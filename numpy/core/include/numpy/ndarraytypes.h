@@ -233,7 +233,6 @@ typedef enum {
         NPY_FR_Y, /* Years */
         NPY_FR_M, /* Months */
         NPY_FR_W, /* Weeks */
-        NPY_FR_B, /* Business days (weekdays, doesn't account for holidays) */
         NPY_FR_D, /* Days */
         NPY_FR_h, /* hours */
         NPY_FR_m, /* minutes */
@@ -253,7 +252,6 @@ typedef enum {
 #define NPY_STR_Y "Y"
 #define NPY_STR_M "M"
 #define NPY_STR_W "W"
-#define NPY_STR_B "B"
 #define NPY_STR_D "D"
 #define NPY_STR_h "h"
 #define NPY_STR_m "m"

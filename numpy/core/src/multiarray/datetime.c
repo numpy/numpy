@@ -32,7 +32,6 @@ NPY_NO_EXPORT char *_datetime_strings[] = {
     NPY_STR_Y,
     NPY_STR_M,
     NPY_STR_W,
-    NPY_STR_B,
     NPY_STR_D,
     NPY_STR_h,
     NPY_STR_m,
@@ -46,49 +45,11 @@ NPY_NO_EXPORT char *_datetime_strings[] = {
     "generic"
 };
 
-/*
-  ====================================================
-    }
-  == Beginning of section borrowed from mx.DateTime ==
-  ====================================================
-*/
-
-/*
- * Functions in the following section are borrowed from mx.DateTime version
- * 2.0.6, and hence this code is subject to the terms of the egenix public
- * license version 1.0.0
- */
-
-/* Table of number of days in a month (0-based, without and with leap) */
+/* Days per month, regular year and leap year */
 static int days_in_month[2][12] = {
     { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 },
     { 31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 }
 };
-
-/*
- * Return the day of the week for the given absolute date.
- * Monday is 0 and Sunday is 6
- */
-static int
-day_of_week(npy_longlong absdate)
-{
-    /* Add in four for the Thursday on Jan 1, 1970 (epoch offset)*/
-    absdate += 4;
-
-    if (absdate >= 0) {
-        return absdate % 7;
-    }
-    else {
-        return 6 + (absdate + 1) % 7;
-    }
-}
-
-/*
-  ====================================================
-  == End of section adapted from mx.DateTime       ==
-  ====================================================
-*/
-
 
 static int
 is_leapyear(npy_int64 year)
@@ -274,7 +235,6 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
     else {
         /* Otherwise calculate the number of days to start */
         npy_int64 days = get_datetimestruct_days(dts);
-        int dotw;
 
         switch (base) {
             case NPY_FR_W:
@@ -284,26 +244,6 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                 }
                 else {
                     ret = (days - 6) / 7;
-                }
-                break;
-            case NPY_FR_B:
-                /* TODO: this needs work... */
-                dotw = day_of_week(days);
-
-                if (dotw > 4) {
-                    /* Invalid business day */
-                    ret = 0;
-                }
-                else {
-                    npy_int64 x;
-                    if (days >= 0) {
-                        /* offset to adjust first week */
-                        x = days - 4;
-                    }
-                    else {
-                        x = days - 2;
-                    }
-                    ret = 2 + (x / 7) * 5 + x % 7;
                 }
                 break;
             case NPY_FR_D:
@@ -457,15 +397,6 @@ PyArray_TimedeltaStructToTimedelta(NPY_DATETIMEUNIT fr, npy_timedeltastruct *d)
             ret = (d->day - 6) / 7;
         }
     }
-    else if (fr == NPY_FR_B) {
-        /*
-         * What is the meaning of a relative Business day?
-         *
-         * This assumes you want to take the day difference and
-         * convert it to business-day difference (removing 2 every 7).
-         */
-        ret = (d->day / 7) * 5 + d->day % 7;
-    }
     else if (fr == NPY_FR_D) {
         ret = d->day;
     }
@@ -536,7 +467,6 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                                     npy_datetime dt,
                                     npy_datetimestruct *out)
 {
-    npy_int64 absdays;
     npy_int64 perday;
 
     /* Initialize the output to all zeros */
@@ -595,28 +525,6 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
         case NPY_FR_W:
             /* A week is 7 days */
             set_datetimestruct_days(dt * 7, out);
-            break;
-
-        case NPY_FR_B:
-            /* TODO: fix up business days */
-            /* Number of business days since Thursday, 1-1-70 */
-            /*
-             * A business day is M T W Th F (i.e. all but Sat and Sun.)
-             * Convert the business day to the number of actual days.
-             *
-             * Must convert [0,1,2,3,4,5,6,7,...] to
-             *                  [0,1,4,5,6,7,8,11,...]
-             * and  [...,-9,-8,-7,-6,-5,-4,-3,-2,-1,0] to
-             *        [...,-13,-10,-9,-8,-7,-6,-3,-2,-1,0]
-             */
-            if (dt >= 0) {
-                absdays = 7 * ((dt + 3) / 5) + ((dt + 3) % 5) - 3;
-            }
-            else {
-                /* Recall how C computes / and % with negative numbers */
-                absdays = 7 * ((dt - 1) / 5) + ((dt - 1) % 5) + 1;
-            }
-            set_datetimestruct_days(absdays, out);
             break;
 
         case NPY_FR_D:
@@ -828,7 +736,7 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
 
 /*
  * FIXME: Overflow is not handled at all
- *   To convert from Years, Months, and Business Days,
+ *   To convert from Years or Months,
  *   multiplication by the average is done
  */
 
@@ -864,10 +772,6 @@ PyArray_TimedeltaToTimedeltaStruct(npy_timedelta val, NPY_DATETIMEUNIT fr,
     }
     else if (fr == NPY_FR_W) {
         day = val * 7;
-    }
-    else if (fr == NPY_FR_B) {
-        /* Number of business days since Thursday, 1-1-70 */
-        day = (val * 7) / 5;
     }
     else if (fr == NPY_FR_D) {
         day = val;
@@ -1308,10 +1212,8 @@ static NPY_DATETIMEUNIT _multiples_table[16][4] = {
     {NPY_FR_M, NPY_FR_W, NPY_FR_D},
     {4,  30, 720},                            /* NPY_FR_M */
     {NPY_FR_W, NPY_FR_D, NPY_FR_h},
-    {5,  7,  168, 10080},                     /* NPY_FR_W */
-    {NPY_FR_B, NPY_FR_D, NPY_FR_h, NPY_FR_m},
-    {24, 1440, 86400},                        /* NPY_FR_B */
-    {NPY_FR_h, NPY_FR_m, NPY_FR_s},
+    {7,  168, 10080},                         /* NPY_FR_W */
+    {NPY_FR_D, NPY_FR_h, NPY_FR_m},
     {24, 1440, 86400},                        /* NPY_FR_D */
     {NPY_FR_h, NPY_FR_m, NPY_FR_s},
     {60, 3600},                               /* NPY_FR_h */
@@ -1401,14 +1303,13 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
 
 /*
  * Lookup table for factors between datetime units, except
- * for years, months, and business days.
+ * for years and months.
  */
 static npy_uint32
 _datetime_factors[] = {
     1,  /* Years - not used */
     1,  /* Months - not used */
     7,  /* Weeks -> Days */
-    1,  /* Business days - not used */
     24, /* Days -> Hours */
     60, /* Hours -> Minutes */
     60, /* Minutes -> Seconds */
@@ -1637,14 +1538,11 @@ datetime_metadata_divides(
     /* If the bases are different, factor in a conversion */
     if (meta1->base != meta2->base) {
         /*
-         * Years, Months, and Business days are incompatible with
+         * Years and Months are incompatible with
          * all other units (except years and months are compatible
          * with each other).
          */
-        if (meta1->base == NPY_FR_B || meta2->base == NPY_FR_B) {
-            return 0;
-        }
-        else if (meta1->base == NPY_FR_Y) {
+        if (meta1->base == NPY_FR_Y) {
             if (meta2->base == NPY_FR_M) {
                 num1 *= 12;
             }
@@ -1749,7 +1647,7 @@ compute_datetime_metadata_greatest_common_divisor(
     }
     else {
         /*
-         * Years, Months, and Business days are incompatible with
+         * Years and Months are incompatible with
          * all other units (except years and months are compatible
          * with each other).
          */
@@ -1795,27 +1693,6 @@ compute_datetime_metadata_greatest_common_divisor(
             else {
                 base = meta1->base;
                 /* Don't multiply num2 since there is no even factor */
-            }
-        }
-        else if (meta1->base == NPY_FR_B || meta2->base == NPY_FR_B) {
-            if (strict_with_nonlinear_units1 || strict_with_nonlinear_units2) {
-                goto incompatible_units;
-            }
-            else {
-                if (meta1->base > meta2->base) {
-                    base = meta1->base;
-                }
-                else {
-                    base = meta2->base;
-                }
-
-                /*
-                 * When combining business days with other units, end
-                 * up with days instead of business days.
-                 */
-                if (base == NPY_FR_B) {
-                    base = NPY_FR_D;
-                }
             }
         }
 
@@ -2014,8 +1891,6 @@ parse_datetime_unit_from_string(char *str, Py_ssize_t len, char *metastr)
                 return NPY_FR_M;
             case 'W':
                 return NPY_FR_W;
-            case 'B':
-                return NPY_FR_B;
             case 'D':
                 return NPY_FR_D;
             case 'h':
@@ -3065,7 +2940,6 @@ get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
         case NPY_FR_h:
             len += 3;  /* "T##" */
         case NPY_FR_D:
-        case NPY_FR_B:
         case NPY_FR_W:
             len += 3;  /* "-##" */
         case NPY_FR_M:
@@ -3170,12 +3044,12 @@ make_iso_8601_date(npy_datetimestruct *dts, char *outstr, int outlen,
         }
     }
     /*
-     * Print business days and weeks with the same precision as days.
+     * Print weeks with the same precision as days.
      *
      * TODO: Could print weeks with YYYY-Www format if the week
      *       epoch is a Monday.
      */
-    else if (base == NPY_FR_B || base == NPY_FR_W) {
+    else if (base == NPY_FR_W) {
         base = NPY_FR_D;
     }
 
@@ -4187,7 +4061,6 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
     if (meta->base > NPY_FR_us ||
                     meta->base == NPY_FR_Y ||
                     meta->base == NPY_FR_M ||
-                    meta->base == NPY_FR_B ||
                     meta->base == NPY_FR_GENERIC) {
         /* Skip use of a tuple for the events, just return the raw int */
         return PyLong_FromLongLong(td);

@@ -691,7 +691,6 @@ static char *_datetime_verbose_strings[] = {
     "years",
     "months",
     "weeks",
-    "business days",
     "days",
     "hours",
     "minutes",

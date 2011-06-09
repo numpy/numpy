@@ -7,7 +7,7 @@ import datetime
 
 class TestDateTime(TestCase):
     def test_datetime_dtype_creation(self):
-        for unit in ['Y', 'M', 'W', 'B', 'D',
+        for unit in ['Y', 'M', 'W', 'D',
                      'h', 'm', 's', 'ms', 'us',
                      'ns', 'ps', 'fs', 'as']:
             dt1 = np.dtype('M8[750%s]'%unit)
@@ -354,7 +354,6 @@ class TestDateTime(TestCase):
     def test_dtype_comparison(self):
         assert_(not (np.dtype('M8[us]') == np.dtype('M8[ms]')))
         assert_(np.dtype('M8[us]') != np.dtype('M8[ms]'))
-        assert_(np.dtype('M8[D]') != np.dtype('M8[B]'))
         assert_(np.dtype('M8[2D]') != np.dtype('M8[D]'))
         assert_(np.dtype('M8[D]') != np.dtype('M8[2D]'))
         assert_(np.dtype('M8[Y]//3') != np.dtype('M8[Y]'))
@@ -383,7 +382,7 @@ class TestDateTime(TestCase):
         # Check that pickle roundtripping works
         dt = np.dtype('M8[7D]//3')
         assert_equal(dt, pickle.loads(pickle.dumps(dt)))
-        dt = np.dtype('M8[B]')
+        dt = np.dtype('M8[W]')
         assert_equal(dt, pickle.loads(pickle.dumps(dt)))
 
     def test_dtype_promotion(self):
@@ -411,10 +410,6 @@ class TestDateTime(TestCase):
         # timedelta <op> timedelta raises when there is no reasonable gcd
         assert_raises(TypeError, np.promote_types,
                             np.dtype('m8[Y]'), np.dtype('m8[D]'))
-        assert_raises(TypeError, np.promote_types,
-                            np.dtype('m8[Y]'), np.dtype('m8[B]'))
-        assert_raises(TypeError, np.promote_types,
-                            np.dtype('m8[D]'), np.dtype('m8[B]'))
         assert_raises(TypeError, np.promote_types,
                             np.dtype('m8[M]'), np.dtype('m8[W]'))
         # timedelta <op> timedelta may overflow with big unit ranges
@@ -835,15 +830,9 @@ class TestDateTime(TestCase):
         assert_(np.dtype('M8[3M/40]') == np.dtype('M8[54h]'))
 
     def test_divisor_conversion_week(self):
-        assert_(np.dtype('m8[W/5]') == np.dtype('m8[B]'))
         assert_(np.dtype('m8[W/7]') == np.dtype('m8[D]'))
         assert_(np.dtype('m8[3W/14]') == np.dtype('m8[36h]'))
         assert_(np.dtype('m8[5W/140]') == np.dtype('m8[360m]'))
-
-    def test_divisor_conversion_bday(self):
-        assert_(np.dtype('M8[B/12]') == np.dtype('M8[2h]'))
-        assert_(np.dtype('M8[B/120]') == np.dtype('M8[12m]'))
-        assert_(np.dtype('M8[3B/960]') == np.dtype('M8[270s]'))
 
     def test_divisor_conversion_day(self):
         assert_(np.dtype('M8[D/12]') == np.dtype('M8[2h]'))
