@@ -1178,30 +1178,70 @@ bad_input:
     return -1;
 }
 
-NPY_NO_EXPORT PyObject *
-parse_datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len)
+/*
+ * Creates a datetime or timedelta dtype using the provided metadata.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+create_datetime_dtype(int type_num, PyArray_DatetimeMetaData *meta)
 {
+    PyArray_Descr *dtype = NULL;
     PyArray_DatetimeMetaData *dt_data;
+    PyObject *metacobj = NULL;
 
-    dt_data = PyArray_malloc(sizeof(PyArray_DatetimeMetaData));
-    if (dt_data == NULL) {
-        return PyErr_NoMemory();
-    }
-
-    /* If there's no metastr, use the default */
-    if (len == 0) {
-        dt_data->base = NPY_DATETIME_DEFAULTUNIT;
-        dt_data->num = 1;
-        dt_data->events = 1;
+    /* Create a default datetime or timedelta */
+    if (type_num == NPY_DATETIME || type_num == NPY_TIMEDELTA) {
+        dtype = PyArray_DescrNewFromType(type_num);
     }
     else {
-        if (parse_datetime_metadata_from_metastr(metastr, len, dt_data) < 0) {
-            PyArray_free(dt_data);
-            return NULL;
-        }
+        PyErr_SetString(PyExc_RuntimeError,
+                "Asked to create a datetime type with a non-datetime "
+                "type number");
+        return NULL;
     }
 
-    return NpyCapsule_FromVoidPtr((void *)dt_data, simple_capsule_dtor);
+    if (dtype == NULL) {
+        return NULL;
+    }
+
+    /*
+     * Remove any reference to old metadata dictionary
+     * And create a new one for this new dtype
+     */
+    Py_XDECREF(dtype->metadata);
+    dtype->metadata = PyDict_New();
+    if (dtype->metadata == NULL) {
+        Py_DECREF(dtype);
+        return NULL;
+    }
+
+    /* Create a metadata capsule to copy the provided metadata */
+    dt_data = PyArray_malloc(sizeof(PyArray_DatetimeMetaData));
+    if (dt_data == NULL) {
+        Py_DECREF(dtype);
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    /* Copy the metadata */
+    *dt_data = *meta;
+
+    /* Allocate a capsule for it (this claims ownership of dt_data) */
+    metacobj = NpyCapsule_FromVoidPtr((void *)dt_data, simple_capsule_dtor);
+    if (metacobj == NULL) {
+        Py_DECREF(dtype);
+        return NULL;
+    }
+
+    /* Set the metadata object in the dictionary. */
+    if (PyDict_SetItemString(dtype->metadata, NPY_METADATA_DTSTR,
+                                                    metacobj) < 0) {
+        Py_DECREF(dtype);
+        Py_DECREF(metacobj);
+        return NULL;
+    }
+    Py_DECREF(metacobj);
+
+    return dtype;
 }
 
 /*
@@ -1211,11 +1251,10 @@ parse_datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len)
 NPY_NO_EXPORT PyArray_Descr *
 parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len)
 {
-    PyArray_Descr *dtype = NULL;
+    PyArray_DatetimeMetaData meta;
     char *metastr = NULL;
     int is_timedelta = 0;
     Py_ssize_t metalen = 0;
-    PyObject *metacobj = NULL;
 
     if (len < 2) {
         PyErr_Format(PyExc_TypeError,
@@ -1255,45 +1294,13 @@ parse_dtype_from_datetime_typestr(char *typestr, Py_ssize_t len)
         return NULL;
     }
 
-    /* Create a default datetime or timedelta */
-    if (is_timedelta) {
-        dtype = PyArray_DescrNewFromType(NPY_TIMEDELTA);
-    }
-    else {
-        dtype = PyArray_DescrNewFromType(NPY_DATETIME);
-    }
-    if (dtype == NULL) {
+    /* Parse the metadata string into a metadata struct */
+    if (parse_datetime_metadata_from_metastr(metastr, metalen, &meta) < 0) {
         return NULL;
     }
 
-    /*
-     * Remove any reference to old metadata dictionary
-     * And create a new one for this new dtype
-     */
-    Py_XDECREF(dtype->metadata);
-    dtype->metadata = PyDict_New();
-    if (dtype->metadata == NULL) {
-        Py_DECREF(dtype);
-        return NULL;
-    }
-
-    /* Parse the metadata string into a metadata capsule */
-    metacobj = parse_datetime_metacobj_from_metastr(metastr, metalen);
-    if (metacobj == NULL) {
-        Py_DECREF(dtype);
-        return NULL;
-    }
-
-    /* Set the metadata object in the dictionary. */
-    if (PyDict_SetItemString(dtype->metadata, NPY_METADATA_DTSTR,
-                                                    metacobj) < 0) {
-        Py_DECREF(dtype);
-        Py_DECREF(metacobj);
-        return NULL;
-    }
-    Py_DECREF(metacobj);
-
-    return dtype;
+    return create_datetime_dtype(is_timedelta ? NPY_TIMEDELTA : NPY_DATETIME,
+                                    &meta);
 }
 
 static NPY_DATETIMEUNIT _multiples_table[16][4] = {
@@ -4445,7 +4452,7 @@ is_any_numpy_datetime_or_timedelta(PyObject *obj)
             is_any_numpy_timedelta(obj));
 }
 
-NPY_NO_EXPORT PyObject *
+NPY_NO_EXPORT PyArrayObject *
 datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
                 PyArray_Descr *dtype)
 {
@@ -4456,6 +4463,10 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
      * share value variables.
      */
     npy_int64 start_value = 0, stop_value = 0, step_value;
+
+    npy_intp i, length;
+    PyArrayObject *ret;
+    npy_int64 *ret_data;
 
     /*
      * First normalize the input parameters so there is no Py_None,
@@ -4560,6 +4571,17 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
                                                 &stop_value) < 0) {
                     return NULL;
                 }
+            }
+        }
+
+        /* Get the 'step' value */
+        if (step == NULL) {
+            step_value = 1;
+        }
+        else {
+            if (convert_pyobject_to_timedelta(&meta, step,
+                                            &step_value) < 0) {
+                return NULL;
             }
         }
     }
@@ -4735,7 +4757,71 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
             }
         }
     }
-    
-    PyErr_SetString(PyExc_RuntimeError, "datetime_arange is incomplete");
-    return NULL;
+
+    /* Now start, stop, and step have their values and matching metadata */
+    if (start_value == NPY_DATETIME_NAT ||
+                    stop_value == NPY_DATETIME_NAT ||
+                    step_value == NPY_DATETIME_NAT) {
+        PyErr_SetString(PyExc_ValueError,
+                    "arange: cannot use NaT (not-a-time) datetime values");
+        return NULL;
+    }
+
+    /* Calculate the array length */
+    if (step_value > 0) {
+        if (stop_value > start_value) {
+            length = (stop_value - start_value) / step_value;
+        }
+        else {
+            length = 0;
+        }
+    }
+    else if (step_value < 0) {
+        if (stop_value < start_value) {
+            length = (start_value - stop_value) / (-step_value);
+        }
+        else {
+            length = 0;
+        }
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError,
+                    "arange: step may not be zero");
+        return NULL;
+    }
+
+    /* Create the dtype of the result */
+    if (dtype != NULL) {
+        Py_INCREF(dtype);
+    }
+    else {
+        dtype = create_datetime_dtype(
+                        is_timedelta ? NPY_TIMEDELTA : NPY_DATETIME,
+                        &meta);
+        if (dtype == NULL) {
+            return NULL;
+        }
+    }
+
+    /* Create the result array */
+    ret = (PyArrayObject *)PyArray_NewFromDescr(
+                            &PyArray_Type, dtype, 1, &length, NULL,
+                            NULL, 0, NULL);
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    if (length > 0) {
+        /* Extract the data pointer */
+        ret_data = (npy_int64 *)PyArray_DATA(ret);
+
+        /* Create the timedeltas or datetimes */
+        for (i = 0; i < length; ++i) {
+            *ret_data = start_value;
+            start_value += step_value;
+            ret_data++;
+        }
+    }
+
+    return ret;
 }

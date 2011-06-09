@@ -1100,6 +1100,20 @@ class TestDateTime(TestCase):
         assert_equal(np.datetime_as_string(a, local=True, tzoffset=-5*60),
                      '2010-03-15T01:30-0500')
 
+    def test_datetime_arange(self):
+        # Default mode
+        a = np.arange('2010-01-05', '2010-01-10', dtype='M8[D]')
+        assert_equal(a.dtype, np.dtype('M8[D]'))
+        assert_equal(a,
+            np.array(['2010-01-05', '2010-01-06', '2010-01-07',
+                      '2010-01-08', '2010-01-09'], dtype='M8[D]'))
+
+        a = np.arange('1950-02-10', '1950-02-06', -1, dtype='M8[D]')
+        assert_equal(a.dtype, np.dtype('M8[D]'))
+        assert_equal(a,
+            np.array(['1950-02-10', '1950-02-09', '1950-02-08',
+                      '1950-02-07'], dtype='M8[D]'))
+
 class TestDateTimeData(TestCase):
 
     def test_basic(self):

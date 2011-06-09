@@ -376,7 +376,7 @@ is_any_numpy_datetime_or_timedelta(PyObject *obj);
 /*
  * Implements a datetime-specific arange
  */
-NPY_NO_EXPORT PyObject *
+NPY_NO_EXPORT PyArrayObject *
 datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
                 PyArray_Descr *dtype);
 

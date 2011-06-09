@@ -3085,7 +3085,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
             (dtype == NULL && (is_any_numpy_datetime_or_timedelta(start) ||
                               is_any_numpy_datetime_or_timedelta(stop) ||
                               is_any_numpy_datetime_or_timedelta(step)))) {
-        return datetime_arange(start, stop, step, dtype);
+        return (PyObject *)datetime_arange(start, stop, step, dtype);
     }
 
     if (!dtype) {
