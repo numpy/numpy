@@ -1083,6 +1083,14 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     self->data = data;
 
     /*
+     * If the strides were provided to the function, need to
+     * update the flags to get the right CONTIGUOUS, ALIGN properties
+     */
+    if (strides != NULL) {
+        PyArray_UpdateFlags(self, UPDATE_ALL);
+    }
+
+    /*
      * call the __array_finalize__
      * method if a subtype.
      * If obj is NULL, then call method with Py_None
@@ -1092,13 +1100,6 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
 
         func = PyObject_GetAttrString((PyObject *)self, "__array_finalize__");
         if (func && func != Py_None) {
-            if (strides != NULL) {
-                /*
-                 * did not allocate own data or funny strides
-                 * update flags before finalize function
-                 */
-                PyArray_UpdateFlags(self, UPDATE_ALL);
-            }
             if (NpyCapsule_Check(func)) {
                 /* A C-function is stored here */
                 PyArray_FinalizeFunc *cfunc;
