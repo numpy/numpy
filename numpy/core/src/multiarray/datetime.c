@@ -1632,11 +1632,12 @@ datetime_metadata_divides(
 }
 
 
-NPY_NO_EXPORT PyObject *
+static PyObject *
 compute_datetime_metadata_greatest_common_divisor(
                         PyArray_Descr *type1,
                         PyArray_Descr *type2,
-                        int strict_with_nonlinear_units)
+                        int strict_with_nonlinear_units1,
+                        int strict_with_nonlinear_units2)
 {
     PyArray_DatetimeMetaData *meta1, *meta2, *dt_data;
     NPY_DATETIMEUNIT base;
@@ -1688,7 +1689,7 @@ compute_datetime_metadata_greatest_common_divisor(
                 base = NPY_FR_M;
                 num1 *= 12;
             }
-            else if (strict_with_nonlinear_units) {
+            else if (strict_with_nonlinear_units1) {
                 goto incompatible_units;
             }
             else {
@@ -1701,7 +1702,7 @@ compute_datetime_metadata_greatest_common_divisor(
                 base = NPY_FR_M;
                 num2 *= 12;
             }
-            else if (strict_with_nonlinear_units) {
+            else if (strict_with_nonlinear_units2) {
                 goto incompatible_units;
             }
             else {
@@ -1709,11 +1710,26 @@ compute_datetime_metadata_greatest_common_divisor(
                 /* Don't multiply num2 since there is no even factor */
             }
         }
-        else if (meta1->base == NPY_FR_M ||
-                            meta1->base == NPY_FR_B ||
-                            meta2->base == NPY_FR_M ||
-                            meta2->base == NPY_FR_B) {
-            if (strict_with_nonlinear_units) {
+        else if (meta1->base == NPY_FR_M) {
+            if (strict_with_nonlinear_units1) {
+                goto incompatible_units;
+            }
+            else {
+                base = meta2->base;
+                /* Don't multiply num1 since there is no even factor */
+            }
+        }
+        else if (meta2->base == NPY_FR_M) {
+            if (strict_with_nonlinear_units2) {
+                goto incompatible_units;
+            }
+            else {
+                base = meta1->base;
+                /* Don't multiply num2 since there is no even factor */
+            }
+        }
+        else if (meta1->base == NPY_FR_B || meta2->base == NPY_FR_B) {
+            if (strict_with_nonlinear_units1 || strict_with_nonlinear_units2) {
                 goto incompatible_units;
             }
             else {
@@ -1801,14 +1817,22 @@ units_overflow: {
 }
 
 /*
- * Uses type1's type_num and the gcd of the metadata to create
- * the result type.
+ * Both type1 and type2 must be either NPY_DATETIME or NPY_TIMEDELTA.
+ * Applies the type promotion rules between the two types, returning
+ * the promoted type.
  */
-static PyArray_Descr *
-datetime_gcd_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
+NPY_NO_EXPORT PyArray_Descr *
+datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
 {
+    int type_num1, type_num2;
     PyObject *gcdmeta;
     PyArray_Descr *dtype;
+    int is_datetime;
+
+    type_num1 = type1->type_num;
+    type_num2 = type2->type_num;
+
+    is_datetime = (type_num1 == NPY_DATETIME || type_num2 == NPY_DATETIME);
 
     /*
      * Get the metadata GCD, being strict about nonlinear units for
@@ -1816,13 +1840,15 @@ datetime_gcd_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
      */
     gcdmeta = compute_datetime_metadata_greatest_common_divisor(
                                             type1, type2,
-                                            type1->type_num == NPY_TIMEDELTA);
+                                            type_num1 == NPY_TIMEDELTA,
+                                            type_num2 == NPY_TIMEDELTA);
     if (gcdmeta == NULL) {
         return NULL;
     }
 
     /* Create a DATETIME or TIMEDELTA dtype */
-    dtype = PyArray_DescrNewFromType(type1->type_num);
+    dtype = PyArray_DescrNewFromType(is_datetime ? NPY_DATETIME :
+                                                   NPY_TIMEDELTA);
     if (dtype == NULL) {
         Py_DECREF(gcdmeta);
         return NULL;
@@ -1847,39 +1873,7 @@ datetime_gcd_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
     Py_DECREF(gcdmeta);
     
     return dtype;
-}
 
-/*
- * Both type1 and type2 must be either NPY_DATETIME or NPY_TIMEDELTA.
- * Applies the type promotion rules between the two types, returning
- * the promoted type.
- */
-NPY_NO_EXPORT PyArray_Descr *
-datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
-{
-    int type_num1, type_num2;
-
-    type_num1 = type1->type_num;
-    type_num2 = type2->type_num;
-
-    if (type_num1 == NPY_DATETIME) {
-        if (type_num2 == NPY_DATETIME) {
-            return datetime_gcd_type_promotion(type1, type2);
-        }
-        else if (type_num2 == NPY_TIMEDELTA) {
-            Py_INCREF(type1);
-            return type1;
-        }
-    }
-    else if (type_num1 == NPY_TIMEDELTA) {
-        if (type_num2 == NPY_DATETIME) {
-            Py_INCREF(type2);
-            return type2;
-        }
-        else if (type_num2 == NPY_TIMEDELTA) {
-            return datetime_gcd_type_promotion(type1, type2);
-        }
-    }
 
     PyErr_SetString(PyExc_RuntimeError,
             "Called datetime_type_promotion on non-datetype type");
