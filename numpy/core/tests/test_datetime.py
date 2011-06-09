@@ -1120,6 +1120,45 @@ class TestDateTime(TestCase):
         assert_equal(a,
             np.datetime64('1969-05') + np.arange(12, step=2))
 
+        # datetime, integer|timedelta works as well
+        # produces arange (start, start + stop) in this case
+        a = np.arange('1969', 18, 3, dtype='M8')
+        assert_equal(a.dtype, np.dtype('M8[Y]'))
+        assert_equal(a,
+            np.datetime64('1969') + np.arange(18, step=3))
+        a = np.arange('1969-12-19', 22, np.timedelta64(2), dtype='M8')
+        assert_equal(a.dtype, np.dtype('M8[D]'))
+        assert_equal(a,
+            np.datetime64('1969-12-19') + np.arange(22, step=2))
+
+        # Step of 0 is disallowed
+        assert_raises(ValueError, np.arange, np.datetime64('today'),
+                                np.datetime64('today') + 3, 0)
+        # Promotion across nonlinear unit boundaries is disallowed
+        assert_raises(TypeError, np.arange, np.datetime64('2011-03-01','D'),
+                                np.timedelta64(5,'M'))
+        assert_raises(TypeError, np.arange,
+                                np.datetime64('2012-02-03T14Z','s'),
+                                np.timedelta64(5,'Y'))
+
+    def test_timedelta_arange(self):
+        a = np.arange(3, 10, dtype='m8')
+        assert_equal(a.dtype, np.dtype('m8'))
+        assert_equal(a, np.timedelta64(0) + np.arange(3, 10))
+
+        a = np.arange(np.timedelta64(3,'s'), 10, 2, dtype='m8')
+        assert_equal(a.dtype, np.dtype('m8[s]'))
+        assert_equal(a, np.timedelta64(0, 's') + np.arange(3, 10, 2))
+
+        # Step of 0 is disallowed
+        assert_raises(ValueError, np.arange, np.timedelta64(0),
+                                np.timedelta64(5), 0)
+        # Promotion across nonlinear unit boundaries is disallowed
+        assert_raises(TypeError, np.arange, np.timedelta64(0,'D'),
+                                np.timedelta64(5,'M'))
+        assert_raises(TypeError, np.arange, np.timedelta64(0,'Y'),
+                                np.timedelta64(5,'D'))
+
 class TestDateTimeData(TestCase):
 
     def test_basic(self):
