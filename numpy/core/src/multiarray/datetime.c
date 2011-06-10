@@ -4685,3 +4685,286 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
 
     return ret;
 }
+
+
+/*
+ * Recursively determines the metadata for an NPY_DATETIME dtype.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+static int
+recursive_find_object_datetime64_type(PyObject *obj,
+                        PyArray_DatetimeMetaData *meta)
+{
+    /* Array -> use its metadata */
+    if (PyArray_Check(obj)) {
+        PyArray_Descr *obj_dtype = PyArray_DESCR(obj);
+        /* If the array has metadata, use it */
+        if (obj_dtype->type_num == NPY_DATETIME ||
+                    obj_dtype->type_num == NPY_TIMEDELTA) {
+            PyArray_DatetimeMetaData *tmp_meta;
+
+            /* Get the metadata from the type */
+            tmp_meta = get_datetime_metadata_from_dtype(obj_dtype);
+            if (tmp_meta == NULL) {
+                return -1;
+            }
+
+            /* Combine it with 'meta' */
+            if (compute_datetime_metadata_greatest_common_divisor(meta,
+                            tmp_meta, meta, 0, 0) < 0) {
+                return -1;
+            }
+
+            return 0;
+        }
+        /* If it's not an object array, stop looking */
+        else if (obj_dtype->type_num != NPY_OBJECT) {
+            return 0;
+        }
+    }
+    /* Datetime scalar -> use its metadata */
+    else if (PyArray_IsScalar(obj, Datetime)) {
+        PyDatetimeScalarObject *dts = (PyDatetimeScalarObject *)obj;
+
+        /* Combine it with 'meta' */
+        if (compute_datetime_metadata_greatest_common_divisor(meta,
+                        &dts->obmeta, meta, 0, 0) < 0) {
+            return -1;
+        }
+
+        return 0;
+    }
+    /* String -> parse it to find out */
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
+        npy_datetime tmp = 0;
+        PyArray_DatetimeMetaData tmp_meta;
+
+        tmp_meta.base = -1;
+        tmp_meta.num = 1;
+        tmp_meta.events = 1;
+
+        if (convert_pyobject_to_datetime(&tmp_meta, obj, &tmp) < 0) {
+            /* If it's a value error, clear the error */
+            if (PyErr_Occurred() &&
+                    PyErr_GivenExceptionMatches(PyErr_Occurred(),
+                                    PyExc_ValueError)) {
+                PyErr_Clear();
+                return 0;
+            }
+            /* Otherwise propagate the error */
+            else {
+                return -1;
+            }
+        }
+
+        /* Combine it with 'meta' */
+        if (compute_datetime_metadata_greatest_common_divisor(meta,
+                        &tmp_meta, meta, 0, 0) < 0) {
+            return -1;
+        }
+
+        return 0;
+    }
+    /* Python date object -> 'D' */
+    else if (PyDate_Check(obj)) {
+        PyArray_DatetimeMetaData tmp_meta;
+
+        tmp_meta.base = NPY_FR_D;
+        tmp_meta.num = 1;
+        tmp_meta.events = 1;
+
+        /* Combine it with 'meta' */
+        if (compute_datetime_metadata_greatest_common_divisor(meta,
+                        &tmp_meta, meta, 0, 0) < 0) {
+            return -1;
+        }
+
+        return 0;
+    }
+    /* Python datetime object -> 'us' */
+    else if (PyDateTime_Check(obj)) {
+        PyArray_DatetimeMetaData tmp_meta;
+
+        tmp_meta.base = NPY_FR_us;
+        tmp_meta.num = 1;
+        tmp_meta.events = 1;
+
+        /* Combine it with 'meta' */
+        if (compute_datetime_metadata_greatest_common_divisor(meta,
+                        &tmp_meta, meta, 0, 0) < 0) {
+            return -1;
+        }
+
+        return 0;
+    }
+
+    /* Now check if what we have left is a sequence for recursion */
+    if (PySequence_Check(obj)) {
+        Py_ssize_t i, len = PySequence_Size(obj);
+        if (len < 0 && PyErr_Occurred()) {
+            return -1;
+        }
+
+        for (i = 0; i < len; ++i) {
+            PyObject *f = PySequence_GetItem(obj, i);
+            if (f == NULL) {
+                return -1;
+            }
+            if (f == obj) {
+                Py_DECREF(f);
+                return 0;
+            }
+            if (recursive_find_object_datetime64_type(f, meta) < 0) {
+                Py_DECREF(f);
+                return -1;
+            }
+            Py_DECREF(f);
+        }
+
+        return 0;
+    }
+    /* Otherwise ignore it */
+    else {
+        return 0;
+    }
+}
+
+/*
+ * Recursively determines the metadata for an NPY_TIMEDELTA dtype.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+static int
+recursive_find_object_timedelta64_type(PyObject *obj,
+                        PyArray_DatetimeMetaData *meta)
+{
+    /* Array -> use its metadata */
+    if (PyArray_Check(obj)) {
+        PyArray_Descr *obj_dtype = PyArray_DESCR(obj);
+        /* If the array has metadata, use it */
+        if (obj_dtype->type_num == NPY_DATETIME ||
+                    obj_dtype->type_num == NPY_TIMEDELTA) {
+            PyArray_DatetimeMetaData *tmp_meta;
+
+            /* Get the metadata from the type */
+            tmp_meta = get_datetime_metadata_from_dtype(obj_dtype);
+            if (tmp_meta == NULL) {
+                return -1;
+            }
+
+            /* Combine it with 'meta' */
+            if (compute_datetime_metadata_greatest_common_divisor(meta,
+                            tmp_meta, meta, 0, 0) < 0) {
+                return -1;
+            }
+
+            return 0;
+        }
+        /* If it's not an object array, stop looking */
+        else if (obj_dtype->type_num != NPY_OBJECT) {
+            return 0;
+        }
+    }
+    /* Datetime scalar -> use its metadata */
+    else if (PyArray_IsScalar(obj, Timedelta)) {
+        PyTimedeltaScalarObject *dts = (PyTimedeltaScalarObject *)obj;
+
+        /* Combine it with 'meta' */
+        if (compute_datetime_metadata_greatest_common_divisor(meta,
+                        &dts->obmeta, meta, 1, 1) < 0) {
+            return -1;
+        }
+
+        return 0;
+    }
+    /* String -> parse it to find out */
+    else if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
+        /* No timedelta parser yet */
+        return 0;
+    }
+    /* Python timedelta object -> 'us' */
+    else if (PyDelta_Check(obj)) {
+        PyArray_DatetimeMetaData tmp_meta;
+
+        tmp_meta.base = NPY_FR_us;
+        tmp_meta.num = 1;
+        tmp_meta.events = 1;
+
+        /* Combine it with 'meta' */
+        if (compute_datetime_metadata_greatest_common_divisor(meta,
+                        &tmp_meta, meta, 0, 0) < 0) {
+            return -1;
+        }
+
+        return 0;
+    }
+
+    /* Now check if what we have left is a sequence for recursion */
+    if (PySequence_Check(obj)) {
+        Py_ssize_t i, len = PySequence_Size(obj);
+        if (len < 0 && PyErr_Occurred()) {
+            return -1;
+        }
+
+        for (i = 0; i < len; ++i) {
+            PyObject *f = PySequence_GetItem(obj, i);
+            if (f == NULL) {
+                return -1;
+            }
+            if (f == obj) {
+                Py_DECREF(f);
+                return 0;
+            }
+            if (recursive_find_object_timedelta64_type(f, meta) < 0) {
+                Py_DECREF(f);
+                return -1;
+            }
+            Py_DECREF(f);
+        }
+
+        return 0;
+    }
+    /* Otherwise ignore it */
+    else {
+        return 0;
+    }
+}
+
+/*
+ * Examines all the objects in the given Python object by
+ * recursively descending the sequence structure. Returns a
+ * datetime or timedelta type with metadata based on the data.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+find_object_datetime_type(PyObject *obj, int type_num)
+{
+    PyArray_DatetimeMetaData meta;
+
+    meta.base = NPY_FR_GENERIC;
+    meta.num = 1;
+    meta.events = 1;
+
+    if (type_num == NPY_DATETIME) {
+        if (recursive_find_object_datetime64_type(obj, &meta) < 0) {
+            return NULL;
+        }
+        else {
+            return create_datetime_dtype(type_num, &meta);
+        }
+    }
+    else if (type_num == NPY_TIMEDELTA) {
+        if (recursive_find_object_timedelta64_type(obj, &meta) < 0) {
+            return NULL;
+        }
+        else {
+            return create_datetime_dtype(type_num, &meta);
+        }
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError,
+                    "find_object_datetime_type needs a datetime or "
+                    "timedelta type number");
+        return NULL;
+    }
+}

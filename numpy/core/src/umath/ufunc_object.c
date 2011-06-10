@@ -4126,8 +4126,24 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
 
     ndim = PyArray_NDIM(arr);
 
-    /* Set up the output data type */
-    op_dtypes[0] = PyArray_DescrFromType(otype_final);
+    /*
+     * Set up the output data type, using the input's exact
+     * data type if the type number didn't change to preserve
+     * metadata
+     */
+    if (PyArray_DESCR(arr)->type_num == otype_final) {
+        if (PyArray_ISNBO(PyArray_DESCR(arr)->byteorder)) {
+            op_dtypes[0] = PyArray_DESCR(arr);
+            Py_INCREF(op_dtypes[0]);
+        }
+        else {
+            op_dtypes[0] = PyArray_DescrNewByteorder(PyArray_DESCR(arr),
+                                                    NPY_NATIVE);
+        }
+    }
+    else {
+        op_dtypes[0] = PyArray_DescrFromType(otype_final);
+    }
     if (op_dtypes[0] == NULL) {
         goto fail;
     }
@@ -4777,8 +4793,24 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
 
     ndim = PyArray_NDIM(arr);
 
-    /* Set up the output data type */
-    op_dtypes[0] = PyArray_DescrFromType(otype_final);
+    /*
+     * Set up the output data type, using the input's exact
+     * data type if the type number didn't change to preserve
+     * metadata
+     */
+    if (PyArray_DESCR(arr)->type_num == otype_final) {
+        if (PyArray_ISNBO(PyArray_DESCR(arr)->byteorder)) {
+            op_dtypes[0] = PyArray_DESCR(arr);
+            Py_INCREF(op_dtypes[0]);
+        }
+        else {
+            op_dtypes[0] = PyArray_DescrNewByteorder(PyArray_DESCR(arr),
+                                                    NPY_NATIVE);
+        }
+    }
+    else {
+        op_dtypes[0] = PyArray_DescrFromType(otype_final);
+    }
     if (op_dtypes[0] == NULL) {
         goto fail;
     }

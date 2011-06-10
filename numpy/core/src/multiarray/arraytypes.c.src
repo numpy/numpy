@@ -3434,7 +3434,7 @@ _init_datetime_descr(PyArray_Descr *descr)
     PyObject *cobj;
 
     dt_data = _pya_malloc(sizeof(PyArray_DatetimeMetaData));
-    dt_data->base = NPY_FR_us;
+    dt_data->base = NPY_DATETIME_DEFAULTUNIT;
     dt_data->num = 1;
     dt_data->events = 1;
 

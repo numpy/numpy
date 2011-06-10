@@ -242,13 +242,6 @@ business_day_offset(PyArrayObject *dates, PyArrayObject *offsets,
         return NULL;
     }
 
-    int i;
-    printf("weekmask: ");
-    for (i = 0; i < 7; ++i) {
-        printf("%d", weekmask[i]);
-    }
-    printf("\n");
-
     /* First create the data types for dates and offsets */
     temp_meta.base = NPY_FR_D;
     temp_meta.num = 1;
@@ -446,8 +439,6 @@ static int
 PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
 {
     PyObject *obj = weekmask_in;
-
-    printf("getting weekmask\n");
 
     /* Make obj into an ASCII string if it is UNICODE */
     Py_INCREF(obj);

@@ -390,4 +390,12 @@ NPY_NO_EXPORT PyArrayObject *
 datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
                 PyArray_Descr *dtype);
 
+/*
+ * Examines all the objects in the given Python object by
+ * recursively descending the sequence structure. Returns a
+ * datetime or timedelta type with metadata based on the data.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+find_object_datetime_type(PyObject *obj, int type_num);
+
 #endif

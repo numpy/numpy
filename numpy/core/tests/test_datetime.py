@@ -667,9 +667,9 @@ class TestDateTime(TestCase):
             assert_equal((dtc - tdb).dtype, np.dtype('M8[h]'))
 
             # M8 - M8 with different goes to higher precision
-            assert_equal(dtc - dtd, 0)
+            assert_equal(dtc - dtd, np.timedelta64(0,'h'))
             assert_equal((dtc - dtd).dtype, np.dtype('m8[h]'))
-            assert_equal(dtd - dtc, 0)
+            assert_equal(dtd - dtc, np.timedelta64(0,'h'))
             assert_equal((dtd - dtc).dtype, np.dtype('m8[h]'))
 
             # m8 - M8
@@ -1148,11 +1148,22 @@ class TestDateTime(TestCase):
         assert_raises(TypeError, np.arange, np.timedelta64(0,'Y'),
                                 np.timedelta64(5,'D'))
 
+    def test_maximum_reduce(self):
+        a = np.array(['2010-01-02','1999-03-14','1833-03'], dtype='M8[D]')
+        assert_equal(np.maximum.reduce(a).dtype, np.dtype('M8[D]'))
+        assert_equal(np.maximum.reduce(a),
+                     np.datetime64('2010-01-02'))
+
+        a = np.array([1,4,0,7,2], dtype='m8[s]')
+        assert_equal(np.maximum.reduce(a).dtype, np.dtype('m8[s]'))
+        assert_equal(np.maximum.reduce(a),
+                     np.timedelta64(7, 's'))
+
 class TestDateTimeData(TestCase):
 
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)
-        assert_equal(np.datetime_data(a.dtype), (asbytes('us'), 1, 1))
+        assert_equal(np.datetime_data(a.dtype), (asbytes('D'), 1, 1))
 
 if __name__ == "__main__":
     run_module_suite()

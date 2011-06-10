@@ -1690,6 +1690,27 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
             }
         }
     }
+    /* Treat datetime generic units with the same idea as flexible strings */
+    else if (newtype != NULL && newtype->type_num == NPY_DATETIME) {
+        PyArray_DatetimeMetaData *meta =
+                    get_datetime_metadata_from_dtype(newtype);
+        if (meta == NULL) {
+            Py_DECREF(newtype);
+            return NULL;
+        }
+
+        if (meta->base == NPY_FR_GENERIC) {
+            /* Detect the unit from the input's data */
+            PyArray_Descr *dtype = find_object_datetime_type(op,
+                                                    newtype->type_num);
+            if (dtype == NULL) {
+                Py_DECREF(newtype);
+                return NULL;
+            }
+            Py_DECREF(newtype);
+            newtype = dtype;
+        }
+    }
 
     /* If we got dimensions and dtype instead of an array */
     if (arr == NULL) {
