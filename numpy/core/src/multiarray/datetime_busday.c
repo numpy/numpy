@@ -235,6 +235,20 @@ business_day_offset(PyArrayObject *dates, PyArrayObject *offsets,
 
     PyArrayObject *ret = NULL;
 
+    if (busdays_in_weekmask == 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "the business day weekmask must have at least one "
+                "valid business day");
+        return NULL;
+    }
+
+    int i;
+    printf("weekmask: ");
+    for (i = 0; i < 7; ++i) {
+        printf("%d", weekmask[i]);
+    }
+    printf("\n");
+
     /* First create the data types for dates and offsets */
     temp_meta.base = NPY_FR_D;
     temp_meta.num = 1;
@@ -329,4 +343,364 @@ finish:
         }
     }
     return ret;
+}
+
+static int
+PyArray_BusDayRollConverter(PyObject *roll_in, NPY_BUSDAY_ROLL *roll)
+{
+    PyObject *obj = roll_in;
+    char *str;
+    Py_ssize_t len;
+
+    /* Make obj into an ASCII string */
+    Py_INCREF(obj);
+    if (PyUnicode_Check(obj)) {
+        /* accept unicode input */
+        PyObject *obj_str;
+        obj_str = PyUnicode_AsASCIIString(obj);
+        if (obj_str == NULL) {
+            Py_DECREF(obj);
+            return 0;
+        }
+        Py_DECREF(obj);
+        obj = obj_str;
+    }
+
+    if (PyBytes_AsStringAndSize(obj, &str, &len) < 0) {
+        Py_DECREF(obj);
+        return 0;
+    }
+
+    /* Use switch statements to quickly isolate the right enum value */
+    switch (str[0]) {
+        case 'b':
+            if (strcmp(str, "backward") == 0) {
+                *roll = NPY_BUSDAY_BACKWARD;
+                goto finish;
+            }
+            break;
+        case 'f':
+            if (len > 2) switch (str[2]) {
+                case 'r':
+                    if (strcmp(str, "forward") == 0) {
+                        *roll = NPY_BUSDAY_FORWARD;
+                        goto finish;
+                    }
+                    break;
+                case 'l':
+                    if (strcmp(str, "following") == 0) {
+                        *roll = NPY_BUSDAY_FOLLOWING;
+                        goto finish;
+                    }
+                    break;
+            }
+            break;
+        case 'm':
+            if (len > 8) switch (str[8]) {
+                case 'f':
+                    if (strcmp(str, "modifiedfollowing") == 0) {
+                        *roll = NPY_BUSDAY_MODIFIEDFOLLOWING;
+                        goto finish;
+                    }
+                    break;
+                case 'p':
+                    if (strcmp(str, "modifiedpreceding") == 0) {
+                        *roll = NPY_BUSDAY_MODIFIEDFOLLOWING;
+                        goto finish;
+                    }
+                    break;
+            }
+            break;
+        case 'n':
+            if (strcmp(str, "nat") == 0) {
+                *roll = NPY_BUSDAY_NAT;
+                goto finish;
+            }
+            break;
+        case 'p':
+            if (strcmp(str, "preceding") == 0) {
+                *roll = NPY_BUSDAY_PRECEDING;
+                goto finish;
+            }
+            break;
+        case 'r':
+            if (strcmp(str, "raise") == 0) {
+                *roll = NPY_BUSDAY_RAISE;
+                goto finish;
+            }
+            break;
+    }
+
+    PyErr_Format(PyExc_ValueError,
+            "Invalid business day roll parameter \"%s\"",
+            str);
+    Py_DECREF(obj);
+    return 0;
+
+finish:
+    Py_DECREF(obj);
+    return 1;
+}
+
+static int
+PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
+{
+    PyObject *obj = weekmask_in;
+
+    printf("getting weekmask\n");
+
+    /* Make obj into an ASCII string if it is UNICODE */
+    Py_INCREF(obj);
+    if (PyUnicode_Check(obj)) {
+        /* accept unicode input */
+        PyObject *obj_str;
+        obj_str = PyUnicode_AsASCIIString(obj);
+        if (obj_str == NULL) {
+            Py_DECREF(obj);
+            return 0;
+        }
+        Py_DECREF(obj);
+        obj = obj_str;
+    }
+
+    if (PyBytes_Check(obj)) {
+        char *str;
+        Py_ssize_t len;
+
+        if (PyBytes_AsStringAndSize(obj, &str, &len) < 0) {
+            Py_DECREF(obj);
+            return 0;
+        }
+
+        /* Length 7 is a string like "1111100" */
+        if (len == 7) {
+            int i;
+            for (i = 0; i < 7; ++i) {
+                switch(str[i]) {
+                    case '0':
+                        weekmask[i] = 0;
+                        break;
+                    case '1':
+                        weekmask[i] = 1;
+                        break;
+                    default:
+                        goto invalid_weekmask_string;
+                }
+            }
+
+            goto finish;
+        }
+        /* Length divisible by 3 is a string like "Mon" or "MonWedFri" */
+        else if (len % 3 == 0) {
+            int i;
+            memset(weekmask, 0, 7);
+            for (i = 0; i < len; i += 3) {
+                switch (str[i]) {
+                    case 'M':
+                        if (str[i+1] == 'o' && str[i+2] == 'n') {
+                            weekmask[0] = 1;
+                        }
+                        else {
+                            goto invalid_weekmask_string;
+                        }
+                        break;
+                    case 'T':
+                        if (str[i+1] == 'u' && str[i+2] == 'e') {
+                            weekmask[1] = 1;
+                        }
+                        else if (str[i+1] == 'h' && str[i+2] == 'u') {
+                            weekmask[3] = 1;
+                        }
+                        else {
+                            goto invalid_weekmask_string;
+                        }
+                        break;
+                    case 'W':
+                        if (str[i+1] == 'e' && str[i+2] == 'd') {
+                            weekmask[2] = 1;
+                        }
+                        else {
+                            goto invalid_weekmask_string;
+                        }
+                        break;
+                    case 'F':
+                        if (str[i+1] == 'r' && str[i+2] == 'i') {
+                            weekmask[4] = 1;
+                        }
+                        else {
+                            goto invalid_weekmask_string;
+                        }
+                        break;
+                    case 'S':
+                        if (str[i+1] == 'a' && str[i+2] == 't') {
+                            weekmask[5] = 1;
+                        }
+                        else if (str[i+1] == 'u' && str[i+2] == 'n') {
+                            weekmask[6] = 1;
+                        }
+                        else {
+                            goto invalid_weekmask_string;
+                        }
+                        break;
+                }
+            }
+
+            goto finish;
+        }
+
+invalid_weekmask_string:
+        PyErr_Format(PyExc_ValueError,
+                "Invalid business day weekmask string \"%s\"",
+                str);
+        Py_DECREF(obj);
+        return 0;
+    }
+    /* Something like [1,1,1,1,1,0,0] */
+    else if (PySequence_Check(obj)) {
+        if (PySequence_Size(obj) != 7 ||
+                (PyArray_Check(obj) && PyArray_NDIM(obj) != 1)) {
+            PyErr_SetString(PyExc_ValueError,
+                "A business day weekmask array must have length 7");
+            Py_DECREF(obj);
+            return 0;
+        }
+        else {
+            int i;
+            PyObject *f;
+
+            for (i = 0; i < 7; ++i) {
+                long val;
+
+                f = PySequence_GetItem(obj, i);
+                if (f == NULL) {
+                    Py_DECREF(obj);
+                    return 0;
+                }
+
+                val = PyInt_AsLong(f);
+                if (val == -1 && PyErr_Occurred()) {
+                    Py_DECREF(obj);
+                    return 0;
+                }
+                if (val == 0) {
+                    weekmask[i] = 0;
+                }
+                else if (val == 1) {
+                    weekmask[i] = 1;
+                }
+                else {
+                    PyErr_SetString(PyExc_ValueError,
+                        "A business day weekmask array must have all "
+                        "1's and 0's");
+                    Py_DECREF(obj);
+                    return 0;
+                }
+            }
+
+            goto finish;
+        }
+    }
+
+    PyErr_SetString(PyExc_ValueError,
+            "Couldn't convert object into a business day weekmask");
+    Py_DECREF(obj);
+    return 0;
+
+
+finish:
+    Py_DECREF(obj);
+    return 1;
+}
+
+/*
+ * This is the 'busday_offset' function exposed for calling
+ * from Python.
+ */
+NPY_NO_EXPORT PyObject *
+array_busday_offset(PyObject *NPY_UNUSED(self),
+                      PyObject *args, PyObject *kwds)
+{
+    char *kwlist[] = {"dates", "offsets", "roll",
+                      "weekmask", "holidays", NULL};
+
+    PyObject *dates_in = NULL, *offsets_in = NULL,
+            *holidays_in = NULL, *busdaydef_in = NULL,
+            *out_in = NULL;
+
+    PyArrayObject *dates = NULL, *offsets = NULL, *out = NULL, *ret;
+    NPY_BUSDAY_ROLL roll = NPY_BUSDAY_RAISE;
+    npy_bool weekmask[7] = {1, 1, 1, 1, 1, 0, 0};
+    int i, busdays_in_weekmask;
+    npy_datetime *holidays_begin = NULL, *holidays_end = NULL;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds,
+                                    "OO|O&O&OOO:busday_offset", kwlist,
+                                    &dates_in,
+                                    &offsets_in,
+                                    &PyArray_BusDayRollConverter, &roll,
+                                    &PyArray_WeekMaskConverter, &weekmask[0],
+                                    &holidays_in,
+                                    &busdaydef_in,
+                                    &out_in)) {
+        return NULL;
+    }
+
+    /* Make 'dates' into an array */
+    if (PyArray_Check(dates_in)) {
+        dates = (PyArrayObject *)dates_in;
+        Py_INCREF(dates);
+    }
+    else {
+        PyArray_Descr *date_dtype;
+
+        /* Use the datetime dtype with generic units so it fills it in */
+        date_dtype = PyArray_DescrFromType(NPY_DATETIME);
+        if (date_dtype == NULL) {
+            goto fail;
+        }
+
+        /* This steals the date_dtype reference */
+        dates = (PyArrayObject *)PyArray_FromAny(dates_in, date_dtype,
+                                                0, 0, 0, dates_in);
+        if (dates == NULL) {
+            goto fail;
+        }
+    }
+
+    /* Make 'offsets' into an array */
+    offsets = (PyArrayObject *)PyArray_FromAny(offsets_in,
+                            PyArray_DescrFromType(NPY_INT64),
+                            0, 0, 0, offsets_in);
+    if (offsets == NULL) {
+        goto fail;
+    }
+
+    /* Make sure 'out' is an array if it's provided */
+    if (out_in != NULL) {
+        if (!PyArray_Check(out_in)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "busday_offset: must provide a NumPy array for 'out'");
+            goto fail;
+        }
+        out = (PyArrayObject *)out_in;
+    }
+
+    busdays_in_weekmask = 0;
+    for (i = 0; i < 7; ++i) {
+        busdays_in_weekmask += weekmask[i];
+    }
+
+    ret = business_day_offset(dates, offsets, out, roll,
+                    weekmask, busdays_in_weekmask,
+                    holidays_begin, holidays_end);
+
+    Py_DECREF(dates);
+    Py_DECREF(offsets);
+
+    return out == NULL ? PyArray_Return(ret) : (PyObject *)ret;
+fail:
+    Py_XDECREF(dates);
+    Py_XDECREF(offsets);
+
+    return NULL;
 }
