@@ -171,6 +171,29 @@ days_to_yearsdays(npy_int64 *days_)
     return year + 2000;
 }
 
+/* Extracts the month number from a 'datetime64[D]' value */
+NPY_NO_EXPORT int
+days_to_month_number(npy_datetime days)
+{
+    npy_int64 year;
+    int *month_lengths, i;
+
+    year = days_to_yearsdays(&days);
+    month_lengths = days_in_month[is_leapyear(year)];
+
+    for (i = 0; i < 12; ++i) {
+        if (days < month_lengths[i]) {
+            return i + 1;
+        }
+        else {
+            days -= month_lengths[i];
+        }
+    }
+
+    /* Should never get here */
+    return 1;
+}
+
 /*
  * Fills in the year, month, day in 'dts' based on the days
  * offset from 1970.
@@ -181,8 +204,8 @@ set_datetimestruct_days(npy_int64 days, npy_datetimestruct *dts)
     int *month_lengths, i;
 
     dts->year = days_to_yearsdays(&days);
-
     month_lengths = days_in_month[is_leapyear(dts->year)];
+
     for (i = 0; i < 12; ++i) {
         if (days < month_lengths[i]) {
             dts->month = i + 1;

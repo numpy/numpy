@@ -5,7 +5,7 @@ NPY_NO_EXPORT void
 numpy_pydatetime_import();
 
 /*
- * Creates a datetime or timedelta dtype using the provided metadata.
+ * Creates a datetime or timedelta dtype using a copy of the provided metadata.
  */
 NPY_NO_EXPORT PyArray_Descr *
 create_datetime_dtype(int type_num, PyArray_DatetimeMetaData *meta);
@@ -40,6 +40,10 @@ NPY_NO_EXPORT int
 convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     const npy_datetimestruct *dts,
                                     npy_datetime *out);
+
+/* Extracts the month number from a 'datetime64[D]' value */
+NPY_NO_EXPORT int
+days_to_month_number(npy_datetime days);
 
 /*
  * Parses the metadata string into the metadata C structure.
