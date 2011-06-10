@@ -1148,7 +1148,7 @@ class TestDateTime(TestCase):
         assert_raises(TypeError, np.arange, np.timedelta64(0,'Y'),
                                 np.timedelta64(5,'D'))
 
-    def test_maximum_reduce(self):
+    def test_datetime_maximum_reduce(self):
         a = np.array(['2010-01-02','1999-03-14','1833-03'], dtype='M8[D]')
         assert_equal(np.maximum.reduce(a).dtype, np.dtype('M8[D]'))
         assert_equal(np.maximum.reduce(a),
@@ -1158,6 +1158,53 @@ class TestDateTime(TestCase):
         assert_equal(np.maximum.reduce(a).dtype, np.dtype('m8[s]'))
         assert_equal(np.maximum.reduce(a),
                      np.timedelta64(7, 's'))
+
+    def test_datetime_busday_offset(self):
+        # First Monday in June
+        assert_equal(
+            np.busday_offset('2011-06',0,roll='forward',weekmask='Mon'),
+            np.datetime64('2011-06-06'))
+        # Last Monday in June
+        assert_equal(
+            np.busday_offset('2011-07',-1,roll='forward',weekmask='Mon'),
+            np.datetime64('2011-06-27'))
+        assert_equal(
+            np.busday_offset('2011-07',-1,roll='forward',weekmask='Mon'),
+            np.datetime64('2011-06-27'))
+
+        # Default M-F business days, different roll modes
+        assert_equal(np.busday_offset('2010-08', 0, roll='backward'),
+                     np.datetime64('2010-07-30'))
+        assert_equal(np.busday_offset('2010-08', 0, roll='preceding'),
+                     np.datetime64('2010-07-30'))
+        assert_equal(np.busday_offset('2010-08', 0, roll='modifiedpreceding'),
+                     np.datetime64('2010-08-02'))
+        assert_equal(np.busday_offset('2010-08', 0, roll='modifiedfollowing'),
+                     np.datetime64('2010-08-02'))
+        assert_equal(np.busday_offset('2010-08', 0, roll='forward'),
+                     np.datetime64('2010-08-02'))
+        assert_equal(np.busday_offset('2010-08', 0, roll='following'),
+                     np.datetime64('2010-08-02'))
+        assert_equal(np.busday_offset('2010-10-30', 0, roll='following'),
+                     np.datetime64('2010-11-01'))
+        assert_equal(
+                np.busday_offset('2010-10-30', 0, roll='modifiedfollowing'),
+                np.datetime64('2010-10-29'))
+        assert_equal(
+                np.busday_offset('2010-10-30', 0, roll='modifiedpreceding'),
+                np.datetime64('2010-10-29'))
+        # roll='raise' by default
+        assert_raises(ValueError, np.busday_offset, '2011-06-04', 0)
+
+        # Bigger offset values
+        assert_equal(np.busday_offset('2006-02-01', 25),
+                     np.datetime64('2006-03-08'))
+        assert_equal(np.busday_offset('2006-03-08', -25),
+                     np.datetime64('2006-02-01'))
+        assert_equal(np.busday_offset('2007-02-25', 11, weekmask='SatSun'),
+                     np.datetime64('2007-04-07'))
+        assert_equal(np.busday_offset('2007-04-07', -11, weekmask='SatSun'),
+                     np.datetime64('2007-02-25'))
 
 class TestDateTimeData(TestCase):
 
