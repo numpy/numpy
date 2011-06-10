@@ -5,6 +5,12 @@ NPY_NO_EXPORT void
 numpy_pydatetime_import();
 
 /*
+ * Creates a datetime or timedelta dtype using the provided metadata.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+create_datetime_dtype(int type_num, PyArray_DatetimeMetaData *meta);
+
+/*
  * This function returns the a new reference to the
  * capsule with the datetime metadata.
  */

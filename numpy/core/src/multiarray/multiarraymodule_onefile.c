@@ -11,6 +11,7 @@
 #include "scalarapi.c"
 
 #include "datetime.c"
+#include "datetime_busday.c"
 #include "arraytypes.c"
 
 #include "hashdescr.c"

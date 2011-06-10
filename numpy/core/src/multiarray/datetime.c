@@ -1,3 +1,12 @@
+/*
+ * This file implements core functionality for NumPy datetime
+ *
+ * Written by Mark Wiebe (mwwiebe@gmail.com)
+ * Copyright (c) 2011 by Enthought, Inc.
+ *
+ * See LICENSE.txt for the license.
+ */
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <datetime.h>
@@ -8,7 +17,6 @@
 #include <numpy/arrayobject.h>
 
 #include "npy_config.h"
-
 #include "numpy/npy_3kcompat.h"
 
 #include "numpy/arrayscalars.h"
@@ -877,6 +885,73 @@ PyArray_TimedeltaToTimedeltaStruct(npy_timedelta val, NPY_DATETIMEUNIT fr,
 }
 
 /*
+ * Creates a datetime or timedelta dtype using a copy of the provided metadata.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+create_datetime_dtype(int type_num, PyArray_DatetimeMetaData *meta)
+{
+    PyArray_Descr *dtype = NULL;
+    PyArray_DatetimeMetaData *dt_data;
+    PyObject *metacobj = NULL;
+
+    /* Create a default datetime or timedelta */
+    if (type_num == NPY_DATETIME || type_num == NPY_TIMEDELTA) {
+        dtype = PyArray_DescrNewFromType(type_num);
+    }
+    else {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Asked to create a datetime type with a non-datetime "
+                "type number");
+        return NULL;
+    }
+
+    if (dtype == NULL) {
+        return NULL;
+    }
+
+    /*
+     * Remove any reference to old metadata dictionary
+     * And create a new one for this new dtype
+     */
+    Py_XDECREF(dtype->metadata);
+    dtype->metadata = PyDict_New();
+    if (dtype->metadata == NULL) {
+        Py_DECREF(dtype);
+        return NULL;
+    }
+
+    /* Create a metadata capsule to copy the provided metadata */
+    dt_data = PyArray_malloc(sizeof(PyArray_DatetimeMetaData));
+    if (dt_data == NULL) {
+        Py_DECREF(dtype);
+        PyErr_NoMemory();
+        return NULL;
+    }
+
+    /* Copy the metadata */
+    *dt_data = *meta;
+
+    /* Allocate a capsule for it (this claims ownership of dt_data) */
+    metacobj = NpyCapsule_FromVoidPtr((void *)dt_data, simple_capsule_dtor);
+    if (metacobj == NULL) {
+        Py_DECREF(dtype);
+        return NULL;
+    }
+
+    /* Set the metadata object in the dictionary. */
+    if (PyDict_SetItemString(dtype->metadata, NPY_METADATA_DTSTR,
+                                                    metacobj) < 0) {
+        Py_DECREF(dtype);
+        Py_DECREF(metacobj);
+        return NULL;
+    }
+    Py_DECREF(metacobj);
+
+    return dtype;
+}
+
+
+/*
  * This function returns the a new reference to the
  * capsule with the datetime metadata.
  */
@@ -1080,72 +1155,6 @@ bad_input:
     }
 
     return -1;
-}
-
-/*
- * Creates a datetime or timedelta dtype using the provided metadata.
- */
-NPY_NO_EXPORT PyArray_Descr *
-create_datetime_dtype(int type_num, PyArray_DatetimeMetaData *meta)
-{
-    PyArray_Descr *dtype = NULL;
-    PyArray_DatetimeMetaData *dt_data;
-    PyObject *metacobj = NULL;
-
-    /* Create a default datetime or timedelta */
-    if (type_num == NPY_DATETIME || type_num == NPY_TIMEDELTA) {
-        dtype = PyArray_DescrNewFromType(type_num);
-    }
-    else {
-        PyErr_SetString(PyExc_RuntimeError,
-                "Asked to create a datetime type with a non-datetime "
-                "type number");
-        return NULL;
-    }
-
-    if (dtype == NULL) {
-        return NULL;
-    }
-
-    /*
-     * Remove any reference to old metadata dictionary
-     * And create a new one for this new dtype
-     */
-    Py_XDECREF(dtype->metadata);
-    dtype->metadata = PyDict_New();
-    if (dtype->metadata == NULL) {
-        Py_DECREF(dtype);
-        return NULL;
-    }
-
-    /* Create a metadata capsule to copy the provided metadata */
-    dt_data = PyArray_malloc(sizeof(PyArray_DatetimeMetaData));
-    if (dt_data == NULL) {
-        Py_DECREF(dtype);
-        PyErr_NoMemory();
-        return NULL;
-    }
-
-    /* Copy the metadata */
-    *dt_data = *meta;
-
-    /* Allocate a capsule for it (this claims ownership of dt_data) */
-    metacobj = NpyCapsule_FromVoidPtr((void *)dt_data, simple_capsule_dtor);
-    if (metacobj == NULL) {
-        Py_DECREF(dtype);
-        return NULL;
-    }
-
-    /* Set the metadata object in the dictionary. */
-    if (PyDict_SetItemString(dtype->metadata, NPY_METADATA_DTSTR,
-                                                    metacobj) < 0) {
-        Py_DECREF(dtype);
-        Py_DECREF(metacobj);
-        return NULL;
-    }
-    Py_DECREF(metacobj);
-
-    return dtype;
 }
 
 /*

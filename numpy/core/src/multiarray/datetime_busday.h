@@ -1,0 +1,5 @@
+#ifndef _NPY_PRIVATE__DATETIME_BUSDAY_H_
+#define _NPY_PRIVATE__DATETIME_BUSDAY_H_
+
+
+#endif
