@@ -116,7 +116,7 @@ class TestDateTime(TestCase):
         assert_equal(a.dtype, np.dtype('M8[h]'))
         assert_equal(b.dtype, np.dtype('M8[h]'))
 
-        assert_equal(np.datetime64(a), a);
+        assert_equal(np.datetime64(a), a)
         assert_equal(np.datetime64(a).dtype, np.dtype('M8[h]'))
 
         assert_equal(np.datetime64(b), a)
@@ -159,7 +159,7 @@ class TestDateTime(TestCase):
         assert_equal(a.dtype, np.dtype('m8[h]'))
         assert_equal(b.dtype, np.dtype('m8[h]'))
 
-        assert_equal(np.timedelta64(a), a);
+        assert_equal(np.timedelta64(a), a)
         assert_equal(np.timedelta64(a).dtype, np.dtype('m8[h]'))
 
         assert_equal(np.timedelta64(b), a)
@@ -312,9 +312,9 @@ class TestDateTime(TestCase):
         assert_equal(np.array('1601', dtype='M8[D]').astype('i8'),
                 (1600-1970)*365 - (1972-1600)/4 + 3 + 366)
         assert_equal(np.array('1900', dtype='M8[D]').astype('i8'),
-                (1900-1970)*365 - (1970-1900)/4)
+                (1900-1970)*365 - (1970-1900)//4)
         assert_equal(np.array('1901', dtype='M8[D]').astype('i8'),
-                (1900-1970)*365 - (1970-1900)/4 + 365)
+                (1900-1970)*365 - (1970-1900)//4 + 365)
         assert_equal(np.array('1967', dtype='M8[D]').astype('i8'), -3*365 - 1)
         assert_equal(np.array('1968', dtype='M8[D]').astype('i8'), -2*365 - 1)
         assert_equal(np.array('1969', dtype='M8[D]').astype('i8'), -1*365)
@@ -324,24 +324,24 @@ class TestDateTime(TestCase):
         assert_equal(np.array('1973', dtype='M8[D]').astype('i8'), 3*365 + 1)
         assert_equal(np.array('1974', dtype='M8[D]').astype('i8'), 4*365 + 1)
         assert_equal(np.array('2000', dtype='M8[D]').astype('i8'),
-                 (2000 - 1970)*365 + (2000 - 1972)/4)
+                 (2000 - 1970)*365 + (2000 - 1972)//4)
         assert_equal(np.array('2001', dtype='M8[D]').astype('i8'),
-                 (2000 - 1970)*365 + (2000 - 1972)/4 + 366)
+                 (2000 - 1970)*365 + (2000 - 1972)//4 + 366)
         assert_equal(np.array('2400', dtype='M8[D]').astype('i8'),
-                 (2400 - 1970)*365 + (2400 - 1972)/4 - 3)
+                 (2400 - 1970)*365 + (2400 - 1972)//4 - 3)
         assert_equal(np.array('2401', dtype='M8[D]').astype('i8'),
-                 (2400 - 1970)*365 + (2400 - 1972)/4 - 3 + 366)
+                 (2400 - 1970)*365 + (2400 - 1972)//4 - 3 + 366)
 
         assert_equal(np.array('1600-02-29', dtype='M8[D]').astype('i8'),
-                (1600-1970)*365 - (1972-1600)/4 + 3 + 31 + 28)
+                (1600-1970)*365 - (1972-1600)//4 + 3 + 31 + 28)
         assert_equal(np.array('1600-03-01', dtype='M8[D]').astype('i8'),
-                (1600-1970)*365 - (1972-1600)/4 + 3 + 31 + 29)
+                (1600-1970)*365 - (1972-1600)//4 + 3 + 31 + 29)
         assert_equal(np.array('2000-02-29', dtype='M8[D]').astype('i8'),
-                 (2000 - 1970)*365 + (2000 - 1972)/4 + 31 + 28)
+                 (2000 - 1970)*365 + (2000 - 1972)//4 + 31 + 28)
         assert_equal(np.array('2000-03-01', dtype='M8[D]').astype('i8'),
-                 (2000 - 1970)*365 + (2000 - 1972)/4 + 31 + 29)
+                 (2000 - 1970)*365 + (2000 - 1972)//4 + 31 + 29)
         assert_equal(np.array('2001-03-22', dtype='M8[D]').astype('i8'),
-                 (2000 - 1970)*365 + (2000 - 1972)/4 + 366 + 31 + 28 + 21)
+                 (2000 - 1970)*365 + (2000 - 1972)//4 + 366 + 31 + 28 + 21)
 
     def test_days_to_pydate(self):
         assert_equal(np.array('1599', dtype='M8[D]').astype('O'),
@@ -1020,7 +1020,7 @@ class TestDateTime(TestCase):
         date = '1969-12-31T23:59:57.789012345678901234Z'
 
         assert_equal(np.datetime_as_string(np.datetime64(date, 'as')),
-                     date);
+                     date)
         date = '1970-01-01T00:34:56.789012345678901234Z'
 
         assert_equal(np.datetime_as_string(np.datetime64(date, 'ns')),
@@ -1033,7 +1033,7 @@ class TestDateTime(TestCase):
         date = '1970-01-01T00:00:05.789012345678901234Z'
 
         assert_equal(np.datetime_as_string(np.datetime64(date, 'as')),
-                     date);
+                     date)
 
         # String conversion with the unit= parameter
         a = np.datetime64('2032-07-18T12:23:34.123456Z', 'us')
