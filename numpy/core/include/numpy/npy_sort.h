@@ -3,7 +3,7 @@
 
 /* Python include is for future object sorts */
 #include <Python.h>
-#include <numpy/npy_common.h>
+#include <numpy/ndarrayobject.h>
 
 
 int BOOL_aquicksort(npy_bool *v, npy_intp* tosort, npy_intp num, void *NOT_USED);

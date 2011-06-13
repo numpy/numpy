@@ -626,7 +626,7 @@ def configuration(parent_package='',top_path=None):
     def get_mathlib_info(*args):
         # Another ugly hack: the mathlib info is known once build_src is run,
         # but we cannot use add_installed_pkg_config here either, so we only
-        # updated the substition dictionary during npymath build
+        # update the substition dictionary during npymath build
         config_cmd = config.get_config_cmd()
 
         # Check that the toolchain works, to fail early if it doesn't
@@ -655,24 +655,34 @@ def configuration(parent_package='',top_path=None):
             subst_dict)
 
     #######################################################################
+    #                           sort library                              #
+    #######################################################################
+
+    config.add_installed_library('npysort',
+            sources = [join('src', 'npysort', 'sort.c.src')],
+            install_dir = 'lib')
+    config.add_npy_pkg_config("npysort.ini.in", "lib/npy-pkg-config",
+            subst_dict)
+
+    #######################################################################
     #                            sort module                              #
     #######################################################################
 
     # _sort version: this function is needed to build foo.c from foo.c.src
     # when foo.c is included in another file and as such not in the src
     # argument of build_ext command
-    def generate_sort_templated_sources(ext, build_dir):
-        from numpy.distutils.misc_util import get_cmd
-
-        subpath = join('src', 'npysort')
-        sources = [join(local_dir, subpath, 'sort.c.src')]
-
-        # numpy.distutils generate .c from .c.src in weird directories, we have
-        # to add them there as they depend on the build_dir
-        config.add_include_dirs(join(build_dir, subpath))
-        cmd = get_cmd('build_src')
-        cmd.ensure_finalized()
-        cmd.template_sources(sources, ext)
+#    def generate_sort_templated_sources(ext, build_dir):
+#        from numpy.distutils.misc_util import get_cmd
+#
+#        subpath = join('src', 'npysort')
+#        sources = [join(local_dir, subpath, 'sort.c.src')]
+#
+#        # numpy.distutils generate .c from .c.src in weird directories, we have
+#        # to add them there as they depend on the build_dir
+#        config.add_include_dirs(join(build_dir, subpath))
+#        cmd = get_cmd('build_src')
+#        cmd.ensure_finalized()
+#        cmd.template_sources(sources, ext)
 
     sort_deps = [
             join('src', 'npysort', 'npy_sort_common.h'),
@@ -681,7 +691,7 @@ def configuration(parent_package='',top_path=None):
 
     sort_src = [
             join('src', 'npysort', 'sortmodule.c'),
-            generate_sort_templated_sources,
+#            generate_sort_templated_sources,
             generate_config_h,
             generate_numpyconfig_h,
             generate_numpy_api]
@@ -689,7 +699,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_sort',
             sources = sort_src,
             depends = deps + sort_deps,
-            libraries = ['npymath'])
+            libraries = ['npymath', 'npysort'])
 
     #######################################################################
     #                        multiarray module                            #

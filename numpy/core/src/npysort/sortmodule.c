@@ -26,7 +26,8 @@
  * The heap sort is included for completeness.
  */
 
-#include "sort.c"
+/*#include "sort.c"*/
+#include "numpy/npy_sort.h"
 
 static struct PyMethodDef methods[] = {
     {NULL, NULL, 0, NULL}
