@@ -11,6 +11,12 @@ NPY_NO_EXPORT PyArray_Descr *
 create_datetime_dtype(int type_num, PyArray_DatetimeMetaData *meta);
 
 /*
+ * Creates a datetime or timedelta dtype using the given unit.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+create_datetime_dtype_with_unit(int type_num, NPY_DATETIMEUNIT unit);
+
+/*
  * This function returns the a new reference to the
  * capsule with the datetime metadata.
  */

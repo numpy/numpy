@@ -973,6 +973,18 @@ create_datetime_dtype(int type_num, PyArray_DatetimeMetaData *meta)
     return dtype;
 }
 
+/*
+ * Creates a datetime or timedelta dtype using the given unit.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+create_datetime_dtype_with_unit(int type_num, NPY_DATETIMEUNIT unit)
+{
+    PyArray_DatetimeMetaData meta;
+    meta.base = unit;
+    meta.num = 1;
+    meta.events = 1;
+    return create_datetime_dtype(type_num, &meta);
+}
 
 /*
  * This function returns the a new reference to the

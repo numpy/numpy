@@ -3234,3 +3234,52 @@ PyArray_GetDTypeTransferFunction(int aligned,
                     out_stransfer, out_transferdata,
                     out_needs_api);
 }
+
+NPY_NO_EXPORT int
+PyArray_CastRawArrays(npy_intp count,
+                      char *src, char *dst,
+                      npy_intp src_stride, npy_intp dst_stride,
+                      PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                      int move_references)
+{
+    PyArray_StridedTransferFn *stransfer = NULL;
+    void *transferdata = NULL;
+    int aligned = 1, needs_api = 0;
+
+    /* Make sure the copy is reasonable */
+    if (dst_stride == 0 && count > 1) {
+        PyErr_SetString(PyExc_ValueError,
+                    "NumPy CastRawArrays cannot do a reduction");
+        return NPY_FAIL;
+    }
+    else if (count == 0) {
+        return NPY_SUCCEED;
+    }
+
+    /* Check data alignment */
+    aligned = (((npy_intp)src_dtype | src_stride) &
+                                (src_dtype->alignment - 1)) == 0 &&
+              (((npy_intp)dst_dtype | dst_stride) &
+                                (dst_dtype->alignment - 1)) == 0;
+
+    /* Get the function to do the casting */
+    if (PyArray_GetDTypeTransferFunction(aligned,
+                        src_stride, dst_stride,
+                        src_dtype, dst_dtype,
+                        move_references,
+                        &stransfer, &transferdata,
+                        &needs_api) != NPY_SUCCEED) {
+        return NPY_FAIL;
+    }
+
+    /* Cast */
+    stransfer(dst, dst_stride, src, src_stride, count,
+                src_dtype->elsize, transferdata);
+
+    /* Cleanup */
+    PyArray_FreeStridedTransferData(transferdata);
+
+    /* If needs_api was set to 1, it may have raised a Python exception */
+    return (needs_api && PyErr_Occurred()) ? NPY_FAIL : NPY_SUCCEED;
+}
+

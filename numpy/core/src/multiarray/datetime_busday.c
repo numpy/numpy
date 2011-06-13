@@ -17,6 +17,7 @@
 #include "numpy/npy_3kcompat.h"
 
 #include "numpy/arrayscalars.h"
+#include "lowlevel_strided_loops.h"
 #include "_datetime.h"
 #include "datetime_busday.h"
 
@@ -603,6 +604,155 @@ finish:
     return 1;
 }
 
+static int
+qsort_datetime_compare(const void *elem1, const void *elem2)
+{
+    npy_datetime e1 = *(npy_datetime *)elem1;
+    npy_datetime e2 = *(npy_datetime *)elem2;
+
+    return (e1 < e2) ? -1 : (e1 == e2) ? 0 : 1;
+}
+
+/*
+ * A list of holidays, which should sorted, not contain any
+ * duplicates or NaTs, and not include any days already excluded
+ * by the associated weekmask.
+ *
+ * The data is manually managed with PyArray_malloc/PyArray_free.
+ */
+typedef struct {
+    npy_datetime *begin, *end;
+} npy_holidayslist;
+
+/*
+ * Sorts the the array of dates provided in place and removes
+ * NaT, duplicates and any date which is already excluded on account
+ * of the weekmask.
+ *
+ * Returns the number of dates left after removing weekmask-excluded
+ * dates.
+ */
+static void
+normalize_holidays_list(npy_holidayslist *holidays, npy_bool *weekmask)
+{
+    npy_datetime *dates = holidays->begin;
+    npy_intp count = holidays->end - dates;
+
+    npy_datetime lastdate = NPY_DATETIME_NAT;
+    npy_intp trimcount, i;
+    int day_of_week;
+
+    /* Sort the dates */
+    qsort(dates, count, sizeof(npy_datetime), &qsort_datetime_compare);
+
+    /* Sweep throught the array, eliminating unnecessary values */
+    trimcount = 0;
+    for (i = 0; i < count; ++i) {
+        npy_datetime date = dates[i];
+
+        /* Skip any NaT or duplicate */
+        if (date != NPY_DATETIME_NAT && date != lastdate) {
+            /* Get the day of the week (1970-01-05 is Monday) */
+            day_of_week = (int)((date - 4) % 7);
+            if (day_of_week < 0) {
+                day_of_week += 7;
+            }
+
+            /*
+             * If the holiday falls on a possible business day,
+             * then keep it.
+             */
+            if (weekmask[day_of_week] == 1) {
+                dates[trimcount++] = date;
+                lastdate = date;
+            }
+        }
+    }
+
+    /* Adjust the end of the holidays array */
+    holidays->end = dates + trimcount;
+}
+
+/*
+ * Converts a Python input into a non-normalized list of holidays.
+ *
+ * IMPORTANT: This function can't do the normalization, because it doesn't
+ *            know the weekmask. You must call 'normalize_holiday_list'
+ *            on the result before using it.
+ */
+static int
+PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
+{
+    PyArrayObject *dates = NULL;
+    PyArray_Descr *date_dtype = NULL;
+    npy_intp count;
+
+    /* Make 'dates' into an array */
+    if (PyArray_Check(dates_in)) {
+        dates = (PyArrayObject *)dates_in;
+        Py_INCREF(dates);
+    }
+    else {
+        PyArray_Descr *datetime_dtype;
+
+        /* Use the datetime dtype with generic units so it fills it in */
+        datetime_dtype = PyArray_DescrFromType(NPY_DATETIME);
+        if (datetime_dtype == NULL) {
+            goto fail;
+        }
+
+        /* This steals the datetime_dtype reference */
+        dates = (PyArrayObject *)PyArray_FromAny(dates_in, datetime_dtype,
+                                                0, 0, 0, dates_in);
+        if (dates == NULL) {
+            goto fail;
+        }
+    }
+
+    date_dtype = create_datetime_dtype_with_unit(NPY_DATETIME, NPY_FR_D);
+    if (date_dtype == NULL) {
+        goto fail;
+    }
+
+    if (!PyArray_CanCastTypeTo(PyArray_DESCR(dates),
+                                    date_dtype, NPY_SAFE_CASTING)) {
+        PyErr_SetString(PyExc_ValueError, "Cannot safely convert "
+                        "provided holidays input into an array of dates");
+        goto fail;
+    }
+    if (PyArray_NDIM(dates) != 1) {
+        PyErr_SetString(PyExc_ValueError, "holidays must be a provided "
+                        "as a one-dimensional array");
+        goto fail;
+    }
+
+    /* Allocate the memory for the dates */
+    count = PyArray_DIM(dates, 0);
+    holidays->begin = PyArray_malloc(sizeof(npy_datetime) * count);
+    if (holidays->begin == NULL) {
+        PyErr_NoMemory();
+        goto fail;
+    }
+    holidays->end = holidays->begin + count;
+
+    /* Cast the data into a raw date array */
+    if (PyArray_CastRawArrays(count,
+                            PyArray_BYTES(dates), (char *)holidays->begin,
+                            PyArray_STRIDE(dates, 0), sizeof(npy_datetime),
+                            PyArray_DESCR(dates), date_dtype,
+                            0) != NPY_SUCCEED) {
+        goto fail;
+    }
+
+    Py_DECREF(date_dtype);
+    date_dtype = NULL;
+
+fail:
+    Py_XDECREF(dates);
+    Py_XDECREF(date_dtype);
+    return 0;
+}
+
 /*
  * This is the 'busday_offset' function exposed for calling
  * from Python.
@@ -615,22 +765,21 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
                       "weekmask", "holidays", NULL};
 
     PyObject *dates_in = NULL, *offsets_in = NULL,
-            *holidays_in = NULL, *busdaydef_in = NULL,
-            *out_in = NULL;
+            *busdaydef_in = NULL, *out_in = NULL;
 
     PyArrayObject *dates = NULL, *offsets = NULL, *out = NULL, *ret;
     NPY_BUSDAY_ROLL roll = NPY_BUSDAY_RAISE;
     npy_bool weekmask[7] = {1, 1, 1, 1, 1, 0, 0};
     int i, busdays_in_weekmask;
-    npy_datetime *holidays_begin = NULL, *holidays_end = NULL;
+    npy_holidayslist holidays = {NULL, NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                                    "OO|O&O&OOO:busday_offset", kwlist,
+                                    "OO|O&O&O&OO:busday_offset", kwlist,
                                     &dates_in,
                                     &offsets_in,
                                     &PyArray_BusDayRollConverter, &roll,
                                     &PyArray_WeekMaskConverter, &weekmask[0],
-                                    &holidays_in,
+                                    &PyArray_HolidaysConverter, &holidays,
                                     &busdaydef_in,
                                     &out_in)) {
         return NULL;
@@ -676,22 +825,32 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
         out = (PyArrayObject *)out_in;
     }
 
+    /* Count the number of business days in a week */
     busdays_in_weekmask = 0;
     for (i = 0; i < 7; ++i) {
         busdays_in_weekmask += weekmask[i];
     }
 
+    /* The holidays list must be normalized before using it */
+    normalize_holidays_list(&holidays, weekmask);
+
     ret = business_day_offset(dates, offsets, out, roll,
                     weekmask, busdays_in_weekmask,
-                    holidays_begin, holidays_end);
+                    holidays.begin, holidays.end);
 
     Py_DECREF(dates);
     Py_DECREF(offsets);
+    if (holidays.begin != NULL) {
+        PyArray_free(holidays.begin);
+    }
 
     return out == NULL ? PyArray_Return(ret) : (PyObject *)ret;
 fail:
     Py_XDECREF(dates);
     Py_XDECREF(offsets);
+    if (holidays.begin != NULL) {
+        PyArray_free(holidays.begin);
+    }
 
     return NULL;
 }

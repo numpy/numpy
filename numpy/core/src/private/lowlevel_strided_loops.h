@@ -174,6 +174,19 @@ PyArray_GetDTypeTransferFunction(int aligned,
                             int *out_needs_api);
 
 /*
+ * Casts the specified number of elements from 'src' with data type
+ * 'src_dtype' to 'dst' with 'dst_dtype'. See
+ * PyArray_GetDTypeTransferFunction for more details.
+ *
+ * returns NPY_SUCCEED or NPY_FAIL.
+ */
+NPY_NO_EXPORT int
+PyArray_CastRawArrays(npy_intp count,
+                      char *src, char *dst,
+                      npy_intp src_stride, npy_intp dst_stride,
+                      PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                      int move_references);
+/*
  * These two functions copy or convert the data of an n-dimensional array
  * to/from a 1-dimensional strided buffer.  These functions will only call
  * 'stransfer' with the provided dst_stride/src_stride and
