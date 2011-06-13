@@ -440,6 +440,7 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'arrayobject.c'),
         pjoin('src', 'multiarray', 'datetime.c'),
         pjoin('src', 'multiarray', 'datetime_busday.c'),
+        pjoin('src', 'multiarray', 'datetime_busdaydef.c'),
         pjoin('src', 'multiarray', 'numpyos.c'),
         pjoin('src', 'multiarray', 'flagsobject.c'),
         pjoin('src', 'multiarray', 'descriptor.c'),

@@ -2401,7 +2401,7 @@ static PyGetSetDef npyiter_getsets[] = {
         (getter)npyiter_finished_get,
         NULL, NULL, NULL},
 
-    {NULL, NULL, NULL, NULL, NULL},
+    {NULL, NULL, NULL, NULL, NULL}
 };
 
 NPY_NO_EXPORT PySequenceMethods npyiter_as_sequence = {

@@ -12,6 +12,7 @@
 
 #include "datetime.c"
 #include "datetime_busday.c"
+#include "datetime_busdaydef.c"
 #include "arraytypes.c"
 
 #include "hashdescr.c"

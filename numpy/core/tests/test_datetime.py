@@ -1206,6 +1206,17 @@ class TestDateTime(TestCase):
         assert_equal(np.busday_offset('2007-04-07', -11, weekmask='SatSun'),
                      np.datetime64('2007-02-25'))
 
+    def test_datetime_busdaydef(self):
+        # Check that it removes NaT, duplicates, and weekends
+        # and sorts the result.
+        bdd = np.busdaydef(
+            holidays=['NaT', '2011-01-17', '2011-03-06', 'NaT',
+                       '2011-12-26','2011-05-30','2011-01-17'])
+        assert_equal(bdd.holidays,
+            np.array(['2011-01-17','2011-05-30','2011-12-26'], dtype='M8'))
+        # Default M-F weekmask
+        assert_equal(bdd.weekmask, np.array([1,1,1,1,1,0,0], dtype='?'))
+
     def test_datetime_busday_holidays_offset(self):
         # With exactly one holiday
         assert_equal(
@@ -1276,6 +1287,7 @@ class TestDateTime(TestCase):
         holidays=['2011-10-10', '2011-11-11', '2011-11-24',
                   '2011-12-25', '2011-05-30', '2011-02-21',
                   '2011-12-26', '2012-01-02']
+        bdd = np.busdaydef(weekmask='1111100', holidays=holidays)
         assert_equal(
             np.busday_offset('2011-10-03', 4, holidays=holidays),
             np.busday_offset('2011-10-03', 4))
@@ -1306,6 +1318,9 @@ class TestDateTime(TestCase):
         assert_equal(
             np.busday_offset('2011-10-03', 61, holidays=holidays),
             np.busday_offset('2011-10-03', 61 + 5))
+        assert_equal(
+            np.busday_offset('2011-10-03', 61, busdaydef=bdd),
+            np.busday_offset('2011-10-03', 61 + 5))
         # A bigger backward jump across more than one week/holiday
         assert_equal(
             np.busday_offset('2012-01-03', -1, holidays=holidays),
@@ -1334,6 +1349,15 @@ class TestDateTime(TestCase):
         assert_equal(
             np.busday_offset('2012-01-03', -57, holidays=holidays),
             np.busday_offset('2012-01-03', -57 - 5))
+        assert_equal(
+            np.busday_offset('2012-01-03', -57, busdaydef=bdd),
+            np.busday_offset('2012-01-03', -57 - 5))
+
+        # Can't supply both a weekmask/holidays and busdaydef
+        assert_raises(ValueError, np.busday_offset, '2012-01-03', -15,
+                        weekmask='1111100', busdaydef=bdd)
+        assert_raises(ValueError, np.busday_offset, '2012-01-03', -15,
+                        holidays=holidays, busdaydef=bdd)
 
         # Roll with the holidays
         assert_equal(

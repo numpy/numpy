@@ -20,6 +20,7 @@
 #include "lowlevel_strided_loops.h"
 #include "_datetime.h"
 #include "datetime_busday.h"
+#include "datetime_busdaydef.h"
 
 /*
  * Returns 1 if the date is a holiday (contained in the sorted
@@ -571,7 +572,7 @@ finish:
     return 1;
 }
 
-static int
+NPY_NO_EXPORT int
 PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
 {
     PyObject *obj = weekmask_in;
@@ -749,17 +750,6 @@ qsort_datetime_compare(const void *elem1, const void *elem2)
 }
 
 /*
- * A list of holidays, which should sorted, not contain any
- * duplicates or NaTs, and not include any days already excluded
- * by the associated weekmask.
- *
- * The data is manually managed with PyArray_malloc/PyArray_free.
- */
-typedef struct {
-    npy_datetime *begin, *end;
-} npy_holidayslist;
-
-/*
  * Sorts the the array of dates provided in place and removes
  * NaT, duplicates and any date which is already excluded on account
  * of the weekmask.
@@ -767,7 +757,7 @@ typedef struct {
  * Returns the number of dates left after removing weekmask-excluded
  * dates.
  */
-static void
+NPY_NO_EXPORT void
 normalize_holidays_list(npy_holidayslist *holidays, npy_bool *weekmask)
 {
     npy_datetime *dates = holidays->begin;
@@ -815,7 +805,7 @@ normalize_holidays_list(npy_holidayslist *holidays, npy_bool *weekmask)
  *            know the weekmask. You must call 'normalize_holiday_list'
  *            on the result before using it.
  */
-static int
+NPY_NO_EXPORT int
 PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
 {
     PyArrayObject *dates = NULL;
@@ -901,25 +891,52 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
     char *kwlist[] = {"dates", "offsets", "roll",
                       "weekmask", "holidays", "busdaydef", "out", NULL};
 
-    PyObject *dates_in = NULL, *offsets_in = NULL,
-            *busdaydef_in = NULL, *out_in = NULL;
+    PyObject *dates_in = NULL, *offsets_in = NULL, *out_in = NULL;
 
     PyArrayObject *dates = NULL, *offsets = NULL, *out = NULL, *ret;
     NPY_BUSDAY_ROLL roll = NPY_BUSDAY_RAISE;
-    npy_bool weekmask[7] = {1, 1, 1, 1, 1, 0, 0};
+    npy_bool weekmask[7] = {2, 1, 1, 1, 1, 0, 0};
+    PyArray_BusinessDayDef *busdaydef = NULL;
     int i, busdays_in_weekmask;
     npy_holidayslist holidays = {NULL, NULL};
+    int allocated_holidays = 1;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                                    "OO|O&O&O&OO:busday_offset", kwlist,
+                                    "OO|O&O&O&O!O:busday_offset", kwlist,
                                     &dates_in,
                                     &offsets_in,
                                     &PyArray_BusDayRollConverter, &roll,
                                     &PyArray_WeekMaskConverter, &weekmask[0],
                                     &PyArray_HolidaysConverter, &holidays,
-                                    &busdaydef_in,
+                                    &NpyBusinessDayDef_Type, &busdaydef,
                                     &out_in)) {
-        return NULL;
+        goto fail;
+    }
+
+    /* Make sure only one of the weekmask/holidays and busdaydef is supplied */
+    if (busdaydef != NULL) {
+        if (weekmask[0] != 2 || holidays.begin != NULL) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot supply both the weekmask/holidays and the "
+                    "busdaydef parameters to busday_offset()");
+            goto fail;
+        }
+
+        /* Indicate that the holidays weren't allocated by us */
+        allocated_holidays = 0;
+
+        /* Copy the weekmask/holidays data */
+        memcpy(weekmask, busdaydef->weekmask, 7);
+        holidays = busdaydef->holidays;
+    }
+    else {
+        /*
+         * Fix up the weekmask from the uninitialized
+         * signal value to a proper default.
+         */
+        if (weekmask[0] == 2) {
+            weekmask[0] = 1;
+        }
     }
 
     /* Make 'dates' into an array */
@@ -928,16 +945,16 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
         Py_INCREF(dates);
     }
     else {
-        PyArray_Descr *date_dtype;
+        PyArray_Descr *datetime_dtype;
 
         /* Use the datetime dtype with generic units so it fills it in */
-        date_dtype = PyArray_DescrFromType(NPY_DATETIME);
-        if (date_dtype == NULL) {
+        datetime_dtype = PyArray_DescrFromType(NPY_DATETIME);
+        if (datetime_dtype == NULL) {
             goto fail;
         }
 
-        /* This steals the date_dtype reference */
-        dates = (PyArrayObject *)PyArray_FromAny(dates_in, date_dtype,
+        /* This steals the datetime_dtype reference */
+        dates = (PyArrayObject *)PyArray_FromAny(dates_in, datetime_dtype,
                                                 0, 0, 0, dates_in);
         if (dates == NULL) {
             goto fail;
@@ -977,7 +994,7 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
 
     Py_DECREF(dates);
     Py_DECREF(offsets);
-    if (holidays.begin != NULL) {
+    if (allocated_holidays && holidays.begin != NULL) {
         PyArray_free(holidays.begin);
     }
 
@@ -985,7 +1002,7 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
 fail:
     Py_XDECREF(dates);
     Py_XDECREF(offsets);
-    if (holidays.begin != NULL) {
+    if (allocated_holidays && holidays.begin != NULL) {
         PyArray_free(holidays.begin);
     }
 

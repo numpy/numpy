@@ -46,6 +46,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "nditer_pywrap.h"
 #include "_datetime.h"
 #include "datetime_busday.h"
+#include "datetime_busdaydef.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -3915,6 +3916,10 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyType_Ready(&PyArrayFlags_Type) < 0) {
         return RETVAL;
     }
+    NpyBusinessDayDef_Type.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&NpyBusinessDayDef_Type) < 0) {
+        return RETVAL;
+    }
 /* FIXME
  * There is no error handling here
  */
@@ -3993,6 +3998,10 @@ PyMODINIT_FUNC initmultiarray(void) {
 
     Py_INCREF(&PyArrayFlags_Type);
     PyDict_SetItemString(d, "flagsobj", (PyObject *)&PyArrayFlags_Type);
+
+    /* Business day definition object */
+    Py_INCREF(&NpyBusinessDayDef_Type);
+    PyDict_SetItemString(d, "busdaydef", (PyObject *)&NpyBusinessDayDef_Type);
 
     set_flaginfo(d);
 
