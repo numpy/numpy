@@ -21,7 +21,110 @@
 #include "_datetime.h"
 #include "datetime_busday.h"
 
+/*
+ * Returns 1 if the date is a holiday (contained in the sorted
+ * list of dates), 0 otherwise.
+ *
+ * The holidays list should be normalized.
+ */
+static int
+is_holiday(npy_datetime date,
+            npy_datetime *holidays_begin, npy_datetime *holidays_end)
+{
+    npy_datetime *trial;
 
+    /* Simple binary search */
+    while (holidays_begin < holidays_end) {
+        trial = holidays_begin + (holidays_end - holidays_begin) / 2;
+
+        if (date < *trial) {
+            holidays_end = trial;
+        }
+        else if (date > *trial) {
+            holidays_begin = trial + 1;
+        }
+        else {
+            return 1;
+        }
+    }
+
+    /* Not found */
+    return 0;
+}
+
+/*
+ * Finds the earliest holiday which is on or after 'date'. If 'date' does not
+ * appear within the holiday range, returns 'holidays_begin' if 'date'
+ * is before all holidays, or 'holidays_end' if 'date' is after all
+ * holidays.
+ *
+ * To remove all the holidays before 'date' from a holiday range, do:
+ *
+ *      holidays_begin = find_holiday_earliest_on_or_after(date,
+ *                                          holidays_begin, holidays_end);
+ *
+ * The holidays list should be normalized.
+ */
+static npy_datetime *
+find_earliest_holiday_on_or_after(npy_datetime date,
+            npy_datetime *holidays_begin, npy_datetime *holidays_end)
+{
+    npy_datetime *trial;
+
+    /* Simple binary search */
+    while (holidays_begin < holidays_end) {
+        trial = holidays_begin + (holidays_end - holidays_begin) / 2;
+
+        if (date < *trial) {
+            holidays_end = trial;
+        }
+        else if (date > *trial) {
+            holidays_begin = trial + 1;
+        }
+        else {
+            return trial;
+        }
+    }
+
+    return holidays_begin;
+}
+
+/*
+ * Finds the earliest holiday which is after 'date'. If 'date' does not
+ * appear within the holiday range, returns 'holidays_begin' if 'date'
+ * is before all holidays, or 'holidays_end' if 'date' is after all
+ * holidays.
+ *
+ * To remove all the holidays after 'date' from a holiday range, do:
+ *
+ *      holidays_end = find_holiday_earliest_after(date,
+ *                                          holidays_begin, holidays_end);
+ *
+ * The holidays list should be normalized.
+ */
+static npy_datetime *
+find_earliest_holiday_after(npy_datetime date,
+            npy_datetime *holidays_begin, npy_datetime *holidays_end)
+{
+    npy_datetime *trial;
+
+    /* Simple binary search */
+    while (holidays_begin < holidays_end) {
+        trial = holidays_begin + (holidays_end - holidays_begin) / 2;
+
+        if (date < *trial) {
+            holidays_end = trial;
+        }
+        else if (date > *trial) {
+            holidays_begin = trial + 1;
+        }
+        else {
+            return trial + 1;
+        }
+    }
+
+    return holidays_begin;
+}
 /*
  * Applies the 'roll' strategy to 'date', placing the result in 'out'
  * and setting 'out_day_of_week' to the day of the week that results.
@@ -57,7 +160,8 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
     }
 
     /* Apply the 'roll' if it's not a business day */
-    if (weekmask[day_of_week] == 0) {
+    if (weekmask[day_of_week] == 0 ||
+                        is_holiday(date, holidays_begin, holidays_end)) {
         npy_datetime start_date = date;
         int start_day_of_week = day_of_week;
 
@@ -69,7 +173,8 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
                     if (++day_of_week == 7) {
                         day_of_week = 0;
                     }
-                } while (weekmask[day_of_week] == 0);
+                } while (weekmask[day_of_week] == 0 ||
+                            is_holiday(date, holidays_begin, holidays_end));
 
                 if (roll == NPY_BUSDAY_MODIFIEDFOLLOWING) {
                     /* If we crossed a month boundary, do preceding instead */
@@ -83,7 +188,8 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
                             if (--day_of_week == -1) {
                                 day_of_week = 6;
                             }
-                        } while (weekmask[day_of_week] == 0);
+                        } while (weekmask[day_of_week] == 0 ||
+                            is_holiday(date, holidays_begin, holidays_end));
                     }
                 }
                 break;
@@ -95,7 +201,8 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
                     if (--day_of_week == -1) {
                         day_of_week = 6;
                     }
-                } while (weekmask[day_of_week] == 0);
+                } while (weekmask[day_of_week] == 0 ||
+                            is_holiday(date, holidays_begin, holidays_end));
 
                 if (roll == NPY_BUSDAY_MODIFIEDPRECEDING) {
                     /* If we crossed a month boundary, do following instead */
@@ -109,7 +216,8 @@ apply_business_day_roll(npy_datetime date, npy_datetime *out,
                             if (++day_of_week == 7) {
                                 day_of_week = 0;
                             }
-                        } while (weekmask[day_of_week] == 0);
+                        } while (weekmask[day_of_week] == 0 ||
+                            is_holiday(date, holidays_begin, holidays_end));
                     }
                 }
                 break;
@@ -147,6 +255,7 @@ apply_business_day_offset(npy_datetime date, npy_int64 offset,
                     npy_datetime *holidays_begin, npy_datetime *holidays_end)
 {
     int day_of_week = 0;
+    npy_datetime *holidays_temp;
 
     /* Roll the date to a business day */
     if (apply_business_day_roll(date, &date, &day_of_week,
@@ -163,9 +272,19 @@ apply_business_day_offset(npy_datetime date, npy_int64 offset,
     
     /* Now we're on a valid business day */
     if (offset > 0) {
+        /* Remove any earlier holidays */
+        holidays_begin = find_earliest_holiday_on_or_after(date,
+                                            holidays_begin, holidays_end);
+
         /* Jump by as many weeks as we can */
         date += (offset / busdays_in_weekmask) * 7;
         offset = offset % busdays_in_weekmask;
+
+        /* Adjust based on the number of holidays we crossed */
+        holidays_temp = find_earliest_holiday_after(date,
+                                            holidays_begin, holidays_end);
+        offset += holidays_temp - holidays_begin;
+        holidays_begin = holidays_temp;
 
         /* Step until we use up the rest of the offset */
         while (offset > 0) {
@@ -173,13 +292,26 @@ apply_business_day_offset(npy_datetime date, npy_int64 offset,
             if (++day_of_week == 7) {
                 day_of_week = 0;
             }
-            offset -= weekmask[day_of_week];
+            if (weekmask[day_of_week] && !is_holiday(date,
+                                            holidays_begin, holidays_end)) {
+                offset--;
+            }
         }
     }
     else if (offset < 0) {
+        /* Remove any later holidays */
+        holidays_end = find_earliest_holiday_after(date,
+                                            holidays_begin, holidays_end);
+
         /* Jump by as many weeks as we can */
         date += (offset / busdays_in_weekmask) * 7;
         offset = offset % busdays_in_weekmask;
+
+        /* Adjust based on the number of holidays we crossed */
+        holidays_temp = find_earliest_holiday_on_or_after(date,
+                                            holidays_begin, holidays_end);
+        offset -= holidays_end - holidays_temp;
+        holidays_end = holidays_temp;
 
         /* Step until we use up the rest of the offset */
         while (offset < 0) {
@@ -187,7 +319,10 @@ apply_business_day_offset(npy_datetime date, npy_int64 offset,
             if (--day_of_week == -1) {
                 day_of_week = 6;
             }
-            offset += weekmask[day_of_week];
+            if (weekmask[day_of_week] && !is_holiday(date,
+                                            holidays_begin, holidays_end)) {
+                offset++;
+            }
         }
     }
 
@@ -744,8 +879,10 @@ PyArray_HolidaysConverter(PyObject *dates_in, npy_holidayslist *holidays)
         goto fail;
     }
 
+    Py_DECREF(dates);
     Py_DECREF(date_dtype);
-    date_dtype = NULL;
+
+    return 1;
 
 fail:
     Py_XDECREF(dates);
@@ -762,7 +899,7 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
     char *kwlist[] = {"dates", "offsets", "roll",
-                      "weekmask", "holidays", NULL};
+                      "weekmask", "holidays", "busdaydef", "out", NULL};
 
     PyObject *dates_in = NULL, *offsets_in = NULL,
             *busdaydef_in = NULL, *out_in = NULL;
