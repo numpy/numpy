@@ -69,34 +69,10 @@ DataFiles: tests
         random/tests/*.py,
         testing/tests/*.py
 
-Recurse:
-    numpy/core,
-    numpy/fft,
-    numpy/lib,
-    numpy/linalg,
-    numpy/random
-
 HookFile: bscript
+
+Recurse: numpy
 
 Library:
     Packages:
-        numpy,
-        numpy.build_utils,
-        numpy.compat,
-        numpy.core,
-        numpy.core.code_generators,
-        numpy.distutils,
-        numpy.distutils.command,
-        numpy.distutils.fcompiler,
-        numpy.doc,
-        numpy.f2py,
-        numpy.fft,
-        numpy.lib,
-        numpy.linalg,
-        numpy.ma,
-        numpy.matrixlib,
-        numpy.numarray,
-        numpy.oldnumeric,
-        numpy.polynomial,
-        numpy.random,
-        numpy.testing
+        numpy
