@@ -1388,6 +1388,31 @@ class TestDateTime(TestCase):
                           '2012-03-05', '2012-03-07', '2012-03-06']),
             np.datetime64('2012-03-08'))
 
+    def test_datetime_busday_holidays_count(self):
+        holidays=['2011-01-01', '2011-10-10', '2011-11-11', '2011-11-24',
+                  '2011-12-25', '2011-05-30', '2011-02-21', '2011-01-17',
+                  '2011-12-26', '2012-01-02', '2011-02-21', '2011-05-30',
+                  '2011-07-01', '2011-07-04', '2011-09-05', '2011-10-10']
+        bdd = np.busdaydef(weekmask='1111100', holidays=holidays)
+
+        # Validate against busday_offset broadcast against
+        # a range of offsets
+        dates = np.busday_offset('2011-01-01', np.arange(366),
+                        roll='forward', busdaydef=bdd)
+        assert_equal(np.busday_count('2011-01-01', dates, busdaydef=bdd),
+                     np.arange(366))
+            
+        dates = np.busday_offset('2011-12-31', -np.arange(366),
+                        roll='forward', busdaydef=bdd)
+        assert_equal(np.busday_count(dates, '2011-12-31', busdaydef=bdd),
+                     np.arange(366))
+            
+        # Can't supply both a weekmask/holidays and busdaydef
+        assert_raises(ValueError, np.busday_offset, '2012-01-03', '2012-02-03',
+                        weekmask='1111100', busdaydef=bdd)
+        assert_raises(ValueError, np.busday_offset, '2012-01-03', '2012-02-03',
+                        holidays=holidays, busdaydef=bdd)
+        
 
 class TestDateTimeData(TestCase):
 

@@ -1,6 +1,24 @@
 #ifndef _NPY_PRIVATE__DATETIME_BUSDAYDEF_H_
 #define _NPY_PRIVATE__DATETIME_BUSDAYDEF_H_
 
+/*
+ * A list of holidays, which should be sorted, not contain any
+ * duplicates or NaTs, and not include any days already excluded
+ * by the associated weekmask.
+ *
+ * The data is manually managed with PyArray_malloc/PyArray_free.
+ */
+typedef struct {
+    npy_datetime *begin, *end;
+} npy_holidayslist;
+
+/*
+ * This object encapsulates a weekmask and normalized holidays list,
+ * so that the business day API can use this data without having
+ * to normalize it repeatedly. All the data of this object is private
+ * and cannot be modified from Python. Copies are made when giving
+ * the weekmask and holidays data to Python code.
+ */
 typedef struct {
     PyObject_HEAD
     npy_holidayslist holidays;

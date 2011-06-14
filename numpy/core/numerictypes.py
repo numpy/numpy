@@ -93,11 +93,11 @@ __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'ScalarType', 'obj2sctype', 'cast', 'nbytes', 'sctype2char',
            'maximum_sctype', 'issctype', 'typecodes', 'find_common_type',
            'issubdtype', 'datetime_data','datetime_as_string',
-           'busday_offset', 'busdaydef']
+           'busday_offset', 'busday_count', 'busdaydef']
 
 from numpy.core.multiarray import typeinfo, ndarray, array, \
                       empty, dtype, datetime_data, datetime_as_string, \
-                      busday_offset, busdaydef
+                      busday_offset, busday_count, busdaydef
 import types as _types
 import sys
 
