@@ -586,7 +586,7 @@ business_day_count(PyArrayObject *dates_begin, PyArrayObject *dates_end,
         PyErr_SetString(PyExc_ValueError,
                 "the business day weekmask must have at least one "
                 "valid business day");
-        return -1;
+        return NULL;
     }
 
     /* First create the data types for the dates and the int64 output */
@@ -675,6 +675,133 @@ finish:
     Py_XDECREF(dtypes[0]);
     Py_XDECREF(dtypes[1]);
     Py_XDECREF(dtypes[2]);
+    if (iter != NULL) {
+        if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
+            Py_XDECREF(ret);
+            ret = NULL;
+        }
+    }
+    return ret;
+}
+
+/*
+ * Returns a boolean array with True for input dates which are valid
+ * business days, and False for dates which are not. This is the
+ * low-level function which requires already cleaned input data.
+ *
+ * dates:  An array of dates with 'datetime64[D]' data type.
+ * out:      Either NULL, or an array with 'bool' data type
+ *              in which to place the resulting dates.
+ * weekmask: A 7-element boolean mask, 1 for possible business days and 0
+ *              for non-business days.
+ * busdays_in_weekmask: A count of how many 1's there are in weekmask.
+ * holidays_begin/holidays_end: A sorted list of dates matching '[D]'
+ *           unit metadata, with any dates falling on a day of the
+ *           week without weekmask[i] == 1 already filtered out.
+ */
+NPY_NO_EXPORT PyArrayObject *
+is_business_day(PyArrayObject *dates, PyArrayObject *out,
+                    npy_bool *weekmask, int busdays_in_weekmask,
+                    npy_datetime *holidays_begin, npy_datetime *holidays_end)
+{
+    PyArray_DatetimeMetaData temp_meta;
+    PyArray_Descr *dtypes[2] = {NULL, NULL};
+
+    NpyIter *iter = NULL;
+    PyArrayObject *op[2] = {NULL, NULL};
+    npy_uint32 op_flags[2], flags;
+
+    PyArrayObject *ret = NULL;
+
+    if (busdays_in_weekmask == 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "the business day weekmask must have at least one "
+                "valid business day");
+        return NULL;
+    }
+
+    /* First create the data types for the dates and the bool output */
+    temp_meta.base = NPY_FR_D;
+    temp_meta.num = 1;
+    temp_meta.events = 1;
+    dtypes[0] = create_datetime_dtype(NPY_DATETIME, &temp_meta);
+    if (dtypes[0] == NULL) {
+        goto fail;
+    }
+    dtypes[1] = PyArray_DescrFromType(NPY_BOOL);
+    if (dtypes[1] == NULL) {
+        goto fail;
+    }
+
+    /* Set up the iterator parameters */
+    flags = NPY_ITER_EXTERNAL_LOOP|
+            NPY_ITER_BUFFERED|
+            NPY_ITER_ZEROSIZE_OK;
+    op[0] = dates;
+    op_flags[0] = NPY_ITER_READONLY | NPY_ITER_ALIGNED;
+    op[1] = out;
+    op_flags[1] = NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE | NPY_ITER_ALIGNED;
+
+    /* Allocate the iterator */
+    iter = NpyIter_MultiNew(2, op, flags, NPY_KEEPORDER, NPY_SAFE_CASTING,
+                            op_flags, dtypes);
+    if (iter == NULL) {
+        goto fail;
+    }
+
+    /* Loop over all elements */
+    if (NpyIter_GetIterSize(iter) > 0) {
+        NpyIter_IterNextFunc *iternext;
+        char **dataptr;
+        npy_intp *strideptr, *innersizeptr;
+
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            goto fail;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        strideptr = NpyIter_GetInnerStrideArray(iter);
+        innersizeptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+        do {
+            char *data_dates = dataptr[0];
+            char *data_out = dataptr[1];
+            npy_intp stride_dates = strideptr[0];
+            npy_intp stride_out = strideptr[1];
+            npy_intp count = *innersizeptr;
+
+            npy_datetime date;
+            int day_of_week;
+
+            while (count--) {
+                /* Check if it's a business day */
+                date = *(npy_datetime *)data_dates;
+                day_of_week = get_day_of_week(date);
+                *(npy_bool *)data_out = weekmask[day_of_week] &&
+                                        !is_holiday(date,
+                                            holidays_begin, holidays_end) &&
+                                        date != NPY_DATETIME_NAT;
+                                                
+
+                data_dates += stride_dates;
+                data_out += stride_out;
+            }
+        } while (iternext(iter));
+    }
+
+    /* Get the return object from the iterator */
+    ret = NpyIter_GetOperandArray(iter)[1];
+    Py_INCREF(ret);
+
+    goto finish;
+
+fail:
+    Py_XDECREF(ret);
+    ret = NULL;
+
+finish:
+    Py_XDECREF(dtypes[0]);
+    Py_XDECREF(dtypes[1]);
     if (iter != NULL) {
         if (NpyIter_Deallocate(iter) != NPY_SUCCEED) {
             Py_XDECREF(ret);
@@ -1048,6 +1175,124 @@ array_busday_count(PyObject *NPY_UNUSED(self),
 fail:
     Py_XDECREF(dates_begin);
     Py_XDECREF(dates_end);
+    if (allocated_holidays && holidays.begin != NULL) {
+        PyArray_free(holidays.begin);
+    }
+
+    return NULL;
+}
+
+/*
+ * This is the 'is_busday' function exposed for calling
+ * from Python.
+ */
+NPY_NO_EXPORT PyObject *
+array_is_busday(PyObject *NPY_UNUSED(self),
+                      PyObject *args, PyObject *kwds)
+{
+    char *kwlist[] = {"dates",
+                      "weekmask", "holidays", "busdaydef", "out", NULL};
+
+    PyObject *dates_in = NULL, *out_in = NULL;
+
+    PyArrayObject *dates = NULL,*out = NULL, *ret;
+    npy_bool weekmask[7] = {2, 1, 1, 1, 1, 0, 0};
+    NpyBusinessDayDef *busdaydef = NULL;
+    int i, busdays_in_weekmask;
+    npy_holidayslist holidays = {NULL, NULL};
+    int allocated_holidays = 1;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds,
+                                    "O|O&O&O!O:busday_count", kwlist,
+                                    &dates_in,
+                                    &PyArray_WeekMaskConverter, &weekmask[0],
+                                    &PyArray_HolidaysConverter, &holidays,
+                                    &NpyBusinessDayDef_Type, &busdaydef,
+                                    &out_in)) {
+        goto fail;
+    }
+
+    /* Make sure only one of the weekmask/holidays and busdaydef is supplied */
+    if (busdaydef != NULL) {
+        if (weekmask[0] != 2 || holidays.begin != NULL) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot supply both the weekmask/holidays and the "
+                    "busdaydef parameters to is_busday()");
+            goto fail;
+        }
+
+        /* Indicate that the holidays weren't allocated by us */
+        allocated_holidays = 0;
+
+        /* Copy the private normalized weekmask/holidays data */
+        holidays = busdaydef->holidays;
+        busdays_in_weekmask = busdaydef->busdays_in_weekmask;
+        memcpy(weekmask, busdaydef->weekmask, 7);
+    }
+    else {
+        /*
+         * Fix up the weekmask from the uninitialized
+         * signal value to a proper default.
+         */
+        if (weekmask[0] == 2) {
+            weekmask[0] = 1;
+        }
+
+        /* Count the number of business days in a week */
+        busdays_in_weekmask = 0;
+        for (i = 0; i < 7; ++i) {
+            busdays_in_weekmask += weekmask[i];
+        }
+
+        /* The holidays list must be normalized before using it */
+        normalize_holidays_list(&holidays, weekmask);
+    }
+
+    /* Make 'dates' into an array */
+    if (PyArray_Check(dates_in)) {
+        dates = (PyArrayObject *)dates_in;
+        Py_INCREF(dates);
+    }
+    else {
+        PyArray_Descr *datetime_dtype;
+
+        /* Use the datetime dtype with generic units so it fills it in */
+        datetime_dtype = PyArray_DescrFromType(NPY_DATETIME);
+        if (datetime_dtype == NULL) {
+            goto fail;
+        }
+
+        /* This steals the datetime_dtype reference */
+        dates = (PyArrayObject *)PyArray_FromAny(dates_in,
+                                                datetime_dtype,
+                                                0, 0, 0, dates_in);
+        if (dates == NULL) {
+            goto fail;
+        }
+    }
+
+    /* Make sure 'out' is an array if it's provided */
+    if (out_in != NULL) {
+        if (!PyArray_Check(out_in)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "busday_offset: must provide a NumPy array for 'out'");
+            goto fail;
+        }
+        out = (PyArrayObject *)out_in;
+    }
+
+    ret = is_business_day(dates, out,
+                    weekmask, busdays_in_weekmask,
+                    holidays.begin, holidays.end);
+
+    Py_DECREF(dates);
+    if (allocated_holidays && holidays.begin != NULL) {
+        PyArray_free(holidays.begin);
+    }
+
+    return out == NULL ? PyArray_Return(ret) : (PyObject *)ret;
+fail:
+    Py_XDECREF(dates);
     if (allocated_holidays && holidays.begin != NULL) {
         PyArray_free(holidays.begin);
     }

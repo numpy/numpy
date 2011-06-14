@@ -17,5 +17,12 @@ NPY_NO_EXPORT PyObject *
 array_busday_count(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds);
 
+/*
+ * This is the 'is_busday' function exposed for calling
+ * from Python.
+ */
+NPY_NO_EXPORT PyObject *
+array_is_busday(PyObject *NPY_UNUSED(self),
+                      PyObject *args, PyObject *kwds);
 
 #endif

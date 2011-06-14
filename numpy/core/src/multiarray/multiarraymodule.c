@@ -3606,6 +3606,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"busday_count",
         (PyCFunction)array_busday_count,
         METH_VARARGS | METH_KEYWORDS, NULL},
+    {"is_busday",
+        (PyCFunction)array_is_busday,
+        METH_VARARGS | METH_KEYWORDS, NULL},
 #if !defined(NPY_PY3K)
     {"newbuffer",
         (PyCFunction)new_buffer,

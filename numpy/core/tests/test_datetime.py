@@ -1412,7 +1412,26 @@ class TestDateTime(TestCase):
                         weekmask='1111100', busdaydef=bdd)
         assert_raises(ValueError, np.busday_offset, '2012-01-03', '2012-02-03',
                         holidays=holidays, busdaydef=bdd)
+
+        # Number of Mondays in March 2011
+        assert_equal(np.busday_count('2011-03', '2011-04', weekmask='Mon'), 4)
         
+    def test_datetime_is_busday(self):
+        holidays=['2011-01-01', '2011-10-10', '2011-11-11', '2011-11-24',
+                  '2011-12-25', '2011-05-30', '2011-02-21', '2011-01-17',
+                  '2011-12-26', '2012-01-02', '2011-02-21', '2011-05-30',
+                  '2011-07-01', '2011-07-04', '2011-09-05', '2011-10-10',
+                  'NaT']
+        bdd = np.busdaydef(weekmask='1111100', holidays=holidays)
+
+        # Weekend/weekday tests
+        assert_equal(np.is_busday('2011-01-01'), False)
+        assert_equal(np.is_busday('2011-01-02'), False)
+        assert_equal(np.is_busday('2011-01-03'), True)
+
+        # All the holidays are not business days
+        assert_equal(np.is_busday(holidays, busdaydef=bdd),
+                     np.zeros(len(holidays), dtype='?'))
 
 class TestDateTimeData(TestCase):
 
