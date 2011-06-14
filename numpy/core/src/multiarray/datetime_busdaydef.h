@@ -4,6 +4,7 @@
 typedef struct {
     PyObject_HEAD
     npy_holidayslist holidays;
+    int busdays_in_weekmask;
     npy_bool weekmask[7];
 } PyArray_BusinessDayDef;
 

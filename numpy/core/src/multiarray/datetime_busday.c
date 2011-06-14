@@ -475,6 +475,15 @@ finish:
     return ret;
 }
 
+NPY_NO_EXPORT npy_intp
+business_day_count(PyArrayObject *dates_begin, PyArrayObject *dates_end,
+                    PyArrayObject *out,
+                    NPY_BUSDAY_ROLL roll,
+                    npy_bool *weekmask, int busdays_in_weekmask,
+                    npy_datetime *holidays_begin, npy_datetime *holidays_end)
+{
+}
+
 static int
 PyArray_BusDayRollConverter(PyObject *roll_in, NPY_BUSDAY_ROLL *roll)
 {
@@ -925,9 +934,10 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
         /* Indicate that the holidays weren't allocated by us */
         allocated_holidays = 0;
 
-        /* Copy the weekmask/holidays data */
-        memcpy(weekmask, busdaydef->weekmask, 7);
+        /* Copy the private normalized weekmask/holidays data */
         holidays = busdaydef->holidays;
+        busdays_in_weekmask = busdaydef->busdays_in_weekmask;
+        memcpy(weekmask, busdaydef->weekmask, 7);
     }
     else {
         /*
@@ -937,6 +947,15 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
         if (weekmask[0] == 2) {
             weekmask[0] = 1;
         }
+
+        /* Count the number of business days in a week */
+        busdays_in_weekmask = 0;
+        for (i = 0; i < 7; ++i) {
+            busdays_in_weekmask += weekmask[i];
+        }
+
+        /* The holidays list must be normalized before using it */
+        normalize_holidays_list(&holidays, weekmask);
     }
 
     /* Make 'dates' into an array */
@@ -978,15 +997,6 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
         }
         out = (PyArrayObject *)out_in;
     }
-
-    /* Count the number of business days in a week */
-    busdays_in_weekmask = 0;
-    for (i = 0; i < 7; ++i) {
-        busdays_in_weekmask += weekmask[i];
-    }
-
-    /* The holidays list must be normalized before using it */
-    normalize_holidays_list(&holidays, weekmask);
 
     ret = business_day_offset(dates, offsets, out, roll,
                     weekmask, busdays_in_weekmask,

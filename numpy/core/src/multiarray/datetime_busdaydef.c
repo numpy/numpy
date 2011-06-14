@@ -31,7 +31,12 @@ busdaydef_new(PyTypeObject *subtype,
 
     self = (PyArray_BusinessDayDef *)subtype->tp_alloc(subtype, 0);
     if (self != NULL) {
-         /* Set the weekmask to the default */
+        /* Start with an empty holidays list */
+        self->holidays.begin = NULL;
+        self->holidays.end = NULL;
+
+        /* Set the weekmask to the default */
+        self->busdays_in_weekmask = 5;
         self->weekmask[0] = 1;
         self->weekmask[1] = 1;
         self->weekmask[2] = 1;
@@ -39,10 +44,6 @@ busdaydef_new(PyTypeObject *subtype,
         self->weekmask[4] = 1;
         self->weekmask[5] = 0;
         self->weekmask[6] = 0;
-
-        /* Start with an empty holidays list */
-        self->holidays.begin = NULL;
-        self->holidays.end = NULL;
     }
 
     return (PyObject *)self;
@@ -52,15 +53,7 @@ static int
 busdaydef_init(PyArray_BusinessDayDef *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"weekmask", "holidays", NULL};
-
-    /* Reset the weekmask to the default */
-    self->weekmask[0] = 1;
-    self->weekmask[1] = 1;
-    self->weekmask[2] = 1;
-    self->weekmask[3] = 1;
-    self->weekmask[4] = 1;
-    self->weekmask[5] = 0;
-    self->weekmask[6] = 0;
+    int i, busdays_in_weekmask;
 
     /* Clear the holidays if necessary */
     if (self->holidays.begin != NULL) {
@@ -69,16 +62,40 @@ busdaydef_init(PyArray_BusinessDayDef *self, PyObject *args, PyObject *kwds)
         self->holidays.end = NULL;
     }
 
+    /* Reset the weekmask to the default */
+    self->busdays_in_weekmask = 5;
+    self->weekmask[0] = 1;
+    self->weekmask[1] = 1;
+    self->weekmask[2] = 1;
+    self->weekmask[3] = 1;
+    self->weekmask[4] = 1;
+    self->weekmask[5] = 0;
+    self->weekmask[6] = 0;
+
     /* Parse the parameters */
     if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                        "|O&O&", kwlist,
+                        "|O&O&:busdaydef", kwlist,
                         &PyArray_WeekMaskConverter, &self->weekmask[0],
                         &PyArray_HolidaysConverter, &self->holidays)) {
         return -1;
     }
- 
+
+    /* Count the number of business days in a week */
+    busdays_in_weekmask = 0;
+    for (i = 0; i < 7; ++i) {
+        busdays_in_weekmask += self->weekmask[i];
+    }
+    self->busdays_in_weekmask = busdays_in_weekmask;
+
     /* Normalize the holidays list */
     normalize_holidays_list(&self->holidays, self->weekmask);
+
+    if (self->busdays_in_weekmask == 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot construct a numpy.busdaydef with a weekmask of "
+                "all zeros");
+        return -1;
+    }
 
     return 0;
 }

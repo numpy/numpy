@@ -1217,6 +1217,9 @@ class TestDateTime(TestCase):
         # Default M-F weekmask
         assert_equal(bdd.weekmask, np.array([1,1,1,1,1,0,0], dtype='?'))
 
+        # All-zeros weekmask should raise
+        assert_raises(ValueError, np.busdaydef, weekmask=[0,0,0,0,0,0,0])
+
     def test_datetime_busday_holidays_offset(self):
         # With exactly one holiday
         assert_equal(
