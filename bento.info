@@ -34,21 +34,6 @@ Classifiers:
     Operating System :: Unix,
     Operating System :: MacOS
 
-Recurse:
-    numpy/core,
-    numpy/fft,
-    numpy/lib,
-    numpy/linalg,
-    numpy/random
-
-HookFile:
-    bscript,
-    numpy/core/bscript,
-    numpy/fft/bscript,
-    numpy/lib/bscript,
-    numpy/linalg/bscript,
-    numpy/random/bscript
-
 ExtraSourceFiles:
     setup.py,
     numpy/core/include/numpy/*.h,
@@ -83,6 +68,15 @@ DataFiles: tests
         polynomial/tests/*.py,
         random/tests/*.py,
         testing/tests/*.py
+
+Recurse:
+    numpy/core,
+    numpy/fft,
+    numpy/lib,
+    numpy/linalg,
+    numpy/random
+
+HookFile: bscript
 
 Library:
     Packages:
