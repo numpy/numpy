@@ -1,12 +1,13 @@
 #ifndef __NPY_SORT_COMMON_H__
 #define __NPY_SORT_COMMON_H__
 
-
+/*
 #include "Python.h"
 #include "numpy/npy_common.h"
 #include "numpy/npy_math.h"
-#include "numpy/halffloat.h"
 #include "npy_config.h"
+*/
+#include <numpy/ndarraytypes.h>
 
 
 /*
@@ -136,6 +137,33 @@ NPY_INLINE static int
 LONGDOUBLE_LT(npy_longdouble a, npy_longdouble b)
 {
     return a < b || (b != b && a == a);
+}
+
+
+NPY_INLINE static int
+npy_half_isnan(npy_half h)
+{
+    return ((h&0x7c00u) == 0x7c00u) && ((h&0x03ffu) != 0x0000u);
+}
+
+
+NPY_INLINE static int
+npy_half_lt_nonan(npy_half h1, npy_half h2)
+{
+    if (h1&0x8000u) {
+        if (h2&0x8000u) {
+            return (h1&0x7fffu) > (h2&0x7fffu);
+        } else {
+            /* Signed zeros are equal, have to check for it */
+            return (h1 != 0x8000u) || (h2 != 0x0000u);
+        }
+    } else {
+        if (h2&0x8000u) {
+            return 0;
+        } else {
+            return (h1&0x7fffu) < (h2&0x7fffu);
+        }
+    }
 }
 
 

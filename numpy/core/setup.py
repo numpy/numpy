@@ -613,7 +613,7 @@ def configuration(parent_package='',top_path=None):
         config.add_data_dir('include/numpy/fenv')
 
     #######################################################################
-    #                          npymath library                            #
+    #                         dummy module                           #
     #######################################################################
 
     # npymath needs the config.h and numpyconfig.h files to be generated, but
@@ -621,6 +621,17 @@ def configuration(parent_package='',top_path=None):
     # (don't ask). Because clib are generated before extensions, we have to
     # explicitly add an extension which has generate_config_h and
     # generate_numpyconfig_h as sources *before* adding npymath.
+
+    config.add_extension('_dummy',
+                         sources = [join('src','dummymodule.c'),
+                                  generate_config_h,
+                                  generate_numpyconfig_h,
+                                  generate_numpy_api]
+                         )
+
+    #######################################################################
+    #                          npymath library                            #
+    #######################################################################
 
     subst_dict = dict([("sep", os.path.sep), ("pkgname", "numpy.core")])
     def get_mathlib_info(*args):
@@ -658,6 +669,7 @@ def configuration(parent_package='',top_path=None):
     #                           sort library                              #
     #######################################################################
 
+    #subst_dict = dict([("sep", os.path.sep), ("pkgname", "numpy.core")])
     config.add_installed_library('npysort',
             sources = [join('src', 'npysort', 'sort.c.src')],
             install_dir = 'lib')
@@ -671,27 +683,26 @@ def configuration(parent_package='',top_path=None):
     # _sort version: this function is needed to build foo.c from foo.c.src
     # when foo.c is included in another file and as such not in the src
     # argument of build_ext command
-#    def generate_sort_templated_sources(ext, build_dir):
-#        from numpy.distutils.misc_util import get_cmd
-#
-#        subpath = join('src', 'npysort')
-#        sources = [join(local_dir, subpath, 'sort.c.src')]
-#
-#        # numpy.distutils generate .c from .c.src in weird directories, we have
-#        # to add them there as they depend on the build_dir
-#        config.add_include_dirs(join(build_dir, subpath))
-#        cmd = get_cmd('build_src')
-#        cmd.ensure_finalized()
-#        cmd.template_sources(sources, ext)
+    def generate_sort_templated_sources(ext, build_dir):
+        from numpy.distutils.misc_util import get_cmd
+
+        subpath = join('src', 'npysort')
+        sources = [join(local_dir, subpath, 'sortmodule.c.src')]
+
+        # numpy.distutils generate .c from .c.src in weird directories, we have
+        # to add them there as they depend on the build_dir
+        config.add_include_dirs(join(build_dir, subpath))
+        cmd = get_cmd('build_src')
+        cmd.ensure_finalized()
+        cmd.template_sources(sources, ext)
 
     sort_deps = [
             join('src', 'npysort', 'npy_sort_common.h'),
-            join('src', 'npysort', 'sort.c.src'),
-            join('src', 'npysort', 'sortmodule.c')]
+            join('src', 'npysort', 'sort.c.src')]
 
     sort_src = [
-            join('src', 'npysort', 'sortmodule.c'),
-#            generate_sort_templated_sources,
+            join('src', 'npysort', 'sortmodule.c.src'),
+            generate_sort_templated_sources,
             generate_config_h,
             generate_numpyconfig_h,
             generate_numpy_api]
@@ -699,7 +710,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('_sort',
             sources = sort_src,
             depends = deps + sort_deps,
-            libraries = ['npymath', 'npysort'])
+            libraries = ['npysort'])
 
     #######################################################################
     #                        multiarray module                            #

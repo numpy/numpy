@@ -26,6 +26,8 @@
  * The heap sort is included for completeness.
  */
 
+#include <stdlib.h>
+#include <numpy/npy_sort.h>
 #include "npy_sort_common.h"
 
 #define NOT_USED NPY_UNUSED(unused)
@@ -54,7 +56,7 @@
  */
 
 
-static int
+int
 @TYPE@_quicksort(@type@ *start, npy_intp num, void *NOT_USED)
 {
     @type@ *pl = start;
@@ -116,7 +118,7 @@ static int
     return 0;
 }
 
-static int
+int
 @TYPE@_aquicksort(@type@ *v, npy_intp* tosort, npy_intp num, void *NOT_USED)
 {
     @type@ vp;
@@ -182,7 +184,7 @@ static int
 }
 
 
-static int
+int
 @TYPE@_heapsort(@type@ *start, npy_intp n, void *NOT_USED)
 {
     @type@ tmp, *a;
@@ -232,7 +234,7 @@ static int
     return 0;
 }
 
-static int
+int
 @TYPE@_aheapsort(@type@ *v, npy_intp *tosort, npy_intp n, void *NOT_USED)
 {
     npy_intp *a, i,j,l, tmp;
@@ -322,7 +324,7 @@ static void
     }
 }
 
-static int
+int
 @TYPE@_mergesort(@type@ *start, npy_intp num, void *NOT_USED)
 {
     @type@ *pl, *pr, *pw;
@@ -381,7 +383,7 @@ static void
     }
 }
 
-static int
+int
 @TYPE@_amergesort(@type@ *v, npy_intp *tosort, npy_intp num, void *NOT_USED)
 {
     npy_intp *pl, *pr, *pw;
@@ -459,7 +461,7 @@ static void
     }
 }
 
-static int
+int
 @TYPE@_mergesort(@type@ *start, npy_intp num, PyArrayObject *arr)
 {
     const size_t elsize = arr->descr->elsize;
@@ -490,7 +492,7 @@ fail_0:
     return err;
 }
 
-static int
+int
 @TYPE@_quicksort(@type@ *start, npy_intp num, PyArrayObject *arr)
 {
     const size_t len = arr->descr->elsize/sizeof(@type@);
@@ -557,7 +559,7 @@ static int
 }
 
 
-static int
+int
 @TYPE@_heapsort(@type@ *start, npy_intp n, PyArrayObject *arr)
 {
     size_t len = arr->descr->elsize/sizeof(@type@);
@@ -606,7 +608,7 @@ static int
 }
 
 
-static int
+int
 @TYPE@_aheapsort(@type@ *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
 {
     size_t len = arr->descr->elsize/sizeof(@type@);
@@ -655,7 +657,7 @@ static int
 }
 
 
-static int
+int
 @TYPE@_aquicksort(@type@ *v, npy_intp* tosort, npy_intp num, PyArrayObject *arr)
 {
     size_t len = arr->descr->elsize/sizeof(@type@);
@@ -765,7 +767,7 @@ static void
 }
 
 
-static int
+int
 @TYPE@_amergesort(@type@ *v, npy_intp *tosort, npy_intp num, PyArrayObject *arr)
 {
     const size_t elsize = arr->descr->elsize;
@@ -785,36 +787,3 @@ static int
     return 0;
 }
 /**end repeat**/
-
-/* just for the module bit */
-#include "numpy/noprefix.h"
-
-static void
-add_sortfuncs(void)
-{
-    PyArray_Descr *descr;
-
-    /**begin repeat
-     *
-     * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
-     *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
-     *         CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE#
-     */
-    descr = PyArray_DescrFromType(PyArray_@TYPE@);
-    descr->f->sort[PyArray_QUICKSORT] =
-        (PyArray_SortFunc *)@TYPE@_quicksort;
-    descr->f->argsort[PyArray_QUICKSORT] =
-        (PyArray_ArgSortFunc *)@TYPE@_aquicksort;
-    descr->f->sort[PyArray_HEAPSORT] =
-        (PyArray_SortFunc *)@TYPE@_heapsort;
-    descr->f->argsort[PyArray_HEAPSORT] =
-        (PyArray_ArgSortFunc *)@TYPE@_aheapsort;
-    descr->f->sort[PyArray_MERGESORT] =
-        (PyArray_SortFunc *)@TYPE@_mergesort;
-    descr->f->argsort[PyArray_MERGESORT] =
-        (PyArray_ArgSortFunc *)@TYPE@_amergesort;
-    /**end repeat**/
-
-}
-
-

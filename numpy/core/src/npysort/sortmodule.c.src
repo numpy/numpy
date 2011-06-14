@@ -26,8 +26,37 @@
  * The heap sort is included for completeness.
  */
 
-/*#include "sort.c"*/
-#include "numpy/npy_sort.h"
+#include <numpy/npy_sort.h>
+#include <numpy/npy_3kcompat.h>
+#include <numpy/ndarrayobject.h>
+
+static void
+add_sortfuncs(void)
+{
+    PyArray_Descr *descr;
+
+    /**begin repeat
+     *
+     * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+     *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
+     *         CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE#
+     */
+    descr = PyArray_DescrFromType(PyArray_@TYPE@);
+    descr->f->sort[PyArray_QUICKSORT] =
+        (PyArray_SortFunc *)@TYPE@_quicksort;
+    descr->f->argsort[PyArray_QUICKSORT] =
+        (PyArray_ArgSortFunc *)@TYPE@_aquicksort;
+    descr->f->sort[PyArray_HEAPSORT] =
+        (PyArray_SortFunc *)@TYPE@_heapsort;
+    descr->f->argsort[PyArray_HEAPSORT] =
+        (PyArray_ArgSortFunc *)@TYPE@_aheapsort;
+    descr->f->sort[PyArray_MERGESORT] =
+        (PyArray_SortFunc *)@TYPE@_mergesort;
+    descr->f->argsort[PyArray_MERGESORT] =
+        (PyArray_ArgSortFunc *)@TYPE@_amergesort;
+    /**end repeat**/
+
+}
 
 static struct PyMethodDef methods[] = {
     {NULL, NULL, 0, NULL}
