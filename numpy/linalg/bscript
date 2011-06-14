@@ -4,7 +4,7 @@ from bento.commands.hooks \
     import \
         pre_build
 
-@pre_build()
+@pre_build
 def pbuild(context):
     bld = context.waf_context
 

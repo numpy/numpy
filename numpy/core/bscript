@@ -250,7 +250,7 @@ def check_complex(conf):
         for t in C99_COMPLEX_TYPES:
             NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_%s' % numpy.build_utils.waf.sanitize_string(t), ''))
 
-@pre_configure()
+@pre_configure
 def configure(context):
     conf = context.waf_context
 
@@ -377,7 +377,7 @@ def process_umath_generator(self):
     return tsk
 
 from os.path import join as pjoin
-@pre_build()
+@pre_build
 def pbuild(context):
     bld = context.waf_context
 

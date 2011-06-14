@@ -73,7 +73,7 @@ def remove_flag_prevalue(name, flag):
         else:
             break
 
-@hooks.pre_configure()
+@hooks.pre_configure
 def pre_configure(context):
     conf = context.waf_context
 
@@ -127,7 +127,7 @@ def process_write_config(self):
     tsk.set_outputs(output)
     return tsk
 
-@hooks.pre_build()
+@hooks.pre_build
 def pre_build(context):
     bld = context.waf_context
 
