@@ -30,6 +30,7 @@ indentation.
    routines.math
    routines.functional
    routines.poly
+   routines.datetime
    routines.financial
    routines.set
    routines.window

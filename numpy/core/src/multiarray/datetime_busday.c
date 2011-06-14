@@ -141,6 +141,7 @@ find_earliest_holiday_after(npy_datetime date,
 
     return holidays_begin;
 }
+
 /*
  * Applies the 'roll' strategy to 'date', placing the result in 'out'
  * and setting 'out_day_of_week' to the day of the week that results.
@@ -1046,7 +1047,7 @@ NPY_NO_EXPORT PyObject *
 array_busday_count(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
-    char *kwlist[] = {"dates_begin", "dates_end",
+    char *kwlist[] = {"begindates", "enddates",
                       "weekmask", "holidays", "busdaydef", "out", NULL};
 
     PyObject *dates_begin_in = NULL, *dates_end_in = NULL, *out_in = NULL;
@@ -1203,7 +1204,7 @@ array_is_busday(PyObject *NPY_UNUSED(self),
     int allocated_holidays = 1;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                                    "O|O&O&O!O:busday_count", kwlist,
+                                    "O|O&O&O!O:is_busday", kwlist,
                                     &dates_in,
                                     &PyArray_WeekMaskConverter, &weekmask[0],
                                     &PyArray_HolidaysConverter, &holidays,

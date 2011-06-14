@@ -5936,6 +5936,268 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
 
 ##############################################################################
 #
+# Datetime-related Methods
+#
+##############################################################################
+
+add_newdoc('numpy.core.multiarray', 'busdaydef',
+    """
+    busdaydef(weekmask='1111100', holidays=None)
+
+    An object that efficiently stores information defining business
+    days for the business day-related functions.
+
+    Parameters
+    ----------
+    weekmask : string or array_like of bool
+        A seven-element array indicating which of Monday through Sunday may
+        be valid business days. May be specified as a list or array, like
+        [1,1,1,1,1,0,0], a length-seven string like '1111100', or a string
+        of three-letter weekday names, like 'MonTueWedThuFri'. The latter
+        string representation is most useful when only one day of the
+        week is important, like 'Mon' if you want to calculate the date
+        of Easter.
+    holidays : array_like of datetime64[D]
+        An array of dates which should be blacked out from being considered
+        as business days. They may be specified in any order, and NaT
+        (not-a-time) dates are ignored. Internally, this list is normalized
+        into a form suited for fast business day calculations.
+
+    Returns
+    -------
+    out : busdaydef
+        A business day definition object containing the specified
+        weekmask and holidays.
+
+    See Also
+    --------
+    is_busday : Returns a boolean array indicating valid business days.
+    busday_offset : Applies an offset counted in business days.
+    busday_count : Counts how many business days are in a half-open date range.
+
+    Attributes
+    ----------
+    weekmask : seven-element array of bool
+    holidays : sorted array of datetime64[D]
+
+    Examples
+    --------
+    >>> # Some important days in July
+    ... bdd = np.busdaydef(holidays=['2011-07-01', '2011-07-04', '2011-07-17'])
+    >>> # Default is Monday to Friday weekdays
+    ... bdd.weekmask
+    array([ True,  True,  True,  True,  True, False, False], dtype='bool')
+    >>> # Any holidays already on the weekend are removed
+    ... bdd.holidays
+    array(['2011-07-01', '2011-07-04'], dtype='datetime64[D]')
+    """)
+
+add_newdoc('numpy.core.multiarray', 'busdaydef', ('weekmask',
+    """A copy of the seven-element boolean mask indicating valid business days."""))
+
+add_newdoc('numpy.core.multiarray', 'busdaydef', ('holidays',
+    """A copy of the holiday array indicating blacked out business days."""))
+
+add_newdoc('numpy.core.multiarray', 'is_busday',
+    """
+    is_busday(dates, weekmask='1111100', holidays=None, busdaydef=None, out=None)
+
+    Calculates which of the given dates are valid business days, and
+    which are not.
+
+    Parameters
+    ----------
+    dates : array_like of datetime64[D]
+        The array of dates to process.
+    weekmask : string or array_like of bool
+        A seven-element array indicating which of Monday through Sunday may
+        be valid business days. May be specified as a list or array, like
+        [1,1,1,1,1,0,0], a length-seven string like '1111100', or a string
+        of three-letter weekday names, like 'MonTueWedThuFri'. The latter
+        string representation is most useful when only one day of the
+        week is important, like 'Mon' if you want to calculate the date
+        of Easter.
+    holidays : array_like of datetime64[D]
+        An array of dates which should be blacked out from being considered
+        as business days. They may be specified in any order, and NaT
+        (not-a-time) dates are ignored. Internally, this list is normalized
+        into a form suited for fast business day calculations.
+    busdaydef : busdaydef
+        A `busdaydef` object which specifies the business days. If this
+        parameter is provided, neither weekmask nor holidays may be
+        provided.
+    out : array of bool
+        If provided, this array is filled with the result.
+
+    Returns
+    -------
+    out : array of bool
+        An array containing True for each valid business day, and
+        False for the others.
+
+    See Also
+    --------
+    busdaydef: An object for efficiently specifying which are business days.
+    busday_offset : Applies an offset counted in business days.
+    busday_count : Counts how many business days are in a half-open date range.
+
+    Examples
+    --------
+    >>> # The weekdays are Friday, Saturday, and Monday
+    ... np.is_busday(['2011-07-01', '2011-07-02', '2011-07-18'],
+    ...                 holidays=['2011-07-01', '2011-07-04', '2011-07-17'])
+    array([False, False,  True], dtype='bool')
+    """)
+
+add_newdoc('numpy.core.multiarray', 'busday_offset',
+    """
+    busday_offset(dates, offsets, roll='raise', weekmask='1111100', holidays=None, busdaydef=None, out=None)
+
+    First adjusts the date to fall on a business day according to
+    the ``roll`` rule, then applies offsets to the given dates
+    counted in business days.
+
+    Parameters
+    ----------
+    dates : array_like of datetime64[D]
+        The array of dates to process.
+    offsets : array_like of integer
+        The array of offsets, which is broadcast with ``dates``.
+    roll : {'raise', 'nat', 'forward', 'following', 'backward', 'preceding', 'modifiedfollowing', 'modifiedpreceding'}
+        How to treat dates that do not fall on a business day. The default
+        is 'raise'.
+
+          * 'raise' means to raise an exception for invalid business days.
+          * 'nat' means to return a NaT (not-a-time) for invalid business days.
+          * 'forward' and 'following' mean to take the first business day
+            later in time.
+          * 'backward' and 'preceding' mean to take the first business day
+            earlier in time.
+          * 'modifiedfollowing' means to take the first business day
+            later in time unless it is across a Month boundary, in which
+            case to take the first business day earlier in time.
+          * 'modifiedpreceding' means to take the first business day
+            earlier in time unless it is across a Month boundary, in which
+            case to take the first business day later in time.
+    weekmask : string or array_like of bool
+        A seven-element array indicating which of Monday through Sunday may
+        be valid business days. May be specified as a list or array, like
+        [1,1,1,1,1,0,0], a length-seven string like '1111100', or a string
+        of three-letter weekday names, like 'MonTueWedThuFri'. The latter
+        string representation is most useful when only one day of the
+        week is important, like 'Mon' if you want to calculate the date
+        of Easter.
+    holidays : array_like of datetime64[D]
+        An array of dates which should be blacked out from being considered
+        as business days. They may be specified in any order, and NaT
+        (not-a-time) dates are ignored. Internally, this list is normalized
+        into a form suited for fast business day calculations.
+    busdaydef : busdaydef
+        A `busdaydef` object which specifies the business days. If this
+        parameter is provided, neither weekmask nor holidays may be
+        provided.
+    out : array of datetime64[D]
+        If provided, this array is filled with the result.
+
+    Returns
+    -------
+    out : array of datetime64[D]
+        An array containing the dates with offsets applied.
+
+    See Also
+    --------
+    busdaydef: An object for efficiently specifying which are business days.
+    is_busday : Returns a boolean array indicating valid business days.
+    busday_count : Counts how many business days are in a half-open date range.
+
+    Examples
+    --------
+    >>> # First business day in October 2011 (not accounting for holidays)
+    ... np.busday_offset('2011-10', 0, roll='forward')
+    numpy.datetime64('2011-10-03','D')
+    >>> # Last business day in February 2012 (not accounting for holidays)
+    ... np.busday_offset('2012-03', -1, roll='forward')
+    numpy.datetime64('2012-02-29','D')
+    >>> # Third Wednesday in January 2011
+    ... np.busday_offset('2011-01', 2, roll='forward', weekmask='Wed')
+    numpy.datetime64('2011-01-19','D')
+    >>> # 2012 Mother's Day in Canada and the U.S.
+    ... np.busday_offset('2012-05', 1, roll='forward', weekmask='Sun')
+    numpy.datetime64('2012-05-13','D')
+
+    >>> # First business day on or after a date
+    ... np.busday_offset('2011-03-20', 0, roll='forward')
+    numpy.datetime64('2011-03-21','D')
+    >>> np.busday_offset('2011-03-22', 0, roll='forward')
+    numpy.datetime64('2011-03-22','D')
+    >>> # First business day after a date
+    ... np.busday_offset('2011-03-20', 1, roll='backward')
+    numpy.datetime64('2011-03-21','D')
+    >>> np.busday_offset('2011-03-22', 1, roll='backward')
+    numpy.datetime64('2011-03-23','D')
+    """)
+
+add_newdoc('numpy.core.multiarray', 'busday_count',
+    """
+    busday_count(begindates, enddates, weekmask='1111100', holidays=[], busdaydef=None, out=None)
+
+    Counts the number of business days between `begindates` and
+    `enddates`, not including the day of `enddates`.
+
+    Parameters
+    ----------
+    begindates : array_like of datetime64[D]
+        The array of the first dates for counting.
+    enddates : array_like of datetime64[D]
+        The array of the end dates for counting, which are excluded
+        from the count themselves.
+    weekmask : string or array_like of bool
+        A seven-element array indicating which of Monday through Sunday may
+        be valid business days. May be specified as a list or array, like
+        [1,1,1,1,1,0,0], a length-seven string like '1111100', or a string
+        of three-letter weekday names, like 'MonTueWedThuFri'. The latter
+        string representation is most useful when only one day of the
+        week is important, like 'Mon' if you want to calculate the date
+        of Easter.
+    holidays : array_like of datetime64[D]
+        An array of dates which should be blacked out from being considered
+        as business days. They may be specified in any order, and NaT
+        (not-a-time) dates are ignored. Internally, this list is normalized
+        into a form suited for fast business day calculations.
+    busdaydef : busdaydef
+        A `busdaydef` object which specifies the business days. If this
+        parameter is provided, neither weekmask nor holidays may be
+        provided.
+    out : array of int64
+        If provided, this array is filled with the result.
+
+    Returns
+    -------
+    out : array of int64
+        An array containing the number of business days between
+        the begin and end dates.
+
+    See Also
+    --------
+    busdaydef: An object for efficiently specifying which are business days.
+    is_busday : Returns a boolean array indicating valid business days.
+    busday_offset : Applies an offset counted in business days.
+
+    Examples
+    --------
+    >>> # Number of weekdays in January 2011
+    ... np.busday_count('2011-01', '2011-02')
+    21
+    >>> # Number of weekdays in 2011
+    ...  np.busday_count('2011', '2012')
+    260
+    >>> # Number of Saturdays in 2011
+    ... np.busday_count('2011', '2012', weekmask='Sat')
+    53
+    """)
+
+##############################################################################
+#
 # nd_grid instances
 #
 ##############################################################################
