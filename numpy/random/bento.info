@@ -1,3 +1,5 @@
+HookFile: bscript
+
 Library:
     Extension: mtrand
         Sources:
