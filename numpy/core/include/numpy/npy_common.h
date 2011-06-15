@@ -178,11 +178,12 @@ typedef unsigned int npy_uint;
 typedef unsigned long npy_ulong;
 
 /* These are for completeness */
-typedef float npy_float;
-typedef double npy_double;
+typedef char npy_char;
 typedef short npy_short;
 typedef int npy_int;
 typedef long npy_long;
+typedef float npy_float;
+typedef double npy_double;
 
 /*
  * Disabling C99 complex usage: a lot of C code in numpy/scipy rely on being

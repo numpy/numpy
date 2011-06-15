@@ -40,20 +40,24 @@ add_sortfuncs(void)
      * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
      *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
      *         CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE#
+     * #suff = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
+     *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+     *         npy_half, npy_float, npy_double, npy_longdouble, npy_cfloat,
+     *         npy_cdouble, npy_clongdouble, npy_string, npy_unicode#
      */
     descr = PyArray_DescrFromType(PyArray_@TYPE@);
     descr->f->sort[PyArray_QUICKSORT] =
-        (PyArray_SortFunc *)@TYPE@_quicksort;
-    descr->f->argsort[PyArray_QUICKSORT] =
-        (PyArray_ArgSortFunc *)@TYPE@_aquicksort;
+        (PyArray_SortFunc *)quicksort_@suff@;
     descr->f->sort[PyArray_HEAPSORT] =
-        (PyArray_SortFunc *)@TYPE@_heapsort;
-    descr->f->argsort[PyArray_HEAPSORT] =
-        (PyArray_ArgSortFunc *)@TYPE@_aheapsort;
+        (PyArray_SortFunc *)heapsort_@suff@;
     descr->f->sort[PyArray_MERGESORT] =
-        (PyArray_SortFunc *)@TYPE@_mergesort;
+        (PyArray_SortFunc *)mergesort_@suff@;
+    descr->f->argsort[PyArray_QUICKSORT] =
+        (PyArray_ArgSortFunc *)aquicksort_@suff@;
+    descr->f->argsort[PyArray_HEAPSORT] =
+        (PyArray_ArgSortFunc *)aheapsort_@suff@;
     descr->f->argsort[PyArray_MERGESORT] =
-        (PyArray_ArgSortFunc *)@TYPE@_amergesort;
+        (PyArray_ArgSortFunc *)amergesort_@suff@;
     /**end repeat**/
 
 }
