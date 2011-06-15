@@ -5950,7 +5950,7 @@ add_newdoc('numpy.core.multiarray', 'busdaycalendar',
 
     Parameters
     ----------
-    weekmask : string or array_like of bool
+    weekmask : str or array_like of bool, optional
         A seven-element array indicating which of Monday through Sunday may
         be valid business days. May be specified as a list or array, like
         [1,1,1,1,1,0,0], a length-seven string like '1111100', or a string
@@ -5958,7 +5958,7 @@ add_newdoc('numpy.core.multiarray', 'busdaycalendar',
         string representation is most useful when only one day of the
         week is important, like 'Mon' if you want to calculate the date
         of Easter.
-    holidays : array_like of datetime64[D]
+    holidays : array_like of datetime64[D], optional
         An array of dates which should be blacked out from being considered
         as business days. They may be specified in any order, and NaT
         (not-a-time) dates are ignored. Internally, this list is normalized
@@ -6011,7 +6011,7 @@ add_newdoc('numpy.core.multiarray', 'is_busday',
     ----------
     dates : array_like of datetime64[D]
         The array of dates to process.
-    weekmask : string or array_like of bool
+    weekmask : str or array_like of bool, optional
         A seven-element array indicating which of Monday through Sunday may
         be valid business days. May be specified as a list or array, like
         [1,1,1,1,1,0,0], a length-seven string like '1111100', or a string
@@ -6019,16 +6019,16 @@ add_newdoc('numpy.core.multiarray', 'is_busday',
         string representation is most useful when only one day of the
         week is important, like 'Mon' if you want to calculate the date
         of Easter.
-    holidays : array_like of datetime64[D]
+    holidays : array_like of datetime64[D], optional
         An array of dates which should be blacked out from being considered
         as business days. They may be specified in any order, and NaT
         (not-a-time) dates are ignored. Internally, this list is normalized
         into a form suited for fast business day calculations.
-    busdaycal : busdaycalendar
+    busdaycal : busdaycalendar, optional
         A `busdaycalendar` object which specifies the business days. If this
         parameter is provided, neither weekmask nor holidays may be
         provided.
-    out : array of bool
+    out : array of bool, optional
         If provided, this array is filled with the result.
 
     Returns
@@ -6063,9 +6063,9 @@ add_newdoc('numpy.core.multiarray', 'busday_offset',
     ----------
     dates : array_like of datetime64[D]
         The array of dates to process.
-    offsets : array_like of integer
+    offsets : array_like of int
         The array of offsets, which is broadcast with ``dates``.
-    roll : {'raise', 'nat', 'forward', 'following', 'backward', 'preceding', 'modifiedfollowing', 'modifiedpreceding'}
+    roll : {'raise', 'nat', 'forward', 'following', 'backward', 'preceding', 'modifiedfollowing', 'modifiedpreceding'}, optional
         How to treat dates that do not fall on a business day. The default
         is 'raise'.
 
@@ -6081,7 +6081,7 @@ add_newdoc('numpy.core.multiarray', 'busday_offset',
           * 'modifiedpreceding' means to take the first business day
             earlier in time unless it is across a Month boundary, in which
             case to take the first business day later in time.
-    weekmask : string or array_like of bool
+    weekmask : str or array_like of bool, optional
         A seven-element array indicating which of Monday through Sunday may
         be valid business days. May be specified as a list or array, like
         [1,1,1,1,1,0,0], a length-seven string like '1111100', or a string
@@ -6089,16 +6089,16 @@ add_newdoc('numpy.core.multiarray', 'busday_offset',
         string representation is most useful when only one day of the
         week is important, like 'Mon' if you want to calculate the date
         of Easter.
-    holidays : array_like of datetime64[D]
+    holidays : array_like of datetime64[D], optional
         An array of dates which should be blacked out from being considered
         as business days. They may be specified in any order, and NaT
         (not-a-time) dates are ignored. Internally, this list is normalized
         into a form suited for fast business day calculations.
-    busdaycal : busdaycalendar
+    busdaycal : busdaycalendar, optional
         A `busdaycalendar` object which specifies the business days. If this
         parameter is provided, neither weekmask nor holidays may be
         provided.
-    out : array of datetime64[D]
+    out : array of datetime64[D], optional
         If provided, this array is filled with the result.
 
     Returns
@@ -6154,7 +6154,7 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
     enddates : array_like of datetime64[D]
         The array of the end dates for counting, which are excluded
         from the count themselves.
-    weekmask : string or array_like of bool
+    weekmask : str or array_like of bool, optional
         A seven-element array indicating which of Monday through Sunday may
         be valid business days. May be specified as a list or array, like
         [1,1,1,1,1,0,0], a length-seven string like '1111100', or a string
@@ -6162,21 +6162,21 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
         string representation is most useful when only one day of the
         week is important, like 'Mon' if you want to calculate the date
         of Easter.
-    holidays : array_like of datetime64[D]
+    holidays : array_like of datetime64[D], optional
         An array of dates which should be blacked out from being considered
         as business days. They may be specified in any order, and NaT
         (not-a-time) dates are ignored. Internally, this list is normalized
         into a form suited for fast business day calculations.
-    busdaycal : busdaycalendar
+    busdaycal : busdaycalendar, optional
         A `busdaycalendar` object which specifies the business days. If this
         parameter is provided, neither weekmask nor holidays may be
         provided.
-    out : array of int64
+    out : array of int, optional
         If provided, this array is filled with the result.
 
     Returns
     -------
-    out : array of int64
+    out : array of int
         An array with a shape from broadcasting ``begindates`` and ``enddates``
         together, containing the number of business days between
         the begin and end dates.
