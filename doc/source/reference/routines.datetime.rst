@@ -13,7 +13,7 @@ Business Day Functions
 .. autosummary::
    :toctree: generated/
 
-   busdaydef
+   busdaycalendar
    is_busday
    busday_offset
    busday_count

@@ -24,12 +24,9 @@ typedef struct {
     npy_holidayslist holidays;
     int busdays_in_weekmask;
     npy_bool weekmask[7];
-} NpyBusinessDayDef;
+} NpyBusDayCalendar;
 
-NPY_NO_EXPORT PyTypeObject NpyBusinessDayDef_Type;
-
-#define NpyBusinessDayDef_Check(op) PyObject_TypeCheck(op, \
-                        &NpyBusinessDayDef_Type)
+NPY_NO_EXPORT PyTypeObject NpyBusDayCalendar_Type;
 
 /*
  * Converts a Python input into a 7-element weekmask, where 0 means

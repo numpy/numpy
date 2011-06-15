@@ -20,7 +20,7 @@
 #include "lowlevel_strided_loops.h"
 #include "_datetime.h"
 #include "datetime_busday.h"
-#include "datetime_busdaydef.h"
+#include "datetime_busdaycal.h"
 
 /* Gets the day of the week for a datetime64[D] value */
 static int
@@ -918,14 +918,14 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
     char *kwlist[] = {"dates", "offsets", "roll",
-                      "weekmask", "holidays", "busdaydef", "out", NULL};
+                      "weekmask", "holidays", "busdaycal", "out", NULL};
 
     PyObject *dates_in = NULL, *offsets_in = NULL, *out_in = NULL;
 
     PyArrayObject *dates = NULL, *offsets = NULL, *out = NULL, *ret;
     NPY_BUSDAY_ROLL roll = NPY_BUSDAY_RAISE;
     npy_bool weekmask[7] = {2, 1, 1, 1, 1, 0, 0};
-    NpyBusinessDayDef *busdaydef = NULL;
+    NpyBusDayCalendar *busdaycal = NULL;
     int i, busdays_in_weekmask;
     npy_holidayslist holidays = {NULL, NULL};
     int allocated_holidays = 1;
@@ -937,17 +937,17 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
                                     &PyArray_BusDayRollConverter, &roll,
                                     &PyArray_WeekMaskConverter, &weekmask[0],
                                     &PyArray_HolidaysConverter, &holidays,
-                                    &NpyBusinessDayDef_Type, &busdaydef,
+                                    &NpyBusDayCalendar_Type, &busdaycal,
                                     &out_in)) {
         goto fail;
     }
 
-    /* Make sure only one of the weekmask/holidays and busdaydef is supplied */
-    if (busdaydef != NULL) {
+    /* Make sure only one of the weekmask/holidays and busdaycal is supplied */
+    if (busdaycal != NULL) {
         if (weekmask[0] != 2 || holidays.begin != NULL) {
             PyErr_SetString(PyExc_ValueError,
                     "Cannot supply both the weekmask/holidays and the "
-                    "busdaydef parameters to busday_offset()");
+                    "busdaycal parameters to busday_offset()");
             goto fail;
         }
 
@@ -955,9 +955,9 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
         allocated_holidays = 0;
 
         /* Copy the private normalized weekmask/holidays data */
-        holidays = busdaydef->holidays;
-        busdays_in_weekmask = busdaydef->busdays_in_weekmask;
-        memcpy(weekmask, busdaydef->weekmask, 7);
+        holidays = busdaycal->holidays;
+        busdays_in_weekmask = busdaycal->busdays_in_weekmask;
+        memcpy(weekmask, busdaycal->weekmask, 7);
     }
     else {
         /*
@@ -1048,13 +1048,13 @@ array_busday_count(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
     char *kwlist[] = {"begindates", "enddates",
-                      "weekmask", "holidays", "busdaydef", "out", NULL};
+                      "weekmask", "holidays", "busdaycal", "out", NULL};
 
     PyObject *dates_begin_in = NULL, *dates_end_in = NULL, *out_in = NULL;
 
     PyArrayObject *dates_begin = NULL, *dates_end = NULL, *out = NULL, *ret;
     npy_bool weekmask[7] = {2, 1, 1, 1, 1, 0, 0};
-    NpyBusinessDayDef *busdaydef = NULL;
+    NpyBusDayCalendar *busdaycal = NULL;
     int i, busdays_in_weekmask;
     npy_holidayslist holidays = {NULL, NULL};
     int allocated_holidays = 1;
@@ -1065,17 +1065,17 @@ array_busday_count(PyObject *NPY_UNUSED(self),
                                     &dates_end_in,
                                     &PyArray_WeekMaskConverter, &weekmask[0],
                                     &PyArray_HolidaysConverter, &holidays,
-                                    &NpyBusinessDayDef_Type, &busdaydef,
+                                    &NpyBusDayCalendar_Type, &busdaycal,
                                     &out_in)) {
         goto fail;
     }
 
-    /* Make sure only one of the weekmask/holidays and busdaydef is supplied */
-    if (busdaydef != NULL) {
+    /* Make sure only one of the weekmask/holidays and busdaycal is supplied */
+    if (busdaycal != NULL) {
         if (weekmask[0] != 2 || holidays.begin != NULL) {
             PyErr_SetString(PyExc_ValueError,
                     "Cannot supply both the weekmask/holidays and the "
-                    "busdaydef parameters to busday_count()");
+                    "busdaycal parameters to busday_count()");
             goto fail;
         }
 
@@ -1083,9 +1083,9 @@ array_busday_count(PyObject *NPY_UNUSED(self),
         allocated_holidays = 0;
 
         /* Copy the private normalized weekmask/holidays data */
-        holidays = busdaydef->holidays;
-        busdays_in_weekmask = busdaydef->busdays_in_weekmask;
-        memcpy(weekmask, busdaydef->weekmask, 7);
+        holidays = busdaycal->holidays;
+        busdays_in_weekmask = busdaycal->busdays_in_weekmask;
+        memcpy(weekmask, busdaycal->weekmask, 7);
     }
     else {
         /*
@@ -1192,13 +1192,13 @@ array_is_busday(PyObject *NPY_UNUSED(self),
                       PyObject *args, PyObject *kwds)
 {
     char *kwlist[] = {"dates",
-                      "weekmask", "holidays", "busdaydef", "out", NULL};
+                      "weekmask", "holidays", "busdaycal", "out", NULL};
 
     PyObject *dates_in = NULL, *out_in = NULL;
 
     PyArrayObject *dates = NULL,*out = NULL, *ret;
     npy_bool weekmask[7] = {2, 1, 1, 1, 1, 0, 0};
-    NpyBusinessDayDef *busdaydef = NULL;
+    NpyBusDayCalendar *busdaycal = NULL;
     int i, busdays_in_weekmask;
     npy_holidayslist holidays = {NULL, NULL};
     int allocated_holidays = 1;
@@ -1208,17 +1208,17 @@ array_is_busday(PyObject *NPY_UNUSED(self),
                                     &dates_in,
                                     &PyArray_WeekMaskConverter, &weekmask[0],
                                     &PyArray_HolidaysConverter, &holidays,
-                                    &NpyBusinessDayDef_Type, &busdaydef,
+                                    &NpyBusDayCalendar_Type, &busdaycal,
                                     &out_in)) {
         goto fail;
     }
 
-    /* Make sure only one of the weekmask/holidays and busdaydef is supplied */
-    if (busdaydef != NULL) {
+    /* Make sure only one of the weekmask/holidays and busdaycal is supplied */
+    if (busdaycal != NULL) {
         if (weekmask[0] != 2 || holidays.begin != NULL) {
             PyErr_SetString(PyExc_ValueError,
                     "Cannot supply both the weekmask/holidays and the "
-                    "busdaydef parameters to is_busday()");
+                    "busdaycal parameters to is_busday()");
             goto fail;
         }
 
@@ -1226,9 +1226,9 @@ array_is_busday(PyObject *NPY_UNUSED(self),
         allocated_holidays = 0;
 
         /* Copy the private normalized weekmask/holidays data */
-        holidays = busdaydef->holidays;
-        busdays_in_weekmask = busdaydef->busdays_in_weekmask;
-        memcpy(weekmask, busdaydef->weekmask, 7);
+        holidays = busdaycal->holidays;
+        busdays_in_weekmask = busdaycal->busdays_in_weekmask;
+        memcpy(weekmask, busdaycal->weekmask, 7);
     }
     else {
         /*

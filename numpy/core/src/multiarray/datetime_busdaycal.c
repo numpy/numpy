@@ -1,6 +1,6 @@
 /*
  * This file implements an object encapsulating a business day
- * definition for accelerating NumPy datetime business day functions.
+ * calendar object for accelerating NumPy datetime business day functions.
  *
  * Written by Mark Wiebe (mwwiebe@gmail.com)
  * Copyright (c) 2011 by Enthought, Inc.
@@ -21,7 +21,7 @@
 #include "lowlevel_strided_loops.h"
 #include "_datetime.h"
 #include "datetime_busday.h"
-#include "datetime_busdaydef.h"
+#include "datetime_busdaycal.h"
 
 NPY_NO_EXPORT int
 PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
@@ -332,12 +332,12 @@ fail:
 }
 
 static PyObject *
-busdaydef_new(PyTypeObject *subtype,
+busdaycalendar_new(PyTypeObject *subtype,
                     PyObject *NPY_UNUSED(args), PyObject *NPY_UNUSED(kwds))
 {
-    NpyBusinessDayDef *self;
+    NpyBusDayCalendar *self;
 
-    self = (NpyBusinessDayDef *)subtype->tp_alloc(subtype, 0);
+    self = (NpyBusDayCalendar *)subtype->tp_alloc(subtype, 0);
     if (self != NULL) {
         /* Start with an empty holidays list */
         self->holidays.begin = NULL;
@@ -358,7 +358,7 @@ busdaydef_new(PyTypeObject *subtype,
 }
 
 static int
-busdaydef_init(NpyBusinessDayDef *self, PyObject *args, PyObject *kwds)
+busdaycalendar_init(NpyBusDayCalendar *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"weekmask", "holidays", NULL};
     int i, busdays_in_weekmask;
@@ -382,7 +382,7 @@ busdaydef_init(NpyBusinessDayDef *self, PyObject *args, PyObject *kwds)
 
     /* Parse the parameters */
     if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                        "|O&O&:busdaydef", kwlist,
+                        "|O&O&:busdaycal", kwlist,
                         &PyArray_WeekMaskConverter, &self->weekmask[0],
                         &PyArray_HolidaysConverter, &self->holidays)) {
         return -1;
@@ -400,7 +400,7 @@ busdaydef_init(NpyBusinessDayDef *self, PyObject *args, PyObject *kwds)
 
     if (self->busdays_in_weekmask == 0) {
         PyErr_SetString(PyExc_ValueError,
-                "Cannot construct a numpy.busdaydef with a weekmask of "
+                "Cannot construct a numpy.busdaycal with a weekmask of "
                 "all zeros");
         return -1;
     }
@@ -409,7 +409,7 @@ busdaydef_init(NpyBusinessDayDef *self, PyObject *args, PyObject *kwds)
 }
 
 static void
-busdaydef_dealloc(NpyBusinessDayDef *self)
+busdaycalendar_dealloc(NpyBusDayCalendar *self)
 {
     /* Clear the holidays */
     if (self->holidays.begin != NULL) {
@@ -422,7 +422,7 @@ busdaydef_dealloc(NpyBusinessDayDef *self)
 }
 
 static PyObject *
-busdaydef_weekmask_get(NpyBusinessDayDef *self)
+busdaycalendar_weekmask_get(NpyBusDayCalendar *self)
 {
     PyArrayObject *ret;
     npy_intp size = 7;
@@ -440,7 +440,7 @@ busdaydef_weekmask_get(NpyBusinessDayDef *self)
 }
 
 static PyObject *
-busdaydef_holidays_get(NpyBusinessDayDef *self)
+busdaycalendar_holidays_get(NpyBusDayCalendar *self)
 {
     PyArrayObject *ret;
     PyArray_Descr *date_dtype;
@@ -467,29 +467,29 @@ busdaydef_holidays_get(NpyBusinessDayDef *self)
     return (PyObject *)ret;
 }
 
-static PyGetSetDef busdaydef_getsets[] = {
+static PyGetSetDef busdaycalendar_getsets[] = {
     {"weekmask",
-        (getter)busdaydef_weekmask_get,
+        (getter)busdaycalendar_weekmask_get,
         NULL, NULL, NULL},
     {"holidays",
-        (getter)busdaydef_holidays_get,
+        (getter)busdaycalendar_holidays_get,
         NULL, NULL, NULL},
 
     {NULL, NULL, NULL, NULL, NULL}
 };
 
-NPY_NO_EXPORT PyTypeObject NpyBusinessDayDef_Type = {
+NPY_NO_EXPORT PyTypeObject NpyBusDayCalendar_Type = {
 #if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
 #else
     PyObject_HEAD_INIT(NULL)
     0,                                          /* ob_size */
 #endif
-    "numpy.busdaydef",                          /* tp_name */
-    sizeof(NpyBusinessDayDef),                  /* tp_basicsize */
+    "numpy.busdaycalendar",                     /* tp_name */
+    sizeof(NpyBusDayCalendar),                  /* tp_basicsize */
     0,                                          /* tp_itemsize */
     /* methods */
-    (destructor)busdaydef_dealloc,              /* tp_dealloc */
+    (destructor)busdaycalendar_dealloc,         /* tp_dealloc */
     0,                                          /* tp_print */
     0,                                          /* tp_getattr */
     0,                                          /* tp_setattr */
@@ -518,15 +518,15 @@ NPY_NO_EXPORT PyTypeObject NpyBusinessDayDef_Type = {
     0,                                          /* tp_iternext */
     0,                                          /* tp_methods */
     0,                                          /* tp_members */
-    busdaydef_getsets,                          /* tp_getset */
+    busdaycalendar_getsets,                     /* tp_getset */
     0,                                          /* tp_base */
     0,                                          /* tp_dict */
     0,                                          /* tp_descr_get */
     0,                                          /* tp_descr_set */
     0,                                          /* tp_dictoffset */
-    (initproc)busdaydef_init,                   /* tp_init */
+    (initproc)busdaycalendar_init,              /* tp_init */
     0,                                          /* tp_alloc */
-    busdaydef_new,                              /* tp_new */
+    busdaycalendar_new,                         /* tp_new */
     0,                                          /* tp_free */
     0,                                          /* tp_is_gc */
     0,                                          /* tp_bases */

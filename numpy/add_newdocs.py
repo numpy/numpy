@@ -5940,12 +5940,13 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
 #
 ##############################################################################
 
-add_newdoc('numpy.core.multiarray', 'busdaydef',
+add_newdoc('numpy.core.multiarray', 'busdaycalendar',
     """
-    busdaydef(weekmask='1111100', holidays=None)
+    busdaycalendar(weekmask='1111100', holidays=None)
 
-    An object that efficiently stores information defining business
-    days for the business day-related functions.
+    A business day calendar object that efficiently stores
+    information defining business days for the business
+    day-related functions.
 
     Parameters
     ----------
@@ -5965,8 +5966,8 @@ add_newdoc('numpy.core.multiarray', 'busdaydef',
 
     Returns
     -------
-    out : busdaydef
-        A business day definition object containing the specified
+    out : busdaycalendar
+        A business day calendar object containing the specified
         weekmask and holidays.
 
     See Also
@@ -5983,7 +5984,8 @@ add_newdoc('numpy.core.multiarray', 'busdaydef',
     Examples
     --------
     >>> # Some important days in July
-    ... bdd = np.busdaydef(holidays=['2011-07-01', '2011-07-04', '2011-07-17'])
+    ... bdd = np.busdaycalendar(
+    ...             holidays=['2011-07-01', '2011-07-04', '2011-07-17'])
     >>> # Default is Monday to Friday weekdays
     ... bdd.weekmask
     array([ True,  True,  True,  True,  True, False, False], dtype='bool')
@@ -5992,15 +5994,15 @@ add_newdoc('numpy.core.multiarray', 'busdaydef',
     array(['2011-07-01', '2011-07-04'], dtype='datetime64[D]')
     """)
 
-add_newdoc('numpy.core.multiarray', 'busdaydef', ('weekmask',
+add_newdoc('numpy.core.multiarray', 'busdaycalendar', ('weekmask',
     """A copy of the seven-element boolean mask indicating valid business days."""))
 
-add_newdoc('numpy.core.multiarray', 'busdaydef', ('holidays',
+add_newdoc('numpy.core.multiarray', 'busdaycalendar', ('holidays',
     """A copy of the holiday array indicating blacked out business days."""))
 
 add_newdoc('numpy.core.multiarray', 'is_busday',
     """
-    is_busday(dates, weekmask='1111100', holidays=None, busdaydef=None, out=None)
+    is_busday(dates, weekmask='1111100', holidays=None, busdaycal=None, out=None)
 
     Calculates which of the given dates are valid business days, and
     which are not.
@@ -6022,8 +6024,8 @@ add_newdoc('numpy.core.multiarray', 'is_busday',
         as business days. They may be specified in any order, and NaT
         (not-a-time) dates are ignored. Internally, this list is normalized
         into a form suited for fast business day calculations.
-    busdaydef : busdaydef
-        A `busdaydef` object which specifies the business days. If this
+    busdaycal : busdaycalendar
+        A `busdaycalendar` object which specifies the business days. If this
         parameter is provided, neither weekmask nor holidays may be
         provided.
     out : array of bool
@@ -6037,7 +6039,7 @@ add_newdoc('numpy.core.multiarray', 'is_busday',
 
     See Also
     --------
-    busdaydef: An object for efficiently specifying which are business days.
+    busdaycalendar: An object for efficiently specifying which are business days.
     busday_offset : Applies an offset counted in business days.
     busday_count : Counts how many business days are in a half-open date range.
 
@@ -6051,7 +6053,7 @@ add_newdoc('numpy.core.multiarray', 'is_busday',
 
 add_newdoc('numpy.core.multiarray', 'busday_offset',
     """
-    busday_offset(dates, offsets, roll='raise', weekmask='1111100', holidays=None, busdaydef=None, out=None)
+    busday_offset(dates, offsets, roll='raise', weekmask='1111100', holidays=None, busdaycal=None, out=None)
 
     First adjusts the date to fall on a business day according to
     the ``roll`` rule, then applies offsets to the given dates
@@ -6092,8 +6094,8 @@ add_newdoc('numpy.core.multiarray', 'busday_offset',
         as business days. They may be specified in any order, and NaT
         (not-a-time) dates are ignored. Internally, this list is normalized
         into a form suited for fast business day calculations.
-    busdaydef : busdaydef
-        A `busdaydef` object which specifies the business days. If this
+    busdaycal : busdaycalendar
+        A `busdaycalendar` object which specifies the business days. If this
         parameter is provided, neither weekmask nor holidays may be
         provided.
     out : array of datetime64[D]
@@ -6107,7 +6109,7 @@ add_newdoc('numpy.core.multiarray', 'busday_offset',
 
     See Also
     --------
-    busdaydef: An object for efficiently specifying which are business days.
+    busdaycalendar: An object for efficiently specifying which are business days.
     is_busday : Returns a boolean array indicating valid business days.
     busday_count : Counts how many business days are in a half-open date range.
 
@@ -6140,7 +6142,7 @@ add_newdoc('numpy.core.multiarray', 'busday_offset',
 
 add_newdoc('numpy.core.multiarray', 'busday_count',
     """
-    busday_count(begindates, enddates, weekmask='1111100', holidays=[], busdaydef=None, out=None)
+    busday_count(begindates, enddates, weekmask='1111100', holidays=[], busdaycal=None, out=None)
 
     Counts the number of business days between `begindates` and
     `enddates`, not including the day of `enddates`.
@@ -6165,8 +6167,8 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
         as business days. They may be specified in any order, and NaT
         (not-a-time) dates are ignored. Internally, this list is normalized
         into a form suited for fast business day calculations.
-    busdaydef : busdaydef
-        A `busdaydef` object which specifies the business days. If this
+    busdaycal : busdaycalendar
+        A `busdaycalendar` object which specifies the business days. If this
         parameter is provided, neither weekmask nor holidays may be
         provided.
     out : array of int64
@@ -6181,7 +6183,7 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
 
     See Also
     --------
-    busdaydef: An object for efficiently specifying which are business days.
+    busdaycalendar: An object for efficiently specifying which are business days.
     is_busday : Returns a boolean array indicating valid business days.
     busday_offset : Applies an offset counted in business days.
 
