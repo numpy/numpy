@@ -47,7 +47,10 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     const npy_datetimestruct *dts,
                                     npy_datetime *out);
 
-/* Extracts the month number from a 'datetime64[D]' value */
+/*
+ * Extracts the month number, within the current year,
+ * from a 'datetime64[D]' value. January is 1, etc.
+ */
 NPY_NO_EXPORT int
 days_to_month_number(npy_datetime days);
 
@@ -60,15 +63,6 @@ NPY_NO_EXPORT int
 parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
                                     PyArray_DatetimeMetaData *out_meta);
 
-
-/*
- * This function returns a reference to a capsule
- * which contains the datetime metadata parsed from a metadata
- * string. 'metastr' should be NULL-terminated, and len should
- * contain its string length.
- */
-NPY_NO_EXPORT PyObject *
-parse_datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len);
 
 /*
  * Converts a datetype dtype string into a dtype descr object.

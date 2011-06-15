@@ -1690,7 +1690,16 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
             }
         }
     }
-    /* Treat datetime generic units with the same idea as flexible strings */
+    /*
+     * Treat datetime generic units with the same idea as flexible strings.
+     *
+     * Flexible strings, for example the dtype 'str', use size zero as a
+     * signal indicating that they represent a "generic string type" instead
+     * of a string type with the size already baked in. The generic unit
+     * plays the same role, indicating that it's a "generic datetime type",
+     * and the actual unit should be filled in when needed just like the
+     * actual string size should be filled in when needed.
+     */
     else if (newtype != NULL && newtype->type_num == NPY_DATETIME) {
         PyArray_DatetimeMetaData *meta =
                     get_datetime_metadata_from_dtype(newtype);

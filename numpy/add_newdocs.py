@@ -6032,8 +6032,8 @@ add_newdoc('numpy.core.multiarray', 'is_busday',
     Returns
     -------
     out : array of bool
-        An array containing True for each valid business day, and
-        False for the others.
+        An array with the same shape as ``dates``, containing True for
+        each valid business day, and False for the others.
 
     See Also
     --------
@@ -6102,7 +6102,8 @@ add_newdoc('numpy.core.multiarray', 'busday_offset',
     Returns
     -------
     out : array of datetime64[D]
-        An array containing the dates with offsets applied.
+        An array with a shape from broadcasting ``dates`` and ``offsets``
+        together, containing the dates with offsets applied.
 
     See Also
     --------
@@ -6174,7 +6175,8 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
     Returns
     -------
     out : array of int64
-        An array containing the number of business days between
+        An array with a shape from broadcasting ``begindates`` and ``enddates``
+        together, containing the number of business days between
         the begin and end dates.
 
     See Also

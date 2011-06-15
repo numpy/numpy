@@ -1505,8 +1505,8 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
     /* If something overflowed, make both num and denom 0 */
     if (denom == 0) {
         PyErr_Format(PyExc_OverflowError,
-                    "Integer overflow getting a conversion factor between "
-                    "NumPy datetime unit %s and %s",
+                    "Integer overflow while computing the conversion "
+                    "factor between NumPy datetime units %s and %s",
                     _datetime_strings[src_base],
                     _datetime_strings[dst_base]);
         *out_num = 0;
@@ -4660,7 +4660,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
     }
     else {
         PyErr_SetString(PyExc_ValueError,
-                    "arange: step may not be zero");
+                    "arange: step cannot be zero");
         return NULL;
     }
 
