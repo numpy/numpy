@@ -347,6 +347,19 @@ class TestUfunc(TestCase):
         a = np.arange(6, dtype='<i4').reshape((2,3))
         assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1), err_msg=msg)
 
+        # Output should always be native-endian
+        Ba = np.arange(1, dtype='>f8')
+        La = np.arange(1, dtype='<f8')
+        assert_equal((Ba+Ba).dtype, np.dtype('f8'))
+        assert_equal((Ba+La).dtype, np.dtype('f8'))
+        assert_equal((La+Ba).dtype, np.dtype('f8'))
+        assert_equal((La+La).dtype, np.dtype('f8'))
+
+        assert_equal(np.absolute(La).dtype, np.dtype('f8'))
+        assert_equal(np.absolute(Ba).dtype, np.dtype('f8'))
+        assert_equal(np.negative(La).dtype, np.dtype('f8'))
+        assert_equal(np.negative(Ba).dtype, np.dtype('f8'))
+
     def test_incontiguous_array(self):
         msg = "incontiguous memory layout of array"
         x = np.arange(64).reshape((2,2,2,2,2,2))

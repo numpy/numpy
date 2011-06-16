@@ -1705,6 +1705,22 @@ find_specified_ufunc_inner_loop(PyUFuncObject *self,
     return -1;
 }
 
+/*
+ * Returns a new reference to type if it is already NBO, otherwise
+ * returns a copy converted to NBO.
+ */
+static PyArray_Descr *
+ensure_dtype_nbo(PyArray_Descr *type)
+{
+    if (PyArray_ISNBO(type->byteorder)) {
+        Py_INCREF(type);
+        return type;
+    }
+    else {
+        return PyArray_DescrNewByteorder(type, NPY_NATIVE);
+    }
+}
+
 /*UFUNC_API
  *
  * This function applies the default type resolution rules
@@ -1827,9 +1843,12 @@ PyUFunc_SimpleBinaryComparisonTypeResolution(PyUFuncObject *ufunc,
             return -1;
         }
 
-        out_dtypes[0] = (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 0);
+        out_dtypes[0] = ensure_dtype_nbo(
+                            (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 0));
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
         out_dtypes[1] = out_dtypes[0];
-        Py_INCREF(out_dtypes[0]);
         Py_INCREF(out_dtypes[1]);
     }
 
@@ -1924,8 +1943,10 @@ PyUFunc_SimpleUnaryOperationTypeResolution(PyUFuncObject *ufunc,
 
     if (type_tup == NULL) {
         /* Input types are the result type */
-        out_dtypes[0] = PyArray_DESCR(operands[0]);
-        Py_INCREF(out_dtypes[0]);
+        out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
         out_dtypes[1] = out_dtypes[0];
         Py_INCREF(out_dtypes[1]);
     }
@@ -1945,8 +1966,11 @@ PyUFunc_SimpleUnaryOperationTypeResolution(PyUFuncObject *ufunc,
             return -1;
         }
 
-        out_dtypes[0] = (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 0);
-        Py_INCREF(out_dtypes[0]);
+        out_dtypes[0] = ensure_dtype_nbo(
+                            (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 0));
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
         out_dtypes[1] = out_dtypes[0];
         Py_INCREF(out_dtypes[1]);
     }
@@ -2060,8 +2084,11 @@ PyUFunc_SimpleBinaryOperationTypeResolution(PyUFuncObject *ufunc,
             return -1;
         }
 
-        out_dtypes[0] = (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 0);
-        Py_INCREF(out_dtypes[0]);
+        out_dtypes[0] = ensure_dtype_nbo(
+                            (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 0));
+        if (out_dtypes[0] == NULL) {
+            return -1;
+        }
         out_dtypes[1] = out_dtypes[0];
         Py_INCREF(out_dtypes[1]);
         out_dtypes[2] = out_dtypes[0];
@@ -2233,8 +2260,6 @@ timedelta_dtype_with_copied_meta(PyArray_Descr *dtype)
     return ret;
 }
 
-
-
 /*
  * This function applies the type resolution rules for addition.
  * In particular, there are a number of special cases with datetime:
@@ -2307,8 +2332,10 @@ PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
         /* m8[<A>] + int => m8[<A>] + m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                                     PyTypeNum_ISBOOL(type_num2)) {
-            out_dtypes[0] = PyArray_DESCR(operands[0]);
-            Py_INCREF(out_dtypes[0]);
+            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
             out_dtypes[1] = out_dtypes[0];
             Py_INCREF(out_dtypes[1]);
             out_dtypes[2] = out_dtypes[0];
@@ -2341,14 +2368,18 @@ PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
         /* M8[<A>] + int => M8[<A>] + m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                     PyTypeNum_ISBOOL(type_num2)) {
+            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
             /* Make a new NPY_TIMEDELTA, and copy type1's metadata */
             out_dtypes[1] = timedelta_dtype_with_copied_meta(
                                             PyArray_DESCR(operands[0]));
             if (out_dtypes[1] == NULL) {
+                Py_DECREF(out_dtypes[0]);
+                out_dtypes[0] = NULL;
                 return -1;
             }
-            out_dtypes[0] = PyArray_DESCR(operands[0]);
-            Py_INCREF(out_dtypes[0]);
             out_dtypes[2] = out_dtypes[0];
             Py_INCREF(out_dtypes[2]);
 
@@ -2361,8 +2392,10 @@ PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
     else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
         /* int + m8[<A>] => m8[<A>] + m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = PyArray_DESCR(operands[1]);
-            Py_INCREF(out_dtypes[0]);
+            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[1]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
             out_dtypes[1] = out_dtypes[0];
             Py_INCREF(out_dtypes[1]);
             out_dtypes[2] = out_dtypes[0];
@@ -2377,8 +2410,12 @@ PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
-            out_dtypes[1] = PyArray_DESCR(operands[1]);
-            Py_INCREF(out_dtypes[1]);
+            out_dtypes[1] = ensure_dtype_nbo(PyArray_DESCR(operands[1]));
+            if (out_dtypes[1] == NULL) {
+                Py_DECREF(out_dtypes[0]);
+                out_dtypes[0] = NULL;
+                return -1;
+            }
             out_dtypes[2] = out_dtypes[1];
             Py_INCREF(out_dtypes[2]);
 
@@ -2485,8 +2522,10 @@ PyUFunc_SubtractionTypeResolution(PyUFuncObject *ufunc,
         /* m8[<A>] - int => m8[<A>] - m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                                         PyTypeNum_ISBOOL(type_num2)) {
-            out_dtypes[0] = PyArray_DESCR(operands[0]);
-            Py_INCREF(out_dtypes[0]);
+            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
             out_dtypes[1] = out_dtypes[0];
             Py_INCREF(out_dtypes[1]);
             out_dtypes[2] = out_dtypes[0];
@@ -2519,14 +2558,18 @@ PyUFunc_SubtractionTypeResolution(PyUFuncObject *ufunc,
         /* M8[<A>] - int => M8[<A>] - m8[<A>] */
         else if (PyTypeNum_ISINTEGER(type_num2) ||
                     PyTypeNum_ISBOOL(type_num2)) {
+            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
             /* Make a new NPY_TIMEDELTA, and copy type1's metadata */
             out_dtypes[1] = timedelta_dtype_with_copied_meta(
                                             PyArray_DESCR(operands[0]));
             if (out_dtypes[1] == NULL) {
+                Py_DECREF(out_dtypes[0]);
+                out_dtypes[0] = NULL;
                 return -1;
             }
-            out_dtypes[0] = PyArray_DESCR(operands[0]);
-            Py_INCREF(out_dtypes[0]);
             out_dtypes[2] = out_dtypes[0];
             Py_INCREF(out_dtypes[2]);
 
@@ -2555,8 +2598,10 @@ PyUFunc_SubtractionTypeResolution(PyUFuncObject *ufunc,
     else if (PyTypeNum_ISINTEGER(type_num1) || PyTypeNum_ISBOOL(type_num1)) {
         /* int - m8[<A>] => m8[<A>] - m8[<A>] */
         if (type_num2 == NPY_TIMEDELTA) {
-            out_dtypes[0] = PyArray_DESCR(operands[1]);
-            Py_INCREF(out_dtypes[0]);
+            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[1]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
             out_dtypes[1] = out_dtypes[0];
             Py_INCREF(out_dtypes[1]);
             out_dtypes[2] = out_dtypes[0];
@@ -2649,8 +2694,10 @@ PyUFunc_MultiplicationTypeResolution(PyUFuncObject *ufunc,
     if (type_num1 == NPY_TIMEDELTA) {
         /* m8[<A>] * int## => m8[<A>] * int64 */
         if (PyTypeNum_ISINTEGER(type_num2) || PyTypeNum_ISBOOL(type_num2)) {
-            out_dtypes[0] = PyArray_DESCR(operands[0]);
-            Py_INCREF(out_dtypes[0]);
+            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
             out_dtypes[1] = PyArray_DescrNewFromType(NPY_LONGLONG);
             if (out_dtypes[1] == NULL) {
                 Py_DECREF(out_dtypes[0]);
@@ -2664,8 +2711,10 @@ PyUFunc_MultiplicationTypeResolution(PyUFuncObject *ufunc,
         }
         /* m8[<A>] * float## => m8[<A>] * float64 */
         else if (PyTypeNum_ISFLOAT(type_num2)) {
-            out_dtypes[0] = PyArray_DESCR(operands[0]);
-            Py_INCREF(out_dtypes[0]);
+            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
             out_dtypes[1] = PyArray_DescrNewFromType(NPY_DOUBLE);
             if (out_dtypes[1] == NULL) {
                 Py_DECREF(out_dtypes[0]);
@@ -2688,8 +2737,12 @@ PyUFunc_MultiplicationTypeResolution(PyUFuncObject *ufunc,
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
-            out_dtypes[1] = PyArray_DESCR(operands[1]);
-            Py_INCREF(out_dtypes[1]);
+            out_dtypes[1] = ensure_dtype_nbo(PyArray_DESCR(operands[1]));
+            if (out_dtypes[1] == NULL) {
+                Py_DECREF(out_dtypes[0]);
+                out_dtypes[0] = NULL;
+                return -1;
+            }
             out_dtypes[2] = out_dtypes[1];
             Py_INCREF(out_dtypes[2]);
 
@@ -2706,8 +2759,12 @@ PyUFunc_MultiplicationTypeResolution(PyUFuncObject *ufunc,
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
-            out_dtypes[1] = PyArray_DESCR(operands[1]);
-            Py_INCREF(out_dtypes[1]);
+            out_dtypes[1] = ensure_dtype_nbo(PyArray_DESCR(operands[1]));
+            if (out_dtypes[1] == NULL) {
+                Py_DECREF(out_dtypes[0]);
+                out_dtypes[0] = NULL;
+                return -1;
+            }
             out_dtypes[2] = out_dtypes[1];
             Py_INCREF(out_dtypes[2]);
 
@@ -2796,8 +2853,10 @@ PyUFunc_DivisionTypeResolution(PyUFuncObject *ufunc,
     if (type_num1 == NPY_TIMEDELTA) {
         /* m8[<A>] / int## => m8[<A>] / int64 */
         if (PyTypeNum_ISINTEGER(type_num2)) {
-            out_dtypes[0] = PyArray_DESCR(operands[0]);
-            Py_INCREF(out_dtypes[0]);
+            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
             out_dtypes[1] = PyArray_DescrNewFromType(NPY_LONGLONG);
             if (out_dtypes[1] == NULL) {
                 Py_DECREF(out_dtypes[0]);
@@ -2811,8 +2870,10 @@ PyUFunc_DivisionTypeResolution(PyUFuncObject *ufunc,
         }
         /* m8[<A>] / float## => m8[<A>] / float64 */
         else if (PyTypeNum_ISFLOAT(type_num2)) {
-            out_dtypes[0] = PyArray_DESCR(operands[0]);
-            Py_INCREF(out_dtypes[0]);
+            out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
             out_dtypes[1] = PyArray_DescrNewFromType(NPY_DOUBLE);
             if (out_dtypes[1] == NULL) {
                 Py_DECREF(out_dtypes[0]);
