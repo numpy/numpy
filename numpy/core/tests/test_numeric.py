@@ -464,6 +464,29 @@ class TestTypes(TestCase):
     def test_result_type(self):
         self.check_promotion_cases(np.result_type)
 
+    def test_promote_types_endian(self):
+        # promote_types should always return native-endian types
+        assert_equal(np.promote_types('<i8', '<i8'), np.dtype('i8'))
+        assert_equal(np.promote_types('>i8', '>i8'), np.dtype('i8'))
+
+        assert_equal(np.promote_types('>i8', '>U16'), np.dtype('U16'))
+        assert_equal(np.promote_types('<i8', '<U16'), np.dtype('U16'))
+        assert_equal(np.promote_types('>U16', '>i8'), np.dtype('U16'))
+        assert_equal(np.promote_types('<U16', '<i8'), np.dtype('U16'))
+
+        assert_equal(np.promote_types('<S5', '<U8'), np.dtype('U8'))
+        assert_equal(np.promote_types('>S5', '>U8'), np.dtype('U8'))
+        assert_equal(np.promote_types('<U8', '<S5'), np.dtype('U8'))
+        assert_equal(np.promote_types('>U8', '>S5'), np.dtype('U8'))
+        assert_equal(np.promote_types('<U5', '<U8'), np.dtype('U8'))
+        assert_equal(np.promote_types('>U8', '>U5'), np.dtype('U8'))
+
+        assert_equal(np.promote_types('<M8', '<M8'), np.dtype('M8'))
+        assert_equal(np.promote_types('>M8', '>M8'), np.dtype('M8'))
+        assert_equal(np.promote_types('<m8', '<m8'), np.dtype('m8'))
+        assert_equal(np.promote_types('>m8', '>m8'), np.dtype('m8'))
+
+
     def test_can_cast(self):
         assert_(np.can_cast(np.int32, np.int64))
         assert_(np.can_cast(np.float64, np.complex))
