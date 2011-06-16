@@ -739,15 +739,15 @@ PyArray_TypestrConvert(int itemsize, int gentype)
 
         case NPY_OBJECTLTR:
 #if PY_VERSION_HEX >= 0x02050000
-	    ret = PyErr_WarnEx(PyExc_DeprecationWarning,
-			       "DType strings 'O4' and 'O8' are deprecated "
-			       "because they are platform specific. Use "
-			       "'O' instead", 0); 
+            ret = PyErr_WarnEx(PyExc_DeprecationWarning,
+                               "DType strings 'O4' and 'O8' are deprecated "
+                               "because they are platform specific. Use "
+                               "'O' instead", 0); 
 #else
-	    ret = PyErr_Warn(PyExc_DeprecationWarning,
-			     "DType strings 'O4' and 'O8' are deprecated "
-			     "because they are platform specific. Use "
-			     "'O' instead"); 
+            ret = PyErr_Warn(PyExc_DeprecationWarning,
+                             "DType strings 'O4' and 'O8' are deprecated "
+                             "because they are platform specific. Use "
+                             "'O' instead"); 
 #endif
             if (ret == 0 && (itemsize == 4 || itemsize == 8)) {
                 newtype = NPY_OBJECT;
