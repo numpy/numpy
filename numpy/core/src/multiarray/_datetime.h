@@ -1,8 +1,24 @@
 #ifndef _NPY_PRIVATE__DATETIME_H_
 #define _NPY_PRIVATE__DATETIME_H_
 
+NPY_NO_EXPORT char *_datetime_strings[NPY_DATETIME_NUMUNITS];
+
+NPY_NO_EXPORT int _days_per_month_table[2][12];
+
 NPY_NO_EXPORT void
 numpy_pydatetime_import();
+
+/*
+ * Returns 1 if the given year is a leap year, 0 otherwise.
+ */
+NPY_NO_EXPORT int
+is_leapyear(npy_int64 year);
+
+/*
+ * Calculates the days offset from the 1970 epoch.
+ */
+NPY_NO_EXPORT npy_int64
+get_datetimestruct_days(const npy_datetimestruct *dts);
 
 /*
  * Creates a datetime or timedelta dtype using a copy of the provided metadata.
@@ -104,12 +120,34 @@ datetime_metadata_divides(
                         int strict_with_nonlinear_units);
 
 /*
+ * This provides the casting rules for the DATETIME data type units.
+ *
+ * Notably, there is a barrier between 'date units' and 'time units'
+ * for all but 'unsafe' casting.
+ */
+NPY_NO_EXPORT npy_bool
+can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
+                          NPY_DATETIMEUNIT dst_unit,
+                          NPY_CASTING casting);
+
+/*
  * This provides the casting rules for the DATETIME data type metadata.
  */
 NPY_NO_EXPORT npy_bool
 can_cast_datetime64_metadata(PyArray_DatetimeMetaData *src_meta,
                              PyArray_DatetimeMetaData *dst_meta,
                              NPY_CASTING casting);
+
+/*
+ * This provides the casting rules for the TIMEDELTA data type units.
+ *
+ * Notably, there is a barrier between the nonlinear years and
+ * months units, and all the other units.
+ */
+NPY_NO_EXPORT npy_bool
+can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
+                          NPY_DATETIMEUNIT dst_unit,
+                          NPY_CASTING casting);
 
 /*
  * This provides the casting rules for the TIMEDELTA data type metadata.
@@ -194,79 +232,6 @@ NPY_NO_EXPORT PyObject *
 append_metastr_to_string(PyArray_DatetimeMetaData *meta,
                                     int skip_brackets,
                                     PyObject *ret);
-
-/*
- * Provides a string length to use for converting datetime
- * objects with the given local and unit settings.
- */
-NPY_NO_EXPORT int
-get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base);
-
-/*
- * Parses (almost) standard ISO 8601 date strings. The differences are:
- *
- * + After the date and time, may place a ' ' followed by an event number.
- * + The date "20100312" is parsed as the year 20100312, not as
- *   equivalent to "2010-03-12". The '-' in the dates are not optional.
- * + Only seconds may have a decimal point, with up to 18 digits after it
- *   (maximum attoseconds precision).
- * + Either a 'T' as in ISO 8601 or a ' ' may be used to separate
- *   the date and the time. Both are treated equivalently.
- * + Doesn't (yet) handle the "YYYY-DDD" or "YYYY-Www" formats.
- * + Doesn't handle leap seconds (seconds value has 60 in these cases).
- * + Doesn't handle 24:00:00 as synonym for midnight (00:00:00) tomorrow
- * + Accepts special values "NaT" (not a time), "Today", (current
- *   day according to local time) and "Now" (current time in UTC).
- *
- * 'str' must be a NULL-terminated string, and 'len' must be its length.
- * 'unit' should contain -1 if the unit is unknown, or the unit
- *      which will be used if it is.
- * 'casting' controls how the detected unit from the string is allowed
- *           to be cast to the 'unit' parameter.
- *
- * 'out' gets filled with the parsed date-time.
- * 'out_local' gets set to 1 if the parsed time was in local time,
- *      to 0 otherwise. The values 'now' and 'today' don't get counted
- *      as local, and neither do UTC +/-#### timezone offsets, because
- *      they aren't using the computer's local timezone offset.
- * 'out_bestunit' gives a suggested unit based on the amount of
- *      resolution provided in the string, or -1 for NaT.
- * 'out_special' gets set to 1 if the parsed time was 'today',
- *      'now', or ''/'NaT'. For 'today', the unit recommended is
- *      'D', for 'now', the unit recommended is 's', and for 'NaT'
- *      the unit recommended is 'Y'.
- *
- * Returns 0 on success, -1 on failure.
- */
-NPY_NO_EXPORT int
-parse_iso_8601_date(char *str, int len,
-                    NPY_DATETIMEUNIT unit,
-                    NPY_CASTING casting,
-                    npy_datetimestruct *out,
-                    npy_bool *out_local,
-                    NPY_DATETIMEUNIT *out_bestunit,
-                    npy_bool *out_special);
-
-/*
- * Converts an npy_datetimestruct to an (almost) ISO 8601
- * NULL-terminated string.
- *
- * If 'local' is non-zero, it produces a string in local time with
- * a +-#### timezone offset, otherwise it uses timezone Z (UTC).
- *
- * 'base' restricts the output to that unit. Set 'base' to
- * -1 to auto-detect a base after which all the values are zero.
- *
- *  'tzoffset' is used if 'local' is enabled, and 'tzoffset' is
- *  set to a value other than -1. This is a manual override for
- *  the local time zone to use, as an offset in minutes.
- *
- *  Returns 0 on success, -1 on failure (for example if the output
- *  string was too short).
- */
-NPY_NO_EXPORT int
-make_iso_8601_date(npy_datetimestruct *dts, char *outstr, int outlen,
-                    int local, NPY_DATETIMEUNIT base, int tzoffset);
 
 /*
  * Tests for and converts a Python datetime.datetime or datetime.date

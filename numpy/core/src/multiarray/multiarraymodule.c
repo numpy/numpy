@@ -45,6 +45,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "convert_datatype.h"
 #include "nditer_pywrap.h"
 #include "_datetime.h"
+#include "datetime_strings.h"
 #include "datetime_busday.h"
 #include "datetime_busdaycal.h"
 
@@ -2939,7 +2940,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             /* Zero the destination string completely */
             memset(dataptr[1], 0, strsize);
             /* Convert that into a string */
-            if (make_iso_8601_date(&dts, (char *)dataptr[1], strsize,
+            if (make_iso_8601_datetime(&dts, (char *)dataptr[1], strsize,
                                 local, unit, tzoffset) < 0) {
                 goto fail;
             }
