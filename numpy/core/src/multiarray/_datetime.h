@@ -99,9 +99,25 @@ convert_datetime_divisor_to_multiple(PyArray_DatetimeMetaData *meta,
  */
 NPY_NO_EXPORT npy_bool
 datetime_metadata_divides(
-                        PyArray_Descr *dividend,
-                        PyArray_Descr *divisor,
+                        PyArray_DatetimeMetaData *dividend,
+                        PyArray_DatetimeMetaData *divisor,
                         int strict_with_nonlinear_units);
+
+/*
+ * This provides the casting rules for the DATETIME data type metadata.
+ */
+NPY_NO_EXPORT npy_bool
+can_cast_datetime64_metadata(PyArray_DatetimeMetaData *src_meta,
+                             PyArray_DatetimeMetaData *dst_meta,
+                             NPY_CASTING casting);
+
+/*
+ * This provides the casting rules for the TIMEDELTA data type metadata.
+ */
+NPY_NO_EXPORT npy_bool
+can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
+                             PyArray_DatetimeMetaData *dst_meta,
+                             NPY_CASTING casting);
 
 /*
  * Computes the GCD of the two date-time metadata values. Raises

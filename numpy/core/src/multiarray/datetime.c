@@ -1537,58 +1537,38 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
  */
 NPY_NO_EXPORT npy_bool
 datetime_metadata_divides(
-                        PyArray_Descr *dividend,
-                        PyArray_Descr *divisor,
+                        PyArray_DatetimeMetaData *dividend,
+                        PyArray_DatetimeMetaData *divisor,
                         int strict_with_nonlinear_units)
 {
-    PyArray_DatetimeMetaData *meta1, *meta2;
     npy_uint64 num1, num2;
 
-    /* Must be datetime types */
-    if ((dividend->type_num != NPY_DATETIME &&
-                        dividend->type_num != NPY_TIMEDELTA) ||
-                    (divisor->type_num != NPY_DATETIME &&
-                        divisor->type_num != NPY_TIMEDELTA)) {
-        return 0;
-    }
-
-    meta1 = get_datetime_metadata_from_dtype(dividend);
-    if (meta1 == NULL) {
-        PyErr_Clear();
-        return 0;
-    }
-    meta2 = get_datetime_metadata_from_dtype(divisor);
-    if (meta2 == NULL) {
-        PyErr_Clear();
-        return 0;
-    }
-
     /* Generic units divide into anything */
-    if (meta2->base == NPY_FR_GENERIC) {
+    if (divisor->base == NPY_FR_GENERIC) {
         return 1;
     }
     /* Non-generic units never divide into generic units */
-    else if (meta1->base == NPY_FR_GENERIC) {
+    else if (dividend->base == NPY_FR_GENERIC) {
         return 0;
     }
 
     /* Events must match */
-    if (meta1->events != meta2->events) {
+    if (dividend->events != divisor->events) {
         return 0;
     }
 
-    num1 = (npy_uint64)meta1->num;
-    num2 = (npy_uint64)meta2->num;
+    num1 = (npy_uint64)dividend->num;
+    num2 = (npy_uint64)divisor->num;
 
     /* If the bases are different, factor in a conversion */
-    if (meta1->base != meta2->base) {
+    if (dividend->base != divisor->base) {
         /*
          * Years and Months are incompatible with
          * all other units (except years and months are compatible
          * with each other).
          */
-        if (meta1->base == NPY_FR_Y) {
-            if (meta2->base == NPY_FR_M) {
+        if (dividend->base == NPY_FR_Y) {
+            if (divisor->base == NPY_FR_M) {
                 num1 *= 12;
             }
             else if (strict_with_nonlinear_units) {
@@ -1599,8 +1579,8 @@ datetime_metadata_divides(
                 return 1;
             }
         }
-        else if (meta2->base == NPY_FR_Y) {
-            if (meta1->base == NPY_FR_M) {
+        else if (divisor->base == NPY_FR_Y) {
+            if (dividend->base == NPY_FR_M) {
                 num2 *= 12;
             }
             else if (strict_with_nonlinear_units) {
@@ -1611,7 +1591,7 @@ datetime_metadata_divides(
                 return 1;
             }
         }
-        else if (meta1->base == NPY_FR_M || meta2->base == NPY_FR_M) {
+        else if (dividend->base == NPY_FR_M || divisor->base == NPY_FR_M) {
             if (strict_with_nonlinear_units) {
                 return 0;
             }
@@ -1622,14 +1602,14 @@ datetime_metadata_divides(
         }
 
         /* Take the greater base (unit sizes are decreasing in enum) */
-        if (meta1->base > meta2->base) {
-            num2 *= get_datetime_units_factor(meta2->base, meta1->base);
+        if (dividend->base > divisor->base) {
+            num2 *= get_datetime_units_factor(divisor->base, dividend->base);
             if (num2 == 0) {
                 return 0;
             }
         }
         else {
-            num1 *= get_datetime_units_factor(meta1->base, meta2->base);
+            num1 *= get_datetime_units_factor(dividend->base, divisor->base);
             if (num1 == 0) {
                 return 0;
             }
@@ -1642,6 +1622,162 @@ datetime_metadata_divides(
     }
 
     return (num1 % num2) == 0;
+}
+
+/*
+ * This provides the casting rules for the DATETIME data type units.
+ *
+ * Notably, there is a barrier between 'date units' and 'time units'
+ * for all but 'unsafe' casting.
+ */
+NPY_NO_EXPORT npy_bool
+can_cast_datetime64_units(NPY_DATETIMEUNIT src_unit,
+                          NPY_DATETIMEUNIT dst_unit,
+                          NPY_CASTING casting)
+{
+    switch (casting) {
+        /* Allow anything with unsafe casting */
+        case NPY_UNSAFE_CASTING:
+            return 1;
+
+        /*
+         * Only enforce the 'date units' vs 'time units' barrier with
+         * 'same_kind' casting.
+         */
+        case NPY_SAME_KIND_CASTING:
+            if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
+                return src_unit == dst_unit;
+            }
+            else {
+                return (src_unit <= NPY_FR_D && dst_unit <= NPY_FR_D) ||
+                       (src_unit > NPY_FR_D && dst_unit > NPY_FR_D);
+            }
+
+        /*
+         * Enforce the 'date units' vs 'time units' barrier and that
+         * casting is only allowed towards more precise units with
+         * 'safe' casting.
+         */
+        case NPY_SAFE_CASTING:
+            if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
+                return src_unit == dst_unit;
+            }
+            else {
+                return (src_unit <= dst_unit) &&
+                       ((src_unit <= NPY_FR_D && dst_unit <= NPY_FR_D) ||
+                        (src_unit > NPY_FR_D && dst_unit > NPY_FR_D));
+            }
+
+        /* Enforce equality with 'no' or 'equiv' casting */
+        default:
+            return src_unit == dst_unit;
+    }
+}
+
+/*
+ * This provides the casting rules for the TIMEDELTA data type units.
+ *
+ * Notably, there is a barrier between the nonlinear years and
+ * months units, and all the other units.
+ */
+NPY_NO_EXPORT npy_bool
+can_cast_timedelta64_units(NPY_DATETIMEUNIT src_unit,
+                          NPY_DATETIMEUNIT dst_unit,
+                          NPY_CASTING casting)
+{
+    switch (casting) {
+        /* Allow anything with unsafe casting */
+        case NPY_UNSAFE_CASTING:
+            return 1;
+
+        /*
+         * Only enforce the 'date units' vs 'time units' barrier with
+         * 'same_kind' casting.
+         */
+        case NPY_SAME_KIND_CASTING:
+            if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
+                return src_unit == dst_unit;
+            }
+            else {
+                return (src_unit <= NPY_FR_M && dst_unit <= NPY_FR_M) ||
+                       (src_unit > NPY_FR_M && dst_unit > NPY_FR_M);
+            }
+
+        /*
+         * Enforce the 'date units' vs 'time units' barrier and that
+         * casting is only allowed towards more precise units with
+         * 'safe' casting.
+         */
+        case NPY_SAFE_CASTING:
+            if (src_unit == NPY_FR_GENERIC || dst_unit == NPY_FR_GENERIC) {
+                return src_unit == dst_unit;
+            }
+            else {
+                return (src_unit <= dst_unit) &&
+                       ((src_unit <= NPY_FR_M && dst_unit <= NPY_FR_M) ||
+                        (src_unit > NPY_FR_M && dst_unit > NPY_FR_M));
+            }
+
+        /* Enforce equality with 'no' or 'equiv' casting */
+        default:
+            return src_unit == dst_unit;
+    }
+}
+
+/*
+ * This provides the casting rules for the DATETIME data type metadata.
+ */
+NPY_NO_EXPORT npy_bool
+can_cast_datetime64_metadata(PyArray_DatetimeMetaData *src_meta,
+                             PyArray_DatetimeMetaData *dst_meta,
+                             NPY_CASTING casting)
+{
+    switch (casting) {
+        case NPY_UNSAFE_CASTING:
+            return 1;
+
+        case NPY_SAME_KIND_CASTING:
+            return can_cast_datetime64_units(src_meta->base, dst_meta->base,
+                                             casting);
+
+        case NPY_SAFE_CASTING:
+            return can_cast_datetime64_units(src_meta->base, dst_meta->base,
+                                                             casting) &&
+                   datetime_metadata_divides(src_meta, dst_meta, 0);
+
+        default:
+            return src_meta->base == dst_meta->base &&
+                   src_meta->num == dst_meta->num &&
+                   src_meta->events == dst_meta->events;
+    }
+}
+
+/*
+ * This provides the casting rules for the TIMEDELTA data type metadata.
+ */
+NPY_NO_EXPORT npy_bool
+can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
+                             PyArray_DatetimeMetaData *dst_meta,
+                             NPY_CASTING casting)
+{
+    switch (casting) {
+        case NPY_UNSAFE_CASTING:
+            return 1;
+
+        case NPY_SAME_KIND_CASTING:
+            return can_cast_timedelta64_units(src_meta->base, dst_meta->base,
+                                             casting);
+
+        case NPY_SAFE_CASTING:
+            return can_cast_timedelta64_units(src_meta->base, dst_meta->base,
+                                                             casting) &&
+                   datetime_metadata_divides(src_meta, dst_meta, 1);
+
+        default:
+            return src_meta->base == dst_meta->base &&
+                   src_meta->num == dst_meta->num &&
+                   src_meta->events == dst_meta->events;
+    }
 }
 
 /*

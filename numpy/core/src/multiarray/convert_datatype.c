@@ -184,21 +184,21 @@ PyArray_CanCastSafely(int fromtype, int totype)
     }
     /* Special-cases for some types */
     switch (fromtype) {
-        case PyArray_DATETIME:
-        case PyArray_TIMEDELTA:
-        case PyArray_OBJECT:
-        case PyArray_VOID:
+        case NPY_DATETIME:
+        case NPY_TIMEDELTA:
+        case NPY_OBJECT:
+        case NPY_VOID:
             return 0;
-        case PyArray_BOOL:
+        case NPY_BOOL:
             return 1;
     }
     switch (totype) {
-        case PyArray_BOOL:
-        case PyArray_DATETIME:
-        case PyArray_TIMEDELTA:
+        case NPY_BOOL:
+        case NPY_DATETIME:
+        case NPY_TIMEDELTA:
             return 0;
-        case PyArray_OBJECT:
-        case PyArray_VOID:
+        case NPY_OBJECT:
+        case NPY_VOID:
             return 1;
     }
 
@@ -210,7 +210,7 @@ PyArray_CanCastSafely(int fromtype, int totype)
     if (from->f->cancastto) {
         int *curtype = from->f->cancastto;
 
-        while (*curtype != PyArray_NOTYPE) {
+        while (*curtype != NPY_NOTYPE) {
             if (*curtype++ == totype) {
                 return 1;
             }
@@ -228,23 +228,23 @@ PyArray_CanCastSafely(int fromtype, int totype)
 NPY_NO_EXPORT npy_bool
 PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 {
-    int fromtype=from->type_num;
-    int totype=to->type_num;
+    int from_type_num = from->type_num;
+    int to_type_num = to->type_num;
     npy_bool ret;
 
-    ret = (npy_bool) PyArray_CanCastSafely(fromtype, totype);
+    ret = (npy_bool) PyArray_CanCastSafely(from_type_num, to_type_num);
     if (ret) {
         /* Check String and Unicode more closely */
-        if (fromtype == NPY_STRING) {
-            if (totype == NPY_STRING) {
+        if (from_type_num == NPY_STRING) {
+            if (to_type_num == NPY_STRING) {
                 ret = (from->elsize <= to->elsize);
             }
-            else if (totype == NPY_UNICODE) {
+            else if (to_type_num == NPY_UNICODE) {
                 ret = (from->elsize << 2 <= to->elsize);
             }
         }
-        else if (fromtype == NPY_UNICODE) {
-            if (totype == NPY_UNICODE) {
+        else if (from_type_num == NPY_UNICODE) {
+            if (to_type_num == NPY_UNICODE) {
                 ret = (from->elsize <= to->elsize);
             }
         }
@@ -252,14 +252,41 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
          * For datetime/timedelta, only treat casts moving towards
          * more precision as safe.
          */
-        else if (fromtype == NPY_DATETIME && totype == NPY_DATETIME) {
-            return datetime_metadata_divides(from, to, 0);
+        else if (from_type_num == NPY_DATETIME && to_type_num == NPY_DATETIME) {
+            PyArray_DatetimeMetaData *meta1, *meta2;
+            meta1 = get_datetime_metadata_from_dtype(from);
+            if (meta1 == NULL) {
+                PyErr_Clear();
+                return 0;
+            }
+            meta2 = get_datetime_metadata_from_dtype(to);
+            if (meta2 == NULL) {
+                PyErr_Clear();
+                return 0;
+            }
+
+            return can_cast_datetime64_metadata(meta1, meta2,
+                                                NPY_SAFE_CASTING);
         }
-        else if (fromtype == NPY_TIMEDELTA && totype == NPY_TIMEDELTA) {
-            return datetime_metadata_divides(from, to, 1);
+        else if (from_type_num == NPY_TIMEDELTA &&
+                                    to_type_num == NPY_TIMEDELTA) {
+            PyArray_DatetimeMetaData *meta1, *meta2;
+            meta1 = get_datetime_metadata_from_dtype(from);
+            if (meta1 == NULL) {
+                PyErr_Clear();
+                return 0;
+            }
+            meta2 = get_datetime_metadata_from_dtype(to);
+            if (meta2 == NULL) {
+                PyErr_Clear();
+                return 0;
+            }
+
+            return can_cast_timedelta64_metadata(meta1, meta2,
+                                                 NPY_SAFE_CASTING);
         }
         /*
-         * TODO: If totype is STRING or unicode
+         * TODO: If to_type_num is STRING or unicode
          * see if the length is long enough to hold the
          * stringified value of the object.
          */
@@ -374,22 +401,50 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
         }
 
         switch (from->type_num) {
-            case NPY_DATETIME:
-            case NPY_TIMEDELTA:
-                switch (casting) {
-                    case NPY_NO_CASTING:
-                        return PyArray_ISNBO(from->byteorder) ==
-                                            PyArray_ISNBO(to->byteorder) &&
-                                has_equivalent_datetime_metadata(from, to);
-                    case NPY_EQUIV_CASTING:
-                        return has_equivalent_datetime_metadata(from, to);
-                    case NPY_SAFE_CASTING:
-                        return datetime_metadata_divides(from, to,
-                                            from->type_num == NPY_TIMEDELTA);
-                    default:
-                        return 1;
+            case NPY_DATETIME: {
+                PyArray_DatetimeMetaData *meta1, *meta2;
+                meta1 = get_datetime_metadata_from_dtype(from);
+                if (meta1 == NULL) {
+                    PyErr_Clear();
+                    return 0;
                 }
-                break;
+                meta2 = get_datetime_metadata_from_dtype(to);
+                if (meta2 == NULL) {
+                    PyErr_Clear();
+                    return 0;
+                }
+
+                if (casting == NPY_NO_CASTING) {
+                    return PyArray_ISNBO(from->byteorder) ==
+                                        PyArray_ISNBO(to->byteorder) &&
+                            can_cast_datetime64_metadata(meta1, meta2, casting);
+                }
+                else {
+                    return can_cast_datetime64_metadata(meta1, meta2, casting);
+                }
+            }
+            case NPY_TIMEDELTA: {
+                PyArray_DatetimeMetaData *meta1, *meta2;
+                meta1 = get_datetime_metadata_from_dtype(from);
+                if (meta1 == NULL) {
+                    PyErr_Clear();
+                    return 0;
+                }
+                meta2 = get_datetime_metadata_from_dtype(to);
+                if (meta2 == NULL) {
+                    PyErr_Clear();
+                    return 0;
+                }
+
+                if (casting == NPY_NO_CASTING) {
+                    return PyArray_ISNBO(from->byteorder) ==
+                                        PyArray_ISNBO(to->byteorder) &&
+                        can_cast_timedelta64_metadata(meta1, meta2, casting);
+                }
+                else {
+                    return can_cast_timedelta64_metadata(meta1, meta2, casting);
+                }
+            }
             default:
                 switch (casting) {
                     case NPY_NO_CASTING:

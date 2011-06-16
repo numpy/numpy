@@ -77,11 +77,18 @@ class TestDateTime(TestCase):
         # Cannot cast timedelta safely from months/years to days
         assert_(not np.can_cast('m8[M]', 'm8[D]', casting='safe'))
         assert_(not np.can_cast('m8[Y]', 'm8[D]', casting='safe'))
-        # Can cast same_kind from months/years to days
+        # Can cast datetime same_kind from months/years to days
         assert_(np.can_cast('M8[M]', 'M8[D]', casting='same_kind'))
         assert_(np.can_cast('M8[Y]', 'M8[D]', casting='same_kind'))
-        assert_(np.can_cast('m8[M]', 'm8[D]', casting='same_kind'))
-        assert_(np.can_cast('m8[Y]', 'm8[D]', casting='same_kind'))
+        # Can't cast timedelta same_kind from months/years to days
+        assert_(not np.can_cast('m8[M]', 'm8[D]', casting='same_kind'))
+        assert_(not np.can_cast('m8[Y]', 'm8[D]', casting='same_kind'))
+        # Can't cast datetime same_kind across the date/time boundary
+        assert_(not np.can_cast('M8[D]', 'M8[h]', casting='same_kind'))
+        assert_(not np.can_cast('M8[h]', 'M8[D]', casting='same_kind'))
+        # Can cast timedelta same_kind across the date/time boundary
+        assert_(np.can_cast('m8[D]', 'm8[h]', casting='same_kind'))
+        assert_(np.can_cast('m8[h]', 'm8[D]', casting='same_kind'))
 
         # Cannot cast safely if the integer multiplier doesn't divide
         assert_(not np.can_cast('M8[7h]', 'M8[3h]', casting='safe'))
