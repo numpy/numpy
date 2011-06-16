@@ -185,7 +185,6 @@ invalid_weekmask_string:
     Py_DECREF(obj);
     return 0;
 
-
 finish:
     Py_DECREF(obj);
     return 1;

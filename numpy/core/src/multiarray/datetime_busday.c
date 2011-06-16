@@ -41,7 +41,9 @@ get_day_of_week(npy_datetime date)
  * Returns 1 if the date is a holiday (contained in the sorted
  * list of dates), 0 otherwise.
  *
- * The holidays list should be normalized.
+ * The holidays list should be normalized, which means any NaT (not-a-time)
+ * values, duplicates, and dates already excluded by the weekmask should
+ * be removed, and the list should be sorted.
  */
 static int
 is_holiday(npy_datetime date,
@@ -79,7 +81,9 @@ is_holiday(npy_datetime date,
  *      holidays_begin = find_holiday_earliest_on_or_after(date,
  *                                          holidays_begin, holidays_end);
  *
- * The holidays list should be normalized.
+ * The holidays list should be normalized, which means any NaT (not-a-time)
+ * values, duplicates, and dates already excluded by the weekmask should
+ * be removed, and the list should be sorted.
  */
 static npy_datetime *
 find_earliest_holiday_on_or_after(npy_datetime date,
@@ -116,7 +120,9 @@ find_earliest_holiday_on_or_after(npy_datetime date,
  *      holidays_end = find_holiday_earliest_after(date,
  *                                          holidays_begin, holidays_end);
  *
- * The holidays list should be normalized.
+ * The holidays list should be normalized, which means any NaT (not-a-time)
+ * values, duplicates, and dates already excluded by the weekmask should
+ * be removed, and the list should be sorted.
  */
 static npy_datetime *
 find_earliest_holiday_after(npy_datetime date,
@@ -283,7 +289,7 @@ apply_business_day_offset(npy_datetime date, npy_int64 offset,
     if (date == NPY_DATETIME_NAT) {
         return 0;
     }
-    
+
     /* Now we're on a valid business day */
     if (offset > 0) {
         /* Remove any earlier holidays */
@@ -782,7 +788,6 @@ is_business_day(PyArrayObject *dates, PyArrayObject *out,
                                         !is_holiday(date,
                                             holidays_begin, holidays_end) &&
                                         date != NPY_DATETIME_NAT;
-                                                
 
                 data_dates += stride_dates;
                 data_out += stride_out;
@@ -1029,6 +1034,7 @@ array_busday_offset(PyObject *NPY_UNUSED(self),
     }
 
     return out == NULL ? PyArray_Return(ret) : (PyObject *)ret;
+
 fail:
     Py_XDECREF(dates);
     Py_XDECREF(offsets);
@@ -1173,6 +1179,7 @@ array_busday_count(PyObject *NPY_UNUSED(self),
     }
 
     return out == NULL ? PyArray_Return(ret) : (PyObject *)ret;
+
 fail:
     Py_XDECREF(dates_begin);
     Py_XDECREF(dates_end);
@@ -1292,6 +1299,7 @@ array_is_busday(PyObject *NPY_UNUSED(self),
     }
 
     return out == NULL ? PyArray_Return(ret) : (PyObject *)ret;
+
 fail:
     Py_XDECREF(dates);
     if (allocated_holidays && holidays.begin != NULL) {
