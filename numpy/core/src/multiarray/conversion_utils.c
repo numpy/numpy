@@ -630,6 +630,7 @@ NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype)
 {
     int newtype = NPY_NOTYPE;
+    int ret;
 
     switch (gentype) {
         case NPY_GENBOOLLTR:
@@ -738,10 +739,10 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             break;
 
         case NPY_OBJECTLTR:  /* raise PyErr_Warn|Ex depending on version */
-            if (DEPRECATE("DType strings 'O4' and 'O8' are deprecated "
-                          "because they are platform specific. Use "
-                          "'O' instead") == 0 && 
-                      (itemsize == 4 || itemsize == 8)) {
+            ret = DEPRECATE("DType strings 'O4' and 'O8' are deprecated "
+                            "because they are platform specific. Use "
+                            "'O' instead"); 
+            if (ret == 0 && (itemsize == 4 || itemsize == 8)) {
                 newtype = NPY_OBJECT;
             }
             break;
