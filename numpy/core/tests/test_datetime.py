@@ -18,6 +18,21 @@ class TestDateTime(TestCase):
         # Generic units shouldn't add [] to the end
         assert_equal(str(np.dtype("M8")), "datetime64")
 
+        # Should be possible to specify the endianness
+        assert_equal(np.dtype("=M8"), np.dtype("M8"))
+        assert_equal(np.dtype("=M8[s]"), np.dtype("M8[s]"))
+        assert_(np.dtype(">M8") == np.dtype("M8") or
+                np.dtype("<M8") == np.dtype("M8"))
+        assert_(np.dtype(">M8[D]") == np.dtype("M8[D]") or
+                np.dtype("<M8[D]") == np.dtype("M8[D]"))
+
+        assert_equal(np.dtype("=m8"), np.dtype("m8"))
+        assert_equal(np.dtype("=m8[s]"), np.dtype("m8[s]"))
+        assert_(np.dtype(">m8") == np.dtype("m8") or
+                np.dtype("<m8") == np.dtype("m8"))
+        assert_(np.dtype(">m8[D]") == np.dtype("m8[D]") or
+                np.dtype("<m8[D]") == np.dtype("m8[D]"))
+
         # Check that the parser rejects bad datetime types
         assert_raises(TypeError, np.dtype, 'M8[badunit]')
         assert_raises(TypeError, np.dtype, 'm8[badunit]')
@@ -122,7 +137,7 @@ class TestDateTime(TestCase):
         assert_equal(np.datetime64('1980-01-25T14:36:22.5Z'),
                      np.datetime64(datetime.datetime(1980,1,25,
                                                 14,36,22,500000)))
-        
+
     def test_timedelta_scalar_construction(self):
         # Construct with different units
         assert_equal(np.timedelta64(7, 'D'),
@@ -349,7 +364,6 @@ class TestDateTime(TestCase):
                     datetime.date(1600, 3, 1))
         assert_equal(np.array('2001-03-22', dtype='M8[D]').astype('O'),
                     datetime.date(2001, 3, 22))
-                
 
     def test_dtype_comparison(self):
         assert_(not (np.dtype('M8[us]') == np.dtype('M8[ms]')))
@@ -540,6 +554,9 @@ class TestDateTime(TestCase):
             assert_equal(np.sign(tdb), tdmone)
             assert_equal(np.sign(tdzero), tdzero)
             assert_equal(np.sign(tda).dtype, tda.dtype)
+
+            # The ufuncs always produce native-endian results
+            assert_
 
     def test_datetime_add(self):
         for dta, dtb, dtc, dtnat, tda, tdb, tdc in \
@@ -1401,12 +1418,12 @@ class TestDateTime(TestCase):
                         roll='forward', busdaycal=bdd)
         assert_equal(np.busday_count('2011-01-01', dates, busdaycal=bdd),
                      np.arange(366))
-            
+
         dates = np.busday_offset('2011-12-31', -np.arange(366),
                         roll='forward', busdaycal=bdd)
         assert_equal(np.busday_count(dates, '2011-12-31', busdaycal=bdd),
                      np.arange(366))
-            
+
         # Can't supply both a weekmask/holidays and busdaycal
         assert_raises(ValueError, np.busday_offset, '2012-01-03', '2012-02-03',
                         weekmask='1111100', busdaycal=bdd)
@@ -1415,7 +1432,7 @@ class TestDateTime(TestCase):
 
         # Number of Mondays in March 2011
         assert_equal(np.busday_count('2011-03', '2011-04', weekmask='Mon'), 4)
-        
+
     def test_datetime_is_busday(self):
         holidays=['2011-01-01', '2011-10-10', '2011-11-11', '2011-11-24',
                   '2011-12-25', '2011-05-30', '2011-02-21', '2011-01-17',

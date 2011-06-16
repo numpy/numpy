@@ -381,7 +381,7 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
     memcpy(ov, ptr, MIN(ap->descr->elsize, datalen));
 #else
     if (!PyArray_ISALIGNED(ap)) {
-        buffer = _pya_malloc(ap->descr->elsize);
+        buffer = PyArray_malloc(ap->descr->elsize);
         if (buffer == NULL) {
             Py_DECREF(temp);
             PyErr_NoMemory();
@@ -396,7 +396,7 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
     datalen <<= 2;
     if (!PyArray_ISALIGNED(ap)) {
         memcpy(ov, buffer, datalen);
-        _pya_free(buffer);
+        PyArray_free(buffer);
     }
 #endif
     /* Fill in the rest of the space with 0 */
@@ -2110,7 +2110,7 @@ UNICODE_nonzero (PyArray_UCS4 *ip, PyArrayObject *ap)
     char *buffer = NULL;
 
     if ((!PyArray_ISNOTSWAPPED(ap)) || (!PyArray_ISALIGNED(ap))) {
-        buffer = _pya_malloc(ap->descr->elsize);
+        buffer = PyArray_malloc(ap->descr->elsize);
         if (buffer == NULL) {
             return nonz;
         }
@@ -2128,7 +2128,7 @@ UNICODE_nonzero (PyArray_UCS4 *ip, PyArrayObject *ap)
         }
         ip++;
     }
-    _pya_free(buffer);
+    PyArray_free(buffer);
     return nonz;
 }
 
@@ -2486,7 +2486,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         if ((swap) || (new->alignment > 1)) {
             if ((swap) || (((intp)(nip1) % new->alignment) != 0)) {
                 /* create buffer and copy */
-                nip1 = _pya_malloc(new->elsize);
+                nip1 = PyArray_malloc(new->elsize);
                 if (nip1 == NULL) {
                     goto finish;
                 }
@@ -2496,10 +2496,10 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
             }
             if ((swap) || (((intp)(nip2) % new->alignment) != 0)) {
                 /* copy data to a buffer */
-                nip2 = _pya_malloc(new->elsize);
+                nip2 = PyArray_malloc(new->elsize);
                 if (nip2 == NULL) {
                     if (nip1 != ip1+offset) {
-                        _pya_free(nip1);
+                        PyArray_free(nip1);
                     }
                     goto finish;
                 }
@@ -2511,10 +2511,10 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
         res = new->f->compare(nip1, nip2, ap);
         if ((swap) || (new->alignment > 1)) {
             if (nip1 != ip1+offset) {
-                _pya_free(nip1);
+                PyArray_free(nip1);
             }
             if (nip2 != ip2+offset) {
-                _pya_free(nip2);
+                PyArray_free(nip2);
             }
         }
         if (res != 0) {
@@ -2647,7 +2647,7 @@ static int
 {
     intp i;
     int elsize = aip->descr->elsize;
-    @type@ *mp = (@type@ *)_pya_malloc(elsize);
+    @type@ *mp = (@type@ *)PyArray_malloc(elsize);
 
     if (mp==NULL) return 0;
     memcpy(mp, ip, elsize);
@@ -2659,7 +2659,7 @@ static int
             *max_ind=i;
         }
     }
-    _pya_free(mp);
+    PyArray_free(mp);
     return 0;
 }
 
@@ -3433,7 +3433,7 @@ _init_datetime_descr(PyArray_Descr *descr)
     PyArray_DatetimeMetaData *dt_data;
     PyObject *cobj;
 
-    dt_data = _pya_malloc(sizeof(PyArray_DatetimeMetaData));
+    dt_data = PyArray_malloc(sizeof(PyArray_DatetimeMetaData));
     dt_data->base = NPY_DATETIME_DEFAULTUNIT;
     dt_data->num = 1;
     dt_data->events = 1;
@@ -3487,35 +3487,35 @@ PyArray_DescrFromType(int type)
 {
     PyArray_Descr *ret = NULL;
 
-    if (type < PyArray_NTYPES) {
+    if (type < NPY_NTYPES) {
         ret = _builtin_descrs[type];
     }
-    else if (type == PyArray_NOTYPE) {
+    else if (type == NPY_NOTYPE) {
         /*
          * This needs to not raise an error so
-         * that PyArray_DescrFromType(PyArray_NOTYPE)
+         * that PyArray_DescrFromType(NPY_NOTYPE)
          * works for backwards-compatible C-API
          */
         return NULL;
     }
-    else if ((type == PyArray_CHAR) || (type == PyArray_CHARLTR)) {
-        ret = PyArray_DescrNew(_builtin_descrs[PyArray_STRING]);
+    else if ((type == NPY_CHAR) || (type == NPY_CHARLTR)) {
+        ret = PyArray_DescrNew(_builtin_descrs[NPY_STRING]);
         if (ret == NULL) {
             return NULL;
         }
         ret->elsize = 1;
-        ret->type = PyArray_CHARLTR;
+        ret->type = NPY_CHARLTR;
         return ret;
     }
     else if (PyTypeNum_ISUSERDEF(type)) {
-        ret = userdescrs[type - PyArray_USERDEF];
+        ret = userdescrs[type - NPY_USERDEF];
     }
     else {
-        int num = PyArray_NTYPES;
+        int num = NPY_NTYPES;
         if (type < _MAX_LETTER) {
             num = (int) _letter_to_num[type];
         }
-        if (num >= PyArray_NTYPES) {
+        if (num >= NPY_NTYPES) {
             ret = NULL;
         }
         else {
@@ -3606,9 +3606,9 @@ set_typeinfo(PyObject *dict)
  *         CFLOAT, CDOUBLE, CLONGDOUBLE, OBJECT, STRING, UNICODE, VOID,
  *         DATETIME,TIMEDELTA#
  */
-    _letter_to_num[PyArray_@name@LTR] = PyArray_@name@;
+    _letter_to_num[NPY_@name@LTR] = NPY_@name@;
 /**end repeat**/
-    _letter_to_num[PyArray_STRINGLTR2] = PyArray_STRING;
+    _letter_to_num[NPY_STRINGLTR2] = NPY_STRING;
 
 /**begin repeat
   * #name = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT,

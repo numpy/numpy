@@ -25,7 +25,8 @@ struct _tagPyUFuncObject;
  * type_tup:          Either NULL, or the type_tup passed to the ufunc.
  * out_dtypes:        An array which should be populated with new
  *                    references to (ufunc->nin + ufunc->nout) new
- *                    dtypes, one for each input and output.
+ *                    dtypes, one for each input and output. These
+ *                    dtypes should all be in native-endian format.
  * out_innerloop:     Should be populated with the correct ufunc inner
  *                    loop for the given type.
  * out_innerloopdata: Should be populated with the void* data to

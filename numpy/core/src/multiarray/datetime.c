@@ -138,7 +138,8 @@ days_to_yearsdays(npy_int64 *days_)
 {
     const npy_int64 days_per_400years = (400*365 + 100 - 4 + 1);
     /* Adjust so it's relative to the year 2000 (divisible by 400) */
-    npy_int64 days = (*days_) - (365*30 + 7), year;
+    npy_int64 days = (*days_) - (365*30 + 7);
+    npy_int64 year;
 
     /* Break down the 400 year cycle to get the year and day within the year */
     if (days >= 0) {
