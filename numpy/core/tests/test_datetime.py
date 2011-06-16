@@ -738,31 +738,37 @@ class TestDateTime(TestCase):
             assert_raises(TypeError, np.multiply, 1.5, dta)
 
     def test_datetime_divide(self):
-        for dta, tda, tdb, tdc in \
+        for dta, tda, tdb, tdc, tdd in \
                     [
                      # One-dimensional arrays
                      (np.array(['2012-12-21'], dtype='M8[D]'),
                       np.array([6], dtype='m8[h]'),
                       np.array([9], dtype='m8[h]'),
-                      np.array([12], dtype='m8[h]')),
+                      np.array([12], dtype='m8[h]'),
+                      np.array([6], dtype='m8[m]')),
                      # NumPy scalars
                      (np.datetime64('2012-12-21', '[D]'),
                       np.timedelta64(6, '[h]'),
                       np.timedelta64(9, '[h]'),
-                      np.timedelta64(12, '[h]'))]:
+                      np.timedelta64(12, '[h]'),
+                      np.timedelta64(6, '[m]'))]:
             # m8 / int
             assert_equal(tdc / 2, tda)
             assert_equal((tdc / 2).dtype, np.dtype('m8[h]'))
             # m8 / float
             assert_equal(tda / 0.5, tdc)
             assert_equal((tda / 0.5).dtype, np.dtype('m8[h]'))
+            # m8 / m8
+            assert_equal(tda / tdb, 6.0 / 9.0)
+            assert_equal(tdb / tda, 9.0 / 6.0)
+            assert_equal((tda / tdb).dtype, np.dtype('f8'))
+            assert_equal(tda / tdd, 60.0)
+            assert_equal(tdd / tda, 1.0 / 60.0)
 
             # int / m8
             assert_raises(TypeError, np.divide, 2, tdb)
             # float / m8
             assert_raises(TypeError, np.divide, 0.5, tdb)
-            # m8 / m8
-            assert_raises(TypeError, np.divide, tda, tdb)
             # m8 / M8
             assert_raises(TypeError, np.divide, dta, tda)
             # M8 / m8

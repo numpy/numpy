@@ -275,6 +275,7 @@ defdict = {
           TD(intfltcmplx),
           [TypeDescription('m', FullTypeDescr, 'mq', 'm'),
            TypeDescription('m', FullTypeDescr, 'md', 'm'),
+           TypeDescription('m', FullTypeDescr, 'mm', 'd'),
           ],
           TD(O, f='PyNumber_Divide'),
           ),

@@ -487,6 +487,9 @@ TIMEDELTA_mq_m_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUS
 NPY_NO_EXPORT void
 TIMEDELTA_md_m_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
+NPY_NO_EXPORT void
+TIMEDELTA_mm_d_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
+
 /* Special case equivalents to above functions */
 
 #define TIMEDELTA_mq_m_true_divide TIMEDELTA_mq_m_divide

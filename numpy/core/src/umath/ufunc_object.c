@@ -2822,8 +2822,9 @@ type_reso_error: {
 /*
  * This function applies the type resolution rules for division.
  * In particular, there are a number of special cases with datetime:
- *    m8[<A>] / int## => m8[<A>] / int64
- *    m8[<A>] / float## => m8[<A>] / float64
+ *    m8[<A>] / m8[<B>] to  m8[gcd(<A>,<B>)] / m8[gcd(<A>,<B>)]  -> float64
+ *    m8[<A>] / int##   to m8[<A>] / int64 -> m8[<A>]
+ *    m8[<A>] / float## to m8[<A>] / float64 -> m8[<A>]
  */
 NPY_NO_EXPORT int
 PyUFunc_DivisionTypeResolution(PyUFuncObject *ufunc,
@@ -2851,13 +2852,34 @@ PyUFunc_DivisionTypeResolution(PyUFuncObject *ufunc,
     }
 
     if (type_num1 == NPY_TIMEDELTA) {
+        /*
+         * m8[<A>] / m8[<B>] to
+         * m8[gcd(<A>,<B>)] / m8[gcd(<A>,<B>)]  -> float64
+         */
+        if (type_num2 == NPY_TIMEDELTA) {
+            out_dtypes[0] = PyArray_PromoteTypes(PyArray_DESCR(operands[0]),
+                                                PyArray_DESCR(operands[1]));
+            if (out_dtypes[0] == NULL) {
+                return -1;
+            }
+            out_dtypes[1] = out_dtypes[0];
+            Py_INCREF(out_dtypes[1]);
+            out_dtypes[2] = PyArray_DescrFromType(NPY_DOUBLE);
+            if (out_dtypes[2] == NULL) {
+                Py_DECREF(out_dtypes[0]);
+                out_dtypes[0] = NULL;
+                Py_DECREF(out_dtypes[1]);
+                out_dtypes[1] = NULL;
+                return -1;
+            }
+        }
         /* m8[<A>] / int## => m8[<A>] / int64 */
-        if (PyTypeNum_ISINTEGER(type_num2)) {
+        else if (PyTypeNum_ISINTEGER(type_num2)) {
             out_dtypes[0] = ensure_dtype_nbo(PyArray_DESCR(operands[0]));
             if (out_dtypes[0] == NULL) {
                 return -1;
             }
-            out_dtypes[1] = PyArray_DescrNewFromType(NPY_LONGLONG);
+            out_dtypes[1] = PyArray_DescrFromType(NPY_LONGLONG);
             if (out_dtypes[1] == NULL) {
                 Py_DECREF(out_dtypes[0]);
                 out_dtypes[0] = NULL;
