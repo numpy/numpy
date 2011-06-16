@@ -20,6 +20,7 @@
 #include "numpy/npy_3kcompat.h"
 
 #include "numpy/arrayscalars.h"
+#include "methods.h"
 #include "_datetime.h"
 
 /*
@@ -2457,6 +2458,8 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
  * 'str' must be a NULL-terminated string, and 'len' must be its length.
  * 'unit' should contain -1 if the unit is unknown, or the unit
  *      which will be used if it is.
+ * 'casting' controls how the detected unit from the string is allowed
+ *           to be cast to the 'unit' parameter.
  *
  * 'out' gets filled with the parsed date-time.
  * 'out_local' gets set to 1 if the parsed time was in local time,
@@ -2470,12 +2473,12 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
  *      'D', for 'now', the unit recommended is 's', and for 'NaT'
  *      the unit recommended is 'Y'.
  *
- *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
 parse_iso_8601_date(char *str, int len,
                     NPY_DATETIMEUNIT unit,
+                    NPY_CASTING casting,
                     npy_datetimestruct *out,
                     npy_bool *out_local,
                     NPY_DATETIMEUNIT *out_bestunit,
@@ -2484,6 +2487,7 @@ parse_iso_8601_date(char *str, int len,
     int year_leap = 0;
     int i, numdigits;
     char *substr, sublen;
+    NPY_DATETIMEUNIT bestunit;
 
     /* Initialize the output to all zeros */
     memset(out, 0, sizeof(npy_datetimestruct));
@@ -2563,6 +2567,8 @@ parse_iso_8601_date(char *str, int len,
         out->month = tm_.tm_mon + 1;
         out->day = tm_.tm_mday;
 
+        bestunit = NPY_FR_D;
+
         /*
          * Indicate that this was a special value, and
          * is a date (unit 'D').
@@ -2571,10 +2577,20 @@ parse_iso_8601_date(char *str, int len,
             *out_local = 0;
         }
         if (out_bestunit != NULL) {
-            *out_bestunit = NPY_FR_D;
+            *out_bestunit = bestunit;
         }
         if (out_special != NULL) {
             *out_special = 1;
+        }
+
+        /* Check the casting rule */
+        if (unit != -1 && !can_cast_datetime64_units(bestunit, unit,
+                                                     casting)) {
+            PyErr_Format(PyExc_ValueError, "Cannot parse \"%s\" as unit "
+                         "'%s' using casting rule %s",
+                         str, _datetime_strings[unit],
+                         npy_casting_to_string(casting));
+            return -1;
         }
 
         return 0;
@@ -2587,20 +2603,14 @@ parse_iso_8601_date(char *str, int len,
         time_t rawtime = 0;
         PyArray_DatetimeMetaData meta;
 
-        /* 'now' only works for units of hours or smaller */
-        if (unit != -1 && unit < NPY_FR_h) {
-            PyErr_SetString(PyExc_ValueError,
-                        "Special value 'now' can only be converted "
-                        "to a NumPy datetime with 'h' or smaller units");
-            return -1;
-        }
-
         time(&rawtime);
 
         /* Set up a dummy metadata for the conversion */
         meta.base = NPY_FR_s;
         meta.num = 1;
         meta.events = 1;
+
+        bestunit = NPY_FR_s;
 
         /*
          * Indicate that this was a special value, and
@@ -2611,10 +2621,20 @@ parse_iso_8601_date(char *str, int len,
             *out_local = 0;
         }
         if (out_bestunit != NULL) {
-            *out_bestunit = NPY_FR_s;
+            *out_bestunit = bestunit;
         }
         if (out_special != NULL) {
             *out_special = 1;
+        }
+
+        /* Check the casting rule */
+        if (unit != -1 && !can_cast_datetime64_units(bestunit, unit,
+                                                     casting)) {
+            PyErr_Format(PyExc_ValueError, "Cannot parse \"%s\" as unit "
+                         "'%s' using casting rule %s",
+                         str, _datetime_strings[unit],
+                         npy_casting_to_string(casting));
+            return -1;
         }
 
         return convert_datetime_to_datetimestruct(&meta, rawtime, out);
@@ -2664,9 +2684,7 @@ parse_iso_8601_date(char *str, int len,
         if (out_local != NULL) {
             *out_local = 0;
         }
-        if (out_bestunit != NULL) {
-            *out_bestunit = NPY_FR_Y;
-        }
+        bestunit = NPY_FR_Y;
         goto finish;
     }
     else if (*substr == '-') {
@@ -2703,9 +2721,7 @@ parse_iso_8601_date(char *str, int len,
         if (out_local != NULL) {
             *out_local = 0;
         }
-        if (out_bestunit != NULL) {
-            *out_bestunit = NPY_FR_M;
-        }
+        bestunit = NPY_FR_M;
         goto finish;
     }
     else if (*substr == '-') {
@@ -2743,9 +2759,7 @@ parse_iso_8601_date(char *str, int len,
         if (out_local != NULL) {
             *out_local = 0;
         }
-        if (out_bestunit != NULL) {
-            *out_bestunit = NPY_FR_D;
-        }
+        bestunit = NPY_FR_D;
         goto finish;
     }
     else if (*substr != 'T' && *substr != ' ') {
@@ -2778,9 +2792,7 @@ parse_iso_8601_date(char *str, int len,
         --sublen;
     }
     else {
-        if (out_bestunit != NULL) {
-            *out_bestunit = NPY_FR_h;
-        }
+        bestunit = NPY_FR_h;
         goto parse_timezone;
     }
 
@@ -2811,9 +2823,7 @@ parse_iso_8601_date(char *str, int len,
         --sublen;
     }
     else {
-        if (out_bestunit != NULL) {
-            *out_bestunit = NPY_FR_m;
-        }
+        bestunit = NPY_FR_m;
         goto parse_timezone;
     }
 
@@ -2844,9 +2854,7 @@ parse_iso_8601_date(char *str, int len,
         --sublen;
     }
     else {
-        if (out_bestunit != NULL) {
-            *out_bestunit = NPY_FR_s;
-        }
+        bestunit = NPY_FR_s;
         goto parse_timezone;
     }
 
@@ -2863,13 +2871,11 @@ parse_iso_8601_date(char *str, int len,
     }
 
     if (sublen == 0 || !isdigit(*substr)) {
-        if (out_bestunit != NULL) {
-            if (numdigits > 3) {
-                *out_bestunit = NPY_FR_us;
-            }
-            else {
-                *out_bestunit = NPY_FR_ms;
-            }
+        if (numdigits > 3) {
+            bestunit = NPY_FR_us;
+        }
+        else {
+            bestunit = NPY_FR_ms;
         }
         goto parse_timezone;
     }
@@ -2887,13 +2893,11 @@ parse_iso_8601_date(char *str, int len,
     }
 
     if (sublen == 0 || !isdigit(*substr)) {
-        if (out_bestunit != NULL) {
-            if (numdigits > 3) {
-                *out_bestunit = NPY_FR_ps;
-            }
-            else {
-                *out_bestunit = NPY_FR_ns;
-            }
+        if (numdigits > 3) {
+            bestunit = NPY_FR_ps;
+        }
+        else {
+            bestunit = NPY_FR_ns;
         }
         goto parse_timezone;
     }
@@ -2910,13 +2914,11 @@ parse_iso_8601_date(char *str, int len,
         }
     }
 
-    if (out_bestunit != NULL) {
-        if (numdigits > 3) {
-            *out_bestunit = NPY_FR_as;
-        }
-        else {
-            *out_bestunit = NPY_FR_fs;
-        }
+    if (numdigits > 3) {
+        bestunit = NPY_FR_as;
+    }
+    else {
+        bestunit = NPY_FR_fs;
     }
 
 parse_timezone:
@@ -3072,6 +3074,20 @@ parse_timezone:
     }
 
 finish:
+    if (out_bestunit != NULL) {
+        *out_bestunit = bestunit;
+    }
+
+    /* Check the casting rule */
+    if (unit != -1 && !can_cast_datetime64_units(bestunit, unit,
+                                                 casting)) {
+        PyErr_Format(PyExc_ValueError, "Cannot parse \"%s\" as unit "
+                     "'%s' using casting rule %s",
+                     str, _datetime_strings[unit],
+                     npy_casting_to_string(casting));
+        return -1;
+    }
+
     return 0;
 
 parse_error:
@@ -3863,8 +3879,8 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
 
         /* Parse the ISO date */
-        if (parse_iso_8601_date(str, len, meta->base, &dts,
-                                NULL, &bestunit, NULL) < 0) {
+        if (parse_iso_8601_date(str, len, meta->base, NPY_SAFE_CASTING,
+                                &dts, NULL, &bestunit, NULL) < 0) {
             Py_DECREF(bytes);
             return -1;
         }

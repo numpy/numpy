@@ -766,7 +766,7 @@ array_setasflat(PyArrayObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-static const char *
+NPY_NO_EXPORT const char *
 npy_casting_to_string(NPY_CASTING casting)
 {
     switch (casting) {
