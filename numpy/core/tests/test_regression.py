@@ -1545,7 +1545,7 @@ class TestRegression(TestCase):
         s3 = asbytes('other')
         a = np.array([[s1],[s2],[s3]])
         assert_equal(a.dtype, np.dtype('S5'))
-        b = a.astype('str')
+        b = a.astype(np.dtype('S0'))
         assert_equal(b.dtype, np.dtype('S5'))
 
     def test_ticket_1756(self):

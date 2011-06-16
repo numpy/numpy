@@ -14,16 +14,12 @@
 #include "numpy/npy_3kcompat.h"
 
 #include "common.h"
-
 #include "ctors.h"
-
 #include "shape.h"
-
 #include "buffer.h"
-
 #include "numpymemoryview.h"
-
 #include "lowlevel_strided_loops.h"
+#include "_datetime.h"
 
 /*
  * Reading from a file or a string.
@@ -1694,6 +1690,36 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
             }
         }
     }
+    /*
+     * Treat datetime generic units with the same idea as flexible strings.
+     *
+     * Flexible strings, for example the dtype 'str', use size zero as a
+     * signal indicating that they represent a "generic string type" instead
+     * of a string type with the size already baked in. The generic unit
+     * plays the same role, indicating that it's a "generic datetime type",
+     * and the actual unit should be filled in when needed just like the
+     * actual string size should be filled in when needed.
+     */
+    else if (newtype != NULL && newtype->type_num == NPY_DATETIME) {
+        PyArray_DatetimeMetaData *meta =
+                    get_datetime_metadata_from_dtype(newtype);
+        if (meta == NULL) {
+            Py_DECREF(newtype);
+            return NULL;
+        }
+
+        if (meta->base == NPY_FR_GENERIC) {
+            /* Detect the unit from the input's data */
+            PyArray_Descr *dtype = find_object_datetime_type(op,
+                                                    newtype->type_num);
+            if (dtype == NULL) {
+                Py_DECREF(newtype);
+                return NULL;
+            }
+            Py_DECREF(newtype);
+            newtype = dtype;
+        }
+    }
 
     /* If we got dimensions and dtype instead of an array */
     if (arr == NULL) {
@@ -3082,6 +3108,15 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     npy_intp length;
     PyArray_Descr *native = NULL;
     int swap;
+
+    /* Datetime arange is handled specially */
+    if ((dtype != NULL && (dtype->type_num == NPY_DATETIME ||
+                           dtype->type_num == NPY_TIMEDELTA)) ||
+            (dtype == NULL && (is_any_numpy_datetime_or_timedelta(start) ||
+                              is_any_numpy_datetime_or_timedelta(stop) ||
+                              is_any_numpy_datetime_or_timedelta(step)))) {
+        return (PyObject *)datetime_arange(start, stop, step, dtype);
+    }
 
     if (!dtype) {
         PyArray_Descr *deftype;

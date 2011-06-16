@@ -3342,11 +3342,20 @@ npyiter_check_casting(int nop, PyArrayObject **op,
                         !PyArray_CanCastArrayTo(op[iop],
                                           op_dtype[iop],
                                           casting)) {
-                PyErr_Format(PyExc_TypeError,
-                        "Iterator operand %d dtype could not be cast "
-                        "to the requested dtype, according to "
-                        "the casting rule given, %s", (int)iop,
-                        npyiter_casting_to_string(casting));
+                PyObject *errmsg;
+                errmsg = PyUString_FromFormat(
+                        "Iterator operand %d dtype could not be cast from ",
+                        (int)iop);
+                PyUString_ConcatAndDel(&errmsg,
+                        PyObject_Repr((PyObject *)PyArray_DESCR(op[iop])));
+                PyUString_ConcatAndDel(&errmsg,
+                        PyUString_FromString(" to "));
+                PyUString_ConcatAndDel(&errmsg,
+                        PyObject_Repr((PyObject *)op_dtype[iop]));
+                PyUString_ConcatAndDel(&errmsg,
+                        PyUString_FromFormat(" according to the rule %s",
+                                npyiter_casting_to_string(casting)));
+                PyErr_SetObject(PyExc_TypeError, errmsg);
                 return 0;
             }
             /* Check write (temp -> op) casting */
@@ -3354,11 +3363,21 @@ npyiter_check_casting(int nop, PyArrayObject **op,
                         !PyArray_CanCastTypeTo(op_dtype[iop],
                                           PyArray_DESCR(op[iop]),
                                           casting)) {
-                PyErr_Format(PyExc_TypeError,
-                        "Iterator requested dtype could not be cast "
-                        "to the operand %d dtype, according to "
-                        "the casting rule given, %s", (int)iop,
-                        npyiter_casting_to_string(casting));
+                PyObject *errmsg;
+                errmsg = PyUString_FromString(
+                        "Iterator requested dtype could not be cast from ");
+                PyUString_ConcatAndDel(&errmsg,
+                        PyObject_Repr((PyObject *)op_dtype[iop]));
+                PyUString_ConcatAndDel(&errmsg,
+                        PyUString_FromString(" to "));
+                PyUString_ConcatAndDel(&errmsg,
+                        PyObject_Repr((PyObject *)PyArray_DESCR(op[iop])));
+                PyUString_ConcatAndDel(&errmsg,
+                        PyUString_FromFormat(", the operand %d dtype, "
+                                "according to the rule %s",
+                                (int)iop,
+                                npyiter_casting_to_string(casting)));
+                PyErr_SetObject(PyExc_TypeError, errmsg);
                 return 0;
             }
 

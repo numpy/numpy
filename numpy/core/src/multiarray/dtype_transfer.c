@@ -708,8 +708,9 @@ typedef struct {
     /* The number of events in the source and destination */
     int src_events, dst_events;
     /*
-     * The metadata for when dealing with Months, Years, or
-     * Business Days (all of which behave non-linearly).
+     * The metadata for when dealing with Months or Years
+     * which behave non-linearly with respect to the other
+     * units.
      */
     PyArray_DatetimeMetaData src_meta, dst_meta;
 } _strided_datetime_cast_data;
@@ -868,16 +869,6 @@ get_nbo_cast_datetime_transfer_function(int aligned,
     get_datetime_conversion_factor(src_meta, dst_meta, &num, &denom);
 
     if (num == 0) {
-        PyObject *errmsg;
-        errmsg = PyUString_FromString("Integer overflow "
-                    "getting a conversion factor between types ");
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)src_dtype));
-        PyUString_ConcatAndDel(&errmsg,
-                PyUString_FromString(" and "));
-        PyUString_ConcatAndDel(&errmsg,
-                PyObject_Repr((PyObject *)dst_dtype));
-        PyErr_SetObject(PyExc_OverflowError, errmsg);
         return NPY_FAIL;
     }
 
@@ -899,16 +890,14 @@ get_nbo_cast_datetime_transfer_function(int aligned,
 
     /*
      * Special case the datetime (but not timedelta) with the nonlinear
-     * units (years, months, business days). For timedelta, an average
+     * units (years and months). For timedelta, an average
      * years and months value is used.
      */
     if (src_dtype->type_num == NPY_DATETIME &&
             (src_meta->base == NPY_FR_Y ||
              src_meta->base == NPY_FR_M ||
-             src_meta->base == NPY_FR_B ||
              dst_meta->base == NPY_FR_Y ||
-             dst_meta->base == NPY_FR_M ||
-             dst_meta->base == NPY_FR_B)) {
+             dst_meta->base == NPY_FR_M)) {
         memcpy(&data->src_meta, src_meta, sizeof(data->src_meta));
         memcpy(&data->dst_meta, dst_meta, sizeof(data->dst_meta));
         *out_stransfer = &_strided_to_strided_datetime_general_cast;
@@ -3245,3 +3234,52 @@ PyArray_GetDTypeTransferFunction(int aligned,
                     out_stransfer, out_transferdata,
                     out_needs_api);
 }
+
+NPY_NO_EXPORT int
+PyArray_CastRawArrays(npy_intp count,
+                      char *src, char *dst,
+                      npy_intp src_stride, npy_intp dst_stride,
+                      PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                      int move_references)
+{
+    PyArray_StridedTransferFn *stransfer = NULL;
+    void *transferdata = NULL;
+    int aligned = 1, needs_api = 0;
+
+    /* Make sure the copy is reasonable */
+    if (dst_stride == 0 && count > 1) {
+        PyErr_SetString(PyExc_ValueError,
+                    "NumPy CastRawArrays cannot do a reduction");
+        return NPY_FAIL;
+    }
+    else if (count == 0) {
+        return NPY_SUCCEED;
+    }
+
+    /* Check data alignment */
+    aligned = (((npy_intp)src_dtype | src_stride) &
+                                (src_dtype->alignment - 1)) == 0 &&
+              (((npy_intp)dst_dtype | dst_stride) &
+                                (dst_dtype->alignment - 1)) == 0;
+
+    /* Get the function to do the casting */
+    if (PyArray_GetDTypeTransferFunction(aligned,
+                        src_stride, dst_stride,
+                        src_dtype, dst_dtype,
+                        move_references,
+                        &stransfer, &transferdata,
+                        &needs_api) != NPY_SUCCEED) {
+        return NPY_FAIL;
+    }
+
+    /* Cast */
+    stransfer(dst, dst_stride, src, src_stride, count,
+                src_dtype->elsize, transferdata);
+
+    /* Cleanup */
+    PyArray_FreeStridedTransferData(transferdata);
+
+    /* If needs_api was set to 1, it may have raised a Python exception */
+    return (needs_api && PyErr_Occurred()) ? NPY_FAIL : NPY_SUCCEED;
+}
+

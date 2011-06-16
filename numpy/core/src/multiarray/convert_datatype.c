@@ -565,6 +565,22 @@ promote_types(PyArray_Descr *type1, PyArray_Descr *type2,
 
 }
 
+/*
+ * Returns a new reference to type if it is already NBO, otherwise
+ * returns a copy converted to NBO.
+ */
+static PyArray_Descr *
+ensure_dtype_nbo(PyArray_Descr *type)
+{
+    if (PyArray_ISNBO(type->byteorder)) {
+        Py_INCREF(type);
+        return type;
+    }
+    else {
+        return PyArray_DescrNewByteorder(type, NPY_NATIVE);
+    }
+}
+
 /*NUMPY_API
  * Produces the smallest size and lowest kind type to which both
  * input types can be cast.
@@ -594,23 +610,11 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
 
         if (PyArray_CanCastTo(type2, type1)) {
             /* Promoted types are always native byte order */
-            if (PyArray_ISNBO(type1->byteorder)) {
-                Py_INCREF(type1);
-                return type1;
-            }
-            else {
-                return PyArray_DescrNewByteorder(type1, NPY_NATIVE);
-            }
+            return ensure_dtype_nbo(type1);
         }
         else if (PyArray_CanCastTo(type1, type2)) {
             /* Promoted types are always native byte order */
-            if (PyArray_ISNBO(type2->byteorder)) {
-                Py_INCREF(type2);
-                return type2;
-            }
-            else {
-                return PyArray_DescrNewByteorder(type2, NPY_NATIVE);
-            }
+            return ensure_dtype_nbo(type2);
         }
 
         /* Convert the 'kind' char into a scalar kind */
@@ -691,8 +695,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         /* BOOL can convert to anything except datetime/void */
         case NPY_BOOL:
             if (type_num2 != NPY_DATETIME && type_num2 != NPY_VOID) {
-                Py_INCREF(type2);
-                return type2;
+                return ensure_dtype_nbo(type2);
             }
             else {
                 break;
@@ -701,18 +704,15 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         case NPY_STRING:
             if (type_num2 == NPY_STRING) {
                 if (type1->elsize > type2->elsize) {
-                    Py_INCREF(type1);
-                    return type1;
+                    return ensure_dtype_nbo(type1);
                 }
                 else {
-                    Py_INCREF(type2);
-                    return type2;
+                    return ensure_dtype_nbo(type2);
                 }
             }
             else if (type_num2 == NPY_UNICODE) {
                 if (type2->elsize >= type1->elsize * 4) {
-                    Py_INCREF(type2);
-                    return type2;
+                    return ensure_dtype_nbo(type2);
                 }
                 else {
                     PyArray_Descr *d = PyArray_DescrNewFromType(NPY_UNICODE);
@@ -725,24 +725,20 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             }
             /* Allow NUMBER -> STRING */
             else if (PyTypeNum_ISNUMBER(type_num2)) {
-                Py_INCREF(type1);
-                return type1;
+                return ensure_dtype_nbo(type1);
             }
         case NPY_UNICODE:
             if (type_num2 == NPY_UNICODE) {
                 if (type1->elsize > type2->elsize) {
-                    Py_INCREF(type1);
-                    return type1;
+                    return ensure_dtype_nbo(type1);
                 }
                 else {
-                    Py_INCREF(type2);
-                    return type2;
+                    return ensure_dtype_nbo(type2);
                 }
             }
             else if (type_num2 == NPY_STRING) {
                 if (type1->elsize >= type2->elsize * 4) {
-                    Py_INCREF(type1);
-                    return type1;
+                    return ensure_dtype_nbo(type1);
                 }
                 else {
                     PyArray_Descr *d = PyArray_DescrNewFromType(NPY_UNICODE);
@@ -755,8 +751,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
             }
             /* Allow NUMBER -> UNICODE */
             else if (PyTypeNum_ISNUMBER(type_num2)) {
-                Py_INCREF(type1);
-                return type1;
+                return ensure_dtype_nbo(type1);
             }
             break;
         case NPY_DATETIME:
@@ -772,8 +767,7 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         case NPY_BOOL:
             if (type_num1 != NPY_DATETIME && type_num1 != NPY_TIMEDELTA &&
                                     type_num1 != NPY_VOID) {
-                Py_INCREF(type1);
-                return type1;
+                return ensure_dtype_nbo(type1);
             }
             else {
                 break;
@@ -781,35 +775,25 @@ PyArray_PromoteTypes(PyArray_Descr *type1, PyArray_Descr *type2)
         case NPY_STRING:
             /* Allow NUMBER -> STRING */
             if (PyTypeNum_ISNUMBER(type_num1)) {
-                Py_INCREF(type2);
-                return type2;
+                return ensure_dtype_nbo(type2);
             }
         case NPY_UNICODE:
             /* Allow NUMBER -> UNICODE */
             if (PyTypeNum_ISNUMBER(type_num1)) {
-                Py_INCREF(type2);
-                return type2;
-            }
-            break;
-        case NPY_DATETIME:
-            if (PyTypeNum_ISINTEGER(type_num1)) {
-                Py_INCREF(type2);
-                return type2;
+                return ensure_dtype_nbo(type2);
             }
             break;
         case NPY_TIMEDELTA:
             if (PyTypeNum_ISINTEGER(type_num1) ||
                             PyTypeNum_ISFLOAT(type_num1)) {
-                Py_INCREF(type2);
-                return type2;
+                return ensure_dtype_nbo(type2);
             }
             break;
     }
 
-    /* For equivalent types we can return either */
-    if (PyArray_EquivTypes(type1, type2)) {
-        Py_INCREF(type1);
-        return type1;
+    /* For types equivalent up to endianness, can return either */
+    if (PyArray_CanCastTypeTo(type1, type2, NPY_EQUIV_CASTING)) {
+        return ensure_dtype_nbo(type1);
     }
 
     /* TODO: Also combine fields, subarrays, strings, etc */

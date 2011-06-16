@@ -233,7 +233,6 @@ typedef enum {
         NPY_FR_Y, /* Years */
         NPY_FR_M, /* Months */
         NPY_FR_W, /* Weeks */
-        NPY_FR_B, /* Business days (weekdays, doesn't account for holidays) */
         NPY_FR_D, /* Days */
         NPY_FR_h, /* hours */
         NPY_FR_m, /* minutes */
@@ -243,16 +242,16 @@ typedef enum {
         NPY_FR_ns,/* nanoseconds */
         NPY_FR_ps,/* picoseconds */
         NPY_FR_fs,/* femtoseconds */
-        NPY_FR_as /* attoseconds */
+        NPY_FR_as,/* attoseconds */
+        NPY_FR_GENERIC /* Generic, unbound units, can convert to anything */
 } NPY_DATETIMEUNIT;
 
-#define NPY_DATETIME_NUMUNITS (NPY_FR_as + 1)
-#define NPY_DATETIME_DEFAULTUNIT NPY_FR_us
+#define NPY_DATETIME_NUMUNITS (NPY_FR_GENERIC + 1)
+#define NPY_DATETIME_DEFAULTUNIT NPY_FR_GENERIC
 
 #define NPY_STR_Y "Y"
 #define NPY_STR_M "M"
 #define NPY_STR_W "W"
-#define NPY_STR_B "B"
 #define NPY_STR_D "D"
 #define NPY_STR_h "h"
 #define NPY_STR_m "m"
@@ -264,6 +263,32 @@ typedef enum {
 #define NPY_STR_fs "fs"
 #define NPY_STR_as "as"
 
+/*
+ * Business day conventions for mapping invalid business
+ * days to valid business days.
+ */
+typedef enum {
+    /* Go forward in time to the following business day. */
+    NPY_BUSDAY_FORWARD,
+    NPY_BUSDAY_FOLLOWING = NPY_BUSDAY_FORWARD,
+    /* Go backward in time to the preceding business day. */
+    NPY_BUSDAY_BACKWARD,
+    NPY_BUSDAY_PRECEDING = NPY_BUSDAY_BACKWARD,
+    /*
+     * Go forward in time to the following business day, unless it
+     * crosses a month boundary, in which case go backward
+     */
+    NPY_BUSDAY_MODIFIEDFOLLOWING,
+    /*
+     * Go backward in time to the preceding business day, unless it
+     * crosses a month boundary, in which case go forward.
+     */
+    NPY_BUSDAY_MODIFIEDPRECEDING,
+    /* Produce a NaT for non-business days. */
+    NPY_BUSDAY_NAT,
+    /* Raise an exception for non-business days. */
+    NPY_BUSDAY_RAISE
+} NPY_BUSDAY_ROLL;
 
 /*
  * This is to typedef npy_intp to the appropriate pointer size for

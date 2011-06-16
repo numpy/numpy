@@ -5,6 +5,18 @@ NPY_NO_EXPORT void
 numpy_pydatetime_import();
 
 /*
+ * Creates a datetime or timedelta dtype using a copy of the provided metadata.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+create_datetime_dtype(int type_num, PyArray_DatetimeMetaData *meta);
+
+/*
+ * Creates a datetime or timedelta dtype using the given unit.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+create_datetime_dtype_with_unit(int type_num, NPY_DATETIMEUNIT unit);
+
+/*
  * This function returns the a new reference to the
  * capsule with the datetime metadata.
  */
@@ -36,6 +48,13 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
                                     npy_datetime *out);
 
 /*
+ * Extracts the month number, within the current year,
+ * from a 'datetime64[D]' value. January is 1, etc.
+ */
+NPY_NO_EXPORT int
+days_to_month_number(npy_datetime days);
+
+/*
  * Parses the metadata string into the metadata C structure.
  *
  * Returns 0 on success, -1 on failure.
@@ -44,15 +63,6 @@ NPY_NO_EXPORT int
 parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
                                     PyArray_DatetimeMetaData *out_meta);
 
-
-/*
- * This function returns a reference to a capsule
- * which contains the datetime metadata parsed from a metadata
- * string. 'metastr' should be NULL-terminated, and len should
- * contain its string length.
- */
-NPY_NO_EXPORT PyObject *
-parse_datetime_metacobj_from_metastr(char *metastr, Py_ssize_t len);
 
 /*
  * Converts a datetype dtype string into a dtype descr object.
@@ -101,10 +111,11 @@ datetime_metadata_divides(
  * Returns a capsule with the GCD metadata.
  */
 NPY_NO_EXPORT PyObject *
-compute_datetime_metadata_greatest_common_divisor(
+compute_datetime_metadata_greatest_common_divisor_capsule(
                         PyArray_Descr *type1,
                         PyArray_Descr *type2,
-                        int strict_with_nonlinear_units);
+                        int strict_with_nonlinear_units1,
+                        int strict_with_nonlinear_units2);
 
 /*
  * Computes the conversion factor to convert data with 'src_meta' metadata
@@ -175,23 +186,48 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
 NPY_NO_EXPORT int
 get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base);
 
-
 /*
  * Parses (almost) standard ISO 8601 date strings. The differences are:
  *
+ * + After the date and time, may place a ' ' followed by an event number.
  * + The date "20100312" is parsed as the year 20100312, not as
  *   equivalent to "2010-03-12". The '-' in the dates are not optional.
  * + Only seconds may have a decimal point, with up to 18 digits after it
  *   (maximum attoseconds precision).
  * + Either a 'T' as in ISO 8601 or a ' ' may be used to separate
  *   the date and the time. Both are treated equivalently.
+ * + Doesn't (yet) handle the "YYYY-DDD" or "YYYY-Www" formats.
+ * + Doesn't handle leap seconds (seconds value has 60 in these cases).
+ * + Doesn't handle 24:00:00 as synonym for midnight (00:00:00) tomorrow
+ * + Accepts special values "NaT" (not a time), "Today", (current
+ *   day according to local time) and "Now" (current time in UTC).
  *
  * 'str' must be a NULL-terminated string, and 'len' must be its length.
+ * 'unit' should contain -1 if the unit is unknown, or the unit
+ *      which will be used if it is.
+ *
+ * 'out' gets filled with the parsed date-time.
+ * 'out_local' gets set to 1 if the parsed time was in local time,
+ *      to 0 otherwise. The values 'now' and 'today' don't get counted
+ *      as local, and neither do UTC +/-#### timezone offsets, because
+ *      they aren't using the computer's local timezone offset.
+ * 'out_bestunit' gives a suggested unit based on the amount of
+ *      resolution provided in the string, or -1 for NaT.
+ * 'out_special' gets set to 1 if the parsed time was 'today',
+ *      'now', or ''/'NaT'. For 'today', the unit recommended is
+ *      'D', for 'now', the unit recommended is 's', and for 'NaT'
+ *      the unit recommended is 'Y'.
+ *
  *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_iso_8601_date(char *str, int len, npy_datetimestruct *out);
+parse_iso_8601_date(char *str, int len,
+                    NPY_DATETIMEUNIT unit,
+                    npy_datetimestruct *out,
+                    npy_bool *out_local,
+                    NPY_DATETIMEUNIT *out_bestunit,
+                    npy_bool *out_special);
 
 /*
  * Converts an npy_datetimestruct to an (almost) ISO 8601
@@ -214,19 +250,26 @@ NPY_NO_EXPORT int
 make_iso_8601_date(npy_datetimestruct *dts, char *outstr, int outlen,
                     int local, NPY_DATETIMEUNIT base, int tzoffset);
 
-
 /*
  * Tests for and converts a Python datetime.datetime or datetime.date
  * object into a NumPy npy_datetimestruct.
+ *
+ * 'out_bestunit' gives a suggested unit based on whether the object
+ *      was a datetime.date or datetime.datetime object.
  *
  * Returns -1 on error, 0 on success, and 1 (with no error set)
  * if obj doesn't have the neeeded date or datetime attributes.
  */
 NPY_NO_EXPORT int
-convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out);
+convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
+                                     NPY_DATETIMEUNIT *out_bestunit);
 
 /*
- * Converts a PyObject * into a datetime, in any of the input forms supported.
+ * Converts a PyObject * into a datetime, in any of the forms supported.
+ *
+ * If the units metadata isn't known ahead of time, set meta->base
+ * to -1, and this function will populate meta with either default
+ * values or values from the input object.
  *
  * Returns -1 on error, 0 on success.
  */
@@ -236,6 +279,10 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
 
 /*
  * Converts a PyObject * into a timedelta, in any of the forms supported
+ *
+ * If the units metadata isn't known ahead of time, set meta->base
+ * to -1, and this function will populate meta with either default
+ * values or values from the input object.
  *
  * Returns -1 on error, 0 on success.
  */
@@ -328,5 +375,27 @@ cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
                           PyArray_DatetimeMetaData *dst_meta,
                           npy_timedelta src_dt,
                           npy_timedelta *dst_dt);
+
+/*
+ * Returns true if the object is something that is best considered
+ * a Datetime or Timedelta, false otherwise.
+ */
+NPY_NO_EXPORT npy_bool
+is_any_numpy_datetime_or_timedelta(PyObject *obj);
+
+/*
+ * Implements a datetime-specific arange
+ */
+NPY_NO_EXPORT PyArrayObject *
+datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
+                PyArray_Descr *dtype);
+
+/*
+ * Examines all the objects in the given Python object by
+ * recursively descending the sequence structure. Returns a
+ * datetime or timedelta type with metadata based on the data.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+find_object_datetime_type(PyObject *obj, int type_num);
 
 #endif

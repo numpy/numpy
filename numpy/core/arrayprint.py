@@ -718,8 +718,5 @@ class TimedeltaFormat(object):
             self.format = '%' + str(max_str_len) + 'd'
 
     def __call__(self, x):
-        if _MININT < x < _MAXINT:
-            return self.format % x.astype('i8')
-        else:
-            return "%s" % x
+        return self.format % x.astype('i8')
 

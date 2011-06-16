@@ -45,6 +45,8 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "convert_datatype.h"
 #include "nditer_pywrap.h"
 #include "_datetime.h"
+#include "datetime_busday.h"
+#include "datetime_busdaycal.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -3590,11 +3592,22 @@ static struct PyMethodDef array_module_methods[] = {
     {"result_type",
         (PyCFunction)array_result_type,
         METH_VARARGS, NULL},
+    /* Datetime-related functions */
     {"datetime_data",
         (PyCFunction)array_datetime_data,
         METH_VARARGS, NULL},
     {"datetime_as_string",
         (PyCFunction)array_datetime_as_string,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    /* Datetime business-day API */
+    {"busday_offset",
+        (PyCFunction)array_busday_offset,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"busday_count",
+        (PyCFunction)array_busday_count,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"is_busday",
+        (PyCFunction)array_is_busday,
         METH_VARARGS | METH_KEYWORDS, NULL},
 #if !defined(NPY_PY3K)
     {"newbuffer",
@@ -3909,6 +3922,10 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyType_Ready(&PyArrayFlags_Type) < 0) {
         return RETVAL;
     }
+    NpyBusDayCalendar_Type.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&NpyBusDayCalendar_Type) < 0) {
+        return RETVAL;
+    }
 /* FIXME
  * There is no error handling here
  */
@@ -3987,6 +4004,11 @@ PyMODINIT_FUNC initmultiarray(void) {
 
     Py_INCREF(&PyArrayFlags_Type);
     PyDict_SetItemString(d, "flagsobj", (PyObject *)&PyArrayFlags_Type);
+
+    /* Business day calendar object */
+    Py_INCREF(&NpyBusDayCalendar_Type);
+    PyDict_SetItemString(d, "busdaycalendar",
+                            (PyObject *)&NpyBusDayCalendar_Type);
 
     set_flaginfo(d);
 

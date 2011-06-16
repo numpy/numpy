@@ -691,7 +691,6 @@ static char *_datetime_verbose_strings[] = {
     "years",
     "months",
     "weeks",
-    "business days",
     "days",
     "hours",
     "minutes",
@@ -701,7 +700,8 @@ static char *_datetime_verbose_strings[] = {
     "nanoseconds",
     "picoseconds",
     "femtoseconds",
-    "attoseconds"
+    "attoseconds",
+    "generic time units"
 };
 
 static PyObject *
@@ -2492,6 +2492,7 @@ finish:
  * #name = datetime, timedelta#
  * #Name = Datetime, Timedelta#
  * #NAME = DATETIME, TIMEDELTA#
+ * #is_datetime = 1, 0#
  */
 
 static PyObject *
@@ -2521,50 +2522,31 @@ static PyObject *
         }
     }
     else {
-        ret->obmeta.base = NPY_DATETIME_DEFAULTUNIT;
-        ret->obmeta.num = 1;
-        ret->obmeta.events = 1;
+        /*
+         * A unit of -1 signals that convert_pyobject_to_datetime
+         * should populate.
+         */
+        ret->obmeta.base = -1;
     }
 
     if (obj == NULL) {
-        ret->obval = 0;
-    }
-    /*
-     * If the metadata was unspecified and the input is a datetime/timedelta
-     * scalar, then copy the input's value and metadata exactly.
-     */
-    else if (meta_obj == NULL && PyArray_IsScalar(obj, @Name@)) {
-        ret->obval = ((Py@Name@ScalarObject *)obj)->obval;
-        ret->obmeta = ((Py@Name@ScalarObject *)obj)->obmeta;
-    }
-    /*
-     * If the metadata was unspecified and the input is a datetime/timedelta
-     * zero-dimensional array, then copy the input's value and metadata
-     * directly.
-     */
-    else if (meta_obj == NULL &&
-                    PyArray_Check(obj) &&
-                    PyArray_NDIM(obj) == 0 &&
-                    PyArray_DESCR(obj)->type_num == NPY_@NAME@) {
-        PyArray_DatetimeMetaData *meta;
+        if (ret->obmeta.base == -1) {
+            ret->obmeta.base = NPY_DATETIME_DEFAULTUNIT;
+            ret->obmeta.num = 1;
+            ret->obmeta.events = 1;
+        }
 
-        meta = get_datetime_metadata_from_dtype(PyArray_DESCR(obj));
-        if (meta == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-        PyArray_DESCR(obj)->f->copyswap(&ret->obval,
-                                        PyArray_DATA(obj),
-                                        !PyArray_ISNOTSWAPPED(obj),
-                                        obj);
-        ret->obmeta = *meta;
+        /* Make datetime default to NaT, timedelta default to zero */
+#if @is_datetime@
+        ret->obval = NPY_DATETIME_NAT;
+#else
+        ret->obval = 0;
+#endif
     }
-    else {
-        if (convert_pyobject_to_@name@(&ret->obmeta, obj, &ret->obval)
+    else if (convert_pyobject_to_@name@(&ret->obmeta, obj, &ret->obval)
                                                                     < 0) {
-            Py_DECREF(ret);
-            return NULL;
-        }
+        Py_DECREF(ret);
+        return NULL;
     }
 
     return (PyObject *)ret;
