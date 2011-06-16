@@ -6,6 +6,7 @@
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
+#include "numpy/ndarrayobject.h"
 
 #include "npy_config.h"
 #include "numpy/npy_3kcompat.h"
@@ -629,6 +630,7 @@ NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype)
 {
     int newtype = NPY_NOTYPE;
+    int ret;
 
     switch (gentype) {
         case NPY_GENBOOLLTR:
@@ -737,11 +739,11 @@ PyArray_TypestrConvert(int itemsize, int gentype)
             break;
 
         case NPY_OBJECTLTR:
-            if (PyErr_WarnEx(PyExc_DeprecationWarning,
-                            "DType strings 'O4' and 'O8' are deprecated "
+            /* raise PyErr_Warn|Ex depending on version */
+            ret = DEPRECATE("DType strings 'O4' and 'O8' are deprecated "
                             "because they are platform specific. Use "
-                            "'O' instead", 0) == 0 &&
-                        (itemsize == 4 || itemsize == 8)) {
+                            "'O' instead");
+            if (ret == 0 && (itemsize == 4 || itemsize == 8)) {
                 newtype = NPY_OBJECT;
             }
             break;
