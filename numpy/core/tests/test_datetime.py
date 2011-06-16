@@ -1108,16 +1108,44 @@ class TestDateTime(TestCase):
                                             unit='auto'),
                             '2032-01-01')
 
-        # local=True
+    def test_datetime_as_string_timzone(self):
+        # timezone='local' vs 'UTC'
         a = np.datetime64('2010-03-15T06:30Z', 'm')
-        assert_(np.datetime_as_string(a, local=True) != '2010-03-15T6:30Z')
-        # local=True with tzoffset
-        assert_equal(np.datetime_as_string(a, local=True, tzoffset=-60),
-                     '2010-03-15T05:30-0100')
-        assert_equal(np.datetime_as_string(a, local=True, tzoffset=+30),
-                     '2010-03-15T07:00+0030')
-        assert_equal(np.datetime_as_string(a, local=True, tzoffset=-5*60),
-                     '2010-03-15T01:30-0500')
+        assert_equal(np.datetime_as_string(a, timezone='UTC'),
+                '2010-03-15T06:30Z')
+        assert_(np.datetime_as_string(a, timezone='local') !=
+                '2010-03-15T06:30Z')
+
+        # Use pytz to test out various time zones
+        try:
+            from pytz import timezone as tz
+
+            b = np.datetime64('2010-02-15T06:30Z', 'm')
+
+            assert_equal(np.datetime_as_string(a, timezone=tz('US/Central')),
+                         '2010-03-15T01:30-0500')
+            assert_equal(np.datetime_as_string(a, timezone=tz('US/Eastern')),
+                         '2010-03-15T02:30-0400')
+            assert_equal(np.datetime_as_string(a, timezone=tz('US/Pacific')),
+                         '2010-03-14T23:30-0700')
+
+            assert_equal(np.datetime_as_string(b, timezone=tz('US/Central')),
+                         '2010-02-15T00:30-0600')
+            assert_equal(np.datetime_as_string(b, timezone=tz('US/Eastern')),
+                         '2010-02-15T01:30-0500')
+            assert_equal(np.datetime_as_string(b, timezone=tz('US/Pacific')),
+                         '2010-02-14T22:30-0800')
+
+            # Check that we can print out the date in the specified time zone
+            assert_equal(np.datetime_as_string(a, unit='D',
+                                               timezone=tz('US/Pacific')),
+                         '2010-03-14')
+            assert_equal(np.datetime_as_string(b, unit='D',
+                                               timezone=tz('US/Central')),
+                         '2010-02-15')
+        except ImportError:
+            import warnings
+            warnings.warn("Need pytz library to test datetime timezones")
 
     def test_datetime_arange(self):
         # With two datetimes provided as strings

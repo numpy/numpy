@@ -834,11 +834,6 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
         base = NPY_FR_D;
     }
 
-    /* Printed dates have no time zone */
-    if (base < NPY_FR_h) {
-        local = 0;
-    }
-
     /* Use the C API to convert from UTC to local time */
     if (local && tzoffset == -1) {
         time_t rawtime = 0, localrawtime;
@@ -1215,5 +1210,228 @@ string_too_short:
                 outlen);
     return -1;
 }
+
+
+/*
+ * This is the Python-exposed datetime_as_string function.
+ */
+NPY_NO_EXPORT PyObject *
+array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
+                                PyObject *kwds)
+{
+    PyObject *arr_in = NULL, *unit_in = NULL, *timezone = NULL;
+
+    int local = 0;
+    NPY_DATETIMEUNIT unit;
+    PyArray_DatetimeMetaData *meta;
+    int strsize;
+
+    PyArrayObject *ret = NULL;
+
+    NpyIter *iter = NULL;
+    PyArrayObject *op[2] = {NULL, NULL};
+    PyArray_Descr *op_dtypes[2] = {NULL, NULL};
+    npy_uint32 flags, op_flags[2];
+
+    static char *kwlist[] = {"arr", "unit", "timezone", NULL};
+
+    if(!PyArg_ParseTupleAndKeywords(args, kwds,
+                                "O|OO:datetime_as_string", kwlist,
+                                &arr_in,
+                                &unit_in,
+                                &timezone)) {
+        return NULL;
+    }
+
+    /* Claim a reference to timezone for later */
+    Py_XINCREF(timezone);
+
+    op[0] = (PyArrayObject *)PyArray_FromAny(arr_in,
+                                    NULL, 0, 0, 0, NULL);
+    if (PyArray_DESCR(op[0])->type_num != NPY_DATETIME) {
+        PyErr_SetString(PyExc_TypeError,
+                    "input must have type NumPy datetime");
+        goto fail;
+    }
+
+    /* Get the datetime metadata */
+    meta = get_datetime_metadata_from_dtype(PyArray_DESCR(op[0]));
+    if (meta == NULL) {
+        goto fail;
+    }
+
+    /* Use the metadata's unit for printing by default */
+    unit = meta->base;
+
+    /* Parse the input unit if provided */
+    if (unit_in != NULL && unit_in != Py_None) {
+        PyObject *strobj;
+        char *str = NULL;
+        Py_ssize_t len = 0;
+
+        if (PyUnicode_Check(unit_in)) {
+            strobj = PyUnicode_AsASCIIString(unit_in);
+            if (strobj == NULL) {
+                goto fail;
+            }
+        }
+        else {
+            strobj = unit_in;
+            Py_INCREF(strobj);
+        }
+
+        if (PyBytes_AsStringAndSize(strobj, &str, &len) < 0) {
+            Py_DECREF(strobj);
+            goto fail;
+        }
+
+        /* unit == -1 means to autodetect the unit from the datetime data */
+        if (strcmp(str, "auto") == 0) {
+            unit = -1;
+        }
+        else {
+            unit = parse_datetime_unit_from_string(str, len, NULL);
+            if (unit == -1) {
+                Py_DECREF(strobj);
+                goto fail;
+            }
+        }
+        Py_DECREF(strobj);
+    }
+
+    /* Get the input time zone */
+    if (timezone != NULL) {
+        /* Convert to ASCII if it's unicode */
+        if (PyUnicode_Check(timezone)) {
+            /* accept unicode input */
+            PyObject *obj_str;
+            obj_str = PyUnicode_AsASCIIString(timezone);
+            if (obj_str == NULL) {
+                goto fail;
+            }
+            Py_DECREF(timezone);
+            timezone = obj_str;
+        }
+
+        /* Check for the supported string inputs */
+        if (PyBytes_Check(timezone)) {
+            char *str;
+            Py_ssize_t len;
+
+            if (PyBytes_AsStringAndSize(timezone, &str, &len) < 0) {
+                goto fail;
+            }
+
+            if (strcmp(str, "local") == 0) {
+                local = 1;
+                Py_DECREF(timezone);
+                timezone = NULL;
+            }
+            else if (strcmp(str, "UTC") == 0) {
+                local = 0;
+                Py_DECREF(timezone);
+                timezone = NULL;
+            }
+            else {
+                PyErr_Format(PyExc_ValueError, "Unsupported timezone "
+                            "input string \"%s\"", str);
+                goto fail;
+            }
+        }
+        /* Otherwise assume it's a Python TZInfo, or acts like one */
+        else {
+            local = 1;
+        }
+    }
+
+    /* Create the output string data type with a big enough length */
+    op_dtypes[1] = PyArray_DescrNewFromType(NPY_STRING);
+    if (op_dtypes[1] == NULL) {
+        goto fail;
+    }
+    strsize = get_datetime_iso_8601_strlen(local, unit);
+    op_dtypes[1]->elsize = strsize;
+
+    flags = NPY_ITER_ZEROSIZE_OK|
+            NPY_ITER_BUFFERED;
+    op_flags[0] = NPY_ITER_READONLY|
+                  NPY_ITER_ALIGNED;
+    op_flags[1] = NPY_ITER_WRITEONLY|
+                  NPY_ITER_ALLOCATE;
+
+    iter = NpyIter_MultiNew(2, op, flags, NPY_KEEPORDER, NPY_NO_CASTING,
+                            op_flags, op_dtypes);
+    if (iter == NULL) {
+        goto fail;
+    }
+
+    if (NpyIter_GetIterSize(iter) != 0) {
+        NpyIter_IterNextFunc *iternext;
+        char **dataptr;
+        npy_datetime dt;
+        npy_datetimestruct dts;
+
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            goto fail;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+
+        do {
+            int tzoffset = -1;
+
+            /* Get the datetime */
+            dt = *(npy_datetime *)dataptr[0];
+
+            /* Convert it to a struct */
+            if (convert_datetime_to_datetimestruct(meta, dt, &dts) < 0) {
+                goto fail;
+            }
+
+            /* Get the tzoffset from the timezone if provided */
+            if (local && timezone != NULL) {
+                tzoffset = get_tzoffset_from_pytzinfo(timezone, &dts);
+                if (tzoffset == -1) {
+                    goto fail;
+                }
+            }
+
+            /* Zero the destination string completely */
+            memset(dataptr[1], 0, strsize);
+            /* Convert that into a string */
+            if (make_iso_8601_datetime(&dts, (char *)dataptr[1], strsize,
+                                local, unit, tzoffset) < 0) {
+                goto fail;
+            }
+        } while(iternext(iter));
+    }
+
+    ret = NpyIter_GetOperandArray(iter)[1];
+    Py_INCREF(ret);
+
+    Py_XDECREF(timezone);
+    Py_XDECREF(op[0]);
+    Py_XDECREF(op[1]);
+    Py_XDECREF(op_dtypes[0]);
+    Py_XDECREF(op_dtypes[1]);
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+
+    return PyArray_Return(ret);
+
+fail:
+    Py_XDECREF(timezone);
+    Py_XDECREF(op[0]);
+    Py_XDECREF(op[1]);
+    Py_XDECREF(op_dtypes[0]);
+    Py_XDECREF(op_dtypes[1]);
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+
+    return NULL;
+}
+
 
 

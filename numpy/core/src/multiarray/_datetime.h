@@ -211,6 +211,13 @@ NPY_NO_EXPORT PyObject *
 convert_datetime_metadata_tuple_to_metacobj(PyObject *tuple);
 
 /*
+ * Gets a tzoffset in minutes by calling the fromutc() function on
+ * the Python datetime.tzinfo object.
+ */
+NPY_NO_EXPORT int
+get_tzoffset_from_pytzinfo(PyObject *timezone, npy_datetimestruct *dts);
+
+/*
  * Converts an input object into datetime metadata. The input
  * may be either a string or a tuple.
  *
@@ -240,12 +247,16 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
  * 'out_bestunit' gives a suggested unit based on whether the object
  *      was a datetime.date or datetime.datetime object.
  *
+ * If 'apply_tzinfo' is 1, this function uses the tzinfo to convert
+ * to UTC time, otherwise it returns the struct with the local time.
+ *
  * Returns -1 on error, 0 on success, and 1 (with no error set)
  * if obj doesn't have the neeeded date or datetime attributes.
  */
 NPY_NO_EXPORT int
 convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
-                                     NPY_DATETIMEUNIT *out_bestunit);
+                                     NPY_DATETIMEUNIT *out_bestunit,
+                                     int apply_tzinfo);
 
 /*
  * Converts a PyObject * into a datetime, in any of the forms supported.

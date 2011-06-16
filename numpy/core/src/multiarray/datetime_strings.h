@@ -74,4 +74,11 @@ NPY_NO_EXPORT int
 make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
                     int local, NPY_DATETIMEUNIT base, int tzoffset);
 
+/*
+ * This is the Python-exposed datetime_as_string function.
+ */
+NPY_NO_EXPORT PyObject *
+array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
+                                PyObject *kwds);
+
 #endif

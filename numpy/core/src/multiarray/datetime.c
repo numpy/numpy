@@ -131,6 +131,19 @@ get_datetimestruct_days(const npy_datetimestruct *dts)
 }
 
 /*
+ * Calculates the minutes offset from the 1970 epoch.
+ */
+NPY_NO_EXPORT npy_int64
+get_datetimestruct_minutes(const npy_datetimestruct *dts)
+{
+    npy_int64 days = get_datetimestruct_days(dts) * 24 * 60;
+    days += dts->hour * 60;
+    days += dts->min;
+
+    return days;
+}
+
+/*
  * Modifies '*days_' to be the day offset within the year,
  * and returns the year.
  */
@@ -2451,12 +2464,16 @@ add_minutes_to_datetimestruct(npy_datetimestruct *dts, int minutes)
  * 'out_bestunit' gives a suggested unit based on whether the object
  *      was a datetime.date or datetime.datetime object.
  *
+ * If 'apply_tzinfo' is 1, this function uses the tzinfo to convert
+ * to UTC time, otherwise it returns the struct with the local time.
+ *
  * Returns -1 on error, 0 on success, and 1 (with no error set)
  * if obj doesn't have the neeeded date or datetime attributes.
  */
 NPY_NO_EXPORT int
 convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
-                                     NPY_DATETIMEUNIT *out_bestunit)
+                                     NPY_DATETIMEUNIT *out_bestunit,
+                                     int apply_tzinfo)
 {
     PyObject *tmp;
     int isleap;
@@ -2514,7 +2531,8 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
         goto invalid_date;
     }
     isleap = is_leapyear(out->year);
-    if (out->day < 1 || out->day > _days_per_month_table[isleap][out->month-1]) {
+    if (out->day < 1 ||
+                out->day > _days_per_month_table[isleap][out->month-1]) {
         goto invalid_date;
     }
 
@@ -2586,7 +2604,7 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
     }
 
     /* Apply the time zone offset if it exists */
-    if (PyObject_HasAttrString(obj, "tzinfo")) {
+    if (apply_tzinfo && PyObject_HasAttrString(obj, "tzinfo")) {
         tmp = PyObject_GetAttrString(obj, "tzinfo");
         if (tmp == NULL) {
             return -1;
@@ -2607,10 +2625,10 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
             Py_DECREF(tmp);
 
             /*
-             * The timedelta should have an attribute "seconds"
+             * The timedelta should have a function "total_seconds"
              * which contains the value we want.
              */
-            tmp = PyObject_GetAttrString(obj, "seconds");
+            tmp = PyObject_CallMethod(offset, "total_seconds", "");
             if (tmp == NULL) {
                 return -1;
             }
@@ -2647,6 +2665,43 @@ invalid_time:
             "to NumPy datetime",
             (int)out->hour, (int)out->min, (int)out->sec, (int)out->us);
     return -1;
+}
+
+/*
+ * Gets a tzoffset in minutes by calling the fromutc() function on
+ * the Python datetime.tzinfo object.
+ */
+NPY_NO_EXPORT int
+get_tzoffset_from_pytzinfo(PyObject *timezone, npy_datetimestruct *dts)
+{
+    PyObject *dt, *loc_dt;
+    npy_datetimestruct loc_dts;
+
+    /* Create a Python datetime to give to the timezone object */
+    dt = PyDateTime_FromDateAndTime((int)dts->year, dts->month, dts->day,
+                            dts->hour, dts->min, 0, 0);
+    if (dt == NULL) {
+        return -1;
+    }
+
+    /* Convert the datetime from UTC to local time */
+    loc_dt = PyObject_CallMethod(timezone, "fromutc", "O", dt);
+    Py_DECREF(dt);
+    if (loc_dt == NULL) {
+        return -1;
+    }
+
+    /* Convert the local datetime into a datetimestruct */
+    if (convert_pydatetime_to_datetimestruct(loc_dt, &loc_dts, NULL, 0) < 0) {
+        Py_DECREF(loc_dt);
+        return -1;
+    }
+
+    Py_DECREF(loc_dt);
+
+    /* Calculate the tzoffset as the difference between the datetimes */
+    return get_datetimestruct_minutes(&loc_dts) -
+           get_datetimestruct_minutes(dts);
 }
 
 /*
@@ -2793,7 +2848,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         npy_datetimestruct dts;
         NPY_DATETIMEUNIT bestunit = -1;
 
-        code = convert_pydatetime_to_datetimestruct(obj, &dts, &bestunit);
+        code = convert_pydatetime_to_datetimestruct(obj, &dts, &bestunit, 1);
         if (code == -1) {
             return -1;
         }
