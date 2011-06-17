@@ -48,13 +48,14 @@ typedef unsigned PY_LONG_LONG npy_ulonglong;
 #    define NPY_ULONGLONG_FMT        "I64u"
 #    define NPY_LONGLONG_SUFFIX(x)   (x##i64)
 #    define NPY_ULONGLONG_SUFFIX(x)  (x##Ui64)
-#  else
-        /* #define LONGLONG_FMT   "lld"      Another possible variant
-           #define ULONGLONG_FMT  "llu"
-
+#  elseif defined(__APPLE__)  /* "%Ld" only parses 4 bytes on 32-bit MacOS X */
+     #define LONGLONG_FMT   "lld"
+     #define ULONGLONG_FMT  "llu"
+        /*                         and another possible variant
            #define LONGLONG_FMT   "qd"   -- BSD perhaps?
            #define ULONGLONG_FMT   "qu"
         */
+#  else
 #    define NPY_LONGLONG_FMT         "Ld"
 #    define NPY_ULONGLONG_FMT        "Lu"
 #    define NPY_LONGLONG_SUFFIX(x)   (x##LL)
