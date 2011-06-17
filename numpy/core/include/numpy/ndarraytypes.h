@@ -85,7 +85,7 @@ enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_NTYPES_ABI_COMPATIBLE=21
 };
 
-#define NPY_METADATA_DTSTR "__frequency__"
+#define NPY_METADATA_DTSTR "__timeunit__"
 
 /* basetype array priority */
 #define NPY_PRIORITY 0.0
