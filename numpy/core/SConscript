@@ -384,7 +384,7 @@ nditer_src = env.GenerateFromTemplate(
 lowlevel_strided_loops_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'lowlevel_strided_loops.c.src'))
 einsum_src = env.GenerateFromTemplate(pjoin('src', 'multiarray', 'einsum.c.src'))
-sortmodule_src = env.GenerateFromTemplate(pjoin('src', 'npysort','sortmodule.c.src'))
+#sortmodule_src = env.GenerateFromTemplate(pjoin('src', 'npysort','sortmodule.c.src'))
 umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umath',
     'umathmodule.c.src'))
 umath_tests_src = env.GenerateFromTemplate(pjoin('src', 'umath',
@@ -441,11 +441,6 @@ subst_dict = {'@prefix@': '$distutils_install_prefix',
     '@pkgname@': 'numpy.core', '@sep@': os.path.sep}
 npysort_ini = env.SubstInFile(pjoin('lib', 'npy-pkg-config', 'npysort.ini'),
     'npysort.ini.in', SUBST_DICT=subst_dict)
-
-#subst_dict = {'@posix_mathlib@': " ".join(['-l%s' % l for l in mlib]),
-#              '@msvc_mathlib@': " ".join(['%s.mlib' % l for l in mlib])}
-#mlib_ini = env.SubstInFile(pjoin('lib', 'npy-pkg-config', 'mlib.ini'),
-#    'mlib.ini.in', SUBST_DICT=subst_dict)
 env.Install('$distutils_installdir/lib/npy-pkg-config', npysort_ini)
 
 #-----------------
@@ -493,11 +488,6 @@ else:
     multiarray_src = [pjoin('src', 'multiarray', 'multiarraymodule_onefile.c')]
 multiarray = env.DistutilsPythonExtension('multiarray', source = multiarray_src)
 env.DistutilsPythonExtension('multiarray_tests', source=multiarray_tests_src)
-
-#------------------
-# Build sort module
-#------------------
-sort = env.DistutilsPythonExtension('_sort', source = sortmodule_src)
 
 #-------------------
 # Build umath module

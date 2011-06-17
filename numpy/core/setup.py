@@ -666,7 +666,7 @@ def configuration(parent_package='',top_path=None):
             subst_dict)
 
     #######################################################################
-    #                           sort library                              #
+    #                         npysort library                             #
     #######################################################################
 
     #subst_dict = dict([("sep", os.path.sep), ("pkgname", "numpy.core")])
@@ -675,42 +675,6 @@ def configuration(parent_package='',top_path=None):
             install_dir = 'lib')
     config.add_npy_pkg_config("npysort.ini.in", "lib/npy-pkg-config",
             subst_dict)
-
-    #######################################################################
-    #                            sort module                              #
-    #######################################################################
-
-    # _sort version: this function is needed to build foo.c from foo.c.src
-    # when foo.c is included in another file and as such not in the src
-    # argument of build_ext command
-    def generate_sort_templated_sources(ext, build_dir):
-        from numpy.distutils.misc_util import get_cmd
-
-        subpath = join('src', 'npysort')
-        sources = [join(local_dir, subpath, 'sortmodule.c.src')]
-
-        # numpy.distutils generate .c from .c.src in weird directories, we have
-        # to add them there as they depend on the build_dir
-        config.add_include_dirs(join(build_dir, subpath))
-        cmd = get_cmd('build_src')
-        cmd.ensure_finalized()
-        cmd.template_sources(sources, ext)
-
-    sort_deps = [
-            join('src', 'npysort', 'npy_sort_common.h'),
-            join('src', 'npysort', 'sort.c.src')]
-
-    sort_src = [
-            join('src', 'npysort', 'sortmodule.c.src'),
-            generate_sort_templated_sources,
-            generate_config_h,
-            generate_numpyconfig_h,
-            generate_numpy_api]
-
-    config.add_extension('_sort',
-            sources = sort_src,
-            depends = deps + sort_deps,
-            libraries = ['npysort'])
 
     #######################################################################
     #                        multiarray module                            #
