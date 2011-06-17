@@ -7,7 +7,7 @@ import umath
 import _internal # for freeze programs
 import numerictypes as nt
 multiarray.set_typeDict(nt.sctypeDict)
-import _sort
+#import _sort
 from numeric import *
 from fromnumeric import *
 import defchararray as char
