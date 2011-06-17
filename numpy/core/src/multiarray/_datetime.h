@@ -265,11 +265,17 @@ convert_pydatetime_to_datetimestruct(PyObject *obj, npy_datetimestruct *out,
  * to -1, and this function will populate meta with either default
  * values or values from the input object.
  *
+ * The 'casting' parameter is used to control what kinds of inputs
+ * are accepted, and what happens. For example, with 'unsafe' casting,
+ * unrecognized inputs are converted to 'NaT' instead of throwing an error,
+ * while with 'safe' casting an error will be thrown if any precision
+ * from the input will be thrown away.
+ *
  * Returns -1 on error, 0 on success.
  */
 NPY_NO_EXPORT int
 convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
-                                npy_datetime *out);
+                                NPY_CASTING casting, npy_datetime *out);
 
 /*
  * Converts a PyObject * into a timedelta, in any of the forms supported
@@ -278,12 +284,17 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
  * to -1, and this function will populate meta with either default
  * values or values from the input object.
  *
+ * The 'casting' parameter is used to control what kinds of inputs
+ * are accepted, and what happens. For example, with 'unsafe' casting,
+ * unrecognized inputs are converted to 'NaT' instead of throwing an error,
+ * while with 'safe' casting an error will be thrown if any precision
+ * from the input will be thrown away.
+ *
  * Returns -1 on error, 0 on success.
  */
 NPY_NO_EXPORT int
 convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
-                                npy_timedelta *out);
-
+                                NPY_CASTING casting, npy_timedelta *out);
 
 /*
  * Converts a datetime into a PyObject *.

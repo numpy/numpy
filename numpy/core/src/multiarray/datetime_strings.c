@@ -124,14 +124,6 @@ parse_iso_8601_datetime(char *str, int len,
         time_t rawtime = 0;
         struct tm tm_;
 
-        /* 'today' only works for units of days or larger */
-        if (unit != -1 && unit > NPY_FR_D) {
-            PyErr_SetString(PyExc_ValueError,
-                        "Special value 'today' can only be converted "
-                        "to a NumPy datetime with 'D' or larger units");
-            return -1;
-        }
-
         time(&rawtime);
 #if defined(_WIN32)
         if (localtime_s(&tm_, &rawtime) != 0) {
@@ -170,7 +162,7 @@ parse_iso_8601_datetime(char *str, int len,
         /* Check the casting rule */
         if (unit != -1 && !can_cast_datetime64_units(bestunit, unit,
                                                      casting)) {
-            PyErr_Format(PyExc_ValueError, "Cannot parse \"%s\" as unit "
+            PyErr_Format(PyExc_TypeError, "Cannot parse \"%s\" as unit "
                          "'%s' using casting rule %s",
                          str, _datetime_strings[unit],
                          npy_casting_to_string(casting));
@@ -214,7 +206,7 @@ parse_iso_8601_datetime(char *str, int len,
         /* Check the casting rule */
         if (unit != -1 && !can_cast_datetime64_units(bestunit, unit,
                                                      casting)) {
-            PyErr_Format(PyExc_ValueError, "Cannot parse \"%s\" as unit "
+            PyErr_Format(PyExc_TypeError, "Cannot parse \"%s\" as unit "
                          "'%s' using casting rule %s",
                          str, _datetime_strings[unit],
                          npy_casting_to_string(casting));
@@ -665,7 +657,7 @@ finish:
     /* Check the casting rule */
     if (unit != -1 && !can_cast_datetime64_units(bestunit, unit,
                                                  casting)) {
-        PyErr_Format(PyExc_ValueError, "Cannot parse \"%s\" as unit "
+        PyErr_Format(PyExc_TypeError, "Cannot parse \"%s\" as unit "
                      "'%s' using casting rule %s",
                      str, _datetime_strings[unit],
                      npy_casting_to_string(casting));
@@ -777,9 +769,9 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
             goto string_too_short;
         }
         outstr[0] = 'N';
-        outstr[0] = 'a';
-        outstr[0] = 'T';
-        outstr[0] = '\0';
+        outstr[1] = 'a';
+        outstr[2] = 'T';
+        outstr[3] = '\0';
 
         return 0;
     }

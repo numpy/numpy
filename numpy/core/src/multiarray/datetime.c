@@ -20,6 +20,7 @@
 #include "numpy/npy_3kcompat.h"
 
 #include "numpy/arrayscalars.h"
+#include "methods.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
 
@@ -1795,6 +1796,68 @@ can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
 }
 
 /*
+ * Tests whether a datetime64 can be cast from the source metadata
+ * to the destination metadata according to the specified casting rule.
+ *
+ * Returns -1 if an exception was raised, 0 otherwise.
+ */
+NPY_NO_EXPORT int
+raise_if_datetime64_metadata_cast_error(char *object_type,
+                            PyArray_DatetimeMetaData *src_meta,
+                            PyArray_DatetimeMetaData *dst_meta,
+                            NPY_CASTING casting)
+{
+    if (can_cast_datetime64_metadata(src_meta, dst_meta, casting)) {
+        return 0;
+    }
+    else {
+        PyObject *errmsg;
+        errmsg = PyUString_FromFormat("Cannot cast %s "
+                    "from metadata ", object_type);
+        errmsg = append_metastr_to_string(src_meta, 0, errmsg);
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromString(" to "));
+        errmsg = append_metastr_to_string(dst_meta, 0, errmsg);
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromFormat(" according to the rule %s",
+                        npy_casting_to_string(casting)));
+        PyErr_SetObject(PyExc_TypeError, errmsg);
+        return -1;
+    }
+}
+
+/*
+ * Tests whether a timedelta64 can be cast from the source metadata
+ * to the destination metadata according to the specified casting rule.
+ *
+ * Returns -1 if an exception was raised, 0 otherwise.
+ */
+NPY_NO_EXPORT int
+raise_if_timedelta64_metadata_cast_error(char *object_type,
+                            PyArray_DatetimeMetaData *src_meta,
+                            PyArray_DatetimeMetaData *dst_meta,
+                            NPY_CASTING casting)
+{
+    if (can_cast_timedelta64_metadata(src_meta, dst_meta, casting)) {
+        return 0;
+    }
+    else {
+        PyObject *errmsg;
+        errmsg = PyUString_FromFormat("Cannot cast %s "
+                    "from metadata ", object_type);
+        errmsg = append_metastr_to_string(src_meta, 0, errmsg);
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromString(" to "));
+        errmsg = append_metastr_to_string(dst_meta, 0, errmsg);
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromFormat(" according to the rule %s",
+                        npy_casting_to_string(casting)));
+        PyErr_SetObject(PyExc_TypeError, errmsg);
+        return -1;
+    }
+}
+
+/*
  * Computes the GCD of the two date-time metadata values. Raises
  * an exception if there is no reasonable GCD, such as with
  * years and days.
@@ -2711,11 +2774,17 @@ get_tzoffset_from_pytzinfo(PyObject *timezone, npy_datetimestruct *dts)
  * to -1, and this function will populate meta with either default
  * values or values from the input object.
  *
+ * The 'casting' parameter is used to control what kinds of inputs
+ * are accepted, and what happens. For example, with 'unsafe' casting,
+ * unrecognized inputs are converted to 'NaT' instead of throwing an error,
+ * while with 'safe' casting an error will be thrown if any precision
+ * from the input will be thrown away.
+ *
  * Returns -1 on error, 0 on success.
  */
 NPY_NO_EXPORT int
 convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
-                                npy_datetime *out)
+                                NPY_CASTING casting, npy_datetime *out)
 {
     if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
         PyObject *bytes = NULL;
@@ -2741,7 +2810,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
 
         /* Parse the ISO date */
-        if (parse_iso_8601_datetime(str, len, meta->base, NPY_SAFE_CASTING,
+        if (parse_iso_8601_datetime(str, len, meta->base, casting,
                                 &dts, NULL, &bestunit, NULL) < 0) {
             Py_DECREF(bytes);
             return -1;
@@ -2776,7 +2845,7 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
     else if (PyTuple_Check(obj) && PyTuple_Size(obj) == 2) {
         int event, event_old;
         if (convert_pyobject_to_datetime(meta, PyTuple_GET_ITEM(obj, 0),
-                                                                out) < 0) {
+                                                        casting, out) < 0) {
             return -1;
         }
         event = (int)PyInt_AsLong(PyTuple_GET_ITEM(obj, 1));
@@ -2810,8 +2879,17 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
         /* Otherwise do a casting transformation */
         else {
-            return cast_datetime_to_datetime(&dts->obmeta, meta,
-                                             dts->obval, out);
+            /* Allow NaT (not-a-time) values to slip through any rule */
+            if (dts->obval != NPY_DATETIME_NAT &&
+                        raise_if_datetime64_metadata_cast_error(
+                                "NumPy timedelta64 scalar",
+                                &dts->obmeta, meta, casting) < 0) {
+                return -1;
+            }
+            else {
+                return cast_datetime_to_datetime(&dts->obmeta, meta,
+                                                    dts->obval, out);
+            }
         }
     }
     /* Datetime zero-dimensional array */
@@ -2839,7 +2917,16 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
         /* Otherwise do a casting transformation */
         else {
-            return cast_datetime_to_datetime(obj_meta, meta, dt, out);
+            /* Allow NaT (not-a-time) values to slip through any rule */
+            if (dt != NPY_DATETIME_NAT &&
+                        raise_if_datetime64_metadata_cast_error(
+                                "NumPy timedelta64 scalar",
+                                obj_meta, meta, casting) < 0) {
+                return -1;
+            }
+            else {
+                return cast_datetime_to_datetime(obj_meta, meta, dt, out);
+            }
         }
     }
     /* Convert from a Python date or datetime object */
@@ -2859,18 +2946,43 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 meta->num = 1;
                 meta->events = 1;
             }
+            else {
+                PyArray_DatetimeMetaData obj_meta;
+                obj_meta.base = bestunit;
+                obj_meta.num = 1;
+                obj_meta.events = 1;
 
-            if (convert_datetimestruct_to_datetime(meta, &dts, out) < 0) {
-                return -1;
+                if (raise_if_datetime64_metadata_cast_error(
+                                bestunit == NPY_FR_D ? "datetime.date object"
+                                                 : "datetime.datetime object",
+                                &obj_meta, meta, casting) < 0) {
+                    return -1;
+                }
             }
 
-            return 0;
+            return convert_datetimestruct_to_datetime(meta, &dts, out);
         }
     }
 
-    PyErr_SetString(PyExc_ValueError,
-            "Could not convert object to NumPy datetime");
-    return -1;
+    /*
+     * With unsafe casting, convert unrecognized objects into NaT
+     * and with same_kind casting, convert None into NaT
+     */
+    if (casting == NPY_UNSAFE_CASTING ||
+            (obj == Py_None && casting == NPY_SAME_KIND_CASTING)) {
+        if (meta->base == -1) {
+            meta->base = NPY_FR_GENERIC;
+            meta->num = 1;
+            meta->events = 1;
+        }
+        *out = NPY_DATETIME_NAT;
+        return 0;
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError,
+                "Could not convert object to NumPy datetime");
+        return -1;
+    }
 }
 
 /*
@@ -2880,14 +2992,71 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
  * to -1, and this function will populate meta with either default
  * values or values from the input object.
  *
+ * The 'casting' parameter is used to control what kinds of inputs
+ * are accepted, and what happens. For example, with 'unsafe' casting,
+ * unrecognized inputs are converted to 'NaT' instead of throwing an error,
+ * while with 'safe' casting an error will be thrown if any precision
+ * from the input will be thrown away.
+ *
  * Returns -1 on error, 0 on success.
  */
 NPY_NO_EXPORT int
 convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
-                                npy_timedelta *out)
+                                NPY_CASTING casting, npy_timedelta *out)
 {
+    if (PyBytes_Check(obj) || PyUnicode_Check(obj)) {
+        PyObject *bytes = NULL;
+        char *str = NULL;
+        Py_ssize_t len = 0;
+        int succeeded = 0;
+
+        /* Convert to an ASCII string for the date parser */
+        if (PyUnicode_Check(obj)) {
+            bytes = PyUnicode_AsASCIIString(obj);
+            if (bytes == NULL) {
+                return -1;
+            }
+        }
+        else {
+            bytes = obj;
+            Py_INCREF(bytes);
+        }
+        if (PyBytes_AsStringAndSize(bytes, &str, &len) == -1) {
+            Py_DECREF(bytes);
+            return -1;
+        }
+
+        /* Check for a NaT string */
+        if (len <= 0 || (len == 3 &&
+                        tolower(str[0]) == 'n' &&
+                        tolower(str[1]) == 'a' &&
+                        tolower(str[2]) == 't')) {
+            *out = NPY_DATETIME_NAT;
+            succeeded = 1;
+        }
+        /* Parse as an integer */
+        else {
+            char *strend = NULL;
+
+            *out = strtol(str, &strend, 10);
+            if (strend - str == len) {
+                succeeded = 1;
+            }
+        }
+
+        if (succeeded) {
+            /* Use generic units if none was specified */
+            if (meta->base == -1) {
+                meta->base = NPY_FR_GENERIC;
+                meta->num = 1;
+                meta->events = 1;
+            }
+
+            return 0;
+        }
+    }
     /* Do no conversion on raw integers */
-    if (PyInt_Check(obj) || PyLong_Check(obj)) {
+    else if (PyInt_Check(obj) || PyLong_Check(obj)) {
         /* Use the default unit if none was specified */
         if (meta->base == -1) {
             meta->base = NPY_DATETIME_DEFAULTUNIT;
@@ -2911,8 +3080,17 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
         /* Otherwise do a casting transformation */
         else {
-            return cast_timedelta_to_timedelta(&dts->obmeta, meta,
-                                                dts->obval, out);
+            /* Allow NaT (not-a-time) values to slip through any rule */
+            if (dts->obval != NPY_DATETIME_NAT &&
+                        raise_if_timedelta64_metadata_cast_error(
+                                "NumPy timedelta64 scalar",
+                                &dts->obmeta, meta, casting) < 0) {
+                return -1;
+            }
+            else {
+                return cast_timedelta_to_timedelta(&dts->obmeta, meta,
+                                                    dts->obval, out);
+            }
         }
     }
     /* Timedelta zero-dimensional array */
@@ -2940,7 +3118,16 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
         /* Otherwise do a casting transformation */
         else {
-            return cast_timedelta_to_timedelta(obj_meta, meta, dt, out);
+            /* Allow NaT (not-a-time) values to slip through any rule */
+            if (dt != NPY_DATETIME_NAT &&
+                        raise_if_timedelta64_metadata_cast_error(
+                                "NumPy timedelta64 scalar",
+                                obj_meta, meta, casting) < 0) {
+                return -1;
+            }
+            else {
+                return cast_timedelta_to_timedelta(obj_meta, meta, dt, out);
+            }
         }
     }
     /* Convert from a Python timedelta object */
@@ -3003,20 +3190,64 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
         else {
             /*
-             * Convert to a microseconds timedelta, then cast to the
-             * desired units.
+             * Detect the largest unit where every value after is zero,
+             * to allow safe casting to seconds if microseconds is zero,
+             * for instance.
              */
-            us_meta.base = NPY_FR_us;
+            if (td % 1000LL != 0) {
+                us_meta.base = NPY_FR_us;
+            }
+            else if (td % 1000000LL != 0) {
+                us_meta.base = NPY_FR_ms;
+            }
+            else if (td % (60*1000000LL) != 0) {
+                us_meta.base = NPY_FR_s;
+            }
+            else if (td % (60*60*1000000LL) != 0) {
+                us_meta.base = NPY_FR_m;
+            }
+            else if (td % (24*60*60*1000000LL) != 0) {
+                us_meta.base = NPY_FR_D;
+            }
+            else if (td % (7*24*60*60*1000000LL) != 0) {
+                us_meta.base = NPY_FR_W;
+            }
             us_meta.num = 1;
             us_meta.events = 1;
-            
-            return cast_timedelta_to_timedelta(&us_meta, meta, td, out);
+
+            if (raise_if_timedelta64_metadata_cast_error(
+                                "datetime.timedelta object",
+                                &us_meta, meta, casting) < 0) {
+                return -1;
+            }
+            else {
+                /* Switch back to microseconds for the casting operation */
+                us_meta.base = NPY_FR_us;
+                
+                return cast_timedelta_to_timedelta(&us_meta, meta, td, out);
+            }
         }
     }
 
-    PyErr_SetString(PyExc_ValueError,
-            "Could not convert object to NumPy timedelta");
-    return -1;
+    /*
+     * With unsafe casting, convert unrecognized objects into NaT
+     * and with same_kind casting, convert None into NaT
+     */
+    if (casting == NPY_UNSAFE_CASTING ||
+            (obj == Py_None && casting == NPY_SAME_KIND_CASTING)) {
+        if (meta->base == -1) {
+            meta->base = NPY_FR_GENERIC;
+            meta->num = 1;
+            meta->events = 1;
+        }
+        *out = NPY_DATETIME_NAT;
+        return 0;
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError,
+                "Could not convert object to NumPy timedelta");
+        return -1;
+    }
 }
 
 /*
@@ -3033,9 +3264,13 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
     PyObject *ret = NULL, *tup = NULL;
     npy_datetimestruct dts;
 
-    /* Handle not-a-time, and generic units as NaT as well */
+    /*
+     * Convert NaT (not-a-time) and any value with generic units
+     * into None.
+     */
     if (dt == NPY_DATETIME_NAT || meta->base == NPY_FR_GENERIC) {
-        return PyUString_FromString("NaT");
+        Py_INCREF(Py_None);
+        return Py_None;
     }
 
     /* If the type's precision is greater than microseconds, return an int */
@@ -3108,9 +3343,12 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
     int event = 0;
     int days = 0, seconds = 0, useconds = 0;
 
-    /* Handle not-a-time */
+    /*
+     * Convert NaT (not-a-time) into None.
+     */
     if (td == NPY_DATETIME_NAT) {
-        return PyUString_FromString("NaT");
+        Py_INCREF(Py_None);
+        return Py_None;
     }
 
     /*
@@ -3399,6 +3637,7 @@ is_any_numpy_datetime_or_timedelta(PyObject *obj)
 NPY_NO_EXPORT int
 convert_pyobjects_to_datetimes(int count,
                                PyObject **objs, int *type_nums,
+                               NPY_CASTING casting,
                                npy_int64 *out_values,
                                PyArray_DatetimeMetaData *inout_meta)
 {
@@ -3432,14 +3671,14 @@ convert_pyobjects_to_datetimes(int count,
             }
             else if (type_nums[i] == NPY_DATETIME) {
                 if (convert_pyobject_to_datetime(&meta[i], objs[i],
-                                                &out_values[i]) < 0) {
+                                            casting, &out_values[i]) < 0) {
                     PyArray_free(meta);
                     return -1;
                 }
             }
             else if (type_nums[i] == NPY_TIMEDELTA) {
                 if (convert_pyobject_to_timedelta(&meta[i], objs[i],
-                                                &out_values[i]) < 0) {
+                                            casting, &out_values[i]) < 0) {
                     PyArray_free(meta);
                     return -1;
                 }
@@ -3498,13 +3737,13 @@ convert_pyobjects_to_datetimes(int count,
             }
             else if (type_nums[i] == NPY_DATETIME) {
                 if (convert_pyobject_to_datetime(inout_meta, objs[i],
-                                                &out_values[i]) < 0) {
+                                            casting, &out_values[i]) < 0) {
                     return -1;
                 }
             }
             else if (type_nums[i] == NPY_TIMEDELTA) {
                 if (convert_pyobject_to_timedelta(inout_meta, objs[i],
-                                                &out_values[i]) < 0) {
+                                            casting, &out_values[i]) < 0) {
                     return -1;
                 }
             }
@@ -3637,7 +3876,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
 
     /* Convert all the arguments */
     if (convert_pyobjects_to_datetimes(3, objs, type_nums,
-                                values, &meta) < 0) {
+                                NPY_SAME_KIND_CASTING, values, &meta) < 0) {
         return NULL;
     }
 
@@ -3899,7 +4138,8 @@ recursive_find_object_datetime64_type(PyObject *obj,
         tmp_meta.num = 1;
         tmp_meta.events = 1;
 
-        if (convert_pyobject_to_datetime(&tmp_meta, obj, &tmp) < 0) {
+        if (convert_pyobject_to_datetime(&tmp_meta, obj,
+                                        NPY_UNSAFE_CASTING, &tmp) < 0) {
             /* If it's a value error, clear the error */
             if (PyErr_Occurred() &&
                     PyErr_GivenExceptionMatches(PyErr_Occurred(),

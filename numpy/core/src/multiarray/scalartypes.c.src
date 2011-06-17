@@ -605,6 +605,7 @@ datetimetype_repr(PyObject *self)
     npy_datetimestruct dts;
     PyObject *ret;
     char iso[NPY_DATETIME_MAX_ISO8601_STRLEN];
+    int local;
 
     if (!PyArray_IsScalar(self, Datetime)) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -619,19 +620,34 @@ datetimetype_repr(PyObject *self)
         return NULL;
     }
 
-    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), 1,
+    local = (scal->obmeta.base > NPY_FR_D);
+    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), local,
                             scal->obmeta.base, -1) < 0) {
         return NULL;
     }
 
-    ret = PyUString_FromString("numpy.datetime64('");
-    PyUString_ConcatAndDel(&ret,
-            PyUString_FromString(iso));
-    PyUString_ConcatAndDel(&ret,
-            PyUString_FromString("','"));
-    ret = append_metastr_to_string(&scal->obmeta, 1, ret);
-    PyUString_ConcatAndDel(&ret,
-            PyUString_FromString("')"));
+    /*
+     * For straight units or generic units, the unit will be deduced
+     * from the string, so it's not necessary to specify it.
+     */
+    if ((scal->obmeta.num == 1 && scal->obmeta.events == 1) ||
+            scal->obmeta.base == NPY_FR_GENERIC) {
+        ret = PyUString_FromString("numpy.datetime64('");
+        PyUString_ConcatAndDel(&ret,
+                PyUString_FromString(iso));
+        PyUString_ConcatAndDel(&ret,
+                PyUString_FromString("')"));
+    }
+    else {
+        ret = PyUString_FromString("numpy.datetime64('");
+        PyUString_ConcatAndDel(&ret,
+                PyUString_FromString(iso));
+        PyUString_ConcatAndDel(&ret,
+                PyUString_FromString("','"));
+        ret = append_metastr_to_string(&scal->obmeta, 1, ret);
+        PyUString_ConcatAndDel(&ret,
+                PyUString_FromString("')"));
+    }
 
     return ret;
 }
@@ -650,12 +666,25 @@ timedeltatype_repr(PyObject *self)
 
     scal = (PyTimedeltaScalarObject *)self;
 
-    ret = PyUString_FromFormat("numpy.timedelta64(%lld", scal->obval);
-    PyUString_ConcatAndDel(&ret,
-            PyUString_FromString(",'"));
-    ret = append_metastr_to_string(&scal->obmeta, 1, ret);
-    PyUString_ConcatAndDel(&ret,
-            PyUString_FromString("')"));
+    /* The value */
+    if (scal->obval == NPY_DATETIME_NAT) {
+        ret = PyUString_FromString("numpy.timedelta64('NaT'");
+    }
+    else {
+        ret = PyUString_FromFormat("numpy.timedelta64(%lld", scal->obval);
+    }
+    /* The metadata unit */
+    if (scal->obmeta.base == NPY_FR_GENERIC) {
+        PyUString_ConcatAndDel(&ret,
+                PyUString_FromString(")"));
+    }
+    else {
+        PyUString_ConcatAndDel(&ret,
+                PyUString_FromString(",'"));
+        ret = append_metastr_to_string(&scal->obmeta, 1, ret);
+        PyUString_ConcatAndDel(&ret,
+                PyUString_FromString("')"));
+    }
 
     return ret;
 }
@@ -666,6 +695,7 @@ datetimetype_str(PyObject *self)
     PyDatetimeScalarObject *scal;
     npy_datetimestruct dts;
     char iso[NPY_DATETIME_MAX_ISO8601_STRLEN];
+    int local;
 
     if (!PyArray_IsScalar(self, Datetime)) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -680,7 +710,8 @@ datetimetype_str(PyObject *self)
         return NULL;
     }
 
-    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), 1,
+    local = (scal->obmeta.base > NPY_FR_D);
+    if (make_iso_8601_datetime(&dts, iso, sizeof(iso), local,
                             scal->obmeta.base, -1) < 0) {
         return NULL;
     }
@@ -688,7 +719,7 @@ datetimetype_str(PyObject *self)
     return PyUString_FromString(iso);
 }
 
-static char *_datetime_verbose_strings[] = {
+static char *_datetime_verbose_strings[NPY_DATETIME_NUMUNITS] = {
     "years",
     "months",
     "weeks",
@@ -731,10 +762,15 @@ timedeltatype_str(PyObject *self)
         return NULL;
     }
 
-    ret = PyUString_FromFormat("%lld ",
+    if (scal->obval == NPY_DATETIME_NAT) {
+        ret = PyUString_FromString("NaT");
+    }
+    else {
+        ret = PyUString_FromFormat("%lld ",
                                 (long long)(scal->obval * scal->obmeta.num));
-    PyUString_ConcatAndDel(&ret,
-            PyUString_FromString(basestr));
+        PyUString_ConcatAndDel(&ret,
+                PyUString_FromString(basestr));
+    }
 
     return ret;
 }
@@ -2544,8 +2580,8 @@ static PyObject *
         ret->obval = 0;
 #endif
     }
-    else if (convert_pyobject_to_@name@(&ret->obmeta, obj, &ret->obval)
-                                                                    < 0) {
+    else if (convert_pyobject_to_@name@(&ret->obmeta, obj,
+                            NPY_SAME_KIND_CASTING, &ret->obval) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
