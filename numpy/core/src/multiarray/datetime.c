@@ -385,25 +385,11 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
 NPY_NO_EXPORT npy_datetime
 PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d)
 {
-    npy_datetime ret;
-    PyArray_DatetimeMetaData meta;
-
-    /* Set up a dummy metadata for the conversion */
-    meta.base = fr;
-    meta.num = 1;
-
-    if (convert_datetimestruct_to_datetime(&meta, d, &ret) < 0) {
-        /* The caller then needs to check PyErr_Occurred() */
-        return -1;
-    }
-
-    return ret;
+    PyErr_SetString(PyExc_RuntimeError,
+            "The NumPy PyArray_DatetimeStructToDatetime function has "
+            "been removed");
+    return -1;
 }
-
-/* Uses Average values when frequency is Y, M, or B */
-
-#define _DAYS_PER_MONTH 30.436875
-#define _DAYS_PER_YEAR  365.2425
 
 /*NUMPY_API
  * Create a timdelta value from a filled timedelta struct and resolution unit.
@@ -413,83 +399,10 @@ PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d)
 NPY_NO_EXPORT npy_datetime
 PyArray_TimedeltaStructToTimedelta(NPY_DATETIMEUNIT fr, npy_timedeltastruct *d)
 {
-    npy_datetime ret;
-
-    if (fr == NPY_FR_Y) {
-        ret = d->day / _DAYS_PER_YEAR;
-    }
-    else if (fr == NPY_FR_M) {
-        ret = d->day / _DAYS_PER_MONTH;
-    }
-    else if (fr == NPY_FR_W) {
-        /* This is just 7-days for now. */
-        if (d->day >= 0) {
-            ret = d->day / 7;
-        }
-        else {
-            ret = (d->day - 6) / 7;
-        }
-    }
-    else if (fr == NPY_FR_D) {
-        ret = d->day;
-    }
-    else if (fr == NPY_FR_h) {
-        ret = d->day + d->sec / 3600;
-    }
-    else if (fr == NPY_FR_m) {
-        ret = d->day * (npy_int64)(1440) + d->sec / 60;
-    }
-    else if (fr == NPY_FR_s) {
-        ret = d->day * (npy_int64)(86400) + d->sec;
-    }
-    else if (fr == NPY_FR_ms) {
-        ret = d->day * (npy_int64)(86400000) + d->sec * 1000 + d->us / 1000;
-    }
-    else if (fr == NPY_FR_us) {
-        npy_int64 num = 86400000;
-        num *= (npy_int64)(1000);
-        ret = d->day * num + d->sec * (npy_int64)(1000000) + d->us;
-    }
-    else if (fr == NPY_FR_ns) {
-        npy_int64 num = 86400000;
-        num *= (npy_int64)(1000000);
-        ret = d->day * num + d->sec * (npy_int64)(1000000000)
-            + d->us * (npy_int64)(1000) + (d->ps / 1000);
-    }
-    else if (fr == NPY_FR_ps) {
-        npy_int64 num2, num1;
-
-        num2 = 1000000;
-        num2 *= (npy_int64)(1000000);
-        num1 = (npy_int64)(86400) * num2;
-
-        ret = d->day * num1 + d->sec * num2 + d->us * (npy_int64)(1000000)
-            + d->ps;
-    }
-    else if (fr == NPY_FR_fs) {
-        /* only 2.6 hours */
-        npy_int64 num2 = 1000000000;
-        num2 *= (npy_int64)(1000000);
-        ret = d->sec * num2 + d->us * (npy_int64)(1000000000)
-            + d->ps * (npy_int64)(1000) + (d->as / 1000);
-    }
-    else if (fr == NPY_FR_as) {
-        /* only 9.2 secs */
-        npy_int64 num1, num2;
-
-        num1 = 1000000;
-        num1 *= (npy_int64)(1000000);
-        num2 = num1 * (npy_int64)(1000000);
-        ret = d->sec * num2 + d->us * num1 + d->ps * (npy_int64)(1000000)
-            + d->as;
-    }
-    else {
-        /* Shouldn't get here */
-        PyErr_SetString(PyExc_ValueError, "invalid internal frequency");
-        ret = -1;
-    }
-
-    return ret;
+    PyErr_SetString(PyExc_RuntimeError,
+            "The NumPy PyArray_TimedeltaStructToTimedelta function has "
+            "been removed");
+    return -1;
 }
 
 /*
@@ -742,18 +655,10 @@ NPY_NO_EXPORT void
 PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
                                  npy_datetimestruct *result)
 {
-    PyArray_DatetimeMetaData meta;
-
-    /* Set up a dummy metadata for the conversion */
-    meta.base = fr;
-    meta.num = 1;
-
-    if (convert_datetime_to_datetimestruct(&meta, val, result) < 0) {
-        /* The caller needs to check PyErr_Occurred() */
-        return;
-    }
-
-    return;
+    PyErr_SetString(PyExc_RuntimeError,
+            "The NumPy PyArray_DatetimeToDatetimeStruct function has "
+            "been removed");
+    memset(result, -1, sizeof(npy_datetimestruct));
 }
 
 /*
@@ -771,131 +676,10 @@ NPY_NO_EXPORT void
 PyArray_TimedeltaToTimedeltaStruct(npy_timedelta val, NPY_DATETIMEUNIT fr,
                                  npy_timedeltastruct *result)
 {
-    npy_longlong day=0;
-    int sec=0, us=0, ps=0, as=0;
-    npy_bool negative=0;
-
-    /*
-     * Note that what looks like val / N and val % N for positive
-     * numbers maps to [val - (N-1)] / N and [N-1 + (val+1) % N]
-     * for negative numbers (with the 2nd value, the remainder,
-     * being positive in both cases).
-     */
-
-    if (val < 0) {
-        val = -val;
-        negative = 1;
-    }
-    if (fr == NPY_FR_Y) {
-        day = val * _DAYS_PER_YEAR;
-    }
-    else if (fr == NPY_FR_M) {
-        day = val * _DAYS_PER_MONTH;
-    }
-    else if (fr == NPY_FR_W) {
-        day = val * 7;
-    }
-    else if (fr == NPY_FR_D) {
-        day = val;
-    }
-    else if (fr == NPY_FR_h) {
-        day = val / 24;
-        sec = (val % 24)*3600;
-    }
-    else if (fr == NPY_FR_m) {
-        day = val / 1440;
-        sec = (val % 1440)*60;
-    }
-    else if (fr == NPY_FR_s) {
-        day = val / (86400);
-        sec = val % 86400;
-    }
-    else if (fr == NPY_FR_ms) {
-        day = val / 86400000;
-        val = val % 86400000;
-        sec = val / 1000;
-        us = (val % 1000)*1000;
-    }
-    else if (fr == NPY_FR_us) {
-        npy_int64 num1;
-        num1 = 86400000;
-        num1 *= 1000;
-        day = val / num1;
-        us = val % num1;
-        sec = us / 1000000;
-        us = us % 1000000;
-    }
-    else if (fr == NPY_FR_ns) {
-        npy_int64 num1;
-        num1 = 86400000;
-        num1 *= 1000000;
-        day = val / num1;
-        val = val % num1;
-        sec = val / 1000000000;
-        val = val % 1000000000;
-        us  = val / 1000;
-        ps  = (val % 1000) * (npy_int64)(1000);
-    }
-    else if (fr == NPY_FR_ps) {
-        npy_int64 num1, num2;
-        num2 = 1000000000;
-        num2 *= (npy_int64)(1000);
-        num1 = (npy_int64)(86400) * num2;
-
-        day = val / num1;
-        ps = val % num1;
-        sec = ps / num2;
-        ps = ps % num2;
-        us = ps / 1000000;
-        ps = ps % 1000000;
-    }
-    else if (fr == NPY_FR_fs) {
-        /* entire range is only += 9.2 hours */
-        npy_int64 num1, num2;
-        num1 = 1000000000;
-        num2 = num1 * (npy_int64)(1000000);
-
-        day = 0;
-        sec = val / num2;
-        val = val % num2;
-        us = val / num1;
-        val = val % num1;
-        ps = val / 1000;
-        as = (val % 1000) * (npy_int64)(1000);
-    }
-    else if (fr == NPY_FR_as) {
-        /* entire range is only += 2.6 seconds */
-        npy_int64 num1, num2, num3;
-        num1 = 1000000;
-        num2 = num1 * (npy_int64)(1000000);
-        num3 = num2 * (npy_int64)(1000000);
-        day = 0;
-        sec = val / num3;
-        as = val % num3;
-        us = as / num2;
-        as = as % num2;
-        ps = as / num1;
-        as = as % num1;
-    }
-    else {
-        PyErr_SetString(PyExc_RuntimeError, "invalid internal time resolution");
-    }
-
-    if (negative) {
-        result->day = -day;
-        result->sec = -sec;
-        result->us = -us;
-        result->ps = -ps;
-        result->as = -as;
-    }
-    else {
-        result->day   = day;
-        result->sec   = sec;
-        result->us    = us;
-        result->ps    = ps;
-        result->as    = as;
-    }
-    return;
+    PyErr_SetString(PyExc_RuntimeError,
+            "The NumPy PyArray_TimedeltaToTimedeltaStruct function has "
+            "been removed");
+    memset(result, -1, sizeof(npy_timedeltastruct));
 }
 
 /*
