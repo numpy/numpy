@@ -46,17 +46,23 @@ typedef unsigned PY_LONG_LONG npy_ulonglong;
 #  ifdef _MSC_VER
 #    define NPY_LONGLONG_FMT         "I64d"
 #    define NPY_ULONGLONG_FMT        "I64u"
+#  elif defined(__APPLE__) || defined(__FreeBSD__)
+/*   "%Ld" only parses 4 bytes -- "L" is floating modifier on MacOS X/BSD */
+#    define NPY_LONGLONG_FMT         "lld"
+#    define NPY_ULONGLONG_FMT        "llu"
+/* 
+     another possible variant -- *quad_t works on *BSD, but is deprecated:
+     #define LONGLONG_FMT   "qd"
+     #define ULONGLONG_FMT   "qu"
+*/
+#  else
+#    define NPY_LONGLONG_FMT         "Ld"
+#    define NPY_ULONGLONG_FMT        "Lu"
+#  endif
+#  ifdef _MSC_VER
 #    define NPY_LONGLONG_SUFFIX(x)   (x##i64)
 #    define NPY_ULONGLONG_SUFFIX(x)  (x##Ui64)
 #  else
-        /* #define LONGLONG_FMT   "lld"      Another possible variant
-           #define ULONGLONG_FMT  "llu"
-
-           #define LONGLONG_FMT   "qd"   -- BSD perhaps?
-           #define ULONGLONG_FMT   "qu"
-        */
-#    define NPY_LONGLONG_FMT         "Ld"
-#    define NPY_ULONGLONG_FMT        "Lu"
 #    define NPY_LONGLONG_SUFFIX(x)   (x##LL)
 #    define NPY_ULONGLONG_SUFFIX(x)  (x##ULL)
 #  endif
