@@ -1793,7 +1793,7 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *kwds
 
 /*
  * Return a tuple of
- * (cleaned metadata dictionary, tuple with (str, num, events))
+ * (cleaned metadata dictionary, tuple with (str, num))
  */
 static PyObject *
 _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
@@ -1904,7 +1904,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
             /* Handle CObject in NPY_METADATA_DTSTR key separately */
             /*
              * newobj is a tuple of cleaned metadata dictionary
-             * and tuple of date_time info (str, num, den, events)
+             * and tuple of date_time info (str, num)
              */
             newobj = _get_pickleabletype_from_datetime_metadata(self);
             if (newobj == NULL) {

@@ -4,7 +4,6 @@
 /*
  * Parses (almost) standard ISO 8601 date strings. The differences are:
  *
- * + After the date and time, may place a ' ' followed by an event number.
  * + The date "20100312" is parsed as the year 20100312, not as
  *   equivalent to "2010-03-12". The '-' in the dates are not optional.
  * + Only seconds may have a decimal point, with up to 18 digits after it

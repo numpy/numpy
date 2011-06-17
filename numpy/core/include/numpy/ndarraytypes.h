@@ -718,7 +718,9 @@ typedef struct {
         NPY_DATETIMEUNIT base;
         int num;
         /*
-         * 'den' is unused, kept here for ABI compatibility with 1.6.
+         * 'den' and 'events are unused, kept here for ABI
+         * compatibility with 1.6.
+         *
          * TODO: Remove for 2.0.
          */
         int den;
@@ -732,14 +734,12 @@ typedef struct {
 typedef struct {
         npy_int64 year;
         npy_int32 month, day, hour, min, sec, us, ps, as;
-        npy_int32 event;
 } npy_datetimestruct;
 
 /* TO BE REMOVED - NOT USED INTERNALLY. */
 typedef struct {
         npy_int64 day;
         npy_int32 sec, us, ps, as;
-        npy_int32 event;
 } npy_timedeltastruct;
 
 /* TO BE REMOVED - NOT USED INTERNALLY. */

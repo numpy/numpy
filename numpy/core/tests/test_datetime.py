@@ -425,7 +425,6 @@ class TestDateTime(TestCase):
         assert_(np.dtype('M8[us]') != np.dtype('M8[ms]'))
         assert_(np.dtype('M8[2D]') != np.dtype('M8[D]'))
         assert_(np.dtype('M8[D]') != np.dtype('M8[2D]'))
-        assert_(np.dtype('M8[Y]//3') != np.dtype('M8[Y]'))
 
     def test_pydatetime_creation(self):
         a = np.array(['1960-03-12', datetime.date(1960, 3, 12)], dtype='M8[D]')
@@ -447,7 +446,7 @@ class TestDateTime(TestCase):
 
     def test_pickle(self):
         # Check that pickle roundtripping works
-        dt = np.dtype('M8[7D]//3')
+        dt = np.dtype('M8[7D]')
         assert_equal(dt, pickle.loads(pickle.dumps(dt)))
         dt = np.dtype('M8[W]')
         assert_equal(dt, pickle.loads(pickle.dumps(dt)))
@@ -492,7 +491,7 @@ class TestDateTime(TestCase):
                       -1020040340, -2942398, -1, 0, 1, 234523453, 1199164176],
                                                         dtype=np.int64)
         # With date units
-        for unit in ['M8[D]', 'M8[D]//4', 'M8[W]', 'M8[M]', 'M8[Y]']:
+        for unit in ['M8[D]', 'M8[W]', 'M8[M]', 'M8[Y]']:
             b = a.copy().view(dtype=unit)
             b[0] = '-0001-01-01'
             b[1] = '-0001-12-31'
@@ -508,7 +507,7 @@ class TestDateTime(TestCase):
                             "Error roundtripping unit %s" % unit)
         # With time units
         for unit in ['M8[as]', 'M8[16fs]', 'M8[ps]', 'M8[us]',
-                     'M8[as]//12', 'M8[us]//16']:
+                     'M8[300as]', 'M8[20us]']:
             b = a.copy().view(dtype=unit)
             b[0] = '-0001-01-01T00Z'
             b[1] = '-0001-12-31T00Z'
@@ -598,8 +597,8 @@ class TestDateTime(TestCase):
         assert_raises(TypeError, np.less, a, b, casting='same_kind')
 
     def test_datetime_like(self):
-        a = np.array([3], dtype='m8[4D]//6')
-        b = np.array(['2012-12-21'], dtype='M8[D]//3')
+        a = np.array([3], dtype='m8[4D]')
+        b = np.array(['2012-12-21'], dtype='M8[D]')
 
         assert_equal(np.ones_like(a).dtype, a.dtype)
         assert_equal(np.zeros_like(a).dtype, a.dtype)
@@ -1573,7 +1572,7 @@ class TestDateTimeData(TestCase):
 
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)
-        assert_equal(np.datetime_data(a.dtype), (asbytes('D'), 1, 1))
+        assert_equal(np.datetime_data(a.dtype), (asbytes('D'), 1))
 
 if __name__ == "__main__":
     run_module_suite()

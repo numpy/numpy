@@ -630,7 +630,7 @@ datetimetype_repr(PyObject *self)
      * For straight units or generic units, the unit will be deduced
      * from the string, so it's not necessary to specify it.
      */
-    if ((scal->obmeta.num == 1 && scal->obmeta.events == 1) ||
+    if ((scal->obmeta.num == 1) ||
             scal->obmeta.base == NPY_FR_GENERIC) {
         ret = PyUString_FromString("numpy.datetime64('");
         PyUString_ConcatAndDel(&ret,
@@ -750,8 +750,6 @@ timedeltatype_str(PyObject *self)
     }
 
     scal = (PyTimedeltaScalarObject *)self;
-
-    /* TODO: Account for events, etc */
 
     if (scal->obmeta.base >= 0 && scal->obmeta.base < NPY_DATETIME_NUMUNITS) {
         basestr = _datetime_verbose_strings[scal->obmeta.base];
@@ -2570,7 +2568,6 @@ static PyObject *
         if (ret->obmeta.base == -1) {
             ret->obmeta.base = NPY_DATETIME_DEFAULTUNIT;
             ret->obmeta.num = 1;
-            ret->obmeta.events = 1;
         }
 
         /* Make datetime default to NaT, timedelta default to zero */

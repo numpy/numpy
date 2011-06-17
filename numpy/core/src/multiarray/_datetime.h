@@ -173,11 +173,7 @@ compute_datetime_metadata_greatest_common_divisor_capsule(
 
 /*
  * Computes the conversion factor to convert data with 'src_meta' metadata
- * into data with 'dst_meta' metadata, not taking into account the events.
- *
- * To convert a npy_datetime or npy_timedelta, first the event number needs
- * to be divided away, then it needs to be scaled by num/denom, and
- * finally the event number can be added back in.
+ * into data with 'dst_meta' metadata.
  *
  * If overflow occurs, both out_num and out_denom are set to 0, but
  * no error is set.
@@ -231,7 +227,7 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
  * 'ret' is a PyUString containing the datetime string, and this
  * function appends the metadata string to it.
  *
- * If 'skip_brackets' is true, skips the '[]' when events == 1.
+ * If 'skip_brackets' is true, skips the '[]'.
  *
  * This function steals the reference 'ret'
  */

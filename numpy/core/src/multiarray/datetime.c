@@ -264,13 +264,6 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
         return -1;
     }
 
-    if (dts->event < 0 || dts->event >= meta->events) {
-        PyErr_Format(PyExc_ValueError,
-                    "NumPy datetime event %d is outside range [0,%d)",
-                    (int)dts->event, (int)meta->events);
-        return -1;
-    }
-
     if (base == NPY_FR_Y) {
         /* Truncate to the year */
         ret = dts->year - 1970;
@@ -379,12 +372,6 @@ convert_datetimestruct_to_datetime(PyArray_DatetimeMetaData *meta,
         }
     }
 
-    /* Add in the event number if needed */
-    if (meta->events > 1) {
-        /* Multiply by the number of events and put in the event number */
-        ret = ret * meta->events + dts->event;
-    }
-
     *out = ret;
 
     return 0;
@@ -404,7 +391,6 @@ PyArray_DatetimeStructToDatetime(NPY_DATETIMEUNIT fr, npy_datetimestruct *d)
     /* Set up a dummy metadata for the conversion */
     meta.base = fr;
     meta.num = 1;
-    meta.events = 1;
 
     if (convert_datetimestruct_to_datetime(&meta, d, &ret) < 0) {
         /* The caller then needs to check PyErr_Occurred() */
@@ -536,16 +522,6 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
         return -1;
     }
     
-    /* Extract the event number */
-    if (meta->events > 1) {
-        out->event = dt % meta->events;
-        dt = dt / meta->events;
-        if (out->event < 0) {
-            out->event += meta->events;
-            --dt;
-        }
-    }
-
     /* TODO: Change to a mechanism that avoids the potential overflow */
     dt *= meta->num;
 
@@ -771,7 +747,6 @@ PyArray_DatetimeToDatetimeStruct(npy_datetime val, NPY_DATETIMEUNIT fr,
     /* Set up a dummy metadata for the conversion */
     meta.base = fr;
     meta.num = 1;
-    meta.events = 1;
 
     if (convert_datetime_to_datetimestruct(&meta, val, result) < 0) {
         /* The caller needs to check PyErr_Occurred() */
@@ -998,7 +973,6 @@ create_datetime_dtype_with_unit(int type_num, NPY_DATETIMEUNIT unit)
     PyArray_DatetimeMetaData meta;
     meta.base = unit;
     meta.num = 1;
-    meta.events = 1;
     return create_datetime_dtype(type_num, &meta);
 }
 
@@ -1148,7 +1122,6 @@ parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
     if (len == 0) {
         out_meta->base = NPY_FR_GENERIC;
         out_meta->num = 1;
-        out_meta->events = 1;
 
         return 0;
     }
@@ -1159,10 +1132,10 @@ parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
     }
 
     substrend = substr;
-    while (*substrend != '\0' && *substrend != ']') {
+    while (substrend - metastr < len && *substrend != ']') {
         ++substrend;
     }
-    if (*substrend == '\0' || substr == substrend) {
+    if (substrend - metastr == len || substr == substrend) {
         substr = substrend;
         goto bad_input;
     }
@@ -1175,20 +1148,8 @@ parse_datetime_metadata_from_metastr(char *metastr, Py_ssize_t len,
 
     substr = substrend+1;
 
-    /* Finally comes an optional number of events */
-    if (substr[0] == '/' && substr[1] == '/') {
-        substr += 2;
-
-        out_meta->events = (int)strtol(substr, &substrend, 10);
-        if (substr == substrend || *substrend != '\0') {
-            goto bad_input;
-        }
-    }
-    else if (*substr != '\0') {
+    if (substr - metastr != len) {
         goto bad_input;
-    }
-    else {
-        out_meta->events = 1;
     }
 
     return 0;
@@ -1432,11 +1393,7 @@ _uint64_euclidean_gcd(npy_uint64 x, npy_uint64 y)
 
 /*
  * Computes the conversion factor to convert data with 'src_meta' metadata
- * into data with 'dst_meta' metadata, not taking into account the events.
- *
- * To convert a npy_datetime or npy_timedelta, first the event number needs
- * to be divided away, then it needs to be scaled by num/denom, and
- * finally the event number can be added back in.
+ * into data with 'dst_meta' metadata.
  *
  * If overflow occurs, both out_num and out_denom are set to 0, but
  * no error is set.
@@ -1564,11 +1521,6 @@ datetime_metadata_divides(
     }
     /* Non-generic units never divide into generic units */
     else if (dividend->base == NPY_FR_GENERIC) {
-        return 0;
-    }
-
-    /* Events must match */
-    if (dividend->events != divisor->events) {
         return 0;
     }
 
@@ -1762,8 +1714,7 @@ can_cast_datetime64_metadata(PyArray_DatetimeMetaData *src_meta,
 
         default:
             return src_meta->base == dst_meta->base &&
-                   src_meta->num == dst_meta->num &&
-                   src_meta->events == dst_meta->events;
+                   src_meta->num == dst_meta->num;
     }
 }
 
@@ -1790,8 +1741,7 @@ can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
 
         default:
             return src_meta->base == dst_meta->base &&
-                   src_meta->num == dst_meta->num &&
-                   src_meta->events == dst_meta->events;
+                   src_meta->num == dst_meta->num;
     }
 }
 
@@ -1876,7 +1826,6 @@ compute_datetime_metadata_greatest_common_divisor(
 {
     NPY_DATETIMEUNIT base;
     npy_uint64 num1, num2, num;
-    int events = 1;
 
     /* If either unit is generic, adopt the metadata from the other one */
     if (meta1->base == NPY_FR_GENERIC) {
@@ -1886,14 +1835,6 @@ compute_datetime_metadata_greatest_common_divisor(
     else if (meta2->base == NPY_FR_GENERIC) {
         *out_meta = *meta1;
         return 0;
-    }
-
-    /* Take the maximum of the events */
-    if (meta1->events > meta2->events) {
-        events = meta1->events;
-    }
-    else {
-        events = meta2->events;
     }
 
     num1 = (npy_uint64)meta1->num;
@@ -1980,7 +1921,6 @@ compute_datetime_metadata_greatest_common_divisor(
     if (out_meta->num <= 0 || num != (npy_uint64)out_meta->num) {
         goto units_overflow;
     }
-    out_meta->events = events;
 
     return 0;
 
@@ -2197,7 +2137,7 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta)
 {
     PyObject *dt_tuple;
 
-    dt_tuple = PyTuple_New(3);
+    dt_tuple = PyTuple_New(2);
     if (dt_tuple == NULL) {
         return NULL;
     }
@@ -2206,8 +2146,6 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta)
             PyBytes_FromString(_datetime_strings[meta->base]));
     PyTuple_SET_ITEM(dt_tuple, 1,
             PyInt_FromLong(meta->num));
-    PyTuple_SET_ITEM(dt_tuple, 2,
-            PyInt_FromLong(meta->events));
 
     return dt_tuple;
 }
@@ -2234,9 +2172,9 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
     }
 
     tuple_size = PyTuple_GET_SIZE(tuple);
-    if (tuple_size < 3 || tuple_size > 4) {
+    if (tuple_size < 2 || tuple_size > 4) {
         PyErr_SetString(PyExc_TypeError,
-                        "Require tuple of size 3 or 4 for "
+                        "Require tuple of size 2 to 4 for "
                         "tuple to NumPy datetime metadata conversion");
         return -1;
     }
@@ -2257,24 +2195,14 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
         return -1;
     }
 
-    if (tuple_size == 3) {
-        out_meta->events = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 2));
-        if (out_meta->events == -1 && PyErr_Occurred()) {
-            return -1;
-        }
-    }
-    else {
+    if (tuple_size == 4) {
         den = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 2));
         if (den == -1 && PyErr_Occurred()) {
             return -1;
         }
-        out_meta->events = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 3));
-        if (out_meta->events == -1 && PyErr_Occurred()) {
-            return -1;
-        }
     }
 
-    if (out_meta->num <= 0 || out_meta->events <= 0 || den <= 0) {
+    if (out_meta->num <= 0 || den <= 0) {
         PyErr_SetString(PyExc_TypeError,
                         "Invalid tuple values for "
                         "tuple to NumPy datetime metadata conversion");
@@ -2359,9 +2287,6 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
             return -1;
         }
 
-        /* extended_unit is only 'num' and 'base', we have to fill the rest */
-        out_meta->events = 1;
-
         return 0;
     }
 
@@ -2371,7 +2296,7 @@ convert_pyobject_to_datetime_metadata(PyObject *obj,
  * 'ret' is a PyUString containing the datetime string, and this
  * function appends the metadata string to it.
  *
- * If 'skip_brackets' is true, skips the '[]' when events == 1.
+ * If 'skip_brackets' is true, skips the '[]'.
  *
  * This function steals the reference 'ret'
  */
@@ -2381,7 +2306,7 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
                                     PyObject *ret)
 {
     PyObject *res;
-    int num, events;
+    int num;
     char *basestr;
 
     if (ret == NULL) {
@@ -2401,7 +2326,6 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
     }
 
     num = meta->num;
-    events = meta->events;
     if (meta->base >= 0 && meta->base < NPY_DATETIME_NUMUNITS) {
         basestr = _datetime_strings[meta->base];
     }
@@ -2412,7 +2336,7 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
     }
 
     if (num == 1) {
-        if (skip_brackets && events == 1) {
+        if (skip_brackets) {
             res = PyUString_FromFormat("%s", basestr);
         }
         else {
@@ -2420,7 +2344,7 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
         }
     }
     else {
-        if (skip_brackets && events == 1) {
+        if (skip_brackets) {
             res = PyUString_FromFormat("%d%s", num, basestr);
         }
         else {
@@ -2428,10 +2352,6 @@ append_metastr_to_string(PyArray_DatetimeMetaData *meta,
         }
     }
 
-    if (events != 1) {
-        PyUString_ConcatAndDel(&res,
-                    PyUString_FromFormat("//%d", events));
-    }
     PyUString_ConcatAndDel(&ret, res);
     return ret;
 }
@@ -2821,7 +2741,6 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         if (meta->base == -1) {
             meta->base = bestunit;
             meta->num = 1;
-            meta->events = 1;
         }
 
         if (convert_datetimestruct_to_datetime(meta, &dts, out) < 0) {
@@ -2839,31 +2758,6 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             return -1;
         }
         *out = PyLong_AsLongLong(obj);
-        return 0;
-    }
-    /* Could be a tuple with event number in the second entry */
-    else if (PyTuple_Check(obj) && PyTuple_Size(obj) == 2) {
-        int event, event_old;
-        if (convert_pyobject_to_datetime(meta, PyTuple_GET_ITEM(obj, 0),
-                                                        casting, out) < 0) {
-            return -1;
-        }
-        event = (int)PyInt_AsLong(PyTuple_GET_ITEM(obj, 1));
-        if (event == -1 && PyErr_Occurred()) {
-            return -1;
-        }
-        if (event < 0 || event >= meta->events) {
-            PyErr_SetString(PyExc_ValueError, "event value for NumPy "
-                            "datetime is out of range");
-            return -1;
-        }
-        /* Replace the event with the one from the tuple */
-        event_old = *out % meta->events;
-        if (event_old < 0) {
-            event_old += meta->events;
-        }
-        *out = *out - event_old + event;
-
         return 0;
     }
     /* Datetime scalar */
@@ -2944,13 +2838,11 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             if (meta->base == -1) {
                 meta->base = bestunit;
                 meta->num = 1;
-                meta->events = 1;
             }
             else {
                 PyArray_DatetimeMetaData obj_meta;
                 obj_meta.base = bestunit;
                 obj_meta.num = 1;
-                obj_meta.events = 1;
 
                 if (raise_if_datetime64_metadata_cast_error(
                                 bestunit == NPY_FR_D ? "datetime.date object"
@@ -2973,7 +2865,6 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         if (meta->base == -1) {
             meta->base = NPY_FR_GENERIC;
             meta->num = 1;
-            meta->events = 1;
         }
         *out = NPY_DATETIME_NAT;
         return 0;
@@ -3049,7 +2940,6 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             if (meta->base == -1) {
                 meta->base = NPY_FR_GENERIC;
                 meta->num = 1;
-                meta->events = 1;
             }
 
             return 0;
@@ -3061,7 +2951,6 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         if (meta->base == -1) {
             meta->base = NPY_DATETIME_DEFAULTUNIT;
             meta->num = 1;
-            meta->events = 1;
         }
 
         *out = PyLong_AsLongLong(obj);
@@ -3182,7 +3071,6 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         if (meta->base == -1) {
             meta->base = NPY_FR_us;
             meta->num = 1;
-            meta->events = 1;
 
             *out = td;
 
@@ -3213,7 +3101,6 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
                 us_meta.base = NPY_FR_W;
             }
             us_meta.num = 1;
-            us_meta.events = 1;
 
             if (raise_if_timedelta64_metadata_cast_error(
                                 "datetime.timedelta object",
@@ -3238,7 +3125,6 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         if (meta->base == -1) {
             meta->base = NPY_FR_GENERIC;
             meta->num = 1;
-            meta->events = 1;
         }
         *out = NPY_DATETIME_NAT;
         return 0;
@@ -3275,7 +3161,6 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
 
     /* If the type's precision is greater than microseconds, return an int */
     if (meta->base > NPY_FR_us) {
-        /* Skip use of a tuple for the events, just return the raw int */
         return PyLong_FromLongLong(dt);
     }
 
@@ -3290,7 +3175,6 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
      * return a raw int.
      */
     if (dts.year < 1 || dts.year > 9999 || dts.sec == 60) {
-        /* Also skip use of a tuple for the events */
         return PyLong_FromLongLong(dt);
     }
 
@@ -3304,28 +3188,7 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
         ret = PyDate_FromDate(dts.year, dts.month, dts.day);
     }
 
-    /* If there is one event, just return the datetime */
-    if (meta->events == 1) {
-        return ret;
-    }
-    /* Otherwise return a tuple with the event in the second position */
-    else {
-        tup = PyTuple_New(2);
-        if (tup == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-        PyTuple_SET_ITEM(tup, 0, ret);
-
-        ret = PyInt_FromLong(dts.event);
-        if (ret == NULL) {
-            Py_DECREF(tup);
-            return NULL;
-        }
-        PyTuple_SET_ITEM(tup, 1, ret);
-
-        return tup;
-    }
+    return ret;
 }
 
 /*
@@ -3340,7 +3203,6 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
 {
     PyObject *ret = NULL, *tup = NULL;
     npy_timedelta value;
-    int event = 0;
     int days = 0, seconds = 0, useconds = 0;
 
     /*
@@ -3359,21 +3221,10 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
                     meta->base == NPY_FR_Y ||
                     meta->base == NPY_FR_M ||
                     meta->base == NPY_FR_GENERIC) {
-        /* Skip use of a tuple for the events, just return the raw int */
         return PyLong_FromLongLong(td);
     }
 
     value = td;
-
-    /* If there are events, extract the event */
-    if (meta->events > 1) {
-        event = (int)(value % meta->events);
-        value = value / meta->events;
-        if (event < 0) {
-            --value;
-            event += meta->events;
-        }
-    }
 
     /* Apply the unit multiplier (TODO: overflow treatment...) */
     value *= meta->num;
@@ -3428,28 +3279,7 @@ convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
         }
     }
 
-    /* If there is one event, just return the datetime */
-    if (meta->events == 1) {
-        return ret;
-    }
-    /* Otherwise return a tuple with the event in the second position */
-    else {
-        tup = PyTuple_New(2);
-        if (tup == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-        PyTuple_SET_ITEM(tup, 0, ret);
-
-        ret = PyInt_FromLong(event);
-        if (ret == NULL) {
-            Py_DECREF(tup);
-            return NULL;
-        }
-        PyTuple_SET_ITEM(tup, 1, ret);
-
-        return tup;
-    }
+    return ret;
 }
 
 /*
@@ -3478,14 +3308,13 @@ has_equivalent_datetime_metadata(PyArray_Descr *type1, PyArray_Descr *type2)
         return 0;
     }
 
-    /* For generic units, the num and events are ignored */
+    /* For generic units, the num is ignored */
     if (meta1->base == NPY_FR_GENERIC && meta2->base == NPY_FR_GENERIC) {
         return 1;
     }
 
     return meta1->base == meta2->base &&
-            meta1->num == meta2->num &&
-            meta1->events == meta2->events;
+            meta1->num == meta2->num;
 }
 
 /*
@@ -3504,8 +3333,7 @@ cast_datetime_to_datetime(PyArray_DatetimeMetaData *src_meta,
 
     /* If the metadata is the same, short-circuit the conversion */
     if (src_meta->base == dst_meta->base &&
-            src_meta->num == dst_meta->num &&
-            src_meta->events == dst_meta->events) {
+            src_meta->num == dst_meta->num) {
         *dst_dt = src_dt;
         return 0;
     }
@@ -3514,9 +3342,6 @@ cast_datetime_to_datetime(PyArray_DatetimeMetaData *src_meta,
     if (convert_datetime_to_datetimestruct(src_meta, src_dt, &dts) < 0) {
             *dst_dt = NPY_DATETIME_NAT;
             return -1;
-    }
-    if (dts.event >= dst_meta->events) {
-        dts.event = dts.event % dst_meta->events;
     }
     if (convert_datetimestruct_to_datetime(dst_meta, &dts, dst_dt) < 0) {
         *dst_dt = NPY_DATETIME_NAT;
@@ -3539,12 +3364,10 @@ cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
                           npy_timedelta *dst_dt)
 {
     npy_int64 num = 0, denom = 0;
-    int event = 0;
 
     /* If the metadata is the same, short-circuit the conversion */
     if (src_meta->base == dst_meta->base &&
-            src_meta->num == dst_meta->num &&
-            src_meta->events == dst_meta->events) {
+            src_meta->num == dst_meta->num) {
         *dst_dt = src_dt;
         return 0;
     }
@@ -3556,28 +3379,12 @@ cast_timedelta_to_timedelta(PyArray_DatetimeMetaData *src_meta,
         return -1;
     }
 
-    /* Remove the event number from the value */
-    if (src_meta->events > 1) {
-        event = (int)(src_dt % src_meta->events);
-        src_dt = src_dt / src_meta->events;
-        if (event < 0) {
-            --src_dt;
-            event += src_meta->events;
-        }
-    }
-
     /* Apply the scaling */
     if (src_dt < 0) {
         *dst_dt = (src_dt * num - (denom - 1)) / denom;
     }
     else {
         *dst_dt = src_dt * num / denom;
-    }
-
-    /* Add the event number back in */
-    if (dst_meta->events > 1) {
-        event = event % dst_meta->events;
-        *dst_dt = (*dst_dt) * dst_meta->events + event;
     }
 
     return 0;
@@ -3662,7 +3469,6 @@ convert_pyobjects_to_datetimes(int count,
         for (i = 0; i < count; ++i) {
             meta[i].base = -1;
             meta[i].num = 1;
-            meta[i].events = 1;
 
             /* NULL -> NaT */
             if (objs[i] == NULL) {
@@ -4047,7 +3853,6 @@ find_string_array_datetime64_type(PyObject *obj,
             }
 
             tmp_meta.num = 1;
-            tmp_meta.events = 1;
             /* Combine it with 'meta' */
             if (compute_datetime_metadata_greatest_common_divisor(meta,
                             &tmp_meta, meta, 0, 0) < 0) {
@@ -4136,7 +3941,6 @@ recursive_find_object_datetime64_type(PyObject *obj,
 
         tmp_meta.base = -1;
         tmp_meta.num = 1;
-        tmp_meta.events = 1;
 
         if (convert_pyobject_to_datetime(&tmp_meta, obj,
                                         NPY_UNSAFE_CASTING, &tmp) < 0) {
@@ -4167,7 +3971,6 @@ recursive_find_object_datetime64_type(PyObject *obj,
 
         tmp_meta.base = NPY_FR_D;
         tmp_meta.num = 1;
-        tmp_meta.events = 1;
 
         /* Combine it with 'meta' */
         if (compute_datetime_metadata_greatest_common_divisor(meta,
@@ -4183,7 +3986,6 @@ recursive_find_object_datetime64_type(PyObject *obj,
 
         tmp_meta.base = NPY_FR_us;
         tmp_meta.num = 1;
-        tmp_meta.events = 1;
 
         /* Combine it with 'meta' */
         if (compute_datetime_metadata_greatest_common_divisor(meta,
@@ -4285,7 +4087,6 @@ recursive_find_object_timedelta64_type(PyObject *obj,
 
         tmp_meta.base = NPY_FR_us;
         tmp_meta.num = 1;
-        tmp_meta.events = 1;
 
         /* Combine it with 'meta' */
         if (compute_datetime_metadata_greatest_common_divisor(meta,
@@ -4339,7 +4140,6 @@ find_object_datetime_type(PyObject *obj, int type_num)
 
     meta.base = NPY_FR_GENERIC;
     meta.num = 1;
-    meta.events = 1;
 
     if (type_num == NPY_DATETIME) {
         if (recursive_find_object_datetime64_type(obj, &meta) < 0) {

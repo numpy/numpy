@@ -3438,7 +3438,6 @@ _init_datetime_descr(PyArray_Descr *descr)
     dt_data = PyArray_malloc(sizeof(PyArray_DatetimeMetaData));
     dt_data->base = NPY_DATETIME_DEFAULTUNIT;
     dt_data->num = 1;
-    dt_data->events = 1;
 
 /* FIXME
  * There is no error check here and no way to indicate an error

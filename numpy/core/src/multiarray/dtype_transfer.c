@@ -705,8 +705,6 @@ typedef struct {
     copy_strided_transfer_data copyfunc;
     /* The conversion fraction */
     npy_int64 num, denom;
-    /* The number of events in the source and destination */
-    int src_events, dst_events;
     /*
      * The metadata for when dealing with Months or Years
      * which behave non-linearly with respect to the other
@@ -748,7 +746,6 @@ _strided_to_strided_datetime_general_cast(char *dst, npy_intp dst_stride,
             dt = NPY_DATETIME_NAT;
         }
         else {
-            dts.event = dts.event % d->dst_meta.events;
             if (convert_datetimestruct_to_datetime(&d->dst_meta,
                                                    &dts, &dt) < 0) {
                 dt = NPY_DATETIME_NAT;
@@ -772,34 +769,17 @@ _strided_to_strided_datetime_cast(char *dst, npy_intp dst_stride,
     _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
     npy_int64 num = d->num, denom = d->denom;
     npy_int64 dt;
-    int event = 0, src_events = d->src_events, dst_events = d->dst_events;
 
     while (N > 0) {
         memcpy(&dt, src, sizeof(dt));
 
         if (dt != NPY_DATETIME_NAT) {
-            /* Remove the event number from the value */
-            if (src_events > 1) {
-                event = (int)(dt % src_events);
-                dt = dt / src_events;
-                if (event < 0) {
-                    --dt;
-                    event += src_events;
-                }
-            }
-
             /* Apply the scaling */
             if (dt < 0) {
                 dt = (dt * num - (denom - 1)) / denom;
             }
             else {
                 dt = dt * num / denom;
-            }
-
-            /* Add the event number back in */
-            if (dst_events > 1) {
-                event = event % dst_events;
-                dt = dt * dst_events + event;
             }
         }
 
@@ -812,7 +792,7 @@ _strided_to_strided_datetime_cast(char *dst, npy_intp dst_stride,
 }
 
 static void
-_aligned_strided_to_strided_datetime_cast_no_events(char *dst,
+_aligned_strided_to_strided_datetime_cast(char *dst,
                         npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
@@ -885,8 +865,6 @@ get_nbo_cast_datetime_transfer_function(int aligned,
     data->copyfunc = &_strided_datetime_cast_data_copy;
     data->num = num;
     data->denom = denom;
-    data->src_events = src_meta->events;
-    data->dst_events = dst_meta->events;
 
     /*
      * Special case the datetime (but not timedelta) with the nonlinear
@@ -902,8 +880,8 @@ get_nbo_cast_datetime_transfer_function(int aligned,
         memcpy(&data->dst_meta, dst_meta, sizeof(data->dst_meta));
         *out_stransfer = &_strided_to_strided_datetime_general_cast;
     }
-    else if (aligned && data->src_events == 1 && data->dst_events == 1) {
-        *out_stransfer = &_aligned_strided_to_strided_datetime_cast_no_events;
+    else if (aligned) {
+        *out_stransfer = &_aligned_strided_to_strided_datetime_cast;
     }
     else {
         *out_stransfer = &_strided_to_strided_datetime_cast;

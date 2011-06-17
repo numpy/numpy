@@ -465,7 +465,6 @@ business_day_offset(PyArrayObject *dates, PyArrayObject *offsets,
     /* First create the data types for dates and offsets */
     temp_meta.base = NPY_FR_D;
     temp_meta.num = 1;
-    temp_meta.events = 1;
     dtypes[0] = create_datetime_dtype(NPY_DATETIME, &temp_meta);
     if (dtypes[0] == NULL) {
         goto fail;
@@ -599,7 +598,6 @@ business_day_count(PyArrayObject *dates_begin, PyArrayObject *dates_end,
     /* First create the data types for the dates and the int64 output */
     temp_meta.base = NPY_FR_D;
     temp_meta.num = 1;
-    temp_meta.events = 1;
     dtypes[0] = create_datetime_dtype(NPY_DATETIME, &temp_meta);
     if (dtypes[0] == NULL) {
         goto fail;
@@ -730,7 +728,6 @@ is_business_day(PyArrayObject *dates, PyArrayObject *out,
     /* First create the data types for the dates and the bool output */
     temp_meta.base = NPY_FR_D;
     temp_meta.num = 1;
-    temp_meta.events = 1;
     dtypes[0] = create_datetime_dtype(NPY_DATETIME, &temp_meta);
     if (dtypes[0] == NULL) {
         goto fail;
