@@ -66,12 +66,18 @@ get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base);
  *  set to a value other than -1. This is a manual override for
  *  the local time zone to use, as an offset in minutes.
  *
+ *  'casting' controls whether data loss is allowed by truncating
+ *  the data to a coarser unit. This interacts with 'local', slightly,
+ *  in order to form a date unit string as a local time, the casting
+ *  must be unsafe.
+ *
  *  Returns 0 on success, -1 on failure (for example if the output
  *  string was too short).
  */
 NPY_NO_EXPORT int
 make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
-                    int local, NPY_DATETIMEUNIT base, int tzoffset);
+                    int local, NPY_DATETIMEUNIT base, int tzoffset,
+                    NPY_CASTING casting);
 
 /*
  * This is the Python-exposed datetime_as_string function.

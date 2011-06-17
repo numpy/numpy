@@ -1127,10 +1127,14 @@ class TestDateTime(TestCase):
 
         # String conversion with the unit= parameter
         a = np.datetime64('2032-07-18T12:23:34.123456Z', 'us')
-        assert_equal(np.datetime_as_string(a, unit='Y'), '2032')
-        assert_equal(np.datetime_as_string(a, unit='M'), '2032-07')
-        assert_equal(np.datetime_as_string(a, unit='W'), '2032-07-18')
-        assert_equal(np.datetime_as_string(a, unit='D'), '2032-07-18')
+        assert_equal(np.datetime_as_string(a, unit='Y', casting='unsafe'),
+                            '2032')
+        assert_equal(np.datetime_as_string(a, unit='M', casting='unsafe'),
+                            '2032-07')
+        assert_equal(np.datetime_as_string(a, unit='W', casting='unsafe'),
+                            '2032-07-18')
+        assert_equal(np.datetime_as_string(a, unit='D', casting='unsafe'),
+                            '2032-07-18')
         assert_equal(np.datetime_as_string(a, unit='h'), '2032-07-18T12Z')
         assert_equal(np.datetime_as_string(a, unit='m'),
                             '2032-07-18T12:23Z')
@@ -1185,7 +1189,7 @@ class TestDateTime(TestCase):
                                             unit='auto'),
                             '2032-01-01')
 
-    def test_datetime_as_string_timzone(self):
+    def test_datetime_as_string_timezone(self):
         # timezone='local' vs 'UTC'
         a = np.datetime64('2010-03-15T06:30Z', 'm')
         assert_equal(np.datetime_as_string(a, timezone='UTC'),
@@ -1213,12 +1217,15 @@ class TestDateTime(TestCase):
             assert_equal(np.datetime_as_string(b, timezone=tz('US/Pacific')),
                          '2010-02-14T22:30-0800')
 
+            # Dates to strings with a timezone attached is disabled by default
+            assert_raises(TypeError, np.datetime_as_string, a, unit='D',
+                               timezone=tz('US/Pacific'))
             # Check that we can print out the date in the specified time zone
             assert_equal(np.datetime_as_string(a, unit='D',
-                                               timezone=tz('US/Pacific')),
+                               timezone=tz('US/Pacific'), casting='unsafe'),
                          '2010-03-14')
             assert_equal(np.datetime_as_string(b, unit='D',
-                                               timezone=tz('US/Central')),
+                               timezone=tz('US/Central'), casting='unsafe'),
                          '2010-02-15')
         except ImportError:
             import warnings

@@ -3147,7 +3147,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
 NPY_NO_EXPORT PyObject *
 convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
 {
-    PyObject *ret = NULL, *tup = NULL;
+    PyObject *ret = NULL;
     npy_datetimestruct dts;
 
     /*
@@ -3201,7 +3201,7 @@ convert_datetime_to_pyobject(npy_datetime dt, PyArray_DatetimeMetaData *meta)
 NPY_NO_EXPORT PyObject *
 convert_timedelta_to_pyobject(npy_timedelta td, PyArray_DatetimeMetaData *meta)
 {
-    PyObject *ret = NULL, *tup = NULL;
+    PyObject *ret = NULL;
     npy_timedelta value;
     int days = 0, seconds = 0, useconds = 0;
 

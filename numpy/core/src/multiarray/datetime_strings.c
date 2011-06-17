@@ -735,6 +735,51 @@ get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
 }
 
 /*
+ * Finds the largest unit whose value is nonzero, and for which
+ * the remainder for the rest of the units is zero.
+ */
+static NPY_DATETIMEUNIT
+lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
+{
+    if (dts->as % 1000 != 0) {
+        return NPY_FR_as;
+    }
+    else if (dts->as != 0) {
+        return NPY_FR_fs;
+    }
+    else if (dts->ps % 1000 != 0) {
+        return NPY_FR_ps;
+    }
+    else if (dts->ps != 0) {
+        return NPY_FR_ns;
+    }
+    else if (dts->us % 1000 != 0) {
+        return NPY_FR_us;
+    }
+    else if (dts->us != 0) {
+        return NPY_FR_ms;
+    }
+    else if (dts->sec != 0) {
+        return NPY_FR_s;
+    }
+    else if (dts->min != 0) {
+        return NPY_FR_m;
+    }
+    else if (dts->hour != 0) {
+        return NPY_FR_h;
+    }
+    else if (dts->day != 1) {
+        return NPY_FR_D;
+    }
+    else if (dts->month != 1) {
+        return NPY_FR_M;
+    }
+    else {
+        return NPY_FR_Y;
+    }
+}
+
+/*
  * Converts an npy_datetimestruct to an (almost) ISO 8601
  * NULL-terminated string.
  *
@@ -748,12 +793,18 @@ get_datetime_iso_8601_strlen(int local, NPY_DATETIMEUNIT base)
  *  set to a value other than -1. This is a manual override for
  *  the local time zone to use, as an offset in minutes.
  *
+ *  'casting' controls whether data loss is allowed by truncating
+ *  the data to a coarser unit. This interacts with 'local', slightly,
+ *  in order to form a date unit string as a local time, the casting
+ *  must be unsafe.
+ *
  *  Returns 0 on success, -1 on failure (for example if the output
  *  string was too short).
  */
 NPY_NO_EXPORT int
 make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
-                    int local, NPY_DATETIMEUNIT base, int tzoffset)
+                    int local, NPY_DATETIMEUNIT base, int tzoffset,
+                    NPY_CASTING casting)
 {
     npy_datetimestruct dts_local;
     int timezone_offset = 0;
@@ -781,36 +832,16 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
 
     /* Automatically detect a good unit */
     if (base == -1) {
-        if (dts->as % 1000 != 0) {
-            base = NPY_FR_as;
-        }
-        else if (dts->as != 0) {
-            base = NPY_FR_fs;
-        }
-        else if (dts->ps % 1000 != 0) {
-            base = NPY_FR_ps;
-        }
-        else if (dts->ps != 0) {
-            base = NPY_FR_ns;
-        }
-        else if (dts->us % 1000 != 0) {
-            base = NPY_FR_us;
-        }
-        else if (dts->us != 0) {
-            base = NPY_FR_ms;
-        }
-        else if (dts->sec != 0) {
-            base = NPY_FR_s;
-        }
+        base = lossless_unit_from_datetimestruct(dts);
         /*
-         * hours and minutes don't get split up by default, and printing
-         * in local time forces minutes
+         * If there's a timezone, use at least minutes precision,
+         * and never split up hours and minutes by default
          */
-        else if (local || dts->min != 0 || dts->hour != 0) {
+        if ((base < NPY_FR_m && local) || base == NPY_FR_h) {
             base = NPY_FR_m;
         }
-        /* dates don't get split up by default */
-        else {
+        /* Don't split up dates by default */
+        else if (base < NPY_FR_D) {
             base = NPY_FR_D;
         }
     }
@@ -884,6 +915,37 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
         /* Set and apply the required timezone offset */
         timezone_offset = tzoffset;
         add_minutes_to_datetimestruct(dts, timezone_offset);
+    }
+
+    /*
+     * Now the datetimestruct data is in the final form for
+     * the string representation, so ensure that the data
+     * isn't being cast according to the casting rule.
+     */
+    if (casting != NPY_UNSAFE_CASTING) {
+        /* Producing a date as a local time is always 'unsafe' */
+        if (base <= NPY_FR_D && local) {
+            PyErr_SetString(PyExc_TypeError, "Cannot create a local "
+                        "timezone-based date string from a NumPy "
+                        "datetime without forcing 'unsafe' casting");
+            return -1;
+        }
+        /* Only 'unsafe' and 'same_kind' allow data loss */
+        else {
+            NPY_DATETIMEUNIT unitprec;
+
+            unitprec = lossless_unit_from_datetimestruct(dts);
+            if (casting != NPY_SAME_KIND_CASTING && unitprec > base) {
+                PyErr_Format(PyExc_TypeError, "Cannot create a "
+                            "string with unit precision '%s' "
+                            "from the NumPy datetime, which has data at "
+                            "unit precision '%s', "
+                            "requires 'unsafe' or 'same_kind' casting",
+                             _datetime_strings[base],
+                             _datetime_strings[unitprec]);
+                return -1;
+            }
+        }
     }
 
     /* YEAR */
@@ -1210,9 +1272,10 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
                                 PyObject *kwds)
 {
     PyObject *arr_in = NULL, *unit_in = NULL, *timezone = NULL;
+    NPY_DATETIMEUNIT unit;
+    NPY_CASTING casting = NPY_SAME_KIND_CASTING;
 
     int local = 0;
-    NPY_DATETIMEUNIT unit;
     PyArray_DatetimeMetaData *meta;
     int strsize;
 
@@ -1223,13 +1286,14 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     PyArray_Descr *op_dtypes[2] = {NULL, NULL};
     npy_uint32 flags, op_flags[2];
 
-    static char *kwlist[] = {"arr", "unit", "timezone", NULL};
+    static char *kwlist[] = {"arr", "unit", "timezone", "casting", NULL};
 
     if(!PyArg_ParseTupleAndKeywords(args, kwds,
-                                "O|OO:datetime_as_string", kwlist,
+                                "O|OOO&:datetime_as_string", kwlist,
                                 &arr_in,
                                 &unit_in,
-                                &timezone)) {
+                                &timezone,
+                                &PyArray_CastingConverter, &casting)) {
         return NULL;
     }
 
@@ -1287,6 +1351,16 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             }
         }
         Py_DECREF(strobj);
+
+        if (!can_cast_datetime64_units(meta->base, unit, casting)) {
+            PyErr_Format(PyExc_TypeError, "Cannot create a datetime "
+                        "string as units '%s' from a NumPy datetime "
+                        "with units '%s' according to the rule %s",
+                        _datetime_strings[unit],
+                        _datetime_strings[meta->base],
+                         npy_casting_to_string(casting));
+            goto fail;
+        }
     }
 
     /* Get the input time zone */
@@ -1390,7 +1464,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             memset(dataptr[1], 0, strsize);
             /* Convert that into a string */
             if (make_iso_8601_datetime(&dts, (char *)dataptr[1], strsize,
-                                local, unit, tzoffset) < 0) {
+                                local, unit, tzoffset, casting) < 0) {
                 goto fail;
             }
         } while(iternext(iter));

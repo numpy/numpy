@@ -606,6 +606,7 @@ datetimetype_repr(PyObject *self)
     PyObject *ret;
     char iso[NPY_DATETIME_MAX_ISO8601_STRLEN];
     int local;
+    NPY_DATETIMEUNIT unit;
 
     if (!PyArray_IsScalar(self, Datetime)) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -621,8 +622,16 @@ datetimetype_repr(PyObject *self)
     }
 
     local = (scal->obmeta.base > NPY_FR_D);
+    /*
+     * Because we're defaulting to local time, display hours with
+     * minutes precision, so that 30-minute timezone offsets can work.
+     */
+    unit = scal->obmeta.base;
+    if (unit == NPY_FR_h) {
+        unit = NPY_FR_m;
+    }
     if (make_iso_8601_datetime(&dts, iso, sizeof(iso), local,
-                            scal->obmeta.base, -1) < 0) {
+                            unit, -1, NPY_SAFE_CASTING) < 0) {
         return NULL;
     }
 
@@ -630,7 +639,7 @@ datetimetype_repr(PyObject *self)
      * For straight units or generic units, the unit will be deduced
      * from the string, so it's not necessary to specify it.
      */
-    if ((scal->obmeta.num == 1) ||
+    if ((scal->obmeta.num == 1 && scal->obmeta.base != NPY_FR_h) ||
             scal->obmeta.base == NPY_FR_GENERIC) {
         ret = PyUString_FromString("numpy.datetime64('");
         PyUString_ConcatAndDel(&ret,
@@ -696,6 +705,7 @@ datetimetype_str(PyObject *self)
     npy_datetimestruct dts;
     char iso[NPY_DATETIME_MAX_ISO8601_STRLEN];
     int local;
+    NPY_DATETIMEUNIT unit;
 
     if (!PyArray_IsScalar(self, Datetime)) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -711,8 +721,16 @@ datetimetype_str(PyObject *self)
     }
 
     local = (scal->obmeta.base > NPY_FR_D);
+    /*
+     * Because we're defaulting to local time, display hours with
+     * minutes precision, so that 30-minute timezone offsets can work.
+     */
+    unit = scal->obmeta.base;
+    if (unit == NPY_FR_h) {
+        unit = NPY_FR_m;
+    }
     if (make_iso_8601_datetime(&dts, iso, sizeof(iso), local,
-                            scal->obmeta.base, -1) < 0) {
+                            unit, -1, NPY_SAFE_CASTING) < 0) {
         return NULL;
     }
 
