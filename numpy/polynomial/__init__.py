@@ -298,10 +298,13 @@ def getdomain(x) :
     from numpy.polynomial.polyutils import getdomain
     return getdomain(x)
 
-@deprecate(message='Please import mapparms from numpy.polynomial.polyutils')
-def mapparms(old, new) :
-    from numpy.polynomial.polyutils import mapparms
-    return mapparms(old, new)
+# Just remove this function as it screws up the documentation of the same
+# named class method.
+#
+#@deprecate(message='Please import mapparms from numpy.polynomial.polyutils')
+#def mapparms(old, new) :
+#    from numpy.polynomial.polyutils import mapparms
+#    return mapparms(old, new)
 
 @deprecate(message='Please import mapdomain from numpy.polynomial.polyutils')
 def mapdomain(x, old, new) :
