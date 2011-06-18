@@ -17,6 +17,7 @@
 
 #include "convert_datatype.h"
 #include "_datetime.h"
+#include "datetime_strings.h"
 
 /*NUMPY_API
  * For backward compatibility
@@ -31,30 +32,11 @@ NPY_NO_EXPORT PyObject *
 PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int fortran)
 {
     PyObject *out;
-    PyArray_Descr *arr_dtype;
 
-    arr_dtype = PyArray_DESCR(arr);
-
-    if (dtype->elsize == 0) {
-        PyArray_DESCR_REPLACE(dtype);
-        if (dtype == NULL) {
-            return NULL;
-        }
-
-        if (arr_dtype->type_num == dtype->type_num) {
-            dtype->elsize = arr_dtype->elsize;
-        }
-        else if (arr_dtype->type_num == NPY_STRING &&
-                                dtype->type_num == NPY_UNICODE) {
-            dtype->elsize = arr_dtype->elsize * 4;
-        }
-        else if (arr_dtype->type_num == NPY_UNICODE &&
-                                dtype->type_num == NPY_STRING) {
-            dtype->elsize = arr_dtype->elsize / 4;
-        }
-        else if (dtype->type_num == NPY_VOID) {
-            dtype->elsize = arr_dtype->elsize;
-        }
+    /* If the requested dtype is flexible, adapt it */
+    PyArray_AdaptFlexibleType((PyObject *)arr, PyArray_DESCR(arr), &dtype);
+    if (dtype == NULL) {
+        return NULL;
     }
 
     out = PyArray_NewFromDescr(Py_TYPE(arr), dtype,
@@ -134,6 +116,133 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 
     PyErr_SetString(PyExc_ValueError, "No cast function available.");
     return NULL;
+}
+
+/*
+ * This function calls Py_DECREF on flex_dtype, and replaces it with
+ * a new dtype that has been adapted based on the values in data_dtype
+ * and data_obj. If the flex_dtype is not flexible, it leaves it as is.
+ *
+ * The current flexible dtypes include NPY_STRING, NPY_UNICODE, NPY_VOID,
+ * and NPY_DATETIME with generic units.
+ */
+NPY_NO_EXPORT void
+PyArray_AdaptFlexibleType(PyObject *data_obj, PyArray_Descr *data_dtype,
+                            PyArray_Descr **flex_dtype)
+{
+    PyArray_DatetimeMetaData *meta;
+
+    /* Flexible types with expandable size */
+    if ((*flex_dtype)->elsize == 0) {
+        /* First replace the flex dtype */
+        PyArray_DESCR_REPLACE(*flex_dtype);
+        if (*flex_dtype == NULL) {
+            return;
+        }
+
+        if (data_dtype->type_num == (*flex_dtype)->type_num ||
+                                    (*flex_dtype)->type_num == NPY_VOID) {
+            (*flex_dtype)->elsize = data_dtype->elsize;
+        }
+        else {
+            npy_intp size = 8;
+
+            /* Get a string-size estimate of the input */
+            switch (data_dtype->type_num) {
+                case NPY_BOOL:
+                    size = 5;
+                    break;
+                case NPY_UBYTE:
+                    size = 3;
+                    break;
+                case NPY_BYTE:
+                    size = 4;
+                    break;
+                case NPY_USHORT:
+                    size = 5;
+                    break;
+                case NPY_SHORT:
+                    size = 6;
+                    break;
+                case NPY_UINT:
+                    size = 10;
+                    break;
+                case NPY_INT:
+                    size = 6;
+                    break;
+                case NPY_ULONG:
+                    size = 20;
+                    break;
+                case NPY_LONG:
+                    size = 21;
+                    break;
+                case NPY_ULONGLONG:
+                    size = 20;
+                    break;
+                case NPY_LONGLONG:
+                    size = 21;
+                    break;
+                case NPY_HALF:
+                case NPY_FLOAT:
+                case NPY_DOUBLE:
+                case NPY_LONGDOUBLE:
+                    size = 32;
+                    break;
+                case NPY_CFLOAT:
+                case NPY_CDOUBLE:
+                case NPY_CLONGDOUBLE:
+                    size = 64;
+                    break;
+                case NPY_OBJECT:
+                    size = 64;
+                    break;
+                case NPY_STRING:
+                case NPY_VOID:
+                    size = data_dtype->elsize;
+                    break;
+                case NPY_UNICODE:
+                    size = data_dtype->elsize / 4;
+                    break;
+                case NPY_DATETIME:
+                    meta = get_datetime_metadata_from_dtype(data_dtype);
+                    if (meta == NULL) {
+                        Py_DECREF(*flex_dtype);
+                        *flex_dtype = NULL;
+                        return;
+                    }
+                    size = get_datetime_iso_8601_strlen(0, meta->base);
+                    break;
+                case NPY_TIMEDELTA:
+                    size = 21;
+                    break;
+            }
+
+            if ((*flex_dtype)->type_num == NPY_STRING) {
+                (*flex_dtype)->elsize = size;
+            }
+            else if ((*flex_dtype)->type_num == NPY_UNICODE) {
+                (*flex_dtype)->elsize = size * 4;
+            }
+        }
+    }
+    /* Flexible type with generic time unit that adapts */
+    else if ((*flex_dtype)->type_num == NPY_DATETIME ||
+                (*flex_dtype)->type_num == NPY_TIMEDELTA) {
+        meta = get_datetime_metadata_from_dtype(*flex_dtype);
+        if (meta == NULL) {
+            Py_DECREF(*flex_dtype);
+            *flex_dtype = NULL;
+            return;
+        }
+
+        if (meta->base == NPY_FR_GENERIC) {
+            /* Detect the unit from the input's data */
+            PyArray_Descr *dtype = find_object_datetime_type(data_obj,
+                                                    (*flex_dtype)->type_num);
+            Py_DECREF(*flex_dtype);
+            *flex_dtype = dtype;
+        }
+    }
 }
 
 /*

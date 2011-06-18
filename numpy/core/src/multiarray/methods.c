@@ -17,6 +17,7 @@
 #include "calculation.h"
 
 #include "methods.h"
+#include "convert_datatype.h"
 
 
 /* NpyArg_ParseKeywords
@@ -831,24 +832,11 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
     else if (PyArray_CanCastArrayTo(self, dtype, casting)) {
         PyArrayObject *ret;
 
-        if (dtype->elsize == 0) {
-            PyArray_DESCR_REPLACE(dtype);
-            if (dtype == NULL) {
-                return NULL;
-            }
-
-            if (dtype->type_num == PyArray_DESCR(self)->type_num ||
-                                        dtype->type_num == NPY_VOID) {
-                dtype->elsize = PyArray_DESCR(self)->elsize;
-            }
-            else if (PyArray_DESCR(self)->type_num == NPY_STRING &&
-                                    dtype->type_num == NPY_UNICODE) {
-                dtype->elsize = PyArray_DESCR(self)->elsize * 4;
-            }
-            else if (PyArray_DESCR(self)->type_num == NPY_UNICODE &&
-                                    dtype->type_num == NPY_STRING) {
-                dtype->elsize = PyArray_DESCR(self)->elsize / 4;
-            }
+        /* If the requested dtype is flexible, adapt it */
+        PyArray_AdaptFlexibleType((PyObject *)self, PyArray_DESCR(self),
+                                                                    &dtype);
+        if (dtype == NULL) {
+            return NULL;
         }
         
         /* This steals the reference to dtype, so no DECREF of dtype */

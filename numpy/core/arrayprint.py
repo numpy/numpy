@@ -245,7 +245,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   'complexfloat' : ComplexFormat(data, precision,
                                                  suppress_small),
                   'longcomplexfloat' : LongComplexFormat(precision),
-                  'datetime' : DatetimeFormat(True, None, -1),
+                  'datetime' : DatetimeFormat(),
                   'timedelta' : TimedeltaFormat(data),
                   'numpystr' : repr,
                   'str' : str}
@@ -698,16 +698,17 @@ class ComplexFormat(object):
         return r + i
 
 class DatetimeFormat(object):
-    def __init__(self, uselocaltime=True, overrideunit=None, tzoffset=-1):
-        self.local = uselocaltime
+    def __init__(self, overrideunit=None,
+                timezone='local', casting='same_kind'):
+        self.timezone = timezone
         self.unit = overrideunit
-        self.tzoffset = -1
+        self.casting = casting
 
     def __call__(self, x):
         return "'%s'" % datetime_as_string(x,
-                                        local=self.local,
                                         unit=self.unit,
-                                        tzoffset=self.tzoffset)
+                                        timezone=self.timezone,
+                                        casting=self.casting)
 
 class TimedeltaFormat(object):
     def __init__(self, data):

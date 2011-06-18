@@ -21,6 +21,7 @@
 #include "numpy/npy_3kcompat.h"
 
 #include "_datetime.h"
+#include "datetime_strings.h"
 
 #include "lowlevel_strided_loops.h"
 
@@ -699,12 +700,23 @@ get_nbo_cast_numeric_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
-/* Does a datetime->datetime or timedelta->timedelta cast */
+/*
+ * Does a datetime->datetime, timedelta->timedelta,
+ * datetime->ascii, or ascii->datetime cast
+ */
 typedef struct {
     free_strided_transfer_data freefunc;
     copy_strided_transfer_data copyfunc;
     /* The conversion fraction */
     npy_int64 num, denom;
+    /* For the datetime -> string conversion, the dst string length */
+    npy_intp src_itemsize, dst_itemsize;
+    /*
+     * A buffer of size 'src_itemsize + 1', for when the input
+     * string is exactly of length src_itemsize with no NULL
+     * terminator.
+     */
+    char *tmp_buffer;
     /*
      * The metadata for when dealing with Months or Years
      * which behave non-linearly with respect to the other
@@ -713,7 +725,17 @@ typedef struct {
     PyArray_DatetimeMetaData src_meta, dst_meta;
 } _strided_datetime_cast_data;
 
-/* strided cast data copy function */
+/* strided datetime cast data free function */
+void _strided_datetime_cast_data_free(void *data)
+{
+    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
+    if (d->tmp_buffer != NULL) {
+        PyArray_free(d->tmp_buffer);
+    }
+    PyArray_free(data);
+}
+
+/* strided datetime cast data copy function */
 void *_strided_datetime_cast_data_copy(void *data)
 {
     _strided_datetime_cast_data *newdata =
@@ -724,6 +746,13 @@ void *_strided_datetime_cast_data_copy(void *data)
     }
 
     memcpy(newdata, data, sizeof(_strided_datetime_cast_data));
+    if (newdata->tmp_buffer != NULL) {
+        newdata->tmp_buffer = PyArray_malloc(newdata->src_itemsize + 1);
+        if (newdata->tmp_buffer == NULL) {
+            PyArray_free(newdata);
+            return NULL;
+        }
+    }
 
     return (void *)newdata;
 }
@@ -823,6 +852,93 @@ _aligned_strided_to_strided_datetime_cast(char *dst,
     }
 }
 
+static void
+_strided_to_strided_datetime_to_string(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
+                        void *data)
+{
+    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
+    npy_intp dst_itemsize = d->dst_itemsize;
+    npy_int64 dt;
+    npy_datetimestruct dts;
+
+    while (N > 0) {
+        memcpy(&dt, src, sizeof(dt));
+
+        if (convert_datetime_to_datetimestruct(&d->src_meta,
+                                               dt, &dts) < 0) {
+            /* For an error, produce a 'NaT' string */
+            dts.year = NPY_DATETIME_NAT;
+        }
+
+        /* Initialize the destination to all zeros */
+        memset(dst, 0, dst_itemsize);
+
+        /*
+         * This may also raise an error, but the caller needs
+         * to use PyErr_Occurred().
+         */
+        make_iso_8601_datetime(&dts, dst, dst_itemsize,
+                                0, d->src_meta.base, -1,
+                                NPY_UNSAFE_CASTING);
+
+        dst += dst_stride;
+        src += src_stride;
+        --N;
+    }
+}
+
+static void
+_strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
+                        char *src, npy_intp src_stride,
+                        npy_intp N, npy_intp src_itemsize,
+                        void *data)
+{
+    _strided_datetime_cast_data *d = (_strided_datetime_cast_data *)data;
+    npy_int64 dt;
+    npy_datetimestruct dts;
+    char *tmp_buffer = d->tmp_buffer;
+    npy_intp len;
+
+    while (N > 0) {
+        len = strnlen(src, src_itemsize);
+
+        /* If the string is all full, use the buffer */
+        if (len == src_itemsize) {
+            memcpy(tmp_buffer, src, src_itemsize);
+            tmp_buffer[src_itemsize] = '\0';
+
+            if (parse_iso_8601_datetime(tmp_buffer, len,
+                                    d->dst_meta.base, NPY_SAME_KIND_CASTING,
+                                    &dts, NULL, NULL, NULL) < 0) {
+                dt = NPY_DATETIME_NAT;
+            }
+        }
+        /* Otherwise parse the data in place */
+        else {
+            if (parse_iso_8601_datetime(src, len,
+                                    d->dst_meta.base, NPY_SAME_KIND_CASTING,
+                                    &dts, NULL, NULL, NULL) < 0) {
+                dt = NPY_DATETIME_NAT;
+            }
+        }
+
+        /* Convert to the datetime */
+        if (dt != NPY_DATETIME_NAT &&
+                convert_datetimestruct_to_datetime(&d->dst_meta,
+                                               &dts, &dt) < 0) {
+            dt = NPY_DATETIME_NAT;
+        }
+
+        memcpy(dst, &dt, sizeof(dt));
+
+        dst += dst_stride;
+        src += src_stride;
+        --N;
+    }
+}
+
 /*
  * Assumes src_dtype and dst_dtype are both datetimes or both timedeltas
  */
@@ -861,10 +977,11 @@ get_nbo_cast_datetime_transfer_function(int aligned,
         *out_transferdata = NULL;
         return NPY_FAIL;
     }
-    data->freefunc = &PyArray_free;
+    data->freefunc = &_strided_datetime_cast_data_free;
     data->copyfunc = &_strided_datetime_cast_data_copy;
     data->num = num;
     data->denom = denom;
+    data->tmp_buffer = NULL;
 
     /*
      * Special case the datetime (but not timedelta) with the nonlinear
@@ -902,6 +1019,105 @@ get_nbo_cast_datetime_transfer_function(int aligned,
 }
 
 static int
+get_nbo_datetime_to_string_transfer_function(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata)
+{
+    PyArray_DatetimeMetaData *src_meta;
+    _strided_datetime_cast_data *data;
+
+    src_meta = get_datetime_metadata_from_dtype(src_dtype);
+    if (src_meta == NULL) {
+        return NPY_FAIL;
+    }
+
+    /* Allocate the data for the casting */
+    data = (_strided_datetime_cast_data *)PyArray_malloc(
+                                    sizeof(_strided_datetime_cast_data));
+    if (data == NULL) {
+        PyErr_NoMemory();
+        *out_stransfer = NULL;
+        *out_transferdata = NULL;
+        return NPY_FAIL;
+    }
+    data->freefunc = &_strided_datetime_cast_data_free;
+    data->copyfunc = &_strided_datetime_cast_data_copy;
+    data->dst_itemsize = dst_dtype->elsize;
+    data->tmp_buffer = NULL;
+
+    memcpy(&data->src_meta, src_meta, sizeof(data->src_meta));
+
+    *out_stransfer = &_strided_to_strided_datetime_to_string;
+    *out_transferdata = data;
+
+#if NPY_DT_DBG_TRACING
+    printf("Dtype transfer from ");
+    PyObject_Print((PyObject *)src_dtype, stdout, 0);
+    printf(" to ");
+    PyObject_Print((PyObject *)dst_dtype, stdout, 0);
+    printf("\n");
+    printf("has conversion fraction %lld/%lld\n", num, denom);
+#endif
+
+    return NPY_SUCCEED;
+}
+
+static int
+get_nbo_string_to_datetime_transfer_function(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata)
+{
+    PyArray_DatetimeMetaData *dst_meta;
+    _strided_datetime_cast_data *data;
+
+    dst_meta = get_datetime_metadata_from_dtype(dst_dtype);
+    if (dst_meta == NULL) {
+        return NPY_FAIL;
+    }
+
+    /* Allocate the data for the casting */
+    data = (_strided_datetime_cast_data *)PyArray_malloc(
+                                    sizeof(_strided_datetime_cast_data));
+    if (data == NULL) {
+        PyErr_NoMemory();
+        *out_stransfer = NULL;
+        *out_transferdata = NULL;
+        return NPY_FAIL;
+    }
+    data->freefunc = &_strided_datetime_cast_data_free;
+    data->copyfunc = &_strided_datetime_cast_data_copy;
+    data->src_itemsize = src_dtype->elsize;
+    data->tmp_buffer = PyArray_malloc(data->src_itemsize + 1);
+    if (data->tmp_buffer == NULL) {
+        PyErr_NoMemory();
+        PyArray_free(data);
+        *out_stransfer = NULL;
+        *out_transferdata = NULL;
+        return NPY_FAIL;
+    }
+
+    memcpy(&data->dst_meta, dst_meta, sizeof(data->dst_meta));
+
+    *out_stransfer = &_strided_to_strided_string_to_datetime;
+    *out_transferdata = data;
+
+#if NPY_DT_DBG_TRACING
+    printf("Dtype transfer from ");
+    PyObject_Print((PyObject *)src_dtype, stdout, 0);
+    printf(" to ");
+    PyObject_Print((PyObject *)dst_dtype, stdout, 0);
+    printf("\n");
+    printf("has conversion fraction %lld/%lld\n", num, denom);
+#endif
+
+    return NPY_SUCCEED;
+}
+
+static int
 get_nbo_cast_transfer_function(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
@@ -927,17 +1143,60 @@ get_nbo_cast_transfer_function(int aligned,
                                     out_stransfer, out_transferdata);
     }
 
-    /* As a parameterized type, datetime->datetime sometimes needs casting */
-    if ((src_dtype->type_num == NPY_DATETIME &&
-                dst_dtype->type_num == NPY_DATETIME) ||
-            (src_dtype->type_num == NPY_TIMEDELTA &&
-                dst_dtype->type_num == NPY_TIMEDELTA)) {
-        *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
-                          !PyArray_ISNBO(dst_dtype->byteorder);
-        return get_nbo_cast_datetime_transfer_function(aligned,
-                                    src_stride, dst_stride,
-                                    src_dtype, dst_dtype,
-                                    out_stransfer, out_transferdata);
+    if (src_dtype->type_num == NPY_DATETIME ||
+            src_dtype->type_num == NPY_TIMEDELTA ||
+            dst_dtype->type_num == NPY_DATETIME ||
+            dst_dtype->type_num == NPY_TIMEDELTA) {
+        /* A parameterized type, datetime->datetime sometimes needs casting */
+        if ((src_dtype->type_num == NPY_DATETIME &&
+                    dst_dtype->type_num == NPY_DATETIME) ||
+                (src_dtype->type_num == NPY_TIMEDELTA &&
+                    dst_dtype->type_num == NPY_TIMEDELTA)) {
+            *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder) ||
+                              !PyArray_ISNBO(dst_dtype->byteorder);
+            return get_nbo_cast_datetime_transfer_function(aligned,
+                                        src_stride, dst_stride,
+                                        src_dtype, dst_dtype,
+                                        out_stransfer, out_transferdata);
+        }
+
+        /*
+         * Datetime <-> string conversions can be handled specially.
+         * The functions may raise an error if the strings have no
+         * space, or can't be parsed properly.
+         */
+        if (src_dtype->type_num == NPY_DATETIME) {
+            switch (dst_dtype->type_num) {
+                case NPY_STRING:
+                    *out_needs_api = 1;
+                    *out_needs_wrap = !PyArray_ISNBO(src_dtype->byteorder);
+                    return get_nbo_datetime_to_string_transfer_function(
+                                        aligned,
+                                        src_stride, dst_stride,
+                                        src_dtype, dst_dtype,
+                                        out_stransfer, out_transferdata);
+
+                case NPY_UNICODE:
+                    *out_needs_api = 1;
+                    break;
+            }
+        }
+        else if (dst_dtype->type_num == NPY_DATETIME) {
+            switch (src_dtype->type_num) {
+                case NPY_STRING:
+                    *out_needs_api = 1;
+                    *out_needs_wrap = !PyArray_ISNBO(dst_dtype->byteorder);
+                    return get_nbo_string_to_datetime_transfer_function(
+                                        aligned,
+                                        src_stride, dst_stride,
+                                        src_dtype, dst_dtype,
+                                        out_stransfer, out_transferdata);
+
+                case NPY_UNICODE:
+                    *out_needs_api = 1;
+                    break;
+            }
+        }
     }
 
     *out_needs_wrap = !aligned ||

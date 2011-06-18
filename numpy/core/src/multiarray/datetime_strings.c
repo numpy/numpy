@@ -781,7 +781,8 @@ lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
 
 /*
  * Converts an npy_datetimestruct to an (almost) ISO 8601
- * NULL-terminated string.
+ * NULL-terminated string. If the string fits in the space exactly,
+ * it leaves out the NULL terminator and returns success.
  *
  * If 'local' is non-zero, it produces a string in local time with
  * a +-#### timezone offset, otherwise it uses timezone Z (UTC).
@@ -814,13 +815,15 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
 
     /* Handle NaT, and treat a datetime with generic units as NaT */
     if (dts->year == NPY_DATETIME_NAT || base == NPY_FR_GENERIC) {
-        if (outlen < 4) {
+        if (outlen < 3) {
             goto string_too_short;
         }
         outstr[0] = 'N';
         outstr[1] = 'a';
         outstr[2] = 'T';
-        outstr[3] = '\0';
+        if (outlen > 3) {
+            outstr[3] = '\0';
+        }
 
         return 0;
     }
@@ -955,7 +958,7 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
     tmplen = snprintf(substr, sublen, "%04" NPY_INT64_FMT, dts->year);
 #endif
     /* If it ran out of space or there isn't space for the NULL terminator */
-    if (tmplen < 0 || tmplen >= sublen) {
+    if (tmplen < 0 || tmplen > sublen) {
         goto string_too_short;
     }
     substr += tmplen;
@@ -963,67 +966,73 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
 
     /* Stop if the unit is years */
     if (base == NPY_FR_Y) {
-        *substr = '\0';
+        if (sublen > 0) {
+            *substr = '\0';
+        }
         return 0;
     }
 
     /* MONTH */
+    if (sublen < 1 ) {
+        goto string_too_short;
+    }
     substr[0] = '-';
-    if (sublen <= 1 ) {
+    if (sublen < 2 ) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->month / 10) + '0');
-    if (sublen <= 2 ) {
+    if (sublen < 3 ) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->month % 10) + '0');
-    if (sublen <= 3 ) {
-        goto string_too_short;
-    }
     substr += 3;
     sublen -= 3;
 
     /* Stop if the unit is months */
     if (base == NPY_FR_M) {
-        *substr = '\0';
+        if (sublen > 0) {
+            *substr = '\0';
+        }
         return 0;
     }
 
     /* DAY */
+    if (sublen < 1 ) {
+        goto string_too_short;
+    }
     substr[0] = '-';
-    if (sublen <= 1 ) {
+    if (sublen < 2 ) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->day / 10) + '0');
-    if (sublen <= 2 ) {
+    if (sublen < 3 ) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->day % 10) + '0');
-    if (sublen <= 3 ) {
-        goto string_too_short;
-    }
     substr += 3;
     sublen -= 3;
 
     /* Stop if the unit is days */
     if (base == NPY_FR_D) {
-        *substr = '\0';
+        if (sublen > 0) {
+            *substr = '\0';
+        }
         return 0;
     }
 
     /* HOUR */
+    if (sublen < 1 ) {
+        goto string_too_short;
+    }
     substr[0] = 'T';
-    if (sublen <= 1 ) {
+    if (sublen < 2 ) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->hour / 10) + '0');
-    if (sublen <= 2 ) {
+    if (sublen < 3 ) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->hour % 10) + '0');
-    if (sublen <= 3 ) {
-        goto string_too_short;
-    }
     substr += 3;
     sublen -= 3;
 
@@ -1033,18 +1042,18 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
     }
 
     /* MINUTE */
+    if (sublen < 1 ) {
+        goto string_too_short;
+    }
     substr[0] = ':';
-    if (sublen <= 1 ) {
+    if (sublen < 2 ) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->min / 10) + '0');
-    if (sublen <= 2 ) {
+    if (sublen < 3 ) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->min % 10) + '0');
-    if (sublen <= 3 ) {
-        goto string_too_short;
-    }
     substr += 3;
     sublen -= 3;
 
@@ -1054,18 +1063,18 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
     }
 
     /* SECOND */
+    if (sublen < 1 ) {
+        goto string_too_short;
+    }
     substr[0] = ':';
-    if (sublen <= 1 ) {
+    if (sublen < 2 ) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->sec / 10) + '0');
-    if (sublen <= 2 ) {
+    if (sublen < 3 ) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->sec % 10) + '0');
-    if (sublen <= 3 ) {
-        goto string_too_short;
-    }
     substr += 3;
     sublen -= 3;
 
@@ -1075,22 +1084,22 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
     }
 
     /* MILLISECOND */
+    if (sublen < 1 ) {
+        goto string_too_short;
+    }
     substr[0] = '.';
-    if (sublen <= 1 ) {
+    if (sublen < 2 ) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->us / 100000) % 10 + '0');
-    if (sublen <= 2 ) {
+    if (sublen < 3 ) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->us / 10000) % 10 + '0');
-    if (sublen <= 3 ) {
+    if (sublen < 4 ) {
         goto string_too_short;
     }
     substr[3] = (char)((dts->us / 1000) % 10 + '0');
-    if (sublen <= 4 ) {
-        goto string_too_short;
-    }
     substr += 4;
     sublen -= 4;
 
@@ -1100,18 +1109,18 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
     }
 
     /* MICROSECOND */
+    if (sublen < 1 ) {
+        goto string_too_short;
+    }
     substr[0] = (char)((dts->us / 100) % 10 + '0');
-    if (sublen <= 1 ) {
+    if (sublen < 2 ) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->us / 10) % 10 + '0');
-    if (sublen <= 2 ) {
+    if (sublen < 3 ) {
         goto string_too_short;
     }
     substr[2] = (char)(dts->us % 10 + '0');
-    if (sublen <= 3 ) {
-        goto string_too_short;
-    }
     substr += 3;
     sublen -= 3;
 
@@ -1121,18 +1130,18 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
     }
 
     /* NANOSECOND */
+    if (sublen < 1 ) {
+        goto string_too_short;
+    }
     substr[0] = (char)((dts->ps / 100000) % 10 + '0');
-    if (sublen <= 1 ) {
+    if (sublen < 2 ) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->ps / 10000) % 10 + '0');
-    if (sublen <= 2 ) {
+    if (sublen < 3 ) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->ps / 1000) % 10 + '0');
-    if (sublen <= 3 ) {
-        goto string_too_short;
-    }
     substr += 3;
     sublen -= 3;
 
@@ -1142,18 +1151,18 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
     }
 
     /* PICOSECOND */
+    if (sublen < 1 ) {
+        goto string_too_short;
+    }
     substr[0] = (char)((dts->ps / 100) % 10 + '0');
-    if (sublen <= 1 ) {
+    if (sublen < 2 ) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->ps / 10) % 10 + '0');
-    if (sublen <= 2 ) {
+    if (sublen < 3 ) {
         goto string_too_short;
     }
     substr[2] = (char)(dts->ps % 10 + '0');
-    if (sublen <= 3 ) {
-        goto string_too_short;
-    }
     substr += 3;
     sublen -= 3;
 
@@ -1163,18 +1172,18 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
     }
 
     /* FEMTOSECOND */
+    if (sublen < 1 ) {
+        goto string_too_short;
+    }
     substr[0] = (char)((dts->as / 100000) % 10 + '0');
-    if (sublen <= 1 ) {
+    if (sublen < 2 ) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->as / 10000) % 10 + '0');
-    if (sublen <= 2 ) {
+    if (sublen < 3 ) {
         goto string_too_short;
     }
     substr[2] = (char)((dts->as / 1000) % 10 + '0');
-    if (sublen <= 3 ) {
-        goto string_too_short;
-    }
     substr += 3;
     sublen -= 3;
 
@@ -1184,24 +1193,27 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
     }
 
     /* ATTOSECOND */
+    if (sublen < 1 ) {
+        goto string_too_short;
+    }
     substr[0] = (char)((dts->as / 100) % 10 + '0');
-    if (sublen <= 1 ) {
+    if (sublen < 2 ) {
         goto string_too_short;
     }
     substr[1] = (char)((dts->as / 10) % 10 + '0');
-    if (sublen <= 2 ) {
+    if (sublen < 3 ) {
         goto string_too_short;
     }
     substr[2] = (char)(dts->as % 10 + '0');
-    if (sublen <= 3 ) {
-        goto string_too_short;
-    }
     substr += 3;
     sublen -= 3;
 
 add_time_zone:
     if (local) {
         /* Add the +/- sign */
+        if (sublen < 1) {
+            goto string_too_short;
+        }
         if (timezone_offset < 0) {
             substr[0] = '-';
             timezone_offset = -timezone_offset;
@@ -1209,53 +1221,47 @@ add_time_zone:
         else {
             substr[0] = '+';
         }
-        if (sublen <= 1) {
-            goto string_too_short;
-        }
         substr += 1;
         sublen -= 1;
 
         /* Add the timezone offset */
+        if (sublen < 1 ) {
+            goto string_too_short;
+        }
         substr[0] = (char)((timezone_offset / (10*60)) % 10 + '0');
-        if (sublen <= 1 ) {
+        if (sublen < 2 ) {
             goto string_too_short;
         }
         substr[1] = (char)((timezone_offset / 60) % 10 + '0');
-        if (sublen <= 2 ) {
+        if (sublen < 3 ) {
             goto string_too_short;
         }
         substr[2] = (char)(((timezone_offset % 60) / 10) % 10 + '0');
-        if (sublen <= 3 ) {
+        if (sublen < 4 ) {
             goto string_too_short;
         }
         substr[3] = (char)((timezone_offset % 60) % 10 + '0');
-        if (sublen <= 4 ) {
-            goto string_too_short;
-        }
         substr += 4;
         sublen -= 4;
     }
     /* UTC "Zulu" time */
     else {
-        substr[0] = 'Z';
-        if (sublen <= 1) {
+        if (sublen < 1) {
             goto string_too_short;
         }
+        substr[0] = 'Z';
         substr += 1;
         sublen -= 1;
     }
 
     /* Add a NULL terminator, and return */
-    substr[0] = '\0';
+    if (sublen > 0) {
+        substr[0] = '\0';
+    }
 
     return 0;
 
 string_too_short:
-    /* Put a NULL terminator on anyway */
-    if (outlen > 0) {
-        outstr[outlen-1] = '\0';
-    }
-
     PyErr_Format(PyExc_RuntimeError,
                 "The string provided for NumPy ISO datetime formatting "
                 "was too short, with length %d",
