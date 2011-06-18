@@ -7,17 +7,15 @@
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-
 #include "numpy/npy_3kcompat.h"
-
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
-#include "numpy/npy_sort.h"
 
+#include "npy_config.h"
+#include "npy_sort.h"
 #include "common.h"
 #include "ctors.h"
 #include "usertypes.h"
-#include "npy_config.h"
 #include "_datetime.h"
 
 #include "numpyos.h"
