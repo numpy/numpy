@@ -25,6 +25,10 @@ import numpy as np
 class $name(pu.PolyBase) :
     """A $name series class.
 
+    $name instances provide the standard Python numerical methods '+',
+    '-', '*', '//', '%', 'divmod', '**', and '()' as well as the listed
+    methods.
+
     Parameters
     ----------
     coef : array_like
@@ -60,10 +64,10 @@ class $name(pu.PolyBase) :
 
     Notes
     -----
-    It is important to specify the domain for many uses of graded polynomial,
-    for instance in fitting data. This is because many of the important
-    properties of the polynomial basis only hold in a specified interval and
-    thus the data must be mapped into that domain in order to benefit.
+    It is important to specify the domain in many cases, for instance in
+    fitting data, because many of the important properties of the
+    polynomial basis only hold in a specified interval and consequently
+    the data must be mapped into that interval in order to benefit.
 
     Examples
     --------

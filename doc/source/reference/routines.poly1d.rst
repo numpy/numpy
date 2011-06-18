@@ -1,5 +1,5 @@
-Polynomials
-***********
+Poly1d
+******
 
 .. currentmodule:: numpy
 
