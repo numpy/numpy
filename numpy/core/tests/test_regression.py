@@ -1595,5 +1595,21 @@ class TestRegression(TestCase):
         b[...] = a_obj
         assert_equal(b, a_rec)
 
+    def test_assign_obj_listoflists(self):
+        # Ticket # 1870
+        # The inner list should get assigned to the object elements
+        a = np.zeros(4, dtype=object)
+        b = a.copy()
+        a[0] = [1]
+        a[1] = [2]
+        a[2] = [3]
+        a[3] = [4]
+        b[...] = [[1], [2], [3], [4]]
+        assert_equal(a, b)
+        # The first dimension should get broadcast
+        a = np.zeros((2,2), dtype=object)
+        a[...] = [[1,2]]
+        assert_equal(a, [[1,2], [1,2]])
+
 if __name__ == "__main__":
     run_module_suite()
