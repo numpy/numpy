@@ -27,7 +27,7 @@ except NameError:
 
 from numpy.compat import open_latin1
 
-from distutils.sysconfig import get_config_var, get_config_vars, get_python_lib
+from distutils.sysconfig import get_python_lib
 from distutils.fancy_getopt import FancyGetopt
 from distutils.errors import DistutilsModuleError, \
      DistutilsExecError, CompileError, LinkError, DistutilsPlatformError
@@ -35,7 +35,8 @@ from distutils.util import split_quoted, strtobool
 
 from numpy.distutils.ccompiler import CCompiler, gen_lib_options
 from numpy.distutils import log
-from numpy.distutils.misc_util import is_string, all_strings, is_sequence, make_temp_file
+from numpy.distutils.misc_util import is_string, all_strings, is_sequence, \
+    make_temp_file, get_shared_lib_extension
 from numpy.distutils.environment import EnvironmentConfig
 from numpy.distutils.exec_command import find_executable
 from numpy.distutils.compat import get_exception
@@ -195,10 +196,8 @@ class FCompiler(CCompiler):
 
     src_extensions = ['.for','.ftn','.f77','.f','.f90','.f95','.F','.F90']
     obj_extension = ".o"
-    shared_lib_extension = get_config_var('SO')  # or .dll
-    # fix long extension for Python >=3.2, see PEP 3149.
-    if 'SOABI' in get_config_vars():
-        shared_lib_extension = shared_lib_extension.replace('.'+get_config_var('SOABI'), '', 1)
+
+    shared_lib_extension = get_shared_lib_extension()
     static_lib_extension = ".a"  # or .lib
     static_lib_format = "lib%s%s" # or %s%s
     shared_lib_format = "%s%s"
