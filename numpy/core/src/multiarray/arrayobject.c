@@ -144,10 +144,11 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
             }
         }
         else {
-            /* If the dims match exactly, can assign directly */
-            if (ndim == PyArray_NDIM(dest) &&
-                        PyArray_CompareLists(dims, PyArray_DIMS(dest),
-                                                ndim)) {
+            /*
+             * If there are more than enough dims, use AssignFromSequence
+             * because it can handle this style of broadcasting.
+             */
+            if (ndim >= PyArray_NDIM(dest)) {
                 int res;
                 Py_DECREF(dtype);
                 res = PyArray_AssignFromSequence(dest, src_object);

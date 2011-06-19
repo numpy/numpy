@@ -542,26 +542,60 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, npy_intp offset)
     if (slen < 0) {
         goto fail;
     }
-    if (slen != a->dimensions[dim]) {
+    /*
+     * Either the dimensions match, or the sequence has length 1 and can
+     * be broadcast to the destination.
+     */
+    if (slen != a->dimensions[dim] && slen != 1) {
         PyErr_Format(PyExc_ValueError,
                  "cannot copy sequence with size %d to array axis "
                  "with dimension %d", (int)slen, (int)a->dimensions[dim]);
         goto fail;
     }
 
-    for (i = 0; i < slen; i++) {
-        PyObject *o = PySequence_GetItem(s, i);
-        if ((a->nd - dim) > 1) {
-            res = setArrayFromSequence(a, o, dim+1, offset);
-        }
-        else {
-            res = a->descr->f->setitem(o, (a->data + offset), a);
-        }
-        Py_DECREF(o);
-        if (res < 0) {
+    /* Broadcast the one element from the sequence to all the outputs */
+    if (slen == 1) {
+        PyObject *o;
+        npy_intp alen = a->dimensions[dim];
+
+        o = PySequence_GetItem(s, 0);
+        if (o == NULL) {
             goto fail;
         }
-        offset += a->strides[dim];
+        for (i = 0; i < alen; i++) {
+            if ((a->nd - dim) > 1) {
+                res = setArrayFromSequence(a, o, dim+1, offset);
+            }
+            else {
+                res = a->descr->f->setitem(o, (a->data + offset), a);
+            }
+            if (res < 0) {
+                Py_DECREF(o);
+                goto fail;
+            }
+            offset += a->strides[dim];
+        }
+        Py_DECREF(o);
+    }
+    /* Copy element by element */
+    else {
+        for (i = 0; i < slen; i++) {
+            PyObject *o = PySequence_GetItem(s, i);
+            if (o == NULL) {
+                goto fail;
+            }
+            if ((a->nd - dim) > 1) {
+                res = setArrayFromSequence(a, o, dim+1, offset);
+            }
+            else {
+                res = a->descr->f->setitem(o, (a->data + offset), a);
+            }
+            Py_DECREF(o);
+            if (res < 0) {
+                goto fail;
+            }
+            offset += a->strides[dim];
+        }
     }
 
     Py_DECREF(s);
