@@ -55,6 +55,7 @@ __all__ = ['load_library', 'ndpointer', 'test', 'ctypes_load_library',
 import sys, os
 from numpy import integer, ndarray, dtype as _dtype, deprecate, array
 from numpy.core.multiarray import _flagdict, flagsobj
+from numpy.distutils.misc_util import get_shared_lib_extension
 
 try:
     import ctypes
@@ -97,7 +98,15 @@ else:
             # Try to load library with platform-specific name, otherwise
             # default to libname.[so|pyd].  Sometimes, these files are built
             # erroneously on non-linux platforms.
-            libname_ext = ['%s.so' % libname, '%s.pyd' % libname]
+            so_ext = get_shared_lib_extension()
+            libname_ext = [libname + so_ext]
+            if sys.version[:3] >= '3.2':
+                # For Python >= 3.2 a tag may be added to lib extension
+                # (platform dependent).  If we find such a tag, try both with
+                # and without it.
+                so_ext2 = get_shared_lib_extension(is_python_ext=True)
+                if not so_ext2 == so_ext:
+                    libname_ext.insert(0, libname + so_ext2)
             if sys.platform == 'win32':
                 libname_ext.insert(0, '%s.dll' % libname)
             elif sys.platform == 'darwin':
