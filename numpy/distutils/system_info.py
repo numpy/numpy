@@ -128,7 +128,8 @@ from distutils import log
 
 from numpy.distutils.exec_command import \
     find_executable, exec_command, get_pythonexe
-from numpy.distutils.misc_util import is_sequence, is_string
+from numpy.distutils.misc_util import is_sequence, is_string, \
+                                      get_shared_lib_extension
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
 
@@ -210,11 +211,7 @@ default_lib_dirs = filter(os.path.isdir, default_lib_dirs)
 default_include_dirs = filter(os.path.isdir, default_include_dirs)
 default_src_dirs = filter(os.path.isdir, default_src_dirs)
 
-so_ext = distutils.sysconfig.get_config_vars('SO')[0] or ''
-# fix long extension for Python >=3.2, see PEP 3149.
-if 'SOABI' in distutils.sysconfig.get_config_vars():
-    so_ext = so_ext.replace('.'+distutils.sysconfig.get_config_var('SOABI'), '', 1)
-
+so_ext = get_shared_lib_extension()
 
 def get_standard_file(fname):
     """Returns a list of files named 'fname' from
