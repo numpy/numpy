@@ -1,12 +1,10 @@
-.. _routines.polynomial:
-
-Polynomials (:mod:`numpy.polynomial`)
-*************************************
+Polynomial Package (:mod:`numpy.polynomial`)
+============================================
 
 .. currentmodule:: numpy.polynomial
 
 Polynomial Classes
-==================
+------------------
 .. autosummary::
    :toctree: generated/
 

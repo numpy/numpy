@@ -1,5 +1,5 @@
 Poly1d
-******
+======
 
 .. currentmodule:: numpy
 
