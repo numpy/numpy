@@ -3557,7 +3557,7 @@ find_string_array_datetime64_type(PyObject *obj,
     char **dataptr;
     npy_intp *strideptr, *innersizeptr;
     PyArray_Descr *string_dtype;
-    int maxlen, len;
+    int maxlen;
     char *tmp_buffer = NULL;
 
     npy_datetimestruct dts;
@@ -3609,18 +3609,20 @@ find_string_array_datetime64_type(PyObject *obj,
         char* data = *dataptr;
         npy_intp stride = *strideptr;
         npy_intp count = *innersizeptr;
+        char *tmp;
 
         /* The inner loop */
         while (count--) {
-            len = strnlen(data, maxlen);
+            /* Replicating strnlen with memchr, because Mac OS X lacks it */
+            tmp = memchr(data, '\0', maxlen);
 
             /* If the string is all full, use the buffer */
-            if (len == maxlen) {
-                memcpy(tmp_buffer, data, len);
-                tmp_buffer[len] = '\0';
+            if (tmp == NULL) {
+                memcpy(tmp_buffer, data, maxlen);
+                tmp_buffer[maxlen] = '\0';
 
                 tmp_meta.base = -1;
-                if (parse_iso_8601_datetime(tmp_buffer, len, -1,
+                if (parse_iso_8601_datetime(tmp_buffer, maxlen, -1,
                                     NPY_UNSAFE_CASTING, &dts, NULL,
                                     &tmp_meta.base, NULL) < 0) {
                     goto fail;
@@ -3629,7 +3631,7 @@ find_string_array_datetime64_type(PyObject *obj,
             /* Otherwise parse the data in place */
             else {
                 tmp_meta.base = -1;
-                if (parse_iso_8601_datetime(data, len, -1,
+                if (parse_iso_8601_datetime(data, tmp - data, -1,
                                     NPY_UNSAFE_CASTING, &dts, NULL,
                                     &tmp_meta.base, NULL) < 0) {
                     goto fail;

@@ -899,17 +899,18 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
     npy_int64 dt;
     npy_datetimestruct dts;
     char *tmp_buffer = d->tmp_buffer;
-    npy_intp len;
+    char *tmp;
 
     while (N > 0) {
-        len = strnlen(src, src_itemsize);
+        /* Replicating strnlen with memchr, because Mac OS X lacks it */
+        tmp = memchr(src, '\0', src_itemsize);
 
         /* If the string is all full, use the buffer */
-        if (len == src_itemsize) {
+        if (tmp == NULL) {
             memcpy(tmp_buffer, src, src_itemsize);
             tmp_buffer[src_itemsize] = '\0';
 
-            if (parse_iso_8601_datetime(tmp_buffer, len,
+            if (parse_iso_8601_datetime(tmp_buffer, src_itemsize,
                                     d->dst_meta.base, NPY_SAME_KIND_CASTING,
                                     &dts, NULL, NULL, NULL) < 0) {
                 dt = NPY_DATETIME_NAT;
@@ -917,7 +918,7 @@ _strided_to_strided_string_to_datetime(char *dst, npy_intp dst_stride,
         }
         /* Otherwise parse the data in place */
         else {
-            if (parse_iso_8601_datetime(src, len,
+            if (parse_iso_8601_datetime(src, tmp - src,
                                     d->dst_meta.base, NPY_SAME_KIND_CASTING,
                                     &dts, NULL, NULL, NULL) < 0) {
                 dt = NPY_DATETIME_NAT;
