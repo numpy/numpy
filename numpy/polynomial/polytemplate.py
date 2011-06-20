@@ -412,13 +412,12 @@ class $name(pu.PolyBase) :
     def copy(self) :
         """Return a copy.
 
-        A new instance of $name is returned that has the same
-        coefficients and domain as the current instance.
+        Return a copy of the current $name instance.
 
         Returns
         -------
         new_instance : $name
-            New instance of $name with the same coefficients and domain.
+            Copy of current instance.
 
         """
         return self.__class__(self.coef, self.domain, self.window)
@@ -518,12 +517,15 @@ class $name(pu.PolyBase) :
         Parameters
         ----------
         domain : array_like, optional
-            The domain of the new series type instance. If the value is None,
-            then the default domain of `kind` is used.
+            The domain of the converted series. If the value is None,
+            the default domain of `kind` is used.
         kind : class, optional
             The polynomial series type class to which the current instance
             should be converted. If kind is None, then the class of the
             current instance is used.
+        window : array_like, optional
+            The window of the converted series. If the value is None,
+            the default window of `kind` is used.
 
         Returns
         -------
@@ -771,9 +773,21 @@ class $name(pu.PolyBase) :
 
     @staticmethod
     def fromroots(roots, domain=$domain, window=$domain) :
-        """Return $name object with specified roots.
+        """Return $name instance with specified roots.
 
-        See ${nick}fromroots for full documentation.
+        Returns an instance of $name representing the product
+        ``(x - r[0])*(x - r[1])*...*(x - r[n-1])``, where ``r`` is the
+        list of roots.
+
+        Parameters
+        ----------
+        roots : array_like
+            List of roots.
+
+        Returns
+        -------
+        object : $name
+            Series with the specified roots.
 
         See Also
         --------
