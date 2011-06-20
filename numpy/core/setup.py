@@ -670,11 +670,10 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     #subst_dict = dict([("sep", os.path.sep), ("pkgname", "numpy.core")])
-    config.add_installed_library('npysort',
-            sources = [join('src', 'npysort', 'sort.c.src')],
-            install_dir = 'lib')
-    config.add_npy_pkg_config("npysort.ini.in", "lib/npy-pkg-config",
-            subst_dict)
+    config.add_library('npysort',
+            sources = [join('src', 'npysort', 'sort.c.src')])
+#    config.add_npy_pkg_config("npysort.ini.in", "lib/npy-pkg-config",
+#            subst_dict)
 
     #######################################################################
     #                        multiarray module                            #
