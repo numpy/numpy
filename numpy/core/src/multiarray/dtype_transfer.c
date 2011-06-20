@@ -1059,10 +1059,19 @@ get_nbo_datetime_to_string_transfer_function(int aligned,
     printf(" to ");
     PyObject_Print((PyObject *)dst_dtype, stdout, 0);
     printf("\n");
-    printf("has conversion fraction %lld/%lld\n", num, denom);
 #endif
 
     return NPY_SUCCEED;
+}
+
+static int
+get_datetime_to_unicode_transfer_function(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata)
+{
+    
 }
 
 static int
@@ -1112,10 +1121,18 @@ get_nbo_string_to_datetime_transfer_function(int aligned,
     printf(" to ");
     PyObject_Print((PyObject *)dst_dtype, stdout, 0);
     printf("\n");
-    printf("has conversion fraction %lld/%lld\n", num, denom);
 #endif
 
     return NPY_SUCCEED;
+}
+
+static int
+get_unicode_to_datetime_transfer_function(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                            PyArray_StridedTransferFn **out_stransfer,
+                            void **out_transferdata)
+{
 }
 
 static int
@@ -1179,7 +1196,11 @@ get_nbo_cast_transfer_function(int aligned,
 
                 case NPY_UNICODE:
                     *out_needs_api = 1;
-                    break;
+                    return get_datetime_to_unicode_transfer_function(
+                                        aligned,
+                                        src_stride, dst_stride,
+                                        src_dtype, dst_dtype,
+                                        out_stransfer, out_transferdata);
             }
         }
         else if (dst_dtype->type_num == NPY_DATETIME) {
@@ -1195,7 +1216,11 @@ get_nbo_cast_transfer_function(int aligned,
 
                 case NPY_UNICODE:
                     *out_needs_api = 1;
-                    break;
+                    return get_unicode_to_datetime_transfer_function(
+                                        aligned,
+                                        src_stride, dst_stride,
+                                        src_dtype, dst_dtype,
+                                        out_stransfer, out_transferdata);
             }
         }
     }
@@ -1366,69 +1391,17 @@ get_cast_transfer_function(int aligned,
         PyArray_StridedTransferFn *tobuffer, *frombuffer;
 
         /* Get the copy/swap operation from src */
-
-        /* If it's a custom data type, wrap its copy swap function */
-        if (src_dtype->type_num >= NPY_NTYPES) {
-            tobuffer = NULL;
-            wrap_copy_swap_function(aligned,
+        PyArray_GetDTypeCopySwapFn(aligned,
                                 src_stride, src_itemsize,
                                 src_dtype,
-                                !PyArray_ISNBO(src_dtype->byteorder),
                                 &tobuffer, &todata);
-        }
-        /* A straight copy */
-        else if (src_itemsize == 1 || PyArray_ISNBO(src_dtype->byteorder)) {
-            tobuffer = PyArray_GetStridedCopyFn(aligned,
-                                        src_stride, src_itemsize,
-                                        src_itemsize);
-        }
-        /* If it's not complex, one swap */
-        else if(src_dtype->kind != 'c') {
-            tobuffer = PyArray_GetStridedCopySwapFn(aligned,
-                                        src_stride, src_itemsize,
-                                        src_itemsize);
-        }
-        /* If complex, a paired swap */
-        else {
-            tobuffer = PyArray_GetStridedCopySwapPairFn(aligned,
-                                        src_stride, src_itemsize,
-                                        src_itemsize);
-        }
+
 
         /* Get the copy/swap operation to dst */
-
-        /* If it's a custom data type, wrap its copy swap function */
-        if (dst_dtype->type_num >= NPY_NTYPES) {
-            frombuffer = NULL;
-            wrap_copy_swap_function(aligned,
+        PyArray_GetDTypeCopySwapFn(aligned,
                                 dst_itemsize, dst_stride,
                                 dst_dtype,
-                                !PyArray_ISNBO(dst_dtype->byteorder),
                                 &frombuffer, &fromdata);
-        }
-        /* A straight copy */
-        else if (dst_itemsize == 1 || PyArray_ISNBO(dst_dtype->byteorder)) {
-            if (dst_dtype->type_num == NPY_OBJECT) {
-                frombuffer = &_strided_to_strided_move_references;
-            }
-            else {
-                frombuffer = PyArray_GetStridedCopyFn(aligned,
-                                        dst_itemsize, dst_stride,
-                                        dst_itemsize);
-            }
-        }
-        /* If it's not complex, one swap */
-        else if(dst_dtype->kind != 'c') {
-            frombuffer = PyArray_GetStridedCopySwapFn(aligned,
-                                        dst_itemsize, dst_stride,
-                                        dst_itemsize);
-        }
-        /* If complex, a paired swap */
-        else {
-            frombuffer = PyArray_GetStridedCopySwapPairFn(aligned,
-                                        dst_itemsize, dst_stride,
-                                        dst_itemsize);
-        }
 
         if (frombuffer == NULL || tobuffer == NULL) {
             PyArray_FreeStridedTransferData(castdata);
@@ -3250,6 +3223,51 @@ get_decsrcref_transfer_function(int aligned,
                             out_transferdata,
                             out_needs_api);
     }
+}
+
+/********************* DTYPE COPY SWAP FUNCTION ***********************/
+
+NPY_NO_EXPORT int
+PyArray_GetDTypeCopySwapFn(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            PyArray_Descr *dtype,
+                            PyArray_StridedTransferFn **outstransfer,
+                            void **outtransferdata)
+{
+    npy_intp itemsize = dtype->elsize;
+
+    /* If it's a custom data type, wrap its copy swap function */
+    if (dtype->type_num >= NPY_NTYPES) {
+        *outstransfer = NULL;
+        wrap_copy_swap_function(aligned,
+                            src_stride, dst_stride,
+                            dtype,
+                            !PyArray_ISNBO(dtype->byteorder),
+                            outstransfer, outtransferdata);
+    }
+    /* A straight copy */
+    else if (itemsize == 1 || PyArray_ISNBO(dtype->byteorder)) {
+        *outstransfer = PyArray_GetStridedCopyFn(aligned,
+                                    src_stride, dst_stride,
+                                    itemsize);
+        *outtransferdata = NULL;
+    }
+    /* If it's not complex, one swap */
+    else if(dtype->kind != 'c') {
+        *outstransfer = PyArray_GetStridedCopySwapFn(aligned,
+                                    src_stride, dst_stride,
+                                    itemsize);
+        *outtransferdata = NULL;
+    }
+    /* If complex, a paired swap */
+    else {
+        *outstransfer = PyArray_GetStridedCopySwapPairFn(aligned,
+                                    src_stride, dst_stride,
+                                    itemsize);
+        *outtransferdata = NULL;
+    }
+
+    return (*outstransfer == NULL) ? NPY_FAIL : NPY_SUCCEED;
 }
 
 /********************* MAIN DTYPE TRANSFER FUNCTION ***********************/
