@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from numpy.testing import *
 
@@ -76,6 +77,12 @@ class TestArray2String(TestCase):
             else:
                 return 'O'
         x = np.arange(3)
+        if sys.version_info[0] >= 3:
+            x_hex = "[0x0 0x1 0x2]"
+            x_oct = "[0o0 0o1 0o2]"
+        else:
+            x_hex = "[0x0L 0x1L 0x2L]"
+            x_oct = "[0L 01L 02L]"
         assert_(np.array2string(x, formatter={'all':_format_function}) == \
                 "[. o O]")
         assert_(np.array2string(x, formatter={'int_kind':_format_function}) ==\
@@ -83,7 +90,9 @@ class TestArray2String(TestCase):
         assert_(np.array2string(x, formatter={'all':lambda x: "%.4f" % x}) == \
                 "[0.0000 1.0000 2.0000]")
         assert_equal(np.array2string(x, formatter={'int':lambda x: hex(x)}), \
-                "[0x0L 0x1L 0x2L]")
+                x_hex)
+        assert_equal(np.array2string(x, formatter={'int':lambda x: oct(x)}), \
+                x_oct)
 
         x = np.arange(3.)
         assert_(np.array2string(x, formatter={'float_kind':lambda x: "%.2f" % x}) == \
