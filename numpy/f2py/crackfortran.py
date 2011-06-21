@@ -416,7 +416,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
                         readfortrancode(fn1,dowithline=dowithline,istop=0)
                         break
                 if not foundfile:
-                    outmess('readfortrancode: could not find include file %s. Ignoring.\n'%(`fn`))
+                    outmess('readfortrancode: could not find include file %s in %s. Ignoring.\n'%(`fn`, os.pathsep.join(include_dirs)))
         else:
             dowithline(finalline)
         l1=ll
@@ -428,13 +428,19 @@ def readfortrancode(ffile,dowithline=show,istop=1):
     m=includeline.match(origfinalline)
     if m:
         fn=m.group('name')
-        fn1=os.path.join(os.path.dirname(currentfilename),fn)
         if os.path.isfile(fn):
             readfortrancode(fn,dowithline=dowithline,istop=0)
-        elif os.path.isfile(fn1):
-            readfortrancode(fn1,dowithline=dowithline,istop=0)
         else:
-            outmess('readfortrancode: could not find include file %s. Ignoring.\n'%(`fn`))
+            include_dirs = [os.path.dirname(currentfilename)] + include_paths
+            foundfile = 0
+            for inc_dir in include_dirs:
+                fn1 = os.path.join(inc_dir,fn)
+                if os.path.isfile(fn1):
+                    foundfile = 1
+                    readfortrancode(fn1,dowithline=dowithline,istop=0)
+                    break
+            if not foundfile:
+                outmess('readfortrancode: could not find include file %s in %s. Ignoring.\n'%(`fn`, os.pathsep.join(include_dirs)))
     else:
         dowithline(finalline)
     filepositiontext=''

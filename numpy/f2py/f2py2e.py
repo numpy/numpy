@@ -4,7 +4,7 @@
 f2py2e - Fortran to Python C/API generator. 2nd Edition.
          See __usage__ below.
 
-Copyright 1999--2005 Pearu Peterson all rights reserved,
+Copyright 1999--2011 Pearu Peterson all rights reserved,
 Pearu Peterson <pearu@cens.ioc.ee>
 Permission to use, modify, and distribute this software is given under the
 terms of the NumPy License.
@@ -13,7 +13,6 @@ NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 $Date: 2005/05/06 08:31:19 $
 Pearu Peterson
 """
-__version__ = "$Revision: 1.90 $"[10:-1]
 
 import __version__
 f2py_version = __version__.version
@@ -112,7 +111,7 @@ Options:
                    functions. --wrap-functions is default because it ensures
                    maximum portability/compiler independence.
 
-  --include_paths <path1>:<path2>:...   Search include files from the given
+  --include-paths <path1>:<path2>:...   Search include files from the given
                    directories.
 
   --help-link [..] List system resources found by system_info.py. See also
@@ -170,7 +169,7 @@ Version:     %s
 numpy Version: %s
 Requires:    Python 2.3 or higher.
 License:     NumPy license (see LICENSE.txt in the NumPy source code)
-Copyright 1999 - 2005 Pearu Peterson all rights reserved.
+Copyright 1999 - 2011 Pearu Peterson all rights reserved.
 http://cens.ioc.ee/projects/f2py2e/"""%(f2py_version, numpy_version)
 
 def scaninputline(inputline):
@@ -218,7 +217,10 @@ def scaninputline(inputline):
         elif l[:8]=='-include':
             cfuncs.outneeds['userincludes'].append(l[9:-1])
             cfuncs.userincludes[l[9:-1]]='#include '+l[8:]
-        elif l[:15]=='--include_paths':
+        elif l[:15] in '--include_paths':
+            outmess('f2py option --include_paths is deprecated, use --include-paths instead.\n')
+            f7=1
+        elif l[:15] in '--include-paths':
             f7=1
         elif l[0]=='-':
             errmess('Unknown option %s\n'%`l`)
@@ -486,6 +488,14 @@ def run_compile():
 
     modulename = 'untitled'
     sources = sys.argv[1:]
+
+    for optname in ['--include_paths', '--include-paths']:
+        if optname in sys.argv:
+            i = sys.argv.index (optname)
+            f2py_flags.extend (sys.argv[i:i+2])
+            del sys.argv[i+1],sys.argv[i]
+            sources = sys.argv[1:]
+
     if '-m' in sys.argv:
         i = sys.argv.index('-m')
         modulename = sys.argv[i+1]
