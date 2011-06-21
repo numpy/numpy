@@ -641,7 +641,7 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
         goto fail;
     }
     new->elsize = conv->elsize;
-    if (conv->names) {
+    if (PyDataType_HASFIELDS(conv)) {
         new->fields = conv->fields;
         Py_XINCREF(new->fields);
         new->names = conv->names;
@@ -1453,7 +1453,7 @@ arraydescr_protocol_descr_get(PyArray_Descr *self)
     PyObject *dobj, *res;
     PyObject *_numpy_internal;
 
-    if (self->names == NULL) {
+    if (!PyDataType_HASFIELDS(self)) {
         /* get default */
         dobj = PyTuple_New(2);
         if (dobj == NULL) {
@@ -1501,7 +1501,7 @@ arraydescr_isbuiltin_get(PyArray_Descr *self)
 static int
 _arraydescr_isnative(PyArray_Descr *self)
 {
-    if (self->names == NULL) {
+    if (!PyDataType_HASFIELDS(self)) {
         return PyArray_ISNBO(self->byteorder);
     }
     else {
@@ -1548,7 +1548,7 @@ arraydescr_isnative_get(PyArray_Descr *self)
 static PyObject *
 arraydescr_fields_get(PyArray_Descr *self)
 {
-    if (self->names == NULL) {
+    if (!PyDataType_HASFIELDS(self)) {
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -1579,7 +1579,7 @@ arraydescr_hasobject_get(PyArray_Descr *self)
 static PyObject *
 arraydescr_names_get(PyArray_Descr *self)
 {
-    if (self->names == NULL) {
+    if (!PyDataType_HASFIELDS(self)) {
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -1594,7 +1594,7 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
     int i;
     PyObject *new_names;
     PyObject *new_fields;
-    if (self->names == NULL) {
+    if (!PyDataType_HASFIELDS(self)) {
         PyErr_SetString(PyExc_ValueError,
                 "there are no fields defined");
         return -1;
@@ -1926,7 +1926,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
 
     PyTuple_SET_ITEM(state, 1, PyUString_FromFormat("%c", endian));
     PyTuple_SET_ITEM(state, 2, arraydescr_subdescr_get(self));
-    if (self->names) {
+    if (PyDataType_HASFIELDS(self)) {
         Py_INCREF(self->names);
         Py_INCREF(self->fields);
         PyTuple_SET_ITEM(state, 3, self->names);
@@ -2366,7 +2366,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
             new->byteorder = newendian;
         }
     }
-    if (new->names) {
+    if (PyDataType_HASFIELDS(new)) {
         PyObject *newfields;
         PyObject *key, *value;
         PyObject *newvalue;
@@ -2448,7 +2448,7 @@ arraydescr_str(PyArray_Descr *self)
 {
     PyObject *sub;
 
-    if (self->names) {
+    if (PyDataType_HASFIELDS(self)) {
         PyObject *lst;
         lst = arraydescr_protocol_descr_get(self);
         if (!lst) {
@@ -2478,7 +2478,8 @@ arraydescr_str(PyArray_Descr *self)
         PyObject *t = PyUString_FromString("(");
         PyObject *sh;
         p = arraydescr_str(self->subarray->base);
-        if (!self->subarray->base->names && !self->subarray->base->subarray) {
+        if (!PyDataType_HASFIELDS(self->subarray->base) &&
+                                    !self->subarray->base->subarray) {
             PyObject *tmp=PyUString_FromString("'");
             PyUString_Concat(&p, tmp);
             PyUString_ConcatAndDel(&tmp, p);
@@ -2511,25 +2512,59 @@ arraydescr_str(PyArray_Descr *self)
     return sub;
 }
 
+/*
+ * The dtype repr function specifically for structured arrays.
+ */
 static PyObject *
-arraydescr_repr(PyArray_Descr *self)
+arraydescr_struct_repr(PyArray_Descr *self)
 {
-    PyObject *sub, *s;
+    PyObject *sub, *s, *t;
+
     s = PyUString_FromString("dtype(");
     sub = arraydescr_str(self);
     if (sub == NULL) {
-        return sub;
+        return NULL;
     }
-    if (!self->names && !self->subarray) {
-        PyObject *t=PyUString_FromString("'");
-        PyUString_Concat(&sub, t);
-        PyUString_ConcatAndDel(&t, sub);
-        sub = t;
-    }
+
+    t=PyUString_FromString("'");
+    PyUString_Concat(&sub, t);
+    PyUString_ConcatAndDel(&t, sub);
+    sub = t;
+
     PyUString_ConcatAndDel(&s, sub);
     sub = PyUString_FromString(")");
     PyUString_ConcatAndDel(&s, sub);
     return s;
+}
+
+/*
+ * The general dtype repr function.
+ */
+static PyObject *
+arraydescr_repr(PyArray_Descr *self)
+{
+    PyObject *sub, *s;
+
+    if (PyDataType_HASFIELDS(self)) {
+        return arraydescr_struct_repr(self);
+    }
+    else {
+        s = PyUString_FromString("dtype(");
+        sub = arraydescr_str(self);
+        if (sub == NULL) {
+            return NULL;
+        }
+        if (!self->subarray) {
+            PyObject *t=PyUString_FromString("'");
+            PyUString_Concat(&sub, t);
+            PyUString_ConcatAndDel(&t, sub);
+            sub = t;
+        }
+        PyUString_ConcatAndDel(&s, sub);
+        sub = PyUString_FromString(")");
+        PyUString_ConcatAndDel(&s, sub);
+        return s;
+    }
 }
 
 static PyObject *
@@ -2611,7 +2646,7 @@ descr_length(PyObject *self0)
 {
     PyArray_Descr *self = (PyArray_Descr *)self0;
 
-    if (self->names) {
+    if (PyDataType_HASFIELDS(self)) {
         return PyTuple_GET_SIZE(self->names);
     }
     else {
@@ -2642,7 +2677,7 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
 {
     PyObject *retval;
 
-    if (!self->names) {
+    if (!PyDataType_HASFIELDS(self)) {
         PyObject *astr = arraydescr_str(self);
 #if defined(NPY_PY3K)
         PyObject *bstr = PyUnicode_AsUnicodeEscapeString(astr);

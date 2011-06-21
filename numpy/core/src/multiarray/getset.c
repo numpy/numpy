@@ -550,7 +550,7 @@ array_struct_get(PyArrayObject *self)
         inter->strides = NULL;
     }
     inter->data = self->data;
-    if (self->descr->names) {
+    if (PyDataType_HASFIELDS(self->descr)) {
         inter->descr = arraydescr_protocol_descr_get(self->descr);
         if (inter->descr == NULL) {
             PyErr_Clear();
