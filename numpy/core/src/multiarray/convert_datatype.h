@@ -22,7 +22,7 @@ PyArray_ValidType(int type);
  * and NPY_DATETIME with generic units.
  */
 NPY_NO_EXPORT void
-PyArray_AdaptFlexibleType(PyObject *data_obj, PyArray_Descr *data_dtype,
+PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                             PyArray_Descr **flex_dtype);
 
 #endif

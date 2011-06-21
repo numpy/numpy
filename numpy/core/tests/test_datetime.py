@@ -446,7 +446,7 @@ class TestDateTime(TestCase):
 
     def test_datetime_string_conversion(self):
         a = ['2011-03-16', '1920-01-01', '2013-05-19']
-        str_a = np.array(a, dtype='S0')
+        str_a = np.array(a, dtype='S')
         dt_a = np.array(a, dtype='M')
         str_b = np.empty_like(str_a)
         dt_b = np.empty_like(dt_a)
@@ -458,6 +458,20 @@ class TestDateTime(TestCase):
         assert_equal(dt_a, dt_b)
         # Datetime to string
         assert_equal(str_a, dt_a.astype('S0'))
+        str_b[...] = dt_a
+        assert_equal(str_a, str_b)
+
+        # Convert the 'S' to 'U'
+        str_a = str_a.astype('U')
+        str_b = str_b.astype('U')
+
+        # Unicode to datetime
+        assert_equal(dt_a, str_a.astype('M'))
+        assert_equal(dt_a.dtype, str_a.astype('M').dtype)
+        dt_b[...] = str_a
+        assert_equal(dt_a, dt_b)
+        # Datetime to unicode
+        assert_equal(str_a, dt_a.astype('U'))
         str_b[...] = dt_a
         assert_equal(str_a, str_b)
 

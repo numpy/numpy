@@ -34,7 +34,7 @@ PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int fortran)
     PyObject *out;
 
     /* If the requested dtype is flexible, adapt it */
-    PyArray_AdaptFlexibleType((PyObject *)arr, PyArray_DESCR(arr), &dtype);
+    PyArray_AdaptFlexibleDType((PyObject *)arr, PyArray_DESCR(arr), &dtype);
     if (dtype == NULL) {
         return NULL;
     }
@@ -123,14 +123,29 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
  * a new dtype that has been adapted based on the values in data_dtype
  * and data_obj. If the flex_dtype is not flexible, it leaves it as is.
  *
+ * Usually, if data_obj is not an array, dtype should be the result
+ * given by the PyArray_GetArrayParamsFromObject function.
+ *
+ * The data_obj may be NULL if just a dtype is is known for the source.
+ *
+ * If *flex_dtype is NULL, returns immediately, without setting an
+ * exception. This basically assumes an error was already set previously.
+ *
  * The current flexible dtypes include NPY_STRING, NPY_UNICODE, NPY_VOID,
  * and NPY_DATETIME with generic units.
  */
 NPY_NO_EXPORT void
-PyArray_AdaptFlexibleType(PyObject *data_obj, PyArray_Descr *data_dtype,
+PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                             PyArray_Descr **flex_dtype)
 {
     PyArray_DatetimeMetaData *meta;
+    int flex_type_num;
+
+    if (*flex_dtype == NULL) {
+        return;
+    }
+
+    flex_type_num = (*flex_dtype)->type_num;
 
     /* Flexible types with expandable size */
     if ((*flex_dtype)->elsize == 0) {
@@ -140,8 +155,8 @@ PyArray_AdaptFlexibleType(PyObject *data_obj, PyArray_Descr *data_dtype,
             return;
         }
 
-        if (data_dtype->type_num == (*flex_dtype)->type_num ||
-                                    (*flex_dtype)->type_num == NPY_VOID) {
+        if (data_dtype->type_num == flex_type_num ||
+                                    flex_type_num == NPY_VOID) {
             (*flex_dtype)->elsize = data_dtype->elsize;
         }
         else {
@@ -217,17 +232,17 @@ PyArray_AdaptFlexibleType(PyObject *data_obj, PyArray_Descr *data_dtype,
                     break;
             }
 
-            if ((*flex_dtype)->type_num == NPY_STRING) {
+            if (flex_type_num == NPY_STRING) {
                 (*flex_dtype)->elsize = size;
             }
-            else if ((*flex_dtype)->type_num == NPY_UNICODE) {
+            else if (flex_type_num == NPY_UNICODE) {
                 (*flex_dtype)->elsize = size * 4;
             }
         }
     }
     /* Flexible type with generic time unit that adapts */
-    else if ((*flex_dtype)->type_num == NPY_DATETIME ||
-                (*flex_dtype)->type_num == NPY_TIMEDELTA) {
+    else if (flex_type_num == NPY_DATETIME ||
+                flex_type_num == NPY_TIMEDELTA) {
         meta = get_datetime_metadata_from_dtype(*flex_dtype);
         if (meta == NULL) {
             Py_DECREF(*flex_dtype);
@@ -236,11 +251,24 @@ PyArray_AdaptFlexibleType(PyObject *data_obj, PyArray_Descr *data_dtype,
         }
 
         if (meta->base == NPY_FR_GENERIC) {
-            /* Detect the unit from the input's data */
-            PyArray_Descr *dtype = find_object_datetime_type(data_obj,
-                                                    (*flex_dtype)->type_num);
-            Py_DECREF(*flex_dtype);
-            *flex_dtype = dtype;
+            if (data_dtype->type_num == NPY_DATETIME ||
+                    data_dtype->type_num == NPY_TIMEDELTA) {
+                meta = get_datetime_metadata_from_dtype(data_dtype);
+                if (meta == NULL) {
+                    Py_DECREF(*flex_dtype);
+                    *flex_dtype = NULL;
+                    return;
+                }
+
+                Py_DECREF(*flex_dtype);
+                *flex_dtype = create_datetime_dtype(flex_type_num, meta);
+            }
+            else if (data_obj != NULL) {
+                /* Detect the unit from the input's data */
+                Py_DECREF(*flex_dtype);
+                *flex_dtype = find_object_datetime_type(data_obj,
+                                                    flex_type_num);
+            }
         }
     }
 }

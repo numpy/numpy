@@ -1660,7 +1660,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* If the requested dtype is flexible, adapt it */
     if (newtype != NULL) {
-        PyArray_AdaptFlexibleType(op,
+        PyArray_AdaptFlexibleDType(op,
                     (dtype == NULL) ? PyArray_DESCR(arr) : dtype,
                     &newtype);
     }

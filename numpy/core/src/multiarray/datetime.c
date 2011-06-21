@@ -3574,8 +3574,10 @@ find_string_array_datetime64_type(PyObject *obj,
     }
 
     /* Use unsafe casting to allow unicode -> ascii string */
-    iter = NpyIter_New((PyArrayObject *)obj, NPY_ITER_READONLY|
-                             NPY_ITER_EXTERNAL_LOOP,
+    iter = NpyIter_New((PyArrayObject *)obj,
+                            NPY_ITER_READONLY|
+                            NPY_ITER_EXTERNAL_LOOP|
+                            NPY_ITER_BUFFERED,
                         NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                         string_dtype);
     Py_DECREF(string_dtype);

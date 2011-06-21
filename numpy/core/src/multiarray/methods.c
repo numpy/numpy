@@ -833,19 +833,19 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
         PyArrayObject *ret;
 
         /* If the requested dtype is flexible, adapt it */
-        PyArray_AdaptFlexibleType((PyObject *)self, PyArray_DESCR(self),
+        PyArray_AdaptFlexibleDType((PyObject *)self, PyArray_DESCR(self),
                                                                     &dtype);
         if (dtype == NULL) {
             return NULL;
         }
-        
+
         /* This steals the reference to dtype, so no DECREF of dtype */
         ret = (PyArrayObject *)PyArray_NewLikeArray(
                                     self, order, dtype, subok);
-
         if (ret == NULL) {
             return NULL;
         }
+
         if (PyArray_CopyInto(ret, self) < 0) {
             Py_DECREF(ret);
             return NULL;
