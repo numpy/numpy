@@ -26,199 +26,15 @@
  * The heap sort is included for completeness.
  */
 
-
-#include "Python.h"
-#include "numpy/noprefix.h"
-#include "numpy/npy_math.h"
-#include "numpy/halffloat.h"
-
-#include "npy_config.h"
+#include <stdlib.h>
+#include "npy_sort.h"
+#include "npysort_common.h"
 
 #define NOT_USED NPY_UNUSED(unused)
 #define PYA_QS_STACK 100
 #define SMALL_QUICKSORT 15
 #define SMALL_MERGESORT 20
 #define SMALL_STRING 16
-
-/*
- *****************************************************************************
- **                        SWAP MACROS                                      **
- *****************************************************************************
- */
-
-/**begin repeat
- *
- * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE, CFLOAT,
- *         CDOUBLE,CLONGDOUBLE, INTP#
- * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
- *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
- *         npy_half, npy_float, npy_double, npy_longdouble, npy_cfloat,
- *         npy_cdouble, npy_clongdouble, npy_intp#
- */
-#define @TYPE@_SWAP(a,b) {@type@ tmp = (b); (b)=(a); (a) = tmp;}
-
-/**end repeat**/
-
-/*
- *****************************************************************************
- **                        COMPARISON FUNCTIONS                             **
- *****************************************************************************
- */
-
-/**begin repeat
- *
- * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
- *         LONGLONG, ULONGLONG#
- * #type = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
- *         longlong, ulonglong#
- */
-NPY_INLINE static int
-@TYPE@_LT(@type@ a, @type@ b)
-{
-    return a < b;
-}
-/**end repeat**/
-
-
-/**begin repeat
- *
- * #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
- * #type = float, double, longdouble#
- */
-NPY_INLINE static int
-@TYPE@_LT(@type@ a, @type@ b)
-{
-    return a < b || (b != b && a == a);
-}
-/**end repeat**/
-
-NPY_INLINE static int
-HALF_LT(npy_half a, npy_half b)
-{
-    int ret;
-
-    if (npy_half_isnan(b)) {
-        ret = !npy_half_isnan(a);
-    } else {
-        ret = !npy_half_isnan(a) && npy_half_lt_nonan(a, b);
-    }
-
-    return ret;
-}
-
-/*
- * For inline functions SUN recommends not using a return in the then part
- * of an if statement. It's a SUN compiler thing, so assign the return value
- * to a variable instead.
- */
-
-/**begin repeat
- *
- * #TYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
- * #type = cfloat, cdouble, clongdouble#
- */
-NPY_INLINE static int
-@TYPE@_LT(@type@ a, @type@ b)
-{
-    int ret;
-
-    if (a.real < b.real) {
-        ret = a.imag == a.imag || b.imag != b.imag;
-    }
-    else if (a.real > b.real) {
-        ret = b.imag != b.imag && a.imag == a.imag;
-    }
-    else if (a.real == b.real || (a.real != a.real && b.real != b.real)) {
-        ret =  a.imag < b.imag || (b.imag != b.imag && a.imag == a.imag);
-    }
-    else {
-        ret = b.real != b.real;
-    }
-
-    return ret;
-}
-/**end repeat**/
-
-
-/* The PyObject functions are stubs for later use */
-NPY_INLINE static int
-PyObject_LT(PyObject *pa, PyObject *pb)
-{
-    return 0;
-}
-
-
-NPY_INLINE static void
-STRING_COPY(char *s1, char *s2, size_t len)
-{
-    memcpy(s1, s2, len);
-}
-
-
-NPY_INLINE static void
-STRING_SWAP(char *s1, char *s2, size_t len)
-{
-    while(len--) {
-        const char t = *s1;
-        *s1++ = *s2;
-        *s2++ = t;
-    }
-}
-
-
-NPY_INLINE static int
-STRING_LT(char *s1, char *s2, size_t len)
-{
-    const unsigned char *c1 = (unsigned char *)s1;
-    const unsigned char *c2 = (unsigned char *)s2;
-    size_t i;
-    int ret = 0;
-
-    for (i = 0; i < len; ++i) {
-        if (c1[i] != c2[i]) {
-            ret = c1[i] < c2[i];
-            break;
-        }
-    }
-    return ret;
-}
-
-
-NPY_INLINE static void
-UNICODE_COPY(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
-{
-    while(len--) {
-        *s1++ = *s2++;
-    }
-}
-
-
-NPY_INLINE static void
-UNICODE_SWAP(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
-{
-    while(len--) {
-        const npy_ucs4 t = *s1;
-        *s1++ = *s2;
-        *s2++ = t;
-    }
-}
-
-
-NPY_INLINE static int
-UNICODE_LT(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
-{
-    size_t i;
-    int ret = 0;
-
-    for (i = 0; i < len; ++i) {
-        if (s1[i] != s2[i]) {
-            ret = s1[i] < s2[i];
-            break;
-        }
-    }
-    return ret;
-}
 
 
 /*
@@ -233,14 +49,17 @@ UNICODE_LT(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
  * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
  *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
  *         CFLOAT, CDOUBLE, CLONGDOUBLE#
- * #type = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
- *         longlong, ulonglong, ushort, float, double, longdouble,
+ * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong, half, float, double, longdouble,
  *         cfloat, cdouble, clongdouble#
+ * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
+ *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ *         npy_ushort, npy_float, npy_double, npy_longdouble, npy_cfloat,
+ *         npy_cdouble, npy_clongdouble#
  */
 
-
-static int
-@TYPE@_quicksort(@type@ *start, npy_intp num, void *NOT_USED)
+int
+quicksort_@suff@(@type@ *start, npy_intp num, void *NOT_USED)
 {
     @type@ *pl = start;
     @type@ *pr = start + num - 1;
@@ -301,8 +120,8 @@ static int
     return 0;
 }
 
-static int
-@TYPE@_aquicksort(@type@ *v, npy_intp* tosort, npy_intp num, void *NOT_USED)
+int
+aquicksort_@suff@(@type@ *v, npy_intp* tosort, npy_intp num, void *NOT_USED)
 {
     @type@ vp;
     npy_intp *pl, *pr;
@@ -367,8 +186,8 @@ static int
 }
 
 
-static int
-@TYPE@_heapsort(@type@ *start, npy_intp n, void *NOT_USED)
+int
+heapsort_@suff@(@type@ *start, npy_intp n, void *NOT_USED)
 {
     @type@ tmp, *a;
     npy_intp i,j,l;
@@ -417,8 +236,8 @@ static int
     return 0;
 }
 
-static int
-@TYPE@_aheapsort(@type@ *v, npy_intp *tosort, npy_intp n, void *NOT_USED)
+int
+aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, void *NOT_USED)
 {
     npy_intp *a, i,j,l, tmp;
     /* The arrays need to be offset by one for heapsort indexing */
@@ -466,22 +285,22 @@ static int
 }
 
 static void
-@TYPE@_mergesort0(@type@ *pl, @type@ *pr, @type@ *pw)
+mergesort0_@suff@(@type@ *pl, @type@ *pr, @type@ *pw)
 {
     @type@ vp, *pi, *pj, *pk, *pm;
 
     if (pr - pl > SMALL_MERGESORT) {
         /* merge sort */
         pm = pl + ((pr - pl) >> 1);
-        @TYPE@_mergesort0(pl, pm, pw);
-        @TYPE@_mergesort0(pm, pr, pw);
+        mergesort0_@suff@(pl, pm, pw);
+        mergesort0_@suff@(pm, pr, pw);
         for (pi = pw, pj = pl; pj < pm;) {
             *pi++ = *pj++;
         }
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
-            if (@TYPE@_LT(*pm,*pj)) {
+            if (@TYPE@_LT(*pm, *pj)) {
                 *pk = *pm++;
             }
             else {
@@ -507,8 +326,8 @@ static void
     }
 }
 
-static int
-@TYPE@_mergesort(@type@ *start, npy_intp num, void *NOT_USED)
+int
+mergesort_@suff@(@type@ *start, npy_intp num, void *NOT_USED)
 {
     @type@ *pl, *pr, *pw;
 
@@ -519,14 +338,14 @@ static int
         PyErr_NoMemory();
         return -1;
     }
-    @TYPE@_mergesort0(pl, pr, pw);
+    mergesort0_@suff@(pl, pr, pw);
 
     PyDataMem_FREE(pw);
     return 0;
 }
 
 static void
-@TYPE@_amergesort0(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw)
+amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw)
 {
     @type@ vp;
     npy_intp vi, *pi, *pj, *pk, *pm;
@@ -534,13 +353,13 @@ static void
     if (pr - pl > SMALL_MERGESORT) {
         /* merge sort */
         pm = pl + ((pr - pl + 1)>>1);
-        @TYPE@_amergesort0(pl,pm-1,v,pw);
-        @TYPE@_amergesort0(pm,pr,v,pw);
+        amergesort0_@suff@(pl, pm-1, v, pw);
+        amergesort0_@suff@(pm, pr, v, pw);
         for (pi = pw, pj = pl; pj < pm; ++pi, ++pj) {
             *pi = *pj;
         }
         for (pk = pw, pm = pl; pk < pi && pj <= pr; ++pm) {
-            if (@TYPE@_LT(v[*pj],v[*pk])) {
+            if (@TYPE@_LT(v[*pj], v[*pk])) {
                 *pm = *pj;
                 ++pj;
             }
@@ -566,8 +385,8 @@ static void
     }
 }
 
-static int
-@TYPE@_amergesort(@type@ *v, npy_intp *tosort, npy_intp num, void *NOT_USED)
+int
+amergesort_@suff@(@type@ *v, npy_intp *tosort, npy_intp num, void *NOT_USED)
 {
     npy_intp *pl, *pr, *pw;
 
@@ -579,7 +398,7 @@ static int
         return -1;
     }
 
-    @TYPE@_amergesort0(pl, pr, v, pw);
+    amergesort0_@suff@(pl, pr, v, pw);
     PyDimMem_FREE(pw);
 
     return 0;
@@ -598,19 +417,20 @@ static int
 /**begin repeat
  *
  * #TYPE = STRING, UNICODE#
- * #type = char, PyArray_UCS4#
+ * #suff = string, unicode#
+ * #type = npy_char, npy_ucs4#
  */
 
 static void
-@TYPE@_mergesort0(@type@ *pl, @type@ *pr, @type@ *pw, @type@ *vp, size_t len)
+mergesort0_@suff@(@type@ *pl, @type@ *pr, @type@ *pw, @type@ *vp, size_t len)
 {
     @type@ *pi, *pj, *pk, *pm;
 
     if ((size_t)(pr - pl) > SMALL_MERGESORT*len) {
         /* merge sort */
         pm = pl + (((pr - pl)/len) >> 1)*len;
-        @TYPE@_mergesort0(pl, pm, pw, vp, len);
-        @TYPE@_mergesort0(pm, pr, pw, vp, len);
+        mergesort0_@suff@(pl, pm, pw, vp, len);
+        mergesort0_@suff@(pm, pr, pw, vp, len);
         @TYPE@_COPY(pw, pl, pm - pl);
         pi = pw + (pm - pl);
         pj = pw;
@@ -644,8 +464,8 @@ static void
     }
 }
 
-static int
-@TYPE@_mergesort(@type@ *start, npy_intp num, PyArrayObject *arr)
+int
+mergesort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
 {
     const size_t elsize = arr->descr->elsize;
     const size_t len = elsize / sizeof(@type@);
@@ -666,7 +486,7 @@ static int
         err = -1;
         goto fail_1;
     }
-    @TYPE@_mergesort0(pl, pr, pw, vp, len);
+    mergesort0_@suff@(pl, pr, pw, vp, len);
 
     PyDataMem_FREE(vp);
 fail_1:
@@ -675,8 +495,8 @@ fail_0:
     return err;
 }
 
-static int
-@TYPE@_quicksort(@type@ *start, npy_intp num, PyArrayObject *arr)
+int
+quicksort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
 {
     const size_t len = arr->descr->elsize/sizeof(@type@);
     @type@ *vp = malloc(arr->descr->elsize);
@@ -742,8 +562,8 @@ static int
 }
 
 
-static int
-@TYPE@_heapsort(@type@ *start, npy_intp n, PyArrayObject *arr)
+int
+heapsort_@suff@(@type@ *start, npy_intp n, PyArrayObject *arr)
 {
     size_t len = arr->descr->elsize/sizeof(@type@);
     @type@ *tmp = malloc(arr->descr->elsize);
@@ -791,8 +611,8 @@ static int
 }
 
 
-static int
-@TYPE@_aheapsort(@type@ *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
+int
+aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
 {
     size_t len = arr->descr->elsize/sizeof(@type@);
     npy_intp *a, i,j,l, tmp;
@@ -840,8 +660,8 @@ static int
 }
 
 
-static int
-@TYPE@_aquicksort(@type@ *v, npy_intp* tosort, npy_intp num, PyArrayObject *arr)
+int
+aquicksort_@suff@(@type@ *v, npy_intp* tosort, npy_intp num, PyArrayObject *arr)
 {
     size_t len = arr->descr->elsize/sizeof(@type@);
     @type@ *vp;
@@ -908,7 +728,7 @@ static int
 
 
 static void
-@TYPE@_amergesort0(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw, int len)
+amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw, int len)
 {
     @type@ *vp;
     npy_intp vi, *pi, *pj, *pk, *pm;
@@ -916,8 +736,8 @@ static void
     if (pr - pl > SMALL_MERGESORT) {
         /* merge sort */
         pm = pl + ((pr - pl) >> 1);
-        @TYPE@_amergesort0(pl,pm,v,pw,len);
-        @TYPE@_amergesort0(pm,pr,v,pw,len);
+        amergesort0_@suff@(pl, pm, v, pw, len);
+        amergesort0_@suff@(pm, pr, v, pw, len);
         for (pi = pw, pj = pl; pj < pm;) {
             *pi++ = *pj++;
         }
@@ -950,8 +770,8 @@ static void
 }
 
 
-static int
-@TYPE@_amergesort(@type@ *v, npy_intp *tosort, npy_intp num, PyArrayObject *arr)
+int
+amergesort_@suff@(@type@ *v, npy_intp *tosort, npy_intp num, PyArrayObject *arr)
 {
     const size_t elsize = arr->descr->elsize;
     const size_t len = elsize / sizeof(@type@);
@@ -964,78 +784,9 @@ static int
         PyErr_NoMemory();
         return -1;
     }
-    @TYPE@_amergesort0(pl, pr, v, pw, len);
+    amergesort0_@suff@(pl, pr, v, pw, len);
 
     PyDimMem_FREE(pw);
     return 0;
 }
 /**end repeat**/
-
-static void
-add_sortfuncs(void)
-{
-    PyArray_Descr *descr;
-
-    /**begin repeat
-     *
-     * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
-     *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
-     *         CFLOAT, CDOUBLE, CLONGDOUBLE, STRING, UNICODE#
-     */
-    descr = PyArray_DescrFromType(PyArray_@TYPE@);
-    descr->f->sort[PyArray_QUICKSORT] =
-        (PyArray_SortFunc *)@TYPE@_quicksort;
-    descr->f->argsort[PyArray_QUICKSORT] =
-        (PyArray_ArgSortFunc *)@TYPE@_aquicksort;
-    descr->f->sort[PyArray_HEAPSORT] =
-        (PyArray_SortFunc *)@TYPE@_heapsort;
-    descr->f->argsort[PyArray_HEAPSORT] =
-        (PyArray_ArgSortFunc *)@TYPE@_aheapsort;
-    descr->f->sort[PyArray_MERGESORT] =
-        (PyArray_SortFunc *)@TYPE@_mergesort;
-    descr->f->argsort[PyArray_MERGESORT] =
-        (PyArray_ArgSortFunc *)@TYPE@_amergesort;
-    /**end repeat**/
-
-}
-
-static struct PyMethodDef methods[] = {
-    {NULL, NULL, 0, NULL}
-};
-
-
-#if defined(NPY_PY3K)
-static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT,
-        "_sort",
-        NULL,
-        -1,
-        methods,
-        NULL,
-        NULL,
-        NULL,
-        NULL
-};
-#endif
-
-/* Initialization function for the module */
-#if defined(NPY_PY3K)
-PyObject *PyInit__sort(void) {
-    PyObject *m;
-    m = PyModule_Create(&moduledef);
-    if (!m) {
-        return NULL;
-    }
-    import_array();
-    add_sortfuncs();
-    return m;
-}
-#else
-PyMODINIT_FUNC
-init_sort(void) {
-    Py_InitModule("_sort", methods);
-
-    import_array();
-    add_sortfuncs();
-}
-#endif

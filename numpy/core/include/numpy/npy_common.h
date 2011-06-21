@@ -1,7 +1,7 @@
 #ifndef _NPY_COMMON_H_
 #define _NPY_COMMON_H_
 
-/* This is auto-generated */
+/* numpconfig.h is auto-generated */
 #include "numpyconfig.h"
 
 #if defined(_MSC_VER)
@@ -23,10 +23,95 @@ enum {
         NPY_CPU_BIG
 };
 
-/* Some platforms don't define bool, long long, or long double.
-   Handle that here.
-*/
+/*
+ * This is to typedef npy_intp to the appropriate pointer size for
+ * this platform.  Py_intptr_t, Py_uintptr_t are defined in pyport.h.
+ */
+typedef Py_intptr_t npy_intp;
+typedef Py_uintptr_t npy_uintp;
+#define NPY_SIZEOF_INTP NPY_SIZEOF_PY_INTPTR_T
+#define NPY_SIZEOF_UINTP NPY_SIZEOF_PY_INTPTR_T
 
+#ifdef constchar
+#undef constchar
+#endif
+
+#if (PY_VERSION_HEX < 0x02050000)
+  #ifndef PY_SSIZE_T_MIN
+    typedef int Py_ssize_t;
+    #define PY_SSIZE_T_MAX INT_MAX
+    #define PY_SSIZE_T_MIN INT_MIN
+  #endif
+#define NPY_SSIZE_T_PYFMT "i"
+#undef PyIndex_Check
+#define constchar const char
+#define PyIndex_Check(op) 0
+#else
+#define NPY_SSIZE_T_PYFMT "n"
+#define constchar char
+#endif
+
+/* NPY_INTP_FMT Note:
+ *      Unlike the other NPY_*_FMT macros which are used with
+ *      PyOS_snprintf, NPY_INTP_FMT is used with PyErr_Format and
+ *      PyString_Format. These functions use different formatting
+ *      codes which are portably specified according to the Python
+ *      documentation. See ticket #1795.
+ *
+ *      On Windows x64, the LONGLONG formatter should be used, but
+ *      in Python 2.6 the %lld formatter is not supported. In this
+ *      case we work around the problem by using the %zd formatter.
+ */
+#if NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_INT
+        #define NPY_INTP NPY_INT
+        #define NPY_UINTP NPY_UINT
+        #define PyIntpArrType_Type PyIntArrType_Type
+        #define PyUIntpArrType_Type PyUIntArrType_Type
+        #define NPY_MAX_INTP NPY_MAX_INT
+        #define NPY_MIN_INTP NPY_MIN_INT
+        #define NPY_MAX_UINTP NPY_MAX_UINT
+        #define NPY_INTP_FMT "d"
+#elif NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONG
+        #define NPY_INTP NPY_LONG
+        #define NPY_UINTP NPY_ULONG
+        #define PyIntpArrType_Type PyLongArrType_Type
+        #define PyUIntpArrType_Type PyULongArrType_Type
+        #define NPY_MAX_INTP NPY_MAX_LONG
+        #define NPY_MIN_INTP MIN_LONG
+        #define NPY_MAX_UINTP NPY_MAX_ULONG
+        #define NPY_INTP_FMT "ld"
+#elif defined(PY_LONG_LONG) && (NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONGLONG)
+        #define NPY_INTP NPY_LONGLONG
+        #define NPY_UINTP NPY_ULONGLONG
+        #define PyIntpArrType_Type PyLongLongArrType_Type
+        #define PyUIntpArrType_Type PyULongLongArrType_Type
+        #define NPY_MAX_INTP NPY_MAX_LONGLONG
+        #define NPY_MIN_INTP NPY_MIN_LONGLONG
+        #define NPY_MAX_UINTP NPY_MAX_ULONGLONG
+    #if (PY_VERSION_HEX >= 0x02070000)
+        #define NPY_INTP_FMT "lld"
+    #else
+        #define NPY_INTP_FMT "zd"
+    #endif
+#endif
+
+/*
+ * We can only use C99 formats for npy_int_p if it is the same as
+ * intp_t, hence the condition on HAVE_UNITPTR_T
+ */
+#if (NPY_USE_C99_FORMATS) == 1 \
+        && (defined HAVE_UINTPTR_T) \
+        && (defined HAVE_INTTYPES_H)
+        #include <inttypes.h>
+        #undef NPY_INTP_FMT
+        #define NPY_INTP_FMT PRIdPTR
+#endif
+
+
+/*
+ * Some platforms don't define bool, long long, or long double.
+ * Handle that here.
+ */
 #define NPY_BYTE_FMT "hhd"
 #define NPY_UBYTE_FMT "hhu"
 #define NPY_SHORT_FMT "hd"
@@ -99,11 +184,12 @@ typedef unsigned int npy_uint;
 typedef unsigned long npy_ulong;
 
 /* These are for completeness */
-typedef float npy_float;
-typedef double npy_double;
+typedef char npy_char;
 typedef short npy_short;
 typedef int npy_int;
 typedef long npy_long;
+typedef float npy_float;
+typedef double npy_double;
 
 /*
  * Disabling C99 complex usage: a lot of C code in numpy/scipy rely on being
