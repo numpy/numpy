@@ -142,6 +142,11 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
     int flex_type_num;
 
     if (*flex_dtype == NULL) {
+        if (!PyErr_Occurred()) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "NumPy AdaptFlexibleDType was called with NULL flex_dtype "
+                    "but no error set");
+        }
         return;
     }
 
@@ -162,40 +167,44 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
         else {
             npy_intp size = 8;
 
-            /* Get a string-size estimate of the input */
+            /*
+             * Get a string-size estimate of the input. These
+             * are generallly the size needed, rounded up to
+             * a multiple of eight.
+             */
             switch (data_dtype->type_num) {
                 case NPY_BOOL:
-                    size = 5;
+                    size = 8;
                     break;
                 case NPY_UBYTE:
-                    size = 3;
+                    size = 8;
                     break;
                 case NPY_BYTE:
-                    size = 4;
+                    size = 8;
                     break;
                 case NPY_USHORT:
-                    size = 5;
+                    size = 8;
                     break;
                 case NPY_SHORT:
-                    size = 6;
+                    size = 8;
                     break;
                 case NPY_UINT:
-                    size = 10;
+                    size = 16;
                     break;
                 case NPY_INT:
-                    size = 6;
+                    size = 16;
                     break;
                 case NPY_ULONG:
-                    size = 20;
+                    size = 24;
                     break;
                 case NPY_LONG:
-                    size = 21;
+                    size = 24;
                     break;
                 case NPY_ULONGLONG:
-                    size = 20;
+                    size = 24;
                     break;
                 case NPY_LONGLONG:
-                    size = 21;
+                    size = 24;
                     break;
                 case NPY_HALF:
                 case NPY_FLOAT:

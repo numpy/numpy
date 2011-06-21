@@ -77,7 +77,11 @@ parse_iso_8601_datetime(char *str, int len,
     out->month = 1;
     out->day = 1;
     
-    /* The empty string and case-variants of "NaT" parse to not-a-time */
+    /*
+     * Convert the empty string and case-variants of "NaT" to not-a-time.
+     * Tried to use PyOS_stricmp, but that function appears to be broken,
+     * not even matching the strcmp function signature as it should.
+     */
     if (len <= 0 || (len == 3 &&
                         tolower(str[0]) == 'n' &&
                         tolower(str[1]) == 'a' &&
@@ -109,9 +113,11 @@ parse_iso_8601_datetime(char *str, int len,
     }
 
     /*
-     * The string "today" resolves to midnight of today's local date in UTC.
-     * This is perhaps a little weird, but done so that further truncation
-     * to a 'datetime64[D]' type produces the date you expect, rather than
+     * The string "today" means take today's date in local time, and
+     * convert it to a date representation. This date representation, if
+     * forced into a time unit, will be at midnight UTC.
+     * This is perhaps a little weird, but done so that the
+     * 'datetime64[D]' type produces the date you expect, rather than
      * switching to an adjacent day depending on the current time and your
      * timezone.
      */
@@ -126,15 +132,15 @@ parse_iso_8601_datetime(char *str, int len,
         time(&rawtime);
 #if defined(_WIN32)
         if (localtime_s(&tm_, &rawtime) != 0) {
-            PyErr_SetString(PyExc_OSError, "Failed to use localtime_s to "
-                                        "get local time");
+            PyErr_SetString(PyExc_OSError, "Failed to obtain local time "
+                                        "from localtime_s");
             return -1;
         }
 #else
         /* Other platforms may require something else */
         if (localtime_r(&rawtime, &tm_) == NULL) {
-            PyErr_SetString(PyExc_OSError, "Failed to use localtime_r to "
-                                        "get local time");
+            PyErr_SetString(PyExc_OSError, "Failed obtain local time "
+                                        "from localtime_r");
             return -1;
         }
 #endif
@@ -784,6 +790,9 @@ lossless_unit_from_datetimestruct(npy_datetimestruct *dts)
  * NULL-terminated string. If the string fits in the space exactly,
  * it leaves out the NULL terminator and returns success.
  *
+ * The differences from ISO 8601 are the 'NaT' string, and
+ * the number of year digits is >= 4 instead of strictly 4.
+ *
  * If 'local' is non-zero, it produces a string in local time with
  * a +-#### timezone offset, otherwise it uses timezone Z (UTC).
  *
@@ -829,7 +838,7 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
     }
 
     /* Only do local time within a reasonable year range */
-    if ((dts->year <= 1900 || dts->year >= 10000) && tzoffset == -1) {
+    if ((dts->year <= 1800 || dts->year >= 10000) && tzoffset == -1) {
         local = 0;
     }
 
@@ -923,7 +932,7 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
     /*
      * Now the datetimestruct data is in the final form for
      * the string representation, so ensure that the data
-     * isn't being cast according to the casting rule.
+     * is being cast according to the casting rule.
      */
     if (casting != NPY_UNSAFE_CASTING) {
         /* Producing a date as a local time is always 'unsafe' */
@@ -952,6 +961,11 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
     }
 
     /* YEAR */
+    /*
+     * Can't use PyOS_snprintf, because it always produces a '\0'
+     * character at the end, and NumPy string types are permitted
+     * to have data all the way to the end of the buffer.
+     */
 #ifdef _WIN32
     tmplen = _snprintf(substr, sublen, "%04" NPY_INT64_FMT, dts->year);
 #else
