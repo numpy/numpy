@@ -43,7 +43,8 @@
 
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
-static int object_ufunc_type_resolution(PyUFuncObject *ufunc,
+static int
+object_ufunc_type_resolution(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,

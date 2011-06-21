@@ -11,6 +11,7 @@
 #include "scalarapi.c"
 
 #include "datetime.c"
+#include "datetime_strings.c"
 #include "datetime_busday.c"
 #include "datetime_busdaycal.c"
 #include "arraytypes.c"

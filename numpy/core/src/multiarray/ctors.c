@@ -15,11 +15,13 @@
 
 #include "common.h"
 #include "ctors.h"
+#include "convert_datatype.h"
 #include "shape.h"
 #include "buffer.h"
 #include "numpymemoryview.h"
 #include "lowlevel_strided_loops.h"
 #include "_datetime.h"
+#include "datetime_strings.h"
 
 /*
  * Reading from a file or a string.
@@ -1687,72 +1689,14 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                         0, &dtype,
                         &ndim, dims, &arr, context) < 0) {
         Py_XDECREF(newtype);
-        ret = NULL;
         return NULL;
     }
 
-    /* If the requested dtype is flexible, adjust its size */
-    if (newtype != NULL && newtype->elsize == 0) {
-        PyArray_DESCR_REPLACE(newtype);
-        if (newtype == NULL) {
-            ret = NULL;
-            return NULL;
-        }
-        if (arr != NULL) {
-            dtype = PyArray_DESCR(arr);
-        }
-
-        if (newtype->type_num == dtype->type_num) {
-            newtype->elsize = dtype->elsize;
-        }
-        else {
-            switch(newtype->type_num) {
-                case NPY_STRING:
-                    if (dtype->type_num == NPY_UNICODE) {
-                        newtype->elsize = dtype->elsize >> 2;
-                    }
-                    else {
-                        newtype->elsize = dtype->elsize;
-                    }
-                    break;
-                case NPY_UNICODE:
-                    newtype->elsize = dtype->elsize << 2;
-                    break;
-                case NPY_VOID:
-                    newtype->elsize = dtype->elsize;
-                    break;
-            }
-        }
-    }
-    /*
-     * Treat datetime generic units with the same idea as flexible strings.
-     *
-     * Flexible strings, for example the dtype 'str', use size zero as a
-     * signal indicating that they represent a "generic string type" instead
-     * of a string type with the size already baked in. The generic unit
-     * plays the same role, indicating that it's a "generic datetime type",
-     * and the actual unit should be filled in when needed just like the
-     * actual string size should be filled in when needed.
-     */
-    else if (newtype != NULL && newtype->type_num == NPY_DATETIME) {
-        PyArray_DatetimeMetaData *meta =
-                    get_datetime_metadata_from_dtype(newtype);
-        if (meta == NULL) {
-            Py_DECREF(newtype);
-            return NULL;
-        }
-
-        if (meta->base == NPY_FR_GENERIC) {
-            /* Detect the unit from the input's data */
-            PyArray_Descr *dtype = find_object_datetime_type(op,
-                                                    newtype->type_num);
-            if (dtype == NULL) {
-                Py_DECREF(newtype);
-                return NULL;
-            }
-            Py_DECREF(newtype);
-            newtype = dtype;
-        }
+    /* If the requested dtype is flexible, adapt it */
+    if (newtype != NULL) {
+        PyArray_AdaptFlexibleDType(op,
+                    (dtype == NULL) ? PyArray_DESCR(arr) : dtype,
+                    &newtype);
     }
 
     /* If we got dimensions and dtype instead of an array */

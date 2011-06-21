@@ -60,8 +60,9 @@ PyArray_CopyStridedTransferData(void *transferdata);
  *
  */
 NPY_NO_EXPORT PyArray_StridedTransferFn *
-PyArray_GetStridedCopyFn(npy_intp aligned, npy_intp src_stride,
-                         npy_intp dst_stride, npy_intp itemsize);
+PyArray_GetStridedCopyFn(int aligned,
+                        npy_intp src_stride, npy_intp dst_stride,
+                        npy_intp itemsize);
 
 /*
  * Gives back a function pointer to a specialized function for copying
@@ -74,8 +75,9 @@ PyArray_GetStridedCopyFn(npy_intp aligned, npy_intp src_stride,
  * Parameters are as for PyArray_GetStridedCopyFn.
  */
 NPY_NO_EXPORT PyArray_StridedTransferFn *
-PyArray_GetStridedCopySwapFn(npy_intp aligned, npy_intp src_stride,
-                             npy_intp dst_stride, npy_intp itemsize);
+PyArray_GetStridedCopySwapFn(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            npy_intp itemsize);
 
 /*
  * Gives back a function pointer to a specialized function for copying
@@ -88,8 +90,9 @@ PyArray_GetStridedCopySwapFn(npy_intp aligned, npy_intp src_stride,
  * Parameters are as for PyArray_GetStridedCopyFn.
  */
 NPY_NO_EXPORT PyArray_StridedTransferFn *
-PyArray_GetStridedCopySwapPairFn(npy_intp aligned, npy_intp src_stride,
-                             npy_intp dst_stride, npy_intp itemsize);
+PyArray_GetStridedCopySwapPairFn(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            npy_intp itemsize);
 
 /*
  * Gives back a transfer function and transfer data pair which copies
@@ -115,9 +118,22 @@ PyArray_GetStridedZeroPadCopyFn(int aligned,
  * without setting a Python exception.
  */
 NPY_NO_EXPORT PyArray_StridedTransferFn *
-PyArray_GetStridedNumericCastFn(npy_intp aligned, npy_intp src_stride,
-                             npy_intp dst_stride,
-                             int src_type_num, int dst_type_num);
+PyArray_GetStridedNumericCastFn(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            int src_type_num, int dst_type_num);
+
+/*
+ * Gets an operation which copies elements of the given dtype,
+ * swapping if the dtype isn't in NBO.
+ *
+ * Returns NPY_SUCCEED or NPY_FAIL
+ */
+NPY_NO_EXPORT int
+PyArray_GetDTypeCopySwapFn(int aligned,
+                            npy_intp src_stride, npy_intp dst_stride,
+                            PyArray_Descr *dtype,
+                            PyArray_StridedTransferFn **outstransfer,
+                            void **outtransferdata);
 
 /*
  * If it's possible, gives back a transfer function which casts and/or

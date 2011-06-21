@@ -17,6 +17,7 @@
 
 #include "convert_datatype.h"
 #include "_datetime.h"
+#include "datetime_strings.h"
 
 /*NUMPY_API
  * For backward compatibility
@@ -31,30 +32,11 @@ NPY_NO_EXPORT PyObject *
 PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int fortran)
 {
     PyObject *out;
-    PyArray_Descr *arr_dtype;
 
-    arr_dtype = PyArray_DESCR(arr);
-
-    if (dtype->elsize == 0) {
-        PyArray_DESCR_REPLACE(dtype);
-        if (dtype == NULL) {
-            return NULL;
-        }
-
-        if (arr_dtype->type_num == dtype->type_num) {
-            dtype->elsize = arr_dtype->elsize;
-        }
-        else if (arr_dtype->type_num == NPY_STRING &&
-                                dtype->type_num == NPY_UNICODE) {
-            dtype->elsize = arr_dtype->elsize * 4;
-        }
-        else if (arr_dtype->type_num == NPY_UNICODE &&
-                                dtype->type_num == NPY_STRING) {
-            dtype->elsize = arr_dtype->elsize / 4;
-        }
-        else if (dtype->type_num == NPY_VOID) {
-            dtype->elsize = arr_dtype->elsize;
-        }
+    /* If the requested dtype is flexible, adapt it */
+    PyArray_AdaptFlexibleDType((PyObject *)arr, PyArray_DESCR(arr), &dtype);
+    if (dtype == NULL) {
+        return NULL;
     }
 
     out = PyArray_NewFromDescr(Py_TYPE(arr), dtype,
@@ -137,6 +119,161 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
 }
 
 /*
+ * This function calls Py_DECREF on flex_dtype, and replaces it with
+ * a new dtype that has been adapted based on the values in data_dtype
+ * and data_obj. If the flex_dtype is not flexible, it leaves it as is.
+ *
+ * Usually, if data_obj is not an array, dtype should be the result
+ * given by the PyArray_GetArrayParamsFromObject function.
+ *
+ * The data_obj may be NULL if just a dtype is is known for the source.
+ *
+ * If *flex_dtype is NULL, returns immediately, without setting an
+ * exception. This basically assumes an error was already set previously.
+ *
+ * The current flexible dtypes include NPY_STRING, NPY_UNICODE, NPY_VOID,
+ * and NPY_DATETIME with generic units.
+ */
+NPY_NO_EXPORT void
+PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
+                            PyArray_Descr **flex_dtype)
+{
+    PyArray_DatetimeMetaData *meta;
+    int flex_type_num;
+
+    if (*flex_dtype == NULL) {
+        return;
+    }
+
+    flex_type_num = (*flex_dtype)->type_num;
+
+    /* Flexible types with expandable size */
+    if ((*flex_dtype)->elsize == 0) {
+        /* First replace the flex dtype */
+        PyArray_DESCR_REPLACE(*flex_dtype);
+        if (*flex_dtype == NULL) {
+            return;
+        }
+
+        if (data_dtype->type_num == flex_type_num ||
+                                    flex_type_num == NPY_VOID) {
+            (*flex_dtype)->elsize = data_dtype->elsize;
+        }
+        else {
+            npy_intp size = 8;
+
+            /* Get a string-size estimate of the input */
+            switch (data_dtype->type_num) {
+                case NPY_BOOL:
+                    size = 5;
+                    break;
+                case NPY_UBYTE:
+                    size = 3;
+                    break;
+                case NPY_BYTE:
+                    size = 4;
+                    break;
+                case NPY_USHORT:
+                    size = 5;
+                    break;
+                case NPY_SHORT:
+                    size = 6;
+                    break;
+                case NPY_UINT:
+                    size = 10;
+                    break;
+                case NPY_INT:
+                    size = 6;
+                    break;
+                case NPY_ULONG:
+                    size = 20;
+                    break;
+                case NPY_LONG:
+                    size = 21;
+                    break;
+                case NPY_ULONGLONG:
+                    size = 20;
+                    break;
+                case NPY_LONGLONG:
+                    size = 21;
+                    break;
+                case NPY_HALF:
+                case NPY_FLOAT:
+                case NPY_DOUBLE:
+                case NPY_LONGDOUBLE:
+                    size = 32;
+                    break;
+                case NPY_CFLOAT:
+                case NPY_CDOUBLE:
+                case NPY_CLONGDOUBLE:
+                    size = 64;
+                    break;
+                case NPY_OBJECT:
+                    size = 64;
+                    break;
+                case NPY_STRING:
+                case NPY_VOID:
+                    size = data_dtype->elsize;
+                    break;
+                case NPY_UNICODE:
+                    size = data_dtype->elsize / 4;
+                    break;
+                case NPY_DATETIME:
+                    meta = get_datetime_metadata_from_dtype(data_dtype);
+                    if (meta == NULL) {
+                        Py_DECREF(*flex_dtype);
+                        *flex_dtype = NULL;
+                        return;
+                    }
+                    size = get_datetime_iso_8601_strlen(0, meta->base);
+                    break;
+                case NPY_TIMEDELTA:
+                    size = 21;
+                    break;
+            }
+
+            if (flex_type_num == NPY_STRING) {
+                (*flex_dtype)->elsize = size;
+            }
+            else if (flex_type_num == NPY_UNICODE) {
+                (*flex_dtype)->elsize = size * 4;
+            }
+        }
+    }
+    /* Flexible type with generic time unit that adapts */
+    else if (flex_type_num == NPY_DATETIME ||
+                flex_type_num == NPY_TIMEDELTA) {
+        meta = get_datetime_metadata_from_dtype(*flex_dtype);
+        if (meta == NULL) {
+            Py_DECREF(*flex_dtype);
+            *flex_dtype = NULL;
+            return;
+        }
+
+        if (meta->base == NPY_FR_GENERIC) {
+            if (data_dtype->type_num == NPY_DATETIME ||
+                    data_dtype->type_num == NPY_TIMEDELTA) {
+                meta = get_datetime_metadata_from_dtype(data_dtype);
+                if (meta == NULL) {
+                    Py_DECREF(*flex_dtype);
+                    *flex_dtype = NULL;
+                    return;
+                }
+
+                Py_DECREF(*flex_dtype);
+                *flex_dtype = create_datetime_dtype(flex_type_num, meta);
+            }
+            else if (data_obj != NULL) {
+                /* Detect the unit from the input's data */
+                Py_DECREF(*flex_dtype);
+                *flex_dtype = find_object_datetime_type(data_obj,
+                                                    flex_type_num);
+            }
+        }
+    }
+}
+
+/*
  * Must be broadcastable.
  * This code is very similar to PyArray_CopyInto/PyArray_MoveInto
  * except casting is done --- PyArray_BUFSIZE is used
@@ -184,21 +321,21 @@ PyArray_CanCastSafely(int fromtype, int totype)
     }
     /* Special-cases for some types */
     switch (fromtype) {
-        case PyArray_DATETIME:
-        case PyArray_TIMEDELTA:
-        case PyArray_OBJECT:
-        case PyArray_VOID:
+        case NPY_DATETIME:
+        case NPY_TIMEDELTA:
+        case NPY_OBJECT:
+        case NPY_VOID:
             return 0;
-        case PyArray_BOOL:
+        case NPY_BOOL:
             return 1;
     }
     switch (totype) {
-        case PyArray_BOOL:
-        case PyArray_DATETIME:
-        case PyArray_TIMEDELTA:
+        case NPY_BOOL:
+        case NPY_DATETIME:
+        case NPY_TIMEDELTA:
             return 0;
-        case PyArray_OBJECT:
-        case PyArray_VOID:
+        case NPY_OBJECT:
+        case NPY_VOID:
             return 1;
     }
 
@@ -210,7 +347,7 @@ PyArray_CanCastSafely(int fromtype, int totype)
     if (from->f->cancastto) {
         int *curtype = from->f->cancastto;
 
-        while (*curtype != PyArray_NOTYPE) {
+        while (*curtype != NPY_NOTYPE) {
             if (*curtype++ == totype) {
                 return 1;
             }
@@ -228,23 +365,23 @@ PyArray_CanCastSafely(int fromtype, int totype)
 NPY_NO_EXPORT npy_bool
 PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
 {
-    int fromtype=from->type_num;
-    int totype=to->type_num;
+    int from_type_num = from->type_num;
+    int to_type_num = to->type_num;
     npy_bool ret;
 
-    ret = (npy_bool) PyArray_CanCastSafely(fromtype, totype);
+    ret = (npy_bool) PyArray_CanCastSafely(from_type_num, to_type_num);
     if (ret) {
         /* Check String and Unicode more closely */
-        if (fromtype == NPY_STRING) {
-            if (totype == NPY_STRING) {
+        if (from_type_num == NPY_STRING) {
+            if (to_type_num == NPY_STRING) {
                 ret = (from->elsize <= to->elsize);
             }
-            else if (totype == NPY_UNICODE) {
+            else if (to_type_num == NPY_UNICODE) {
                 ret = (from->elsize << 2 <= to->elsize);
             }
         }
-        else if (fromtype == NPY_UNICODE) {
-            if (totype == NPY_UNICODE) {
+        else if (from_type_num == NPY_UNICODE) {
+            if (to_type_num == NPY_UNICODE) {
                 ret = (from->elsize <= to->elsize);
             }
         }
@@ -252,14 +389,41 @@ PyArray_CanCastTo(PyArray_Descr *from, PyArray_Descr *to)
          * For datetime/timedelta, only treat casts moving towards
          * more precision as safe.
          */
-        else if (fromtype == NPY_DATETIME && totype == NPY_DATETIME) {
-            return datetime_metadata_divides(from, to, 0);
+        else if (from_type_num == NPY_DATETIME && to_type_num == NPY_DATETIME) {
+            PyArray_DatetimeMetaData *meta1, *meta2;
+            meta1 = get_datetime_metadata_from_dtype(from);
+            if (meta1 == NULL) {
+                PyErr_Clear();
+                return 0;
+            }
+            meta2 = get_datetime_metadata_from_dtype(to);
+            if (meta2 == NULL) {
+                PyErr_Clear();
+                return 0;
+            }
+
+            return can_cast_datetime64_metadata(meta1, meta2,
+                                                NPY_SAFE_CASTING);
         }
-        else if (fromtype == NPY_TIMEDELTA && totype == NPY_TIMEDELTA) {
-            return datetime_metadata_divides(from, to, 1);
+        else if (from_type_num == NPY_TIMEDELTA &&
+                                    to_type_num == NPY_TIMEDELTA) {
+            PyArray_DatetimeMetaData *meta1, *meta2;
+            meta1 = get_datetime_metadata_from_dtype(from);
+            if (meta1 == NULL) {
+                PyErr_Clear();
+                return 0;
+            }
+            meta2 = get_datetime_metadata_from_dtype(to);
+            if (meta2 == NULL) {
+                PyErr_Clear();
+                return 0;
+            }
+
+            return can_cast_timedelta64_metadata(meta1, meta2,
+                                                 NPY_SAFE_CASTING);
         }
         /*
-         * TODO: If totype is STRING or unicode
+         * TODO: If to_type_num is STRING or unicode
          * see if the length is long enough to hold the
          * stringified value of the object.
          */
@@ -374,22 +538,50 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
         }
 
         switch (from->type_num) {
-            case NPY_DATETIME:
-            case NPY_TIMEDELTA:
-                switch (casting) {
-                    case NPY_NO_CASTING:
-                        return PyArray_ISNBO(from->byteorder) ==
-                                            PyArray_ISNBO(to->byteorder) &&
-                                has_equivalent_datetime_metadata(from, to);
-                    case NPY_EQUIV_CASTING:
-                        return has_equivalent_datetime_metadata(from, to);
-                    case NPY_SAFE_CASTING:
-                        return datetime_metadata_divides(from, to,
-                                            from->type_num == NPY_TIMEDELTA);
-                    default:
-                        return 1;
+            case NPY_DATETIME: {
+                PyArray_DatetimeMetaData *meta1, *meta2;
+                meta1 = get_datetime_metadata_from_dtype(from);
+                if (meta1 == NULL) {
+                    PyErr_Clear();
+                    return 0;
                 }
-                break;
+                meta2 = get_datetime_metadata_from_dtype(to);
+                if (meta2 == NULL) {
+                    PyErr_Clear();
+                    return 0;
+                }
+
+                if (casting == NPY_NO_CASTING) {
+                    return PyArray_ISNBO(from->byteorder) ==
+                                        PyArray_ISNBO(to->byteorder) &&
+                            can_cast_datetime64_metadata(meta1, meta2, casting);
+                }
+                else {
+                    return can_cast_datetime64_metadata(meta1, meta2, casting);
+                }
+            }
+            case NPY_TIMEDELTA: {
+                PyArray_DatetimeMetaData *meta1, *meta2;
+                meta1 = get_datetime_metadata_from_dtype(from);
+                if (meta1 == NULL) {
+                    PyErr_Clear();
+                    return 0;
+                }
+                meta2 = get_datetime_metadata_from_dtype(to);
+                if (meta2 == NULL) {
+                    PyErr_Clear();
+                    return 0;
+                }
+
+                if (casting == NPY_NO_CASTING) {
+                    return PyArray_ISNBO(from->byteorder) ==
+                                        PyArray_ISNBO(to->byteorder) &&
+                        can_cast_timedelta64_metadata(meta1, meta2, casting);
+                }
+                else {
+                    return can_cast_timedelta64_metadata(meta1, meta2, casting);
+                }
+            }
             default:
                 switch (casting) {
                     case NPY_NO_CASTING:

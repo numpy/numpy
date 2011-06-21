@@ -817,7 +817,8 @@ DATETIME_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     }
 
     /* Convert the object into a NumPy datetime */
-    if (convert_pyobject_to_datetime(meta, op, &temp) < 0) {
+    if (convert_pyobject_to_datetime(meta, op,
+                            NPY_SAME_KIND_CASTING, &temp) < 0) {
         return -1;
     }
 
@@ -845,7 +846,8 @@ TIMEDELTA_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     }
 
     /* Convert the object into a NumPy datetime */
-    if (convert_pyobject_to_timedelta(meta, op, &temp) < 0) {
+    if (convert_pyobject_to_timedelta(meta, op,
+                            NPY_SAME_KIND_CASTING, &temp) < 0) {
         return -1;
     }
 
@@ -3436,7 +3438,6 @@ _init_datetime_descr(PyArray_Descr *descr)
     dt_data = PyArray_malloc(sizeof(PyArray_DatetimeMetaData));
     dt_data->base = NPY_DATETIME_DEFAULTUNIT;
     dt_data->num = 1;
-    dt_data->events = 1;
 
 /* FIXME
  * There is no error check here and no way to indicate an error
