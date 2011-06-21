@@ -34,6 +34,8 @@
 #define CFLOAT_SWAP(a,b) {npy_cfloat tmp = (b); (b)=(a); (a) = tmp;}
 #define CDOUBLE_SWAP(a,b) {npy_cdouble tmp = (b); (b)=(a); (a) = tmp;}
 #define CLONGDOUBLE_SWAP(a,b) {npy_clongdouble tmp = (b); (b)=(a); (a) = tmp;}
+
+/* Need this for the argsort functions */
 #define INTP_SWAP(a,b) {npy_intp tmp = (b); (b)=(a); (a) = tmp;}
 
 /*
