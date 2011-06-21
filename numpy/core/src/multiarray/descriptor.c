@@ -1336,7 +1336,7 @@ static PyMemberDef arraydescr_members[] = {
 static PyObject *
 arraydescr_subdescr_get(PyArray_Descr *self)
 {
-    if (self->subarray == NULL) {
+    if (!PyDataType_HASSUBARRAY(self)) {
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -1432,7 +1432,7 @@ arraydescr_typename_get(PyArray_Descr *self)
 static PyObject *
 arraydescr_base_get(PyArray_Descr *self)
 {
-    if (self->subarray == NULL) {
+    if (!PyDataType_HASSUBARRAY(self)) {
         Py_INCREF(self);
         return (PyObject *)self;
     }
@@ -1443,7 +1443,7 @@ arraydescr_base_get(PyArray_Descr *self)
 static PyObject *
 arraydescr_shape_get(PyArray_Descr *self)
 {
-    if (self->subarray == NULL) {
+    if (!PyDataType_HASSUBARRAY(self)) {
         return PyTuple_New(0);
     }
     /*TODO
@@ -2214,7 +2214,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         }
 
         self->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
-        if (self->subarray == NULL) {
+        if (!PyDataType_HASSUBARRAY(self)) {
             return PyErr_NoMemory();
         }
         self->subarray->base = (PyArray_Descr *)PyTuple_GET_ITEM(subarray, 0);
@@ -2438,7 +2438,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
         Py_DECREF(new->fields);
         new->fields = newfields;
     }
-    if (new->subarray) {
+    if (PyDataType_HASSUBARRAY(new)) {
         Py_DECREF(new->subarray->base);
         new->subarray->base = PyArray_DescrNewByteorder(
                 self->subarray->base, newendian);
@@ -2590,14 +2590,30 @@ arraydescr_struct_list_str(PyArray_Descr *dtype)
             return 0;
         }
         PyUString_ConcatAndDel(&ret, PyUString_FromString("("));
-        PyUString_ConcatAndDel(&ret, PyObject_Repr(key));
-        PyUString_ConcatAndDel(&ret, PyUString_FromString(","));
-        tmp = arraydescr_short_construction_repr(fld_dtype);
-        PyUString_ConcatAndDel(&ret, tmp);
         /* Check for whether to do titles as well */
         if (title != NULL && title != Py_None) {
-            PyUString_ConcatAndDel(&ret, PyUString_FromString(","));
+            PyUString_ConcatAndDel(&ret, PyUString_FromString("("));
             PyUString_ConcatAndDel(&ret, PyObject_Repr(title));
+            PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
+            PyUString_ConcatAndDel(&ret, PyObject_Repr(key));
+            PyUString_ConcatAndDel(&ret, PyUString_FromString("), "));
+        }
+        else {
+            PyUString_ConcatAndDel(&ret, PyObject_Repr(key));
+            PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
+        }
+        /* Special case subarray handling here */
+        if (PyDataType_HASSUBARRAY(fld_dtype)) {
+            tmp = arraydescr_short_construction_repr(
+                            fld_dtype->subarray->base);
+            PyUString_ConcatAndDel(&ret, tmp);
+            PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
+            PyUString_ConcatAndDel(&ret,
+                            PyObject_Str(fld_dtype->subarray->shape));
+        }
+        else {
+            tmp = arraydescr_short_construction_repr(fld_dtype);
+            PyUString_ConcatAndDel(&ret, tmp);
         }
         PyUString_ConcatAndDel(&ret, PyUString_FromString(")"));
         if (i != names_size - 1) {
@@ -2724,7 +2740,7 @@ arraydescr_subarray_str(PyArray_Descr *dtype)
     ret = PyUString_FromString("(");
     p = arraydescr_short_construction_repr(dtype->subarray->base);
     PyUString_ConcatAndDel(&ret, p);
-    PyUString_ConcatAndDel(&ret, PyUString_FromString(","));
+    PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
     PyUString_ConcatAndDel(&ret, PyObject_Str(dtype->subarray->shape));
     PyUString_ConcatAndDel(&ret, PyUString_FromString(")"));
 

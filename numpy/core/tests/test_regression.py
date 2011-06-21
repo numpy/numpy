@@ -864,6 +864,23 @@ class TestRegression(TestCase):
                      "('bottom', [('bleft', ('>f4', (8, 64)), (1,)), "
                      "('bright', '>f4', (8, 36))])]")
 
+        dt = np.dtype({'names': ['r','g','b'], 'formats': ['u1', 'u1', 'u1'],
+                        'offsets': [0, 1, 2],
+                        'titles': ['Red pixel', 'Green pixel', 'Blue pixel']})
+        assert_equal(str(dt),
+                    "[(('Red pixel', 'r'), 'u1'), "
+                    "(('Green pixel', 'g'), 'u1'), "
+                    "(('Blue pixel', 'b'), 'u1')]")
+
+        dt = np.dtype({'names': ['r','b'], 'formats': ['u1', 'u1'],
+                        'offsets': [0, 2],
+                        'titles': ['Red pixel', 'Blue pixel']})
+        assert_equal(str(dt),
+                    "{'names':['r','b'], "
+                    "'formats':['u1','u1'], "
+                    "'offsets':[0,2], "
+                    "'titles':['Red pixel','Blue pixel']}")
+
     def test_nonnative_endian_fill(self, level=rlevel):
         """ Non-native endian arrays were incorrectly filled with scalars before
         r5034.
