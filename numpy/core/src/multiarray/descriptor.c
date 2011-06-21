@@ -17,9 +17,6 @@
 #include "common.h"
 #include "descriptor.h"
 
-#define _chk_byteorder(arg) (arg == '>' || arg == '<' ||        \
-                             arg == '|' || arg == '=')
-
 static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
 static PyArray_Descr *
@@ -103,6 +100,9 @@ array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args)
     return Py_None;
 }
 
+#define _chk_byteorder(arg) (arg == '>' || arg == '<' ||        \
+                             arg == '|' || arg == '=')
+
 static int
 _check_for_commastring(char *type, Py_ssize_t len)
 {
@@ -136,6 +136,8 @@ _check_for_commastring(char *type, Py_ssize_t len)
     return 0;
 }
 
+#undef _chk_byteorder
+
 static int
 is_datetime_typestr(char *type, Py_ssize_t len)
 {
@@ -159,10 +161,6 @@ is_datetime_typestr(char *type, Py_ssize_t len)
     }
     return 0;
 }
-
-
-
-#undef _chk_byteorder
 
 static PyArray_Descr *
 _convert_from_tuple(PyObject *obj)
@@ -1750,22 +1748,27 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
 {
     PyObject *odescr, *ometadata=NULL;
     PyArray_Descr *descr, *conv;
-    Bool align = FALSE;
-    Bool copy = FALSE;
-    Bool copied = FALSE;
-    static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
+    npy_bool align = FALSE;
+    npy_bool copy = FALSE;
+    npy_bool copied = FALSE;
+    int itemsize = -1;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO&O&O!", kwlist,
+    static char *kwlist[] = {"dtype", "align", "copy", "metadata",
+                            "itemsize", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO&O&O!i", kwlist,
                 &odescr,
                 PyArray_BoolConverter, &align,
                 PyArray_BoolConverter, &copy,
-                &PyDict_Type, &ometadata)) {
+                &PyDict_Type, &ometadata,
+                &itemsize)) {
         return NULL;
     }
 
     if ((ometadata != NULL) && (_invalid_metadata_check(ometadata))) {
         return NULL;
     }
+
     if (align) {
         if (!PyArray_DescrAlignConverter(odescr, &conv)) {
             return NULL;
@@ -1774,6 +1777,7 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
     else if (!PyArray_DescrConverter(odescr, &conv)) {
         return NULL;
     }
+
     /* Get a new copy of it unless it's already a copy */
     if (copy && conv->fields == Py_None) {
         descr = PyArray_DescrNew(conv);
@@ -1788,6 +1792,7 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
          * underlying dictionary
          */
         if (!copied) {
+            copied = TRUE;
             descr = PyArray_DescrNew(conv);
             Py_DECREF(conv);
             conv = descr;
@@ -1815,6 +1820,47 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
         else {
             /* Make a copy of the input dictionary */
             conv->metadata = PyDict_Copy(ometadata);
+        }
+    }
+
+    /* Override the itemsize if provided */
+    if (itemsize >= 0) {
+        /* Only can override the item size of structured arrays */
+        if (!PyDataType_HASFIELDS(conv)) {
+            PyErr_Format(PyExc_ValueError,
+                    "The itemsize parameter may only be used when "
+                    "constructing a data type with fields");
+            Py_DECREF(conv);
+            return NULL;
+        }
+        /* Make sure the itemsize isn't made too small */
+        if (itemsize < conv->elsize) {
+            PyErr_Format(PyExc_ValueError,
+                    "NumPy dtype descriptor requires %d bytes, "
+                    "cannot override to smaller itemsize of %d",
+                    (int)conv->elsize, (int)itemsize);
+            Py_DECREF(conv);
+            return NULL;
+        }
+        /* If align is set, make sure the alignment divides into the size */
+        if (align && itemsize % conv->alignment != 0) {
+            PyErr_Format(PyExc_ValueError,
+                    "NumPy dtype descriptor requires alignment of %d bytes, "
+                    "which is not divisible into the specified itemsize %d",
+                    (int)conv->alignment, (int)itemsize);
+            Py_DECREF(conv);
+            return NULL;
+        }
+        /* Change the itemsize */
+        if (itemsize != conv->elsize) {
+            /* Make sure we can change the itemsize */
+            if (!copied) {
+                copied = TRUE;
+                descr = PyArray_DescrNew(conv);
+                Py_DECREF(conv);
+                conv = descr;
+            }
+            conv->elsize = itemsize;
         }
     }
 
@@ -2771,12 +2817,20 @@ arraydescr_str(PyArray_Descr *dtype)
  * The dtype repr function specifically for structured arrays.
  */
 static PyObject *
-arraydescr_struct_repr(PyArray_Descr *self)
+arraydescr_struct_repr(PyArray_Descr *dtype)
 {
     PyObject *sub, *s;
+    int is_simple;
 
     s = PyUString_FromString("dtype(");
-    sub = arraydescr_struct_str(self);
+    if (is_dtype_struct_simple_layout(dtype)) {
+        sub = arraydescr_struct_list_str(dtype);
+        is_simple = 1;
+    }
+    else {
+        sub = arraydescr_struct_dict_str(dtype);
+        is_simple = 0;
+    }
     if (sub == NULL) {
         return NULL;
     }
@@ -2784,8 +2838,13 @@ arraydescr_struct_repr(PyArray_Descr *self)
     PyUString_ConcatAndDel(&s, sub);
 
     /* If it's an aligned structure, add the align=True parameter */
-    if (self->flags&NPY_ALIGNED_STRUCT) {
+    if (dtype->flags&NPY_ALIGNED_STRUCT) {
         PyUString_ConcatAndDel(&s, PyUString_FromString(", align=True"));
+    }
+    /* If it wasn't simple, also specify the itemsize parameter */
+    if (!is_simple) {
+        PyUString_ConcatAndDel(&s,
+                    PyUString_FromFormat(", itemsize=%d", (int)dtype->elsize));
     }
 
     PyUString_ConcatAndDel(&s, PyUString_FromString(")"));
