@@ -475,6 +475,17 @@ class TestDateTime(TestCase):
         str_b[...] = dt_a
         assert_equal(str_a, str_b)
 
+    def test_datetime_array_str(self):
+        a = np.array(['2011-03-16', '1920-01-01', '2013-05-19'], dtype='M')
+        assert_equal(str(a), "['2011-03-16' '1920-01-01' '2013-05-19']")
+
+        a = np.array(['2011-03-16T13:55Z', '1920-01-01T03:12Z'], dtype='M')
+        assert_equal(np.array2string(a, separator=', ',
+                    formatter={'datetime': lambda x :
+                            "'%s'" % np.datetime_as_string(x, timezone='UTC')}),
+                     "['2011-03-16T13:55Z', '1920-01-01T03:12Z']")
+        
+
     def test_pickle(self):
         # Check that pickle roundtripping works
         dt = np.dtype('M8[7D]')

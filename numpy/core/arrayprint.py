@@ -15,7 +15,7 @@ __docformat__ = 'restructuredtext'
 import sys
 import numerictypes as _nt
 from umath import maximum, minimum, absolute, not_equal, isnan, isinf
-from multiarray import format_longfloat, datetime_as_string
+from multiarray import format_longfloat, datetime_as_string, datetime_data
 from fromnumeric import ravel
 
 
@@ -245,7 +245,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   'complexfloat' : ComplexFormat(data, precision,
                                                  suppress_small),
                   'longcomplexfloat' : LongComplexFormat(precision),
-                  'datetime' : DatetimeFormat(),
+                  'datetime' : DatetimeFormat(data),
                   'timedelta' : TimedeltaFormat(data),
                   'numpystr' : repr,
                   'str' : str}
@@ -698,10 +698,25 @@ class ComplexFormat(object):
         return r + i
 
 class DatetimeFormat(object):
-    def __init__(self, overrideunit=None,
-                timezone='local', casting='same_kind'):
-        self.timezone = timezone
-        self.unit = overrideunit
+    def __init__(self, x, unit=None,
+                timezone=None, casting='same_kind'):
+        # Get the unit from the dtype
+        if unit is None:
+            if x.dtype.kind == 'M':
+                unit = datetime_data(x.dtype)[0]
+            else:
+                unit = 's'
+
+        # If timezone is default, make it 'local' or 'UTC' based on the unit
+        if timezone is None:
+            # Date units -> UTC, time units -> local
+            if unit in ('Y', 'M', 'W', 'D'):
+                self.timezone = 'UTC'
+            else:
+                self.timezone = 'local'
+        else:
+            self.timezone = timezone
+        self.unit = unit
         self.casting = casting
 
     def __call__(self, x):
