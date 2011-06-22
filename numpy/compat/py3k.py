@@ -23,7 +23,7 @@ if sys.version_info[0] >= 3:
             return s
         return s.decode('latin1')
     def isfileobj(f):
-        return isinstance(f, io.FileIO)
+        return isinstance(f, (io.FileIO, io.BufferedReader))
     def open_latin1(filename, mode='r'):
         return open(filename, mode=mode, encoding='iso-8859-1')
     strchar = 'U'
