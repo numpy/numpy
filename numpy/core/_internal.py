@@ -12,7 +12,7 @@ if (sys.byteorder == 'little'):
 else:
     _nbo = asbytes('>')
 
-def _makenames_list(adict):
+def _makenames_list(adict, align):
     from multiarray import dtype
     allfields = []
     fnames = adict.keys()
@@ -26,7 +26,7 @@ def _makenames_list(adict):
         num = int(obj[1])
         if (num < 0):
             raise ValueError("invalid offset.")
-        format = dtype(obj[0])
+        format = dtype(obj[0], align=align)
         if (format.itemsize == 0):
             raise ValueError("all itemsizes must be fixed.")
         if (n > 2):
@@ -53,7 +53,7 @@ def _usefields(adict, align):
     except KeyError:
         names = None
     if names is None:
-        names, formats, offsets, titles = _makenames_list(adict)
+        names, formats, offsets, titles = _makenames_list(adict, align)
     else:
         formats = []
         offsets = []

@@ -92,11 +92,46 @@ class TestRecord(TestCase):
         assert_equal(dt.itemsize, 8)
         dt = np.dtype([('f0', 'i4'), ('f1', 'i1')], align=True)
         assert_equal(dt.itemsize, 8)
-        dt = np.dtype({'names':['f0','f1'], 'formats':['i4', 'u1'],
-                        'offsets':[0,4]}, align=True)
+        dt = np.dtype({'names':['f0','f1'],
+                       'formats':['i4', 'u1'],
+                       'offsets':[0,4]}, align=True)
         assert_equal(dt.itemsize, 8)
         dt = np.dtype({'f0': ('i4', 0), 'f1':('u1', 4)}, align=True)
         assert_equal(dt.itemsize, 8)
+        # Nesting should preserve that alignment
+        dt1 = np.dtype([('f0', 'i4'),
+                       ('f1', [('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')]),
+                       ('f2', 'i1')], align=True)
+        assert_equal(dt1.itemsize, 20)
+        dt2 = np.dtype({'names':['f0','f1','f2'],
+                       'formats':['i4',
+                                  [('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')],
+                                  'i1'],
+                       'offsets':[0, 4, 16]}, align=True)
+        assert_equal(dt2.itemsize, 20)
+        dt3 = np.dtype({'f0': ('i4', 0),
+                       'f1': ([('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')], 4),
+                       'f2': ('i1', 16)}, align=True)
+        assert_equal(dt3.itemsize, 20)
+        assert_equal(dt1, dt2)
+        assert_equal(dt2, dt3)
+        # Nesting should preserve packing
+        dt1 = np.dtype([('f0', 'i4'),
+                       ('f1', [('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')]),
+                       ('f2', 'i1')], align=False)
+        assert_equal(dt1.itemsize, 11)
+        dt2 = np.dtype({'names':['f0','f1','f2'],
+                       'formats':['i4',
+                                  [('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')],
+                                  'i1'],
+                       'offsets':[0, 4, 10]}, align=False)
+        assert_equal(dt2.itemsize, 11)
+        dt3 = np.dtype({'f0': ('i4', 0),
+                       'f1': ([('f1', 'i1'), ('f2', 'i4'), ('f3', 'i1')], 4),
+                       'f2': ('i1', 10)}, align=False)
+        assert_equal(dt3.itemsize, 11)
+        assert_equal(dt1, dt2)
+        assert_equal(dt2, dt3)
 
     def test_union_struct(self):
         # Should be able to create union dtypes
