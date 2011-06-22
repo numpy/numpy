@@ -50,6 +50,11 @@ class TestBuiltin(TestCase):
         assert_raises(ValueError, np.dtype, 'f4, i4', itemsize=7)
         # If alignment is enabled, the alignment (4) must divide the itemsize
         assert_raises(ValueError, np.dtype, 'f4, i1', align=True, itemsize=9)
+        # If alignment is enabled, the individual fields must be aligned
+        assert_raises(ValueError, np.dtype,
+                        {'names':['f0','f1'],
+                         'formats':['i1','f4'],
+                         'offsets':[0,2]}, align=True)
 
 class TestRecord(TestCase):
     def test_equivalent_record(self):
@@ -80,6 +85,18 @@ class TestRecord(TestCase):
             dict(names=set(['A', 'B']), formats=['f8', 'i4']))
         self.assertRaises(TypeError, np.dtype,
             dict(names=['A', 'B'], formats=set(['f8', 'i4'])))
+
+    def test_aligned_size(self):
+        # Check that structured dtypes get padded to an aligned size
+        dt = np.dtype('i4, i1', align=True)
+        assert_equal(dt.itemsize, 8)
+        dt = np.dtype([('f0', 'i4'), ('f1', 'i1')], align=True)
+        assert_equal(dt.itemsize, 8)
+        dt = np.dtype({'names':['f0','f1'], 'formats':['i4', 'u1'],
+                        'offsets':[0,4]}, align=True)
+        assert_equal(dt.itemsize, 8)
+        dt = np.dtype({'f0': ('i4', 0), 'f1':('u1', 4)}, align=True)
+        assert_equal(dt.itemsize, 8)
 
 class TestSubarray(TestCase):
     def test_single_subarray(self):

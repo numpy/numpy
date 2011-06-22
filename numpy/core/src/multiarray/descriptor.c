@@ -399,7 +399,8 @@ _convert_from_array_descr(PyObject *obj, int align)
 
             _align = conv->alignment;
             if (_align > 1) {
-                totalsize = ((totalsize + _align - 1)/_align)*_align;
+                /* The alignment is always a power of 2, so this works */
+                totalsize = (totalsize + _align - 1) & (-_align);
             }
             maxalign = MAX(maxalign, _align);
         }
@@ -432,14 +433,23 @@ _convert_from_array_descr(PyObject *obj, int align)
         totalsize += conv->elsize;
         Py_DECREF(tup);
     }
+
+    if (maxalign > 1) {
+        /* The alignment is always a power of 2, so this works */
+        totalsize = (totalsize + maxalign - 1) & (-maxalign);
+    }
+
     new = PyArray_DescrNewFromType(PyArray_VOID);
+    if (new == NULL) {
+        Py_XDECREF(fields);
+        Py_XDECREF(nameslist);
+        return NULL;
+    }
     new->fields = fields;
     new->names = nameslist;
     new->elsize = totalsize;
     new->flags=dtypeflags;
-    if (maxalign > 1) {
-        totalsize = ((totalsize + maxalign - 1)/maxalign)*maxalign;
-    }
+
     /* Structured arrays get a sticky aligned bit */
     if (align) {
         new->flags |= NPY_ALIGNED_STRUCT;
@@ -508,7 +518,8 @@ _convert_from_list(PyObject *obj, int align)
 
             _align = conv->alignment;
             if (_align > 1) {
-                totalsize = ((totalsize + _align - 1)/_align)*_align;
+                /* The alignment is always a power of 2, so this works */
+                totalsize = (totalsize + _align - 1) & (-_align);
             }
             maxalign = MAX(maxalign, _align);
         }
@@ -523,7 +534,8 @@ _convert_from_list(PyObject *obj, int align)
     new->names = nameslist;
     new->flags = dtypeflags;
     if (maxalign > 1) {
-        totalsize = ((totalsize+maxalign-1)/maxalign)*maxalign;
+        /* The alignment is always a power of 2, so this works */
+        totalsize = (totalsize + maxalign - 1) & (-maxalign);
     }
     /* Structured arrays get a sticky aligned bit */
     if (align) {
@@ -791,18 +803,28 @@ _convert_from_dict(PyObject *obj, int align)
             }
             offset = PyInt_AsLong(off);
             PyTuple_SET_ITEM(tup, 1, off);
-            if (offset < totalsize) {
+            /* If align=True, enforce field alignment */
+            if (align && offset % newdescr->alignment != 0) {
+                PyErr_Format(PyExc_ValueError,
+                        "offset %d for NumPy dtype with fields is "
+                        "not divisible by the field alignment %d "
+                        "with align=True",
+                        (int)offset, (int)newdescr->alignment);
+                ret = PY_FAIL;
+            }
+            else if (offset < totalsize) {
                 PyErr_SetString(PyExc_ValueError,
                         "invalid offset (must be ordered)");
                 ret = PY_FAIL;
             }
-            if (offset > totalsize) {
+            else if (offset > totalsize) {
                 totalsize = offset;
             }
         }
         else {
             if (align && _align > 1) {
-                totalsize = ((totalsize + _align - 1)/_align)*_align;
+                /* The alignment is always a power of 2, so this works */
+                totalsize = (totalsize + _align - 1) & (-_align);
             }
             PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
         }
@@ -859,7 +881,8 @@ _convert_from_dict(PyObject *obj, int align)
         goto fail;
     }
     if (maxalign > 1) {
-        totalsize = ((totalsize + maxalign - 1)/maxalign)*maxalign;
+        /* The alignment is always a power of 2, so this works */
+        totalsize = (totalsize + maxalign - 1) & (-maxalign);
     }
     if (align) {
         new->alignment = maxalign;
