@@ -309,7 +309,7 @@ _array_typedescr_fromstr(char *str)
     switch (typechar) {
     case 'b':
         if (size == sizeof(Bool)) {
-            type_num = PyArray_BOOL;
+            type_num = NPY_BOOL;
         }
         else {
             PyErr_SetString(PyExc_ValueError, msg);
@@ -318,22 +318,22 @@ _array_typedescr_fromstr(char *str)
         break;
     case 'u':
         if (size == sizeof(uintp)) {
-            type_num = PyArray_UINTP;
+            type_num = NPY_UINTP;
         }
         else if (size == sizeof(char)) {
-            type_num = PyArray_UBYTE;
+            type_num = NPY_UBYTE;
         }
         else if (size == sizeof(short)) {
-            type_num = PyArray_USHORT;
+            type_num = NPY_USHORT;
         }
         else if (size == sizeof(ulong)) {
-            type_num = PyArray_ULONG;
+            type_num = NPY_ULONG;
         }
         else if (size == sizeof(int)) {
-            type_num = PyArray_UINT;
+            type_num = NPY_UINT;
         }
         else if (size == sizeof(ulonglong)) {
-            type_num = PyArray_ULONGLONG;
+            type_num = NPY_ULONGLONG;
         }
         else {
             PyErr_SetString(PyExc_ValueError, msg);
@@ -342,22 +342,22 @@ _array_typedescr_fromstr(char *str)
         break;
     case 'i':
         if (size == sizeof(intp)) {
-            type_num = PyArray_INTP;
+            type_num = NPY_INTP;
         }
         else if (size == sizeof(char)) {
-            type_num = PyArray_BYTE;
+            type_num = NPY_BYTE;
         }
         else if (size == sizeof(short)) {
-            type_num = PyArray_SHORT;
+            type_num = NPY_SHORT;
         }
         else if (size == sizeof(long)) {
-            type_num = PyArray_LONG;
+            type_num = NPY_LONG;
         }
         else if (size == sizeof(int)) {
-            type_num = PyArray_INT;
+            type_num = NPY_INT;
         }
         else if (size == sizeof(longlong)) {
-            type_num = PyArray_LONGLONG;
+            type_num = NPY_LONGLONG;
         }
         else {
             PyErr_SetString(PyExc_ValueError, msg);
@@ -366,13 +366,13 @@ _array_typedescr_fromstr(char *str)
         break;
     case 'f':
         if (size == sizeof(float)) {
-            type_num = PyArray_FLOAT;
+            type_num = NPY_FLOAT;
         }
         else if (size == sizeof(double)) {
-            type_num = PyArray_DOUBLE;
+            type_num = NPY_DOUBLE;
         }
         else if (size == sizeof(longdouble)) {
-            type_num = PyArray_LONGDOUBLE;
+            type_num = NPY_LONGDOUBLE;
         }
         else {
             PyErr_SetString(PyExc_ValueError, msg);
@@ -381,13 +381,13 @@ _array_typedescr_fromstr(char *str)
         break;
     case 'c':
         if (size == sizeof(float)*2) {
-            type_num = PyArray_CFLOAT;
+            type_num = NPY_CFLOAT;
         }
         else if (size == sizeof(double)*2) {
-            type_num = PyArray_CDOUBLE;
+            type_num = NPY_CDOUBLE;
         }
         else if (size == sizeof(longdouble)*2) {
-            type_num = PyArray_CLONGDOUBLE;
+            type_num = NPY_CLONGDOUBLE;
         }
         else {
             PyErr_SetString(PyExc_ValueError, msg);
@@ -396,22 +396,22 @@ _array_typedescr_fromstr(char *str)
         break;
     case 'O':
         if (size == sizeof(PyObject *)) {
-            type_num = PyArray_OBJECT;
+            type_num = NPY_OBJECT;
         }
         else {
             PyErr_SetString(PyExc_ValueError, msg);
             return NULL;
         }
         break;
-    case PyArray_STRINGLTR:
-        type_num = PyArray_STRING;
+    case NPY_STRINGLTR:
+        type_num = NPY_STRING;
         break;
-    case PyArray_UNICODELTR:
-        type_num = PyArray_UNICODE;
+    case NPY_UNICODELTR:
+        type_num = NPY_UNICODE;
         size <<= 2;
         break;
     case 'V':
-        type_num = PyArray_VOID;
+        type_num = NPY_VOID;
         break;
     default:
         PyErr_SetString(PyExc_ValueError, msg);

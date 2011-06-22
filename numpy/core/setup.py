@@ -732,6 +732,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'numpymemoryview.c'),
             join('src', 'multiarray', 'buffer.c'),
             join('src', 'multiarray', 'datetime.c'),
+            join('src', 'multiarray', 'datetime_strings.c'),
             join('src', 'multiarray', 'datetime_busday.c'),
             join('src', 'multiarray', 'datetime_busdaycal.c'),
             join('src', 'multiarray', 'numpyos.c'),

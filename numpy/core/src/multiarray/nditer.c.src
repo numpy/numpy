@@ -3145,37 +3145,13 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         if (op_request_dtype != NULL) {
             /* We just have a borrowed reference to op_request_dtype */
             Py_INCREF(op_request_dtype);
-            /* If it's a data type without a size, set the size */
-            if (op_request_dtype->elsize == 0) {
-                PyArray_DESCR_REPLACE(op_request_dtype);
-                if (op_request_dtype == NULL) {
-                    return 0;
-                }
-
-                if (op_request_dtype->type_num == NPY_STRING) {
-                    switch((*op_dtype)->type_num) {
-                        case NPY_STRING:
-                            op_request_dtype->elsize = (*op_dtype)->elsize;
-                            break;
-                        case NPY_UNICODE:
-                            op_request_dtype->elsize = (*op_dtype)->elsize >> 2;
-                            break;
-                    }
-                }
-                else if (op_request_dtype->type_num == NPY_UNICODE) {
-                    switch((*op_dtype)->type_num) {
-                        case NPY_STRING:
-                            op_request_dtype->elsize = (*op_dtype)->elsize << 2;
-                            break;
-                        case NPY_UNICODE:
-                            op_request_dtype->elsize = (*op_dtype)->elsize;
-                            break;
-                    }
-                }
-                else if (op_request_dtype->type_num == NPY_VOID) {
-                    op_request_dtype->elsize = (*op_dtype)->elsize;
-                }
+            /* If the requested dtype is flexible, adapt it */
+            PyArray_AdaptFlexibleDType((PyObject *)(*op), PyArray_DESCR(*op),
+                                        &op_request_dtype);
+            if (op_request_dtype == NULL) {
+                return 0;
             }
+
             /* Store the requested dtype */
             Py_DECREF(*op_dtype);
             *op_dtype = op_request_dtype;
