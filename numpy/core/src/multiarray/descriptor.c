@@ -361,14 +361,25 @@ _convert_from_array_descr(PyObject *obj, int align)
         /* Process rest */
 
         if (PyTuple_GET_SIZE(item) == 2) {
-            ret = PyArray_DescrConverter(PyTuple_GET_ITEM(item, 1), &conv);
+            if (align) {
+                ret = PyArray_DescrAlignConverter(PyTuple_GET_ITEM(item, 1),
+                                                        &conv);
+            }
+            else {
+                ret = PyArray_DescrConverter(PyTuple_GET_ITEM(item, 1), &conv);
+            }
             if (ret == PY_FAIL) {
                 PyObject_Print(PyTuple_GET_ITEM(item, 1), stderr, 0);
             }
         }
         else if (PyTuple_GET_SIZE(item) == 3) {
             newobj = PyTuple_GetSlice(item, 1, 3);
-            ret = PyArray_DescrConverter(newobj, &conv);
+            if (align) {
+                ret = PyArray_DescrAlignConverter(newobj, &conv);
+            }
+            else {
+                ret = PyArray_DescrConverter(newobj, &conv);
+            }
             Py_DECREF(newobj);
         }
         else {
@@ -505,7 +516,12 @@ _convert_from_list(PyObject *obj, int align)
     for (i = 0; i < n; i++) {
         tup = PyTuple_New(2);
         key = PyUString_FromFormat("f%d", i);
-        ret = PyArray_DescrConverter(PyList_GET_ITEM(obj, i), &conv);
+        if (align) {
+            ret = PyArray_DescrAlignConverter(PyList_GET_ITEM(obj, i), &conv);
+        }
+        else {
+            ret = PyArray_DescrConverter(PyList_GET_ITEM(obj, i), &conv);
+        }
         if (ret == PY_FAIL) {
             Py_DECREF(tup);
             Py_DECREF(key);
@@ -585,8 +601,10 @@ _convert_from_commastring(PyObject *obj, int align)
         return NULL;
     }
     if (PyList_GET_SIZE(listobj) == 1) {
-        if (PyArray_DescrConverter(
-                    PyList_GET_ITEM(listobj, 0), &res) == NPY_FAIL) {
+        int retcode;
+        retcode = PyArray_DescrConverter(PyList_GET_ITEM(listobj, 0),
+                                                &res);
+        if (retcode == NPY_FAIL) {
             res = NULL;
         }
     }
@@ -760,21 +778,21 @@ _convert_from_dict(PyObject *obj, int align)
 
     totalsize = 0;
     for (i = 0; i < n; i++) {
-        PyObject *tup, *descr, *index, *item, *name, *off;
+        PyObject *tup, *descr, *index, *title, *name, *off;
         int len, ret, _align = 1;
         PyArray_Descr *newdescr;
 
         /* Build item to insert (descr, offset, [title])*/
         len = 2;
-        item = NULL;
+        title = NULL;
         index = PyInt_FromLong(i);
         if (titles) {
-            item=PyObject_GetItem(titles, index);
-            if (item && item != Py_None) {
+            title=PyObject_GetItem(titles, index);
+            if (title && title != Py_None) {
                 len = 3;
             }
             else {
-                Py_XDECREF(item);
+                Py_XDECREF(title);
             }
             PyErr_Clear();
         }
@@ -783,7 +801,12 @@ _convert_from_dict(PyObject *obj, int align)
         if (!descr) {
             goto fail;
         }
-        ret = PyArray_DescrConverter(descr, &newdescr);
+        if (align) {
+            ret = PyArray_DescrAlignConverter(descr, &newdescr);
+        }
+        else {
+            ret = PyArray_DescrConverter(descr, &newdescr);
+        }
         Py_DECREF(descr);
         if (ret == PY_FAIL) {
             Py_DECREF(tup);
@@ -812,13 +835,8 @@ _convert_from_dict(PyObject *obj, int align)
                         (int)offset, (int)newdescr->alignment);
                 ret = PY_FAIL;
             }
-            else if (offset < totalsize) {
-                PyErr_SetString(PyExc_ValueError,
-                        "invalid offset (must be ordered)");
-                ret = PY_FAIL;
-            }
-            else if (offset > totalsize) {
-                totalsize = offset;
+            else if (offset + newdescr->elsize > totalsize) {
+                totalsize = offset + newdescr->elsize;
             }
         }
         else {
@@ -827,9 +845,10 @@ _convert_from_dict(PyObject *obj, int align)
                 totalsize = (totalsize + _align - 1) & (-_align);
             }
             PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
+            totalsize += newdescr->elsize;
         }
         if (len == 3) {
-            PyTuple_SET_ITEM(tup, 2, item);
+            PyTuple_SET_ITEM(tup, 2, title);
         }
         name = PyObject_GetItem(names, index);
         if (!name) {
@@ -856,16 +875,16 @@ _convert_from_dict(PyObject *obj, int align)
         Py_DECREF(name);
         if (len == 3) {
 #if defined(NPY_PY3K)
-            if (PyUString_Check(item)) {
+            if (PyUString_Check(title)) {
 #else
-            if (PyUString_Check(item) || PyUnicode_Check(item)) {
+            if (PyUString_Check(title) || PyUnicode_Check(title)) {
 #endif
-                if (PyDict_GetItem(fields, item) != NULL) {
+                if (PyDict_GetItem(fields, title) != NULL) {
                     PyErr_SetString(PyExc_ValueError,
                             "title already used as a name or title.");
                     ret=PY_FAIL;
                 }
-                PyDict_SetItem(fields, item, tup);
+                PyDict_SetItem(fields, title, tup);
             }
         }
         Py_DECREF(tup);
@@ -873,10 +892,9 @@ _convert_from_dict(PyObject *obj, int align)
             goto fail;
         }
         dtypeflags |= (newdescr->flags & NPY_FROM_FIELDS);
-        totalsize += newdescr->elsize;
     }
 
-    new = PyArray_DescrNewFromType(PyArray_VOID);
+    new = PyArray_DescrNewFromType(NPY_VOID);
     if (new == NULL) {
         goto fail;
     }

@@ -98,6 +98,31 @@ class TestRecord(TestCase):
         dt = np.dtype({'f0': ('i4', 0), 'f1':('u1', 4)}, align=True)
         assert_equal(dt.itemsize, 8)
 
+    def test_union_struct(self):
+        # Should be able to create union dtypes
+        dt = np.dtype({'names':['f0','f1','f2'], 'formats':['<u4', '<u2','<u2'],
+                        'offsets':[0,0,2]}, align=True)
+        assert_equal(dt.itemsize, 4)
+        a = np.array([3], dtype='<u4').view(dt)
+        a['f1'] = 10
+        a['f2'] = 36
+        assert_equal(a['f0'], 10 + 36*256*256)
+        # Should be able to specify fields out of order
+        dt = np.dtype({'names':['f0','f1','f2'], 'formats':['<u4', '<u2','<u2'],
+                        'offsets':[4,0,2]}, align=True)
+        assert_equal(dt.itemsize, 8)
+        dt2 = np.dtype({'names':['f2','f0','f1'],
+                        'formats':['<u2', '<u4','<u2'],
+                        'offsets':[2,4,0]}, align=True)
+        vals = [(0,1,2), (3,-1,4)]
+        vals2 = [(2,0,1), (4,3,-1)]
+        a = np.array(vals, dt)
+        b = np.array(vals2, dt2)
+        assert_equal(a.astype(dt2), b)
+        assert_equal(b.astype(dt), a)
+        assert_equal(a.view(dt2), b)
+        assert_equal(b.view(dt), a)
+
 class TestSubarray(TestCase):
     def test_single_subarray(self):
         a = np.dtype((np.int, (2)))
