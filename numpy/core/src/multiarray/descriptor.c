@@ -17,6 +17,18 @@
 #include "common.h"
 #include "descriptor.h"
 
+/*
+ * offset:    A starting offset.
+ * alignment: A power-of-two alignment.
+ *
+ * This macro returns the smallest value >= 'offset'
+ * which is divisible by 'alignment'. Because 'alignment'
+ * is a power of two, and integers are twos-complement,
+ * can use some simple bit-fiddling to do this.
+ */
+#define NPY_NEXT_ALIGNED_OFFSET(offset, alignment) \
+                (((offset) + (alignment) - 1) & (-(alignment)))
+
 static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 
 static PyArray_Descr *
@@ -408,8 +420,7 @@ _convert_from_array_descr(PyObject *obj, int align)
 
             _align = conv->alignment;
             if (_align > 1) {
-                /* The alignment is always a power of 2, so this works */
-                totalsize = (totalsize + _align - 1) & (-_align);
+                totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
             maxalign = MAX(maxalign, _align);
         }
@@ -444,8 +455,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     }
 
     if (maxalign > 1) {
-        /* The alignment is always a power of 2, so this works */
-        totalsize = (totalsize + maxalign - 1) & (-maxalign);
+        totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
     }
 
     new = PyArray_DescrNewFromType(PyArray_VOID);
@@ -532,8 +542,7 @@ _convert_from_list(PyObject *obj, int align)
 
             _align = conv->alignment;
             if (_align > 1) {
-                /* The alignment is always a power of 2, so this works */
-                totalsize = (totalsize + _align - 1) & (-_align);
+                totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
             maxalign = MAX(maxalign, _align);
         }
@@ -548,8 +557,7 @@ _convert_from_list(PyObject *obj, int align)
     new->names = nameslist;
     new->flags = dtypeflags;
     if (maxalign > 1) {
-        /* The alignment is always a power of 2, so this works */
-        totalsize = (totalsize + maxalign - 1) & (-maxalign);
+        totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
     }
     /* Structured arrays get a sticky aligned bit */
     if (align) {
@@ -706,7 +714,6 @@ validate_object_field_overlap(PyArray_Descr *dtype)
     Py_ssize_t i, j, names_size;
     PyArray_Descr *fld_dtype, *fld2_dtype;
     int fld_offset, fld2_offset, align;
-    npy_intp total_offset;
 
     /* Get some properties from the dtype */
     names = dtype->names;
@@ -916,8 +923,7 @@ _convert_from_dict(PyObject *obj, int align)
         }
         else {
             if (align && _align > 1) {
-                /* The alignment is always a power of 2, so this works */
-                totalsize = (totalsize + _align - 1) & (-_align);
+                totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
             PyTuple_SET_ITEM(tup, 1, PyInt_FromLong(totalsize));
             totalsize += newdescr->elsize;
@@ -974,8 +980,7 @@ _convert_from_dict(PyObject *obj, int align)
         goto fail;
     }
     if (maxalign > 1) {
-        /* The alignment is always a power of 2, so this works */
-        totalsize = (totalsize + maxalign - 1) & (-maxalign);
+        totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
     }
     if (align) {
         new->alignment = maxalign;
@@ -2886,7 +2891,7 @@ arraydescr_struct_dict_str(PyArray_Descr *dtype)
     }
     /* The alignment is always a power of 2, so this works */
     if (align) {
-        naturalsize = (naturalsize + dtype->alignment - 1) & (-dtype->alignment);
+        naturalsize = NPY_NEXT_ALIGNED_OFFSET(naturalsize, dtype->alignment);
     }
     /* Finally, the itemsize */
     if (naturalsize == dtype->elsize) {
@@ -2975,12 +2980,12 @@ arraydescr_struct_repr(PyArray_Descr *dtype)
 
 /*
  * This creates a shorter repr using the 'kind' and 'itemsize',
- * instead of the longer type name. It also creates the input
- * for constructing a dtype rather than the full dtype function
- * call.
+ * instead of the longer type name. This is the object you pass
+ * as the first parameter to the dtype constructor.
  *
  * This does not preserve the 'align=True' parameter
- * for structured arrays like the regular repr does.
+ * for structured arrays like the regular repr does, because
+ * this flag is separate from the first dtype constructor parameter.
  */
 NPY_NO_EXPORT PyObject *
 arraydescr_short_construction_repr(PyArray_Descr *dtype)
