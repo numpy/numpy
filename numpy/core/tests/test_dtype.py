@@ -122,6 +122,27 @@ class TestRecord(TestCase):
         assert_equal(b.astype(dt), a)
         assert_equal(a.view(dt2), b)
         assert_equal(b.view(dt), a)
+        # Should not be able to overlap objects with other types
+        assert_raises(TypeError, np.dtype,
+                {'names':['f0','f1'],
+                 'formats':['O', 'i1'],
+                 'offsets':[0,2]})
+        assert_raises(TypeError, np.dtype,
+                {'names':['f0','f1'],
+                 'formats':['i4', 'O'],
+                 'offsets':[0,3]})
+        assert_raises(TypeError, np.dtype,
+                {'names':['f0','f1'],
+                 'formats':[[('a','O')], 'i1'],
+                 'offsets':[0,2]})
+        assert_raises(TypeError, np.dtype,
+                {'names':['f0','f1'],
+                 'formats':['i4', [('a','O')]],
+                 'offsets':[0,3]})
+        # Out of order should still be ok, however
+        dt = np.dtype({'names':['f0','f1'],
+                       'formats':['i1', 'O'],
+                       'offsets':[np.dtype('intp').itemsize, 0]})
 
 class TestSubarray(TestCase):
     def test_single_subarray(self):

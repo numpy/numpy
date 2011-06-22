@@ -389,15 +389,13 @@ _convert_from_array_descr(PyObject *obj, int align)
             goto fail;
         }
         if ((PyDict_GetItem(fields, name) != NULL)
+             || (title
 #if defined(NPY_PY3K)
-             || (title
                  && PyUString_Check(title)
-                 && (PyDict_GetItem(fields, title) != NULL))) {
 #else
-             || (title
                  && (PyUString_Check(title) || PyUnicode_Check(title))
-                 && (PyDict_GetItem(fields, title) != NULL))) {
 #endif
+                 && (PyDict_GetItem(fields, title) != NULL))) {
             PyErr_SetString(PyExc_ValueError,
                     "two fields with the same name");
             goto fail;
@@ -691,6 +689,78 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag)
 }
 
 /*
+ * Validates that any field of the structured array 'dtype' which has
+ * the NPY_ITEM_HASOBJECT flag set does not overlap with another field.
+ *
+ * This algorithm is worst case O(n^2). It could be done with a sort
+ * and sweep algorithm, but the structured dtype representation is
+ * rather ugly right now, so writing something better can wait until
+ * that representation is made sane.
+ *
+ * Returns 0 on success, -1 if an exception is raised.
+ */
+static int
+validate_object_field_overlap(PyArray_Descr *dtype)
+{
+    PyObject *names, *fields, *key, *tup, *title;
+    Py_ssize_t i, j, names_size;
+    PyArray_Descr *fld_dtype, *fld2_dtype;
+    int fld_offset, fld2_offset, align;
+    npy_intp total_offset;
+
+    /* Get some properties from the dtype */
+    names = dtype->names;
+    names_size = PyTuple_GET_SIZE(names);
+    fields = dtype->fields;
+    align = PyDataType_FLAGCHK(dtype, NPY_ALIGNED_STRUCT);
+
+    for (i = 0; i < names_size; ++i) {
+        key = PyTuple_GET_ITEM(names, i);
+        if (key == NULL) {
+            return -1;
+        }
+        tup = PyDict_GetItem(fields, key);
+        if (tup == NULL) {
+            return -1;
+        }
+        if (!PyArg_ParseTuple(tup, "Oi|O", &fld_dtype, &fld_offset, &title)) {
+            return -1;
+        }
+
+        /* If this field has objects, check for overlaps */
+        if (PyDataType_REFCHK(fld_dtype)) {
+            for (j = 0; j < names_size; ++j) {
+                if (i != j) {
+                    key = PyTuple_GET_ITEM(names, j);
+                    if (key == NULL) {
+                        return -1;
+                    }
+                    tup = PyDict_GetItem(fields, key);
+                    if (tup == NULL) {
+                        return -1;
+                    }
+                    if (!PyArg_ParseTuple(tup, "Oi|O", &fld2_dtype,
+                                                &fld2_offset, &title)) {
+                        return -1;
+                    }
+                    /* Raise an exception if it overlaps */
+                    if (fld_offset < fld2_offset + fld2_dtype->elsize &&
+                                fld2_offset < fld_offset + fld_dtype->elsize) {
+                        PyErr_SetString(PyExc_TypeError,
+                                "Cannot create a NumPy dtype with overlapping "
+                                "object fields");
+                        return -1;
+                    }
+                }
+            }
+        }
+    }
+
+    /* It passed all the overlap tests */
+    return 0;
+}
+
+/*
  * a dictionary specifying a data-type
  * must have at least two and up to four
  * keys These must all be sequences of the same length.
@@ -754,6 +824,7 @@ _convert_from_dict(PyObject *obj, int align)
     int totalsize;
     int maxalign = 0;
     int dtypeflags = 0;
+    int has_out_of_order_fields = 0;
 
     fields = PyDict_New();
     if (fields == NULL) {
@@ -826,6 +897,10 @@ _convert_from_dict(PyObject *obj, int align)
             }
             offset = PyInt_AsLong(off);
             PyTuple_SET_ITEM(tup, 1, off);
+            /* Flag whether the fields are specified out of order */
+            if (offset < totalsize) {
+                has_out_of_order_fields = 1;
+            }
             /* If align=True, enforce field alignment */
             if (align && offset % newdescr->alignment != 0) {
                 PyErr_Format(PyExc_ValueError,
@@ -915,6 +990,17 @@ _convert_from_dict(PyObject *obj, int align)
     new->names = names;
     new->fields = fields;
     new->flags = dtypeflags;
+
+    /*
+     * If the fields weren't in order, and there was an OBJECT type,
+     * need to verify that no OBJECT types overlap with something else.
+     */
+    if (has_out_of_order_fields && PyDataType_REFCHK(new)) {
+        if (validate_object_field_overlap(new) < 0) {
+            Py_DECREF(new);
+            return NULL;
+        }
+    }
 
     /* Structured arrays get a sticky aligned bit */
     if (align) {
