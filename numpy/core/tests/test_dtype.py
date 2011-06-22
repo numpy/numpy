@@ -42,14 +42,18 @@ class TestBuiltin(TestCase):
             assert_raises(TypeError, np.dtype, typestr)
 
     def test_bad_param(self):
-        # Can't override the itemsize of a non-struct type
-        assert_raises(ValueError, np.dtype, 'f4', itemsize=6)
-        # Even if you specify the same size
-        assert_raises(ValueError, np.dtype, 'f4', itemsize=4)
         # Can't give a size that's too small
-        assert_raises(ValueError, np.dtype, 'f4, i4', itemsize=7)
+        assert_raises(ValueError, np.dtype,
+                        {'names':['f0','f1'],
+                         'formats':['i4', 'i1'],
+                         'offsets':[0,4],
+                         'itemsize':4})
         # If alignment is enabled, the alignment (4) must divide the itemsize
-        assert_raises(ValueError, np.dtype, 'f4, i1', align=True, itemsize=9)
+        assert_raises(ValueError, np.dtype,
+                        {'names':['f0','f1'],
+                         'formats':['i4', 'i1'],
+                         'offsets':[0,4],
+                         'itemsize':9}, align=True)
         # If alignment is enabled, the individual fields must be aligned
         assert_raises(ValueError, np.dtype,
                         {'names':['f0','f1'],
@@ -71,10 +75,12 @@ class TestRecord(TestCase):
 
     def test_different_titles(self):
         # In theory, they may hash the same (collision) ?
-        a = np.dtype({'names': ['r','b'], 'formats': ['u1', 'u1'],
-            'titles': ['Red pixel', 'Blue pixel']})
-        b = np.dtype({'names': ['r','b'], 'formats': ['u1', 'u1'],
-            'titles': ['RRed pixel', 'Blue pixel']})
+        a = np.dtype({'names': ['r','b'],
+                      'formats': ['u1', 'u1'],
+                      'titles': ['Red pixel', 'Blue pixel']})
+        b = np.dtype({'names': ['r','b'],
+                      'formats': ['u1', 'u1'],
+                      'titles': ['RRed pixel', 'Blue pixel']})
         assert_dtype_not_equal(a, b)
 
     def test_not_lists(self):
@@ -324,13 +330,14 @@ class TestString(TestCase):
 
         dt = np.dtype({'names': ['r','b'], 'formats': ['u1', 'u1'],
                         'offsets': [0, 2],
-                        'titles': ['Red pixel', 'Blue pixel']},
-                        itemsize = 4)
+                        'titles': ['Red pixel', 'Blue pixel'],
+                        'itemsize': 4})
         assert_equal(repr(dt),
                     "dtype({'names':['r','b'], "
                     "'formats':['u1','u1'], "
                     "'offsets':[0,2], "
-                    "'titles':['Red pixel','Blue pixel']}, itemsize=4)")
+                    "'titles':['Red pixel','Blue pixel'], "
+                    "'itemsize':4})")
 
 if __name__ == "__main__":
     run_module_suite()

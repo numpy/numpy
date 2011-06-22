@@ -818,10 +818,10 @@ _convert_from_dict(PyObject *obj, int align)
 {
     PyArray_Descr *new;
     PyObject *fields = NULL;
-    PyObject *names, *offsets, *descrs, *titles;
+    PyObject *names, *offsets, *descrs, *titles, *tmp;
     PyObject *metadata;
     int n, i;
-    int totalsize;
+    int totalsize, itemsize;
     int maxalign = 0;
     int dtypeflags = 0;
     int has_out_of_order_fields = 0;
@@ -1007,6 +1007,37 @@ _convert_from_dict(PyObject *obj, int align)
         new->flags |= NPY_ALIGNED_STRUCT;
     }
 
+    /* Override the itemsize if provided */
+    tmp = PyDict_GetItemString(obj, "itemsize");
+    if (tmp != NULL) {
+        itemsize = (int)PyInt_AsLong(tmp);
+        if (itemsize == -1 && PyErr_Occurred()) {
+            Py_DECREF(new);
+            return NULL;
+        }
+        /* Make sure the itemsize isn't made too small */
+        if (itemsize < new->elsize) {
+            PyErr_Format(PyExc_ValueError,
+                    "NumPy dtype descriptor requires %d bytes, "
+                    "cannot override to smaller itemsize of %d",
+                    (int)new->elsize, (int)itemsize);
+            Py_DECREF(new);
+            return NULL;
+        }
+        /* If align is set, make sure the alignment divides into the size */
+        if (align && itemsize % new->alignment != 0) {
+            PyErr_Format(PyExc_ValueError,
+                    "NumPy dtype descriptor requires alignment of %d bytes, "
+                    "which is not divisible into the specified itemsize %d",
+                    (int)new->alignment, (int)itemsize);
+            Py_DECREF(new);
+            return NULL;
+        }
+        /* Set the itemsize */
+        new->elsize = itemsize;
+    }
+
+    /* Add the metadata if provided */
     metadata = PyDict_GetItemString(obj, "metadata");
 
     if (new->metadata == NULL) {
@@ -1873,26 +1904,23 @@ static PyObject *
 arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
                 PyObject *args, PyObject *kwds)
 {
-    PyObject *odescr, *ometadata=NULL;
+    PyObject *odescr, *metadata=NULL;
     PyArray_Descr *descr, *conv;
     npy_bool align = FALSE;
     npy_bool copy = FALSE;
     npy_bool copied = FALSE;
-    int itemsize = -1;
 
-    static char *kwlist[] = {"dtype", "align", "copy", "metadata",
-                            "itemsize", NULL};
+    static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO&O&O!i", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO&O&O!", kwlist,
                 &odescr,
                 PyArray_BoolConverter, &align,
                 PyArray_BoolConverter, &copy,
-                &PyDict_Type, &ometadata,
-                &itemsize)) {
+                &PyDict_Type, &metadata)) {
         return NULL;
     }
 
-    if ((ometadata != NULL) && (_invalid_metadata_check(ometadata))) {
+    if ((metadata != NULL) && (_invalid_metadata_check(metadata))) {
         return NULL;
     }
 
@@ -1913,7 +1941,7 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
         copied = TRUE;
     }
 
-    if ((ometadata != NULL)) {
+    if ((metadata != NULL)) {
         /*
          * We need to be sure to make a new copy of the data-type and any
          * underlying dictionary
@@ -1926,8 +1954,9 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
         }
         if ((conv->metadata != NULL)) {
             /*
-             * Make a copy of the metadata before merging with ometadata
-             * so that this data-type descriptor has it's own copy
+             * Make a copy of the metadata before merging with the
+             * input metadata so that this data-type descriptor has
+             * it's own copy
              */
             /* Save a reference */
             odescr = conv->metadata;
@@ -1939,55 +1968,14 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
              * Update conv->metadata with anything new in metadata
              * keyword, but do not over-write anything already there
              */
-            if (PyDict_Merge(conv->metadata, ometadata, 0) != 0) {
+            if (PyDict_Merge(conv->metadata, metadata, 0) != 0) {
                 Py_DECREF(conv);
                 return NULL;
             }
         }
         else {
             /* Make a copy of the input dictionary */
-            conv->metadata = PyDict_Copy(ometadata);
-        }
-    }
-
-    /* Override the itemsize if provided */
-    if (itemsize >= 0) {
-        /* Only can override the item size of structured arrays */
-        if (!PyDataType_HASFIELDS(conv)) {
-            PyErr_Format(PyExc_ValueError,
-                    "The itemsize parameter may only be used when "
-                    "constructing a data type with fields");
-            Py_DECREF(conv);
-            return NULL;
-        }
-        /* Make sure the itemsize isn't made too small */
-        if (itemsize < conv->elsize) {
-            PyErr_Format(PyExc_ValueError,
-                    "NumPy dtype descriptor requires %d bytes, "
-                    "cannot override to smaller itemsize of %d",
-                    (int)conv->elsize, (int)itemsize);
-            Py_DECREF(conv);
-            return NULL;
-        }
-        /* If align is set, make sure the alignment divides into the size */
-        if (align && itemsize % conv->alignment != 0) {
-            PyErr_Format(PyExc_ValueError,
-                    "NumPy dtype descriptor requires alignment of %d bytes, "
-                    "which is not divisible into the specified itemsize %d",
-                    (int)conv->alignment, (int)itemsize);
-            Py_DECREF(conv);
-            return NULL;
-        }
-        /* Change the itemsize */
-        if (itemsize != conv->elsize) {
-            /* Make sure we can change the itemsize */
-            if (!copied) {
-                copied = TRUE;
-                descr = PyArray_DescrNew(conv);
-                Py_DECREF(conv);
-                conv = descr;
-            }
-            conv->elsize = itemsize;
+            conv->metadata = PyDict_Copy(metadata);
         }
     }
 
@@ -2809,11 +2797,16 @@ arraydescr_struct_dict_str(PyArray_Descr *dtype)
     Py_ssize_t i, names_size;
     PyArray_Descr *fld_dtype;
     int fld_offset, has_titles;
+    int align, naturalsize;
 
     names = dtype->names;
     names_size = PyTuple_GET_SIZE(names);
     fields = dtype->fields;
     has_titles = 0;
+
+    /* Used to determine whether the 'itemsize=' is needed */
+    align = (dtype->flags&NPY_ALIGNED_STRUCT) != 0;
+    naturalsize = 0;
 
     /* Build up a string to make the dictionary */
 
@@ -2865,6 +2858,10 @@ arraydescr_struct_dict_str(PyArray_Descr *dtype)
         if (i != names_size - 1) {
             PyUString_ConcatAndDel(&ret, PyUString_FromString(","));
         }
+        /* Accumulate the natural size of the dtype */
+        if (fld_offset + fld_dtype->elsize > naturalsize) {
+            naturalsize = fld_offset + fld_dtype->elsize;
+        }
     }
     /* Fourth, the titles */
     if (has_titles) {
@@ -2887,7 +2884,18 @@ arraydescr_struct_dict_str(PyArray_Descr *dtype)
             }
         }
     }
-    PyUString_ConcatAndDel(&ret, PyUString_FromString("]}"));
+    /* The alignment is always a power of 2, so this works */
+    if (align) {
+        naturalsize = (naturalsize + dtype->alignment - 1) & (-dtype->alignment);
+    }
+    /* Finally, the itemsize */
+    if (naturalsize == dtype->elsize) {
+        PyUString_ConcatAndDel(&ret, PyUString_FromString("]}"));
+    }
+    else {
+        PyUString_ConcatAndDel(&ret,
+            PyUString_FromFormat("], 'itemsize':%d}", (int)dtype->elsize));
+    }
 
     return ret;
 }
@@ -2947,17 +2955,9 @@ static PyObject *
 arraydescr_struct_repr(PyArray_Descr *dtype)
 {
     PyObject *sub, *s;
-    int is_simple;
 
     s = PyUString_FromString("dtype(");
-    if (is_dtype_struct_simple_layout(dtype)) {
-        sub = arraydescr_struct_list_str(dtype);
-        is_simple = 1;
-    }
-    else {
-        sub = arraydescr_struct_dict_str(dtype);
-        is_simple = 0;
-    }
+    sub = arraydescr_struct_str(dtype);
     if (sub == NULL) {
         return NULL;
     }
@@ -2967,11 +2967,6 @@ arraydescr_struct_repr(PyArray_Descr *dtype)
     /* If it's an aligned structure, add the align=True parameter */
     if (dtype->flags&NPY_ALIGNED_STRUCT) {
         PyUString_ConcatAndDel(&s, PyUString_FromString(", align=True"));
-    }
-    /* If it wasn't simple, also specify the itemsize parameter */
-    if (!is_simple) {
-        PyUString_ConcatAndDel(&s,
-                    PyUString_FromFormat(", itemsize=%d", (int)dtype->elsize));
     }
 
     PyUString_ConcatAndDel(&s, PyUString_FromString(")"));
