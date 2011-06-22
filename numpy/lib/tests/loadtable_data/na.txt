@@ -1,0 +1,4 @@
+NA, 3.4, 3e2, blah, sing, a
+5, NA, 24.6, NA, zoomzoom,
+NA, 42, , posies, , a
+, , NA, little, lamb, ab

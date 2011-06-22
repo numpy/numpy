@@ -1,0 +1,5 @@
+Inf, 2, INF, nan
+-inf, 2 ,-INF ,inf
+3.5 ,NAN ,NaN ,12.5
+12, 3.76E22 ,3.1415, infn
+

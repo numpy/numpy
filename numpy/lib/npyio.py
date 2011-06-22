@@ -1,4 +1,4 @@
-__all__ = ['savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
+__all__ = ['savetxt', 'loadtxt', 'loadtable', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
            'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
            'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']
 
@@ -22,6 +22,8 @@ from _iotools import LineSplitter, NameValidator, StringConverter, \
                      easy_dtype, _bytes_to_name
 
 from numpy.compat import asbytes, asstr, asbytes_nested, bytes
+
+from io.loadtable import loadtable
 
 if sys.version_info[0] >= 3:
     from io import BytesIO

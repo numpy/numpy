@@ -1,0 +1,2 @@
+True false True False
+X Y false TRUE
