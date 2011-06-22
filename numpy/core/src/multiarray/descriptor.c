@@ -1917,7 +1917,7 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
 
     static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO&O&O!", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O!", kwlist,
                 &odescr,
                 PyArray_BoolConverter, &align,
                 PyArray_BoolConverter, &copy,
