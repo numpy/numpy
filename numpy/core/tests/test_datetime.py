@@ -614,10 +614,12 @@ class TestDateTime(TestCase):
             dt1 = np.dtype('M8[%s]' % unit1)
             for unit2 in ['D', 'h', 'm', 's', 'ms', 'us']:
                 dt2 = np.dtype('M8[%s]' % unit2)
-                assert_equal(np.array('1932-02-17', dtype='M').astype(dt1),
-                     np.array('1932-02-17T00:00:00Z', dtype='M').astype(dt2))
-                assert_equal(np.array('10000-04-27', dtype='M').astype(dt1),
-                     np.array('10000-04-27T00:00:00Z', dtype='M').astype(dt2))
+                assert_(np.equal(np.array('1932-02-17', dtype='M').astype(dt1),
+                     np.array('1932-02-17T00:00:00Z', dtype='M').astype(dt2),
+                     casting='unsafe'))
+                assert_(np.equal(np.array('10000-04-27', dtype='M').astype(dt1),
+                     np.array('10000-04-27T00:00:00Z', dtype='M').astype(dt2),
+                     casting='unsafe'))
 
         # Shouldn't be able to compare datetime and timedelta
         # TODO: Changing to 'same_kind' or 'safe' casting in the ufuncs by
@@ -732,10 +734,12 @@ class TestDateTime(TestCase):
             assert_equal((tda + dta).dtype, np.dtype('M8[D]'))
 
             # In M8 + m8, the result goes to higher precision
-            assert_equal(dta + tdb, dtc)
-            assert_equal((dta + tdb).dtype, np.dtype('M8[h]'))
-            assert_equal(tdb + dta, dtc)
-            assert_equal((tdb + dta).dtype, np.dtype('M8[h]'))
+            assert_equal(np.add(dta, tdb, casting='unsafe'), dtc)
+            assert_equal(np.add(dta, tdb, casting='unsafe').dtype,
+                         np.dtype('M8[h]'))
+            assert_equal(np.add(tdb, dta, casting='unsafe'), dtc)
+            assert_equal(np.add(tdb, dta, casting='unsafe').dtype,
+                         np.dtype('M8[h]'))
 
             # M8 + M8
             assert_raises(TypeError, np.add, dta, dtb)
@@ -794,14 +798,19 @@ class TestDateTime(TestCase):
             assert_equal((dtb - tda).dtype, np.dtype('M8[D]'))
 
             # In M8 - m8, the result goes to higher precision
-            assert_equal(dtc - tdb, dte)
-            assert_equal((dtc - tdb).dtype, np.dtype('M8[h]'))
+            assert_equal(np.subtract(dtc, tdb, casting='unsafe'), dte)
+            assert_equal(np.subtract(dtc, tdb, casting='unsafe').dtype,
+                         np.dtype('M8[h]'))
 
             # M8 - M8 with different goes to higher precision
-            assert_equal(dtc - dtd, np.timedelta64(0,'h'))
-            assert_equal((dtc - dtd).dtype, np.dtype('m8[h]'))
-            assert_equal(dtd - dtc, np.timedelta64(0,'h'))
-            assert_equal((dtd - dtc).dtype, np.dtype('m8[h]'))
+            assert_equal(np.subtract(dtc, dtd, casting='unsafe'),
+                         np.timedelta64(0,'h'))
+            assert_equal(np.subtract(dtc, dtd, casting='unsafe').dtype,
+                         np.dtype('m8[h]'))
+            assert_equal(np.subtract(dtd, dtc, casting='unsafe'),
+                         np.timedelta64(0,'h'))
+            assert_equal(np.subtract(dtd, dtc, casting='unsafe').dtype,
+                         np.dtype('m8[h]'))
 
             # m8 - M8
             assert_raises(TypeError, np.subtract, tda, dta)
@@ -915,7 +924,7 @@ class TestDateTime(TestCase):
 
         # Interaction with NaT
         a = np.array('1999-03-12T13Z', dtype='M8[2m]')
-        dtnat = np.array('NaT', dtype='M8[D]')
+        dtnat = np.array('NaT', dtype='M8[h]')
         assert_equal(np.minimum(a,dtnat), a)
         assert_equal(np.minimum(dtnat,a), a)
         assert_equal(np.maximum(a,dtnat), a)
