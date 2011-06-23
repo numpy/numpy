@@ -471,5 +471,65 @@ class TestUfunc(TestCase):
 
         assert_equal(ref, True, err_msg="reference check")
 
+class TestGeneralizeUfuncs(TestCase):
+    def setUp(self):
+        self.A = np.array([[0.57311211, 0.5566819 , 0.6124054 , 0.66216366, 0.00850151],
+                           [0.06834556, 0.02745207, 0.98692964, 0.67906414, 0.37794816],
+                           [0.21752169, 0.37686867, 0.93973352, 0.49818713, 0.21303216],
+                           [0.08066141, 0.37775952, 0.56552893, 0.18719725, 0.64559197],
+                           [0.99428521, 0.24205622, 0.63299425, 0.92321895, 0.94189936]])
+
+    def test_mean(self):
+        assert_almost_equal(umt.mean(self.A.flatten()), 0.49556561593504361)
+        assert_almost_equal(umt.mean(self.A),
+                            np.array([0.48257292, 0.42794791, 0.44906863, 0.37134782, 0.7468908]))
+
+    def test_std(self):
+        assert_almost_equal(umt.std(self.A.flatten()),0.30789518960654322)
+        assert_almost_equal(umt.std(self.A),
+                            np.array([0.2398093, 0.36543965, 0.26747138, 0.21511266, 0.28218941]))
+
+class TestGeneralizeNaNUfuncs(TestCase):
+    def setUp(self):
+        self.A = np.array([[[np.nan, 0.01319214, 0.01620964],
+                            [0.11704017, np.nan, 0.75157887],
+                            [0.28333658, 0.1630199 , np.nan]],
+                           [[0.59541557, np.nan, 0.37910852],
+                            [np.nan, 0.87964135, np.nan],
+                            [0.70543747, np.nan, 0.34306596]],
+                           [[0.72687499, 0.91084584, np.nan],
+                            [0.84386844, 0.38944762, 0.23913896],
+                            [np.nan, 0.37068164, 0.33850425]]])
+
+    def test_nansum(self):
+        assert_almost_equal(umt.nansum(self.A.flatten()), 8.0664079100000006)
+        assert_almost_equal(np.swapaxes(umt.nansum(np.swapaxes(self.A,0,2)), 1, 0),
+                            np.array([[1.32229056, 0.92403798, 0.39531816],
+                                      [0.96090861, 1.26908897, 0.99071783],
+                                      [0.98877405, 0.53370154, 0.68157021]]))
+        assert_almost_equal(umt.nansum(np.swapaxes(self.A,1,2)),
+                            np.array([[0.40037675, 0.17621204, 0.76778851],
+                                      [1.30085304, 0.87964135, 0.72217448],
+                                      [1.57074343, 1.6709751 , 0.57764321]]))
+        assert_almost_equal(umt.nansum(self.A),
+                            np.array([[0.02940178, 0.86861904, 0.44635648],
+                                      [0.97452409, 0.87964135, 1.04850343],
+                                      [1.63772083, 1.47245502, 0.70918589]]))
+
+    def test_nancumsum(self):
+        assert_almost_equal(umt.nancumsum(self.A.flatten()), 
+                            np.array([np.nan, 0.01319214, 0.02940178, 0.14644195, 0.14644195,
+                                      0.89802082, 1.1813574, 1.3443773, 1.3443773,  1.93979287,
+                                      1.93979287, 2.31890139, 2.31890139, 3.19854274, 3.19854274,
+                                      3.90398021, 3.90398021, 4.24704617, 4.97392116, 5.884767,
+                                      5.884767, 6.72863544, 7.11808306, 7.35722202, 7.35722202,
+                                      7.72790366, 8.06640791]))
+
+    def test_nanmean(self):
+        assert_almost_equal(umt.nanmean(self.A.flatten()), 0.44813377277777783)
+
+    def test_nanstd(self):
+        assert_almost_equal(umt.nanstd(self.A.flatten()), 0.28764635583291526)
+
 if __name__ == "__main__":
     run_module_suite()

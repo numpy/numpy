@@ -38,6 +38,9 @@ typedef npy_intp intp;
     INIT_OUTER_LOOP_3           \
     intp s3 = *steps++;
 
+#define BEGIN_OUTER_LOOP_2      \
+    for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1) {
+
 #define BEGIN_OUTER_LOOP_3      \
     for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2) {
 
@@ -124,6 +127,7 @@ static void
 
 char *matrix_multiply_signature = "(m,n),(n,p)->(m,p)";
 
+
 /**begin repeat
 
    #TYPE=FLOAT,DOUBLE,LONG#
@@ -177,6 +181,229 @@ static void
 
 /**end repeat**/
 
+char *mean_signature = "(i)->()";
+
+/**begin repeat
+
+   #TYPE=DOUBLE#
+   #typ=npy_double#
+*/
+
+static void
+@TYPE@_mean(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_2
+    intp di = dimensions[0];
+    intp i;
+    intp is1=steps[0];
+    BEGIN_OUTER_LOOP_2
+        char *ip1=args[0], *op=args[1];
+        @typ@ sum = 0;
+        for (i = 0; i < di; i++) {
+            sum += (*(@typ@ *)ip1);
+            ip1 += is1;
+        }
+        *(@typ@ *)op = sum / (@typ@) di;
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
+char *std_signature = "(i)->()";
+
+/**begin repeat
+
+   #TYPE=DOUBLE#
+   #typ=npy_double#
+*/
+
+static void
+@TYPE@_std(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_2
+    intp di = dimensions[0];
+    intp i;
+    intp is1=steps[0];
+    BEGIN_OUTER_LOOP_2
+        char *ip1=args[0], *op=args[1];
+        @typ@ sum = 0;
+        @typ@ sum2 = 0;
+        @typ@ mean;
+        for (i = 0; i < di; i++) {
+            sum += (*(@typ@ *)ip1);
+            ip1 += is1;
+        }
+        mean = sum / (@typ@) di;
+        ip1 = args[0];
+        for (i = 0; i < di; i++) {
+            const @typ@ value = (*(@typ@ *)ip1);
+            const @typ@ tmp = value - mean;
+            sum2 += tmp * tmp;
+            ip1 += is1;
+        }
+        *(@typ@ *)op = sqrt(sum2 / (@typ@) di);
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
+char *nansum_signature = "(i)->()";
+
+/**begin repeat
+
+   #TYPE=DOUBLE#
+   #typ=npy_double#
+*/
+
+static void
+@TYPE@_nansum(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_2
+    intp di = dimensions[0];
+    intp i;
+    intp is1=steps[0];
+    BEGIN_OUTER_LOOP_2
+        char *ip1=args[0], *op=args[1];
+        @typ@ sum = 0;
+        intp n = 0;
+        for (i = 0; i < di; i++) {
+            const @typ@ value = (*(@typ@ *)ip1);
+            ip1 += is1;
+            if (npy_isnan(value)) continue;
+            sum += value;
+            n++;
+        }
+        if (n == 0) {
+            *(@typ@ *)op = NPY_NAN;
+        } else {
+            *(@typ@ *)op = sum;
+        }
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
+char *nancumsum_signature = "(i)->(i)";
+
+/**begin repeat
+
+   #TYPE=DOUBLE#
+   #typ=npy_double#
+*/
+
+static void
+@TYPE@_nancumsum(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_2
+    intp di = dimensions[0];
+    intp i;
+    intp is1=steps[0]; intp os=steps[1];
+    BEGIN_OUTER_LOOP_2
+        char *ip1=args[0], *op=args[1];
+        @typ@ sum = 0;
+        intp n = 0;
+        for (i = 0; i < di; i++) {
+            const @typ@ value = (*(@typ@ *)ip1);
+            if (!npy_isnan(value)) {
+                sum += value;
+                n++;
+            }
+            if (n == 0) {
+                *(@typ@ *)op = NPY_NAN;
+            } else {
+                *(@typ@ *)op = sum;
+            }
+            ip1 += is1;
+            op += os;
+        }
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
+char *nanmean_signature = "(i)->()";
+
+/**begin repeat
+
+   #TYPE=DOUBLE#
+   #typ=npy_double#
+*/
+
+static void
+@TYPE@_nanmean(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_2
+    intp di = dimensions[0];
+    intp i;
+    intp is1=steps[0];
+    BEGIN_OUTER_LOOP_2
+        char *ip1=args[0], *op=args[1];
+        @typ@ sum = 0;
+        intp n = 0;
+        for (i = 0; i < di; i++) {
+            const @typ@ value = (*(@typ@ *)ip1);
+            ip1 += is1;
+            if (npy_isnan(value)) continue;
+            sum += value;
+            n++;
+        }
+        if (n == 0) {
+            *(@typ@ *)op = NPY_NAN;
+        } else {
+            *(@typ@ *)op = sum / n;
+        }
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
+char *nanstd_signature = "(i)->()";
+
+/**begin repeat
+
+   #TYPE=DOUBLE#
+   #typ=npy_double#
+*/
+
+static void
+@TYPE@_nanstd(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_2
+    intp di = dimensions[0];
+    intp i;
+    intp is1=steps[0];
+    BEGIN_OUTER_LOOP_2
+        char *ip1=args[0], *op=args[1];
+        @typ@ sum = 0;
+        @typ@ sum2 = 0;
+        @typ@ mean;
+        intp n = 0;
+        for (i = 0; i < di; i++) {
+            const @typ@ value = (*(@typ@ *)ip1);
+            ip1 += is1;
+            if (npy_isnan(value)) continue;
+            sum += value;
+            n++;
+        }
+        mean = sum / n;
+        ip1 = args[0];
+        for (i = 0; i < di; i++) {
+            const @typ@ value = (*(@typ@ *)ip1);
+            ip1 += is1;
+            if (npy_isnan(value)) continue;
+            const @typ@ tmp = value - mean;
+            sum2 += tmp * tmp;
+        }
+        if (n == 0) {
+            *(@typ@ *)op = NPY_NAN;
+        } else {
+            *(@typ@ *)op = sqrt(sum2 / n);
+        }
+    END_OUTER_LOOP
+}
+
+/**end repeat**/
+
 /*  The following lines were generated using a slightly modified
     version of code_generators/generate_umath.py and adding these
     lines to defdict:
@@ -207,6 +434,24 @@ static char innerwt_signatures[] = { PyArray_LONG, PyArray_LONG, PyArray_LONG, P
 static PyUFuncGenericFunction matrix_multiply_functions[] = { LONG_matrix_multiply, FLOAT_matrix_multiply, DOUBLE_matrix_multiply };
 static void *matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
 static char matrix_multiply_signatures[] = { PyArray_LONG, PyArray_LONG, PyArray_LONG,  PyArray_FLOAT, PyArray_FLOAT, PyArray_FLOAT,  PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static PyUFuncGenericFunction mean_functions[] = { DOUBLE_mean };
+static void * mean_data[] = { (void *)NULL };
+static char mean_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE };
+static PyUFuncGenericFunction std_functions[] = { DOUBLE_std };
+static void * std_data[] = { (void *)NULL };
+static char std_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE };
+static PyUFuncGenericFunction nansum_functions[] = { DOUBLE_nansum };
+static void * nansum_data[] = { (void *)NULL };
+static char nansum_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE };
+static PyUFuncGenericFunction nancumsum_functions[] = { DOUBLE_nancumsum };
+static void * nancumsum_data[] = { (void *)NULL };
+static char nancumsum_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE };
+static PyUFuncGenericFunction nanmean_functions[] = { DOUBLE_nanmean };
+static void * nanmean_data[] = { (void *)NULL };
+static char nanmean_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE };
+static PyUFuncGenericFunction nanstd_functions[] = { DOUBLE_nanstd };
+static void * nanstd_data[] = { (void *)NULL };
+static char nanstd_signatures[] = { PyArray_DOUBLE, PyArray_DOUBLE };
 
 static void
 addUfuncs(PyObject *dictionary) {
@@ -233,6 +478,48 @@ addUfuncs(PyObject *dictionary) {
                                     "     \"(m,n),(n,p)->(m,p)\" \n",
                                     0, matrix_multiply_signature);
     PyDict_SetItemString(dictionary, "matrix_multiply", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(mean_functions, mean_data, mean_signatures, 1,
+                                    1, 1, PyUFunc_None, "mean",
+                                    "mean on the last dimension and broadcast on the rest\n"\
+                                    "     \"(i)->()\" \n",
+                                    0, mean_signature);
+    PyDict_SetItemString(dictionary, "mean", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(std_functions, std_data, std_signatures, 1,
+                                    1, 1, PyUFunc_None, "std",
+                                    "std on the last dimension and broadcast on the rest\n"\
+                                    "     \"(i)->()\" \n",
+                                    0, std_signature);
+    PyDict_SetItemString(dictionary, "std", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(nansum_functions, nansum_data, nansum_signatures, 1,
+                                    1, 1, PyUFunc_None, "nansum",
+                                    "nansum on the last dimension and broadcast on the rest\n"\
+                                    "     \"(i)->()\" \n",
+                                    0, nansum_signature);
+    PyDict_SetItemString(dictionary, "nansum", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(nancumsum_functions, nancumsum_data, nancumsum_signatures, 1,
+                                    1, 1, PyUFunc_None, "nancumsum",
+                                    "nancumsum on the last dimension and broadcast on the rest\n"\
+                                    "     \"(i)->(i)\" \n",
+                                    0, nancumsum_signature);
+    PyDict_SetItemString(dictionary, "nancumsum", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(nanmean_functions, nanmean_data, nanmean_signatures, 1,
+                                    1, 1, PyUFunc_None, "nanmean",
+                                    "nanmean on the last dimension and broadcast on the rest\n"\
+                                    "     \"(i)->()\" \n",
+                                    0, nanmean_signature);
+    PyDict_SetItemString(dictionary, "nanmean", f);
+    Py_DECREF(f);
+    f = PyUFunc_FromFuncAndDataAndSignature(nanstd_functions, nanstd_data, nanstd_signatures, 1,
+                                    1, 1, PyUFunc_None, "nanstd",
+                                    "nanstd on the last dimension and broadcast on the rest\n"\
+                                    "     \"(i)->()\" \n",
+                                    0, nanstd_signature);
+    PyDict_SetItemString(dictionary, "nanstd", f);
     Py_DECREF(f);
 }
 
