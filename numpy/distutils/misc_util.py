@@ -9,6 +9,7 @@ import tempfile
 import subprocess
 import shutil
 
+import distutils
 from distutils.errors import DistutilsError
 
 try:
@@ -583,6 +584,35 @@ def get_lib_source_files(lib):
             filenames.append(d)
     return filenames
 
+def get_shared_lib_extension(is_python_ext=False):
+    """Return the correct file extension for shared libraries.
+
+    Parameters
+    ----------
+    is_python_ext : bool, optional
+        Whether the shared library is a Python extension.  Default is False.
+
+    Returns
+    -------
+    so_ext : str
+        The shared library extension.
+
+    Notes
+    -----
+    For Python shared libs, `so_ext` will typically be '.so' on Linux and OS X,
+    and '.pyd' on Windows.  For Python >= 3.2 `so_ext` has a tag prepended on
+    POSIX systems according to PEP 3149.  For Python 3.2 this is implemented on
+    Linux, but not on OS X.
+
+    """
+    so_ext = distutils.sysconfig.get_config_var('SO') or ''
+    # fix long extension for Python >=3.2, see PEP 3149.
+    if (not is_python_ext) and 'SOABI' in distutils.sysconfig.get_config_vars():
+        # Does nothing unless SOABI config var exists
+        so_ext = so_ext.replace('.' + distutils.sysconfig.get_config_var('SOABI'), '', 1)
+
+    return so_ext
+
 def get_data_files(data):
     if is_string(data):
         return [data]
@@ -772,7 +802,7 @@ class Configuration(object):
     def todict(self):
         """
         Return a dictionary compatible with the keyword arguments of distutils
-        setup function. 
+        setup function.
 
         Examples
         --------
@@ -947,8 +977,8 @@ class Configuration(object):
     def add_subpackage(self,subpackage_name,
                        subpackage_path=None,
                        standalone = False):
-        """Add a sub-package to the current Configuration instance. 
-        
+        """Add a sub-package to the current Configuration instance.
+
         This is useful in a setup.py script for adding sub-packages to a
         package.
 
@@ -994,7 +1024,7 @@ class Configuration(object):
         installed (and distributed). The data_path can be either a relative
         path-name, or an absolute path-name, or a 2-tuple where the first
         argument shows where in the install directory the data directory
-        should be installed to. 
+        should be installed to.
 
         Parameters
         ----------
@@ -1389,7 +1419,7 @@ class Configuration(object):
         Notes
         -----
         The self.paths(...) method is applied to all lists that may contain
-        paths. 
+        paths.
         """
         ext_args = copy.copy(kw)
         ext_args['name'] = dot_join(self.name,name)
@@ -1863,7 +1893,7 @@ class Configuration(object):
             return revision
         branch_fn = njoin(path,'.hg','branch')
         branch_cache_fn = njoin(path,'.hg','branch.cache')
-        
+
         if os.path.isfile(branch_fn):
             branch0 = None
             f = open(branch_fn)
@@ -1889,8 +1919,8 @@ class Configuration(object):
         """Try to get version string of a package.
 
         Return a version string of the current package or None if the version
-        information could not be detected. 
-        
+        information could not be detected.
+
         Notes
         -----
         This method scans files named
@@ -1956,8 +1986,8 @@ class Configuration(object):
 
     def make_svn_version_py(self, delete=True):
         """Appends a data function to the data_files list that will generate
-        __svn_version__.py file to the current package directory. 
-        
+        __svn_version__.py file to the current package directory.
+
         Generate package __svn_version__.py file from SVN revision number,
         it will be removed after python exits but will be available
         when sdist, etc commands are executed.
@@ -1999,8 +2029,8 @@ class Configuration(object):
 
     def make_hg_version_py(self, delete=True):
         """Appends a data function to the data_files list that will generate
-        __hg_version__.py file to the current package directory. 
-        
+        __hg_version__.py file to the current package directory.
+
         Generate package __hg_version__.py file from Mercurial revision,
         it will be removed after python exits but will be available
         when sdist, etc commands are executed.

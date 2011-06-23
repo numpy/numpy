@@ -2,6 +2,7 @@ import sys
 
 import numpy as np
 from numpy.ctypeslib import ndpointer, load_library
+from numpy.distutils.misc_util import get_shared_lib_extension
 from numpy.testing import *
 
 try:
@@ -29,12 +30,7 @@ class TestLoadLibrary(TestCase):
         (including extension) does not work."""
         try:
             try:
-                from distutils import sysconfig
-                so = sysconfig.get_config_var('SO')
-                # fix long extension for Python >=3.2, see PEP 3149.
-                if 'SOABI' in sysconfig.get_config_vars():
-                    so = so.replace('.'+sysconfig.get_config_var('SOABI'), '', 1)
-
+                so = get_shared_lib_extension(is_python_ext=True)
                 cdll = load_library('multiarray%s' % so,
                                     np.core.multiarray.__file__)
             except ImportError:
