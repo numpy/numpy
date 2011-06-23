@@ -157,6 +157,35 @@ an np.array *a* are::
         Exactly like a.copy(), except always produces an array
         without a mask and uses 'fillvalue' for any masked values.
 
+Masked Element-wise UFuncs
+==========================
+
+As part of the implementation, ufuncs and other operations will
+have to be extended to support masked computation. Because this
+is a useful feature in general, even outside the context of
+a masked array, in addition to working with masked arrays ufuncs
+will take an optional 'mask=' parameter which allows the use
+of boolean arrays to choose where a computation should be done. This
+functions similar to a "where" clause on the ufunc.::
+
+    np.add(a, b, out=b, mask=(a > threshold))
+
+If the 'out' parameter isn't specified, use of the 'mask=' parameter
+will produce a array with a mask as the result. A benefit of this
+operation is that it provides a way to temporarily treat an object
+with a mask, without making it a masked array which adds the mask
+permanently.
+
+Reduction operations like 'sum', 'prod', 'min', and 'max' will operate as
+if the values weren't there, applying the operation to the unmasked
+values. If all the input values are masked, 'sum' and 'prod' will produce
+the additive and multiplicative identities respectively, while 'min'
+and 'max' will produce masked values.
+
+Statistics operations which require a count, like 'mean' and 'std' will
+also use the unmasked value counts for their calculations, and produce
+masked values when all the inputs are masked.
+
 Unresolved Design Questions
 ===========================
 
@@ -168,10 +197,12 @@ while the later preserves type information, so the correct choice
 will require some discussion to resolve.
 
 The existing masked array implementation has a "hardmask" feature,
-which freezes the mask. Boolean indexing could for instance return
-a hardmasked array instead of a flattened array with the arbitrary
-choice of C-ordering as it currently is. This could be an internal
-array flag, with a.mask.harden() and a.mask.soften() performing the
-functions of a.harden_mask() and a.soften_mask() in the current masked
-array. There would also be an a.mask.ishard property.
+which freezes the mask.  This would be an internal
+array flag, with 'a.mask.harden()' and 'a.mask.soften()' performing the
+functions of 'a.harden_mask()' and 'a.soften_mask()' in the current masked
+array. There would also need to be an 'a.mask.ishard' property.
+
+If the hardmask feature is implemented, boolean indexing could
+return a hardmasked array instead of a flattened array with the
+arbitrary choice of C-ordering as it currently does.
 
