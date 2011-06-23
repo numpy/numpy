@@ -299,14 +299,28 @@ class TestString(TestCase):
                     "(('Green pixel', 'g'), 'u1'), "
                     "(('Blue pixel', 'b'), 'u1')]")
 
+        dt = np.dtype({'names': ['rgba', 'r','g','b'],
+                       'formats': ['<u4', 'u1', 'u1', 'u1'],
+                       'offsets': [0, 0, 1, 2],
+                       'titles': ['Color', 'Red pixel',
+                                  'Green pixel', 'Blue pixel']})
+        assert_equal(str(dt),
+                    "{'names':['rgba','r','g','b'],"
+                    " 'formats':['<u4','u1','u1','u1'],"
+                    " 'offsets':[0,0,1,2],"
+                    " 'titles':['Color','Red pixel',"
+                              "'Green pixel','Blue pixel'],"
+                    " 'itemsize':4}")
+
         dt = np.dtype({'names': ['r','b'], 'formats': ['u1', 'u1'],
                         'offsets': [0, 2],
                         'titles': ['Red pixel', 'Blue pixel']})
         assert_equal(str(dt),
-                    "{'names':['r','b'], "
-                    "'formats':['u1','u1'], "
-                    "'offsets':[0,2], "
-                    "'titles':['Red pixel','Blue pixel']}")
+                    "{'names':['r','b'],"
+                    " 'formats':['u1','u1'],"
+                    " 'offsets':[0,2],"
+                    " 'titles':['Red pixel','Blue pixel'],"
+                    " 'itemsize':3}")
 
     def test_complex_dtype_repr(self):
         dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),
@@ -327,6 +341,19 @@ class TestString(TestCase):
                     "dtype([(('Red pixel', 'r'), 'u1'), "
                     "(('Green pixel', 'g'), 'u1'), "
                     "(('Blue pixel', 'b'), 'u1')], align=True)")
+
+        dt = np.dtype({'names': ['rgba', 'r','g','b'],
+                       'formats': ['<u4', 'u1', 'u1', 'u1'],
+                       'offsets': [0, 0, 1, 2],
+                       'titles': ['Color', 'Red pixel',
+                                  'Green pixel', 'Blue pixel']}, align=True)
+        assert_equal(repr(dt),
+                    "dtype({'names':['rgba','r','g','b'],"
+                    " 'formats':['<u4','u1','u1','u1'],"
+                    " 'offsets':[0,0,1,2],"
+                    " 'titles':['Color','Red pixel',"
+                              "'Green pixel','Blue pixel'],"
+                    " 'itemsize':4}, align=True)")
 
         dt = np.dtype({'names': ['r','b'], 'formats': ['u1', 'u1'],
                         'offsets': [0, 2],

@@ -22,9 +22,9 @@
  * alignment: A power-of-two alignment.
  *
  * This macro returns the smallest value >= 'offset'
- * which is divisible by 'alignment'. Because 'alignment'
- * is a power of two, and integers are twos-complement,
- * can use some simple bit-fiddling to do this.
+ * that is divisible by 'alignment'. Because 'alignment'
+ * is a power of two and integers are twos-complement,
+ * it is possible to use some simple bit-fiddling to do this.
  */
 #define NPY_NEXT_ALIGNED_OFFSET(offset, alignment) \
                 (((offset) + (alignment) - 1) & (-(alignment)))
@@ -2642,30 +2642,27 @@ static PyMethodDef arraydescr_methods[] = {
 /*
  * Checks whether the structured data type in 'dtype'
  * has a simple layout, where all the fields are in order,
- * follow the alignment based on the NPY_ALIGNED_STRUCT flag,
- * and the total length ends just after the last field with
- * appropriate alignment padding.
+ * and follow each other with no alignment padding.
  *
  * When this returns true, the dtype can be reconstructed
- * from a list of the field names and dtypes, and an
- * alignment parameter.
+ * from a list of the field names and dtypes with no additional
+ * dtype parameters.
  *
  * Returns 1 if it has a simple layout, 0 otherwise.
  */
 static int
-is_dtype_struct_simple_layout(PyArray_Descr *dtype)
+is_dtype_struct_simple_unaligned_layout(PyArray_Descr *dtype)
 {
     PyObject *names, *fields, *key, *tup, *title;
     Py_ssize_t i, names_size;
     PyArray_Descr *fld_dtype;
-    int fld_offset, align;
+    int fld_offset;
     npy_intp total_offset;
 
     /* Get some properties from the dtype */
     names = dtype->names;
     names_size = PyTuple_GET_SIZE(names);
     fields = dtype->fields;
-    align = PyDataType_FLAGCHK(dtype, NPY_ALIGNED_STRUCT);
 
     /* Start at offset zero */
     total_offset = 0;
@@ -2683,16 +2680,6 @@ is_dtype_struct_simple_layout(PyArray_Descr *dtype)
             PyErr_Clear();
             return 0;
         }
-        /* If it's an aligned struct, apply the dtype alignment */
-        if (align) {
-            /*
-             * Alignment is always a power of 2, so -alignment is
-             * a bitmask which preserves everything but the undesired
-             * bits.
-             */
-            total_offset = (total_offset + fld_dtype->alignment - 1) &
-                                            (-fld_dtype->alignment);
-        }
         /* If this field doesn't follow the pattern, not a simple layout */
         if (total_offset != fld_offset) {
             return 0;
@@ -2701,19 +2688,8 @@ is_dtype_struct_simple_layout(PyArray_Descr *dtype)
         total_offset += fld_dtype->elsize;
     }
 
-    /* If it's an aligned struct, apply the struct-level alignment */
-    if (align) {
-        /*
-         * Alignment is always a power of 2, so -alignment is
-         * a bitmask which preserves everything but the undesired
-         * bits.
-         */
-        total_offset = (total_offset + dtype->alignment - 1) &
-                                        (-dtype->alignment);
-    }
-
     /*
-     * If the itemsize doesn't match the final aligned offset, it's
+     * If the itemsize doesn't match the final offset, it's
      * not a simple layout.
      */
     if (total_offset != dtype->elsize) {
@@ -2802,16 +2778,11 @@ arraydescr_struct_dict_str(PyArray_Descr *dtype)
     Py_ssize_t i, names_size;
     PyArray_Descr *fld_dtype;
     int fld_offset, has_titles;
-    int align, naturalsize;
 
     names = dtype->names;
     names_size = PyTuple_GET_SIZE(names);
     fields = dtype->fields;
     has_titles = 0;
-
-    /* Used to determine whether the 'itemsize=' is needed */
-    align = (dtype->flags&NPY_ALIGNED_STRUCT) != 0;
-    naturalsize = 0;
 
     /* Build up a string to make the dictionary */
 
@@ -2863,10 +2834,6 @@ arraydescr_struct_dict_str(PyArray_Descr *dtype)
         if (i != names_size - 1) {
             PyUString_ConcatAndDel(&ret, PyUString_FromString(","));
         }
-        /* Accumulate the natural size of the dtype */
-        if (fld_offset + fld_dtype->elsize > naturalsize) {
-            naturalsize = fld_offset + fld_dtype->elsize;
-        }
     }
     /* Fourth, the titles */
     if (has_titles) {
@@ -2889,18 +2856,9 @@ arraydescr_struct_dict_str(PyArray_Descr *dtype)
             }
         }
     }
-    /* The alignment is always a power of 2, so this works */
-    if (align) {
-        naturalsize = NPY_NEXT_ALIGNED_OFFSET(naturalsize, dtype->alignment);
-    }
     /* Finally, the itemsize */
-    if (naturalsize == dtype->elsize) {
-        PyUString_ConcatAndDel(&ret, PyUString_FromString("]}"));
-    }
-    else {
-        PyUString_ConcatAndDel(&ret,
+    PyUString_ConcatAndDel(&ret,
             PyUString_FromFormat("], 'itemsize':%d}", (int)dtype->elsize));
-    }
 
     return ret;
 }
@@ -2909,7 +2867,7 @@ arraydescr_struct_dict_str(PyArray_Descr *dtype)
 static PyObject *
 arraydescr_struct_str(PyArray_Descr *dtype)
 {
-    if (is_dtype_struct_simple_layout(dtype)) {
+    if (is_dtype_struct_simple_unaligned_layout(dtype)) {
         return arraydescr_struct_list_str(dtype);
     }
     else {
@@ -2979,13 +2937,16 @@ arraydescr_struct_repr(PyArray_Descr *dtype)
 }
 
 /*
- * This creates a shorter repr using the 'kind' and 'itemsize',
- * instead of the longer type name. This is the object you pass
- * as the first parameter to the dtype constructor.
+ * This creates a shorter repr using 'kind' and 'itemsize',
+ * instead of the longer type name. This is the object passed
+ * as the first parameter to the dtype constructor, and if no
+ * additional constructor parameters are given, will reproduce
+ * the exact memory layout.
  *
- * This does not preserve the 'align=True' parameter
- * for structured arrays like the regular repr does, because
- * this flag is separate from the first dtype constructor parameter.
+ * This does not preserve the 'align=True' parameter or sticky
+ * NPY_ALIGNED_STRUCT flag for struct arrays like the regular
+ * repr does, because the 'align' flag is not part of first
+ * dtype constructor parameter.
  */
 NPY_NO_EXPORT PyObject *
 arraydescr_short_construction_repr(PyArray_Descr *dtype)
