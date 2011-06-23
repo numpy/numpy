@@ -62,6 +62,9 @@ data type for NumPy and have it automatically work with missing values
 is one of the reasons the masked approach has been chosen over special
 signal values.
 
+Implementing masks as described in this NEP does not preclude also
+creating data types with special "NA" values.
+
 **************************
 The Mask as Seen in Python
 **************************
@@ -98,6 +101,10 @@ which is also a view of the mask in the original array. This means unmasking
 values in views will also unmask them in the original array, and if
 a mask is added to an array, it will not be possible to ever remove that
 mask except to create a new array copying the data but not the mask.
+
+It is still possible to temporarily treat an array with a mask without
+giving it one, by first creating a view of the array and then adding a
+mask to that view.
 
 Working With Masked Values
 ==========================
@@ -165,16 +172,17 @@ have to be extended to support masked computation. Because this
 is a useful feature in general, even outside the context of
 a masked array, in addition to working with masked arrays ufuncs
 will take an optional 'mask=' parameter which allows the use
-of boolean arrays to choose where a computation should be done. This
-functions similar to a "where" clause on the ufunc.::
+of boolean arrays to choose where a computation should be done.
+This functions similar to a "where" clause on the ufunc.::
 
     np.add(a, b, out=b, mask=(a > threshold))
 
+A benefit of having this 'mask=' parameter is that it provides a way
+to temporarily treat an object with a mask without ever creating a
+masked array object.
+
 If the 'out' parameter isn't specified, use of the 'mask=' parameter
-will produce a array with a mask as the result. A benefit of this
-operation is that it provides a way to temporarily treat an object
-with a mask, without making it a masked array which adds the mask
-permanently.
+will produce a array with a mask as the result.
 
 Reduction operations like 'sum', 'prod', 'min', and 'max' will operate as
 if the values weren't there, applying the operation to the unmasked
@@ -191,7 +199,7 @@ Unresolved Design Questions
 
 Scalars will not be modified to have a mask, so this leaves two options
 for what value should be returned when retrieving a single masked value.
-Either 'None', or a one-dimensional masked array. The former follows
+Either 'None', or a zero-dimensional masked array. The former follows
 the convention of returning an immutable value from such accesses,
 while the later preserves type information, so the correct choice
 will require some discussion to resolve.
@@ -204,5 +212,14 @@ array. There would also need to be an 'a.mask.ishard' property.
 
 If the hardmask feature is implemented, boolean indexing could
 return a hardmasked array instead of a flattened array with the
-arbitrary choice of C-ordering as it currently does.
+arbitrary choice of C-ordering as it currently does. While this
+improves the abstraction of the array significantly, it is not
+a compatible change.
 
+There is some consternation about the conventional True/False
+interpretation of the mask, centered around the name "mask". One
+possibility to deal with this is to call it a "validity mask" in
+all documentation, which more clearly indicates that True means
+valid data. If this isn't sufficient, an alternate name for the
+attribute could be found, like "a.validitymask", "a.validmask",
+or "a.validity".
