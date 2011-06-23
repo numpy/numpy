@@ -438,7 +438,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 
     if ((newtype->elsize != self->descr->elsize) &&
         (self->nd == 0 || !PyArray_ISONESEGMENT(self) ||
-         newtype->subarray)) {
+         PyDataType_HASSUBARRAY(newtype))) {
         goto fail;
     }
     if (PyArray_ISCONTIGUOUS(self)) {
@@ -474,7 +474,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 
     /* fall through -- adjust type*/
     Py_DECREF(self->descr);
-    if (newtype->subarray) {
+    if (PyDataType_HASSUBARRAY(newtype)) {
         /*
          * create new array object from data and update
          * dimensions, strides and descr from it
@@ -550,7 +550,7 @@ array_struct_get(PyArrayObject *self)
         inter->strides = NULL;
     }
     inter->data = self->data;
-    if (self->descr->names) {
+    if (PyDataType_HASFIELDS(self->descr)) {
         inter->descr = arraydescr_protocol_descr_get(self->descr);
         if (inter->descr == NULL) {
             PyErr_Clear();

@@ -544,7 +544,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
     int itemsize;
 
     descr = ap->descr;
-    if (descr->names != NULL) {
+    if (PyDataType_HASFIELDS(descr)) {
         PyObject *key;
         PyObject *names;
         int i, n;
@@ -3304,10 +3304,14 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_FillWithScalarFunc*)NULL,
 #if @sort@
     {
-        quicksort_@suff@, heapsort_@suff@, mergesort_@suff@
+        (PyArray_SortFunc *)quicksort_@suff@,
+        (PyArray_SortFunc *)heapsort_@suff@,
+        (PyArray_SortFunc *)mergesort_@suff@
     },
     {
-        aquicksort_@suff@, aheapsort_@suff@, amergesort_@suff@
+        (PyArray_ArgSortFunc *)aquicksort_@suff@,
+        (PyArray_ArgSortFunc *)aheapsort_@suff@,
+        (PyArray_ArgSortFunc *)amergesort_@suff@
     },
 #else
     {
@@ -3408,10 +3412,14 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     (PyArray_FillWithScalarFunc*)@from@_fillwithscalar,
 #if @sort@
     {
-        quicksort_@suff@, heapsort_@suff@, mergesort_@suff@
+        (PyArray_SortFunc *)quicksort_@suff@,
+        (PyArray_SortFunc *)heapsort_@suff@,
+        (PyArray_SortFunc *)mergesort_@suff@
     },
     {
-        aquicksort_@suff@, aheapsort_@suff@, amergesort_@suff@
+        (PyArray_ArgSortFunc *)aquicksort_@suff@,
+        (PyArray_ArgSortFunc *)aheapsort_@suff@,
+        (PyArray_ArgSortFunc *)amergesort_@suff@
     },
 #else
     {

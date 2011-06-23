@@ -545,7 +545,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
     if (PyString_Check(op) || PyUnicode_Check(op)) {
         PyObject *temp;
 
-        if (self->descr->names) {
+        if (PyDataType_HASFIELDS(self->descr)) {
             obj = PyDict_GetItem(self->descr->fields, op);
             if (obj != NULL) {
                 PyArray_Descr *descr;
@@ -573,7 +573,9 @@ array_subscript(PyArrayObject *self, PyObject *op)
     }
 
     /* Check for multiple field access */
-    if (self->descr->names && PySequence_Check(op) && !PyTuple_Check(op)) {
+    if (PyDataType_HASFIELDS(self->descr) &&
+                        PySequence_Check(op) &&
+                        !PyTuple_Check(op)) {
         int seqlen, i;
         seqlen = PySequence_Size(op);
         for (i = 0; i < seqlen; i++) {
@@ -797,7 +799,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
     }
 
     if (PyString_Check(index) || PyUnicode_Check(index)) {
-        if (self->descr->names) {
+        if (PyDataType_HASFIELDS(self->descr)) {
             PyObject *obj;
 
             obj = PyDict_GetItem(self->descr->fields, index);
