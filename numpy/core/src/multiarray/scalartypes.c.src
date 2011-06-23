@@ -2008,7 +2008,7 @@ static PyMethodDef @name@type_methods[] = {
 static Py_ssize_t
 voidtype_length(PyVoidScalarObject *self)
 {
-    if (!self->descr->names) {
+    if (!PyDataType_HASFIELDS(self->descr)) {
         return 0;
     }
     else { /* return the number of fields */

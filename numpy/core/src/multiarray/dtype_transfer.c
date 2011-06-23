@@ -2310,7 +2310,7 @@ get_subarray_transfer_function(int aligned,
     npy_intp src_size = 1, dst_size = 1;
 
     /* Get the subarray shapes and sizes */
-    if (src_dtype->subarray != NULL) {
+    if (PyDataType_HASSUBARRAY(src_dtype)) {
        if (!(PyArray_IntpConverter(src_dtype->subarray->shape,
                                             &src_shape))) {
             PyErr_SetString(PyExc_ValueError,
@@ -2320,7 +2320,7 @@ get_subarray_transfer_function(int aligned,
         src_size = PyArray_MultiplyList(src_shape.ptr, src_shape.len);
         src_dtype = src_dtype->subarray->base;
     }
-    if (dst_dtype->subarray != NULL) {
+    if (PyDataType_HASSUBARRAY(dst_dtype)) {
        if (!(PyArray_IntpConverter(dst_dtype->subarray->shape,
                                             &dst_shape))) {
             if (src_shape.ptr != NULL) {
@@ -3184,7 +3184,7 @@ get_setdstzero_transfer_function(int aligned,
         *out_transferdata = NULL;
     }
     /* If there are subarrays, need to wrap it */
-    else if (dst_dtype->subarray != NULL) {
+    else if (PyDataType_HASSUBARRAY(dst_dtype)) {
         PyArray_Dims dst_shape = {NULL, -1};
         npy_intp dst_size = 1;
         PyArray_StridedTransferFn *contig_stransfer;
@@ -3297,7 +3297,7 @@ get_decsrcref_transfer_function(int aligned,
         return NPY_SUCCEED;
     }
     /* If there are subarrays, need to wrap it */
-    else if (src_dtype->subarray != NULL) {
+    else if (PyDataType_HASSUBARRAY(src_dtype)) {
         PyArray_Dims src_shape = {NULL, -1};
         npy_intp src_size = 1;
         PyArray_StridedTransferFn *stransfer;
@@ -3496,7 +3496,8 @@ PyArray_GetDTypeTransferFunction(int aligned,
     if (src_itemsize == dst_itemsize && src_dtype->kind == dst_dtype->kind &&
                 !PyDataType_HASFIELDS(src_dtype) &&
                 !PyDataType_HASFIELDS(dst_dtype) &&
-                src_dtype->subarray == NULL && dst_dtype->subarray == NULL &&
+                !PyDataType_HASSUBARRAY(src_dtype) &&
+                !PyDataType_HASSUBARRAY(dst_dtype) &&
                 src_type_num != NPY_DATETIME && src_type_num != NPY_TIMEDELTA) {
         /* A custom data type requires that we use its copy/swap */
         if (src_type_num >= NPY_NTYPES || dst_type_num >= NPY_NTYPES) {
@@ -3575,7 +3576,8 @@ PyArray_GetDTypeTransferFunction(int aligned,
     }
 
     /* Handle subarrays */
-    if (src_dtype->subarray != NULL || dst_dtype->subarray != NULL) {
+    if (PyDataType_HASSUBARRAY(src_dtype) ||
+                                PyDataType_HASSUBARRAY(dst_dtype)) {
         return get_subarray_transfer_function(aligned,
                         src_stride, dst_stride,
                         src_dtype, dst_dtype,

@@ -502,7 +502,8 @@ typedef struct {
 #define NPY_USE_GETITEM     0x20
 /* Use f.setitem when setting creating 0-d array from this data-type.*/
 #define NPY_USE_SETITEM     0x40
-/* define NPY_IS_COMPLEX */
+/* A sticky flag specifically for structured arrays */
+#define NPY_ALIGNED_STRUCT  0x80
 
 /*
  *These are inherited for global data-type if any data-types in the
@@ -1344,6 +1345,7 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyDataType_ISEXTENDED(obj) PyTypeNum_ISEXTENDED(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_ISOBJECT(obj) PyTypeNum_ISOBJECT(((PyArray_Descr*)(obj))->type_num)
 #define PyDataType_HASFIELDS(obj) (((PyArray_Descr *)(obj))->names != NULL)
+#define PyDataType_HASSUBARRAY(dtype) ((dtype)->subarray != NULL)
 
 #define PyArray_ISBOOL(obj) PyTypeNum_ISBOOL(PyArray_TYPE(obj))
 #define PyArray_ISUNSIGNED(obj) PyTypeNum_ISUNSIGNED(PyArray_TYPE(obj))

@@ -55,7 +55,7 @@ static int _is_array_descr_builtin(PyArray_Descr* descr)
         if (descr->fields != NULL && descr->fields != Py_None) {
                 return 0;
         }
-        if (descr->subarray != NULL) {
+        if (PyDataType_HASSUBARRAY(descr)) {
                 return 0;
         }
         return 1;
@@ -223,7 +223,7 @@ static int _array_descr_walk(PyArray_Descr* descr, PyObject *l)
                 return -1;
             }
         }
-        if(descr->subarray != NULL) {
+        if(PyDataType_HASSUBARRAY(descr)) {
             st = _array_descr_walk_subarray(descr->subarray, l);
             if (st) {
                 return -1;

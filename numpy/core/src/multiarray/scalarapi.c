@@ -757,7 +757,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             Py_SIZE(vobj) = itemsize;
             vobj->flags = BEHAVED | OWNDATA;
             swap = 0;
-            if (descr->names) {
+            if (PyDataType_HASFIELDS(descr)) {
                 if (base) {
                     Py_INCREF(base);
                     vobj->base = base;

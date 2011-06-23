@@ -5563,7 +5563,8 @@ add_newdoc('numpy.core.multiarray', 'dtype',
     align : bool, optional
         Add padding to the fields to match what a C compiler would output
         for a similar C-struct. Can be ``True`` only if `obj` is a dictionary
-        or a comma-separated string.
+        or a comma-separated string. If a struct dtype is being created,
+        this also sets a sticky alignment flag ``isalignedstruct``.
     copy : bool, optional
         Make a new copy of the data-type object. If ``False``, the result
         may just be a reference to a built-in data-type object.
@@ -5785,6 +5786,14 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('isnative',
     Boolean indicating whether the byte order of this dtype is native
     to the platform.
 
+    """))
+
+add_newdoc('numpy.core.multiarray', 'dtype', ('isalignedstruct',
+    """
+    Boolean indicating whether the dtype is a struct which maintains
+    field alignment. This flag is sticky, so when combining multiple
+    structs together, it is preserved and produces new dtypes which
+    are also aligned.
     """))
 
 add_newdoc('numpy.core.multiarray', 'dtype', ('itemsize',

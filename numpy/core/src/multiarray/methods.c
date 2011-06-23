@@ -1132,7 +1132,7 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         PyObject *new_name;
         PyObject *_numpy_internal;
         saved = self->descr;
-        if (saved->names == NULL) {
+        if (!PyDataType_HASFIELDS(saved)) {
             PyErr_SetString(PyExc_ValueError, "Cannot specify " \
                             "order when the array has no fields.");
             return NULL;
@@ -1186,7 +1186,7 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         PyObject *new_name;
         PyObject *_numpy_internal;
         saved = self->descr;
-        if (saved->names == NULL) {
+        if (!PyDataType_HASFIELDS(saved)) {
             PyErr_SetString(PyExc_ValueError, "Cannot specify " \
                             "order when the array has no fields.");
             return NULL;
