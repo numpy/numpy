@@ -333,7 +333,7 @@ defdict = {
 'ones_like' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.ones_like'),
-          'PyUFunc_SimpleUnaryOperationTypeResolution',
+          'PyUFunc_OnesLikeTypeResolution',
           TD(noobj),
           TD(O, f='Py_get_one'),
           ),
