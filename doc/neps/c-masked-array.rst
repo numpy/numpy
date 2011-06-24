@@ -65,6 +65,49 @@ signal values.
 Implementing masks as described in this NEP does not preclude also
 creating data types with special "NA" values.
 
+*************************
+Definition of Masked Data
+*************************
+
+Unknown Yet Existing Data
+=========================
+
+In order to be able to develop an intuition about what computation
+will be done by various NumPy functions, a consistent conceptual
+model of what a masked element means must be applied. The approach
+taken in the R project is to define a masked element as something which
+does have a valid value, but that value is unknown.
+
+In this interpretation, any computation with a masked input produces
+a masked output. For example, 'sum(a)' would produce a masked value
+if 'a' contained just one masked element.
+
+Some more complex arithmetic operations, such as matrix products, are
+well defined with this interpretation, and the result should be
+the same as is the missing values were NaNs. Actually implementing
+such things to the theoretical limit is probably not worth it,
+and in many cases either raising an exception or returning all
+missing values may be preferred to doing precise calculations.
+
+This approach should likely be the default uniformly throughout NumPy,
+because it will consistently flag problems by default, instead of
+silently producing incorrect results because a missing value is
+hidden deep within an array.
+
+Data That Doesn't Exist
+=======================
+
+Another useful interpretation is that the masked elements should be
+treated as if they didn't exist in the array, and the operation should
+do its best interpretation of what that means according to the data
+that's left. In this case, 'mean(a)' would compute the mean of just
+the values that are unmasked, adjusting both the sum and count it
+uses based on the mask.
+
+This approach is useful when working with messy data and the analysis
+being done is trying to produce the best result that's possible from
+the data that is available.
+
 **************************
 The Mask as Seen in Python
 **************************
@@ -140,6 +183,22 @@ missing values. If a division by zero occurs, an unmasked Inf or NaN will
 be produced. To mask those values, a further "a.mask &= np.isfinite(a)"
 can achieve that.
 
+Scalars will not be modified to have a mask, so this leaves two options
+for what value should be returned when retrieving a single masked value.
+Either 'None', or a zero-dimensional masked array. Based on discussion,
+'None' is unacceptable, for two reasons. First, masked values should
+always compare as False, similar to NaNs. If None, is returned, they
+will compare as True. Second, a manual loop through a masked array
+like::
+
+    for i in xrange(len(a)):
+        a[i] = np.log(a[i])
+
+would raise an error, because you can't call 'np.log' on None. With
+a zero-dimensional masked array, having them compare False is easy,
+and calling 'np.log' on a masked value will produce a masked value,
+since 'np.log' is a regular ufunc.
+
 New ndarray Methods
 ===================
 
@@ -185,24 +244,20 @@ If the 'out' parameter isn't specified, use of the 'mask=' parameter
 will produce a array with a mask as the result.
 
 Reduction operations like 'sum', 'prod', 'min', and 'max' will operate as
-if the values weren't there, applying the operation to the unmasked
-values. If all the input values are masked, 'sum' and 'prod' will produce
-the additive and multiplicative identities respectively, while 'min'
-and 'max' will produce masked values.
+if the values were like NaN, producing masked values if any of their
+input values were masked.
 
-Statistics operations which require a count, like 'mean' and 'std' will
-also use the unmasked value counts for their calculations, and produce
-masked values when all the inputs are masked.
+An optional parameter to change the interpretation of masked values
+is also needed, to do the operation as if just the unmasked values existed.
+When all the input values are masked, 'sum' and 'prod' will produce
+the additive and multiplicative identities respectively, while 'min'
+and 'max' will produce masked values. With this parameter enabled,
+statistics operations which require a count, like 'mean' and 'std'
+will also use the unmasked value counts for their calculations, and
+produce masked values when all the inputs are masked.
 
 Unresolved Design Questions
 ===========================
-
-Scalars will not be modified to have a mask, so this leaves two options
-for what value should be returned when retrieving a single masked value.
-Either 'None', or a zero-dimensional masked array. The former follows
-the convention of returning an immutable value from such accesses,
-while the later preserves type information, so the correct choice
-will require some discussion to resolve.
 
 The existing masked array implementation has a "hardmask" feature,
 which freezes the mask.  This would be an internal
