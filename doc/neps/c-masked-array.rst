@@ -108,7 +108,19 @@ whether a value is masked by saying "arr[0] is np.NA".
 All operations which write to masked arrays will not affect the value
 unless they also unmask that value. This allows the storage behind
 masked elements to still be relied on if they are still accessible
-from another view which doesn't have them masked.
+from another view which doesn't have them masked. For example::
+
+    >>> a = np.array([1,2])
+    >>> b = a.view()
+    >>> b.flags.hasmask = True
+    >>> b
+    array([1,2], masked=True)
+    >>> b[0] = np.NA
+    >>> b
+    array([NA,2], masked=True)
+    >>> a
+    array([1,2])
+    >>> # The underlying value in 'a' was untouched
 
 If np.NA or masked values are copied to an array without a mask, an
 exception will be raised. Adding a validitymask to the target array
