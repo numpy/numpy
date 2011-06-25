@@ -16,7 +16,7 @@ The existing masked array functionality in NumPy is useful for many
 people, however it has a number of issues that prevent it from being
 the preferred solution in some important cases. By implementing mask
 functionality into the core ndarray object, all the current issues
-with the system can be resolved in a high performance and flexible manner.
+with the system can be resolved in a high-performance and flexible manner.
 
 The integration with ufuncs and other numpy core functions like sum is weak.
 This could be dealt with either through a better function overloading
@@ -79,7 +79,7 @@ the data as if the NA values are not part of the data set.
 Data That Is Being Temporarily Ignored
 ======================================
 
-Iterpreting the meaning of temporarily ignored data requires
+Interpreting the meaning of temporarily ignored data requires
 choosing between one of the missing data interpretations above.
 This is a common use case for masks, which are an elegant mechanism
 to implement this.
