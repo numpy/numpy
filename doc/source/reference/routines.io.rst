@@ -25,6 +25,14 @@ Text files
    ndarray.tofile
    ndarray.tolist
 
+Raw binary files
+----------------
+
+.. autosummary::
+
+   fromfile
+   ndarray.tofile
+
 String formatting
 -----------------
 .. autosummary::
