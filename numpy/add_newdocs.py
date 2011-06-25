@@ -2147,6 +2147,8 @@ add_newdoc('numpy.core', 'restoredot',
 
 add_newdoc('numpy.core', 'vdot',
     """
+    vdot(a, b)
+
     Return the dot product of two vectors.
 
     The vdot(`a`, `b`) function handles complex numbers differently than

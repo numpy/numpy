@@ -822,7 +822,7 @@ class matrix(N.ndarray):
 
         Raises
         ------
-        numpy.linalg.linalg.LinAlgError: Singular matrix
+        numpy.linalg.LinAlgError: Singular matrix
             If `self` is singular.
 
         See Also

@@ -58,7 +58,7 @@ class LinAlgError(Exception):
       File "...linalg.py", line 249,
         in solve
         raise LinAlgError('Singular matrix')
-    numpy.linalg.linalg.LinAlgError: Singular matrix
+    numpy.linalg.LinAlgError: Singular matrix
 
     """
     pass
@@ -1366,7 +1366,7 @@ def cond(x, p=None):
 
     See Also
     --------
-    numpy.linalg.linalg.norm
+    numpy.linalg.norm
 
     Notes
     -----
