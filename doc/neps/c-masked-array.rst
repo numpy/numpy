@@ -120,15 +120,13 @@ from another view which doesn't have them masked. For example::
     array([NA,2], masked=True)
     >>> a
     array([1,2])
-    >>> # The underlying value in 'a' was untouched
+    >>> # The underlying number 1 value in 'a[0]' was untouched
 
 If np.NA or masked values are copied to an array without a mask, an
 exception will be raised. Adding a validitymask to the target array
 would be problematic, because then having a mask would be a "viral"
 property consuming extra memory and reducing performance in unexpected
-ways. To assign a value would require a default value, which is
-something that should be explicitly stated, so a function like
-"a.assign_from_masked(b, maskedvalue=3.0)" needs to be created.
+ways.
 
 By default, the string "NA" will be used to represent masked values
 in str and repr outputs. A global default configuration will allow
@@ -136,7 +134,7 @@ this to be changed. The array2string function will also gain a
 'maskedstr=' parameter so this could be changed to "NA" or
 other values people may desire. For example,::
 
-    >>>np.array([1.0, 2.0, np.NA, 7.0], masked=True)
+    >>> np.array([1.0, 2.0, np.NA, 7.0], masked=True)
 
 will produce an array with values [1.0, 2.0, <inaccessible>, 7.0], and
 validitymask [True, True, False, True].
@@ -144,7 +142,9 @@ validitymask [True, True, False, True].
 For floating point numbers, Inf and NaN are separate concepts from
 missing values. If a division by zero occurs, an unmasked Inf or NaN will
 be produced. To mask those values, a further 'a.validitymask &= np.isfinite(a)'
-can achieve that.
+can achieve that. If the parameterized dtype('NA[f8,InfNan]') is
+implemented as described in a later section, this mechanism could be
+used to get these semantics without the extra mask manipulation.
 
 A manual loop through a masked array like::
 
