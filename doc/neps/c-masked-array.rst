@@ -102,8 +102,15 @@ numpy.NA to the array masks that element. The storage behind a masked
 value may never be accessed in any way, other than to unmask it by
 assigning a value.
 
-Because numpy.NA is a global singleton, it will be possible to test
-whether a value is masked by saying "arr[0] is np.NA".
+While numpy.NA works to mask values, it does not itself have a dtype.
+This means that returning the numpy.NA singleton from an operation
+like 'arr[0]' would be throwing away the dtype, which is still
+valuable to retain, so 'arr[0]' will return a zero-dimensional
+array with its value masked instead of numpy.NA. To test if the value
+is missing, a function like "np.ismissing(arr[0])" will be provided.
+One of the key reasons for the NumPy scalars is to allow their values
+into dictionaries. Having a missing value as the key in a dictionary
+is a bad idea, so not returning a scalar is fine for this case.
 
 All operations which write to masked arrays will not affect the value
 unless they also unmask that value. This allows the storage behind
@@ -151,9 +158,11 @@ A manual loop through a masked array like::
     for i in xrange(len(a)):
         a[i] = np.log(a[i])
 
-should work, something that is a little bit tricky because the global
-singleton np.NA has no type, and doesn't follow the type promotion rules.
-A good approach to deal with this needs to be found.
+works even with masked values, because 'a[i]' returns a zero-dimensional
+array with a masked value instead of np.NA for the missing elements.
+If np.NA was returned, np.log would have to raise an exception because
+it doesn't know the log of which dtype it's meant to call, whether it's a
+missing float or a missing string, for example.
 
 The 'validitymask' Property
 ===========================
