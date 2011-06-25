@@ -460,6 +460,9 @@ class FunctionDoc(NumpyDocString):
 
 
 class ClassDoc(NumpyDocString):
+
+    extra_public_methods = ['__call__']
+
     def __init__(self, cls, doc=None, modulename='', func_doc=FunctionDoc,
                  config={}):
         if not inspect.isclass(cls) and cls is not None:
@@ -490,7 +493,9 @@ class ClassDoc(NumpyDocString):
         if self._cls is None:
             return []
         return [name for name,func in inspect.getmembers(self._cls)
-                if not name.startswith('_') and callable(func)]
+                if ((not name.startswith('_')
+                     or name in self.extra_public_methods)
+                    and callable(func))]
 
     @property
     def properties(self):
