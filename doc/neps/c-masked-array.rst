@@ -1,4 +1,4 @@
-:Title: Masked Array Functionality in C
+:Title: Missing Data Functionality in NumPy
 :Author: Mark Wiebe <mwwiebe@gmail.com>
 :Date: 2011-06-23
 
@@ -12,23 +12,37 @@ Table of Contents
 Abstract
 ********
 
-The existing masked array functionality in NumPy is useful for many
-people, however it has a number of issues that prevent it from being
-the preferred solution in some important cases. By implementing mask
-functionality into the core ndarray object, all the current issues
-with the system can be resolved in a high-performance and flexible manner.
+Users interested in dealing with missing data within NumPy are generally
+pointed to the masked array subclass of the ndarray, generally known
+as 'numpy.ma'. This class has a number of users who depend strongly
+on its capabilities, but people who are accustomed to the deep integration
+of the missing data placeholder "NA" in the R project and others who
+find the programming interface challenging or inconsistent tend not
+to use it.
 
-The integration with ufuncs and other numpy core functions like sum is weak.
-This could be dealt with either through a better function overloading
-mechanism or moving the mask into the core ndarray.
+This NEP proposes to integrate a mask-based missing data solution
+into NumPy, with an additional NA bit pattern-based missing data solution
+that can be implemented  concurrently or later which would integrate seamlessly
+with the mask-based solution.
 
-In the current masked array, calculations are done for the whole array,
-then masks are patched up afterwords. This means that invalid calculations
-sitting in masked elements can raise warnings or exceptions even though they
-shouldn't, so the ufunc error handling mechanism can't be relied on.
+The mask-based solution and the NA bit pattern-based solutions in this
+proposal offer the exact same missing value abstraction, with several
+differences in performance, memory overhead, and flexibility.
 
-While no comprehensive benchmarks appear to exist, poor performance is
-sometimes cited as a problem as well.
+The mask-based solution is more flexible, supporting all behaviors of the
+NA bit pattern-based solution, but leaving the hidden values untouched
+whenever an element is masked.
+
+The NA bit pattern-based solution requires less memory, is bit-level
+compatible with the 64-bit floating point representation used in R, but
+does not preserve the hidden values and in fact requires stealing at
+least one bit pattern from the underlying dtype to represent the missing
+value NA.
+
+Both solutions are generic in the sense that they can be used with
+custom data types very easily, with no effort in the case of the masked
+solution, and with the requirement that a bit pattern to sacrifice be
+chosen in the case of the NA bit pattern solution.
 
 **************************
 Definition of Missing Data
@@ -41,11 +55,15 @@ In order to be able to develop an intuition about what computation
 will be done by various NumPy functions, a consistent conceptual
 model of what a masked element means must be applied. The approach
 taken in the R project is to define a masked element as something which
-does have a valid value, but that value is unknown.
+does have a valid value, but that value is unknown. This proposal
+adopts this behavior as as the default for all operations involving
+missing values.
 
-In this interpretation, any computation with a masked input produces
+In this interpretation, nearly any computation with a masked input produces
 a masked output. For example, 'sum(a)' would produce a masked value
-if 'a' contained just one masked element.
+if 'a' contained just one masked element. When the output value does
+not depend on one of the inputs, it is reasonable to output a value
+that is not NA, such as logical_and(NA, False) == False.
 
 Some more complex arithmetic operations, such as matrix products, are
 well defined with this interpretation, and the result should be
@@ -53,43 +71,47 @@ the same as is the missing values were NaNs. Actually implementing
 such things to the theoretical limit is probably not worth it,
 and in many cases either raising an exception or returning all
 missing values may be preferred to doing precise calculations.
-
-This approach should likely be the default uniformly throughout NumPy,
-because it will consistently flag problems by default, instead of
-silently producing incorrect results because a missing value is
-hidden deep within an array.
+Care must be taken here when dealing with the values and the masks,
+to preserve the semantics that masking a value never touches
+the element's backing memory.
 
 Data That Doesn't Exist
 =======================
 
 Another useful interpretation is that the masked elements should be
 treated as if they didn't exist in the array, and the operation should
-do its best interpretation of what that means according to the data
+do its best to interpret what that means according to the data
 that's left. In this case, 'mean(a)' would compute the mean of just
 the values that are unmasked, adjusting both the sum and count it
 uses based on the mask.
 
-This approach is useful when working with messy data and the analysis
-being done is trying to produce the best result that's possible from
-the data that is available.
+This kind of data can arise when conforming sparsely sampled data
+into a regular sampling pattern, and is a useful interpretation so 
+use when attempting to get best-guess answers for many statistical queries.
 
 In R, many functions take a parameter "na.rm=T" which means to treat
-the data as if the NA values are not part of the data set.
+the data as if the NA values are not part of the data set. This proposal
+defines a standard parameter "skipmissing=True" for this same purpose. 
 
 Data That Is Being Temporarily Ignored
 ======================================
 
-Interpreting the meaning of temporarily ignored data requires
-choosing between one of the missing data interpretations above.
-This is a common use case for masks, which are an elegant mechanism
-to implement this.
+It can be useful to temporarily treat some array elements as if they
+were NA, possibly in many different configurations. This is a common
+use case for masks, and the mask-based implementation of missing values
+supports this usage by having the strict requirement that masked array
+elements never be touched.
 
-**************************
-The Mask as Seen in Python
-**************************
+In general, this can be done by first creating a view, then either adding
+a mask if there isn't one yet, or having the view create its own copy of
+the mask instead of retaining a view of the original's mask.
 
-Working With Masked Values
-==========================
+********************************
+Missing Values as Seen in Python
+********************************
+
+Working With Missing Values
+===========================
 
 NumPy will gain a global singleton called numpy.NA, similar to None,
 but with semantics reflecting its status as a missing value. In particular,
@@ -97,20 +119,33 @@ trying to treat it as a boolean will raise an exception, and comparisons
 with it will produce numpy.NA instead of True or False. These basics are
 adopted from the behavior of the NA value in the R project.
 
-Assigning a value to the array always unmasks that element. Assigning
-numpy.NA to the array masks that element. The storage behind a masked
-value may never be accessed in any way, other than to unmask it by
-assigning a value.
+For example,::
+
+    >>> np.array([1.0, 2.0, np.NA, 7.0], masked=True)
+    array([1., 2., NA, 7.], masked=True)
+    >>> np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]')
+    array([1., 2., NA, 7.], dtype='NA[<f8]')
+
+produce arrays with values [1.0, 2.0, <inaccessible>, 7.0] /
+mask [Unmasked, Unmasked, Masked, Unmasked], and
+values [1.0, 2.0, <NA bit pattern>, 7.0] respectively.
+
+Assigning a value to an array always causes that element to not be NA,
+transparently unmasking it if necessary.. Assigning numpy.NA to the array
+masks that element or assigns the NA bit pattern for the particular dtype.
+In the mask-based implementation, the storage behind a missing value may never
+be accessed in any way, other than to unmask it by assigning its value.
 
 While numpy.NA works to mask values, it does not itself have a dtype.
 This means that returning the numpy.NA singleton from an operation
 like 'arr[0]' would be throwing away the dtype, which is still
 valuable to retain, so 'arr[0]' will return a zero-dimensional
-array with its value masked instead of numpy.NA. To test if the value
-is missing, a function like "np.ismissing(arr[0])" will be provided.
-One of the key reasons for the NumPy scalars is to allow their values
-into dictionaries. Having a missing value as the key in a dictionary
-is a bad idea, so not returning a scalar is fine for this case.
+array either with its value masked, or containing the NA bit pattern
+for the array's dtype. To test if the value is missing, the function
+"np.ismissing(arr[0])" will be provided. One of the key reasons for the
+NumPy scalars is to allow their values into dictionaries. Having a
+missing value as the key in a dictionary is a bad idea, so the NumPy
+scalars will not support missing values in any form.
 
 All operations which write to masked arrays will not affect the value
 unless they also unmask that value. This allows the storage behind
@@ -129,29 +164,33 @@ from another view which doesn't have them masked. For example::
     array([1,2])
     >>> # The underlying number 1 value in 'a[0]' was untouched
 
-If np.NA or masked values are copied to an array without a mask, an
-exception will be raised. Adding a validitymask to the target array
-would be problematic, because then having a mask would be a "viral"
-property consuming extra memory and reducing performance in unexpected
-ways.
+Copying values between the mask-based implementation and the
+NA bit pattern implementation will transparently do the correct thing,
+turning the NA bit pattern into a masked value, or a masked value
+into the NA bit pattern where appropriate. The one exception is
+if a valid value in a masked array happens to have the NA bit pattern,
+copying this value to the NA form of the dtype will cause it to
+become NA as well.
 
-By default, the string "NA" will be used to represent masked values
-in str and repr outputs. A global default configuration will allow
+If np.NA or masked values are copied to an array without support for
+missing values enabled, an exception will be raised. Adding a mask to
+the target array would be problematic, because then having a mask
+would be a "viral" property consuming extra memory and reducing
+performance in unexpected ways.
+
+By default, the string "NA" will be used to represent missing values
+in str and repr outputs. A global configuration will allow
 this to be changed. The array2string function will also gain a
-'maskedstr=' parameter so this could be changed to "NA" or
-other values people may desire. For example,::
-
-    >>> np.array([1.0, 2.0, np.NA, 7.0], masked=True)
-
-will produce an array with values [1.0, 2.0, <inaccessible>, 7.0], and
-validitymask [True, True, False, True].
+'maskedstr=' parameter so this could be changed to "<missing>" or
+other values people may desire.
 
 For floating point numbers, Inf and NaN are separate concepts from
-missing values. If a division by zero occurs, an unmasked Inf or NaN will
-be produced. To mask those values, a further 'a.validitymask &= np.isfinite(a)'
-can achieve that. If the parameterized dtype('NA[f8,InfNan]') is
-implemented as described in a later section, this mechanism could be
-used to get these semantics without the extra mask manipulation.
+missing values. If a division by zero occurs in an array with default
+missing value support, an unmasked Inf or NaN will be produced. To
+mask those values, a further 'a[np.logical_not(a.isfinite(a)] = np.NA'
+can achieve that. For the NA bit pattern approach, the parameterized
+dtype('NA[f8,InfNan]') described in a later section can be used to get
+these semantics without the extra manipulation.
 
 A manual loop through a masked array like::
 
@@ -159,46 +198,50 @@ A manual loop through a masked array like::
         a[i] = np.log(a[i])
 
 works even with masked values, because 'a[i]' returns a zero-dimensional
-array with a masked value instead of np.NA for the missing elements.
-If np.NA was returned, np.log would have to raise an exception because
-it doesn't know the log of which dtype it's meant to call, whether it's a
-missing float or a missing string, for example.
+array with a missing value instead of the singleton np.NA for the missing
+elements. If np.NA was returned, np.log would have to raise an exception
+because it doesn't know the log of which dtype it's meant to call, whether
+it's a missing float or a missing string, for example.
 
-The 'validitymask' Property
+Accessing a Boolean Mask
+========================
+
+The mask used to implement missing data in the masked approach is not
+accessible from Python directly. This is partially due to differing
+opinions on whether True in the mask should mean "missing" or "not missing"
+Additionally, exposing the mask directly would preclude a potential
+space optimization, where a bit-level instead of a byte-level mask
+is used to get a factor of eight memory usage improvement.
+
+To access the mask values, there are two functions provided,
+'np.ismissing' and 'np.isavail', which test for NA or available values
+respectively. These functions work equivalently for masked arrays
+and NA bit pattern dtypes.
+
+Creating Masked Arrays
+======================
+
+There are two flags which indicate and control the nature of the mask
+used in masked arrays.
+
+First is 'arr.flags.hasmask', which is True for all masked arrays and
+may be set to True to add a mask to an array which does not have one.
+
+Second is 'arr.flags.ownmask', which is True if the array owns the
+memory to the mask, and False if the array has no mask, or has a view
+into the mask of another array. If this is set to False in a masked
+array, the array will create a copy of the mask so that further modifications
+to the mask will not affect the array being viewed.
+
+Mask Implementation Details
 ===========================
 
-The array object will get a new property 'validitymask', which behaves very
-similar to a boolean array. When this property isn't None, it
-has a shape exactly matching the array's shape, and for struct dtypes,
-has a matching dtype with every type in the struct replaced with bool.
-
-The reason for calling it 'validitymask' instead of just 'mask' or something
-shorter is that this object is not intended to be the primary way to work
-with masked values. It provides an interface for working with the mask,
-but primarily the mask will be changed transparently based on manipulating
-values and using the global singleton 'numpy.NA'.
-
-The validitymask value is True for values that exist in the array, and False
-for values that do not. This is the same convention used in most places
-masks are used, for instance for image masks specifying which are valid
-pixels and which are transparent. This is the reverse of the convention
-in the current masked array subclass, but I think changing this is worth
-the trouble for the long term benefit.
-
-When an array has no mask, as indicated by the 'arr.flags.hasmask'
-property being False, a mask may be added either by assigning True to
-'arr.flags.hasmask', or assigning a boolean array to 'arr.validitymask'.
-If the array already has a validitymask, this operation will raise an
-exception unless the single value False is being assigned, which will
-mask all the elements. The &= operator, however will be allowed, as
-it can only cause unmasked values to become masked.
-
-The memory ordering of the validitymask will always match the ordering of
+The memory ordering of the mask will always match the ordering of
 the array it is associated with. A Fortran-style array will have a
-Fortran-style validitymask, etc.
+Fortran-style mask, etc.
 
-When a view of an array with a validitymask is taken, the view will have
-a validitymask which is also a view of the validitymask in the original
+When a view of an array with a mask is taken, the view will have
+a mask which is also a view of the mask in the original
 array. This means unmasking values in views will also unmask them
 in the original array, and if a mask is added to an array, it will
 not be possible to ever remove that mask except to create a new array
@@ -210,37 +253,30 @@ mask to that view. A data set can be viewed with multiple different
 masks simultaneously, by creating multiple views, and giving each view
 a mask.
 
-When a validitymask gets added, the array to which it was added owns
-the validitymask. This is indicated by the 'arr.flags.ownmask' flag.
-When a view of an array with a validity mask is taken, the view does
-not own its validitymask. In this case, it is possible to assign
-'arr.flags.ownmask = True', which gives 'arr' its own copy of the
-validitymask it is using, allowing it to be changed without affecting
-the mask of the array being viewed.
-
 New ndarray Methods
 ===================
 
-In addition to the 'mask' property, the ndarray needs several new
-methods to easily work with masked values. The proposed methods for
-an np.array *a* are::
+New functions added to the numpy namespace are::
 
-    a.assign_from_masked(b, fillvalue, casting='same_kind'):
-        This is equivalent to a[...] = b, with the provided maskedvalue
-        being substituted wherever there is missing data. This is
-        intended for use when 'a' has no mask, but 'b' does.
+    np.ismissing(arr)
+        Returns a boolean array with True whereever the array is masked
+        or matches the NA bit pattern, and False elsewhere
 
-    a.fill_masked(value)
-        This is exactly like a.fill(value), but only modifies the
-        masked elements of 'a'. All values of 'a' become unmasked.
+    np.isavail(arr)
+        Returns a boolean array with False whereever the array is masked
+        or matches the NA bit pattern, and True elsewhere
 
-    a.fill_unmasked(value)
-        This is exactly like a.fill(value), but only modifies the
-        unmasked elements of a. The mask remains unchanged.
+New functions added to the ndarray are::
 
-    a.copy_filled(fillvalue, order='K', ...)
-        Exactly like a.copy(), except always produces an array
-        without a mask and uses 'fillvalue' for any masked values.
+    arr.copy(..., replacena=None)
+        Modification to the copy function which replaces NA values,
+        either masked or with the NA bit pattern, with the 'replacena='
+        parameter suppled. When 'replacena' isn't None, the copied
+        array is unmasked and has the 'NA' part stripped from the
+        parameterized type ('NA[f8]' becomes just 'f8').
+
+    arr.view(masked=True)
+        This is a shortcut for 'a = arr.view(); a.flags.hasmask=True'.
 
 Masked Element-wise UFuncs
 ==========================
@@ -253,7 +289,7 @@ will take an optional 'mask=' parameter which allows the use
 of boolean arrays to choose where a computation should be done.
 This functions similar to a "where" clause on the ufunc.::
 
-    np.add(a, b, out=b, mask=(a > threshold))
+    >>> np.add(a, b, out=b, mask=(a > threshold))
 
 A benefit of having this 'mask=' parameter is that it provides a way
 to temporarily treat an object with a mask without ever creating a
@@ -296,7 +332,9 @@ PEP 3118
 ========
 
 PEP 3118 doesn't have any mask mechanism, so arrays with masks will
-not be accessible through this interface.
+not be accessible through this interface. Similarly, it doesn't support
+the specification of dtypes with NA bit patterns, so the parameterized NA
+dtypes will also not be accessible through this interface.
 
 Unresolved Design Questions
 ===========================
@@ -401,6 +439,12 @@ form, are then::
     np.dtype('NA[f8,NaN]') (for any NaN)
     np.dtype('NA[f8,InfNaN]') (for any NaN or Inf)
 
+When no parameter is specified a flexible NA dtype is created, which itself
+cannot hold values, but will conform to the input types in funcions like
+'np.astype'. The dtype 'f8' maps to 'NA[f8]', and [('a', 'f4'), ('b', 'i4')]
+maps to [('a', 'NA[f4]'), ('b', 'NA[i4]')]. Thus, to view the memory
+of an 'f8' array 'arr' with 'NA[f8]', you can say arr.view(dtype='NA').
+
 Parameterized Data Type Which Adds Additional Memory for the NA Flag
 ====================================================================
 
@@ -433,7 +477,7 @@ the discussion are::
     Pierre GM
     Christopher Barker
     Josef Perktold
-    Benjamin Root
+    Ben Root
     Laurent Gautier
     Neal Becker
     Bruce Southey
