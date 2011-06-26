@@ -319,14 +319,33 @@ Reduction operations like 'sum', 'prod', 'min', and 'max' will operate
 consistently with the idea that a masked value exists, but its value
 is unknown.
 
-An optional parameter 'skipna=False' will be added to those functions
+An optional parameter 'skipna=' will be added to those functions
 which can interpret it appropriately to do the operation as if just
-the unmasked values existed. When all the input values are masked,
+the unmasked values existed.
+
+With 'skipna=True', when all the input values are masked,
 'sum' and 'prod' will produce the additive and multiplicative identities
-respectively, while 'min' and 'max' will produce masked values. With
-this parameter enabled, statistics operations which require a count,
-like 'mean' and 'std' will also use the unmasked value counts for
-their calculations, and produce masked values when all the inputs are masked.
+respectively, while 'min' and 'max' will produce masked values.
+Statistics operations which require a count, like 'mean' and 'std'
+will also use the unmasked value counts for their calculations if
+'skipna=True', and produce masked values when all the inputs are masked.
+
+Some examples::
+
+    >>> a = np.array([1., 3., np.NA, 7.], masked=True)
+    >>> np.sum(a)
+    array(NA, dtype='<f8', masked=True)
+    >>> np.sum(a, skipna=True)
+    11.0
+    >>> np.mean(a)
+    array(NA, dtype='<f8', masked=True)
+    >>> np.mean(a)
+    3.6666666666666665
+    >>> a = np.array([np.NA, np.NA], dtype='f8', masked=True)
+    >>> np.sum(a, skipna=True)
+    0.0
+    >>> np.max(a, skipna=True)
+    array(NA, dtype='<f8', masked=True)
 
 PEP 3118
 ========
