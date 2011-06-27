@@ -232,11 +232,11 @@ struct NpyIter_BD {
         (&(bufferdata)->bd_flexdata + 3*(nop)))
 #define NBF_READTRANSFERFN(bufferdata) ((PyArray_StridedTransferFn **) \
         (&(bufferdata)->bd_flexdata + 4*(nop)))
-#define NBF_READTRANSFERDATA(bufferdata) ((void **) \
+#define NBF_READTRANSFERDATA(bufferdata) ((NpyAuxData **) \
         (&(bufferdata)->bd_flexdata + 5*(nop)))
 #define NBF_WRITETRANSFERFN(bufferdata) ((PyArray_StridedTransferFn **) \
         (&(bufferdata)->bd_flexdata + 6*(nop)))
-#define NBF_WRITETRANSFERDATA(bufferdata) ((void **) \
+#define NBF_WRITETRANSFERDATA(bufferdata) ((NpyAuxData **) \
         (&(bufferdata)->bd_flexdata + 7*(nop)))
 #define NBF_BUFFERS(bufferdata) ((char **) \
         (&(bufferdata)->bd_flexdata + 8*(nop)))
@@ -841,7 +841,7 @@ NpyIter_Copy(NpyIter *iter)
         NpyIter_BufferData *bufferdata;
         npy_intp buffersize, itemsize;
         char **buffers;
-        void **readtransferdata, **writetransferdata;
+        NpyAuxData **readtransferdata, **writetransferdata;
 
         bufferdata = NIT_BUFFERDATA(newiter);
         buffers = NBF_BUFFERS(bufferdata);
@@ -869,7 +869,7 @@ NpyIter_Copy(NpyIter *iter)
                 }
                 else {
                     readtransferdata[iop] =
-                      PyArray_CopyStridedTransferData(readtransferdata[iop]);
+                          NPY_AUXDATA_CLONE(readtransferdata[iop]);
                     if (readtransferdata[iop] == NULL) {
                         out_of_memory = 1;
                     }
@@ -882,7 +882,7 @@ NpyIter_Copy(NpyIter *iter)
                 }
                 else {
                     writetransferdata[iop] =
-                      PyArray_CopyStridedTransferData(writetransferdata[iop]);
+                          NPY_AUXDATA_CLONE(writetransferdata[iop]);
                     if (writetransferdata[iop] == NULL) {
                         out_of_memory = 1;
                     }
@@ -925,7 +925,7 @@ NpyIter_Deallocate(NpyIter *iter)
     if (itflags&NPY_ITFLAG_BUFFER) {
         NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
         char **buffers;
-        void **transferdata;
+        NpyAuxData **transferdata;
 
         /* buffers */
         buffers = NBF_BUFFERS(bufferdata);
@@ -938,14 +938,14 @@ NpyIter_Deallocate(NpyIter *iter)
         transferdata = NBF_READTRANSFERDATA(bufferdata);
         for(iop = 0; iop < nop; ++iop, ++transferdata) {
             if (*transferdata) {
-                PyArray_FreeStridedTransferData(*transferdata);
+                NPY_AUXDATA_FREE(*transferdata);
             }
         }
         /* write bufferdata */
         transferdata = NBF_WRITETRANSFERDATA(bufferdata);
         for(iop = 0; iop < nop; ++iop, ++transferdata) {
             if (*transferdata) {
-                PyArray_FreeStridedTransferData(*transferdata);
+                NPY_AUXDATA_FREE(*transferdata);
             }
         }
     }
@@ -5057,11 +5057,11 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     npy_intp *strides = NAD_STRIDES(axisdata), op_stride;
     PyArray_StridedTransferFn **readtransferfn = NBF_READTRANSFERFN(bufferdata),
                         **writetransferfn = NBF_WRITETRANSFERFN(bufferdata);
-    void **readtransferdata = NBF_READTRANSFERDATA(bufferdata),
-         **writetransferdata = NBF_WRITETRANSFERDATA(bufferdata);
+    NpyAuxData **readtransferdata = NBF_READTRANSFERDATA(bufferdata),
+               **writetransferdata = NBF_WRITETRANSFERDATA(bufferdata);
 
     PyArray_StridedTransferFn *stransfer = NULL;
-    void *transferdata = NULL;
+    NpyAuxData *transferdata = NULL;
     int needs_api = 0;
 
     for (iop = 0; iop < nop; ++iop) {
@@ -5155,11 +5155,11 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
 fail:
     for (i = 0; i < iop; ++i) {
         if (readtransferdata[iop] != NULL) {
-            PyArray_FreeStridedTransferData(readtransferdata[iop]);
+            NPY_AUXDATA_FREE(readtransferdata[iop]);
             readtransferdata[iop] = NULL;
         }
         if (writetransferdata[iop] != NULL) {
-            PyArray_FreeStridedTransferData(writetransferdata[iop]);
+            NPY_AUXDATA_FREE(writetransferdata[iop]);
             writetransferdata[iop] = NULL;
         }
     }
@@ -5336,7 +5336,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
     npy_intp *reduce_outerstrides = NULL;
 
     PyArray_StridedTransferFn *stransfer = NULL;
-    void *transferdata = NULL;
+    NpyAuxData *transferdata = NULL;
 
     npy_intp axisdata_incr = NIT_AXISDATA_SIZEOF(itflags, ndim, nop) /
                                 NPY_SIZEOF_INTP;
@@ -5503,7 +5503,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
     char **reduce_outerptrs = NULL;
 
     PyArray_StridedTransferFn *stransfer = NULL;
-    void *transferdata = NULL;
+    NpyAuxData *transferdata = NULL;
 
     /*
      * Have to get this flag before npyiter_checkreducesize sets
