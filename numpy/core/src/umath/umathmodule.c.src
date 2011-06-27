@@ -39,6 +39,7 @@
 #include "funcs.inc"
 #include "loops.h"
 #include "ufunc_object.h"
+#include "ufunc_type_resolution.h"
 #include "__umath_generated.c"
 #include "__ufunc_api.c"
 
