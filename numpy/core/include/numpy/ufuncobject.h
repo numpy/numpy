@@ -31,11 +31,14 @@ struct _tagPyUFuncObject;
  * This function should validate that the casting rule is being followed,
  * and fail if it is not.
  *
+ * For backwards compatibility, the regular type resolution function does not
+ * support auxiliary data with object semantics. The type resolution call
+ * which returns a masked generic function returns a standard NpyAuxData
+ * object, for which the NPY_AUXDATA_FREE and NPY_AUXDATA_CLONE macros
+ * work.
+ *
  * ufunc:             The ufunc object.
  * casting:           The 'casting' parameter provided to the ufunc.
- * masked:            If non-zero, must return a
- *                    PyUFuncGenericMaskedFunction instead of a regular
- *                    PyUFuncGenericFunction.
  * operands:          An array of length (ufunc->nin + ufunc->nout),
  *                    with the output parameters possibly NULL.
  * type_tup:          Either NULL, or the type_tup passed to the ufunc.
@@ -54,12 +57,19 @@ struct _tagPyUFuncObject;
 typedef int (PyUFunc_TypeResolutionFunc)(
                                 struct _tagPyUFuncObject *ufunc,
                                 NPY_CASTING casting,
-                                int masked,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes,
                                 PyUFuncGenericFunction *out_innerloop,
                                 void **out_innerloopdata);
+typedef int (PyUFunc_TypeResolutionMaskedFunc)(
+                                struct _tagPyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericMaskedFunction *out_innerloop,
+                                NpyAuxData **out_innerloopdata);
 
 typedef struct _tagPyUFuncObject {
         PyObject_HEAD
@@ -129,6 +139,12 @@ typedef struct _tagPyUFuncObject {
          * have a different set of rules.
          */
         PyUFunc_TypeResolutionFunc *type_resolution_function;
+        /*
+         * A function which resolves the types and returns an inner loop.
+         * This is used by the regular ufunc when it requires using
+         * a mask to select which elements to compute.
+         */
+        PyUFunc_TypeResolutionMaskedFunc *type_resolution_masked_function;
 } PyUFuncObject;
 
 #include "arrayobject.h"
