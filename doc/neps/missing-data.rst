@@ -140,13 +140,14 @@ Without doing this, NA printouts would look like::
     array(NA, dtype='NA[<f8]')
 
 but with this, they could be printed as::
+
     >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], masked=True))
     NA('float64')
     >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]'))
     NA('NA[<f8]')
 
 Assigning a value to an array always causes that element to not be NA,
-transparently unmasking it if necessary.. Assigning numpy.NA to the array
+transparently unmasking it if necessary. Assigning numpy.NA to the array
 masks that element or assigns the NA bit pattern for the particular dtype.
 In the mask-based implementation, the storage behind a missing value may never
 be accessed in any way, other than to unmask it by assigning its value.
@@ -311,7 +312,7 @@ to temporarily treat an object with a mask without ever creating a
 masked array object.
 
 If the 'out' parameter isn't specified, use of the 'mask=' parameter
-will produce a array with a mask as the result.
+will produce an array with a mask as the result.
 
 For boolean operations, the R project special cases logical_and and
 logical_or so that logical_and(NA, False) is False, and
@@ -479,7 +480,7 @@ form, are then::
     np.dtype('NA[f8,InfNaN]') (for any NaN or Inf)
 
 When no parameter is specified a flexible NA dtype is created, which itself
-cannot hold values, but will conform to the input types in funcions like
+cannot hold values, but will conform to the input types in functions like
 'np.astype'. The dtype 'f8' maps to 'NA[f8]', and [('a', 'f4'), ('b', 'i4')]
 maps to [('a', 'NA[f4]'), ('b', 'NA[i4]')]. Thus, to view the memory
 of an 'f8' array 'arr' with 'NA[f8]', you can say arr.view(dtype='NA').
