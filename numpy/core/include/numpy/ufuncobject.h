@@ -7,7 +7,20 @@
 extern "C" {
 #endif
 
-typedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *);
+/* The most generic inner loop for a standard element-wise ufunc */
+typedef void (*PyUFuncGenericFunction)
+            (char **args,
+             npy_intp *dimensions,
+             npy_intp *steps,
+             void *innerloopdata);
+
+/* The most generic inner loop for a masked standard element-wise ufunc */
+typedef void (*PyUFuncGenericMaskedFunction)
+            (char **args,
+             npy_bool *mask,
+             npy_intp *dimensions,
+             npy_intp *steps,
+             void *innerloopdata);
 
 /* Forward declaration for the type resolution function */
 struct _tagPyUFuncObject;
@@ -20,6 +33,9 @@ struct _tagPyUFuncObject;
  *
  * ufunc:             The ufunc object.
  * casting:           The 'casting' parameter provided to the ufunc.
+ * masked:            If non-zero, must return a
+ *                    PyUFuncGenericMaskedFunction instead of a regular
+ *                    PyUFuncGenericFunction.
  * operands:          An array of length (ufunc->nin + ufunc->nout),
  *                    with the output parameters possibly NULL.
  * type_tup:          Either NULL, or the type_tup passed to the ufunc.
@@ -38,6 +54,7 @@ struct _tagPyUFuncObject;
 typedef int (PyUFunc_TypeResolutionFunc)(
                                 struct _tagPyUFuncObject *ufunc,
                                 NPY_CASTING casting,
+                                int masked,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes,
