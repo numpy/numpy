@@ -1733,6 +1733,7 @@ ensure_dtype_nbo(PyArray_Descr *type)
 NPY_NO_EXPORT int
 PyUFunc_DefaultTypeResolution(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
+                                int masked,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes,
@@ -1788,6 +1789,7 @@ PyUFunc_DefaultTypeResolution(PyUFuncObject *ufunc,
 NPY_NO_EXPORT int
 PyUFunc_SimpleBinaryComparisonTypeResolution(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
+                                int masked,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes,
@@ -1815,7 +1817,7 @@ PyUFunc_SimpleBinaryComparisonTypeResolution(PyUFuncObject *ufunc,
     type_num2 = PyArray_DESCR(operands[1])->type_num;
     if (type_num1 >= NPY_NTYPES || type_num2 >= NPY_NTYPES ||
             type_num1 == NPY_OBJECT || type_num2 == NPY_OBJECT) {
-        return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+        return PyUFunc_DefaultTypeResolution(ufunc, casting, masked, operands,
                 type_tup, out_dtypes, out_innerloop, out_innerloopdata);
     }
 
@@ -1834,8 +1836,9 @@ PyUFunc_SimpleBinaryComparisonTypeResolution(PyUFuncObject *ufunc,
          * default type resolution handle this one.
          */
         if (!PyTuple_Check(type_tup) || PyTuple_GET_SIZE(type_tup) != 1) {
-            return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
-                    type_tup, out_dtypes, out_innerloop, out_innerloopdata);
+            return PyUFunc_DefaultTypeResolution(ufunc, casting, masked,
+                    operands, type_tup, out_dtypes,
+                    out_innerloop, out_innerloopdata);
         }
 
         if (!PyArray_DescrCheck(PyTuple_GET_ITEM(type_tup, 0))) {
@@ -1913,6 +1916,7 @@ PyUFunc_SimpleBinaryComparisonTypeResolution(PyUFuncObject *ufunc,
 NPY_NO_EXPORT int
 PyUFunc_SimpleUnaryOperationTypeResolution(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
+                                int masked,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes,
@@ -1938,7 +1942,7 @@ PyUFunc_SimpleUnaryOperationTypeResolution(PyUFuncObject *ufunc,
      */
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     if (type_num1 >= NPY_NTYPES || type_num1 == NPY_OBJECT) {
-        return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+        return PyUFunc_DefaultTypeResolution(ufunc, casting, masked, operands,
                 type_tup, out_dtypes, out_innerloop, out_innerloopdata);
     }
 
@@ -1957,8 +1961,9 @@ PyUFunc_SimpleUnaryOperationTypeResolution(PyUFuncObject *ufunc,
          * default type resolution handle this one.
          */
         if (!PyTuple_Check(type_tup) || PyTuple_GET_SIZE(type_tup) != 1) {
-            return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
-                    type_tup, out_dtypes, out_innerloop, out_innerloopdata);
+            return PyUFunc_DefaultTypeResolution(ufunc, casting, masked,
+                    operands, type_tup, out_dtypes,
+                    out_innerloop, out_innerloopdata);
         }
 
         if (!PyArray_DescrCheck(PyTuple_GET_ITEM(type_tup, 0))) {
@@ -2020,6 +2025,7 @@ PyUFunc_SimpleUnaryOperationTypeResolution(PyUFuncObject *ufunc,
 NPY_NO_EXPORT int
 PyUFunc_OnesLikeTypeResolution(PyUFuncObject *ufunc,
                                 NPY_CASTING NPY_UNUSED(casting),
+                                int masked,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes,
@@ -2027,7 +2033,7 @@ PyUFunc_OnesLikeTypeResolution(PyUFuncObject *ufunc,
                                 void **out_innerloopdata)
 {
     return PyUFunc_SimpleUnaryOperationTypeResolution(ufunc,
-                        NPY_UNSAFE_CASTING,
+                        NPY_UNSAFE_CASTING, masked,
                         operands, type_tup, out_dtypes,
                         out_innerloop, out_innerloopdata);
 }
@@ -2048,6 +2054,7 @@ PyUFunc_OnesLikeTypeResolution(PyUFuncObject *ufunc,
 NPY_NO_EXPORT int
 PyUFunc_SimpleBinaryOperationTypeResolution(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
+                                int masked,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes,
@@ -2075,7 +2082,7 @@ PyUFunc_SimpleBinaryOperationTypeResolution(PyUFuncObject *ufunc,
     type_num2 = PyArray_DESCR(operands[1])->type_num;
     if (type_num1 >= NPY_NTYPES || type_num2 >= NPY_NTYPES ||
             type_num1 == NPY_OBJECT || type_num2 == NPY_OBJECT) {
-        return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+        return PyUFunc_DefaultTypeResolution(ufunc, casting, masked, operands,
                 type_tup, out_dtypes, out_innerloop, out_innerloopdata);
     }
 
@@ -2096,8 +2103,9 @@ PyUFunc_SimpleBinaryOperationTypeResolution(PyUFuncObject *ufunc,
          * default type resolution handle this one.
          */
         if (!PyTuple_Check(type_tup) || PyTuple_GET_SIZE(type_tup) != 1) {
-            return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
-                    type_tup, out_dtypes, out_innerloop, out_innerloopdata);
+            return PyUFunc_DefaultTypeResolution(ufunc, casting, masked,
+                    operands, type_tup, out_dtypes,
+                    out_innerloop, out_innerloopdata);
         }
 
         if (!PyArray_DescrCheck(PyTuple_GET_ITEM(type_tup, 0))) {
@@ -2163,6 +2171,7 @@ PyUFunc_SimpleBinaryOperationTypeResolution(PyUFuncObject *ufunc,
 NPY_NO_EXPORT int
 PyUFunc_AbsoluteTypeResolution(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
+                                int masked,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes,
@@ -2171,13 +2180,13 @@ PyUFunc_AbsoluteTypeResolution(PyUFuncObject *ufunc,
 {
     /* Use the default for complex types, to find the loop producing float */
     if (PyTypeNum_ISCOMPLEX(PyArray_DESCR(operands[0])->type_num)) {
-        return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+        return PyUFunc_DefaultTypeResolution(ufunc, casting, masked, operands,
                     type_tup, out_dtypes, out_innerloop, out_innerloopdata);
     }
     else {
         return PyUFunc_SimpleUnaryOperationTypeResolution(ufunc, casting,
-                    operands, type_tup, out_dtypes, out_innerloop,
-                    out_innerloopdata);
+                    masked, operands, type_tup, out_dtypes,
+                    out_innerloop, out_innerloopdata);
     }
 }
 
@@ -2211,35 +2220,6 @@ get_datetime_metacobj_from_dtype(PyArray_Descr *dtype)
 
     Py_INCREF(metacobj);
     return metacobj;
-}
-
-/*
- * This function returns a pointer to the DateTimeMetaData
- * contained within the provided datetime dtype.
- *
- * NOTE: This function is copied from datetime.c in multiarray,
- *       because umath and multiarray are not linked together.
- */
-static PyArray_DatetimeMetaData *
-get_datetime_metadata_from_dtype(PyArray_Descr *dtype)
-{
-    PyObject *metacobj;
-    PyArray_DatetimeMetaData *meta = NULL;
-
-    metacobj = get_datetime_metacobj_from_dtype(dtype);
-    if (metacobj == NULL) {
-        return NULL;
-    }
-
-    /* Check that the dtype has an NpyCapsule for the metadata */
-    meta = (PyArray_DatetimeMetaData *)NpyCapsule_AsVoidPtr(metacobj);
-    if (meta == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "Datetime type object is invalid, unit metadata is corrupt");
-        return NULL;
-    }
-
-    return meta;
 }
 
 /*
@@ -2299,6 +2279,7 @@ timedelta_dtype_with_copied_meta(PyArray_Descr *dtype)
 NPY_NO_EXPORT int
 PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
+                                int masked,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes,
@@ -2317,7 +2298,7 @@ PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+        return PyUFunc_DefaultTypeResolution(ufunc, casting, masked, operands,
                     type_tup, out_dtypes, out_innerloop, out_innerloopdata);
     }
 
@@ -2506,6 +2487,7 @@ type_reso_error: {
 NPY_NO_EXPORT int
 PyUFunc_SubtractionTypeResolution(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
+                                int masked,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes,
@@ -2524,7 +2506,7 @@ PyUFunc_SubtractionTypeResolution(PyUFuncObject *ufunc,
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+        return PyUFunc_DefaultTypeResolution(ufunc, casting, masked, operands,
                     type_tup, out_dtypes, out_innerloop, out_innerloopdata);
     }
 
@@ -2691,6 +2673,7 @@ type_reso_error: {
 NPY_NO_EXPORT int
 PyUFunc_MultiplicationTypeResolution(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
+                                int masked,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes,
@@ -2709,7 +2692,7 @@ PyUFunc_MultiplicationTypeResolution(PyUFuncObject *ufunc,
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+        return PyUFunc_DefaultTypeResolution(ufunc, casting, masked, operands,
                     type_tup, out_dtypes, out_innerloop, out_innerloopdata);
     }
 
@@ -2851,6 +2834,7 @@ type_reso_error: {
 NPY_NO_EXPORT int
 PyUFunc_DivisionTypeResolution(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
+                                int masked,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes,
@@ -2869,7 +2853,7 @@ PyUFunc_DivisionTypeResolution(PyUFuncObject *ufunc,
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_DefaultTypeResolution(ufunc, casting, operands,
+        return PyUFunc_DefaultTypeResolution(ufunc, casting, masked, operands,
                     type_tup, out_dtypes, out_innerloop, out_innerloopdata);
     }
 
@@ -3623,7 +3607,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     NPY_UF_DBG_PRINT("Finding inner loop\n");
 
 
-    retval = self->type_resolution_function(self, casting,
+    retval = self->type_resolution_function(self, casting, 0,
                         op, type_tup, dtype, &innerloop, &innerloopdata);
     if (retval < 0) {
         goto fail;
@@ -3949,7 +3933,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     NPY_UF_DBG_PRINT("Finding inner loop\n");
 
-    retval = self->type_resolution_function(self, casting,
+    retval = self->type_resolution_function(self, casting, 0,
                         op, type_tup, dtype, &innerloop, &innerloopdata);
     if (retval < 0) {
         goto fail;
