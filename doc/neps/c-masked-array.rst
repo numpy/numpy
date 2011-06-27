@@ -53,15 +53,15 @@ Unknown Yet Existing Data
 
 In order to be able to develop an intuition about what computation
 will be done by various NumPy functions, a consistent conceptual
-model of what a masked element means must be applied. The approach
-taken in the R project is to define a masked element as something which
+model of what a missing element means must be applied. The approach
+taken in the R project is to define a missing element as something which
 does have a valid value, but that value is unknown. This proposal
 adopts this behavior as as the default for all operations involving
 missing values.
 
-In this interpretation, nearly any computation with a masked input produces
-a masked output. For example, 'sum(a)' would produce a masked value
-if 'a' contained just one masked element. When the output value does
+In this interpretation, nearly any computation with a missing input produces
+a missing output. For example, 'sum(a)' would produce a missing value
+if 'a' contained just one missing element. When the output value does
 not depend on one of the inputs, it is reasonable to output a value
 that is not NA, such as logical_and(NA, False) == False.
 
@@ -78,7 +78,7 @@ the element's backing memory.
 Data That Doesn't Exist
 =======================
 
-Another useful interpretation is that the masked elements should be
+Another useful interpretation is that the missing elements should be
 treated as if they didn't exist in the array, and the operation should
 do its best to interpret what that means according to the data
 that's left. In this case, 'mean(a)' would compute the mean of just
@@ -99,8 +99,8 @@ Data That Is Being Temporarily Ignored
 It can be useful to temporarily treat some array elements as if they
 were NA, possibly in many different configurations. This is a common
 use case for masks, and the mask-based implementation of missing values
-supports this usage by having the strict requirement that masked array
-elements never be touched.
+supports this usage by having the strict requirement that the data
+storage backing any missing array elements never be touched.
 
 In general, this can be done by first creating a view, then either adding
 a mask if there isn't one yet, or having the view create its own copy of
@@ -129,6 +129,21 @@ For example,::
 produce arrays with values [1.0, 2.0, <inaccessible>, 7.0] /
 mask [Unmasked, Unmasked, Masked, Unmasked], and
 values [1.0, 2.0, <NA bit pattern>, 7.0] respectively.
+
+It may be worth overloading the np.NA __call__ method to accept a dtype,
+returning a zero-dimensional array with a missing value of that dtype.
+Without doing this, NA printouts would look like::
+
+    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], masked=True))
+    array(NA, dtype='float64', masked=True)
+    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]'))
+    array(NA, dtype='NA[<f8]')
+
+but with this, they could be printed as::
+    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], masked=True))
+    NA('float64')
+    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]'))
+    NA('NA[<f8]')
 
 Assigning a value to an array always causes that element to not be NA,
 transparently unmasking it if necessary.. Assigning numpy.NA to the array
@@ -278,8 +293,8 @@ New functions added to the ndarray are::
     arr.view(masked=True)
         This is a shortcut for 'a = arr.view(); a.flags.hasmask=True'.
 
-Masked Element-wise UFuncs
-==========================
+Element-wise UFuncs With Missing Values
+=======================================
 
 As part of the implementation, ufuncs and other operations will
 have to be extended to support masked computation. Because this
@@ -312,8 +327,8 @@ like ufuncs, but deviate from their behavior. The functions logical_and
 and logical_or can be moved into standalone function objects which are
 backwards compatible with the current ufuncs.
 
-Masked Reduction UFuncs
-=======================
+Reduction UFuncs With Missing Values
+====================================
 
 Reduction operations like 'sum', 'prod', 'min', and 'max' will operate
 consistently with the idea that a masked value exists, but its value
@@ -355,14 +370,19 @@ not be accessible through this interface. Similarly, it doesn't support
 the specification of dtypes with NA bit patterns, so the parameterized NA
 dtypes will also not be accessible through this interface.
 
+If NumPy did allow access through PEP 3118, this would circumvent the
+missing value abstraction in a very damaging way. Other libraries would
+try to use masked arrays, and silently get access to the data without
+also getting access to the mask or being aware of the missing value
+abstraction the mask and data together are following.
+
 Unresolved Design Questions
 ===========================
 
 The existing masked array implementation has a "hardmask" feature,
-which freezes the mask.  This would be an internal
-array flag, with 'a.mask.harden()' and 'a.mask.soften()' performing the
-functions of 'a.harden_mask()' and 'a.soften_mask()' in the current masked
-array. There would also need to be an 'a.mask.ishard' property.
+which prevents values from ever being unmasked by assigning a value.
+This would be an internal array flag, named something like
+'arr.flags.hardmask'.
 
 If the hardmask feature is implemented, boolean indexing could
 return a hardmasked array instead of a flattened array with the
@@ -370,9 +390,9 @@ arbitrary choice of C-ordering as it currently does. While this
 improves the abstraction of the array significantly, it is not
 a compatible change.
 
-****************************
-Possible Alternative Designs
-****************************
+**********************************
+Alternative Designs Without a Mask
+**********************************
 
 Parameterized Data Type With NA Signal Values
 =============================================
