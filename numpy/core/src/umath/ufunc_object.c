@@ -3740,6 +3740,8 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     self->userloops=NULL;
 
     self->type_resolution_function = &PyUFunc_DefaultTypeResolution;
+    self->type_resolution_masked_function =
+                            &PyUFunc_DefaultTypeResolutionMasked;
 
     if (name == NULL) {
         self->name = "?";
