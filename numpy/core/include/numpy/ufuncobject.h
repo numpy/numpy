@@ -20,7 +20,8 @@ typedef void (*PyUFuncGenericMaskedFunction)
              npy_bool *mask,
              npy_intp *dimensions,
              npy_intp *steps,
-             void *innerloopdata);
+             npy_intp maskstep,
+             NpyAuxData *innerloopdata);
 
 /* Forward declaration for the type resolution function */
 struct _tagPyUFuncObject;

@@ -1348,6 +1348,133 @@ type_reso_error: {
     }
 }
 
+typedef struct {
+    NpyAuxData base;
+    PyUFuncGenericFunction unmasked_innerloop;
+    void *unmasked_innerloopdata;
+    int nargs;
+} _ufunc_masker_data;
+
+static NpyAuxData *
+ufunc_masker_data_clone(NpyAuxData *data)
+{
+    _ufunc_masker_data *n;
+    
+    /* Allocate a new one */
+    n = (_ufunc_masker_data *)PyArray_malloc(sizeof(_ufunc_masker_data));
+    if (n == NULL) {
+        return NULL;
+    }
+
+    /* Copy the data (unmasked data doesn't have object semantics) */
+    memcpy(n, data, sizeof(_ufunc_masker_data));
+
+    return (NpyAuxData *)n;
+}
+
+/*
+ * This function wraps a regular unmasked ufunc inner loop as a
+ * masked ufunc inner loop, only calling the function for
+ * elements where the mask is True.
+ */
+static void
+unmasked_ufunc_loop_as_masked(
+             char **args,
+             npy_bool *mask,
+             npy_intp *dimensions,
+             npy_intp *steps,
+             npy_intp maskstep,
+             NpyAuxData *innerloopdata)
+{
+    _ufunc_masker_data *data;
+    int iargs, nargs;
+    PyUFuncGenericFunction unmasked_innerloop;
+    void *unmasked_innerloopdata;
+    npy_intp loopsize, subloopsize;
+
+    /* Put the aux data into local variables */
+    data = (_ufunc_masker_data *)innerloopdata;
+    unmasked_innerloop = data->unmasked_innerloop;
+    unmasked_innerloopdata = data->unmasked_innerloopdata;
+    nargs = data->nargs;
+    loopsize = *dimensions;
+
+    /* Process the data as runs of unmasked values */
+    do {
+        /* Skip masked values */
+        subloopsize = 0;
+        while (subloopsize < loopsize && *mask == 0) {
+            ++subloopsize;
+            mask += maskstep;
+        }
+        for (iargs = 0; iargs < nargs; ++iargs) {
+            args[iargs] += subloopsize * steps[iargs];
+        }
+        loopsize -= subloopsize;
+        /*
+         * Process unmasked values (assumes unmasked loop doesn't
+         * mess with the 'args' pointer values)
+         */
+        subloopsize = 0;
+        while (subloopsize < loopsize && *mask != 0) {
+            ++subloopsize;
+            mask += maskstep;
+        }
+        unmasked_innerloop(args, &subloopsize, steps, unmasked_innerloopdata);
+        for (iargs = 0; iargs < nargs; ++iargs) {
+            args[iargs] += subloopsize * steps[iargs];
+        }
+        loopsize -= subloopsize;
+    } while (loopsize > 0);
+}
+
+
+/*UFUNC_API
+ *
+ * This function calls the unmasked type resolution function of the
+ * ufunc, then wraps it with a function which only calls the inner
+ * loop where the mask is True.
+ *
+ * Returns 0 on success, -1 on error.
+ */
+NPY_NO_EXPORT int
+PyUFunc_DefaultTypeResolutionMasked(PyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericMaskedFunction *out_innerloop,
+                                NpyAuxData **out_innerloopdata)
+{
+    int retcode;
+    _ufunc_masker_data *data;
+
+    /* Create a new NpyAuxData object for the masker data */
+    data = (_ufunc_masker_data *)PyArray_malloc(sizeof(_ufunc_masker_data));
+    if (data == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+    memset(data, 0, sizeof(_ufunc_masker_data));
+    data->base.free = (NpyAuxData_FreeFunc *)&PyArray_free;
+    data->base.clone = &ufunc_masker_data_clone;
+    data->nargs = ufunc->nin + ufunc->nout;
+
+    /* Get the unmasked ufunc inner loop */
+    retcode = ufunc->type_resolution_function(ufunc, casting,
+                    operands, type_tup, out_dtypes,
+                    &data->unmasked_innerloop, &data->unmasked_innerloopdata);
+    if (retcode < 0) {
+        PyArray_free(data);
+        return retcode;
+    }
+
+    /* Return the loop function + aux data */
+    *out_innerloop = &unmasked_ufunc_loop_as_masked;
+    *out_innerloopdata = (NpyAuxData *)data;
+    return 0;
+}
+
 static int
 ufunc_loop_matches(PyUFuncObject *self,
                     PyArrayObject **op,

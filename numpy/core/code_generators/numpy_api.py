@@ -364,6 +364,7 @@ ufunc_funcs_api = {
     # End 1.6 API
     'PyUFunc_DefaultTypeResolution':            39,
     'PyUFunc_ValidateCasting':                  40,
+    'PyUFunc_DefaultTypeResolutionMasked':      41,
 }
 
 # List of all the dicts which define the C API
