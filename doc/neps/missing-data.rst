@@ -301,18 +301,20 @@ As part of the implementation, ufuncs and other operations will
 have to be extended to support masked computation. Because this
 is a useful feature in general, even outside the context of
 a masked array, in addition to working with masked arrays ufuncs
-will take an optional 'mask=' parameter which allows the use
-of boolean arrays to choose where a computation should be done.
-This functions similar to a "where" clause on the ufunc.::
+will take an optional 'where=' parameter which allows the use
+of boolean arrays to choose where a computation should be done.::
 
-    >>> np.add(a, b, out=b, mask=(a > threshold))
+    >>> np.add(a, b, out=b, where=(a > threshold))
 
-A benefit of having this 'mask=' parameter is that it provides a way
+A benefit of having this 'where=' parameter is that it provides a way
 to temporarily treat an object with a mask without ever creating a
-masked array object.
+masked array object. In the example above, this would only do the
+add for the array elements with True in the 'where' clause, and neither
+'a' nor 'b' need to be masked arrays.
 
-If the 'out' parameter isn't specified, use of the 'mask=' parameter
-will produce an array with a mask as the result.
+If the 'out' parameter isn't specified, use of the 'where=' parameter
+will produce an array with a mask as the result, with missing values
+for everywhere the 'where' clause had the value False.
 
 For boolean operations, the R project special cases logical_and and
 logical_or so that logical_and(NA, False) is False, and

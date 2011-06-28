@@ -721,7 +721,8 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                 NPY_CASTING *out_casting,
                 PyObject **out_extobj,
                 PyObject **out_typetup,
-                int *out_subok)
+                int *out_subok,
+                PyArrayObject **out_wheremask)
 {
     npy_intp i, nargs, nin = self->nin;
     PyObject *obj, *context;
@@ -731,6 +732,12 @@ static int get_ufunc_arguments(PyUFuncObject *self,
     int any_flexible = 0, any_object = 0;
 
     ufunc_name = self->name ? self->name : "<unnamed ufunc>";
+
+    *out_extobj = NULL;
+    *out_typetup = NULL;
+    if (out_wheremask != NULL) {
+        *out_wheremask = NULL;
+    }
 
     /* Check number of arguments */
     nargs = PyTuple_Size(args);
@@ -843,6 +850,25 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                         bad_arg = 0;
                     }
                     break;
+                case 'd':
+                    /* Another way to specify 'sig' */
+                    if (strncmp(str,"dtype",5) == 0) {
+                        /* Allow this parameter to be None */
+                        PyArray_Descr *dtype;
+                        if (!PyArray_DescrConverter2(value, &dtype)) {
+                            goto fail;
+                        }
+                        if (dtype != NULL) {
+                            if (*out_typetup != NULL) {
+                                PyErr_SetString(PyExc_RuntimeError,
+                                    "cannot specify both 'sig' and 'dtype'");
+                                goto fail;
+                            }
+                            *out_typetup = Py_BuildValue("(N)", dtype);
+                        }
+                        bad_arg = 0;
+                    }
+                    break;
                 case 'e':
                     /*
                      * Overrides the global parameters buffer size,
@@ -910,24 +936,27 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                         bad_arg = 0;
                     }
                     break;
-                case 'd':
-                    /* Another way to specify 'sig' */
-                    if (strncmp(str,"dtype",5) == 0) {
-                        /* Allow this parameter to be None */
+                case 'w':
+                    /*
+                     * Provides a boolean array 'where=' mask if
+                     * out_wheremask is supplied.
+                     */
+                    if (out_wheremask != NULL &&
+                            strncmp(str,"where",5) == 0) {
                         PyArray_Descr *dtype;
-                        if (!PyArray_DescrConverter2(value, &dtype)) {
+                        dtype = PyArray_DescrFromType(NPY_BOOL);
+                        if (dtype == NULL) {
                             goto fail;
                         }
-                        if (dtype != NULL) {
-                            if (*out_typetup != NULL) {
-                                PyErr_SetString(PyExc_RuntimeError,
-                                    "cannot specify both 'sig' and 'dtype'");
-                                goto fail;
-                            }
-                            *out_typetup = Py_BuildValue("(N)", dtype);
+                        *out_wheremask = (PyArrayObject *)PyArray_FromAny(
+                                                            value, dtype,
+                                                            0, 0, 0, NULL);
+                        if (*out_wheremask == NULL) {
+                            goto fail;
                         }
                         bad_arg = 0;
                     }
+                    break;
             }
 
             if (bad_arg) {
@@ -943,6 +972,14 @@ static int get_ufunc_arguments(PyUFuncObject *self,
 
 fail:
     Py_XDECREF(str_key_obj);
+    Py_XDECREF(*out_extobj);
+    *out_extobj = NULL;
+    Py_XDECREF(*out_typetup);
+    *out_typetup = NULL;
+    if (out_wheremask != NULL) {
+        Py_XDECREF(*out_wheremask);
+        *out_wheremask = NULL;
+    }
     return -1;
 }
 
@@ -1499,7 +1536,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
 
     /* Get all the arguments */
     retval = get_ufunc_arguments(self, args, kwds,
-                op, &order, &casting, &extobj, &type_tup, &subok);
+                op, &order, &casting, &extobj,
+                &type_tup, &subok, NULL);
     if (retval < 0) {
         goto fail;
     }
@@ -1839,6 +1877,16 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
+    /*
+     * The selected masked inner loop, when the 'where='
+     * parameter or arrays with missing values are in op.
+     */
+    PyUFuncGenericMaskedFunction masked_innerloop = NULL;
+    NpyAuxData *masked_innerloopdata = NULL;
+
+    /* The mask provided in the 'where=' parameter */
+    PyArrayObject *wheremask = NULL;
+
     /* The __array_prepare__ function to call for each output */
     PyObject *arr_prep[NPY_MAXARGS];
     /*
@@ -1885,7 +1933,8 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     /* Get all the arguments */
     retval = get_ufunc_arguments(self, args, kwds,
-                op, &order, &casting, &extobj, &type_tup, &subok);
+                op, &order, &casting, &extobj,
+                &type_tup, &subok, &wheremask);
     if (retval < 0) {
         goto fail;
     }
@@ -2006,6 +2055,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     Py_XDECREF(errobj);
     Py_XDECREF(type_tup);
     Py_XDECREF(arr_prep_args);
+    Py_XDECREF(wheremask);
 
     NPY_UF_DBG_PRINT("Returning Success\n");
 
@@ -2022,6 +2072,7 @@ fail:
     Py_XDECREF(errobj);
     Py_XDECREF(type_tup);
     Py_XDECREF(arr_prep_args);
+    Py_XDECREF(wheremask);
 
     return retval;
 }
