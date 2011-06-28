@@ -14,13 +14,15 @@ typedef void (*PyUFuncGenericFunction)
              npy_intp *steps,
              void *innerloopdata);
 
-/* The most generic inner loop for a masked standard element-wise ufunc */
+/*
+ * The most generic inner loop for a masked standard element-wise ufunc.
+ * The mask data and step is at args[narg] and steps[narg], after all
+ * the operands.
+ */
 typedef void (*PyUFuncGenericMaskedFunction)
             (char **args,
-             npy_bool *mask,
              npy_intp *dimensions,
              npy_intp *steps,
-             npy_intp maskstep,
              NpyAuxData *innerloopdata);
 
 /* Forward declaration for the type resolution function */

@@ -1421,6 +1421,151 @@ execute_ufunc_loop(PyUFuncObject *self,
     return 0;
 }
 
+/*
+ * nin             - number of inputs
+ * nout            - number of outputs
+ * wheremask       - if not NULL, the 'where=' parameter to the ufunc.
+ * op              - the operands (nin + nout of them)
+ * order           - the loop execution order/output memory order
+ * buffersize      - how big of a buffer to use
+ * arr_prep        - the __array_prepare__ functions for the outputs
+ * innerloop       - the inner loop function
+ * innerloopdata   - data to pass to the inner loop
+ */
+static int
+execute_ufunc_masked_loop(PyUFuncObject *self,
+                    PyArrayObject *wheremask,
+                    PyArrayObject **op,
+                    PyArray_Descr **dtype,
+                    NPY_ORDER order,
+                    npy_intp buffersize,
+                    PyObject **arr_prep,
+                    PyObject *arr_prep_args,
+                    PyUFuncGenericMaskedFunction innerloop,
+                    NpyAuxData *innerloopdata)
+{
+    npy_intp i, nin = self->nin, nout = self->nout;
+    npy_intp nop = nin + nout;
+    npy_uint32 op_flags[NPY_MAXARGS];
+    NpyIter *iter;
+    char *baseptrs[NPY_MAXARGS];
+    int needs_api;
+
+    NpyIter_IterNextFunc *iternext;
+    char **dataptr;
+    npy_intp *stride;
+    npy_intp *count_ptr;
+
+    PyArrayObject **op_it;
+
+    NPY_BEGIN_THREADS_DEF;
+
+    if (wheremask != NULL) {
+        if (nop + 1 > NPY_MAXARGS) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Too many operands when including where= parameter");
+            return -1;
+        }
+        op[nop] = wheremask;
+    }
+
+    /* Set up the flags */
+    for (i = 0; i < nin; ++i) {
+        op_flags[i] = NPY_ITER_READONLY|
+                      NPY_ITER_ALIGNED;
+    }
+    for (i = nin; i < nop; ++i) {
+        op_flags[i] = NPY_ITER_WRITEONLY|
+                      NPY_ITER_ALIGNED|
+                      NPY_ITER_ALLOCATE|
+                      NPY_ITER_NO_BROADCAST|
+                      NPY_ITER_NO_SUBTYPE;
+    }
+    op_flags[nop] = NPY_ITER_READONLY;
+
+    /*
+     * Allocate the iterator.  Because the types of the inputs
+     * were already checked, we use the casting rule 'unsafe' which
+     * is faster to calculate.
+     */
+    iter = NpyIter_AdvancedNew(nop + ((wheremask != NULL) ? 1 : 0), op,
+                        NPY_ITER_EXTERNAL_LOOP|
+                        NPY_ITER_REFS_OK|
+                        NPY_ITER_ZEROSIZE_OK|
+                        NPY_ITER_BUFFERED|
+                        NPY_ITER_GROWINNER|
+                        NPY_ITER_DELAY_BUFALLOC,
+                        order, NPY_UNSAFE_CASTING,
+                        op_flags, dtype,
+                        0, NULL, NULL, buffersize);
+    if (iter == NULL) {
+        return -1;
+    }
+
+    needs_api = NpyIter_IterationNeedsAPI(iter);
+
+    /* Copy any allocated outputs */
+    op_it = NpyIter_GetOperandArray(iter);
+    for (i = nin; i < nop; ++i) {
+        if (op[i] == NULL) {
+            op[i] = op_it[i];
+            Py_INCREF(op[i]);
+        }
+    }
+
+    /* Call the __array_prepare__ functions where necessary */
+    for (i = 0; i < nout; ++i) {
+        if (prepare_ufunc_output(self, &op[nin+i],
+                            arr_prep[i], arr_prep_args, i) < 0) {
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
+    }
+
+    /* Only do the loop if the iteration size is non-zero */
+    if (NpyIter_GetIterSize(iter) != 0) {
+
+        /* Reset the iterator with the base pointers from the wrapped outputs */
+        for (i = 0; i < nin; ++i) {
+            baseptrs[i] = PyArray_BYTES(op_it[i]);
+        }
+        for (i = nin; i < nop; ++i) {
+            baseptrs[i] = PyArray_BYTES(op[i]);
+        }
+        if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
+
+        /* Get the variables needed for the loop */
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        stride = NpyIter_GetInnerStrideArray(iter);
+        count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+        if (!needs_api) {
+            NPY_BEGIN_THREADS;
+        }
+
+        /* Execute the loop */
+        do {
+            NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)*count_ptr);
+            innerloop(dataptr, count_ptr, stride, innerloopdata);
+        } while (iternext(iter));
+
+        if (!needs_api) {
+            NPY_END_THREADS;
+        }
+    }
+
+    NpyIter_Deallocate(iter);
+    return 0;
+}
+
 static PyObject *
 make_arr_prep_args(npy_intp nin, PyObject *args, PyObject *kwds)
 {
@@ -1855,6 +2000,8 @@ fail:
  *
  * This generic function is called with the ufunc object, the arguments to it,
  * and an array of (pointers to) PyArrayObjects which are NULL.
+ *
+ * 'op' is an array of at least NPY_MAXARGS PyArrayObject *.
  */
 NPY_NO_EXPORT int
 PyUFunc_GenericFunction(PyUFuncObject *self,
@@ -1865,6 +2012,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     int i, nop;
     char *ufunc_name;
     int retval = -1, subok = 1;
+    int usemaskedloop = 0;
 
     PyArray_Descr *dtype[NPY_MAXARGS];
 
@@ -1939,6 +2087,14 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
         goto fail;
     }
 
+    /*
+     * For now just the where mask triggers this, but later arrays
+     * with missing data will trigger it as well.
+     */
+    if (wheremask != NULL) {
+        usemaskedloop = 1;
+    }
+
     /* Get the buffersize, errormask, and error object globals */
     if (extobj == NULL) {
         if (PyUFunc_GetPyValues(ufunc_name,
@@ -1957,20 +2113,33 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     NPY_UF_DBG_PRINT("Finding inner loop\n");
 
-    retval = self->type_resolution_function(self, casting,
-                        op, type_tup, dtype, &innerloop, &innerloopdata);
-    if (retval < 0) {
-        goto fail;
+    if (usemaskedloop) {
+        retval = self->type_resolution_masked_function(self, casting,
+                            op, type_tup, dtype,
+                            &masked_innerloop, &masked_innerloopdata);
+        if (retval < 0) {
+            goto fail;
+        }
     }
+    else {
+        retval = self->type_resolution_function(self, casting,
+                            op, type_tup, dtype,
+                            &innerloop, &innerloopdata);
+        if (retval < 0) {
+            goto fail;
+        }
 
-    /*
-     * This checks whether a trivial loop is ok,
-     * making copies of scalar and one dimensional operands if that will
-     * help.
-     */
-    trivial_loop_ok = check_for_trivial_loop(self, op, dtype, buffersize);
-    if (trivial_loop_ok < 0) {
-        goto fail;
+        /*
+         * This checks whether a trivial loop is ok,
+         * making copies of scalar and one dimensional operands if that will
+         * help.
+         *
+         * Only do the trivial loop check for the unmasked version.
+         */
+        trivial_loop_ok = check_for_trivial_loop(self, op, dtype, buffersize);
+        if (trivial_loop_ok < 0) {
+            goto fail;
+        }
     }
 
     /*
@@ -2022,8 +2191,14 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
         }
     }
 
-    /* If the loop wants the arrays, provide them */
-    if (_does_loop_use_arrays(innerloopdata)) {
+    /*
+     * If the loop wants the arrays, provide them.
+     *
+     * TODO: Remove this, since this is already basically broken
+     *       with the addition of the masked inner loops and
+     *       not worth fixing.
+     */
+    if (!usemaskedloop && _does_loop_use_arrays(innerloopdata)) {
         innerloopdata = (void*)op;
     }
 
@@ -2033,9 +2208,18 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     NPY_UF_DBG_PRINT("Executing inner loop\n");
 
     /* Do the ufunc loop */
-    retval = execute_ufunc_loop(self, trivial_loop_ok, op, dtype, order,
-                        buffersize, arr_prep, arr_prep_args,
-                        innerloop, innerloopdata);
+    if (usemaskedloop) {
+        retval = execute_ufunc_masked_loop(self, wheremask,
+                            op, dtype, order,
+                            buffersize, arr_prep, arr_prep_args,
+                            masked_innerloop, masked_innerloopdata);
+    }
+    else {
+        retval = execute_ufunc_loop(self, trivial_loop_ok,
+                            op, dtype, order,
+                            buffersize, arr_prep, arr_prep_args,
+                            innerloop, innerloopdata);
+    }
     if (retval < 0) {
         goto fail;
     }
