@@ -1380,10 +1380,8 @@ ufunc_masker_data_clone(NpyAuxData *data)
 static void
 unmasked_ufunc_loop_as_masked(
              char **args,
-             npy_bool *mask,
              npy_intp *dimensions,
              npy_intp *steps,
-             npy_intp maskstep,
              NpyAuxData *innerloopdata)
 {
     _ufunc_masker_data *data;
@@ -1391,6 +1389,8 @@ unmasked_ufunc_loop_as_masked(
     PyUFuncGenericFunction unmasked_innerloop;
     void *unmasked_innerloopdata;
     npy_intp loopsize, subloopsize;
+    char *mask;
+    npy_intp maskstep;
 
     /* Put the aux data into local variables */
     data = (_ufunc_masker_data *)innerloopdata;
@@ -1398,12 +1398,15 @@ unmasked_ufunc_loop_as_masked(
     unmasked_innerloopdata = data->unmasked_innerloopdata;
     nargs = data->nargs;
     loopsize = *dimensions;
+    mask = args[nargs];
+    maskstep = steps[nargs];
+
 
     /* Process the data as runs of unmasked values */
     do {
         /* Skip masked values */
         subloopsize = 0;
-        while (subloopsize < loopsize && *mask == 0) {
+        while (subloopsize < loopsize && *(npy_bool *)mask == 0) {
             ++subloopsize;
             mask += maskstep;
         }
@@ -1416,7 +1419,7 @@ unmasked_ufunc_loop_as_masked(
          * mess with the 'args' pointer values)
          */
         subloopsize = 0;
-        while (subloopsize < loopsize && *mask != 0) {
+        while (subloopsize < loopsize && *(npy_bool *)mask != 0) {
             ++subloopsize;
             mask += maskstep;
         }
