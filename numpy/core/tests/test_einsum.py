@@ -421,6 +421,12 @@ class TestEinSum(TestCase):
         assert_equal(b, np.sum(a))
         assert_equal(b.dtype, np.dtype(dtype))
 
+        # A case which was failing (ticket #1885)
+        p = np.arange(2) + 1
+        q = np.arange(4).reshape(2,2) + 3
+        r = np.arange(4).reshape(2,2) + 7
+        assert_equal(np.einsum('z,mz,zm->', p, q, r), 253)
+
     def test_einsum_sums_int8(self):
         self.check_einsum_sums('i1');
 

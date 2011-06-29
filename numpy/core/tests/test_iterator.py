@@ -2284,5 +2284,16 @@ def test_iter_buffering_reduction():
         y[...] += x
     assert_equal(b, np.sum(a, axis=1))
 
+    # Iterator inner double loop was wrong on this one
+    p = np.arange(2) + 1
+    it = np.nditer([p,None],
+            ['delay_bufalloc','reduce_ok','buffered','external_loop'],
+            [['readonly'],['readwrite','allocate']],
+            op_axes=[[-1,0],[-1,-1]],
+            itershape=(2,2))
+    it.operands[1].fill(0)
+    it.reset()
+    assert_equal(it[0], [1,2,1,2])
+
 if __name__ == "__main__":
     run_module_suite()

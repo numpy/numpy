@@ -6080,10 +6080,11 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     }
 
     /*
-     * If there was any non-zero coordinate or the reduction inner
-     * loop doesn't fit in the buffersize, can't do the double loop
+     * If there was any non-zero coordinate, the reduction inner
+     * loop doesn't fit in the buffersize, or the reduction inner loop
+     * covered the entire iteration size, can't do the double loop.
      */
-    if (nonzerocoord || count < reducespace) {
+    if (nonzerocoord || count < reducespace || idim == ndim) {
         if (reducespace < count) {
             count = reducespace;
         }
