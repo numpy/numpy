@@ -48,27 +48,32 @@ chosen in the case of the NA bit pattern solution.
 Definition of Missing Data
 **************************
 
+In order to be able to develop an intuition about what computation
+will be done by various NumPy functions, a consistent conceptual
+model of what a missing element means must be applied.
 Ferreting out the behaviors people need or want when they are working
 with "missing data" seems to be tricky, but I believe that it boils
 down to two different ideas, each of which is internally self-consistent.
 
-The "unknown yet existing data" interpretation, however, can be applied
-rigorously to all computations, while the "data that doesn't exist"
-interpretation makes sense for statistical operations like standard
-deviation but not for linear algebra operations like matrix product.
+One of them, the "unknown yet existing data" interpretation, can be applied
+rigorously to all computations, while the other makes sense for
+some statistical operations like standard deviation but not for
+linear algebra operations like matrix product.
 Thus, making "unknown yet existing data" be the default interpretation
 is superior, providing a consistent model across all computations,
 and for those operations where the other interpretation makes sense,
 an optional parameter "skipna=" can be added.
 
+For people who want the other interpretation to be default, a mechanism
+proposed elsewhere for customizing subclass ufunc behavior with a
+_numpy_ufunc_ member function would allow a subclass with a different
+default to be created.
+
 Unknown Yet Existing Data
 =========================
 
-In order to be able to develop an intuition about what computation
-will be done by various NumPy functions, a consistent conceptual
-model of what a missing element means must be applied. The approach
-taken in the R project is to define a missing element as something which
-does have a valid value, but that value is unknown. This proposal
+This is the approach taken in the R project, defining a missing element
+as something which does have a valid value which isn't known. This proposal
 adopts this behavior as as the default for all operations involving
 missing values.
 
@@ -80,7 +85,7 @@ that is not NA, such as logical_and(NA, False) == False.
 
 Some more complex arithmetic operations, such as matrix products, are
 well defined with this interpretation, and the result should be
-the same as is the missing values were NaNs. Actually implementing
+the same as if if the missing values were NaNs. Actually implementing
 such things to the theoretical limit is probably not worth it,
 and in many cases either raising an exception or returning all
 missing values may be preferred to doing precise calculations.
@@ -96,15 +101,17 @@ treated as if they didn't exist in the array, and the operation should
 do its best to interpret what that means according to the data
 that's left. In this case, 'mean(a)' would compute the mean of just
 the values that are unmasked, adjusting both the sum and count it
-uses based on the mask.
+uses based on the mask. To be consistent, the mean of an array of
+all missing values must produce the same result as the mean of a zero-sized
+array without missing value support.
 
 This kind of data can arise when conforming sparsely sampled data
-into a regular sampling pattern, and is a useful interpretation so 
+into a regular sampling pattern, and is a useful interpretation to 
 use when attempting to get best-guess answers for many statistical queries.
 
 In R, many functions take a parameter "na.rm=T" which means to treat
 the data as if the NA values are not part of the data set. This proposal
-defines a standard parameter "skipmissing=True" for this same purpose. 
+defines a standard parameter "skipna=True" for this same purpose. 
 
 ********************************************
 Implementation Techniques For Missing Values
@@ -128,8 +135,8 @@ NA Value Bit Patterns
 =====================
 
 One or more patterns of bits, for example a NaN with
-a particular payload, are chosen to represent the missing value placeholder
-NA.
+a particular payload, are chosen to represent the missing value
+placeholder NA.
 
 A consequence of this approach is that assigning NA changes the bits
 holding the value, so that value is gone.
@@ -207,7 +214,7 @@ like 'arr[0]' would be throwing away the dtype, which is still
 valuable to retain, so 'arr[0]' will return a zero-dimensional
 array either with its value masked, or containing the NA bit pattern
 for the array's dtype. To test if the value is missing, the function
-"np.ismissing(arr[0])" will be provided. One of the key reasons for the
+"np.isna(arr[0])" will be provided. One of the key reasons for the
 NumPy scalars is to allow their values into dictionaries. Having a
 missing value as the key in a dictionary is a bad idea, so the NumPy
 scalars will not support missing values in any form.
@@ -237,6 +244,11 @@ if a valid value in a masked array happens to have the NA bit pattern,
 copying this value to the NA form of the dtype will cause it to
 become NA as well.
 
+When operations are done between arrays with NA dtypes and masked arrays,
+the result will be masked arrays. This is because in some cases the
+NA dtypes cannot represent all the values in the masked array, so
+going to masked arrays is the only way to losslessly preserve the data.
+
 If np.NA or masked values are copied to an array without support for
 missing values enabled, an exception will be raised. Adding a mask to
 the target array would be problematic, because then having a mask
@@ -246,7 +258,7 @@ performance in unexpected ways.
 By default, the string "NA" will be used to represent missing values
 in str and repr outputs. A global configuration will allow
 this to be changed. The array2string function will also gain a
-'maskedstr=' parameter so this could be changed to "<missing>" or
+'nastr=' parameter so this could be changed to "<missing>" or
 other values people may desire.
 
 For floating point numbers, Inf and NaN are separate concepts from
@@ -279,7 +291,7 @@ space optimization, where a bit-level instead of a byte-level mask
 is used to get a factor of eight memory usage improvement.
 
 To access the mask values, there are two functions provided,
-'np.ismissing' and 'np.isavail', which test for NA or available values
+'np.isna' and 'np.isavail', which test for NA or available values
 respectively. These functions work equivalently for masked arrays
 and NA bit pattern dtypes.
 
@@ -323,7 +335,7 @@ New ndarray Methods
 
 New functions added to the numpy namespace are::
 
-    np.ismissing(arr)
+    np.isna(arr)
         Returns a boolean array with True whereever the array is masked
         or matches the NA bit pattern, and False elsewhere
 
@@ -420,7 +432,6 @@ Some examples::
     /home/mwiebe/virtualenvs/dev/lib/python2.7/site-packages/numpy/core/fromnumeric.py:2374: RuntimeWarning: invalid value encountered in double_scalars
       return mean(axis, dtype, out)
     nan
-
 
 PEP 3118
 ========
@@ -551,6 +562,14 @@ cannot hold values, but will conform to the input types in functions like
 'np.astype'. The dtype 'f8' maps to 'NA[f8]', and [('a', 'f4'), ('b', 'i4')]
 maps to [('a', 'NA[f4]'), ('b', 'NA[i4]')]. Thus, to view the memory
 of an 'f8' array 'arr' with 'NA[f8]', you can say arr.view(dtype='NA').
+
+******************************
+C API Access: Masked Iteration
+******************************
+
+TODO: Describe details about how the nditer will be extended to allow
+functions to do masked iteration, transparently working with both
+NA dtypes or masked arrays in one implementation.
 
 ********************
 Rejected Alternative
