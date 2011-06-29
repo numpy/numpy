@@ -2025,6 +2025,97 @@ Other functions
     1 if the lists are identical; otherwise, return 0.
 
 
+Auxiliary Data With Object Semantics
+------------------------------------
+
+.. versionadded:: 1.7.0
+
+.. ctype:: NpyAuxData
+
+When working with more complex dtypes which are composed of other dtypes,
+such as the struct dtype, creating inner loops that manipulate the dtypes
+requires carrying along additional data. NumPy supports this idea
+through a struct :ctype:`NpyAuxData`, mandating a few conventions so that
+it is possible to do this.
+
+Defining an :ctype:`NpyAuxData` is similar to defining a class in C++,
+but the object semantics have to be tracked manually since the API is in C.
+Here's an example for a function which doubles up an element using
+an element copier function as a primitive.::
+
+    typedef struct {
+        NpyAuxData base;
+        ElementCopier_Func *func;
+        NpyAuxData *funcdata;
+    } eldoubler_aux_data;
+
+    void free_element_doubler_aux_data(NpyAuxData *data)
+    {
+        eldoubler_aux_data *d = (eldoubler_aux_data *)data;
+        /* Free the memory owned by this auxadata */
+        NPY_AUXDATA_FREE(d->funcdata);
+        PyArray_free(d);
+    }
+
+    NpyAuxData *clone_element_doubler_aux_data(NpyAuxData *data)
+    {
+        eldoubler_aux_data *ret = PyArray_malloc(sizeof(eldoubler_aux_data));
+        if (ret == NULL) {
+            return NULL;
+        }
+
+        /* Raw copy of all data */
+        memcpy(ret, data, sizeof(eldoubler_aux_data));
+
+        /* Fix up the owned auxdata so we have our own copy */
+        ret->funcdata = NPY_AUXDATA_CLONE(ret->funcdata);
+        if (ret->funcdata == NULL) {
+            PyArray_free(ret);
+            return NULL;
+        }
+
+        return (NpyAuxData *)ret;
+    }
+
+    NpyAuxData *create_element_doubler_aux_data(
+                                ElementCopier_Func *func,
+                                NpyAuxData *funcdata)
+    {
+        eldoubler_aux_data *ret = PyArray_malloc(sizeof(eldoubler_aux_data));
+        if (ret == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+        memset(&ret, 0, sizeof(eldoubler_aux_data));
+        ret->base->free = &free_element_doubler_aux_data;
+        ret->base->clone = &clone_element_doubler_aux_data;
+        ret->func = func;
+        ret->funcdata = funcdata;
+
+        return (NpyAuxData *)ret;
+    }
+
+.. ctype:: NpyAuxData_FreeFunc
+
+    The function pointer type for NpyAuxData free functions.
+
+.. ctype:: NpyAuxData_CloneFunc
+
+    The function pointer type for NpyAuxData clone functions. These
+    functions should never set the Python exception on error, because
+    they may be called from a multi-threaded context.
+
+.. cfunction:: NPY_AUXDATA_FREE(auxdata)
+
+    A macro which calls the auxdata's free function appropriately,
+    does nothing if auxdata is NULL.
+
+.. cfunction:: NPY_AUXDATA_CLONE(auxdata)
+
+    A macro which calls the auxdata's clone function appropriately,
+    returning a deep copy of the auxiliary data.
+
+
 Array Iterators
 ---------------
 
