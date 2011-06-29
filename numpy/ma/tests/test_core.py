@@ -1700,9 +1700,9 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         x = arange(10) * 2
         xm = arange(10) * 2
         xm[2] = masked
-        x /= 2
+        x //= 2
         assert_equal(x, y)
-        xm /= 2
+        xm //= 2
         assert_equal(xm, y)
 
     def test_inplace_division_scalar_float(self):
