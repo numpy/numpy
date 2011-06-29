@@ -292,6 +292,14 @@ advanced usage and will not typically be used.
 
     The first output can provided as either a positional or a keyword parameter.
 
+*where*
+
+    .. versionadded:: 1.7
+
+    Accepts a boolean array which is broadcast together with the operands.
+    Values of True indicate to calculate the ufunc at that position, values
+    of False indicate to leave the value in the output alone.
+
 *casting*
 
     .. versionadded:: 1.6
