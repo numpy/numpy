@@ -1467,6 +1467,7 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
             return -1;
         }
         op[nop] = wheremask;
+        dtype[nop] = NULL;
     }
 
     /* Set up the flags */
@@ -1482,6 +1483,8 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
                       NPY_ITER_NO_SUBTYPE;
     }
     op_flags[nop] = NPY_ITER_READONLY;
+
+    NPY_UF_DBG_PRINT("Making iterator\n");
 
     /*
      * Allocate the iterator.  Because the types of the inputs
@@ -1501,6 +1504,8 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
     if (iter == NULL) {
         return -1;
     }
+
+    NPY_UF_DBG_PRINT("Made iterator\n");
 
     needs_api = NpyIter_IterationNeedsAPI(iter);
 
@@ -1532,10 +1537,15 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
         for (i = nin; i < nop; ++i) {
             baseptrs[i] = PyArray_BYTES(op[i]);
         }
+        if (wheremask != NULL) {
+            baseptrs[nop] = PyArray_BYTES(op[nop]);
+        }
+        NPY_UF_DBG_PRINT("reset base pointers call:\n");
         if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
             NpyIter_Deallocate(iter);
             return -1;
         }
+        NPY_UF_DBG_PRINT("finished reset base pointers call\n");
 
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -1551,6 +1561,7 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
             NPY_BEGIN_THREADS;
         }
 
+        NPY_UF_DBG_PRINT("Actual inner loop:\n");
         /* Execute the loop */
         do {
             NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)*count_ptr);
@@ -2205,16 +2216,18 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     /* Start with the floating-point exception flags cleared */
     PyUFunc_clearfperr();
 
-    NPY_UF_DBG_PRINT("Executing inner loop\n");
-
     /* Do the ufunc loop */
     if (usemaskedloop) {
+        NPY_UF_DBG_PRINT("Executing masked inner loop\n");
+
         retval = execute_ufunc_masked_loop(self, wheremask,
                             op, dtype, order,
                             buffersize, arr_prep, arr_prep_args,
                             masked_innerloop, masked_innerloopdata);
     }
     else {
+        NPY_UF_DBG_PRINT("Executing unmasked inner loop\n");
+
         retval = execute_ufunc_loop(self, trivial_loop_ok,
                             op, dtype, order,
                             buffersize, arr_prep, arr_prep_args,
