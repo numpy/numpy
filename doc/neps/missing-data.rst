@@ -13,7 +13,7 @@ Abstract
 ********
 
 Users interested in dealing with missing data within NumPy are generally
-pointed to the masked array subclass of the ndarray, generally known
+pointed to the masked array subclass of the ndarray, known
 as 'numpy.ma'. This class has a number of users who depend strongly
 on its capabilities, but people who are accustomed to the deep integration
 of the missing data placeholder "NA" in the R project and others who
@@ -22,7 +22,7 @@ to use it.
 
 This NEP proposes to integrate a mask-based missing data solution
 into NumPy, with an additional NA bit pattern-based missing data solution
-that can be implemented  concurrently or later which would integrate seamlessly
+that can be implemented  concurrently or later integrating seamlessly
 with the mask-based solution.
 
 The mask-based solution and the NA bit pattern-based solutions in this
@@ -47,6 +47,19 @@ chosen in the case of the NA bit pattern solution.
 **************************
 Definition of Missing Data
 **************************
+
+Ferreting out the behaviors people need or want when they are working
+with "missing data" seems to be tricky, but I believe that it boils
+down to two different ideas, each of which is internally self-consistent.
+
+The "unknown yet existing data" interpretation, however, can be applied
+rigorously to all computations, while the "data that doesn't exist"
+interpretation makes sense for statistical operations like standard
+deviation but not for linear algebra operations like matrix product.
+Thus, making "unknown yet existing data" be the default interpretation
+is superior, providing a consistent model across all computations,
+and for those operations where the other interpretation makes sense,
+an optional parameter "skipna=" can be added.
 
 Unknown Yet Existing Data
 =========================
@@ -75,8 +88,8 @@ Care must be taken here when dealing with the values and the masks,
 to preserve the semantics that masking a value never touches
 the element's backing memory.
 
-Data That Doesn't Exist
-=======================
+Data That Doesn't Exist Or Is Being Skipped
+===========================================
 
 Another useful interpretation is that the missing elements should be
 treated as if they didn't exist in the array, and the operation should
@@ -93,18 +106,54 @@ In R, many functions take a parameter "na.rm=T" which means to treat
 the data as if the NA values are not part of the data set. This proposal
 defines a standard parameter "skipmissing=True" for this same purpose. 
 
-Data That Is Being Temporarily Ignored
-======================================
+********************************************
+Implementation Techniques For Missing Values
+********************************************
 
-It can be useful to temporarily treat some array elements as if they
-were NA, possibly in many different configurations. This is a common
-use case for masks, and the mask-based implementation of missing values
-supports this usage by having the strict requirement that the data
-storage backing any missing array elements never be touched.
+In addition to there being two different interpretations of missing values,
+there are two different commonly used implementation techniques for
+missing values. While there are some differing default behaviors between
+existing implementations of the techniques, I believe that the design
+choices made in a new implementation must be made based on their merits,
+not by rote copying of previous designs even if some users have been
+accustomed to those conventions.
 
-In general, this can be done by first creating a view, then either adding
-a mask if there isn't one yet, or having the view create its own copy of
-the mask instead of retaining a view of the original's mask.
+Each approach has positive and negative aspects to it, so this NEP
+proposed to implement both. To enable the writing of generic "missing
+value" code which does not have to worry about whether the arrays
+it is using have taken one or the other approach, the missing value
+semantics will be identical for the two implementations.
+
+NA Value Bit Patterns
+=====================
+
+One or more patterns of bits, for example a NaN with
+a particular payload, are chosen to represent the missing value placeholder
+NA.
+
+A consequence of this approach is that assigning NA changes the bits
+holding the value, so that value is gone.
+
+Additionally, for some types such as integers, a good and proper value
+must be sacrificed to enable this functionality.
+
+Array Masks
+===========
+
+A parallel array of booleans, either one byte per element or one bit
+per element, is allocated alongside the existing array data. In this
+NEP, the convention is chosen that True means the element is valid
+(unmasked), and False means the element is NA.
+
+By taking care when writing any C algorithm that works with values
+and masks together, it is possible to have the memory for a value
+that is masked never be written to. This feature allows multiple
+simultaneous views of the same data with different choices of what
+is missing, a feature requested by many people on the mailing list.
+
+This approach places no limitations on the values of the underlying
+data type, it may take on any binary pattern without affecting the
+NA behavior.
 
 ********************************
 Missing Values as Seen in Python
@@ -387,8 +436,20 @@ try to use masked arrays, and silently get access to the data without
 also getting access to the mask or being aware of the missing value
 abstraction the mask and data together are following.
 
-Unresolved Design Questions
-===========================
+Cython
+======
+
+Cython uses PEP 3118 to work with NumPy arrays, so currently it will
+simply refuse to work with them as described in the "PEP 3118" section.
+
+In order to properly support NumPy missing values, Cython will need to
+be modified in some fashion to add this support. Likely the best way
+to do this will be to include it with supporting np.nditer, which
+is most likely going to have an enhancement to make writing missing
+value algorithms easier.
+
+Hard Masks
+==========
 
 The existing masked array implementation has a "hardmask" feature,
 which prevents values from ever being unmasked by assigning a value.
@@ -401,12 +462,8 @@ arbitrary choice of C-ordering as it currently does. While this
 improves the abstraction of the array significantly, it is not
 a compatible change.
 
-**********************************
-Alternative Designs Without a Mask
-**********************************
-
-Parameterized Data Type With NA Signal Values
-=============================================
+Parameterized NA Data Types
+===========================
 
 A masked array isn't the only way to deal with missing data, and
 some systems deal with the problem by defining a special "NA" value,
@@ -495,6 +552,10 @@ cannot hold values, but will conform to the input types in functions like
 maps to [('a', 'NA[f4]'), ('b', 'NA[i4]')]. Thus, to view the memory
 of an 'f8' array 'arr' with 'NA[f8]', you can say arr.view(dtype='NA').
 
+********************
+Rejected Alternative
+********************
+
 Parameterized Data Type Which Adds Additional Memory for the NA Flag
 ====================================================================
 
@@ -539,5 +600,6 @@ the discussion are::
     E. Antero Tammi
     Jason Grout 
     Dag Sverre Seljebotn
+    Joe Harrington
 
 I apologize if I missed anyone.
