@@ -33,16 +33,9 @@ Exported symbols include:
     int_, uint,
     longlong, ulonglong,
 
-
     single, csingle,
     float_, complex_,
     longfloat, clongfloat,
-
-
-    datetime_
-    timedelta_,  (this inherits from from signedinteger, as it is
-                  a signed integer with an associated time unit)
-
 
    As part of the type-hierarchy:    xx -- is bit-width
 
@@ -405,9 +398,7 @@ def _set_up_aliases():
                   ('longcomplex', 'clongdouble'),
                   ('bool_', 'bool'),
                   ('unicode_', 'unicode'),
-                  ('object_', 'object'),
-                  ('timedelta_', 'timedelta'),
-                  ('datetime_', 'datetime')]
+                  ('object_', 'object')]
     if sys.version_info[0] >= 3:
         type_pairs.extend([('bytes_', 'string'),
                            ('str_', 'unicode'),
