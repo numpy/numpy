@@ -226,12 +226,12 @@ from another view which doesn't have them masked. For example::
 
     >>> a = np.array([1,2])
     >>> b = a.view()
-    >>> b.flags.hasmask = True
+    >>> b.flags.hasnamask = True
     >>> b
-    array([1,2], masked=True)
+    array([1,2], namasked=True)
     >>> b[0] = np.NA
     >>> b
-    array([NA,2], masked=True)
+    array([NA,2], namasked=True)
     >>> a
     array([1,2])
     >>> # The underlying number 1 value in 'a[0]' was untouched
@@ -301,10 +301,10 @@ Creating Masked Arrays
 There are two flags which indicate and control the nature of the mask
 used in masked arrays.
 
-First is 'arr.flags.hasmask', which is True for all masked arrays and
+First is 'arr.flags.hasnamask', which is True for all masked arrays and
 may be set to True to add a mask to an array which does not have one.
 
-Second is 'arr.flags.ownmask', which is True if the array owns the
+Second is 'arr.flags.ownnamask', which is True if the array owns the
 memory to the mask, and False if the array has no mask, or has a view
 into the mask of another array. If this is set to False in a masked
 array, the array will create a copy of the mask so that further modifications
@@ -352,8 +352,8 @@ New functions added to the ndarray are::
         array is unmasked and has the 'NA' part stripped from the
         parameterized type ('NA[f8]' becomes just 'f8').
 
-    arr.view(masked=True)
-        This is a shortcut for 'a = arr.view(); a.flags.hasmask=True'.
+    arr.view(namasked=True)
+        This is a shortcut for 'a = arr.view(); a.flags.hasnamask=True'.
 
 Element-wise UFuncs With Missing Values
 =======================================
@@ -562,6 +562,45 @@ cannot hold values, but will conform to the input types in functions like
 'np.astype'. The dtype 'f8' maps to 'NA[f8]', and [('a', 'f4'), ('b', 'i4')]
 maps to [('a', 'NA[f4]'), ('b', 'NA[i4]')]. Thus, to view the memory
 of an 'f8' array 'arr' with 'NA[f8]', you can say arr.view(dtype='NA').
+
+************************
+C Implementation Details
+************************
+
+The first version to implement is the array masks, because it is
+the more general approach. The mask itself is an array, but since
+it is intended to never be directly accessible from Python, it won't
+be a full ndarray itself. The mask always has the same shape as
+the array it's attached to, so it doesn't need its own shape. For
+an array with a struct dtype, however, the mask will have a different
+dtype than just a straight bool, so it does need its own dtype.
+This gives us the following additions to the PyArrayObject::
+
+    /*
+     * Descriptor for the mask dtype.
+     *   If no mask: NULL
+     *   If mask   : bool/structured dtype of bools
+     */
+    PyArray_Descr *maskdescr;
+    /*
+     * Raw data buffer for mask. If the array has the flag
+     * NPY_ARRAY_OWNNAMASK enabled, it owns this memory and
+     * must call PyArray_free on it when destroyed.
+     */
+    char *maskdata;
+    /*
+     * Just like dimensions and strides point into the same memory
+     * buffer, we now just make the buffer 3x the nd instead of 2x
+     * and use the same buffer.
+     */
+    npy_intp *maskstrides;
+
+There are 2 (or 3) flags which must be added to the array flags::
+
+    NPY_ARRAY_HASNAMASK
+    NPY_ARRAY_OWNNAMASK
+    /* To possibly add in a later revision */
+    NPY_ARRAY_HARDNAMASK
 
 ******************************
 C API Access: Masked Iteration
