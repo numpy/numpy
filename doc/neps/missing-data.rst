@@ -620,5 +620,6 @@ the discussion are::
     Jason Grout 
     Dag Sverre Seljebotn
     Joe Harrington
+    Gary Strangman
 
 I apologize if I missed anyone.
