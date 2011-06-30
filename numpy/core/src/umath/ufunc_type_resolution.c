@@ -9,6 +9,7 @@
  * See LICENSE.txt for the license.
  */
 #define _UMATHMODULE
+#define NPY_NO_DEPRECATED_API
 
 #include "Python.h"
 
