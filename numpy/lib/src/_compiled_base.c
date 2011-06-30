@@ -121,11 +121,6 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     type = PyArray_DescrFromType(PyArray_INTP);
     len = PyArray_SIZE(lst);
     if (len < 1) {
-        if (weight != Py_None) {
-            PyErr_SetString(PyExc_ValueError,
-                    "weights should be None if x is empty.");
-            goto fail;
-        }
         if (mlength == Py_None) {
             minlength = 0;
         }
