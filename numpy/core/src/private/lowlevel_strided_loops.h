@@ -325,20 +325,22 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                         PyArray_CompareLists(PyArray_DIMS(arr1), \
                                              PyArray_DIMS(arr2), \
                                              PyArray_NDIM(arr1)) && \
-                        (arr1->flags&(NPY_CONTIGUOUS|NPY_FORTRAN)) == \
-                                (arr2->flags&(NPY_CONTIGUOUS|NPY_FORTRAN)) \
+                        (arr1->flags&(NPY_ARRAY_C_CONTIGUOUS| \
+                                      NPY_ARRAY_F_CONTIGUOUS)) == \
+                                (arr2->flags&(NPY_ARRAY_C_CONTIGUOUS| \
+                                              NPY_ARRAY_F_CONTIGUOUS)) \
                         )
 
 #define PyArray_TRIVIALLY_ITERABLE(arr) ( \
                     PyArray_NDIM(arr) <= 1 || \
-                    PyArray_CHKFLAGS(arr, NPY_CONTIGUOUS) || \
-                    PyArray_CHKFLAGS(arr, NPY_FORTRAN) \
+                    PyArray_CHKFLAGS(arr, NPY_ARRAY_C_CONTIGUOUS) || \
+                    PyArray_CHKFLAGS(arr, NPY_ARRAY_F_CONTIGUOUS) \
                     )
 #define PyArray_PREPARE_TRIVIAL_ITERATION(arr, count, data, stride) \
                     count = PyArray_SIZE(arr), \
                     data = PyArray_BYTES(arr), \
                     stride = ((PyArray_NDIM(arr) == 0) ? 0 : \
-                                (PyArray_CHKFLAGS(arr, NPY_FORTRAN) ? \
+                            (PyArray_CHKFLAGS(arr, NPY_ARRAY_F_CONTIGUOUS) ? \
                                             PyArray_STRIDE(arr, 0) : \
                                             PyArray_STRIDE(arr, \
                                                 PyArray_NDIM(arr)-1)))
@@ -362,12 +364,12 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                     data1 = PyArray_BYTES(arr1); \
                     data2 = PyArray_BYTES(arr2); \
                     stride1 = (size1 == 1 ? 0 : \
-                                (PyArray_CHKFLAGS(arr1, NPY_FORTRAN) ? \
+                            (PyArray_CHKFLAGS(arr1, NPY_ARRAY_F_CONTIGUOUS) ? \
                                             PyArray_STRIDE(arr1, 0) : \
                                             PyArray_STRIDE(arr1, \
                                                 PyArray_NDIM(arr1)-1))); \
                     stride2 = (size2 == 1 ? 0 : \
-                                (PyArray_CHKFLAGS(arr2, NPY_FORTRAN) ? \
+                            (PyArray_CHKFLAGS(arr2, NPY_ARRAY_F_CONTIGUOUS) ? \
                                             PyArray_STRIDE(arr2, 0) : \
                                             PyArray_STRIDE(arr2, \
                                                 PyArray_NDIM(arr2)-1))); \
@@ -407,17 +409,17 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                     data2 = PyArray_BYTES(arr2); \
                     data3 = PyArray_BYTES(arr3); \
                     stride1 = (size1 == 1 ? 0 : \
-                                (PyArray_CHKFLAGS(arr1, NPY_FORTRAN) ? \
+                            (PyArray_CHKFLAGS(arr1, NPY_ARRAY_F_CONTIGUOUS) ? \
                                             PyArray_STRIDE(arr1, 0) : \
                                             PyArray_STRIDE(arr1, \
                                                 PyArray_NDIM(arr1)-1))); \
                     stride2 = (size2 == 1 ? 0 : \
-                                (PyArray_CHKFLAGS(arr2, NPY_FORTRAN) ? \
+                            (PyArray_CHKFLAGS(arr2, NPY_ARRAY_F_CONTIGUOUS) ? \
                                             PyArray_STRIDE(arr2, 0) : \
                                             PyArray_STRIDE(arr2, \
                                                 PyArray_NDIM(arr2)-1))); \
                     stride3 = (size3 == 1 ? 0 : \
-                                (PyArray_CHKFLAGS(arr3, NPY_FORTRAN) ? \
+                            (PyArray_CHKFLAGS(arr3, NPY_ARRAY_F_CONTIGUOUS) ? \
                                             PyArray_STRIDE(arr3, 0) : \
                                             PyArray_STRIDE(arr3, \
                                                 PyArray_NDIM(arr3)-1))); \

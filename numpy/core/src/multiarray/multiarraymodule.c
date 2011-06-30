@@ -18,6 +18,7 @@
 #include "Python.h"
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -191,7 +192,7 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         return -1;
     }
     if ((ap = (PyArrayObject*)PyArray_FromAny(*op, typedescr, nd, nd,
-                                              CARRAY, NULL)) == NULL) {
+                                      NPY_ARRAY_CARRAY, NULL)) == NULL) {
         return -1;
     }
     switch(nd) {
@@ -660,12 +661,14 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
 
     typec = PyArray_DescrFromType(typenum);
     Py_INCREF(typec);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0, ALIGNED, NULL);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
+                                        NPY_ARRAY_ALIGNED, NULL);
     if (ap1 == NULL) {
         Py_DECREF(typec);
         return NULL;
     }
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0, ALIGNED, NULL);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
+                                        NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
         goto fail;
     }
@@ -767,12 +770,14 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     typec = PyArray_DescrFromType(typenum);
 
     Py_INCREF(typec);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0, ALIGNED, NULL);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
+                                        NPY_ARRAY_ALIGNED, NULL);
     if (ap1 == NULL) {
         Py_DECREF(typec);
         return NULL;
     }
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0, ALIGNED, NULL);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 0, 0,
+                                        NPY_ARRAY_ALIGNED, NULL);
     if (ap2 == NULL) {
         goto fail;
     }
@@ -1113,12 +1118,14 @@ PyArray_Correlate2(PyObject *op1, PyObject *op2, int mode)
 
     typec = PyArray_DescrFromType(typenum);
     Py_INCREF(typec);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1, DEFAULT, NULL);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
+                                        NPY_ARRAY_DEFAULT, NULL);
     if (ap1 == NULL) {
         Py_DECREF(typec);
         return NULL;
     }
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1, DEFAULT, NULL);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1,
+                                        NPY_ARRAY_DEFAULT, NULL);
     if (ap2 == NULL) {
         goto clean_ap1;
     }
@@ -1178,12 +1185,14 @@ PyArray_Correlate(PyObject *op1, PyObject *op2, int mode)
 
     typec = PyArray_DescrFromType(typenum);
     Py_INCREF(typec);
-    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1, DEFAULT, NULL);
+    ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 1, 1,
+                                            NPY_ARRAY_DEFAULT, NULL);
     if (ap1 == NULL) {
         Py_DECREF(typec);
         return NULL;
     }
-    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1, DEFAULT, NULL);
+    ap2 = (PyArrayObject *)PyArray_FromAny(op2, typec, 1, 1,
+                                           NPY_ARRAY_DEFAULT, NULL);
     if (ap2 == NULL) {
         goto fail;
     }
@@ -1602,21 +1611,21 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     }
 
     if (copy) {
-        flags = ENSURECOPY;
+        flags = NPY_ARRAY_ENSURECOPY;
     }
     if (order == NPY_CORDER) {
-        flags |= CONTIGUOUS;
+        flags |= NPY_ARRAY_C_CONTIGUOUS;
     }
     else if ((order == NPY_FORTRANORDER)
              /* order == NPY_ANYORDER && */
              || (PyArray_Check(op) && PyArray_ISFORTRAN(op))) {
-        flags |= FORTRAN;
+        flags |= NPY_ARRAY_F_CONTIGUOUS;
     }
     if (!subok) {
-        flags |= ENSUREARRAY;
+        flags |= NPY_ARRAY_ENSUREARRAY;
     }
 
-    flags |= NPY_FORCECAST;
+    flags |= NPY_ARRAY_FORCECAST;
     Py_XINCREF(type);
     ret = PyArray_CheckFromAny(op, type, 0, 0, flags, NULL);
 
@@ -1902,7 +1911,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         return NULL;
     }
     if (type == NULL) {
-        type = PyArray_DescrFromType(PyArray_DEFAULT);
+        type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
     ret = PyArray_FromFile(fp, type, (npy_intp) nin, sep);
     ok = npy_PyFile_DupClose(file, fp);
@@ -1946,7 +1955,7 @@ array_frombuffer(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds
         return NULL;
     }
     if (type == NULL) {
-        type = PyArray_DescrFromType(PyArray_DEFAULT);
+        type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
     return PyArray_FromBuffer(obj, type, (npy_intp)nin, (npy_intp)offset);
 }
@@ -2042,7 +2051,7 @@ einsum_sub_op_from_str(PyObject *args, PyObject **str_obj, char **subscripts,
         PyObject *obj = PyTuple_GET_ITEM(args, i+1);
 
         op[i] = (PyArrayObject *)PyArray_FromAny(obj,
-                                NULL, 0, 0, NPY_ENSUREARRAY, NULL);
+                                NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL);
         if (op[i] == NULL) {
             goto fail;
         }
@@ -2184,7 +2193,7 @@ einsum_sub_op_from_lists(PyObject *args,
         }
 
         op[i] = (PyArrayObject *)PyArray_FromAny(obj,
-                                NULL, 0, 0, NPY_ENSUREARRAY, NULL);
+                                NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL);
         if (op[i] == NULL) {
             goto fail;
         }
@@ -3645,24 +3654,24 @@ set_flaginfo(PyObject *d)
 
     newd = PyDict_New();
 
-#define _addnew(val, one)                                       \
-    PyDict_SetItemString(newd, #val, s=PyInt_FromLong(val));    \
+#define _addnew(key, val, one)                                       \
+    PyDict_SetItemString(newd, #key, s=PyInt_FromLong(val));    \
     Py_DECREF(s);                                               \
     PyDict_SetItemString(newd, #one, s=PyInt_FromLong(val));    \
     Py_DECREF(s)
 
-#define _addone(val)                                            \
-    PyDict_SetItemString(newd, #val, s=PyInt_FromLong(val));    \
+#define _addone(key, val)                                            \
+    PyDict_SetItemString(newd, #key, s=PyInt_FromLong(val));    \
     Py_DECREF(s)
 
-    _addnew(OWNDATA, O);
-    _addnew(FORTRAN, F);
-    _addnew(CONTIGUOUS, C);
-    _addnew(ALIGNED, A);
-    _addnew(UPDATEIFCOPY, U);
-    _addnew(WRITEABLE, W);
-    _addone(C_CONTIGUOUS);
-    _addone(F_CONTIGUOUS);
+    _addnew(OWNDATA, NPY_ARRAY_OWNDATA, O);
+    _addnew(FORTRAN, NPY_ARRAY_F_CONTIGUOUS, F);
+    _addnew(CONTIGUOUS, NPY_ARRAY_C_CONTIGUOUS, C);
+    _addnew(ALIGNED, NPY_ARRAY_ALIGNED, A);
+    _addnew(UPDATEIFCOPY, NPY_ARRAY_UPDATEIFCOPY, U);
+    _addnew(WRITEABLE, NPY_ARRAY_WRITEABLE, W);
+    _addone(C_CONTIGUOUS, NPY_ARRAY_C_CONTIGUOUS);
+    _addone(F_CONTIGUOUS, NPY_ARRAY_F_CONTIGUOUS);
 
 #undef _addone
 #undef _addnew

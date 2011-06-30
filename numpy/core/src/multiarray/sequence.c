@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -78,7 +79,7 @@ array_slice(PyArrayObject *self, Py_ssize_t ilow,
     }
     r->base = (PyObject *)self;
     Py_INCREF(self);
-    PyArray_UpdateFlags(r, UPDATE_ALL);
+    PyArray_UpdateFlags(r, NPY_ARRAY_UPDATE_ALL);
     return (PyObject *)r;
 }
 

@@ -12,6 +12,7 @@
 #include "Python.h"
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
 #include <numpy/halffloat.h>
@@ -2202,7 +2203,9 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
             return 0;
         }
         PyArray_UpdateFlags(*ret,
-                    NPY_C_CONTIGUOUS|NPY_ALIGNED|NPY_F_CONTIGUOUS);
+                    NPY_ARRAY_C_CONTIGUOUS|
+                    NPY_ARRAY_ALIGNED|
+                    NPY_ARRAY_F_CONTIGUOUS);
         Py_INCREF(op);
         PyArray_BASE(*ret) = (PyObject *)op;
         return 1;
@@ -2288,7 +2291,7 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
                             PyArray_DESCR(op),
                             ndim, new_dims, new_strides,
                             PyArray_DATA(op),
-                            PyArray_ISWRITEABLE(op) ? NPY_WRITEABLE : 0,
+                            PyArray_ISWRITEABLE(op) ? NPY_ARRAY_WRITEABLE : 0,
                             (PyObject *)op);
 
     if (ret == NULL) {
@@ -2301,7 +2304,9 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
         return NULL;
     }
     PyArray_UpdateFlags(ret,
-                NPY_C_CONTIGUOUS|NPY_ALIGNED|NPY_F_CONTIGUOUS);
+                NPY_ARRAY_C_CONTIGUOUS|
+                NPY_ARRAY_ALIGNED|
+                NPY_ARRAY_F_CONTIGUOUS);
     Py_INCREF(op);
     PyArray_BASE(ret) = (PyObject *)op;
 

@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -1038,17 +1039,17 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     self->dimensions = NULL;
     self->data = NULL;
     if (data == NULL) {
-        self->flags = DEFAULT;
+        self->flags = NPY_ARRAY_DEFAULT;
         if (flags) {
-            self->flags |= NPY_F_CONTIGUOUS;
+            self->flags |= NPY_ARRAY_F_CONTIGUOUS;
             if (nd > 1) {
-                self->flags &= ~NPY_C_CONTIGUOUS;
+                self->flags &= ~NPY_ARRAY_C_CONTIGUOUS;
             }
-            flags = NPY_F_CONTIGUOUS;
+            flags = NPY_ARRAY_F_CONTIGUOUS;
         }
     }
     else {
-        self->flags = (flags & ~NPY_UPDATEIFCOPY);
+        self->flags = (flags & ~NPY_ARRAY_UPDATEIFCOPY);
     }
     self->descr = descr;
     self->base = (PyObject *)NULL;
@@ -1077,7 +1078,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     }
     else {
         self->dimensions = self->strides = NULL;
-        self->flags |= NPY_F_CONTIGUOUS;
+        self->flags |= NPY_ARRAY_F_CONTIGUOUS;
     }
 
     if (data == NULL) {
@@ -1095,7 +1096,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             PyErr_NoMemory();
             goto fail;
         }
-        self->flags |= OWNDATA;
+        self->flags |= NPY_ARRAY_OWNDATA;
 
         /*
          * It is bad to have unitialized OBJECT pointers
@@ -1110,7 +1111,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
          * If data is passed in, this object won't own it by default.
          * Caller must arrange for this to be reset if truly desired
          */
-        self->flags &= ~OWNDATA;
+        self->flags &= ~NPY_ARRAY_OWNDATA;
     }
     self->data = data;
 
@@ -1119,7 +1120,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
      * update the flags to get the right CONTIGUOUS, ALIGN properties
      */
     if (strides != NULL) {
-        PyArray_UpdateFlags(self, UPDATE_ALL);
+        PyArray_UpdateFlags(self, NPY_ARRAY_UPDATE_ALL);
     }
 
     /*
@@ -1364,12 +1365,12 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
         strides[0] = view->itemsize;
     }
 
-    flags = BEHAVED & (view->readonly ? ~NPY_WRITEABLE : ~0);
+    flags = NPY_ARRAY_BEHAVED & (view->readonly ? ~NPY_ARRAY_WRITEABLE : ~0);
     r = PyArray_NewFromDescr(&PyArray_Type, descr,
                              nd, shape, strides, view->buf,
                              flags, NULL);
     ((PyArrayObject *)r)->base = memoryview;
-    PyArray_UpdateFlags((PyArrayObject *)r, UPDATE_ALL);
+    PyArray_UpdateFlags((PyArrayObject *)r, NPY_ARRAY_UPDATE_ALL);
 
     *out = r;
     return 0;
@@ -1424,7 +1425,7 @@ fail:
  *          // Could make custom strides here too
  *          arr = PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
  *                                      dims, NULL,
- *                                      fortran ? NPY_F_CONTIGUOUS : 0,
+ *                                      fortran ? NPY_ARRAY_F_CONTIGUOUS : 0,
  *                                      NULL);
  *          if (arr == NULL) {
  *              return NULL;
@@ -1668,7 +1669,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
 }
 
 /*NUMPY_API
- * Does not check for NPY_ENSURECOPY and NPY_NOTSWAPPED in flags
+ * Does not check for NPY_ARRAY_ENSURECOPY and NPY_ARRAY_NOTSWAPPED in flags
  * Steals a reference to newtype --- which can be NULL
  */
 NPY_NO_EXPORT PyObject *
@@ -1701,7 +1702,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* If we got dimensions and dtype instead of an array */
     if (arr == NULL) {
-        if (flags&NPY_UPDATEIFCOPY) {
+        if (flags&NPY_ARRAY_UPDATEIFCOPY) {
             Py_XDECREF(newtype);
             PyErr_SetString(PyExc_TypeError,
                             "UPDATEIFCOPY used for non-array input.");
@@ -1741,7 +1742,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                  *       in PyArray_MinScalarType.
                  */
                 /*
-                if (!(flags&NPY_FORCECAST) && ndim > 0 &&
+                if (!(flags&NPY_ARRAY_FORCECAST) && ndim > 0 &&
                         !PyArray_CanCastTo(dtype, newtype)) {
                     Py_DECREF(dtype);
                     Py_XDECREF(newtype);
@@ -1758,7 +1759,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
             ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, newtype,
                                                  ndim, dims,
                                                  NULL, NULL,
-                                                 flags&NPY_F_CONTIGUOUS, NULL);
+                                                 flags&NPY_ARRAY_F_CONTIGUOUS, NULL);
             if (ret != NULL) {
                 if (ndim > 0) {
                     if (PyArray_AssignFromSequence(ret, op) < 0) {
@@ -1800,16 +1801,16 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
 /*
  * flags is any of
- * NPY_C_CONTIGUOUS (CONTIGUOUS),
- * NPY_F_CONTIGUOUS (FORTRAN),
- * NPY_ALIGNED,
- * NPY_WRITEABLE,
- * NPY_NOTSWAPPED,
- * NPY_ENSURECOPY,
- * NPY_UPDATEIFCOPY,
- * NPY_FORCECAST,
- * NPY_ENSUREARRAY,
- * NPY_ELEMENTSTRIDES
+ * NPY_ARRAY_C_CONTIGUOUS (formerly CONTIGUOUS),
+ * NPY_ARRAY_F_CONTIGUOUS (formerly FORTRAN),
+ * NPY_ARRAY_ALIGNED,
+ * NPY_ARRAY_WRITEABLE,
+ * NPY_ARRAY_NOTSWAPPED,
+ * NPY_ARRAY_ENSURECOPY,
+ * NPY_ARRAY_UPDATEIFCOPY,
+ * NPY_ARRAY_FORCECAST,
+ * NPY_ARRAY_ENSUREARRAY,
+ * NPY_ARRAY_ELEMENTSTRIDES
  *
  * or'd (|) together
  *
@@ -1818,24 +1819,25 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
  * won't guarantee it -- it will depend on the object as to whether or
  * not it has such features.
  *
- * Note that NPY_ENSURECOPY is enough
- * to guarantee NPY_C_CONTIGUOUS, NPY_ALIGNED and NPY_WRITEABLE
- * and therefore it is redundant to include those as well.
+ * Note that NPY_ARRAY_ENSURECOPY is enough
+ * to guarantee NPY_ARRAY_C_CONTIGUOUS, NPY_ARRAY_ALIGNED and
+ * NPY_ARRAY_WRITEABLE and therefore it is redundant to include
+ * those as well.
  *
- * NPY_BEHAVED == NPY_ALIGNED | NPY_WRITEABLE
- * NPY_CARRAY = NPY_C_CONTIGUOUS | NPY_BEHAVED
- * NPY_FARRAY = NPY_F_CONTIGUOUS | NPY_BEHAVED
+ * NPY_ARRAY_BEHAVED == NPY_ARRAY_ALIGNED | NPY_ARRAY_WRITEABLE
+ * NPY_ARRAY_CARRAY = NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_BEHAVED
+ * NPY_ARRAY_FARRAY = NPY_ARRAY_F_CONTIGUOUS | NPY_ARRAY_BEHAVED
  *
- * NPY_F_CONTIGUOUS can be set in the FLAGS to request a FORTRAN array.
+ * NPY_ARRAY_F_CONTIGUOUS can be set in the FLAGS to request a FORTRAN array.
  * Fortran arrays are always behaved (aligned,
  * notswapped, and writeable) and not (C) CONTIGUOUS (if > 1d).
  *
- * NPY_UPDATEIFCOPY flag sets this flag in the returned array if a copy is
- * made and the base argument points to the (possibly) misbehaved array.
+ * NPY_ARRAY_UPDATEIFCOPY flag sets this flag in the returned array if a copy
+ * is made and the base argument points to the (possibly) misbehaved array.
  * When the new array is deallocated, the original array held in base
  * is updated with the contents of the new array.
  *
- * NPY_FORCECAST will cause a cast to occur regardless of whether or not
+ * NPY_ARRAY_FORCECAST will cause a cast to occur regardless of whether or not
  * it is safe.
  */
 
@@ -1847,7 +1849,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
                      int max_depth, int requires, PyObject *context)
 {
     PyObject *obj;
-    if (requires & NPY_NOTSWAPPED) {
+    if (requires & NPY_ARRAY_NOTSWAPPED) {
         if (!descr && PyArray_Check(op) &&
             !PyArray_ISNBO(PyArray_DESCR(op)->byteorder)) {
             descr = PyArray_DescrNew(PyArray_DESCR(op));
@@ -1864,7 +1866,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     if (obj == NULL) {
         return NULL;
     }
-    if ((requires & NPY_ELEMENTSTRIDES) &&
+    if ((requires & NPY_ARRAY_ELEMENTSTRIDES) &&
         !PyArray_ElementStrides(obj)) {
         PyObject *new;
         new = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
@@ -1905,10 +1907,10 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     }
 
     /*
-     * Can't cast unless ndim-0 array, NPY_FORCECAST is specified
+     * Can't cast unless ndim-0 array, NPY_ARRAY_FORCECAST is specified
      * or the cast is safe.
      */
-    if (!(flags & NPY_FORCECAST) && !PyArray_NDIM(arr) == 0 &&
+    if (!(flags & NPY_ARRAY_FORCECAST) && !PyArray_NDIM(arr) == 0 &&
         !PyArray_CanCastTo(oldtype, newtype)) {
         Py_DECREF(newtype);
         PyErr_SetString(PyExc_TypeError,
@@ -1918,27 +1920,30 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     }
 
     /* Don't copy if sizes are compatible */
-    if ((flags & NPY_ENSURECOPY) || PyArray_EquivTypes(oldtype, newtype)) {
+    if ((flags & NPY_ARRAY_ENSURECOPY) ||
+                            PyArray_EquivTypes(oldtype, newtype)) {
         arrflags = arr->flags;
-        if (arr->nd <= 1 && (flags & NPY_F_CONTIGUOUS)) {
-            flags |= NPY_C_CONTIGUOUS;
+        if (arr->nd <= 1 && (flags & NPY_ARRAY_F_CONTIGUOUS)) {
+            flags |= NPY_ARRAY_C_CONTIGUOUS;
         }
-        copy = (flags & NPY_ENSURECOPY) ||
-            ((flags & NPY_C_CONTIGUOUS) && (!(arrflags & NPY_C_CONTIGUOUS)))
-            || ((flags & NPY_ALIGNED) && (!(arrflags & NPY_ALIGNED)))
+        copy = (flags & NPY_ARRAY_ENSURECOPY) ||
+            ((flags & NPY_ARRAY_C_CONTIGUOUS) && (!(arrflags & NPY_ARRAY_C_CONTIGUOUS)))
+            || ((flags & NPY_ARRAY_ALIGNED) &&
+                (!(arrflags & NPY_ARRAY_ALIGNED)))
             || (arr->nd > 1 &&
-                ((flags & NPY_F_CONTIGUOUS) &&
-                 (!(arrflags & NPY_F_CONTIGUOUS))))
-            || ((flags & NPY_WRITEABLE) && (!(arrflags & NPY_WRITEABLE)));
+                ((flags & NPY_ARRAY_F_CONTIGUOUS) &&
+                 (!(arrflags & NPY_ARRAY_F_CONTIGUOUS))))
+            || ((flags & NPY_ARRAY_WRITEABLE) &&
+                (!(arrflags & NPY_ARRAY_WRITEABLE)));
 
         if (copy) {
-            if ((flags & NPY_UPDATEIFCOPY) &&
+            if ((flags & NPY_ARRAY_UPDATEIFCOPY) &&
                 (!PyArray_ISWRITEABLE(arr))) {
                 Py_DECREF(newtype);
                 PyErr_SetString(PyExc_ValueError, msg);
                 return NULL;
             }
-            if ((flags & NPY_ENSUREARRAY)) {
+            if ((flags & NPY_ARRAY_ENSUREARRAY)) {
                 subtype = &PyArray_Type;
             }
             ret = (PyArrayObject *)
@@ -1946,7 +1951,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                                      arr->nd,
                                      arr->dimensions,
                                      NULL, NULL,
-                                     flags & NPY_F_CONTIGUOUS,
+                                     flags & NPY_ARRAY_F_CONTIGUOUS,
                                      (PyObject *)arr);
             if (ret == NULL) {
                 return NULL;
@@ -1955,10 +1960,10 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                 Py_DECREF(ret);
                 return NULL;
             }
-            if (flags & NPY_UPDATEIFCOPY)  {
-                ret->flags |= NPY_UPDATEIFCOPY;
+            if (flags & NPY_ARRAY_UPDATEIFCOPY)  {
+                ret->flags |= NPY_ARRAY_UPDATEIFCOPY;
                 ret->base = (PyObject *)arr;
-                PyArray_FLAGS(ret->base) &= ~NPY_WRITEABLE;
+                PyArray_FLAGS(ret->base) &= ~NPY_ARRAY_WRITEABLE;
                 Py_INCREF(arr);
             }
         }
@@ -1968,7 +1973,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
          */
         else {
             Py_DECREF(newtype);
-            if ((flags & NPY_ENSUREARRAY) &&
+            if ((flags & NPY_ARRAY_ENSUREARRAY) &&
                 !PyArray_CheckExact(arr)) {
                 Py_INCREF(arr->descr);
                 ret = (PyArrayObject *)
@@ -1996,20 +2001,20 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
      * array type and copy was not specified
      */
     else {
-        if ((flags & NPY_UPDATEIFCOPY) &&
+        if ((flags & NPY_ARRAY_UPDATEIFCOPY) &&
             (!PyArray_ISWRITEABLE(arr))) {
             Py_DECREF(newtype);
             PyErr_SetString(PyExc_ValueError, msg);
             return NULL;
         }
-        if ((flags & NPY_ENSUREARRAY)) {
+        if ((flags & NPY_ARRAY_ENSUREARRAY)) {
             subtype = &PyArray_Type;
         }
         ret = (PyArrayObject *)
             PyArray_NewFromDescr(subtype, newtype,
                                  arr->nd, arr->dimensions,
                                  NULL, NULL,
-                                 flags & NPY_F_CONTIGUOUS,
+                                 flags & NPY_ARRAY_F_CONTIGUOUS,
                                  (PyObject *)arr);
         if (ret == NULL) {
             return NULL;
@@ -2018,10 +2023,10 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             Py_DECREF(ret);
             return NULL;
         }
-        if (flags & NPY_UPDATEIFCOPY)  {
-            ret->flags |= NPY_UPDATEIFCOPY;
+        if (flags & NPY_ARRAY_UPDATEIFCOPY)  {
+            ret->flags |= NPY_ARRAY_UPDATEIFCOPY;
             ret->base = (PyObject *)arr;
-            PyArray_FLAGS(ret->base) &= ~NPY_WRITEABLE;
+            PyArray_FLAGS(ret->base) &= ~NPY_ARRAY_WRITEABLE;
             Py_INCREF(arr);
         }
     }
@@ -2050,9 +2055,9 @@ PyArray_FromStructInterface(PyObject *input)
     if (inter->two != 2) {
         goto fail;
     }
-    if ((inter->flags & NPY_NOTSWAPPED) != NPY_NOTSWAPPED) {
-        endian = PyArray_OPPBYTE;
-        inter->flags &= ~NPY_NOTSWAPPED;
+    if ((inter->flags & NPY_ARRAY_NOTSWAPPED) != NPY_ARRAY_NOTSWAPPED) {
+        endian = NPY_OPPBYTE;
+        inter->flags &= ~NPY_ARRAY_NOTSWAPPED;
     }
 
     if (inter->flags & ARR_HAS_DESCR) {
@@ -2078,7 +2083,7 @@ PyArray_FromStructInterface(PyObject *input)
     Py_INCREF(input);
     PyArray_BASE(r) = input;
     Py_DECREF(attr);
-    PyArray_UpdateFlags((PyArrayObject *)r, UPDATE_ALL);
+    PyArray_UpdateFlags((PyArrayObject *)r, NPY_ARRAY_UPDATE_ALL);
     return r;
 
  fail:
@@ -2103,7 +2108,7 @@ PyArray_FromInterface(PyObject *input)
     Py_ssize_t buffer_len;
     int res, i, n;
     intp dims[MAX_DIMS], strides[MAX_DIMS];
-    int dataflags = BEHAVED;
+    int dataflags = NPY_ARRAY_BEHAVED;
 
     /* Get the memory from __array_data__ and __array_offset__ */
     /* Get the shape */
@@ -2147,7 +2152,7 @@ PyArray_FromInterface(PyObject *input)
             if (res < 0) {
                 goto fail;
             }
-            dataflags &= ~NPY_WRITEABLE;
+            dataflags &= ~NPY_ARRAY_WRITEABLE;
         }
         attr = PyDict_GetItemString(inter, "offset");
         if (attr) {
@@ -2192,7 +2197,7 @@ PyArray_FromInterface(PyObject *input)
             goto fail;
         }
         if (PyObject_IsTrue(PyTuple_GET_ITEM(attr,1))) {
-            dataflags &= ~NPY_WRITEABLE;
+            dataflags &= ~NPY_ARRAY_WRITEABLE;
         }
     }
     attr = tstr;
@@ -2268,7 +2273,7 @@ PyArray_FromInterface(PyObject *input)
         memcpy(ret->strides, strides, n*sizeof(npy_intp));
     }
     else PyErr_Clear();
-    PyArray_UpdateFlags(ret, UPDATE_ALL);
+    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
     Py_DECREF(inter);
     return (PyObject *)ret;
 
@@ -2366,7 +2371,7 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
     ret = PyArray_NewFromDescr(&PyArray_Type, descr,
                                nd, newd,
                                NULL, data,
-                               (data ? CARRAY : 0), NULL);
+                               (data ? NPY_ARRAY_CARRAY : 0), NULL);
     return ret;
 }
 
@@ -2422,7 +2427,7 @@ PyArray_EnsureArray(PyObject *op)
         new = PyArray_FromScalar(op, NULL);
     }
     else {
-        new = PyArray_FromAny(op, NULL, 0, 0, NPY_ENSUREARRAY, NULL);
+        new = PyArray_FromAny(op, NULL, 0, 0, NPY_ARRAY_ENSUREARRAY, NULL);
     }
     Py_XDECREF(op);
     return new;
@@ -2866,7 +2871,7 @@ PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int fortran)
     PyArrayObject *ret;
 
     if (!type) {
-        type = PyArray_DescrFromType(PyArray_DEFAULT);
+        type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                                                 type,
@@ -2894,7 +2899,7 @@ PyArray_Empty(int nd, npy_intp *dims, PyArray_Descr *type, int fortran)
 {
     PyArrayObject *ret;
 
-    if (!type) type = PyArray_DescrFromType(PyArray_DEFAULT);
+    if (!type) type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                                                 type, nd, dims,
                                                 NULL, NULL,
@@ -3524,18 +3529,18 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
                                                      type,
                                                      1, &n,
                                                      NULL, data,
-                                                     DEFAULT,
+                                                     NPY_ARRAY_DEFAULT,
                                                      NULL)) == NULL) {
         Py_DECREF(buf);
         return NULL;
     }
 
     if (!writeable) {
-        ret->flags &= ~NPY_WRITEABLE;
+        ret->flags &= ~NPY_ARRAY_WRITEABLE;
     }
     /* Store a reference for decref on deallocation */
     ret->base = buf;
-    PyArray_UpdateFlags(ret, NPY_ALIGNED);
+    PyArray_UpdateFlags(ret, NPY_ARRAY_ALIGNED);
     return (PyObject *)ret;
 }
 
@@ -3569,7 +3574,7 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
     Bool binary;
 
     if (dtype == NULL) {
-        dtype=PyArray_DescrFromType(PyArray_DEFAULT);
+        dtype=PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
     if (PyDataType_FLAGCHK(dtype, NPY_ITEM_IS_POINTER) ||
                     PyDataType_REFCHK(dtype)) {
@@ -3753,11 +3758,11 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
  *
  * If data is given, then flags is flags associated with data.
  * If strides is not given, then a contiguous strides array will be created
- * and the NPY_C_CONTIGUOUS bit will be set.  If the flags argument
- * has the NPY_F_CONTIGUOUS bit set, then a FORTRAN-style strides array will be
- * created (and of course the NPY_F_CONTIGUOUS flag bit will be set).
+ * and the NPY_ARRAY_C_CONTIGUOUS bit will be set.  If the flags argument
+ * has the NPY_ARRAY_F_CONTIGUOUS bit set, then a FORTRAN-style strides array will be
+ * created (and of course the NPY_ARRAY_F_CONTIGUOUS flag bit will be set).
  *
- * If data is not given but created here, then flags will be DEFAULT
+ * If data is not given but created here, then flags will be NPY_ARRAY_DEFAULT
  * and a non-zero flags argument can be used to indicate a FORTRAN style
  * array is desired.
  */
@@ -3768,16 +3773,18 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
 {
     int i;
     /* Only make Fortran strides if not contiguous as well */
-    if ((inflag & (NPY_F_CONTIGUOUS|NPY_C_CONTIGUOUS)) == NPY_F_CONTIGUOUS) {
+    if ((inflag & (NPY_ARRAY_F_CONTIGUOUS|NPY_ARRAY_C_CONTIGUOUS)) ==
+                                            NPY_ARRAY_F_CONTIGUOUS) {
         for (i = 0; i < nd; i++) {
             strides[i] = itemsize;
             itemsize *= dims[i] ? dims[i] : 1;
         }
         if (nd > 1) {
-            *objflags = ((*objflags)|NPY_F_CONTIGUOUS) & ~NPY_C_CONTIGUOUS;
+            *objflags = ((*objflags)|NPY_ARRAY_F_CONTIGUOUS) &
+                                            ~NPY_ARRAY_C_CONTIGUOUS;
         }
         else {
-            *objflags |= (NPY_F_CONTIGUOUS|NPY_C_CONTIGUOUS);
+            *objflags |= (NPY_ARRAY_F_CONTIGUOUS|NPY_ARRAY_C_CONTIGUOUS);
         }
     }
     else {
@@ -3786,10 +3793,11 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             itemsize *= dims[i] ? dims[i] : 1;
         }
         if (nd > 1) {
-            *objflags = ((*objflags)|NPY_C_CONTIGUOUS) & ~NPY_F_CONTIGUOUS;
+            *objflags = ((*objflags)|NPY_ARRAY_C_CONTIGUOUS) &
+                                            ~NPY_ARRAY_F_CONTIGUOUS;
         }
         else {
-            *objflags |= (NPY_C_CONTIGUOUS|NPY_F_CONTIGUOUS);
+            *objflags |= (NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS);
         }
     }
     return itemsize;

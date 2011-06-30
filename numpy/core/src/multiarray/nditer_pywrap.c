@@ -10,6 +10,7 @@
 #include "Python.h"
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
 #include <numpy/npy_3kcompat.h>
@@ -715,7 +716,7 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
             int fromanyflags = 0;
 
             if (op_flags[iop]&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
-                fromanyflags = NPY_UPDATEIFCOPY;
+                fromanyflags = NPY_ARRAY_UPDATEIFCOPY;
             }
             ao = (PyArrayObject *)PyArray_FromAny((PyObject *)op[iop],
                                             NULL, 0, 0, fromanyflags, NULL);
@@ -2047,13 +2048,13 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 
     Py_INCREF(dtype);
     ret = (PyObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
-                            ret_ndim, &innerloopsize,
-                            &innerstride, dataptr,
-                            self->writeflags[i] ? NPY_WRITEABLE : 0, NULL);
+                        ret_ndim, &innerloopsize,
+                        &innerstride, dataptr,
+                        self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0, NULL);
     Py_INCREF(self);
     ((PyArrayObject *)ret)->base = (PyObject *)self;
 
-    PyArray_UpdateFlags((PyArrayObject *)ret, NPY_UPDATE_ALL);
+    PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
 
     return ret;
 }
@@ -2166,11 +2167,11 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
     tmp = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
                                 1, &innerloopsize,
                                 &innerstride, dataptr,
-                                NPY_WRITEABLE, NULL);
+                                NPY_ARRAY_WRITEABLE, NULL);
     if (tmp == NULL) {
         return -1;
     }
-    PyArray_UpdateFlags(tmp, NPY_UPDATE_ALL);
+    PyArray_UpdateFlags(tmp, NPY_ARRAY_UPDATE_ALL);
     ret = PyArray_CopyObject(tmp, v);
     Py_DECREF(tmp);
     return ret;

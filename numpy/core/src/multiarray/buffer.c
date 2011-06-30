@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -56,7 +57,7 @@ array_getreadbuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
 static Py_ssize_t
 array_getwritebuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
 {
-    if (PyArray_CHKFLAGS(self, WRITEABLE)) {
+    if (PyArray_CHKFLAGS(self, NPY_ARRAY_WRITEABLE)) {
         return array_getreadbuf(self, segment, (void **) ptrptr);
     }
     else {
@@ -605,12 +606,12 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
 
     /* Check whether we can provide the wanted properties */
     if ((flags & PyBUF_C_CONTIGUOUS) == PyBUF_C_CONTIGUOUS &&
-        !PyArray_CHKFLAGS(self, NPY_C_CONTIGUOUS)) {
+        !PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS)) {
         PyErr_SetString(PyExc_ValueError, "ndarray is not C-contiguous");
         goto fail;
     }
     if ((flags & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS &&
-        !PyArray_CHKFLAGS(self, NPY_F_CONTIGUOUS)) {
+        !PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS)) {
         PyErr_SetString(PyExc_ValueError, "ndarray is not Fortran contiguous");
         goto fail;
     }
@@ -621,7 +622,7 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     }
     if ((flags & PyBUF_STRIDES) != PyBUF_STRIDES &&
         (flags & PyBUF_ND) == PyBUF_ND &&
-        !PyArray_CHKFLAGS(self, NPY_C_CONTIGUOUS)) {
+        !PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS)) {
         /* Non-strided N-dim buffers must be C-contiguous */
         PyErr_SetString(PyExc_ValueError, "ndarray is not C-contiguous");
         goto fail;

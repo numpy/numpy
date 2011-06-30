@@ -14,6 +14,7 @@
 #include "Python.h"
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
 #include <numpy/npy_cpu.h>

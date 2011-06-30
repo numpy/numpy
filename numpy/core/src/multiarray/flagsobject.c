@@ -4,6 +4,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -31,7 +32,10 @@ PyArray_NewFlagsObject(PyObject *obj)
     PyObject *flagobj;
     int flags;
     if (obj == NULL) {
-        flags = CONTIGUOUS | OWNDATA | FORTRAN | ALIGNED;
+        flags = NPY_ARRAY_C_CONTIGUOUS |
+                NPY_ARRAY_OWNDATA |
+                NPY_ARRAY_F_CONTIGUOUS |
+                NPY_ARRAY_ALIGNED;
     }
     else {
         flags = PyArray_FLAGS(obj);
@@ -53,46 +57,46 @@ NPY_NO_EXPORT void
 PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 {
 
-    if (flagmask & FORTRAN) {
+    if (flagmask & NPY_ARRAY_F_CONTIGUOUS) {
         if (_IsFortranContiguous(ret)) {
-            ret->flags |= FORTRAN;
+            ret->flags |= NPY_ARRAY_F_CONTIGUOUS;
             if (ret->nd > 1) {
-                ret->flags &= ~CONTIGUOUS;
+                ret->flags &= ~NPY_ARRAY_C_CONTIGUOUS;
             }
         }
         else {
-            ret->flags &= ~FORTRAN;
+            ret->flags &= ~NPY_ARRAY_F_CONTIGUOUS;
         }
     }
-    if (flagmask & CONTIGUOUS) {
+    if (flagmask & NPY_ARRAY_C_CONTIGUOUS) {
         if (_IsContiguous(ret)) {
-            ret->flags |= CONTIGUOUS;
+            ret->flags |= NPY_ARRAY_C_CONTIGUOUS;
             if (ret->nd > 1) {
-                ret->flags &= ~FORTRAN;
+                ret->flags &= ~NPY_ARRAY_F_CONTIGUOUS;
             }
         }
         else {
-            ret->flags &= ~CONTIGUOUS;
+            ret->flags &= ~NPY_ARRAY_C_CONTIGUOUS;
         }
     }
-    if (flagmask & ALIGNED) {
+    if (flagmask & NPY_ARRAY_ALIGNED) {
         if (_IsAligned(ret)) {
-            ret->flags |= ALIGNED;
+            ret->flags |= NPY_ARRAY_ALIGNED;
         }
         else {
-            ret->flags &= ~ALIGNED;
+            ret->flags &= ~NPY_ARRAY_ALIGNED;
         }
     }
     /*
      * This is not checked by default WRITEABLE is not
      * part of UPDATE_ALL
      */
-    if (flagmask & WRITEABLE) {
+    if (flagmask & NPY_ARRAY_WRITEABLE) {
         if (_IsWriteable(ret)) {
-            ret->flags |= WRITEABLE;
+            ret->flags |= NPY_ARRAY_WRITEABLE;
         }
         else {
-            ret->flags &= ~WRITEABLE;
+            ret->flags &= ~NPY_ARRAY_WRITEABLE;
         }
     }
     return;
@@ -180,23 +184,26 @@ arrayflags_dealloc(PyArrayFlagsObject *self)
         return item;                                                    \
     }
 
-_define_get(CONTIGUOUS, contiguous)
-_define_get(FORTRAN, fortran)
-_define_get(UPDATEIFCOPY, updateifcopy)
-_define_get(OWNDATA, owndata)
-_define_get(ALIGNED, aligned)
-_define_get(WRITEABLE, writeable)
+_define_get(NPY_ARRAY_C_CONTIGUOUS, contiguous)
+_define_get(NPY_ARRAY_F_CONTIGUOUS, fortran)
+_define_get(NPY_ARRAY_UPDATEIFCOPY, updateifcopy)
+_define_get(NPY_ARRAY_OWNDATA, owndata)
+_define_get(NPY_ARRAY_ALIGNED, aligned)
+_define_get(NPY_ARRAY_WRITEABLE, writeable)
 
-_define_get(ALIGNED|WRITEABLE, behaved)
-_define_get(ALIGNED|WRITEABLE|CONTIGUOUS, carray)
+_define_get(NPY_ARRAY_ALIGNED|
+            NPY_ARRAY_WRITEABLE, behaved)
+_define_get(NPY_ARRAY_ALIGNED|
+            NPY_ARRAY_WRITEABLE|
+            NPY_ARRAY_C_CONTIGUOUS, carray)
 
 static PyObject *
 arrayflags_forc_get(PyArrayFlagsObject *self)
 {
     PyObject *item;
 
-    if (((self->flags & FORTRAN) == FORTRAN) ||
-        ((self->flags & CONTIGUOUS) == CONTIGUOUS)) {
+    if (((self->flags & NPY_ARRAY_F_CONTIGUOUS) == NPY_ARRAY_F_CONTIGUOUS) ||
+        ((self->flags & NPY_ARRAY_C_CONTIGUOUS) == NPY_ARRAY_C_CONTIGUOUS)) {
         item = Py_True;
     }
     else {
@@ -211,8 +218,8 @@ arrayflags_fnc_get(PyArrayFlagsObject *self)
 {
     PyObject *item;
 
-    if (((self->flags & FORTRAN) == FORTRAN) &&
-        !((self->flags & CONTIGUOUS) == CONTIGUOUS)) {
+    if (((self->flags & NPY_ARRAY_F_CONTIGUOUS) == NPY_ARRAY_F_CONTIGUOUS) &&
+        !((self->flags & NPY_ARRAY_C_CONTIGUOUS) == NPY_ARRAY_C_CONTIGUOUS)) {
         item = Py_True;
     }
     else {
@@ -227,9 +234,10 @@ arrayflags_farray_get(PyArrayFlagsObject *self)
 {
     PyObject *item;
 
-    if (((self->flags & (ALIGNED|WRITEABLE|FORTRAN)) ==
-         (ALIGNED|WRITEABLE|FORTRAN)) &&
-        !((self->flags & CONTIGUOUS) == CONTIGUOUS)) {
+    if (((self->flags & (NPY_ARRAY_ALIGNED|
+                         NPY_ARRAY_WRITEABLE|
+                         NPY_ARRAY_F_CONTIGUOUS)) != 0) &&
+        !((self->flags & NPY_ARRAY_C_CONTIGUOUS) != 0)) {
         item = Py_True;
     }
     else {
@@ -536,13 +544,13 @@ arrayflags_print(PyArrayFlagsObject *self)
     int fl = self->flags;
 
     return PyUString_FromFormat("  %s : %s\n  %s : %s\n  %s : %s\n"\
-                               "  %s : %s\n  %s : %s\n  %s : %s",
-                               "C_CONTIGUOUS", _torf_(fl, CONTIGUOUS),
-                               "F_CONTIGUOUS", _torf_(fl, FORTRAN),
-                               "OWNDATA", _torf_(fl, OWNDATA),
-                               "WRITEABLE", _torf_(fl, WRITEABLE),
-                               "ALIGNED", _torf_(fl, ALIGNED),
-                               "UPDATEIFCOPY", _torf_(fl, UPDATEIFCOPY));
+                           "  %s : %s\n  %s : %s\n  %s : %s",
+                           "C_CONTIGUOUS", _torf_(fl, NPY_ARRAY_C_CONTIGUOUS),
+                           "F_CONTIGUOUS", _torf_(fl, NPY_ARRAY_F_CONTIGUOUS),
+                           "OWNDATA",      _torf_(fl, NPY_ARRAY_OWNDATA),
+                           "WRITEABLE",    _torf_(fl, NPY_ARRAY_WRITEABLE),
+                           "ALIGNED",      _torf_(fl, NPY_ARRAY_ALIGNED),
+                           "UPDATEIFCOPY", _torf_(fl, NPY_ARRAY_UPDATEIFCOPY));
 }
 
 

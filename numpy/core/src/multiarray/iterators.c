@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -296,7 +297,7 @@ array_iter_base_init(PyArrayIterObject *it, PyArrayObject *ao)
     int nd, i;
 
     nd = ao->nd;
-    PyArray_UpdateFlags(ao, CONTIGUOUS);
+    PyArray_UpdateFlags(ao, NPY_ARRAY_C_CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
         it->contiguous = 1;
     }
@@ -392,7 +393,7 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     if (it == NULL) {
         return NULL;
     }
-    PyArray_UpdateFlags(ao, CONTIGUOUS);
+    PyArray_UpdateFlags(ao, NPY_ARRAY_C_CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
         it->contiguous = 1;
     }
@@ -794,7 +795,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     indtype = PyArray_DescrFromType(PyArray_INTP);
     if (PyArray_IsScalar(ind, Integer) || PyList_Check(ind)) {
         Py_INCREF(indtype);
-        obj = PyArray_FromAny(ind, indtype, 0, 0, FORCECAST, NULL);
+        obj = PyArray_FromAny(ind, indtype, 0, 0, NPY_ARRAY_FORCECAST, NULL);
         if (obj == NULL) {
             goto fail;
         }
@@ -814,7 +815,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         else if (PyArray_ISINTEGER(obj)) {
             PyObject *new;
             new = PyArray_FromAny(obj, indtype, 0, 0,
-                                  FORCECAST | ALIGNED, NULL);
+                              NPY_ARRAY_FORCECAST | NPY_ARRAY_ALIGNED, NULL);
             if (new == NULL) {
                 goto fail;
             }
@@ -1055,7 +1056,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     indtype = PyArray_DescrFromType(PyArray_INTP);
     if (PyList_Check(ind)) {
         Py_INCREF(indtype);
-        obj = PyArray_FromAny(ind, indtype, 0, 0, FORCECAST, NULL);
+        obj = PyArray_FromAny(ind, indtype, 0, 0, NPY_ARRAY_FORCECAST, NULL);
     }
     else {
         Py_INCREF(ind);
@@ -1076,7 +1077,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
             PyObject *new;
             Py_INCREF(indtype);
             new = PyArray_CheckFromAny(obj, indtype, 0, 0,
-                                       FORCECAST | BEHAVED_NS, NULL);
+                           NPY_ARRAY_FORCECAST | NPY_ARRAY_BEHAVED_NS, NULL);
             Py_DECREF(obj);
             obj = new;
             if (new == NULL) {
@@ -1157,8 +1158,8 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
             Py_DECREF(r);
             return NULL;
         }
-        PyArray_FLAGS(r) |= UPDATEIFCOPY;
-        it->ao->flags &= ~WRITEABLE;
+        PyArray_FLAGS(r) |= NPY_ARRAY_UPDATEIFCOPY;
+        it->ao->flags &= ~NPY_ARRAY_WRITEABLE;
     }
     Py_INCREF(it->ao);
     PyArray_BASE(r) = (PyObject *)it->ao;
@@ -1808,7 +1809,7 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
         /* Non-object types */
 
         storeflags = ar->ao->flags;
-        ar->ao->flags |= BEHAVED;
+        ar->ao->flags |= NPY_ARRAY_BEHAVED;
         st = ar->ao->descr->f->setitem((PyObject*)fill, ret, ar->ao);
         ar->ao->flags = storeflags;
 

@@ -654,20 +654,6 @@ typedef struct {
         npy_int32 sec, us, ps, as;
 } npy_timedeltastruct;
 
-/* TO BE REMOVED - NOT USED INTERNALLY. */
-#if PY_VERSION_HEX >= 0x03000000
-#define PyDataType_GetDatetimeMetaData(descr)                                 \
-    ((descr->metadata == NULL) ? NULL :                                       \
-        ((PyArray_DatetimeMetaData *)(PyCapsule_GetPointer(                   \
-                PyDict_GetItemString(                                         \
-                    descr->metadata, NPY_METADATA_DTSTR), NULL))))
-#else
-#define PyDataType_GetDatetimeMetaData(descr)                                 \
-    ((descr->metadata == NULL) ? NULL :                                       \
-        ((PyArray_DatetimeMetaData *)(PyCObject_AsVoidPtr(                    \
-                PyDict_GetItemString(descr->metadata, NPY_METADATA_DTSTR)))))
-#endif
-
 typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 /*
@@ -677,15 +663,15 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_C_CONTIGUOUS    0x0001
 
 /*
- * set if array is a contiguous Fortran array: the first index varies
+ * Set if array is a contiguous Fortran array: the first index varies
  * the fastest in memory (strides array is reverse of C-contiguous
  * array)
  */
 #define NPY_ARRAY_F_CONTIGUOUS       0x0002
 
 /*
- * Note: all 0-d arrays are CONTIGUOUS and FORTRAN contiguous. If a
- * 1-d array is CONTIGUOUS it is also FORTRAN contiguous
+ * Note: all 0-d arrays are C_CONTIGUOUS and F_CONTIGUOUS. If a
+ * 1-d array is C_CONTIGUOUS it is also F_CONTIGUOUS
  */
 
 /*
@@ -738,41 +724,37 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 #define NPY_ARRAY_UPDATEIFCOPY  0x1000
 
-/*
- * These versions of the above flags are not yet deprecated,
- * but the intention is to do so in a future release.
- */
-#define NPY_C_CONTIGUOUS   NPY_ARRAY_C_CONTIGUOUS
-#define NPY_F_CONTIGUOUS   NPY_ARRAY_F_CONTIGUOUS
-#define NPY_OWNDATA        NPY_ARRAY_OWNDATA
-#define NPY_FORCECAST      NPY_ARRAY_FORCECAST
-#define NPY_ENSURECOPY     NPY_ARRAY_ENSURECOPY
-#define NPY_ENSUREARRAY    NPY_ARRAY_ENSUREARRAY
-#define NPY_ELEMENTSTRIDES NPY_ARRAY_ELEMENTSTRIDES
-#define NPY_ALIGNED        NPY_ARRAY_ALIGNED
-#define NPY_NOTSWAPPED     NPY_ARRAY_NOTSWAPPED
-#define NPY_WRITEABLE      NPY_ARRAY_WRITEABLE
-#define NPY_UPDATEIFCOPY   NPY_ARRAY_UPDATEIFCOPY
+#define NPY_ARRAY_BEHAVED      (NPY_ARRAY_ALIGNED | \
+                                NPY_ARRAY_WRITEABLE)
+#define NPY_ARRAY_BEHAVED_NS   (NPY_ARRAY_ALIGNED | \
+                                NPY_ARRAY_WRITEABLE | \
+                                NPY_ARRAY_NOTSWAPPED)
+#define NPY_ARRAY_CARRAY       (NPY_ARRAY_C_CONTIGUOUS | \
+                                NPY_ARRAY_BEHAVED)
+#define NPY_ARRAY_CARRAY_RO    (NPY_ARRAY_C_CONTIGUOUS | \
+                                NPY_ARRAY_ALIGNED)
+#define NPY_ARRAY_FARRAY       (NPY_ARRAY_F_CONTIGUOUS | \
+                                NPY_ARRAY_BEHAVED)
+#define NPY_ARRAY_FARRAY_RO    (NPY_ARRAY_F_CONTIGUOUS | \
+                                NPY_ARRAY_ALIGNED)
+#define NPY_ARRAY_DEFAULT      (NPY_ARRAY_CARRAY)
+#define NPY_ARRAY_IN_ARRAY     (NPY_ARRAY_CARRAY_RO)
+#define NPY_ARRAY_OUT_ARRAY    (NPY_ARRAY_CARRAY)
+#define NPY_ARRAY_INOUT_ARRAY  (NPY_ARRAY_CARRAY | \
+                                NPY_ARRAY_UPDATEIFCOPY)
+#define NPY_ARRAY_IN_FARRAY    (NPY_ARRAY_FARRAY_RO)
+#define NPY_ARRAY_OUT_FARRAY   (NPY_ARRAY_FARRAY)
+#define NPY_ARRAY_INOUT_FARRAY (NPY_ARRAY_FARRAY | \
+                                NPY_ARRAY_UPDATEIFCOPY)
+
+#define NPY_ARRAY_UPDATE_ALL   (NPY_ARRAY_C_CONTIGUOUS | \
+                                NPY_ARRAY_F_CONTIGUOUS | \
+                                NPY_ARRAY_ALIGNED)
 
 /* This flag is for the array interface */
 #define NPY_ARR_HAS_DESCR  0x0800
 
 
-#define NPY_BEHAVED (NPY_ALIGNED | NPY_WRITEABLE)
-#define NPY_BEHAVED_NS (NPY_ALIGNED | NPY_WRITEABLE | NPY_NOTSWAPPED)
-#define NPY_CARRAY (NPY_CONTIGUOUS | NPY_BEHAVED)
-#define NPY_CARRAY_RO (NPY_CONTIGUOUS | NPY_ALIGNED)
-#define NPY_FARRAY (NPY_FORTRAN | NPY_BEHAVED)
-#define NPY_FARRAY_RO (NPY_FORTRAN | NPY_ALIGNED)
-#define NPY_DEFAULT NPY_CARRAY
-#define NPY_IN_ARRAY NPY_CARRAY_RO
-#define NPY_OUT_ARRAY NPY_CARRAY
-#define NPY_INOUT_ARRAY (NPY_CARRAY | NPY_UPDATEIFCOPY)
-#define NPY_IN_FARRAY NPY_FARRAY_RO
-#define NPY_OUT_FARRAY NPY_FARRAY
-#define NPY_INOUT_FARRAY (NPY_FARRAY | NPY_UPDATEIFCOPY)
-
-#define NPY_UPDATE_ALL (NPY_CONTIGUOUS | NPY_FORTRAN | NPY_ALIGNED)
 
 
 /*
@@ -807,12 +789,12 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define PyArray_CHKFLAGS(m, FLAGS)                              \
         ((((PyArrayObject *)(m))->flags & (FLAGS)) == (FLAGS))
 
-#define PyArray_ISCONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_CONTIGUOUS)
-#define PyArray_ISWRITEABLE(m) PyArray_CHKFLAGS(m, NPY_WRITEABLE)
-#define PyArray_ISALIGNED(m) PyArray_CHKFLAGS(m, NPY_ALIGNED)
+#define PyArray_ISCONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS)
+#define PyArray_ISWRITEABLE(m) PyArray_CHKFLAGS(m, NPY_ARRAY_WRITEABLE)
+#define PyArray_ISALIGNED(m) PyArray_CHKFLAGS(m, NPY_ARRAY_ALIGNED)
 
-#define PyArray_IS_C_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_C_CONTIGUOUS)
-#define PyArray_IS_F_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_F_CONTIGUOUS)
+#define PyArray_IS_C_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS)
+#define PyArray_IS_F_CONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS)
 
 #if NPY_ALLOW_THREADS
 #define NPY_BEGIN_ALLOW_THREADS Py_BEGIN_ALLOW_THREADS
@@ -1249,7 +1231,6 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 
 /* The default array type */
 #define NPY_DEFAULT_TYPE NPY_DOUBLE
-#define PyArray_DEFAULT NPY_DEFAULT_TYPE
 
 /*
  * All sorts of useful ways to look into a PyArrayObject.  These are
@@ -1258,15 +1239,15 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
  */
 
 #define PyArray_NDIM(obj) (((PyArrayObject *)(obj))->nd)
-#define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 ||                      \
-                                 PyArray_CHKFLAGS(m, NPY_CONTIGUOUS) ||       \
-                                 PyArray_CHKFLAGS(m, NPY_FORTRAN))
+#define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 || \
+                             PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS) || \
+                             PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS))
 
-#define PyArray_ISFORTRAN(m) (PyArray_CHKFLAGS(m, NPY_FORTRAN) &&             \
+#define PyArray_ISFORTRAN(m) (PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) && \
                              (PyArray_NDIM(m) > 1))
 
-#define PyArray_FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, NPY_FORTRAN) ?            \
-                              NPY_FORTRAN : 0))
+#define PyArray_FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) ? \
+                               NPY_ARRAY_F_CONTIGUOUS : 0))
 
 #define FORTRAN_IF PyArray_FORTRAN_IF
 #define PyArray_DATA(obj) ((void *)(((PyArrayObject *)(obj))->data))
@@ -1408,12 +1389,12 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyArray_FLAGSWAP(m, flags) (PyArray_CHKFLAGS(m, flags) &&       \
                                     PyArray_ISNOTSWAPPED(m))
 
-#define PyArray_ISCARRAY(m) PyArray_FLAGSWAP(m, NPY_CARRAY)
-#define PyArray_ISCARRAY_RO(m) PyArray_FLAGSWAP(m, NPY_CARRAY_RO)
-#define PyArray_ISFARRAY(m) PyArray_FLAGSWAP(m, NPY_FARRAY)
-#define PyArray_ISFARRAY_RO(m) PyArray_FLAGSWAP(m, NPY_FARRAY_RO)
-#define PyArray_ISBEHAVED(m) PyArray_FLAGSWAP(m, NPY_BEHAVED)
-#define PyArray_ISBEHAVED_RO(m) PyArray_FLAGSWAP(m, NPY_ALIGNED)
+#define PyArray_ISCARRAY(m) PyArray_FLAGSWAP(m, NPY_ARRAY_CARRAY)
+#define PyArray_ISCARRAY_RO(m) PyArray_FLAGSWAP(m, NPY_ARRAY_CARRAY_RO)
+#define PyArray_ISFARRAY(m) PyArray_FLAGSWAP(m, NPY_ARRAY_FARRAY)
+#define PyArray_ISFARRAY_RO(m) PyArray_FLAGSWAP(m, NPY_ARRAY_FARRAY_RO)
+#define PyArray_ISBEHAVED(m) PyArray_FLAGSWAP(m, NPY_ARRAY_BEHAVED)
+#define PyArray_ISBEHAVED_RO(m) PyArray_FLAGSWAP(m, NPY_ARRAY_ALIGNED)
 
 
 #define PyDataType_ISNOTSWAPPED(d) PyArray_ISNBO(((PyArray_Descr *)(d))->byteorder)
@@ -1443,7 +1424,7 @@ typedef struct {
 
     int flags;            /*
                            * how should be data interpreted. Valid
-                           * flags are CONTIGUOUS (1), FORTRAN (2),
+                           * flags are CONTIGUOUS (1), F_CONTIGUOUS (2),
                            * ALIGNED (0x100), NOTSWAPPED (0x200), and
                            * WRITEABLE (0x400).  ARR_HAS_DESCR (0x800)
                            * states that arrdescr field is present in

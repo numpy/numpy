@@ -1,6 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -238,7 +239,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         }
         if (l == 0 && minitype->type_num == PyArray_BOOL) {
             Py_DECREF(minitype);
-            minitype = PyArray_DescrFromType(PyArray_DEFAULT);
+            minitype = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
             if (minitype == NULL) {
                 return NULL;
             }
@@ -514,7 +515,7 @@ _IsWriteable(PyArrayObject *ap)
     Py_ssize_t n;
 
     /* If we own our own data, then no-problem */
-    if ((base == NULL) || (ap->flags & OWNDATA)) {
+    if ((base == NULL) || (ap->flags & NPY_ARRAY_OWNDATA)) {
         return TRUE;
     }
     /*
@@ -528,7 +529,7 @@ _IsWriteable(PyArrayObject *ap)
      */
 
     while(PyArray_Check(base)) {
-        if (PyArray_CHKFLAGS(base, OWNDATA)) {
+        if (PyArray_CHKFLAGS(base, NPY_ARRAY_OWNDATA)) {
             return (Bool) (PyArray_ISWRITEABLE(base));
         }
         base = PyArray_BASE(base);
