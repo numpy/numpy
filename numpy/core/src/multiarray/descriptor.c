@@ -4,6 +4,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -1092,7 +1093,7 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
 }
 
 /*NUMPY_API
- * Get typenum from an object -- None goes to PyArray_DEFAULT
+ * Get typenum from an object -- None goes to NPY_DEFAULT_TYPE
  * This function takes a Python object representing a type and converts it
  * to a the correct PyArray_Descr * structure to describe the type.
  *
@@ -1118,7 +1119,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 
     /* default */
     if (obj == Py_None) {
-        *at = PyArray_DescrFromType(PyArray_DEFAULT);
+        *at = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
         return PY_SUCCEED;
     }
 

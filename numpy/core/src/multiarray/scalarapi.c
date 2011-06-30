@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -221,7 +222,7 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
                     outcode,
                     0, NULL,
                     NULL, ctypeptr,
-                    CARRAY, NULL);
+                    NPY_ARRAY_CARRAY, NULL);
         if (aout == NULL) {
             Py_DECREF(ain);
             return -1;
@@ -276,7 +277,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
     /* convert to 0-dim array of scalar typecode */
     typecode = PyArray_DescrFromScalar(scalar);
     if ((typecode->type_num == PyArray_VOID) &&
-            !(((PyVoidScalarObject *)scalar)->flags & OWNDATA) &&
+            !(((PyVoidScalarObject *)scalar)->flags & NPY_ARRAY_OWNDATA) &&
             outcode == NULL) {
         r = PyArray_NewFromDescr(&PyArray_Type,
                 typecode,
@@ -755,14 +756,14 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             Py_INCREF(descr);
             vobj->obval = NULL;
             Py_SIZE(vobj) = itemsize;
-            vobj->flags = BEHAVED | OWNDATA;
+            vobj->flags = NPY_ARRAY_BEHAVED | NPY_ARRAY_OWNDATA;
             swap = 0;
             if (PyDataType_HASFIELDS(descr)) {
                 if (base) {
                     Py_INCREF(base);
                     vobj->base = base;
                     vobj->flags = PyArray_FLAGS(base);
-                    vobj->flags &= ~OWNDATA;
+                    vobj->flags &= ~NPY_ARRAY_OWNDATA;
                     vobj->obval = data;
                     return obj;
                 }

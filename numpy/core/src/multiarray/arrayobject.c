@@ -25,6 +25,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "structmember.h"
 
 /*#include <stdio.h>*/
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -235,8 +236,8 @@ array_dealloc(PyArrayObject *self) {
          * (checked previously) and it was locked here
          * thus, unlock it.
          */
-        if (self->flags & UPDATEIFCOPY) {
-            ((PyArrayObject *)self->base)->flags |= WRITEABLE;
+        if (self->flags & NPY_ARRAY_UPDATEIFCOPY) {
+            ((PyArrayObject *)self->base)->flags |= NPY_ARRAY_WRITEABLE;
             Py_INCREF(self); /* hold on to self in next call */
             if (PyArray_CopyAnyInto((PyArrayObject *)self->base, self) < 0) {
                 PyErr_Print();
@@ -254,7 +255,7 @@ array_dealloc(PyArrayObject *self) {
         Py_DECREF(self->base);
     }
 
-    if ((self->flags & OWNDATA) && self->data) {
+    if ((self->flags & NPY_ARRAY_OWNDATA) && self->data) {
         /* Free internal references if an Object array */
         if (PyDataType_FLAGCHK(self->descr, NPY_ITEM_REFCOUNT)) {
             Py_INCREF(self); /*hold on to self */
@@ -999,8 +1000,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             if (typenum != PyArray_OBJECT) {
                 typenum = PyArray_NOTYPE;
             }
-            array_other = PyArray_FromObject(other,
-                    typenum, 0, 0);
+            array_other = PyArray_FromObject(other, typenum, 0, 0);
             /*
              * If not successful, indicate that the items cannot be compared
              * this way.
@@ -1240,11 +1240,11 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
                                      &order)) {
         goto fail;
     }
-    if (order == PyArray_FORTRANORDER) {
+    if (order == NPY_FORTRANORDER) {
         fortran = 1;
     }
     if (descr == NULL) {
-        descr = PyArray_DescrFromType(PyArray_DEFAULT);
+        descr = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
 
     itemsize = descr->elsize;
@@ -1319,7 +1319,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         }
         /* get writeable and aligned */
         if (fortran) {
-            buffer.flags |= FORTRAN;
+            buffer.flags |= NPY_ARRAY_F_CONTIGUOUS;
         }
         ret = (PyArrayObject *)\
             PyArray_NewFromDescr(subtype, descr,
@@ -1331,7 +1331,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             descr = NULL;
             goto fail;
         }
-        PyArray_UpdateFlags(ret, UPDATE_ALL);
+        PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
         ret->base = buffer.base;
         Py_INCREF(buffer.base);
     }

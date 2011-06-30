@@ -11,6 +11,7 @@
 #include "Python.h"
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
 #include <numpy/npy_3kcompat.h>
@@ -2573,7 +2574,7 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     Py_INCREF(dtype);
     view = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
                                 shape, strides, dataptr,
-                                writeable ? NPY_WRITEABLE : 0,
+                                writeable ? NPY_ARRAY_WRITEABLE : 0,
                                 NULL);
     if (view == NULL) {
         return NULL;
@@ -2582,7 +2583,7 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     Py_INCREF(obj);
     view->base = (PyObject *)obj;
     /* Make sure all the flags are good */
-    PyArray_UpdateFlags(view, NPY_UPDATE_ALL);
+    PyArray_UpdateFlags(view, NPY_ARRAY_UPDATE_ALL);
 
     return view;
 }
@@ -3100,7 +3101,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
 
     if (PyArray_Check(*op)) {
         if (((*op_itflags)&NPY_OP_ITFLAG_WRITE) &&
-                    (!PyArray_CHKFLAGS(*op, NPY_WRITEABLE))) {
+                    (!PyArray_CHKFLAGS(*op, NPY_ARRAY_WRITEABLE))) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator operand was a non-writeable array, but was "
                     "flagged as writeable");
@@ -4074,7 +4075,7 @@ npyiter_apply_forced_iteration_order(NpyIter *iter, NPY_ORDER order)
 
             /* Check that all the array inputs are fortran order */
             for (iop = 0; iop < nop; ++iop, ++op) {
-                if (*op && !PyArray_CHKFLAGS(*op, NPY_F_CONTIGUOUS)) {
+                if (*op && !PyArray_CHKFLAGS(*op, NPY_ARRAY_F_CONTIGUOUS)) {
                    forder = 0;
                    break;
                 }
@@ -4684,7 +4685,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
         newret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
                               op_dtype, op_ndim,
                               shape, strides, dataptr,
-                              NPY_WRITEABLE, NULL);
+                              NPY_ARRAY_WRITEABLE, NULL);
         if (newret == NULL) {
             Py_DECREF(ret);
             return NULL;
@@ -4694,7 +4695,7 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     }
 
     /* Make sure all the flags are good */
-    PyArray_UpdateFlags(ret, NPY_UPDATE_ALL);
+    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
 
     /* Double-check that the subtype didn't mess with the dimensions */
     if (subtype != &PyArray_Type) {
@@ -4834,8 +4835,8 @@ npyiter_allocate_arrays(NpyIter *iter,
             }
             /* If the data will be written to, set UPDATEIFCOPY */
             if (op_itflags[iop]&NPY_OP_ITFLAG_WRITE) {
-                PyArray_FLAGS(temp) |= NPY_UPDATEIFCOPY;
-                PyArray_FLAGS(op[iop]) &= ~NPY_WRITEABLE;
+                PyArray_FLAGS(temp) |= NPY_ARRAY_UPDATEIFCOPY;
+                PyArray_FLAGS(op[iop]) &= ~NPY_ARRAY_WRITEABLE;
                 Py_INCREF(op[iop]);
                 temp->base = (PyObject *)op[iop];
             }

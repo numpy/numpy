@@ -12,6 +12,7 @@
 
 #include <time.h>
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #include <numpy/arrayobject.h>
 

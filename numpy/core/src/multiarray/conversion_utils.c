@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -26,7 +27,7 @@
  *
  * This conversion function can be used with the "O&" argument for
  * PyArg_ParseTuple.  It will immediately return an object of array type
- * or will convert to a CARRAY any other object.
+ * or will convert to a NPY_ARRAY_CARRAY any other object.
  *
  * If you use PyArray_Converter, you must DECREF the array when finished
  * as you get a new reference to it.
@@ -40,7 +41,7 @@ PyArray_Converter(PyObject *object, PyObject **address)
         return PY_SUCCEED;
     }
     else {
-        *address = PyArray_FromAny(object, NULL, 0, 0, CARRAY, NULL);
+        *address = PyArray_FromAny(object, NULL, 0, 0, NPY_ARRAY_CARRAY, NULL);
         if (*address == NULL) {
             return PY_FAIL;
         }
@@ -143,14 +144,14 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     Py_ssize_t buflen;
 
     buf->ptr = NULL;
-    buf->flags = BEHAVED;
+    buf->flags = NPY_ARRAY_BEHAVED;
     buf->base = NULL;
     if (obj == Py_None) {
         return PY_SUCCEED;
     }
     if (PyObject_AsWriteBuffer(obj, &(buf->ptr), &buflen) < 0) {
         PyErr_Clear();
-        buf->flags &= ~WRITEABLE;
+        buf->flags &= ~NPY_ARRAY_WRITEABLE;
         if (PyObject_AsReadBuffer(obj, (const void **)&(buf->ptr),
                                   &buflen) < 0) {
             return PY_FAIL;

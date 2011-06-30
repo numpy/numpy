@@ -3,6 +3,7 @@
 #include "Python.h"
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -571,10 +572,10 @@ VOID_getitem(char *ip, PyArrayObject *ap)
             /* update alignment based on offset */
             if ((new->alignment > 1)
                     && ((((intp)(ip+offset)) % new->alignment) != 0)) {
-                ap->flags &= ~ALIGNED;
+                ap->flags &= ~NPY_ARRAY_ALIGNED;
             }
             else {
-                ap->flags |= ALIGNED;
+                ap->flags |= NPY_ARRAY_ALIGNED;
             }
             PyTuple_SET_ITEM(ret, i, new->f->getitem(ip+offset, ap));
             ap->flags = savedflags;
@@ -597,14 +598,14 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         Py_INCREF(descr->subarray->base);
         ret = PyArray_NewFromDescr(&PyArray_Type,
                 descr->subarray->base, shape.len, shape.ptr,
-                NULL, ip, ap->flags&(~NPY_F_CONTIGUOUS), NULL);
+                NULL, ip, ap->flags&(~NPY_ARRAY_F_CONTIGUOUS), NULL);
         PyDimMem_FREE(shape.ptr);
         if (!ret) {
             return NULL;
         }
         PyArray_BASE(ret) = (PyObject *)ap;
         Py_INCREF(ap);
-        PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL);
+        PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
         return ret;
     }
 
@@ -694,10 +695,10 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
             /* remember to update alignment flags */
             if ((new->alignment > 1)
                     && ((((intp)(ip+offset)) % new->alignment) != 0)) {
-                ap->flags &= ~ALIGNED;
+                ap->flags &= ~NPY_ARRAY_ALIGNED;
             }
             else {
-                ap->flags |= ALIGNED;
+                ap->flags |= NPY_ARRAY_ALIGNED;
             }
             res = new->f->setitem(PyTuple_GET_ITEM(op, i), ip+offset, ap);
             ap->flags = savedflags;
@@ -729,7 +730,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         }
         PyArray_BASE(ret) = (PyObject *)ap;
         Py_INCREF(ap);
-        PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL);
+        PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
         res = PyArray_CopyObject((PyArrayObject *)ret, op);
         Py_DECREF(ret);
         return res;
@@ -2183,10 +2184,10 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
             ap->descr = new;
             ap->flags = savedflags;
             if ((new->alignment > 1) && !__ALIGNED(ip+offset, new->alignment)) {
-                ap->flags &= ~ALIGNED;
+                ap->flags &= ~NPY_ARRAY_ALIGNED;
             }
             else {
-                ap->flags |= ALIGNED;
+                ap->flags |= NPY_ARRAY_ALIGNED;
             }
             if (new->f->nonzero(ip+offset, ap)) {
                 nonz = TRUE;

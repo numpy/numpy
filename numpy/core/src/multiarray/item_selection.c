@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -36,7 +37,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     int err;
 
     indices = NULL;
-    self = (PyAO *)_check_axis(self0, &axis, CARRAY);
+    self = (PyAO *)_check_axis(self0, &axis, NPY_ARRAY_CARRAY);
     if (self == NULL) {
         return NULL;
     }
@@ -79,7 +80,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     }
     else {
         PyArrayObject *obj;
-        int flags = NPY_CARRAY | NPY_UPDATEIFCOPY;
+        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
 
         if ((ret->nd != nd) ||
             !PyArray_CompareLists(ret->dimensions, shape, nd)) {
@@ -96,7 +97,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
              * so the input array is not changed
              * before the error is called
              */
-            flags |= NPY_ENSURECOPY;
+            flags |= NPY_ARRAY_ENSURECOPY;
         }
         obj = (PyArrayObject *)PyArray_FromArray(ret, self->descr,
                                                  flags);
@@ -223,10 +224,10 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     }
     if (!PyArray_ISCONTIGUOUS(self)) {
         PyArrayObject *obj;
-        int flags = NPY_CARRAY | NPY_UPDATEIFCOPY;
+        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
 
         if (clipmode == NPY_RAISE) {
-            flags |= NPY_ENSURECOPY;
+            flags |= NPY_ARRAY_ENSURECOPY;
         }
         Py_INCREF(self->descr);
         obj = (PyArrayObject *)PyArray_FromArray(self,
@@ -247,7 +248,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     ni = PyArray_SIZE(indices);
     Py_INCREF(self->descr);
     values = (PyArrayObject *)PyArray_FromAny(values0, self->descr, 0, 0,
-                                              DEFAULT | FORCECAST, NULL);
+                              NPY_ARRAY_DEFAULT | NPY_ARRAY_FORCECAST, NULL);
     if (values == NULL) {
         goto fail;
     }
@@ -402,7 +403,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     }
     if (!PyArray_ISCONTIGUOUS(self)) {
         PyArrayObject *obj;
-        int flags = NPY_CARRAY | NPY_UPDATEIFCOPY;
+        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
 
         Py_INCREF(self->descr);
         obj = (PyArrayObject *)PyArray_FromArray(self,
@@ -417,7 +418,8 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     dest = self->data;
     chunk = self->descr->elsize;
     mask = (PyArrayObject *)\
-        PyArray_FROM_OTF(mask0, PyArray_BOOL, CARRAY | FORCECAST);
+        PyArray_FROM_OTF(mask0, PyArray_BOOL,
+                            NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST);
     if (mask == NULL) {
         goto fail;
     }
@@ -430,7 +432,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     }
     Py_INCREF(self->descr);
     values = (PyArrayObject *)\
-        PyArray_FromAny(values0, self->descr, 0, 0, NPY_CARRAY, NULL);
+        PyArray_FromAny(values0, self->descr, 0, 0, NPY_ARRAY_CARRAY, NULL);
     if (values == NULL) {
         goto fail;
     }
@@ -507,7 +509,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     nd = repeats->nd;
     counts = (intp *)repeats->data;
 
-    if ((ap=_check_axis(aop, &axis, CARRAY))==NULL) {
+    if ((ap=_check_axis(aop, &axis, NPY_ARRAY_CARRAY))==NULL) {
         Py_DECREF(repeats);
         return NULL;
     }
@@ -640,7 +642,9 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
     }
     else {
         PyArrayObject *obj;
-        int flags = NPY_CARRAY | NPY_UPDATEIFCOPY | NPY_FORCECAST;
+        int flags = NPY_ARRAY_CARRAY |
+                    NPY_ARRAY_UPDATEIFCOPY |
+                    NPY_ARRAY_FORCECAST;
 
         if ((PyArray_NDIM(ret) != multi->nd)
                 || !PyArray_CompareLists(
@@ -656,7 +660,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
              * so the input array is not changed
              * before the error is called
              */
-            flags |= NPY_ENSURECOPY;
+            flags |= NPY_ARRAY_ENSURECOPY;
         }
         Py_INCREF(mps[0]->descr);
         obj = (PyArrayObject *)PyArray_FromArray(ret, mps[0]->descr, flags);
@@ -767,7 +771,8 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     elsize = op->descr->elsize;
     astride = op->strides[axis];
 
-    needcopy = !(op->flags & ALIGNED) || (astride != (intp) elsize) || swap;
+    needcopy = !(op->flags & NPY_ARRAY_ALIGNED) ||
+                (astride != (intp) elsize) || swap;
     if (needcopy) {
         char *buffer = PyDataMem_NEW(N*elsize);
 
@@ -843,7 +848,8 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     astride = op->strides[axis];
     rstride = PyArray_STRIDE(ret,axis);
 
-    needcopy = swap || !(op->flags & ALIGNED) || (astride != (intp) elsize) ||
+    needcopy = swap || !(op->flags & NPY_ARRAY_ALIGNED) ||
+                         (astride != (intp) elsize) ||
             (rstride != sizeof(intp));
     if (needcopy) {
         char *valbuffer, *indbuffer;
@@ -942,21 +948,23 @@ qsortCompare (const void *a, const void *b)
 
 /* These swap axes in-place if necessary */
 #define SWAPINTP(a,b) {intp c; c=(a); (a) = (b); (b) = c;}
-#define SWAPAXES2(ap) {                                                 \
-        orign = (ap)->nd-1;                                             \
-        if (axis != orign) {                                            \
-            SWAPINTP(ap->dimensions[axis], ap->dimensions[orign]);      \
-            SWAPINTP(ap->strides[axis], ap->strides[orign]);            \
-            PyArray_UpdateFlags(ap, CONTIGUOUS | FORTRAN);              \
-        }                                                               \
+#define SWAPAXES2(ap) { \
+        orign = (ap)->nd-1; \
+        if (axis != orign) { \
+            SWAPINTP(ap->dimensions[axis], ap->dimensions[orign]); \
+            SWAPINTP(ap->strides[axis], ap->strides[orign]); \
+            PyArray_UpdateFlags(ap, NPY_ARRAY_C_CONTIGUOUS | \
+                                    NPY_ARRAY_F_CONTIGUOUS); \
+        } \
     }
 
-#define SWAPBACK2(ap) {                                                 \
-        if (axis != orign) {                                            \
-            SWAPINTP(ap->dimensions[axis], ap->dimensions[orign]);      \
-            SWAPINTP(ap->strides[axis], ap->strides[orign]);            \
-            PyArray_UpdateFlags(ap, CONTIGUOUS | FORTRAN);              \
-        }                                                               \
+#define SWAPBACK2(ap) { \
+        if (axis != orign) { \
+            SWAPINTP(ap->dimensions[axis], ap->dimensions[orign]); \
+            SWAPINTP(ap->strides[axis], ap->strides[orign]); \
+            PyArray_UpdateFlags(ap, NPY_ARRAY_C_CONTIGUOUS | \
+                                    NPY_ARRAY_F_CONTIGUOUS); \
+        } \
     }
 
 /*NUMPY_API
@@ -1000,8 +1008,8 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     SWAPAXES2(op);
 
     ap = (PyArrayObject *)PyArray_FromAny((PyObject *)op,
-                                          NULL, 1, 0,
-                                          DEFAULT | UPDATEIFCOPY, NULL);
+                          NULL, 1, 0,
+                          NPY_ARRAY_DEFAULT | NPY_ARRAY_UPDATEIFCOPY, NULL);
     if (ap == NULL) {
         goto fail;
     }
@@ -1268,7 +1276,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     for (j = 0; j < n; j++) {
         needcopy = needcopy
             || PyArray_ISBYTESWAPPED(mps[j])
-            || !(mps[j]->flags & ALIGNED)
+            || !(mps[j]->flags & NPY_ARRAY_ALIGNED)
             || (mps[j]->strides[axis] != (intp)mps[j]->descr->elsize);
         if (mps[j]->descr->elsize > maxelsize) {
             maxelsize = mps[j]->descr->elsize;
@@ -1462,7 +1470,8 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
     /* need ap1 as contiguous array and of right type */
     Py_INCREF(dtype);
     ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
-                                1, 1, NPY_DEFAULT | NPY_NOTSWAPPED, NULL);
+                                1, 1, NPY_ARRAY_DEFAULT |
+                                      NPY_ARRAY_NOTSWAPPED, NULL);
     if (ap1 == NULL) {
         Py_DECREF(dtype);
         return NULL;
@@ -1470,7 +1479,8 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
 
     /* need ap2 as contiguous array and of right type */
     ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
-                                0, 0, NPY_DEFAULT | NPY_NOTSWAPPED, NULL);
+                                0, 0, NPY_ARRAY_DEFAULT |
+                                      NPY_ARRAY_NOTSWAPPED, NULL);
     if (ap2 == NULL) {
         goto fail;
     }

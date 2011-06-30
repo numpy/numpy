@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -82,7 +83,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     oldsize = PyArray_SIZE(self);
 
     if (oldsize != newsize) {
-        if (!(self->flags & OWNDATA)) {
+        if (!(self->flags & NPY_ARRAY_OWNDATA)) {
             PyErr_SetString(PyExc_ValueError,
                     "cannot resize this array: it does not own its data");
             return NULL;
@@ -232,9 +233,9 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
          * data in the order it is in.
          */
         if (!(PyArray_ISONESEGMENT(self)) ||
-            (((PyArray_CHKFLAGS(self, NPY_CONTIGUOUS) &&
+            (((PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS) &&
                order == NPY_FORTRANORDER) ||
-              (PyArray_CHKFLAGS(self, NPY_FORTRAN) &&
+              (PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS) &&
                   order == NPY_CORDER)) && (self->nd > 1))) {
             int success = 0;
             success = _attempt_nocopy_reshape(self,n,dimensions,
@@ -261,12 +262,12 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         /* Make sure the flags argument is set. */
         if (n > 1) {
             if (order == NPY_FORTRANORDER) {
-                flags &= ~NPY_CONTIGUOUS;
-                flags |= NPY_FORTRAN;
+                flags &= ~NPY_ARRAY_C_CONTIGUOUS;
+                flags |= NPY_ARRAY_F_CONTIGUOUS;
             }
             else {
-                flags &= ~NPY_FORTRAN;
-                flags |= NPY_CONTIGUOUS;
+                flags &= ~NPY_ARRAY_F_CONTIGUOUS;
+                flags |= NPY_ARRAY_C_CONTIGUOUS;
             }
         }
     }
@@ -312,7 +313,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         Py_INCREF(self);
     }
     ret->base = (PyObject *)self;
-    PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);
+    PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
     return (PyObject *)ret;
 
  fail:
@@ -620,7 +621,7 @@ PyArray_Squeeze(PyArrayObject *self)
     if (ret == NULL) {
         return NULL;
     }
-    PyArray_FLAGS(ret) &= ~OWNDATA;
+    PyArray_FLAGS(ret) &= ~NPY_ARRAY_OWNDATA;
     PyArray_BASE(ret) = (PyObject *)self;
     Py_INCREF(self);
     return (PyObject *)ret;
@@ -756,7 +757,7 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
         ret->dimensions[i] = ap->dimensions[permutation[i]];
         ret->strides[i] = ap->strides[permutation[i]];
     }
-    PyArray_UpdateFlags(ret, CONTIGUOUS | FORTRAN);
+    PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
     return (PyObject *)ret;
 }
 
@@ -881,7 +882,7 @@ PyArray_Ravel(PyArrayObject *a, NPY_ORDER order)
 
             if (ret != NULL) {
                 PyArray_UpdateFlags((PyArrayObject *)ret,
-                                    NPY_CONTIGUOUS|NPY_FORTRAN);
+                            NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS);
                 Py_INCREF(a);
                 PyArray_BASE(ret) = (PyObject *)a;
             }

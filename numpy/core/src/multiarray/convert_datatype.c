@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -1648,7 +1649,7 @@ PyArray_Zero(PyArrayObject *arr)
         return zeroval;
     }
     storeflags = arr->flags;
-    arr->flags |= BEHAVED;
+    arr->flags |= NPY_ARRAY_BEHAVED;
     ret = arr->descr->f->setitem(obj, zeroval, arr);
     arr->flags = storeflags;
     Py_DECREF(obj);
@@ -1686,7 +1687,7 @@ PyArray_One(PyArrayObject *arr)
     }
 
     storeflags = arr->flags;
-    arr->flags |= BEHAVED;
+    arr->flags |= NPY_ARRAY_BEHAVED;
     ret = arr->descr->f->setitem(obj, oneval, arr);
     arr->flags = storeflags;
     Py_DECREF(obj);
@@ -1819,14 +1820,14 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 
     /* Make sure all arrays are actual array objects. */
     for (i = 0; i < n; i++) {
-        int flags = CARRAY;
+        int flags = NPY_ARRAY_CARRAY;
 
         if ((otmp = PySequence_GetItem(op, i)) == NULL) {
             goto fail;
         }
         if (!allscalars && ((PyObject *)(mps[i]) == Py_None)) {
             /* forcecast scalars */
-            flags |= FORCECAST;
+            flags |= NPY_ARRAY_FORCECAST;
             Py_DECREF(Py_None);
         }
         Py_INCREF(intype);
