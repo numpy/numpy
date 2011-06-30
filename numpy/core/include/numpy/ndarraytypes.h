@@ -674,17 +674,14 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  * Means c-style contiguous (last index varies the fastest). The data
  * elements right after each other.
  */
-#define NPY_CONTIGUOUS    0x0001
+#define NPY_ARRAY_C_CONTIGUOUS    0x0001
 
 /*
  * set if array is a contiguous Fortran array: the first index varies
  * the fastest in memory (strides array is reverse of C-contiguous
  * array)
  */
-#define NPY_FORTRAN       0x0002
-
-#define NPY_C_CONTIGUOUS NPY_CONTIGUOUS
-#define NPY_F_CONTIGUOUS NPY_FORTRAN
+#define NPY_ARRAY_F_CONTIGUOUS       0x0002
 
 /*
  * Note: all 0-d arrays are CONTIGUOUS and FORTRAN contiguous. If a
@@ -695,7 +692,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  * If set, the array owns the data: it will be free'd when the array
  * is deleted.
  */
-#define NPY_OWNDATA       0x0004
+#define NPY_ARRAY_OWNDATA       0x0004
 
 /*
  * An array never has the next four set; they're only used as parameter
@@ -703,22 +700,22 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 
 /* Cause a cast to occur regardless of whether or not it is safe. */
-#define NPY_FORCECAST     0x0010
+#define NPY_ARRAY_FORCECAST     0x0010
 
 /*
  * Always copy the array. Returned arrays are always CONTIGUOUS,
  * ALIGNED, and WRITEABLE.
  */
-#define NPY_ENSURECOPY    0x0020
+#define NPY_ARRAY_ENSURECOPY    0x0020
 
 /* Make sure the returned array is a base-class ndarray */
-#define NPY_ENSUREARRAY   0x0040
+#define NPY_ARRAY_ENSUREARRAY   0x0040
 
 /*
  * Make sure that the strides are in units of the element size Needed
  * for some operations with record-arrays.
  */
-#define NPY_ELEMENTSTRIDES 0x0080
+#define NPY_ARRAY_ELEMENTSTRIDES 0x0080
 
 /*
  * Array data is aligned on the appropiate memory address for the type
@@ -726,20 +723,36 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  * array of integers (4 bytes each) starts on a memory address that's
  * a multiple of 4)
  */
-#define NPY_ALIGNED       0x0100
+#define NPY_ARRAY_ALIGNED       0x0100
 
 /* Array data has the native endianness */
-#define NPY_NOTSWAPPED    0x0200
+#define NPY_ARRAY_NOTSWAPPED    0x0200
 
 /* Array data is writeable */
-#define NPY_WRITEABLE     0x0400
+#define NPY_ARRAY_WRITEABLE     0x0400
 
 /*
  * If this flag is set, then base contains a pointer to an array of
  * the same size that should be updated with the current contents of
  * this array when this array is deallocated
  */
-#define NPY_UPDATEIFCOPY  0x1000
+#define NPY_ARRAY_UPDATEIFCOPY  0x1000
+
+/*
+ * These versions of the above flags are not yet deprecated,
+ * but the intention is to do so in a future release.
+ */
+#define NPY_C_CONTIGUOUS   NPY_ARRAY_C_CONTIGUOUS
+#define NPY_F_CONTIGUOUS   NPY_ARRAY_F_CONTIGUOUS
+#define NPY_OWNDATA        NPY_ARRAY_OWNDATA
+#define NPY_FORCECAST      NPY_ARRAY_FORCECAST
+#define NPY_ENSURECOPY     NPY_ARRAY_ENSURECOPY
+#define NPY_ENSUREARRAY    NPY_ARRAY_ENSUREARRAY
+#define NPY_ELEMENTSTRIDES NPY_ARRAY_ELEMENTSTRIDES
+#define NPY_ALIGNED        NPY_ARRAY_ALIGNED
+#define NPY_NOTSWAPPED     NPY_ARRAY_NOTSWAPPED
+#define NPY_WRITEABLE      NPY_ARRAY_WRITEABLE
+#define NPY_UPDATEIFCOPY   NPY_ARRAY_UPDATEIFCOPY
 
 /* This flag is for the array interface */
 #define NPY_ARR_HAS_DESCR  0x0800
@@ -1451,5 +1464,9 @@ typedef struct {
                            * does not have ARR_HAS_DESCR flag set)
                            */
 } PyArrayInterface;
+
+#ifndef NPY_NO_DEPRECATED_API
+#include "npy_deprecated_api.h"
+#endif
 
 #endif /* NPY_ARRAYTYPES_H */
