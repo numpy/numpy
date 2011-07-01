@@ -19,7 +19,8 @@ Basic Datetimes
 The most basic way to create datetimes is from strings in
 ISO 8601 date or datetime format. The unit for internal storage
 is automatically selected from the form of the string, and can
-be either a "date unit" or a "time unit". The date units are years ('Y'),
+be either a :ref:`date unit <arrays.dtypes.dateunits>` or a
+:ref:`time unit <arrays.dtypes.timeunits>`. The date units are years ('Y'),
 months ('M'), weeks ('W'), and days ('D'), while the time units are
 hours ('h'), minutes ('m'), seconds ('s'), milliseconds ('ms'), and
 more SI-prefix seconds-based units.
@@ -97,7 +98,8 @@ because the moment of time is still being represented exactly.
     True
 
 An important exception to this rule is between datetimes with
-"date units" and datetimes with "time units". This is because this kind
+:ref:`date units <arrays.dtypes.dateunits>` and datetimes with
+:ref:`time units <arrays.dtypes.timeunits>`. This is because this kind
 of conversion generally requires a choice of timezone and
 particular time of day on the given date.
 
@@ -167,15 +169,30 @@ mode which allows for accounting of leap-seconds is proposed), with
 a epoch of 1970-01-01T00:00Z. This means the supported dates are
 always a symmetric interval around 1970.
 
+Here are the date units:
+
+.. _arrays.dtypes.dateunits:
+
 ======== ================ ======================= ==========================
-      Date or Time unit         Time span              Time span (years)
+      Date unit               Time span              Time span (years)
 ------------------------- ----------------------- --------------------------
   Code       Meaning         Relative Time             Absolute Time
 ======== ================ ======================= ==========================
-   Y       year (date)      +- 9.2e18 years         [9.2e18 BC, 9.2e18 AD]
-   M       month (date)     +- 7.6e17 years         [7.6e17 BC, 7.6e17 AD]
-   W       week (date)      +- 1.7e17 years         [1.7e17 BC, 1.7e17 AD]
-   D       day (date)       +- 2.5e16 years         [2.5e16 BC, 2.5e16 AD]
+   Y       year             +- 9.2e18 years         [9.2e18 BC, 9.2e18 AD]
+   M       month            +- 7.6e17 years         [7.6e17 BC, 7.6e17 AD]
+   W       week             +- 1.7e17 years         [1.7e17 BC, 1.7e17 AD]
+   D       day              +- 2.5e16 years         [2.5e16 BC, 2.5e16 AD]
+======== ================ ======================= ==========================
+
+And here are the time units:
+
+.. _arrays.dtypes.timeunits:
+
+======== ================ ======================= ==========================
+      Time unit               Time span              Time span (years)
+------------------------- ----------------------- --------------------------
+  Code       Meaning         Relative Time             Absolute Time
+======== ================ ======================= ==========================
    h       hour             +- 1.0e15 years         [1.0e15 BC, 1.0e15 AD]
    m       minute           +- 1.7e13 years         [1.7e13 BC, 1.7e13 AD]
    s       second           +- 2.9e12 years         [ 2.9e9 BC,  2.9e9 AD]
