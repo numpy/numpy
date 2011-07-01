@@ -41,6 +41,8 @@ class TestFromrecords(TestCase):
         fd = open(filename, 'rb')
         fd.seek(2880 * 2)
         r = np.rec.fromfile(fd, formats='f8,i4,a5', shape=3, byteorder='big')
+        fd.seek(2880 * 2)
+        r = np.rec.array(fd, formats='f8,i4,a5', shape=3, byteorder='big')
 
     def test_recarray_from_obj(self):
         count = 10
