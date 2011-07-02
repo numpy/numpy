@@ -499,5 +499,12 @@ class TestUfunc(TestCase):
         np.subtract(a, 2, out=a, where=[True,False])
         assert_equal(a, [[0, 27], [14, 5]])
 
+        # With casting on output
+        a = np.ones(10, np.int64)
+        b = np.ones(10, np.int64)
+        c = np.ones(10, np.float64)
+        np.add(a, b, out=c, where=[1,0,0,1,0,0,1,1,1,0])
+        assert_equal(c, [2,1,1,2,1,1,2,2,2,1])
+
 if __name__ == "__main__":
     run_module_suite()
