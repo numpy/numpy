@@ -176,8 +176,8 @@ provides a starting point.
 
 For example,::
 
-    >>> np.array([1.0, 2.0, np.NA, 7.0], masked=True)
-    array([1., 2., NA, 7.], masked=True)
+    >>> np.array([1.0, 2.0, np.NA, 7.0], namasked=True)
+    array([1., 2., NA, 7.], namasked=True)
     >>> np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]')
     array([1., 2., NA, 7.], dtype='NA[<f8]')
 
@@ -189,14 +189,14 @@ It may be worth overloading the np.NA __call__ method to accept a dtype,
 returning a zero-dimensional array with a missing value of that dtype.
 Without doing this, NA printouts would look like::
 
-    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], masked=True))
-    array(NA, dtype='float64', masked=True)
+    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], namasked=True))
+    array(NA, dtype='float64', namasked=True)
     >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]'))
     array(NA, dtype='NA[<f8]')
 
 but with this, they could be printed as::
 
-    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], masked=True))
+    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], namasked=True))
     NA('float64')
     >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]'))
     NA('NA[<f8]')
@@ -446,7 +446,7 @@ their behavior is through a series of examples::
     True
 
     >>> np.all(np.array([True, True, True], namasked=True))
-    False
+    True
     >>> np.all(np.array([True, NA, True], namasked=True))
     NA
     >>> np.all(np.array([False, NA, True], namasked=True))
