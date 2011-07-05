@@ -73,9 +73,9 @@ Unknown Yet Existing Data
 =========================
 
 This is the approach taken in the R project, defining a missing element
-as something which does have a valid value which isn't known. This proposal
-adopts this behavior as as the default for all operations involving
-missing values.
+as something which does have a valid value which isn't known, or is
+NA (not available). This proposal adopts this behavior as as the
+default for all operations involving missing values.
 
 In this interpretation, nearly any computation with a missing input produces
 a missing output. For example, 'sum(a)' would produce a missing value
@@ -85,13 +85,10 @@ that is not NA, such as logical_and(NA, False) == False.
 
 Some more complex arithmetic operations, such as matrix products, are
 well defined with this interpretation, and the result should be
-the same as if if the missing values were NaNs. Actually implementing
+the same as if the missing values were NaNs. Actually implementing
 such things to the theoretical limit is probably not worth it,
 and in many cases either raising an exception or returning all
 missing values may be preferred to doing precise calculations.
-Care must be taken here when dealing with the values and the masks,
-to preserve the semantics that masking a value never touches
-the element's backing memory.
 
 Data That Doesn't Exist Or Is Being Skipped
 ===========================================
@@ -100,10 +97,10 @@ Another useful interpretation is that the missing elements should be
 treated as if they didn't exist in the array, and the operation should
 do its best to interpret what that means according to the data
 that's left. In this case, 'mean(a)' would compute the mean of just
-the values that are unmasked, adjusting both the sum and count it
-uses based on the mask. To be consistent, the mean of an array of
-all missing values must produce the same result as the mean of a zero-sized
-array without missing value support.
+the values that are available, adjusting both the sum and count it
+uses based on which values are missing. To be consistent, the mean of
+an array of all missing values must produce the same result as the
+mean of a zero-sized array without missing value support.
 
 This kind of data can arise when conforming sparsely sampled data
 into a regular sampling pattern, and is a useful interpretation to 
@@ -122,14 +119,14 @@ there are two different commonly used implementation techniques for
 missing values. While there are some differing default behaviors between
 existing implementations of the techniques, I believe that the design
 choices made in a new implementation must be made based on their merits,
-not by rote copying of previous designs even if some users have been
-accustomed to those conventions.
+not by rote copying of previous designs.
 
-Each approach has positive and negative aspects to it, so this NEP
-proposed to implement both. To enable the writing of generic "missing
-value" code which does not have to worry about whether the arrays
-it is using have taken one or the other approach, the missing value
-semantics will be identical for the two implementations.
+Both masks and NA bit patterns have different strong and weak points,
+depending on the application context. This NEP thus proposes to implement
+both. To enable the writing of generic "missing value" code which does
+not have to worry about whether the arrays it is using have taken one
+or the other approach, the missing value semantics will be identical
+for the two implementations.
 
 NA Value Bit Patterns
 =====================
@@ -147,8 +144,8 @@ must be sacrificed to enable this functionality.
 Array Masks
 ===========
 
-A parallel array of booleans, either one byte per element or one bit
-per element, is allocated alongside the existing array data. In this
+A mask is a parallel array of booleans, either one byte per element or
+one bit per element, allocated alongside the existing array data. In this
 NEP, the convention is chosen that True means the element is valid
 (unmasked), and False means the element is NA.
 
@@ -173,7 +170,9 @@ NumPy will gain a global singleton called numpy.NA, similar to None,
 but with semantics reflecting its status as a missing value. In particular,
 trying to treat it as a boolean will raise an exception, and comparisons
 with it will produce numpy.NA instead of True or False. These basics are
-adopted from the behavior of the NA value in the R project.
+adopted from the behavior of the NA value in the R project. To dig
+deeper into the ideas, http://en.wikipedia.org/wiki/Ternary_logic#Kleene_logic
+provides a starting point.
 
 For example,::
 
@@ -247,7 +246,7 @@ become NA as well.
 When operations are done between arrays with NA dtypes and masked arrays,
 the result will be masked arrays. This is because in some cases the
 NA dtypes cannot represent all the values in the masked array, so
-going to masked arrays is the only way to losslessly preserve the data.
+going to masked arrays is the only way to preserve all aspects of the data.
 
 If np.NA or masked values are copied to an array without support for
 missing values enabled, an exception will be raised. Adding a mask to
@@ -290,10 +289,12 @@ Additionally, exposing the mask directly would preclude a potential
 space optimization, where a bit-level instead of a byte-level mask
 is used to get a factor of eight memory usage improvement.
 
-To access the mask values, there are two functions provided,
+To access a mask directly, there are two functions provided. They
+work equivalently for both arrays with masks and NA bit
+patterns, so they are specified in terms of NA and available values
+instead of masked and unmasked values. The functions are
 'np.isna' and 'np.isavail', which test for NA or available values
-respectively. These functions work equivalently for masked arrays
-and NA bit pattern dtypes.
+respectively.
 
 Creating Masked Arrays
 ======================
@@ -411,7 +412,7 @@ will also use the unmasked value counts for their calculations if
 
 Some examples::
 
-    >>> a = np.array([1., 3., np.NA, 7.], masked=True)
+    >>> a = np.array([1., 3., np.NA, 7.], namasked=True)
     >>> np.sum(a)
     array(NA, dtype='<f8', masked=True)
     >>> np.sum(a, skipna=True)
@@ -421,11 +422,11 @@ Some examples::
     >>> np.mean(a, skipna=True)
     3.6666666666666665
 
-    >>> a = np.array([np.NA, np.NA], dtype='f8', masked=True)
+    >>> a = np.array([np.NA, np.NA], dtype='f8', namasked=True)
     >>> np.sum(a, skipna=True)
     0.0
     >>> np.max(a, skipna=True)
-    array(NA, dtype='<f8', masked=True)
+    array(NA, dtype='<f8', namasked=True)
     >>> np.mean(a)
     NA('<f8')
     >>> np.mean(a, skipna=True)
@@ -433,45 +434,23 @@ Some examples::
       return mean(axis, dtype, out)
     nan
 
-PEP 3118
-========
+The functions 'np.any' and 'np.all' require some special consideration,
+just as logical_and and logical_or do. Maybe the best way to describe
+their behavior is through a series of examples::
 
-PEP 3118 doesn't have any mask mechanism, so arrays with masks will
-not be accessible through this interface. Similarly, it doesn't support
-the specification of dtypes with NA bit patterns, so the parameterized NA
-dtypes will also not be accessible through this interface.
+    >>> np.any(np.array([False, False, False], namasked=True))
+    False
+    >>> np.any(np.array([False, NA, False], namasked=True))
+    NA
+    >>> np.any(np.array([False, NA, True], namasked=True))
+    True
 
-If NumPy did allow access through PEP 3118, this would circumvent the
-missing value abstraction in a very damaging way. Other libraries would
-try to use masked arrays, and silently get access to the data without
-also getting access to the mask or being aware of the missing value
-abstraction the mask and data together are following.
-
-Cython
-======
-
-Cython uses PEP 3118 to work with NumPy arrays, so currently it will
-simply refuse to work with them as described in the "PEP 3118" section.
-
-In order to properly support NumPy missing values, Cython will need to
-be modified in some fashion to add this support. Likely the best way
-to do this will be to include it with supporting np.nditer, which
-is most likely going to have an enhancement to make writing missing
-value algorithms easier.
-
-Hard Masks
-==========
-
-The existing masked array implementation has a "hardmask" feature,
-which prevents values from ever being unmasked by assigning a value.
-This would be an internal array flag, named something like
-'arr.flags.hardmask'.
-
-If the hardmask feature is implemented, boolean indexing could
-return a hardmasked array instead of a flattened array with the
-arbitrary choice of C-ordering as it currently does. While this
-improves the abstraction of the array significantly, it is not
-a compatible change.
+    >>> np.all(np.array([True, True, True], namasked=True))
+    False
+    >>> np.all(np.array([True, NA, True], namasked=True))
+    NA
+    >>> np.all(np.array([False, NA, True], namasked=True))
+    False
 
 Parameterized NA Data Types
 ===========================
@@ -562,6 +541,68 @@ cannot hold values, but will conform to the input types in functions like
 'np.astype'. The dtype 'f8' maps to 'NA[f8]', and [('a', 'f4'), ('b', 'i4')]
 maps to [('a', 'NA[f4]'), ('b', 'NA[i4]')]. Thus, to view the memory
 of an 'f8' array 'arr' with 'NA[f8]', you can say arr.view(dtype='NA').
+
+PEP 3118
+========
+
+PEP 3118 doesn't have any mask mechanism, so arrays with masks will
+not be accessible through this interface. Similarly, it doesn't support
+the specification of dtypes with NA bit patterns, so the parameterized NA
+dtypes will also not be accessible through this interface.
+
+If NumPy did allow access through PEP 3118, this would circumvent the
+missing value abstraction in a very damaging way. Other libraries would
+try to use masked arrays, and silently get access to the data without
+also getting access to the mask or being aware of the missing value
+abstraction the mask and data together are following.
+
+Cython
+======
+
+Cython uses PEP 3118 to work with NumPy arrays, so currently it will
+simply refuse to work with them as described in the "PEP 3118" section.
+
+In order to properly support NumPy missing values, Cython will need to
+be modified in some fashion to add this support. Likely the best way
+to do this will be to include it with supporting np.nditer, which
+is most likely going to have an enhancement to make writing missing
+value algorithms easier.
+
+Hard Masks
+==========
+
+The existing masked array implementation has a "hardmask" feature,
+which prevents values from ever being unmasked by assigning a value.
+This would be an internal array flag, named something like
+'arr.flags.hardmask'.
+
+If the hardmask feature is implemented, boolean indexing could
+return a hardmasked array instead of a flattened array with the
+arbitrary choice of C-ordering as it currently does. While this
+improves the abstraction of the array significantly, it is not
+a compatible change.
+
+Shared Masks
+============
+
+One feature of numpy.ma is called 'shared masks'.
+
+http://docs.scipy.org/doc/numpy/reference/maskedarray.baseclass.html#numpy.ma.MaskedArray.sharedmask
+
+This feature cannot be supported by a masked implementation of
+missing values without directly violating the missing value abstraction.
+If the same mask memory is shared between two arrays 'a' and 'b', assigning
+a value to a masked element in 'a' will simultaneously unmask the
+element with matching index in 'b'. Because this isn't at the same time
+assigning a valid value to that element in 'b', this has violated the
+abstraction. For this reason, shared masks will not be supported
+by the mask-based missing value implementation.
+
+This is slightly different from what happens when taking a view
+of an array with masked missing value support, where a view of
+both the mask and the data are taken simultaneously. The result
+is two views which share the same mask memory and the same data memory,
+which still preserves the missing value abstraction.
 
 ************************
 C Implementation Details
@@ -660,5 +701,6 @@ the discussion are::
     Dag Sverre Seljebotn
     Joe Harrington
     Gary Strangman
+    Chris Jordan-Squire
 
 I apologize if I missed anyone.
