@@ -5759,7 +5759,9 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                 reduce_outerptrs[iop] = ptrs[iop];
                 break;
             default:
-                /* In this case, the buffer is being used */
+                /* In this case, the buffer is always being used */
+                any_buffered = 1;
+
                 if (!(op_itflags[iop]&NPY_OP_ITFLAG_REDUCE)) {
                     ptrs[iop] = buffers[iop];
                     strides[iop] = dtypes[iop]->elsize;
@@ -5816,6 +5818,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
 
             npy_bool skip_transfer = 0;
 
+            /* If stransfer wasn't set to NULL, buffering is required */
             any_buffered = 1;
 
             /*
