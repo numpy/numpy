@@ -190,6 +190,10 @@ mask
     boolean or enum array parallel to the data array is used to signal
     which elements are NA or IGNORE.
 
+numpy.ma
+    The existing implementation of a particular form of masked arrays,
+    which is part of the NumPy codebase.
+
 ********************************
 Missing Values as Seen in Python
 ********************************
@@ -602,7 +606,7 @@ value algorithms easier.
 Hard Masks
 ==========
 
-The existing masked array implementation has a "hardmask" feature,
+The numpy.ma implementation has a "hardmask" feature,
 which prevents values from ever being unmasked by assigning a value.
 This would be an internal array flag, named something like
 'arr.flags.hardmask'.
