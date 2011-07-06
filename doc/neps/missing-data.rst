@@ -21,19 +21,19 @@ find the programming interface challenging or inconsistent tend not
 to use it.
 
 This NEP proposes to integrate a mask-based missing data solution
-into NumPy, with an additional NA bit pattern-based missing data solution
+into NumPy, with an additional bitpattern-based missing data solution
 that can be implemented  concurrently or later integrating seamlessly
 with the mask-based solution.
 
-The mask-based solution and the NA bit pattern-based solutions in this
+The mask-based solution and the bitpattern-based solutions in this
 proposal offer the exact same missing value abstraction, with several
 differences in performance, memory overhead, and flexibility.
 
 The mask-based solution is more flexible, supporting all behaviors of the
-NA bit pattern-based solution, but leaving the hidden values untouched
+bitpattern-based solution, but leaving the hidden values untouched
 whenever an element is masked.
 
-The NA bit pattern-based solution requires less memory, is bit-level
+The bitpattern-based solution requires less memory, is bit-level
 compatible with the 64-bit floating point representation used in R, but
 does not preserve the hidden values and in fact requires stealing at
 least one bit pattern from the underlying dtype to represent the missing
@@ -42,7 +42,7 @@ value NA.
 Both solutions are generic in the sense that they can be used with
 custom data types very easily, with no effort in the case of the masked
 solution, and with the requirement that a bit pattern to sacrifice be
-chosen in the case of the NA bit pattern solution.
+chosen in the case of the bitpattern solution.
 
 **************************
 Definition of Missing Data
@@ -69,8 +69,8 @@ proposed elsewhere for customizing subclass ufunc behavior with a
 _numpy_ufunc_ member function would allow a subclass with a different
 default to be created.
 
-Unknown Yet Existing Data
-=========================
+Unknown Yet Existing Data (NA)
+==============================
 
 This is the approach taken in the R project, defining a missing element
 as something which does have a valid value which isn't known, or is
@@ -90,8 +90,8 @@ such things to the theoretical limit is probably not worth it,
 and in many cases either raising an exception or returning all
 missing values may be preferred to doing precise calculations.
 
-Data That Doesn't Exist Or Is Being Skipped
-===========================================
+Data That Doesn't Exist Or Is Being Skipped (IGNORE)
+====================================================
 
 Another useful interpretation is that the missing elements should be
 treated as if they didn't exist in the array, and the operation should
@@ -121,15 +121,15 @@ existing implementations of the techniques, I believe that the design
 choices made in a new implementation must be made based on their merits,
 not by rote copying of previous designs.
 
-Both masks and NA bit patterns have different strong and weak points,
+Both masks and bitpatterns have different strong and weak points,
 depending on the application context. This NEP thus proposes to implement
 both. To enable the writing of generic "missing value" code which does
 not have to worry about whether the arrays it is using have taken one
 or the other approach, the missing value semantics will be identical
 for the two implementations.
 
-NA Value Bit Patterns
-=====================
+Bit Patterns Signalling Missing Values (bitpattern)
+===================================================
 
 One or more patterns of bits, for example a NaN with
 a particular payload, are chosen to represent the missing value
@@ -141,8 +141,8 @@ holding the value, so that value is gone.
 Additionally, for some types such as integers, a good and proper value
 must be sacrificed to enable this functionality.
 
-Array Masks
-===========
+Boolean Masks Signalling Missing Values (mask)
+==============================================
 
 A mask is a parallel array of booleans, either one byte per element or
 one bit per element, allocated alongside the existing array data. In this
@@ -158,6 +158,37 @@ is missing, a feature requested by many people on the mailing list.
 This approach places no limitations on the values of the underlying
 data type, it may take on any binary pattern without affecting the
 NA behavior.
+
+*****************
+Glossary of Terms
+*****************
+
+Because the above discussions of the different concepts and their
+relationships are tricky to understand, here are more succinct
+definitions of the terms used in this NEP.
+
+NA (Not Available)
+    A placeholder for a value which is unknown to computations. That
+    value may be temporarily hidden with a mask, may have been lost
+    due to hard drive corruption, or gone for any number of reasons.
+    This is the same as NA in the R project.
+
+IGNORE (Skip/Ignore)
+    A placeholder which should be treated by computations as if no value does
+    or could exist there. For sums, this means act as if the value
+    were zero, and for products, this means act as if the value were one.
+    It's as if the array were compressed in some fashion to not include
+    that element.
+
+bitpattern
+    A technique for implementing either NA or IGNORE, where a particular
+    set of bit patterns are chosen from all the possible bit patterns of the
+    value's data type to signal that the element is NA or IGNORE.
+
+mask
+    A technique for implementing either NA or IGNORE, where a
+    boolean or enum array parallel to the data array is used to signal
+    which elements are NA or IGNORE.
 
 ********************************
 Missing Values as Seen in Python
@@ -183,7 +214,7 @@ For example,::
 
 produce arrays with values [1.0, 2.0, <inaccessible>, 7.0] /
 mask [Unmasked, Unmasked, Masked, Unmasked], and
-values [1.0, 2.0, <NA bit pattern>, 7.0] respectively.
+values [1.0, 2.0, <NA bitpattern>, 7.0] respectively.
 
 It may be worth overloading the np.NA __call__ method to accept a dtype,
 returning a zero-dimensional array with a missing value of that dtype.
@@ -203,7 +234,7 @@ but with this, they could be printed as::
 
 Assigning a value to an array always causes that element to not be NA,
 transparently unmasking it if necessary. Assigning numpy.NA to the array
-masks that element or assigns the NA bit pattern for the particular dtype.
+masks that element or assigns the NA bitpattern for the particular dtype.
 In the mask-based implementation, the storage behind a missing value may never
 be accessed in any way, other than to unmask it by assigning its value.
 
@@ -211,7 +242,7 @@ While numpy.NA works to mask values, it does not itself have a dtype.
 This means that returning the numpy.NA singleton from an operation
 like 'arr[0]' would be throwing away the dtype, which is still
 valuable to retain, so 'arr[0]' will return a zero-dimensional
-array either with its value masked, or containing the NA bit pattern
+array either with its value masked, or containing the NA bitpattern
 for the array's dtype. To test if the value is missing, the function
 "np.isna(arr[0])" will be provided. One of the key reasons for the
 NumPy scalars is to allow their values into dictionaries. Having a
@@ -236,10 +267,10 @@ from another view which doesn't have them masked. For example::
     >>> # The underlying number 1 value in 'a[0]' was untouched
 
 Copying values between the mask-based implementation and the
-NA bit pattern implementation will transparently do the correct thing,
-turning the NA bit pattern into a masked value, or a masked value
-into the NA bit pattern where appropriate. The one exception is
-if a valid value in a masked array happens to have the NA bit pattern,
+bitpattern implementation will transparently do the correct thing,
+turning the bitpattern into a masked value, or a masked value
+into the bitpattern where appropriate. The one exception is
+if a valid value in a masked array happens to have the NA bitpattern,
 copying this value to the NA form of the dtype will cause it to
 become NA as well.
 
@@ -264,7 +295,7 @@ For floating point numbers, Inf and NaN are separate concepts from
 missing values. If a division by zero occurs in an array with default
 missing value support, an unmasked Inf or NaN will be produced. To
 mask those values, a further 'a[np.logical_not(a.isfinite(a)] = np.NA'
-can achieve that. For the NA bit pattern approach, the parameterized
+can achieve that. For the bitpattern approach, the parameterized
 dtype('NA[f8,InfNan]') described in a later section can be used to get
 these semantics without the extra manipulation.
 
@@ -338,17 +369,17 @@ New functions added to the numpy namespace are::
 
     np.isna(arr)
         Returns a boolean array with True whereever the array is masked
-        or matches the NA bit pattern, and False elsewhere
+        or matches the NA bitpattern, and False elsewhere
 
     np.isavail(arr)
         Returns a boolean array with False whereever the array is masked
-        or matches the NA bit pattern, and True elsewhere
+        or matches the NA bitpattern, and True elsewhere
 
 New functions added to the ndarray are::
 
     arr.copy(..., replacena=None)
         Modification to the copy function which replaces NA values,
-        either masked or with the NA bit pattern, with the 'replacena='
+        either masked or with the NA bitpattern, with the 'replacena='
         parameter suppled. When 'replacena' isn't None, the copied
         array is unmasked and has the 'NA' part stripped from the
         parameterized type ('NA[f8]' becomes just 'f8').
@@ -479,7 +510,7 @@ This allows one to avoid the need to write special case code for each
 ufunc and for each na* dtype, something that is hard to avoid when
 building a separate independent dtype implementation for each na* dtype.
 
-Reliable conversions with the NA bit pattern preserved across primitive
+Reliable conversions with the NA bitpattern preserved across primitive
 types requires consideration as well. Even in the simple case of
 double -> float, where this is supported by hardware, the NA value
 will get lost because the NaN payload is typically not preserved.
@@ -547,8 +578,8 @@ PEP 3118
 
 PEP 3118 doesn't have any mask mechanism, so arrays with masks will
 not be accessible through this interface. Similarly, it doesn't support
-the specification of dtypes with NA bit patterns, so the parameterized NA
-dtypes will also not be accessible through this interface.
+the specification of dtypes with NA or IGNORE bitpatterns, so the
+parameterized NA dtypes will also not be accessible through this interface.
 
 If NumPy did allow access through PEP 3118, this would circumvent the
 missing value abstraction in a very damaging way. Other libraries would
