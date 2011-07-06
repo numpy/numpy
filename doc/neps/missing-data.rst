@@ -171,7 +171,8 @@ NA (Not Available)
     A placeholder for a value which is unknown to computations. That
     value may be temporarily hidden with a mask, may have been lost
     due to hard drive corruption, or gone for any number of reasons.
-    This is the same as NA in the R project.
+    For sums and products this means to produce NA if any of the inputs
+    are NA.  This is the same as NA in the R project.
 
 IGNORE (Skip/Ignore)
     A placeholder which should be treated by computations as if no value does
@@ -193,6 +194,17 @@ mask
 numpy.ma
     The existing implementation of a particular form of masked arrays,
     which is part of the NumPy codebase.
+
+Python API
+    All the interface mechanisms that are exposed to Python code
+    for using missing values in NumPy. This API is designed to be
+    Pythonic and fit into the way NumPy works as much as possible.
+
+C API
+    All the implementation mechanisms exposed for CPython extensions
+    written in C that want to support NumPy missing value support.
+    This API is designed to be as natural as possible in C, and
+    is usually prioritizes flexibility and high performance.
 
 ********************************
 Missing Values as Seen in Python
