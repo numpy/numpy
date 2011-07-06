@@ -24,6 +24,7 @@
  *
  */
 #define _UMATHMODULE
+#define NPY_NO_DEPRECATED_API
 
 #include "Python.h"
 
@@ -3323,7 +3324,8 @@ execute_ufunc_loop(PyUFuncObject *self,
                              PyArray_NDIM(op[0]),
                              PyArray_DIMS(op[0]),
                              NULL, NULL,
-                             PyArray_ISFORTRAN(op[0]) ? NPY_F_CONTIGUOUS : 0,
+                             PyArray_ISFORTRAN(op[0]) ?
+                                            NPY_ARRAY_F_CONTIGUOUS : 0,
                              NULL);
 
                 /* Call the __prepare_array__ if necessary */
@@ -3374,7 +3376,8 @@ execute_ufunc_loop(PyUFuncObject *self,
                                  PyArray_NDIM(tmp),
                                  PyArray_DIMS(tmp),
                                  NULL, NULL,
-                                 PyArray_ISFORTRAN(tmp) ? NPY_F_CONTIGUOUS : 0,
+                                 PyArray_ISFORTRAN(tmp) ?
+                                                NPY_ARRAY_F_CONTIGUOUS : 0,
                                  NULL);
 
                 /* Call the __prepare_array__ if necessary */
@@ -5229,7 +5232,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
             return NULL;
         }
         indices = (PyArrayObject *)PyArray_FromAny(obj_ind, indtype,
-                                                   1, 1, CARRAY, NULL);
+                                           1, 1, NPY_ARRAY_CARRAY, NULL);
         if (indices == NULL) {
             Py_XDECREF(otype);
             return NULL;

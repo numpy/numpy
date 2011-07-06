@@ -3,6 +3,7 @@
 #include "Python.h"
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #ifndef _MULTIARRAYMODULE
 #define _MULTIARRAYMODULE
 #endif
@@ -1131,8 +1132,8 @@ gentype_struct_get(PyObject *self)
     inter->two = 2;
     inter->nd = 0;
     inter->flags = arr->flags;
-    inter->flags &= ~(UPDATEIFCOPY | OWNDATA);
-    inter->flags |= NPY_NOTSWAPPED;
+    inter->flags &= ~(NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_OWNDATA);
+    inter->flags |= NPY_ARRAY_NOTSWAPPED;
     inter->typekind = arr->descr->kind;
     inter->itemsize = arr->descr->elsize;
     inter->strides = NULL;
@@ -1571,7 +1572,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
     char *dptr;
     static char *kwlist[] = {"value", "dtype", "offset", 0};
 
-    if ((self->flags & WRITEABLE) != WRITEABLE) {
+    if ((self->flags & NPY_ARRAY_WRITEABLE) != NPY_ARRAY_WRITEABLE) {
         PyErr_SetString(PyExc_RuntimeError, "Can't write to memory");
         return NULL;
     }
@@ -1606,7 +1607,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
     }
     else {
         /* Copy data from value to correct place in dptr */
-        src = PyArray_FromAny(value, typecode, 0, 0, CARRAY, NULL);
+        src = PyArray_FromAny(value, typecode, 0, 0, NPY_ARRAY_CARRAY, NULL);
         if (src == NULL) {
             return NULL;
         }
@@ -2364,7 +2365,7 @@ NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
 static void
 void_dealloc(PyVoidScalarObject *v)
 {
-    if (v->flags & OWNDATA) {
+    if (v->flags & NPY_ARRAY_OWNDATA) {
         PyDataMem_FREE(v->obval);
     }
     Py_XDECREF(v->descr);
@@ -2476,7 +2477,7 @@ static PyObject *
      * It is expected at this point that robj is a PyArrayScalar
      * (even for Object Data Type)
      */
-    arr = PyArray_FromAny(obj, typecode, 0, 0, FORCECAST, NULL);
+    arr = PyArray_FromAny(obj, typecode, 0, 0, NPY_ARRAY_FORCECAST, NULL);
     if ((arr == NULL) || (PyArray_NDIM(arr) > 0)) {
         return arr;
     }
@@ -2624,7 +2625,7 @@ bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *NPY_U
     if (obj == Py_True) {
         PyArrayScalar_RETURN_TRUE;
     }
-    arr = PyArray_FROM_OTF(obj, PyArray_BOOL, FORCECAST);
+    arr = PyArray_FROM_OTF(obj, PyArray_BOOL, NPY_ARRAY_FORCECAST);
     if (arr && 0 == PyArray_NDIM(arr)) {
         Bool val = *((Bool *)PyArray_DATA(arr));
         Py_DECREF(arr);
@@ -2808,13 +2809,14 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
         ((PyVoidScalarObject *)ret)->descr =
             PyArray_DescrNewFromType(PyArray_VOID);
         ((PyVoidScalarObject *)ret)->descr->elsize = (int) memu;
-        ((PyVoidScalarObject *)ret)->flags = BEHAVED | OWNDATA;
+        ((PyVoidScalarObject *)ret)->flags = NPY_ARRAY_BEHAVED |
+                                             NPY_ARRAY_OWNDATA;
         ((PyVoidScalarObject *)ret)->base = NULL;
         memset(destptr, '\0', (size_t) memu);
         return ret;
     }
 
-    arr = PyArray_FROM_OTF(obj, PyArray_VOID, FORCECAST);
+    arr = PyArray_FROM_OTF(obj, PyArray_VOID, NPY_ARRAY_FORCECAST);
     return PyArray_Return((PyArrayObject *)arr);
 }
 

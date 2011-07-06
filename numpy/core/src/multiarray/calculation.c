@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -118,7 +119,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
         rp = (PyArrayObject *)\
             PyArray_FromArray(out,
                               PyArray_DescrFromType(PyArray_INTP),
-                              NPY_CARRAY | NPY_UPDATEIFCOPY);
+                              NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
         if (rp == NULL) {
             goto fail;
         }
@@ -873,7 +874,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     /* Convert max to an array */
     if (max != NULL) {
         maxa = (NPY_AO *)PyArray_FromAny(max, indescr, 0, 0,
-                                         NPY_DEFAULT, NULL);
+                                         NPY_ARRAY_DEFAULT, NULL);
         if (maxa == NULL) {
             return NULL;
         }
@@ -915,7 +916,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         /* Convert min to an array */
         Py_INCREF(indescr);
         mina = (NPY_AO *)PyArray_FromAny(min, indescr, 0, 0,
-                                         NPY_DEFAULT, NULL);
+                                         NPY_ARRAY_DEFAULT, NULL);
         Py_DECREF(min);
         if (mina == NULL) {
             goto fail;
@@ -927,18 +928,20 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
      * Check to see if input is single-segment, aligned,
      * and in native byteorder
      */
-    if (PyArray_ISONESEGMENT(self) && PyArray_CHKFLAGS(self, ALIGNED) &&
-        PyArray_ISNOTSWAPPED(self) && (self->descr == indescr)) {
+    if (PyArray_ISONESEGMENT(self) &&
+                            PyArray_CHKFLAGS(self, NPY_ARRAY_ALIGNED) &&
+                            PyArray_ISNOTSWAPPED(self) &&
+                            (self->descr == indescr)) {
         ingood = 1;
     }
     if (!ingood) {
         int flags;
 
         if (PyArray_ISFORTRAN(self)) {
-            flags = NPY_FARRAY;
+            flags = NPY_ARRAY_FARRAY;
         }
         else {
-            flags = NPY_CARRAY;
+            flags = NPY_ARRAY_CARRAY;
         }
         Py_INCREF(indescr);
         newin = (NPY_AO *)PyArray_FromArray(self, indescr, flags);
@@ -991,8 +994,9 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         outgood = 1;
     }
     if (!outgood && PyArray_ISONESEGMENT(out) &&
-        PyArray_CHKFLAGS(out, ALIGNED) && PyArray_ISNOTSWAPPED(out) &&
-        PyArray_EquivTypes(out->descr, indescr)) {
+                        PyArray_CHKFLAGS(out, NPY_ARRAY_ALIGNED) &&
+                        PyArray_ISNOTSWAPPED(out) &&
+                        PyArray_EquivTypes(out->descr, indescr)) {
         outgood = 1;
     }
 
@@ -1003,10 +1007,10 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     if (!outgood) {
         int oflags;
         if (PyArray_ISFORTRAN(out))
-            oflags = NPY_FARRAY;
+            oflags = NPY_ARRAY_FARRAY;
         else
-            oflags = NPY_CARRAY;
-        oflags |= NPY_UPDATEIFCOPY | NPY_FORCECAST;
+            oflags = NPY_ARRAY_CARRAY;
+        oflags |= NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_FORCECAST;
         Py_INCREF(indescr);
         newout = (NPY_AO*)PyArray_FromArray(out, indescr, oflags);
         if (newout == NULL) {

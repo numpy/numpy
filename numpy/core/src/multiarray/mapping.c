@@ -3,6 +3,7 @@
 #include "structmember.h"
 
 /*#include <stdio.h>*/
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -66,7 +67,7 @@ array_big_item(PyArrayObject *self, intp i)
     }
     Py_INCREF(self);
     r->base = (PyObject *)self;
-    PyArray_UpdateFlags(r, CONTIGUOUS | FORTRAN);
+    PyArray_UpdateFlags(r, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
     return (PyObject *)r;
 }
 
@@ -289,7 +290,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
     }
     descr = mit->ait->ao->descr;
     Py_INCREF(descr);
-    arr = PyArray_FromAny(op, descr, 0, 0, FORCECAST, NULL);
+    arr = PyArray_FromAny(op, descr, 0, 0, NPY_ARRAY_FORCECAST, NULL);
     if (arr == NULL) {
         return -1;
     }
@@ -530,7 +531,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
     }
     other->base = (PyObject *)self;
     Py_INCREF(self);
-    PyArray_UpdateFlags(other, UPDATE_ALL);
+    PyArray_UpdateFlags(other, NPY_ARRAY_UPDATE_ALL);
     return (PyObject *)other;
 }
 
@@ -637,7 +638,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                                             self->descr,
                                             1, &oned,
                                             NULL, NULL,
-                                            NPY_DEFAULT,
+                                            NPY_ARRAY_DEFAULT,
                                             NULL);
             }
         }
@@ -1064,9 +1065,9 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
     intp coords[MAX_DIMS], dims_m1[MAX_DIMS];
     intp *dptr[MAX_DIMS];
 
-    typecode=PyArray_DescrFromType(PyArray_BOOL);
+    typecode=PyArray_DescrFromType(NPY_BOOL);
     ba = (PyArrayObject *)PyArray_FromAny(myBool, typecode, 0, 0,
-                                          CARRAY, NULL);
+                                          NPY_ARRAY_CARRAY, NULL);
     if (ba == NULL) {
         return -1;
     }
@@ -1161,7 +1162,7 @@ _convert_obj(PyObject *obj, PyArrayIterObject **iter)
     }
     else {
         indtype = PyArray_DescrFromType(PyArray_INTP);
-        arr = PyArray_FromAny(obj, indtype, 0, 0, FORCECAST, NULL);
+        arr = PyArray_FromAny(obj, indtype, 0, 0, NPY_ARRAY_FORCECAST, NULL);
         if (arr == NULL) {
             return -1;
         }
@@ -1530,8 +1531,9 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
 
     else if (PyArray_Check(indexobj) || !PyTuple_Check(indexobj)) {
         mit->numiter = 1;
-        indtype = PyArray_DescrFromType(PyArray_INTP);
-        arr = PyArray_FromAny(indexobj, indtype, 0, 0, FORCECAST, NULL);
+        indtype = PyArray_DescrFromType(NPY_INTP);
+        arr = PyArray_FromAny(indexobj, indtype, 0, 0,
+                                NPY_ARRAY_FORCECAST, NULL);
         if (arr == NULL) {
             goto fail;
         }

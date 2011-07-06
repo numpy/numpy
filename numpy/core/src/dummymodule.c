@@ -6,6 +6,8 @@
  * configuration files before the libraries are made.
  */
 
+#define NPY_NO_DEPRECATED_API
+
 #include <Python.h>
 #include <numpy/npy_3kcompat.h>
 

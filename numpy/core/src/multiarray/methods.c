@@ -3,6 +3,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -302,7 +303,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
                                self->nd, self->dimensions,
                                self->strides,
                                self->data + offset,
-                               self->flags&(~NPY_F_CONTIGUOUS),
+                               self->flags&(~NPY_ARRAY_F_CONTIGUOUS),
                                (PyObject *)self);
     if (ret == NULL) {
         return NULL;
@@ -310,7 +311,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
     Py_INCREF(self);
     ((PyArrayObject *)ret)->base = (PyObject *)self;
 
-    PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL);
+    PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
     return ret;
 }
 
@@ -361,7 +362,7 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
     Py_INCREF(self);
     ((PyArrayObject *)ret)->base = (PyObject *)self;
 
-    PyArray_UpdateFlags((PyArrayObject *)ret, UPDATE_ALL);
+    PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
     retval = PyArray_CopyObject((PyArrayObject *)ret, val);
     Py_DECREF(ret);
     return retval;
@@ -1538,22 +1539,22 @@ array_setstate(PyArrayObject *self, PyObject *args)
         }
     }
 
-    if ((self->flags & OWNDATA)) {
+    if ((self->flags & NPY_ARRAY_OWNDATA)) {
         if (self->data != NULL) {
             PyDataMem_FREE(self->data);
         }
-        self->flags &= ~OWNDATA;
+        self->flags &= ~NPY_ARRAY_OWNDATA;
     }
     Py_XDECREF(self->base);
 
-    self->flags &= ~UPDATEIFCOPY;
+    self->flags &= ~NPY_ARRAY_UPDATEIFCOPY;
 
     if (self->dimensions != NULL) {
         PyDimMem_FREE(self->dimensions);
         self->dimensions = NULL;
     }
 
-    self->flags = DEFAULT;
+    self->flags = NPY_ARRAY_DEFAULT;
 
     self->nd = nd;
 
@@ -1563,7 +1564,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
         memcpy(self->dimensions, dimensions, sizeof(intp)*nd);
         (void) _array_fill_strides(self->strides, dimensions, nd,
                                    (size_t) self->descr->elsize,
-                                   (fortran ? FORTRAN : CONTIGUOUS),
+                                   (fortran ? NPY_ARRAY_F_CONTIGUOUS :
+                                              NPY_ARRAY_C_CONTIGUOUS),
                                    &(self->flags));
     }
 
@@ -1607,7 +1609,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
             else {
                 memcpy(self->data, datastr, num);
             }
-            self->flags |= OWNDATA;
+            self->flags |= NPY_ARRAY_OWNDATA;
             self->base = NULL;
             Py_DECREF(rawdata);
         }
@@ -1628,14 +1630,14 @@ array_setstate(PyArrayObject *self, PyObject *args)
         if (PyDataType_FLAGCHK(self->descr, NPY_NEEDS_INIT)) {
             memset(self->data, 0, PyArray_NBYTES(self));
         }
-        self->flags |= OWNDATA;
+        self->flags |= NPY_ARRAY_OWNDATA;
         self->base = NULL;
         if (_setlist_pkl(self, rawdata) < 0) {
             return NULL;
         }
     }
 
-    PyArray_UpdateFlags(self, UPDATE_ALL);
+    PyArray_UpdateFlags(self, NPY_ARRAY_UPDATE_ALL);
 
     Py_INCREF(Py_None);
     return Py_None;
@@ -2164,10 +2166,10 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
     if (align != Py_None) {
         if (PyObject_Not(align)) {
-            self->flags &= ~ALIGNED;
+            self->flags &= ~NPY_ARRAY_ALIGNED;
         }
         else if (_IsAligned(self)) {
-            self->flags |= ALIGNED;
+            self->flags |= NPY_ARRAY_ALIGNED;
         }
         else {
             PyErr_SetString(PyExc_ValueError,
@@ -2186,7 +2188,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
             return NULL;
         }
         else {
-            self->flags &= ~UPDATEIFCOPY;
+            self->flags &= ~NPY_ARRAY_UPDATEIFCOPY;
             Py_XDECREF(self->base);
             self->base = NULL;
         }
@@ -2195,7 +2197,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (write != Py_None) {
         if (PyObject_IsTrue(write))
             if (_IsWriteable(self)) {
-                self->flags |= WRITEABLE;
+                self->flags |= NPY_ARRAY_WRITEABLE;
             }
             else {
                 self->flags = flagback;
@@ -2206,7 +2208,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 return NULL;
             }
         else
-            self->flags &= ~WRITEABLE;
+            self->flags &= ~NPY_ARRAY_WRITEABLE;
     }
 
     Py_INCREF(Py_None);

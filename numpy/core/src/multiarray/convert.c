@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -323,7 +324,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     else {
         descr = PyArray_DESCR(arr);
         Py_INCREF(descr);
-        newarr = PyArray_FromAny(obj, descr, 0,0, ALIGNED, NULL);
+        newarr = PyArray_FromAny(obj, descr, 0,0, NPY_ARRAY_ALIGNED, NULL);
         if (newarr == NULL) {
             return -1;
         }
