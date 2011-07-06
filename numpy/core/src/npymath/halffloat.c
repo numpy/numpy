@@ -1,3 +1,4 @@
+#define NPY_NO_DEPRECATED_API
 #include "numpy/halffloat.h"
 
 /*
