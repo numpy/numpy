@@ -458,5 +458,19 @@ class TestUfunc(TestCase):
 
         assert_equal(ref, True, err_msg="reference check")
 
+    def test_casting_out_param(self):
+        # Test that it's possible to do casts on output
+        a = np.ones((200,100), np.int64)
+        b = np.ones((200,100), np.int64)
+        c = np.ones((200,100), np.float64)
+        np.add(a, b, out=c)
+        assert_equal(c, 2)
+
+        a = np.zeros(65536)
+        b = np.zeros(65536, dtype=np.float32)
+        np.subtract(a, 0, out=b)
+        assert_equal(b, 0)
+
+
 if __name__ == "__main__":
     run_module_suite()
