@@ -51,6 +51,7 @@ API_FILES = [join('multiarray', 'methods.c'),
              join('multiarray', 'nditer_pywrap.c'),
              join('multiarray', 'einsum.c.src'),
              join('umath', 'ufunc_object.c'),
+             join('umath', 'ufunc_type_resolution.c'),
              join('umath', 'loops.c.src'),
             ]
 THIS_DIR = os.path.dirname(__file__)

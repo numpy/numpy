@@ -154,7 +154,7 @@ From scratch
     provided. If *strides* is ``NULL``, then the array strides are
     computed as C-style contiguous (default) or Fortran-style
     contiguous (*flags* is nonzero for *data* = ``NULL`` or *flags* &
-    :cdata:`NPY_F_CONTIGUOUS` is nonzero non-NULL *data*). Any provided
+    :cdata:`NPY_ARRAY_F_CONTIGUOUS` is nonzero non-NULL *data*). Any provided
     *dims* and *strides* are copied into newly allocated dimension and
     strides arrays for the new array object.
 
@@ -297,108 +297,112 @@ From other objects
     the array is constructed that way. Almost always this
     parameter is ``NULL``.
 
-    .. cvar:: NPY_C_CONTIGUOUS
+    In versions 1.6 and earlier of NumPy, the following flags
+    did not have the _ARRAY_ macro namespace in them. That form
+    of the constant names is deprecated in 1.7.
+
+    .. cvar:: NPY_ARRAY_C_CONTIGUOUS
 
         Make sure the returned array is C-style contiguous
 
-    .. cvar:: NPY_F_CONTIGUOUS
+    .. cvar:: NPY_ARRAY_F_CONTIGUOUS
 
         Make sure the returned array is Fortran-style contiguous.
 
-    .. cvar:: NPY_ALIGNED
+    .. cvar:: NPY_ARRAY_ALIGNED
 
         Make sure the returned array is aligned on proper boundaries for its
         data type. An aligned array has the data pointer and every strides
         factor as a multiple of the alignment factor for the data-type-
         descriptor.
 
-    .. cvar:: NPY_WRITEABLE
+    .. cvar:: NPY_ARRAY_WRITEABLE
 
         Make sure the returned array can be written to.
 
-    .. cvar:: NPY_ENSURECOPY
+    .. cvar:: NPY_ARRAY_ENSURECOPY
 
         Make sure a copy is made of *op*. If this flag is not
         present, data is not copied if it can be avoided.
 
-    .. cvar:: NPY_ENSUREARRAY
+    .. cvar:: NPY_ARRAY_ENSUREARRAY
 
         Make sure the result is a base-class ndarray or bigndarray. By
         default, if *op* is an instance of a subclass of the
         bigndarray, an instance of that same subclass is returned. If
         this flag is set, an ndarray object will be returned instead.
 
-    .. cvar:: NPY_FORCECAST
+    .. cvar:: NPY_ARRAY_FORCECAST
 
         Force a cast to the output type even if it cannot be done
         safely.  Without this flag, a data cast will occur only if it
         can be done safely, otherwise an error is reaised.
 
-    .. cvar:: NPY_UPDATEIFCOPY
+    .. cvar:: NPY_ARRAY_UPDATEIFCOPY
 
         If *op* is already an array, but does not satisfy the
         requirements, then a copy is made (which will satisfy the
-        requirements). If this flag is present and a copy (of an
-        object that is already an array) must be made, then the
-        corresponding :cdata:`NPY_UPDATEIFCOPY` flag is set in the returned
+        requirements). If this flag is present and a copy (of an object
+        that is already an array) must be made, then the corresponding
+        :cdata:`NPY_ARRAY_UPDATEIFCOPY` flag is set in the returned
         copy and *op* is made to be read-only. When the returned copy
         is deleted (presumably after your calculations are complete),
         its contents will be copied back into *op* and the *op* array
-        will be made writeable again. If *op* is not writeable to
-        begin with, then an error is raised. If *op* is not already an
-        array, then this flag has no effect.
+        will be made writeable again. If *op* is not writeable to begin
+        with, then an error is raised. If *op* is not already an array,
+        then this flag has no effect.
 
-    .. cvar:: NPY_BEHAVED
+    .. cvar:: NPY_ARRAY_BEHAVED
 
-        :cdata:`NPY_ALIGNED` \| :cdata:`NPY_WRITEABLE`
+        :cdata:`NPY_ARRAY_ALIGNED` \| :cdata:`NPY_ARRAY_WRITEABLE`
 
-    .. cvar:: NPY_CARRAY
+    .. cvar:: NPY_ARRAY_CARRAY
 
-        :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_BEHAVED`
+        :cdata:`NPY_ARRAY_C_CONTIGUOUS` \| :cdata:`NPY_ARRAY_BEHAVED`
 
-    .. cvar:: NPY_CARRAY_RO
+    .. cvar:: NPY_ARRAY_CARRAY_RO
 
-        :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_ALIGNED`
+        :cdata:`NPY_ARRAY_C_CONTIGUOUS` \| :cdata:`NPY_ARRAY_ALIGNED`
 
-    .. cvar:: NPY_FARRAY
+    .. cvar:: NPY_ARRAY_FARRAY
 
-        :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_BEHAVED`
+        :cdata:`NPY_ARRAY_F_CONTIGUOUS` \| :cdata:`NPY_ARRAY_BEHAVED`
 
-    .. cvar:: NPY_FARRAY_RO
+    .. cvar:: NPY_ARRAY_FARRAY_RO
 
-        :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_ALIGNED`
+        :cdata:`NPY_ARRAY_F_CONTIGUOUS` \| :cdata:`NPY_ARRAY_ALIGNED`
 
-    .. cvar:: NPY_DEFAULT
+    .. cvar:: NPY_ARRAY_DEFAULT
 
-        :cdata:`NPY_CARRAY`
+        :cdata:`NPY_ARRAY_CARRAY`
 
-    .. cvar:: NPY_IN_ARRAY
+    .. cvar:: NPY_ARRAY_IN_ARRAY
 
-        :cdata:`NPY_CONTIGUOUS` \| :cdata:`NPY_ALIGNED`
+        :cdata:`NPY_ARRAY_CONTIGUOUS` \| :cdata:`NPY_ARRAY_ALIGNED`
 
-    .. cvar:: NPY_IN_FARRAY
+    .. cvar:: NPY_ARRAY_IN_FARRAY
 
-        :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_ALIGNED`
+        :cdata:`NPY_ARRAY_F_CONTIGUOUS` \| :cdata:`NPY_ARRAY_ALIGNED`
 
     .. cvar:: NPY_OUT_ARRAY
 
-        :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
-        :cdata:`NPY_ALIGNED`
+        :cdata:`NPY_ARRAY_C_CONTIGUOUS` \| :cdata:`NPY_ARRAY_WRITEABLE` \|
+        :cdata:`NPY_ARRAY_ALIGNED`
 
-    .. cvar:: NPY_OUT_FARRAY
+    .. cvar:: NPY_ARRAY_OUT_FARRAY
 
-        :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
-        :cdata:`NPY_ALIGNED`
+        :cdata:`NPY_ARRAY_F_CONTIGUOUS` \| :cdata:`NPY_ARRAY_WRITEABLE` \|
+        :cdata:`NPY_ARRAY_ALIGNED`
 
-    .. cvar:: NPY_INOUT_ARRAY
+    .. cvar:: NPY_ARRAY_INOUT_ARRAY
 
-        :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
-        :cdata:`NPY_ALIGNED` \| :cdata:`NPY_UPDATEIFCOPY`
+        :cdata:`NPY_ARRAY_C_CONTIGUOUS` \| :cdata:`NPY_ARRAY_WRITEABLE` \|
+        :cdata:`NPY_ARRAY_ALIGNED` \| :cdata:`NPY_ARRAY_UPDATEIFCOPY`
 
-    .. cvar:: NPY_INOUT_FARRAY
+    .. cvar:: NPY_ARRAY_INOUT_FARRAY
 
-        :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_WRITEABLE` \|
-        :cdata:`NPY_ALIGNED` \| :cdata:`NPY_UPDATEIFCOPY`
+        :cdata:`NPY_ARRAY_F_CONTIGUOUS` \| :cdata:`NPY_ARRAY_WRITEABLE` \|
+        :cdata:`NPY_ARRAY_ALIGNED` \| :cdata:`NPY_ARRAY_UPDATEIFCOPY`
 
 .. cfunction:: int PyArray_GetArrayParamsFromObject(PyObject* op, PyArray_Descr* requested_dtype, npy_bool writeable, PyArray_Descr** out_dtype, int* out_ndim, npy_intp* out_dims, PyArrayObject** out_arr, PyObject* context)
 
@@ -421,7 +425,7 @@ From other objects
     If writing to the value in 'op' is desired, set the boolean
     'writeable' to 1.  This raises an error when 'op' is a scalar, list
     of lists, or other non-writeable 'op'. This differs from passing
-    NPY_WRITEABLE to PyArray_FromAny, where the writeable array may
+    NPY_ARRAY_WRITEABLE to PyArray_FromAny, where the writeable array may
     be a copy of the input.
 
     When success (0 return value) is returned, either out_arr
@@ -447,7 +451,7 @@ From other objects
             // Could make custom strides here too
             arr = PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
                                         dims, NULL,
-                                        fortran ? NPY_F_CONTIGUOUS : 0,
+                                        fortran ? NPY_ARRAY_F_CONTIGUOUS : 0,
                                         NULL);
             if (arr == NULL) {
                 return NULL;
@@ -466,12 +470,12 @@ From other objects
 .. cfunction:: PyObject* PyArray_CheckFromAny(PyObject* op, PyArray_Descr* dtype, int min_depth, int max_depth, int requirements, PyObject* context)
 
     Nearly identical to :cfunc:`PyArray_FromAny` (...) except
-    *requirements* can contain :cdata:`NPY_NOTSWAPPED` (over-riding the
-    specification in *dtype*) and :cdata:`NPY_ELEMENTSTRIDES` which
+    *requirements* can contain :cdata:`NPY_ARRAY_NOTSWAPPED` (over-riding the
+    specification in *dtype*) and :cdata:`NPY_ARRAY_ELEMENTSTRIDES` which
     indicates that the array should be aligned in the sense that the
     strides are multiples of the element size.
 
-.. cvar:: NPY_NOTSWAPPED
+.. cvar:: NPY_ARRAY_NOTSWAPPED
 
     Make sure the returned array has a data-type descriptor that is in
     machine byte-order, over-riding any specification in the *dtype*
@@ -482,11 +486,11 @@ From other objects
     not in machine byte- order), then a new data-type descriptor is
     created and used with its byte-order field set to native.
 
-.. cvar:: NPY_BEHAVED_NS
+.. cvar:: NPY_ARRAY_BEHAVED_NS
 
-    :cdata:`NPY_ALIGNED` \| :cdata:`NPY_WRITEABLE` \| :cdata:`NPY_NOTSWAPPED`
+    :cdata:`NPY_ARRAY_ALIGNED` \| :cdata:`NPY_ARRAY_WRITEABLE` \| :cdata:`NPY_ARRAY_NOTSWAPPED`
 
-.. cvar:: NPY_ELEMENTSTRIDES
+.. cvar:: NPY_ARRAY_ELEMENTSTRIDES
 
     Make sure the returned array has strides that are multiples of the
     element size.
@@ -545,7 +549,7 @@ From other objects
     This function **steals a reference** to ``op`` and makes sure that
     ``op`` is a base-class ndarray. It special cases array scalars,
     but otherwise calls :cfunc:`PyArray_FromAny` ( ``op``, NULL, 0, 0,
-    :cdata:`NPY_ENSUREARRAY`).
+    :cdata:`NPY_ARRAY_ENSUREARRAY`).
 
 .. cfunction:: PyObject* PyArray_FromString(char* string, npy_intp slen, PyArray_Descr* dtype, npy_intp num, char* sep)
 
@@ -579,7 +583,7 @@ From other objects
     object, ``buf``, that exports the (single-segment) buffer protocol
     (or has an attribute __buffer\__ that returns an object that
     exports the buffer protocol). A writeable buffer will be tried
-    first followed by a read- only buffer. The :cdata:`NPY_WRITEABLE`
+    first followed by a read- only buffer. The :cdata:`NPY_ARRAY_WRITEABLE`
     flag of the returned array will reflect which one was
     successful. The data is assumed to start at ``offset`` bytes from
     the start of the memory location for the object. The type of the
@@ -625,11 +629,11 @@ From other objects
     Similar to :cfunc:`PyArray_FROM_O` except it can take an argument
     of *requirements* indicating properties the resulting array must
     have. Available requirements that can be enforced are
-    :cdata:`NPY_CONTIGUOUS`, :cdata:`NPY_F_CONTIGUOUS`,
-    :cdata:`NPY_ALIGNED`, :cdata:`NPY_WRITEABLE`,
-    :cdata:`NPY_NOTSWAPPED`, :cdata:`NPY_ENSURECOPY`,
-    :cdata:`NPY_UPDATEIFCOPY`, :cdata:`NPY_FORCECAST`, and
-    :cdata:`NPY_ENSUREARRAY`. Standard combinations of flags can also
+    :cdata:`NPY_ARRAY_C_CONTIGUOUS`, :cdata:`NPY_ARRAY_F_CONTIGUOUS`,
+    :cdata:`NPY_ARRAY_ALIGNED`, :cdata:`NPY_ARRAY_WRITEABLE`,
+    :cdata:`NPY_ARRAY_NOTSWAPPED`, :cdata:`NPY_ARRAY_ENSURECOPY`,
+    :cdata:`NPY_ARRAY_UPDATEIFCOPY`, :cdata:`NPY_ARRAY_FORCECAST`, and
+    :cdata:`NPY_ARRAY_ENSUREARRAY`. Standard combinations of flags can also
     be used:
 
 .. cfunction:: PyObject* PyArray_FROM_OT(PyObject* obj, int typenum)
@@ -648,7 +652,7 @@ From other objects
     specified using a typenumber. :cfunc:`PyArray_DescrFromType`
     (*typenum*) is passed directly to :cfunc:`PyArray_FromAny`. This
     macro also adds :cdata:`NPY_DEFAULT` to requirements if
-    :cdata:`NPY_ENSURECOPY` is passed in as requirements.
+    :cdata:`NPY_ARRAY_ENSURECOPY` is passed in as requirements.
 
 .. cfunction:: PyObject *PyArray_CheckAxis(PyObject* obj, int* axis, int requirements)
 
@@ -1187,11 +1191,11 @@ determine the bit-position of the flag.  Python exposes a nice
 attribute- based interface as well as a dictionary-like interface for
 getting (and, if appropriate, setting) these flags.
 
-Memory areas of all kinds can be pointed to by an ndarray,
-necessitating these flags.  If you get an arbitrary ``PyArrayObject``
-in C-code, you need to be aware of the flags that are set.  If you
-need to guarantee a certain kind of array (like :cdata:`NPY_C_CONTIGUOUS` and
-:cdata:`NPY_BEHAVED`), then pass these requirements into the
+Memory areas of all kinds can be pointed to by an ndarray, necessitating
+these flags.  If you get an arbitrary ``PyArrayObject`` in C-code, you
+need to be aware of the flags that are set.  If you need to guarantee
+a certain kind of array (like :cdata:`NPY_ARRAY_C_CONTIGUOUS` and
+:cdata:`NPY_ARRAY_BEHAVED`), then pass these requirements into the
 PyArray_FromAny function.
 
 
@@ -1206,38 +1210,38 @@ might not be writeable. It might be in Fortan-contiguous order. The
 array flags are used to indicate what can be said about data
 associated with an array.
 
-.. cvar:: NPY_C_CONTIGUOUS
+.. cvar:: NPY_ARRAY_C_CONTIGUOUS
 
     The data area is in C-style contiguous order (last index varies the
     fastest).
 
-.. cvar:: NPY_F_CONTIGUOUS
+.. cvar:: NPY_ARRAY_F_CONTIGUOUS
 
     The data area is in Fortran-style contiguous order (first index varies
     the fastest).
 
-Notice that contiguous 1-d arrays are always both Fortran
-contiguous and C contiguous. Both of these flags can be checked and
-are convenience flags only as whether or not an array is
-:cdata:`NPY_C_CONTIGUOUS` or :cdata:`NPY_F_CONTIGUOUS` can be determined by the
-``strides``, ``dimensions``, and ``itemsize`` attributes.
+Notice that contiguous 1-d arrays are always both Fortran contiguous
+and C contiguous. Both of these flags can be checked and are convenience
+flags only as whether or not an array is :cdata:`NPY_ARRAY_C_CONTIGUOUS`
+or :cdata:`NPY_ARRAY_F_CONTIGUOUS` can be determined by the ``strides``,
+``dimensions``, and ``itemsize`` attributes.
 
-.. cvar:: NPY_OWNDATA
+.. cvar:: NPY_ARRAY_OWNDATA
 
     The data area is owned by this array.
 
-.. cvar:: NPY_ALIGNED
+.. cvar:: NPY_ARRAY_ALIGNED
 
     The data area is aligned appropriately (for all strides).
 
-.. cvar:: NPY_WRITEABLE
+.. cvar:: NPY_ARRAY_WRITEABLE
 
     The data area can be written to.
 
     Notice that the above 3 flags are are defined so that a new, well-
     behaved array has these flags defined as true.
 
-.. cvar:: NPY_UPDATEIFCOPY
+.. cvar:: NPY_ARRAY_UPDATEIFCOPY
 
     The data area represents a (well-behaved) copy whose information
     should be transferred back to the original when this array is deleted.
@@ -1250,47 +1254,47 @@ are convenience flags only as whether or not an array is
     array (which is set read_only). When the array with this flag set
     is deallocated, it will copy its contents back to the "misbehaved"
     array (casting if necessary) and will reset the "misbehaved" array
-    to :cdata:`NPY_WRITEABLE`. If the "misbehaved" array was not
-    :cdata:`NPY_WRITEABLE` to begin with then :cfunc:`PyArray_FromAny`
-    would have returned an error because :cdata:`NPY_UPDATEIFCOPY`
+    to :cdata:`NPY_ARRAY_WRITEABLE`. If the "misbehaved" array was not
+    :cdata:`NPY_ARRAY_WRITEABLE` to begin with then :cfunc:`PyArray_FromAny`
+    would have returned an error because :cdata:`NPY_ARRAY_UPDATEIFCOPY`
     would not have been possible.
 
-:cfunc:`PyArray_UpdateFlags` (obj, flags) will update the
-``obj->flags`` for ``flags`` which can be any of
-:cdata:`NPY_C_CONTIGUOUS`, :cdata:`NPY_F_CONTIGUOUS`, :cdata:`NPY_ALIGNED`,
-or :cdata:`NPY_WRITEABLE`.
+:cfunc:`PyArray_UpdateFlags` (obj, flags) will update the ``obj->flags``
+for ``flags`` which can be any of :cdata:`NPY_ARRAY_C_CONTIGUOUS`,
+:cdata:`NPY_ARRAY_F_CONTIGUOUS`, :cdata:`NPY_ARRAY_ALIGNED`, or
+:cdata:`NPY_ARRAY_WRITEABLE`.
 
 
 Combinations of array flags
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. cvar:: NPY_BEHAVED
+.. cvar:: NPY_ARRAY_BEHAVED
 
-    :cdata:`NPY_ALIGNED` \| :cdata:`NPY_WRITEABLE`
+    :cdata:`NPY_ARRAY_ALIGNED` \| :cdata:`NPY_ARRAY_WRITEABLE`
 
-.. cvar:: NPY_CARRAY
+.. cvar:: NPY_ARRAY_CARRAY
 
-    :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_BEHAVED`
+    :cdata:`NPY_ARRAY_C_CONTIGUOUS` \| :cdata:`NPY_ARRAY_BEHAVED`
 
-.. cvar:: NPY_CARRAY_RO
+.. cvar:: NPY_ARRAY_CARRAY_RO
 
-    :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_ALIGNED`
+    :cdata:`NPY_ARRAY_C_CONTIGUOUS` \| :cdata:`NPY_ARRAY_ALIGNED`
 
-.. cvar:: NPY_FARRAY
+.. cvar:: NPY_ARRAY_FARRAY
 
-    :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_BEHAVED`
+    :cdata:`NPY_ARRAY_F_CONTIGUOUS` \| :cdata:`NPY_ARRAY_BEHAVED`
 
-.. cvar:: NPY_FARRAY_RO
+.. cvar:: NPY_ARRAY_FARRAY_RO
 
-    :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_ALIGNED`
+    :cdata:`NPY_ARRAY_F_CONTIGUOUS` \| :cdata:`NPY_ARRAY_ALIGNED`
 
-.. cvar:: NPY_DEFAULT
+.. cvar:: NPY_ARRAY_DEFAULT
 
-    :cdata:`NPY_CARRAY`
+    :cdata:`NPY_ARRAY_CARRAY`
 
-.. cvar:: NPY_UPDATE_ALL
+.. cvar:: NPY_ARRAY_UPDATE_ALL
 
-    :cdata:`NPY_C_CONTIGUOUS` \| :cdata:`NPY_F_CONTIGUOUS` \| :cdata:`NPY_ALIGNED`
+    :cdata:`NPY_ARRAY_C_CONTIGUOUS` \| :cdata:`NPY_ARRAY_F_CONTIGUOUS` \| :cdata:`NPY_ARRAY_ALIGNED`
 
 
 Flag-like constants
@@ -1299,28 +1303,28 @@ Flag-like constants
 These constants are used in :cfunc:`PyArray_FromAny` (and its macro forms) to
 specify desired properties of the new array.
 
-.. cvar:: NPY_FORCECAST
+.. cvar:: NPY_ARRAY_FORCECAST
 
     Cast to the desired type, even if it can't be done without losing
     information.
 
-.. cvar:: NPY_ENSURECOPY
+.. cvar:: NPY_ARRAY_ENSURECOPY
 
     Make sure the resulting array is a copy of the original.
 
-.. cvar:: NPY_ENSUREARRAY
+.. cvar:: NPY_ARRAY_ENSUREARRAY
 
     Make sure the resulting object is an actual ndarray (or bigndarray),
     and not a sub-class.
 
-.. cvar:: NPY_NOTSWAPPED
+.. cvar:: NPY_ARRAY_NOTSWAPPED
 
     Only used in :cfunc:`PyArray_CheckFromAny` to over-ride the byteorder
     of the data-type object passed in.
 
-.. cvar:: NPY_BEHAVED_NS
+.. cvar:: NPY_ARRAY_BEHAVED_NS
 
-    :cdata:`NPY_ALIGNED` \| :cdata:`NPY_WRITEABLE` \| :cdata:`NPY_NOTSWAPPED`
+    :cdata:`NPY_ARRAY_ALIGNED` \| :cdata:`NPY_ARRAY_WRITEABLE` \| :cdata:`NPY_ARRAY_NOTSWAPPED`
 
 
 Flag checking
@@ -1334,9 +1338,9 @@ For all of these macros *arr* must be an instance of a (subclass of)
     The first parameter, arr, must be an ndarray or subclass. The
     parameter, *flags*, should be an integer consisting of bitwise
     combinations of the possible flags an array can have:
-    :cdata:`NPY_C_CONTIGUOUS`, :cdata:`NPY_F_CONTIGUOUS`,
-    :cdata:`NPY_OWNDATA`, :cdata:`NPY_ALIGNED`,
-    :cdata:`NPY_WRITEABLE`, :cdata:`NPY_UPDATEIFCOPY`.
+    :cdata:`NPY_ARRAY_C_CONTIGUOUS`, :cdata:`NPY_ARRAY_F_CONTIGUOUS`,
+    :cdata:`NPY_ARRAY_OWNDATA`, :cdata:`NPY_ARRAY_ALIGNED`,
+    :cdata:`NPY_ARRAY_WRITEABLE`, :cdata:`NPY_ARRAY_UPDATEIFCOPY`.
 
 .. cfunction:: PyArray_ISCONTIGUOUS(arr)
 
@@ -1392,8 +1396,8 @@ For all of these macros *arr* must be an instance of a (subclass of)
 
 .. cfunction:: void PyArray_UpdateFlags(PyArrayObject* arr, int flagmask)
 
-    The :cdata:`NPY_C_CONTIGUOUS`, :cdata:`NPY_ALIGNED`, and
-    :cdata:`NPY_F_CONTIGUOUS` array flags can be "calculated" from the
+    The :cdata:`NPY_ARRAY_C_CONTIGUOUS`, :cdata:`NPY_ARRAY_ALIGNED`, and
+    :cdata:`NPY_ARRAY_F_CONTIGUOUS` array flags can be "calculated" from the
     array object itself. This routine updates one or more of these
     flags of *arr* as specified in *flagmask* by performing the
     required calculation.
@@ -2025,6 +2029,97 @@ Other functions
     1 if the lists are identical; otherwise, return 0.
 
 
+Auxiliary Data With Object Semantics
+------------------------------------
+
+.. versionadded:: 1.7.0
+
+.. ctype:: NpyAuxData
+
+When working with more complex dtypes which are composed of other dtypes,
+such as the struct dtype, creating inner loops that manipulate the dtypes
+requires carrying along additional data. NumPy supports this idea
+through a struct :ctype:`NpyAuxData`, mandating a few conventions so that
+it is possible to do this.
+
+Defining an :ctype:`NpyAuxData` is similar to defining a class in C++,
+but the object semantics have to be tracked manually since the API is in C.
+Here's an example for a function which doubles up an element using
+an element copier function as a primitive.::
+
+    typedef struct {
+        NpyAuxData base;
+        ElementCopier_Func *func;
+        NpyAuxData *funcdata;
+    } eldoubler_aux_data;
+
+    void free_element_doubler_aux_data(NpyAuxData *data)
+    {
+        eldoubler_aux_data *d = (eldoubler_aux_data *)data;
+        /* Free the memory owned by this auxadata */
+        NPY_AUXDATA_FREE(d->funcdata);
+        PyArray_free(d);
+    }
+
+    NpyAuxData *clone_element_doubler_aux_data(NpyAuxData *data)
+    {
+        eldoubler_aux_data *ret = PyArray_malloc(sizeof(eldoubler_aux_data));
+        if (ret == NULL) {
+            return NULL;
+        }
+
+        /* Raw copy of all data */
+        memcpy(ret, data, sizeof(eldoubler_aux_data));
+
+        /* Fix up the owned auxdata so we have our own copy */
+        ret->funcdata = NPY_AUXDATA_CLONE(ret->funcdata);
+        if (ret->funcdata == NULL) {
+            PyArray_free(ret);
+            return NULL;
+        }
+
+        return (NpyAuxData *)ret;
+    }
+
+    NpyAuxData *create_element_doubler_aux_data(
+                                ElementCopier_Func *func,
+                                NpyAuxData *funcdata)
+    {
+        eldoubler_aux_data *ret = PyArray_malloc(sizeof(eldoubler_aux_data));
+        if (ret == NULL) {
+            PyErr_NoMemory();
+            return NULL;
+        }
+        memset(&ret, 0, sizeof(eldoubler_aux_data));
+        ret->base->free = &free_element_doubler_aux_data;
+        ret->base->clone = &clone_element_doubler_aux_data;
+        ret->func = func;
+        ret->funcdata = funcdata;
+
+        return (NpyAuxData *)ret;
+    }
+
+.. ctype:: NpyAuxData_FreeFunc
+
+    The function pointer type for NpyAuxData free functions.
+
+.. ctype:: NpyAuxData_CloneFunc
+
+    The function pointer type for NpyAuxData clone functions. These
+    functions should never set the Python exception on error, because
+    they may be called from a multi-threaded context.
+
+.. cfunction:: NPY_AUXDATA_FREE(auxdata)
+
+    A macro which calls the auxdata's free function appropriately,
+    does nothing if auxdata is NULL.
+
+.. cfunction:: NPY_AUXDATA_CLONE(auxdata)
+
+    A macro which calls the auxdata's clone function appropriately,
+    returning a deep copy of the auxiliary data.
+
+
 Array Iterators
 ---------------
 
@@ -2516,7 +2611,7 @@ to.
     to hold on to the memory be sure to INCREF the base member. The
     chunk of memory is pointed to by *buf* ->ptr member and has length
     *buf* ->len. The flags member of *buf* is :cdata:`NPY_BEHAVED_RO` with
-    the :cdata:`NPY_WRITEABLE` flag set if *obj* has a writeable buffer
+    the :cdata:`NPY_ARRAY_WRITEABLE` flag set if *obj* has a writeable buffer
     interface.
 
 .. cfunction:: int PyArray_AxisConverter(PyObject \* obj, int* axis)
@@ -3006,11 +3101,11 @@ Miscellaneous Macros
 
 .. cfunction:: PyArray_XDECREF_ERR(PyObject \*obj)
 
-    DECREF's an array object which may have the :cdata:`NPY_UPDATEIFCOPY`
+    DECREF's an array object which may have the :cdata:`NPY_ARRAY_UPDATEIFCOPY`
     flag set without causing the contents to be copied back into the
-    original array. Resets the :cdata:`NPY_WRITEABLE` flag on the base
+    original array. Resets the :cdata:`NPY_ARRAY_WRITEABLE` flag on the base
     object. This is useful for recovering from an error condition when
-    :cdata:`NPY_UPDATEIFCOPY` is used.
+    :cdata:`NPY_ARRAY_UPDATEIFCOPY` is used.
 
 
 Enumerated Types

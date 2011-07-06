@@ -16,31 +16,15 @@
  * Examples of transfer functions are a straight copy, a byte-swap,
  * and a casting operation,
  *
- * The 'transferdata' parameter is slightly special, and must always contain
- * pointer to deallocation and copying routines at its beginning.  The function
- * PyArray_FreeStridedTransferData should be used to deallocate such
- * pointers, and calls the first function pointer, while the function
- * PyArray_CopyStridedTransferData should be used to copy it.
+ * The 'transferdata' parameter is slightly special, following a
+ * generic auxiliary data pattern defined in ndarraytypes.h
+ * Use NPY_AUXDATA_CLONE and NPY_AUXDATA_FREE to deal with this data.
  * 
  */
 typedef void (PyArray_StridedTransferFn)(char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
                                     npy_intp N, npy_intp src_itemsize,
-                                    void *transferdata);
-
-/*
- * Deallocates a PyArray_StridedTransferFunction data object.  See
- * the comment with the function typedef for more details.
- */
-NPY_NO_EXPORT void
-PyArray_FreeStridedTransferData(void *transferdata);
-
-/*
- * Copies a PyArray_StridedTransferFunction data object.  See
- * the comment with the function typedef for more details.
- */
-NPY_NO_EXPORT void *
-PyArray_CopyStridedTransferData(void *transferdata);
+                                    NpyAuxData *transferdata);
 
 /*
  * Gives back a function pointer to a specialized function for copying
@@ -109,7 +93,7 @@ PyArray_GetStridedZeroPadCopyFn(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             npy_intp src_itemsize, npy_intp dst_itemsize,
                             PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata);
+                            NpyAuxData **outtransferdata);
 
 /*
  * For casts between built-in numeric types,
@@ -133,7 +117,7 @@ PyArray_GetDTypeCopySwapFn(int aligned,
                             npy_intp src_stride, npy_intp dst_stride,
                             PyArray_Descr *dtype,
                             PyArray_StridedTransferFn **outstransfer,
-                            void **outtransferdata);
+                            NpyAuxData **outtransferdata);
 
 /*
  * If it's possible, gives back a transfer function which casts and/or
@@ -186,7 +170,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
                             PyArray_StridedTransferFn **out_stransfer,
-                            void **out_transferdata,
+                            NpyAuxData **out_transferdata,
                             int *out_needs_api);
 
 /*
@@ -253,7 +237,7 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
                 npy_intp *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedTransferFn *stransfer,
-                void *transferdata);
+                NpyAuxData *transferdata);
 
 NPY_NO_EXPORT npy_intp
 PyArray_TransferStridedToNDim(npy_intp ndim,
@@ -263,7 +247,7 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                 npy_intp *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedTransferFn *stransfer,
-                void *transferdata);
+                NpyAuxData *transferdata);
 
 /*
  *            TRIVIAL ITERATION

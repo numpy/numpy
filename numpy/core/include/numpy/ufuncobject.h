@@ -7,7 +7,23 @@
 extern "C" {
 #endif
 
-typedef void (*PyUFuncGenericFunction) (char **, npy_intp *, npy_intp *, void *);
+/* The most generic inner loop for a standard element-wise ufunc */
+typedef void (*PyUFuncGenericFunction)
+            (char **args,
+             npy_intp *dimensions,
+             npy_intp *steps,
+             void *innerloopdata);
+
+/*
+ * The most generic inner loop for a masked standard element-wise ufunc.
+ * The mask data and step is at args[narg] and steps[narg], after all
+ * the operands.
+ */
+typedef void (*PyUFuncGenericMaskedFunction)
+            (char **args,
+             npy_intp *dimensions,
+             npy_intp *steps,
+             NpyAuxData *innerloopdata);
 
 /* Forward declaration for the type resolution function */
 struct _tagPyUFuncObject;
@@ -17,6 +33,12 @@ struct _tagPyUFuncObject;
  * calculation input and output data types and return an inner loop function.
  * This function should validate that the casting rule is being followed,
  * and fail if it is not.
+ *
+ * For backwards compatibility, the regular type resolution function does not
+ * support auxiliary data with object semantics. The type resolution call
+ * which returns a masked generic function returns a standard NpyAuxData
+ * object, for which the NPY_AUXDATA_FREE and NPY_AUXDATA_CLONE macros
+ * work.
  *
  * ufunc:             The ufunc object.
  * casting:           The 'casting' parameter provided to the ufunc.
@@ -43,6 +65,14 @@ typedef int (PyUFunc_TypeResolutionFunc)(
                                 PyArray_Descr **out_dtypes,
                                 PyUFuncGenericFunction *out_innerloop,
                                 void **out_innerloopdata);
+typedef int (PyUFunc_TypeResolutionMaskedFunc)(
+                                struct _tagPyUFuncObject *ufunc,
+                                NPY_CASTING casting,
+                                PyArrayObject **operands,
+                                PyObject *type_tup,
+                                PyArray_Descr **out_dtypes,
+                                PyUFuncGenericMaskedFunction *out_innerloop,
+                                NpyAuxData **out_innerloopdata);
 
 typedef struct _tagPyUFuncObject {
         PyObject_HEAD
@@ -112,6 +142,12 @@ typedef struct _tagPyUFuncObject {
          * have a different set of rules.
          */
         PyUFunc_TypeResolutionFunc *type_resolution_function;
+        /*
+         * A function which resolves the types and returns an inner loop.
+         * This is used by the regular ufunc when it requires using
+         * a mask to select which elements to compute.
+         */
+        PyUFunc_TypeResolutionMaskedFunc *type_resolution_masked_function;
 } PyUFuncObject;
 
 #include "arrayobject.h"
