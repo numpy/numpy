@@ -41,20 +41,20 @@ called a rank-0 array), then the strides and dimensions variables are
 NULL.
 
 Besides the structural information contained in the strides and
-dimensions members of the :ctype:`PyArrayObject`, the flags contain important
-information about how the data may be accessed. In particular, the
-:cdata:`NPY_ALIGNED` flag is set when the memory is on a suitable boundary
-according to the data-type array. Even if you have a contiguous chunk
-of memory, you cannot just assume it is safe to dereference a data-
-type-specific pointer to an element. Only if the :cdata:`NPY_ALIGNED` flag is
-set is this a safe operation (on some platforms it will work but on
-others, like Solaris, it will cause a bus error). The :cdata:`NPY_WRITEABLE`
-should also be ensured if you plan on writing to the memory area of
-the array. It is also possible to obtain a pointer to an unwriteable
-memory area. Sometimes, writing to the memory area when the
-:cdata:`NPY_WRITEABLE` flag is not set will just be rude. Other times it can
-cause program crashes ( *e.g.* a data-area that is a read-only
-memory-mapped file).
+dimensions members of the :ctype:`PyArrayObject`, the flags contain
+important information about how the data may be accessed. In particular,
+the :cdata:`NPY_ARRAY_ALIGNED` flag is set when the memory is on a
+suitable boundary according to the data-type array. Even if you have
+a contiguous chunk of memory, you cannot just assume it is safe to
+dereference a data- type-specific pointer to an element. Only if the
+:cdata:`NPY_ARRAY_ALIGNED` flag is set is this a safe operation (on
+some platforms it will work but on others, like Solaris, it will cause
+a bus error). The :cdata:`NPY_ARRAY_WRITEABLE` should also be ensured
+if you plan on writing to the memory area of the array. It is also
+possible to obtain a pointer to an unwriteable memory area. Sometimes,
+writing to the memory area when the :cdata:`NPY_ARRAY_WRITEABLE` flag is not
+set will just be rude. Other times it can cause program crashes ( *e.g.*
+a data-area that is a read-only memory-mapped file).
 
 
 Data-type encapsulation
