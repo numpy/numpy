@@ -1400,6 +1400,40 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyDataType_ISNOTSWAPPED(d) PyArray_ISNBO(((PyArray_Descr *)(d))->byteorder)
 #define PyDataType_ISBYTESWAPPED(d) (!PyDataType_ISNOTSWAPPED(d))
 
+/************************************************************
+ * NumPy Auxiliary Data for inner loops, sort functions, etc.
+ ************************************************************/
+
+/*
+ * When creating an auxiliary data struct, this should always appear
+ * as the first member, like this:
+ *
+ * typedef struct {
+ *     NpyAuxData base;
+ *     double constant;
+ * } constant_multiplier_aux_data;
+ */
+typedef struct NpyAuxData_tag NpyAuxData;
+
+/* Function pointers for freeing or cloning auxiliary data */
+typedef void (NpyAuxData_FreeFunc) (NpyAuxData *);
+typedef NpyAuxData *(NpyAuxData_CloneFunc) (NpyAuxData *);
+
+struct NpyAuxData_tag {
+    NpyAuxData_FreeFunc *free;
+    NpyAuxData_CloneFunc *clone;
+    /* To allow for a bit of expansion without breaking the ABI */
+    void *reserved[2];
+};
+
+/* Macros to use for freeing and cloning auxiliary data */
+#define NPY_AUXDATA_FREE(auxdata) \
+    if ((auxdata) == NULL) \
+        ; \
+    else \
+        ((auxdata)->free(auxdata))
+#define NPY_AUXDATA_CLONE(auxdata) \
+    ((auxdata)->clone(auxdata))
 
 /*
  * This is the form of the struct that's returned pointed by the

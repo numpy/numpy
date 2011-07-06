@@ -488,6 +488,7 @@ env.DistutilsPythonExtension('multiarray_tests', source=multiarray_tests_src)
 #-------------------
 if ENABLE_SEPARATE_COMPILATION:
     umathmodule_src.extend([pjoin('src', 'umath', 'ufunc_object.c')])
+    umathmodule_src.extend([pjoin('src', 'umath', 'ufunc_type_resolution.c')])
     umathmodule_src.extend(umath_loops_src)
 else:
     umathmodule_src = [pjoin('src', 'umath', 'umathmodule_onefile.c')]

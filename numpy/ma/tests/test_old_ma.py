@@ -486,9 +486,9 @@ class TestMa(TestCase):
         x = arange(10) * 2
         xm = arange(10)
         xm[2] = masked
-        x /= 2
+        x //= 2
         assert_(eq(x, y))
-        xm /= 2
+        xm //= 2
         assert_(eq(x, y))
 
         x = arange(10) * 1.0

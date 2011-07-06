@@ -432,64 +432,65 @@ writeable). The syntax is
         converting the Python object into an array that is more
         "well-behaved" for your specific usage.
 
-        The requirements flag allows specification of what kind of array is
-        acceptable. If the object passed in does not satisfy this requirements
-        then a copy is made so that thre returned object will satisfy the
-        requirements. these ndarray can use a very generic pointer to memory.
-        This flag allows specification of the desired properties of the
-        returned array object. All of the flags are explained in the detailed
-        API chapter. The flags most commonly needed are :cdata:`NPY_IN_ARRAY`,
-        :cdata:`NPY_OUT_ARRAY`, and :cdata:`NPY_INOUT_ARRAY`:
+        The requirements flag allows specification of what kind of
+        array is acceptable. If the object passed in does not satisfy
+        this requirements then a copy is made so that thre returned
+        object will satisfy the requirements. these ndarray can use a
+        very generic pointer to memory.  This flag allows specification
+        of the desired properties of the returned array object. All
+        of the flags are explained in the detailed API chapter. The
+        flags most commonly needed are :cdata:`NPY_ARRAY_IN_ARRAY`,
+        :cdata:`NPY_OUT_ARRAY`, and :cdata:`NPY_ARRAY_INOUT_ARRAY`:
 
-        .. cvar:: NPY_IN_ARRAY
+        .. cvar:: NPY_ARRAY_IN_ARRAY
 
-            Equivalent to :cdata:`NPY_CONTIGUOUS` \|
-            :cdata:`NPY_ALIGNED`. This combination of flags is useful
+            Equivalent to :cdata:`NPY_ARRAY_C_CONTIGUOUS` \|
+            :cdata:`NPY_ARRAY_ALIGNED`. This combination of flags is useful
             for arrays that must be in C-contiguous order and aligned.
             These kinds of arrays are usually input arrays for some
             algorithm.
 
-        .. cvar:: NPY_OUT_ARRAY
+        .. cvar:: NPY_ARRAY_OUT_ARRAY
 
-            Equivalent to :cdata:`NPY_CONTIGUOUS` \|
-            :cdata:`NPY_ALIGNED` \| :cdata:`NPY_WRITEABLE`. This
+            Equivalent to :cdata:`NPY_ARRAY_C_CONTIGUOUS` \|
+            :cdata:`NPY_ARRAY_ALIGNED` \| :cdata:`NPY_ARRAY_WRITEABLE`. This
             combination of flags is useful to specify an array that is
             in C-contiguous order, is aligned, and can be written to
             as well. Such an array is usually returned as output
             (although normally such output arrays are created from
             scratch).
 
-        .. cvar:: NPY_INOUT_ARRAY
+        .. cvar:: NPY_ARRAY_INOUT_ARRAY
 
-            Equivalent to :cdata:`NPY_CONTIGUOUS` \|
-            :cdata:`NPY_ALIGNED` \| :cdata:`NPY_WRITEABLE` \|
-            :cdata:`NPY_UPDATEIFCOPY`. This combination of flags is
+            Equivalent to :cdata:`NPY_ARRAY_C_CONTIGUOUS` \|
+            :cdata:`NPY_ARRAY_ALIGNED` \| :cdata:`NPY_ARRAY_WRITEABLE` \|
+            :cdata:`NPY_ARRAY_UPDATEIFCOPY`. This combination of flags is
             useful to specify an array that will be used for both
             input and output. If a copy is needed, then when the
             temporary is deleted (by your use of :cfunc:`Py_DECREF` at
             the end of the interface routine), the temporary array
             will be copied back into the original array passed in. Use
-            of the :cdata:`UPDATEIFCOPY` flag requires that the input
+            of the :cdata:`NPY_ARRAY_UPDATEIFCOPY` flag requires that the input
             object is already an array (because other objects cannot
             be automatically updated in this fashion). If an error
             occurs use :cfunc:`PyArray_DECREF_ERR` (obj) on an array
-            with the :cdata:`NPY_UPDATEIFCOPY` flag set. This will
+            with the :cdata:`NPY_ARRAY_UPDATEIFCOPY` flag set. This will
             delete the array without causing the contents to be copied
             back into the original array.
 
 
         Other useful flags that can be OR'd as additional requirements are:
 
-        .. cvar:: NPY_FORCECAST
+        .. cvar:: NPY_ARRAY_FORCECAST
 
             Cast to the desired type, even if it can't be done without losing
             information.
 
-        .. cvar:: NPY_ENSURECOPY
+        .. cvar:: NPY_ARRAY_ENSURECOPY
 
             Make sure the resulting array is a copy of the original.
 
-        .. cvar:: NPY_ENSUREARRAY
+        .. cvar:: NPY_ARRAY_ENSUREARRAY
 
             Make sure the resulting object is an actual ndarray and not a sub-
             class.
@@ -499,7 +500,7 @@ writeable). The syntax is
     Whether or not an array is byte-swapped is determined by the
     data-type of the array. Native byte-order arrays are always
     requested by :cfunc:`PyArray_FROM_OTF` and so there is no need for
-    a :cdata:`NPY_NOTSWAPPED` flag in the requirements argument. There
+    a :cdata:`NPY_ARRAY_NOTSWAPPED` flag in the requirements argument. There
     is also no way to get a byte-swapped array from this routine.
 
 

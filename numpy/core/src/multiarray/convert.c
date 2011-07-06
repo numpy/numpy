@@ -376,7 +376,7 @@ NPY_NO_EXPORT int
 PyArray_FillWithZero(PyArrayObject *a)
 {
     PyArray_StridedTransferFn *stransfer = NULL;
-    void *transferdata = NULL;
+    NpyAuxData *transferdata = NULL;
     PyArray_Descr *dtype = PyArray_DESCR(a);
     NpyIter *iter;
 
@@ -456,7 +456,7 @@ PyArray_FillWithZero(PyArrayObject *a)
         NPY_END_THREADS;
     }
 
-    PyArray_FreeStridedTransferData(transferdata);
+    NPY_AUXDATA_FREE(transferdata);
     NpyIter_Deallocate(iter);
 
     return 0;

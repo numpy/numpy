@@ -126,7 +126,7 @@ static void
 @prefix@_@oper@_size@elsize@(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        void *NPY_UNUSED(data))
+                        NpyAuxData *NPY_UNUSED(data))
 {
     /*printf("fn @prefix@_@oper@_size@elsize@\n");*/
     while (N > 0) {
@@ -186,7 +186,7 @@ static void
                         npy_intp dst_stride,
                         char *src, npy_intp NPY_UNUSED(src_stride),
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        void *NPY_UNUSED(data))
+                        NpyAuxData *NPY_UNUSED(data))
 {
 #if @elsize@ != 16
     @type@ temp = @swap@@elsize@(*((@type@ *)src));
@@ -231,7 +231,7 @@ static void
 _strided_to_strided(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
-                        void *NPY_UNUSED(data))
+                        NpyAuxData *NPY_UNUSED(data))
 {
     while (N > 0) {
         memcpy(dst, src, src_itemsize);
@@ -245,7 +245,7 @@ static void
 _swap_strided_to_strided(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
-                        void *NPY_UNUSED(data))
+                        NpyAuxData *NPY_UNUSED(data))
 {
     char *a, *b, c;
 
@@ -270,7 +270,7 @@ static void
 _swap_pair_strided_to_strided(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp src_itemsize,
-                        void *NPY_UNUSED(data))
+                        NpyAuxData *NPY_UNUSED(data))
 {
     char *a, *b, c;
     npy_intp itemsize_half = src_itemsize / 2;
@@ -305,7 +305,7 @@ static void
 _contig_to_contig(char *dst, npy_intp NPY_UNUSED(dst_stride),
                         char *src, npy_intp NPY_UNUSED(src_stride),
                         npy_intp N, npy_intp src_itemsize,
-                        void *NPY_UNUSED(data))
+                        NpyAuxData *NPY_UNUSED(data))
 {
     memcpy(dst, src, src_itemsize*N);
 }
@@ -763,7 +763,7 @@ static void
                         char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                        void *NPY_UNUSED(data))
+                        NpyAuxData *NPY_UNUSED(data))
 {
 #if @is_complex1@
     _TYPE1 src_value[2];
@@ -919,32 +919,6 @@ PyArray_GetStridedNumericCastFn(int aligned, npy_intp src_stride,
 }
 
 
-/************** STRIDED TRANSFER FUNCTION MEMORY MANAGEMENT **************/
-
-typedef void (*_npy_stridedtransfer_dealloc)(void *);
-NPY_NO_EXPORT void
-PyArray_FreeStridedTransferData(void *transferdata)
-{
-    if (transferdata != NULL) {
-        _npy_stridedtransfer_dealloc dealloc =
-                        *((_npy_stridedtransfer_dealloc *)transferdata);
-        dealloc(transferdata);
-    }
-}
-
-typedef void *(*_npy_stridedtransfer_copy)(void *);
-NPY_NO_EXPORT void *
-PyArray_CopyStridedTransferData(void *transferdata)
-{
-    if (transferdata != NULL) {
-        _npy_stridedtransfer_copy copy =
-                        *((_npy_stridedtransfer_copy *)transferdata + 1);
-        return copy(transferdata);
-    }
-
-    return NULL;
-}
-
 /****************** PRIMITIVE FLAT TO/FROM NDIM FUNCTIONS ******************/
 
 NPY_NO_EXPORT npy_intp
@@ -955,7 +929,7 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
                 npy_intp *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedTransferFn *stransfer,
-                void *data)
+                NpyAuxData *data)
 {
     npy_intp i, M, N, coord0, shape0, src_stride0, coord1, shape1, src_stride1;
 
@@ -1073,7 +1047,7 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                 npy_intp *shape, npy_intp shape_inc,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedTransferFn *stransfer,
-                void *data)
+                NpyAuxData *data)
 {
     npy_intp i, M, N, coord0, shape0, dst_stride0, coord1, shape1, dst_stride1;
 

@@ -2449,7 +2449,7 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
                                 NPY_ORDER order)
 {
     PyArray_StridedTransferFn *stransfer = NULL;
-    void *transferdata = NULL;
+    NpyAuxData *transferdata = NULL;
     NpyIter *dst_iter, *src_iter;
 
     NpyIter_IterNextFunc *dst_iternext, *src_iternext;
@@ -2617,7 +2617,7 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
         NPY_END_THREADS;
     }
 
-    PyArray_FreeStridedTransferData(transferdata);
+    NPY_AUXDATA_FREE(transferdata);
     NpyIter_Deallocate(dst_iter);
     NpyIter_Deallocate(src_iter);
 
@@ -2651,7 +2651,7 @@ NPY_NO_EXPORT int
 PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
 {
     PyArray_StridedTransferFn *stransfer = NULL;
-    void *transferdata = NULL;
+    NpyAuxData *transferdata = NULL;
     NPY_BEGIN_THREADS_DEF;
 
     if (!PyArray_ISWRITEABLE(dst)) {
@@ -2706,7 +2706,7 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
             NPY_END_THREADS;
         }
 
-        PyArray_FreeStridedTransferData(transferdata);
+        NPY_AUXDATA_FREE(transferdata);
 
         return PyErr_Occurred() ? -1 : 0;
     }
@@ -2791,7 +2791,7 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
             }
         }
 
-        PyArray_FreeStridedTransferData(transferdata);
+        NPY_AUXDATA_FREE(transferdata);
         NpyIter_Deallocate(iter);
 
         return PyErr_Occurred() ? -1 : 0;
