@@ -433,8 +433,8 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
                 }
                 break;
             case 'v':
-                if (strcmp(str, "virtualmask") == 0) {
-                    flag = NPY_ITER_VIRTUALMASK;
+                if (strcmp(str, "virtual") == 0) {
+                    flag = NPY_ITER_VIRTUAL;
                 }
                 break;
             case 'w':
