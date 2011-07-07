@@ -116,6 +116,8 @@
 #define NPY_OP_ITFLAG_ALIGNED      0x10
 /* The operand is being reduced */
 #define NPY_OP_ITFLAG_REDUCE       0x20
+/* The operand requires masking when copying buffer -> array */
+#define NPY_OP_ITFLAG_WRITEMASKED  0x40
 
 /*
  * The data layout of the iterator is fully specified by

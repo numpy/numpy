@@ -893,6 +893,12 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_NO_SUBTYPE                 0x02000000
 /* Require that the dimension match the iterator dimensions exactly */
 #define NPY_ITER_NO_BROADCAST               0x08000000
+/* A mask is being used on this array, affects buffer -> array copy */
+#define NPY_ITER_WRITEMASKED                0x04000000
+/* This array is the mask for all WRITEMASKED operands */
+#define NPY_ITER_ARRAYMASK                  0x10000000
+/* This is a virtual array slot of the mask for all WRITEMASKED operands */
+#define NPY_ITER_VIRTUALMASK                0x20000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000

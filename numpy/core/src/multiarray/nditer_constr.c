@@ -899,6 +899,17 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
         return 0;
     }
 
+    /* Check the flag for a write masked operands */
+    if (op_flags&NPY_ITER_WRITEMASKED) {
+        if (!(*op_itflags)&NPY_OP_ITFLAG_WRITE) {
+            PyErr_SetString(PyExc_ValueError,
+                "The iterator flag WRITEMASKED may only "
+                "be used with READWRITE or WRITEONLY");
+            return 0;
+        }
+        *op_itflags |= NPY_OP_ITFLAG_WRITEMASKED;
+    }
+
     return 1;
 }
 
