@@ -907,7 +907,21 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
                 "be used with READWRITE or WRITEONLY");
             return 0;
         }
+        if ((op_flags&(NPY_ITER_ARRAYMASK|NPY_ITER_VIRTUALMASK)) != 0) {
+            PyErr_SetString(PyExc_ValueError,
+                "The iterator flag WRITEMASKED may not "
+                "be used together with ARRAYMASK or VIRTUALMASK");
+            return 0;
+        }
         *op_itflags |= NPY_OP_ITFLAG_WRITEMASKED;
+    }
+
+    if ((op_flags&(NPY_ITER_ARRAYMASK|NPY_ITER_VIRTUALMASK)) ==
+                        (NPY_ITER_ARRAYMASK|NPY_ITER_VIRTUALMASK)) {
+        PyErr_SetString(PyExc_ValueError,
+            "The iterator flag ARRAYMASK may not "
+            "be used together with VIRTUALMASK");
+        return 0;
     }
 
     return 1;

@@ -30,7 +30,7 @@
  * doesn't change.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int fortran)
+PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int is_f_order)
 {
     PyObject *out;
 
@@ -44,7 +44,7 @@ PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int fortran)
                                arr->nd,
                                arr->dimensions,
                                NULL, NULL,
-                               fortran,
+                               is_f_order,
                                (PyObject *)arr);
 
     if (out == NULL) {

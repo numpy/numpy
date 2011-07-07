@@ -607,8 +607,6 @@ typedef struct PyArrayObject {
         PyObject *weakreflist;  /* For weakreferences */
 } PyArrayObject;
 
-#define fortran fortran_        /* For some compilers */
-
 /* Array Flags Object */
 typedef struct PyArrayFlagsObject {
         PyObject_HEAD

@@ -28,7 +28,7 @@ _fix_unknown_dimension(PyArray_Dims *newshape, intp s_original);
 
 static int
 _attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
-                        intp *newstrides, int fortran);
+                        intp *newstrides, int is_f_order);
 
 static void
 _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype);
@@ -41,7 +41,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype);
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
-               NPY_ORDER fortran)
+               NPY_ORDER order)
 {
     intp oldsize, newsize;
     int new_nd=newshape->len, k, n, elsize;
@@ -166,7 +166,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
 /*
  * Returns a new array
  * with the new shape from the data
- * in the old array --- order-perspective depends on fortran argument.
+ * in the old array --- order-perspective depends on order argument.
  * copy-only-if-necessary
  */
 
@@ -186,7 +186,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     intp newstrides[MAX_DIMS];
     int flags;
 
-    if (order == PyArray_ANYORDER) {
+    if (order == NPY_ANYORDER) {
         order = PyArray_ISFORTRAN(self);
     }
     /*  Quick check to make sure anything actually needs to be done */
@@ -418,7 +418,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
  * If no copy is needed, returns 1 and fills newstrides
  *     with appropriate strides
  *
- * The "fortran" argument describes how the array should be viewed
+ * The "is_f_order" argument describes how the array should be viewed
  * during the reshape, not how it is stored in memory (that
  * information is in self->strides).
  *
@@ -428,7 +428,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
  */
 static int
 _attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
-                        intp *newstrides, int fortran)
+                        intp *newstrides, int is_f_order)
 {
     int oldnd;
     intp olddims[MAX_DIMS];
@@ -452,7 +452,7 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
       fprintf(stderr, ") -> (");
       for (ni=0; ni<newnd; ni++)
       fprintf(stderr, "(%d,*), ", newdims[ni]);
-      fprintf(stderr, "), fortran=%d)\n", fortran);
+      fprintf(stderr, "), is_f_order=%d)\n", is_f_order);
     */
 
 
@@ -490,7 +490,7 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
         }
 
         for (ok = oi; ok < oj - 1; ok++) {
-            if (fortran) {
+            if (is_f_order) {
                 if (oldstrides[ok+1] != olddims[ok]*oldstrides[ok]) {
                      /* not contiguous enough */
                     return 0;
@@ -505,7 +505,7 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
             }
         }
 
-        if (fortran) {
+        if (is_f_order) {
             newstrides[ni] = oldstrides[oi];
             for (nk = ni + 1; nk < nj; nk++) {
                 newstrides[nk] = newstrides[nk - 1]*newdims[nk - 1];

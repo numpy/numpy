@@ -1425,7 +1425,7 @@ fail:
  *          // Could make custom strides here too
  *          arr = PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
  *                                      dims, NULL,
- *                                      fortran ? NPY_ARRAY_F_CONTIGUOUS : 0,
+ *                                      is_f_order ? NPY_ARRAY_F_CONTIGUOUS : 0,
  *                                      NULL);
  *          if (arr == NULL) {
  *              return NULL;
@@ -2866,7 +2866,7 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
  * accepts NULL type
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int fortran)
+PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
 {
     PyArrayObject *ret;
 
@@ -2877,7 +2877,7 @@ PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int fortran)
                                                 type,
                                                 nd, dims,
                                                 NULL, NULL,
-                                                fortran, NULL);
+                                                is_f_order, NULL);
     if (ret == NULL) {
         return NULL;
     }
@@ -2895,7 +2895,7 @@ PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int fortran)
  * steals referenct to type
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Empty(int nd, npy_intp *dims, PyArray_Descr *type, int fortran)
+PyArray_Empty(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
 {
     PyArrayObject *ret;
 
@@ -2903,7 +2903,7 @@ PyArray_Empty(int nd, npy_intp *dims, PyArray_Descr *type, int fortran)
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                                                 type, nd, dims,
                                                 NULL, NULL,
-                                                fortran, NULL);
+                                                is_f_order, NULL);
     if (ret == NULL) {
         return NULL;
     }
