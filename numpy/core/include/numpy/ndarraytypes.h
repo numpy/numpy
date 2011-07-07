@@ -104,49 +104,52 @@ enum NPY_TYPES {    NPY_BOOL=0,
  * module
  */
 
-/*  except 'p' -- signed integer for pointer type */
+enum NPY_TYPECHAR {
+        NPY_BOOLLTR = '?',
+        NPY_BYTELTR = 'b',
+        NPY_UBYTELTR = 'B',
+        NPY_SHORTLTR = 'h',
+        NPY_USHORTLTR = 'H',
+        NPY_INTLTR = 'i',
+        NPY_UINTLTR = 'I',
+        NPY_LONGLTR = 'l',
+        NPY_ULONGLTR = 'L',
+        NPY_LONGLONGLTR = 'q',
+        NPY_ULONGLONGLTR = 'Q',
+        NPY_HALFLTR = 'e',
+        NPY_FLOATLTR = 'f',
+        NPY_DOUBLELTR = 'd',
+        NPY_LONGDOUBLELTR = 'g',
+        NPY_CFLOATLTR = 'F',
+        NPY_CDOUBLELTR = 'D',
+        NPY_CLONGDOUBLELTR = 'G',
+        NPY_OBJECTLTR = 'O',
+        NPY_STRINGLTR = 'S',
+        NPY_STRINGLTR2 = 'a',
+        NPY_UNICODELTR = 'U',
+        NPY_VOIDLTR = 'V',
+        NPY_DATETIMELTR = 'M',
+        NPY_TIMEDELTALTR = 'm',
+        NPY_CHARLTR = 'c',
 
-enum NPY_TYPECHAR { NPY_BOOLLTR = '?',
-                        NPY_BYTELTR = 'b',
-                        NPY_UBYTELTR = 'B',
-                        NPY_SHORTLTR = 'h',
-                        NPY_USHORTLTR = 'H',
-                        NPY_INTLTR = 'i',
-                        NPY_UINTLTR = 'I',
-                        NPY_LONGLTR = 'l',
-                        NPY_ULONGLTR = 'L',
-                        NPY_LONGLONGLTR = 'q',
-                        NPY_ULONGLONGLTR = 'Q',
-                        NPY_HALFLTR = 'e',
-                        NPY_FLOATLTR = 'f',
-                        NPY_DOUBLELTR = 'd',
-                        NPY_LONGDOUBLELTR = 'g',
-                        NPY_CFLOATLTR = 'F',
-                        NPY_CDOUBLELTR = 'D',
-                        NPY_CLONGDOUBLELTR = 'G',
-                        NPY_OBJECTLTR = 'O',
-                        NPY_STRINGLTR = 'S',
-                        NPY_STRINGLTR2 = 'a',
-                        NPY_UNICODELTR = 'U',
-                        NPY_VOIDLTR = 'V',
-                        NPY_DATETIMELTR = 'M',
-                        NPY_TIMEDELTALTR = 'm',
-                        NPY_CHARLTR = 'c',
+        /*
+         * No Descriptor, just a define -- this let's
+         * Python users specify an array of integers
+         * large enough to hold a pointer on the
+         * platform
+         */
+        NPY_INTPLTR = 'p',
+        NPY_UINTPLTR = 'P',
 
-                        /*
-                         * No Descriptor, just a define -- this let's
-                         * Python users specify an array of integers
-                         * large enough to hold a pointer on the
-                         * platform
-                         */
-                        NPY_INTPLTR = 'p',
-                        NPY_UINTPLTR = 'P',
-
-                        NPY_GENBOOLLTR ='b',
-                        NPY_SIGNEDLTR = 'i',
-                        NPY_UNSIGNEDLTR = 'u',
-                        NPY_FLOATINGLTR = 'f',
-                        NPY_COMPLEXLTR = 'c'
+        /*
+         * These are for dtype 'kinds', not dtype 'typecodes'
+         * as the above are for.
+         */
+        NPY_GENBOOLLTR ='b',
+        NPY_SIGNEDLTR = 'i',
+        NPY_UNSIGNEDLTR = 'u',
+        NPY_FLOATINGLTR = 'f',
+        NPY_COMPLEXLTR = 'c'
 };
 
 typedef enum {
@@ -603,8 +606,6 @@ typedef struct PyArrayObject {
         int flags;              /* Flags describing array -- see below */
         PyObject *weakreflist;  /* For weakreferences */
 } PyArrayObject;
-
-#define NPY_AO PyArrayObject
 
 #define fortran fortran_        /* For some compilers */
 
