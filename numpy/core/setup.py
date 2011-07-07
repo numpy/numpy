@@ -686,7 +686,7 @@ def configuration(parent_package='',top_path=None):
         subpath = join('src', 'multiarray')
         sources = [join(local_dir, subpath, 'scalartypes.c.src'),
                    join(local_dir, subpath, 'arraytypes.c.src'),
-                   join(local_dir, subpath, 'nditer.c.src'),
+                   join(local_dir, subpath, 'nditer_templ.c.src'),
                    join(local_dir, subpath, 'lowlevel_strided_loops.c.src'),
                    join(local_dir, subpath, 'einsum.c.src')]
 
@@ -773,7 +773,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'mapping.c'),
             join('src', 'multiarray', 'methods.c'),
             join('src', 'multiarray', 'multiarraymodule.c'),
-            join('src', 'multiarray', 'nditer.c.src'),
+            join('src', 'multiarray', 'nditer_templ.c.src'),
             join('src', 'multiarray', 'nditer_api.c'),
             join('src', 'multiarray', 'nditer_constr.c'),
             join('src', 'multiarray', 'nditer_pywrap.c'),
