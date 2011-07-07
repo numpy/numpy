@@ -690,6 +690,22 @@ There are 2 (or 3) flags which must be added to the array flags::
     /* To possibly add in a later revision */
     NPY_ARRAY_HARDNAMASK
 
+To allow the easy detection of NA support, and whether an array
+has any missing values, we add the following functions:
+
+PyDataType_HasNASupport(PyArray_Descr* dtype)
+    Returns true if this is an NA dtype, or a struct
+    dtype where every field has NA support.
+
+PyArray_HasNASupport(PyArrayObject* obj)
+    Returns true if the array dtype has NA support, or
+    the array has an NA mask.
+
+PyArray_ContainsNA(PyArrayObject* obj)
+    Returns false if the array has no NA support. Returns
+    true if the array has NA support AND there is an
+    NA anywhere in the array.
+
 ********************************************
 C Iterator API Changes: Iteration With Masks
 ********************************************
@@ -737,9 +753,19 @@ Iterator NA-array Features
 ==========================
 
 NPY_ITER_USE_NAMASK
-    If the operand has an NA dtype, a mask, or both, this adds a new
+    If the operand has an NA dtype, an NA mask, or both, this adds a new
     virtual operand to the end of the operand list which iterates
     over the mask of the particular operand.
+
+NPY_ITER_IGNORE_NAMASK
+    If an operand has an NA mask, by default the iterator will raise
+    an exception unless USE_NAMASK is specified. This flag disables that
+    check, and is intended for cases where one has first checked that
+    all the elements in the array are not NA using the
+    PyArray_ContainsNA function.
+    
+    If the dtype is an NA dtype, this also strips the NA-ness from
+    the dtype, showing a dtype that does not support NA.
 
 ********************
 Rejected Alternative
