@@ -213,7 +213,7 @@ typedef enum {
 /* The special not-a-time (NaT) value */
 #define NPY_DATETIME_NAT NPY_MIN_INT64
 /*
- * Theoretical maximum length of a DATETIME ISO 8601 string
+ * Upper bound on the length of a DATETIME ISO 8601 string
  *   YEAR: 21 (64-bit year)
  *   MONTH: 3
  *   DAY: 3

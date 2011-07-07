@@ -1028,7 +1028,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         *op_dtype = PyArray_DESCR(*op);
         if (*op_dtype == NULL) {
             PyErr_SetString(PyExc_ValueError,
-                    "Iterator input array object has no dtype descr");
+                    "Iterator input operand has no dtype descr");
             return 0;
         }
         Py_INCREF(*op_dtype);
