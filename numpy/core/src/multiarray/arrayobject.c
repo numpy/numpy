@@ -1216,8 +1216,8 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     PyArray_Dims strides = {NULL, 0};
     PyArray_Chunk buffer;
     longlong offset = 0;
-    NPY_ORDER order = PyArray_CORDER;
-    int fortran = 0;
+    NPY_ORDER order = NPY_CORDER;
+    int is_f_order = 0;
     PyArrayObject *ret;
 
     buffer.ptr = NULL;
@@ -1241,7 +1241,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         goto fail;
     }
     if (order == NPY_FORTRANORDER) {
-        fortran = 1;
+        is_f_order = 1;
     }
     if (descr == NULL) {
         descr = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
@@ -1289,7 +1289,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             PyArray_NewFromDescr(subtype, descr,
                                  (int)dims.len,
                                  dims.ptr,
-                                 strides.ptr, NULL, fortran, NULL);
+                                 strides.ptr, NULL, is_f_order, NULL);
         if (ret == NULL) {
             descr = NULL;
             goto fail;
@@ -1318,7 +1318,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
             goto fail;
         }
         /* get writeable and aligned */
-        if (fortran) {
+        if (is_f_order) {
             buffer.flags |= NPY_ARRAY_F_CONTIGUOUS;
         }
         ret = (PyArrayObject *)\

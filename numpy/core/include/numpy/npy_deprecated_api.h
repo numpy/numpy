@@ -83,4 +83,10 @@
  */
 #define NPY_AO PyArrayObject
 
+/*
+ * Deprecated as of NumPy 1.7, an all-lowercase macro doesn't
+ * belong in the public API.
+ */
+#define fortran fortran_
+
 #endif

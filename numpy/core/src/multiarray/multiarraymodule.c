@@ -1656,7 +1656,7 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
-    Bool fortran;
+    npy_bool is_f_order;
     PyObject *ret = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&", kwlist,
@@ -1668,10 +1668,10 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
     switch (order) {
         case NPY_CORDER:
-            fortran = FALSE;
+            is_f_order = FALSE;
             break;
         case NPY_FORTRANORDER:
-            fortran = TRUE;
+            is_f_order = TRUE;
             break;
         default:
             PyErr_SetString(PyExc_ValueError,
@@ -1679,7 +1679,7 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
             goto fail;
     }
 
-    ret = PyArray_Empty(shape.len, shape.ptr, typecode, fortran);
+    ret = PyArray_Empty(shape.len, shape.ptr, typecode, is_f_order);
     PyDimMem_FREE(shape.ptr);
     return ret;
 
@@ -1789,7 +1789,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
-    Bool fortran = FALSE;
+    npy_bool is_f_order = FALSE;
     PyObject *ret = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&", kwlist,
@@ -1801,10 +1801,10 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
     switch (order) {
         case NPY_CORDER:
-            fortran = FALSE;
+            is_f_order = FALSE;
             break;
         case NPY_FORTRANORDER:
-            fortran = TRUE;
+            is_f_order = TRUE;
             break;
         default:
             PyErr_SetString(PyExc_ValueError,
@@ -1812,7 +1812,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
             goto fail;
     }
 
-    ret = PyArray_Zeros(shape.len, shape.ptr, typecode, (int) fortran);
+    ret = PyArray_Zeros(shape.len, shape.ptr, typecode, (int) is_f_order);
     PyDimMem_FREE(shape.ptr);
     return ret;
 

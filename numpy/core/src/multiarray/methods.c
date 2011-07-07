@@ -1444,7 +1444,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     PyObject *shape;
     PyArray_Descr *typecode;
     int version = 1;
-    int fortran;
+    int is_f_order;
     PyObject *rawdata = NULL;
     char *datastr;
     Py_ssize_t len;
@@ -1458,14 +1458,14 @@ array_setstate(PyArrayObject *self, PyObject *args)
                             &version,
                             &PyTuple_Type, &shape,
                             &PyArrayDescr_Type, &typecode,
-                            &fortran,
+                            &is_f_order,
                             &rawdata)) {
         PyErr_Clear();
         version = 0;
         if (!PyArg_ParseTuple(args, "(O!O!iO)",
                             &PyTuple_Type, &shape,
                             &PyArrayDescr_Type, &typecode,
-                            &fortran,
+                            &is_f_order,
                             &rawdata)) {
             return NULL;
         }
@@ -1564,8 +1564,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
         memcpy(self->dimensions, dimensions, sizeof(intp)*nd);
         (void) _array_fill_strides(self->strides, dimensions, nd,
                                    (size_t) self->descr->elsize,
-                                   (fortran ? NPY_ARRAY_F_CONTIGUOUS :
-                                              NPY_ARRAY_C_CONTIGUOUS),
+                                   (is_f_order ? NPY_ARRAY_F_CONTIGUOUS :
+                                                 NPY_ARRAY_C_CONTIGUOUS),
                                    &(self->flags));
     }
 

@@ -98,41 +98,41 @@ extern "C" CONFUSE_EMACS
                         (((flags) & NPY_ARRAY_ENSURECOPY) ? \
                          (flags) | NPY_ARRAY_DEFAULT : (flags)), NULL)
 
-#define PyArray_ZEROS(m, dims, type, fortran)                                 \
-        PyArray_Zeros(m, dims, PyArray_DescrFromType(type), fortran)
+#define PyArray_ZEROS(m, dims, type, is_f_order) \
+        PyArray_Zeros(m, dims, PyArray_DescrFromType(type), is_f_order)
 
-#define PyArray_EMPTY(m, dims, type, fortran)                                 \
-        PyArray_Empty(m, dims, PyArray_DescrFromType(type), fortran)
+#define PyArray_EMPTY(m, dims, type, is_f_order) \
+        PyArray_Empty(m, dims, PyArray_DescrFromType(type), is_f_order)
 
-#define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), val,            \
+#define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), val, \
                                            PyArray_NBYTES(obj))
 
 #define PyArray_REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
 #define NPY_REFCOUNT PyArray_REFCOUNT
 #define NPY_MAX_ELSIZE (2 * NPY_SIZEOF_LONGDOUBLE)
 
-#define PyArray_ContiguousFromAny(op, type, min_depth, max_depth)             \
-        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,           \
+#define PyArray_ContiguousFromAny(op, type, min_depth, max_depth) \
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth, \
                               max_depth, NPY_ARRAY_DEFAULT, NULL)
 
-#define PyArray_EquivArrTypes(a1, a2)                                         \
+#define PyArray_EquivArrTypes(a1, a2) \
         PyArray_EquivTypes(PyArray_DESCR(a1), PyArray_DESCR(a2))
 
-#define PyArray_EquivByteorders(b1, b2)                                       \
+#define PyArray_EquivByteorders(b1, b2) \
         (((b1) == (b2)) || (PyArray_ISNBO(b1) == PyArray_ISNBO(b2)))
 
-#define PyArray_SimpleNew(nd, dims, typenum)                                  \
+#define PyArray_SimpleNew(nd, dims, typenum) \
         PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, NULL, 0, 0, NULL)
 
-#define PyArray_SimpleNewFromData(nd, dims, typenum, data)                    \
-        PyArray_New(&PyArray_Type, nd, dims, typenum, NULL,                   \
+#define PyArray_SimpleNewFromData(nd, dims, typenum, data) \
+        PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, \
                     data, 0, NPY_ARRAY_CARRAY, NULL)
 
-#define PyArray_SimpleNewFromDescr(nd, dims, descr)                           \
-        PyArray_NewFromDescr(&PyArray_Type, descr, nd, dims,                  \
+#define PyArray_SimpleNewFromDescr(nd, dims, descr) \
+        PyArray_NewFromDescr(&PyArray_Type, descr, nd, dims, \
                              NULL, NULL, 0, NULL)
 
-#define PyArray_ToScalar(data, arr)                                           \
+#define PyArray_ToScalar(data, arr) \
         PyArray_Scalar(data, PyArray_DESCR(arr), (PyObject *)arr)
 
 
@@ -141,22 +141,22 @@ extern "C" CONFUSE_EMACS
    inline the constants inside a for loop making it a moot point
 */
 
-#define PyArray_GETPTR1(obj, i) ((void *)(PyArray_BYTES(obj) +                \
+#define PyArray_GETPTR1(obj, i) ((void *)(PyArray_BYTES(obj) + \
                                          (i)*PyArray_STRIDES(obj)[0]))
 
-#define PyArray_GETPTR2(obj, i, j) ((void *)(PyArray_BYTES(obj) +             \
-                                            (i)*PyArray_STRIDES(obj)[0] +     \
+#define PyArray_GETPTR2(obj, i, j) ((void *)(PyArray_BYTES(obj) + \
+                                            (i)*PyArray_STRIDES(obj)[0] + \
                                             (j)*PyArray_STRIDES(obj)[1]))
 
-#define PyArray_GETPTR3(obj, i, j, k) ((void *)(PyArray_BYTES(obj) +          \
-                                            (i)*PyArray_STRIDES(obj)[0] +     \
-                                            (j)*PyArray_STRIDES(obj)[1] +     \
+#define PyArray_GETPTR3(obj, i, j, k) ((void *)(PyArray_BYTES(obj) + \
+                                            (i)*PyArray_STRIDES(obj)[0] + \
+                                            (j)*PyArray_STRIDES(obj)[1] + \
                                             (k)*PyArray_STRIDES(obj)[2]))
 
-#define PyArray_GETPTR4(obj, i, j, k, l) ((void *)(PyArray_BYTES(obj) +       \
-                                            (i)*PyArray_STRIDES(obj)[0] +     \
-                                            (j)*PyArray_STRIDES(obj)[1] +     \
-                                            (k)*PyArray_STRIDES(obj)[2] +     \
+#define PyArray_GETPTR4(obj, i, j, k, l) ((void *)(PyArray_BYTES(obj) + \
+                                            (i)*PyArray_STRIDES(obj)[0] + \
+                                            (j)*PyArray_STRIDES(obj)[1] + \
+                                            (k)*PyArray_STRIDES(obj)[2] + \
                                             (l)*PyArray_STRIDES(obj)[3]))
 
 #define PyArray_XDECREF_ERR(obj) \
