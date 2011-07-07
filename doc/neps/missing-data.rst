@@ -677,7 +677,7 @@ This gives us the following additions to the PyArrayObject::
      * NPY_ARRAY_OWNNAMASK enabled, it owns this memory and
      * must call PyArray_free on it when destroyed.
      */
-    char *maskdata;
+    npy_uint8 *maskdata;
     /*
      * Just like dimensions and strides point into the same memory
      * buffer, we now just make the buffer 3x the nd instead of 2x
@@ -707,6 +707,19 @@ PyArray_ContainsNA(PyArrayObject* obj)
     Returns false if the array has no NA support. Returns
     true if the array has NA support AND there is an
     NA anywhere in the array.
+
+The format of the mask itself is designed to indicate whether an
+element is masked or not, as well as contain a payload so that multiple
+different NAs with different payloads can be used in the future.
+Initially, we will simply use the payload 0.
+
+In order to allow the combination of masks to be a simple 'min' operation,
+we make the dtype be npy_uint8, and use bit 7 to indicate whether
+the value with mask 'm' is masked ((m&0x80) == 0) or unmasked
+((m&0x80) == 0x80). The rest of the bits are the payload, which
+is (m&0x7f). A consequence of this is that payloads with smaller values
+are propagated. This design gives 128 payload values to masked elements,
+and 128 payload values to unmasked elements.
 
 ********************************************
 C Iterator API Changes: Iteration With Masks
@@ -755,12 +768,13 @@ NPY_ITER_ARRAYMASK
     into the NA bitpattern when copying from the buffer to the
     array.
 
-NPY_ITER_VIRTUALMASK
-    Indicates that the mask is not an array, but rather created on
-    the fly by the inner iteration code. This allocates enough buffer
-    space for the code to write the mask into, but does not have
-    an actual array backing the data. There can only be one such
-    mask, and there cannot also be an array mask.
+NPY_ITER_VIRTUAL
+    Indicates that this operand is not an array, but rather created on
+    the fly for the inner iteration code. This allocates enough buffer
+    space for the code to read/write data, but does not have
+    an actual array backing the data. When combined with NPY_ITER_ARRAYMASK,
+    allows for creating a "virtual mask", specifying which values
+    are unmasked without ever creating a full mask array.
 
 Iterator NA-array Features
 ==========================
