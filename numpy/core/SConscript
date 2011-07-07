@@ -469,6 +469,7 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'buffer.c'),
         pjoin('src', 'multiarray', 'numpymemoryview.c'),
         pjoin('src', 'multiarray', 'scalarapi.c'),
+        pjoin('src', 'multiarray', 'nditer_api.c'),
         pjoin('src', 'multiarray', 'nditer_constr.c'),
         pjoin('src', 'multiarray', 'nditer_pywrap.c'),
         pjoin('src', 'multiarray', 'dtype_transfer.c')]

@@ -2951,6 +2951,4 @@ fail:
     return 0;
 }
 
-
-
 #undef NPY_ITERATOR_IMPLEMENTATION_CODE
