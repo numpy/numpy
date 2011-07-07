@@ -77,5 +77,10 @@
                 PyDict_GetItemString(descr->metadata, NPY_METADATA_DTSTR)))))
 #endif
 
+/*
+ * Deprecated as of NumPy 1.7, this kind of shortcut doesn't
+ * belong in the public API.
+ */
+#define NPY_AO PyArrayObject
 
 #endif
