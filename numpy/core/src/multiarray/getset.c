@@ -281,7 +281,7 @@ static PyObject *
 array_data_get(PyArrayObject *self)
 {
 #if defined(NPY_PY3K)
-    return PyMemoryView_FromObject(self);
+    return PyMemoryView_FromObject((PyObject *)self);
 #else
     intp nbytes;
     if (!(PyArray_ISONESEGMENT(self))) {

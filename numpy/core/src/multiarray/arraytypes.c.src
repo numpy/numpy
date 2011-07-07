@@ -627,9 +627,9 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         strides[0] = 1;
         descr = PyArray_DescrNewFromType(PyArray_BYTE);
         u = PyArray_NewFromDescr(&PyArray_Type, descr, 1, dims, strides,
-                                 ip,
-                                 PyArray_ISWRITEABLE(ap) ? NPY_WRITEABLE : 0,
-                                 NULL);
+                             ip,
+                             PyArray_ISWRITEABLE(ap) ? NPY_ARRAY_WRITEABLE : 0,
+                             NULL);
         ((PyArrayObject*)u)->base = ap;
         Py_INCREF(ap);
     }
