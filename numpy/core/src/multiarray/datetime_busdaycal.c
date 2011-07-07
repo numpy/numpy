@@ -539,4 +539,3 @@ NPY_NO_EXPORT PyTypeObject NpyBusDayCalendar_Type = {
     0,                                          /* tp_version_tag */
 #endif
 };
-

@@ -77,7 +77,7 @@ parse_iso_8601_datetime(char *str, int len,
     memset(out, 0, sizeof(npy_datetimestruct));
     out->month = 1;
     out->day = 1;
-    
+
     /*
      * Convert the empty string and case-variants of "NaT" to not-a-time.
      * Tried to use PyOS_stricmp, but that function appears to be broken,
@@ -1517,6 +1517,3 @@ fail:
 
     return NULL;
 }
-
-
-

@@ -165,7 +165,7 @@ if config.CheckDeclaration(('PRIdPTR'), includes  = '#include <inttypes.h>'):
     numpyconfig_sym.append(('DEFINE_NPY_USE_C99_FORMATS', '#define NPY_USE_C99_FORMATS 1'))
 else:
     numpyconfig_sym.append(('DEFINE_NPY_USE_C99_FORMATS', ''))
-    
+
 #----------------------
 # Checking the mathlib
 #----------------------

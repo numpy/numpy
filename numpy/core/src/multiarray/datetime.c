@@ -435,7 +435,7 @@ convert_datetime_to_datetimestruct(PyArray_DatetimeMetaData *meta,
                     "with generic units");
         return -1;
     }
-    
+
     /* TODO: Change to a mechanism that avoids the potential overflow */
     dt *= meta->num;
 
@@ -1844,7 +1844,7 @@ datetime_type_promotion(PyArray_Descr *type1, PyArray_Descr *type2)
         return NULL;
     }
     Py_DECREF(gcdmeta);
-    
+
     return dtype;
 
 
@@ -2895,7 +2895,7 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             else {
                 /* Switch back to microseconds for the casting operation */
                 us_meta.base = NPY_FR_us;
-                
+
                 return cast_timedelta_to_timedelta(&us_meta, meta, td, out);
             }
         }

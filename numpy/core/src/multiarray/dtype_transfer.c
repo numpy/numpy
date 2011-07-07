@@ -3649,4 +3649,3 @@ PyArray_CastRawArrays(npy_intp count,
     /* If needs_api was set to 1, it may have raised a Python exception */
     return (needs_api && PyErr_Occurred()) ? NPY_FAIL : NPY_SUCCEED;
 }
-
