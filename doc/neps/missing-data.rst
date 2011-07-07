@@ -1,5 +1,7 @@
 :Title: Missing Data Functionality in NumPy
 :Author: Mark Wiebe <mwwiebe@gmail.com>
+:Copyright: Copyright 2011 by Enthought, Inc
+:License: CC By-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0/)
 :Date: 2011-06-23
 
 *****************
@@ -167,14 +169,14 @@ Because the above discussions of the different concepts and their
 relationships are tricky to understand, here are more succinct
 definitions of the terms used in this NEP.
 
-NA (Not Available)
+NA (Not Available/Propagate)
     A placeholder for a value which is unknown to computations. That
     value may be temporarily hidden with a mask, may have been lost
     due to hard drive corruption, or gone for any number of reasons.
     For sums and products this means to produce NA if any of the inputs
-    are NA.  This is the same as NA in the R project.
+    are NA. This is the same as NA in the R project.
 
-IGNORE (Skip/Ignore)
+IGNORE (Ignore/Skip)
     A placeholder which should be treated by computations as if no value does
     or could exist there. For sums, this means act as if the value
     were zero, and for products, this means act as if the value were one.
@@ -690,13 +692,91 @@ There are 2 (or 3) flags which must be added to the array flags::
     /* To possibly add in a later revision */
     NPY_ARRAY_HARDNAMASK
 
-******************************
-C API Access: Masked Iteration
-******************************
+To allow the easy detection of NA support, and whether an array
+has any missing values, we add the following functions:
 
-TODO: Describe details about how the nditer will be extended to allow
-functions to do masked iteration, transparently working with both
-NA dtypes or masked arrays in one implementation.
+PyDataType_HasNASupport(PyArray_Descr* dtype)
+    Returns true if this is an NA dtype, or a struct
+    dtype where every field has NA support.
+
+PyArray_HasNASupport(PyArrayObject* obj)
+    Returns true if the array dtype has NA support, or
+    the array has an NA mask.
+
+PyArray_ContainsNA(PyArrayObject* obj)
+    Returns false if the array has no NA support. Returns
+    true if the array has NA support AND there is an
+    NA anywhere in the array.
+
+********************************************
+C Iterator API Changes: Iteration With Masks
+********************************************
+
+For iteration and computation with masks, both in the context of missing
+values and when the mask is used like the 'where=' parameter in ufuncs,
+extending the nditer is the most natural way to expose this functionality.
+
+Masked operations need to work with casting, alignment, and anything else
+which causes values to be copied into a temporary buffer, something which
+is handled nicely by the nditer but difficult to do outside that context.
+
+First we describe iteration designed for use of masks outside the
+context of missing values, then the features which include missing
+value support.
+
+Iterator Mask Features
+======================
+
+We add several new per-operand flags:
+
+NPY_ITER_WRITEMASKED
+    Indicates that any copies done from a buffer to the array are
+    masked. This is necessary because READWRITE mode could destroy
+    data if a float array was being treated like an int array, so
+    copying to the buffer and back would truncate to integers. No
+    similar flag is provided for reading, because it may not be possible
+    to know the mask ahead of time, and copying everything into
+    the buffer will never destroy data.
+
+NPY_ITER_ARRAYMASK
+    Indicates that this array is a boolean mask to use when copying
+    any WRITEMASKED argument from a buffer back to the array. There
+    can be only one such mask, and there cannot also be a virtual
+    mask.
+
+    As a special case, if the flag NPY_ITER_USE_NAMASK is specified
+    at the same time, the mask for the operand is used instead
+    of the operand itself. If the operand has no mask but is
+    based on an NA dtype, that mask exposed by the iterator converts
+    into the NA bitpattern when copying from the buffer to the
+    array.
+
+NPY_ITER_VIRTUALMASK
+    Indicates that the mask is not an array, but rather created on
+    the fly by the inner iteration code. This allocates enough buffer
+    space for the code to write the mask into, but does not have
+    an actual array backing the data. There can only be one such
+    mask, and there cannot also be an array mask.
+
+Iterator NA-array Features
+==========================
+
+We add several new per-operand flags:
+
+NPY_ITER_USE_NAMASK
+    If the operand has an NA dtype, an NA mask, or both, this adds a new
+    virtual operand to the end of the operand list which iterates
+    over the mask of the particular operand.
+
+NPY_ITER_IGNORE_NAMASK
+    If an operand has an NA mask, by default the iterator will raise
+    an exception unless NPY_ITER_USE_NAMASK is specified. This flag
+    disables that check, and is intended for cases where one has first
+    checked that all the elements in the array are not NA using the
+    PyArray_ContainsNA function.
+
+    If the dtype is an NA dtype, this also strips the NA-ness from the
+    dtype, showing a dtype that does not support NA.
 
 ********************
 Rejected Alternative

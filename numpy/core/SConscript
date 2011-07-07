@@ -380,7 +380,7 @@ umath_loops_src = env.GenerateFromTemplate(pjoin('src', 'umath', 'loops.c.src'))
 arraytypes_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'arraytypes.c.src'))
 nditer_src = env.GenerateFromTemplate(
-    pjoin('src', 'multiarray', 'nditer.c.src'))
+    pjoin('src', 'multiarray', 'nditer_templ.c.src'))
 lowlevel_strided_loops_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'lowlevel_strided_loops.c.src'))
 einsum_src = env.GenerateFromTemplate(pjoin('src', 'multiarray', 'einsum.c.src'))
@@ -469,6 +469,8 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'buffer.c'),
         pjoin('src', 'multiarray', 'numpymemoryview.c'),
         pjoin('src', 'multiarray', 'scalarapi.c'),
+        pjoin('src', 'multiarray', 'nditer_api.c'),
+        pjoin('src', 'multiarray', 'nditer_constr.c'),
         pjoin('src', 'multiarray', 'nditer_pywrap.c'),
         pjoin('src', 'multiarray', 'dtype_transfer.c')]
     multiarray_src.extend(arraytypes_src)
