@@ -1,5 +1,7 @@
 :Title: Missing Data Functionality in NumPy
 :Author: Mark Wiebe <mwwiebe@gmail.com>
+:Copyright: Copyright 2011 by Enthought, Inc
+:License: CC By-SA 3.0 (http://creativecommons.org/licenses/by-sa/3.0/)
 :Date: 2011-06-23
 
 *****************
@@ -742,6 +744,13 @@ NPY_ITER_ARRAYMASK
     can be only one such mask, and there cannot also be a virtual
     mask.
 
+    As a special case, if the flag NPY_ITER_USE_NAMASK is specified
+    at the same time, the mask for the operand is used instead
+    of the operand itself. If the operand has no mask but is
+    based on an NA dtype, that mask exposed by the iterator converts
+    into the NA bitpattern when copying from the buffer to the
+    array.
+
 NPY_ITER_VIRTUALMASK
     Indicates that the mask is not an array, but rather created on
     the fly by the inner iteration code. This allocates enough buffer
@@ -752,6 +761,8 @@ NPY_ITER_VIRTUALMASK
 Iterator NA-array Features
 ==========================
 
+We add several new per-operand flags:
+
 NPY_ITER_USE_NAMASK
     If the operand has an NA dtype, an NA mask, or both, this adds a new
     virtual operand to the end of the operand list which iterates
@@ -759,13 +770,13 @@ NPY_ITER_USE_NAMASK
 
 NPY_ITER_IGNORE_NAMASK
     If an operand has an NA mask, by default the iterator will raise
-    an exception unless USE_NAMASK is specified. This flag disables that
-    check, and is intended for cases where one has first checked that
-    all the elements in the array are not NA using the
+    an exception unless NPY_ITER_USE_NAMASK is specified. This flag
+    disables that check, and is intended for cases where one has first
+    checked that all the elements in the array are not NA using the
     PyArray_ContainsNA function.
-    
-    If the dtype is an NA dtype, this also strips the NA-ness from
-    the dtype, showing a dtype that does not support NA.
+
+    If the dtype is an NA dtype, this also strips the NA-ness from the
+    dtype, showing a dtype that does not support NA.
 
 ********************
 Rejected Alternative
