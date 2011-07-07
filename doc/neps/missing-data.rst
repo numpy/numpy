@@ -169,14 +169,14 @@ Because the above discussions of the different concepts and their
 relationships are tricky to understand, here are more succinct
 definitions of the terms used in this NEP.
 
-NA (Not Available)
+NA (Not Available/Propagate)
     A placeholder for a value which is unknown to computations. That
     value may be temporarily hidden with a mask, may have been lost
     due to hard drive corruption, or gone for any number of reasons.
     For sums and products this means to produce NA if any of the inputs
-    are NA.  This is the same as NA in the R project.
+    are NA. This is the same as NA in the R project.
 
-IGNORE (Skip/Ignore)
+IGNORE (Ignore/Skip)
     A placeholder which should be treated by computations as if no value does
     or could exist there. For sums, this means act as if the value
     were zero, and for products, this means act as if the value were one.
