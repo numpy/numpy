@@ -370,11 +370,22 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
         flag = 0;
         switch (str[0]) {
             case 'a':
-                if (strcmp(str, "allocate") == 0) {
-                    flag = NPY_ITER_ALLOCATE;
-                }
-                if (strcmp(str, "aligned") == 0) {
-                    flag = NPY_ITER_ALIGNED;
+                if (length > 2) switch(str[2]) {
+                    case 'i':
+                        if (strcmp(str, "aligned") == 0) {
+                            flag = NPY_ITER_ALIGNED;
+                        }
+                        break;
+                    case 'l':
+                        if (strcmp(str, "allocate") == 0) {
+                            flag = NPY_ITER_ALLOCATE;
+                        }
+                        break;
+                    case 'r':
+                        if (strcmp(str, "arraymask") == 0) {
+                            flag = NPY_ITER_ARRAYMASK;
+                        }
+                        break;
                 }
                 break;
             case 'c':
@@ -421,9 +432,23 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
                     flag = NPY_ITER_UPDATEIFCOPY;
                 }
                 break;
+            case 'v':
+                if (strcmp(str, "virtualmask") == 0) {
+                    flag = NPY_ITER_VIRTUALMASK;
+                }
+                break;
             case 'w':
-                if (strcmp(str, "writeonly") == 0) {
-                    flag = NPY_ITER_WRITEONLY;
+                if (length > 5) switch (str[5]) {
+                    case 'o':
+                        if (strcmp(str, "writeonly") == 0) {
+                            flag = NPY_ITER_WRITEONLY;
+                        }
+                        break;
+                    case 'm':
+                        if (strcmp(str, "writemasked") == 0) {
+                            flag = NPY_ITER_WRITEMASKED;
+                        }
+                        break;
                 }
                 break;
         }

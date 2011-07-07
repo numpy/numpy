@@ -738,6 +738,10 @@ NPY_ITER_WRITEMASKED
     to know the mask ahead of time, and copying everything into
     the buffer will never destroy data.
 
+    The code using the iterator should only write to values which
+    are not masked by the mask specified, otherwise the result will
+    be different depending on whether buffering is enabled or not.
+
 NPY_ITER_ARRAYMASK
     Indicates that this array is a boolean mask to use when copying
     any WRITEMASKED argument from a buffer back to the array. There

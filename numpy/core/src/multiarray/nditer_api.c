@@ -1418,6 +1418,8 @@ NpyIter_DebugPrint(NpyIter *iter)
             printf("ALIGNED ");
         if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_REDUCE)
             printf("REDUCE ");
+        if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_WRITEMASKED)
+            printf("WRITEMASKED ");
         printf("\n");
     }
     printf("|\n");
