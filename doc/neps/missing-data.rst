@@ -713,13 +713,24 @@ element is masked or not, as well as contain a payload so that multiple
 different NAs with different payloads can be used in the future.
 Initially, we will simply use the payload 0.
 
-In order to allow the combination of masks to be a simple 'min' operation,
-we make the dtype be npy_uint8, and use bit 7 to indicate whether
-the value with mask 'm' is masked ((m&0x80) == 0) or unmasked
-((m&0x80) == 0x80). The rest of the bits are the payload, which
-is (m&0x7f). A consequence of this is that payloads with smaller values
-are propagated. This design gives 128 payload values to masked elements,
+The mask has type npy_uint8, and bit 0 is used to indicate whether
+a value is masked. If ((m&0x01) == 0), the element is masked, otherwise
+it is unmasked. The rest of the bits are the payload, which is (m>>1).
+The convention for combining masks with payloads is that smaller
+payloads propagate. This design gives 128 payload values to masked elements,
 and 128 payload values to unmasked elements.
+
+The big benefit of this approach is that npy_bool also
+works as a mask, because it takes on the values 0 for False and 1
+for True. Additionally, the payload for npy_bool, which is always
+zero, dominates over all the other possible payloads.
+
+An idea that was discarded is to allow the combination of masks + payloads
+to be a simple 'min' operation. This can be done by putting the payload
+in bits 0 through 6, so that the payload is (m&0x7f), and using bit 7
+for the masking flag, so ((m&0x80) == 0) means the element is masked.
+The fact that this makes masks completely different from booleans, instead
+of a strict superset, is the primary reason this choice was discarded.
 
 ********************************************
 C Iterator API Changes: Iteration With Masks
