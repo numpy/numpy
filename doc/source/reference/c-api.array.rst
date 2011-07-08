@@ -475,6 +475,10 @@ From other objects
     indicates that the array should be aligned in the sense that the
     strides are multiples of the element size.
 
+    In versions 1.6 and earlier of NumPy, the following flags
+    did not have the _ARRAY_ macro namespace in them. That form
+    of the constant names is deprecated in 1.7.
+
 .. cvar:: NPY_ARRAY_NOTSWAPPED
 
     Make sure the returned array has a data-type descriptor that is in
@@ -1209,6 +1213,10 @@ its data in a different byte-order than the machine recognizes. It
 might not be writeable. It might be in Fortan-contiguous order. The
 array flags are used to indicate what can be said about data
 associated with an array.
+
+In versions 1.6 and earlier of NumPy, the following flags
+did not have the _ARRAY_ macro namespace in them. That form
+of the constant names is deprecated in 1.7.
 
 .. cvar:: NPY_ARRAY_C_CONTIGUOUS
 
