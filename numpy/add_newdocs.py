@@ -3724,11 +3724,6 @@ add_newdoc('numpy.core.multiarray', 'copyto',
         of `dst`, and selects elements to copy from `src` to `dst`
         wherever it contains the value True.
 
-    Returns
-    -------
-    out : ndarray
-        Returns the array `dst`.
-
     """)
 
 add_newdoc('numpy.core.multiarray', 'putmask',
