@@ -735,6 +735,9 @@ PyArray_ContainsNA(PyArrayObject* obj)
     true if the array has NA support AND there is an
     NA anywhere in the array.
 
+Mask Binary Format
+==================
+
 The format of the mask itself is designed to indicate whether an
 element is masked or not, as well as contain a payload so that multiple
 different NAs with different payloads can be used in the future.
@@ -751,6 +754,11 @@ The big benefit of this approach is that npy_bool also
 works as a mask, because it takes on the values 0 for False and 1
 for True. Additionally, the payload for npy_bool, which is always
 zero, dominates over all the other possible payloads.
+
+Since the design involves giving the mask its own dtype, we can
+distinguish between masking with a single NA value (npy_bool mask),
+and masking with multi-NA (npy_uint8 mask). Initial implementations
+will just support the npy_bool mask.
 
 An idea that was discarded is to allow the combination of masks + payloads
 to be a simple 'min' operation. This can be done by putting the payload
