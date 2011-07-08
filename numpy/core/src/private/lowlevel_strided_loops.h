@@ -27,6 +27,20 @@ typedef void (PyArray_StridedTransferFn)(char *dst, npy_intp dst_stride,
                                     NpyAuxData *transferdata);
 
 /*
+ * This is for pointers to functions which behave exactly as
+ * for PyArray_StridedTransferFn, but with an additional mask controlling
+ * which values are transferred.
+ *
+ * In particular, the 'i'-th element is transfered if and only if
+ * (((mask[i*mask_stride])&0x01) == 0x01).
+ */
+typedef void (PyArray_MaskedStridedTransferFn)(char *dst, npy_intp dst_stride,
+                                    char *src, npy_intp src_stride,
+                                    npy_uint8 *mask, npy_intp mask_stride,
+                                    npy_intp N, npy_intp src_itemsize,
+                                    NpyAuxData *transferdata);
+
+/*
  * Gives back a function pointer to a specialized function for copying
  * strided memory.  Returns NULL if there is a problem with the inputs.
  *
@@ -170,6 +184,34 @@ PyArray_GetDTypeTransferFunction(int aligned,
                             PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                             int move_references,
                             PyArray_StridedTransferFn **out_stransfer,
+                            NpyAuxData **out_transferdata,
+                            int *out_needs_api);
+
+/*
+ * This is identical to PyArray_GetDTypeTransferFunction, but
+ * returns a transfer function which also takes a mask as a parameter.
+ * Bit zero of the mask is used to determine which values to copy,
+ * data is transfered exactly when ((mask[i])&0x01) == 0x01.
+ *
+ * If move_references is true, values which are not copied to the
+ * destination will still have their source reference decremented.
+ *
+ * If mask_dtype is NPY_BOOL or NPY_UINT8, each full element is either
+ * transferred or not according to the mask as described above. If
+ * dst_dtype and mask_dtype are both struct dtypes, their names must
+ * match exactly, and the dtype of each leaf field in mask_dtype must
+ * be either NPY_BOOL or NPY_UINT8.
+ */
+NPY_NO_EXPORT int
+PyArray_GetMaskedDTypeTransferFunction(int aligned,
+                            npy_intp src_stride,
+                            npy_intp dst_stride,
+                            npy_intp mask_stride,
+                            PyArray_Descr *src_dtype,
+                            PyArray_Descr *dst_dtype,
+                            PyArray_Descr *mask_dtype,
+                            int move_references,
+                            PyArray_MaskedStridedTransferFn **out_stransfer,
                             NpyAuxData **out_transferdata,
                             int *out_needs_api);
 

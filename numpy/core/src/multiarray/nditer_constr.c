@@ -987,10 +987,10 @@ npyiter_prepare_one_operand(PyArrayObject **op,
             *op_dtype = NULL;
         }
 
-        /* Specify uint8 if no dtype was requested for the mask */
+        /* Specify bool if no dtype was requested for the mask */
         if (op_flags&NPY_ITER_ARRAYMASK) {
             if (*op_dtype == NULL) {
-                *op_dtype = PyArray_DescrFromType(NPY_UINT8);
+                *op_dtype = PyArray_DescrFromType(NPY_BOOL);
                 if (*op_dtype == NULL) {
                     return 0;
                 }
