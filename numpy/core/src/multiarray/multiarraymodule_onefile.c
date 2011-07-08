@@ -38,7 +38,9 @@
 #include "conversion_utils.c"
 #include "buffer.c"
 
-#include "nditer.c"
+#include "nditer_constr.c"
+#include "nditer_api.c"
+#include "nditer_templ.c"
 #include "nditer_pywrap.c"
 #include "lowlevel_strided_loops.c"
 #include "dtype_transfer.c"
