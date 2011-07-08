@@ -1391,7 +1391,7 @@ unmasked_ufunc_loop_as_masked(
     void *unmasked_innerloopdata;
     npy_intp loopsize, subloopsize;
     char *mask;
-    npy_intp maskstep;
+    npy_intp mask_stride;
 
     /* Put the aux data into local variables */
     data = (_ufunc_masker_data *)innerloopdata;
@@ -1400,16 +1400,16 @@ unmasked_ufunc_loop_as_masked(
     nargs = data->nargs;
     loopsize = *dimensions;
     mask = args[nargs];
-    maskstep = steps[nargs];
+    mask_stride = steps[nargs];
 
 
     /* Process the data as runs of unmasked values */
     do {
         /* Skip masked values */
         subloopsize = 0;
-        while (subloopsize < loopsize && *(npy_bool *)mask == 0) {
+        while (subloopsize < loopsize && (*(npy_uint8 *)mask)&0x01 == 0) {
             ++subloopsize;
-            mask += maskstep;
+            mask += mask_stride;
         }
         for (iargs = 0; iargs < nargs; ++iargs) {
             args[iargs] += subloopsize * steps[iargs];
@@ -1420,9 +1420,9 @@ unmasked_ufunc_loop_as_masked(
          * mess with the 'args' pointer values)
          */
         subloopsize = 0;
-        while (subloopsize < loopsize && *(npy_bool *)mask != 0) {
+        while (subloopsize < loopsize && (*(npy_uint8 *)mask)&0x01 != 0) {
             ++subloopsize;
-            mask += maskstep;
+            mask += mask_stride;
         }
         unmasked_innerloop(args, &subloopsize, steps, unmasked_innerloopdata);
         for (iargs = 0; iargs < nargs; ++iargs) {
