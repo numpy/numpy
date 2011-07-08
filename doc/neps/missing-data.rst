@@ -591,6 +591,33 @@ cannot hold values, but will conform to the input types in functions like
 maps to [('a', 'NA[f4]'), ('b', 'NA[i4]')]. Thus, to view the memory
 of an 'f8' array 'arr' with 'NA[f8]', you can say arr.view(dtype='NA').
 
+Future Expansion to multi-NA Payloads
+=====================================
+
+The packages SAS and Stata both support multiple different "NA" values.
+This allows one to specify different reasons for why a value, for
+example homework that wasn't done because the dog ate it or the student
+was sick. In these packages, the different NA values have a linear ordering
+which specifies how different NA values combine together.
+
+In the sections on C implementation details, the mask has been designed
+so that a mask with a payload is a strict superset of the NumPy boolean
+type, and the boolean type has a payload of just zero. Different payloads
+combine with the 'min' operation.
+
+The important part of future-proofing the design is making sure
+the C ABI-level choices and the Python API-level choices have a natural
+transition to multi-NA support. Here is one way multi-NA support could look::
+
+    >>> a = np.array([np.NA(1), 3, np.NA(2)], namasked='multi')
+    >>> np.sum(a)
+    NA(1)
+    >>> np.sum(a[1:])
+    NA(2)
+    >>> b = np.array([np.NA, 2, 5], namasked=True)
+    >>> a + b
+    array([NA(0), 5, NA(2)], namasked='multi')
+
 PEP 3118
 ========
 
