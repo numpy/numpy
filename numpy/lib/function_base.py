@@ -1146,9 +1146,9 @@ def unwrap(p, discont=pi, axis=-1):
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
     ddmod = mod(dd+pi, 2*pi)-pi
-    _nx.putmask(ddmod, (ddmod==-pi) & (dd > 0), pi)
+    _nx.copyto(ddmod, pi, where=(ddmod==-pi) & (dd > 0))
     ph_correct = ddmod - dd;
-    _nx.putmask(ph_correct, abs(dd)<discont, 0)
+    _nx.copyto(ph_correct, 0, where=abs(dd)<discont)
     up = array(p, copy=True, dtype='d')
     up[slice1] = p[slice1] + ph_correct.cumsum(axis)
     return up
@@ -1273,7 +1273,7 @@ def extract(condition, arr):
 
     See Also
     --------
-    take, put, putmask, compress
+    take, put, copyto, compress
 
     Examples
     --------
@@ -1303,9 +1303,9 @@ def place(arr, mask, vals):
     """
     Change elements of an array based on conditional and input values.
 
-    Similar to ``np.putmask(arr, mask, vals)``, the difference is that `place`
+    Similar to ``np.copyto(arr, vals, where=mask)``, the difference is that `place`
     uses the first N elements of `vals`, where N is the number of True values
-    in `mask`, while `putmask` uses the elements where `mask` is True.
+    in `mask`, while `copyto` uses the elements where `mask` is True.
 
     Note that `extract` does the exact opposite of `place`.
 
@@ -1322,7 +1322,7 @@ def place(arr, mask, vals):
 
     See Also
     --------
-    putmask, put, take, extract
+    copyto, put, take, extract
 
     Examples
     --------
@@ -1366,7 +1366,7 @@ def _nanop(op, fill, a, axis=None):
     # y[mask] = fill
     # We can't use fancy indexing here as it'll mess w/ MaskedArrays
     # Instead, let's fill the array directly...
-    np.putmask(y, mask, fill)
+    np.copyto(y, fill, where=mask)
     res = op(y, axis=axis)
     mask_all_along_axis = mask.all(axis=axis)
 
