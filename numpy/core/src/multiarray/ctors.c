@@ -2952,7 +2952,7 @@ PyArray_MaskedCopyInto(PyArrayObject *dst, PyArrayObject *src,
 
         if (PyArray_GetMaskedDTypeTransferFunction(
                         PyArray_ISALIGNED(src) && PyArray_ISALIGNED(dst),
-                        src_stride, dst_stride, mask_stride, 
+                        src_stride, dst_stride, mask_stride,
                         PyArray_DESCR(src),
                         PyArray_DESCR(dst),
                         PyArray_DESCR(mask),

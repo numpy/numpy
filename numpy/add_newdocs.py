@@ -3731,7 +3731,7 @@ add_newdoc('numpy.core.multiarray', 'putmask',
     putmask(a, mask, values)
 
     This function is deprecated as of NumPy 1.7. Use the function
-    ``np.copy(a, values, where=mask)`` to achieve this functionality.
+    ``np.copyto(a, values, where=mask)`` to achieve this functionality.
 
     Changes elements of an array based on conditional and input values.
 
