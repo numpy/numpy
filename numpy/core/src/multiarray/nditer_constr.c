@@ -39,7 +39,8 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
                     PyArray_Descr **op_request_dtypes,
                     PyArray_Descr **op_dtype,
                     npy_uint32 flags,
-                    npy_uint32 *op_flags, char *op_itflags);
+                    npy_uint32 *op_flags, char *op_itflags,
+                    npy_int8 *out_maskop);
 static int
 npyiter_check_casting(int nop, PyArrayObject **op,
                     PyArray_Descr **op_dtype,
@@ -200,7 +201,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     if (!npyiter_prepare_operands(nop, op_in, op, op_dataptr,
                         op_request_dtypes, op_dtype,
                         flags,
-                        op_flags, op_itflags)) {
+                        op_flags, op_itflags, &NIT_MASKOP(iter))) {
         PyArray_free(iter);
         return NULL;
     }
@@ -899,6 +900,33 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
         return 0;
     }
 
+    /* Check the flag for a write masked operands */
+    if (op_flags&NPY_ITER_WRITEMASKED) {
+        if (!(*op_itflags)&NPY_OP_ITFLAG_WRITE) {
+            PyErr_SetString(PyExc_ValueError,
+                "The iterator flag WRITEMASKED may only "
+                "be used with READWRITE or WRITEONLY");
+            return 0;
+        }
+        if ((op_flags&NPY_ITER_ARRAYMASK) != 0) {
+            PyErr_SetString(PyExc_ValueError,
+                "The iterator flag WRITEMASKED may not "
+                "be used together with ARRAYMASK");
+            return 0;
+        }
+        *op_itflags |= NPY_OP_ITFLAG_WRITEMASKED;
+    }
+
+    if ((op_flags&NPY_ITER_VIRTUAL) != 0) {
+        if ((op_flags&NPY_ITER_READWRITE) == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                "The iterator flag VIRTUAL should be "
+                "be used together with READWRITE");
+            return 0;
+        }
+        *op_itflags |= NPY_OP_ITFLAG_VIRTUAL;
+    }
+
     return 1;
 }
 
@@ -919,41 +947,67 @@ npyiter_prepare_one_operand(PyArrayObject **op,
 {
     /* NULL operands must be automatically allocated outputs */
     if (*op == NULL) {
-        /* ALLOCATE should be enabled */
-        if (!(op_flags&NPY_ITER_ALLOCATE)) {
+        /* ALLOCATE or VIRTUAL should be enabled */
+        if ((op_flags&(NPY_ITER_ALLOCATE|NPY_ITER_VIRTUAL)) == 0) {
             PyErr_SetString(PyExc_ValueError,
-                    "Iterator operand was NULL, but automatic allocation as an "
-                    "output wasn't requested");
+                    "Iterator operand was NULL, but neither the "
+                    "ALLOCATE nor the VIRTUAL flag was specified");
             return 0;
         }
-        /* Writing should be enabled */
-        if (!((*op_itflags)&NPY_OP_ITFLAG_WRITE)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Automatic allocation was requested for an iterator "
-                    "operand, but it wasn't flagged for writing");
-            return 0;
+
+        if (op_flags&NPY_ITER_ALLOCATE) {
+            /* Writing should be enabled */
+            if (!((*op_itflags)&NPY_OP_ITFLAG_WRITE)) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Automatic allocation was requested for an iterator "
+                        "operand, but it wasn't flagged for writing");
+                return 0;
+            }
+            /*
+             * Reading should be disabled if buffering is enabled without
+             * also enabling NPY_ITER_DELAY_BUFALLOC.  In all other cases,
+             * the caller may initialize the allocated operand to a value
+             * before beginning iteration.
+             */
+            if (((flags&(NPY_ITER_BUFFERED|
+                            NPY_ITER_DELAY_BUFALLOC)) == NPY_ITER_BUFFERED) &&
+                    ((*op_itflags)&NPY_OP_ITFLAG_READ)) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Automatic allocation was requested for an iterator "
+                        "operand, and it was flagged as readable, but "
+                        "buffering  without delayed allocation was enabled");
+                return 0;
+            }
+
+            /* If a requested dtype was provided, use it, otherwise NULL */
+            Py_XINCREF(op_request_dtype);
+            *op_dtype = op_request_dtype;
         }
-        /*
-         * Reading should be disabled if buffering is enabled without
-         * also enabling NPY_ITER_DELAY_BUFALLOC.  In all other cases,
-         * the caller may initialize the allocated operand to a value
-         * before beginning iteration.
-         */
-        if (((flags&(NPY_ITER_BUFFERED|
-                        NPY_ITER_DELAY_BUFALLOC)) == NPY_ITER_BUFFERED) &&
-                ((*op_itflags)&NPY_OP_ITFLAG_READ)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Automatic allocation was requested for an iterator "
-                    "operand, and it was flagged as readable, but buffering "
-                    " without delayed allocation was enabled");
-            return 0;
+        else {
+            *op_dtype = NULL;
         }
+
+        /* Specify bool if no dtype was requested for the mask */
+        if (op_flags&NPY_ITER_ARRAYMASK) {
+            if (*op_dtype == NULL) {
+                *op_dtype = PyArray_DescrFromType(NPY_BOOL);
+                if (*op_dtype == NULL) {
+                    return 0;
+                }
+            }
+        }
+
         *op_dataptr = NULL;
-        /* If a requested dtype was provided, use it, otherwise NULL */
-        Py_XINCREF(op_request_dtype);
-        *op_dtype = op_request_dtype;
 
         return 1;
+    }
+
+    /* VIRTUAL operands must be NULL */
+    if (op_flags&NPY_ITER_VIRTUAL) {
+        PyErr_SetString(PyExc_ValueError,
+                "Iterator operand flag VIRTUAL was specified, "
+                "but the operand was not NULL");
+        return 0;
     }
 
     if (PyArray_Check(*op)) {
@@ -974,7 +1028,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         *op_dtype = PyArray_DESCR(*op);
         if (*op_dtype == NULL) {
             PyErr_SetString(PyExc_ValueError,
-                    "Iterator input array object has no dtype descr");
+                    "Iterator input operand has no dtype descr");
             return 0;
         }
         Py_INCREF(*op_dtype);
@@ -1066,9 +1120,11 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
                     PyArray_Descr **op_request_dtypes,
                     PyArray_Descr **op_dtype,
                     npy_uint32 flags,
-                    npy_uint32 *op_flags, char *op_itflags)
+                    npy_uint32 *op_flags, char *op_itflags,
+                    npy_int8 *out_maskop)
 {
     int iop, i;
+    npy_int8 maskop = -1;
 
     for (iop = 0; iop < nop; ++iop) {
         op[iop] = op_in[iop];
@@ -1082,6 +1138,23 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
                 Py_XDECREF(op_dtype[i]);
             }
             return 0;
+        }
+
+        /* Extract the operand which is for masked iteration */
+        if ((op_flags[iop]&NPY_ITER_ARRAYMASK) != 0) {
+            if (maskop != -1) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Only one iterator operand may receive an "
+                        "ARRAYMASK flag");
+                for (i = 0; i <= iop; ++i) {
+                    Py_XDECREF(op[i]);
+                    Py_XDECREF(op_dtype[i]);
+                }
+                return 0;
+            }
+
+            maskop = iop;
+            *out_maskop = iop;
         }
 
         /*

@@ -2999,6 +2999,149 @@ get_setdestzero_fields_transfer_function(int aligned,
     return NPY_SUCCEED;
 }
 
+/************************* MASKED TRANSFER WRAPPER *************************/
+
+typedef struct {
+    NpyAuxData base;
+    /* The transfer function being wrapped */
+    PyArray_StridedTransferFn *stransfer;
+    NpyAuxData *transferdata;
+
+    /* The src decref function if necessary */
+    PyArray_StridedTransferFn *decsrcref_stransfer;
+    NpyAuxData *decsrcref_transferdata;
+} _masked_wrapper_transfer_data;
+
+/* transfer data free function */
+void _masked_wrapper_transfer_data_free(NpyAuxData *data)
+{
+    _masked_wrapper_transfer_data *d = (_masked_wrapper_transfer_data *)data;
+    NPY_AUXDATA_FREE(d->transferdata);
+    NPY_AUXDATA_FREE(d->decsrcref_transferdata);
+    PyArray_free(data);
+}
+
+/* transfer data copy function */
+NpyAuxData *_masked_wrapper_transfer_data_clone(NpyAuxData *data)
+{
+    _masked_wrapper_transfer_data *d = (_masked_wrapper_transfer_data *)data;
+    _masked_wrapper_transfer_data *newdata;
+
+    /* Allocate the data and populate it */
+    newdata = (_masked_wrapper_transfer_data *)PyArray_malloc(
+                                    sizeof(_masked_wrapper_transfer_data));
+    if (newdata == NULL) {
+        return NULL;
+    }
+    memcpy(newdata, d, sizeof(_masked_wrapper_transfer_data));
+
+    /* Clone all the owned auxdata as well */
+    if (newdata->transferdata != NULL) {
+        newdata->transferdata = NPY_AUXDATA_CLONE(newdata->transferdata);
+        if (newdata->transferdata == NULL) {
+            PyArray_free(newdata);
+            return NULL;
+        }
+    }
+    if (newdata->decsrcref_transferdata != NULL) {
+        newdata->decsrcref_transferdata =
+                        NPY_AUXDATA_CLONE(newdata->decsrcref_transferdata);
+        if (newdata->decsrcref_transferdata == NULL) {
+            NPY_AUXDATA_FREE(newdata->transferdata);
+            PyArray_free(newdata);
+            return NULL;
+        }
+    }
+
+    return (NpyAuxData *)newdata;
+}
+
+void _strided_masked_wrapper_decsrcref_transfer_function(
+                                    char *dst, npy_intp dst_stride,
+                                    char *src, npy_intp src_stride,
+                                    npy_uint8 *mask, npy_intp mask_stride,
+                                    npy_intp N, npy_intp src_itemsize,
+                                    NpyAuxData *transferdata)
+{
+    _masked_wrapper_transfer_data *d =
+                        (_masked_wrapper_transfer_data *)transferdata;
+    npy_intp subloopsize;
+    PyArray_StridedTransferFn *unmasked_stransfer, *decsrcref_stransfer;
+    NpyAuxData *unmasked_transferdata, *decsrcref_transferdata;
+
+    unmasked_stransfer = d->stransfer;
+    unmasked_transferdata = d->transferdata;
+    decsrcref_stransfer = d->decsrcref_stransfer;
+    decsrcref_transferdata = d->decsrcref_transferdata;
+
+    while (N > 0) {
+        /* Skip masked values, still calling decsrcref for move_references */
+        subloopsize = 0;
+        while (subloopsize < N && ((*mask)&0x01) == 0) {
+            ++subloopsize;
+            mask += mask_stride;
+        }
+        decsrcref_stransfer(NULL, 0, src, src_stride,
+                            subloopsize, src_itemsize, decsrcref_transferdata);
+        dst += subloopsize * dst_stride;
+        src += subloopsize * src_stride;
+        N -= subloopsize;
+        /* Process unmasked values */
+        subloopsize = 0;
+        while (subloopsize < N && ((*mask)&0x01) != 0) {
+            ++subloopsize;
+            mask += mask_stride;
+        }
+        unmasked_stransfer(dst, dst_stride, src, src_stride,
+                            subloopsize, src_itemsize, unmasked_transferdata);
+        dst += subloopsize * dst_stride;
+        src += subloopsize * src_stride;
+        N -= subloopsize;
+    }
+}
+
+void _strided_masked_wrapper_transfer_function(
+                                    char *dst, npy_intp dst_stride,
+                                    char *src, npy_intp src_stride,
+                                    npy_uint8 *mask, npy_intp mask_stride,
+                                    npy_intp N, npy_intp src_itemsize,
+                                    NpyAuxData *transferdata)
+{
+
+    _masked_wrapper_transfer_data *d =
+                            (_masked_wrapper_transfer_data *)transferdata;
+    npy_intp subloopsize;
+    PyArray_StridedTransferFn *unmasked_stransfer;
+    NpyAuxData *unmasked_transferdata;
+
+    unmasked_stransfer = d->stransfer;
+    unmasked_transferdata = d->transferdata;
+
+    while (N > 0) {
+        /* Skip masked values */
+        subloopsize = 0;
+        while (subloopsize < N && ((*mask)&0x01) == 0) {
+            ++subloopsize;
+            mask += mask_stride;
+        }
+        dst += subloopsize * dst_stride;
+        src += subloopsize * src_stride;
+        N -= subloopsize;
+        /* Process unmasked values */
+        subloopsize = 0;
+        while (subloopsize < N && ((*mask)&0x01) != 0) {
+            ++subloopsize;
+            mask += mask_stride;
+        }
+        unmasked_stransfer(dst, dst_stride, src, src_stride,
+                            subloopsize, src_itemsize, unmasked_transferdata);
+        dst += subloopsize * dst_stride;
+        src += subloopsize * src_stride;
+        N -= subloopsize;
+    }
+}
+
+
 /************************* DEST BOOL SETONE *******************************/
 
 static void
@@ -3600,6 +3743,84 @@ PyArray_GetDTypeTransferFunction(int aligned,
                     move_references,
                     out_stransfer, out_transferdata,
                     out_needs_api);
+}
+
+NPY_NO_EXPORT int
+PyArray_GetMaskedDTypeTransferFunction(int aligned,
+                            npy_intp src_stride,
+                            npy_intp dst_stride,
+                            npy_intp mask_stride,
+                            PyArray_Descr *src_dtype,
+                            PyArray_Descr *dst_dtype,
+                            PyArray_Descr *mask_dtype,
+                            int move_references,
+                            PyArray_MaskedStridedTransferFn **out_stransfer,
+                            NpyAuxData **out_transferdata,
+                            int *out_needs_api)
+{
+    PyArray_StridedTransferFn *stransfer = NULL;
+    NpyAuxData *transferdata = NULL;
+    _masked_wrapper_transfer_data *data;
+
+    /* TODO: Add struct-based mask_dtype support later */
+    if (mask_dtype->type_num != NPY_BOOL &&
+                            mask_dtype->type_num != NPY_UINT8) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Only bool and uint8 masks are supported at the moment, "
+                "structs of bool/uint8 is planned for the future");
+        return NPY_FAIL;
+    }
+
+    /* TODO: Special case some important cases so they're fast */
+
+    /* Fall back to wrapping a non-masked transfer function */
+    if (PyArray_GetDTypeTransferFunction(aligned,
+                                src_stride, dst_stride,
+                                src_dtype, dst_dtype,
+                                move_references,
+                                &stransfer, &transferdata,
+                                out_needs_api) != NPY_SUCCEED) {
+        return NPY_FAIL;
+    }
+
+    /* Create the wrapper function's auxdata */
+    data = (_masked_wrapper_transfer_data *)PyArray_malloc(
+                            sizeof(_masked_wrapper_transfer_data));
+    if (data == NULL) {
+        PyErr_NoMemory();
+        NPY_AUXDATA_FREE(transferdata);
+        return NPY_FAIL;
+    }
+
+    /* Fill in the auxdata object */
+    memset(data, 0, sizeof(_masked_wrapper_transfer_data));
+    data->base.free = &_masked_wrapper_transfer_data_free;
+    data->base.clone = &_masked_wrapper_transfer_data_clone;
+
+    data->stransfer = stransfer;
+    data->transferdata = transferdata;
+
+    /* If the src object will need a DECREF, get a function to handle that */
+    if (move_references && PyDataType_REFCHK(src_dtype)) {
+        if (get_decsrcref_transfer_function(aligned,
+                            src_stride,
+                            src_dtype,
+                            &data->decsrcref_stransfer,
+                            &data->decsrcref_transferdata,
+                            out_needs_api) != NPY_SUCCEED) {
+            NPY_AUXDATA_FREE((NpyAuxData *)data);
+            return NPY_FAIL;
+        }
+
+        *out_stransfer = &_strided_masked_wrapper_decsrcref_transfer_function;
+    }
+    else {
+        *out_stransfer = &_strided_masked_wrapper_transfer_function;
+    }
+
+    *out_transferdata = (NpyAuxData *)data;
+
+    return NPY_SUCCEED;
 }
 
 NPY_NO_EXPORT int

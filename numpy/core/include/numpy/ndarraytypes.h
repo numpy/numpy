@@ -104,49 +104,52 @@ enum NPY_TYPES {    NPY_BOOL=0,
  * module
  */
 
-/*  except 'p' -- signed integer for pointer type */
+enum NPY_TYPECHAR {
+        NPY_BOOLLTR = '?',
+        NPY_BYTELTR = 'b',
+        NPY_UBYTELTR = 'B',
+        NPY_SHORTLTR = 'h',
+        NPY_USHORTLTR = 'H',
+        NPY_INTLTR = 'i',
+        NPY_UINTLTR = 'I',
+        NPY_LONGLTR = 'l',
+        NPY_ULONGLTR = 'L',
+        NPY_LONGLONGLTR = 'q',
+        NPY_ULONGLONGLTR = 'Q',
+        NPY_HALFLTR = 'e',
+        NPY_FLOATLTR = 'f',
+        NPY_DOUBLELTR = 'd',
+        NPY_LONGDOUBLELTR = 'g',
+        NPY_CFLOATLTR = 'F',
+        NPY_CDOUBLELTR = 'D',
+        NPY_CLONGDOUBLELTR = 'G',
+        NPY_OBJECTLTR = 'O',
+        NPY_STRINGLTR = 'S',
+        NPY_STRINGLTR2 = 'a',
+        NPY_UNICODELTR = 'U',
+        NPY_VOIDLTR = 'V',
+        NPY_DATETIMELTR = 'M',
+        NPY_TIMEDELTALTR = 'm',
+        NPY_CHARLTR = 'c',
 
-enum NPY_TYPECHAR { NPY_BOOLLTR = '?',
-                        NPY_BYTELTR = 'b',
-                        NPY_UBYTELTR = 'B',
-                        NPY_SHORTLTR = 'h',
-                        NPY_USHORTLTR = 'H',
-                        NPY_INTLTR = 'i',
-                        NPY_UINTLTR = 'I',
-                        NPY_LONGLTR = 'l',
-                        NPY_ULONGLTR = 'L',
-                        NPY_LONGLONGLTR = 'q',
-                        NPY_ULONGLONGLTR = 'Q',
-                        NPY_HALFLTR = 'e',
-                        NPY_FLOATLTR = 'f',
-                        NPY_DOUBLELTR = 'd',
-                        NPY_LONGDOUBLELTR = 'g',
-                        NPY_CFLOATLTR = 'F',
-                        NPY_CDOUBLELTR = 'D',
-                        NPY_CLONGDOUBLELTR = 'G',
-                        NPY_OBJECTLTR = 'O',
-                        NPY_STRINGLTR = 'S',
-                        NPY_STRINGLTR2 = 'a',
-                        NPY_UNICODELTR = 'U',
-                        NPY_VOIDLTR = 'V',
-                        NPY_DATETIMELTR = 'M',
-                        NPY_TIMEDELTALTR = 'm',
-                        NPY_CHARLTR = 'c',
+        /*
+         * No Descriptor, just a define -- this let's
+         * Python users specify an array of integers
+         * large enough to hold a pointer on the
+         * platform
+         */
+        NPY_INTPLTR = 'p',
+        NPY_UINTPLTR = 'P',
 
-                        /*
-                         * No Descriptor, just a define -- this let's
-                         * Python users specify an array of integers
-                         * large enough to hold a pointer on the
-                         * platform
-                         */
-                        NPY_INTPLTR = 'p',
-                        NPY_UINTPLTR = 'P',
-
-                        NPY_GENBOOLLTR ='b',
-                        NPY_SIGNEDLTR = 'i',
-                        NPY_UNSIGNEDLTR = 'u',
-                        NPY_FLOATINGLTR = 'f',
-                        NPY_COMPLEXLTR = 'c'
+        /*
+         * These are for dtype 'kinds', not dtype 'typecodes'
+         * as the above are for.
+         */
+        NPY_GENBOOLLTR ='b',
+        NPY_SIGNEDLTR = 'i',
+        NPY_UNSIGNEDLTR = 'u',
+        NPY_FLOATINGLTR = 'f',
+        NPY_COMPLEXLTR = 'c'
 };
 
 typedef enum {
@@ -210,7 +213,7 @@ typedef enum {
 /* The special not-a-time (NaT) value */
 #define NPY_DATETIME_NAT NPY_MIN_INT64
 /*
- * Theoretical maximum length of a DATETIME ISO 8601 string
+ * Upper bound on the length of a DATETIME ISO 8601 string
  *   YEAR: 21 (64-bit year)
  *   MONTH: 3
  *   DAY: 3
@@ -604,10 +607,6 @@ typedef struct PyArrayObject {
         PyObject *weakreflist;  /* For weakreferences */
 } PyArrayObject;
 
-#define NPY_AO PyArrayObject
-
-#define fortran fortran_        /* For some compilers */
-
 /* Array Flags Object */
 typedef struct PyArrayFlagsObject {
         PyObject_HEAD
@@ -890,8 +889,14 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_ALLOCATE                   0x01000000
 /* If an operand is allocated, don't use any subtype */
 #define NPY_ITER_NO_SUBTYPE                 0x02000000
+/* This is a virtual array slot, operand is NULL but temporary data is there */
+#define NPY_ITER_VIRTUAL                    0x04000000
 /* Require that the dimension match the iterator dimensions exactly */
 #define NPY_ITER_NO_BROADCAST               0x08000000
+/* A mask is being used on this array, affects buffer -> array copy */
+#define NPY_ITER_WRITEMASKED                0x10000000
+/* This array is the mask for all WRITEMASKED operands */
+#define NPY_ITER_ARRAYMASK                  0x20000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000

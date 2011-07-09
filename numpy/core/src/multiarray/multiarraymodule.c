@@ -45,6 +45,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "numpymemoryview.h"
 #include "convert_datatype.h"
 #include "nditer_pywrap.h"
+#include "methods.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
 #include "datetime_busday.h"
@@ -1649,6 +1650,79 @@ clean_type:
 }
 
 static PyObject *
+array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+{
+
+    static char *kwlist[] = {"dst","src","casting","where",NULL};
+    PyObject *wheremask_in = NULL;
+    PyArrayObject *dst = NULL, *src = NULL, *wheremask = NULL;
+    NPY_CASTING casting = NPY_SAME_KIND_CASTING;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O&|O&O", kwlist,
+                &PyArray_Type, &dst,
+                &PyArray_Converter, &src,
+                &PyArray_CastingConverter, &casting,
+                &wheremask_in)) {
+        goto fail;
+    }
+
+    if (wheremask_in != NULL) {
+        /* Get the boolean where mask */
+        PyArray_Descr *dtype = PyArray_DescrFromType(NPY_BOOL);
+        if (dtype == NULL) {
+            goto fail;
+        }
+        wheremask = (PyArrayObject *)PyArray_FromAny(wheremask_in,
+                                                dtype, 0, 0, 0, NULL);
+        if (wheremask == NULL) {
+            goto fail;
+        }
+
+        /* Use the 'move' function which handles overlapping */
+        if (PyArray_MaskedMoveInto(dst, src, wheremask, casting) < 0) {
+            goto fail;
+        }
+    }
+    else {
+        /*
+         * MoveInto doesn't accept a casting rule, must check it
+         * ourselves.
+         */
+        if (!PyArray_CanCastArrayTo(src, PyArray_DESCR(dst), casting)) {
+            PyObject *errmsg;
+            errmsg = PyUString_FromString("Cannot cast array data from ");
+            PyUString_ConcatAndDel(&errmsg,
+                    PyObject_Repr((PyObject *)PyArray_DESCR(src)));
+            PyUString_ConcatAndDel(&errmsg,
+                    PyUString_FromString(" to "));
+            PyUString_ConcatAndDel(&errmsg,
+                    PyObject_Repr((PyObject *)PyArray_DESCR(dst)));
+            PyUString_ConcatAndDel(&errmsg,
+                    PyUString_FromFormat(" according to the rule %s",
+                            npy_casting_to_string(casting)));
+            PyErr_SetObject(PyExc_TypeError, errmsg);
+            goto fail;
+        }
+
+        /* Use the 'move' function which handles overlapping */
+        if (PyArray_MoveInto(dst, src) < 0) {
+            goto fail;
+        }
+    }
+
+    Py_XDECREF(src);
+    Py_XDECREF(wheremask);
+
+    Py_INCREF(Py_None);
+    return Py_None;
+
+ fail:
+    Py_XDECREF(src);
+    Py_XDECREF(wheremask);
+    return NULL;
+}
+
+static PyObject *
 array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
@@ -1656,7 +1730,7 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
-    Bool fortran;
+    npy_bool is_f_order;
     PyObject *ret = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&", kwlist,
@@ -1668,10 +1742,10 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
     switch (order) {
         case NPY_CORDER:
-            fortran = FALSE;
+            is_f_order = FALSE;
             break;
         case NPY_FORTRANORDER:
-            fortran = TRUE;
+            is_f_order = TRUE;
             break;
         default:
             PyErr_SetString(PyExc_ValueError,
@@ -1679,7 +1753,7 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
             goto fail;
     }
 
-    ret = PyArray_Empty(shape.len, shape.ptr, typecode, fortran);
+    ret = PyArray_Empty(shape.len, shape.ptr, typecode, is_f_order);
     PyDimMem_FREE(shape.ptr);
     return ret;
 
@@ -1789,7 +1863,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
-    Bool fortran = FALSE;
+    npy_bool is_f_order = FALSE;
     PyObject *ret = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&", kwlist,
@@ -1801,10 +1875,10 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
     switch (order) {
         case NPY_CORDER:
-            fortran = FALSE;
+            is_f_order = FALSE;
             break;
         case NPY_FORTRANORDER:
-            fortran = TRUE;
+            is_f_order = TRUE;
             break;
         default:
             PyErr_SetString(PyExc_ValueError,
@@ -1812,7 +1886,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
             goto fail;
     }
 
-    ret = PyArray_Zeros(shape.len, shape.ptr, typecode, (int) fortran);
+    ret = PyArray_Zeros(shape.len, shape.ptr, typecode, (int) is_f_order);
     PyDimMem_FREE(shape.ptr);
     return ret;
 
@@ -3362,6 +3436,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"array",
         (PyCFunction)_array_fromobject,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"copyto",
+        (PyCFunction)array_copyto,
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"nested_iters",
         (PyCFunction)NpyIter_NestedIters,

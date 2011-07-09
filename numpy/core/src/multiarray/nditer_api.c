@@ -1337,6 +1337,9 @@ NpyIter_DebugPrint(NpyIter *iter)
     printf("\n");
     printf("| NDim: %d\n", (int)ndim);
     printf("| NOp: %d\n", (int)nop);
+    if (NIT_MASKOP(iter) >= 0) {
+        printf("| MaskOp: %d\n", (int)NIT_MASKOP(iter));
+    }
     printf("| IterSize: %d\n", (int)NIT_ITERSIZE(iter));
     printf("| IterStart: %d\n", (int)NIT_ITERSTART(iter));
     printf("| IterEnd: %d\n", (int)NIT_ITEREND(iter));
@@ -1418,6 +1421,10 @@ NpyIter_DebugPrint(NpyIter *iter)
             printf("ALIGNED ");
         if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_REDUCE)
             printf("REDUCE ");
+        if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_VIRTUAL)
+            printf("VIRTUAL ");
+        if ((NIT_OPITFLAGS(iter)[iop])&NPY_OP_ITFLAG_WRITEMASKED)
+            printf("WRITEMASKED ");
         printf("\n");
     }
     printf("|\n");

@@ -1,7 +1,7 @@
 __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast',
            'dtype', 'fromstring', 'fromfile', 'frombuffer',
-           'int_asbuffer', 'where', 'argwhere',
+           'int_asbuffer', 'where', 'argwhere', 'copyto',
            'concatenate', 'fastCopyAndTranspose', 'lexsort', 'set_numeric_ops',
            'can_cast', 'promote_types', 'min_scalar_type', 'result_type',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
@@ -58,6 +58,7 @@ nditer = multiarray.nditer
 nested_iters = multiarray.nested_iters
 broadcast = multiarray.broadcast
 dtype = multiarray.dtype
+copyto = multiarray.copyto
 ufunc = type(sin)
 
 
@@ -113,7 +114,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
 
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok)
-    res.fill(0)
+    multiarray.copyto(res, 0, casting='unsafe')
     return res
 
 # end Fernando's utilities
@@ -1817,14 +1818,7 @@ def ones(shape, dtype=None, order='C'):
 
     """
     a = empty(shape, dtype, order)
-    try:
-        a.fill(1)
-        # Above is faster now after addition of fast loops.
-        #a = zeros(shape, dtype, order)
-        #a+=1
-    except TypeError:
-        obj = _maketup(dtype, 1)
-        a.fill(obj)
+    multiarray.copyto(a, 1, casting='unsafe')
     return a
 
 def identity(n, dtype=None):

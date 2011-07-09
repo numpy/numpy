@@ -116,6 +116,10 @@
 #define NPY_OP_ITFLAG_ALIGNED      0x10
 /* The operand is being reduced */
 #define NPY_OP_ITFLAG_REDUCE       0x20
+/* The operand is for temporary use, does not have a backing array */
+#define NPY_OP_ITFLAG_VIRTUAL      0x40
+/* The operand requires masking when copying buffer -> array */
+#define NPY_OP_ITFLAG_WRITEMASKED  0x80
 
 /*
  * The data layout of the iterator is fully specified by
@@ -129,7 +133,9 @@
 struct NpyIter_InternalOnly {
     /* Initial fixed position data */
     npy_uint32 itflags;
-    npy_uint16 ndim, nop;
+    npy_uint8 ndim, nop;
+    npy_int8 maskop;
+    npy_uint8 unused_padding;
     npy_intp itersize, iterstart, iterend;
     /* iterindex is only used if RANGED or BUFFERED is set */
     npy_intp iterindex;
@@ -188,6 +194,8 @@ typedef struct NpyIter_BD NpyIter_BufferData;
         ((iter)->ndim)
 #define NIT_NOP(iter) \
         ((iter)->nop)
+#define NIT_MASKOP(iter) \
+        ((iter)->maskop)
 #define NIT_ITERSIZE(iter) \
         (iter->itersize)
 #define NIT_ITERSTART(iter) \
