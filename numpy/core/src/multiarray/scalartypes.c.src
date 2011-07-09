@@ -2482,7 +2482,7 @@ static PyObject *
         return arr;
     }
     /* 0-d array */
-    robj = PyArray_ToScalar(PyArray_DATA(arr), (NPY_AO *)arr);
+    robj = PyArray_ToScalar(PyArray_DATA(arr), (PyArrayObject *)arr);
     Py_DECREF(arr);
 
 finish:

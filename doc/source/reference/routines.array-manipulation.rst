@@ -3,6 +3,13 @@ Array manipulation routines
 
 .. currentmodule:: numpy
 
+Basic operations
+================
+.. autosummary::
+   :toctree: generated/
+
+    copyto
+
 Changing array shape
 ====================
 .. autosummary::

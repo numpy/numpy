@@ -3184,6 +3184,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
         order.  If order is 'A' ('Any'), then the result has the same order
         as the input.
 
+    See also
+    --------
+    numpy.copyto
+
     Examples
     --------
     >>> x = np.array([[1,2,3],[4,5,6]], order='F')
@@ -3690,10 +3694,44 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
 
     """))
 
+add_newdoc('numpy.core.multiarray', 'copyto',
+    """
+    copyto(dst, src, casting='same_kind', where=None)
+
+    Copies values from `src` into `dst`, broadcasting as necessary.
+    Raises a TypeError if the casting rule is violated, and if
+    `where` is provided, it selects which elements to copy.
+
+    .. versionadded:: 1.7.0
+
+    Parameters
+    ----------
+    dst : ndarray
+        The array into which values are copied.
+    src : array_like
+        The array from which values are copied.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur when copying.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
+    where : array_like of bool
+        A boolean array which is broadcasted to match the dimensions
+        of `dst`, and selects elements to copy from `src` to `dst`
+        wherever it contains the value True.
+
+    """)
 
 add_newdoc('numpy.core.multiarray', 'putmask',
     """
     putmask(a, mask, values)
+
+    This function is deprecated as of NumPy 1.7. Use the function
+    ``np.copyto(a, values, where=mask)`` to achieve this functionality.
 
     Changes elements of an array based on conditional and input values.
 
@@ -3714,7 +3752,7 @@ add_newdoc('numpy.core.multiarray', 'putmask',
 
     See Also
     --------
-    place, put, take
+    place, put, take, copyto
 
     Examples
     --------
@@ -5959,6 +5997,8 @@ add_newdoc('numpy.core.multiarray', 'busdaycalendar',
     information defining business days for the business
     day-related functions.
 
+    .. versionadded:: 1.7.0
+
     Parameters
     ----------
     weekmask : str or array_like of bool, optional
@@ -6018,6 +6058,8 @@ add_newdoc('numpy.core.multiarray', 'is_busday',
     Calculates which of the given dates are valid business days, and
     which are not.
 
+    .. versionadded:: 1.7.0
+
     Parameters
     ----------
     dates : array_like of datetime64[D]
@@ -6069,6 +6111,8 @@ add_newdoc('numpy.core.multiarray', 'busday_offset',
     First adjusts the date to fall on a business day according to
     the ``roll`` rule, then applies offsets to the given dates
     counted in business days.
+
+    .. versionadded:: 1.7.0
 
     Parameters
     ----------
@@ -6157,6 +6201,8 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
 
     Counts the number of business days between `begindates` and
     `enddates`, not including the day of `enddates`.
+
+    .. versionadded:: 1.7.0
 
     Parameters
     ----------

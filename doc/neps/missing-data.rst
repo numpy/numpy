@@ -591,6 +591,33 @@ cannot hold values, but will conform to the input types in functions like
 maps to [('a', 'NA[f4]'), ('b', 'NA[i4]')]. Thus, to view the memory
 of an 'f8' array 'arr' with 'NA[f8]', you can say arr.view(dtype='NA').
 
+Future Expansion to multi-NA Payloads
+=====================================
+
+The packages SAS and Stata both support multiple different "NA" values.
+This allows one to specify different reasons for why a value, for
+example homework that wasn't done because the dog ate it or the student
+was sick. In these packages, the different NA values have a linear ordering
+which specifies how different NA values combine together.
+
+In the sections on C implementation details, the mask has been designed
+so that a mask with a payload is a strict superset of the NumPy boolean
+type, and the boolean type has a payload of just zero. Different payloads
+combine with the 'min' operation.
+
+The important part of future-proofing the design is making sure
+the C ABI-level choices and the Python API-level choices have a natural
+transition to multi-NA support. Here is one way multi-NA support could look::
+
+    >>> a = np.array([np.NA(1), 3, np.NA(2)], namasked='multi')
+    >>> np.sum(a)
+    NA(1)
+    >>> np.sum(a[1:])
+    NA(2)
+    >>> b = np.array([np.NA, 2, 5], namasked=True)
+    >>> a + b
+    array([NA(0), 5, NA(2)], namasked='multi')
+
 PEP 3118
 ========
 
@@ -677,7 +704,7 @@ This gives us the following additions to the PyArrayObject::
      * NPY_ARRAY_OWNNAMASK enabled, it owns this memory and
      * must call PyArray_free on it when destroyed.
      */
-    char *maskdata;
+    npy_uint8 *maskdata;
     /*
      * Just like dimensions and strides point into the same memory
      * buffer, we now just make the buffer 3x the nd instead of 2x
@@ -707,6 +734,38 @@ PyArray_ContainsNA(PyArrayObject* obj)
     Returns false if the array has no NA support. Returns
     true if the array has NA support AND there is an
     NA anywhere in the array.
+
+Mask Binary Format
+==================
+
+The format of the mask itself is designed to indicate whether an
+element is masked or not, as well as contain a payload so that multiple
+different NAs with different payloads can be used in the future.
+Initially, we will simply use the payload 0.
+
+The mask has type npy_uint8, and bit 0 is used to indicate whether
+a value is masked. If ((m&0x01) == 0), the element is masked, otherwise
+it is unmasked. The rest of the bits are the payload, which is (m>>1).
+The convention for combining masks with payloads is that smaller
+payloads propagate. This design gives 128 payload values to masked elements,
+and 128 payload values to unmasked elements.
+
+The big benefit of this approach is that npy_bool also
+works as a mask, because it takes on the values 0 for False and 1
+for True. Additionally, the payload for npy_bool, which is always
+zero, dominates over all the other possible payloads.
+
+Since the design involves giving the mask its own dtype, we can
+distinguish between masking with a single NA value (npy_bool mask),
+and masking with multi-NA (npy_uint8 mask). Initial implementations
+will just support the npy_bool mask.
+
+An idea that was discarded is to allow the combination of masks + payloads
+to be a simple 'min' operation. This can be done by putting the payload
+in bits 0 through 6, so that the payload is (m&0x7f), and using bit 7
+for the masking flag, so ((m&0x80) == 0) means the element is masked.
+The fact that this makes masks completely different from booleans, instead
+of a strict superset, is the primary reason this choice was discarded.
 
 ********************************************
 C Iterator API Changes: Iteration With Masks
@@ -738,6 +797,10 @@ NPY_ITER_WRITEMASKED
     to know the mask ahead of time, and copying everything into
     the buffer will never destroy data.
 
+    The code using the iterator should only write to values which
+    are not masked by the mask specified, otherwise the result will
+    be different depending on whether buffering is enabled or not.
+
 NPY_ITER_ARRAYMASK
     Indicates that this array is a boolean mask to use when copying
     any WRITEMASKED argument from a buffer back to the array. There
@@ -751,12 +814,13 @@ NPY_ITER_ARRAYMASK
     into the NA bitpattern when copying from the buffer to the
     array.
 
-NPY_ITER_VIRTUALMASK
-    Indicates that the mask is not an array, but rather created on
-    the fly by the inner iteration code. This allocates enough buffer
-    space for the code to write the mask into, but does not have
-    an actual array backing the data. There can only be one such
-    mask, and there cannot also be an array mask.
+NPY_ITER_VIRTUAL
+    Indicates that this operand is not an array, but rather created on
+    the fly for the inner iteration code. This allocates enough buffer
+    space for the code to read/write data, but does not have
+    an actual array backing the data. When combined with NPY_ITER_ARRAYMASK,
+    allows for creating a "virtual mask", specifying which values
+    are unmasked without ever creating a full mask array.
 
 Iterator NA-array Features
 ==========================

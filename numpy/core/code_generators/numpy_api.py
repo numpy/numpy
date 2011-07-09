@@ -256,7 +256,7 @@ multiarray_funcs_api = {
     'PyArray_TimedeltaToTimedeltaStruct':   221,
     'PyArray_DatetimeStructToDatetime':     222,
     'PyArray_TimedeltaStructToTimedelta':   223,
-    # New Iterator API
+    # NDIter API
     'NpyIter_New':                          224,
     'NpyIter_MultiNew':                     225,
     'NpyIter_AdvancedNew':                  226,
@@ -315,6 +315,9 @@ multiarray_funcs_api = {
     'PyArray_GetArrayParamsFromObject':     278,
     'PyArray_ConvertClipmodeSequence':      279,
     'PyArray_MatrixProduct2':               280,
+    # End 1.6 API
+    'PyArray_MaskedCopyInto':               281,
+    'PyArray_MaskedMoveInto':               282,
 }
 
 ufunc_types_api = {
