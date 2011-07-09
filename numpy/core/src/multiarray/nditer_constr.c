@@ -214,7 +214,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      * Initialize buffer data (must set the buffers and transferdata
      * to NULL before we might deallocate the iterator).
      */
-    if (itflags&NPY_ITFLAG_BUFFER) {
+    if (itflags & NPY_ITFLAG_BUFFER) {
         bufferdata = NIT_BUFFERDATA(iter);
         NBF_SIZE(bufferdata) = 0;
         memset(NBF_BUFFERS(bufferdata), 0, nop*NPY_SIZEOF_INTP);
@@ -232,7 +232,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 
     NPY_IT_TIME_POINT(c_fill_axisdata);
 
-    if (itflags&NPY_ITFLAG_BUFFER) {
+    if (itflags & NPY_ITFLAG_BUFFER) {
         /*
          * If buffering is enabled and no buffersize was given, use a default
          * chosen to be big enough to get some amortization benefits, but
@@ -277,7 +277,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
             /* Flag this so later we can avoid flipping axes */
             any_allocate = 1;
             /* If a subtype may be used, indicate so */
-            if (!(op_flags[iop]&NPY_ITER_NO_SUBTYPE)) {
+            if (!(op_flags[iop] & NPY_ITER_NO_SUBTYPE)) {
                 need_subtype = 1;
             }
             /*
@@ -294,7 +294,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      * If the ordering was not forced, reorder the axes
      * and flip negative strides to find the best one.
      */
-    if (!(itflags&NPY_ITFLAG_FORCEDORDER)) {
+    if (!(itflags & NPY_ITFLAG_FORCEDORDER)) {
         if (ndim > 1) {
             npyiter_find_best_axis_ordering(iter);
         }
@@ -302,7 +302,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
          * If there's an output being allocated, we must not negate
          * any strides.
          */
-        if (!any_allocate && !(flags&NPY_ITER_DONT_NEGATE_STRIDES)) {
+        if (!any_allocate && !(flags & NPY_ITER_DONT_NEGATE_STRIDES)) {
             npyiter_flip_negative_strides(iter);
         }
         itflags = NIT_ITFLAGS(iter);
@@ -321,9 +321,9 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      * If an automatically allocated output didn't have a specified
      * dtype, we need to figure it out now, before allocating the outputs.
      */
-    if (any_missing_dtypes || (flags&NPY_ITER_COMMON_DTYPE)) {
+    if (any_missing_dtypes || (flags & NPY_ITER_COMMON_DTYPE)) {
         PyArray_Descr *dtype;
-        int only_inputs = !(flags&NPY_ITER_COMMON_DTYPE);
+        int only_inputs = !(flags & NPY_ITER_COMMON_DTYPE);
 
         op = NIT_OPERANDS(iter);
         op_dtype = NIT_DTYPES(iter);
@@ -337,7 +337,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
             NpyIter_Deallocate(iter);
             return NULL;
         }
-        if (flags&NPY_ITER_COMMON_DTYPE) {
+        if (flags & NPY_ITER_COMMON_DTYPE) {
             NPY_IT_DBG_PRINT("Iterator: Replacing all data types\n");
             /* Replace all the data types */
             for (iop = 0; iop < nop; ++iop) {
@@ -393,7 +393,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      * Finally, if a multi-index wasn't requested,
      * it may be possible to coalesce some axes together.
      */
-    if (ndim > 1 && !(itflags&NPY_ITFLAG_HASMULTIINDEX)) {
+    if (ndim > 1 && !(itflags & NPY_ITFLAG_HASMULTIINDEX)) {
         npyiter_coalesce_axes(iter);
         /*
          * The operation may have changed the layout, so we have to
@@ -413,9 +413,9 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      * Now that the axes are finished, check whether we can apply
      * the single iteration optimization to the iternext function.
      */
-    if (!(itflags&NPY_ITFLAG_BUFFER)) {
+    if (!(itflags & NPY_ITFLAG_BUFFER)) {
         NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-        if (itflags&NPY_ITFLAG_EXLOOP) {
+        if (itflags & NPY_ITFLAG_EXLOOP) {
             if (NIT_ITERSIZE(iter) == NAD_SHAPE(axisdata)) {
                 NIT_ITFLAGS(iter) |= NPY_ITFLAG_ONEITERATION;
             }
@@ -429,11 +429,11 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      * If REFS_OK was specified, check whether there are any
      * reference arrays and flag it if so.
      */
-    if (flags&NPY_ITER_REFS_OK) {
+    if (flags & NPY_ITER_REFS_OK) {
         for (iop = 0; iop < nop; ++iop) {
             PyArray_Descr *rdt = op_dtype[iop];
-            if ((rdt->flags&(NPY_ITEM_REFCOUNT|
-                                     NPY_ITEM_IS_POINTER|
+            if ((rdt->flags & (NPY_ITEM_REFCOUNT |
+                                     NPY_ITEM_IS_POINTER |
                                      NPY_NEEDS_PYAPI)) != 0) {
                 /* Iteration needs API access */
                 NIT_ITFLAGS(iter) |= NPY_ITFLAG_NEEDSAPI;
@@ -442,12 +442,12 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     }
 
     /* If buffering is set without delayed allocation */
-    if (itflags&NPY_ITFLAG_BUFFER) {
+    if (itflags & NPY_ITFLAG_BUFFER) {
         if (!npyiter_allocate_transfer_functions(iter)) {
             NpyIter_Deallocate(iter);
             return NULL;
         }
-        if (itflags&NPY_ITFLAG_DELAYBUF) {
+        if (itflags & NPY_ITFLAG_DELAYBUF) {
             bufferdata = NIT_BUFFERDATA(iter);
             /* Make the data pointers NULL */
             memset(NBF_PTRS(bufferdata), 0, nop*NPY_SIZEOF_INTP);
@@ -514,7 +514,7 @@ NpyIter_New(PyArrayObject *op, npy_uint32 flags,
                   PyArray_Descr* dtype)
 {
     /* Split the flags into separate global and op flags */
-    npy_uint32 op_flags = flags&NPY_ITER_PER_OP_FLAGS;
+    npy_uint32 op_flags = flags & NPY_ITER_PER_OP_FLAGS;
     flags &= NPY_ITER_GLOBAL_FLAGS;
 
     return NpyIter_AdvancedNew(1, &op, flags, order, casting,
@@ -554,7 +554,7 @@ NpyIter_Copy(NpyIter *iter)
     }
 
     /* Allocate buffers and make copies of the transfer data if necessary */
-    if (itflags&NPY_ITFLAG_BUFFER) {
+    if (itflags & NPY_ITFLAG_BUFFER) {
         NpyIter_BufferData *bufferdata;
         npy_intp buffersize, itemsize;
         char **buffers;
@@ -639,7 +639,7 @@ NpyIter_Deallocate(NpyIter *iter)
     PyArrayObject **object = NIT_OPERANDS(iter);
 
     /* Deallocate any buffers and buffering data */
-    if (itflags&NPY_ITFLAG_BUFFER) {
+    if (itflags & NPY_ITFLAG_BUFFER) {
         NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
         char **buffers;
         NpyAuxData **transferdata;
@@ -687,7 +687,7 @@ NpyIter_Deallocate(NpyIter *iter)
 static int
 npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
 {
-    if ((flags&NPY_ITER_PER_OP_FLAGS) != 0) {
+    if ((flags & NPY_ITER_PER_OP_FLAGS) != 0) {
         PyErr_SetString(PyExc_ValueError,
                     "A per-operand flag was passed as a global flag "
                     "to the iterator constructor");
@@ -695,8 +695,8 @@ npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
     }
 
     /* Check for an index */
-    if (flags&(NPY_ITER_C_INDEX | NPY_ITER_F_INDEX)) {
-        if ((flags&(NPY_ITER_C_INDEX | NPY_ITER_F_INDEX)) ==
+    if (flags & (NPY_ITER_C_INDEX | NPY_ITER_F_INDEX)) {
+        if ((flags & (NPY_ITER_C_INDEX | NPY_ITER_F_INDEX)) ==
                     (NPY_ITER_C_INDEX | NPY_ITER_F_INDEX)) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator flags C_INDEX and "
@@ -706,7 +706,7 @@ npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
         (*itflags) |= NPY_ITFLAG_HASINDEX;
     }
     /* Check if a multi-index was requested */
-    if (flags&NPY_ITER_MULTI_INDEX) {
+    if (flags & NPY_ITER_MULTI_INDEX) {
         /*
          * This flag primarily disables dimension manipulations that
          * would produce an incorrect multi-index.
@@ -714,8 +714,8 @@ npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
         (*itflags) |= NPY_ITFLAG_HASMULTIINDEX;
     }
     /* Check if the caller wants to handle inner iteration */
-    if (flags&NPY_ITER_EXTERNAL_LOOP) {
-        if ((*itflags)&(NPY_ITFLAG_HASINDEX|NPY_ITFLAG_HASMULTIINDEX)) {
+    if (flags & NPY_ITER_EXTERNAL_LOOP) {
+        if ((*itflags) & (NPY_ITFLAG_HASINDEX | NPY_ITFLAG_HASMULTIINDEX)) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator flag EXTERNAL_LOOP cannot be used "
                     "if an index or multi-index is being tracked");
@@ -724,10 +724,10 @@ npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
         (*itflags) |= NPY_ITFLAG_EXLOOP;
     }
     /* Ranged */
-    if (flags&NPY_ITER_RANGED) {
+    if (flags & NPY_ITER_RANGED) {
         (*itflags) |= NPY_ITFLAG_RANGE;
-        if ((flags&NPY_ITER_EXTERNAL_LOOP) &&
-                                    !(flags&NPY_ITER_BUFFERED)) {
+        if ((flags & NPY_ITER_EXTERNAL_LOOP) &&
+                                    !(flags & NPY_ITER_BUFFERED)) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator flag RANGED cannot be used with "
                     "the flag EXTERNAL_LOOP unless "
@@ -736,12 +736,12 @@ npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags)
         }
     }
     /* Buffering */
-    if (flags&NPY_ITER_BUFFERED) {
+    if (flags & NPY_ITER_BUFFERED) {
         (*itflags) |= NPY_ITFLAG_BUFFER;
-        if (flags&NPY_ITER_GROWINNER) {
+        if (flags & NPY_ITER_GROWINNER) {
             (*itflags) |= NPY_ITFLAG_GROWINNER;
         }
-        if (flags&NPY_ITER_DELAY_BUFALLOC) {
+        if (flags & NPY_ITER_DELAY_BUFALLOC) {
             (*itflags) |= NPY_ITFLAG_DELAYBUF;
         }
     }
@@ -846,7 +846,7 @@ npyiter_calculate_ndim(int nop, PyArrayObject **op_in,
 static int
 npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
 {
-    if ((op_flags&NPY_ITER_GLOBAL_FLAGS) != 0) {
+    if ((op_flags & NPY_ITER_GLOBAL_FLAGS) != 0) {
         PyErr_SetString(PyExc_ValueError,
                     "A global iterator flag was passed as a per-operand flag "
                     "to the iterator constructor");
@@ -854,9 +854,9 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
     }
 
     /* Check the read/write flags */
-    if (op_flags&NPY_ITER_READONLY) {
+    if (op_flags & NPY_ITER_READONLY) {
         /* The read/write flags are mutually exclusive */
-        if (op_flags&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
+        if (op_flags & (NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
             PyErr_SetString(PyExc_ValueError,
                     "Only one of the iterator flags READWRITE, "
                     "READONLY, and WRITEONLY may be "
@@ -866,9 +866,9 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
 
         *op_itflags = NPY_OP_ITFLAG_READ;
     }
-    else if (op_flags&NPY_ITER_READWRITE) {
+    else if (op_flags & NPY_ITER_READWRITE) {
         /* The read/write flags are mutually exclusive */
-        if (op_flags&NPY_ITER_WRITEONLY) {
+        if (op_flags & NPY_ITER_WRITEONLY) {
             PyErr_SetString(PyExc_ValueError,
                     "Only one of the iterator flags READWRITE, "
                     "READONLY, and WRITEONLY may be "
@@ -878,7 +878,7 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
 
         *op_itflags = NPY_OP_ITFLAG_READ|NPY_OP_ITFLAG_WRITE;
     }
-    else if(op_flags&NPY_ITER_WRITEONLY) {
+    else if(op_flags & NPY_ITER_WRITEONLY) {
         *op_itflags = NPY_OP_ITFLAG_WRITE;
     }
     else {
@@ -890,8 +890,8 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
     }
 
     /* Check the flags for temporary copies */
-    if (((*op_itflags)&NPY_OP_ITFLAG_WRITE) &&
-                (op_flags&(NPY_ITER_COPY|
+    if (((*op_itflags) & NPY_OP_ITFLAG_WRITE) &&
+                (op_flags & (NPY_ITER_COPY |
                            NPY_ITER_UPDATEIFCOPY)) == NPY_ITER_COPY) {
         PyErr_SetString(PyExc_ValueError,
                 "If an iterator operand is writeable, must use "
@@ -901,14 +901,14 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
     }
 
     /* Check the flag for a write masked operands */
-    if (op_flags&NPY_ITER_WRITEMASKED) {
-        if (!(*op_itflags)&NPY_OP_ITFLAG_WRITE) {
+    if (op_flags & NPY_ITER_WRITEMASKED) {
+        if (!(*op_itflags) & NPY_OP_ITFLAG_WRITE) {
             PyErr_SetString(PyExc_ValueError,
                 "The iterator flag WRITEMASKED may only "
                 "be used with READWRITE or WRITEONLY");
             return 0;
         }
-        if ((op_flags&NPY_ITER_ARRAYMASK) != 0) {
+        if ((op_flags & NPY_ITER_ARRAYMASK) != 0) {
             PyErr_SetString(PyExc_ValueError,
                 "The iterator flag WRITEMASKED may not "
                 "be used together with ARRAYMASK");
@@ -917,8 +917,8 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
         *op_itflags |= NPY_OP_ITFLAG_WRITEMASKED;
     }
 
-    if ((op_flags&NPY_ITER_VIRTUAL) != 0) {
-        if ((op_flags&NPY_ITER_READWRITE) == 0) {
+    if ((op_flags & NPY_ITER_VIRTUAL) != 0) {
+        if ((op_flags & NPY_ITER_READWRITE) == 0) {
             PyErr_SetString(PyExc_ValueError,
                 "The iterator flag VIRTUAL should be "
                 "be used together with READWRITE");
@@ -948,16 +948,16 @@ npyiter_prepare_one_operand(PyArrayObject **op,
     /* NULL operands must be automatically allocated outputs */
     if (*op == NULL) {
         /* ALLOCATE or VIRTUAL should be enabled */
-        if ((op_flags&(NPY_ITER_ALLOCATE|NPY_ITER_VIRTUAL)) == 0) {
+        if ((op_flags & (NPY_ITER_ALLOCATE|NPY_ITER_VIRTUAL)) == 0) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator operand was NULL, but neither the "
                     "ALLOCATE nor the VIRTUAL flag was specified");
             return 0;
         }
 
-        if (op_flags&NPY_ITER_ALLOCATE) {
+        if (op_flags & NPY_ITER_ALLOCATE) {
             /* Writing should be enabled */
-            if (!((*op_itflags)&NPY_OP_ITFLAG_WRITE)) {
+            if (!((*op_itflags) & NPY_OP_ITFLAG_WRITE)) {
                 PyErr_SetString(PyExc_ValueError,
                         "Automatic allocation was requested for an iterator "
                         "operand, but it wasn't flagged for writing");
@@ -969,9 +969,9 @@ npyiter_prepare_one_operand(PyArrayObject **op,
              * the caller may initialize the allocated operand to a value
              * before beginning iteration.
              */
-            if (((flags&(NPY_ITER_BUFFERED|
+            if (((flags & (NPY_ITER_BUFFERED |
                             NPY_ITER_DELAY_BUFALLOC)) == NPY_ITER_BUFFERED) &&
-                    ((*op_itflags)&NPY_OP_ITFLAG_READ)) {
+                    ((*op_itflags) & NPY_OP_ITFLAG_READ)) {
                 PyErr_SetString(PyExc_ValueError,
                         "Automatic allocation was requested for an iterator "
                         "operand, and it was flagged as readable, but "
@@ -988,7 +988,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         }
 
         /* Specify bool if no dtype was requested for the mask */
-        if (op_flags&NPY_ITER_ARRAYMASK) {
+        if (op_flags & NPY_ITER_ARRAYMASK) {
             if (*op_dtype == NULL) {
                 *op_dtype = PyArray_DescrFromType(NPY_BOOL);
                 if (*op_dtype == NULL) {
@@ -1003,7 +1003,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
     }
 
     /* VIRTUAL operands must be NULL */
-    if (op_flags&NPY_ITER_VIRTUAL) {
+    if (op_flags & NPY_ITER_VIRTUAL) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator operand flag VIRTUAL was specified, "
                 "but the operand was not NULL");
@@ -1011,14 +1011,14 @@ npyiter_prepare_one_operand(PyArrayObject **op,
     }
 
     if (PyArray_Check(*op)) {
-        if (((*op_itflags)&NPY_OP_ITFLAG_WRITE) &&
+        if (((*op_itflags) & NPY_OP_ITFLAG_WRITE) &&
                     (!PyArray_CHKFLAGS(*op, NPY_ARRAY_WRITEABLE))) {
             PyErr_SetString(PyExc_ValueError,
                     "Iterator operand was a non-writeable array, but was "
                     "flagged as writeable");
             return 0;
         }
-        if (!(flags&NPY_ITER_ZEROSIZE_OK) && PyArray_SIZE(*op) == 0) {
+        if (!(flags & NPY_ITER_ZEROSIZE_OK) && PyArray_SIZE(*op) == 0) {
             PyErr_SetString(PyExc_ValueError,
                     "Iteration of zero-sized operands is not enabled");
             return 0;
@@ -1036,12 +1036,12 @@ npyiter_prepare_one_operand(PyArrayObject **op,
          * If references weren't specifically allowed, make sure there
          * are no references in the inputs or requested dtypes.
          */
-        if (!(flags&NPY_ITER_REFS_OK)) {
+        if (!(flags & NPY_ITER_REFS_OK)) {
             PyArray_Descr *dt = PyArray_DESCR(*op);
-            if (((dt->flags&(NPY_ITEM_REFCOUNT|
+            if (((dt->flags & (NPY_ITEM_REFCOUNT |
                            NPY_ITEM_IS_POINTER)) != 0) ||
                     (dt != *op_dtype &&
-                        (((*op_dtype)->flags&(NPY_ITEM_REFCOUNT|
+                        (((*op_dtype)->flags & (NPY_ITEM_REFCOUNT |
                                              NPY_ITEM_IS_POINTER))) != 0)) {
                 PyErr_SetString(PyExc_TypeError,
                         "Iterator operand or requested dtype holds "
@@ -1070,7 +1070,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         }
 
         /* Check if the operand is in the byte order requested */
-        if (op_flags&NPY_ITER_NBO) {
+        if (op_flags & NPY_ITER_NBO) {
             /* Check byte order */
             if (!PyArray_ISNBO((*op_dtype)->byteorder)) {
                 PyArray_Descr *nbo_dtype;
@@ -1087,7 +1087,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
             }
         }
         /* Check if the operand is aligned */
-        if (op_flags&NPY_ITER_ALIGNED) {
+        if (op_flags & NPY_ITER_ALIGNED) {
             /* Check alignment */
             if (!PyArray_ISALIGNED(*op)) {
                 NPY_IT_DBG_PRINT("Iterator: Setting NPY_OP_ITFLAG_CAST "
@@ -1141,7 +1141,7 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
         }
 
         /* Extract the operand which is for masked iteration */
-        if ((op_flags[iop]&NPY_ITER_ARRAYMASK) != 0) {
+        if ((op_flags[iop] & NPY_ITER_ARRAYMASK) != 0) {
             if (maskop != -1) {
                 PyErr_SetString(PyExc_ValueError,
                         "Only one iterator operand may receive an "
@@ -1294,7 +1294,7 @@ npyiter_check_casting(int nop, PyArrayObject **op,
         if (op[iop] != NULL && !PyArray_EquivTypes(PyArray_DESCR(op[iop]),
                                                      op_dtype[iop])) {
             /* Check read (op -> temp) casting */
-            if ((op_itflags[iop]&NPY_OP_ITFLAG_READ) &&
+            if ((op_itflags[iop] & NPY_OP_ITFLAG_READ) &&
                         !PyArray_CanCastArrayTo(op[iop],
                                           op_dtype[iop],
                                           casting)) {
@@ -1315,7 +1315,7 @@ npyiter_check_casting(int nop, PyArrayObject **op,
                 return 0;
             }
             /* Check write (temp -> op) casting */
-            if ((op_itflags[iop]&NPY_OP_ITFLAG_WRITE) &&
+            if ((op_itflags[iop] & NPY_OP_ITFLAG_WRITE) &&
                         !PyArray_CanCastTypeTo(op_dtype[iop],
                                           PyArray_DESCR(op[iop]),
                                           casting)) {
@@ -1482,25 +1482,25 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                     if (bshape == 1) {
                         strides[iop] = 0;
                         if (idim >= ondim && !output_scalars &&
-                                        (op_flags[iop]&NPY_ITER_NO_BROADCAST)) {
+                                        (op_flags[iop] & NPY_ITER_NO_BROADCAST)) {
                             goto operand_different_than_broadcast;
                         }
                     }
                     else if (idim >= ondim ||
                                         PyArray_DIM(op_cur, ondim-idim-1) == 1) {
                         strides[iop] = 0;
-                        if (op_flags[iop]&NPY_ITER_NO_BROADCAST) {
+                        if (op_flags[iop] & NPY_ITER_NO_BROADCAST) {
                             goto operand_different_than_broadcast;
                         }
                         /* If it's writeable, this means a reduction */
-                        if (op_itflags[iop]&NPY_OP_ITFLAG_WRITE) {
-                            if (!(flags&NPY_ITER_REDUCE_OK)) {
+                        if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
+                            if (!(flags & NPY_ITER_REDUCE_OK)) {
                                 PyErr_SetString(PyExc_ValueError,
                                         "output operand requires a reduction, but "
                                         "reduction is not enabled");
                                 return 0;
                             }
-                            if (!(op_itflags[iop]&NPY_OP_ITFLAG_READ)) {
+                            if (!(op_itflags[iop] & NPY_OP_ITFLAG_READ)) {
                                 PyErr_SetString(PyExc_ValueError,
                                         "output operand requires a reduction, but "
                                         "is flagged as write-only, not "
@@ -1525,18 +1525,18 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                     }
                     else if (PyArray_DIM(op_cur, i) == 1) {
                         strides[iop] = 0;
-                        if (op_flags[iop]&NPY_ITER_NO_BROADCAST) {
+                        if (op_flags[iop] & NPY_ITER_NO_BROADCAST) {
                             goto operand_different_than_broadcast;
                         }
                         /* If it's writeable, this means a reduction */
-                        if (op_itflags[iop]&NPY_OP_ITFLAG_WRITE) {
-                            if (!(flags&NPY_ITER_REDUCE_OK)) {
+                        if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
+                            if (!(flags & NPY_ITER_REDUCE_OK)) {
                                 PyErr_SetString(PyExc_ValueError,
                                         "output operand requires a reduction, but "
                                         "reduction is not enabled");
                                 return 0;
                             }
-                            if (!(op_itflags[iop]&NPY_OP_ITFLAG_READ)) {
+                            if (!(op_itflags[iop] & NPY_OP_ITFLAG_READ)) {
                                 PyErr_SetString(PyExc_ValueError,
                                         "output operand requires a reduction, but "
                                         "is flagged as write-only, not "
@@ -1557,14 +1557,14 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                 else {
                     strides[iop] = 0;
                     /* If it's writeable, this means a reduction */
-                    if (op_itflags[iop]&NPY_OP_ITFLAG_WRITE) {
-                        if (!(flags&NPY_ITER_REDUCE_OK)) {
+                    if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
+                        if (!(flags & NPY_ITER_REDUCE_OK)) {
                             PyErr_SetString(PyExc_ValueError,
                                     "output operand requires a reduction, but "
                                     "reduction is not enabled");
                             return 0;
                         }
-                        if (!(op_itflags[iop]&NPY_OP_ITFLAG_READ)) {
+                        if (!(op_itflags[iop] & NPY_OP_ITFLAG_READ)) {
                             PyErr_SetString(PyExc_ValueError,
                                     "output operand requires a reduction, but "
                                     "is flagged as write-only, not "
@@ -1717,7 +1717,7 @@ operand_different_than_broadcast: {
         PyObject *errmsg, *tmp;
 
         /* Start of error message */
-        if (op_flags[iop]&NPY_ITER_READONLY) {
+        if (op_flags[iop] & NPY_ITER_READONLY) {
             errmsg = PyUString_FromString("non-broadcastable operand "
                                           "with shape ");
         }
@@ -1930,14 +1930,14 @@ npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags)
      * incremented.
      */
     if (NIT_ITERSIZE(iter) == 1) {
-        if (itflags&NPY_ITFLAG_HASINDEX) {
+        if (itflags & NPY_ITFLAG_HASINDEX) {
             axisdata = NIT_AXISDATA(iter);
             NAD_PTRS(axisdata)[nop] = 0;
         }
         return;
     }
 
-    if (flags&NPY_ITER_C_INDEX) {
+    if (flags & NPY_ITER_C_INDEX) {
         sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
         axisdata = NIT_AXISDATA(iter);
         indexstride = 1;
@@ -1954,7 +1954,7 @@ npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags)
             indexstride *= shape;
         }
     }
-    else if (flags&NPY_ITER_F_INDEX) {
+    else if (flags & NPY_ITER_F_INDEX) {
         sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
         axisdata = NIT_INDEX_AXISDATA(NIT_AXISDATA(iter), ndim-1);
         indexstride = 1;
@@ -2310,7 +2310,7 @@ npyiter_get_common_dtype(int nop, PyArrayObject **op,
 
     for (iop = 0; iop < nop; ++iop) {
         if (op_dtype[iop] != NULL &&
-                    (!only_inputs || (op_itflags[iop]&NPY_OP_ITFLAG_READ))) {
+                    (!only_inputs || (op_itflags[iop] & NPY_OP_ITFLAG_READ))) {
             /* If no dtype was requested and the op is a scalar, pass the op */
             if ((op_request_dtypes == NULL ||
                             op_request_dtypes[iop] == NULL) &&
@@ -2453,13 +2453,13 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                      * reduction wasn't enabled, throw an error
                      */
                     if (NAD_SHAPE(axisdata) != 1) {
-                        if (!(flags&NPY_ITER_REDUCE_OK)) {
+                        if (!(flags & NPY_ITER_REDUCE_OK)) {
                             PyErr_SetString(PyExc_ValueError,
                                     "output requires a reduction, but "
                                     "reduction is not enabled");
                             return NULL;
                         }
-                        if (!((*op_itflags)&NPY_OP_ITFLAG_READ)) {
+                        if (!((*op_itflags) & NPY_OP_ITFLAG_READ)) {
                             PyErr_SetString(PyExc_ValueError,
                                     "output requires a reduction, but "
                                     "is flagged as write-only, not read-write");
@@ -2645,7 +2645,7 @@ npyiter_allocate_arrays(NpyIter *iter,
     NpyIter_BufferData *bufferdata = NULL;
     PyArrayObject **op = NIT_OPERANDS(iter);
 
-    if (itflags&NPY_ITFLAG_BUFFER) {
+    if (itflags & NPY_ITFLAG_BUFFER) {
         bufferdata = NIT_BUFFERDATA(iter);
     }
 
@@ -2658,7 +2658,7 @@ npyiter_allocate_arrays(NpyIter *iter,
             int ondim = output_scalars ? 0 : ndim;
 
             /* Check whether the subtype was disabled */
-            op_subtype = (op_flags[iop]&NPY_ITER_NO_SUBTYPE) ?
+            op_subtype = (op_flags[iop] & NPY_ITER_NO_SUBTYPE) ?
                                                 &PyArray_Type : subtype;
 
             /* Allocate the output array */
@@ -2690,9 +2690,9 @@ npyiter_allocate_arrays(NpyIter *iter,
          * it's an array scalar, make a copy whether or not the
          * copy flag is enabled.
          */
-        else if ((op_itflags[iop]&(NPY_OP_ITFLAG_CAST|
-                         NPY_OP_ITFLAG_READ|
-                         NPY_OP_ITFLAG_WRITE)) == (NPY_OP_ITFLAG_CAST|
+        else if ((op_itflags[iop] & (NPY_OP_ITFLAG_CAST |
+                         NPY_OP_ITFLAG_READ |
+                         NPY_OP_ITFLAG_WRITE)) == (NPY_OP_ITFLAG_CAST |
                                                    NPY_OP_ITFLAG_READ) &&
                           PyArray_NDIM(op[iop]) == 0) {
             PyArrayObject *temp;
@@ -2721,16 +2721,16 @@ npyiter_allocate_arrays(NpyIter *iter,
              * New arrays are aligned need no cast, and in the case
              * of scalars, always have stride 0 so never need buffering
              */
-            op_itflags[iop] |= (NPY_OP_ITFLAG_ALIGNED|
+            op_itflags[iop] |= (NPY_OP_ITFLAG_ALIGNED |
                                   NPY_OP_ITFLAG_BUFNEVER);
             op_itflags[iop] &= ~NPY_OP_ITFLAG_CAST;
-            if (itflags&NPY_ITFLAG_BUFFER) {
+            if (itflags & NPY_ITFLAG_BUFFER) {
                 NBF_STRIDES(bufferdata)[iop] = 0;
             }
         }
         /* If casting is required and permitted */
-        else if ((op_itflags[iop]&NPY_OP_ITFLAG_CAST) &&
-                   (op_flags[iop]&(NPY_ITER_COPY|NPY_ITER_UPDATEIFCOPY))) {
+        else if ((op_itflags[iop] & NPY_OP_ITFLAG_CAST) &&
+                   (op_flags[iop] & (NPY_ITER_COPY|NPY_ITER_UPDATEIFCOPY))) {
             PyArrayObject *temp;
             int ondim = PyArray_NDIM(op[iop]);
 
@@ -2746,14 +2746,14 @@ npyiter_allocate_arrays(NpyIter *iter,
             }
 
             /* If the data will be read, copy it into temp */
-            if (op_itflags[iop]&NPY_OP_ITFLAG_READ) {
+            if (op_itflags[iop] & NPY_OP_ITFLAG_READ) {
                 if (PyArray_CopyInto(temp, op[iop]) != 0) {
                     Py_DECREF(temp);
                     return 0;
                 }
             }
             /* If the data will be written to, set UPDATEIFCOPY */
-            if (op_itflags[iop]&NPY_OP_ITFLAG_WRITE) {
+            if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
                 PyArray_FLAGS(temp) |= NPY_ARRAY_UPDATEIFCOPY;
                 PyArray_FLAGS(op[iop]) &= ~NPY_ARRAY_WRITEABLE;
                 Py_INCREF(op[iop]);
@@ -2779,8 +2779,8 @@ npyiter_allocate_arrays(NpyIter *iter,
              * Buffering must be enabled for casting/conversion if copy
              * wasn't specified.
              */
-            if ((op_itflags[iop]&NPY_OP_ITFLAG_CAST) &&
-                                  !(itflags&NPY_ITFLAG_BUFFER)) {
+            if ((op_itflags[iop] & NPY_OP_ITFLAG_CAST) &&
+                                  !(itflags & NPY_ITFLAG_BUFFER)) {
                 PyErr_SetString(PyExc_TypeError,
                         "Iterator operand required copying or buffering, "
                         "but neither copying nor buffering was enabled");
@@ -2797,7 +2797,7 @@ npyiter_allocate_arrays(NpyIter *iter,
         }
 
         /* Here we can finally check for contiguous iteration */
-        if (op_flags[iop]&NPY_ITER_CONTIG) {
+        if (op_flags[iop] & NPY_ITER_CONTIG) {
             NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
             npy_intp stride = NAD_STRIDES(axisdata)[iop];
 
@@ -2805,7 +2805,7 @@ npyiter_allocate_arrays(NpyIter *iter,
                 NPY_IT_DBG_PRINT("Iterator: Setting NPY_OP_ITFLAG_CAST "
                                     "because of NPY_ITER_CONTIG\n");
                 op_itflags[iop] |= NPY_OP_ITFLAG_CAST;
-                if (!(itflags&NPY_ITFLAG_BUFFER)) {
+                if (!(itflags & NPY_ITFLAG_BUFFER)) {
                     PyErr_SetString(PyExc_TypeError,
                             "Iterator operand required buffering, "
                             "to be contiguous as requested, but "
@@ -2820,7 +2820,7 @@ npyiter_allocate_arrays(NpyIter *iter,
          * the inner stride of this operand works for the whole
          * array, we can set NPY_OP_ITFLAG_BUFNEVER.
          */
-        if ((itflags&NPY_ITFLAG_BUFFER) && !(op_itflags[iop]&NPY_OP_ITFLAG_CAST)) {
+        if ((itflags & NPY_ITFLAG_BUFFER) && !(op_itflags[iop] & NPY_OP_ITFLAG_CAST)) {
             NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
             if (ndim == 1) {
                 op_itflags[iop] |= NPY_OP_ITFLAG_BUFNEVER;
@@ -2889,7 +2889,7 @@ npyiter_get_priority_subtype(int nop, PyArrayObject **op,
     int iop;
 
     for (iop = 0; iop < nop; ++iop) {
-        if (op[iop] != NULL && op_itflags[iop]&NPY_OP_ITFLAG_READ) {
+        if (op[iop] != NULL && op_itflags[iop] & NPY_OP_ITFLAG_READ) {
             double priority = PyArray_GetPriority((PyObject *)op[iop], 0.0);
             if (priority > *subtype_priority) {
                 *subtype_priority = priority;
@@ -2928,18 +2928,18 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
          * Reduction operands may be buffered with a different stride,
          * so we must pass NPY_MAX_INTP to the transfer function factory.
          */
-        op_stride = (flags&NPY_OP_ITFLAG_REDUCE) ? NPY_MAX_INTP :
+        op_stride = (flags & NPY_OP_ITFLAG_REDUCE) ? NPY_MAX_INTP :
                                                    strides[iop];
 
         /*
          * If we have determined that a buffer may be needed,
          * allocate the appropriate transfer functions
          */
-        if (!(flags&NPY_OP_ITFLAG_BUFNEVER)) {
-            if (flags&NPY_OP_ITFLAG_READ) {
+        if (!(flags & NPY_OP_ITFLAG_BUFNEVER)) {
+            if (flags & NPY_OP_ITFLAG_READ) {
                 int move_references = 0;
                 if (PyArray_GetDTypeTransferFunction(
-                                        (flags&NPY_OP_ITFLAG_ALIGNED) != 0,
+                                        (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
                                         op_stride,
                                         op_dtype[iop]->elsize,
                                         PyArray_DESCR(op[iop]),
@@ -2956,10 +2956,10 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
             else {
                 readtransferfn[iop] = NULL;
             }
-            if (flags&NPY_OP_ITFLAG_WRITE) {
+            if (flags & NPY_OP_ITFLAG_WRITE) {
                 int move_references = 1;
                 if (PyArray_GetDTypeTransferFunction(
-                                        (flags&NPY_OP_ITFLAG_ALIGNED) != 0,
+                                        (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
                                         op_dtype[iop]->elsize,
                                         op_stride,
                                         op_dtype[iop],
@@ -2981,7 +2981,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                  * src references.
                  */
                 if (PyArray_GetDTypeTransferFunction(
-                                        (flags&NPY_OP_ITFLAG_ALIGNED) != 0,
+                                        (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
                                         op_dtype[iop]->elsize, 0,
                                         op_dtype[iop], NULL,
                                         1,
