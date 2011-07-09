@@ -1021,8 +1021,8 @@ class TestClip(TestCase):
 
 
 class TestPutmask(object):
-    def tst_basic(self,x,T,mask,val):
-        np.putmask(x,mask,val)
+    def tst_basic(self, x, T, mask, val):
+        np.putmask(x, mask, val)
         assert_(np.all(x[mask] == T(val)))
         assert_(x.dtype == T)
 
