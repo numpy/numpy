@@ -457,7 +457,7 @@ def test_iter_no_inner_dim_coalescing():
     i = nditer(a, ['external_loop'], [['readonly']])
     assert_equal(i.ndim, 1)
     assert_equal(i[0].shape, (12,))
-    
+
     # Even with lots of 1-sized dimensions, should still coalesce
     a = arange(24).reshape(1,1,2,1,1,3,1,1,4,1,1)
     i = nditer(a, ['external_loop'], [['readonly']])
@@ -658,7 +658,7 @@ def test_iter_broadcasting_errors():
         # The message should contain the itershape parameter
         assert_(msg.find('(4,3)') >= 0,
                 'Message "%s" doesn\'t contain itershape parameter (4,3)' % msg)
-    
+
     try:
         i = nditer([np.zeros((2,1,1)), np.zeros((2,))],
                     [],
@@ -1579,7 +1579,7 @@ def test_iter_buffered_cast_simple():
                    buffersize=3)
     for v in i:
         v[...] *= 2
-    
+
     assert_equal(a, 2*np.arange(10, dtype='f4'))
 
 def test_iter_buffered_cast_byteswapped():
@@ -1593,7 +1593,7 @@ def test_iter_buffered_cast_byteswapped():
                    buffersize=3)
     for v in i:
         v[...] *= 2
-    
+
     assert_equal(a, 2*np.arange(10, dtype='f4'))
 
     try:
@@ -1607,7 +1607,7 @@ def test_iter_buffered_cast_byteswapped():
                        buffersize=3)
         for v in i:
             v[...] *= 2
-        
+
         assert_equal(a, 2*np.arange(10, dtype='f8'))
     finally:
         warnings.simplefilter("default", np.ComplexWarning)
@@ -1966,7 +1966,7 @@ def test_iter_buffering_badwriteback():
     i = nditer([a,b],['buffered','external_loop'],
                         [['readonly'],['writeonly']],
                         order='C')
-    
+
     # If a has just one element, it's fine too (constant 0 stride, a reduction)
     a = np.arange(1).reshape(1,1,1)
     i = nditer([a,b],['buffered','external_loop','reduce_ok'],
@@ -2192,7 +2192,7 @@ def test_iter_nested_iters_dtype_buffered():
     assert_equal(a, [[1,2,3],[4,5,6]])
 
 def test_iter_reduction_error():
-    
+
     a = np.arange(6)
     assert_raises(ValueError, nditer, [a,None], [],
                     [['readonly'], ['readwrite','allocate']],
