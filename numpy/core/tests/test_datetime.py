@@ -169,6 +169,11 @@ class TestDateTime(TestCase):
         assert_raises(TypeError, np.datetime64,
                         datetime.datetime(1920,4,14,13,20), 'D')
 
+    def test_datetime_array_find_type(self):
+        dt = np.datetime64('1970-01-01', 'M')
+        arr = np.array([dt])
+        assert_equal(arr.dtype, np.dtype('M8[M]'))
+
     def test_timedelta_scalar_construction(self):
         # Construct with different units
         assert_equal(np.timedelta64(7, 'D'),
