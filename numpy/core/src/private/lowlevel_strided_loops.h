@@ -32,11 +32,11 @@ typedef void (PyArray_StridedTransferFn)(char *dst, npy_intp dst_stride,
  * which values are transferred.
  *
  * In particular, the 'i'-th element is transfered if and only if
- * (((mask[i*mask_stride])&0x01) == 0x01).
+ * NpyMask_IsExposed(mask[i*mask_stride]).
  */
 typedef void (PyArray_MaskedStridedTransferFn)(char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
-                                    npy_uint8 *mask, npy_intp mask_stride,
+                                    npy_mask *mask, npy_intp mask_stride,
                                     npy_intp N, npy_intp src_itemsize,
                                     NpyAuxData *transferdata);
 
@@ -191,7 +191,7 @@ PyArray_GetDTypeTransferFunction(int aligned,
  * This is identical to PyArray_GetDTypeTransferFunction, but
  * returns a transfer function which also takes a mask as a parameter.
  * Bit zero of the mask is used to determine which values to copy,
- * data is transfered exactly when ((mask[i])&0x01) == 0x01.
+ * and data is transfered exactly when NpyMask_IsExposed(mask[i*mask_stride]).
  *
  * If move_references is true, values which are not copied to the
  * destination will still have their source reference decremented.
@@ -290,6 +290,18 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                 npy_intp count, npy_intp src_itemsize,
                 PyArray_StridedTransferFn *stransfer,
                 NpyAuxData *transferdata);
+
+NPY_NO_EXPORT npy_intp
+PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
+                char *dst, npy_intp *dst_strides, npy_intp dst_strides_inc,
+                char *src, npy_intp src_stride,
+                npy_mask *mask, npy_intp mask_stride,
+                npy_intp *coords, npy_intp coords_inc,
+                npy_intp *shape, npy_intp shape_inc,
+                npy_intp count, npy_intp src_itemsize,
+                PyArray_MaskedStridedTransferFn *stransfer,
+                NpyAuxData *data);
+
 
 /*
  *            TRIVIAL ITERATION

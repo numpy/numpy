@@ -1480,9 +1480,10 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
                       NPY_ITER_ALIGNED|
                       NPY_ITER_ALLOCATE|
                       NPY_ITER_NO_BROADCAST|
-                      NPY_ITER_NO_SUBTYPE;
+                      NPY_ITER_NO_SUBTYPE|
+                      NPY_ITER_WRITEMASKED;
     }
-    op_flags[nop] = NPY_ITER_READONLY;
+    op_flags[nop] = NPY_ITER_READONLY|NPY_ITER_ARRAYMASK;
 
     NPY_UF_DBG_PRINT("Making iterator\n");
 

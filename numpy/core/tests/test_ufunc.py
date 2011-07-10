@@ -499,7 +499,6 @@ class TestUfunc(TestCase):
         np.subtract(a, 2, out=a, where=[True,False])
         assert_equal(a, [[0, 27], [14, 5]])
 
-    @dec.knownfailureif(True)
     def test_where_param_buffer_output(self):
         # This test is temporarily skipped because it requires
         # adding masking features to the nditer to work properly
