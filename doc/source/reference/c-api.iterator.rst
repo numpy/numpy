@@ -579,6 +579,46 @@ Construction and Destruction
             Ensures that the input or output matches the iteration
             dimensions exactly.
 
+        .. cvar:: NPY_ITER_ARRAYMASK
+
+            Indicates that this operand is the mask to use for
+            selecting elements when writing to operands which have
+            the :cdata:`NPY_ITER_WRITEMASKED` flag applied to them.
+            Only one operand may have :cdata:`NPY_ITER_ARRAYMASK` flag
+            applied to it.
+
+            The data type of an operand with this flag should be either
+            :cdata:`NPY_BOOL`, :cdata:`NPY_MASK`, or a struct dtype
+            whose fields are all valid mask dtypes. In the latter case,
+            it must match up with a struct operand being WRITEMASKED,
+            as it is specifying a mask for each field of that array.
+
+            This flag only affects writing from the buffer back to
+            the array. This means that if the operand is also
+            :cdata:`NPY_ITER_READWRITE` or :cdata:`NPY_ITER_WRITEONLY`,
+            code doing iteration can write to this operand to
+            control which elements will be untouched and which ones will be
+            modified. This is useful when the mask should be a combination
+            of input masks, for example. Mask values can be created
+            with the :cfunc:`NpyMask_Create` function.
+
+        .. cvar:: NPY_ITER_WRITEMASKED
+
+            Indicates that only elements which the operand with
+            the ARRAYMASK flag indicates are intended to be modified
+            by the iteration. In general, the iterator does not enforce
+            this, it is up to the code doing the iteration to follow
+            that promise. Code can use the :cfunc:`NpyMask_IsExposed` 
+            inline function to test whether the mask at a particular
+            element allows writing.
+
+            When this flag is used, and this operand is buffered, this
+            changes how data is copied from the buffer into the array.
+            A masked copying routine is used, which only copies the
+            elements in the buffer for which :cfunc:`NpyMask_IsExposed` 
+            returns true from the corresponding element in the ARRAYMASK
+            operand.
+
 .. cfunction:: NpyIter* NpyIter_AdvancedNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes, npy_intp* itershape, npy_intp buffersize)
 
     Extends :cfunc:`NpyIter_MultiNew` with several advanced options providing
