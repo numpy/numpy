@@ -291,6 +291,18 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                 PyArray_StridedTransferFn *stransfer,
                 NpyAuxData *transferdata);
 
+NPY_NO_EXPORT npy_intp
+PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
+                char *dst, npy_intp *dst_strides, npy_intp dst_strides_inc,
+                char *src, npy_intp src_stride,
+                npy_uint8 *mask, npy_intp mask_stride,
+                npy_intp *coords, npy_intp coords_inc,
+                npy_intp *shape, npy_intp shape_inc,
+                npy_intp count, npy_intp src_itemsize,
+                PyArray_MaskedStridedTransferFn *stransfer,
+                NpyAuxData *data);
+
+
 /*
  *            TRIVIAL ITERATION
  *
