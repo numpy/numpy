@@ -110,7 +110,7 @@ def test_copyto():
     assert_raises(TypeError, np.copyto, a, 3.5, where=[True,False,True])
 
     # Lists of integer 0's and 1's is ok too
-    np.copyto(a, 4, where=[[0,1,1], [1,0,0]])
+    np.copyto(a, 4.0, casting='unsafe', where=[[0,1,1], [1,0,0]])
     assert_equal(a, [[3,4,4], [4,1,3]])
 
     # Overlapping copy with mask should work
