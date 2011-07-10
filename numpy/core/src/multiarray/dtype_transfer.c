@@ -3765,7 +3765,7 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
     /* TODO: Add struct-based mask_dtype support later */
     if (mask_dtype->type_num != NPY_BOOL &&
                             mask_dtype->type_num != NPY_MASK) {
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_SetString(PyExc_TypeError,
                 "Only bool and uint8 masks are supported at the moment, "
                 "structs of bool/uint8 is planned for the future");
         return NPY_FAIL;
