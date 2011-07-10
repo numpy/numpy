@@ -3059,7 +3059,7 @@ NpyAuxData *_masked_wrapper_transfer_data_clone(NpyAuxData *data)
 void _strided_masked_wrapper_decsrcref_transfer_function(
                                     char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
-                                    npy_uint8 *mask, npy_intp mask_stride,
+                                    npy_mask *mask, npy_intp mask_stride,
                                     npy_intp N, npy_intp src_itemsize,
                                     NpyAuxData *transferdata)
 {
@@ -3077,7 +3077,7 @@ void _strided_masked_wrapper_decsrcref_transfer_function(
     while (N > 0) {
         /* Skip masked values, still calling decsrcref for move_references */
         subloopsize = 0;
-        while (subloopsize < N && ((*mask)&0x01) == 0) {
+        while (subloopsize < N && !NpyMask_IsExposed(*mask)) {
             ++subloopsize;
             mask += mask_stride;
         }
@@ -3088,7 +3088,7 @@ void _strided_masked_wrapper_decsrcref_transfer_function(
         N -= subloopsize;
         /* Process unmasked values */
         subloopsize = 0;
-        while (subloopsize < N && ((*mask)&0x01) != 0) {
+        while (subloopsize < N && NpyMask_IsExposed(*mask)) {
             ++subloopsize;
             mask += mask_stride;
         }
@@ -3103,7 +3103,7 @@ void _strided_masked_wrapper_decsrcref_transfer_function(
 void _strided_masked_wrapper_transfer_function(
                                     char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
-                                    npy_uint8 *mask, npy_intp mask_stride,
+                                    npy_mask *mask, npy_intp mask_stride,
                                     npy_intp N, npy_intp src_itemsize,
                                     NpyAuxData *transferdata)
 {
@@ -3120,7 +3120,7 @@ void _strided_masked_wrapper_transfer_function(
     while (N > 0) {
         /* Skip masked values */
         subloopsize = 0;
-        while (subloopsize < N && ((*mask)&0x01) == 0) {
+        while (subloopsize < N && !NpyMask_IsExposed(*mask)) {
             ++subloopsize;
             mask += mask_stride;
         }
@@ -3129,7 +3129,7 @@ void _strided_masked_wrapper_transfer_function(
         N -= subloopsize;
         /* Process unmasked values */
         subloopsize = 0;
-        while (subloopsize < N && ((*mask)&0x01) != 0) {
+        while (subloopsize < N && NpyMask_IsExposed(*mask)) {
             ++subloopsize;
             mask += mask_stride;
         }
@@ -3764,7 +3764,7 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
 
     /* TODO: Add struct-based mask_dtype support later */
     if (mask_dtype->type_num != NPY_BOOL &&
-                            mask_dtype->type_num != NPY_UINT8) {
+                            mask_dtype->type_num != NPY_MASK) {
         PyErr_SetString(PyExc_RuntimeError,
                 "Only bool and uint8 masks are supported at the moment, "
                 "structs of bool/uint8 is planned for the future");
