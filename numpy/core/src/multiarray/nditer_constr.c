@@ -189,6 +189,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     NIT_ITFLAGS(iter) = itflags;
     NIT_NDIM(iter) = ndim;
     NIT_NOP(iter) = nop;
+    NIT_MASKOP(iter) = -1;
     NIT_ITERINDEX(iter) = 0;
     memset(NIT_BASEOFFSETS(iter), 0, (nop+1)*NPY_SIZEOF_INTP);
 
@@ -1125,6 +1126,7 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
 {
     int iop, i;
     npy_int8 maskop = -1;
+    int any_writemasked_ops = 0;
 
     for (iop = 0; iop < nop; ++iop) {
         op[iop] = op_in[iop];
@@ -1155,6 +1157,10 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
 
             maskop = iop;
             *out_maskop = iop;
+        }
+
+        if (op_flags[iop] & NPY_ITER_WRITEMASKED) {
+            any_writemasked_ops = 1;
         }
 
         /*
@@ -1194,6 +1200,21 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
                     "At least one iterator input must be non-NULL");
             return 0;
         }
+    }
+
+    if (any_writemasked_ops && maskop < 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "An iterator operand was flagged as WRITEMASKED, "
+                "but no ARRAYMASK operand was given to supply "
+                "the mask");
+        return 0;
+    }
+    else if (!any_writemasked_ops && maskop >= 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "An iterator operand was flagged as the ARRAYMASK, "
+                "but no WRITEMASKED operands were given to use "
+                "the mask");
+        return 0;
     }
 
     return 1;
@@ -1348,6 +1369,57 @@ npyiter_check_casting(int nop, PyArrayObject **op,
 }
 
 /*
+ * Checks that the mask broadcasts to the WRITEMASK REDUCE
+ * operand 'iop', but 'iop' never broadcasts to the mask.
+ * If 'iop' broadcasts to the mask, the result would be more
+ * than one mask value per reduction element, something which
+ * is invalid.
+ *
+ * This check should only be called after all the operands
+ * have been filled in.
+ *
+ * Returns 1 on success, 0 on error.
+ */
+static int
+check_mask_for_writemasked_reduction(NpyIter *iter, int iop)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    int idim, ndim = NIT_NDIM(iter);
+    int nop = NIT_NOP(iter);
+    int maskop = NIT_MASKOP(iter);
+
+    NpyIter_AxisData *axisdata;
+    npy_intp sizeof_axisdata;
+
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
+
+    for(idim = 0; idim < ndim; ++idim) {
+        npy_intp maskstride, istride;
+        
+        istride = NAD_STRIDES(axisdata)[iop];
+        maskstride = NAD_STRIDES(axisdata)[maskop];
+
+        /*
+         * If 'iop' is being broadcast to 'maskop', we have
+         * the invalid situation described above.
+         */
+        if (maskstride != 0 && istride == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Iterator reduction operand is WRITEMASKED, "
+                    "but also broadcasts to multiple mask values. "
+                    "There can be only one mask value per WRITEMASKED "
+                    "element.");
+            return 0;
+        }
+
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
+    }
+
+    return 1;
+}
+
+/*
  * Fills in the AXISDATA for the 'nop' operands, broadcasting
  * the dimensionas as necessary.  Also fills
  * in the ITERSIZE data member.
@@ -1367,6 +1439,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
+    int maskop = NIT_MASKOP(iter);
 
     int ondim;
     NpyIter_AxisData *axisdata;
@@ -1487,7 +1560,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                         }
                     }
                     else if (idim >= ondim ||
-                                        PyArray_DIM(op_cur, ondim-idim-1) == 1) {
+                                    PyArray_DIM(op_cur, ondim-idim-1) == 1) {
                         strides[iop] = 0;
                         if (op_flags[iop] & NPY_ITER_NO_BROADCAST) {
                             goto operand_different_than_broadcast;
@@ -1496,17 +1569,37 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                         if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
                             if (!(flags & NPY_ITER_REDUCE_OK)) {
                                 PyErr_SetString(PyExc_ValueError,
-                                        "output operand requires a reduction, but "
-                                        "reduction is not enabled");
+                                        "output operand requires a "
+                                        "reduction, but reduction is "
+                                        "not enabled");
                                 return 0;
                             }
                             if (!(op_itflags[iop] & NPY_OP_ITFLAG_READ)) {
                                 PyErr_SetString(PyExc_ValueError,
-                                        "output operand requires a reduction, but "
-                                        "is flagged as write-only, not "
-                                        "read-write");
+                                        "output operand requires a "
+                                        "reduction, but is flagged as "
+                                        "write-only, not read-write");
                                 return 0;
                             }
+                            /*
+                             * The ARRAYMASK can't be a reduction, because
+                             * it would be possible to write back to the
+                             * array once when the ARRAYMASK says 'True',
+                             * then have the reduction on the ARRAYMASK
+                             * later flip to 'False', indicating that the
+                             * write back should never have been done,
+                             * and violating the strict masking semantics
+                             */
+                            if (iop == maskop) {
+                                PyErr_SetString(PyExc_ValueError,
+                                        "output operand requires a "
+                                        "reduction, but is flagged as "
+                                        "the ARRAYMASK operand which "
+                                        "is not permitted to be the "
+                                        "result of a reduction");
+                                return 0;
+                            }
+
                             NIT_ITFLAGS(iter) |= NPY_ITFLAG_REDUCE;
                             op_itflags[iop] |= NPY_OP_ITFLAG_REDUCE;
                         }
@@ -2642,6 +2735,8 @@ npyiter_allocate_arrays(NpyIter *iter,
     int idim, ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
 
+    int check_writemasked_reductions = 0;
+
     NpyIter_BufferData *bufferdata = NULL;
     PyArrayObject **op = NIT_OPERANDS(iter);
 
@@ -2649,8 +2744,18 @@ npyiter_allocate_arrays(NpyIter *iter,
         bufferdata = NIT_BUFFERDATA(iter);
     }
 
-
     for (iop = 0; iop < nop; ++iop) {
+        /*
+         * Check whether there are any WRITEMASKED REDUCE operands
+         * which should be validated after all the strides are filled
+         * in.
+         */
+        if ((op_itflags[iop] &
+                (NPY_OP_ITFLAG_WRITEMASKED | NPY_OP_ITFLAG_REDUCE)) ==
+                        (NPY_OP_ITFLAG_WRITEMASKED | NPY_OP_ITFLAG_REDUCE)) {
+            check_writemasked_reductions = 1;
+        }
+
         /* NULL means an output the iterator should allocate */
         if (op[iop] == NULL) {
             PyArrayObject *out;
@@ -2820,7 +2925,8 @@ npyiter_allocate_arrays(NpyIter *iter,
          * the inner stride of this operand works for the whole
          * array, we can set NPY_OP_ITFLAG_BUFNEVER.
          */
-        if ((itflags & NPY_ITFLAG_BUFFER) && !(op_itflags[iop] & NPY_OP_ITFLAG_CAST)) {
+        if ((itflags & NPY_ITFLAG_BUFFER) &&
+                                !(op_itflags[iop] & NPY_OP_ITFLAG_CAST)) {
             NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
             if (ndim == 1) {
                 op_itflags[iop] |= NPY_OP_ITFLAG_BUFNEVER;
@@ -2867,6 +2973,31 @@ npyiter_allocate_arrays(NpyIter *iter,
                 if (idim == ndim) {
                     op_itflags[iop] |= NPY_OP_ITFLAG_BUFNEVER;
                     NBF_STRIDES(bufferdata)[iop] = innerstride;
+                }
+            }
+        }
+    }
+
+    if (check_writemasked_reductions) {
+        for (iop = 0; iop < nop; ++iop) {
+            /*
+             * Check whether there are any WRITEMASKED REDUCE operands
+             * which should be validated now that all the strides are filled
+             * in.
+             */
+            if ((op_itflags[iop] &
+                    (NPY_OP_ITFLAG_WRITEMASKED | NPY_OP_ITFLAG_REDUCE)) ==
+                        (NPY_OP_ITFLAG_WRITEMASKED | NPY_OP_ITFLAG_REDUCE)) {
+                /*
+                 * If the ARRAYMASK has 'bigger' dimensions
+                 * than this REDUCE WRITEMASKED operand,
+                 * the result would be more than one mask
+                 * value per reduction element, something which
+                 * is invalid. This function provides validation
+                 * for that.
+                 */
+                if (!check_mask_for_writemasked_reduction(iter, iop)) {
+                    return 0;
                 }
             }
         }
@@ -2958,7 +3089,38 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
             }
             if (flags & NPY_OP_ITFLAG_WRITE) {
                 int move_references = 1;
-                if (PyArray_GetDTypeTransferFunction(
+
+                /*
+                 * If the operand is WRITEMASKED, use a masked transfer fn.
+                 */
+                if (flags & NPY_OP_ITFLAG_WRITEMASKED) {
+                    int maskop = NIT_MASKOP(iter);
+                    PyArray_Descr *mask_dtype = PyArray_DESCR(op[maskop]);
+
+                    /*
+                     * If the mask's stride is contiguous, use it, otherwise
+                     * the mask may or may not be buffered, so the stride
+                     * could be inconsistent.
+                     */
+                    if (PyArray_GetMaskedDTypeTransferFunction(
+                                (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
+                                op_dtype[iop]->elsize,
+                                op_stride,
+                                (strides[maskop] == mask_dtype->elsize) ?
+                                                mask_dtype->elsize :
+                                                NPY_MAX_INTP,
+                                op_dtype[iop],
+                                PyArray_DESCR(op[iop]),
+                                mask_dtype,
+                                move_references,
+                                (PyArray_MaskedStridedTransferFn **)&stransfer,
+                                &transferdata,
+                                &needs_api) != NPY_SUCCEED) {
+                        goto fail;
+                    }
+                }
+                else {
+                    if (PyArray_GetDTypeTransferFunction(
                                         (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
                                         op_dtype[iop]->elsize,
                                         op_stride,
@@ -2968,7 +3130,8 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                         &stransfer,
                                         &transferdata,
                                         &needs_api) != NPY_SUCCEED) {
-                    goto fail;
+                        goto fail;
+                    }
                 }
                 writetransferfn[iop] = stransfer;
                 writetransferdata[iop] = transferdata;

@@ -1156,3 +1156,139 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
         }
     }
 }
+
+NPY_NO_EXPORT npy_intp
+PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
+                char *dst, npy_intp *dst_strides, npy_intp dst_strides_inc,
+                char *src, npy_intp src_stride,
+                npy_uint8 *mask, npy_intp mask_stride,
+                npy_intp *coords, npy_intp coords_inc,
+                npy_intp *shape, npy_intp shape_inc,
+                npy_intp count, npy_intp src_itemsize,
+                PyArray_MaskedStridedTransferFn *stransfer,
+                NpyAuxData *data)
+{
+    npy_intp i, M, N, coord0, shape0, dst_stride0, coord1, shape1, dst_stride1;
+
+    /* Finish off dimension 0 */
+    coord0 = coords[0];
+    shape0 = shape[0];
+    dst_stride0 = dst_strides[0];
+    N = shape0 - coord0;
+    if (N >= count) {
+        stransfer(dst, dst_stride0,
+                    src, src_stride,
+                    mask, mask_stride,
+                    count, src_itemsize, data);
+        return 0;
+    }
+    stransfer(dst, dst_stride0,
+                src, src_stride,
+                mask, mask_stride,
+                N, src_itemsize, data);
+    count -= N;
+
+    /* If it's 1-dimensional, there's no more to copy */
+    if (ndim == 1) {
+        return count;
+    }
+
+    /* Adjust the src and dst pointers */
+    coord1 = (coords + coords_inc)[0];
+    shape1 = (shape + shape_inc)[0];
+    dst_stride1 = (dst_strides + dst_strides_inc)[0];
+    dst = dst - coord0*dst_stride0 + dst_stride1;
+    src += N*src_stride;
+    mask += N*mask_stride;
+
+    /* Finish off dimension 1 */
+    M = (shape1 - coord1 - 1);
+    N = shape0*M;
+    for (i = 0; i < M; ++i) {
+        if (shape0 >= count) {
+            stransfer(dst, dst_stride0,
+                        src, src_stride,
+                        mask, mask_stride,
+                        count, src_itemsize, data);
+            return 0;
+        }
+        else {
+            stransfer(dst, dst_stride0,
+                        src, src_stride,
+                        mask, mask_stride,
+                        shape0, src_itemsize, data);
+        }
+        count -= shape0;
+        dst += dst_stride1;
+        src += shape0*src_stride;
+        mask += shape0*mask_stride;
+    }
+
+    /* If it's 2-dimensional, there's no more to copy */
+    if (ndim == 2) {
+        return count;
+    }
+
+    /* General-case loop for everything else */
+    else {
+        /* Iteration structure for dimensions 2 and up */
+        struct {
+            npy_intp coord, shape, dst_stride;
+        } it[NPY_MAXDIMS];
+
+        /* Copy the coordinates and shape */
+        coords += 2*coords_inc;
+        shape += 2*shape_inc;
+        dst_strides += 2*dst_strides_inc;
+        for (i = 0; i < ndim-2; ++i) {
+            it[i].coord = coords[0];
+            it[i].shape = shape[0];
+            it[i].dst_stride = dst_strides[0];
+            coords += coords_inc;
+            shape += shape_inc;
+            dst_strides += dst_strides_inc;
+        }
+
+        for (;;) {
+            /* Adjust the dst pointer from the dimension 0 and 1 loop */
+            dst = dst - shape1*dst_stride1;
+
+            /* Increment to the next coordinate */
+            for (i = 0; i < ndim-2; ++i) {
+                dst += it[i].dst_stride;
+                if (++it[i].coord >= it[i].shape) {
+                    it[i].coord = 0;
+                    dst -= it[i].dst_stride*it[i].shape;
+                }
+                else {
+                    break;
+                }
+            }
+            /* If the last dimension rolled over, we're done */
+            if (i == ndim-2) {
+                return count;
+            }
+
+            /* A loop for dimensions 0 and 1 */
+            for (i = 0; i < shape1; ++i) {
+                if (shape0 >= count) {
+                    stransfer(dst, dst_stride0,
+                                src, src_stride,
+                                mask, mask_stride,
+                                count, src_itemsize, data);
+                    return 0;
+                }
+                else {
+                    stransfer(dst, dst_stride0,
+                                src, src_stride,
+                                mask, mask_stride,
+                                shape0, src_itemsize, data);
+                }
+                count -= shape0;
+                dst += dst_stride1;
+                src += shape0*src_stride;
+                mask += shape0*mask_stride;
+            }
+        }
+    }
+}
