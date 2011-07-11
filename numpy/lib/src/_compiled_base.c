@@ -118,11 +118,20 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     if (!(lst = PyArray_ContiguousFromAny(list, PyArray_INTP, 1, 1))) {
             goto fail;
     }
+    type = PyArray_DescrFromType(PyArray_INTP);
     len = PyArray_SIZE(lst);
     if (len < 1) {
-        PyErr_SetString(PyExc_ValueError,
-                "The first argument cannot be empty.");
-        goto fail;
+        if (mlength == Py_None) {
+            minlength = 0;
+        }
+        else if (!(minlength = PyArray_PyIntAsIntp(mlength))) {
+            goto fail;
+        }
+        if (!(ans = PyArray_Zeros(1, &minlength, type, 0))){
+            goto fail;
+        }
+    Py_DECREF(lst);
+    return ans;
     }
     numbers = (intp *) PyArray_DATA(lst);
     mxi = mxx(numbers, len);
@@ -147,7 +156,6 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
             ans_size = minlength;
         }
     }
-    type = PyArray_DescrFromType(PyArray_INTP);
     if (weight == Py_None) {
         if (!(ans = PyArray_Zeros(1, &ans_size, type, 0))) {
             goto fail;
