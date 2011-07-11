@@ -1745,6 +1745,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
+    int maskop = NIT_MASKOP(iter);
 
     char *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
@@ -1862,14 +1863,42 @@ npyiter_copy_from_buffers(NpyIter *iter)
                                     "operand %d (%d items)\n",
                                     (int)iop, (int)op_transfersize);
 
-                PyArray_TransferStridedToNDim(ndim_transfer,
-                        ad_ptrs[iop], dst_strides, axisdata_incr,
-                        buffer, src_stride,
-                        dst_coords, axisdata_incr,
-                        dst_shape, axisdata_incr,
-                        op_transfersize, dtypes[iop]->elsize,
-                        stransfer,
-                        transferdata);
+                if (op_itflags[iop] & NPY_OP_ITFLAG_WRITEMASKED) {
+                    npy_uint8 *maskptr;
+
+                    /*
+                     * The mask pointer may be in the buffer or in
+                     * the array, detect which one.
+                     */
+                    delta = (ptrs[maskop] - buffers[maskop]);
+                    if (0 <= delta &&
+                                delta <= buffersize*dtypes[maskop]->elsize) {
+                        maskptr = buffers[maskop];
+                    }
+                    else {
+                        maskptr = ad_ptrs[maskop];
+                    }
+
+                    PyArray_TransferMaskedStridedToNDim(ndim_transfer,
+                            ad_ptrs[iop], dst_strides, axisdata_incr,
+                            buffer, src_stride,
+                            maskptr, strides[maskop],
+                            dst_coords, axisdata_incr,
+                            dst_shape, axisdata_incr,
+                            op_transfersize, dtypes[iop]->elsize,
+                            (PyArray_MaskedStridedTransferFn *)stransfer,
+                            transferdata);
+                }
+                else {
+                    PyArray_TransferStridedToNDim(ndim_transfer,
+                            ad_ptrs[iop], dst_strides, axisdata_incr,
+                            buffer, src_stride,
+                            dst_coords, axisdata_incr,
+                            dst_shape, axisdata_incr,
+                            op_transfersize, dtypes[iop]->elsize,
+                            stransfer,
+                            transferdata);
+                }
             }
         }
         /* If there's no copy back, we may have to decrement refs.  In

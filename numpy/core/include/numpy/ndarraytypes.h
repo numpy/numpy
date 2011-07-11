@@ -1440,6 +1440,40 @@ struct NpyAuxData_tag {
 #define NPY_AUXDATA_CLONE(auxdata) \
     ((auxdata)->clone(auxdata))
 
+/*********************************************************************
+ * NumPy functions for dealing with masks, such as in masked iteration
+ *********************************************************************/
+
+typedef npy_uint8 npy_mask;
+#define NPY_MASK NPY_UINT8
+
+/*
+ * Bit 0 of the mask indicates whether a value is exposed
+ * or hidden. This is compatible with a 'where=' boolean
+ * mask, because NumPy booleans are 1 byte, and contain
+ * either the value 0 or 1.
+ */
+static NPY_INLINE npy_bool
+NpyMask_IsExposed(npy_mask mask)
+{
+    return (mask & 0x01) != 0;
+}
+
+/*
+ * Bits 1 through 7 of the mask contain the payload.
+ */
+static NPY_INLINE npy_uint8
+NpyMask_GetPayload(npy_mask mask)
+{
+    return ((npy_uint8)mask) >> 1;
+}
+
+static NPY_INLINE npy_mask
+NpyMask_Create(npy_bool exposed, npy_uint8 payload)
+{
+    return (npy_mask)(exposed != 0) | (npy_mask)(payload << 1);
+}
+
 /*
  * This is the form of the struct that's returned pointed by the
  * PyCObject attribute of an array __array_struct__. See
