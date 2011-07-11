@@ -1976,6 +1976,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     PyArray_Descr *oldtype;
     char *msg = "cannot copy back to a read-only array";
     PyTypeObject *subtype;
+    NPY_CASTING casting = NPY_SAFE_CASTING;
 
     oldtype = PyArray_DESCR(arr);
     subtype = Py_TYPE(arr);
@@ -1992,16 +1993,28 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         itemsize = newtype->elsize;
     }
 
-    /*
-     * Can't cast unless ndim-0 array, NPY_ARRAY_FORCECAST is specified
-     * or the cast is safe.
-     */
-    if (!(flags & NPY_ARRAY_FORCECAST) && !PyArray_NDIM(arr) == 0 &&
-        !PyArray_CanCastTo(oldtype, newtype)) {
+    /* If the casting if forced, use the 'unsafe' casting rule */
+    if (flags & NPY_ARRAY_FORCECAST) {
+        casting = NPY_UNSAFE_CASTING;
+    }
+
+    /* Raise an error if the casting rule isn't followed */
+    if (!PyArray_CanCastArrayTo(arr, newtype, casting)) {
+        PyObject *errmsg;
+
+        errmsg = PyUString_FromString("Cannot cast array data from ");
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)PyArray_DESCR(arr)));
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromString(" to "));
+        PyUString_ConcatAndDel(&errmsg,
+                PyObject_Repr((PyObject *)newtype));
+        PyUString_ConcatAndDel(&errmsg,
+                PyUString_FromFormat(" according to the rule %s",
+                        npy_casting_to_string(casting)));
+        PyErr_SetObject(PyExc_TypeError, errmsg);
+
         Py_DECREF(newtype);
-        PyErr_SetString(PyExc_TypeError,
-                        "array cannot be safely cast "  \
-                        "to required type");
         return NULL;
     }
 
@@ -2013,14 +2026,15 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             flags |= NPY_ARRAY_C_CONTIGUOUS;
         }
         copy = (flags & NPY_ARRAY_ENSURECOPY) ||
-            ((flags & NPY_ARRAY_C_CONTIGUOUS) && (!(arrflags & NPY_ARRAY_C_CONTIGUOUS)))
+            ((flags & NPY_ARRAY_C_CONTIGUOUS) &&
+                    (!(arrflags & NPY_ARRAY_C_CONTIGUOUS)))
             || ((flags & NPY_ARRAY_ALIGNED) &&
-                (!(arrflags & NPY_ARRAY_ALIGNED)))
+                    (!(arrflags & NPY_ARRAY_ALIGNED)))
             || (arr->nd > 1 &&
-                ((flags & NPY_ARRAY_F_CONTIGUOUS) &&
-                 (!(arrflags & NPY_ARRAY_F_CONTIGUOUS))))
+                    ((flags & NPY_ARRAY_F_CONTIGUOUS) &&
+                    (!(arrflags & NPY_ARRAY_F_CONTIGUOUS))))
             || ((flags & NPY_ARRAY_WRITEABLE) &&
-                (!(arrflags & NPY_ARRAY_WRITEABLE)));
+                    (!(arrflags & NPY_ARRAY_WRITEABLE)));
 
         if (copy) {
             if ((flags & NPY_ARRAY_UPDATEIFCOPY) &&
