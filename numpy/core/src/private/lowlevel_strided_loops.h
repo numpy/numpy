@@ -228,6 +228,7 @@ PyArray_CastRawArrays(npy_intp count,
                       npy_intp src_stride, npy_intp dst_stride,
                       PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                       int move_references);
+
 /*
  * These two functions copy or convert the data of an n-dimensional array
  * to/from a 1-dimensional strided buffer.  These functions will only call
@@ -241,9 +242,9 @@ PyArray_CastRawArrays(npy_intp count,
  *
  * ndim:
  *      The number of dimensions of the n-dimensional array.
- * dst/src:
- *      The destination or src starting pointer.
- * dst_stride/src_stride:
+ * dst/src/mask:
+ *      The destination, source or mask starting pointer.
+ * dst_stride/src_stride/mask_stride:
  *      The stride of the 1-dimensional strided buffer
  * dst_strides/src_strides:
  *      The strides of the n-dimensional array.
@@ -268,8 +269,7 @@ PyArray_CastRawArrays(npy_intp count,
  *      The strided transfer function.
  * transferdata:
  *      An auxiliary data pointer passed to the strided transfer function.
- *      If a non-NULL value is returned, it must be deallocated with the
- *      function PyArray_FreeStridedTransferData.
+ *      This follows the conventions of NpyAuxData objects.
  */
 NPY_NO_EXPORT npy_intp
 PyArray_TransferNDimToStrided(npy_intp ndim,

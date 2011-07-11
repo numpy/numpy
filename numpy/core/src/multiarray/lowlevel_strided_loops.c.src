@@ -921,6 +921,7 @@ PyArray_GetStridedNumericCastFn(int aligned, npy_intp src_stride,
 
 /****************** PRIMITIVE FLAT TO/FROM NDIM FUNCTIONS ******************/
 
+/* See documentation of arguments in lowlevel_strided_loops.h */
 NPY_NO_EXPORT npy_intp
 PyArray_TransferNDimToStrided(npy_intp ndim,
                 char *dst, npy_intp dst_stride,
@@ -1039,6 +1040,7 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
     }
 }
 
+/* See documentation of arguments in lowlevel_strided_loops.h */
 NPY_NO_EXPORT npy_intp
 PyArray_TransferStridedToNDim(npy_intp ndim,
                 char *dst, npy_intp *dst_strides, npy_intp dst_strides_inc,
@@ -1157,6 +1159,7 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
     }
 }
 
+/* See documentation of arguments in lowlevel_strided_loops.h */
 NPY_NO_EXPORT npy_intp
 PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
                 char *dst, npy_intp *dst_strides, npy_intp dst_strides_inc,
