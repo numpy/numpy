@@ -110,12 +110,8 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         goto finish;
     }
 
-    if (minitype == NULL) {
-        minitype = PyArray_DescrFromType(PyArray_BOOL);
-    }
-    else {
-        Py_INCREF(minitype);
-    }
+    Py_XINCREF(minitype);
+
     if (max < 0) {
         goto deflt;
     }
@@ -237,8 +233,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
             PyErr_Clear();
             goto deflt;
         }
-        if (l == 0 && minitype->type_num == PyArray_BOOL) {
-            Py_DECREF(minitype);
+        if (l == 0 && minitype == NULL) {
             minitype = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
             if (minitype == NULL) {
                 return NULL;
@@ -253,17 +248,21 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
             }
             chktype = _array_find_type(ip, minitype, max-1);
             if (chktype == NULL) {
-                Py_DECREF(minitype);
+                Py_XDECREF(minitype);
                 return NULL;
             }
-            newtype = PyArray_PromoteTypes(chktype, minitype);
-            Py_DECREF(minitype);
-            minitype = newtype;
-            Py_DECREF(chktype);
+            if (minitype == NULL) {
+                minitype = chktype;
+            } else {
+                newtype = PyArray_PromoteTypes(chktype, minitype);
+                Py_DECREF(minitype);
+                minitype = newtype;
+                Py_DECREF(chktype);
+            }
             Py_DECREF(ip);
         }
         chktype = minitype;
-        Py_INCREF(minitype);
+        minitype = NULL;
         goto finish;
     }
 
@@ -272,9 +271,13 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
     chktype = _use_default_type(op);
 
  finish:
-    outtype = PyArray_PromoteTypes(chktype, minitype);
-    Py_DECREF(chktype);
-    Py_DECREF(minitype);
+    if (minitype == NULL) {
+        outtype = chktype;
+    } else {
+        outtype = PyArray_PromoteTypes(chktype, minitype);
+        Py_DECREF(chktype);
+        Py_DECREF(minitype);
+    }
     if (outtype == NULL) {
         return NULL;
     }
