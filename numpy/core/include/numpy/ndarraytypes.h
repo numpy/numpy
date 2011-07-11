@@ -1456,7 +1456,7 @@ typedef npy_uint8 npy_mask;
 static NPY_INLINE npy_bool
 NpyMask_IsExposed(npy_mask mask)
 {
-    return (mask&0x01) != 0;
+    return (mask & 0x01) != 0;
 }
 
 /*

@@ -1863,7 +1863,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
                                     "operand %d (%d items)\n",
                                     (int)iop, (int)op_transfersize);
 
-                if (op_itflags[iop]&NPY_OP_ITFLAG_WRITEMASKED) {
+                if (op_itflags[iop] & NPY_OP_ITFLAG_WRITEMASKED) {
                     npy_uint8 *maskptr;
 
                     /*
