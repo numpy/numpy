@@ -776,6 +776,15 @@ M   33  21.99
                            dtype=[('date', np.object_), ('stid', float)])
         assert_equal(test, control)
 
+    def test_converters_cornercases2(self):
+        "Test the conversion to datetime64."
+        converter = {'date': lambda s: np.datetime64(strptime(s, '%Y-%m-%d %H:%M:%SZ'))}
+        data = StringIO('2009-02-03 12:00:00Z, 72214.0')
+        test = np.ndfromtxt(data, delimiter=',', dtype=None,
+                            names=['date', 'stid'], converters=converter)
+        control = np.array((datetime(2009, 02, 03), 72214.),
+                           dtype=[('date', 'datetime64[us]'), ('stid', float)])
+        assert_equal(test, control)
 
     def test_unused_converter(self):
         "Test whether unused converters are forgotten"

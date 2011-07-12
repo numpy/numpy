@@ -90,8 +90,11 @@ def _array_descr(descriptor):
             else:
                 new = descriptor.metadata.copy()
                 # Eliminate any key related to internal implementation
-                _ = new.pop(METADATA_DTSTR, None)
-                return (descriptor.str, new)
+                new.pop(METADATA_DTSTR, None)
+                if new:
+                    return (descriptor.str, new)
+                else:
+                    return descriptor.str
         else:
             return (_array_descr(subdtype[0]), subdtype[1])
 
