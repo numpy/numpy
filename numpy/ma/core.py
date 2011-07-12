@@ -143,6 +143,8 @@ default_filler = {'b': True,
                   'u' : 999999,
                   'V' : '???',
                   'U' : 'N/A',
+                  'M8[D]' : np.datetime64('1970-01-01'),
+                  'M8[us]' : np.datetime64('1970-01-01 00:00:00.000000Z')
                   }
 max_filler = ntypes._minvals
 max_filler.update([(k, -np.inf) for k in [np.float32, np.float64]])
@@ -198,6 +200,8 @@ def default_fill_value(obj):
     elif isinstance(obj, np.dtype):
         if obj.subdtype:
             defval = default_filler.get(obj.subdtype[0].kind, '?')
+        elif obj.kind == 'M':
+            defval = default_filler.get(obj.str[1:], '?')
         else:
             defval = default_filler.get(obj.kind, '?')
     elif isinstance(obj, float):
