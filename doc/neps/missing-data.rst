@@ -711,7 +711,7 @@ This gives us the following additions to the PyArrayObject::
     PyArray_Descr *maskna_descr;
     /*
      * Raw data buffer for mask. If the array has the flag
-     * NPY_ARRAY_OWNNAMASK enabled, it owns this memory and
+     * NPY_ARRAY_OWNMASKNA enabled, it owns this memory and
      * must call PyArray_free on it when destroyed.
      */
     npy_mask *maskna_data;
@@ -724,10 +724,10 @@ This gives us the following additions to the PyArrayObject::
 
 There are 2 (or 3) flags which must be added to the array flags::
 
-    NPY_ARRAY_HASNAMASK
-    NPY_ARRAY_OWNNAMASK
+    NPY_ARRAY_HASMASKNA
+    NPY_ARRAY_OWNMASKNA
     /* To possibly add in a later revision */
-    NPY_ARRAY_HARDNAMASK
+    NPY_ARRAY_HARDMASKNA
 
 To allow the easy detection of NA support, and whether an array
 has any missing values, we add the following functions:
@@ -817,7 +817,7 @@ NPY_ITER_ARRAYMASK
     can be only one such mask, and there cannot also be a virtual
     mask.
 
-    As a special case, if the flag NPY_ITER_USE_NAMASK is specified
+    As a special case, if the flag NPY_ITER_USE_MASKNA is specified
     at the same time, the mask for the operand is used instead
     of the operand itself. If the operand has no mask but is
     based on an NA dtype, that mask exposed by the iterator converts
@@ -837,14 +837,14 @@ Iterator NA-array Features
 
 We add several new per-operand flags:
 
-NPY_ITER_USE_NAMASK
+NPY_ITER_USE_MASKNA
     If the operand has an NA dtype, an NA mask, or both, this adds a new
     virtual operand to the end of the operand list which iterates
     over the mask of the particular operand.
 
-NPY_ITER_IGNORE_NAMASK
+NPY_ITER_IGNORE_MASKNA
     If an operand has an NA mask, by default the iterator will raise
-    an exception unless NPY_ITER_USE_NAMASK is specified. This flag
+    an exception unless NPY_ITER_USE_MASKNA is specified. This flag
     disables that check, and is intended for cases where one has first
     checked that all the elements in the array are not NA using the
     PyArray_ContainsNA function.

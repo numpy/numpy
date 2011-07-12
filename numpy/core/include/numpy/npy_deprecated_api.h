@@ -89,4 +89,10 @@
  */
 #define fortran fortran_
 
+/*
+ * Direct access to PyArrayObject fields is deprecated as of NumPy 1.7,
+ * but enabled here through this typedef.
+ */
+typedef PyArrayObject_fieldaccess PyArrayObject;
+
 #endif

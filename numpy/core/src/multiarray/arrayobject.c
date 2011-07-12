@@ -65,6 +65,35 @@ PyArray_Size(PyObject *op)
     }
 }
 
+/*NUMPY_API
+ * Sets the 'base' attribute of the array.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_SetBase(PyArrayObject *arr, PyObject *obj)
+{
+    /*
+     * Don't allow chains of views, always set the base
+     * to the owner of the data
+     */
+    while (PyArray_Check(obj) &&
+                            (PyObject *)arr != obj &&
+                            PyArray_BASE(obj) != NULL) {
+        obj = PyArray_BASE(obj);
+    }
+    /* Disallow circular references */
+    if ((PyObject *)arr == obj) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot create a circular NumPy array 'base' dependency");
+        return -1;
+    }
+    ((PyArrayObject_fieldaccess *)arr)->base = obj;
+
+    return 0;
+}
+
+
 /*NUMPY_API*/
 NPY_NO_EXPORT int
 PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
@@ -1370,7 +1399,7 @@ array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
 {
     PyObject *obj;
     /* nitems will always be 0 */
-    obj = (PyObject *)_pya_malloc(sizeof(PyArrayObject));
+    obj = (PyObject *)_pya_malloc(NPY_SIZEOF_PYARRAYOBJECT);
     PyObject_Init(obj, type);
     return obj;
 }
@@ -1384,7 +1413,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     0,                                          /* ob_size */
 #endif
     "numpy.ndarray",                            /* tp_name */
-    sizeof(PyArrayObject),                      /* tp_basicsize */
+    NPY_SIZEOF_PYARRAYOBJECT,                   /* tp_basicsize */
     0,                                          /* tp_itemsize */
     /* methods */
     (destructor)array_dealloc,                  /* tp_dealloc */

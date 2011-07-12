@@ -1187,7 +1187,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 "need sequence of keys with len > 0 in lexsort");
         return NULL;
     }
-    mps = (PyArrayObject **) _pya_malloc(n*sizeof(PyArrayObject));
+    mps = (PyArrayObject **) _pya_malloc(n*NPY_SIZEOF_PYARRAYOBJECT);
     if (mps == NULL) {
         return PyErr_NoMemory();
     }
