@@ -5,7 +5,7 @@
  * Set to non-zero to make np.array() automatically convert python datetime.date
  * and datetime.datetime to np.datetime64.
  */
-#define NPY_ARRAY_CONVERT_DATETIME 0
+#define NPY_ARRAY_AUTOCONVERT_PYDATETIME 0
 
 NPY_NO_EXPORT char *_datetime_strings[NPY_DATETIME_NUMUNITS];
 
