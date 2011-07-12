@@ -143,8 +143,8 @@ default_filler = {'b': True,
                   'u' : 999999,
                   'V' : '???',
                   'U' : 'N/A',
-                  'M8[D]' : np.datetime64('1970-01-01'),
-                  'M8[us]' : np.datetime64('1970-01-01 00:00:00.000000Z')
+                  'M8[D]' : np.datetime64('NaT', 'D'),
+                  'M8[us]' : np.datetime64('NaT', 'us')
                   }
 max_filler = ntypes._minvals
 max_filler.update([(k, -np.inf) for k in [np.float32, np.float64]])
