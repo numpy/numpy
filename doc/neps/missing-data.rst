@@ -225,27 +225,29 @@ provides a starting point.
 
 For example,::
 
-    >>> np.array([1.0, 2.0, np.NA, 7.0], namasked=True)
-    array([1., 2., NA, 7.], namasked=True)
-    >>> np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]')
+    >>> np.array([1.0, 2.0, np.NA, 7.0], maskna=True)
+    array([1., 2., NA, 7.], maskna=True)
+    >>> np.array([1.0, 2.0, np.NA, 7.0], dtype='NA')
     array([1., 2., NA, 7.], dtype='NA[<f8]')
+    >>> np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f4]')
+    array([1., 2., NA, 7.], dtype='NA[<f4]')
 
 produce arrays with values [1.0, 2.0, <inaccessible>, 7.0] /
-mask [Unmasked, Unmasked, Masked, Unmasked], and
+mask [Exposed, Exposed, Exposed, Hidden], and
 values [1.0, 2.0, <NA bitpattern>, 7.0] respectively.
 
 It may be worth overloading the np.NA __call__ method to accept a dtype,
 returning a zero-dimensional array with a missing value of that dtype.
 Without doing this, NA printouts would look like::
 
-    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], namasked=True))
-    array(NA, dtype='float64', namasked=True)
+    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], maskna=True))
+    array(NA, dtype='float64', maskna=True)
     >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]'))
     array(NA, dtype='NA[<f8]')
 
 but with this, they could be printed as::
 
-    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], namasked=True))
+    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], maskna=True))
     NA('float64')
     >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]'))
     NA('NA[<f8]')
@@ -274,12 +276,12 @@ from another view which doesn't have them masked. For example::
 
     >>> a = np.array([1,2])
     >>> b = a.view()
-    >>> b.flags.hasnamask = True
+    >>> b.flags.hasmaskna = True
     >>> b
-    array([1,2], namasked=True)
+    array([1,2], maskna=True)
     >>> b[0] = np.NA
     >>> b
-    array([NA,2], namasked=True)
+    array([NA,2], maskna=True)
     >>> a
     array([1,2])
     >>> # The underlying number 1 value in 'a[0]' was untouched
@@ -351,10 +353,10 @@ Creating Masked Arrays
 There are two flags which indicate and control the nature of the mask
 used in masked arrays.
 
-First is 'arr.flags.hasnamask', which is True for all masked arrays and
+First is 'arr.flags.hasmaskna', which is True for all masked arrays and
 may be set to True to add a mask to an array which does not have one.
 
-Second is 'arr.flags.ownnamask', which is True if the array owns the
+Second is 'arr.flags.ownmaskna', which is True if the array owns the
 memory to the mask, and False if the array has no mask, or has a view
 into the mask of another array. If this is set to False in a masked
 array, the array will create a copy of the mask so that further modifications
@@ -402,8 +404,16 @@ New functions added to the ndarray are::
         array is unmasked and has the 'NA' part stripped from the
         parameterized type ('NA[f8]' becomes just 'f8').
 
-    arr.view(namasked=True)
-        This is a shortcut for 'a = arr.view(); a.flags.hasnamask=True'.
+    arr.view(maskna=True)
+        This is a shortcut for
+        >>> a = arr.view()
+        >>> a.flags.hasmaskna = True
+
+    arr.view(ownmaskna=True)
+        This is a shortcut for
+        >>> a = arr.view()
+        >>> a.flags.hasmaskna = True
+        >>> a.flags.ownmaskna = True
 
 Element-wise UFuncs With Missing Values
 =======================================
@@ -461,7 +471,7 @@ will also use the unmasked value counts for their calculations if
 
 Some examples::
 
-    >>> a = np.array([1., 3., np.NA, 7.], namasked=True)
+    >>> a = np.array([1., 3., np.NA, 7.], maskna=True)
     >>> np.sum(a)
     array(NA, dtype='<f8', masked=True)
     >>> np.sum(a, skipna=True)
@@ -471,11 +481,11 @@ Some examples::
     >>> np.mean(a, skipna=True)
     3.6666666666666665
 
-    >>> a = np.array([np.NA, np.NA], dtype='f8', namasked=True)
+    >>> a = np.array([np.NA, np.NA], dtype='f8', maskna=True)
     >>> np.sum(a, skipna=True)
     0.0
     >>> np.max(a, skipna=True)
-    array(NA, dtype='<f8', namasked=True)
+    array(NA, dtype='<f8', maskna=True)
     >>> np.mean(a)
     NA('<f8')
     >>> np.mean(a, skipna=True)
@@ -487,18 +497,18 @@ The functions 'np.any' and 'np.all' require some special consideration,
 just as logical_and and logical_or do. Maybe the best way to describe
 their behavior is through a series of examples::
 
-    >>> np.any(np.array([False, False, False], namasked=True))
+    >>> np.any(np.array([False, False, False], maskna=True))
     False
-    >>> np.any(np.array([False, NA, False], namasked=True))
+    >>> np.any(np.array([False, NA, False], maskna=True))
     NA
-    >>> np.any(np.array([False, NA, True], namasked=True))
+    >>> np.any(np.array([False, NA, True], maskna=True))
     True
 
-    >>> np.all(np.array([True, True, True], namasked=True))
+    >>> np.all(np.array([True, True, True], maskna=True))
     True
-    >>> np.all(np.array([True, NA, True], namasked=True))
+    >>> np.all(np.array([True, NA, True], maskna=True))
     NA
-    >>> np.all(np.array([False, NA, True], namasked=True))
+    >>> np.all(np.array([False, NA, True], maskna=True))
     False
 
 Parameterized NA Data Types
@@ -609,14 +619,14 @@ The important part of future-proofing the design is making sure
 the C ABI-level choices and the Python API-level choices have a natural
 transition to multi-NA support. Here is one way multi-NA support could look::
 
-    >>> a = np.array([np.NA(1), 3, np.NA(2)], namasked='multi')
+    >>> a = np.array([np.NA(1), 3, np.NA(2)], maskna='multi')
     >>> np.sum(a)
     NA(1)
     >>> np.sum(a[1:])
     NA(2)
-    >>> b = np.array([np.NA, 2, 5], namasked=True)
+    >>> b = np.array([np.NA, 2, 5], maskna=True)
     >>> a + b
-    array([NA(0), 5, NA(2)], namasked='multi')
+    array([NA(0), 5, NA(2)], maskna='multi')
 
 PEP 3118
 ========
@@ -696,21 +706,21 @@ This gives us the following additions to the PyArrayObject::
     /*
      * Descriptor for the mask dtype.
      *   If no mask: NULL
-     *   If mask   : bool/structured dtype of bools
+     *   If mask   : bool/uint8/structured dtype of mask dtypes
      */
-    PyArray_Descr *maskdescr;
+    PyArray_Descr *maskna_descr;
     /*
      * Raw data buffer for mask. If the array has the flag
      * NPY_ARRAY_OWNNAMASK enabled, it owns this memory and
      * must call PyArray_free on it when destroyed.
      */
-    npy_uint8 *maskdata;
+    npy_mask *maskna_data;
     /*
      * Just like dimensions and strides point into the same memory
      * buffer, we now just make the buffer 3x the nd instead of 2x
      * and use the same buffer.
      */
-    npy_intp *maskstrides;
+    npy_intp *maskna_strides;
 
 There are 2 (or 3) flags which must be added to the array flags::
 
