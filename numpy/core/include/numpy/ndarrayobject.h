@@ -159,12 +159,20 @@ extern "C" CONFUSE_EMACS
                                             (k)*PyArray_STRIDES(obj)[2] + \
                                             (l)*PyArray_STRIDES(obj)[3]))
 
-#define PyArray_XDECREF_ERR(obj) \
-        if (obj && (PyArray_FLAGS(obj) & NPY_ARRAY_UPDATEIFCOPY)) { \
-                PyArray_FLAGS(PyArray_BASE(obj)) |= NPY_ARRAY_WRITEABLE; \
-                PyArray_FLAGS(obj) &= ~NPY_ARRAY_UPDATEIFCOPY; \
-        } \
-        Py_XDECREF(obj)
+static NPY_INLINE void
+PyArray_XDECREF_ERR(PyArrayObject *obj)
+{
+    if (obj) {
+        if (PyArray_FLAGS(obj) & NPY_ARRAY_UPDATEIFCOPY) {
+            PyObject *base = PyArray_BASE(obj);
+            ((PyArrayObject_fieldaccess *)base)->flags |=
+                                                    NPY_ARRAY_WRITEABLE;
+            ((PyArrayObject_fieldaccess *)obj)->flags &=
+                                                    ~NPY_ARRAY_UPDATEIFCOPY;
+        }
+        Py_DECREF(obj);
+    }
+}
 
 #define PyArray_DESCR_REPLACE(descr) do { \
                 PyArray_Descr *_new_; \

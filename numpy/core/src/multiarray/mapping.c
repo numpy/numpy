@@ -277,7 +277,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
 static int
 PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 {
-    PyObject *arr = NULL;
+    PyArrayObject *arr = NULL;
     PyArrayIterObject *it;
     int index;
     int swap;
@@ -290,13 +290,14 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
     }
     descr = mit->ait->ao->descr;
     Py_INCREF(descr);
-    arr = PyArray_FromAny(op, descr, 0, 0, NPY_ARRAY_FORCECAST, NULL);
+    arr = (PyArrayObject *)PyArray_FromAny(op, descr,
+                                0, 0, NPY_ARRAY_FORCECAST, NULL);
     if (arr == NULL) {
         return -1;
     }
     if ((mit->subspace != NULL) && (mit->consec)) {
         if (mit->iteraxes[0] > 0) {  /* then we need to swap */
-            _swap_axes(mit, (PyArrayObject **)&arr, 0);
+            _swap_axes(mit, &arr, 0);
             if (arr == NULL) {
                 return -1;
             }
@@ -307,7 +308,8 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
        to shape of mit->dimensions, mit->nd */
 
     if ((it = (PyArrayIterObject *)\
-         PyArray_BroadcastToShape(arr, mit->dimensions, mit->nd))==NULL) {
+         PyArray_BroadcastToShape((PyObject *)arr,
+                                    mit->dimensions, mit->nd))==NULL) {
         Py_DECREF(arr);
         return -1;
     }
@@ -422,8 +424,8 @@ fancy_indexing_check(PyObject *args)
         for (i = 0; i < n; i++) {
             obj = PyTuple_GET_ITEM(args,i);
             if (PyArray_Check(obj)) {
-                if (PyArray_ISINTEGER(obj) ||
-                    PyArray_ISBOOL(obj)) {
+                if (PyArray_ISINTEGER((PyArrayObject *)obj) ||
+                    PyArray_ISBOOL((PyArrayObject *)obj)) {
                     retval = SOBJ_ISFANCY;
                 }
                 else {
@@ -437,8 +439,8 @@ fancy_indexing_check(PyObject *args)
         }
     }
     else if (PyArray_Check(args)) {
-        if ((PyArray_TYPE(args)==PyArray_BOOL) ||
-            (PyArray_ISINTEGER(args))) {
+        if ((PyArray_TYPE((PyArrayObject *)args)==NPY_BOOL) ||
+            (PyArray_ISINTEGER((PyArrayObject *)args))) {
             return SOBJ_ISFANCY;
         }
         else {
@@ -463,7 +465,8 @@ fancy_indexing_check(PyObject *args)
                 return SOBJ_ISFANCY;
             }
             if (PyArray_Check(obj)) {
-                if (PyArray_ISINTEGER(obj) || PyArray_ISBOOL(obj)) {
+                if (PyArray_ISINTEGER((PyArrayObject *)obj) ||
+                                    PyArray_ISBOOL((PyArrayObject *)obj)) {
                     retval = SOBJ_LISTTUP;
                 }
                 else {
@@ -625,8 +628,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
             return add_new_axes_0d(self, nd);
         }
         /* Allow Boolean mask selection also */
-        if ((PyArray_Check(op) && (PyArray_DIMS(op)==0)
-                    && PyArray_ISBOOL(op))) {
+        if ((PyArray_Check(op) && (PyArray_DIMS((PyArrayObject *)op)==0)
+                                && PyArray_ISBOOL((PyArrayObject *)op))) {
             if (PyObject_IsTrue(op)) {
                 Py_INCREF(self);
                 return (PyObject *)self;
@@ -635,7 +638,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 intp oned = 0;
                 Py_INCREF(self->descr);
                 return PyArray_NewFromDescr(Py_TYPE(self),
-                                            self->descr,
+                                            PyArray_DESCR(self),
                                             1, &oned,
                                             NULL, NULL,
                                             NPY_ARRAY_DEFAULT,
@@ -856,8 +859,9 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
             return self->descr->f->setitem(op, self->data, self);
         }
         if (PyBool_Check(index) || PyArray_IsScalar(index, Bool) ||
-            (PyArray_Check(index) && (PyArray_DIMS(index)==0) &&
-             PyArray_ISBOOL(index))) {
+                        (PyArray_Check(index) &&
+                         (PyArray_DIMS((PyArrayObject *)index)==0) &&
+                         PyArray_ISBOOL((PyArrayObject *)index))) {
             if (PyObject_IsTrue(index)) {
                 return self->descr->f->setitem(op, self->data, self);
             }
@@ -999,8 +1003,9 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
             noellipses = FALSE;
         }
         else if (PyBool_Check(op) || PyArray_IsScalar(op, Bool) ||
-                 (PyArray_Check(op) && (PyArray_DIMS(op)==0) &&
-                  PyArray_ISBOOL(op))) {
+                 (PyArray_Check(op) &&
+                    (PyArray_DIMS((PyArrayObject *)op)==0) &&
+                     PyArray_ISBOOL((PyArrayObject *)op))) {
             noellipses = FALSE;
         }
         else if (PySequence_Check(op)) {
@@ -1157,7 +1162,7 @@ _convert_obj(PyObject *obj, PyArrayIterObject **iter)
     if (PySlice_Check(obj) || (obj == Py_Ellipsis)) {
         return 0;
     }
-    else if (PyArray_Check(obj) && PyArray_ISBOOL(obj)) {
+    else if (PyArray_Check(obj) && PyArray_ISBOOL((PyArrayObject *)obj)) {
         return _nonzero_indices(obj, iter);
     }
     else {
@@ -1455,7 +1460,7 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
 {
     PyArrayMapIterObject *mit;
     PyArray_Descr *indtype;
-    PyObject *arr = NULL;
+    PyArrayObject *arr = NULL;
     int i, n, started, nonindex;
 
     if (fancy == SOBJ_BADARRAY) {
@@ -1512,7 +1517,8 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
      */
 
     /* convert all inputs to iterators */
-    if (PyArray_Check(indexobj) && (PyArray_TYPE(indexobj) == PyArray_BOOL)) {
+    if (PyArray_Check(indexobj) &&
+                    (PyArray_TYPE((PyArrayObject *)indexobj) == NPY_BOOL)) {
         mit->numiter = _nonzero_indices(indexobj, mit->iters);
         if (mit->numiter < 0) {
             goto fail;
@@ -1532,12 +1538,12 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
     else if (PyArray_Check(indexobj) || !PyTuple_Check(indexobj)) {
         mit->numiter = 1;
         indtype = PyArray_DescrFromType(NPY_INTP);
-        arr = PyArray_FromAny(indexobj, indtype, 0, 0,
+        arr = (PyArrayObject *)PyArray_FromAny(indexobj, indtype, 0, 0,
                                 NPY_ARRAY_FORCECAST, NULL);
         if (arr == NULL) {
             goto fail;
         }
-        mit->iters[0] = (PyArrayIterObject *)PyArray_IterNew(arr);
+        mit->iters[0] = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
         if (mit->iters[0] == NULL) {
             Py_DECREF(arr);
             goto fail;

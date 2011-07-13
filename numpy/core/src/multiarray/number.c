@@ -27,13 +27,13 @@ NPY_NO_EXPORT NumericOps n_ops; /* NB: static objects initialized to zero */
 
 /* FIXME - macro contains a return */
 #define SET(op)   temp = PyDict_GetItemString(dict, #op); \
-    if (temp != NULL) {                                   \
-        if (!(PyCallable_Check(temp))) {                  \
-            return -1;                                    \
-        }                                                 \
-        Py_INCREF(temp);                                  \
-        Py_XDECREF(n_ops.op);                             \
-        n_ops.op = temp;                                  \
+    if (temp != NULL) { \
+        if (!(PyCallable_Check(temp))) { \
+            return -1; \
+        } \
+        Py_INCREF(temp); \
+        Py_XDECREF(n_ops.op); \
+        n_ops.op = temp; \
     }
 
 
@@ -289,8 +289,8 @@ array_power_is_scalar(PyObject *o2, double* exp)
         return 1;
     }
     if ((PyArray_IsZeroDim(o2) &&
-         ((PyArray_ISINTEGER(o2) ||
-           (optimize_fpexps && PyArray_ISFLOAT(o2))))) ||
+         ((PyArray_ISINTEGER((PyArrayObject *)o2) ||
+           (optimize_fpexps && PyArray_ISFLOAT((PyArrayObject *)o2))))) ||
         PyArray_IsScalar(o2, Integer) ||
         (optimize_fpexps && PyArray_IsScalar(o2, Floating))) {
         temp = Py_TYPE(o2)->tp_as_number->nb_float(o2);
@@ -613,7 +613,8 @@ array_int(PyArrayObject *v)
      * If we still got an array which can hold references, stop
      * because it could point back at 'v'.
      */
-    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+    if (PyArray_Check(pv) &&
+                PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
@@ -653,7 +654,8 @@ array_float(PyArrayObject *v)
      * If we still got an array which can hold references, stop
      * because it could point back at 'v'.
      */
-    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+    if (PyArray_Check(pv) &&
+                    PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
@@ -689,7 +691,8 @@ array_long(PyArrayObject *v)
      * If we still got an array which can hold references, stop
      * because it could point back at 'v'.
      */
-    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+    if (PyArray_Check(pv) &&
+                    PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
@@ -723,7 +726,8 @@ array_oct(PyArrayObject *v)
      * If we still got an array which can hold references, stop
      * because it could point back at 'v'.
      */
-    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+    if (PyArray_Check(pv) &&
+                    PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
@@ -757,7 +761,8 @@ array_hex(PyArrayObject *v)
      * If we still got an array which can hold references, stop
      * because it could point back at 'v'.
      */
-    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+    if (PyArray_Check(pv) &&
+                    PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;

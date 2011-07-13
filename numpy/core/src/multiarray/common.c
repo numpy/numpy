@@ -92,7 +92,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
      * is NULL.
      */
     if (PyArray_Check(op)) {
-        chktype = PyArray_DESCR(op);
+        chktype = PyArray_DESCR((PyArrayObject *)op);
         Py_INCREF(chktype);
         if (minitype == NULL) {
             return chktype;
@@ -211,7 +211,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
     if (PyObject_HasAttrString(op, "__array__")) {
         ip = PyObject_CallMethod(op, "__array__", NULL);
         if(ip && PyArray_Check(ip)) {
-            chktype = PyArray_DESCR(ip);
+            chktype = PyArray_DESCR((PyArrayObject *)ip);
             Py_INCREF(chktype);
             Py_DECREF(ip);
             goto finish;
@@ -288,7 +288,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
     if (outtype->type_num == PyArray_VOID &&
         minitype->type_num != PyArray_VOID) {
         Py_DECREF(outtype);
-        return PyArray_DescrFromType(PyArray_OBJECT);
+        return PyArray_DescrFromType(NPY_OBJECT);
     }
     return outtype;
 }
@@ -529,13 +529,16 @@ _IsWriteable(PyArrayObject *ap)
      * or a string object (for pickling support memory savings).
      * - this last could be removed if a proper pickleable
      * buffer was added to Python.
+     *
+     * MW: I think it would better to disallow switching from READONLY
+     *     to WRITEABLE like this...
      */
 
     while(PyArray_Check(base)) {
-        if (PyArray_CHKFLAGS(base, NPY_ARRAY_OWNDATA)) {
-            return (Bool) (PyArray_ISWRITEABLE(base));
+        if (PyArray_CHKFLAGS((PyArrayObject *)base, NPY_ARRAY_OWNDATA)) {
+            return (npy_bool) (PyArray_ISWRITEABLE((PyArrayObject *)base));
         }
-        base = PyArray_BASE(base);
+        base = PyArray_BASE((PyArrayObject *)base);
     }
 
     /*

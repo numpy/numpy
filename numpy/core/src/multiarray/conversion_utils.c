@@ -360,7 +360,7 @@ PyArray_PyIntAsInt(PyObject *o)
     long long_value = -1;
     PyObject *obj;
     static char *msg = "an integer is required";
-    PyObject *arr;
+    PyArrayObject *arr;
     PyArray_Descr *descr;
     int ret;
 
@@ -380,16 +380,18 @@ PyArray_PyIntAsInt(PyObject *o)
     descr = &INT_Descr;
     arr = NULL;
     if (PyArray_Check(o)) {
-        if (PyArray_SIZE(o)!=1 || !PyArray_ISINTEGER(o)) {
+        if (PyArray_SIZE((PyArrayObject *)o)!=1 ||
+                                !PyArray_ISINTEGER((PyArrayObject *)o)) {
             PyErr_SetString(PyExc_TypeError, msg);
             return -1;
         }
         Py_INCREF(descr);
-        arr = PyArray_CastToType((PyArrayObject *)o, descr, 0);
+        arr = (PyArrayObject *)PyArray_CastToType((PyArrayObject *)o,
+                                                    descr, 0);
     }
     if (PyArray_IsScalar(o, Integer)) {
         Py_INCREF(descr);
-        arr = PyArray_FromScalar(o, descr);
+        arr = (PyArrayObject *)PyArray_FromScalar(o, descr);
     }
     if (arr != NULL) {
         ret = *((int *)PyArray_DATA(arr));
@@ -449,7 +451,7 @@ PyArray_PyIntAsIntp(PyObject *o)
     longlong long_value = -1;
     PyObject *obj;
     static char *msg = "an integer is required";
-    PyObject *arr;
+    PyArrayObject *arr;
     PyArray_Descr *descr;
     npy_intp ret;
 
@@ -475,16 +477,18 @@ PyArray_PyIntAsIntp(PyObject *o)
     arr = NULL;
 
     if (PyArray_Check(o)) {
-        if (PyArray_SIZE(o)!=1 || !PyArray_ISINTEGER(o)) {
+        if (PyArray_SIZE((PyArrayObject *)o)!=1 ||
+                                !PyArray_ISINTEGER((PyArrayObject *)o)) {
             PyErr_SetString(PyExc_TypeError, msg);
             return -1;
         }
         Py_INCREF(descr);
-        arr = PyArray_CastToType((PyArrayObject *)o, descr, 0);
+        arr = (PyArrayObject *)PyArray_CastToType((PyArrayObject *)o,
+                                                                descr, 0);
     }
     else if (PyArray_IsScalar(o, Integer)) {
         Py_INCREF(descr);
-        arr = PyArray_FromScalar(o, descr);
+        arr = (PyArrayObject *)PyArray_FromScalar(o, descr);
     }
     if (arr != NULL) {
         ret = *((npy_intp *)PyArray_DATA(arr));

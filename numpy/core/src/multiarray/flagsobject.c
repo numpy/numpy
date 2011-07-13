@@ -31,6 +31,13 @@ PyArray_NewFlagsObject(PyObject *obj)
 {
     PyObject *flagobj;
     int flags;
+
+    if (!PyArray_Check(obj)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Need a NumPy array to create a flags object");
+        return NULL;
+    }
+
     if (obj == NULL) {
         flags = NPY_ARRAY_C_CONTIGUOUS |
                 NPY_ARRAY_OWNDATA |
@@ -38,7 +45,7 @@ PyArray_NewFlagsObject(PyObject *obj)
                 NPY_ARRAY_ALIGNED;
     }
     else {
-        flags = PyArray_FLAGS(obj);
+        flags = PyArray_FLAGS((PyArrayObject *)obj);
     }
     flagobj = PyArrayFlags_Type.tp_alloc(&PyArrayFlags_Type, 0);
     if (flagobj == NULL) {

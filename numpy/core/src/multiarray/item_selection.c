@@ -824,7 +824,7 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 
     PyArrayIterObject *it = NULL;
     PyArrayIterObject *rit = NULL;
-    PyObject *ret;
+    PyArrayObject *ret;
     int needcopy = 0, i;
     intp N, size;
     int elsize, swap;
@@ -832,14 +832,16 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArray_ArgSortFunc *argsort;
     BEGIN_THREADS_DEF;
 
-    ret = PyArray_New(Py_TYPE(op), op->nd,
-                          op->dimensions, PyArray_INTP,
-                          NULL, NULL, 0, 0, (PyObject *)op);
+    ret = (PyArrayObject *)PyArray_New(Py_TYPE(op),
+                            PyArray_NDIM(op),
+                            PyArray_DIMS(op),
+                            NPY_INTP,
+                            NULL, NULL, 0, 0, (PyObject *)op);
     if (ret == NULL) {
         return NULL;
     }
     it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, &axis);
-    rit = (PyArrayIterObject *)PyArray_IterAllButAxis(ret, &axis);
+    rit = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)ret, &axis);
     if (rit == NULL || it == NULL) {
         goto fail;
     }
@@ -902,7 +904,7 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 
     Py_DECREF(it);
     Py_DECREF(rit);
-    return ret;
+    return (PyObject *)ret;
 
  fail:
     NPY_END_THREADS;
@@ -1574,7 +1576,8 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     self = (PyAO *)new;
 
     if (n == 2) {
-        PyObject *a = NULL, *indices= NULL, *ret = NULL;
+        PyObject *a = NULL, *ret = NULL;
+        PyArrayObject *indices = NULL;
         intp n1, n2, start, stop, step, count;
         intp *dptr;
 
@@ -1592,7 +1595,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 
         /* count = ceil((stop-start)/step) */
         count = ((stop-start) / step) + (((stop-start) % step) != 0);
-        indices = PyArray_New(&PyArray_Type, 1, &count,
+        indices = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &count,
                               PyArray_INTP, NULL, NULL, 0, 0, NULL);
         if (indices == NULL) {
             Py_DECREF(self);
@@ -1608,7 +1611,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
             Py_DECREF(indices);
             return NULL;
         }
-        ret = PyObject_GetItem(a, indices);
+        ret = PyObject_GetItem(a, (PyObject *)indices);
         Py_DECREF(a);
         Py_DECREF(indices);
         return ret;

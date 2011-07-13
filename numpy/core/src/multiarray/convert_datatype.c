@@ -1752,7 +1752,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
         for (i = 0; i < n; i++) {
             mps[i] = (PyArrayObject *) array_big_item((PyArrayObject *)op, i);
         }
-        if (!PyArray_ISCARRAY(op)) {
+        if (!PyArray_ISCARRAY((PyArrayObject *)op)) {
             for (i = 0; i < n; i++) {
                 PyObject *obj;
                 obj = PyArray_NewCopy(mps[i], NPY_CORDER);
