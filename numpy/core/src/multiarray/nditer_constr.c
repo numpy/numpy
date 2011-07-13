@@ -2859,8 +2859,10 @@ npyiter_allocate_arrays(NpyIter *iter,
             }
             /* If the data will be written to, set UPDATEIFCOPY */
             if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
-                PyArray_FLAGS(temp) |= NPY_ARRAY_UPDATEIFCOPY;
-                PyArray_FLAGS(op[iop]) &= ~NPY_ARRAY_WRITEABLE;
+                ((PyArrayObject_fieldaccess *)temp)->flags |=
+                                                    NPY_ARRAY_UPDATEIFCOPY;
+                ((PyArrayObject_fieldaccess *)op[iop])->flags &=
+                                                    ~NPY_ARRAY_WRITEABLE;
                 Py_INCREF(op[iop]);
                 temp->base = (PyObject *)op[iop];
             }

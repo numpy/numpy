@@ -308,7 +308,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 NPY_NO_EXPORT int
 PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 {
-    PyObject *newarr;
+    PyArrayObject *newarr;
     int itemsize, swap;
     void *fromptr;
     PyArray_Descr *descr;
@@ -324,7 +324,8 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     else {
         descr = PyArray_DESCR(arr);
         Py_INCREF(descr);
-        newarr = PyArray_FromAny(obj, descr, 0,0, NPY_ARRAY_ALIGNED, NULL);
+        newarr = (PyArrayObject *)PyArray_FromAny(obj, descr,
+                                        0,0, NPY_ARRAY_ALIGNED, NULL);
         if (newarr == NULL) {
             return -1;
         }
@@ -489,7 +490,8 @@ PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER order)
 NPY_NO_EXPORT PyObject *
 PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 {
-    PyObject *new = NULL;
+    PyArrayObject *new = NULL;
+    PyArray_Descr *dtype;
     PyTypeObject *subtype;
 
     if (pytype) {
@@ -498,9 +500,10 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     else {
         subtype = Py_TYPE(self);
     }
-    Py_INCREF(self->descr);
-    new = PyArray_NewFromDescr(subtype,
-                               self->descr,
+    dtype = PyArray_DESCR(self);
+    Py_INCREF(dtype);
+    new = (PyArrayObject *)PyArray_NewFromDescr(subtype,
+                               dtype,
                                self->nd, self->dimensions,
                                self->strides,
                                self->data,
@@ -509,10 +512,14 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         return NULL;
     }
     Py_INCREF(self);
-    PyArray_BASE(new) = (PyObject *)self;
+    if (PyArray_SetBase(new, (PyObject *)self) < 0) {
+        Py_DECREF(new);
+        Py_DECREF(type);
+        return NULL;
+    }
 
     if (type != NULL) {
-        if (PyObject_SetAttrString(new, "dtype",
+        if (PyObject_SetAttrString((PyObject *)new, "dtype",
                                    (PyObject *)type) < 0) {
             Py_DECREF(new);
             Py_DECREF(type);
@@ -520,5 +527,5 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         }
         Py_DECREF(type);
     }
-    return new;
+    return (PyObject *)new;
 }

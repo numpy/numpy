@@ -1513,7 +1513,8 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
     npy_intp newdims[MAX_DIMS];
     npy_intp newstrides[MAX_DIMS];
     int i, k, num;
-    PyObject *ret;
+    PyArrayObject *ret;
+    PyArray_Descr *dtype;
 
     num = ndmin - nd;
     for (i = 0; i < num; i++) {
@@ -1525,12 +1526,20 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
         newdims[i] = arr->dimensions[k];
         newstrides[i] = arr->strides[k];
     }
-    Py_INCREF(arr->descr);
-    ret = PyArray_NewFromDescr(Py_TYPE(arr), arr->descr, ndmin,
-            newdims, newstrides, arr->data, arr->flags, (PyObject *)arr);
+    dtype = PyArray_DESCR(arr);
+    Py_INCREF(dtype);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(arr),
+                        dtype, ndmin, newdims, newstrides,
+                        PyArray_DATA(arr), PyArray_FLAGS(arr), (PyObject *)arr);
+    if (ret == NULL) {
+        return NULL;
+    }
     /* steals a reference to arr --- so don't increment here */
-    PyArray_BASE(ret) = (PyObject *)arr;
-    return ret;
+    if (PyArray_SetBase(ret, (PyObject *)arr) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+    return (PyObject *)ret;
 }
 
 
@@ -1545,9 +1554,8 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
 static PyObject *
 _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 {
-    PyObject *op, *ret = NULL;
-    static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
-                         "ndmin", NULL};
+    PyObject *op;
+    PyArrayObject *oparr = NULL, *ret = NULL;
     Bool subok = FALSE;
     Bool copy = TRUE;
     int ndmin = 0, nd;
@@ -1555,6 +1563,9 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     PyArray_Descr *oldtype = NULL;
     NPY_ORDER order = NPY_ANYORDER;
     int flags = 0;
+
+    static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
+                         "ndmin", NULL};
 
     if (PyTuple_GET_SIZE(args) > 2) {
         PyErr_SetString(PyExc_ValueError,
@@ -1579,33 +1590,34 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     /* fast exit if simple call */
     if ((subok && PyArray_Check(op))
             || (!subok && PyArray_CheckExact(op))) {
+        oparr = (PyArrayObject *)op;
         if (type == NULL) {
-            if (!copy && STRIDING_OK(op, order)) {
+            if (!copy && STRIDING_OK(oparr, order)) {
                 Py_INCREF(op);
-                ret = op;
+                ret = oparr;
                 goto finish;
             }
             else {
-                ret = PyArray_NewCopy((PyArrayObject*)op, order);
+                ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
                 goto finish;
             }
         }
         /* One more chance */
-        oldtype = PyArray_DESCR(op);
+        oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, type)) {
-            if (!copy && STRIDING_OK(op, order)) {
+            if (!copy && STRIDING_OK(oparr, order)) {
                 Py_INCREF(op);
-                ret = op;
+                ret = oparr;
                 goto finish;
             }
             else {
-                ret = PyArray_NewCopy((PyArrayObject*)op, order);
+                ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
                 if (oldtype == type) {
                     goto finish;
                 }
                 Py_INCREF(oldtype);
                 Py_DECREF(PyArray_DESCR(ret));
-                PyArray_DESCR(ret) = oldtype;
+                ((PyArrayObject_fieldaccess *)ret)->descr = oldtype;
                 goto finish;
             }
         }
@@ -1618,8 +1630,9 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
         flags |= NPY_ARRAY_C_CONTIGUOUS;
     }
     else if ((order == NPY_FORTRANORDER)
-             /* order == NPY_ANYORDER && */
-             || (PyArray_Check(op) && PyArray_ISFORTRAN(op))) {
+                 /* order == NPY_ANYORDER && */
+                 || (PyArray_Check(op) &&
+                     PyArray_ISFORTRAN((PyArrayObject *)op))) {
         flags |= NPY_ARRAY_F_CONTIGUOUS;
     }
     if (!subok) {
@@ -1628,21 +1641,22 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 
     flags |= NPY_ARRAY_FORCECAST;
     Py_XINCREF(type);
-    ret = PyArray_CheckFromAny(op, type, 0, 0, flags, NULL);
+    ret = (PyArrayObject *)PyArray_CheckFromAny(op, type,
+                                                0, 0, flags, NULL);
 
  finish:
     Py_XDECREF(type);
     if (!ret) {
-        return ret;
+        return (PyObject *)ret;
     }
     else if ((nd=PyArray_NDIM(ret)) >= ndmin) {
-        return ret;
+        return (PyObject *)ret;
     }
     /*
      * create a new array from the same data with ones in the shape
      * steals a reference to ret
      */
-    return _prepend_ones((PyArrayObject *)ret, nd, ndmin);
+    return _prepend_ones(ret, nd, ndmin);
 
 clean_type:
     Py_XDECREF(type);

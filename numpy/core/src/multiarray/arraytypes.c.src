@@ -439,7 +439,8 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
 
     /* Handle case of assigning from an array scalar */
     if (PyArray_Check(op) && PyArray_NDIM((PyArrayObject *)op) == 0) {
-        temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op), op);
+        temp = PyArray_ToScalar(PyArray_BYTES((PyArrayObject *)op),
+                                (PyArrayObject *)op);
         if (temp == NULL) {
             return -1;
         }
@@ -608,11 +609,11 @@ VOID_getitem(char *ip, PyArrayObject *ap)
         if (!ret) {
             return NULL;
         }
+        Py_INCREF(ap);
         if (PyArray_SetBase(ret, (PyObject *)ap) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
-        Py_INCREF(ap);
         PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
         return (PyObject *)ret;
     }
@@ -638,11 +639,11 @@ VOID_getitem(char *ip, PyArrayObject *ap)
                              descr, 1, dims, strides, ip,
                              PyArray_ISWRITEABLE(ap) ? NPY_ARRAY_WRITEABLE : 0,
                              NULL);
+        Py_INCREF(ap);
         if (PyArray_SetBase(u, ap) < 0) {
             Py_DECREF(u);
             return NULL;
         }
-        Py_INCREF(ap);
     }
 #else
     /*
@@ -740,11 +741,11 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         if (!ret) {
             return -1;
         }
+        Py_INCREF(ap);
         if (PyArray_SetBase(ret, (PyObject *)ap) < 0) {
             Py_DECREF(ret);
             return -1;
         }
-        Py_INCREF(ap);
         PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
         res = PyArray_CopyObject(ret, op);
         Py_DECREF(ret);

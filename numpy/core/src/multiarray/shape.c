@@ -595,7 +595,8 @@ PyArray_Squeeze(PyArrayObject *self)
     intp dimensions[MAX_DIMS];
     intp strides[MAX_DIMS];
     int i, j;
-    PyObject *ret;
+    PyArrayObject *ret;
+    PyArray_Descr *dtype;
 
     if (nd == 0) {
         Py_INCREF(self);
@@ -611,9 +612,10 @@ PyArray_Squeeze(PyArrayObject *self)
         }
     }
 
-    Py_INCREF(self->descr);
-    ret = PyArray_NewFromDescr(Py_TYPE(self),
-                               self->descr,
+    dtype = PyArray_DESCR(self);
+    Py_INCREF(dtype);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
+                               dtype,
                                newnd, dimensions,
                                strides, self->data,
                                self->flags,
@@ -621,9 +623,9 @@ PyArray_Squeeze(PyArrayObject *self)
     if (ret == NULL) {
         return NULL;
     }
-    PyArray_FLAGS(ret) &= ~NPY_ARRAY_OWNDATA;
-    PyArray_BASE(ret) = (PyObject *)self;
+    ((PyArrayObject_fieldaccess *)ret)->flags &= ~NPY_ARRAY_OWNDATA;
     Py_INCREF(self);
+    PyArray_SetBase(ret, (PyObject *)self);
     return (PyObject *)ret;
 }
 
@@ -866,13 +868,13 @@ PyArray_Ravel(PyArrayObject *a, NPY_ORDER order)
 
         /* If all the strides matched a contiguous layout, return a view */
         if (i < 0) {
-            PyObject *ret;
+            PyArrayObject *ret;
             npy_intp stride = PyArray_DESCR(a)->elsize;
 
             val[0] = PyArray_SIZE(a);
 
             Py_INCREF(PyArray_DESCR(a));
-            ret = PyArray_NewFromDescr(Py_TYPE(a),
+            ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(a),
                                PyArray_DESCR(a),
                                1, val,
                                &stride,
@@ -881,12 +883,15 @@ PyArray_Ravel(PyArrayObject *a, NPY_ORDER order)
                                (PyObject *)a);
 
             if (ret != NULL) {
-                PyArray_UpdateFlags((PyArrayObject *)ret,
+                PyArray_UpdateFlags(ret,
                             NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS);
                 Py_INCREF(a);
-                PyArray_BASE(ret) = (PyObject *)a;
+                if (PyArray_SetBase(ret, (PyObject *)a) < 0) {
+                    Py_DECREF(ret);
+                    ret = NULL;
+                }
             }
-            return ret;
+            return (PyObject *)ret;
         }
 
     }

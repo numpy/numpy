@@ -43,10 +43,10 @@ static int
 array_shape_set(PyArrayObject *self, PyObject *val)
 {
     int nd;
-    PyObject *ret;
+    PyArrayObject *ret;
 
     /* Assumes C-order */
-    ret = PyArray_Reshape(self, val);
+    ret = (PyArrayObject *)PyArray_Reshape(self, val);
     if (ret == NULL) {
         return -1;
     }
@@ -205,7 +205,7 @@ array_protocol_descr_get(PyArrayObject *self)
 static PyObject *
 array_protocol_strides_get(PyArrayObject *self)
 {
-    if PyArray_ISCONTIGUOUS(self) {
+    if (PyArray_ISCONTIGUOUS(self)) {
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -758,7 +758,7 @@ array_flat_get(PyArrayObject *self)
 static int
 array_flat_set(PyArrayObject *self, PyObject *val)
 {
-    PyObject *arr = NULL;
+    PyArrayObject *arr = NULL;
     int retval = -1;
     PyArrayIterObject *selfit = NULL, *arrit = NULL;
     PyArray_Descr *typecode;
@@ -767,12 +767,12 @@ array_flat_set(PyArrayObject *self, PyObject *val)
 
     typecode = self->descr;
     Py_INCREF(typecode);
-    arr = PyArray_FromAny(val, typecode,
+    arr = (PyArrayObject *)PyArray_FromAny(val, typecode,
                           0, 0, NPY_ARRAY_FORCECAST | FORTRAN_IF(self), NULL);
     if (arr == NULL) {
         return -1;
     }
-    arrit = (PyArrayIterObject *)PyArray_IterNew(arr);
+    arrit = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
     if (arrit == NULL) {
         goto exit;
     }

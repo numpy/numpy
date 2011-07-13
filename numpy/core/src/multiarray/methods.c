@@ -878,28 +878,30 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_wraparray(PyArrayObject *self, PyObject *args)
 {
-    PyObject *arr;
-    PyObject *ret;
+    PyArrayObject *arr, *ret;
+    PyObject *obj;
 
     if (PyTuple_Size(args) < 1) {
         PyErr_SetString(PyExc_TypeError,
                         "only accepts 1 argument");
         return NULL;
     }
-    arr = PyTuple_GET_ITEM(args, 0);
-    if (arr == NULL) {
+    obj = PyTuple_GET_ITEM(args, 0);
+    if (obj == NULL) {
         return NULL;
     }
-    if (!PyArray_Check(arr)) {
+    if (!PyArray_Check(obj)) {
         PyErr_SetString(PyExc_TypeError,
                         "can only be called with ndarray object");
         return NULL;
     }
+    arr = (PyArrayObject *)obj;
 
     if (Py_TYPE(self) != Py_TYPE(arr)){
-        Py_INCREF(PyArray_DESCR(arr));
-        ret = PyArray_NewFromDescr(Py_TYPE(self),
-                                   PyArray_DESCR(arr),
+        PyArray_Descr *dtype = PyArray_DESCR(arr);
+        Py_INCREF(dtype);
+        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
+                                   dtype,
                                    PyArray_NDIM(arr),
                                    PyArray_DIMS(arr),
                                    PyArray_STRIDES(arr), PyArray_DATA(arr),
@@ -907,13 +909,16 @@ array_wraparray(PyArrayObject *self, PyObject *args)
         if (ret == NULL) {
             return NULL;
         }
-        Py_INCREF(arr);
-        PyArray_BASE(ret) = arr;
-        return ret;
+        Py_INCREF(obj);
+        if (PyArray_SetBase(ret, obj) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+        return (PyObject *)ret;
     } else {
         /*The type was set in __array_prepare__*/
         Py_INCREF(arr);
-        return arr;
+        return (PyObject *)arr;
     }
 }
 
@@ -921,30 +926,33 @@ array_wraparray(PyArrayObject *self, PyObject *args)
 static PyObject *
 array_preparearray(PyArrayObject *self, PyObject *args)
 {
-    PyObject *arr;
-    PyObject *ret;
+    PyObject *obj;
+    PyArrayObject *arr, *ret;
+    PyArray_Descr *dtype;
 
     if (PyTuple_Size(args) < 1) {
         PyErr_SetString(PyExc_TypeError,
                         "only accepts 1 argument");
         return NULL;
     }
-    arr = PyTuple_GET_ITEM(args, 0);
-    if (!PyArray_Check(arr)) {
+    obj = PyTuple_GET_ITEM(args, 0);
+    if (!PyArray_Check(obj)) {
         PyErr_SetString(PyExc_TypeError,
                         "can only be called with ndarray object");
         return NULL;
     }
+    arr = (PyArrayObject *)obj;
 
     if (Py_TYPE(self) == Py_TYPE(arr)) {
         /* No need to create a new view */
         Py_INCREF(arr);
-        return arr;
+        return (PyObject *)arr;
     }
 
-    Py_INCREF(PyArray_DESCR(arr));
-    ret = PyArray_NewFromDescr(Py_TYPE(self),
-                               PyArray_DESCR(arr),
+    dtype = PyArray_DESCR(arr);
+    Py_INCREF(dtype);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
+                               dtype,
                                PyArray_NDIM(arr),
                                PyArray_DIMS(arr),
                                PyArray_STRIDES(arr), PyArray_DATA(arr),
@@ -953,8 +961,11 @@ array_preparearray(PyArrayObject *self, PyObject *args)
         return NULL;
     }
     Py_INCREF(arr);
-    PyArray_BASE(ret) = arr;
-    return ret;
+    if (PyArray_SetBase(ret, (PyObject *)arr) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+    return (PyObject *)ret;
 }
 
 
@@ -972,7 +983,7 @@ array_getarray(PyArrayObject *self, PyObject *args)
 
     /* convert to PyArray_Type */
     if (!PyArray_CheckExact(self)) {
-        PyObject *new;
+        PyArrayObject *new;
         PyTypeObject *subtype = &PyArray_Type;
 
         if (!PyType_IsSubtype(Py_TYPE(self), &PyArray_Type)) {
@@ -980,7 +991,7 @@ array_getarray(PyArrayObject *self, PyObject *args)
         }
 
         Py_INCREF(PyArray_DESCR(self));
-        new = PyArray_NewFromDescr(subtype,
+        new = (PyArrayObject *)PyArray_NewFromDescr(subtype,
                                    PyArray_DESCR(self),
                                    PyArray_NDIM(self),
                                    PyArray_DIMS(self),
@@ -991,15 +1002,14 @@ array_getarray(PyArrayObject *self, PyObject *args)
             return NULL;
         }
         Py_INCREF(self);
-        PyArray_BASE(new) = (PyObject *)self;
-        self = (PyArrayObject *)new;
+        PyArray_SetBase(new, (PyObject *)self);
+        self = new;
     }
     else {
         Py_INCREF(self);
     }
 
-    if ((newtype == NULL) ||
-        PyArray_EquivTypes(self->descr, newtype)) {
+    if ((newtype == NULL) || PyArray_EquivTypes(self->descr, newtype)) {
         return (PyObject *)self;
     }
     else {
@@ -1276,13 +1286,14 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
     PyObject* visit;
     char *optr;
     PyArrayIterObject *it;
-    PyObject *copy, *ret, *deepcopy;
+    PyObject *copy, *deepcopy;
+    PyArrayObject *ret;
 
     if (!PyArg_ParseTuple(args, "O", &visit)) {
         return NULL;
     }
-    ret = PyArray_Copy(self);
-    if (PyDataType_REFCHK(self->descr)) {
+    ret = (PyArrayObject *)PyArray_Copy(self);
+    if (PyDataType_REFCHK(PyArray_DESCR(self))) {
         copy = PyImport_ImportModule("copy");
         if (copy == NULL) {
             return NULL;
@@ -1306,7 +1317,7 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
         Py_DECREF(deepcopy);
         Py_DECREF(it);
     }
-    return _ARET(ret);
+    return PyArray_Return(ret);
 }
 
 /* Convert Array to flat list (using getitem) */

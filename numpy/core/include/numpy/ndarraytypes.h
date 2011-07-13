@@ -974,7 +974,7 @@ struct PyArrayIterObject_tag {
         else { \
                 (it)->coordinates[1] = 0; \
                 (it)->coordinates[0]++; \
-                (it)->dataptr += (it)->strides[0] \
+                (it)->dataptr += (it)->strides[0] - \
                         (it)->backstrides[1]; \
         } \
 }
@@ -1271,17 +1271,14 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 
 #define FORTRAN_IF PyArray_FORTRAN_IF
 
-static NPY_INLINE void *
+static NPY_INLINE char *
 PyArray_DATA(PyArrayObject *arr)
 {
     return ((PyArrayObject_fieldaccess *)arr)->data;
 }
 
-static NPY_INLINE char *
-PyArray_BYTES(PyArrayObject *arr)
-{
-    return ((PyArrayObject_fieldaccess *)arr)->data;
-}
+/* Same as PyArray_DATA */
+#define PyArray_BYTES(arr) PyArray_DATA(arr)
 
 static NPY_INLINE npy_intp *
 PyArray_DIMS(PyArrayObject *arr)
