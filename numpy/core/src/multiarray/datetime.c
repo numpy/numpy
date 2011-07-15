@@ -3684,7 +3684,7 @@ recursive_find_object_datetime64_type(PyObject *obj,
 {
     /* Array -> use its metadata */
     if (PyArray_Check(obj)) {
-        PyArrayObject *arr = (PyArrayObject *)arr;
+        PyArrayObject *arr = (PyArrayObject *)obj;
         PyArray_Descr *arr_dtype = PyArray_DESCR(arr);
 
         if (arr_dtype->type_num == NPY_STRING ||
