@@ -4,9 +4,7 @@ Glossary
 
 .. toctree::
 
-.. glossary::
-
-   .. automodule:: numpy.doc.glossary
+.. automodule:: numpy.doc.glossary
 
 Jargon
 ------

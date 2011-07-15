@@ -67,7 +67,7 @@ datetime type with generic units.
 
 
 The datetime type works with many common NumPy functions, for
-example :meth:`arange` can be used to generate ranges of dates.
+example :func:`arange` can be used to generate ranges of dates.
 
 .. admonition:: Example
 
@@ -174,9 +174,7 @@ Here are the date units:
 .. _arrays.dtypes.dateunits:
 
 ======== ================ ======================= ==========================
-      Date unit               Time span              Time span (years)
-------------------------- ----------------------- --------------------------
-  Code       Meaning         Relative Time             Absolute Time
+  Code       Meaning       Time span (relative)    Time span (absolute)
 ======== ================ ======================= ==========================
    Y       year             +- 9.2e18 years         [9.2e18 BC, 9.2e18 AD]
    M       month            +- 7.6e17 years         [7.6e17 BC, 7.6e17 AD]
@@ -189,9 +187,7 @@ And here are the time units:
 .. _arrays.dtypes.timeunits:
 
 ======== ================ ======================= ==========================
-      Time unit               Time span              Time span (years)
-------------------------- ----------------------- --------------------------
-  Code       Meaning         Relative Time             Absolute Time
+  Code       Meaning       Time span (relative)    Time span (absolute)
 ======== ================ ======================= ==========================
    h       hour             +- 1.0e15 years         [1.0e15 BC, 1.0e15 AD]
    m       minute           +- 1.7e13 years         [1.7e13 BC, 1.7e13 AD]
@@ -211,7 +207,7 @@ To allow the datetime to be used in contexts where accounting for weekends
 and holidays is important, NumPy includes a set of functions for
 working with business days.
 
-The function :meth:`busday_offset` allows you to apply offsets
+The function :func:`busday_offset` allows you to apply offsets
 specified in business days to datetimes with a unit of 'day'. By default,
 a business date is defined to be any date which falls on Monday through
 Friday, but this can be customized with a weekmask and a list of holidays.
@@ -225,7 +221,7 @@ Friday, but this can be customized with a weekmask and a list of holidays.
     numpy.datetime64('2011-06-27')
 
 When an input date falls on the weekend or a holiday,
-:meth:`busday_offset` first applies a rule to roll the
+:func:`busday_offset` first applies a rule to roll the
 date to a valid business day, then applies the offset. The
 default rule is 'raise', which simply raises an exception.
 The rules most typically used are 'forward' and 'backward'.
@@ -283,6 +279,6 @@ with one particular choice of weekmask and holidays, there is
 an object :class:`busdaycalendar` which stores the data necessary
 in an optimized form.
 
-The other two functions for business days are :meth:`is_busday`
-and :meth:`busday_count`, which are more straightforward and
+The other two functions for business days are :func:`is_busday`
+and :func:`busday_count`, which are more straightforward and
 not explained here.
