@@ -1440,8 +1440,28 @@ class TestDateTime(TestCase):
         # Default M-F weekmask
         assert_equal(bdd.weekmask, np.array([1,1,1,1,1,0,0], dtype='?'))
 
+        # Check string weekmask with varying whitespace.
+        bdd = np.busdaycalendar(weekmask="Sun TueWed  Thu\tFri")
+        assert_equal(bdd.weekmask, np.array([0,1,1,1,1,0,1], dtype='?'))
+
+        # Check length 7 0/1 string
+        bdd = np.busdaycalendar(weekmask="0011001")
+        assert_equal(bdd.weekmask, np.array([0,0,1,1,0,0,1], dtype='?'))
+
+        # Check length 7 string weekmask.
+        bdd = np.busdaycalendar(weekmask="Mon Tue")
+        assert_equal(bdd.weekmask, np.array([1,1,0,0,0,0,0], dtype='?'))
+
         # All-zeros weekmask should raise
         assert_raises(ValueError, np.busdaycalendar, weekmask=[0,0,0,0,0,0,0])
+        # weekday names must be correct case
+        assert_raises(ValueError, np.busdaycalendar, weekmask="satsun")
+        # All-zeros weekmask should raise
+        assert_raises(ValueError, np.busdaycalendar, weekmask="")
+        # Invalid weekday name codes should raise
+        assert_raises(ValueError, np.busdaycalendar, weekmask="Mon Tue We")
+        assert_raises(ValueError, np.busdaycalendar, weekmask="Max")
+        assert_raises(ValueError, np.busdaycalendar, weekmask="Monday Tue")
 
     def test_datetime_busday_holidays_offset(self):
         # With exactly one holiday
