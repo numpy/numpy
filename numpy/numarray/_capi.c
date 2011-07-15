@@ -1,5 +1,6 @@
 #include <Python.h>
 
+#define NPY_NO_DEPRECATED_API
 #define _libnumarray_MODULE
 #include "include/numpy/libnumarray.h"
 #include "numpy/npy_3kcompat.h"
@@ -1076,7 +1077,7 @@ NA_OutputArray(PyObject *a, NumarrayType t, int requires)
     PyArray_Descr *dtype;
     PyArrayObject *ret;
 
-    if (!PyArray_Check(a) || !PyArray_ISWRITEABLE(a)) {
+    if (!PyArray_Check(a) || !PyArray_ISWRITEABLE((PyArrayObject *)a)) {
         PyErr_Format(PyExc_TypeError,
                 "NA_OutputArray: only writeable arrays work for output.");
         return NULL;
@@ -1087,18 +1088,22 @@ NA_OutputArray(PyObject *a, NumarrayType t, int requires)
         return (PyArrayObject *)a;
     }
     if (t == tAny) {
-        dtype = PyArray_DESCR(a);
+        dtype = PyArray_DESCR((PyArrayObject *)a);
         Py_INCREF(dtype);
     }
     else {
         dtype = PyArray_DescrFromType(t);
     }
-    ret = (PyArrayObject *)PyArray_Empty(PyArray_NDIM(a), PyArray_DIMS(a),
-            dtype, 0);
-    ret->flags |= NPY_UPDATEIFCOPY;
-    ret->base = a;
-    PyArray_FLAGS(a) &= ~NPY_WRITEABLE;
+    ret = (PyArrayObject *)PyArray_Empty(PyArray_NDIM((PyArrayObject *)a),
+                                        PyArray_DIMS((PyArrayObject *)a),
+                                        dtype, 0);
     Py_INCREF(a);
+    if (PyArray_SetBase(ret, a) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+    PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
+    PyArray_CLEARFLAGS((PyArrayObject *)a, NPY_ARRAY_WRITEABLE);
     return ret;
 }
 
@@ -1114,7 +1119,8 @@ NA_OutputArray(PyObject *a, NumarrayType t, int requires)
 static PyArrayObject *
 NA_IoArray(PyObject *a, NumarrayType t, int requires)
 {
-    PyArrayObject *shadow = NA_InputArray(a, t, requires | NPY_UPDATEIFCOPY );
+    PyArrayObject *shadow = NA_InputArray(a, t,
+                                requires | NPY_ARRAY_UPDATEIFCOPY );
 
     if (!shadow) return NULL;
 
@@ -2482,7 +2488,7 @@ _setFromPythonScalarCore(PyArrayObject *a, long offset, PyObject*value, int entr
 static int
 NA_setFromPythonScalar(PyArrayObject *a, long offset, PyObject *value)
 {
-    if (a->flags & WRITABLE)
+    if (PyArray_FLAGS(a) & NPY_ARRAY_WRITEABLE)
         return _setFromPythonScalarCore(a, offset, value, 0);
     else {
         PyErr_Format(
@@ -2745,7 +2751,7 @@ NA_swapAxes(PyArrayObject *array, int x, int y)
     array->strides[x] = array->strides[y];
     array->strides[y] = temp;
 
-    PyArray_UpdateFlags(array, NPY_UPDATE_ALL);
+    PyArray_UpdateFlags(array, NPY_ARRAY_UPDATE_ALL);
 
     return 0;
 }
@@ -2861,20 +2867,20 @@ NA_NewAllFromBuffer(int ndim, maybelong *shape, NumarrayType type,
 static void
 NA_updateAlignment(PyArrayObject *self)
 {
-    PyArray_UpdateFlags(self, NPY_ALIGNED);
+    PyArray_UpdateFlags(self, NPY_ARRAY_ALIGNED);
 }
 
 static void
 NA_updateContiguous(PyArrayObject *self)
 {
-    PyArray_UpdateFlags(self, NPY_CONTIGUOUS | NPY_FORTRAN);
+    PyArray_UpdateFlags(self, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
 }
 
 
 static void
 NA_updateStatus(PyArrayObject *self)
 {
-    PyArray_UpdateFlags(self, NPY_UPDATE_ALL);
+    PyArray_UpdateFlags(self, NPY_ARRAY_UPDATE_ALL);
 }
 
 static int

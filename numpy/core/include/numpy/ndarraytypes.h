@@ -620,6 +620,7 @@ typedef struct tagPyArrayObject {
         PyObject_HEAD
 } PyArrayObject;
 #else
+/* Can't put this in npy_deprecated_api.h like the others */
 typedef PyArrayObject_fieldaccess PyArrayObject;
 #endif
 
@@ -1328,6 +1329,25 @@ PyArray_CHKFLAGS(PyArrayObject *arr, int flags)
     return (PyArray_FLAGS(arr) & flags) == flags;
 }
 
+/*
+ * Enables the specified array flags. Does no checking,
+ * assumes you know what you're doing.
+ */
+static NPY_INLINE void
+PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
+{
+    ((PyArrayObject_fieldaccess *)arr)->flags |= ~flags;
+}
+
+/*
+ * Clears the specified array flags. Does no checking,
+ * assumes you know what you're doing.
+ */
+static NPY_INLINE void
+PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
+{
+    ((PyArrayObject_fieldaccess *)arr)->flags &= ~flags;
+}
 
 static NPY_INLINE npy_intp
 PyArray_ITEMSIZE(PyArrayObject *arr)

@@ -1030,7 +1030,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                      npy_intp *dims, npy_intp *strides, void *data,
                      int flags, PyObject *obj)
 {
-    PyArrayObject *self;
+    PyArrayObject_fieldaccess *self;
     int i;
     size_t sd;
     npy_intp largest;
@@ -1118,7 +1118,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         largest /= dim;
     }
 
-    self = (PyArrayObject *) subtype->tp_alloc(subtype, 0);
+    self = (PyArrayObject_fieldaccess *) subtype->tp_alloc(subtype, 0);
     if (self == NULL) {
         Py_DECREF(descr);
         return NULL;
@@ -2063,15 +2063,13 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                 return NULL;
             }
             if (flags & NPY_ARRAY_UPDATEIFCOPY)  {
-                ((PyArrayObject_fieldaccess *)ret)->flags |=
-                                                    NPY_ARRAY_UPDATEIFCOPY;
+                Py_INCREF(arr);
                 if (PyArray_SetBase(ret, (PyObject *)arr) < 0) {
                     Py_DECREF(ret);
                     return NULL;
                 }
-                ((PyArrayObject_fieldaccess *)ret->base)->flags &=
-                                                    ~NPY_ARRAY_WRITEABLE;
-                Py_INCREF(arr);
+                PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
+                PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEABLE);
             }
         }
         /*
@@ -2136,11 +2134,13 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             return NULL;
         }
         if (flags & NPY_ARRAY_UPDATEIFCOPY)  {
-            ret->flags |= NPY_ARRAY_UPDATEIFCOPY;
-            ret->base = (PyObject *)arr;
-            ((PyArrayObject_fieldaccess *)ret->base)->flags &=
-                                                    ~NPY_ARRAY_WRITEABLE;
             Py_INCREF(arr);
+            if (PyArray_SetBase(ret, (PyObject *)arr) < 0) {
+                Py_DECREF(ret);
+                return NULL;
+            }
+            PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
+            PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEABLE);
         }
     }
     return (PyObject *)ret;
@@ -2153,7 +2153,8 @@ PyArray_FromStructInterface(PyObject *input)
     PyArray_Descr *thetype = NULL;
     char buf[40];
     PyArrayInterface *inter;
-    PyObject *attr, *r;
+    PyObject *attr;
+    PyArrayObject *ret;
     char endian = PyArray_NATBYTE;
 
     attr = PyObject_GetAttrString(input, "__array_struct__");
@@ -2189,18 +2190,18 @@ PyArray_FromStructInterface(PyObject *input)
         }
     }
 
-    r = PyArray_NewFromDescr(&PyArray_Type, thetype,
+    ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, thetype,
                              inter->nd, inter->shape,
                              inter->strides, inter->data,
                              inter->flags, NULL);
     Py_INCREF(input);
-    if (PyArray_SetBase(r, input) < 0) {
-        Py_DECREF(r);
+    if (PyArray_SetBase(ret, input) < 0) {
+        Py_DECREF(ret);
         return NULL;
     }
     Py_DECREF(attr);
-    PyArray_UpdateFlags((PyArrayObject *)r, NPY_ARRAY_UPDATE_ALL);
-    return r;
+    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
+    return (PyObject *)ret;
 
  fail:
     PyErr_SetString(PyExc_ValueError, "invalid __array_struct__");
@@ -2497,13 +2498,13 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
 NPY_NO_EXPORT PyObject *
 PyArray_FromDims(int nd, int *d, int type)
 {
-    PyObject *ret;
+    PyArrayObject *ret;
     char msg[] = "PyArray_FromDims: use PyArray_SimpleNew.";
 
     if (DEPRECATE(msg) < 0) {
         return NULL;
     }
-    ret = PyArray_FromDimsAndDataAndDescr(nd, d,
+    ret = (PyArrayObject *)PyArray_FromDimsAndDataAndDescr(nd, d,
                                           PyArray_DescrFromType(type),
                                           NULL);
     /*
@@ -2511,10 +2512,10 @@ PyArray_FromDims(int nd, int *d, int type)
      * relied on that.  Better keep it the same. If
      * Object type, then it's already been set to zero, though.
      */
-    if (ret && (PyArray_DESCR(ret)->type_num != PyArray_OBJECT)) {
+    if (ret && (PyArray_DESCR(ret)->type_num != NPY_OBJECT)) {
         memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
     }
-    return ret;
+    return (PyObject *)ret;
 }
 
 /* end old calls */
@@ -3286,7 +3287,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_Arange(double start, double stop, double step, int type_num)
 {
     npy_intp length;
-    PyObject *range;
+    PyArrayObject *range;
     PyArray_ArrFuncs *funcs;
     PyObject *obj;
     int ret;
@@ -3301,7 +3302,7 @@ PyArray_Arange(double start, double stop, double step, int type_num)
         return PyArray_New(&PyArray_Type, 1, &length, type_num,
                            NULL, NULL, 0, 0, NULL);
     }
-    range = PyArray_New(&PyArray_Type, 1, &length, type_num,
+    range = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &length, type_num,
                         NULL, NULL, 0, 0, NULL);
     if (range == NULL) {
         return NULL;
@@ -3313,34 +3314,34 @@ PyArray_Arange(double start, double stop, double step, int type_num)
      * if length > 2, then call the inner loop, otherwise stop
      */
     obj = PyFloat_FromDouble(start);
-    ret = funcs->setitem(obj, PyArray_DATA(range), (PyArrayObject *)range);
+    ret = funcs->setitem(obj, PyArray_DATA(range), range);
     Py_DECREF(obj);
     if (ret < 0) {
         goto fail;
     }
     if (length == 1) {
-        return range;
+        return (PyObject *)range;
     }
     obj = PyFloat_FromDouble(start + step);
     ret = funcs->setitem(obj, PyArray_BYTES(range)+PyArray_ITEMSIZE(range),
-                         (PyArrayObject *)range);
+                         range);
     Py_DECREF(obj);
     if (ret < 0) {
         goto fail;
     }
     if (length == 2) {
-        return range;
+        return (PyObject *)range;
     }
     if (!funcs->fill) {
         PyErr_SetString(PyExc_ValueError, "no fill-function for data-type.");
         Py_DECREF(range);
         return NULL;
     }
-    funcs->fill(PyArray_DATA(range), length, (PyArrayObject *)range);
+    funcs->fill(PyArray_DATA(range), length, range);
     if (PyErr_Occurred()) {
         goto fail;
     }
-    return range;
+    return (PyObject *)range;
 
  fail:
     Py_DECREF(range);
@@ -3427,7 +3428,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
 NPY_NO_EXPORT PyObject *
 PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr *dtype)
 {
-    PyObject *range;
+    PyArrayObject *range;
     PyArray_ArrFuncs *funcs;
     PyObject *next, *err;
     npy_intp length;
@@ -3492,10 +3493,10 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     }
     if (length <= 0) {
         length = 0;
-        range = PyArray_SimpleNewFromDescr(1, &length, dtype);
+        range = (PyArrayObject *)PyArray_SimpleNewFromDescr(1, &length, dtype);
         Py_DECREF(step);
         Py_DECREF(start);
-        return range;
+        return (PyObject *)range;
     }
 
     /*
@@ -3511,7 +3512,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         swap = 0;
     }
 
-    range = PyArray_SimpleNewFromDescr(1, &length, native);
+    range = (PyArrayObject *)PyArray_SimpleNewFromDescr(1, &length, native);
     if (range == NULL) {
         goto fail;
     }
@@ -3521,15 +3522,14 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
      * if length > 2, then call the inner loop, otherwise stop
      */
     funcs = PyArray_DESCR(range)->f;
-    if (funcs->setitem(
-                start, PyArray_DATA(range), (PyArrayObject *)range) < 0) {
+    if (funcs->setitem(start, PyArray_DATA(range), range) < 0) {
         goto fail;
     }
     if (length == 1) {
         goto finish;
     }
     if (funcs->setitem(next, PyArray_BYTES(range)+PyArray_ITEMSIZE(range),
-                       (PyArrayObject *)range) < 0) {
+                       range) < 0) {
         goto fail;
     }
     if (length == 2) {
@@ -3540,22 +3540,24 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         Py_DECREF(range);
         goto fail;
     }
-    funcs->fill(PyArray_DATA(range), length, (PyArrayObject *)range);
+    funcs->fill(PyArray_DATA(range), length, range);
     if (PyErr_Occurred()) {
         goto fail;
     }
  finish:
+    /* TODO: This swapping could be handled on the fly by the nditer */
     if (swap) {
         PyObject *new;
-        new = PyArray_Byteswap((PyArrayObject *)range, 1);
+        new = PyArray_Byteswap(range, 1);
         Py_DECREF(new);
         Py_DECREF(PyArray_DESCR(range));
-        PyArray_DESCR(range) = dtype;  /* steals the reference */
+        /* steals the reference */
+        ((PyArrayObject_fieldaccess *)range)->descr = dtype;
     }
     Py_DECREF(start);
     Py_DECREF(step);
     Py_DECREF(next);
-    return range;
+    return (PyObject *)range;
 
  fail:
     Py_DECREF(start);
@@ -3689,7 +3691,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
             err = 1;
         }
         else {
-            PyArray_DIM(r,0) = *nread;
+            PyArray_DIMS(r)[0] = *nread;
             r->data = tmp;
         }
     }
@@ -3771,7 +3773,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
             return PyErr_NoMemory();
         }
         ret->data = tmp;
-        PyArray_DIM(ret,0) = nread;
+        PyArray_DIMS(ret)[0] = nread;
     }
     return (PyObject *)ret;
 }

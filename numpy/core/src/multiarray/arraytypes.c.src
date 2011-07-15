@@ -578,10 +578,10 @@ VOID_getitem(char *ip, PyArrayObject *ap)
             /* update alignment based on offset */
             if ((new->alignment > 1)
                     && ((((intp)(ip+offset)) % new->alignment) != 0)) {
-                ((PyArrayObject_fieldaccess *)ap)->flags &= ~NPY_ARRAY_ALIGNED;
+                PyArray_CLEARFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
             else {
-                ((PyArrayObject_fieldaccess *)ap)->flags |= NPY_ARRAY_ALIGNED;
+                PyArray_ENABLEFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
             PyTuple_SET_ITEM(ret, i, new->f->getitem(ip+offset, ap));
             ((PyArrayObject_fieldaccess *)ap)->flags = savedflags;
@@ -708,10 +708,10 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
             /* remember to update alignment flags */
             if ((new->alignment > 1)
                     && ((((intp)(ip+offset)) % new->alignment) != 0)) {
-                ((PyArrayObject_fieldaccess *)ap)->flags &= ~NPY_ARRAY_ALIGNED;
+                PyArray_CLEARFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
             else {
-                ((PyArrayObject_fieldaccess *)ap)->flags |= NPY_ARRAY_ALIGNED;
+                PyArray_ENABLEFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
             res = new->f->setitem(PyTuple_GET_ITEM(op, i), ip+offset, ap);
             ((PyArrayObject_fieldaccess *)ap)->flags = savedflags;
@@ -2222,10 +2222,10 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
             ((PyArrayObject_fieldaccess *)ap)->descr = descr;
             ((PyArrayObject_fieldaccess *)ap)->flags = savedflags;
             if ((new->alignment > 1) && !__ALIGNED(ip+offset, new->alignment)) {
-                ((PyArrayObject_fieldaccess *)ap)->flags &= ~NPY_ARRAY_ALIGNED;
+                PyArray_CLEARFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
             else {
-                ((PyArrayObject_fieldaccess *)ap)->flags |= NPY_ARRAY_ALIGNED;
+                PyArray_ENABLEFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
             if (new->f->nonzero(ip+offset, ap)) {
                 nonz = TRUE;

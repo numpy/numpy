@@ -623,9 +623,12 @@ PyArray_Squeeze(PyArrayObject *self)
     if (ret == NULL) {
         return NULL;
     }
-    ((PyArrayObject_fieldaccess *)ret)->flags &= ~NPY_ARRAY_OWNDATA;
+    PyArray_CLEARFLAGS(ret, NPY_ARRAY_OWNDATA);
     Py_INCREF(self);
-    PyArray_SetBase(ret, (PyObject *)self);
+    if (PyArray_SetBase(ret, (PyObject *)self) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
     return (PyObject *)ret;
 }
 

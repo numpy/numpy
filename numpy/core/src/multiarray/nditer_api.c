@@ -1864,7 +1864,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
                                     (int)iop, (int)op_transfersize);
 
                 if (op_itflags[iop] & NPY_OP_ITFLAG_WRITEMASKED) {
-                    npy_uint8 *maskptr;
+                    npy_mask *maskptr;
 
                     /*
                      * The mask pointer may be in the buffer or in
@@ -1873,10 +1873,10 @@ npyiter_copy_from_buffers(NpyIter *iter)
                     delta = (ptrs[maskop] - buffers[maskop]);
                     if (0 <= delta &&
                                 delta <= buffersize*dtypes[maskop]->elsize) {
-                        maskptr = buffers[maskop];
+                        maskptr = (npy_mask *)buffers[maskop];
                     }
                     else {
-                        maskptr = ad_ptrs[maskop];
+                        maskptr = (npy_mask *)ad_ptrs[maskop];
                     }
 
                     PyArray_TransferMaskedStridedToNDim(ndim_transfer,
