@@ -177,15 +177,13 @@ class $name(pu.PolyBase) :
         format = "%s(%s, %s, %s)"
         coef = repr(self.coef)[6:-1]
         domain = repr(self.domain)[6:-1]
-        window = repr(self.domain)[6:-1]
+        window = repr(self.window)[6:-1]
         return format % ('$name', coef, domain, window)
 
     def __str__(self) :
-        format = "%s(%s, %s, %s)"
-        coef = str(self.coef)[6:-1]
-        domain = str(self.domain)[6:-1]
-        window = str(self.domain)[6:-1]
-        return format % ('$nick', coef, domain, window)
+        format = "%s(%s)"
+        coef = str(self.coef)
+        return format % ('$nick', coef)
 
     # Pickle and copy
 
