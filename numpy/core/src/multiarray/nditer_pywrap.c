@@ -2077,7 +2077,10 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
                         &innerstride, dataptr,
                         self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0, NULL);
     Py_INCREF(self);
-    ((PyArrayObject *)ret)->base = (PyObject *)self;
+    if (PyArray_SetBase(ret, (PyObject *)self) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
 
     PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
 

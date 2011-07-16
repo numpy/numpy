@@ -1132,14 +1132,14 @@ gentype_struct_get(PyObject *self)
     inter = (PyArrayInterface *)PyArray_malloc(sizeof(PyArrayInterface));
     inter->two = 2;
     inter->nd = 0;
-    inter->flags = arr->flags;
+    inter->flags = PyArray_FLAGS(arr);
     inter->flags &= ~(NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_OWNDATA);
     inter->flags |= NPY_ARRAY_NOTSWAPPED;
-    inter->typekind = arr->descr->kind;
-    inter->itemsize = arr->descr->elsize;
+    inter->typekind = PyArray_DESCR(arr)->kind;
+    inter->itemsize = PyArray_DESCR(arr)->elsize;
     inter->strides = NULL;
     inter->shape = NULL;
-    inter->data = arr->data;
+    inter->data = PyArray_DATA(arr);
     inter->descr = NULL;
 
     ret = NpyCapsule_FromVoidPtrAndDesc(inter, arr, gentype_struct_free);

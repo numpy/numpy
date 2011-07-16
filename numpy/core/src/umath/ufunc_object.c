@@ -3470,7 +3470,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
         return NULL;
     }
     /* Check to see if input is zero-dimensional */
-    if (mp->nd == 0) {
+    if (PyArray_NDIM(mp) == 0) {
         PyErr_Format(PyExc_TypeError, "cannot %s on a scalar",
                      _reduce_type[operation]);
         Py_XDECREF(otype);
@@ -3489,9 +3489,9 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     }
 
     if (axis < 0) {
-        axis += mp->nd;
+        axis += PyArray_NDIM(mp);
     }
-    if (axis < 0 || axis >= mp->nd) {
+    if (axis < 0 || axis >= PyArray_NDIM(mp)) {
         PyErr_SetString(PyExc_ValueError, "axis not in array");
         Py_XDECREF(otype);
         Py_DECREF(mp);
@@ -3502,7 +3502,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
       * unless otype already specified.
       */
     if (otype == NULL && out != NULL) {
-        otype = out->descr;
+        otype = PyArray_DESCR(out);
         Py_INCREF(otype);
     }
     if (otype == NULL) {
@@ -3517,7 +3517,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
             if (PyTypeNum_ISBOOL(typenum)) {
                 typenum = PyArray_LONG;
             }
-            else if ((size_t)mp->descr->elsize < sizeof(long)) {
+            else if ((size_t)PyArray_DESCR(mp)->elsize < sizeof(long)) {
                 if (PyTypeNum_ISUNSIGNED(typenum)) {
                     typenum = PyArray_ULONG;
                 }
@@ -4324,16 +4324,16 @@ ufunc_outer(PyUFuncObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     /* Construct new shape tuple */
-    shape1 = PyTuple_New(ap1->nd);
+    shape1 = PyTuple_New(PyArray_NDIM(ap1));
     if (shape1 == NULL) {
         goto fail;
     }
-    for (i = 0; i < ap1->nd; i++) {
+    for (i = 0; i < PyArray_NDIM(ap1); i++) {
         PyTuple_SET_ITEM(shape1, i,
-                PyLong_FromLongLong((longlong)ap1->dimensions[i]));
+                PyLong_FromLongLong((longlong)PyArray_DIMS(ap1)[i]));
     }
-    shape2 = PyTuple_New(ap2->nd);
-    for (i = 0; i < ap2->nd; i++) {
+    shape2 = PyTuple_New(PyArray_NDIM(ap2));
+    for (i = 0; i < PyArray_NDIM(ap2); i++) {
         PyTuple_SET_ITEM(shape2, i, PyInt_FromLong((long) 1));
     }
     if (shape2 == NULL) {
