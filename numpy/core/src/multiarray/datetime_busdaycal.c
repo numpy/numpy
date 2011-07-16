@@ -138,7 +138,8 @@ invalid_weekmask_string:
     /* Something like [1,1,1,1,1,0,0] */
     else if (PySequence_Check(obj)) {
         if (PySequence_Size(obj) != 7 ||
-                (PyArray_Check(obj) && PyArray_NDIM(obj) != 1)) {
+                        (PyArray_Check(obj) &&
+                         PyArray_NDIM((PyArrayObject *)obj) != 1)) {
             PyErr_SetString(PyExc_ValueError,
                 "A business day weekmask array must have length 7");
             Py_DECREF(obj);

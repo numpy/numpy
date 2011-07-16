@@ -45,7 +45,7 @@ array_getreadbuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
         return -1;
     }
     if (PyArray_ISONESEGMENT(self)) {
-        *ptrptr = self->data;
+        *ptrptr = PyArray_DATA(self);
         return PyArray_NBYTES(self);
     }
     PyErr_SetString(PyExc_ValueError, "array is not a single segment");
@@ -154,7 +154,7 @@ _is_natively_aligned_at(PyArray_Descr *descr,
 {
     int k;
 
-    if ((Py_ssize_t)(arr->data) % descr->alignment != 0) {
+    if ((Py_ssize_t)(PyArray_DATA(arr)) % descr->alignment != 0) {
         return 0;
     }
 
@@ -166,9 +166,9 @@ _is_natively_aligned_at(PyArray_Descr *descr,
         return 0;
     }
 
-    for (k = 0; k < arr->nd; ++k) {
-        if (arr->dimensions[k] > 1) {
-            if (arr->strides[k] % descr->alignment != 0) {
+    for (k = 0; k < PyArray_NDIM(arr); ++k) {
+        if (PyArray_DIM(arr, k) > 1) {
+            if (PyArray_STRIDE(arr, k) % descr->alignment != 0) {
                 return 0;
             }
         }

@@ -86,7 +86,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
     n3 = (sep ? strlen((const char *)sep) : 0);
     if (n3 == 0) {
         /* binary data */
-        if (PyDataType_FLAGCHK(self->descr, NPY_LIST_PICKLE)) {
+        if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_LIST_PICKLE)) {
             PyErr_SetString(PyExc_ValueError, "cannot write " \
                     "object arrays to a file in "   \
                     "binary mode");
@@ -100,15 +100,15 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 #if defined (_MSC_VER) && defined(_WIN64)
             /* Workaround Win64 fwrite() bug. Ticket #1660 */
             {
-                npy_intp maxsize = 2147483648 / self->descr->elsize;
+                npy_intp maxsize = 2147483648 / PyArray_DESCR(self)->elsize;
                 npy_intp chunksize;
 
                 n = 0;
                 while (size > 0) {
                     chunksize = (size > maxsize) ? maxsize : size;
                     n2 = fwrite((const void *)
-                             ((char *)self->data + (n * self->descr->elsize)),
-                             (size_t) self->descr->elsize,
+                             ((char *)PyArray_DATA(self) + (n * PyArray_DESCR(self)->elsize)),
+                             (size_t) PyArray_DESCR(self)->elsize,
                              (size_t) chunksize, fp);
                     if (n2 < chunksize) {
                         break;
@@ -119,8 +119,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                 size = PyArray_SIZE(self);
             }
 #else
-            n = fwrite((const void *)self->data,
-                    (size_t) self->descr->elsize,
+            n = fwrite((const void *)PyArray_DATA(self),
+                    (size_t) PyArray_DESCR(self)->elsize,
                     (size_t) size, fp);
 #endif
             NPY_END_ALLOW_THREADS;
@@ -138,7 +138,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             NPY_BEGIN_THREADS;
             while (it->index < it->size) {
                 if (fwrite((const void *)it->dataptr,
-                            (size_t) self->descr->elsize,
+                            (size_t) PyArray_DESCR(self)->elsize,
                             1, fp) < 1) {
                     NPY_END_THREADS;
                     PyErr_Format(PyExc_IOError,
@@ -163,7 +163,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             PyArray_IterNew((PyObject *)self);
         n4 = (format ? strlen((const char *)format) : 0);
         while (it->index < it->size) {
-            obj = self->descr->f->getitem(it->dataptr, self);
+            obj = PyArray_DESCR(self)->f->getitem(it->dataptr, self);
             if (obj == NULL) {
                 Py_DECREF(it);
                 return -1;
@@ -266,7 +266,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
     numbytes = PyArray_NBYTES(self);
     if ((PyArray_ISCONTIGUOUS(self) && (order == NPY_CORDER))
         || (PyArray_ISFORTRAN(self) && (order == NPY_FORTRANORDER))) {
-        ret = PyBytes_FromStringAndSize(self->data, (Py_ssize_t) numbytes);
+        ret = PyBytes_FromStringAndSize(PyArray_DATA(self), (Py_ssize_t) numbytes);
     }
     else {
         PyObject *new;
@@ -293,7 +293,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
         }
         dptr = PyBytes_AS_STRING(ret);
         index = it->size;
-        elsize = self->descr->elsize;
+        elsize = PyArray_DESCR(self)->elsize;
         while (index--) {
             memcpy(dptr, it->dataptr, elsize);
             dptr += elsize;
@@ -315,7 +315,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     intp size;
     PyArray_CopySwapFunc *copyswap;
 
-    itemsize = arr->descr->elsize;
+    itemsize = PyArray_DESCR(arr)->elsize;
     if (PyArray_ISOBJECT(arr)) {
         fromptr = &obj;
         swap = 0;
@@ -333,11 +333,11 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
         swap = (PyArray_ISNOTSWAPPED(arr) != PyArray_ISNOTSWAPPED(newarr));
     }
     size=PyArray_SIZE(arr);
-    copyswap = arr->descr->f->copyswap;
+    copyswap = PyArray_DESCR(arr)->f->copyswap;
     if (PyArray_ISONESEGMENT(arr)) {
         char *toptr=PyArray_DATA(arr);
         PyArray_FillWithScalarFunc* fillwithscalar =
-            arr->descr->f->fillwithscalar;
+            PyArray_DESCR(arr)->f->fillwithscalar;
         if (fillwithscalar && PyArray_ISALIGNED(arr)) {
             copyswap(fromptr, NULL, swap, newarr);
             fillwithscalar(toptr, size, fromptr, arr);
@@ -504,10 +504,10 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     Py_INCREF(dtype);
     new = (PyArrayObject *)PyArray_NewFromDescr(subtype,
                                dtype,
-                               self->nd, self->dimensions,
-                               self->strides,
-                               self->data,
-                               self->flags, (PyObject *)self);
+                               PyArray_NDIM(self), PyArray_DIMS(self),
+                               PyArray_STRIDES(self),
+                               PyArray_DATA(self),
+                               PyArray_FLAGS(self), (PyObject *)self);
     if (new == NULL) {
         return NULL;
     }

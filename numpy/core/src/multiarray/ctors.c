@@ -1976,7 +1976,6 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     int copy = 0;
     int arrflags;
     PyArray_Descr *oldtype;
-    char *msg = "cannot copy back to a read-only array";
     PyTypeObject *subtype;
     NPY_CASTING casting = NPY_SAFE_CASTING;
 
@@ -2024,6 +2023,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     if ((flags & NPY_ARRAY_ENSURECOPY) ||
                             PyArray_EquivTypes(oldtype, newtype)) {
         arrflags = arr->flags;
+        printf("flags: %d sizeof %d\n", arr->flags, (int)sizeof(PyArrayObject));
         if (arr->nd <= 1 && (flags & NPY_ARRAY_F_CONTIGUOUS)) {
             flags |= NPY_ARRAY_C_CONTIGUOUS;
         }
@@ -2040,9 +2040,10 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
         if (copy) {
             if ((flags & NPY_ARRAY_UPDATEIFCOPY) &&
-                (!PyArray_ISWRITEABLE(arr))) {
+                                (!PyArray_ISWRITEABLE(arr))) {
                 Py_DECREF(newtype);
-                PyErr_SetString(PyExc_ValueError, msg);
+                PyErr_SetString(PyExc_ValueError,
+                        "cannot copy back to a read-only array");
                 return NULL;
             }
             if ((flags & NPY_ARRAY_ENSUREARRAY)) {
@@ -2112,9 +2113,10 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
      */
     else {
         if ((flags & NPY_ARRAY_UPDATEIFCOPY) &&
-            (!PyArray_ISWRITEABLE(arr))) {
+                            (!PyArray_ISWRITEABLE(arr))) {
             Py_DECREF(newtype);
-            PyErr_SetString(PyExc_ValueError, msg);
+            PyErr_SetString(PyExc_ValueError,
+                    "cannot copy back to a read-only array B");
             return NULL;
         }
         if ((flags & NPY_ARRAY_ENSUREARRAY)) {
@@ -2239,17 +2241,23 @@ PyArray_FromInterface(PyObject *input)
     }
     if (!PyDict_Check(inter)) {
         Py_DECREF(inter);
-        return Py_NotImplemented;
+        PyErr_SetString(PyExc_ValueError,
+                "Invalid __array_interface__ value, must be a dict");
+        return NULL;
     }
     shape = PyDict_GetItemString(inter, "shape");
     if (shape == NULL) {
         Py_DECREF(inter);
-        return Py_NotImplemented;
+        PyErr_SetString(PyExc_ValueError,
+                "Missing __array_interface__ shape");
+        return NULL;
     }
     tstr = PyDict_GetItemString(inter, "typestr");
     if (tstr == NULL) {
         Py_DECREF(inter);
-        return Py_NotImplemented;
+        PyErr_SetString(PyExc_ValueError,
+                "Missing __array_interface__ typestr");
+        return NULL;
     }
 
     attr = PyDict_GetItemString(inter, "data");
@@ -2265,7 +2273,7 @@ PyArray_FromInterface(PyObject *input)
         if (res < 0) {
             PyErr_Clear();
             res = PyObject_AsReadBuffer(
-                    item, (const void **)&data, &buffer_len);
+                        item, (const void **)&data, &buffer_len);
             if (res < 0) {
                 goto fail;
             }
@@ -2276,7 +2284,7 @@ PyArray_FromInterface(PyObject *input)
             longlong num = PyLong_AsLongLong(attr);
             if (error_converting(num)) {
                 PyErr_SetString(PyExc_TypeError,
-                                "offset "\
+                                "__array_interface__ offset "
                                 "must be an integer");
                 goto fail;
             }
@@ -2288,7 +2296,7 @@ PyArray_FromInterface(PyObject *input)
         PyObject *dataptr;
         if (PyTuple_GET_SIZE(attr) != 2) {
             PyErr_SetString(PyExc_TypeError,
-                            "data must return "     \
+                            "__array_interface__ data must be " \
                             "a 2-tuple with (data pointer "\
                             "integer, read-only flag)");
             goto fail;
@@ -2299,7 +2307,7 @@ PyArray_FromInterface(PyObject *input)
                          "%p", (void **)&data);
             if (res < 1) {
                 PyErr_SetString(PyExc_TypeError,
-                                "data string cannot be " \
+                                "__array_interface__ data string cannot be " \
                                 "converted");
                 goto fail;
             }
@@ -2308,9 +2316,9 @@ PyArray_FromInterface(PyObject *input)
             data = PyLong_AsVoidPtr(dataptr);
         }
         else {
-            PyErr_SetString(PyExc_TypeError, "first element " \
-                            "of data tuple must be integer" \
-                            " or string.");
+            PyErr_SetString(PyExc_TypeError, "first element "
+                            "of __array_interface__ data tuple "
+                            "must be integer or string.");
             goto fail;
         }
         if (PyObject_IsTrue(PyTuple_GET_ITEM(attr,1))) {
@@ -2325,7 +2333,8 @@ PyArray_FromInterface(PyObject *input)
     }
 #endif
     if (!PyBytes_Check(attr)) {
-        PyErr_SetString(PyExc_TypeError, "typestr must be a string");
+        PyErr_SetString(PyExc_TypeError,
+                    "__array_interface__ typestr must be a string");
         goto fail;
     }
     type = _array_typedescr_fromstr(PyString_AS_STRING(attr));

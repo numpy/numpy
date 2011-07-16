@@ -33,16 +33,16 @@ static PyObject *
 array_slice(PyArrayObject *self, Py_ssize_t ilow,
             Py_ssize_t ihigh)
 {
-    PyArrayObject *r;
+    PyArrayObject *ret;
     Py_ssize_t l;
     char *data;
 
-    if (self->nd == 0) {
+    if (PyArray_NDIM(self) == 0) {
         PyErr_SetString(PyExc_ValueError, "cannot slice a 0-d array");
         return NULL;
     }
 
-    l=self->dimensions[0];
+    l=PyArray_DIMS(self)[0];
     if (ilow < 0) {
         ilow = 0;
     }
@@ -63,24 +63,27 @@ array_slice(PyArrayObject *self, Py_ssize_t ilow,
         }
     }
     else {
-        data = self->data;
+        data = PyArray_DATA(self);
     }
 
-    self->dimensions[0] = ihigh-ilow;
-    Py_INCREF(self->descr);
-    r = (PyArrayObject *)                                           \
-        PyArray_NewFromDescr(Py_TYPE(self), self->descr,
-                             self->nd, self->dimensions,
-                             self->strides, data,
-                             self->flags, (PyObject *)self);
-    self->dimensions[0] = l;
-    if (r == NULL) {
+    PyArray_DIMS(self)[0] = ihigh-ilow;
+    Py_INCREF(PyArray_DESCR(self));
+    ret = (PyArrayObject *)                                           \
+        PyArray_NewFromDescr(Py_TYPE(self), PyArray_DESCR(self),
+                             PyArray_NDIM(self), PyArray_DIMS(self),
+                             PyArray_STRIDES(self), data,
+                             PyArray_FLAGS(self), (PyObject *)self);
+    PyArray_DIMS(self)[0] = l;
+    if (ret == NULL) {
         return NULL;
     }
-    r->base = (PyObject *)self;
     Py_INCREF(self);
-    PyArray_UpdateFlags(r, NPY_ARRAY_UPDATE_ALL);
-    return (PyObject *)r;
+    if (PyArray_SetBase(ret, (PyObject *)self) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
+    return (PyObject *)ret;
 }
 
 
@@ -162,19 +165,19 @@ NPY_NO_EXPORT PySequenceMethods array_as_sequence = {
 
 /* Array evaluates as "TRUE" if any of the elements are non-zero*/
 static int
-array_any_nonzero(PyArrayObject *mp)
+array_any_nonzero(PyArrayObject *arr)
 {
     intp index;
     PyArrayIterObject *it;
     Bool anyTRUE = FALSE;
 
-    it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
+    it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
     if (it == NULL) {
         return anyTRUE;
     }
     index = it->size;
     while(index--) {
-        if (mp->descr->f->nonzero(it->dataptr, mp)) {
+        if (PyArray_DESCR(arr)->f->nonzero(it->dataptr, arr)) {
             anyTRUE = TRUE;
             break;
         }

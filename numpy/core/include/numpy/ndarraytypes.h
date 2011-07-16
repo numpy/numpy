@@ -615,7 +615,7 @@ typedef struct tagPyArrayObject_fieldaccess {
  * To hide the implementation details, we only expose
  * the Python struct HEAD.
  */
-#ifdef NPY_NO_DEPRECATE_API
+#ifdef NPY_NO_DEPRECATED_API
 typedef struct tagPyArrayObject {
         PyObject_HEAD
 } PyArrayObject;
@@ -1254,12 +1254,17 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define NPY_DEFAULT_TYPE NPY_DOUBLE
 
 /*
- * All sorts of useful ways to look into a PyArrayObject.  These are
- * the recommended over casting to PyArrayObject and accessing the
- * members directly.
+ * All sorts of useful ways to look into a PyArrayObject. It is recommended
+ * to use PyArrayObject * objects instead of always casting from PyObject *,
+ * for improved type checking.
  */
 
-#define PyArray_NDIM(obj) (((PyArrayObject *)(obj))->nd)
+static NPY_INLINE int
+PyArray_NDIM(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->nd;
+}
+
 #define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 || \
                              PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS) || \
                              PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS))
