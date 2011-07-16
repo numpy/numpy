@@ -42,7 +42,8 @@ extern "C" CONFUSE_EMACS
 #define PyArray_HasArrayInterface(op, out)                                    \
         PyArray_HasArrayInterfaceType(op, NULL, NULL, out)
 
-#define PyArray_IsZeroDim(op) (PyArray_Check(op) && (PyArray_NDIM(op) == 0))
+#define PyArray_IsZeroDim(op) (PyArray_Check(op) && \
+                               (PyArray_NDIM((PyArrayObject *)op) == 0))
 
 #define PyArray_IsScalar(obj, cls)                                            \
         (PyObject_TypeCheck(obj, &Py##cls##ArrType_Type))

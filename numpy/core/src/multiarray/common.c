@@ -448,19 +448,19 @@ index2ptr(PyArrayObject *mp, intp i)
 {
     intp dim0;
 
-    if (mp->nd == 0) {
+    if (PyArray_NDIM(mp) == 0) {
         PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed");
         return NULL;
     }
-    dim0 = mp->dimensions[0];
+    dim0 = PyArray_DIMS(mp)[0];
     if (i < 0) {
         i += dim0;
     }
     if (i == 0 && dim0 > 0) {
-        return mp->data;
+        return PyArray_DATA(mp);
     }
     if (i > 0 && i < dim0) {
-        return mp->data+i*mp->strides[0];
+        return PyArray_DATA(mp)+i*PyArray_STRIDES(mp)[0];
     }
     PyErr_SetString(PyExc_IndexError,"index out of bounds");
     return NULL;
@@ -469,7 +469,7 @@ index2ptr(PyArrayObject *mp, intp i)
 NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret)
 {
-    if (PyDataType_REFCHK(ret->descr)) {
+    if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
         PyObject *zero = PyInt_FromLong(0);
         PyArray_FillObjectArray(ret, zero);
         Py_DECREF(zero);
@@ -480,7 +480,7 @@ _zerofill(PyArrayObject *ret)
     }
     else {
         intp n = PyArray_NBYTES(ret);
-        memset(ret->data, 0, n);
+        memset(PyArray_DATA(ret), 0, n);
     }
     return 0;
 }
@@ -498,14 +498,14 @@ _IsAligned(PyArrayObject *ap)
      * PyArray_DescrConverter(), but not necessarily when using
      * PyArray_DescrAlignConverter(). */
 
-    alignment = ap->descr->alignment;
+    alignment = PyArray_DESCR(ap)->alignment;
     if (alignment == 1) {
         return 1;
     }
-    ptr = (intp) ap->data;
+    ptr = (intp) PyArray_DATA(ap);
     aligned = (ptr % alignment) == 0;
-    for (i = 0; i < ap->nd; i++) {
-        aligned &= ((ap->strides[i] % alignment) == 0);
+    for (i = 0; i < PyArray_NDIM(ap); i++) {
+        aligned &= ((PyArray_STRIDES(ap)[i] % alignment) == 0);
     }
     return aligned != 0;
 }
@@ -513,12 +513,12 @@ _IsAligned(PyArrayObject *ap)
 NPY_NO_EXPORT Bool
 _IsWriteable(PyArrayObject *ap)
 {
-    PyObject *base=ap->base;
+    PyObject *base=PyArray_BASE(ap);
     void *dummy;
     Py_ssize_t n;
 
     /* If we own our own data, then no-problem */
-    if ((base == NULL) || (ap->flags & NPY_ARRAY_OWNDATA)) {
+    if ((base == NULL) || (PyArray_FLAGS(ap) & NPY_ARRAY_OWNDATA)) {
         return TRUE;
     }
     /*

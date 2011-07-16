@@ -2702,7 +2702,10 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
             Py_DECREF(ret);
             return NULL;
         }
-        newret->base = (PyObject *)ret;
+        if (PyArray_SetBase(newret, (PyObject *)ret) < 0) {
+            Py_DECREF(newret);
+            return NULL;
+        }
         ret = newret;
     }
 
@@ -2859,12 +2862,13 @@ npyiter_allocate_arrays(NpyIter *iter,
             }
             /* If the data will be written to, set UPDATEIFCOPY */
             if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
-                ((PyArrayObject_fieldaccess *)temp)->flags |=
-                                                    NPY_ARRAY_UPDATEIFCOPY;
-                ((PyArrayObject_fieldaccess *)op[iop])->flags &=
-                                                    ~NPY_ARRAY_WRITEABLE;
                 Py_INCREF(op[iop]);
-                temp->base = (PyObject *)op[iop];
+                if (PyArray_SetBase(temp, (PyObject *)op[iop]) < 0) {
+                    Py_DECREF(temp);
+                    return 0;
+                }
+                PyArray_ENABLEFLAGS(temp, NPY_ARRAY_UPDATEIFCOPY);
+                PyArray_CLEARFLAGS(op[iop], NPY_ARRAY_WRITEABLE);
             }
 
             Py_DECREF(op[iop]);

@@ -547,7 +547,7 @@ _array_nonzero(PyArrayObject *mp)
 
     n = PyArray_SIZE(mp);
     if (n == 1) {
-        return mp->descr->f->nonzero(mp->data, mp);
+        return PyArray_DESCR(mp)->f->nonzero(PyArray_DATA(mp), mp);
     }
     else if (n == 0) {
         return 0;
@@ -593,7 +593,7 @@ array_int(PyArrayObject *v)
                         " converted to Python scalars");
         return NULL;
     }
-    pv = v->descr->f->getitem(v->data, v);
+    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
     if (pv == NULL) {
         return NULL;
     }
@@ -634,7 +634,7 @@ array_float(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = v->descr->f->getitem(v->data, v);
+    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
     if (pv == NULL) {
         return NULL;
     }
@@ -676,7 +676,7 @@ array_long(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = v->descr->f->getitem(v->data, v);
+    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
     if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
                         "scalar object is not a number");
@@ -711,7 +711,7 @@ array_oct(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = v->descr->f->getitem(v->data, v);
+    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
     if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
                         "scalar object is not a number");
@@ -746,7 +746,7 @@ array_hex(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = v->descr->f->getitem(v->data, v);
+    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
     if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
                         "scalar object is not a number");
@@ -789,7 +789,7 @@ array_index(PyArrayObject *v)
                         "one element can be converted to an index");
         return NULL;
     }
-    return v->descr->f->getitem(v->data, v);
+    return PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
 }
 #endif
 

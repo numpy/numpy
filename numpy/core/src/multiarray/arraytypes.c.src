@@ -205,7 +205,7 @@ static int
     int rsize;
 
     if (!(PyArray_IsScalar(op, @kind@))) {
-        if (PyArray_Check(op) && (PyArray_NDIM(op) == 0)) {
+        if (PyArray_Check(op) && (PyArray_NDIM((PyArrayObject *)op) == 0)) {
             op2 = PyArray_DESCR((PyArrayObject *)op)->f->getitem(
                                     PyArray_BYTES((PyArrayObject *)op),
                                     (PyArrayObject *)op);

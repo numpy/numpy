@@ -55,16 +55,16 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
      * We need to permute the array so that axis is placed at the end.
      * And all other dimensions are shifted left.
      */
-    if (axis != ap->nd-1) {
+    if (axis != PyArray_NDIM(ap)-1) {
         PyArray_Dims newaxes;
         intp dims[MAX_DIMS];
         int i;
 
         newaxes.ptr = dims;
-        newaxes.len = ap->nd;
+        newaxes.len = PyArray_NDIM(ap);
         for (i = 0; i < axis; i++) dims[i] = i;
-        for (i = axis; i < ap->nd - 1; i++) dims[i] = i + 1;
-        dims[ap->nd - 1] = axis;
+        for (i = axis; i < PyArray_NDIM(ap) - 1; i++) dims[i] = i + 1;
+        dims[PyArray_NDIM(ap) - 1] = axis;
         op = (PyArrayObject *)PyArray_Transpose(ap, &newaxes);
         Py_DECREF(ap);
         if (op == NULL) {
@@ -78,18 +78,18 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     /* Will get native-byte order contiguous copy. */
     ap = (PyArrayObject *)
         PyArray_ContiguousFromAny((PyObject *)op,
-                                  op->descr->type_num, 1, 0);
+                                  PyArray_DESCR(op)->type_num, 1, 0);
     Py_DECREF(op);
     if (ap == NULL) {
         return NULL;
     }
-    arg_func = ap->descr->f->argmax;
+    arg_func = PyArray_DESCR(ap)->f->argmax;
     if (arg_func == NULL) {
         PyErr_SetString(PyExc_TypeError, "data type not ordered");
         goto fail;
     }
-    elsize = ap->descr->elsize;
-    m = ap->dimensions[ap->nd-1];
+    elsize = PyArray_DESCR(ap)->elsize;
+    m = PyArray_DIMS(ap)[PyArray_NDIM(ap)-1];
     if (m == 0) {
         PyErr_SetString(PyExc_ValueError,
                         "attempt to get argmax/argmin "\
@@ -98,8 +98,8 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     }
 
     if (!out) {
-        rp = (PyArrayObject *)PyArray_New(Py_TYPE(ap), ap->nd-1,
-                                          ap->dimensions, PyArray_INTP,
+        rp = (PyArrayObject *)PyArray_New(Py_TYPE(ap), PyArray_NDIM(ap)-1,
+                                          PyArray_DIMS(ap), PyArray_INTP,
                                           NULL, NULL, 0, 0,
                                           (PyObject *)ap);
         if (rp == NULL) {
@@ -108,7 +108,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     }
     else {
         if (PyArray_SIZE(out) !=
-                PyArray_MultiplyList(ap->dimensions, ap->nd - 1)) {
+                PyArray_MultiplyList(PyArray_DIMS(ap), PyArray_NDIM(ap) - 1)) {
             PyErr_SetString(PyExc_TypeError,
                             "invalid shape for output array.");
         }
@@ -124,19 +124,19 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
         }
     }
 
-    NPY_BEGIN_THREADS_DESCR(ap->descr);
+    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap));
     n = PyArray_SIZE(ap)/m;
-    rptr = (intp *)rp->data;
-    for (ip = ap->data, i = 0; i < n; i++, ip += elsize*m) {
+    rptr = (intp *)PyArray_DATA(rp);
+    for (ip = PyArray_DATA(ap), i = 0; i < n; i++, ip += elsize*m) {
         arg_func(ip, m, rptr, ap);
         rptr += 1;
     }
-    NPY_END_THREADS_DESCR(ap->descr);
+    NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
 
     Py_DECREF(ap);
     if (copyret) {
         PyArrayObject *obj;
-        obj = (PyArrayObject *)rp->base;
+        obj = (PyArrayObject *)PyArray_BASE(rp);
         Py_INCREF(obj);
         Py_DECREF(rp);
         rp = obj;
@@ -194,7 +194,7 @@ PyArray_Max(PyArrayObject *ap, int axis, PyArrayObject *out)
         return NULL;
     }
     ret = PyArray_GenericReduceFunction(arr, n_ops.maximum, axis,
-                                        arr->descr->type_num, out);
+                                        PyArray_DESCR(arr)->type_num, out);
     Py_DECREF(arr);
     return ret;
 }
@@ -212,7 +212,7 @@ PyArray_Min(PyArrayObject *ap, int axis, PyArrayObject *out)
         return NULL;
     }
     ret = PyArray_GenericReduceFunction(arr, n_ops.minimum, axis,
-                                        arr->descr->type_num, out);
+                                        PyArray_DESCR(arr)->type_num, out);
     Py_DECREF(arr);
     return ret;
 }
@@ -602,10 +602,10 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
             my_descr = PyArray_DescrFromType(NPY_DOUBLE);
         }
         else {
-            Py_INCREF(a->descr);
-            my_descr = a->descr;
+            Py_INCREF(PyArray_DESCR(a));
+            my_descr = PyArray_DESCR(a);
         }
-        out = (PyArrayObject *)PyArray_Empty(a->nd, a->dimensions,
+        out = (PyArrayObject *)PyArray_Empty(PyArray_NDIM(a), PyArray_DIMS(a),
                                              my_descr,
                                              PyArray_ISFORTRAN(a));
         if (out == NULL) {
@@ -642,9 +642,9 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
     Py_DECREF(f);
     Py_DECREF(out);
     if (ret_int) {
-        Py_INCREF(a->descr);
+        Py_INCREF(PyArray_DESCR(a));
         tmp = PyArray_CastToType((PyArrayObject *)ret,
-                                 a->descr, PyArray_ISFORTRAN(a));
+                                 PyArray_DESCR(a), PyArray_ISFORTRAN(a));
         Py_DECREF(ret);
         return tmp;
     }
@@ -813,7 +813,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         return NULL;
     }
 
-    func = self->descr->f->fastclip;
+    func = PyArray_DESCR(self)->f->fastclip;
     if (func == NULL || (min != NULL && !PyArray_CheckAnyScalar(min)) ||
         (max != NULL && !PyArray_CheckAnyScalar(max))) {
         return _slow_array_clip(self, min, max, out);
@@ -847,15 +847,15 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
      * type that matches both).
      */
     if (PyArray_ScalarKind(newdescr->type_num, NULL) >
-        PyArray_ScalarKind(self->descr->type_num, NULL)) {
-        indescr = PyArray_PromoteTypes(newdescr, self->descr);
+        PyArray_ScalarKind(PyArray_DESCR(self)->type_num, NULL)) {
+        indescr = PyArray_PromoteTypes(newdescr, PyArray_DESCR(self));
         func = indescr->f->fastclip;
         if (func == NULL) {
             return _slow_array_clip(self, min, max, out);
         }
     }
     else {
-        indescr = self->descr;
+        indescr = PyArray_DESCR(self);
         Py_INCREF(indescr);
     }
     Py_DECREF(newdescr);
@@ -930,7 +930,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     if (PyArray_ISONESEGMENT(self) &&
                             PyArray_CHKFLAGS(self, NPY_ARRAY_ALIGNED) &&
                             PyArray_ISNOTSWAPPED(self) &&
-                            (self->descr == indescr)) {
+                            (PyArray_DESCR(self) == indescr)) {
         ingood = 1;
     }
     if (!ingood) {
@@ -977,8 +977,8 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     if (out == NULL) {
         Py_INCREF(indescr);
         out = (PyArrayObject*)PyArray_NewFromDescr(Py_TYPE(self),
-                                            indescr, self->nd,
-                                            self->dimensions,
+                                            indescr, PyArray_NDIM(self),
+                                            PyArray_DIMS(self),
                                             NULL, NULL,
                                             PyArray_ISFORTRAN(self),
                                             (PyObject *)self);
@@ -995,7 +995,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     if (!outgood && PyArray_ISONESEGMENT(out) &&
                         PyArray_CHKFLAGS(out, NPY_ARRAY_ALIGNED) &&
                         PyArray_ISNOTSWAPPED(out) &&
-                        PyArray_EquivTypes(out->descr, indescr)) {
+                        PyArray_EquivTypes(PyArray_DESCR(out), indescr)) {
         outgood = 1;
     }
 
@@ -1027,19 +1027,19 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
                         "same shape as the input.");
         goto fail;
     }
-    if (newout->data != newin->data) {
-        memcpy(newout->data, newin->data, PyArray_NBYTES(newin));
+    if (PyArray_DATA(newout) != PyArray_DATA(newin)) {
+        memcpy(PyArray_DATA(newout), PyArray_DATA(newin), PyArray_NBYTES(newin));
     }
 
     /* Now we can call the fast-clip function */
     min_data = max_data = NULL;
     if (mina != NULL) {
-        min_data = mina->data;
+        min_data = PyArray_DATA(mina);
     }
     if (maxa != NULL) {
-        max_data = maxa->data;
+        max_data = PyArray_DATA(maxa);
     }
-    func(newin->data, PyArray_SIZE(newin), min_data, max_data, newout->data);
+    func(PyArray_DATA(newin), PyArray_SIZE(newin), min_data, max_data, PyArray_DATA(newout));
 
     /* Clean up temporary variables */
     Py_XDECREF(mina);

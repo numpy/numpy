@@ -1049,7 +1049,10 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     }
     /* Tell the view who owns the data */
     Py_INCREF(obj);
-    view->base = (PyObject *)obj;
+    if (PyArray_SetBase(view, (PyObject *)obj) < 0) {
+        Py_DECREF(view);
+        return NULL;
+    }
     /* Make sure all the flags are good */
     PyArray_UpdateFlags(view, NPY_ARRAY_UPDATE_ALL);
 

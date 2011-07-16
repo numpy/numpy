@@ -363,9 +363,9 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
                         PyArray_CompareLists(PyArray_DIMS(arr1), \
                                              PyArray_DIMS(arr2), \
                                              PyArray_NDIM(arr1)) && \
-                        (arr1->flags&(NPY_ARRAY_C_CONTIGUOUS| \
+                        (PyArray_FLAGS(arr1)&(NPY_ARRAY_C_CONTIGUOUS| \
                                       NPY_ARRAY_F_CONTIGUOUS)) == \
-                                (arr2->flags&(NPY_ARRAY_C_CONTIGUOUS| \
+                                (PyArray_FLAGS(arr2)&(NPY_ARRAY_C_CONTIGUOUS| \
                                               NPY_ARRAY_F_CONTIGUOUS)) \
                         )
 

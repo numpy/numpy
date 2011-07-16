@@ -227,7 +227,7 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
             Py_DECREF(ain);
             return -1;
         }
-        castfunc(ain->data, aout->data, 1, ain, aout);
+        castfunc(PyArray_DATA(ain), PyArray_DATA(aout), 1, ain, aout);
         Py_DECREF(ain);
         Py_DECREF(aout);
     }
@@ -812,9 +812,9 @@ PyArray_Return(PyArrayObject *mp)
     if (!PyArray_Check(mp)) {
         return (PyObject *)mp;
     }
-    if (mp->nd == 0) {
+    if (PyArray_NDIM(mp) == 0) {
         PyObject *ret;
-        ret = PyArray_ToScalar(mp->data, mp);
+        ret = PyArray_ToScalar(PyArray_DATA(mp), mp);
         Py_DECREF(mp);
         return ret;
     }
