@@ -23,7 +23,7 @@ be either a :ref:`date unit <arrays.dtypes.dateunits>` or a
 :ref:`time unit <arrays.dtypes.timeunits>`. The date units are years ('Y'),
 months ('M'), weeks ('W'), and days ('D'), while the time units are
 hours ('h'), minutes ('m'), seconds ('s'), milliseconds ('ms'), and
-more SI-prefix seconds-based units.
+some additional SI-prefix seconds-based units.
 
 .. admonition:: Example
 
@@ -139,7 +139,7 @@ simple datetime calculations.
     >>> np.timedelta64(1,'W') / np.timedelta64(1,'D')
     7.0
 
-There are two Timedelta units, years and months, which are treated
+There are two Timedelta units ('Y', years and 'M', months) which are treated
 specially, because how much time they represent changes depending
 on when they are used. While a timedelta day unit is equivalent to
 24 hours, there is no way to convert a month unit into days, because
@@ -167,7 +167,13 @@ other units based on input data.
 Datetimes are always stored based on POSIX time (though having a TAI
 mode which allows for accounting of leap-seconds is proposed), with
 a epoch of 1970-01-01T00:00Z. This means the supported dates are
-always a symmetric interval around 1970.
+always a symmetric interval around the epoch, called "time span" in the
+table below.
+
+The length of the span is the range of a 64-bit integer times the length
+of the date or unit.  For example, the time span for 'W' (week) is exactly
+7 times longer than the time span for 'D' (day), and the time span for
+'D' (day) is exactly 24 times longer than the time span for 'h' (hour).
 
 Here are the date units:
 
@@ -178,10 +184,10 @@ Here are the date units:
 ------------------------- ----------------------- --------------------------
   Code       Meaning         Relative Time             Absolute Time
 ======== ================ ======================= ==========================
-   Y       year             +- 9.2e18 years         [9.2e18 BC, 9.2e18 AD]
-   M       month            +- 7.6e17 years         [7.6e17 BC, 7.6e17 AD]
-   W       week             +- 1.7e17 years         [1.7e17 BC, 1.7e17 AD]
-   D       day              +- 2.5e16 years         [2.5e16 BC, 2.5e16 AD]
+   Y       year             +/- 9.2e18 years        [9.2e18 BC, 9.2e18 AD]
+   M       month            +/- 7.6e17 years        [7.6e17 BC, 7.6e17 AD]
+   W       week             +/- 1.7e17 years        [1.7e17 BC, 1.7e17 AD]
+   D       day              +/- 2.5e16 years        [2.5e16 BC, 2.5e16 AD]
 ======== ================ ======================= ==========================
 
 And here are the time units:
@@ -193,28 +199,34 @@ And here are the time units:
 ------------------------- ----------------------- --------------------------
   Code       Meaning         Relative Time             Absolute Time
 ======== ================ ======================= ==========================
-   h       hour             +- 1.0e15 years         [1.0e15 BC, 1.0e15 AD]
-   m       minute           +- 1.7e13 years         [1.7e13 BC, 1.7e13 AD]
-   s       second           +- 2.9e12 years         [ 2.9e9 BC,  2.9e9 AD]
-   ms      millisecond      +- 2.9e9 years          [ 2.9e6 BC,  2.9e6 AD]
-   us      microsecond      +- 2.9e6 years          [290301 BC, 294241 AD]
-   ns      nanosecond       +- 292 years            [  1678 AD,   2262 AD]
-   ps      picosecond       +- 106 days             [  1969 AD,   1970 AD]
-   fs      femtosecond      +- 2.6 hours            [  1969 AD,   1970 AD]
-   as      attosecond       +- 9.2 seconds          [  1969 AD,   1970 AD]
+   h       hour             +/- 1.0e15 years        [1.0e15 BC, 1.0e15 AD]
+   m       minute           +/- 1.7e13 years        [1.7e13 BC, 1.7e13 AD]
+   s       second           +/- 2.9e12 years        [ 2.9e9 BC,  2.9e9 AD]
+   ms      millisecond      +/- 2.9e9 years         [ 2.9e6 BC,  2.9e6 AD]
+   us      microsecond      +/- 2.9e6 years         [290301 BC, 294241 AD]
+   ns      nanosecond       +/- 292 years           [  1678 AD,   2262 AD]
+   ps      picosecond       +/- 106 days            [  1969 AD,   1970 AD]
+   fs      femtosecond      +/- 2.6 hours           [  1969 AD,   1970 AD]
+   as      attosecond       +/- 9.2 seconds         [  1969 AD,   1970 AD]
 ======== ================ ======================= ==========================
 
 Business Day Functionality
 ==========================
 
-To allow the datetime to be used in contexts where accounting for weekends
-and holidays is important, NumPy includes a set of functions for
-working with business days.
+To allow the datetime to be used in contexts where only certain days of
+the week are valid, NumPy includes a set of "busday" (business day)
+functions.
+
+The default for busday functions is that the only valid days are Monday
+through Friday (the usual business days).  The implementation is based on
+a "weekmask" containing 7 Boolean flags to indicate valid days; custom
+weekmasks are possible that specify other sets of valid days.
+
+The "busday" functions can additionally check a list of "holiday" dates,
+specific dates that are not valid days.
 
 The function :meth:`busday_offset` allows you to apply offsets
-specified in business days to datetimes with a unit of 'day'. By default,
-a business date is defined to be any date which falls on Monday through
-Friday, but this can be customized with a weekmask and a list of holidays.
+specified in business days to datetimes with a unit of 'D' (day).
 
 .. admonition:: Example
 
@@ -270,7 +282,7 @@ is necessary to get a desired answer.
 
 The function is also useful for computing some kinds of days
 like holidays. In Canada and the U.S., Mother's day is on
-the second Sunday in May, which can be computed with a special
+the second Sunday in May, which can be computed with a custom
 weekmask.
 
 .. admonition:: Example
@@ -278,11 +290,67 @@ weekmask.
     >>> np.busday_offset('2012-05', 1, roll='forward', weekmask='Sun')
     numpy.datetime64('2012-05-13','D')
 
-When performance is important for manipulating many business date
+When performance is important for manipulating many business dates
 with one particular choice of weekmask and holidays, there is
 an object :class:`busdaycalendar` which stores the data necessary
 in an optimized form.
 
-The other two functions for business days are :meth:`is_busday`
-and :meth:`busday_count`, which are more straightforward and
-not explained here.
+np.is_busday():
+```````````````
+To test a datetime64 value to see if it is a valid day, use np.is_busday().
+
+.. admonition:: Example
+
+    >>> np.is_busday(np.datetime64('2011-07-15'))  # a Friday
+    True
+    >>> np.is_busday(np.datetime64('2011-07-16')) # a Saturday
+    False
+    >>> np.is_busday(np.datetime64('2011-07-16'), weekmask="Sat Sun")
+    True
+    >>> a = np.arange(np.datetime64('2011-07-11'), np.datetime64('2011-07-18'))
+    >>> np.is_busday(a)
+    array([ True,  True,  True,  True,  True, False, False], dtype='bool')
+
+np.busday_count():
+``````````````````
+To find how many valid days there are in a specified range of datetime64
+dates, use np.busday_count():
+
+.. admonition:: Example
+
+    >>> np.busday_count(np.datetime64('2011-07-11'), np.datetime64('2011-07-18'))
+    5
+    >>> np.busday_count(np.datetime64('2011-07-18'), np.datetime64('2011-07-11'))
+    0
+    # note: In future this will likely return -5, not 0
+
+If you have an array of datetime64 day values, and you want a count of 
+how many of them are valid dates, you can do this:
+
+.. admonition:: Example
+
+    >>> a = np.arange(np.datetime64('2011-07-11'), np.datetime64('2011-07-18'))
+    >>> np.count_nonzero(np.is_busday(a))
+    5
+
+
+
+Custom Weekmasks
+----------------
+
+Here are several examples of custom weekmask values.  These examples
+specify the "busday" default of Monday through Friday being valid days.
+
+Some examples::
+
+    # Positional sequences; positions are Monday through Sunday.
+    # Length of the sequence must be exactly 7.
+    weekmask = [1, 1, 1, 1, 1, 0, 0]
+    # list or other sequence; 0 == invalid day, 1 == valid day
+    weekmask = "1111100"
+    # string '0' == invalid day, '1' == valid day
+
+    # string abbreviations from this list: Mon Tue Wed Thu Fri Sat Sun
+    weekmask = "Mon Tue Wed Thu Fri"
+    # any amount of whitespace is allowed; abbreviations are case-sensitive.
+    weekmask = "MonTue Wed  Thu\tFri"
