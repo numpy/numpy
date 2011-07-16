@@ -365,6 +365,7 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
 {
     npy_int64 count, whole_weeks;
     int day_of_week = 0;
+    int swapped = 0;
 
     /* If we get a NaT, raise an error */
     if (date_begin == NPY_DATETIME_NAT || date_end == NPY_DATETIME_NAT) {
@@ -375,9 +376,15 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
     }
 
     /* Trivial empty date range */
-    if (date_begin >= date_end) {
+    if (date_begin == date_end) {
         *out = 0;
         return 0;
+    }
+    else if (date_begin > date_end) {
+        npy_datetime tmp = date_begin;
+        date_begin = date_end;
+        date_end = tmp;
+        swapped = 1;
     }
 
     /* Remove any earlier holidays */
@@ -409,6 +416,10 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
                 day_of_week = 0;
             }
         }
+    }
+
+    if (swapped) {
+        count = -count;
     }
 
     *out = count;
@@ -562,6 +573,9 @@ finish:
  * Counts the number of business days between two dates, not including
  * the end date. This is the low-level function which requires already
  * cleaned input data.
+ *
+ * If dates_begin is before dates_end, the result is positive.  If
+ * dates_begin is after dates_end, it is negative.
  *
  * dates_begin:  An array of dates with 'datetime64[D]' data type.
  * dates_end:    An array of dates with 'datetime64[D]' data type.
