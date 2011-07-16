@@ -5993,44 +5993,52 @@ add_newdoc('numpy.core.multiarray', 'busdaycalendar',
     """
     busdaycalendar(weekmask='1111100', holidays=None)
 
-    A business day calendar object that efficiently stores
-    information defining business days for the business
-    day-related functions.
+    A business day calendar object that efficiently stores information
+    defining valid days for the busday family of functions.
+
+    The default valid days are Monday through Friday ("business days").
+    A busdaycalendar object can be specified with any set of weekly
+    valid days, plus an optional "holiday" dates that always will be invalid.
+
+    Once a busdaycalendar object is created, the weekmask and holidays
+    cannot be modified.
 
     .. versionadded:: 1.7.0
 
     Parameters
     ----------
     weekmask : str or array_like of bool, optional
-        A seven-element array indicating which of Monday through Sunday may
-        be valid business days. May be specified as a list or array, like
-        [1,1,1,1,1,0,0], a length-seven string like '1111100', or a string
-        of three-letter weekday names, like 'MonTueWedThuFri'. The latter
-        string representation is most useful when only one day of the
-        week is important, like 'Mon' if you want to calculate the date
-        of Easter.
+        A seven-element array indicating which of Monday through Sunday are
+        valid days. May be specified as a length-seven list or array, like
+        [1,1,1,1,1,0,0]; a length-seven string, like '1111100'; or a string
+        like "Mon Tue Wed Thu Fri", made up of 3-character abbreviations for
+        weekdays, optionally separated by white space. Valid abbreviations
+        are: Mon Tue Wed Thu Fri Sat Sun
     holidays : array_like of datetime64[D], optional
-        An array of dates which should be blacked out from being considered
-        as business days. They may be specified in any order, and NaT
-        (not-a-time) dates are ignored. Internally, this list is normalized
-        into a form suited for fast business day calculations.
+        An array of dates to consider as invalid dates, no matter which
+        weekday they fall upon.  Holiday dates may be specified in any
+        order, and NaT (not-a-time) dates are ignored.  This list is
+        saved in a normalized form that is suited for fast calculations
+        of valid days.
 
     Returns
     -------
     out : busdaycalendar
         A business day calendar object containing the specified
-        weekmask and holidays.
+        weekmask and holidays values.
 
     See Also
     --------
-    is_busday : Returns a boolean array indicating valid business days.
-    busday_offset : Applies an offset counted in business days.
-    busday_count : Counts how many business days are in a half-open date range.
+    is_busday : Returns a boolean array indicating valid days.
+    busday_offset : Applies an offset counted in valid days.
+    busday_count : Counts how many valid days are in a half-open date range.
 
     Attributes
     ----------
-    weekmask : seven-element array of bool
-    holidays : sorted array of datetime64[D]
+    Note: once a busdaycalendar object is created, you cannot modify the
+    weekmask or holidays.  The attributes return copies of internal data.
+    weekmask : (copy) seven-element array of bool
+    holidays : (copy) sorted array of datetime64[D]
 
     Examples
     --------
@@ -6046,17 +6054,16 @@ add_newdoc('numpy.core.multiarray', 'busdaycalendar',
     """)
 
 add_newdoc('numpy.core.multiarray', 'busdaycalendar', ('weekmask',
-    """A copy of the seven-element boolean mask indicating valid business days."""))
+    """A copy of the seven-element boolean mask indicating valid days."""))
 
 add_newdoc('numpy.core.multiarray', 'busdaycalendar', ('holidays',
-    """A copy of the holiday array indicating blacked out business days."""))
+    """A copy of the holiday array indicating additional invalid days."""))
 
 add_newdoc('numpy.core.multiarray', 'is_busday',
     """
     is_busday(dates, weekmask='1111100', holidays=None, busdaycal=None, out=None)
 
-    Calculates which of the given dates are valid business days, and
-    which are not.
+    Calculates which of the given dates are valid days, and which are not.
 
     .. versionadded:: 1.7.0
 
@@ -6065,20 +6072,19 @@ add_newdoc('numpy.core.multiarray', 'is_busday',
     dates : array_like of datetime64[D]
         The array of dates to process.
     weekmask : str or array_like of bool, optional
-        A seven-element array indicating which of Monday through Sunday may
-        be valid business days. May be specified as a list or array, like
-        [1,1,1,1,1,0,0], a length-seven string like '1111100', or a string
-        of three-letter weekday names, like 'MonTueWedThuFri'. The latter
-        string representation is most useful when only one day of the
-        week is important, like 'Mon' if you want to calculate the date
-        of Easter.
+        A seven-element array indicating which of Monday through Sunday are
+        valid days. May be specified as a length-seven list or array, like
+        [1,1,1,1,1,0,0]; a length-seven string, like '1111100'; or a string
+        like "Mon Tue Wed Thu Fri", made up of 3-character abbreviations for
+        weekdays, optionally separated by white space. Valid abbreviations
+        are: Mon Tue Wed Thu Fri Sat Sun
     holidays : array_like of datetime64[D], optional
-        An array of dates which should be blacked out from being considered
-        as business days. They may be specified in any order, and NaT
-        (not-a-time) dates are ignored. Internally, this list is normalized
-        into a form suited for fast business day calculations.
+        An array of dates to consider as invalid dates.  They may be
+        specified in any order, and NaT (not-a-time) dates are ignored.
+        This list is saved in a normalized form that is suited for
+        fast calculations of valid days.
     busdaycal : busdaycalendar, optional
-        A `busdaycalendar` object which specifies the business days. If this
+        A `busdaycalendar` object which specifies the valid days. If this
         parameter is provided, neither weekmask nor holidays may be
         provided.
     out : array of bool, optional
@@ -6088,13 +6094,13 @@ add_newdoc('numpy.core.multiarray', 'is_busday',
     -------
     out : array of bool
         An array with the same shape as ``dates``, containing True for
-        each valid business day, and False for the others.
+        each valid day, and False for each invalid day.
 
     See Also
     --------
-    busdaycalendar: An object for efficiently specifying which are business days.
-    busday_offset : Applies an offset counted in business days.
-    busday_count : Counts how many business days are in a half-open date range.
+    busdaycalendar: An object that specifies a custom set of valid days.
+    busday_offset : Applies an offset counted in valid days.
+    busday_count : Counts how many valid days are in a half-open date range.
 
     Examples
     --------
@@ -6108,9 +6114,9 @@ add_newdoc('numpy.core.multiarray', 'busday_offset',
     """
     busday_offset(dates, offsets, roll='raise', weekmask='1111100', holidays=None, busdaycal=None, out=None)
 
-    First adjusts the date to fall on a business day according to
+    First adjusts the date to fall on a valid day according to
     the ``roll`` rule, then applies offsets to the given dates
-    counted in business days.
+    counted in valid days.
 
     .. versionadded:: 1.7.0
 
@@ -6121,36 +6127,35 @@ add_newdoc('numpy.core.multiarray', 'busday_offset',
     offsets : array_like of int
         The array of offsets, which is broadcast with ``dates``.
     roll : {'raise', 'nat', 'forward', 'following', 'backward', 'preceding', 'modifiedfollowing', 'modifiedpreceding'}, optional
-        How to treat dates that do not fall on a business day. The default
+        How to treat dates that do not fall on a valid day. The default
         is 'raise'.
 
-          * 'raise' means to raise an exception for invalid business days.
-          * 'nat' means to return a NaT (not-a-time) for invalid business days.
-          * 'forward' and 'following' mean to take the first business day
+          * 'raise' means to raise an exception for an invalid day.
+          * 'nat' means to return a NaT (not-a-time) for an invalid day.
+          * 'forward' and 'following' mean to take the first valid day
             later in time.
-          * 'backward' and 'preceding' mean to take the first business day
+          * 'backward' and 'preceding' mean to take the first valid day
             earlier in time.
-          * 'modifiedfollowing' means to take the first business day
+          * 'modifiedfollowing' means to take the first valid day
             later in time unless it is across a Month boundary, in which
-            case to take the first business day earlier in time.
-          * 'modifiedpreceding' means to take the first business day
+            case to take the first valid day earlier in time.
+          * 'modifiedpreceding' means to take the first valid day
             earlier in time unless it is across a Month boundary, in which
-            case to take the first business day later in time.
+            case to take the first valid day later in time.
     weekmask : str or array_like of bool, optional
-        A seven-element array indicating which of Monday through Sunday may
-        be valid business days. May be specified as a list or array, like
-        [1,1,1,1,1,0,0], a length-seven string like '1111100', or a string
-        of three-letter weekday names, like 'MonTueWedThuFri'. The latter
-        string representation is most useful when only one day of the
-        week is important, like 'Mon' if you want to calculate the date
-        of Easter.
+        A seven-element array indicating which of Monday through Sunday are
+        valid days. May be specified as a length-seven list or array, like
+        [1,1,1,1,1,0,0]; a length-seven string, like '1111100'; or a string
+        like "Mon Tue Wed Thu Fri", made up of 3-character abbreviations for
+        weekdays, optionally separated by white space. Valid abbreviations
+        are: Mon Tue Wed Thu Fri Sat Sun
     holidays : array_like of datetime64[D], optional
-        An array of dates which should be blacked out from being considered
-        as business days. They may be specified in any order, and NaT
-        (not-a-time) dates are ignored. Internally, this list is normalized
-        into a form suited for fast business day calculations.
+        An array of dates to consider as invalid dates.  They may be
+        specified in any order, and NaT (not-a-time) dates are ignored.
+        This list is saved in a normalized form that is suited for
+        fast calculations of valid days.
     busdaycal : busdaycalendar, optional
-        A `busdaycalendar` object which specifies the business days. If this
+        A `busdaycalendar` object which specifies the valid days. If this
         parameter is provided, neither weekmask nor holidays may be
         provided.
     out : array of datetime64[D], optional
@@ -6164,9 +6169,9 @@ add_newdoc('numpy.core.multiarray', 'busday_offset',
 
     See Also
     --------
-    busdaycalendar: An object for efficiently specifying which are business days.
-    is_busday : Returns a boolean array indicating valid business days.
-    busday_count : Counts how many business days are in a half-open date range.
+    busdaycalendar: An object that specifies a custom set of valid days.
+    is_busday : Returns a boolean array indicating valid days.
+    busday_count : Counts how many valid days are in a half-open date range.
 
     Examples
     --------
@@ -6199,8 +6204,13 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
     """
     busday_count(begindates, enddates, weekmask='1111100', holidays=[], busdaycal=None, out=None)
 
-    Counts the number of business days between `begindates` and
+    Counts the number of valid days between `begindates` and
     `enddates`, not including the day of `enddates`.
+
+    If ``enddates`` specifies a date value that is earlier than the
+    corresponding ``begindates`` date value, the count will be 0.
+    However, in future this may change to a negative count of valid
+    days.
 
     .. versionadded:: 1.7.0
 
@@ -6212,20 +6222,19 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
         The array of the end dates for counting, which are excluded
         from the count themselves.
     weekmask : str or array_like of bool, optional
-        A seven-element array indicating which of Monday through Sunday may
-        be valid business days. May be specified as a list or array, like
-        [1,1,1,1,1,0,0], a length-seven string like '1111100', or a string
-        of three-letter weekday names, like 'MonTueWedThuFri'. The latter
-        string representation is most useful when only one day of the
-        week is important, like 'Mon' if you want to calculate the date
-        of Easter.
+        A seven-element array indicating which of Monday through Sunday are
+        valid days. May be specified as a length-seven list or array, like
+        [1,1,1,1,1,0,0]; a length-seven string, like '1111100'; or a string
+        like "Mon Tue Wed Thu Fri", made up of 3-character abbreviations for
+        weekdays, optionally separated by white space. Valid abbreviations
+        are: Mon Tue Wed Thu Fri Sat Sun
     holidays : array_like of datetime64[D], optional
-        An array of dates which should be blacked out from being considered
-        as business days. They may be specified in any order, and NaT
-        (not-a-time) dates are ignored. Internally, this list is normalized
-        into a form suited for fast business day calculations.
+        An array of dates to consider as invalid dates.  They may be
+        specified in any order, and NaT (not-a-time) dates are ignored.
+        This list is saved in a normalized form that is suited for
+        fast calculations of valid days.
     busdaycal : busdaycalendar, optional
-        A `busdaycalendar` object which specifies the business days. If this
+        A `busdaycalendar` object which specifies the valid days. If this
         parameter is provided, neither weekmask nor holidays may be
         provided.
     out : array of int, optional
@@ -6235,14 +6244,14 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
     -------
     out : array of int
         An array with a shape from broadcasting ``begindates`` and ``enddates``
-        together, containing the number of business days between
+        together, containing the number of valid days between
         the begin and end dates.
 
     See Also
     --------
-    busdaycalendar: An object for efficiently specifying which are business days.
-    is_busday : Returns a boolean array indicating valid business days.
-    busday_offset : Applies an offset counted in business days.
+    busdaycalendar: An object that specifies a custom set of valid days.
+    is_busday : Returns a boolean array indicating valid days.
+    busday_offset : Applies an offset counted in valid days.
 
     Examples
     --------
