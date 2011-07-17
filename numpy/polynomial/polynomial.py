@@ -1246,6 +1246,36 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
+def polycompanion(cs):
+    """Return the companion matrix of cs.
+
+
+    Parameters
+    ----------
+    cs : array_like
+        1-d array of series coefficients ordered from low to high degree.
+
+    Returns
+    -------
+    mat : ndarray
+        Scaled companion matrix of dimensions (deg, deg).
+
+    """
+    # cs is a trimmed copy
+    [cs] = pu.as_series([cs])
+    if len(cs) < 2 :
+        raise ValueError('Series must have maximum degree of at least 1.')
+    if len(cs) == 2:
+        return np.array(-cs[0]/cs[1])
+
+    n = len(cs) - 1
+    mat = np.zeros((n, n), dtype=cs.dtype)
+    bot = mat.reshape(-1)[n::n+1]
+    bot[...] = 1
+    mat[:,-1] -= cs[:-1]/cs[-1]
+    return mat
+
+
 def polyroots(cs):
     """
     Compute the roots of a polynomial.
@@ -1270,32 +1300,39 @@ def polyroots(cs):
     --------
     chebroots
 
+    Notes
+    -----
+    The root estimates are obtained as the eigenvalues of the companion
+    matrix, Roots far from the origin of the complex plane may have large
+    errors due to the numerical instability of the power series for such
+    values. Roots with multiplicity greater than 1 will also show larger
+    errors as the value of the series near such points is relatively
+    insensitive to errors in the roots. Isolated roots near the origin can
+    be improved by a few iterations of Newton's method.
+
     Examples
     --------
-    >>> import numpy.polynomial as P
-    >>> P.polyroots(P.polyfromroots((-1,0,1)))
+    >>> import numpy.polynomial.polynomial as poly
+    >>> poly.polyroots(poly.polyfromroots((-1,0,1)))
     array([-1.,  0.,  1.])
-    >>> P.polyroots(P.polyfromroots((-1,0,1))).dtype
+    >>> poly.polyroots(poly.polyfromroots((-1,0,1))).dtype
     dtype('float64')
     >>> j = complex(0,1)
-    >>> P.polyroots(P.polyfromroots((-j,0,j)))
+    >>> poly.polyroots(poly.polyfromroots((-j,0,j)))
     array([  0.00000000e+00+0.j,   0.00000000e+00+1.j,   2.77555756e-17-1.j])
 
     """
     # cs is a trimmed copy
     [cs] = pu.as_series([cs])
-    if len(cs) <= 1 :
+    if len(cs) < 2:
         return np.array([], dtype=cs.dtype)
-    if len(cs) == 2 :
+    if len(cs) == 2:
         return np.array([-cs[0]/cs[1]])
 
-    n = len(cs) - 1
-    cmat = np.zeros((n,n), dtype=cs.dtype)
-    cmat.flat[n::n+1] = 1
-    cmat[:,-1] -= cs[:-1]/cs[-1]
-    roots = la.eigvals(cmat)
-    roots.sort()
-    return roots
+    m = polycompanion(cs)
+    r = la.eigvals(m)
+    r.sort()
+    return r
 
 
 #
