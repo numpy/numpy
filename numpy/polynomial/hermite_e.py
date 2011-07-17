@@ -1407,18 +1407,59 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
+def hermecompanion(cs):
+    """Return the scaled companion matrix of cs.
+
+    The basis polynomials are scaled so that the companion matrix is
+    symmetric when `cs` represents a single HermiteE polynomial. This
+    provides better eigenvalue estimates than the unscaled case and in the
+    single polynomial case the eigenvalues are guaranteed to be real if
+    `numpy.linalg.eigvalsh` is used to obtain them.
+
+    Parameters
+    ----------
+    cs : array_like
+        1-d array of Legendre series coefficients ordered from low to high
+        degree.
+
+    Returns
+    -------
+    mat : ndarray
+        Scaled companion matrix of dimensions (deg, deg).
+
+    """
+    accprod = np.multiply.accumulate
+    # cs is a trimmed copy
+    [cs] = pu.as_series([cs])
+    if len(cs) < 2:
+        raise ValueError('Series must have maximum degree of at least 1.')
+    if len(cs) == 2:
+        return np.array(-cs[0]/cs[1])
+
+    n = len(cs) - 1
+    mat = np.zeros((n, n), dtype=cs.dtype)
+    scl = np.hstack((1., np.sqrt(np.arange(1,n))))
+    scl = np.multiply.accumulate(scl)
+    top = mat.reshape(-1)[1::n+1]
+    bot = mat.reshape(-1)[n::n+1]
+    top[...] = np.sqrt(np.arange(1,n))
+    bot[...] = top
+    mat[:,-1] -= (cs[:-1]/cs[-1])*(scl/scl[-1])
+    return mat
+
+
 def hermeroots(cs):
     """
     Compute the roots of a Hermite series.
 
-    Return the roots (a.k.a "zeros") of the Hermite series represented by
+    Return the roots (a.k.a "zeros") of the HermiteE series represented by
     `cs`, which is the sequence of coefficients from lowest order "term"
     to highest, e.g., [1,2,3] is the series ``L_0 + 2*L_1 + 3*L_2``.
 
     Parameters
     ----------
     cs : array_like
-        1-d array of Hermite series coefficients ordered from low to high.
+        1-d array of HermiteE series coefficients ordered from low to high.
 
     Returns
     -------
@@ -1454,21 +1495,12 @@ def hermeroots(cs):
     if len(cs) <= 1 :
         return np.array([], dtype=cs.dtype)
     if len(cs) == 2 :
-        return np.array([-.5*cs[0]/cs[1]])
+        return np.array([-cs[0]/cs[1]])
 
-    n = len(cs) - 1
-    cs /= cs[-1]
-    cmat = np.zeros((n,n), dtype=cs.dtype)
-    cmat[1, 0] = 1
-    for i in range(1, n):
-        cmat[i - 1, i] = i
-        if i != n - 1:
-            cmat[i + 1, i] = 1
-        else:
-            cmat[:, i] -= cs[:-1]
-    roots = la.eigvals(cmat)
-    roots.sort()
-    return roots
+    m = hermecompanion(cs)
+    r = la.eigvals(m)
+    r.sort()
+    return r
 
 
 #

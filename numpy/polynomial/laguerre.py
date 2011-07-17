@@ -1410,6 +1410,45 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
+def lagcompanion(cs):
+    """Return the companion matrix of cs.
+
+    The unscaled companion matrix of the Laguerre polynomials is already
+    symmetric when `cs` represents a single Laguerre polynomial, so no
+    further scaling is needed.
+
+    Parameters
+    ----------
+    cs : array_like
+        1-d array of Laguerre series coefficients ordered from low to high
+        degree.
+
+    Returns
+    -------
+    mat : ndarray
+        Companion matrix of dimensions (deg, deg).
+
+    """
+    accprod = np.multiply.accumulate
+    # cs is a trimmed copy
+    [cs] = pu.as_series([cs])
+    if len(cs) < 2:
+        raise ValueError('Series must have maximum degree of at least 1.')
+    if len(cs) == 2:
+        return np.array(1 + cs[0]/cs[1])
+
+    n = len(cs) - 1
+    mat = np.zeros((n, n), dtype=cs.dtype)
+    top = mat.reshape(-1)[1::n+1]
+    mid = mat.reshape(-1)[0::n+1]
+    bot = mat.reshape(-1)[n::n+1]
+    top[...] = -np.arange(1,n)
+    mid[...] = 2.*np.arange(n) + 1.
+    bot[...] = top
+    mat[:,-1] += (cs[:-1]/cs[-1])*n
+    return mat
+
+
 def lagroots(cs):
     """
     Compute the roots of a Laguerre series.
@@ -1459,21 +1498,10 @@ def lagroots(cs):
     if len(cs) == 2 :
         return np.array([1 + cs[0]/cs[1]])
 
-    n = len(cs) - 1
-    cs /= cs[-1]
-    cmat = np.zeros((n,n), dtype=cs.dtype)
-    cmat[0, 0] = 1
-    cmat[1, 0] = -1
-    for i in range(1, n):
-        cmat[i - 1, i] = -i
-        cmat[i, i] = 2*i + 1
-        if i != n - 1:
-            cmat[i + 1, i] = -(i + 1)
-        else:
-            cmat[:, i] += cs[:-1]*(i + 1)
-    roots = la.eigvals(cmat)
-    roots.sort()
-    return roots
+    m = lagcompanion(cs)
+    r = la.eigvals(m)
+    r.sort()
+    return r
 
 
 #

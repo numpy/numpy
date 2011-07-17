@@ -1632,6 +1632,46 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
+def chebcompanion(cs):
+    """Return the scaled companion matrix of cs.
+
+    The basis polynomials are scaled so that the companion matrix is
+    symmetric when `cs` represents a single Chebyshev polynomial. This
+    provides better eigenvalue estimates than the unscaled case and in the
+    single polynomial case the eigenvalues are guaranteed to be real if
+    np.eigvalsh is used to obtain them.
+
+    Parameters
+    ----------
+    cs : array_like
+        1-d array of Legendre series coefficients ordered from low to high
+        degree.
+
+    Returns
+    -------
+    mat : ndarray
+        Scaled companion matrix of dimensions (deg, deg).
+
+    """
+    # cs is a trimmed copy
+    [cs] = pu.as_series([cs])
+    if len(cs) < 2:
+        raise ValueError('Series must have maximum degree of at least 1.')
+    if len(cs) == 2:
+        return np.array(-cs[0]/cs[1])
+
+    n = len(cs) - 1
+    mat = np.zeros((n, n), dtype=cs.dtype)
+    scl = np.array([1.] + [np.sqrt(.5)]*(n-1))
+    top = mat.reshape(-1)[1::n+1]
+    bot = mat.reshape(-1)[n::n+1]
+    top[0] = np.sqrt(.5)
+    top[1:] = 1/2
+    bot[...] = top
+    mat[:,-1] -= (cs[:-1]/cs[-1])*(scl/scl[-1])*.5
+    return mat
+
+
 def chebroots(cs):
     """
     Compute the roots of a Chebyshev series.
@@ -1666,34 +1706,22 @@ def chebroots(cs):
 
     Examples
     --------
-    >>> import numpy.polynomial as P
-    >>> import numpy.polynomial.chebyshev as C
-    >>> P.polyroots((-1,1,-1,1)) # x^3 - x^2 + x - 1 has two complex roots
-    array([ -4.99600361e-16-1.j,  -4.99600361e-16+1.j,   1.00000e+00+0.j])
-    >>> C.chebroots((-1,1,-1,1)) # T3 - T2 + T1 - T0 has only real roots
+    >>> import numpy.polynomial.chebyshev as cheb
+    >>> cheb.chebroots((-1, 1,-1, 1)) # T3 - T2 + T1 - T0 has real roots
     array([ -5.00000000e-01,   2.60860684e-17,   1.00000000e+00])
 
     """
     # cs is a trimmed copy
     [cs] = pu.as_series([cs])
-    if len(cs) <= 1 :
+    if len(cs) < 2:
         return np.array([], dtype=cs.dtype)
-    if len(cs) == 2 :
+    if len(cs) == 2:
         return np.array([-cs[0]/cs[1]])
 
-    n = len(cs) - 1
-    cs /= cs[-1]
-    cmat = np.zeros((n,n), dtype=cs.dtype)
-    cmat[1, 0] = 1
-    for i in range(1, n):
-        cmat[i - 1, i] = .5
-        if i != n - 1:
-            cmat[i + 1, i] = .5
-        else:
-            cmat[:, i] -= cs[:-1]*.5
-    roots = la.eigvals(cmat)
-    roots.sort()
-    return roots
+    m = chebcompanion(cs)
+    r = la.eigvals(m)
+    r.sort()
+    return r
 
 
 def chebpts1(npts):

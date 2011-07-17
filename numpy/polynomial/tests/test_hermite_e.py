@@ -398,7 +398,7 @@ class TestMisc(TestCase) :
 
     def test_hermeroots(self) :
         assert_almost_equal(herme.hermeroots([1]), [])
-        assert_almost_equal(herme.hermeroots([1, 1]), [-.5])
+        assert_almost_equal(herme.hermeroots([1, 1]), [-1])
         for i in range(2,5) :
             tgt = np.linspace(-1, 1, i)
             res = herme.hermeroots(herme.hermefromroots(tgt))
