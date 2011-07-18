@@ -47,7 +47,7 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags);
 
 /* TODO: Put the order parameter in PyArray_CopyAnyInto and remove this */
 NPY_NO_EXPORT int
-PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
+PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src,
                                 NPY_ORDER order);
 
 /* FIXME: remove those from here */

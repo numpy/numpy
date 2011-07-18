@@ -165,11 +165,9 @@ PyArray_XDECREF_ERR(PyArrayObject *obj)
 {
     if (obj) {
         if (PyArray_FLAGS(obj) & NPY_ARRAY_UPDATEIFCOPY) {
-            PyObject *base = PyArray_BASE(obj);
-            ((PyArrayObject_fieldaccess *)base)->flags |=
-                                                    NPY_ARRAY_WRITEABLE;
-            ((PyArrayObject_fieldaccess *)obj)->flags &=
-                                                    ~NPY_ARRAY_UPDATEIFCOPY;
+            PyArrayObject *base = (PyArrayObject *)PyArray_BASE(obj);
+            PyArray_ENABLEFLAGS(base, NPY_ARRAY_WRITEABLE);
+            PyArray_CLEARFLAGS(obj, NPY_ARRAY_UPDATEIFCOPY);
         }
         Py_DECREF(obj);
     }

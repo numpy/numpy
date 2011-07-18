@@ -933,7 +933,7 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
     if (ret == NULL) {
         return NULL;
     }
-    if (PyArray_CopyAnyIntoOrdered(ret, a, order) < 0) {
+    if (PyArray_CopyAsFlat(ret, a, order) < 0) {
         Py_DECREF(ret);
         return NULL;
     }

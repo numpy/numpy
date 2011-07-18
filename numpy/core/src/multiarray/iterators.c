@@ -22,7 +22,8 @@
 #define SingleIndex -3
 
 NPY_NO_EXPORT npy_intp
-parse_subindex(PyObject *op, npy_intp *step_size, npy_intp *n_steps, npy_intp max)
+parse_subindex(PyObject *op, npy_intp *step_size,
+                    npy_intp *n_steps, npy_intp max)
 {
     npy_intp index;
 

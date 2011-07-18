@@ -2573,7 +2573,7 @@ PyArray_EnsureAnyArray(PyObject *op)
 
 /* TODO: Put the order parameter in PyArray_CopyAnyInto and remove this */
 NPY_NO_EXPORT int
-PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
+PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src,
                                 NPY_ORDER order)
 {
     PyArray_StridedTransferFn *stransfer = NULL;
@@ -2613,9 +2613,9 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
     dst_size = PyArray_SIZE(dst);
     src_size = PyArray_SIZE(src);
     if (dst_size != src_size) {
-        PyErr_SetString(PyExc_ValueError,
-                "arrays must have the same number of elements"
-                " for copy");
+        PyErr_Format(PyExc_ValueError,
+                "cannot copy from array of size %d into an array "
+                "of size %d", (int)src_size, (int)dst_size);
         return -1;
     }
 
@@ -2766,7 +2766,7 @@ PyArray_CopyAnyIntoOrdered(PyArrayObject *dst, PyArrayObject *src,
 NPY_NO_EXPORT int
 PyArray_CopyAnyInto(PyArrayObject *dst, PyArrayObject *src)
 {
-    return PyArray_CopyAnyIntoOrdered(dst, src, NPY_CORDER);
+    return PyArray_CopyAsFlat(dst, src, NPY_CORDER);
 }
 
 /*NUMPY_API

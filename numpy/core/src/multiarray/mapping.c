@@ -397,12 +397,13 @@ add_new_axes_0d(PyArrayObject *arr,  int newaxis_count)
         dimensions[i]  = 1;
     }
     Py_INCREF(PyArray_DESCR(arr));
-    if ((other = (PyArrayObject *)
-         PyArray_NewFromDescr(Py_TYPE(arr), PyArray_DESCR(arr),
-                              newaxis_count, dimensions,
-                              NULL, PyArray_DATA(arr),
-                              PyArray_FLAGS(arr),
-                              (PyObject *)arr)) == NULL) {
+    other = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(arr),
+                                PyArray_DESCR(arr),
+                                newaxis_count, dimensions,
+                                NULL, PyArray_DATA(arr),
+                                PyArray_FLAGS(arr),
+                                (PyObject *)arr);
+    if (other == NULL) {
         return NULL;
     }
     Py_INCREF(arr);
@@ -513,30 +514,35 @@ fancy_indexing_check(PyObject *args)
 NPY_NO_EXPORT PyObject *
 array_subscript_simple(PyArrayObject *self, PyObject *op)
 {
-    intp dimensions[MAX_DIMS], strides[MAX_DIMS];
-    intp offset;
+    npy_intp dimensions[MAX_DIMS], strides[MAX_DIMS];
+    npy_intp offset;
     int nd;
     PyArrayObject *other;
-    intp value;
+    npy_intp value;
 
     value = PyArray_PyIntAsIntp(op);
-    if (!PyErr_Occurred()) {
+    if (value == -1 && PyErr_Occurred()) {
+        PyErr_Clear();
+    }
+    else {
         return array_big_item(self, value);
     }
-    PyErr_Clear();
 
     /* Standard (view-based) Indexing */
-    if ((nd = parse_index(self, op, dimensions, strides, &offset)) == -1) {
+    nd = parse_index(self, op, dimensions, strides, &offset);
+    if (nd == -1) {
         return NULL;
     }
+
     /* This will only work if new array will be a view */
     Py_INCREF(PyArray_DESCR(self));
-    if ((other = (PyArrayObject *)
-         PyArray_NewFromDescr(Py_TYPE(self), PyArray_DESCR(self),
-                              nd, dimensions,
-                              strides, PyArray_DATA(self)+offset,
-                              PyArray_FLAGS(self),
-                              (PyObject *)self)) == NULL) {
+    other = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
+                                PyArray_DESCR(self),
+                                nd, dimensions,
+                                strides, PyArray_DATA(self)+offset,
+                                PyArray_FLAGS(self),
+                                (PyObject *)self);
+    if (other == NULL) {
         return NULL;
     }
     Py_INCREF(self);
@@ -545,6 +551,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
         return NULL;
     }
     PyArray_UpdateFlags(other, NPY_ARRAY_UPDATE_ALL);
+
     return (PyObject *)other;
 }
 

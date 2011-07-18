@@ -1341,7 +1341,7 @@ PyArray_CHKFLAGS(PyArrayObject *arr, int flags)
 static NPY_INLINE void
 PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
 {
-    ((PyArrayObject_fieldaccess *)arr)->flags |= ~flags;
+    ((PyArrayObject_fieldaccess *)arr)->flags |= flags;
 }
 
 /*

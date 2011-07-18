@@ -275,6 +275,7 @@ static void
 array_dealloc(PyArrayObject *self)
 {
     PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)self;
+
     _array_dealloc_buffer_info(self);
 
     if (fa->weakreflist != NULL) {
@@ -319,7 +320,7 @@ array_dealloc(PyArrayObject *self)
              * self already...
              */
         }
-        PyDataMem_FREE(fa->data);
+        //PyDataMem_FREE(fa->data);
     }
 
     PyDimMem_FREE(fa->dimensions);
