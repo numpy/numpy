@@ -1056,8 +1056,12 @@ class TestPutmask(object):
                       dtype=[('x', '<f8'), ('y', '>f8'), ('z', '<f8')])
         np.putmask(rec['x'],[True,False],10)
         assert_array_equal(rec['x'],[10,5])
-        np.putmask(rec['y'],[True,False],10)
-        assert_array_equal(rec['y'],[10,4])
+        assert_array_equal(rec['y'],[2,4])
+        assert_array_equal(rec['z'],[3,3])
+        np.putmask(rec['y'],[True,False],11)
+        assert_array_equal(rec['x'],[10,5])
+        assert_array_equal(rec['y'],[11,4])
+        assert_array_equal(rec['z'],[3,3])
 
     def test_masked_array(self):
         ## x = np.array([1,2,3])

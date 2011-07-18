@@ -1790,7 +1790,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* If we got dimensions and dtype instead of an array */
     if (arr == NULL) {
-        if (flags&NPY_ARRAY_UPDATEIFCOPY) {
+        if (flags & NPY_ARRAY_UPDATEIFCOPY) {
             Py_XDECREF(newtype);
             PyErr_SetString(PyExc_TypeError,
                             "UPDATEIFCOPY used for non-array input.");
@@ -2058,16 +2058,17 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             if (ret == NULL) {
                 return NULL;
             }
-            if (PyArray_CopyInto(ret, arr) == -1) {
+            if (PyArray_CopyInto(ret, arr) < 0) {
                 Py_DECREF(ret);
                 return NULL;
             }
             if (flags & NPY_ARRAY_UPDATEIFCOPY)  {
+                /*
+                 * Don't use PyArray_SetBase, because that compresses
+                 * the chain of bases.
+                 */
                 Py_INCREF(arr);
-                if (PyArray_SetBase(ret, (PyObject *)arr) < 0) {
-                    Py_DECREF(ret);
-                    return NULL;
-                }
+                ((PyArrayObject_fieldaccess *)ret)->base = (PyObject *)arr;
                 PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
                 PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEABLE);
             }
@@ -2135,11 +2136,12 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             return NULL;
         }
         if (flags & NPY_ARRAY_UPDATEIFCOPY)  {
+            /*
+             * Don't use PyArray_SetBase, because that compresses
+             * the chain of bases.
+             */
             Py_INCREF(arr);
-            if (PyArray_SetBase(ret, (PyObject *)arr) < 0) {
-                Py_DECREF(ret);
-                return NULL;
-            }
+            ((PyArrayObject_fieldaccess *)ret)->base = (PyObject *)arr;
             PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
             PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEABLE);
         }

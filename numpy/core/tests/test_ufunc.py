@@ -458,8 +458,8 @@ class TestUfunc(TestCase):
                     for s2 in slice_3:
                         a1 = d1.transpose(p1)[s1]
                         a2 = d2.transpose(p2)[s2]
-                        ref = ref and a1.base != None and a1.base.base != None
-                        ref = ref and a2.base != None and a2.base.base != None
+                        ref = ref and a1.base != None
+                        ref = ref and a2.base != None
                         if broadcastable(a1.shape[-1], a2.shape[-2]) and \
                            broadcastable(a1.shape[0], a2.shape[0]):
                             assert_array_almost_equal(

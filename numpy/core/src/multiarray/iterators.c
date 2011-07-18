@@ -1183,11 +1183,12 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
             Py_DECREF(ret);
             return NULL;
         }
+        /*
+         * Don't use PyArray_SetBase, because that compresses
+         * the chain of bases.
+         */
         Py_INCREF(it->ao);
-        if (PyArray_SetBase(ret, (PyObject *)it->ao) < 0) {
-            Py_DECREF(ret);
-            return NULL;
-        }
+        ((PyArrayObject_fieldaccess *)ret)->base = (PyObject *)it->ao;
         PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
         PyArray_CLEARFLAGS(it->ao, NPY_ARRAY_WRITEABLE);
     }

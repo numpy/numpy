@@ -25,14 +25,13 @@
  */
 NPY_NO_EXPORT PyObject *
 PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
-                 PyArrayObject *ret, NPY_CLIPMODE clipmode)
+                 PyArrayObject *out, NPY_CLIPMODE clipmode)
 {
     PyArray_FastTakeFunc *func;
-    PyArrayObject *self, *indices;
+    PyArrayObject *obj, *self, *indices;
     intp nd, i, j, n, m, max_item, tmp, chunk, nelem;
     intp shape[MAX_DIMS];
     char *src, *dest;
-    int copyret = 0;
     int err;
 
     indices = NULL;
@@ -44,7 +43,6 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                                                          PyArray_INTP,
                                                          1, 0);
     if (indices == NULL) {
-        Py_XINCREF(ret);
         goto fail;
     }
     n = m = chunk = 1;
@@ -65,28 +63,25 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             }
         }
     }
-    Py_INCREF(PyArray_DESCR(self));
-    if (!ret) {
-        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
+    if (!out) {
+        Py_INCREF(PyArray_DESCR(self));
+        obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
                                                     PyArray_DESCR(self),
                                                     nd, shape,
                                                     NULL, NULL, 0,
                                                     (PyObject *)self);
 
-        if (ret == NULL) {
+        if (obj == NULL) {
             goto fail;
         }
     }
     else {
-        PyArrayObject *obj;
         int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
 
-        if ((PyArray_NDIM(ret) != nd) ||
-            !PyArray_CompareLists(PyArray_DIMS(ret), shape, nd)) {
+        if ((PyArray_NDIM(out) != nd) ||
+            !PyArray_CompareLists(PyArray_DIMS(out), shape, nd)) {
             PyErr_SetString(PyExc_ValueError,
                             "bad shape in output array");
-            ret = NULL;
-            Py_DECREF(PyArray_DESCR(self));
             goto fail;
         }
 
@@ -98,22 +93,19 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
              */
             flags |= NPY_ARRAY_ENSURECOPY;
         }
-        obj = (PyArrayObject *)PyArray_FromArray(ret, PyArray_DESCR(self),
+        Py_INCREF(PyArray_DESCR(self));
+        obj = (PyArrayObject *)PyArray_FromArray(out, PyArray_DESCR(self),
                                                  flags);
-        if (obj != ret) {
-            copyret = 1;
-        }
-        ret = obj;
-        if (ret == NULL) {
+        if (obj == NULL) {
             goto fail;
         }
     }
 
     max_item = PyArray_DIMS(self)[axis];
     nelem = chunk;
-    chunk = chunk * PyArray_DESCR(ret)->elsize;
+    chunk = chunk * PyArray_DESCR(obj)->elsize;
     src = PyArray_DATA(self);
-    dest = PyArray_DATA(ret);
+    dest = PyArray_DATA(obj);
 
     func = PyArray_DESCR(self)->f->fasttake;
     if (func == NULL) {
@@ -183,20 +175,17 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         }
     }
 
-    PyArray_INCREF(ret);
     Py_XDECREF(indices);
     Py_XDECREF(self);
-    if (copyret) {
-        PyObject *obj;
-        obj = PyArray_BASE(ret);
+    if (out != NULL && out != obj) {
+        Py_DECREF(obj);
+        obj = out;
         Py_INCREF(obj);
-        Py_DECREF(ret);
-        ret = (PyArrayObject *)obj;
     }
-    return (PyObject *)ret;
+    return (PyObject *)obj;
 
  fail:
-    PyArray_XDECREF_ERR(ret);
+    PyArray_XDECREF_ERR(obj);
     Py_XDECREF(indices);
     Py_XDECREF(self);
     return NULL;
@@ -388,6 +377,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 {
     PyArray_FastPutmaskFunc *func;
     PyArrayObject  *mask, *values;
+    PyArray_Descr *dtype;
     intp i, chunk, ni, max_item, nv, tmp;
     char *src, *dest;
     int copied = 0;
@@ -401,17 +391,17 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     values = NULL;
     if (!PyArray_Check(self)) {
         PyErr_SetString(PyExc_TypeError,
-                        "putmask: first argument must "\
+                        "putmask: first argument must "
                         "be an array");
         return NULL;
     }
     if (!PyArray_ISCONTIGUOUS(self)) {
         PyArrayObject *obj;
-        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
 
-        Py_INCREF(PyArray_DESCR(self));
-        obj = (PyArrayObject *)PyArray_FromArray(self,
-                                                 PyArray_DESCR(self), flags);
+        dtype = PyArray_DESCR(self);
+        Py_INCREF(dtype);
+        obj = (PyArrayObject *)PyArray_FromArray(self, dtype,
+                                NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
         if (obj != self) {
             copied = 1;
         }
@@ -421,22 +411,22 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     max_item = PyArray_SIZE(self);
     dest = PyArray_DATA(self);
     chunk = PyArray_DESCR(self)->elsize;
-    mask = (PyArrayObject *)\
-        PyArray_FROM_OTF(mask0, PyArray_BOOL,
-                            NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST);
+    mask = (PyArrayObject *)PyArray_FROM_OTF(mask0, NPY_BOOL,
+                                NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST);
     if (mask == NULL) {
         goto fail;
     }
     ni = PyArray_SIZE(mask);
     if (ni != max_item) {
         PyErr_SetString(PyExc_ValueError,
-                        "putmask: mask and data must be "\
+                        "putmask: mask and data must be "
                         "the same size");
         goto fail;
     }
-    Py_INCREF(PyArray_DESCR(self));
-    values = (PyArrayObject *)\
-        PyArray_FromAny(values0, PyArray_DESCR(self), 0, 0, NPY_ARRAY_CARRAY, NULL);
+    dtype = PyArray_DESCR(self);
+    Py_INCREF(dtype);
+    values = (PyArrayObject *)PyArray_FromAny(values0, dtype,
+                                    0, 0, NPY_ARRAY_CARRAY, NULL);
     if (values == NULL) {
         goto fail;
     }
@@ -449,7 +439,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     }
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
         for (i = 0; i < ni; i++) {
-            tmp = ((Bool *)(PyArray_DATA(mask)))[i];
+            tmp = ((npy_bool *)(PyArray_DATA(mask)))[i];
             if (tmp) {
                 src = PyArray_DATA(values) + chunk * (i % nv);
                 PyArray_Item_INCREF(src, PyArray_DESCR(self));
@@ -462,7 +452,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
         func = PyArray_DESCR(self)->f->fastputmask;
         if (func == NULL) {
             for (i = 0; i < ni; i++) {
-                tmp = ((Bool *)(PyArray_DATA(mask)))[i];
+                tmp = ((npy_bool *)(PyArray_DATA(mask)))[i];
                 if (tmp) {
                     src = PyArray_DATA(values) + chunk*(i % nv);
                     memmove(dest + i*chunk, src, chunk);
@@ -599,16 +589,17 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
 /*NUMPY_API
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
+PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
                NPY_CLIPMODE clipmode)
 {
+    PyArrayObject *obj = NULL;
+    PyArray_Descr *dtype;
     int n, elsize;
     intp i;
     char *ret_data;
     PyArrayObject **mps, *ap;
     PyArrayMultiIterObject *multi = NULL;
     intp mi;
-    int copyret = 0;
     ap = NULL;
 
     /*
@@ -635,27 +626,27 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
         goto fail;
     }
     /* Set-up return array */
-    if (!ret) {
-        Py_INCREF(PyArray_DESCR(mps[0]));
-        ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(ap),
-                                                    PyArray_DESCR(mps[0]),
+    if (out == NULL) {
+        dtype = PyArray_DESCR(mps[0]);
+        Py_INCREF(dtype);
+        obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(ap),
+                                                    dtype,
                                                     multi->nd,
                                                     multi->dimensions,
                                                     NULL, NULL, 0,
                                                     (PyObject *)ap);
     }
     else {
-        PyArrayObject *obj;
         int flags = NPY_ARRAY_CARRAY |
                     NPY_ARRAY_UPDATEIFCOPY |
                     NPY_ARRAY_FORCECAST;
 
-        if ((PyArray_NDIM(ret) != multi->nd)
-                || !PyArray_CompareLists(
-                    PyArray_DIMS(ret), multi->dimensions, multi->nd)) {
+        if ((PyArray_NDIM(out) != multi->nd)
+                    || !PyArray_CompareLists(PyArray_DIMS(out),
+                                             multi->dimensions,
+                                             multi->nd)) {
             PyErr_SetString(PyExc_TypeError,
-                            "invalid shape for output array.");
-            ret = NULL;
+                            "choose: invalid shape for output array.");
             goto fail;
         }
         if (clipmode == NPY_RAISE) {
@@ -666,19 +657,16 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
              */
             flags |= NPY_ARRAY_ENSURECOPY;
         }
-        Py_INCREF(PyArray_DESCR(mps[0]));
-        obj = (PyArrayObject *)PyArray_FromArray(ret, PyArray_DESCR(mps[0]), flags);
-        if (obj != ret) {
-            copyret = 1;
-        }
-        ret = obj;
+        dtype = PyArray_DESCR(mps[0]);
+        Py_INCREF(dtype);
+        obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
     }
 
-    if (ret == NULL) {
+    if (obj == NULL) {
         goto fail;
     }
-    elsize = PyArray_DESCR(ret)->elsize;
-    ret_data = PyArray_DATA(ret);
+    elsize = PyArray_DESCR(obj)->elsize;
+    ret_data = PyArray_DATA(obj);
 
     while (PyArray_MultiIter_NOTDONE(multi)) {
         mi = *((intp *)PyArray_MultiIter_DATA(multi, n));
@@ -716,21 +704,19 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
         PyArray_MultiIter_NEXT(multi);
     }
 
-    PyArray_INCREF(ret);
+    PyArray_INCREF(obj);
     Py_DECREF(multi);
     for (i = 0; i < n; i++) {
         Py_XDECREF(mps[i]);
     }
     Py_DECREF(ap);
     PyDataMem_FREE(mps);
-    if (copyret) {
-        PyObject *obj;
-        obj = PyArray_BASE(ret);
+    if (out != NULL && out != obj) {
+        Py_DECREF(obj);
+        obj = out;
         Py_INCREF(obj);
-        Py_DECREF(ret);
-        ret = (PyArrayObject *)obj;
     }
-    return (PyObject *)ret;
+    return (PyObject *)obj;
 
  fail:
     Py_XDECREF(multi);
@@ -739,7 +725,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *ret,
     }
     Py_XDECREF(ap);
     PyDataMem_FREE(mps);
-    PyArray_XDECREF_ERR(ret);
+    PyArray_XDECREF_ERR(obj);
     return NULL;
 }
 

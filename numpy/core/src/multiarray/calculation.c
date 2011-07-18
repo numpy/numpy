@@ -45,7 +45,6 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     intp *rptr;
     intp i, n, m;
     int elsize;
-    int copyret = 0;
     NPY_BEGIN_THREADS_DEF;
 
     if ((ap=(PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
@@ -76,8 +75,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     }
 
     /* Will get native-byte order contiguous copy. */
-    ap = (PyArrayObject *)
-        PyArray_ContiguousFromAny((PyObject *)op,
+    ap = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)op,
                                   PyArray_DESCR(op)->type_num, 1, 0);
     Py_DECREF(op);
     if (ap == NULL) {
@@ -112,15 +110,11 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
             PyErr_SetString(PyExc_TypeError,
                             "invalid shape for output array.");
         }
-        rp = (PyArrayObject *)\
-            PyArray_FromArray(out,
+        rp = (PyArrayObject *)PyArray_FromArray(out,
                               PyArray_DescrFromType(PyArray_INTP),
                               NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
         if (rp == NULL) {
             goto fail;
-        }
-        if (rp != out) {
-            copyret = 1;
         }
     }
 
@@ -134,12 +128,11 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
 
     Py_DECREF(ap);
-    if (copyret) {
-        PyArrayObject *obj;
-        obj = (PyArrayObject *)PyArray_BASE(rp);
-        Py_INCREF(obj);
+    /* Trigger the UPDATEIFCOPY if necessary */
+    if (out != NULL && out != rp) {
         Py_DECREF(rp);
-        rp = obj;
+        rp = out;
+        Py_INCREF(rp);
     }
     return (PyObject *)rp;
 
