@@ -27,6 +27,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                  PyArrayObject *out, NPY_CLIPMODE clipmode)
 {
+    PyArray_Descr *dtype;
     PyArray_FastTakeFunc *func;
     PyArrayObject *obj, *self, *indices;
     intp nd, i, j, n, m, max_item, tmp, chunk, nelem;
@@ -64,9 +65,10 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         }
     }
     if (!out) {
-        Py_INCREF(PyArray_DESCR(self));
+        dtype = PyArray_DESCR(self);
+        Py_INCREF(dtype);
         obj = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
-                                                    PyArray_DESCR(self),
+                                                    dtype,
                                                     nd, shape,
                                                     NULL, NULL, 0,
                                                     (PyObject *)self);
@@ -93,9 +95,9 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
              */
             flags |= NPY_ARRAY_ENSURECOPY;
         }
-        Py_INCREF(PyArray_DESCR(self));
-        obj = (PyArrayObject *)PyArray_FromArray(out, PyArray_DESCR(self),
-                                                 flags);
+        dtype = PyArray_DESCR(self);
+        Py_INCREF(dtype);
+        obj = (PyArrayObject *)PyArray_FromArray(out, dtype, flags);
         if (obj == NULL) {
             goto fail;
         }
@@ -175,12 +177,13 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         }
     }
 
+    PyArray_INCREF(obj);
     Py_XDECREF(indices);
     Py_XDECREF(self);
     if (out != NULL && out != obj) {
+        Py_INCREF(out);
         Py_DECREF(obj);
         obj = out;
-        Py_INCREF(obj);
     }
     return (PyObject *)obj;
 
@@ -712,9 +715,9 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     Py_DECREF(ap);
     PyDataMem_FREE(mps);
     if (out != NULL && out != obj) {
+        Py_INCREF(out);
         Py_DECREF(obj);
         obj = out;
-        Py_INCREF(obj);
     }
     return (PyObject *)obj;
 

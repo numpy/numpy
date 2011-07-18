@@ -185,6 +185,12 @@ class TestRecord(TestCase):
                        'formats':['i1', 'O'],
                        'offsets':[np.dtype('intp').itemsize, 0]})
 
+    def test_comma_datetime(self):
+        dt = np.dtype('M8[D],datetime64[Y],i8')
+        assert_equal(dt, np.dtype([('f0', 'M8[D]'),
+                                   ('f1', 'datetime64[Y]'),
+                                   ('f2', 'i8')]))
+
 class TestSubarray(TestCase):
     def test_single_subarray(self):
         a = np.dtype((np.int, (2)))

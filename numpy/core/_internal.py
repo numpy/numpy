@@ -129,60 +129,38 @@ def _reconstruct(subtype, shape, dtype):
     return ndarray.__new__(subtype, shape, dtype)
 
 
-# format_re and _split were taken from numarray by J. Todd Miller
+# format_re was originally from numarray by J. Todd Miller
 
-def _split(input):
-    """Split the input formats string into field formats without splitting
-       the tuple used to specify multi-dimensional arrays."""
-
-    newlist = []
-    hold = asbytes('')
-
-    listinput = input.split(asbytes(','))
-    for element in listinput:
-        if hold != asbytes(''):
-            item = hold + asbytes(',') + element
-        else:
-            item = element
-        left = item.count(asbytes('('))
-        right = item.count(asbytes(')'))
-
-        # if the parenthesis is not balanced, hold the string
-        if left > right :
-            hold = item
-
-        # when balanced, append to the output list and reset the hold
-        elif left == right:
-            newlist.append(item.strip())
-            hold = asbytes('')
-
-        # too many close parenthesis is unacceptable
-        else:
-            raise SyntaxError(item)
-
-    # if there is string left over in hold
-    if hold != asbytes(''):
-        raise SyntaxError(hold)
-
-    return newlist
-
-format_re = re.compile(asbytes(r'(?P<order1>[<>|=]?)(?P<repeats> *[(]?[ ,0-9]*[)]? *)(?P<order2>[<>|=]?)(?P<dtype>[A-Za-z0-9.]*)'))
+format_re = re.compile(asbytes(r'(?P<order1>[<>|=]?)(?P<repeats> *[(]?[ ,0-9]*[)]? *)(?P<order2>[<>|=]?)(?P<dtype>[A-Za-z0-9.]*(?:\[[a-zA-Z0-9,.]+\])?)'))
+sep_re = re.compile(asbytes(r'\s*,\s*'))
+space_re = re.compile(asbytes(r'\s+$'))
 
 # astr is a string (perhaps comma separated)
 
 _convorder = {asbytes('='): _nbo}
 
 def _commastring(astr):
-    res = _split(astr)
-    if (len(res)) < 1:
-        raise ValueError("unrecognized formant")
+    startindex = 0
     result = []
-    for k,item in enumerate(res):
-        # convert item
+    while startindex < len(astr):
+        mo = format_re.match(astr, pos=startindex)
         try:
-            (order1, repeats, order2, dtype) = format_re.match(item).groups()
+            (order1, repeats, order2, dtype) = mo.groups()
         except (TypeError, AttributeError):
-            raise ValueError('format %s is not recognized' % item)
+            raise ValueError('format number %d of "%s" is not recognized' %
+                                            (len(result)+1, astr))
+        startindex = mo.end()
+        # Separator or ending padding
+        if startindex < len(astr):
+            if space_re.match(astr, pos=startindex):
+                startindex = len(astr)
+            else:
+                mo = sep_re.match(astr, pos=startindex)
+                if not mo:
+                    raise ValueError(
+                            'format number %d of "%s" is not recognized' %
+                                            (len(result)+1, astr))
+                startindex = mo.end()
 
         if order2 == asbytes(''):
             order = order1
@@ -192,7 +170,7 @@ def _commastring(astr):
             order1 = _convorder.get(order1, order1)
             order2 = _convorder.get(order2, order2)
             if (order1 != order2):
-                raise ValueError('in-consistent byte-order specification %s and %s' % (order1, order2))
+                raise ValueError('inconsistent byte-order specification %s and %s' % (order1, order2))
             order = order1
 
         if order in [asbytes('|'), asbytes('='), _nbo]:
@@ -203,7 +181,7 @@ def _commastring(astr):
         else:
             newitem = (dtype, eval(repeats))
         result.append(newitem)
-
+        
     return result
 
 def _getintp_ctype():

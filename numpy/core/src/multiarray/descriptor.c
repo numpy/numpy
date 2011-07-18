@@ -599,7 +599,7 @@ _convert_from_commastring(PyObject *obj, int align)
     }
     listobj = PyObject_CallMethod(_numpy_internal, "_commastring", "O", obj);
     Py_DECREF(_numpy_internal);
-    if (!listobj) {
+    if (listobj == NULL) {
         return NULL;
     }
     if (!PyList_Check(listobj) || PyList_GET_SIZE(listobj) < 1) {
