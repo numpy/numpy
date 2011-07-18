@@ -2011,7 +2011,7 @@ npyiter_seq_length(NewNpyArrayIterObject *self)
     }
 }
 
-NPY_NO_EXPORT PyArrayObject *
+NPY_NO_EXPORT PyObject *
 npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 {
     PyArrayObject *ret;
@@ -2084,7 +2084,7 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 
     PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
 
-    return ret;
+    return (PyObject *)ret;
 }
 
 NPY_NO_EXPORT PyObject *

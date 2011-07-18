@@ -1149,7 +1149,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
              * If not successful, then objects cannot be
              * compared this way
              */
-            if (array_other == NULL) {
+            if (array_other == NULL || (PyObject *)array_other == Py_None) {
                 Py_XDECREF(array_other);
                 PyErr_Clear();
                 Py_INCREF(Py_NotImplemented);

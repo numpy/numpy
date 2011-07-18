@@ -348,9 +348,9 @@ NA_NewAll(int ndim, maybelong *shape, NumarrayType type,
             result = NULL;
         } else {
             if (buffer) {
-                memcpy(result->data, buffer, NA_NBYTES(result));
+                memcpy(PyArray_DATA(result), buffer, NA_NBYTES(result));
             } else {
-                memset(result->data, 0, NA_NBYTES(result));
+                memset(PyArray_DATA(result), 0, NA_NBYTES(result));
             }
         }
     }
@@ -367,7 +367,7 @@ NA_NewAllStrides(int ndim, maybelong *shape, maybelong *strides,
             byteoffset, 0,
             byteorder, aligned, writeable);
     for(i=0; i<ndim; i++)
-        result->strides[i] = strides[i];
+        PyArray_STRIDES(result)[i] = strides[i];
     return result;
 }
 
@@ -704,16 +704,16 @@ _NA_callStridingHelper(PyObject *aux, long dim,
 {
     int i, j, status=0;
     dim -= 1;
-    for(i=0; i<numarray[0]->dimensions[dim]; i++) {
+    for(i=0; i<PyArray_DIMS(numarray[0])[dim]; i++) {
         for (j=0; j<nnumarray; j++)
-            data[j] += numarray[j]->strides[dim]*i;
+            data[j] += PyArray_STRIDES(numarray[j])[dim]*i;
         if (dim == 0)
             status |= f(aux, nnumarray, numarray, data);
         else
             status |= _NA_callStridingHelper(
                     aux, dim, nnumarray, numarray, data, f);
         for (j=0; j<nnumarray; j++)
-            data[j] -= numarray[j]->strides[dim]*i;
+            data[j] -= PyArray_STRIDES(numarray[j])[dim]*i;
     }
     return status;
 }
@@ -747,7 +747,7 @@ callStridingCFunc(PyObject *self, PyObject *args) {
                     "%s arg[%d] is not an array.",
                     me->descr.name, i);
         numarray[i] = (PyArrayObject *) otemp;
-        data[i] = numarray[i]->data;
+        data[i] = PyArray_DATA(numarray[i]);
         Py_DECREF(otemp);
         if (!NA_updateDataPtr(numarray[i]))
             return NULL;
@@ -756,7 +756,7 @@ callStridingCFunc(PyObject *self, PyObject *args) {
     /* Cast function pointer and perform stride operation */
     f = (CFUNC_STRIDED_FUNC) me->descr.fptr;
 
-    if (_NA_callStridingHelper(aux, numarray[0]->nd,
+    if (_NA_callStridingHelper(aux, PyArray_NDIM(numarray[0]),
                 nnumarray, numarray, data, f)) {
         return NULL;
     } else {
@@ -1053,7 +1053,7 @@ NA_InputArray(PyObject *a, NumarrayType t, int requires)
 static int
 satisfies(PyArrayObject *a, int requirements, NumarrayType t)
 {
-    int type_ok = (a->descr->type_num == t) || (t == tAny);
+    int type_ok = (PyArray_DESCR(a)->type_num == t) || (t == tAny);
 
     if (PyArray_ISCARRAY(a))
         return type_ok;
@@ -1165,7 +1165,7 @@ Complex64 NA_get_Complex64(PyArrayObject *a, long offset)
     Complex32 v0;
     Complex64 v;
 
-    switch(a->descr->type_num) {
+    switch(PyArray_DESCR(a)->type_num) {
     case tComplex32:
         v0 = NA_GETP(a, Complex32, (NA_PTR(a)+offset));
         v.r = v0.r;
@@ -1186,7 +1186,7 @@ void NA_set_Complex64(PyArrayObject *a, long offset, Complex64 v)
 {
     Complex32 v0;
 
-    switch(a->descr->type_num) {
+    switch(PyArray_DESCR(a)->type_num) {
     case tComplex32:
         v0.r = v.r;
         v0.i = v.i;
@@ -1203,7 +1203,7 @@ void NA_set_Complex64(PyArrayObject *a, long offset, Complex64 v)
 
 Int64 NA_get_Int64(PyArrayObject *a, long offset)
 {
-    switch(a->descr->type_num) {
+    switch(PyArray_DESCR(a)->type_num) {
     case tBool:
         return NA_GETP(a, Bool, (NA_PTR(a)+offset)) != 0;
     case tInt8:
@@ -1233,7 +1233,7 @@ Int64 NA_get_Int64(PyArrayObject *a, long offset)
     default:
         PyErr_Format( PyExc_TypeError,
                 "Unknown type %d in NA_get_Int64",
-                a->descr->type_num);
+                PyArray_DESCR(a)->type_num);
         PyErr_Print();
     }
     return 0; /* suppress warning */
@@ -1243,7 +1243,7 @@ void NA_set_Int64(PyArrayObject *a, long offset, Int64 v)
 {
     Bool b;
 
-    switch(a->descr->type_num) {
+    switch(PyArray_DESCR(a)->type_num) {
     case tBool:
         b = (v != 0);
         NA_SETP(a, Bool, (NA_PTR(a)+offset), b);
@@ -1281,7 +1281,7 @@ void NA_set_Int64(PyArrayObject *a, long offset, Int64 v)
     default:
                     PyErr_Format( PyExc_TypeError,
                             "Unknown type %d in NA_set_Int64",
-                            a->descr->type_num);
+                            PyArray_DESCR(a)->type_num);
                     PyErr_Print();
     }
 }
@@ -1299,11 +1299,11 @@ long NA_get_offset(PyArrayObject *a, int N, ...)
     va_start(ap, N);
     if (N > 0) { /* compute offset of "outer" indices. */
         for(i=0; i<N; i++)
-            offset += va_arg(ap, long) * a->strides[i];
+            offset += va_arg(ap, long) * PyArray_STRIDES(a)[i];
     } else {   /* compute offset of "inner" indices. */
         N = -N;
         for(i=0; i<N; i++)
-            offset += va_arg(ap, long) * a->strides[a->nd-N+i];
+            offset += va_arg(ap, long) * PyArray_STRIDES(a)[PyArray_NDIM(a)-N+i];
     }
     va_end(ap);
     return offset;
@@ -1311,7 +1311,7 @@ long NA_get_offset(PyArrayObject *a, int N, ...)
 
 Float64 NA_get_Float64(PyArrayObject *a, long offset)
 {
-    switch(a->descr->type_num) {
+    switch(PyArray_DESCR(a)->type_num) {
     case tBool:
         return NA_GETP(a, Bool, (NA_PTR(a)+offset)) != 0;
     case tInt8:
@@ -1343,7 +1343,7 @@ Float64 NA_get_Float64(PyArrayObject *a, long offset)
     default:
         PyErr_Format( PyExc_TypeError,
                 "Unknown type %d in NA_get_Float64",
-                a->descr->type_num);
+                PyArray_DESCR(a)->type_num);
     }
     return 0; /* suppress warning */
 }
@@ -1352,7 +1352,7 @@ void NA_set_Float64(PyArrayObject *a, long offset, Float64 v)
 {
     Bool b;
 
-    switch(a->descr->type_num) {
+    switch(PyArray_DESCR(a)->type_num) {
     case tBool:
         b = (v != 0);
         NA_SETP(a, Bool, (NA_PTR(a)+offset), b);
@@ -1394,7 +1394,7 @@ void NA_set_Float64(PyArrayObject *a, long offset, Float64 v)
     default:
                      PyErr_Format( PyExc_TypeError,
                              "Unknown type %d in NA_set_Float64",
-                             a->descr->type_num );
+                             PyArray_DESCR(a)->type_num );
                      PyErr_Print();
     }
 }
@@ -1402,127 +1402,127 @@ void NA_set_Float64(PyArrayObject *a, long offset, Float64 v)
 
 Float64 NA_get1_Float64(PyArrayObject *a, long i)
 {
-    long offset = i * a->strides[0];
+    long offset = i * PyArray_STRIDES(a)[0];
     return NA_get_Float64(a, offset);
 }
 
 Float64 NA_get2_Float64(PyArrayObject *a, long i, long j)
 {
-    long offset  = i * a->strides[0]
-        + j * a->strides[1];
+    long offset  = i * PyArray_STRIDES(a)[0]
+        + j * PyArray_STRIDES(a)[1];
     return NA_get_Float64(a, offset);
 }
 
 Float64 NA_get3_Float64(PyArrayObject *a, long i, long j, long k)
 {
-    long offset  = i * a->strides[0]
-        + j * a->strides[1]
-        + k * a->strides[2];
+    long offset  = i * PyArray_STRIDES(a)[0]
+        + j * PyArray_STRIDES(a)[1]
+        + k * PyArray_STRIDES(a)[2];
     return NA_get_Float64(a, offset);
 }
 
 void NA_set1_Float64(PyArrayObject *a, long i, Float64 v)
 {
-    long offset = i * a->strides[0];
+    long offset = i * PyArray_STRIDES(a)[0];
     NA_set_Float64(a, offset, v);
 }
 
 void NA_set2_Float64(PyArrayObject *a, long i, long j, Float64 v)
 {
-    long offset  = i * a->strides[0]
-        + j * a->strides[1];
+    long offset  = i * PyArray_STRIDES(a)[0]
+        + j * PyArray_STRIDES(a)[1];
     NA_set_Float64(a, offset, v);
 }
 
 void NA_set3_Float64(PyArrayObject *a, long i, long j, long k, Float64 v)
 {
-    long offset  = i * a->strides[0]
-        + j * a->strides[1]
-        + k * a->strides[2];
+    long offset  = i * PyArray_STRIDES(a)[0]
+        + j * PyArray_STRIDES(a)[1]
+        + k * PyArray_STRIDES(a)[2];
     NA_set_Float64(a, offset, v);
 }
 
 Complex64 NA_get1_Complex64(PyArrayObject *a, long i)
 {
-    long offset = i * a->strides[0];
+    long offset = i * PyArray_STRIDES(a)[0];
     return NA_get_Complex64(a, offset);
 }
 
 Complex64 NA_get2_Complex64(PyArrayObject *a, long i, long j)
 {
-    long offset  = i * a->strides[0]
-        + j * a->strides[1];
+    long offset  = i * PyArray_STRIDES(a)[0]
+        + j * PyArray_STRIDES(a)[1];
     return NA_get_Complex64(a, offset);
 }
 
 Complex64 NA_get3_Complex64(PyArrayObject *a, long i, long j, long k)
 {
-    long offset  = i * a->strides[0]
-        + j * a->strides[1]
-        + k * a->strides[2];
+    long offset  = i * PyArray_STRIDES(a)[0]
+        + j * PyArray_STRIDES(a)[1]
+        + k * PyArray_STRIDES(a)[2];
     return NA_get_Complex64(a, offset);
 }
 
 void NA_set1_Complex64(PyArrayObject *a, long i, Complex64 v)
 {
-    long offset = i * a->strides[0];
+    long offset = i * PyArray_STRIDES(a)[0];
     NA_set_Complex64(a, offset, v);
 }
 
 void NA_set2_Complex64(PyArrayObject *a, long i, long j, Complex64 v)
 {
-    long offset  = i * a->strides[0]
-        + j * a->strides[1];
+    long offset  = i * PyArray_STRIDES(a)[0]
+        + j * PyArray_STRIDES(a)[1];
     NA_set_Complex64(a, offset, v);
 }
 
 void NA_set3_Complex64(PyArrayObject *a, long i, long j, long k, Complex64 v)
 {
-    long offset  = i * a->strides[0]
-        + j * a->strides[1]
-        + k * a->strides[2];
+    long offset  = i * PyArray_STRIDES(a)[0]
+        + j * PyArray_STRIDES(a)[1]
+        + k * PyArray_STRIDES(a)[2];
     NA_set_Complex64(a, offset, v);
 }
 
 Int64 NA_get1_Int64(PyArrayObject *a, long i)
 {
-    long offset = i * a->strides[0];
+    long offset = i * PyArray_STRIDES(a)[0];
     return NA_get_Int64(a, offset);
 }
 
 Int64 NA_get2_Int64(PyArrayObject *a, long i, long j)
 {
-    long offset  = i * a->strides[0]
-        + j * a->strides[1];
+    long offset  = i * PyArray_STRIDES(a)[0]
+        + j * PyArray_STRIDES(a)[1];
     return NA_get_Int64(a, offset);
 }
 
 Int64 NA_get3_Int64(PyArrayObject *a, long i, long j, long k)
 {
-    long offset  = i * a->strides[0]
-        + j * a->strides[1]
-        + k * a->strides[2];
+    long offset  = i * PyArray_STRIDES(a)[0]
+        + j * PyArray_STRIDES(a)[1]
+        + k * PyArray_STRIDES(a)[2];
     return NA_get_Int64(a, offset);
 }
 
 void NA_set1_Int64(PyArrayObject *a, long i, Int64 v)
 {
-    long offset = i * a->strides[0];
+    long offset = i * PyArray_STRIDES(a)[0];
     NA_set_Int64(a, offset, v);
 }
 
 void NA_set2_Int64(PyArrayObject *a, long i, long j, Int64 v)
 {
-    long offset  = i * a->strides[0]
-        + j * a->strides[1];
+    long offset  = i * PyArray_STRIDES(a)[0]
+        + j * PyArray_STRIDES(a)[1];
     NA_set_Int64(a, offset, v);
 }
 
 void NA_set3_Int64(PyArrayObject *a, long i, long j, long k, Int64 v)
 {
-    long offset  = i * a->strides[0]
-        + j * a->strides[1]
-        + k * a->strides[2];
+    long offset  = i * PyArray_STRIDES(a)[0]
+        + j * PyArray_STRIDES(a)[1]
+        + k * PyArray_STRIDES(a)[2];
     NA_set_Int64(a, offset, v);
 }
 
@@ -1531,7 +1531,7 @@ void NA_set3_Int64(PyArrayObject *a, long i, long j, long k, Int64 v)
 #define NA_SET_CMPLX(a, type, base, cnt, in)                                  \
 {                                                                             \
     int i;                                                                \
-    int stride = a->strides[ a->nd - 1];                                  \
+    int stride = PyArray_STRIDES(a)[ PyArray_NDIM(a) - 1];                                  \
     NA_SET1D(a, type, base, cnt, in);                                     \
     base = NA_PTR(a) + offset + sizeof(type);                             \
     for(i=0; i<cnt; i++) {                                                \
@@ -1545,7 +1545,7 @@ NA_get1D_Float64(PyArrayObject *a, long offset, int cnt, Float64*out)
 {
     char *base = NA_PTR(a) + offset;
 
-    switch(a->descr->type_num) {
+    switch(PyArray_DESCR(a)->type_num) {
     case tBool:
         NA_GET1D(a, Bool, base, cnt, out);
         break;
@@ -1590,7 +1590,7 @@ NA_get1D_Float64(PyArrayObject *a, long offset, int cnt, Float64*out)
     default:
         PyErr_Format( PyExc_TypeError,
                 "Unknown type %d in NA_get1D_Float64",
-                a->descr->type_num);
+                PyArray_DESCR(a)->type_num);
         PyErr_Print();
         return -1;
     }
@@ -1614,7 +1614,7 @@ NA_set1D_Float64(PyArrayObject *a, long offset, int cnt, Float64*in)
 {
     char *base = NA_PTR(a) + offset;
 
-    switch(a->descr->type_num) {
+    switch(PyArray_DESCR(a)->type_num) {
     case tBool:
         NA_SET1D(a, Bool, base, cnt, in);
         break;
@@ -1659,7 +1659,7 @@ NA_set1D_Float64(PyArrayObject *a, long offset, int cnt, Float64*in)
     default:
         PyErr_Format( PyExc_TypeError,
                 "Unknown type %d in NA_set1D_Float64",
-                a->descr->type_num);
+                PyArray_DESCR(a)->type_num);
         PyErr_Print();
         return -1;
     }
@@ -1671,7 +1671,7 @@ NA_get1D_Int64(PyArrayObject *a, long offset, int cnt, Int64*out)
 {
     char *base = NA_PTR(a) + offset;
 
-    switch(a->descr->type_num) {
+    switch(PyArray_DESCR(a)->type_num) {
     case tBool:
         NA_GET1D(a, Bool, base, cnt, out);
         break;
@@ -1714,7 +1714,7 @@ NA_get1D_Int64(PyArrayObject *a, long offset, int cnt, Int64*out)
     default:
         PyErr_Format( PyExc_TypeError,
                 "Unknown type %d in NA_get1D_Int64",
-                a->descr->type_num);
+                PyArray_DESCR(a)->type_num);
         PyErr_Print();
         return -1;
     }
@@ -1738,7 +1738,7 @@ NA_set1D_Int64(PyArrayObject *a, long offset, int cnt, Int64*in)
 {
     char *base = NA_PTR(a) + offset;
 
-    switch(a->descr->type_num) {
+    switch(PyArray_DESCR(a)->type_num) {
     case tBool:
         NA_SET1D(a, Bool, base, cnt, in);
         break;
@@ -1781,7 +1781,7 @@ NA_set1D_Int64(PyArrayObject *a, long offset, int cnt, Int64*in)
     default:
         PyErr_Format( PyExc_TypeError,
                 "Unknown type %d in NA_set1D_Int64",
-                a->descr->type_num);
+                PyArray_DESCR(a)->type_num);
         PyErr_Print();
         return -1;
     }
@@ -1793,14 +1793,14 @@ NA_get1D_Complex64(PyArrayObject *a, long offset, int cnt, Complex64*out)
 {
     char *base = NA_PTR(a) + offset;
 
-    switch(a->descr->type_num) {
+    switch(PyArray_DESCR(a)->type_num) {
     case tComplex64:
         NA_GET1D(a, Complex64, base, cnt, out);
         break;
     default:
         PyErr_Format( PyExc_TypeError,
                 "Unsupported type %d in NA_get1D_Complex64",
-                a->descr->type_num);
+                PyArray_DESCR(a)->type_num);
         PyErr_Print();
         return -1;
     }
@@ -1812,14 +1812,14 @@ NA_set1D_Complex64(PyArrayObject *a, long offset, int cnt, Complex64*in)
 {
     char *base = NA_PTR(a) + offset;
 
-    switch(a->descr->type_num) {
+    switch(PyArray_DESCR(a)->type_num) {
     case tComplex64:
         NA_SET1D(a, Complex64, base, cnt, in);
         break;
     default:
         PyErr_Format( PyExc_TypeError,
                 "Unsupported type %d in NA_set1D_Complex64",
-                a->descr->type_num);
+                PyArray_DESCR(a)->type_num);
         PyErr_Print();
         return -1;
     }
@@ -1841,10 +1841,10 @@ NA_ShapeEqual(PyArrayObject *a, PyArrayObject *b)
                 "NA_ShapeEqual: non-array as parameter.");
         return -1;
     }
-    if (a->nd != b->nd)
+    if (PyArray_NDIM(a) != PyArray_NDIM(b))
         return 0;
-    for(i=0; i<a->nd; i++)
-        if (a->dimensions[i] != b->dimensions[i])
+    for(i=0; i<PyArray_NDIM(a); i++)
+        if (PyArray_DIMS(a)[i] != PyArray_DIMS(b)[i])
             return 0;
     return 1;
 }
@@ -1864,11 +1864,11 @@ NA_ShapeLessThan(PyArrayObject *a, PyArrayObject *b)
                 "NA_ShapeLessThan: non-array as parameter.");
         return -1;
     }
-    mindim = MIN(a->nd, b->nd);
-    aoff = a->nd - mindim;
-    boff = b->nd - mindim;
+    mindim = MIN(PyArray_NDIM(a), PyArray_NDIM(b));
+    aoff = PyArray_NDIM(a) - mindim;
+    boff = PyArray_NDIM(b) - mindim;
     for(i=0; i<mindim; i++)
-        if (a->dimensions[i+aoff] >=  b->dimensions[i+boff])
+        if (PyArray_DIMS(a)[i+aoff] >=  PyArray_DIMS(b)[i+boff])
             return 0;
     return 1;
 }
@@ -2065,7 +2065,7 @@ getShape(PyObject *a, maybelong *shape, int dims)
     }
 
     if (!PySequence_Check(a) ||
-            (NA_NDArrayCheck(a) && (PyArray(a)->nd == 0)))
+            (NA_NDArrayCheck(a) && (PyArray_NDIM(PyArray(a)) == 0)))
         return dims;
     slen = PySequence_Length(a);
     if (slen < 0) {
@@ -2109,13 +2109,13 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, long offset)
     SequenceConstraint mustbe = NOTHING;
     int i, seqlen=-1, slen = PySequence_Length(s);
 
-    if (dim > a->nd) {
+    if (dim > PyArray_NDIM(a)) {
         PyErr_Format(PyExc_ValueError,
                 "setArrayFromSequence: sequence/array dimensions mismatch.");
         return -1;
     }
 
-    if (slen != a->dimensions[dim]) {
+    if (slen != PyArray_DIMS(a)[dim]) {
         PyErr_Format(PyExc_ValueError,
                 "setArrayFromSequence: sequence/array shape mismatch.");
         return -1;
@@ -2128,7 +2128,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, long offset)
                     "setArrayFromSequence: Can't get a sequence item");
             return -1;
         } else if ((NA_isPythonScalar(o) ||
-                    (NA_NumArrayCheck(o) && PyArray(o)->nd == 0)) &&
+                    (NA_NumArrayCheck(o) && PyArray_NDIM(PyArray(o)) == 0)) &&
                 ((mustbe == NOTHING) || (mustbe == NUMBER))) {
             if (NA_setFromPythonScalar(a, offset, o) < 0)
                 return -2;
@@ -2160,7 +2160,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, long offset)
             return -6;
         }
         Py_DECREF(o);
-        offset += a->strides[dim];
+        offset += PyArray_STRIDES(a)[dim];
     }
     return 0;
 }
@@ -2205,7 +2205,7 @@ _NA_maxType(PyObject *seq, int limit)
         return -1;
     }
     if (NA_NumArrayCheck(seq)) {
-        switch(PyArray(seq)->descr->type_num) {
+        switch(PyArray_DESCR(PyArray(seq))->type_num) {
         case tBool:
             return BOOL_SCALAR;
         case tInt8:
@@ -2308,7 +2308,7 @@ NA_isPythonScalar(PyObject *o)
 static PyObject *
 NA_getPythonScalar(PyArrayObject *a, long offset)
 {
-    int type = a->descr->type_num;
+    int type = PyArray_DESCR(a)->type_num;
     PyObject *rval = NULL;
 
     switch(type) {
@@ -2361,9 +2361,9 @@ NA_getPythonScalar(PyArrayObject *a, long offset)
 static int
 NA_overflow(PyArrayObject *a, Float64 v)
 {
-    if ((a->flags & CHECKOVERFLOW) == 0) return 0;
+    if ((PyArray_FLAGS(a) & CHECKOVERFLOW) == 0) return 0;
 
-    switch(a->descr->type_num) {
+    switch(PyArray_DESCR(a)->type_num) {
     case tBool:
         return 0;
     case tInt8:
@@ -2408,7 +2408,7 @@ NA_overflow(PyArrayObject *a, Float64 v)
     default:
         PyErr_Format( PyExc_TypeError,
                 "Unknown type %d in NA_overflow",
-                a->descr->type_num );
+                PyArray_DESCR(a)->type_num );
         PyErr_Print();
         return -1;
     }
@@ -2431,11 +2431,11 @@ _setFromPythonScalarCore(PyArrayObject *a, long offset, PyObject*value, int entr
             return -1;
         NA_set_Int64(a, offset, v);
     } else if (PyLong_Check(value)) {
-        if (a->descr->type_num == tInt64) {
+        if (PyArray_DESCR(a)->type_num == tInt64) {
             v = (Int64) PyLong_AsLongLong( value );
-        } else if (a->descr->type_num == tUInt64) {
+        } else if (PyArray_DESCR(a)->type_num == tUInt64) {
             v = (UInt64) PyLong_AsUnsignedLongLong( value );
-        } else if (a->descr->type_num == tUInt32) {
+        } else if (PyArray_DESCR(a)->type_num == tUInt32) {
             v = PyLong_AsUnsignedLong(value);
         } else {
             v = PyLong_AsLongLong(value);
@@ -2461,7 +2461,7 @@ _setFromPythonScalarCore(PyArrayObject *a, long offset, PyObject*value, int entr
         NA_set_Complex64(a, offset, vc);
     } else if (PyObject_HasAttrString(value, "__tonumtype__")) {
         int rval;
-        PyObject *type = NA_typeNoToTypeObject(a->descr->type_num);
+        PyObject *type = NA_typeNoToTypeObject(PyArray_DESCR(a)->type_num);
         if (!type) return -1;
         value = PyObject_CallMethod(
                 value, "__tonumtype__", "(N)", type);
@@ -2514,7 +2514,7 @@ NA_ComplexArrayCheck(PyObject *a)
     int rval = NA_NumArrayCheck(a);
     if (rval > 0) {
         PyArrayObject *arr = (PyArrayObject *) a;
-        switch(arr->descr->type_num) {
+        switch(PyArray_DESCR(arr)->type_num) {
         case tComplex64: case tComplex32:
             return 1;
         default:
@@ -2529,8 +2529,8 @@ NA_elements(PyArrayObject  *a)
 {
     int i;
     unsigned long n = 1;
-    for(i = 0; i<a->nd; i++)
-        n *= a->dimensions[i];
+    for(i = 0; i<PyArray_NDIM(a); i++)
+        n *= PyArray_DIMS(a)[i];
     return n;
 }
 
@@ -2731,25 +2731,25 @@ NA_swapAxes(PyArrayObject *array, int x, int y)
 
     if (((PyObject *) array) == Py_None) return 0;
 
-    if (array->nd < 2) return 0;
+    if (PyArray_NDIM(array) < 2) return 0;
 
-    if (x < 0) x += array->nd;
-    if (y < 0) y += array->nd;
+    if (x < 0) x += PyArray_NDIM(array);
+    if (y < 0) y += PyArray_NDIM(array);
 
-    if ((x < 0) || (x >= array->nd) ||
-            (y < 0) || (y >= array->nd)) {
+    if ((x < 0) || (x >= PyArray_NDIM(array)) ||
+            (y < 0) || (y >= PyArray_NDIM(array))) {
         PyErr_Format(PyExc_ValueError,
                 "Specified dimension does not exist");
         return -1;
     }
 
-    temp = array->dimensions[x];
-    array->dimensions[x] = array->dimensions[y];
-    array->dimensions[y] = temp;
+    temp = PyArray_DIMS(array)[x];
+    PyArray_DIMS(array)[x] = PyArray_DIMS(array)[y];
+    PyArray_DIMS(array)[y] = temp;
 
-    temp = array->strides[x];
-    array->strides[x] = array->strides[y];
-    array->strides[y] = temp;
+    temp = PyArray_STRIDES(array)[x];
+    PyArray_STRIDES(array)[x] = PyArray_STRIDES(array)[y];
+    PyArray_STRIDES(array)[y] = temp;
 
     PyArray_UpdateFlags(array, NPY_ARRAY_UPDATE_ALL);
 
@@ -2921,7 +2921,7 @@ NA_getArrayData(PyArrayObject *obj)
         PyErr_Format(PyExc_TypeError,
                 "expected an NDArray");
     }
-    return obj->data;
+    return PyArray_DATA(obj);
 }
 
 /* Byteswap is not a flag of the array --- it is implicit in the data-type */
