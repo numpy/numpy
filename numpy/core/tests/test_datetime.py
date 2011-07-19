@@ -1644,11 +1644,17 @@ class TestDateTime(TestCase):
                         roll='forward', busdaycal=bdd)
         assert_equal(np.busday_count('2011-01-01', dates, busdaycal=bdd),
                      np.arange(366))
+        # Returns negative value when reversed
+        assert_equal(np.busday_count(dates, '2011-01-01', busdaycal=bdd),
+                     -np.arange(366))
 
         dates = np.busday_offset('2011-12-31', -np.arange(366),
                         roll='forward', busdaycal=bdd)
         assert_equal(np.busday_count(dates, '2011-12-31', busdaycal=bdd),
                      np.arange(366))
+        # Returns negative value when reversed
+        assert_equal(np.busday_count('2011-12-31', dates, busdaycal=bdd),
+                     -np.arange(366))
 
         # Can't supply both a weekmask/holidays and busdaycal
         assert_raises(ValueError, np.busday_offset, '2012-01-03', '2012-02-03',
@@ -1658,6 +1664,8 @@ class TestDateTime(TestCase):
 
         # Number of Mondays in March 2011
         assert_equal(np.busday_count('2011-03', '2011-04', weekmask='Mon'), 4)
+        # Returns negative value when reversed
+        assert_equal(np.busday_count('2011-04', '2011-03', weekmask='Mon'), -4)
 
     def test_datetime_is_busday(self):
         holidays=['2011-01-01', '2011-10-10', '2011-11-11', '2011-11-24',
