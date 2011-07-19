@@ -524,7 +524,7 @@ def average(a, axis=None, weights=None, returned=False):
     else:
         return avg
 
-def asarray_chkfinite(a):
+def asarray_chkfinite(a, dtype=None, order=None):
     """
     Convert the input to an array, checking for NaNs or Infs.
 
@@ -570,8 +570,8 @@ def asarray_chkfinite(a):
     ``asarray_chkfinite`` is identical to ``asarray``.
 
     >>> a = [1, 2]
-    >>> np.asarray_chkfinite(a)
-    array([1, 2])
+    >>> np.asarray_chkfinite(a, dtype=float)
+    array([1., 2.])
 
     Raises ValueError if array_like contains Nans or Infs.
 
@@ -584,7 +584,7 @@ def asarray_chkfinite(a):
     ValueError
 
     """
-    a = asarray(a)
+    a = asarray(a, dtype=dtype, order=order)
     if (a.dtype.char in typecodes['AllFloat']) \
            and (_nx.isnan(a).any() or _nx.isinf(a).any()):
         raise ValueError(
