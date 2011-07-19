@@ -3077,7 +3077,7 @@ void _strided_masked_wrapper_decsrcref_transfer_function(
     while (N > 0) {
         /* Skip masked values, still calling decsrcref for move_references */
         subloopsize = 0;
-        while (subloopsize < N && !NpyMask_IsExposed(*mask)) {
+        while (subloopsize < N && !NpyMaskValue_IsExposed(*mask)) {
             ++subloopsize;
             mask += mask_stride;
         }
@@ -3088,7 +3088,7 @@ void _strided_masked_wrapper_decsrcref_transfer_function(
         N -= subloopsize;
         /* Process unmasked values */
         subloopsize = 0;
-        while (subloopsize < N && NpyMask_IsExposed(*mask)) {
+        while (subloopsize < N && NpyMaskValue_IsExposed(*mask)) {
             ++subloopsize;
             mask += mask_stride;
         }
@@ -3120,7 +3120,7 @@ void _strided_masked_wrapper_transfer_function(
     while (N > 0) {
         /* Skip masked values */
         subloopsize = 0;
-        while (subloopsize < N && !NpyMask_IsExposed(*mask)) {
+        while (subloopsize < N && !NpyMaskValue_IsExposed(*mask)) {
             ++subloopsize;
             mask += mask_stride;
         }
@@ -3129,7 +3129,7 @@ void _strided_masked_wrapper_transfer_function(
         N -= subloopsize;
         /* Process unmasked values */
         subloopsize = 0;
-        while (subloopsize < N && NpyMask_IsExposed(*mask)) {
+        while (subloopsize < N && NpyMaskValue_IsExposed(*mask)) {
             ++subloopsize;
             mask += mask_stride;
         }

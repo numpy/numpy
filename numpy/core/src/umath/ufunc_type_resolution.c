@@ -1408,7 +1408,7 @@ unmasked_ufunc_loop_as_masked(
         /* Skip masked values */
         subloopsize = 0;
         while (subloopsize < loopsize &&
-                        !NpyMask_IsExposed(*(npy_mask *)mask)) {
+                        !NpyMaskValue_IsExposed(*(npy_mask *)mask)) {
             ++subloopsize;
             mask += mask_stride;
         }
@@ -1422,7 +1422,7 @@ unmasked_ufunc_loop_as_masked(
          */
         subloopsize = 0;
         while (subloopsize < loopsize &&
-                        NpyMask_IsExposed(*(npy_mask *)mask)) {
+                        NpyMaskValue_IsExposed(*(npy_mask *)mask)) {
             ++subloopsize;
             mask += mask_stride;
         }

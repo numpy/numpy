@@ -837,9 +837,22 @@ This gives us the following additions to the PyArrayObject::
      */
     npy_intp *maskna_strides;
 
-There are 2 (or 3) flags which must be added to the array flags::
+These fields can be accessed through the inline functions::
 
-    NPY_ARRAY_HASMASKNA
+    PyArray_Descr *
+    PyArray_MASKNA_DESCR(PyArrayObject *arr);
+
+    npy_mask *
+    PyArray_MASKNA_DATA(PyArrayObject *arr);
+
+    npy_intp *
+    PyArray_MASKNA_STRIDES(PyArrayObject *arr);
+
+    npy_bool
+    PyArray_HASMASKNA(PyArrayObject *arr);
+
+There are 1 or 2 flags which must be added to the array flags::
+
     NPY_ARRAY_OWNMASKNA
     /* To possibly add in a later revision */
     NPY_ARRAY_HARDMASKNA
