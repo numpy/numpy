@@ -46,6 +46,7 @@ PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
     if (PyBytes_Check(obj)) {
         char *str;
         Py_ssize_t len;
+        int i;
 
         if (PyBytes_AsStringAndSize(obj, &str, &len) < 0) {
             Py_DECREF(obj);
@@ -54,7 +55,6 @@ PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
 
         /* Length 7 is a string like "1111100" */
         if (len == 7) {
-            int i;
             for (i = 0; i < 7; ++i) {
                 switch(str[i]) {
                     case '0':
@@ -64,69 +64,80 @@ PyArray_WeekMaskConverter(PyObject *weekmask_in, npy_bool *weekmask)
                         weekmask[i] = 1;
                         break;
                     default:
+                        goto general_weekmask_string;
+                }
+            }
+
+            goto finish;
+        }
+
+general_weekmask_string:
+        /* a string like "SatSun" or "Mon Tue Wed" */
+        memset(weekmask, 0, 7);
+        for (i = 0; i < len; i += 3) {
+            while (isspace(str[i]))
+                ++i;
+
+            if (i == len) {
+                goto finish;
+            }
+            else if (i + 2 >= len) {
+                goto invalid_weekmask_string;
+            }
+
+            switch (str[i]) {
+                case 'M':
+                    if (str[i+1] == 'o' && str[i+2] == 'n') {
+                        weekmask[0] = 1;
+                    }
+                    else {
                         goto invalid_weekmask_string;
-                }
+                    }
+                    break;
+                case 'T':
+                    if (str[i+1] == 'u' && str[i+2] == 'e') {
+                        weekmask[1] = 1;
+                    }
+                    else if (str[i+1] == 'h' && str[i+2] == 'u') {
+                        weekmask[3] = 1;
+                    }
+                    else {
+                        goto invalid_weekmask_string;
+                    }
+                    break;
+                case 'W':
+                    if (str[i+1] == 'e' && str[i+2] == 'd') {
+                        weekmask[2] = 1;
+                    }
+                    else {
+                        goto invalid_weekmask_string;
+                    }
+                    break;
+                case 'F':
+                    if (str[i+1] == 'r' && str[i+2] == 'i') {
+                        weekmask[4] = 1;
+                    }
+                    else {
+                        goto invalid_weekmask_string;
+                    }
+                    break;
+                case 'S':
+                    if (str[i+1] == 'a' && str[i+2] == 't') {
+                        weekmask[5] = 1;
+                    }
+                    else if (str[i+1] == 'u' && str[i+2] == 'n') {
+                        weekmask[6] = 1;
+                    }
+                    else {
+                        goto invalid_weekmask_string;
+                    }
+                    break;
+                default:
+                    goto invalid_weekmask_string;
             }
-
-            goto finish;
         }
-        /* Length divisible by 3 is a string like "Mon" or "MonWedFri" */
-        else if (len % 3 == 0) {
-            int i;
-            memset(weekmask, 0, 7);
-            for (i = 0; i < len; i += 3) {
-                switch (str[i]) {
-                    case 'M':
-                        if (str[i+1] == 'o' && str[i+2] == 'n') {
-                            weekmask[0] = 1;
-                        }
-                        else {
-                            goto invalid_weekmask_string;
-                        }
-                        break;
-                    case 'T':
-                        if (str[i+1] == 'u' && str[i+2] == 'e') {
-                            weekmask[1] = 1;
-                        }
-                        else if (str[i+1] == 'h' && str[i+2] == 'u') {
-                            weekmask[3] = 1;
-                        }
-                        else {
-                            goto invalid_weekmask_string;
-                        }
-                        break;
-                    case 'W':
-                        if (str[i+1] == 'e' && str[i+2] == 'd') {
-                            weekmask[2] = 1;
-                        }
-                        else {
-                            goto invalid_weekmask_string;
-                        }
-                        break;
-                    case 'F':
-                        if (str[i+1] == 'r' && str[i+2] == 'i') {
-                            weekmask[4] = 1;
-                        }
-                        else {
-                            goto invalid_weekmask_string;
-                        }
-                        break;
-                    case 'S':
-                        if (str[i+1] == 'a' && str[i+2] == 't') {
-                            weekmask[5] = 1;
-                        }
-                        else if (str[i+1] == 'u' && str[i+2] == 'n') {
-                            weekmask[6] = 1;
-                        }
-                        else {
-                            goto invalid_weekmask_string;
-                        }
-                        break;
-                }
-            }
 
-            goto finish;
-        }
+        goto finish;
 
 invalid_weekmask_string:
         PyErr_Format(PyExc_ValueError,
