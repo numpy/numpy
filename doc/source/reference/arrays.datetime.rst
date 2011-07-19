@@ -293,7 +293,7 @@ in an optimized form.
 
 np.is_busday():
 ```````````````
-To test a datetime64 value to see if it is a valid day, use np.is_busday().
+To test a datetime64 value to see if it is a valid day, use :func:`is_busday`.
 
 .. admonition:: Example
 
@@ -310,7 +310,7 @@ To test a datetime64 value to see if it is a valid day, use np.is_busday().
 np.busday_count():
 ``````````````````
 To find how many valid days there are in a specified range of datetime64
-dates, use np.busday_count():
+dates, use :func:`busday_count`:
 
 .. admonition:: Example
 
