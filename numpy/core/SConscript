@@ -452,6 +452,7 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'descriptor.c'),
         pjoin('src', 'multiarray', 'iterators.c'),
         pjoin('src', 'multiarray', 'mapping.c'),
+        pjoin('src', 'multiarray', 'na_mask.c'),
         pjoin('src', 'multiarray', 'number.c'),
         pjoin('src', 'multiarray', 'getset.c'),
         pjoin('src', 'multiarray', 'sequence.c'),

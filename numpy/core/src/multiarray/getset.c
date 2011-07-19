@@ -775,7 +775,7 @@ array_flat_set(PyArrayObject *self, PyObject *val)
     typecode = PyArray_DESCR(self);
     Py_INCREF(typecode);
     arr = (PyArrayObject *)PyArray_FromAny(val, typecode,
-                          0, 0, NPY_ARRAY_FORCECAST | FORTRAN_IF(self), NULL);
+                  0, 0, NPY_ARRAY_FORCECAST | PyArray_FORTRAN_IF(self), NULL);
     if (arr == NULL) {
         return -1;
     }

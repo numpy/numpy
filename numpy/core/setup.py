@@ -773,6 +773,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'mapping.c'),
             join('src', 'multiarray', 'methods.c'),
             join('src', 'multiarray', 'multiarraymodule.c'),
+            join('src', 'multiarray', 'na_mask.c'),
             join('src', 'multiarray', 'nditer_templ.c.src'),
             join('src', 'multiarray', 'nditer_api.c'),
             join('src', 'multiarray', 'nditer_constr.c'),
