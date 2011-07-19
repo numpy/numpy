@@ -793,6 +793,12 @@ class TestCheckFinite(TestCase):
         assert_raises(ValueError, numpy.lib.asarray_chkfinite, b)
         assert_raises(ValueError, numpy.lib.asarray_chkfinite, c)
 
+    def test_dtype_order(self):
+        """Regression test for missing dtype and order arguments"""
+        a = [1, 2, 3]
+        a = numpy.lib.asarray_chkfinite(a, order='F', dtype=numpy.float64)
+        assert_(a.dtype == numpy.float64)
+
 
 class TestNaNFuncts(TestCase):
     def setUp(self):
