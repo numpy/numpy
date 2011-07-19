@@ -620,7 +620,10 @@ typedef struct tagPyArrayObject {
         PyObject_HEAD
 } PyArrayObject;
 #else
-/* Can't put this in npy_deprecated_api.h like the others */
+/*
+ * Can't put this in npy_deprecated_api.h like the others.
+ * PyArrayObject field access is deprecated as of NumPy 1.7.
+ */
 typedef PyArrayObject_fieldaccess PyArrayObject;
 #endif
 
@@ -1257,13 +1260,13 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
  * All sorts of useful ways to look into a PyArrayObject. It is recommended
  * to use PyArrayObject * objects instead of always casting from PyObject *,
  * for improved type checking.
+ *
+ * In many cases here the macro versions of the accessors are deprecated,
+ * but can't be immediately changed to inline functions because the
+ * preexisting macros accept PyObject * and do automatic casts. Inline
+ * functions accepting PyArrayObject * provides for some compile-time
+ * checking of correctness when working with these objects in C.
  */
-
-static NPY_INLINE int
-PyArray_NDIM(PyArrayObject *arr)
-{
-    return ((PyArrayObject_fieldaccess *)arr)->nd;
-}
 
 #define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 || \
                              PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS) || \
@@ -1277,14 +1280,25 @@ PyArray_NDIM(PyArrayObject *arr)
 
 #define FORTRAN_IF PyArray_FORTRAN_IF
 
+#ifdef NPY_NO_DEPRECATED_API
+/*
+ * Changing access macros into functions, to allow for future hiding
+ * of the internal memory layout. This later hiding will allow the 2.x series
+ * to change the internal representation of arrays without affecting
+ * ABI compatibility.
+ */
+
+static NPY_INLINE int
+PyArray_NDIM(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->nd;
+}
+
 static NPY_INLINE char *
 PyArray_DATA(PyArrayObject *arr)
 {
     return ((PyArrayObject_fieldaccess *)arr)->data;
 }
-
-/* Same as PyArray_DATA */
-#define PyArray_BYTES(arr) PyArray_DATA(arr)
 
 static NPY_INLINE npy_intp *
 PyArray_DIMS(PyArrayObject *arr)
@@ -1328,11 +1342,71 @@ PyArray_FLAGS(PyArrayObject *arr)
     return ((PyArrayObject_fieldaccess *)arr)->flags;
 }
 
+static NPY_INLINE npy_intp
+PyArray_ITEMSIZE(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->descr->elsize;
+}
+
+static NPY_INLINE int
+PyArray_TYPE(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->descr->type_num;
+}
+
 static NPY_INLINE int
 PyArray_CHKFLAGS(PyArrayObject *arr, int flags)
 {
     return (PyArray_FLAGS(arr) & flags) == flags;
 }
+
+static NPY_INLINE PyObject *
+PyArray_GETITEM(PyArrayObject *arr, char *itemptr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->descr->f->getitem(
+                                                itemptr,
+                                                arr);
+}
+
+static NPY_INLINE int
+PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->descr->f->setitem(
+                                                v,
+                                                itemptr,
+                                                arr);
+}
+
+#else
+
+/* Macros are deprecated as of NumPy 1.7. */
+#define PyArray_NDIM(obj) (((PyArrayObject_fieldaccess *)(obj))->nd)
+#define PyArray_DATA(obj) ((void *)(((PyArrayObject_fieldaccess *)(obj))->data))
+#define PyArray_DIMS(obj) (((PyArrayObject_fieldaccess *)(obj))->dimensions)
+#define PyArray_STRIDES(obj) (((PyArrayObject_fieldaccess *)(obj))->strides)
+#define PyArray_DIM(obj,n) (PyArray_DIMS(obj)[n])
+#define PyArray_STRIDE(obj,n) (PyArray_STRIDES(obj)[n])
+#define PyArray_BASE(obj) (((PyArrayObject_fieldaccess *)(obj))->base)
+#define PyArray_DESCR(obj) (((PyArrayObject_fieldaccess *)(obj))->descr)
+#define PyArray_FLAGS(obj) (((PyArrayObject_fieldaccess *)(obj))->flags)
+#define PyArray_CHKFLAGS(m, FLAGS) \
+        ((((PyArrayObject_fieldaccess *)(m))->flags & (FLAGS)) == (FLAGS))
+#define PyArray_ITEMSIZE(obj) \
+                    (((PyArrayObject_fieldaccess *)(obj))->descr->elsize)
+#define PyArray_TYPE(obj) \
+                    (((PyArrayObject_fieldaccess *)(obj))->descr->type_num)
+#define PyArray_GETITEM(obj,itemptr) \
+        PyArray_DESCR(obj)->f->getitem((char *)(itemptr), \
+                                     (PyArrayObject *)(obj))
+
+#define PyArray_SETITEM(obj,itemptr,v) \
+        PyArray_DESCR(obj)->f->setitem((PyObject *)(v), \
+                                     (char *)(itemptr), \
+                                     (PyArrayObject *)(obj))
+#endif
+
+/* Same as PyArray_DATA */
+#define PyArray_BYTES(arr) PyArray_DATA(arr)
 
 /*
  * Enables the specified array flags. Does no checking,
@@ -1352,35 +1426,6 @@ static NPY_INLINE void
 PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 {
     ((PyArrayObject_fieldaccess *)arr)->flags &= ~flags;
-}
-
-static NPY_INLINE npy_intp
-PyArray_ITEMSIZE(PyArrayObject *arr)
-{
-    return ((PyArrayObject_fieldaccess *)arr)->descr->elsize;
-}
-
-static NPY_INLINE int
-PyArray_TYPE(PyArrayObject *arr)
-{
-    return ((PyArrayObject_fieldaccess *)arr)->descr->type_num;
-}
-
-static NPY_INLINE PyObject *
-PyArray_GETITEM(PyArrayObject *arr, void *itemptr)
-{
-    return ((PyArrayObject_fieldaccess *)arr)->descr->f->getitem(
-                                                (char *)itemptr,
-                                                arr);
-}
-
-static NPY_INLINE int
-PyArray_SETITEM(PyArrayObject *arr, void *itemptr, PyObject *v)
-{
-    return ((PyArrayObject_fieldaccess *)arr)->descr->f->setitem(
-                                                v,
-                                                (char *)itemptr,
-                                                arr);
 }
 
 #define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
