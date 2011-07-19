@@ -1595,10 +1595,16 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
 
     /* If op supports the __array_struct__ or __array_interface__ interface */
     tmp = PyArray_FromStructInterface(op);
+    if (tmp == NULL) {
+        return -1;
+    }
     if (tmp == Py_NotImplemented) {
         tmp = PyArray_FromInterface(op);
+        if (tmp == NULL) {
+            return -1;
+        }
     }
-    else {
+    if (tmp != Py_NotImplemented) {
         if (writeable && !PyArray_ISWRITEABLE((PyArrayObject *)tmp)) {
             PyErr_SetString(PyExc_RuntimeError,
                                 "cannot write to array interface object");
