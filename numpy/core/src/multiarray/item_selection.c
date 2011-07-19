@@ -29,7 +29,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
 {
     PyArray_Descr *dtype;
     PyArray_FastTakeFunc *func;
-    PyArrayObject *obj, *self, *indices;
+    PyArrayObject *obj = NULL, *self, *indices;
     intp nd, i, j, n, m, max_item, tmp, chunk, nelem;
     intp shape[MAX_DIMS];
     char *src, *dest;

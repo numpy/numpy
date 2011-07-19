@@ -161,15 +161,15 @@ extern "C" CONFUSE_EMACS
                                             (l)*PyArray_STRIDES(obj)[3]))
 
 static NPY_INLINE void
-PyArray_XDECREF_ERR(PyArrayObject *obj)
+PyArray_XDECREF_ERR(PyArrayObject *arr)
 {
-    if (obj) {
-        if (PyArray_FLAGS(obj) & NPY_ARRAY_UPDATEIFCOPY) {
-            PyArrayObject *base = (PyArrayObject *)PyArray_BASE(obj);
+    if (arr != NULL) {
+        if (PyArray_FLAGS(arr) & NPY_ARRAY_UPDATEIFCOPY) {
+            PyArrayObject *base = (PyArrayObject *)PyArray_BASE(arr);
             PyArray_ENABLEFLAGS(base, NPY_ARRAY_WRITEABLE);
-            PyArray_CLEARFLAGS(obj, NPY_ARRAY_UPDATEIFCOPY);
+            PyArray_CLEARFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
         }
-        Py_DECREF(obj);
+        Py_DECREF(arr);
     }
 }
 
