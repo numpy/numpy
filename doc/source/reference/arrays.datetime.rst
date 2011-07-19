@@ -317,8 +317,7 @@ dates, use :func:`busday_count`:
     >>> np.busday_count(np.datetime64('2011-07-11'), np.datetime64('2011-07-18'))
     5
     >>> np.busday_count(np.datetime64('2011-07-18'), np.datetime64('2011-07-11'))
-    0
-    # note: In future this will likely return -5, not 0
+    -5
 
 If you have an array of datetime64 day values, and you want a count of 
 how many of them are valid dates, you can do this:

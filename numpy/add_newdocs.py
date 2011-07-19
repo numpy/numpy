@@ -6208,9 +6208,7 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
     `enddates`, not including the day of `enddates`.
 
     If ``enddates`` specifies a date value that is earlier than the
-    corresponding ``begindates`` date value, the count will be 0.
-    However, in future this may change to a negative count of valid
-    days.
+    corresponding ``begindates`` date value, the count will be negative.
 
     .. versionadded:: 1.7.0
 
