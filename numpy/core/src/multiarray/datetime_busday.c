@@ -379,7 +379,8 @@ apply_business_day_count(npy_datetime date_begin, npy_datetime date_end,
     if (date_begin == date_end) {
         *out = 0;
         return 0;
-    } else if (date_begin > date_end) {
+    }
+    else if (date_begin > date_end) {
         npy_datetime tmp = date_begin;
         date_begin = date_end;
         date_end = tmp;
