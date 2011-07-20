@@ -42,7 +42,7 @@ PyObject *PyInit__dummy(void) {
 }
 #else
 PyMODINIT_FUNC
-init_sort(void) {
+init_dummy(void) {
     Py_InitModule("_dummy", methods);
 }
 #endif
