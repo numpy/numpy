@@ -335,11 +335,11 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             Found bin edge of size <= 0. Did you specify `bins` with
             non-monotonic sequence?""")
 
+    nbin =  asarray(nbin)
+
     # Handle empty input.
     if N == 0:
-        return np.zeros(D), edges
-
-    nbin =  asarray(nbin)
+        return np.zeros(nbin-2), edges
 
     # Compute the bin number each sample falls into.
     Ncount = {}

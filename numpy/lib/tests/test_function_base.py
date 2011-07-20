@@ -749,7 +749,10 @@ class TestHistogramdd(TestCase):
 
     def test_empty(self):
         a, b = histogramdd([[], []], bins=([0,1], [0,1]))
-        assert_array_max_ulp(a, array([ 0., 0.]))
+        assert_array_max_ulp(a, array([[ 0.]]))
+        a, b = np.histogramdd([[], [], []], bins=2)
+        assert_array_max_ulp(a, np.zeros((2, 2, 2)))
+
 
     def test_bins_errors(self):
         """There are two ways to specify bins. Check for the right errors when

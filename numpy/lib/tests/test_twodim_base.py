@@ -224,7 +224,10 @@ class TestHistogram2d(TestCase):
 
     def test_empty(self):
         a, edge1, edge2 = histogram2d([],[], bins=([0,1],[0,1]))
-        assert_array_max_ulp(a, array([ 0., 0.]))
+        assert_array_max_ulp(a, array([[ 0.]]))
+
+        a, edge1, edge2 = histogram2d([], [], bins=4)
+        assert_array_max_ulp(a, np.zeros((4, 4)))
 
 
 class TestTri(TestCase):
