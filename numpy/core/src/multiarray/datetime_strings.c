@@ -131,7 +131,7 @@ parse_iso_8601_datetime(char *str, int len,
         struct tm tm_;
 
         time(&rawtime);
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__GNUC__)
         if (localtime_s(&tm_, &rawtime) != 0) {
             PyErr_SetString(PyExc_OSError, "Failed to obtain local time "
                                         "from localtime_s");
@@ -532,7 +532,7 @@ parse_timezone:
             }
 
             /* gmtime converts a 'time_t' into a UTC 'struct tm' */
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__GNUC__)
             if (gmtime_s(&tm_, &rawtime) != 0) {
                 PyErr_SetString(PyExc_OSError, "Failed to use gmtime_s to "
                                             "get a UTC time");
@@ -884,7 +884,7 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
         rawtime += dts->min * 60;
 
         /* localtime converts a 'time_t' into a local 'struct tm' */
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__GNUC__)
         if (localtime_s(&tm_, &rawtime) != 0) {
             PyErr_SetString(PyExc_OSError, "Failed to use localtime_s to "
                                         "get a local time");
