@@ -233,8 +233,9 @@ For example,::
     array([1., 2., NA, 7.], dtype='NA[<f4]')
 
 produce arrays with values [1.0, 2.0, <inaccessible>, 7.0] /
-mask [Exposed, Exposed, Exposed, Hidden], and
-values [1.0, 2.0, <NA bitpattern>, 7.0] respectively.
+mask [Exposed, Exposed, Hidden, Exposed], and
+values [1.0, 2.0, <NA bitpattern>, 7.0] for the masked and
+NA dtype versions respectively.
 
 It may be worth overloading the np.NA __call__ method to accept a dtype,
 returning a zero-dimensional array with a missing value of that dtype.
@@ -473,7 +474,7 @@ Some examples::
 
     >>> a = np.array([1., 3., np.NA, 7.], maskna=True)
     >>> np.sum(a)
-    array(NA, dtype='<f8', masked=True)
+    array(NA, dtype='<f8', maskna=True)
     >>> np.sum(a, skipna=True)
     11.0
     >>> np.mean(a)
@@ -499,17 +500,21 @@ their behavior is through a series of examples::
 
     >>> np.any(np.array([False, False, False], maskna=True))
     False
-    >>> np.any(np.array([False, NA, False], maskna=True))
+    >>> np.any(np.array([False, np.NA, False], maskna=True))
     NA
-    >>> np.any(np.array([False, NA, True], maskna=True))
+    >>> np.any(np.array([False, np.NA, True], maskna=True))
     True
 
     >>> np.all(np.array([True, True, True], maskna=True))
     True
-    >>> np.all(np.array([True, NA, True], maskna=True))
+    >>> np.all(np.array([True, np.NA, True], maskna=True))
     NA
-    >>> np.all(np.array([False, NA, True], maskna=True))
+    >>> np.all(np.array([False, np.NA, True], maskna=True))
     False
+
+Since 'np.any' is the reduction for 'np.logical_or', and 'np.all'
+is the reduction for 'np.logical_and', it makes sense for them to
+have a 'skipna=' parameter like the other similar reduction functions.
 
 Parameterized NA Data Types
 ===========================
@@ -621,12 +626,122 @@ transition to multi-NA support. Here is one way multi-NA support could look::
 
     >>> a = np.array([np.NA(1), 3, np.NA(2)], maskna='multi')
     >>> np.sum(a)
-    NA(1)
+    NA(1, dtype='<i4')
     >>> np.sum(a[1:])
-    NA(2)
+    NA(2, dtype='<i4')
     >>> b = np.array([np.NA, 2, 5], maskna=True)
     >>> a + b
     array([NA(0), 5, NA(2)], maskna='multi')
+
+The design of this NEP does not distinguish between NAs that come
+from an NA mask or NAs that come from an NA dtype. Both of these get
+treated equivalently in computations, with masks dominating over NA
+dtypes.::
+
+    >>> a = np.array([np.NA, 2, 5], maskna=True)
+    >>> b = np.array([1, np.NA, 7], dtype='NA')
+    >>> a + b
+    array([NA, NA, 12], maskna=True)
+
+The multi-NA approach allows one to distinguish between these NAs,
+through assigning different payloads to the different types. If we
+extend the 'skipna=' parameter to accept a list of payloads in addition
+to True/False, one could do this::
+
+    >>> a = np.array([np.NA(1), 2, 5], maskna='multi')
+    >>> b = np.array([1, np.NA(0), 7], dtype='NA[f4,multi]')
+    >>> a + b
+    array([NA(1), NA(0), 12], maskna='multi')
+    >>> np.sum(a, skipna=0)
+    NA(1, dtype='<i4')
+    >>> np.sum(a, skipna=1)
+    7
+    >>> np.sum(b, skipna=0)
+    8
+    >>> np.sum(b, skipna=1)
+    NA(0, dtype='<f4')
+    >>> np.sum(a+b, skipna=(0,1))
+    12
+
+Differences with numpy.ma
+=========================
+
+The computational model that numpy.ma uses does not strictly adhere to
+either the NA or the IGNORE model. This section exhibits some examples
+of how these differences affect simple computations. This information
+will be very important for helping users navigate between the systems,
+so a summary probably should be put in a table in the documentation.::
+
+    >>> a = np.random.random((3, 2))
+    >>> mask = [[False, True], [True, True], [False, False]]
+    >>> b1 = np.ma.masked_array(a, mask=mask)
+    >>> b2 = a.view(maskna=True)
+    >>> b2[mask] = np.NA
+
+    >>> b1
+    masked_array(data =
+     [[0.110804969841 --]
+     [-- --]
+     [0.955128477746 0.440430735546]],
+                 mask =
+     [[False  True]
+     [ True  True]
+     [False False]],
+           fill_value = 1e+20)
+    >>> b2
+    array([[0.110804969841, NA],
+           [NA, NA],
+           [0.955128477746, 0.440430735546]],
+           maskna=True)
+
+    >>> b1.mean(axis=0)
+    masked_array(data = [0.532966723794 0.440430735546],
+                 mask = [False False],
+           fill_value = 1e+20)
+
+    >>> b2.mean(axis=0)
+    array([NA, NA], dtype='<f8', maskna=True)
+    >>> b2.mean(axis=0, skipna=True)
+    array([0.532966723794 0.440430735546], maskna=True)
+
+For functions like np.mean, when 'skipna=True', the behavior
+for all NAs is consistent with an empty array::
+
+    >>> b1.mean(axis=1)
+    masked_array(data = [0.110804969841 -- 0.697779606646],
+                 mask = [False  True False],
+           fill_value = 1e+20)
+
+    >>> b2.mean(axis=1)
+    array([NA, NA, 0.697779606646], maskna=True)
+    >>> b2.mean(axis=1, skipna=True)
+    RuntimeWarning: invalid value encountered in double_scalars
+    array([0.110804969841, nan, 0.697779606646], maskna=True)
+
+    >>> np.mean([])
+    RuntimeWarning: invalid value encountered in double_scalars
+    nan
+
+In particular, note that numpy.ma generally skips masked values,
+except returns masked when all the values are masked, while
+the 'skipna=' parameter returns zero when all the values are NA,
+to be consistent with the result of np.sum([])::
+
+    >>> b1[1]
+    masked_array(data = [-- --],
+                 mask = [ True  True],
+           fill_value = 1e+20)
+    >>> b2[1]
+    array([NA, NA], dtype='<f8', maskna=True)
+    >>> b1[1].sum()
+    masked
+    >>> b2[1].sum()
+    NA(dtype='<f8')
+    >>> b2[1].sum(skipna=True)
+    0.0
+
+    >>> np.sum([])
+    0.0
 
 PEP 3118
 ========
