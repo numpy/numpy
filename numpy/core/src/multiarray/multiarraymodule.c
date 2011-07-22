@@ -32,8 +32,6 @@
 
 NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 
-#define PyAO PyArrayObject
-
 /* Internal APIs */
 #include "arraytypes.h"
 #include "arrayobject.h"
@@ -50,6 +48,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "datetime_strings.h"
 #include "datetime_busday.h"
 #include "datetime_busdaycal.h"
+#include "na_singleton.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -2685,7 +2684,7 @@ PyArray_Where(PyObject *condition, PyObject *x, PyObject *y)
         Py_DECREF(obj);
         return NULL;
     }
-    ret = PyArray_Choose((PyAO *)obj, tup, NULL, NPY_RAISE);
+    ret = PyArray_Choose((PyArrayObject *)obj, tup, NULL, NPY_RAISE);
     Py_DECREF(obj);
     Py_DECREF(tup);
     return ret;
@@ -3851,6 +3850,9 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (PyType_Ready(&NpyIter_Type) < 0) {
         return RETVAL;
     }
+    if (PyType_Ready(&NpyNA_Type) < 0) {
+        return RETVAL;
+    }
 
     PyArrayDescr_Type.tp_hash = PyArray_DescrHash;
     if (PyType_Ready(&PyArrayDescr_Type) < 0) {
@@ -3946,6 +3948,12 @@ PyMODINIT_FUNC initmultiarray(void) {
     Py_INCREF(&NpyBusDayCalendar_Type);
     PyDict_SetItemString(d, "busdaycalendar",
                             (PyObject *)&NpyBusDayCalendar_Type);
+    /* NA Type */
+    PyDict_SetItemString(d, "NAType", (PyObject *)&NpyNA_Type);
+    Py_INCREF(&NpyNA_Type);
+    /* NA  Singleton */
+    PyDict_SetItemString(d, "NA", (PyObject *)&_Npy_NASingleton);
+    Py_INCREF(&_Npy_NASingleton);
 
     set_flaginfo(d);
 

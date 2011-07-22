@@ -14,4 +14,6 @@ typedef struct {
 
 NPY_NO_EXPORT NpyNA_fieldaccess _Npy_NASingleton;
 
+#define Npy_NA ((PyObject *)&_Npy_NASingleton)
+
 #endif

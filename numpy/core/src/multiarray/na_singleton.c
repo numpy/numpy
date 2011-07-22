@@ -71,6 +71,26 @@ na_init(NpyNA_fieldaccess *self, PyObject *args, PyObject *kwds)
     return 0;
 }
 
+/*
+ * The call function proxies to the na_init function to handle
+ * the payload and dtype parameters.
+ */
+static PyObject *
+na_call(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+{
+    NpyNA_fieldaccess *ret;
+    
+    ret = (NpyNA_fieldaccess *)na_new(&NpyNA_Type, NULL, NULL);
+    if (ret != NULL) {
+        if (na_init(ret, args, kwds) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+
+    return (PyObject *)ret;
+}
+
 static void
 na_dealloc(NpyNA_fieldaccess *self)
 {
@@ -104,6 +124,31 @@ na_repr(NpyNA_fieldaccess *self)
                 PyUString_FromString(")"));
         return s;
     }
+}
+
+/*
+ * The str function is the same as repr, except it throws away
+ * the dtype. It is always either "NA" or "NA(payload)".
+ */
+static PyObject *
+na_str(NpyNA_fieldaccess *self)
+{
+    if (self->payload == 255) {
+        return PyUString_FromString("NA");
+    }
+    else {
+        return PyUString_FromFormat("NA(%d)", (int)self->payload);
+    }
+}
+
+/*
+ * Any comparison with NA produces an NA.
+ */
+static PyObject *
+na_richcompare(NpyNA_fieldaccess *self, PyObject *other, int cmp_op)
+{
+    Py_INCREF(Npy_NA);
+    return Npy_NA;
 }
 
 static PyObject *
@@ -214,6 +259,33 @@ static PyGetSetDef na_getsets[] = {
     {NULL, NULL, NULL, NULL, NULL}
 };
 
+/* Using NA in an if statement is always an error */
+static int
+na_nonzero(PyObject *NPY_UNUSED(self))
+{
+    PyErr_SetString(PyExc_ValueError,
+            "numpy.NA represents an unknown missing value, "
+            "so its truth value cannot be determined");
+    return -1;
+}
+
+NPY_NO_EXPORT PyNumberMethods na_as_number = {
+    0,                                          /*nb_add*/
+    0,                                          /*nb_subtract*/
+    0,                                          /*nb_multiply*/
+#if defined(NPY_PY3K)
+#else
+    0,                                          /*nb_divide*/
+#endif
+    0,                                          /*nb_remainder*/
+    0,                                          /*nb_divmod*/
+    0,                                          /*nb_power*/
+    0,                                          /*nb_neg*/
+    0,                                          /*nb_pos*/
+    0,                                          /*(unaryfunc)array_abs,*/
+    (inquiry)na_nonzero,                        /*nb_nonzero*/
+};
+
 NPY_NO_EXPORT PyTypeObject NpyNA_Type = {
 #if defined(NPY_PY3K)
     PyVarObject_HEAD_INIT(NULL, 0)
@@ -235,12 +307,12 @@ NPY_NO_EXPORT PyTypeObject NpyNA_Type = {
     0,                                          /* tp_compare */
 #endif
     (reprfunc)na_repr,                          /* tp_repr */
-    0,                                          /* tp_as_number */
+    &na_as_number,                              /* tp_as_number */
     0,                                          /* tp_as_sequence */
     0,                                          /* tp_as_mapping */
     0,                                          /* tp_hash */
-    0,                                          /* tp_call */
-    0,                                          /* tp_str */
+    (ternaryfunc)na_call,                       /* tp_call */
+    (reprfunc)na_str,                           /* tp_str */
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
@@ -248,7 +320,7 @@ NPY_NO_EXPORT PyTypeObject NpyNA_Type = {
     0,                                          /* tp_doc */
     0,                                          /* tp_traverse */
     0,                                          /* tp_clear */
-    0,                                          /* tp_richcompare */
+    (richcmpfunc)na_richcompare,                /* tp_richcompare */
     0,                                          /* tp_weaklistoffset */
     0,                                          /* tp_iter */
     0,                                          /* tp_iternext */
@@ -278,7 +350,7 @@ NPY_NO_EXPORT PyTypeObject NpyNA_Type = {
 
 NPY_NO_EXPORT NpyNA_fieldaccess _Npy_NASingleton = {
     PyObject_HEAD_INIT(&NpyNA_Type)
-    0,    /* payload */
+    255,  /* payload (255 means no payload) */
     NULL, /* dtype */
     1     /* is_singleton */
 };
