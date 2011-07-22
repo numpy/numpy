@@ -50,6 +50,18 @@ sub-types).
 
 .. cfunction:: PyObject *PyArray_BASE(PyObject* arr)
 
+    This returns the base object of the array. In most cases, this
+    means the object which owns the memory the array is pointing at.
+
+    If you are constructing an array using the C API, and specifying
+    your own memory, you should use the function :cfunc:`PyArray_SetBaseObject`
+    to set the base to an object which owns the memory.
+
+    If the :cdata:`NPY_ARRAY_UPDATEIFCOPY` flag is set, it has a different
+    meaning, namely base is the array into which the current array will
+    be copied upon destruction. This overloading of the base property
+    for two functions is likely to change in a future version of NumPy.
+
 .. cfunction:: PyArray_Descr *PyArray_DESCR(PyObject* arr)
 
 .. cfunction:: int PyArray_FLAGS(PyObject* arr)
@@ -149,7 +161,7 @@ From scratch
     is not ``NULL``, then it is assumed to point to the memory to be
     used for the array and the *flags* argument is used as the new
     flags for the array (except the state of :cdata:`NPY_OWNDATA` and
-    :cdata:`UPDATEIFCOPY` flags of the new array will be reset). In
+    :cdata:`NPY_ARRAY_UPDATEIFCOPY` flags of the new array will be reset). In
     addition, if *data* is non-NULL, then *strides* can also be
     provided. If *strides* is ``NULL``, then the array strides are
     computed as C-style contiguous (default) or Fortran-style
@@ -266,6 +278,19 @@ From scratch
     increments of ``step``. Equivalent to arange( ``start``,
     ``stop``, ``step``, ``typenum`` ).
 
+.. cfunction:: int PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
+
+    If you construct an array by passing in your own memory buffer as
+    a parameter, you need to set the array's `base` property to ensure
+    the lifetime of the memory buffer is appropriate. This function
+    accomplishes the task.
+
+    The return value is 0 on success, -1 on failure.
+
+    If the object provided is an array, this function traverses the
+    chain of `base` pointers so that each array points to the owner
+    of the memory directly. Once the base is set, it may not be changed
+    to another value.
 
 From other objects
 ^^^^^^^^^^^^^^^^^^
