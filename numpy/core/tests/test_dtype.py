@@ -297,6 +297,25 @@ class TestString(TestCase):
                      "('bottom', [('bleft', ('>f4', (8, 64)), (1,)), "
                      "('bright', '>f4', (8, 36))])]")
 
+        # If the sticky aligned flag is set to True, it makes the
+        # str() function use a dict representation with an 'aligned' flag
+        dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),
+                                ('rtile', '>f4', (64, 36))],
+                                (3,)),
+                       ('bottom', [('bleft', ('>f4', (8, 64)), (1,)),
+                                   ('bright', '>f4', (8, 36))])],
+                       align=True)
+        assert_equal(str(dt),
+                    "{'names':['top','bottom'], "
+                     "'formats':[([('tiles', ('>f4', (64, 64)), (1,)), "
+                                  "('rtile', '>f4', (64, 36))], (3,)),"
+                                 "[('bleft', ('>f4', (8, 64)), (1,)), "
+                                  "('bright', '>f4', (8, 36))]], "
+                     "'offsets':[0,76800], "
+                     "'itemsize':80000, "
+                     "'aligned':True}")
+        assert_equal(np.dtype(eval(str(dt))), dt)
+
         dt = np.dtype({'names': ['r','g','b'], 'formats': ['u1', 'u1', 'u1'],
                         'offsets': [0, 1, 2],
                         'titles': ['Red pixel', 'Green pixel', 'Blue pixel']})
@@ -327,6 +346,10 @@ class TestString(TestCase):
                     " 'offsets':[0,2],"
                     " 'titles':['Red pixel','Blue pixel'],"
                     " 'itemsize':3}")
+
+        dt = np.dtype([('a', '<m8[D]'), ('b', '<M8[us]')])
+        assert_equal(str(dt),
+                    "[('a', '<m8[D]'), ('b', '<M8[us]')]")
 
     def test_complex_dtype_repr(self):
         dt = np.dtype([('top', [('tiles', ('>f4', (64, 64)), (1,)),
@@ -371,6 +394,11 @@ class TestString(TestCase):
                     "'offsets':[0,2], "
                     "'titles':['Red pixel','Blue pixel'], "
                     "'itemsize':4})")
+
+        dt = np.dtype([('a', '<M8[D]'), ('b', '<m8[us]')])
+        assert_equal(repr(dt),
+                    "dtype([('a', '<M8[D]'), ('b', '<m8[us]')])")
+
 
 if __name__ == "__main__":
     run_module_suite()
