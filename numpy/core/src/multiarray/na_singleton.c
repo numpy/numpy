@@ -17,6 +17,7 @@
 #include "npy_config.h"
 #include "numpy/npy_3kcompat.h"
 
+#include "descriptor.h"
 #include "na_singleton.h"
 
 static PyObject *
@@ -26,7 +27,8 @@ na_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
     self = (NpyNA_fieldaccess *)subtype->tp_alloc(subtype, 0);
     if (self != NULL) {
-        self->payload = 0;
+        /* 255 signals no payload */
+        self->payload = 255;
         self->dtype = NULL;
         self->is_singleton = 0;
     }
@@ -38,7 +40,7 @@ static int
 na_init(NpyNA_fieldaccess *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"payload", "dtype", NULL};
-    int payload = 0;
+    int payload = NPY_MAX_INT;
     PyArray_Descr *dtype = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&:NA", kwlist,
@@ -48,7 +50,11 @@ na_init(NpyNA_fieldaccess *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    if (payload < 0 || payload > 127) {
+    /* Use 255 as the signal that no payload is set */
+    if (payload == NPY_MAX_INT) {
+        self->payload = 255;
+    }
+    else if (payload < 0 || payload > 127) {
         PyErr_Format(PyExc_ValueError,
                     "out of bounds payload for NumPy NA, "
                     "%d is not in the range [0,127]", payload);
@@ -74,9 +80,43 @@ na_dealloc(NpyNA_fieldaccess *self)
 }
 
 static PyObject *
+na_repr(NpyNA_fieldaccess *self)
+{
+    if (self->dtype == NULL) {
+        if (self->payload == 255) {
+            return PyUString_FromString("NA");
+        }
+        else {
+            return PyUString_FromFormat("NA(%d)", (int)self->payload);
+        }
+    }
+    else {
+        PyObject *s;
+        if (self->payload == 255) {
+            s = PyUString_FromString("NA(dtype=");
+        }
+        else {
+            s  = PyUString_FromFormat("NA(%d, dtype=", (int)self->payload);
+        }
+        PyUString_ConcatAndDel(&s,
+                arraydescr_short_construction_repr(self->dtype));
+        PyUString_ConcatAndDel(&s,
+                PyUString_FromString(")"));
+        return s;
+    }
+}
+
+static PyObject *
 na_payload_get(NpyNA_fieldaccess *self)
 {
-    return PyInt_FromLong(self->payload);
+    /* If no payload is set, the value stored is 255 */
+    if (self->payload == 255) {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
+    else {
+        return PyInt_FromLong(self->payload);
+    }
 }
 
 static int
@@ -91,9 +131,9 @@ na_payload_set(NpyNA_fieldaccess *self, PyObject *value)
                     "make a new copy like 'numpy.NA(payload)'");
         return -1;
     }
-    /* Deleting the payload sets it to 0 */
-    else if (value == NULL) {
-        self->payload = 0;
+    /* Deleting the payload sets it to 255, the signal for no payload */
+    else if (value == NULL || value == Py_None) {
+        self->payload = 255;
     }
     else {
         /* Use PyNumber_Index to ensure an integer in Python >= 2.5*/
@@ -194,7 +234,7 @@ NPY_NO_EXPORT PyTypeObject NpyNA_Type = {
 #else
     0,                                          /* tp_compare */
 #endif
-    0,                                          /* tp_repr */
+    (reprfunc)na_repr,                          /* tp_repr */
     0,                                          /* tp_as_number */
     0,                                          /* tp_as_sequence */
     0,                                          /* tp_as_mapping */
