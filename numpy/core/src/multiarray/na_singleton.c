@@ -13,11 +13,13 @@
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #include <numpy/arrayobject.h>
+#include <numpy/arrayscalars.h>
 
 #include "npy_config.h"
 #include "numpy/npy_3kcompat.h"
 
 #include "descriptor.h"
+#include "common.h"
 #include "na_singleton.h"
 
 static PyObject *
@@ -147,8 +149,16 @@ na_str(NpyNA_fieldaccess *self)
 static PyObject *
 na_richcompare(NpyNA_fieldaccess *self, PyObject *other, int cmp_op)
 {
-    Py_INCREF(Npy_NA);
-    return Npy_NA;
+    /* If an ndarray is compared directly with NA, let the array handle it */
+    if (PyArray_Check(other)) {
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
+    /* Otherwise always return the NA singleton */
+    else {
+        Py_INCREF(Npy_NA);
+        return Npy_NA;
+    }
 }
 
 static PyObject *
@@ -259,6 +269,222 @@ static PyGetSetDef na_getsets[] = {
     {NULL, NULL, NULL, NULL, NULL}
 };
 
+/* Combines two NA values together, merging their payloads and dtypes. */
+NPY_NO_EXPORT NpyNA *
+NpyNA_CombineNA(NpyNA *na1, NpyNA *na2)
+{
+    NpyNA_fieldaccess *ret, *fna1, *fna2;
+
+    fna1 = (NpyNA_fieldaccess *)na1;
+    fna2 = (NpyNA_fieldaccess *)na2;
+
+    ret = (NpyNA_fieldaccess *)na_new(&NpyNA_Type, NULL, NULL);
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    /* Combine the payloads */
+    ret->payload = NpyNA_CombinePayloads(fna1->payload, fna2->payload);
+
+    /* Combine the dtypes */
+    Py_XDECREF(ret->dtype);
+    ret->dtype = NULL;
+    if (fna1->dtype != NULL && fna2->dtype != NULL) {
+        ret->dtype = PyArray_PromoteTypes(fna1->dtype, fna2->dtype);
+        if (ret->dtype == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+    else if (fna1->dtype != NULL) {
+        ret->dtype = fna1->dtype;
+        Py_INCREF(ret->dtype);
+    }
+    else if (fna2->dtype != NULL) {
+        ret->dtype = fna2->dtype;
+        Py_INCREF(ret->dtype);
+    }
+
+    return (NpyNA *)ret;
+}
+
+/*
+ * Combines an NA with an object, raising an error if the object has
+ * no extractable NumPy dtype.
+ */
+NPY_NO_EXPORT NpyNA *
+NpyNA_CombineNAWithObject(NpyNA *na, PyObject *obj)
+{
+    NpyNA_fieldaccess *ret, *fna;
+    PyArray_Descr *dtype = NULL;
+
+    fna = (NpyNA_fieldaccess *)na;
+
+    /* If 'obj' is NA, handle it specially */
+    if (NpyNA_Check(obj)) {
+        return NpyNA_CombineNA(na, (NpyNA *)obj);
+    }
+
+    /* Extract a dtype from 'obj' */
+    if (PyArray_IsScalar(obj, Generic)) {
+        dtype = PyArray_DescrFromScalar(obj);
+        if (dtype == NULL) {
+            return NULL;
+        }
+    }
+    else if (PyArray_Check(obj)) {
+        /* TODO: This needs to be more complicated... */
+        dtype = PyArray_DESCR((PyArrayObject *)obj);
+        Py_INCREF(dtype);
+    }
+    else {
+        dtype = _array_find_python_scalar_type(obj);
+        if (dtype == NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                    "numpy.NA only supports operations with scalars "
+                    "and NumPy arrays");
+            return NULL;
+        }
+    }
+
+    ret = (NpyNA_fieldaccess *)na_new(&NpyNA_Type, NULL, NULL);
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    /* Copy the payload */
+    ret->payload = fna->payload;
+
+    /* Combine the dtypes */
+    Py_XDECREF(ret->dtype);
+    if (fna->dtype == NULL) {
+        ret->dtype = dtype;
+    }
+    else {
+        ret->dtype = PyArray_PromoteTypes(fna->dtype, dtype);
+        Py_DECREF(dtype);
+        if (ret->dtype == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+
+    return (NpyNA *)ret;
+}
+
+/* An NA unary op simply passes along the same NA */
+static PyObject *
+na_unaryop(PyObject *self)
+{
+    Py_INCREF(self);
+    return self;
+}
+
+static PyObject *
+na_binaryop(PyObject *op1, PyObject *op2)
+{
+    /* If an ndarray is operated on with NA, let the array handle it */
+    if (PyArray_Check(op1) || PyArray_Check(op2)) {
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
+    /* Combine NAs according to standard rules */
+    else {
+        if (NpyNA_Check(op1)) {
+            return (PyObject *)NpyNA_CombineNAWithObject((NpyNA *)op1, op2);
+        }
+        else if (NpyNA_Check(op2)) {
+            return (PyObject *)NpyNA_CombineNAWithObject((NpyNA *)op2, op1);
+        }
+        else {
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
+        }
+    }
+}
+
+static PyObject *
+na_power(PyObject *op1, PyObject *op2, PyObject *NPY_UNUSED(op3))
+{
+    return na_binaryop(op1, op2);
+}
+
+/* Special case bitwise <and> with a boolean 'other' */
+static PyObject *
+na_and(PyObject *op1, PyObject *op2)
+{
+    NpyNA *na;
+    PyObject *other;
+
+    if (NpyNA_Check(op1)) {
+        na = (NpyNA *)op1;
+        other = op2;
+    }
+    else if (NpyNA_Check(op2)) {
+        na = (NpyNA *)op2;
+        other = op1;
+    }
+    else {
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
+
+    /* If an ndarray is operated on with NA, let the array handle it */
+    if (PyArray_Check(other)) {
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
+    /* NA & False is False */
+    else if (other == Py_False ||
+                        ((Py_TYPE(other) == &PyBoolArrType_Type) &&
+                         ((PyBoolScalarObject *)other)->obval == 0)) {
+        Py_INCREF(Py_False);
+        return Py_False;
+    }
+    /* Combine NAs according to standard rules */
+    else {
+        return (PyObject *)NpyNA_CombineNAWithObject(na, other);
+    }
+}
+
+/* Special case bitwise <or> with a boolean 'other' */
+static PyObject *
+na_or(PyObject *op1, PyObject *op2)
+{
+    NpyNA *na;
+    PyObject *other;
+
+    if (NpyNA_Check(op1)) {
+        na = (NpyNA *)op1;
+        other = op2;
+    }
+    else if (NpyNA_Check(op2)) {
+        na = (NpyNA *)op2;
+        other = op1;
+    }
+    else {
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
+
+    /* If an ndarray is operated on with NA, let the array handle it */
+    if (PyArray_Check(other)) {
+        Py_INCREF(Py_NotImplemented);
+        return Py_NotImplemented;
+    }
+    /* NA & True is True */
+    else if (other == Py_True ||
+                        ((Py_TYPE(other) == &PyBoolArrType_Type) &&
+                         ((PyBoolScalarObject *)other)->obval != 0)) {
+        Py_INCREF(Py_True);
+        return Py_True;
+    }
+    /* Combine NAs according to standard rules */
+    else {
+        return (PyObject *)NpyNA_CombineNAWithObject(na, other);
+    }
+}
+
 /* Using NA in an if statement is always an error */
 static int
 na_nonzero(PyObject *NPY_UNUSED(self))
@@ -270,20 +496,63 @@ na_nonzero(PyObject *NPY_UNUSED(self))
 }
 
 NPY_NO_EXPORT PyNumberMethods na_as_number = {
-    0,                                          /*nb_add*/
-    0,                                          /*nb_subtract*/
-    0,                                          /*nb_multiply*/
+    (binaryfunc)na_binaryop,                    /*nb_add*/
+    (binaryfunc)na_binaryop,                    /*nb_subtract*/
+    (binaryfunc)na_binaryop,                    /*nb_multiply*/
 #if defined(NPY_PY3K)
 #else
-    0,                                          /*nb_divide*/
+    (binaryfunc)na_binaryop,                    /*nb_divide*/
 #endif
-    0,                                          /*nb_remainder*/
-    0,                                          /*nb_divmod*/
-    0,                                          /*nb_power*/
-    0,                                          /*nb_neg*/
-    0,                                          /*nb_pos*/
-    0,                                          /*(unaryfunc)array_abs,*/
+    (binaryfunc)na_binaryop,                    /*nb_remainder*/
+    (binaryfunc)na_binaryop,                    /*nb_divmod*/
+    (ternaryfunc)na_power,                      /*nb_power*/
+    (unaryfunc)na_unaryop,                      /*nb_neg*/
+    (unaryfunc)na_unaryop,                      /*nb_pos*/
+    (unaryfunc)na_unaryop,                      /*nb_abs,*/
     (inquiry)na_nonzero,                        /*nb_nonzero*/
+    (unaryfunc)na_unaryop,                      /*nb_invert*/
+    (binaryfunc)na_binaryop,                    /*nb_lshift*/
+    (binaryfunc)na_binaryop,                    /*nb_rshift*/
+    (binaryfunc)na_and,                         /*nb_and*/
+    (binaryfunc)na_binaryop,                    /*nb_xor*/
+    (binaryfunc)na_or,                          /*nb_or*/
+#if defined(NPY_PY3K)
+#else
+    0,                                          /*nb_coerce*/
+#endif
+    0,                                          /*nb_int*/
+#if defined(NPY_PY3K)
+    0,                                          /*nb_reserved*/
+#else
+    0,                                          /*nb_long*/
+#endif
+    0,                                          /*nb_float*/
+#if defined(NPY_PY3K)
+#else
+    0,                                          /*nb_oct*/
+    0,                                          /*nb_hex*/
+#endif
+    0,                                          /*inplace_add*/
+    0,                                          /*inplace_subtract*/
+    0,                                          /*inplace_multiply*/
+#if defined(NPY_PY3K)
+#else
+    0,                                          /*inplace_divide*/
+#endif
+    0,                                          /*inplace_remainder*/
+    0,                                          /*inplace_power*/
+    0,                                          /*inplace_lshift*/
+    0,                                          /*inplace_rshift*/
+    0,                                          /*inplace_and*/
+    0,                                          /*inplace_xor*/
+    0,                                          /*inplace_or*/
+    (binaryfunc)na_binaryop,                    /*nb_floor_divide*/
+    (binaryfunc)na_binaryop,                    /*nb_true_divide*/
+    0,                                          /*nb_inplace_floor_divide*/
+    0,                                          /*nb_inplace_true_divide*/
+#if PY_VERSION_HEX >= 0x02050000
+    0,                                          /*nb_index*/
+#endif
 };
 
 NPY_NO_EXPORT PyTypeObject NpyNA_Type = {
@@ -316,7 +585,7 @@ NPY_NO_EXPORT PyTypeObject NpyNA_Type = {
     0,                                          /* tp_getattro */
     0,                                          /* tp_setattro */
     0,                                          /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                         /* tp_flags */
+    Py_TPFLAGS_DEFAULT|Py_TPFLAGS_CHECKTYPES,   /* tp_flags */
     0,                                          /* tp_doc */
     0,                                          /* tp_traverse */
     0,                                          /* tp_clear */

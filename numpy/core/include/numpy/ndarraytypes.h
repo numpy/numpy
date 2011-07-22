@@ -927,6 +927,8 @@ typedef struct tagNpyNA {
         PyObject_HEAD
 } NpyNA;
 
+#define NpyNA_Check(op) PyObject_TypeCheck(op, &NpyNA_Type)
+
 /**********************************
  * The nditer object, added in 1.6
  **********************************/
