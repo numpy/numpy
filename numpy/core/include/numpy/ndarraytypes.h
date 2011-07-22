@@ -918,6 +918,15 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_DISABLE_C_API
 #endif
 
+/*****************************
+ * NA object
+ *****************************/
+
+/* Direct access to the fields of the NA object is just internal to NumPy. */
+typedef struct tagNpyNA {
+        PyObject_HEAD
+} NpyNA;
+
 /**********************************
  * The nditer object, added in 1.6
  **********************************/
