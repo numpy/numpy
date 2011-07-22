@@ -1629,7 +1629,8 @@ static PyObject *npyiter_multi_index_get(NewNpyArrayIterObject *self)
     }
 }
 
-static int npyiter_multi_index_set(NewNpyArrayIterObject *self, PyObject *value)
+static int
+npyiter_multi_index_set(NewNpyArrayIterObject *self, PyObject *value)
 {
     npy_intp idim, ndim, multi_index[NPY_MAXDIMS];
 
