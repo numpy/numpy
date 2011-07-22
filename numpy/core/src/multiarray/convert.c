@@ -512,7 +512,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
         return NULL;
     }
     Py_INCREF(self);
-    if (PyArray_SetBase(new, (PyObject *)self) < 0) {
+    if (PyArray_SetBaseObject(new, (PyObject *)self) < 0) {
         Py_DECREF(new);
         Py_DECREF(type);
         return NULL;

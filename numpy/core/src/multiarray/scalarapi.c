@@ -289,7 +289,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
             return NULL;
         }
         Py_INCREF(scalar);
-        if (PyArray_SetBase(r, (PyObject *)scalar) < 0) {
+        if (PyArray_SetBaseObject(r, (PyObject *)scalar) < 0) {
             Py_DECREF(r);
             return NULL;
         }

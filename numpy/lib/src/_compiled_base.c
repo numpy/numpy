@@ -1051,7 +1051,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
             goto fail;
         }
         Py_INCREF(ret_arr);
-        if (PyArray_SetBase(view, (PyObject *)ret_arr) < 0) {
+        if (PyArray_SetBaseObject(view, (PyObject *)ret_arr) < 0) {
             Py_DECREF(view);
             goto fail;
         }

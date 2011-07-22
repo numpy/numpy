@@ -1898,7 +1898,7 @@ finish:
                 return NULL;
             }
             Py_INCREF(ret);
-            if (PyArray_SetBase(view, (PyObject *)ret) < 0) {
+            if (PyArray_SetBaseObject(view, (PyObject *)ret) < 0) {
                 Py_DECREF(ret);
                 Py_DECREF(ret_tuple);
             }

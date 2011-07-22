@@ -1165,7 +1165,7 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
             return NULL;
         }
         Py_INCREF(it->ao);
-        if (PyArray_SetBase(ret, (PyObject *)it->ao) < 0) {
+        if (PyArray_SetBaseObject(ret, (PyObject *)it->ao) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
@@ -1184,7 +1184,7 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
             return NULL;
         }
         /*
-         * Don't use PyArray_SetBase, because that compresses
+         * Don't use PyArray_SetBaseObject, because that compresses
          * the chain of bases.
          */
         Py_INCREF(it->ao);

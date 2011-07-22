@@ -318,7 +318,7 @@ multiarray_funcs_api = {
     # End 1.6 API
     'PyArray_MaskedCopyInto':               281,
     'PyArray_MaskedMoveInto':               282,
-    'PyArray_SetBase':                      283,
+    'PyArray_SetBaseObject':                      283,
 }
 
 ufunc_types_api = {

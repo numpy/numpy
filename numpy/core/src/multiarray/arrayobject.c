@@ -72,7 +72,7 @@ PyArray_Size(PyObject *op)
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_SetBase(PyArrayObject *arr, PyObject *obj)
+PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
 {
     if (obj == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1414,7 +1414,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
         }
         PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
         Py_INCREF(buffer.base);
-        if (PyArray_SetBase(ret, buffer.base) < 0) {
+        if (PyArray_SetBaseObject(ret, buffer.base) < 0) {
             Py_DECREF(ret);
             ret = NULL;
             goto fail;

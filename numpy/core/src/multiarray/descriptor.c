@@ -869,7 +869,6 @@ _convert_from_dict(PyObject *obj, int align)
             PyErr_SetString(PyExc_ValueError,
                     "NumPy dtype descriptor includes 'aligned' entry, "
                     "but its value is neither True nor False");
-            Py_DECREF(new);
             return NULL;
         }
     }

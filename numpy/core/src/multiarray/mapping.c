@@ -66,7 +66,7 @@ array_big_item(PyArrayObject *self, intp i)
         return NULL;
     }
     Py_INCREF(self);
-    if (PyArray_SetBase(r, (PyObject *)self) < 0) {
+    if (PyArray_SetBaseObject(r, (PyObject *)self) < 0) {
         Py_DECREF(r);
         return NULL;
     }
@@ -407,7 +407,7 @@ add_new_axes_0d(PyArrayObject *arr,  int newaxis_count)
         return NULL;
     }
     Py_INCREF(arr);
-    if (PyArray_SetBase(other, (PyObject *)arr) < 0) {
+    if (PyArray_SetBaseObject(other, (PyObject *)arr) < 0) {
         Py_DECREF(other);
         return NULL;
     }
@@ -546,7 +546,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
         return NULL;
     }
     Py_INCREF(self);
-    if (PyArray_SetBase(other, (PyObject *)self) < 0) {
+    if (PyArray_SetBaseObject(other, (PyObject *)self) < 0) {
         Py_DECREF(other);
         return NULL;
     }

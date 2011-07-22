@@ -2070,7 +2070,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             }
             if (flags & NPY_ARRAY_UPDATEIFCOPY)  {
                 /*
-                 * Don't use PyArray_SetBase, because that compresses
+                 * Don't use PyArray_SetBaseObject, because that compresses
                  * the chain of bases.
                  */
                 Py_INCREF(arr);
@@ -2101,7 +2101,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                 if (ret == NULL) {
                     return NULL;
                 }
-                if (PyArray_SetBase(ret, (PyObject *)arr)) {
+                if (PyArray_SetBaseObject(ret, (PyObject *)arr)) {
                     Py_DECREF(ret);
                     return NULL;
                 }
@@ -2143,7 +2143,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         }
         if (flags & NPY_ARRAY_UPDATEIFCOPY)  {
             /*
-             * Don't use PyArray_SetBase, because that compresses
+             * Don't use PyArray_SetBaseObject, because that compresses
              * the chain of bases.
              */
             Py_INCREF(arr);
@@ -2204,7 +2204,7 @@ PyArray_FromStructInterface(PyObject *input)
                              inter->strides, inter->data,
                              inter->flags, NULL);
     Py_INCREF(input);
-    if (PyArray_SetBase(ret, input) < 0) {
+    if (PyArray_SetBaseObject(ret, input) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
@@ -2376,7 +2376,7 @@ PyArray_FromInterface(PyObject *input)
         return NULL;
     }
     Py_INCREF(base);
-    if (PyArray_SetBase(ret, base) < 0) {
+    if (PyArray_SetBaseObject(ret, base) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
@@ -3902,7 +3902,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
         PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);
     }
     /* Store a reference for decref on deallocation */
-    if (PyArray_SetBase(ret, buf) < 0) {
+    if (PyArray_SetBaseObject(ret, buf) < 0) {
         Py_DECREF(ret);
         return NULL;
     }

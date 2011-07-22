@@ -312,7 +312,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     if (incref) {
         Py_INCREF(self);
     }
-    if (PyArray_SetBase(ret, (PyObject *)self)) {
+    if (PyArray_SetBaseObject(ret, (PyObject *)self)) {
         Py_DECREF(ret);
         return NULL;
     }
@@ -628,7 +628,7 @@ PyArray_Squeeze(PyArrayObject *self)
     }
     PyArray_CLEARFLAGS(ret, NPY_ARRAY_OWNDATA);
     Py_INCREF(self);
-    if (PyArray_SetBase(ret, (PyObject *)self) < 0) {
+    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
@@ -758,7 +758,7 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
     }
     /* point at true owner of memory: */
     Py_INCREF(ap);
-    if (PyArray_SetBase(ret, (PyObject *)ap) < 0) {
+    if (PyArray_SetBaseObject(ret, (PyObject *)ap) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
@@ -895,7 +895,7 @@ PyArray_Ravel(PyArrayObject *a, NPY_ORDER order)
                 PyArray_UpdateFlags(ret,
                             NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS);
                 Py_INCREF(a);
-                if (PyArray_SetBase(ret, (PyObject *)a) < 0) {
+                if (PyArray_SetBaseObject(ret, (PyObject *)a) < 0) {
                     Py_DECREF(ret);
                     ret = NULL;
                 }

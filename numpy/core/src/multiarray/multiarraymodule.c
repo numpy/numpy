@@ -1535,7 +1535,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
         return NULL;
     }
     /* steals a reference to arr --- so don't increment here */
-    if (PyArray_SetBase(ret, (PyObject *)arr) < 0) {
+    if (PyArray_SetBaseObject(ret, (PyObject *)arr) < 0) {
         Py_DECREF(ret);
         return NULL;
     }

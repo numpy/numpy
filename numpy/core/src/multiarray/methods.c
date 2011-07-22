@@ -309,7 +309,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
         return NULL;
     }
     Py_INCREF(self);
-    if (PyArray_SetBase(((PyArrayObject *)ret), (PyObject *)self) < 0) {
+    if (PyArray_SetBaseObject(((PyArrayObject *)ret), (PyObject *)self) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
@@ -911,7 +911,7 @@ array_wraparray(PyArrayObject *self, PyObject *args)
             return NULL;
         }
         Py_INCREF(obj);
-        if (PyArray_SetBase(ret, obj) < 0) {
+        if (PyArray_SetBaseObject(ret, obj) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
@@ -962,7 +962,7 @@ array_preparearray(PyArrayObject *self, PyObject *args)
         return NULL;
     }
     Py_INCREF(arr);
-    if (PyArray_SetBase(ret, (PyObject *)arr) < 0) {
+    if (PyArray_SetBaseObject(ret, (PyObject *)arr) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
@@ -1003,7 +1003,7 @@ array_getarray(PyArrayObject *self, PyObject *args)
             return NULL;
         }
         Py_INCREF(self);
-        PyArray_SetBase(new, (PyObject *)self);
+        PyArray_SetBaseObject(new, (PyObject *)self);
         self = new;
     }
     else {
