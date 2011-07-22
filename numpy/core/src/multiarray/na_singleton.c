@@ -29,8 +29,7 @@ na_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 
     self = (NpyNA_fieldaccess *)subtype->tp_alloc(subtype, 0);
     if (self != NULL) {
-        /* 255 signals no payload */
-        self->payload = 255;
+        self->payload = NPY_NA_NOPAYLOAD;
         self->dtype = NULL;
         self->is_singleton = 0;
     }
@@ -52,9 +51,9 @@ na_init(NpyNA_fieldaccess *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    /* Use 255 as the signal that no payload is set */
+    /* Using NPY_MAX_INT as the default for 'payload' */
     if (payload == NPY_MAX_INT) {
-        self->payload = 255;
+        self->payload = NPY_NA_NOPAYLOAD;
     }
     else if (payload < 0 || payload > 127) {
         PyErr_Format(PyExc_ValueError,
@@ -105,7 +104,7 @@ static PyObject *
 na_repr(NpyNA_fieldaccess *self)
 {
     if (self->dtype == NULL) {
-        if (self->payload == 255) {
+        if (self->payload == NPY_NA_NOPAYLOAD) {
             return PyUString_FromString("NA");
         }
         else {
@@ -114,7 +113,7 @@ na_repr(NpyNA_fieldaccess *self)
     }
     else {
         PyObject *s;
-        if (self->payload == 255) {
+        if (self->payload == NPY_NA_NOPAYLOAD) {
             s = PyUString_FromString("NA(dtype=");
         }
         else {
@@ -135,7 +134,7 @@ na_repr(NpyNA_fieldaccess *self)
 static PyObject *
 na_str(NpyNA_fieldaccess *self)
 {
-    if (self->payload == 255) {
+    if (self->payload == NPY_NA_NOPAYLOAD) {
         return PyUString_FromString("NA");
     }
     else {
@@ -164,8 +163,7 @@ na_richcompare(NpyNA_fieldaccess *self, PyObject *other, int cmp_op)
 static PyObject *
 na_payload_get(NpyNA_fieldaccess *self)
 {
-    /* If no payload is set, the value stored is 255 */
-    if (self->payload == 255) {
+    if (self->payload == NPY_NA_NOPAYLOAD) {
         Py_INCREF(Py_None);
         return Py_None;
     }
@@ -186,9 +184,8 @@ na_payload_set(NpyNA_fieldaccess *self, PyObject *value)
                     "make a new copy like 'numpy.NA(payload)'");
         return -1;
     }
-    /* Deleting the payload sets it to 255, the signal for no payload */
     else if (value == NULL || value == Py_None) {
-        self->payload = 255;
+        self->payload = NPY_NA_NOPAYLOAD;
     }
     else {
         /* Use PyNumber_Index to ensure an integer in Python >= 2.5*/
@@ -619,8 +616,8 @@ NPY_NO_EXPORT PyTypeObject NpyNA_Type = {
 
 NPY_NO_EXPORT NpyNA_fieldaccess _Npy_NASingleton = {
     PyObject_HEAD_INIT(&NpyNA_Type)
-    255,  /* payload (255 means no payload) */
-    NULL, /* dtype */
-    1     /* is_singleton */
+    NPY_NA_NOPAYLOAD,  /* payload */
+    NULL,              /* dtype */
+    1                  /* is_singleton */
 };
 
