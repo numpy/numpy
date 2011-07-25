@@ -15,6 +15,7 @@
 #include "common.h"
 #include "iterators.h"
 #include "mapping.h"
+#include "na_singleton.h"
 
 #define SOBJ_NOTFANCY 0
 #define SOBJ_ISFANCY 1
@@ -41,66 +42,133 @@ array_length(PyArrayObject *self)
 }
 
 NPY_NO_EXPORT PyObject *
-array_big_item(PyArrayObject *self, intp i)
+array_big_item(PyArrayObject *self, npy_intp i)
 {
     char *item;
-    PyArrayObject *r;
+    PyArrayObject *ret;
+    npy_intp dim0;
 
     if(PyArray_NDIM(self) == 0) {
         PyErr_SetString(PyExc_IndexError,
                         "0-d arrays can't be indexed");
         return NULL;
     }
-    if ((item = index2ptr(self, i)) == NULL) {
+
+    printf("array_big_item\n");
+
+    /* Bounds check and get the data pointer */
+    dim0 = PyArray_DIM(self, 0);
+    if (i < 0) {
+        i += dim0;
+    }
+    if (i < 0 || i >= dim0) {
+        PyErr_SetString(PyExc_IndexError,"index out of bounds");
         return NULL;
     }
+    item = PyArray_DATA(self) + i * PyArray_STRIDE(self, 0);
+
+    /* Create the view array */
     Py_INCREF(PyArray_DESCR(self));
-    r = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
                                               PyArray_DESCR(self),
                                               PyArray_NDIM(self)-1,
                                               PyArray_DIMS(self)+1,
                                               PyArray_STRIDES(self)+1, item,
-                                              PyArray_FLAGS(self),
+              PyArray_FLAGS(self) & ~(NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA),
                                               (PyObject *)self);
-    if (r == NULL) {
+    if (ret == NULL) {
         return NULL;
     }
+
+    /* Take a view of the mask if it exists */
+    if (PyArray_HASMASKNA(self)) {
+        PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)ret;
+
+        fa->maskna_dtype = PyArray_MASKNA_DTYPE(self);
+        Py_INCREF(fa->maskna_dtype);
+        fa->maskna_data = PyArray_MASKNA_DATA(self) +
+                          i * PyArray_MASKNA_STRIDES(self)[0];
+        if (fa->nd > 0) {
+            memcpy(fa->maskna_strides, &(PyArray_MASKNA_STRIDES(self)[1]),
+                                        (fa->nd - 1) * sizeof(npy_intp));
+        }
+        fa->flags |= NPY_ARRAY_MASKNA;
+    }
+
+    /* Set the base object */
     Py_INCREF(self);
-    if (PyArray_SetBaseObject(r, (PyObject *)self) < 0) {
-        Py_DECREF(r);
+    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
+        Py_DECREF(ret);
         return NULL;
     }
-    PyArray_UpdateFlags(r, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
-    return (PyObject *)r;
+
+    PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
+    return (PyObject *)ret;
 }
 
 NPY_NO_EXPORT int
 _array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
 {
-    return array_ass_big_item(self, (intp) i, v);
+    return array_ass_big_item(self, (npy_intp) i, v);
 }
+
 /* contains optimization for 1-d arrays */
 NPY_NO_EXPORT PyObject *
 array_item_nice(PyArrayObject *self, Py_ssize_t i)
 {
     if (PyArray_NDIM(self) == 1) {
         char *item;
-        if ((item = index2ptr(self, i)) == NULL) {
+        npy_intp dim0;
+
+        /* Bounds check and get the data pointer */
+        dim0 = PyArray_DIM(self, 0);
+        if (i < 0) {
+            i += dim0;
+        }
+        if (i < 0 || i >= dim0) {
+            PyErr_SetString(PyExc_IndexError,"index out of bounds");
             return NULL;
         }
+        item = PyArray_DATA(self) + i * PyArray_STRIDE(self, 0);
+
+        if (PyArray_HASMASKNA(self)) {
+            npy_mask maskvalue;
+
+            maskvalue = (npy_mask)*(PyArray_MASKNA_DATA(self) +
+                                    i * PyArray_MASKNA_STRIDES(self)[0]);
+            if (!NpyMaskValue_IsExposed(maskvalue)) {
+                NpyNA_fields *fna;
+
+                fna = (NpyNA_fields *)NpyNA_Type.tp_new(&NpyNA_Type, NULL, NULL);
+                if (fna == NULL) {
+                    return NULL;
+                }
+
+                fna->dtype = PyArray_DESCR(self);
+                Py_INCREF(fna->dtype);
+
+                if (PyArray_MASKNA_DTYPE(self)->type_num == NPY_MASK) {
+                    fna->payload = NpyMaskValue_GetPayload(maskvalue);
+                }
+
+                return (PyObject *)fna;
+            }
+        }
+
         return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
     }
     else {
         return PyArray_Return(
-                (PyArrayObject *) array_big_item(self, (intp) i));
+                (PyArrayObject *) array_big_item(self, (npy_intp) i));
     }
 }
 
 NPY_NO_EXPORT int
-array_ass_big_item(PyArrayObject *self, intp i, PyObject *v)
+array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v)
 {
     PyArrayObject *tmp;
     char *item;
+    npy_intp dim0;
     int ret;
 
     if (v == NULL) {
@@ -108,11 +176,13 @@ array_ass_big_item(PyArrayObject *self, intp i, PyObject *v)
                         "can't delete array elements");
         return -1;
     }
+
     if (!PyArray_ISWRITEABLE(self)) {
         PyErr_SetString(PyExc_RuntimeError,
                         "array is not writeable");
         return -1;
     }
+
     if (PyArray_NDIM(self) == 0) {
         PyErr_SetString(PyExc_IndexError,
                         "0-d arrays can't be indexed.");
@@ -120,8 +190,10 @@ array_ass_big_item(PyArrayObject *self, intp i, PyObject *v)
     }
 
 
-    if (PyArray_NDIM(self) > 1) {
-        if((tmp = (PyArrayObject *)array_big_item(self, i)) == NULL) {
+    /* For multi-dimensional arrays and NA masked arrays, use CopyObject */
+    if (PyArray_NDIM(self) > 1 || PyArray_HASMASKNA(self)) {
+        tmp = (PyArrayObject *)array_big_item(self, i);
+        if(tmp == NULL) {
             return -1;
         }
         ret = PyArray_CopyObject(tmp, v);
@@ -129,13 +201,18 @@ array_ass_big_item(PyArrayObject *self, intp i, PyObject *v)
         return ret;
     }
 
-    if ((item = index2ptr(self, i)) == NULL) {
+    /* Bounds check and get the data pointer */
+    dim0 = PyArray_DIM(self, 0);
+    if (i < 0) {
+        i += dim0;
+    }
+    if (i < 0 || i >= dim0) {
+        PyErr_SetString(PyExc_IndexError,"index out of bounds");
         return -1;
     }
-    if (PyArray_DESCR(self)->f->setitem(v, item, self) == -1) {
-        return -1;
-    }
-    return 0;
+    item = PyArray_DATA(self) + i * PyArray_STRIDE(self, 0);
+
+    return PyArray_DESCR(self)->f->setitem(v, item, self);
 }
 
 /* -------------------------------------------------------------- */
@@ -147,7 +224,7 @@ _swap_axes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
     int n1, n2, n3, val, bnd;
     int i;
     PyArray_Dims permute;
-    intp d[MAX_DIMS];
+    npy_intp d[MAX_DIMS];
     PyArrayObject *arr;
 
     permute.ptr = d;
@@ -390,7 +467,7 @@ NPY_NO_EXPORT PyObject *
 add_new_axes_0d(PyArrayObject *arr,  int newaxis_count)
 {
     PyArrayObject *other;
-    intp dimensions[MAX_DIMS];
+    npy_intp dimensions[MAX_DIMS];
     int i;
 
     for (i = 0; i < newaxis_count; ++i) {
@@ -652,7 +729,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 return (PyObject *)self;
             }
             else {
-                intp oned = 0;
+                npy_intp oned = 0;
                 Py_INCREF(PyArray_DESCR(self));
                 return PyArray_NewFromDescr(Py_TYPE(self),
                                             PyArray_DESCR(self),
@@ -714,7 +791,7 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *index, PyObject *op)
 {
     int ret;
     PyArrayObject *tmp;
-    intp value;
+    npy_intp value;
 
     value = PyArray_PyIntAsIntp(index);
     if (!error_converting(value)) {
@@ -766,11 +843,11 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *index, PyObject *op)
    otherwise fill vals with converted integers
 */
 static int
-_tuple_of_integers(PyObject *seq, intp *vals, int maxvals)
+_tuple_of_integers(PyObject *seq, npy_intp *vals, int maxvals)
 {
     int i;
     PyObject *obj;
-    intp temp;
+    npy_intp temp;
 
     for(i=0; i<maxvals; i++) {
         obj = PyTuple_GET_ITEM(seq, i);
@@ -793,7 +870,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 {
     int ret, oned, fancy;
     PyArrayMapIterObject *mit;
-    intp vals[MAX_DIMS];
+    npy_intp vals[MAX_DIMS];
 
     if (op == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -809,7 +886,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
     if (PyInt_Check(index) || PyArray_IsScalar(index, Integer) ||
         PyLong_Check(index) || (PyIndex_Check(index) &&
                                 !PySequence_Check(index))) {
-        intp value;
+        npy_intp value;
         value = PyArray_PyIntAsIntp(index);
         if (PyErr_Occurred()) {
             PyErr_Clear();
@@ -957,12 +1034,12 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 {
 
     PyArrayObject *mp;
-    intp vals[MAX_DIMS];
+    npy_intp vals[MAX_DIMS];
 
     if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) ||
         PyLong_Check(op) || (PyIndex_Check(op) &&
                              !PySequence_Check(op))) {
-        intp value;
+        npy_intp value;
         value = PyArray_PyIntAsIntp(op);
         if (PyErr_Occurred()) {
             PyErr_Clear();
@@ -1082,10 +1159,10 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
     PyArray_Descr *typecode;
     PyArrayObject *ba = NULL, *new = NULL;
     int nd, j;
-    intp size, i, count;
+    npy_intp size, i, count;
     Bool *ptr;
-    intp coords[MAX_DIMS], dims_m1[MAX_DIMS];
-    intp *dptr[MAX_DIMS];
+    npy_intp coords[MAX_DIMS], dims_m1[MAX_DIMS];
+    npy_intp *dptr[MAX_DIMS];
 
     typecode=PyArray_DescrFromType(NPY_BOOL);
     ba = (PyArrayObject *)PyArray_FromAny(myBool, typecode, 0, 0,
@@ -1122,7 +1199,7 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
         if (iters[j] == NULL) {
             goto fail;
         }
-        dptr[j] = (intp *)PyArray_DATA(iters[j]->ao);
+        dptr[j] = (npy_intp *)PyArray_DATA(iters[j]->ao);
         coords[j] = 0;
         dims_m1[j] = PyArray_DIMS(ba)[j]-1;
     }
@@ -1201,7 +1278,7 @@ _convert_obj(PyObject *obj, PyArrayIterObject **iter)
 NPY_NO_EXPORT void
 PyArray_MapIterReset(PyArrayMapIterObject *mit)
 {
-    int i,j; intp coord[MAX_DIMS];
+    int i,j; npy_intp coord[MAX_DIMS];
     PyArrayIterObject *it;
     PyArray_CopySwapFunc *copyswap;
 
@@ -1210,7 +1287,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
     copyswap = PyArray_DESCR(mit->iters[0]->ao)->f->copyswap;
 
     if (mit->subspace != NULL) {
-        memcpy(coord, mit->bscoord, sizeof(intp)*PyArray_NDIM(mit->ait->ao));
+        memcpy(coord, mit->bscoord, sizeof(npy_intp)*PyArray_NDIM(mit->ait->ao));
         PyArray_ITER_RESET(mit->subspace);
         for (i = 0; i < mit->numiter; i++) {
             it = mit->iters[i];
@@ -1249,7 +1326,7 @@ NPY_NO_EXPORT void
 PyArray_MapIterNext(PyArrayMapIterObject *mit)
 {
     int i, j;
-    intp coord[MAX_DIMS];
+    npy_intp coord[MAX_DIMS];
     PyArrayIterObject *it;
     PyArray_CopySwapFunc *copyswap;
 
@@ -1264,7 +1341,7 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
         if (mit->subspace->index >= mit->subspace->size) {
             /* reset coord to coordinates of beginning of the subspace */
             memcpy(coord, mit->bscoord,
-                        sizeof(intp)*PyArray_NDIM(mit->ait->ao));
+                        sizeof(npy_intp)*PyArray_NDIM(mit->ait->ao));
             PyArray_ITER_RESET(mit->subspace);
             for (i = 0; i < mit->numiter; i++) {
                 it = mit->iters[i];
@@ -1314,8 +1391,8 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     PyObject *sub, *obj = NULL;
     int i, j, n, curraxis, ellipexp, noellip;
     PyArrayIterObject *it;
-    intp dimsize;
-    intp *indptr;
+    npy_intp dimsize;
+    npy_intp *indptr;
 
     subnd = PyArray_NDIM(arr) - mit->numiter;
     if (subnd < 0) {
@@ -1387,7 +1464,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     j = 0;
     /* Only expand the first ellipsis */
     noellip = 1;
-    memset(mit->bscoord, 0, sizeof(intp)*PyArray_NDIM(arr));
+    memset(mit->bscoord, 0, sizeof(npy_intp)*PyArray_NDIM(arr));
     for (i = 0; i < n; i++) {
         /*
          * We need to fill in the starting coordinates for
@@ -1402,8 +1479,8 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
             noellip = 0;
         }
         else {
-            intp start = 0;
-            intp stop, step;
+            npy_intp start = 0;
+            npy_intp stop, step;
             /* Should be slice object or another Ellipsis */
             if (obj == Py_Ellipsis) {
                 mit->bscoord[curraxis] = 0;
@@ -1441,12 +1518,12 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     }
 
     for (i = 0; i < mit->numiter; i++) {
-        intp indval;
+        npy_intp indval;
         it = mit->iters[i];
         PyArray_ITER_RESET(it);
         dimsize = PyArray_DIMS(arr)[mit->iteraxes[i]];
         while (it->index < it->size) {
-            indptr = ((intp *)it->dataptr);
+            indptr = ((npy_intp *)it->dataptr);
             indval = *indptr;
             if (indval < 0) {
                 indval += dimsize;
@@ -1567,7 +1644,7 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
             goto fail;
         }
         mit->nd = PyArray_NDIM(arr);
-        memcpy(mit->dimensions, PyArray_DIMS(arr), mit->nd*sizeof(intp));
+        memcpy(mit->dimensions, PyArray_DIMS(arr), mit->nd*sizeof(npy_intp));
         mit->size = PyArray_SIZE(arr);
         Py_DECREF(arr);
         Py_DECREF(mit->indexobj);

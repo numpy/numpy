@@ -64,15 +64,17 @@ array_shape_set(PyArrayObject *self, PyObject *val)
     ((PyArrayObject_fieldaccess *)self)->nd = nd;
     if (nd > 0) {
         /* create new dimensions and strides */
-        ((PyArrayObject_fieldaccess *)self)->dimensions = PyDimMem_NEW(2*nd);
+        ((PyArrayObject_fieldaccess *)self)->dimensions = PyDimMem_NEW(3*nd);
         if (PyArray_DIMS(self) == NULL) {
             Py_DECREF(ret);
             PyErr_SetString(PyExc_MemoryError,"");
             return -1;
         }
         ((PyArrayObject_fieldaccess *)self)->strides = PyArray_DIMS(self) + nd;
+        ((PyArrayObject_fieldaccess *)self)->maskna_strides = PyArray_DIMS(self) + 2*nd;
         memcpy(PyArray_DIMS(self), PyArray_DIMS(ret), nd*sizeof(intp));
         memcpy(PyArray_STRIDES(self), PyArray_STRIDES(ret), nd*sizeof(intp));
+        memcpy(PyArray_MASKNA_STRIDES(self), PyArray_MASKNA_STRIDES(ret), nd*sizeof(intp));
     }
     else {
         ((PyArrayObject_fieldaccess *)self)->dimensions = NULL;

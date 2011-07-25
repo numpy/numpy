@@ -1573,8 +1573,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
     fa->nd = nd;
 
     if (nd > 0) {
-        fa->dimensions = PyDimMem_NEW(nd * 2);
+        fa->dimensions = PyDimMem_NEW(3*nd);
         fa->strides = PyArray_DIMS(self) + nd;
+        fa->maskna_strides = PyArray_DIMS(self) + 2*nd;
         memcpy(PyArray_DIMS(self), dimensions, sizeof(intp)*nd);
         _array_fill_strides(PyArray_STRIDES(self), dimensions, nd,
                                PyArray_DESCR(self)->elsize,
