@@ -662,7 +662,7 @@ typedef struct tagPyArrayObject_fieldaccess {
      *   If no mask: NULL
      *   If mask   : bool/uint8/structured dtype of mask dtypes
      */
-    PyArray_Descr *maskna_descr;
+    PyArray_Descr *maskna_dtype;
     /*
      * Raw data buffer for mask. If the array has the flag
      * NPY_ARRAY_OWNMASKNA enabled, it owns this memory and
@@ -672,7 +672,8 @@ typedef struct tagPyArrayObject_fieldaccess {
     /*
      * Just like dimensions and strides point into the same memory
      * buffer, we now just make that buffer 3x the nd instead of 2x
-     * and use the same buffer.
+     * and use the same buffer. This is always allocated, regardless
+     * of whether there is an NA mask or not.
      */
     npy_intp *maskna_strides;
 } PyArrayObject_fieldaccess;
@@ -746,6 +747,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 /*
  * Means c-style contiguous (last index varies the fastest). The data
  * elements right after each other.
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
  */
 #define NPY_ARRAY_C_CONTIGUOUS    0x0001
 
@@ -753,6 +757,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  * Set if array is a contiguous Fortran array: the first index varies
  * the fastest in memory (strides array is reverse of C-contiguous
  * array)
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
  */
 #define NPY_ARRAY_F_CONTIGUOUS    0x0002
 
@@ -764,12 +771,16 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 /*
  * If set, the array owns the data: it will be free'd when the array
  * is deleted.
+ *
+ * This flag may be tested for in PyArray_FLAGS(arr).
  */
 #define NPY_ARRAY_OWNDATA         0x0004
 
 /*
  * An array never has the next four set; they're only used as parameter
  * flags to the the various FromAny functions
+ *
+ * This flag may be requested in constructor functions.
  */
 
 /* Cause a cast to occur regardless of whether or not it is safe. */
@@ -778,15 +789,23 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 /*
  * Always copy the array. Returned arrays are always CONTIGUOUS,
  * ALIGNED, and WRITEABLE.
+ *
+ * This flag may be requested in constructor functions.
  */
 #define NPY_ARRAY_ENSURECOPY      0x0020
 
-/* Make sure the returned array is a base-class ndarray */
+/*
+ * Make sure the returned array is a base-class ndarray
+ *
+ * This flag may be requested in constructor functions.
+ */
 #define NPY_ARRAY_ENSUREARRAY     0x0040
 
 /*
  * Make sure that the strides are in units of the element size Needed
  * for some operations with record-arrays.
+ *
+ * This flag may be requested in constructor functions.
  */
 #define NPY_ARRAY_ELEMENTSTRIDES  0x0080
 
@@ -795,27 +814,64 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  * stored according to how the compiler would align things (e.g., an
  * array of integers (4 bytes each) starts on a memory address that's
  * a multiple of 4)
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
  */
 #define NPY_ARRAY_ALIGNED         0x0100
 
-/* Array data has the native endianness */
+/*
+ * Array data has the native endianness
+ *
+ * This flag may be requested in constructor functions.
+ */
 #define NPY_ARRAY_NOTSWAPPED      0x0200
 
-/* Array data is writeable */
+/*
+ * Array data is writeable
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
+ */
 #define NPY_ARRAY_WRITEABLE       0x0400
 
 /*
  * If this flag is set, then base contains a pointer to an array of
  * the same size that should be updated with the current contents of
  * this array when this array is deallocated
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
  */
 #define NPY_ARRAY_UPDATEIFCOPY    0x1000
 
 /*
+ * If this flag is set, then the array has an NA mask corresponding
+ * to the array data. If the flag NPY_ARRAY_OWNMASKNA is requested
+ * in a constructor, this flag is also implied even if it is not set.
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
+ */
+#define NPY_ARRAY_MASKNA          0x2000
+
+/*
  * If this flag is set, then the array owns the memory for the
  * missing values NA mask.
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
  */
-#define NPY_ARRAY_OWNMASKNA       0x2000
+#define NPY_ARRAY_OWNMASKNA       0x4000
+
+/*
+ * If this flag is set, then arrays which have an NA mask, or arrays
+ * which have an NA dtype are permitted to pass through. If not,
+ * a array with NA support causes an error to be thrown.
+ *
+ * This flag may be requested in constructor functions.
+ */
+#define NPY_ARRAY_ALLOWNA         0x8000
 
 
 #define NPY_ARRAY_BEHAVED      (NPY_ARRAY_ALIGNED | \
@@ -1511,9 +1567,9 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 /* Access to the missing values NA mask, added in 1.7 */
 
 static NPY_INLINE PyArray_Descr *
-PyArray_MASKNA_DESCR(PyArrayObject *arr)
+PyArray_MASKNA_DTYPE(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->maskna_descr;
+    return ((PyArrayObject_fieldaccess *)arr)->maskna_dtype;
 }
 
 static NPY_INLINE npy_mask *

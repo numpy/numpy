@@ -25,6 +25,7 @@
 #include "_datetime.h"
 #include "datetime_strings.h"
 
+#include "shape.h"
 #include "lowlevel_strided_loops.h"
 
 #define NPY_LOWLEVEL_BUFFER_BLOCKSIZE  128
@@ -3863,6 +3864,129 @@ PyArray_CastRawArrays(npy_intp count,
     /* Cast */
     stransfer(dst, dst_stride, src, src_stride, count,
                 src_dtype->elsize, transferdata);
+
+    /* Cleanup */
+    NPY_AUXDATA_FREE(transferdata);
+
+    /* If needs_api was set to 1, it may have raised a Python exception */
+    return (needs_api && PyErr_Occurred()) ? NPY_FAIL : NPY_SUCCEED;
+}
+
+/*
+ * Casts the elements from one n-dimensional array to another n-dimensional
+ * array with identical shape but possibly different strides and dtypes.
+ * Does not account for overlap.
+ *
+ * Returns NPY_SUCCEED or NPY_FAIL.
+ */
+NPY_NO_EXPORT int
+PyArray_CastRawNDimArrays(int ndim, npy_intp *shape,
+                      char *src, char *dst,
+                      npy_intp *src_strides, npy_intp *dst_strides,
+                      PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                      int move_references)
+{
+    PyArray_StridedTransferFn *stransfer = NULL;
+    NpyAuxData *transferdata = NULL;
+    int i, j;
+    npy_intp src_align, dst_align;
+    int aligned, needs_api = 0;
+    npy_intp coords[NPY_MAXDIMS];
+    npy_intp shape_copy[NPY_MAXDIMS];
+    npy_intp src_strides_copy[NPY_MAXDIMS];
+    npy_intp dst_strides_copy[NPY_MAXDIMS];
+    _npy_stride_sort_item strideperm[NPY_MAXDIMS];
+
+    /* Use the simpler function for 0 and 1 dimensional transfers */
+    if (ndim <= 1) {
+        if (ndim == 0) {
+            return PyArray_CastRawArrays(1, src, dst, 0, 0,
+                                    src_dtype, dst_dtype, move_references);
+        }
+        else {
+            return PyArray_CastRawArrays(shape[0], src, dst,
+                                    src_strides[0], dst_strides[0],
+                                    src_dtype, dst_dtype, move_references);
+        }
+    }
+
+    /* Determine data alignment */
+    src_align = (npy_intp)src;
+    for (i = 0; i < ndim; ++i) {
+        src_align |= src_strides[i];
+    }
+    dst_align = (npy_intp)dst;
+    for (i = 0; i < ndim; ++i) {
+        dst_align |= dst_strides[i];
+    }
+    aligned = (src_align & (src_dtype->alignment - 1)) == 0 &&
+              (dst_align & (dst_dtype->alignment - 1)) == 0;
+
+    /* Sort the axes based on the destination strides */
+    PyArray_CreateSortedStridePerm(ndim, dst_strides, strideperm);
+    for (i = 0; i < ndim; ++i) {
+        int iperm = strideperm[i].perm;
+        shape_copy[i] = shape[iperm];
+        src_strides_copy[i] = src_strides[iperm];
+        dst_strides_copy[i] = dst_strides[iperm];
+    }
+
+    /* Coalesce dimensions where it's possible */
+    i = 0;
+    for (j = 1; j < ndim; ++j) {
+        if (shape[i] == 1) {
+            /* Drop axis i */
+            shape[i] = shape[j];
+            src_strides_copy[i] = src_strides_copy[j];
+            dst_strides_copy[i] = dst_strides_copy[j];
+        }
+        else if (shape[j] == 1) {
+            /* Drop axis j */
+        }
+        else if (src_strides_copy[i] == src_strides_copy[j] * shape[j] &&
+                 dst_strides_copy[i] == dst_strides_copy[j] * shape[j]) {
+            /* Coalesce axes i and j */
+            shape[i] *= shape[j];
+            src_strides_copy[i] = src_strides_copy[j];
+            dst_strides_copy[i] = dst_strides_copy[j];
+        }
+        else {
+            /* Can't coalesce, go to next i */
+            ++i;
+        }
+    }
+    ndim = i+1;
+
+    /* Get the function to do the casting */
+    if (PyArray_GetDTypeTransferFunction(aligned,
+                        src_strides[ndim-1], dst_strides[ndim-1],
+                        src_dtype, dst_dtype,
+                        move_references,
+                        &stransfer, &transferdata,
+                        &needs_api) != NPY_SUCCEED) {
+        return NPY_FAIL;
+    }
+
+    /* Do the copying */
+    memset(coords, 0, ndim * sizeof(npy_intp));
+    do {
+        /* Copy along the last dimension */
+        i = ndim - 1;
+        stransfer(dst, dst_strides_copy[i], src, src_strides_copy[i], shape[i],
+                    src_dtype->elsize, transferdata);
+        --i;
+        /* Increment to the next n-dimensional coordinate */
+        for (;i > 0; --i) {
+            if (++coords[i] == shape[i]) {
+                coords[i] = 0;
+                src -= (shape[i] - 1) * src_strides_copy[i];
+            }
+            else {
+                src += src_strides_copy[i];
+                break;
+            }
+        }
+    } while (i > 0);
 
     /* Cleanup */
     NPY_AUXDATA_FREE(transferdata);

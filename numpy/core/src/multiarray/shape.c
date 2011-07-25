@@ -807,21 +807,21 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
 }
 
 /*
- * This function populates the first PyArray_NDIM(arr) elements
+ * This function populates the first ndim elements
  * of strideperm with sorted descending by their absolute values.
  * For example, the stride array (4, -2, 12) becomes
  * [(2, 12), (0, 4), (1, -2)].
  */
 NPY_NO_EXPORT void
-PyArray_CreateSortedStridePerm(PyArrayObject *arr,
+PyArray_CreateSortedStridePerm(int ndim, npy_intp * strides,
                            _npy_stride_sort_item *strideperm)
 {
-    int i, ndim = PyArray_NDIM(arr);
+    int i;
 
     /* Set up the strideperm values */
     for (i = 0; i < ndim; ++i) {
         strideperm[i].perm = i;
-        strideperm[i].stride = PyArray_STRIDE(arr, i);
+        strideperm[i].stride = strides[i];
     }
 
     /* Sort them */
@@ -865,7 +865,8 @@ PyArray_Ravel(PyArrayObject *a, NPY_ORDER order)
         npy_intp stride;
         int i, ndim = PyArray_NDIM(a);
 
-        PyArray_CreateSortedStridePerm(a, strideperm);
+        PyArray_CreateSortedStridePerm(PyArray_NDIM(a), PyArray_STRIDES(a),
+                                        strideperm);
 
         stride = PyArray_DESCR(a)->elsize;
         for (i = ndim-1; i >= 0; --i) {

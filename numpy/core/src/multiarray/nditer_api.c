@@ -1599,7 +1599,6 @@ npyiter_coalesce_axes(NpyIter *iter)
 }
 
 /*
- *
  * If errmsg is non-NULL, it should point to a variable which will
  * receive the error message, and no Python exception will be set.
  * This is so that the function can be called from code not holding
