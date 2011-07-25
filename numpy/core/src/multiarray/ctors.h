@@ -72,4 +72,20 @@ byte_swap_vector(void *p, intp n, int size);
 NPY_NO_EXPORT int
 PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v);
 
+/*
+ * A slight generalization of PyArray_GetArrayParamsFromObject,
+ * which also returns whether the input data contains any numpy.NA
+ * values.
+ *
+ * This isn't exposed in the public API.
+ */
+NPY_NO_EXPORT int
+PyArray_GetArrayParamsFromObjectEx(PyObject *op,
+                        PyArray_Descr *requested_dtype,
+                        npy_bool writeable,
+                        PyArray_Descr **out_dtype,
+                        int *out_ndim, npy_intp *out_dims,
+                        int *out_contains_na,
+                        PyArrayObject **out_arr, PyObject *context);
+
 #endif

@@ -50,6 +50,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "getset.h"
 #include "sequence.h"
 #include "buffer.h"
+#include "na_mask.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -120,7 +121,7 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
 NPY_NO_EXPORT int
 PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 {
-    int ret;
+    int ret, contains_na = 0;
     PyArrayObject *src;
     PyArray_Descr *dtype = NULL;
     int ndim = 0;
@@ -155,8 +156,17 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
      * Get either an array object we can copy from, or its parameters
      * if there isn't a convenient array available.
      */
-    if (PyArray_GetArrayParamsFromObject(src_object, PyArray_DESCR(dest),
-                0, &dtype, &ndim, dims, &src, NULL) < 0) {
+    if (PyArray_GetArrayParamsFromObjectEx(src_object, PyArray_DESCR(dest),
+                0, &dtype, &ndim, dims, &contains_na, &src, NULL) < 0) {
+        Py_DECREF(src_object);
+        return -1;
+    }
+
+    if (contains_na && !(PyArray_HasNASupport(dest) ||
+                         PyArray_DESCR(dest)->type_num == NPY_OBJECT)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot set NumPy array values to NA values without first "
+                "enabling NA support in the array");
         Py_DECREF(src_object);
         return -1;
     }
@@ -173,11 +183,27 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
                     return -1;
                 }
             }
+            /* Assigning NA affects the mask if it exists */
+            else if (PyArray_HasNASupport(dest) && NpyNA_Check(src_object)) {
+                if (PyArray_AssignNA(dest, (NpyNA *)src_object) < 0) {
+                    Py_DECREF(src_object);
+                    return -1;
+                }
+
+                Py_DECREF(src_object);
+                return 0;
+            }
+            /* Otherwise use the dtype's setitem function */
             else {
                 if (PyArray_SIZE(dest) == 1) {
                     Py_DECREF(dtype);
-                    return PyArray_DESCR(dest)->f->setitem(src_object,
-                                                    PyArray_DATA(dest), dest);
+                    ret = PyArray_DESCR(dest)->f->setitem(src_object,
+                                                PyArray_DATA(dest), dest);
+                    /* Unmask the value if necessary */
+                    if (ret == 0 && PyArray_HASMASKNA(dest)) {
+                        PyArray_MASKNA_DATA(dest)[0] = 1;
+                    }
+                    return ret;
                 }
                 else {
                     src = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
@@ -215,6 +241,12 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
             if (src == NULL) {
                 Py_DECREF(src_object);
                 return -1;
+            }
+            if (PyArray_HASMASKNA(dest)) {
+                if (PyArray_AllocateMaskNA(dest, 0, 0) < 0) {
+                    Py_DECREF(src_object);
+                    return -1;
+                }
             }
             if (PyArray_AssignFromSequence(src, src_object) < 0) {
                 Py_DECREF(src);

@@ -19,6 +19,7 @@
 #include "scalartypes.h"
 
 #include "common.h"
+#include "na_singleton.h"
 
 static PyArray_Descr *
 _descr_from_subtype(PyObject *type)
@@ -814,7 +815,18 @@ PyArray_Return(PyArrayObject *mp)
     }
     if (PyArray_NDIM(mp) == 0) {
         PyObject *ret;
-        ret = PyArray_ToScalar(PyArray_DATA(mp), mp);
+        if (PyArray_HASMASKNA(mp)) {
+            npy_mask maskvalue = (npy_mask)(*PyArray_MASKNA_DATA(mp));
+            if (NpyMaskValue_IsExposed(maskvalue)) {
+                ret = PyArray_ToScalar(PyArray_DATA(mp), mp);
+            }
+            else {
+                ret = (PyObject *)NpyNA_FromObject((PyObject *)mp, 0);
+            }
+        }
+        else {
+            ret = PyArray_ToScalar(PyArray_DATA(mp), mp);
+        }
         Py_DECREF(mp);
         return ret;
     }
