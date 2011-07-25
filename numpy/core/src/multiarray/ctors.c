@@ -24,6 +24,7 @@
 #include "methods.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
+#include "na_singleton.h"
 
 /*
  * Reading from a file or a string.
@@ -595,7 +596,8 @@ PyArray_MaskedMoveInto(PyArrayObject *dst, PyArrayObject *src,
 
 /* adapted from Numarray */
 static int
-setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, npy_intp offset)
+setArrayFromSequence(PyArrayObject *a, PyObject *s,
+                        int dim, npy_intp offset, npy_intp maskoffset)
 {
     Py_ssize_t i, slen;
     int res = -1;
@@ -645,25 +647,45 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, npy_intp offset)
     /* Broadcast the one element from the sequence to all the outputs */
     if (slen == 1) {
         PyObject *o;
-        npy_intp alen = PyArray_DIMS(a)[dim];
+        NpyNA *na = NULL;
+        char maskvalue = 0;
+        npy_intp alen = PyArray_DIM(a, dim);
 
         o = PySequence_GetItem(s, 0);
         if (o == NULL) {
             goto fail;
         }
+
+        /* Check if the value being assigned is NA */
+        if (PyArray_HASMASKNA(a)) {
+            na = NpyNA_FromObject(o, 1);
+            if (na != NULL) {
+                maskvalue = (char)NpyNA_AsMaskValue(na);
+            }
+        }
+
         for (i = 0; i < alen; i++) {
             if ((PyArray_NDIM(a) - dim) > 1) {
-                res = setArrayFromSequence(a, o, dim+1, offset);
+                res = setArrayFromSequence(a, o, dim+1, offset, maskoffset);
             }
             else {
-                res = PyArray_DESCR(a)->f->setitem(o, (PyArray_DATA(a) + offset), a);
+                if (na == NULL) {
+                    res = PyArray_DESCR(a)->f->setitem(o,
+                                        (PyArray_DATA(a) + offset), a);
+                }
+                else {
+                    *(PyArray_MASKNA_DATA(a) + maskoffset) = maskvalue;
+                }
             }
             if (res < 0) {
                 Py_DECREF(o);
+                Py_XDECREF(na);
                 goto fail;
             }
             offset += PyArray_STRIDES(a)[dim];
+            maskoffset += PyArray_MASKNA_STRIDES(a)[dim];
         }
+        Py_XDECREF(na);
         Py_DECREF(o);
     }
     /* Copy element by element */
@@ -674,16 +696,34 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s, int dim, npy_intp offset)
                 goto fail;
             }
             if ((PyArray_NDIM(a) - dim) > 1) {
-                res = setArrayFromSequence(a, o, dim+1, offset);
+                res = setArrayFromSequence(a, o, dim+1, offset, maskoffset);
             }
             else {
-                res = PyArray_DESCR(a)->f->setitem(o, (PyArray_DATA(a) + offset), a);
+                NpyNA *na = NULL;
+                char maskvalue = 0;
+
+                /* Check if the value being assigned is NA */
+                if (PyArray_HASMASKNA(a)) {
+                    na = NpyNA_FromObject(o, 1);
+                    if (na != NULL) {
+                        maskvalue = (char)NpyNA_AsMaskValue(na);
+                    }
+                }
+
+                if (na == NULL) {
+                    res = PyArray_DESCR(a)->f->setitem(o,
+                                            (PyArray_DATA(a) + offset), a);
+                }
+                else {
+                    *(PyArray_MASKNA_DATA(a) + maskoffset) = maskvalue;
+                }
             }
             Py_DECREF(o);
             if (res < 0) {
                 goto fail;
             }
             offset += PyArray_STRIDES(a)[dim];
+            maskoffset += PyArray_MASKNA_STRIDES(a)[dim];
         }
     }
 
@@ -708,7 +748,7 @@ PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v)
                         "assignment to 0-d array");
         return -1;
     }
-    return setArrayFromSequence(self, v, 0, 0);
+    return setArrayFromSequence(self, v, 0, 0, 0);
 }
 
 /*
@@ -1147,6 +1187,8 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     fa->descr = descr;
     fa->base = (PyObject *)NULL;
     fa->weakreflist = (PyObject *)NULL;
+    fa->maskna_dtype = NULL;
+    fa->maskna_data = NULL;
 
     if (nd > 0) {
         fa->dimensions = PyDimMem_NEW(3*nd);

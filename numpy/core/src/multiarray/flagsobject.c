@@ -283,7 +283,7 @@ arrayflags_maskna_set(PyArrayFlagsObject *self, PyObject *obj)
     }
 
     if (PyObject_IsTrue(obj)) {
-        return PyArray_AllocateMaskNA(self->arr, 0, 0);
+        return PyArray_AllocateMaskNA((PyArrayObject *)self->arr, 0, 0);
     }
     else {
         if (self->flags & NPY_ARRAY_MASKNA) {
@@ -320,7 +320,7 @@ arrayflags_ownmaskna_set(PyArrayFlagsObject *self, PyObject *obj)
     }
 
     if (PyObject_IsTrue(obj)) {
-        return PyArray_AllocateMaskNA(self->arr, 1, 0);
+        return PyArray_AllocateMaskNA((PyArrayObject *)self->arr, 1, 0);
     }
     else {
         if (self->flags & NPY_ARRAY_OWNMASKNA) {
@@ -644,16 +644,19 @@ arrayflags_print(PyArrayFlagsObject *self)
 {
     int fl = self->flags;
 
-    return PyUString_FromFormat("  %s : %s\n  %s : %s\n  %s : %s\n"\
-                           "  %s : %s\n  %s : %s\n  %s : %s",
-                           "C_CONTIGUOUS", _torf_(fl, NPY_ARRAY_C_CONTIGUOUS),
-                           "F_CONTIGUOUS", _torf_(fl, NPY_ARRAY_F_CONTIGUOUS),
-                           "OWNDATA",      _torf_(fl, NPY_ARRAY_OWNDATA),
-                           "MASKNA",       _torf_(fl, NPY_ARRAY_MASKNA),
-                           "OWNMASKNA",    _torf_(fl, NPY_ARRAY_OWNMASKNA),
-                           "WRITEABLE",    _torf_(fl, NPY_ARRAY_WRITEABLE),
-                           "ALIGNED",      _torf_(fl, NPY_ARRAY_ALIGNED),
-                           "UPDATEIFCOPY", _torf_(fl, NPY_ARRAY_UPDATEIFCOPY));
+    return PyUString_FromFormat(
+                        "  %s : %s\n  %s : %s\n"
+                        "  %s : %s\n  %s : %s\n"
+                        "  %s : %s\n  %s : %s\n"
+                        "  %s : %s\n  %s : %s",
+                        "C_CONTIGUOUS", _torf_(fl, NPY_ARRAY_C_CONTIGUOUS),
+                        "F_CONTIGUOUS", _torf_(fl, NPY_ARRAY_F_CONTIGUOUS),
+                        "OWNDATA",      _torf_(fl, NPY_ARRAY_OWNDATA),
+                        "MASKNA",       _torf_(fl, NPY_ARRAY_MASKNA),
+                        "OWNMASKNA",    _torf_(fl, NPY_ARRAY_OWNMASKNA),
+                        "WRITEABLE",    _torf_(fl, NPY_ARRAY_WRITEABLE),
+                        "ALIGNED",      _torf_(fl, NPY_ARRAY_ALIGNED),
+                        "UPDATEIFCOPY", _torf_(fl, NPY_ARRAY_UPDATEIFCOPY));
 }
 
 

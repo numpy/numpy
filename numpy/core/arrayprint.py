@@ -477,6 +477,8 @@ def _formatArray(a, format_function, rank, max_line_len,
             s, line = _extendLine(s, line, summary_insert1, max_line_len, next_line_prefix)
 
         for i in xrange(trailing_items, 1, -1):
+            print "bad index: ",  i
+            print "length: ",  len(a)
             word = format_function(a[-i]) + separator
             s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
 

@@ -143,7 +143,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         /* Different number of dimensions. */
         ((PyArrayObject_fieldaccess *)self)->nd = new_nd;
         /* Need new dimensions and strides arrays */
-        dimptr = PyDimMem_RENEW(PyArray_DIMS(self), 2*new_nd);
+        dimptr = PyDimMem_RENEW(PyArray_DIMS(self), 3*new_nd);
         if (dimptr == NULL) {
             PyErr_SetString(PyExc_MemoryError,
                     "cannot allocate memory for array");
@@ -151,6 +151,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
         ((PyArrayObject_fieldaccess *)self)->dimensions = dimptr;
         ((PyArrayObject_fieldaccess *)self)->strides = dimptr + new_nd;
+        ((PyArrayObject_fieldaccess *)self)->maskna_strides = dimptr + 2*new_nd;
     }
 
     /* make new_strides variable */

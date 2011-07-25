@@ -668,7 +668,7 @@ typedef struct tagPyArrayObject_fieldaccess {
      * NPY_ARRAY_OWNMASKNA enabled, it owns this memory and
      * must call PyArray_free on it when destroyed.
      */
-    npy_mask *maskna_data;
+    char *maskna_data;
     /*
      * Just like dimensions and strides point into the same memory
      * buffer, we now just make that buffer 3x the nd instead of 2x
@@ -1056,6 +1056,8 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_WRITEMASKED                0x10000000
 /* This array is the mask for all WRITEMASKED operands */
 #define NPY_ITER_ARRAYMASK                  0x20000000
+/* Split this operand up into data and an NA mask */
+#define NPY_ITER_USE_MASKNA                 0x40000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000
@@ -1572,7 +1574,7 @@ PyArray_MASKNA_DTYPE(PyArrayObject *arr)
     return ((PyArrayObject_fieldaccess *)arr)->maskna_dtype;
 }
 
-static NPY_INLINE npy_mask *
+static NPY_INLINE char *
 PyArray_MASKNA_DATA(PyArrayObject *arr)
 {
     return ((PyArrayObject_fieldaccess *)arr)->maskna_data;
@@ -1588,7 +1590,7 @@ PyArray_MASKNA_STRIDES(PyArrayObject *arr)
 static NPY_INLINE npy_bool
 PyArray_HASMASKNA(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->maskna_data != NULL;
+    return (((PyArrayObject_fieldaccess *)arr)->flags & NPY_ARRAY_MASKNA) != 0;
 }
 
 

@@ -149,5 +149,25 @@ def test_na_other_operations():
     assert_equal((np.NA | False).dtype, np.array(False).dtype)
     assert_equal((np.NA & True).dtype, np.array(True).dtype)
 
+def test_na_mask_flag():
+    a = np.arange(3)
+    assert_(not a.flags.maskna)
+    assert_(not a.flags.ownmaskna)
+    assert_(not a.flags['MASKNA'])
+    assert_(not a.flags['OWNMASKNA'])
+    # Add a mask by setting the flag
+    a.flags.maskna = True
+    assert_(a.flags.maskna)
+    assert_(a.flags.ownmaskna)
+    assert_(a.flags['MASKNA'])
+    assert_(a.flags['OWNMASKNA'])
+    # Can't remove the mask once it's created
+    def setmaskna(x, v):
+        x.maskna = v
+    assert_raises(ValueError, setmaskna, a.flags, False)
+    def setownmaskna(x, v):
+        x.ownmaskna = v
+    assert_raises(ValueError, setownmaskna, a.flags, False)
+
 if __name__ == "__main__":
     run_module_suite()

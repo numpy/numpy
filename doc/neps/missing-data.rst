@@ -823,7 +823,7 @@ This gives us the following additions to the PyArrayObject::
      *   If no mask: NULL
      *   If mask   : bool/uint8/structured dtype of mask dtypes
      */
-    PyArray_Descr *maskna_descr;
+    PyArray_Descr *maskna_dtype;
     /*
      * Raw data buffer for mask. If the array has the flag
      * NPY_ARRAY_OWNMASKNA enabled, it owns this memory and
@@ -840,7 +840,7 @@ This gives us the following additions to the PyArrayObject::
 These fields can be accessed through the inline functions::
 
     PyArray_Descr *
-    PyArray_MASKNA_DESCR(PyArrayObject *arr);
+    PyArray_MASKNA_DTYPE(PyArrayObject *arr);
 
     npy_mask *
     PyArray_MASKNA_DATA(PyArrayObject *arr);
@@ -851,8 +851,10 @@ These fields can be accessed through the inline functions::
     npy_bool
     PyArray_HASMASKNA(PyArrayObject *arr);
 
-There are 1 or 2 flags which must be added to the array flags::
+There are 2 or 3 flags which must be added to the array flags, both
+for requesting NA masks and for testing for them::
 
+    NPY_ARRAY_MASKNA
     NPY_ARRAY_OWNMASKNA
     /* To possibly add in a later revision */
     NPY_ARRAY_HARDMASKNA
@@ -872,6 +874,10 @@ PyArray_ContainsNA(PyArrayObject* obj)
     Returns false if the array has no NA support. Returns
     true if the array has NA support AND there is an
     NA anywhere in the array.
+
+int PyArray_AllocateMaskNA(PyArrayObject* arr, npy_bool ownmaskna, npy_bool multina)
+    Allocates an NA mask for the array, ensuring ownership if requested
+    and using NPY_MASK instead of NPY_BOOL for the dtype if multina is True.
 
 Mask Binary Format
 ==================
@@ -968,7 +974,7 @@ We add several new per-operand flags:
 NPY_ITER_USE_MASKNA
     If the operand has an NA dtype, an NA mask, or both, this adds a new
     virtual operand to the end of the operand list which iterates
-    over the mask of the particular operand.
+    over the mask for the particular operand.
 
 NPY_ITER_IGNORE_MASKNA
     If an operand has an NA mask, by default the iterator will raise
@@ -1002,7 +1008,7 @@ to 12.5% overhead for a separately kept mask.
 Acknowledgments
 ***************
 
-In addition to feedback Travis Oliphant and others at Enthought,
+In addition to feedback from Travis Oliphant and others at Enthought,
 this NEP has been revised based on a great deal of feedback from
 the NumPy-Discussion mailing list. The people participating in
 the discussion are::

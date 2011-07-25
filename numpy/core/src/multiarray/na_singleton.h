@@ -10,9 +10,9 @@ typedef struct {
     PyArray_Descr *dtype;
     /* Internal flag, whether this is the singleton numpy.NA or not */
     int is_singleton;
-} NpyNA_fieldaccess;
+} NpyNA_fields;
 
-NPY_NO_EXPORT NpyNA_fieldaccess _Npy_NASingleton;
+NPY_NO_EXPORT NpyNA_fields _Npy_NASingleton;
 #define Npy_NA ((PyObject *)&_Npy_NASingleton)
 
 #define NPY_NA_NOPAYLOAD (255)
@@ -38,5 +38,20 @@ NpyNA_CombineNA(NpyNA *na1, NpyNA *na2);
  */
 NPY_NO_EXPORT NpyNA *
 NpyNA_CombineNAWithObject(NpyNA *na, PyObject *obj);
+
+/*
+ * Converts an object into an NA if possible.
+ *
+ * If 'suppress_error' is enabled, doesn't raise an error when something
+ * isn't NA.
+ */
+NPY_NO_EXPORT NpyNA *
+NpyNA_FromObject(PyObject *obj, int suppress_error);
+
+/*
+ * Returns a mask value corresponding to the NA.
+ */
+NPY_NO_EXPORT npy_mask
+NpyNA_AsMaskValue(NpyNA *na);
 
 #endif

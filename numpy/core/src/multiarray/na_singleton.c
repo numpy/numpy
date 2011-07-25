@@ -25,9 +25,9 @@
 static PyObject *
 na_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 {
-    NpyNA_fieldaccess *self;
+    NpyNA_fields *self;
 
-    self = (NpyNA_fieldaccess *)subtype->tp_alloc(subtype, 0);
+    self = (NpyNA_fields *)subtype->tp_alloc(subtype, 0);
     if (self != NULL) {
         self->payload = NPY_NA_NOPAYLOAD;
         self->dtype = NULL;
@@ -38,7 +38,7 @@ na_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
 }
 
 static int
-na_init(NpyNA_fieldaccess *self, PyObject *args, PyObject *kwds)
+na_init(NpyNA_fields *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"payload", "dtype", NULL};
     int payload = NPY_MAX_INT;
@@ -79,9 +79,9 @@ na_init(NpyNA_fieldaccess *self, PyObject *args, PyObject *kwds)
 static PyObject *
 na_call(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    NpyNA_fieldaccess *ret;
+    NpyNA_fields *ret;
     
-    ret = (NpyNA_fieldaccess *)na_new(&NpyNA_Type, NULL, NULL);
+    ret = (NpyNA_fields *)na_new(&NpyNA_Type, NULL, NULL);
     if (ret != NULL) {
         if (na_init(ret, args, kwds) < 0) {
             Py_DECREF(ret);
@@ -93,7 +93,7 @@ na_call(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 }
 
 static void
-na_dealloc(NpyNA_fieldaccess *self)
+na_dealloc(NpyNA_fields *self)
 {
     Py_XDECREF(self->dtype);
     self->dtype = NULL;
@@ -101,7 +101,7 @@ na_dealloc(NpyNA_fieldaccess *self)
 }
 
 static PyObject *
-na_repr(NpyNA_fieldaccess *self)
+na_repr(NpyNA_fields *self)
 {
     if (self->dtype == NULL) {
         if (self->payload == NPY_NA_NOPAYLOAD) {
@@ -132,7 +132,7 @@ na_repr(NpyNA_fieldaccess *self)
  * the dtype. It is always either "NA" or "NA(payload)".
  */
 static PyObject *
-na_str(NpyNA_fieldaccess *self)
+na_str(NpyNA_fields *self)
 {
     if (self->payload == NPY_NA_NOPAYLOAD) {
         return PyUString_FromString("NA");
@@ -146,7 +146,7 @@ na_str(NpyNA_fieldaccess *self)
  * Any comparison with NA produces an NA.
  */
 static PyObject *
-na_richcompare(NpyNA_fieldaccess *self, PyObject *other, int cmp_op)
+na_richcompare(NpyNA_fields *self, PyObject *other, int cmp_op)
 {
     /* If an ndarray is compared directly with NA, let the array handle it */
     if (PyArray_Check(other)) {
@@ -161,7 +161,7 @@ na_richcompare(NpyNA_fieldaccess *self, PyObject *other, int cmp_op)
 }
 
 static PyObject *
-na_payload_get(NpyNA_fieldaccess *self)
+na_payload_get(NpyNA_fields *self)
 {
     if (self->payload == NPY_NA_NOPAYLOAD) {
         Py_INCREF(Py_None);
@@ -173,7 +173,7 @@ na_payload_get(NpyNA_fieldaccess *self)
 }
 
 static int
-na_payload_set(NpyNA_fieldaccess *self, PyObject *value)
+na_payload_set(NpyNA_fields *self, PyObject *value)
 {
     long payload;
 
@@ -217,7 +217,7 @@ na_payload_set(NpyNA_fieldaccess *self, PyObject *value)
 }
 
 static PyObject *
-na_dtype_get(NpyNA_fieldaccess *self)
+na_dtype_get(NpyNA_fields *self)
 {
     if (self->dtype == NULL) {
         Py_INCREF(Py_None);
@@ -230,7 +230,7 @@ na_dtype_get(NpyNA_fieldaccess *self)
 }
 
 static int
-na_dtype_set(NpyNA_fieldaccess *self, PyObject *value)
+na_dtype_set(NpyNA_fields *self, PyObject *value)
 {
     PyArray_Descr *dtype = NULL;
 
@@ -270,12 +270,12 @@ static PyGetSetDef na_getsets[] = {
 NPY_NO_EXPORT NpyNA *
 NpyNA_CombineNA(NpyNA *na1, NpyNA *na2)
 {
-    NpyNA_fieldaccess *ret, *fna1, *fna2;
+    NpyNA_fields *ret, *fna1, *fna2;
 
-    fna1 = (NpyNA_fieldaccess *)na1;
-    fna2 = (NpyNA_fieldaccess *)na2;
+    fna1 = (NpyNA_fields *)na1;
+    fna2 = (NpyNA_fields *)na2;
 
-    ret = (NpyNA_fieldaccess *)na_new(&NpyNA_Type, NULL, NULL);
+    ret = (NpyNA_fields *)na_new(&NpyNA_Type, NULL, NULL);
     if (ret == NULL) {
         return NULL;
     }
@@ -312,10 +312,10 @@ NpyNA_CombineNA(NpyNA *na1, NpyNA *na2)
 NPY_NO_EXPORT NpyNA *
 NpyNA_CombineNAWithObject(NpyNA *na, PyObject *obj)
 {
-    NpyNA_fieldaccess *ret, *fna;
+    NpyNA_fields *ret, *fna;
     PyArray_Descr *dtype = NULL;
 
-    fna = (NpyNA_fieldaccess *)na;
+    fna = (NpyNA_fields *)na;
 
     /* If 'obj' is NA, handle it specially */
     if (NpyNA_Check(obj)) {
@@ -344,7 +344,7 @@ NpyNA_CombineNAWithObject(NpyNA *na, PyObject *obj)
         }
     }
 
-    ret = (NpyNA_fieldaccess *)na_new(&NpyNA_Type, NULL, NULL);
+    ret = (NpyNA_fields *)na_new(&NpyNA_Type, NULL, NULL);
     if (ret == NULL) {
         return NULL;
     }
@@ -367,6 +367,86 @@ NpyNA_CombineNAWithObject(NpyNA *na, PyObject *obj)
     }
 
     return (NpyNA *)ret;
+}
+/*
+ * Converts an object into an NA if possible.
+ *
+ * If 'suppress_error' is enabled, doesn't raise an error when something
+ * isn't NA.
+ */
+NPY_NO_EXPORT NpyNA *
+NpyNA_FromObject(PyObject *obj, int suppress_error)
+{
+    /* Pass through existing NAs */
+    if (NpyNA_Check(obj)) {
+        Py_INCREF(obj);
+        return (NpyNA *)obj;
+    }
+    /* Convert zero-dimensional masked elements into NAs */
+    else if (PyArray_Check(obj)) {
+        if (PyArray_NDIM((PyArrayObject *)obj) == 0 &&
+                    !PyArray_HASFIELDS((PyArrayObject *)obj)) {
+            if (PyArray_HASMASKNA((PyArrayObject *)obj)) {
+                npy_mask maskvalue;
+                NpyNA_fields *fna;
+
+                maskvalue = (npy_mask)*PyArray_MASKNA_DATA(
+                                            (PyArrayObject *)obj);
+                if (NpyMaskValue_IsExposed(maskvalue)) {
+                    if (!suppress_error) {
+                        PyErr_SetString(PyExc_ValueError,
+                                "Cannot convert zero-dimensional array with "
+                                "valid value into NA");
+                    }
+                    return NULL;
+                }
+
+                fna = (NpyNA_fields *)na_new(&NpyNA_Type, NULL, NULL);
+                if (fna == NULL) {
+                    return NULL;
+                }
+
+                fna->dtype = PyArray_DESCR((PyArrayObject *)obj);
+                Py_INCREF(fna->dtype);
+
+                if (PyArray_MASKNA_DTYPE((PyArrayObject *)obj)->type_num ==
+                                        NPY_MASK) {
+                    fna->payload = NpyMaskValue_GetPayload(maskvalue);
+                }
+
+                return (NpyNA *)fna;
+            }
+        }
+        else {
+            if (!suppress_error) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Cannot convert array with one or more dimensions "
+                        "into an NA");
+            }
+            return NULL;
+        }
+    }
+
+    if (!suppress_error) {
+        PyErr_SetString(PyExc_ValueError, "Cannot convert object into an NA");
+    }
+    return NULL;
+}
+
+/*
+ * Returns a mask value corresponding to the NA.
+ */
+NPY_NO_EXPORT npy_mask
+NpyNA_AsMaskValue(NpyNA *na)
+{
+    NpyNA_fields *fna = (NpyNA_fields *)na;
+
+    if (fna->payload == NPY_NA_NOPAYLOAD) {
+        return 0;
+    }
+    else {
+        return NpyMaskValue_Create(0, fna->payload);
+    }
 }
 
 /* An NA unary op simply passes along the same NA */
@@ -560,7 +640,7 @@ NPY_NO_EXPORT PyTypeObject NpyNA_Type = {
     0,                                          /* ob_size */
 #endif
     "numpy.NAType",                             /* tp_name */
-    sizeof(NpyNA_fieldaccess),                  /* tp_basicsize */
+    sizeof(NpyNA_fields),                  /* tp_basicsize */
     0,                                          /* tp_itemsize */
     /* methods */
     (destructor)na_dealloc,                     /* tp_dealloc */
@@ -614,7 +694,7 @@ NPY_NO_EXPORT PyTypeObject NpyNA_Type = {
 #endif
 };
 
-NPY_NO_EXPORT NpyNA_fieldaccess _Npy_NASingleton = {
+NPY_NO_EXPORT NpyNA_fields _Npy_NASingleton = {
     PyObject_HEAD_INIT(&NpyNA_Type)
     NPY_NA_NOPAYLOAD,  /* payload */
     NULL,              /* dtype */

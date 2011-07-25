@@ -19,6 +19,7 @@
 
 #include "shape.h"
 #include "lowlevel_strided_loops.h"
+#include "na_singleton.h"
 
 /*NUMPY_API
  *
@@ -177,8 +178,69 @@ PyArray_AllocateMaskNA(PyArrayObject *arr, npy_bool ownmaskna, npy_bool multina)
     /* Set the NA mask data in the array */
     Py_XDECREF(maskna_dtype);
     fa->maskna_dtype = maskna_dtype;
-    fa->maskna_data = (npy_mask *)maskna_data;
+    fa->maskna_data = maskna_data;
     fa->flags |= (NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA);
 
+    return 0;
+}
+
+/*
+ * Assigns the given NA value to all the elements in the array. If
+ * 'arr' has a mask, masks all the elements of the array.
+ *
+ * In the future, when 'arr' has an NA dtype, will assign the
+ * appropriate NA bitpatterns to the elements.
+ *
+ * Returns -1 on failure, 0 on success.
+ */
+NPY_NO_EXPORT int
+PyArray_AssignNA(PyArrayObject *arr, NpyNA *na)
+{
+    NpyNA_fields *fna = (NpyNA_fields *)na;
+    char maskvalue;
+    PyArray_Descr *maskdtype;
+    npy_intp strides[NPY_MAXDIMS];
+
+    if (!PyArray_HASMASKNA(arr)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot assign an NA to an "
+                "array with no NA support");
+        return -1;
+    }
+
+    /* Turn the payload into a mask value */
+    if (fna->payload == NPY_NA_NOPAYLOAD) {
+        maskvalue = 0;
+    }
+    else if (PyArray_MASKNA_DTYPE(arr)->type_num !=
+                                        NPY_MASK) {
+        /* TODO: also handle struct-NA mask dtypes */
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot assign an NA with a payload to an "
+                "NA-array with a boolean mask, requires a multi-NA mask");
+        return -1;
+    }
+    else {
+        maskvalue = (char)NpyMaskValue_Create(0, fna->payload);
+    }
+
+    /* Copy the mask value to arr's mask */
+    maskdtype = PyArray_DescrFromType(maskvalue == 0 ? NPY_BOOL
+                                                     : NPY_MASK);
+    if (maskdtype == NULL) {
+        return -1;
+    }
+    memset(strides, 0, PyArray_NDIM(arr) * sizeof(npy_intp));
+    if (PyArray_CastRawNDimArrays(PyArray_NDIM(arr),
+                        PyArray_DIMS(arr),
+                        &maskvalue, PyArray_MASKNA_DATA(arr),
+                        strides, PyArray_MASKNA_STRIDES(arr),
+                        maskdtype, PyArray_MASKNA_DTYPE(arr),
+                        0) < 0) {
+        Py_DECREF(maskdtype);
+        return -1;
+    }
+
+    Py_DECREF(maskdtype);
     return 0;
 }
