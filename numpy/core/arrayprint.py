@@ -15,7 +15,7 @@ __docformat__ = 'restructuredtext'
 import sys
 import numerictypes as _nt
 from umath import maximum, minimum, absolute, not_equal, isnan, isinf
-from multiarray import format_longfloat, datetime_as_string, datetime_data
+from multiarray import format_longfloat, datetime_as_string, datetime_data, isna
 from fromnumeric import ravel
 
 
@@ -477,8 +477,6 @@ def _formatArray(a, format_function, rank, max_line_len,
             s, line = _extendLine(s, line, summary_insert1, max_line_len, next_line_prefix)
 
         for i in xrange(trailing_items, 1, -1):
-            print "bad index: ",  i
-            print "length: ",  len(a)
             word = format_function(a[-i]) + separator
             s, line = _extendLine(s, line, word, max_line_len, next_line_prefix)
 
@@ -637,7 +635,7 @@ class IntegerFormat(object):
             pass
 
     def __call__(self, x):
-        if _MININT < x < _MAXINT:
+        if not isna(x) and _MININT < x < _MAXINT:
             return self.format % x
         else:
             return "%s" % x

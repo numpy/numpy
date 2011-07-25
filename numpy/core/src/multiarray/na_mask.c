@@ -244,3 +244,51 @@ PyArray_AssignNA(PyArrayObject *arr, NpyNA *na)
     Py_DECREF(maskdtype);
     return 0;
 }
+
+/*
+ * A ufunc-like function, which returns a boolean or an array
+ * of booleans indicating which values are NA.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_IsNA(PyObject *obj)
+{
+    /* NA objects are NA */
+    if (NpyNA_Check(obj)) {
+        Py_INCREF(Py_True);
+        return Py_True;
+    }
+    /* Otherwise non-array objects are not NA */
+    else if (!PyArray_Check(obj)) {
+        Py_INCREF(Py_False);
+        return Py_False;
+    }
+    /* Create a boolean array based on the mask */
+    else {
+        //PyArrayObject *ret;
+        PyArray_Descr *dtype;
+
+        if (PyArray_HASFIELDS((PyArrayObject *)obj)) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "field-NA is not supported yet");
+            return NULL;
+        }
+
+        PyErr_SetString(PyExc_RuntimeError,
+                "isna isn't done yet");
+        return NULL;
+
+        dtype = PyArray_DescrFromType(NPY_BOOL);
+        if (dtype == NULL) {
+            return NULL;
+        }
+
+        /* TODO: Set up iterator, etc */
+
+        if (!PyArray_HasNASupport((PyArrayObject *)obj)) {
+            /* TODO */
+        }
+        else {
+            /* TODO */
+        }
+    }
+}
