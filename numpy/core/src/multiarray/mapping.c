@@ -54,8 +54,6 @@ array_big_item(PyArrayObject *self, npy_intp i)
         return NULL;
     }
 
-    printf("array_big_item\n");
-
     /* Bounds check and get the data pointer */
     dim0 = PyArray_DIM(self, 0);
     if (i < 0) {

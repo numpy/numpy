@@ -49,6 +49,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "datetime_busday.h"
 #include "datetime_busdaycal.h"
 #include "na_singleton.h"
+#include "na_mask.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -2464,6 +2465,18 @@ finish:
 }
 
 static PyObject *
+array_isna(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
+{
+    PyObject *a;
+    static char *kwlist[] = {"a", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O:isna", kwlist, &a)) {
+        return NULL;
+    }
+    return PyArray_IsNA(a);
+}
+
+static PyObject *
 array_fastCopyAndTranspose(PyObject *NPY_UNUSED(dummy), PyObject *args)
 {
     PyObject *a0;
@@ -3516,6 +3529,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"einsum",
         (PyCFunction)array_einsum,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"isna",
+        (PyCFunction)array_isna,
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"_fastCopyAndTranspose",
         (PyCFunction)array_fastCopyAndTranspose,
