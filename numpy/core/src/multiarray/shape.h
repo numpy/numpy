@@ -12,7 +12,8 @@ typedef struct {
  * [(2, 12), (0, 4), (1, -2)].
  */
 NPY_NO_EXPORT void
-PyArray_CreateSortedStridePerm(PyArrayObject *arr,
+PyArray_CreateSortedStridePerm(int ndim, npy_intp * strides,
                            _npy_stride_sort_item *strideperm);
+
 
 #endif

@@ -770,7 +770,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
 static int
 discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
                                     int stop_at_string, int stop_at_tuple,
-                                    int *out_is_object)
+                                    int *out_is_object, int *out_contains_na)
 {
     PyObject *e;
     int r, n, i;
@@ -799,6 +799,11 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     /* obj is a Scalar */
     if (PyArray_IsScalar(obj, Generic)) {
         *maxndim = 0;
+        return 0;
+    }
+
+    if (NpyNA_Check(obj)) {
+        *out_contains_na = 1;
         return 0;
     }
 
@@ -969,7 +974,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         }
         r = discover_dimensions(e, &maxndim_m1, d + 1, check_it,
                                         stop_at_string, stop_at_tuple,
-                                        out_is_object);
+                                        out_is_object, out_contains_na);
         Py_DECREF(e);
         if (r < 0) {
             return r;
@@ -993,7 +998,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
             }
             r = discover_dimensions(e, &maxndim_m1, dtmp, check_it,
                                             stop_at_string, stop_at_tuple,
-                                            out_is_object);
+                                            out_is_object, out_contains_na);
             Py_DECREF(e);
             if (r < 0) {
                 return r;
@@ -1144,12 +1149,13 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     fa->weakreflist = (PyObject *)NULL;
 
     if (nd > 0) {
-        fa->dimensions = PyDimMem_NEW(2*nd);
+        fa->dimensions = PyDimMem_NEW(3*nd);
         if (fa->dimensions == NULL) {
             PyErr_NoMemory();
             goto fail;
         }
         fa->strides = fa->dimensions + nd;
+        fa->maskna_strides = fa->dimensions + 2 * nd;
         memcpy(fa->dimensions, dims, sizeof(npy_intp)*nd);
         if (strides == NULL) { /* fill it in */
             sd = _array_fill_strides(fa->strides, dims, nd, sd,
@@ -1323,7 +1329,9 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
         _npy_stride_sort_item strideperm[NPY_MAXDIMS];
         int i;
 
-        PyArray_CreateSortedStridePerm(prototype, strideperm);
+        PyArray_CreateSortedStridePerm(PyArray_NDIM(prototype),
+                                        PyArray_STRIDES(prototype),
+                                        strideperm);
 
         /* Build the new strides */
         stride = dtype->elsize;
@@ -1473,71 +1481,25 @@ fail:
 #endif
 }
 
-/*NUMPY_API
- * Retrieves the array parameters for viewing/converting an arbitrary
- * PyObject* to a NumPy array. This allows the "innate type and shape"
- * of Python list-of-lists to be discovered without
- * actually converting to an array.
+/*
+ * A slight generalization of PyArray_GetArrayParamsFromObject,
+ * which also returns whether the input data contains any numpy.NA
+ * values.
  *
- * In some cases, such as structured arrays and the __array__ interface,
- * a data type needs to be used to make sense of the object.  When
- * this is needed, provide a Descr for 'requested_dtype', otherwise
- * provide NULL. This reference is not stolen. Also, if the requested
- * dtype doesn't modify the interpretation of the input, out_dtype will
- * still get the "innate" dtype of the object, not the dtype passed
- * in 'requested_dtype'.
- *
- * If writing to the value in 'op' is desired, set the boolean
- * 'writeable' to 1.  This raises an error when 'op' is a scalar, list
- * of lists, or other non-writeable 'op'.
- *
- * Result: When success (0 return value) is returned, either out_arr
- *         is filled with a non-NULL PyArrayObject and
- *         the rest of the parameters are untouched, or out_arr is
- *         filled with NULL, and the rest of the parameters are
- *         filled.
- *
- * Typical usage:
- *
- *      PyArrayObject *arr = NULL;
- *      PyArray_Descr *dtype = NULL;
- *      int ndim = 0;
- *      npy_intp dims[NPY_MAXDIMS];
- *
- *      if (PyArray_GetArrayParamsFromObject(op, NULL, 1, &dtype,
- *                                          &ndim, &dims, &arr, NULL) < 0) {
- *          return NULL;
- *      }
- *      if (arr == NULL) {
- *          ... validate/change dtype, validate flags, ndim, etc ...
- *          // Could make custom strides here too
- *          arr = PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
- *                                      dims, NULL,
- *                                      is_f_order ? NPY_ARRAY_F_CONTIGUOUS : 0,
- *                                      NULL);
- *          if (arr == NULL) {
- *              return NULL;
- *          }
- *          if (PyArray_CopyObject(arr, op) < 0) {
- *              Py_DECREF(arr);
- *              return NULL;
- *          }
- *      }
- *      else {
- *          ... in this case the other parameters weren't filled, just
- *              validate and possibly copy arr itself ...
- *      }
- *      ... use arr ...
+ * This isn't exposed in the public API.
  */
 NPY_NO_EXPORT int
-PyArray_GetArrayParamsFromObject(PyObject *op,
+PyArray_GetArrayParamsFromObjectEx(PyObject *op,
                         PyArray_Descr *requested_dtype,
                         npy_bool writeable,
                         PyArray_Descr **out_dtype,
                         int *out_ndim, npy_intp *out_dims,
+                        int *out_contains_na,
                         PyArrayObject **out_arr, PyObject *context)
 {
     PyObject *tmp;
+
+    *out_contains_na = 0;
 
     /* If op is an array */
     if (PyArray_Check(op)) {
@@ -1687,7 +1649,7 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
         is_object = 0;
         if (discover_dimensions(op, out_ndim, out_dims, check_it,
                                     stop_at_string, stop_at_tuple,
-                                    &is_object) < 0) {
+                                    &is_object, out_contains_na) < 0) {
             Py_DECREF(*out_dtype);
             if (PyErr_Occurred()) {
                 return -1;
@@ -1763,6 +1725,76 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
 }
 
 /*NUMPY_API
+ * Retrieves the array parameters for viewing/converting an arbitrary
+ * PyObject* to a NumPy array. This allows the "innate type and shape"
+ * of Python list-of-lists to be discovered without
+ * actually converting to an array.
+ *
+ * In some cases, such as structured arrays and the __array__ interface,
+ * a data type needs to be used to make sense of the object.  When
+ * this is needed, provide a Descr for 'requested_dtype', otherwise
+ * provide NULL. This reference is not stolen. Also, if the requested
+ * dtype doesn't modify the interpretation of the input, out_dtype will
+ * still get the "innate" dtype of the object, not the dtype passed
+ * in 'requested_dtype'.
+ *
+ * If writing to the value in 'op' is desired, set the boolean
+ * 'writeable' to 1.  This raises an error when 'op' is a scalar, list
+ * of lists, or other non-writeable 'op'.
+ *
+ * Result: When success (0 return value) is returned, either out_arr
+ *         is filled with a non-NULL PyArrayObject and
+ *         the rest of the parameters are untouched, or out_arr is
+ *         filled with NULL, and the rest of the parameters are
+ *         filled.
+ *
+ * Typical usage:
+ *
+ *      PyArrayObject *arr = NULL;
+ *      PyArray_Descr *dtype = NULL;
+ *      int ndim = 0;
+ *      npy_intp dims[NPY_MAXDIMS];
+ *
+ *      if (PyArray_GetArrayParamsFromObject(op, NULL, 1, &dtype,
+ *                                          &ndim, &dims, &arr, NULL) < 0) {
+ *          return NULL;
+ *      }
+ *      if (arr == NULL) {
+ *          ... validate/change dtype, validate flags, ndim, etc ...
+ *          // Could make custom strides here too
+ *          arr = PyArray_NewFromDescr(&PyArray_Type, dtype, ndim,
+ *                                      dims, NULL,
+ *                                      is_f_order ? NPY_ARRAY_F_CONTIGUOUS : 0,
+ *                                      NULL);
+ *          if (arr == NULL) {
+ *              return NULL;
+ *          }
+ *          if (PyArray_CopyObject(arr, op) < 0) {
+ *              Py_DECREF(arr);
+ *              return NULL;
+ *          }
+ *      }
+ *      else {
+ *          ... in this case the other parameters weren't filled, just
+ *              validate and possibly copy arr itself ...
+ *      }
+ *      ... use arr ...
+ */
+NPY_NO_EXPORT int
+PyArray_GetArrayParamsFromObject(PyObject *op,
+                        PyArray_Descr *requested_dtype,
+                        npy_bool writeable,
+                        PyArray_Descr **out_dtype,
+                        int *out_ndim, npy_intp *out_dims,
+                        PyArrayObject **out_arr, PyObject *context)
+{
+    int contains_na = 0;
+    return PyArray_GetArrayParamsFromObjectEx(op, requested_dtype,
+                        writeable, out_dtype, out_ndim, out_dims,
+                        &contains_na, out_arr, context);
+}
+
+/*NUMPY_API
  * Does not check for NPY_ARRAY_ENSURECOPY and NPY_ARRAY_NOTSWAPPED in flags
  * Steals a reference to newtype --- which can be NULL
  */
@@ -1776,13 +1808,13 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
      */
     PyArrayObject *arr = NULL, *ret;
     PyArray_Descr *dtype = NULL;
-    int ndim = 0;
+    int ndim = 0, contains_na = 0;
     npy_intp dims[NPY_MAXDIMS];
 
     /* Get either the array or its parameters if it isn't an array */
-    if (PyArray_GetArrayParamsFromObject(op, newtype,
+    if (PyArray_GetArrayParamsFromObjectEx(op, newtype,
                         0, &dtype,
-                        &ndim, dims, &arr, context) < 0) {
+                        &ndim, dims, &contains_na, &arr, context) < 0) {
         Py_XDECREF(newtype);
         return NULL;
     }
@@ -1851,9 +1883,21 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
             /* Create an array and copy the data */
             ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, newtype,
-                                                 ndim, dims,
-                                                 NULL, NULL,
-                                                 flags&NPY_ARRAY_F_CONTIGUOUS, NULL);
+                                         ndim, dims,
+                                         NULL, NULL,
+                                         flags&NPY_ARRAY_F_CONTIGUOUS, NULL);
+            /*
+             * Add an NA mask if requested, or if allowed and the data
+             * has NAs
+             */
+            if ((flags & (NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA)) != 0 ||
+                        (contains_na && (flags & NPY_ARRAY_ALLOWNA))) {
+                if (PyArray_AllocateMaskNA(ret,
+                                (flags&NPY_ARRAY_OWNMASKNA) != 0, 0) < 0) {
+                    Py_DECREF(ret);
+                    return NULL;
+                }
+            }
             if (ret != NULL) {
                 if (ndim > 0) {
                     if (PyArray_AssignFromSequence(ret, op) < 0) {
@@ -1952,7 +1996,7 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
             PyArray_DESCR_REPLACE(descr);
         }
         if (descr) {
-            descr->byteorder = PyArray_NATIVE;
+            descr->byteorder = NPY_NATIVE;
         }
     }
 

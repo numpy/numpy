@@ -1542,13 +1542,11 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
 }
 
 
-#define _ARET(x) PyArray_Return((PyArrayObject *)(x))
-
-#define STRIDING_OK(op, order) ((order) == NPY_ANYORDER ||          \
-                                ((order) == NPY_CORDER &&           \
-                                 PyArray_ISCONTIGUOUS(op)) ||           \
-                                ((order) == NPY_FORTRANORDER &&     \
-                                 PyArray_ISFORTRAN(op)))
+#define STRIDING_OK(op, order) \
+                ((order) == NPY_ANYORDER || \
+                 (order) == NPY_KEEPORDER || \
+                 ((order) == NPY_CORDER && PyArray_ISCONTIGUOUS(op)) || \
+                 ((order) == NPY_FORTRANORDER && PyArray_ISFORTRAN(op)))
 
 static PyObject *
 _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
@@ -1561,37 +1559,49 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     PyArray_Descr *type = NULL;
     PyArray_Descr *oldtype = NULL;
     NPY_ORDER order = NPY_ANYORDER;
-    int flags = 0;
+    int flags = 0, maskna = 0, ownmaskna = 0;
 
     static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
-                         "ndmin", NULL};
+                         "ndmin", "maskna", NULL};
 
     if (PyTuple_GET_SIZE(args) > 2) {
         PyErr_SetString(PyExc_ValueError,
                         "only 2 non-keyword arguments accepted");
         return NULL;
     }
-    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&i", kwd, &op,
+    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&iii", kwd,
+                &op,
                 PyArray_DescrConverter2, &type,
                 PyArray_BoolConverter, &copy,
                 PyArray_OrderConverter, &order,
                 PyArray_BoolConverter, &subok,
-                &ndmin)) {
+                &ndmin,
+                &maskna,
+                &ownmaskna)) {
         goto clean_type;
+    }
+
+    /* 'ownmaskna' forces 'maskna' to be True */
+    if (ownmaskna) {
+        maskna = 1;
     }
 
     if (ndmin > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
-                "ndmin bigger than allowable number of dimensions "\
+                "ndmin bigger than allowable number of dimensions "
                 "NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
         goto clean_type;
     }
     /* fast exit if simple call */
-    if ((subok && PyArray_Check(op))
-            || (!subok && PyArray_CheckExact(op))) {
+    if (((subok && PyArray_Check(op)) ||
+                 (!subok && PyArray_CheckExact(op))) &&
+              ((maskna &&
+                (PyArray_FLAGS((PyArrayObject *)op)&NPY_ARRAY_MASKNA) != 0) ||
+               (!maskna &&
+                (PyArray_FLAGS((PyArrayObject *)op)&NPY_ARRAY_MASKNA) == 0))) {
         oparr = (PyArrayObject *)op;
         if (type == NULL) {
-            if (!copy && STRIDING_OK(oparr, order)) {
+            if (!copy && !ownmaskna && STRIDING_OK(oparr, order)) {
                 Py_INCREF(op);
                 ret = oparr;
                 goto finish;
@@ -1604,7 +1614,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
         /* One more chance */
         oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, type)) {
-            if (!copy && STRIDING_OK(oparr, order)) {
+            if (!copy && !ownmaskna && STRIDING_OK(oparr, order)) {
                 Py_INCREF(op);
                 ret = oparr;
                 goto finish;
@@ -1637,6 +1647,12 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     if (!subok) {
         flags |= NPY_ARRAY_ENSUREARRAY;
     }
+    if (maskna) {
+        flags |= NPY_ARRAY_MASKNA;
+    }
+    if (maskna) {
+        flags |= NPY_ARRAY_OWNMASKNA;
+    }
 
     flags |= NPY_ARRAY_FORCECAST;
     Py_XINCREF(type);
@@ -1645,10 +1661,12 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 
  finish:
     Py_XDECREF(type);
-    if (!ret) {
-        return (PyObject *)ret;
+    if (ret == NULL) {
+        return NULL;
     }
-    else if ((nd=PyArray_NDIM(ret)) >= ndmin) {
+
+    nd = PyArray_NDIM(ret);
+    if (nd >= ndmin) {
         return (PyObject *)ret;
     }
     /*
@@ -2069,7 +2087,7 @@ array_innerproduct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (!PyArg_ParseTuple(args, "OO", &a0, &b0)) {
         return NULL;
     }
-    return _ARET(PyArray_InnerProduct(a0, b0));
+    return PyArray_Return((PyArrayObject *)PyArray_InnerProduct(a0, b0));
 }
 
 static PyObject *
@@ -2089,7 +2107,7 @@ array_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwds)
                         "'out' must be an array");
         return NULL;
     }
-    return _ARET(PyArray_MatrixProduct2(a, v, (PyArrayObject *)o));
+    return PyArray_Return((PyArrayObject *)PyArray_MatrixProduct2(a, v, (PyArrayObject *)o));
 }
 
 static int
@@ -2430,7 +2448,7 @@ array_einsum(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 
     /* If no output was supplied, possibly convert to a scalar */
     if (ret != NULL && out == NULL) {
-        ret = _ARET(ret);
+        ret = PyArray_Return((PyArrayObject *)ret);
     }
 
 finish:
@@ -2453,7 +2471,7 @@ array_fastCopyAndTranspose(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &a0)) {
         return NULL;
     }
-    return _ARET(PyArray_CopyAndTranspose(a0));
+    return PyArray_Return((PyArrayObject *)PyArray_CopyAndTranspose(a0));
 }
 
 static PyObject *
@@ -2711,10 +2729,8 @@ array_lexsort(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|i", kwlist, &obj, &axis)) {
         return NULL;
     }
-    return _ARET(PyArray_LexSort(obj, axis));
+    return PyArray_Return((PyArrayObject *)PyArray_LexSort(obj, axis));
 }
-
-#undef _ARET
 
 static PyObject *
 array_can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args,
