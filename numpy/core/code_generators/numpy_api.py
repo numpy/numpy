@@ -69,7 +69,7 @@ multiarray_types_api = {
     'PyHalfArrType_Type':               217,
     'NpyIter_Type':                     218,
     # End 1.6 API
-    'NpyNA_Type':                       286,
+    'NpyNA_Type':                       287,
 }
 
 #define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
@@ -323,6 +323,7 @@ multiarray_funcs_api = {
     'PyArray_SetBaseObject':                283,
     'PyArray_HasNASupport':                 284,
     'PyArray_ContainsNA':                   285,
+    'PyArray_AllocateMaskNA':               286,
 }
 
 ufunc_types_api = {

@@ -220,12 +220,26 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
  * 'src_dtype' to 'dst' with 'dst_dtype'. See
  * PyArray_GetDTypeTransferFunction for more details.
  *
- * returns NPY_SUCCEED or NPY_FAIL.
+ * Returns NPY_SUCCEED or NPY_FAIL.
  */
 NPY_NO_EXPORT int
 PyArray_CastRawArrays(npy_intp count,
                       char *src, char *dst,
                       npy_intp src_stride, npy_intp dst_stride,
+                      PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
+                      int move_references);
+
+/*
+ * Casts the elements from one n-dimensional array to another n-dimensional
+ * array with identical shape but possibly different strides and dtypes.
+ * Does not account for overlap.
+ *
+ * Returns NPY_SUCCEED or NPY_FAIL.
+ */
+NPY_NO_EXPORT int
+PyArray_CastRawNDimArrays(int ndim, npy_intp *shape,
+                      char *src, char *dst,
+                      npy_intp *src_strides, npy_intp *dst_strides,
                       PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
                       int move_references);
 
