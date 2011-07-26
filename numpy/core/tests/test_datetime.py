@@ -514,7 +514,7 @@ class TestDateTime(TestCase):
                     formatter={'datetime': lambda x :
                             "'%s'" % np.datetime_as_string(x, timezone='UTC')}),
                      "['2011-03-16T13:55Z', '1920-01-01T03:12Z']")
-        
+
 
     def test_pickle(self):
         # Check that pickle roundtripping works

@@ -1,14 +1,14 @@
-/* 
- * File: array_from_pyobj.c 
+/*
+ * File: array_from_pyobj.c
  *
  * Description:
- * ------------ 
+ * ------------
  * Provides array_from_pyobj function that returns a contigious array
  * object with the given dimensions and required storage order, either
  * in row-major (C) or column-major (Fortran) order. The function
  * array_from_pyobj is very flexible about its Python object argument
  * that can be any number, list, tuple, or array.
- * 
+ *
  * array_from_pyobj is used in f2py generated Python extension
  * modules.
  *
@@ -80,8 +80,8 @@ PyArrayObject* array_from_pyobj(const int type_num,
 
   if (intent & F2PY_INTENT_CACHE) {
     /* Don't expect correct storage order or anything reasonable when
-       returning cache array. */ 
-    if ((intent & F2PY_INTENT_HIDE) 
+       returning cache array. */
+    if ((intent & F2PY_INTENT_HIDE)
 	|| (obj==Py_None)) {
       PyArrayObject *arr = NULL;
       CHECK_DIMS_DEFINED(rank,dims,"optional,intent(cache) must"
@@ -92,7 +92,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
 	Py_INCREF(arr);
       return arr;
     }
-    if (PyArray_Check(obj) 
+    if (PyArray_Check(obj)
 	&& ISCONTIGUOUS((PyArrayObject *)obj)
 	&& HAS_PROPER_ELSIZE((PyArrayObject *)obj,type_num)
 	) {
@@ -124,7 +124,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
 			       intent(inout) */
 
     PyArrayObject *arr = (PyArrayObject *)obj;
-    int is_cont = (intent & F2PY_INTENT_C) ? 
+    int is_cont = (intent & F2PY_INTENT_C) ?
       (ISCONTIGUOUS(arr)) : (array_has_column_major_storage(arr));
 
     if (check_and_fix_dimensions(arr,rank,dims))
@@ -166,7 +166,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
 
   if ((obj==Py_None) && (intent & F2PY_OPTIONAL)) {
     PyArrayObject *arr = NULL;
-    CHECK_DIMS_DEFINED(rank,dims,"optional must have defined dimensions.\n");    
+    CHECK_DIMS_DEFINED(rank,dims,"optional must have defined dimensions.\n");
     arr = (PyArrayObject *)PyArray_FromDims(rank,dims,type_num);
     ARR_IS_NULL(arr,"FromDims failed: optional.\n");
     if (intent & F2PY_INTENT_OUT) {
@@ -240,8 +240,8 @@ void lazy_transpose(PyArrayObject* arr) {
     Note that this function is assumed to be used even times for a
     given array. Otherwise, the caller should set flags &= ~CONTIGUOUS.
    */
-  int rank,i,s,j; 
-  rank = arr->nd; 
+  int rank,i,s,j;
+  rank = arr->nd;
   if (rank < 2) return;
 
   for(i=0,j=rank-1;i<rank/2;++i,--j) {
@@ -268,7 +268,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,int *dims) 
     int free_axe = -1;
     int i;
     /* Fill dims where -1 or 0; check dimensions; calc new_size; */
-    for(i=0;i<arr->nd;++i) { 
+    for(i=0;i<arr->nd;++i) {
       if (dims[i] >= 0) {
 	if (dims[i]!=arr->dimensions[i]) {
 	  fprintf(stderr,"%d-th dimension must be fixed to %d but got %d\n",
@@ -311,7 +311,7 @@ int check_and_fix_dimensions(const PyArrayObject* arr,const int rank,int *dims) 
 	if (arr->dimensions[i]!=dims[i]) {
 	  fprintf(stderr,"%d-th dimension must be fixed to %d but got %d\n",
 		  i,dims[i],arr->dimensions[i]);
-	  return 1;	  
+	  return 1;	
 	}
 	if (!dims[i]) dims[i] = 1;	
       } else

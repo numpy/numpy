@@ -74,7 +74,7 @@ enum NPY_TYPES {    NPY_BOOL=0,
                      * New 1.6 types appended, may be integrated
                      * into the above in 2.0.
                      */
-                    NPY_DATETIME, NPY_TIMEDELTA, NPY_HALF, 
+                    NPY_DATETIME, NPY_TIMEDELTA, NPY_HALF,
 
                     NPY_NTYPES,
                     NPY_NOTYPE,

@@ -6,7 +6,7 @@
 /* The structs defined here are private implementation details of numarray
 which are subject to change w/o notice.
 */
- 
+
 #define PY_BOOL_CHAR "b"
 #define PY_INT8_CHAR "b"
 #define PY_INT16_CHAR "h"
@@ -44,7 +44,7 @@ typedef enum
 #define UNCONVERTED 0
 #define C_ARRAY     (NUM_CONTIGUOUS | NUM_NOTSWAPPED | NUM_ALIGNED)
 
-#define MUST_BE_COMPUTED 2   
+#define MUST_BE_COMPUTED 2
 
 #define NUM_FLOORDIVIDE(a,b,out) (out) = floor((a)/(b))
 
@@ -334,7 +334,7 @@ _makeSetPa(Bool)
                out[i] = NA_GETPb(ai, type, base); \
                base += stride; \
            } \
-        } 
+        }
 
 #define NA_GET1Da(ai, type, base, cnt, out)                                   \
         { int i, stride = PyArray_STRIDES(ai)[PyArray_NDIM(ai)-1]; \
@@ -342,7 +342,7 @@ _makeSetPa(Bool)
                out[i] = NA_GETPa(ai, type, base);                             \
                base += stride;                                                \
            }                                                                  \
-        } 
+        }
 
 #define NA_GET1Df(ai, type, base, cnt, out)                                   \
         { int i, stride = PyArray_STRIDES(ai)[PyArray_NDIM(ai)-1]; \
@@ -350,7 +350,7 @@ _makeSetPa(Bool)
                out[i] = NA_GETPf(ai, type, base);                             \
                base += stride;                                                \
            }                                                                  \
-        } 
+        }
 
 #define NA_GET1D(ai, type, base, cnt, out)                                    \
         if (PyArray_ISCARRAY(ai)) {                                           \
@@ -360,7 +360,7 @@ _makeSetPa(Bool)
         } else {                                                              \
               NA_GET1Da(ai, type, base, cnt, out);                            \
 	}
-        
+
 #define NA_SET1Db(ai, type, base, cnt, in)                                    \
         { int i, stride = PyArray_STRIDES(ai)[PyArray_NDIM(ai)-1]; \
            for(i=0; i<cnt; i++) {                                             \
@@ -393,7 +393,7 @@ _makeSetPa(Bool)
         } else {                                                              \
 	      NA_SET1Da(ai, type, base, cnt, out);                            \
 	}
-        
+
 /* ========================== utilities ================================== */
 
 #if !defined(MIN)

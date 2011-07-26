@@ -185,7 +185,7 @@ def _commastring(astr):
         else:
             newitem = (dtype, eval(repeats))
         result.append(newitem)
-        
+
     return result
 
 def _getintp_ctype():

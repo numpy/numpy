@@ -299,7 +299,7 @@ class TestUfunc(TestCase):
         b[:] = 0
         np.add(a,0.5,sig=('i4','i4','i4'),out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
-        
+
 
     def test_inner1d(self):
         a = np.arange(6).reshape((2,3))
