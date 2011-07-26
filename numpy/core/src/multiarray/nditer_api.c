@@ -1337,9 +1337,20 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("REDUCE ");
     if (itflags&NPY_ITFLAG_REUSE_REDUCE_LOOPS)
         printf("REUSE_REDUCE_LOOPS ");
+    if (itflags&NPY_ITFLAG_HAS_MASKNA_OP)
+        printf("ITFLAG_HAS_MASKNA_OP ");
+
     printf("\n");
     printf("| NDim: %d\n", (int)ndim);
     printf("| NOp: %d\n", (int)nop);
+    if (itflags&NPY_ITFLAG_HAS_MASKNA_OP) {
+        printf("| First MaskNA Op: %d\n", (int)NIT_FIRST_MASKNA_OP(iter));
+        printf("| MaskNA Indices: ");
+        for (iop = 0; iop < nop; ++iop) {
+            printf("%d ", (int)NIT_MASKNA_INDICES(iter)[iop]);
+        }
+        printf("\n");
+    }
     if (NIT_MASKOP(iter) >= 0) {
         printf("| MaskOp: %d\n", (int)NIT_MASKOP(iter));
     }
