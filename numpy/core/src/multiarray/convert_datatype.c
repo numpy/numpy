@@ -1702,22 +1702,38 @@ PyArray_One(PyArrayObject *arr)
 
 /*NUMPY_API
  * Return the typecode of the array a Python object would be converted to
+ *
+ * Returns the type number the result should have, or NPY_NOTYPE on error.
  */
 NPY_NO_EXPORT int
 PyArray_ObjectType(PyObject *op, int minimum_type)
 {
-    PyArray_Descr *intype;
-    PyArray_Descr *outtype;
-    int ret;
+    PyArray_Descr *dtype = NULL;
+    int ret, contains_na = 0;
 
-    intype = PyArray_DescrFromType(minimum_type);
-    if (intype == NULL) {
-        PyErr_Clear();
+    if (minimum_type != NPY_NOTYPE && minimum_type >= 0) {
+        dtype = PyArray_DescrFromType(minimum_type);
+        if (dtype == NULL) {
+            return NPY_NOTYPE;
+        }
     }
-    outtype = _array_find_type(op, intype, MAX_DIMS);
-    ret = outtype->type_num;
-    Py_DECREF(outtype);
-    Py_XDECREF(intype);
+
+    if (PyArray_DTypeFromObject(op, NPY_MAXDIMS, &contains_na, &dtype) < 0) {
+        return NPY_NOTYPE;
+    }
+
+    if (contains_na) {
+        ret = NPY_OBJECT;
+    }
+    else if (dtype == NULL) {
+        ret = NPY_DEFAULT_TYPE;
+    }
+    else {
+        ret = dtype->type_num;
+    }
+
+    Py_XDECREF(dtype);
+
     return ret;
 }
 
