@@ -48,7 +48,7 @@ class TestRavelUnravelIndex(TestCase):
             uncoords = coords[0]+5*coords[1]
             assert_equal(np.ravel_multi_index(coords, shape, order='F'), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape, order='F'))
-            
+
             coords = np.array([[1,0,1,2,3,4],[1,6,1,3,2,0],[1,3,1,0,9,5]],
                               dtype=dtype)
             shape = (5,8,10)

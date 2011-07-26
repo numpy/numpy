@@ -1049,7 +1049,10 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     }
     /* Tell the view who owns the data */
     Py_INCREF(obj);
-    view->base = (PyObject *)obj;
+    if (PyArray_SetBaseObject(view, (PyObject *)obj) < 0) {
+        Py_DECREF(view);
+        return NULL;
+    }
     /* Make sure all the flags are good */
     PyArray_UpdateFlags(view, NPY_ARRAY_UPDATE_ALL);
 
@@ -1864,7 +1867,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
                                     (int)iop, (int)op_transfersize);
 
                 if (op_itflags[iop] & NPY_OP_ITFLAG_WRITEMASKED) {
-                    npy_uint8 *maskptr;
+                    npy_mask *maskptr;
 
                     /*
                      * The mask pointer may be in the buffer or in
@@ -1873,10 +1876,10 @@ npyiter_copy_from_buffers(NpyIter *iter)
                     delta = (ptrs[maskop] - buffers[maskop]);
                     if (0 <= delta &&
                                 delta <= buffersize*dtypes[maskop]->elsize) {
-                        maskptr = buffers[maskop];
+                        maskptr = (npy_mask *)buffers[maskop];
                     }
                     else {
-                        maskptr = ad_ptrs[maskop];
+                        maskptr = (npy_mask *)ad_ptrs[maskop];
                     }
 
                     PyArray_TransferMaskedStridedToNDim(ndim_transfer,

@@ -11,16 +11,25 @@ NPY_NO_EXPORT PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj);
 
 /*
- * This creates a shorter repr using the 'kind' and 'itemsize',
- * instead of the longer type name. It also creates the input
- * for constructing a dtype rather than the full dtype function
- * call.
+ * This creates a shorter repr using 'kind' and 'itemsize',
+ * instead of the longer type name. This is the object passed
+ * as the first parameter to the dtype constructor, and if no
+ * additional constructor parameters are given, will reproduce
+ * the exact memory layout.
  *
- * This does not preserve the 'align=True' parameter
- * for structured arrays like the regular repr does.
+ * If 'includealignflag' is true, this includes the 'align=True' parameter
+ * inside the struct dtype construction dict when needed. Use this flag
+ * if you want a proper repr string without the 'dtype()' part around it.
+ *
+ * If 'includealignflag' is false, this does not preserve the
+ * 'align=True' parameter or sticky NPY_ALIGNED_STRUCT flag for
+ * struct arrays like the regular repr does, because the 'align'
+ * flag is not part of first dtype constructor parameter. This
+ * mode is intended for a full 'repr', where the 'align=True' is
+ * provided as the second parameter.
  */
 NPY_NO_EXPORT PyObject *
-arraydescr_short_construction_repr(PyArray_Descr *dtype);
+arraydescr_short_construction_repr(PyArray_Descr *dtype, int includealignflag);
 
 #ifdef NPY_ENABLE_SEPARATE_COMPILATION
 extern NPY_NO_EXPORT char *_datetime_strings[];

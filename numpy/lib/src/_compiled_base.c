@@ -1,12 +1,13 @@
+#define NPY_NO_DEPRECATED_API
 #include "Python.h"
 #include "structmember.h"
 #include "numpy/noprefix.h"
 #include "npy_config.h"
 
-static intp
-incr_slot_(double x, double *bins, intp lbins)
+static npy_intp
+incr_slot_(double x, double *bins, npy_intp lbins)
 {
-    intp i;
+    npy_intp i;
 
     for ( i = 0; i < lbins; i ++ ) {
         if ( x < bins [i] ) {
@@ -16,10 +17,10 @@ incr_slot_(double x, double *bins, intp lbins)
     return lbins;
 }
 
-static intp
-decr_slot_(double x, double * bins, intp lbins)
+static npy_intp
+decr_slot_(double x, double * bins, npy_intp lbins)
 {
-    intp i;
+    npy_intp i;
 
     for ( i = lbins - 1; i >= 0; i -- ) {
         if (x < bins [i]) {
@@ -57,11 +58,11 @@ monotonic_(double * a, int lena)
 
 
 /* find the index of the maximum element of an integer array */
-static intp
-mxx (intp *i , intp len)
+static npy_intp
+mxx (npy_intp *i , npy_intp len)
 {
-    intp mx = 0, max = i[0];
-    intp j;
+    npy_intp mx = 0, max = i[0];
+    npy_intp j;
 
     for ( j = 1; j < len; j ++ ) {
         if ( i [j] > max ) {
@@ -73,11 +74,11 @@ mxx (intp *i , intp len)
 }
 
 /* find the index of the minimum element of an integer array */
-static intp
-mnx (intp *i , intp len)
+static npy_intp
+mnx (npy_intp *i , npy_intp len)
 {
-    intp mn = 0, min = i [0];
-    intp j;
+    npy_intp mn = 0, min = i [0];
+    npy_intp j;
 
     for ( j = 1; j < len; j ++ )
         if ( i [j] < min )
@@ -105,8 +106,8 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     PyArray_Descr *type;
     PyObject *list = NULL, *weight=Py_None, *mlength=Py_None;
-    PyObject *lst=NULL, *ans=NULL, *wts=NULL;
-    intp *numbers, *ians, len , mxi, mni, ans_size, minlength;
+    PyArrayObject *lst=NULL, *ans=NULL, *wts=NULL;
+    npy_intp *numbers, *ians, len , mxi, mni, ans_size, minlength;
     int i;
     double *weights , *dans;
     static char *kwlist[] = {"list", "weights", "minlength", NULL};
@@ -115,8 +116,9 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
                 kwlist, &list, &weight, &mlength)) {
             goto fail;
     }
-    if (!(lst = PyArray_ContiguousFromAny(list, PyArray_INTP, 1, 1))) {
-            goto fail;
+    lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
+    if (lst == NULL) {
+        goto fail;
     }
     len = PyArray_SIZE(lst);
     if (len < 1) {
@@ -124,7 +126,7 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
                 "The first argument cannot be empty.");
         goto fail;
     }
-    numbers = (intp *) PyArray_DATA(lst);
+    numbers = (npy_intp *) PyArray_DATA(lst);
     mxi = mxx(numbers, len);
     mni = mnx(numbers, len);
     if (numbers[mni] < 0) {
@@ -147,18 +149,21 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
             ans_size = minlength;
         }
     }
-    type = PyArray_DescrFromType(PyArray_INTP);
+    type = PyArray_DescrFromType(NPY_INTP);
     if (weight == Py_None) {
-        if (!(ans = PyArray_Zeros(1, &ans_size, type, 0))) {
+        ans = (PyArrayObject *)PyArray_Zeros(1, &ans_size, type, 0);
+        if (ans == NULL) {
             goto fail;
         }
-        ians = (intp *)(PyArray_DATA(ans));
+        ians = (npy_intp *)(PyArray_DATA(ans));
         for (i = 0; i < len; i++)
             ians [numbers [i]] += 1;
         Py_DECREF(lst);
     }
     else {
-        if (!(wts = PyArray_ContiguousFromAny(weight, PyArray_DOUBLE, 1, 1))) {
+        wts = (PyArrayObject *)PyArray_ContiguousFromAny(
+                                                weight, NPY_DOUBLE, 1, 1);
+        if (wts == NULL) {
             goto fail;
         }
         weights = (double *)PyArray_DATA (wts);
@@ -167,18 +172,19 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
                     "The weights and list don't have the same length.");
             goto fail;
         }
-        type = PyArray_DescrFromType(PyArray_DOUBLE);
-        if (!(ans = PyArray_Zeros(1, &ans_size, type, 0))) {
+        type = PyArray_DescrFromType(NPY_DOUBLE);
+        ans = (PyArrayObject *)PyArray_Zeros(1, &ans_size, type, 0);
+        if (ans == NULL) {
             goto fail;
         }
-        dans = (double *)PyArray_DATA (ans);
+        dans = (double *)PyArray_DATA(ans);
         for (i = 0; i < len; i++) {
             dans[numbers[i]] += weights[i];
         }
         Py_DECREF(lst);
         Py_DECREF(wts);
     }
-    return ans;
+    return (PyObject *)ans;
 
 fail:
     Py_XDECREF(lst);
@@ -200,10 +206,10 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     /* self is not used */
     PyObject *ox, *obins;
-    PyObject *ax = NULL, *abins = NULL, *aret = NULL;
+    PyArrayObject *ax = NULL, *abins = NULL, *aret = NULL;
     double *dx, *dbins;
-    intp lbins, lx;             /* lengths */
-    intp *iret;
+    npy_intp lbins, lx;             /* lengths */
+    npy_intp *iret;
     int m, i;
     static char *kwlist[] = {"x", "bins", NULL};
     PyArray_Descr *type;
@@ -211,12 +217,16 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist, &ox, &obins)) {
         goto fail;
     }
-    type = PyArray_DescrFromType(PyArray_DOUBLE);
-    if (!(ax = PyArray_FromAny(ox, type, 1, 1, CARRAY, NULL))) {
+    type = PyArray_DescrFromType(NPY_DOUBLE);
+    ax = (PyArrayObject *)PyArray_FromAny(ox, type,
+                                        1, 1, NPY_ARRAY_CARRAY, NULL);
+    if (ax == NULL) {
         goto fail;
     }
     Py_INCREF(type);
-    if (!(abins = PyArray_FromAny(obins, type, 1, 1, CARRAY, NULL))) {
+    abins = (PyArrayObject *)PyArray_FromAny(obins, type,
+                                        1, 1, NPY_ARRAY_CARRAY, NULL);
+    if (abins == NULL) {
         goto fail;
     }
 
@@ -224,10 +234,11 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     dx = (double *)PyArray_DATA(ax);
     lbins = PyArray_SIZE(abins);
     dbins = (double *)PyArray_DATA(abins);
-    if (!(aret = PyArray_SimpleNew(1, &lx, PyArray_INTP))) {
+    aret = (PyArrayObject *)PyArray_SimpleNew(1, &lx, NPY_INTP);
+    if (aret == NULL) {
         goto fail;
     }
-    iret = (intp *)PyArray_DATA(aret);
+    iret = (npy_intp *)PyArray_DATA(aret);
 
     if (lx <= 0 || lbins < 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -266,7 +277,7 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 
     Py_DECREF(ax);
     Py_DECREF(abins);
-    return aret;
+    return (PyObject *)aret;
 
 fail:
     Py_XDECREF(ax);
@@ -291,7 +302,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     int numvals, totmask, sameshape;
     char *input_data, *mptr, *vptr, *zero = NULL;
     int melsize, delsize, copied, nd;
-    intp *instrides, *inshape;
+    npy_intp *instrides, *inshape;
     int mindx, rem_indx, indx, i, k, objarray;
 
     static char *kwlist[] = {"input", "mask", "vals", NULL};
@@ -302,13 +313,13 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         goto fail;
     }
 
-    amask = (PyArrayObject *) PyArray_FROM_OF(mask, CARRAY);
+    amask = (PyArrayObject *)PyArray_FROM_OF(mask, NPY_ARRAY_CARRAY);
     if (amask == NULL) {
         goto fail;
     }
     /* Cast an object array */
-    if (amask->descr->type_num == PyArray_OBJECT) {
-        tmp = (PyArrayObject *)PyArray_Cast(amask, PyArray_INTP);
+    if (PyArray_DESCR(amask)->type_num == NPY_OBJECT) {
+        tmp = (PyArrayObject *)PyArray_Cast(amask, NPY_INTP);
         if (tmp == NULL) {
             goto fail;
         }
@@ -317,16 +328,16 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
 
     sameshape = 1;
-    if (amask->nd == ainput->nd) {
-        for (k = 0; k < amask->nd; k++) {
-            if (amask->dimensions[k] != ainput->dimensions[k]) {
+    if (PyArray_NDIM(amask) == PyArray_NDIM(ainput)) {
+        for (k = 0; k < PyArray_NDIM(amask); k++) {
+            if (PyArray_DIMS(amask)[k] != PyArray_DIMS(ainput)[k]) {
                 sameshape = 0;
             }
         }
     }
     else {
         /* Test to see if amask is 1d */
-        if (amask->nd != 1) {
+        if (PyArray_NDIM(amask) != 1) {
             sameshape = 0;
         }
         else if ((PyArray_SIZE(ainput)) != PyArray_SIZE(amask)) {
@@ -339,22 +350,23 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         goto fail;
     }
 
-    avals = (PyArrayObject *)PyArray_FromObject(vals, ainput->descr->type_num, 0, 1);
+    avals = (PyArrayObject *)PyArray_FromObject(vals,
+                                        PyArray_DESCR(ainput)->type_num, 0, 1);
     if (avals == NULL) {
         goto fail;
     }
     numvals = PyArray_SIZE(avals);
-    nd = ainput->nd;
-    input_data = ainput->data;
-    mptr = amask->data;
-    melsize = amask->descr->elsize;
-    vptr = avals->data;
-    delsize = avals->descr->elsize;
+    nd = PyArray_NDIM(ainput);
+    input_data = PyArray_DATA(ainput);
+    mptr = PyArray_DATA(amask);
+    melsize = PyArray_DESCR(amask)->elsize;
+    vptr = PyArray_DATA(avals);
+    delsize = PyArray_DESCR(avals)->elsize;
     zero = PyArray_Zero(amask);
     if (zero == NULL) {
         goto fail;
     }
-    objarray = (ainput->descr->type_num == PyArray_OBJECT);
+    objarray = (PyArray_DESCR(ainput)->type_num == NPY_OBJECT);
 
     /* Handle zero-dimensional case separately */
     if (nd == 0) {
@@ -380,8 +392,8 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
      */
     totmask = (int) PyArray_SIZE(amask);
     copied = 0;
-    instrides = ainput->strides;
-    inshape = ainput->dimensions;
+    instrides = PyArray_STRIDES(ainput);
+    inshape = PyArray_DIMS(ainput);
     for (mindx = 0; mindx < totmask; mindx++) {
         if (memcmp(mptr,zero,melsize) != 0) {
             /* compute indx into input array */
@@ -402,7 +414,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             copied += 1;
             /* If we move past value data.  Reset */
             if (copied >= numvals) {
-                vptr = avals->data;
+                vptr = PyArray_DATA(avals);
             }
         }
         mptr += melsize;
@@ -476,31 +488,32 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         return NULL;
     }
 
-    afp = (NPY_AO*)PyArray_ContiguousFromAny(fp, NPY_DOUBLE, 1, 1);
+    afp = (PyArrayObject *)PyArray_ContiguousFromAny(fp, NPY_DOUBLE, 1, 1);
     if (afp == NULL) {
         return NULL;
     }
-    axp = (NPY_AO*)PyArray_ContiguousFromAny(xp, NPY_DOUBLE, 1, 1);
+    axp = (PyArrayObject *)PyArray_ContiguousFromAny(xp, NPY_DOUBLE, 1, 1);
     if (axp == NULL) {
         goto fail;
     }
-    ax = (NPY_AO*)PyArray_ContiguousFromAny(x, NPY_DOUBLE, 1, 0);
+    ax = (PyArrayObject *)PyArray_ContiguousFromAny(x, NPY_DOUBLE, 1, 0);
     if (ax == NULL) {
         goto fail;
     }
-    lenxp = axp->dimensions[0];
+    lenxp = PyArray_DIMS(axp)[0];
     if (lenxp == 0) {
         PyErr_SetString(PyExc_ValueError,
                 "array of sample points is empty");
         goto fail;
     }
-    if (afp->dimensions[0] != lenxp) {
+    if (PyArray_DIMS(afp)[0] != lenxp) {
         PyErr_SetString(PyExc_ValueError,
                 "fp and xp are not of the same length.");
         goto fail;
     }
 
-    af = (NPY_AO*)PyArray_SimpleNew(ax->nd, ax->dimensions, NPY_DOUBLE);
+    af = (PyArrayObject *)PyArray_SimpleNew(PyArray_NDIM(ax),
+                                        PyArray_DIMS(ax), NPY_DOUBLE);
     if (af == NULL) {
         goto fail;
     }
@@ -1038,7 +1051,10 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
             goto fail;
         }
         Py_INCREF(ret_arr);
-        view->base = (PyObject *)ret_arr;
+        if (PyArray_SetBaseObject(view, (PyObject *)ret_arr) < 0) {
+            Py_DECREF(view);
+            goto fail;
+        }
         PyTuple_SET_ITEM(ret_tuple, i, PyArray_Return(view));
     }
 
@@ -1246,8 +1262,8 @@ static PyObject *
 pack_or_unpack_bits(PyObject *input, int axis, int unpack)
 {
     PyArrayObject *inp;
-    PyObject *new = NULL;
-    PyObject *out = NULL;
+    PyArrayObject *new = NULL;
+    PyArrayObject *out = NULL;
     npy_intp outdims[MAX_DIMS];
     int i;
     void (*thefunc)(void *, int, npy_intp, npy_intp, void *, npy_intp, npy_intp);
@@ -1271,25 +1287,25 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
         goto fail;
     }
 
-    new = PyArray_CheckAxis(inp, &axis, 0);
+    new = (PyArrayObject *)PyArray_CheckAxis(inp, &axis, 0);
     Py_DECREF(inp);
     if (new == NULL) {
         return NULL;
     }
     /* Handle zero-dim array separately */
     if (PyArray_SIZE(new) == 0) {
-        return PyArray_Copy((PyArrayObject *)new);
+        return PyArray_Copy(new);
     }
 
     if (PyArray_NDIM(new) == 0) {
         if (unpack) {
             /* Handle 0-d array by converting it to a 1-d array */
-            PyObject *temp;
+            PyArrayObject *temp;
             PyArray_Dims newdim = {NULL, 1};
             npy_intp shape = 1;
 
             newdim.ptr = &shape;
-            temp = PyArray_Newshape((PyArrayObject *)new, &newdim, NPY_CORDER);
+            temp = (PyArrayObject *)PyArray_Newshape(new, &newdim, NPY_CORDER);
             if (temp == NULL) {
                 goto fail;
             }
@@ -1297,8 +1313,8 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
             new = temp;
         }
         else {
-            ubyte *optr, *iptr;
-            out = PyArray_New(new->ob_type, 0, NULL, NPY_UBYTE,
+            char *optr, *iptr;
+            out = (PyArrayObject *)PyArray_New(new->ob_type, 0, NULL, NPY_UBYTE,
                     NULL, NULL, 0, 0, NULL);
             if (out == NULL) {
                 goto fail;
@@ -1338,8 +1354,9 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
     }
 
     /* Create output array */
-    out = PyArray_New(new->ob_type, PyArray_NDIM(new), outdims, PyArray_UBYTE,
-            NULL, NULL, 0, PyArray_ISFORTRAN(new), NULL);
+    out = (PyArrayObject *)PyArray_New(new->ob_type,
+                        PyArray_NDIM(new), outdims, NPY_UBYTE,
+                        NULL, NULL, 0, PyArray_ISFORTRAN(new), NULL);
     if (out == NULL) {
         goto fail;
     }
@@ -1365,7 +1382,7 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
 
 finish:
     Py_DECREF(new);
-    return out;
+    return (PyObject *)out;
 
 fail:
     Py_XDECREF(new);

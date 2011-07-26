@@ -2014,7 +2014,7 @@ npyiter_seq_length(NewNpyArrayIterObject *self)
 NPY_NO_EXPORT PyObject *
 npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 {
-    PyObject *ret;
+    PyArrayObject *ret;
 
     npy_intp ret_ndim;
     npy_intp nop, innerloopsize, innerstride;
@@ -2072,16 +2072,19 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
     }
 
     Py_INCREF(dtype);
-    ret = (PyObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
+    ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
                         ret_ndim, &innerloopsize,
                         &innerstride, dataptr,
                         self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0, NULL);
     Py_INCREF(self);
-    ((PyArrayObject *)ret)->base = (PyObject *)self;
+    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
 
-    PyArray_UpdateFlags((PyArrayObject *)ret, NPY_ARRAY_UPDATE_ALL);
+    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
 
-    return ret;
+    return (PyObject *)ret;
 }
 
 NPY_NO_EXPORT PyObject *

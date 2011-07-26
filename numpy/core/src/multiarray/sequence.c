@@ -30,57 +30,59 @@ array_any_nonzero(PyArrayObject *mp);
 
 
 static PyObject *
-array_slice(PyArrayObject *self, Py_ssize_t ilow,
-            Py_ssize_t ihigh)
+array_slice(PyArrayObject *self, Py_ssize_t ilow, Py_ssize_t ihigh)
 {
-    PyArrayObject *r;
-    Py_ssize_t l;
+    PyArrayObject *ret;
+    PyArray_Descr *dtype;
+    Py_ssize_t dim0;
     char *data;
+    npy_intp shape[NPY_MAXDIMS];
 
-    if (self->nd == 0) {
+    if (PyArray_NDIM(self) == 0) {
         PyErr_SetString(PyExc_ValueError, "cannot slice a 0-d array");
         return NULL;
     }
 
-    l=self->dimensions[0];
+    dim0 = PyArray_DIM(self, 0);
     if (ilow < 0) {
         ilow = 0;
     }
-    else if (ilow > l) {
-        ilow = l;
+    else if (ilow > dim0) {
+        ilow = dim0;
     }
     if (ihigh < ilow) {
         ihigh = ilow;
     }
-    else if (ihigh > l) {
-        ihigh = l;
+    else if (ihigh > dim0) {
+        ihigh = dim0;
     }
 
-    if (ihigh != ilow) {
-        data = index2ptr(self, ilow);
-        if (data == NULL) {
-            return NULL;
-        }
-    }
-    else {
-        data = self->data;
+    data = PyArray_DATA(self);
+    if (ilow < ihigh) {
+        data += ilow * PyArray_STRIDE(self, 0);
     }
 
-    self->dimensions[0] = ihigh-ilow;
-    Py_INCREF(self->descr);
-    r = (PyArrayObject *)                                           \
-        PyArray_NewFromDescr(Py_TYPE(self), self->descr,
-                             self->nd, self->dimensions,
-                             self->strides, data,
-                             self->flags, (PyObject *)self);
-    self->dimensions[0] = l;
-    if (r == NULL) {
+    /* Same shape except dimension 0 */
+    shape[0] = ihigh - ilow;
+    memcpy(shape+1, PyArray_DIMS(self) + 1,
+                        (PyArray_NDIM(self)-1)*sizeof(npy_intp));
+
+    dtype = PyArray_DESCR(self);
+    Py_INCREF(dtype);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self), dtype,
+                             PyArray_NDIM(self), shape,
+                             PyArray_STRIDES(self), data,
+                             PyArray_FLAGS(self), (PyObject *)self);
+    if (ret == NULL) {
         return NULL;
     }
-    r->base = (PyObject *)self;
     Py_INCREF(self);
-    PyArray_UpdateFlags(r, NPY_ARRAY_UPDATE_ALL);
-    return (PyObject *)r;
+    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
+    return (PyObject *)ret;
 }
 
 
@@ -162,19 +164,19 @@ NPY_NO_EXPORT PySequenceMethods array_as_sequence = {
 
 /* Array evaluates as "TRUE" if any of the elements are non-zero*/
 static int
-array_any_nonzero(PyArrayObject *mp)
+array_any_nonzero(PyArrayObject *arr)
 {
     intp index;
     PyArrayIterObject *it;
     Bool anyTRUE = FALSE;
 
-    it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
+    it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
     if (it == NULL) {
         return anyTRUE;
     }
     index = it->size;
     while(index--) {
-        if (mp->descr->f->nonzero(it->dataptr, mp)) {
+        if (PyArray_DESCR(arr)->f->nonzero(it->dataptr, arr)) {
             anyTRUE = TRUE;
             break;
         }

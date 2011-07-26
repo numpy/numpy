@@ -2573,23 +2573,24 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
     }
     /* Datetime zero-dimensional array */
     else if (PyArray_Check(obj) &&
-                    PyArray_NDIM(obj) == 0 &&
-                    PyArray_DESCR(obj)->type_num == NPY_DATETIME) {
-        PyArray_DatetimeMetaData *obj_meta;
+              PyArray_NDIM((PyArrayObject *)obj) == 0 &&
+              PyArray_DESCR((PyArrayObject *)obj)->type_num == NPY_DATETIME) {
+        PyArrayObject *arr = (PyArrayObject *)obj;
+        PyArray_DatetimeMetaData *arr_meta;
         npy_datetime dt = 0;
 
-        obj_meta = get_datetime_metadata_from_dtype(PyArray_DESCR(obj));
-        if (obj_meta == NULL) {
+        arr_meta = get_datetime_metadata_from_dtype(PyArray_DESCR(arr));
+        if (arr_meta == NULL) {
             return -1;
         }
-        PyArray_DESCR(obj)->f->copyswap(&dt,
-                                        PyArray_DATA(obj),
-                                        !PyArray_ISNOTSWAPPED(obj),
-                                        obj);
+        PyArray_DESCR(arr)->f->copyswap(&dt,
+                                PyArray_DATA(arr),
+                                !PyArray_ISNOTSWAPPED(arr),
+                                obj);
 
         /* Copy the value directly if units weren't specified */
         if (meta->base == -1) {
-            *meta = *obj_meta;
+            *meta = *arr_meta;
             *out = dt;
 
             return 0;
@@ -2600,11 +2601,11 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
             if (dt != NPY_DATETIME_NAT &&
                         raise_if_datetime64_metadata_cast_error(
                                 "NumPy timedelta64 scalar",
-                                obj_meta, meta, casting) < 0) {
+                                arr_meta, meta, casting) < 0) {
                 return -1;
             }
             else {
-                return cast_datetime_to_datetime(obj_meta, meta, dt, out);
+                return cast_datetime_to_datetime(arr_meta, meta, dt, out);
             }
         }
     }
@@ -2769,23 +2770,24 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
     }
     /* Timedelta zero-dimensional array */
     else if (PyArray_Check(obj) &&
-                    PyArray_NDIM(obj) == 0 &&
-                    PyArray_DESCR(obj)->type_num == NPY_TIMEDELTA) {
-        PyArray_DatetimeMetaData *obj_meta;
+             PyArray_NDIM((PyArrayObject *)obj) == 0 &&
+             PyArray_DESCR((PyArrayObject *)obj)->type_num == NPY_TIMEDELTA) {
+        PyArrayObject *arr = (PyArrayObject *)obj;
+        PyArray_DatetimeMetaData *arr_meta;
         npy_timedelta dt = 0;
 
-        obj_meta = get_datetime_metadata_from_dtype(PyArray_DESCR(obj));
-        if (obj_meta == NULL) {
+        arr_meta = get_datetime_metadata_from_dtype(PyArray_DESCR(arr));
+        if (arr_meta == NULL) {
             return -1;
         }
-        PyArray_DESCR(obj)->f->copyswap(&dt,
-                                        PyArray_DATA(obj),
-                                        !PyArray_ISNOTSWAPPED(obj),
-                                        obj);
+        PyArray_DESCR(arr)->f->copyswap(&dt,
+                                PyArray_DATA(arr),
+                                !PyArray_ISNOTSWAPPED(arr),
+                                obj);
 
         /* Copy the value directly if units weren't specified */
         if (meta->base == -1) {
-            *meta = *obj_meta;
+            *meta = *arr_meta;
             *out = dt;
 
             return 0;
@@ -2796,11 +2798,11 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
             if (dt != NPY_DATETIME_NAT &&
                         raise_if_timedelta64_metadata_cast_error(
                                 "NumPy timedelta64 scalar",
-                                obj_meta, meta, casting) < 0) {
+                                arr_meta, meta, casting) < 0) {
                 return -1;
             }
             else {
-                return cast_timedelta_to_timedelta(obj_meta, meta, dt, out);
+                return cast_timedelta_to_timedelta(arr_meta, meta, dt, out);
             }
         }
     }
@@ -3184,7 +3186,8 @@ is_any_numpy_datetime(PyObject *obj)
 {
     return (PyArray_IsScalar(obj, Datetime) ||
             (PyArray_Check(obj) && (
-                PyArray_DESCR(obj)->type_num == NPY_DATETIME)) ||
+                PyArray_DESCR((PyArrayObject *)obj)->type_num ==
+                                                        NPY_DATETIME)) ||
             PyDate_Check(obj) ||
             PyDateTime_Check(obj));
 }
@@ -3197,9 +3200,9 @@ static npy_bool
 is_any_numpy_timedelta(PyObject *obj)
 {
     return (PyArray_IsScalar(obj, Timedelta) ||
-            (PyArray_Check(obj) && (
-                PyArray_DESCR(obj)->type_num == NPY_TIMEDELTA)) ||
-            PyDelta_Check(obj));
+        (PyArray_Check(obj) && (
+            PyArray_DESCR((PyArrayObject *)obj)->type_num == NPY_TIMEDELTA)) ||
+        PyDelta_Check(obj));
 }
 
 /*
@@ -3550,7 +3553,7 @@ datetime_arange(PyObject *start, PyObject *stop, PyObject *step,
  * Returns 0 on success, -1 on failure.
  */
 static int
-find_string_array_datetime64_type(PyObject *obj,
+find_string_array_datetime64_type(PyArrayObject *arr,
                         PyArray_DatetimeMetaData *meta)
 {
     NpyIter* iter;
@@ -3565,7 +3568,7 @@ find_string_array_datetime64_type(PyObject *obj,
     PyArray_DatetimeMetaData tmp_meta;
 
     /* Handle zero-sized arrays specially */
-    if (PyArray_SIZE(obj) == 0) {
+    if (PyArray_SIZE(arr) == 0) {
         return 0;
     }
 
@@ -3575,7 +3578,7 @@ find_string_array_datetime64_type(PyObject *obj,
     }
 
     /* Use unsafe casting to allow unicode -> ascii string */
-    iter = NpyIter_New((PyArrayObject *)obj,
+    iter = NpyIter_New((PyArrayObject *)arr,
                             NPY_ITER_READONLY|
                             NPY_ITER_EXTERNAL_LOOP|
                             NPY_ITER_BUFFERED,
@@ -3681,19 +3684,20 @@ recursive_find_object_datetime64_type(PyObject *obj,
 {
     /* Array -> use its metadata */
     if (PyArray_Check(obj)) {
-        PyArray_Descr *obj_dtype = PyArray_DESCR(obj);
+        PyArrayObject *arr = (PyArrayObject *)obj;
+        PyArray_Descr *arr_dtype = PyArray_DESCR(arr);
 
-        if (obj_dtype->type_num == NPY_STRING ||
-                            obj_dtype->type_num == NPY_UNICODE) {
-            return find_string_array_datetime64_type(obj, meta);
+        if (arr_dtype->type_num == NPY_STRING ||
+                            arr_dtype->type_num == NPY_UNICODE) {
+            return find_string_array_datetime64_type(arr, meta);
         }
         /* If the array has metadata, use it */
-        else if (obj_dtype->type_num == NPY_DATETIME ||
-                    obj_dtype->type_num == NPY_TIMEDELTA) {
+        else if (arr_dtype->type_num == NPY_DATETIME ||
+                    arr_dtype->type_num == NPY_TIMEDELTA) {
             PyArray_DatetimeMetaData *tmp_meta;
 
             /* Get the metadata from the type */
-            tmp_meta = get_datetime_metadata_from_dtype(obj_dtype);
+            tmp_meta = get_datetime_metadata_from_dtype(arr_dtype);
             if (tmp_meta == NULL) {
                 return -1;
             }
@@ -3707,7 +3711,7 @@ recursive_find_object_datetime64_type(PyObject *obj,
             return 0;
         }
         /* If it's not an object array, stop looking */
-        else if (obj_dtype->type_num != NPY_OBJECT) {
+        else if (arr_dtype->type_num != NPY_OBJECT) {
             return 0;
         }
     }
@@ -3827,15 +3831,16 @@ recursive_find_object_timedelta64_type(PyObject *obj,
 {
     /* Array -> use its metadata */
     if (PyArray_Check(obj)) {
-        PyArray_Descr *obj_dtype = PyArray_DESCR(obj);
+        PyArrayObject *arr = (PyArrayObject *)obj;
+        PyArray_Descr *arr_dtype = PyArray_DESCR(arr);
 
         /* If the array has metadata, use it */
-        if (obj_dtype->type_num == NPY_DATETIME ||
-                    obj_dtype->type_num == NPY_TIMEDELTA) {
+        if (arr_dtype->type_num == NPY_DATETIME ||
+                    arr_dtype->type_num == NPY_TIMEDELTA) {
             PyArray_DatetimeMetaData *tmp_meta;
 
             /* Get the metadata from the type */
-            tmp_meta = get_datetime_metadata_from_dtype(obj_dtype);
+            tmp_meta = get_datetime_metadata_from_dtype(arr_dtype);
             if (tmp_meta == NULL) {
                 return -1;
             }
@@ -3849,7 +3854,7 @@ recursive_find_object_timedelta64_type(PyObject *obj,
             return 0;
         }
         /* If it's not an object array, stop looking */
-        else if (obj_dtype->type_num != NPY_OBJECT) {
+        else if (arr_dtype->type_num != NPY_OBJECT) {
             return 0;
         }
     }

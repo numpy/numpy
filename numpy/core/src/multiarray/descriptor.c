@@ -599,7 +599,7 @@ _convert_from_commastring(PyObject *obj, int align)
     }
     listobj = PyObject_CallMethod(_numpy_internal, "_commastring", "O", obj);
     Py_DECREF(_numpy_internal);
-    if (!listobj) {
+    if (listobj == NULL) {
         return NULL;
     }
     if (!PyList_Check(listobj) || PyList_GET_SIZE(listobj) < 1) {
@@ -851,8 +851,26 @@ _convert_from_dict(PyObject *obj, int align)
         || (offsets && (n > PyObject_Length(offsets)))
         || (titles && (n > PyObject_Length(titles)))) {
         PyErr_SetString(PyExc_ValueError,
-                "all items in the dictionary must have the same length.");
+                "'names', 'formats', 'offsets', and 'titles' dicct "
+                "entries must have the same length");
         goto fail;
+    }
+
+    /*
+     * If a property 'aligned' is in the dict, it overrides the align flag
+     * to be True if it not already true.
+     */
+    tmp = PyDict_GetItemString(obj, "aligned");
+    if (tmp != NULL) {
+        if (tmp == Py_True) {
+            align = 1;
+        }
+        else if (tmp != Py_False) {
+            PyErr_SetString(PyExc_ValueError,
+                    "NumPy dtype descriptor includes 'aligned' entry, "
+                    "but its value is neither True nor False");
+            return NULL;
+        }
     }
 
     totalsize = 0;
@@ -2748,14 +2766,14 @@ arraydescr_struct_list_str(PyArray_Descr *dtype)
         /* Special case subarray handling here */
         if (PyDataType_HASSUBARRAY(fld_dtype)) {
             tmp = arraydescr_short_construction_repr(
-                            fld_dtype->subarray->base);
+                            fld_dtype->subarray->base, 0);
             PyUString_ConcatAndDel(&ret, tmp);
             PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
             PyUString_ConcatAndDel(&ret,
                             PyObject_Str(fld_dtype->subarray->shape));
         }
         else {
-            tmp = arraydescr_short_construction_repr(fld_dtype);
+            tmp = arraydescr_short_construction_repr(fld_dtype, 0);
             PyUString_ConcatAndDel(&ret, tmp);
         }
         PyUString_ConcatAndDel(&ret, PyUString_FromString(")"));
@@ -2773,7 +2791,7 @@ arraydescr_struct_list_str(PyArray_Descr *dtype)
  * in a dict format.
  */
 static PyObject *
-arraydescr_struct_dict_str(PyArray_Descr *dtype)
+arraydescr_struct_dict_str(PyArray_Descr *dtype, int includealignedflag)
 {
     PyObject *names, *key, *fields, *ret, *tmp, *tup, *title;
     Py_ssize_t i, names_size;
@@ -2813,7 +2831,7 @@ arraydescr_struct_dict_str(PyArray_Descr *dtype)
         if (title != NULL && title != Py_None) {
             has_titles = 1;
         }
-        tmp = arraydescr_short_construction_repr(fld_dtype);
+        tmp = arraydescr_short_construction_repr(fld_dtype, 0);
         PyUString_ConcatAndDel(&ret, tmp);
         if (i != names_size - 1) {
             PyUString_ConcatAndDel(&ret, PyUString_FromString(","));
@@ -2857,22 +2875,36 @@ arraydescr_struct_dict_str(PyArray_Descr *dtype)
             }
         }
     }
-    /* Finally, the itemsize */
-    PyUString_ConcatAndDel(&ret,
-            PyUString_FromFormat("], 'itemsize':%d}", (int)dtype->elsize));
+    if (includealignedflag && (dtype->flags&NPY_ALIGNED_STRUCT)) {
+        /* Finally, the itemsize/itemsize and aligned flag */
+        PyUString_ConcatAndDel(&ret,
+                PyUString_FromFormat("], 'itemsize':%d, 'aligned':True}",
+                        (int)dtype->elsize));
+    }
+    else {
+        /* Finally, the itemsize/itemsize*/
+        PyUString_ConcatAndDel(&ret,
+                PyUString_FromFormat("], 'itemsize':%d}", (int)dtype->elsize));
+    }
 
     return ret;
 }
 
 /* Produces a string representation for a structured dtype */
 static PyObject *
-arraydescr_struct_str(PyArray_Descr *dtype)
+arraydescr_struct_str(PyArray_Descr *dtype, int includealignflag)
 {
-    if (is_dtype_struct_simple_unaligned_layout(dtype)) {
+    /*
+     * The list str representation can't include the 'align=' flag,
+     * so if it is requested and the struct has the aligned flag set,
+     * we must use the dict str instead.
+     */
+    if (!(includealignflag && (dtype->flags&NPY_ALIGNED_STRUCT)) &&
+                        is_dtype_struct_simple_unaligned_layout(dtype)) {
         return arraydescr_struct_list_str(dtype);
     }
     else {
-        return arraydescr_struct_dict_str(dtype);
+        return arraydescr_struct_dict_str(dtype, includealignflag);
     }
 }
 
@@ -2883,7 +2915,7 @@ arraydescr_subarray_str(PyArray_Descr *dtype)
     PyObject *p, *ret;
 
     ret = PyUString_FromString("(");
-    p = arraydescr_short_construction_repr(dtype->subarray->base);
+    p = arraydescr_short_construction_repr(dtype->subarray->base, 0);
     PyUString_ConcatAndDel(&ret, p);
     PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
     PyUString_ConcatAndDel(&ret, PyObject_Str(dtype->subarray->shape));
@@ -2898,7 +2930,7 @@ arraydescr_str(PyArray_Descr *dtype)
     PyObject *sub;
 
     if (PyDataType_HASFIELDS(dtype)) {
-        sub = arraydescr_struct_str(dtype);
+        sub = arraydescr_struct_str(dtype, 1);
     }
     else if (PyDataType_HASSUBARRAY(dtype)) {
         sub = arraydescr_subarray_str(dtype);
@@ -2921,7 +2953,7 @@ arraydescr_struct_repr(PyArray_Descr *dtype)
     PyObject *sub, *s;
 
     s = PyUString_FromString("dtype(");
-    sub = arraydescr_struct_str(dtype);
+    sub = arraydescr_struct_str(dtype, 0);
     if (sub == NULL) {
         return NULL;
     }
@@ -2944,20 +2976,26 @@ arraydescr_struct_repr(PyArray_Descr *dtype)
  * additional constructor parameters are given, will reproduce
  * the exact memory layout.
  *
- * This does not preserve the 'align=True' parameter or sticky
- * NPY_ALIGNED_STRUCT flag for struct arrays like the regular
- * repr does, because the 'align' flag is not part of first
- * dtype constructor parameter.
+ * If 'includealignflag' is true, this includes the 'align=True' parameter
+ * inside the struct dtype construction dict when needed. Use this flag
+ * if you want a proper repr string without the 'dtype()' part around it.
+ *
+ * If 'includealignflag' is false, this does not preserve the
+ * 'align=True' parameter or sticky NPY_ALIGNED_STRUCT flag for
+ * struct arrays like the regular repr does, because the 'align'
+ * flag is not part of first dtype constructor parameter. This
+ * mode is intended for a full 'repr', where the 'align=True' is
+ * provided as the second parameter.
  */
 NPY_NO_EXPORT PyObject *
-arraydescr_short_construction_repr(PyArray_Descr *dtype)
+arraydescr_short_construction_repr(PyArray_Descr *dtype, int includealignflag)
 {
     PyObject *ret;
     PyArray_DatetimeMetaData *meta;
     char byteorder[2];
 
     if (PyDataType_HASFIELDS(dtype)) {
-        return arraydescr_struct_str(dtype);
+        return arraydescr_struct_str(dtype, includealignflag);
     }
     else if (PyDataType_HASSUBARRAY(dtype)) {
         return arraydescr_subarray_str(dtype);
@@ -3037,16 +3075,20 @@ arraydescr_short_construction_repr(PyArray_Descr *dtype)
             if (meta == NULL) {
                 return NULL;
             }
-            ret = PyUString_FromFormat("%sM8", byteorder);
-            return append_metastr_to_string(meta, 0, ret);
+            ret = PyUString_FromFormat("'%sM8", byteorder);
+            ret = append_metastr_to_string(meta, 0, ret);
+            PyUString_ConcatAndDel(&ret, PyUString_FromString("'"));
+            return ret;
 
         case NPY_TIMEDELTA:
             meta = get_datetime_metadata_from_dtype(dtype);
             if (meta == NULL) {
                 return NULL;
             }
-            ret = PyUString_FromFormat("%sm8", byteorder);
-            return append_metastr_to_string(meta, 0, ret);
+            ret = PyUString_FromFormat("'%sm8", byteorder);
+            ret = append_metastr_to_string(meta, 0, ret);
+            PyUString_ConcatAndDel(&ret, PyUString_FromString("'"));
+            return ret;
 
         default:
             PyErr_SetString(PyExc_RuntimeError, "Internal error: NumPy dtype "

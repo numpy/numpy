@@ -681,7 +681,8 @@ timedeltatype_repr(PyObject *self)
         ret = PyUString_FromString("numpy.timedelta64('NaT'");
     }
     else {
-        ret = PyUString_FromFormat("numpy.timedelta64(%lld", scal->obval);
+        ret = PyUString_FromFormat("numpy.timedelta64(%lld",
+                                            (long long)scal->obval);
     }
     /* The metadata unit */
     if (scal->obmeta.base == NPY_FR_GENERIC) {
@@ -1131,14 +1132,14 @@ gentype_struct_get(PyObject *self)
     inter = (PyArrayInterface *)PyArray_malloc(sizeof(PyArrayInterface));
     inter->two = 2;
     inter->nd = 0;
-    inter->flags = arr->flags;
+    inter->flags = PyArray_FLAGS(arr);
     inter->flags &= ~(NPY_ARRAY_UPDATEIFCOPY | NPY_ARRAY_OWNDATA);
     inter->flags |= NPY_ARRAY_NOTSWAPPED;
-    inter->typekind = arr->descr->kind;
-    inter->itemsize = arr->descr->elsize;
+    inter->typekind = PyArray_DESCR(arr)->kind;
+    inter->itemsize = PyArray_DESCR(arr)->elsize;
     inter->strides = NULL;
     inter->shape = NULL;
-    inter->data = arr->data;
+    inter->data = PyArray_DATA(arr);
     inter->descr = NULL;
 
     ret = NpyCapsule_FromVoidPtrAndDesc(inter, arr, gentype_struct_free);
@@ -1416,21 +1417,24 @@ static char doc_sc_wraparray[] = "sc.__array_wrap__(obj) return scalar from arra
 static PyObject *
 gentype_wraparray(PyObject *NPY_UNUSED(scalar), PyObject *args)
 {
-    PyObject *arr;
+    PyObject *obj;
+    PyArrayObject *arr;
 
     if (PyTuple_Size(args) < 1) {
         PyErr_SetString(PyExc_TypeError,
                 "only accepts 1 argument.");
         return NULL;
     }
-    arr = PyTuple_GET_ITEM(args, 0);
-    if (!PyArray_Check(arr)) {
+    obj = PyTuple_GET_ITEM(args, 0);
+    if (!PyArray_Check(obj)) {
         PyErr_SetString(PyExc_TypeError,
                 "can only be called with ndarray object");
         return NULL;
     }
+    arr = (PyArrayObject *)obj;
 
-    return PyArray_Scalar(PyArray_DATA(arr), PyArray_DESCR(arr), arr);
+    return PyArray_Scalar(PyArray_DATA(arr),
+                    PyArray_DESCR(arr), (PyObject *)arr);
 }
 
 /*
@@ -1567,7 +1571,8 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 {
     PyArray_Descr *typecode = NULL;
     int offset = 0;
-    PyObject *value, *src;
+    PyObject *value;
+    PyArrayObject *src;
     int mysize;
     char *dptr;
     static char *kwlist[] = {"value", "dtype", "offset", 0};
@@ -1607,7 +1612,8 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
     }
     else {
         /* Copy data from value to correct place in dptr */
-        src = PyArray_FromAny(value, typecode, 0, 0, NPY_ARRAY_CARRAY, NULL);
+        src = (PyArrayObject *)PyArray_FromAny(value, typecode,
+                                    0, 0, NPY_ARRAY_CARRAY, NULL);
         if (src == NULL) {
             return NULL;
         }
@@ -2431,7 +2437,7 @@ static PyObject *
 {
     PyObject *obj = NULL;
     PyObject *robj;
-    PyObject *arr;
+    PyArrayObject *arr;
     PyArray_Descr *typecode = NULL;
 #if !(@default@ == 2)
     int itemsize;
@@ -2477,12 +2483,13 @@ static PyObject *
      * It is expected at this point that robj is a PyArrayScalar
      * (even for Object Data Type)
      */
-    arr = PyArray_FromAny(obj, typecode, 0, 0, NPY_ARRAY_FORCECAST, NULL);
+    arr = (PyArrayObject *)PyArray_FromAny(obj, typecode,
+                                    0, 0, NPY_ARRAY_FORCECAST, NULL);
     if ((arr == NULL) || (PyArray_NDIM(arr) > 0)) {
-        return arr;
+        return (PyObject *)arr;
     }
     /* 0-d array */
-    robj = PyArray_ToScalar(PyArray_DATA(arr), (PyArrayObject *)arr);
+    robj = PyArray_ToScalar(PyArray_DATA(arr), arr);
     Py_DECREF(arr);
 
 finish:
@@ -2611,7 +2618,7 @@ static PyObject *
 bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *NPY_UNUSED(kwds))
 {
     PyObject *obj = NULL;
-    PyObject *arr;
+    PyArrayObject *arr;
 
     if (!PyArg_ParseTuple(args, "|O", &obj)) {
         return NULL;
@@ -2625,9 +2632,10 @@ bool_arrtype_new(PyTypeObject *NPY_UNUSED(type), PyObject *args, PyObject *NPY_U
     if (obj == Py_True) {
         PyArrayScalar_RETURN_TRUE;
     }
-    arr = PyArray_FROM_OTF(obj, PyArray_BOOL, NPY_ARRAY_FORCECAST);
+    arr = (PyArrayObject *)PyArray_FROM_OTF(obj,
+                                NPY_BOOL, NPY_ARRAY_FORCECAST);
     if (arr && 0 == PyArray_NDIM(arr)) {
-        Bool val = *((Bool *)PyArray_DATA(arr));
+        npy_bool val = *((npy_bool *)PyArray_DATA(arr));
         Py_DECREF(arr);
         PyArrayScalar_RETURN_BOOL_FROM_LONG(val);
     }
@@ -2776,8 +2784,9 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
      */
     if (PyLong_Check(obj) || PyInt_Check(obj) ||
             PyArray_IsScalar(obj, Integer) ||
-            (PyArray_Check(obj) && PyArray_NDIM(obj)==0 &&
-             PyArray_ISINTEGER(obj))) {
+            (PyArray_Check(obj) &&
+                     PyArray_NDIM((PyArrayObject *)obj)==0 &&
+                     PyArray_ISINTEGER((PyArrayObject *)obj))) {
 #if defined(NPY_PY3K)
         new = Py_TYPE(obj)->tp_as_number->nb_int(obj);
 #else

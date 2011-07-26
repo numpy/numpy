@@ -128,7 +128,7 @@ float _nextf(float x, int p)
 
 #ifdef HAVE_LDOUBLE_DOUBLE_DOUBLE_BE
 
-/* 
+/*
  * FIXME: this is ugly and untested. The asm part only works with gcc, and we
  * should consolidate the GET_LDOUBLE* / SET_LDOUBLE macros
  */
@@ -561,7 +561,7 @@ npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y)
 void npy_set_floatstatus_divbyzero(void)
 {
     fpsetsticky(FP_X_DZ);
-} 
+}
 
 void npy_set_floatstatus_overflow(void)
 {
@@ -593,7 +593,7 @@ void npy_set_floatstatus_invalid(void)
 void npy_set_floatstatus_divbyzero(void)
 {
     feraiseexcept(FE_DIVBYZERO);
-} 
+}
 
 void npy_set_floatstatus_overflow(void)
 {
@@ -617,7 +617,7 @@ void npy_set_floatstatus_invalid(void)
 void npy_set_floatstatus_divbyzero(void)
 {
     fp_raise_xcp(FP_DIV_BY_ZERO);
-} 
+}
 
 void npy_set_floatstatus_overflow(void)
 {

@@ -221,7 +221,7 @@ class TestHalf(TestCase):
         a = np.zeros((5,), dtype=float16)
         a.fill(1)
         assert_equal(a, np.ones((5,), dtype=float16))
-        
+
         # nonzero and copyswap
         a = np.array([0,0,-1,-1/1e20,0,2.0**-24, 7.629e-6], dtype=float16)
         assert_equal(a.nonzero()[0],
@@ -235,7 +235,7 @@ class TestHalf(TestCase):
         b = np.ones((20,), dtype=float16)
         assert_equal(np.dot(a,b),
                      95)
-        
+
         # argmax
         a = np.array([0, -np.inf, -2, 0.5, 12.55, 7.3, 2.1, 12.4], dtype=float16)
         assert_equal(a.argmax(),
@@ -271,7 +271,7 @@ class TestHalf(TestCase):
         assert_equal(np.nextafter(a_f16[0], hinf), -a_f16[1])
         assert_equal(np.nextafter(a_f16[1:], hinf), a_f16[:-1])
         assert_equal(np.nextafter(a_f16[:-1], -hinf), a_f16[1:])
-        
+
 
     def test_half_ufuncs(self):
         """Test the various ufuncs"""
@@ -302,7 +302,7 @@ class TestHalf(TestCase):
         assert_equal(np.signbit(b), [True,False,False,False,False])
 
         assert_equal(np.copysign(b,a), [2,5,1,4,3])
-        
+
         assert_equal(np.maximum(a,b), [0,5,2,4,3])
         x = np.maximum(b,c)
         assert_(np.isnan(x[3]))
@@ -365,7 +365,7 @@ class TestHalf(TestCase):
             bx16 = np.array((1e4,),dtype=float16)
             sy16 = float16(1e-4)
             by16 = float16(1e4)
-            
+
             # Underflow errors
             assert_raises_fpe('underflow', lambda a,b:a*b, sx16, sx16)
             assert_raises_fpe('underflow', lambda a,b:a*b, sx16, sy16)

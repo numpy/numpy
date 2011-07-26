@@ -227,7 +227,7 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
             Py_DECREF(ain);
             return -1;
         }
-        castfunc(ain->data, aout->data, 1, ain, aout);
+        castfunc(PyArray_DATA(ain), PyArray_DATA(aout), 1, ain, aout);
         Py_DECREF(ain);
         Py_DECREF(aout);
     }
@@ -270,7 +270,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 {
     PyArray_Descr *typecode;
-    PyObject *r;
+    PyArrayObject *r;
     char *memptr;
     PyObject *ret;
 
@@ -279,18 +279,24 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
     if ((typecode->type_num == PyArray_VOID) &&
             !(((PyVoidScalarObject *)scalar)->flags & NPY_ARRAY_OWNDATA) &&
             outcode == NULL) {
-        r = PyArray_NewFromDescr(&PyArray_Type,
+        r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                 typecode,
                 0, NULL, NULL,
                 ((PyVoidScalarObject *)scalar)->obval,
                 ((PyVoidScalarObject *)scalar)->flags,
                 NULL);
-        PyArray_BASE(r) = (PyObject *)scalar;
+        if (r == NULL) {
+            return NULL;
+        }
         Py_INCREF(scalar);
-        return r;
+        if (PyArray_SetBaseObject(r, (PyObject *)scalar) < 0) {
+            Py_DECREF(r);
+            return NULL;
+        }
+        return (PyObject *)r;
     }
 
-    r = PyArray_NewFromDescr(&PyArray_Type,
+    r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
             typecode,
             0, NULL,
             NULL, NULL, 0, NULL);
@@ -327,12 +333,12 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 
 finish:
     if (outcode == NULL) {
-        return r;
+        return (PyObject *)r;
     }
     if (outcode->type_num == typecode->type_num) {
         if (!PyTypeNum_ISEXTENDED(typecode->type_num)
                 || (outcode->elsize == typecode->elsize)) {
-            return r;
+            return (PyObject *)r;
         }
     }
 
@@ -353,7 +359,8 @@ PyArray_ScalarFromObject(PyObject *object)
 {
     PyObject *ret=NULL;
     if (PyArray_IsZeroDim(object)) {
-        return PyArray_ToScalar(PyArray_DATA(object), object);
+        return PyArray_ToScalar(PyArray_DATA((PyArrayObject *)object),
+                                (PyArrayObject *)object);
     }
     /*
      * Booleans in Python are implemented as a subclass of integers,
@@ -762,7 +769,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
                 if (base) {
                     Py_INCREF(base);
                     vobj->base = base;
-                    vobj->flags = PyArray_FLAGS(base);
+                    vobj->flags = PyArray_FLAGS((PyArrayObject *)base);
                     vobj->flags &= ~NPY_ARRAY_OWNDATA;
                     vobj->obval = data;
                     return obj;
@@ -805,9 +812,9 @@ PyArray_Return(PyArrayObject *mp)
     if (!PyArray_Check(mp)) {
         return (PyObject *)mp;
     }
-    if (mp->nd == 0) {
+    if (PyArray_NDIM(mp) == 0) {
         PyObject *ret;
-        ret = PyArray_ToScalar(mp->data, mp);
+        ret = PyArray_ToScalar(PyArray_DATA(mp), mp);
         Py_DECREF(mp);
         return ret;
     }
