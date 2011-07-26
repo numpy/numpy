@@ -173,9 +173,12 @@ def test_maskna_construction():
     # Construction with NA inputs
     a = np.array([1.0, 2.0, np.NA, 7.0], maskna=True)
     assert_equal(a.dtype, np.dtype('f8'))
+    assert_(a.flags.maskna)
+    assert_equal(type(a[2]), np.NAType)
     # Without the 'maskna=True', produces an object array
     a = np.array([1.0, 2.0, np.NA, 7.0])
     assert_equal(a.dtype, np.dtype('O'))
+    assert_equal(type(a[2]), np.NAType)
 
 if __name__ == "__main__":
     run_module_suite()
