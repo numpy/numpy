@@ -1324,14 +1324,22 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
                            ', ', "array(")
     else: # show zero-length shape unless it is (0,)
         lst = "[], shape=%s" % (repr(arr.shape),)
-    typeless = arr.dtype.type in _typelessdata
 
     if arr.__class__ is not ndarray:
         cName= arr.__class__.__name__
     else:
         cName = "array"
-    if typeless and arr.size:
-        return cName + "(%s)" % lst
+
+    skiptype = (arr.dtype.type in _typelessdata) and arr.size > 0
+
+    if arr.flags.maskna:
+        lst += ", maskna=True"
+        # If everything is NA, can't skip the type
+        if np.all(np.isna(arr)):
+            skiptype = False
+
+    if skiptype:
+        return "%s(%s)" % (cName, lst)
     else:
         typename = arr.dtype.name
         # Quote typename in the output if it is "complex".
