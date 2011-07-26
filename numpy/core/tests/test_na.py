@@ -169,5 +169,13 @@ def test_na_mask_flag():
         x.ownmaskna = v
     assert_raises(ValueError, setownmaskna, a.flags, False)
 
+def test_maskna_construction():
+    # Construction with NA inputs
+    a = np.array([1.0, 2.0, np.NA, 7.0], maskna=True)
+    assert_equal(a.dtype, np.dtype('f8'))
+    # Without the 'maskna=True', produces an object array
+    a = np.array([1.0, 2.0, np.NA, 7.0])
+    assert_equal(a.dtype, np.dtype('O'))
+
 if __name__ == "__main__":
     run_module_suite()

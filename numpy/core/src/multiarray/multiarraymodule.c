@@ -1563,7 +1563,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     int flags = 0, maskna = 0, ownmaskna = 0;
 
     static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
-                         "ndmin", "maskna", NULL};
+                         "ndmin", "maskna", "ownmaskna", NULL};
 
     if (PyTuple_GET_SIZE(args) > 2) {
         PyErr_SetString(PyExc_ValueError,

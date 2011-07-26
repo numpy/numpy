@@ -810,7 +810,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
 static int
 discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
                                     int stop_at_string, int stop_at_tuple,
-                                    int *out_is_object, int *out_contains_na)
+                                    int *out_is_object)
 {
     PyObject *e;
     int r, n, i;
@@ -842,8 +842,9 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         return 0;
     }
 
+    /* obj is an NA */
     if (NpyNA_Check(obj)) {
-        *out_contains_na = 1;
+        *maxndim = 0;
         return 0;
     }
 
@@ -1014,7 +1015,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
         }
         r = discover_dimensions(e, &maxndim_m1, d + 1, check_it,
                                         stop_at_string, stop_at_tuple,
-                                        out_is_object, out_contains_na);
+                                        out_is_object);
         Py_DECREF(e);
         if (r < 0) {
             return r;
@@ -1038,7 +1039,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
             }
             r = discover_dimensions(e, &maxndim_m1, dtmp, check_it,
                                             stop_at_string, stop_at_tuple,
-                                            out_is_object, out_contains_na);
+                                            out_is_object);
             Py_DECREF(e);
             if (r < 0) {
                 return r;
@@ -1662,16 +1663,23 @@ PyArray_GetArrayParamsFromObjectEx(PyObject *op,
             *out_dtype = requested_dtype;
         }
         else {
-            *out_dtype = _array_find_type(op, NULL, MAX_DIMS);
-            if (*out_dtype == NULL) {
-                if (PyErr_Occurred() &&
-                        PyErr_GivenExceptionMatches(PyErr_Occurred(),
-                                                PyExc_MemoryError)) {
+            *out_dtype = NULL;
+            if (PyArray_DTypeFromObject(op, NPY_MAXDIMS,
+                                    out_contains_na, out_dtype) < 0) {
+                if (PyErr_ExceptionMatches(PyExc_MemoryError)) {
                     return -1;
                 }
-                /* Say it's an OBJECT array if there's an error */
-                PyErr_Clear();
-                *out_dtype = PyArray_DescrFromType(NPY_OBJECT);
+                /* Return NPY_OBJECT for most exceptions */
+                else {
+                    PyErr_Clear();
+                    *out_dtype = PyArray_DescrFromType(NPY_OBJECT);
+                    if (*out_dtype == NULL) {
+                        return -1;
+                    }
+                }
+            }
+            if (*out_dtype == NULL) {
+                *out_dtype = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
                 if (*out_dtype == NULL) {
                     return -1;
                 }
@@ -1691,7 +1699,7 @@ PyArray_GetArrayParamsFromObjectEx(PyObject *op,
         is_object = 0;
         if (discover_dimensions(op, out_ndim, out_dims, check_it,
                                     stop_at_string, stop_at_tuple,
-                                    &is_object, out_contains_na) < 0) {
+                                    &is_object) < 0) {
             Py_DECREF(*out_dtype);
             if (PyErr_Occurred()) {
                 return -1;
@@ -1830,10 +1838,23 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
                         int *out_ndim, npy_intp *out_dims,
                         PyArrayObject **out_arr, PyObject *context)
 {
-    int contains_na = 0;
-    return PyArray_GetArrayParamsFromObjectEx(op, requested_dtype,
+    int contains_na = 0, retcode;
+    retcode = PyArray_GetArrayParamsFromObjectEx(op, requested_dtype,
                         writeable, out_dtype, out_ndim, out_dims,
                         &contains_na, out_arr, context);
+
+    /* If NAs were detected, switch to an NPY_OBJECT dtype */
+    if (retcode == 0 && *out_arr == NULL && contains_na) {
+        if ((*out_dtype)->type_num != NPY_OBJECT) {
+            Py_DECREF(*out_dtype);
+            *out_dtype = PyArray_DescrFromType(NPY_OBJECT);
+            if (*out_dtype == NULL) {
+                retcode = -1;
+            }
+        }
+    }
+
+    return retcode;
 }
 
 /*NUMPY_API
@@ -1921,6 +1942,19 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                 }
                 */
                 Py_DECREF(dtype);
+            }
+
+            /*
+             * If there are NAs, but no requested NA support,
+             * switch to NPY_OBJECT. Alternatively - raise an error?
+             */
+            if (contains_na &&
+                    (flags & (NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA)) == 0) {
+                Py_DECREF(newtype);
+                newtype = PyArray_DescrFromType(NPY_OBJECT);
+                if (newtype == NULL) {
+                    return NULL;
+                }
             }
 
             /* Create an array and copy the data */
@@ -2560,7 +2594,26 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrFromObject(PyObject *op, PyArray_Descr *mintype)
 {
-    return _array_find_type(op, mintype, MAX_DIMS);
+    PyArray_Descr *dtype;
+    int contains_na = 0;
+
+    dtype = mintype;
+    Py_XINCREF(dtype);
+
+    if (PyArray_DTypeFromObject(op, NPY_MAXDIMS, &contains_na, &dtype) < 0) {
+        return NULL;
+    }
+
+    if (contains_na) {
+        Py_XDECREF(dtype);
+        return PyArray_DescrFromType(NPY_OBJECT);
+    }
+    else if (dtype == NULL) {
+        return PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+    }
+    else {
+        return dtype;
+    }
 }
 
 /* These are also old calls (should use PyArray_NewFromDescr) */
