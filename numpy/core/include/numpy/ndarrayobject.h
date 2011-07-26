@@ -42,7 +42,8 @@ extern "C" CONFUSE_EMACS
 #define PyArray_HasArrayInterface(op, out)                                    \
         PyArray_HasArrayInterfaceType(op, NULL, NULL, out)
 
-#define PyArray_IsZeroDim(op) (PyArray_Check(op) && (PyArray_NDIM(op) == 0))
+#define PyArray_IsZeroDim(op) (PyArray_Check(op) && \
+                               (PyArray_NDIM((PyArrayObject *)op) == 0))
 
 #define PyArray_IsScalar(obj, cls)                                            \
         (PyObject_TypeCheck(obj, &Py##cls##ArrType_Type))
@@ -159,12 +160,18 @@ extern "C" CONFUSE_EMACS
                                             (k)*PyArray_STRIDES(obj)[2] + \
                                             (l)*PyArray_STRIDES(obj)[3]))
 
-#define PyArray_XDECREF_ERR(obj) \
-        if (obj && (PyArray_FLAGS(obj) & NPY_ARRAY_UPDATEIFCOPY)) { \
-                PyArray_FLAGS(PyArray_BASE(obj)) |= NPY_ARRAY_WRITEABLE; \
-                PyArray_FLAGS(obj) &= ~NPY_ARRAY_UPDATEIFCOPY; \
-        } \
-        Py_XDECREF(obj)
+static NPY_INLINE void
+PyArray_XDECREF_ERR(PyArrayObject *arr)
+{
+    if (arr != NULL) {
+        if (PyArray_FLAGS(arr) & NPY_ARRAY_UPDATEIFCOPY) {
+            PyArrayObject *base = (PyArrayObject *)PyArray_BASE(arr);
+            PyArray_ENABLEFLAGS(base, NPY_ARRAY_WRITEABLE);
+            PyArray_CLEARFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
+        }
+        Py_DECREF(arr);
+    }
+}
 
 #define PyArray_DESCR_REPLACE(descr) do { \
                 PyArray_Descr *_new_; \

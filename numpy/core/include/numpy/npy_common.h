@@ -135,7 +135,7 @@ typedef unsigned PY_LONG_LONG npy_ulonglong;
 /*   "%Ld" only parses 4 bytes -- "L" is floating modifier on MacOS X/BSD */
 #    define NPY_LONGLONG_FMT         "lld"
 #    define NPY_ULONGLONG_FMT        "llu"
-/* 
+/*
      another possible variant -- *quad_t works on *BSD, but is deprecated:
      #define LONGLONG_FMT   "qd"
      #define ULONGLONG_FMT   "qu"

@@ -2207,7 +2207,11 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
                     NPY_ARRAY_ALIGNED|
                     NPY_ARRAY_F_CONTIGUOUS);
         Py_INCREF(op);
-        PyArray_BASE(*ret) = (PyObject *)op;
+        if (PyArray_SetBaseObject(*ret, (PyObject *)op) < 0) {
+            Py_DECREF(*ret);
+            *ret = NULL;
+            return 0;
+        }
         return 1;
     }
 
@@ -2308,7 +2312,10 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
                 NPY_ARRAY_ALIGNED|
                 NPY_ARRAY_F_CONTIGUOUS);
     Py_INCREF(op);
-    PyArray_BASE(ret) = (PyObject *)op;
+    if (PyArray_SetBaseObject(ret, (PyObject *)op) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
 
     return ret;
 }

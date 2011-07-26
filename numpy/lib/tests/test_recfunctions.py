@@ -671,9 +671,10 @@ class TestJoinBy2(TestCase):
                             (10, 2, 54, 69, 14, 4), (11, 2, 55, 70, 15, 5),
                             (10, 3, 56, 71, 16, 6), (11, 3, 57, 72, 17, 7),
                             (10, 4, 58, 73, 18, 8), (11, 4, 59, 74, 19, 9)],
-                      dtype=[('k', '<i8'), ('a', '<i8'), ('b1', '<i8'),
-                             ('b2', '<i8'), ('c1', '<i8'), ('c2', '<i8')])
+                      dtype=[('k', int), ('a', int), ('b1', int),
+                             ('b2', int), ('c1', int), ('c2', int)])
         test = join_by(['a','k'], a, b, r1postfix='1', r2postfix='2', jointype='inner')
+        assert_equal(test.dtype, control.dtype)
         assert_equal(test, control)
 
 

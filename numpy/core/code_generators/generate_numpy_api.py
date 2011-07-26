@@ -220,7 +220,9 @@ def do_generate_api(targets, sources):
     for name, index in types_api.items():
         multiarray_api_dict[name] = TypeApi(name, index, 'PyTypeObject', api_name)
 
-    assert len(multiarray_api_dict) == len(multiarray_api_index)
+    if len(multiarray_api_dict) != len(multiarray_api_index):
+        raise AssertionError, "Multiarray API size mismatch %d %d" % \
+                        (len(multiarray_api_dict), len(multiarray_api_index))
 
     extension_list = []
     for name, index in genapi.order_dict(multiarray_api_index):

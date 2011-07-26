@@ -665,7 +665,7 @@ timedelta_dtype_with_copied_meta(PyArray_Descr *dtype)
  *    m8[<A>] + M8[<B>] => m8[gcd(<A>,<B>)] + M8[gcd(<A>,<B>)]
  * TODO: Non-linear time unit cases require highly special-cased loops
  *    M8[<A>] + m8[Y|M|B]
- *    m8[Y|M|B] + M8[<A>] 
+ *    m8[Y|M|B] + M8[<A>]
  */
 NPY_NO_EXPORT int
 PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
@@ -1360,7 +1360,7 @@ static NpyAuxData *
 ufunc_masker_data_clone(NpyAuxData *data)
 {
     _ufunc_masker_data *n;
-    
+
     /* Allocate a new one */
     n = (_ufunc_masker_data *)PyArray_malloc(sizeof(_ufunc_masker_data));
     if (n == NULL) {

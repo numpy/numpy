@@ -104,16 +104,16 @@ PyArray_INCREF(PyArrayObject *mp)
     PyObject *temp;
     PyArrayIterObject *it;
 
-    if (!PyDataType_REFCHK(mp->descr)) {
+    if (!PyDataType_REFCHK(PyArray_DESCR(mp))) {
         return 0;
     }
-    if (mp->descr->type_num != PyArray_OBJECT) {
+    if (PyArray_DESCR(mp)->type_num != PyArray_OBJECT) {
         it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
         if (it == NULL) {
             return -1;
         }
         while(it->index < it->size) {
-            PyArray_Item_INCREF(it->dataptr, mp->descr);
+            PyArray_Item_INCREF(it->dataptr, PyArray_DESCR(mp));
             PyArray_ITER_NEXT(it);
         }
         Py_DECREF(it);
@@ -121,7 +121,7 @@ PyArray_INCREF(PyArrayObject *mp)
     }
 
     if (PyArray_ISONESEGMENT(mp)) {
-        data = (PyObject **)mp->data;
+        data = (PyObject **)PyArray_DATA(mp);
         n = PyArray_SIZE(mp);
         if (PyArray_ISALIGNED(mp)) {
             for (i = 0; i < n; i++, data++) {
@@ -162,16 +162,16 @@ PyArray_XDECREF(PyArrayObject *mp)
     PyObject *temp;
     PyArrayIterObject *it;
 
-    if (!PyDataType_REFCHK(mp->descr)) {
+    if (!PyDataType_REFCHK(PyArray_DESCR(mp))) {
         return 0;
     }
-    if (mp->descr->type_num != PyArray_OBJECT) {
+    if (PyArray_DESCR(mp)->type_num != PyArray_OBJECT) {
         it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)mp);
         if (it == NULL) {
             return -1;
         }
         while(it->index < it->size) {
-            PyArray_Item_XDECREF(it->dataptr, mp->descr);
+            PyArray_Item_XDECREF(it->dataptr, PyArray_DESCR(mp));
             PyArray_ITER_NEXT(it);
         }
         Py_DECREF(it);
@@ -179,7 +179,7 @@ PyArray_XDECREF(PyArrayObject *mp)
     }
 
     if (PyArray_ISONESEGMENT(mp)) {
-        data = (PyObject **)mp->data;
+        data = (PyObject **)PyArray_DATA(mp);
         n = PyArray_SIZE(mp);
         if (PyArray_ISALIGNED(mp)) {
             for (i = 0; i < n; i++, data++) Py_XDECREF(*data);
@@ -214,9 +214,9 @@ PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
 {
     intp i,n;
     n = PyArray_SIZE(arr);
-    if (arr->descr->type_num == PyArray_OBJECT) {
+    if (PyArray_DESCR(arr)->type_num == PyArray_OBJECT) {
         PyObject **optr;
-        optr = (PyObject **)(arr->data);
+        optr = (PyObject **)(PyArray_DATA(arr));
         n = PyArray_SIZE(arr);
         if (obj == NULL) {
             for (i = 0; i < n; i++) {
@@ -232,10 +232,10 @@ PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
     }
     else {
         char *optr;
-        optr = arr->data;
+        optr = PyArray_DATA(arr);
         for (i = 0; i < n; i++) {
-            _fillobject(optr, obj, arr->descr);
-            optr += arr->descr->elsize;
+            _fillobject(optr, obj, PyArray_DESCR(arr));
+            optr += PyArray_DESCR(arr)->elsize;
         }
     }
 }

@@ -41,8 +41,8 @@ PyArray_CastToType(PyArrayObject *arr, PyArray_Descr *dtype, int is_f_order)
     }
 
     out = PyArray_NewFromDescr(Py_TYPE(arr), dtype,
-                               arr->nd,
-                               arr->dimensions,
+                               PyArray_NDIM(arr),
+                               PyArray_DIMS(arr),
                                NULL, NULL,
                                is_f_order,
                                (PyObject *)arr);
@@ -1633,10 +1633,10 @@ PyArray_Zero(PyArrayObject *arr)
     int ret, storeflags;
     PyObject *obj;
 
-    if (_check_object_rec(arr->descr) < 0) {
+    if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
     }
-    zeroval = PyDataMem_NEW(arr->descr->elsize);
+    zeroval = PyDataMem_NEW(PyArray_DESCR(arr)->elsize);
     if (zeroval == NULL) {
         PyErr_SetNone(PyExc_MemoryError);
         return NULL;
@@ -1648,10 +1648,10 @@ PyArray_Zero(PyArrayObject *arr)
         Py_DECREF(obj);
         return zeroval;
     }
-    storeflags = arr->flags;
-    arr->flags |= NPY_ARRAY_BEHAVED;
-    ret = arr->descr->f->setitem(obj, zeroval, arr);
-    arr->flags = storeflags;
+    storeflags = PyArray_FLAGS(arr);
+    PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
+    ret = PyArray_DESCR(arr)->f->setitem(obj, zeroval, arr);
+    ((PyArrayObject_fieldaccess *)arr)->flags = storeflags;
     Py_DECREF(obj);
     if (ret < 0) {
         PyDataMem_FREE(zeroval);
@@ -1670,10 +1670,10 @@ PyArray_One(PyArrayObject *arr)
     int ret, storeflags;
     PyObject *obj;
 
-    if (_check_object_rec(arr->descr) < 0) {
+    if (_check_object_rec(PyArray_DESCR(arr)) < 0) {
         return NULL;
     }
-    oneval = PyDataMem_NEW(arr->descr->elsize);
+    oneval = PyDataMem_NEW(PyArray_DESCR(arr)->elsize);
     if (oneval == NULL) {
         PyErr_SetNone(PyExc_MemoryError);
         return NULL;
@@ -1686,10 +1686,10 @@ PyArray_One(PyArrayObject *arr)
         return oneval;
     }
 
-    storeflags = arr->flags;
-    arr->flags |= NPY_ARRAY_BEHAVED;
-    ret = arr->descr->f->setitem(obj, oneval, arr);
-    arr->flags = storeflags;
+    storeflags = PyArray_FLAGS(arr);
+    PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
+    ret = PyArray_DESCR(arr)->f->setitem(obj, oneval, arr);
+    ((PyArrayObject_fieldaccess *)arr)->flags = storeflags;
     Py_DECREF(obj);
     if (ret < 0) {
         PyDataMem_FREE(oneval);
@@ -1752,7 +1752,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
         for (i = 0; i < n; i++) {
             mps[i] = (PyArrayObject *) array_big_item((PyArrayObject *)op, i);
         }
-        if (!PyArray_ISCARRAY(op)) {
+        if (!PyArray_ISCARRAY((PyArrayObject *)op)) {
             for (i = 0; i < n; i++) {
                 PyObject *obj;
                 obj = PyArray_NewCopy(mps[i], NPY_CORDER);

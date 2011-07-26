@@ -145,7 +145,7 @@ npy_half npy_half_nextafter(npy_half x, npy_half y)
 
     return ret;
 }
- 
+
 int npy_half_eq_nonan(npy_half h1, npy_half h2)
 {
     return (h1 == h2 || ((h1 | h2) & 0x7fff) == 0);
@@ -239,7 +239,7 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
 
     h_sgn = (npy_uint16) ((f&0x80000000u) >> 16);
     f_exp = (f&0x7f800000u);
-    
+
     /* Exponent overflow/NaN converts to signed inf/NaN */
     if (f_exp >= 0x47800000u) {
         if (f_exp == 0x7f800000u) {
@@ -265,15 +265,15 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
             return (npy_uint16) (h_sgn + 0x7c00u);
         }
     }
-    
+
     /* Exponent underflow converts to a subnormal half or signed zero */
     if (f_exp <= 0x38000000u) {
-        /* 
+        /*
          * Signed zeros, subnormal floats, and floats with small
          * exponents all convert to signed zero halfs.
          */
         if (f_exp < 0x33000000u) {
-#if NPY_HALF_GENERATE_UNDERFLOW 
+#if NPY_HALF_GENERATE_UNDERFLOW
             /* If f != 0, it underflowed to 0 */
             if ((f&0x7fffffff) != 0) {
                 npy_set_floatstatus_underflow();
@@ -284,7 +284,7 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
         /* Make the subnormal significand */
         f_exp >>= 23;
         f_sig = (0x00800000u + (f&0x007fffffu));
-#if NPY_HALF_GENERATE_UNDERFLOW 
+#if NPY_HALF_GENERATE_UNDERFLOW
         /* If it's not exactly represented, it underflowed */
         if ((f_sig&(((npy_uint32)1 << (126 - f_exp)) - 1)) != 0) {
             npy_set_floatstatus_underflow();
@@ -292,7 +292,7 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
 #endif
         f_sig >>= (113 - f_exp);
         /* Handle rounding by adding 1 to the bit beyond half precision */
-#if NPY_HALF_ROUND_TIES_TO_EVEN 
+#if NPY_HALF_ROUND_TIES_TO_EVEN
         /*
          * If the last bit in the half significand is 0 (already even), and
          * the remaining bit pattern is 1000...0, then we do not add one
@@ -317,7 +317,7 @@ npy_uint16 npy_floatbits_to_halfbits(npy_uint32 f)
     h_exp = (npy_uint16) ((f_exp - 0x38000000u) >> 13);
     /* Handle rounding by adding 1 to the bit beyond half precision */
     f_sig = (f&0x007fffffu);
-#if NPY_HALF_ROUND_TIES_TO_EVEN 
+#if NPY_HALF_ROUND_TIES_TO_EVEN
     /*
      * If the last bit in the half significand is 0 (already even), and
      * the remaining bit pattern is 1000...0, then we do not add one
@@ -354,7 +354,7 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
 
     h_sgn = (d&0x8000000000000000ULL) >> 48;
     d_exp = (d&0x7ff0000000000000ULL);
-    
+
     /* Exponent overflow/NaN converts to signed inf/NaN */
     if (d_exp >= 0x40f0000000000000ULL) {
         if (d_exp == 0x7ff0000000000000ULL) {
@@ -380,15 +380,15 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
             return h_sgn + 0x7c00u;
         }
     }
-    
+
     /* Exponent underflow converts to subnormal half or signed zero */
     if (d_exp <= 0x3f00000000000000ULL) {
-        /* 
+        /*
          * Signed zeros, subnormal floats, and floats with small
          * exponents all convert to signed zero halfs.
          */
         if (d_exp < 0x3e60000000000000ULL) {
-#if NPY_HALF_GENERATE_UNDERFLOW 
+#if NPY_HALF_GENERATE_UNDERFLOW
             /* If d != 0, it underflowed to 0 */
             if ((d&0x7fffffffffffffffULL) != 0) {
                 npy_set_floatstatus_underflow();
@@ -399,7 +399,7 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
         /* Make the subnormal significand */
         d_exp >>= 52;
         d_sig = (0x0010000000000000ULL + (d&0x000fffffffffffffULL));
-#if NPY_HALF_GENERATE_UNDERFLOW 
+#if NPY_HALF_GENERATE_UNDERFLOW
         /* If it's not exactly represented, it underflowed */
         if ((d_sig&(((npy_uint64)1 << (1051 - d_exp)) - 1)) != 0) {
             npy_set_floatstatus_underflow();
@@ -407,7 +407,7 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
 #endif
         d_sig >>= (1009 - d_exp);
         /* Handle rounding by adding 1 to the bit beyond half precision */
-#if NPY_HALF_ROUND_TIES_TO_EVEN 
+#if NPY_HALF_ROUND_TIES_TO_EVEN
         /*
          * If the last bit in the half significand is 0 (already even), and
          * the remaining bit pattern is 1000...0, then we do not add one
@@ -432,7 +432,7 @@ npy_uint16 npy_doublebits_to_halfbits(npy_uint64 d)
     h_exp = (npy_uint16) ((d_exp - 0x3f00000000000000ULL) >> 42);
     /* Handle rounding by adding 1 to the bit beyond half precision */
     d_sig = (d&0x000fffffffffffffULL);
-#if NPY_HALF_ROUND_TIES_TO_EVEN 
+#if NPY_HALF_ROUND_TIES_TO_EVEN
     /*
      * If the last bit in the half significand is 0 (already even), and
      * the remaining bit pattern is 1000...0, then we do not add one
@@ -527,4 +527,4 @@ npy_uint64 npy_halfbits_to_doublebits(npy_uint16 h)
             return d_sgn + (((npy_uint64)(h&0x7fffu) + 0xfc000u) << 42);
     }
 }
- 
+

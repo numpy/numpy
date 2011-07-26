@@ -137,9 +137,9 @@ PyArray_OverflowMultiplyList(npy_intp *l1, int n)
 NPY_NO_EXPORT void *
 PyArray_GetPtr(PyArrayObject *obj, npy_intp* ind)
 {
-    int n = obj->nd;
-    npy_intp *strides = obj->strides;
-    char *dptr = obj->data;
+    int n = PyArray_NDIM(obj);
+    npy_intp *strides = PyArray_STRIDES(obj);
+    char *dptr = PyArray_DATA(obj);
 
     while (n--) {
         dptr += (*strides++) * (*ind++);
@@ -198,22 +198,22 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
     }
     switch(nd) {
     case 1:
-        *((char **)ptr) = ap->data;
+        *((char **)ptr) = PyArray_DATA(ap);
         break;
     case 2:
-        n = ap->dimensions[0];
+        n = PyArray_DIMS(ap)[0];
         ptr2 = (char **)_pya_malloc(n * sizeof(char *));
         if (!ptr2) {
             goto fail;
         }
         for (i = 0; i < n; i++) {
-            ptr2[i] = ap->data + i*ap->strides[0];
+            ptr2[i] = PyArray_DATA(ap) + i*PyArray_STRIDES(ap)[0];
         }
         *((char ***)ptr) = ptr2;
         break;
     case 3:
-        n = ap->dimensions[0];
-        m = ap->dimensions[1];
+        n = PyArray_DIMS(ap)[0];
+        m = PyArray_DIMS(ap)[1];
         ptr3 = (char ***)_pya_malloc(n*(m+1) * sizeof(char *));
         if (!ptr3) {
             goto fail;
@@ -221,12 +221,12 @@ PyArray_AsCArray(PyObject **op, void *ptr, npy_intp *dims, int nd,
         for (i = 0; i < n; i++) {
             ptr3[i] = ptr3[n + (m-1)*i];
             for (j = 0; j < m; j++) {
-                ptr3[i][j] = ap->data + i*ap->strides[0] + j*ap->strides[1];
+                ptr3[i][j] = PyArray_DATA(ap) + i*PyArray_STRIDES(ap)[0] + j*PyArray_STRIDES(ap)[1];
             }
         }
         *((char ****)ptr) = ptr3;
     }
-    memcpy(dims, ap->dimensions, nd*sizeof(npy_intp));
+    memcpy(dims, PyArray_DIMS(ap), nd*sizeof(npy_intp));
     *op = (PyObject *)ap;
     return 0;
 
@@ -290,10 +290,10 @@ PyArray_Free(PyObject *op, void *ptr)
 {
     PyArrayObject *ap = (PyArrayObject *)op;
 
-    if ((ap->nd < 1) || (ap->nd > 3)) {
+    if ((PyArray_NDIM(ap) < 1) || (PyArray_NDIM(ap) > 3)) {
         return -1;
     }
-    if (ap->nd >= 2) {
+    if (PyArray_NDIM(ap) >= 2) {
         _pya_free(ptr);
     }
     Py_DECREF(ap);
@@ -407,17 +407,17 @@ PyArray_Concatenate(PyObject *op, int axis)
             goto fail;
         }
         if (i == 0) {
-            nd = mps[i]->nd;
+            nd = PyArray_NDIM(mps[i]);
         }
         else {
-            if (nd != mps[i]->nd) {
+            if (nd != PyArray_NDIM(mps[i])) {
                 PyErr_SetString(PyExc_ValueError,
                                 "arrays must have same "\
                                 "number of dimensions");
                 goto fail;
             }
-            if (!PyArray_CompareLists(mps[0]->dimensions+1,
-                                      mps[i]->dimensions+1,
+            if (!PyArray_CompareLists(PyArray_DIMS(mps[0])+1,
+                                      PyArray_DIMS(mps[i])+1,
                                       nd-1)) {
                 PyErr_SetString(PyExc_ValueError,
                                 "array dimensions must "\
@@ -430,25 +430,25 @@ PyArray_Concatenate(PyObject *op, int axis)
                             "0-d arrays can't be concatenated");
             goto fail;
         }
-        new_dim += mps[i]->dimensions[0];
+        new_dim += PyArray_DIMS(mps[i])[0];
     }
-    tmp = mps[0]->dimensions[0];
-    mps[0]->dimensions[0] = new_dim;
-    Py_INCREF(mps[0]->descr);
+    tmp = PyArray_DIMS(mps[0])[0];
+    PyArray_DIMS(mps[0])[0] = new_dim;
+    Py_INCREF(PyArray_DESCR(mps[0]));
     ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
-                                                mps[0]->descr, nd,
-                                                mps[0]->dimensions,
+                                                PyArray_DESCR(mps[0]), nd,
+                                                PyArray_DIMS(mps[0]),
                                                 NULL, NULL, 0,
                                                 (PyObject *)ret);
-    mps[0]->dimensions[0] = tmp;
+    PyArray_DIMS(mps[0])[0] = tmp;
 
     if (ret == NULL) {
         goto fail;
     }
-    data = ret->data;
+    data = PyArray_DATA(ret);
     for (i = 0; i < n; i++) {
         numbytes = PyArray_NBYTES(mps[i]);
-        memcpy(data, mps[i]->data, numbytes);
+        memcpy(data, PyArray_DATA(mps[i]), numbytes);
         data += numbytes;
     }
 
@@ -476,9 +476,9 @@ _signbit_set(PyArrayObject *arr)
     char byteorder;
     int elsize;
 
-    elsize = arr->descr->elsize;
-    byteorder = arr->descr->byteorder;
-    ptr = arr->data;
+    elsize = PyArray_DESCR(arr)->elsize;
+    byteorder = PyArray_DESCR(arr)->byteorder;
+    ptr = PyArray_DATA(arr);
     if (elsize > 1 &&
         (byteorder == PyArray_LITTLE ||
          (byteorder == PyArray_NATIVE &&
@@ -673,8 +673,8 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     if (ap2 == NULL) {
         goto fail;
     }
-    if (ap1->nd == 0 || ap2->nd == 0) {
-        ret = (ap1->nd == 0 ? ap1 : ap2);
+    if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
+        ret = (PyArray_NDIM(ap1) == 0 ? ap1 : ap2);
         ret = (PyArrayObject *)Py_TYPE(ret)->tp_as_number->nb_multiply(
                                             (PyObject *)ap1, (PyObject *)ap2);
         Py_DECREF(ap1);
@@ -682,19 +682,19 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
         return (PyObject *)ret;
     }
 
-    l = ap1->dimensions[ap1->nd - 1];
-    if (ap2->dimensions[ap2->nd - 1] != l) {
+    l = PyArray_DIMS(ap1)[PyArray_NDIM(ap1) - 1];
+    if (PyArray_DIMS(ap2)[PyArray_NDIM(ap2) - 1] != l) {
         PyErr_SetString(PyExc_ValueError, "matrices are not aligned");
         goto fail;
     }
 
-    nd = ap1->nd + ap2->nd - 2;
+    nd = PyArray_NDIM(ap1) + PyArray_NDIM(ap2) - 2;
     j = 0;
-    for (i = 0; i < ap1->nd - 1; i++) {
-        dimensions[j++] = ap1->dimensions[i];
+    for (i = 0; i < PyArray_NDIM(ap1) - 1; i++) {
+        dimensions[j++] = PyArray_DIMS(ap1)[i];
     }
-    for (i = 0; i < ap2->nd - 1; i++) {
-        dimensions[j++] = ap2->dimensions[i];
+    for (i = 0; i < PyArray_NDIM(ap2) - 1; i++) {
+        dimensions[j++] = PyArray_DIMS(ap2)[i];
     }
 
     /*
@@ -705,20 +705,20 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     if (ret == NULL) {
         goto fail;
     }
-    dot = (ret->descr->f->dotfunc);
+    dot = (PyArray_DESCR(ret)->f->dotfunc);
     if (dot == NULL) {
         PyErr_SetString(PyExc_ValueError,
                         "dot not available for this type");
         goto fail;
     }
-    is1 = ap1->strides[ap1->nd - 1];
-    is2 = ap2->strides[ap2->nd - 1];
-    op = ret->data; os = ret->descr->elsize;
-    axis = ap1->nd - 1;
+    is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1) - 1];
+    is2 = PyArray_STRIDES(ap2)[PyArray_NDIM(ap2) - 1];
+    op = PyArray_DATA(ret); os = PyArray_DESCR(ret)->elsize;
+    axis = PyArray_NDIM(ap1) - 1;
     it1 = (PyArrayIterObject *) PyArray_IterAllButAxis((PyObject *)ap1, &axis);
-    axis = ap2->nd - 1;
+    axis = PyArray_NDIM(ap2) - 1;
     it2 = (PyArrayIterObject *) PyArray_IterAllButAxis((PyObject *)ap2, &axis);
-    NPY_BEGIN_THREADS_DESCR(ap2->descr);
+    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
     while (1) {
         while (it2->index < it2->size) {
             dot(it1->dataptr, is1, it2->dataptr, is2, op, l, ret);
@@ -731,7 +731,7 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
         }
         PyArray_ITER_RESET(it2);
     }
-    NPY_END_THREADS_DESCR(ap2->descr);
+    NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
     Py_DECREF(it1);
     Py_DECREF(it2);
     if (PyErr_Occurred()) {
@@ -782,39 +782,39 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     if (ap2 == NULL) {
         goto fail;
     }
-    if (ap1->nd == 0 || ap2->nd == 0) {
-        ret = (ap1->nd == 0 ? ap1 : ap2);
+    if (PyArray_NDIM(ap1) == 0 || PyArray_NDIM(ap2) == 0) {
+        ret = (PyArray_NDIM(ap1) == 0 ? ap1 : ap2);
         ret = (PyArrayObject *)Py_TYPE(ret)->tp_as_number->nb_multiply(
                                         (PyObject *)ap1, (PyObject *)ap2);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
         return (PyObject *)ret;
     }
-    l = ap1->dimensions[ap1->nd - 1];
-    if (ap2->nd > 1) {
-        matchDim = ap2->nd - 2;
+    l = PyArray_DIMS(ap1)[PyArray_NDIM(ap1) - 1];
+    if (PyArray_NDIM(ap2) > 1) {
+        matchDim = PyArray_NDIM(ap2) - 2;
     }
     else {
         matchDim = 0;
     }
-    if (ap2->dimensions[matchDim] != l) {
+    if (PyArray_DIMS(ap2)[matchDim] != l) {
         PyErr_SetString(PyExc_ValueError, "objects are not aligned");
         goto fail;
     }
-    nd = ap1->nd + ap2->nd - 2;
+    nd = PyArray_NDIM(ap1) + PyArray_NDIM(ap2) - 2;
     if (nd > NPY_MAXDIMS) {
         PyErr_SetString(PyExc_ValueError, "dot: too many dimensions in result");
         goto fail;
     }
     j = 0;
-    for (i = 0; i < ap1->nd - 1; i++) {
-        dimensions[j++] = ap1->dimensions[i];
+    for (i = 0; i < PyArray_NDIM(ap1) - 1; i++) {
+        dimensions[j++] = PyArray_DIMS(ap1)[i];
     }
-    for (i = 0; i < ap2->nd - 2; i++) {
-        dimensions[j++] = ap2->dimensions[i];
+    for (i = 0; i < PyArray_NDIM(ap2) - 2; i++) {
+        dimensions[j++] = PyArray_DIMS(ap2)[i];
     }
-    if(ap2->nd > 1) {
-        dimensions[j++] = ap2->dimensions[ap2->nd-1];
+    if(PyArray_NDIM(ap2) > 1) {
+        dimensions[j++] = PyArray_DIMS(ap2)[PyArray_NDIM(ap2)-1];
     }
     /*
       fprintf(stderr, "nd=%d dimensions=", nd);
@@ -823,7 +823,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
       fprintf(stderr, "\n");
     */
 
-    is1 = ap1->strides[ap1->nd-1]; is2 = ap2->strides[matchDim];
+    is1 = PyArray_STRIDES(ap1)[PyArray_NDIM(ap1)-1]; is2 = PyArray_STRIDES(ap2)[matchDim];
     /* Choose which subtype to return */
     ret = new_array_for_sum(ap1, ap2, out, nd, dimensions, typenum);
     if (ret == NULL) {
@@ -838,20 +838,20 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         memset(PyArray_DATA(ret), 0, PyArray_ITEMSIZE(ret));
     }
 
-    dot = ret->descr->f->dotfunc;
+    dot = PyArray_DESCR(ret)->f->dotfunc;
     if (dot == NULL) {
         PyErr_SetString(PyExc_ValueError,
                         "dot not available for this type");
         goto fail;
     }
 
-    op = ret->data; os = ret->descr->elsize;
-    axis = ap1->nd-1;
+    op = PyArray_DATA(ret); os = PyArray_DESCR(ret)->elsize;
+    axis = PyArray_NDIM(ap1)-1;
     it1 = (PyArrayIterObject *)
         PyArray_IterAllButAxis((PyObject *)ap1, &axis);
     it2 = (PyArrayIterObject *)
         PyArray_IterAllButAxis((PyObject *)ap2, &matchDim);
-    NPY_BEGIN_THREADS_DESCR(ap2->descr);
+    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
     while (1) {
         while (it2->index < it2->size) {
             dot(it1->dataptr, is1, it2->dataptr, is2, op, l, ret);
@@ -864,7 +864,7 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
         }
         PyArray_ITER_RESET(it2);
     }
-    NPY_END_THREADS_DESCR(ap2->descr);
+    NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
     Py_DECREF(it1);
     Py_DECREF(it2);
     if (PyErr_Occurred()) {
@@ -958,8 +958,8 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
 
     NPY_BEGIN_THREADS_DEF;
 
-    n1 = ap1->dimensions[0];
-    n2 = ap2->dimensions[0];
+    n1 = PyArray_DIMS(ap1)[0];
+    n2 = PyArray_DIMS(ap2)[0];
     if (n1 < n2) {
         ret = ap1;
         ap1 = ap2;
@@ -1002,20 +1002,20 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
     if (ret == NULL) {
         return NULL;
     }
-    dot = ret->descr->f->dotfunc;
+    dot = PyArray_DESCR(ret)->f->dotfunc;
     if (dot == NULL) {
         PyErr_SetString(PyExc_ValueError,
                         "function not available for this data type");
         goto clean_ret;
     }
 
-    NPY_BEGIN_THREADS_DESCR(ret->descr);
-    is1 = ap1->strides[0];
-    is2 = ap2->strides[0];
-    op = ret->data;
-    os = ret->descr->elsize;
-    ip1 = ap1->data;
-    ip2 = ap2->data + n_left*is2;
+    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ret));
+    is1 = PyArray_STRIDES(ap1)[0];
+    is2 = PyArray_STRIDES(ap2)[0];
+    op = PyArray_DATA(ret);
+    os = PyArray_DESCR(ret)->elsize;
+    ip1 = PyArray_DATA(ap1);
+    ip2 = PyArray_DATA(ap2) + n_left*is2;
     n = n - n_left;
     for (i = 0; i < n_left; i++) {
         dot(ip1, is1, ip2, is2, op, n, ret);
@@ -1035,7 +1035,7 @@ _pyarray_correlate(PyArrayObject *ap1, PyArrayObject *ap2, int typenum,
         op += os;
     }
 
-    NPY_END_THREADS_DESCR(ret->descr);
+    NPY_END_THREADS_DESCR(PyArray_DESCR(ret));
     if (PyErr_Occurred()) {
         goto clean_ret;
     }
@@ -1062,16 +1062,16 @@ _pyarray_revert(PyArrayObject *ret)
     npy_intp os;
     char *op;
 
-    length = ret->dimensions[0];
-    copyswap = ret->descr->f->copyswap;
+    length = PyArray_DIMS(ret)[0];
+    copyswap = PyArray_DESCR(ret)->f->copyswap;
 
-    tmp = PyArray_malloc(ret->descr->elsize);
+    tmp = PyArray_malloc(PyArray_DESCR(ret)->elsize);
     if (tmp == NULL) {
         return -1;
     }
 
-    os = ret->descr->elsize;
-    op = ret->data;
+    os = PyArray_DESCR(ret)->elsize;
+    op = PyArray_DATA(ret);
     sw1 = op;
     sw2 = op + (length - 1) * os;
     if (PyArray_ISFLEXIBLE(ret) || PyArray_ISOBJECT(ret)) {
@@ -1513,24 +1513,33 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
     npy_intp newdims[MAX_DIMS];
     npy_intp newstrides[MAX_DIMS];
     int i, k, num;
-    PyObject *ret;
+    PyArrayObject *ret;
+    PyArray_Descr *dtype;
 
     num = ndmin - nd;
     for (i = 0; i < num; i++) {
         newdims[i] = 1;
-        newstrides[i] = arr->descr->elsize;
+        newstrides[i] = PyArray_DESCR(arr)->elsize;
     }
     for (i = num; i < ndmin; i++) {
         k = i - num;
-        newdims[i] = arr->dimensions[k];
-        newstrides[i] = arr->strides[k];
+        newdims[i] = PyArray_DIMS(arr)[k];
+        newstrides[i] = PyArray_STRIDES(arr)[k];
     }
-    Py_INCREF(arr->descr);
-    ret = PyArray_NewFromDescr(Py_TYPE(arr), arr->descr, ndmin,
-            newdims, newstrides, arr->data, arr->flags, (PyObject *)arr);
+    dtype = PyArray_DESCR(arr);
+    Py_INCREF(dtype);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(arr),
+                        dtype, ndmin, newdims, newstrides,
+                        PyArray_DATA(arr), PyArray_FLAGS(arr), (PyObject *)arr);
+    if (ret == NULL) {
+        return NULL;
+    }
     /* steals a reference to arr --- so don't increment here */
-    PyArray_BASE(ret) = (PyObject *)arr;
-    return ret;
+    if (PyArray_SetBaseObject(ret, (PyObject *)arr) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+    return (PyObject *)ret;
 }
 
 
@@ -1545,9 +1554,8 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
 static PyObject *
 _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 {
-    PyObject *op, *ret = NULL;
-    static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
-                         "ndmin", NULL};
+    PyObject *op;
+    PyArrayObject *oparr = NULL, *ret = NULL;
     Bool subok = FALSE;
     Bool copy = TRUE;
     int ndmin = 0, nd;
@@ -1555,6 +1563,9 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     PyArray_Descr *oldtype = NULL;
     NPY_ORDER order = NPY_ANYORDER;
     int flags = 0;
+
+    static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
+                         "ndmin", NULL};
 
     if (PyTuple_GET_SIZE(args) > 2) {
         PyErr_SetString(PyExc_ValueError,
@@ -1579,33 +1590,34 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     /* fast exit if simple call */
     if ((subok && PyArray_Check(op))
             || (!subok && PyArray_CheckExact(op))) {
+        oparr = (PyArrayObject *)op;
         if (type == NULL) {
-            if (!copy && STRIDING_OK(op, order)) {
+            if (!copy && STRIDING_OK(oparr, order)) {
                 Py_INCREF(op);
-                ret = op;
+                ret = oparr;
                 goto finish;
             }
             else {
-                ret = PyArray_NewCopy((PyArrayObject*)op, order);
+                ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
                 goto finish;
             }
         }
         /* One more chance */
-        oldtype = PyArray_DESCR(op);
+        oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, type)) {
-            if (!copy && STRIDING_OK(op, order)) {
+            if (!copy && STRIDING_OK(oparr, order)) {
                 Py_INCREF(op);
-                ret = op;
+                ret = oparr;
                 goto finish;
             }
             else {
-                ret = PyArray_NewCopy((PyArrayObject*)op, order);
+                ret = (PyArrayObject *)PyArray_NewCopy(oparr, order);
                 if (oldtype == type) {
                     goto finish;
                 }
                 Py_INCREF(oldtype);
                 Py_DECREF(PyArray_DESCR(ret));
-                PyArray_DESCR(ret) = oldtype;
+                ((PyArrayObject_fieldaccess *)ret)->descr = oldtype;
                 goto finish;
             }
         }
@@ -1618,8 +1630,9 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
         flags |= NPY_ARRAY_C_CONTIGUOUS;
     }
     else if ((order == NPY_FORTRANORDER)
-             /* order == NPY_ANYORDER && */
-             || (PyArray_Check(op) && PyArray_ISFORTRAN(op))) {
+                 /* order == NPY_ANYORDER && */
+                 || (PyArray_Check(op) &&
+                     PyArray_ISFORTRAN((PyArrayObject *)op))) {
         flags |= NPY_ARRAY_F_CONTIGUOUS;
     }
     if (!subok) {
@@ -1628,21 +1641,22 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 
     flags |= NPY_ARRAY_FORCECAST;
     Py_XINCREF(type);
-    ret = PyArray_CheckFromAny(op, type, 0, 0, flags, NULL);
+    ret = (PyArrayObject *)PyArray_CheckFromAny(op, type,
+                                                0, 0, flags, NULL);
 
  finish:
     Py_XDECREF(type);
     if (!ret) {
-        return ret;
+        return (PyObject *)ret;
     }
     else if ((nd=PyArray_NDIM(ret)) >= ndmin) {
-        return ret;
+        return (PyObject *)ret;
     }
     /*
      * create a new array from the same data with ones in the shape
      * steals a reference to ret
      */
-    return _prepend_ones((PyArrayObject *)ret, nd, ndmin);
+    return _prepend_ones(ret, nd, ndmin);
 
 clean_type:
     Py_XDECREF(type);

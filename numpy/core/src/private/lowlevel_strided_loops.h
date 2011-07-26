@@ -19,7 +19,7 @@
  * The 'transferdata' parameter is slightly special, following a
  * generic auxiliary data pattern defined in ndarraytypes.h
  * Use NPY_AUXDATA_CLONE and NPY_AUXDATA_FREE to deal with this data.
- * 
+ *
  */
 typedef void (PyArray_StridedTransferFn)(char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
@@ -47,10 +47,10 @@ typedef void (PyArray_MaskedStridedTransferFn)(char *dst, npy_intp dst_stride,
  * aligned:
  *      Should be 1 if the src and dst pointers are always aligned,
  *      0 otherwise.
- * src_stride:  
+ * src_stride:
  *      Should be the src stride if it will always be the same,
  *      NPY_MAX_INTP otherwise.
- * dst_stride:  
+ * dst_stride:
  *      Should be the dst stride if it will always be the same,
  *      NPY_MAX_INTP otherwise.
  * itemsize:
@@ -143,10 +143,10 @@ PyArray_GetDTypeCopySwapFn(int aligned,
  * aligned:
  *      Should be 1 if the src and dst pointers are always aligned,
  *      0 otherwise.
- * src_stride:  
+ * src_stride:
  *      Should be the src stride if it will always be the same,
  *      NPY_MAX_INTP otherwise.
- * dst_stride:  
+ * dst_stride:
  *      Should be the dst stride if it will always be the same,
  *      NPY_MAX_INTP otherwise.
  * src_dtype:
@@ -363,9 +363,9 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
                         PyArray_CompareLists(PyArray_DIMS(arr1), \
                                              PyArray_DIMS(arr2), \
                                              PyArray_NDIM(arr1)) && \
-                        (arr1->flags&(NPY_ARRAY_C_CONTIGUOUS| \
+                        (PyArray_FLAGS(arr1)&(NPY_ARRAY_C_CONTIGUOUS| \
                                       NPY_ARRAY_F_CONTIGUOUS)) == \
-                                (arr2->flags&(NPY_ARRAY_C_CONTIGUOUS| \
+                                (PyArray_FLAGS(arr2)&(NPY_ARRAY_C_CONTIGUOUS| \
                                               NPY_ARRAY_F_CONTIGUOUS)) \
                         )
 

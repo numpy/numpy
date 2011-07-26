@@ -74,7 +74,7 @@ enum NPY_TYPES {    NPY_BOOL=0,
                      * New 1.6 types appended, may be integrated
                      * into the above in 2.0.
                      */
-                    NPY_DATETIME, NPY_TIMEDELTA, NPY_HALF, 
+                    NPY_DATETIME, NPY_TIMEDELTA, NPY_HALF,
 
                     NPY_NTYPES,
                     NPY_NOTYPE,
@@ -519,7 +519,7 @@ typedef struct {
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
-#define PyDataType_FLAGCHK(dtype, flag)                                   \
+#define PyDataType_FLAGCHK(dtype, flag) \
         (((dtype)->flags & (flag)) == (flag))
 
 #define PyDataType_REFCHK(dtype)                                          \
@@ -573,12 +573,16 @@ typedef struct _arr_descr {
 } PyArray_ArrayDescr;
 
 /*
- * The main array object structure. It is recommended to use the macros
- * defined below (PyArray_DATA and friends) access fields here, instead
- * of the members themselves.
+ * The main array object structure.
+ *
+ * It has been recommended to use the inline functions defined below
+ * (PyArray_DATA and friends) to access fields here for a number of
+ * releases. Direct access to the members themselves is deprecated.
+ * To ensure that your code does not use deprecated access,
+ * #define NPY_NO_DEPRECATED_API.
  */
-
-typedef struct PyArrayObject {
+/* This struct will be moved to a private header in a future release */
+typedef struct tagPyArrayObject_fieldaccess {
         PyObject_HEAD
         char *data;             /* pointer to raw data buffer */
         int nd;                 /* number of dimensions, also called ndim */
@@ -605,7 +609,25 @@ typedef struct PyArrayObject {
         PyArray_Descr *descr;   /* Pointer to type structure */
         int flags;              /* Flags describing array -- see below */
         PyObject *weakreflist;  /* For weakreferences */
+} PyArrayObject_fieldaccess;
+
+/*
+ * To hide the implementation details, we only expose
+ * the Python struct HEAD.
+ */
+#ifdef NPY_NO_DEPRECATED_API
+typedef struct tagPyArrayObject {
+        PyObject_HEAD
 } PyArrayObject;
+#else
+/*
+ * Can't put this in npy_deprecated_api.h like the others.
+ * PyArrayObject field access is deprecated as of NumPy 1.7.
+ */
+typedef PyArrayObject_fieldaccess PyArrayObject;
+#endif
+
+#define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fieldaccess))
 
 /* Array Flags Object */
 typedef struct PyArrayFlagsObject {
@@ -785,9 +807,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 
 
-#define PyArray_CHKFLAGS(m, FLAGS)                              \
-        ((((PyArrayObject *)(m))->flags & (FLAGS)) == (FLAGS))
-
 #define PyArray_ISCONTIGUOUS(m) PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS)
 #define PyArray_ISWRITEABLE(m) PyArray_CHKFLAGS(m, NPY_ARRAY_WRITEABLE)
 #define PyArray_ISALIGNED(m) PyArray_CHKFLAGS(m, NPY_ARRAY_ALIGNED)
@@ -939,122 +958,122 @@ struct PyArrayIterObject_tag {
 #define PyArrayIter_Check(op) PyObject_TypeCheck(op, &PyArrayIter_Type)
 
 #define _PyAIT(it) ((PyArrayIterObject *)(it))
-#define PyArray_ITER_RESET(it) {                                        \
-        _PyAIT(it)->index = 0;                                          \
-        _PyAIT(it)->dataptr = _PyAIT(it)->ao->data;                     \
-        memset(_PyAIT(it)->coordinates, 0,                              \
-               (_PyAIT(it)->nd_m1+1)*sizeof(npy_intp));                 \
+#define PyArray_ITER_RESET(it) { \
+        _PyAIT(it)->index = 0; \
+        _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
+        memset(_PyAIT(it)->coordinates, 0, \
+               (_PyAIT(it)->nd_m1+1)*sizeof(npy_intp)); \
 }
 
-#define _PyArray_ITER_NEXT1(it) {                                       \
-        (it)->dataptr += _PyAIT(it)->strides[0];                        \
-        (it)->coordinates[0]++;                                         \
+#define _PyArray_ITER_NEXT1(it) { \
+        (it)->dataptr += _PyAIT(it)->strides[0]; \
+        (it)->coordinates[0]++; \
 }
 
-#define _PyArray_ITER_NEXT2(it) {                                       \
-        if ((it)->coordinates[1] < (it)->dims_m1[1]) {                  \
-                (it)->coordinates[1]++;                                 \
-                (it)->dataptr += (it)->strides[1];                      \
-        }                                                               \
-        else {                                                          \
-                (it)->coordinates[1] = 0;                               \
-                (it)->coordinates[0]++;                                 \
-                (it)->dataptr += (it)->strides[0] -                     \
-                        (it)->backstrides[1];                           \
-        }                                                               \
+#define _PyArray_ITER_NEXT2(it) { \
+        if ((it)->coordinates[1] < (it)->dims_m1[1]) { \
+                (it)->coordinates[1]++; \
+                (it)->dataptr += (it)->strides[1]; \
+        } \
+        else { \
+                (it)->coordinates[1] = 0; \
+                (it)->coordinates[0]++; \
+                (it)->dataptr += (it)->strides[0] - \
+                        (it)->backstrides[1]; \
+        } \
 }
 
-#define _PyArray_ITER_NEXT3(it) {                                       \
-        if ((it)->coordinates[2] < (it)->dims_m1[2]) {                  \
-                (it)->coordinates[2]++;                                 \
-                (it)->dataptr += (it)->strides[2];                      \
-        }                                                               \
-        else {                                                          \
-                (it)->coordinates[2] = 0;                               \
-                (it)->dataptr -= (it)->backstrides[2];                  \
-                if ((it)->coordinates[1] < (it)->dims_m1[1]) {          \
-                        (it)->coordinates[1]++;                         \
-                        (it)->dataptr += (it)->strides[1];              \
-                }                                                       \
-                else {                                                  \
-                        (it)->coordinates[1] = 0;                       \
-                        (it)->coordinates[0]++;                         \
-                        (it)->dataptr += (it)->strides[0] -             \
-                                (it)->backstrides[1];                   \
-                }                                                       \
-        }                                                               \
+#define _PyArray_ITER_NEXT3(it) { \
+        if ((it)->coordinates[2] < (it)->dims_m1[2]) { \
+                (it)->coordinates[2]++; \
+                (it)->dataptr += (it)->strides[2]; \
+        } \
+        else { \
+                (it)->coordinates[2] = 0; \
+                (it)->dataptr -= (it)->backstrides[2]; \
+                if ((it)->coordinates[1] < (it)->dims_m1[1]) { \
+                        (it)->coordinates[1]++; \
+                        (it)->dataptr += (it)->strides[1]; \
+                } \
+                else { \
+                        (it)->coordinates[1] = 0; \
+                        (it)->coordinates[0]++; \
+                        (it)->dataptr += (it)->strides[0] \
+                                (it)->backstrides[1]; \
+                } \
+        } \
 }
 
-#define PyArray_ITER_NEXT(it) {                                            \
-        _PyAIT(it)->index++;                                               \
-        if (_PyAIT(it)->nd_m1 == 0) {                                      \
-                _PyArray_ITER_NEXT1(_PyAIT(it));                           \
-        }                                                                  \
-        else if (_PyAIT(it)->contiguous)                                   \
-                _PyAIT(it)->dataptr += _PyAIT(it)->ao->descr->elsize;      \
-        else if (_PyAIT(it)->nd_m1 == 1) {                                 \
-                _PyArray_ITER_NEXT2(_PyAIT(it));                           \
-        }                                                                  \
-        else {                                                             \
-                int __npy_i;                                               \
+#define PyArray_ITER_NEXT(it) { \
+        _PyAIT(it)->index++; \
+        if (_PyAIT(it)->nd_m1 == 0) { \
+                _PyArray_ITER_NEXT1(_PyAIT(it)); \
+        } \
+        else if (_PyAIT(it)->contiguous) \
+                _PyAIT(it)->dataptr += PyArray_DESCR(_PyAIT(it)->ao)->elsize; \
+        else if (_PyAIT(it)->nd_m1 == 1) { \
+                _PyArray_ITER_NEXT2(_PyAIT(it)); \
+        } \
+        else { \
+                int __npy_i; \
                 for (__npy_i=_PyAIT(it)->nd_m1; __npy_i >= 0; __npy_i--) { \
-                        if (_PyAIT(it)->coordinates[__npy_i] <             \
-                            _PyAIT(it)->dims_m1[__npy_i]) {                \
-                                _PyAIT(it)->coordinates[__npy_i]++;        \
-                                _PyAIT(it)->dataptr +=                     \
-                                        _PyAIT(it)->strides[__npy_i];      \
-                                break;                                     \
-                        }                                                  \
-                        else {                                             \
-                                _PyAIT(it)->coordinates[__npy_i] = 0;      \
-                                _PyAIT(it)->dataptr -=                     \
-                                        _PyAIT(it)->backstrides[__npy_i];  \
-                        }                                                  \
-                }                                                          \
-        }                                                                  \
+                        if (_PyAIT(it)->coordinates[__npy_i] < \
+                            _PyAIT(it)->dims_m1[__npy_i]) { \
+                                _PyAIT(it)->coordinates[__npy_i]++; \
+                                _PyAIT(it)->dataptr += \
+                                        _PyAIT(it)->strides[__npy_i]; \
+                                break; \
+                        } \
+                        else { \
+                                _PyAIT(it)->coordinates[__npy_i] = 0; \
+                                _PyAIT(it)->dataptr -= \
+                                        _PyAIT(it)->backstrides[__npy_i]; \
+                        } \
+                } \
+        } \
 }
 
-#define PyArray_ITER_GOTO(it, destination) {                            \
-        int __npy_i;                                                    \
-        _PyAIT(it)->index = 0;                                          \
-        _PyAIT(it)->dataptr = _PyAIT(it)->ao->data;                     \
-        for (__npy_i = _PyAIT(it)->nd_m1; __npy_i>=0; __npy_i--) {      \
-                if (destination[__npy_i] < 0) {                         \
-                        destination[__npy_i] +=                         \
-                                _PyAIT(it)->dims_m1[__npy_i]+1;         \
-                }                                                       \
-                _PyAIT(it)->dataptr += destination[__npy_i] *           \
-                        _PyAIT(it)->strides[__npy_i];                   \
-                _PyAIT(it)->coordinates[__npy_i] =                      \
-                        destination[__npy_i];                           \
-                _PyAIT(it)->index += destination[__npy_i] *             \
-                        ( __npy_i==_PyAIT(it)->nd_m1 ? 1 :              \
-                          _PyAIT(it)->dims_m1[__npy_i+1]+1) ;           \
-        }                                                               \
+#define PyArray_ITER_GOTO(it, destination) { \
+        int __npy_i; \
+        _PyAIT(it)->index = 0; \
+        _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
+        for (__npy_i = _PyAIT(it)->nd_m1; __npy_i>=0; __npy_i--) { \
+                if (destination[__npy_i] < 0) { \
+                        destination[__npy_i] += \
+                                _PyAIT(it)->dims_m1[__npy_i]+1; \
+                } \
+                _PyAIT(it)->dataptr += destination[__npy_i] * \
+                        _PyAIT(it)->strides[__npy_i]; \
+                _PyAIT(it)->coordinates[__npy_i] = \
+                        destination[__npy_i]; \
+                _PyAIT(it)->index += destination[__npy_i] * \
+                        ( __npy_i==_PyAIT(it)->nd_m1 ? 1 : \
+                          _PyAIT(it)->dims_m1[__npy_i+1]+1) ; \
+        } \
 }
 
-#define PyArray_ITER_GOTO1D(it, ind) {                                     \
-        int __npy_i;                                                       \
-        npy_intp __npy_ind = (npy_intp) (ind);                             \
-        if (__npy_ind < 0) __npy_ind += _PyAIT(it)->size;                  \
-        _PyAIT(it)->index = __npy_ind;                                     \
-        if (_PyAIT(it)->nd_m1 == 0) {                                      \
-                _PyAIT(it)->dataptr = _PyAIT(it)->ao->data +               \
-                        __npy_ind * _PyAIT(it)->strides[0];                \
-        }                                                                  \
-        else if (_PyAIT(it)->contiguous)                                   \
-                _PyAIT(it)->dataptr = _PyAIT(it)->ao->data +               \
-                        __npy_ind * _PyAIT(it)->ao->descr->elsize;         \
-        else {                                                             \
-                _PyAIT(it)->dataptr = _PyAIT(it)->ao->data;                \
-                for (__npy_i = 0; __npy_i<=_PyAIT(it)->nd_m1;              \
-                     __npy_i++) {                                          \
-                        _PyAIT(it)->dataptr +=                             \
+#define PyArray_ITER_GOTO1D(it, ind) { \
+        int __npy_i; \
+        npy_intp __npy_ind = (npy_intp) (ind); \
+        if (__npy_ind < 0) __npy_ind += _PyAIT(it)->size; \
+        _PyAIT(it)->index = __npy_ind; \
+        if (_PyAIT(it)->nd_m1 == 0) { \
+                _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao) + \
+                        __npy_ind * _PyAIT(it)->strides[0]; \
+        } \
+        else if (_PyAIT(it)->contiguous) \
+                _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao) + \
+                        __npy_ind * PyArray_DESCR(_PyAIT(it)->ao)->elsize; \
+        else { \
+                _PyAIT(it)->dataptr = PyArray_BYTES(_PyAIT(it)->ao); \
+                for (__npy_i = 0; __npy_i<=_PyAIT(it)->nd_m1; \
+                     __npy_i++) { \
+                        _PyAIT(it)->dataptr += \
                                 (__npy_ind / _PyAIT(it)->factors[__npy_i]) \
-                                * _PyAIT(it)->strides[__npy_i];            \
-                        __npy_ind %= _PyAIT(it)->factors[__npy_i];         \
-                }                                                          \
-        }                                                                  \
+                                * _PyAIT(it)->strides[__npy_i]; \
+                        __npy_ind %= _PyAIT(it)->factors[__npy_i]; \
+                } \
+        } \
 }
 
 #define PyArray_ITER_DATA(it) ((void *)(_PyAIT(it)->dataptr))
@@ -1238,12 +1257,17 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define NPY_DEFAULT_TYPE NPY_DOUBLE
 
 /*
- * All sorts of useful ways to look into a PyArrayObject.  These are
- * the recommended over casting to PyArrayObject and accessing the
- * members directly.
+ * All sorts of useful ways to look into a PyArrayObject. It is recommended
+ * to use PyArrayObject * objects instead of always casting from PyObject *,
+ * for improved type checking.
+ *
+ * In many cases here the macro versions of the accessors are deprecated,
+ * but can't be immediately changed to inline functions because the
+ * preexisting macros accept PyObject * and do automatic casts. Inline
+ * functions accepting PyArrayObject * provides for some compile-time
+ * checking of correctness when working with these objects in C.
  */
 
-#define PyArray_NDIM(obj) (((PyArrayObject *)(obj))->nd)
 #define PyArray_ISONESEGMENT(m) (PyArray_NDIM(m) == 0 || \
                              PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS) || \
                              PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS))
@@ -1255,27 +1279,154 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
                                NPY_ARRAY_F_CONTIGUOUS : 0))
 
 #define FORTRAN_IF PyArray_FORTRAN_IF
-#define PyArray_DATA(obj) ((void *)(((PyArrayObject *)(obj))->data))
-#define PyArray_BYTES(obj) (((PyArrayObject *)(obj))->data)
-#define PyArray_DIMS(obj) (((PyArrayObject *)(obj))->dimensions)
-#define PyArray_STRIDES(obj) (((PyArrayObject *)(obj))->strides)
+
+#ifdef NPY_NO_DEPRECATED_API
+/*
+ * Changing access macros into functions, to allow for future hiding
+ * of the internal memory layout. This later hiding will allow the 2.x series
+ * to change the internal representation of arrays without affecting
+ * ABI compatibility.
+ */
+
+static NPY_INLINE int
+PyArray_NDIM(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->nd;
+}
+
+static NPY_INLINE char *
+PyArray_DATA(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->data;
+}
+
+static NPY_INLINE npy_intp *
+PyArray_DIMS(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->dimensions;
+}
+
+static NPY_INLINE npy_intp *
+PyArray_STRIDES(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->strides;
+}
+
+static NPY_INLINE npy_intp
+PyArray_DIM(PyArrayObject *arr, int idim)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->dimensions[idim];
+}
+
+static NPY_INLINE npy_intp
+PyArray_STRIDE(PyArrayObject *arr, int istride)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->strides[istride];
+}
+
+static NPY_INLINE PyObject *
+PyArray_BASE(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->base;
+}
+
+static NPY_INLINE PyArray_Descr *
+PyArray_DESCR(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->descr;
+}
+
+static NPY_INLINE int
+PyArray_FLAGS(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->flags;
+}
+
+static NPY_INLINE npy_intp
+PyArray_ITEMSIZE(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->descr->elsize;
+}
+
+static NPY_INLINE int
+PyArray_TYPE(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->descr->type_num;
+}
+
+static NPY_INLINE int
+PyArray_CHKFLAGS(PyArrayObject *arr, int flags)
+{
+    return (PyArray_FLAGS(arr) & flags) == flags;
+}
+
+static NPY_INLINE PyObject *
+PyArray_GETITEM(PyArrayObject *arr, char *itemptr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->descr->f->getitem(
+                                                itemptr,
+                                                arr);
+}
+
+static NPY_INLINE int
+PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->descr->f->setitem(
+                                                v,
+                                                itemptr,
+                                                arr);
+}
+
+#else
+
+/* Macros are deprecated as of NumPy 1.7. */
+#define PyArray_NDIM(obj) (((PyArrayObject_fieldaccess *)(obj))->nd)
+#define PyArray_DATA(obj) ((void *)(((PyArrayObject_fieldaccess *)(obj))->data))
+#define PyArray_DIMS(obj) (((PyArrayObject_fieldaccess *)(obj))->dimensions)
+#define PyArray_STRIDES(obj) (((PyArrayObject_fieldaccess *)(obj))->strides)
 #define PyArray_DIM(obj,n) (PyArray_DIMS(obj)[n])
 #define PyArray_STRIDE(obj,n) (PyArray_STRIDES(obj)[n])
-#define PyArray_BASE(obj) (((PyArrayObject *)(obj))->base)
-#define PyArray_DESCR(obj) (((PyArrayObject *)(obj))->descr)
-#define PyArray_FLAGS(obj) (((PyArrayObject *)(obj))->flags)
-#define PyArray_ITEMSIZE(obj) (((PyArrayObject *)(obj))->descr->elsize)
-#define PyArray_TYPE(obj) (((PyArrayObject *)(obj))->descr->type_num)
+#define PyArray_BASE(obj) (((PyArrayObject_fieldaccess *)(obj))->base)
+#define PyArray_DESCR(obj) (((PyArrayObject_fieldaccess *)(obj))->descr)
+#define PyArray_FLAGS(obj) (((PyArrayObject_fieldaccess *)(obj))->flags)
+#define PyArray_CHKFLAGS(m, FLAGS) \
+        ((((PyArrayObject_fieldaccess *)(m))->flags & (FLAGS)) == (FLAGS))
+#define PyArray_ITEMSIZE(obj) \
+                    (((PyArrayObject_fieldaccess *)(obj))->descr->elsize)
+#define PyArray_TYPE(obj) \
+                    (((PyArrayObject_fieldaccess *)(obj))->descr->type_num)
+#define PyArray_GETITEM(obj,itemptr) \
+        PyArray_DESCR(obj)->f->getitem((char *)(itemptr), \
+                                     (PyArrayObject *)(obj))
 
-#define PyArray_GETITEM(obj,itemptr)                                          \
-        ((PyArrayObject *)(obj))->descr->f->getitem((char *)(itemptr),        \
-                                                 (PyArrayObject *)(obj))
+#define PyArray_SETITEM(obj,itemptr,v) \
+        PyArray_DESCR(obj)->f->setitem((PyObject *)(v), \
+                                     (char *)(itemptr), \
+                                     (PyArrayObject *)(obj))
+#endif
 
-#define PyArray_SETITEM(obj,itemptr,v)                                        \
-        ((PyArrayObject *)(obj))->descr->f->setitem((PyObject *)(v),          \
-                                                    (char *)(itemptr),        \
-                                                    (PyArrayObject *)(obj))
+/* Same as PyArray_DATA */
+#define PyArray_BYTES(arr) PyArray_DATA(arr)
 
+/*
+ * Enables the specified array flags. Does no checking,
+ * assumes you know what you're doing.
+ */
+static NPY_INLINE void
+PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
+{
+    ((PyArrayObject_fieldaccess *)arr)->flags |= flags;
+}
+
+/*
+ * Clears the specified array flags. Does no checking,
+ * assumes you know what you're doing.
+ */
+static NPY_INLINE void
+PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
+{
+    ((PyArrayObject_fieldaccess *)arr)->flags &= ~flags;
+}
 
 #define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
 

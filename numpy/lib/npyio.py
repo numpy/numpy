@@ -627,7 +627,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         data-type, arrays are returned for each field.  Default is False.
     ndmin : int, optional
         The returned array will have at least `ndmin` dimensions.
-        Otherwise mono-dimensional axes will be squeezed. 
+        Otherwise mono-dimensional axes will be squeezed.
         Legal values: 0 (default), 1 or 2.
         .. versionadded:: 1.6.0
 
@@ -803,7 +803,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fh.close()
 
     X = np.array(X, dtype)
-    # Multicolumn data are returned with shape (1, N, M), i.e. 
+    # Multicolumn data are returned with shape (1, N, M), i.e.
     # (1, 1, M) for a single row - remove the singleton dimension there
     if X.ndim == 3 and X.shape[:2] == (1, 1):
         X.shape = (1, -1)

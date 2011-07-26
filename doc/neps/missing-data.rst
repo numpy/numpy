@@ -225,27 +225,30 @@ provides a starting point.
 
 For example,::
 
-    >>> np.array([1.0, 2.0, np.NA, 7.0], namasked=True)
-    array([1., 2., NA, 7.], namasked=True)
-    >>> np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]')
+    >>> np.array([1.0, 2.0, np.NA, 7.0], maskna=True)
+    array([1., 2., NA, 7.], maskna=True)
+    >>> np.array([1.0, 2.0, np.NA, 7.0], dtype='NA')
     array([1., 2., NA, 7.], dtype='NA[<f8]')
+    >>> np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f4]')
+    array([1., 2., NA, 7.], dtype='NA[<f4]')
 
 produce arrays with values [1.0, 2.0, <inaccessible>, 7.0] /
-mask [Unmasked, Unmasked, Masked, Unmasked], and
-values [1.0, 2.0, <NA bitpattern>, 7.0] respectively.
+mask [Exposed, Exposed, Hidden, Exposed], and
+values [1.0, 2.0, <NA bitpattern>, 7.0] for the masked and
+NA dtype versions respectively.
 
 It may be worth overloading the np.NA __call__ method to accept a dtype,
 returning a zero-dimensional array with a missing value of that dtype.
 Without doing this, NA printouts would look like::
 
-    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], namasked=True))
-    array(NA, dtype='float64', namasked=True)
+    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], maskna=True))
+    array(NA, dtype='float64', maskna=True)
     >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]'))
     array(NA, dtype='NA[<f8]')
 
 but with this, they could be printed as::
 
-    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], namasked=True))
+    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], maskna=True))
     NA('float64')
     >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]'))
     NA('NA[<f8]')
@@ -274,12 +277,12 @@ from another view which doesn't have them masked. For example::
 
     >>> a = np.array([1,2])
     >>> b = a.view()
-    >>> b.flags.hasnamask = True
+    >>> b.flags.hasmaskna = True
     >>> b
-    array([1,2], namasked=True)
+    array([1,2], maskna=True)
     >>> b[0] = np.NA
     >>> b
-    array([NA,2], namasked=True)
+    array([NA,2], maskna=True)
     >>> a
     array([1,2])
     >>> # The underlying number 1 value in 'a[0]' was untouched
@@ -351,10 +354,10 @@ Creating Masked Arrays
 There are two flags which indicate and control the nature of the mask
 used in masked arrays.
 
-First is 'arr.flags.hasnamask', which is True for all masked arrays and
+First is 'arr.flags.hasmaskna', which is True for all masked arrays and
 may be set to True to add a mask to an array which does not have one.
 
-Second is 'arr.flags.ownnamask', which is True if the array owns the
+Second is 'arr.flags.ownmaskna', which is True if the array owns the
 memory to the mask, and False if the array has no mask, or has a view
 into the mask of another array. If this is set to False in a masked
 array, the array will create a copy of the mask so that further modifications
@@ -402,8 +405,16 @@ New functions added to the ndarray are::
         array is unmasked and has the 'NA' part stripped from the
         parameterized type ('NA[f8]' becomes just 'f8').
 
-    arr.view(namasked=True)
-        This is a shortcut for 'a = arr.view(); a.flags.hasnamask=True'.
+    arr.view(maskna=True)
+        This is a shortcut for
+        >>> a = arr.view()
+        >>> a.flags.hasmaskna = True
+
+    arr.view(ownmaskna=True)
+        This is a shortcut for
+        >>> a = arr.view()
+        >>> a.flags.hasmaskna = True
+        >>> a.flags.ownmaskna = True
 
 Element-wise UFuncs With Missing Values
 =======================================
@@ -461,9 +472,9 @@ will also use the unmasked value counts for their calculations if
 
 Some examples::
 
-    >>> a = np.array([1., 3., np.NA, 7.], namasked=True)
+    >>> a = np.array([1., 3., np.NA, 7.], maskna=True)
     >>> np.sum(a)
-    array(NA, dtype='<f8', masked=True)
+    array(NA, dtype='<f8', maskna=True)
     >>> np.sum(a, skipna=True)
     11.0
     >>> np.mean(a)
@@ -471,11 +482,11 @@ Some examples::
     >>> np.mean(a, skipna=True)
     3.6666666666666665
 
-    >>> a = np.array([np.NA, np.NA], dtype='f8', namasked=True)
+    >>> a = np.array([np.NA, np.NA], dtype='f8', maskna=True)
     >>> np.sum(a, skipna=True)
     0.0
     >>> np.max(a, skipna=True)
-    array(NA, dtype='<f8', namasked=True)
+    array(NA, dtype='<f8', maskna=True)
     >>> np.mean(a)
     NA('<f8')
     >>> np.mean(a, skipna=True)
@@ -487,19 +498,23 @@ The functions 'np.any' and 'np.all' require some special consideration,
 just as logical_and and logical_or do. Maybe the best way to describe
 their behavior is through a series of examples::
 
-    >>> np.any(np.array([False, False, False], namasked=True))
+    >>> np.any(np.array([False, False, False], maskna=True))
     False
-    >>> np.any(np.array([False, NA, False], namasked=True))
+    >>> np.any(np.array([False, np.NA, False], maskna=True))
     NA
-    >>> np.any(np.array([False, NA, True], namasked=True))
+    >>> np.any(np.array([False, np.NA, True], maskna=True))
     True
 
-    >>> np.all(np.array([True, True, True], namasked=True))
+    >>> np.all(np.array([True, True, True], maskna=True))
     True
-    >>> np.all(np.array([True, NA, True], namasked=True))
+    >>> np.all(np.array([True, np.NA, True], maskna=True))
     NA
-    >>> np.all(np.array([False, NA, True], namasked=True))
+    >>> np.all(np.array([False, np.NA, True], maskna=True))
     False
+
+Since 'np.any' is the reduction for 'np.logical_or', and 'np.all'
+is the reduction for 'np.logical_and', it makes sense for them to
+have a 'skipna=' parameter like the other similar reduction functions.
 
 Parameterized NA Data Types
 ===========================
@@ -609,14 +624,124 @@ The important part of future-proofing the design is making sure
 the C ABI-level choices and the Python API-level choices have a natural
 transition to multi-NA support. Here is one way multi-NA support could look::
 
-    >>> a = np.array([np.NA(1), 3, np.NA(2)], namasked='multi')
+    >>> a = np.array([np.NA(1), 3, np.NA(2)], maskna='multi')
     >>> np.sum(a)
-    NA(1)
+    NA(1, dtype='<i4')
     >>> np.sum(a[1:])
-    NA(2)
-    >>> b = np.array([np.NA, 2, 5], namasked=True)
+    NA(2, dtype='<i4')
+    >>> b = np.array([np.NA, 2, 5], maskna=True)
     >>> a + b
-    array([NA(0), 5, NA(2)], namasked='multi')
+    array([NA(0), 5, NA(2)], maskna='multi')
+
+The design of this NEP does not distinguish between NAs that come
+from an NA mask or NAs that come from an NA dtype. Both of these get
+treated equivalently in computations, with masks dominating over NA
+dtypes.::
+
+    >>> a = np.array([np.NA, 2, 5], maskna=True)
+    >>> b = np.array([1, np.NA, 7], dtype='NA')
+    >>> a + b
+    array([NA, NA, 12], maskna=True)
+
+The multi-NA approach allows one to distinguish between these NAs,
+through assigning different payloads to the different types. If we
+extend the 'skipna=' parameter to accept a list of payloads in addition
+to True/False, one could do this::
+
+    >>> a = np.array([np.NA(1), 2, 5], maskna='multi')
+    >>> b = np.array([1, np.NA(0), 7], dtype='NA[f4,multi]')
+    >>> a + b
+    array([NA(1), NA(0), 12], maskna='multi')
+    >>> np.sum(a, skipna=0)
+    NA(1, dtype='<i4')
+    >>> np.sum(a, skipna=1)
+    7
+    >>> np.sum(b, skipna=0)
+    8
+    >>> np.sum(b, skipna=1)
+    NA(0, dtype='<f4')
+    >>> np.sum(a+b, skipna=(0,1))
+    12
+
+Differences with numpy.ma
+=========================
+
+The computational model that numpy.ma uses does not strictly adhere to
+either the NA or the IGNORE model. This section exhibits some examples
+of how these differences affect simple computations. This information
+will be very important for helping users navigate between the systems,
+so a summary probably should be put in a table in the documentation.::
+
+    >>> a = np.random.random((3, 2))
+    >>> mask = [[False, True], [True, True], [False, False]]
+    >>> b1 = np.ma.masked_array(a, mask=mask)
+    >>> b2 = a.view(maskna=True)
+    >>> b2[mask] = np.NA
+
+    >>> b1
+    masked_array(data =
+     [[0.110804969841 --]
+     [-- --]
+     [0.955128477746 0.440430735546]],
+                 mask =
+     [[False  True]
+     [ True  True]
+     [False False]],
+           fill_value = 1e+20)
+    >>> b2
+    array([[0.110804969841, NA],
+           [NA, NA],
+           [0.955128477746, 0.440430735546]],
+           maskna=True)
+
+    >>> b1.mean(axis=0)
+    masked_array(data = [0.532966723794 0.440430735546],
+                 mask = [False False],
+           fill_value = 1e+20)
+
+    >>> b2.mean(axis=0)
+    array([NA, NA], dtype='<f8', maskna=True)
+    >>> b2.mean(axis=0, skipna=True)
+    array([0.532966723794 0.440430735546], maskna=True)
+
+For functions like np.mean, when 'skipna=True', the behavior
+for all NAs is consistent with an empty array::
+
+    >>> b1.mean(axis=1)
+    masked_array(data = [0.110804969841 -- 0.697779606646],
+                 mask = [False  True False],
+           fill_value = 1e+20)
+
+    >>> b2.mean(axis=1)
+    array([NA, NA, 0.697779606646], maskna=True)
+    >>> b2.mean(axis=1, skipna=True)
+    RuntimeWarning: invalid value encountered in double_scalars
+    array([0.110804969841, nan, 0.697779606646], maskna=True)
+
+    >>> np.mean([])
+    RuntimeWarning: invalid value encountered in double_scalars
+    nan
+
+In particular, note that numpy.ma generally skips masked values,
+except returns masked when all the values are masked, while
+the 'skipna=' parameter returns zero when all the values are NA,
+to be consistent with the result of np.sum([])::
+
+    >>> b1[1]
+    masked_array(data = [-- --],
+                 mask = [ True  True],
+           fill_value = 1e+20)
+    >>> b2[1]
+    array([NA, NA], dtype='<f8', maskna=True)
+    >>> b1[1].sum()
+    masked
+    >>> b2[1].sum()
+    NA(dtype='<f8')
+    >>> b2[1].sum(skipna=True)
+    0.0
+
+    >>> np.sum([])
+    0.0
 
 PEP 3118
 ========
@@ -696,28 +821,28 @@ This gives us the following additions to the PyArrayObject::
     /*
      * Descriptor for the mask dtype.
      *   If no mask: NULL
-     *   If mask   : bool/structured dtype of bools
+     *   If mask   : bool/uint8/structured dtype of mask dtypes
      */
-    PyArray_Descr *maskdescr;
+    PyArray_Descr *maskna_descr;
     /*
      * Raw data buffer for mask. If the array has the flag
-     * NPY_ARRAY_OWNNAMASK enabled, it owns this memory and
+     * NPY_ARRAY_OWNMASKNA enabled, it owns this memory and
      * must call PyArray_free on it when destroyed.
      */
-    npy_uint8 *maskdata;
+    npy_mask *maskna_data;
     /*
      * Just like dimensions and strides point into the same memory
      * buffer, we now just make the buffer 3x the nd instead of 2x
      * and use the same buffer.
      */
-    npy_intp *maskstrides;
+    npy_intp *maskna_strides;
 
 There are 2 (or 3) flags which must be added to the array flags::
 
-    NPY_ARRAY_HASNAMASK
-    NPY_ARRAY_OWNNAMASK
+    NPY_ARRAY_HASMASKNA
+    NPY_ARRAY_OWNMASKNA
     /* To possibly add in a later revision */
-    NPY_ARRAY_HARDNAMASK
+    NPY_ARRAY_HARDMASKNA
 
 To allow the easy detection of NA support, and whether an array
 has any missing values, we add the following functions:
@@ -807,7 +932,7 @@ NPY_ITER_ARRAYMASK
     can be only one such mask, and there cannot also be a virtual
     mask.
 
-    As a special case, if the flag NPY_ITER_USE_NAMASK is specified
+    As a special case, if the flag NPY_ITER_USE_MASKNA is specified
     at the same time, the mask for the operand is used instead
     of the operand itself. If the operand has no mask but is
     based on an NA dtype, that mask exposed by the iterator converts
@@ -827,14 +952,14 @@ Iterator NA-array Features
 
 We add several new per-operand flags:
 
-NPY_ITER_USE_NAMASK
+NPY_ITER_USE_MASKNA
     If the operand has an NA dtype, an NA mask, or both, this adds a new
     virtual operand to the end of the operand list which iterates
     over the mask of the particular operand.
 
-NPY_ITER_IGNORE_NAMASK
+NPY_ITER_IGNORE_MASKNA
     If an operand has an NA mask, by default the iterator will raise
-    an exception unless NPY_ITER_USE_NAMASK is specified. This flag
+    an exception unless NPY_ITER_USE_MASKNA is specified. This flag
     disables that check, and is intended for cases where one has first
     checked that all the elements in the array are not NA using the
     PyArray_ContainsNA function.

@@ -12,7 +12,7 @@ typedef npy_uint8 UInt8;
 typedef npy_int16 Int16;
 typedef npy_uint16 UInt16;
 typedef npy_int32 Int32;
-typedef npy_uint32 UInt32; 
+typedef npy_uint32 UInt32;
 typedef npy_int64 Int64;
 typedef npy_uint64 UInt64;
 typedef npy_float32 Float32;
@@ -65,7 +65,7 @@ typedef struct { Float64 r, i; } Complex64;
 
 #define PyArray(m)                      ((PyArrayObject *)(m))
 #define PyArray_ISFORTRAN_CONTIGUOUS(m) (((PyArray(m))->flags & FORTRAN_CONTIGUOUS) != 0)
-#define PyArray_ISWRITABLE  PyArray_ISWRITEABLE 
+#define PyArray_ISWRITABLE  PyArray_ISWRITEABLE
 
 
-#endif 
+#endif

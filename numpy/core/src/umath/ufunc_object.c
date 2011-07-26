@@ -61,7 +61,6 @@
 
 /********************/
 #define USE_USE_DEFAULTS 1
-#define USE_NEW_ITERATOR_GENFUNC 1
 /********************/
 
 /* ---------------------------------------------------------------- */
@@ -798,7 +797,7 @@ static int get_ufunc_arguments(PyUFuncObject *self,
         }
         /* If it's an array, can use it */
         if (PyArray_Check(obj)) {
-            if (!PyArray_ISWRITEABLE(obj)) {
+            if (!PyArray_ISWRITEABLE((PyArrayObject *)obj)) {
                 PyErr_SetString(PyExc_ValueError,
                                 "return array is not writeable");
                 return -1;
@@ -890,7 +889,7 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                         }
 
                         if (PyArray_Check(value)) {
-                            if (!PyArray_ISWRITEABLE(value)) {
+                            if (!PyArray_ISWRITEABLE((PyArrayObject *)value)) {
                                 PyErr_SetString(PyExc_ValueError,
                                         "return array is not writeable");
                                 goto fail;
@@ -1116,6 +1115,7 @@ prepare_ufunc_output(PyUFuncObject *self,
 {
     if (arr_prep != NULL && arr_prep != Py_None) {
         PyObject *res;
+        PyArrayObject *arr;
 
         res = PyObject_CallFunction(arr_prep, "O(OOi)",
                     *op, self, arr_prep_args, i);
@@ -1128,32 +1128,33 @@ prepare_ufunc_output(PyUFuncObject *self,
             Py_XDECREF(res);
             return -1;
         }
+        arr = (PyArrayObject *)res;
 
         /* If the same object was returned, nothing to do */
-        if (res == (PyObject *)*op) {
-            Py_DECREF(res);
+        if (arr == *op) {
+            Py_DECREF(arr);
         }
         /* If the result doesn't match, throw an error */
-        else if (PyArray_NDIM(res) != PyArray_NDIM(*op) ||
-                !PyArray_CompareLists(PyArray_DIMS(res),
+        else if (PyArray_NDIM(arr) != PyArray_NDIM(*op) ||
+                !PyArray_CompareLists(PyArray_DIMS(arr),
                                       PyArray_DIMS(*op),
-                                      PyArray_NDIM(res)) ||
-                !PyArray_CompareLists(PyArray_STRIDES(res),
+                                      PyArray_NDIM(arr)) ||
+                !PyArray_CompareLists(PyArray_STRIDES(arr),
                                       PyArray_STRIDES(*op),
-                                      PyArray_NDIM(res)) ||
-                !PyArray_EquivTypes(PyArray_DESCR(res),
+                                      PyArray_NDIM(arr)) ||
+                !PyArray_EquivTypes(PyArray_DESCR(arr),
                                     PyArray_DESCR(*op))) {
             PyErr_SetString(PyExc_TypeError,
                     "__array_prepare__ must return an "
                     "ndarray or subclass thereof which is "
                     "otherwise identical to its input");
-            Py_DECREF(res);
+            Py_DECREF(arr);
             return -1;
         }
         /* Replace the op value */
         else {
             Py_DECREF(*op);
-            *op = (PyArrayObject *)res;
+            *op = arr;
         }
     }
 
@@ -3468,7 +3469,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
         return NULL;
     }
     /* Check to see if input is zero-dimensional */
-    if (mp->nd == 0) {
+    if (PyArray_NDIM(mp) == 0) {
         PyErr_Format(PyExc_TypeError, "cannot %s on a scalar",
                      _reduce_type[operation]);
         Py_XDECREF(otype);
@@ -3487,9 +3488,9 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     }
 
     if (axis < 0) {
-        axis += mp->nd;
+        axis += PyArray_NDIM(mp);
     }
-    if (axis < 0 || axis >= mp->nd) {
+    if (axis < 0 || axis >= PyArray_NDIM(mp)) {
         PyErr_SetString(PyExc_ValueError, "axis not in array");
         Py_XDECREF(otype);
         Py_DECREF(mp);
@@ -3500,7 +3501,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
       * unless otype already specified.
       */
     if (otype == NULL && out != NULL) {
-        otype = out->descr;
+        otype = PyArray_DESCR(out);
         Py_INCREF(otype);
     }
     if (otype == NULL) {
@@ -3515,7 +3516,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
             if (PyTypeNum_ISBOOL(typenum)) {
                 typenum = PyArray_LONG;
             }
-            else if ((size_t)mp->descr->elsize < sizeof(long)) {
+            else if ((size_t)PyArray_DESCR(mp)->elsize < sizeof(long)) {
                 if (PyTypeNum_ISUNSIGNED(typenum)) {
                     typenum = PyArray_ULONG;
                 }
@@ -4322,16 +4323,16 @@ ufunc_outer(PyUFuncObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
     /* Construct new shape tuple */
-    shape1 = PyTuple_New(ap1->nd);
+    shape1 = PyTuple_New(PyArray_NDIM(ap1));
     if (shape1 == NULL) {
         goto fail;
     }
-    for (i = 0; i < ap1->nd; i++) {
+    for (i = 0; i < PyArray_NDIM(ap1); i++) {
         PyTuple_SET_ITEM(shape1, i,
-                PyLong_FromLongLong((longlong)ap1->dimensions[i]));
+                PyLong_FromLongLong((longlong)PyArray_DIMS(ap1)[i]));
     }
-    shape2 = PyTuple_New(ap2->nd);
-    for (i = 0; i < ap2->nd; i++) {
+    shape2 = PyTuple_New(PyArray_NDIM(ap2));
+    for (i = 0; i < PyArray_NDIM(ap2); i++) {
         PyTuple_SET_ITEM(shape2, i, PyInt_FromLong((long) 1));
     }
     if (shape2 == NULL) {

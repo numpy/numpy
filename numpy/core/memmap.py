@@ -26,6 +26,15 @@ class memmap(ndarray):
     memmap's are array-like objects.  This differs from Python's ``mmap``
     module, which uses file-like objects.
 
+    This subclass of ndarray has some unpleasant interactions with
+    some operations, because it doesn't quite fit properly as a subclass.
+    An alternative to using this subclass is to create the ``mmap``
+    object yourself, then create an ndarray with ndarray.__new__ directly,
+    passing the object created in its 'buffer=' parameter.
+
+    This class may at some point be turned into a factory function
+    which returns a view into an mmap buffer.
+
     Parameters
     ----------
     filename : str or file-like object
@@ -275,27 +284,5 @@ class memmap(ndarray):
         memmap
 
         """
-        if self._mmap is not None:
-            self._mmap.flush()
-
-    def _close(self):
-        """Close the memmap file.  Only do this when deleting the object."""
-        if self.base is self._mmap:
-            # The python mmap probably causes flush on close, but
-            # we put this here for safety
-            self._mmap.flush()
-            self._mmap.close()
-            self._mmap = None
-
-    def __del__(self):
-        # We first check if we are the owner of the mmap, rather than
-        # a view, so deleting a view does not call _close
-        # on the parent mmap
-        if self._mmap is self.base:
-            try:
-                # First run tell() to see whether file is open
-                self._mmap.tell()
-            except ValueError:
-                pass
-            else:
-                self._close()
+        if self.base is not None and hasattr(self.base, 'flush'):
+            self.base.flush()

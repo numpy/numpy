@@ -31,6 +31,7 @@ PyArray_NewFlagsObject(PyObject *obj)
 {
     PyObject *flagobj;
     int flags;
+
     if (obj == NULL) {
         flags = NPY_ARRAY_C_CONTIGUOUS |
                 NPY_ARRAY_OWNDATA |
@@ -38,7 +39,13 @@ PyArray_NewFlagsObject(PyObject *obj)
                 NPY_ARRAY_ALIGNED;
     }
     else {
-        flags = PyArray_FLAGS(obj);
+        if (!PyArray_Check(obj)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Need a NumPy array to create a flags object");
+            return NULL;
+        }
+
+        flags = PyArray_FLAGS((PyArrayObject *)obj);
     }
     flagobj = PyArrayFlags_Type.tp_alloc(&PyArrayFlags_Type, 0);
     if (flagobj == NULL) {
@@ -59,32 +66,32 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 
     if (flagmask & NPY_ARRAY_F_CONTIGUOUS) {
         if (_IsFortranContiguous(ret)) {
-            ret->flags |= NPY_ARRAY_F_CONTIGUOUS;
-            if (ret->nd > 1) {
-                ret->flags &= ~NPY_ARRAY_C_CONTIGUOUS;
+            PyArray_ENABLEFLAGS(ret, NPY_ARRAY_F_CONTIGUOUS);
+            if (PyArray_NDIM(ret) > 1) {
+                PyArray_CLEARFLAGS(ret, NPY_ARRAY_C_CONTIGUOUS);
             }
         }
         else {
-            ret->flags &= ~NPY_ARRAY_F_CONTIGUOUS;
+            PyArray_CLEARFLAGS(ret, NPY_ARRAY_F_CONTIGUOUS);
         }
     }
     if (flagmask & NPY_ARRAY_C_CONTIGUOUS) {
         if (_IsContiguous(ret)) {
-            ret->flags |= NPY_ARRAY_C_CONTIGUOUS;
-            if (ret->nd > 1) {
-                ret->flags &= ~NPY_ARRAY_F_CONTIGUOUS;
+            PyArray_ENABLEFLAGS(ret, NPY_ARRAY_C_CONTIGUOUS);
+            if (PyArray_NDIM(ret) > 1) {
+                PyArray_CLEARFLAGS(ret, NPY_ARRAY_F_CONTIGUOUS);
             }
         }
         else {
-            ret->flags &= ~NPY_ARRAY_C_CONTIGUOUS;
+            PyArray_CLEARFLAGS(ret, NPY_ARRAY_C_CONTIGUOUS);
         }
     }
     if (flagmask & NPY_ARRAY_ALIGNED) {
         if (_IsAligned(ret)) {
-            ret->flags |= NPY_ARRAY_ALIGNED;
+            PyArray_ENABLEFLAGS(ret, NPY_ARRAY_ALIGNED);
         }
         else {
-            ret->flags &= ~NPY_ARRAY_ALIGNED;
+            PyArray_CLEARFLAGS(ret, NPY_ARRAY_ALIGNED);
         }
     }
     /*
@@ -93,10 +100,10 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
      */
     if (flagmask & NPY_ARRAY_WRITEABLE) {
         if (_IsWriteable(ret)) {
-            ret->flags |= NPY_ARRAY_WRITEABLE;
+            PyArray_ENABLEFLAGS(ret, NPY_ARRAY_WRITEABLE);
         }
         else {
-            ret->flags &= ~NPY_ARRAY_WRITEABLE;
+            PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);
         }
     }
     return;
@@ -115,20 +122,20 @@ _IsContiguous(PyArrayObject *ap)
     intp dim;
     int i;
 
-    if (ap->nd == 0) {
+    if (PyArray_NDIM(ap) == 0) {
         return 1;
     }
-    sd = ap->descr->elsize;
-    if (ap->nd == 1) {
-        return ap->dimensions[0] == 1 || sd == ap->strides[0];
+    sd = PyArray_DESCR(ap)->elsize;
+    if (PyArray_NDIM(ap) == 1) {
+        return PyArray_DIMS(ap)[0] == 1 || sd == PyArray_STRIDES(ap)[0];
     }
-    for (i = ap->nd - 1; i >= 0; --i) {
-        dim = ap->dimensions[i];
+    for (i = PyArray_NDIM(ap) - 1; i >= 0; --i) {
+        dim = PyArray_DIMS(ap)[i];
         /* contiguous by definition */
         if (dim == 0) {
             return 1;
         }
-        if (ap->strides[i] != sd) {
+        if (PyArray_STRIDES(ap)[i] != sd) {
             return 0;
         }
         sd *= dim;
@@ -145,20 +152,20 @@ _IsFortranContiguous(PyArrayObject *ap)
     intp dim;
     int i;
 
-    if (ap->nd == 0) {
+    if (PyArray_NDIM(ap) == 0) {
         return 1;
     }
-    sd = ap->descr->elsize;
-    if (ap->nd == 1) {
-        return ap->dimensions[0] == 1 || sd == ap->strides[0];
+    sd = PyArray_DESCR(ap)->elsize;
+    if (PyArray_NDIM(ap) == 1) {
+        return PyArray_DIMS(ap)[0] == 1 || sd == PyArray_STRIDES(ap)[0];
     }
-    for (i = 0; i < ap->nd; ++i) {
-        dim = ap->dimensions[i];
+    for (i = 0; i < PyArray_NDIM(ap); ++i) {
+        dim = PyArray_DIMS(ap)[i];
         /* fortran contiguous by definition */
         if (dim == 0) {
             return 1;
         }
-        if (ap->strides[i] != sd) {
+        if (PyArray_STRIDES(ap)[i] != sd) {
             return 0;
         }
         sd *= dim;

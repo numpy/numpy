@@ -4,7 +4,7 @@ import warnings
 
 from numpy import memmap
 from numpy import arange, allclose
-from numpy.testing import TestCase, assert_, assert_array_equal
+from numpy.testing import *
 
 class TestMemmap(TestCase):
     def setUp(self):
@@ -69,23 +69,22 @@ class TestMemmap(TestCase):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)
         fp[:] = self.data[:]
+        assert_equal(fp[0], self.data[0])
         fp.flush()
 
     def test_del(self):
         # Make sure a view does not delete the underlying mmap
         fp_base = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)
-        fp_view = fp_base[:]
-        class ViewCloseError(Exception):
-            pass
-        _close = memmap._close
-        def replace_close(self):
-            raise ViewCloseError('View should not call _close on memmap')
-        try:
-            memmap._close = replace_close
-            del fp_view
-        finally:
-            memmap._close = _close
+        fp_base[0] = 5
+        fp_view = fp_base[0:1]
+        assert_equal(fp_view[0], 5)
+        del fp_view
+        # Should still be able to access and assign values after
+        # deleting the view
+        assert_equal(fp_base[0], 5)
+        fp_base[0] = 6
+        assert_equal(fp_base[0], 6)
 
 if __name__ == "__main__":
     run_module_suite()
