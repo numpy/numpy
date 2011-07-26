@@ -120,7 +120,7 @@ na_repr(NpyNA_fields *self)
             s  = PyUString_FromFormat("NA(%d, dtype=", (int)self->payload);
         }
         PyUString_ConcatAndDel(&s,
-                arraydescr_short_construction_repr(self->dtype));
+                arraydescr_short_construction_repr(self->dtype, 1));
         PyUString_ConcatAndDel(&s,
                 PyUString_FromString(")"));
         return s;
