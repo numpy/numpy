@@ -53,132 +53,172 @@ _use_default_type(PyObject *op)
     typenum = -1;
     l = 0;
     type = (PyObject *)Py_TYPE(op);
-    while (l < PyArray_NUMUSERTYPES) {
+    while (l < NPY_NUMUSERTYPES) {
         if (type == (PyObject *)(userdescrs[l]->typeobj)) {
-            typenum = l + PyArray_USERDEF;
+            typenum = l + NPY_USERDEF;
             break;
         }
         l++;
     }
     if (typenum == -1) {
-        typenum = PyArray_OBJECT;
+        typenum = NPY_OBJECT;
     }
     return PyArray_DescrFromType(typenum);
 }
 
-
 /*
- * op is an object to be converted to an ndarray.
+ * Recursively examines the object to determine an appropriate dtype
+ * to use for converting to an ndarray.
  *
- * minitype is the minimum type-descriptor needed.
+ * 'obj' is the object to be converted to an ndarray.
  *
- * max is the maximum number of dimensions -- used for recursive call
- * to avoid infinite recursion...
+ * 'maxdims' is the maximum recursion depth.
+ *
+ * 'out_contains_na' gets set to 1 if an np.NA object is encountered.
+ * The NA does not affect the dtype produced, so if this is set to 1
+ * and the result is for an array without NA support, the dtype should
+ * be switched to NPY_OBJECT. When adding multi-NA support, this should
+ * also signal whether just regular NAs or NAs with payloads were seen.
+ *
+ * 'out_dtype' should be either NULL or a minimal starting dtype when
+ * the function is called. It is updated with the results of type
+ * promotion. This dtype does not get updated when processing NA objects.
+ * This is reset to NULL on failure.
+ *
+ * Returns 0 on success, -1 on failure.
  */
-NPY_NO_EXPORT PyArray_Descr *
-_array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
+NPY_NO_EXPORT int
+PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
+                        PyArray_Descr **out_dtype)
 {
-    int l;
+    int i, size;
+    PyArray_Descr *dtype = NULL;
     PyObject *ip;
-    PyArray_Descr *chktype = NULL;
-    PyArray_Descr *outtype;
 #if PY_VERSION_HEX >= 0x02060000
     Py_buffer buffer_view;
 #endif
 
-    /*
-     * These need to come first because if op already carries
-     * a descr structure, then we want it to be the result if minitype
-     * is NULL.
-     */
-    if (PyArray_Check(op)) {
-        chktype = PyArray_DESCR((PyArrayObject *)op);
-        Py_INCREF(chktype);
-        if (minitype == NULL) {
-            return chktype;
+    /* Check if it's an ndarray */
+    if (PyArray_Check(obj)) {
+        dtype = PyArray_DESCR((PyArrayObject *)obj);
+        Py_INCREF(dtype);
+        goto promote_types;
+    }
+
+    /* Check if it's a NumPy scalar */
+    if (PyArray_IsScalar(obj, Generic)) {
+        dtype = PyArray_DescrFromScalar(obj);
+        if (dtype == NULL) {
+            goto fail;
         }
-        Py_INCREF(minitype);
-        goto finish;
+        goto promote_types;
     }
 
-    if (PyArray_IsScalar(op, Generic)) {
-        chktype = PyArray_DescrFromScalar(op);
-        if (minitype == NULL) {
-            return chktype;
+    /* Check if it's a Python scalar */
+    dtype = _array_find_python_scalar_type(obj);
+    if (dtype != NULL) {
+        goto promote_types;
+    }
+
+    /* Check if it's an NA */
+    if (NpyNA_Check(obj)) {
+        *out_contains_na = 1;
+        return 0;
+    }
+
+    /* Check if it's an ASCII string */
+    if (PyBytes_Check(obj)) {
+        int itemsize = PyString_GET_SIZE(obj);
+
+        /* If it's already a big enough string, don't bother type promoting */
+        if (*out_dtype != NULL &&
+                        (*out_dtype)->type_num == NPY_STRING &&
+                        (*out_dtype)->elsize >= itemsize) {
+            return 0;
         }
-        Py_INCREF(minitype);
-        goto finish;
+        dtype = PyArray_DescrNewFromType(NPY_STRING);
+        if (dtype == NULL) {
+            goto fail;
+        }
+        dtype->elsize = itemsize;
+        goto promote_types;
     }
 
-    Py_XINCREF(minitype);
-
-    if (max < 0) {
-        goto deflt;
-    }
-    chktype = _array_find_python_scalar_type(op);
-    if (chktype) {
-        goto finish;
-    }
-
-    if (PyBytes_Check(op)) {
-        chktype = PyArray_DescrNewFromType(PyArray_STRING);
-        chktype->elsize = PyString_GET_SIZE(op);
-        goto finish;
-    }
-
-    if (PyUnicode_Check(op)) {
-        chktype = PyArray_DescrNewFromType(PyArray_UNICODE);
-        chktype->elsize = PyUnicode_GET_DATA_SIZE(op);
+    /* Check if it's a Unicode string */
+    if (PyUnicode_Check(obj)) {
+        int itemsize = PyUnicode_GET_DATA_SIZE(obj);
 #ifndef Py_UNICODE_WIDE
-        chktype->elsize <<= 1;
+        itemsize <<= 1;
 #endif
-        goto finish;
+
+        /*
+         * If it's already a big enough unicode object,
+         * don't bother type promoting
+         */
+        if (*out_dtype != NULL &&
+                        (*out_dtype)->type_num == NPY_UNICODE &&
+                        (*out_dtype)->elsize >= itemsize) {
+            return 0;
+        }
+        dtype = PyArray_DescrNewFromType(NPY_UNICODE);
+        if (dtype == NULL) {
+            goto fail;
+        }
+        dtype->elsize = itemsize;
+        goto promote_types;
     }
 
 #if PY_VERSION_HEX >= 0x02060000
     /* PEP 3118 buffer interface */
     memset(&buffer_view, 0, sizeof(Py_buffer));
-    if (PyObject_GetBuffer(op, &buffer_view, PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
-        PyObject_GetBuffer(op, &buffer_view, PyBUF_FORMAT) == 0) {
+    if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
+        PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT) == 0) {
 
         PyErr_Clear();
-        chktype = _descriptor_from_pep3118_format(buffer_view.format);
+        dtype = _descriptor_from_pep3118_format(buffer_view.format);
         PyBuffer_Release(&buffer_view);
-        if (chktype) {
-            goto finish;
+        if (dtype) {
+            goto promote_types;
         }
     }
-    else if (PyObject_GetBuffer(op, &buffer_view, PyBUF_STRIDES) == 0 ||
-             PyObject_GetBuffer(op, &buffer_view, PyBUF_SIMPLE) == 0) {
+    else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
+             PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
 
         PyErr_Clear();
-        chktype = PyArray_DescrNewFromType(PyArray_VOID);
-        chktype->elsize = buffer_view.itemsize;
+        dtype = PyArray_DescrNewFromType(NPY_VOID);
+        dtype->elsize = buffer_view.itemsize;
         PyBuffer_Release(&buffer_view);
-        goto finish;
+        goto promote_types;
     }
     else {
         PyErr_Clear();
     }
 #endif
 
-    if ((ip=PyObject_GetAttrString(op, "__array_interface__"))!=NULL) {
+    /* The array interface */
+    ip = PyObject_GetAttrString(obj, "__array_interface__");
+    if (ip != NULL) {
         if (PyDict_Check(ip)) {
-            PyObject *new;
-            new = PyDict_GetItemString(ip, "typestr");
-            if (new && PyString_Check(new)) {
-                chktype =_array_typedescr_fromstr(PyString_AS_STRING(new));
+            PyObject *typestr;
+            typestr = PyDict_GetItemString(ip, "typestr");
+            if (typestr && PyString_Check(typestr)) {
+                dtype =_array_typedescr_fromstr(PyString_AS_STRING(typestr));
+                Py_DECREF(ip);
+                if (dtype == NULL) {
+                    goto fail;
+                }
+                goto promote_types;
             }
         }
         Py_DECREF(ip);
-        if (chktype) {
-            goto finish;
-        }
     }
     else {
         PyErr_Clear();
     }
-    if ((ip=PyObject_GetAttrString(op, "__array_struct__")) != NULL) {
+
+    /* The array struct interface */
+    ip = PyObject_GetAttrString(obj, "__array_struct__");
+    if (ip != NULL) {
         PyArrayInterface *inter;
         char buf[40];
 
@@ -187,112 +227,119 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
             if (inter->two == 2) {
                 PyOS_snprintf(buf, sizeof(buf),
                         "|%c%d", inter->typekind, inter->itemsize);
-                chktype = _array_typedescr_fromstr(buf);
+                dtype = _array_typedescr_fromstr(buf);
+                Py_DECREF(ip);
+                if (dtype == NULL) {
+                    goto fail;
+                }
+                goto promote_types;
             }
         }
         Py_DECREF(ip);
-        if (chktype) {
-            goto finish;
-        }
     }
     else {
         PyErr_Clear();
     }
 
+    /* The old buffer interface */
 #if !defined(NPY_PY3K)
-    if (PyBuffer_Check(op)) {
-        chktype = PyArray_DescrNewFromType(PyArray_VOID);
-        chktype->elsize = Py_TYPE(op)->tp_as_sequence->sq_length(op);
+    if (PyBuffer_Check(obj)) {
+        dtype = PyArray_DescrNewFromType(NPY_VOID);
+        if (dtype == NULL) {
+            goto fail;
+        }
+        dtype->elsize = Py_TYPE(obj)->tp_as_sequence->sq_length(obj);
         PyErr_Clear();
-        goto finish;
+        goto promote_types;
     }
 #endif
 
-    if (PyObject_HasAttrString(op, "__array__")) {
-        ip = PyObject_CallMethod(op, "__array__", NULL);
+    /* The __array__ attribute */
+    if (PyObject_HasAttrString(obj, "__array__")) {
+        ip = PyObject_CallMethod(obj, "__array__", NULL);
         if(ip && PyArray_Check(ip)) {
-            chktype = PyArray_DESCR((PyArrayObject *)ip);
-            Py_INCREF(chktype);
+            dtype = PyArray_DESCR((PyArrayObject *)ip);
+            Py_INCREF(dtype);
             Py_DECREF(ip);
-            goto finish;
+            goto promote_types;
         }
         Py_XDECREF(ip);
-        if (PyErr_Occurred()) PyErr_Clear();
+        if (PyErr_Occurred()) {
+            goto fail;
+        }
     }
 
-#if defined(NPY_PY3K)
-    /* FIXME: XXX -- what is the correct thing to do here? */
-#else
-    if (PyInstance_Check(op)) {
-        goto deflt;
+    /* Not exactly sure what this is about... */
+#if !defined(NPY_PY3K)
+    if (PyInstance_Check(obj)) {
+        dtype = _use_default_type(obj);
+        if (dtype == NULL) {
+            goto fail;
+        }
+        else {
+            goto promote_types;
+        }
     }
 #endif
-    if (PySequence_Check(op)) {
-        l = PyObject_Length(op);
-        if (l < 0 && PyErr_Occurred()) {
-            PyErr_Clear();
-            goto deflt;
-        }
-        if (l == 0 && minitype == NULL) {
-            minitype = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
-            if (minitype == NULL) {
-                return NULL;
-            }
-        }
-        while (--l >= 0) {
-            PyArray_Descr *newtype;
-            ip = PySequence_GetItem(op, l);
-            if (ip==NULL) {
-                PyErr_Clear();
-                goto deflt;
-            }
-            chktype = _array_find_type(ip, minitype, max-1);
-            if (chktype == NULL) {
-                Py_XDECREF(minitype);
-                return NULL;
-            }
-            if (minitype == NULL) {
-                minitype = chktype;
-            }
-            else {
-                newtype = PyArray_PromoteTypes(chktype, minitype);
-                Py_DECREF(minitype);
-                minitype = newtype;
-                Py_DECREF(chktype);
-            }
-            Py_DECREF(ip);
-        }
-        chktype = minitype;
-        minitype = NULL;
-        goto finish;
-    }
 
-
- deflt:
-    chktype = _use_default_type(op);
-
- finish:
-    if (minitype == NULL) {
-        outtype = chktype;
-    }
-    else {
-        outtype = PyArray_PromoteTypes(chktype, minitype);
-        Py_DECREF(chktype);
-        Py_DECREF(minitype);
-    }
-    if (outtype == NULL) {
-        return NULL;
-    }
     /*
-     * VOID Arrays should not occur by "default"
-     * unless input was already a VOID
+     * If we reached the maximum recursion depth without hitting one
+     * of the above cases, the output dtype should be OBJECT
      */
-    if (outtype->type_num == PyArray_VOID &&
-            (minitype == NULL || minitype->type_num != PyArray_VOID)) {
-        Py_DECREF(outtype);
-        return PyArray_DescrFromType(NPY_OBJECT);
+    if (maxdims == 0 || !PySequence_Check(obj)) {
+        if (*out_dtype == NULL || (*out_dtype)->type_num != NPY_OBJECT) {
+            Py_XDECREF(*out_dtype);
+            *out_dtype = PyArray_DescrFromType(NPY_OBJECT);
+            if (*out_dtype == NULL) {
+                return -1;
+            }
+        }
+        return 0;
     }
-    return outtype;
+
+    /* Recursive case */
+    size = PySequence_Size(obj);
+    if (size < 0) {
+        goto fail;
+    }
+    /* Recursive call for each sequence item */
+    for (i = 0; i < size; ++i) {
+        ip = PySequence_GetItem(obj, i);
+        if (ip==NULL) {
+            goto fail;
+        }
+        if (PyArray_DTypeFromObject(ip, maxdims - 1,
+                            out_contains_na, out_dtype) < 0) {
+            goto fail;
+        }
+        Py_DECREF(ip);
+    }
+
+    return 0;
+
+
+promote_types:
+    /* Set 'out_dtype' if it's NULL */
+    if (*out_dtype == NULL) {
+        *out_dtype = dtype;
+        return 0;
+    }
+    /* Do type promotion with 'out_dtype' */
+    else {
+        PyArray_Descr *res_dtype = PyArray_PromoteTypes(dtype, *out_dtype);
+        Py_DECREF(dtype);
+        if (res_dtype == NULL) {
+            return -1;
+        }
+        Py_DECREF(*out_dtype);
+        *out_dtype = res_dtype;
+        return 0;
+    }
+
+fail:
+    Py_XDECREF(*out_dtype);
+    *out_dtype = NULL;
+    return -1;
 }
 
 /* new reference */
