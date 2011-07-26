@@ -273,8 +273,7 @@ PyArray_IsNA(PyObject *obj)
             return NULL;
         }
 
-        PyErr_SetString(PyExc_RuntimeError,
-                "isna isn't done yet");
+        PyErr_SetString(PyExc_RuntimeError, "isna isn't done yet");
         return NULL;
 
         dtype = PyArray_DescrFromType(NPY_BOOL);
