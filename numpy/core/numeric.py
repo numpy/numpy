@@ -1330,15 +1330,15 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     else:
         cName = "array"
 
-    skiptype = (arr.dtype.type in _typelessdata) and arr.size > 0
+    skipdtype = (arr.dtype.type in _typelessdata) and arr.size > 0
 
     if arr.flags.maskna:
         lst += ", maskna=True"
         # If everything is NA, can't skip the type
-        if skiptype and np.all(np.isna(arr)):
-            skiptype = False
+        if skipdtype and all(isna(arr)):
+            skipdtype = False
 
-    if skiptype:
+    if skipdtype:
         return "%s(%s)" % (cName, lst)
     else:
         typename = arr.dtype.name

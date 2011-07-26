@@ -1029,17 +1029,37 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         return 0;
     }
 
+
     if (PyArray_Check(*op)) {
         if (((*op_itflags) & NPY_OP_ITFLAG_WRITE) &&
                     (!PyArray_CHKFLAGS(*op, NPY_ARRAY_WRITEABLE))) {
             PyErr_SetString(PyExc_ValueError,
-                    "Iterator operand was a non-writeable array, but was "
+                    "Operand was a non-writeable array, but "
                     "flagged as writeable");
             return 0;
         }
         if (!(flags & NPY_ITER_ZEROSIZE_OK) && PyArray_SIZE(*op) == 0) {
             PyErr_SetString(PyExc_ValueError,
                     "Iteration of zero-sized operands is not enabled");
+            return 0;
+        }
+        /*
+         * Writeable USE_MASKNA operands must have a mask
+         * (or NA dtype, later)
+         */
+        if ((op_flags & NPY_ITER_USE_MASKNA) != 0 &&
+                            ((*op_itflags) & NPY_OP_ITFLAG_WRITE) != 0 &&
+                            !PyArray_HASMASKNA(*op)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Operand is writeable and flagged USE_MASKNA, "
+                    "but the operand does not have an NA mask");
+            return 0;
+        }
+        /* Arrays with NA masks must have USE_MASKNA specified */
+        if ((op_flags & NPY_ITER_USE_MASKNA) == 0 && PyArray_HASMASKNA(*op)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Operand has an NA mask but the operation does "
+                    "not support NA via the flag USE_MASKNA");
             return 0;
         }
         *op_dataptr = PyArray_BYTES(*op);
@@ -1234,6 +1254,13 @@ npyiter_prepare_operands(int nop, int first_maskna_op, PyArrayObject **op_in,
             }
             return 0;
         }
+    }
+
+    /* Initialize the mask virtual operands to NULL for now */
+    for (iop = first_maskna_op; iop < nop; ++iop) {
+        op[iop] = NULL;
+        op_dataptr[iop] = NULL;
+        op_dtype[iop] = NULL;
     }
 
     /* If all the operands were NULL, it's an error */
@@ -2842,6 +2869,17 @@ npyiter_allocate_arrays(NpyIter *iter,
             op[iop] = out;
 
             /*
+             * Add an NA mask to the array if needed. When NA dtypes
+             * are supported, this should skip allocating the mask
+             * if the allocated array has an NA dtype.
+             */
+            if (op_flags[iop] & NPY_ITER_USE_MASKNA) {
+                if (PyArray_AllocateMaskNA(out, 1, 0) < 0) {
+                    return 0;
+                }
+            }
+
+            /*
              * Now we need to replace the pointers and strides with values
              * from the new array.
              */
@@ -2869,6 +2907,12 @@ npyiter_allocate_arrays(NpyIter *iter,
                                         0, NULL, NULL, NULL, 0, NULL);
             if (temp == NULL) {
                 return 0;
+            }
+            /* Add an NA mask if needed */
+            if (PyArray_HASMASKNA(op[iop])) {
+                if (PyArray_AllocateMaskNA(temp, 1, 0) < 0) {
+                    return 0;
+                }
             }
             if (PyArray_CopyInto(temp, op[iop]) != 0) {
                 Py_DECREF(temp);
@@ -2911,8 +2955,18 @@ npyiter_allocate_arrays(NpyIter *iter,
             if (temp == NULL) {
                 return 0;
             }
+            /* Add an NA mask if needed */
+            if (PyArray_HASMASKNA(op[iop])) {
+                if (PyArray_AllocateMaskNA(temp, 1, 0) < 0) {
+                    return 0;
+                }
+            }
 
-            /* If the data will be read, copy it into temp */
+            /*
+             * If the data will be read, copy it into temp.
+             * TODO: It might be possible to do a view into
+             *       op[iop]'s mask instead here.
+             */
             if (op_itflags[iop] & NPY_OP_ITFLAG_READ) {
                 if (PyArray_CopyInto(temp, op[iop]) != 0) {
                     Py_DECREF(temp);
