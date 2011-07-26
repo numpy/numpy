@@ -681,7 +681,8 @@ timedeltatype_repr(PyObject *self)
         ret = PyUString_FromString("numpy.timedelta64('NaT'");
     }
     else {
-        ret = PyUString_FromFormat("numpy.timedelta64(%lld", scal->obval);
+        /* Can't use "%lld" since it requires Python 2.7 or greater */
+        ret = PyUString_FromFormat("numpy.timedelta64(%ld", (long)scal->obval);
     }
     /* The metadata unit */
     if (scal->obmeta.base == NPY_FR_GENERIC) {
@@ -783,8 +784,9 @@ timedeltatype_str(PyObject *self)
         ret = PyUString_FromString("NaT");
     }
     else {
-        ret = PyUString_FromFormat("%lld ",
-                                (long long)(scal->obval * scal->obmeta.num));
+        /* Can't use "%lld" since it requires Python 2.7 or greater */
+        ret = PyUString_FromFormat("%ld ",
+                                (long)(scal->obval * scal->obmeta.num));
         PyUString_ConcatAndDel(&ret,
                 PyUString_FromString(basestr));
     }
