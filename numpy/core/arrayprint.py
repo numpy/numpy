@@ -583,7 +583,9 @@ class FloatFormat(object):
         import numeric as _nc
         err = _nc.seterr(invalid='ignore')
         try:
-            if isnan(x):
+            if isna(x):
+                return str(x)
+            elif isnan(x):
                 if self.sign:
                     return self.special_fmt % ('+' + _nan_str,)
                 else:
