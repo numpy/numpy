@@ -1335,7 +1335,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     if arr.flags.maskna:
         lst += ", maskna=True"
         # If everything is NA, can't skip the type
-        if np.all(np.isna(arr)):
+        if skiptype and np.all(np.isna(arr)):
             skiptype = False
 
     if skiptype:
