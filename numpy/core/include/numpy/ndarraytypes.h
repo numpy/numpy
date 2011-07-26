@@ -546,17 +546,17 @@ typedef struct {
  *These are inherited for global data-type if any data-types in the
  * field have them
  */
-#define NPY_FROM_FIELDS    (NPY_NEEDS_INIT | NPY_LIST_PICKLE |             \
+#define NPY_FROM_FIELDS    (NPY_NEEDS_INIT | NPY_LIST_PICKLE | \
                             NPY_ITEM_REFCOUNT | NPY_NEEDS_PYAPI)
 
-#define NPY_OBJECT_DTYPE_FLAGS (NPY_LIST_PICKLE | NPY_USE_GETITEM |       \
+#define NPY_OBJECT_DTYPE_FLAGS (NPY_LIST_PICKLE | NPY_USE_GETITEM | \
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
 #define PyDataType_FLAGCHK(dtype, flag) \
         (((dtype)->flags & (flag)) == (flag))
 
-#define PyDataType_REFCHK(dtype)                                          \
+#define PyDataType_REFCHK(dtype) \
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
 
 typedef struct _PyArray_Descr {

@@ -1651,7 +1651,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     if (maskna) {
         flags |= NPY_ARRAY_MASKNA;
     }
-    if (maskna) {
+    if (ownmaskna) {
         flags |= NPY_ARRAY_OWNMASKNA;
     }
 
