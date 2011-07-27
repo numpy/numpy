@@ -264,7 +264,7 @@ PyArray_IsNA(PyObject *obj)
     }
     /* Create a boolean array based on the mask */
     else {
-        //PyArrayObject *ret;
+        PyArrayObject *ret;
         PyArray_Descr *dtype;
 
         if (PyArray_HASFIELDS((PyArrayObject *)obj)) {
@@ -273,21 +273,90 @@ PyArray_IsNA(PyObject *obj)
             return NULL;
         }
 
-        PyErr_SetString(PyExc_RuntimeError, "isna isn't done yet");
-        return NULL;
-
         dtype = PyArray_DescrFromType(NPY_BOOL);
         if (dtype == NULL) {
             return NULL;
         }
 
-        /* TODO: Set up iterator, etc */
+        if (PyArray_HASMASKNA((PyArrayObject *)obj)) {
+            NpyIter *iter;
+            PyArrayObject *op[2] = {(PyArrayObject *)obj, NULL};
+            npy_uint32 flags, op_flags[2];
+            PyArray_Descr *op_dtypes[2] = {NULL, dtype};
 
-        if (!PyArray_HasNASupport((PyArrayObject *)obj)) {
-            /* TODO */
+            flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_ZEROSIZE_OK;
+            /*
+             * This USE_MASKNA causes there to be 3 operands, where operand
+             * 2 is the mask for operand 0
+             */
+            op_flags[0] = NPY_ITER_READONLY | NPY_ITER_USE_MASKNA;
+            op_flags[1] = NPY_ITER_WRITEONLY | NPY_ITER_ALLOCATE;
+
+            iter = NpyIter_MultiNew(2, op, flags, NPY_KEEPORDER, NPY_NO_CASTING,
+                                    op_flags, op_dtypes);
+            if (iter == NULL) {
+                Py_DECREF(dtype);
+                return NULL;
+            }
+
+            if (NpyIter_GetIterSize(iter) > 0) {
+                NpyIter_IterNextFunc *iternext;
+                npy_intp innersize, *innerstrides;
+                npy_intp innerstridemask, innerstride1;
+                char **dataptrs, *dataptrmask, *dataptr1;
+
+                iternext = NpyIter_GetIterNext(iter, NULL);
+                if (iternext == NULL) {
+                    Py_DECREF(dtype);
+                    return NULL;
+                }
+                innerstrides = NpyIter_GetInnerStrideArray(iter);
+                innerstridemask = innerstrides[2];
+                innerstride1 = innerstrides[1];
+                /* Because buffering is disabled, the innersize is fixed */
+                innersize = *NpyIter_GetInnerLoopSizePtr(iter);
+                dataptrs = NpyIter_GetDataPtrArray(iter);
+
+                do {
+                    npy_intp i;
+                    dataptrmask = dataptrs[2];
+                    dataptr1 = dataptrs[1];
+
+                    for (i = 0; i < innersize; ++i) {
+                        /*
+                         * Bit 0 of the mask is 0 -> NA, 1 -> available,
+                         * so invert it and clear the rest of the bits.
+                         */
+                        *dataptr1 = ~(*dataptrmask) & 0x01;
+                        dataptrmask += innerstridemask;
+                        dataptr1 += innerstride1;
+                    }
+                } while (iternext(iter));
+            }
+
+            ret = NpyIter_GetOperandArray(iter)[1];
+            Py_INCREF(ret);
+            Py_DECREF(dtype);
+            NpyIter_Deallocate(iter);
         }
+        /* Create an array of all zeros */
         else {
-            /* TODO */
+            npy_intp size;
+            ret = (PyArrayObject *)PyArray_NewLikeArray(
+                            (PyArrayObject *)obj, NPY_KEEPORDER, dtype, 0);
+            if (ret == NULL) {
+                return NULL;
+            }
+            /*
+             * Can use memset because the newly allocated array is
+             * packed tightly in memory
+             */
+            size = PyArray_SIZE(ret);
+            if (size > 0) {
+                memset(PyArray_DATA(ret), 0, dtype->elsize * size);
+            }
         }
+
+        return (PyObject *)ret;
     }
 }
