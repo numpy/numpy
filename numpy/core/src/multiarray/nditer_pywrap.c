@@ -428,8 +428,17 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
                 }
                 break;
             case 'u':
-                if (strcmp(str, "updateifcopy") == 0) {
-                    flag = NPY_ITER_UPDATEIFCOPY;
+                switch (str[1]) {
+                    case 'p':
+                        if (strcmp(str, "updateifcopy") == 0) {
+                            flag = NPY_ITER_UPDATEIFCOPY;
+                        }
+                        break;
+                    case 's':
+                        if (strcmp(str, "use_maskna") == 0) {
+                            flag = NPY_ITER_USE_MASKNA;
+                        }
+                        break;
                 }
                 break;
             case 'v':
@@ -659,9 +668,9 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp nop,
 }
 
 /*
- * Converts the operand array and op_flags array into the form NpyIter_AdvancedNew
- * needs.  Sets nop, and on success, each op[i] owns a reference
- * to an array object.
+ * Converts the operand array and op_flags array into the form
+ * NpyIter_AdvancedNew needs.  Sets nop, and on success, each
+ * op[i] owns a reference to an array object.
  */
 static int
 npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
@@ -1977,7 +1986,11 @@ static PyObject *npyiter_nop_get(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    return PyInt_FromLong(NpyIter_GetNOp(self->iter));
+    /*
+     * We only expose the provided operands, which is everything
+     * before the first MASKNA operand.
+     */
+    return PyInt_FromLong(NpyIter_GetFirstMaskNAOp(self->iter));
 }
 
 static PyObject *npyiter_itersize_get(NewNpyArrayIterObject *self)
@@ -2008,7 +2021,11 @@ npyiter_seq_length(NewNpyArrayIterObject *self)
         return 0;
     }
     else {
-        return NpyIter_GetNOp(self->iter);
+        /*
+         * We only expose the provided operands, which is everything
+         * before the first MASKNA operand.
+         */
+        return NpyIter_GetFirstMaskNAOp(self->iter);
     }
 }
 
@@ -2017,10 +2034,12 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 {
     PyArrayObject *ret;
 
+    npy_int8 *maskna_indices;
     npy_intp ret_ndim;
     npy_intp nop, innerloopsize, innerstride;
     char *dataptr;
     PyArray_Descr *dtype;
+    int has_external_loop;
 
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -2035,7 +2054,11 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
         return NULL;
     }
 
-    nop = NpyIter_GetNOp(self->iter);
+    /*
+     * We only expose the provided operands, which is everything
+     * before the first MASKNA operand.
+     */
+    nop = NpyIter_GetFirstMaskNAOp(self->iter);
     if (i < 0 || i >= nop) {
         PyErr_Format(PyExc_IndexError,
                 "Iterator operand index %d is out of bounds", (int)i);
@@ -2059,8 +2082,10 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 
     dataptr = self->dataptrs[i];
     dtype = self->dtypes[i];
+    has_external_loop = NpyIter_HasExternalLoop(self->iter);
+    maskna_indices = NpyIter_GetMaskNAIndices(self->iter);
 
-    if (NpyIter_HasExternalLoop(self->iter)) {
+    if (has_external_loop) {
         innerloopsize = *self->innerloopsizeptr;
         innerstride = self->innerstrides[i];
         ret_ndim = 1;
@@ -2084,6 +2109,23 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
     }
 
     PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
+
+    /* If this is a USE_MASKNA operand, include the mask */
+    if (maskna_indices[i] >= 0) {
+        PyArrayObject *obj = NpyIter_GetOperandArray(self->iter)[i];
+        PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
+        int i_maskna = maskna_indices[i];
+
+        fret->maskna_dtype = PyArray_MASKNA_DTYPE(obj);
+        Py_INCREF(fret->maskna_dtype);
+        fret->maskna_data = self->dataptrs[i_maskna];
+        if (has_external_loop) {
+            fret->maskna_strides[0] = self->innerstrides[i_maskna];
+        }
+
+        fret->flags |= NPY_ARRAY_MASKNA;
+        fret->flags &= ~NPY_ARRAY_OWNMASKNA;
+    }
 
     return (PyObject *)ret;
 }
@@ -2109,7 +2151,11 @@ npyiter_seq_slice(NewNpyArrayIterObject *self,
         return NULL;
     }
 
-    nop = NpyIter_GetNOp(self->iter);
+    /*
+     * We only expose the provided operands, which is everything
+     * before the first MASKNA operand.
+     */
+    nop = NpyIter_GetFirstMaskNAOp(self->iter);
     if (ilow < 0) {
         ilow = 0;
     }
@@ -2143,10 +2189,11 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
 {
 
     npy_intp nop, innerloopsize, innerstride;
+    npy_int8 *maskna_indices;
     char *dataptr;
     PyArray_Descr *dtype;
     PyArrayObject *tmp;
-    int ret;
+    int ret, has_external_loop;
 
     if (v == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -2167,7 +2214,11 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
         return -1;
     }
 
-    nop = NpyIter_GetNOp(self->iter);
+    /*
+     * We only expose the provided operands, which is everything
+     * before the first MASKNA operand.
+     */
+    nop = NpyIter_GetFirstMaskNAOp(self->iter);
     if (i < 0 || i >= nop) {
         PyErr_Format(PyExc_IndexError,
                 "Iterator operand index %d is out of bounds", (int)i);
@@ -2181,8 +2232,9 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
 
     dataptr = self->dataptrs[i];
     dtype = self->dtypes[i];
+    has_external_loop = NpyIter_HasExternalLoop(self->iter);
 
-    if (NpyIter_HasExternalLoop(self->iter)) {
+    if (has_external_loop) {
         innerloopsize = *self->innerloopsizeptr;
         innerstride = self->innerstrides[i];
     }
@@ -2190,6 +2242,8 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
         innerloopsize = 1;
         innerstride = 0;
     }
+
+    maskna_indices = NpyIter_GetMaskNAIndices(self->iter);
 
     /* TODO - there should be a better way than this... */
     Py_INCREF(dtype);
@@ -2199,6 +2253,25 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
                                 NPY_ARRAY_WRITEABLE, NULL);
     if (tmp == NULL) {
         return -1;
+    }
+    /* If this is a USE_MASKNA operand, include the mask */
+    if (maskna_indices[i] >= 0) {
+        PyArrayObject *obj = NpyIter_GetOperandArray(self->iter)[i];
+        PyArrayObject_fieldaccess *ftmp = (PyArrayObject_fieldaccess *)tmp;
+        int i_maskna = maskna_indices[i];
+
+        ftmp->maskna_dtype = PyArray_MASKNA_DTYPE(obj);
+        Py_INCREF(ftmp->maskna_dtype);
+        ftmp->maskna_data = self->dataptrs[i_maskna];
+        if (has_external_loop) {
+            ftmp->maskna_strides[0] = self->innerstrides[i_maskna];
+        }
+        else {
+            ftmp->maskna_strides[0] = 0;
+        }
+
+        ftmp->flags |= NPY_ARRAY_MASKNA;
+        ftmp->flags &= ~NPY_ARRAY_OWNMASKNA;
     }
     PyArray_UpdateFlags(tmp, NPY_ARRAY_UPDATE_ALL);
     ret = PyArray_CopyObject(tmp, v);
@@ -2232,7 +2305,11 @@ npyiter_seq_ass_slice(NewNpyArrayIterObject *self, Py_ssize_t ilow,
         return -1;
     }
 
-    nop = NpyIter_GetNOp(self->iter);
+    /*
+     * We only expose the provided operands, which is everything
+     * before the first MASKNA operand.
+     */
+    nop = NpyIter_GetFirstMaskNAOp(self->iter);
     if (ilow < 0) {
         ilow = 0;
     }

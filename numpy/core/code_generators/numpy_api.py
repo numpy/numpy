@@ -324,6 +324,8 @@ multiarray_funcs_api = {
     'PyArray_HasNASupport':                 284,
     'PyArray_ContainsNA':                   285,
     'PyArray_AllocateMaskNA':               286,
+    'NpyIter_GetFirstMaskNAOp':             288,
+    'NpyIter_GetMaskNAIndices':             289,
 }
 
 ufunc_types_api = {
