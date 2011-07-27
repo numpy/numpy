@@ -97,7 +97,7 @@ parse_index(PyArrayObject *self, PyObject *op,
     else {
         if (!PySequence_Check(op)) {
             PyErr_SetString(PyExc_IndexError,
-                            "index must be either an int "\
+                            "index must be either an int "
                             "or a sequence");
             return -1;
         }
