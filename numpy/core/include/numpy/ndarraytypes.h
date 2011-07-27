@@ -867,7 +867,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 /*
  * If this flag is set, then arrays which have an NA mask, or arrays
  * which have an NA dtype are permitted to pass through. If not,
- * a array with NA support causes an error to be thrown.
+ * an array with NA support causes an error to be thrown.
  *
  * This flag may be requested in constructor functions.
  */
