@@ -85,6 +85,8 @@ npyiter_allocate_arrays(NpyIter *iter,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
                         npy_uint32 *op_flags, char *op_itflags,
                         int **op_axes, int output_scalars);
+static int
+npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes);
 static void
 npyiter_get_priority_subtype(int first_maskna_op, PyArrayObject **op,
                             char *op_itflags,
@@ -404,6 +406,18 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
                             op_itflags, op_axes, output_scalars)) {
         NpyIter_Deallocate(iter);
         return NULL;
+    }
+
+    /*
+     * If there were any NA masks added to the iteration, fill in
+     * the strides and other data they need. This is being done
+     * after all the 'allocate' arrays are finished.
+     */
+    if (maskna_nop > 0) {
+        if (!npyiter_fill_maskna_axisdata(iter, op_axes)) {
+            NpyIter_Deallocate(iter);
+            return NULL;
+        }
     }
 
     NPY_IT_TIME_POINT(c_allocate_arrays);
@@ -1145,27 +1159,6 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         return 0;
     }
 
-    return 1;
-}
-
-/*
- * Prepares the maskna virtual operand for one of the constructor
- * operands.  Assumes that 'op' has already been prepared by
- * npyiter_prepare_one_operand. Fills in 'op_maskna_dataptr',
- * 'op_maskna_dtype', and 'op_maskna_itflags'.
- *
- * This needs to be called after any 'allocate' operands have
- * been allocated.
- *
- * Returns 1 on success, 0 on failure.
- */
-static int
-npyiter_prepare_one_maskna_operand(PyArrayObject *op,
-                        char **op_maskna_dataptr,
-                        PyArray_Descr **op_maskna_dtype,
-                        npy_uint32 flags,
-                        npy_uint32 op_flags, char *op_maskna_itflags)
-{
     return 1;
 }
 
@@ -3122,6 +3115,84 @@ npyiter_allocate_arrays(NpyIter *iter,
                 }
             }
         }
+    }
+
+    return 1;
+}
+
+/*
+ * Prepares the maskna virtual operands for the constructor
+ * operands, and fills in the axisdata. Fills in 'op_maskna_dataptr',
+ * 'op_maskna_dtype', and may modify 'op_maskna_itflags'.
+ *
+ * This needs to be called after any 'allocate' operands have
+ * been allocated. There is no validation of the shape/strides done,
+ * because the shape of a mask exactly matches the shape of the
+ * operand to which it attached.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+static int
+npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    int idim, ndim = NIT_NDIM(iter);
+    int iop, iop_maskna, nop = NIT_NOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
+
+    npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
+    NpyIter_AxisData *axisdata;
+    npy_intp sizeof_axisdata;
+    PyArrayObject **op = NIT_OPERANDS(iter), *op_cur;
+    char **op_dataptr = NIT_RESETDATAPTR(iter);
+
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
+
+    /* Fill in the reset dataptr array with the mask pointers */
+    for (iop = first_maskna_op; iop < nop; ++iop) {
+        op_dataptr[iop] = PyArray_MASKNA_DATA(op[maskna_indices[iop]]);
+    }
+
+    /* Process the maskna operands, filling in the axisdata */
+    for (idim = 0; idim < ndim; ++idim) {
+        npy_intp *strides = NAD_STRIDES(axisdata);
+
+        for (iop = first_maskna_op; iop < nop; ++iop) {
+            /*
+             * iop_maskna is the index of the USE_MASKNA input,
+             * iop is the index of the corresponding mask.
+             */
+            iop_maskna = maskna_indices[iop];
+            op_cur = op[iop_maskna];
+
+            /*
+             * The strides of the mask will be zero exactly
+             * where they're zero for the main data
+             */
+            if (strides[iop_maskna] == 0) {
+                strides[iop] = 0;
+            }
+            else {
+                int i;
+
+                if (op_axes == NULL || op_axes[iop] == NULL) {
+                    i = PyArray_NDIM(op_cur) - idim - 1;
+                }
+                else {
+                    i = op_axes[iop][ndim-idim-1];
+                }
+
+                strides[iop] = PyArray_MASKNA_STRIDES(op_cur)[i];
+            }
+        }
+
+        /* Initialize the mask data pointers */
+        memcpy(NAD_PTRS(axisdata) + first_maskna_op,
+                op_dataptr + first_maskna_op,
+                NPY_SIZEOF_INTP*(nop - first_maskna_op));
+
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
     }
 
     return 1;

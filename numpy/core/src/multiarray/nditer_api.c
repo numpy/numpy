@@ -272,7 +272,9 @@ NpyIter_Reset(NpyIter *iter, char **errmsg)
 }
 
 /*NUMPY_API
- * Resets the iterator to its initial state, with new base data pointers
+ * Resets the iterator to its initial state, with new base data pointers.
+ * This function requires great caution, even more so if any
+ * NPY_ITER_USE_MASKNA operands were specified.
  *
  * If errmsg is non-NULL, it should point to a variable which will
  * receive the error message, and no Python exception will be set.
@@ -748,6 +750,35 @@ NpyIter_GetNOp(NpyIter *iter)
 }
 
 /*NUMPY_API
+ * Gets the index of the first operand which is the
+ * mask for an NPY_ITER_USE_MASKNA operand.
+ */
+NPY_NO_EXPORT int
+NpyIter_GetFirstMaskNAOp(NpyIter *iter)
+{
+    return NIT_FIRST_MASKNA_OP(iter);
+}
+
+/*NUMPY_API
+ * Gets the correspondences between the operands with
+ * NPY_ITER_USEMASKNA set and their corresponding masks.
+ *
+ * If i < NpyIter_GetFirstMaskNAOp(iter), then
+ * NpyIter_GetMaskNAIndices(iter)[i] is either -1 or
+ * an index >= NpyIter_GetFirstMaskNAOp(iter) of the corresponding
+ * mask.
+ *
+ * If i >= NpyIter_GetFirstMaskNAOp(iter), then
+ * NpyIter_GetMaskNAIndices(iter)[i] is the index
+ * of the corresponding maskna operand for the mask.
+ */
+NPY_NO_EXPORT npy_int8 *
+NpyIter_GetMaskNAIndices(NpyIter *iter)
+{
+    return NIT_MASKNA_INDICES(iter);
+}
+
+/*NUMPY_API
  * Gets the number of elements being iterated
  */
 NPY_NO_EXPORT npy_intp
@@ -1004,6 +1035,7 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
     int nop = NIT_NOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     PyArrayObject *obj, *view;
@@ -1012,8 +1044,9 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
     int writeable;
+    npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
 
-    if (i < 0 || i >= nop) {
+    if (i < 0 || i >= first_maskna_op) {
         PyErr_SetString(PyExc_IndexError,
                 "index provided for an iterator view was out of bounds");
         return NULL;
@@ -1034,9 +1067,11 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
 
     /* Retrieve the shape and strides from the axisdata */
-    for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+    for (idim = 0; idim < ndim; ++idim) {
         shape[ndim-idim-1] = NAD_SHAPE(axisdata);
         strides[ndim-idim-1] = NAD_STRIDES(axisdata)[i];
+
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
     }
 
     Py_INCREF(dtype);
@@ -1055,6 +1090,29 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     }
     /* Make sure all the flags are good */
     PyArray_UpdateFlags(view, NPY_ARRAY_UPDATE_ALL);
+    /*
+     * Add the mask to the view if the operand was NPY_ITER_USE_MASKNA.
+     */
+    if (maskna_indices[i] >= 0) {
+        PyArrayObject_fieldaccess *fview = (PyArrayObject_fieldaccess *)view;
+        int i_maskna = maskna_indices[i];
+        npy_intp *maskna_strides = fview->maskna_strides;
+
+        fview->maskna_dtype = PyArray_MASKNA_DTYPE(obj);
+        Py_INCREF(fview->maskna_dtype);
+        fview->maskna_data = NIT_RESETDATAPTR(iter)[i_maskna];
+
+        axisdata = NIT_AXISDATA(iter);
+        for (idim = 0; idim < ndim; ++idim) {
+            maskna_strides[ndim-idim-1] = NAD_STRIDES(axisdata)[i_maskna];
+
+            NIT_ADVANCE_AXISDATA(axisdata, 1);
+        }
+
+        /* This view doesn't own the mask */
+        fview->flags |= NPY_ARRAY_MASKNA;
+        fview->flags &= ~NPY_ARRAY_OWNMASKNA;
+    }
 
     return view;
 }
