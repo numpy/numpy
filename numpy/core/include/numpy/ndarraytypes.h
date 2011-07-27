@@ -1377,10 +1377,14 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
                                                 arr);
 }
 
+/* Same as PyArray_DATA */
+#define PyArray_BYTES(arr) PyArray_DATA(arr)
+
 #else
 
 /* Macros are deprecated as of NumPy 1.7. */
 #define PyArray_NDIM(obj) (((PyArrayObject_fieldaccess *)(obj))->nd)
+#define PyArray_BYTES(obj) ((char *)(((PyArrayObject_fieldaccess *)(obj))->data))
 #define PyArray_DATA(obj) ((void *)(((PyArrayObject_fieldaccess *)(obj))->data))
 #define PyArray_DIMS(obj) (((PyArrayObject_fieldaccess *)(obj))->dimensions)
 #define PyArray_STRIDES(obj) (((PyArrayObject_fieldaccess *)(obj))->strides)
@@ -1404,9 +1408,6 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
                                      (char *)(itemptr), \
                                      (PyArrayObject *)(obj))
 #endif
-
-/* Same as PyArray_DATA */
-#define PyArray_BYTES(arr) PyArray_DATA(arr)
 
 /*
  * Enables the specified array flags. Does no checking,
