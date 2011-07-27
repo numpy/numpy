@@ -180,5 +180,52 @@ def test_array_maskna_construction():
     assert_equal(a.dtype, np.dtype('O'))
     assert_equal(type(a[2]), np.NAType)
 
+def test_isna():
+    # Objects which are not np.NA or ndarray all return False
+    assert_equal(np.isna(True), False)
+    assert_equal(np.isna("abc"), False)
+    assert_equal(np.isna([1,2,3]), False)
+    assert_equal(np.isna({3:5}), False)
+    # Various NA values return True
+    assert_equal(np.isna(np.NA), True)
+    assert_equal(np.isna(np.NA()), True)
+    assert_equal(np.isna(np.NA(5)), True)
+    assert_equal(np.isna(np.NA(dtype='f4')), True)
+    assert_equal(np.isna(np.NA(12,dtype='f4')), True)
+
+def test_array_maskna_isna():
+    # Simple 1D example
+    a = np.arange(10)
+
+    # With no mask, it returns all False
+    assert_equal(np.isna(a), False)
+    assert_equal(np.isna(a).shape, (10,))
+
+    # With a mask but no NAs, it still returns all False
+    a.flags.maskna = True
+    assert_equal(np.isna(a), False)
+    assert_equal(np.isna(a).shape, (10,))
+
+    # Checking isna of a single value
+    assert_equal(np.isna(a[4]), False)
+    # Assigning NA to a single value
+    a[3] = np.NA
+    assert_equal(np.isna(a), [0,0,0,1,0,0,0,0,0,0])
+    # Checking isna of a single value
+    assert_equal(np.isna(a[3]), True)
+
+    # Checking isna of a slice
+    assert_equal(np.isna(a[1:6]), [0,0,1,0,0])
+    # Assigning NA to a slice
+    a[5:7] = np.NA
+    assert_equal(np.isna(a), [0,0,0,1,0,1,1,0,0,0])
+
+    # Checking isna of a strided slice
+    assert_equal(np.isna(a[1:8:2]), [0,1,1,0])
+    # Assigning NA to a strided slice
+    a[2:10:3] = np.NA
+    assert_equal(np.isna(a), [0,0,1,1,0,1,1,0,1,0])
+
+
 if __name__ == "__main__":
     run_module_suite()

@@ -595,7 +595,23 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
     PyArrayObject *other;
     npy_intp value;
 
+    /*
+     * PyNumber_Index was introduced in Python 2.5 because of NumPy.
+     * http://www.python.org/dev/peps/pep-0357/
+     * Let's use it for indexing!
+     */
+#if PY_VERSION_HEX >= 0x02050000
+    PyObject *ind = PyNumber_Index(op);
+    if (ind != NULL) {
+        value = PyArray_PyIntAsIntp(ind);
+        Py_DECREF(ind);
+    }
+    else {
+        value = -1;
+    }
+#else
     value = PyArray_PyIntAsIntp(op);
+#endif
     if (value == -1 && PyErr_Occurred()) {
         PyErr_Clear();
     }
