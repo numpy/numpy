@@ -3040,7 +3040,7 @@ class MaskedArray(ndarray):
             mindx = mask_or(_mask[indx], mval, copy=True)
             dindx = self._data[indx]
             if dindx.size > 1:
-                dindx[~mindx] = dval
+                np.copyto(dindx, dval, where=~mindx)
             elif mindx is nomask:
                 dindx = dval
             ndarray.__setitem__(_data, indx, dindx)
