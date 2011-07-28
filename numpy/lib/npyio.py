@@ -1277,7 +1277,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         # return an empty array if the datafile is empty
         first_line = ''
         first_values = []
-        warnings.warn('genfromtxt: Empty input file.')
+        warnings.warn('genfromtxt: Empty input file: "{0}"'.format(fname))
 
     # Should we take the first values as names ?
     if names is True:
