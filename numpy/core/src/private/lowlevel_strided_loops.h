@@ -316,6 +316,25 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
                 PyArray_MaskedStridedTransferFn *stransfer,
                 NpyAuxData *data);
 
+/*
+ * Prepares shape and strides for a simple raw array iteration.
+ * This sorts the strides into FORTRAN order, reverses any negative
+ * strides, then coalesces axes where possible. The results are
+ * filled in the output parameters.
+ *
+ * This is intended for simple, lightweight iteration over arrays
+ * where no buffering of any kind is needed, and the array may
+ * not be stored as a PyArrayObject. For example, to iterate over
+ * the NA mask of an array.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_PrepareOneRawArrayIter(int ndim, char *data,
+                            npy_intp *shape, npy_intp *strides,
+                            int *out_ndim, char **out_data,
+                            npy_intp *out_shape, npy_intp *out_strides);
+
 
 /*
  *            TRIVIAL ITERATION

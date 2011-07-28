@@ -17,6 +17,7 @@
 #include "common.h"
 #include "ctors.h"
 #include "lowlevel_strided_loops.h"
+#include "item_selection.h"
 
 #define _check_axis PyArray_CheckAxis
 
@@ -1690,6 +1691,77 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
     return ret;
 }
 
+/*
+ * Counts the number of True values in a raw boolean array. This
+ * is a low-overhead function which does no heap allocations.
+ *
+ * Returns -1 on error.
+ */
+NPY_NO_EXPORT npy_intp
+count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
+{
+    int idim;
+    npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+    npy_intp i, coord[NPY_MAXDIMS];
+    npy_intp count = 0;
+
+    /* Use raw iteration with no heap memory allocation */
+    if (PyArray_PrepareOneRawArrayIter(
+                    ndim, data, ashape, astrides,
+                    &ndim, &data, shape, strides) < 0) {
+        return -1;
+    }
+
+    /* Do the iteration */
+    memset(coord, 0, ndim * sizeof(npy_intp));
+    /* Special case for contiguous inner loop */
+    if (strides[0] == 1) {
+        do {
+            char *d = data;
+            /* Process the innermost dimension */
+            for (i = 0; i < shape[0]; ++i, ++d) {
+                count += (*d != 0);
+            }
+
+            /* Increment to the next n-dimensional coordinate */
+            for (idim = 1; idim < ndim; ++idim) {
+                if (++coord[idim] == shape[idim]) {
+                    coord[idim] = 0;
+                    data -= (shape[idim] - 1) * strides[idim];
+                }
+                else {
+                    data += strides[idim];
+                    break;
+                }
+            }
+        } while (i < ndim);
+    }
+    /* General inner loop */
+    else {
+        do {
+            char *d = data;
+            /* Process the innermost dimension */
+            for (i = 0; i < shape[0]; ++i, d += strides[0]) {
+                count += (*d != 0);
+            }
+
+            /* Increment to the next n-dimensional coordinate */
+            for (idim = 1; idim < ndim; ++idim) {
+                if (++coord[idim] == shape[idim]) {
+                    coord[idim] = 0;
+                    data -= (shape[idim] - 1) * strides[idim];
+                }
+                else {
+                    data += strides[idim];
+                    break;
+                }
+            }
+        } while (i < ndim);
+    }
+
+    return count;
+}
+
 /*NUMPY_API
  * Counts the number of non-zero elements in the array
  *
@@ -1698,7 +1770,7 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
 NPY_NO_EXPORT npy_intp
 PyArray_CountNonzero(PyArrayObject *self)
 {
-    PyArray_NonzeroFunc *nonzero = PyArray_DESCR(self)->f->nonzero;
+    PyArray_NonzeroFunc *nonzero;
     char *data;
     npy_intp stride, count;
     npy_intp nonzero_count = 0;
@@ -1707,6 +1779,14 @@ PyArray_CountNonzero(PyArrayObject *self)
     NpyIter_IterNextFunc *iternext;
     char **dataptr;
     npy_intp *strideptr, *innersizeptr;
+
+    /* Special low-overhead version specific to the boolean type */
+    if (PyArray_DESCR(self)->type_num == NPY_BOOL) {
+        return count_boolean_trues(PyArray_NDIM(self), PyArray_DATA(self),
+                        PyArray_DIMS(self), PyArray_STRIDES(self));
+    }
+
+    nonzero = PyArray_DESCR(self)->f->nonzero;
 
     /* If it's a trivial one-dimensional loop, don't use an iterator */
     if (PyArray_TRIVIALLY_ITERABLE(self)) {
@@ -1767,7 +1847,7 @@ PyArray_CountNonzero(PyArrayObject *self)
 
     NpyIter_Deallocate(iter);
 
-    return nonzero_count;
+    return PyErr_Occurred() ? -1 : nonzero_count;
 }
 
 /*NUMPY_API

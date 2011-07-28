@@ -743,6 +743,38 @@ to be consistent with the result of np.sum([])::
     >>> np.sum([])
     0.0
 
+Boolean Indexing
+================
+
+Indexing using a boolean array containing NAs does not have a consistent
+interpretation according to the NA abstraction. For example::
+
+    >>> a = np.array([1, 2])
+    >>> mask = np.array([np.NA, True], maskna=True)
+    >>> a[mask]
+    What should happen here?
+
+Since the NA represents a valid but unknown value, and it is a boolean,
+it has two possible underlying values::
+
+    >>> a[np.array([True, True])]
+    array([1, 2])
+    >>> a[np.array([False, True])]
+    array([2])
+
+The thing which changes is the length of the output array, nothing which
+itself can be substituted for NA. For this reason, at least initially,
+NumPy will raise an exception for this case.
+
+Another possibility is to add an inconsistency, and follow the approach
+R uses. That is, to produce the following::
+
+    >>> a[mask]
+    array([NA, 2], maskna=True)
+
+If, in user testing, this is found necessary for pragmatic reasons,
+the feature should be added even though it is inconsistent.
+
 PEP 3118
 ========
 
