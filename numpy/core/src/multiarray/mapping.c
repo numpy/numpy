@@ -222,7 +222,7 @@ _swap_axes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
     int n1, n2, n3, val, bnd;
     int i;
     PyArray_Dims permute;
-    npy_intp d[MAX_DIMS];
+    npy_intp d[NPY_MAXDIMS];
     PyArrayObject *arr;
 
     permute.ptr = d;
@@ -454,7 +454,7 @@ count_new_axes_0d(PyObject *tuple)
                         " as an index");
         return -1;
     }
-    if (newaxis_count > MAX_DIMS) {
+    if (newaxis_count > NPY_MAXDIMS) {
         PyErr_SetString(PyExc_IndexError, "too many dimensions");
         return -1;
     }
@@ -465,7 +465,7 @@ NPY_NO_EXPORT PyObject *
 add_new_axes_0d(PyArrayObject *arr,  int newaxis_count)
 {
     PyArrayObject *other;
-    npy_intp dimensions[MAX_DIMS];
+    npy_intp dimensions[NPY_MAXDIMS];
     int i;
 
     for (i = 0; i < newaxis_count; ++i) {
@@ -501,7 +501,7 @@ fancy_indexing_check(PyObject *args)
 
     if (PyTuple_Check(args)) {
         n = PyTuple_GET_SIZE(args);
-        if (n >= MAX_DIMS) {
+        if (n >= NPY_MAXDIMS) {
             return SOBJ_TOOMANY;
         }
         for (i = 0; i < n; i++) {
@@ -532,14 +532,14 @@ fancy_indexing_check(PyObject *args)
     }
     else if (PySequence_Check(args)) {
         /*
-         * Sequences < MAX_DIMS with any slice objects
+         * Sequences < NPY_MAXDIMS with any slice objects
          * or newaxis, or Ellipsis is considered standard
          * as long as there are also no Arrays and or additional
          * sequences embedded.
          */
         retval = SOBJ_ISFANCY;
         n = PySequence_Size(args);
-        if (n < 0 || n >= MAX_DIMS) {
+        if (n < 0 || n >= NPY_MAXDIMS) {
             return SOBJ_ISFANCY;
         }
         for (i = 0; i < n; i++) {
@@ -589,10 +589,11 @@ fancy_indexing_check(PyObject *args)
 NPY_NO_EXPORT PyObject *
 array_subscript_simple(PyArrayObject *self, PyObject *op)
 {
-    npy_intp dimensions[MAX_DIMS], strides[MAX_DIMS];
-    npy_intp offset;
+    npy_intp dimensions[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+    npy_intp maskna_strides[NPY_MAXDIMS];
+    npy_intp offset, maskna_offset;
     int nd;
-    PyArrayObject *other;
+    PyArrayObject *ret;
     npy_intp value;
 
     /*
@@ -620,30 +621,55 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
     }
 
     /* Standard (view-based) Indexing */
-    nd = parse_index(self, op, dimensions, strides, &offset);
+    if (PyArray_HASMASKNA(self)) {
+        nd = parse_index(self, op, dimensions,
+                        strides, &offset, maskna_strides, &maskna_offset);
+    }
+    else {
+        nd = parse_index(self, op, dimensions,
+                        strides, &offset, NULL, NULL);
+    }
     if (nd == -1) {
         return NULL;
     }
 
-    /* This will only work if new array will be a view */
+    /* Create a view using the indexing result */
     Py_INCREF(PyArray_DESCR(self));
-    other = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
                                 PyArray_DESCR(self),
                                 nd, dimensions,
-                                strides, PyArray_DATA(self)+offset,
+                                strides, PyArray_DATA(self) + offset,
                                 PyArray_FLAGS(self),
                                 (PyObject *)self);
-    if (other == NULL) {
+    if (ret == NULL) {
         return NULL;
     }
     Py_INCREF(self);
-    if (PyArray_SetBaseObject(other, (PyObject *)self) < 0) {
-        Py_DECREF(other);
+    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
+        Py_DECREF(ret);
         return NULL;
     }
-    PyArray_UpdateFlags(other, NPY_ARRAY_UPDATE_ALL);
+    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
 
-    return (PyObject *)other;
+    if (PyArray_HASMASKNA(self)) {
+        PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
+
+        fret->maskna_dtype = PyArray_MASKNA_DTYPE(self);
+        Py_INCREF(fret->maskna_dtype);
+
+        fret->maskna_data = PyArray_MASKNA_DATA(self) + maskna_offset;
+
+        if (nd > 0) {
+            memcpy(fret->maskna_strides, maskna_strides,
+                                            nd * sizeof(npy_intp));
+        }
+
+        /* This view doesn't own the mask */
+        fret->flags |= NPY_ARRAY_MASKNA;
+        fret->flags &= ~NPY_ARRAY_OWNMASKNA;
+    }
+
+    return (PyObject *)ret;
 }
 
 NPY_NO_EXPORT PyObject *
@@ -884,7 +910,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
 {
     int ret, oned, fancy;
     PyArrayMapIterObject *mit;
-    npy_intp vals[MAX_DIMS];
+    npy_intp vals[NPY_MAXDIMS];
 
     if (op == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1048,7 +1074,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 {
 
     PyArrayObject *mp;
-    npy_intp vals[MAX_DIMS];
+    npy_intp vals[NPY_MAXDIMS];
 
     if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) ||
         PyLong_Check(op) || (PyIndex_Check(op) &&
@@ -1175,8 +1201,8 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
     int nd, j;
     npy_intp size, i, count;
     Bool *ptr;
-    npy_intp coords[MAX_DIMS], dims_m1[MAX_DIMS];
-    npy_intp *dptr[MAX_DIMS];
+    npy_intp coords[NPY_MAXDIMS], dims_m1[NPY_MAXDIMS];
+    npy_intp *dptr[NPY_MAXDIMS];
 
     typecode=PyArray_DescrFromType(NPY_BOOL);
     ba = (PyArrayObject *)PyArray_FromAny(myBool, typecode, 0, 0,
@@ -1292,7 +1318,7 @@ _convert_obj(PyObject *obj, PyArrayIterObject **iter)
 NPY_NO_EXPORT void
 PyArray_MapIterReset(PyArrayMapIterObject *mit)
 {
-    int i,j; npy_intp coord[MAX_DIMS];
+    int i,j; npy_intp coord[NPY_MAXDIMS];
     PyArrayIterObject *it;
     PyArray_CopySwapFunc *copyswap;
 
@@ -1340,7 +1366,7 @@ NPY_NO_EXPORT void
 PyArray_MapIterNext(PyArrayMapIterObject *mit)
 {
     int i, j;
-    npy_intp coord[MAX_DIMS];
+    npy_intp coord[NPY_MAXDIMS];
     PyArrayIterObject *it;
     PyArray_CopySwapFunc *copyswap;
 
@@ -1588,7 +1614,7 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
     if (mit == NULL) {
         return NULL;
     }
-    for (i = 0; i < MAX_DIMS; i++) {
+    for (i = 0; i < NPY_MAXDIMS; i++) {
         mit->iters[i] = NULL;
     }
     mit->index = 0;
