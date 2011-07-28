@@ -43,11 +43,50 @@ NPY_NO_EXPORT npy_bool
 PyArray_ContainsNA(PyArrayObject *arr)
 {
     /* Need NA support to contain NA */
-    if (!PyArray_HasNASupport(arr)) {
-        return 0;
-    }
+    if (PyArray_HASMASKNA(arr)) {
+        int idim, ndim;
+        char *data;
+        npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+        npy_intp i, coord[NPY_MAXDIMS];
 
-    /* TODO: Loop through NA mask */
+        if (PyArray_HASFIELDS(arr)) {
+            /* TODO: need to add field-NA support */
+            return 1;
+        }
+
+        /* Use raw iteration with no heap memory allocation */
+        if (PyArray_PrepareOneRawArrayIter(
+                        PyArray_NDIM(arr), PyArray_MASKNA_DATA(arr),
+                        PyArray_DIMS(arr), PyArray_MASKNA_STRIDES(arr),
+                        &ndim, &data, shape, strides) < 0) {
+            PyErr_Clear();
+            return 1;
+        }
+
+        /* Do the iteration */
+        memset(coord, 0, ndim * sizeof(npy_intp));
+        do {
+            char *d = data;
+            /* Process the innermost dimension */
+            for (i = 0; i < shape[0]; ++i, d += strides[0]) {
+                if (!NpyMaskValue_IsExposed((npy_mask)(*d))) {
+                    return 1;
+                }
+            }
+
+            /* Increment to the next n-dimensional coordinate */
+            for (idim = 1; idim < ndim; ++idim) {
+                if (++coord[idim] == shape[idim]) {
+                    coord[idim] = 0;
+                    data -= (shape[idim] - 1) * strides[idim];
+                }
+                else {
+                    data += strides[idim];
+                    break;
+                }
+            }
+        } while (i < ndim);
+    }
 
     return 0;
 }

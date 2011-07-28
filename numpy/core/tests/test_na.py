@@ -225,6 +225,13 @@ def test_array_maskna_isna_1D():
     a[2:10:3] = np.NA
     assert_equal(np.isna(a), [0,0,1,1,0,1,1,0,1,0])
 
+    # Checking isna of a boolean mask index
+    mask = np.array([1,1,0,0,0,1,0,1,1,0], dtype='?')
+    assert_equal(np.isna(a[mask]), [0,0,1,0,1])
+    # Assigning NA to a boolean masked index
+    a[mask] = np.NA
+    assert_equal(np.isna(a), [1,1,1,1,0,1,1,1,1,0])
+
     # TODO: fancy indexing is next...
 
 

@@ -16,6 +16,8 @@
 #include "iterators.h"
 #include "mapping.h"
 #include "na_singleton.h"
+#include "lowlevel_strided_loops.h"
+#include "item_selection.h"
 
 #define SOBJ_NOTFANCY 0
 #define SOBJ_ISFANCY 1
@@ -496,7 +498,6 @@ static int
 fancy_indexing_check(PyObject *args)
 {
     int i, n;
-    PyObject *obj;
     int retval = SOBJ_NOTFANCY;
 
     if (PyTuple_Check(args)) {
@@ -505,10 +506,11 @@ fancy_indexing_check(PyObject *args)
             return SOBJ_TOOMANY;
         }
         for (i = 0; i < n; i++) {
-            obj = PyTuple_GET_ITEM(args,i);
+            PyObject *obj = PyTuple_GET_ITEM(args,i);
             if (PyArray_Check(obj)) {
-                if (PyArray_ISINTEGER((PyArrayObject *)obj) ||
-                    PyArray_ISBOOL((PyArrayObject *)obj)) {
+                int type_num = PyArray_DESCR((PyArrayObject *)obj)->type_num;
+                if (PyTypeNum_ISINTEGER(type_num) ||
+                                        PyTypeNum_ISBOOL(type_num)) {
                     retval = SOBJ_ISFANCY;
                 }
                 else {
@@ -522,8 +524,8 @@ fancy_indexing_check(PyObject *args)
         }
     }
     else if (PyArray_Check(args)) {
-        if ((PyArray_TYPE((PyArrayObject *)args)==NPY_BOOL) ||
-            (PyArray_ISINTEGER((PyArrayObject *)args))) {
+        int type_num = PyArray_DESCR((PyArrayObject *)args)->type_num;
+        if (PyTypeNum_ISINTEGER(type_num) || PyTypeNum_ISBOOL(type_num)) {
             return SOBJ_ISFANCY;
         }
         else {
@@ -543,13 +545,14 @@ fancy_indexing_check(PyObject *args)
             return SOBJ_ISFANCY;
         }
         for (i = 0; i < n; i++) {
-            obj = PySequence_GetItem(args, i);
+            PyObject *obj = PySequence_GetItem(args, i);
             if (obj == NULL) {
                 return SOBJ_ISFANCY;
             }
             if (PyArray_Check(obj)) {
-                if (PyArray_ISINTEGER((PyArrayObject *)obj) ||
-                                    PyArray_ISBOOL((PyArrayObject *)obj)) {
+                int type_num = PyArray_DESCR((PyArrayObject *)obj)->type_num;
+                if (PyTypeNum_ISINTEGER(type_num) ||
+                                            PyTypeNum_ISBOOL(type_num)) {
                     retval = SOBJ_LISTTUP;
                 }
                 else {
@@ -560,7 +563,7 @@ fancy_indexing_check(PyObject *args)
                 retval = SOBJ_LISTTUP;
             }
             else if (PySlice_Check(obj) || obj == Py_Ellipsis ||
-                    obj == Py_None) {
+                                                    obj == Py_None) {
                 retval = SOBJ_NOTFANCY;
             }
             Py_DECREF(obj);
@@ -670,6 +673,211 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
     }
 
     return (PyObject *)ret;
+}
+
+/*
+ * Implements boolean indexing. This produces a one-dimensional
+ * array which picks out all of the elements of 'self' for which
+ * the corresponding element of 'op' is True.
+ *
+ * This operation is somewhat unfortunate, because to produce
+ * a one-dimensional output array, it has to choose a particular
+ * iteration order, in the case of NumPy that is always C order even
+ * though this function allows different choices.
+ */
+NPY_NO_EXPORT PyArrayObject *
+array_boolean_subscript(PyArrayObject *self, PyArrayObject *bmask, NPY_ORDER order)
+{
+    npy_intp size, itemsize;
+    char *ret_data, *ret_maskna_data = NULL;
+    PyArray_Descr *dtype;
+    PyArrayObject *ret;
+    int self_has_maskna = PyArray_HASMASKNA(self), needs_api = 0;
+
+    if (PyArray_DESCR(bmask)->type_num != NPY_BOOL) {
+        PyErr_SetString(PyExc_TypeError,
+                "NumPy boolean array indexing requires a boolean index");
+        return NULL;
+    }
+
+    /* See the Boolean Indexing section of the missing data NEP */
+    if (PyArray_ContainsNA(bmask)) {
+        PyErr_SetString(PyExc_ValueError,
+                "The boolean mask array may not contain any NA values");
+        return NULL;
+    }
+
+    /*
+     * Since we've checked that the mask contains no NAs, we
+     * can do a straightforward count of the boolean True values
+     * in the raw mask data array.
+     */
+    size = count_boolean_trues(PyArray_NDIM(bmask), PyArray_DATA(bmask),
+                                PyArray_DIMS(bmask), PyArray_STRIDES(bmask));
+    /* Correction factor for broadcasting 'bmask' to 'self' */
+    size *= PyArray_SIZE(self) / PyArray_SIZE(bmask);
+
+    /* Allocate the output of the boolean indexing */
+    dtype = PyArray_DESCR(self);
+    Py_INCREF(dtype);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self), dtype, 1, &size,
+                                NULL, NULL, 0, (PyObject *)self);
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    /* Allocate an NA mask for ret if required */
+    if (self_has_maskna) {
+        if (PyArray_AllocateMaskNA(ret, 1, 0) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+        ret_maskna_data = PyArray_MASKNA_DATA(ret);
+    }
+
+    itemsize = dtype->elsize;
+    ret_data = PyArray_DATA(ret);
+
+    /* Create an iterator for the data */
+    if (size > 0) {
+        NpyIter *iter;
+        PyArrayObject *op[2] = {self, bmask};
+        npy_uint32 flags, op_flags[2];
+        npy_intp fixed_strides[3];
+        PyArray_StridedTransferFn *stransfer = NULL;
+        NpyAuxData *transferdata = NULL;
+
+        NpyIter_IterNextFunc *iternext;
+        npy_intp innersize, *innerstrides;
+        char **dataptrs;
+
+        /* Set up the iterator */
+        flags = NPY_ITER_EXTERNAL_LOOP;
+        if (self_has_maskna) {
+            op_flags[0] = NPY_ITER_READONLY | NPY_ITER_USE_MASKNA;
+        }
+        else {
+            op_flags[0] = NPY_ITER_READONLY;
+        }
+        /*
+         * Since we already checked PyArray_ContainsNA(bmask), can
+         * ignore any MASKNA of bmask.
+         */
+        op_flags[1] = NPY_ITER_READONLY | NPY_ITER_IGNORE_MASKNA;
+
+        iter = NpyIter_MultiNew(2, op, flags, order, NPY_NO_CASTING,
+                                op_flags, NULL);
+        if (iter == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        /* Get a dtype transfer function */
+        NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+        if (PyArray_GetDTypeTransferFunction(PyArray_ISALIGNED(self),
+                        fixed_strides[0], itemsize,
+                        dtype, dtype,
+                        0,
+                        &stransfer, &transferdata,
+                        &needs_api) != NPY_SUCCEED) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        /* Get the values needed for the inner loop */
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            Py_DECREF(ret);
+            NPY_AUXDATA_FREE(transferdata);
+            return NULL;
+        }
+        innerstrides = NpyIter_GetInnerStrideArray(iter);
+        dataptrs = NpyIter_GetDataPtrArray(iter);
+
+        /* Regular inner loop */
+        if (!self_has_maskna) {
+            npy_intp self_stride = innerstrides[0];
+            npy_intp bmask_stride = innerstrides[1];
+            npy_intp subloopsize;
+            do {
+                innersize = *NpyIter_GetInnerLoopSizePtr(iter);
+                char *self_data = dataptrs[0];
+                char *bmask_data = dataptrs[1];
+
+                while (innersize > 0) {
+                    /* Skip masked values */
+                    subloopsize = 0;
+                    while (subloopsize < innersize && *bmask_data == 0) {
+                        ++subloopsize;
+                        bmask_data += bmask_stride;
+                    }
+                    innersize -= subloopsize;
+                    self_data += subloopsize * self_stride;
+                    /* Process unmasked values */
+                    subloopsize = 0;
+                    while (subloopsize < innersize && *bmask_data != 0) {
+                        ++subloopsize;
+                        bmask_data += bmask_stride;
+                    }
+                    stransfer(ret_data, itemsize, self_data, self_stride,
+                                subloopsize, itemsize, transferdata);
+                    innersize -= subloopsize;
+                    self_data += subloopsize * self_stride;
+                }
+            } while (iternext(iter));
+        }
+        /* NA masked inner loop */
+        else {
+            npy_intp i;
+            npy_intp self_stride = innerstrides[0];
+            npy_intp bmask_stride = innerstrides[1];
+            npy_intp maskna_stride = innerstrides[2];
+            npy_intp subloopsize;
+            do {
+                innersize = *NpyIter_GetInnerLoopSizePtr(iter);
+                char *self_data = dataptrs[0];
+                char *bmask_data = dataptrs[1];
+                char *maskna_data = dataptrs[2];
+
+                while (innersize > 0) {
+                    /* Skip masked values */
+                    subloopsize = 0;
+                    while (subloopsize < innersize && *bmask_data == 0) {
+                        ++subloopsize;
+                        bmask_data += bmask_stride;
+                    }
+                    innersize -= subloopsize;
+                    self_data += subloopsize * self_stride;
+                    /* Process unmasked values */
+                    subloopsize = 0;
+                    while (subloopsize < innersize && *bmask_data != 0) {
+                        ++subloopsize;
+                        bmask_data += bmask_stride;
+                    }
+                    /*
+                     * Because it's a newly allocated array, we
+                     * don't have to be careful about not overwriting
+                     * NA masked values. If 'ret' were an output parameter,
+                     * we would have to avoid that.
+                     */
+                    stransfer(ret_data, itemsize, self_data, self_stride,
+                                subloopsize, itemsize, transferdata);
+                    /* Copy the mask */
+                    for (i = 0; i < subloopsize; ++i) {
+                        *ret_maskna_data++ = *maskna_data;
+                        maskna_data += maskna_stride;
+                    }
+                    innersize -= subloopsize;
+                    self_data += subloopsize * self_stride;
+                }
+            } while (iternext(iter));
+        }
+
+        NpyIter_Deallocate(iter);
+        NPY_AUXDATA_FREE(transferdata);
+    }
+
+    return ret;
 }
 
 NPY_NO_EXPORT PyObject *

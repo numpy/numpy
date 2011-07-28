@@ -397,14 +397,22 @@ NPY_NO_EXPORT PyObject *
 PyArray_IterNew(PyObject *obj)
 {
     PyArrayIterObject *it;
-    PyArrayObject *ao = (PyArrayObject *)obj;
+    PyArrayObject *ao;
 
-    if (!PyArray_Check(ao)) {
+    if (!PyArray_Check(obj)) {
         PyErr_BadInternalCall();
         return NULL;
     }
+    ao = (PyArrayObject *)obj;
 
-    it = (PyArrayIterObject *)_pya_malloc(sizeof(PyArrayIterObject));
+    if (PyArray_HASMASKNA(ao)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Old-style NumPy iterators do not support NA masks, "
+                "use numpy.nditer instead");
+        return NULL;
+    }
+
+    it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
     PyObject_Init((PyObject *)it, &PyArrayIter_Type);
     /* it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);*/
     if (it == NULL) {
@@ -425,6 +433,13 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     int i, diff, j, compat, k;
     PyArrayObject *ao = (PyArrayObject *)obj;
 
+    if (PyArray_HASMASKNA(ao)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Old-style NumPy iterators do not support NA masks, "
+                "use numpy.nditer instead");
+        return NULL;
+    }
+
     if (PyArray_NDIM(ao) > nd) {
         goto err;
     }
@@ -442,7 +457,7 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     if (!compat) {
         goto err;
     }
-    it = (PyArrayIterObject *)_pya_malloc(sizeof(PyArrayIterObject));
+    it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
     PyObject_Init((PyObject *)it, &PyArrayIter_Type);
 
     if (it == NULL) {
@@ -1506,7 +1521,7 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
                      "array objects (inclusive).", NPY_MAXARGS);
         return NULL;
     }
-    multi = _pya_malloc(sizeof(PyArrayMultiIterObject));
+    multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
     if (multi == NULL) {
         return PyErr_NoMemory();
     }
@@ -1571,7 +1586,7 @@ PyArray_MultiIterNew(int n, ...)
 
     /* fprintf(stderr, "multi new...");*/
 
-    multi = _pya_malloc(sizeof(PyArrayMultiIterObject));
+    multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
     if (multi == NULL) {
         return PyErr_NoMemory();
     }
@@ -1634,7 +1649,7 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
         return NULL;
     }
 
-    multi = _pya_malloc(sizeof(PyArrayMultiIterObject));
+    multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
     if (multi == NULL) {
         return PyErr_NoMemory();
     }
@@ -2031,7 +2046,7 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, npy_intp *bounds,
     int i;
     PyArrayNeighborhoodIterObject *ret;
 
-    ret = _pya_malloc(sizeof(*ret));
+    ret = PyArray_malloc(sizeof(*ret));
     if (ret == NULL) {
         return NULL;
     }
