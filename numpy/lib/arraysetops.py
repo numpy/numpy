@@ -229,7 +229,7 @@ def intersect1d(ar1, ar2, assume_unique=False):
         ar2 = unique(ar2)
     aux = np.concatenate( (ar1, ar2) )
     aux.sort()
-    return aux[aux[1:] == aux[:-1]]
+    return aux[:-1][aux[1:] == aux[:-1]]
 
 def setxor1d(ar1, ar2, assume_unique=False):
     """

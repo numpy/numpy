@@ -3897,6 +3897,30 @@ PyArray_PrepareOneRawArrayIter(int ndim, char *data,
     _npy_stride_sort_item strideperm[NPY_MAXDIMS];
     int i, j;
 
+    /* Special case 0 and 1 dimensions */
+    if (ndim == 0) {
+        *out_ndim = 1;
+        *out_data = data;
+        out_shape[0] = 1;
+        out_strides[0] = 0;
+        return 0;
+    }
+    else if (ndim == 1) {
+        npy_intp stride_entry = strides[0], shape_entry = shape[0];
+        *out_ndim = 1;
+        out_shape[0] = shape[0];
+        /* Always make a positive stride */
+        if (stride_entry >= 0) {
+            *out_data = data;
+            out_strides[0] = stride_entry;
+        }
+        else {
+            *out_data = data + stride_entry * (shape_entry - 1);
+            out_strides[0] = -stride_entry;
+        }
+        return 0;
+    }
+
     /* Sort the axes based on the destination strides */
     PyArray_CreateSortedStridePerm(ndim, strides, strideperm);
     for (i = 0; i < ndim; ++i) {
@@ -3912,6 +3936,14 @@ PyArray_PrepareOneRawArrayIter(int ndim, char *data,
         if (stride_entry < 0) {
             data += stride_entry * (shape_entry - 1);
             out_strides[i] = -stride_entry;
+        }
+        /* Detect 0-size arrays here */
+        if (shape_entry == 0) {
+            *out_ndim = 1;
+            *out_data = data;
+            out_shape[0] = 0;
+            out_strides[0] = 0;
+            return 0;
         }
     }
 
