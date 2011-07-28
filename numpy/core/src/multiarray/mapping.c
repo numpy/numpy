@@ -979,7 +979,7 @@ array_ass_boolean_subscript(PyArrayObject *self,
         }
 
         if (size != PyArray_DIMS(v)[0]) {
-            PyErr_Format(PyExc_TypeError,
+            PyErr_Format(PyExc_ValueError,
                     "NumPy boolean array indexing assignment "
                     "cannot assign %d input values to "
                     "the %d output values where the mask is true",
