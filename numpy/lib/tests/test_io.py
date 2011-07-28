@@ -959,12 +959,12 @@ M   33  21.99
                              usecols=('a', 'c'), **kwargs)
         assert_equal(test, ctrl)
 
-
     def test_empty_file(self):
         "Test that an empty file raises the proper exception"
         data = StringIO()
-        assert_raises(IOError, np.ndfromtxt, data)
-
+        test = np.genfromtxt(data)
+        ctrl = np.array([])
+        assert_equal(test, ctrl)
 
     def test_fancy_dtype_alt(self):
         "Check that a nested dtype isn't MIA"
