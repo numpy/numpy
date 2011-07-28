@@ -981,8 +981,8 @@ array_ass_boolean_subscript(PyArrayObject *self,
         if (size != PyArray_DIMS(v)[0]) {
             PyErr_Format(PyExc_TypeError,
                     "NumPy boolean array indexing assignment "
-                    "requires an input shape matching the number of True "
-                    "values in the mask (%d) != (%d)",
+                    "cannot assign %d input values to "
+                    "the %d output values where the mask is true",
                     (int)PyArray_DIMS(v)[0], (int)size);
             return -1;
         }
