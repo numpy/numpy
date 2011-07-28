@@ -71,7 +71,8 @@ class TestEinSum(TestCase):
 
     def test_einsum_views(self):
         # pass-through
-        a = np.arange(6).reshape(2,3)
+        a = np.arange(6)
+        a.shape = (2,3)
 
         b = np.einsum("...", a)
         assert_(b.base is a)
@@ -88,7 +89,8 @@ class TestEinSum(TestCase):
         assert_equal(b, a)
 
         # transpose
-        a = np.arange(6).reshape(2,3)
+        a = np.arange(6)
+        a.shape = (2,3)
 
         b = np.einsum("ji", a)
         assert_(b.base is a)
@@ -99,7 +101,8 @@ class TestEinSum(TestCase):
         assert_equal(b, a.T)
 
         # diagonal
-        a = np.arange(9).reshape(3,3)
+        a = np.arange(9)
+        a.shape = (3,3)
 
         b = np.einsum("ii->i", a)
         assert_(b.base is a)
@@ -110,7 +113,8 @@ class TestEinSum(TestCase):
         assert_equal(b, [a[i,i] for i in range(3)])
 
         # diagonal with various ways of broadcasting an additional dimension
-        a = np.arange(27).reshape(3,3,3)
+        a = np.arange(27)
+        a.shape = (3,3,3)
 
         b = np.einsum("...ii->...i", a)
         assert_(b.base is a)
@@ -173,7 +177,8 @@ class TestEinSum(TestCase):
                          for x in a.transpose(1,0,2)])
 
         # triple diagonal
-        a = np.arange(27).reshape(3,3,3)
+        a = np.arange(27)
+        a.shape = (3,3,3)
 
         b = np.einsum("iii->i", a)
         assert_(b.base is a)
@@ -184,7 +189,8 @@ class TestEinSum(TestCase):
         assert_equal(b, [a[i,i,i] for i in range(3)])
 
         # swap axes
-        a = np.arange(24).reshape(2,3,4)
+        a = np.arange(24)
+        a.shape = (2,3,4)
 
         b = np.einsum("ijk->jik", a)
         assert_(b.base is a)
@@ -421,6 +427,12 @@ class TestEinSum(TestCase):
         assert_equal(b, np.sum(a))
         assert_equal(b.dtype, np.dtype(dtype))
 
+        # A case which was failing (ticket #1885)
+        p = np.arange(2) + 1
+        q = np.arange(4).reshape(2,2) + 3
+        r = np.arange(4).reshape(2,2) + 7
+        assert_equal(np.einsum('z,mz,zm->', p, q, r), 253)
+
     def test_einsum_sums_int8(self):
         self.check_einsum_sums('i1');
 
@@ -465,6 +477,19 @@ class TestEinSum(TestCase):
 
     def test_einsum_sums_clongdouble(self):
         self.check_einsum_sums(np.clongdouble);
+
+    def test_einsum_misc(self):
+        # This call used to crash because of a bug in
+        # PyArray_FillWithZero
+        a = np.ones((1,2))
+        b = np.ones((2,2,1))
+        assert_equal(np.einsum('ij...,j...->i...',a,b), [[[2],[2]]])
+
+        # The iterator had an issue with buffering this reduction
+        a = np.ones((5, 12, 4, 2, 3), np.int64)
+        b = np.ones((5, 12, 11), np.int64)
+        assert_equal(np.einsum('ijklm,ijn,ijn->',a,b,b),
+                        np.einsum('ijklm,ijn->',a,b))
 
 if __name__ == "__main__":
     run_module_suite()

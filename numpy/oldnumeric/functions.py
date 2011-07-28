@@ -91,7 +91,7 @@ def nonzero(a):
     if len(res) == 1:
         return res[0]
     else:
-        raise ValueError, "Input argument must be 1d"
+        raise ValueError("Input argument must be 1d")
 
 def reshape(a, shape):
     return np.reshape(a, shape)

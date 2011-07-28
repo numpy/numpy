@@ -101,7 +101,7 @@ finally:
 RELEASE_NOTES = 'doc/release/2.0.0-notes.rst'
 
 # Start/end of the log (from git)
-LOG_START = 'svn/tags/1.5.0'
+LOG_START = 'v1.6.0'
 LOG_END = 'master'
 
 
@@ -398,8 +398,22 @@ def pdf():
 #------------------
 # Mac OS X targets
 #------------------
-def dmg_name(fullversion, pyver):
-    return "numpy-%s-py%s-python.org.dmg" % (fullversion, pyver)
+def dmg_name(fullversion, pyver, osxver=None):
+    """Return name for dmg installer.
+
+    Notes
+    -----
+    Python 2.7 has two binaries, one for 10.3 (ppc, i386) and one for 10.6
+    (i386, x86_64). All other Python versions at python.org at the moment
+    have binaries for 10.3 only. The "macosx%s" part of the dmg name should
+    correspond to the python.org naming scheme.
+    """
+    # assume that for the py2.7/osx10.6 build the deployment target is set
+    # (should be done in the release script).
+    if not osxver:
+        osxver = os.environ.get('MACOSX_DEPLOYMENT_TARGET', '10.3')
+    return "numpy-%s-py%s-python.org-macosx%s.dmg" % (fullversion, pyver,
+                                                      osxver)
 
 def macosx_version():
     if not sys.platform == 'darwin':
@@ -580,7 +594,7 @@ Checksums
 
 def write_log_task(options, filename='Changelog'):
     st = subprocess.Popen(
-            ['git', 'svn', 'log',  '%s..%s' % (LOG_START, LOG_END)],
+            ['git', 'log',  '%s..%s' % (LOG_START, LOG_END)],
             stdout=subprocess.PIPE)
 
     out = st.communicate()[0]

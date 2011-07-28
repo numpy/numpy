@@ -30,7 +30,7 @@ class TestArraySplit(TestCase):
         a = arange(10)
         try:
             res = array_split(a,0)
-            assert(0) # it should have thrown a value error
+            assert_(0) # it should have thrown a value error
         except ValueError:
             pass
 
@@ -149,7 +149,7 @@ class TestSplit(TestCase):
         a = arange(10)
         try:
             res = split(a,3)
-            assert(0) # should raise an error
+            assert_(0) # should raise an error
         except ValueError:
             pass
 
@@ -189,7 +189,7 @@ class TestHsplit(TestCase):
         a= array(1)
         try:
             hsplit(a,2)
-            assert(0)
+            assert_(0)
         except ValueError:
             pass
 
@@ -214,7 +214,7 @@ class TestVsplit(TestCase):
         a= array([1,2,3,4])
         try:
             vsplit(a,2)
-            assert(0)
+            assert_(0)
         except ValueError:
             pass
 
@@ -234,7 +234,7 @@ class TestDsplit(TestCase):
                   [1,2,3,4]])
         try:
             dsplit(a,2)
-            assert(0)
+            assert_(0)
         except ValueError:
             pass
 

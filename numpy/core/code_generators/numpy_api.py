@@ -256,7 +256,7 @@ multiarray_funcs_api = {
     'PyArray_TimedeltaToTimedeltaStruct':   221,
     'PyArray_DatetimeStructToDatetime':     222,
     'PyArray_TimedeltaStructToTimedelta':   223,
-    # New Iterator API
+    # NDIter API
     'NpyIter_New':                          224,
     'NpyIter_MultiNew':                     225,
     'NpyIter_AdvancedNew':                  226,
@@ -315,6 +315,10 @@ multiarray_funcs_api = {
     'PyArray_GetArrayParamsFromObject':     278,
     'PyArray_ConvertClipmodeSequence':      279,
     'PyArray_MatrixProduct2':               280,
+    # End 1.6 API
+    'PyArray_MaskedCopyInto':               281,
+    'PyArray_MaskedMoveInto':               282,
+    'PyArray_SetBaseObject':                      283,
 }
 
 ufunc_types_api = {
@@ -361,6 +365,10 @@ ufunc_funcs_api = {
     'PyUFunc_ee_e':                             36,
     'PyUFunc_ee_e_As_ff_f':                     37,
     'PyUFunc_ee_e_As_dd_d':                     38,
+    # End 1.6 API
+    'PyUFunc_DefaultTypeResolution':            39,
+    'PyUFunc_ValidateCasting':                  40,
+    'PyUFunc_DefaultTypeResolutionMasked':      41,
 }
 
 # List of all the dicts which define the C API

@@ -165,7 +165,7 @@ if config.CheckDeclaration(('PRIdPTR'), includes  = '#include <inttypes.h>'):
     numpyconfig_sym.append(('DEFINE_NPY_USE_C99_FORMATS', '#define NPY_USE_C99_FORMATS 1'))
 else:
     numpyconfig_sym.append(('DEFINE_NPY_USE_C99_FORMATS', ''))
-    
+
 #----------------------
 # Checking the mathlib
 #----------------------
@@ -380,11 +380,10 @@ umath_loops_src = env.GenerateFromTemplate(pjoin('src', 'umath', 'loops.c.src'))
 arraytypes_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'arraytypes.c.src'))
 nditer_src = env.GenerateFromTemplate(
-    pjoin('src', 'multiarray', 'nditer.c.src'))
+    pjoin('src', 'multiarray', 'nditer_templ.c.src'))
 lowlevel_strided_loops_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'lowlevel_strided_loops.c.src'))
 einsum_src = env.GenerateFromTemplate(pjoin('src', 'multiarray', 'einsum.c.src'))
-sortmodule_src = env.GenerateFromTemplate(pjoin('src', '_sortmodule.c.src'))
 umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umath',
     'umathmodule.c.src'))
 umath_tests_src = env.GenerateFromTemplate(pjoin('src', 'umath',
@@ -431,6 +430,12 @@ mlib_ini = env.SubstInFile(pjoin('lib', 'npy-pkg-config', 'mlib.ini'),
 env.Install('$distutils_installdir/lib/npy-pkg-config', mlib_ini)
 env.Install('$distutils_installdir/lib/npy-pkg-config', npymath_ini)
 
+# npysort core lib
+npysort_src = [env.GenerateFromTemplate(pjoin('src', 'npysort', 'sort.c.src'))]
+env.StaticExtLibrary("npysort", npysort_src)
+env.Prepend(LIBS=["npysort"])
+env.Prepend(LIBPATH=["."])
+
 #-----------------
 # Build multiarray
 #-----------------
@@ -439,6 +444,9 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'hashdescr.c'),
         pjoin('src', 'multiarray', 'arrayobject.c'),
         pjoin('src', 'multiarray', 'datetime.c'),
+        pjoin('src', 'multiarray', 'datetime_strings.c'),
+        pjoin('src', 'multiarray', 'datetime_busday.c'),
+        pjoin('src', 'multiarray', 'datetime_busdaycal.c'),
         pjoin('src', 'multiarray', 'numpyos.c'),
         pjoin('src', 'multiarray', 'flagsobject.c'),
         pjoin('src', 'multiarray', 'descriptor.c'),
@@ -461,6 +469,8 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'buffer.c'),
         pjoin('src', 'multiarray', 'numpymemoryview.c'),
         pjoin('src', 'multiarray', 'scalarapi.c'),
+        pjoin('src', 'multiarray', 'nditer_api.c'),
+        pjoin('src', 'multiarray', 'nditer_constr.c'),
         pjoin('src', 'multiarray', 'nditer_pywrap.c'),
         pjoin('src', 'multiarray', 'dtype_transfer.c')]
     multiarray_src.extend(arraytypes_src)
@@ -475,16 +485,12 @@ else:
 multiarray = env.DistutilsPythonExtension('multiarray', source = multiarray_src)
 env.DistutilsPythonExtension('multiarray_tests', source=multiarray_tests_src)
 
-#------------------
-# Build sort module
-#------------------
-sort = env.DistutilsPythonExtension('_sort', source = sortmodule_src)
-
 #-------------------
 # Build umath module
 #-------------------
 if ENABLE_SEPARATE_COMPILATION:
     umathmodule_src.extend([pjoin('src', 'umath', 'ufunc_object.c')])
+    umathmodule_src.extend([pjoin('src', 'umath', 'ufunc_type_resolution.c')])
     umathmodule_src.extend(umath_loops_src)
 else:
     umathmodule_src = [pjoin('src', 'umath', 'umathmodule_onefile.c')]

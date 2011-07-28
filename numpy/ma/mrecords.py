@@ -197,7 +197,7 @@ class MaskedRecords(MaskedArray, object):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError):
-            raise AttributeError, "record array has no attribute %s" % attr
+            raise AttributeError("record array has no attribute %s" % attr)
         # So far, so good...
         _localdict = ndarray.__getattribute__(self, '__dict__')
         _data = ndarray.view(self, _localdict['_baseclass'])
@@ -269,7 +269,7 @@ class MaskedRecords(MaskedArray, object):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError):
-            raise AttributeError, "record array has no attribute %s" % attr
+            raise AttributeError("record array has no attribute %s" % attr)
         #
         if val is masked:
             _fill_value = _localdict['_fill_value']
@@ -589,7 +589,7 @@ on the first line. An exception is raised if the file is 3D or more.
     if len(arr.shape) == 2 :
         arr = arr[0]
     elif len(arr.shape) > 2:
-        raise ValueError, "The array should be 2D at most!"
+        raise ValueError("The array should be 2D at most!")
     # Start the conversion loop .......
     for f in arr:
         try:
@@ -619,11 +619,11 @@ def openfile(fname):
     try:
         f = open(fname)
     except IOError:
-        raise IOError, "No such file: '%s'" % fname
+        raise IOError("No such file: '%s'" % fname)
     if f.readline()[:2] != "\\x":
         f.seek(0, 0)
         return f
-    raise NotImplementedError, "Wow, binary file"
+    raise NotImplementedError("Wow, binary file")
 
 
 def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',

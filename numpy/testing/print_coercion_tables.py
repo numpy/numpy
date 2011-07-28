@@ -4,7 +4,7 @@
 import numpy as np
 
 # Generic object that can be added, but doesn't do anything else
-class GenericObject:
+class GenericObject(object):
     def __init__(self, v):
         self.v = v
 

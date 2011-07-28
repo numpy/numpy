@@ -2,10 +2,12 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
+#include "numpy/ndarrayobject.h"
 
 #include "npy_config.h"
 #include "numpy/npy_3kcompat.h"
@@ -25,7 +27,7 @@
  *
  * This conversion function can be used with the "O&" argument for
  * PyArg_ParseTuple.  It will immediately return an object of array type
- * or will convert to a CARRAY any other object.
+ * or will convert to a NPY_ARRAY_CARRAY any other object.
  *
  * If you use PyArray_Converter, you must DECREF the array when finished
  * as you get a new reference to it.
@@ -39,7 +41,7 @@ PyArray_Converter(PyObject *object, PyObject **address)
         return PY_SUCCEED;
     }
     else {
-        *address = PyArray_FromAny(object, NULL, 0, 0, CARRAY, NULL);
+        *address = PyArray_FromAny(object, NULL, 0, 0, NPY_ARRAY_CARRAY, NULL);
         if (*address == NULL) {
             return PY_FAIL;
         }
@@ -142,14 +144,14 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     Py_ssize_t buflen;
 
     buf->ptr = NULL;
-    buf->flags = BEHAVED;
+    buf->flags = NPY_ARRAY_BEHAVED;
     buf->base = NULL;
     if (obj == Py_None) {
         return PY_SUCCEED;
     }
     if (PyObject_AsWriteBuffer(obj, &(buf->ptr), &buflen) < 0) {
         PyErr_Clear();
-        buf->flags &= ~WRITEABLE;
+        buf->flags &= ~NPY_ARRAY_WRITEABLE;
         if (PyObject_AsReadBuffer(obj, (const void **)&(buf->ptr),
                                   &buflen) < 0) {
             return PY_FAIL;
@@ -358,7 +360,7 @@ PyArray_PyIntAsInt(PyObject *o)
     long long_value = -1;
     PyObject *obj;
     static char *msg = "an integer is required";
-    PyObject *arr;
+    PyArrayObject *arr;
     PyArray_Descr *descr;
     int ret;
 
@@ -378,16 +380,18 @@ PyArray_PyIntAsInt(PyObject *o)
     descr = &INT_Descr;
     arr = NULL;
     if (PyArray_Check(o)) {
-        if (PyArray_SIZE(o)!=1 || !PyArray_ISINTEGER(o)) {
+        if (PyArray_SIZE((PyArrayObject *)o)!=1 ||
+                                !PyArray_ISINTEGER((PyArrayObject *)o)) {
             PyErr_SetString(PyExc_TypeError, msg);
             return -1;
         }
         Py_INCREF(descr);
-        arr = PyArray_CastToType((PyArrayObject *)o, descr, 0);
+        arr = (PyArrayObject *)PyArray_CastToType((PyArrayObject *)o,
+                                                    descr, 0);
     }
     if (PyArray_IsScalar(o, Integer)) {
         Py_INCREF(descr);
-        arr = PyArray_FromScalar(o, descr);
+        arr = (PyArrayObject *)PyArray_FromScalar(o, descr);
     }
     if (arr != NULL) {
         ret = *((int *)PyArray_DATA(arr));
@@ -447,7 +451,7 @@ PyArray_PyIntAsIntp(PyObject *o)
     longlong long_value = -1;
     PyObject *obj;
     static char *msg = "an integer is required";
-    PyObject *arr;
+    PyArrayObject *arr;
     PyArray_Descr *descr;
     npy_intp ret;
 
@@ -473,16 +477,18 @@ PyArray_PyIntAsIntp(PyObject *o)
     arr = NULL;
 
     if (PyArray_Check(o)) {
-        if (PyArray_SIZE(o)!=1 || !PyArray_ISINTEGER(o)) {
+        if (PyArray_SIZE((PyArrayObject *)o)!=1 ||
+                                !PyArray_ISINTEGER((PyArrayObject *)o)) {
             PyErr_SetString(PyExc_TypeError, msg);
             return -1;
         }
         Py_INCREF(descr);
-        arr = PyArray_CastToType((PyArrayObject *)o, descr, 0);
+        arr = (PyArrayObject *)PyArray_CastToType((PyArrayObject *)o,
+                                                                descr, 0);
     }
     else if (PyArray_IsScalar(o, Integer)) {
         Py_INCREF(descr);
-        arr = PyArray_FromScalar(o, descr);
+        arr = (PyArrayObject *)PyArray_FromScalar(o, descr);
     }
     if (arr != NULL) {
         ret = *((npy_intp *)PyArray_DATA(arr));
@@ -628,119 +634,149 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype)
 {
-    int newtype = gentype;
+    int newtype = NPY_NOTYPE;
+    int ret;
 
-    if (gentype == PyArray_GENBOOLLTR) {
-        if (itemsize == 1) {
-            newtype = PyArray_BOOL;
-        }
-        else {
-            newtype = PyArray_NOTYPE;
-        }
-    }
-    else if (gentype == PyArray_SIGNEDLTR) {
-        switch(itemsize) {
-        case 1:
-            newtype = PyArray_INT8;
+    switch (gentype) {
+        case NPY_GENBOOLLTR:
+            if (itemsize == 1) {
+                newtype = NPY_BOOL;
+            }
             break;
-        case 2:
-            newtype = PyArray_INT16;
-            break;
-        case 4:
-            newtype = PyArray_INT32;
-            break;
-        case 8:
-            newtype = PyArray_INT64;
-            break;
+
+        case NPY_SIGNEDLTR:
+            switch(itemsize) {
+                case 1:
+                    newtype = NPY_INT8;
+                    break;
+                case 2:
+                    newtype = NPY_INT16;
+                    break;
+                case 4:
+                    newtype = NPY_INT32;
+                    break;
+                case 8:
+                    newtype = NPY_INT64;
+                    break;
 #ifdef PyArray_INT128
-        case 16:
-            newtype = PyArray_INT128;
-            break;
+                case 16:
+                    newtype = NPY_INT128;
+                    break;
 #endif
-        default:
-            newtype = PyArray_NOTYPE;
-        }
-    }
-    else if (gentype == PyArray_UNSIGNEDLTR) {
-        switch(itemsize) {
-        case 1:
-            newtype = PyArray_UINT8;
+            }
             break;
-        case 2:
-            newtype = PyArray_UINT16;
-            break;
-        case 4:
-            newtype = PyArray_UINT32;
-            break;
-        case 8:
-            newtype = PyArray_UINT64;
-            break;
+
+        case NPY_UNSIGNEDLTR:
+            switch(itemsize) {
+                case 1:
+                    newtype = NPY_UINT8;
+                    break;
+                case 2:
+                    newtype = NPY_UINT16;
+                    break;
+                case 4:
+                    newtype = NPY_UINT32;
+                    break;
+                case 8:
+                    newtype = NPY_UINT64;
+                    break;
 #ifdef PyArray_INT128
-        case 16:
-            newtype = PyArray_UINT128;
-            break;
+                case 16:
+                    newtype = NPY_UINT128;
+                    break;
 #endif
-        default:
-            newtype = PyArray_NOTYPE;
+            }
             break;
-        }
-    }
-    else if (gentype == PyArray_FLOATINGLTR) {
-        switch(itemsize) {
-        case 2:
-            newtype = PyArray_FLOAT16;
-            break;
-        case 4:
-            newtype = PyArray_FLOAT32;
-            break;
-        case 8:
-            newtype = PyArray_FLOAT64;
-            break;
+
+        case NPY_FLOATINGLTR:
+            switch(itemsize) {
+                case 2:
+                    newtype = NPY_FLOAT16;
+                    break;
+                case 4:
+                    newtype = NPY_FLOAT32;
+                    break;
+                case 8:
+                    newtype = NPY_FLOAT64;
+                    break;
 #ifdef PyArray_FLOAT80
-        case 10:
-            newtype = PyArray_FLOAT80;
-            break;
+                case 10:
+                    newtype = NPY_FLOAT80;
+                    break;
 #endif
 #ifdef PyArray_FLOAT96
-        case 12:
-            newtype = PyArray_FLOAT96;
-            break;
+                case 12:
+                    newtype = NPY_FLOAT96;
+                    break;
 #endif
 #ifdef PyArray_FLOAT128
-        case 16:
-            newtype = PyArray_FLOAT128;
-            break;
+                case 16:
+                    newtype = NPY_FLOAT128;
+                    break;
 #endif
-        default:
-            newtype = PyArray_NOTYPE;
-        }
-    }
-    else if (gentype == PyArray_COMPLEXLTR) {
-        switch(itemsize) {
-        case 8:
-            newtype = PyArray_COMPLEX64;
+            }
             break;
-        case 16:
-            newtype = PyArray_COMPLEX128;
-            break;
+
+        case NPY_COMPLEXLTR:
+            switch(itemsize) {
+                case 8:
+                    newtype = NPY_COMPLEX64;
+                    break;
+                case 16:
+                    newtype = NPY_COMPLEX128;
+                    break;
 #ifdef PyArray_FLOAT80
-        case 20:
-            newtype = PyArray_COMPLEX160;
-            break;
+                case 20:
+                    newtype = NPY_COMPLEX160;
+                    break;
 #endif
 #ifdef PyArray_FLOAT96
-        case 24:
-            newtype = PyArray_COMPLEX192;
-            break;
+                case 24:
+                    newtype = NPY_COMPLEX192;
+                    break;
 #endif
 #ifdef PyArray_FLOAT128
-        case 32:
-            newtype = PyArray_COMPLEX256;
-            break;
+                case 32:
+                    newtype = NPY_COMPLEX256;
+                    break;
 #endif
-        default:
-            newtype = PyArray_NOTYPE;
-        }
+            }
+            break;
+
+        case NPY_OBJECTLTR:
+            /* raise PyErr_Warn|Ex depending on version */
+            ret = DEPRECATE("DType strings 'O4' and 'O8' are deprecated "
+                            "because they are platform specific. Use "
+                            "'O' instead");
+            if (ret == 0 && (itemsize == 4 || itemsize == 8)) {
+                newtype = NPY_OBJECT;
+            }
+            break;
+
+        case NPY_STRINGLTR:
+        case NPY_STRINGLTR2:
+            newtype = NPY_STRING;
+            break;
+
+        case NPY_UNICODELTR:
+            newtype = NPY_UNICODE;
+            break;
+
+        case NPY_VOIDLTR:
+            newtype = NPY_VOID;
+            break;
+
+        case NPY_DATETIMELTR:
+            if (itemsize == 8) {
+                newtype = NPY_DATETIME;
+            }
+            break;
+
+        case NPY_TIMEDELTALTR:
+            if (itemsize == 8) {
+                newtype = NPY_TIMEDELTA;
+            }
+            break;
     }
     return newtype;
 }

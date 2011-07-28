@@ -9,7 +9,7 @@ from numpy.testing.utils import WarningManager
 from numpy.core.multiarray import dot as dot_
 import warnings
 
-class Vec:
+class Vec(object):
     def __init__(self,sequence=None):
         if sequence is None:
             sequence=[]
@@ -345,12 +345,13 @@ class TestFloatExceptions(TestCase):
 class TestTypes(TestCase):
     def check_promotion_cases(self, promote_func):
         """Tests that the scalars get coerced correctly."""
+        b = np.bool_(0)
         i8, i16, i32, i64 = int8(0), int16(0), int32(0), int64(0)
         u8, u16, u32, u64 = uint8(0), uint16(0), uint32(0), uint64(0)
         f32, f64, fld = float32(0), float64(0), longdouble(0)
         c64, c128, cld = complex64(0), complex128(0), clongdouble(0)
 
-        # coercion within the same type
+        # coercion within the same kind
         assert_equal(promote_func(i8,i16), np.dtype(int16))
         assert_equal(promote_func(i32,i8), np.dtype(int32))
         assert_equal(promote_func(i16,i64), np.dtype(int64))
@@ -362,7 +363,9 @@ class TestTypes(TestCase):
         assert_equal(promote_func(cld,c128), np.dtype(clongdouble))
         assert_equal(promote_func(c64,fld), np.dtype(clongdouble))
 
-        # coercion between types
+        # coercion between kinds
+        assert_equal(promote_func(b,i32), np.dtype(int32))
+        assert_equal(promote_func(b,u8), np.dtype(uint8))
         assert_equal(promote_func(i8,u8), np.dtype(int16))
         assert_equal(promote_func(u8,i32), np.dtype(int32))
         assert_equal(promote_func(i64,u32), np.dtype(int64))
@@ -376,6 +379,10 @@ class TestTypes(TestCase):
         assert_equal(promote_func(cld,f64), np.dtype(clongdouble))
 
         # coercion between scalars and 1-D arrays
+        assert_equal(promote_func(array([b]),i8), np.dtype(int8))
+        assert_equal(promote_func(array([b]),u8), np.dtype(uint8))
+        assert_equal(promote_func(array([b]),i32), np.dtype(int32))
+        assert_equal(promote_func(array([b]),u32), np.dtype(uint32))
         assert_equal(promote_func(array([i8]),i64), np.dtype(int8))
         assert_equal(promote_func(u64,array([i32])), np.dtype(int32))
         assert_equal(promote_func(i64,array([u32])), np.dtype(uint32))
@@ -384,49 +391,103 @@ class TestTypes(TestCase):
         assert_equal(promote_func(fld,array([f32])), np.dtype(float32))
         assert_equal(promote_func(array([f64]),fld), np.dtype(float64))
         assert_equal(promote_func(fld,array([c64])), np.dtype(complex64))
+        assert_equal(promote_func(c64,array([f64])), np.dtype(complex128))
+        assert_equal(promote_func(complex64(3j),array([f64])),
+                                                    np.dtype(complex128))
+
+        # coercion between scalars and 1-D arrays, where
+        # the scalar has greater kind than the array
+        assert_equal(promote_func(array([b]),f64), np.dtype(float64))
+        assert_equal(promote_func(array([b]),i64), np.dtype(int64))
+        assert_equal(promote_func(array([b]),u64), np.dtype(uint64))
+        assert_equal(promote_func(array([i8]),f64), np.dtype(float64))
+        assert_equal(promote_func(array([u16]),f64), np.dtype(float64))
+        # uint and int are treated as the same "kind" for
+        # the purposes of array-scalar promotion.
+        assert_equal(promote_func(array([u16]), i32), np.dtype(uint16))
+        # float and complex are treated as the same "kind" for
+        # the purposes of array-scalar promotion, so that you can do
+        # (0j + float32array) to get a complex64 array instead of
+        # a complex128 array.
+        assert_equal(promote_func(array([f32]),c128), np.dtype(complex64))
 
     def test_coercion(self):
         def res_type(a, b):
             return np.add(a, b).dtype
-
-        ctx = WarningManager()
-        ctx.__enter__()
-        warnings.simplefilter('ignore', np.ComplexWarning)
-
         self.check_promotion_cases(res_type)
 
-        f64 = float64(0)
-        c64 = complex64(0)
-        ## Scalars do not coerce to complex if the value is real
-        #assert_equal(res_type(c64,array([f64])), np.dtype(float64))
-        # But they do if the value is complex
-        assert_equal(res_type(complex64(3j),array([f64])),
-                                                    np.dtype(complex128))
+        # Use-case: float/complex scalar * bool/int8 array
+        #           shouldn't narrow the float/complex type
+        for a in [np.array([True,False]), np.array([-3,12], dtype=np.int8)]:
+            b = 1.234 * a
+            assert_equal(b.dtype, np.dtype('f8'), "array type %s" % a.dtype)
+            b = np.longdouble(1.234) * a
+            assert_equal(b.dtype, np.dtype(np.longdouble),
+                                                "array type %s" % a.dtype)
+            b = np.float64(1.234) * a
+            assert_equal(b.dtype, np.dtype('f8'), "array type %s" % a.dtype)
+            b = np.float32(1.234) * a
+            assert_equal(b.dtype, np.dtype('f4'), "array type %s" % a.dtype)
+            b = np.float16(1.234) * a
+            assert_equal(b.dtype, np.dtype('f2'), "array type %s" % a.dtype)
 
-        # Scalars do coerce to complex even if the value is real
-        # This is so "a+0j" can be reliably used to make something complex.
-        assert_equal(res_type(c64,array([f64])), np.dtype(complex128))
+            b = 1.234j * a
+            assert_equal(b.dtype, np.dtype('c16'), "array type %s" % a.dtype)
+            b = np.clongdouble(1.234j) * a
+            assert_equal(b.dtype, np.dtype(np.clongdouble),
+                                                "array type %s" % a.dtype)
+            b = np.complex128(1.234j) * a
+            assert_equal(b.dtype, np.dtype('c16'), "array type %s" % a.dtype)
+            b = np.complex64(1.234j) * a
+            assert_equal(b.dtype, np.dtype('c8'), "array type %s" % a.dtype)
 
-        ctx.__exit__()
-
+        # The following use-case is problematic, and to resolve its
+        # tricky side-effects requires more changes.
+        #
+        ## Use-case: (1-t)*a, where 't' is a boolean array and 'a' is
+        ##            a float32, shouldn't promote to float64
+        #a = np.array([1.0, 1.5], dtype=np.float32)
+        #t = np.array([True, False])
+        #b = t*a
+        #assert_equal(b, [1.0, 0.0])
+        #assert_equal(b.dtype, np.dtype('f4'))
+        #b = (1-t)*a
+        #assert_equal(b, [0.0, 1.5])
+        #assert_equal(b.dtype, np.dtype('f4'))
+        ## Probably ~t (bitwise negation) is more proper to use here,
+        ## but this is arguably less intuitive to understand at a glance, and
+        ## would fail if 't' is actually an integer array instead of boolean:
+        #b = (~t)*a
+        #assert_equal(b, [0.0, 1.5])
+        #assert_equal(b.dtype, np.dtype('f4'))
 
     def test_result_type(self):
         self.check_promotion_cases(np.result_type)
 
-        f64 = float64(0)
-        c64 = complex64(0)
-        ## Scalars do not coerce to complex if the value is real
-        #assert_equal(np.result_type(c64,array([f64])), np.dtype(float64))
-        # But they do if the value is complex
-        assert_equal(np.result_type(complex64(3j),array([f64])),
-                                                    np.dtype(complex128))
+    def test_promote_types_endian(self):
+        # promote_types should always return native-endian types
+        assert_equal(np.promote_types('<i8', '<i8'), np.dtype('i8'))
+        assert_equal(np.promote_types('>i8', '>i8'), np.dtype('i8'))
 
-        # Scalars do coerce to complex even if the value is real
-        # This is so "a+0j" can be reliably used to make something complex.
-        assert_equal(np.result_type(c64,array([f64])), np.dtype(complex128))
+        assert_equal(np.promote_types('>i8', '>U16'), np.dtype('U16'))
+        assert_equal(np.promote_types('<i8', '<U16'), np.dtype('U16'))
+        assert_equal(np.promote_types('>U16', '>i8'), np.dtype('U16'))
+        assert_equal(np.promote_types('<U16', '<i8'), np.dtype('U16'))
+
+        assert_equal(np.promote_types('<S5', '<U8'), np.dtype('U8'))
+        assert_equal(np.promote_types('>S5', '>U8'), np.dtype('U8'))
+        assert_equal(np.promote_types('<U8', '<S5'), np.dtype('U8'))
+        assert_equal(np.promote_types('>U8', '>S5'), np.dtype('U8'))
+        assert_equal(np.promote_types('<U5', '<U8'), np.dtype('U8'))
+        assert_equal(np.promote_types('>U8', '>U5'), np.dtype('U8'))
+
+        assert_equal(np.promote_types('<M8', '<M8'), np.dtype('M8'))
+        assert_equal(np.promote_types('>M8', '>M8'), np.dtype('M8'))
+        assert_equal(np.promote_types('<m8', '<m8'), np.dtype('m8'))
+        assert_equal(np.promote_types('>m8', '>m8'), np.dtype('m8'))
 
 
-    def can_cast(self):
+    def test_can_cast(self):
         assert_(np.can_cast(np.int32, np.int64))
         assert_(np.can_cast(np.float64, np.complex))
         assert_(not np.can_cast(np.complex, np.float))
@@ -1039,7 +1100,7 @@ class TestClip(TestCase):
         self.assertTrue(a2 is a)
 
 
-class TestAllclose():
+class TestAllclose(object):
     rtol = 1e-5
     atol = 1e-8
 
@@ -1163,6 +1224,8 @@ class TestLikeFuncs(TestCase):
             assert_equal(dz.shape, d.shape)
             assert_equal(array(dz.strides)*d.dtype.itemsize,
                          array(d.strides)*dz.dtype.itemsize)
+            assert_equal(d.flags.c_contiguous, dz.flags.c_contiguous)
+            assert_equal(d.flags.f_contiguous, dz.flags.f_contiguous)
             if dtype is None:
                 assert_equal(dz.dtype, d.dtype)
             else:
@@ -1283,7 +1346,7 @@ class TestCorrelateNew(_TestCorrelate):
         z = np.correlate(y, x, 'full', old_behavior=self.old_behavior)
         assert_array_almost_equal(z, r_z)
 
-class TestArgwhere:
+class TestArgwhere(object):
     def test_2D(self):
         x = np.arange(6).reshape((2, 3))
         assert_array_equal(np.argwhere(x > 1),
@@ -1295,7 +1358,7 @@ class TestArgwhere:
     def test_list(self):
         assert_equal(np.argwhere([4, 0, 2, 1, 3]), [[0], [2], [3], [4]])
 
-class TestStringFunction:
+class TestStringFunction(object):
     def test_set_string_function(self):
         a = np.array([1])
         np.set_string_function(lambda x: "FOO", repr=True)

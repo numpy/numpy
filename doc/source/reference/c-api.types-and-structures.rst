@@ -129,14 +129,14 @@ PyArray_Type
 
 .. cmember:: PyObject *PyArrayObject.base
 
-    This member is used to hold a pointer to another Python object
-    that is related to this array. There are two use cases: 1) If
-    this array does not own its own memory, then base points to the
-    Python object that owns it (perhaps another array object), 2)
-    If this array has the :cdata:`NPY_UPDATEIFCOPY` flag set, then this
-    array is a working copy of a "misbehaved" array. As soon as
-    this array is deleted, the array pointed to by base will be
-    updated with the contents of this array.
+    This member is used to hold a pointer to another Python object that
+    is related to this array. There are two use cases: 1) If this array
+    does not own its own memory, then base points to the Python object
+    that owns it (perhaps another array object), 2) If this array has
+    the :cdata:`NPY_ARRAY_UPDATEIFCOPY` flag set, then this array is
+    a working copy of a "misbehaved" array. As soon as this array is
+    deleted, the array pointed to by base will be updated with the
+    contents of this array.
 
 .. cmember:: PyArray_Descr *PyArrayObject.descr
 
@@ -151,9 +151,10 @@ PyArray_Type
 .. cmember:: int PyArrayObject.flags
 
     Flags indicating how the memory pointed to by data is to be
-    interpreted. Possible flags are :cdata:`NPY_C_CONTIGUOUS`,
-    :cdata:`NPY_F_CONTIGUOUS`, :cdata:`NPY_OWNDATA`, :cdata:`NPY_ALIGNED`,
-    :cdata:`NPY_WRITEABLE`, and :cdata:`NPY_UPDATEIFCOPY`.
+    interpreted. Possible flags are :cdata:`NPY_ARRAY_C_CONTIGUOUS`,
+    :cdata:`NPY_ARRAY_F_CONTIGUOUS`, :cdata:`NPY_ARRAY_OWNDATA`,
+    :cdata:`NPY_ARRAY_ALIGNED`, :cdata:`NPY_ARRAY_WRITEABLE`, and
+    :cdata:`NPY_ARRAY_UPDATEIFCOPY`.
 
 .. cmember:: PyObject *PyArrayObject.weakreflist
 
@@ -850,8 +851,8 @@ PyArrayIter_Type
    .. cmember:: Bool PyArrayIterObject.contiguous
 
        This flag is true if the underlying array is
-       :cdata:`NPY_C_CONTIGUOUS`. It is used to simplify calculations when
-       possible.
+       :cdata:`NPY_ARRAY_C_CONTIGUOUS`. It is used to simplify
+       calculations when possible.
 
 
 How to use an array iterator on a C-level is explained more fully in
@@ -1057,8 +1058,8 @@ PyArray_Chunk
 
    .. cmember:: int PyArray_Chunk.flags
 
-       Any data flags (*e.g.* :cdata:`NPY_WRITEABLE` ) that should be used
-       to interpret the memory.
+       Any data flags (*e.g.* :cdata:`NPY_ARRAY_WRITEABLE` ) that should
+       be used to interpret the memory.
 
 
 PyArrayInterface
@@ -1117,12 +1118,12 @@ PyArrayInterface
 
    .. cmember:: int PyArrayInterface.flags
 
-       Any of the bits :cdata:`NPY_C_CONTIGUOUS` (1),
-       :cdata:`NPY_F_CONTIGUOUS` (2), :cdata:`NPY_ALIGNED` (0x100),
-       :cdata:`NPY_NOTSWAPPED` (0x200), or :cdata:`NPY_WRITEABLE`
+       Any of the bits :cdata:`NPY_ARRAY_C_CONTIGUOUS` (1),
+       :cdata:`NPY_ARRAY_F_CONTIGUOUS` (2), :cdata:`NPY_ARRAY_ALIGNED` (0x100),
+       :cdata:`NPY_ARRAY_NOTSWAPPED` (0x200), or :cdata:`NPY_ARRAY_WRITEABLE`
        (0x400) to indicate something about the data. The
-       :cdata:`NPY_ALIGNED`, :cdata:`NPY_C_CONTIGUOUS`, and
-       :cdata:`NPY_F_CONTIGUOUS` flags can actually be determined from
+       :cdata:`NPY_ARRAY_ALIGNED`, :cdata:`NPY_ARRAY_C_CONTIGUOUS`, and
+       :cdata:`NPY_ARRAY_F_CONTIGUOUS` flags can actually be determined from
        the other parameters. The flag :cdata:`NPY_ARR_HAS_DESCR`
        (0x800) can also be set to indicate to objects consuming the
        version 3 array interface that the descr member of the

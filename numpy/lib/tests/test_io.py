@@ -1,22 +1,21 @@
-import numpy as np
-import numpy.ma as ma
-from numpy.ma.testutils import (TestCase, assert_equal, assert_array_equal,
-    assert_raises, run_module_suite)
-from numpy.testing import assert_warns, assert_
-
 import sys
-
 import gzip
 import os
 import threading
-
 from tempfile import mkstemp, NamedTemporaryFile
 import time
 from datetime import datetime
 
+import numpy as np
+import numpy.ma as ma
 from numpy.lib._iotools import ConverterError, ConverterLockError, \
                                ConversionWarning
 from numpy.compat import asbytes, asbytes_nested, bytes
+
+from nose import SkipTest
+from numpy.ma.testutils import (TestCase, assert_equal, assert_array_equal,
+    assert_raises, run_module_suite)
+from numpy.testing import assert_warns, assert_
 
 if sys.version_info[0] >= 3:
     from io import BytesIO
@@ -480,6 +479,10 @@ class TestLoadTxt(TestCase):
         c = StringIO()
         c.write(asbytes('1,2,3\n4,5,6'))
         c.seek(0)
+        assert_raises(ValueError, np.loadtxt, c, ndmin=3)
+        c.seek(0)
+        assert_raises(ValueError, np.loadtxt, c, ndmin=1.5)
+        c.seek(0)
         x = np.loadtxt(c, dtype=int, delimiter=',', ndmin=1)
         a = np.array([[1, 2, 3], [4, 5, 6]])
         assert_array_equal(x, a)
@@ -487,11 +490,27 @@ class TestLoadTxt(TestCase):
         d.write(asbytes('0,1,2'))
         d.seek(0)
         x = np.loadtxt(d, dtype=int, delimiter=',', ndmin=2)
-        assert_(x.shape == (3, 1))
-        assert_raises(ValueError, np.loadtxt, d, ndmin=3)
-        assert_raises(ValueError, np.loadtxt, d, ndmin=1.5)
+        assert_(x.shape == (1, 3))
+        d.seek(0)
+        x = np.loadtxt(d, dtype=int, delimiter=',', ndmin=1)
+        assert_(x.shape == (3,))
+        d.seek(0)
+        x = np.loadtxt(d, dtype=int, delimiter=',', ndmin=0)
+        assert_(x.shape == (3,))
         e = StringIO()
-        assert_(np.loadtxt(e, ndmin=2).shape == (0, 1,))
+        e.write(asbytes('0\n1\n2'))
+        e.seek(0)
+        x = np.loadtxt(e, dtype=int, delimiter=',', ndmin=2)
+        assert_(x.shape == (3, 1))
+        e.seek(0)
+        x = np.loadtxt(e, dtype=int, delimiter=',', ndmin=1)
+        assert_(x.shape == (3,))
+        e.seek(0)
+        x = np.loadtxt(e, dtype=int, delimiter=',', ndmin=0)
+        assert_(x.shape == (3,))
+        f = StringIO()
+        assert_(np.loadtxt(f, ndmin=2).shape == (0, 1,))
+        assert_(np.loadtxt(f, ndmin=1).shape == (0,))
 
     def test_generator_source(self):
         def count():
@@ -757,6 +776,15 @@ M   33  21.99
                            dtype=[('date', np.object_), ('stid', float)])
         assert_equal(test, control)
 
+    def test_converters_cornercases2(self):
+        "Test the conversion to datetime64."
+        converter = {'date': lambda s: np.datetime64(strptime(s, '%Y-%m-%d %H:%M:%SZ'))}
+        data = StringIO('2009-02-03 12:00:00Z, 72214.0')
+        test = np.ndfromtxt(data, delimiter=',', dtype=None,
+                            names=['date', 'stid'], converters=converter)
+        control = np.array((datetime(2009, 02, 03), 72214.),
+                           dtype=[('date', 'datetime64[us]'), ('stid', float)])
+        assert_equal(test, control)
 
     def test_unused_converter(self):
         "Test whether unused converters are forgotten"
@@ -1311,25 +1339,28 @@ M   33  21.99
         self.assertTrue(isinstance(test, np.recarray))
         assert_equal(test, control)
 
-    def test_gft_filename(self):
+    def test_gft_using_filename(self):
         # Test that we can load data from a filename as well as a file object
-        data = '0 1 2\n3 4 5'
-        exp_res = np.arange(6).reshape((2,3))
-        assert_array_equal(np.genfromtxt(StringIO(data)), exp_res)
-        f, name = mkstemp()
-        # Thanks to another windows brokeness, we can't use
-        # NamedTemporaryFile: a file created from this function cannot be
-        # reopened by another open call. So we first put the string
-        # of the test reference array, write it to a securely opened file,
-        # which is then read from by the loadtxt function
-        try:
-            os.write(f, asbytes(data))
-            assert_array_equal(np.genfromtxt(name), exp_res)
-        finally:
-            os.close(f)
-            os.unlink(name)
+        wanted = np.arange(6).reshape((2,3))
+        if sys.version_info[0] >= 3:
+            # python 3k is known to fail for '\r'
+            linesep = ('\n', '\r\n')
+        else:
+            linesep = ('\n', '\r\n', '\r')
 
-    def test_gft_generator_source(self):
+        for sep in linesep:
+            data = '0 1 2' + sep + '3 4 5'
+            f, name = mkstemp()
+            # We can't use NamedTemporaryFile on windows, because we cannot
+            # reopen the file.
+            try:
+                os.write(f, asbytes(data))
+                assert_array_equal(np.genfromtxt(name), wanted)
+            finally:
+                os.close(f)
+                os.unlink(name)
+
+    def test_gft_using_generator(self):
         def count():
             for i in range(10):
                 yield asbytes("%d" % i)
@@ -1393,21 +1424,21 @@ def test_npzfile_dict():
 
     z = np.load(s)
 
-    assert 'x' in z
-    assert 'y' in z
-    assert 'x' in z.keys()
-    assert 'y' in z.keys()
+    assert_('x' in z)
+    assert_('y' in z)
+    assert_('x' in z.keys())
+    assert_('y' in z.keys())
 
     for f, a in z.iteritems():
-        assert f in ['x', 'y']
+        assert_(f in ['x', 'y'])
         assert_equal(a.shape, (3, 3))
 
-    assert len(z.items()) == 2
+    assert_(len(z.items()) == 2)
 
     for f in z:
-        assert f in ['x', 'y']
+        assert_(f in ['x', 'y'])
 
-    assert 'x' in list(z.iterkeys())
+    assert_('x' in list(z.iterkeys()))
 
 if __name__ == "__main__":
     run_module_suite()

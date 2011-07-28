@@ -10,7 +10,19 @@ Highlights
 New features
 ============
 
+Custom formatter for printing arrays
+------------------------------------
+
+
 
 Changes
 =======
 
+
+
+Deprecations
+============
+
+Specifying a custom string formatter with a `_format` array attribute is
+deprecated. The new `formatter` keyword in ``numpy.set_printoptions`` or
+``numpy.array2string`` can be used instead.

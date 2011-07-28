@@ -80,8 +80,7 @@ def cov(m, y=None, rowvar=0, bias=0):
         y = transpose(y)
     N = m.shape[0]
     if (y.shape[0] != N):
-        raise ValueError, "x and y must have the same number "\
-              "of observations"
+        raise ValueError("x and y must have the same number of observations")
     m = m - _Nmean(m,axis=0)
     y = y - _Nmean(y,axis=0)
     if bias:

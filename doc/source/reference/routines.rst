@@ -29,7 +29,8 @@ indentation.
    routines.statistics
    routines.math
    routines.functional
-   routines.poly
+   routines.polynomials
+   routines.datetime
    routines.financial
    routines.set
    routines.window

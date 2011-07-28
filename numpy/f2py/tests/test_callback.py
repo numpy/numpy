@@ -59,7 +59,7 @@ cf2py  intent(out) a
         assert_( r==11,`r`)
         r = t(self.module.func0._cpointer)
         assert_( r==11,`r`)
-        class A:
+        class A(object):
             def __call__(self):
                 return 7
             def mth(self):

@@ -68,7 +68,7 @@ typedef struct { Float64 a, theta; } PolarComplex64;
 #define NUM_CLE(p, q)  ((p).r <= (q).r)
 #define NUM_CGE(p, q)  ((p).r >= (q).r)
 
-/* e**z = e**x * (cos(y)+ i*sin(y)) where z = x + i*y 
+/* e**z = e**x * (cos(y)+ i*sin(y)) where z = x + i*y
    so e**z = e**x * cos(y) +  i * e**x * sin(y)
 */
 #define NUM_CEXP(p, s)                                                        \
@@ -79,7 +79,7 @@ typedef struct { Float64 a, theta; } PolarComplex64;
 
 /* e**w = z;     w = u + i*v;     z = r * e**(i*theta);
 
-e**u * e**(i*v) = r * e**(i*theta); 
+e**u * e**(i*v) = r * e**(i*theta);
 
 log(z) = w;  log(z) = log(r) + i*theta;
  */
@@ -110,7 +110,7 @@ log(z) = w;  log(z) = log(r) + i*theta;
                                NUM_CEXP(s, s);                               \
                             }                                                \
                           }
-  
+
 #define NUM_CSQRT(p, s)   { Complex64 temp; temp.r = 0.5; temp.i=0;           \
                             NUM_CPOW(p, temp, s);                             \
                           }
@@ -201,7 +201,7 @@ log(z) = w;  log(z) = log(r) + i*theta;
                          NUM_CIMUL(s, s);                                     \
                          NUM_CRMUL(s, 0.5, s);                                \
                        }
-                         
+
 /* asinh(z) = log( z + (z**2 + 1)**0.5 )   */
 #define NUM_CASINH(p, s) { Complex64 p1;   NUM_CASS(p, p1);                   \
                           NUM_CMUL(p, p, s);                                  \

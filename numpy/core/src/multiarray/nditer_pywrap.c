@@ -10,6 +10,7 @@
 #include "Python.h"
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
 #include <numpy/npy_3kcompat.h>
@@ -369,11 +370,22 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
         flag = 0;
         switch (str[0]) {
             case 'a':
-                if (strcmp(str, "allocate") == 0) {
-                    flag = NPY_ITER_ALLOCATE;
-                }
-                if (strcmp(str, "aligned") == 0) {
-                    flag = NPY_ITER_ALIGNED;
+                if (length > 2) switch(str[2]) {
+                    case 'i':
+                        if (strcmp(str, "aligned") == 0) {
+                            flag = NPY_ITER_ALIGNED;
+                        }
+                        break;
+                    case 'l':
+                        if (strcmp(str, "allocate") == 0) {
+                            flag = NPY_ITER_ALLOCATE;
+                        }
+                        break;
+                    case 'r':
+                        if (strcmp(str, "arraymask") == 0) {
+                            flag = NPY_ITER_ARRAYMASK;
+                        }
+                        break;
                 }
                 break;
             case 'c':
@@ -420,9 +432,23 @@ NpyIter_OpFlagsConverter(PyObject *op_flags_in,
                     flag = NPY_ITER_UPDATEIFCOPY;
                 }
                 break;
+            case 'v':
+                if (strcmp(str, "virtual") == 0) {
+                    flag = NPY_ITER_VIRTUAL;
+                }
+                break;
             case 'w':
-                if (strcmp(str, "writeonly") == 0) {
-                    flag = NPY_ITER_WRITEONLY;
+                if (length > 5) switch (str[5]) {
+                    case 'o':
+                        if (strcmp(str, "writeonly") == 0) {
+                            flag = NPY_ITER_WRITEONLY;
+                        }
+                        break;
+                    case 'm':
+                        if (strcmp(str, "writemasked") == 0) {
+                            flag = NPY_ITER_WRITEMASKED;
+                        }
+                        break;
                 }
                 break;
         }
@@ -715,7 +741,7 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
             int fromanyflags = 0;
 
             if (op_flags[iop]&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
-                fromanyflags = NPY_UPDATEIFCOPY;
+                fromanyflags = NPY_ARRAY_UPDATEIFCOPY;
             }
             ao = (PyArrayObject *)PyArray_FromAny((PyObject *)op[iop],
                                             NULL, 0, 0, fromanyflags, NULL);
@@ -1417,8 +1443,6 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
     PyObject *ret;
 
     npy_intp iop, nop;
-    PyArray_Descr **dtypes;
-    char **dataptrs;
 
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -1427,8 +1451,6 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
     }
 
     nop = NpyIter_GetNOp(self->iter);
-    dtypes = self->dtypes;
-    dataptrs = self->dataptrs;
 
     /* Return an array  or tuple of arrays with the values */
     if (nop == 1) {
@@ -1992,7 +2014,7 @@ npyiter_seq_length(NewNpyArrayIterObject *self)
 NPY_NO_EXPORT PyObject *
 npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 {
-    PyObject *ret;
+    PyArrayObject *ret;
 
     npy_intp ret_ndim;
     npy_intp nop, innerloopsize, innerstride;
@@ -2050,16 +2072,19 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
     }
 
     Py_INCREF(dtype);
-    ret = (PyObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
-                            ret_ndim, &innerloopsize,
-                            &innerstride, dataptr,
-                            self->writeflags[i] ? NPY_WRITEABLE : 0, NULL);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
+                        ret_ndim, &innerloopsize,
+                        &innerstride, dataptr,
+                        self->writeflags[i] ? NPY_ARRAY_WRITEABLE : 0, NULL);
     Py_INCREF(self);
-    ((PyArrayObject *)ret)->base = (PyObject *)self;
+    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
 
-    PyArray_UpdateFlags((PyArrayObject *)ret, NPY_UPDATE_ALL);
+    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
 
-    return ret;
+    return (PyObject *)ret;
 }
 
 NPY_NO_EXPORT PyObject *
@@ -2170,11 +2195,11 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
     tmp = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
                                 1, &innerloopsize,
                                 &innerstride, dataptr,
-                                NPY_WRITEABLE, NULL);
+                                NPY_ARRAY_WRITEABLE, NULL);
     if (tmp == NULL) {
         return -1;
     }
-    PyArray_UpdateFlags(tmp, NPY_UPDATE_ALL);
+    PyArray_UpdateFlags(tmp, NPY_ARRAY_UPDATE_ALL);
     ret = PyArray_CopyObject(tmp, v);
     Py_DECREF(tmp);
     return ret;
@@ -2405,7 +2430,7 @@ static PyGetSetDef npyiter_getsets[] = {
         (getter)npyiter_finished_get,
         NULL, NULL, NULL},
 
-    {NULL, NULL, NULL, NULL, NULL},
+    {NULL, NULL, NULL, NULL, NULL}
 };
 
 NPY_NO_EXPORT PySequenceMethods npyiter_as_sequence = {

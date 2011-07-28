@@ -596,14 +596,14 @@ class TestMaskedArray(TestCase):
         ndtype = [('a', int), ('b', int)]
         a = np.array([(1, 2,)], dtype=ndtype)[0]
         f = mvoid(a)
-        assert(isinstance(f, mvoid))
+        assert_(isinstance(f, mvoid))
         #
         a = masked_array([(1, 2)], mask=[(1, 0)], dtype=ndtype)[0]
-        assert(isinstance(a, mvoid))
+        assert_(isinstance(a, mvoid))
         #
         a = masked_array([(1, 2), (1, 2)], mask=[(1, 0), (0, 0)], dtype=ndtype)
         f = mvoid(a._data[0], a._mask[0])
-        assert(isinstance(f, mvoid))
+        assert_(isinstance(f, mvoid))
 
     def test_mvoid_getitem(self):
         "Test mvoid.__getitem__"
@@ -752,8 +752,8 @@ class TestMaskedArrayArithmetic(TestCase):
     def test_masked_singleton_equality(self):
         "Tests (in)equality on masked snigleton"
         a = array([1, 2, 3], mask=[1, 1, 0])
-        assert((a[0] == 0) is masked)
-        assert((a[0] != 0) is masked)
+        assert_((a[0] == 0) is masked)
+        assert_((a[0] != 0) is masked)
         assert_equal((a[-1] == 0), False)
         assert_equal((a[-1] != 0), True)
 
@@ -1031,7 +1031,7 @@ class TestMaskedArrayArithmetic(TestCase):
     def test_noshrinking(self):
         "Check that we don't shrink a mask when not wanted"
         # Binary operations
-        a = masked_array([1, 2, 3], mask=[False, False, False], shrink=False)
+        a = masked_array([1., 2., 3.], mask=[False, False, False], shrink=False)
         b = a + 1
         assert_equal(b.mask, [0, 0, 0])
         # In place binary operation
@@ -1520,7 +1520,7 @@ class TestFillingValues(TestCase):
         b['a'] = a['a']
         b['a'].set_fill_value(a['a'].fill_value)
         f = b._fill_value[()]
-        assert(np.isnan(f[0]))
+        assert_(np.isnan(f[0]))
         assert_equal(f[-1], default_fill_value(1.))
 
     def test_fillvalue_as_arguments(self):
@@ -1646,7 +1646,7 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         """Test of inplace additions"""
         (x, y, xm) = self.intdata
         m = xm.mask
-        a = arange(10, dtype=float)
+        a = arange(10, dtype=np.int16)
         a[-1] = masked
         x += a
         xm += a
@@ -1700,9 +1700,9 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         x = arange(10) * 2
         xm = arange(10) * 2
         xm[2] = masked
-        x /= 2
+        x //= 2
         assert_equal(x, y)
-        xm /= 2
+        xm //= 2
         assert_equal(xm, y)
 
     def test_inplace_division_scalar_float(self):
@@ -2489,12 +2489,12 @@ class TestMaskedArrayMethods(TestCase):
         # w/o mask: each entry is a np.void whose elements are standard Python
         for entry in a:
             for item in entry.tolist():
-                assert(not isinstance(item, np.generic))
+                assert_(not isinstance(item, np.generic))
         # w/ mask: each entry is a ma.void whose elements should be standard Python
         a.mask[0] = (0, 1)
         for entry in a:
             for item in entry.tolist():
-                assert(not isinstance(item, np.generic))
+                assert_(not isinstance(item, np.generic))
 
 
     def test_toflex(self):

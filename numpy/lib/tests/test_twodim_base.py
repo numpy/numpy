@@ -224,7 +224,10 @@ class TestHistogram2d(TestCase):
 
     def test_empty(self):
         a, edge1, edge2 = histogram2d([],[], bins=([0,1],[0,1]))
-        assert_array_max_ulp(a, array([ 0., 0.]))
+        assert_array_max_ulp(a, array([[ 0.]]))
+
+        a, edge1, edge2 = histogram2d([], [], bins=4)
+        assert_array_max_ulp(a, np.zeros((4, 4)))
 
 
 class TestTri(TestCase):
@@ -277,7 +280,7 @@ def test_tril_indices():
            [-10, -10, -10, -10]]) )
 
 
-class TestTriuIndices():
+class TestTriuIndices(object):
     def test_triu_indices(self):
         iu1 = triu_indices(4)
         iu2 = triu_indices(4, 2)
@@ -308,14 +311,14 @@ class TestTriuIndices():
                        [ 13,  14,  15,  -1]]) )
 
 
-class TestTrilIndicesFrom():
+class TestTrilIndicesFrom(object):
     def test_exceptions(self):
         assert_raises(ValueError, tril_indices_from, np.ones((2,)))
         assert_raises(ValueError, tril_indices_from, np.ones((2,2,2)))
         assert_raises(ValueError, tril_indices_from, np.ones((2,3)))
 
 
-class TestTriuIndicesFrom():
+class TestTriuIndicesFrom(object):
     def test_exceptions(self):
         assert_raises(ValueError, triu_indices_from, np.ones((2,)))
         assert_raises(ValueError, triu_indices_from, np.ones((2,2,2)))

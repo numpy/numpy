@@ -169,13 +169,13 @@ class TestMa(TestCase):
         self.assertEqual(1, count(1))
         self.assertTrue (eq(0, array(1, mask=[1])))
         ott = ott.reshape((2, 2))
-        assert isinstance(count(ott, 0), numpy.ndarray)
+        assert_(isinstance(count(ott, 0), numpy.ndarray))
         if sys.version_info[0] >= 3:
-            assert isinstance(count(ott), numpy.integer)
+            assert_(isinstance(count(ott), numpy.integer))
         else:
-            assert isinstance(count(ott), types.IntType)
+            assert_(isinstance(count(ott), types.IntType))
         self.assertTrue (eq(3, count(ott)))
-        assert getmask(count(ott, 0)) is nomask
+        assert_(getmask(count(ott, 0)) is nomask)
         self.assertTrue (eq([1, 2], count(ott, 0)))
 
     def test_testMinMax (self):
@@ -220,38 +220,38 @@ class TestMa(TestCase):
         x4 = array(x1)
     # test conversion to strings
         junk, garbage = str(x2), repr(x2)
-        assert eq(numpy.sort(x1), sort(x2, fill_value=0))
+        assert_(eq(numpy.sort(x1), sort(x2, fill_value=0)))
     # tests of indexing
-        assert type(x2[1]) is type(x1[1])
-        assert x1[1] == x2[1]
-        assert x2[0] is masked
-        assert eq(x1[2], x2[2])
-        assert eq(x1[2:5], x2[2:5])
-        assert eq(x1[:], x2[:])
-        assert eq(x1[1:], x3[1:])
+        assert_(type(x2[1]) is type(x1[1]))
+        assert_(x1[1] == x2[1])
+        assert_(x2[0] is masked)
+        assert_(eq(x1[2], x2[2]))
+        assert_(eq(x1[2:5], x2[2:5]))
+        assert_(eq(x1[:], x2[:]))
+        assert_(eq(x1[1:], x3[1:]))
         x1[2] = 9
         x2[2] = 9
-        assert eq(x1, x2)
+        assert_(eq(x1, x2))
         x1[1:3] = 99
         x2[1:3] = 99
-        assert eq(x1, x2)
+        assert_(eq(x1, x2))
         x2[1] = masked
-        assert eq(x1, x2)
+        assert_(eq(x1, x2))
         x2[1:3] = masked
-        assert eq(x1, x2)
+        assert_(eq(x1, x2))
         x2[:] = x1
         x2[1] = masked
-        assert allequal(getmask(x2), array([0, 1, 0, 0]))
+        assert_(allequal(getmask(x2), array([0, 1, 0, 0])))
         x3[:] = masked_array([1, 2, 3, 4], [0, 1, 1, 0])
-        assert allequal(getmask(x3), array([0, 1, 1, 0]))
+        assert_(allequal(getmask(x3), array([0, 1, 1, 0])))
         x4[:] = masked_array([1, 2, 3, 4], [0, 1, 1, 0])
-        assert allequal(getmask(x4), array([0, 1, 1, 0]))
-        assert allequal(x4, array([1, 2, 3, 4]))
+        assert_(allequal(getmask(x4), array([0, 1, 1, 0])))
+        assert_(allequal(x4, array([1, 2, 3, 4])))
         x1 = numpy.arange(5) * 1.0
         x2 = masked_values(x1, 3.0)
-        assert eq(x1, x2)
-        assert allequal(array([0, 0, 0, 1, 0], MaskType), x2.mask)
-        assert eq(3.0, x2.fill_value)
+        assert_(eq(x1, x2))
+        assert_(allequal(array([0, 0, 0, 1, 0], MaskType), x2.mask))
+        assert_(eq(3.0, x2.fill_value))
         x1 = array([1, 'hello', 2, 3], object)
         x2 = numpy.array([1, 'hello', 2, 3], object)
         s1 = x1[1]
@@ -259,7 +259,7 @@ class TestMa(TestCase):
         self.assertEqual(type(s2), str)
         self.assertEqual(type(s1), str)
         self.assertEqual(s1, s2)
-        assert x1[1:1].shape == (0,)
+        assert_(x1[1:1].shape == (0,))
 
     def test_testCopySize(self):
         "Tests of some subtle points of copying and sizing."
@@ -325,87 +325,87 @@ class TestMa(TestCase):
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
         i = numpy.nonzero(m)[0]
         put(ym, i, zm)
-        assert all(take(ym, i, axis=0) == zm)
+        assert_(all(take(ym, i, axis=0) == zm))
 
     def test_testOddFeatures(self):
         "Test of other odd features"
         x = arange(20); x = x.reshape(4, 5)
         x.flat[5] = 12
-        assert x[1, 0] == 12
+        assert_(x[1, 0] == 12)
         z = x + 10j * x
-        assert eq(z.real, x)
-        assert eq(z.imag, 10 * x)
-        assert eq((z * conjugate(z)).real, 101 * x * x)
+        assert_(eq(z.real, x))
+        assert_(eq(z.imag, 10 * x))
+        assert_(eq((z * conjugate(z)).real, 101 * x * x))
         z.imag[...] = 0.0
 
         x = arange(10)
         x[3] = masked
-        assert str(x[3]) == str(masked)
+        assert_(str(x[3]) == str(masked))
         c = x >= 8
-        assert count(where(c, masked, masked)) == 0
-        assert shape(where(c, masked, masked)) == c.shape
+        assert_(count(where(c, masked, masked)) == 0)
+        assert_(shape(where(c, masked, masked)) == c.shape)
         z = where(c , x, masked)
-        assert z.dtype is x.dtype
-        assert z[3] is masked
-        assert z[4] is masked
-        assert z[7] is masked
-        assert z[8] is not masked
-        assert z[9] is not masked
-        assert eq(x, z)
+        assert_(z.dtype is x.dtype)
+        assert_(z[3] is masked)
+        assert_(z[4] is masked)
+        assert_(z[7] is masked)
+        assert_(z[8] is not masked)
+        assert_(z[9] is not masked)
+        assert_(eq(x, z))
         z = where(c , masked, x)
-        assert z.dtype is x.dtype
-        assert z[3] is masked
-        assert z[4] is not masked
-        assert z[7] is not masked
-        assert z[8] is masked
-        assert z[9] is masked
+        assert_(z.dtype is x.dtype)
+        assert_(z[3] is masked)
+        assert_(z[4] is not masked)
+        assert_(z[7] is not masked)
+        assert_(z[8] is masked)
+        assert_(z[9] is masked)
         z = masked_where(c, x)
-        assert z.dtype is x.dtype
-        assert z[3] is masked
-        assert z[4] is not masked
-        assert z[7] is not masked
-        assert z[8] is masked
-        assert z[9] is masked
-        assert eq(x, z)
+        assert_(z.dtype is x.dtype)
+        assert_(z[3] is masked)
+        assert_(z[4] is not masked)
+        assert_(z[7] is not masked)
+        assert_(z[8] is masked)
+        assert_(z[9] is masked)
+        assert_(eq(x, z))
         x = array([1., 2., 3., 4., 5.])
         c = array([1, 1, 1, 0, 0])
         x[2] = masked
         z = where(c, x, -x)
-        assert eq(z, [1., 2., 0., -4., -5])
+        assert_(eq(z, [1., 2., 0., -4., -5]))
         c[0] = masked
         z = where(c, x, -x)
-        assert eq(z, [1., 2., 0., -4., -5])
-        assert z[0] is masked
-        assert z[1] is not masked
-        assert z[2] is masked
-        assert eq(masked_where(greater(x, 2), x), masked_greater(x, 2))
-        assert eq(masked_where(greater_equal(x, 2), x),
-                  masked_greater_equal(x, 2))
-        assert eq(masked_where(less(x, 2), x), masked_less(x, 2))
-        assert eq(masked_where(less_equal(x, 2), x), masked_less_equal(x, 2))
-        assert eq(masked_where(not_equal(x, 2), x), masked_not_equal(x, 2))
-        assert eq(masked_where(equal(x, 2), x), masked_equal(x, 2))
-        assert eq(masked_where(not_equal(x, 2), x), masked_not_equal(x, 2))
-        assert eq(masked_inside(range(5), 1, 3), [0, 199, 199, 199, 4])
-        assert eq(masked_outside(range(5), 1, 3), [199, 1, 2, 3, 199])
-        assert eq(masked_inside(array(range(5), mask=[1, 0, 0, 0, 0]), 1, 3).mask,
-                  [1, 1, 1, 1, 0])
-        assert eq(masked_outside(array(range(5), mask=[0, 1, 0, 0, 0]), 1, 3).mask,
-                  [1, 1, 0, 0, 1])
-        assert eq(masked_equal(array(range(5), mask=[1, 0, 0, 0, 0]), 2).mask,
-                  [1, 0, 1, 0, 0])
-        assert eq(masked_not_equal(array([2, 2, 1, 2, 1], mask=[1, 0, 0, 0, 0]), 2).mask,
-                  [1, 0, 1, 0, 1])
-        assert eq(masked_where([1, 1, 0, 0, 0], [1, 2, 3, 4, 5]), [99, 99, 3, 4, 5])
+        assert_(eq(z, [1., 2., 0., -4., -5]))
+        assert_(z[0] is masked)
+        assert_(z[1] is not masked)
+        assert_(z[2] is masked)
+        assert_(eq(masked_where(greater(x, 2), x), masked_greater(x, 2)))
+        assert_(eq(masked_where(greater_equal(x, 2), x),
+                  masked_greater_equal(x, 2)))
+        assert_(eq(masked_where(less(x, 2), x), masked_less(x, 2)))
+        assert_(eq(masked_where(less_equal(x, 2), x), masked_less_equal(x, 2)))
+        assert_(eq(masked_where(not_equal(x, 2), x), masked_not_equal(x, 2)))
+        assert_(eq(masked_where(equal(x, 2), x), masked_equal(x, 2)))
+        assert_(eq(masked_where(not_equal(x, 2), x), masked_not_equal(x, 2)))
+        assert_(eq(masked_inside(range(5), 1, 3), [0, 199, 199, 199, 4]))
+        assert_(eq(masked_outside(range(5), 1, 3), [199, 1, 2, 3, 199]))
+        assert_(eq(masked_inside(array(range(5), mask=[1, 0, 0, 0, 0]), 1, 3).mask,
+                  [1, 1, 1, 1, 0]))
+        assert_(eq(masked_outside(array(range(5), mask=[0, 1, 0, 0, 0]), 1, 3).mask,
+                  [1, 1, 0, 0, 1]))
+        assert_(eq(masked_equal(array(range(5), mask=[1, 0, 0, 0, 0]), 2).mask,
+                  [1, 0, 1, 0, 0]))
+        assert_(eq(masked_not_equal(array([2, 2, 1, 2, 1], mask=[1, 0, 0, 0, 0]), 2).mask,
+                  [1, 0, 1, 0, 1]))
+        assert_(eq(masked_where([1, 1, 0, 0, 0], [1, 2, 3, 4, 5]), [99, 99, 3, 4, 5]))
         atest = ones((10, 10, 10), dtype=float32)
         btest = zeros(atest.shape, MaskType)
         ctest = masked_where(btest, atest)
-        assert eq(atest, ctest)
+        assert_(eq(atest, ctest))
         z = choose(c, (-x, x))
-        assert eq(z, [1., 2., 0., -4., -5])
-        assert z[0] is masked
-        assert z[1] is not masked
-        assert z[2] is masked
+        assert_(eq(z, [1., 2., 0., -4., -5]))
+        assert_(z[0] is masked)
+        assert_(z[1] is not masked)
+        assert_(z[2] is masked)
         x = arange(6)
         x[5] = masked
         y = arange(6) * 10
@@ -414,26 +414,26 @@ class TestMa(TestCase):
         cm = c.filled(1)
         z = where(c, x, y)
         zm = where(cm, x, y)
-        assert eq(z, zm)
-        assert getmask(zm) is nomask
-        assert eq(zm, [0, 1, 2, 30, 40, 50])
+        assert_(eq(z, zm))
+        assert_(getmask(zm) is nomask)
+        assert_(eq(zm, [0, 1, 2, 30, 40, 50]))
         z = where(c, masked, 1)
-        assert eq(z, [99, 99, 99, 1, 1, 1])
+        assert_(eq(z, [99, 99, 99, 1, 1, 1]))
         z = where(c, 1, masked)
-        assert eq(z, [99, 1, 1, 99, 99, 99])
+        assert_(eq(z, [99, 1, 1, 99, 99, 99]))
 
     def test_testMinMax(self):
         "Test of minumum, maximum."
-        assert eq(minimum([1, 2, 3], [4, 0, 9]), [1, 0, 3])
-        assert eq(maximum([1, 2, 3], [4, 0, 9]), [4, 2, 9])
+        assert_(eq(minimum([1, 2, 3], [4, 0, 9]), [1, 0, 3]))
+        assert_(eq(maximum([1, 2, 3], [4, 0, 9]), [4, 2, 9]))
         x = arange(5)
         y = arange(5) - 2
         x[3] = masked
         y[0] = masked
-        assert eq(minimum(x, y), where(less(x, y), x, y))
-        assert eq(maximum(x, y), where(greater(x, y), x, y))
-        assert minimum(x) == 0
-        assert maximum(x) == 4
+        assert_(eq(minimum(x, y), where(less(x, y), x, y)))
+        assert_(eq(maximum(x, y), where(greater(x, y), x, y)))
+        assert_(minimum(x) == 0)
+        assert_(maximum(x) == 4)
 
     def test_testTakeTransposeInnerOuter(self):
         "Test of take, transpose, inner, outer products"
@@ -442,18 +442,18 @@ class TestMa(TestCase):
         x[5:6] = masked
         x = x.reshape(2, 3, 4)
         y = y.reshape(2, 3, 4)
-        assert eq(numpy.transpose(y, (2, 0, 1)), transpose(x, (2, 0, 1)))
-        assert eq(numpy.take(y, (2, 0, 1), 1), take(x, (2, 0, 1), 1))
-        assert eq(numpy.inner(filled(x, 0), filled(y, 0)),
-                                inner(x, y))
-        assert eq(numpy.outer(filled(x, 0), filled(y, 0)),
-                                outer(x, y))
+        assert_(eq(numpy.transpose(y, (2, 0, 1)), transpose(x, (2, 0, 1))))
+        assert_(eq(numpy.take(y, (2, 0, 1), 1), take(x, (2, 0, 1), 1)))
+        assert_(eq(numpy.inner(filled(x, 0), filled(y, 0)),
+                                inner(x, y)))
+        assert_(eq(numpy.outer(filled(x, 0), filled(y, 0)),
+                                outer(x, y)))
         y = array(['abc', 1, 'def', 2, 3], object)
         y[2] = masked
         t = take(y, [0, 3, 4])
-        assert t[0] == 'abc'
-        assert t[1] == 2
-        assert t[2] == 3
+        assert_(t[0] == 'abc')
+        assert_(t[1] == 2)
+        assert_(t[2] == 3)
 
     def test_testInplace(self):
         """Test of inplace operations and rich comparisons"""
@@ -463,47 +463,47 @@ class TestMa(TestCase):
         xm = arange(10)
         xm[2] = masked
         x += 1
-        assert eq(x, y + 1)
+        assert_(eq(x, y + 1))
         xm += 1
-        assert eq(x, y + 1)
+        assert_(eq(x, y + 1))
 
         x = arange(10)
         xm = arange(10)
         xm[2] = masked
         x -= 1
-        assert eq(x, y - 1)
+        assert_(eq(x, y - 1))
         xm -= 1
-        assert eq(xm, y - 1)
+        assert_(eq(xm, y - 1))
 
         x = arange(10) * 1.0
         xm = arange(10) * 1.0
         xm[2] = masked
         x *= 2.0
-        assert eq(x, y * 2)
+        assert_(eq(x, y * 2))
         xm *= 2.0
-        assert eq(xm, y * 2)
+        assert_(eq(xm, y * 2))
 
         x = arange(10) * 2
         xm = arange(10)
         xm[2] = masked
-        x /= 2
-        assert eq(x, y)
-        xm /= 2
-        assert eq(x, y)
+        x //= 2
+        assert_(eq(x, y))
+        xm //= 2
+        assert_(eq(x, y))
 
         x = arange(10) * 1.0
         xm = arange(10) * 1.0
         xm[2] = masked
         x /= 2.0
-        assert eq(x, y / 2.0)
+        assert_(eq(x, y / 2.0))
         xm /= arange(10)
-        assert eq(xm, ones((10,)))
+        assert_(eq(xm, ones((10,))))
 
         x = arange(10).astype(float32)
         xm = arange(10)
         xm[2] = masked
         x += 1.
-        assert eq(x, y + 1.)
+        assert_(eq(x, y + 1.))
 
     def test_testPickle(self):
         "Test of pickling"
@@ -513,7 +513,7 @@ class TestMa(TestCase):
         x = x.reshape(4, 3)
         s = pickle.dumps(x)
         y = pickle.loads(s)
-        assert eq(x, y)
+        assert_(eq(x, y))
 
     def test_testMasked(self):
         "Test of masked element"

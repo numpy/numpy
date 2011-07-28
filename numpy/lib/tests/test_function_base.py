@@ -749,7 +749,10 @@ class TestHistogramdd(TestCase):
 
     def test_empty(self):
         a, b = histogramdd([[], []], bins=([0,1], [0,1]))
-        assert_array_max_ulp(a, array([ 0., 0.]))
+        assert_array_max_ulp(a, array([[ 0.]]))
+        a, b = np.histogramdd([[], [], []], bins=2)
+        assert_array_max_ulp(a, np.zeros((2, 2, 2)))
+
 
     def test_bins_errors(self):
         """There are two ways to specify bins. Check for the right errors when
@@ -792,6 +795,12 @@ class TestCheckFinite(TestCase):
         numpy.lib.asarray_chkfinite(a)
         assert_raises(ValueError, numpy.lib.asarray_chkfinite, b)
         assert_raises(ValueError, numpy.lib.asarray_chkfinite, c)
+
+    def test_dtype_order(self):
+        """Regression test for missing dtype and order arguments"""
+        a = [1, 2, 3]
+        a = numpy.lib.asarray_chkfinite(a, order='F', dtype=numpy.float64)
+        assert_(a.dtype == numpy.float64)
 
 
 class TestNaNFuncts(TestCase):

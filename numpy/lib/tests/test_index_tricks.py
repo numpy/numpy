@@ -48,7 +48,7 @@ class TestRavelUnravelIndex(TestCase):
             uncoords = coords[0]+5*coords[1]
             assert_equal(np.ravel_multi_index(coords, shape, order='F'), uncoords)
             assert_equal(coords, np.unravel_index(uncoords, shape, order='F'))
-            
+
             coords = np.array([[1,0,1,2,3,4],[1,6,1,3,2,0],[1,3,1,0,9,5]],
                               dtype=dtype)
             shape = (5,8,10)
@@ -72,11 +72,11 @@ class TestGrid(TestCase):
     def test_basic(self):
         a = mgrid[-1:1:10j]
         b = mgrid[-1:1:0.1]
-        assert(a.shape == (10,))
-        assert(b.shape == (20,))
-        assert(a[0] == -1)
+        assert_(a.shape == (10,))
+        assert_(b.shape == (20,))
+        assert_(a[0] == -1)
         assert_almost_equal(a[-1],1)
-        assert(b[0] == -1)
+        assert_(b[0] == -1)
         assert_almost_equal(b[1]-b[0],0.1,11)
         assert_almost_equal(b[-1],b[0]+19*0.1,11)
         assert_almost_equal(a[1]-a[0],2.0/9.0,11)
@@ -89,8 +89,8 @@ class TestGrid(TestCase):
     def test_nd(self):
         c = mgrid[-1:1:10j,-2:2:10j]
         d = mgrid[-1:1:0.1,-2:2:0.2]
-        assert(c.shape == (2,10,10))
-        assert(d.shape == (2,20,20))
+        assert_(c.shape == (2,10,10))
+        assert_(d.shape == (2,20,20))
         assert_array_equal(c[0][0,:],-ones(10,'d'))
         assert_array_equal(c[1][:,0],-2*ones(10,'d'))
         assert_array_almost_equal(c[0][-1,:],ones(10,'d'),11)
@@ -108,21 +108,21 @@ class TestConcatenator(TestCase):
 
     def test_mixed_type(self):
         g = r_[10.1, 1:10]
-        assert(g.dtype == 'f8')
+        assert_(g.dtype == 'f8')
 
     def test_more_mixed_type(self):
         g = r_[-10.1, array([1]), array([2,3,4]), 10.0]
-        assert(g.dtype == 'f8')
+        assert_(g.dtype == 'f8')
 
     def test_2d(self):
         b = rand(5,5)
         c = rand(5,5)
         d = r_['1',b,c]  # append columns
-        assert(d.shape == (5,10))
+        assert_(d.shape == (5,10))
         assert_array_equal(d[:,:5],b)
         assert_array_equal(d[:,5:],c)
         d = r_[b,c]
-        assert(d.shape == (10,5))
+        assert_(d.shape == (10,5))
         assert_array_equal(d[:5,:],b)
         assert_array_equal(d[5:,:],c)
 

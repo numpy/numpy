@@ -11,7 +11,7 @@ def assert_shapes_correct(input_shapes, expected_shape):
     outarrays = broadcast_arrays(*inarrays)
     outshapes = [a.shape for a in outarrays]
     expected = [expected_shape] * len(inarrays)
-    assert outshapes == expected
+    assert_equal(outshapes, expected)
 
 def assert_incompatible_shapes_raise(input_shapes):
     """ Broadcast a list of arrays with the given (incompatible) input shapes
@@ -76,13 +76,13 @@ def test_same_input_shapes():
     for shape in data:
         input_shapes = [shape]
         # Single input.
-        yield assert_shapes_correct, input_shapes, shape
+        assert_shapes_correct(input_shapes, shape)
         # Double input.
         input_shapes2 = [shape, shape]
-        yield assert_shapes_correct, input_shapes2, shape
+        assert_shapes_correct(input_shapes2, shape)
         # Triple input.
         input_shapes3 = [shape, shape, shape]
-        yield assert_shapes_correct, input_shapes3, shape
+        assert_shapes_correct(input_shapes3, shape)
 
 def test_two_compatible_by_ones_input_shapes():
     """ Check that two different input shapes (of the same length but some have
@@ -104,9 +104,9 @@ def test_two_compatible_by_ones_input_shapes():
         [[(1,1), (0,1)], (0,1)],
     ]
     for input_shapes, expected_shape in data:
-        yield assert_shapes_correct, input_shapes, expected_shape
+        assert_shapes_correct(input_shapes, expected_shape)
         # Reverse the input shapes since broadcasting should be symmetric.
-        yield assert_shapes_correct, input_shapes[::-1], expected_shape
+        assert_shapes_correct(input_shapes[::-1], expected_shape)
 
 def test_two_compatible_by_prepending_ones_input_shapes():
     """ Check that two different input shapes (of different lengths) broadcast
@@ -135,9 +135,9 @@ def test_two_compatible_by_prepending_ones_input_shapes():
         [[(), (0,1)], (0,1)],
     ]
     for input_shapes, expected_shape in data:
-        yield assert_shapes_correct, input_shapes, expected_shape
+        assert_shapes_correct(input_shapes, expected_shape)
         # Reverse the input shapes since broadcasting should be symmetric.
-        yield assert_shapes_correct, input_shapes[::-1], expected_shape
+        assert_shapes_correct(input_shapes[::-1], expected_shape)
 
 def test_incompatible_shapes_raise_valueerror():
     """ Check that a ValueError is raised for incompatible shapes.
@@ -149,9 +149,9 @@ def test_incompatible_shapes_raise_valueerror():
         [(1,3,4), (2,3,3)],
     ]
     for input_shapes in data:
-        yield assert_incompatible_shapes_raise, input_shapes
+        assert_incompatible_shapes_raise(input_shapes)
         # Reverse the input shapes since broadcasting should be symmetric.
-        yield assert_incompatible_shapes_raise, input_shapes[::-1]
+        assert_incompatible_shapes_raise(input_shapes[::-1])
 
 def test_same_as_ufunc():
     """ Check that the data layout is the same as if a ufunc did the operation.
@@ -192,16 +192,17 @@ def test_same_as_ufunc():
         [[(), (0,1)], (0,1)],
     ]
     for input_shapes, expected_shape in data:
-        yield assert_same_as_ufunc, input_shapes[0], input_shapes[1]
+        assert_same_as_ufunc(input_shapes[0], input_shapes[1],
+                "Shapes: %s %s" % (input_shapes[0], input_shapes[1]))
         # Reverse the input shapes since broadcasting should be symmetric.
-        yield assert_same_as_ufunc, input_shapes[1], input_shapes[0]
+        assert_same_as_ufunc(input_shapes[1], input_shapes[0])
         # Try them transposed, too.
-        yield assert_same_as_ufunc, input_shapes[0], input_shapes[1], True
+        assert_same_as_ufunc(input_shapes[0], input_shapes[1], True)
         # ... and flipped for non-rank-0 inputs in order to test negative
         # strides.
         if () not in input_shapes:
-            yield assert_same_as_ufunc, input_shapes[0], input_shapes[1], False, True
-            yield assert_same_as_ufunc, input_shapes[0], input_shapes[1], True, True
+            assert_same_as_ufunc(input_shapes[0], input_shapes[1], False, True)
+            assert_same_as_ufunc(input_shapes[0], input_shapes[1], True, True)
 
 
 if __name__ == "__main__":

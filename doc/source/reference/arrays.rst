@@ -45,3 +45,4 @@ of also more complicated arrangements of data.
    arrays.classes
    maskedarray
    arrays.interface
+   arrays.datetime

@@ -149,7 +149,7 @@ class container(object):
         if len(self.shape) == 0:
             return func(self[0])
         else:
-            raise TypeError, "only rank-0 arrays can be converted to Python scalars."
+            raise TypeError("only rank-0 arrays can be converted to Python scalars.")
 
     def __complex__(self): return self._scalarfunc(complex)
     def __float__(self): return self._scalarfunc(float)

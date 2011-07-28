@@ -119,7 +119,7 @@ class TestUfunc(TestCase):
         assert_almost_equal(ftwo(x,x), ftwo_val, err_msg=msg)
 
         # class to use in testing object method loops
-        class foo :
+        class foo(object):
             def logical_not(self) :
                 return np.bool_(1)
             def logical_and(self, obj) :
@@ -128,24 +128,24 @@ class TestUfunc(TestCase):
         # check unary PyUFunc_O_O
         msg = "PyUFunc_O_O"
         x = np.ones(10, dtype=np.object)[0::2]
-        assert np.all(np.abs(x) == 1), msg
+        assert_(np.all(np.abs(x) == 1), msg)
         # check unary PyUFunc_O_O_method
         msg = "PyUFunc_O_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
         for i in range(len(x)) :
             x[i] = foo()
-        assert np.all(np.logical_not(x) == True), msg
+        assert_(np.all(np.logical_not(x) == True), msg)
 
         # check binary PyUFunc_OO_O
         msg = "PyUFunc_OO_O"
         x = np.ones(10, dtype=np.object)[0::2]
-        assert np.all(np.add(x,x) == 2), msg
+        assert_(np.all(np.add(x,x) == 2), msg)
         # check binary PyUFunc_OO_O_method
         msg = "PyUFunc_OO_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
         for i in range(len(x)) :
             x[i] = foo()
-        assert np.all(np.logical_and(x,x) == 1), msg
+        assert_(np.all(np.logical_and(x,x) == 1), msg)
 
         # check PyUFunc_On_Om
         # fixme -- I don't know how to do this yet
@@ -299,7 +299,7 @@ class TestUfunc(TestCase):
         b[:] = 0
         np.add(a,0.5,sig=('i4','i4','i4'),out=b, casting='unsafe')
         assert_equal(b, [0, 0, 1])
-        
+
 
     def test_inner1d(self):
         a = np.arange(6).reshape((2,3))
@@ -346,6 +346,19 @@ class TestUfunc(TestCase):
         msg = "little endian"
         a = np.arange(6, dtype='<i4').reshape((2,3))
         assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1), err_msg=msg)
+
+        # Output should always be native-endian
+        Ba = np.arange(1, dtype='>f8')
+        La = np.arange(1, dtype='<f8')
+        assert_equal((Ba+Ba).dtype, np.dtype('f8'))
+        assert_equal((Ba+La).dtype, np.dtype('f8'))
+        assert_equal((La+Ba).dtype, np.dtype('f8'))
+        assert_equal((La+La).dtype, np.dtype('f8'))
+
+        assert_equal(np.absolute(La).dtype, np.dtype('f8'))
+        assert_equal(np.absolute(Ba).dtype, np.dtype('f8'))
+        assert_equal(np.negative(La).dtype, np.dtype('f8'))
+        assert_equal(np.negative(Ba).dtype, np.dtype('f8'))
 
     def test_incontiguous_array(self):
         msg = "incontiguous memory layout of array"
@@ -445,8 +458,8 @@ class TestUfunc(TestCase):
                     for s2 in slice_3:
                         a1 = d1.transpose(p1)[s1]
                         a2 = d2.transpose(p2)[s2]
-                        ref = ref and a1.base != None and a1.base.base != None
-                        ref = ref and a2.base != None and a2.base.base != None
+                        ref = ref and a1.base != None
+                        ref = ref and a2.base != None
                         if broadcastable(a1.shape[-1], a2.shape[-2]) and \
                            broadcastable(a1.shape[0], a2.shape[0]):
                             assert_array_almost_equal(
@@ -457,6 +470,45 @@ class TestUfunc(TestCase):
                                                           str(a2.shape)))
 
         assert_equal(ref, True, err_msg="reference check")
+
+    def test_casting_out_param(self):
+        # Test that it's possible to do casts on output
+        a = np.ones((200,100), np.int64)
+        b = np.ones((200,100), np.int64)
+        c = np.ones((200,100), np.float64)
+        np.add(a, b, out=c)
+        assert_equal(c, 2)
+
+        a = np.zeros(65536)
+        b = np.zeros(65536, dtype=np.float32)
+        np.subtract(a, 0, out=b)
+        assert_equal(b, 0)
+
+    def test_where_param(self):
+        # Test that the where= ufunc parameter works with regular arrays
+        a = np.arange(7)
+        b = np.ones(7)
+        c = np.zeros(7)
+        np.add(a, b, out=c, where=(a % 2 == 1))
+        assert_equal(c, [0,2,0,4,0,6,0])
+
+        a = np.arange(4).reshape(2,2) + 2
+        np.power(a, [2,3], out=a, where=[[0,1],[1,0]])
+        assert_equal(a, [[2, 27], [16, 5]])
+        # Broadcasting the where= parameter
+        np.subtract(a, 2, out=a, where=[True,False])
+        assert_equal(a, [[0, 27], [14, 5]])
+
+    def test_where_param_buffer_output(self):
+        # This test is temporarily skipped because it requires
+        # adding masking features to the nditer to work properly
+
+        # With casting on output
+        a = np.ones(10, np.int64)
+        b = np.ones(10, np.int64)
+        c = 1.5 * np.ones(10, np.float64)
+        np.add(a, b, out=c, where=[1,0,0,1,0,0,1,1,1,0])
+        assert_equal(c, [2,1.5,1.5,2,1.5,1.5,2,2,2,1.5])
 
 if __name__ == "__main__":
     run_module_suite()

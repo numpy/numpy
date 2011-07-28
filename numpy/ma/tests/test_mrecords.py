@@ -48,7 +48,7 @@ class TestMRecords(TestCase):
         mbase = base.view(mrecarray)
         assert_equal(mbase.recordmask, base.recordmask)
         assert_equal_records(mbase._mask, base._mask)
-        assert isinstance(mbase._data, recarray)
+        assert_(isinstance(mbase._data, recarray))
         assert_equal_records(mbase._data, base._data.view(recarray))
         for field in ('a','b','c'):
             assert_equal(base[field], mbase[field])
@@ -64,7 +64,7 @@ class TestMRecords(TestCase):
             assert_equal(base[field], mbase[field])
         # as elements .......
         mbase_first = mbase[0]
-        assert isinstance(mbase_first, mrecarray)
+        assert_(isinstance(mbase_first, mrecarray))
         assert_equal(mbase_first.dtype, mbase.dtype)
         assert_equal(mbase_first.tolist(), (1,1.1,asbytes('one')))
         # Used to be mask, now it's recordmask
@@ -72,17 +72,17 @@ class TestMRecords(TestCase):
         assert_equal(mbase_first._mask.item(), (False, False, False))
         assert_equal(mbase_first['a'], mbase['a'][0])
         mbase_last = mbase[-1]
-        assert isinstance(mbase_last, mrecarray)
+        assert_(isinstance(mbase_last, mrecarray))
         assert_equal(mbase_last.dtype, mbase.dtype)
         assert_equal(mbase_last.tolist(), (None,None,None))
         # Used to be mask, now it's recordmask
         assert_equal(mbase_last.recordmask, True)
         assert_equal(mbase_last._mask.item(), (True, True, True))
         assert_equal(mbase_last['a'], mbase['a'][-1])
-        assert (mbase_last['a'] is masked)
+        assert_((mbase_last['a'] is masked))
         # as slice ..........
         mbase_sl = mbase[:2]
-        assert isinstance(mbase_sl, mrecarray)
+        assert_(isinstance(mbase_sl, mrecarray))
         assert_equal(mbase_sl.dtype, mbase.dtype)
         # Used to be mask, now it's recordmask
         assert_equal(mbase_sl.recordmask, [0,1])

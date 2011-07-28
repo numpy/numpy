@@ -174,6 +174,13 @@ Casting Rules
 .. index::
    pair: ufunc; casting rules
 
+.. note::
+
+   In NumPy 1.6.0, a type promotion API was created to encapsulate the
+   mechansim for determining output types. See the functions
+   :func:`result_type`, :func:`promote_types`, and
+   :func:`min_scalar_type` for more details.
+
 At the core of every ufunc is a one-dimensional strided loop that
 implements the actual function for a specific type combination. When a
 ufunc is created, it is given a static list of inner loops and a
@@ -267,18 +274,63 @@ types, are interpreted accordingly in ufuncs) without worrying about
 whether the precision of the scalar constant will cause upcasting on
 your large (small precision) array.
 
-
 :class:`ufunc`
 ==============
 
 Optional keyword arguments
 --------------------------
 
-All ufuncs take optional keyword arguments. These represent rather
-advanced usage and will not typically be used by most Numpy users.
+All ufuncs take optional keyword arguments. Most of these represent
+advanced usage and will not typically be used.
 
 .. index::
    pair: ufunc; keyword arguments
+
+*out*
+
+    .. versionadded:: 1.6
+
+    The first output can provided as either a positional or a keyword parameter.
+
+*where*
+
+    .. versionadded:: 1.7
+
+    Accepts a boolean array which is broadcast together with the operands.
+    Values of True indicate to calculate the ufunc at that position, values
+    of False indicate to leave the value in the output alone.
+
+*casting*
+
+    .. versionadded:: 1.6
+
+    Provides a policy for what kind of casting is permitted. For compatibility
+    with previous versions of NumPy, this defaults to 'unsafe'. May be 'no',
+    'equiv', 'safe', 'same_kind', or 'unsafe'. See :func:`can_cast` for
+    explanations of the parameter values.
+
+*order*
+
+    .. versionadded:: 1.6
+
+    Specifies the calculation iteration order/memory layout of the output array.
+    Defaults to 'K'. 'C' means the output should be C-contiguous, 'F' means
+    F-contiguous, 'A' means F-contiguous if the inputs are F-contiguous, C-contiguous
+    otherwise, and 'K' means to match the element ordering of the inputs
+    as closely as possible.
+
+*dtype*
+
+    .. versionadded:: 1.6
+
+    Overrides the dtype of the calculation and output arrays. Similar to *sig*.
+
+*subok*
+
+    .. versionadded:: 1.6
+
+    Defaults to true. If set to false, the output will always be a strict
+    array, not a subtype.
 
 *sig*
 
@@ -302,6 +354,7 @@ advanced usage and will not typically be used by most Numpy users.
     provided for the error mode. This may be useful, for example, as an
     optimization for calculations requiring many ufunc calls on small arrays
     in a loop.
+
 
 
 Attributes

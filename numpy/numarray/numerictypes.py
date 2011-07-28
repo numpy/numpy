@@ -137,11 +137,11 @@ class NumericType(object):
 class BooleanType(NumericType):
     pass
 
-class SignedType:
+class SignedType(object):
     """Marker class used for signed type check"""
     pass
 
-class UnsignedType:
+class UnsignedType(object):
     """Marker class used for unsigned type check"""
     pass
 

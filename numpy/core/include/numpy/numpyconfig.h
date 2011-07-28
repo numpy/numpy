@@ -3,7 +3,7 @@
 
 #include "_numpyconfig.h"
 
-/* 
+/*
  * On Mac OS X, because there is only one configuration stage for all the archs
  * in universal builds, any macro which depends on the arch needs to be
  * harcoded

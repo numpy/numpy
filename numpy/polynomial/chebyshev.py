@@ -892,9 +892,9 @@ def chebder(cs, m=1, scl=1) :
     cnt = int(m)
 
     if cnt != m:
-        raise ValueError, "The order of derivation must be integer"
+        raise ValueError("The order of derivation must be integer")
     if cnt < 0 :
-        raise ValueError, "The order of derivation must be non-negative"
+        raise ValueError("The order of derivation must be non-negative")
 
     # cs is a trimmed copy
     [cs] = pu.as_series([cs])
@@ -991,11 +991,11 @@ def chebint(cs, m=1, k=[], lbnd=0, scl=1):
         k = [k]
 
     if cnt != m:
-        raise ValueError, "The order of integration must be integer"
+        raise ValueError("The order of integration must be integer")
     if cnt < 0 :
-        raise ValueError, "The order of integration must be non-negative"
+        raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt :
-        raise ValueError, "Too many integration constants"
+        raise ValueError("Too many integration constants")
 
     # cs is a trimmed copy
     [cs] = pu.as_series([cs])
@@ -1226,15 +1226,15 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
     # check arguments.
     if deg < 0 :
-        raise ValueError, "expected deg >= 0"
+        raise ValueError("expected deg >= 0")
     if x.ndim != 1:
-        raise TypeError, "expected 1D vector for x"
+        raise TypeError("expected 1D vector for x")
     if x.size == 0:
-        raise TypeError, "expected non-empty vector for x"
+        raise TypeError("expected non-empty vector for x")
     if y.ndim < 1 or y.ndim > 2 :
-        raise TypeError, "expected 1D or 2D array for y"
+        raise TypeError("expected 1D or 2D array for y")
     if len(x) != len(y):
-        raise TypeError, "expected x and y to have same length"
+        raise TypeError("expected x and y to have same length")
 
     # set up the least squares matrices
     lhs = chebvander(x, deg)
@@ -1242,9 +1242,9 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     if w is not None:
         w = np.asarray(w) + 0.0
         if w.ndim != 1:
-            raise TypeError, "expected 1D vector for w"
+            raise TypeError("expected 1D vector for w")
         if len(x) != len(w):
-            raise TypeError, "expected x and w to have same length"
+            raise TypeError("expected x and w to have same length")
         # apply weights
         if rhs.ndim == 2:
             lhs *= w[:, np.newaxis]

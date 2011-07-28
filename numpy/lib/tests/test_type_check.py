@@ -3,15 +3,15 @@ from numpy.lib import *
 from numpy.core import *
 from numpy.compat import asbytes
 
-try: 
-    import ctypes 
-    _HAS_CTYPE = True 
-except ImportError: 
-    _HAS_CTYPE = False 
+try:
+    import ctypes
+    _HAS_CTYPE = True
+except ImportError:
+    _HAS_CTYPE = False
 
-    
+
 def assert_all(x):
-    assert(all(x)), x
+    assert_(all(x), x)
 
 
 class TestCommonType(TestCase):
@@ -21,10 +21,10 @@ class TestCommonType(TestCase):
         af64 = array([[1,2],[3,4]], dtype=float64)
         acs = array([[1+5j,2+6j],[3+7j,4+8j]], dtype=csingle)
         acd = array([[1+5j,2+6j],[3+7j,4+8j]], dtype=cdouble)
-        assert common_type(af32) == float32
-        assert common_type(af64) == float64
-        assert common_type(acs) == csingle
-        assert common_type(acd) == cdouble
+        assert_(common_type(af32) == float32)
+        assert_(common_type(af64) == float64)
+        assert_(common_type(acs) == csingle)
+        assert_(common_type(acd) == cdouble)
 
 
 
@@ -81,12 +81,12 @@ class TestMintypecode(TestCase):
 class TestIsscalar(TestCase):
 
     def test_basic(self):
-        assert(isscalar(3))
-        assert(not isscalar([3]))
-        assert(not isscalar((3,)))
-        assert(isscalar(3j))
-        assert(isscalar(10L))
-        assert(isscalar(4.0))
+        assert_(isscalar(3))
+        assert_(not isscalar([3]))
+        assert_(not isscalar((3,)))
+        assert_(isscalar(3j))
+        assert_(isscalar(10L))
+        assert_(isscalar(4.0))
 
 
 class TestReal(TestCase):
@@ -116,7 +116,7 @@ class TestIscomplex(TestCase):
     def test_fail(self):
         z = array([-1,0,1])
         res = iscomplex(z)
-        assert(not sometrue(res,axis=0))
+        assert_(not sometrue(res,axis=0))
     def test_pass(self):
         z = array([-1j,1,0])
         res = iscomplex(z)
@@ -139,18 +139,18 @@ class TestIscomplexobj(TestCase):
 
     def test_basic(self):
         z = array([-1,0,1])
-        assert(not iscomplexobj(z))
+        assert_(not iscomplexobj(z))
         z = array([-1j,0,-1])
-        assert(iscomplexobj(z))
+        assert_(iscomplexobj(z))
 
 
 
 class TestIsrealobj(TestCase):
     def test_basic(self):
         z = array([-1,0,1])
-        assert(isrealobj(z))
+        assert_(isrealobj(z))
         z = array([-1j,0,-1])
-        assert(not isrealobj(z))
+        assert_(not isrealobj(z))
 
 
 class TestIsnan(TestCase):
@@ -298,9 +298,9 @@ class TestIsposinf(TestCase):
             vals = isposinf(array((-1.,0,1))/0.)
         finally:
             seterr(**olderr)
-        assert(vals[0] == 0)
-        assert(vals[1] == 0)
-        assert(vals[2] == 1)
+        assert_(vals[0] == 0)
+        assert_(vals[1] == 0)
+        assert_(vals[2] == 1)
 
 
 class TestIsneginf(TestCase):
@@ -310,9 +310,9 @@ class TestIsneginf(TestCase):
             vals = isneginf(array((-1.,0,1))/0.)
         finally:
             seterr(**olderr)
-        assert(vals[0] == 1)
-        assert(vals[1] == 0)
-        assert(vals[2] == 0)
+        assert_(vals[0] == 1)
+        assert_(vals[1] == 0)
+        assert_(vals[2] == 0)
 
 
 class TestNanToNum(TestCase):
@@ -324,7 +324,7 @@ class TestNanToNum(TestCase):
         finally:
             seterr(**olderr)
         assert_all(vals[0] < -1e10) and assert_all(isfinite(vals[0]))
-        assert(vals[1] == 0)
+        assert_(vals[1] == 0)
         assert_all(vals[2] > 1e10) and assert_all(isfinite(vals[2]))
 
     def test_integer(self):
@@ -380,15 +380,7 @@ class TestArrayConversion(TestCase):
     def test_asfarray(self):
         a = asfarray(array([1,2,3]))
         assert_equal(a.__class__,ndarray)
-        assert issubdtype(a.dtype,float)
-
-class TestDateTimeData:
-
-    @dec.skipif(not _HAS_CTYPE, "ctypes not available on this python installation")
-    def test_basic(self):
-        a = array(['1980-03-23'], dtype=datetime64)
-        assert_equal(datetime_data(a.dtype), (asbytes('us'), 1, 1, 1))
-
+        assert_(issubdtype(a.dtype,float))
 
 if __name__ == "__main__":
     run_module_suite()

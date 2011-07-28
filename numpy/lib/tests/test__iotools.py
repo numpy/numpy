@@ -125,7 +125,7 @@ class TestNameValidator(TestCase):
         "Test validate no names"
         namelist = None
         validator = NameValidator()
-        assert(validator(namelist) is None)
+        assert_(validator(namelist) is None)
         assert_equal(validator(namelist, nbfields=3), ['f0', 'f1', 'f2'])
 
 
@@ -191,7 +191,7 @@ class TestStringConverter(TestCase):
         "Make sure that string-to-object functions are properly recognized"
         conv = StringConverter(_bytes_to_date)
         assert_equal(conv._mapper[-2][0](0), 0j)
-        assert(hasattr(conv, 'default'))
+        assert_(hasattr(conv, 'default'))
     #
     def test_keep_default(self):
         "Make sure we don't lose an explicit default"

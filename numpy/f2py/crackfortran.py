@@ -399,7 +399,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
                 ll=l
             cont=(r is not None)
         else:
-            raise ValueError,"Flag sourcecodeform must be either 'fix' or 'free': %s"%`sourcecodeform`
+            raise ValueError("Flag sourcecodeform must be either 'fix' or 'free': %s"%`sourcecodeform`)
         filepositiontext='Line #%d in %s:"%s"\n\t' % (fin.filelineno()-1,currentfilename,l1)
         m=includeline.match(origfinalline)
         if m:
@@ -416,7 +416,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
                         readfortrancode(fn1,dowithline=dowithline,istop=0)
                         break
                 if not foundfile:
-                    outmess('readfortrancode: could not find include file %s. Ignoring.\n'%(`fn`))
+                    outmess('readfortrancode: could not find include file %s in %s. Ignoring.\n'%(`fn`, os.pathsep.join(include_dirs)))
         else:
             dowithline(finalline)
         l1=ll
@@ -428,13 +428,19 @@ def readfortrancode(ffile,dowithline=show,istop=1):
     m=includeline.match(origfinalline)
     if m:
         fn=m.group('name')
-        fn1=os.path.join(os.path.dirname(currentfilename),fn)
         if os.path.isfile(fn):
             readfortrancode(fn,dowithline=dowithline,istop=0)
-        elif os.path.isfile(fn1):
-            readfortrancode(fn1,dowithline=dowithline,istop=0)
         else:
-            outmess('readfortrancode: could not find include file %s. Ignoring.\n'%(`fn`))
+            include_dirs = [os.path.dirname(currentfilename)] + include_paths
+            foundfile = 0
+            for inc_dir in include_dirs:
+                fn1 = os.path.join(inc_dir,fn)
+                if os.path.isfile(fn1):
+                    foundfile = 1
+                    readfortrancode(fn1,dowithline=dowithline,istop=0)
+                    break
+            if not foundfile:
+                outmess('readfortrancode: could not find include file %s in %s. Ignoring.\n'%(`fn`, os.pathsep.join(include_dirs)))
     else:
         dowithline(finalline)
     filepositiontext=''
@@ -1149,7 +1155,6 @@ def analyzeline(m,case,line):
                     groupcache[groupcounter]['use'][name]['map']=rl
             else:
                 pass
-
         else:
             print m.groupdict()
             outmess('analyzeline: Could not crack the use statement.\n')
@@ -1492,6 +1497,7 @@ def get_useparameters(block, param_map=None):
     for usename,mapping in usedict.items():
         usename = usename.lower()
         if usename not in f90modulevars:
+            outmess('get_useparameters: no module %s info used by %s\n' % (usename, block.get('name')))
             continue
         mvars = f90modulevars[usename]
         params = get_parameters(mvars)
@@ -1505,6 +1511,7 @@ def get_useparameters(block, param_map=None):
                 outmess('get_useparameters: overriding parameter %s with'\
                         ' value from module %s' % (`k`,`usename`))
             param_map[k] = v
+
     return param_map
 
 def postcrack2(block,tab='',param_map=None):
@@ -2058,13 +2065,6 @@ def _eval_scalar(value,params):
                 % (msg,value,params.keys()))
     return value
 
-_size_call_sub = re.compile(r'size\s*\((?P<arg1>\w+)\s*[,]').sub
-def two_argument_size_hook(expr):
-    new_expr = _size_call_sub(r'shape(\g<arg1>,-1+', expr)
-    if verbose > 1 and expr!=new_expr:
-        outmess('two_argument_size_hook: mapping %r to %r\n' % (expr, new_expr))
-    return new_expr
-
 def analyzevars(block):
     global f90modulevars
     setmesstext(block)
@@ -2207,7 +2207,6 @@ def analyzevars(block):
                         if d[:4] == '1 * ': d = d[4:]
                         if di and di[-4:] == '/(1)': di = di[:-4]
                         if v: savelindims[d] = v,di
-                    d = two_argument_size_hook(d)
                     vars[n]['dimension'].append(d)
         if 'dimension' in vars[n]:
             if isintent_c(vars[n]):
@@ -2324,7 +2323,6 @@ def analyzevars(block):
                 if not vars[n]['depend']: del vars[n]['depend']
             if isscalar(vars[n]):
                 vars[n]['='] = _eval_scalar(vars[n]['='],params)
-                vars[n]['='] = two_argument_size_hook(vars[n]['='])
 
     for n in vars.keys():
         if n==block['name']: # n is block name

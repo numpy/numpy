@@ -41,7 +41,7 @@ def _convert_from_string(data):
         if count == 0:
             Ncols = len(newrow)
         elif len(newrow) != Ncols:
-            raise ValueError, "Rows not the same size."
+            raise ValueError("Rows not the same size.")
         count += 1
         newdata.append(newrow)
     return newdata

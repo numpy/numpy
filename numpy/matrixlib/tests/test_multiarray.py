@@ -4,7 +4,7 @@ from numpy.testing import *
 class TestView(TestCase):
     def test_type(self):
         x = np.array([1,2,3])
-        assert(isinstance(x.view(np.matrix),np.matrix))
+        assert_(isinstance(x.view(np.matrix),np.matrix))
 
     def test_keywords(self):
         x = np.array([(1,2)],dtype=[('a',np.int8),('b',np.int8)])
@@ -12,5 +12,5 @@ class TestView(TestCase):
         y = x.view(dtype='<i2', type=np.matrix)
         assert_array_equal(y,[[513]])
 
-        assert(isinstance(y,np.matrix))
+        assert_(isinstance(y,np.matrix))
         assert_equal(y.dtype, np.dtype('<i2'))

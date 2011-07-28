@@ -1552,13 +1552,24 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
         Data type, scalar, or array to cast from.
     totype : dtype or dtype specifier
         Data type to cast to.
-    casting : casting rule
-        May be any of 'no', 'equiv', 'safe', 'same_kind', or 'unsafe'.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
 
     Returns
     -------
     out : bool
         True if cast can occur according to the casting rule.
+
+    See also
+    --------
+    dtype, result_type
 
     Examples
     --------
@@ -1635,6 +1646,8 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     kind to which both ``type1`` and ``type2`` may be safely cast.
     The returned data type is always in native byte order.
 
+    This function is symmetric and associative.
+
     Parameters
     ----------
     type1 : dtype or dtype specifier
@@ -1647,10 +1660,13 @@ add_newdoc('numpy.core.multiarray', 'promote_types',
     out : dtype
         The promoted data type.
 
+    Notes
+    -----
+    .. versionadded:: 1.6.0
+
     See Also
     --------
-    issctype, issubsctype, issubdtype, obj2sctype, sctype2char,
-    maximum_sctype, min_scalar_type
+    result_type, dtype, can_cast
 
     Examples
     --------
@@ -1678,7 +1694,7 @@ add_newdoc('numpy.core.multiarray', 'min_scalar_type',
     and smallest scalar kind which can hold its value.  For non-scalar
     array ``a``, returns the vector's dtype unmodified.
 
-    As a special case, floating point values are not demoted to integers,
+    Floating point values are not demoted to integers,
     and complex values are not demoted to floats.
 
     Parameters
@@ -1691,11 +1707,13 @@ add_newdoc('numpy.core.multiarray', 'min_scalar_type',
     out : dtype
         The minimal data type.
 
+    Notes
+    -----
+    .. versionadded:: 1.6.0
 
     See Also
     --------
-    issctype, issubsctype, issubdtype, obj2sctype, sctype2char,
-    maximum_sctype, promote_types
+    result_type, promote_types, dtype, can_cast
 
     Examples
     --------
@@ -1744,6 +1762,33 @@ add_newdoc('numpy.core.multiarray', 'result_type',
     -------
     out : dtype
         The result type.
+
+    See also
+    --------
+    dtype, promote_types, min_scalar_type, can_cast
+
+    Notes
+    -----
+    .. versionadded:: 1.6.0
+
+    The specific algorithm used is as follows.
+
+    Categories are determined by first checking which of boolean,
+    integer (int/uint), or floating point (float/complex) the maximum
+    kind of all the arrays and the scalars are.
+    
+    If there are only scalars or the maximum category of the scalars
+    is higher than the maximum category of the arrays,
+    the data types are combined with :func:`promote_types`
+    to produce the return value.
+
+    Otherwise, `min_scalar_type` is called on each array, and
+    the resulting data types are all combined with :func:`promote_types`
+    to produce the return value.
+
+    The set of int values is not a subset of the uint values for types
+    with the same number of bits, something not reflected in
+    :func:`min_scalar_type`, but handled as a special case in `result_type`.
 
     Examples
     --------
@@ -1911,9 +1956,9 @@ add_newdoc('numpy.core', 'einsum',
           * 'no' means the data types should not be cast at all.
           * 'equiv' means only byte-order changes are allowed.
           * 'safe' means only casts which can preserve values are allowed.
-          * 'unsafe' means any data conversions may be done.
           * 'same_kind' means only safe casts or casts within a kind,
             like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
 
     Returns
     -------
@@ -1926,6 +1971,8 @@ add_newdoc('numpy.core', 'einsum',
 
     Notes
     -----
+    .. versionadded:: 1.6.0
+
     The subscripts string is a comma-separated list of subscript labels,
     where each label refers to a dimension of the corresponding operand.
     Repeated subscripts labels in one operand take the diagonal.  For example,
@@ -2100,6 +2147,8 @@ add_newdoc('numpy.core', 'restoredot',
 
 add_newdoc('numpy.core', 'vdot',
     """
+    vdot(a, b)
+
     Return the dot product of two vectors.
 
     The vdot(`a`, `b`) function handles complex numbers differently than
@@ -2954,14 +3003,39 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
     """
-    a.astype(t)
+    a.astype(dtype, order='K', casting='unsafe', subok=True, copy=True)
 
     Copy of the array, cast to a specified type.
 
     Parameters
     ----------
-    t : str or dtype
+    dtype : str or dtype
         Typecode or data-type to which the array is cast.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Controls the memory layout order of the result.
+        'C' means C order, 'F' means Fortran order, 'A'
+        means 'F' order if all the arrays are Fortran contiguous,
+        'C' order otherwise, and 'K' means as close to the
+        order the array elements appear in memory as possible.
+        Default is 'K'.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur. Defaults to 'unsafe'
+        for backwards compatibility.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
+    subok : bool, optional
+        If True, then sub-classes will be passed-through (default), otherwise
+        the returned array will be forced to be a base-class array.
+    copy : bool, optional
+        By default, astype always returns a newly allocated array. If this
+        is set to false, and the `dtype`, `order`, and `subok`
+        requirements are satisfied, the input array is returned instead
+        of a copy.
 
     Raises
     ------
@@ -3109,6 +3183,10 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
         memory.  If `order` is `F`, the result has 'Fortran' (column-major)
         order.  If order is 'A' ('Any'), then the result has the same order
         as the input.
+
+    See also
+    --------
+    numpy.copyto
 
     Examples
     --------
@@ -3616,10 +3694,44 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
 
     """))
 
+add_newdoc('numpy.core.multiarray', 'copyto',
+    """
+    copyto(dst, src, casting='same_kind', where=None)
+
+    Copies values from `src` into `dst`, broadcasting as necessary.
+    Raises a TypeError if the casting rule is violated, and if
+    `where` is provided, it selects which elements to copy.
+
+    .. versionadded:: 1.7.0
+
+    Parameters
+    ----------
+    dst : ndarray
+        The array into which values are copied.
+    src : array_like
+        The array from which values are copied.
+    casting : {'no', 'equiv', 'safe', 'same_kind', 'unsafe'}, optional
+        Controls what kind of data casting may occur when copying.
+
+          * 'no' means the data types should not be cast at all.
+          * 'equiv' means only byte-order changes are allowed.
+          * 'safe' means only casts which can preserve values are allowed.
+          * 'same_kind' means only safe casts or casts within a kind,
+            like float64 to float32, are allowed.
+          * 'unsafe' means any data conversions may be done.
+    where : array_like of bool
+        A boolean array which is broadcasted to match the dimensions
+        of `dst`, and selects elements to copy from `src` to `dst`
+        wherever it contains the value True.
+
+    """)
 
 add_newdoc('numpy.core.multiarray', 'putmask',
     """
     putmask(a, mask, values)
+
+    This function is deprecated as of NumPy 1.7. Use the function
+    ``np.copyto(a, values, where=mask)`` to achieve this functionality.
 
     Changes elements of an array based on conditional and input values.
 
@@ -3640,7 +3752,7 @@ add_newdoc('numpy.core.multiarray', 'putmask',
 
     See Also
     --------
-    place, put, take
+    place, put, take, copyto
 
     Examples
     --------
@@ -5491,10 +5603,15 @@ add_newdoc('numpy.core.multiarray', 'dtype',
     align : bool, optional
         Add padding to the fields to match what a C compiler would output
         for a similar C-struct. Can be ``True`` only if `obj` is a dictionary
-        or a comma-separated string.
+        or a comma-separated string. If a struct dtype is being created,
+        this also sets a sticky alignment flag ``isalignedstruct``.
     copy : bool, optional
         Make a new copy of the data-type object. If ``False``, the result
         may just be a reference to a built-in data-type object.
+
+    See also
+    --------
+    result_type
 
     Examples
     --------
@@ -5711,6 +5828,14 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('isnative',
 
     """))
 
+add_newdoc('numpy.core.multiarray', 'dtype', ('isalignedstruct',
+    """
+    Boolean indicating whether the dtype is a struct which maintains
+    field alignment. This flag is sticky, so when combining multiple
+    structs together, it is preserved and produces new dtypes which
+    are also aligned.
+    """))
+
 add_newdoc('numpy.core.multiarray', 'dtype', ('itemsize',
     """
     The element size of this data-type object.
@@ -5857,6 +5982,287 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('newbyteorder',
 
     """))
 
+
+##############################################################################
+#
+# Datetime-related Methods
+#
+##############################################################################
+
+add_newdoc('numpy.core.multiarray', 'busdaycalendar',
+    """
+    busdaycalendar(weekmask='1111100', holidays=None)
+
+    A business day calendar object that efficiently stores information
+    defining valid days for the busday family of functions.
+
+    The default valid days are Monday through Friday ("business days").
+    A busdaycalendar object can be specified with any set of weekly
+    valid days, plus an optional "holiday" dates that always will be invalid.
+
+    Once a busdaycalendar object is created, the weekmask and holidays
+    cannot be modified.
+
+    .. versionadded:: 1.7.0
+
+    Parameters
+    ----------
+    weekmask : str or array_like of bool, optional
+        A seven-element array indicating which of Monday through Sunday are
+        valid days. May be specified as a length-seven list or array, like
+        [1,1,1,1,1,0,0]; a length-seven string, like '1111100'; or a string
+        like "Mon Tue Wed Thu Fri", made up of 3-character abbreviations for
+        weekdays, optionally separated by white space. Valid abbreviations
+        are: Mon Tue Wed Thu Fri Sat Sun
+    holidays : array_like of datetime64[D], optional
+        An array of dates to consider as invalid dates, no matter which
+        weekday they fall upon.  Holiday dates may be specified in any
+        order, and NaT (not-a-time) dates are ignored.  This list is
+        saved in a normalized form that is suited for fast calculations
+        of valid days.
+
+    Returns
+    -------
+    out : busdaycalendar
+        A business day calendar object containing the specified
+        weekmask and holidays values.
+
+    See Also
+    --------
+    is_busday : Returns a boolean array indicating valid days.
+    busday_offset : Applies an offset counted in valid days.
+    busday_count : Counts how many valid days are in a half-open date range.
+
+    Attributes
+    ----------
+    Note: once a busdaycalendar object is created, you cannot modify the
+    weekmask or holidays.  The attributes return copies of internal data.
+    weekmask : (copy) seven-element array of bool
+    holidays : (copy) sorted array of datetime64[D]
+
+    Examples
+    --------
+    >>> # Some important days in July
+    ... bdd = np.busdaycalendar(
+    ...             holidays=['2011-07-01', '2011-07-04', '2011-07-17'])
+    >>> # Default is Monday to Friday weekdays
+    ... bdd.weekmask
+    array([ True,  True,  True,  True,  True, False, False], dtype='bool')
+    >>> # Any holidays already on the weekend are removed
+    ... bdd.holidays
+    array(['2011-07-01', '2011-07-04'], dtype='datetime64[D]')
+    """)
+
+add_newdoc('numpy.core.multiarray', 'busdaycalendar', ('weekmask',
+    """A copy of the seven-element boolean mask indicating valid days."""))
+
+add_newdoc('numpy.core.multiarray', 'busdaycalendar', ('holidays',
+    """A copy of the holiday array indicating additional invalid days."""))
+
+add_newdoc('numpy.core.multiarray', 'is_busday',
+    """
+    is_busday(dates, weekmask='1111100', holidays=None, busdaycal=None, out=None)
+
+    Calculates which of the given dates are valid days, and which are not.
+
+    .. versionadded:: 1.7.0
+
+    Parameters
+    ----------
+    dates : array_like of datetime64[D]
+        The array of dates to process.
+    weekmask : str or array_like of bool, optional
+        A seven-element array indicating which of Monday through Sunday are
+        valid days. May be specified as a length-seven list or array, like
+        [1,1,1,1,1,0,0]; a length-seven string, like '1111100'; or a string
+        like "Mon Tue Wed Thu Fri", made up of 3-character abbreviations for
+        weekdays, optionally separated by white space. Valid abbreviations
+        are: Mon Tue Wed Thu Fri Sat Sun
+    holidays : array_like of datetime64[D], optional
+        An array of dates to consider as invalid dates.  They may be
+        specified in any order, and NaT (not-a-time) dates are ignored.
+        This list is saved in a normalized form that is suited for
+        fast calculations of valid days.
+    busdaycal : busdaycalendar, optional
+        A `busdaycalendar` object which specifies the valid days. If this
+        parameter is provided, neither weekmask nor holidays may be
+        provided.
+    out : array of bool, optional
+        If provided, this array is filled with the result.
+
+    Returns
+    -------
+    out : array of bool
+        An array with the same shape as ``dates``, containing True for
+        each valid day, and False for each invalid day.
+
+    See Also
+    --------
+    busdaycalendar: An object that specifies a custom set of valid days.
+    busday_offset : Applies an offset counted in valid days.
+    busday_count : Counts how many valid days are in a half-open date range.
+
+    Examples
+    --------
+    >>> # The weekdays are Friday, Saturday, and Monday
+    ... np.is_busday(['2011-07-01', '2011-07-02', '2011-07-18'],
+    ...                 holidays=['2011-07-01', '2011-07-04', '2011-07-17'])
+    array([False, False,  True], dtype='bool')
+    """)
+
+add_newdoc('numpy.core.multiarray', 'busday_offset',
+    """
+    busday_offset(dates, offsets, roll='raise', weekmask='1111100', holidays=None, busdaycal=None, out=None)
+
+    First adjusts the date to fall on a valid day according to
+    the ``roll`` rule, then applies offsets to the given dates
+    counted in valid days.
+
+    .. versionadded:: 1.7.0
+
+    Parameters
+    ----------
+    dates : array_like of datetime64[D]
+        The array of dates to process.
+    offsets : array_like of int
+        The array of offsets, which is broadcast with ``dates``.
+    roll : {'raise', 'nat', 'forward', 'following', 'backward', 'preceding', 'modifiedfollowing', 'modifiedpreceding'}, optional
+        How to treat dates that do not fall on a valid day. The default
+        is 'raise'.
+
+          * 'raise' means to raise an exception for an invalid day.
+          * 'nat' means to return a NaT (not-a-time) for an invalid day.
+          * 'forward' and 'following' mean to take the first valid day
+            later in time.
+          * 'backward' and 'preceding' mean to take the first valid day
+            earlier in time.
+          * 'modifiedfollowing' means to take the first valid day
+            later in time unless it is across a Month boundary, in which
+            case to take the first valid day earlier in time.
+          * 'modifiedpreceding' means to take the first valid day
+            earlier in time unless it is across a Month boundary, in which
+            case to take the first valid day later in time.
+    weekmask : str or array_like of bool, optional
+        A seven-element array indicating which of Monday through Sunday are
+        valid days. May be specified as a length-seven list or array, like
+        [1,1,1,1,1,0,0]; a length-seven string, like '1111100'; or a string
+        like "Mon Tue Wed Thu Fri", made up of 3-character abbreviations for
+        weekdays, optionally separated by white space. Valid abbreviations
+        are: Mon Tue Wed Thu Fri Sat Sun
+    holidays : array_like of datetime64[D], optional
+        An array of dates to consider as invalid dates.  They may be
+        specified in any order, and NaT (not-a-time) dates are ignored.
+        This list is saved in a normalized form that is suited for
+        fast calculations of valid days.
+    busdaycal : busdaycalendar, optional
+        A `busdaycalendar` object which specifies the valid days. If this
+        parameter is provided, neither weekmask nor holidays may be
+        provided.
+    out : array of datetime64[D], optional
+        If provided, this array is filled with the result.
+
+    Returns
+    -------
+    out : array of datetime64[D]
+        An array with a shape from broadcasting ``dates`` and ``offsets``
+        together, containing the dates with offsets applied.
+
+    See Also
+    --------
+    busdaycalendar: An object that specifies a custom set of valid days.
+    is_busday : Returns a boolean array indicating valid days.
+    busday_count : Counts how many valid days are in a half-open date range.
+
+    Examples
+    --------
+    >>> # First business day in October 2011 (not accounting for holidays)
+    ... np.busday_offset('2011-10', 0, roll='forward')
+    numpy.datetime64('2011-10-03','D')
+    >>> # Last business day in February 2012 (not accounting for holidays)
+    ... np.busday_offset('2012-03', -1, roll='forward')
+    numpy.datetime64('2012-02-29','D')
+    >>> # Third Wednesday in January 2011
+    ... np.busday_offset('2011-01', 2, roll='forward', weekmask='Wed')
+    numpy.datetime64('2011-01-19','D')
+    >>> # 2012 Mother's Day in Canada and the U.S.
+    ... np.busday_offset('2012-05', 1, roll='forward', weekmask='Sun')
+    numpy.datetime64('2012-05-13','D')
+
+    >>> # First business day on or after a date
+    ... np.busday_offset('2011-03-20', 0, roll='forward')
+    numpy.datetime64('2011-03-21','D')
+    >>> np.busday_offset('2011-03-22', 0, roll='forward')
+    numpy.datetime64('2011-03-22','D')
+    >>> # First business day after a date
+    ... np.busday_offset('2011-03-20', 1, roll='backward')
+    numpy.datetime64('2011-03-21','D')
+    >>> np.busday_offset('2011-03-22', 1, roll='backward')
+    numpy.datetime64('2011-03-23','D')
+    """)
+
+add_newdoc('numpy.core.multiarray', 'busday_count',
+    """
+    busday_count(begindates, enddates, weekmask='1111100', holidays=[], busdaycal=None, out=None)
+
+    Counts the number of valid days between `begindates` and
+    `enddates`, not including the day of `enddates`.
+
+    If ``enddates`` specifies a date value that is earlier than the
+    corresponding ``begindates`` date value, the count will be negative.
+
+    .. versionadded:: 1.7.0
+
+    Parameters
+    ----------
+    begindates : array_like of datetime64[D]
+        The array of the first dates for counting.
+    enddates : array_like of datetime64[D]
+        The array of the end dates for counting, which are excluded
+        from the count themselves.
+    weekmask : str or array_like of bool, optional
+        A seven-element array indicating which of Monday through Sunday are
+        valid days. May be specified as a length-seven list or array, like
+        [1,1,1,1,1,0,0]; a length-seven string, like '1111100'; or a string
+        like "Mon Tue Wed Thu Fri", made up of 3-character abbreviations for
+        weekdays, optionally separated by white space. Valid abbreviations
+        are: Mon Tue Wed Thu Fri Sat Sun
+    holidays : array_like of datetime64[D], optional
+        An array of dates to consider as invalid dates.  They may be
+        specified in any order, and NaT (not-a-time) dates are ignored.
+        This list is saved in a normalized form that is suited for
+        fast calculations of valid days.
+    busdaycal : busdaycalendar, optional
+        A `busdaycalendar` object which specifies the valid days. If this
+        parameter is provided, neither weekmask nor holidays may be
+        provided.
+    out : array of int, optional
+        If provided, this array is filled with the result.
+
+    Returns
+    -------
+    out : array of int
+        An array with a shape from broadcasting ``begindates`` and ``enddates``
+        together, containing the number of valid days between
+        the begin and end dates.
+
+    See Also
+    --------
+    busdaycalendar: An object that specifies a custom set of valid days.
+    is_busday : Returns a boolean array indicating valid days.
+    busday_offset : Applies an offset counted in valid days.
+
+    Examples
+    --------
+    >>> # Number of weekdays in January 2011
+    ... np.busday_count('2011-01', '2011-02')
+    21
+    >>> # Number of weekdays in 2011
+    ...  np.busday_count('2011', '2012')
+    260
+    >>> # Number of Saturdays in 2011
+    ... np.busday_count('2011', '2012', weekmask='Sat')
+    53
+    """)
 
 ##############################################################################
 #

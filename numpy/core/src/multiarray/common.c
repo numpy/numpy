@@ -1,6 +1,7 @@
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -91,7 +92,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
      * is NULL.
      */
     if (PyArray_Check(op)) {
-        chktype = PyArray_DESCR(op);
+        chktype = PyArray_DESCR((PyArrayObject *)op);
         Py_INCREF(chktype);
         if (minitype == NULL) {
             return chktype;
@@ -109,12 +110,8 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
         goto finish;
     }
 
-    if (minitype == NULL) {
-        minitype = PyArray_DescrFromType(PyArray_BOOL);
-    }
-    else {
-        Py_INCREF(minitype);
-    }
+    Py_XINCREF(minitype);
+
     if (max < 0) {
         goto deflt;
     }
@@ -214,7 +211,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
     if (PyObject_HasAttrString(op, "__array__")) {
         ip = PyObject_CallMethod(op, "__array__", NULL);
         if(ip && PyArray_Check(ip)) {
-            chktype = PyArray_DESCR(ip);
+            chktype = PyArray_DESCR((PyArrayObject *)ip);
             Py_INCREF(chktype);
             Py_DECREF(ip);
             goto finish;
@@ -236,9 +233,8 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
             PyErr_Clear();
             goto deflt;
         }
-        if (l == 0 && minitype->type_num == PyArray_BOOL) {
-            Py_DECREF(minitype);
-            minitype = PyArray_DescrFromType(PyArray_DEFAULT);
+        if (l == 0 && minitype == NULL) {
+            minitype = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
             if (minitype == NULL) {
                 return NULL;
             }
@@ -252,17 +248,21 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
             }
             chktype = _array_find_type(ip, minitype, max-1);
             if (chktype == NULL) {
-                Py_DECREF(minitype);
+                Py_XDECREF(minitype);
                 return NULL;
             }
-            newtype = PyArray_PromoteTypes(chktype, minitype);
-            Py_DECREF(minitype);
-            minitype = newtype;
-            Py_DECREF(chktype);
+            if (minitype == NULL) {
+                minitype = chktype;
+            } else {
+                newtype = PyArray_PromoteTypes(chktype, minitype);
+                Py_DECREF(minitype);
+                minitype = newtype;
+                Py_DECREF(chktype);
+            }
             Py_DECREF(ip);
         }
         chktype = minitype;
-        Py_INCREF(minitype);
+        minitype = NULL;
         goto finish;
     }
 
@@ -271,9 +271,13 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
     chktype = _use_default_type(op);
 
  finish:
-    outtype = PyArray_PromoteTypes(chktype, minitype);
-    Py_DECREF(chktype);
-    Py_DECREF(minitype);
+    if (minitype == NULL) {
+        outtype = chktype;
+    } else {
+        outtype = PyArray_PromoteTypes(chktype, minitype);
+        Py_DECREF(chktype);
+        Py_DECREF(minitype);
+    }
     if (outtype == NULL) {
         return NULL;
     }
@@ -284,7 +288,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
     if (outtype->type_num == PyArray_VOID &&
         minitype->type_num != PyArray_VOID) {
         Py_DECREF(outtype);
-        return PyArray_DescrFromType(PyArray_OBJECT);
+        return PyArray_DescrFromType(NPY_OBJECT);
     }
     return outtype;
 }
@@ -309,7 +313,7 @@ _array_typedescr_fromstr(char *str)
     switch (typechar) {
     case 'b':
         if (size == sizeof(Bool)) {
-            type_num = PyArray_BOOL;
+            type_num = NPY_BOOL;
         }
         else {
             PyErr_SetString(PyExc_ValueError, msg);
@@ -318,22 +322,22 @@ _array_typedescr_fromstr(char *str)
         break;
     case 'u':
         if (size == sizeof(uintp)) {
-            type_num = PyArray_UINTP;
+            type_num = NPY_UINTP;
         }
         else if (size == sizeof(char)) {
-            type_num = PyArray_UBYTE;
+            type_num = NPY_UBYTE;
         }
         else if (size == sizeof(short)) {
-            type_num = PyArray_USHORT;
+            type_num = NPY_USHORT;
         }
         else if (size == sizeof(ulong)) {
-            type_num = PyArray_ULONG;
+            type_num = NPY_ULONG;
         }
         else if (size == sizeof(int)) {
-            type_num = PyArray_UINT;
+            type_num = NPY_UINT;
         }
         else if (size == sizeof(ulonglong)) {
-            type_num = PyArray_ULONGLONG;
+            type_num = NPY_ULONGLONG;
         }
         else {
             PyErr_SetString(PyExc_ValueError, msg);
@@ -342,22 +346,22 @@ _array_typedescr_fromstr(char *str)
         break;
     case 'i':
         if (size == sizeof(intp)) {
-            type_num = PyArray_INTP;
+            type_num = NPY_INTP;
         }
         else if (size == sizeof(char)) {
-            type_num = PyArray_BYTE;
+            type_num = NPY_BYTE;
         }
         else if (size == sizeof(short)) {
-            type_num = PyArray_SHORT;
+            type_num = NPY_SHORT;
         }
         else if (size == sizeof(long)) {
-            type_num = PyArray_LONG;
+            type_num = NPY_LONG;
         }
         else if (size == sizeof(int)) {
-            type_num = PyArray_INT;
+            type_num = NPY_INT;
         }
         else if (size == sizeof(longlong)) {
-            type_num = PyArray_LONGLONG;
+            type_num = NPY_LONGLONG;
         }
         else {
             PyErr_SetString(PyExc_ValueError, msg);
@@ -366,13 +370,13 @@ _array_typedescr_fromstr(char *str)
         break;
     case 'f':
         if (size == sizeof(float)) {
-            type_num = PyArray_FLOAT;
+            type_num = NPY_FLOAT;
         }
         else if (size == sizeof(double)) {
-            type_num = PyArray_DOUBLE;
+            type_num = NPY_DOUBLE;
         }
         else if (size == sizeof(longdouble)) {
-            type_num = PyArray_LONGDOUBLE;
+            type_num = NPY_LONGDOUBLE;
         }
         else {
             PyErr_SetString(PyExc_ValueError, msg);
@@ -381,13 +385,13 @@ _array_typedescr_fromstr(char *str)
         break;
     case 'c':
         if (size == sizeof(float)*2) {
-            type_num = PyArray_CFLOAT;
+            type_num = NPY_CFLOAT;
         }
         else if (size == sizeof(double)*2) {
-            type_num = PyArray_CDOUBLE;
+            type_num = NPY_CDOUBLE;
         }
         else if (size == sizeof(longdouble)*2) {
-            type_num = PyArray_CLONGDOUBLE;
+            type_num = NPY_CLONGDOUBLE;
         }
         else {
             PyErr_SetString(PyExc_ValueError, msg);
@@ -396,22 +400,22 @@ _array_typedescr_fromstr(char *str)
         break;
     case 'O':
         if (size == sizeof(PyObject *)) {
-            type_num = PyArray_OBJECT;
+            type_num = NPY_OBJECT;
         }
         else {
             PyErr_SetString(PyExc_ValueError, msg);
             return NULL;
         }
         break;
-    case PyArray_STRINGLTR:
-        type_num = PyArray_STRING;
+    case NPY_STRINGLTR:
+        type_num = NPY_STRING;
         break;
-    case PyArray_UNICODELTR:
-        type_num = PyArray_UNICODE;
+    case NPY_UNICODELTR:
+        type_num = NPY_UNICODE;
         size <<= 2;
         break;
     case 'V':
-        type_num = PyArray_VOID;
+        type_num = NPY_VOID;
         break;
     default:
         PyErr_SetString(PyExc_ValueError, msg);
@@ -444,19 +448,19 @@ index2ptr(PyArrayObject *mp, intp i)
 {
     intp dim0;
 
-    if (mp->nd == 0) {
+    if (PyArray_NDIM(mp) == 0) {
         PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed");
         return NULL;
     }
-    dim0 = mp->dimensions[0];
+    dim0 = PyArray_DIMS(mp)[0];
     if (i < 0) {
         i += dim0;
     }
     if (i == 0 && dim0 > 0) {
-        return mp->data;
+        return PyArray_DATA(mp);
     }
     if (i > 0 && i < dim0) {
-        return mp->data+i*mp->strides[0];
+        return PyArray_DATA(mp)+i*PyArray_STRIDES(mp)[0];
     }
     PyErr_SetString(PyExc_IndexError,"index out of bounds");
     return NULL;
@@ -465,7 +469,7 @@ index2ptr(PyArrayObject *mp, intp i)
 NPY_NO_EXPORT int
 _zerofill(PyArrayObject *ret)
 {
-    if (PyDataType_REFCHK(ret->descr)) {
+    if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
         PyObject *zero = PyInt_FromLong(0);
         PyArray_FillObjectArray(ret, zero);
         Py_DECREF(zero);
@@ -476,7 +480,7 @@ _zerofill(PyArrayObject *ret)
     }
     else {
         intp n = PyArray_NBYTES(ret);
-        memset(ret->data, 0, n);
+        memset(PyArray_DATA(ret), 0, n);
     }
     return 0;
 }
@@ -494,14 +498,14 @@ _IsAligned(PyArrayObject *ap)
      * PyArray_DescrConverter(), but not necessarily when using
      * PyArray_DescrAlignConverter(). */
 
-    alignment = ap->descr->alignment;
+    alignment = PyArray_DESCR(ap)->alignment;
     if (alignment == 1) {
         return 1;
     }
-    ptr = (intp) ap->data;
+    ptr = (intp) PyArray_DATA(ap);
     aligned = (ptr % alignment) == 0;
-    for (i = 0; i < ap->nd; i++) {
-        aligned &= ((ap->strides[i] % alignment) == 0);
+    for (i = 0; i < PyArray_NDIM(ap); i++) {
+        aligned &= ((PyArray_STRIDES(ap)[i] % alignment) == 0);
     }
     return aligned != 0;
 }
@@ -509,12 +513,12 @@ _IsAligned(PyArrayObject *ap)
 NPY_NO_EXPORT Bool
 _IsWriteable(PyArrayObject *ap)
 {
-    PyObject *base=ap->base;
+    PyObject *base=PyArray_BASE(ap);
     void *dummy;
     Py_ssize_t n;
 
     /* If we own our own data, then no-problem */
-    if ((base == NULL) || (ap->flags & OWNDATA)) {
+    if ((base == NULL) || (PyArray_FLAGS(ap) & NPY_ARRAY_OWNDATA)) {
         return TRUE;
     }
     /*
@@ -525,13 +529,16 @@ _IsWriteable(PyArrayObject *ap)
      * or a string object (for pickling support memory savings).
      * - this last could be removed if a proper pickleable
      * buffer was added to Python.
+     *
+     * MW: I think it would better to disallow switching from READONLY
+     *     to WRITEABLE like this...
      */
 
     while(PyArray_Check(base)) {
-        if (PyArray_CHKFLAGS(base, OWNDATA)) {
-            return (Bool) (PyArray_ISWRITEABLE(base));
+        if (PyArray_CHKFLAGS((PyArrayObject *)base, NPY_ARRAY_OWNDATA)) {
+            return (npy_bool) (PyArray_ISWRITEABLE((PyArrayObject *)base));
         }
-        base = PyArray_BASE(base);
+        base = PyArray_BASE((PyArrayObject *)base);
     }
 
     /*

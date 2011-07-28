@@ -72,7 +72,7 @@ if ctypes is None:
             If ctypes is not available.
 
         """
-        raise ImportError, "ctypes is not available."
+        raise ImportError("ctypes is not available.")
     ctypes_load_library = _dummy
     load_library = _dummy
     as_ctypes = _dummy
@@ -97,7 +97,16 @@ else:
             # Try to load library with platform-specific name, otherwise
             # default to libname.[so|pyd].  Sometimes, these files are built
             # erroneously on non-linux platforms.
-            libname_ext = ['%s.so' % libname, '%s.pyd' % libname]
+            from numpy.distutils.misc_util import get_shared_lib_extension
+            so_ext = get_shared_lib_extension()
+            libname_ext = [libname + so_ext]
+            if sys.version[:3] >= '3.2':
+                # For Python >= 3.2 a tag may be added to lib extension
+                # (platform dependent).  If we find such a tag, try both with
+                # and without it.
+                so_ext2 = get_shared_lib_extension(is_python_ext=True)
+                if not so_ext2 == so_ext:
+                    libname_ext.insert(0, libname + so_ext2)
             if sys.platform == 'win32':
                 libname_ext.insert(0, '%s.dll' % libname)
             elif sys.platform == 'darwin':
@@ -159,24 +168,24 @@ class _ndptr(_ndptr_base):
                 'typestr': self._dtype_.descr[0][1],
                 'data': (self.value, False),
                 }
-    
+
     @classmethod
     def from_param(cls, obj):
         if not isinstance(obj, ndarray):
-            raise TypeError, "argument must be an ndarray"
+            raise TypeError("argument must be an ndarray")
         if cls._dtype_ is not None \
                and obj.dtype != cls._dtype_:
-            raise TypeError, "array must have data type %s" % cls._dtype_
+            raise TypeError("array must have data type %s" % cls._dtype_)
         if cls._ndim_ is not None \
                and obj.ndim != cls._ndim_:
-            raise TypeError, "array must have %d dimension(s)" % cls._ndim_
+            raise TypeError("array must have %d dimension(s)" % cls._ndim_)
         if cls._shape_ is not None \
                and obj.shape != cls._shape_:
-            raise TypeError, "array must have shape %s" % str(cls._shape_)
+            raise TypeError("array must have shape %s" % str(cls._shape_))
         if cls._flags_ is not None \
                and ((obj.flags.num & cls._flags_) != cls._flags_):
-            raise TypeError, "array must have flags %s" % \
-                  _flags_fromnum(cls._flags_)
+            raise TypeError("array must have flags %s" %
+                    _flags_fromnum(cls._flags_))
         return obj.ctypes
 
 
@@ -251,7 +260,7 @@ def ndpointer(dtype=None, ndim=None, shape=None, flags=None):
             try:
                 flags = [x.strip().upper() for x in flags]
             except:
-                raise TypeError, "invalid flags specification"
+                raise TypeError("invalid flags specification")
             num = _num_fromflags(flags)
     try:
         return _pointer_type_cache[(dtype, ndim, shape, num)]
@@ -386,7 +395,7 @@ if ctypes is not None:
     # public functions
 
     def as_array(obj, shape=None):
-        """Create a numpy array from a ctypes array or a ctypes POINTER.  
+        """Create a numpy array from a ctypes array or a ctypes POINTER.
         The numpy array shares the memory with the ctypes object.
 
         The size parameter must be given if converting from a ctypes POINTER.
@@ -394,7 +403,7 @@ if ctypes is not None:
         """
         tp = type(obj)
         try: tp.__array_interface__
-        except AttributeError: 
+        except AttributeError:
             if hasattr(obj, 'contents'):
                 prep_pointer(obj, shape)
             else:

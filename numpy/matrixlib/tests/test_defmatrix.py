@@ -9,7 +9,7 @@ class TestCtor(TestCase):
     def test_basic(self):
         A = array([[1,2],[3,4]])
         mA = matrix(A)
-        assert all(mA.A == A)
+        assert_(all(mA.A == A))
 
         B = bmat("A,A;A,A")
         C = bmat([[A,A], [A,A]])
@@ -17,16 +17,16 @@ class TestCtor(TestCase):
                    [3,4,3,4],
                    [1,2,1,2],
                    [3,4,3,4]])
-        assert all(B.A == D)
-        assert all(C.A == D)
+        assert_(all(B.A == D))
+        assert_(all(C.A == D))
 
         E = array([[5,6],[7,8]])
         AEresult = matrix([[1,2,5,6],[3,4,7,8]])
-        assert all(bmat([A,E]) == AEresult)
+        assert_(all(bmat([A,E]) == AEresult))
 
         vec = arange(5)
         mvec = matrix(vec)
-        assert mvec.shape == (1,5)
+        assert_(mvec.shape == (1,5))
 
     def test_bmat_nondefault_str(self):
         A = array([[1,2],[3,4]])
@@ -43,12 +43,12 @@ class TestCtor(TestCase):
                            [3,4,7,8],
                            [5,6,1,2],
                            [7,8,3,4]])
-        assert all(bmat("A,A;A,A") == Aresult)
-        assert all(bmat("A,A;A,A",ldict={'A':B}) == Aresult)
+        assert_(all(bmat("A,A;A,A") == Aresult))
+        assert_(all(bmat("A,A;A,A",ldict={'A':B}) == Aresult))
         assert_raises(TypeError, bmat, "A,A;A,A",gdict={'A':B})
-        assert all(bmat("A,A;A,A",ldict={'A':A},gdict={'A':B}) == Aresult)
+        assert_(all(bmat("A,A;A,A",ldict={'A':A},gdict={'A':B}) == Aresult))
         b2 = bmat("A,B;C,D",ldict={'A':A,'B':B},gdict={'C':B,'D':A})
-        assert all(b2 == mixresult)
+        assert_(all(b2 == mixresult))
 
 
 class TestProperties(TestCase):
@@ -65,35 +65,35 @@ class TestProperties(TestCase):
         sumall = 30
         assert_array_equal(sum0, M.sum(axis=0))
         assert_array_equal(sum1, M.sum(axis=1))
-        assert sumall == M.sum()
+        assert_(sumall == M.sum())
 
 
     def test_prod(self):
         x = matrix([[1,2,3],[4,5,6]])
-        assert x.prod() == 720
-        assert all(x.prod(0) == matrix([[4,10,18]]))
-        assert all(x.prod(1) == matrix([[6],[120]]))
+        assert_(x.prod() == 720)
+        assert_(all(x.prod(0) == matrix([[4,10,18]])))
+        assert_(all(x.prod(1) == matrix([[6],[120]])))
 
         y = matrix([0,1,3])
-        assert y.prod() == 0
+        assert_(y.prod() == 0)
 
     def test_max(self):
         x = matrix([[1,2,3],[4,5,6]])
-        assert x.max() == 6
-        assert all(x.max(0) == matrix([[4,5,6]]))
-        assert all(x.max(1) == matrix([[3],[6]]))
+        assert_(x.max() == 6)
+        assert_(all(x.max(0) == matrix([[4,5,6]])))
+        assert_(all(x.max(1) == matrix([[3],[6]])))
 
     def test_min(self):
         x = matrix([[1,2,3],[4,5,6]])
-        assert x.min() == 1
-        assert all(x.min(0) == matrix([[1,2,3]]))
-        assert all(x.min(1) == matrix([[1],[4]]))
+        assert_(x.min() == 1)
+        assert_(all(x.min(0) == matrix([[1,2,3]])))
+        assert_(all(x.min(1) == matrix([[1],[4]])))
 
     def test_ptp(self):
         x = np.arange(4).reshape((2,2))
-        assert x.ptp() == 3
-        assert all(x.ptp(0) == array([2, 2]))
-        assert all(x.ptp(1) == array([1, 1]))
+        assert_(x.ptp() == 3)
+        assert_(all(x.ptp(0) == array([2, 2])))
+        assert_(all(x.ptp(1) == array([1, 1])))
 
     def test_var(self):
         x = np.arange(9).reshape((3,3))
@@ -107,16 +107,16 @@ class TestProperties(TestCase):
         A = array([[1., 2.],
                    [3., 4.]])
         mA = matrix(A)
-        assert allclose(linalg.inv(A), mA.I)
-        assert all(array(transpose(A) == mA.T))
-        assert all(array(transpose(A) == mA.H))
-        assert all(A == mA.A)
+        assert_(allclose(linalg.inv(A), mA.I))
+        assert_(all(array(transpose(A) == mA.T)))
+        assert_(all(array(transpose(A) == mA.H)))
+        assert_(all(A == mA.A))
 
         B = A + 2j*A
         mB = matrix(B)
-        assert allclose(linalg.inv(B), mB.I)
-        assert all(array(transpose(B) == mB.T))
-        assert all(array(conjugate(transpose(B)) == mB.H))
+        assert_(allclose(linalg.inv(B), mB.I))
+        assert_(all(array(transpose(B) == mB.T)))
+        assert_(all(array(conjugate(transpose(B)) == mB.H)))
 
     def test_pinv(self):
         x = matrix(arange(6).reshape(2,3))
@@ -129,40 +129,40 @@ class TestProperties(TestCase):
         A = arange(100).reshape(10,10)
         mA = matrix(A)
         mB = matrix(A) + 0.1
-        assert all(mB == A+0.1)
-        assert all(mB == matrix(A+0.1))
-        assert not any(mB == matrix(A-0.1))
-        assert all(mA < mB)
-        assert all(mA <= mB)
-        assert all(mA <= mA)
-        assert not any(mA < mA)
+        assert_(all(mB == A+0.1))
+        assert_(all(mB == matrix(A+0.1)))
+        assert_(not any(mB == matrix(A-0.1)))
+        assert_(all(mA < mB))
+        assert_(all(mA <= mB))
+        assert_(all(mA <= mA))
+        assert_(not any(mA < mA))
 
-        assert not any(mB < mA)
-        assert all(mB >= mA)
-        assert all(mB >= mB)
-        assert not any(mB > mB)
+        assert_(not any(mB < mA))
+        assert_(all(mB >= mA))
+        assert_(all(mB >= mB))
+        assert_(not any(mB > mB))
 
-        assert all(mA == mA)
-        assert not any(mA == mB)
-        assert all(mB != mA)
+        assert_(all(mA == mA))
+        assert_(not any(mA == mB))
+        assert_(all(mB != mA))
 
-        assert not all(abs(mA) > 0)
-        assert all(abs(mB > 0))
+        assert_(not all(abs(mA) > 0))
+        assert_(all(abs(mB > 0)))
 
     def test_asmatrix(self):
         A = arange(100).reshape(10,10)
         mA = asmatrix(A)
         A[0,0] = -10
-        assert A[0,0] == mA[0,0]
+        assert_(A[0,0] == mA[0,0])
 
     def test_noaxis(self):
         A = matrix([[1,0],[0,1]])
-        assert A.sum() == matrix(2)
-        assert A.mean() == matrix(0.5)
+        assert_(A.sum() == matrix(2))
+        assert_(A.mean() == matrix(0.5))
 
     def test_repr(self):
         A = matrix([[1,0],[0,1]])
-        assert repr(A) == "matrix([[1, 0],\n        [0, 1]])"
+        assert_(repr(A) == "matrix([[1, 0],\n        [0, 1]])")
 
 class TestCasting(TestCase):
     def test_basic(self):
@@ -172,15 +172,15 @@ class TestCasting(TestCase):
         mB = mA.copy()
         O = ones((10,10), float64) * 0.1
         mB = mB + O
-        assert mB.dtype.type == float64
-        assert all(mA != mB)
-        assert all(mB == mA+0.1)
+        assert_(mB.dtype.type == float64)
+        assert_(all(mA != mB))
+        assert_(all(mB == mA+0.1))
 
         mC = mA.copy()
         O = ones((10,10), complex128)
         mC = mC * O
-        assert mC.dtype.type == complex128
-        assert all(mA != mB)
+        assert_(mC.dtype.type == complex128)
+        assert_(all(mA != mB))
 
 
 class TestAlgebra(TestCase):
@@ -193,22 +193,22 @@ class TestAlgebra(TestCase):
 
         B = identity(2)
         for i in xrange(6):
-            assert allclose((mA ** i).A, B)
+            assert_(allclose((mA ** i).A, B))
             B = dot(B, A)
 
         Ainv = linalg.inv(A)
         B = identity(2)
         for i in xrange(6):
-            assert allclose((mA ** -i).A, B)
+            assert_(allclose((mA ** -i).A, B))
             B = dot(B, Ainv)
 
-        assert allclose((mA * mA).A, dot(A, A))
-        assert allclose((mA + mA).A, (A + A))
-        assert allclose((3*mA).A, (3*A))
+        assert_(allclose((mA * mA).A, dot(A, A)))
+        assert_(allclose((mA + mA).A, (A + A)))
+        assert_(allclose((3*mA).A, (3*A)))
 
         mA2 = matrix(A)
         mA2 *= 3
-        assert allclose(mA2.A, 3*A)
+        assert_(allclose(mA2.A, 3*A))
 
     def test_pow(self):
         """Test raising a matrix to an integer power works as expected."""
@@ -278,12 +278,12 @@ class TestMatrixReturn(TestCase):
                 else:
                     args = ()
                 b = f(*args)
-                assert type(b) is matrix, "%s" % attrib
-        assert type(a.real) is matrix
-        assert type(a.imag) is matrix
+                assert_(type(b) is matrix, "%s" % attrib)
+        assert_(type(a.real) is matrix)
+        assert_(type(a.imag) is matrix)
         c,d = matrix([0.0]).nonzero()
-        assert type(c) is matrix
-        assert type(d) is matrix
+        assert_(type(c) is matrix)
+        assert_(type(d) is matrix)
 
 
 class TestIndexing(TestCase):
@@ -316,13 +316,13 @@ class TestNewScalarIndexing(TestCase):
     def test_fancy_indexing(self):
         a = self.a
         x = a[1, [0,1,0]]
-        assert isinstance(x, matrix)
+        assert_(isinstance(x, matrix))
         assert_equal(x, matrix([[3,  4,  3]]))
         x = a[[1,0]]
-        assert isinstance(x, matrix)
+        assert_(isinstance(x, matrix))
         assert_equal(x, matrix([[3,  4], [1, 2]]))
         x = a[[[1],[0]],[[1,0],[0,1]]]
-        assert isinstance(x, matrix)
+        assert_(isinstance(x, matrix))
         assert_equal(x, matrix([[4,  3], [1,  2]]))
 
     def test_matrix_element(self):
@@ -365,9 +365,9 @@ class TestNewScalarIndexing(TestCase):
 class TestPower(TestCase):
     def test_returntype(self):
         a = array([[0,1],[0,0]])
-        assert type(matrix_power(a, 2)) is ndarray
+        assert_(type(matrix_power(a, 2)) is ndarray)
         a = mat(a)
-        assert type(matrix_power(a, 2)) is matrix
+        assert_(type(matrix_power(a, 2)) is matrix)
 
     def test_list(self):
         assert_array_equal(matrix_power([[0, 1], [0, 0]], 2), [[0, 0], [0, 0]])

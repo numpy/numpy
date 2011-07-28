@@ -42,7 +42,8 @@ extern "C" CONFUSE_EMACS
 #define PyArray_HasArrayInterface(op, out)                                    \
         PyArray_HasArrayInterfaceType(op, NULL, NULL, out)
 
-#define PyArray_IsZeroDim(op) (PyArray_Check(op) && (PyArray_NDIM(op) == 0))
+#define PyArray_IsZeroDim(op) (PyArray_Check(op) && \
+                               (PyArray_NDIM((PyArrayObject *)op) == 0))
 
 #define PyArray_IsScalar(obj, cls)                                            \
         (PyObject_TypeCheck(obj, &Py##cls##ArrType_Type))
@@ -88,51 +89,51 @@ extern "C" CONFUSE_EMACS
 #define PyArray_FROM_OT(m,type) PyArray_FromAny(m,                            \
                                 PyArray_DescrFromType(type), 0, 0, 0, NULL);
 
-#define PyArray_FROM_OTF(m, type, flags)                                      \
-        PyArray_FromAny(m, PyArray_DescrFromType(type), 0, 0,                 \
-                        (((flags) & NPY_ENSURECOPY) ?                         \
-                         ((flags) | NPY_DEFAULT) : (flags)), NULL)
+#define PyArray_FROM_OTF(m, type, flags) \
+        PyArray_FromAny(m, PyArray_DescrFromType(type), 0, 0, \
+                        (((flags) & NPY_ARRAY_ENSURECOPY) ? \
+                         ((flags) | NPY_ARRAY_DEFAULT) : (flags)), NULL)
 
-#define PyArray_FROMANY(m, type, min, max, flags)                             \
-        PyArray_FromAny(m, PyArray_DescrFromType(type), min, max,             \
-                        (((flags) & NPY_ENSURECOPY) ?                         \
-                         (flags) | NPY_DEFAULT : (flags)), NULL)
+#define PyArray_FROMANY(m, type, min, max, flags) \
+        PyArray_FromAny(m, PyArray_DescrFromType(type), min, max, \
+                        (((flags) & NPY_ARRAY_ENSURECOPY) ? \
+                         (flags) | NPY_ARRAY_DEFAULT : (flags)), NULL)
 
-#define PyArray_ZEROS(m, dims, type, fortran)                                 \
-        PyArray_Zeros(m, dims, PyArray_DescrFromType(type), fortran)
+#define PyArray_ZEROS(m, dims, type, is_f_order) \
+        PyArray_Zeros(m, dims, PyArray_DescrFromType(type), is_f_order)
 
-#define PyArray_EMPTY(m, dims, type, fortran)                                 \
-        PyArray_Empty(m, dims, PyArray_DescrFromType(type), fortran)
+#define PyArray_EMPTY(m, dims, type, is_f_order) \
+        PyArray_Empty(m, dims, PyArray_DescrFromType(type), is_f_order)
 
-#define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), val,            \
+#define PyArray_FILLWBYTE(obj, val) memset(PyArray_DATA(obj), val, \
                                            PyArray_NBYTES(obj))
 
 #define PyArray_REFCOUNT(obj) (((PyObject *)(obj))->ob_refcnt)
 #define NPY_REFCOUNT PyArray_REFCOUNT
 #define NPY_MAX_ELSIZE (2 * NPY_SIZEOF_LONGDOUBLE)
 
-#define PyArray_ContiguousFromAny(op, type, min_depth, max_depth)             \
-        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,           \
-                              max_depth, NPY_DEFAULT, NULL)
+#define PyArray_ContiguousFromAny(op, type, min_depth, max_depth) \
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth, \
+                              max_depth, NPY_ARRAY_DEFAULT, NULL)
 
-#define PyArray_EquivArrTypes(a1, a2)                                         \
+#define PyArray_EquivArrTypes(a1, a2) \
         PyArray_EquivTypes(PyArray_DESCR(a1), PyArray_DESCR(a2))
 
-#define PyArray_EquivByteorders(b1, b2)                                       \
+#define PyArray_EquivByteorders(b1, b2) \
         (((b1) == (b2)) || (PyArray_ISNBO(b1) == PyArray_ISNBO(b2)))
 
-#define PyArray_SimpleNew(nd, dims, typenum)                                  \
+#define PyArray_SimpleNew(nd, dims, typenum) \
         PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, NULL, 0, 0, NULL)
 
-#define PyArray_SimpleNewFromData(nd, dims, typenum, data)                    \
-        PyArray_New(&PyArray_Type, nd, dims, typenum, NULL,                   \
-                    data, 0, NPY_CARRAY, NULL)
+#define PyArray_SimpleNewFromData(nd, dims, typenum, data) \
+        PyArray_New(&PyArray_Type, nd, dims, typenum, NULL, \
+                    data, 0, NPY_ARRAY_CARRAY, NULL)
 
-#define PyArray_SimpleNewFromDescr(nd, dims, descr)                           \
-        PyArray_NewFromDescr(&PyArray_Type, descr, nd, dims,                  \
+#define PyArray_SimpleNewFromDescr(nd, dims, descr) \
+        PyArray_NewFromDescr(&PyArray_Type, descr, nd, dims, \
                              NULL, NULL, 0, NULL)
 
-#define PyArray_ToScalar(data, arr)                                           \
+#define PyArray_ToScalar(data, arr) \
         PyArray_Scalar(data, PyArray_DESCR(arr), (PyObject *)arr)
 
 
@@ -141,53 +142,62 @@ extern "C" CONFUSE_EMACS
    inline the constants inside a for loop making it a moot point
 */
 
-#define PyArray_GETPTR1(obj, i) ((void *)(PyArray_BYTES(obj) +                \
+#define PyArray_GETPTR1(obj, i) ((void *)(PyArray_BYTES(obj) + \
                                          (i)*PyArray_STRIDES(obj)[0]))
 
-#define PyArray_GETPTR2(obj, i, j) ((void *)(PyArray_BYTES(obj) +             \
-                                            (i)*PyArray_STRIDES(obj)[0] +     \
+#define PyArray_GETPTR2(obj, i, j) ((void *)(PyArray_BYTES(obj) + \
+                                            (i)*PyArray_STRIDES(obj)[0] + \
                                             (j)*PyArray_STRIDES(obj)[1]))
 
-#define PyArray_GETPTR3(obj, i, j, k) ((void *)(PyArray_BYTES(obj) +          \
-                                            (i)*PyArray_STRIDES(obj)[0] +     \
-                                            (j)*PyArray_STRIDES(obj)[1] +     \
+#define PyArray_GETPTR3(obj, i, j, k) ((void *)(PyArray_BYTES(obj) + \
+                                            (i)*PyArray_STRIDES(obj)[0] + \
+                                            (j)*PyArray_STRIDES(obj)[1] + \
                                             (k)*PyArray_STRIDES(obj)[2]))
 
-#define PyArray_GETPTR4(obj, i, j, k, l) ((void *)(PyArray_BYTES(obj) +       \
-                                            (i)*PyArray_STRIDES(obj)[0] +     \
-                                            (j)*PyArray_STRIDES(obj)[1] +     \
-                                            (k)*PyArray_STRIDES(obj)[2] +     \
+#define PyArray_GETPTR4(obj, i, j, k, l) ((void *)(PyArray_BYTES(obj) + \
+                                            (i)*PyArray_STRIDES(obj)[0] + \
+                                            (j)*PyArray_STRIDES(obj)[1] + \
+                                            (k)*PyArray_STRIDES(obj)[2] + \
                                             (l)*PyArray_STRIDES(obj)[3]))
 
-#define PyArray_XDECREF_ERR(obj) \
-        if (obj && (PyArray_FLAGS(obj) & NPY_UPDATEIFCOPY)) {                 \
-                PyArray_FLAGS(PyArray_BASE(obj)) |= NPY_WRITEABLE;            \
-                PyArray_FLAGS(obj) &= ~NPY_UPDATEIFCOPY;                      \
-        }                                                                     \
-        Py_XDECREF(obj)
+static NPY_INLINE void
+PyArray_XDECREF_ERR(PyArrayObject *arr)
+{
+    if (arr != NULL) {
+        if (PyArray_FLAGS(arr) & NPY_ARRAY_UPDATEIFCOPY) {
+            PyArrayObject *base = (PyArrayObject *)PyArray_BASE(arr);
+            PyArray_ENABLEFLAGS(base, NPY_ARRAY_WRITEABLE);
+            PyArray_CLEARFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
+        }
+        Py_DECREF(arr);
+    }
+}
 
-#define PyArray_DESCR_REPLACE(descr) do {                                     \
-                PyArray_Descr *_new_;                                         \
-                _new_ = PyArray_DescrNew(descr);                              \
-                Py_XDECREF(descr);                                            \
-                descr = _new_;                                                \
+#define PyArray_DESCR_REPLACE(descr) do { \
+                PyArray_Descr *_new_; \
+                _new_ = PyArray_DescrNew(descr); \
+                Py_XDECREF(descr); \
+                descr = _new_; \
         } while(0)
 
 /* Copy should always return contiguous array */
 #define PyArray_Copy(obj) PyArray_NewCopy(obj, NPY_CORDER)
 
-#define PyArray_FromObject(op, type, min_depth, max_depth)                    \
-        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,           \
-                              max_depth, NPY_BEHAVED | NPY_ENSUREARRAY, NULL)
+#define PyArray_FromObject(op, type, min_depth, max_depth) \
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth, \
+                              max_depth, NPY_ARRAY_BEHAVED | \
+                                         NPY_ARRAY_ENSUREARRAY, NULL)
 
-#define PyArray_ContiguousFromObject(op, type, min_depth, max_depth)          \
-        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,           \
-                              max_depth, NPY_DEFAULT | NPY_ENSUREARRAY, NULL)
+#define PyArray_ContiguousFromObject(op, type, min_depth, max_depth) \
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth, \
+                              max_depth, NPY_ARRAY_DEFAULT | \
+                                         NPY_ARRAY_ENSUREARRAY, NULL)
 
-#define PyArray_CopyFromObject(op, type, min_depth, max_depth)                \
-        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth,           \
-                        max_depth, NPY_ENSURECOPY | NPY_DEFAULT |             \
-                        NPY_ENSUREARRAY, NULL)
+#define PyArray_CopyFromObject(op, type, min_depth, max_depth) \
+        PyArray_FromAny(op, PyArray_DescrFromType(type), min_depth, \
+                        max_depth, NPY_ARRAY_ENSURECOPY | \
+                                   NPY_ARRAY_DEFAULT | \
+                                   NPY_ARRAY_ENSUREARRAY, NULL)
 
 #define PyArray_Cast(mp, type_num)                                            \
         PyArray_CastToType(mp, PyArray_DescrFromType(type_num), 0)

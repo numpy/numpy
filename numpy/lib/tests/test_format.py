@@ -259,18 +259,18 @@ Test the header writing.
     "F\x00{'descr': '>c16', 'fortran_order': False, 'shape': (3, 5)}           \n"
     "F\x00{'descr': '>c16', 'fortran_order': True, 'shape': (5, 3)}            \n"
     "F\x00{'descr': '>c16', 'fortran_order': False, 'shape': (3, 3)}           \n"
-    "F\x00{'descr': '|O4', 'fortran_order': False, 'shape': (0,)}              \n"
-    "F\x00{'descr': '|O4', 'fortran_order': False, 'shape': ()}                \n"
-    "F\x00{'descr': '|O4', 'fortran_order': False, 'shape': (15,)}             \n"
-    "F\x00{'descr': '|O4', 'fortran_order': False, 'shape': (3, 5)}            \n"
-    "F\x00{'descr': '|O4', 'fortran_order': True, 'shape': (5, 3)}             \n"
-    "F\x00{'descr': '|O4', 'fortran_order': False, 'shape': (3, 3)}            \n"
-    "F\x00{'descr': '|O4', 'fortran_order': False, 'shape': (0,)}              \n"
-    "F\x00{'descr': '|O4', 'fortran_order': False, 'shape': ()}                \n"
-    "F\x00{'descr': '|O4', 'fortran_order': False, 'shape': (15,)}             \n"
-    "F\x00{'descr': '|O4', 'fortran_order': False, 'shape': (3, 5)}            \n"
-    "F\x00{'descr': '|O4', 'fortran_order': True, 'shape': (5, 3)}             \n"
-    "F\x00{'descr': '|O4', 'fortran_order': False, 'shape': (3, 3)}            \n"
+    "F\x00{'descr': 'O', 'fortran_order': False, 'shape': (0,)}              \n"
+    "F\x00{'descr': 'O', 'fortran_order': False, 'shape': ()}                \n"
+    "F\x00{'descr': 'O', 'fortran_order': False, 'shape': (15,)}             \n"
+    "F\x00{'descr': 'O', 'fortran_order': False, 'shape': (3, 5)}            \n"
+    "F\x00{'descr': 'O', 'fortran_order': True, 'shape': (5, 3)}             \n"
+    "F\x00{'descr': 'O', 'fortran_order': False, 'shape': (3, 3)}            \n"
+    "F\x00{'descr': 'O', 'fortran_order': False, 'shape': (0,)}              \n"
+    "F\x00{'descr': 'O', 'fortran_order': False, 'shape': ()}                \n"
+    "F\x00{'descr': 'O', 'fortran_order': False, 'shape': (15,)}             \n"
+    "F\x00{'descr': 'O', 'fortran_order': False, 'shape': (3, 5)}            \n"
+    "F\x00{'descr': 'O', 'fortran_order': True, 'shape': (5, 3)}             \n"
+    "F\x00{'descr': 'O', 'fortran_order': False, 'shape': (3, 3)}            \n"
     "v\x00{'descr': [('x', '<i4', (2,)), ('y', '<f8', (2, 2)), ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}         \n"
     "\x16\x02{'descr': [('x', '<i4', (2,)),\n           ('Info',\n            [('value', '<c16'),\n             ('y2', '<f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '<c16', (2,)),\n               ('y3', '<f8', (2,)),\n               ('z3', '<u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '<U8'), ('Value', '<c16')]),\n           ('y', '<f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
     "v\x00{'descr': [('x', '>i4', (2,)), ('y', '>f8', (2, 2)), ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}         \n"
@@ -421,7 +421,7 @@ def roundtrip(arr):
     return arr2
 
 def assert_equal(o1, o2):
-    assert o1 == o2
+    assert_(o1 == o2)
 
 
 def test_roundtrip():

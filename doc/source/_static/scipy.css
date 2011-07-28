@@ -33,6 +33,11 @@ dl.last > dd {
     margin-left: 30px;
 }
 
+/* hide overflowing content in the sidebar */
+div.sphinxsidebarwrapper p.topless {
+    overflow: hidden;
+}
+
 /**
  * Hide dummy toctrees 
  */
@@ -114,6 +119,7 @@ div.sphinxsidebar ul.want-points {
 
 .field-list th {
   color: rgb(0,102,204);
+  white-space: nowrap;
 }
 
 /** 

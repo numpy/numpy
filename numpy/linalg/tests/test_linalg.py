@@ -22,7 +22,8 @@ def assert_almost_equal(a, b, **kw):
         decimal = 12
     old_assert_almost_equal(a, b, decimal=decimal, **kw)
 
-class LinalgTestCase:
+
+class LinalgTestCase(object):
     def test_single(self):
         a = array([[1.,2.], [3.,4.]], dtype=single)
         b = array([2., 1.], dtype=single)
@@ -80,7 +81,7 @@ class LinalgTestCase:
         self.do(a, b)
 
 
-class LinalgNonsquareTestCase:
+class LinalgNonsquareTestCase(object):
     def test_single_nsq_1(self):
         a = array([[1.,2.,3.], [3.,4.,6.]], dtype=single)
         b = array([2., 1.], dtype=single)
@@ -136,13 +137,15 @@ class TestSolve(LinalgTestCase, TestCase):
     def do(self, a, b):
         x = linalg.solve(a, b)
         assert_almost_equal(b, dot(a, x))
-        assert imply(isinstance(b, matrix), isinstance(x, matrix))
+        assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
+
 
 class TestInv(LinalgTestCase, TestCase):
     def do(self, a, b):
         a_inv = linalg.inv(a)
         assert_almost_equal(dot(a, a_inv), identity(asarray(a).shape[0]))
-        assert imply(isinstance(a, matrix), isinstance(a_inv, matrix))
+        assert_(imply(isinstance(a, matrix), isinstance(a_inv, matrix)))
+
 
 class TestEigvals(LinalgTestCase, TestCase):
     def do(self, a, b):
@@ -150,18 +153,21 @@ class TestEigvals(LinalgTestCase, TestCase):
         evalues, evectors = linalg.eig(a)
         assert_almost_equal(ev, evalues)
 
+
 class TestEig(LinalgTestCase, TestCase):
     def do(self, a, b):
         evalues, evectors = linalg.eig(a)
         assert_almost_equal(dot(a, evectors), multiply(evectors, evalues))
-        assert imply(isinstance(a, matrix), isinstance(evectors, matrix))
+        assert_(imply(isinstance(a, matrix), isinstance(evectors, matrix)))
+
 
 class TestSVD(LinalgTestCase, TestCase):
     def do(self, a, b):
         u, s, vt = linalg.svd(a, 0)
         assert_almost_equal(a, dot(multiply(u, s), vt))
-        assert imply(isinstance(a, matrix), isinstance(u, matrix))
-        assert imply(isinstance(a, matrix), isinstance(vt, matrix))
+        assert_(imply(isinstance(a, matrix), isinstance(u, matrix)))
+        assert_(imply(isinstance(a, matrix), isinstance(vt, matrix)))
+
 
 class TestCondSVD(LinalgTestCase, TestCase):
     def do(self, a, b):
@@ -169,22 +175,26 @@ class TestCondSVD(LinalgTestCase, TestCase):
         s = linalg.svd(c, compute_uv=False)
         old_assert_almost_equal(s[0]/s[-1], linalg.cond(a), decimal=5)
 
+
 class TestCond2(LinalgTestCase, TestCase):
     def do(self, a, b):
         c = asarray(a) # a might be a matrix
         s = linalg.svd(c, compute_uv=False)
         old_assert_almost_equal(s[0]/s[-1], linalg.cond(a,2), decimal=5)
 
+
 class TestCondInf(TestCase):
     def test(self):
         A = array([[1.,0,0],[0,-2.,0],[0,0,3.]])
         assert_almost_equal(linalg.cond(A,inf),3.)
 
+
 class TestPinv(LinalgTestCase, TestCase):
     def do(self, a, b):
         a_ginv = linalg.pinv(a)
         assert_almost_equal(dot(a, a_ginv), identity(asarray(a).shape[0]))
-        assert imply(isinstance(a, matrix), isinstance(a_ginv, matrix))
+        assert_(imply(isinstance(a, matrix), isinstance(a_ginv, matrix)))
+
 
 class TestDet(LinalgTestCase, TestCase):
     def do(self, a, b):
@@ -215,6 +225,7 @@ class TestDet(LinalgTestCase, TestCase):
         assert_equal(type(linalg.slogdet([[0.0j]])[0]), cdouble)
         assert_equal(type(linalg.slogdet([[0.0j]])[1]), double)
 
+
 class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase, TestCase):
     def do(self, a, b):
         arr = np.asarray(a)
@@ -237,10 +248,11 @@ class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase, TestCase):
             expect_resids = type(x)([])
         assert_almost_equal(residuals, expect_resids)
         assert_(np.issubdtype(residuals.dtype, np.floating))
-        assert imply(isinstance(b, matrix), isinstance(x, matrix))
-        assert imply(isinstance(b, matrix), isinstance(residuals, matrix))
+        assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
+        assert_(imply(isinstance(b, matrix), isinstance(residuals, matrix)))
 
-class TestMatrixPower():
+
+class TestMatrixPower(object):
     R90 = array([[0,1],[-1,0]])
     Arb22 = array([[4,-7],[-2,10]])
     noninv = array([[1,0],[0,0]])
@@ -293,6 +305,7 @@ class TestMatrixPower():
         assert_raises(numpy.linalg.linalg.LinAlgError,
                       lambda: matrix_power(self.noninv,-1))
 
+
 class TestBoolPower(TestCase):
     def test_square(self):
         A = array([[True,False],[True,True]])
@@ -334,6 +347,7 @@ class HermitianTestCase(object):
         a = matrix([[1.,2.], [2.,1.]])
         self.do(a)
 
+
 class TestEigvalsh(HermitianTestCase, TestCase):
     def do(self, a):
         # note that eigenvalue arrays must be sorted since
@@ -344,6 +358,7 @@ class TestEigvalsh(HermitianTestCase, TestCase):
         evalues.sort()
         assert_almost_equal(ev, evalues)
 
+
 class TestEigh(HermitianTestCase, TestCase):
     def do(self, a):
         # note that eigenvalue arrays must be sorted since
@@ -353,6 +368,7 @@ class TestEigh(HermitianTestCase, TestCase):
         ev.sort()
         evalues.sort()
         assert_almost_equal(ev, evalues)
+
 
 class _TestNorm(TestCase):
     dt = None
@@ -403,32 +419,41 @@ class _TestNorm(TestCase):
         self.assertRaises(ValueError, norm, A, -3)
         self.assertRaises(ValueError, norm, A, 0)
 
+
 class TestNormDouble(_TestNorm):
     dt = np.double
     dec= 12
+
 
 class TestNormSingle(_TestNorm):
     dt = np.float32
     dec = 6
 
 
-def test_matrix_rank():
-    # Full rank matrix
-    yield assert_equal, 4, matrix_rank(np.eye(4))
-    # rank deficient matrix
-    I=np.eye(4); I[-1,-1] = 0.
-    yield assert_equal, matrix_rank(I), 3
-    # All zeros - zero rank
-    yield assert_equal, matrix_rank(np.zeros((4,4))), 0
-    # 1 dimension - rank 1 unless all 0
-    yield assert_equal, matrix_rank([1, 0, 0, 0]), 1
-    yield assert_equal, matrix_rank(np.zeros((4,))), 0
-    # accepts array-like
-    yield assert_equal, matrix_rank([1]), 1
-    # greater than 2 dimensions raises error
-    yield assert_raises, TypeError, matrix_rank, np.zeros((2,2,2))
-    # works on scalar
-    yield assert_equal, matrix_rank(1), 1
+class TestMatrixRank(object):
+    def test_matrix_rank(self):
+        # Full rank matrix
+        yield assert_equal, 4, matrix_rank(np.eye(4))
+        # rank deficient matrix
+        I=np.eye(4); I[-1,-1] = 0.
+        yield assert_equal, matrix_rank(I), 3
+        # All zeros - zero rank
+        yield assert_equal, matrix_rank(np.zeros((4,4))), 0
+        # 1 dimension - rank 1 unless all 0
+        yield assert_equal, matrix_rank([1, 0, 0, 0]), 1
+        yield assert_equal, matrix_rank(np.zeros((4,))), 0
+        # accepts array-like
+        yield assert_equal, matrix_rank([1]), 1
+        # greater than 2 dimensions raises error
+        yield assert_raises, TypeError, matrix_rank, np.zeros((2,2,2))
+        # works on scalar
+        yield assert_equal, matrix_rank(1), 1
+
+
+class TestQR(TestCase):
+    def test_qr_empty(self):
+        a = np.zeros((0,2))
+        self.assertRaises(linalg.LinAlgError, linalg.qr, a)
 
 
 if __name__ == "__main__":

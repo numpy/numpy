@@ -3,413 +3,415 @@
 Glossary
 ========
 
-along an axis
-    Axes are defined for arrays with more than one dimension.  A
-    2-dimensional array has two corresponding axes: the first running
-    vertically downwards across rows (axis 0), and the second running
-    horizontally across columns (axis 1).
+.. glossary::
 
-    Many operation can take place along one of these axes.  For example,
-    we can sum each row of an array, in which case we operate along
-    columns, or axis 1::
+   along an axis
+       Axes are defined for arrays with more than one dimension.  A
+       2-dimensional array has two corresponding axes: the first running
+       vertically downwards across rows (axis 0), and the second running
+       horizontally across columns (axis 1).
 
-      >>> x = np.arange(12).reshape((3,4))
+       Many operation can take place along one of these axes.  For example,
+       we can sum each row of an array, in which case we operate along
+       columns, or axis 1::
 
-      >>> x
-      array([[ 0,  1,  2,  3],
-             [ 4,  5,  6,  7],
-             [ 8,  9, 10, 11]])
+         >>> x = np.arange(12).reshape((3,4))
 
-      >>> x.sum(axis=1)
-      array([ 6, 22, 38])
+         >>> x
+         array([[ 0,  1,  2,  3],
+                [ 4,  5,  6,  7],
+                [ 8,  9, 10, 11]])
 
-array
-    A homogeneous container of numerical elements.  Each element in the
-    array occupies a fixed amount of memory (hence homogeneous), and
-    can be a numerical element of a single type (such as float, int
-    or complex) or a combination (such as ``(float, int, float)``).  Each
-    array has an associated data-type (or ``dtype``), which describes
-    the numerical type of its elements::
+         >>> x.sum(axis=1)
+         array([ 6, 22, 38])
 
-      >>> x = np.array([1, 2, 3], float)
+   array
+       A homogeneous container of numerical elements.  Each element in the
+       array occupies a fixed amount of memory (hence homogeneous), and
+       can be a numerical element of a single type (such as float, int
+       or complex) or a combination (such as ``(float, int, float)``).  Each
+       array has an associated data-type (or ``dtype``), which describes
+       the numerical type of its elements::
 
-      >>> x
-      array([ 1.,  2.,  3.])
+         >>> x = np.array([1, 2, 3], float)
 
-      >>> x.dtype # floating point number, 64 bits of memory per element
-      dtype('float64')
+         >>> x
+         array([ 1.,  2.,  3.])
 
+         >>> x.dtype # floating point number, 64 bits of memory per element
+         dtype('float64')
 
-      # More complicated data type: each array element is a combination of
-      # and integer and a floating point number
-      >>> np.array([(1, 2.0), (3, 4.0)], dtype=[('x', int), ('y', float)])
-      array([(1, 2.0), (3, 4.0)],
-            dtype=[('x', '<i4'), ('y', '<f8')])
 
-    Fast element-wise operations, called `ufuncs`_, operate on arrays.
+         # More complicated data type: each array element is a combination of
+         # and integer and a floating point number
+         >>> np.array([(1, 2.0), (3, 4.0)], dtype=[('x', int), ('y', float)])
+         array([(1, 2.0), (3, 4.0)],
+               dtype=[('x', '<i4'), ('y', '<f8')])
 
-array_like
-    Any sequence that can be interpreted as an ndarray.  This includes
-    nested lists, tuples, scalars and existing arrays.
+       Fast element-wise operations, called `ufuncs`_, operate on arrays.
 
-attribute
-    A property of an object that can be accessed using ``obj.attribute``,
-    e.g., ``shape`` is an attribute of an array::
+   array_like
+       Any sequence that can be interpreted as an ndarray.  This includes
+       nested lists, tuples, scalars and existing arrays.
 
-      >>> x = np.array([1, 2, 3])
-      >>> x.shape
-      (3,)
+   attribute
+       A property of an object that can be accessed using ``obj.attribute``,
+       e.g., ``shape`` is an attribute of an array::
 
-BLAS
-    `Basic Linear Algebra Subprograms <http://en.wikipedia.org/wiki/BLAS>`_
+         >>> x = np.array([1, 2, 3])
+         >>> x.shape
+         (3,)
 
-broadcast
-    NumPy can do operations on arrays whose shapes are mismatched::
+   BLAS
+       `Basic Linear Algebra Subprograms <http://en.wikipedia.org/wiki/BLAS>`_
 
-      >>> x = np.array([1, 2])
-      >>> y = np.array([[3], [4]])
+   broadcast
+       NumPy can do operations on arrays whose shapes are mismatched::
 
-      >>> x
-      array([1, 2])
+         >>> x = np.array([1, 2])
+         >>> y = np.array([[3], [4]])
 
-      >>> y
-      array([[3],
-             [4]])
+         >>> x
+         array([1, 2])
 
-      >>> x + y
-      array([[4, 5],
-             [5, 6]])
+         >>> y
+         array([[3],
+                [4]])
 
-    See `doc.broadcasting`_ for more information.
+         >>> x + y
+         array([[4, 5],
+                [5, 6]])
 
-C order
-    See `row-major`
+       See `doc.broadcasting`_ for more information.
 
-column-major
-    A way to represent items in a N-dimensional array in the 1-dimensional
-    computer memory. In column-major order, the leftmost index "varies the
-    fastest": for example the array::
+   C order
+       See `row-major`
 
-         [[1, 2, 3],
-          [4, 5, 6]]
+   column-major
+       A way to represent items in a N-dimensional array in the 1-dimensional
+       computer memory. In column-major order, the leftmost index "varies the
+       fastest": for example the array::
 
-    is represented in the column-major order as::
+            [[1, 2, 3],
+             [4, 5, 6]]
 
-        [1, 4, 2, 5, 3, 6]
+       is represented in the column-major order as::
 
-    Column-major order is also known as the Fortran order, as the Fortran
-    programming language uses it.
+           [1, 4, 2, 5, 3, 6]
 
-decorator
-    An operator that transforms a function.  For example, a ``log``
-    decorator may be defined to print debugging information upon
-    function execution::
+       Column-major order is also known as the Fortran order, as the Fortran
+       programming language uses it.
 
-      >>> def log(f):
-      ...     def new_logging_func(*args, **kwargs):
-      ...         print "Logging call with parameters:", args, kwargs
-      ...         return f(*args, **kwargs)
-      ...
-      ...     return new_logging_func
+   decorator
+       An operator that transforms a function.  For example, a ``log``
+       decorator may be defined to print debugging information upon
+       function execution::
 
-    Now, when we define a function, we can "decorate" it using ``log``::
+         >>> def log(f):
+         ...     def new_logging_func(*args, **kwargs):
+         ...         print "Logging call with parameters:", args, kwargs
+         ...         return f(*args, **kwargs)
+         ...
+         ...     return new_logging_func
 
-      >>> @log
-      ... def add(a, b):
-      ...     return a + b
+       Now, when we define a function, we can "decorate" it using ``log``::
 
-    Calling ``add`` then yields:
+         >>> @log
+         ... def add(a, b):
+         ...     return a + b
 
-    >>> add(1, 2)
-    Logging call with parameters: (1, 2) {}
-    3
+       Calling ``add`` then yields:
 
-dictionary
-    Resembling a language dictionary, which provides a mapping between
-    words and descriptions thereof, a Python dictionary is a mapping
-    between two objects::
+       >>> add(1, 2)
+       Logging call with parameters: (1, 2) {}
+       3
 
-      >>> x = {1: 'one', 'two': [1, 2]}
+   dictionary
+       Resembling a language dictionary, which provides a mapping between
+       words and descriptions thereof, a Python dictionary is a mapping
+       between two objects::
 
-    Here, `x` is a dictionary mapping keys to values, in this case
-    the integer 1 to the string "one", and the string "two" to
-    the list ``[1, 2]``.  The values may be accessed using their
-    corresponding keys::
+         >>> x = {1: 'one', 'two': [1, 2]}
 
-      >>> x[1]
-      'one'
+       Here, `x` is a dictionary mapping keys to values, in this case
+       the integer 1 to the string "one", and the string "two" to
+       the list ``[1, 2]``.  The values may be accessed using their
+       corresponding keys::
 
-      >>> x['two']
-      [1, 2]
+         >>> x[1]
+         'one'
 
-    Note that dictionaries are not stored in any specific order.  Also,
-    most mutable (see *immutable* below) objects, such as lists, may not
-    be used as keys.
+         >>> x['two']
+         [1, 2]
 
-    For more information on dictionaries, read the
-    `Python tutorial <http://docs.python.org/tut>`_.
+       Note that dictionaries are not stored in any specific order.  Also,
+       most mutable (see *immutable* below) objects, such as lists, may not
+       be used as keys.
 
-Fortran order
-    See `column-major`
+       For more information on dictionaries, read the
+       `Python tutorial <http://docs.python.org/tut>`_.
 
-flattened
-    Collapsed to a one-dimensional array. See `ndarray.flatten`_ for details.
+   Fortran order
+       See `column-major`
 
-immutable
-    An object that cannot be modified after execution is called
-    immutable.  Two common examples are strings and tuples.
+   flattened
+       Collapsed to a one-dimensional array. See `ndarray.flatten`_ for details.
 
-instance
-    A class definition gives the blueprint for constructing an object::
+   immutable
+       An object that cannot be modified after execution is called
+       immutable.  Two common examples are strings and tuples.
 
-      >>> class House(object):
-      ...     wall_colour = 'white'
+   instance
+       A class definition gives the blueprint for constructing an object::
 
-    Yet, we have to *build* a house before it exists::
+         >>> class House(object):
+         ...     wall_colour = 'white'
 
-      >>> h = House() # build a house
+       Yet, we have to *build* a house before it exists::
 
-    Now, ``h`` is called a ``House`` instance.  An instance is therefore
-    a specific realisation of a class.
+         >>> h = House() # build a house
 
-iterable
-    A sequence that allows "walking" (iterating) over items, typically
-    using a loop such as::
+       Now, ``h`` is called a ``House`` instance.  An instance is therefore
+       a specific realisation of a class.
 
-      >>> x = [1, 2, 3]
-      >>> [item**2 for item in x]
-      [1, 4, 9]
+   iterable
+       A sequence that allows "walking" (iterating) over items, typically
+       using a loop such as::
 
-    It is often used in combintion with ``enumerate``::
-      >>> keys = ['a','b','c']
-      >>> for n, k in enumerate(keys):
-      ...     print "Key %d: %s" % (n, k)
-      ...
-      Key 0: a
-      Key 1: b
-      Key 2: c
+         >>> x = [1, 2, 3]
+         >>> [item**2 for item in x]
+         [1, 4, 9]
 
-list
-    A Python container that can hold any number of objects or items.
-    The items do not have to be of the same type, and can even be
-    lists themselves::
+       It is often used in combintion with ``enumerate``::
+         >>> keys = ['a','b','c']
+         >>> for n, k in enumerate(keys):
+         ...     print "Key %d: %s" % (n, k)
+         ...
+         Key 0: a
+         Key 1: b
+         Key 2: c
 
-      >>> x = [2, 2.0, "two", [2, 2.0]]
+   list
+       A Python container that can hold any number of objects or items.
+       The items do not have to be of the same type, and can even be
+       lists themselves::
 
-    The list `x` contains 4 items, each which can be accessed individually::
+         >>> x = [2, 2.0, "two", [2, 2.0]]
 
-      >>> x[2] # the string 'two'
-      'two'
+       The list `x` contains 4 items, each which can be accessed individually::
 
-      >>> x[3] # a list, containing an integer 2 and a float 2.0
-      [2, 2.0]
+         >>> x[2] # the string 'two'
+         'two'
 
-    It is also possible to select more than one item at a time,
-    using *slicing*::
+         >>> x[3] # a list, containing an integer 2 and a float 2.0
+         [2, 2.0]
 
-      >>> x[0:2] # or, equivalently, x[:2]
-      [2, 2.0]
+       It is also possible to select more than one item at a time,
+       using *slicing*::
 
-    In code, arrays are often conveniently expressed as nested lists::
+         >>> x[0:2] # or, equivalently, x[:2]
+         [2, 2.0]
 
+       In code, arrays are often conveniently expressed as nested lists::
 
-      >>> np.array([[1, 2], [3, 4]])
-      array([[1, 2],
-             [3, 4]])
 
-    For more information, read the section on lists in the `Python
-    tutorial <http://docs.python.org/tut>`_.  For a mapping
-    type (key-value), see *dictionary*.
+         >>> np.array([[1, 2], [3, 4]])
+         array([[1, 2],
+                [3, 4]])
 
-mask
-    A boolean array, used to select only certain elements for an operation::
+       For more information, read the section on lists in the `Python
+       tutorial <http://docs.python.org/tut>`_.  For a mapping
+       type (key-value), see *dictionary*.
 
-      >>> x = np.arange(5)
-      >>> x
-      array([0, 1, 2, 3, 4])
+   mask
+       A boolean array, used to select only certain elements for an operation::
 
-      >>> mask = (x > 2)
-      >>> mask
-      array([False, False, False, True,  True], dtype=bool)
+         >>> x = np.arange(5)
+         >>> x
+         array([0, 1, 2, 3, 4])
 
-      >>> x[mask] = -1
-      >>> x
-      array([ 0,  1,  2,  -1, -1])
+         >>> mask = (x > 2)
+         >>> mask
+         array([False, False, False, True,  True], dtype=bool)
 
-masked array
-    Array that suppressed values indicated by a mask::
+         >>> x[mask] = -1
+         >>> x
+         array([ 0,  1,  2,  -1, -1])
 
-      >>> x = np.ma.masked_array([np.nan, 2, np.nan], [True, False, True])
-      >>> x
-      masked_array(data = [-- 2.0 --],
-                   mask = [ True False  True],
-             fill_value = 1e+20)
-      <BLANKLINE>
+   masked array
+       Array that suppressed values indicated by a mask::
 
-      >>> x + [1, 2, 3]
-      masked_array(data = [-- 4.0 --],
-                   mask = [ True False  True],
-             fill_value = 1e+20)
-      <BLANKLINE>
+         >>> x = np.ma.masked_array([np.nan, 2, np.nan], [True, False, True])
+         >>> x
+         masked_array(data = [-- 2.0 --],
+                      mask = [ True False  True],
+                fill_value = 1e+20)
+         <BLANKLINE>
 
+         >>> x + [1, 2, 3]
+         masked_array(data = [-- 4.0 --],
+                      mask = [ True False  True],
+                fill_value = 1e+20)
+         <BLANKLINE>
 
-    Masked arrays are often used when operating on arrays containing
-    missing or invalid entries.
 
-matrix
-    A 2-dimensional ndarray that preserves its two-dimensional nature
-    throughout operations.  It has certain special operations, such as ``*``
-    (matrix multiplication) and ``**`` (matrix power), defined::
+       Masked arrays are often used when operating on arrays containing
+       missing or invalid entries.
 
-      >>> x = np.mat([[1, 2], [3, 4]])
+   matrix
+       A 2-dimensional ndarray that preserves its two-dimensional nature
+       throughout operations.  It has certain special operations, such as ``*``
+       (matrix multiplication) and ``**`` (matrix power), defined::
 
-      >>> x
-      matrix([[1, 2],
-              [3, 4]])
+         >>> x = np.mat([[1, 2], [3, 4]])
 
-      >>> x**2
-      matrix([[ 7, 10],
-            [15, 22]])
+         >>> x
+         matrix([[1, 2],
+                 [3, 4]])
 
-method
-    A function associated with an object.  For example, each ndarray has a
-    method called ``repeat``::
+         >>> x**2
+         matrix([[ 7, 10],
+               [15, 22]])
 
-      >>> x = np.array([1, 2, 3])
+   method
+       A function associated with an object.  For example, each ndarray has a
+       method called ``repeat``::
 
-      >>> x.repeat(2)
-      array([1, 1, 2, 2, 3, 3])
+         >>> x = np.array([1, 2, 3])
 
-ndarray
-    See *array*.
+         >>> x.repeat(2)
+         array([1, 1, 2, 2, 3, 3])
 
-reference
-    If ``a`` is a reference to ``b``, then ``(a is b) == True``.  Therefore,
-    ``a`` and ``b`` are different names for the same Python object.
+   ndarray
+       See *array*.
 
-row-major
-    A way to represent items in a N-dimensional array in the 1-dimensional
-    computer memory. In row-major order, the rightmost index "varies
-    the fastest": for example the array::
+   reference
+       If ``a`` is a reference to ``b``, then ``(a is b) == True``.  Therefore,
+       ``a`` and ``b`` are different names for the same Python object.
 
-         [[1, 2, 3],
-          [4, 5, 6]]
+   row-major
+       A way to represent items in a N-dimensional array in the 1-dimensional
+       computer memory. In row-major order, the rightmost index "varies
+       the fastest": for example the array::
 
-    is represented in the row-major order as::
+            [[1, 2, 3],
+             [4, 5, 6]]
 
-        [1, 2, 3, 4, 5, 6]
+       is represented in the row-major order as::
 
-    Row-major order is also known as the C order, as the C programming
-    language uses it. New Numpy arrays are by default in row-major order.
+           [1, 2, 3, 4, 5, 6]
 
-self
-    Often seen in method signatures, ``self`` refers to the instance
-    of the associated class.  For example:
+       Row-major order is also known as the C order, as the C programming
+       language uses it. New Numpy arrays are by default in row-major order.
 
-      >>> class Paintbrush(object):
-      ...     color = 'blue'
-      ...
-      ...     def paint(self):
-      ...         print "Painting the city %s!" % self.color
-      ...
-      >>> p = Paintbrush()
-      >>> p.color = 'red'
-      >>> p.paint() # self refers to 'p'
-      Painting the city red!
+   self
+       Often seen in method signatures, ``self`` refers to the instance
+       of the associated class.  For example:
 
-slice
-    Used to select only certain elements from a sequence::
+         >>> class Paintbrush(object):
+         ...     color = 'blue'
+         ...
+         ...     def paint(self):
+         ...         print "Painting the city %s!" % self.color
+         ...
+         >>> p = Paintbrush()
+         >>> p.color = 'red'
+         >>> p.paint() # self refers to 'p'
+         Painting the city red!
 
-      >>> x = range(5)
-      >>> x
-      [0, 1, 2, 3, 4]
+   slice
+       Used to select only certain elements from a sequence::
 
-      >>> x[1:3] # slice from 1 to 3 (excluding 3 itself)
-      [1, 2]
+         >>> x = range(5)
+         >>> x
+         [0, 1, 2, 3, 4]
 
-      >>> x[1:5:2] # slice from 1 to 5, but skipping every second element
-      [1, 3]
+         >>> x[1:3] # slice from 1 to 3 (excluding 3 itself)
+         [1, 2]
 
-      >>> x[::-1] # slice a sequence in reverse
-      [4, 3, 2, 1, 0]
+         >>> x[1:5:2] # slice from 1 to 5, but skipping every second element
+         [1, 3]
 
-    Arrays may have more than one dimension, each which can be sliced
-    individually::
+         >>> x[::-1] # slice a sequence in reverse
+         [4, 3, 2, 1, 0]
 
-      >>> x = np.array([[1, 2], [3, 4]])
-      >>> x
-      array([[1, 2],
-             [3, 4]])
+       Arrays may have more than one dimension, each which can be sliced
+       individually::
 
-      >>> x[:, 1]
-      array([2, 4])
+         >>> x = np.array([[1, 2], [3, 4]])
+         >>> x
+         array([[1, 2],
+                [3, 4]])
 
-tuple
-    A sequence that may contain a variable number of types of any
-    kind.  A tuple is immutable, i.e., once constructed it cannot be
-    changed.  Similar to a list, it can be indexed and sliced::
+         >>> x[:, 1]
+         array([2, 4])
 
-      >>> x = (1, 'one', [1, 2])
+   tuple
+       A sequence that may contain a variable number of types of any
+       kind.  A tuple is immutable, i.e., once constructed it cannot be
+       changed.  Similar to a list, it can be indexed and sliced::
 
-      >>> x
-      (1, 'one', [1, 2])
+         >>> x = (1, 'one', [1, 2])
 
-      >>> x[0]
-      1
+         >>> x
+         (1, 'one', [1, 2])
 
-      >>> x[:2]
-      (1, 'one')
+         >>> x[0]
+         1
 
-    A useful concept is "tuple unpacking", which allows variables to
-    be assigned to the contents of a tuple::
+         >>> x[:2]
+         (1, 'one')
 
-      >>> x, y = (1, 2)
-      >>> x, y = 1, 2
+       A useful concept is "tuple unpacking", which allows variables to
+       be assigned to the contents of a tuple::
 
-    This is often used when a function returns multiple values:
+         >>> x, y = (1, 2)
+         >>> x, y = 1, 2
 
-      >>> def return_many():
-      ...     return 1, 'alpha', None
+       This is often used when a function returns multiple values:
 
-      >>> a, b, c = return_many()
-      >>> a, b, c
-      (1, 'alpha', None)
+         >>> def return_many():
+         ...     return 1, 'alpha', None
 
-      >>> a
-      1
-      >>> b
-      'alpha'
+         >>> a, b, c = return_many()
+         >>> a, b, c
+         (1, 'alpha', None)
 
-ufunc
-    Universal function.  A fast element-wise array operation.  Examples include
-    ``add``, ``sin`` and ``logical_or``.
+         >>> a
+         1
+         >>> b
+         'alpha'
 
-view
-    An array that does not own its data, but refers to another array's
-    data instead.  For example, we may create a view that only shows
-    every second element of another array::
+   ufunc
+       Universal function.  A fast element-wise array operation.  Examples include
+       ``add``, ``sin`` and ``logical_or``.
 
-      >>> x = np.arange(5)
-      >>> x
-      array([0, 1, 2, 3, 4])
+   view
+       An array that does not own its data, but refers to another array's
+       data instead.  For example, we may create a view that only shows
+       every second element of another array::
 
-      >>> y = x[::2]
-      >>> y
-      array([0, 2, 4])
+         >>> x = np.arange(5)
+         >>> x
+         array([0, 1, 2, 3, 4])
 
-      >>> x[0] = 3 # changing x changes y as well, since y is a view on x
-      >>> y
-      array([3, 2, 4])
+         >>> y = x[::2]
+         >>> y
+         array([0, 2, 4])
 
-wrapper
-    Python is a high-level (highly abstracted, or English-like) language.
-    This abstraction comes at a price in execution speed, and sometimes
-    it becomes necessary to use lower level languages to do fast
-    computations.  A wrapper is code that provides a bridge between
-    high and the low level languages, allowing, e.g., Python to execute
-    code written in C or Fortran.
+         >>> x[0] = 3 # changing x changes y as well, since y is a view on x
+         >>> y
+         array([3, 2, 4])
 
-    Examples include ctypes, SWIG and Cython (which wraps C and C++)
-    and f2py (which wraps Fortran).
+   wrapper
+       Python is a high-level (highly abstracted, or English-like) language.
+       This abstraction comes at a price in execution speed, and sometimes
+       it becomes necessary to use lower level languages to do fast
+       computations.  A wrapper is code that provides a bridge between
+       high and the low level languages, allowing, e.g., Python to execute
+       code written in C or Fortran.
+
+       Examples include ctypes, SWIG and Cython (which wraps C and C++)
+       and f2py (which wraps Fortran).
 
 """

@@ -46,10 +46,10 @@ class TestErrstate(TestCase):
             print(args)
         olderrcall = geterrcall()
         with errstate(call=foo):
-            assert(geterrcall() is foo), 'call is not foo'
+            assert_(geterrcall() is foo, 'call is not foo')
             with errstate(call=None):
-                assert(geterrcall() is None), 'call is not None'
-        assert(geterrcall() is olderrcall), 'call is not olderrcall'
+                assert_(geterrcall() is None, 'call is not None')
+        assert_(geterrcall() is olderrcall, 'call is not olderrcall')
 
 """
 

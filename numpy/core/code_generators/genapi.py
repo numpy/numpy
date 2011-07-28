@@ -44,10 +44,16 @@ API_FILES = [join('multiarray', 'methods.c'),
              join('multiarray', 'conversion_utils.c'),
              join('multiarray', 'buffer.c'),
              join('multiarray', 'datetime.c'),
-             join('multiarray', 'nditer.c.src'),
+             join('multiarray', 'datetime_strings.c'),
+             join('multiarray', 'datetime_busday.c'),
+             join('multiarray', 'datetime_busdaycal.c'),
+             join('multiarray', 'nditer_api.c'),
+             join('multiarray', 'nditer_constr.c'),
              join('multiarray', 'nditer_pywrap.c'),
+             join('multiarray', 'nditer_templ.c.src'),
              join('multiarray', 'einsum.c.src'),
              join('umath', 'ufunc_object.c'),
+             join('umath', 'ufunc_type_resolution.c'),
              join('umath', 'loops.c.src'),
             ]
 THIS_DIR = os.path.dirname(__file__)
@@ -257,7 +263,7 @@ def should_rebuild(targets, source_files):
     return False
 
 # Those *Api classes instances know how to output strings for the generated code
-class TypeApi:
+class TypeApi(object):
     def __init__(self, name, index, ptr_cast, api_name):
         self.index = index
         self.name = name
@@ -283,7 +289,7 @@ class TypeApi:
 """ % {'type': self.name}
         return astr
 
-class GlobalVarApi:
+class GlobalVarApi(object):
     def __init__(self, name, index, type, api_name):
         self.name = name
         self.index = index
@@ -311,7 +317,7 @@ class GlobalVarApi:
 
 # Dummy to be able to consistently use *Api instances for all items in the
 # array api
-class BoolValuesApi:
+class BoolValuesApi(object):
     def __init__(self, name, index, api_name):
         self.name = name
         self.index = index
@@ -337,7 +343,7 @@ NPY_NO_EXPORT PyBoolScalarObject _PyArrayScalar_BoolValues[2];
 """
         return astr
 
-class FunctionApi:
+class FunctionApi(object):
     def __init__(self, name, index, return_type, args, api_name):
         self.name = name
         self.index = index

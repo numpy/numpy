@@ -12,11 +12,11 @@ class TestRegression(TestCase):
     def test_matrix_properties(self,level=rlevel):
         """Ticket #125"""
         a = np.matrix([1.0],dtype=float)
-        assert(type(a.real) is np.matrix)
-        assert(type(a.imag) is np.matrix)
+        assert_(type(a.real) is np.matrix)
+        assert_(type(a.imag) is np.matrix)
         c,d = np.matrix([0.0]).nonzero()
-        assert(type(c) is np.matrix)
-        assert(type(d) is np.matrix)
+        assert_(type(c) is np.matrix)
+        assert_(type(d) is np.matrix)
 
     def test_matrix_multiply_by_1d_vector(self, level=rlevel) :
         """Ticket #473"""

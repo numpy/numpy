@@ -355,7 +355,7 @@ def _build_import_library_x86():
         log.warn('Failed to build import library for gcc. Linking will fail.')
     #if not success:
     #    msg = "Couldn't find import library, and failed to build it."
-    #    raise DistutilsPlatformError, msg
+    #    raise DistutilsPlatformError(msg)
     return
 
 #=====================================

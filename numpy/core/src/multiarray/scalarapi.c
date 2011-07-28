@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -94,10 +95,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
                 _IFCASE(Int);
                 _IFCASE(Long);
                 _IFCASE(LongLong);
-                if _CHK(TimeInteger) {
-                    _IFCASE(Datetime);
-                    _IFCASE(Timedelta);
-                }
+                _IFCASE(Timedelta);
             }
             else {
                 /* Unsigned Integer */
@@ -126,6 +124,9 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
     }
     else if (_CHK(Bool)) {
         return _OBJ(Bool);
+    }
+    else if (_CHK(Datetime)) {
+        return _OBJ(Datetime);
     }
     else if (_CHK(Flexible)) {
         if (_CHK(String)) {
@@ -221,12 +222,12 @@ PyArray_CastScalarToCtype(PyObject *scalar, void *ctypeptr,
                     outcode,
                     0, NULL,
                     NULL, ctypeptr,
-                    CARRAY, NULL);
+                    NPY_ARRAY_CARRAY, NULL);
         if (aout == NULL) {
             Py_DECREF(ain);
             return -1;
         }
-        castfunc(ain->data, aout->data, 1, ain, aout);
+        castfunc(PyArray_DATA(ain), PyArray_DATA(aout), 1, ain, aout);
         Py_DECREF(ain);
         Py_DECREF(aout);
     }
@@ -269,27 +270,33 @@ NPY_NO_EXPORT PyObject *
 PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 {
     PyArray_Descr *typecode;
-    PyObject *r;
+    PyArrayObject *r;
     char *memptr;
     PyObject *ret;
 
     /* convert to 0-dim array of scalar typecode */
     typecode = PyArray_DescrFromScalar(scalar);
     if ((typecode->type_num == PyArray_VOID) &&
-            !(((PyVoidScalarObject *)scalar)->flags & OWNDATA) &&
+            !(((PyVoidScalarObject *)scalar)->flags & NPY_ARRAY_OWNDATA) &&
             outcode == NULL) {
-        r = PyArray_NewFromDescr(&PyArray_Type,
+        r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                 typecode,
                 0, NULL, NULL,
                 ((PyVoidScalarObject *)scalar)->obval,
                 ((PyVoidScalarObject *)scalar)->flags,
                 NULL);
-        PyArray_BASE(r) = (PyObject *)scalar;
+        if (r == NULL) {
+            return NULL;
+        }
         Py_INCREF(scalar);
-        return r;
+        if (PyArray_SetBaseObject(r, (PyObject *)scalar) < 0) {
+            Py_DECREF(r);
+            return NULL;
+        }
+        return (PyObject *)r;
     }
 
-    r = PyArray_NewFromDescr(&PyArray_Type,
+    r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
             typecode,
             0, NULL,
             NULL, NULL, 0, NULL);
@@ -326,12 +333,12 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 
 finish:
     if (outcode == NULL) {
-        return r;
+        return (PyObject *)r;
     }
     if (outcode->type_num == typecode->type_num) {
         if (!PyTypeNum_ISEXTENDED(typecode->type_num)
                 || (outcode->elsize == typecode->elsize)) {
-            return r;
+            return (PyObject *)r;
         }
     }
 
@@ -352,7 +359,8 @@ PyArray_ScalarFromObject(PyObject *object)
 {
     PyObject *ret=NULL;
     if (PyArray_IsZeroDim(object)) {
-        return PyArray_ToScalar(PyArray_DATA(object), object);
+        return PyArray_ToScalar(PyArray_DATA((PyArrayObject *)object),
+                                (PyArrayObject *)object);
     }
     /*
      * Booleans in Python are implemented as a subclass of integers,
@@ -522,7 +530,7 @@ PyArray_DescrFromScalar(PyObject *sc)
         return descr;
     }
 
-    if (PyArray_IsScalar(sc, TimeInteger)) {
+    if (PyArray_IsScalar(sc, Datetime) || PyArray_IsScalar(sc, Timedelta)) {
         PyObject *cobj;
         PyArray_DatetimeMetaData *dt_data;
 
@@ -755,14 +763,14 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             Py_INCREF(descr);
             vobj->obval = NULL;
             Py_SIZE(vobj) = itemsize;
-            vobj->flags = BEHAVED | OWNDATA;
+            vobj->flags = NPY_ARRAY_BEHAVED | NPY_ARRAY_OWNDATA;
             swap = 0;
-            if (descr->names) {
+            if (PyDataType_HASFIELDS(descr)) {
                 if (base) {
                     Py_INCREF(base);
                     vobj->base = base;
-                    vobj->flags = PyArray_FLAGS(base);
-                    vobj->flags &= ~OWNDATA;
+                    vobj->flags = PyArray_FLAGS((PyArrayObject *)base);
+                    vobj->flags &= ~NPY_ARRAY_OWNDATA;
                     vobj->obval = data;
                     return obj;
                 }
@@ -804,9 +812,9 @@ PyArray_Return(PyArrayObject *mp)
     if (!PyArray_Check(mp)) {
         return (PyObject *)mp;
     }
-    if (mp->nd == 0) {
+    if (PyArray_NDIM(mp) == 0) {
         PyObject *ret;
-        ret = PyArray_ToScalar(mp->data, mp);
+        ret = PyArray_ToScalar(PyArray_DATA(mp), mp);
         Py_DECREF(mp);
         return ret;
     }

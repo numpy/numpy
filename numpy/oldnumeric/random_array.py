@@ -19,10 +19,10 @@ def seed(x=0, y=0):
         mt.seed((x,y))
 
 def get_seed():
-    raise NotImplementedError, \
-          "If you want to save the state of the random number generator.\n"\
-          "Then you should use obj = numpy.random.get_state() followed by.\n"\
-          "numpy.random.set_state(obj)."
+    raise NotImplementedError(
+          "If you want to save the state of the random number generator.\n"
+          "Then you should use obj = numpy.random.get_state() followed by.\n"
+          "numpy.random.set_state(obj).")
 
 def random(shape=[]):
     "random(n) or random([n, m, ...]) returns array of random numbers"
@@ -41,12 +41,12 @@ def randint(minimum, maximum=None, shape=[]):
     """randint(min, max, shape=[]) = random integers >=min, < max
     If max not given, random integers >= 0, <min"""
     if not isinstance(minimum, int):
-        raise ArgumentError, "randint requires first argument integer"
+        raise ArgumentError("randint requires first argument integer")
     if maximum is None:
         maximum = minimum
         minimum = 0
     if not isinstance(maximum, int):
-        raise ArgumentError, "randint requires second argument integer"
+        raise ArgumentError("randint requires second argument integer")
     a = ((maximum-minimum)* random(shape))
     if isinstance(a, np.ndarray):
         return minimum + a.astype(np.int)

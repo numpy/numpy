@@ -36,7 +36,7 @@ extern doublereal dlapy2_(doublereal *x, doublereal *y);
 
 '''
 
-class FortranRoutine:
+class FortranRoutine(object):
     """Wrapper for a Fortran routine in a file.
     """
     type = 'generic'
@@ -65,7 +65,7 @@ class UnknownFortranRoutine(FortranRoutine):
     def dependencies(self):
         return []
 
-class FortranLibrary:
+class FortranLibrary(object):
     """Container for a bunch of Fortran routines.
     """
     def __init__(self, src_dirs):

@@ -11,6 +11,9 @@
 #include "scalarapi.c"
 
 #include "datetime.c"
+#include "datetime_strings.c"
+#include "datetime_busday.c"
+#include "datetime_busdaycal.c"
 #include "arraytypes.c"
 
 #include "hashdescr.c"
@@ -35,7 +38,9 @@
 #include "conversion_utils.c"
 #include "buffer.c"
 
-#include "nditer.c"
+#include "nditer_constr.c"
+#include "nditer_api.c"
+#include "nditer_templ.c"
 #include "nditer_pywrap.c"
 #include "lowlevel_strided_loops.c"
 #include "dtype_transfer.c"

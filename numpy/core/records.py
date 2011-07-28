@@ -149,7 +149,7 @@ class format_parser:
         """ Parse the field formats """
 
         if formats is None:
-            raise ValueError, "Need formats argument"
+            raise ValueError("Need formats argument")
         if isinstance(formats, list):
             if len(formats) < 2:
                 formats.append('')
@@ -174,7 +174,7 @@ class format_parser:
             elif (type(names) == str):
                 names = names.split(',')
             else:
-                raise NameError, "illegal input names %s" % `names`
+                raise NameError("illegal input names %s" % `names`)
 
             self._names = [n.strip() for n in names[:self._nfields]]
         else:
@@ -189,7 +189,7 @@ class format_parser:
         # check for redundant names
         _dup = find_duplicate(self._names)
         if _dup:
-            raise ValueError, "Duplicate field names: %s" % _dup
+            raise ValueError("Duplicate field names: %s" % _dup)
 
         if (titles):
             self._titles = [n.strip() for n in titles[:self._nfields]]
@@ -244,13 +244,13 @@ class record(nt.void):
                 return obj.view(chararray)
             return obj
         else:
-            raise AttributeError, "'record' object has no "\
-                  "attribute '%s'" % attr
+            raise AttributeError("'record' object has no "
+                    "attribute '%s'" % attr)
 
 
     def __setattr__(self, attr, val):
         if attr in ['setfield', 'getfield', 'dtype']:
-            raise AttributeError, "Cannot set '%s' attribute" % attr
+            raise AttributeError("Cannot set '%s' attribute" % attr)
         fielddict = nt.void.__getattribute__(self, 'dtype').fields
         res = fielddict.get(attr, None)
         if res:
@@ -259,8 +259,8 @@ class record(nt.void):
             if getattr(self, attr, None):
                 return nt.void.__setattr__(self, attr, val)
             else:
-                raise AttributeError, "'record' object has no "\
-                      "attribute '%s'" % attr
+                raise AttributeError("'record' object has no "
+                        "attribute '%s'" % attr)
 
     def pprint(self):
         """Pretty-print all fields."""
@@ -413,7 +413,7 @@ class recarray(ndarray):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError):
-            raise AttributeError, "record array has no attribute %s" % attr
+            raise AttributeError("record array has no attribute %s" % attr)
         obj = self.getfield(*res)
         # if it has fields return a recarray, otherwise return
         # normal array
@@ -450,7 +450,7 @@ class recarray(ndarray):
         try:
             res = fielddict[attr][:2]
         except (TypeError, KeyError):
-            raise AttributeError, "record array has no attribute %s" % attr
+            raise AttributeError("record array has no attribute %s" % attr)
         return self.setfield(val, *res)
 
     def __getitem__(self, indx):
@@ -528,7 +528,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         formats = ''
         for obj in arrayList:
             if not isinstance(obj, ndarray):
-                raise ValueError, "item in the array list must be an ndarray."
+                raise ValueError("item in the array list must be an ndarray.")
             formats += _typestr[obj.dtype.type]
             if issubclass(obj.dtype.type, nt.flexible):
                 formats += `obj.itemsize`
@@ -545,8 +545,8 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
 
     # Determine shape from data-type.
     if len(descr) != len(arrayList):
-        raise ValueError, "mismatch between the number of fields "\
-              "and the number of arrays"
+        raise ValueError("mismatch between the number of fields "
+                "and the number of arrays")
 
     d0 = descr[0].shape
     nn = len(d0)
@@ -557,7 +557,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
         nn = len(descr[k].shape)
         testshape = obj.shape[:len(obj.shape) - nn]
         if testshape != shape:
-            raise ValueError, "array-shape mismatch in array %d" % k
+            raise ValueError("array-shape mismatch in array %d" % k)
 
     _array = recarray(shape, descr)
 
@@ -618,7 +618,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
         if isinstance(shape, (int, long)):
             shape = (shape,)
         if len(shape) > 1:
-            raise ValueError, "Can only deal with 1-d array."
+            raise ValueError("Can only deal with 1-d array.")
         _array = recarray(shape, descr)
         for k in xrange(_array.size):
             _array[k] = tuple(recList[k])
@@ -639,7 +639,7 @@ def fromstring(datastring, dtype=None, shape=None, offset=0, formats=None,
 
 
     if dtype is None and formats is None:
-        raise ValueError, "Must have dtype= or formats="
+        raise ValueError("Must have dtype= or formats=")
 
     if dtype is not None:
         descr = sb.dtype(dtype)

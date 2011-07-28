@@ -335,11 +335,11 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
             Found bin edge of size <= 0. Did you specify `bins` with
             non-monotonic sequence?""")
 
+    nbin =  asarray(nbin)
+
     # Handle empty input.
     if N == 0:
-        return np.zeros(D), edges
-
-    nbin =  asarray(nbin)
+        return np.zeros(nbin-2), edges
 
     # Compute the bin number each sample falls into.
     Ncount = {}
@@ -524,7 +524,7 @@ def average(a, axis=None, weights=None, returned=False):
     else:
         return avg
 
-def asarray_chkfinite(a):
+def asarray_chkfinite(a, dtype=None, order=None):
     """
     Convert the input to an array, checking for NaNs or Infs.
 
@@ -570,8 +570,8 @@ def asarray_chkfinite(a):
     ``asarray_chkfinite`` is identical to ``asarray``.
 
     >>> a = [1, 2]
-    >>> np.asarray_chkfinite(a)
-    array([1, 2])
+    >>> np.asarray_chkfinite(a, dtype=float)
+    array([1., 2.])
 
     Raises ValueError if array_like contains Nans or Infs.
 
@@ -584,7 +584,7 @@ def asarray_chkfinite(a):
     ValueError
 
     """
-    a = asarray(a)
+    a = asarray(a, dtype=dtype, order=order)
     if (a.dtype.char in typecodes['AllFloat']) \
            and (_nx.isnan(a).any() or _nx.isinf(a).any()):
         raise ValueError(
@@ -1146,9 +1146,9 @@ def unwrap(p, discont=pi, axis=-1):
     slice1 = [slice(None, None)]*nd     # full slices
     slice1[axis] = slice(1, None)
     ddmod = mod(dd+pi, 2*pi)-pi
-    _nx.putmask(ddmod, (ddmod==-pi) & (dd > 0), pi)
+    _nx.copyto(ddmod, pi, where=(ddmod==-pi) & (dd > 0))
     ph_correct = ddmod - dd;
-    _nx.putmask(ph_correct, abs(dd)<discont, 0)
+    _nx.copyto(ph_correct, 0, where=abs(dd)<discont)
     up = array(p, copy=True, dtype='d')
     up[slice1] = p[slice1] + ph_correct.cumsum(axis)
     return up
@@ -1273,7 +1273,7 @@ def extract(condition, arr):
 
     See Also
     --------
-    take, put, putmask, compress
+    take, put, copyto, compress
 
     Examples
     --------
@@ -1303,9 +1303,9 @@ def place(arr, mask, vals):
     """
     Change elements of an array based on conditional and input values.
 
-    Similar to ``np.putmask(arr, mask, vals)``, the difference is that `place`
+    Similar to ``np.copyto(arr, vals, where=mask)``, the difference is that `place`
     uses the first N elements of `vals`, where N is the number of True values
-    in `mask`, while `putmask` uses the elements where `mask` is True.
+    in `mask`, while `copyto` uses the elements where `mask` is True.
 
     Note that `extract` does the exact opposite of `place`.
 
@@ -1322,7 +1322,7 @@ def place(arr, mask, vals):
 
     See Also
     --------
-    putmask, put, take, extract
+    copyto, put, take, extract
 
     Examples
     --------
@@ -1366,7 +1366,7 @@ def _nanop(op, fill, a, axis=None):
     # y[mask] = fill
     # We can't use fancy indexing here as it'll mess w/ MaskedArrays
     # Instead, let's fill the array directly...
-    np.putmask(y, mask, fill)
+    np.copyto(y, fill, where=mask)
     res = op(y, axis=axis)
     mask_all_along_axis = mask.all(axis=axis)
 
@@ -2991,28 +2991,27 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
     >>> a
     array([[10,  7,  4],
            [ 3,  2,  1]])
-    >>> np.percentile(a, 0.5)
+    >>> np.percentile(a, 50)
     3.5
     >>> np.percentile(a, 0.5, axis=0)
     array([ 6.5,  4.5,  2.5])
-    >>> np.percentile(a, 0.5, axis=1)
+    >>> np.percentile(a, 50, axis=1)
     array([ 7.,  2.])
 
-    >>> m = np.percentile(a, 0.5, axis=0)
+    >>> m = np.percentile(a, 50, axis=0)
     >>> out = np.zeros_like(m)
-    >>> np.percentile(a, 0.5, axis=0, out=m)
+    >>> np.percentile(a, 50, axis=0, out=m)
     array([ 6.5,  4.5,  2.5])
     >>> m
     array([ 6.5,  4.5,  2.5])
 
     >>> b = a.copy()
-    >>> np.percentile(b, 0.5, axis=1, overwrite_input=True)
+    >>> np.percentile(b, 50, axis=1, overwrite_input=True)
     array([ 7.,  2.])
     >>> assert not np.all(a==b)
     >>> b = a.copy()
-    >>> np.percentile(b, 0.5, axis=None, overwrite_input=True)
+    >>> np.percentile(b, 50, axis=None, overwrite_input=True)
     3.5
-    >>> assert not np.all(a==b)
 
     """
     a = np.asarray(a)
@@ -3049,7 +3048,7 @@ def _compute_qth_percentile(sorted, q, axis, out):
 
     q = q / 100.0
     if (q < 0) or (q > 1):
-        raise ValueError, "percentile must be either in the range [0,100]"
+        raise ValueError("percentile must be either in the range [0,100]")
 
     indexer = [slice(None)] * sorted.ndim
     Nx = sorted.shape[axis]

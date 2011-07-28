@@ -45,7 +45,7 @@ def seek_gzip_factory(f):
                 offset = self.offset + offset
 
             if whence not in [0, 1]:
-                raise IOError, "Illegal argument"
+                raise IOError("Illegal argument")
 
             if offset < self.offset:
                 # for negative seek, rewind and do positive seek
@@ -113,7 +113,7 @@ class BagObj(object):
         try:
             return object.__getattribute__(self, '_obj')[key]
         except KeyError:
-            raise AttributeError, key
+            raise AttributeError(key)
 
 def zipfile_factory(*args, **kwargs):
     import zipfile
@@ -233,7 +233,7 @@ class NpzFile(object):
             else:
                 return bytes
         else:
-            raise KeyError, "%s is not a file in the archive" % key
+            raise KeyError("%s is not a file in the archive" % key)
 
 
     def __iter__(self):
@@ -353,8 +353,8 @@ def load(file, mmap_mode=None):
             try:
                 return _cload(fid)
             except:
-                raise IOError, \
-                    "Failed to interpret file %s as a pickle" % repr(file)
+                raise IOError(
+                    "Failed to interpret file %s as a pickle" % repr(file))
     finally:
         if own_fid:
             fid.close()
@@ -530,7 +530,7 @@ def _savez(file, args, kwds, compress):
     for i, val in enumerate(args):
         key = 'arr_%d' % i
         if key in namedict.keys():
-            raise ValueError, "Cannot use un-named variables and keyword %s" % key
+            raise ValueError("Cannot use un-named variables and keyword %s" % key)
         namedict[key] = val
 
     if compress:
@@ -626,7 +626,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         unpacked using ``x, y, z = loadtxt(...)``.  When used with a record
         data-type, arrays are returned for each field.  Default is False.
     ndmin : int, optional
-        The returned array must have at least `ndmin` dimensions.
+        The returned array will have at least `ndmin` dimensions.
+        Otherwise mono-dimensional axes will be squeezed.
         Legal values: 0 (default), 1 or 2.
         .. versionadded:: 1.6.0
 
@@ -802,20 +803,25 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fh.close()
 
     X = np.array(X, dtype)
+    # Multicolumn data are returned with shape (1, N, M), i.e.
+    # (1, 1, M) for a single row - remove the singleton dimension there
+    if X.ndim == 3 and X.shape[:2] == (1, 1):
+        X.shape = (1, -1)
 
     # Verify that the array has at least dimensions `ndmin`.
     # Check correctness of the values of `ndmin`
     if not ndmin in [0, 1, 2]:
         raise ValueError('Illegal value of ndmin keyword: %s' % ndmin)
-    # Tweak the size and shape of the arrays
+    # Tweak the size and shape of the arrays - remove extraneous dimensions
     if X.ndim > ndmin:
         X = np.squeeze(X)
-    # Has to be in this order for the odd case ndmin=1, X.squeeze().ndim=0
+    # and ensure we have the minimum number of dimensions asked for
+    # - has to be in this order for the odd case ndmin=1, X.squeeze().ndim=0
     if X.ndim < ndmin:
         if ndmin == 1:
-            X.shape = (X.size, )
+            X = np.atleast_1d(X)
         elif ndmin == 2:
-            X.shape = (X.size, 1)
+            X = np.atleast_2d(X).T
 
     if unpack:
         if len(dtype_types) > 1:
@@ -1232,7 +1238,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     own_fhd = False
     try:
         if isinstance(fname, basestring):
-            fhd = iter(np.lib._datasource.open(fname, 'Ub'))
+            fhd = iter(np.lib._datasource.open(fname, 'rbU'))
             own_fhd = True
         else:
             fhd = iter(fname)

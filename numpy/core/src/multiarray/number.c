@@ -3,6 +3,7 @@
 #include "structmember.h"
 
 /*#include <stdio.h>*/
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
@@ -26,13 +27,13 @@ NPY_NO_EXPORT NumericOps n_ops; /* NB: static objects initialized to zero */
 
 /* FIXME - macro contains a return */
 #define SET(op)   temp = PyDict_GetItemString(dict, #op); \
-    if (temp != NULL) {                                   \
-        if (!(PyCallable_Check(temp))) {                  \
-            return -1;                                    \
-        }                                                 \
-        Py_INCREF(temp);                                  \
-        Py_XDECREF(n_ops.op);                             \
-        n_ops.op = temp;                                  \
+    if (temp != NULL) { \
+        if (!(PyCallable_Check(temp))) { \
+            return -1; \
+        } \
+        Py_INCREF(temp); \
+        Py_XDECREF(n_ops.op); \
+        n_ops.op = temp; \
     }
 
 
@@ -288,8 +289,8 @@ array_power_is_scalar(PyObject *o2, double* exp)
         return 1;
     }
     if ((PyArray_IsZeroDim(o2) &&
-         ((PyArray_ISINTEGER(o2) ||
-           (optimize_fpexps && PyArray_ISFLOAT(o2))))) ||
+         ((PyArray_ISINTEGER((PyArrayObject *)o2) ||
+           (optimize_fpexps && PyArray_ISFLOAT((PyArrayObject *)o2))))) ||
         PyArray_IsScalar(o2, Integer) ||
         (optimize_fpexps && PyArray_IsScalar(o2, Floating))) {
         temp = Py_TYPE(o2)->tp_as_number->nb_float(o2);
@@ -546,7 +547,7 @@ _array_nonzero(PyArrayObject *mp)
 
     n = PyArray_SIZE(mp);
     if (n == 1) {
-        return mp->descr->f->nonzero(mp->data, mp);
+        return PyArray_DESCR(mp)->f->nonzero(PyArray_DATA(mp), mp);
     }
     else if (n == 0) {
         return 0;
@@ -592,7 +593,7 @@ array_int(PyArrayObject *v)
                         " converted to Python scalars");
         return NULL;
     }
-    pv = v->descr->f->getitem(v->data, v);
+    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
     if (pv == NULL) {
         return NULL;
     }
@@ -612,7 +613,8 @@ array_int(PyArrayObject *v)
      * If we still got an array which can hold references, stop
      * because it could point back at 'v'.
      */
-    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+    if (PyArray_Check(pv) &&
+                PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
@@ -632,7 +634,7 @@ array_float(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = v->descr->f->getitem(v->data, v);
+    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
     if (pv == NULL) {
         return NULL;
     }
@@ -652,7 +654,8 @@ array_float(PyArrayObject *v)
      * If we still got an array which can hold references, stop
      * because it could point back at 'v'.
      */
-    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+    if (PyArray_Check(pv) &&
+                    PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
@@ -673,7 +676,7 @@ array_long(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = v->descr->f->getitem(v->data, v);
+    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
     if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
                         "scalar object is not a number");
@@ -688,7 +691,8 @@ array_long(PyArrayObject *v)
      * If we still got an array which can hold references, stop
      * because it could point back at 'v'.
      */
-    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+    if (PyArray_Check(pv) &&
+                    PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
@@ -707,7 +711,7 @@ array_oct(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = v->descr->f->getitem(v->data, v);
+    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
     if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
                         "scalar object is not a number");
@@ -722,7 +726,8 @@ array_oct(PyArrayObject *v)
      * If we still got an array which can hold references, stop
      * because it could point back at 'v'.
      */
-    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+    if (PyArray_Check(pv) &&
+                    PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
@@ -741,7 +746,7 @@ array_hex(PyArrayObject *v)
                         "be converted to Python scalars");
         return NULL;
     }
-    pv = v->descr->f->getitem(v->data, v);
+    pv = PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
     if (Py_TYPE(pv)->tp_as_number == 0) {
         PyErr_SetString(PyExc_TypeError, "cannot convert to an int; "\
                         "scalar object is not a number");
@@ -756,7 +761,8 @@ array_hex(PyArrayObject *v)
      * If we still got an array which can hold references, stop
      * because it could point back at 'v'.
      */
-    if (PyArray_Check(pv) && PyDataType_REFCHK(PyArray_DESCR(pv))) {
+    if (PyArray_Check(pv) &&
+                    PyDataType_REFCHK(PyArray_DESCR((PyArrayObject *)pv))) {
         PyErr_SetString(PyExc_TypeError,
                 "object array may be self-referencing");
         return NULL;
@@ -783,7 +789,7 @@ array_index(PyArrayObject *v)
                         "one element can be converted to an index");
         return NULL;
     }
-    return v->descr->f->getitem(v->data, v);
+    return PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
 }
 #endif
 

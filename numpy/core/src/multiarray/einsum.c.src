@@ -12,6 +12,7 @@
 #include "Python.h"
 #include "structmember.h"
 
+#define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #include <numpy/ndarrayobject.h>
 #include <numpy/halffloat.h>
@@ -1917,6 +1918,10 @@ parse_operand_subscripts(char *subscripts, int length,
     /*
      * Find any labels duplicated for this operand, and turn them
      * into negative offets to the axis to merge with.
+     *
+     * In C, the char type may be signed or unsigned, but with
+     * twos complement arithmetic the char is ok either way here, and
+     * later where it matters the char is cast to a signed char.
      */
     for (idim = 0; idim  < ndim-1; ++idim) {
         char *next;
@@ -1928,7 +1933,7 @@ parse_operand_subscripts(char *subscripts, int length,
                                     ndim-idim-1);
             while (next != NULL) {
                 /* The offset from next to out_labels[idim] (negative) */
-                *next = (out_labels+idim)-next;
+                *next = (char)((out_labels+idim)-next);
                 /* Search for the next matching label */
                 next = (char *)memchr(next+1, label,
                                         out_labels+ndim-1-next);
@@ -2128,7 +2133,11 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
 
     /* Match the labels in the operand with the output labels */
     for (idim = 0; idim < ndim; ++idim) {
-        label = labels[idim];
+        /*
+         * The char type may be either signed or unsigned, we
+         * need it to be signed here.
+         */
+        label = (signed char)labels[idim];
         /* If this label says to merge axes, get the actual label */
         if (label < 0) {
             label = labels[idim+label];
@@ -2194,9 +2203,15 @@ get_single_op_view(PyArrayObject *op, int  iop, char *labels,
             return 0;
         }
         PyArray_UpdateFlags(*ret,
-                    NPY_C_CONTIGUOUS|NPY_ALIGNED|NPY_F_CONTIGUOUS);
+                    NPY_ARRAY_C_CONTIGUOUS|
+                    NPY_ARRAY_ALIGNED|
+                    NPY_ARRAY_F_CONTIGUOUS);
         Py_INCREF(op);
-        PyArray_BASE(*ret) = (PyObject *)op;
+        if (PyArray_SetBaseObject(*ret, (PyObject *)op) < 0) {
+            Py_DECREF(*ret);
+            *ret = NULL;
+            return 0;
+        }
         return 1;
     }
 
@@ -2226,7 +2241,11 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
     /* Copy the dimensions and strides, except when collapsing */
     icombine = 0;
     for (idim = 0; idim < ndim; ++idim) {
-        label = labels[idim];
+        /*
+         * The char type may be either signed or unsigned, we
+         * need it to be signed here.
+         */
+        label = (signed char)labels[idim];
         /* If this label says to merge axes, get the actual label */
         if (label < 0) {
             combineoffset = label;
@@ -2276,7 +2295,7 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
                             PyArray_DESCR(op),
                             ndim, new_dims, new_strides,
                             PyArray_DATA(op),
-                            PyArray_ISWRITEABLE(op) ? NPY_WRITEABLE : 0,
+                            PyArray_ISWRITEABLE(op) ? NPY_ARRAY_WRITEABLE : 0,
                             (PyObject *)op);
 
     if (ret == NULL) {
@@ -2289,9 +2308,14 @@ get_combined_dims_view(PyArrayObject *op, int iop, char *labels)
         return NULL;
     }
     PyArray_UpdateFlags(ret,
-                NPY_C_CONTIGUOUS|NPY_ALIGNED|NPY_F_CONTIGUOUS);
+                NPY_ARRAY_C_CONTIGUOUS|
+                NPY_ARRAY_ALIGNED|
+                NPY_ARRAY_F_CONTIGUOUS);
     Py_INCREF(op);
-    PyArray_BASE(ret) = (PyObject *)op;
+    if (PyArray_SetBaseObject(ret, (PyObject *)op) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
 
     return ret;
 }
@@ -2877,10 +2901,15 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
             }
         }
 
-        /* Check whether any dimensions need to be combined */
+        /*
+         * Check whether any dimensions need to be combined
+         *
+         * The char type may be either signed or unsigned, we
+         * need it to be signed here.
+         */
         combine = 0;
         for (idim = 0; idim < ndim; ++idim) {
-            if (labels[idim] < 0) {
+            if ((signed char)labels[idim] < 0) {
                 combine = 1;
             }
         }
@@ -2989,7 +3018,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
 
     /***************************/
     /*
-     * Accceleration for some specific loop structures. Note
+     * Acceleration for some specific loop structures. Note
      * that with axis coalescing, inputs with more dimensions can
      * be reduced to fit into these patterns.
      */

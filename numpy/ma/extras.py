@@ -533,7 +533,7 @@ def average(a, axis=None, weights=None, returned=False):
                     d = add.reduce(w, axis, dtype=float)
                     del w, r
                 else:
-                    raise ValueError, 'average: weights wrong shape.'
+                    raise ValueError('average: weights wrong shape.')
         else:
             if weights is None:
                 n = add.reduce(a, axis, dtype=float)
@@ -556,7 +556,7 @@ def average(a, axis=None, weights=None, returned=False):
                     n = add.reduce(a * w, axis, dtype=float)
                     d = add.reduce(w, axis, dtype=float)
                 else:
-                    raise ValueError, 'average: weights wrong shape.'
+                    raise ValueError('average: weights wrong shape.')
                 del w
     if n is masked or d is masked:
         return masked
@@ -718,7 +718,7 @@ def compress_rowcols(x, axis=None):
     """
     x = asarray(x)
     if x.ndim != 2:
-        raise NotImplementedError, "compress2d works for 2D arrays only."
+        raise NotImplementedError("compress2d works for 2D arrays only.")
     m = getmask(x)
     # Nothing is masked: return x
     if m is nomask or not m.any():
@@ -842,7 +842,7 @@ def mask_rowcols(a, axis=None):
     """
     a = asarray(a)
     if a.ndim != 2:
-        raise NotImplementedError, "compress2d works for 2D arrays only."
+        raise NotImplementedError("compress2d works for 2D arrays only.")
     m = getmask(a)
     # Nothing is masked: return a
     if m is nomask or not m.any():
@@ -1429,7 +1429,7 @@ class MAxisConcatenator(AxisConcatenator):
 
     def __getitem__(self, key):
         if isinstance(key, str):
-            raise MAError, "Unavailable for masked array."
+            raise MAError("Unavailable for masked array.")
         if type(key) is not tuple:
             key = (key,)
         objs = []
@@ -1459,7 +1459,7 @@ class MAxisConcatenator(AxisConcatenator):
                     self.axis = int(key[k])
                     continue
                 except (ValueError, TypeError):
-                    raise ValueError, "Unknown special directive"
+                    raise ValueError("Unknown special directive")
             elif type(key[k]) in np.ScalarType:
                 newobj = asarray([key[k]])
                 scalars.append(k)
@@ -1706,7 +1706,7 @@ def notmasked_contiguous(a, axis=None):
     a = asarray(a)
     nd = a.ndim
     if nd > 2:
-        raise NotImplementedError, "Currently limited to atmost 2D array."
+        raise NotImplementedError("Currently limited to atmost 2D array.")
     if axis is None or nd == 1:
         return flatnotmasked_contiguous(a)
     #
@@ -1863,7 +1863,7 @@ def polyfit(x, y, deg, rcond=None, full=False):
         else:
             m = mx
     else:
-        raise TypeError, "Expected a 1D or 2D array for y!"
+        raise TypeError("Expected a 1D or 2D array for y!")
     if m is not nomask:
         x[m] = y[m] = masked
     # Set rcond

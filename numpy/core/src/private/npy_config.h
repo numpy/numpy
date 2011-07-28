@@ -10,7 +10,7 @@
 #endif
 
 /* Safe to use ldexp and frexp for long double for MSVC builds */
-#if (SIZEOF_LONG_DOUBLE == SIZEOF_DOUBLE) || defined(_MSC_VER)  
+#if (SIZEOF_LONG_DOUBLE == SIZEOF_DOUBLE) || defined(_MSC_VER)
     #ifdef HAVE_LDEXP
         #define HAVE_LDEXPL 1
     #endif
@@ -24,7 +24,7 @@
 #undef HAVE_ATAN2
 #endif
 
-/* 
+/*
  * On Mac OS X, because there is only one configuration stage for all the archs
  * in universal builds, any macro which depends on the arch needs to be
  * harcoded

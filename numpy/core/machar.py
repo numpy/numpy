@@ -128,7 +128,7 @@ class MachAr(object):
             if any(temp1 - one != zero):
                 break
         else:
-            raise RuntimeError, msg % (_, one.dtype)
+            raise RuntimeError(msg % (_, one.dtype))
         b = one
         for _ in xrange(max_iterN):
             b = b + b
@@ -137,7 +137,7 @@ class MachAr(object):
             if any(itemp != 0):
                 break
         else:
-            raise RuntimeError, msg % (_, one.dtype)
+            raise RuntimeError(msg % (_, one.dtype))
         ibeta = itemp
         beta = float_conv(ibeta)
 
@@ -152,7 +152,7 @@ class MachAr(object):
             if any(temp1 - one != zero):
                 break
         else:
-            raise RuntimeError, msg % (_, one.dtype)
+            raise RuntimeError(msg % (_, one.dtype))
 
         betah = beta / two
         a = one
@@ -163,7 +163,7 @@ class MachAr(object):
             if any(temp1 - one != zero):
                 break
         else:
-            raise RuntimeError, msg % (_, one.dtype)
+            raise RuntimeError(msg % (_, one.dtype))
         temp = a + betah
         irnd = 0
         if any(temp-a != zero):
@@ -188,10 +188,10 @@ class MachAr(object):
             negep = negep - 1
             # Prevent infinite loop on PPC with gcc 4.0:
             if negep < 0:
-                raise RuntimeError, "could not determine machine tolerance " \
-                                    "for 'negep', locals() -> %s" % (locals())
+                raise RuntimeError("could not determine machine tolerance "
+                        "for 'negep', locals() -> %s" % (locals()))
         else:
-            raise RuntimeError, msg % (_, one.dtype)
+            raise RuntimeError(msg % (_, one.dtype))
         negep = -negep
         epsneg = a
 
@@ -206,7 +206,7 @@ class MachAr(object):
             a = a * beta
             machep = machep + 1
         else:
-            raise RuntimeError, msg % (_, one.dtype)
+            raise RuntimeError(msg % (_, one.dtype))
         eps = a
 
         # Determine ngrd
@@ -234,7 +234,7 @@ class MachAr(object):
             i = i + 1
             k = k + k
         else:
-            raise RuntimeError, msg % (_, one.dtype)
+            raise RuntimeError(msg % (_, one.dtype))
         if ibeta != 10:
             iexp = i + 1
             mx = k + k
@@ -262,7 +262,7 @@ class MachAr(object):
             else:
                 break
         else:
-            raise RuntimeError, msg % (_, one.dtype)
+            raise RuntimeError(msg % (_, one.dtype))
         minexp = -k
 
         # Determine maxexp, xmax

@@ -12,7 +12,7 @@ if (sys.byteorder == 'little'):
 else:
     _nbo = asbytes('>')
 
-def _makenames_list(adict):
+def _makenames_list(adict, align):
     from multiarray import dtype
     allfields = []
     fnames = adict.keys()
@@ -26,7 +26,7 @@ def _makenames_list(adict):
         num = int(obj[1])
         if (num < 0):
             raise ValueError("invalid offset.")
-        format = dtype(obj[0])
+        format = dtype(obj[0], align=align)
         if (format.itemsize == 0):
             raise ValueError("all itemsizes must be fixed.")
         if (n > 2):
@@ -53,7 +53,7 @@ def _usefields(adict, align):
     except KeyError:
         names = None
     if names is None:
-        names, formats, offsets, titles = _makenames_list(adict)
+        names, formats, offsets, titles = _makenames_list(adict, align)
     else:
         formats = []
         offsets = []
@@ -90,8 +90,11 @@ def _array_descr(descriptor):
             else:
                 new = descriptor.metadata.copy()
                 # Eliminate any key related to internal implementation
-                _ = new.pop(METADATA_DTSTR, None)
-                return (descriptor.str, new)
+                new.pop(METADATA_DTSTR, None)
+                if new:
+                    return (descriptor.str, new)
+                else:
+                    return descriptor.str
         else:
             return (_array_descr(subdtype[0]), subdtype[1])
 
@@ -129,90 +132,42 @@ def _reconstruct(subtype, shape, dtype):
     return ndarray.__new__(subtype, shape, dtype)
 
 
-# format_re and _split were taken from numarray by J. Todd Miller
+# format_re was originally from numarray by J. Todd Miller
 
-def _split(input):
-    """Split the input formats string into field formats without splitting
-       the tuple used to specify multi-dimensional arrays."""
-
-    newlist = []
-    hold = asbytes('')
-
-    listinput = input.split(asbytes(','))
-    for element in listinput:
-        if hold != asbytes(''):
-            item = hold + asbytes(',') + element
-        else:
-            item = element
-        left = item.count(asbytes('('))
-        right = item.count(asbytes(')'))
-
-        # if the parenthesis is not balanced, hold the string
-        if left > right :
-            hold = item
-
-        # when balanced, append to the output list and reset the hold
-        elif left == right:
-            newlist.append(item.strip())
-            hold = asbytes('')
-
-        # too many close parenthesis is unacceptable
-        else:
-            raise SyntaxError(item)
-
-    # if there is string left over in hold
-    if hold != asbytes(''):
-        raise SyntaxError(hold)
-
-    return newlist
-
-format_datetime = re.compile(asbytes(r"""
-     (?P<typecode>M8|m8|datetime64|timedelta64)
-     ([[]
-       ((?P<num>\d+)?
-       (?P<baseunit>Y|M|W|B|D|h|m|s|ms|us|ns|ps|fs|as)
-       (/(?P<den>\d+))?
-      []])
-     (//(?P<events>\d+))?)?"""), re.X)
-
-# Return (baseunit, num, den, events), datetime
-#  from date-time string
-def _datetimestring(astr):
-    res = format_datetime.match(astr)
-    if res is None:
-        raise ValueError("Incorrect date-time string.")
-    typecode = res.group('typecode')
-    datetime = (typecode == asbytes('M8') or typecode == asbytes('datetime64'))
-    defaults = [asbytes('us'), 1, 1, 1]
-    names = ['baseunit', 'num', 'den', 'events']
-    func = [bytes, int, int, int]
-    dt_tuple = []
-    for i, name in enumerate(names):
-        value = res.group(name)
-        if value:
-            dt_tuple.append(func[i](value))
-        else:
-            dt_tuple.append(defaults[i])
-
-    return tuple(dt_tuple), datetime
-
-format_re = re.compile(asbytes(r'(?P<order1>[<>|=]?)(?P<repeats> *[(]?[ ,0-9]*[)]? *)(?P<order2>[<>|=]?)(?P<dtype>[A-Za-z0-9.]*)'))
+format_re = re.compile(asbytes(
+                           r'(?P<order1>[<>|=]?)'
+                           r'(?P<repeats> *[(]?[ ,0-9]*[)]? *)'
+                           r'(?P<order2>[<>|=]?)'
+                           r'(?P<dtype>[A-Za-z0-9.]*(?:\[[a-zA-Z0-9,.]+\])?)'))
+sep_re = re.compile(asbytes(r'\s*,\s*'))
+space_re = re.compile(asbytes(r'\s+$'))
 
 # astr is a string (perhaps comma separated)
 
 _convorder = {asbytes('='): _nbo}
 
 def _commastring(astr):
-    res = _split(astr)
-    if (len(res)) < 1:
-        raise ValueError("unrecognized formant")
+    startindex = 0
     result = []
-    for k,item in enumerate(res):
-        # convert item
+    while startindex < len(astr):
+        mo = format_re.match(astr, pos=startindex)
         try:
-            (order1, repeats, order2, dtype) = format_re.match(item).groups()
+            (order1, repeats, order2, dtype) = mo.groups()
         except (TypeError, AttributeError):
-            raise ValueError('format %s is not recognized' % item)
+            raise ValueError('format number %d of "%s" is not recognized' %
+                                            (len(result)+1, astr))
+        startindex = mo.end()
+        # Separator or ending padding
+        if startindex < len(astr):
+            if space_re.match(astr, pos=startindex):
+                startindex = len(astr)
+            else:
+                mo = sep_re.match(astr, pos=startindex)
+                if not mo:
+                    raise ValueError(
+                            'format number %d of "%s" is not recognized' %
+                                            (len(result)+1, astr))
+                startindex = mo.end()
 
         if order2 == asbytes(''):
             order = order1
@@ -222,7 +177,7 @@ def _commastring(astr):
             order1 = _convorder.get(order1, order1)
             order2 = _convorder.get(order2, order2)
             if (order1 != order2):
-                raise ValueError('in-consistent byte-order specification %s and %s' % (order1, order2))
+                raise ValueError('inconsistent byte-order specification %s and %s' % (order1, order2))
             order = order1
 
         if order in [asbytes('|'), asbytes('='), _nbo]:

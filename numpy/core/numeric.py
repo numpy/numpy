@@ -1,7 +1,7 @@
 __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast',
            'dtype', 'fromstring', 'fromfile', 'frombuffer',
-           'int_asbuffer', 'where', 'argwhere',
+           'int_asbuffer', 'where', 'argwhere', 'copyto',
            'concatenate', 'fastCopyAndTranspose', 'lexsort', 'set_numeric_ops',
            'can_cast', 'promote_types', 'min_scalar_type', 'result_type',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
@@ -58,6 +58,7 @@ nditer = multiarray.nditer
 nested_iters = multiarray.nested_iters
 broadcast = multiarray.broadcast
 dtype = multiarray.dtype
+copyto = multiarray.copyto
 ufunc = type(sin)
 
 
@@ -113,7 +114,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
 
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok)
-    res.fill(0)
+    multiarray.copyto(res, 0, casting='unsafe')
     return res
 
 # end Fernando's utilities
@@ -977,7 +978,7 @@ def tensordot(a, b, axes=2):
             if axes_b[k] < 0:
                 axes_b[k] += ndb
     if not equal:
-        raise ValueError, "shape-mismatch for sum"
+        raise ValueError("shape-mismatch for sum")
 
     # Move the axes to sum over to the end of "a"
     # and to the front of "b"
@@ -1109,9 +1110,9 @@ def rollaxis(a, axis, start=0):
         start += n
     msg = 'rollaxis: %s (%d) must be >=0 and < %d'
     if not (0 <= axis < n):
-        raise ValueError, msg % ('axis', axis, n)
+        raise ValueError(msg % ('axis', axis, n))
     if not (0 <= start < n+1):
-        raise ValueError, msg % ('start', start, n+1)
+        raise ValueError(msg % ('start', start, n+1))
     if (axis < start): # it's been removed
         start -= 1
     if axis==start:
@@ -1332,7 +1333,7 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     if typeless and arr.size:
         return cName + "(%s)" % lst
     else:
-        typename=arr.dtype.name
+        typename="'%s'" % arr.dtype.name
         lf = ''
         if issubclass(arr.dtype.type, flexible):
             if arr.dtype.names:
@@ -1817,14 +1818,7 @@ def ones(shape, dtype=None, order='C'):
 
     """
     a = empty(shape, dtype, order)
-    try:
-        a.fill(1)
-        # Above is faster now after addition of fast loops.
-        #a = zeros(shape, dtype, order)
-        #a+=1
-    except TypeError:
-        obj = _maketup(dtype, 1)
-        a.fill(obj)
+    multiarray.copyto(a, 1, casting='unsafe')
     return a
 
 def identity(n, dtype=None):
@@ -2179,11 +2173,11 @@ def setbufsize(size):
 
     """
     if size > 10e6:
-        raise ValueError, "Buffer size, %s, is too big." % size
+        raise ValueError("Buffer size, %s, is too big." % size)
     if size < 5:
-        raise ValueError, "Buffer size, %s, is too small." %size
+        raise ValueError("Buffer size, %s, is too small." %size)
     if size % 16 != 0:
-        raise ValueError, "Buffer size, %s, is not a multiple of 16." %size
+        raise ValueError("Buffer size, %s, is not a multiple of 16." %size)
 
     pyvals = umath.geterrobj()
     old = getbufsize()
@@ -2279,7 +2273,7 @@ def seterrcall(func):
     """
     if func is not None and not callable(func):
         if not hasattr(func, 'write') or not callable(func.write):
-            raise ValueError, "Only callable can be used as callback"
+            raise ValueError("Only callable can be used as callback")
     pyvals = umath.geterrobj()
     old = geterrcall()
     pyvals[2] = func
