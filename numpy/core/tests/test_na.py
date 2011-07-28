@@ -180,6 +180,11 @@ def test_array_maskna_construction():
     assert_equal(a.dtype, np.dtype('O'))
     assert_equal(type(a[2]), np.NAType)
 
+    # From np.NA as a straight scalar
+    a = np.array(np.NA, maskna=True)
+    assert_equal(type(a), np.ndarray)
+    assert_(np.isna(a))
+
 def test_isna():
     # Objects which are not np.NA or ndarray all return False
     assert_equal(np.isna(True), False)

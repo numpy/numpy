@@ -549,15 +549,19 @@ class TestFromiter(TestCase):
 class TestNonzero(TestCase):
     def test_nonzero_trivial(self):
         assert_equal(np.count_nonzero(array([])), 0)
+        assert_equal(np.count_nonzero(array([], dtype='?')), 0)
         assert_equal(np.nonzero(array([])), ([],))
 
         assert_equal(np.count_nonzero(array(0)), 0)
+        assert_equal(np.count_nonzero(array(0, dtype='?')), 0)
         assert_equal(np.nonzero(array(0)), ([],))
         assert_equal(np.count_nonzero(array(1)), 1)
+        assert_equal(np.count_nonzero(array(1, dtype='?')), 1)
         assert_equal(np.nonzero(array(1)), ([0],))
 
     def test_nonzero_onedim(self):
         x = array([1,0,2,-1,0,0,8])
+        assert_equal(np.count_nonzero(x), 4)
         assert_equal(np.count_nonzero(x), 4)
         assert_equal(np.nonzero(x), ([0, 2, 3, 6],))
 
@@ -598,6 +602,13 @@ class TestIndex(TestCase):
         g2 = randint(0,8,size=15)
         V[g1,g2] = -V[g1,g2]
         assert_((array([a[0][V>0],a[1][V>0],a[2][V>0]]) == a[:,V>0]).all())
+
+    def test_boolean_edgecase(self):
+        a = np.array([], dtype='int32')
+        b = np.array([], dtype='bool')
+        c = a[b]
+        assert_equal(c, [])
+        assert_equal(c.dtype, np.dtype('int32'))
 
 
 class TestBinaryRepr(TestCase):
