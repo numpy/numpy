@@ -463,7 +463,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      * reference arrays and flag it if so.
      */
     if (flags & NPY_ITER_REFS_OK) {
-        for (iop = 0; iop < nop; ++iop) {
+        for (iop = 0; iop < first_maskna_op; ++iop) {
             PyArray_Descr *rdt = op_dtype[iop];
             if ((rdt->flags & (NPY_ITEM_REFCOUNT |
                                      NPY_ITEM_IS_POINTER |

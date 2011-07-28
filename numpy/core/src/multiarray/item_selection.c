@@ -1712,6 +1712,11 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
         return -1;
     }
 
+    /* Handle zero-sized array */
+    if (shape[0] == 0) {
+        return 0;
+    }
+
     /* Do the iteration */
     memset(coord, 0, ndim * sizeof(npy_intp));
     /* Special case for contiguous inner loop */

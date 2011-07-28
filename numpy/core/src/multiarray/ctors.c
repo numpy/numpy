@@ -1586,6 +1586,34 @@ PyArray_GetArrayParamsFromObjectEx(PyObject *op,
         return 0;
     }
 
+    /* If op is a numpy.NA */
+    if (NpyNA_Check(op)) {
+        NpyNA_fields *fna = (NpyNA_fields *)op;
+
+        if (writeable) {
+            PyErr_SetString(PyExc_RuntimeError,
+                                "cannot write to numpy.NA");
+            return -1;
+        }
+        /* Use the NA's dtype if available */
+        if (fna->dtype != NULL) {
+            *out_dtype = fna->dtype;
+            Py_INCREF(*out_dtype);
+        }
+        /* Otherwise use the default NumPy dtype */
+        else {
+            *out_dtype = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+            if (*out_dtype == NULL) {
+                return -1;
+            }
+        }
+        *out_ndim = 0;
+        *out_arr = NULL;
+        *out_contains_na = 1;
+        return 0;
+
+    }
+
     /* If op supports the PEP 3118 buffer interface */
     if (!PyBytes_Check(op) && !PyUnicode_Check(op) &&
              _array_from_buffer_3118(op, (PyObject **)out_arr) == 0) {
@@ -1891,6 +1919,15 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
 
     /* If we got dimensions and dtype instead of an array */
     if (arr == NULL) {
+        /*
+         * If the input data is an NA object, and the ALLOWNA flag is
+         * enabled, produce an array with an NA mask.
+         */
+        if (contains_na && (flags & NPY_ARRAY_ALLOWNA) != 0 &&
+                                    NpyNA_Check(op)) {
+            flags |= NPY_ARRAY_MASKNA;
+        }
+
         if (flags & NPY_ARRAY_UPDATEIFCOPY) {
             Py_XDECREF(newtype);
             PyErr_SetString(PyExc_TypeError,
@@ -1962,6 +1999,10 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                                          ndim, dims,
                                          NULL, NULL,
                                          flags&NPY_ARRAY_F_CONTIGUOUS, NULL);
+            if (ret == NULL) {
+                return NULL;
+            }
+
             /*
              * Add an NA mask if requested, or if allowed and the data
              * has NAs
@@ -1973,20 +2014,29 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
                     Py_DECREF(ret);
                     return NULL;
                 }
-            }
-            if (ret != NULL) {
-                if (ndim > 0) {
-                    if (PyArray_AssignFromSequence(ret, op) < 0) {
-                        Py_DECREF(ret);
-                        ret = NULL;
+
+                /* Special case assigning a single NA */
+                if (ndim == 0) {
+                    NpyNA *na = NpyNA_FromObject(op, 1);
+                    if (na != NULL) {
+                        PyArray_MASKNA_DATA(ret)[0] =
+                                        (char)NpyNA_AsMaskValue(na);
+                        return (PyObject *)ret;
                     }
                 }
-                else {
-                    if (PyArray_DESCR(ret)->f->setitem(op,
-                                                PyArray_DATA(ret), ret) < 0) {
-                        Py_DECREF(ret);
-                        ret = NULL;
-                    }
+            }
+
+            if (ndim > 0) {
+                if (PyArray_AssignFromSequence(ret, op) < 0) {
+                    Py_DECREF(ret);
+                    ret = NULL;
+                }
+            }
+            else {
+                if (PyArray_DESCR(ret)->f->setitem(op,
+                                            PyArray_DATA(ret), ret) < 0) {
+                    Py_DECREF(ret);
+                    ret = NULL;
                 }
             }
         }
@@ -2005,7 +2055,16 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
             ret = NULL;
         }
         else {
-            ret = (PyArrayObject *)PyArray_FromArray(arr, newtype, flags);
+            if (PyArray_HASMASKNA((PyArrayObject *)arr) &&
+                                (flags & NPY_ARRAY_ALLOWNA) == 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "this operation does not support "
+                        "arrays with NA masks");
+                ret = NULL;
+            }
+            else {
+                ret = (PyArrayObject *)PyArray_FromArray(arr, newtype, flags);
+            }
             Py_DECREF(arr);
         }
     }
