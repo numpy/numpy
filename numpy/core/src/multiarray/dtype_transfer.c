@@ -3873,6 +3873,76 @@ PyArray_CastRawArrays(npy_intp count,
 }
 
 /*
+ * Prepares shape and strides for a simple raw array iteration.
+ * This sorts the strides into FORTRAN order, reverses any negative
+ * strides, then coalesces axes where possible. The results are
+ * filled in the output parameters.
+ *
+ * This is intended for simple, lightweight iteration over arrays
+ * where no buffering of any kind is needed, and the array may
+ * not be stored as a PyArrayObject. For example, to iterate over
+ * the NA mask of an array.
+ *
+ * The arrays shape, out_shape, strides, and out_strides must all
+ * point to different data.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_PrepareOneRawArrayIter(int ndim, char *data,
+                            npy_intp *shape, npy_intp *strides,
+                            int *out_ndim, char **out_data,
+                            npy_intp *out_shape, npy_intp *out_strides)
+{
+    _npy_stride_sort_item strideperm[NPY_MAXDIMS];
+    int i, j;
+
+    /* Sort the axes based on the destination strides */
+    PyArray_CreateSortedStridePerm(ndim, strides, strideperm);
+    for (i = 0; i < ndim; ++i) {
+        int iperm = ndim - strideperm[i].perm - 1;
+        out_shape[i] = shape[iperm];
+        out_strides[i] = strides[iperm];
+    }
+
+    /* Reverse any negative strides */
+    for (i = 0; i < ndim; ++i) {
+        npy_intp stride_entry = out_strides[i], shape_entry = out_shape[i];
+
+        if (stride_entry < 0) {
+            data += stride_entry * (shape_entry - 1);
+            out_strides[i] = -stride_entry;
+        }
+    }
+
+    /* Coalesce any dimensions where possible */
+    i = 0;
+    for (j = 1; j < ndim; ++j) {
+        if (out_shape[i] == 1) {
+            /* Drop axis i */
+            out_shape[i] = out_shape[j];
+            out_strides[i] = out_strides[j];
+        }
+        else if (out_shape[j] == 1) {
+            /* Drop axis j */
+        }
+        else if (out_strides[i] * out_shape[i] == out_strides[j]) {
+            /* Coalesce axes i and j */
+            out_shape[i] *= out_shape[j];
+        }
+        else {
+            /* Can't coalesce, go to next i */
+            ++i;
+        }
+    }
+    ndim = i+1;
+
+    *out_data = data;
+    *out_ndim = ndim;
+    return 0;
+}
+
+/*
  * Casts the elements from one n-dimensional array to another n-dimensional
  * array with identical shape but possibly different strides and dtypes.
  * Does not account for overlap.

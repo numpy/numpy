@@ -1058,6 +1058,8 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_ARRAYMASK                  0x20000000
 /* Split this operand up into data and an NA mask */
 #define NPY_ITER_USE_MASKNA                 0x40000000
+/* Iterate over the data, even if it has an NA mask and without USE_MASKNA */
+#define NPY_ITER_IGNORE_MASKNA              0x80000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000
