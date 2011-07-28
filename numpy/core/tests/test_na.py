@@ -193,8 +193,7 @@ def test_isna():
     assert_equal(np.isna(np.NA(dtype='f4')), True)
     assert_equal(np.isna(np.NA(12,dtype='f4')), True)
 
-def test_array_maskna_isna():
-    # Simple 1D example
+def test_array_maskna_isna_1D():
     a = np.arange(10)
 
     # With no mask, it returns all False
@@ -225,6 +224,8 @@ def test_array_maskna_isna():
     # Assigning NA to a strided slice
     a[2:10:3] = np.NA
     assert_equal(np.isna(a), [0,0,1,1,0,1,1,0,1,0])
+
+    # TODO: fancy indexing is next...
 
 
 if __name__ == "__main__":
