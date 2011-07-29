@@ -1596,15 +1596,31 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     /* fast exit if simple call */
     if (((subok && PyArray_Check(op)) ||
                  (!subok && PyArray_CheckExact(op))) &&
-              ((maskna &&
-                (PyArray_FLAGS((PyArrayObject *)op)&NPY_ARRAY_MASKNA) != 0) ||
-               (!maskna &&
-                (PyArray_FLAGS((PyArrayObject *)op)&NPY_ARRAY_MASKNA) == 0))) {
+              ((maskna && PyArray_HASMASKNA((PyArrayObject *)op)) ||
+               (!maskna && !PyArray_HASMASKNA((PyArrayObject *)op)))) {
         oparr = (PyArrayObject *)op;
         if (type == NULL) {
-            if (!copy && !ownmaskna && STRIDING_OK(oparr, order)) {
-                Py_INCREF(op);
-                ret = oparr;
+            if (!copy && STRIDING_OK(oparr, order)) {
+                /*
+                 * If mask ownership is requested and the array doesn't
+                 * already own its own mask, make a view which owns its
+                 * own mask.
+                 */
+                if (ownmaskna &&
+                            !(PyArray_FLAGS(oparr) & NPY_ARRAY_OWNMASKNA)) {
+                    ret = (PyArrayObject *)PyArray_View(oparr, NULL, NULL);
+                    if (ret == NULL) {
+                        return NULL;
+                    }
+                    if (PyArray_AllocateMaskNA(ret, 1, 0) < 0) {
+                        Py_DECREF(ret);
+                        return NULL;
+                    }
+                }
+                else {
+                    ret = oparr;
+                    Py_INCREF(ret);
+                }
                 goto finish;
             }
             else {
@@ -1655,7 +1671,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
         flags |= NPY_ARRAY_OWNMASKNA;
     }
 
-    flags |= NPY_ARRAY_FORCECAST;
+    flags |= (NPY_ARRAY_FORCECAST | NPY_ARRAY_ALLOWNA);
     Py_XINCREF(type);
     ret = (PyArrayObject *)PyArray_CheckFromAny(op, type,
                                                 0, 0, flags, NULL);
