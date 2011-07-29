@@ -963,8 +963,7 @@ M   33  21.99
         "Test that an empty file raises the proper exception"
         data = StringIO()
         test = np.genfromtxt(data)
-        ctrl = np.array([])
-        assert_equal(test, ctrl)
+        assert_equal(test, np.array([]))
 
     def test_fancy_dtype_alt(self):
         "Check that a nested dtype isn't MIA"
