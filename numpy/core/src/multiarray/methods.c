@@ -292,7 +292,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
 
     if (offset < 0 || (offset + typed->elsize) > PyArray_DESCR(self)->elsize) {
         PyErr_Format(PyExc_ValueError,
-                     "Need 0 <= offset <= %d for requested type "  \
+                     "Need 0 <= offset <= %d for requested type "
                      "but received offset = %d",
                      PyArray_DESCR(self)->elsize-typed->elsize, offset);
         Py_DECREF(typed);
@@ -349,16 +349,16 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
 
     if (offset < 0 || (offset + dtype->elsize) > PyArray_DESCR(self)->elsize) {
         PyErr_Format(PyExc_ValueError,
-                     "Need 0 <= offset <= %d for requested type "  \
+                     "Need 0 <= offset <= %d for requested type "
                      "but received offset = %d",
                      PyArray_DESCR(self)->elsize-dtype->elsize, offset);
         Py_DECREF(dtype);
         return -1;
     }
     ret = PyArray_NewFromDescr(Py_TYPE(self),
-                               dtype, PyArray_NDIM(self), PyArray_DIMS(self),
-                               PyArray_STRIDES(self), PyArray_DATA(self) + offset,
-                               PyArray_FLAGS(self), (PyObject *)self);
+                           dtype, PyArray_NDIM(self), PyArray_DIMS(self),
+                           PyArray_STRIDES(self), PyArray_DATA(self) + offset,
+                           PyArray_FLAGS(self), (PyObject *)self);
     if (ret == NULL) {
         return -1;
     }
