@@ -45,6 +45,27 @@ def test_array_maskna_construction():
     assert_equal(type(a), np.ndarray)
     assert_(np.isna(a))
 
+    a = np.zeros((3,))
+    assert_(not a.flags.maskna)
+    a = np.zeros((3,), maskna=True)
+    assert_(a.flags.maskna)
+    assert_equal(np.isna(a), False)
+
+    # np.empty returns all NAs if maskna is set to True
+    a = np.empty((3,))
+    assert_(not a.flags.maskna)
+    a = np.empty((3,), maskna=True)
+    assert_(a.flags.maskna)
+    assert_equal(np.isna(a), True)
+
+    # np.empty_like returns all NAs if maskna is set to True
+    tmp = np.arange(3)
+    a = np.empty_like(tmp)
+    assert_(not a.flags.maskna)
+    a = np.empty_like(tmp, maskna=True)
+    assert_(a.flags.maskna)
+    assert_equal(np.isna(a), True)
+
 def test_isna():
     # Objects which are not np.NA or ndarray all return False
     assert_equal(np.isna(True), False)

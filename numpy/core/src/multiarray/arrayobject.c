@@ -243,7 +243,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
                 return -1;
             }
             if (PyArray_HASMASKNA(dest)) {
-                if (PyArray_AllocateMaskNA(dest, 0, 0) < 0) {
+                if (PyArray_AllocateMaskNA(dest, 1, 0, 1) < 0) {
                     Py_DECREF(src_object);
                     return -1;
                 }

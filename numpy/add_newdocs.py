@@ -736,6 +736,8 @@ add_newdoc('numpy.core.multiarray', 'empty',
     order : {'C', 'F'}, optional
         Whether to store multi-dimensional data in C (row-major) or
         Fortran (column-major) order in memory.
+    maskna : boolean
+        If this is true, the returned array will have an NA mask.
 
     See Also
     --------
