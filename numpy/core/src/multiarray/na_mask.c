@@ -215,7 +215,6 @@ PyArray_AllocateMaskNA(PyArrayObject *arr, npy_bool ownmaskna, npy_bool multina)
     }
 
     /* Set the NA mask data in the array */
-    Py_XDECREF(maskna_dtype);
     fa->maskna_dtype = maskna_dtype;
     fa->maskna_data = maskna_data;
     fa->flags |= (NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA);
