@@ -405,7 +405,7 @@ PyArray_PyIntAsInt(PyObject *o)
         goto finish;
     }
 #endif
-    if (Py_TYPE(o)->tp_as_number != NULL &&         \
+    if (Py_TYPE(o)->tp_as_number != NULL &&
         Py_TYPE(o)->tp_as_number->nb_int != NULL) {
         obj = Py_TYPE(o)->tp_as_number->nb_int(o);
         if (obj == NULL) {
@@ -415,7 +415,7 @@ PyArray_PyIntAsInt(PyObject *o)
         Py_DECREF(obj);
     }
 #if !defined(NPY_PY3K)
-    else if (Py_TYPE(o)->tp_as_number != NULL &&                    \
+    else if (Py_TYPE(o)->tp_as_number != NULL &&
              Py_TYPE(o)->tp_as_number->nb_long != NULL) {
         obj = Py_TYPE(o)->tp_as_number->nb_long(o);
         if (obj == NULL) {
