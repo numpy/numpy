@@ -478,8 +478,11 @@ PyArray_MoveInto(PyArrayObject *dst, PyArrayObject *src)
      * it for most cases.  It may still incorrectly handle copying of
      * partially-overlapping data elements, where the data pointer was offset
      * by a fraction of the element size.
+     *
+     * For NA masked arrays, we always use the overlapping check and
+     * copy to handle this.
      */
-    if ((PyArray_NDIM(dst) == 1 &&
+    if ((!PyArray_HASMASKNA(dst) && PyArray_NDIM(dst) == 1 &&
                         PyArray_NDIM(src) == 1 &&
                         PyArray_STRIDE(dst, 0) > 0 &&
                         PyArray_STRIDE(src, 0) > 0) ||
@@ -498,6 +501,15 @@ PyArray_MoveInto(PyArrayObject *dst, PyArrayObject *src)
         if (tmp == NULL) {
             return -1;
         }
+
+        /* Make the temporary copy have an NA mask if necessary */
+        if (PyArray_HASMASKNA(src)) {
+            if (PyArray_AllocateMaskNA(tmp, 1, 0) < 0) {
+                Py_DECREF(tmp);
+                return -1;
+            }
+        }
+
         ret = PyArray_CopyInto(tmp, src);
         if (ret == 0) {
             ret = PyArray_CopyInto(dst, tmp);
@@ -2984,8 +2996,7 @@ PyArray_CopyAnyInto(PyArrayObject *dst, PyArrayObject *src)
 NPY_NO_EXPORT int
 PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
 {
-    PyArray_StridedTransferFn *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
+    int src_has_maskna, dst_has_maskna;
     NPY_BEGIN_THREADS_DEF;
 
     if (!PyArray_ISWRITEABLE(dst)) {
@@ -2994,8 +3005,27 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
         return -1;
     }
 
-    if (PyArray_NDIM(dst) >= PyArray_NDIM(src) &&
+    src_has_maskna = PyArray_HASMASKNA(src);
+    dst_has_maskna = PyArray_HASMASKNA(dst);
+    /* Can't copy an NA to an array which doesn't support it */
+    if (src_has_maskna && !dst_has_maskna) {
+        if (PyArray_ContainsNA(src)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA value to an array which "
+                    "does not support NAs");
+            return -1;
+        }
+        /* If there are no actual NAs, allow the copy */
+        else {
+            src_has_maskna = 0;
+        }
+    }
+
+    /* Special case for simple strides and no NA mask */
+    if (!dst_has_maskna && PyArray_NDIM(dst) >= PyArray_NDIM(src) &&
                             PyArray_TRIVIALLY_ITERABLE_PAIR(dst, src)) {
+        PyArray_StridedTransferFn *stransfer = NULL;
+        NpyAuxData *transferdata = NULL;
         char *dst_data, *src_data;
         npy_intp count, dst_stride, src_stride, src_itemsize;
 
@@ -3044,7 +3074,10 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
 
         return PyErr_Occurred() ? -1 : 0;
     }
-    else {
+    /* Copying unmasked into unmasked */
+    else if (!dst_has_maskna) {
+        PyArray_StridedTransferFn *stransfer = NULL;
+        NpyAuxData *transferdata = NULL;
         PyArrayObject *op[2];
         npy_uint32 op_flags[2];
         PyArray_Descr *op_dtypes_values[2], **op_dtypes = NULL;
@@ -3067,7 +3100,11 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
          */
         /*op_flags[0] = NPY_ITER_WRITEONLY|NPY_ITER_NO_BROADCAST;*/
         op_flags[0] = NPY_ITER_WRITEONLY;
-        op_flags[1] = NPY_ITER_READONLY;
+        /*
+         * If src has an NA mask, it was already confirmed to
+         * contain no NA values, so ignoring the NA mask is fine.
+         */
+        op_flags[1] = NPY_ITER_READONLY | NPY_ITER_IGNORE_MASKNA;
 
         /*
          * If 'src' is being broadcast to 'dst', and it is smaller
@@ -3137,6 +3174,274 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
                             dataptr[1], stride[1],
                             *countptr, src_itemsize, transferdata);
             } while(iternext(iter));
+
+            if (!needs_api) {
+                NPY_END_THREADS;
+            }
+        }
+
+        NPY_AUXDATA_FREE(transferdata);
+        NpyIter_Deallocate(iter);
+
+        return PyErr_Occurred() ? -1 : 0;
+    }
+    /* Copying non NA-masked into NA-masked */
+    else if (!src_has_maskna) {
+        PyArray_StridedTransferFn *stransfer = NULL;
+        NpyAuxData *transferdata = NULL;
+        PyArrayObject *op[2];
+        npy_uint32 op_flags[2];
+        PyArray_Descr *op_dtypes_values[2], **op_dtypes = NULL;
+        NpyIter *iter;
+        npy_intp src_size;
+
+        NpyIter_IterNextFunc *iternext;
+        char **dataptr;
+        npy_intp *stride;
+        npy_intp *countptr;
+        npy_intp src_itemsize;
+        int needs_api;
+
+        op[0] = dst;
+        op[1] = src;
+        /*
+         * TODO: In NumPy 2.0, reenable NPY_ITER_NO_BROADCAST. This
+         *       was removed during NumPy 1.6 testing for compatibility
+         *       with NumPy 1.5, as per Travis's -10 veto power.
+         */
+        /*op_flags[0] = NPY_ITER_WRITEONLY|NPY_ITER_NO_BROADCAST|NPY_ITER_USE_MASKNA;*/
+        op_flags[0] = NPY_ITER_WRITEONLY | NPY_ITER_USE_MASKNA;
+        op_flags[1] = NPY_ITER_READONLY;
+
+        /*
+         * If 'src' is being broadcast to 'dst', and it is smaller
+         * than the default NumPy buffer size, allow the iterator to
+         * make a copy of 'src' with the 'dst' dtype if necessary.
+         *
+         * This is a performance operation, to allow fewer casts followed
+         * by more plain copies.
+         */
+        src_size = PyArray_SIZE(src);
+        if (src_size <= NPY_BUFSIZE && src_size < PyArray_SIZE(dst)) {
+            op_flags[1] |= NPY_ITER_COPY;
+            op_dtypes = op_dtypes_values;
+            op_dtypes_values[0] = NULL;
+            op_dtypes_values[1] = PyArray_DESCR(dst);
+        }
+
+        iter = NpyIter_MultiNew(2, op,
+                            NPY_ITER_EXTERNAL_LOOP|
+                            NPY_ITER_REFS_OK|
+                            NPY_ITER_ZEROSIZE_OK,
+                            NPY_KEEPORDER,
+                            NPY_UNSAFE_CASTING,
+                            op_flags,
+                            op_dtypes);
+        if (iter == NULL) {
+            return -1;
+        }
+
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        stride = NpyIter_GetInnerStrideArray(iter);
+        countptr = NpyIter_GetInnerLoopSizePtr(iter);
+        src_itemsize = PyArray_DESCR(src)->elsize;
+
+        needs_api = NpyIter_IterationNeedsAPI(iter);
+
+        /*
+         * Because buffering is disabled in the iterator, the inner loop
+         * strides will be the same throughout the iteration loop.  Thus,
+         * we can pass them to this function to take advantage of
+         * contiguous strides, etc.
+         */
+        if (PyArray_GetDTypeTransferFunction(
+                        PyArray_ISALIGNED(src) && PyArray_ISALIGNED(dst),
+                        stride[1], stride[0],
+                        NpyIter_GetDescrArray(iter)[1], PyArray_DESCR(dst),
+                        0,
+                        &stransfer, &transferdata,
+                        &needs_api) != NPY_SUCCEED) {
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
+
+
+        if (NpyIter_GetIterSize(iter) != 0) {
+            /* Because buffering is disabled, this stride will be fixed */
+            npy_intp maskna_stride = stride[2];
+            if (!needs_api) {
+                NPY_BEGIN_THREADS;
+            }
+
+            /* Specialize for contiguous mask stride */
+            if (maskna_stride == 1) {
+                do {
+                    char *maskna_ptr = dataptr[2];
+                    npy_intp count = *countptr;
+
+                    stransfer(dataptr[0], stride[0],
+                                dataptr[1], stride[1],
+                                count, src_itemsize, transferdata);
+                    memset(maskna_ptr, 1, count);
+                } while(iternext(iter));
+            }
+            else {
+                do {
+                    char *maskna_ptr = dataptr[2];
+                    npy_intp count = *countptr;
+
+                    stransfer(dataptr[0], stride[0],
+                                dataptr[1], stride[1],
+                                count, src_itemsize, transferdata);
+                    while (count-- != 0) {
+                        *maskna_ptr = 1;
+                        maskna_ptr += maskna_stride;
+                    }
+                } while(iternext(iter));
+            }
+
+            if (!needs_api) {
+                NPY_END_THREADS;
+            }
+        }
+
+        NPY_AUXDATA_FREE(transferdata);
+        NpyIter_Deallocate(iter);
+
+        return PyErr_Occurred() ? -1 : 0;
+    }
+    /* Copying NA-masked into NA-masked */
+    else {
+        PyArray_MaskedStridedTransferFn *stransfer = NULL;
+        NpyAuxData *transferdata = NULL;
+        PyArrayObject *op[2];
+        npy_uint32 op_flags[2];
+        PyArray_Descr *op_dtypes_values[2], **op_dtypes = NULL;
+        NpyIter *iter;
+        npy_intp src_size;
+
+        NpyIter_IterNextFunc *iternext;
+        char **dataptr;
+        npy_intp *stride;
+        npy_intp *countptr;
+        npy_intp src_itemsize;
+        int needs_api;
+
+        op[0] = dst;
+        op[1] = src;
+        /*
+         * TODO: In NumPy 2.0, reenable NPY_ITER_NO_BROADCAST. This
+         *       was removed during NumPy 1.6 testing for compatibility
+         *       with NumPy 1.5, as per Travis's -10 veto power.
+         */
+        /*op_flags[0] = NPY_ITER_WRITEONLY|NPY_ITER_NO_BROADCAST|NPY_ITER_USE_MASKNA;*/
+        op_flags[0] = NPY_ITER_WRITEONLY | NPY_ITER_USE_MASKNA;
+        op_flags[1] = NPY_ITER_READONLY | NPY_ITER_USE_MASKNA;
+
+        /*
+         * If 'src' is being broadcast to 'dst', and it is smaller
+         * than the default NumPy buffer size, allow the iterator to
+         * make a copy of 'src' with the 'dst' dtype if necessary.
+         *
+         * This is a performance operation, to allow fewer casts followed
+         * by more plain copies.
+         */
+        src_size = PyArray_SIZE(src);
+        if (src_size <= NPY_BUFSIZE && src_size < PyArray_SIZE(dst)) {
+            op_flags[1] |= NPY_ITER_COPY;
+            op_dtypes = op_dtypes_values;
+            op_dtypes_values[0] = NULL;
+            op_dtypes_values[1] = PyArray_DESCR(dst);
+        }
+
+        iter = NpyIter_MultiNew(2, op,
+                            NPY_ITER_EXTERNAL_LOOP|
+                            NPY_ITER_REFS_OK|
+                            NPY_ITER_ZEROSIZE_OK,
+                            NPY_KEEPORDER,
+                            NPY_UNSAFE_CASTING,
+                            op_flags,
+                            op_dtypes);
+        if (iter == NULL) {
+            return -1;
+        }
+
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        stride = NpyIter_GetInnerStrideArray(iter);
+        countptr = NpyIter_GetInnerLoopSizePtr(iter);
+        src_itemsize = PyArray_DESCR(src)->elsize;
+
+        needs_api = NpyIter_IterationNeedsAPI(iter);
+
+        /*
+         * Because buffering is disabled in the iterator, the inner loop
+         * strides will be the same throughout the iteration loop.  Thus,
+         * we can pass them to this function to take advantage of
+         * contiguous strides, etc.
+         */
+        if (PyArray_GetMaskedDTypeTransferFunction(
+                        PyArray_ISALIGNED(src) && PyArray_ISALIGNED(dst),
+                        stride[1], stride[0], stride[3],
+                        NpyIter_GetDescrArray(iter)[1],
+                        PyArray_DESCR(dst),
+                        PyArray_MASKNA_DTYPE(src),
+                        0,
+                        &stransfer, &transferdata,
+                        &needs_api) != NPY_SUCCEED) {
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
+
+
+        if (NpyIter_GetIterSize(iter) != 0) {
+            /* Because buffering is disabled, this stride will be fixed */
+            npy_intp dst_maskna_stride = stride[2];
+            npy_intp src_maskna_stride = stride[3];
+            if (!needs_api) {
+                NPY_BEGIN_THREADS;
+            }
+
+            /* Specialize for contiguous mask stride */
+            if (src_maskna_stride == 1 && dst_maskna_stride == 1) {
+                do {
+                    char *dst_maskna_ptr = dataptr[2];
+                    char *src_maskna_ptr = dataptr[3];
+                    npy_intp count = *countptr;
+
+                    stransfer(dataptr[0], stride[0],
+                                dataptr[1], stride[1],
+                                (npy_mask *)src_maskna_ptr, src_maskna_stride,
+                                count, src_itemsize, transferdata);
+                    memcpy(dst_maskna_ptr, src_maskna_ptr, count);
+                } while(iternext(iter));
+            }
+            else {
+                do {
+                    char *dst_maskna_ptr = dataptr[2];
+                    char *src_maskna_ptr = dataptr[3];
+                    npy_intp count = *countptr;
+
+                    stransfer(dataptr[0], stride[0],
+                                dataptr[1], stride[1],
+                                (npy_mask *)src_maskna_ptr, src_maskna_stride,
+                                count, src_itemsize, transferdata);
+                    while (count-- != 0) {
+                        *dst_maskna_ptr = *src_maskna_ptr;
+                        src_maskna_ptr += src_maskna_stride;
+                        dst_maskna_ptr += dst_maskna_stride;
+                    }
+                } while(iternext(iter));
+            }
 
             if (!needs_api) {
                 NPY_END_THREADS;
