@@ -285,6 +285,12 @@ def test_array_maskna_view_array_assignment_1D():
     assert_equal(a, [2,3,4,5,6])
     assert_equal(np.isna(b), False)
 
+    # Assigning from a list with NAs should unmask the non-NA values
+    b[...] = np.NA
+    b[...] = [7,np.NA,2,0,np.NA]
+    assert_equal(a, [7,3,2,0,6])
+    assert_equal(np.isna(b), [0,1,0,0,1])
+
     # Assigning from an unmasked array should unmask the values
     b[...] = np.NA
     b[...] = np.arange(5)

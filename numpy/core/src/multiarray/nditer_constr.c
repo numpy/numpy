@@ -2922,9 +2922,12 @@ npyiter_allocate_arrays(NpyIter *iter,
             if (temp == NULL) {
                 return 0;
             }
-            /* Add an NA mask if needed */
+            /*
+             * Add an NA mask if needed, defaulting to all NAs because
+             * the data is uninitialized
+             */
             if (PyArray_HASMASKNA(op[iop])) {
-                if (PyArray_AllocateMaskNA(temp, 1, 0, 1) < 0) {
+                if (PyArray_AllocateMaskNA(temp, 1, 0, 0) < 0) {
                     return 0;
                 }
             }
