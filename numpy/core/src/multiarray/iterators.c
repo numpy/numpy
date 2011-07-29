@@ -226,8 +226,11 @@ slice_coerce_index(PyObject *o, npy_intp *v)
      * PyNumber_Index was introduced in Python 2.5 because of NumPy.
      * http://www.python.org/dev/peps/pep-0357/
      * Let's use it for indexing!
+     *
+     * Unfortunately, SciPy and possibly other code seems to rely
+     * on the lenient coercion. :(
      */
-#if PY_VERSION_HEX >= 0x02050000
+#if 0 /*PY_VERSION_HEX >= 0x02050000*/
     PyObject *ind = PyNumber_Index(o);
     if (ind != NULL) {
         *v = PyArray_PyIntAsIntp(ind);
