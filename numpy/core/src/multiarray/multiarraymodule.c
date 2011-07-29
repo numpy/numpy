@@ -1612,7 +1612,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
                     if (ret == NULL) {
                         return NULL;
                     }
-                    if (PyArray_AllocateMaskNA(ret, 1, 0) < 0) {
+                    if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
                         Py_DECREF(ret);
                         return NULL;
                     }
@@ -1774,17 +1774,19 @@ static PyObject *
 array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
-    static char *kwlist[] = {"shape","dtype","order",NULL};
+    static char *kwlist[] = {"shape","dtype","order","maskna",NULL};
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
     npy_bool is_f_order;
-    PyObject *ret = NULL;
+    PyArrayObject *ret = NULL;
+    int maskna = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&i", kwlist,
                 PyArray_IntpConverter, &shape,
                 PyArray_DescrConverter, &typecode,
-                PyArray_OrderConverter, &order)) {
+                PyArray_OrderConverter, &order,
+                &maskna)) {
         goto fail;
     }
 
@@ -1801,9 +1803,22 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
             goto fail;
     }
 
-    ret = PyArray_Empty(shape.len, shape.ptr, typecode, is_f_order);
+    ret = (PyArrayObject *)PyArray_Empty(shape.len, shape.ptr,
+                                            typecode, is_f_order);
+
+    if (maskna) {
+        /*
+         * Default the mask to all NA values, because the data is
+         * not initialized
+         */
+        if (PyArray_AllocateMaskNA(ret, 1, 0, 0) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+
     PyDimMem_FREE(shape.ptr);
-    return ret;
+    return (PyObject *)ret;
 
  fail:
     Py_XDECREF(typecode);
@@ -1815,24 +1830,38 @@ static PyObject *
 array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
-    static char *kwlist[] = {"prototype","dtype","order","subok",NULL};
+    static char *kwlist[] = {"prototype","dtype","order","subok","maskna",NULL};
     PyArrayObject *prototype = NULL;
     PyArray_Descr *dtype = NULL;
     NPY_ORDER order = NPY_KEEPORDER;
-    PyObject *ret = NULL;
-    int subok = 1;
+    PyArrayObject *ret = NULL;
+    int subok = 1, maskna = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&i", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&ii", kwlist,
                 PyArray_Converter, &prototype,
                 PyArray_DescrConverter2, &dtype,
                 PyArray_OrderConverter, &order,
-                &subok)) {
+                &subok,
+                &maskna)) {
         goto fail;
     }
     /* steals the reference to dtype if it's not NULL */
-    ret = PyArray_NewLikeArray(prototype, order, dtype, subok);
+    ret = (PyArrayObject *)PyArray_NewLikeArray(prototype,
+                                            order, dtype, subok);
     Py_DECREF(prototype);
-    return ret;
+
+    if (maskna) {
+        /*
+         * Default the mask to all NA values, because the data is
+         * not initialized
+         */
+        if (PyArray_AllocateMaskNA(ret, 1, 0, 0) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+
+    return (PyObject *)ret;
 
  fail:
     Py_XDECREF(prototype);
@@ -1907,17 +1936,19 @@ array_scalar(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 static PyObject *
 array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"shape","dtype","order",NULL}; /* XXX ? */
+    static char *kwlist[] = {"shape","dtype","order","maskna",NULL};
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
     npy_bool is_f_order = FALSE;
-    PyObject *ret = NULL;
+    PyArrayObject *ret = NULL;
+    int maskna = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&i", kwlist,
                 PyArray_IntpConverter, &shape,
                 PyArray_DescrConverter, &typecode,
-                PyArray_OrderConverter, &order)) {
+                PyArray_OrderConverter, &order,
+                &maskna)) {
         goto fail;
     }
 
@@ -1934,14 +1965,23 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
             goto fail;
     }
 
-    ret = PyArray_Zeros(shape.len, shape.ptr, typecode, (int) is_f_order);
+    ret = (PyArrayObject *)PyArray_Zeros(shape.len, shape.ptr,
+                                        typecode, (int) is_f_order);
+
+    if (maskna) {
+        if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+
     PyDimMem_FREE(shape.ptr);
-    return ret;
+    return (PyObject *)ret;
 
  fail:
     Py_XDECREF(typecode);
     PyDimMem_FREE(shape.ptr);
-    return ret;
+    return (PyObject *)ret;
 }
 
 static PyObject *

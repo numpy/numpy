@@ -283,7 +283,7 @@ arrayflags_maskna_set(PyArrayFlagsObject *self, PyObject *obj)
     }
 
     if (PyObject_IsTrue(obj)) {
-        return PyArray_AllocateMaskNA((PyArrayObject *)self->arr, 0, 0);
+        return PyArray_AllocateMaskNA((PyArrayObject *)self->arr, 0, 0, 1);
     }
     else {
         if (self->flags & NPY_ARRAY_MASKNA) {
@@ -320,7 +320,7 @@ arrayflags_ownmaskna_set(PyArrayFlagsObject *self, PyObject *obj)
     }
 
     if (PyObject_IsTrue(obj)) {
-        return PyArray_AllocateMaskNA((PyArrayObject *)self->arr, 1, 0);
+        return PyArray_AllocateMaskNA((PyArrayObject *)self->arr, 1, 0, 1);
     }
     else {
         if (self->flags & NPY_ARRAY_OWNMASKNA) {

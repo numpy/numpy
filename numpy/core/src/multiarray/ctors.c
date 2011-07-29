@@ -504,7 +504,7 @@ PyArray_MoveInto(PyArrayObject *dst, PyArrayObject *src)
 
         /* Make the temporary copy have an NA mask if necessary */
         if (PyArray_HASMASKNA(src)) {
-            if (PyArray_AllocateMaskNA(tmp, 1, 0) < 0) {
+            if (PyArray_AllocateMaskNA(tmp, 1, 0, 1) < 0) {
                 Py_DECREF(tmp);
                 return -1;
             }
@@ -2031,7 +2031,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
             if ((flags & (NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA)) != 0 ||
                         (contains_na && (flags & NPY_ARRAY_ALLOWNA))) {
                 if (PyArray_AllocateMaskNA(ret,
-                                (flags&NPY_ARRAY_OWNMASKNA) != 0, 0) < 0) {
+                                (flags&NPY_ARRAY_OWNMASKNA) != 0, 0, 1) < 0) {
                     Py_DECREF(ret);
                     return NULL;
                 }
@@ -2267,7 +2267,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
             /* Allocate an NA mask if necessary from the input */
             if (PyArray_HASMASKNA(arr)) {
-                if (PyArray_AllocateMaskNA(ret, 1, 0) < 0) {
+                if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
                     Py_DECREF(ret);
                     return NULL;
                 }
@@ -2281,7 +2281,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             /* Allocate an NA mask if requested but wasn't from the input */
             if ((flags & (NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA)) != 0 &&
                                 !PyArray_HASMASKNA(ret)) {
-                if (PyArray_AllocateMaskNA(ret, 1, 0) < 0) {
+                if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
                     Py_DECREF(ret);
                     return NULL;
                 }

@@ -1451,7 +1451,7 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
 {
     PyObject *ret;
 
-    npy_intp iop, nop;
+    npy_intp iop, first_maskna_op;
 
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -1459,18 +1459,18 @@ static PyObject *npyiter_value_get(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    nop = NpyIter_GetNOp(self->iter);
+    first_maskna_op = NpyIter_GetFirstMaskNAOp(self->iter);
 
     /* Return an array  or tuple of arrays with the values */
-    if (nop == 1) {
+    if (first_maskna_op == 1) {
         ret = npyiter_seq_item(self, 0);
     }
     else {
-        ret = PyTuple_New(nop);
+        ret = PyTuple_New(first_maskna_op);
         if (ret == NULL) {
             return NULL;
         }
-        for (iop = 0; iop < nop; ++iop) {
+        for (iop = 0; iop < first_maskna_op; ++iop) {
             PyObject *a = npyiter_seq_item(self, iop);
             if (a == NULL) {
                 Py_DECREF(ret);
@@ -1487,7 +1487,7 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
 {
     PyObject *ret;
 
-    npy_intp iop, nop;
+    npy_intp iop, first_maskna_op;
     PyArrayObject **operands;
 
     if (self->iter == NULL) {
@@ -1496,14 +1496,14 @@ static PyObject *npyiter_operands_get(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    nop = NpyIter_GetNOp(self->iter);
+    first_maskna_op = NpyIter_GetFirstMaskNAOp(self->iter);
     operands = self->operands;
 
-    ret = PyTuple_New(nop);
+    ret = PyTuple_New(first_maskna_op);
     if (ret == NULL) {
         return NULL;
     }
-    for (iop = 0; iop < nop; ++iop) {
+    for (iop = 0; iop < first_maskna_op; ++iop) {
         PyObject *operand = (PyObject *)operands[iop];
 
         Py_INCREF(operand);
@@ -1517,7 +1517,7 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
 {
     PyObject *ret;
 
-    npy_intp iop, nop;
+    npy_intp iop, first_maskna_op;
 
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -1525,13 +1525,13 @@ static PyObject *npyiter_itviews_get(NewNpyArrayIterObject *self)
         return NULL;
     }
 
-    nop = NpyIter_GetNOp(self->iter);
+    first_maskna_op = NpyIter_GetFirstMaskNAOp(self->iter);
 
-    ret = PyTuple_New(nop);
+    ret = PyTuple_New(first_maskna_op);
     if (ret == NULL) {
         return NULL;
     }
-    for (iop = 0; iop < nop; ++iop) {
+    for (iop = 0; iop < first_maskna_op; ++iop) {
         PyArrayObject *view = NpyIter_GetIterView(self->iter, iop);
 
         if (view == NULL) {

@@ -63,7 +63,7 @@ ufunc = type(sin)
 
 
 # originally from Fernando Perez's IPython
-def zeros_like(a, dtype=None, order='K', subok=True):
+def zeros_like(a, dtype=None, order='K', subok=True, maskna=False):
     """
     Return an array of zeros with the same shape and type as a given array.
 
@@ -81,6 +81,8 @@ def zeros_like(a, dtype=None, order='K', subok=True):
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
         as possible.
+    maskna : boolean
+        If this is true, the returned array will have an NA mask.
 
     Returns
     -------
@@ -113,7 +115,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
     array([ 0.,  0.,  0.])
 
     """
-    res = empty_like(a, dtype=dtype, order=order, subok=subok)
+    res = empty_like(a, dtype=dtype, order=order, subok=subok, maskna=maskna)
     multiarray.copyto(res, 0, casting='unsafe')
     return res
 

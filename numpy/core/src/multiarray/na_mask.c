@@ -102,10 +102,17 @@ PyArray_ContainsNA(PyArrayObject *arr)
  * If 'multina' is True, the mask is allocated with an NPY_MASK dtype
  * instead of NPY_BOOL.
  *
+ * If a new mask is allocated, and no mask was there to copy from,
+ * the mask is filled with the 'defaultmask' value. Normally you
+ * set this to 1, so all the values are exposed.
+ *
  * Returns -1 on failure, 0 on success.
  */
 NPY_NO_EXPORT int
-PyArray_AllocateMaskNA(PyArrayObject *arr, npy_bool ownmaskna, npy_bool multina)
+PyArray_AllocateMaskNA(PyArrayObject *arr,
+                npy_bool ownmaskna,
+                npy_bool multina,
+                npy_mask defaultmask)
 {
     PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)arr;
     PyArray_Descr *maskna_dtype = NULL;
@@ -166,7 +173,7 @@ PyArray_AllocateMaskNA(PyArrayObject *arr, npy_bool ownmaskna, npy_bool multina)
             }
         }
         else {
-            memset(maskna_data, 1, size * maskna_dtype->elsize);
+            memset(maskna_data, defaultmask, size * maskna_dtype->elsize);
         }
 
         fa->maskna_strides[0] = maskna_dtype->elsize;
@@ -199,7 +206,7 @@ PyArray_AllocateMaskNA(PyArrayObject *arr, npy_bool ownmaskna, npy_bool multina)
             }
         }
         else {
-            memset(maskna_data, 1, size * maskna_dtype->elsize);
+            memset(maskna_data, defaultmask, size * maskna_dtype->elsize);
         }
 
         memcpy(fa->maskna_strides, maskna_strides, fa->nd * sizeof(npy_intp));
@@ -210,7 +217,7 @@ PyArray_AllocateMaskNA(PyArrayObject *arr, npy_bool ownmaskna, npy_bool multina)
             maskna_data[0] = fa->maskna_data[0];
         }
         else {
-            maskna_data[0] = 1;
+            maskna_data[0] = defaultmask;
         }
     }
 

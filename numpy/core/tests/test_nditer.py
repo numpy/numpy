@@ -2399,5 +2399,9 @@ def test_iter_writemasked():
     # were copied back
     assert_equal(a, [3,3,2.5])
 
+def test_iter_maskna():
+    a = np.zeros((3,), dtype='f8')
+    b = np.zeros((3,), dtype='f4', maskna=True)
+
 if __name__ == "__main__":
     run_module_suite()

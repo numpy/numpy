@@ -198,7 +198,8 @@ array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
     if (maskna || ownmaskna) {
         /* Ensure there is an NA mask if requested */
-        if (PyArray_AllocateMaskNA((PyArrayObject *)ret, ownmaskna, 0) < 0) {
+        if (PyArray_AllocateMaskNA((PyArrayObject *)ret,
+                                        ownmaskna, 0, 1) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
