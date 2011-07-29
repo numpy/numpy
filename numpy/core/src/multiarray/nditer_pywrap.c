@@ -731,6 +731,11 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
             }
             else {
                 op_flags[iop] = NPY_ITER_READONLY;
+
+                /* Enable MASKNA iteration if the op needs it */
+                if (PyArray_HASMASKNA(op[iop])) {
+                    op_flags[iop] |= NPY_ITER_USE_MASKNA;
+                }
             }
         }
     }
@@ -747,10 +752,10 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
     for (iop = 0; iop < nop; ++iop) {
         if (op[iop] != NULL) {
             PyArrayObject *ao;
-            int fromanyflags = 0;
+            int fromanyflags = NPY_ARRAY_ALLOWNA;
 
             if (op_flags[iop]&(NPY_ITER_READWRITE|NPY_ITER_WRITEONLY)) {
-                fromanyflags = NPY_ARRAY_UPDATEIFCOPY;
+                fromanyflags |= NPY_ARRAY_UPDATEIFCOPY;
             }
             ao = (PyArrayObject *)PyArray_FromAny((PyObject *)op[iop],
                                             NULL, 0, 0, fromanyflags, NULL);

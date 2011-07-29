@@ -729,6 +729,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
                     char maskvalue;
                     if (na != NULL) {
                         maskvalue = (char)NpyNA_AsMaskValue(na);
+                        res = 0;
                     }
                     else {
                         maskvalue = 1;

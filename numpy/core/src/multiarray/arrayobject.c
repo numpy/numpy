@@ -50,6 +50,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "getset.h"
 #include "sequence.h"
 #include "buffer.h"
+#include "na_singleton.h"
 #include "na_mask.h"
 
 /*NUMPY_API
@@ -175,6 +176,13 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
     if (src == NULL) {
         /* If the input is scalar */
         if (ndim == 0) {
+            NpyNA *na = NULL;
+
+            /* Get an NpyNA if src is NA, but don't raise an error */
+            if (PyArray_HasNASupport(dest)) {
+                na = NpyNA_FromObject(src_object, 1);
+            }
+
             /* If there's one dest element and src is a Python scalar */
             if (PyArray_IsScalar(src_object, Generic)) {
                 src = (PyArrayObject *)PyArray_FromScalar(src_object, dtype);
@@ -184,12 +192,14 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
                 }
             }
             /* Assigning NA affects the mask if it exists */
-            else if (PyArray_HasNASupport(dest) && NpyNA_Check(src_object)) {
-                if (PyArray_AssignNA(dest, (NpyNA *)src_object) < 0) {
+            else if (na != NULL) {
+                if (PyArray_AssignNA(dest, na) < 0) {
+                    Py_DECREF(na);
                     Py_DECREF(src_object);
                     return -1;
                 }
 
+                Py_DECREF(na);
                 Py_DECREF(src_object);
                 return 0;
             }
