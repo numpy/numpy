@@ -613,6 +613,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
 {
     Py_ssize_t i, slen;
     int res = -1;
+    int a_has_maskna = PyArray_HASMASKNA(a);
 
     /*
      * This code is to ensure that the sequence access below will
@@ -669,10 +670,13 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
         }
 
         /* Check if the value being assigned is NA */
-        if (PyArray_HASMASKNA(a)) {
+        if (a_has_maskna) {
             na = NpyNA_FromObject(o, 1);
             if (na != NULL) {
                 maskvalue = (char)NpyNA_AsMaskValue(na);
+            }
+            else {
+                maskvalue = 1;
             }
         }
 
@@ -681,11 +685,13 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
                 res = setArrayFromSequence(a, o, dim+1, offset, maskoffset);
             }
             else {
+                /* Assign a value if it isn't NA */
                 if (na == NULL) {
                     res = PyArray_DESCR(a)->f->setitem(o,
                                         (PyArray_DATA(a) + offset), a);
                 }
-                else {
+                /* Assign to the mask if a supports MASKNA */
+                if (a_has_maskna) {
                     *(PyArray_MASKNA_DATA(a) + maskoffset) = maskvalue;
                 }
             }
@@ -711,22 +717,25 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
                 res = setArrayFromSequence(a, o, dim+1, offset, maskoffset);
             }
             else {
-                NpyNA *na = NULL;
-                char maskvalue = 0;
 
-                /* Check if the value being assigned is NA */
-                if (PyArray_HASMASKNA(a)) {
-                    na = NpyNA_FromObject(o, 1);
-                    if (na != NULL) {
-                        maskvalue = (char)NpyNA_AsMaskValue(na);
-                    }
-                }
-
-                if (na == NULL) {
+                /* Assignment without an NA mask */
+                if (!a_has_maskna) {
                     res = PyArray_DESCR(a)->f->setitem(o,
                                             (PyArray_DATA(a) + offset), a);
                 }
+                /* Assignment with an NA mask */
                 else {
+                    NpyNA *na = NpyNA_FromObject(o, 1);
+                    char maskvalue;
+                    if (na != NULL) {
+                        maskvalue = (char)NpyNA_AsMaskValue(na);
+                    }
+                    else {
+                        maskvalue = 1;
+                        res = PyArray_DESCR(a)->f->setitem(o,
+                                            (PyArray_DATA(a) + offset), a);
+                    }
+
                     *(PyArray_MASKNA_DATA(a) + maskoffset) = maskvalue;
                 }
             }
@@ -2153,10 +2162,10 @@ PyArray_CheckFromAny(PyObject *op, PyArray_Descr *descr, int min_depth,
     }
     if ((requires & NPY_ARRAY_ELEMENTSTRIDES) &&
         !PyArray_ElementStrides(obj)) {
-        PyObject *new;
-        new = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
+        PyObject *ret;
+        ret = PyArray_NewCopy((PyArrayObject *)obj, NPY_ANYORDER);
         Py_DECREF(obj);
-        obj = new;
+        obj = ret;
     }
     return obj;
 }
@@ -2255,10 +2264,29 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             if (ret == NULL) {
                 return NULL;
             }
+
+            /* Allocate an NA mask if necessary from the input */
+            if (PyArray_HASMASKNA(arr)) {
+                if (PyArray_AllocateMaskNA(ret, 1, 0) < 0) {
+                    Py_DECREF(ret);
+                    return NULL;
+                }
+            }
+
             if (PyArray_CopyInto(ret, arr) < 0) {
                 Py_DECREF(ret);
                 return NULL;
             }
+
+            /* Allocate an NA mask if requested but wasn't from the input */
+            if ((flags & (NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA)) != 0 &&
+                                !PyArray_HASMASKNA(ret)) {
+                if (PyArray_AllocateMaskNA(ret, 1, 0) < 0) {
+                    Py_DECREF(ret);
+                    return NULL;
+                }
+            }
+
             if (flags & NPY_ARRAY_UPDATEIFCOPY)  {
                 /*
                  * Don't use PyArray_SetBaseObject, because that compresses

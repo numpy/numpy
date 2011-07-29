@@ -467,15 +467,22 @@ PyArray_FillWithZero(PyArrayObject *a)
  * Copy an array.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER order)
+PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
 {
     PyArrayObject *ret = (PyArrayObject *)PyArray_NewLikeArray(
-                                                    m1, order, NULL, 1);
+                                                    obj, order, NULL, 1);
     if (ret == NULL) {
         return NULL;
     }
 
-    if (PyArray_CopyInto(ret, m1) == -1) {
+    if (PyArray_HASMASKNA(obj)) {
+        if (PyArray_AllocateMaskNA(ret, 1, 0) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+
+    if (PyArray_CopyInto(ret, obj) == -1) {
         Py_DECREF(ret);
         return NULL;
     }
@@ -490,7 +497,7 @@ PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER order)
 NPY_NO_EXPORT PyObject *
 PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 {
-    PyArrayObject *new = NULL;
+    PyArrayObject *ret = NULL;
     PyArray_Descr *dtype;
     PyTypeObject *subtype;
 
@@ -502,30 +509,52 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     }
     dtype = PyArray_DESCR(self);
     Py_INCREF(dtype);
-    new = (PyArrayObject *)PyArray_NewFromDescr(subtype,
+    ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
                                dtype,
                                PyArray_NDIM(self), PyArray_DIMS(self),
                                PyArray_STRIDES(self),
                                PyArray_DATA(self),
-                               PyArray_FLAGS(self), (PyObject *)self);
-    if (new == NULL) {
+               PyArray_FLAGS(self) & ~(NPY_ARRAY_MASKNA|NPY_ARRAY_OWNMASKNA),
+                               (PyObject *)self);
+    if (ret == NULL) {
         return NULL;
     }
     Py_INCREF(self);
-    if (PyArray_SetBaseObject(new, (PyObject *)self) < 0) {
-        Py_DECREF(new);
+    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
+        Py_DECREF(ret);
         Py_DECREF(type);
         return NULL;
     }
 
+    /* Take a view of the mask if it exists */
+    if (PyArray_HASMASKNA(self)) {
+        PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)ret;
+
+        if (PyArray_HASFIELDS(self)) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "NA masks with fields are not supported yet");
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        fa->maskna_dtype = PyArray_MASKNA_DTYPE(self);
+        Py_INCREF(fa->maskna_dtype);
+        fa->maskna_data = PyArray_MASKNA_DATA(self);
+        if (fa->nd > 0) {
+            memcpy(fa->maskna_strides, PyArray_MASKNA_STRIDES(self),
+                                            fa->nd * sizeof(npy_intp));
+        }
+        fa->flags |= NPY_ARRAY_MASKNA;
+    }
+
     if (type != NULL) {
-        if (PyObject_SetAttrString((PyObject *)new, "dtype",
+        if (PyObject_SetAttrString((PyObject *)ret, "dtype",
                                    (PyObject *)type) < 0) {
-            Py_DECREF(new);
+            Py_DECREF(ret);
             Py_DECREF(type);
             return NULL;
         }
         Py_DECREF(type);
     }
-    return (PyObject *)new;
+    return (PyObject *)ret;
 }

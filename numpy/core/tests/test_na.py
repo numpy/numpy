@@ -185,6 +185,12 @@ def test_array_maskna_construction():
     assert_equal(type(a), np.ndarray)
     assert_(np.isna(a))
 
+    # As a special case, converting np.NA to an array produces
+    # a zero-dimensional masked array
+    a = np.array(np.NA)
+    assert_equal(type(a), np.ndarray)
+    assert_(np.isna(a))
+
 def test_isna():
     # Objects which are not np.NA or ndarray all return False
     assert_equal(np.isna(True), False)
@@ -238,6 +244,195 @@ def test_array_maskna_isna_1D():
     assert_equal(np.isna(a), [1,1,1,1,0,1,1,1,1,0])
 
     # TODO: fancy indexing is next...
+
+def test_array_maskna_view_function():
+    a = np.arange(10)
+
+    # Taking a view of a non-masked array, making sure there's a mask
+    b = a.view(maskna=True)
+    assert_(not a.flags.maskna)
+    assert_(b.flags.maskna)
+    assert_(b.flags.ownmaskna)
+
+    # Taking a view of a non-masked array, making sure there's an owned mask
+    b = a.view(ownmaskna=True)
+    assert_(not a.flags.maskna)
+    assert_(b.flags.maskna)
+    assert_(b.flags.ownmaskna)
+
+    # Taking a view of a masked array
+    c = b.view()
+    assert_(b.flags.maskna)
+    assert_(b.flags.ownmaskna)
+    assert_(c.flags.maskna)
+    assert_(not c.flags.ownmaskna)
+
+    # Taking a view of a masked array, making sure there's a mask
+    c = b.view(maskna = True)
+    assert_(b.flags.maskna)
+    assert_(b.flags.ownmaskna)
+    assert_(c.flags.maskna)
+    assert_(not c.flags.ownmaskna)
+
+    # Taking a view of a masked array, making sure there's an owned mask
+    c = b.view(ownmaskna = True)
+    assert_(b.flags.maskna)
+    assert_(b.flags.ownmaskna)
+    assert_(c.flags.maskna)
+    assert_(c.flags.ownmaskna)
+
+def test_array_maskna_array_function_1D():
+    a = np.arange(10)
+    a_ref = a.copy()
+    b = a.view(maskna=True)
+    b[3:10:2] = np.NA
+    b_view = b.view()
+
+    # Ensure the setup is correct
+    assert_(not a.flags.maskna)
+    assert_(b.flags.maskna)
+    assert_(b.flags.ownmaskna)
+    assert_(b_view.flags.maskna)
+    assert_(not b_view.flags.ownmaskna)
+
+    # Should be able to add a mask with 'maskna='
+    c = np.array(a, maskna=True)
+    assert_(c.flags.maskna)
+    assert_(c.flags.ownmaskna)
+    assert_(not (c is b))
+
+    # Should be able to add a mask with 'ownmaskna='
+    c = np.array(a, ownmaskna=True)
+    assert_(c.flags.maskna)
+    assert_(c.flags.ownmaskna)
+    assert_(not (c is b))
+
+    # Should propagate mask
+    c = np.array(b)
+    assert_(c.flags.maskna)
+    assert_(c.flags.ownmaskna)
+    assert_equal(np.isna(b), np.isna(c))
+    assert_(not (c is b))
+
+    # Should propagate mask with 'maskna=True'
+    c = np.array(b, maskna=True)
+    assert_(c.flags.maskna)
+    assert_(c.flags.ownmaskna)
+    assert_equal(np.isna(b), np.isna(c))
+    assert_(not (c is b))
+
+    # Should propagate mask with 'ownmaskna=True'
+    c = np.array(b, ownmaskna=True)
+    assert_(c.flags.maskna)
+    assert_(c.flags.ownmaskna)
+    assert_equal(np.isna(b), np.isna(c))
+    assert_(not (c is b))
+
+    # Should be able to pass it through
+    c = np.array(b, copy=False)
+    assert_(c is b)
+
+    # Should be able to pass it through with 'maskna=True'
+    c = np.array(b, copy=False, maskna=True)
+    assert_(c is b)
+
+    # Should be able to pass it through with 'maskna=True'
+    c = np.array(b_view, copy=False, maskna=True)
+    assert_(c is b_view)
+
+    # Should be able to pass an owned mask through with 'ownmaskna=True'
+    c = np.array(b, copy=False, ownmaskna=True)
+    assert_(c is b)
+
+    # Should produce a view with an owned mask with 'ownmaskna=True'
+    c = np.array(b_view, copy=False, ownmaskna=True)
+    assert_(c.base is a)
+    assert_(c.flags.ownmaskna)
+    assert_(not (c is b_view))
+
+def test_array_maskna_view_NA_assignment_1D():
+    a = np.arange(10)
+    a_ref = a.copy()
+
+    # Make sure that assigning NA doesn't affect the original data
+    b = a.view(maskna=True)
+    b[...] = np.NA
+    assert_equal(np.isna(b), True)
+    assert_equal(a, a_ref)
+
+    b = a.view(maskna=True)
+    b[:] = np.NA
+    assert_equal(np.isna(b), True)
+    assert_equal(a, a_ref)
+
+    b = a.view(maskna=True)
+    b[3:5] = np.NA
+    assert_equal(np.isna(b), [0,0,0,1,1,0,0,0,0,0])
+    assert_equal(a, a_ref)
+
+    b = a.view(maskna=True)
+    b[3:10:3] = np.NA
+    assert_equal(np.isna(b), [0,0,0,1,0,0,1,0,0,1])
+    assert_equal(a, a_ref)
+
+    b = a.view(maskna=True)
+    b[3] = np.NA
+    assert_equal(np.isna(b), [0,0,0,1,0,0,0,0,0,0])
+    assert_equal(a, a_ref)
+
+    b = a.view(maskna=True)
+    mask = np.array([0,1,0,1,1,0,0,0,1,1], dtype='?')
+    b[mask] = np.NA
+    assert_equal(np.isna(b), mask)
+    assert_equal(a, a_ref)
+
+    # TODO: fancy indexing is next...
+
+def test_array_maskna_view_array_assignment_1D():
+    a = np.arange(5)
+    b = a.view(maskna=True)
+
+    # Assigning a constant scalar should unmask the values
+    b[...] = np.NA
+    b[...] = 3
+    assert_equal(a, 3)
+    assert_equal(np.isna(b), False)
+
+    # Assigning from a list should unmask the values
+    b[...] = np.NA
+    b[...] = [2]
+    assert_equal(a, [2,2,2,2,2])
+    assert_equal(np.isna(b), False)
+
+    # Assigning from a list should unmask the values
+    b[...] = np.NA
+    b[...] = [2,3,4,5,6]
+    assert_equal(a, [2,3,4,5,6])
+    assert_equal(np.isna(b), False)
+
+    # Assigning from an unmasked array should unmask the values
+    b[...] = np.NA
+    b[...] = np.arange(5)
+    assert_equal(a, np.arange(5))
+    assert_equal(np.isna(b), False)
+
+    # Assigning from a masked array with no NAs should unmask the values
+    b[...] = np.NA
+    tmp = np.arange(5) + 1
+    tmp.flags.maskna = True
+    b[...] = tmp
+    assert_equal(a, np.arange(5) + 1)
+    assert_equal(np.isna(b), False)
+
+    # Assigning from a masked array with some NAs should unmask most
+    # of the values, and leave the value behind the NAs untouched
+    b[...] = np.NA
+    tmp = np.arange(5) + 5
+    tmp.flags.maskna = True
+    tmp[2] = np.NA
+    b[...] = tmp
+    assert_equal(a, [5,6,3,8,9])
+    assert_equal(np.isna(b), [0,0,1,0,0])
 
 
 if __name__ == "__main__":

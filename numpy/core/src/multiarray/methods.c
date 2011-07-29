@@ -153,11 +153,15 @@ array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
     PyObject *out_dtype = NULL;
     PyObject *out_type = NULL;
     PyArray_Descr *dtype = NULL;
+    PyObject *ret;
+    int maskna = 0, ownmaskna = 0;
 
-    static char *kwlist[] = {"dtype", "type", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OO", kwlist,
+    static char *kwlist[] = {"dtype", "type", "maskna", "ownmaskna", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOii", kwlist,
                                      &out_dtype,
-                                     &out_type))
+                                     &out_type,
+                                     &maskna,
+                                     &ownmaskna))
         return NULL;
 
     /* If user specified a positional argument, guess whether it
@@ -190,7 +194,19 @@ array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    return PyArray_View(self, dtype, (PyTypeObject*)out_type);
+    ret = PyArray_View(self, dtype, (PyTypeObject*)out_type);
+
+    if (maskna || ownmaskna) {
+        /* Ensure there is an NA mask if requested */
+        if (PyArray_AllocateMaskNA((PyArrayObject *)ret, ownmaskna, 0) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+        return ret;
+    }
+    else {
+        return ret;
+    }
 }
 
 static PyObject *
