@@ -301,7 +301,7 @@ static PyObject *
 arrayflags_ownmaskna_get(PyArrayFlagsObject *self)
 {
     PyObject *item;
-    if (self->flags & NPY_ARRAY_MASKNA) {
+    if (self->flags & NPY_ARRAY_OWNMASKNA) {
         item = Py_True;
     }
     else {
