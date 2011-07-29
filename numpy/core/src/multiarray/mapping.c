@@ -737,7 +737,7 @@ array_boolean_subscript(PyArrayObject *self,
 
     /* Allocate an NA mask for ret if required */
     if (self_has_maskna) {
-        if (PyArray_AllocateMaskNA(ret, 1, 0) < 0) {
+        if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
             Py_DECREF(ret);
             return NULL;
         }

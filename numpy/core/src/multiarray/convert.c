@@ -476,7 +476,7 @@ PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
     }
 
     if (PyArray_HASMASKNA(obj)) {
-        if (PyArray_AllocateMaskNA(ret, 1, 0) < 0) {
+        if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
             Py_DECREF(ret);
             return NULL;
         }

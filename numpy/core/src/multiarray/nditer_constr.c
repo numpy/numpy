@@ -414,6 +414,27 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      * after all the 'allocate' arrays are finished.
      */
     if (maskna_nop > 0) {
+        npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
+
+        /* Copy op references to the maskna op's masks */
+        for (iop = first_maskna_op; iop < nop; ++iop) {
+            int iop_maskna = maskna_indices[iop];
+            op[iop] = op[iop_maskna];
+            Py_INCREF(op[iop]);
+            op_dtype[iop] = PyArray_MASKNA_DTYPE(op[iop]);
+            Py_INCREF(op_dtype[iop]);
+            /* Propagate select flags from the main operand */
+            op_itflags[iop] = op_itflags[iop_maskna] &
+                                (NPY_OP_ITFLAG_WRITE |
+                                 NPY_OP_ITFLAG_READ |
+                                 NPY_OP_ITFLAG_BUFNEVER |
+                                 NPY_OP_ITFLAG_REDUCE |
+                                 NPY_OP_ITFLAG_WRITEMASKED);
+            /* The mask is always aligned (alignment 1) */
+            op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+        }
+
+        /* Fill in the strides for the masks */
         if (!npyiter_fill_maskna_axisdata(iter, op_axes)) {
             NpyIter_Deallocate(iter);
             return NULL;
@@ -2867,7 +2888,7 @@ npyiter_allocate_arrays(NpyIter *iter,
              * if the allocated array has an NA dtype.
              */
             if (op_flags[iop] & NPY_ITER_USE_MASKNA) {
-                if (PyArray_AllocateMaskNA(out, 1, 0) < 0) {
+                if (PyArray_AllocateMaskNA(out, 1, 0, 1) < 0) {
                     return 0;
                 }
             }
@@ -2903,7 +2924,7 @@ npyiter_allocate_arrays(NpyIter *iter,
             }
             /* Add an NA mask if needed */
             if (PyArray_HASMASKNA(op[iop])) {
-                if (PyArray_AllocateMaskNA(temp, 1, 0) < 0) {
+                if (PyArray_AllocateMaskNA(temp, 1, 0, 1) < 0) {
                     return 0;
                 }
             }
@@ -2950,7 +2971,7 @@ npyiter_allocate_arrays(NpyIter *iter,
             }
             /* Add an NA mask if needed */
             if (PyArray_HASMASKNA(op[iop])) {
-                if (PyArray_AllocateMaskNA(temp, 1, 0) < 0) {
+                if (PyArray_AllocateMaskNA(temp, 1, 0, 1) < 0) {
                     return 0;
                 }
             }
@@ -3151,7 +3172,7 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
 
     /* Fill in the reset dataptr array with the mask pointers */
     for (iop = first_maskna_op; iop < nop; ++iop) {
-        op_dataptr[iop] = PyArray_MASKNA_DATA(op[maskna_indices[iop]]);
+        op_dataptr[iop] = PyArray_MASKNA_DATA(op[iop]);
     }
 
     /* Process the maskna operands, filling in the axisdata */
@@ -3228,6 +3249,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     /*int ndim = NIT_NDIM(iter);*/
     int iop = 0, nop = NIT_NOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
     npy_intp i;
     char *op_itflags = NIT_OPITFLAGS(iter);
@@ -3259,13 +3281,18 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
          * allocate the appropriate transfer functions
          */
         if (!(flags & NPY_OP_ITFLAG_BUFNEVER)) {
+            PyArray_Descr *op_orig_dtype;
+
+            /* Get either the array's or the array namask's dtype */
+            op_orig_dtype = (iop < first_maskna_op) ? PyArray_DESCR(op[iop])
+                                           : PyArray_MASKNA_DTYPE(op[iop]);
             if (flags & NPY_OP_ITFLAG_READ) {
                 int move_references = 0;
                 if (PyArray_GetDTypeTransferFunction(
                                         (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
                                         op_stride,
                                         op_dtype[iop]->elsize,
-                                        PyArray_DESCR(op[iop]),
+                                        op_orig_dtype,
                                         op_dtype[iop],
                                         move_references,
                                         &stransfer,
@@ -3302,7 +3329,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                                 mask_dtype->elsize :
                                                 NPY_MAX_INTP,
                                 op_dtype[iop],
-                                PyArray_DESCR(op[iop]),
+                                op_orig_dtype,
                                 mask_dtype,
                                 move_references,
                                 (PyArray_MaskedStridedTransferFn **)&stransfer,
@@ -3317,7 +3344,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                         op_dtype[iop]->elsize,
                                         op_stride,
                                         op_dtype[iop],
-                                        PyArray_DESCR(op[iop]),
+                                        op_orig_dtype,
                                         move_references,
                                         &stransfer,
                                         &transferdata,
