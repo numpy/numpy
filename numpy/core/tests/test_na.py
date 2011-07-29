@@ -434,6 +434,46 @@ def test_array_maskna_view_array_assignment_1D():
     assert_equal(a, [5,6,3,8,9])
     assert_equal(np.isna(b), [0,0,1,0,0])
 
+    # Assigning to a single element should unmask the value
+    b[...] = np.NA
+    b[2] = 10
+    assert_equal(a, [5,6,10,8,9])
+    assert_equal(np.isna(b), [1,1,0,1,1])
+
+    # Assigning to a simple slice should unmask the values
+    b[...] = np.NA
+    b[2:] = 4
+    assert_equal(a, [5,6,4,4,4])
+    assert_equal(np.isna(b), [1,1,0,0,0])
+
+    # Assigning to a strided slice should unmask the values
+    b[...] = np.NA
+    b[3::-2] = 12
+    assert_equal(a, [5,12,4,12,4])
+    assert_equal(np.isna(b), [1,0,1,0,1])
+
+    # Assigning to a boolean index should unmask the values
+    b[...] = np.NA
+    mask = np.array([0,1,1,0,1], dtype='?')
+    b[mask] = 7
+    assert_equal(a, [5,7,7,12,7])
+    assert_equal(np.isna(b), [1,0,0,1,0])
+
+    # Assigning a list to a boolean index should unmask the values
+    b[...] = np.NA
+    mask = np.array([1,0,0,0,1], dtype='?')
+    b[mask] = [8,1]
+    assert_equal(a, [8,7,7,12,1])
+    assert_equal(np.isna(b), [0,1,1,1,0])
+
+    # Assigning a list with NA to a boolean index should unmask non-NA values
+    b[...] = np.NA
+    mask = np.array([0,1,1,0,0], dtype='?')
+    b[mask] = [8,np.NA]
+    assert_equal(a, [8,8,7,12,1])
+    assert_equal(np.isna(b), [1,0,1,1,1])
+
+    # TODO: fancy indexing is next...
 
 if __name__ == "__main__":
     run_module_suite()
