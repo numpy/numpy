@@ -1817,6 +1817,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
     int ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
     int maskop = NIT_MASKOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
     char *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
@@ -1832,6 +1833,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
     char **ptrs = NBF_PTRS(bufferdata), **ad_ptrs = NAD_PTRS(axisdata);
     char **buffers = NBF_BUFFERS(bufferdata);
     char *buffer;
+    npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
 
     npy_intp reduce_outerdim = 0;
     npy_intp *reduce_outerstrides = NULL;
@@ -1934,7 +1936,37 @@ npyiter_copy_from_buffers(NpyIter *iter)
                                     "operand %d (%d items)\n",
                                     (int)iop, (int)op_transfersize);
 
-                if (op_itflags[iop] & NPY_OP_ITFLAG_WRITEMASKED) {
+                /* USE_MASKNA operand */
+                if (iop < first_maskna_op && maskna_indices[iop] >= 0) {
+                    int iop_maskna = maskna_indices[iop];
+                    npy_mask *maskptr;
+                    /* TODO: support WRITEMASKED + USE_MASKNA together */
+
+                    /*
+                     * The mask pointer may be in the buffer or in
+                     * the array, detect which one.
+                     */
+                    delta = (ptrs[iop_maskna] - buffers[iop_maskna]);
+                    if (0 <= delta &&
+                            delta <= buffersize*dtypes[iop_maskna]->elsize) {
+                        maskptr = (npy_mask *)buffers[iop_maskna];
+                    }
+                    else {
+                        maskptr = (npy_mask *)ad_ptrs[iop_maskna];
+                    }
+
+                    PyArray_TransferMaskedStridedToNDim(ndim_transfer,
+                            ad_ptrs[iop], dst_strides, axisdata_incr,
+                            buffer, src_stride,
+                            maskptr, strides[iop_maskna],
+                            dst_coords, axisdata_incr,
+                            dst_shape, axisdata_incr,
+                            op_transfersize, dtypes[iop]->elsize,
+                            (PyArray_MaskedStridedTransferFn *)stransfer,
+                            transferdata);
+                }
+                /* WRITEMASKED operand */
+                else if (op_itflags[iop] & NPY_OP_ITFLAG_WRITEMASKED) {
                     npy_mask *maskptr;
 
                     /*
@@ -1960,6 +1992,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
                             (PyArray_MaskedStridedTransferFn *)stransfer,
                             transferdata);
                 }
+                /* Regular operand */
                 else {
                     PyArray_TransferStridedToNDim(ndim_transfer,
                             ad_ptrs[iop], dst_strides, axisdata_incr,
