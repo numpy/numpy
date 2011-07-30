@@ -238,6 +238,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
         bufferdata = NIT_BUFFERDATA(iter);
         NBF_SIZE(bufferdata) = 0;
         memset(NBF_BUFFERS(bufferdata), 0, nop*NPY_SIZEOF_INTP);
+        memset(NBF_PTRS(bufferdata), 0, nop*NPY_SIZEOF_INTP);
         memset(NBF_READTRANSFERDATA(bufferdata), 0, nop*NPY_SIZEOF_INTP);
         memset(NBF_WRITETRANSFERDATA(bufferdata), 0, nop*NPY_SIZEOF_INTP);
     }
@@ -421,8 +422,27 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
             int iop_maskna = maskna_indices[iop];
             op[iop] = op[iop_maskna];
             Py_INCREF(op[iop]);
-            op_dtype[iop] = PyArray_MASKNA_DTYPE(op[iop]);
-            Py_INCREF(op_dtype[iop]);
+            /* If the operand has a mask, use its dtype */
+            if (PyArray_HASMASKNA(op[iop])) {
+                op_dtype[iop] = PyArray_MASKNA_DTYPE(op[iop]);
+                Py_INCREF(op_dtype[iop]);
+            }
+            /* Otherwise a virtual all-ones operand will be used */
+            else {
+                if (PyArray_HASFIELDS(op[iop])) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "struct-NA is not supported yet");
+                    NpyIter_Deallocate(iter);
+                    return NULL;
+                }
+                else {
+                    op_dtype[iop] = PyArray_DescrFromType(NPY_BOOL);
+                    if (op_dtype[iop] == NULL) {
+                        NpyIter_Deallocate(iter);
+                        return NULL;
+                    }
+                }
+            }
             /* Propagate select flags from the main operand */
             op_itflags[iop] = op_itflags[iop_maskna] &
                                 (NPY_OP_ITFLAG_WRITE |
@@ -501,12 +521,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
             NpyIter_Deallocate(iter);
             return NULL;
         }
-        if (itflags & NPY_ITFLAG_DELAYBUF) {
-            bufferdata = NIT_BUFFERDATA(iter);
-            /* Make the data pointers NULL */
-            memset(NBF_PTRS(bufferdata), 0, nop*NPY_SIZEOF_INTP);
-        }
-        else {
+        if (!(itflags & NPY_ITFLAG_DELAYBUF)) {
             /* Allocate the buffers */
             if (!npyiter_allocate_buffers(iter, NULL)) {
                 NpyIter_Deallocate(iter);
@@ -1292,7 +1307,7 @@ npyiter_prepare_operands(int nop, int first_maskna_op, PyArrayObject **op_in,
     /* If all the operands were NULL, it's an error */
     if (op[0] == NULL) {
         int all_null = 1;
-        for (iop = 1; iop < nop; ++iop) {
+        for (iop = 1; iop < first_maskna_op; ++iop) {
             if (op[iop] != NULL) {
                 all_null = 0;
                 break;
@@ -1304,7 +1319,7 @@ npyiter_prepare_operands(int nop, int first_maskna_op, PyArrayObject **op_in,
                 Py_XDECREF(op_dtype[i]);
             }
             PyErr_SetString(PyExc_ValueError,
-                    "At least one iterator input must be non-NULL");
+                    "At least one iterator operand must be non-NULL");
             return 0;
         }
     }
@@ -1354,7 +1369,7 @@ npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
 
     /*
      * Negative dimension indicates "newaxis", which can
-     * be discarded for printing if its a leading dimension.
+     * be discarded for printing if it's a leading dimension.
      * Find the first non-"newaxis" dimension.
      */
     i = 0;
@@ -3176,6 +3191,7 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
     int iop, iop_maskna, nop = NIT_NOP(iter);
     int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
+    char *op_itflags = NIT_OPITFLAGS(iter);
     npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
@@ -3187,7 +3203,25 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
 
     /* Fill in the reset dataptr array with the mask pointers */
     for (iop = first_maskna_op; iop < nop; ++iop) {
-        op_dataptr[iop] = PyArray_MASKNA_DATA(op[iop]);
+        /* If there's a mask, process that */
+        if (PyArray_HASMASKNA(op[iop])) {
+            op_dataptr[iop] = PyArray_MASKNA_DATA(op[iop]);
+        }
+        /*
+         * Otherwise we create a virtual operand a single one value
+         * broadcast everywhere
+         */
+        else {
+            static char ones_virtual_mask_data = 1;
+
+            op_itflags[iop] |= (NPY_OP_ITFLAG_VIRTUAL |
+                                NPY_OP_ITFLAG_BUFNEVER);
+            op_dataptr[iop] = &ones_virtual_mask_data;
+            if (itflags & NPY_ITFLAG_BUFFER) {
+                NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
+                NBF_PTRS(bufferdata)[iop] = op_dataptr[iop];
+            }
+        }
     }
 
     /* Process the maskna operands, filling in the axisdata */
@@ -3204,9 +3238,11 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
 
             /*
              * The strides of the mask will be zero exactly
-             * where they're zero for the main data
+             * where they're zero for the main data, or will
+             * be zero always if the operand has no NA support and
+             * a virtual mask of all ones is being used.
              */
-            if (strides[iop_maskna] == 0) {
+            if (strides[iop_maskna] == 0 || !PyArray_HASMASKNA(op_cur)) {
                 strides[iop] = 0;
             }
             else {

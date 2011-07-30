@@ -2411,6 +2411,40 @@ def test_iter_maskna():
     for x in it:
         assert_equal(np.isna(x), True)
 
+    # readonly USE_MASKNA iteration of an array without an NA mask
+    # creates a virtual mask
+    it = np.nditer([a_orig,b_orig], [], [['readonly','use_maskna']]*2)
+    for x, y in it:
+        assert_(x.flags.maskna)
+        assert_(not x.flags.ownmaskna)
+        assert_(y.flags.maskna)
+        assert_(not y.flags.ownmaskna)
+        assert_equal(np.isna(x), False)
+        assert_equal(np.isna(y), False)
+
+    # buffered readonly USE_MASKNA iteration of an array without an NA mask
+    # creates a virtual mask
+    it = np.nditer([a_orig,b_orig], ['buffered'], [['readonly','use_maskna']]*2,
+                        op_dtypes=['i4','i8'], casting='unsafe')
+    for x, y in it:
+        assert_(x.flags.maskna)
+        assert_(not x.flags.ownmaskna)
+        assert_(y.flags.maskna)
+        assert_(not y.flags.ownmaskna)
+        assert_equal(np.isna(x), False)
+        assert_equal(np.isna(y), False)
+
+    # writeable USE_MASKNA iteration of an array without an NA mask
+    # is disallowed
+    assert_raises(ValueError, np.nditer, a_orig, [],
+                                [['readwrite','use_maskna']])
+    assert_raises(ValueError, np.nditer, a_orig, [],
+                                [['writeonly','use_maskna']])
+    assert_raises(ValueError, np.nditer, a_orig, ['buffered'],
+                                [['readwrite','use_maskna']])
+    assert_raises(ValueError, np.nditer, a_orig, ['buffered'],
+                                [['writeonly','use_maskna']])
+
     # Assigning NAs and values in an iteration
     a[...] = [0,1,2]
     b_orig[...] = [1,2,2]
