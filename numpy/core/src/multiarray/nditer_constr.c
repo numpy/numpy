@@ -968,6 +968,18 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
                 "be used together with ARRAYMASK");
             return 0;
         }
+        /*
+         * When WRITEMASKED and USE_MASKNA are supported together,
+         * it will probably require that buffering is enabled as well,
+         * because that will need yet another temporary mask buffer to combine
+         * the two masks before doing the masked copies.
+         */
+        if ((op_flags & NPY_ITER_USE_MASKNA) != 0) {
+            PyErr_SetString(PyExc_ValueError,
+                "The combination of iterator flags WRITEMASKED "
+                "and USE_MASKNA is not yet supported");
+            return 0;
+        }
         *op_itflags |= NPY_OP_ITFLAG_WRITEMASKED;
     }
 
@@ -3265,6 +3277,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                         **writetransferfn = NBF_WRITETRANSFERFN(bufferdata);
     NpyAuxData **readtransferdata = NBF_READTRANSFERDATA(bufferdata),
                **writetransferdata = NBF_WRITETRANSFERDATA(bufferdata);
+    npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
 
     PyArray_StridedTransferFn *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
@@ -3313,9 +3326,39 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                 int move_references = 1;
 
                 /*
-                 * If the operand is WRITEMASKED, use a masked transfer fn.
+                 * If the operand has USE_MASKNA, use a masked transfer fn.
+                 * The masks for the maskna operands can be copied straight
+                 * unless the operand is also WRITEMASKED.
                  */
-                if (flags & NPY_OP_ITFLAG_WRITEMASKED) {
+                if (iop < first_maskna_op && maskna_indices[iop] >= 0) {
+                    /* TODO: support USE_MASKNA + WRITEMASKED together */
+                    PyArray_Descr *mask_dtype =
+                                    PyArray_MASKNA_DTYPE(op[iop]);
+                    int iop_maskna = maskna_indices[iop];
+
+                    /*
+                     * If the mask's stride is contiguous, use it, otherwise
+                     * the mask may or may not be buffered, so the stride
+                     * could be inconsistent.
+                     */
+                    if (PyArray_GetMaskedDTypeTransferFunction(
+                                (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
+                                op_dtype[iop]->elsize,
+                                op_stride,
+                            (flags & NPY_OP_ITFLAG_REDUCE) ? NPY_MAX_INTP :
+                                                   strides[iop_maskna],
+                                op_dtype[iop],
+                                op_orig_dtype,
+                                mask_dtype,
+                                move_references,
+                                (PyArray_MaskedStridedTransferFn **)&stransfer,
+                                &transferdata,
+                                &needs_api) != NPY_SUCCEED) {
+                        goto fail;
+                    }
+                }
+                /* If the operand is WRITEMASKED, use a masked transfer fn */
+                else if (flags & NPY_OP_ITFLAG_WRITEMASKED) {
                     int maskop = NIT_MASKOP(iter);
                     PyArray_Descr *mask_dtype = PyArray_DESCR(op[maskop]);
 
