@@ -2121,7 +2121,7 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
         PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
         int i_maskna = maskna_indices[i];
 
-        fret->maskna_dtype = PyArray_MASKNA_DTYPE(obj);
+        fret->maskna_dtype = NpyIter_GetDescrArray(self->iter)[i_maskna];
         Py_INCREF(fret->maskna_dtype);
         fret->maskna_data = self->dataptrs[i_maskna];
         if (has_external_loop) {
@@ -2265,7 +2265,7 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
         PyArrayObject_fieldaccess *ftmp = (PyArrayObject_fieldaccess *)tmp;
         int i_maskna = maskna_indices[i];
 
-        ftmp->maskna_dtype = PyArray_MASKNA_DTYPE(obj);
+        ftmp->maskna_dtype = NpyIter_GetDescrArray(self->iter)[i_maskna];
         Py_INCREF(ftmp->maskna_dtype);
         ftmp->maskna_data = self->dataptrs[i_maskna];
         if (has_external_loop) {
