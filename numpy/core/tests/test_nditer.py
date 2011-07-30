@@ -2400,8 +2400,10 @@ def test_iter_writemasked():
     assert_equal(a, [3,3,2.5])
 
 def test_iter_maskna():
-    a = np.zeros((3,), dtype='f8', maskna=True)
-    b = np.zeros((3,), dtype='f4')
+    a_orig = np.zeros((3,), dtype='f8')
+    b_orig = np.zeros((3,), dtype='f4')
+    a = a_orig.view(maskna=True)
+    b = b_orig.view(maskna=True)
 
     # Default iteration with NA mask
     a[...] = np.NA
@@ -2411,8 +2413,8 @@ def test_iter_maskna():
 
     # Assigning NAs and values in an iteration
     a[...] = [0,1,2]
-    b[...] = [1,2,2]
-    it = np.nditer([a,b], [], [['writeonly','use_maskna'], ['readonly']])
+    b_orig[...] = [1,2,2]
+    it = np.nditer([a,b_orig], [], [['writeonly','use_maskna'], ['readonly']])
     for x, y in it:
         if y == 2:
             x[...] = np.NA
@@ -2431,6 +2433,21 @@ def test_iter_maskna():
         x[...] = y
     assert_equal(a[1], 0)
     assert_equal(np.isna(a), [1,0,1])
+
+    # Copying values with buffering
+    a_orig[...] = [1,2,3]
+    b_orig[...] = [4,5,6]
+    a[...] = [np.NA, np.NA, 5]
+    b[...] = [np.NA, 3, np.NA]
+    it = np.nditer([a,b], ['buffered'], [['writeonly','use_maskna'],
+                               ['readonly','use_maskna']],
+                    op_dtypes=['i4','i4'],
+                    casting='unsafe')
+    for x, y in it:
+        x[...] = y
+    assert_equal(a[1], 3)
+    assert_equal(np.isna(a), [1,0,1])
+    assert_equal(a_orig, [1,3,3])
 
 if __name__ == "__main__":
     run_module_suite()
