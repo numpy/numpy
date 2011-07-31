@@ -215,18 +215,6 @@ PyUFunc_clearfperr()
     PyUFunc_getfperr();
 }
 
-
-#define NO_UFUNCLOOP        0
-#define ZERO_EL_REDUCELOOP  0
-#define ONE_UFUNCLOOP       1
-#define ONE_EL_REDUCELOOP   1
-#define NOBUFFER_UFUNCLOOP  2
-#define NOBUFFER_REDUCELOOP 2
-#define BUFFER_UFUNCLOOP    3
-#define BUFFER_REDUCELOOP   3
-#define SIGNATURE_NOBUFFER_UFUNCLOOP 4
-
-
 /*
  * This function analyzes the input arguments
  * and determines an appropriate __array_prepare__ function to call
@@ -721,9 +709,10 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                 PyObject **out_extobj,
                 PyObject **out_typetup,
                 int *out_subok,
-                PyArrayObject **out_wheremask)
+                PyArrayObject **out_wheremask,
+                int *out_use_maskna)
 {
-    npy_intp i, nargs, nin = self->nin;
+    int i, nargs, nin = self->nin;
     PyObject *obj, *context;
     PyObject *str_key_obj = NULL;
     char *ufunc_name;
@@ -745,6 +734,9 @@ static int get_ufunc_arguments(PyUFuncObject *self,
         return -1;
     }
 
+    /* Need USE_MASKNA mode if any input has an NA mask */
+    *out_use_maskna = 0;
+
     /* Get input arguments */
     for(i = 0; i < nin; ++i) {
         obj = PyTuple_GET_ITEM(args, i);
@@ -762,10 +754,14 @@ static int get_ufunc_arguments(PyUFuncObject *self,
             context = NULL;
         }
         out_op[i] = (PyArrayObject *)PyArray_FromAny(obj,
-                                        NULL, 0, 0, 0, context);
+                                    NULL, 0, 0, NPY_ARRAY_ALLOWNA, context);
         Py_XDECREF(context);
         if (out_op[i] == NULL) {
             return -1;
+        }
+        /* If the array has an NA mask, enable USE_MASKNA mode */
+        if (PyArray_HASMASKNA(out_op[i])) {
+            *out_use_maskna = 1;
         }
         if (!any_flexible &&
                 PyTypeNum_ISFLEXIBLE(PyArray_DESCR(out_op[i])->type_num)) {
@@ -1423,9 +1419,43 @@ execute_ufunc_loop(PyUFuncObject *self,
 }
 
 /*
+ * This function combines the 'nin' input masks together, copying the
+ * result into each of the 'nout' output masks.
+ */
+static void
+combine_ufunc_maskna(char **masks, npy_intp *strides, npy_intp count,
+                        int nin, int nout)
+{
+    char *masks_copies[NPY_MAXARGS];
+    npy_intp i;
+    int iop;
+
+    /* Make copies of the mask pointers to modify */
+    memcpy(masks_copies, masks, (nin + nout) * sizeof(char *));
+
+    /*
+     * TODO: This code only works for NPY_BOOL masks, will need to
+     *       generalize this for multi-NA.
+     */
+    for (i = 0; i < count; ++i) {
+        char maskvalue = *masks_copies[0];
+        masks_copies[0] += strides[0];
+        for (iop = 1; iop < nin; ++iop) {
+            maskvalue &= *masks_copies[iop];
+            masks_copies[iop] += strides[iop];
+        }
+        for (iop = nin; iop < nin + nout; ++iop) {
+            *masks_copies[iop] = maskvalue;
+            masks_copies[iop] += strides[iop];
+        }
+    }
+}
+
+/*
  * nin             - number of inputs
  * nout            - number of outputs
  * wheremask       - if not NULL, the 'where=' parameter to the ufunc.
+ * use_maskna      - if non-zero, flag USE_MASKNA for all the operands
  * op              - the operands (nin + nout of them)
  * order           - the loop execution order/output memory order
  * buffersize      - how big of a buffer to use
@@ -1436,6 +1466,7 @@ execute_ufunc_loop(PyUFuncObject *self,
 static int
 execute_ufunc_masked_loop(PyUFuncObject *self,
                     PyArrayObject *wheremask,
+                    int use_maskna,
                     PyArrayObject **op,
                     PyArray_Descr **dtype,
                     NPY_ORDER order,
@@ -1445,12 +1476,12 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
                     PyUFuncGenericMaskedFunction innerloop,
                     NpyAuxData *innerloopdata)
 {
-    npy_intp i, nin = self->nin, nout = self->nout;
-    npy_intp nop = nin + nout;
+    int i, nin = self->nin, nout = self->nout;
+    int nop = nin + nout;
     npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
-    char *baseptrs[NPY_MAXARGS];
     int needs_api;
+    npy_intp default_op_in_flags = 0, default_op_out_flags = 0;
 
     NpyIter_IterNextFunc *iternext;
     char **dataptr;
@@ -1469,22 +1500,31 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
         }
         op[nop] = wheremask;
         dtype[nop] = NULL;
+        default_op_out_flags |= NPY_ITER_WRITEMASKED;
+    }
+
+    if (use_maskna) {
+        default_op_in_flags |= NPY_ITER_USE_MASKNA;
+        default_op_out_flags |= NPY_ITER_USE_MASKNA;
     }
 
     /* Set up the flags */
     for (i = 0; i < nin; ++i) {
-        op_flags[i] = NPY_ITER_READONLY|
+        op_flags[i] = default_op_in_flags |
+                      NPY_ITER_READONLY |
                       NPY_ITER_ALIGNED;
     }
     for (i = nin; i < nop; ++i) {
-        op_flags[i] = NPY_ITER_WRITEONLY|
-                      NPY_ITER_ALIGNED|
-                      NPY_ITER_ALLOCATE|
-                      NPY_ITER_NO_BROADCAST|
-                      NPY_ITER_NO_SUBTYPE|
-                      NPY_ITER_WRITEMASKED;
+        op_flags[i] = default_op_out_flags |
+                      NPY_ITER_WRITEONLY |
+                      NPY_ITER_ALIGNED |
+                      NPY_ITER_ALLOCATE |
+                      NPY_ITER_NO_BROADCAST |
+                      NPY_ITER_NO_SUBTYPE;
     }
-    op_flags[nop] = NPY_ITER_READONLY|NPY_ITER_ARRAYMASK;
+    if (wheremask != NULL) {
+        op_flags[nop] = NPY_ITER_READONLY | NPY_ITER_ARRAYMASK;
+    }
 
     NPY_UF_DBG_PRINT("Making iterator\n");
 
@@ -1494,12 +1534,11 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
      * is faster to calculate.
      */
     iter = NpyIter_AdvancedNew(nop + ((wheremask != NULL) ? 1 : 0), op,
-                        NPY_ITER_EXTERNAL_LOOP|
-                        NPY_ITER_REFS_OK|
-                        NPY_ITER_ZEROSIZE_OK|
-                        NPY_ITER_BUFFERED|
-                        NPY_ITER_GROWINNER|
-                        NPY_ITER_DELAY_BUFALLOC,
+                        NPY_ITER_EXTERNAL_LOOP |
+                        NPY_ITER_REFS_OK |
+                        NPY_ITER_ZEROSIZE_OK |
+                        NPY_ITER_BUFFERED |
+                        NPY_ITER_GROWINNER,
                         order, NPY_UNSAFE_CASTING,
                         op_flags, dtype,
                         0, NULL, NULL, buffersize);
@@ -1532,22 +1571,16 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
     /* Only do the loop if the iteration size is non-zero */
     if (NpyIter_GetIterSize(iter) != 0) {
 
-        /* Reset the iterator with the base pointers from the wrapped outputs */
-        for (i = 0; i < nin; ++i) {
-            baseptrs[i] = PyArray_BYTES(op_it[i]);
-        }
+        /* Validate that the prepare_ufunc_output didn't mess with pointers */
         for (i = nin; i < nop; ++i) {
-            baseptrs[i] = PyArray_BYTES(op[i]);
+            if (PyArray_BYTES(op[i]) != PyArray_BYTES(op_it[i])) {
+                PyErr_SetString(PyExc_ValueError,
+                        "The __array_prepare__ functions modified the data "
+                        "pointer addresses in an invalid fashion");
+                NpyIter_Deallocate(iter);
+                return -1;
+            }
         }
-        if (wheremask != NULL) {
-            baseptrs[nop] = PyArray_BYTES(op[nop]);
-        }
-        NPY_UF_DBG_PRINT("reset base pointers call:\n");
-        if (NpyIter_ResetBasePointers(iter, baseptrs, NULL) != NPY_SUCCEED) {
-            NpyIter_Deallocate(iter);
-            return -1;
-        }
-        NPY_UF_DBG_PRINT("finished reset base pointers call\n");
 
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
@@ -1565,10 +1598,24 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
 
         NPY_UF_DBG_PRINT("Actual inner loop:\n");
         /* Execute the loop */
-        do {
-            NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)*count_ptr);
-            innerloop(dataptr, count_ptr, stride, innerloopdata);
-        } while (iternext(iter));
+        if (wheremask != NULL) {
+            do {
+                NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)*count_ptr);
+                innerloop(dataptr, dataptr[nop], count_ptr,
+                                stride, stride[nop], innerloopdata);
+            } while (iternext(iter));
+        }
+        else {
+            do {
+                NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)*count_ptr);
+                /* Combine the input NA masks for the output */
+                combine_ufunc_maskna(&dataptr[nop], &stride[nop], *count_ptr,
+                                        nin, nout);
+                /* Evaluate the ufunc wherever the NA mask says */
+                innerloop(dataptr, dataptr[nop + nin], count_ptr,
+                                stride, stride[nop + nin], innerloopdata);
+            } while (iternext(iter));
+        }
 
         if (!needs_api) {
             NPY_END_THREADS;
@@ -1653,6 +1700,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
 
     npy_intp *inner_strides_tmp, *ax_strides_tmp[NPY_MAXDIMS];
     int core_dim_ixs_size, *core_dim_ixs;
+    int use_maskna = 0;
 
     /* The __array_prepare__ function to call for each output */
     PyObject *arr_prep[NPY_MAXARGS];
@@ -1695,8 +1743,14 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     /* Get all the arguments */
     retval = get_ufunc_arguments(self, args, kwds,
                 op, &order, &casting, &extobj,
-                &type_tup, &subok, NULL);
+                &type_tup, &subok, NULL, &use_maskna);
     if (retval < 0) {
+        goto fail;
+    }
+
+    if (use_maskna) {
+        PyErr_SetString(PyExc_ValueError,
+                "Generalized ufuncs do not support ndarrays with NA masks");
         goto fail;
     }
 
@@ -2056,7 +2110,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
      */
     PyObject *arr_prep_args = NULL;
 
-    int trivial_loop_ok = 0;
+    int trivial_loop_ok = 0, use_maskna = 0;
 
     NPY_ORDER order = NPY_KEEPORDER;
     /*
@@ -2095,17 +2149,28 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     /* Get all the arguments */
     retval = get_ufunc_arguments(self, args, kwds,
                 op, &order, &casting, &extobj,
-                &type_tup, &subok, &wheremask);
+                &type_tup, &subok, &wheremask, &use_maskna);
     if (retval < 0) {
         goto fail;
     }
 
     /*
-     * For now just the where mask triggers this, but later arrays
-     * with missing data will trigger it as well.
+     * Use the masked loop if either an input had an NA mask or a wheremask
+     * was specified.
      */
-    if (wheremask != NULL) {
+    if (wheremask != NULL || use_maskna) {
         usemaskedloop = 1;
+
+        /*
+         * TODO: Implement support for this (requires more work in the
+         *       iterator first)
+         */
+        if (wheremask && use_maskna) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "Ufuncs do not work with NA masked arrays and "
+                    "the where= parameter at the same time yet");
+            goto fail;
+        }
     }
 
     /* Get the buffersize, errormask, and error object globals */
@@ -2222,7 +2287,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     if (usemaskedloop) {
         NPY_UF_DBG_PRINT("Executing masked inner loop\n");
 
-        retval = execute_ufunc_masked_loop(self, wheremask,
+        retval = execute_ufunc_masked_loop(self, wheremask, use_maskna,
                             op, dtype, order,
                             buffersize, arr_prep, arr_prep_args,
                             masked_innerloop, masked_innerloopdata);
@@ -3795,8 +3860,11 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
                 continue;
             }
         }
-        /* default behavior */
-        retobj[i] = PyArray_Return(mps[j]);
+        else {
+            /* default behavior */
+            retobj[i] = PyArray_Return(mps[j]);
+        }
+
     }
 
     if (self->nout == 1) {

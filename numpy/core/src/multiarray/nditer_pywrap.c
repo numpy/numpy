@@ -2117,7 +2117,6 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
 
     /* If this is a USE_MASKNA operand, include the mask */
     if (maskna_indices[i] >= 0) {
-        PyArrayObject *obj = NpyIter_GetOperandArray(self->iter)[i];
         PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
         int i_maskna = maskna_indices[i];
 
@@ -2261,7 +2260,6 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
     }
     /* If this is a USE_MASKNA operand, include the mask */
     if (maskna_indices[i] >= 0) {
-        PyArrayObject *obj = NpyIter_GetOperandArray(self->iter)[i];
         PyArrayObject_fieldaccess *ftmp = (PyArrayObject_fieldaccess *)tmp;
         int i_maskna = maskna_indices[i];
 

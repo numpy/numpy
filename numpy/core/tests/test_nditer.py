@@ -2487,6 +2487,11 @@ def test_iter_maskna():
 
     # WRITEMASKED and MASKNA aren't supported together yet
     mask = np.array([1,1,0], dtype='?')
+    assert_raises(ValueError, np.nditer, [a,b,mask], [],
+                                [['writeonly','use_maskna','writemasked'],
+                                 ['readonly','use_maskna'],
+                                 ['readonly','arraymask']])
+    # when they are supported together, will probably require buffering
     assert_raises(ValueError, np.nditer, [a,b,mask], ['buffered'],
                                 [['writeonly','use_maskna','writemasked'],
                                  ['readonly','use_maskna'],
