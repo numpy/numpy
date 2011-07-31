@@ -3197,9 +3197,14 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
     npy_intp sizeof_axisdata;
     PyArrayObject **op = NIT_OPERANDS(iter), *op_cur;
     char **op_dataptr = NIT_RESETDATAPTR(iter);
+    NpyIter_BufferData *bufferdata = NULL;
 
     axisdata = NIT_AXISDATA(iter);
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
+
+    if (itflags & NPY_ITFLAG_BUFFER) {
+        bufferdata = NIT_BUFFERDATA(iter);
+    }
 
     /* Fill in the reset dataptr array with the mask pointers */
     for (iop = first_maskna_op; iop < nop; ++iop) {
@@ -3218,7 +3223,6 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
                                 NPY_OP_ITFLAG_BUFNEVER);
             op_dataptr[iop] = &ones_virtual_mask_data;
             if (itflags & NPY_ITFLAG_BUFFER) {
-                NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
                 NBF_PTRS(bufferdata)[iop] = op_dataptr[iop];
             }
         }
@@ -3265,6 +3269,23 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
                 NPY_SIZEOF_INTP*(nop - first_maskna_op));
 
         NIT_ADVANCE_AXISDATA(axisdata, 1);
+    }
+
+    /* Initialize the strides of any BUFNEVER mask operands */
+    if (itflags & NPY_ITFLAG_BUFFER) {
+        npy_intp *strides = NBF_STRIDES(bufferdata);
+        axisdata = NIT_AXISDATA(iter);
+
+        for (iop = first_maskna_op; iop < nop; ++iop) {
+            if (op_itflags[iop] & NPY_OP_ITFLAG_BUFNEVER) {
+                if (PyArray_HASMASKNA(op[iop])) {
+                    strides[iop] = NAD_STRIDES(axisdata)[iop];
+                }
+                else {
+                    strides[iop] = 0;
+                }
+            }
+        }
     }
 
     return 1;

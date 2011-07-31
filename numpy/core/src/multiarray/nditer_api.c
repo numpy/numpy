@@ -1396,7 +1396,7 @@ NpyIter_DebugPrint(NpyIter *iter)
     if (itflags&NPY_ITFLAG_REUSE_REDUCE_LOOPS)
         printf("REUSE_REDUCE_LOOPS ");
     if (itflags&NPY_ITFLAG_HAS_MASKNA_OP)
-        printf("ITFLAG_HAS_MASKNA_OP ");
+        printf("HAS_MASKNA_OP ");
 
     printf("\n");
     printf("| NDim: %d\n", (int)ndim);
