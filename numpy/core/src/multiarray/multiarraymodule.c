@@ -2574,17 +2574,30 @@ array_correlate2(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 static PyObject *
 array_arange(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws) {
     PyObject *o_start = NULL, *o_stop = NULL, *o_step = NULL, *range=NULL;
-    static char *kwd[]= {"start", "stop", "step", "dtype", NULL};
+    static char *kwd[]= {"start", "stop", "step", "dtype", "maskna", NULL};
     PyArray_Descr *typecode = NULL;
+    int maskna = 0;
 
-    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&", kwd,
-                &o_start, &o_stop, &o_step,
-                PyArray_DescrConverter2, &typecode)) {
+    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|OOO&i", kwd,
+                &o_start,
+                &o_stop,
+                &o_step,
+                PyArray_DescrConverter2, &typecode,
+                &maskna)) {
         Py_XDECREF(typecode);
         return NULL;
     }
     range = PyArray_ArangeObj(o_start, o_stop, o_step, typecode);
     Py_XDECREF(typecode);
+
+    /* Allocate an NA mask if requested */
+    if (maskna) {
+        if (PyArray_AllocateMaskNA((PyArrayObject *)range, 1, 0, 1) < 0) {
+            Py_DECREF(range);
+            return NULL;
+        }
+    }
+
     return range;
 }
 

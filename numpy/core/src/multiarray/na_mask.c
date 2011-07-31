@@ -64,8 +64,7 @@ PyArray_ContainsNA(PyArrayObject *arr)
         }
 
         /* Do the iteration */
-        memset(coord, 0, ndim * sizeof(npy_intp));
-        do {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape, strides, data) {
             char *d = data;
             /* Process the innermost dimension */
             for (i = 0; i < shape[0]; ++i, d += strides[0]) {
@@ -73,19 +72,65 @@ PyArray_ContainsNA(PyArrayObject *arr)
                     return 1;
                 }
             }
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, strides, data);
+    }
 
-            /* Increment to the next n-dimensional coordinate */
-            for (idim = 1; idim < ndim; ++idim) {
-                if (++coord[idim] == shape[idim]) {
-                    coord[idim] = 0;
-                    data -= (shape[idim] - 1) * strides[idim];
-                }
-                else {
-                    data += strides[idim];
-                    break;
-                }
+    return 0;
+}
+
+/*
+ * Assigns the mask value to all the NA mask elements of
+ * the array.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_AssignMaskNA(PyArrayObject *arr, npy_mask maskvalue)
+{
+    int idim, ndim;
+    char *data;
+    npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+    npy_intp i, coord[NPY_MAXDIMS];
+
+    /* Need NA support to fill the NA mask */
+    if (!PyArray_HASMASKNA(arr)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot fill the NA mask of an array which has no NA mask");
+        return -1;
+    }
+
+    if (PyArray_HASFIELDS(arr)) {
+        /* TODO: need to add field-NA support */
+        PyErr_SetString(PyExc_ValueError,
+                "field-NA support is not implemented yet");
+        return -1;
+    }
+
+    /* Use raw iteration with no heap memory allocation */
+    if (PyArray_PrepareOneRawArrayIter(
+                    PyArray_NDIM(arr), PyArray_MASKNA_DATA(arr),
+                    PyArray_DIMS(arr), PyArray_MASKNA_STRIDES(arr),
+                    &ndim, &data, shape, strides) < 0) {
+        PyErr_Clear();
+        return 1;
+    }
+
+    /* Special case contiguous inner stride */
+    if (strides[0] == 1) {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape, strides, data) {
+            /* Process the innermost dimension */
+            memset(data, maskvalue, shape[0]);
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, strides, data);
+    }
+    /* General inner stride */
+    else {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape, strides, data) {
+            char *d = data;
+            /* Process the innermost dimension */
+            for (i = 0; i < shape[0]; ++i, d += strides[0]) {
+                *(npy_mask *)d = maskvalue;
             }
-        } while (i < ndim);
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, strides, data);
     }
 
     return 0;
@@ -243,8 +288,6 @@ PyArray_AssignNA(PyArrayObject *arr, NpyNA *na)
 {
     NpyNA_fields *fna = (NpyNA_fields *)na;
     char maskvalue;
-    PyArray_Descr *maskdtype;
-    npy_intp strides[NPY_MAXDIMS];
 
     if (!PyArray_HASMASKNA(arr)) {
         PyErr_SetString(PyExc_ValueError,
@@ -269,25 +312,7 @@ PyArray_AssignNA(PyArrayObject *arr, NpyNA *na)
         maskvalue = (char)NpyMaskValue_Create(0, fna->payload);
     }
 
-    /* Copy the mask value to arr's mask */
-    maskdtype = PyArray_DescrFromType(maskvalue == 0 ? NPY_BOOL
-                                                     : NPY_MASK);
-    if (maskdtype == NULL) {
-        return -1;
-    }
-    memset(strides, 0, PyArray_NDIM(arr) * sizeof(npy_intp));
-    if (PyArray_CastRawNDimArrays(PyArray_NDIM(arr),
-                        PyArray_DIMS(arr),
-                        &maskvalue, PyArray_MASKNA_DATA(arr),
-                        strides, PyArray_MASKNA_STRIDES(arr),
-                        maskdtype, PyArray_MASKNA_DTYPE(arr),
-                        0) < 0) {
-        Py_DECREF(maskdtype);
-        return -1;
-    }
-
-    Py_DECREF(maskdtype);
-    return 0;
+    return PyArray_AssignMaskNA(arr, maskvalue);
 }
 
 /*
