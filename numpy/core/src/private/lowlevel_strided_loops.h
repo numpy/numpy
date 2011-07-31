@@ -327,6 +327,10 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
  * not be stored as a PyArrayObject. For example, to iterate over
  * the NA mask of an array.
  *
+ * You can use this together with NPY_RAW_ITER_START and
+ * NPY_RAW_ITER_ONE_NEXT to handle the looping boilerplate of everything
+ * but the innermost loop (which is for idim == 0).
+ *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
@@ -334,6 +338,26 @@ PyArray_PrepareOneRawArrayIter(int ndim, char *data,
                             npy_intp *shape, npy_intp *strides,
                             int *out_ndim, char **out_data,
                             npy_intp *out_shape, npy_intp *out_strides);
+
+/* Start raw iteration */
+#define NPY_RAW_ITER_START(idim, ndim, coord, shape, strides, data) \
+        memset((coord), 0, (ndim) * sizeof(coord[0])); \
+        do {
+
+/* Increment to the next n-dimensional coordinate for one raw array */
+#define NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, strides, data) \
+            for ((idim) = 1; (idim) < (ndim); ++(idim)) { \
+                if (++(coord)[idim] == (shape)[idim]) { \
+                    (coord)[idim] = 0; \
+                    (data) -= ((shape)[idim] - 1) * (strides)[idim]; \
+                } \
+                else { \
+                    (data) += (strides)[idim]; \
+                    break; \
+                } \
+            } \
+        } while ((idim) < (ndim)); \
+
 
 
 /*
