@@ -367,7 +367,7 @@ array_dealloc(PyArrayObject *self)
 
     /* If the array has an NA mask, free its associated data */
     if (fa->flags & NPY_ARRAY_MASKNA) {
-        Py_DECREF(fa->maskna_dtype);
+        Py_XDECREF(fa->maskna_dtype);
         if (fa->flags & NPY_ARRAY_OWNMASKNA) {
             PyDataMem_FREE(fa->maskna_data);
         }

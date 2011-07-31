@@ -2450,7 +2450,8 @@ get_binary_op_function(PyUFuncObject *self, int *otype,
 static PyObject *
 PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
                     PyArrayObject *out,
-                    int axis, int otype, int operation, char *opname)
+                    int axis, int otype, int skipna,
+                    int operation, char *opname)
 {
     PyArrayObject *op[2];
     PyArray_Descr *op_dtypes[2] = {NULL, NULL};
@@ -2458,7 +2459,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
     int *op_axes[2] = {op_axes_arrays[0], op_axes_arrays[1]};
     npy_uint32 op_flags[2];
     int i, idim, ndim, otype_final;
-    int needs_api, need_outer_iterator;
+    int needs_api, need_outer_iterator, use_maskna = 0;
 
     NpyIter *iter = NULL, *iter_inner = NULL;
 
@@ -2481,6 +2482,19 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
     PyObject_Print((PyObject *)PyArray_DESCR(arr), stdout, 0);
     printf("\n");
 #endif
+
+    use_maskna = PyArray_HASMASKNA(arr);
+    if (use_maskna) {
+        if (operation == UFUNC_ACCUMULATE) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "ufunc accumulate doesn't support NA masked arrays yet");
+            return NULL;
+        }
+    }
+    /* If there's no NA mask, there are no NAs to skip */
+    else {
+        skipna = 0;
+    }
 
     if (PyUFunc_GetPyValues(opname, &buffersize, &errormask, &errobj) < 0) {
         return NULL;
@@ -2554,18 +2568,23 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
     }
 
     /* The per-operand flags for the outer loop */
-    op_flags[0] = NPY_ITER_READWRITE|
-                  NPY_ITER_NO_BROADCAST|
-                  NPY_ITER_ALLOCATE|
+    op_flags[0] = NPY_ITER_READWRITE |
+                  NPY_ITER_NO_BROADCAST |
+                  NPY_ITER_ALLOCATE |
                   NPY_ITER_NO_SUBTYPE;
     op_flags[1] = NPY_ITER_READONLY;
+
+    if (use_maskna) {
+        op_flags[0] |= NPY_ITER_USE_MASKNA;
+        op_flags[1] |= NPY_ITER_USE_MASKNA;
+    }
 
     op[0] = out;
     op[1] = arr;
 
     need_outer_iterator = (ndim > 1);
     if (operation == UFUNC_ACCUMULATE) {
-        /* This is because we can't buffer, so must do UPDATEIFCOPY */
+        /* We can't buffer, so must do UPDATEIFCOPY */
         if (!PyArray_ISALIGNED(arr) || (out && !PyArray_ISALIGNED(out)) ||
                 !PyArray_EquivTypes(op_dtypes[0], PyArray_DESCR(arr)) ||
                 (out &&
@@ -2655,11 +2674,17 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             if (out == NULL) {
                 goto fail;
             }
+
+            if (use_maskna) {
+                if (PyArray_AllocateMaskNA(out, 1, 0, 1) < 0) {
+                    goto fail;
+                }
+            }
         }
     }
 
     /*
-     * If the reduction unit has size zero, either return the reduction
+     * If the reduction axis has size zero, either return the reduction
      * unit for UFUNC_REDUCE, or return the zero-sized output array
      * for UFUNC_ACCUMULATE.
      */
@@ -2709,14 +2734,20 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
             op_flags[1] = NPY_ITER_READONLY|
                           NPY_ITER_ALIGNED;
 
+            if (use_maskna) {
+                op_flags[0] |= NPY_ITER_USE_MASKNA;
+                op_flags[1] |= NPY_ITER_USE_MASKNA;
+            }
+
             op_axes[0][0] = -1;
             op_axes[1][0] = axis;
 
-            iter_inner = NpyIter_AdvancedNew(2, op, NPY_ITER_EXTERNAL_LOOP|
-                                       NPY_ITER_BUFFERED|
-                                       NPY_ITER_DELAY_BUFALLOC|
-                                       NPY_ITER_GROWINNER|
-                                       NPY_ITER_REDUCE_OK|
+            iter_inner = NpyIter_AdvancedNew(2, op,
+                                       NPY_ITER_EXTERNAL_LOOP |
+                                       NPY_ITER_BUFFERED |
+                                       NPY_ITER_DELAY_BUFALLOC |
+                                       NPY_ITER_GROWINNER |
+                                       NPY_ITER_REDUCE_OK |
                                        NPY_ITER_REFS_OK,
                                        NPY_CORDER, NPY_UNSAFE_CASTING,
                                        op_flags, op_dtypes,
@@ -3061,18 +3092,18 @@ fail:
  */
 static PyObject *
 PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
-        int axis, int otype)
+        int axis, int otype, int skipna)
 {
-    return PyUFunc_ReductionOp(self, arr, out, axis, otype,
+    return PyUFunc_ReductionOp(self, arr, out, axis, otype, skipna,
                                 UFUNC_REDUCE, "reduce");
 }
 
 
 static PyObject *
 PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
-                   int axis, int otype)
+                   int axis, int otype, int skipna)
 {
-    return PyUFunc_ReductionOp(self, arr, out, axis, otype,
+    return PyUFunc_ReductionOp(self, arr, out, axis, otype, skipna,
                                 UFUNC_ACCUMULATE, "accumulate");
 }
 
@@ -3097,7 +3128,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
  */
 static PyObject *
 PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
-                 PyArrayObject *out, int axis, int otype)
+                 PyArrayObject *out, int axis, int otype, int skipna)
 {
     PyArrayObject *op[3];
     PyArray_Descr *op_dtypes[3] = {NULL, NULL, NULL};
@@ -3123,6 +3154,12 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
     PyObject *errobj = NULL;
+
+    if (PyArray_HASMASKNA(arr)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                    "ufunc reduceat doesn't support NA masked arrays yet");
+        return NULL;
+    }
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -3468,8 +3505,10 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     PyArrayObject *indices = NULL;
     PyArray_Descr *otype = NULL;
     PyArrayObject *out = NULL;
-    static char *kwlist1[] = {"array", "axis", "dtype", "out", NULL};
-    static char *kwlist2[] = {"array", "indices", "axis", "dtype", "out", NULL};
+    int skipna = 0;
+    static char *kwlist1[] = {"array", "axis", "dtype", "out", "skipna", NULL};
+    static char *kwlist2[] = {"array", "indices", "axis",
+                                "dtype", "out", "skipna", NULL};
     static char *_reduce_type[] = {"reduce", "accumulate", "reduceat", NULL};
 
     if (self == NULL) {
@@ -3498,10 +3537,13 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(PyArray_INTP);
-        if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iO&O&", kwlist2,
-                                        &op, &obj_ind, &axis,
+        if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iO&O&i", kwlist2,
+                                        &op,
+                                        &obj_ind,
+                                        &axis,
                                         PyArray_DescrConverter2, &otype,
-                                        PyArray_OutputConverter, &out)) {
+                                        PyArray_OutputConverter, &out,
+                                        &skipna)) {
             Py_XDECREF(otype);
             return NULL;
         }
@@ -3513,10 +3555,12 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
         }
     }
     else {
-        if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iO&O&", kwlist1,
-                                        &op, &axis,
+        if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iO&O&i", kwlist1,
+                                        &op,
+                                        &axis,
                                         PyArray_DescrConverter2, &otype,
-                                        PyArray_OutputConverter, &out)) {
+                                        PyArray_OutputConverter, &out,
+                                        &skipna)) {
             Py_XDECREF(otype);
             return NULL;
         }
@@ -3528,7 +3572,8 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     else {
         context = NULL;
     }
-    mp = (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0, 0, context);
+    mp = (PyArrayObject *)PyArray_FromAny(op, NULL, 0, 0,
+                                            NPY_ARRAY_ALLOWNA, context);
     Py_XDECREF(context);
     if (mp == NULL) {
         return NULL;
@@ -3579,14 +3624,14 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
             && ((strcmp(self->name,"add") == 0)
                 || (strcmp(self->name,"multiply") == 0))) {
             if (PyTypeNum_ISBOOL(typenum)) {
-                typenum = PyArray_LONG;
+                typenum = NPY_LONG;
             }
             else if ((size_t)PyArray_DESCR(mp)->elsize < sizeof(long)) {
                 if (PyTypeNum_ISUNSIGNED(typenum)) {
-                    typenum = PyArray_ULONG;
+                    typenum = NPY_ULONG;
                 }
                 else {
-                    typenum = PyArray_LONG;
+                    typenum = NPY_LONG;
                 }
             }
         }
@@ -3597,15 +3642,15 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     switch(operation) {
     case UFUNC_REDUCE:
         ret = (PyArrayObject *)PyUFunc_Reduce(self, mp, out, axis,
-                                              otype->type_num);
+                                              otype->type_num, skipna);
         break;
     case UFUNC_ACCUMULATE:
         ret = (PyArrayObject *)PyUFunc_Accumulate(self, mp, out, axis,
-                                                  otype->type_num);
+                                                  otype->type_num, skipna);
         break;
     case UFUNC_REDUCEAT:
         ret = (PyArrayObject *)PyUFunc_Reduceat(self, mp, indices, out,
-                                                axis, otype->type_num);
+                                                axis, otype->type_num, skipna);
         Py_DECREF(indices);
         break;
     }

@@ -2485,6 +2485,25 @@ def test_iter_maskna():
     assert_equal(np.isna(a), [1,0,1])
     assert_equal(a_orig, [1.5,3,5.5])
 
+    # Copying NA values with buffering and external_loop
+    a_orig[...] = [1.5,2.5,3.5]
+    b_orig[...] = [4.5,5.5,6.5]
+    a[...] = [np.NA, np.NA, 5.5]
+    b[...] = [np.NA, 3.5, np.NA]
+    it = np.nditer([a,b], ['buffered','external_loop'],
+                              [['writeonly','use_maskna'],
+                               ['readonly','use_maskna']],
+                    op_dtypes=['i4','i4'],
+                    casting='unsafe')
+    for x, y in it:
+        assert_equal(x.size, 3)
+        x[...] = y
+    # The 3.5 in b gets truncated to 3, because the iterator is processing
+    # elements as int32 values.
+    assert_equal(a[1], 3)
+    assert_equal(np.isna(a), [1,0,1])
+    assert_equal(a_orig, [1.5,3,5.5])
+
     # WRITEMASKED and MASKNA aren't supported together yet
     mask = np.array([1,1,0], dtype='?')
     assert_raises(ValueError, np.nditer, [a,b,mask], [],

@@ -356,5 +356,14 @@ def test_array_maskna_view_array_assignment_1D():
 
     # TODO: fancy indexing is next...
 
+def test_ufunc_1D():
+    a = np.arange(3, maskna=True)
+    b = np.arange(3)
+
+    # An NA mask is produced if an operand has one
+    c = a + b
+    assert_(c.flags.maskna)
+    assert_equal(c, [0,2,4])
+
 if __name__ == "__main__":
     run_module_suite()
