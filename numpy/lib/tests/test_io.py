@@ -5,6 +5,7 @@ import threading
 from tempfile import mkstemp, NamedTemporaryFile
 import time
 from datetime import datetime
+import warnings
 
 import numpy as np
 import numpy.ma as ma
@@ -637,7 +638,6 @@ class TestFromTxt(TestCase):
         assert_equal(test, ctrl)
 
     def test_skip_footer_with_invalid(self):
-        import warnings
         basestr = '1 1\n2 2\n3 3\n4 4\n5  \n6  \n7  \n'
         warnings.filterwarnings("ignore")
         # Footer too small to get rid of all invalid values
@@ -960,7 +960,8 @@ M   33  21.99
         assert_equal(test, ctrl)
 
     def test_empty_file(self):
-        "Test that an empty file raises the proper exception"
+        "Test that an empty file raises the proper warning."
+        warnings.filterwarnings("ignore", message="genfromtxt: Empty input file:")
         data = StringIO()
         test = np.genfromtxt(data)
         assert_equal(test, np.array([]))
@@ -1438,6 +1439,7 @@ def test_npzfile_dict():
         assert_(f in ['x', 'y'])
 
     assert_('x' in list(z.iterkeys()))
+
 
 if __name__ == "__main__":
     run_module_suite()

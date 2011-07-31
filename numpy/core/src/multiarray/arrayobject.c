@@ -320,7 +320,7 @@ array_dealloc(PyArrayObject *self)
              * self already...
              */
         }
-        //PyDataMem_FREE(fa->data);
+        PyDataMem_FREE(fa->data);
     }
 
     PyDimMem_FREE(fa->dimensions);

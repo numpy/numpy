@@ -1618,5 +1618,12 @@ class TestRegression(TestCase):
         a[...] = [[1,2]]
         assert_equal(a, [[1,2], [1,2]])
 
+    def test_memoryleak(self):
+        # Ticket #1917 - ensure that array data doesn't leak
+        for i in range(1000):
+            # 100MB times 1000 would give 100GB of memory usage if it leaks
+            a = np.empty((100000000,), dtype='i1')
+            del a
+
 if __name__ == "__main__":
     run_module_suite()
