@@ -833,7 +833,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         return X
 
 
-def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
+def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
+        footer='', commentstr=''):
     """
     Save an array to a text file.
 
@@ -853,6 +854,13 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
         Character separating columns.
     newline : str
         .. versionadded:: 1.5.0
+    header : str
+        String that will be written to the beginning of the file. (Remember to
+        add a newline, ``'\n'``, at the end of the line, if desired.)
+    footer : str
+        String that will be written to the end of the file.
+    commentstr : str
+        String that will be prepended to the ``header`` and ``footer`` strings.
 
         Character separating lines.
 
@@ -976,8 +984,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
             else:
                 format = fmt
 
+        fh.write(asbytes(commentstr + header))
         for row in X:
             fh.write(asbytes(format % tuple(row) + newline))
+        fh.write(asbytes(commentstr + footer))
     finally:
         if own_fh:
             fh.close()
