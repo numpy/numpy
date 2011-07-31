@@ -2,6 +2,7 @@
 #include "Python.h"
 #include "structmember.h"
 #include "numpy/noprefix.h"
+#include "numpy/npy_3kcompat.h"
 #include "npy_config.h"
 
 static npy_intp
@@ -1112,8 +1113,8 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     docstr = PyString_AS_STRING(str);
 #endif
 
-#define _TESTDOC1(typebase) (obj->ob_type == &Py##typebase##_Type)
-#define _TESTDOC2(typebase) (obj->ob_type == Py##typebase##_TypePtr)
+#define _TESTDOC1(typebase) (Py_TYPE(obj) == &Py##typebase##_Type)
+#define _TESTDOC2(typebase) (Py_TYPE(obj) == Py##typebase##_TypePtr)
 #define _ADDDOC(typebase, doc, name) do {                               \
         Py##typebase##Object *new = (Py##typebase##Object *)obj;        \
         if (!(doc)) {                                                   \
@@ -1314,7 +1315,7 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
         }
         else {
             char *optr, *iptr;
-            out = (PyArrayObject *)PyArray_New(new->ob_type, 0, NULL, NPY_UBYTE,
+            out = (PyArrayObject *)PyArray_New(Py_TYPE(new), 0, NULL, NPY_UBYTE,
                     NULL, NULL, 0, 0, NULL);
             if (out == NULL) {
                 goto fail;
@@ -1354,7 +1355,7 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
     }
 
     /* Create output array */
-    out = (PyArrayObject *)PyArray_New(new->ob_type,
+    out = (PyArrayObject *)PyArray_New(Py_TYPE(new),
                         PyArray_NDIM(new), outdims, NPY_UBYTE,
                         NULL, NULL, 0, PyArray_ISFORTRAN(new), NULL);
     if (out == NULL) {
@@ -1454,17 +1455,17 @@ define_types(void)
     if (myobj == NULL) {
         return;
     }
-    PyGetSetDescr_TypePtr = myobj->ob_type;
+    PyGetSetDescr_TypePtr = Py_TYPE(myobj);
     myobj = PyDict_GetItemString(tp_dict, "alignment");
     if (myobj == NULL) {
         return;
     }
-    PyMemberDescr_TypePtr = myobj->ob_type;
+    PyMemberDescr_TypePtr = Py_TYPE(myobj);
     myobj = PyDict_GetItemString(tp_dict, "newbyteorder");
     if (myobj == NULL) {
         return;
     }
-    PyMethodDescr_TypePtr = myobj->ob_type;
+    PyMethodDescr_TypePtr = Py_TYPE(myobj);
     return;
 }
 
