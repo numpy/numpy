@@ -498,11 +498,11 @@ PyArray_ReduceMaskArray(int ndim, npy_intp *shape,
      * by making it the first operand here
      */
     if (PyArray_PrepareTwoRawArrayIter(ndim, shape,
-                                    src, src_strides,
-                                    dst, dst_strides,
+                                    src_data, src_strides,
+                                    dst_data, dst_strides,
                                     &ndim, shape_it,
-                                    &src, src_strides_it,
-                                    &dst, dst_strides_it) < 0) {
+                                    &src_data, src_strides_it,
+                                    &dst_data, dst_strides_it) < 0) {
         return NPY_FAIL;
     }
 
@@ -512,40 +512,40 @@ PyArray_ReduceMaskArray(int ndim, npy_intp *shape,
         if (src_strides_it[0] == 1) {
             NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
                 /* If there's a zero in src, set dst to zero */
-                if (memchr(src, 0, shape_it[0]) != NULL) {
-                    *dst = 0;
+                if (memchr(src_data, 0, shape_it[0]) != NULL) {
+                    *dst_data = 0;
                 }
             } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
-                                        src, src_strides_it,
-                                        dst, dst_strides_it);
+                                        src_data, src_strides_it,
+                                        dst_data, dst_strides_it);
         }
         else {
             NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
-                char *src_d = src;
+                char *src_d = src_data;
                 /* If there's a zero in src, set dst to zero */
                 for (i = 0; i < shape_it[0]; ++i) {
                     if (*src_d == 0) {
-                        *dst = 0;
+                        *dst_data = 0;
                         break;
                     }
-                    src_d += src_strides_it[0]
+                    src_d += src_strides_it[0];
                 }
             } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
-                                        src, src_strides_it,
-                                        dst, dst_strides_it);
+                                        src_data, src_strides_it,
+                                        dst_data, dst_strides_it);
         }
     }
     else {
         NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
-            char *src_d = src, dst_d = dst;
+            char *src_d = src_data, *dst_d = dst_data;
             for (i = 0; i < shape_it[0]; ++i) {
                 *dst_d &= *src_d;
-                src_d += src_strides_it[0]
-                dst_d += dst_strides_it[0]
+                src_d += src_strides_it[0];
+                dst_d += dst_strides_it[0];
             }
         } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
-                                    src, src_strides_it,
-                                    dst, dst_strides_it);
+                                    src_data, src_strides_it,
+                                    dst_data, dst_strides_it);
     }
 
     return 0;
