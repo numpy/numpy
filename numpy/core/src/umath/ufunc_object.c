@@ -2448,10 +2448,8 @@ get_binary_op_function(PyUFuncObject *self, int *otype,
  *
  */
 static PyObject *
-PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
-                    PyArrayObject *out,
-                    int axis, int otype, int skipna,
-                    int operation, char *opname)
+PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
+        int axis, int otype, int skipna)
 {
     PyArrayObject *op[2];
     PyArray_Descr *op_dtypes[2] = {NULL, NULL};
@@ -2475,28 +2473,21 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
 
     NPY_BEGIN_THREADS_DEF;
 
-    NPY_UF_DBG_PRINT2("\nEvaluating ufunc %s.%s\n", ufunc_name, opname);
+    NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s.reduce\n", ufunc_name);
 
 #if 0
-    printf("Doing %s.%s on array with dtype :  ", ufunc_name, opname);
+    printf("Doing %s.reduce on array with dtype :  ", ufunc_name);
     PyObject_Print((PyObject *)PyArray_DESCR(arr), stdout, 0);
     printf("\n");
 #endif
 
     use_maskna = PyArray_HASMASKNA(arr);
-    if (use_maskna) {
-        if (operation == UFUNC_ACCUMULATE) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "ufunc accumulate doesn't support NA masked arrays yet");
-            return NULL;
-        }
-    }
     /* If there's no NA mask, there are no NAs to skip */
-    else {
+    if (!use_maskna) {
         skipna = 0;
     }
 
-    if (PyUFunc_GetPyValues(opname, &buffersize, &errormask, &errobj) < 0) {
+    if (PyUFunc_GetPyValues("reduce", &buffersize, &errormask, &errobj) < 0) {
         return NULL;
     }
 
@@ -2508,9 +2499,9 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
                                 &innerloop, &innerloopdata) < 0) {
         PyArray_Descr *dtype = PyArray_DescrFromType(otype);
         PyErr_Format(PyExc_ValueError,
-                     "could not find a matching type for %s.%s, "
+                     "could not find a matching type for %s.reduce, "
                      "requested type has type code '%c'",
-                            ufunc_name, opname, dtype ? dtype->type : '-');
+                            ufunc_name, dtype ? dtype->type : '-');
         Py_XDECREF(dtype);
         goto fail;
     }
@@ -2540,31 +2531,18 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
     }
 
 #if NPY_UF_DBG_TRACING
-    printf("Found %s.%s inner loop with dtype :  ", ufunc_name, opname);
+    printf("Found %s.reduce inner loop with dtype :  ", ufunc_name);
     PyObject_Print((PyObject *)op_dtypes[0], stdout, 0);
     printf("\n");
 #endif
 
     /* Set up the op_axes for the outer loop */
-    if (operation == UFUNC_REDUCE) {
-        for (i = 0, idim = 0; idim < ndim; ++idim) {
-            if (idim != axis) {
-                op_axes_arrays[0][i] = i;
-                op_axes_arrays[1][i] = idim;
-                i++;
-            }
+    for (i = 0, idim = 0; idim < ndim; ++idim) {
+        if (idim != axis) {
+            op_axes_arrays[0][i] = i;
+            op_axes_arrays[1][i] = idim;
+            i++;
         }
-    }
-    else if (operation == UFUNC_ACCUMULATE) {
-        for (idim = 0; idim < ndim; ++idim) {
-            op_axes_arrays[0][idim] = idim;
-            op_axes_arrays[1][idim] = idim;
-        }
-    }
-    else {
-        PyErr_Format(PyExc_RuntimeError,
-                    "invalid reduction operation %s.%s", ufunc_name, opname);
-        goto fail;
     }
 
     /* The per-operand flags for the outer loop */
@@ -2583,15 +2561,6 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
     op[1] = arr;
 
     need_outer_iterator = (ndim > 1);
-    if (operation == UFUNC_ACCUMULATE) {
-        /* We can't buffer, so must do UPDATEIFCOPY */
-        if (!PyArray_ISALIGNED(arr) || (out && !PyArray_ISALIGNED(out)) ||
-                !PyArray_EquivTypes(op_dtypes[0], PyArray_DESCR(arr)) ||
-                (out &&
-                 !PyArray_EquivTypes(op_dtypes[0], PyArray_DESCR(out)))) {
-            need_outer_iterator = 1;
-        }
-    }
 
     if (need_outer_iterator) {
         int ndim_iter = 0;
@@ -2599,24 +2568,9 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
                            NPY_ITER_REFS_OK;
         PyArray_Descr **op_dtypes_param = NULL;
 
-        if (operation == UFUNC_REDUCE) {
-            ndim_iter = ndim - 1;
-            if (out == NULL) {
-                op_dtypes_param = op_dtypes;
-            }
-        }
-        else if (operation == UFUNC_ACCUMULATE) {
-            /*
-             * The way accumulate is set up, we can't do buffering,
-             * so make a copy instead when necessary.
-             */
-            ndim_iter = ndim;
-            flags |= NPY_ITER_MULTI_INDEX;
-            /* Add some more flags */
-            op_flags[0] |= NPY_ITER_UPDATEIFCOPY|NPY_ITER_ALIGNED;
-            op_flags[1] |= NPY_ITER_COPY|NPY_ITER_ALIGNED;
+        ndim_iter = ndim - 1;
+        if (out == NULL) {
             op_dtypes_param = op_dtypes;
-            op_dtypes[1] = op_dtypes[0];
         }
         NPY_UF_DBG_PRINT("Allocating outer iterator\n");
         iter = NpyIter_AdvancedNew(2, op, flags,
@@ -2626,27 +2580,6 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
                                    ndim_iter, op_axes, NULL, 0);
         if (iter == NULL) {
             goto fail;
-        }
-
-        if (operation == UFUNC_ACCUMULATE) {
-            /* In case COPY or UPDATEIFCOPY occurred */
-            op[0] = NpyIter_GetOperandArray(iter)[0];
-            op[1] = NpyIter_GetOperandArray(iter)[1];
-
-            if (PyArray_SIZE(op[0]) == 0) {
-                if (out == NULL) {
-                    out = op[0];
-                    Py_INCREF(out);
-                }
-                goto finish;
-            }
-
-            if (NpyIter_RemoveAxis(iter, axis) != NPY_SUCCEED) {
-                goto fail;
-            }
-            if (NpyIter_RemoveMultiIndex(iter) != NPY_SUCCEED) {
-                goto fail;
-            }
         }
     }
 
@@ -2659,18 +2592,10 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
         else {
             PyArray_Descr *dtype = op_dtypes[0];
             Py_INCREF(dtype);
-            if (operation == UFUNC_REDUCE) {
-                op[0] = out = (PyArrayObject *)PyArray_NewFromDescr(
-                                        &PyArray_Type, dtype,
-                                        0, NULL, NULL, NULL,
-                                        0, NULL);
-            }
-            else if (operation == UFUNC_ACCUMULATE) {
-                op[0] = out = (PyArrayObject *)PyArray_NewFromDescr(
-                                        &PyArray_Type, dtype,
-                                        ndim, PyArray_DIMS(op[1]), NULL, NULL,
-                                        0, NULL);
-            }
+            op[0] = out = (PyArrayObject *)PyArray_NewFromDescr(
+                                    &PyArray_Type, dtype,
+                                    0, NULL, NULL, NULL,
+                                    0, NULL);
             if (out == NULL) {
                 goto fail;
             }
@@ -2689,28 +2614,26 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
      * for UFUNC_ACCUMULATE.
      */
     if (PyArray_DIM(op[1], axis) == 0) {
-        if (operation == UFUNC_REDUCE) {
-            if (self->identity == PyUFunc_None) {
-                PyErr_Format(PyExc_ValueError,
-                             "zero-size array to %s.%s "
-                             "without identity", ufunc_name, opname);
+        if (self->identity == PyUFunc_None) {
+            PyErr_Format(PyExc_ValueError,
+                         "zero-size array to %s.reduce "
+                         "without identity", ufunc_name);
+            goto fail;
+        }
+        if (self->identity == PyUFunc_One) {
+            PyObject *obj = PyInt_FromLong((long) 1);
+            if (obj == NULL) {
                 goto fail;
             }
-            if (self->identity == PyUFunc_One) {
-                PyObject *obj = PyInt_FromLong((long) 1);
-                if (obj == NULL) {
-                    goto fail;
-                }
-                PyArray_FillWithScalar(op[0], obj);
-                Py_DECREF(obj);
-            } else {
-                PyObject *obj = PyInt_FromLong((long) 0);
-                if (obj == NULL) {
-                    goto fail;
-                }
-                PyArray_FillWithScalar(op[0], obj);
-                Py_DECREF(obj);
+            PyArray_FillWithScalar(op[0], obj);
+            Py_DECREF(obj);
+        } else {
+            PyObject *obj = PyInt_FromLong((long) 0);
+            if (obj == NULL) {
+                goto fail;
             }
+            PyArray_FillWithScalar(op[0], obj);
+            Py_DECREF(obj);
         }
 
         goto finish;
@@ -2727,38 +2650,30 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
         op_dtypes[1] = op_dtypes[0];
 
         NPY_UF_DBG_PRINT("Allocating inner iterator\n");
-        if (operation == UFUNC_REDUCE) {
-            /* The per-operand flags for the inner loop */
-            op_flags[0] = NPY_ITER_READWRITE|
-                          NPY_ITER_ALIGNED;
-            op_flags[1] = NPY_ITER_READONLY|
-                          NPY_ITER_ALIGNED;
+        /* The per-operand flags for the inner loop */
+        op_flags[0] = NPY_ITER_READWRITE|
+                      NPY_ITER_ALIGNED;
+        op_flags[1] = NPY_ITER_READONLY|
+                      NPY_ITER_ALIGNED;
 
-            if (use_maskna) {
-                op_flags[0] |= NPY_ITER_USE_MASKNA;
-                op_flags[1] |= NPY_ITER_USE_MASKNA;
-            }
-
-            op_axes[0][0] = -1;
-            op_axes[1][0] = axis;
-
-            iter_inner = NpyIter_AdvancedNew(2, op,
-                                       NPY_ITER_EXTERNAL_LOOP |
-                                       NPY_ITER_BUFFERED |
-                                       NPY_ITER_DELAY_BUFALLOC |
-                                       NPY_ITER_GROWINNER |
-                                       NPY_ITER_REDUCE_OK |
-                                       NPY_ITER_REFS_OK,
-                                       NPY_CORDER, NPY_UNSAFE_CASTING,
-                                       op_flags, op_dtypes,
-                                       1, op_axes, NULL, buffersize);
+        if (use_maskna) {
+            op_flags[0] |= NPY_ITER_USE_MASKNA;
+            op_flags[1] |= NPY_ITER_USE_MASKNA;
         }
-        /* Should never get an inner iterator for ACCUMULATE */
-        else {
-            PyErr_SetString(PyExc_RuntimeError,
-                "internal ufunc reduce error, should not need inner iterator");
-            goto fail;
-        }
+
+        op_axes[0][0] = -1;
+        op_axes[1][0] = axis;
+
+        iter_inner = NpyIter_AdvancedNew(2, op,
+                                   NPY_ITER_EXTERNAL_LOOP |
+                                   NPY_ITER_BUFFERED |
+                                   NPY_ITER_DELAY_BUFALLOC |
+                                   NPY_ITER_GROWINNER |
+                                   NPY_ITER_REDUCE_OK |
+                                   NPY_ITER_REFS_OK,
+                                   NPY_CORDER, NPY_UNSAFE_CASTING,
+                                   op_flags, op_dtypes,
+                                   1, op_axes, NULL, buffersize);
         if (iter_inner == NULL) {
             goto fail;
         }
@@ -2856,10 +2771,6 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
 
             NPY_UF_DBG_PRINT("UFunc: Reduce loop with just outer iterator\n");
 
-            if (operation == UFUNC_ACCUMULATE) {
-                stride0 = PyArray_STRIDE(op[0], axis);
-            }
-
             stride_copy[0] = stride0;
             stride_copy[1] = stride1;
             stride_copy[2] = stride0;
@@ -2889,13 +2800,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
 
                 if (count_m1 > 0) {
                     /* Turn the two items into three for the inner loop */
-                    if (operation == UFUNC_REDUCE) {
-                        dataptr_copy[1] += stride1;
-                    }
-                    else if (operation == UFUNC_ACCUMULATE) {
-                        dataptr_copy[1] += stride1;
-                        dataptr_copy[2] += stride0;
-                    }
+                    dataptr_copy[1] += stride1;
                     NPY_UF_DBG_PRINT1("iterator loop count %d\n",
                                                     (int)count_m1);
                     innerloop(dataptr_copy, &count_m1,
@@ -2985,25 +2890,11 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
 
             NPY_UF_DBG_PRINT("UFunc: Reduce loop with no iterators\n");
 
-            if (operation == UFUNC_REDUCE) {
-                if (PyArray_NDIM(op[0]) != 0) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "provided out is the wrong size "
-                            "for the reduction");
-                    goto fail;
-                }
-            }
-            else if (operation == UFUNC_ACCUMULATE) {
-                if (PyArray_NDIM(op[0]) != PyArray_NDIM(op[1]) ||
-                        !PyArray_CompareLists(PyArray_DIMS(op[0]),
-                                              PyArray_DIMS(op[1]),
-                                              PyArray_NDIM(op[0]))) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "provided out is the wrong size "
-                            "for the reduction");
-                    goto fail;
-                }
-                stride0 = PyArray_STRIDE(op[0], axis);
+            if (PyArray_NDIM(op[0]) != 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "provided out is the wrong size "
+                        "for the reduction");
+                goto fail;
             }
 
             stride_copy[0] = stride0;
@@ -3028,13 +2919,7 @@ PyUFunc_ReductionOp(PyUFuncObject *self, PyArrayObject *arr,
 
             if (count > 1) {
                 --count;
-                if (operation == UFUNC_REDUCE) {
-                    dataptr_copy[1] += stride1;
-                }
-                else if (operation == UFUNC_ACCUMULATE) {
-                    dataptr_copy[1] += stride1;
-                    dataptr_copy[2] += stride0;
-                }
+                dataptr_copy[1] += stride1;
 
                 NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)count);
 
@@ -3083,28 +2968,374 @@ fail:
     return NULL;
 }
 
-/*
- * We have two basic kinds of loops. One is used when arr is not-swapped
- * and aligned and output type is the same as input type.  The other uses
- * buffers when one of these is not satisfied.
- *
- *  Zero-length and one-length axes-to-be-reduced are handled separately.
- */
-static PyObject *
-PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
-        int axis, int otype, int skipna)
-{
-    return PyUFunc_ReductionOp(self, arr, out, axis, otype, skipna,
-                                UFUNC_REDUCE, "reduce");
-}
-
 
 static PyObject *
 PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                    int axis, int otype, int skipna)
 {
-    return PyUFunc_ReductionOp(self, arr, out, axis, otype, skipna,
-                                UFUNC_ACCUMULATE, "accumulate");
+    PyArrayObject *op[2];
+    PyArray_Descr *op_dtypes[2] = {NULL, NULL};
+    int op_axes_arrays[2][NPY_MAXDIMS];
+    int *op_axes[2] = {op_axes_arrays[0], op_axes_arrays[1]};
+    npy_uint32 op_flags[2];
+    int i, idim, ndim, otype_final;
+    int needs_api, need_outer_iterator, use_maskna = 0;
+
+    NpyIter *iter = NULL, *iter_inner = NULL;
+
+    /* The selected inner loop */
+    PyUFuncGenericFunction innerloop = NULL;
+    void *innerloopdata = NULL;
+
+    char *ufunc_name = self->name ? self->name : "(unknown)";
+
+    /* These parameters come from extobj= or from a TLS global */
+    int buffersize = 0, errormask = 0;
+    PyObject *errobj = NULL;
+
+    NPY_BEGIN_THREADS_DEF;
+
+    NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s.accumulate\n", ufunc_name);
+
+#if 0
+    printf("Doing %s.accumulate on array with dtype :  ", ufunc_name);
+    PyObject_Print((PyObject *)PyArray_DESCR(arr), stdout, 0);
+    printf("\n");
+#endif
+
+    use_maskna = PyArray_HASMASKNA(arr);
+    if (use_maskna) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "ufunc accumulate doesn't support NA masked arrays yet");
+        return NULL;
+    }
+    /* If there's no NA mask, there are no NAs to skip */
+    else {
+        skipna = 0;
+    }
+
+    if (PyUFunc_GetPyValues("accumulate", &buffersize, &errormask, &errobj) < 0) {
+        return NULL;
+    }
+
+    /* Take a reference to out for later returning */
+    Py_XINCREF(out);
+
+    otype_final = otype;
+    if (get_binary_op_function(self, &otype_final,
+                                &innerloop, &innerloopdata) < 0) {
+        PyArray_Descr *dtype = PyArray_DescrFromType(otype);
+        PyErr_Format(PyExc_ValueError,
+                     "could not find a matching type for %s.accumulate, "
+                     "requested type has type code '%c'",
+                            ufunc_name, dtype ? dtype->type : '-');
+        Py_XDECREF(dtype);
+        goto fail;
+    }
+
+    ndim = PyArray_NDIM(arr);
+
+    /*
+     * Set up the output data type, using the input's exact
+     * data type if the type number didn't change to preserve
+     * metadata
+     */
+    if (PyArray_DESCR(arr)->type_num == otype_final) {
+        if (PyArray_ISNBO(PyArray_DESCR(arr)->byteorder)) {
+            op_dtypes[0] = PyArray_DESCR(arr);
+            Py_INCREF(op_dtypes[0]);
+        }
+        else {
+            op_dtypes[0] = PyArray_DescrNewByteorder(PyArray_DESCR(arr),
+                                                    NPY_NATIVE);
+        }
+    }
+    else {
+        op_dtypes[0] = PyArray_DescrFromType(otype_final);
+    }
+    if (op_dtypes[0] == NULL) {
+        goto fail;
+    }
+
+#if NPY_UF_DBG_TRACING
+    printf("Found %s.%s inner loop with dtype :  ", ufunc_name, opname);
+    PyObject_Print((PyObject *)op_dtypes[0], stdout, 0);
+    printf("\n");
+#endif
+
+    /* Set up the op_axes for the outer loop */
+    for (idim = 0; idim < ndim; ++idim) {
+        op_axes_arrays[0][idim] = idim;
+        op_axes_arrays[1][idim] = idim;
+    }
+
+    /* The per-operand flags for the outer loop */
+    op_flags[0] = NPY_ITER_READWRITE |
+                  NPY_ITER_NO_BROADCAST |
+                  NPY_ITER_ALLOCATE |
+                  NPY_ITER_NO_SUBTYPE;
+    op_flags[1] = NPY_ITER_READONLY;
+
+    if (use_maskna) {
+        op_flags[0] |= NPY_ITER_USE_MASKNA;
+        op_flags[1] |= NPY_ITER_USE_MASKNA;
+    }
+
+    op[0] = out;
+    op[1] = arr;
+
+    need_outer_iterator = (ndim > 1);
+    /* We can't buffer, so must do UPDATEIFCOPY */
+    if (!PyArray_ISALIGNED(arr) || (out && !PyArray_ISALIGNED(out)) ||
+            !PyArray_EquivTypes(op_dtypes[0], PyArray_DESCR(arr)) ||
+            (out &&
+             !PyArray_EquivTypes(op_dtypes[0], PyArray_DESCR(out)))) {
+        need_outer_iterator = 1;
+    }
+
+    if (need_outer_iterator) {
+        int ndim_iter = 0;
+        npy_uint32 flags = NPY_ITER_ZEROSIZE_OK|
+                           NPY_ITER_REFS_OK;
+        PyArray_Descr **op_dtypes_param = NULL;
+
+        /*
+         * The way accumulate is set up, we can't do buffering,
+         * so make a copy instead when necessary.
+         */
+        ndim_iter = ndim;
+        flags |= NPY_ITER_MULTI_INDEX;
+        /* Add some more flags */
+        op_flags[0] |= NPY_ITER_UPDATEIFCOPY|NPY_ITER_ALIGNED;
+        op_flags[1] |= NPY_ITER_COPY|NPY_ITER_ALIGNED;
+        op_dtypes_param = op_dtypes;
+        op_dtypes[1] = op_dtypes[0];
+        NPY_UF_DBG_PRINT("Allocating outer iterator\n");
+        iter = NpyIter_AdvancedNew(2, op, flags,
+                                   NPY_KEEPORDER, NPY_UNSAFE_CASTING,
+                                   op_flags,
+                                   op_dtypes_param,
+                                   ndim_iter, op_axes, NULL, 0);
+        if (iter == NULL) {
+            goto fail;
+        }
+
+        /* In case COPY or UPDATEIFCOPY occurred */
+        op[0] = NpyIter_GetOperandArray(iter)[0];
+        op[1] = NpyIter_GetOperandArray(iter)[1];
+
+        if (PyArray_SIZE(op[0]) == 0) {
+            if (out == NULL) {
+                out = op[0];
+                Py_INCREF(out);
+            }
+            goto finish;
+        }
+
+        if (NpyIter_RemoveAxis(iter, axis) != NPY_SUCCEED) {
+            goto fail;
+        }
+        if (NpyIter_RemoveMultiIndex(iter) != NPY_SUCCEED) {
+            goto fail;
+        }
+    }
+
+    /* Get the output */
+    if (out == NULL) {
+        if (iter) {
+            op[0] = out = NpyIter_GetOperandArray(iter)[0];
+            Py_INCREF(out);
+        }
+        else {
+            PyArray_Descr *dtype = op_dtypes[0];
+            Py_INCREF(dtype);
+            op[0] = out = (PyArrayObject *)PyArray_NewFromDescr(
+                                    &PyArray_Type, dtype,
+                                    ndim, PyArray_DIMS(op[1]), NULL, NULL,
+                                    0, NULL);
+            if (out == NULL) {
+                goto fail;
+            }
+
+            if (use_maskna) {
+                if (PyArray_AllocateMaskNA(out, 1, 0, 1) < 0) {
+                    goto fail;
+                }
+            }
+        }
+    }
+
+    /*
+     * If the reduction axis has size zero, either return the reduction
+     * unit for UFUNC_REDUCE, or return the zero-sized output array
+     * for UFUNC_ACCUMULATE.
+     */
+    if (PyArray_DIM(op[1], axis) == 0) {
+        goto finish;
+    }
+    else if (PyArray_SIZE(op[0]) == 0) {
+        goto finish;
+    }
+
+    if (iter && NpyIter_GetIterSize(iter) != 0) {
+        char *dataptr_copy[3];
+        npy_intp stride_copy[3];
+
+        NpyIter_IterNextFunc *iternext;
+        char **dataptr;
+
+        int itemsize = op_dtypes[0]->elsize;
+
+        /* Get the variables needed for the loop */
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            goto fail;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+
+
+        /* Execute the loop with just the outer iterator */
+        npy_intp count_m1 = PyArray_DIM(op[1], axis)-1;
+        npy_intp stride0 = 0, stride1 = PyArray_STRIDE(op[1], axis);
+
+        NPY_UF_DBG_PRINT("UFunc: Reduce loop with just outer iterator\n");
+
+        stride0 = PyArray_STRIDE(op[0], axis);
+
+        stride_copy[0] = stride0;
+        stride_copy[1] = stride1;
+        stride_copy[2] = stride0;
+
+        needs_api = NpyIter_IterationNeedsAPI(iter);
+
+        if (!needs_api) {
+            NPY_BEGIN_THREADS;
+        }
+
+        do {
+
+            dataptr_copy[0] = dataptr[0];
+            dataptr_copy[1] = dataptr[1];
+            dataptr_copy[2] = dataptr[0];
+
+            /* Copy the first element to start the reduction */
+            if (otype == NPY_OBJECT) {
+                Py_XDECREF(*(PyObject **)dataptr_copy[0]);
+                *(PyObject **)dataptr_copy[0] =
+                                    *(PyObject **)dataptr_copy[1];
+                Py_XINCREF(*(PyObject **)dataptr_copy[0]);
+            }
+            else {
+                memcpy(dataptr_copy[0], dataptr_copy[1], itemsize);
+            }
+
+            if (count_m1 > 0) {
+                /* Turn the two items into three for the inner loop */
+                dataptr_copy[1] += stride1;
+                dataptr_copy[2] += stride0;
+                NPY_UF_DBG_PRINT1("iterator loop count %d\n",
+                                                (int)count_m1);
+                innerloop(dataptr_copy, &count_m1,
+                            stride_copy, innerloopdata);
+            }
+        } while (iternext(iter));
+
+        if (!needs_api) {
+            NPY_END_THREADS;
+        }
+    }
+    else if (iter == NULL) {
+        char *dataptr_copy[3];
+        npy_intp stride_copy[3];
+
+        int itemsize = op_dtypes[0]->elsize;
+
+        /* Execute the loop with no iterators */
+        npy_intp count = PyArray_DIM(op[1], axis);
+        npy_intp stride0 = 0, stride1 = PyArray_STRIDE(op[1], axis);
+
+        NPY_UF_DBG_PRINT("UFunc: Reduce loop with no iterators\n");
+
+        if (PyArray_NDIM(op[0]) != PyArray_NDIM(op[1]) ||
+                !PyArray_CompareLists(PyArray_DIMS(op[0]),
+                                      PyArray_DIMS(op[1]),
+                                      PyArray_NDIM(op[0]))) {
+            PyErr_SetString(PyExc_ValueError,
+                    "provided out is the wrong size "
+                    "for the reduction");
+            goto fail;
+        }
+        stride0 = PyArray_STRIDE(op[0], axis);
+
+        stride_copy[0] = stride0;
+        stride_copy[1] = stride1;
+        stride_copy[2] = stride0;
+
+        /* Turn the two items into three for the inner loop */
+        dataptr_copy[0] = PyArray_BYTES(op[0]);
+        dataptr_copy[1] = PyArray_BYTES(op[1]);
+        dataptr_copy[2] = PyArray_BYTES(op[0]);
+
+        /* Copy the first element to start the reduction */
+        if (otype == NPY_OBJECT) {
+            Py_XDECREF(*(PyObject **)dataptr_copy[0]);
+            *(PyObject **)dataptr_copy[0] =
+                                *(PyObject **)dataptr_copy[1];
+            Py_XINCREF(*(PyObject **)dataptr_copy[0]);
+        }
+        else {
+            memcpy(dataptr_copy[0], dataptr_copy[1], itemsize);
+        }
+
+        if (count > 1) {
+            --count;
+            dataptr_copy[1] += stride1;
+            dataptr_copy[2] += stride0;
+
+            NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)count);
+
+            needs_api = PyDataType_REFCHK(op_dtypes[0]);
+
+            if (!needs_api) {
+                NPY_BEGIN_THREADS;
+            }
+
+            innerloop(dataptr_copy, &count,
+                        stride_copy, innerloopdata);
+
+            if (!needs_api) {
+                NPY_END_THREADS;
+            }
+        }
+    }
+
+finish:
+    Py_XDECREF(op_dtypes[0]);
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+    if (iter_inner != NULL) {
+        NpyIter_Deallocate(iter_inner);
+    }
+
+    Py_XDECREF(errobj);
+
+    return (PyObject *)out;
+
+fail:
+    Py_XDECREF(out);
+    Py_XDECREF(op_dtypes[0]);
+
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+    if (iter_inner != NULL) {
+        NpyIter_Deallocate(iter_inner);
+    }
+
+    Py_XDECREF(errobj);
+
+    return NULL;
 }
 
 /*
