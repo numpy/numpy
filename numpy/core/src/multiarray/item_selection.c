@@ -19,8 +19,6 @@
 #include "lowlevel_strided_loops.h"
 #include "item_selection.h"
 
-#define _check_axis PyArray_CheckAxis
-
 /*NUMPY_API
  * Take
  */
@@ -37,7 +35,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     int err;
 
     indices = NULL;
-    self = (PyArrayObject *)_check_axis(self0, &axis, NPY_ARRAY_CARRAY);
+    self = (PyArrayObject *)PyArray_CheckAxis(self0, &axis, NPY_ARRAY_CARRAY);
     if (self == NULL) {
         return NULL;
     }
@@ -507,7 +505,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     nd = PyArray_NDIM(repeats);
     counts = (npy_intp *)PyArray_DATA(repeats);
 
-    if ((ap=_check_axis(aop, &axis, NPY_ARRAY_CARRAY))==NULL) {
+    if ((ap=PyArray_CheckAxis(aop, &axis, NPY_ARRAY_CARRAY))==NULL) {
         Py_DECREF(repeats);
         return NULL;
     }
@@ -1080,7 +1078,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     }
 
     /* Creates new reference op2 */
-    if ((op2=(PyArrayObject *)_check_axis(op, &axis, 0)) == NULL) {
+    if ((op2=(PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
         return NULL;
     }
     /* Determine if we should use new algorithm or not */
@@ -1719,51 +1717,25 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
         return 0;
     }
 
-    /* Do the iteration */
-    memset(coord, 0, ndim * sizeof(npy_intp));
     /* Special case for contiguous inner loop */
     if (strides[0] == 1) {
-        do {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
             char *d = data;
             /* Process the innermost dimension */
             for (i = 0; i < shape[0]; ++i, ++d) {
                 count += (*d != 0);
             }
-
-            /* Increment to the next n-dimensional coordinate */
-            for (idim = 1; idim < ndim; ++idim) {
-                if (++coord[idim] == shape[idim]) {
-                    coord[idim] = 0;
-                    data -= (shape[idim] - 1) * strides[idim];
-                }
-                else {
-                    data += strides[idim];
-                    break;
-                }
-            }
-        } while (i < ndim);
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
     }
     /* General inner loop */
     else {
-        do {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
             char *d = data;
             /* Process the innermost dimension */
             for (i = 0; i < shape[0]; ++i, d += strides[0]) {
                 count += (*d != 0);
             }
-
-            /* Increment to the next n-dimensional coordinate */
-            for (idim = 1; idim < ndim; ++idim) {
-                if (++coord[idim] == shape[idim]) {
-                    coord[idim] = 0;
-                    data -= (shape[idim] - 1) * strides[idim];
-                }
-                else {
-                    data += strides[idim];
-                    break;
-                }
-            }
-        } while (i < ndim);
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
     }
 
     return count;

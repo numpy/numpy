@@ -80,6 +80,50 @@ PyArray_ContainsNA(PyArrayObject *arr)
 }
 
 /*
+ * Fills a raw array whose dtype has size one with the specified byte
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+static int
+fill_raw_byte_array(int ndim, npy_intp *shape,
+                char *data, npy_intp *strides, char fillvalue)
+{
+    int idim;
+    npy_intp shape_it[NPY_MAXDIMS], strides_it[NPY_MAXDIMS];
+    npy_intp i, coord[NPY_MAXDIMS];
+
+    /* Use raw iteration with no heap memory allocation */
+    if (PyArray_PrepareOneRawArrayIter(
+                    ndim, shape,
+                    data, strides,
+                    &ndim, shape_it,
+                    &data, strides_it) < 0) {
+        PyErr_Clear();
+        return 1;
+    }
+
+    /* Special case contiguous inner stride */
+    if (strides_it[0] == 1) {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
+            /* Process the innermost dimension */
+            memset(data, fillvalue, shape_it[0]);
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape_it, data, strides_it);
+    }
+    /* General inner stride */
+    else {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
+            char *d = data;
+            /* Process the innermost dimension */
+            for (i = 0; i < shape_it[0]; ++i, d += strides_it[0]) {
+                *d = fillvalue;
+            }
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape_it, data, strides_it);
+    }
+
+    return 0;
+}
+
+/*
  * Assigns the mask value to all the NA mask elements of
  * the array.
  *
@@ -88,11 +132,6 @@ PyArray_ContainsNA(PyArrayObject *arr)
 NPY_NO_EXPORT int
 PyArray_AssignMaskNA(PyArrayObject *arr, npy_mask maskvalue)
 {
-    int idim, ndim;
-    char *data;
-    npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
-    npy_intp i, coord[NPY_MAXDIMS];
-
     /* Need NA support to fill the NA mask */
     if (!PyArray_HASMASKNA(arr)) {
         PyErr_SetString(PyExc_ValueError,
@@ -107,35 +146,10 @@ PyArray_AssignMaskNA(PyArrayObject *arr, npy_mask maskvalue)
         return -1;
     }
 
-    /* Use raw iteration with no heap memory allocation */
-    if (PyArray_PrepareOneRawArrayIter(
+    return fill_raw_byte_array(
                     PyArray_NDIM(arr), PyArray_DIMS(arr),
                     PyArray_MASKNA_DATA(arr), PyArray_MASKNA_STRIDES(arr),
-                    &ndim, shape,
-                    &data, strides) < 0) {
-        PyErr_Clear();
-        return 1;
-    }
-
-    /* Special case contiguous inner stride */
-    if (strides[0] == 1) {
-        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
-            /* Process the innermost dimension */
-            memset(data, maskvalue, shape[0]);
-        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
-    }
-    /* General inner stride */
-    else {
-        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
-            char *d = data;
-            /* Process the innermost dimension */
-            for (i = 0; i < shape[0]; ++i, d += strides[0]) {
-                *(npy_mask *)d = maskvalue;
-            }
-        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
-    }
-
-    return 0;
+                    (char)maskvalue);
 }
 
 /*NUMPY_API
@@ -431,4 +445,108 @@ PyArray_IsNA(PyObject *obj)
 
         return (PyObject *)ret;
     }
+}
+
+/*NUMPY_API
+ *
+ * This function performs a reduction on the masks for an array.
+ * The masks are provided in raw form, with their strides conformed
+ * for the reduction.
+ *
+ * This is for use with a reduction where 'skipna=False'.
+ *
+ * ndim, shape: The geometry of the arrays
+ * src_dtype, dst_dtype: The NA mask dtypes.
+ * src_data, dst_data: The NA mask data pointers.
+ * src_strides, dst_strides: The NA mask strides, matching the geometry.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_ReduceMaskArray(int ndim, npy_intp *shape,
+            PyArray_Descr *src_dtype, char *src_data, npy_intp *src_strides,
+            PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides)
+{
+    int idim;
+    npy_intp i, coord[NPY_MAXDIMS];
+    npy_intp shape_it[NPY_MAXDIMS];
+    npy_intp src_strides_it[NPY_MAXDIMS];
+    npy_intp dst_strides_it[NPY_MAXDIMS];
+
+    /* Confirm that dst is not larger than src */
+    for (idim = 0; idim < ndim; ++idim) {
+        if (src_strides[idim] == 0 && dst_strides[idim] != 0) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "ReduceMaskArray cannot reduce into a larger array");
+            return -1;
+        }
+    }
+
+    if (src_dtype->type_num != NPY_BOOL || dst_dtype->type_num != NPY_BOOL) {
+        PyErr_SetString(PyExc_ValueError,
+                "multi-NA and field-NA are not yet supported");
+        return -1;
+    }
+
+    /* Initialize the destination mask to all ones, exposed data */
+    if (fill_raw_byte_array(ndim, shape, dst_data, dst_strides, 1) < 0) {
+        return -1;
+    }
+
+    /*
+     * Sort axes based on 'src', which has more non-zero strides,
+     * by making it the first operand here
+     */
+    if (PyArray_PrepareTwoRawArrayIter(ndim, shape,
+                                    src, src_strides,
+                                    dst, dst_strides,
+                                    &ndim, shape_it,
+                                    &src, src_strides_it,
+                                    &dst, dst_strides_it) < 0) {
+        return NPY_FAIL;
+    }
+
+    /* Special case a reduction in the inner loop */
+    if (dst_strides_it[0] == 0) {
+        /* Special case a contiguous reduction in the inner loop */
+        if (src_strides_it[0] == 1) {
+            NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
+                /* If there's a zero in src, set dst to zero */
+                if (memchr(src, 0, shape_it[0]) != NULL) {
+                    *dst = 0;
+                }
+            } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
+                                        src, src_strides_it,
+                                        dst, dst_strides_it);
+        }
+        else {
+            NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
+                char *src_d = src;
+                /* If there's a zero in src, set dst to zero */
+                for (i = 0; i < shape_it[0]; ++i) {
+                    if (*src_d == 0) {
+                        *dst = 0;
+                        break;
+                    }
+                    src_d += src_strides_it[0]
+                }
+            } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
+                                        src, src_strides_it,
+                                        dst, dst_strides_it);
+        }
+    }
+    else {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
+            char *src_d = src, dst_d = dst;
+            for (i = 0; i < shape_it[0]; ++i) {
+                *dst_d &= *src_d;
+                src_d += src_strides_it[0]
+                dst_d += dst_strides_it[0]
+            }
+        } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
+                                    src, src_strides_it,
+                                    dst, dst_strides_it);
+    }
+
+    return 0;
 }

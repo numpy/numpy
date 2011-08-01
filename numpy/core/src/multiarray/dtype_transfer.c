@@ -4115,10 +4115,10 @@ PyArray_CastRawNDimArrays(int ndim, npy_intp *shape,
     int idim;
     npy_intp src_align, dst_align;
     int aligned, needs_api = 0;
-    npy_intp coords[NPY_MAXDIMS];
-    npy_intp shape_copy[NPY_MAXDIMS];
-    npy_intp src_strides_copy[NPY_MAXDIMS];
-    npy_intp dst_strides_copy[NPY_MAXDIMS];
+    npy_intp coord[NPY_MAXDIMS];
+    npy_intp shape_it[NPY_MAXDIMS];
+    npy_intp src_strides_it[NPY_MAXDIMS];
+    npy_intp dst_strides_it[NPY_MAXDIMS];
 
     /* Determine data alignment */
     src_align = (npy_intp)src;
@@ -4135,9 +4135,9 @@ PyArray_CastRawNDimArrays(int ndim, npy_intp *shape,
     if (PyArray_PrepareTwoRawArrayIter(ndim, shape,
                                     dst, dst_strides,
                                     src, src_strides,
-                                    &ndim, shape_copy,
-                                    &dst, dst_strides_copy,
-                                    &src, src_strides_copy) < 0) {
+                                    &ndim, shape_it,
+                                    &dst, dst_strides_it,
+                                    &src, src_strides_it) < 0) {
         return NPY_FAIL;
     }
 
@@ -4151,13 +4151,13 @@ PyArray_CastRawNDimArrays(int ndim, npy_intp *shape,
         return NPY_FAIL;
     }
 
-    NPY_RAW_ITER_START(idim, ndim, coords, shape_copy) {
-        stransfer(dst, dst_strides_copy[0],
-                    src, src_strides_copy[0], shape_copy[0],
+    NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
+        stransfer(dst, dst_strides_it[0],
+                    src, src_strides_it[0], shape_it[0],
                     src_dtype->elsize, transferdata);
-    } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coords, shape_copy,
-                                src, src_strides,
-                                dst, dst_strides);
+    } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
+                                src, src_strides_it,
+                                dst, dst_strides_it);
 
     /* Cleanup */
     NPY_AUXDATA_FREE(transferdata);

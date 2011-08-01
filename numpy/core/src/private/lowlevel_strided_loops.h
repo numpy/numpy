@@ -380,7 +380,7 @@ PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
                     break; \
                 } \
             } \
-        } while ((idim) < (ndim)); \
+        } while ((idim) < (ndim))
 
 /* Increment to the next n-dimensional coordinate for two raw arrays */
 #define NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape, \
@@ -397,8 +397,7 @@ PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
                     break; \
                 } \
             } \
-        } while ((idim) < (ndim)); \
-
+        } while ((idim) < (ndim))
 
 
 /*
