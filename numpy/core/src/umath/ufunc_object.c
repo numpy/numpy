@@ -3528,7 +3528,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     }
     if (self->nout != 1) {
         PyErr_Format(PyExc_ValueError,
-                     "%s only supported for functions " \
+                     "%s only supported for functions "
                      "returning a single value",
                      _reduce_type[operation]);
         return NULL;

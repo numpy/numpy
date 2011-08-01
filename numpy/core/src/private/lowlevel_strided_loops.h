@@ -334,18 +334,42 @@ PyArray_TransferMaskedStridedToNDim(npy_intp ndim,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_PrepareOneRawArrayIter(int ndim, char *data,
-                            npy_intp *shape, npy_intp *strides,
-                            int *out_ndim, char **out_data,
-                            npy_intp *out_shape, npy_intp *out_strides);
+PyArray_PrepareOneRawArrayIter(int ndim, npy_intp *shape,
+                            char *data, npy_intp *strides,
+                            int *out_ndim, npy_intp *out_shape,
+                            char **out_data, npy_intp *out_strides);
+
+/*
+ * The same as PyArray_PrepareOneRawArrayIter, but for two
+ * operands instead of one. Any broadcasting of the two operands
+ * should have already been done before calling this function,
+ * as the ndim and shape is only specified once for both operands.
+ *
+ * Only the strides of the first operand are used to reorder
+ * the dimensions, no attempt to consider all the strides together
+ * is made, as is done in the NpyIter object.
+ *
+ * You can use this together with NPY_RAW_ITER_START and
+ * NPY_RAW_ITER_TWO_NEXT to handle the looping boilerplate of everything
+ * but the innermost loop (which is for idim == 0).
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
+                            char *dataA, npy_intp *stridesA,
+                            char *dataB, npy_intp *stridesB,
+                            int *out_ndim, npy_intp *out_shape,
+                            char **out_dataA, npy_intp *out_stridesA,
+                            char **out_dataB, npy_intp *out_stridesB);
 
 /* Start raw iteration */
-#define NPY_RAW_ITER_START(idim, ndim, coord, shape, strides, data) \
+#define NPY_RAW_ITER_START(idim, ndim, coord, shape) \
         memset((coord), 0, (ndim) * sizeof(coord[0])); \
         do {
 
 /* Increment to the next n-dimensional coordinate for one raw array */
-#define NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, strides, data) \
+#define NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides) \
             for ((idim) = 1; (idim) < (ndim); ++(idim)) { \
                 if (++(coord)[idim] == (shape)[idim]) { \
                     (coord)[idim] = 0; \
@@ -353,6 +377,23 @@ PyArray_PrepareOneRawArrayIter(int ndim, char *data,
                 } \
                 else { \
                     (data) += (strides)[idim]; \
+                    break; \
+                } \
+            } \
+        } while ((idim) < (ndim)); \
+
+/* Increment to the next n-dimensional coordinate for two raw arrays */
+#define NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape, \
+                              dataA, stridesA, dataB, stridesB) \
+            for ((idim) = 1; (idim) < (ndim); ++(idim)) { \
+                if (++(coord)[idim] == (shape)[idim]) { \
+                    (coord)[idim] = 0; \
+                    (dataA) -= ((shape)[idim] - 1) * (stridesA)[idim]; \
+                    (dataB) -= ((shape)[idim] - 1) * (stridesB)[idim]; \
+                } \
+                else { \
+                    (dataA) += (stridesA)[idim]; \
+                    (dataB) += (stridesB)[idim]; \
                     break; \
                 } \
             } \

@@ -56,15 +56,16 @@ PyArray_ContainsNA(PyArrayObject *arr)
 
         /* Use raw iteration with no heap memory allocation */
         if (PyArray_PrepareOneRawArrayIter(
-                        PyArray_NDIM(arr), PyArray_MASKNA_DATA(arr),
-                        PyArray_DIMS(arr), PyArray_MASKNA_STRIDES(arr),
-                        &ndim, &data, shape, strides) < 0) {
+                        PyArray_NDIM(arr), PyArray_DIMS(arr),
+                        PyArray_MASKNA_DATA(arr), PyArray_MASKNA_STRIDES(arr),
+                        &ndim, shape,
+                        &data, strides) < 0) {
             PyErr_Clear();
             return 1;
         }
 
         /* Do the iteration */
-        NPY_RAW_ITER_START(idim, ndim, coord, shape, strides, data) {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
             char *d = data;
             /* Process the innermost dimension */
             for (i = 0; i < shape[0]; ++i, d += strides[0]) {
@@ -72,7 +73,7 @@ PyArray_ContainsNA(PyArrayObject *arr)
                     return 1;
                 }
             }
-        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, strides, data);
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
     }
 
     return 0;
@@ -108,29 +109,30 @@ PyArray_AssignMaskNA(PyArrayObject *arr, npy_mask maskvalue)
 
     /* Use raw iteration with no heap memory allocation */
     if (PyArray_PrepareOneRawArrayIter(
-                    PyArray_NDIM(arr), PyArray_MASKNA_DATA(arr),
-                    PyArray_DIMS(arr), PyArray_MASKNA_STRIDES(arr),
-                    &ndim, &data, shape, strides) < 0) {
+                    PyArray_NDIM(arr), PyArray_DIMS(arr),
+                    PyArray_MASKNA_DATA(arr), PyArray_MASKNA_STRIDES(arr),
+                    &ndim, shape,
+                    &data, strides) < 0) {
         PyErr_Clear();
         return 1;
     }
 
     /* Special case contiguous inner stride */
     if (strides[0] == 1) {
-        NPY_RAW_ITER_START(idim, ndim, coord, shape, strides, data) {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
             /* Process the innermost dimension */
             memset(data, maskvalue, shape[0]);
-        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, strides, data);
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
     }
     /* General inner stride */
     else {
-        NPY_RAW_ITER_START(idim, ndim, coord, shape, strides, data) {
+        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
             char *d = data;
             /* Process the innermost dimension */
             for (i = 0; i < shape[0]; ++i, d += strides[0]) {
                 *(npy_mask *)d = maskvalue;
             }
-        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, strides, data);
+        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
     }
 
     return 0;

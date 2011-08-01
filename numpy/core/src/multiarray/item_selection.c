@@ -1707,8 +1707,10 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
 
     /* Use raw iteration with no heap memory allocation */
     if (PyArray_PrepareOneRawArrayIter(
-                    ndim, data, ashape, astrides,
-                    &ndim, &data, shape, strides) < 0) {
+                    ndim, ashape,
+                    data, astrides,
+                    &ndim, shape,
+                    &data, strides) < 0) {
         return -1;
     }
 

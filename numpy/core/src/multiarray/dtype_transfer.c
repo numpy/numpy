@@ -3889,10 +3889,10 @@ PyArray_CastRawArrays(npy_intp count,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_PrepareOneRawArrayIter(int ndim, char *data,
-                            npy_intp *shape, npy_intp *strides,
-                            int *out_ndim, char **out_data,
-                            npy_intp *out_shape, npy_intp *out_strides)
+PyArray_PrepareOneRawArrayIter(int ndim, npy_intp *shape,
+                            char *data, npy_intp *strides,
+                            int *out_ndim, npy_intp *out_shape,
+                            char **out_data, npy_intp *out_strides)
 {
     _npy_stride_sort_item strideperm[NPY_MAXDIMS];
     int i, j;
@@ -3975,6 +3975,128 @@ PyArray_PrepareOneRawArrayIter(int ndim, char *data,
 }
 
 /*
+ * The same as PyArray_PrepareOneRawArrayIter, but for two
+ * operands instead of one. Any broadcasting of the two operands
+ * should have already been done before calling this function,
+ * as the ndim and shape is only specified once for both operands.
+ *
+ * Only the strides of the first operand are used to reorder
+ * the dimensions, no attempt to consider all the strides together
+ * is made, as is done in the NpyIter object.
+ *
+ * You can use this together with NPY_RAW_ITER_START and
+ * NPY_RAW_ITER_TWO_NEXT to handle the looping boilerplate of everything
+ * but the innermost loop (which is for idim == 0).
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
+                            char *dataA, npy_intp *stridesA,
+                            char *dataB, npy_intp *stridesB,
+                            int *out_ndim, npy_intp *out_shape,
+                            char **out_dataA, npy_intp *out_stridesA,
+                            char **out_dataB, npy_intp *out_stridesB)
+{
+    _npy_stride_sort_item strideperm[NPY_MAXDIMS];
+    int i, j;
+
+    /* Special case 0 and 1 dimensions */
+    if (ndim == 0) {
+        *out_ndim = 1;
+        *out_dataA = dataA;
+        *out_dataB = dataB;
+        out_shape[0] = 1;
+        out_stridesA[0] = 0;
+        out_stridesB[0] = 0;
+        return 0;
+    }
+    else if (ndim == 1) {
+        npy_intp stride_entryA = stridesA[0], stride_entryB = stridesB[0];
+        npy_intp shape_entry = shape[0];
+        *out_ndim = 1;
+        out_shape[0] = shape[0];
+        /* Always make a positive stride for the first operand */
+        if (stride_entryA >= 0) {
+            *out_dataA = dataA;
+            *out_dataB = dataB;
+            out_stridesA[0] = stride_entryA;
+            out_stridesB[0] = stride_entryB;
+        }
+        else {
+            *out_dataA = dataA + stride_entryA * (shape_entry - 1);
+            *out_dataB = dataB + stride_entryB * (shape_entry - 1);
+            out_stridesA[0] = -stride_entryA;
+            out_stridesB[0] = -stride_entryB;
+        }
+        return 0;
+    }
+
+    /* Sort the axes based on the destination strides */
+    PyArray_CreateSortedStridePerm(ndim, stridesA, strideperm);
+    for (i = 0; i < ndim; ++i) {
+        int iperm = ndim - strideperm[i].perm - 1;
+        out_shape[i] = shape[iperm];
+        out_stridesA[i] = stridesA[iperm];
+        out_stridesB[i] = stridesB[iperm];
+    }
+
+    /* Reverse any negative strides of operand A */
+    for (i = 0; i < ndim; ++i) {
+        npy_intp stride_entryA = out_stridesA[i];
+        npy_intp stride_entryB = out_stridesB[i];
+        npy_intp shape_entry = out_shape[i];
+
+        if (stride_entryA < 0) {
+            dataA += stride_entryA * (shape_entry - 1);
+            dataB += stride_entryB * (shape_entry - 1);
+            out_stridesA[i] = -stride_entryA;
+            out_stridesB[i] = -stride_entryB;
+        }
+        /* Detect 0-size arrays here */
+        if (shape_entry == 0) {
+            *out_ndim = 1;
+            *out_dataA = dataA;
+            *out_dataB = dataB;
+            out_shape[0] = 0;
+            out_stridesA[0] = 0;
+            out_stridesB[0] = 0;
+            return 0;
+        }
+    }
+
+    /* Coalesce any dimensions where possible */
+    i = 0;
+    for (j = 1; j < ndim; ++j) {
+        if (out_shape[i] == 1) {
+            /* Drop axis i */
+            out_shape[i] = out_shape[j];
+            out_stridesA[i] = out_stridesA[j];
+            out_stridesB[i] = out_stridesB[j];
+        }
+        else if (out_shape[j] == 1) {
+            /* Drop axis j */
+        }
+        else if (out_stridesA[i] * out_shape[i] == out_stridesA[j] &&
+                    out_stridesB[i] * out_shape[i] == out_stridesB[j]) {
+            /* Coalesce axes i and j */
+            out_shape[i] *= out_shape[j];
+        }
+        else {
+            /* Can't coalesce, go to next i */
+            ++i;
+        }
+    }
+    ndim = i+1;
+
+    *out_dataA = dataA;
+    *out_dataB = dataB;
+    *out_ndim = ndim;
+    return 0;
+
+}
+
+/*
  * Casts the elements from one n-dimensional array to another n-dimensional
  * array with identical shape but possibly different strides and dtypes.
  * Does not account for overlap.
@@ -3990,78 +4112,38 @@ PyArray_CastRawNDimArrays(int ndim, npy_intp *shape,
 {
     PyArray_StridedTransferFn *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
-    int i, j;
+    int idim;
     npy_intp src_align, dst_align;
     int aligned, needs_api = 0;
     npy_intp coords[NPY_MAXDIMS];
     npy_intp shape_copy[NPY_MAXDIMS];
     npy_intp src_strides_copy[NPY_MAXDIMS];
     npy_intp dst_strides_copy[NPY_MAXDIMS];
-    _npy_stride_sort_item strideperm[NPY_MAXDIMS];
-
-    /* Use the simpler function for 0 and 1 dimensional transfers */
-    if (ndim <= 1) {
-        if (ndim == 0) {
-            return PyArray_CastRawArrays(1, src, dst, 0, 0,
-                                    src_dtype, dst_dtype, move_references);
-        }
-        else {
-            return PyArray_CastRawArrays(shape[0], src, dst,
-                                    src_strides[0], dst_strides[0],
-                                    src_dtype, dst_dtype, move_references);
-        }
-    }
 
     /* Determine data alignment */
     src_align = (npy_intp)src;
-    for (i = 0; i < ndim; ++i) {
-        src_align |= src_strides[i];
+    for (idim = 0; idim < ndim; ++idim) {
+        src_align |= src_strides[idim];
     }
     dst_align = (npy_intp)dst;
-    for (i = 0; i < ndim; ++i) {
-        dst_align |= dst_strides[i];
+    for (idim = 0; idim < ndim; ++idim) {
+        dst_align |= dst_strides[idim];
     }
     aligned = (src_align & (src_dtype->alignment - 1)) == 0 &&
               (dst_align & (dst_dtype->alignment - 1)) == 0;
 
-    /* Sort the axes based on the destination strides */
-    PyArray_CreateSortedStridePerm(ndim, dst_strides, strideperm);
-    for (i = 0; i < ndim; ++i) {
-        int iperm = strideperm[i].perm;
-        shape_copy[i] = shape[iperm];
-        src_strides_copy[i] = src_strides[iperm];
-        dst_strides_copy[i] = dst_strides[iperm];
+    if (PyArray_PrepareTwoRawArrayIter(ndim, shape,
+                                    dst, dst_strides,
+                                    src, src_strides,
+                                    &ndim, shape_copy,
+                                    &dst, dst_strides_copy,
+                                    &src, src_strides_copy) < 0) {
+        return NPY_FAIL;
     }
-
-    /* Coalesce dimensions where it's possible */
-    i = 0;
-    for (j = 1; j < ndim; ++j) {
-        if (shape[i] == 1) {
-            /* Drop axis i */
-            shape[i] = shape[j];
-            src_strides_copy[i] = src_strides_copy[j];
-            dst_strides_copy[i] = dst_strides_copy[j];
-        }
-        else if (shape[j] == 1) {
-            /* Drop axis j */
-        }
-        else if (src_strides_copy[i] == src_strides_copy[j] * shape[j] &&
-                 dst_strides_copy[i] == dst_strides_copy[j] * shape[j]) {
-            /* Coalesce axes i and j */
-            shape[i] *= shape[j];
-            src_strides_copy[i] = src_strides_copy[j];
-            dst_strides_copy[i] = dst_strides_copy[j];
-        }
-        else {
-            /* Can't coalesce, go to next i */
-            ++i;
-        }
-    }
-    ndim = i+1;
 
     /* Get the function to do the casting */
     if (PyArray_GetDTypeTransferFunction(aligned,
-                        src_strides[ndim-1], dst_strides[ndim-1],
+                        src_strides[0], dst_strides[0],
                         src_dtype, dst_dtype,
                         move_references,
                         &stransfer, &transferdata,
@@ -4069,26 +4151,13 @@ PyArray_CastRawNDimArrays(int ndim, npy_intp *shape,
         return NPY_FAIL;
     }
 
-    /* Do the copying */
-    memset(coords, 0, ndim * sizeof(npy_intp));
-    do {
-        /* Copy along the last dimension */
-        i = ndim - 1;
-        stransfer(dst, dst_strides_copy[i], src, src_strides_copy[i], shape[i],
+    NPY_RAW_ITER_START(idim, ndim, coords, shape_copy) {
+        stransfer(dst, dst_strides_copy[0],
+                    src, src_strides_copy[0], shape_copy[0],
                     src_dtype->elsize, transferdata);
-        --i;
-        /* Increment to the next n-dimensional coordinate */
-        for (;i > 0; --i) {
-            if (++coords[i] == shape[i]) {
-                coords[i] = 0;
-                src -= (shape[i] - 1) * src_strides_copy[i];
-            }
-            else {
-                src += src_strides_copy[i];
-                break;
-            }
-        }
-    } while (i > 0);
+    } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coords, shape_copy,
+                                src, src_strides,
+                                dst, dst_strides);
 
     /* Cleanup */
     NPY_AUXDATA_FREE(transferdata);
