@@ -1448,12 +1448,7 @@ def sum(a, axis=None, dtype=None, out=None):
             out[...] = res
             return out
         return res
-    try:
-        sum = a.sum
-    except AttributeError:
-        return _wrapit(a, 'sum', axis, dtype, out)
-    return sum(axis, dtype, out)
-
+    return um.add.reduce(a, axis=axis, dtype=dtype, out=out)
 
 def product (a, axis=None, dtype=None, out=None):
     """
@@ -1464,11 +1459,7 @@ def product (a, axis=None, dtype=None, out=None):
     prod : equivalent function; see for details.
 
     """
-    try:
-        prod = a.prod
-    except AttributeError:
-        return _wrapit(a, 'prod', axis, dtype, out)
-    return prod(axis, dtype, out)
+    return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out)
 
 
 def sometrue(a, axis=None, out=None):
@@ -1482,11 +1473,7 @@ def sometrue(a, axis=None, out=None):
     any : equivalent function
 
     """
-    try:
-        any = a.any
-    except AttributeError:
-        return _wrapit(a, 'any', axis, out)
-    return any(axis, out)
+    return um.logical_or.reduce(a, axis=axis, out=out)
 
 
 def alltrue (a, axis=None, out=None):
@@ -1498,12 +1485,7 @@ def alltrue (a, axis=None, out=None):
     numpy.all : Equivalent function; see for details.
 
     """
-    try:
-        all = a.all
-    except AttributeError:
-        return _wrapit(a, 'all', axis, out)
-    return all(axis, out)
-
+    return um.logical_and.reduce(a, axis=axis, out=out)
 
 def any(a,axis=None, out=None):
     """
@@ -1569,12 +1551,7 @@ def any(a,axis=None, out=None):
     (191614240, 191614240)
 
     """
-    try:
-        any = a.any
-    except AttributeError:
-        return _wrapit(a, 'any', axis, out)
-    return any(axis, out)
-
+    return um.logical_or.reduce(a, axis=axis, out=out)
 
 def all(a,axis=None, out=None):
     """
@@ -1633,12 +1610,7 @@ def all(a,axis=None, out=None):
     (28293632, 28293632, array([ True], dtype=bool))
 
     """
-    try:
-        all = a.all
-    except AttributeError:
-        return _wrapit(a, 'all', axis, out)
-    return all(axis, out)
-
+    return um.logical_and.reduce(a, axis=axis, out=out)
 
 def cumsum (a, axis=None, dtype=None, out=None):
     """

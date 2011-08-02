@@ -120,9 +120,9 @@ class TestUfunc(TestCase):
 
         # class to use in testing object method loops
         class foo(object):
-            def logical_not(self) :
+            def conjugate(self) :
                 return np.bool_(1)
-            def logical_and(self, obj) :
+            def logical_xor(self, obj) :
                 return np.bool_(1)
 
         # check unary PyUFunc_O_O
@@ -134,7 +134,7 @@ class TestUfunc(TestCase):
         x = np.zeros(10, dtype=np.object)[0::2]
         for i in range(len(x)) :
             x[i] = foo()
-        assert_(np.all(np.logical_not(x) == True), msg)
+        assert_(np.all(np.conjugate(x) == True), msg)
 
         # check binary PyUFunc_OO_O
         msg = "PyUFunc_OO_O"
@@ -145,7 +145,7 @@ class TestUfunc(TestCase):
         x = np.zeros(10, dtype=np.object)[0::2]
         for i in range(len(x)) :
             x[i] = foo()
-        assert_(np.all(np.logical_and(x,x) == 1), msg)
+        assert_(np.all(np.logical_xor(x,x)), msg)
 
         # check PyUFunc_On_Om
         # fixme -- I don't know how to do this yet
@@ -470,6 +470,33 @@ class TestUfunc(TestCase):
                                                           str(a2.shape)))
 
         assert_equal(ref, True, err_msg="reference check")
+
+    def test_object_logical(self):
+        a = np.array([3, None, True, False, "test", ""], dtype=object)
+        assert_equal(np.logical_or(a, None),
+                        np.array([x or None for x in a], dtype=object))
+        assert_equal(np.logical_or(a, True),
+                        np.array([x or True for x in a], dtype=object))
+        assert_equal(np.logical_or(a, 12),
+                        np.array([x or 12 for x in a], dtype=object))
+        assert_equal(np.logical_or(a, "blah"),
+                        np.array([x or "blah" for x in a], dtype=object))
+
+        assert_equal(np.logical_and(a, None),
+                        np.array([x and None for x in a], dtype=object))
+        assert_equal(np.logical_and(a, True),
+                        np.array([x and True for x in a], dtype=object))
+        assert_equal(np.logical_and(a, 12),
+                        np.array([x and 12 for x in a], dtype=object))
+        assert_equal(np.logical_and(a, "blah"),
+                        np.array([x and "blah" for x in a], dtype=object))
+
+        assert_equal(np.logical_not(a),
+                        np.array([not x for x in a], dtype=object))
+
+        assert_equal(np.logical_or.reduce(a), 3)
+        assert_equal(np.logical_and.reduce(a), None)
+
 
     def test_casting_out_param(self):
         # Test that it's possible to do casts on output
