@@ -773,7 +773,7 @@ NpyIter_GetFirstMaskNAOp(NpyIter *iter)
  * of the corresponding maskna operand for the mask.
  */
 NPY_NO_EXPORT npy_int8 *
-NpyIter_GetMaskNAIndices(NpyIter *iter)
+NpyIter_GetMaskNAIndexArray(NpyIter *iter)
 {
     return NIT_MASKNA_INDICES(iter);
 }

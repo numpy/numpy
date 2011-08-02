@@ -2088,7 +2088,7 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
     dataptr = self->dataptrs[i];
     dtype = self->dtypes[i];
     has_external_loop = NpyIter_HasExternalLoop(self->iter);
-    maskna_indices = NpyIter_GetMaskNAIndices(self->iter);
+    maskna_indices = NpyIter_GetMaskNAIndexArray(self->iter);
 
     if (has_external_loop) {
         innerloopsize = *self->innerloopsizeptr;
@@ -2247,7 +2247,7 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
         innerstride = 0;
     }
 
-    maskna_indices = NpyIter_GetMaskNAIndices(self->iter);
+    maskna_indices = NpyIter_GetMaskNAIndexArray(self->iter);
 
     /* TODO - there should be a better way than this... */
     Py_INCREF(dtype);
