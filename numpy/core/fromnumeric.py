@@ -1384,9 +1384,16 @@ def sum(a, axis=None, dtype=None, out=None):
     ----------
     a : array_like
         Elements to sum.
-    axis : integer, optional
-        Axis over which the sum is taken. By default `axis` is None,
-        and all elements are summed.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which a sum is performed.
+        The default (`axis` = `None`) is perform a sum over all
+        the dimensions of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        .. versionadded:: 1.7.0
+        
+        If this is a tuple of ints, a sum is performed on multiple
+        axes, instead of a single axis or all the axes as before.
     dtype : dtype, optional
         The type of the returned array and of the accumulator in which
         the elements are summed.  By default, the dtype of `a` is used.
@@ -1497,11 +1504,16 @@ def any(a,axis=None, out=None):
     ----------
     a : array_like
         Input array or object that can be converted to an array.
-    axis : int, optional
-        Axis along which a logical OR is performed.  The default
-        (`axis` = `None`) is to perform a logical OR over a flattened
-        input array. `axis` may be negative, in which case it counts
-        from the last to the first axis.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which a logical OR reduction is performed.
+        The default (`axis` = `None`) is perform a logical OR over all
+        the dimensions of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        .. versionadded:: 1.7.0
+        
+        If this is a tuple of ints, a reduction is performed on multiple
+        axes, instead of a single axis or all the axes as before.
     out : ndarray, optional
         Alternate output array in which to place the result.  It must have
         the same shape as the expected output and its type is preserved
@@ -1561,11 +1573,16 @@ def all(a,axis=None, out=None):
     ----------
     a : array_like
         Input array or object that can be converted to an array.
-    axis : int, optional
-        Axis along which a logical AND is performed.
-        The default (`axis` = `None`) is to perform a logical AND
-        over a flattened input array.  `axis` may be negative, in which
-        case it counts from the last to the first axis.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which a logical AND reduction is performed.
+        The default (`axis` = `None`) is perform a logical OR over all
+        the dimensions of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        .. versionadded:: 1.7.0
+        
+        If this is a tuple of ints, a reduction is performed on multiple
+        axes, instead of a single axis or all the axes as before.
     out : ndarray, optional
         Alternate output array in which to place the result.
         It must have the same shape as the expected output and its
@@ -1908,9 +1925,16 @@ def prod(a, axis=None, dtype=None, out=None):
     ----------
     a : array_like
         Input data.
-    axis : int, optional
-        Axis over which the product is taken.  By default, the product
-        of all elements is calculated.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which a product is performed.
+        The default (`axis` = `None`) is perform a product over all
+        the dimensions of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        .. versionadded:: 1.7.0
+        
+        If this is a tuple of ints, a product is performed on multiple
+        axes, instead of a single axis or all the axes as before.
     dtype : data-type, optional
         The data-type of the returned array, as well as of the accumulator
         in which the elements are multiplied.  By default, if `a` is of
@@ -1974,12 +1998,7 @@ def prod(a, axis=None, dtype=None, out=None):
     True
 
     """
-    try:
-        prod = a.prod
-    except AttributeError:
-        return _wrapit(a, 'prod', axis, dtype, out)
-    return prod(axis, dtype, out)
-
+    return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out)
 
 def cumprod(a, axis=None, dtype=None, out=None):
     """
