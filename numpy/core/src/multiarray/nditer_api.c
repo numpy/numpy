@@ -2564,7 +2564,7 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     *reduce_outerdim = 0;
 
     /* If there's only one dimension, no need to calculate anything */
-    if (ndim == 1) {
+    if (ndim == 1 || count == 0) {
         *reduce_innersize = count;
         return count;
     }

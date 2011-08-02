@@ -1102,13 +1102,13 @@ class TestMaskedArrayArithmetic(TestCase):
             output.fill(-9999)
             result = npfunc(xm, axis=0, out=output)
             # ... the result should be the given output
-            self.assertTrue(result is output)
+            assert_(result is output)
             assert_equal(result, xmmeth(axis=0, out=output))
             #
             output = empty(4, dtype=int)
             result = xmmeth(axis=0, out=output)
-            self.assertTrue(result is output)
-            self.assertTrue(output[0] is masked)
+            assert_(result is output)
+            assert_(output[0] is masked)
 
 
     def test_eq_on_structured(self):

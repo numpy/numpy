@@ -2571,6 +2571,53 @@ conform_reduce_result(int ndim, npy_bool *axis_flags, PyArrayObject *out)
     return (PyArrayObject *)ret;
 }
 
+/* Allocate 'result' or conform 'out' to 'self' (in 'result') */
+static PyArrayObject *
+allocate_or_conform_reduce_result(PyArrayObject *arr, PyArrayObject *out,
+                        npy_bool *axis_flags, int otype_final, int keepmask)
+{
+    if (out == NULL) {
+        PyArrayObject *result;
+        PyArray_Descr *dtype = NULL;
+        /*
+         * Set up the output data type, using the input's exact
+         * data type if the type number didn't change to preserve
+         * metadata
+         */
+        if (PyArray_DESCR(arr)->type_num == otype_final) {
+            if (PyArray_ISNBO(PyArray_DESCR(arr)->byteorder)) {
+                dtype = PyArray_DESCR(arr);
+                Py_INCREF(dtype);
+            }
+            else {
+                dtype = PyArray_DescrNewByteorder(PyArray_DESCR(arr),
+                                                        NPY_NATIVE);
+            }
+        }
+        else {
+            dtype = PyArray_DescrFromType(otype_final);
+        }
+        if (dtype == NULL) {
+            return NULL;
+        }
+
+        result = allocate_reduce_result(arr, axis_flags, dtype);
+
+        /* Allocate an NA mask if necessary */
+        if (keepmask && result != NULL && PyArray_HASMASKNA(arr)) {
+            if (PyArray_AllocateMaskNA(result, 1, 0, 1) < 0) {
+                Py_DECREF(result);
+                return NULL;
+            }
+        }
+
+        return result;
+    }
+    else {
+        return conform_reduce_result(PyArray_NDIM(arr), axis_flags, out);
+    }
+}
+
 /*
  * Either:
  *   1) Fills 'result' with the identity, and returns a reference to 'arr'.
@@ -2732,7 +2779,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 
     /* Iterator parameters */
     NpyIter *iter = NULL;
-    PyArrayObject *op[2];
+    PyArrayObject *op[3];
     PyArray_Descr *op_dtypes[2] = {NULL, NULL};
     npy_uint32 flags, op_flags[2];
 
@@ -2774,48 +2821,16 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         return NULL;
     }
 
-    /* Allocate 'result' or conform 'out' to 'self' (in 'result') */
-    if (out == NULL) {
-        PyArray_Descr *dtype = NULL;
-        /*
-         * Set up the output data type, using the input's exact
-         * data type if the type number didn't change to preserve
-         * metadata
-         */
-        if (PyArray_DESCR(arr)->type_num == otype_final) {
-            if (PyArray_ISNBO(PyArray_DESCR(arr)->byteorder)) {
-                dtype = PyArray_DESCR(arr);
-                Py_INCREF(dtype);
-            }
-            else {
-                dtype = PyArray_DescrNewByteorder(PyArray_DESCR(arr),
-                                                        NPY_NATIVE);
-            }
-        }
-        else {
-            dtype = PyArray_DescrFromType(otype_final);
-        }
-        if (dtype == NULL) {
-            return NULL;
-        }
-        result = allocate_reduce_result(arr, axis_flags, dtype);
-        if (result == NULL) {
-            return NULL;
-        }
-
-        /* Allocate an NA mask if necessary */
-        if (!skipna && PyArray_HASMASKNA(arr)) {
-            if (PyArray_AllocateMaskNA(result, 1, 0, 1) < 0) {
-                Py_DECREF(result);
-                return NULL;
-            }
-        }
+    /* If the loop wants the arrays, provide them */
+    if (_does_loop_use_arrays(innerloopdata)) {
+        innerloopdata = (void*)op;
     }
-    else {
-        result = conform_reduce_result(ndim, axis_flags, out);
-        if (result == NULL) {
-            return NULL;
-        }
+
+    /* Allocate an output or conform 'out' to 'self' */
+    result = allocate_or_conform_reduce_result(arr, out,
+                                        axis_flags, otype_final, !skipna);
+    if (result == NULL) {
+        return NULL;
     }
 
     /*
@@ -2832,6 +2847,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     /* Now we can do a loop applying the ufunc in a straightforward manner */
     op[0] = result;
     op[1] = arr_view;
+    /* op is length 3 in case the inner loop wanted these as its data */
+    op[2] = result;
     op_dtypes[0] = PyArray_DescrFromType(otype_final);
     if (op_dtypes[0] == NULL) {
         goto fail;
@@ -2897,6 +2914,10 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 
         if (!needs_api) {
             NPY_END_THREADS;
+        }
+
+        if (needs_api && PyErr_Occurred()) {
+            goto fail;
         }
     }
 
@@ -3768,14 +3789,6 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     if (mp == NULL) {
         return NULL;
     }
-    /* Check to see if input is zero-dimensional */
-    if (PyArray_NDIM(mp) == 0) {
-        PyErr_Format(PyExc_TypeError, "cannot %s on a scalar",
-                     _reduce_type[operation]);
-        Py_XDECREF(otype);
-        Py_DECREF(mp);
-        return NULL;
-    }
     /* Check to see that type (and otype) is not FLEXIBLE */
     if (PyArray_ISFLEXIBLE(mp) ||
         (otype && PyTypeNum_ISFLEXIBLE(otype->type_num))) {
@@ -3855,6 +3868,35 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
         naxes = 1;
     }
 
+    /* Check to see if input is zero-dimensional. */
+    if (PyArray_NDIM(mp) == 0) {
+        /* A reduction with no axes is still valid but trivial */
+        if (operation == UFUNC_REDUCE && naxes == 0) {
+            Py_XDECREF(otype);
+            /* If there's an output parameter, copy the value */
+            if (out != NULL) {
+                if (PyArray_CopyInto(out, mp) < 0) {
+                    Py_DECREF(mp);
+                    return NULL;
+                }
+                else {
+                    Py_DECREF(mp);
+                    Py_INCREF(out);
+                    return (PyObject *)out;
+                }
+            }
+            /* Otherwise return the array unscathed */
+            else {
+                return (PyObject *)mp;
+            }
+        }
+        PyErr_Format(PyExc_TypeError, "cannot %s on a scalar",
+                     _reduce_type[operation]);
+        Py_XDECREF(otype);
+        Py_DECREF(mp);
+        return NULL;
+    }
+
      /*
       * If out is specified it determines otype
       * unless otype already specified.
@@ -3919,9 +3961,16 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     }
     Py_DECREF(mp);
     Py_DECREF(otype);
+
     if (ret == NULL) {
         return NULL;
     }
+
+    /* If an output parameter was provided, don't wrap it */
+    if (out != NULL) {
+        return (PyObject *)ret;
+    }
+
     if (Py_TYPE(op) != Py_TYPE(ret)) {
         res = PyObject_CallMethod(op, "__array_wrap__", "O", ret);
         if (res == NULL) {
