@@ -5299,8 +5299,22 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
     ----------
     a : array_like
         The array to act on.
-    axis : int, optional
-        The axis along which to apply the reduction.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which a reduction is performed.
+        The default (`axis` = 0) is perform a reduction over the first
+        dimension of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        .. versionadded:: 1.7.0
+
+        If this is `None`, a reduction is performed over all the axes.
+        If this is a tuple of ints, a reduction is performed on multiple
+        axes, instead of a single axis or all the axes as before.
+
+        For operations which are either not commutative or not associative,
+        doing a reduction over multiple axes is not well-defined. The
+        ufuncs do not currently raise an exception in this case, but will
+        likely do so in the future.
     dtype : data-type code, optional
         The type used to represent the intermediate results. Defaults
         to the data-type of the output array if this is provided, or
