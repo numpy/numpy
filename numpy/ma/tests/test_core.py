@@ -2034,7 +2034,7 @@ class TestMaskedArrayMethods(TestCase):
 
     def test_allany_oddities(self):
         "Some fun with all and any"
-        store = empty(1, dtype=bool)
+        store = empty((), dtype=bool)
         full = array([1, 2, 3], mask=True)
         #
         self.assertTrue(full.all() is masked)
@@ -2043,7 +2043,7 @@ class TestMaskedArrayMethods(TestCase):
         self.assertTrue(store._mask, True)
         self.assertTrue(store is not masked)
         #
-        store = empty(1, dtype=bool)
+        store = empty((), dtype=bool)
         self.assertTrue(full.any() is masked)
         full.any(out=store)
         self.assertTrue(not store)
