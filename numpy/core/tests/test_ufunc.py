@@ -497,6 +497,13 @@ class TestUfunc(TestCase):
         assert_equal(np.logical_or.reduce(a), 3)
         assert_equal(np.logical_and.reduce(a), None)
 
+    def test_zerosize_reduction(self):
+        assert_equal(np.sum([]), 0)
+        assert_equal(np.prod([]), 1)
+        assert_equal(np.any([]), False)
+        assert_equal(np.all([]), True)
+        assert_raises(ValueError, np.max, [])
+        assert_raises(ValueError, np.min, [])
 
     def test_casting_out_param(self):
         # Test that it's possible to do casts on output
