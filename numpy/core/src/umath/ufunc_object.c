@@ -2650,6 +2650,13 @@ initialize_reduce_result(int identity, PyArrayObject *result,
         npy_intp *strides, *shape, *shape_orig;
         PyArrayObject *arr_view;
         int idim, ndim = PyArray_NDIM(arr);
+
+        if (PyArray_SIZE(arr) == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "zero-size array to ufunc.reduce without identity");
+            return NULL;
+        }
+
         /*
          * TODO: Should the ufunc tell us whether it's commutative
          *       and/or associative, and this operation can be reordered?
@@ -2800,13 +2807,6 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         }
         axis_flags[axis] = 1;
     }
-
-/*
-    printf("reduce.%s\n", ufunc_name);
-    {int i; printf("axes flags:");
-     for(i = 0;i < ndim; ++i) printf("%d ", (int)axis_flags[i]);
-     printf("\n");}
-*/
 
     /* Get the appropriate ufunc inner loop */
     otype_final = otype;
