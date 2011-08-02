@@ -246,7 +246,7 @@ defdict = {
           TD(O, f='PyNumber_Add'),
           ),
 'subtract' :
-    Ufunc(2, 1, Zero,
+    Ufunc(2, 1, None, # Zero is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.subtract'),
           'PyUFunc_SubtractionTypeResolution',
           TD(notimes_or_obj),
@@ -269,7 +269,7 @@ defdict = {
           TD(O, f='PyNumber_Multiply'),
           ),
 'divide' :
-    Ufunc(2, 1, One,
+    Ufunc(2, 1, None, # One is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.divide'),
           'PyUFunc_DivisionTypeResolution',
           TD(intfltcmplx),
@@ -280,7 +280,7 @@ defdict = {
           TD(O, f='PyNumber_Divide'),
           ),
 'floor_divide' :
-    Ufunc(2, 1, One,
+    Ufunc(2, 1, None, # One is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.floor_divide'),
           'PyUFunc_DivisionTypeResolution',
           TD(intfltcmplx),
@@ -290,7 +290,7 @@ defdict = {
           TD(O, f='PyNumber_FloorDivide'),
           ),
 'true_divide' :
-    Ufunc(2, 1, One,
+    Ufunc(2, 1, None, # One is only a unit to the right, not the left
           docstrings.get('numpy.core.umath.true_divide'),
           'PyUFunc_DivisionTypeResolution',
           TD('bBhH', out='d'),
@@ -309,7 +309,7 @@ defdict = {
           TD(P, f='conjugate'),
           ),
 'fmod' :
-    Ufunc(2, 1, Zero,
+    Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.fmod'),
           None,
           TD(ints),
@@ -338,7 +338,7 @@ defdict = {
           TD(O, f='Py_get_one'),
           ),
 'power' :
-    Ufunc(2, 1, One,
+    Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.power'),
           None,
           TD(ints),

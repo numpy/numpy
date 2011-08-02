@@ -779,8 +779,8 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
  */
 int _npy_stride_sort_item_comparator(const void *a, const void *b)
 {
-    npy_intp astride = ((_npy_stride_sort_item *)a)->stride,
-            bstride = ((_npy_stride_sort_item *)b)->stride;
+    npy_intp astride = ((npy_stride_sort_item *)a)->stride,
+            bstride = ((npy_stride_sort_item *)b)->stride;
 
     /* Sort the absolute value of the strides */
     if (astride < 0) {
@@ -798,8 +798,8 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
          * Make the qsort stable by next comparing the perm order.
          * (Note that two perm entries will never be equal)
          */
-        npy_intp aperm = ((_npy_stride_sort_item *)a)->perm,
-                bperm = ((_npy_stride_sort_item *)b)->perm;
+        npy_intp aperm = ((npy_stride_sort_item *)a)->perm,
+                bperm = ((npy_stride_sort_item *)b)->perm;
         return (aperm < bperm) ? -1 : 1;
     }
     else {
@@ -807,7 +807,8 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
     }
 }
 
-/*
+/*NUMPY_API
+ *
  * This function populates the first ndim elements
  * of strideperm with sorted descending by their absolute values.
  * For example, the stride array (4, -2, 12) becomes
@@ -815,7 +816,7 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
  */
 NPY_NO_EXPORT void
 PyArray_CreateSortedStridePerm(int ndim, npy_intp * strides,
-                           _npy_stride_sort_item *strideperm)
+                           npy_stride_sort_item *strideperm)
 {
     int i;
 
@@ -826,7 +827,7 @@ PyArray_CreateSortedStridePerm(int ndim, npy_intp * strides,
     }
 
     /* Sort them */
-    qsort(strideperm, ndim, sizeof(_npy_stride_sort_item),
+    qsort(strideperm, ndim, sizeof(npy_stride_sort_item),
                                     &_npy_stride_sort_item_comparator);
 }
 
@@ -862,7 +863,7 @@ PyArray_Ravel(PyArrayObject *a, NPY_ORDER order)
     }
     /* For KEEPORDER, check if we can make a flattened view */
     else if (order == NPY_KEEPORDER) {
-        _npy_stride_sort_item strideperm[NPY_MAXDIMS];
+        npy_stride_sort_item strideperm[NPY_MAXDIMS];
         npy_intp stride;
         int i, ndim = PyArray_NDIM(a);
 

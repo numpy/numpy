@@ -327,6 +327,9 @@ multiarray_funcs_api = {
     'NpyIter_GetFirstMaskNAOp':             288,
     'NpyIter_GetMaskNAIndexArray':          289,
     'PyArray_ReduceMaskArray':              290,
+    'PyArray_CreateSortedStridePerm':       291,
+    'PyArray_FillWithZero':                 292,
+    'PyArray_FillWithOne':                  293,
 }
 
 ufunc_types_api = {

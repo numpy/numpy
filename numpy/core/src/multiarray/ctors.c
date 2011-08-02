@@ -1391,8 +1391,8 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
     else {
         npy_intp strides[NPY_MAXDIMS], stride;
         npy_intp *shape = PyArray_DIMS(prototype);
-        _npy_stride_sort_item strideperm[NPY_MAXDIMS];
-        int i;
+        npy_stride_sort_item strideperm[NPY_MAXDIMS];
+        int idim;
 
         PyArray_CreateSortedStridePerm(PyArray_NDIM(prototype),
                                         PyArray_STRIDES(prototype),
@@ -1400,14 +1400,14 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
 
         /* Build the new strides */
         stride = dtype->elsize;
-        for (i = ndim-1; i >= 0; --i) {
-            npy_intp i_perm = strideperm[i].perm;
+        for (idim = ndim-1; idim >= 0; --idim) {
+            npy_intp i_perm = strideperm[idim].perm;
             strides[i_perm] = stride;
             stride *= shape[i_perm];
         }
 
         /* Finally, allocate the array */
-        ret = PyArray_NewFromDescr( subok ? Py_TYPE(prototype) : &PyArray_Type,
+        ret = PyArray_NewFromDescr(subok ? Py_TYPE(prototype) : &PyArray_Type,
                                         dtype,
                                         ndim,
                                         shape,
