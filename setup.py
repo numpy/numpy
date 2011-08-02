@@ -167,6 +167,19 @@ def setup_package():
         if os.path.isfile(site_cfg):
             shutil.copy(site_cfg, src_path)
 
+        # Ugly hack to make pip work with Python 3, see #1857.
+        # Explanation: pip messes with __file__ which interacts badly with the
+        # change in directory due to the 2to3 conversion.  Therefore we restore
+        # __file__ to what it would have been otherwise.
+        global __file__
+        __file__ = os.path.join(os.curdir, os.path.basename(__file__))
+        if '--egg-base' in sys.argv:
+            # Change pip-egg-info entry to absolute path, so pip can find it
+            # after changing directory.
+            idx = sys.argv.index('--egg-base')
+            if sys.argv[idx + 1] == 'pip-egg-info':
+                sys.argv[idx + 1] = os.path.join(local_path, 'pip-egg-info')
+
     old_path = os.getcwd()
     os.chdir(src_path)
     sys.path.insert(0, src_path)
