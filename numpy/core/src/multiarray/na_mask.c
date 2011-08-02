@@ -240,7 +240,7 @@ PyArray_AllocateMaskNA(PyArrayObject *arr,
         fa->maskna_strides[0] = maskna_dtype->elsize;
     }
     else if (fa->nd > 1) {
-        _npy_stride_sort_item strideperm[NPY_MAXDIMS];
+        npy_stride_sort_item strideperm[NPY_MAXDIMS];
         npy_intp stride, maskna_strides[NPY_MAXDIMS], *shape;
         int i;
 

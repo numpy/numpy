@@ -4,4 +4,7 @@
 NPY_NO_EXPORT int
 PyArray_FillWithZero(PyArrayObject *a);
 
+NPY_NO_EXPORT int
+PyArray_FillWithOne(PyArrayObject *a);
+
 #endif

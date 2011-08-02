@@ -368,7 +368,8 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     return 0;
 }
 
-/*
+/*NUMPY_API
+ *
  * Fills an array with zeros.
  *
  * Returns 0 on success, -1 on failure.
@@ -398,9 +399,32 @@ PyArray_FillWithZero(PyArrayObject *a)
         return 0;
     }
 
+    /* If there's an object type, copy the value zero to everything */
+    if (PyDataType_REFCHK(dtype)) {
+        PyArrayObject *tmp;
+        PyArray_Descr *bool_dtype = PyArray_DescrFromType(NPY_BOOL);
+        int retcode;
+
+        /* Create a boolean array with 0 in it */
+        if (dtype == NULL) {
+            return -1;
+        }
+        tmp = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+                                        bool_dtype, 0, NULL, NULL,
+                                        NULL, 0, NULL);
+        if (tmp == NULL) {
+            return -1;
+        }
+        PyArray_BYTES(tmp)[0] = 0;
+
+        retcode = PyArray_CopyInto(a, tmp);
+        Py_DECREF(tmp);
+
+        return retcode;
+    }
+
     /* If it's possible to do a simple memset, do so */
-    if (!PyDataType_REFCHK(dtype) && (PyArray_ISCONTIGUOUS(a) ||
-                                      PyArray_ISFORTRAN(a))) {
+    if (PyArray_IS_C_CONTIGUOUS(a) || PyArray_IS_F_CONTIGUOUS(a)) {
         memset(PyArray_DATA(a), 0, PyArray_NBYTES(a));
         return 0;
     }
@@ -461,6 +485,48 @@ PyArray_FillWithZero(PyArrayObject *a)
     NpyIter_Deallocate(iter);
 
     return 0;
+}
+
+/*NUMPY_API
+ *
+ * Fills an array with ones.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_FillWithOne(PyArrayObject *a)
+{
+    PyArrayObject *tmp;
+    PyArray_Descr *bool_dtype;
+    int retcode;
+
+    if (!PyArray_ISWRITEABLE(a)) {
+        PyErr_SetString(PyExc_RuntimeError, "cannot write to array");
+        return -1;
+    }
+
+    /* A zero-sized array needs no zeroing */
+    if (PyArray_SIZE(a) == 0) {
+        return 0;
+    }
+
+    /* Create a boolean array with 0 in it */
+    bool_dtype = PyArray_DescrFromType(NPY_BOOL);
+    if (bool_dtype == NULL) {
+        return -1;
+    }
+    tmp = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
+                                    bool_dtype, 0, NULL, NULL,
+                                    NULL, 0, NULL);
+    if (tmp == NULL) {
+        return -1;
+    }
+    PyArray_BYTES(tmp)[0] = 1;
+
+    retcode = PyArray_CopyInto(a, tmp);
+    Py_DECREF(tmp);
+
+    return retcode;
 }
 
 /*NUMPY_API
@@ -534,6 +600,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
             PyErr_SetString(PyExc_RuntimeError,
                     "NA masks with fields are not supported yet");
             Py_DECREF(ret);
+            Py_DECREF(type);
             return NULL;
         }
 

@@ -3894,7 +3894,7 @@ PyArray_PrepareOneRawArrayIter(int ndim, npy_intp *shape,
                             int *out_ndim, npy_intp *out_shape,
                             char **out_data, npy_intp *out_strides)
 {
-    _npy_stride_sort_item strideperm[NPY_MAXDIMS];
+    npy_stride_sort_item strideperm[NPY_MAXDIMS];
     int i, j;
 
     /* Special case 0 and 1 dimensions */
@@ -3998,7 +3998,7 @@ PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
                             char **out_dataA, npy_intp *out_stridesA,
                             char **out_dataB, npy_intp *out_stridesB)
 {
-    _npy_stride_sort_item strideperm[NPY_MAXDIMS];
+    npy_stride_sort_item strideperm[NPY_MAXDIMS];
     int i, j;
 
     /* Special case 0 and 1 dimensions */

@@ -52,6 +52,8 @@ npy_half npy_half_nextafter(npy_half x, npy_half y);
 #define NPY_HALF_NINF   (0xfc00u)
 #define NPY_HALF_NAN    (0x7e00u)
 
+#define NPY_MAX_HALF    (0x7bffu)
+
 /*
  * Bit-level conversions
  */
