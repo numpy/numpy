@@ -18,17 +18,19 @@
 
 #include "shape.h"
 
-#define PyAO PyArrayObject
+#define PyArrayObject PyArrayObject
 
 static int
-_check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides);
+_check_ones(PyArrayObject *self, int newnd,
+                npy_intp* newdims, npy_intp *strides, npy_intp *masknastrides);
 
 static int
-_fix_unknown_dimension(PyArray_Dims *newshape, intp s_original);
+_fix_unknown_dimension(PyArray_Dims *newshape, npy_intp s_original);
 
 static int
-_attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
-                        intp *newstrides, int is_f_order);
+_attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
+                        npy_intp *newstrides, npy_intp *newmasknastrides,
+                        int is_f_order);
 
 static void
 _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype);
@@ -43,15 +45,15 @@ NPY_NO_EXPORT PyObject *
 PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                NPY_ORDER order)
 {
-    intp oldsize, newsize;
+    npy_intp oldsize, newsize;
     int new_nd=newshape->len, k, n, elsize;
     int refcnt;
-    intp* new_dimensions=newshape->ptr;
-    intp new_strides[MAX_DIMS];
+    npy_intp* new_dimensions=newshape->ptr;
+    npy_intp new_strides[NPY_MAXDIMS];
     size_t sd;
-    intp *dimptr;
+    npy_intp *dimptr;
     char *new_data;
-    intp largest;
+    npy_intp largest;
 
     if (!PyArray_ISONESEGMENT(self)) {
         PyErr_SetString(PyExc_ValueError,
@@ -158,8 +160,8 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     sd = (size_t) PyArray_DESCR(self)->elsize;
     sd = (size_t) _array_fill_strides(new_strides, new_dimensions, new_nd, sd,
             PyArray_FLAGS(self), &(((PyArrayObject_fieldaccess *)self)->flags));
-    memmove(PyArray_DIMS(self), new_dimensions, new_nd*sizeof(intp));
-    memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(intp));
+    memmove(PyArray_DIMS(self), new_dimensions, new_nd*sizeof(npy_intp));
+    memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(npy_intp));
     Py_INCREF(Py_None);
     return Py_None;
 }
@@ -178,29 +180,33 @@ NPY_NO_EXPORT PyObject *
 PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                  NPY_ORDER order)
 {
-    intp i;
-    intp *dimensions = newdims->ptr;
+    npy_intp i;
+    npy_intp *dimensions = newdims->ptr;
     PyArrayObject *ret;
-    int n = newdims->len;
-    Bool same, incref = TRUE;
-    intp *strides = NULL;
-    intp newstrides[MAX_DIMS];
-    int flags;
+    int ndim = newdims->len;
+    npy_bool same, incref = TRUE;
+    npy_intp *strides = NULL;
+    npy_intp newstrides[NPY_MAXDIMS];
+    npy_intp newmasknastrides[NPY_MAXDIMS];
+    int flags, build_maskna_strides = 0;
+
+    printf("in newshape\n"); fflush(stdout);
 
     if (order == NPY_ANYORDER) {
         order = PyArray_ISFORTRAN(self);
     }
     /*  Quick check to make sure anything actually needs to be done */
-    if (n == PyArray_NDIM(self)) {
+    if (ndim == PyArray_NDIM(self)) {
         same = TRUE;
         i = 0;
-        while (same && i < n) {
+        while (same && i < ndim) {
             if (PyArray_DIM(self,i) != dimensions[i]) {
                 same=FALSE;
             }
             i++;
         }
         if (same) {
+            printf("returning view\n"); fflush(stdout);
             return PyArray_View(self, NULL, NULL);
         }
     }
@@ -213,13 +219,16 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
      * In this case we don't need to do anything but update strides and
      * dimensions.  So, we can handle non single-segment cases.
      */
-    i = _check_ones(self, n, dimensions, newstrides);
+    i = _check_ones(self, ndim, dimensions, newstrides, newmasknastrides);
     if (i == 0) {
+        printf("setting strides to newstrides\n"); fflush(stdout);
         strides = newstrides;
     }
-    flags = PyArray_FLAGS(self);
+    flags = PyArray_FLAGS(self) & ~(NPY_ARRAY_OWNMASKNA |
+                                    NPY_ARRAY_MASKNA);
 
     if (strides == NULL) {
+        printf("strides are null\n"); fflush(stdout);
         /*
          * we are really re-shaping not just adding ones to the shape somewhere
          * fix any -1 dimensions and check new-dimensions against old size
@@ -239,29 +248,35 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
               (PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS) &&
                   order == NPY_CORDER)) && (PyArray_NDIM(self) > 1))) {
             int success = 0;
-            success = _attempt_nocopy_reshape(self,n,dimensions,
-                                              newstrides,order);
+            success = _attempt_nocopy_reshape(self, ndim, dimensions,
+                                          newstrides, newmasknastrides, order);
             if (success) {
+                printf("nocopy reshape succeeded\n"); fflush(stdout);
                 /* no need to copy the array after all */
                 strides = newstrides;
-                flags = PyArray_FLAGS(self);
             }
             else {
-                PyObject *new;
-                new = PyArray_NewCopy(self, order);
-                if (new == NULL) {
+                printf("nocopy reshape failed\n"); fflush(stdout);
+                PyObject *newcopy;
+                newcopy = PyArray_NewCopy(self, order);
+                if (newcopy == NULL) {
                     return NULL;
                 }
                 incref = FALSE;
-                self = (PyArrayObject *)new;
-                flags = PyArray_FLAGS(self);
+                self = (PyArrayObject *)newcopy;
+                build_maskna_strides = 1;
             }
+            flags = PyArray_FLAGS(self) & ~(NPY_ARRAY_OWNMASKNA |
+                                            NPY_ARRAY_MASKNA);
+        }
+        else {
+            build_maskna_strides = 1;
         }
 
         /* We always have to interpret the contiguous buffer correctly */
 
         /* Make sure the flags argument is set. */
-        if (n > 1) {
+        if (ndim > 1) {
             if (order == NPY_FORTRANORDER) {
                 flags &= ~NPY_ARRAY_C_CONTIGUOUS;
                 flags |= NPY_ARRAY_F_CONTIGUOUS;
@@ -272,7 +287,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
             }
         }
     }
-    else if (n > 0) {
+    else if (ndim > 0) {
         /*
          * replace any 0-valued strides with
          * appropriate value to preserve contiguousness
@@ -281,17 +296,17 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
             if (strides[0] == 0) {
                 strides[0] = PyArray_DESCR(self)->elsize;
             }
-            for (i = 1; i < n; i++) {
+            for (i = 1; i < ndim; i++) {
                 if (strides[i] == 0) {
                     strides[i] = strides[i-1] * dimensions[i-1];
                 }
             }
         }
         else {
-            if (strides[n-1] == 0) {
-                strides[n-1] = PyArray_DESCR(self)->elsize;
+            if (strides[ndim-1] == 0) {
+                strides[ndim-1] = PyArray_DESCR(self)->elsize;
             }
-            for (i = n - 2; i > -1; i--) {
+            for (i = ndim - 2; i > -1; i--) {
                 if (strides[i] == 0) {
                     strides[i] = strides[i+1] * dimensions[i+1];
                 }
@@ -300,9 +315,9 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     }
 
     Py_INCREF(PyArray_DESCR(self));
-    ret = (PyAO *)PyArray_NewFromDescr(Py_TYPE(self),
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
                                        PyArray_DESCR(self),
-                                       n, dimensions,
+                                       ndim, dimensions,
                                        strides,
                                        PyArray_DATA(self),
                                        flags, (PyObject *)self);
@@ -310,6 +325,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     if (ret == NULL) {
         goto fail;
     }
+
     if (incref) {
         Py_INCREF(self);
     }
@@ -317,6 +333,37 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         Py_DECREF(ret);
         return NULL;
     }
+
+    /* If there's an NA mask, make sure to view it too */
+    if (PyArray_HASMASKNA(self)) {
+        PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)ret;
+        fa->maskna_dtype = PyArray_MASKNA_DTYPE(self);
+        Py_INCREF(fa->maskna_dtype);
+        fa->maskna_data = PyArray_MASKNA_DATA(self);
+        if (build_maskna_strides) {
+            npy_intp stride = 1;
+            if (order == NPY_FORTRANORDER) {
+                printf("building fortran strides\n"); fflush(stdout);
+                for (i = 0; i < ndim; ++i) {
+                    fa->maskna_strides[i] = stride;
+                    printf("stride %d\n", stride);
+                    stride *= fa->dimensions[i];
+                }
+            }
+            else {
+                for (i = ndim; i >= 0; --i) {
+                    fa->maskna_strides[i] = stride;
+                    stride *= fa->dimensions[i];
+                }
+            }
+        }
+        else {
+            memcpy(fa->maskna_strides, newmasknastrides,
+                                fa->nd * sizeof(npy_intp));
+        }
+        fa->flags |= NPY_ARRAY_MASKNA;
+    }
+
     PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
     return (PyObject *)ret;
 
@@ -350,12 +397,14 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
 
 /* inserts 0 for strides where dimension will be 1 */
 static int
-_check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides)
+_check_ones(PyArrayObject *self, int newnd,
+                npy_intp* newdims, npy_intp *strides, npy_intp *masknastrides)
 {
     int nd;
-    intp *dims;
-    Bool done=FALSE;
+    npy_intp *dims;
+    npy_bool done=FALSE;
     int j, k;
+    int has_maskna = PyArray_HASMASKNA(self);
 
     nd = PyArray_NDIM(self);
     dims = PyArray_DIMS(self);
@@ -363,11 +412,17 @@ _check_ones(PyArrayObject *self, int newnd, intp* newdims, intp *strides)
     for (k = 0, j = 0; !done && (j < nd || k < newnd);) {
         if ((j<nd) && (k<newnd) && (newdims[k] == dims[j])) {
             strides[k] = PyArray_STRIDES(self)[j];
+            if (has_maskna) {
+                masknastrides[k] = PyArray_MASKNA_STRIDES(self)[j];
+            }
             j++;
             k++;
         }
         else if ((k < newnd) && (newdims[k] == 1)) {
             strides[k] = 0;
+            if (has_maskna) {
+                masknastrides[k] = 0;
+            }
             k++;
         }
         else if ((j<nd) && (dims[j] == 1)) {
@@ -431,20 +486,25 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
  * stride of the next-fastest index.
  */
 static int
-_attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
-                        intp *newstrides, int is_f_order)
+_attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
+                        npy_intp *newstrides, npy_intp *newmasknastrides,
+                        int is_f_order)
 {
     int oldnd;
-    intp olddims[MAX_DIMS];
-    intp oldstrides[MAX_DIMS];
+    npy_intp olddims[NPY_MAXDIMS];
+    npy_intp oldstrides[NPY_MAXDIMS], oldmasknastrides[NPY_MAXDIMS];
     int oi, oj, ok, ni, nj, nk;
     int np, op;
+    int has_maskna = PyArray_HASMASKNA(self);
 
     oldnd = 0;
     for (oi = 0; oi < PyArray_NDIM(self); oi++) {
         if (PyArray_DIMS(self)[oi]!= 1) {
             olddims[oldnd] = PyArray_DIMS(self)[oi];
             oldstrides[oldnd] = PyArray_STRIDES(self)[oi];
+            if (has_maskna) {
+                oldmasknastrides[oldnd] = PyArray_MASKNA_STRIDES(self)[oi];
+            }
             oldnd++;
         }
     }
@@ -495,14 +555,18 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
 
         for (ok = oi; ok < oj - 1; ok++) {
             if (is_f_order) {
-                if (oldstrides[ok+1] != olddims[ok]*oldstrides[ok]) {
+                if (oldstrides[ok+1] != olddims[ok]*oldstrides[ok] ||
+                       (has_maskna && oldmasknastrides[ok+1] !=
+                                        olddims[ok]*oldmasknastrides[ok])) {
                      /* not contiguous enough */
                     return 0;
                 }
             }
             else {
                 /* C order */
-                if (oldstrides[ok] != olddims[ok+1]*oldstrides[ok+1]) {
+                if (oldstrides[ok] != olddims[ok+1]*oldstrides[ok+1] ||
+                        (has_maskna && oldmasknastrides[ok] !=
+                                    olddims[ok+1]*oldmasknastrides[ok+1])) {
                     /* not contiguous enough */
                     return 0;
                 }
@@ -514,12 +578,26 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
             for (nk = ni + 1; nk < nj; nk++) {
                 newstrides[nk] = newstrides[nk - 1]*newdims[nk - 1];
             }
+            if (has_maskna) {
+                newmasknastrides[ni] = oldmasknastrides[oi];
+                for (nk = ni + 1; nk < nj; nk++) {
+                    newmasknastrides[nk] =
+                                    newmasknastrides[nk - 1]*newdims[nk - 1];
+                }
+            }
         }
         else {
             /* C order */
             newstrides[nj - 1] = oldstrides[oj - 1];
             for (nk = nj - 1; nk > ni; nk--) {
                 newstrides[nk - 1] = newstrides[nk]*newdims[nk];
+            }
+            if (has_maskna) {
+                newmasknastrides[nj - 1] = oldmasknastrides[oj - 1];
+                for (nk = nj - 1; nk > ni; nk--) {
+                    newmasknastrides[nk - 1] =
+                                    newmasknastrides[nk]*newdims[nk];
+                }
             }
         }
         ni = nj++;
@@ -540,10 +618,10 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, intp* newdims,
 }
 
 static int
-_fix_unknown_dimension(PyArray_Dims *newshape, intp s_original)
+_fix_unknown_dimension(PyArray_Dims *newshape, npy_intp s_original)
 {
-    intp *dimensions;
-    intp i_unknown, s_known;
+    npy_intp *dimensions;
+    npy_intp i_unknown, s_known;
     int i, n;
     static char msg[] = "total size of new array must be unchanged";
 
@@ -596,8 +674,8 @@ PyArray_Squeeze(PyArrayObject *self)
 {
     int nd = PyArray_NDIM(self);
     int newnd = nd;
-    intp dimensions[MAX_DIMS];
-    intp strides[MAX_DIMS];
+    npy_intp dimensions[NPY_MAXDIMS];
+    npy_intp strides[NPY_MAXDIMS];
     int i, j;
     PyArrayObject *ret;
     PyArray_Descr *dtype;
@@ -643,7 +721,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 {
     PyArray_Dims new_axes;
-    intp dims[MAX_DIMS];
+    npy_intp dims[NPY_MAXDIMS];
     int n, i, val;
     PyObject *ret;
 
@@ -699,9 +777,9 @@ PyArray_SwapAxes(PyArrayObject *ap, int a1, int a2)
 NPY_NO_EXPORT PyObject *
 PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
 {
-    intp *axes, axis;
-    intp i, n;
-    intp permutation[MAX_DIMS], reverse_permutation[MAX_DIMS];
+    npy_intp *axes, axis;
+    npy_intp i, n;
+    npy_intp permutation[NPY_MAXDIMS], reverse_permutation[NPY_MAXDIMS];
     PyArrayObject *ret = NULL;
 
     if (permute == NULL) {
@@ -839,7 +917,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_Ravel(PyArrayObject *a, NPY_ORDER order)
 {
     PyArray_Dims newdim = {NULL,1};
-    intp val[1] = {-1};
+    npy_intp val[1] = {-1};
 
     newdim.ptr = val;
 
@@ -918,7 +996,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
 {
     PyArrayObject *ret;
-    intp size;
+    npy_intp size;
 
     if (order == NPY_ANYORDER) {
         order = PyArray_ISFORTRAN(a) ? NPY_FORTRANORDER : NPY_CORDER;

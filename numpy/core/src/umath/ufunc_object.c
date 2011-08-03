@@ -2433,6 +2433,76 @@ get_binary_op_function(PyUFuncObject *self, int *otype,
 }
 
 /*
+ * Given the output type, finds the specified binary op, and
+ * returns a masked inner loop.  The ufunc must have nin==2
+ * and nout==1.  The function may modify otype if the given
+ * type isn't found.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+static int
+get_masked_binary_op_function(PyUFuncObject *self, PyArrayObject *arr,
+                        int otype,
+                        PyArray_Descr **out_dtype,
+                        PyUFuncGenericMaskedFunction *out_innerloop,
+                        NpyAuxData **out_innerloopdata)
+{
+    int i, retcode;
+    PyArrayObject *op[3] = {arr, arr, arr};
+    PyArray_Descr *dtype[3] = {NULL, NULL, NULL};
+    PyObject *type_tup = NULL;
+
+    NPY_UF_DBG_PRINT1("Getting masked binary op function for type number %d\n",
+                                *otype);
+
+    *out_dtype = NULL;
+
+    /* Build a type tuple if otype is specified */
+    if (otype != NPY_NOTYPE) {
+        PyArray_Descr *otype_dtype = PyArray_DescrFromType(otype);
+        if (otype_dtype == NULL) {
+            return -1;
+        }
+        type_tup = Py_BuildValue("(N)", otype_dtype);
+        if (type_tup == NULL) {
+            return -1;
+        }
+    }
+
+    /* Use the type resolution function to find our loop */
+    retcode = self->type_resolution_masked_function(self, NPY_SAFE_CASTING,
+                        op, type_tup, dtype,
+                        out_innerloop, out_innerloopdata);
+    Py_XDECREF(type_tup);
+    if (retcode == -1) {
+        return -1;
+    }
+    else if (retcode == -2) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "type resolution returned NotImplemented");
+        return -1;
+    }
+
+    /* The selected dtypes should all be equivalent */
+    if (!PyArray_EquivTypes(dtype[0], dtype[1]) ||
+                !PyArray_EquivTypes(dtype[1], dtype[2])) {
+        for (i = 0; i < 3; ++i) {
+            Py_DECREF(dtype[i]);
+        }
+        PyErr_SetString(PyExc_RuntimeError,
+                "could not find a masked binary loop appropriate for "
+                "reduce ufunc");
+        return -1;
+    }
+
+    *out_dtype = dtype[0];
+    Py_DECREF(dtype[1]);
+    Py_DECREF(dtype[2]);
+
+    return 0;
+}
+
+/*
  * Allocates a result array for a reduction operation, with
  * dimensions matching 'arr' except set to 1 with 0 stride
  * whereever axis_flags is True. Dropping the reduction axes
@@ -2574,34 +2644,15 @@ conform_reduce_result(int ndim, npy_bool *axis_flags, PyArrayObject *out)
 /* Allocate 'result' or conform 'out' to 'self' (in 'result') */
 static PyArrayObject *
 allocate_or_conform_reduce_result(PyArrayObject *arr, PyArrayObject *out,
-                        npy_bool *axis_flags, int otype_final, int keepmask)
+                        npy_bool *axis_flags, PyArray_Descr * otype_dtype,
+                        int keepmask)
 {
     if (out == NULL) {
         PyArrayObject *result;
-        PyArray_Descr *dtype = NULL;
-        /*
-         * Set up the output data type, using the input's exact
-         * data type if the type number didn't change to preserve
-         * metadata
-         */
-        if (PyArray_DESCR(arr)->type_num == otype_final) {
-            if (PyArray_ISNBO(PyArray_DESCR(arr)->byteorder)) {
-                dtype = PyArray_DESCR(arr);
-                Py_INCREF(dtype);
-            }
-            else {
-                dtype = PyArray_DescrNewByteorder(PyArray_DESCR(arr),
-                                                        NPY_NATIVE);
-            }
-        }
-        else {
-            dtype = PyArray_DescrFromType(otype_final);
-        }
-        if (dtype == NULL) {
-            return NULL;
-        }
 
-        result = allocate_reduce_result(arr, axis_flags, dtype);
+        printf("allocating result\n"); fflush(stdout);
+        Py_INCREF(otype_dtype);
+        result = allocate_reduce_result(arr, axis_flags, otype_dtype);
 
         /* Allocate an NA mask if necessary */
         if (keepmask && result != NULL && PyArray_HASMASKNA(arr)) {
@@ -2614,6 +2665,7 @@ allocate_or_conform_reduce_result(PyArrayObject *arr, PyArrayObject *out,
         return result;
     }
     else {
+        printf("conforming result\n"); fflush(stdout);
         return conform_reduce_result(PyArray_NDIM(arr), axis_flags, out);
     }
 }
@@ -2767,15 +2819,19 @@ static PyObject *
 PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         int naxes, int *axes, int otype, int skipna)
 {
-    int ndim;
-    int iaxes;
+    int iaxes, ndim, retcode;
+    PyArray_Descr *otype_dtype = NULL;
     npy_bool axis_flags[NPY_MAXDIMS];
     PyArrayObject *arr_view = NULL, *result = NULL;
-    int otype_final;
 
-    /* The selected inner loop */
+    /* The normal selected inner loop */
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
+
+    /* The masked selected inner loop */
+    int use_maskna = 0;
+    PyUFuncGenericMaskedFunction maskedinnerloop = NULL;
+    NpyAuxData *maskedinnerloopdata = NULL;
 
     char *ufunc_name = self->name ? self->name : "(unknown)";
     NPY_BEGIN_THREADS_DEF;
@@ -2808,10 +2864,45 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         axis_flags[axis] = 1;
     }
 
+    use_maskna = PyArray_HASMASKNA(arr);
+
     /* Get the appropriate ufunc inner loop */
-    otype_final = otype;
-    if (get_binary_op_function(self, &otype_final,
-                                &innerloop, &innerloopdata) < 0) {
+    if (use_maskna) {
+        retcode = get_masked_binary_op_function(self, arr, otype,
+                        &otype_dtype, &maskedinnerloop, &maskedinnerloopdata);
+    }
+    else {
+        /*
+         * TODO: Switch to using the type resolution function like
+         *       in the masked case.
+         */
+        int otype_final = otype;
+        retcode = get_binary_op_function(self, &otype_final,
+                                &innerloop, &innerloopdata);
+
+        /*
+         * Set up the output data type, using the input's exact
+         * data type if the type number didn't change to preserve
+         * metadata
+         */
+        if (PyArray_DESCR(arr)->type_num == otype_final) {
+            if (PyArray_ISNBO(PyArray_DESCR(arr)->byteorder)) {
+                otype_dtype = PyArray_DESCR(arr);
+                Py_INCREF(otype_dtype);
+            }
+            else {
+                otype_dtype = PyArray_DescrNewByteorder(PyArray_DESCR(arr),
+                                                        NPY_NATIVE);
+            }
+        }
+        else {
+            otype_dtype = PyArray_DescrFromType(otype_final);
+        }
+        if (otype_dtype == NULL) {
+            return NULL;
+        }
+    }
+    if (retcode < 0) {
         PyArray_Descr *dtype = PyArray_DescrFromType(otype);
         PyErr_Format(PyExc_ValueError,
                      "could not find a matching type for %s.reduce, "
@@ -2828,9 +2919,60 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 
     /* Allocate an output or conform 'out' to 'self' */
     result = allocate_or_conform_reduce_result(arr, out,
-                                        axis_flags, otype_final, !skipna);
+                                        axis_flags, otype_dtype, !skipna);
     if (result == NULL) {
         return NULL;
+    }
+
+    /* Prepare the NA mask if there is one */
+    if (use_maskna) {
+        printf("doing masked %s.reduce\n", ufunc_name); fflush(stdout);
+        /*
+         * Do the reduction on the NA mask before the data. This way
+         * we can avoid modifying the outputs which end up masked, obeying
+         * the required NA masking semantics.
+         */
+        if (!skipna) {
+            if (PyArray_HASMASKNA(result)) {
+                if (PyArray_ReduceMaskNAArray(ndim, PyArray_DIMS(arr),
+                            PyArray_MASKNA_DTYPE(arr),
+                            PyArray_MASKNA_DATA(arr),
+                            PyArray_MASKNA_STRIDES(arr),
+                            PyArray_MASKNA_DTYPE(result),
+                            PyArray_MASKNA_DATA(result),
+                            PyArray_MASKNA_STRIDES(result)) < 0) {
+                    goto fail;
+                }
+            }
+            else if (PyArray_ContainsNA(arr)) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Cannot assign NA value to an array which "
+                        "does not support NAs");
+                goto fail;
+            }
+            else {
+                use_maskna = 0;
+            }
+
+            /* Short circuit any calculation if the result is a single NA */
+            if (PyArray_SIZE(result) == 1 &&
+                    !NpyMaskValue_IsExposed(
+                                (npy_mask)*PyArray_MASKNA_DATA(result))) {
+                goto finish;
+            }
+        }
+        else {
+            /*
+             * If there's no identity, validate that there is no
+             * reduction which is all NA values.
+             */
+            if (self->identity == PyUFunc_None) {
+                PyErr_SetString(PyExc_ValueError,
+                        "skipna=True together with a non-identity reduction "
+                        "isn't implemented yet");
+                goto fail;
+            }
+        }
     }
 
     /*
@@ -2849,11 +2991,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     op[1] = arr_view;
     /* op is length 3 in case the inner loop wanted these as its data */
     op[2] = result;
-    op_dtypes[0] = PyArray_DescrFromType(otype_final);
-    if (op_dtypes[0] == NULL) {
-        goto fail;
-    }
-    op_dtypes[1] = op_dtypes[0];
+    op_dtypes[0] = otype_dtype;
+    op_dtypes[1] = otype_dtype;
 
     flags = NPY_ITER_BUFFERED |
             NPY_ITER_EXTERNAL_LOOP |
@@ -2866,6 +3005,32 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                   NPY_ITER_NO_SUBTYPE;
     op_flags[1] = NPY_ITER_READONLY |
                   NPY_ITER_ALIGNED;
+
+    /* Add mask-related flags */
+    if (use_maskna) {
+        if (skipna) {
+            /* Need the input's mask to determine what to skip */
+            op_flags[0] |= NPY_ITER_USE_MASKNA;
+            /* The output's mask has been set to all exposed already */
+            op_flags[1] |= NPY_ITER_IGNORE_MASKNA;
+
+            /* TODO: allocate a temporary buffer for inverting the mask */
+        }
+        else {
+            /* The input's mask is already incorporated in the output's mask */
+            op_flags[0] |= NPY_ITER_IGNORE_MASKNA;
+            /* Iterate over the output's mask */
+            op_flags[1] |= NPY_ITER_USE_MASKNA;
+        }
+    }
+    else {
+        /*
+         * If 'out' had no mask, and 'arr' did, we checked that 'arr'
+         * contains no NA values and can ignore the masks.
+         */
+        op_flags[0] |= NPY_ITER_IGNORE_MASKNA;
+        op_flags[1] |= NPY_ITER_IGNORE_MASKNA;
+    }
 
     iter = NpyIter_MultiNew(2, op, flags,
                                NPY_KEEPORDER, NPY_UNSAFE_CASTING,
@@ -2894,23 +3059,44 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
 
         needs_api = NpyIter_IterationNeedsAPI(iter) ||
-                    otype_final == NPY_OBJECT;
+                    PyDataType_REFCHK(otype_dtype);
 
         if (!needs_api) {
             NPY_BEGIN_THREADS;
         }
 
-        do {
-            /* Turn the two items into three for the inner loop */
-            dataptr_copy[0] = dataptr[0];
-            dataptr_copy[1] = dataptr[1];
-            dataptr_copy[2] = dataptr[0];
-            stride_copy[0] = stride[0];
-            stride_copy[1] = stride[1];
-            stride_copy[2] = stride[0];
-            innerloop(dataptr_copy, count_ptr,
-                        stride_copy, innerloopdata);
-        } while (iternext(iter));
+        /* Straightforward reduction */
+        if (!use_maskna) {
+            do {
+                /* Turn the two items into three for the inner loop */
+                dataptr_copy[0] = dataptr[0];
+                dataptr_copy[1] = dataptr[1];
+                dataptr_copy[2] = dataptr[0];
+                stride_copy[0] = stride[0];
+                stride_copy[1] = stride[1];
+                stride_copy[2] = stride[0];
+                innerloop(dataptr_copy, count_ptr,
+                            stride_copy, innerloopdata);
+            } while (iternext(iter));
+        }
+        /* Masked reduction */
+        else {
+            do {
+                /* Turn the two items into three for the inner loop */
+                dataptr_copy[0] = dataptr[0];
+                dataptr_copy[1] = dataptr[1];
+                dataptr_copy[2] = dataptr[0];
+                stride_copy[0] = stride[0];
+                stride_copy[1] = stride[1];
+                stride_copy[2] = stride[0];
+                /*
+                 * If skipna=True, this masks based on the mask in 'arr',
+                 * otherwise it masks based on the mask in 'result'
+                 */
+                maskedinnerloop(dataptr_copy, dataptr[2], count_ptr,
+                            stride_copy, stride[2], maskedinnerloopdata);
+            } while (iternext(iter));
+        }
 
         if (!needs_api) {
             NPY_END_THREADS;
@@ -2920,6 +3106,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
             goto fail;
         }
     }
+
+finish:
 
     /* Strip out the extra 'one' dimensions in the result */
     if (out == NULL) {
@@ -2931,9 +3119,12 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         Py_INCREF(result);
     }
 
-    NpyIter_Deallocate(iter);
-    Py_DECREF(arr_view);
-    Py_DECREF(op_dtypes[0]);
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+    Py_XDECREF(arr_view);
+    Py_XDECREF(otype_dtype);
+    NPY_AUXDATA_FREE(maskedinnerloopdata);
     return (PyObject *)result;
 
 fail:
@@ -2942,7 +3133,8 @@ fail:
     }
     Py_XDECREF(result);
     Py_XDECREF(arr_view);
-    Py_XDECREF(op_dtypes[0]);
+    Py_XDECREF(otype_dtype);
+    NPY_AUXDATA_FREE(maskedinnerloopdata);
     return NULL;
 }
 

@@ -1836,7 +1836,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 
     /* Make sure all arrays are actual array objects. */
     for (i = 0; i < n; i++) {
-        int flags = NPY_ARRAY_CARRAY;
+        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_ALLOWNA;
 
         if ((otmp = PySequence_GetItem(op, i)) == NULL) {
             goto fail;
