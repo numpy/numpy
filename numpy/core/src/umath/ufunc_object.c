@@ -2645,7 +2645,7 @@ conform_reduce_result(int ndim, npy_bool *axis_flags, PyArrayObject *out)
 static PyArrayObject *
 allocate_or_conform_reduce_result(PyArrayObject *arr, PyArrayObject *out,
                         npy_bool *axis_flags, PyArray_Descr * otype_dtype,
-                        int keepmask)
+                        int addmask)
 {
     if (out == NULL) {
         PyArrayObject *result;
@@ -2654,7 +2654,7 @@ allocate_or_conform_reduce_result(PyArrayObject *arr, PyArrayObject *out,
         result = allocate_reduce_result(arr, axis_flags, otype_dtype);
 
         /* Allocate an NA mask if necessary */
-        if (keepmask && result != NULL && PyArray_HASMASKNA(arr)) {
+        if (addmask && result != NULL) {
             if (PyArray_AllocateMaskNA(result, 1, 0, 1) < 0) {
                 Py_DECREF(result);
                 return NULL;
@@ -2864,16 +2864,27 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 
     use_maskna = PyArray_HASMASKNA(arr);
 
+    /* Detect whether to ignore the MASKNA */
+    if (use_maskna) {
+        if (!skipna && out != NULL && !PyArray_HASMASKNA(out)) {
+            if (PyArray_ContainsNA(arr)) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Cannot assign NA value to an array which "
+                        "does not support NAs");
+                goto fail;
+            }
+            else {
+                use_maskna = 0;
+            }
+        }
+    }
+
     /* Get the appropriate ufunc inner loop */
     if (use_maskna) {
         retcode = get_masked_binary_op_function(self, arr, otype,
                         &otype_dtype, &maskedinnerloop, &maskedinnerloopdata);
     }
     else {
-        /*
-         * TODO: Switch to using the type resolution function like
-         *       in the masked case.
-         */
         int otype_final = otype;
         retcode = get_binary_op_function(self, &otype_final,
                                 &innerloop, &innerloopdata);
@@ -2917,42 +2928,41 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 
     /* Allocate an output or conform 'out' to 'self' */
     result = allocate_or_conform_reduce_result(arr, out,
-                                        axis_flags, otype_dtype, !skipna);
+                            axis_flags, otype_dtype, !skipna && use_maskna);
     if (result == NULL) {
         return NULL;
     }
 
     /* Prepare the NA mask if there is one */
     if (use_maskna) {
-        //printf("doing masked %s.reduce\n", ufunc_name); fflush(stdout);
         /*
          * Do the reduction on the NA mask before the data. This way
          * we can avoid modifying the outputs which end up masked, obeying
          * the required NA masking semantics.
          */
         if (!skipna) {
-            if (PyArray_HASMASKNA(result)) {
-                if (PyArray_ReduceMaskNAArray(ndim, PyArray_DIMS(arr),
-                            PyArray_MASKNA_DTYPE(arr),
-                            PyArray_MASKNA_DATA(arr),
-                            PyArray_MASKNA_STRIDES(arr),
-                            PyArray_MASKNA_DTYPE(result),
-                            PyArray_MASKNA_DATA(result),
-                            PyArray_MASKNA_STRIDES(result)) < 0) {
-                    goto fail;
+            int idim;
+            npy_intp result_strides[NPY_MAXDIMS];
+            /* Need to make sure the appropriate strides are 0 in 'result' */
+            for (idim = 0; idim < PyArray_NDIM(arr); ++idim) {
+                if (PyArray_DIMS(result)[idim] == 1) {
+                    result_strides[idim] = 0;
+                }
+                else {
+                    result_strides[idim] = PyArray_MASKNA_STRIDES(result)[idim];
                 }
             }
-            else if (PyArray_ContainsNA(arr)) {
-                PyErr_SetString(PyExc_ValueError,
-                        "Cannot assign NA value to an array which "
-                        "does not support NAs");
+            if (PyArray_ReduceMaskNAArray(ndim, PyArray_DIMS(arr),
+                        PyArray_MASKNA_DTYPE(arr),
+                        PyArray_MASKNA_DATA(arr),
+                        PyArray_MASKNA_STRIDES(arr),
+                        PyArray_MASKNA_DTYPE(result),
+                        PyArray_MASKNA_DATA(result),
+                        result_strides) < 0) {
                 goto fail;
             }
-            else {
-                use_maskna = 0;
-            }
 
-            /* Short circuit any calculation if the result is a single NA */
+            /* Short circuit any calculation if the result 0-dim NA */
             if (PyArray_SIZE(result) == 1 &&
                     !NpyMaskValue_IsExposed(
                                 (npy_mask)*PyArray_MASKNA_DATA(result))) {
