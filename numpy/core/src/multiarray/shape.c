@@ -342,7 +342,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                 }
             }
             else {
-                for (i = ndim; i >= 0; --i) {
+                for (i = ndim-1; i >= 0; --i) {
                     fa->maskna_strides[i] = stride;
                     stride *= fa->dimensions[i];
                 }

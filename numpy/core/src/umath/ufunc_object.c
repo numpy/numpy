@@ -4047,7 +4047,9 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
         if (axis < 0) {
             axis += PyArray_NDIM(mp);
         }
-        if (axis < 0 || axis >= PyArray_NDIM(mp)) {
+        /* Special case letting axis=0 slip through for scalars */
+        if ((axis < 0 || axis >= PyArray_NDIM(mp)) &&
+                !(axis == 0 && PyArray_NDIM(mp) == 0)) {
             PyErr_SetString(PyExc_ValueError,
                     "'axis' entry is out of bounds");
             Py_XDECREF(otype);
@@ -4060,8 +4062,14 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 
     /* Check to see if input is zero-dimensional. */
     if (PyArray_NDIM(mp) == 0) {
-        /* A reduction with no axes is still valid but trivial */
-        if (operation == UFUNC_REDUCE && naxes == 0) {
+        /*
+         * A reduction with no axes is still valid but trivial.
+         * As a special case for backwards compatibility in 'sum',
+         * 'prod', et al, also allow a reduction where axis=0, even
+         * though this is technically incorrect.
+         */
+        if (operation == UFUNC_REDUCE &&
+                    (naxes == 0 || (naxes == 1 && axes[0] == 0))) {
             Py_XDECREF(otype);
             /* If there's an output parameter, copy the value */
             if (out != NULL) {
