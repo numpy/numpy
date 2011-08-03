@@ -698,6 +698,8 @@ array_boolean_subscript(PyArrayObject *self,
     PyArrayObject *ret;
     int self_has_maskna = PyArray_HASMASKNA(self), needs_api = 0;
     npy_intp bmask_size;
+    int bmask_axes[NPY_MAXDIMS];
+    int *op_axes[2] = {NULL, NULL};
 
     if (PyArray_DESCR(bmask)->type_num != NPY_BOOL) {
         PyErr_SetString(PyExc_TypeError,
@@ -711,6 +713,30 @@ array_boolean_subscript(PyArrayObject *self,
                 "The boolean mask indexing array "
                 "may not contain any NA values");
         return NULL;
+    }
+
+    /*
+     * If the boolean mask has one dimension, broadcast to
+     * the left instead of to the right. Other broadcasting
+     * is disallowed to minimize inconsistency with NumPy in
+     * general.
+     */
+    if (PyArray_NDIM(bmask) != PyArray_NDIM(self)) {
+        int i;
+
+        if (PyArray_NDIM(bmask) != 1) {
+            PyErr_SetString(PyExc_ValueError,
+                    "The boolean mask indexing array "
+                    "is neither one-dimensional nor "
+                    "matches the operand's number of "
+                    "dimensions");
+            return NULL;
+        }
+        op_axes[1] = bmask_axes;
+        bmask_axes[0] = 0;
+        for (i = 1; i < PyArray_NDIM(self); ++i) {
+            bmask_axes[i] = -1;
+        }
     }
 
     /*
@@ -777,8 +803,9 @@ array_boolean_subscript(PyArrayObject *self,
          */
         op_flags[1] = NPY_ITER_READONLY | NPY_ITER_IGNORE_MASKNA;
 
-        iter = NpyIter_MultiNew(2, op, flags, order, NPY_NO_CASTING,
-                                op_flags, NULL);
+        iter = NpyIter_AdvancedNew(2, op, flags, order, NPY_NO_CASTING,
+                                op_flags, NULL,
+                                PyArray_NDIM(self), op_axes, NULL, 0);
         if (iter == NULL) {
             Py_DECREF(ret);
             return NULL;
@@ -921,6 +948,8 @@ array_ass_boolean_subscript(PyArrayObject *self,
     int needs_api = 0;
     npy_intp bmask_size;
     char constant_valid_mask = 1;
+    int bmask_axes[NPY_MAXDIMS];
+    int *op_axes[2] = {NULL, NULL};
 
     if (PyArray_DESCR(bmask)->type_num != NPY_BOOL) {
         PyErr_SetString(PyExc_TypeError,
@@ -934,6 +963,30 @@ array_ass_boolean_subscript(PyArrayObject *self,
                 "NumPy boolean array indexing assignment "
                 "requires a 0 or 1-dimensional input");
         return -1;
+    }
+
+    /*
+     * If the boolean mask has one dimension, broadcast to
+     * the left instead of to the right. Other broadcasting
+     * is disallowed to minimize inconsistency with NumPy in
+     * general.
+     */
+    if (PyArray_NDIM(bmask) != PyArray_NDIM(self)) {
+        int i;
+
+        if (PyArray_NDIM(bmask) != 1) {
+            PyErr_SetString(PyExc_ValueError,
+                    "The boolean mask indexing array "
+                    "is neither one-dimensional nor "
+                    "matches the operand's number of "
+                    "dimensions");
+            return -1;
+        }
+        op_axes[1] = bmask_axes;
+        bmask_axes[0] = 0;
+        for (i = 1; i < PyArray_NDIM(self); ++i) {
+            bmask_axes[i] = -1;
+        }
     }
 
     /* See the Boolean Indexing section of the missing data NEP */
@@ -1033,8 +1086,9 @@ array_ass_boolean_subscript(PyArrayObject *self,
          */
         op_flags[1] = NPY_ITER_READONLY | NPY_ITER_IGNORE_MASKNA;
 
-        iter = NpyIter_MultiNew(2, op, flags, order, NPY_NO_CASTING,
-                                op_flags, NULL);
+        iter = NpyIter_AdvancedNew(2, op, flags, order, NPY_NO_CASTING,
+                                op_flags, NULL,
+                                PyArray_NDIM(self), op_axes, NULL, 0);
         if (iter == NULL) {
             return -1;
         }
@@ -2238,8 +2292,8 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
     int i, n, started, nonindex;
 
     if (fancy == SOBJ_BADARRAY) {
-        PyErr_SetString(PyExc_IndexError,                       \
-                        "arrays used as indices must be of "    \
+        PyErr_SetString(PyExc_IndexError,
+                        "arrays used as indices must be of "
                         "integer (or boolean) type");
         return NULL;
     }
@@ -2291,6 +2345,23 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
      */
 
     /* convert all inputs to iterators */
+    if (PyArray_Check(indexobj) &&
+                    (PyArray_TYPE((PyArrayObject *)indexobj) == NPY_BOOL)) {
+        mit->numiter = _nonzero_indices(indexobj, mit->iters);
+        if (mit->numiter < 0) {
+            goto fail;
+        }
+        mit->nd = 1;
+        mit->dimensions[0] = mit->iters[0]->dims_m1[0]+1;
+        Py_DECREF(mit->indexobj);
+        mit->indexobj = PyTuple_New(mit->numiter);
+        if (mit->indexobj == NULL) {
+            goto fail;
+        }
+        for (i = 0; i < mit->numiter; i++) {
+            PyTuple_SET_ITEM(mit->indexobj, i, PyInt_FromLong(0));
+        }
+    }
     if (PyArray_Check(indexobj) || !PyTuple_Check(indexobj)) {
         mit->numiter = 1;
         indtype = PyArray_DescrFromType(NPY_INTP);
