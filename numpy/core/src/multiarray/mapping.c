@@ -698,8 +698,6 @@ array_boolean_subscript(PyArrayObject *self,
     PyArrayObject *ret;
     int self_has_maskna = PyArray_HASMASKNA(self), needs_api = 0;
     npy_intp bmask_size;
-    int bmask_axes[NPY_MAXDIMS];
-    int *op_axes[2] = {NULL, NULL};
 
     if (PyArray_DESCR(bmask)->type_num != NPY_BOOL) {
         PyErr_SetString(PyExc_TypeError,
@@ -715,29 +713,14 @@ array_boolean_subscript(PyArrayObject *self,
         return NULL;
     }
 
-    /*
-     * If the boolean mask has one dimension, broadcast to
-     * the left instead of to the right. Other broadcasting
-     * is disallowed to minimize inconsistency with NumPy in
-     * general.
-     */
     if (PyArray_NDIM(bmask) != PyArray_NDIM(self)) {
-        int i;
-
-        if (PyArray_NDIM(bmask) != 1) {
-            PyErr_SetString(PyExc_ValueError,
-                    "The boolean mask indexing array "
-                    "is neither one-dimensional nor "
-                    "matches the operand's number of "
-                    "dimensions");
-            return NULL;
-        }
-        op_axes[1] = bmask_axes;
-        bmask_axes[0] = 0;
-        for (i = 1; i < PyArray_NDIM(self); ++i) {
-            bmask_axes[i] = -1;
-        }
+        PyErr_SetString(PyExc_ValueError,
+                "The boolean mask assignment indexing array "
+                "must have the same number of dimensions as "
+                "the array being indexed");
+        return NULL;
     }
+
 
     /*
      * Since we've checked that the mask contains no NAs, we
@@ -803,9 +786,8 @@ array_boolean_subscript(PyArrayObject *self,
          */
         op_flags[1] = NPY_ITER_READONLY | NPY_ITER_IGNORE_MASKNA;
 
-        iter = NpyIter_AdvancedNew(2, op, flags, order, NPY_NO_CASTING,
-                                op_flags, NULL,
-                                PyArray_NDIM(self), op_axes, NULL, 0);
+        iter = NpyIter_MultiNew(2, op, flags, order, NPY_NO_CASTING,
+                                op_flags, NULL);
         if (iter == NULL) {
             Py_DECREF(ret);
             return NULL;
@@ -948,8 +930,6 @@ array_ass_boolean_subscript(PyArrayObject *self,
     int needs_api = 0;
     npy_intp bmask_size;
     char constant_valid_mask = 1;
-    int bmask_axes[NPY_MAXDIMS];
-    int *op_axes[2] = {NULL, NULL};
 
     if (PyArray_DESCR(bmask)->type_num != NPY_BOOL) {
         PyErr_SetString(PyExc_TypeError,
@@ -959,34 +939,19 @@ array_ass_boolean_subscript(PyArrayObject *self,
     }
 
     if (PyArray_NDIM(v) > 1) {
-        PyErr_SetString(PyExc_TypeError,
+        PyErr_Format(PyExc_TypeError,
                 "NumPy boolean array indexing assignment "
-                "requires a 0 or 1-dimensional input");
+                "requires a 0 or 1-dimensional input, input "
+                "has %d dimensions", PyArray_NDIM(v));
         return -1;
     }
 
-    /*
-     * If the boolean mask has one dimension, broadcast to
-     * the left instead of to the right. Other broadcasting
-     * is disallowed to minimize inconsistency with NumPy in
-     * general.
-     */
     if (PyArray_NDIM(bmask) != PyArray_NDIM(self)) {
-        int i;
-
-        if (PyArray_NDIM(bmask) != 1) {
-            PyErr_SetString(PyExc_ValueError,
-                    "The boolean mask indexing array "
-                    "is neither one-dimensional nor "
-                    "matches the operand's number of "
-                    "dimensions");
-            return -1;
-        }
-        op_axes[1] = bmask_axes;
-        bmask_axes[0] = 0;
-        for (i = 1; i < PyArray_NDIM(self); ++i) {
-            bmask_axes[i] = -1;
-        }
+        PyErr_SetString(PyExc_ValueError,
+                "The boolean mask assignment indexing array "
+                "must have the same number of dimensions as "
+                "the array being indexed");
+        return -1;
     }
 
     /* See the Boolean Indexing section of the missing data NEP */
@@ -1086,9 +1051,8 @@ array_ass_boolean_subscript(PyArrayObject *self,
          */
         op_flags[1] = NPY_ITER_READONLY | NPY_ITER_IGNORE_MASKNA;
 
-        iter = NpyIter_AdvancedNew(2, op, flags, order, NPY_NO_CASTING,
-                                op_flags, NULL,
-                                PyArray_NDIM(self), op_axes, NULL, 0);
+        iter = NpyIter_MultiNew(2, op, flags, order, NPY_NO_CASTING,
+                                op_flags, NULL);
         if (iter == NULL) {
             return -1;
         }
@@ -1355,8 +1319,9 @@ array_subscript(PyArrayObject *self, PyObject *op)
         return NULL;
     }
 
-    /* Boolean indexing */
-    if (PyArray_Check(op) && (PyArray_TYPE((PyArrayObject *)op) == NPY_BOOL)) {
+    /* Boolean indexing special case which supports mask NA */
+    if (PyArray_Check(op) && (PyArray_TYPE((PyArrayObject *)op) == NPY_BOOL)
+                && (PyArray_NDIM(self) == PyArray_NDIM((PyArrayObject *)op))) {
         return (PyObject *)array_boolean_subscript(self,
                                         (PyArrayObject *)op, NPY_CORDER);
     }
@@ -1644,12 +1609,15 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
     }
     PyErr_Clear();
 
-    /* Boolean indexing */
+    /* Boolean indexing special case with NA mask support */
     if (PyArray_Check(index) &&
-                (PyArray_TYPE((PyArrayObject *)index) == NPY_BOOL)) {
+                (PyArray_TYPE((PyArrayObject *)index) == NPY_BOOL) &&
+                (PyArray_NDIM(self) == PyArray_NDIM((PyArrayObject *)index))) {
+        int retcode;
         PyArrayObject *op_arr;
         PyArray_Descr *dtype = NULL;
-        /* If it's an NA with no dtype, specify it explicitly */
+
+        /* If it's an NA with no dtype, specify the dtype explicitly */
         if (NpyNA_Check(op) && ((NpyNA_fields *)op)->dtype == NULL) {
             dtype = PyArray_DESCR(self);
             Py_INCREF(dtype);
@@ -1660,13 +1628,24 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
             return -1;
         }
 
-        return array_ass_boolean_subscript(self,
-                        (PyArrayObject *)index,
-                        (PyArrayObject *)op_arr, NPY_CORDER);
+        if (PyArray_NDIM(op_arr) < 2) {
+            retcode = array_ass_boolean_subscript(self,
+                            (PyArrayObject *)index,
+                            op_arr, NPY_CORDER);
+            Py_DECREF(op_arr);
+            return retcode;
+        }
+        /*
+         * Assigning from multi-dimensional 'op' in this case seems
+         * inconsistent, so falling through to old code for backwards
+         * compatibility.
+         */
+        Py_DECREF(op_arr);
     }
 
     fancy = fancy_indexing_check(index);
     if (fancy != SOBJ_NOTFANCY) {
+
         oned = ((PyArray_NDIM(self) == 1) &&
                 !(PyTuple_Check(index) && PyTuple_GET_SIZE(index) > 1));
         mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, oned, fancy);
@@ -1782,26 +1761,6 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
                                 PyArray_DESCR(self), (npy_mask)*maskna_item);
             }
         }
-
-#if 0
-        int i;
-        char *item;
-
-        for (i = 0; i < PyArray_NDIM(self); i++) {
-            if (vals[i] < 0) {
-                vals[i] += PyArray_DIMS(self)[i];
-            }
-            if ((vals[i] < 0) || (vals[i] >= PyArray_DIMS(self)[i])) {
-                PyErr_Format(PyExc_IndexError,
-                             "index (%"INTP_FMT") out of range "\
-                             "(0<=index<%"INTP_FMT") in dimension %d",
-                             vals[i], PyArray_DIMS(self)[i], i);
-                return NULL;
-            }
-        }
-        item = PyArray_GetPtr(self, vals);
-        return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
-#endif
     }
     PyErr_Clear();
 
@@ -1825,7 +1784,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
         return NULL;
     }
     if (PyArray_Check(mp) && PyArray_NDIM(mp) == 0) {
-        Bool noellipses = TRUE;
+        npy_bool noellipses = TRUE;
         if ((op == Py_Ellipsis) || PyString_Check(op) || PyUnicode_Check(op)) {
             noellipses = FALSE;
         }
@@ -2302,7 +2261,7 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
         return NULL;
     }
 
-    mit = (PyArrayMapIterObject *)_pya_malloc(sizeof(PyArrayMapIterObject));
+    mit = (PyArrayMapIterObject *)PyArray_malloc(sizeof(PyArrayMapIterObject));
     PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
     if (mit == NULL) {
         return NULL;
@@ -2362,7 +2321,7 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
             PyTuple_SET_ITEM(mit->indexobj, i, PyInt_FromLong(0));
         }
     }
-    if (PyArray_Check(indexobj) || !PyTuple_Check(indexobj)) {
+    else if (PyArray_Check(indexobj) || !PyTuple_Check(indexobj)) {
         mit->numiter = 1;
         indtype = PyArray_DescrFromType(NPY_INTP);
         arr = (PyArrayObject *)PyArray_FromAny(indexobj, indtype, 0, 0,
@@ -2469,7 +2428,7 @@ arraymapiter_dealloc(PyArrayMapIterObject *mit)
     for (i = 0; i < mit->numiter; i++) {
         Py_XDECREF(mit->iters[i]);
     }
-    _pya_free(mit);
+    PyArray_free(mit);
 }
 
 /*

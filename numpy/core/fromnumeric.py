@@ -1455,7 +1455,14 @@ def sum(a, axis=None, dtype=None, out=None):
             out[...] = res
             return out
         return res
-    return um.add.reduce(a, axis=axis, dtype=dtype, out=out)
+    elif not (type(a) is mu.ndarray):
+        try:
+            sum = a.sum
+        except AttributeError:
+            return um.add.reduce(a, axis=axis, dtype=dtype, out=out)
+        return sum(axis=axis, dtype=dtype, out=out)
+    else:
+        return um.add.reduce(a, axis=axis, dtype=dtype, out=out)
 
 def product (a, axis=None, dtype=None, out=None):
     """
@@ -1998,7 +2005,14 @@ def prod(a, axis=None, dtype=None, out=None):
     True
 
     """
-    return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out)
+    if not (type(a) is mu.ndarray):
+        try:
+            prod = a.prod
+        except AttributeError:
+            return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out)
+        return prod(axis=axis, dtype=dtype, out=out)
+    else:
+        return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out)
 
 def cumprod(a, axis=None, dtype=None, out=None):
     """

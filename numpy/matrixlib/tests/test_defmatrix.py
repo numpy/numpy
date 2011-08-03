@@ -65,29 +65,45 @@ class TestProperties(TestCase):
         sumall = 30
         assert_array_equal(sum0, M.sum(axis=0))
         assert_array_equal(sum1, M.sum(axis=1))
-        assert_(sumall == M.sum())
+        assert_equal(sumall, M.sum())
+
+        assert_array_equal(sum0, np.sum(M, axis=0))
+        assert_array_equal(sum1, np.sum(M, axis=1))
+        assert_equal(sumall, np.sum(M))
 
 
     def test_prod(self):
         x = matrix([[1,2,3],[4,5,6]])
-        assert_(x.prod() == 720)
-        assert_(all(x.prod(0) == matrix([[4,10,18]])))
-        assert_(all(x.prod(1) == matrix([[6],[120]])))
+        assert_equal(x.prod(), 720)
+        assert_equal(x.prod(0), matrix([[4,10,18]]))
+        assert_equal(x.prod(1), matrix([[6],[120]]))
+
+        assert_equal(np.prod(x), 720)
+        assert_equal(np.prod(x, axis=0), matrix([[4,10,18]]))
+        assert_equal(np.prod(x, axis=1), matrix([[6],[120]]))
 
         y = matrix([0,1,3])
         assert_(y.prod() == 0)
 
     def test_max(self):
         x = matrix([[1,2,3],[4,5,6]])
-        assert_(x.max() == 6)
-        assert_(all(x.max(0) == matrix([[4,5,6]])))
-        assert_(all(x.max(1) == matrix([[3],[6]])))
+        assert_equal(x.max(), 6)
+        assert_equal(x.max(0), matrix([[4,5,6]]))
+        assert_equal(x.max(1), matrix([[3],[6]]))
+
+        assert_equal(np.max(x), 6)
+        assert_equal(np.max(x, axis=0), matrix([[4,5,6]]))
+        assert_equal(np.max(x, axis=1), matrix([[3],[6]]))
 
     def test_min(self):
         x = matrix([[1,2,3],[4,5,6]])
-        assert_(x.min() == 1)
-        assert_(all(x.min(0) == matrix([[1,2,3]])))
-        assert_(all(x.min(1) == matrix([[1],[4]])))
+        assert_equal(x.min(), 1)
+        assert_equal(x.min(0), matrix([[1,2,3]]))
+        assert_equal(x.min(1), matrix([[1],[4]]))
+
+        assert_equal(np.min(x), 1)
+        assert_equal(np.min(x, axis=0), matrix([[1,2,3]]))
+        assert_equal(np.min(x, axis=1), matrix([[1],[4]]))
 
     def test_ptp(self):
         x = np.arange(4).reshape((2,2))

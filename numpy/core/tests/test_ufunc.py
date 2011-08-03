@@ -505,6 +505,16 @@ class TestUfunc(TestCase):
         assert_raises(ValueError, np.max, [])
         assert_raises(ValueError, np.min, [])
 
+    def test_scalar_reduction(self):
+        # The functions 'sum', 'prod', etc allow specifying axis=0
+        # even for scalars
+        assert_equal(np.sum(3, axis=0), 3)
+        assert_equal(np.prod(3.5, axis=0), 3.5)
+        assert_equal(np.any(True, axis=0), True)
+        assert_equal(np.all(False, axis=0), False)
+        assert_equal(np.max(3, axis=0), 3)
+        assert_equal(np.min(2.5, axis=0), 2.5)
+
     def test_casting_out_param(self):
         # Test that it's possible to do casts on output
         a = np.ones((200,100), np.int64)
