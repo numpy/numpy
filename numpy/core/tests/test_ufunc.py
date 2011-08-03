@@ -515,6 +515,12 @@ class TestUfunc(TestCase):
         assert_equal(np.max(3, axis=0), 3)
         assert_equal(np.min(2.5, axis=0), 2.5)
 
+        # Make sure that scalars are coming out from this operation
+        assert_(type(np.prod(np.float32(2.5), axis=0)) is np.float32)
+        assert_(type(np.sum(np.float32(2.5), axis=0)) is np.float32)
+        assert_(type(np.max(np.float32(2.5), axis=0)) is np.float32)
+        assert_(type(np.min(np.float32(2.5), axis=0)) is np.float32)
+
     def test_casting_out_param(self):
         # Test that it's possible to do casts on output
         a = np.ones((200,100), np.int64)
