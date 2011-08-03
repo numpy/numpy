@@ -520,5 +520,34 @@ def test_ufunc_1D():
     assert_(c.flags.maskna)
     #assert_equal(c, [0,2,4])
 
+def test_ufunc_reduce_1D():
+    a = np.arange(3.0, maskna=True)
+    b = np.array(0.5)
+    c = np.array(0.5, maskna=True)
+
+    # Since 'a' has no NA values, this should work
+    np.add.reduce(a, out=b)
+    assert_equal(b, 3.0)
+
+    # With an NA value, the reduce should throw with the non-NA output param
+    a[1] = np.NA
+    assert_raises(ValueError, np.add.reduce, a, out=b)
+
+    # With an NA value, the output parameter can still be an NA-array
+    np.add.reduce(a, out=c)
+    assert_(np.isna(c))
+
+    # Should not touch the out= element when assigning NA
+    b[...] = 1.0
+    d = b.view(maskna=True)
+    np.add.reduce(a, out=d)
+    assert_(np.isna(d))
+    assert_equal(b, 1.0)
+
+    # Without an output parameter, return NA
+    ret = np.add.reduce(a)
+    assert_(np.isna(ret))
+    
+
 if __name__ == "__main__":
     run_module_suite()

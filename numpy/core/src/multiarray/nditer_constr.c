@@ -1093,6 +1093,8 @@ npyiter_prepare_one_operand(PyArrayObject **op,
 
 
     if (PyArray_Check(*op)) {
+        npy_uint32 tmp;
+
         if (((*op_itflags) & NPY_OP_ITFLAG_WRITE) &&
                     (!PyArray_CHKFLAGS(*op, NPY_ARRAY_WRITEABLE))) {
             PyErr_SetString(PyExc_ValueError,
@@ -1118,7 +1120,9 @@ npyiter_prepare_one_operand(PyArrayObject **op,
             return 0;
         }
         /* Arrays with NA masks must have USE_MASKNA specified */
-        if ((op_flags & NPY_ITER_USE_MASKNA) == 0 && PyArray_HASMASKNA(*op)) {
+        tmp = op_flags & (NPY_ITER_USE_MASKNA | NPY_ITER_IGNORE_MASKNA);
+        if (tmp != NPY_ITER_USE_MASKNA && tmp != NPY_ITER_IGNORE_MASKNA &&
+                                    PyArray_HASMASKNA(*op)) {
             PyErr_SetString(PyExc_ValueError,
                     "Operand has an NA mask but the operation does "
                     "not support NA via the flag USE_MASKNA");
