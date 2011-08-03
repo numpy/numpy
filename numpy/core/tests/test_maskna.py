@@ -79,6 +79,17 @@ def test_isna():
     assert_equal(np.isna(np.NA(dtype='f4')), True)
     assert_equal(np.isna(np.NA(12,dtype='f4')), True)
 
+def test_array_maskna_payload():
+    # Single numbered index
+    a = np.zeros((2,), maskna=True)
+    a[0] = np.NA
+    assert_equal(a[0].payload, None)
+
+    # Tuple index
+    a = np.zeros((2,3), maskna=True)
+    a[1,1] = np.NA
+    assert_equal(a[1,1].payload, None)
+
 def test_array_maskna_isna_1D():
     a = np.arange(10)
 
@@ -266,12 +277,50 @@ def test_array_maskna_array_function_1D():
     assert_(c.flags.ownmaskna)
     assert_(not (c is b_view))
 
+def test_array_maskna_setasflat():
+    # Copy from a C to a F array with some NAs
+    a_orig = np.empty((2,3), order='C')
+    b_orig = np.empty((3,2), order='F')
+    a = a_orig.view(maskna=True)
+    b = b_orig.view(maskna=True)
+    a[...] = 1
+    a[0,1] = np.NA
+    a[1,2] = np.NA
+    b[...] = 2
+    b.setasflat(a)
+    assert_equal(np.isna(a), [[0,1,0],[0,0,1]])
+    assert_equal(b_orig, [[1,2],[1,1],[1,2]])
+    assert_equal(np.isna(b), [[0,1],[0,0],[0,1]])
+
+def test_array_maskna_ravel():
+    # From a C array
+    a = np.zeros((2,3), maskna=True, order='C')
+    a[0,1] = np.NA
+    a[1,2] = np.NA
+
+    # Ravel in C order returns a view
+    b = np.ravel(a)
+    assert_(b.base is a)
+    assert_equal(b.shape, (6,))
+    assert_(b.flags.maskna)
+    assert_(not b.flags.ownmaskna)
+    assert_equal(np.isna(b), [0,1,0,0,0,1])
+
+    # Ravel in F order returns a copy
+    b = np.ravel(a, order='F')
+    assert_(b.base is None)
+    assert_equal(b.shape, (6,))
+    assert_(b.flags.maskna)
+    assert_(b.flags.ownmaskna)
+    assert_equal(np.isna(b), [0,0,1,0,0,1])
+
 def test_array_maskna_reshape():
     # Simple reshape 1D -> 2D
     a = np.arange(6, maskna=True)
     a[1] = np.NA
     a[5] = np.NA
 
+    # Reshape from 1D to C order
     b = a.reshape(2,3)
     assert_(b.base is a)
     assert_equal(b.shape, (2,3))
@@ -279,7 +328,9 @@ def test_array_maskna_reshape():
     assert_(not b.flags.ownmaskna)
     assert_equal(np.isna(b), [[0,1,0],[0,0,1]])
 
+    # Reshape from 1D to F order
     b = a.reshape(2,3,order='F')
+    assert_(b.base is a)
     assert_equal(b.shape, (2,3))
     assert_(b.flags.maskna)
     assert_(not b.flags.ownmaskna)

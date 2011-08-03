@@ -1758,7 +1758,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
             }
             else {
                 return (PyObject *)NpyNA_FromDTypeAndMaskValue(
-                                PyArray_DESCR(self), (npy_mask)*maskna_item);
+                            PyArray_DESCR(self), (npy_mask)*maskna_item, 0);
             }
         }
     }

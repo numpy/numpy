@@ -2820,23 +2820,28 @@ PyArray_EnsureAnyArray(PyObject *op)
 
 /* TODO: Put the order parameter in PyArray_CopyAnyInto and remove this */
 NPY_NO_EXPORT int
-PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src,
-                                NPY_ORDER order)
+PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 {
     PyArray_StridedTransferFn *stransfer = NULL;
+    PyArray_MaskedStridedTransferFn *maskedstransfer = NULL;
     NpyAuxData *transferdata = NULL;
+    PyArray_StridedTransferFn *maskna_stransfer = NULL;
+    NpyAuxData *maskna_transferdata = NULL;
     NpyIter *dst_iter, *src_iter;
 
     NpyIter_IterNextFunc *dst_iternext, *src_iternext;
     char **dst_dataptr, **src_dataptr;
     npy_intp dst_stride, src_stride;
+    npy_intp maskna_src_stride = 0, maskna_dst_stride = 0;
     npy_intp *dst_countptr, *src_countptr;
+    npy_uint32 baseflags;
 
     char *dst_data, *src_data;
+    char *maskna_dst_data = NULL, *maskna_src_data = NULL;
     npy_intp dst_count, src_count, count;
-    npy_intp src_itemsize;
+    npy_intp src_itemsize, maskna_src_itemsize = 0;
     npy_intp dst_size, src_size;
-    int needs_api;
+    int needs_api, use_maskna = 0;
 
     NPY_BEGIN_THREADS_DEF;
 
@@ -2871,26 +2876,54 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src,
         return 0;
     }
 
+    baseflags = NPY_ITER_EXTERNAL_LOOP |
+                NPY_ITER_DONT_NEGATE_STRIDES |
+                NPY_ITER_REFS_OK;
+
+    /*
+     * If 'src' has a mask, and 'dst' doesn't, need to validate that
+     * 'src' has everything exposed. Otherwise, the mask needs to
+     * be copied as well.
+     */
+    if (PyArray_HASMASKNA(src)) {
+        if (PyArray_HASMASKNA(dst)) {
+            use_maskna = 1;
+            baseflags |= NPY_ITER_USE_MASKNA;
+        }
+        else {
+            if (PyArray_ContainsNA(src)) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Cannot assign NA value to an array which "
+                        "does not support NAs");
+                return -1;
+            }
+            baseflags |= NPY_ITER_IGNORE_MASKNA;
+        }
+    }
+    /*
+     * If 'dst' has a mask but 'src' doesn't, set all of 'dst'
+     * to be exposed, then proceed without worrying about the mask.
+     */
+    else if (PyArray_HASMASKNA(dst)) {
+        if (PyArray_AssignMaskNA(dst, 1) < 0) {
+            return -1;
+        }
+        baseflags |= NPY_ITER_IGNORE_MASKNA;
+    }
 
     /*
      * This copy is based on matching C-order traversals of src and dst.
      * By using two iterators, we can find maximal sub-chunks that
      * can be processed at once.
      */
-    dst_iter = NpyIter_New(dst, NPY_ITER_WRITEONLY|
-                                NPY_ITER_EXTERNAL_LOOP|
-                                NPY_ITER_DONT_NEGATE_STRIDES|
-                                NPY_ITER_REFS_OK,
+    dst_iter = NpyIter_New(dst, NPY_ITER_WRITEONLY | baseflags,
                                 order,
                                 NPY_NO_CASTING,
                                 NULL);
     if (dst_iter == NULL) {
         return -1;
     }
-    src_iter = NpyIter_New(src, NPY_ITER_READONLY|
-                                NPY_ITER_EXTERNAL_LOOP|
-                                NPY_ITER_DONT_NEGATE_STRIDES|
-                                NPY_ITER_REFS_OK,
+    src_iter = NpyIter_New(src, NPY_ITER_READONLY | baseflags,
                                 order,
                                 NPY_NO_CASTING,
                                 NULL);
@@ -2903,22 +2936,27 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src,
     dst_iternext = NpyIter_GetIterNext(dst_iter, NULL);
     dst_dataptr = NpyIter_GetDataPtrArray(dst_iter);
     /* Since buffering is disabled, we can cache the stride */
-    dst_stride = *NpyIter_GetInnerStrideArray(dst_iter);
+    dst_stride = NpyIter_GetInnerStrideArray(dst_iter)[0];
     dst_countptr = NpyIter_GetInnerLoopSizePtr(dst_iter);
 
     src_iternext = NpyIter_GetIterNext(src_iter, NULL);
     src_dataptr = NpyIter_GetDataPtrArray(src_iter);
     /* Since buffering is disabled, we can cache the stride */
-    src_stride = *NpyIter_GetInnerStrideArray(src_iter);
+    src_stride = NpyIter_GetInnerStrideArray(src_iter)[0];
     src_countptr = NpyIter_GetInnerLoopSizePtr(src_iter);
+    src_itemsize = PyArray_DESCR(src)->elsize;
+
+    if (use_maskna) {
+        maskna_src_stride = NpyIter_GetInnerStrideArray(src_iter)[1];
+        maskna_dst_stride = NpyIter_GetInnerStrideArray(dst_iter)[1];
+        maskna_src_itemsize = PyArray_MASKNA_DTYPE(src)->elsize;
+    }
 
     if (dst_iternext == NULL || src_iternext == NULL) {
         NpyIter_Deallocate(dst_iter);
         NpyIter_Deallocate(src_iter);
         return -1;
     }
-
-    src_itemsize = PyArray_DESCR(src)->elsize;
 
     needs_api = NpyIter_IterationNeedsAPI(dst_iter) ||
                 NpyIter_IterationNeedsAPI(src_iter);
@@ -2929,18 +2967,49 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src,
      * we can pass them to this function to take advantage of
      * contiguous strides, etc.
      */
-    if (PyArray_GetDTypeTransferFunction(
-                    PyArray_ISALIGNED(src) && PyArray_ISALIGNED(dst),
-                    src_stride, dst_stride,
-                    PyArray_DESCR(src), PyArray_DESCR(dst),
-                    0,
-                    &stransfer, &transferdata,
-                    &needs_api) != NPY_SUCCEED) {
-        NpyIter_Deallocate(dst_iter);
-        NpyIter_Deallocate(src_iter);
-        return -1;
+    if (!use_maskna) {
+        if (PyArray_GetDTypeTransferFunction(
+                        PyArray_ISALIGNED(src) && PyArray_ISALIGNED(dst),
+                        src_stride, dst_stride,
+                        PyArray_DESCR(src), PyArray_DESCR(dst),
+                        0,
+                        &stransfer, &transferdata,
+                        &needs_api) != NPY_SUCCEED) {
+            NpyIter_Deallocate(dst_iter);
+            NpyIter_Deallocate(src_iter);
+            return -1;
+        }
     }
+    else {
+        if (PyArray_GetMaskedDTypeTransferFunction(
+                        PyArray_ISALIGNED(src) && PyArray_ISALIGNED(dst),
+                        src_stride,
+                        dst_stride,
+                        maskna_src_stride,
+                        PyArray_DESCR(src),
+                        PyArray_DESCR(dst),
+                        PyArray_MASKNA_DTYPE(src),
+                        0,
+                        &maskedstransfer, &transferdata,
+                        &needs_api) != NPY_SUCCEED) {
+            NpyIter_Deallocate(dst_iter);
+            NpyIter_Deallocate(src_iter);
+            return -1;
+        }
 
+        /* Also need a transfer function for the mask itself */
+        if (PyArray_GetDTypeTransferFunction(1,
+                        maskna_src_stride, maskna_dst_stride,
+                        PyArray_MASKNA_DTYPE(src), PyArray_MASKNA_DTYPE(dst),
+                        0,
+                        &maskna_stransfer, &maskna_transferdata,
+                        &needs_api) != NPY_SUCCEED) {
+            NPY_AUXDATA_FREE(transferdata);
+            NpyIter_Deallocate(dst_iter);
+            NpyIter_Deallocate(src_iter);
+            return -1;
+        }
+    }
 
     if (!needs_api) {
         NPY_BEGIN_THREADS;
@@ -2948,43 +3017,90 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src,
 
     dst_count = *dst_countptr;
     src_count = *src_countptr;
-    dst_data = *dst_dataptr;
-    src_data = *src_dataptr;
+    dst_data = dst_dataptr[0];
+    src_data = src_dataptr[0];
     /*
      * The tests did not trigger this code, so added a new function
      * ndarray.setasflat to the Python exposure in order to test it.
      */
-    for(;;) {
-        /* Transfer the biggest amount that fits both */
-        count = (src_count < dst_count) ? src_count : dst_count;
-        stransfer(dst_data, dst_stride,
-                    src_data, src_stride,
-                    count, src_itemsize, transferdata);
+    if (!use_maskna) {
+        for(;;) {
+            /* Transfer the biggest amount that fits both */
+            count = (src_count < dst_count) ? src_count : dst_count;
+            stransfer(dst_data, dst_stride,
+                        src_data, src_stride,
+                        count, src_itemsize, transferdata);
 
-        /* If we exhausted the dst block, refresh it */
-        if (dst_count == count) {
-            if (!dst_iternext(dst_iter)) {
-                break;
+            /* If we exhausted the dst block, refresh it */
+            if (dst_count == count) {
+                if (!dst_iternext(dst_iter)) {
+                    break;
+                }
+                dst_count = *dst_countptr;
+                dst_data = dst_dataptr[0];
             }
-            dst_count = *dst_countptr;
-            dst_data = *dst_dataptr;
-        }
-        else {
-            dst_count -= count;
-            dst_data += count*dst_stride;
-        }
+            else {
+                dst_count -= count;
+                dst_data += count*dst_stride;
+            }
 
-        /* If we exhausted the src block, refresh it */
-        if (src_count == count) {
-            if (!src_iternext(src_iter)) {
-                break;
+            /* If we exhausted the src block, refresh it */
+            if (src_count == count) {
+                if (!src_iternext(src_iter)) {
+                    break;
+                }
+                src_count = *src_countptr;
+                src_data = src_dataptr[0];
             }
-            src_count = *src_countptr;
-            src_data = *src_dataptr;
+            else {
+                src_count -= count;
+                src_data += count*src_stride;
+            }
         }
-        else {
-            src_count -= count;
-            src_data += count*src_stride;
+    }
+    else {
+        maskna_src_data = src_dataptr[1];
+        maskna_dst_data = dst_dataptr[1];
+        for(;;) {
+            /* Transfer the biggest amount that fits both */
+            count = (src_count < dst_count) ? src_count : dst_count;
+            maskedstransfer(dst_data, dst_stride,
+                        src_data, src_stride,
+                        (npy_mask *)maskna_src_data, maskna_src_stride,
+                        count, src_itemsize, transferdata);
+            maskna_stransfer(maskna_dst_data, maskna_dst_stride,
+                        maskna_src_data, maskna_src_stride,
+                        count, maskna_src_itemsize, maskna_transferdata);
+
+            /* If we exhausted the dst block, refresh it */
+            if (dst_count == count) {
+                if (!dst_iternext(dst_iter)) {
+                    break;
+                }
+                dst_count = *dst_countptr;
+                dst_data = dst_dataptr[0];
+                maskna_dst_data = dst_dataptr[1];
+            }
+            else {
+                dst_count -= count;
+                dst_data += count*dst_stride;
+                maskna_dst_data += count*maskna_dst_stride;
+            }
+
+            /* If we exhausted the src block, refresh it */
+            if (src_count == count) {
+                if (!src_iternext(src_iter)) {
+                    break;
+                }
+                src_count = *src_countptr;
+                src_data = src_dataptr[0];
+                maskna_src_data = src_dataptr[1];
+            }
+            else {
+                src_count -= count;
+                src_data += count*src_stride;
+                maskna_src_data += count*maskna_src_stride;
+            }
         }
     }
 
@@ -2993,6 +3109,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src,
     }
 
     NPY_AUXDATA_FREE(transferdata);
+    NPY_AUXDATA_FREE(maskna_transferdata);
     NpyIter_Deallocate(dst_iter);
     NpyIter_Deallocate(src_iter);
 

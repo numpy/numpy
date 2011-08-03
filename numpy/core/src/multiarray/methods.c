@@ -772,7 +772,8 @@ array_setasflat(PyArrayObject *self, PyObject *args)
         return NULL;
     }
 
-    arr = (PyArrayObject *)PyArray_FromAny(arr_in, NULL, 0, 0, 0, NULL);
+    arr = (PyArrayObject *)PyArray_FromAny(arr_in, NULL,
+                                        0, 0, NPY_ARRAY_ALLOWNA, NULL);
     if (arr == NULL) {
         return NULL;
     }

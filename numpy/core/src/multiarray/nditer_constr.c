@@ -3190,6 +3190,7 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
     int idim, ndim = NIT_NDIM(iter);
     int iop, iop_maskna, nop = NIT_NOP(iter);
     int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
+    npy_int8 *perm;
 
     char *op_itflags = NIT_OPITFLAGS(iter);
     npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
@@ -3201,6 +3202,7 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
 
     axisdata = NIT_AXISDATA(iter);
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
+    perm = NIT_PERM(iter);
 
     if (itflags & NPY_ITFLAG_BUFFER) {
         bufferdata = NIT_BUFFERDATA(iter);
@@ -3231,6 +3233,16 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
     /* Process the maskna operands, filling in the axisdata */
     for (idim = 0; idim < ndim; ++idim) {
         npy_intp *strides = NAD_STRIDES(axisdata);
+        npy_int8 p;
+        int idim_permuted;
+
+        p = perm[idim];
+        if (p < 0) {
+            idim_permuted = 1-p;
+        }
+        else {
+            idim_permuted = p;
+        }
 
         for (iop = first_maskna_op; iop < nop; ++iop) {
             /*
@@ -3253,17 +3265,27 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
                 int i;
 
                 if (op_axes == NULL || op_axes[iop_maskna] == NULL) {
-                    i = PyArray_NDIM(op_cur) - idim - 1;
+                    i = PyArray_NDIM(op_cur) - idim_permuted - 1;
                 }
                 else {
-                    i = op_axes[iop_maskna][ndim-idim-1];
+                    i = op_axes[iop_maskna][ndim-idim_permuted-1];
                 }
 
                 strides[iop] = PyArray_MASKNA_STRIDES(op_cur)[i];
+                /* Reverse the axis if necessary */
+                if (p < 0) {
+                    op_dataptr[iop] += (NAD_SHAPE(axisdata)-1) * strides[iop];
+                    strides[iop] = -strides[iop];
+                }
             }
         }
 
-        /* Initialize the mask data pointers */
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
+    }
+
+    /* Initialize the mask data pointers */
+    axisdata = NIT_AXISDATA(iter);
+    for (idim = 0; idim < ndim; ++idim) {
         memcpy(NAD_PTRS(axisdata) + first_maskna_op,
                 op_dataptr + first_maskna_op,
                 NPY_SIZEOF_INTP*(nop - first_maskna_op));

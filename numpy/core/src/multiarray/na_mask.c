@@ -126,7 +126,9 @@ fill_raw_byte_array(int ndim, npy_intp *shape,
 /*NUMPY_API
  *
  * Assigns the mask value to all the NA mask elements of
- * the array.
+ * the array. This routine is intended to be used to mask
+ * all the elments of an array, or if you will also be assigning
+ * values to everything at the same time, to unmask all the elements.
  *
  * Returns 0 on success, -1 on failure.
  */

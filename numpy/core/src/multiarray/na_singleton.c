@@ -80,7 +80,7 @@ static PyObject *
 na_call(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
     NpyNA_fields *ret;
-    
+
     ret = (NpyNA_fields *)na_new(&NpyNA_Type, NULL, NULL);
     if (ret != NULL) {
         if (na_init(ret, args, kwds) < 0) {
@@ -439,7 +439,8 @@ NpyNA_FromObject(PyObject *obj, int suppress_error)
  * if 'maskvalue' represents an exposed mask.
  */
 NPY_NO_EXPORT NpyNA *
-NpyNA_FromDTypeAndMaskValue(PyArray_Descr *dtype, npy_mask maskvalue)
+NpyNA_FromDTypeAndMaskValue(PyArray_Descr *dtype, npy_mask maskvalue,
+                                                                int multina)
 {
     NpyNA_fields *fna;
 
@@ -462,7 +463,15 @@ NpyNA_FromDTypeAndMaskValue(PyArray_Descr *dtype, npy_mask maskvalue)
     fna->dtype = dtype;
     Py_XINCREF(fna->dtype);
 
-    fna->payload = NpyMaskValue_GetPayload(maskvalue);
+    if (multina) {
+        fna->payload = NpyMaskValue_GetPayload(maskvalue);
+    }
+    else if (NpyMaskValue_GetPayload(maskvalue) != 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot convert mask value into NA without enabling multi-NA");
+        Py_DECREF(fna);
+        return NULL;
+    }
 
     return (NpyNA *)fna;
 }
