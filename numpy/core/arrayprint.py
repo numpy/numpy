@@ -218,16 +218,13 @@ def _boolFormatter(x):
 
 def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   prefix="", formatter=None):
-    print "DEBUG: in array2string!"
 
     if max_line_width is None:
         max_line_width = _line_width
 
-    print "DEBUG: A"
     if precision is None:
         precision = _float_output_precision
 
-    print "DEBUG: B"
     if suppress_small is None:
         suppress_small = _float_output_suppress_small
 
@@ -241,7 +238,6 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         summary_insert = ""
         data = ravel(a)
 
-    print "DEBUG: making formatdict"
     formatdict = {'bool' : _boolFormatter,
                   'int' : IntegerFormat(data),
                   'float' : FloatFormat(data, precision, suppress_small),
@@ -253,7 +249,6 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   'timedelta' : TimedeltaFormat(data),
                   'numpystr' : repr,
                   'str' : str}
-    print "DEBUG: made formatdict"
 
     if formatter is not None:
         fkeys = [k for k in formatter.keys() if formatter[k] is not None]
