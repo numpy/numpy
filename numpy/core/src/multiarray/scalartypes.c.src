@@ -681,8 +681,15 @@ timedeltatype_repr(PyObject *self)
         ret = PyUString_FromString("numpy.timedelta64('NaT'");
     }
     else {
+        /* Can't use "%lld" in Python < 2.7, or if HAVE_LONG_LONG is not
+         * defined */
+#if defined(HAVE_LONG_LONG) && (PY_MAJOR_VERSION >= 0x02070000)
         ret = PyUString_FromFormat("numpy.timedelta64(%lld",
                                             (long long)scal->obval);
+#else
+        ret = PyUString_FromFormat("numpy.timedelta64(%ld",
+                                            (long)scal->obval);
+#endif
     }
     /* The metadata unit */
     if (scal->obmeta.base == NPY_FR_GENERIC) {
@@ -784,8 +791,15 @@ timedeltatype_str(PyObject *self)
         ret = PyUString_FromString("NaT");
     }
     else {
+        /* Can't use "%lld" in Python < 2.7, or if HAVE_LONG_LONG is not
+         * defined */
+#if defined(HAVE_LONG_LONG) && (PY_MAJOR_VERSION >= 0x02070000)
         ret = PyUString_FromFormat("%lld ",
                                 (long long)(scal->obval * scal->obmeta.num));
+#else
+        ret = PyUString_FromFormat("%ld ",
+                                (long)(scal->obval * scal->obmeta.num));
+#endif
         PyUString_ConcatAndDel(&ret,
                 PyUString_FromString(basestr));
     }
@@ -3863,7 +3877,7 @@ initialize_casting_tables(void)
         _npy_type_promotion_table[i][i] = i;
         /* Don't let number promote to string/unicode/void/datetime/timedelta */
         if (i == NPY_STRING || i == NPY_UNICODE || i == NPY_VOID ||
-							i == NPY_DATETIME || i == NPY_TIMEDELTA) {
+                                                        i == NPY_DATETIME || i == NPY_TIMEDELTA) {
             /* Promoting these types requires examining their contents */
             _npy_type_promotion_table[i][i] = -1;
             for (j = i+1; j < NPY_NTYPES; ++j) {
