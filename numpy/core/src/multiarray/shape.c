@@ -190,8 +190,6 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     npy_intp newmasknastrides[NPY_MAXDIMS];
     int flags, build_maskna_strides = 0;
 
-    printf("in newshape\n"); fflush(stdout);
-
     if (order == NPY_ANYORDER) {
         order = PyArray_ISFORTRAN(self);
     }
@@ -206,7 +204,6 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
             i++;
         }
         if (same) {
-            printf("returning view\n"); fflush(stdout);
             return PyArray_View(self, NULL, NULL);
         }
     }
@@ -221,14 +218,12 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
      */
     i = _check_ones(self, ndim, dimensions, newstrides, newmasknastrides);
     if (i == 0) {
-        printf("setting strides to newstrides\n"); fflush(stdout);
         strides = newstrides;
     }
     flags = PyArray_FLAGS(self) & ~(NPY_ARRAY_OWNMASKNA |
                                     NPY_ARRAY_MASKNA);
 
     if (strides == NULL) {
-        printf("strides are null\n"); fflush(stdout);
         /*
          * we are really re-shaping not just adding ones to the shape somewhere
          * fix any -1 dimensions and check new-dimensions against old size
@@ -251,12 +246,10 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
             success = _attempt_nocopy_reshape(self, ndim, dimensions,
                                           newstrides, newmasknastrides, order);
             if (success) {
-                printf("nocopy reshape succeeded\n"); fflush(stdout);
                 /* no need to copy the array after all */
                 strides = newstrides;
             }
             else {
-                printf("nocopy reshape failed\n"); fflush(stdout);
                 PyObject *newcopy;
                 newcopy = PyArray_NewCopy(self, order);
                 if (newcopy == NULL) {
@@ -343,15 +336,12 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         if (build_maskna_strides) {
             npy_intp stride = 1;
             if (order == NPY_FORTRANORDER) {
-                printf("building fortran strides\n"); fflush(stdout);
                 for (i = 0; i < ndim; ++i) {
                     fa->maskna_strides[i] = stride;
-                    printf("stride %d\n", (int)stride);
                     stride *= fa->dimensions[i];
                 }
             }
             else {
-                printf("building C strides\n"); fflush(stdout);
                 for (i = ndim; i >= 0; --i) {
                     fa->maskna_strides[i] = stride;
                     stride *= fa->dimensions[i];

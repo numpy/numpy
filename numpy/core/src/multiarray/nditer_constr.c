@@ -3252,11 +3252,11 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
             else {
                 int i;
 
-                if (op_axes == NULL || op_axes[iop] == NULL) {
+                if (op_axes == NULL || op_axes[iop_maskna] == NULL) {
                     i = PyArray_NDIM(op_cur) - idim - 1;
                 }
                 else {
-                    i = op_axes[iop][ndim-idim-1];
+                    i = op_axes[iop_maskna][ndim-idim-1];
                 }
 
                 strides[iop] = PyArray_MASKNA_STRIDES(op_cur)[i];

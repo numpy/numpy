@@ -2650,7 +2650,6 @@ allocate_or_conform_reduce_result(PyArrayObject *arr, PyArrayObject *out,
     if (out == NULL) {
         PyArrayObject *result;
 
-        printf("allocating result\n"); fflush(stdout);
         Py_INCREF(otype_dtype);
         result = allocate_reduce_result(arr, axis_flags, otype_dtype);
 
@@ -2665,7 +2664,6 @@ allocate_or_conform_reduce_result(PyArrayObject *arr, PyArrayObject *out,
         return result;
     }
     else {
-        printf("conforming result\n"); fflush(stdout);
         return conform_reduce_result(PyArray_NDIM(arr), axis_flags, out);
     }
 }
@@ -2926,7 +2924,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 
     /* Prepare the NA mask if there is one */
     if (use_maskna) {
-        printf("doing masked %s.reduce\n", ufunc_name); fflush(stdout);
+        //printf("doing masked %s.reduce\n", ufunc_name); fflush(stdout);
         /*
          * Do the reduction on the NA mask before the data. This way
          * we can avoid modifying the outputs which end up masked, obeying
