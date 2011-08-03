@@ -434,6 +434,40 @@ NpyNA_FromObject(PyObject *obj, int suppress_error)
 }
 
 /*
+ * Converts a dtype reference and mask value into an NA.
+ * Doesn't steal the 'dtype' reference. Raises an error
+ * if 'maskvalue' represents an exposed mask.
+ */
+NPY_NO_EXPORT NpyNA *
+NpyNA_FromDTypeAndMaskValue(PyArray_Descr *dtype, npy_mask maskvalue)
+{
+    NpyNA_fields *fna;
+
+    if (dtype == NULL && maskvalue == 0) {
+        Py_INCREF(Npy_NA);
+        return (NpyNA *)Npy_NA;
+    }
+
+    if (NpyMaskValue_IsExposed(maskvalue)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot convert exposed mask value into NA");
+        return NULL;
+    }
+
+    fna = (NpyNA_fields *)na_new(&NpyNA_Type, NULL, NULL);
+    if (fna == NULL) {
+        return NULL;
+    }
+
+    fna->dtype = dtype;
+    Py_XINCREF(fna->dtype);
+
+    fna->payload = NpyMaskValue_GetPayload(maskvalue);
+
+    return (NpyNA *)fna;
+}
+
+/*
  * Returns a mask value corresponding to the NA.
  */
 NPY_NO_EXPORT npy_mask

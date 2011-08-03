@@ -346,11 +346,12 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                 printf("building fortran strides\n"); fflush(stdout);
                 for (i = 0; i < ndim; ++i) {
                     fa->maskna_strides[i] = stride;
-                    printf("stride %d\n", stride);
+                    printf("stride %d\n", (int)stride);
                     stride *= fa->dimensions[i];
                 }
             }
             else {
+                printf("building C strides\n"); fflush(stdout);
                 for (i = ndim; i >= 0; --i) {
                     fa->maskna_strides[i] = stride;
                     stride *= fa->dimensions[i];

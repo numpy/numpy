@@ -105,6 +105,8 @@ parse_index(PyArrayObject *self, PyObject *op,
     PyObject *op1 = NULL;
     int is_slice;
 
+    printf("parsing index...\n");
+
     if (PySlice_Check(op) || op == Py_Ellipsis || op == Py_None) {
         n = 1;
         op1 = op;
@@ -173,6 +175,7 @@ parse_index(PyArrayObject *self, PyObject *op,
             }
         }
         else {
+            printf("index %d %d %d\n", (int)start, (int)n_steps, (int)step_size);
             if (nd_old >= PyArray_NDIM(self)) {
                 PyErr_SetString(PyExc_IndexError, "too many indices");
                 return -1;
@@ -209,6 +212,7 @@ parse_index(PyArrayObject *self, PyObject *op,
     }
     *out_offset = offset;
     if (out_maskna_offset != NULL) {
+        printf ("maskna offset %d\n", (int)maskna_offset);
         *out_maskna_offset = maskna_offset;
     }
     return nd_new;
