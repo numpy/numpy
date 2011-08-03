@@ -974,7 +974,6 @@ PyArray_Ravel(PyArrayObject *a, NPY_ORDER order)
             }
             return (PyObject *)ret;
         }
-
     }
 
     return PyArray_Flatten(a, order);
@@ -1001,10 +1000,17 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
                                NULL,
                                NULL,
                                0, (PyObject *)a);
-
     if (ret == NULL) {
         return NULL;
     }
+
+    if (PyArray_HASMASKNA(a)) {
+        if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+
     if (PyArray_CopyAsFlat(ret, a, order) < 0) {
         Py_DECREF(ret);
         return NULL;
