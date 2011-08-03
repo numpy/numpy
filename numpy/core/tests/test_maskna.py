@@ -120,6 +120,47 @@ def test_array_maskna_isna_1D():
 
     # TODO: fancy indexing is next...
 
+def test_array_maskna_isna_2D():
+    a = np.zeros((3,4))
+
+    # With no mask, it returns all False
+    assert_equal(np.isna(a), False)
+    assert_equal(np.isna(a).shape, (3,4))
+
+    # With a mask but no NAs, it still returns all False
+    a.flags.maskna = True
+    assert_equal(np.isna(a), False)
+    assert_equal(np.isna(a).shape, (3,4))
+
+    # Checking isna of a single value
+    assert_equal(np.isna(a[1,2]), False)
+    # Assigning NA to a single value
+    a[1,2] = np.NA
+    assert_equal(np.isna(a), [[0,0,0,0],[0,0,1,0],[0,0,0,0]])
+    # Checking isna of a single value
+    assert_equal(np.isna(a[1,2]), True)
+
+    # Checking isna of a slice
+    assert_equal(np.isna(a[1:4,1:3]), [[0,1],[0,0]])
+    # Assigning NA to a slice
+    a[1:3,0:2] = np.NA
+    assert_equal(np.isna(a), [[0,0,0,0],[1,1,1,0],[1,1,0,0]])
+
+    # Checking isna of a strided slice
+    assert_equal(np.isna(a[1:,1:5:2]), [[1,0],[1,0]])
+    # Assigning NA to a strided slice
+    a[::2,::2] = np.NA
+    assert_equal(np.isna(a), [[1,0,1,0],[1,1,1,0],[1,1,1,0]])
+
+    # Checking isna of a boolean mask index
+    mask = np.array([[1,1,0,0],[0,1,0,1],[0,0,1,0]], dtype='?')
+    assert_equal(np.isna(a[mask]), [1,0,1,0,1])
+    # Assigning NA to a boolean masked index
+    a[mask] = np.NA
+    assert_equal(np.isna(a), [[1,1,1,0],[1,1,1,1],[1,1,1,0]])
+
+    # TODO: fancy indexing is next...
+
 def test_array_maskna_view_function():
     a = np.arange(10)
 
@@ -276,6 +317,50 @@ def test_array_maskna_view_NA_assignment_1D():
 
     b = a.view(maskna=True)
     mask = np.array([0,1,0,1,1,0,0,0,1,1], dtype='?')
+    b[mask] = np.NA
+    assert_equal(np.isna(b), mask)
+    assert_equal(a, a_ref)
+
+    # TODO: fancy indexing is next...
+
+def test_array_maskna_view_NA_assignment_2D():
+    a = np.arange(6).reshape(2,3)
+    a_ref = a.copy()
+
+    # Make sure that assigning NA doesn't affect the original data
+    b = a.view(maskna=True)
+    b[...] = np.NA
+    assert_equal(np.isna(b), True)
+    assert_equal(a, a_ref)
+
+    b = a.view(maskna=True)
+    b[:] = np.NA
+    assert_equal(np.isna(b), True)
+    assert_equal(a, a_ref)
+
+    b = a.view(maskna=True)
+    b[0,:] = np.NA
+    assert_equal(np.isna(b[0]), True)
+    assert_equal(np.isna(b[1]), False)
+    assert_equal(a, a_ref)
+
+    b = a.view(maskna=True)
+    b[1:,1:3] = np.NA
+    assert_equal(np.isna(b), [[0,0,0],[0,1,1]])
+    assert_equal(a, a_ref)
+
+    b = a.view(maskna=True)
+    b[1,::2] = np.NA
+    assert_equal(np.isna(b), [[0,0,0],[1,0,1]])
+    assert_equal(a, a_ref)
+
+    b = a.view(maskna=True)
+    b[0,2] = np.NA
+    assert_equal(np.isna(b), [[0,0,1],[0,0,0]])
+    assert_equal(a, a_ref)
+
+    b = a.view(maskna=True)
+    mask = np.array([[1,0,1],[1,1,0]], dtype='?')
     b[mask] = np.NA
     assert_equal(np.isna(b), mask)
     assert_equal(a, a_ref)
