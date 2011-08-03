@@ -4085,7 +4085,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
             }
             /* Otherwise return the array unscathed */
             else {
-                return (PyObject *)mp;
+                return PyArray_Return(mp);
             }
         }
         PyErr_Format(PyExc_TypeError, "cannot %s on a scalar",
