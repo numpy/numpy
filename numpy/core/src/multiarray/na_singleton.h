@@ -54,7 +54,8 @@ NpyNA_FromObject(PyObject *obj, int suppress_error);
  * if 'maskvalue' represents an exposed mask.
  */
 NPY_NO_EXPORT NpyNA *
-NpyNA_FromDTypeAndMaskValue(PyArray_Descr *dtype, npy_mask maskvalue);
+NpyNA_FromDTypeAndMaskValue(PyArray_Descr *dtype, npy_mask maskvalue,
+                                                            int multina);
 
 /*
  * Returns a mask value corresponding to the NA.
