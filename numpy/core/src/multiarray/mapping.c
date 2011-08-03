@@ -89,8 +89,8 @@ array_big_item(PyArrayObject *self, npy_intp i)
         fa->maskna_data = PyArray_MASKNA_DATA(self) +
                           i * PyArray_MASKNA_STRIDES(self)[0];
         if (fa->nd > 0) {
-            memcpy(fa->maskna_strides, &(PyArray_MASKNA_STRIDES(self)[1]),
-                                        (fa->nd - 1) * sizeof(npy_intp));
+            memcpy(fa->maskna_strides, PyArray_MASKNA_STRIDES(self)+1,
+                                        fa->nd * sizeof(npy_intp));
         }
         fa->flags |= NPY_ARRAY_MASKNA;
     }
@@ -1392,12 +1392,7 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *index, PyObject *op)
         tmp = (PyArrayObject *)tmp0;
     }
 
-    if (PyArray_ISOBJECT(self) && (PyArray_NDIM(tmp) == 0)) {
-        ret = PyArray_DESCR(tmp)->f->setitem(op, PyArray_DATA(tmp), tmp);
-    }
-    else {
-        ret = PyArray_CopyObject(tmp, op);
-    }
+    ret = PyArray_CopyObject(tmp, op);
     Py_DECREF(tmp);
     return ret;
 }
@@ -1521,7 +1516,7 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
                          (PyArray_DIMS((PyArrayObject *)index)==0) &&
                          PyArray_ISBOOL((PyArrayObject *)index))) {
             if (PyObject_IsTrue(index)) {
-                return PyArray_DESCR(self)->f->setitem(op, PyArray_DATA(self), self);
+                return PyArray_CopyObject(self, op);
             }
             else { /* don't do anything */
                 return 0;
@@ -1532,25 +1527,66 @@ array_ass_sub(PyArrayObject *self, PyObject *index, PyObject *op)
     }
 
     /* Integer-tuple */
-    if (PyTuple_Check(index) && (PyTuple_GET_SIZE(index) == PyArray_NDIM(self))
-        && (_tuple_of_integers(index, vals, PyArray_NDIM(self)) >= 0)) {
-        int i;
-        char *item;
+    if (PyTuple_Check(index) &&
+                (PyTuple_GET_SIZE(index) == PyArray_NDIM(self)) &&
+                (_tuple_of_integers(index, vals, PyArray_NDIM(self)) >= 0)) {
+        int idim, ndim = PyArray_NDIM(self);
+        npy_intp *shape = PyArray_DIMS(self);
+        npy_intp *strides = PyArray_STRIDES(self);
+        char *item = PyArray_DATA(self);
 
-        for (i = 0; i < PyArray_NDIM(self); i++) {
-            if (vals[i] < 0) {
-                vals[i] += PyArray_DIMS(self)[i];
+        if (!PyArray_HASMASKNA(self)) {
+            for (idim = 0; idim < ndim; idim++) {
+                npy_intp v = vals[idim];
+                if (v < 0) {
+                    v += shape[idim];
+                }
+                if (v < 0 || v >= shape[idim]) {
+                    PyErr_Format(PyExc_IndexError,
+                                 "index (%"INTP_FMT") out of range "\
+                                 "(0<=index<%"INTP_FMT") in dimension %d",
+                                 vals[idim], PyArray_DIMS(self)[idim], idim);
+                    return -1;
+                }
+                else {
+                    item += v * strides[idim];
+                }
             }
-            if ((vals[i] < 0) || (vals[i] >= PyArray_DIMS(self)[i])) {
-                PyErr_Format(PyExc_IndexError,
-                             "index (%"INTP_FMT") out of range "\
-                             "(0<=index<%"INTP_FMT") in dimension %d",
-                             vals[i], PyArray_DIMS(self)[i], i);
-                return -1;
+            return PyArray_DESCR(self)->f->setitem(op, item, self);
+        }
+        else {
+            char *maskna_item = PyArray_MASKNA_DATA(self);
+            npy_intp *maskna_strides = PyArray_MASKNA_STRIDES(self);
+            NpyNA *na;
+
+            for (idim = 0; idim < ndim; idim++) {
+                npy_intp v = vals[idim];
+                if (v < 0) {
+                    v += shape[idim];
+                }
+                if (v < 0 || v >= shape[idim]) {
+                    PyErr_Format(PyExc_IndexError,
+                                 "index (%"INTP_FMT") out of range "\
+                                 "(0<=index<%"INTP_FMT") in dimension %d",
+                                 vals[idim], PyArray_DIMS(self)[idim], idim);
+                    return -1;
+                }
+                else {
+                    item += v * strides[idim];
+                    maskna_item += v * maskna_strides[idim];
+                }
+            }
+            na = NpyNA_FromObject(op, 1);
+            if (na == NULL) {
+                *maskna_item = 1;
+                return PyArray_DESCR(self)->f->setitem(op, item, self);
+            }
+            else {
+                *maskna_item = NpyNA_AsMaskValue(na);
+                Py_DECREF(na);
+                return 0;
             }
         }
-        item = PyArray_GetPtr(self, vals);
-        return PyArray_DESCR(self)->f->setitem(op, item, self);
     }
     PyErr_Clear();
 
@@ -1634,9 +1670,66 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
         }
     }
     /* optimization for a tuple of integers */
-    if (PyArray_NDIM(self) > 1 && PyTuple_Check(op) &&
-        (PyTuple_GET_SIZE(op) == PyArray_NDIM(self))
-        && (_tuple_of_integers(op, vals, PyArray_NDIM(self)) >= 0)) {
+    if (PyArray_NDIM(self) > 1 &&
+                PyTuple_Check(op) &&
+                (PyTuple_GET_SIZE(op) == PyArray_NDIM(self)) &&
+                (_tuple_of_integers(op, vals, PyArray_NDIM(self)) >= 0)) {
+        int idim, ndim = PyArray_NDIM(self);
+        npy_intp *shape = PyArray_DIMS(self);
+        npy_intp *strides = PyArray_STRIDES(self);
+        char *item = PyArray_DATA(self);
+
+        if (!PyArray_HASMASKNA(self)) {
+            for (idim = 0; idim < ndim; idim++) {
+                npy_intp v = vals[idim];
+                if (v < 0) {
+                    v += shape[idim];
+                }
+                if (v < 0 || v >= shape[idim]) {
+                    PyErr_Format(PyExc_IndexError,
+                                 "index (%"INTP_FMT") out of range "\
+                                 "(0<=index<%"INTP_FMT") in dimension %d",
+                                 vals[idim], PyArray_DIMS(self)[idim], idim);
+                    return NULL;
+                }
+                else {
+                    item += v * strides[idim];
+                }
+            }
+            return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
+        }
+        else {
+            char *maskna_item = PyArray_MASKNA_DATA(self);
+            npy_intp *maskna_strides = PyArray_MASKNA_STRIDES(self);
+
+            for (idim = 0; idim < ndim; idim++) {
+                npy_intp v = vals[idim];
+                if (v < 0) {
+                    v += shape[idim];
+                }
+                if (v < 0 || v >= shape[idim]) {
+                    PyErr_Format(PyExc_IndexError,
+                                 "index (%"INTP_FMT") out of range "\
+                                 "(0<=index<%"INTP_FMT") in dimension %d",
+                                 vals[idim], PyArray_DIMS(self)[idim], idim);
+                    return NULL;
+                }
+                else {
+                    item += v * strides[idim];
+                    maskna_item += v * maskna_strides[idim];
+                }
+            }
+            if (NpyMaskValue_IsExposed((npy_mask)*maskna_item)) {
+                return PyArray_Scalar(item, PyArray_DESCR(self),
+                                                    (PyObject *)self);
+            }
+            else {
+                return (PyObject *)NpyNA_FromDTypeAndMaskValue(
+                                PyArray_DESCR(self), (npy_mask)*maskna_item);
+            }
+        }
+
+#if 0
         int i;
         char *item;
 
@@ -1654,6 +1747,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
         }
         item = PyArray_GetPtr(self, vals);
         return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
+#endif
     }
     PyErr_Clear();
 
