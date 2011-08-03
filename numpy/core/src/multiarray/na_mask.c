@@ -123,7 +123,8 @@ fill_raw_byte_array(int ndim, npy_intp *shape,
     return 0;
 }
 
-/*
+/*NUMPY_API
+ *
  * Assigns the mask value to all the NA mask elements of
  * the array.
  *
@@ -290,7 +291,8 @@ PyArray_AllocateMaskNA(PyArrayObject *arr,
     return 0;
 }
 
-/*
+/*NUMPY_API
+ *
  * Assigns the given NA value to all the elements in the array. If
  * 'arr' has a mask, masks all the elements of the array.
  *
@@ -463,7 +465,7 @@ PyArray_IsNA(PyObject *obj)
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_ReduceMaskArray(int ndim, npy_intp *shape,
+PyArray_ReduceMaskNAArray(int ndim, npy_intp *shape,
             PyArray_Descr *src_dtype, char *src_data, npy_intp *src_strides,
             PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides)
 {
