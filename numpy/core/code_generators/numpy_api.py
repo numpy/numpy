@@ -326,10 +326,12 @@ multiarray_funcs_api = {
     'PyArray_AllocateMaskNA':               286,
     'NpyIter_GetFirstMaskNAOp':             288,
     'NpyIter_GetMaskNAIndexArray':          289,
-    'PyArray_ReduceMaskArray':              290,
+    'PyArray_ReduceMaskNAArray':            290,
     'PyArray_CreateSortedStridePerm':       291,
     'PyArray_FillWithZero':                 292,
     'PyArray_FillWithOne':                  293,
+    'PyArray_AssignNA':                     294,
+    'PyArray_AssignMaskNA':                 295,
 }
 
 ufunc_types_api = {

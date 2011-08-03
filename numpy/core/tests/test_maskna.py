@@ -225,6 +225,25 @@ def test_array_maskna_array_function_1D():
     assert_(c.flags.ownmaskna)
     assert_(not (c is b_view))
 
+def test_array_maskna_reshape():
+    # Simple reshape 1D -> 2D
+    a = np.arange(6, maskna=True)
+    a[1] = np.NA
+    a[5] = np.NA
+
+    b = a.reshape(2,3)
+    assert_(b.base is a)
+    assert_equal(b.shape, (2,3))
+    assert_(b.flags.maskna)
+    assert_(not b.flags.ownmaskna)
+    assert_equal(np.isna(b), [[0,1,0],[0,0,1]])
+
+    b = a.reshape(2,3,order='F')
+    assert_equal(b.shape, (2,3))
+    assert_(b.flags.maskna)
+    assert_(not b.flags.ownmaskna)
+    assert_equal(np.isna(b), [[0,0,0],[1,0,1]])
+
 def test_array_maskna_view_NA_assignment_1D():
     a = np.arange(10)
     a_ref = a.copy()
