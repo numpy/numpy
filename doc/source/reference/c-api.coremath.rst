@@ -175,9 +175,9 @@ Linking against the core math library in an extension
 To use the core math library in your own extension, you need to add the npymath
 compile and link options to your extension in your setup.py:
 
-        >>> from numpy.distutils.misc_utils import get_info
+        >>> from numpy.distutils.misc_util import get_info
         >>> info = get_info('npymath')
-        >>> config.add_extension('foo', sources=['foo.c'], extra_info=**info)
+        >>> config.add_extension('foo', sources=['foo.c'], extra_info=info)
 
 In other words, the usage of info is exactly the same as when using blas_info
 and co.
