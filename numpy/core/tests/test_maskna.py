@@ -583,82 +583,95 @@ def test_maskna_ufunc_1D():
     assert_(c.flags.maskna)
     #assert_equal(c, [0,2,4])
 
+def test_maskna_ufunc_sum_1D():
+    check_maskna_ufunc_sum_1D(np.sum)
+
 def test_maskna_ufunc_add_reduce_1D():
+    check_maskna_ufunc_sum_1D(np.add.reduce)
+
+def check_maskna_ufunc_sum_1D(sum_func):
     a = np.arange(3.0, maskna=True)
     b = np.array(0.5)
     c_orig = np.array(0.5)
     c = c_orig.view(maskna=True)
 
     # Since 'a' has no NA values, this should work
-    np.add.reduce(a, out=b)
+    sum_func(a, out=b)
     assert_equal(b, 3.0)
-    np.add.reduce(a, skipna=True, out=b)
+    b[...] = 7
+    sum_func(a, skipna=True, out=b)
     assert_equal(b, 3.0)
 
-    ret = np.add.reduce(a)
+    ret = sum_func(a)
     assert_equal(ret, 3.0)
-    ret = np.add.reduce(a, skipna=True)
+    ret = sum_func(a, skipna=True)
     assert_equal(ret, 3.0)
 
     # With an NA value, the reduce should throw with the non-NA output param
     a[1] = np.NA
-    assert_raises(ValueError, np.add.reduce, a, out=b)
+    assert_raises(ValueError, sum_func, a, out=b)
 
     # With an NA value, the output parameter can still be an NA-array
     c_orig[...] = 0.5
-    np.add.reduce(a, out=c)
+    sum_func(a, out=c)
     assert_equal(c_orig, 0.5)
     assert_(np.isna(c))
 
     # Should not touch the out= element when assigning NA
     b[...] = 1.0
     d = b.view(maskna=True)
-    np.add.reduce(a, out=d)
+    sum_func(a, out=d)
     assert_(np.isna(d))
     assert_equal(b, 1.0)
 
     # Without an output parameter, return NA
-    ret = np.add.reduce(a)
+    ret = sum_func(a)
     assert_(np.isna(ret))
 
     # With 'skipna=True'
-    ret = np.add.reduce(a, skipna=True)
+    ret = sum_func(a, skipna=True)
     assert_equal(ret, 2.0)
 
     # With 'skipna=True', and out= parameter
     b[...] = 0.5
-    np.add.reduce(a, skipna=True, out=b)
+    sum_func(a, skipna=True, out=b)
     assert_equal(b, 2.0)
     
     # With 'skipna=True', and out= parameter with a mask
     c[...] = 0.5
     c[...] = np.NA
-    np.add.reduce(a, skipna=True, out=c)
+    sum_func(a, skipna=True, out=c)
     assert_(not np.isna(c))
     assert_equal(c, 2.0)
 
+def test_ufunc_max_1D():
+    check_ufunc_max_1D(np.max)
+
 def test_ufunc_maximum_reduce_1D():
+    check_ufunc_max_1D(np.maximum.reduce)
+
+def check_ufunc_max_1D(max_func):
     a_orig = np.array([0, 3, 2, 10, -1, 5, 7, -2])
     a = a_orig.view(maskna=True)
 
     # Straightforward reduce with no NAs
-    b = np.maximum.reduce(a)
+    b = max_func(a)
     assert_equal(b, 10)
 
     # Set the biggest value to NA
     a[3] = np.NA
-    b = np.maximum.reduce(a)
+    b = max_func(a)
     assert_(np.isna(b))
 
     # Skip the NA
-    b = np.maximum.reduce(a, skipna=True)
+    b = max_func(a, skipna=True)
     assert_(not b.flags.maskna)
     assert_(not np.isna(b))
     assert_equal(b, 7)
 
     # Set the first value to NA
     a[0] = np.NA
-    b = np.maximum.reduce(a, skipna=True)
+    b = max_func(a, skipna=True)
     assert_(not b.flags.maskna)
     assert_(not np.isna(b))
     assert_equal(b, 7)
@@ -666,7 +679,7 @@ def test_ufunc_maximum_reduce_1D():
     # Set all the values to NA - should raise the same error as
     # for an empty array
     a[...] = np.NA
-    assert_raises(ValueError, np.maximum.reduce, a, skipna=True)
+    assert_raises(ValueError, max_func, a, skipna=True)
 
 if __name__ == "__main__":
     run_module_suite()

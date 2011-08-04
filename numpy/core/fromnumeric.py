@@ -1376,7 +1376,7 @@ def clip(a, a_min, a_max, out=None):
     return clip(a_min, a_max, out)
 
 
-def sum(a, axis=None, dtype=None, out=None):
+def sum(a, axis=None, dtype=None, out=None, skipna=False):
     """
     Sum of array elements over a given axis.
 
@@ -1406,6 +1406,9 @@ def sum(a, axis=None, dtype=None, out=None):
         (the shape of `a` with `axis` removed, i.e.,
         ``numpy.delete(a.shape, axis)``).  Its type is preserved. See
         `doc.ufuncs` (Section "Output arguments") for more details.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during summation
+        instead of propagating them.
 
     Returns
     -------
@@ -1459,10 +1462,13 @@ def sum(a, axis=None, dtype=None, out=None):
         try:
             sum = a.sum
         except AttributeError:
-            return um.add.reduce(a, axis=axis, dtype=dtype, out=out)
+            return um.add.reduce(a, axis=axis, dtype=dtype,
+                                out=out, skipna=skipna)
+        # NOTE: Dropping the skipna parameter here...
         return sum(axis=axis, dtype=dtype, out=out)
     else:
-        return um.add.reduce(a, axis=axis, dtype=dtype, out=out)
+        return um.add.reduce(a, axis=axis, dtype=dtype,
+                            out=out, skipna=skipna)
 
 def product (a, axis=None, dtype=None, out=None):
     """
@@ -1501,7 +1507,7 @@ def alltrue (a, axis=None, out=None):
     """
     return um.logical_and.reduce(a, axis=axis, out=out)
 
-def any(a,axis=None, out=None):
+def any(a, axis=None, out=None, skipna=False):
     """
     Test whether any array element along a given axis evaluates to True.
 
@@ -1527,6 +1533,9 @@ def any(a,axis=None, out=None):
         (e.g., if it is of type float, then it will remain so, returning
         1.0 for True and 0.0 for False, regardless of the type of `a`).
         See `doc.ufuncs` (Section "Output arguments") for details.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during summation
+        instead of propagating them.
 
     Returns
     -------
@@ -1570,9 +1579,9 @@ def any(a,axis=None, out=None):
     (191614240, 191614240)
 
     """
-    return um.logical_or.reduce(a, axis=axis, out=out)
+    return um.logical_or.reduce(a, axis=axis, out=out, skipna=skipna)
 
-def all(a,axis=None, out=None):
+def all(a, axis=None, out=None, skipna=False):
     """
     Test whether all array elements along a given axis evaluate to True.
 
@@ -1596,6 +1605,9 @@ def all(a,axis=None, out=None):
         type is preserved (e.g., if ``dtype(out)`` is float, the result
         will consist of 0.0's and 1.0's).  See `doc.ufuncs` (Section
         "Output arguments") for more details.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during summation
+        instead of propagating them.
 
     Returns
     -------
@@ -1634,7 +1646,7 @@ def all(a,axis=None, out=None):
     (28293632, 28293632, array([ True], dtype=bool))
 
     """
-    return um.logical_and.reduce(a, axis=axis, out=out)
+    return um.logical_and.reduce(a, axis=axis, out=out, skipna=skipna)
 
 def cumsum (a, axis=None, dtype=None, out=None):
     """
@@ -1767,7 +1779,7 @@ def ptp(a, axis=None, out=None):
     return ptp(axis, out)
 
 
-def amax(a, axis=None, out=None):
+def amax(a, axis=None, out=None, skipna=False):
     """
     Return the maximum of an array or maximum along an axis.
 
@@ -1781,6 +1793,9 @@ def amax(a, axis=None, out=None):
         Alternate output array in which to place the result.  Must be of
         the same shape and buffer length as the expected output.  See
         `doc.ufuncs` (Section "Output arguments") for more details.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during summation
+        instead of propagating them.
 
     Returns
     -------
@@ -1822,14 +1837,19 @@ def amax(a, axis=None, out=None):
     4.0
 
     """
-    try:
-        amax = a.max
-    except AttributeError:
-        return _wrapit(a, 'max', axis, out)
-    return amax(axis, out)
+    if not (type(a) is mu.ndarray):
+        try:
+            amax = a.max
+        except AttributeError:
+            return um.maximum.reduce(a, axis=axis,
+                                out=out, skipna=skipna)
+        # NOTE: Dropping the skipna parameter
+        return amax(axis=axis, out=out)
+    else:
+        return um.maximum.reduce(a, axis=axis,
+                            out=out, skipna=skipna)
 
-
-def amin(a, axis=None, out=None):
+def amin(a, axis=None, out=None, skipna=False):
     """
     Return the minimum of an array or minimum along an axis.
 
@@ -1843,6 +1863,9 @@ def amin(a, axis=None, out=None):
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
         See `doc.ufuncs` (Section "Output arguments") for more details.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during summation
+        instead of propagating them.
 
     Returns
     -------
@@ -1884,12 +1907,17 @@ def amin(a, axis=None, out=None):
     0.0
 
     """
-    try:
-        amin = a.min
-    except AttributeError:
-        return _wrapit(a, 'min', axis, out)
-    return amin(axis, out)
-
+    if not (type(a) is mu.ndarray):
+        try:
+            amin = a.min
+        except AttributeError:
+            return um.minimum.reduce(a, axis=axis,
+                                out=out, skipna=skipna)
+        # NOTE: Dropping the skipna parameter
+        return amin(axis=axis, out=out)
+    else:
+        return um.minimum.reduce(a, axis=axis,
+                            out=out, skipna=skipna)
 
 def alen(a):
     """
@@ -1924,7 +1952,7 @@ def alen(a):
         return len(array(a,ndmin=1))
 
 
-def prod(a, axis=None, dtype=None, out=None):
+def prod(a, axis=None, dtype=None, out=None, skipna=False):
     """
     Return the product of array elements over a given axis.
 
@@ -1952,6 +1980,9 @@ def prod(a, axis=None, dtype=None, out=None):
         Alternative output array in which to place the result. It must have
         the same shape as the expected output, but the type of the
         output values will be cast if necessary.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during summation
+        instead of propagating them.
 
     Returns
     -------
@@ -2009,10 +2040,12 @@ def prod(a, axis=None, dtype=None, out=None):
         try:
             prod = a.prod
         except AttributeError:
-            return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out)
+            return um.multiply.reduce(a, axis=axis, dtype=dtype,
+                                out=out, skipna=skipna)
         return prod(axis=axis, dtype=dtype, out=out)
     else:
-        return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out)
+        return um.multiply.reduce(a, axis=axis, dtype=dtype,
+                            out=out, skipna=skipna)
 
 def cumprod(a, axis=None, dtype=None, out=None):
     """
