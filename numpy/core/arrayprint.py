@@ -216,6 +216,12 @@ def _boolFormatter(x):
     else: return 'False'
 
 
+def repr_format(x):
+    if isna(x):
+        return str(x)
+    else:
+        return repr(x)
+
 def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   prefix="", formatter=None):
 
@@ -247,7 +253,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   'longcomplexfloat' : LongComplexFormat(precision),
                   'datetime' : DatetimeFormat(data),
                   'timedelta' : TimedeltaFormat(data),
-                  'numpystr' : repr,
+                  'numpystr' : repr_format,
                   'str' : str}
 
     if formatter is not None:
@@ -533,7 +539,11 @@ class FloatFormat(object):
         errstate = _nc.seterr(all='ignore')
         try:
             special = isnan(data) | isinf(data)
-            non_zero = absolute(data.compress(not_equal(data, 0) & ~special))
+            # TODO: Later treat NA as special too
+            special[isna(data)] = False
+            valid = not_equal(data, 0) & ~special
+            valid[isna(data)] = False
+            non_zero = absolute(data.compress(valid))
             if len(non_zero) == 0:
                 max_val = 0.
                 min_val = 0.
@@ -629,8 +639,8 @@ _MININT = -sys.maxint-1
 class IntegerFormat(object):
     def __init__(self, data):
         try:
-            max_str_len = max(len(str(maximum.reduce(data))),
-                              len(str(minimum.reduce(data))))
+            max_str_len = max(len(str(maximum.reduce(data, skipna=True))),
+                              len(str(minimum.reduce(data, skipna=True))))
             self.format = '%' + str(max_str_len) + 'd'
         except TypeError, NotImplementedError:
             # if reduce(data) fails, this instance will not be called, just
@@ -664,6 +674,9 @@ class LongFloatFormat(object):
                     return ' ' + _inf_str
             else:
                 return '-' + _inf_str
+        elif isna(x):
+            # TODO: formatting options like _nan_str and _inf_str
+            return str(x)
         elif x >= 0:
             if self.sign:
                 return '+' + format_longfloat(x, self.precision)
@@ -679,9 +692,12 @@ class LongComplexFormat(object):
         self.imag_format = LongFloatFormat(precision, sign=True)
 
     def __call__(self, x):
-        r = self.real_format(x.real)
-        i = self.imag_format(x.imag)
-        return r + i + 'j'
+        if isna(x):
+            return str(x)
+        else:
+            r = self.real_format(x.real)
+            i = self.imag_format(x.imag)
+            return r + i + 'j'
 
 
 class ComplexFormat(object):
@@ -691,14 +707,17 @@ class ComplexFormat(object):
                                        sign=True)
 
     def __call__(self, x):
-        r = self.real_format(x.real, strip_zeros=False)
-        i = self.imag_format(x.imag, strip_zeros=False)
-        if not self.imag_format.exp_format:
-            z = i.rstrip('0')
-            i = z + 'j' + ' '*(len(i)-len(z))
+        if isna(x):
+            return str(x)
         else:
-            i = i + 'j'
-        return r + i
+            r = self.real_format(x.real, strip_zeros=False)
+            i = self.imag_format(x.imag, strip_zeros=False)
+            if not self.imag_format.exp_format:
+                z = i.rstrip('0')
+                i = z + 'j' + ' '*(len(i)-len(z))
+            else:
+                i = i + 'j'
+            return r + i
 
 class DatetimeFormat(object):
     def __init__(self, x, unit=None,
@@ -723,7 +742,10 @@ class DatetimeFormat(object):
         self.casting = casting
 
     def __call__(self, x):
-        return "'%s'" % datetime_as_string(x,
+        if isna(x):
+            return str(x)
+        else:
+            return "'%s'" % datetime_as_string(x,
                                         unit=self.unit,
                                         timezone=self.timezone,
                                         casting=self.casting)
@@ -737,5 +759,8 @@ class TimedeltaFormat(object):
             self.format = '%' + str(max_str_len) + 'd'
 
     def __call__(self, x):
-        return self.format % x.astype('i8')
+        if isna(x):
+            return str(x)
+        else:
+            return self.format % x.astype('i8')
 
