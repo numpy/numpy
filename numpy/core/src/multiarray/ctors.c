@@ -2029,8 +2029,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
              * Add an NA mask if requested, or if allowed and the data
              * has NAs
              */
-            if ((flags & (NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA)) != 0 ||
-                        (contains_na && (flags & NPY_ARRAY_ALLOWNA))) {
+            if ((flags & (NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA)) != 0) {
                 if (PyArray_AllocateMaskNA(ret,
                                 (flags&NPY_ARRAY_OWNMASKNA) != 0, 0, 1) < 0) {
                     Py_DECREF(ret);
