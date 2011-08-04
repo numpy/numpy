@@ -2980,6 +2980,16 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                         "isn't implemented yet");
                 goto fail;
             }
+
+            /*
+             * If the result has a mask (i.e. from the out= parameter),
+             * Set it to all exposed.
+             */
+            if (PyArray_HASMASKNA(result)) {
+                if (PyArray_AssignMaskNA(result, 1) < 0) {
+                    goto fail;
+                }
+            }
         }
     }
 
@@ -3017,18 +3027,18 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     /* Add mask-related flags */
     if (use_maskna) {
         if (skipna) {
-            /* Need the input's mask to determine what to skip */
-            op_flags[0] |= NPY_ITER_USE_MASKNA;
             /* The output's mask has been set to all exposed already */
-            op_flags[1] |= NPY_ITER_IGNORE_MASKNA;
+            op_flags[0] |= NPY_ITER_IGNORE_MASKNA;
+            /* Need the input's mask to determine what to skip */
+            op_flags[1] |= NPY_ITER_USE_MASKNA;
 
             /* TODO: allocate a temporary buffer for inverting the mask */
         }
         else {
-            /* The input's mask is already incorporated in the output's mask */
-            op_flags[0] |= NPY_ITER_IGNORE_MASKNA;
             /* Iterate over the output's mask */
-            op_flags[1] |= NPY_ITER_USE_MASKNA;
+            op_flags[0] |= NPY_ITER_USE_MASKNA;
+            /* The input's mask is already incorporated in the output's mask */
+            op_flags[1] |= NPY_ITER_IGNORE_MASKNA;
         }
     }
     else {
