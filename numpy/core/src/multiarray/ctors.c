@@ -236,7 +236,7 @@ _update_descr_and_dimensions(PyArray_Descr **des, npy_intp *newdims,
 
 
     newnd = oldnd + numnew;
-    if (newnd > MAX_DIMS) {
+    if (newnd > NPY_MAXDIMS) {
         goto finish;
     }
     if (tuple) {
@@ -2453,7 +2453,7 @@ PyArray_FromInterface(PyObject *input)
     char *data;
     Py_ssize_t buffer_len;
     int res, i, n;
-    intp dims[MAX_DIMS], strides[MAX_DIMS];
+    intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
     /* Get the memory from __array_data__ and __array_offset__ */
@@ -2732,7 +2732,7 @@ PyArray_FromDimsAndDataAndDescr(int nd, int *d,
 {
     PyObject *ret;
     int i;
-    npy_intp newd[MAX_DIMS];
+    npy_intp newd[NPY_MAXDIMS];
     char msg[] = "PyArray_FromDimsAndDataAndDescr: use PyArray_NewFromDescr.";
 
     if (DEPRECATE(msg) < 0) {
@@ -3822,14 +3822,14 @@ PyArray_CheckAxis(PyArrayObject *arr, int *axis, int flags)
     PyObject *temp1, *temp2;
     int n = PyArray_NDIM(arr);
 
-    if (*axis == MAX_DIMS || n == 0) {
+    if (*axis == NPY_MAXDIMS || n == 0) {
         if (n != 1) {
             temp1 = PyArray_Ravel(arr,0);
             if (temp1 == NULL) {
                 *axis = 0;
                 return NULL;
             }
-            if (*axis == MAX_DIMS) {
+            if (*axis == NPY_MAXDIMS) {
                 *axis = PyArray_NDIM((PyArrayObject *)temp1)-1;
             }
         }

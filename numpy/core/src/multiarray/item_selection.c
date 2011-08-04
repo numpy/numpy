@@ -32,10 +32,11 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     intp nd, i, j, n, m, max_item, tmp, chunk, nelem;
     intp shape[MAX_DIMS];
     char *src, *dest;
-    int err;
+    int err, use_maskna = 0;
 
     indices = NULL;
-    self = (PyArrayObject *)PyArray_CheckAxis(self0, &axis, NPY_ARRAY_CARRAY);
+    self = (PyArrayObject *)PyArray_CheckAxis(self0, &axis,
+                                    NPY_ARRAY_CARRAY | NPY_ARRAY_ALLOWNA);
     if (self == NULL) {
         return NULL;
     }
@@ -45,6 +46,9 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     if (indices == NULL) {
         goto fail;
     }
+
+
+
     n = m = chunk = 1;
     nd = PyArray_NDIM(self) + PyArray_NDIM(indices) - 1;
     for (i = 0; i < nd; i++) {
@@ -75,14 +79,24 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         if (obj == NULL) {
             goto fail;
         }
+
+        /* Allocate an NA mask if necessary */
+        if (PyArray_HASMASKNA(self)) {
+            if (PyArray_AllocateMaskNA(obj, 1, 0, 1) < 0) {
+                goto fail;
+            }
+            use_maskna = 1;
+        }
     }
     else {
-        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY;
+        int flags = NPY_ARRAY_CARRAY |
+                    NPY_ARRAY_UPDATEIFCOPY |
+                    NPY_ARRAY_ALLOWNA;
 
         if ((PyArray_NDIM(out) != nd) ||
             !PyArray_CompareLists(PyArray_DIMS(out), shape, nd)) {
             PyErr_SetString(PyExc_ValueError,
-                            "bad shape in output array");
+                        "output array does not match result of ndarray.take");
             goto fail;
         }
 
@@ -100,6 +114,18 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         if (obj == NULL) {
             goto fail;
         }
+
+        if (PyArray_HASMASKNA(self)) {
+            if (PyArray_HASMASKNA(obj)) {
+                use_maskna = 1;
+            }
+            else if (PyArray_ContainsNA(self)) {
+                PyErr_SetString(PyExc_ValueError,
+                        "Cannot assign NA value to an array which "
+                        "does not support NAs");
+                goto fail;
+            }
+        }
     }
 
     max_item = PyArray_DIMS(self)[axis];
@@ -109,7 +135,121 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     dest = PyArray_DATA(obj);
 
     func = PyArray_DESCR(self)->f->fasttake;
-    if (func == NULL) {
+    if (use_maskna) {
+        char *dst_maskna = NULL, *src_maskna = NULL;
+        npy_intp itemsize = PyArray_DESCR(obj)->elsize;
+        PyArray_MaskedStridedTransferFn *maskedstransfer = NULL;
+        NpyAuxData *transferdata = NULL;
+        int needs_api = 0;
+
+        if (PyArray_GetMaskedDTypeTransferFunction(
+                        1,
+                        itemsize,
+                        itemsize,
+                        1,
+                        PyArray_DESCR(obj),
+                        PyArray_DESCR(obj),
+                        PyArray_MASKNA_DTYPE(obj),
+                        0,
+                        &maskedstransfer, &transferdata,
+                        &needs_api) != NPY_SUCCEED) {
+            goto fail;
+        }
+
+
+        src_maskna = PyArray_MASKNA_DATA(self);
+        dst_maskna = PyArray_MASKNA_DATA(obj);
+        if (PyDataType_REFCHK(PyArray_DESCR(self))) {
+            /*
+             * TODO: Should use PyArray_GetDTypeTransferFunction
+             *       instead of raw memmove to remedy this.
+             */
+            PyErr_SetString(PyExc_RuntimeError,
+                    "ndarray.take doesn't support object arrays with "
+                    "masks yet");
+            NPY_AUXDATA_FREE(transferdata);
+            goto fail;
+        }
+
+        switch(clipmode) {
+        case NPY_RAISE:
+            for (i = 0; i < n; i++) {
+                for (j = 0; j < m; j++) {
+                    tmp = ((intp *)(PyArray_DATA(indices)))[j];
+                    if (tmp < 0) {
+                        tmp = tmp + max_item;
+                    }
+                    if ((tmp < 0) || (tmp >= max_item)) {
+                        PyErr_SetString(PyExc_IndexError,
+                                "index out of range "\
+                                "for array");
+                        NPY_AUXDATA_FREE(transferdata);
+                        goto fail;
+                    }
+                    maskedstransfer(dest, itemsize,
+                                    src + tmp*chunk, itemsize,
+                                    (npy_mask *)src_maskna, 1,
+                                    nelem, itemsize, transferdata);
+                    dest += chunk;
+                    memmove(dst_maskna, src_maskna + tmp*nelem, nelem);
+                    dst_maskna += nelem;
+                }
+                src += chunk*max_item;
+                src_maskna += nelem*max_item;
+            }
+            break;
+        case NPY_WRAP:
+            for (i = 0; i < n; i++) {
+                for (j = 0; j < m; j++) {
+                    tmp = ((intp *)(PyArray_DATA(indices)))[j];
+                    if (tmp < 0) {
+                        while (tmp < 0) {
+                            tmp += max_item;
+                        }
+                    }
+                    else if (tmp >= max_item) {
+                        while (tmp >= max_item) {
+                            tmp -= max_item;
+                        }
+                    }
+                    maskedstransfer(dest, itemsize,
+                                    src + tmp*chunk, itemsize,
+                                    (npy_mask *)src_maskna, 1,
+                                    nelem, itemsize, transferdata);
+                    dest += chunk;
+                    memmove(dst_maskna, src_maskna + tmp*nelem, nelem);
+                    dst_maskna += nelem;
+                }
+                src += chunk*max_item;
+                src_maskna += nelem*max_item;
+            }
+            break;
+        case NPY_CLIP:
+            for (i = 0; i < n; i++) {
+                for (j = 0; j < m; j++) {
+                    tmp = ((intp *)(PyArray_DATA(indices)))[j];
+                    if (tmp < 0) {
+                        tmp = 0;
+                    }
+                    else if (tmp >= max_item) {
+                        tmp = max_item - 1;
+                    }
+                    maskedstransfer(dest, itemsize,
+                                    src + tmp*chunk, itemsize,
+                                    (npy_mask *)src_maskna, 1,
+                                    nelem, itemsize, transferdata);
+                    dest += chunk;
+                    memmove(dst_maskna, src_maskna + tmp*nelem, nelem);
+                    dst_maskna += nelem;
+                }
+                src += chunk*max_item;
+                src_maskna += nelem*max_item;
+            }
+            break;
+        }
+        NPY_AUXDATA_FREE(transferdata);
+    }
+    else if (func == NULL) {
         switch(clipmode) {
         case NPY_RAISE:
             for (i = 0; i < n; i++) {
@@ -1667,14 +1807,26 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
     PyArrayObject *cond;
     PyObject *res, *ret;
 
-    cond = (PyArrayObject *)PyArray_FROM_O(condition);
-    if (cond == NULL) {
-        return NULL;
+    if (PyArray_Check(condition)) {
+        cond = (PyArrayObject *)condition;
+        Py_INCREF(cond);
     }
+    else {
+        PyArray_Descr *dtype = PyArray_DescrFromType(NPY_BOOL);
+        if (dtype == NULL) {
+            return NULL;
+        }
+        cond = (PyArrayObject *)PyArray_FromAny(condition, dtype,
+                                    0, 0, NPY_ARRAY_ALLOWNA, NULL);
+        if (cond == NULL) {
+            return NULL;
+        }
+    }
+
     if (PyArray_NDIM(cond) != 1) {
         Py_DECREF(cond);
         PyErr_SetString(PyExc_ValueError,
-                        "condition must be 1-d array");
+                        "condition must be a 1-d array");
         return NULL;
     }
 
@@ -1742,7 +1894,8 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
 }
 
 /*NUMPY_API
- * Counts the number of non-zero elements in the array
+ * Counts the number of non-zero elements in the array. Raises
+ * an error if the array contains an NA.
  *
  * Returns -1 on error.
  */
@@ -1758,6 +1911,16 @@ PyArray_CountNonzero(PyArrayObject *self)
     NpyIter_IterNextFunc *iternext;
     char **dataptr;
     npy_intp *strideptr, *innersizeptr;
+
+    /* If 'self' has an NA mask, make sure it has no NA values */
+    if (PyArray_HASMASKNA(self)) {
+        if (PyArray_ContainsNA(self)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot count the number of nonzeros in an array "
+                    "which contains an NA");
+            return -1;
+        }
+    }
 
     /* Special low-overhead version specific to the boolean type */
     if (PyArray_DESCR(self)->type_num == NPY_BOOL) {
@@ -1789,9 +1952,14 @@ PyArray_CountNonzero(PyArrayObject *self)
         return 0;
     }
 
-    /* Otherwise create and use an iterator to count the nonzeros */
-    iter = NpyIter_New(self, NPY_ITER_READONLY|
-                             NPY_ITER_EXTERNAL_LOOP|
+    /*
+     * Otherwise create and use an iterator to count the nonzeros.
+     * Can ignore any NAs because we already checked PyArray_ContainsNA
+     * earlier.
+     */
+    iter = NpyIter_New(self, NPY_ITER_READONLY |
+                             NPY_ITER_IGNORE_MASKNA |
+                             NPY_ITER_EXTERNAL_LOOP |
                              NPY_ITER_REFS_OK,
                         NPY_KEEPORDER, NPY_NO_CASTING,
                         NULL);
@@ -1844,13 +2012,23 @@ PyArray_Nonzero(PyArrayObject *self)
     PyArray_NonzeroFunc *nonzero = PyArray_DESCR(self)->f->nonzero;
     char *data;
     npy_intp stride, count;
-    npy_intp nonzero_count = PyArray_CountNonzero(self);
+    npy_intp nonzero_count;
     npy_intp *multi_index;
 
     NpyIter *iter;
     NpyIter_IterNextFunc *iternext;
     NpyIter_GetMultiIndexFunc *get_multi_index;
     char **dataptr;
+
+    /*
+     * First count the number of non-zeros in 'self'. If 'self' contains
+     * an NA value, this will raise an error, so after this call
+     * we can assume 'self' contains no NAs.
+     */
+    nonzero_count = PyArray_CountNonzero(self);
+    if (nonzero_count < 0) {
+        return NULL;
+    }
 
     /* Allocate the result as a 2D array */
     ret_dims[0] = nonzero_count;
@@ -1881,10 +2059,15 @@ PyArray_Nonzero(PyArrayObject *self)
         goto finish;
     }
 
-    /* Build an iterator tracking a multi-index, in C order */
-    iter = NpyIter_New(self, NPY_ITER_READONLY|
-                             NPY_ITER_MULTI_INDEX|
-                             NPY_ITER_ZEROSIZE_OK|
+    /*
+     * Build an iterator tracking a multi-index, in C order. We
+     * can ignore NAs because the PyArray_CountNonzero call checked
+     * that there were no NAs already.
+     */
+    iter = NpyIter_New(self, NPY_ITER_READONLY |
+                             NPY_ITER_IGNORE_MASKNA |
+                             NPY_ITER_MULTI_INDEX |
+                             NPY_ITER_ZEROSIZE_OK |
                              NPY_ITER_REFS_OK,
                         NPY_CORDER, NPY_NO_CASTING,
                         NULL);
