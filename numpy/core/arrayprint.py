@@ -212,8 +212,12 @@ def _leading_trailing(a):
     return b
 
 def _boolFormatter(x):
-    if x: return ' True'
-    else: return 'False'
+    if isna(x):
+        return str(x)
+    elif x:
+        return ' True'
+    else:
+        return 'False'
 
 
 def repr_format(x):
@@ -645,6 +649,9 @@ class IntegerFormat(object):
         except TypeError, NotImplementedError:
             # if reduce(data) fails, this instance will not be called, just
             # instantiated in formatdict.
+            pass
+        except ValueError:
+            # this occurs when everything is NA
             pass
 
     def __call__(self, x):
