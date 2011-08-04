@@ -2676,8 +2676,13 @@ allocate_or_conform_reduce_result(PyArrayObject *arr, PyArrayObject *out,
  */
 static PyArrayObject *
 initialize_reduce_result(int identity, PyArrayObject *result,
-                        npy_bool *axis_flags, PyArrayObject *arr)
+                        npy_bool *axis_flags, PyArrayObject *arr,
+                        int skipna, char *ufunc_name)
 {
+    npy_intp *strides, *shape, shape_orig[NPY_MAXDIMS], shape0;
+    PyArrayObject *arr_view;
+    int idim, ndim;
+
     if (identity == PyUFunc_One) {
         if (PyArray_FillWithOne(result) < 0) {
             return NULL;
@@ -2693,17 +2698,69 @@ initialize_reduce_result(int identity, PyArrayObject *result,
         return arr;
     }
     /*
+     * With skipna=True and where 'arr' has an NA mask,
+     * need to do some additional fiddling if there's no unit.
+     */
+    else if (skipna && PyArray_HASMASKNA(arr)) {
+        char *data, *maskna_data;
+        npy_intp *maskna_strides;
+
+        ndim = PyArray_NDIM(arr);
+
+        /*
+         * Currently only supporting one dimension in this case.
+         */
+        if (ndim != 1) {
+            PyErr_SetString(PyExc_ValueError,
+                    "skipna=True with a non-identity reduction "
+                    "and an array with ndim > 1 isn't implemented yet");
+            return NULL;
+        }
+
+        arr_view = (PyArrayObject *)PyArray_View(arr, NULL, &PyArray_Type);
+        if (arr_view == NULL) {
+            return NULL;
+        }
+
+        shape = PyArray_DIMS(arr_view);
+        shape0 = shape[0];
+        data = PyArray_DATA(arr_view);
+        strides = PyArray_STRIDES(arr_view);
+        maskna_data = PyArray_MASKNA_DATA(arr_view);
+        maskna_strides = PyArray_MASKNA_STRIDES(arr_view);
+
+        /* Shrink the array from the start until we find an exposed element */
+        while (shape0 > 0 &&
+                    !NpyMaskValue_IsExposed((npy_mask)*maskna_data)) {
+            --shape0;
+            data += strides[0];
+            maskna_data += maskna_strides[0];
+        }
+
+        if (shape0 == 0) {
+            Py_DECREF(arr_view);
+            PyErr_Format(PyExc_ValueError,
+                    "fully NA array with skipna=True to "
+                    "%s.reduce which has no identity", ufunc_name);
+            return NULL;
+        }
+
+        /* With the first element exposed, fall through to the other code */
+        shape[0] = shape0;
+        ((PyArrayObject_fieldaccess *)arr_view)->data = data;
+        ((PyArrayObject_fieldaccess *)arr_view)->maskna_data = maskna_data;
+    }
+    /*
      * If there is no identity, copy the first element along the
      * reduction dimensions.
      */
     else {
-        npy_intp *strides, *shape, *shape_orig;
-        PyArrayObject *arr_view;
-        int idim, ndim = PyArray_NDIM(arr);
+        ndim = PyArray_NDIM(arr);
 
         if (PyArray_SIZE(arr) == 0) {
-            PyErr_SetString(PyExc_ValueError,
-                    "zero-size array to ufunc.reduce without identity");
+            PyErr_Format(PyExc_ValueError,
+                    "zero-size array to %s.reduce which has no identity",
+                    ufunc_name);
             return NULL;
         }
 
@@ -2719,45 +2776,45 @@ initialize_reduce_result(int identity, PyArrayObject *result,
         if (arr_view == NULL) {
             return NULL;
         }
-
-        /*
-         * Adjust the shape to only look at the first element along
-         * any of the reduction axes.
-         */
-        shape = PyArray_DIMS(arr_view);
-        for (idim = 0; idim < ndim; ++idim) {
-            if (axis_flags[idim]) {
-                shape[idim] = 1;
-            }
-        }
-
-        /* Copy the elements into the result to start */
-        if (PyArray_CopyInto(result, arr_view) < 0) {
-            Py_DECREF(arr_view);
-            return NULL;
-        }
-
-        /* Adjust the shape to only look at the remaining elements */
-        shape_orig = PyArray_DIMS(arr);
-        strides = PyArray_STRIDES(arr_view);
-        for (idim = 0; idim < ndim; ++idim) {
-            if (axis_flags[idim]) {
-                shape[idim] = shape_orig[idim] - 1;
-                ((PyArrayObject_fieldaccess *)arr_view)->data += strides[idim];
-            }
-        }
-        if (PyArray_HASMASKNA(arr_view)) {
-            strides = PyArray_MASKNA_STRIDES(arr_view);
-            for (idim = 0; idim < ndim; ++idim) {
-                if (axis_flags[idim]) {
-                    ((PyArrayObject_fieldaccess *)arr_view)->maskna_data +=
-                                                                strides[idim];
-                }
-            }
-        }
-
-        return arr_view;
     }
+
+    /*
+     * Adjust the shape to only look at the first element along
+     * any of the reduction axes.
+     */
+    shape = PyArray_DIMS(arr_view);
+    memcpy(shape_orig, shape, ndim * sizeof(npy_intp));
+    for (idim = 0; idim < ndim; ++idim) {
+        if (axis_flags[idim]) {
+            shape[idim] = 1;
+        }
+    }
+
+    /* Copy the elements into the result to start */
+    if (PyArray_CopyInto(result, arr_view) < 0) {
+        Py_DECREF(arr_view);
+        return NULL;
+    }
+
+    /* Adjust the shape to only look at the remaining elements */
+    strides = PyArray_STRIDES(arr_view);
+    for (idim = 0; idim < ndim; ++idim) {
+        if (axis_flags[idim]) {
+            shape[idim] = shape_orig[idim] - 1;
+            ((PyArrayObject_fieldaccess *)arr_view)->data += strides[idim];
+        }
+    }
+    if (PyArray_HASMASKNA(arr_view)) {
+        strides = PyArray_MASKNA_STRIDES(arr_view);
+        for (idim = 0; idim < ndim; ++idim) {
+            if (axis_flags[idim]) {
+                ((PyArrayObject_fieldaccess *)arr_view)->maskna_data +=
+                                                            strides[idim];
+            }
+        }
+    }
+
+    return arr_view;
 }
 
 /*
@@ -2971,22 +3028,28 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         }
         else {
             /*
-             * If there's no identity, validate that there is no
-             * reduction which is all NA values.
-             */
-            if (self->identity == PyUFunc_None) {
-                PyErr_SetString(PyExc_ValueError,
-                        "skipna=True together with a non-identity reduction "
-                        "isn't implemented yet");
-                goto fail;
-            }
-
-            /*
              * If the result has a mask (i.e. from the out= parameter),
              * Set it to all exposed.
              */
             if (PyArray_HASMASKNA(result)) {
                 if (PyArray_AssignMaskNA(result, 1) < 0) {
+                    goto fail;
+                }
+            }
+
+            /* Special case a one-value input */
+            if (PyArray_SIZE(arr) == 1) {
+                if (NpyMaskValue_IsExposed(
+                                (npy_mask)*PyArray_MASKNA_DATA(arr))) {
+                    /* Copy the element into the result */
+                    if (PyArray_CopyInto(result, arr) < 0) {
+                        goto finish;
+                    }
+                }
+                else {
+                    PyErr_Format(PyExc_ValueError,
+                            "fully NA array with skipna=True to "
+                            "%s.reduce which has no identity", ufunc_name);
                     goto fail;
                 }
             }
@@ -2999,7 +3062,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
      * all the elements to reduce into 'result'.
      */
     arr_view = initialize_reduce_result(self->identity, result,
-                                            axis_flags, arr);
+                                        axis_flags, arr, skipna, ufunc_name);
     if (arr_view == NULL) {
         goto fail;
     }
