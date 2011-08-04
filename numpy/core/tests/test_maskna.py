@@ -576,13 +576,50 @@ def test_maskna_take_1D():
     assert_equal(np.isna(c), [0,1,0])
 
 def test_maskna_ufunc_1D():
-    a = np.arange(3, maskna=True)
-    b = np.arange(3)
+    a_orig = np.arange(3)
+    a = a_orig.view(maskna=True)
+    b_orig = np.array([5,4,3])
+    b = b_orig.view(maskna=True)
+    c_orig = np.array([0,0,0])
+    c = c_orig.view(maskna=True)
 
     # An NA mask is produced if an operand has one
-    c = a + b
-    assert_(c.flags.maskna)
-    #assert_equal(c, [0,2,4])
+    res = a + b_orig
+    assert_(res.flags.maskna)
+    assert_equal(res, [5,5,5])
+
+    res = b_orig + a
+    assert_(res.flags.maskna)
+    assert_equal(res, [5,5,5])
+
+    # Can still output to a non-NA array if there are no NAs
+    np.add(a, b, out=c_orig)
+    assert_equal(c_orig, [5,5,5])
+
+    # Should unmask everything if the output has NA support but
+    # the inputs don't
+    c_orig[...] = 0
+    c[...] = np.NA
+    np.add(a_orig, b_orig, out=c)
+    assert_equal(c, [5,5,5])
+
+    # If the input has NA support but an output parameter doesn't,
+    # should work as long as the inputs contain no NAs
+    c_orig[...] = 0
+    np.add(a, b, out=c_orig)
+    assert_equal(c_orig, [5,5,5])
+
+    # An NA is produced if either operand has one
+    a[0] = np.NA
+    b[1] = np.NA
+    res = a + b
+    assert_equal(np.isna(res), [1,1,0])
+    assert_equal(res[2], 5)
+
+    # If the output contains NA, can't have out= parameter without
+    # NA support
+    assert_raises(ValueError, np.add, a, b, out=c_orig)
+
 
 def test_maskna_ufunc_sum_1D():
     check_maskna_ufunc_sum_1D(np.sum)
