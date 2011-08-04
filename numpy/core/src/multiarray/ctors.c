@@ -612,7 +612,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
                         int dim, npy_intp offset, npy_intp maskoffset)
 {
     Py_ssize_t i, slen;
-    int res = -1;
+    int res = 0;
     int a_has_maskna = PyArray_HASMASKNA(a);
 
     /*
