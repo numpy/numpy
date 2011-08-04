@@ -32,6 +32,7 @@ def test_array_maskna_construction():
     # Without the 'maskna=True', produces an object array
     a = np.array([1.0, 2.0, np.NA, 7.0])
     assert_equal(a.dtype, np.dtype('O'))
+    assert_(not a.flags.maskna)
     assert_equal(type(a[2]), np.NAType)
 
     # From np.NA as a straight scalar
