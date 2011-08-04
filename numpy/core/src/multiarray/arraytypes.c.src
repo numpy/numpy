@@ -2899,12 +2899,13 @@ OBJECT_fill(PyObject **buffer, intp length, void *NPY_UNUSED(ignored))
     intp i;
     PyObject *start = buffer[0];
     PyObject *delta = buffer[1];
+    PyObject *second;
 
     delta = PyNumber_Subtract(delta, start);
     if (!delta) {
         return;
     }
-    start = PyNumber_Add(start, delta);
+    second = start = PyNumber_Add(start, delta);
     if (!start) {
         goto finish;
     }
@@ -2920,6 +2921,7 @@ OBJECT_fill(PyObject **buffer, intp length, void *NPY_UNUSED(ignored))
     }
 
 finish:
+    Py_XDECREF(second);
     Py_DECREF(delta);
     return;
 }
