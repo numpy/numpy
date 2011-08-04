@@ -3001,6 +3001,7 @@ PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
         return NULL;
     }
     if (_zerofill(ret) < 0) {
+        Py_DECREF(ret);
         return NULL;
     }
     return (PyObject *)ret;
