@@ -520,7 +520,7 @@ def test_ufunc_1D():
     assert_(c.flags.maskna)
     #assert_equal(c, [0,2,4])
 
-def test_ufunc_reduce_1D():
+def test_ufunc_add_reduce_1D():
     a = np.arange(3.0, maskna=True)
     b = np.array(0.5)
     c_orig = np.array(0.5)
@@ -529,6 +529,13 @@ def test_ufunc_reduce_1D():
     # Since 'a' has no NA values, this should work
     np.add.reduce(a, out=b)
     assert_equal(b, 3.0)
+    np.add.reduce(a, skipna=True, out=b)
+    assert_equal(b, 3.0)
+
+    ret = np.add.reduce(a)
+    assert_equal(ret, 3.0)
+    ret = np.add.reduce(a, skipna=True)
+    assert_equal(ret, 3.0)
 
     # With an NA value, the reduce should throw with the non-NA output param
     a[1] = np.NA
@@ -566,6 +573,37 @@ def test_ufunc_reduce_1D():
     np.add.reduce(a, skipna=True, out=c)
     assert_(not np.isna(c))
     assert_equal(c, 2.0)
+
+def test_ufunc_maximum_reduce_1D():
+    a_orig = np.array([0, 3, 2, 10, -1, 5, 7, -2])
+    a = a_orig.view(maskna=True)
+
+    # Straightforward reduce with no NAs
+    b = np.maximum.reduce(a)
+    assert_equal(b, 10)
+
+    # Set the biggest value to NA
+    a[3] = np.NA
+    b = np.maximum.reduce(a)
+    assert_(np.isna(b))
+
+    # Skip the NA
+    b = np.maximum.reduce(a, skipna=True)
+    assert_(not b.flags.maskna)
+    assert_(not np.isna(b))
+    assert_equal(b, 7)
+
+    # Set the first value to NA
+    a[0] = np.NA
+    b = np.maximum.reduce(a, skipna=True)
+    assert_(not b.flags.maskna)
+    assert_(not np.isna(b))
+    assert_equal(b, 7)
+
+    # Set all the values to NA - should raise the same error as
+    # for an empty array
+    a[...] = np.NA
+    assert_raises(ValueError, np.maximum.reduce, a, skipna=True)
 
 if __name__ == "__main__":
     run_module_suite()
