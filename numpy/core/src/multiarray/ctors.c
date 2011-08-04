@@ -276,12 +276,12 @@ _unaligned_strided_byte_copy(char *dst, npy_intp outstrides, char *src,
     char *tout = dst;
     char *tin = src;
 
-#define _COPY_N_SIZE(size)                      \
-    for(i=0; i<N; i++) {                       \
-        memcpy(tout, tin, size);                \
-        tin += instrides;                       \
-        tout += outstrides;                     \
-    }                                           \
+#define _COPY_N_SIZE(size) \
+    for(i=0; i<N; i++) { \
+        memcpy(tout, tin, size); \
+        tin += instrides; \
+        tout += outstrides; \
+    } \
     return
 
     switch(elsize) {
