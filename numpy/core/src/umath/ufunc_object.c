@@ -712,12 +712,13 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                 PyArrayObject **out_wheremask,
                 int *out_use_maskna)
 {
-    int i, nargs, nin = self->nin;
+    int i, nargs, nin = self->nin, nout = self->nout;
     PyObject *obj, *context;
     PyObject *str_key_obj = NULL;
     char *ufunc_name;
 
     int any_flexible = 0, any_object = 0;
+    int any_non_maskna_out = 0, any_maskna_out = 0;
 
     ufunc_name = self->name ? self->name : "<unnamed ufunc>";
 
@@ -800,6 +801,13 @@ static int get_ufunc_arguments(PyUFuncObject *self,
             }
             Py_INCREF(obj);
             out_op[i] = (PyArrayObject *)obj;
+
+            if (PyArray_HASMASKNA((PyArrayObject *)obj)) {
+                any_maskna_out = 1;
+            }
+            else {
+                any_non_maskna_out = 1;
+            }
         }
         else {
             PyErr_SetString(PyExc_TypeError,
@@ -892,6 +900,13 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                             }
                             Py_INCREF(value);
                             out_op[nin] = (PyArrayObject *)value;
+
+                            if (PyArray_HASMASKNA((PyArrayObject *)value)) {
+                                any_maskna_out = 1;
+                            }
+                            else {
+                                any_non_maskna_out = 1;
+                            }
                         }
                         else {
                             PyErr_SetString(PyExc_TypeError,
@@ -961,8 +976,42 @@ static int get_ufunc_arguments(PyUFuncObject *self,
             }
         }
     }
-
     Py_XDECREF(str_key_obj);
+
+    /*
+     * If NA mask support is enabled and there are non-maskNA outputs,
+     * only proceed if all the inputs contain no NA values.
+     */
+    if (*out_use_maskna && any_non_maskna_out) {
+        /* Check all the inputs for NA */
+        for(i = 0; i < nin; ++i) {
+            if (PyArray_HASMASKNA(out_op[i])) {
+                if (PyArray_ContainsNA(out_op[i])) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "Cannot assign NA value to an array which "
+                            "does not support NAs");
+                    return -1;
+                }
+            }
+        }
+
+        /* Disable MASKNA - the inner loop uses NPY_ITER_IGNORE_MASKNA */
+        *out_use_maskna = 0;
+    }
+    /*
+     * If we're not using a masked loop, but an output has an NA mask,
+     * set it to all exposed.
+     */
+    else if (!(*out_use_maskna) && any_maskna_out) {
+        for (i = nin; i < nin+nout; ++i) {
+            if (PyArray_HASMASKNA(out_op[i])) {
+                if (PyArray_AssignMaskNA(out_op[i], 1) < 0) {
+                    return -1;
+                }
+            }
+        }
+    }
+
     return 0;
 
 fail:
@@ -1506,6 +1555,15 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
     if (use_maskna) {
         default_op_in_flags |= NPY_ITER_USE_MASKNA;
         default_op_out_flags |= NPY_ITER_USE_MASKNA;
+    }
+    /*
+     * Some operands may still have NA masks, but they will
+     * have been checked to ensure they have no NAs using
+     * PyArray_ContainsNA. Thus we flag to ignore MASKNA here.
+     */
+    else {
+        default_op_in_flags |= NPY_ITER_IGNORE_MASKNA;
+        default_op_out_flags |= NPY_ITER_IGNORE_MASKNA;
     }
 
     /* Set up the flags */
