@@ -1706,6 +1706,7 @@ arraymultiter_next(PyArrayMultiIterObject *multi)
         multi->index++;
         return ret;
     }
+    Py_DECREF(ret);
     return NULL;
 }
 
