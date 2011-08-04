@@ -45,6 +45,12 @@ def test_array_maskna_construction():
     assert_equal(type(a), np.ndarray)
     assert_(np.isna(a))
 
+    # The data type defaults to the same as an empty array if all is NA
+    a = np.array([np.NA], maskna=True)
+    b = np.array([])
+    assert_equal(a.dtype, b.dtype)
+    assert_(np.isna(a))
+
     a = np.zeros((3,))
     assert_(not a.flags.maskna)
     a = np.zeros((3,), maskna=True)
