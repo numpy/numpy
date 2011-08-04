@@ -517,7 +517,64 @@ def test_array_maskna_view_array_assignment_1D():
 
     # TODO: fancy indexing is next...
 
-def test_ufunc_1D():
+def test_maskna_nonzero_1D():
+    a = np.zeros((5,), maskna=True)
+
+    # The nonzeros without any NAs
+    assert_equal(np.count_nonzero(a), 0)
+    assert_equal(np.nonzero(a)[0], [])
+    a[2] = 3
+    assert_equal(np.count_nonzero(a), 1)
+    assert_equal(np.nonzero(a)[0], [2])
+    a[3:] = 2
+    assert_equal(np.count_nonzero(a), 3)
+    assert_equal(np.nonzero(a)[0], [2,3,4])
+
+    # The nonzeros with an NA
+    a[2] = np.NA
+    assert_raises(ValueError, np.count_nonzero, a)
+    assert_raises(ValueError, np.nonzero, a)
+
+def test_maskna_take_1D():
+    a = np.arange(5, maskna=True)
+    b = np.arange(3)
+    c = b.view(maskna=True)
+
+    # Take without any NAs
+    assert_equal(a.take([0,2,4]), [0,2,4])
+
+    # Take without any NAs, into non-NA output parameter
+    a.take([0,2,4], out=b)
+    assert_equal(b, [0,2,4])
+
+    # Take without any NAs, into NA output parameter
+    b[...] = 1
+    c[...] = np.NA
+    a.take([0,2,4], out=c)
+    assert_equal(c, [0,2,4])
+
+    # Take with some NAs
+    a[2] = np.NA
+    a[3] = np.NA
+    ret = a.take([0,2,4])
+    assert_equal([ret[0], ret[2]], [0,4])
+    assert_equal(np.isna(ret), [0,1,0])
+
+    # Take with some NAs, into NA output parameter
+    b[...] = 1
+    c[...] = np.NA
+    a.take([0,2,4], out=c)
+    assert_equal(b, [0,1,4])
+    assert_equal([c[0], c[2]], [0,4])
+    assert_equal(np.isna(c), [0,1,0])
+
+    c[...] = 1
+    a.take([0,2,4], out=c)
+    assert_equal(b, [0,1,4])
+    assert_equal([c[0], c[2]], [0,4])
+    assert_equal(np.isna(c), [0,1,0])
+
+def test_maskna_ufunc_1D():
     a = np.arange(3, maskna=True)
     b = np.arange(3)
 
@@ -526,7 +583,7 @@ def test_ufunc_1D():
     assert_(c.flags.maskna)
     #assert_equal(c, [0,2,4])
 
-def test_ufunc_add_reduce_1D():
+def test_maskna_ufunc_add_reduce_1D():
     a = np.arange(3.0, maskna=True)
     b = np.array(0.5)
     c_orig = np.array(0.5)

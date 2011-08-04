@@ -46,9 +46,6 @@ NpyArg_ParseKeywords(PyObject *keys, const char *format, char **kwlist, ...)
     return ret;
 }
 
-/* Should only be used if x is known to be an nd-array */
-#define _ARET(x) PyArray_Return((PyArrayObject *)(x))
-
 static PyObject *
 array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -65,7 +62,8 @@ array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_ClipmodeConverter, &mode))
         return NULL;
 
-    return _ARET(PyArray_TakeFrom(self, indices, dimension, out, mode));
+    return PyArray_Return((PyArrayObject *)
+                PyArray_TakeFrom(self, indices, dimension, out, mode));
 }
 
 static PyObject *
@@ -103,7 +101,7 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *keywords[] = {"order", NULL};
     PyArray_Dims newshape;
     PyObject *ret;
-    PyArray_ORDER order = PyArray_CORDER;
+    PyArray_ORDER order = NPY_CORDER;
     Py_ssize_t n = PyTuple_Size(args);
 
     if (!NpyArg_ParseKeywords(kwds, "|O&", keywords,
@@ -222,7 +220,7 @@ array_argmax(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_OutputConverter, &out))
         return NULL;
 
-    return _ARET(PyArray_ArgMax(self, axis, out));
+    return PyArray_Return((PyArrayObject *)PyArray_ArgMax(self, axis, out));
 }
 
 static PyObject *
@@ -237,7 +235,7 @@ array_argmin(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_OutputConverter, &out))
         return NULL;
 
-    return _ARET(PyArray_ArgMin(self, axis, out));
+    return PyArray_Return((PyArrayObject *)PyArray_ArgMin(self, axis, out));
 }
 
 static PyObject *
@@ -1042,7 +1040,7 @@ array_getarray(PyArrayObject *self, PyObject *args)
 static PyObject *
 array_copy(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArray_ORDER order = PyArray_CORDER;
+    PyArray_ORDER order = NPY_CORDER;
     static char *kwlist[] = {"order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
@@ -1087,7 +1085,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    ret = PyArray_Resize(self, &newshape, refcheck, PyArray_CORDER);
+    ret = PyArray_Resize(self, &newshape, refcheck, NPY_CORDER);
     PyDimMem_FREE(newshape.ptr);
     if (ret == NULL) {
         return NULL;
@@ -1108,7 +1106,7 @@ array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
                                      PyArray_AxisConverter, &axis)) {
         return NULL;
     }
-    return _ARET(PyArray_Repeat(self, repeats, axis));
+    return PyArray_Return((PyArrayObject *)PyArray_Repeat(self, repeats, axis));
 }
 
 static PyObject *
@@ -1135,7 +1133,7 @@ array_choose(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    return _ARET(PyArray_Choose(self, choices, out, clipmode));
+    return PyArray_Return((PyArrayObject *)PyArray_Choose(self, choices, out, clipmode));
 }
 
 static PyObject *
@@ -1241,7 +1239,7 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         Py_XDECREF(PyArray_DESCR(self));
         ((PyArrayObject_fieldaccess *)self)->descr = saved;
     }
-    return _ARET(res);
+    return PyArray_Return((PyArrayObject *)res);
 }
 
 static PyObject *
@@ -1256,7 +1254,7 @@ array_searchsorted(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_SearchsideConverter, &side)) {
         return NULL;
     }
-    return _ARET(PyArray_SearchSorted(self, keys, side));
+    return PyArray_Return((PyArrayObject *)PyArray_SearchSorted(self, keys, side));
 }
 
 static void
@@ -2047,7 +2045,8 @@ array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_OutputConverter, &out)) {
         return NULL;
     }
-    return _ARET(PyArray_Compress(self, condition, axis, out));
+    return PyArray_Return(
+                (PyArrayObject *)PyArray_Compress(self, condition, axis, out));
 }
 
 
@@ -2082,7 +2081,7 @@ array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
     rtype = _CHKTYPENUM(dtype);
     Py_XDECREF(dtype);
-    return _ARET(PyArray_Trace(self, offset, axis1, axis2, rtype, out));
+    return PyArray_Return((PyArrayObject *)PyArray_Trace(self, offset, axis1, axis2, rtype, out));
 }
 
 #undef _CHKTYPENUM
@@ -2105,7 +2104,7 @@ array_clip(PyArrayObject *self, PyObject *args, PyObject *kwds)
         PyErr_SetString(PyExc_ValueError, "One of max or min must be given.");
         return NULL;
     }
-    return _ARET(PyArray_Clip(self, min, max, out));
+    return PyArray_Return((PyArrayObject *)PyArray_Clip(self, min, max, out));
 }
 
 
@@ -2135,14 +2134,14 @@ array_diagonal(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &axis2)) {
         return NULL;
     }
-    return _ARET(PyArray_Diagonal(self, offset, axis1, axis2));
+    return PyArray_Return((PyArrayObject *)PyArray_Diagonal(self, offset, axis1, axis2));
 }
 
 
 static PyObject *
 array_flatten(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArray_ORDER order = PyArray_CORDER;
+    PyArray_ORDER order = NPY_CORDER;
     static char *kwlist[] = {"order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
@@ -2156,7 +2155,7 @@ array_flatten(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_ravel(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArray_ORDER order = PyArray_CORDER;
+    PyArray_ORDER order = NPY_CORDER;
     static char *kwlist[] = {"order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
@@ -2179,7 +2178,7 @@ array_round(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      PyArray_OutputConverter, &out)) {
         return NULL;
     }
-    return _ARET(PyArray_Round(self, decimals, out));
+    return PyArray_Return((PyArrayObject *)PyArray_Round(self, decimals, out));
 }
 
 
@@ -2467,5 +2466,3 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
-
-#undef _ARET
