@@ -22,7 +22,8 @@ What works with NA:
     * All element-wise ufuncs.
     * UFunc.reduce methods, with a new skipna parameter.
     * Array methods:
-       + ndarray.clip, 
+       + ndarray.clip
+       + ndarray.conjugate, 
 
 What doesn't work with NA:
     * Fancy indexing, such as with lists and partial boolean masks.
@@ -30,7 +31,7 @@ What doesn't work with NA:
       that doesn't have an identity.
     * UFunc.accumulate, UFunc.reduceat.
     * np.logical_and, np.logical_or, np.all, and np.any don't satisfy the
-      rules NA | True == True, and NA & False == False yet.
+      rules NA | True == True and NA & False == False yet.
     * Array methods:
        + ndarray.argmax, ndarray.argmin,
 

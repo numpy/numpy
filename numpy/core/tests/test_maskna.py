@@ -719,22 +719,52 @@ def check_ufunc_max_1D(max_func):
     a[...] = np.NA
     assert_raises(ValueError, max_func, a, skipna=True)
 
-def test_array_maskna_methods():
+def test_array_maskna_clip_method():
+    # ndarray.clip
     a = np.array([2, np.NA, 10, 4, np.NA, 7], maskna=True)
     
-    # ndarray.clip
     b = np.clip(a, 3, None)
-    print repr(b)
     assert_equal(np.isna(b), [0,1,0,0,1,0])
     assert_equal(b[~np.isna(b)], [3, 10, 4, 7])
 
-    b = np.clip(a, None, 6)
-    assert_equal(np.isna(b), [0,1,0,0,1,0])
-    assert_equal(b[~np.isna(b)], [2, 6, 4, 6])
+    res = np.clip(a, None, 6)
+    assert_equal(np.isna(res), [0,1,0,0,1,0])
+    assert_equal(res[~np.isna(res)], [2, 6, 4, 6])
 
-    b = np.clip(a, 4, 7)
-    assert_equal(np.isna(b), [0,1,0,0,1,0])
-    assert_equal(b[~np.isna(b)], [4, 7, 4, 7])
+    res = np.clip(a, 4, 7)
+    assert_equal(np.isna(res), [0,1,0,0,1,0])
+    assert_equal(res[~np.isna(res)], [4, 7, 4, 7])
+
+def test_array_maskna_max_min_methods():
+    # ndarray.max, ndarray.min
+    a = np.array([[2, np.NA, 10],
+                  [4, 8, 7],
+                  [12, 4, np.NA]], maskna=True)
+
+    res = a.max(axis=0)
+    print repr(res)
+    assert_equal(np.isna(res), [0,1,1])
+    assert_equal(res[~np.isna(res)], [12])
+
+    res = a.max(axis=-1)
+    assert_equal(np.isna(res), [1,0,1])
+    assert_equal(res[~np.isna(res)], [8])
+
+    res = a.min(axis=0)
+    assert_equal(np.isna(res), [0,1,1])
+    assert_equal(res[~np.isna(res)], [2])
+
+    res = a.min(axis=-1)
+    assert_equal(np.isna(res), [1,0,1])
+    assert_equal(res[~np.isna(res)], [4])
+
+def test_array_maskna_conjugate_method():
+    # ndarray.conjugate
+    a = np.array([1j, 2+4j, np.NA, 2-1.5j, np.NA], maskna=True)
+
+    b = a.conjugate()
+    assert_equal(np.isna(b), [0,0,1,0,1])
+    assert_equal(b[~np.isna(b)], [-1j, 2-4j, 2+1.5j])
 
 if __name__ == "__main__":
     run_module_suite()
