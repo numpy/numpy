@@ -6,7 +6,8 @@ __all__ = ['select', 'piecewise', 'trim_zeros', 'copy', 'iterable',
         'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
         'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
         'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-        'meshgrid', 'delete', 'insert', 'append', 'interp']
+        'meshgrid', 'delete', 'insert', 'append', 'interp', 
+            'add_newdoc_ufunc']
 
 import warnings
 import types
@@ -27,6 +28,7 @@ from _compiled_base import _insert, add_docstring
 from _compiled_base import digitize, bincount, interp as compiled_interp
 from arraysetops import setdiff1d
 from utils import deprecate
+from _compiled_base import add_newdoc_ufunc
 import numpy as np
 
 
@@ -3179,6 +3181,11 @@ def add_newdoc(place, obj, doc):
        (method2, docstring2), ...]
 
     This routine never raises an error.
+    
+    This routine cannot modify read-only docstrings, as appear
+    in new-style classes or built-in functions. Because this
+    routine never raises an error the caller must check manually
+    that the docstrings were changed. 
        """
     try:
         new = {}
