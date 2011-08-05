@@ -510,6 +510,21 @@ PyArray_ReduceMaskNAArray(int ndim, npy_intp *shape,
         return NPY_FAIL;
     }
 
+{
+    int i;
+    printf("Dump of raw iter:\n");
+    printf("ndim: %d\n", ndim);
+    printf("shape: ");
+    for (i = 0; i < ndim; ++i) printf("%d ", (int)shape[i]);
+    printf("\n");
+    printf("src_strides: ");
+    for (i = 0; i < ndim; ++i) printf("%d ", (int)src_strides_it[i]);
+    printf("\n");
+    printf("dst_strides: ");
+    for (i = 0; i < ndim; ++i) printf("%d ", (int)dst_strides_it[i]);
+    printf("\n");
+}
+
     /* Special case a reduction in the inner loop */
     if (dst_strides_it[0] == 0) {
         /* Special case a contiguous reduction in the inner loop */
@@ -543,10 +558,13 @@ PyArray_ReduceMaskNAArray(int ndim, npy_intp *shape,
         NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
             char *src_d = src_data, *dst_d = dst_data;
             for (i = 0; i < shape_it[0]; ++i) {
+printf("s%d/d%d>>", (int)*src_d, (int)*dst_d);
                 *dst_d &= *src_d;
+printf("d%d ", (int)*dst_d);
                 src_d += src_strides_it[0];
                 dst_d += dst_strides_it[0];
             }
+printf("\n");
         } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
                                     src_data, src_strides_it,
                                     dst_data, dst_strides_it);
