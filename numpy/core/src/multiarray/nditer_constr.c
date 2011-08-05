@@ -3242,12 +3242,11 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
 
         p = perm[idim];
         if (p < 0) {
-            idim_permuted = 1-p;
+            idim_permuted = -1-p;
         }
         else {
             idim_permuted = p;
         }
-
         for (iop = first_maskna_op; iop < nop; ++iop) {
             /*
              * iop_maskna is the index of the USE_MASKNA input,
