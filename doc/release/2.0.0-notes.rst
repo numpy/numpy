@@ -2,6 +2,7 @@
 NumPy 2.0.0 Release Notes
 =========================
 
+[Possibly 1.7.0 release notes, as ABI compatibility is still being maintained]
 
 Highlights
 ==========
@@ -9,6 +10,30 @@ Highlights
 
 New features
 ============
+
+Support for NA missing values similar to those in R has been implemented.
+This was done by adding optional NA masks to the core array object.
+
+Support for NA is not complete, here is a list of the things that do and
+do not work with NA values:
+
+What works with NA:
+    * Basic indexing and slicing, as well as full boolean mask indexing.
+    * All element-wise ufuncs.
+    * UFunc.reduce methods, with a new skipna parameter.
+    * Array methods:
+       + ndarray.clip, 
+
+What doesn't work with NA:
+    * Fancy indexing, such as with lists and partial boolean masks.
+    * UFunc.reduce of multi-dimensional arrays, with skipna=True and a ufunc
+      that doesn't have an identity.
+    * UFunc.accumulate, UFunc.reduceat.
+    * np.logical_and, np.logical_or, np.all, and np.any don't satisfy the
+      rules NA | True == True, and NA & False == False yet.
+    * Array methods:
+       + ndarray.argmax, ndarray.argmin,
+
 
 Custom formatter for printing arrays
 ------------------------------------

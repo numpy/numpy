@@ -719,5 +719,22 @@ def check_ufunc_max_1D(max_func):
     a[...] = np.NA
     assert_raises(ValueError, max_func, a, skipna=True)
 
+def test_array_maskna_methods():
+    a = np.array([2, np.NA, 10, 4, np.NA, 7], maskna=True)
+    
+    # ndarray.clip
+    b = np.clip(a, 3, None)
+    print repr(b)
+    assert_equal(np.isna(b), [0,1,0,0,1,0])
+    assert_equal(b[~np.isna(b)], [3, 10, 4, 7])
+
+    b = np.clip(a, None, 6)
+    assert_equal(np.isna(b), [0,1,0,0,1,0])
+    assert_equal(b[~np.isna(b)], [2, 6, 4, 6])
+
+    b = np.clip(a, 4, 7)
+    assert_equal(np.isna(b), [0,1,0,0,1,0])
+    assert_equal(b[~np.isna(b)], [4, 7, 4, 7])
+
 if __name__ == "__main__":
     run_module_suite()
