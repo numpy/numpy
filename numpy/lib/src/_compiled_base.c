@@ -1197,6 +1197,7 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
         PyErr_SetString(PyExc_ValueError, 
                     "Cannot change docstring of ufunc "
                     "with non-NULL docstring");
+        return NULL;
     }
 
     docstr = PyString_AS_STRING(str);

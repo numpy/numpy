@@ -1185,5 +1185,17 @@ def test_median():
     assert_allclose(np.median(a2, axis=1), [1, 4])
 
 
+class TestAdd_newdoc_ufunc(TestCase):
+    
+    def test_ufunc_arg(self):
+        assert_raises(TypeError, add_newdoc_ufunc, 2,"blah")
+        assert_raises(ValueError, add_newdoc_ufunc,np.add,"blah")
+
+    def test_string_arg(self):
+        assert_raises(TypeError, add_newdoc_ufunc,np.add, 3)
+    
+
+    
+
 if __name__ == "__main__":
     run_module_suite()
