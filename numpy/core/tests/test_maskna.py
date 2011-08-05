@@ -512,7 +512,7 @@ def test_array_maskna_view_array_assignment_1D():
     # Assigning a list with NA to a boolean index should unmask non-NA values
     b[...] = np.NA
     mask = np.array([0,1,1,0,0], dtype='?')
-    b[mask] = [8,np.NA]
+    b[mask] = np.array([8,np.NA], maskna=True)
     assert_equal(a, [8,8,7,12,1])
     assert_equal(np.isna(b), [1,0,1,1,1])
 
