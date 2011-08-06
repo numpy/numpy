@@ -256,7 +256,8 @@ array_assign_scalar(PyArrayObject *dst,
                     PyArrayObject *wheremask,
                     NPY_CASTING casting, npy_bool overwritena)
 {
-    int copied_src_data = 0, dst_has_maskna = PyArray_HASMASKNA(dst);
+    int allocated_src_data = 0, dst_has_maskna = PyArray_HASMASKNA(dst);
+    npy_longlong scalarbuffer[4];
 
     /* Check the casting rule */
     if (!can_cast_scalar_to(src_dtype, src_data,
@@ -286,9 +287,17 @@ array_assign_scalar(PyArrayObject *dst,
                     PyArray_SIZE(dst) > 1) {
         char *tmp_src_data;
 
-        /* Allocate a new buffer to store the copied src data */
-        tmp_src_data = PyArray_malloc(PyArray_DESCR(dst)->elsize);
-        copied_src_data = 1;
+        /*
+         * Use a static buffer to store the aligned/cast version,
+         * or allocate some memory if more space is needed.
+         */
+        if (sizeof(scalarbuffer) >= PyArray_DESCR(dst)->elsize) {
+            tmp_src_data = (char *)&scalarbuffer[0];
+        }
+        else {
+            tmp_src_data = PyArray_malloc(PyArray_DESCR(dst)->elsize);
+            allocated_src_data = 1;
+        }
         if (PyArray_CastRawArrays(1, src_data, tmp_src_data, 0, 0,
                             src_dtype, PyArray_DESCR(dst), 0) != NPY_SUCCEED) {
             goto fail;
@@ -300,9 +309,9 @@ array_assign_scalar(PyArrayObject *dst,
     }
 
     if (wheremask == NULL) {
-        /* This is the case of a straightforward value assignment */
+        /* A straightforward value assignment */
         if (overwritena || !dst_has_maskna) {
-            /* If we're assigning to an array with a mask, set to all exposed */
+            /* If assigning to an array with an NA mask, set to all exposed */
             if (dst_has_maskna) {
                 if (PyArray_AssignMaskNA(dst, 1) < 0) {
                     goto fail;
@@ -316,12 +325,12 @@ array_assign_scalar(PyArrayObject *dst,
                 goto fail;
             }
         }
-        /* This is value assignment without overwriting NA values */
+        /* A value assignment without overwriting NA values */
         else {
         }
     }
     else {
-        /* This is the case of a straightforward where-masked assignment */
+        /* A straightforward where-masked assignment */
         if (overwritena || !dst_has_maskna) {
             npy_intp wheremask_strides[NPY_MAXDIMS];
 
@@ -343,19 +352,19 @@ array_assign_scalar(PyArrayObject *dst,
                 goto fail;
             }
         }
-        /* This is masked value assignment without overwriting NA values */
+        /* A masked value assignment without overwriting NA values */
         else {
         }
     }
 
-    if (copied_src_data) {
+    if (allocated_src_data) {
         PyArray_free(src_data);
     }
 
     return 0;
 
 fail:
-    if (copied_src_data) {
+    if (allocated_src_data) {
         PyArray_free(src_data);
     }
 
