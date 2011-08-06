@@ -477,6 +477,8 @@ PyArray_ReduceMaskNAArray(int ndim, npy_intp *shape,
     npy_intp src_strides_it[NPY_MAXDIMS];
     npy_intp dst_strides_it[NPY_MAXDIMS];
 
+    char *saved_dst_data = dst_data;
+
     /* Confirm that dst is not larger than src */
     for (idim = 0; idim < ndim; ++idim) {
         if (src_strides[idim] == 0 && dst_strides[idim] != 0) {
@@ -513,6 +515,8 @@ PyArray_ReduceMaskNAArray(int ndim, npy_intp *shape,
 {
     int i;
     printf("Dump of raw iter:\n");
+    printf("dst data: %p\n", dst_data);
+    printf("original dst data: %p\n", saved_dst_data);
     printf("ndim: %d\n", ndim);
     printf("shape: ");
     for (i = 0; i < ndim; ++i) printf("%d ", (int)shape[i]);
@@ -561,6 +565,7 @@ PyArray_ReduceMaskNAArray(int ndim, npy_intp *shape,
 printf("s%d/d%d>>", (int)*src_d, (int)*dst_d);
                 *dst_d &= *src_d;
 printf("d%d ", (int)*dst_d);
+printf("%p ", dst_d);
                 src_d += src_strides_it[0];
                 dst_d += dst_strides_it[0];
             }

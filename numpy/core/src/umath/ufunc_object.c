@@ -2705,9 +2705,9 @@ allocate_or_conform_reduce_result(PyArrayObject *arr, PyArrayObject *out,
                         npy_bool *axis_flags, PyArray_Descr * otype_dtype,
                         int addmask)
 {
-    if (out == NULL) {
-        PyArrayObject *result;
+    PyArrayObject *result;
 
+    if (out == NULL) {
         Py_INCREF(otype_dtype);
         result = allocate_reduce_result(arr, axis_flags, otype_dtype);
 
@@ -2718,12 +2718,12 @@ allocate_or_conform_reduce_result(PyArrayObject *arr, PyArrayObject *out,
                 return NULL;
             }
         }
-
-        return result;
     }
     else {
-        return conform_reduce_result(PyArray_NDIM(arr), axis_flags, out);
+        result = conform_reduce_result(PyArray_NDIM(arr), axis_flags, out);
     }
+
+    return result;
 }
 
 /*
@@ -3077,6 +3077,13 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                 goto fail;
             }
 
+if (ndim == 2 && PyArray_HASMASKNA(result)) {
+    printf ("after reduce maskna %d %d %d\n",
+            (int)PyArray_MASKNA_DATA(result)[0],
+            (int)PyArray_MASKNA_DATA(result)[1],
+            (int)PyArray_MASKNA_DATA(result)[2]);
+}
+
             /* Short circuit any calculation if the result 0-dim NA */
             if (PyArray_SIZE(result) == 1 &&
                     !NpyMaskValue_IsExposed(
@@ -3125,6 +3132,12 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         goto fail;
     }
 
+if (ndim == 2 && PyArray_HASMASKNA(result)) {
+    printf ("after initialize reduce result maskna %d %d %d\n",
+            (int)PyArray_MASKNA_DATA(result)[0],
+            (int)PyArray_MASKNA_DATA(result)[1],
+            (int)PyArray_MASKNA_DATA(result)[2]);
+}
     /* Now we can do a loop applying the ufunc in a straightforward manner */
     op[0] = result;
     op[1] = arr_view;
@@ -3220,6 +3233,12 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         }
         /* Masked reduction */
         else {
+if (ndim == 2 && PyArray_HASMASKNA(result)) {
+    printf ("before inner loop %d %d %d\n",
+            (int)PyArray_MASKNA_DATA(result)[0],
+            (int)PyArray_MASKNA_DATA(result)[1],
+            (int)PyArray_MASKNA_DATA(result)[2]);
+}
             do {
                 /* Turn the two items into three for the inner loop */
                 dataptr_copy[0] = dataptr[0];
@@ -3236,6 +3255,12 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                             stride_copy, stride[2], maskedinnerloopdata);
             } while (iternext(iter));
         }
+if (ndim == 2 && PyArray_HASMASKNA(result)) {
+    printf ("after inner loop %d %d %d\n",
+            (int)PyArray_MASKNA_DATA(result)[0],
+            (int)PyArray_MASKNA_DATA(result)[1],
+            (int)PyArray_MASKNA_DATA(result)[2]);
+}
 
         if (!needs_api) {
             NPY_END_THREADS;
@@ -3250,7 +3275,27 @@ finish:
 
     /* Strip out the extra 'one' dimensions in the result */
     if (out == NULL) {
+        int print = PyArray_NDIM(result) == 2 && PyArray_HASMASKNA(result);
+if (print) {
+    printf("maskna data %p\n", PyArray_MASKNA_DATA(result));
+    printf("maskna strides %d %d\n", (int)PyArray_MASKNA_STRIDES(result)[0],(int)PyArray_MASKNA_STRIDES(result)[1]);
+    printf ("maskna %d %d %d\n",
+            (int)PyArray_MASKNA_DATA(result)[0],
+            (int)PyArray_MASKNA_DATA(result)[1],
+            (int)PyArray_MASKNA_DATA(result)[2]);
+    PyObject_Print(result, stdout, 0);
+    printf("\n");
+}
         strip_flagged_dimensions(result, axis_flags);
+if (print) {
+    printf("maskna stride %d\n", (int)PyArray_MASKNA_STRIDES(result)[0]);
+    printf ("maskna %d %d %d\n",
+            (int)PyArray_MASKNA_DATA(result)[0],
+            (int)PyArray_MASKNA_DATA(result)[1],
+            (int)PyArray_MASKNA_DATA(result)[2]);
+    PyObject_Print(result, stdout, 0);
+    printf("\n\n");
+}
     }
     else {
         Py_DECREF(result);
