@@ -88,6 +88,28 @@ broadcast_error: {
 }
 
 /*
+ * Checks whether a data pointer + set of strides refers to a raw
+ * array which is fully aligned data.
+ */
+static int
+strides_are_aligned(int ndim, char *data, npy_intp *strides, int alignment)
+{
+    if (alignment > 1) {
+        npy_intp align_check = (npy_intp)data;
+        int idim;
+
+        for (idim = 0; idim < ndim; ++idim) {
+            align_check |= strides[idim];
+        }
+
+        return ((align_check & (alignment - 1)) == 0);
+    }
+    else {
+        return 1;
+    }
+}
+
+/*
  * Assigns the scalar value to every element of the destination raw array.
  *
  * Returns 0 on success, -1 on failure.
@@ -104,19 +126,12 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
 
     PyArray_StridedTransferFn *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
-    int aligned = 1, needs_api = 0;
+    int aligned, needs_api = 0;
     npy_intp src_itemsize = src_dtype->elsize;
 
     /* Check alignment */
-    if (dst_dtype->alignment > 1) {
-        npy_intp align_check = (npy_intp)dst_data;
-        for (idim = 0; idim < ndim; ++idim) {
-            align_check |= dst_strides[idim];
-        }
-        if ((align_check & (dst_dtype->alignment - 1)) != 0) {
-            aligned = 0;
-        }
-    }
+    aligned = strides_are_aligned(ndim, dst_data, dst_strides,
+                                    dst_dtype->alignment);
     if (((npy_intp)src_data & (src_dtype->alignment - 1)) != 0) {
         aligned = 0;
     }
@@ -181,19 +196,12 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
 
     PyArray_MaskedStridedTransferFn *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
-    int aligned = 1, needs_api = 0;
+    int aligned, needs_api = 0;
     npy_intp src_itemsize = src_dtype->elsize;
 
     /* Check alignment */
-    if (dst_dtype->alignment > 1) {
-        npy_intp align_check = (npy_intp)dst_data;
-        for (idim = 0; idim < ndim; ++idim) {
-            align_check |= dst_strides[idim];
-        }
-        if ((align_check & (dst_dtype->alignment - 1)) != 0) {
-            aligned = 0;
-        }
-    }
+    aligned = strides_are_aligned(ndim, dst_data, dst_strides,
+                                    dst_dtype->alignment);
     if (((npy_intp)src_data & (src_dtype->alignment - 1)) != 0) {
         aligned = 0;
     }
