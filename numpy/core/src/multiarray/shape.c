@@ -1017,3 +1017,54 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
     }
     return (PyObject *)ret;
 }
+
+/* See shape.h for parameters documentation */
+NPY_NO_EXPORT PyObject *
+build_shape_string(npy_intp n, npy_intp *vals)
+{
+    npy_intp i;
+    PyObject *ret, *tmp;
+
+    /*
+     * Negative dimension indicates "newaxis", which can
+     * be discarded for printing if it's a leading dimension.
+     * Find the first non-"newaxis" dimension.
+     */
+    i = 0;
+    while (i < n && vals[i] < 0) {
+        ++i;
+    }
+
+    if (i == n) {
+        return PyUString_FromFormat("()");
+    }
+    else {
+        ret = PyUString_FromFormat("(%" NPY_INTP_FMT, vals[i++]);
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+
+    for (; i < n; ++i) {
+        if (vals[i] < 0) {
+            tmp = PyUString_FromString(",newaxis");
+        }
+        else {
+            tmp = PyUString_FromFormat(",%" NPY_INTP_FMT, vals[i]);
+        }
+        if (tmp == NULL) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+
+        PyUString_ConcatAndDel(&ret, tmp);
+        if (ret == NULL) {
+            return NULL;
+        }
+    }
+
+    tmp = PyUString_FromFormat(")");
+    PyUString_ConcatAndDel(&ret, tmp);
+    return ret;
+}
+
