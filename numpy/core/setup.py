@@ -700,6 +700,7 @@ def configuration(parent_package='',top_path=None):
     multiarray_deps = [
             join('src', 'multiarray', 'arrayobject.h'),
             join('src', 'multiarray', 'arraytypes.h'),
+            join('src', 'multiarray', 'array_assign.h'),
             join('src', 'multiarray', 'buffer.h'),
             join('src', 'multiarray', 'calculation.h'),
             join('src', 'multiarray', 'common.h'),
@@ -750,6 +751,7 @@ def configuration(parent_package='',top_path=None):
     multiarray_src = [
             join('src', 'multiarray', 'arrayobject.c'),
             join('src', 'multiarray', 'arraytypes.c.src'),
+            join('src', 'multiarray', 'array_assign.c'),
             join('src', 'multiarray', 'buffer.c'),
             join('src', 'multiarray', 'calculation.c'),
             join('src', 'multiarray', 'common.c'),
