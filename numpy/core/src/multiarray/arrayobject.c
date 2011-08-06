@@ -243,6 +243,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
             else {
                 if (PyArray_SIZE(dest) == 1) {
                     Py_DECREF(dtype);
+                    Py_DECREF(src_object);
                     ret = PyArray_DESCR(dest)->f->setitem(src_object,
                                                 PyArray_DATA(dest), dest);
                     /* Unmask the value if necessary */
