@@ -197,6 +197,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
                 }
                 value = scalar_value(src_object, dtype);
                 if (value == NULL) {
+                    Py_DECREF(dtype);
                     Py_DECREF(src_object);
                     return -1;
                 }
