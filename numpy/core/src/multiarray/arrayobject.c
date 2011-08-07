@@ -52,6 +52,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "buffer.h"
 #include "na_singleton.h"
 #include "na_mask.h"
+#include "array_assign.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -185,11 +186,27 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 
             /* If there's one dest element and src is a Python scalar */
             if (PyArray_IsScalar(src_object, Generic)) {
-                src = (PyArrayObject *)PyArray_FromScalar(src_object, dtype);
-                if (src == NULL) {
+                PyArray_Descr *dtype;
+                char *value;
+                int retcode;
+
+                dtype = PyArray_DescrFromScalar(src_object);
+                if (dtype == NULL) {
                     Py_DECREF(src_object);
                     return -1;
                 }
+                value = scalar_value(src_object, dtype);
+                if (value == NULL) {
+                    Py_DECREF(src_object);
+                    return -1;
+                }
+
+                /* TODO: switch to SAME_KIND casting */
+                retcode = array_assign_scalar(dest, dtype, value,
+                                        NULL, NPY_UNSAFE_CASTING, 0, NULL);
+                Py_DECREF(dtype);
+                Py_DECREF(src_object);
+                return retcode;
             }
             /* Assigning NA affects the mask if it exists */
             else if (na != NULL) {

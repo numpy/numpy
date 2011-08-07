@@ -3924,7 +3924,7 @@ PyArray_PrepareOneRawArrayIter(int ndim, npy_intp *shape,
     /* Sort the axes based on the destination strides */
     PyArray_CreateSortedStridePerm(ndim, strides, strideperm);
     for (i = 0; i < ndim; ++i) {
-        int iperm = ndim - strideperm[i].perm - 1;
+        int iperm = strideperm[ndim - i - 1].perm;
         out_shape[i] = shape[iperm];
         out_strides[i] = strides[iperm];
     }
@@ -3965,9 +3965,28 @@ PyArray_PrepareOneRawArrayIter(int ndim, npy_intp *shape,
         else {
             /* Can't coalesce, go to next i */
             ++i;
+            out_shape[i] = out_shape[j];
+            out_strides[i] = out_strides[j];
         }
     }
     ndim = i+1;
+
+#if 0
+    /* DEBUG */
+    {
+        printf("raw iter ndim %d\n", ndim);
+        printf("shape: ");
+        for (i = 0; i < ndim; ++i) {
+            printf("%d ", (int)out_shape[i]);
+        }
+        printf("\n");
+        printf("strides: ");
+        for (i = 0; i < ndim; ++i) {
+            printf("%d ", (int)out_strides[i]);
+        }
+        printf("\n");
+    }
+#endif
 
     *out_data = data;
     *out_ndim = ndim;
@@ -4035,7 +4054,7 @@ PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
     /* Sort the axes based on the destination strides */
     PyArray_CreateSortedStridePerm(ndim, stridesA, strideperm);
     for (i = 0; i < ndim; ++i) {
-        int iperm = ndim - strideperm[i].perm - 1;
+        int iperm = strideperm[ndim - i - 1].perm;
         out_shape[i] = shape[iperm];
         out_stridesA[i] = stridesA[iperm];
         out_stridesB[i] = stridesB[iperm];
@@ -4085,6 +4104,9 @@ PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
         else {
             /* Can't coalesce, go to next i */
             ++i;
+            out_shape[i] = out_shape[j];
+            out_stridesA[i] = out_stridesA[j];
+            out_stridesB[i] = out_stridesB[j];
         }
     }
     ndim = i+1;
@@ -4166,7 +4188,7 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
     /* Sort the axes based on the destination strides */
     PyArray_CreateSortedStridePerm(ndim, stridesA, strideperm);
     for (i = 0; i < ndim; ++i) {
-        int iperm = ndim - strideperm[i].perm - 1;
+        int iperm = strideperm[ndim - i - 1].perm;
         out_shape[i] = shape[iperm];
         out_stridesA[i] = stridesA[iperm];
         out_stridesB[i] = stridesB[iperm];
@@ -4224,6 +4246,10 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
         else {
             /* Can't coalesce, go to next i */
             ++i;
+            out_shape[i] = out_shape[j];
+            out_stridesA[i] = out_stridesA[j];
+            out_stridesB[i] = out_stridesB[j];
+            out_stridesC[i] = out_stridesC[j];
         }
     }
     ndim = i+1;
