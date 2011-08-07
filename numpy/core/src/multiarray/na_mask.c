@@ -582,7 +582,7 @@ static void
 _strided_bool_mask_inversion(char *dst, npy_intp dst_stride,
                             char *src, npy_intp src_stride,
                             npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
-                            NpyAuxData *NPY_UNUSED(data))
+                            NpyAuxData *NPY_UNUSED(opdata))
 {
     while (N > 0) {
         *dst = !(*src);
@@ -593,12 +593,11 @@ _strided_bool_mask_inversion(char *dst, npy_intp dst_stride,
 }
 
 NPY_NO_EXPORT int
-PyArray_GetMaskInversionFunction(npy_intp mask_stride,
-                            PyArray_Descr *mask_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata)
+PyArray_GetMaskInversionFunction(
+        npy_intp mask_stride, PyArray_Descr *mask_dtype,
+        PyArray_StridedUnaryOp **out_unop, NpyAuxData **out_opdata)
 {
-    /* Will use the transferdata with the field version */
+    /* Will use the opdata with the field version */
     if (PyDataType_HASFIELDS(mask_dtype)) {
         PyErr_SetString(PyExc_RuntimeError,
                 "field-based masks are not supported yet");
@@ -613,7 +612,123 @@ PyArray_GetMaskInversionFunction(npy_intp mask_stride,
 
     /* TODO: Specialize for contiguous data */
 
-    *out_stransfer = &_strided_bool_mask_inversion;
-    *out_transferdata = NULL;
+    *out_unop = &_strided_bool_mask_inversion;
+    *out_opdata = NULL;
+    return 0;
+}
+
+static void
+_strided_bool_mask_noinv0_noinv1_and(char *dst, npy_intp dst_stride,
+                            char *src0, npy_intp src0_stride,
+                            char *src1, npy_intp src1_stride,
+                            npy_intp N, NpyAuxData *NPY_UNUSED(opdata))
+{
+    while (N > 0) {
+        *dst = (*src0) & (*src1);
+        dst += dst_stride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        --N;
+    }
+}
+
+static void
+_strided_bool_mask_inv0_noinv1_and(char *dst, npy_intp dst_stride,
+                            char *src0, npy_intp src0_stride,
+                            char *src1, npy_intp src1_stride,
+                            npy_intp N, NpyAuxData *NPY_UNUSED(opdata))
+{
+    while (N > 0) {
+        *dst = ((*src0) ^ 0x01) & (*src1);
+        dst += dst_stride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        --N;
+    }
+}
+
+static void
+_strided_bool_mask_noinv0_inv1_and(char *dst, npy_intp dst_stride,
+                            char *src0, npy_intp src0_stride,
+                            char *src1, npy_intp src1_stride,
+                            npy_intp N, NpyAuxData *NPY_UNUSED(opdata))
+{
+    while (N > 0) {
+        *dst = (*src0) & ((*src1) ^ 0x01);
+        dst += dst_stride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        --N;
+    }
+}
+
+static void
+_strided_bool_mask_inv0_inv1_and(char *dst, npy_intp dst_stride,
+                            char *src0, npy_intp src0_stride,
+                            char *src1, npy_intp src1_stride,
+                            npy_intp N, NpyAuxData *NPY_UNUSED(opdata))
+{
+    while (N > 0) {
+        *dst = ((*src0) | (*src1)) ^ 0x01;
+        dst += dst_stride;
+        src0 += src0_stride;
+        src1 += src1_stride;
+        --N;
+    }
+}
+
+/*
+ * Gets a function which ANDs together two masks, possibly inverting
+ * one or both of the masks as well.
+ *
+ * The dtype of the output must match 'mask0_dtype'.
+ */
+NPY_NO_EXPORT int
+PyArray_GetMaskAndFunction(
+        npy_intp mask0_stride, PyArray_Descr *mask0_dtype, int invert_mask0,
+        npy_intp mask1_stride, PyArray_Descr *mask1_dtype, int invert_mask1,
+        PyArray_StridedBinaryOp **out_binop, NpyAuxData **out_opdata)
+{
+    /* Will use the opdata with the field version */
+    if (PyDataType_HASFIELDS(mask0_dtype) ||
+                        PyDataType_HASFIELDS(mask1_dtype)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "field-based masks are not supported yet");
+        return -1;
+    }
+
+    if (mask0_dtype->type_num == NPY_MASK ||
+                            mask1_dtype->type_num == NPY_MASK) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "multi-NA masks are not supported yet");
+        return -1;
+    }
+
+    if (mask0_dtype->type_num != NPY_BOOL ||
+                            mask1_dtype->type_num != NPY_BOOL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "unsupported data type for mask");
+        return -1;
+    }
+
+    /* TODO: Specialize for contiguous data */
+
+    if (invert_mask0) {
+        if (invert_mask1) {
+            *out_binop = &_strided_bool_mask_inv0_inv1_and;
+        }
+        else {
+            *out_binop = &_strided_bool_mask_inv0_noinv1_and;
+        }
+    }
+    else {
+        if (invert_mask1) {
+            *out_binop = &_strided_bool_mask_noinv0_inv1_and;
+        }
+        else {
+            *out_binop = &_strided_bool_mask_noinv0_noinv1_and;
+        }
+    }
+    *out_opdata = NULL;
     return 0;
 }
