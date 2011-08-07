@@ -772,6 +772,7 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
     npy_intp i, n;
     npy_intp permutation[NPY_MAXDIMS], reverse_permutation[NPY_MAXDIMS];
     PyArrayObject *ret = NULL;
+    int flags;
 
     if (permute == NULL) {
         n = PyArray_NDIM(ap);
@@ -808,20 +809,21 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
             reverse_permutation[axis] = i;
             permutation[i] = axis;
         }
-        for (i = 0; i < n; i++) {
-        }
     }
+
+    flags = PyArray_FLAGS(ap);
 
     /*
      * this allocates memory for dimensions and strides (but fills them
      * incorrectly), sets up descr, and points data at PyArray_DATA(ap).
      */
     Py_INCREF(PyArray_DESCR(ap));
-    ret = (PyArrayObject *)\
+    ret = (PyArrayObject *)
         PyArray_NewFromDescr(Py_TYPE(ap),
                              PyArray_DESCR(ap),
                              n, PyArray_DIMS(ap),
-                             NULL, PyArray_DATA(ap), PyArray_FLAGS(ap),
+                             NULL, PyArray_DATA(ap),
+                             flags & ~(NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA),
                              (PyObject *)ap);
     if (ret == NULL) {
         return NULL;
@@ -831,6 +833,21 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
     if (PyArray_SetBaseObject(ret, (PyObject *)ap) < 0) {
         Py_DECREF(ret);
         return NULL;
+    }
+
+    /* Take a view of the NA mask as well if necessary */
+    if (flags & NPY_ARRAY_MASKNA) {
+        PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)ret;
+
+        fa->maskna_dtype = PyArray_MASKNA_DTYPE(ap);
+        Py_INCREF(fa->maskna_dtype);
+        fa->maskna_data = PyArray_MASKNA_DATA(ap);
+
+        for (i = 0; i < n; i++) {
+            fa->maskna_strides[i] =
+                        PyArray_MASKNA_STRIDES(ap)[permutation[i]];
+        }
+        fa->flags |= NPY_ARRAY_MASKNA;
     }
 
     /* fix the dimensions and strides of the return-array */

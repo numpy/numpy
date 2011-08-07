@@ -19,6 +19,7 @@
 
 #include "shape.h"
 #include "lowlevel_strided_loops.h"
+#include "array_assign.h"
 #include "na_singleton.h"
 
 /*NUMPY_API
@@ -130,29 +131,72 @@ fill_raw_byte_array(int ndim, npy_intp *shape,
  * all the elments of an array, or if you will also be assigning
  * values to everything at the same time, to unmask all the elements.
  *
+ * If 'wheremask' isn't NULL, it should be a boolean mask which
+ * specifies where to do the assignment.
+ *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_AssignMaskNA(PyArrayObject *arr, npy_mask maskvalue)
+PyArray_AssignMaskNA(PyArrayObject *arr, PyArrayObject *wheremask,
+                        npy_mask maskvalue)
 {
+    PyArray_Descr *maskvalue_dtype;
+    int retcode = 0;
+
     /* Need NA support to fill the NA mask */
     if (!PyArray_HASMASKNA(arr)) {
         PyErr_SetString(PyExc_ValueError,
-                "Cannot fill the NA mask of an array which has no NA mask");
+                "Cannot assign to the NA mask of an "
+                "array which has no NA mask");
         return -1;
     }
 
-    if (PyArray_HASFIELDS(arr)) {
-        /* TODO: need to add field-NA support */
-        PyErr_SetString(PyExc_ValueError,
-                "field-NA support is not implemented yet");
+    /*
+     * If the mask given has no payload, assign from boolean type, otherwise
+     * assign from the mask type.
+     */
+    if ((maskvalue & (~0x01)) == 0) {
+        maskvalue_dtype = PyArray_DescrFromType(NPY_BOOL);
+    }
+    else {
+        maskvalue_dtype = PyArray_DescrFromType(NPY_MASK);
+    }
+    if (maskvalue_dtype == NULL) {
         return -1;
     }
 
-    return fill_raw_byte_array(
-                    PyArray_NDIM(arr), PyArray_DIMS(arr),
-                    PyArray_MASKNA_DATA(arr), PyArray_MASKNA_STRIDES(arr),
-                    (char)maskvalue);
+    if (wheremask == NULL) {
+        retcode = raw_array_assign_scalar(
+                        PyArray_NDIM(arr), PyArray_DIMS(arr),
+                        PyArray_MASKNA_DTYPE(arr),
+                        PyArray_MASKNA_DATA(arr),
+                        PyArray_MASKNA_STRIDES(arr),
+                        maskvalue_dtype, (char *)&maskvalue);
+    }
+    else {
+        npy_intp wheremask_strides[NPY_MAXDIMS];
+
+        /* Broadcast the wheremask to 'arr' */
+        if (broadcast_strides(PyArray_NDIM(arr), PyArray_DIMS(arr),
+                    PyArray_NDIM(wheremask), PyArray_DIMS(wheremask),
+                    PyArray_STRIDES(wheremask), "where mask",
+                    wheremask_strides) < 0) {
+            Py_DECREF(maskvalue_dtype);
+            return -1;
+        }
+
+        retcode = raw_array_wheremasked_assign_scalar(
+                        PyArray_NDIM(arr), PyArray_DIMS(arr),
+                        PyArray_MASKNA_DTYPE(arr),
+                        PyArray_MASKNA_DATA(arr),
+                        PyArray_MASKNA_STRIDES(arr),
+                        maskvalue_dtype, (char *)&maskvalue,
+                        PyArray_DESCR(wheremask), PyArray_DATA(wheremask),
+                        wheremask_strides);
+    }
+
+    Py_DECREF(maskvalue_dtype);
+    return retcode;
 }
 
 /*NUMPY_API
@@ -332,7 +376,7 @@ PyArray_AssignNA(PyArrayObject *arr, NpyNA *na)
         maskvalue = (char)NpyMaskValue_Create(0, fna->payload);
     }
 
-    return PyArray_AssignMaskNA(arr, maskvalue);
+    return PyArray_AssignMaskNA(arr, NULL, maskvalue);
 }
 
 /*
@@ -477,8 +521,6 @@ PyArray_ReduceMaskNAArray(int ndim, npy_intp *shape,
     npy_intp src_strides_it[NPY_MAXDIMS];
     npy_intp dst_strides_it[NPY_MAXDIMS];
 
-    char *saved_dst_data = dst_data;
-
     /* Confirm that dst is not larger than src */
     for (idim = 0; idim < ndim; ++idim) {
         if (src_strides[idim] == 0 && dst_strides[idim] != 0) {
@@ -511,23 +553,6 @@ PyArray_ReduceMaskNAArray(int ndim, npy_intp *shape,
                                     &dst_data, dst_strides_it) < 0) {
         return NPY_FAIL;
     }
-
-{
-    int i;
-    printf("Dump of raw iter:\n");
-    printf("dst data: %p\n", dst_data);
-    printf("original dst data: %p\n", saved_dst_data);
-    printf("ndim: %d\n", ndim);
-    printf("shape: ");
-    for (i = 0; i < ndim; ++i) printf("%d ", (int)shape[i]);
-    printf("\n");
-    printf("src_strides: ");
-    for (i = 0; i < ndim; ++i) printf("%d ", (int)src_strides_it[i]);
-    printf("\n");
-    printf("dst_strides: ");
-    for (i = 0; i < ndim; ++i) printf("%d ", (int)dst_strides_it[i]);
-    printf("\n");
-}
 
     /* Special case a reduction in the inner loop */
     if (dst_strides_it[0] == 0) {
@@ -562,14 +587,10 @@ PyArray_ReduceMaskNAArray(int ndim, npy_intp *shape,
         NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
             char *src_d = src_data, *dst_d = dst_data;
             for (i = 0; i < shape_it[0]; ++i) {
-printf("s%d/d%d>>", (int)*src_d, (int)*dst_d);
                 *dst_d &= *src_d;
-printf("d%d ", (int)*dst_d);
-printf("%p ", dst_d);
                 src_d += src_strides_it[0];
                 dst_d += dst_strides_it[0];
             }
-printf("\n");
         } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
                                     src_data, src_strides_it,
                                     dst_data, dst_strides_it);
@@ -585,7 +606,7 @@ _strided_bool_mask_inversion(char *dst, npy_intp dst_stride,
                             NpyAuxData *NPY_UNUSED(opdata))
 {
     while (N > 0) {
-        *dst = !(*src);
+        *dst = ((*src) ^ 0x01) & 0x01;
         dst += dst_stride;
         src += src_stride;
         --N;

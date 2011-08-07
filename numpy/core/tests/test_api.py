@@ -84,6 +84,53 @@ def test_array_astype():
     assert_(not (a is b))
     assert_(type(b) != np.matrix)
 
+def test_copyto_fromscalar():
+    a = np.arange(6, dtype='f4').reshape(2,3)
+
+    # Simple copy
+    np.copyto(a, 1.5)
+    assert_equal(a, 1.5)
+    np.copyto(a.T, 2.5)
+    assert_equal(a, 2.5)
+
+    # Where-masked copy
+    mask = np.array([[0,1,0],[0,0,1]], dtype='?')
+    np.copyto(a, 3.5, where=mask)
+    assert_equal(a, [[2.5,3.5,2.5],[2.5,2.5,3.5]])
+    mask = np.array([[0,1],[1,1],[1,0]], dtype='?')
+    np.copyto(a.T, 4.5, where=mask)
+    assert_equal(a, [[2.5,4.5,4.5],[4.5,4.5,3.5]])
+
+    # Simple copy to NA-masked
+    a_orig = a
+    a = a_orig.view(maskna=True)
+    a[...] = np.NA
+    np.copyto(a, 0.5)
+    assert_equal(a, 0.5)
+    a[...] = np.NA
+    np.copyto(a.T, 1.5)
+    assert_equal(a, 1.5)
+
+    # Where-masked copy to NA-masked
+    a[0,0] = np.NA
+    a[1,1] = np.NA
+    mask = np.array([[1,0,1],[0,0,1]], dtype='?')
+    np.copyto(a, 2.5, where=mask)
+    assert_equal(np.isna(a), [[0,0,0],[0,1,0]])
+    assert_equal(a_orig, [[2.5,1.5,2.5],[1.5,1.5,2.5]])
+
+    # Simple preservena=True copy
+    a[0,0] = np.NA
+    np.copyto(a, 3.5, preservena=True)
+    assert_equal(np.isna(a), [[1,0,0],[0,1,0]])
+    assert_equal(a_orig, [[2.5,3.5,3.5],[3.5,1.5,3.5]])
+
+    # Where-masked preservena=True copy
+    mask = np.array([[1,0,1],[0,0,1]], dtype='?')
+    np.copyto(a, 4.5, where=mask, preservena=True)
+    assert_equal(np.isna(a), [[1,0,0],[0,1,0]])
+    assert_equal(a_orig, [[2.5,3.5,4.5],[3.5,1.5,4.5]])
+
 def test_copyto():
     a = np.arange(6, dtype='i4').reshape(2,3)
 

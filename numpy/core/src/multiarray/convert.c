@@ -423,15 +423,27 @@ PyArray_FillWithZero(PyArrayObject *a)
         return retcode;
     }
 
+    /* Expose all the elements */
+    if (PyArray_HASMASKNA(a)) {
+        if (PyArray_AssignMaskNA(a, NULL, 1) < 0) {
+            return -1;
+        }
+    }
+
     /* If it's possible to do a simple memset, do so */
     if (PyArray_IS_C_CONTIGUOUS(a) || PyArray_IS_F_CONTIGUOUS(a)) {
         memset(PyArray_DATA(a), 0, PyArray_NBYTES(a));
         return 0;
     }
 
-    /* Use an iterator to go through all the data */
-    iter = NpyIter_New(a, NPY_ITER_WRITEONLY|NPY_ITER_EXTERNAL_LOOP,
-                    NPY_KEEPORDER, NPY_NO_CASTING, NULL);
+    /*
+     * Use an iterator to go through all the data. Can flag
+     * IGNORE_MASKNA because we exposed all the elements already.
+     */
+    iter = NpyIter_New(a, NPY_ITER_WRITEONLY |
+                          NPY_ITER_EXTERNAL_LOOP |
+                          NPY_ITER_IGNORE_MASKNA,
+                        NPY_KEEPORDER, NPY_NO_CASTING, NULL);
 
     if (iter == NULL) {
         return -1;
@@ -566,6 +578,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     PyArrayObject *ret = NULL;
     PyArray_Descr *dtype;
     PyTypeObject *subtype;
+    int flags;
 
     if (pytype) {
         subtype = pytype;
@@ -573,6 +586,10 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     else {
         subtype = Py_TYPE(self);
     }
+
+    flags = PyArray_FLAGS(self);
+    flags &= ~(NPY_ARRAY_MASKNA|NPY_ARRAY_OWNMASKNA);
+
     dtype = PyArray_DESCR(self);
     Py_INCREF(dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
@@ -580,7 +597,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
                                PyArray_NDIM(self), PyArray_DIMS(self),
                                PyArray_STRIDES(self),
                                PyArray_DATA(self),
-               PyArray_FLAGS(self) & ~(NPY_ARRAY_MASKNA|NPY_ARRAY_OWNMASKNA),
+                               flags,
                                (PyObject *)self);
     if (ret == NULL) {
         return NULL;

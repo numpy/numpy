@@ -634,7 +634,10 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             if not cond :
                 raise AssertionError(msg)
     except ValueError, e:
-        header = 'error during assertion:\n%s\n\n%s' % (e, header)
+        import traceback
+        efmt = traceback.format_exc()
+        header = 'error during assertion:\n\n%s\n\n%s' % (efmt, header)
+            
         msg = build_err_msg([x, y], err_msg, verbose=verbose, header=header,
                             names=('x', 'y'))
         raise ValueError(msg)

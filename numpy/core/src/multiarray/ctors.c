@@ -1271,6 +1271,14 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
          * Caller must arrange for this to be reset if truly desired
          */
         fa->flags &= ~NPY_ARRAY_OWNDATA;
+
+        /* Flagging MASKNA is incompatible with providing the data pointer */
+        if (fa->flags & NPY_ARRAY_MASKNA) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot construct a view of data together with the "
+                    "NPY_ARRAY_MASKNA flag, the NA mask must be added later");
+            goto fail;
+        }
     }
     fa->data = data;
 
@@ -2904,7 +2912,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
      * to be exposed, then proceed without worrying about the mask.
      */
     else if (PyArray_HASMASKNA(dst)) {
-        if (PyArray_AssignMaskNA(dst, 1) < 0) {
+        if (PyArray_AssignMaskNA(dst, NULL, 1) < 0) {
             return -1;
         }
         baseflags |= NPY_ITER_IGNORE_MASKNA;
