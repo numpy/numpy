@@ -968,8 +968,11 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
             if len(fmt) != ncol:
                 raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
             if iscomplex_X:
-                fmt = 2 * fmt
-            format = asstr(delimiter).join(map(asstr, fmt))
+                format = ''
+                for fmt_i in fmt:
+                    format += ' (%s%sj)' % (fmt_i, fmt_i)
+            else:
+                format = asstr(delimiter).join(map(asstr, fmt))
         elif type(fmt) is str:
             n_fmt_chars = fmt.count('%')
             error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
