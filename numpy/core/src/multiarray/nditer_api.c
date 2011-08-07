@@ -1838,7 +1838,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
     npy_intp reduce_outerdim = 0;
     npy_intp *reduce_outerstrides = NULL;
 
-    PyArray_StridedTransferFn *stransfer = NULL;
+    PyArray_StridedUnaryOp *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
 
     npy_intp axisdata_incr = NIT_AXISDATA_SIZEOF(itflags, ndim, nop) /
@@ -1962,7 +1962,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
                             dst_coords, axisdata_incr,
                             dst_shape, axisdata_incr,
                             op_transfersize, dtypes[iop]->elsize,
-                            (PyArray_MaskedStridedTransferFn *)stransfer,
+                            (PyArray_MaskedStridedUnaryOp *)stransfer,
                             transferdata);
                 }
                 /* WRITEMASKED operand */
@@ -1989,7 +1989,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
                             dst_coords, axisdata_incr,
                             dst_shape, axisdata_incr,
                             op_transfersize, dtypes[iop]->elsize,
-                            (PyArray_MaskedStridedTransferFn *)stransfer,
+                            (PyArray_MaskedStridedUnaryOp *)stransfer,
                             transferdata);
                 }
                 /* Regular operand */
@@ -2064,7 +2064,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
     npy_intp *reduce_outerstrides = NULL;
     char **reduce_outerptrs = NULL;
 
-    PyArray_StridedTransferFn *stransfer = NULL;
+    PyArray_StridedUnaryOp *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
 
     /*

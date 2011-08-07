@@ -377,7 +377,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 NPY_NO_EXPORT int
 PyArray_FillWithZero(PyArrayObject *a)
 {
-    PyArray_StridedTransferFn *stransfer = NULL;
+    PyArray_StridedUnaryOp *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
     PyArray_Descr *dtype = PyArray_DESCR(a);
     NpyIter *iter;

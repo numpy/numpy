@@ -3355,13 +3355,13 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     PyArrayObject **op = NIT_OPERANDS(iter);
     PyArray_Descr **op_dtype = NIT_DTYPES(iter);
     npy_intp *strides = NAD_STRIDES(axisdata), op_stride;
-    PyArray_StridedTransferFn **readtransferfn = NBF_READTRANSFERFN(bufferdata),
+    PyArray_StridedUnaryOp **readtransferfn = NBF_READTRANSFERFN(bufferdata),
                         **writetransferfn = NBF_WRITETRANSFERFN(bufferdata);
     NpyAuxData **readtransferdata = NBF_READTRANSFERDATA(bufferdata),
                **writetransferdata = NBF_WRITETRANSFERDATA(bufferdata);
     npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
 
-    PyArray_StridedTransferFn *stransfer = NULL;
+    PyArray_StridedUnaryOp *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
     int needs_api = 0;
 
@@ -3433,7 +3433,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                 op_orig_dtype,
                                 mask_dtype,
                                 move_references,
-                                (PyArray_MaskedStridedTransferFn **)&stransfer,
+                                (PyArray_MaskedStridedUnaryOp **)&stransfer,
                                 &transferdata,
                                 &needs_api) != NPY_SUCCEED) {
                         goto fail;
@@ -3460,7 +3460,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                 op_orig_dtype,
                                 mask_dtype,
                                 move_references,
-                                (PyArray_MaskedStridedTransferFn **)&stransfer,
+                                (PyArray_MaskedStridedUnaryOp **)&stransfer,
                                 &transferdata,
                                 &needs_api) != NPY_SUCCEED) {
                         goto fail;

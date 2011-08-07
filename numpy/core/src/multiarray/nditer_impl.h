@@ -251,11 +251,11 @@ struct NpyIter_BD {
         (&(bufferdata)->bd_flexdata + 2*(nop)))
 #define NBF_REDUCE_OUTERPTRS(bufferdata) ((char **) \
         (&(bufferdata)->bd_flexdata + 3*(nop)))
-#define NBF_READTRANSFERFN(bufferdata) ((PyArray_StridedTransferFn **) \
+#define NBF_READTRANSFERFN(bufferdata) ((PyArray_StridedUnaryOp **) \
         (&(bufferdata)->bd_flexdata + 4*(nop)))
 #define NBF_READTRANSFERDATA(bufferdata) ((NpyAuxData **) \
         (&(bufferdata)->bd_flexdata + 5*(nop)))
-#define NBF_WRITETRANSFERFN(bufferdata) ((PyArray_StridedTransferFn **) \
+#define NBF_WRITETRANSFERFN(bufferdata) ((PyArray_StridedUnaryOp **) \
         (&(bufferdata)->bd_flexdata + 6*(nop)))
 #define NBF_WRITETRANSFERDATA(bufferdata) ((NpyAuxData **) \
         (&(bufferdata)->bd_flexdata + 7*(nop)))
