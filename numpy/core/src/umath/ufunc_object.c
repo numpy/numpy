@@ -2742,14 +2742,14 @@ initialize_reduce_result(int identity, PyArrayObject *result,
     int idim, ndim;
 
     if (identity == PyUFunc_One) {
-        if (PyArray_FillWithOne(result) < 0) {
+        if (PyArray_AssignOne(result, NULL, !skipna, NULL) < 0) {
             return NULL;
         }
         Py_INCREF(arr);
         return arr;
     }
     else if (identity == PyUFunc_Zero) {
-        if (PyArray_FillWithZero(result) < 0) {
+        if (PyArray_AssignZero(result, NULL, !skipna, NULL) < 0) {
             return NULL;
         }
         Py_INCREF(arr);

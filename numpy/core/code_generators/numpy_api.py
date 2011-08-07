@@ -328,8 +328,8 @@ multiarray_funcs_api = {
     'NpyIter_GetMaskNAIndexArray':          289,
     'PyArray_ReduceMaskNAArray':            290,
     'PyArray_CreateSortedStridePerm':       291,
-    'PyArray_FillWithZero':                 292,
-    'PyArray_FillWithOne':                  293,
+    'PyArray_AssignZero':                   292,
+    'PyArray_AssignOne':                    293,
     'PyArray_AssignNA':                     294,
     'PyArray_AssignMaskNA':                 295,
 }
