@@ -50,6 +50,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "datetime_busdaycal.h"
 #include "na_singleton.h"
 #include "na_mask.h"
+#include "array_assign.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -1701,16 +1702,18 @@ static PyObject *
 array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
 
-    static char *kwlist[] = {"dst","src","casting","where",NULL};
+    static char *kwlist[] = {"dst","src","casting","where","preservena",NULL};
     PyObject *wheremask_in = NULL;
     PyArrayObject *dst = NULL, *src = NULL, *wheremask = NULL;
     NPY_CASTING casting = NPY_SAME_KIND_CASTING;
+    int preservena = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O&|O&O", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O&|O&Oi", kwlist,
                 &PyArray_Type, &dst,
                 &PyArray_Converter, &src,
                 &PyArray_CastingConverter, &casting,
-                &wheremask_in)) {
+                &wheremask_in,
+                &preservena)) {
         goto fail;
     }
 
@@ -1725,7 +1728,27 @@ array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
         if (wheremask == NULL) {
             goto fail;
         }
+    }
 
+    /* Special case scalar assignment */
+    if (PyArray_NDIM(src) == 0 && !PyArray_ContainsNA(src)) {
+        if (array_assign_scalar(dst, PyArray_DESCR(src), PyArray_DATA(src),
+                                    wheremask, casting,
+                                    preservena, NULL) < 0) {
+            goto fail;
+        }
+        else {
+            goto finish;
+        }
+    }
+
+    if (preservena) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "This case of copyto doesn't support preservena=True yet");
+        goto fail;
+    }
+
+    if (wheremask != NULL) {
         /* Use the 'move' function which handles overlapping */
         if (PyArray_MaskedMoveInto(dst, src, wheremask, casting) < 0) {
             goto fail;
@@ -1758,6 +1781,7 @@ array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
         }
     }
 
+finish:
     Py_XDECREF(src);
     Py_XDECREF(wheremask);
 
