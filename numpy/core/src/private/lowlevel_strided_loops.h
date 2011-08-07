@@ -42,6 +42,26 @@ typedef void (PyArray_MaskedStridedUnaryOp)(char *dst, npy_intp dst_stride,
                                     NpyAuxData *transferdata);
 
 /*
+ * This function pointer is for binary operations that input two
+ * arbitrarily strided one-dimensional array segments and output
+ * an arbitrarily strided array segment of the same size.
+ * It may be a fully general function, or a specialized function
+ * when the strides or item size have particular known values.
+ *
+ * Examples of binary operations are the basic arithmetic operations,
+ * logical operators AND, OR, and many others.
+ *
+ * The 'transferdata' parameter is slightly special, following a
+ * generic auxiliary data pattern defined in ndarraytypes.h
+ * Use NPY_AUXDATA_CLONE and NPY_AUXDATA_FREE to deal with this data.
+ *
+ */
+typedef void (PyArray_StridedBinaryOp)(char *dst, npy_intp dst_stride,
+                                    char *src0, npy_intp src0_stride,
+                                    char *src1, npy_intp src1_stride,
+                                    npy_intp N, NpyAuxData *transferdata);
+
+/*
  * Gives back a function pointer to a specialized function for copying
  * strided memory.  Returns NULL if there is a problem with the inputs.
  *
@@ -364,6 +384,32 @@ PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
                             char **out_dataA, npy_intp *out_stridesA,
                             char **out_dataB, npy_intp *out_stridesB);
 
+/*
+ * The same as PyArray_PrepareOneRawArrayIter, but for three
+ * operands instead of one. Any broadcasting of the three operands
+ * should have already been done before calling this function,
+ * as the ndim and shape is only specified once for all operands.
+ *
+ * Only the strides of the first operand are used to reorder
+ * the dimensions, no attempt to consider all the strides together
+ * is made, as is done in the NpyIter object.
+ *
+ * You can use this together with NPY_RAW_ITER_START and
+ * NPY_RAW_ITER_THREE_NEXT to handle the looping boilerplate of everything
+ * but the innermost loop (which is for idim == 0).
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
+                            char *dataA, npy_intp *stridesA,
+                            char *dataB, npy_intp *stridesB,
+                            char *dataC, npy_intp *stridesC,
+                            int *out_ndim, npy_intp *out_shape,
+                            char **out_dataA, npy_intp *out_stridesA,
+                            char **out_dataB, npy_intp *out_stridesB,
+                            char **out_dataC, npy_intp *out_stridesC);
+
 /* Start raw iteration */
 #define NPY_RAW_ITER_START(idim, ndim, coord, shape) \
         memset((coord), 0, (ndim) * sizeof(coord[0])); \
@@ -395,6 +441,27 @@ PyArray_PrepareTwoRawArrayIter(int ndim, npy_intp *shape,
                 else { \
                     (dataA) += (stridesA)[idim]; \
                     (dataB) += (stridesB)[idim]; \
+                    break; \
+                } \
+            } \
+        } while ((idim) < (ndim))
+
+/* Increment to the next n-dimensional coordinate for three raw arrays */
+#define NPY_RAW_ITER_THREE_NEXT(idim, ndim, coord, shape, \
+                              dataA, stridesA, \
+                              dataB, stridesB, \
+                              dataC, stridesC) \
+            for ((idim) = 1; (idim) < (ndim); ++(idim)) { \
+                if (++(coord)[idim] == (shape)[idim]) { \
+                    (coord)[idim] = 0; \
+                    (dataA) -= ((shape)[idim] - 1) * (stridesA)[idim]; \
+                    (dataB) -= ((shape)[idim] - 1) * (stridesB)[idim]; \
+                    (dataC) -= ((shape)[idim] - 1) * (stridesC)[idim]; \
+                } \
+                else { \
+                    (dataA) += (stridesA)[idim]; \
+                    (dataB) += (stridesB)[idim]; \
+                    (dataC) += (stridesC)[idim]; \
                     break; \
                 } \
             } \

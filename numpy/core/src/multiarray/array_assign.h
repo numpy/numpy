@@ -11,8 +11,13 @@
  * wheremask: If non-NULL, a boolean mask specifying where to copy.
  * casting: An exception is raised if the assignment violates this
  *          casting rule.
- * overwritena: If 1, overwrites everything in 'dst', if 0, it
- *              does not overwrite elements in 'dst' which are NA.
+ * preservena: If 0, overwrites everything in 'dst', if 1, it
+ *              preserves elements in 'dst' which are NA.
+ * preservewhichna: Must be NULL. When multi-NA support is implemented,
+ *                   this will be an array of flags for 'preservena=True',
+ *                   indicating which NA payload values to preserve.
+ *
+ * This function is implemented in array_assign_scalar.c.
  *
  * Returns 0 on success, -1 on failure.
  */
@@ -20,7 +25,8 @@ NPY_NO_EXPORT int
 array_assign_scalar(PyArrayObject *dst,
                     PyArray_Descr *src_dtype, char *src_data,
                     PyArrayObject *wheremask,
-                    NPY_CASTING casting, npy_bool overwritena);
+                    NPY_CASTING casting,
+                    npy_bool preservena, npy_bool *preservewhichna);
 
 /*
  * An array assignment function for copying arrays, broadcasting 'src' into
@@ -33,15 +39,19 @@ array_assign_scalar(PyArrayObject *dst,
  * wheremask: If non-NULL, a boolean mask specifying where to copy.
  * casting: An exception is raised if the copy violates this
  *          casting rule.
- * overwritena: If 1, overwrites everything in 'dst', if 0, it
- *              does not overwrite elements in 'dst' which are NA.
+ * preservena: If 0, overwrites everything in 'dst', if 1, it
+ *              preserves elements in 'dst' which are NA.
+ * preservewhichna: Must be NULL. When multi-NA support is implemented,
+ *                   this will be an array of flags for 'preservena=True',
+ *                   indicating which NA payload values to preserve.
  *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-array_assign_broadcast(PyArrayObject *dst, PyArrayObject *src,
+array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                     PyArrayObject *wheremask, 
-                    NPY_CASTING casting, npy_bool overwritena);
+                    NPY_CASTING casting,
+                    npy_bool preservena, npy_bool *preservewhichna);
 
 /*
  * An array assignment function for copying arrays, treating the
@@ -57,8 +67,11 @@ array_assign_broadcast(PyArrayObject *dst, PyArrayObject *src,
  * wheremask: If non-NULL, a boolean mask specifying where to copy.
  * casting: An exception is raised if the copy violates this
  *          casting rule.
- * overwritena: If 1, overwrites everything in 'dst', if 0, it
- *              does not overwrite elements in 'dst' which are NA.
+ * preservena: If 0, overwrites everything in 'dst', if 1, it
+ *              preserves elements in 'dst' which are NA.
+ * preservewhichna: Must be NULL. When multi-NA support is implemented,
+ *                   this will be an array of flags for 'preservena=True',
+ *                   indicating which NA payload values to preserve.
  *
  * Returns 0 on success, -1 on failure.
  */
@@ -66,7 +79,8 @@ NPY_NO_EXPORT int
 array_assign_flat(PyArrayObject *dst, NPY_ORDER dst_order,
                   PyArrayObject *src, NPY_ORDER src_order,
                   PyArrayObject *wheremask,
-                  NPY_CASTING casting, npy_bool overwritena);
+                  NPY_CASTING casting,
+                  npy_bool preservena, npy_bool *preservewhichna);
 
 
 
