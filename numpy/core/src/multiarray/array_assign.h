@@ -68,4 +68,36 @@ array_assign_flat(PyArrayObject *dst, NPY_ORDER dst_order,
                   PyArrayObject *wheremask,
                   NPY_CASTING casting, npy_bool overwritena);
 
+
+
+
+/*
+ * Internal detail of how much to buffer during array assignments which
+ * need it. This is for more complex NA masking operations where masks
+ * need to be inverted or combined together.
+ */
+#define NPY_ARRAY_ASSIGN_BUFFERSIZE 8192
+
+/*
+ * Broadcasts strides to match the given dimensions. Can be used,
+ * for instance, to set up a raw iteration.
+ *
+ * 'strides_name' is used to produce an error message if the strides
+ * cannot be broadcast.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+broadcast_strides(int ndim, npy_intp *shape,
+                int strides_ndim, npy_intp *strides_shape, npy_intp *strides,
+                char *strides_name,
+                npy_intp *out_strides);
+
+/*
+ * Checks whether a data pointer + set of strides refers to a raw
+ * array which is fully aligned data.
+ */
+NPY_NO_EXPORT int
+raw_array_is_aligned(int ndim, char *data, npy_intp *strides, int alignment);
+
 #endif

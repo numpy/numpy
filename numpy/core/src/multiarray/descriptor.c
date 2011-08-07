@@ -714,13 +714,12 @@ validate_object_field_overlap(PyArray_Descr *dtype)
     PyObject *names, *fields, *key, *tup, *title;
     Py_ssize_t i, j, names_size;
     PyArray_Descr *fld_dtype, *fld2_dtype;
-    int fld_offset, fld2_offset, align;
+    int fld_offset, fld2_offset;
 
     /* Get some properties from the dtype */
     names = dtype->names;
     names_size = PyTuple_GET_SIZE(names);
     fields = dtype->fields;
-    align = PyDataType_FLAGCHK(dtype, NPY_ALIGNED_STRUCT);
 
     for (i = 0; i < names_size; ++i) {
         key = PyTuple_GET_ITEM(names, i);

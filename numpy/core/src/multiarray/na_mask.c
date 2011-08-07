@@ -577,3 +577,43 @@ printf("\n");
 
     return 0;
 }
+
+static void
+_strided_bool_mask_inversion(char *dst, npy_intp dst_stride,
+                            char *src, npy_intp src_stride,
+                            npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
+                            NpyAuxData *NPY_UNUSED(data))
+{
+    while (N > 0) {
+        *dst = !(*src);
+        dst += dst_stride;
+        src += src_stride;
+        --N;
+    }
+}
+
+NPY_NO_EXPORT int
+PyArray_GetMaskInversionFunction(npy_intp mask_stride,
+                            PyArray_Descr *mask_dtype,
+                            PyArray_StridedUnaryOp **out_stransfer,
+                            NpyAuxData **out_transferdata)
+{
+    /* Will use the transferdata with the field version */
+    if (PyDataType_HASFIELDS(mask_dtype)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "field-based masks are not supported yet");
+        return -1;
+    }
+
+    if (mask_dtype->type_num != NPY_BOOL && mask_dtype->type_num != NPY_MASK) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "unsupported data type for mask");
+        return -1;
+    }
+
+    /* TODO: Specialize for contiguous data */
+
+    *out_stransfer = &_strided_bool_mask_inversion;
+    *out_transferdata = NULL;
+    return 0;
+}

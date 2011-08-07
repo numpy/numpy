@@ -2821,10 +2821,10 @@ PyArray_EnsureAnyArray(PyObject *op)
 NPY_NO_EXPORT int
 PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 {
-    PyArray_StridedTransferFn *stransfer = NULL;
-    PyArray_MaskedStridedTransferFn *maskedstransfer = NULL;
+    PyArray_StridedUnaryOp *stransfer = NULL;
+    PyArray_MaskedStridedUnaryOp *maskedstransfer = NULL;
     NpyAuxData *transferdata = NULL;
-    PyArray_StridedTransferFn *maskna_stransfer = NULL;
+    PyArray_StridedUnaryOp *maskna_stransfer = NULL;
     NpyAuxData *maskna_transferdata = NULL;
     NpyIter *dst_iter, *src_iter;
 
@@ -3169,7 +3169,7 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
     /* Special case for simple strides and no NA mask */
     if (!dst_has_maskna && PyArray_NDIM(dst) >= PyArray_NDIM(src) &&
                             PyArray_TRIVIALLY_ITERABLE_PAIR(dst, src)) {
-        PyArray_StridedTransferFn *stransfer = NULL;
+        PyArray_StridedUnaryOp *stransfer = NULL;
         NpyAuxData *transferdata = NULL;
         char *dst_data, *src_data;
         npy_intp count, dst_stride, src_stride, src_itemsize;
@@ -3221,7 +3221,7 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
     }
     /* Copying unmasked into unmasked */
     else if (!dst_has_maskna) {
-        PyArray_StridedTransferFn *stransfer = NULL;
+        PyArray_StridedUnaryOp *stransfer = NULL;
         NpyAuxData *transferdata = NULL;
         PyArrayObject *op[2];
         npy_uint32 op_flags[2];
@@ -3332,7 +3332,7 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
     }
     /* Copying non NA-masked into NA-masked */
     else if (!src_has_maskna) {
-        PyArray_StridedTransferFn *stransfer = NULL;
+        PyArray_StridedUnaryOp *stransfer = NULL;
         NpyAuxData *transferdata = NULL;
         PyArrayObject *op[2];
         npy_uint32 op_flags[2];
@@ -3462,7 +3462,7 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
     }
     /* Copying NA-masked into NA-masked */
     else {
-        PyArray_MaskedStridedTransferFn *stransfer = NULL;
+        PyArray_MaskedStridedUnaryOp *stransfer = NULL;
         NpyAuxData *transferdata = NULL;
         PyArrayObject *op[2];
         npy_uint32 op_flags[2];
@@ -3612,7 +3612,7 @@ NPY_NO_EXPORT int
 PyArray_MaskedCopyInto(PyArrayObject *dst, PyArrayObject *src,
                         PyArrayObject *mask, NPY_CASTING casting)
 {
-    PyArray_MaskedStridedTransferFn *stransfer = NULL;
+    PyArray_MaskedStridedUnaryOp *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
     NPY_BEGIN_THREADS_DEF;
 
