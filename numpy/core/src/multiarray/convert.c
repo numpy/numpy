@@ -15,6 +15,7 @@
 #include "arrayobject.h"
 #include "mapping.h"
 #include "lowlevel_strided_loops.h"
+#include "array_assign.h"
 
 #include "convert.h"
 
@@ -372,172 +373,74 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
  *
  * Fills an array with zeros.
  *
- * Returns 0 on success, -1 on failure.
- */
-NPY_NO_EXPORT int
-PyArray_FillWithZero(PyArrayObject *a)
-{
-    PyArray_StridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
-    PyArray_Descr *dtype = PyArray_DESCR(a);
-    NpyIter *iter;
-
-    NpyIter_IterNextFunc *iternext;
-    char **dataptr;
-    npy_intp stride, *countptr;
-    int needs_api;
-
-    NPY_BEGIN_THREADS_DEF;
-
-    if (!PyArray_ISWRITEABLE(a)) {
-        PyErr_SetString(PyExc_RuntimeError, "cannot write to array");
-        return -1;
-    }
-
-    /* A zero-sized array needs no zeroing */
-    if (PyArray_SIZE(a) == 0) {
-        return 0;
-    }
-
-    /* If there's an object type, copy the value zero to everything */
-    if (PyDataType_REFCHK(dtype)) {
-        PyArrayObject *tmp;
-        PyArray_Descr *bool_dtype = PyArray_DescrFromType(NPY_BOOL);
-        int retcode;
-
-        /* Create a boolean array with 0 in it */
-        if (dtype == NULL) {
-            return -1;
-        }
-        tmp = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                        bool_dtype, 0, NULL, NULL,
-                                        NULL, 0, NULL);
-        if (tmp == NULL) {
-            return -1;
-        }
-        PyArray_BYTES(tmp)[0] = 0;
-
-        retcode = PyArray_CopyInto(a, tmp);
-        Py_DECREF(tmp);
-
-        return retcode;
-    }
-
-    /* Expose all the elements */
-    if (PyArray_HASMASKNA(a)) {
-        if (PyArray_AssignMaskNA(a, NULL, 1) < 0) {
-            return -1;
-        }
-    }
-
-    /* If it's possible to do a simple memset, do so */
-    if (PyArray_IS_C_CONTIGUOUS(a) || PyArray_IS_F_CONTIGUOUS(a)) {
-        memset(PyArray_DATA(a), 0, PyArray_NBYTES(a));
-        return 0;
-    }
-
-    /*
-     * Use an iterator to go through all the data. Can flag
-     * IGNORE_MASKNA because we exposed all the elements already.
-     */
-    iter = NpyIter_New(a, NPY_ITER_WRITEONLY |
-                          NPY_ITER_EXTERNAL_LOOP |
-                          NPY_ITER_IGNORE_MASKNA,
-                        NPY_KEEPORDER, NPY_NO_CASTING, NULL);
-
-    if (iter == NULL) {
-        return -1;
-    }
-
-    iternext = NpyIter_GetIterNext(iter, NULL);
-    if (iternext == NULL) {
-        NpyIter_Deallocate(iter);
-        return -1;
-    }
-    dataptr = NpyIter_GetDataPtrArray(iter);
-    stride = NpyIter_GetInnerStrideArray(iter)[0];
-    countptr = NpyIter_GetInnerLoopSizePtr(iter);
-
-    needs_api = NpyIter_IterationNeedsAPI(iter);
-
-    /*
-     * Because buffering is disabled in the iterator, the inner loop
-     * strides will be the same throughout the iteration loop.  Thus,
-     * we can pass them to this function to take advantage of
-     * contiguous strides, etc.
-     *
-     * By setting the src_dtype to NULL, we get a function which sets
-     * the destination to zeros.
-     */
-    if (PyArray_GetDTypeTransferFunction(
-                    PyArray_ISALIGNED(a),
-                    0, stride,
-                    NULL, PyArray_DESCR(a),
-                    0,
-                    &stransfer, &transferdata,
-                    &needs_api) != NPY_SUCCEED) {
-        NpyIter_Deallocate(iter);
-        return -1;
-    }
-
-    if (!needs_api) {
-        NPY_BEGIN_THREADS;
-    }
-
-    do {
-        stransfer(*dataptr, stride, NULL, 0,
-                    *countptr, 0, transferdata);
-    } while(iternext(iter));
-
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
-
-    NPY_AUXDATA_FREE(transferdata);
-    NpyIter_Deallocate(iter);
-
-    return 0;
-}
-
-/*NUMPY_API
- *
- * Fills an array with ones.
+ * dst: The destination array.
+ * wheremask: If non-NULL, a boolean mask specifying where to set the values.
+ * preservena: If 0, overwrites everything in 'dst', if 1, it
+ *              preserves elements in 'dst' which are NA.
+ * preservewhichna: Must be NULL. When multi-NA support is implemented,
+ *                   this will be an array of flags for 'preservena=True',
+ *                   indicating which NA payload values to preserve.
  *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_FillWithOne(PyArrayObject *a)
+PyArray_AssignZero(PyArrayObject *dst,
+                    PyArrayObject *wheremask,
+                    npy_bool preservena, npy_bool *preservewhichna)
 {
-    PyArrayObject *tmp;
+    npy_bool value;
     PyArray_Descr *bool_dtype;
     int retcode;
 
-    if (!PyArray_ISWRITEABLE(a)) {
-        PyErr_SetString(PyExc_RuntimeError, "cannot write to array");
-        return -1;
-    }
-
-    /* A zero-sized array needs no zeroing */
-    if (PyArray_SIZE(a) == 0) {
-        return 0;
-    }
-
-    /* Create a boolean array with 0 in it */
+    /* Create a raw bool scalar with the value False */
     bool_dtype = PyArray_DescrFromType(NPY_BOOL);
     if (bool_dtype == NULL) {
         return -1;
     }
-    tmp = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                    bool_dtype, 0, NULL, NULL,
-                                    NULL, 0, NULL);
-    if (tmp == NULL) {
+    value = 0;
+
+    retcode = array_assign_scalar(dst, bool_dtype, (char *)&value,
+                                wheremask, NPY_SAFE_CASTING,
+                                preservena, preservewhichna);
+
+    Py_DECREF(bool_dtype);
+    return retcode;
+}
+/*NUMPY_API
+ *
+ * Fills an array with ones.
+ *
+ * dst: The destination array.
+ * wheremask: If non-NULL, a boolean mask specifying where to set the values.
+ * preservena: If 0, overwrites everything in 'dst', if 1, it
+ *              preserves elements in 'dst' which are NA.
+ * preservewhichna: Must be NULL. When multi-NA support is implemented,
+ *                   this will be an array of flags for 'preservena=True',
+ *                   indicating which NA payload values to preserve.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_AssignOne(PyArrayObject *dst,
+                    PyArrayObject *wheremask,
+                    npy_bool preservena, npy_bool *preservewhichna)
+{
+    npy_bool value;
+    PyArray_Descr *bool_dtype;
+    int retcode;
+
+    /* Create a raw bool scalar with the value True */
+    bool_dtype = PyArray_DescrFromType(NPY_BOOL);
+    if (bool_dtype == NULL) {
         return -1;
     }
-    PyArray_BYTES(tmp)[0] = 1;
+    value = 1;
 
-    retcode = PyArray_CopyInto(a, tmp);
-    Py_DECREF(tmp);
+    retcode = array_assign_scalar(dst, bool_dtype, (char *)&value,
+                                wheremask, NPY_SAFE_CASTING,
+                                preservena, preservewhichna);
 
+    Py_DECREF(bool_dtype);
     return retcode;
 }
 

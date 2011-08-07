@@ -525,7 +525,7 @@ PyArray_ReduceMaskNAArray(int ndim, npy_intp *shape,
     for (idim = 0; idim < ndim; ++idim) {
         if (src_strides[idim] == 0 && dst_strides[idim] != 0) {
             PyErr_SetString(PyExc_RuntimeError,
-                    "ReduceMaskArray cannot reduce into a larger array");
+                    "ReduceMaskNAArray cannot reduce into a larger array");
             return -1;
         }
     }

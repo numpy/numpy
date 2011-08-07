@@ -3013,7 +3013,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     /* Initialize the output to all zeros and reset the iterator */
     ret = NpyIter_GetOperandArray(iter)[nop];
     Py_INCREF(ret);
-    PyArray_FillWithZero(ret);
+    PyArray_AssignZero(ret, NULL, 0, NULL);
 
 
     /***************************/

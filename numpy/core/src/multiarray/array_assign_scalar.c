@@ -387,6 +387,13 @@ array_assign_scalar(PyArrayObject *dst,
     int allocated_src_data = 0, dst_has_maskna = PyArray_HASMASKNA(dst);
     npy_longlong scalarbuffer[4];
 
+    /* Check that 'dst' is writeable */
+    if (!PyArray_ISWRITEABLE(dst)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "cannot assign a scalar value to a read-only array");
+        return -1;
+    }
+
     /* Check the casting rule */
     if (!can_cast_scalar_to(src_dtype, src_data,
                             PyArray_DESCR(dst), casting)) {
@@ -414,11 +421,13 @@ array_assign_scalar(PyArrayObject *dst,
     /*
      * Make a copy of the src data if it's a different dtype than 'dst'
      * or isn't aligned, and the destination we're copying to has
-     * more than one element.
+     * more than one element. To avoid having to manage object lifetimes,
+     * we also skip this if 'dst' has an object dtype.
      */
     if ((!PyArray_EquivTypes(PyArray_DESCR(dst), src_dtype) ||
                 ((npy_intp)src_data & (src_dtype->alignment - 1)) != 0) &&
-                    PyArray_SIZE(dst) > 1) {
+                    PyArray_SIZE(dst) > 1 &&
+                    !PyDataType_REFCHK(PyArray_DESCR(dst))) {
         char *tmp_src_data;
 
         /*
