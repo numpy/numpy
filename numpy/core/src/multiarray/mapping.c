@@ -762,7 +762,7 @@ array_boolean_subscript(PyArrayObject *self,
         PyArrayObject *op[2] = {self, bmask};
         npy_uint32 flags, op_flags[2];
         npy_intp fixed_strides[3];
-        PyArray_StridedTransferFn *stransfer = NULL;
+        PyArray_StridedUnaryOp *stransfer = NULL;
         NpyAuxData *transferdata = NULL;
 
         NpyIter_IterNextFunc *iternext;
@@ -1068,7 +1068,7 @@ array_ass_boolean_subscript(PyArrayObject *self,
 
         /* Regular inner loop */
         if (!self_has_maskna) {
-            PyArray_StridedTransferFn *stransfer = NULL;
+            PyArray_StridedUnaryOp *stransfer = NULL;
             NpyAuxData *transferdata = NULL;
             npy_intp self_stride = innerstrides[0];
             npy_intp bmask_stride = innerstrides[1];
@@ -1119,7 +1119,7 @@ array_ass_boolean_subscript(PyArrayObject *self,
         }
         /* NA masked inner loop */
         else {
-            PyArray_MaskedStridedTransferFn *stransfer = NULL;
+            PyArray_MaskedStridedUnaryOp *stransfer = NULL;
             NpyAuxData *transferdata = NULL;
             npy_intp i;
             npy_intp self_stride = innerstrides[0];

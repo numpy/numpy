@@ -444,6 +444,7 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'hashdescr.c'),
         pjoin('src', 'multiarray', 'arrayobject.c'),
         pjoin('src', 'multiarray', 'array_assign.c'),
+        pjoin('src', 'multiarray', 'array_assign_scalar.c'),
         pjoin('src', 'multiarray', 'datetime.c'),
         pjoin('src', 'multiarray', 'datetime_strings.c'),
         pjoin('src', 'multiarray', 'datetime_busday.c'),

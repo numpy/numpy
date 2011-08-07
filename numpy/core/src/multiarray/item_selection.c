@@ -138,7 +138,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     if (use_maskna) {
         char *dst_maskna = NULL, *src_maskna = NULL;
         npy_intp itemsize = PyArray_DESCR(obj)->elsize;
-        PyArray_MaskedStridedTransferFn *maskedstransfer = NULL;
+        PyArray_MaskedStridedUnaryOp *maskedstransfer = NULL;
         NpyAuxData *transferdata = NULL;
         int needs_api = 0;
 
