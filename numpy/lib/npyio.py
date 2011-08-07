@@ -960,24 +960,42 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
         else:
             ncol = X.shape[1]
 
+        iscomplex_X = np.iscomplexobj(X)
         # `fmt` can be a string with multiple insertion points or a
         # list of formats.  E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
+        # Determine first if X is complex, where twice as many
         if type(fmt) in (list, tuple):
             if len(fmt) != ncol:
                 raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
+            if iscomplex_X:
+                fmt = 2 * fmt
             format = asstr(delimiter).join(map(asstr, fmt))
         elif type(fmt) is str:
-            if fmt.count('%') == 1:
-                fmt = [fmt, ]*ncol
+            n_fmt_chars = fmt.count('%')
+            error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
+            if n_fmt_chars == 1:
+                if iscomplex_X:
+                    fmt = [' (%s+%sj)' % (fmt, fmt),] * ncol
+                else:
+                    fmt = [fmt, ] * ncol
                 format = delimiter.join(fmt)
-            elif fmt.count('%') != ncol:
-                raise AttributeError('fmt has wrong number of %% formats.  %s'
-                                     % fmt)
+            elif iscomplex_X and n_fmt_chars != (2 * ncol):
+                raise error
+            elif ((not iscomplex_X) and n_fmt_chars != ncol):
+                raise error
             else:
                 format = fmt
 
-        for row in X:
-            fh.write(asbytes(format % tuple(row) + newline))
+        if iscomplex_X:
+            for row in X:
+                row2 = []
+                for number in row:
+                    row2.append(number.real)
+                    row2.append(number.imag)
+                fh.write(asbytes(format % tuple(row2) + newline))
+        else:
+            for row in X:
+                fh.write(asbytes(format % tuple(row) + newline))
     finally:
         if own_fh:
             fh.close()
