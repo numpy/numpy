@@ -22,7 +22,8 @@ PyArray_IsNA(PyObject *obj);
  * Gets a strided unary operation which inverts mask values.
  */
 NPY_NO_EXPORT int
-PyArray_GetMaskInversionFunction(npy_intp mask_stride,
+PyArray_GetMaskInversionFunction(npy_intp dst_mask_stride,
+                            npy_intp src_mask_stride,
                             PyArray_Descr *mask_dtype,
                             PyArray_StridedUnaryOp **out_unop,
                             NpyAuxData **out_opdata);
