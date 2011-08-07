@@ -84,6 +84,32 @@ array_assign_flat(PyArrayObject *dst, NPY_ORDER dst_order,
 
 
 
+/******** LOW-LEVEL SCALAR TO ARRAY ASSIGNMENT ********/
+
+/*
+ * Assigns the scalar value to every element of the destination raw array.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+raw_array_assign_scalar(int ndim, npy_intp *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
+        PyArray_Descr *src_dtype, char *src_data);
+
+/*
+ * Assigns the scalar value to every element of the destination raw array
+ * where the 'wheremask' value is True.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
+        PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
+        PyArray_Descr *src_dtype, char *src_data,
+        PyArray_Descr *wheremask_dtype, char *wheremask_data,
+        npy_intp *wheremask_strides);
+
+/******** LOW-LEVEL ARRAY MANIPULATION HELPERS ********/
 
 /*
  * Internal detail of how much to buffer during array assignments which

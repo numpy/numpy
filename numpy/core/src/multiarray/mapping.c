@@ -80,7 +80,7 @@ array_big_item(PyArrayObject *self, npy_intp i)
         return NULL;
     }
 
-    /* Take a view of the mask if it exists */
+    /* Take a view of the NA mask if it exists */
     if (PyArray_HASMASKNA(self)) {
         PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)ret;
 
@@ -645,7 +645,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
                                 PyArray_DESCR(self),
                                 nd, dimensions,
                                 strides, PyArray_DATA(self) + offset,
-                                PyArray_FLAGS(self),
+            PyArray_FLAGS(self) & ~(NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA),
                                 (PyObject *)self);
     if (ret == NULL) {
         return NULL;
@@ -657,6 +657,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
     }
     PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
 
+    /* Take a view of the NA mask if it exists */
     if (PyArray_HASMASKNA(self)) {
         PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
 

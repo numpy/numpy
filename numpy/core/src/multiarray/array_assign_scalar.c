@@ -30,7 +30,7 @@
  *
  * Returns 0 on success, -1 on failure.
  */
-static int
+NPY_NO_EXPORT int
 raw_array_assign_scalar(int ndim, npy_intp *shape,
         PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
         PyArray_Descr *src_dtype, char *src_data)
@@ -97,7 +97,7 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
  *
  * Returns 0 on success, -1 on failure.
  */
-static int
+NPY_NO_EXPORT int
 raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
         PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
         PyArray_Descr *src_dtype, char *src_data,
@@ -171,7 +171,7 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
  *
  * Returns 0 on success, -1 on failure.
  */
-static int
+NPY_NO_EXPORT int
 raw_array_assign_scalar_preservena(int ndim, npy_intp *shape,
         PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
         PyArray_Descr *src_dtype, char *src_data,
@@ -188,12 +188,6 @@ raw_array_assign_scalar_preservena(int ndim, npy_intp *shape,
     NpyAuxData *transferdata = NULL;
     int aligned, needs_api = 0;
     npy_intp src_itemsize = src_dtype->elsize;
-
-    PyArray_StridedUnaryOp *maskinv_stransfer = NULL;
-    NpyAuxData *maskinv_transferdata = NULL;
-
-    char *maskna_buffer;
-    npy_intp maskna_itemsize;
 
     /* Check alignment */
     aligned = raw_array_is_aligned(ndim, dst_data, dst_strides,
@@ -213,32 +207,13 @@ raw_array_assign_scalar_preservena(int ndim, npy_intp *shape,
         return -1;
     }
 
-    /* Allocate a buffer for inverting the mask */
-    maskna_itemsize = maskna_dtype->elsize;
-    maskna_buffer = PyArray_malloc(NPY_ARRAY_ASSIGN_BUFFERSIZE *
-                                    maskna_itemsize);
-    if (maskna_buffer == NULL) {
-        PyErr_NoMemory();
-        return -1;
-    }
-
     /* Get the function to do the casting */
     if (PyArray_GetMaskedDTypeTransferFunction(aligned,
-                        0, dst_strides_it[0], maskna_itemsize,
+                        0, dst_strides_it[0], maskna_strides_it[0],
                         src_dtype, dst_dtype, maskna_dtype,
                         0,
                         &stransfer, &transferdata,
                         &needs_api) != NPY_SUCCEED) {
-        PyArray_free(maskna_buffer);
-        return -1;
-    }
-
-    /* Get the function to invert the mask */
-    if (PyArray_GetMaskInversionFunction(
-                        maskna_strides_it[0], maskna_dtype,
-                        &maskinv_stransfer, &maskinv_transferdata) < 0) {
-        PyArray_free(maskna_buffer);
-        NPY_AUXDATA_FREE(transferdata);
         return -1;
     }
 
@@ -247,31 +222,10 @@ raw_array_assign_scalar_preservena(int ndim, npy_intp *shape,
     }
 
     NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
-        npy_intp buffered_count, count;
-        char *dst_d, *maskna_d;
-        /* Process the innermost dimension a buffer size at a time */
-        count = shape_it[0];
-        dst_d = dst_data;
-        maskna_d = maskna_data;
-        do {
-            buffered_count = count > NPY_ARRAY_ASSIGN_BUFFERSIZE
-                                        ? count
-                                        : NPY_ARRAY_ASSIGN_BUFFERSIZE;
-
-            /* Invert the mask into the buffer */
-            maskinv_stransfer(maskna_buffer, maskna_itemsize,
-                        maskna_d, maskna_strides_it[0],
-                        buffered_count, maskna_itemsize, maskinv_transferdata);
-
-            /* Transfer the data based on the buffered mask */
-            stransfer(dst_d, dst_strides_it[0], src_data, 0,
-                        (npy_mask *)maskna_buffer, maskna_itemsize,
-                        buffered_count, src_itemsize, transferdata);
-
-            dst_d += buffered_count * dst_strides_it[0];
-            maskna_d += buffered_count * maskna_strides_it[0];
-            count -= buffered_count;
-        } while (count > 0);
+        /* Transfer the data based on the NA mask */
+        stransfer(dst_data, dst_strides_it[0], src_data, 0,
+                    (npy_mask *)maskna_data, maskna_strides_it[0],
+                    shape_it[0], src_itemsize, transferdata);
     } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
                             dst_data, dst_strides_it,
                             maskna_data, maskna_strides_it);
@@ -280,9 +234,7 @@ raw_array_assign_scalar_preservena(int ndim, npy_intp *shape,
         NPY_END_THREADS;
     }
 
-    PyArray_free(maskna_buffer);
     NPY_AUXDATA_FREE(transferdata);
-    NPY_AUXDATA_FREE(maskinv_transferdata);
 
     return (needs_api && PyErr_Occurred()) ? -1 : 0;
 }
@@ -294,7 +246,7 @@ raw_array_assign_scalar_preservena(int ndim, npy_intp *shape,
  *
  * Returns 0 on success, -1 on failure.
  */
-static int
+NPY_NO_EXPORT int
 raw_array_wheremasked_assign_scalar_preservena(int ndim, npy_intp *shape,
         PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
         PyArray_Descr *src_dtype, char *src_data,
@@ -366,7 +318,7 @@ raw_array_wheremasked_assign_scalar_preservena(int ndim, npy_intp *shape,
      * of the binary operation is the dtype 'maskna_dtype'
      */
     if (PyArray_GetMaskAndFunction(
-                        maskna_strides_it[0], maskna_dtype, 1,
+                        maskna_strides_it[0], maskna_dtype, 0,
                         wheremask_strides_it[0], wheremask_dtype, 0,
                         &maskand_stransfer, &maskand_transferdata) < 0) {
         PyArray_free(maskna_buffer);
@@ -387,7 +339,7 @@ raw_array_wheremasked_assign_scalar_preservena(int ndim, npy_intp *shape,
         maskna_d = maskna_data;
         wheremask_d = wheremask_data;
         do {
-            buffered_count = count > NPY_ARRAY_ASSIGN_BUFFERSIZE
+            buffered_count = count < NPY_ARRAY_ASSIGN_BUFFERSIZE
                                         ? count
                                         : NPY_ARRAY_ASSIGN_BUFFERSIZE;
 
@@ -495,7 +447,7 @@ array_assign_scalar(PyArrayObject *dst,
         if (!preservena || !dst_has_maskna) {
             /* If assigning to an array with an NA mask, set to all exposed */
             if (dst_has_maskna) {
-                if (PyArray_AssignMaskNA(dst, 1) < 0) {
+                if (PyArray_AssignMaskNA(dst, NULL, 1) < 0) {
                     goto fail;
                 }
             }
@@ -554,7 +506,7 @@ array_assign_scalar(PyArrayObject *dst,
                  * TODO: If the where mask has NA values, this part
                  *       changes too.
                  */
-                if (PyArray_AssignMaskNA(dst, 1) < 0) {
+                if (PyArray_AssignMaskNA(dst, wheremask, 1) < 0) {
                     goto fail;
                 }
             }

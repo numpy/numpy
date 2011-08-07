@@ -72,7 +72,8 @@ array_slice(PyArrayObject *self, Py_ssize_t ilow, Py_ssize_t ihigh)
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self), dtype,
                              PyArray_NDIM(self), shape,
                              PyArray_STRIDES(self), data,
-                             PyArray_FLAGS(self), (PyObject *)self);
+             PyArray_FLAGS(self) & ~(NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA),
+                             (PyObject *)self);
     if (ret == NULL) {
         return NULL;
     }

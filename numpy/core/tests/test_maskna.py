@@ -742,7 +742,6 @@ def test_array_maskna_max_min_methods():
                   [12, 4, np.NA]], maskna=True)
 
     res = a.max(axis=0)
-    print repr(res)
     assert_equal(np.isna(res), [0,1,1])
     assert_equal(res[~np.isna(res)], [12])
 

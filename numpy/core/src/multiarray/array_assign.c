@@ -38,7 +38,7 @@ broadcast_strides(int ndim, npy_intp *shape,
      * Process from the end to the start, so that 'strides' and 'out_strides'
      * can point to the same memory.
      */
-    for (idim = ndim - 1; idim >= idim_start; ++idim) {
+    for (idim = ndim - 1; idim >= idim_start; --idim) {
         npy_intp strides_shape_value = strides_shape[idim - idim_start];
         /* If it doesn't have dimension one, it must match */
         if (strides_shape_value == 1) {
