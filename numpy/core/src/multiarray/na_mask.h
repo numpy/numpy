@@ -34,7 +34,19 @@ PyArray_IsNA(PyObject *obj);
 NPY_NO_EXPORT int
 PyArray_GetMaskInversionFunction(npy_intp mask_stride,
                             PyArray_Descr *mask_dtype,
-                            PyArray_StridedUnaryOp **out_stransfer,
-                            NpyAuxData **out_transferdata);
+                            PyArray_StridedUnaryOp **out_unop,
+                            NpyAuxData **out_opdata);
+
+/*
+ * Gets a function which ANDs together two masks, possibly inverting
+ * one or both of the masks as well.
+ *
+ * The dtype of the output must match 'mask0_dtype'.
+ */
+NPY_NO_EXPORT int
+PyArray_GetMaskAndFunction(
+        npy_intp mask0_stride, PyArray_Descr *mask0_dtype, int invert_mask0,
+        npy_intp mask1_stride, PyArray_Descr *mask1_dtype, int invert_mask1,
+        PyArray_StridedBinaryOp **out_binop, NpyAuxData **out_opdata);
 
 #endif
