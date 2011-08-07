@@ -188,9 +188,13 @@ static void
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
                         NpyAuxData *NPY_UNUSED(data))
 {
-#if @elsize@ != 16
-    @type@ temp = @swap@@elsize@(*((@type@ *)src));
+#if @elsize@ == 1 && @dst_contig@
+    memset(dst, *src, N);
 #else
+
+#  if @elsize@ != 16
+    @type@ temp = @swap@@elsize@(*((@type@ *)src));
+#  else
     npy_uint64 temp0, temp1;
 #    if @is_swap@ == 0
         temp0 = (*((npy_uint64 *)src));
@@ -202,24 +206,25 @@ static void
         temp0 = _NPY_SWAP8(*((npy_uint64 *)src));
         temp1 = _NPY_SWAP8(*((npy_uint64 *)src + 1));
 #    endif
-#endif
+#  endif
 
     while (N > 0) {
-#if @elsize@ != 16
+#  if @elsize@ != 16
         *((@type@ *)dst) = temp;
-#else
+#  else
         *((npy_uint64 *)dst) = temp0;
         *((npy_uint64 *)dst + 1) = temp1;
-#endif
-#if @dst_contig@
+#  endif
+#  if @dst_contig@
         dst += @elsize@;
-#else
+#  else
         dst += dst_stride;
-#endif
+#  endif
         --N;
     }
+#endif/* @elsize == 1 && @dst_contig@ -- else */
 }
-#endif
+#endif/* (@src_contig@ == 0) && @is_aligned@ */
 
 #endif/* @elsize@ >= @minelsize@ */
 
