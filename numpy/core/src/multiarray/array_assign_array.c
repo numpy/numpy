@@ -361,10 +361,28 @@ raw_array_wheremasked_assign_array_preservena(int ndim, npy_intp *shape,
     return (needs_api && PyErr_Occurred()) ? -1 : 0;
 }
 
-
-/* See array_assign.h for documentation */
+/*NUMPY_API
+ *
+ * An array assignment function for copying arrays, broadcasting 'src' into
+ * 'dst'. This function makes a temporary copy of 'src' if 'src' and
+ * 'dst' overlap, to be able to handle views of the same data with
+ * different strides.
+ *
+ * dst: The destination array.
+ * src: The source array.
+ * wheremask: If non-NULL, a boolean mask specifying where to copy.
+ * casting: An exception is raised if the copy violates this
+ *          casting rule.
+ * preservena: If 0, overwrites everything in 'dst', if 1, it
+ *              preserves elements in 'dst' which are NA.
+ * preservewhichna: Must be NULL. When multi-NA support is implemented,
+ *                   this will be an array of flags for 'preservena=True',
+ *                   indicating which NA payload values to preserve.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
 NPY_NO_EXPORT int
-array_assign_array(PyArrayObject *dst, PyArrayObject *src,
+PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
                     PyArrayObject *wheremask,
                     NPY_CASTING casting,
                     npy_bool preservena, npy_bool *preservewhichna)
@@ -389,7 +407,8 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
             }
         }
 
-        return array_assign_scalar(dst, PyArray_DESCR(src), PyArray_DATA(src),
+        return PyArray_AssignRawScalar(
+                            dst, PyArray_DESCR(src), PyArray_DATA(src),
                             wheremask, casting, preservena, preservewhichna);
     }
 
@@ -499,7 +518,7 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
             }
         }
 
-        if (array_assign_array(tmp, src,
+        if (PyArray_AssignArray(tmp, src,
                                 NULL, NPY_UNSAFE_CASTING, 0, NULL) < 0) {
             Py_DECREF(tmp);
             goto fail;

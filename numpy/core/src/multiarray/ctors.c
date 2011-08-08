@@ -25,7 +25,6 @@
 #include "_datetime.h"
 #include "datetime_strings.h"
 #include "na_singleton.h"
-#include "array_assign.h"
 
 /*
  * Reading from a file or a string.
@@ -2922,7 +2921,7 @@ PyArray_CopyAnyInto(PyArrayObject *dst, PyArrayObject *src)
 NPY_NO_EXPORT int
 PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
 {
-    return array_assign_array(dst, src, NULL, NPY_UNSAFE_CASTING, 0, NULL);
+    return PyArray_AssignArray(dst, src, NULL, NPY_UNSAFE_CASTING, 0, NULL);
 }
 
 /*NUMPY_API
@@ -2933,7 +2932,7 @@ PyArray_CopyInto(PyArrayObject *dst, PyArrayObject *src)
 NPY_NO_EXPORT int
 PyArray_MoveInto(PyArrayObject *dst, PyArrayObject *src)
 {
-    return array_assign_array(dst, src, NULL, NPY_UNSAFE_CASTING, 0, NULL);
+    return PyArray_AssignArray(dst, src, NULL, NPY_UNSAFE_CASTING, 0, NULL);
 }
 
 /*NUMPY_API
