@@ -330,6 +330,8 @@ multiarray_funcs_api = {
     'PyArray_AssignOne':                    291,
     'PyArray_AssignNA':                     292,
     'PyArray_AssignMaskNA':                 293,
+    'PyArray_AssignRawScalar':              294,
+    'PyArray_AssignArray':                  295,
 }
 
 ufunc_types_api = {

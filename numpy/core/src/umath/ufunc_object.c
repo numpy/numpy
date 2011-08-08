@@ -2848,8 +2848,13 @@ initialize_reduce_result(int identity, PyArrayObject *result,
         }
     }
 
-    /* Copy the elements into the result to start */
-    if (PyArray_CopyInto(result, arr_view) < 0) {
+    /*
+     * Copy the elements into the result to start, with
+     * 'preservena' set to True so that we don't overwrite
+     * what we already calculated in ReduceNAMask.
+     */
+    if (PyArray_AssignArray(result, arr_view, NULL, NPY_UNSAFE_CASTING,
+                            1, NULL) < 0) {
         Py_DECREF(arr_view);
         return NULL;
     }
