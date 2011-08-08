@@ -15,7 +15,6 @@
 #include "arrayobject.h"
 #include "mapping.h"
 #include "lowlevel_strided_loops.h"
-#include "array_assign.h"
 #include "scalartypes.h"
 
 #include "convert.h"
@@ -330,7 +329,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
             return -1;
         }
     }
-    /* Use array_assign_scalar if 'obj' is a numpy scalar object */
+    /* NumPy scalar */
     else if (PyArray_IsScalar(obj, Generic)) {
         dtype = PyArray_DescrFromScalar(obj);
         if (dtype == NULL) {
@@ -405,7 +404,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     /* Use the value pointer we got if possible */
     if (value != NULL) {
         /* TODO: switch to SAME_KIND casting */
-        retcode = array_assign_scalar(arr, dtype, value,
+        retcode = PyArray_AssignRawScalar(arr, dtype, value,
                                 NULL, NPY_UNSAFE_CASTING, 0, NULL);
         Py_DECREF(dtype);
         return retcode;
@@ -464,7 +463,7 @@ PyArray_AssignZero(PyArrayObject *dst,
     }
     value = 0;
 
-    retcode = array_assign_scalar(dst, bool_dtype, (char *)&value,
+    retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
                                 wheremask, NPY_SAFE_CASTING,
                                 preservena, preservewhichna);
 
@@ -502,7 +501,7 @@ PyArray_AssignOne(PyArrayObject *dst,
     }
     value = 1;
 
-    retcode = array_assign_scalar(dst, bool_dtype, (char *)&value,
+    retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
                                 wheremask, NPY_SAFE_CASTING,
                                 preservena, preservewhichna);
 

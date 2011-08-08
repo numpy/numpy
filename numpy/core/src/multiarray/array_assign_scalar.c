@@ -302,9 +302,29 @@ raw_array_wheremasked_assign_scalar_preservena(int ndim, npy_intp *shape,
 }
 
 
-/* See array_assign.h for documentation */
+/*NUMPY_API
+ *
+ * Assigns a scalar value specified by 'src_dtype' and 'src_data'
+ * to elements of 'dst'.
+ *
+ * dst: The destination array.
+ * src_dtype: The data type of the source scalar.
+ * src_data: The memory element of the source scalar.
+ * wheremask: If non-NULL, a boolean mask specifying where to copy.
+ * casting: An exception is raised if the assignment violates this
+ *          casting rule.
+ * preservena: If 0, overwrites everything in 'dst', if 1, it
+ *              preserves elements in 'dst' which are NA.
+ * preservewhichna: Must be NULL. When multi-NA support is implemented,
+ *                   this will be an array of flags for 'preservena=True',
+ *                   indicating which NA payload values to preserve.
+ *
+ * This function is implemented in array_assign_scalar.c.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
 NPY_NO_EXPORT int
-array_assign_scalar(PyArrayObject *dst,
+PyArray_AssignRawScalar(PyArrayObject *dst,
                     PyArray_Descr *src_dtype, char *src_data,
                     PyArrayObject *wheremask,
                     NPY_CASTING casting,

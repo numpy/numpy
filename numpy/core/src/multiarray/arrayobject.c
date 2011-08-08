@@ -52,7 +52,6 @@ maintainer email:  oliphant.travis@ieee.org
 #include "buffer.h"
 #include "na_singleton.h"
 #include "na_mask.h"
-#include "array_assign.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -203,7 +202,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
                 }
 
                 /* TODO: switch to SAME_KIND casting */
-                retcode = array_assign_scalar(dest, dtype, value,
+                retcode = PyArray_AssignRawScalar(dest, dtype, value,
                                         NULL, NPY_UNSAFE_CASTING, 0, NULL);
                 Py_DECREF(dtype);
                 Py_DECREF(src_object);

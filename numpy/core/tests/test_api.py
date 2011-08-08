@@ -171,7 +171,7 @@ def test_copyto_maskna():
     a_orig = np.zeros((2,3), dtype='f8')
     a = a_orig.view(maskna=True)
 
-    # Simple copy to from non-masked to NA-masked
+    # Simple copy from non-masked to NA-masked
     a[...] = np.NA
     np.copyto(a, np.arange(6).reshape(2,3))
     assert_equal(a, [[0,1,2],[3,4,5]])
@@ -179,7 +179,7 @@ def test_copyto_maskna():
     np.copyto(a.T, np.arange(6).reshape(3,2) + 1)
     assert_equal(a, [[1,3,5],[2,4,6]])
 
-    # Simple copy to from NA-masked to NA-masked
+    # Simple copy from NA-masked to NA-masked
     a[...] = np.NA
     a[1,2] = 12
     tmp = np.arange(6, maskna=True).reshape(2,3)
@@ -239,7 +239,6 @@ def test_copyto_maskna():
     np.copyto(a, tmp, where=mask, preservena=True)
     assert_equal(a_orig, [[0,3,3],[3,4,12]])
     assert_equal(np.isna(a), [[0,1,0],[1,1,1]])
-    
 
 if __name__ == "__main__":
     run_module_suite()

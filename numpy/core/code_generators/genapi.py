@@ -23,6 +23,8 @@ __docformat__ = 'restructuredtext'
 # The files under src/ that are scanned for API functions
 API_FILES = [join('multiarray', 'methods.c'),
              join('multiarray', 'arrayobject.c'),
+             join('multiarray', 'array_assign_scalar.c'),
+             join('multiarray', 'array_assign_array.c'),
              join('multiarray', 'flagsobject.c'),
              join('multiarray', 'descriptor.c'),
              join('multiarray', 'iterators.c'),

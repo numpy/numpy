@@ -50,7 +50,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "datetime_busdaycal.h"
 #include "na_singleton.h"
 #include "na_mask.h"
-#include "array_assign.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -1730,7 +1729,7 @@ array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
         }
     }
 
-    if (array_assign_array(dst, src,
+    if (PyArray_AssignArray(dst, src,
                     wheremask, casting, preservena, NULL) < 0) {
         goto fail;
     }
