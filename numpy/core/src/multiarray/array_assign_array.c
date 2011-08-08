@@ -67,8 +67,8 @@ raw_array_assign_array(int ndim, npy_intp *shape,
     }
 
     /*
-     * Overlap check for the 1D case. Higher dimensional arrays cause
-     * a temporary copy before getting here.
+     * Overlap check for the 1D case. Higher dimensional arrays and
+     * opposite strides cause a temporary copy before getting here.
      */
     if (ndim == 1 && src_data < dst_data &&
                 src_data + shape_it[0] * src_strides_it[0] > dst_data) {
@@ -471,11 +471,15 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
     }
 
     /*
-     * When ndim is 1, the lower-level inner loop handles copying
-     * of overlapping data. For bigger ndim, we make a temporary
-     * copy of 'src' if 'src' and 'dst' overlap.'
+     * When ndim is 1 and the strides point in the same direction,
+     * the lower-level inner loop handles copying
+     * of overlapping data. For bigger ndim and opposite-strided 1D
+     * data, we make a temporary copy of 'src' if 'src' and 'dst' overlap.'
      */
-    if (PyArray_NDIM(dst) > 1 && arrays_overlap(src, dst)) {
+    if (((PyArray_NDIM(dst) == 1 && PyArray_NDIM(src) >= 1 &&
+                    PyArray_STRIDES(dst)[0] *
+                            PyArray_STRIDES(src)[PyArray_NDIM(src) - 1] < 0) ||
+                    PyArray_NDIM(dst) > 1) && arrays_overlap(src, dst)) {
         PyArrayObject *tmp;
 
         /*
@@ -506,11 +510,34 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
     }
 
     /* Broadcast 'src' to 'dst' for raw iteration */
-    if (broadcast_strides(PyArray_NDIM(dst), PyArray_DIMS(dst),
-                PyArray_NDIM(src), PyArray_DIMS(src),
-                PyArray_STRIDES(src), "input array",
-                src_strides) < 0) {
-        goto fail;
+    if (PyArray_NDIM(src) > PyArray_NDIM(dst)) {
+        int ndim_tmp = PyArray_NDIM(src);
+        npy_intp *src_shape_tmp = PyArray_DIMS(src);
+        npy_intp *src_strides_tmp = PyArray_STRIDES(src);
+        /*
+         * As a special case for backwards compatibility, strip
+         * away unit dimensions from the left of 'src'
+         */
+        while (ndim_tmp > PyArray_NDIM(dst) && src_shape_tmp[0] == 1) {
+            --ndim_tmp;
+            ++src_shape_tmp;
+            ++src_strides_tmp;
+        }
+
+        if (broadcast_strides(PyArray_NDIM(dst), PyArray_DIMS(dst),
+                    ndim_tmp, src_shape_tmp,
+                    src_strides_tmp, "input array",
+                    src_strides) < 0) {
+            goto fail;
+        }
+    }
+    else {
+        if (broadcast_strides(PyArray_NDIM(dst), PyArray_DIMS(dst),
+                    PyArray_NDIM(src), PyArray_DIMS(src),
+                    PyArray_STRIDES(src), "input array",
+                    src_strides) < 0) {
+            goto fail;
+        }
     }
 
     if (src_has_maskna) {

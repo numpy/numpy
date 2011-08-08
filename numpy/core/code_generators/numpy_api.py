@@ -69,7 +69,7 @@ multiarray_types_api = {
     'PyHalfArrType_Type':               217,
     'NpyIter_Type':                     218,
     # End 1.6 API
-    'NpyNA_Type':                       287,
+    'NpyNA_Type':                       281,
 }
 
 #define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
@@ -318,20 +318,18 @@ multiarray_funcs_api = {
     'PyArray_ConvertClipmodeSequence':      279,
     'PyArray_MatrixProduct2':               280,
     # End 1.6 API
-    'PyArray_MaskedCopyInto':               281,
-    'PyArray_MaskedMoveInto':               282,
-    'PyArray_SetBaseObject':                283,
-    'PyArray_HasNASupport':                 284,
-    'PyArray_ContainsNA':                   285,
-    'PyArray_AllocateMaskNA':               286,
-    'NpyIter_GetFirstMaskNAOp':             288,
-    'NpyIter_GetMaskNAIndexArray':          289,
-    'PyArray_ReduceMaskNAArray':            290,
-    'PyArray_CreateSortedStridePerm':       291,
-    'PyArray_AssignZero':                   292,
-    'PyArray_AssignOne':                    293,
-    'PyArray_AssignNA':                     294,
-    'PyArray_AssignMaskNA':                 295,
+    'PyArray_SetBaseObject':                282,
+    'PyArray_HasNASupport':                 283,
+    'PyArray_ContainsNA':                   284,
+    'PyArray_AllocateMaskNA':               285,
+    'NpyIter_GetFirstMaskNAOp':             286,
+    'NpyIter_GetMaskNAIndexArray':          287,
+    'PyArray_ReduceMaskNAArray':            288,
+    'PyArray_CreateSortedStridePerm':       289,
+    'PyArray_AssignZero':                   290,
+    'PyArray_AssignOne':                    291,
+    'PyArray_AssignNA':                     292,
+    'PyArray_AssignMaskNA':                 293,
 }
 
 ufunc_types_api = {
