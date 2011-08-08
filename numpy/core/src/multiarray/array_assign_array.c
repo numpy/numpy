@@ -319,7 +319,7 @@ raw_array_wheremasked_assign_array_preservena(int ndim, npy_intp *shape,
         /* Process the innermost dimension a buffer size at a time */
         count = shape_it[0];
         dst_d = dst_data;
-        src_d = dst_data;
+        src_d = src_data;
         maskna_d = maskna_data;
         wheremask_d = wheremask_data;
         do {
