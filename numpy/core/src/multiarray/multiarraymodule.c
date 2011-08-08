@@ -1730,58 +1730,11 @@ array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
         }
     }
 
-    /* Special case scalar assignment */
-    if (PyArray_NDIM(src) == 0 && !PyArray_ContainsNA(src)) {
-        if (array_assign_scalar(dst, PyArray_DESCR(src), PyArray_DATA(src),
-                                    wheremask, casting,
-                                    preservena, NULL) < 0) {
-            goto fail;
-        }
-        else {
-            goto finish;
-        }
-    }
-
-    if (preservena) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "This case of copyto doesn't support preservena=True yet");
+    if (array_assign_array(dst, src,
+                    wheremask, casting, preservena, NULL) < 0) {
         goto fail;
     }
 
-    if (wheremask != NULL) {
-        /* Use the 'move' function which handles overlapping */
-        if (PyArray_MaskedMoveInto(dst, src, wheremask, casting) < 0) {
-            goto fail;
-        }
-    }
-    else {
-        /*
-         * MoveInto doesn't accept a casting rule, must check it
-         * ourselves.
-         */
-        if (!PyArray_CanCastArrayTo(src, PyArray_DESCR(dst), casting)) {
-            PyObject *errmsg;
-            errmsg = PyUString_FromString("Cannot cast array data from ");
-            PyUString_ConcatAndDel(&errmsg,
-                    PyObject_Repr((PyObject *)PyArray_DESCR(src)));
-            PyUString_ConcatAndDel(&errmsg,
-                    PyUString_FromString(" to "));
-            PyUString_ConcatAndDel(&errmsg,
-                    PyObject_Repr((PyObject *)PyArray_DESCR(dst)));
-            PyUString_ConcatAndDel(&errmsg,
-                    PyUString_FromFormat(" according to the rule %s",
-                            npy_casting_to_string(casting)));
-            PyErr_SetObject(PyExc_TypeError, errmsg);
-            goto fail;
-        }
-
-        /* Use the 'move' function which handles overlapping */
-        if (PyArray_MoveInto(dst, src) < 0) {
-            goto fail;
-        }
-    }
-
-finish:
     Py_XDECREF(src);
     Py_XDECREF(wheremask);
 
