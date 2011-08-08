@@ -66,6 +66,18 @@ raw_array_assign_array(int ndim, npy_intp *shape,
         return -1;
     }
 
+    /*
+     * Overlap check for the 1D case. Higher dimensional arrays cause
+     * a temporary copy before getting here.
+     */
+    if (ndim == 1 && src_data < dst_data &&
+                src_data + shape_it[0] * src_strides_it[0] > dst_data) {
+        src_data += (shape_it[0] - 1) * src_strides_it[0];
+        dst_data += (shape_it[0] - 1) * dst_strides_it[0];
+        src_strides_it[0] = -src_strides_it[0];
+        dst_strides_it[0] = -dst_strides_it[0];
+    }
+
     /* Get the function to do the casting */
     if (PyArray_GetDTypeTransferFunction(aligned,
                         src_strides_it[0], dst_strides_it[0],
@@ -140,6 +152,20 @@ raw_array_wheremasked_assign_array(int ndim, npy_intp *shape,
                     &src_data, src_strides_it,
                     &wheremask_data, wheremask_strides_it) < 0) {
         return -1;
+    }
+
+    /*
+     * Overlap check for the 1D case. Higher dimensional arrays cause
+     * a temporary copy before getting here.
+     */
+    if (ndim == 1 && src_data < dst_data &&
+                src_data + shape_it[0] * src_strides_it[0] > dst_data) {
+        src_data += (shape_it[0] - 1) * src_strides_it[0];
+        dst_data += (shape_it[0] - 1) * dst_strides_it[0];
+        wheremask_data += (shape_it[0] - 1) * wheremask_strides_it[0];
+        src_strides_it[0] = -src_strides_it[0];
+        dst_strides_it[0] = -dst_strides_it[0];
+        wheremask_strides_it[0] = -wheremask_strides_it[0];
     }
 
     /* Get the function to do the casting */
@@ -243,6 +269,22 @@ raw_array_wheremasked_assign_array_preservena(int ndim, npy_intp *shape,
         return -1;
     }
 
+    /*
+     * Overlap check for the 1D case. Higher dimensional arrays cause
+     * a temporary copy before getting here.
+     */
+    if (ndim == 1 && src_data < dst_data &&
+                src_data + shape_it[0] * src_strides_it[0] > dst_data) {
+        src_data += (shape_it[0] - 1) * src_strides_it[0];
+        dst_data += (shape_it[0] - 1) * dst_strides_it[0];
+        maskna_data += (shape_it[0] - 1) * maskna_strides_it[0];
+        wheremask_data += (shape_it[0] - 1) * wheremask_strides_it[0];
+        src_strides_it[0] = -src_strides_it[0];
+        dst_strides_it[0] = -dst_strides_it[0];
+        maskna_strides_it[0] = -maskna_strides_it[0];
+        wheremask_strides_it[0] = -wheremask_strides_it[0];
+    }
+
     /* Get the function to do the casting */
     if (PyArray_GetMaskedDTypeTransferFunction(aligned,
                         src_strides[0], dst_strides_it[0], maskna_itemsize,
@@ -329,9 +371,9 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
 {
     int dst_has_maskna = PyArray_HASMASKNA(dst);
     int src_has_maskna = PyArray_HASMASKNA(src);
+    int copied_src = 0;
 
     npy_intp src_strides[NPY_MAXDIMS], src_maskna_strides[NPY_MAXDIMS];
-
 
     /* Use array_assign_scalar if 'src' NDIM is 0 */
     if (PyArray_NDIM(src) == 0) {
@@ -351,11 +393,44 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                             wheremask, casting, preservena, preservewhichna);
     }
 
+    /*
+     * Performance fix for expresions like "a[1000:6000] += x".  In this
+     * case, first an in-place add is done, followed by an assignment,
+     * equivalently expressed like this:
+     *
+     *   tmp = a[1000:6000]   # Calls array_subscript_nice in mapping.c
+     *   np.add(tmp, x, tmp)
+     *   a[1000:6000] = tmp   # Calls array_ass_sub in mapping.c
+     *
+     * In the assignment the underlying data type, shape, strides, and
+     * data pointers are identical, but src != dst because they are separately
+     * generated slices.  By detecting this and skipping the redundant
+     * copy of values to themselves, we potentially give a big speed boost.
+     *
+     * Note that we don't call EquivTypes, because usually the exact same
+     * dtype object will appear, and we don't want to slow things down
+     * with a complicated comparison.  The comparisons are ordered to
+     * try and reject this with as little work as possible.
+     */
+    if (PyArray_DATA(src) == PyArray_DATA(dst) &&
+                        PyArray_MASKNA_DATA(src) == PyArray_MASKNA_DATA(dst) &&
+                        PyArray_DESCR(src) == PyArray_DESCR(dst) &&
+                        PyArray_NDIM(src) == PyArray_NDIM(dst) &&
+                        PyArray_CompareLists(PyArray_DIMS(src),
+                                             PyArray_DIMS(dst),
+                                             PyArray_NDIM(src)) &&
+                        PyArray_CompareLists(PyArray_STRIDES(src),
+                                             PyArray_STRIDES(dst),
+                                             PyArray_NDIM(src))) {
+        /*printf("Redundant copy operation detected\n");*/
+        return 0;
+    }
+
     /* Check that 'dst' is writeable */
     if (!PyArray_ISWRITEABLE(dst)) {
         PyErr_SetString(PyExc_RuntimeError,
                 "cannot assign to a read-only array");
-        return -1;
+        goto fail;
     }
 
     /* Check the casting rule */
@@ -373,13 +448,13 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                 PyUString_FromFormat(" according to the rule %s",
                         npy_casting_to_string(casting)));
         PyErr_SetObject(PyExc_TypeError, errmsg);
-        return -1;
+        goto fail;
     }
 
     if (preservewhichna != NULL) {
         PyErr_SetString(PyExc_RuntimeError,
                 "multi-NA support is not yet implemented");
-        return -1;
+        goto fail;
     }
 
     if (src_has_maskna && !dst_has_maskna) {
@@ -388,11 +463,46 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
             PyErr_SetString(PyExc_ValueError,
                     "Cannot assign NA value to an array which "
                     "does not support NAs");
-            return -1;
+            goto fail;
         }
         else {
             src_has_maskna = 0;
         }
+    }
+
+    /*
+     * When ndim is 1, the lower-level inner loop handles copying
+     * of overlapping data. For bigger ndim, we make a temporary
+     * copy of 'src' if 'src' and 'dst' overlap.'
+     */
+    if (PyArray_NDIM(dst) > 1 && arrays_overlap(src, dst)) {
+        PyArrayObject *tmp;
+
+        /*
+         * Allocate a temporary copy array.
+         */
+        tmp = (PyArrayObject *)PyArray_NewLikeArray(dst,
+                                        NPY_KEEPORDER, NULL, 0);
+        if (tmp == NULL) {
+            goto fail;
+        }
+
+        /* Make the temporary copy have an NA mask if necessary */
+        if (PyArray_HASMASKNA(src)) {
+            if (PyArray_AllocateMaskNA(tmp, 1, 0, 1) < 0) {
+                Py_DECREF(tmp);
+                goto fail;
+            }
+        }
+
+        if (array_assign_array(tmp, src,
+                                NULL, NPY_UNSAFE_CASTING, 0, NULL) < 0) {
+            Py_DECREF(tmp);
+            goto fail;
+        }
+
+        src = tmp;
+        copied_src = 1;
     }
 
     /* Broadcast 'src' to 'dst' for raw iteration */
@@ -400,7 +510,7 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                 PyArray_NDIM(src), PyArray_DIMS(src),
                 PyArray_STRIDES(src), "input array",
                 src_strides) < 0) {
-        return -1;
+        goto fail;
     }
 
     if (src_has_maskna) {
@@ -408,7 +518,7 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                     PyArray_NDIM(src), PyArray_DIMS(src),
                     PyArray_MASKNA_STRIDES(src), "input array",
                     src_maskna_strides) < 0) {
-            return -1;
+            goto fail;
         }
     }
 
@@ -427,11 +537,11 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                                     PyArray_MASKNA_DTYPE(src),
                                             PyArray_MASKNA_DATA(src),
                                             src_maskna_strides) < 0) {
-                        return -1;
+                        goto fail;
                     }
 
                     /* Assign the values based on the 'src' NA mask */
-                    return raw_array_wheremasked_assign_array(
+                    if (raw_array_wheremasked_assign_array(
                                     PyArray_NDIM(dst), PyArray_DIMS(dst),
                                     PyArray_DESCR(dst), PyArray_DATA(dst),
                                             PyArray_STRIDES(dst),
@@ -439,12 +549,15 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                                             src_strides,
                                     PyArray_MASKNA_DTYPE(src),
                                             PyArray_MASKNA_DATA(src),
-                                            src_maskna_strides);
+                                            src_maskna_strides) < 0) {
+                        goto fail;
+                    }
 
+                    goto finish;
                 }
                 else {
                     if (PyArray_AssignMaskNA(dst, NULL, 1) < 0) {
-                        return -1;
+                        goto fail;
                     }
                 }
             }
@@ -453,7 +566,7 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
             if (raw_array_assign_array(PyArray_NDIM(dst), PyArray_DIMS(dst),
                     PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst),
                     PyArray_DESCR(src), PyArray_DATA(src), src_strides) < 0) {
-                return -1;
+                goto fail;
             }
         }
         /* A value assignment without overwriting NA values */
@@ -471,7 +584,7 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                                 PyArray_MASKNA_DTYPE(dst),
                                         PyArray_MASKNA_DATA(dst),
                                         PyArray_MASKNA_STRIDES(dst)) < 0) {
-                    return -1;
+                    goto fail;
                 }
             }
 
@@ -487,7 +600,7 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                             PyArray_STRIDES(src),
                     PyArray_MASKNA_DTYPE(dst), PyArray_MASKNA_DATA(dst),
                             PyArray_MASKNA_STRIDES(dst)) < 0) {
-                return -1;
+                goto fail;
             }
         }
     }
@@ -499,14 +612,14 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                 PyErr_SetString(PyExc_ValueError,
                         "Cannot assign NA value to an array which "
                         "does not support NAs");
-                return -1;
+                goto fail;
             }
             else {
                 /* TODO: add support for this */
                 PyErr_SetString(PyExc_ValueError,
                         "A where mask with NA values is not supported "
                         "yet");
-                return -1;
+                goto fail;
             }
         }
 
@@ -515,7 +628,7 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                     PyArray_NDIM(wheremask), PyArray_DIMS(wheremask),
                     PyArray_STRIDES(wheremask), "where mask",
                     wheremask_strides) < 0) {
-            return -1;
+            goto fail;
         }
 
         /* A straightforward where-masked assignment */
@@ -539,14 +652,14 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                                     PyArray_DESCR(wheremask),
                                             PyArray_DATA(wheremask),
                                             wheremask_strides) < 0) {
-                        return -1;
+                        goto fail;
                     }
 
                     /*
                      * Assign the values based on the wheremask, not
                      * overwriting values also masked by the 'src' NA mask
                      */
-                    return raw_array_wheremasked_assign_array_preservena(
+                    if (raw_array_wheremasked_assign_array_preservena(
                                     PyArray_NDIM(dst), PyArray_DIMS(dst),
                                     PyArray_DESCR(dst), PyArray_DATA(dst),
                                             PyArray_STRIDES(dst),
@@ -557,12 +670,15 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                                             src_maskna_strides,
                                     PyArray_DESCR(wheremask),
                                             PyArray_DATA(wheremask),
-                                            wheremask_strides);
+                                            wheremask_strides)) {
+                        goto fail;
+                    }
 
+                    goto finish;
                 }
                 else {
                     if (PyArray_AssignMaskNA(dst, wheremask, 1) < 0) {
-                        return -1;
+                        goto fail;
                     }
                 }
             }
@@ -574,7 +690,7 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                     PyArray_DESCR(src), PyArray_DATA(src), src_strides,
                     PyArray_DESCR(wheremask), PyArray_DATA(wheremask),
                             wheremask_strides) < 0) {
-                return -1;
+                goto fail;
             }
         }
         /* A masked value assignment without overwriting NA values */
@@ -598,7 +714,7 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                                 PyArray_DESCR(wheremask),
                                         PyArray_DATA(wheremask),
                                         wheremask_strides) < 0) {
-                    return -1;
+                    goto fail;
                 }
             }
 
@@ -617,11 +733,21 @@ array_assign_array(PyArrayObject *dst, PyArrayObject *src,
                     PyArray_MASKNA_STRIDES(dst),
                     PyArray_DESCR(wheremask), PyArray_DATA(wheremask),
                     wheremask_strides) < 0) {
-                return -1;
+                goto fail;
             }
         }
     }
 
+finish:
+    if (copied_src) {
+        Py_DECREF(src);
+    }
     return 0;
+
+fail:
+    if (copied_src) {
+        Py_DECREF(src);
+    }
+    return -1;
 }
 

@@ -140,4 +140,9 @@ broadcast_strides(int ndim, npy_intp *shape,
 NPY_NO_EXPORT int
 raw_array_is_aligned(int ndim, char *data, npy_intp *strides, int alignment);
 
+/* Returns 1 if the arrays have overlapping data, 0 otherwise */
+NPY_NO_EXPORT int
+arrays_overlap(PyArrayObject *arr1, PyArrayObject *arr2);
+
+
 #endif

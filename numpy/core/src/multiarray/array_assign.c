@@ -97,3 +97,50 @@ raw_array_is_aligned(int ndim, char *data, npy_intp *strides, int alignment)
     }
 }
 
+
+/* Gets a half-open range [start, end) which contains the array data */
+NPY_NO_EXPORT void
+get_array_memory_extents(PyArrayObject *arr,
+                    npy_uintp *out_start, npy_uintp *out_end)
+{
+    npy_uintp start, end;
+    npy_intp idim, ndim = PyArray_NDIM(arr);
+    npy_intp *dimensions = PyArray_DIMS(arr),
+            *strides = PyArray_STRIDES(arr);
+
+    /* Calculate with a closed range [start, end] */
+    start = end = (npy_uintp)PyArray_DATA(arr);
+    for (idim = 0; idim < ndim; ++idim) {
+        npy_intp stride = strides[idim], dim = dimensions[idim];
+        /* If the array size is zero, return an empty range */
+        if (dim == 0) {
+            *out_start = *out_end = (npy_uintp)PyArray_DATA(arr);
+            return;
+        }
+        /* Expand either upwards or downwards depending on stride */
+        else {
+            if (stride > 0) {
+                end += stride*(dim-1);
+            }
+            else if (stride < 0) {
+                start += stride*(dim-1);
+            }
+        }
+    }
+
+    /* Return a half-open range */
+    *out_start = start;
+    *out_end = end + PyArray_DESCR(arr)->elsize;
+}
+
+/* Returns 1 if the arrays have overlapping data, 0 otherwise */
+NPY_NO_EXPORT int
+arrays_overlap(PyArrayObject *arr1, PyArrayObject *arr2)
+{
+    npy_uintp start1 = 0, start2 = 0, end1 = 0, end2 = 0;
+
+    get_array_memory_extents(arr1, &start1, &end1);
+    get_array_memory_extents(arr2, &start2, &end2);
+
+    return (start1 < end2) && (start2 < end1);
+}

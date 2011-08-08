@@ -88,4 +88,8 @@ PyArray_GetArrayParamsFromObjectEx(PyObject *op,
                         int *out_contains_na,
                         PyArrayObject **out_arr, PyObject *context);
 
+/* Returns 1 if the arrays have overlapping data, 0 otherwise */
+NPY_NO_EXPORT int
+_arrays_overlap(PyArrayObject *arr1, PyArrayObject *arr2);
+
 #endif
