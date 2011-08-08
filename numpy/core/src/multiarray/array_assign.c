@@ -18,6 +18,8 @@
 #include "npy_config.h"
 #include "numpy/npy_3kcompat.h"
 
+#include "shape.h"
+
 #include "array_assign.h"
 
 /* See array_assign.h for parameter documentation */

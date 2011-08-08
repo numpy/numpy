@@ -410,6 +410,34 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
                             char **out_dataB, npy_intp *out_stridesB,
                             char **out_dataC, npy_intp *out_stridesC);
 
+/*
+ * The same as PyArray_PrepareOneRawArrayIter, but for four
+ * operands instead of one. Any broadcasting of the four operands
+ * should have already been done before calling this function,
+ * as the ndim and shape is only specified once for all operands.
+ *
+ * Only the strides of the first operand are used to reorder
+ * the dimensions, no attempt to consider all the strides together
+ * is made, as is done in the NpyIter object.
+ *
+ * You can use this together with NPY_RAW_ITER_START and
+ * NPY_RAW_ITER_FOUR_NEXT to handle the looping boilerplate of everything
+ * but the innermost loop (which is for idim == 0).
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_PrepareFourRawArrayIter(int ndim, npy_intp *shape,
+                            char *dataA, npy_intp *stridesA,
+                            char *dataB, npy_intp *stridesB,
+                            char *dataC, npy_intp *stridesC,
+                            char *dataD, npy_intp *stridesD,
+                            int *out_ndim, npy_intp *out_shape,
+                            char **out_dataA, npy_intp *out_stridesA,
+                            char **out_dataB, npy_intp *out_stridesB,
+                            char **out_dataC, npy_intp *out_stridesC,
+                            char **out_dataD, npy_intp *out_stridesD);
+
 /* Start raw iteration */
 #define NPY_RAW_ITER_START(idim, ndim, coord, shape) \
         memset((coord), 0, (ndim) * sizeof(coord[0])); \
@@ -462,6 +490,30 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
                     (dataA) += (stridesA)[idim]; \
                     (dataB) += (stridesB)[idim]; \
                     (dataC) += (stridesC)[idim]; \
+                    break; \
+                } \
+            } \
+        } while ((idim) < (ndim))
+
+/* Increment to the next n-dimensional coordinate for four raw arrays */
+#define NPY_RAW_ITER_FOUR_NEXT(idim, ndim, coord, shape, \
+                              dataA, stridesA, \
+                              dataB, stridesB, \
+                              dataC, stridesC, \
+                              dataD, stridesD) \
+            for ((idim) = 1; (idim) < (ndim); ++(idim)) { \
+                if (++(coord)[idim] == (shape)[idim]) { \
+                    (coord)[idim] = 0; \
+                    (dataA) -= ((shape)[idim] - 1) * (stridesA)[idim]; \
+                    (dataB) -= ((shape)[idim] - 1) * (stridesB)[idim]; \
+                    (dataC) -= ((shape)[idim] - 1) * (stridesC)[idim]; \
+                    (dataD) -= ((shape)[idim] - 1) * (stridesD)[idim]; \
+                } \
+                else { \
+                    (dataA) += (stridesA)[idim]; \
+                    (dataB) += (stridesB)[idim]; \
+                    (dataC) += (stridesC)[idim]; \
+                    (dataD) += (stridesD)[idim]; \
                     break; \
                 } \
             } \

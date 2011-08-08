@@ -348,7 +348,7 @@ PyArray_AllocateMaskNA(PyArrayObject *arr,
  * Returns -1 on failure, 0 on success.
  */
 NPY_NO_EXPORT int
-PyArray_AssignNA(PyArrayObject *arr, NpyNA *na)
+PyArray_AssignNA(PyArrayObject *arr, PyArrayObject *wheremask, NpyNA *na)
 {
     NpyNA_fields *fna = (NpyNA_fields *)na;
     char maskvalue;
@@ -376,7 +376,7 @@ PyArray_AssignNA(PyArrayObject *arr, NpyNA *na)
         maskvalue = (char)NpyMaskValue_Create(0, fna->payload);
     }
 
-    return PyArray_AssignMaskNA(arr, NULL, maskvalue);
+    return PyArray_AssignMaskNA(arr, wheremask, maskvalue);
 }
 
 /*
