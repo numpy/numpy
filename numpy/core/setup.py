@@ -753,6 +753,7 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'arraytypes.c.src'),
             join('src', 'multiarray', 'array_assign.c'),
             join('src', 'multiarray', 'array_assign_scalar.c'),
+            join('src', 'multiarray', 'array_assign_array.c'),
             join('src', 'multiarray', 'buffer.c'),
             join('src', 'multiarray', 'calculation.c'),
             join('src', 'multiarray', 'common.c'),

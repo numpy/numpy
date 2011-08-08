@@ -706,7 +706,11 @@ array_boolean_subscript(PyArrayObject *self,
         return NULL;
     }
 
-    /* See the Boolean Indexing section of the missing data NEP */
+    /*
+     * See the Boolean Indexing section of the missing data NEP.
+     *
+     * TODO: Add 'wheremask' as a parameter to ContainsNA.
+     */
     if (PyArray_ContainsNA(bmask)) {
         PyErr_SetString(PyExc_ValueError,
                 "The boolean mask indexing array "

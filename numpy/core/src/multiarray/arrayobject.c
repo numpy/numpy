@@ -211,7 +211,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
             }
             /* Assigning NA affects the mask if it exists */
             else if (na != NULL) {
-                if (PyArray_AssignNA(dest, na) < 0) {
+                if (PyArray_AssignNA(dest, NULL, na) < 0) {
                     Py_DECREF(na);
                     Py_DECREF(src_object);
                     return -1;

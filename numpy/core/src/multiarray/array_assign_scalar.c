@@ -167,80 +167,6 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
 
 /*
  * Assigns the scalar value to every element of the destination raw array
- * except for those which are masked as NA according to 'maskna'.
- *
- * Returns 0 on success, -1 on failure.
- */
-NPY_NO_EXPORT int
-raw_array_assign_scalar_preservena(int ndim, npy_intp *shape,
-        PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides,
-        PyArray_Descr *src_dtype, char *src_data,
-        PyArray_Descr *maskna_dtype, char *maskna_data,
-        npy_intp *maskna_strides)
-{
-    int idim;
-    npy_intp shape_it[NPY_MAXDIMS], dst_strides_it[NPY_MAXDIMS];
-    npy_intp maskna_strides_it[NPY_MAXDIMS];
-    npy_intp coord[NPY_MAXDIMS];
-    NPY_BEGIN_THREADS_DEF;
-
-    PyArray_MaskedStridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
-    int aligned, needs_api = 0;
-    npy_intp src_itemsize = src_dtype->elsize;
-
-    /* Check alignment */
-    aligned = raw_array_is_aligned(ndim, dst_data, dst_strides,
-                                    dst_dtype->alignment);
-    if (((npy_intp)src_data & (src_dtype->alignment - 1)) != 0) {
-        aligned = 0;
-    }
-
-    /* Use raw iteration with no heap allocation */
-    if (PyArray_PrepareTwoRawArrayIter(
-                    ndim, shape,
-                    dst_data, dst_strides,
-                    maskna_data, maskna_strides,
-                    &ndim, shape_it,
-                    &dst_data, dst_strides_it,
-                    &maskna_data, maskna_strides_it) < 0) {
-        return -1;
-    }
-
-    /* Get the function to do the casting */
-    if (PyArray_GetMaskedDTypeTransferFunction(aligned,
-                        0, dst_strides_it[0], maskna_strides_it[0],
-                        src_dtype, dst_dtype, maskna_dtype,
-                        0,
-                        &stransfer, &transferdata,
-                        &needs_api) != NPY_SUCCEED) {
-        return -1;
-    }
-
-    if (!needs_api) {
-        NPY_BEGIN_THREADS;
-    }
-
-    NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
-        /* Transfer the data based on the NA mask */
-        stransfer(dst_data, dst_strides_it[0], src_data, 0,
-                    (npy_mask *)maskna_data, maskna_strides_it[0],
-                    shape_it[0], src_itemsize, transferdata);
-    } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
-                            dst_data, dst_strides_it,
-                            maskna_data, maskna_strides_it);
-
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
-
-    NPY_AUXDATA_FREE(transferdata);
-
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
-}
-
-/*
- * Assigns the scalar value to every element of the destination raw array
  * where the 'wheremask' is True, except for those which are masked as NA
  * according to 'maskna'.
  *
@@ -470,7 +396,7 @@ array_assign_scalar(PyArrayObject *dst,
         }
         /* A value assignment without overwriting NA values */
         else {
-            if (raw_array_assign_scalar_preservena(
+            if (raw_array_wheremasked_assign_scalar(
                     PyArray_NDIM(dst), PyArray_DIMS(dst),
                     PyArray_DESCR(dst), PyArray_DATA(dst), PyArray_STRIDES(dst),
                     src_dtype, src_data,
