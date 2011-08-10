@@ -392,6 +392,7 @@ class TestLoadTxt(TestCase):
         assert_array_equal(x, a)
 
     def test_empty_file(self):
+        warnings.filterwarnings("ignore", message="loadtxt: Empty input file:")
         c = StringIO()
         x = np.loadtxt(c)
         assert_equal(x.shape, (0,))

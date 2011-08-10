@@ -763,6 +763,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # End of lines reached
             first_line = ''
             first_vals = []
+            warnings.warn('loadtxt: Empty input file: "%s"' % fname)
         N = len(usecols or first_vals)
 
         dtype_types, packing = flatten_dtype(dtype)
@@ -1275,7 +1276,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             first_values = split_line(first_line)
     except StopIteration:
         # return an empty array if the datafile is empty
-        first_line = ''
+        first_line = asbytes('')
         first_values = []
         warnings.warn('genfromtxt: Empty input file: "%s"' % fname)
 
