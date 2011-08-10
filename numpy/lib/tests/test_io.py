@@ -428,6 +428,7 @@ class TestLoadTxt(TestCase):
         assert_array_equal(x, a)
 
     def test_empty_file(self):
+        warnings.filterwarnings("ignore", message="loadtxt: Empty input file:")
         c = StringIO()
         x = np.loadtxt(c)
         assert_equal(x.shape, (0,))
@@ -987,11 +988,17 @@ M   33  21.99
                              usecols=('a', 'c'), **kwargs)
         assert_equal(test, ctrl)
 
-
     def test_empty_file(self):
-        "Test that an empty file raises the proper exception"
-        data = StringIO()
-        assert_raises(IOError, np.ndfromtxt, data)
+        "Test that an empty file raises the proper warning."
+        warn_ctx = WarningManager()
+        warn_ctx.__enter__()
+        try:
+            warnings.filterwarnings("ignore", message="genfromtxt: Empty input file:")
+            data = StringIO()
+            test = np.genfromtxt(data)
+            assert_equal(test, np.array([]))
+        finally:
+            warn_ctx.__exit__()
 
 
     def test_fancy_dtype_alt(self):

@@ -765,6 +765,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # End of lines reached
             first_line = ''
             first_vals = []
+            warnings.warn('loadtxt: Empty input file: "%s"' % fname)
         N = len(usecols or first_vals)
 
         dtype_types, packing = flatten_dtype(dtype)
@@ -1299,8 +1300,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     first_line = asbytes('').join(first_line.split(comments)[1:])
             first_values = split_line(first_line)
     except StopIteration:
-        # might want to return empty array instead of raising error.
-        raise IOError('End-of-file reached before encountering data.')
+        # return an empty array if the datafile is empty
+        first_line = asbytes('')
+        first_values = []
+        warnings.warn('genfromtxt: Empty input file: "%s"' % fname)
 
     # Should we take the first values as names ?
     if names is True:
