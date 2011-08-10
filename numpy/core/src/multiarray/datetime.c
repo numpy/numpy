@@ -807,6 +807,7 @@ get_datetime_metadata_from_dtype(PyArray_Descr *dtype)
 
     /* Check that the dtype has an NpyCapsule for the metadata */
     meta = (PyArray_DatetimeMetaData *)NpyCapsule_AsVoidPtr(metacobj);
+    Py_DECREF(metacobj);
     if (meta == NULL) {
         PyErr_SetString(PyExc_TypeError,
                 "Datetime type object is invalid, unit metadata is corrupt");
