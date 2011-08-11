@@ -108,6 +108,12 @@ class NoseTester(object):
         which `NoseTester` is initialized.
 
     """
+    # Stuff to exclude from tests. These are from numpy.distutils
+    excludes = ['f2py_ext',
+                'f2py_f90_ext',
+                'gen_ext',
+                'pyrex_ext',
+                'swig_ext']
 
     def __init__(self, package=None):
         ''' Test class init
@@ -188,6 +194,15 @@ class NoseTester(object):
         print "Python version %s" % pyversion
         print "nose version %d.%d.%d" % nose.__versioninfo__
 
+    def _get_custom_doctester(self):
+        """ Return instantiated plugin for doctests
+
+        Allows subclassing of this class to override doctester
+
+        A return value of None means use the nose builtin doctest plugin
+        """
+        from noseclasses import NumpyDoctest
+        return NumpyDoctest()
 
     def prepare_test_args(self, label='fast', verbose=1, extra_argv=None,
                           doctests=False, coverage=False):
@@ -202,36 +217,37 @@ class NoseTester(object):
         test
 
         """
-
-        # if doctests is in the extra args, remove it and set the doctest
-        # flag so the NumPy doctester is used instead
-        if extra_argv and '--with-doctest' in extra_argv:
-            extra_argv.remove('--with-doctest')
-            doctests = True
-
+        # fail with nice error message if nose is not present
+        import_nose()
+        # compile argv
         argv = self._test_argv(label, verbose, extra_argv)
-        if doctests:
-            argv += ['--with-numpydoctest']
-
+        # bypass tests noted for exclude
+        for ename in self.excludes:
+            argv += ['--exclude', ename]
+        # our way of doing coverage
         if coverage:
             argv+=['--cover-package=%s' % self.package_name, '--with-coverage',
                    '--cover-tests', '--cover-inclusive', '--cover-erase']
-
-        # bypass these samples under distutils
-        argv += ['--exclude','f2py_ext']
-        argv += ['--exclude','f2py_f90_ext']
-        argv += ['--exclude','gen_ext']
-        argv += ['--exclude','pyrex_ext']
-        argv += ['--exclude','swig_ext']
-
-        # fail with nice error message if nose is not present
-        import_nose()
-
         # construct list of plugins
         import nose.plugins.builtin
-        from noseclasses import NumpyDoctest, KnownFailure, Unplugger
-        plugins = [NumpyDoctest(), KnownFailure(), Unplugger()]
+        from noseclasses import KnownFailure, Unplugger
+        plugins = [KnownFailure()]
         plugins += [p() for p in nose.plugins.builtin.plugins]
+        # add doctesting if required
+        doctest_argv = '--with-doctest' in argv
+        if doctests == False and doctest_argv:
+            doctests = True
+        plug = self._get_custom_doctester()
+        if plug is None:
+            # use standard doctesting
+            if doctests and not doctest_argv:
+                argv += ['--with-doctest']
+        else: # custom doctesting
+            if doctest_argv: # in fact the unplugger would take care of this
+                argv.remove('--with-doctest')
+            plugins += [Unplugger('doctest'), plug]
+            if doctests:
+                argv += ['--with-' + plug.name]
         return argv, plugins
 
     def test(self, label='fast', verbose=1, extra_argv=None, doctests=False,
