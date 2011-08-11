@@ -185,16 +185,24 @@ print_state = numpy.get_printoptions()
 
 class NumpyDoctest(npd.Doctest):
     name = 'numpydoctest'   # call nosetests with --with-numpydoctest
-    enabled = True
+    score = 1000 # load late, after doctest builtin
 
     def options(self, parser, env=os.environ):
         Plugin.options(self, parser, env)
 
     def configure(self, options, config):
+        # parent method sets enabled flag from command line --with-numpydoctest
         Plugin.configure(self, options, config)
         self.doctest_tests = True
         self.finder = NumpyDocTestFinder()
         self.parser = doctest.DocTestParser()
+        if self.enabled:
+            # Pull standard doctest out of plugin list; there's no reason to run
+            # both.  In practice the Unplugger plugin above would cover us when
+            # run from a standard numpy.test() call; this is just in case
+            # someone wants to run our plugin outside the numpy.test() machinery
+            config.plugins.plugins = [p for p in config.plugins.plugins
+                                      if p.name != 'doctest']
 
     # Turn on whitespace normalization, set a minimal execution context
     # for doctests, implement a "#random" directive to allow executing a
@@ -263,6 +271,27 @@ class NumpyDoctest(npd.Doctest):
         return npd.Doctest.wantFile(self, file)
 
 
+class Unplugger(object):
+    """ Nose plugin to remove named plugin late in loading
+
+    By default it removes the "doctest" plugin.
+    """
+    name = 'unplugger'
+    enabled = True # always enabled
+    score = 4000 # load late in order to be after builtins
+
+    def __init__(self, to_unplug='doctest'):
+        self.to_unplug = to_unplug
+
+    def options(self, parser, env):
+        pass
+
+    def configure(self, options, config):
+        # Pull named plugin out of plugins list
+        config.plugins.plugins = [p for p in config.plugins.plugins
+                                  if p.name != self.to_unplug]
+
+
 class KnownFailureTest(Exception):
     '''Raise this exception to mark a test as a known failing test.'''
     pass
@@ -295,41 +324,9 @@ class KnownFailure(ErrorClassPlugin):
             self.enabled = False
 
 
-class NpConfig(nose.core.Config):
-    ''' Class to pull out nose doctest plugin after configuration
-
-    This allows the user to set doctest related settings in their
-    configuration.  For example, without this fix, a setting of
-    'with-doctest=1' in the user's .noserc file would cause an error, if
-    we remove the doctest extension before this stage.  Our configure
-    uses the plugin to parse any settings, but then removed the doctest
-    plugin because the numpy doctester should be used for doctests
-    instead.
-    '''
-    def __init__(self, config):
-        self.__dict__ = config.__dict__
-        
-    def configure(self, *args, **kwargs):
-        super(NpConfig, self).configure(*args, **kwargs)
-        self.plugins.plugins = [p for p in self.plugins.plugins
-                                if p.name != 'doctest']
-        
-
-# Our class has two uses.  First, to allow us to use NpConfig above to
-# remove the doctest plugin after it has parsed the configuration.
-# Second we save the results of the tests in runTests - see runTests
+# Class allows us to save the results of the tests in runTests - see runTests
 # method docstring for details
 class NumpyTestProgram(nose.core.TestProgram):
-    def makeConfig(self, *args, **kwargs):
-        """Load a Config, pre-filled with user config files if any are
-        found.
-
-        We override this method only to allow us to return a NpConfig
-        object instead of a Config object. 
-        """
-        config = super(NumpyTestProgram, self).makeConfig(*args, **kwargs)
-        return NpConfig(config)
-    
     def runTests(self):
         """Run Tests. Returns true on success, false on failure, and
         sets self.success to the same value.
@@ -345,7 +342,6 @@ class NumpyTestProgram(nose.core.TestProgram):
         plug_runner = self.config.plugins.prepareTestRunner(self.testRunner)
         if plug_runner is not None:
             self.testRunner = plug_runner
-
         self.result = self.testRunner.run(self.test)
         self.success = self.result.wasSuccessful()
         return self.success

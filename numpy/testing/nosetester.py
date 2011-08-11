@@ -79,33 +79,6 @@ def run_module_suite(file_to_run = None):
 
     import_nose().run(argv=['',file_to_run])
 
-# contructs NoseTester method docstrings
-def _docmethod(meth, testtype):
-    if not meth.__doc__:
-        return
-
-    test_header = \
-        '''Parameters
-        ----------
-        label : {'fast', 'full', '', attribute identifer}
-            Identifies the %(testtype)ss to run.  This can be a string to
-            pass to the nosetests executable with the '-A' option, or one of
-            several special values.
-            Special values are:
-                'fast' - the default - which corresponds to nosetests -A option
-                         of 'not slow'.
-                'full' - fast (as above) and slow %(testtype)ss as in the
-                         no -A option to nosetests - same as ''
-            None or '' - run all %(testtype)ss
-            attribute_identifier - string passed directly to nosetests as '-A'
-        verbose : integer
-            verbosity value for test outputs, 1-10
-        extra_argv : list
-            List with any extra args to pass to nosetests''' \
-            % {'testtype': testtype}
-
-    meth.__doc__ = meth.__doc__ % {'test_header':test_header}
-
 
 class NoseTester(object):
     """
@@ -171,7 +144,19 @@ class NoseTester(object):
     def _test_argv(self, label, verbose, extra_argv):
         ''' Generate argv for nosetest command
 
-        %(test_header)s
+        Parameters
+        ----------
+        label : {'fast', 'full', '', attribute identifier}, optional
+            see ``test`` docstring
+        verbose : int, optional
+            Verbosity value for test outputs, in the range 1-10. Default is 1.
+        extra_argv : list, optional
+            List with any extra arguments to pass to nosetests.
+
+        Returns
+        -------
+        argv : list
+            command line arguments that will be passed to nose
         '''
         argv = [__file__, self.package_path, '-s']
         if label and label != 'full':
@@ -239,12 +224,13 @@ class NoseTester(object):
         argv += ['--exclude','pyrex_ext']
         argv += ['--exclude','swig_ext']
 
-        nose = import_nose()
+        # fail with nice error message if nose is not present
+        import_nose()
 
         # construct list of plugins
         import nose.plugins.builtin
-        from noseclasses import NumpyDoctest, KnownFailure
-        plugins = [NumpyDoctest(), KnownFailure()]
+        from noseclasses import NumpyDoctest, KnownFailure, Unplugger
+        plugins = [NumpyDoctest(), KnownFailure(), Unplugger()]
         plugins += [p() for p in nose.plugins.builtin.plugins]
         return argv, plugins
 
@@ -256,15 +242,14 @@ class NoseTester(object):
         Parameters
         ----------
         label : {'fast', 'full', '', attribute identifier}, optional
-            Identifies the tests to run. This can be a string to pass to the
-            nosetests executable with the '-A' option, or one of
-            several special values.
-            Special values are:
-                'fast' - the default - which corresponds to the ``nosetests -A``
-                         option of 'not slow'.
-                'full' - fast (as above) and slow tests as in the
-                         'no -A' option to nosetests - this is the same as ''.
-            None or '' - run all tests.
+            Identifies the tests to run. This can be a string to pass to
+            the nosetests executable with the '-A' option, or one of several
+            special values.  Special values are:
+            * 'fast' - the default - which corresponds to the ``nosetests -A``
+              option of 'not slow'.
+            * 'full' - fast (as above) and slow tests as in the
+              'no -A' option to nosetests - this is the same as ''.
+            * None or '' - run all tests.
             attribute_identifier - string passed directly to nosetests as '-A'.
         verbose : int, optional
             Verbosity value for test outputs, in the range 1-10. Default is 1.
@@ -336,18 +321,17 @@ class NoseTester(object):
         Parameters
         ----------
         label : {'fast', 'full', '', attribute identifier}, optional
-            Identifies the tests to run. This can be a string to pass to the
-            nosetests executable with the '-A' option, or one of
-            several special values.
-            Special values are:
-                'fast' - the default - which corresponds to the ``nosetests -A``
-                         option of 'not slow'.
-                'full' - fast (as above) and slow tests as in the
-                         'no -A' option to nosetests - this is the same as ''.
-            None or '' - run all tests.
+            Identifies the benchmarks to run. This can be a string to pass to
+            the nosetests executable with the '-A' option, or one of several
+            special values.  Special values are:
+            * 'fast' - the default - which corresponds to the ``nosetests -A``
+              option of 'not slow'.
+            * 'full' - fast (as above) and slow benchmarks as in the
+              'no -A' option to nosetests - this is the same as ''.
+            * None or '' - run all tests.
             attribute_identifier - string passed directly to nosetests as '-A'.
         verbose : int, optional
-            Verbosity value for test outputs, in the range 1-10. Default is 1.
+            Verbosity value for benchmark outputs, in the range 1-10. Default is 1.
         extra_argv : list, optional
             List with any extra arguments to pass to nosetests.
 
@@ -392,13 +376,14 @@ class NoseTester(object):
         argv = self._test_argv(label, verbose, extra_argv)
         argv += ['--match', r'(?:^|[\\b_\\.%s-])[Bb]ench' % os.sep]
 
+        # import nose or make informative error
         nose = import_nose()
-        return nose.run(argv=argv)
 
-    # generate method docstrings
-    _docmethod(_test_argv, '(testtype)')
-    _docmethod(test, 'test')
-    _docmethod(bench, 'benchmark')
+        # get plugin to disable doctests
+        from noseclasses import Unplugger
+        add_plugins = [Unplugger('doctest')]
+
+        return nose.run(argv=argv, addplugins=add_plugins)
 
 
 ########################################################################
