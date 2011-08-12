@@ -735,8 +735,8 @@ def test_array_maskna_clip_method():
     assert_equal(np.isna(res), [0,1,0,0,1,0])
     assert_equal(res[~np.isna(res)], [4, 7, 4, 7])
 
-def test_array_maskna_max_min_methods():
-    # ndarray.max, ndarray.min
+def test_array_maskna_max_min_ptp_methods():
+    # ndarray.max, ndarray.min, ndarray.ptp
     a = np.array([[2, np.NA, 10],
                   [4, 8, 7],
                   [12, 4, np.NA]], maskna=True)
@@ -756,6 +756,58 @@ def test_array_maskna_max_min_methods():
     res = a.min(axis=-1)
     assert_equal(np.isna(res), [1,0,1])
     assert_equal(res[~np.isna(res)], [4])
+
+    res = a.ptp(axis=0)
+    assert_equal(np.isna(res), [0,1,1])
+    assert_equal(res[~np.isna(res)], [10])
+
+    res = a.ptp(axis=-1)
+    assert_equal(np.isna(res), [1,0,1])
+    assert_equal(res[~np.isna(res)], [4])
+
+def test_array_maskna_sum_prod_methods():
+    # ndarray.sum, ndarray.prod
+    a = np.array([[2, np.NA, 10],
+                  [4, 8, 7],
+                  [12, 4, np.NA]], maskna=True)
+    
+    res = a.sum(axis=0)
+    assert_equal(np.isna(res), [0,1,1])
+    assert_equal(res[~np.isna(res)], [18])
+
+    res = a.sum(axis=-1)
+    assert_equal(np.isna(res), [1,0,1])
+    assert_equal(res[~np.isna(res)], [19])
+    
+    res = a.prod(axis=0)
+    assert_equal(np.isna(res), [0,1,1])
+    assert_equal(res[~np.isna(res)], [2*4*12])
+
+    res = a.prod(axis=-1)
+    assert_equal(np.isna(res), [1,0,1])
+    assert_equal(res[~np.isna(res)], [4*8*7])
+
+def test_array_maskna_std_mean_methods():
+    # ndarray.std, ndarray.mean
+    a = np.array([[2, np.NA, 10],
+                  [4, 8, 7],
+                  [12, 4, np.NA]], maskna=True)
+
+    res = a.mean(axis=0)
+    assert_equal(np.isna(res), [0,1,1])
+    assert_equal(res[~np.isna(res)], [np.array([2,4,12]).mean()])
+
+    res = a.mean(axis=-1)
+    assert_equal(np.isna(res), [1,0,1])
+    assert_equal(res[~np.isna(res)], [np.array([4,8,7]).mean()])
+
+    res = a.std(axis=0)
+    assert_equal(np.isna(res), [0,1,1])
+    assert_equal(res[~np.isna(res)], [np.array([2,4,12]).std()])
+
+    res = a.std(axis=-1)
+    assert_equal(np.isna(res), [1,0,1])
+    assert_equal(res[~np.isna(res)], [np.array([4,8,7]).std()])
 
 def test_array_maskna_conjugate_method():
     # ndarray.conjugate

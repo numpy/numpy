@@ -152,7 +152,7 @@ PyArray_ArgMin(PyArrayObject *ap, int axis, PyArrayObject *out)
 
     if (PyArray_ISFLEXIBLE(ap)) {
         PyErr_SetString(PyExc_TypeError,
-                        "argmax is unsupported for this type");
+                        "argmin is unsupported for this type");
         return NULL;
     }
     else if (PyArray_ISUNSIGNED(ap)) {

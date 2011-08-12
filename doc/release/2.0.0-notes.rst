@@ -22,8 +22,10 @@ What works with NA:
     * All element-wise ufuncs.
     * UFunc.reduce methods, with a new skipna parameter.
     * Array methods:
-       + ndarray.clip
-       + ndarray.conjugate, 
+       + ndarray.clip, ndarray.min, ndarray.max, ndarray.sum, ndarray.prod,
+         
+       
+       ndarray.conjugate
 
 What doesn't work with NA:
     * Fancy indexing, such as with lists and partial boolean masks.
