@@ -2506,7 +2506,7 @@ get_masked_binary_op_function(PyUFuncObject *self, PyArrayObject *arr,
                         NpyAuxData **out_innerloopdata)
 {
     int i, retcode;
-    PyArrayObject *op[3] = {arr, arr, arr};
+    PyArrayObject *op[3] = {arr, arr, NULL};
     PyArray_Descr *dtype[3] = {NULL, NULL, NULL};
     PyObject *type_tup = NULL;
 
@@ -2521,14 +2521,17 @@ get_masked_binary_op_function(PyUFuncObject *self, PyArrayObject *arr,
         if (otype_dtype == NULL) {
             return -1;
         }
-        type_tup = Py_BuildValue("(N)", otype_dtype);
+        Py_INCREF(otype_dtype);
+        Py_INCREF(otype_dtype);
+        type_tup = Py_BuildValue("(NNN)",
+                        otype_dtype, otype_dtype, otype_dtype);
         if (type_tup == NULL) {
             return -1;
         }
     }
 
     /* Use the type resolution function to find our loop */
-    retcode = self->type_resolution_masked_function(self, NPY_SAFE_CASTING,
+    retcode = self->type_resolution_masked_function(self, NPY_SAME_KIND_CASTING,
                         op, type_tup, dtype,
                         out_innerloop, out_innerloopdata);
     Py_XDECREF(type_tup);
@@ -2991,7 +2994,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                 PyErr_SetString(PyExc_ValueError,
                         "Cannot assign NA value to an array which "
                         "does not support NAs");
-                goto fail;
+                return NULL;
             }
             else {
                 use_maskna = 0;
@@ -3032,12 +3035,12 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         }
     }
     if (retcode < 0) {
-        PyArray_Descr *dtype = PyArray_DescrFromType(otype);
-        PyErr_Format(PyExc_ValueError,
-                     "could not find a matching type for %s.reduce, "
-                     "requested type has type code '%c'",
-                            ufunc_name, dtype ? dtype->type : '-');
-        Py_XDECREF(dtype);
+        //PyArray_Descr *dtype = PyArray_DescrFromType(otype);
+        //PyErr_Format(PyExc_ValueError,
+        //             "could not find a matching type for %s.reduce, "
+        //             "requested type has type code '%c'",
+        //                    ufunc_name, dtype ? dtype->type : '-');
+        //Py_XDECREF(dtype);
         return NULL;
     }
 

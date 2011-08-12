@@ -424,7 +424,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
 
     /* if it's a builtin type, then use the typenumber */
     typenum = _typenum_fromtypeobj(type,1);
-    if (typenum != PyArray_NOTYPE) {
+    if (typenum != NPY_NOTYPE) {
         new = PyArray_DescrFromType(typenum);
         return new;
     }
@@ -433,24 +433,24 @@ PyArray_DescrFromTypeObject(PyObject *type)
     if ((type == (PyObject *) &PyNumberArrType_Type) ||
             (type == (PyObject *) &PyInexactArrType_Type) ||
             (type == (PyObject *) &PyFloatingArrType_Type)) {
-        typenum = PyArray_DOUBLE;
+        typenum = NPY_DOUBLE;
     }
     else if (type == (PyObject *)&PyComplexFloatingArrType_Type) {
-        typenum = PyArray_CDOUBLE;
+        typenum = NPY_CDOUBLE;
     }
     else if ((type == (PyObject *)&PyIntegerArrType_Type) ||
             (type == (PyObject *)&PySignedIntegerArrType_Type)) {
-        typenum = PyArray_LONG;
+        typenum = NPY_LONG;
     }
     else if (type == (PyObject *) &PyUnsignedIntegerArrType_Type) {
-        typenum = PyArray_ULONG;
+        typenum = NPY_ULONG;
     }
     else if (type == (PyObject *) &PyCharacterArrType_Type) {
-        typenum = PyArray_STRING;
+        typenum = NPY_STRING;
     }
     else if ((type == (PyObject *) &PyGenericArrType_Type) ||
             (type == (PyObject *) &PyFlexibleArrType_Type)) {
-        typenum = PyArray_VOID;
+        typenum = NPY_VOID;
     }
 
     if (typenum != PyArray_NOTYPE) {
@@ -464,7 +464,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
 
     /* Do special thing for VOID sub-types */
     if (PyType_IsSubtype((PyTypeObject *)type, &PyVoidArrType_Type)) {
-        new = PyArray_DescrNewFromType(PyArray_VOID);
+        new = PyArray_DescrNewFromType(NPY_VOID);
         conv = _arraydescr_fromobj(type);
         if (conv) {
             new->fields = conv->fields;
