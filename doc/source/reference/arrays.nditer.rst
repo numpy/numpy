@@ -6,12 +6,14 @@
 Iterating Over Arrays
 *********************
 
-The iterator object :class:`nditer`, introduced in NumPy 1.6, provides many
-flexible ways to visit all the elements of one or more arrays in a systematic
-fashion. This page introduces some basic ways to use the object for
-computations on arrays in Python. Since the Python exposure of :class:`nditer`
-is a relatively straightforward mapping of the C array iterator API,
-these ideas will also provide help working with array iteration in C.
+The iterator object :class:`nditer`, introduced in NumPy 1.6, provides
+many flexible ways to visit all the elements of one or more arrays in
+a systematic fashion. This page introduces some basic ways to use the
+object for computations on arrays in Python, then concludes with how one
+can accelerate the inner loop in Cython. Since the Python exposure of
+:class:`nditer` is a relatively straightforward mapping of the C array
+iterator API, these ideas will also provide help working with array
+iteration in C.
 
 Single Array Iteration
 ======================
@@ -33,8 +35,8 @@ is chosen to match the memory layout of the array instead of using a
 standard C or Fortran ordering. This is done for access efficiency,
 reflecting the idea that by default one simply wants to visit each element
 without concern for a particular ordering. We can see this by iterating
-over the transpose our previous array, compared to taking a copy if it
-in C order.
+over the transpose of our previous array, compared to taking a copy
+of that transpose in C order.
 
 .. admonition:: Example
 
@@ -50,10 +52,12 @@ in C order.
     0 3 1 4 2 5
 
 The elements of both `a` and `a.T` get traversed in the same order,
-namely the order they are stored in memory.
+namely the order they are stored in memory, whereas the elements of
+`a.T.copy(order='C')` get visited in a different order because they
+have been put into a different memory layout.
 
 Controlling Iteration Order
-===========================
+---------------------------
 
 There are times when it is important to visit the elements of an array
 in a specific order, irrespective of the layout of the elements in memory.
@@ -75,18 +79,17 @@ order='C' for C order and order='F' for Fortran order.
     0 3 1 4 2 5
 
 Modifying Array Values
-======================
+----------------------
 
 By default, the :class:`nditer` treats the input array as a read-only
-object. To modify the array elements, you must specify you want to
-use either read-write or write-only mode. This is controlled with
-per-operand flags.
+object. To modify the array elements, you must specify either read-write
+or write-only mode. This is controlled with per-operand flags.
 
-One thing to watch out for is that regular assignment in Python
-simply changes a reference in the local or global variable dictionary.
-This means that simply assigning to `x` will not place the value into
-the element of the array, but rather switch `x` from being an array element
-reference to being a reference to the value you assigned. To
+Regular assignment in Python simply changes a reference in the local or
+global variable dictionary instead of modifying an existing variable in
+place.  This means that simply assigning to `x` will not place the value
+into the element of the array, but rather switch `x` from being an array
+element reference to being a reference to the value you assigned. To
 actually modify the element of the array, `x` should be indexed with
 the ellipsis.
 
@@ -104,7 +107,7 @@ the ellipsis.
            [ 6,  8, 10]])
 
 Using an External Loop
-======================
+----------------------
 
 In all the examples so far, the elements of `a` are provided by the
 iterator one at a time. While this is simple and convenient, it is
@@ -116,7 +119,7 @@ being visited.
 The :class:`nditer` will try to provide chunks that are
 as large as possible to the inner loop. By forcing 'C' and 'F' order,
 we get different external loop sizes. This mode is enabled by specifying
-a global iterator flag.
+an iterator flag.
 
 Observe that with the default of keeping native memory order, the
 iterator is able to provide a single one-dimensional chunk, whereas
@@ -137,7 +140,7 @@ elements each.
     [0 3] [1 4] [2 5]
 
 Tracking an Index or Multi-Index
-================================
+--------------------------------
 
 During iteration, you may want to use the index of the current
 element in a computation. For example, you may want to visit the
@@ -188,7 +191,7 @@ loop, because it requires a different index value per element. If
 you try to combine these flags, the :class:`nditer` object will
 raise an exception
 
-.. admontion:: Example
+.. admonition:: Example
 
     >>> a = np.zeros((2,3))
     >>> it = np.nditer(a, flags=['c_index', 'external_loop'])
@@ -197,7 +200,7 @@ raise an exception
     ValueError: Iterator flag EXTERNAL_LOOP cannot be used if an index or multi-index is being tracked
 
 Buffering the Array Elements
-============================
+----------------------------
 
 When forcing an iteration order, we observed that the external loop
 option may provide the elements in smaller chunks because the elements
@@ -225,7 +228,7 @@ is enabled.
     [0 3 1 4 2 5]
 
 Iterating as a Specific Data Type
-=================================
+---------------------------------
 
 There are times when it is necessary to treat an array as a different
 data type than it is stored as. For instance, one may want to do all
@@ -263,7 +266,7 @@ data type doesn't match precisely.
 
 In copying mode, 'copy' is specified as a per-operand flag. This is
 done to provide control in a per-operand fashion. Buffering mode is
-specified as a global iterator flag.
+specified as an iterator flag.
 
 .. admonition:: Example
 
@@ -365,7 +368,7 @@ which includes the input shapes to help diagnose the problem.
     ValueError: operands could not be broadcast together with shapes (2) (2,3)
 
 Iterator-Allocated Output Arrays
-================================
+--------------------------------
 
 A common case in NumPy functions is to have outputs allocated based
 on the broadcasting of the input, and additionally have an optional
@@ -374,7 +377,7 @@ provided. The :class:`nditer` object provides a convenient idiom that
 makes it very easy to support this mechanism.
 
 We'll show how this works by creating a function `square` which squares
-its input. Let's start with a minimal function definition without 'out'
+its input. Let's start with a minimal function definition excluding 'out'
 parameter support.
 
 .. admonition:: Example
@@ -420,8 +423,8 @@ reasons.
 
     >>> square([1,2,3])
     array([1, 4, 9])
-    >>> b = np.zeros((3,))
 
+    >>> b = np.zeros((3,))
     >>> square([1,2,3], out=b)
     array([ 1.,  4.,  9.])
     >>> b
@@ -434,7 +437,7 @@ reasons.
     ValueError: non-broadcastable output operand with shape (3) doesn't match the broadcast shape (2,3)
 
 Outer Product Iteration
-=======================
+-----------------------
 
 Any binary operation can be extended to an array operation in an
 outer product fashion, and the :class:`nditer` object provides a
@@ -450,7 +453,7 @@ from the iterator's axes to the axes of the operand.
 
 Suppose the first operand is one dimensional and the second operand is
 two dimensional. The iterator will have three dimensions, so `op_axes`
-will consist of two 3-element lists.  The first list picks out the one
+will have two 3-element lists.  The first list picks out the one
 axis of the first operand, and is -1 for the rest of the iterator axes,
 with a final result of [0, -1, -1]. The second list picks out the two
 axes of the second operand, but shouldn't overlap with the axes picked
@@ -473,20 +476,18 @@ Everything to do with the outer product is handled by the iterator setup.
     >>> it.operands[2]
     array([[[ 0,  0,  0,  0],
             [ 0,  0,  0,  0]],
-
            [[ 0,  1,  2,  3],
             [ 4,  5,  6,  7]],
-
            [[ 0,  2,  4,  6],
             [ 8, 10, 12, 14]]])
 
 Reduction Iteration
-===================
+-------------------
 
 Whenever a writeable operand has fewer elements than the full iteration space,
 that operand is undergoing a reduction. The :class:`nditer` object requires
 that any reduction operand be flagged as read-write, and only allows
-reductions when 'reduce_ok' is provided as a global iterator flag.
+reductions when 'reduce_ok' is provided as an iterator flag.
 
 For a simple example, consider taking the sum of all elements in an array.
 
@@ -533,7 +534,7 @@ initialization of the operand after this buffering operation is complete
 will not be reflected in the buffer that the iteration starts with, and
 garbage results will be produced.
 
-The global iterator flag "delay_bufalloc" is there to allow
+The iterator flag "delay_bufalloc" is there to allow
 iterator-allocated reduction operands to exist together with buffering.
 When this flag is set, the iterator will leave its buffers uninitialized
 until it receives a reset, after which it will be ready for regular
@@ -555,3 +556,149 @@ buffering.
     >>> it.operands[1]
     array([[ 6, 22, 38],
            [54, 70, 86]])
+
+Putting the Inner Loop in Cython
+================================
+
+Those who want really good performance out of their low level operations
+should strongly consider directly using the iteration API provided
+in C, but for those who are not comfortable with C or C++, Cython
+is a good middle ground with reasonable performance tradeoffs. For
+the :class:`nditer` object, this means letting the iterator take care
+of broadcasting, dtype conversion, and buffering, while giving the inner
+loop to Cython.
+
+For our example, we'll create a sum of squares function. To start,
+let's implement this function in straightforward Python. We want to
+support an 'axis' parameter similar to the numpy :func:`sum` function,
+so we will need to construct a list for the `op_axes` parameter.
+Here's how this looks.
+
+.. admonition:: Example
+
+    >>> def axis_to_axeslist(axis, ndim):
+    ...     if axis is None:
+    ...         return [-1] * ndim
+    ...     else:
+    ...         if type(axis) is not tuple:
+    ...             axis = (axis,)
+    ...         axeslist = [1] * ndim
+    ...         for i in axis:
+    ...             axeslist[i] = -1
+    ...         ax = 0
+    ...         for i in range(ndim):
+    ...             if axeslist[i] != -1:
+    ...                 axeslist[i] = ax
+    ...                 ax += 1
+    ...         return axeslist
+    ...
+    >>> def sum_squares_py(arr, axis=None, out=None):
+    ...     axeslist = axis_to_axeslist(axis, arr.ndim)
+    ...     it = np.nditer([arr, out], flags=['reduce_ok', 'external_loop',
+    ...                                       'buffered', 'delay_bufalloc'],
+    ...                 op_flags=[['readonly'], ['readwrite', 'allocate']],
+    ...                 op_axes=[None, axeslist],
+    ...                 op_dtypes=['float64', 'float64'])
+    ...     it.operands[1][...] = 0
+    ...     it.reset()
+    ...     for x, y in it:
+    ...         y[...] += x*x
+    ...     return it.operands[1]
+    ...
+    >>> a = np.arange(6).reshape(2,3)
+    >>> sum_squares_py(a)
+    array(55.0)
+    >>> sum_squares_py(a, axis=-1)
+    array([  5.,  50.])
+
+To Cython-ize this function, we replace the inner loop (y[...] += x*x) with
+Cython code that's specialized for the float64 dtype. With the
+'external_loop' flag enabled, the arrays provided to the inner loop will
+always be one-dimensional, so very little checking needs to be done.
+
+Here's the listing of sum_squares.pyx::
+
+    import numpy as np
+    cimport numpy as np
+    cimport cython
+
+    def axis_to_axeslist(axis, ndim):
+        if axis is None:
+            return [-1] * ndim
+        else:
+            if type(axis) is not tuple:
+                axis = (axis,)
+            axeslist = [1] * ndim
+            for i in axis:
+                axeslist[i] = -1
+            ax = 0
+            for i in range(ndim):
+                if axeslist[i] != -1:
+                    axeslist[i] = ax
+                    ax += 1
+            return axeslist
+
+    @cython.boundscheck(False)
+    def sum_squares_cy(arr, axis=None, out=None):
+        cdef np.ndarray[double] x
+        cdef np.ndarray[double] y
+        cdef int size
+        cdef double value
+
+        axeslist = axis_to_axeslist(axis, arr.ndim)
+        it = np.nditer([arr, out], flags=['reduce_ok', 'external_loop',
+                                          'buffered', 'delay_bufalloc'],
+                    op_flags=[['readonly'], ['readwrite', 'allocate']],
+                    op_axes=[None, axeslist],
+                    op_dtypes=['float64', 'float64'])
+        it.operands[1][...] = 0
+        it.reset()
+        for xarr, yarr in it:
+            x = xarr
+            y = yarr
+            size = x.shape[0]
+            for i in range(size):
+               value = x[i]
+               y[i] = y[i] + value * value
+        return it.operands[1]
+
+On this machine, building the .pyx file into a module looked like the
+following, but you may have to find some Cython tutorials to tell you
+the specifics for your system configuration.::
+
+    $ cython sum_squares.pyx
+    $ gcc -shared -pthread -fPIC -fwrapv -O2 -Wall -I/usr/include/python2.7 -fno-strict-aliasing -o sum_squares.so sum_squares.c
+
+Running this from the Python interpreter produces the same answers
+as our native Python/NumPy code did.
+
+.. admonition:: Example
+
+    >>> from sum_squares import sum_squares_cy
+    >>> a = np.arange(6).reshape(2,3)
+    >>> sum_squares_cy(a)
+    array(55.0)
+    >>> sum_squares_cy(a, axis=-1)
+    array([  5.,  50.])
+
+Doing a little timing in IPython shows that the reduced overhead and
+memory allocation of the Cython inner loop is providing a very nice
+speedup over both the straightforward Python code and an expression
+using NumPy's built-in sum function.::
+
+    >>> a = np.random.rand(1000,1000)
+
+    >>> timeit sum_squares_py(a, axis=-1)
+    10 loops, best of 3: 37.1 ms per loop
+
+    >>> timeit np.sum(a*a, axis=-1)
+    10 loops, best of 3: 20.9 ms per loop
+
+    >>> timeit sum_squares_cy(a, axis=-1)
+    100 loops, best of 3: 11.8 ms per loop
+
+    >>> np.all(sum_squares_cy(a, axis=-1) == np.sum(a*a, axis=-1))
+    True
+
+    >>> np.all(sum_squares_py(a, axis=-1) == np.sum(a*a, axis=-1))
+    True
