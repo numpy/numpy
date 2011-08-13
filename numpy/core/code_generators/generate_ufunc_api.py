@@ -75,7 +75,13 @@ _import_umath(void)
   return 0;
 }
 
-#define import_umath() { UFUNC_NOFPE if (_import_umath() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.umath failed to import"); return; }}
+#if PY_VERSION_HEX >= 0x03000000
+#define NUMPY_IMPORT_UMATH_RETVAL NULL
+#else
+#define NUMPY_IMPORT_UMATH_RETVAL
+#endif
+
+#define import_umath() { UFUNC_NOFPE if (_import_umath() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.umath failed to import"); return NUMPY_IMPORT_UMATH_RETVAL; }}
 
 #define import_umath1(ret) { UFUNC_NOFPE if (_import_umath() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.umath failed to import"); return ret; }}
 
