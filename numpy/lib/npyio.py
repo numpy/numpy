@@ -963,7 +963,6 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
         iscomplex_X = np.iscomplexobj(X)
         # `fmt` can be a string with multiple insertion points or a
         # list of formats.  E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
-        # Determine first if X is complex, where twice as many
         if type(fmt) in (list, tuple):
             if len(fmt) != ncol:
                 raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
