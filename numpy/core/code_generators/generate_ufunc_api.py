@@ -81,14 +81,47 @@ _import_umath(void)
 #define NUMPY_IMPORT_UMATH_RETVAL
 #endif
 
-#define import_umath() { UFUNC_NOFPE if (_import_umath() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.umath failed to import"); return NUMPY_IMPORT_UMATH_RETVAL; }}
+#define import_umath() \
+    do {\
+        UFUNC_NOFPE\
+        if (_import_umath() < 0) {\
+            PyErr_Print();\
+            PyErr_SetString(PyExc_ImportError,\
+                    "numpy.core.umath failed to import");\
+            return NUMPY_IMPORT_UMATH_RETVAL;\
+        }\
+    } while(0)
 
-#define import_umath1(ret) { UFUNC_NOFPE if (_import_umath() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.umath failed to import"); return ret; }}
+#define import_umath1(ret) \
+    do {\
+        UFUNC_NOFPE\
+        if (_import_umath() < 0) {\
+            PyErr_Print();\
+            PyErr_SetString(PyExc_ImportError,\
+                    "numpy.core.umath failed to import");\
+            return ret;\
+        }\
+    } while(0)
 
-#define import_umath2(msg, ret) { UFUNC_NOFPE if (_import_umath() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, msg); return ret; }}
+#define import_umath2(ret, msg) \
+    do {\
+        UFUNC_NOFPE\
+        if (_import_umath() < 0) {\
+            PyErr_Print();\
+            PyErr_SetString(PyExc_ImportError, msg);\
+            return ret;\
+        }\
+    } while(0)
 
-#define import_ufunc() { UFUNC_NOFPE if (_import_umath() < 0) {PyErr_Print(); PyErr_SetString(PyExc_ImportError, "numpy.core.umath failed to import"); }}
-
+#define import_ufunc() \
+    do {\
+        UFUNC_NOFPE\
+        if (_import_umath() < 0) {\
+            PyErr_Print();\
+            PyErr_SetString(PyExc_ImportError,\
+                    "numpy.core.umath failed to import");\
+        }\
+    } while(0)
 
 #endif
 """
