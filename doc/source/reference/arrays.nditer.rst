@@ -8,10 +8,10 @@ Iterating Over Arrays
 
 The iterator object :class:`nditer`, introduced in NumPy 1.6, provides many
 flexible ways to visit all the elements of one or more arrays in a systematic
-fashion. This page introduces some basic ways to use the object to do
+fashion. This page introduces some basic ways to use the object for
 computations on arrays in Python. Since the Python exposure of :class:`nditer`
-is a relatively straightforward mapping of the C API for the iterator,
-these ideas may also provide help working with array iteration in C.
+is a relatively straightforward mapping of the C array iterator API,
+these ideas will also provide help working with array iteration in C.
 
 Single Array Iteration
 ======================
@@ -79,14 +79,14 @@ Modifying Array Values
 
 By default, the :class:`nditer` treats the input array as a read-only
 object. To modify the array elements, you must specify you want to
-use either read-write or write-only mode. This is controlled using
+use either read-write or write-only mode. This is controlled with
 per-operand flags.
 
-One thing to watch out for is that regular assignment in Python is
-simply changing a reference in the local or global variable dictionary.
-This means that simply assigning to `x` will not place a value into
-the element of the array, but will rather switch `x` from being a reference
-to an array element to being a reference to the value you assigned. To
+One thing to watch out for is that regular assignment in Python
+simply changes a reference in the local or global variable dictionary.
+This means that simply assigning to `x` will not place the value into
+the element of the array, but rather switch `x` from being an array element
+reference to being a reference to the value you assigned. To
 actually modify the element of the array, `x` should be indexed with
 the ellipsis.
 
@@ -150,12 +150,12 @@ for iterating with an :class:`nditer`. This syntax explicitly works
 with the iterator object itself, so its properties are readily accessible
 during iteration. With this looping construct, the current value is
 accessible by indexing into the iterator, and the index being tracked
-is the property `index` or `multi_index` depending on what is requested.
+is the property `index` or `multi_index` depending on what was requested.
 
 The Python interactive interpreter unfortunately prints out the
 while-loop condition during each iteration of the loop. We have modified
 the output in the examples using this looping construct in order to
-match the behavior of the for loop-based examples.
+be more readable.
 
 .. admonition:: Example
 
@@ -184,7 +184,7 @@ match the behavior of the for loop-based examples.
            [-1,  0,  1]])
 
 Tracking an index or multi-index is incompatible with using an external
-loop, because it requires a different index value per iteration. If
+loop, because it requires a different index value per element. If
 you try to combine these flags, the :class:`nditer` object will
 raise an exception
 
@@ -203,12 +203,13 @@ When forcing an iteration order, we observed that the external loop
 option may provide the elements in smaller chunks because the elements
 can't be visited in the appropriate order with a constant stride.
 When writing C code, this is generally fine, however in pure Python code
-this causes significant overhead.
+this can cause a significant reduction in performance.
 
 By enabling buffering mode, the chunks provided by the iterator to
 the inner loop can be made larger, significantly reducing the overhead
 of the Python interpreter. In the example forcing Fortran iteration order,
-the inner loop gets to see all the elements when buffering is enabled.
+the inner loop gets to see all the elements in one go when buffering
+is enabled.
 
 .. admonition:: Example
 
@@ -236,7 +237,7 @@ and buffering mode. With temporary copies, a copy of the entire array
 is made, then iteration is done in the copy. Write access is permitted
 through a mode which updates the original array after all the iteration
 is complete. The major drawback of temporary copies is that the temporary
-copy may consume a large amount of memory, particular if the iteration
+copy may consume a large amount of memory, particularly if the iteration
 data type has a larger itemsize than the original one.
 
 Buffering mode mitigates the memory usage issue and is more cache-friendly
@@ -327,3 +328,230 @@ would violate the casting rule.
     Traceback (most recent call last):
       File "<stdin>", line 2, in <module>
     TypeError: Iterator requested dtype could not be cast from dtype('float64') to dtype('int64'), the operand 0 dtype, according to the rule 'same_kind'
+
+Broadcasting Array Iteration
+============================
+
+NumPy has a set of rules for dealing with arrays that have differing
+shapes which are applied whenever functions take multiple operands
+which combine element-wise. This is called
+:ref:`broadcasting <ufuncs.broadcasting>`.  The :class:`nditer`
+object can apply these rules for you when you need to write such a function.
+
+As an example, we print out the result of broadcasting a one and
+a two dimensional array together.
+
+.. admonition:: Example
+
+    >>> a = np.arange(3)
+    >>> b = np.arange(6).reshape(2,3)
+    >>> for x, y in np.nditer([a,b]):
+    ...     print "%d:%d" % (x,y),
+    ...
+    0:0 1:1 2:2 0:3 1:4 2:5
+
+When a broadcasting error occurs, the iterator raises an exception
+which includes the input shapes to help diagnose the problem.
+
+.. admonition:: Example
+
+    >>> a = np.arange(2)
+    >>> b = np.arange(6).reshape(2,3)
+    >>> for x, y in np.nditer([a,b]):
+    ...     print "%d:%d" % (x,y),
+    ...
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    ValueError: operands could not be broadcast together with shapes (2) (2,3)
+
+Iterator-Allocated Output Arrays
+================================
+
+A common case in NumPy functions is to have outputs allocated based
+on the broadcasting of the input, and additionally have an optional
+parameter called 'out' where the result will be placed when it is
+provided. The :class:`nditer` object provides a convenient idiom that
+makes it very easy to support this mechanism.
+
+We'll show how this works by creating a function `square` which squares
+its input. Let's start with a minimal function definition without 'out'
+parameter support.
+
+.. admonition:: Example
+
+    >>> def square(a):
+    ...     it = np.nditer([a, None])
+    ...     for x, y in it:
+    ...          y[...] = x*x
+    ...     return it.operands[1]
+    ...
+    >>> square([1,2,3])
+    array([1, 4, 9])
+
+By default, the :class:`nditer` uses the flags 'allocate' and 'writeonly'
+for operands that are passed in as None. This means we were able to provide
+just the two operands to the iterator, and it handled the rest.
+
+When adding the 'out' parameter, we have to explicitly provide those flags,
+because if someone passes in an array as 'out', the iterator will default
+to 'readonly', and our inner loop would fail. While we're at it, let's
+also introduce the 'no_broadcast' flag, which will prevent the output
+from being broadcast. It would already error in this case because an
+output that is being broadcast requires a reduction operation, something
+which must be explicitly enabled in a global flag, the error message
+that results from disabling broadcasting is much more understandable
+for end-users.
+
+For completeness, we'll also add the 'external_loop' and 'buffered'
+flags, as these are what you will typically want for performance
+reasons.
+
+.. admonition:: Example
+
+    >>> def square(a, out=None):
+    ...     it = np.nditer([a, out],
+    ...             flags = ['external_loop', 'buffered'],
+    ...             op_flags = [['readonly'],
+    ...                         ['writeonly', 'allocate', 'no_broadcast']])
+    ...     for x, y in it:
+    ...         y[...] = x*x
+    ...     return it.operands[1]
+    ...
+
+    >>> square([1,2,3])
+    array([1, 4, 9])
+    >>> b = np.zeros((3,))
+
+    >>> square([1,2,3], out=b)
+    array([ 1.,  4.,  9.])
+    >>> b
+    array([ 1.,  4.,  9.])
+
+    >>> square(np.arange(6).reshape(2,3), out=b)
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+      File "<stdin>", line 4, in square
+    ValueError: non-broadcastable output operand with shape (3) doesn't match the broadcast shape (2,3)
+
+Outer Product Iteration
+=======================
+
+Any binary operation can be extended to an array operation in an
+outer product fashion, and the :class:`nditer` object provides a
+way to accomplish this by explicitly mapping the axes of the operands.
+It is also possible to do this with :const:`newaxis` indexing, but
+we will show you how to directly use the nditer `op_axes` parameter to
+accomplish this with no intermediate views.
+
+We'll do a simple outer product, placing the dimensions of the first
+operand before the dimensions of the second operand. The `op_axes`
+parameter needs one list of axes for each operand, and provides a mapping
+from the iterator's axes to the axes of the operand.
+
+Suppose the first operand is one dimensional and the second operand is
+two dimensional. The iterator will have three dimensions, so `op_axes`
+will consist of two 3-element lists.  The first list picks out the one
+axis of the first operand, and is -1 for the rest of the iterator axes,
+with a final result of [0, -1, -1]. The second list picks out the two
+axes of the second operand, but shouldn't overlap with the axes picked
+out in the first operand. Its list is [-1, 0, 1]. The output operand
+maps onto the iterator axes in the standard manner, so we can provide
+None instead of constructing another list.
+
+The operation in the inner loop is a straightforward multiplication.
+Everything to do with the outer product is handled by the iterator setup.
+
+.. admonition:: Example
+
+    >>> a = np.arange(3)
+    >>> b = np.arange(8).reshape(2,4)
+    >>> it = np.nditer([a, b, None], flags=['external_loop'],
+    ...             op_axes=[[0, -1, -1], [-1, 0, 1], None])
+    >>> for x, y, z in it:
+    ...     z[...] = x*y
+    ...
+    >>> it.operands[2]
+    array([[[ 0,  0,  0,  0],
+            [ 0,  0,  0,  0]],
+
+           [[ 0,  1,  2,  3],
+            [ 4,  5,  6,  7]],
+
+           [[ 0,  2,  4,  6],
+            [ 8, 10, 12, 14]]])
+
+Reduction Iteration
+===================
+
+Whenever a writeable operand has fewer elements than the full iteration space,
+that operand is undergoing a reduction. The :class:`nditer` object requires
+that any reduction operand be flagged as read-write, and only allows
+reductions when 'reduce_ok' is provided as a global iterator flag.
+
+For a simple example, consider taking the sum of all elements in an array.
+
+.. admonition:: Example
+
+    >>> a = np.arange(24).reshape(2,3,4)
+    >>> b = np.array(0)
+    >>> for x, y in np.nditer([a, b], flags=['reduce_ok', 'external_loop'],
+    ...                     op_flags=[['readonly'], ['readwrite']]):
+    ...     y[...] += x
+    ...
+    >>> b
+    array(276)
+    >>> np.sum(a)
+    276
+
+Things are a little bit more tricky when combining reduction and allocated
+operands. Before iteration is started, any reduction operand must be
+initialized to its starting values. Here's how we can do this, taking
+sums along the last axis of `a`.
+
+.. admonition:: Example
+
+    >>> a = np.arange(24).reshape(2,3,4)
+    >>> it = np.nditer([a, None], flags=['reduce_ok', 'external_loop'],
+    ...             op_flags=[['readonly'], ['readwrite', 'allocate']],
+    ...             op_axes=[None, [0,1,-1]])
+    >>> it.operands[1][...] = 0
+    >>> for x, y in it:
+    ...     y[...] += x
+    ...
+    >>> it.operands[1]
+    array([[ 6, 22, 38],
+           [54, 70, 86]])
+    >>> np.sum(a, axis=2)
+    array([[ 6, 22, 38],
+           [54, 70, 86]])
+
+To do buffered reduction requires yet another adjustment during the
+setup. Normally the iterator construction involves copying the first
+buffer of data from the readable arrays into the buffer. Any reduction
+operand is readable, so it may be read into a buffer. Unfortunately,
+initialization of the operand after this buffering operation is complete
+will not be reflected in the buffer that the iteration starts with, and
+garbage results will be produced.
+
+The global iterator flag "delay_bufalloc" is there to allow
+iterator-allocated reduction operands to exist together with buffering.
+When this flag is set, the iterator will leave its buffers uninitialized
+until it receives a reset, after which it will be ready for regular
+iteration. Here's how the previous example looks if we also enable
+buffering.
+
+.. admonition:: Example
+
+    >>> a = np.arange(24).reshape(2,3,4)
+    >>> it = np.nditer([a, None], flags=['reduce_ok', 'external_loop',
+    ...                                  'buffered', 'delay_bufalloc'],
+    ...             op_flags=[['readonly'], ['readwrite', 'allocate']],
+    ...             op_axes=[None, [0,1,-1]])
+    >>> it.operands[1][...] = 0
+    >>> it.reset()
+    >>> for x, y in it:
+    ...     y[...] += x
+    ...
+    >>> it.operands[1]
+    array([[ 6, 22, 38],
+           [54, 70, 86]])
