@@ -834,7 +834,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
 
 def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
-        footer='', commentstr=''):
+        footer='', commentstr='# '):
     """
     Save an array to a text file.
 
@@ -984,10 +984,12 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
             else:
                 format = fmt
 
-        fh.write(asbytes(commentstr + header))
+        if len(header) > 0:
+            fh.write(asbytes(commentstr + header + newline))
         for row in X:
             fh.write(asbytes(format % tuple(row) + newline))
-        fh.write(asbytes(commentstr + footer))
+        if len(footer) > 0:
+            fh.write(asbytes(commentstr + footer + newline))
     finally:
         if own_fh:
             fh.close()
