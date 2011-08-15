@@ -1548,6 +1548,18 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
                                      (PyArrayObject *)(obj))
 #endif
 
+static NPY_INLINE PyArray_Descr *
+PyArray_DTYPE(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->descr;
+}
+
+static NPY_INLINE npy_intp *
+PyArray_SHAPE(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fieldaccess *)arr)->dimensions;
+}
+
 /*
  * Enables the specified array flags. Does no checking,
  * assumes you know what you're doing.

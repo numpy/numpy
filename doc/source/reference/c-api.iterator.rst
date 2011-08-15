@@ -586,6 +586,8 @@ Construction and Destruction
 
         .. cvar:: NPY_ITER_ARRAYMASK
 
+            .. versionadded:: 1.7
+
             Indicates that this operand is the mask to use for
             selecting elements when writing to operands which have
             the :cdata:`NPY_ITER_WRITEMASKED` flag applied to them.
@@ -609,6 +611,8 @@ Construction and Destruction
 
         .. cvar:: NPY_ITER_WRITEMASKED
 
+            .. versionadded:: 1.7
+
             Indicates that only elements which the operand with
             the ARRAYMASK flag indicates are intended to be modified
             by the iteration. In general, the iterator does not enforce
@@ -623,6 +627,35 @@ Construction and Destruction
             elements in the buffer for which :cfunc:`NpyMask_IsExposed`
             returns true from the corresponding element in the ARRAYMASK
             operand.
+
+        .. cvar:: NPY_ITER_USE_MASKNA
+
+            .. versionadded:: 1.7
+
+            Adds a new operand to the end of the operand list which
+            iterates over the mask of this operand. If this operand has
+            no mask and is read-only, it broadcasts a constant
+            one-valued mask to indicate every value is valid. If this
+            operand has no mask and is writeable, an error is raised.
+
+            Each operand which has this flag applied to it causes
+            an additional operand to be tacked on the end of the operand
+            list, in an order matching that of the operand array.
+            For example, if there are four operands, and operands with index
+            one and three have the flag :cdata:`NPY_ITER_USE_MASKNA`
+            specified, there will be six operands total, and they will
+            look like [op0, op1, op2, op3, op1_mask, op3_mask].
+
+        .. cvar:: NPY_ITER_IGNORE_MASKNA
+
+            .. versionadded:: 1.7
+
+            Under some circumstances, code doing an iteration will
+            have already called :cfunc:`PyArray_ContainsNA` on an
+            operand which has a mask, and seen that its return value
+            was false. When this occurs, it is safe to do the iteration
+            without simultaneously iterating over the mask, and this
+            flag allows that to be done.
 
 .. cfunction:: NpyIter* NpyIter_AdvancedNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes, npy_intp* itershape, npy_intp buffersize)
 
