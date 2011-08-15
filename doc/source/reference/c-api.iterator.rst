@@ -23,6 +23,11 @@ branch, so will integrate naturally into the refactored code base.
 The iterator is named ``NpyIter`` and functions are
 named ``NpyIter_*``.
 
+There is an :ref:`introductory guide to array iteration <arrays.nditer>`
+which may be of interest for those using this C API. In many instances,
+testing out ideas by creating the iterator in Python is a good idea
+before writing the C iteration code.
+
 Converting from Previous NumPy Iterators
 ----------------------------------------
 
