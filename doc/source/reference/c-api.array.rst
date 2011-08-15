@@ -21,13 +21,30 @@ Array structure and data access
 -------------------------------
 
 These macros all access the :ctype:`PyArrayObject` structure members. The input
-argument, obj, can be any :ctype:`PyObject *` that is directly interpretable
+argument, arr, can be any :ctype:`PyObject *` that is directly interpretable
 as a :ctype:`PyArrayObject *` (any instance of the :cdata:`PyArray_Type` and its
 sub-types).
 
-.. cfunction:: void *PyArray_DATA(PyObject *obj)
+.. cfunction:: int PyArray_NDIM(PyArrayObject *arr)
 
-.. cfunction:: char *PyArray_BYTES(PyObject *obj)
+    The number of dimensions in the array.
+
+.. cfunction:: npy_intp *PyArray_DIMS(PyArrayObject *arr)
+
+    Returns a pointer to the dimensions/shape of the array. The
+    number of elements matches the number of dimensions
+    of the array.
+
+.. cfunction:: npy_intp *PyArray_SHAPE(PyArrayObject *arr)
+
+    .. versionadded:: 1.7
+
+    A synonym for PyArray_DIMS, named to be consistent with the
+    'shape' usage within Python.
+
+.. cfunction:: void *PyArray_DATA(PyArrayObject *arr)
+
+.. cfunction:: char *PyArray_BYTES(PyArrayObject *arr)
 
     These two macros are similar and obtain the pointer to the
     data-buffer for the array. The first macro can (and should be)
@@ -36,19 +53,21 @@ sub-types).
     array then be sure you understand how to access the data in the
     array to avoid memory and/or alignment problems.
 
-.. cfunction:: npy_intp *PyArray_DIMS(PyObject *arr)
+.. cfunction:: npy_intp *PyArray_STRIDES(PyArrayObject* arr)
 
-.. cfunction:: npy_intp *PyArray_STRIDES(PyObject* arr)
+    Returns a pointer to the strides of the array. The
+    number of elements matches the number of dimensions
+    of the array.
 
-.. cfunction:: npy_intp PyArray_DIM(PyObject* arr, int n)
+.. cfunction:: npy_intp PyArray_DIM(PyArrayObject* arr, int n)
 
     Return the shape in the *n* :math:`^{\textrm{th}}` dimension.
 
-.. cfunction:: npy_intp PyArray_STRIDE(PyObject* arr, int n)
+.. cfunction:: npy_intp PyArray_STRIDE(PyArrayObject* arr, int n)
 
     Return the stride in the *n* :math:`^{\textrm{th}}` dimension.
 
-.. cfunction:: PyObject *PyArray_BASE(PyObject* arr)
+.. cfunction:: PyObject *PyArray_BASE(PyArrayObject* arr)
 
     This returns the base object of the array. In most cases, this
     means the object which owns the memory the array is pointing at.
@@ -62,40 +81,91 @@ sub-types).
     be copied upon destruction. This overloading of the base property
     for two functions is likely to change in a future version of NumPy.
 
-.. cfunction:: PyArray_Descr *PyArray_DESCR(PyObject* arr)
+.. cfunction:: PyArray_Descr *PyArray_DESCR(PyArrayObject* arr)
 
-.. cfunction:: int PyArray_FLAGS(PyObject* arr)
+    Returns a borrowed reference to the dtype property of the array.
 
-.. cfunction:: int PyArray_ITEMSIZE(PyObject* arr)
+.. cfunction:: PyArray_Descr *PyArray_DTYPE(PyArrayObject* arr)
+
+    .. versionadded:: 1.7
+
+    A synonym for PyArray_DESCR, named to be consistent with the
+    'dtype' usage within Python.
+
+.. cfunction:: PyArray_Descr *PyArray_MASKNA_DTYPE(PyArrayObject* arr)
+
+    .. versionadded:: 1.7
+
+    Returns a borrowed reference to the dtype property for the NA mask
+    of the array, or NULL if the array has no NA mask. This function does
+    not raise an exception when it returns NULL, it is simply returning
+    the appropriate field.
+
+.. cfunction:: char *PyArray_MASKNA_DATA(PyArrayObject* arr)
+
+    .. versionadded:: 1.7
+
+    Returns a pointer to the raw data for the NA mask of the array,
+    or NULL if the array has no NA mask. This function does
+    not raise an exception when it returns NULL, it is simply returning
+    the appropriate field.
+
+.. cfunction:: npy_intp *PyArray_MASKNA_STRIDES(PyArrayObject* arr)
+
+    .. versionadded:: 1.7
+
+    Returns a pointer to strides of the NA mask of the array, If the
+    array has no NA mask, the values contained in the array will be
+    invalid. The shape of the NA mask is identical to the shape of the
+    array itself, so the number of strides is always the same as the
+    number of array dimensions.
+
+.. cfunction:: void PyArray_ENABLEFLAGS(PyArrayObject* arr, int flags)
+
+    .. versionadded:: 1.7
+
+    Enables the specified array flags. This function does no validation,
+    and assumes that you know what you're doing.
+
+.. cfunction:: void PyArray_CLEARFLAGS(PyArrayObject* arr, int flags)
+
+    .. versionadded:: 1.7
+
+    Clears the specified array flags. This function does no validation,
+    and assumes that you know what you're doing.
+
+.. cfunction:: int PyArray_FLAGS(PyArrayObject* arr)
+
+.. cfunction:: int PyArray_ITEMSIZE(PyArrayObject* arr)
 
     Return the itemsize for the elements of this array.
 
-.. cfunction:: int PyArray_TYPE(PyObject* arr)
+.. cfunction:: int PyArray_TYPE(PyArrayObject* arr)
 
     Return the (builtin) typenumber for the elements of this array.
 
-.. cfunction:: PyObject *PyArray_GETITEM(PyObject* arr, void* itemptr)
+.. cfunction:: PyObject *PyArray_GETITEM(PyArrayObject* arr, void* itemptr)
 
     Get a Python object from the ndarray, *arr*, at the location
     pointed to by itemptr. Return ``NULL`` on failure.
 
-.. cfunction:: int PyArray_SETITEM(PyObject* arr, void* itemptr, PyObject* obj)
+.. cfunction:: int PyArray_SETITEM(PyArrayObject* arr, void* itemptr, PyObject* obj)
 
     Convert obj and place it in the ndarray, *arr*, at the place
     pointed to by itemptr. Return -1 if an error occurs or 0 on
     success.
 
-.. cfunction:: npy_intp PyArray_SIZE(PyObject* arr)
+.. cfunction:: npy_intp PyArray_SIZE(PyArrayObject* arr)
 
     Returns the total size (in number of elements) of the array.
 
-.. cfunction:: npy_intp PyArray_Size(PyObject* obj)
+.. cfunction:: npy_intp PyArray_Size(PyArrayObject* obj)
 
     Returns 0 if *obj* is not a sub-class of bigndarray. Otherwise,
     returns the total number of elements in the array. Safer version
     of :cfunc:`PyArray_SIZE` (*obj*).
 
-.. cfunction:: npy_intp PyArray_NBYTES(PyObject* arr)
+.. cfunction:: npy_intp PyArray_NBYTES(PyArrayObject* arr)
 
     Returns the total number of bytes consumed by the array.
 
@@ -149,48 +219,64 @@ From scratch
 .. cfunction:: PyObject* PyArray_NewFromDescr(PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, npy_intp* strides, void* data, int flags, PyObject* obj)
 
     This is the main array creation function. Most new arrays are
-    created with this flexible function. The returned object is an
-    object of Python-type *subtype*, which must be a subtype of
-    :cdata:`PyArray_Type`. The array has *nd* dimensions, described by
-    *dims*. The data-type descriptor of the new array is *descr*. If
-    *subtype* is not :cdata:`&PyArray_Type` (*e.g.* a Python subclass of
-    the ndarray), then *obj* is the object to pass to the
-    :obj:`__array_finalize__` method of the subclass. If *data* is
-    ``NULL``, then new memory will be allocated and *flags* can be
-    non-zero to indicate a Fortran-style contiguous array. If *data*
-    is not ``NULL``, then it is assumed to point to the memory to be
-    used for the array and the *flags* argument is used as the new
-    flags for the array (except the state of :cdata:`NPY_OWNDATA` and
-    :cdata:`NPY_ARRAY_UPDATEIFCOPY` flags of the new array will be reset). In
-    addition, if *data* is non-NULL, then *strides* can also be
-    provided. If *strides* is ``NULL``, then the array strides are
-    computed as C-style contiguous (default) or Fortran-style
+    created with this flexible function.
+    
+    The returned object is an object of Python-type *subtype*, which
+    must be a subtype of :cdata:`PyArray_Type`.  The array has *nd*
+    dimensions, described by *dims*. The data-type descriptor of the
+    new array is *descr*.
+
+    If *subtype* is of an array subclass instead of the base
+    :cdata:`&PyArray_Type`, then *obj* is the object to pass to
+    the :obj:`__array_finalize__` method of the subclass.
+    
+    If *data* is ``NULL``, then new memory will be allocated and *flags*
+    can be non-zero to indicate a Fortran-style contiguous array. If
+    *data* is not ``NULL``, then it is assumed to point to the memory
+    to be used for the array and the *flags* argument is used as the
+    new flags for the array (except the state of :cdata:`NPY_OWNDATA`
+    and :cdata:`NPY_ARRAY_UPDATEIFCOPY` flags of the new array will
+    be reset).
+    
+    In addition, if *data* is non-NULL, then *strides* can
+    also be provided. If *strides* is ``NULL``, then the array strides
+    are computed as C-style contiguous (default) or Fortran-style
     contiguous (*flags* is nonzero for *data* = ``NULL`` or *flags* &
-    :cdata:`NPY_ARRAY_F_CONTIGUOUS` is nonzero non-NULL *data*). Any provided
-    *dims* and *strides* are copied into newly allocated dimension and
-    strides arrays for the new array object.
+    :cdata:`NPY_ARRAY_F_CONTIGUOUS` is nonzero non-NULL *data*). Any
+    provided *dims* and *strides* are copied into newly allocated
+    dimension and strides arrays for the new array object.
+
+    Because the flags are ignored when *data* is NULL, you cannot
+    create a new array from scratch with an NA mask. If one is desired,
+    call the function :cfunc:`PyArray_AllocateMaskNA` after the array
+    is created.
 
 .. cfunction:: PyObject* PyArray_NewLikeArray(PyArrayObject* prototype, NPY_ORDER order, PyArray_Descr* descr, int subok)
 
     .. versionadded:: 1.6
 
-   This function steals a reference to *descr* if it is not NULL.
+    This function steals a reference to *descr* if it is not NULL.
 
-   This array creation routine allows for the convenient creation of
-   a new array matching an existing array's shapes and memory layout,
-   possibly changing the layout and/or data type.
+    This array creation routine allows for the convenient creation of
+    a new array matching an existing array's shapes and memory layout,
+    possibly changing the layout and/or data type.
 
-   When *order* is :cdata:`NPY_ANYORDER`, the result order is
-   :cdata:`NPY_FORTRANORDER` if *prototype* is a fortran array,
-   :cdata:`NPY_CORDER` otherwise.  When *order* is
-   :cdata:`NPY_KEEPORDER`, the result order matches that of *prototype*, even
-   when the axes of *prototype* aren't in C or Fortran order.
+    When *order* is :cdata:`NPY_ANYORDER`, the result order is
+    :cdata:`NPY_FORTRANORDER` if *prototype* is a fortran array,
+    :cdata:`NPY_CORDER` otherwise.  When *order* is
+    :cdata:`NPY_KEEPORDER`, the result order matches that of *prototype*, even
+    when the axes of *prototype* aren't in C or Fortran order.
 
-   If *descr* is NULL, the data type of *prototype* is used.
+    If *descr* is NULL, the data type of *prototype* is used.
 
-   If *subok* is 1, the newly created array will use the sub-type of
-   *prototype* to create the new array, otherwise it will create a
-   base-class array.
+    If *subok* is 1, the newly created array will use the sub-type of
+    *prototype* to create the new array, otherwise it will create a
+    base-class array.
+
+    The newly allocated array does not have an NA mask even if the
+    *prototype* provided does. If an NA mask is desired in the array,
+    call the function :cfunc:`PyArray_AllocateMaskNA` after the array
+    is created.
 
 .. cfunction:: PyObject* PyArray_New(PyTypeObject* subtype, int nd, npy_intp* dims, int type_num, npy_intp* strides, void* data, int itemsize, int flags, PyObject* obj)
 
@@ -278,7 +364,9 @@ From scratch
     increments of ``step``. Equivalent to arange( ``start``,
     ``stop``, ``step``, ``typenum`` ).
 
-.. cfunction:: int PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
+.. cfunction:: int PyArray_SetBaseObject(PyArrayObject* arr, PyObject* obj)
+
+    .. versionadded:: 1.7
 
     If you construct an array by passing in your own memory buffer as
     a parameter, you need to set the array's `base` property to ensure
@@ -376,6 +464,31 @@ From other objects
         will be made writeable again. If *op* is not writeable to begin
         with, then an error is raised. If *op* is not already an array,
         then this flag has no effect.
+
+    .. cvar:: NPY_ARRAY_MASKNA
+
+        .. versionadded:: 1.7
+
+        Make sure the array has an NA mask associated with its data.
+
+    .. cvar:: NPY_ARRAY_OWNMASKNA
+
+        .. versionadded:: 1.7
+
+        Make sure the array has an NA mask which it owns
+        associated with its data.
+
+    .. cvar:: NPY_ARRAY_ALLOWNA
+
+        .. versionadded:: 1.7
+
+        To prevent simple errors from slipping in, arrays with NA
+        masks are not permitted to pass through by default. Instead
+        an exception is raised indicating the operation doesn't support
+        NA masks yet. In order to enable NA mask support, this flag
+        must be passed in to allow the NA mask through, signalling that
+        the later code is written appropriately to handle NA mask
+        semantics.
 
     .. cvar:: NPY_ARRAY_BEHAVED
 
@@ -1291,6 +1404,24 @@ or :cdata:`NPY_ARRAY_F_CONTIGUOUS` can be determined by the ``strides``,
     :cdata:`NPY_ARRAY_WRITEABLE` to begin with then :cfunc:`PyArray_FromAny`
     would have returned an error because :cdata:`NPY_ARRAY_UPDATEIFCOPY`
     would not have been possible.
+
+.. cvar:: NPY_ARRAY_MASKNA
+
+    If this flag is enabled, the array has an NA mask associated with
+    the data. C code which interacts with the NA mask must follow
+    specific semantic rules about when to overwrite data and when not
+    to. The mask can be accessed through the functions
+    :cfunc:`PyArray_MASKNA_DTYPE`, :cfunc:`PyArray_MASKNA_DATA`, and
+    :cfunc:`PyArray_MASKNA_STRIDES`.
+
+.. cvar:: NPY_ARRAY_OWNMASKNA
+
+    If this flag is enabled, the array owns its own NA mask. If it is not
+    enabled, the NA mask is a view into a different array's NA mask.
+
+    In order to ensure that an array owns its own NA mask, you can
+    call :cfunc:`PyArray_AllocateMaskNA` with the parameter *ownmaskna*
+    set to 1.
 
 :cfunc:`PyArray_UpdateFlags` (obj, flags) will update the ``obj->flags``
 for ``flags`` which can be any of :cdata:`NPY_ARRAY_C_CONTIGUOUS`,
