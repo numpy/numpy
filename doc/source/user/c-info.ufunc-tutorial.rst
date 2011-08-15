@@ -84,42 +84,46 @@ the module.
         #include <math.h>
 
         /*
-            spammodule.c
-            This is the C code for a non-numpy Python extension to
-            define the logit function, where logit(p) = log(p/(1-p)).
-            This function will not work on numpy arrays automatically.
-            numpy.vectorize must be called in python to generate
-            a numpy-friendly function.
-
-            Details explaining the Python-C API can be found under
-            'Extending and Embedding' and 'Python/C API' at
-            docs.python.org .
-        */
+         * spammodule.c
+         * This is the C code for a non-numpy Python extension to
+         * define the logit function, where logit(p) = log(p/(1-p)).
+         * This function will not work on numpy arrays automatically.
+         * numpy.vectorize must be called in python to generate
+         * a numpy-friendly function.
+         *
+         * Details explaining the Python-C API can be found under
+         * 'Extending and Embedding' and 'Python/C API' at
+         * docs.python.org .
+         */
 
 
         /* This declares the logit function */
         static PyObject* spam_logit(PyObject *self, PyObject *args);
 
 
-        /* This tells Python what methods this module has */
+        /*
+         * This tells Python what methods this module has.
+         * See the Python-C API for more information.
+         */
         static PyMethodDef SpamMethods[] = {
-            {"logit", spam_logit, METH_VARARGS,
-             "compute logit"},
+            {"logit",
+                spam_logit,
+                METH_VARARGS, "compute logit"},
             {NULL, NULL, 0, NULL}
         };
 
 
         /*
-            This actually defines the logit function for
-            input args from Python.
-        */
+         * This actually defines the logit function for
+         * input args from Python.
+         */
 
-        static PyObject* spam_logit(PyObject *self, PyObject *args){
-
+        static PyObject* spam_logit(PyObject *self, PyObject *args)
+        {
             double p;
 
             /* This parses the Python argument into a double */
-            if(!PyArg_ParseTuple(args, "d", &p)){
+            if(!PyArg_ParseTuple(args, "d", &p)) {
                 return NULL;
             }
 
@@ -133,14 +137,14 @@ the module.
 
 
         /* This initiates the module using the above definitions. */
-        PyMODINIT_FUNC initspam(void){
+        PyMODINIT_FUNC initspam(void)
+        {
             PyObject *m;
 
             m = Py_InitModule("spam", SpamMethods);
-            if( m==NULL){
+            if (m == NULL) {
                 return;
             }
-
         }
 
 To use the setup.py file, place setup.py and spammodule.c in the same
@@ -224,39 +228,39 @@ the primary thing that must be changed to create your own ufunc.
         #include "numpy/halffloat.h"
 
         /*
-            single_type_logit.c
-            This is the C code for creating your own
-            Numpy ufunc for a logit function.
-
-            In this code we only define the ufunc for
-            a single dtype. The computations that must
-            be replaced to create a ufunc for
-            a different funciton are marked with BEGIN
-            and END.
-
-            Details explaining the Python-C API can be found under
-            'Extending and Embedding' and 'Python/C API' at
-            docs.python.org .
-
-        */
+         * single_type_logit.c
+         * This is the C code for creating your own
+         * Numpy ufunc for a logit function.
+         *
+         * In this code we only define the ufunc for
+         * a single dtype. The computations that must
+         * be replaced to create a ufunc for
+         * a different funciton are marked with BEGIN
+         * and END.
+         *
+         * Details explaining the Python-C API can be found under
+         * 'Extending and Embedding' and 'Python/C API' at
+         * docs.python.org .
+         */
 
 
         static PyMethodDef LogitMethods[] = {
                 {NULL, NULL, 0, NULL}
         };
 
+        /* The loop definition must precede the PyMODINIT_FUNC. */
 
         static void double_logit(char **args, npy_intp *dimensions,
-                                    npy_intp* steps, void* data){
-
+                                    npy_intp* steps, void* data)
+        {
             npy_intp i;
-            npy_intp n=dimensions[0];
-            char *in=args[0], *out=args[1];
-            npy_intp in_step=steps[0], out_step=steps[1];
+            npy_intp n = dimensions[0];
+            char *in = args[0], *out = args[1];
+            npy_intp in_step = steps[0], out_step = steps[1];
 
             double tmp;
 
-            for(i=0; i<n; i++){
+            for (i = 0; i < n; i++) {
                 /*BEGIN main ufunc computation*/
                 tmp = *(double *)in;
                 tmp /= 1-tmp;
@@ -268,30 +272,23 @@ the primary thing that must be changed to create your own ufunc.
             }
         }
 
-
-        /*
-            These definitions must be outside PyMODINIT_FUNC.
-            They must be global, but will be local if declared
-            inside PyMODINIT_FUNC.
-        */
-
-
         /*This a pointer to the above function*/
         PyUFuncGenericFunction funcs[1] = {&double_logit};
 
         /* These are the input and return dtypes of logit.*/
 
-        char types[2] = {NPY_DOUBLE,NPY_DOUBLE};
+        char types[2] = {NPY_DOUBLE, NPY_DOUBLE};
 
 
         void *data[1] = {NULL};
 
-        PyMODINIT_FUNC initnpspam(void){
+        PyMODINIT_FUNC initnpspam(void)
+        {
             PyObject *m, *logit, *d;
 
 
-            m  =Py_InitModule("npspam", LogitMethods);
-            if( m==NULL ){
+            m = Py_InitModule("npspam", LogitMethods);
+            if (m == NULL) {
                 return;
             }
 
@@ -299,12 +296,12 @@ the primary thing that must be changed to create your own ufunc.
             import_umath();
 
             logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 1, 1,
-                                        PyUFunc_None, "logit",
-                                        "logit_docstring", 0);
+                                            PyUFunc_None, "logit",
+                                            "logit_docstring", 0);
 
             d = PyModule_GetDict(m);
 
-            PyDict_SetItemString(d , "logit", logit);
+            PyDict_SetItemString(d, "logit", logit);
             Py_DECREF(logit);
         }
 
@@ -391,41 +388,42 @@ the primary thing that must be changed to create your own ufunc.
         #include "numpy/halffloat.h"
 
         /*
-            multi_type_logit.c
-            This is the C code for creating your own
-            Numpy ufunc for a logit function.
-
-            Each function of the form type_logit defines the
-            logit function for a different numpy dtype. Each
-            of these functions must be modified when you
-            create your own ufunc. The computations that must
-            be replaced to create a ufunc for
-            a different funciton are marked with BEGIN
-            and END.
-
-            Details explaining the Python-C API can be found under
-            'Extending and Embedding' and 'Python/C API' at
-            docs.python.org .
-
-        */
+         * multi_type_logit.c
+         * This is the C code for creating your own
+         * Numpy ufunc for a logit function.
+         *
+         * Each function of the form type_logit defines the
+         * logit function for a different numpy dtype. Each
+         * of these functions must be modified when you
+         * create your own ufunc. The computations that must
+         * be replaced to create a ufunc for
+         * a different funciton are marked with BEGIN
+         * and END.
+         *
+         * Details explaining the Python-C API can be found under
+         * 'Extending and Embedding' and 'Python/C API' at
+         * docs.python.org .
+         *
+         */
 
 
         static PyMethodDef LogitMethods[] = {
                 {NULL, NULL, 0, NULL}
         };
 
+        /* The loop definitions must precede the PyMODINIT_FUNC. */
 
         static void long_double_logit(char **args, npy_intp *dimensions,
-                                    npy_intp* steps, void* data){
-
+                                      npy_intp* steps, void* data)
+        {
             npy_intp i;
-            npy_intp n=dimensions[0];
-            char *in=args[0], *out=args[1];
-            npy_intp in_step=steps[0], out_step=steps[1];
+            npy_intp n = dimensions[0];
+            char *in = args[0], *out=args[1];
+            npy_intp in_step = steps[0], out_step = steps[1];
 
             long double tmp;
 
-            for(i=0; i<n; i++){
+            for (i = 0; i < n; i++) {
                 /*BEGIN main ufunc computation*/
                 tmp = *(long double *)in;
                 tmp /= 1-tmp;
@@ -438,16 +436,16 @@ the primary thing that must be changed to create your own ufunc.
         }
 
         static void double_logit(char **args, npy_intp *dimensions,
-                                    npy_intp* steps, void* data){
-
+                                 npy_intp* steps, void* data)
+        {
             npy_intp i;
-            npy_intp n=dimensions[0];
-            char *in=args[0], *out=args[1];
-            npy_intp in_step=steps[0], out_step=steps[1];
+            npy_intp n = dimensions[0];
+            char *in = args[0], *out = args[1];
+            npy_intp in_step = steps[0], out_step = steps[1];
 
             double tmp;
 
-            for(i=0; i<n; i++){
+            for (i = 0; i < n; i++) {
                 /*BEGIN main ufunc computation*/
                 tmp = *(double *)in;
                 tmp /= 1-tmp;
@@ -460,16 +458,16 @@ the primary thing that must be changed to create your own ufunc.
         }
 
         static void float_logit(char **args, npy_intp *dimensions,
-                                    npy_intp* steps, void* data){
-
+                                npy_intp* steps, void* data)
+        {
             npy_intp i;
-            npy_intp n=dimensions[0];
-            char *in=args[0], *out=args[1];
-            npy_intp in_step=steps[0], out_step=steps[1];
+            npy_intp n = dimensions[0];
+            char *in=args[0], *out = args[1];
+            npy_intp in_step = steps[0], out_step = steps[1];
 
             float tmp;
 
-            for(i=0; i<n; i++){
+            for (i = 0; i < n; i++) {
                 /*BEGIN main ufunc computation*/
                 tmp = *(float *)in;
                 tmp /= 1-tmp;
@@ -483,16 +481,16 @@ the primary thing that must be changed to create your own ufunc.
 
 
         static void half_float_logit(char **args, npy_intp *dimensions,
-                                    npy_intp* steps, void* data){
-
+                                     npy_intp* steps, void* data)
+        {
             npy_intp i;
-            npy_intp n=dimensions[0];
-            char *in=args[0], *out=args[1];
-            npy_intp in_step=steps[0], out_step=steps[1];
+            npy_intp n = dimensions[0];
+            char *in = args[0], *out = args[1];
+            npy_intp in_step = steps[0], out_step = steps[1];
 
             float tmp;
 
-            for(i=0; i<n; i++){
+            for (i = 0; i < n; i++) {
 
                 /*BEGIN main ufunc computation*/
                 tmp = *(npy_half *)in;
@@ -507,23 +505,17 @@ the primary thing that must be changed to create your own ufunc.
             }
         }
 
-        /*
-            These definitions must be outside PyMODINIT_FUNC.
-            They must be global, but will be local if declared
-            inside PyMODINIT_FUNC.
-        */
-
 
         /*This gives pointers to the above functions*/
-        PyUFuncGenericFunction funcs[4] = {&half_float_logit, &float_logit,
-                                            &double_logit, &long_double_logit};
+        PyUFuncGenericFunction funcs[4] = {&half_float_logit,
+                                           &float_logit,
+                                           &double_logit,
+                                           &long_double_logit};
 
-        /*
-            These are the input and return dtypes of logit. They must
-            be in the same order as the funcs array immediately above.
-        */
-        char types[8] = {NPY_HALF, NPY_HALF, NPY_FLOAT, NPY_FLOAT,
-                        NPY_DOUBLE,NPY_DOUBLE, NPY_LONGDOUBLE, NPY_LONGDOUBLE};
+       char types[8] = {NPY_HALF, NPY_HALF,
+                        NPY_FLOAT, NPY_FLOAT,
+                        NPY_DOUBLE,NPY_DOUBLE,
+                        NPY_LONGDOUBLE, NPY_LONGDOUBLE};
 
 
         void *data[4] = {NULL, NULL, NULL, NULL};
@@ -532,8 +524,8 @@ the primary thing that must be changed to create your own ufunc.
             PyObject *m, *logit, *d;
 
 
-            m  =Py_InitModule("npspam", LogitMethods);
-            if( m==NULL ){
+            m  = Py_InitModule("npspam", LogitMethods);
+            if (m == NULL) {
                 return;
             }
 
@@ -541,12 +533,12 @@ the primary thing that must be changed to create your own ufunc.
             import_umath();
 
             logit = PyUFunc_FromFuncAndData(funcs,data, types, 4, 1, 1,
-                                        PyUFunc_None, "logit",
-                                        "logit_docstring", 0);
+                                            PyUFunc_None, "logit",
+                                            "logit_docstring", 0);
 
             d = PyModule_GetDict(m);
 
-            PyDict_SetItemString(d , "logit", logit);
+            PyDict_SetItemString(d, "logit", logit);
             Py_DECREF(logit);
         }
 
@@ -588,8 +580,12 @@ or installed to site-packages via python setup.py install.
             #Necessary for the half-float d-type.
             info = get_info('npymath')
 
-            config = Configuration('npspam_directory', parent_package, top_path)
-            config.add_extension('npspam', ['multi_type_logit.c'], extra_info=info)
+            config = Configuration('npspam_directory',
+                                    parent_package,
+                                    top_path)
+            config.add_extension('npspam',
+                                    ['multi_type_logit.c'],
+                                    extra_info=info)
 
             return config
 
@@ -646,38 +642,39 @@ as well as all other properties of a ufunc.
         #include "numpy/halffloat.h"
 
         /*
-            multi_arg_logit.c
-            This is the C code for creating your own
-            Numpy ufunc for a multiple argument, multiple
-            return value ufunc. The places where the
-            ufunc computation is carried out are marked
-            with comments.
-
-            Details explaining the Python-C API can be found under
-            'Extending and Embedding' and 'Python/C API' at
-            docs.python.org .
-
-        */
+         * multi_arg_logit.c
+         * This is the C code for creating your own
+         * Numpy ufunc for a multiple argument, multiple
+         * return value ufunc. The places where the
+         * ufunc computation is carried out are marked
+         * with comments.
+         *
+         * Details explaining the Python-C API can be found under
+         * 'Extending and Embedding' and 'Python/C API' at
+         * docs.python.org .
+         *
+         */
 
 
         static PyMethodDef LogitMethods[] = {
                 {NULL, NULL, 0, NULL}
         };
 
+        /* The loop definition must precede the PyMODINIT_FUNC. */
 
         static void double_logitprod(char **args, npy_intp *dimensions,
-                                    npy_intp* steps, void* data){
-
+                                    npy_intp* steps, void* data)
+        {
             npy_intp i;
-            npy_intp n=dimensions[0];
-            char *in1=args[0], *in2=args[1];
-            char *out1=args[2], *out2=args[3];
-            npy_intp in1_step=steps[0], in2_step=steps[1];
-            npy_intp out1_step=steps[2], out2_step=steps[3];
+            npy_intp n = dimensions[0];
+            char *in1 = args[0], *in2 = args[1];
+            char *out1 = args[2], *out2 = args[3];
+            npy_intp in1_step = steps[0], in2_step = steps[1];
+            npy_intp out1_step = steps[2], out2_step = steps[3];
 
             double tmp;
 
-            for(i=0; i<n; i++){
+            for (i = 0; i < n; i++) {
                 /*BEGIN main ufunc computation*/
                 tmp = *(double *)in1;
                 tmp *= *(double *)in2;
@@ -693,19 +690,12 @@ as well as all other properties of a ufunc.
         }
 
 
-        /*
-            These definitions must be outside PyMODINIT_FUNC.
-            They must be global, but will be local if declared
-            inside PyMODINIT_FUNC.
-        */
-
-
         /*This a pointer to the above function*/
         PyUFuncGenericFunction funcs[1] = {&double_logitprod};
 
         /* These are the input and return dtypes of logit.*/
 
-        char types[4] = {NPY_DOUBLE,NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE};
+        char types[4] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE};
 
 
         void *data[1] = {NULL};
@@ -714,8 +704,8 @@ as well as all other properties of a ufunc.
             PyObject *m, *logitprod, *d;
 
 
-            m  =Py_InitModule("npspam", LogitMethods);
-            if( m==NULL ){
+            m  = Py_InitModule("npspam", LogitMethods);
+            if (m == NULL) {
                 return;
             }
 
@@ -723,12 +713,12 @@ as well as all other properties of a ufunc.
             import_umath();
 
             logitprod = PyUFunc_FromFuncAndData(funcs,data, types, 1, 2, 2,
-                                        PyUFunc_None, "logitprod",
-                                        "logitprod_docstring", 0);
+                                                PyUFunc_None, "logitprod",
+                                                "logitprod_docstring", 0);
 
             d = PyModule_GetDict(m);
 
-            PyDict_SetItemString(d , "logitprod", logitprod);
+            PyDict_SetItemString(d, "logitprod", logitprod);
             Py_DECREF(logitprod);
         }
 

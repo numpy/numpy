@@ -572,7 +572,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
     y = array(y, copy=False, subok=True)
 
     def isnumber(x):
-        return x.dtype.char in '?behilqpBHILQPfdgFDG'
+        return x.dtype.char in '?bhilqpBHILQPefdgFDG'
 
     def chk_same_position(x_id, y_id, hasval='nan'):
         """Handling nan/inf: check that x and y have the nan/inf at the same
