@@ -287,24 +287,23 @@ class NoseTester(object):
         Notes
         -----
         Each NumPy module exposes `test` in its namespace to run all tests for it.
-        For example, to run all tests for numpy.lib::
+        For example, to run all tests for numpy.lib:
 
-          >>> np.lib.test()
+        >>> np.lib.test() #doctest: +SKIP
 
         Examples
         --------
-        >>> result = np.lib.test()
+        >>> result = np.lib.test() #doctest: +SKIP
         Running unit tests for numpy.lib
         ...
         Ran 976 tests in 3.933s
 
         OK
 
-        >>> result.errors
+        >>> result.errors #doctest: +SKIP
         []
-        >>> result.knownfail
+        >>> result.knownfail #doctest: +SKIP
         []
-
         """
 
         # cap verbosity at 3 because nose becomes *very* verbose beyond that
@@ -368,7 +367,7 @@ class NoseTester(object):
 
         Examples
         --------
-        >>> success = np.lib.bench()
+        >>> success = np.lib.bench() #doctest: +SKIP
         Running benchmarks for numpy.lib
         ...
         using 562341 items:
@@ -381,7 +380,7 @@ class NoseTester(object):
         ...
         OK
 
-        >>> success
+        >>> success #doctest: +SKIP
         True
 
         """
