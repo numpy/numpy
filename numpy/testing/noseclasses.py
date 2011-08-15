@@ -196,6 +196,7 @@ class NumpyDoctest(npd.Doctest):
         self.doctest_tests = True
         self.finder = NumpyDocTestFinder()
         self.parser = doctest.DocTestParser()
+        self.doctest_result_var = None # default in npd.Doctest
         if self.enabled:
             # Pull standard doctest out of plugin list; there's no reason to run
             # both.  In practice the Unplugger plugin above would cover us when
@@ -254,7 +255,8 @@ class NumpyDoctest(npd.Doctest):
 
             yield NumpyDocTestCase(test,
                                    optionflags=optionflags,
-                                   checker=NumpyOutputChecker())
+                                   checker=NumpyOutputChecker(),
+                                   result_var = self.doctest_result_var)
 
 
     # Add an afterContext method to nose.plugins.doctests.Doctest in order
