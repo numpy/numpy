@@ -249,7 +249,7 @@ class TestSaveTxt(TestCase):
         c = StringIO()
         commentstr = '% '
         np.savetxt(c, a, fmt='%1d', header=test_header_footer,
-                commentstr=commentstr)
+                comments=commentstr)
         c.seek(0)
         assert_equal(c.read(),
                 asbytes(commentstr + test_header_footer + '\n' + '1 2\n3 4\n'))
@@ -257,7 +257,7 @@ class TestSaveTxt(TestCase):
         c = StringIO()
         commentstr = '% '
         np.savetxt(c, a, fmt='%1d', footer=test_header_footer,
-                commentstr=commentstr)
+                comments=commentstr)
         c.seek(0)
         assert_equal(c.read(),
                 asbytes('1 2\n3 4\n' + commentstr + test_header_footer + '\n'))

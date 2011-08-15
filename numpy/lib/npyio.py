@@ -834,7 +834,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
 
 def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
-        footer='', commentstr='# '):
+        footer='', comments='# '):
     """
     Save an array to a text file.
 
@@ -846,21 +846,22 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         transparently.
     X : array_like
         Data to be saved to a text file.
-    fmt : str or sequence of strs
+    fmt : str or sequence of strs, optional
         A single format (%10.5f), a sequence of formats, or a
         multi-format string, e.g. 'Iteration %d -- %10.5f', in which
         case `delimiter` is ignored.
-    delimiter : str
+    delimiter : str, optional
         Character separating columns.
-    newline : str
+    newline : str, optional
         .. versionadded:: 1.5.0
-    header : str
-        String that will be written to the beginning of the file. (Remember to
-        add a newline, ``'\n'``, at the end of the line, if desired.)
-    footer : str
-        String that will be written to the end of the file.
-    commentstr : str
-        String that will be prepended to the ``header`` and ``footer`` strings.
+    header : str, optional
+        String that will be written at the beginning of the file.
+    footer : str, optional
+        String that will be written at the end of the file.
+    comments : str, optional
+        String that will be prepended to the ``header`` and ``footer`` strings,
+        to mark them as comments. Default: '# ',  as expected by e.g.
+        ``numpy.loadtxt``.
 
         Character separating lines.
 
@@ -985,11 +986,13 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 format = fmt
 
         if len(header) > 0:
-            fh.write(asbytes(commentstr + header + newline))
+            header = header.replace('\n', '\n' + comments)
+            fh.write(asbytes(comments + header + newline))
         for row in X:
             fh.write(asbytes(format % tuple(row) + newline))
         if len(footer) > 0:
-            fh.write(asbytes(commentstr + footer + newline))
+            footer = footer.replace('\n', '\n' + comments)
+            fh.write(asbytes(comments + footer + newline))
     finally:
         if own_fh:
             fh.close()
