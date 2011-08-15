@@ -13,7 +13,7 @@ object for computations on arrays in Python, then concludes with how one
 can accelerate the inner loop in Cython. Since the Python exposure of
 :class:`nditer` is a relatively straightforward mapping of the C array
 iterator API, these ideas will also provide help working with array
-iteration in C.
+iteration from C or C++.
 
 Single Array Iteration
 ======================
