@@ -1188,8 +1188,8 @@ def test_median():
 class TestAdd_newdoc_ufunc(TestCase):
     
     def test_ufunc_arg(self):
-        assert_raises(TypeError, add_newdoc_ufunc, 2,"blah")
-        assert_raises(ValueError, add_newdoc_ufunc,np.add,"blah")
+        assert_raises(TypeError, add_newdoc_ufunc, 2, "blah")
+        assert_raises(ValueError, add_newdoc_ufunc,np.add, "blah")
 
     def test_string_arg(self):
         assert_raises(TypeError, add_newdoc_ufunc,np.add, 3)

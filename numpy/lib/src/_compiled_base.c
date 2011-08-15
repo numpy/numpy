@@ -1180,37 +1180,32 @@ add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyObject *str;
     char *docstr, *newdocstr;
 
-#if defined(NPY_PY3K)
-    if (!PyArg_ParseTuple(args, "O!O!", &PyUFunc_Type, &ufunc, 
-                                        &PyUnicode_Type, &str)) {
-        return NULL;
-    }
-
-    docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
-#else
-    if (!PyArg_ParseTuple(args, "O!O!", &PyUFunc_Type, &ufunc, 
+    if (!PyArg_ParseTuple(args, "O!O!", &PyUFunc_Type, &ufunc,
                                         &PyString_Type, &str)) {
         return NULL;
     }
 
     if(NULL != ufunc->doc){
         PyErr_SetString(PyExc_ValueError, 
-                    "Cannot change docstring of ufunc "
-                    "with non-NULL docstring");
+                        "Cannot change docstring of ufunc "
+                        "with non-NULL docstring");
         return NULL;
     }
 
+#if defined(NPY_PY3K)
+    docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
+#else
     docstr = PyString_AS_STRING(str);
 #endif
    
     /* 
-        This is an intentional memory-leak. BWA-HA-HA-HA-HA. 
-        Also, it shouldn't be a problem in the intended use 
-        cases. Someone would have to repeatedly create new
-        docstrings for ufuncs by constantly replacing them
-        or importing and throwing away ufuncs.
-    */
-    newdocstr = malloc(strlen(docstr)+1);
+     * This introduces a memory leak, as the memory allocated for the doc
+     * will not be freed even if the ufunc itself is deleted. In practice
+     * this should not be a problem since the user would have to
+     * repeatedly create, document, and throw away ufuncs. 
+     */ 
+
+    newdocstr = malloc(strlen(docstr) + 1);
     strcpy(newdocstr, docstr);
 
     ufunc->doc = newdocstr;

@@ -6,8 +6,7 @@ __all__ = ['select', 'piecewise', 'trim_zeros', 'copy', 'iterable',
         'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
         'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
         'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-        'meshgrid', 'delete', 'insert', 'append', 'interp', 
-            'add_newdoc_ufunc']
+        'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc']
 
 import warnings
 import types
