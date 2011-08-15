@@ -26,6 +26,24 @@ def check_whitespace_enabled():
      7
     '''
 
+def check_empty_output():
+    """ Check that no output does not cause an error.
+
+    This is related to nose bug 445; the numpy plugin changed the
+    doctest-result-variable default and therefore hit this bug:
+    http://code.google.com/p/python-nose/issues/detail?id=445
+
+    >>> a = 10
+    """
+
+def check_skip():
+    """ Check skip directive
+
+    The test below should not run
+
+    >>> 1/0 #doctest: +SKIP
+    """
+
 
 if __name__ == '__main__':
     # Run tests outside numpy test rig
