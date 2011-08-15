@@ -225,7 +225,7 @@ the primary thing that must be changed to create your own ufunc.
         #include "math.h"
         #include "numpy/ndarraytypes.h"
         #include "numpy/ufuncobject.h"
-        #include "numpy/halffloat.h"
+        #include "numpy/npy_3kcompat.h"
 
         /*
          * single_type_logit.c
@@ -242,7 +242,6 @@ the primary thing that must be changed to create your own ufunc.
          * 'Extending and Embedding' and 'Python/C API' at
          * docs.python.org .
          */
-
 
         static PyMethodDef LogitMethods[] = {
                 {NULL, NULL, 0, NULL}
@@ -276,12 +275,47 @@ the primary thing that must be changed to create your own ufunc.
         PyUFuncGenericFunction funcs[1] = {&double_logit};
 
         /* These are the input and return dtypes of logit.*/
-
         char types[2] = {NPY_DOUBLE, NPY_DOUBLE};
-
 
         void *data[1] = {NULL};
 
+        #if defined(NPY_PY3K)
+        static struct PyModuleDef moduledef = {
+            PyModuleDef HEAT_INIT,
+            "npspam",
+            NULL,
+            -1,
+            LogitMethods,
+            NULL,
+            NULL,
+            NULL,
+            NULL
+        };
+        #endif
+
+        #if defined(NPY_PY3K)
+        PyObject *PyInit__npspam(void) {
+            PyObject *m;
+            m = PyModule_Create(&moduledef);
+            if (!m) {
+                return NULL;
+            }
+
+            import_array();
+            import_umath();
+
+            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 1, 1,
+                                            PyUFunc_None, "logit",
+                                            "logit_docstring", 0);
+
+            d = PyModule_GetDict(m);
+
+            PyDict_SetItemString(d, "logit", logit);
+            Py_DECREF(logit);
+
+            return m;
+        }
+        #else
         PyMODINIT_FUNC initnpspam(void)
         {
             PyObject *m, *logit, *d;
@@ -304,7 +338,7 @@ the primary thing that must be changed to create your own ufunc.
             PyDict_SetItemString(d, "logit", logit);
             Py_DECREF(logit);
         }
-
+        #endif
 
 This is a setup.py file for the above code. As before, the module
 can be build via calling python setup.py build at the command prompt,
@@ -516,15 +550,51 @@ the primary thing that must be changed to create your own ufunc.
                         NPY_FLOAT, NPY_FLOAT,
                         NPY_DOUBLE,NPY_DOUBLE,
                         NPY_LONGDOUBLE, NPY_LONGDOUBLE};
-
-
         void *data[4] = {NULL, NULL, NULL, NULL};
 
-        PyMODINIT_FUNC initnpspam(void){
+        #if defined(NPY_PY3K)
+        static struct PyModuleDef moduledef = {
+            PyModuleDef HEAT_INIT,
+            "npspam",
+            NULL,
+            -1,
+            LogitMethods,
+            NULL,
+            NULL,
+            NULL,
+            NULL
+        };
+        #endif
+
+        #if defined(NPY_PY3K)
+        PyObject *PyInit__npspam(void) {
+            PyObject *m;
+            m = PyModule_Create(&moduledef);
+            if (!m) {
+                return NULL;
+            }
+
+            import_array();
+            import_umath();
+
+            logit = PyUFunc_FromFuncAndData(funcs,data, types, 4, 1, 1,
+                                            PyUFunc_None, "logit",
+                                            "logit_docstring", 0);
+
+            d = PyModule_GetDict(m);
+
+            PyDict_SetItemString(d, "logit", logit);
+            Py_DECREF(logit);
+
+            return m;
+        }
+        #else
+        PyMODINIT_FUNC initnpspam(void)
+        {
             PyObject *m, *logit, *d;
 
 
-            m  = Py_InitModule("npspam", LogitMethods);
+            m = Py_InitModule("npspam", LogitMethods);
             if (m == NULL) {
                 return;
             }
@@ -541,7 +611,7 @@ the primary thing that must be changed to create your own ufunc.
             PyDict_SetItemString(d, "logit", logit);
             Py_DECREF(logit);
         }
-
+        #endif
 
 This is a setup.py file for the above code. As before, the module
 can be build via calling python setup.py build at the command prompt,
@@ -700,11 +770,49 @@ as well as all other properties of a ufunc.
 
         void *data[1] = {NULL};
 
-        PyMODINIT_FUNC initnpspam(void){
-            PyObject *m, *logitprod, *d;
+        #if defined(NPY_PY3K)
+        static struct PyModuleDef moduledef = {
+            PyModuleDef HEAT_INIT,
+            "npspam",
+            NULL,
+            -1,
+            LogitMethods,
+            NULL,
+            NULL,
+            NULL,
+            NULL
+        };
+        #endif
+
+        #if defined(NPY_PY3K)
+        PyObject *PyInit__npspam(void) {
+            PyObject *m;
+            m = PyModule_Create(&moduledef);
+            if (!m) {
+                return NULL;
+            }
+
+            import_array();
+            import_umath();
+
+            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 2, 2,
+                                            PyUFunc_None, "logit",
+                                            "logit_docstring", 0);
+
+            d = PyModule_GetDict(m);
+
+            PyDict_SetItemString(d, "logit", logit);
+            Py_DECREF(logit);
+
+            return m;
+        }
+        #else
+        PyMODINIT_FUNC initnpspam(void)
+        {
+            PyObject *m, *logit, *d;
 
 
-            m  = Py_InitModule("npspam", LogitMethods);
+            m = Py_InitModule("npspam", LogitMethods);
             if (m == NULL) {
                 return;
             }
@@ -712,18 +820,16 @@ as well as all other properties of a ufunc.
             import_array();
             import_umath();
 
-            logitprod = PyUFunc_FromFuncAndData(funcs,data, types, 1, 2, 2,
-                                                PyUFunc_None, "logitprod",
-                                                "logitprod_docstring", 0);
+            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 2, 2,
+                                            PyUFunc_None, "logit",
+                                            "logit_docstring", 0);
 
             d = PyModule_GetDict(m);
 
-            PyDict_SetItemString(d, "logitprod", logitprod);
-            Py_DECREF(logitprod);
+            PyDict_SetItemString(d, "logit", logit);
+            Py_DECREF(logit);
         }
-
-
-
+        #endif
 
 .. _`sec:PyUFunc-spec`:
 
