@@ -454,6 +454,80 @@ dump_data(char **string, int *n, int *max_n, char *data, int nd,
 #undef CHECK_MEMORY
 }
 
+NPY_NO_EXPORT void
+PyArray_DebugPrint(PyArrayObject *obj)
+{
+    int i;
+    PyArrayObject_fieldaccess *fobj = (PyArrayObject_fieldaccess *)obj;
+
+    printf("-------------------------------------------------------\n");
+    printf(" Dump of NumPy ndarray at address %p\n", obj);
+    if (obj == NULL) {
+        printf(" It's NULL!\n");
+        printf("-------------------------------------------------------\n");
+        fflush(stdout);
+        return;
+    }
+    printf(" ndim   : %d\n", fobj->nd);
+    printf(" shape  :");
+    for (i = 0; i < fobj->nd; ++i) {
+        printf(" %d", (int)fobj->dimensions[i]);
+    }
+    printf("\n");
+
+    printf(" dtype  : ");
+    PyObject_Print((PyObject *)fobj->descr, stdout, 0);
+    printf("\n");
+    printf(" data   : %p\n", fobj->data);
+    printf(" strides:");
+    for (i = 0; i < fobj->nd; ++i) {
+        printf(" %d", (int)fobj->strides[i]);
+    }
+    printf("\n");
+
+    printf(" base   : %p\n", fobj->base);
+
+    printf(" flags :");
+    if (fobj->flags & NPY_ARRAY_C_CONTIGUOUS)
+        printf(" C_CONTIGUOUS");
+    if (fobj->flags & NPY_ARRAY_F_CONTIGUOUS)
+        printf(" F_CONTIGUOUS");
+    if (fobj->flags & NPY_ARRAY_OWNDATA)
+        printf(" OWNDATA");
+    if (fobj->flags & NPY_ARRAY_ALIGNED)
+        printf(" ALIGNED");
+    if (fobj->flags & NPY_ARRAY_WRITEABLE)
+        printf(" WRITEABLE");
+    if (fobj->flags & NPY_ARRAY_UPDATEIFCOPY)
+        printf(" UPDATEIFCOPY");
+    if (fobj->flags & NPY_ARRAY_MASKNA)
+        printf(" MASKNA");
+    if (fobj->flags & NPY_ARRAY_OWNMASKNA)
+        printf(" OWNMASKNA");
+    printf("\n");
+
+    if (fobj->flags & NPY_ARRAY_MASKNA) {
+        printf(" maskna dtype  : ");
+        PyObject_Print((PyObject *)fobj->maskna_dtype, stdout, 0);
+        printf("\n");
+        printf(" maskna data   : %p\n", fobj->maskna_data);
+        printf(" maskna strides:");
+        for (i = 0; i < fobj->nd; ++i) {
+            printf(" %d", (int)fobj->maskna_strides[i]);
+        }
+        printf("\n");
+    }
+
+    if (fobj->base != NULL && PyArray_Check(fobj->base)) {
+        printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
+        printf("Dump of array's BASE:\n");
+        PyArray_DebugPrint((PyArrayObject *)fobj->base);
+        printf(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n");
+    }
+    printf("-------------------------------------------------------\n");
+    fflush(stdout);
+}
+
 static PyObject *
 array_repr_builtin(PyArrayObject *self, int repr)
 {

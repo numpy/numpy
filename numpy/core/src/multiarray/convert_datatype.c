@@ -707,14 +707,17 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
 {
     PyArray_Descr *from = PyArray_DESCR(arr);
 
-    /* If it's not a scalar, use the standard rules */
-    if (PyArray_NDIM(arr) > 0) {
-        return PyArray_CanCastTypeTo(from, to, casting);
+    /* If it's a scalar, check the value */
+    if (PyArray_NDIM(arr) == 0 && !PyArray_HASFIELDS(arr)) {
+        /* Only check the value if it's not masked */
+        if (!PyArray_HASMASKNA(arr) ||
+                NpyMaskValue_IsExposed((npy_mask)*PyArray_MASKNA_DATA(arr))) {
+            return can_cast_scalar_to(from, PyArray_DATA(arr), to, casting);
+        }
     }
-    /* Otherwise, check the value */
-    else {
-        return can_cast_scalar_to(from, PyArray_DATA(arr), to, casting);
-    }
+
+    /* Otherwise, use the standard rules */
+    return PyArray_CanCastTypeTo(from, to, casting);
 }
 
 /*NUMPY_API

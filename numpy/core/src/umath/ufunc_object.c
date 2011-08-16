@@ -2705,13 +2705,13 @@ conform_reduce_result(int ndim, npy_bool *axis_flags, PyArrayObject *out)
 /* Allocate 'result' or conform 'out' to 'self' (in 'result') */
 static PyArrayObject *
 allocate_or_conform_reduce_result(PyArrayObject *arr, PyArrayObject *out,
-                        npy_bool *axis_flags, PyArray_Descr * otype_dtype,
+                        npy_bool *axis_flags, PyArray_Descr *otype_dtype,
                         int addmask)
 {
     PyArrayObject *result;
 
     if (out == NULL) {
-        Py_INCREF(otype_dtype);
+        Py_XINCREF(otype_dtype);
         result = allocate_reduce_result(arr, axis_flags, otype_dtype);
 
         /* Allocate an NA mask if necessary */
@@ -3075,6 +3075,9 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                     result_strides[idim] = PyArray_MASKNA_STRIDES(result)[idim];
                 }
             }
+            if (!PyArray_HASMASKNA(arr) || !PyArray_HASMASKNA(result))
+                printf ("hasmaskna %d %d\n", PyArray_HASMASKNA(arr),
+                                PyArray_HASMASKNA(result));
             if (PyArray_ReduceMaskNAArray(ndim, PyArray_DIMS(arr),
                         PyArray_MASKNA_DTYPE(arr),
                         PyArray_MASKNA_DATA(arr),
@@ -4183,12 +4186,9 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     }
     /* Try to interpret axis as an integer */
     else {
-        /* TODO: PyNumber_Index would be good to use here */
         long axis = PyInt_AsLong(axes_in);
+        /* TODO: PyNumber_Index would be good to use here */
         if (axis == -1 && PyErr_Occurred()) {
-            PyErr_Clear();
-            PyErr_SetString(PyExc_ValueError,
-                    "invalid argument for 'axis'");
             Py_XDECREF(otype);
             Py_DECREF(mp);
             return NULL;
