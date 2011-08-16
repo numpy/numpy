@@ -408,7 +408,9 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
 
 finish:
     if (out) {
-        if (PyArray_CopyAnyInto(out, (PyArrayObject *)ret) < 0) {
+        if (PyArray_AssignArray(out, (PyArrayObject *)ret,
+                    NULL, NPY_DEFAULT_ASSIGN_CASTING,
+                    0, NULL) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
@@ -574,7 +576,9 @@ PyArray_Round(PyArrayObject *a, int decimals, PyArrayObject *out)
     if (decimals >= 0) {
         if (PyArray_ISINTEGER(a)) {
             if (out) {
-                if (PyArray_CopyAnyInto(out, a) < 0) {
+                if (PyArray_AssignArray(out, a,
+                            NULL, NPY_DEFAULT_ASSIGN_CASTING,
+                            0, NULL) < 0) {
                     return NULL;
                 }
                 Py_INCREF(out);
@@ -1063,7 +1067,9 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         goto fail;
     }
     if (PyArray_DATA(newout) != PyArray_DATA(newin)) {
-        if (PyArray_CopyInto(newout, newin) < 0) {
+        if (PyArray_AssignArray(newout, newin,
+                    NULL, NPY_DEFAULT_ASSIGN_CASTING,
+                    0, NULL) < 0) {
             goto fail;
         }
     }
@@ -1115,7 +1121,9 @@ PyArray_Conjugate(PyArrayObject *self, PyArrayObject *out)
     else {
         PyArrayObject *ret;
         if (out) {
-            if (PyArray_CopyAnyInto(out, self) < 0) {
+            if (PyArray_AssignArray(out, self,
+                        NULL, NPY_DEFAULT_ASSIGN_CASTING,
+                        0, NULL) < 0) {
                 return NULL;
             }
             ret = out;

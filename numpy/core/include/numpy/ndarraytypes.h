@@ -204,6 +204,9 @@ typedef enum {
         NPY_UNSAFE_CASTING=4
 } NPY_CASTING;
 
+/* The default casting to use for typical assignment operations */
+#define NPY_DEFAULT_ASSIGN_CASTING NPY_SAME_KIND_CASTING
+
 typedef enum {
         NPY_CLIP=0,
         NPY_WRAP=1,
