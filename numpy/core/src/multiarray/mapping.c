@@ -466,7 +466,7 @@ count_new_axes_0d(PyObject *tuple)
 NPY_NO_EXPORT PyObject *
 add_new_axes_0d(PyArrayObject *arr,  int newaxis_count)
 {
-    PyArrayObject *other;
+    PyArrayObject *ret;
     npy_intp dimensions[NPY_MAXDIMS];
     int i;
 
@@ -474,21 +474,41 @@ add_new_axes_0d(PyArrayObject *arr,  int newaxis_count)
         dimensions[i]  = 1;
     }
     Py_INCREF(PyArray_DESCR(arr));
-    other = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(arr),
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(arr),
                                 PyArray_DESCR(arr),
                                 newaxis_count, dimensions,
                                 NULL, PyArray_DATA(arr),
-                                PyArray_FLAGS(arr),
+            PyArray_FLAGS(arr) & ~(NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA),
                                 (PyObject *)arr);
-    if (other == NULL) {
+    if (ret == NULL) {
         return NULL;
     }
+
     Py_INCREF(arr);
-    if (PyArray_SetBaseObject(other, (PyObject *)arr) < 0) {
-        Py_DECREF(other);
+    if (PyArray_SetBaseObject(ret, (PyObject *)arr) < 0) {
+        Py_DECREF(ret);
         return NULL;
     }
-    return (PyObject *)other;
+
+    /* Take a view of the NA mask if it exists */
+    if (PyArray_HASMASKNA(arr)) {
+        PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
+
+        fret->maskna_dtype = PyArray_MASKNA_DTYPE(arr);
+        Py_INCREF(fret->maskna_dtype);
+
+        fret->maskna_data = PyArray_MASKNA_DATA(arr);
+
+        for (i = 0; i < newaxis_count; ++i) {
+            fret->maskna_strides[i]  = fret->maskna_dtype->elsize;
+        }
+
+        /* This view doesn't own the mask */
+        fret->flags |= NPY_ARRAY_MASKNA;
+        fret->flags &= ~NPY_ARRAY_OWNMASKNA;
+    }
+
+    return (PyObject *)ret;
 }
 
 
@@ -1297,7 +1317,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
                 Py_INCREF(self);
                 return (PyObject *)self;
             }
-            if ((nd = count_new_axes_0d(op)) == -1) {
+            nd = count_new_axes_0d(op);
+            if (nd == -1) {
                 return NULL;
             }
             return add_new_axes_0d(self, nd);
@@ -1776,18 +1797,20 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
      * array_subscript_simple).  So, this cast is a bit dangerous..
      */
 
-    /*
-     * The following is just a copy of PyArray_Return with an
-     * additional logic in the nd == 0 case.
-     */
-
     if (mp == NULL) {
         return NULL;
     }
+
     if (PyErr_Occurred()) {
         Py_XDECREF(mp);
         return NULL;
     }
+
+    /*
+     * The following adds some additional logic to avoid calling
+     * PyArray_Return if there is an ellipsis.
+     */
+
     if (PyArray_Check(mp) && PyArray_NDIM(mp) == 0) {
         npy_bool noellipses = TRUE;
         if ((op == Py_Ellipsis) || PyString_Check(op) || PyUnicode_Check(op)) {
@@ -1815,12 +1838,10 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
             }
         }
         if (noellipses) {
-            PyObject *ret;
-            ret = PyArray_ToScalar(PyArray_DATA(mp), mp);
-            Py_DECREF(mp);
-            return ret;
+            return PyArray_Return(mp);
         }
     }
+
     return (PyObject *)mp;
 }
 
