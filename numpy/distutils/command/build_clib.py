@@ -175,6 +175,10 @@ class build_clib(old_build_clib):
             raise DistutilsError("library %s has Fortran sources"\
                   " but no Fortran compiler found" % (lib_name))
 
+        if fcompiler is not None:
+            fcompiler.extra_f77_compile_args = build_info.get('extra_f77_compile_args') or []
+            fcompiler.extra_f90_compile_args = build_info.get('extra_f90_compile_args') or []
+
         macros = build_info.get('macros')
         include_dirs = build_info.get('include_dirs')
         if include_dirs is None:
