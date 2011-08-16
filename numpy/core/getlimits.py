@@ -180,6 +180,14 @@ nexp  =%(nexp)6s   min=        -max
 ---------------------------------------------------------------------
 ''' % self.__dict__
 
+    def __repr__(self):
+        c = self.__class__.__name__
+        d = self.__dict__.copy()
+        d['klass'] = c
+        return ("%(klass)s(resolution=%(resolution)s, min=-%(_str_max)s," \
+               + " max=%(_str_max)s, dtype=%(dtype)s)") \
+                % d
+
 
 class iinfo(object):
     """
@@ -280,6 +288,9 @@ max = %(max)s
 ---------------------------------------------------------------------
 ''' % {'dtype': self.dtype, 'min': self.min, 'max': self.max}
 
+    def __repr__(self):
+        return "%s(min=%s, max=%s, dtype=%s)" % (self.__class__.__name__,
+                                    self.min, self.max, self.dtype)
 
 if __name__ == '__main__':
     f = finfo(ntypes.single)
