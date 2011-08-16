@@ -876,10 +876,7 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
         bstride = -bstride;
     }
 
-    if (astride > bstride) {
-        return -1;
-    }
-    else if (astride == bstride) {
+    if (astride == bstride || astride == 0 || bstride == 0) {
         /*
          * Make the qsort stable by next comparing the perm order.
          * (Note that two perm entries will never be equal)
@@ -887,6 +884,9 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
         npy_intp aperm = ((npy_stride_sort_item *)a)->perm,
                 bperm = ((npy_stride_sort_item *)b)->perm;
         return (aperm < bperm) ? -1 : 1;
+    }
+    if (astride > bstride) {
+        return -1;
     }
     else {
         return 1;
@@ -901,20 +901,121 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
  * [(2, 12), (0, 4), (1, -2)].
  */
 NPY_NO_EXPORT void
-PyArray_CreateSortedStridePerm(int ndim, npy_intp * strides,
-                           npy_stride_sort_item *strideperm)
+PyArray_CreateSortedStridePerm(int ndim, npy_intp *shape,
+                        npy_intp *strides,
+                        npy_stride_sort_item *out_strideperm)
 {
     int i;
 
     /* Set up the strideperm values */
     for (i = 0; i < ndim; ++i) {
-        strideperm[i].perm = i;
-        strideperm[i].stride = strides[i];
+        out_strideperm[i].perm = i;
+        if (shape[i] == 1) {
+            out_strideperm[i].stride = 0;
+        }
+        else {
+            out_strideperm[i].stride = strides[i];
+        }
     }
 
     /* Sort them */
-    qsort(strideperm, ndim, sizeof(npy_stride_sort_item),
+    qsort(out_strideperm, ndim, sizeof(npy_stride_sort_item),
                                     &_npy_stride_sort_item_comparator);
+}
+
+static NPY_INLINE npy_intp
+intp_abs(npy_intp x)
+{
+    return (x < 0) ? -x : x;
+}
+
+
+
+/*
+ * Creates a sorted stride perm matching the KEEPORDER behavior
+ * of the NpyIter object. Because this operates based on multiple
+ * input strides, the 'stride' member of the npy_stride_sort_item
+ * would be useless and we simply argsort a list of indices instead.
+ *
+ * The caller should have already validated that 'ndim' matches for
+ * every array in the arrays list.
+ */
+NPY_NO_EXPORT void
+PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
+                        int ndim, int *out_strideperm)
+{
+    int i0, i1, ipos, j0, j1, iarrays;
+
+    /* Initialize the strideperm values to the identity. */
+    for (i0 = 0; i0 < ndim; ++i0) {
+        out_strideperm[i0] = i0;
+    }
+
+    /*
+     * This is the same as the custom stable insertion sort in
+     * the NpyIter object, but sorting in the reverse order as
+     * in the iterator. The iterator sorts from smallest stride
+     * to biggest stride (Fortran order), whereas here we sort
+     * from biggest stride to smallest stride (C order).
+     */
+    for (i0 = 1; i0 < ndim; ++i0) {
+
+        ipos = i0;
+        j0 = out_strideperm[i0];
+
+        for (i1 = i0 - 1; i1 >= 0; --i1) {
+            int ambig = 1, shouldswap = 0;
+
+            j1 = out_strideperm[i1];
+
+            for (iarrays = 0; iarrays < narrays; ++iarrays) {
+                if (PyArray_SHAPE(arrays[iarrays])[j0] != 1 &&
+                            PyArray_SHAPE(arrays[iarrays])[j1] != 1) {
+                    if (intp_abs(PyArray_STRIDES(arrays[iarrays])[j0]) <=
+                            intp_abs(PyArray_STRIDES(arrays[iarrays])[j1])) {
+                        /*
+                         * Set swap even if it's not ambiguous already,
+                         * because in the case of conflicts between
+                         * different operands, C-order wins.
+                         */
+                        shouldswap = 0;
+                    }
+                    else {
+                        /* Only set swap if it's still ambiguous */
+                        if (ambig) {
+                            shouldswap = 1;
+                        }
+                    }
+
+                    /*
+                     * A comparison has been done, so it's
+                     * no longer ambiguous
+                     */
+                    ambig = 0;
+                }
+            }
+            /*
+             * If the comparison was unambiguous, either shift
+             * 'ipos' to 'i1' or stop looking for an insertion point
+             */
+            if (!ambig) {
+                if (shouldswap) {
+                    ipos = i1;
+                }
+                else {
+                    break;
+                }
+            }
+        }
+
+        /* Insert out_strideperm[i0] into the right place */
+        if (ipos != i0) {
+            for (i1 = i0; i1 > ipos; --i1) {
+                out_strideperm[i1] = out_strideperm[i1-1];
+            }
+            out_strideperm[ipos] = j0;
+        }
+    }
 }
 
 /*NUMPY_API
@@ -953,8 +1054,8 @@ PyArray_Ravel(PyArrayObject *a, NPY_ORDER order)
         npy_intp stride;
         int i, ndim = PyArray_NDIM(a);
 
-        PyArray_CreateSortedStridePerm(PyArray_NDIM(a), PyArray_STRIDES(a),
-                                        strideperm);
+        PyArray_CreateSortedStridePerm(PyArray_NDIM(a), PyArray_SHAPE(a),
+                                PyArray_STRIDES(a), strideperm);
 
         stride = PyArray_DESCR(a)->elsize;
         for (i = ndim-1; i >= 0; --i) {

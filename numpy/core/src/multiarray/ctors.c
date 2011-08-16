@@ -1175,6 +1175,7 @@ PyArray_NewLikeArray(PyArrayObject *prototype, NPY_ORDER order,
         int idim;
 
         PyArray_CreateSortedStridePerm(PyArray_NDIM(prototype),
+                                        PyArray_SHAPE(prototype),
                                         PyArray_STRIDES(prototype),
                                         strideperm);
 

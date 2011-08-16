@@ -1667,18 +1667,20 @@ Conversion
     copied into every location. A -1 is returned if an error occurs,
     otherwise 0 is returned.
 
-.. cfunction:: PyObject* PyArray_View(PyArrayObject* self, PyArray_Descr* dtype)
+.. cfunction:: PyObject* PyArray_View(PyArrayObject* self, PyArray_Descr* dtype, PyTypeObject *ptype)
 
-    Equivalent to :meth:`ndarray.view` (*self*, *dtype*). Return a new view of
-    the array *self* as possibly a different data-type, *dtype*. If
-    *dtype* is ``NULL``, then the returned array will have the same
-    data type as *self*. The new data-type must be consistent with
-    the size of *self*. Either the itemsizes must be identical, or
-    *self* must be single-segment and the total number of bytes must
-    be the same.  In the latter case the dimensions of the returned
-    array will be altered in the last (or first for Fortran-style
-    contiguous arrays) dimension. The data area of the returned array
-    and self is exactly the same.
+    Equivalent to :meth:`ndarray.view` (*self*, *dtype*). Return a new
+    view of the array *self* as possibly a different data-type, *dtype*,
+    and different array subclass *ptype*.
+    
+    If *dtype* is ``NULL``, then the returned array will have the same
+    data type as *self*. The new data-type must be consistent with the
+    size of *self*. Either the itemsizes must be identical, or *self* must
+    be single-segment and the total number of bytes must be the same.
+    In the latter case the dimensions of the returned array will be
+    altered in the last (or first for Fortran-style contiguous arrays)
+    dimension. The data area of the returned array and self is exactly
+    the same.
 
 
 Shape Manipulation
