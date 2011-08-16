@@ -920,5 +920,28 @@ def test_array_maskna_diagonal():
     res = a.diagonal(3)
     assert_equal(res, [])
 
+def test_array_maskna_concatenate():
+    # np.concatenate
+    a = np.arange(6, maskna=True, dtype='i4').reshape(2,3)
+    a[1,0] = np.NA
+
+    b = np.array([[12],[13]], dtype='i4')
+    res = np.concatenate([a, b], axis=1)
+    assert_equal(np.isna(res), [[0,0,0,0], [1,0,0,0]])
+    assert_equal(res[~np.isna(res)], [0,1,2,12,4,5,13])
+    assert_equal(res.strides, (16, 4))
+
+    b = np.array([[10, np.NA, 11]], maskna=True, dtype='i4')
+    res = np.concatenate([a,b], axis=0)
+    assert_equal(np.isna(res), [[0,0,0], [1,0,0], [0,1,0]])
+    assert_equal(res[~np.isna(res)], [0,1,2,4,5,10,11])
+    assert_equal(res.strides, (12, 4))
+
+    b = np.array([[np.NA, 10]], order='F', maskna=True, dtype='i4')
+    res = np.concatenate([a.T, b], axis=0)
+    assert_equal(np.isna(res), [[0,1], [0,0], [0,0], [1,0]])
+    assert_equal(res[~np.isna(res)], [0,1,4,2,5,10])
+    assert_equal(res.strides, (4, 16))
+
 if __name__ == "__main__":
     run_module_suite()

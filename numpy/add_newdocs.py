@@ -3702,7 +3702,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('put',
 
 add_newdoc('numpy.core.multiarray', 'copyto',
     """
-    copyto(dst, src, casting='same_kind', where=None)
+    copyto(dst, src, casting='same_kind', where=None, preservena=False)
 
     Copies values from `src` into `dst`, broadcasting as necessary.
     Raises a TypeError if the casting rule is violated, and if
@@ -3725,10 +3725,13 @@ add_newdoc('numpy.core.multiarray', 'copyto',
           * 'same_kind' means only safe casts or casts within a kind,
             like float64 to float32, are allowed.
           * 'unsafe' means any data conversions may be done.
-    where : array_like of bool
+    where : array_like of bool, optional
         A boolean array which is broadcasted to match the dimensions
         of `dst`, and selects elements to copy from `src` to `dst`
         wherever it contains the value True.
+    preservena : bool, optional
+        If set to True, leaves any NA values in `dst` untouched. This
+        is similar to the "hard mask" feature in numpy.ma.
 
     """)
 

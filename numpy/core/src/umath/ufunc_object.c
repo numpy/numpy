@@ -2582,13 +2582,12 @@ allocate_reduce_result(PyArrayObject *arr, npy_bool *axis_flags,
     int idim, ndim = PyArray_NDIM(arr);
 
     if (dtype == NULL) {
-        dtype = PyArray_DESCR(arr);
+        dtype = PyArray_DTYPE(arr);
         Py_INCREF(dtype);
     }
 
-    PyArray_CreateSortedStridePerm(PyArray_NDIM(arr),
-                                    PyArray_STRIDES(arr),
-                                    strideperm);
+    PyArray_CreateSortedStridePerm(PyArray_NDIM(arr), PyArray_SHAPE(arr),
+                                    PyArray_STRIDES(arr), strideperm);
 
     /* Build the new strides and shape */
     stride = dtype->elsize;
