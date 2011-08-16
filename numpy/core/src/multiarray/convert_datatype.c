@@ -1331,7 +1331,13 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_MinScalarType(PyArrayObject *arr)
 {
     PyArray_Descr *dtype = PyArray_DESCR(arr);
-    if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(dtype->type_num)) {
+    /*
+     * If the array isn't a numeric scalar or is a scalar but with
+     * its value masked out, just return the array's dtype.
+     */
+    if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(dtype->type_num) ||
+                    (PyArray_HASMASKNA(arr) && !NpyMaskValue_IsExposed(
+                                    (npy_mask)*PyArray_MASKNA_DATA(arr)))) {
         Py_INCREF(dtype);
         return dtype;
     }

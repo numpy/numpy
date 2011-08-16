@@ -141,3 +141,5 @@ class TestVstack(TestCase):
         desired = array([[1,2],[1,2]])
         assert_array_equal(res,desired)
 
+if __name__ == "__main__":
+    run_module_suite()

@@ -2369,7 +2369,7 @@ npyiter_reverse_axis_ordering(NpyIter *iter)
     NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_IDENTPERM;
 }
 
-static npy_intp
+static NPY_INLINE npy_intp
 intp_abs(npy_intp x)
 {
     return (x < 0) ? -x : x;

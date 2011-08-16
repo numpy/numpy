@@ -294,7 +294,8 @@ PyArray_AllocateMaskNA(PyArrayObject *arr,
         shape = fa->dimensions;
 
         /* This causes the NA mask and data memory orderings to match */
-        PyArray_CreateSortedStridePerm(fa->nd, fa->strides, strideperm);
+        PyArray_CreateSortedStridePerm(fa->nd, fa->dimensions,
+                                            fa->strides, strideperm);
         stride = maskna_dtype->elsize;
         for (i = fa->nd-1; i >= 0; --i) {
             npy_intp i_perm = strideperm[i].perm;

@@ -29,9 +29,12 @@ What works with NA:
     * Array methods:
        + ndarray.clip, ndarray.min, ndarray.max, ndarray.sum, ndarray.prod,
          ndarray.conjugate, ndarray.diagonal
+       + numpy.concatenate
 
 What doesn't work with NA:
     * Fancy indexing, such as with lists and partial boolean masks.
+    * ndarray.flat and any other methods that use the old iterator
+      mechanism instead of the newer nditer.
     * UFunc.reduce of multi-dimensional arrays, with skipna=True and a ufunc
       that doesn't have an identity.
     * UFunc.accumulate, UFunc.reduceat.
