@@ -19,7 +19,7 @@
 
 #include "methods.h"
 #include "convert_datatype.h"
-#include "na_singleton.h"
+#include "item_selection.h"
 
 
 /* NpyArg_ParseKeywords
@@ -549,172 +549,6 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
     Py_INCREF(Py_None);
     return Py_None;
 }
-
-/*
- * Gets a single item from the array, based on a single multi-index
- * array of values, which must be of length PyArray_NDIM(self).
- */
-static PyObject *
-PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
-{
-    int idim, ndim = PyArray_NDIM(self);
-    char *data = PyArray_DATA(self);
-    npy_intp *shape = PyArray_SHAPE(self);
-    npy_intp *strides = PyArray_STRIDES(self);
-
-    /* Case with an NA mask */
-    if (PyArray_HASMASKNA(self)) {
-        char *maskdata = PyArray_MASKNA_DATA(self);
-        npy_mask maskvalue;
-        npy_intp *maskstrides = PyArray_MASKNA_STRIDES(self);
-
-        if (PyArray_HASFIELDS(self)) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "field-NA is not supported yet in MultiIndexGetItem");
-            return NULL;
-        }
-
-        /* Get the data and maskdata pointer */
-        for (idim = 0; idim < ndim; ++idim) {
-            npy_intp shapevalue = shape[idim];
-            npy_intp ind = multi_index[idim];
-
-            if (ind < 0) {
-                ind += shapevalue;
-            }
-
-            if (ind < 0 || ind >= shapevalue) {
-                PyErr_SetString(PyExc_ValueError, "index out of bounds");
-                return NULL;
-            }
-
-            data += ind * strides[idim];
-            maskdata += ind * maskstrides[idim];
-        }
-
-        maskvalue = (npy_mask)*maskdata;
-        if (NpyMaskValue_IsExposed(maskvalue)) {
-            return PyArray_DESCR(self)->f->getitem(data, self);
-        }
-        else {
-            return (PyObject *)NpyNA_FromDTypeAndMaskValue(
-                                                PyArray_DTYPE(self),
-                                                maskvalue, 0);
-        }
-    }
-    /* Case without an NA mask */
-    else {
-        /* Get the data pointer */
-        for (idim = 0; idim < ndim; ++idim) {
-            npy_intp shapevalue = shape[idim];
-            npy_intp ind = multi_index[idim];
-
-            if (ind < 0) {
-                ind += shapevalue;
-            }
-
-            if (ind < 0 || ind >= shapevalue) {
-                PyErr_SetString(PyExc_ValueError, "index out of bounds");
-                return NULL;
-            }
-
-            data += ind * strides[idim];
-        }
-
-        return PyArray_DESCR(self)->f->getitem(data, self);
-    }
-}
-
-/*
- * Sets a single item in the array, based on a single multi-index
- * array of values, which must be of length PyArray_NDIM(self).
- *
- * Returns 0 on success, -1 on failure.
- */
-static int
-PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
-                                                PyObject *obj)
-{
-    int idim, ndim = PyArray_NDIM(self);
-    char *data = PyArray_DATA(self);
-    npy_intp *shape = PyArray_SHAPE(self);
-    npy_intp *strides = PyArray_STRIDES(self);
-
-    /* Case with an NA mask */
-    if (PyArray_HASMASKNA(self)) {
-        char *maskdata = PyArray_MASKNA_DATA(self);
-        npy_intp *maskstrides = PyArray_MASKNA_STRIDES(self);
-        NpyNA *na = NpyNA_FromObject(obj, 1);
-
-        if (PyArray_HASFIELDS(self)) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "field-NA is not supported yet in MultiIndexSetItem");
-            return -1;
-        }
-
-        /* Get the data and maskdata pointer */
-        for (idim = 0; idim < ndim; ++idim) {
-            npy_intp shapevalue = shape[idim];
-            npy_intp ind = multi_index[idim];
-
-            if (ind < 0) {
-                ind += shapevalue;
-            }
-
-            if (ind < 0 || ind >= shapevalue) {
-                PyErr_SetString(PyExc_ValueError, "index out of bounds");
-                return -1;
-            }
-
-            data += ind * strides[idim];
-            maskdata += ind * maskstrides[idim];
-        }
-
-        if (na == NULL) {
-            *maskdata = 1;
-            return PyArray_DESCR(self)->f->setitem(obj, data, self);
-        }
-        else {
-            char maskvalue = (char)NpyNA_AsMaskValue(na);
-
-            if (maskvalue != 0 && 
-                        PyArray_MASKNA_DTYPE(self)->type_num != NPY_MASK) {
-                /* TODO: also handle struct-NA mask dtypes */
-                PyErr_SetString(PyExc_ValueError,
-                        "Cannot assign an NA with a payload to an "
-                        "NA-array with a boolean mask, requires a "
-                        "multi-NA mask");
-                return -1;
-            }
-
-            *maskdata = maskvalue;
-
-            return 0;
-        }
-    }
-    /* Case without an NA mask */
-    else {
-        /* Get the data pointer */
-        for (idim = 0; idim < ndim; ++idim) {
-            npy_intp shapevalue = shape[idim];
-            npy_intp ind = multi_index[idim];
-
-            if (ind < 0) {
-                ind += shapevalue;
-            }
-
-            if (ind < 0 || ind >= shapevalue) {
-                PyErr_SetString(PyExc_ValueError, "index out of bounds");
-                return -1;
-            }
-
-            data += ind * strides[idim];
-        }
-
-        return PyArray_DESCR(self)->f->setitem(obj, data, self);
-    }
-}
-
 
 static PyObject *
 array_toscalar(PyArrayObject *self, PyObject *args)
@@ -1330,7 +1164,7 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         PyObject *_numpy_internal;
         saved = PyArray_DESCR(self);
         if (!PyDataType_HASFIELDS(saved)) {
-            PyErr_SetString(PyExc_ValueError, "Cannot specify " \
+            PyErr_SetString(PyExc_ValueError, "Cannot specify "
                             "order when the array has no fields.");
             return NULL;
         }
