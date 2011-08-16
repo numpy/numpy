@@ -12,7 +12,7 @@ import nose
 from nose.plugins import doctests as npd
 from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.plugins.base import Plugin
-from nose.util import src, getpackage
+from nose.util import src
 import numpy
 from nosetester import get_package_name
 import inspect
@@ -115,27 +115,6 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
                     valname = '%s.%s' % (name, valname)
                     self._find(tests, val, valname, module, source_lines,
                                globs, seen)
-
-
-class NumpyDocTestCase(npd.DocTestCase):
-    """Proxy for DocTestCase: provides an address() method that
-    returns the correct address for the doctest case. Otherwise
-    acts as a proxy to the test case. To provide hints for address(),
-    an obj may also be passed -- this will be used as the test object
-    for purposes of determining the test address, if it is provided.
-    """
-
-    # doctests loaded via find(obj) omit the module name
-    # so we need to override id, __repr__ and shortDescription
-    # bonus: this will squash a 2.3 vs 2.4 incompatiblity
-    def id(self):
-        name = self._dt_test.name
-        filename = self._dt_test.filename
-        if filename is not None:
-            pk = getpackage(filename)
-            if pk is not None and not name.startswith(pk):
-                name = "%s.%s" % (pk, name)
-        return name
 
 
 # second-chance checker; if the default comparison doesn't
