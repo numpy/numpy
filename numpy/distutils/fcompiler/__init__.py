@@ -214,8 +214,8 @@ class FCompiler(CCompiler):
     c_compiler = None
 
     # extra_{f77,f90}_compile_args are set by build_ext.build_extension method
-    extra_f77_compiler_args = []
-    extra_f90_compiler_args = []
+    extra_f77_compile_args = []
+    extra_f90_compile_args = []
 
     def __init__(self, *args, **kw):
         CCompiler.__init__(self, *args, **kw)
