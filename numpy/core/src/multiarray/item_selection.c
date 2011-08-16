@@ -1657,146 +1657,153 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
 
 /*NUMPY_API
  * Diagonal
+ *
+ * As of NumPy 1.7, this function always returns a view into 'self'.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 {
-    int n = PyArray_NDIM(self);
-    PyObject *new;
-    PyArray_Dims newaxes;
-    intp dims[MAX_DIMS];
-    int i, pos;
+    int i, idim, ndim = PyArray_NDIM(self);
+    npy_intp *strides, *maskna_strides = NULL;
+    npy_intp stride1, stride2, maskna_stride1 = 0, maskna_stride2 = 0;
+    npy_intp *shape, dim1, dim2;
+    int self_has_maskna = PyArray_HASMASKNA(self);
 
-    newaxes.ptr = dims;
-    if (n < 2) {
+    char *data, *maskna_data;
+    npy_intp diag_size;
+    PyArrayObject *ret;
+    PyArray_Descr *dtype;
+    npy_intp ret_shape[NPY_MAXDIMS], ret_strides[NPY_MAXDIMS];
+
+    if (ndim < 2) {
         PyErr_SetString(PyExc_ValueError,
-                        "array.ndim must be >= 2");
+                        "diag requires an array of at least two dimensions");
         return NULL;
     }
+
+    /* Handle negative axes with standard Python indexing rules */
     if (axis1 < 0) {
-        axis1 += n;
+        axis1 += ndim;
     }
     if (axis2 < 0) {
-        axis2 += n;
+        axis2 += ndim;
     }
-    if ((axis1 == axis2) || (axis1 < 0) || (axis1 >= n) ||
-        (axis2 < 0) || (axis2 >= n)) {
-        PyErr_Format(PyExc_ValueError, "axis1(=%d) and axis2(=%d) "\
-                     "must be different and within range (nd=%d)",
-                     axis1, axis2, n);
+
+    /* Error check the two axes */
+    if (axis1 == axis2) {
+        PyErr_SetString(PyExc_ValueError,
+                    "axis1 and axis2 cannot be the same");
+        return NULL;
+    }
+    else if (axis1 < 0 || axis1 >= ndim || axis2 < 0 || axis2 >= ndim) {
+        PyErr_Format(PyExc_ValueError,
+                    "axis1(=%d) and axis2(=%d) "
+                    "must be within range (ndim=%d)",
+                    axis1, axis2, ndim);
         return NULL;
     }
 
-    newaxes.len = n;
-    /* insert at the end */
-    newaxes.ptr[n-2] = axis1;
-    newaxes.ptr[n-1] = axis2;
-    pos = 0;
-    for (i = 0; i < n; i++) {
-        if ((i==axis1) || (i==axis2)) {
-            continue;
-        }
-        newaxes.ptr[pos++] = i;
+    /* Get the shape and strides of the two axes */
+    shape = PyArray_SHAPE(self);
+    dim1 = shape[axis1];
+    dim2 = shape[axis2];
+    strides = PyArray_STRIDES(self);
+    stride1 = strides[axis1];
+    stride2 = strides[axis2];
+    if (self_has_maskna) {
+        maskna_strides = PyArray_MASKNA_STRIDES(self);
+        maskna_stride1 = maskna_strides[axis1];
+        maskna_stride2 = maskna_strides[axis2];
     }
-    new = PyArray_Transpose(self, &newaxes);
-    if (new == NULL) {
-        return NULL;
-    }
-    self = (PyArrayObject *)new;
 
-    if (n == 2) {
-        PyObject *a = NULL, *ret = NULL;
-        PyArrayObject *indices = NULL;
-        intp n1, n2, start, stop, step, count;
-        intp *dptr;
-
-        n1 = PyArray_DIMS(self)[0];
-        n2 = PyArray_DIMS(self)[1];
-        step = n2 + 1;
-        if (offset < 0) {
-            start = -n2 * offset;
-            stop = MIN(n2, n1+offset)*(n2+1) - n2*offset;
+    /* Compute the data pointers and diag_size for the view */
+    data = PyArray_DATA(self);
+    maskna_data = PyArray_MASKNA_DATA(self);
+    if (offset > 0) {
+        if (offset >= dim2) {
+            diag_size = 0;
         }
         else {
-            start = offset;
-            stop = MIN(n1, n2-offset)*(n2+1) + offset;
-        }
+            data += offset * stride2;
+            maskna_data += offset * maskna_stride2;
 
-        /* count = ceil((stop-start)/step) */
-        count = ((stop-start) / step) + (((stop-start) % step) != 0);
-        indices = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &count,
-                              PyArray_INTP, NULL, NULL, 0, 0, NULL);
-        if (indices == NULL) {
-            Py_DECREF(self);
-            return NULL;
+            diag_size = dim2 - offset;
+            if (dim1 < diag_size) {
+                diag_size = dim1;
+            }
         }
-        dptr = (intp *)PyArray_DATA(indices);
-        for (n1 = start; n1 < stop; n1 += step) {
-            *dptr++ = n1;
-        }
-        a = PyArray_IterNew((PyObject *)self);
-        Py_DECREF(self);
-        if (a == NULL) {
-            Py_DECREF(indices);
-            return NULL;
-        }
-        ret = PyObject_GetItem(a, (PyObject *)indices);
-        Py_DECREF(a);
-        Py_DECREF(indices);
-        return ret;
     }
+    else if (offset < 0) {
+        offset = -offset;
+        if (offset >= dim1) {
+            diag_size = 0;
+        }
+        else {
+            data += offset * stride1;
+            maskna_data += offset * maskna_stride1;
 
+            diag_size = dim1 - offset;
+            if (dim2 < diag_size) {
+                diag_size = dim2;
+            }
+        }
+    }
     else {
-        /*
-         * my_diagonal = []
-         * for i in range (s [0]) :
-         * my_diagonal.append (diagonal (a [i], offset))
-         * return array (my_diagonal)
-         */
-        PyObject *mydiagonal = NULL, *ret = NULL, *sel = NULL;
-        intp n1;
-        int res;
-        PyArray_Descr *typecode;
-
-        new = NULL;
-
-        typecode = PyArray_DESCR(self);
-        mydiagonal = PyList_New(0);
-        if (mydiagonal == NULL) {
-            Py_DECREF(self);
-            return NULL;
-        }
-        n1 = PyArray_DIMS(self)[0];
-        for (i = 0; i < n1; i++) {
-            new = PyInt_FromLong((long) i);
-            sel = PyArray_EnsureAnyArray(PyObject_GetItem((PyObject *)self, new));
-            Py_DECREF(new);
-            if (sel == NULL) {
-                Py_DECREF(self);
-                Py_DECREF(mydiagonal);
-                return NULL;
-            }
-            new = PyArray_Diagonal((PyArrayObject *)sel, offset, n-3, n-2);
-            Py_DECREF(sel);
-            if (new == NULL) {
-                Py_DECREF(self);
-                Py_DECREF(mydiagonal);
-                return NULL;
-            }
-            res = PyList_Append(mydiagonal, new);
-            Py_DECREF(new);
-            if (res < 0) {
-                Py_DECREF(self);
-                Py_DECREF(mydiagonal);
-                return NULL;
-            }
-        }
-        Py_DECREF(self);
-        Py_INCREF(typecode);
-        ret =  PyArray_FromAny(mydiagonal, typecode, 0, 0, 0, NULL);
-        Py_DECREF(mydiagonal);
-        return ret;
+        diag_size = dim1 < dim2 ? dim1 : dim2;
     }
+
+    /* Build the new shape and strides for the main data */
+    i = 0;
+    for (idim = 0; idim < ndim; ++idim) {
+        if (idim != axis1 && idim != axis2) {
+            ret_shape[i] = shape[idim];
+            ret_strides[i] = strides[idim];
+            ++i;
+        }
+    }
+    ret_shape[ndim-2] = diag_size;
+    ret_strides[ndim-2] = stride1 + stride2;
+
+    /* Create the diagonal view */
+    dtype = PyArray_DTYPE(self);
+    Py_INCREF(dtype);
+    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
+                               dtype,
+                               ndim-1, ret_shape,
+                               ret_strides,
+                               data,
+               PyArray_FLAGS(self) & ~(NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA),
+                               (PyObject *)self);
+    if (ret == NULL) {
+        return NULL;
+    }
+    Py_INCREF(self);
+    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+
+    /* Take a view of the mask if it exists */
+    if (self_has_maskna) {
+        PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
+        npy_intp *maskna_strides = PyArray_MASKNA_STRIDES(self);
+
+        fret->maskna_dtype = PyArray_MASKNA_DTYPE(self);
+        Py_INCREF(fret->maskna_dtype);
+        fret->maskna_data = maskna_data;
+        /* Build the strides for the mask */
+        i = 0;
+        for (idim = 0; idim < ndim; ++idim) {
+            if (idim != axis1 && idim != axis2) {
+                fret->maskna_strides[i] = maskna_strides[idim];
+                ++i;
+            }
+        }
+        fret->maskna_strides[ndim-2] = maskna_stride1 + maskna_stride2;
+        fret->flags |= NPY_ARRAY_MASKNA;
+    }
+
+    return (PyObject *)ret;
 }
 
 /*NUMPY_API

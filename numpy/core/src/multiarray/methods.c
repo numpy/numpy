@@ -2076,6 +2076,7 @@ array_diagonal(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     int axis1 = 0, axis2 = 1, offset = 0;
     static char *kwlist[] = {"offset", "axis1", "axis2", NULL};
+    PyArrayObject *ret;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iii", kwlist,
                                      &offset,
@@ -2083,7 +2084,9 @@ array_diagonal(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &axis2)) {
         return NULL;
     }
-    return PyArray_Return((PyArrayObject *)PyArray_Diagonal(self, offset, axis1, axis2));
+
+    ret = (PyArrayObject *)PyArray_Diagonal(self, offset, axis1, axis2);
+    return PyArray_Return(ret);
 }
 
 
