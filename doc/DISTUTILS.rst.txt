@@ -226,7 +226,8 @@ in writing setup scripts:
   ``define_macros``, ``undef_macros``, ``library_dirs``, ``libraries``,
   ``runtime_library_dirs``, ``extra_objects``, ``extra_compile_args``,
   ``extra_link_args``, ``export_symbols``, ``swig_opts``, ``depends``,
-  ``language``, ``f2py_options``, ``module_dirs``, ``extra_info``.
+  ``language``, ``f2py_options``, ``module_dirs``, ``extra_info``,
+  ``extra_f77_compile_args``, ``extra_compile_f90_args``.
 
   Note that ``config.paths`` method is applied to all lists that
   may contain paths. ``extra_info`` is a dictionary or a list
@@ -261,11 +262,12 @@ in writing setup scripts:
   The second argument gives a path to a build directory that must
   be used when creating files to a disk.
 
-+ ``config.add_library(name, sources, **build_info)`` --- add
-  a library to ``libraries`` list. Allowed keywords arguments
-  are ``depends``, ``macros``, ``include_dirs``,
-  ``extra_compiler_args``, ``f2py_options``. See ``.add_extension()``
-  method for more information on arguments.
++ ``config.add_library(name, sources, **build_info)`` --- add a
+  library to ``libraries`` list. Allowed keywords arguments are
+  ``depends``, ``macros``, ``include_dirs``, ``extra_compiler_args``,
+  ``f2py_options``, ``extra_f77_compile_args``,
+  ``extra_compile_f90_args``.  See ``.add_extension()`` method for
+  more information on arguments.
 
 + ``config.have_f77c()`` --- return True if Fortran 77 compiler is
   available (read: a simple Fortran 77 code compiled succesfully). 

@@ -299,6 +299,9 @@ class build_ext (old_build_ext):
             fcompiler = self._f77_compiler
         else: # in case ext.language is c++, for instance
             fcompiler = self._f90_compiler or self._f77_compiler
+        if fcompiler is not None:
+            fcompiler.extra_f77_compile_args = ext.extra_f77_compile_args or []
+            fcompiler.extra_f90_compile_args = ext.extra_f90_compile_args or []
         cxx_compiler = self._cxx_compiler
 
         # check for the availability of required compilers
