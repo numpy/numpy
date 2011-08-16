@@ -834,7 +834,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         return X
 
 
-def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
+def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
+        footer='', comments='# '):
     """
     Save an array to a text file.
 
@@ -846,14 +847,25 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
         transparently.
     X : array_like
         Data to be saved to a text file.
-    fmt : str or sequence of strs
+    fmt : str or sequence of strs, optional
         A single format (%10.5f), a sequence of formats, or a
         multi-format string, e.g. 'Iteration %d -- %10.5f', in which
         case `delimiter` is ignored.
-    delimiter : str
+    delimiter : str, optional
         Character separating columns.
-    newline : str
+    newline : str, optional
         .. versionadded:: 1.5.0
+    header : str, optional
+        String that will be written at the beginning of the file.
+        .. versionadded:: 2.0.0
+    footer : str, optional
+        String that will be written at the end of the file.
+        .. versionadded:: 2.0.0
+    comments : str, optional
+        String that will be prepended to the ``header`` and ``footer`` strings,
+        to mark them as comments. Default: '# ',  as expected by e.g.
+        ``numpy.loadtxt``.
+        .. versionadded:: 2.0.0
 
         Character separating lines.
 
@@ -977,8 +989,14 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
             else:
                 format = fmt
 
+        if len(header) > 0:
+            header = header.replace('\n', '\n' + comments)
+            fh.write(asbytes(comments + header + newline))
         for row in X:
             fh.write(asbytes(format % tuple(row) + newline))
+        if len(footer) > 0:
+            footer = footer.replace('\n', '\n' + comments)
+            fh.write(asbytes(comments + footer + newline))
     finally:
         if own_fh:
             fh.close()
