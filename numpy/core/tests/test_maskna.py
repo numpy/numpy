@@ -890,5 +890,35 @@ def test_array_maskna_conjugate_method():
     assert_equal(np.isna(b), [0,0,1,0,1])
     assert_equal(b[~np.isna(b)], [-1j, 2-4j, 2+1.5j])
 
+def test_array_maskna_diagonal():
+    # ndarray.diagonal
+    a = np.arange(6, maskna=True)
+    a.shape = (2,3)
+    a[0,1] = np.NA
+
+    # Should produce a view into a
+    res = a.diagonal()
+    assert_(res.base is a)
+    assert_(res.flags.maskna)
+    assert_(not res.flags.ownmaskna)
+    assert_equal(res, [0, 4])
+
+    res = a.diagonal(-1)
+    assert_equal(res, [3])
+
+    res = a.diagonal(-2)
+    assert_equal(res, [])
+
+    # This diagonal has the NA
+    res = a.diagonal(1)
+    assert_equal(np.isna(res), [1,0])
+    assert_equal(res[~np.isna(res)], [5])
+
+    res = a.diagonal(2)
+    assert_equal(res, [2])
+
+    res = a.diagonal(3)
+    assert_equal(res, [])
+
 if __name__ == "__main__":
     run_module_suite()

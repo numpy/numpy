@@ -221,10 +221,12 @@ def diag(v, k=0):
     """
     Extract a diagonal or construct a diagonal array.
 
+    As of NumPy 1.7, extracting a diagonal always returns a view into `v`.
+
     Parameters
     ----------
     v : array_like
-        If `v` is a 2-D array, return a copy of its `k`-th diagonal.
+        If `v` is a 2-D array, return a view of its `k`-th diagonal.
         If `v` is a 1-D array, return a 2-D array with `v` on the `k`-th
         diagonal.
     k : int, optional
@@ -278,16 +280,7 @@ def diag(v, k=0):
         res[:n-k].flat[i::n+1] = v
         return res
     elif len(s) == 2:
-        if k >= s[1]:
-            return empty(0, dtype=v.dtype)
-        if v.flags.f_contiguous:
-            # faster slicing
-            v, k, s = v.T, -k, s[::-1]
-        if k >= 0:
-            i = k
-        else:
-            i = (-k) * s[1]
-        return v[:s[1]-k].flat[i::s[1]+1]
+        return v.diagonal(k)
     else:
         raise ValueError("Input must be 1- or 2-d.")
 

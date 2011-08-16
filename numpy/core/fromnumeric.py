@@ -911,6 +911,8 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     removing `axis1` and `axis2` and appending an index to the right equal
     to the size of the resulting diagonals.
 
+    As of NumPy 1.7, this function always returns a view into `a`.
+
     Parameters
     ----------
     a : array_like

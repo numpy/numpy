@@ -11,11 +11,16 @@ Highlights
 New features
 ============
 
+
+Mask-based NA missing values
+----------------------------
+
 Support for NA missing values similar to those in R has been implemented.
 This was done by adding optional NA masks to the core array object.
 
-Support for NA is not complete, here is a list of the things that do and
-do not work with NA values:
+While a significant amount of the NumPy functionality has been extended to
+support NA masks, not everything is yet supported. Here is a list of things
+that do and do not work with NA values:
 
 What works with NA:
     * Basic indexing and slicing, as well as full boolean mask indexing.
@@ -23,9 +28,7 @@ What works with NA:
     * UFunc.reduce methods, with a new skipna parameter.
     * Array methods:
        + ndarray.clip, ndarray.min, ndarray.max, ndarray.sum, ndarray.prod,
-         
-       
-       ndarray.conjugate
+         ndarray.conjugate, ndarray.diagonal
 
 What doesn't work with NA:
     * Fancy indexing, such as with lists and partial boolean masks.
@@ -46,6 +49,15 @@ Custom formatter for printing arrays
 Changes
 =======
 
+The default casting rule for UFunc out= parameters has been changed from
+'unsafe' to 'same_kind'.  Most usages which violate the 'same_kind'
+rule are likely bugs, so this change may expose previously undetected
+errors in projects that depend on NumPy.
+
+The functions np.diag, np.diagonal, and <ndarray>.diagonal now return a
+view into the original array instead of making a copy. This makes these
+functions more consistent with NumPy's general approach of taking views
+where possible, and performs much faster as well.
 
 
 Deprecations
