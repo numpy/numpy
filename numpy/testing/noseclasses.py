@@ -12,17 +12,13 @@ import nose
 from nose.plugins import doctests as npd
 from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.plugins.base import Plugin
-from nose.util import src, getpackage
+from nose.util import src
 import numpy
 from nosetester import get_package_name
 import inspect
 
-_doctest_ignore = ['generate_numpy_api.py', 'scons_support.py',
-                   'setupscons.py', 'setup.py']
-
 # Some of the classes in this module begin with 'Numpy' to clearly distinguish
 # them from the plethora of very similar names from nose/unittest/doctest
-
 
 #-----------------------------------------------------------------------------
 # Modified version of the one in the stdlib, that fixes a python bug (doctests
@@ -65,8 +61,6 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
             return True # [XX] no way not be sure.
         else:
             raise ValueError("object must be a class or function")
-
-
 
     def _find(self, tests, obj, name, module, source_lines, globs, seen):
         """
@@ -117,27 +111,6 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
                                globs, seen)
 
 
-class NumpyDocTestCase(npd.DocTestCase):
-    """Proxy for DocTestCase: provides an address() method that
-    returns the correct address for the doctest case. Otherwise
-    acts as a proxy to the test case. To provide hints for address(),
-    an obj may also be passed -- this will be used as the test object
-    for purposes of determining the test address, if it is provided.
-    """
-
-    # doctests loaded via find(obj) omit the module name
-    # so we need to override id, __repr__ and shortDescription
-    # bonus: this will squash a 2.3 vs 2.4 incompatiblity
-    def id(self):
-        name = self._dt_test.name
-        filename = self._dt_test.filename
-        if filename is not None:
-            pk = getpackage(filename)
-            if pk is not None and not name.startswith(pk):
-                name = "%s.%s" % (pk, name)
-        return name
-
-
 # second-chance checker; if the default comparison doesn't
 # pass, then see if the expected output string contains flags that
 # tell us to ignore the output
@@ -185,20 +158,87 @@ print_state = numpy.get_printoptions()
 
 class NumpyDoctest(npd.Doctest):
     name = 'numpydoctest'   # call nosetests with --with-numpydoctest
-    enabled = True
+    score = 1000 # load late, after doctest builtin
 
+    # always use whitespace and ellipsis options for doctests
+    doctest_optflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
+
+    # files that should be ignored for doctests
+    doctest_ignore = ['generate_numpy_api.py',
+                      'scons_support.py',
+                      'setupscons.py',
+                      'setup.py']
+
+    # Custom classes; class variables to allow subclassing
+    doctest_case_class = NumpyDocTestCase
+    out_check_class = NumpyOutputChecker
+    test_finder_class = NumpyDocTestFinder
+
+    # Don't use the standard doctest option handler; hard-code the option values
     def options(self, parser, env=os.environ):
         Plugin.options(self, parser, env)
+        # Test doctests in 'test' files / directories. Standard plugin default
+        # is False
+        self.doctest_tests = True
+        # Variable name; if defined, doctest results stored in this variable in
+        # the top-level namespace.  None is the standard default
+        self.doctest_result_var = None
 
     def configure(self, options, config):
+        # parent method sets enabled flag from command line --with-numpydoctest
         Plugin.configure(self, options, config)
-        self.doctest_tests = True
-        self.finder = NumpyDocTestFinder()
+        self.finder = self.test_finder_class()
         self.parser = doctest.DocTestParser()
+        if self.enabled:
+            # Pull standard doctest out of plugin list; there's no reason to run
+            # both.  In practice the Unplugger plugin above would cover us when
+            # run from a standard numpy.test() call; this is just in case
+            # someone wants to run our plugin outside the numpy.test() machinery
+            config.plugins.plugins = [p for p in config.plugins.plugins
+                                      if p.name != 'doctest']
 
-    # Turn on whitespace normalization, set a minimal execution context
-    # for doctests, implement a "#random" directive to allow executing a
-    # command while ignoring its output.
+    def set_test_context(self, test):
+        """ Configure `test` object to set test context
+
+        We set the numpy / scipy standard doctest namespace
+
+        Parameters
+        ----------
+        test : test object
+            with ``globs`` dictionary defining namespace
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        `test` object modified in place
+        """
+        # set the namespace for tests
+        pkg_name = get_package_name(os.path.dirname(test.filename))
+
+        # Each doctest should execute in an environment equivalent to
+        # starting Python and executing "import numpy as np", and,
+        # for SciPy packages, an additional import of the local
+        # package (so that scipy.linalg.basic.py's doctests have an
+        # implicit "from scipy import linalg" as well.
+        #
+        # Note: __file__ allows the doctest in NoseTester to run
+        # without producing an error
+        test.globs = {'__builtins__':__builtins__,
+                      '__file__':'__main__',
+                      '__name__':'__main__',
+                      'np':numpy}
+        # add appropriate scipy import for SciPy tests
+        if 'scipy' in pkg_name:
+            p = pkg_name.split('.')
+            p2 = p[-1]
+            test.globs[p2] = __import__(pkg_name, test.globs, {}, [p2])
+
+    # Override test loading to customize test context (with set_test_context
+    # method), set standard docstring options, and install our own test output
+    # checker
     def loadTestsFromModule(self, module):
         if not self.matches(module.__name__):
             npd.log.debug("Doctest doesn't want module %s", module)
@@ -218,49 +258,45 @@ class NumpyDoctest(npd.Doctest):
                 continue
             if not test.filename:
                 test.filename = module_file
-
-            pkg_name = get_package_name(os.path.dirname(test.filename))
-
-            # Each doctest should execute in an environment equivalent to
-            # starting Python and executing "import numpy as np", and,
-            # for SciPy packages, an additional import of the local
-            # package (so that scipy.linalg.basic.py's doctests have an
-            # implicit "from scipy import linalg" as well.
-            #
-            # Note: __file__ allows the doctest in NoseTester to run
-            # without producing an error
-            test.globs = {'__builtins__':__builtins__,
-                          '__file__':'__main__',
-                          '__name__':'__main__',
-                          'np':numpy}
-
-            # add appropriate scipy import for SciPy tests
-            if 'scipy' in pkg_name:
-                p = pkg_name.split('.')
-                p1 = '.'.join(p[:-1])
-                p2 = p[-1]
-                test.globs[p2] = __import__(pkg_name, test.globs, {}, [p2])
-
-            # always use whitespace and ellipsis options
-            optionflags = doctest.NORMALIZE_WHITESPACE | doctest.ELLIPSIS
-
-            yield NumpyDocTestCase(test,
-                                   optionflags=optionflags,
-                                   checker=NumpyOutputChecker())
-
+            # Set test namespace; test altered in place
+            self.set_test_context(test)
+            yield self.doctest_case_class(test,
+                                          optionflags=self.doctest_optflags,
+                                          checker=self.out_check_class(),
+                                          result_var=self.doctest_result_var)
 
     # Add an afterContext method to nose.plugins.doctests.Doctest in order
     # to restore print options to the original state after each doctest
     def afterContext(self):
         numpy.set_printoptions(**print_state)
 
-
     # Ignore NumPy-specific build files that shouldn't be searched for tests
     def wantFile(self, file):
         bn = os.path.basename(file)
-        if bn in _doctest_ignore:
+        if bn in self.doctest_ignore:
             return False
         return npd.Doctest.wantFile(self, file)
+
+
+class Unplugger(object):
+    """ Nose plugin to remove named plugin late in loading
+
+    By default it removes the "doctest" plugin.
+    """
+    name = 'unplugger'
+    enabled = True # always enabled
+    score = 4000 # load late in order to be after builtins
+
+    def __init__(self, to_unplug='doctest'):
+        self.to_unplug = to_unplug
+
+    def options(self, parser, env):
+        pass
+
+    def configure(self, options, config):
+        # Pull named plugin out of plugins list
+        config.plugins.plugins = [p for p in config.plugins.plugins
+                                  if p.name != self.to_unplug]
 
 
 class KnownFailureTest(Exception):
@@ -295,41 +331,9 @@ class KnownFailure(ErrorClassPlugin):
             self.enabled = False
 
 
-class NpConfig(nose.core.Config):
-    ''' Class to pull out nose doctest plugin after configuration
-
-    This allows the user to set doctest related settings in their
-    configuration.  For example, without this fix, a setting of
-    'with-doctest=1' in the user's .noserc file would cause an error, if
-    we remove the doctest extension before this stage.  Our configure
-    uses the plugin to parse any settings, but then removed the doctest
-    plugin because the numpy doctester should be used for doctests
-    instead.
-    '''
-    def __init__(self, config):
-        self.__dict__ = config.__dict__
-        
-    def configure(self, *args, **kwargs):
-        super(NpConfig, self).configure(*args, **kwargs)
-        self.plugins.plugins = [p for p in self.plugins.plugins
-                                if p.name != 'doctest']
-        
-
-# Our class has two uses.  First, to allow us to use NpConfig above to
-# remove the doctest plugin after it has parsed the configuration.
-# Second we save the results of the tests in runTests - see runTests
+# Class allows us to save the results of the tests in runTests - see runTests
 # method docstring for details
 class NumpyTestProgram(nose.core.TestProgram):
-    def makeConfig(self, *args, **kwargs):
-        """Load a Config, pre-filled with user config files if any are
-        found.
-
-        We override this method only to allow us to return a NpConfig
-        object instead of a Config object. 
-        """
-        config = super(NumpyTestProgram, self).makeConfig(*args, **kwargs)
-        return NpConfig(config)
-    
     def runTests(self):
         """Run Tests. Returns true on success, false on failure, and
         sets self.success to the same value.
@@ -345,7 +349,6 @@ class NumpyTestProgram(nose.core.TestProgram):
         plug_runner = self.config.plugins.prepareTestRunner(self.testRunner)
         if plug_runner is not None:
             self.testRunner = plug_runner
-
         self.result = self.testRunner.run(self.test)
         self.success = self.result.wasSuccessful()
         return self.success
