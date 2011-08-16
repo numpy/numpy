@@ -826,26 +826,41 @@ def test_array_maskna_sum_prod_methods():
     # ndarray.sum, ndarray.prod
     a = np.array([[2, np.NA, 10],
                   [4, 8, 7],
-                  [12, 4, np.NA]], maskna=True)
+                  [12, 4, np.NA],
+                  [3, 2, 5]], maskna=True)
     
     res = a.sum(axis=0)
     assert_equal(np.isna(res), [0,1,1])
-    assert_equal(res[~np.isna(res)], [18])
+    assert_equal(res[~np.isna(res)], [21])
 
     res = a.sum(axis=-1)
-    assert_equal(np.isna(res), [1,0,1])
-    assert_equal(res[~np.isna(res)], [19])
+    assert_equal(np.isna(res), [1,0,1,0])
+    assert_equal(res[~np.isna(res)], [19,10])
     
     res = a.prod(axis=0)
     assert_equal(np.isna(res), [0,1,1])
-    assert_equal(res[~np.isna(res)], [2*4*12])
+    assert_equal(res[~np.isna(res)], [2*4*12*3])
 
     res = a.prod(axis=-1)
-    assert_equal(np.isna(res), [1,0,1])
-    assert_equal(res[~np.isna(res)], [4*8*7])
+    assert_equal(np.isna(res), [1,0,1,0])
+    assert_equal(res[~np.isna(res)], [4*8*7,3*2*5])
+
+    # Check also with Fortran-order
+    a = np.array([[2, np.NA, 10],
+                  [4, 8, 7],
+                  [12, 4, np.NA],
+                  [3, 2, 5]], maskna=True, order='F')
+
+    res = a.sum(axis=0)
+    assert_equal(np.isna(res), [0,1,1])
+    assert_equal(res[~np.isna(res)], [21])
+
+    res = a.sum(axis=-1)
+    assert_equal(np.isna(res), [1,0,1,0])
+    assert_equal(res[~np.isna(res)], [19,10])
+    
 
 def test_array_maskna_std_mean_methods():
-    return
     # ndarray.std, ndarray.mean
     a = np.array([[2, np.NA, 10],
                   [4, 8, 7],

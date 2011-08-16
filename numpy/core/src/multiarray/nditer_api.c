@@ -1591,6 +1591,7 @@ NpyIter_DebugPrint(NpyIter *iter)
     }
 
     printf("------- END ITERATOR DUMP -------\n");
+    fflush(stdout);
 
     PyGILState_Release(gilstate);
 }
@@ -2044,6 +2045,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
     char *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
@@ -2373,13 +2375,21 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
         }
 
         if (stransfer != NULL) {
-            npy_intp src_itemsize = PyArray_DESCR(operands[iop])->elsize;
+            npy_intp src_itemsize;
             npy_intp op_transfersize;
 
             npy_intp dst_stride, *src_strides, *src_coords, *src_shape;
             int ndim_transfer;
 
             npy_bool skip_transfer = 0;
+
+            /* Need to pick the right item size for the data vs mask */
+            if (iop < first_maskna_op) {
+                src_itemsize = PyArray_DTYPE(operands[iop])->elsize;
+            }
+            else {
+                src_itemsize = PyArray_MASKNA_DTYPE(operands[iop])->elsize;
+            }
 
             /* If stransfer wasn't set to NULL, buffering is required */
             any_buffered = 1;
