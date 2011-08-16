@@ -1769,10 +1769,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     PyObject *arr_prep_args = NULL;
 
     NPY_ORDER order = NPY_KEEPORDER;
-    /*
-     * Currently trying out SAME_KIND casting rule by default.
-     */
-    NPY_CASTING casting = NPY_SAME_KIND_CASTING;
+    /* Use the default assignment casting rule */
+    NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
     /* When provided, extobj and typetup contain borrowed references */
     PyObject *extobj = NULL, *type_tup = NULL;
 
@@ -2171,10 +2169,8 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     int trivial_loop_ok = 0, use_maskna = 0;
 
     NPY_ORDER order = NPY_KEEPORDER;
-    /*
-     * Currently trying out SAME_KIND casting rule by default.
-     */
-    NPY_CASTING casting = NPY_SAME_KIND_CASTING;
+    /* Use the default assignment casting rule */
+    NPY_CASTING casting = NPY_DEFAULT_ASSIGN_CASTING;
     /* When provided, extobj and typetup contain borrowed references */
     PyObject *extobj = NULL, *type_tup = NULL;
 
