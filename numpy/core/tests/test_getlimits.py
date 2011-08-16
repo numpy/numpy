@@ -55,6 +55,15 @@ class TestIinfo(TestCase):
         for T in types:
             assert_equal(iinfo(T).max, T(-1))
 
+class TestRepr(TestCase):
+    def test_iinfo_repr(self):
+        expected = "iinfo(min=-32768, max=32767, dtype=int16)"
+        assert_equal(repr(np.iinfo(np.int16)), expected)
+
+    def test_finfo_repr(self):
+        expected = "finfo(resolution=1e-06, min=-3.4028235e+38," + \
+                   " max=3.4028235e+38, dtype=float32)"
+        assert_equal(repr(np.finfo(np.float32)), expected)
 
 def test_instances():
     iinfo(10)
