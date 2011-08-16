@@ -19,6 +19,7 @@
 
 #include "methods.h"
 #include "convert_datatype.h"
+#include "na_singleton.h"
 
 
 /* NpyArg_ParseKeywords
@@ -422,7 +423,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 {
     PyArrayObject *ret;
-    intp size;
+    npy_intp size;
     PyArray_CopySwapNFunc *copyswapn;
     PyArrayIterObject *it;
 
@@ -440,7 +441,7 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
         }
         else { /* Use iterator */
             int axis = -1;
-            intp stride;
+            npy_intp stride;
             it = (PyArrayIterObject *)                      \
                 PyArray_IterAllButAxis((PyObject *)self, &axis);
             stride = PyArray_STRIDES(self)[axis];
@@ -549,103 +550,251 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
     return Py_None;
 }
 
-
+/*
+ * Gets a single item from the array, based on a single multi-index
+ * array of values, which must be of length PyArray_NDIM(self).
+ */
 static PyObject *
-array_toscalar(PyArrayObject *self, PyObject *args) {
-    int n, nd;
-    n = PyTuple_GET_SIZE(args);
+PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
+{
+    int idim, ndim = PyArray_NDIM(self);
+    char *data = PyArray_DATA(self);
+    npy_intp *shape = PyArray_SHAPE(self);
+    npy_intp *strides = PyArray_STRIDES(self);
 
-    if (n == 1) {
-        PyObject *obj;
-        obj = PyTuple_GET_ITEM(args, 0);
-        if (PyTuple_Check(obj)) {
-            args = obj;
-            n = PyTuple_GET_SIZE(args);
-        }
-    }
+    /* Case with an NA mask */
+    if (PyArray_HASMASKNA(self)) {
+        char *maskdata = PyArray_MASKNA_DATA(self);
+        npy_mask maskvalue;
+        npy_intp *maskstrides = PyArray_MASKNA_STRIDES(self);
 
-    if (n == 0) {
-        if (PyArray_NDIM(self) == 0 || PyArray_SIZE(self) == 1)
-            return PyArray_DESCR(self)->f->getitem(PyArray_DATA(self), self);
-        else {
-            PyErr_SetString(PyExc_ValueError,
-                            "can only convert an array "    \
-                            " of size 1 to a Python scalar");
+        if (PyArray_HASFIELDS(self)) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "field-NA is not supported yet in MultiIndexGetItem");
             return NULL;
         }
-    }
-    else if (n != PyArray_NDIM(self) && (n > 1 || PyArray_NDIM(self) == 0)) {
-        PyErr_SetString(PyExc_ValueError,
-                        "incorrect number of indices for "      \
-                        "array");
-        return NULL;
-    }
-    else if (n == 1) { /* allows for flat getting as well as 1-d case */
-        intp value, loc, index, factor;
-        intp factors[MAX_DIMS];
-        value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, 0));
-        if (error_converting(value)) {
-            PyErr_SetString(PyExc_ValueError, "invalid integer");
-            return NULL;
-        }
-        factor = PyArray_SIZE(self);
-        if (value < 0) value += factor;
-        if ((value >= factor) || (value < 0)) {
-            PyErr_SetString(PyExc_ValueError,
-                            "index out of bounds");
-            return NULL;
-        }
-        if (PyArray_NDIM(self) == 1) {
-            value *= PyArray_STRIDES(self)[0];
-            return PyArray_DESCR(self)->f->getitem(PyArray_DATA(self) + value,
-                                           self);
-        }
-        nd = PyArray_NDIM(self);
-        factor = 1;
-        while (nd--) {
-            factors[nd] = factor;
-            factor *= PyArray_DIMS(self)[nd];
-        }
-        loc = 0;
-        for (nd = 0; nd < PyArray_NDIM(self); nd++) {
-            index = value / factors[nd];
-            value = value % factors[nd];
-            loc += PyArray_STRIDES(self)[nd]*index;
-        }
 
-        return PyArray_DESCR(self)->f->getitem(PyArray_DATA(self) + loc,
-                                       self);
+        /* Get the data and maskdata pointer */
+        for (idim = 0; idim < ndim; ++idim) {
+            npy_intp shapevalue = shape[idim];
+            npy_intp ind = multi_index[idim];
 
-    }
-    else {
-        intp loc, index[MAX_DIMS];
-        nd = PyArray_IntpFromSequence(args, index, MAX_DIMS);
-        if (nd < n) {
-            return NULL;
-        }
-        loc = 0;
-        while (nd--) {
-            if (index[nd] < 0) {
-                index[nd] += PyArray_DIMS(self)[nd];
+            if (ind < 0) {
+                ind += shapevalue;
             }
-            if (index[nd] < 0 ||
-                index[nd] >= PyArray_DIMS(self)[nd]) {
-                PyErr_SetString(PyExc_ValueError,
-                                "index out of bounds");
+
+            if (ind < 0 || ind >= shapevalue) {
+                PyErr_SetString(PyExc_ValueError, "index out of bounds");
                 return NULL;
             }
-            loc += PyArray_STRIDES(self)[nd]*index[nd];
+
+            data += ind * strides[idim];
+            maskdata += ind * maskstrides[idim];
         }
-        return PyArray_DESCR(self)->f->getitem(PyArray_DATA(self) + loc, self);
+
+        maskvalue = (npy_mask)*maskdata;
+        if (NpyMaskValue_IsExposed(maskvalue)) {
+            return PyArray_DESCR(self)->f->getitem(data, self);
+        }
+        else {
+            return (PyObject *)NpyNA_FromDTypeAndMaskValue(
+                                                PyArray_DTYPE(self),
+                                                maskvalue, 0);
+        }
+    }
+    /* Case without an NA mask */
+    else {
+        /* Get the data pointer */
+        for (idim = 0; idim < ndim; ++idim) {
+            npy_intp shapevalue = shape[idim];
+            npy_intp ind = multi_index[idim];
+
+            if (ind < 0) {
+                ind += shapevalue;
+            }
+
+            if (ind < 0 || ind >= shapevalue) {
+                PyErr_SetString(PyExc_ValueError, "index out of bounds");
+                return NULL;
+            }
+
+            data += ind * strides[idim];
+        }
+
+        return PyArray_DESCR(self)->f->getitem(data, self);
     }
 }
 
+/*
+ * Sets a single item in the array, based on a single multi-index
+ * array of values, which must be of length PyArray_NDIM(self).
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+static int
+PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
+                                                PyObject *obj)
+{
+    int idim, ndim = PyArray_NDIM(self);
+    char *data = PyArray_DATA(self);
+    npy_intp *shape = PyArray_SHAPE(self);
+    npy_intp *strides = PyArray_STRIDES(self);
+
+    /* Case with an NA mask */
+    if (PyArray_HASMASKNA(self)) {
+        char *maskdata = PyArray_MASKNA_DATA(self);
+        npy_intp *maskstrides = PyArray_MASKNA_STRIDES(self);
+        NpyNA *na = NpyNA_FromObject(obj, 1);
+
+        if (PyArray_HASFIELDS(self)) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "field-NA is not supported yet in MultiIndexSetItem");
+            return -1;
+        }
+
+        /* Get the data and maskdata pointer */
+        for (idim = 0; idim < ndim; ++idim) {
+            npy_intp shapevalue = shape[idim];
+            npy_intp ind = multi_index[idim];
+
+            if (ind < 0) {
+                ind += shapevalue;
+            }
+
+            if (ind < 0 || ind >= shapevalue) {
+                PyErr_SetString(PyExc_ValueError, "index out of bounds");
+                return -1;
+            }
+
+            data += ind * strides[idim];
+            maskdata += ind * maskstrides[idim];
+        }
+
+        if (na == NULL) {
+            *maskdata = 1;
+            return PyArray_DESCR(self)->f->setitem(obj, data, self);
+        }
+        else {
+            char maskvalue = (char)NpyNA_AsMaskValue(na);
+
+            if (maskvalue != 0 && 
+                        PyArray_MASKNA_DTYPE(self)->type_num != NPY_MASK) {
+                /* TODO: also handle struct-NA mask dtypes */
+                PyErr_SetString(PyExc_ValueError,
+                        "Cannot assign an NA with a payload to an "
+                        "NA-array with a boolean mask, requires a "
+                        "multi-NA mask");
+                return -1;
+            }
+
+            *maskdata = maskvalue;
+
+            return 0;
+        }
+    }
+    /* Case without an NA mask */
+    else {
+        /* Get the data pointer */
+        for (idim = 0; idim < ndim; ++idim) {
+            npy_intp shapevalue = shape[idim];
+            npy_intp ind = multi_index[idim];
+
+            if (ind < 0) {
+                ind += shapevalue;
+            }
+
+            if (ind < 0 || ind >= shapevalue) {
+                PyErr_SetString(PyExc_ValueError, "index out of bounds");
+                return -1;
+            }
+
+            data += ind * strides[idim];
+        }
+
+        return PyArray_DESCR(self)->f->setitem(obj, data, self);
+    }
+}
+
+
 static PyObject *
-array_setscalar(PyArrayObject *self, PyObject *args) {
-    int n, nd;
-    int ret = -1;
+array_toscalar(PyArrayObject *self, PyObject *args)
+{
+    npy_intp multi_index[NPY_MAXDIMS];
+    int n = PyTuple_GET_SIZE(args);
+    int idim, ndim = PyArray_NDIM(self);
+
+    /* If there is a tuple as a single argument, treat it as the argument */
+    if (n == 1 && PyTuple_Check(PyTuple_GET_ITEM(args, 0))) {
+        args = PyTuple_GET_ITEM(args, 0);
+        n = PyTuple_GET_SIZE(args);
+    }
+
+    if (n == 0) {
+        if (PyArray_SIZE(self) == 1) {
+            for (idim = 0; idim < ndim; ++idim) {
+                multi_index[idim] = 0;
+            }
+        }
+        else {
+            PyErr_SetString(PyExc_ValueError,
+                            "can only convert an array "
+                            " of size 1 to a Python scalar");
+        }
+    }
+    /* Special case of C-order flat indexing... :| */
+    else if (n == 1 && ndim != 1) {
+        npy_intp *shape = PyArray_SHAPE(self);
+        npy_intp value, size = PyArray_SIZE(self);
+
+        value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, 0));
+        if (value == -1 && PyErr_Occurred()) {
+            return NULL;
+        }
+
+        /* Negative indexing */
+        if (value < 0) {
+            value += size;
+        }
+
+        if (value < 0 || value >= size) {
+            PyErr_SetString(PyExc_ValueError, "index out of bounds");
+            return NULL;
+        }
+
+        /* Convert the flat index into a multi-index */
+        for (idim = ndim-1; idim >= 0; --idim) {
+            multi_index[idim] = value % shape[idim];
+            value /= shape[idim];
+        }
+    }
+    /* A multi-index tuple */
+    else if (n == ndim) {
+        npy_intp value;
+
+        for (idim = 0; idim < ndim; ++idim) {
+            value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, idim));
+            if (value == -1 && PyErr_Occurred()) {
+                return NULL;
+            }
+            multi_index[idim] = value;
+        }
+    }
+    else {
+        PyErr_SetString(PyExc_ValueError,
+                        "incorrect number of indices for array");
+        return NULL;
+    }
+
+    return PyArray_MultiIndexGetItem(self, multi_index);
+}
+
+static PyObject *
+array_setscalar(PyArrayObject *self, PyObject *args)
+{
+    npy_intp multi_index[NPY_MAXDIMS];
+    int n = PyTuple_GET_SIZE(args) - 1;
+    int idim, ndim = PyArray_NDIM(self);
     PyObject *obj;
-    n = PyTuple_GET_SIZE(args) - 1;
 
     if (n < 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -653,110 +802,76 @@ array_setscalar(PyArrayObject *self, PyObject *args) {
         return NULL;
     }
     obj = PyTuple_GET_ITEM(args, n);
+
+    /* If there is a tuple as a single argument, treat it as the argument */
+    if (n == 1 && PyTuple_Check(PyTuple_GET_ITEM(args, 0))) {
+        args = PyTuple_GET_ITEM(args, 0);
+        n = PyTuple_GET_SIZE(args);
+    }
+
     if (n == 0) {
-        if (PyArray_NDIM(self) == 0 || PyArray_SIZE(self) == 1) {
-            ret = PyArray_DESCR(self)->f->setitem(obj, PyArray_DATA(self), self);
+        if (PyArray_SIZE(self) == 1) {
+            for (idim = 0; idim < ndim; ++idim) {
+                multi_index[idim] = 0;
+            }
         }
         else {
             PyErr_SetString(PyExc_ValueError,
-                            "can only place a scalar for an "
-                            " array of size 1");
-            return NULL;
+                            "can only convert an array "
+                            " of size 1 to a Python scalar");
         }
     }
-    else if (n != PyArray_NDIM(self) && (n > 1 || PyArray_NDIM(self) == 0)) {
-        PyErr_SetString(PyExc_ValueError,
-                        "incorrect number of indices for "      \
-                        "array");
-        return NULL;
-    }
-    else if (n == 1) { /* allows for flat setting as well as 1-d case */
-        intp value, loc, index, factor;
-        intp factors[MAX_DIMS];
-        PyObject *indobj;
+    /* Special case of C-order flat indexing... :| */
+    else if (n == 1 && ndim != 1) {
+        npy_intp *shape = PyArray_SHAPE(self);
+        npy_intp value, size = PyArray_SIZE(self);
 
-        indobj = PyTuple_GET_ITEM(args, 0);
-        if (PyTuple_Check(indobj)) {
-            PyObject *res;
-            PyObject *newargs;
-            PyObject *tmp;
-            int i, nn;
-            nn = PyTuple_GET_SIZE(indobj);
-            newargs = PyTuple_New(nn+1);
-            Py_INCREF(obj);
-            for (i = 0; i < nn; i++) {
-                tmp = PyTuple_GET_ITEM(indobj, i);
-                Py_INCREF(tmp);
-                PyTuple_SET_ITEM(newargs, i, tmp);
-            }
-            PyTuple_SET_ITEM(newargs, nn, obj);
-            /* Call with a converted set of arguments */
-            res = array_setscalar(self, newargs);
-            Py_DECREF(newargs);
-            return res;
-        }
-        value = PyArray_PyIntAsIntp(indobj);
-        if (error_converting(value)) {
-            PyErr_SetString(PyExc_ValueError, "invalid integer");
+        value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, 0));
+        if (value == -1 && PyErr_Occurred()) {
             return NULL;
-        }
-        if (value >= PyArray_SIZE(self)) {
-            PyErr_SetString(PyExc_ValueError,
-                            "index out of bounds");
-            return NULL;
-        }
-        if (PyArray_NDIM(self) == 1) {
-            value *= PyArray_STRIDES(self)[0];
-            ret = PyArray_DESCR(self)->f->setitem(obj, PyArray_DATA(self) + value,
-                                          self);
-            goto finish;
-        }
-        nd = PyArray_NDIM(self);
-        factor = 1;
-        while (nd--) {
-            factors[nd] = factor;
-            factor *= PyArray_DIMS(self)[nd];
-        }
-        loc = 0;
-        for (nd = 0; nd < PyArray_NDIM(self); nd++) {
-            index = value / factors[nd];
-            value = value % factors[nd];
-            loc += PyArray_STRIDES(self)[nd]*index;
         }
 
-        ret = PyArray_DESCR(self)->f->setitem(obj, PyArray_DATA(self) + loc, self);
-    }
-    else {
-        intp loc, index[MAX_DIMS];
-        PyObject *tupargs;
-        tupargs = PyTuple_GetSlice(args, 0, n);
-        nd = PyArray_IntpFromSequence(tupargs, index, MAX_DIMS);
-        Py_DECREF(tupargs);
-        if (nd < n) {
+        /* Negative indexing */
+        if (value < 0) {
+            value += size;
+        }
+
+        if (value < 0 || value >= size) {
+            PyErr_SetString(PyExc_ValueError, "index out of bounds");
             return NULL;
         }
-        loc = 0;
-        while (nd--) {
-            if (index[nd] < 0) {
-                index[nd] += PyArray_DIMS(self)[nd];
-            }
-            if (index[nd] < 0 ||
-                index[nd] >= PyArray_DIMS(self)[nd]) {
-                PyErr_SetString(PyExc_ValueError,
-                                "index out of bounds");
+
+        /* Convert the flat index into a multi-index */
+        for (idim = ndim-1; idim >= 0; --idim) {
+            multi_index[idim] = value % shape[idim];
+            value /= shape[idim];
+        }
+    }
+    /* A multi-index tuple */
+    else if (n == ndim) {
+        npy_intp value;
+
+        for (idim = 0; idim < ndim; ++idim) {
+            value = PyArray_PyIntAsIntp(PyTuple_GET_ITEM(args, idim));
+            if (value == -1 && PyErr_Occurred()) {
                 return NULL;
             }
-            loc += PyArray_STRIDES(self)[nd]*index[nd];
+            multi_index[idim] = value;
         }
-        ret = PyArray_DESCR(self)->f->setitem(obj, PyArray_DATA(self) + loc, self);
     }
-
- finish:
-    if (ret < 0) {
+    else {
+        PyErr_SetString(PyExc_ValueError,
+                        "incorrect number of indices for array");
         return NULL;
     }
-    Py_INCREF(Py_None);
-    return Py_None;
+
+    if (PyArray_MultiIndexSetItem(self, multi_index, obj) < 0) {
+        return NULL;
+    }
+    else {
+        Py_INCREF(Py_None);
+        return Py_None;
+    }
 }
 
 /* Sets the array values from another array as if they were flat */
@@ -1476,7 +1591,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     PyObject *rawdata = NULL;
     char *datastr;
     Py_ssize_t len;
-    intp size, dimensions[MAX_DIMS];
+    npy_intp size, dimensions[MAX_DIMS];
     int nd;
 
     PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)self;
@@ -1592,7 +1707,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         fa->dimensions = PyDimMem_NEW(3*nd);
         fa->strides = PyArray_DIMS(self) + nd;
         fa->maskna_strides = PyArray_DIMS(self) + 2*nd;
-        memcpy(PyArray_DIMS(self), dimensions, sizeof(intp)*nd);
+        memcpy(PyArray_DIMS(self), dimensions, sizeof(npy_intp)*nd);
         _array_fill_strides(PyArray_STRIDES(self), dimensions, nd,
                                PyArray_DESCR(self)->elsize,
                                (is_f_order ? NPY_ARRAY_F_CONTIGUOUS :
@@ -1610,7 +1725,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         /* Bytes are never interned */
         if (!_IsAligned(self) || swap) {
 #endif
-            intp num = PyArray_NBYTES(self);
+            npy_intp num = PyArray_NBYTES(self);
             fa->data = PyDataMem_NEW(num);
             if (PyArray_DATA(self) == NULL) {
                 fa->nd = 0;
@@ -1619,7 +1734,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 return PyErr_NoMemory();
             }
             if (swap) { /* byte-swap on pickle-read */
-                intp numels = num / PyArray_DESCR(self)->elsize;
+                npy_intp numels = num / PyArray_DESCR(self)->elsize;
                 PyArray_DESCR(self)->f->copyswapn(PyArray_DATA(self),
                                         PyArray_DESCR(self)->elsize,
                                         datastr, PyArray_DESCR(self)->elsize,

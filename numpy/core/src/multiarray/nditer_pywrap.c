@@ -2045,6 +2045,7 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
     char *dataptr;
     PyArray_Descr *dtype;
     int has_external_loop;
+    Py_ssize_t i_orig = i;
 
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
@@ -2064,9 +2065,15 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
      * before the first MASKNA operand.
      */
     nop = NpyIter_GetFirstMaskNAOp(self->iter);
+
+    /* Negative indexing */
+    if (i < 0) {
+        i += nop;
+    }
+
     if (i < 0 || i >= nop) {
         PyErr_Format(PyExc_IndexError,
-                "Iterator operand index %d is out of bounds", (int)i);
+                "Iterator operand index %d is out of bounds", (int)i_orig);
         return NULL;
     }
 
@@ -2113,8 +2120,6 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
         return NULL;
     }
 
-    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
-
     /* If this is a USE_MASKNA operand, include the mask */
     if (maskna_indices[i] >= 0) {
         PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
@@ -2130,6 +2135,8 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
         fret->flags |= NPY_ARRAY_MASKNA;
         fret->flags &= ~NPY_ARRAY_OWNMASKNA;
     }
+
+    PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
 
     return (PyObject *)ret;
 }
@@ -2198,6 +2205,8 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
     PyArray_Descr *dtype;
     PyArrayObject *tmp;
     int ret, has_external_loop;
+    Py_ssize_t i_orig = i;
+
 
     if (v == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -2223,14 +2232,20 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
      * before the first MASKNA operand.
      */
     nop = NpyIter_GetFirstMaskNAOp(self->iter);
+
+    /* Negative indexing */
+    if (i < 0) {
+        i += nop;
+    }
+
     if (i < 0 || i >= nop) {
         PyErr_Format(PyExc_IndexError,
-                "Iterator operand index %d is out of bounds", (int)i);
+                "Iterator operand index %d is out of bounds", (int)i_orig);
         return -1;
     }
     if (!self->writeflags[i]) {
         PyErr_Format(PyExc_RuntimeError,
-                "Iterator operand %d is not writeable", (int)i);
+                "Iterator operand %d is not writeable", (int)i_orig);
         return -1;
     }
 
@@ -2276,7 +2291,9 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
         ftmp->flags |= NPY_ARRAY_MASKNA;
         ftmp->flags &= ~NPY_ARRAY_OWNMASKNA;
     }
+
     PyArray_UpdateFlags(tmp, NPY_ARRAY_UPDATE_ALL);
+
     ret = PyArray_CopyObject(tmp, v);
     Py_DECREF(tmp);
     return ret;

@@ -430,16 +430,20 @@ def array2string(a, max_line_width=None, precision=None,
 
     if a.shape == ():
         x = a.item()
-        try:
-            lst = a._format(x)
-            msg = "The `_format` attribute is deprecated in Numpy 2.0 and " \
-                  "will be removed in 2.1. Use the `formatter` kw instead."
-            import warnings
-            warnings.warn(msg, DeprecationWarning)
-        except AttributeError:
-            if isinstance(x, tuple):
-                x = _convert_arrays(x)
-            lst = style(x)
+        if isna(x):
+            lst = str(x)
+        else:
+            try:
+                lst = a._format(x)
+                msg = "The `_format` attribute is deprecated in Numpy " \
+                      "2.0 and will be removed in 2.1. Use the " \
+                      "`formatter` kw instead."
+                import warnings
+                warnings.warn(msg, DeprecationWarning)
+            except AttributeError:
+                if isinstance(x, tuple):
+                    x = _convert_arrays(x)
+                lst = style(x)
     elif reduce(product, a.shape) == 0:
         # treat as a null array if any of shape elements == 0
         lst = "[]"
