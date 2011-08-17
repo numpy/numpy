@@ -1723,11 +1723,10 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
     /* If we got dimensions and dtype instead of an array */
     if (arr == NULL) {
         /*
-         * If the input data is an NA object, and the ALLOWNA flag is
+         * If the input data contains any NAs, and the ALLOWNA flag is
          * enabled, produce an array with an NA mask.
          */
-        if (contains_na && (flags & NPY_ARRAY_ALLOWNA) != 0 &&
-                                    NpyNA_Check(op)) {
+        if (contains_na && (flags & NPY_ARRAY_ALLOWNA) != 0) {
             flags |= NPY_ARRAY_MASKNA;
         }
 
