@@ -29,7 +29,8 @@ What works with NA:
     * Array methods:
        + ndarray.clip, ndarray.min, ndarray.max, ndarray.sum, ndarray.prod,
          ndarray.conjugate, ndarray.diagonal
-       + numpy.concatenate
+       + numpy.concatenate, numpy.column_stack, numpy.hstack,
+         numpy.vstack, numpy.dstack
 
 What doesn't work with NA:
     * Fancy indexing, such as with lists and partial boolean masks.
@@ -42,6 +43,7 @@ What doesn't work with NA:
       rules NA | True == True and NA & False == False yet.
     * Array methods:
        + ndarray.argmax, ndarray.argmin,
+       + numpy.repeat
 
 
 Custom formatter for printing arrays
@@ -62,6 +64,12 @@ view into the original array instead of making a copy. This makes these
 functions more consistent with NumPy's general approach of taking views
 where possible, and performs much faster as well.
 
+The function np.concatenate tries to match the layout of its input
+arrays. Previously, the layout did not follow any particular reason,
+and depended in an undesirable on the particular axis chosen for
+concatenation. A bug was also fixed which silently allowed out of bounds
+axis arguments.
+
 
 Deprecations
 ============
@@ -69,3 +77,10 @@ Deprecations
 Specifying a custom string formatter with a `_format` array attribute is
 deprecated. The new `formatter` keyword in ``numpy.set_printoptions`` or
 ``numpy.array2string`` can be used instead.
+
+In the C API, direct access to the fields of PyArrayObject* has been
+deprecated. Direct access has been recommended against for many releases, but
+now you can test your code against the deprecated C API by #defining
+NPY_NO_DEPRECATED_API before including any NumPy headers. Expect
+something similar for PyArray_Descr* and other core objects in the
+future as preparation for NumPy 2.0.

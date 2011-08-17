@@ -15,6 +15,7 @@
 #include "numpy/npy_3kcompat.h"
 
 #include "common.h"
+#include "arrayobject.h"
 #include "ctors.h"
 #include "lowlevel_strided_loops.h"
 #include "na_singleton.h"
@@ -43,7 +44,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         return NULL;
     }
     indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
-                                                         PyArray_INTP,
+                                                         NPY_INTP,
                                                          1, 0);
     if (indices == NULL) {
         goto fail;
@@ -161,17 +162,6 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
 
         src_maskna = PyArray_MASKNA_DATA(self);
         dst_maskna = PyArray_MASKNA_DATA(obj);
-        if (PyDataType_REFCHK(PyArray_DESCR(self))) {
-            /*
-             * TODO: Should use PyArray_GetDTypeTransferFunction
-             *       instead of raw memmove to remedy this.
-             */
-            PyErr_SetString(PyExc_RuntimeError,
-                    "ndarray.take doesn't support object arrays with "
-                    "masks yet");
-            NPY_AUXDATA_FREE(transferdata);
-            goto fail;
-        }
 
         switch(clipmode) {
         case NPY_RAISE:
@@ -183,14 +173,13 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                     }
                     if ((tmp < 0) || (tmp >= max_item)) {
                         PyErr_SetString(PyExc_IndexError,
-                                "index out of range "\
-                                "for array");
+                                "index out of range for array");
                         NPY_AUXDATA_FREE(transferdata);
                         goto fail;
                     }
                     maskedstransfer(dest, itemsize,
                                     src + tmp*chunk, itemsize,
-                                    (npy_mask *)src_maskna, 1,
+                                    (npy_mask *)(src_maskna + tmp*nelem), 1,
                                     nelem, itemsize, transferdata);
                     dest += chunk;
                     memmove(dst_maskna, src_maskna + tmp*nelem, nelem);
@@ -216,7 +205,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                     }
                     maskedstransfer(dest, itemsize,
                                     src + tmp*chunk, itemsize,
-                                    (npy_mask *)src_maskna, 1,
+                                    (npy_mask *)(src_maskna + tmp*nelem), 1,
                                     nelem, itemsize, transferdata);
                     dest += chunk;
                     memmove(dst_maskna, src_maskna + tmp*nelem, nelem);
@@ -238,7 +227,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                     }
                     maskedstransfer(dest, itemsize,
                                     src + tmp*chunk, itemsize,
-                                    (npy_mask *)src_maskna, 1,
+                                    (npy_mask *)(src_maskna + tmp*nelem), 1,
                                     nelem, itemsize, transferdata);
                     dest += chunk;
                     memmove(dst_maskna, src_maskna + tmp*nelem, nelem);
@@ -373,7 +362,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
     dest = PyArray_DATA(self);
     chunk = PyArray_DESCR(self)->elsize;
     indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
-                                                         PyArray_INTP, 0, 0);
+                                                         NPY_INTP, 0, 0);
     if (indices == NULL) {
         goto fail;
     }
@@ -640,7 +629,7 @@ PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
     PyArrayObject *ret = NULL;
     char *new_data, *old_data;
 
-    repeats = (PyArrayObject *)PyArray_ContiguousFromAny(op, PyArray_INTP, 0, 1);
+    repeats = (PyArrayObject *)PyArray_ContiguousFromAny(op, NPY_INTP, 0, 1);
     if (repeats == NULL) {
         return NULL;
     }
@@ -1209,7 +1198,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     if ((n == 0) || (PyArray_SIZE(op) == 1)) {
         ret = (PyArrayObject *)PyArray_New(Py_TYPE(op), PyArray_NDIM(op),
                                            PyArray_DIMS(op),
-                                           PyArray_INTP,
+                                           NPY_INTP,
                                            NULL, NULL, 0, 0,
                                            (PyObject *)op);
         if (ret == NULL) {
@@ -1248,7 +1237,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         return NULL;
     }
     ret = (PyArrayObject *)PyArray_New(Py_TYPE(op), PyArray_NDIM(op),
-                                       PyArray_DIMS(op), PyArray_INTP,
+                                       PyArray_DIMS(op), NPY_INTP,
                                        NULL, NULL, 0, 0, (PyObject *)op);
     if (ret == NULL) {
         goto fail;
@@ -1371,7 +1360,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         /* single element case */
         ret = (PyArrayObject *)PyArray_New(&PyArray_Type, PyArray_NDIM(mps[0]),
                                            PyArray_DIMS(mps[0]),
-                                           PyArray_INTP,
+                                           NPY_INTP,
                                            NULL, NULL, 0, 0, NULL);
 
         if (ret == NULL) {
@@ -1391,7 +1380,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 
     /* Now do the sorting */
     ret = (PyArrayObject *)PyArray_New(&PyArray_Type, PyArray_NDIM(mps[0]),
-                                       PyArray_DIMS(mps[0]), PyArray_INTP,
+                                       PyArray_DIMS(mps[0]), NPY_INTP,
                                        NULL, NULL, 0, 0, NULL);
     if (ret == NULL) {
         goto fail;
@@ -1622,7 +1611,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
     }
     /* ret is a contiguous array of intp type to hold returned indices */
     ret = (PyArrayObject *)PyArray_New(Py_TYPE(ap2), PyArray_NDIM(ap2),
-                                       PyArray_DIMS(ap2), PyArray_INTP,
+                                       PyArray_DIMS(ap2), NPY_INTP,
                                        NULL, NULL, 0, 0, (PyObject *)ap2);
     if (ret == NULL) {
         goto fail;
