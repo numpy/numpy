@@ -2740,7 +2740,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                 goto fail;
             }
 
-            /* Short circuit any calculation if the result 0-dim NA */
+            /* Short circuit any calculation if the result is 0-dim NA */
             if (PyArray_SIZE(result) == 1 &&
                     !NpyMaskValue_IsExposed(
                                 (npy_mask)*PyArray_MASKNA_DATA(result))) {
@@ -2815,8 +2815,6 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
             op_flags[0] |= NPY_ITER_IGNORE_MASKNA;
             /* Need the input's mask to determine what to skip */
             op_flags[1] |= NPY_ITER_USE_MASKNA;
-
-            /* TODO: allocate a temporary buffer for inverting the mask */
         }
         else {
             /* Iterate over the output's mask */
