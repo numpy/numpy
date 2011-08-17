@@ -3942,3 +3942,26 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
     }
     return itemsize;
 }
+
+/*
+ * Calls arr_of_subclass.__array_wrap__(towrap), in order to make 'towrap'
+ * have the same ndarray subclass as 'arr_of_subclass'.
+ */
+NPY_NO_EXPORT PyArrayObject *
+PyArray_SubclassWrap(PyArrayObject *arr_of_subclass, PyArrayObject *towrap)
+{
+    PyObject *wrapped = PyObject_CallMethod((PyObject *)arr_of_subclass,
+                                        "__array_wrap__", "O", towrap);
+    if (wrapped == NULL) {
+        return NULL;
+    }
+    if (!PyArray_Check(wrapped)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "ndarray subclass __array_wrap__ method returned an "
+                "object which was not an instance of an ndarray subclass");
+        Py_DECREF(wrapped);
+        return NULL;
+    }
+
+    return (PyArrayObject *)wrapped;
+}
