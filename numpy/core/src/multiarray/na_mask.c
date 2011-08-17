@@ -496,8 +496,7 @@ PyArray_IsNA(PyObject *obj)
     }
 }
 
-/*NUMPY_API
- *
+/*
  * This function performs a reduction on the masks for an array.
  * The masks are provided in raw form, with their strides conformed
  * for the reduction.
@@ -511,8 +510,8 @@ PyArray_IsNA(PyObject *obj)
  *
  * Returns 0 on success, -1 on failure.
  */
-NPY_NO_EXPORT int
-PyArray_ReduceMaskNAArray(int ndim, npy_intp *shape,
+static int
+raw_reduce_maskna_array(int ndim, npy_intp *shape,
             PyArray_Descr *src_dtype, char *src_data, npy_intp *src_strides,
             PyArray_Descr *dst_dtype, char *dst_data, npy_intp *dst_strides)
 {
@@ -598,6 +597,70 @@ PyArray_ReduceMaskNAArray(int ndim, npy_intp *shape,
     }
 
     return 0;
+}
+
+/*NUMPY_API
+ *
+ * This function performs a reduction on the masks for an array.
+ *
+ * This is for use with a reduction where 'skipna=False'.
+ *
+ * result: The result array, which should have the same 'ndim' as
+ *         'operand' but with dimensions of size one for every reduction
+ *         axis. This array must have an NA mask.
+ * operand: The operand for which the reduction is being done. This array
+ *          must have an NA mask.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_ReduceMaskNAArray(PyArrayObject *result, PyArrayObject *operand)
+{
+    int idim, ndim;
+    npy_intp result_strides[NPY_MAXDIMS];
+    npy_intp *result_shape, *operand_shape;
+    npy_intp *result_maskna_strides;
+
+    ndim = PyArray_NDIM(operand);
+    if (ndim != PyArray_NDIM(result)) {
+        PyErr_SetString(PyExc_ValueError,
+                "result and operand must have the same 'ndim' in "
+                "ReduceMaskNAArray");
+        return -1;
+    }
+    if (!PyArray_HASMASKNA(result) || !PyArray_HASMASKNA(operand)) {
+        PyErr_SetString(PyExc_ValueError,
+                "both result and operand must have NA masks in "
+                "ReduceMaskNAArray");
+        return -1;
+    }
+
+    /* Need to make sure the appropriate strides are 0 in 'result' */
+    result_shape = PyArray_SHAPE(result);
+    operand_shape = PyArray_SHAPE(operand);
+    result_maskna_strides = PyArray_MASKNA_STRIDES(result);
+    for (idim = 0; idim < ndim; ++idim) {
+        if (result_shape[idim] == 1) {
+            result_strides[idim] = 0;
+        }
+        else if (result_shape[idim] != operand_shape[idim]) {
+            PyErr_SetString(PyExc_ValueError,
+                "the result shape must match the operand shape wherever "
+                "it is not 1 in ReduceMaskNAArray");
+            return -1;
+        }
+        else {
+            result_strides[idim] = result_maskna_strides[idim];
+        }
+    }
+
+    return raw_reduce_maskna_array(ndim, PyArray_DIMS(operand),
+                    PyArray_MASKNA_DTYPE(operand),
+                    PyArray_MASKNA_DATA(operand),
+                    PyArray_MASKNA_STRIDES(operand),
+                    PyArray_MASKNA_DTYPE(result),
+                    PyArray_MASKNA_DATA(result),
+                    result_strides);
 }
 
 static void

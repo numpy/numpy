@@ -177,6 +177,8 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
 
 /*NUMPY_API
  * Get axis from an object (possibly None) -- a converter function,
+ *
+ * See also PyArray_ConvertMultiAxis, which also handles a tuple of axes.
  */
 NPY_NO_EXPORT int
 PyArray_AxisConverter(PyObject *obj, int *axis)
@@ -191,6 +193,90 @@ PyArray_AxisConverter(PyObject *obj, int *axis)
         }
     }
     return PY_SUCCEED;
+}
+
+/*
+ * Converts an axis parameter into an ndim-length C-array of
+ * boolean flags, True for each axis specified.
+ *
+ * If obj is None, everything is set to True. If obj is a tuple,
+ * each axis within the tuple is set to True. If obj is an integer,
+ * just that axis is set to True.
+ */
+NPY_NO_EXPORT int
+PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
+{
+    /* None means all of the axes */
+    if (axis_in == Py_None || axis_in == NULL) {
+        memset(out_axis_flags, 1, ndim);
+        return NPY_SUCCEED;
+    }
+    /* A tuple of which axes */
+    else if (PyTuple_Check(axis_in)) {
+        int i, naxes;
+
+        memset(out_axis_flags, 0, ndim);
+
+        naxes = PyTuple_Size(axis_in);
+        if (naxes < 0) {
+            return NPY_FAIL;
+        }
+        for (i = 0; i < naxes; ++i) {
+            PyObject *tmp = PyTuple_GET_ITEM(axis_in, i);
+            long axis = PyInt_AsLong(tmp);
+            if (axis == -1 && PyErr_Occurred()) {
+                return NPY_FAIL;
+            }
+            if (axis < 0) {
+                axis += ndim;
+            }
+            if (axis < 0 || axis >= ndim) {
+                PyErr_SetString(PyExc_ValueError,
+                        "'axis' entry is out of bounds");
+                return NPY_FAIL;
+            }
+            if (out_axis_flags[axis]) {
+                PyErr_SetString(PyExc_ValueError,
+                        "duplicate value in 'axis'");
+                return NPY_FAIL;
+            }
+            out_axis_flags[axis] = 1;
+        }
+
+        return NPY_SUCCEED;
+    }
+    /* Try to interpret axis as an integer */
+    else {
+        long axis;
+
+        memset(out_axis_flags, 0, ndim);
+
+        axis = PyInt_AsLong(axis_in);
+        /* TODO: PyNumber_Index would be good to use here */
+        if (axis == -1 && PyErr_Occurred()) {
+            return NPY_FAIL;
+        }
+        if (axis < 0) {
+            axis += ndim;
+        }
+        /*
+         * Special case letting axis=0 slip through for scalars,
+         * for backwards compatibility reasons.
+         */
+        if (axis == 0 && ndim == 0) {
+            return NPY_SUCCEED;
+        }
+
+        if (axis < 0 || axis >= ndim) {
+            PyErr_SetString(PyExc_ValueError,
+                    "'axis' entry is out of bounds");
+            return NPY_FAIL;
+        }
+
+        out_axis_flags[axis] = 1;
+
+        return NPY_SUCCEED;
+    }
 }
 
 /*NUMPY_API

@@ -1891,6 +1891,74 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
     return count;
 }
 
+/*
+ * A full reduction version of PyArray_CountNonzero, supporting
+ * an 'out' parameter and doing the count as a reduction along
+ * selected axes. It also supports a 'skipna' parameter, which
+ * skips over any NA masked values in arr.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
+                        npy_bool *axis_flags, int skipna)
+{
+    PyArray_NonzeroFunc *nonzero;
+    int ndim, use_maskna;
+    PyArray_Descr *dtype;
+    PyArrayObject *result = NULL;
+
+    nonzero = PyArray_DESCR(arr)->f->nonzero;
+    if (nonzero == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                    "Cannot count the number of non-zeros for a dtype "
+                    "which doesn't have a 'nonzero' function");
+        return NULL;
+    }
+
+    ndim = PyArray_NDIM(arr);
+    use_maskna = PyArray_HASMASKNA(arr);
+
+    /*
+     * If 'arr' has an NA mask, but 'out' doesn't, validate that 'arr'
+     * contains no NA values so we can ignore the mask entirely.
+     */
+    if (use_maskna && !skipna && out != NULL && !PyArray_HASMASKNA(out)) {
+        if (PyArray_ContainsNA(arr)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA value to an array which "
+                    "does not support NAs");
+            return NULL;
+        }
+        else {
+            use_maskna = 0;
+        }
+    }
+
+    /* This reference gets stolen by PyArray_CreateReduceResult */
+    dtype = PyArray_DescrFromType(NPY_INTP);
+    if (dtype == NULL) {
+        return NULL;
+    }
+    /* This either conforms 'out' to the ndim of 'arr', or allocates
+     * a new array appropriate for this reduction.
+     */
+    result = PyArray_CreateReduceResult(arr, out,
+                            dtype, axis_flags, !skipna && use_maskna,
+                            "count_nonzero");
+    if (result == NULL) {
+        return NULL;
+    }
+
+    if (use_maskna) {
+        /*
+         * Do the reduction on the NA mask before the data. This way
+         * we can avoid modifying the outputs which end up masked, obeying
+         * the required NA masking semantics.
+         */
+        if (!skipna) {
+        }
+    }
+}
+
 /*NUMPY_API
  * Counts the number of non-zero elements in the array. Raises
  * an error if the array contains an NA.
