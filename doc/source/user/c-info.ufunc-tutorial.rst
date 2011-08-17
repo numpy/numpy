@@ -137,6 +137,29 @@ the module.
 
 
         /* This initiates the module using the above definitions. */
+        #if PY_VERSION_HEX >= 0x03000000
+        static struct PyModuleDef moduledef = {
+            PyModuleDef HEAT_INIT,
+            "spam",
+            NULL,
+            -1,
+            SpamMethods,
+            NULL,
+            NULL,
+            NULL,
+            NULL
+        };
+
+        PyObject *PyInit__npspam(void)
+        {
+            PyObject *m;
+            m = PyModule_Create(&moduledef);
+            if (!m) {
+                return NULL;
+            }
+            return m;
+        }
+        #else
         PyMODINIT_FUNC initspam(void)
         {
             PyObject *m;
@@ -146,6 +169,7 @@ the module.
                 return;
             }
         }
+        #endif
 
 To use the setup.py file, place setup.py and spammodule.c in the same
 folder. Then python setup.py build will build the module to import,
@@ -275,11 +299,11 @@ the primary thing that must be changed to create your own ufunc.
         PyUFuncGenericFunction funcs[1] = {&double_logit};
 
         /* These are the input and return dtypes of logit.*/
-        char types[2] = {NPY_DOUBLE, NPY_DOUBLE};
+        static char types[2] = {NPY_DOUBLE, NPY_DOUBLE};
 
-        void *data[1] = {NULL};
+        static void *data[1] = {NULL};
 
-        #if defined(NPY_PY3K)
+        #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef HEAT_INIT,
             "npspam",
@@ -291,10 +315,9 @@ the primary thing that must be changed to create your own ufunc.
             NULL,
             NULL
         };
-        #endif
 
-        #if defined(NPY_PY3K)
-        PyObject *PyInit__npspam(void) {
+        PyObject *PyInit__npspam(void)
+        {
             PyObject *m;
             m = PyModule_Create(&moduledef);
             if (!m) {
@@ -373,7 +396,9 @@ or installed to site-packages via python setup.py install.
             import numpy
             from numpy.distutils.misc_util import Configuration
 
-            config = Configuration('npspam_directory', parent_package, top_path)
+            config = Configuration('npspam_directory',
+                                   parent_package,
+                                   top_path)
             config.add_extension('npspam', ['single_type_logit.c'])
 
             return config
@@ -546,13 +571,13 @@ the primary thing that must be changed to create your own ufunc.
                                            &double_logit,
                                            &long_double_logit};
 
-       char types[8] = {NPY_HALF, NPY_HALF,
+        static char types[8] = {NPY_HALF, NPY_HALF,
                         NPY_FLOAT, NPY_FLOAT,
                         NPY_DOUBLE,NPY_DOUBLE,
                         NPY_LONGDOUBLE, NPY_LONGDOUBLE};
-        void *data[4] = {NULL, NULL, NULL, NULL};
+        static void *data[4] = {NULL, NULL, NULL, NULL};
 
-        #if defined(NPY_PY3K)
+        #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef HEAT_INIT,
             "npspam",
@@ -564,10 +589,9 @@ the primary thing that must be changed to create your own ufunc.
             NULL,
             NULL
         };
-        #endif
 
-        #if defined(NPY_PY3K)
-        PyObject *PyInit__npspam(void) {
+        PyObject *PyInit__npspam(void)
+        {
             PyObject *m;
             m = PyModule_Create(&moduledef);
             if (!m) {
@@ -765,12 +789,13 @@ as well as all other properties of a ufunc.
 
         /* These are the input and return dtypes of logit.*/
 
-        char types[4] = {NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE};
+        static char types[4] = {NPY_DOUBLE, NPY_DOUBLE,
+                                NPY_DOUBLE, NPY_DOUBLE};
 
 
-        void *data[1] = {NULL};
+        static void *data[1] = {NULL};
 
-        #if defined(NPY_PY3K)
+        #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef HEAT_INIT,
             "npspam",
@@ -782,10 +807,9 @@ as well as all other properties of a ufunc.
             NULL,
             NULL
         };
-        #endif
 
-        #if defined(NPY_PY3K)
-        PyObject *PyInit__npspam(void) {
+        PyObject *PyInit__npspam(void)
+        {
             PyObject *m;
             m = PyModule_Create(&moduledef);
             if (!m) {
@@ -884,13 +908,15 @@ automatically generates a ufunc from a C function with the correct signature.
                void *extra)
             {
                 npy_intp i;
-                npy_intp is1=steps[0], is2=steps[1];
-                npy_intp os=steps[2], n=dimensions[0];
-                char *i1=args[0], *i2=args[1], *op=args[2];
-                for (i=0; i<n; i++) {
-                    *((double *)op) = *((double *)i1) + \
+                npy_intp is1 = steps[0], is2 = steps[1];
+                npy_intp os = steps[2], n = dimensions[0];
+                char *i1 = args[0], *i2 = args[1], *op = args[2];
+                for (i = 0; i < n; i++) {
+                    *((double *)op) = *((double *)i1) +
                                       *((double *)i2);
-                    i1 += is1; i2 += is2; op += os;
+                    i1 += is1;
+                    i2 += is2;
+                    op += os;
                  }
             }
 
@@ -915,7 +941,7 @@ automatically generates a ufunc from a C function with the correct signature.
 
         .. code-block:: c
 
-            char types[3] = {NPY_INT, NPY_DOUBLE, NPY_CDOUBLE}
+            static char types[3] = {NPY_INT, NPY_DOUBLE, NPY_CDOUBLE}
 
         The bit-width names can also be used (e.g. :cdata:`NPY_INT32`,
         :cdata:`NPY_COMPLEX128` ) if desired.
@@ -965,19 +991,17 @@ adapted from the umath module
 
     .. code-block:: c
 
-        static PyUFuncGenericFunction atan2_functions[]=\
-            {PyUFunc_ff_f, PyUFunc_dd_d,
-             PyUFunc_gg_g, PyUFunc_OO_O_method};
-        static void* atan2_data[]=\
-            {(void *)atan2f,(void *) atan2,
-             (void *)atan2l,(void *)"arctan2"};
-        static char atan2_signatures[]=\
-            {NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
-             NPY_DOUBLE, NPY_DOUBLE,
-             NPY_DOUBLE, NPY_LONGDOUBLE,
-             NPY_LONGDOUBLE, NPY_LONGDOUBLE
-             NPY_OBJECT, NPY_OBJECT,
-             NPY_OBJECT};
+        static PyUFuncGenericFunction atan2_functions[] = {
+                              PyUFunc_ff_f, PyUFunc_dd_d,
+                              PyUFunc_gg_g, PyUFunc_OO_O_method};
+        static void* atan2_data[] = {
+                              (void *)atan2f,(void *) atan2,
+                              (void *)atan2l,(void *)"arctan2"};
+        static char atan2_signatures[] = {
+                      NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
+                      NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
+                      NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_LONGDOUBLE
+                      NPY_OBJECT, NPY_OBJECT, NPY_OBJECT};
         ...
         /* in the module initialization code */
         PyObject *f, *dict, *module;
