@@ -1336,9 +1336,12 @@ def array_repr(arr, max_line_width=None, precision=None, suppress_small=None):
     skipdtype = (arr.dtype.type in _typelessdata) and arr.size > 0
 
     if arr.flags.maskna:
-        lst += ", maskna=True"
-        # If everything is NA, can't skip the type
-        if skipdtype and all(isna(arr)):
+        whichna = isna(arr)
+        # If nothing is NA, explicitly signal the NA-mask
+        if not any(whichna):
+            lst += ", maskna=True"
+        # If everything is NA, can't skip the dtype
+        if skipdtype and all(whichna):
             skipdtype = False
 
     if skipdtype:
