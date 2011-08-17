@@ -567,7 +567,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                          header=''):
-    from numpy.core import array, isnan, isinf, any
+    from numpy.core import array, isnan, isinf, isna, any, all, inf
     x = array(x, copy=False, subok=True)
     y = array(y, copy=False, subok=True)
 
@@ -598,22 +598,64 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             if not cond :
                 raise AssertionError(msg)
 
-        if (isnumber(x) and isnumber(y)) and (any(isnan(x)) or any(isnan(y))):
-            x_id = isnan(x)
-            y_id = isnan(y)
-            chk_same_position(x_id, y_id, hasval='nan')
-            # If only one item, it was a nan, so just return
-            if x.size == y.size == 1:
+        if isnumber(x) and isnumber(y):
+            x_isna, y_isna = isna(x), isna(y)
+            x_isnan, y_isnan = isnan(x), isnan(y)
+            x_isinf, y_isinf = isinf(x), isinf(y)
+
+            # Remove any NAs from the isnan and isinf arrays
+            if x.ndim == 0:
+                if x_isna:
+                    x_isnan = False
+                    x_isinf = False
+            else:
+                x_isnan[x_isna] = False
+                x_isinf[x_isna] = False
+            if y.ndim == 0:
+                if y_isna:
+                    y_isnan = False
+                    y_isinf = False
+            else:
+                y_isnan[y_isna] = False
+                y_isinf[y_isna] = False
+
+
+            # Validate that the special values are in the same place
+            if any(x_isnan) or any(y_isnan):
+                chk_same_position(x_isnan, y_isnan, hasval='nan')
+            if any(x_isinf) or any(y_isinf):
+                # Check +inf and -inf separately, since they are different
+                chk_same_position(x == +inf, y == +inf, hasval='+inf')
+                chk_same_position(x == -inf, y == -inf, hasval='-inf')
+            if any(x_isna) or any(y_isna):
+                chk_same_position(x_isna, y_isna, hasval='NA')
+
+            # Combine all the special values
+            x_id, y_id = x_isnan, y_isnan
+            x_id |= x_isinf
+            y_id |= y_isinf
+            x_id |= x_isna
+            y_id |= y_isna
+
+            # Only do the comparison if actual values are left
+            if all(x_id):
                 return
-            val = comparison(x[~x_id], y[~y_id])
-        elif (isnumber(x) and isnumber(y)) and (any(isinf(x)) or any(isinf(y))):
-            x_id = isinf(x)
-            y_id = isinf(y)
-            chk_same_position(x_id, y_id, hasval='inf')
-            # If only one item, it was a inf, so just return
-            if x.size == y.size == 1:
+
+            if any(x_id):
+                val = comparison(x[~x_id], y[~y_id])
+            else:
+                val = comparison(x, y)
+        # field-NA isn't supported yet, so skip struct dtypes for this
+        elif (not x.dtype.names and not y.dtype.names) and \
+                    (any(isna(x)) or any(isna(y))):
+            x_isna, y_isna = isna(x), isna(y)
+
+            if any(x_isna) or any(y_isna):
+                chk_same_position(x_isna, y_isna, hasval='NA')
+
+            if all(x_isna):
                 return
-            val = comparison(x[~x_id], y[~y_id])
+            val = comparison(x[~x_isna], y[~y_isna])
         else:
             val = comparison(x,y)
 
@@ -650,7 +692,9 @@ def assert_array_equal(x, y, err_msg='', verbose=True):
     elements of these objects are equal. An exception is raised at
     shape mismatch or conflicting values. In contrast to the standard usage
     in numpy, NaNs are compared like numbers, no assertion is raised if
-    both objects have NaNs in the same positions.
+    both objects have NaNs in the same positions. Similarly, NAs are compared
+    like numbers, no assertion is raised if both objects have NAs in the
+    same positions.
 
     The usual caution for verifying equality with floating point numbers is
     advised.

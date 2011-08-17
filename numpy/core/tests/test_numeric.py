@@ -594,6 +594,50 @@ class TestNonzero(TestCase):
         assert_equal(np.nonzero(x['a'].T), ([0,1,1,2],[1,1,2,0]))
         assert_equal(np.nonzero(x['b'].T), ([0,0,1,2,2],[0,1,2,0,2]))
 
+    def test_count_nonzero_axis(self):
+        a = array([[0,1,0],[2,3,0]])
+        assert_equal(np.count_nonzero(a, axis=()), [[0,1,0],[1,1,0]])
+        assert_equal(np.count_nonzero(a, axis=0), [1,2,0])
+        assert_equal(np.count_nonzero(a, axis=1), [1,2])
+        assert_equal(np.count_nonzero(a, axis=(0,1)), 3)
+
+        res = array([-1,-1,-1], dtype='i2')
+        np.count_nonzero(a, axis=0, out=res)
+        assert_equal(res, [1,2,0])
+
+        # A 3-dimensional array with an NA
+        a = array([[[0,1,0],[2,np.NA,0]], [[0,1,0],[2,3,0]]], maskna=True)
+
+        # Test that the NA reduces correctly
+        assert_array_equal(np.count_nonzero(a, axis=()),
+                            [[[0,1,0],[1,np.NA,0]], [[0,1,0],[1,1,0]]])
+        assert_array_equal(np.count_nonzero(a, axis=0), [[0,2,0], [2,np.NA,0]])
+        assert_array_equal(np.count_nonzero(a, axis=1), [[1,np.NA,0], [1,2,0]])
+        assert_array_equal(np.count_nonzero(a, axis=2), [[1,np.NA], [1,2]])
+        assert_array_equal(np.count_nonzero(a, axis=(0,1)), [2,np.NA,0])
+        assert_array_equal(np.count_nonzero(a, axis=(0,2)), [2,np.NA])
+        assert_array_equal(np.count_nonzero(a, axis=(1,2)), [np.NA,3])
+        assert_array_equal(np.count_nonzero(a, axis=(0,1,2)),
+                                                np.NA(dtype=np.intp))
+        assert_array_equal(np.count_nonzero(a, axis=None),
+                                                np.NA(dtype=np.intp))
+
+        # Test that the NA gets skipped correctly
+        assert_array_equal(np.count_nonzero(a, axis=(), skipna=True),
+                            [[[0,1,0],[1,0,0]], [[0,1,0],[1,1,0]]])
+        assert_array_equal(np.count_nonzero(a, axis=0, skipna=True),
+                            [[0,2,0], [2,1,0]])
+        assert_array_equal(np.count_nonzero(a, axis=1, skipna=True),
+                            [[1,1,0], [1,2,0]])
+        assert_array_equal(np.count_nonzero(a, axis=2, skipna=True),
+                            [[1,1], [1,2]])
+        assert_array_equal(np.count_nonzero(a, axis=(0,1), skipna=True),
+                            [2,3,0])
+        assert_array_equal(np.count_nonzero(a, axis=(0,2), skipna=True), [2,3])
+        assert_array_equal(np.count_nonzero(a, axis=(1,2), skipna=True), [2,3])
+        assert_array_equal(np.count_nonzero(a, axis=(0,1,2), skipna=True), 5)
+        assert_array_equal(np.count_nonzero(a, axis=None, skipna=True), 5)
+
 class TestIndex(TestCase):
     def test_boolean(self):
         a = rand(3,5,8)
