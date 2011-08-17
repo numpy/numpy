@@ -2505,6 +2505,7 @@ get_masked_binary_op_function(PyUFuncObject *self, PyArrayObject *arr,
     PyArrayObject *op[3] = {arr, arr, NULL};
     PyArray_Descr *dtype[3] = {NULL, NULL, NULL};
     PyObject *type_tup = NULL;
+    char *ufunc_name = self->name ? self->name : "(unknown)";
 
     NPY_UF_DBG_PRINT1("Getting masked binary op function for type number %d\n",
                                 *otype);
@@ -2546,9 +2547,9 @@ get_masked_binary_op_function(PyUFuncObject *self, PyArrayObject *arr,
         for (i = 0; i < 3; ++i) {
             Py_DECREF(dtype[i]);
         }
-        PyErr_SetString(PyExc_RuntimeError,
+        PyErr_Format(PyExc_RuntimeError,
                 "could not find a masked binary loop appropriate for "
-                "reduce ufunc");
+                "reduce ufunc %s", ufunc_name);
         return -1;
     }
 
@@ -2607,7 +2608,7 @@ initialize_reduce_result(int identity, PyArrayObject *result,
  * The axes must already be bounds-checked by the calling function,
  * this function does not validate them.
  */
-static PyObject *
+static PyArrayObject *
 PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         int naxes, int *axes, int otype, int skipna)
 {
@@ -2659,17 +2660,15 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     use_maskna = PyArray_HASMASKNA(arr);
 
     /* Detect whether to ignore the MASKNA */
-    if (use_maskna) {
-        if (!skipna && out != NULL && !PyArray_HASMASKNA(out)) {
-            if (PyArray_ContainsNA(arr)) {
-                PyErr_SetString(PyExc_ValueError,
-                        "Cannot assign NA value to an array which "
-                        "does not support NAs");
-                return NULL;
-            }
-            else {
-                use_maskna = 0;
-            }
+    if (use_maskna && !skipna && out != NULL && !PyArray_HASMASKNA(out)) {
+        if (PyArray_ContainsNA(arr)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA value to an array which "
+                    "does not support NAs");
+            return NULL;
+        }
+        else {
+            use_maskna = 0;
         }
     }
 
@@ -2737,27 +2736,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
          * the required NA masking semantics.
          */
         if (!skipna) {
-            int idim;
-            npy_intp result_strides[NPY_MAXDIMS];
-            /* Need to make sure the appropriate strides are 0 in 'result' */
-            for (idim = 0; idim < PyArray_NDIM(arr); ++idim) {
-                if (PyArray_DIMS(result)[idim] == 1) {
-                    result_strides[idim] = 0;
-                }
-                else {
-                    result_strides[idim] = PyArray_MASKNA_STRIDES(result)[idim];
-                }
-            }
-            if (!PyArray_HASMASKNA(arr) || !PyArray_HASMASKNA(result))
-                printf ("hasmaskna %d %d\n", PyArray_HASMASKNA(arr),
-                                PyArray_HASMASKNA(result));
-            if (PyArray_ReduceMaskNAArray(ndim, PyArray_DIMS(arr),
-                        PyArray_MASKNA_DTYPE(arr),
-                        PyArray_MASKNA_DATA(arr),
-                        PyArray_MASKNA_STRIDES(arr),
-                        PyArray_MASKNA_DTYPE(result),
-                        PyArray_MASKNA_DATA(result),
-                        result_strides) < 0) {
+            if (PyArray_ReduceMaskNAArray(result, arr) < 0) {
                 goto fail;
             }
 
@@ -2948,7 +2927,7 @@ finish:
     Py_XDECREF(arr_view);
     Py_XDECREF(otype_dtype);
     NPY_AUXDATA_FREE(maskedinnerloopdata);
-    return (PyObject *)result;
+    return result;
 
 fail:
     if (iter != NULL) {
@@ -3952,7 +3931,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 
     switch(operation) {
     case UFUNC_REDUCE:
-        ret = (PyArrayObject *)PyUFunc_Reduce(self, mp, out, naxes, axes,
+        ret = PyUFunc_Reduce(self, mp, out, naxes, axes,
                                               otype->type_num, skipna);
         break;
     case UFUNC_ACCUMULATE:
