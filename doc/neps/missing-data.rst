@@ -477,7 +477,7 @@ Some examples::
     >>> np.sum(a, skipna=True)
     11.0
     >>> np.mean(a)
-    NA('<f8')
+    NA(dtype='<f8')
     >>> np.mean(a, skipna=True)
     3.6666666666666665
 
@@ -487,7 +487,7 @@ Some examples::
     >>> np.max(a, skipna=True)
     array(NA, dtype='<f8', maskna=True)
     >>> np.mean(a)
-    NA('<f8')
+    NA(dtype='<f8')
     >>> np.mean(a, skipna=True)
     /home/mwiebe/virtualenvs/dev/lib/python2.7/site-packages/numpy/core/fromnumeric.py:2374: RuntimeWarning: invalid value encountered in double_scalars
       return mean(axis, dtype, out)

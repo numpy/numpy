@@ -26,9 +26,10 @@ What works with NA:
     * Basic indexing and slicing, as well as full boolean mask indexing.
     * All element-wise ufuncs.
     * UFunc.reduce methods, with a new skipna parameter.
+    * The nditer object.
     * Array methods:
        + ndarray.clip, ndarray.min, ndarray.max, ndarray.sum, ndarray.prod,
-         ndarray.conjugate, ndarray.diagonal
+         ndarray.conjugate, ndarray.diagonal, ndarray.flatten
        + numpy.concatenate, numpy.column_stack, numpy.hstack,
          numpy.vstack, numpy.dstack
 
@@ -36,6 +37,8 @@ What doesn't work with NA:
     * Fancy indexing, such as with lists and partial boolean masks.
     * ndarray.flat and any other methods that use the old iterator
       mechanism instead of the newer nditer.
+    * Struct dtypes, which will have corresponding struct masks with
+      one mask value per primitive field of the struct dtype.
     * UFunc.reduce of multi-dimensional arrays, with skipna=True and a ufunc
       that doesn't have an identity.
     * UFunc.accumulate, UFunc.reduceat.
@@ -43,7 +46,10 @@ What doesn't work with NA:
       rules NA | True == True and NA & False == False yet.
     * Array methods:
        + ndarray.argmax, ndarray.argmin,
-       + numpy.repeat
+       + numpy.repeat, numpy.delete (relies on fancy indexing),
+         numpy.append, numpy.insert (relies on fancy indexing),
+         numpy.where, 
+
 
 
 Custom formatter for printing arrays
@@ -66,7 +72,7 @@ where possible, and performs much faster as well.
 
 The function np.concatenate tries to match the layout of its input
 arrays. Previously, the layout did not follow any particular reason,
-and depended in an undesirable on the particular axis chosen for
+and depended in an undesirable way on the particular axis chosen for
 concatenation. A bug was also fixed which silently allowed out of bounds
 axis arguments.
 
