@@ -29,11 +29,15 @@ def test_array_maskna_construction():
     assert_equal(a.dtype, np.dtype('f8'))
     assert_(a.flags.maskna)
     assert_equal(type(a[2]), np.NAType)
-    # Without the 'maskna=True', produces an object array
+    # Without the 'maskna=True', still produces an NA mask if NA is there
     a = np.array([1.0, 2.0, np.NA, 7.0])
-    assert_equal(a.dtype, np.dtype('O'))
-    assert_(not a.flags.maskna)
+    assert_equal(a.dtype, np.dtype('f8'))
+    assert_(a.flags.maskna)
     assert_equal(type(a[2]), np.NAType)
+    # Without any NAs, does not produce an NA mask
+    a = np.array([1.0, 2.0, 4.0, 7.0])
+    assert_equal(a.dtype, np.dtype('f8'))
+    assert_(not a.flags.maskna)
 
     # From np.NA as a straight scalar
     a = np.array(np.NA, maskna=True)
@@ -76,11 +80,19 @@ def test_array_maskna_construction():
 def test_array_maskna_repr():
     # Test some simple reprs with NA in them
     a = np.array(np.NA, maskna=True)
-    assert_equal(repr(a), 'array(NA, maskna=True, dtype=float64)')
+    assert_equal(repr(a), 'array(NA, dtype=float64)')
+    a = np.array(3, maskna=True)
+    assert_equal(repr(a), 'array(3, maskna=True)')
     a = np.array([np.NA, 3], maskna=True)
-    assert_equal(repr(a), 'array([NA, 3], maskna=True)')
+    assert_equal(repr(a), 'array([NA, 3])')
+    a = np.array([np.NA, np.NA])
+    assert_equal(repr(a), 'array([NA, NA], dtype=float64)')
     a = np.array([3.5, np.NA], maskna=True)
-    assert_equal(repr(a), 'array([ 3.5, NA], maskna=True)')
+    assert_equal(repr(a), 'array([ 3.5, NA])')
+    a = np.array([3.75, 6.25], maskna=True)
+    assert_equal(repr(a), 'array([ 3.75,  6.25], maskna=True)')
+    a = np.array([3.75, 6.25], maskna=True, dtype='f4')
+    assert_equal(repr(a), 'array([ 3.75,  6.25], maskna=True, dtype=float32)')
 
 def test_isna():
     # Objects which are not np.NA or ndarray all return False

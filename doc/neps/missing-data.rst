@@ -347,20 +347,42 @@ instead of masked and unmasked values. The functions are
 'np.isna' and 'np.isavail', which test for NA or available values
 respectively.
 
-Creating Masked Arrays
-======================
+Creating NA-Masked Arrays
+=========================
 
-There are two flags which indicate and control the nature of the mask
-used in masked arrays.
+The usual way to create an array with an NA mask is to pass the keyword
+parameter maskna=True to one of the constructors. Most functions that
+create a new array take this parameter, and produce an NA-masked
+array with all its elements exposed when the parameter is set to True.
 
-First is 'arr.flags.hasmaskna', which is True for all masked arrays and
+There are also two flags which indicate and control the nature of the mask
+used in masked arrays. These flags can be used to add a mask, or ensure
+the mask isn't a view into another array's mask.
+
+First is 'arr.flags.maskna', which is True for all masked arrays and
 may be set to True to add a mask to an array which does not have one.
 
 Second is 'arr.flags.ownmaskna', which is True if the array owns the
 memory to the mask, and False if the array has no mask, or has a view
-into the mask of another array. If this is set to False in a masked
+into the mask of another array. If this is set to True in a masked
 array, the array will create a copy of the mask so that further modifications
-to the mask will not affect the array being viewed.
+to the mask will not affect the original mask from which the view was taken.
+
+NA-Masks When Constructing From Lists
+=====================================
+
+The initial design of NA-mask construction was to make all construction
+fully explicit. This turns out to be unwieldy when working interactively
+with NA-masked arrays, and having an object array be created instead of
+an NA-masked array can be very surprising.
+
+Because of this, the design has been changed to enable an NA-mask whenever
+creating an array from lists which have an NA object in them. There could
+be some debate of whether one should create NA-masks or NA-bitpatterns
+by default, but due to the time constraints it was only feasible to tackle
+NA-masks, and extending the NA-mask support more fully throughout NumPy seems
+much more reasonable than starting another system and ending up with two
+incomplete systems.
 
 Mask Implementation Details
 ===========================

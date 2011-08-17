@@ -100,6 +100,10 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
 
     /* Check if it's an ndarray */
     if (PyArray_Check(obj)) {
+        /* Check for any NAs in the array */
+        if (PyArray_ContainsNA((PyArrayObject *)obj)) {
+            *out_contains_na = 1;
+        }
         dtype = PyArray_DESCR((PyArrayObject *)obj);
         Py_INCREF(dtype);
         goto promote_types;
