@@ -332,6 +332,9 @@ multiarray_funcs_api = {
     'PyArray_AssignMaskNA':                 293,
     'PyArray_AssignRawScalar':              294,
     'PyArray_AssignArray':                  295,
+    'PyArray_CreateReduceResult':           296,
+    'PyArray_InitializeReduceResult':       297,
+    'PyArray_RemoveAxesInPlace':            298
 }
 
 ufunc_types_api = {

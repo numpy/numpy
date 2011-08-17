@@ -31,7 +31,7 @@ What works with NA:
        + ndarray.clip, ndarray.min, ndarray.max, ndarray.sum, ndarray.prod,
          ndarray.conjugate, ndarray.diagonal, ndarray.flatten
        + numpy.concatenate, numpy.column_stack, numpy.hstack,
-         numpy.vstack, numpy.dstack
+         numpy.vstack, numpy.dstack, numpy.squeeze
 
 What doesn't work with NA:
     * Fancy indexing, such as with lists and partial boolean masks.
@@ -49,6 +49,19 @@ What doesn't work with NA:
        + numpy.repeat, numpy.delete (relies on fancy indexing),
          numpy.append, numpy.insert (relies on fancy indexing),
          numpy.where, 
+
+Differences with R:
+    * R's parameter rm.na=T is spelled skipna=True in NumPy.
+    * np.isna(nan) is False, but R's is.na(nan) is TRUE. This is because
+      NumPy's NA is treated independently of the underlying data type.
+    * Boolean indexing, where the result is compressed to just
+      the elements with true in the mask, raises if the booelan mask
+      has an NA value in it. This is because that value could be either
+      True or False, meaning the count of the output array is actually
+      NA. R treats this case in a manner inconsistent with the NA model,
+      returning NA values in the spots where the boolean index has NA.
+      This may have a practical advantage in spite of violating the
+      NA theoretical model, so NumPy could adopt the behavior if necessary
 
 
 
@@ -76,6 +89,11 @@ and depended in an undesirable way on the particular axis chosen for
 concatenation. A bug was also fixed which silently allowed out of bounds
 axis arguments.
 
+The ufuncs logical_or, logical_and, and logical_not now follow Python's
+behavior with object arrays, instead of trying to call methods on the
+objects. For example the expression (3 and 'test') produces the string
+'test', and now np.logical_and(np.array(3, 'O'), np.array('test', 'O'))
+produces 'test' as well.
 
 Deprecations
 ============

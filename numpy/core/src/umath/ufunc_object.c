@@ -2560,171 +2560,6 @@ get_masked_binary_op_function(PyUFuncObject *self, PyArrayObject *arr,
 }
 
 /*
- * Allocates a result array for a reduction operation, with
- * dimensions matching 'arr' except set to 1 with 0 stride
- * whereever axis_flags is True. Dropping the reduction axes
- * from the result must be done later by the caller once the
- * computation is complete.
- *
- * This function never adds an NA mask to the allocated
- * result, that is the responsibility of the caller. It also
- * always allocates a base class ndarray.
- *
- * If 'dtype' isn't NULL, this function steals its reference.
- */
-static PyArrayObject *
-allocate_reduce_result(PyArrayObject *arr, npy_bool *axis_flags,
-                        PyArray_Descr *dtype)
-{
-    npy_intp strides[NPY_MAXDIMS], stride;
-    npy_intp shape[NPY_MAXDIMS], *arr_shape = PyArray_DIMS(arr);
-    npy_stride_sort_item strideperm[NPY_MAXDIMS];
-    int idim, ndim = PyArray_NDIM(arr);
-
-    if (dtype == NULL) {
-        dtype = PyArray_DTYPE(arr);
-        Py_INCREF(dtype);
-    }
-
-    PyArray_CreateSortedStridePerm(PyArray_NDIM(arr), PyArray_SHAPE(arr),
-                                    PyArray_STRIDES(arr), strideperm);
-
-    /* Build the new strides and shape */
-    stride = dtype->elsize;
-    memcpy(shape, arr_shape, ndim * sizeof(shape[0]));
-    for (idim = ndim-1; idim >= 0; --idim) {
-        npy_intp i_perm = strideperm[idim].perm;
-        if (axis_flags[i_perm]) {
-            strides[i_perm] = 0;
-            shape[i_perm] = 1;
-        }
-        else {
-            strides[i_perm] = stride;
-            stride *= shape[i_perm];
-        }
-    }
-
-    /* Finally, allocate the array */
-    return (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
-                                    ndim, shape, strides,
-                                    NULL, 0, NULL);
-}
-
-/*
- * Conforms an output parameter 'out' to have 'ndim' dimensions
- * with dimensions of size one added in the appropriate places
- * indicated by 'axis_flags'.
- *
- * The return value is a view into 'out'.
- */
-static PyArrayObject *
-conform_reduce_result(int ndim, npy_bool *axis_flags, PyArrayObject *out)
-{
-    npy_intp strides[NPY_MAXDIMS], shape[NPY_MAXDIMS];
-    npy_intp *strides_out = PyArray_STRIDES(out);
-    npy_intp *shape_out = PyArray_DIMS(out);
-    int idim, idim_out, ndim_out = PyArray_NDIM(out);
-    PyArray_Descr *dtype;
-    PyArrayObject_fieldaccess *ret;
-
-    /* Construct the strides and shape */
-    idim_out = 0;
-    for (idim = 0; idim < ndim; ++idim) {
-        if (axis_flags[idim]) {
-            strides[idim] = 0;
-            shape[idim] = 1;
-        }
-        else {
-            if (idim_out >= ndim_out) {
-                PyErr_SetString(PyExc_ValueError,
-                        "output parameter for reduce does not have "
-                        "enough dimensions");
-                return NULL;
-            }
-            strides[idim] = strides_out[idim_out];
-            shape[idim] = shape_out[idim_out];
-            ++idim_out;
-        }
-    }
-
-    if (idim_out != ndim_out) {
-        PyErr_SetString(PyExc_ValueError,
-                "output parameter for reduce has too many "
-                "dimensions");
-        return NULL;
-    }
-
-    /* Allocate the view */
-    dtype = PyArray_DESCR(out);
-    Py_INCREF(dtype);
-    ret = (PyArrayObject_fieldaccess *)PyArray_NewFromDescr(&PyArray_Type,
-                               dtype,
-                               ndim, shape,
-                               strides,
-                               PyArray_DATA(out),
-               PyArray_FLAGS(out) & ~(NPY_ARRAY_MASKNA|NPY_ARRAY_OWNMASKNA),
-                               NULL);
-    if (ret == NULL) {
-        return NULL;
-    }
-    Py_INCREF(out);
-    if (PyArray_SetBaseObject((PyArrayObject *)ret, (PyObject *)out) < 0) {
-        Py_DECREF(ret);
-        return NULL;
-    }
-
-    /* Take a view of the mask if it exists */
-    if (PyArray_HASMASKNA(out)) {
-        npy_intp *strides_ret = ret->maskna_strides;
-        strides_out = PyArray_MASKNA_STRIDES(out);
-        idim_out = 0;
-        for (idim = 0; idim < ndim; ++idim) {
-            if (axis_flags[idim]) {
-                strides_ret[idim] = 0;
-            }
-            else {
-                strides_ret[idim] = strides_out[idim_out];
-                ++idim_out;
-            }
-        }
-
-        ret->maskna_dtype = PyArray_MASKNA_DTYPE(out);
-        Py_INCREF(ret->maskna_dtype);
-        ret->maskna_data = PyArray_MASKNA_DATA(out);
-        ret->flags |= NPY_ARRAY_MASKNA;
-    }
-
-    return (PyArrayObject *)ret;
-}
-
-/* Allocate 'result' or conform 'out' to 'self' (in 'result') */
-static PyArrayObject *
-allocate_or_conform_reduce_result(PyArrayObject *arr, PyArrayObject *out,
-                        npy_bool *axis_flags, PyArray_Descr *otype_dtype,
-                        int addmask)
-{
-    PyArrayObject *result;
-
-    if (out == NULL) {
-        Py_XINCREF(otype_dtype);
-        result = allocate_reduce_result(arr, axis_flags, otype_dtype);
-
-        /* Allocate an NA mask if necessary */
-        if (addmask && result != NULL) {
-            if (PyArray_AllocateMaskNA(result, 1, 0, 1) < 0) {
-                Py_DECREF(result);
-                return NULL;
-            }
-        }
-    }
-    else {
-        result = conform_reduce_result(PyArray_NDIM(arr), axis_flags, out);
-    }
-
-    return result;
-}
-
-/*
  * Either:
  *   1) Fills 'result' with the identity, and returns a reference to 'arr'.
  *   2) Copies the first values along each reduction axis into 'result',
@@ -2735,10 +2570,6 @@ initialize_reduce_result(int identity, PyArrayObject *result,
                         npy_bool *axis_flags, PyArrayObject *arr,
                         int skipna, char *ufunc_name)
 {
-    npy_intp *strides, *shape, shape_orig[NPY_MAXDIMS], shape0;
-    PyArrayObject *arr_view;
-    int idim, ndim;
-
     if (identity == PyUFunc_One) {
         if (PyArray_AssignOne(result, NULL, !skipna, NULL) < 0) {
             return NULL;
@@ -2753,165 +2584,10 @@ initialize_reduce_result(int identity, PyArrayObject *result,
         Py_INCREF(arr);
         return arr;
     }
-    /*
-     * With skipna=True and where 'arr' has an NA mask,
-     * need to do some additional fiddling if there's no unit.
-     */
-    else if (skipna && PyArray_HASMASKNA(arr)) {
-        char *data, *maskna_data;
-        npy_intp *maskna_strides;
-
-        ndim = PyArray_NDIM(arr);
-
-        /*
-         * Currently only supporting one dimension in this case.
-         */
-        if (ndim != 1) {
-            PyErr_SetString(PyExc_ValueError,
-                    "skipna=True with a non-identity reduction "
-                    "and an array with ndim > 1 isn't implemented yet");
-            return NULL;
-        }
-
-        arr_view = (PyArrayObject *)PyArray_View(arr, NULL, &PyArray_Type);
-        if (arr_view == NULL) {
-            return NULL;
-        }
-
-        shape = PyArray_DIMS(arr_view);
-        shape0 = shape[0];
-        data = PyArray_DATA(arr_view);
-        strides = PyArray_STRIDES(arr_view);
-        maskna_data = PyArray_MASKNA_DATA(arr_view);
-        maskna_strides = PyArray_MASKNA_STRIDES(arr_view);
-
-        /* Shrink the array from the start until we find an exposed element */
-        while (shape0 > 0 &&
-                    !NpyMaskValue_IsExposed((npy_mask)*maskna_data)) {
-            --shape0;
-            data += strides[0];
-            maskna_data += maskna_strides[0];
-        }
-
-        if (shape0 == 0) {
-            Py_DECREF(arr_view);
-            PyErr_Format(PyExc_ValueError,
-                    "fully NA array with skipna=True to "
-                    "%s.reduce which has no identity", ufunc_name);
-            return NULL;
-        }
-
-        /* With the first element exposed, fall through to the other code */
-        shape[0] = shape0;
-        ((PyArrayObject_fieldaccess *)arr_view)->data = data;
-        ((PyArrayObject_fieldaccess *)arr_view)->maskna_data = maskna_data;
-    }
-    /*
-     * If there is no identity, copy the first element along the
-     * reduction dimensions.
-     */
     else {
-        ndim = PyArray_NDIM(arr);
-
-        if (PyArray_SIZE(arr) == 0) {
-            PyErr_Format(PyExc_ValueError,
-                    "zero-size array to %s.reduce which has no identity",
-                    ufunc_name);
-            return NULL;
-        }
-
-        /*
-         * TODO: Should the ufunc tell us whether it's commutative
-         *       and/or associative, and this operation can be reordered?
-         *       When reducing more than one axis at a time, this is
-         *       important.
-         *
-         * Take a view into 'arr' which we can modify.
-         */
-        arr_view = (PyArrayObject *)PyArray_View(arr, NULL, &PyArray_Type);
-        if (arr_view == NULL) {
-            return NULL;
-        }
+        return PyArray_InitializeReduceResult(
+                        result, arr, axis_flags, skipna, ufunc_name);
     }
-
-    /*
-     * Adjust the shape to only look at the first element along
-     * any of the reduction axes.
-     */
-    shape = PyArray_DIMS(arr_view);
-    memcpy(shape_orig, shape, ndim * sizeof(npy_intp));
-    for (idim = 0; idim < ndim; ++idim) {
-        if (axis_flags[idim]) {
-            shape[idim] = 1;
-        }
-    }
-
-    /*
-     * Copy the elements into the result to start, with
-     * 'preservena' set to True so that we don't overwrite
-     * what we already calculated in ReduceNAMask.
-     */
-    if (PyArray_AssignArray(result, arr_view, NULL, NPY_UNSAFE_CASTING,
-                            1, NULL) < 0) {
-        Py_DECREF(arr_view);
-        return NULL;
-    }
-
-    /* Adjust the shape to only look at the remaining elements */
-    strides = PyArray_STRIDES(arr_view);
-    for (idim = 0; idim < ndim; ++idim) {
-        if (axis_flags[idim]) {
-            shape[idim] = shape_orig[idim] - 1;
-            ((PyArrayObject_fieldaccess *)arr_view)->data += strides[idim];
-        }
-    }
-    if (PyArray_HASMASKNA(arr_view)) {
-        strides = PyArray_MASKNA_STRIDES(arr_view);
-        for (idim = 0; idim < ndim; ++idim) {
-            if (axis_flags[idim]) {
-                ((PyArrayObject_fieldaccess *)arr_view)->maskna_data +=
-                                                            strides[idim];
-            }
-        }
-    }
-
-    return arr_view;
-}
-
-/*
- * Removes the dimensions flagged as True from the array,
- * modifying it in place.
- */
-static void
-strip_flagged_dimensions(PyArrayObject *arr, npy_bool *flags)
-{
-    PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)arr;
-    npy_intp *shape = fa->dimensions, *strides = fa->strides;
-    int idim, ndim = fa->nd, idim_out = 0;
-
-    /* Compress the dimensions and strides */
-    for (idim = 0; idim < ndim; ++idim) {
-        if (!flags[idim]) {
-            shape[idim_out] = shape[idim];
-            strides[idim_out] = strides[idim];
-            ++idim_out;
-        }
-    }
-
-    /* Compress the mask strides if the result has an NA mask */
-    if (PyArray_HASMASKNA(arr)) {
-        strides = fa->maskna_strides;
-        idim_out = 0;
-        for (idim = 0; idim < ndim; ++idim) {
-            if (!flags[idim]) {
-                strides[idim_out] = strides[idim];
-                ++idim_out;
-            }
-        }
-    }
-
-    /* The final number of dimensions */
-    fa->nd = idim_out;
 }
 
 /*
@@ -3045,8 +2721,10 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     }
 
     /* Allocate an output or conform 'out' to 'self' */
-    result = allocate_or_conform_reduce_result(arr, out,
-                            axis_flags, otype_dtype, !skipna && use_maskna);
+    Py_XINCREF(otype_dtype);
+    result = PyArray_CreateReduceResult(arr, out,
+                            otype_dtype, axis_flags, !skipna && use_maskna,
+                            ufunc_name);
     if (result == NULL) {
         return NULL;
     }
@@ -3256,7 +2934,7 @@ finish:
 
     /* Strip out the extra 'one' dimensions in the result */
     if (out == NULL) {
-        strip_flagged_dimensions(result, axis_flags);
+        PyArray_RemoveAxesInPlace(result, axis_flags);
     }
     else {
         Py_DECREF(result);

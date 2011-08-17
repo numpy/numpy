@@ -663,45 +663,48 @@ _fix_unknown_dimension(PyArray_Dims *newshape, npy_intp s_original)
 NPY_NO_EXPORT PyObject *
 PyArray_Squeeze(PyArrayObject *self)
 {
-    int nd = PyArray_NDIM(self);
-    int newnd = nd;
-    npy_intp dimensions[NPY_MAXDIMS];
-    npy_intp strides[NPY_MAXDIMS];
-    int i, j;
     PyArrayObject *ret;
-    PyArray_Descr *dtype;
+    npy_bool unit_dims[NPY_MAXDIMS];
+    int idim, ndim, any_ones;
+    npy_intp *shape;
 
-    if (nd == 0) {
+    ndim = PyArray_NDIM(self);
+    shape = PyArray_SHAPE(self);
+
+    any_ones = 0;
+    for (idim = 0; idim < ndim; ++idim) {
+        if (shape[idim] == 1) {
+            unit_dims[idim] = 1;
+            any_ones = 1;
+        }
+        else {
+            unit_dims[idim] = 0;
+        }
+    }
+
+    /* If there were no ones to squeeze out, return the same array */
+    if (!any_ones) {
         Py_INCREF(self);
         return (PyObject *)self;
     }
-    for (j = 0, i = 0; i < nd; i++) {
-        if (PyArray_DIMS(self)[i] == 1) {
-            newnd -= 1;
-        }
-        else {
-            dimensions[j] = PyArray_DIMS(self)[i];
-            strides[j++] = PyArray_STRIDES(self)[i];
-        }
-    }
 
-    dtype = PyArray_DESCR(self);
-    Py_INCREF(dtype);
-    ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
-                               dtype,
-                               newnd, dimensions,
-                               strides, PyArray_DATA(self),
-                               PyArray_FLAGS(self),
-                               (PyObject *)self);
+    ret = (PyArrayObject *)PyArray_View(self, NULL, &PyArray_Type);
     if (ret == NULL) {
         return NULL;
     }
-    PyArray_CLEARFLAGS(ret, NPY_ARRAY_OWNDATA);
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
+
+    PyArray_RemoveAxesInPlace(ret, unit_dims);
+
+    /*
+     * If self isn't not a base class ndarray, call its
+     * __array_wrap__ method
+     */
+    if (Py_TYPE(self) != &PyArray_Type) {
+        PyArrayObject *tmp = PyArray_SubclassWrap(self, ret);
         Py_DECREF(ret);
-        return NULL;
+        ret = tmp;
     }
+
     return (PyObject *)ret;
 }
 
@@ -1186,3 +1189,44 @@ build_shape_string(npy_intp n, npy_intp *vals)
     return ret;
 }
 
+/*NUMPY_API
+ *
+ * Removes the axes flagged as True from the array,
+ * modifying it in place. If an axis flagged for removal
+ * has a shape entry bigger than one, this effectively selects
+ * index zero for that axis.
+ *
+ * For example, this can be used to remove the reduction axes
+ * from a reduction result once its computation is complete.
+ */
+NPY_NO_EXPORT void
+PyArray_RemoveAxesInPlace(PyArrayObject *arr, npy_bool *flags)
+{
+    PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)arr;
+    npy_intp *shape = fa->dimensions, *strides = fa->strides;
+    int idim, ndim = fa->nd, idim_out = 0;
+
+    /* Compress the dimensions and strides */
+    for (idim = 0; idim < ndim; ++idim) {
+        if (!flags[idim]) {
+            shape[idim_out] = shape[idim];
+            strides[idim_out] = strides[idim];
+            ++idim_out;
+        }
+    }
+
+    /* Compress the mask strides if the result has an NA mask */
+    if (PyArray_HASMASKNA(arr)) {
+        strides = fa->maskna_strides;
+        idim_out = 0;
+        for (idim = 0; idim < ndim; ++idim) {
+            if (!flags[idim]) {
+                strides[idim_out] = strides[idim];
+                ++idim_out;
+            }
+        }
+    }
+
+    /* The final number of dimensions */
+    fa->nd = idim_out;
+}

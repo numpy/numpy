@@ -1,0 +1,4 @@
+#ifndef _NPY_PRIVATE__REDUCTION_H_
+#define _NPY_PRIVATE__REDUCTION_H_
+
+#endif

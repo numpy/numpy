@@ -149,8 +149,6 @@ def test_array_maskna_item():
     a.itemset((1,1), np.NA)
     assert_(np.isna(a[1,1]))
 
-
-
 def test_array_maskna_payload():
     # Single numbered index
     a = np.zeros((2,), maskna=True)
@@ -962,6 +960,7 @@ def test_array_maskna_concatenate():
     assert_equal(res.strides, (4, 16))
 
 def test_array_maskna_column_stack():
+    # np.column_stack
     a = np.array((1,2,3), maskna=True)
     b = np.array((2,3,4), maskna=True)
     b[2] = np.NA
@@ -978,6 +977,13 @@ def test_array_maskna_compress():
     res = a.compress(mask)
     assert_equal(res, [1,2,3,4])
 
+def test_array_maskna_squeeze():
+    # np.squeeze
+    a = np.zeros((1,3,1,1,4,2,1), maskna=True)
+    a[0,1,0,0,3,0,0] = np.NA
+    res = np.squeeze(a)
+    assert_equal(res.shape, (3,4,2))
+    assert_(np.isna(res[1,3,0]))
 
 if __name__ == "__main__":
     run_module_suite()
