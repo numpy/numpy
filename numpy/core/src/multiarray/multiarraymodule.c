@@ -1709,7 +1709,9 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
     Py_INCREF(dtype);
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(arr),
                         dtype, ndmin, newdims, newstrides,
-                        PyArray_DATA(arr), PyArray_FLAGS(arr), (PyObject *)arr);
+                        PyArray_DATA(arr),
+            PyArray_FLAGS(arr) & ~(NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA),
+                        (PyObject *)arr);
     if (ret == NULL) {
         return NULL;
     }
@@ -1718,6 +1720,25 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
         Py_DECREF(ret);
         return NULL;
     }
+
+    /* Take a view of the NA mask as well if necessary */
+    if (PyArray_HASMASKNA(arr)) {
+        PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
+
+        fret->maskna_dtype = PyArray_MASKNA_DTYPE(arr);
+        Py_INCREF(fret->maskna_dtype);
+        fret->maskna_data = PyArray_MASKNA_DATA(arr);
+
+        for (i = 0; i < num; ++i) {
+            fret->maskna_strides[i] = 0;
+        }
+        for (i = num; i < ndmin; ++i) {
+            fret->maskna_strides[i] = PyArray_MASKNA_STRIDES(arr)[i - num];
+        }
+        fret->flags |= NPY_ARRAY_MASKNA;
+    }
+
+
     return (PyObject *)ret;
 }
 
