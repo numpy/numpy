@@ -295,9 +295,16 @@ performance in unexpected ways.
 
 By default, the string "NA" will be used to represent missing values
 in str and repr outputs. A global configuration will allow
-this to be changed. The array2string function will also gain a
-'nastr=' parameter so this could be changed to "<missing>" or
-other values people may desire.
+this to be changed, exactly extending the way nan and inf are treated.
+The following works in the current draft implementation::
+
+    >>> a = np.arange(6, maskna=True)
+    >>> a[3] = np.NA
+    >>> a
+    array([0, 1, 2, NA, 4, 5], maskna=True)
+    >>> np.set_printoptions(nastr='blah')
+    >>> a
+    array([0, 1, 2, blah, 4, 5], maskna=True)
 
 For floating point numbers, Inf and NaN are separate concepts from
 missing values. If a division by zero occurs in an array with default
@@ -320,11 +327,8 @@ A manual loop through a masked array like::
     >>> a
     array([       -inf,  0.        ,  0.69314718, NA,  1.38629436], maskna=True)
 
-works even with masked values, because 'a[i]' returns a zero-dimensional
-array with a missing value instead of the singleton np.NA for the missing
-elements. If np.NA was returned, np.log would have to raise an exception
-because it doesn't know the log of which dtype it's meant to call, whether
-it's a missing float or a missing string, for example.
+works even with masked values, because 'a[i]' returns an NA object
+with a data type associated, that can be treated properly by the ufuncs.
 
 Accessing a Boolean Mask
 ========================
@@ -383,7 +387,7 @@ New ndarray Methods
 
 New functions added to the numpy namespace are::
 
-    np.isna(arr)
+    np.isna(arr) [IMPLEMENTED]
         Returns a boolean array with True whereever the array is masked
         or matches the NA bitpattern, and False elsewhere
 
@@ -400,12 +404,12 @@ New functions added to the ndarray are::
         array is unmasked and has the 'NA' part stripped from the
         parameterized type ('NA[f8]' becomes just 'f8').
 
-    arr.view(maskna=True)
+    arr.view(maskna=True) [IMPLEMENTED]
         This is a shortcut for
         >>> a = arr.view()
         >>> a.flags.hasmaskna = True
 
-    arr.view(ownmaskna=True)
+    arr.view(ownmaskna=True) [IMPLEMENTED]
         This is a shortcut for
         >>> a = arr.view()
         >>> a.flags.hasmaskna = True
