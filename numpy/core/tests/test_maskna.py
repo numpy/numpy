@@ -943,5 +943,14 @@ def test_array_maskna_concatenate():
     assert_equal(res[~np.isna(res)], [0,1,4,2,5,10])
     assert_equal(res.strides, (4, 16))
 
+def test_array_maskna_column_stack():
+    a = np.array((1,2,3), maskna=True)
+    b = np.array((2,3,4), maskna=True)
+    b[2] = np.NA
+    res = np.column_stack((a,b))
+    assert_equal(np.isna(res), [[0,0], [0,0], [0,1]])
+    assert_equal(res[~np.isna(res)], [1,2,2,3,3])
+
+
 if __name__ == "__main__":
     run_module_suite()
