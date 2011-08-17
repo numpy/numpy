@@ -401,3 +401,235 @@ PyArray_InitializeReduceResult(
     return op_view;
 }
 
+/*
+ * This function executes all the standard NumPy reduction function
+ * boilerplate code, just calling assign_unit and the appropriate
+ * inner loop function where necessary.
+ *
+ * operand     : The array to be reduced.
+ * out         : NULL, or the array into which to place the result.
+ * operand_dtype : The dtype the inner loop expects for the operand.
+ * result_dtype : The dtype the inner loop expects for the result.
+ * axis_flags  : Flags indicating the reduction axes of 'operand'.
+ * skipna      : If true, NAs are skipped instead of propagating.
+ * assign_unit : If NULL, PyArray_InitializeReduceResult is used, otherwise
+ *               this function is called to initialize the result to
+ *               the reduction's unit.
+ * inner_loop  : The inner loop which does the reduction.
+ * masked_inner_loop: The inner loop which does the reduction with a mask.
+ * data        : Data which is passed to assign_unit and the inner loop.
+ * funcname    : The name of the reduction function, for error messages.
+ */
+NPY_NO_EXPORT PyArrayObject *
+PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
+                        PyArray_Descr *operand_dtype,
+                        PyArray_Descr *result_dtype,
+                        npy_bool *axis_flags, int skipna,
+                        PyArray_AssignReduceUnitFunc *assign_unit,
+                        PyArray_ReduceInnerLoopFunc *inner_loop,
+                        PyArray_ReduceInnerLoopFunc *masked_inner_loop,
+                        void *data, const char *funcname)
+{
+    int use_maskna;
+    PyArrayObject *result = NULL, *op_view = NULL;
+
+    /* Iterator parameters */
+    NpyIter *iter = NULL;
+    PyArrayObject *op[2];
+    PyArray_Descr *op_dtypes[2];
+    npy_uint32 flags, op_flags[2];
+
+    use_maskna = PyArray_HASMASKNA(operand);
+
+    /*
+     * If 'operand' has an NA mask, but 'out' doesn't, validate that 'operand'
+     * contains no NA values so we can ignore the mask entirely.
+     */
+    if (use_maskna && !skipna && out != NULL && !PyArray_HASMASKNA(out)) {
+        if (PyArray_ContainsNA(operand)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA value to an array which "
+                    "does not support NAs");
+            goto fail;
+        }
+        else {
+            use_maskna = 0;
+        }
+    }
+
+    /*
+     * This either conforms 'out' to the ndim of 'operand', or allocates
+     * a new array appropriate for this reduction.
+     */
+    Py_INCREF(result_dtype);
+    result = PyArray_CreateReduceResult(operand, out,
+                            result_dtype, axis_flags, !skipna && use_maskna,
+                            funcname);
+    if (result == NULL) {
+        goto fail;
+    }
+
+    /*
+     * Do the reduction on the NA mask before the data. This way
+     * we can avoid modifying the outputs which end up masked, obeying
+     * the required NA masking semantics.
+     */
+    if (use_maskna && !skipna) {
+        if (PyArray_ReduceMaskNAArray(result, operand) < 0) {
+            goto fail;
+        }
+
+        /* Short circuit any calculation if the result is 0-dim NA */
+        if (PyArray_SIZE(result) == 1 &&
+                !NpyMaskValue_IsExposed(
+                            (npy_mask)*PyArray_MASKNA_DATA(result))) {
+            goto finish;
+        }
+    }
+
+    /*
+     * Initialize the result to the reduction unit if possible,
+     * otherwise copy the initial values and get a view to the rest.
+     */
+    if (assign_unit != NULL) {
+        if (assign_unit(result, !skipna, data) < 0) {
+            goto fail;
+        }
+        op_view = operand;
+        Py_INCREF(op_view);
+    }
+    else {
+        op_view = PyArray_InitializeReduceResult(result, operand,
+                            axis_flags, skipna, funcname);
+        if (op_view == NULL) {
+            Py_DECREF(result);
+            return NULL;
+        }
+    }
+
+    /* Set up the iterator */
+    op[0] = result;
+    op[1] = op_view;
+    op_dtypes[0] = result_dtype;
+    op_dtypes[1] = operand_dtype;
+
+    flags = NPY_ITER_BUFFERED |
+            NPY_ITER_EXTERNAL_LOOP |
+            NPY_ITER_DONT_NEGATE_STRIDES |
+            NPY_ITER_ZEROSIZE_OK |
+            NPY_ITER_REDUCE_OK |
+            NPY_ITER_REFS_OK;
+    op_flags[0] = NPY_ITER_READWRITE |
+                  NPY_ITER_ALIGNED |
+                  NPY_ITER_NO_SUBTYPE;
+    op_flags[1] = NPY_ITER_READONLY |
+                  NPY_ITER_ALIGNED;
+
+    /* Add mask-related flags */
+    if (use_maskna) {
+        if (skipna) {
+            /* The output's mask has been set to all exposed already */
+            op_flags[0] |= NPY_ITER_IGNORE_MASKNA;
+            /* Need the input's mask to determine what to skip */
+            op_flags[1] |= NPY_ITER_USE_MASKNA;
+        }
+        else {
+            /* Iterate over the output's mask */
+            op_flags[0] |= NPY_ITER_USE_MASKNA;
+            /* The input's mask is already incorporated in the output's mask */
+            op_flags[1] |= NPY_ITER_IGNORE_MASKNA;
+        }
+    }
+    else {
+        /*
+         * If 'out' had no mask, and 'operand' did, we checked that 'operand'
+         * contains no NA values and can ignore the masks.
+         */
+        op_flags[0] |= NPY_ITER_IGNORE_MASKNA;
+        op_flags[1] |= NPY_ITER_IGNORE_MASKNA;
+    }
+
+    iter = NpyIter_MultiNew(2, op, flags,
+                               NPY_KEEPORDER, NPY_SAME_KIND_CASTING,
+                               op_flags,
+                               op_dtypes);
+    if (iter == NULL) {
+        Py_DECREF(result);
+        Py_DECREF(op_dtypes[0]);
+        return NULL;
+    }
+
+    if (NpyIter_GetIterSize(iter) != 0) {
+        NpyIter_IterNextFunc *iternext;
+        char **dataptr;
+        npy_intp *strideptr;
+        npy_intp *countptr;
+        int needs_api;
+
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            Py_DECREF(result);
+            Py_DECREF(op_dtypes[0]);
+            NpyIter_Deallocate(iter);
+            return NULL;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        strideptr = NpyIter_GetInnerStrideArray(iter);
+        countptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+        needs_api = NpyIter_IterationNeedsAPI(iter);
+
+        /* Straightforward reduction */
+        if (!use_maskna) {
+            if (inner_loop == NULL) {
+                PyErr_Format(PyExc_RuntimeError,
+                        "reduction operation %s did not supply an "
+                        "unmasked inner loop function", funcname);
+                goto fail;
+            }
+
+            inner_loop(iter, dataptr, strideptr, countptr,
+                                                iternext, needs_api, data);
+        }
+        /* Masked reduction */
+        else {
+            if (masked_inner_loop == NULL) {
+                PyErr_Format(PyExc_RuntimeError,
+                        "reduction operation %s did not supply a "
+                        "masked inner loop function", funcname);
+                goto fail;
+            }
+
+            masked_inner_loop(iter, dataptr, strideptr, countptr,
+                                                iternext, needs_api, data);
+        }
+
+        if (PyErr_Occurred()) {
+            goto fail;
+        }
+    }
+
+    NpyIter_Deallocate(iter);
+
+finish:
+    /* Strip out the extra 'one' dimensions in the result */
+    if (out == NULL) {
+        PyArray_RemoveAxesInPlace(result, axis_flags);
+    }
+    else {
+        Py_DECREF(result);
+        result = out;
+        Py_INCREF(result);
+    }
+
+    return result;
+
+fail:
+    Py_XDECREF(result);
+    Py_XDECREF(op_view);
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+
+    return NULL;
+}
