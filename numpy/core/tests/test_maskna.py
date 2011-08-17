@@ -600,7 +600,7 @@ def test_maskna_nonzero_1D():
 
     # The nonzeros with an NA
     a[2] = np.NA
-    assert_raises(ValueError, np.count_nonzero, a)
+    assert_(np.isna(np.count_nonzero(a)))
     assert_raises(ValueError, np.nonzero, a)
 
 def test_maskna_take_1D():

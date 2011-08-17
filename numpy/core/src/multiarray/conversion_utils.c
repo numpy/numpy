@@ -199,7 +199,7 @@ PyArray_AxisConverter(PyObject *obj, int *axis)
  * Converts an axis parameter into an ndim-length C-array of
  * boolean flags, True for each axis specified.
  *
- * If obj is None, everything is set to True. If obj is a tuple,
+ * If obj is None or NULL, everything is set to True. If obj is a tuple,
  * each axis within the tuple is set to True. If obj is an integer,
  * just that axis is set to True.
  */
