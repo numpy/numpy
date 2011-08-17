@@ -19,6 +19,7 @@
 #include "ctors.h"
 #include "lowlevel_strided_loops.h"
 #include "na_singleton.h"
+#include "reduction.h"
 
 #include "item_selection.h"
 
@@ -1891,6 +1892,90 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
     return count;
 }
 
+static int
+assign_reduce_unit_zero(PyArrayObject *result, int preservena, void *data)
+{
+    return PyArray_AssignZero(result, NULL, preservena, NULL);
+}
+
+static void
+reduce_count_nonzero_inner_loop(NpyIter *iter,
+                                            char **dataptr,
+                                            npy_intp *strideptr,
+                                            npy_intp *countptr,
+                                            NpyIter_IterNextFunc *iternext,
+                                            int needs_api,
+                                            void *data)
+{
+    PyArray_NonzeroFunc *nonzero = (PyArray_NonzeroFunc *)data;
+    PyArrayObject *arr = NpyIter_GetOperandArray(iter)[1];
+
+    NPY_BEGIN_THREADS_DEF;
+
+    if (!needs_api) {
+        NPY_BEGIN_THREADS;
+    }
+
+    do {
+        char *data0 = dataptr[0], *data1 = dataptr[1];
+        npy_intp stride0 = strideptr[0], stride1 = strideptr[1];
+        npy_intp count = *countptr;
+
+        while (count--) {
+            if (nonzero(data1, arr)) {
+                ++(*(npy_intp *)data0);
+            }
+            data0 += stride0;
+            data1 += stride1;
+        }
+    } while (iternext(iter));
+
+    if (!needs_api) {
+        NPY_END_THREADS;
+    }
+}
+
+static void
+reduce_count_nonzero_masked_inner_loop(NpyIter *iter,
+                                            char **dataptr,
+                                            npy_intp *strideptr,
+                                            npy_intp *countptr,
+                                            NpyIter_IterNextFunc *iternext,
+                                            int needs_api,
+                                            void *data)
+{
+    PyArray_NonzeroFunc *nonzero = (PyArray_NonzeroFunc *)data;
+    PyArrayObject *arr = NpyIter_GetOperandArray(iter)[1];
+
+    NPY_BEGIN_THREADS_DEF;
+
+    if (!needs_api) {
+        NPY_BEGIN_THREADS;
+    }
+
+    do {
+        char *data0 = dataptr[0], *data1 = dataptr[1], *data2 = dataptr[2];
+        npy_intp stride0 = strideptr[0], stride1 = strideptr[1],
+                    stride2 = strideptr[2];
+        npy_intp count = *countptr;
+
+        while (count--) {
+            if (NpyMaskValue_IsExposed((npy_mask)*data2) &&
+                                        nonzero(data1, arr)) {
+                ++(*(npy_intp *)data0);
+            }
+            data0 += stride0;
+            data1 += stride1;
+            data2 += stride2;
+        }
+    } while (iternext(iter));
+
+    if (!needs_api) {
+        NPY_END_THREADS;
+    }
+}
+
+
 /*
  * A full reduction version of PyArray_CountNonzero, supporting
  * an 'out' parameter and doing the count as a reduction along
@@ -1902,15 +1987,8 @@ PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
                         npy_bool *axis_flags, int skipna)
 {
     PyArray_NonzeroFunc *nonzero;
-    int use_maskna;
+    PyArrayObject *result;
     PyArray_Descr *dtype;
-    PyArrayObject *result = NULL;
-
-    /* Iterator parameters */
-    NpyIter *iter = NULL;
-    PyArrayObject *op[2];
-    PyArray_Descr *op_dtypes[2];
-    npy_uint32 flags, op_flags[2];
 
     nonzero = PyArray_DESCR(arr)->f->nonzero;
     if (nonzero == NULL) {
@@ -1920,217 +1998,25 @@ PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
         return NULL;
     }
 
-    use_maskna = PyArray_HASMASKNA(arr);
-
-    /*
-     * If 'arr' has an NA mask, but 'out' doesn't, validate that 'arr'
-     * contains no NA values so we can ignore the mask entirely.
-     */
-    if (use_maskna && !skipna && out != NULL && !PyArray_HASMASKNA(out)) {
-        if (PyArray_ContainsNA(arr)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Cannot assign NA value to an array which "
-                    "does not support NAs");
-            return NULL;
-        }
-        else {
-            use_maskna = 0;
-        }
-    }
-
-    /* This reference gets stolen by PyArray_CreateReduceResult */
     dtype = PyArray_DescrFromType(NPY_INTP);
     if (dtype == NULL) {
         return NULL;
     }
-    /* This either conforms 'out' to the ndim of 'arr', or allocates
-     * a new array appropriate for this reduction.
-     */
-    result = PyArray_CreateReduceResult(arr, out,
-                            dtype, axis_flags, !skipna && use_maskna,
-                            "count_nonzero");
-    if (result == NULL) {
-        return NULL;
-    }
 
-    /*
-     * Do the reduction on the NA mask before the data. This way
-     * we can avoid modifying the outputs which end up masked, obeying
-     * the required NA masking semantics.
-     */
-    if (use_maskna && !skipna) {
-        if (PyArray_ReduceMaskNAArray(result, arr) < 0) {
-            Py_DECREF(result);
-            return NULL;
-        }
-
-        /* Short circuit any calculation if the result is 0-dim NA */
-        if (PyArray_SIZE(result) == 1 &&
-                !NpyMaskValue_IsExposed(
-                            (npy_mask)*PyArray_MASKNA_DATA(result))) {
-            goto finish;
-        }
-    }
-
-    /*
-     * Initialize the result to all zeros, except for the NAs
-     * when skipna is False.
-     */
-    if (PyArray_AssignZero(result, NULL, !skipna, NULL) < 0) {
-        Py_DECREF(result);
-        return NULL;
-    }
-
-    /* Set up the iterator */
-    op[0] = result;
-    op[1] = arr;
-    op_dtypes[0] = PyArray_DescrFromType(NPY_INTP);
-    if (op_dtypes[0] == NULL) {
-        Py_DECREF(result);
-        return NULL;
-    }
-    op_dtypes[1] = NULL;
-
-    flags = NPY_ITER_BUFFERED |
-            NPY_ITER_EXTERNAL_LOOP |
-            NPY_ITER_DONT_NEGATE_STRIDES |
-            NPY_ITER_ZEROSIZE_OK |
-            NPY_ITER_REDUCE_OK |
-            NPY_ITER_REFS_OK;
-    op_flags[0] = NPY_ITER_READWRITE |
-                  NPY_ITER_ALIGNED |
-                  NPY_ITER_NO_SUBTYPE;
-    op_flags[1] = NPY_ITER_READONLY |
-                  NPY_ITER_ALIGNED;
-
-    /* Add mask-related flags */
-    if (use_maskna) {
-        if (skipna) {
-            /* The output's mask has been set to all exposed already */
-            op_flags[0] |= NPY_ITER_IGNORE_MASKNA;
-            /* Need the input's mask to determine what to skip */
-            op_flags[1] |= NPY_ITER_USE_MASKNA;
-        }
-        else {
-            /* Iterate over the output's mask */
-            op_flags[0] |= NPY_ITER_USE_MASKNA;
-            /* The input's mask is already incorporated in the output's mask */
-            op_flags[1] |= NPY_ITER_IGNORE_MASKNA;
-        }
+    result = PyArray_ReduceWrapper(arr, out,
+                            PyArray_DESCR(arr), dtype,
+                            axis_flags, skipna,
+                            &assign_reduce_unit_zero,
+                            &reduce_count_nonzero_inner_loop,
+                            &reduce_count_nonzero_masked_inner_loop,
+                            nonzero, "count_nonzero");
+    Py_DECREF(dtype);
+    if (out == NULL && result != NULL) {
+        return PyArray_Return(result);
     }
     else {
-        /*
-         * If 'out' had no mask, and 'arr' did, we checked that 'arr'
-         * contains no NA values and can ignore the masks.
-         */
-        op_flags[0] |= NPY_ITER_IGNORE_MASKNA;
-        op_flags[1] |= NPY_ITER_IGNORE_MASKNA;
+        return (PyObject *)result;
     }
-
-    iter = NpyIter_MultiNew(2, op, flags,
-                               NPY_KEEPORDER, NPY_UNSAFE_CASTING,
-                               op_flags,
-                               op_dtypes);
-    if (iter == NULL) {
-        Py_DECREF(result);
-        Py_DECREF(op_dtypes[0]);
-        return NULL;
-    }
-
-    if (NpyIter_GetIterSize(iter) != 0) {
-        int needs_api;
-        NpyIter_IterNextFunc *iternext;
-        char **dataptr;
-        npy_intp *strideptr;
-        npy_intp *countptr;
-        NPY_BEGIN_THREADS_DEF;
-
-        iternext = NpyIter_GetIterNext(iter, NULL);
-        if (iternext == NULL) {
-            Py_DECREF(result);
-            Py_DECREF(op_dtypes[0]);
-            NpyIter_Deallocate(iter);
-            return NULL;
-        }
-        dataptr = NpyIter_GetDataPtrArray(iter);
-        strideptr = NpyIter_GetInnerStrideArray(iter);
-        countptr = NpyIter_GetInnerLoopSizePtr(iter);
-
-        needs_api = NpyIter_IterationNeedsAPI(iter) ||
-                    PyDataType_REFCHK(PyArray_DESCR(arr));
-
-        if (!needs_api) {
-            NPY_BEGIN_THREADS;
-        }
-
-        /* Straightforward reduction */
-        if (!use_maskna) {
-            do {
-                char *data0 = dataptr[0];
-                char *data1 = dataptr[1];
-                npy_intp stride0 = strideptr[0];
-                npy_intp stride1 = strideptr[1];
-                npy_intp count = *countptr;
-
-                while (count--) {
-                    if (nonzero(data1, arr)) {
-                        ++(*(npy_intp *)data0);
-                    }
-                    data0 += stride0;
-                    data1 += stride1;
-                }
-            } while (iternext(iter));
-        }
-        /* Masked reduction */
-        else {
-            do {
-                char *data0 = dataptr[0];
-                char *data1 = dataptr[1];
-                char *data2 = dataptr[2];
-                npy_intp stride0 = strideptr[0];
-                npy_intp stride1 = strideptr[1];
-                npy_intp stride2 = strideptr[2];
-                npy_intp count = *countptr;
-
-                while (count--) {
-                    if (NpyMaskValue_IsExposed((npy_mask)*data2) &&
-                                                nonzero(data1, arr)) {
-                        ++(*(npy_intp *)data0);
-                    }
-                    data0 += stride0;
-                    data1 += stride1;
-                    data2 += stride2;
-                }
-            } while (iternext(iter));
-        }
-
-        if (!needs_api) {
-            NPY_END_THREADS;
-        }
-
-        if (needs_api && PyErr_Occurred()) {
-            Py_DECREF(result);
-            Py_DECREF(op_dtypes[0]);
-            NpyIter_Deallocate(iter);
-            return NULL;
-        }
-    }
-
-    Py_DECREF(op_dtypes[0]);
-    NpyIter_Deallocate(iter);
-
-finish:
-    /* Strip out the extra 'one' dimensions in the result */
-    if (out == NULL) {
-        PyArray_RemoveAxesInPlace(result, axis_flags);
-    }
-    else {
-        Py_DECREF(result);
-        result = out;
-        Py_INCREF(result);
-    }
-
-    return PyArray_Return(result);
 }
 
 /*NUMPY_API
