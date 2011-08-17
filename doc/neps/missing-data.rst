@@ -237,21 +237,15 @@ mask [Exposed, Exposed, Hidden, Exposed], and
 values [1.0, 2.0, <NA bitpattern>, 7.0] for the masked and
 NA dtype versions respectively.
 
-It may be worth overloading the np.NA __call__ method to accept a dtype,
-returning a zero-dimensional array with a missing value of that dtype.
-Without doing this, NA printouts would look like::
+The np.NA singleton may accept a dtype= keyword parameter, indicating
+that it should be treated as an NA of a particular data type. This is also
+a mechanism for preserving the dtype in a NumPy scalar-like fashion.
+Here's what this could look like::
 
     >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], maskna=True))
-    array(NA, dtype='float64', maskna=True)
+    NA(dtype='<f8')
     >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]'))
-    array(NA, dtype='NA[<f8]')
-
-but with this, they could be printed as::
-
-    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], maskna=True))
-    NA('float64')
-    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]'))
-    NA('NA[<f8]')
+    NA(dtype='NA[<f8]')
 
 Assigning a value to an array always causes that element to not be NA,
 transparently unmasking it if necessary. Assigning numpy.NA to the array
@@ -259,32 +253,25 @@ masks that element or assigns the NA bitpattern for the particular dtype.
 In the mask-based implementation, the storage behind a missing value may never
 be accessed in any way, other than to unmask it by assigning its value.
 
-While numpy.NA works to mask values, it does not itself have a dtype.
-This means that returning the numpy.NA singleton from an operation
-like 'arr[0]' would be throwing away the dtype, which is still
-valuable to retain, so 'arr[0]' will return a zero-dimensional
-array either with its value masked, or containing the NA bitpattern
-for the array's dtype. To test if the value is missing, the function
-"np.isna(arr[0])" will be provided. One of the key reasons for the
-NumPy scalars is to allow their values into dictionaries. Having a
-missing value as the key in a dictionary is a bad idea, so the NumPy
-scalars will not support missing values in any form.
+To test if a value is missing, the function "np.isna(arr[0])" will
+be provided. One of the key reasons for the NumPy scalars is to allow
+their values into dictionaries.
 
 All operations which write to masked arrays will not affect the value
 unless they also unmask that value. This allows the storage behind
 masked elements to still be relied on if they are still accessible
-from another view which doesn't have them masked. For example::
+from another view which doesn't have them masked. For example, the
+following was run on the missingdata work-in-progress branch::
 
     >>> a = np.array([1,2])
-    >>> b = a.view()
-    >>> b.flags.hasmaskna = True
+    >>> b = a.view(maskna=True)
     >>> b
-    array([1,2], maskna=True)
+    array([1, 2], maskna=True)
     >>> b[0] = np.NA
     >>> b
-    array([NA,2], maskna=True)
+    array([NA, 2], maskna=True)
     >>> a
-    array([1,2])
+    array([1, 2])
     >>> # The underlying number 1 value in 'a[0]' was untouched
 
 Copying values between the mask-based implementation and the
@@ -322,8 +309,16 @@ these semantics without the extra manipulation.
 
 A manual loop through a masked array like::
 
-    for i in xrange(len(a)):
-        a[i] = np.log(a[i])
+    >>> a = np.arange(5., maskna=True)
+    >>> a[3] = np.NA
+    >>> a
+    array([ 0.,  1.,  2., NA,  4.], maskna=True)
+    >>> for i in xrange(len(a)):
+    ...     a[i] = np.log(a[i])
+    ... 
+    __main__:2: RuntimeWarning: divide by zero encountered in log
+    >>> a
+    array([       -inf,  0.        ,  0.69314718, NA,  1.38629436], maskna=True)
 
 works even with masked values, because 'a[i]' returns a zero-dimensional
 array with a missing value instead of the singleton np.NA for the missing

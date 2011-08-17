@@ -556,8 +556,8 @@ class FloatFormat(object):
                 max_val = 0.
                 min_val = 0.
             else:
-                max_val = maximum.reduce(non_zero)
-                min_val = minimum.reduce(non_zero)
+                max_val = maximum.reduce(non_zero, skipna=True)
+                min_val = minimum.reduce(non_zero, skipna=True)
                 if max_val >= 1.e8:
                     self.exp_format = True
                 if not self.suppress_small and (min_val < 0.0001

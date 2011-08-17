@@ -632,6 +632,12 @@ def test_maskna_take_1D():
     assert_equal([c[0], c[2]], [0,4])
     assert_equal(np.isna(c), [0,1,0])
 
+    # Take with an NA just at the start
+    a = np.arange(5, maskna=True)
+    a[0] = np.NA
+    res = a.take([1,2,3,4])
+    assert_equal(res, [1,2,3,4])
+
 def test_maskna_ufunc_1D():
     a_orig = np.arange(3)
     a = a_orig.view(maskna=True)
@@ -950,6 +956,15 @@ def test_array_maskna_column_stack():
     res = np.column_stack((a,b))
     assert_equal(np.isna(res), [[0,0], [0,0], [0,1]])
     assert_equal(res[~np.isna(res)], [1,2,2,3,3])
+
+def test_array_maskna_compress():
+    # ndarray.compress
+    a = np.arange(5., maskna=True)
+    a[0] = np.NA
+
+    mask = np.array([0,1,1,1,1], dtype='?')
+    res = a.compress(mask)
+    assert_equal(res, [1,2,3,4])
 
 
 if __name__ == "__main__":
