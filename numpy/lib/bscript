@@ -10,8 +10,5 @@ def pbuild(context):
     def builder_compiled_base(extension):
         includes = ["../core/include", "../core/include/numpy", "../core",
                     "../core/src/private"]
-        bld(features="c cshlib pyext bento",
-            target=extension.name,
-            includes=includes,
-            source=extension.sources)
+        return context.default_builder(extension, includes=includes)
     context.register_builder("_compiled_base", builder_compiled_base)

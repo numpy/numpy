@@ -18,8 +18,7 @@ def pbuild(context):
 
         includes = ["../core/include", "../core/include/numpy", "../core",
                     "../core/src/private"]
-        bld(features="c cshlib pyext bento",
-            target=extension.name,
-            source=extension.sources,
-            includes=includes, **kw)
+        return context.default_builder(extension,
+                                       includes=includes,
+                                       **kw)
     context.register_builder("lapack_lite", build_lapack_lite)
