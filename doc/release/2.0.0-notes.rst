@@ -11,7 +11,6 @@ Highlights
 New features
 ============
 
-
 Mask-based NA missing values
 ----------------------------
 
@@ -31,7 +30,8 @@ What works with NA:
        + ndarray.clip, ndarray.min, ndarray.max, ndarray.sum, ndarray.prod,
          ndarray.conjugate, ndarray.diagonal, ndarray.flatten
        + numpy.concatenate, numpy.column_stack, numpy.hstack,
-         numpy.vstack, numpy.dstack, numpy.squeeze
+         numpy.vstack, numpy.dstack, numpy.squeeze, numpy.mean, numpy.std,
+         numpy.var
 
 What doesn't work with NA:
     * Fancy indexing, such as with lists and partial boolean masks.
@@ -63,6 +63,22 @@ Differences with R:
       This may have a practical advantage in spite of violating the
       NA theoretical model, so NumPy could adopt the behavior if necessary
 
+Reduction UFuncs Generalize axis= Parmaeter
+-------------------------------------------
+
+Any ufunc.reduce function call, as well as other reductions like
+sum, prod, any, all, max and min support the ability to choose
+a subset of the axes to reduce over. Previously, one could say
+axis=None to mean all the axes or axis=# to pick a single axis.
+Now, one can also say axis=(#,#) to pick a list of axes for reduction.
+
+Reduction UFuncs New keepdims= Parameter
+----------------------------------------
+
+There is a new keepdims= parameter, which if set to True, doesn't
+throw away the reduction axes but instead sets them to have size one.
+when this option is set, the reduction result will broadcast correctly
+to the original operand which was reduced.
 
 
 Custom formatter for printing arrays
