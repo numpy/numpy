@@ -905,7 +905,12 @@ def squeeze(a, axis=None):
         squeeze = a.squeeze
     except AttributeError:
         return _wrapit(a, 'squeeze')
-    return squeeze(axis=axis)
+    try:
+        # First try to use the new axis= parameter
+        return squeeze(axis=axis)
+    except TypeError:
+        # For backwards compatibility
+        return squeeze()
 
 
 def diagonal(a, offset=0, axis1=0, axis2=1):

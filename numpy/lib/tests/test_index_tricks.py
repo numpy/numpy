@@ -147,6 +147,10 @@ class TestIndexExpression(TestCase):
         assert_equal(a[:,:3,[1,2]], a[index_exp[:,:3,[1,2]]])
         assert_equal(a[:,:3,[1,2]], a[s_[:,:3,[1,2]]])
 
+def test_c_():
+    a = np.c_[np.array([[1,2,3]]), 0, 0, np.array([[4,5,6]])]
+    assert_equal(a, [[1, 2, 3, 0, 0, 4, 5, 6]])
+
 def test_fill_diagonal():
     a = zeros((3, 3),int)
     fill_diagonal(a, 5)
