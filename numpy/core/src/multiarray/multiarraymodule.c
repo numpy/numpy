@@ -2166,19 +2166,21 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 static PyObject *
 array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"arr", "axis", "out", "skipna", NULL};
+    static char *kwlist[] = {"arr", "axis", "out", "skipna", "keepdims", NULL};
 
     PyObject *array_in, *axis_in = NULL, *out_in = NULL;
     PyObject *ret = NULL;
     PyArrayObject *array, *out = NULL;
     npy_bool axis_flags[NPY_MAXDIMS];
-    int skipna = 0;
+    int skipna = 0, keepdims = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OOi:count_nonzero", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds,
+                                "O|OOii:count_nonzero", kwlist,
                                 &array_in,
                                 &axis_in,
                                 &out_in,
-                                &skipna)) {
+                                &skipna,
+                                &keepdims)) {
         return NULL;
     }
 
@@ -2204,7 +2206,7 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         }
     }
 
-    ret = PyArray_ReduceCountNonzero(array, out, axis_flags, skipna);
+    ret = PyArray_ReduceCountNonzero(array, out, axis_flags, skipna, keepdims);
 
     Py_DECREF(array);
 
@@ -2214,19 +2216,20 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 static PyObject *
 array_count_reduce_items(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"arr", "axis", "skipna", NULL};
+    static char *kwlist[] = {"arr", "axis", "skipna", "keepdims", NULL};
 
     PyObject *array_in, *axis_in = NULL;
     PyObject *ret = NULL;
     PyArrayObject *array;
     npy_bool axis_flags[NPY_MAXDIMS];
-    int skipna = 0;
+    int skipna = 0, keepdims = 0;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                                "O|Oi:count_reduce_items", kwlist,
+                                "O|Oii:count_reduce_items", kwlist,
                                 &array_in,
                                 &axis_in,
-                                &skipna)) {
+                                &skipna,
+                                &keepdims)) {
         return NULL;
     }
 
@@ -2242,7 +2245,7 @@ array_count_reduce_items(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *k
         return NULL;
     }
 
-    ret = PyArray_CountReduceItems(array, axis_flags, skipna);
+    ret = PyArray_CountReduceItems(array, axis_flags, skipna, keepdims);
 
     Py_DECREF(array);
 

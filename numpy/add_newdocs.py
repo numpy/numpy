@@ -896,10 +896,21 @@ add_newdoc('numpy.core.multiarray', 'count_nonzero',
     ----------
     a : array_like
         The array for which to count non-zeros.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which a reduction is performed.
+        The default (`axis` = None) is perform a reduction over all
+        the dimensions of the input array.
+    skipna : bool, optional
+        If this is set to True, any NA elements in the array are skipped
+        instead of propagating.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
-    count : int
+    count : int or array of int
         Number of non-zero values in the array.
 
     See Also
@@ -910,14 +921,18 @@ add_newdoc('numpy.core.multiarray', 'count_nonzero',
     --------
     >>> np.count_nonzero(np.eye(4))
     4
-
     >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]])
     5
+    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]], axis=1)
+    array([2, 3])
+    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]], axis=1, keepdims=True)
+    array([[2],
+           [3]])
     """)
 
 add_newdoc('numpy.core.multiarray', 'count_reduce_items',
     """
-    count_reduce_items(arr, axis=None, skipna=False)
+    count_reduce_items(arr, axis=None, skipna=False, keepdims=False)
 
     Counts the number of items a reduction with the same `axis`
     and `skipna` parameter values would use. The purpose of this
@@ -941,6 +956,10 @@ add_newdoc('numpy.core.multiarray', 'count_reduce_items',
         counted. The only time this function does any actual counting
         instead of a cheap multiply of a few sizes is when `skipna` is
         true and `arr` has an NA mask.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -5330,7 +5349,7 @@ add_newdoc('numpy.core', 'ufunc', ('types',
 
 add_newdoc('numpy.core', 'ufunc', ('reduce',
     """
-    reduce(a, axis=0, dtype=None, out=None, skipna=False)
+    reduce(a, axis=0, dtype=None, out=None, skipna=False, keepdims=False)
 
     Reduces `a`'s dimension by one, by applying ufunc along one axis.
 
@@ -5380,6 +5399,10 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
         were not counted in the array. The default, False, causes the
         NA values to propagate, so if any element in a set of elements
         being reduced is NA, the result will be NA.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
