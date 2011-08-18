@@ -339,11 +339,11 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
 
     /* Handle standard Python negative indexing */
     if (axis < 0) {
-        axis += narrays;
+        axis += ndim;
     }
     if (axis < 0 || axis >= ndim) {
-        PyErr_SetString(PyExc_IndexError,
-                        "axis out of bounds");
+        PyErr_Format(PyExc_IndexError,
+                        "axis %d out of bounds [0, %d)", axis, ndim);
         return NULL;
     }
 
@@ -530,7 +530,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
     }
 
     strides[1] = dtype->elsize;
-    strides[2] = strides[1] * shape[1];
+    strides[0] = strides[1] * shape[1];
 
     /* Allocate the array for the result. This steals the 'dtype' reference. */
     ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
