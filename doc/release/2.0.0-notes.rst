@@ -18,8 +18,8 @@ Support for NA missing values similar to those in R has been implemented.
 This was done by adding optional NA masks to the core array object.
 
 While a significant amount of the NumPy functionality has been extended to
-support NA masks, not everything is yet supported. Here is a list of things
-that do and do not work with NA values:
+support NA masks, not everything is yet supported. Here is an (incomplete)
+list of things that do and do not work with NA values:
 
 What works with NA:
     * Basic indexing and slicing, as well as full boolean mask indexing.
