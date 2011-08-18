@@ -12,7 +12,4 @@ _strings_richcompare(PyArrayObject *self, PyArrayObject *other, int cmp_op,
 NPY_NO_EXPORT PyObject *
 array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op);
 
-NPY_NO_EXPORT void
-PyArray_DebugPrint(PyArrayObject *obj);
-
 #endif

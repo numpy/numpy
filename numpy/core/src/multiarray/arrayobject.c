@@ -454,6 +454,10 @@ dump_data(char **string, int *n, int *max_n, char *data, int nd,
 #undef CHECK_MEMORY
 }
 
+/*NUMPY_API
+ * Prints the raw data of the ndarray in a form useful for debugging
+ * low-level C issues.
+ */
 NPY_NO_EXPORT void
 PyArray_DebugPrint(PyArrayObject *obj)
 {

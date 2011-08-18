@@ -3092,7 +3092,7 @@ npyiter_allocate_arrays(NpyIter *iter,
         }
 
         /*
-         * If no alignment, byte swap, or casting is needed, and
+         * If no alignment, byte swap, or casting is needed,
          * the inner stride of this operand works for the whole
          * array, we can set NPY_OP_ITFLAG_BUFNEVER.
          */
@@ -3301,12 +3301,19 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
     /* Initialize the strides of any BUFNEVER mask operands */
     if (itflags & NPY_ITFLAG_BUFFER) {
         npy_intp *strides = NBF_STRIDES(bufferdata);
-        axisdata = NIT_AXISDATA(iter);
 
         for (iop = first_maskna_op; iop < nop; ++iop) {
             if (op_itflags[iop] & NPY_OP_ITFLAG_BUFNEVER) {
                 if (PyArray_HASMASKNA(op[iop])) {
-                    strides[iop] = NAD_STRIDES(axisdata)[iop];
+                    axisdata = NIT_AXISDATA(iter);
+                    /* Find stride of the first non-empty shape */
+                    for (idim = 0; idim < ndim; ++idim) {
+                        if (NAD_SHAPE(axisdata) != 1) {
+                            strides[iop] = NAD_STRIDES(axisdata)[iop];
+                            break;
+                        }
+                        NIT_ADVANCE_AXISDATA(axisdata, 1);
+                    }
                 }
                 else {
                     strides[iop] = 0;
