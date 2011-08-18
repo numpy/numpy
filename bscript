@@ -86,16 +86,8 @@ def pre_configure(context):
         # FIXME: fix upstream waf tool to work on mac os X
         conf.env.CC = ["/usr/bin/gcc-4.0"]
         conf.env.LINK_CC = ["/usr/bin/gcc-4.0"]
-        ## FIXME: fix upstream waf tool to avoid linking against libpython2.6.so
-        ## (cause crashes when importing the extension)
-        #name = "python%s" % ".".join([str(i) for i in sys.version_info[:2]])
-        #remove_flag(name, conf.env.LIB_PYEXT)
-        #remove_flag("-dynamiclib", conf.env.LINKFLAGS_cshlib)
-        #remove_flag_postvalue("-compatibility_version", conf.env.CFLAGS_cshlib)
-        #remove_flag_postvalue("-current_version", conf.env.CFLAGS_cshlib)
         remove_flag_prevalue("ppc", conf.env.CFLAGS_PYEXT)
         remove_flag_prevalue("ppc", conf.env.LINKFLAGS_PYEXT)
-        #conf.env.LINKFLAGS_cshlib.extend(["-undefined", "dynamic_lookup", "-bundle"])
         conf.env["MACOSX_DEPLOYMENT_TARGET"] = "10.4"
 
     conf.env.CFLAGS_PYEXT.append("-Wfatal-errors")
