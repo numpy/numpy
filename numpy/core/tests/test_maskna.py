@@ -1132,6 +1132,24 @@ def test_array_maskna_var_std():
     res = np.std(a, axis=1)
     assert_array_almost_equal(res, [np.NA, 0.81649658092772603])
 
+    # With an NA and skipna=True
+    a = np.arange(6, maskna=True).reshape(2,3)
+    a[0,1] = np.NA
+
+    res = np.var(a, skipna=True)
+    assert_almost_equal(res, 2.96)
+    res = np.std(a, skipna=True)
+    assert_almost_equal(res, 1.7204650534085253)
+
+    res = np.var(a, axis=0, skipna=True)
+    assert_array_equal(res, [2.25, 0, 2.25])
+    res = np.std(a, axis=0, skipna=True)
+    assert_array_equal(res, [1.5, 0, 1.5])
+
+    res = np.var(a, axis=1, skipna=True)
+    assert_array_almost_equal(res, [1.0, 0.66666666666666663])
+    res = np.std(a, axis=1, skipna=True)
+    assert_array_almost_equal(res, [1.0, 0.81649658092772603])
 
 if __name__ == "__main__":
     run_module_suite()
