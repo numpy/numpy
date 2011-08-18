@@ -258,6 +258,13 @@ class TestSqueeze(TestCase):
         assert_array_equal(squeeze(b),reshape(b,(20,10,20)))
         assert_array_equal(squeeze(c),reshape(c,(20,10)))
 
+        # Squeezing to 0-dim should still give an ndarray
+        a = [[[1.5]]]
+        res = squeeze(a)
+        assert_equal(res, 1.5)
+        assert_equal(res.ndim, 0)
+        assert_equal(type(res), ndarray)
+
 
 class TestKron(TestCase):
     def test_return_type(self):
