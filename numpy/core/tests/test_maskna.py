@@ -792,6 +792,80 @@ def check_ufunc_max_1D(max_func):
     a[...] = np.NA
     assert_raises(ValueError, max_func, a, skipna=True)
 
+def test_count_reduce_items():
+    # np.count_reduce_items
+
+    # When skipna is False, it should always return the
+    # product of the reduction axes as a NumPy intp scalar
+    a = np.zeros((2,3,4))
+
+    res = np.count_reduce_items(a)
+    assert_equal(res, 24)
+    assert_equal(type(res), np.intp)
+
+    res = np.count_reduce_items(a, axis=0)
+    assert_equal(res, 2)
+    assert_equal(type(res), np.intp)
+
+    res = np.count_reduce_items(a, axis=(1,2))
+    assert_equal(res, 12)
+    assert_equal(type(res), np.intp)
+
+    # This still holds if 'a' has an NA mask and some NA values
+    a = np.zeros((2,3,4), maskna=True)
+    a[1,2,2] = np.NA
+    a[0,1,2] = np.NA
+    a[1,0,3] = np.NA
+
+    res = np.count_reduce_items(a)
+    assert_equal(res, 24)
+    assert_equal(type(res), np.intp)
+
+    res = np.count_reduce_items(a, axis=0)
+    assert_equal(res, 2)
+    assert_equal(type(res), np.intp)
+
+    res = np.count_reduce_items(a, axis=(1,2))
+    assert_equal(res, 12)
+    assert_equal(type(res), np.intp)
+
+    # If skipna is True, but the array has no NA mask, the result
+    # should still be the product of the reduction axes
+    a = np.zeros((2,3,4))
+
+    res = np.count_reduce_items(a, skipna=True)
+    assert_equal(res, 24)
+    assert_equal(type(res), np.intp)
+
+    res = np.count_reduce_items(a, axis=0, skipna=True)
+    assert_equal(res, 2)
+    assert_equal(type(res), np.intp)
+
+    res = np.count_reduce_items(a, axis=(1,2), skipna=True)
+    assert_equal(res, 12)
+    assert_equal(type(res), np.intp)
+
+    # Finally, when skipna is True AND the array has an NA mask,
+    # we get an array of counts
+    a = np.zeros((2,3,4), maskna=True)
+    a[1,2,2] = np.NA
+    a[0,1,2] = np.NA
+    a[1,0,3] = np.NA
+
+    # When doing a full reduction, should still get the scalar
+    res = np.count_reduce_items(a, skipna=True)
+    assert_equal(res, 21)
+    assert_equal(res.dtype, np.dtype(np.intp))
+
+    res = np.count_reduce_items(a, axis=0, skipna=True)
+    assert_equal(res, [[2,2,2,1], [2,2,1,2], [2,2,1,2]])
+    assert_equal(res.dtype, np.dtype(np.intp))
+
+    res = np.count_reduce_items(a, axis=(1,2), skipna=True)
+    assert_equal(res, [11,10])
+    assert_equal(res.dtype, np.dtype(np.intp))
+
+
 def test_array_maskna_clip_method():
     # ndarray.clip
     a = np.array([2, np.NA, 10, 4, np.NA, 7], maskna=True)

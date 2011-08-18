@@ -1,7 +1,7 @@
 __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
-           'arange', 'array', 'zeros', 'count_nonzero', 'empty', 'broadcast',
-           'dtype', 'fromstring', 'fromfile', 'frombuffer',
-           'int_asbuffer', 'where', 'argwhere', 'copyto',
+           'arange', 'array', 'zeros', 'count_nonzero', 'count_reduce_items',
+           'empty', 'broadcast', 'dtype', 'fromstring', 'fromfile',
+           'frombuffer', 'int_asbuffer', 'where', 'argwhere', 'copyto',
            'concatenate', 'fastCopyAndTranspose', 'lexsort', 'set_numeric_ops',
            'can_cast', 'promote_types', 'min_scalar_type', 'result_type',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
@@ -144,6 +144,7 @@ arange = multiarray.arange
 array = multiarray.array
 zeros = multiarray.zeros
 count_nonzero = multiarray.count_nonzero
+count_reduce_items = multiarray.count_reduce_items
 empty = multiarray.empty
 empty_like = multiarray.empty_like
 fromstring = multiarray.fromstring

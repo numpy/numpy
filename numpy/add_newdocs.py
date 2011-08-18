@@ -915,6 +915,56 @@ add_newdoc('numpy.core.multiarray', 'count_nonzero',
     5
     """)
 
+add_newdoc('numpy.core.multiarray', 'count_reduce_items',
+    """
+    count_reduce_items(arr, axis=None, skipna=False)
+
+    Counts the number of items a reduction with the same `axis`
+    and `skipna` parameter values would use. The purpose of this
+    function is for the creation of reduction operations
+    which use the item count, such as :func:`mean`.
+
+    When `skipna` is False or `arr` doesn't have an NA mask,
+    the result is simply the product of the reduction axis
+    sizes, returned as a single scalar.
+
+    Parameters
+    ----------
+    arr : array_like
+        The array for which to count the reduce items.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which a reduction is performed.
+        The default (`axis` = None) is perform a reduction over all
+        the dimensions of the input array.
+    skipna : bool, optional
+        If this is set to True, any NA elements in the array are not
+        counted. The only time this function does any actual counting
+        instead of a cheap multiply of a few sizes is when `skipna` is
+        true and `arr` has an NA mask.
+
+    Returns
+    -------
+    count : intp or array of intp
+        Number of items that would be used in a reduction with the
+        same `axis` and `skipna` parameter values.
+
+    Examples
+    --------
+    >>> a = np.array([[1,np.NA,1], [1,1,np.NA]])
+
+    >>> np.count_reduce_items(a)
+    6
+    >>> np.count_reduce_items(a, skipna=True)
+    4
+    >>> np.sum(a, skipna=True)
+    4
+
+    >>> np.count_reduce_items(a, axis=0, skipna=True)
+    array([2, 1, 1])
+    >>> np.sum(a, axis=0, skipna=True)
+    array([2, 1, 1])
+    """)
+
 add_newdoc('numpy.core.multiarray','set_typeDict',
     """set_typeDict(dict)
 
@@ -5280,7 +5330,7 @@ add_newdoc('numpy.core', 'ufunc', ('types',
 
 add_newdoc('numpy.core', 'ufunc', ('reduce',
     """
-    reduce(a, axis=0, dtype=None, out=None)
+    reduce(a, axis=0, dtype=None, out=None, skipna=False)
 
     Reduces `a`'s dimension by one, by applying ufunc along one axis.
 
@@ -5325,6 +5375,11 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
     out : ndarray, optional
         A location into which the result is stored. If not provided, a
         freshly-allocated array is returned.
+    skipna : bool, optional
+        If this is set to True, the reduction is done as if any NA elements
+        were not counted in the array. The default, False, causes the
+        NA values to propagate, so if any element in a set of elements
+        being reduced is NA, the result will be NA.
 
     Returns
     -------
