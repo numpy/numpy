@@ -708,6 +708,59 @@ PyArray_Squeeze(PyArrayObject *self)
     return (PyObject *)ret;
 }
 
+/*
+ * Just like PyArray_Squeeze, but allows the caller to select
+ * a subset of the size-one dimensions to squeeze out.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags)
+{
+    PyArrayObject *ret;
+    npy_bool unit_dims[NPY_MAXDIMS];
+    int idim, ndim, any_ones;
+    npy_intp *shape;
+
+    ndim = PyArray_NDIM(self);
+    shape = PyArray_SHAPE(self);
+
+    /* Verify that the axes requested are all of size one */
+    any_ones = 0;
+    for (idim = 0; idim < ndim; ++idim) {
+        if (axis_flags[idim] != 0 && shape[idim] == 1) {
+            unit_dims[idim] = 1;
+            any_ones = 1;
+        }
+        else {
+            unit_dims[idim] = 0;
+        }
+    }
+
+    /* If there were no axes to squeeze out, return the same array */
+    if (!any_ones) {
+        Py_INCREF(self);
+        return (PyObject *)self;
+    }
+
+    ret = (PyArrayObject *)PyArray_View(self, NULL, &PyArray_Type);
+    if (ret == NULL) {
+        return NULL;
+    }
+
+    PyArray_RemoveAxesInPlace(ret, unit_dims);
+
+    /*
+     * If self isn't not a base class ndarray, call its
+     * __array_wrap__ method
+     */
+    if (Py_TYPE(self) != &PyArray_Type) {
+        PyArrayObject *tmp = PyArray_SubclassWrap(self, ret);
+        Py_DECREF(ret);
+        ret = tmp;
+    }
+
+    return (PyObject *)ret;
+}
+
 /*NUMPY_API
  * SwapAxes
  */
@@ -1195,6 +1248,10 @@ build_shape_string(npy_intp n, npy_intp *vals)
  * modifying it in place. If an axis flagged for removal
  * has a shape entry bigger than one, this effectively selects
  * index zero for that axis.
+ *
+ * WARNING: If an axis flagged for removal has a shape equal to zero,
+ *          the array will point to invalid memory. The caller must
+ *          validate this!
  *
  * For example, this can be used to remove the reduction axes
  * from a reduction result once its computation is complete.
