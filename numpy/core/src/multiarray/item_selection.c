@@ -2009,7 +2009,7 @@ PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
                             &assign_reduce_unit_zero,
                             &reduce_count_nonzero_inner_loop,
                             &reduce_count_nonzero_masked_inner_loop,
-                            nonzero, "count_nonzero");
+                            nonzero, 0, "count_nonzero");
     Py_DECREF(dtype);
     if (out == NULL && result != NULL) {
         return PyArray_Return(result);

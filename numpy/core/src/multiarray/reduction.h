@@ -100,8 +100,7 @@ typedef void (PyArray_ReduceInnerLoopFunc)(NpyIter *iter,
  * inner_loop  : The inner loop which does the reduction.
  * masked_inner_loop: The inner loop which does the reduction with a mask.
  * data        : Data which is passed to assign_unit and the inner loop.
- * needs_api   : Should be 1 if the inner loop might call a Python API
- *               function like PyErr_SetString.
+ * buffersize  : Buffer size for the iterator. For the default, pass in 0.
  * funcname    : The name of the reduction function, for error messages.
  */
 NPY_NO_EXPORT PyArrayObject *
@@ -112,6 +111,23 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                         PyArray_AssignReduceUnitFunc *assign_unit,
                         PyArray_ReduceInnerLoopFunc *inner_loop,
                         PyArray_ReduceInnerLoopFunc *masked_inner_loop,
-                        void *data, const char *funcname);
+                        void *data, npy_intp buffersize, const char *funcname);
+
+/*
+ * This function counts the number of elements that a reduction
+ * will see along the reduction directions, given the provided options.
+ *
+ * If the reduction operand has no NA mask or 'skipna' is false, this
+ * is simply the prod`uct of all the reduction axis sizes. A NumPy
+ * scalar is returned in this case.
+ *
+ * If the reduction operand has an NA mask and 'skipna' is true, this
+ * counts the number of elements which are not NA along the reduction
+ * dimensions, and returns an array with the counts.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_CountReduceItems(PyArrayObject *operand,
+                            npy_bool *axis_flags, int skipna);
+
 
 #endif

@@ -17,6 +17,7 @@
 #include "npy_config.h"
 #include "numpy/npy_3kcompat.h"
 
+#include "lowlevel_strided_loops.h"
 #include "reduction.h"
 
 /*
@@ -418,6 +419,7 @@ PyArray_InitializeReduceResult(
  * inner_loop  : The inner loop which does the reduction.
  * masked_inner_loop: The inner loop which does the reduction with a mask.
  * data        : Data which is passed to assign_unit and the inner loop.
+ * buffersize  : Buffer size for the iterator. For the default, pass in 0.
  * funcname    : The name of the reduction function, for error messages.
  */
 NPY_NO_EXPORT PyArrayObject *
@@ -428,7 +430,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                         PyArray_AssignReduceUnitFunc *assign_unit,
                         PyArray_ReduceInnerLoopFunc *inner_loop,
                         PyArray_ReduceInnerLoopFunc *masked_inner_loop,
-                        void *data, const char *funcname)
+                        void *data, npy_intp buffersize, const char *funcname)
 {
     int use_maskna;
     PyArrayObject *result = NULL, *op_view = NULL;
@@ -549,10 +551,11 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         op_flags[1] |= NPY_ITER_IGNORE_MASKNA;
     }
 
-    iter = NpyIter_MultiNew(2, op, flags,
+    iter = NpyIter_AdvancedNew(2, op, flags,
                                NPY_KEEPORDER, NPY_SAME_KIND_CASTING,
                                op_flags,
-                               op_dtypes);
+                               op_dtypes,
+                               0, NULL, NULL, buffersize);
     if (iter == NULL) {
         Py_DECREF(result);
         Py_DECREF(op_dtypes[0]);
@@ -632,4 +635,139 @@ fail:
     }
 
     return NULL;
+}
+
+/*
+ * This function counts the number of elements that a reduction
+ * will see along the reduction directions, given the provided options.
+ *
+ * If the reduction operand has no NA mask or 'skipna' is false, this
+ * is simply the prod`uct of all the reduction axis sizes. A NumPy
+ * scalar is returned in this case.
+ *
+ * If the reduction operand has an NA mask and 'skipna' is true, this
+ * counts the number of elements which are not NA along the reduction
+ * dimensions, and returns an array with the counts.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_CountReduceItems(PyArrayObject *operand,
+                            npy_bool *axis_flags, int skipna)
+{
+    int idim, ndim = PyArray_NDIM(operand);
+
+    /* The product of the reduction dimensions in this case */
+    if (!skipna || !PyArray_HASMASKNA(operand)) {
+        npy_intp count = 1, *shape = PyArray_SHAPE(operand);
+        PyArray_Descr *dtype;
+        PyObject *ret;
+
+        for (idim = 0; idim < ndim; ++idim) {
+            if (axis_flags[idim]) {
+                count *= shape[idim];
+            }
+        }
+
+        dtype = PyArray_DescrFromType(NPY_INTP);
+        if (dtype == NULL) {
+            return NULL;
+        }
+        ret = PyArray_Scalar(&count, dtype, NULL);
+        Py_DECREF(dtype);
+        return ret;
+    }
+    /* Otherwise we need to do a count based on the NA mask */
+    else {
+        npy_intp *strides;
+        PyArrayObject *result;
+        PyArray_Descr *result_dtype;
+
+        npy_intp i, coord[NPY_MAXDIMS];
+        npy_intp shape_it[NPY_MAXDIMS];
+        npy_intp operand_strides_it[NPY_MAXDIMS];
+        npy_intp result_strides_it[NPY_MAXDIMS];
+        char *operand_data = NULL, *result_data = NULL;
+
+        /*
+         * To support field-NA, we would create a result type
+         * with an INTP matching each field, then separately count
+         * the available elements per-field.
+         */
+        if (PyArray_HASFIELDS(operand)) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "field-NA isn't implemented yet");
+            return NULL;
+        }
+
+        /*
+         * TODO: The loop below is specialized for NPY_BOOL masks,
+         *       will need another version for NPY_MASK masks.
+         */
+        if (PyArray_MASKNA_DTYPE(operand)->type_num != NPY_BOOL) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "multi-NA isn't implemented yet");
+            return NULL;
+        }
+
+        /* Allocate an array for the reduction counting */
+        result_dtype = PyArray_DescrFromType(NPY_INTP);
+        if (result_dtype == NULL) {
+            return NULL;
+        }
+        result = PyArray_CreateReduceResult(operand, NULL,
+                                result_dtype, axis_flags, 0,
+                                "count_reduce_items");
+        if (result == NULL) {
+            return NULL;
+        }
+
+        /* Initialize result to all zeros */
+        if (PyArray_AssignZero(result, NULL, 0, NULL) < 0) {
+            Py_DECREF(result);
+            return NULL;
+        }
+
+        /*
+         * Set all the reduction strides to 0 in result so
+         * we can use them for raw iteration
+         */
+        strides = PyArray_STRIDES(result);
+        for (idim = 0; idim < ndim; ++idim) {
+            if (axis_flags[idim]) {
+                strides[idim] = 0;
+            }
+        }
+
+        /*
+         * Sort axes based on 'operand', which has more non-zero strides,
+         * by making it the first operand here
+         */
+        if (PyArray_PrepareTwoRawArrayIter(ndim, PyArray_SHAPE(operand),
+                PyArray_MASKNA_DATA(operand), PyArray_MASKNA_STRIDES(operand),
+                            PyArray_DATA(result), PyArray_STRIDES(result),
+                            &ndim, shape_it,
+                            &operand_data, operand_strides_it,
+                            &result_data, result_strides_it) < 0) {
+            Py_DECREF(result);
+            return NULL;
+        }
+
+        /*
+         * NOTE: The following only works for NPY_BOOL masks.
+         */
+        NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
+            char *operand_d = operand_data, *result_d = result_data;
+            for (i = 0; i < shape_it[0]; ++i) {
+                *(npy_intp *)result_d += *operand_d;
+
+                operand_d += operand_strides_it[0];
+                result_d += result_strides_it[0];
+            }
+        } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
+                                    operand_data, operand_strides_it,
+                                    result_data, result_strides_it);
+
+        /* Remove the reduction axes and return the result */
+        PyArray_RemoveAxesInPlace(result, axis_flags);
+        return PyArray_Return(result);
+    }
 }
