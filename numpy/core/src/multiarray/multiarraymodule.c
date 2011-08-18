@@ -54,6 +54,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "ctors.h"
 #include "na_singleton.h"
 #include "na_mask.h"
+#include "reduction.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -2211,6 +2212,44 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
+array_count_reduce_items(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
+{
+    static char *kwlist[] = {"arr", "axis", "skipna", NULL};
+
+    PyObject *array_in, *axis_in = NULL;
+    PyObject *ret = NULL;
+    PyArrayObject *array;
+    npy_bool axis_flags[NPY_MAXDIMS];
+    int skipna = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds,
+                                "O|Oi:count_reduce_items", kwlist,
+                                &array_in,
+                                &axis_in,
+                                &skipna)) {
+        return NULL;
+    }
+
+    array = (PyArrayObject *)PyArray_FromAny(array_in, NULL,
+                                        0, 0, NPY_ARRAY_ALLOWNA, NULL);
+    if (array == NULL) {
+        return NULL;
+    }
+
+    if (PyArray_ConvertMultiAxis(axis_in, PyArray_NDIM(array),
+                                        axis_flags) != NPY_SUCCEED) {
+        Py_DECREF(array);
+        return NULL;
+    }
+
+    ret = PyArray_CountReduceItems(array, axis_flags, skipna);
+
+    Py_DECREF(array);
+
+    return ret;
+}
+
+static PyObject *
 array_fromstring(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
     char *data;
@@ -3755,6 +3794,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"count_nonzero",
         (PyCFunction)array_count_nonzero,
+        METH_VARARGS|METH_KEYWORDS, NULL},
+    {"count_reduce_items",
+        (PyCFunction)array_count_reduce_items,
         METH_VARARGS|METH_KEYWORDS, NULL},
     {"empty",
         (PyCFunction)array_empty,
