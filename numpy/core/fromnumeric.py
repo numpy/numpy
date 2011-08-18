@@ -868,7 +868,7 @@ def resize(a, new_shape):
     return reshape(a, new_shape)
 
 
-def squeeze(a):
+def squeeze(a, axis=None):
     """
     Remove single-dimensional entries from the shape of an array.
 
@@ -876,12 +876,17 @@ def squeeze(a):
     ----------
     a : array_like
         Input data.
+    axis : None or int or tuple of ints, optional
+        Selects a subset of the single-dimensional entries in the
+        shape. If an axis is selected with shape entry greater than
+        one, that axis is left untouched.
 
     Returns
     -------
     squeezed : ndarray
-        The input array, but with with all dimensions of length 1
-        removed.  Whenever possible, a view on `a` is returned.
+        The input array, but with with all or a subset of the
+        dimensions of length 1 removed. This is always `a` itself
+        or a view into `a`.
 
     Examples
     --------
@@ -896,7 +901,7 @@ def squeeze(a):
         squeeze = a.squeeze
     except AttributeError:
         return _wrapit(a, 'squeeze')
-    return squeeze()
+    return squeeze(axis=axis)
 
 
 def diagonal(a, offset=0, axis1=0, axis2=1):
@@ -2432,14 +2437,15 @@ def mean(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
                             out=out, skipna=skipna, keepdims=keepdims)
     rcount = mu.count_reduce_items(arr, axis=axis,
                             skipna=skipna, keepdims=keepdims)
-    if type(ret) is mu.ndarray:
+    if isinstance(ret, mu.ndarray):
         um.true_divide(ret, rcount, out=ret, casting='unsafe')
     else:
         ret = ret / float(rcount)
     return ret
 
 
-def std(a, axis=None, dtype=None, out=None, ddof=0):
+def std(a, axis=None, dtype=None, out=None, ddof=0,
+                            skipna=False, keepdims=False):
     """
     Compute the standard deviation along the specified axis.
 
@@ -2466,6 +2472,13 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
         Means Delta Degrees of Freedom.  The divisor used in calculations
         is ``N - ddof``, where ``N`` represents the number of elements.
         By default `ddof` is zero.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during calculation
+        instead of propagating them.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -2526,14 +2539,25 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
     0.44999999925552653
 
     """
-    try:
-        std = a.std
-    except AttributeError:
-        return _wrapit(a, 'std', axis, dtype, out, ddof)
-    return std(axis, dtype, out, ddof)
+    if not (type(a) is mu.ndarray):
+        try:
+            std = a.std
+            return std(axis=axis, dtype=dtype, out=out, ddof=ddof)
+        except AttributeError:
+            pass
 
+    ret = var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+                                skipna=skipna, keepdims=keepdims)
 
-def var(a, axis=None, dtype=None, out=None, ddof=0):
+    if isinstance(ret, mu.ndarray):
+        um.sqrt(ret, out=ret)
+    else:
+        ret = um.sqrt(ret)
+
+    return ret
+
+def var(a, axis=None, dtype=None, out=None, ddof=0,
+                            skipna=False, keepdims=False):
     """
     Compute the variance along the specified axis.
 
@@ -2561,6 +2585,13 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
         "Delta Degrees of Freedom": the divisor used in the calculation is
         ``N - ddof``, where ``N`` represents the number of elements. By
         default `ddof` is zero.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during calculation
+        instead of propagating them.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -2600,9 +2631,9 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     >>> a = np.array([[1,2],[3,4]])
     >>> np.var(a)
     1.25
-    >>> np.var(a,0)
+    >>> np.var(a, axis=0)
     array([ 1.,  1.])
-    >>> np.var(a,1)
+    >>> np.var(a, axis=1)
     array([ 0.25,  0.25])
 
     In single precision, var() can be inaccurate:
@@ -2613,7 +2644,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     >>> np.var(a)
     0.20405951142311096
 
-    Computing the standard deviation in float64 is more accurate:
+    Computing the variance in float64 is more accurate:
 
     >>> np.var(a, dtype=np.float64)
     0.20249999932997387
@@ -2621,8 +2652,50 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     0.20250000000000001
 
     """
-    try:
-        var = a.var
-    except AttributeError:
-        return _wrapit(a, 'var', axis, dtype, out, ddof)
-    return var(axis, dtype, out, ddof)
+    if not (type(a) is mu.ndarray):
+        try:
+            var = a.var
+            return var(axis=axis, dtype=dtype, out=out, ddof=ddof)
+        except AttributeError:
+            pass
+
+    arr = asarray(a)
+
+    # First compute the mean, saving 'rcount' for reuse later
+    if dtype is None and arr.dtype.kind in ['b','u','i']:
+        arrmean = um.add.reduce(arr, axis=axis, dtype='f8',
+                            skipna=skipna, keepdims=True)
+    else:
+        arrmean = um.add.reduce(arr, axis=axis, dtype=dtype,
+                            skipna=skipna, keepdims=True)
+    rcount = mu.count_reduce_items(arr, axis=axis,
+                            skipna=skipna, keepdims=True)
+    if isinstance(arrmean, mu.ndarray):
+        um.true_divide(arrmean, rcount, out=arrmean, casting='unsafe')
+    else:
+        arrmean = arrmean / float(rcount)
+
+    # arr - arrmean
+    x = arr - arrmean
+
+    # (arr - arrmean) ** 2
+    if arr.dtype.kind == 'c':
+        um.multiply(x, um.conjugate(x), out=x)
+        x = x.real
+    else:
+        um.multiply(x, x, out=x)
+
+    # add.reduce((arr - arrmean) ** 2, axis)
+    ret = um.add.reduce(x, axis=axis, dtype=dtype, out=out,
+                                skipna=skipna, keepdims=keepdims)
+
+    # add.reduce((arr - arrmean) ** 2, axis) / (n - ddof)
+    if not keepdims and isinstance(rcount, mu.ndarray):
+        rcount = rcount.squeeze(axis=axis)
+    rcount -= ddof
+    if isinstance(ret, mu.ndarray):
+        um.true_divide(ret, rcount, out=ret, casting='unsafe')
+    else:
+        ret = ret / float(rcount)
+
+    return ret

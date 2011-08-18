@@ -16,10 +16,12 @@
 #include "common.h"
 #include "ctors.h"
 #include "calculation.h"
-
-#include "methods.h"
 #include "convert_datatype.h"
 #include "item_selection.h"
+#include "conversion_utils.h"
+#include "shape.h"
+
+#include "methods.h"
 
 
 /* NpyArg_ParseKeywords
@@ -138,12 +140,28 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
 }
 
 static PyObject *
-array_squeeze(PyArrayObject *self, PyObject *args)
+array_squeeze(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    if (!PyArg_ParseTuple(args, "")) {
+    PyObject *axis_in = NULL;
+    npy_bool axis_flags[NPY_MAXDIMS];
+
+    static char *kwlist[] = {"axis", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O", kwlist,
+                                     &axis_in)) {
         return NULL;
     }
-    return PyArray_Squeeze(self);
+
+    if (axis_in == NULL) {
+        return PyArray_Squeeze(self);
+    }
+    else {
+        if (PyArray_ConvertMultiAxis(axis_in, PyArray_NDIM(self),
+                                            axis_flags) != NPY_SUCCEED) {
+            return NULL;
+        }
+
+        return PyArray_SqueezeSelected(self, axis_flags);
+    }
 }
 
 static PyObject *
@@ -160,8 +178,9 @@ array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &out_dtype,
                                      &out_type,
                                      &maskna,
-                                     &ownmaskna))
+                                     &ownmaskna)) {
         return NULL;
+    }
 
     /* If user specified a positional argument, guess whether it
        represents a type or a dtype for backward compatibility. */
@@ -2382,7 +2401,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"squeeze",
         (PyCFunction)array_squeeze,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"std",
         (PyCFunction)array_stddev,
         METH_VARARGS | METH_KEYWORDS, NULL},
