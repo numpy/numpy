@@ -46,10 +46,10 @@
 #define NPY_UF_DBG_TRACING 0
 
 #if NPY_UF_DBG_TRACING
-#define NPY_UF_DBG_PRINT(s) printf("%s", s)
-#define NPY_UF_DBG_PRINT1(s, p1) printf(s, p1)
-#define NPY_UF_DBG_PRINT2(s, p1, p2) printf(s, p1, p2)
-#define NPY_UF_DBG_PRINT3(s, p1, p2, p3) printf(s, p1, p2, p3)
+#define NPY_UF_DBG_PRINT(s) {printf("%s", s);fflush(stdout);}
+#define NPY_UF_DBG_PRINT1(s, p1) {printf((s), (p1));fflush(stdout);}
+#define NPY_UF_DBG_PRINT2(s, p1, p2) {printf(s, p1, p2);fflush(stdout);}
+#define NPY_UF_DBG_PRINT3(s, p1, p2, p3) {printf(s, p1, p2, p3);fflush(stdout);}
 #else
 #define NPY_UF_DBG_PRINT(s)
 #define NPY_UF_DBG_PRINT1(s, p1)
@@ -2508,7 +2508,7 @@ get_masked_binary_op_function(PyUFuncObject *self, PyArrayObject *arr,
     char *ufunc_name = self->name ? self->name : "(unknown)";
 
     NPY_UF_DBG_PRINT1("Getting masked binary op function for type number %d\n",
-                                *otype);
+                                otype);
 
     *out_dtype = NULL;
 
@@ -2682,6 +2682,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         retcode = get_binary_op_function(self, &otype_final,
                                 &innerloop, &innerloopdata);
 
+        NPY_UF_DBG_PRINT2("Loop retcode %d, otype final %d\n",
+                                                retcode, otype_final);
         /*
          * Set up the output data type, using the input's exact
          * data type if the type number didn't change to preserve
@@ -3030,7 +3032,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     }
 
 #if NPY_UF_DBG_TRACING
-    printf("Found %s.%s inner loop with dtype :  ", ufunc_name, opname);
+    printf("Found %s.accumulate inner loop with dtype :  ", ufunc_name);
     PyObject_Print((PyObject *)op_dtypes[0], stdout, 0);
     printf("\n");
 #endif

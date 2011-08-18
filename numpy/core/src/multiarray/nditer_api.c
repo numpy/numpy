@@ -2565,7 +2565,7 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     npy_intp sizeof_axisdata;
     npy_intp coord, shape, *strides;
     npy_intp reducespace = 1, factor;
-    npy_bool nonzerocoord = 0;
+    npy_bool nonzerocoord;
 
     char *op_itflags = NIT_OPITFLAGS(iter);
     char stride0op[NPY_MAXARGS];
@@ -2595,6 +2595,9 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     reducespace += (shape-coord-1);
     factor = shape;
     NIT_ADVANCE_AXISDATA(axisdata, 1);
+
+    /* Initialize nonzerocoord based on the first coordinate */
+    nonzerocoord = (coord != 0);
 
     /* Go forward through axisdata, calculating the space available */
     for (idim = 1; idim < ndim && reducespace < count;
