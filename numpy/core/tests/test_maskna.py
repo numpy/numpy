@@ -694,9 +694,14 @@ def test_maskna_ufunc_1D():
     assert_raises(ValueError, np.add, a, b, out=c_orig)
 
     # Divide in-place with NA
-    a = np.array([[np.NA], [12.]], maskna=True)
-    assert_array_equal(a, [[np.NA], [666.]])
-    # The assert_array_equal should have caught this...
+    a_orig = np.array([[3], [12.]])
+    a = a_orig.view(maskna=True)
+    a[0,0] = np.NA
+    a /= 3
+    # Shouldn't have touched the masked element
+    assert_array_equal(a_orig, [[3], [4.]])
+    assert_array_equal(a, [[np.NA], [4.]])
+    # double-check assertions
     assert_equal(np.isna(a), [[1], [0]])
     assert_equal(a[~np.isna(a)], [4.])
 

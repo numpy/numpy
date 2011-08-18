@@ -877,6 +877,8 @@ def squeeze(a, axis=None):
     a : array_like
         Input data.
     axis : None or int or tuple of ints, optional
+        .. versionadded:: 1.7.0
+        
         Selects a subset of the single-dimensional entries in the
         shape. If an axis is selected with shape entry greater than
         one, an error is raised.
