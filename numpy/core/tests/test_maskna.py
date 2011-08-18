@@ -693,6 +693,13 @@ def test_maskna_ufunc_1D():
     # NA support
     assert_raises(ValueError, np.add, a, b, out=c_orig)
 
+    # Divide in-place with NA
+    a = np.array([[np.NA], [12.]], maskna=True)
+    assert_array_equal(a, [[np.NA], [666.]])
+    # The assert_array_equal should have caught this...
+    assert_equal(np.isna(a), [[1], [0]])
+    assert_equal(a[~np.isna(a)], [4.])
+
 
 def test_maskna_ufunc_sum_1D():
     check_maskna_ufunc_sum_1D(np.sum)
@@ -1055,9 +1062,71 @@ def test_array_maskna_squeeze():
     # np.squeeze
     a = np.zeros((1,3,1,1,4,2,1), maskna=True)
     a[0,1,0,0,3,0,0] = np.NA
+
     res = np.squeeze(a)
     assert_equal(res.shape, (3,4,2))
     assert_(np.isna(res[1,3,0]))
+
+    res = np.squeeze(a, axis=(0,2,6))
+    assert_equal(res.shape, (3,1,4,2))
+    assert_(np.isna(res[1,0,3,0]))
+
+def test_array_maskna_mean():
+    # np.mean
+
+    # With an NA mask, but no NA
+    a = np.arange(6, maskna=True).reshape(2,3)
+
+    res = np.mean(a)
+    assert_equal(res, 2.5)
+    res = np.mean(a, axis=0)
+    assert_equal(res, [1.5, 2.5, 3.5])
+
+    # With an NA and skipna=False
+    a = np.arange(6, maskna=True).reshape(2,3)
+    a[0,1] = np.NA
+
+    res = np.mean(a)
+    assert_(type(res) is np.NAType)
+
+    res = np.mean(a, axis=0)
+    assert_array_equal(res, [1.5, np.NA, 3.5])
+
+    res = np.mean(a, axis=1)
+    assert_array_equal(res, [np.NA, 4.0])
+
+    # With an NA and skipna=True
+    res = np.mean(a, skipna=True)
+    assert_almost_equal(res, 2.8)
+
+    res = np.mean(a, axis=0, skipna=True)
+    assert_array_equal(res, [1.5, 4.0, 3.5])
+
+    res = np.mean(a, axis=1, skipna=True)
+    assert_array_equal(res, [1.0, 4.0])
+
+def test_array_maskna_var_std():
+    # np.var, np.std
+
+    # With an NA and skipna=False
+    a = np.arange(6, maskna=True).reshape(2,3)
+    a[0,1] = np.NA
+
+    res = np.var(a)
+    assert_(type(res) is np.NAType)
+    res = np.std(a)
+    assert_(type(res) is np.NAType)
+
+    res = np.var(a, axis=0)
+    assert_array_equal(res, [2.25, np.NA, 2.25])
+    res = np.std(a, axis=0)
+    assert_array_equal(res, [1.5, np.NA, 1.5])
+
+    res = np.var(a, axis=1)
+    assert_array_almost_equal(res, [np.NA, 0.66666666666666663])
+    res = np.std(a, axis=1)
+    assert_array_almost_equal(res, [np.NA, 0.81649658092772603])
+
 
 if __name__ == "__main__":
     run_module_suite()

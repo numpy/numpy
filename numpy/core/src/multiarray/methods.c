@@ -151,7 +151,7 @@ array_squeeze(PyArrayObject *self, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    if (axis_in == NULL) {
+    if (axis_in == NULL || axis_in == Py_None) {
         return PyArray_Squeeze(self);
     }
     else {
