@@ -384,11 +384,9 @@ def pbuild(context):
     def builder(library):
         # FIXME: hack to build static library that can be linked into a dlopen-able
         # library
-        bld(features="c pyext cstlib bento",
-            source=library.sources,
-            includes=["src/private", "src/npymath", "include"],
-            use="cshlib",
-            target=library.name)
+        return context.default_library_builder(library,
+                                               includes=["src/private", "src/npymath", "include"],
+                                               use="cloadable")
     context.register_compiled_library_builder("npymath", builder)
 
     def builder_multiarray(extension):
@@ -442,20 +440,16 @@ def pbuild(context):
         else:
             sources = extension.sources
         includes = ["src/multiarray", "src/private"]
-        bld(features="c cshlib pyext bento",
-            includes=includes,
-            target="multiarray",
-            source=sources,
-            use="npymath")
+        return context.default_builder(extension,
+                                       includes=includes,
+                                       source=sources,
+                                       use="npymath")
     context.register_builder("multiarray", builder_multiarray)
 
     def builder_sort(extension):
-        includes = [".", "src/private"]
-        bld(features="c cshlib pyext bento",
-            target="_sort",
-            source=extension.sources,
-            includes=includes,
-            use="npymath")
+        return context.default_builder(extension,
+                                       includes=[".", "src/private"],
+                                       use="npymath")
     context.register_builder("_sort", builder_sort)
 
     def build_ufunc(extension):
@@ -480,31 +474,24 @@ def pbuild(context):
                     pjoin("src", "umath", "loops.c.src")]
         else:
             sources = extension.sources
-        bld(features="c cshlib pyext bento",
-            includes=includes,
-            target="umath",
-            source=sources,
-            use="npymath")
+        return context.default_builder(extension,
+                                       includes=includes,
+                                       source=sources,
+                                       use="npymath")
     context.register_builder("umath", build_ufunc)
 
     def build_scalarmath(extension):
-        bld(features="c cshlib pyext bento",
-            target=extension.name,
-            source=extension.sources,
-            use="npymath")
+        return context.default_builder(extension,
+                                       use="npymath")
     context.register_builder("scalarmath", build_scalarmath)
 
     def build_multiarray_tests(extension):
-        bld(features="c cshlib pyext bento",
-            target=extension.name,
-            source=extension.sources,
-            use="npymath")
+        return context.default_builder(extension,
+                                       use="npymath")
     context.register_builder("multiarray_tests", build_multiarray_tests)
 
     def build_dotblas(extension):
         if bld.env.HAS_CBLAS:
-            bld(features="c cshlib pyext bento",
-                target=extension.name,
-                source=extension.sources,
-                use="CBLAS")
+            return context.default_builder(extension,
+                                           use="CBLAS")
     context.register_builder("_dotblas", build_dotblas)

@@ -11,8 +11,5 @@ def build(context):
     def build(extension):
         includes = ["../core/include", "../core/include/numpy", "../core",
                     "../core/src/private"]
-        bld(features="c cshlib pyext bento",
-            target=extension.name,
-            source=extension.sources,
-            includes=includes)
+        return context.default_builder(extension, includes=includes)
     context.register_builder("fftpack_lite", build)
