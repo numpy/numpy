@@ -2336,7 +2336,7 @@ def round_(a, decimals=0, out=None):
     return round(decimals, out)
 
 
-def mean(a, axis=None, dtype=None, out=None):
+def mean(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
     """
     Compute the arithmetic mean along the specified axis.
 
@@ -2361,6 +2361,13 @@ def mean(a, axis=None, dtype=None, out=None):
         is ``None``; if provided, it must have the same shape as the
         expected output, but the type will be cast if necessary.
         See `doc.ufuncs` for details.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during calculation
+        instead of propagating them.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -2407,11 +2414,29 @@ def mean(a, axis=None, dtype=None, out=None):
     0.55000000074505806
 
     """
-    try:
-        mean = a.mean
-    except AttributeError:
-        return _wrapit(a, 'mean', axis, dtype, out)
-    return mean(axis, dtype, out)
+    if not (type(a) is mu.ndarray):
+        try:
+            mean = a.mean
+            return mean(axis=axis, dtype=dtype, out=out)
+        except AttributeError:
+            pass
+
+    arr = asarray(a)
+
+    # Upgrade bool, unsigned int, and int to float64
+    if dtype is None and arr.dtype.kind in ['b','u','i']:
+        ret = um.add.reduce(arr, axis=axis, dtype='f8',
+                            out=out, skipna=skipna, keepdims=keepdims)
+    else:
+        ret = um.add.reduce(arr, axis=axis, dtype=dtype,
+                            out=out, skipna=skipna, keepdims=keepdims)
+    rcount = mu.count_reduce_items(arr, axis=axis,
+                            skipna=skipna, keepdims=keepdims)
+    if type(ret) is mu.ndarray:
+        um.true_divide(ret, rcount, out=ret, casting='unsafe')
+    else:
+        ret = ret / float(rcount)
+    return ret
 
 
 def std(a, axis=None, dtype=None, out=None, ddof=0):
@@ -2458,14 +2483,15 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
     The standard deviation is the square root of the average of the squared
     deviations from the mean, i.e., ``std = sqrt(mean(abs(x - x.mean())**2))``.
 
-    The average squared deviation is normally calculated as ``x.sum() / N``, where
-    ``N = len(x)``.  If, however, `ddof` is specified, the divisor ``N - ddof``
-    is used instead. In standard statistical practice, ``ddof=1`` provides an
-    unbiased estimator of the variance of the infinite population. ``ddof=0``
-    provides a maximum likelihood estimate of the variance for normally
-    distributed variables. The standard deviation computed in this function
-    is the square root of the estimated variance, so even with ``ddof=1``, it
-    will not be an unbiased estimate of the standard deviation per se.
+    The average squared deviation is normally calculated as
+    ``x.sum() / N``, where ``N = len(x)``.  If, however, `ddof` is specified,
+    the divisor ``N - ddof`` is used instead. In standard statistical
+    practice, ``ddof=1`` provides an unbiased estimator of the variance
+    of the infinite population. ``ddof=0`` provides a maximum likelihood
+    estimate of the variance for normally distributed variables. The
+    standard deviation computed in this function is the square root of
+    the estimated variance, so even with ``ddof=1``, it will not be an
+    unbiased estimate of the standard deviation per se.
 
     Note that, for complex numbers, `std` takes the absolute
     value before squaring, so that the result is always real and nonnegative.

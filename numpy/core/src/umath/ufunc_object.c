@@ -2610,7 +2610,7 @@ initialize_reduce_result(int identity, PyArrayObject *result,
  */
 static PyArrayObject *
 PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
-        int naxes, int *axes, int otype, int skipna)
+        int naxes, int *axes, int otype, int skipna, int keepdims)
 {
     int iaxes, ndim, retcode;
     PyArray_Descr *otype_dtype = NULL;
@@ -2723,7 +2723,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     Py_XINCREF(otype_dtype);
     result = PyArray_CreateReduceResult(arr, out,
                             otype_dtype, axis_flags, !skipna && use_maskna,
-                            ufunc_name);
+                            keepdims, ufunc_name);
     if (result == NULL) {
         return NULL;
     }
@@ -2911,7 +2911,9 @@ finish:
 
     /* Strip out the extra 'one' dimensions in the result */
     if (out == NULL) {
-        PyArray_RemoveAxesInPlace(result, axis_flags);
+        if (!keepdims) {
+            PyArray_RemoveAxesInPlace(result, axis_flags);
+        }
     }
     else {
         Py_DECREF(result);
@@ -3708,8 +3710,9 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     PyArrayObject *indices = NULL;
     PyArray_Descr *otype = NULL;
     PyArrayObject *out = NULL;
-    int skipna = 0;
-    static char *kwlist1[] = {"array", "axis", "dtype", "out", "skipna", NULL};
+    int skipna = 0, keepdims = 0;
+    static char *kwlist1[] = {"array", "axis", "dtype",
+                                "out", "skipna", "keepdims", NULL};
     static char *kwlist2[] = {"array", "indices", "axis",
                                 "dtype", "out", "skipna", NULL};
     static char *_reduce_type[] = {"reduce", "accumulate", "reduceat", NULL};
@@ -3758,12 +3761,13 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
         }
     }
     else {
-        if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&i", kwlist1,
+        if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&ii", kwlist1,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
                                         PyArray_OutputConverter, &out,
-                                        &skipna)) {
+                                        &skipna,
+                                        &keepdims)) {
             Py_XDECREF(otype);
             return NULL;
         }
@@ -3930,7 +3934,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     switch(operation) {
     case UFUNC_REDUCE:
         ret = PyUFunc_Reduce(self, mp, out, naxes, axes,
-                                              otype->type_num, skipna);
+                                          otype->type_num, skipna, keepdims);
         break;
     case UFUNC_ACCUMULATE:
         if (naxes != 1) {

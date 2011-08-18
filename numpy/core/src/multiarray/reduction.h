@@ -94,6 +94,8 @@ typedef void (PyArray_ReduceInnerLoopFunc)(NpyIter *iter,
  * result_dtype : The dtype the inner loop expects for the result.
  * axis_flags  : Flags indicating the reduction axes of 'operand'.
  * skipna      : If true, NAs are skipped instead of propagating.
+ * keepdims    : If true, leaves the reduction dimensions in the result
+ *               with size one.
  * assign_unit : If NULL, PyArray_InitializeReduceResult is used, otherwise
  *               this function is called to initialize the result to
  *               the reduction's unit.
@@ -107,7 +109,7 @@ NPY_NO_EXPORT PyArrayObject *
 PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                         PyArray_Descr *operand_dtype,
                         PyArray_Descr *result_dtype,
-                        npy_bool *axis_flags, int skipna,
+                        npy_bool *axis_flags, int skipna, int keepdims,
                         PyArray_AssignReduceUnitFunc *assign_unit,
                         PyArray_ReduceInnerLoopFunc *inner_loop,
                         PyArray_ReduceInnerLoopFunc *masked_inner_loop,
@@ -127,7 +129,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
  */
 NPY_NO_EXPORT PyObject *
 PyArray_CountReduceItems(PyArrayObject *operand,
-                            npy_bool *axis_flags, int skipna);
+                            npy_bool *axis_flags, int skipna, int keepdims);
 
 
 #endif

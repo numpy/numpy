@@ -1984,7 +1984,7 @@ reduce_count_nonzero_masked_inner_loop(NpyIter *iter,
  */
 NPY_NO_EXPORT PyObject *
 PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
-                        npy_bool *axis_flags, int skipna)
+                        npy_bool *axis_flags, int skipna, int keepdims)
 {
     PyArray_NonzeroFunc *nonzero;
     PyArrayObject *result;
@@ -2005,7 +2005,7 @@ PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
 
     result = PyArray_ReduceWrapper(arr, out,
                             PyArray_DESCR(arr), dtype,
-                            axis_flags, skipna,
+                            axis_flags, skipna, keepdims,
                             &assign_reduce_unit_zero,
                             &reduce_count_nonzero_inner_loop,
                             &reduce_count_nonzero_masked_inner_loop,
