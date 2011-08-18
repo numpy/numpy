@@ -80,7 +80,7 @@ allocate_reduce_result(PyArrayObject *arr, npy_bool *axis_flags,
  */
 static PyArrayObject *
 conform_reduce_result(int ndim, npy_bool *axis_flags,
-                        PyArrayObject *out, const char *funcname)
+                    PyArrayObject *out, int keepdims, const char *funcname)
 {
     npy_intp strides[NPY_MAXDIMS], shape[NPY_MAXDIMS];
     npy_intp *strides_out = PyArray_STRIDES(out);
@@ -88,6 +88,35 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
     int idim, idim_out, ndim_out = PyArray_NDIM(out);
     PyArray_Descr *dtype;
     PyArrayObject_fieldaccess *ret;
+
+    /*
+     * If the 'keepdims' parameter is true, do a simpler validation and
+     * return a new reference to 'out'.
+     */
+    if (keepdims) {
+        if (PyArray_NDIM(out) != ndim) {
+            PyErr_Format(PyExc_ValueError,
+                    "output parameter for reduction operation %s "
+                    "has the wrong number of dimensions (must match "
+                    "the operand's when keepdims=True)", funcname);
+            return NULL;
+        }
+
+        for (idim = 0; idim < ndim; ++idim) {
+            if (axis_flags[idim]) {
+                if (shape_out[idim] != 1) {
+                    PyErr_Format(PyExc_ValueError,
+                            "output parameter for reduction operation %s "
+                            "has a reduction dimension not equal to one "
+                            "(required when keepdims=True)", funcname);
+                    return NULL;
+                }
+            }
+        }
+
+        Py_INCREF(out);
+        return out;
+    }
 
     /* Construct the strides and shape */
     idim_out = 0;
@@ -180,7 +209,7 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
 NPY_NO_EXPORT PyArrayObject *
 PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
                     PyArray_Descr *dtype, npy_bool *axis_flags,
-                    int need_namask, const char *funcname)
+                    int need_namask, int keepdims, const char *funcname)
 {
     PyArrayObject *result;
 
@@ -209,7 +238,7 @@ PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
         }
 
         result = conform_reduce_result(PyArray_NDIM(operand), axis_flags,
-                                        out, funcname);
+                                        out, keepdims, funcname);
     }
 
     return result;
@@ -413,6 +442,8 @@ PyArray_InitializeReduceResult(
  * result_dtype : The dtype the inner loop expects for the result.
  * axis_flags  : Flags indicating the reduction axes of 'operand'.
  * skipna      : If true, NAs are skipped instead of propagating.
+ * keepdims    : If true, leaves the reduction dimensions in the result
+ *               with size one.
  * assign_unit : If NULL, PyArray_InitializeReduceResult is used, otherwise
  *               this function is called to initialize the result to
  *               the reduction's unit.
@@ -426,7 +457,7 @@ NPY_NO_EXPORT PyArrayObject *
 PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                         PyArray_Descr *operand_dtype,
                         PyArray_Descr *result_dtype,
-                        npy_bool *axis_flags, int skipna,
+                        npy_bool *axis_flags, int skipna, int keepdims,
                         PyArray_AssignReduceUnitFunc *assign_unit,
                         PyArray_ReduceInnerLoopFunc *inner_loop,
                         PyArray_ReduceInnerLoopFunc *masked_inner_loop,
@@ -466,7 +497,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     Py_INCREF(result_dtype);
     result = PyArray_CreateReduceResult(operand, out,
                             result_dtype, axis_flags, !skipna && use_maskna,
-                            funcname);
+                            keepdims, funcname);
     if (result == NULL) {
         goto fail;
     }
@@ -617,7 +648,9 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
 finish:
     /* Strip out the extra 'one' dimensions in the result */
     if (out == NULL) {
-        PyArray_RemoveAxesInPlace(result, axis_flags);
+        if (!keepdims) {
+            PyArray_RemoveAxesInPlace(result, axis_flags);
+        }
     }
     else {
         Py_DECREF(result);
@@ -651,7 +684,7 @@ fail:
  */
 NPY_NO_EXPORT PyObject *
 PyArray_CountReduceItems(PyArrayObject *operand,
-                            npy_bool *axis_flags, int skipna)
+                            npy_bool *axis_flags, int skipna, int keepdims)
 {
     int idim, ndim = PyArray_NDIM(operand);
 
@@ -715,7 +748,7 @@ PyArray_CountReduceItems(PyArrayObject *operand,
         }
         result = PyArray_CreateReduceResult(operand, NULL,
                                 result_dtype, axis_flags, 0,
-                                "count_reduce_items");
+                                keepdims, "count_reduce_items");
         if (result == NULL) {
             return NULL;
         }
@@ -767,7 +800,9 @@ PyArray_CountReduceItems(PyArrayObject *operand,
                                     result_data, result_strides_it);
 
         /* Remove the reduction axes and return the result */
-        PyArray_RemoveAxesInPlace(result, axis_flags);
+        if (!keepdims) {
+            PyArray_RemoveAxesInPlace(result, axis_flags);
+        }
         return PyArray_Return(result);
     }
 }
