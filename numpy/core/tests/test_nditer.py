@@ -2295,6 +2295,23 @@ def test_iter_buffering_reduction():
     it.reset()
     assert_equal(it[0], [1,2,1,2])
 
+def test_iter_buffering_reduction_reuse_reduce_loops():
+    # There was a bug triggering reuse of the reduce loop inappropriately,
+    # which caused processing to happen in unnecessarily small chunks
+    # and overran the buffer.
+
+    a = np.zeros((2,7))
+    b = np.zeros((1,7))
+    it = np.nditer([a,b], flags=['reduce_ok', 'external_loop', 'buffered'],
+                    op_flags=[['readonly'], ['readwrite']],
+                    buffersize = 5)
+
+    bufsizes = []
+    for x, y in it:
+        bufsizes.append(x.shape[0])
+    assert_equal(bufsizes, [5,2,5,2])
+    assert_equal(sum(bufsizes), a.size)
+
 def test_iter_writemasked_badinput():
     a = np.zeros((2,3))
     b = np.zeros((3,))
