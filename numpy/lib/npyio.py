@@ -707,11 +707,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             if len(shape) == 0:
                 return ([dt.base], None)
             else:
-                packing = [(shape[-1], tuple)]
+                packing = [(shape[-1], list)]
                 if len(shape) > 1:
-                    for dim in dt.shape[-2:0:-1]:
-                        packing = [(dim*packing[0][0],packing*dim)]
-                    packing = packing*shape[0]
+                    for dim in dt.shape[-2::-1]:
+                        packing = [(dim*packing[0][0], packing*dim)]
                 return ([dt.base] * int(np.prod(dt.shape)), packing)
         else:
             types = []
@@ -720,7 +719,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 tp, bytes = dt.fields[field]
                 flat_dt, flat_packing = flatten_dtype(tp)
                 types.extend(flat_dt)
-                packing.append((len(flat_dt),flat_packing))
+                # Avoid extra nesting for subarrays
+                if len(tp.shape) > 0:
+                    packing.extend(flat_packing)
+                else:
+                    packing.append((len(flat_dt), flat_packing))
             return (types, packing)
 
     def pack_items(items, packing):
@@ -729,6 +732,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             return items[0]
         elif packing is tuple:
             return tuple(items)
+        elif packing is list:
+            return list(items)
         else:
             start = 0
             ret = []
