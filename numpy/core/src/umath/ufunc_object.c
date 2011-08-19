@@ -2569,9 +2569,11 @@ get_masked_binary_op_function(PyUFuncObject *self, PyArrayObject *arr,
 static PyArrayObject *
 initialize_reduce_result(int identity, PyArrayObject *result,
                         npy_bool *axis_flags, PyArrayObject *arr,
-                        int skipna, char *ufunc_name)
+                        int skipna, npy_intp *out_skip_first_count,
+                        char *ufunc_name)
 {
     if (identity == PyUFunc_One) {
+        *out_skip_first_count = 0;
         if (PyArray_AssignOne(result, NULL, !skipna, NULL) < 0) {
             return NULL;
         }
@@ -2579,6 +2581,7 @@ initialize_reduce_result(int identity, PyArrayObject *result,
         return arr;
     }
     else if (identity == PyUFunc_Zero) {
+        *out_skip_first_count = 0;
         if (PyArray_AssignZero(result, NULL, !skipna, NULL) < 0) {
             return NULL;
         }
@@ -2586,8 +2589,8 @@ initialize_reduce_result(int identity, PyArrayObject *result,
         return arr;
     }
     else {
-        return PyArray_InitializeReduceResult(
-                        result, arr, axis_flags, skipna, ufunc_name);
+        return PyArray_InitializeReduceResult(result, arr, axis_flags,
+                                skipna, out_skip_first_count, ufunc_name);
     }
 }
 
@@ -2616,6 +2619,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     PyArray_Descr *otype_dtype = NULL;
     npy_bool axis_flags[NPY_MAXDIMS];
     PyArrayObject *arr_view = NULL, *result = NULL;
+    npy_intp skip_first_count = 0;
 
     /* The normal selected inner loop */
     PyUFuncGenericFunction innerloop = NULL;
@@ -2786,7 +2790,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
      * all the elements to reduce into 'result'.
      */
     arr_view = initialize_reduce_result(self->identity, result,
-                                        axis_flags, arr, skipna, ufunc_name);
+                                        axis_flags, arr, skipna,
+                                        &skip_first_count, ufunc_name);
     if (arr_view == NULL) {
         goto fail;
     }
@@ -2871,6 +2876,44 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 
         /* Straightforward reduction */
         if (!use_maskna) {
+            if (skip_first_count > 0) {
+                do {
+                    npy_intp count = *count_ptr;
+
+                    /* Skip any first-visit elements */
+                    if (NpyIter_IsFirstVisit(iter, 1)) {
+                        if (stride[0] == 0) {
+                            --count;
+                            --skip_first_count;
+                            dataptr[1] += stride[1];
+                        }
+                        else {
+                            skip_first_count -= count;
+                            count = 0;
+                        }
+                    }
+
+                    /* Turn the two items into three for the inner loop */
+                    dataptr_copy[0] = dataptr[0];
+                    dataptr_copy[1] = dataptr[1];
+                    dataptr_copy[2] = dataptr[0];
+                    stride_copy[0] = stride[0];
+                    stride_copy[1] = stride[1];
+                    stride_copy[2] = stride[0];
+                    innerloop(dataptr_copy, &count,
+                                stride_copy, innerloopdata);
+
+                    /* Jump to the faster loop when skipping is done */
+                    if (skip_first_count == 0) {
+                        if (iternext(iter)) {
+                            break;
+                        }
+                        else {
+                            goto finish_loop;
+                        }
+                    }
+                } while (iternext(iter));
+            }
             do {
                 /* Turn the two items into three for the inner loop */
                 dataptr_copy[0] = dataptr[0];
@@ -2885,6 +2928,49 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         }
         /* Masked reduction */
         else {
+            if (skip_first_count > 0) {
+                do {
+                    npy_intp count = *count_ptr;
+
+                    /* Skip any first-visit elements */
+                    if (NpyIter_IsFirstVisit(iter, 1)) {
+                        if (stride[0] == 0) {
+                            --count;
+                            --skip_first_count;
+                            dataptr[1] += stride[1];
+                            dataptr[2] += stride[2];
+                        }
+                        else {
+                            skip_first_count -= count;
+                            count = 0;
+                        }
+                    }
+
+                    /* Turn the two items into three for the inner loop */
+                    dataptr_copy[0] = dataptr[0];
+                    dataptr_copy[1] = dataptr[1];
+                    dataptr_copy[2] = dataptr[0];
+                    stride_copy[0] = stride[0];
+                    stride_copy[1] = stride[1];
+                    stride_copy[2] = stride[0];
+                    /*
+                     * If skipna=True, this masks based on the mask in 'arr',
+                     * otherwise it masks based on the mask in 'result'
+                     */
+                    maskedinnerloop(dataptr_copy, dataptr[2], &count,
+                                stride_copy, stride[2], maskedinnerloopdata);
+
+                    /* Jump to the faster loop when skipping is done */
+                    if (skip_first_count == 0) {
+                        if (iternext(iter)) {
+                            break;
+                        }
+                        else {
+                            goto finish_loop;
+                        }
+                    }
+                } while (iternext(iter));
+            }
             do {
                 /* Turn the two items into three for the inner loop */
                 dataptr_copy[0] = dataptr[0];
@@ -2901,7 +2987,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                             stride_copy, stride[2], maskedinnerloopdata);
             } while (iternext(iter));
         }
-
+finish_loop:
         if (!needs_api) {
             NPY_END_THREADS;
         }

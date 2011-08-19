@@ -996,7 +996,7 @@ array_ass_boolean_subscript(PyArrayObject *self,
     if (v_has_maskna && !self_has_maskna) {
         if (PyArray_ContainsNA(v)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Cannot assign NA value to an array which "
+                    "Cannot assign NA to an array which "
                     "does not support NAs");
             return -1;
         }

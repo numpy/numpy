@@ -23,11 +23,56 @@ typedef int (PyArray_AssignReduceUnitFunc)(PyArrayObject *result,
  * the inner loop, such as when the iternext() function never calls
  * a function which could raise a Python exception.
  *
+ * Ths skip_first_count parameter indicates how many elements need to be
+ * skipped based on NpyIter_IsFirstVisit checks. This can only be positive
+ * when the 'assign_unit' parameter was NULL when calling
+ * PyArray_ReduceWrapper.
+ *
  * The unmasked inner loop gets two data pointers and two strides, and should
  * look roughly like this:
+ *  {
  *      NPY_BEGIN_THREADS_DEF;
  *      if (!needs_api) {
  *          NPY_BEGIN_THREADS;
+ *      }
+ *      // This first-visit loop can be skipped if 'assign_unit' was non-NULL
+ *      if (skip_first_count > 0) {
+ *          do {
+ *              char *data0 = dataptr[0], *data1 = dataptr[1];
+ *              npy_intp stride0 = strideptr[0], stride1 = strideptr[1];
+ *              npy_intp count = *countptr;
+ *
+ *              // Skip any first-visit elements
+ *              if (NpyIter_IsFirstVisit(iter, 1)) {
+ *                  if (stride0 == 0) {
+ *                      --count;
+ *                      --skip_first_count;
+ *                      data1 += stride1;
+ *                      //data2 += stride2; // In masked loop
+ *                  }
+ *                  else {
+ *                      skip_first_count -= count;
+ *                      count = 0;
+ *                  }
+ *              }
+ *
+ *              while (count--) {
+ *                  *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
+ *                                                    *(operand_t *)data1);
+ *                  data0 += stride0;
+ *                  data1 += stride1;
+ *              }
+ *
+ *              // Jump to the faster loop when skipping is done
+ *              if (skip_first_count == 0) {
+ *                  if (iternext(iter)) {
+ *                      break;
+ *                  }
+ *                  else {
+ *                      goto finish_loop;
+ *                  }
+ *              }
+ *          } while (iternext(iter));
  *      }
  *      do {
  *          char *data0 = dataptr[0], *data1 = dataptr[1];
@@ -41,21 +86,23 @@ typedef int (PyArray_AssignReduceUnitFunc)(PyArrayObject *result,
  *              data1 += stride1;
  *          }
  *      } while (iternext(iter));
+ *  finish_loop:
  *      if (!needs_api) {
  *          NPY_END_THREADS;
  *      }
+ *      return (needs_api && PyErr_Occurred()) ? -1 : 0;
+ *  }
  *
  * The masked inner loop gets three data pointers and three strides, and
- * should look roughly like this:
- *      NPY_BEGIN_THREADS_DEF;
- *      if (!needs_api) {
- *          NPY_BEGIN_THREADS;
- *      }
+ * looks identical except for the iteration inner loops which should be
+ * like this:
  *      do {
  *          char *data0 = dataptr[0], *data1 = dataptr[1], *data2 = dataptr[2];
  *          npy_intp stride0 = strideptr[0], stride1 = strideptr[1],
  *                      stride2 = strideptr[2];
  *          npy_intp count = *countptr;
+ *
+ *          // Skipping first visits would go here
  *
  *          while (count--) {
  *              if (NpyMaskValue_IsExposed((npy_mask)*data2)) {
@@ -66,21 +113,22 @@ typedef int (PyArray_AssignReduceUnitFunc)(PyArrayObject *result,
  *              data1 += stride1;
  *              data2 += stride2;
  *          }
- *      } while (iternext(iter));
- *      if (!needs_api) {
- *          NPY_END_THREADS;
- *      }
  *
- * Once the inner loop is finished, PyArray_ReduceWrapper calls
- * PyErr_Occurred to check if any exception was raised during the
- * computation.
+ *          // Jumping to the faster loop would go here
+ *
+ *      } while (iternext(iter));
+ *
+ * If needs_api is True, this function should call PyErr_Occurred()
+ * to check if an error occurred during processing, and return -1 for
+ * error, 0 for success.
  */
-typedef void (PyArray_ReduceInnerLoopFunc)(NpyIter *iter,
+typedef int (PyArray_ReduceInnerLoopFunc)(NpyIter *iter,
                                             char **dataptr,
                                             npy_intp *strideptr,
                                             npy_intp *countptr,
                                             NpyIter_IterNextFunc *iternext,
                                             int needs_api,
+                                            npy_intp skip_first_count,
                                             void *data);
 
 /*

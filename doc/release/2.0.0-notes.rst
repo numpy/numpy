@@ -44,6 +44,8 @@ What doesn't work with NA:
     * UFunc.accumulate, UFunc.reduceat.
     * np.logical_and, np.logical_or, np.all, and np.any don't satisfy the
       rules NA | True == True and NA & False == False yet.
+    * The reduction methods like <ndarray>.sum, etc. do not yet support
+      the new extended axis=, skipna= and keepdims= parameters.
     * Array methods:
        + ndarray.argmax, ndarray.argmin,
        + numpy.repeat, numpy.delete (relies on fancy indexing),
