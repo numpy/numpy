@@ -125,7 +125,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             }
             else if (PyArray_ContainsNA(self)) {
                 PyErr_SetString(PyExc_ValueError,
-                        "Cannot assign NA value to an array which "
+                        "Cannot assign NA to an array which "
                         "does not support NAs");
                 goto fail;
             }
@@ -1898,13 +1898,14 @@ assign_reduce_unit_zero(PyArrayObject *result, int preservena, void *data)
     return PyArray_AssignZero(result, NULL, preservena, NULL);
 }
 
-static void
+static int
 reduce_count_nonzero_inner_loop(NpyIter *iter,
                                             char **dataptr,
                                             npy_intp *strideptr,
                                             npy_intp *countptr,
                                             NpyIter_IterNextFunc *iternext,
                                             int needs_api,
+                                            npy_intp skip_first_count,
                                             void *data)
 {
     PyArray_NonzeroFunc *nonzero = (PyArray_NonzeroFunc *)data;
@@ -1933,15 +1934,18 @@ reduce_count_nonzero_inner_loop(NpyIter *iter,
     if (!needs_api) {
         NPY_END_THREADS;
     }
+
+    return (needs_api && PyErr_Occurred()) ? -1 : 0;
 }
 
-static void
+static int
 reduce_count_nonzero_masked_inner_loop(NpyIter *iter,
                                             char **dataptr,
                                             npy_intp *strideptr,
                                             npy_intp *countptr,
                                             NpyIter_IterNextFunc *iternext,
                                             int needs_api,
+                                            npy_intp skip_first_count,
                                             void *data)
 {
     PyArray_NonzeroFunc *nonzero = (PyArray_NonzeroFunc *)data;
@@ -1973,6 +1977,8 @@ reduce_count_nonzero_masked_inner_loop(NpyIter *iter,
     if (!needs_api) {
         NPY_END_THREADS;
     }
+
+    return (needs_api && PyErr_Occurred()) ? -1 : 0;
 }
 
 

@@ -693,6 +693,81 @@ NpyIter_HasIndex(NpyIter *iter)
 }
 
 /*NUMPY_API
+ * Checks to see whether this is the first time the elements
+ * of the specified reduction operand which the iterator points at are
+ * being seen for the first time. The function returns
+ * a reasonable answer for reduction operands and when buffering is
+ * disabled. The answer may be incorrect for buffered non-reduction
+ * operands.
+ *
+ * If this function returns true, the caller should also
+ * check the inner loop stride of the operand, because if
+ * that stride is 0, then only the first element of the innermost
+ * external loop is being visited for the first time.
+ *
+ * This function does not check that 'iop' is within bounds, because
+ * it is intended to be called within the iteration loop. If there
+ * is a good way to do the iteration without calling this function,
+ * that is preferable since this is a non-trivial property to check.
+ */
+NPY_NO_EXPORT npy_bool
+NpyIter_IsFirstVisit(NpyIter *iter, int iop)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    int idim, ndim = NIT_NDIM(iter);
+    int nop = NIT_NOP(iter);
+
+    NpyIter_AxisData *axisdata;
+    npy_intp sizeof_axisdata;
+
+    sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
+    axisdata = NIT_AXISDATA(iter);
+
+    for (idim = 0; idim < ndim; ++idim) {
+        npy_intp coord = NAD_INDEX(axisdata);
+        npy_intp stride = NAD_STRIDES(axisdata)[iop];
+
+        /*
+         * If this is a reduction dimension and the coordinate
+         * is not at the start, it's definitely not the first visit
+         */
+        if (stride == 0 && coord != 0) {
+            return 0;
+        }
+
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
+    }
+
+    /*
+     * In reduction buffering mode, there's a double loop being
+     * tracked in the buffer part of the iterator data structure.
+     * We need to check the two levels of that loop as well.
+     */
+    if (itflags&NPY_ITFLAG_BUFFER) {
+        NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
+        /* The outer reduce loop */
+        if (NBF_REDUCE_OUTERSTRIDES(bufferdata)[iop] == 0 &&
+                NBF_REDUCE_POS(bufferdata) != 0) {
+            return 0;
+        }
+        /*
+         * The inner reduce loop, when there's no external loop. This
+         * requires a more complicated check for the second "coord != 0"
+         * check, because this part of the loop is operating based on
+         * a global iterindex instead of a local coordinate like the rest.
+         */
+        if (!(itflags&NPY_ITFLAG_EXLOOP) &&
+                NBF_STRIDES(bufferdata)[iop] == 0 &&
+                NIT_ITERINDEX(iter) !=
+                        NBF_BUFITEREND(bufferdata) - NBF_SIZE(bufferdata)) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+/*NUMPY_API
  * Whether the iteration could be done with no buffering.
  */
 NPY_NO_EXPORT npy_bool

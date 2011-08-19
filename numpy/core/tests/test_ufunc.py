@@ -560,5 +560,76 @@ class TestUfunc(TestCase):
         np.add(a, b, out=c, where=[1,0,0,1,0,0,1,1,1,0])
         assert_equal(c, [2,1.5,1.5,2,1.5,1.5,2,2,2,1.5])
 
+    def check_unitless_reduction(self, a):
+        # np.minimum.reduce is a unitless reduction
+
+        # Verify that it sees the zero at various positions
+        a[...] = 1
+        a[1,0,0] = 0
+        assert_equal(np.minimum.reduce(a, axis=None), 0)
+        assert_equal(np.minimum.reduce(a, axis=(0,1)), [0,1,1,1])
+        assert_equal(np.minimum.reduce(a, axis=(0,2)), [0,1,1])
+        assert_equal(np.minimum.reduce(a, axis=(1,2)), [1,0])
+        assert_equal(np.minimum.reduce(a, axis=0),
+                                    [[0,1,1,1], [1,1,1,1], [1,1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=1),
+                                    [[1,1,1,1], [0,1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=2),
+                                    [[1,1,1], [0,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=()), a)
+
+        a[...] = 1
+        a[0,1,0] = 0
+        assert_equal(np.minimum.reduce(a, axis=None), 0)
+        assert_equal(np.minimum.reduce(a, axis=(0,1)), [0,1,1,1])
+        assert_equal(np.minimum.reduce(a, axis=(0,2)), [1,0,1])
+        assert_equal(np.minimum.reduce(a, axis=(1,2)), [0,1])
+        assert_equal(np.minimum.reduce(a, axis=0),
+                                    [[1,1,1,1], [0,1,1,1], [1,1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=1),
+                                    [[0,1,1,1], [1,1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=2),
+                                    [[1,0,1], [1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=()), a)
+
+        a[...] = 1
+        a[0,0,1] = 0
+        assert_equal(np.minimum.reduce(a, axis=None), 0)
+        assert_equal(np.minimum.reduce(a, axis=(0,1)), [1,0,1,1])
+        assert_equal(np.minimum.reduce(a, axis=(0,2)), [0,1,1])
+        assert_equal(np.minimum.reduce(a, axis=(1,2)), [0,1])
+        assert_equal(np.minimum.reduce(a, axis=0),
+                                    [[1,0,1,1], [1,1,1,1], [1,1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=1),
+                                    [[1,0,1,1], [1,1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=2),
+                                    [[0,1,1], [1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=()), a)
+
+    def test_unitless_reduction_corder(self):
+        a = np.empty((2,3,4), order='C')
+        self.check_unitless_reduction(a)
+
+    def test_unitless_reduction_forder(self):
+        a = np.empty((2,3,4), order='F')
+        self.check_unitless_reduction(a)
+
+    def test_unitless_reduction_otherorder(self):
+        a = np.empty((2,4,3), order='C').swapaxes(1,2)
+        self.check_unitless_reduction(a)
+
+    def test_unitless_reduction_noncontig(self):
+        a = np.empty((3,5,4), order='C').swapaxes(1,2)
+        a = a[1:, 1:, 1:]
+        self.check_unitless_reduction(a)
+
+    def test_unitless_reduction_noncontig_unaligned(self):
+        a = np.empty((3*4*5*8 + 1,), dtype='i1')
+        a = a[1:].view(dtype='f8')
+        a.shape = (3,4,5)
+        a = a[1:, 1:, 1:]
+        self.check_unitless_reduction(a)
+
+
 if __name__ == "__main__":
     run_module_suite()
