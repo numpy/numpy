@@ -1310,7 +1310,7 @@ class TestDateTime(TestCase):
                          '2010-02-15')
         except ImportError:
             import warnings
-            warnings.warn("Need pytz library to test datetime timezones")
+            warnings.warn("pytz not found, pytz compatibility tests skipped")
 
     def test_datetime_arange(self):
         # With two datetimes provided as strings
