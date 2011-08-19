@@ -2672,7 +2672,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
         else {
             if (PyArray_ContainsNA(src)) {
                 PyErr_SetString(PyExc_ValueError,
-                        "Cannot assign NA value to an array which "
+                        "Cannot assign NA to an array which "
                         "does not support NAs");
                 return -1;
             }

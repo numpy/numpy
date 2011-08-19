@@ -288,6 +288,9 @@ PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
  * skipna  : If True, indicates that the reduction is being calculated
  *           as if the NA values are being dropped from the computation
  *           instead of accumulating into an NA result.
+ * out_skip_first_count : This gets populated with the number of first-visit
+ *                        elements that should be skipped during the
+ *                        iteration loop.
  * funcname : The name of the reduction operation, for the purpose of
  *            better quality error messages. For example, "numpy.max"
  *            would be a good name for NumPy's max function.
@@ -298,13 +301,17 @@ PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
 NPY_NO_EXPORT PyArrayObject *
 PyArray_InitializeReduceResult(
                     PyArrayObject *result, PyArrayObject *operand,
-                    npy_bool *axis_flags, int skipna, const char *funcname)
+                    npy_bool *axis_flags, int skipna,
+                    npy_intp *out_skip_first_count, const char *funcname)
 {
     npy_intp *strides, *shape, shape_orig[NPY_MAXDIMS], shape0;
     PyArrayObject *op_view = NULL;
-    int idim, ndim;
+    int idim, ndim, nreduce_axes;
 
     ndim = PyArray_NDIM(operand);
+
+    /* Default to no skipping first-visit elements in the iteration */
+    *out_skip_first_count = 0;
 
     /*
      * If 'skipna' is False, or 'operand' has no NA mask in which
@@ -389,13 +396,16 @@ PyArray_InitializeReduceResult(
      * then return a view to the rest.
      *
      * Adjust the shape to only look at the first element along
-     * any of the reduction axes.
+     * any of the reduction axes. We count the number of reduction axes
+     * at the same time.
      */
     shape = PyArray_SHAPE(op_view);
+    nreduce_axes = 0;
     memcpy(shape_orig, shape, ndim * sizeof(npy_intp));
     for (idim = 0; idim < ndim; ++idim) {
         if (axis_flags[idim]) {
             shape[idim] = 1;
+            ++nreduce_axes;
         }
     }
 
@@ -410,22 +420,38 @@ PyArray_InitializeReduceResult(
         return NULL;
     }
 
-    /* Adjust the shape to only look at the remaining elements */
-    strides = PyArray_STRIDES(op_view);
-    for (idim = 0; idim < ndim; ++idim) {
-        if (axis_flags[idim]) {
-            shape[idim] = shape_orig[idim] - 1;
-            ((PyArrayObject_fieldaccess *)op_view)->data += strides[idim];
-        }
-    }
-    if (PyArray_HASMASKNA(op_view)) {
-        strides = PyArray_MASKNA_STRIDES(op_view);
+    /*
+     * If there are zero or one reduction axes, adjust the view's
+     * shape to only look at the remaining elements
+     */
+    if (nreduce_axes <= 1) {
+        strides = PyArray_STRIDES(op_view);
         for (idim = 0; idim < ndim; ++idim) {
             if (axis_flags[idim]) {
-                ((PyArrayObject_fieldaccess *)op_view)->maskna_data +=
-                                                            strides[idim];
+                shape[idim] = shape_orig[idim] - 1;
+                ((PyArrayObject_fieldaccess *)op_view)->data += strides[idim];
             }
         }
+        if (PyArray_HASMASKNA(op_view)) {
+            strides = PyArray_MASKNA_STRIDES(op_view);
+            for (idim = 0; idim < ndim; ++idim) {
+                if (axis_flags[idim]) {
+                    ((PyArrayObject_fieldaccess *)op_view)->maskna_data +=
+                                                                strides[idim];
+                }
+            }
+        }
+    }
+    /*
+     * Otherwise iterate over the whole operand, but tell the inner loop
+     * to skip the elements we already copied by setting the skip_first_count.
+     */
+    else {
+        *out_skip_first_count = PyArray_SIZE(result);
+
+        Py_DECREF(op_view);
+        Py_INCREF(operand);
+        op_view = operand;
     }
 
     return op_view;
@@ -465,6 +491,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
 {
     int use_maskna;
     PyArrayObject *result = NULL, *op_view = NULL;
+    npy_intp skip_first_count = 0;
 
     /* Iterator parameters */
     NpyIter *iter = NULL;
@@ -481,7 +508,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     if (use_maskna && !skipna && out != NULL && !PyArray_HASMASKNA(out)) {
         if (PyArray_ContainsNA(operand)) {
             PyErr_SetString(PyExc_ValueError,
-                    "Cannot assign NA value to an array which "
+                    "Cannot assign NA to an array which "
                     "does not support NAs");
             goto fail;
         }
@@ -533,7 +560,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     }
     else {
         op_view = PyArray_InitializeReduceResult(result, operand,
-                            axis_flags, skipna, funcname);
+                            axis_flags, skipna, &skip_first_count, funcname);
         if (op_view == NULL) {
             Py_DECREF(result);
             return NULL;
@@ -623,8 +650,11 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                 goto fail;
             }
 
-            inner_loop(iter, dataptr, strideptr, countptr,
-                                                iternext, needs_api, data);
+            if (inner_loop(iter, dataptr, strideptr, countptr,
+                            iternext, needs_api, skip_first_count, data) < 0) {
+
+                goto fail;
+            }
         }
         /* Masked reduction */
         else {
@@ -635,12 +665,10 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                 goto fail;
             }
 
-            masked_inner_loop(iter, dataptr, strideptr, countptr,
-                                                iternext, needs_api, data);
-        }
-
-        if (PyErr_Occurred()) {
-            goto fail;
+            if (masked_inner_loop(iter, dataptr, strideptr, countptr,
+                            iternext, needs_api, skip_first_count, data) < 0) {
+                goto fail;
+            }
         }
     }
 

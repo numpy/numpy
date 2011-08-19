@@ -435,7 +435,7 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
         if (PyArray_ContainsNA(wheremask)) {
             if (!dst_has_maskna) {
                 PyErr_SetString(PyExc_ValueError,
-                        "Cannot assign NA value to an array which "
+                        "Cannot assign NA to an array which "
                         "does not support NAs");
                 goto fail;
             }
