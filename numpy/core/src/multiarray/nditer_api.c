@@ -700,15 +700,19 @@ NpyIter_HasIndex(NpyIter *iter)
  * disabled. The answer may be incorrect for buffered non-reduction
  * operands.
  *
+ * This function is intended to be used in EXTERNAL_LOOP mode only,
+ * and will produce some wrong answers when that mode is not enabled.
+ *
  * If this function returns true, the caller should also
  * check the inner loop stride of the operand, because if
  * that stride is 0, then only the first element of the innermost
  * external loop is being visited for the first time.
  *
- * This function does not check that 'iop' is within bounds, because
- * it is intended to be called within the iteration loop. If there
- * is a good way to do the iteration without calling this function,
- * that is preferable since this is a non-trivial property to check.
+ * WARNING: For performance reasons, 'iop' is not bounds-checked,
+ *          it is not confirmed that 'iop' is actually a reduction
+ *          operand, and it is not confirmed that EXTERNAL_LOOP
+ *          mode is enabled. These checks are the responsibility of
+ *          the caller, and should be done outside of any inner loops.
  */
 NPY_NO_EXPORT npy_bool
 NpyIter_IsFirstVisit(NpyIter *iter, int iop)
@@ -748,18 +752,6 @@ NpyIter_IsFirstVisit(NpyIter *iter, int iop)
         /* The outer reduce loop */
         if (NBF_REDUCE_OUTERSTRIDES(bufferdata)[iop] == 0 &&
                 NBF_REDUCE_POS(bufferdata) != 0) {
-            return 0;
-        }
-        /*
-         * The inner reduce loop, when there's no external loop. This
-         * requires a more complicated check for the second "coord != 0"
-         * check, because this part of the loop is operating based on
-         * a global iterindex instead of a local coordinate like the rest.
-         */
-        if (!(itflags&NPY_ITFLAG_EXLOOP) &&
-                NBF_STRIDES(bufferdata)[iop] == 0 &&
-                NIT_ITERINDEX(iter) !=
-                        NBF_BUFITEREND(bufferdata) - NBF_SIZE(bufferdata)) {
             return 0;
         }
     }
