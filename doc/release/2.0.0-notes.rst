@@ -63,7 +63,7 @@ Differences with R:
       This may have a practical advantage in spite of violating the
       NA theoretical model, so NumPy could adopt the behavior if necessary
 
-Reduction UFuncs Generalize axis= Parmaeter
+Reduction UFuncs Generalize axis= Parameter
 -------------------------------------------
 
 Any ufunc.reduce function call, as well as other reductions like
@@ -77,7 +77,7 @@ Reduction UFuncs New keepdims= Parameter
 
 There is a new keepdims= parameter, which if set to True, doesn't
 throw away the reduction axes but instead sets them to have size one.
-when this option is set, the reduction result will broadcast correctly
+When this option is set, the reduction result will broadcast correctly
 to the original operand which was reduced.
 
 
@@ -97,7 +97,8 @@ errors in projects that depend on NumPy.
 The functions np.diag, np.diagonal, and <ndarray>.diagonal now return a
 view into the original array instead of making a copy. This makes these
 functions more consistent with NumPy's general approach of taking views
-where possible, and performs much faster as well.
+where possible, and performs much faster as well. This has the
+potential to break code that assumes a copy is made instead of a view.
 
 The function np.concatenate tries to match the layout of its input
 arrays. Previously, the layout did not follow any particular reason,
