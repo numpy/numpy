@@ -983,7 +983,7 @@ PyArray_CreateSortedStridePerm(int ndim, npy_intp *shape,
 }
 
 static NPY_INLINE npy_intp
-intp_abs(npy_intp x)
+s_intp_abs(npy_intp x)
 {
     return (x < 0) ? -x : x;
 }
@@ -1030,8 +1030,8 @@ PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
             for (iarrays = 0; iarrays < narrays; ++iarrays) {
                 if (PyArray_SHAPE(arrays[iarrays])[j0] != 1 &&
                             PyArray_SHAPE(arrays[iarrays])[j1] != 1) {
-                    if (intp_abs(PyArray_STRIDES(arrays[iarrays])[j0]) <=
-                            intp_abs(PyArray_STRIDES(arrays[iarrays])[j1])) {
+                    if (s_intp_abs(PyArray_STRIDES(arrays[iarrays])[j0]) <=
+                            s_intp_abs(PyArray_STRIDES(arrays[iarrays])[j1])) {
                         /*
                          * Set swap even if it's not ambiguous already,
                          * because in the case of conflicts between
