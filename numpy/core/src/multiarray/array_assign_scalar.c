@@ -38,12 +38,13 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
     int idim;
     npy_intp shape_it[NPY_MAXDIMS], dst_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
-    NPY_BEGIN_THREADS_DEF;
 
     PyArray_StridedUnaryOp *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
     int aligned, needs_api = 0;
     npy_intp src_itemsize = src_dtype->elsize;
+
+    NPY_BEGIN_THREADS_DEF;
 
     /* Check alignment */
     aligned = raw_array_is_aligned(ndim, dst_data, dst_strides,
@@ -108,12 +109,13 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
     npy_intp shape_it[NPY_MAXDIMS], dst_strides_it[NPY_MAXDIMS];
     npy_intp wheremask_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
-    NPY_BEGIN_THREADS_DEF;
 
     PyArray_MaskedStridedUnaryOp *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
     int aligned, needs_api = 0;
     npy_intp src_itemsize = src_dtype->elsize;
+
+    NPY_BEGIN_THREADS_DEF;
 
     /* Check alignment */
     aligned = raw_array_is_aligned(ndim, dst_data, dst_strides,
@@ -186,7 +188,6 @@ raw_array_wheremasked_assign_scalar_preservena(int ndim, npy_intp *shape,
     npy_intp maskna_strides_it[NPY_MAXDIMS];
     npy_intp wheremask_strides_it[NPY_MAXDIMS];
     npy_intp coord[NPY_MAXDIMS];
-    NPY_BEGIN_THREADS_DEF;
 
     PyArray_MaskedStridedUnaryOp *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
@@ -198,6 +199,8 @@ raw_array_wheremasked_assign_scalar_preservena(int ndim, npy_intp *shape,
 
     char *maskna_buffer;
     npy_intp maskna_itemsize;
+
+    NPY_BEGIN_THREADS_DEF;
 
     /* Check alignment */
     aligned = raw_array_is_aligned(ndim, dst_data, dst_strides,
