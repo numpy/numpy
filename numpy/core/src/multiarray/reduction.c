@@ -548,6 +548,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
 
     flags = NPY_ITER_BUFFERED |
             NPY_ITER_EXTERNAL_LOOP |
+            NPY_ITER_GROWINNER |
             NPY_ITER_DONT_NEGATE_STRIDES |
             NPY_ITER_ZEROSIZE_OK |
             NPY_ITER_REDUCE_OK |
