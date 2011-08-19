@@ -110,11 +110,11 @@ Using an External Loop
 ----------------------
 
 In all the examples so far, the elements of `a` are provided by the
-iterator one at a time. While this is simple and convenient, it is
-not very efficient. A better approach is to move the one-dimensional
-inner loop out of the iterator and into your code. This way, NumPy's
-vectorized operations can be used on larger chunks of the elements
-being visited.
+iterator one at a time, because all the looping logic is internal to the
+iterator. While this is simple and convenient, it is not very efficient. A
+better approach is to move the one-dimensional innermost loop into your
+code, external to the iterator. This way, NumPy's vectorized operations
+can be used on larger chunks of the elements being visited.
 
 The :class:`nditer` will try to provide chunks that are
 as large as possible to the inner loop. By forcing 'C' and 'F' order,
@@ -233,15 +233,17 @@ Iterating as a Specific Data Type
 There are times when it is necessary to treat an array as a different
 data type than it is stored as. For instance, one may want to do all
 computations on 64-bit floats, even if the arrays being manipulated
-are 32-bit floats.
+are 32-bit floats. Except when writing low-level C code, it's generally
+better to let the iterator handle the copying or buffering instead
+of casting the data type yourself in the inner loop.
 
 There are two mechanisms which allow this to be done, temporary copies
-and buffering mode. With temporary copies, a copy of the entire array
-is made, then iteration is done in the copy. Write access is permitted
-through a mode which updates the original array after all the iteration
-is complete. The major drawback of temporary copies is that the temporary
-copy may consume a large amount of memory, particularly if the iteration
-data type has a larger itemsize than the original one.
+and buffering mode. With temporary copies, a copy of the entire array is
+made with the new data type, then iteration is done in the copy. Write
+access is permitted through a mode which updates the original array after
+all the iteration is complete. The major drawback of temporary copies is
+that the temporary copy may consume a large amount of memory, particularly
+if the iteration data type has a larger itemsize than the original one.
 
 Buffering mode mitigates the memory usage issue and is more cache-friendly
 than making temporary copies. Except for special cases, where the whole
@@ -397,13 +399,17 @@ just the two operands to the iterator, and it handled the rest.
 
 When adding the 'out' parameter, we have to explicitly provide those flags,
 because if someone passes in an array as 'out', the iterator will default
-to 'readonly', and our inner loop would fail. While we're at it, let's
-also introduce the 'no_broadcast' flag, which will prevent the output
-from being broadcast. It would already error in this case because an
-output that is being broadcast requires a reduction operation, something
-which must be explicitly enabled in a global flag, the error message
-that results from disabling broadcasting is much more understandable
-for end-users.
+to 'readonly', and our inner loop would fail.
+
+While we're at it, let's also introduce the 'no_broadcast' flag, which
+will prevent the output from being broadcast. This is important, because
+we only want one input value for each output. Aggregating more than one
+input value is a reduction operation which requires special handling.
+It would already raise an error because reductions must be explicitly
+enabled in an iterator flag, but the error message that results from
+disabling broadcasting is much more understandable for end-users.
+To see how to generalize the square function to a reduction, look
+at the sum of squares function in the section about Cython.
 
 For completeness, we'll also add the 'external_loop' and 'buffered'
 flags, as these are what you will typically want for performance
@@ -439,12 +445,12 @@ reasons.
 Outer Product Iteration
 -----------------------
 
-Any binary operation can be extended to an array operation in an
-outer product fashion, and the :class:`nditer` object provides a
-way to accomplish this by explicitly mapping the axes of the operands.
-It is also possible to do this with :const:`newaxis` indexing, but
-we will show you how to directly use the nditer `op_axes` parameter to
-accomplish this with no intermediate views.
+Any binary operation can be extended to an array operation in an outer
+product fashion like in :func:`outer`, and the :class:`nditer` object
+provides a way to accomplish this by explicitly mapping the axes of
+the operands.  It is also possible to do this with :const:`newaxis`
+indexing, but we will show you how to directly use the nditer `op_axes`
+parameter to accomplish this with no intermediate views.
 
 We'll do a simple outer product, placing the dimensions of the first
 operand before the dimensions of the second operand. The `op_axes`
