@@ -2627,7 +2627,6 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     NpyAuxData *maskedinnerloopdata = NULL;
 
     char *ufunc_name = self->name ? self->name : "(unknown)";
-    NPY_BEGIN_THREADS_DEF;
 
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -2638,6 +2637,8 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     PyArrayObject *op[3];
     PyArray_Descr *op_dtypes[2] = {NULL, NULL};
     npy_uint32 flags, op_flags[2];
+
+    NPY_BEGIN_THREADS_DEF;
 
     ndim = PyArray_NDIM(arr);
 
@@ -3155,6 +3156,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     if (iter && NpyIter_GetIterSize(iter) != 0) {
         char *dataptr_copy[3];
         npy_intp stride_copy[3];
+        npy_intp count_m1, stride0, stride1;
 
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
@@ -3170,8 +3172,8 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 
 
         /* Execute the loop with just the outer iterator */
-        npy_intp count_m1 = PyArray_DIM(op[1], axis)-1;
-        npy_intp stride0 = 0, stride1 = PyArray_STRIDE(op[1], axis);
+        count_m1 = PyArray_DIM(op[1], axis)-1;
+        stride0 = 0, stride1 = PyArray_STRIDE(op[1], axis);
 
         NPY_UF_DBG_PRINT("UFunc: Reduce loop with just outer iterator\n");
 
@@ -3361,13 +3363,13 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
     int buffersize = 0, errormask = 0;
     PyObject *errobj = NULL;
 
+    NPY_BEGIN_THREADS_DEF;
+
     if (PyArray_HASMASKNA(arr)) {
         PyErr_SetString(PyExc_RuntimeError,
                     "ufunc reduceat doesn't support NA masked arrays yet");
         return NULL;
     }
-
-    NPY_BEGIN_THREADS_DEF;
 
     reduceat_ind = (npy_intp *)PyArray_DATA(ind);
     ind_size = PyArray_DIM(ind, 0);

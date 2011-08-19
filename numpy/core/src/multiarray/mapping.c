@@ -847,10 +847,12 @@ array_boolean_subscript(PyArrayObject *self,
             npy_intp self_stride = innerstrides[0];
             npy_intp bmask_stride = innerstrides[1];
             npy_intp subloopsize;
+            char *self_data;
+            char *bmask_data;
             do {
                 innersize = *NpyIter_GetInnerLoopSizePtr(iter);
-                char *self_data = dataptrs[0];
-                char *bmask_data = dataptrs[1];
+                self_data = dataptrs[0];
+                bmask_data = dataptrs[1];
 
                 while (innersize > 0) {
                     /* Skip masked values */
@@ -882,11 +884,14 @@ array_boolean_subscript(PyArrayObject *self,
             npy_intp bmask_stride = innerstrides[1];
             npy_intp maskna_stride = innerstrides[2];
             npy_intp subloopsize;
+            char *self_data;
+            char *bmask_data;
+            char *maskna_data;
             do {
                 innersize = *NpyIter_GetInnerLoopSizePtr(iter);
-                char *self_data = dataptrs[0];
-                char *bmask_data = dataptrs[1];
-                char *maskna_data = dataptrs[2];
+                self_data = dataptrs[0];
+                bmask_data = dataptrs[1];
+                maskna_data = dataptrs[2];
 
                 while (innersize > 0) {
                     /* Skip masked values */
@@ -1098,6 +1103,8 @@ array_ass_boolean_subscript(PyArrayObject *self,
             npy_intp self_stride = innerstrides[0];
             npy_intp bmask_stride = innerstrides[1];
             npy_intp subloopsize;
+            char *self_data;
+            char *bmask_data;
 
             /* Get a dtype transfer function */
             NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
@@ -1114,8 +1121,8 @@ array_ass_boolean_subscript(PyArrayObject *self,
 
             do {
                 innersize = *NpyIter_GetInnerLoopSizePtr(iter);
-                char *self_data = dataptrs[0];
-                char *bmask_data = dataptrs[1];
+                self_data = dataptrs[0];
+                bmask_data = dataptrs[1];
 
                 while (innersize > 0) {
                     /* Skip masked values */
@@ -1152,6 +1159,9 @@ array_ass_boolean_subscript(PyArrayObject *self,
             npy_intp self_maskna_stride = innerstrides[2];
             npy_intp subloopsize;
             PyArray_Descr *v_maskna_dtype;
+            char *self_data;
+            char *bmask_data;
+            char *self_maskna_data;
 
             if (PyArray_HASMASKNA(v)) {
                 v_maskna_dtype = PyArray_MASKNA_DTYPE(v);
@@ -1184,9 +1194,9 @@ array_ass_boolean_subscript(PyArrayObject *self,
 
             do {
                 innersize = *NpyIter_GetInnerLoopSizePtr(iter);
-                char *self_data = dataptrs[0];
-                char *bmask_data = dataptrs[1];
-                char *self_maskna_data = dataptrs[2];
+                self_data = dataptrs[0];
+                bmask_data = dataptrs[1];
+                self_maskna_data = dataptrs[2];
 
                 while (innersize > 0) {
                     /* Skip masked values */
