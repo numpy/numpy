@@ -43,7 +43,7 @@ typedef int (PyArray_AssignReduceUnitFunc)(PyArrayObject *result,
  *              npy_intp count = *countptr;
  *
  *              // Skip any first-visit elements
- *              if (NpyIter_IsFirstVisit(iter, 1)) {
+ *              if (NpyIter_IsFirstVisit(iter, 0)) {
  *                  if (stride0 == 0) {
  *                      --count;
  *                      --skip_first_count;

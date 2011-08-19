@@ -2881,7 +2881,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                     npy_intp count = *count_ptr;
 
                     /* Skip any first-visit elements */
-                    if (NpyIter_IsFirstVisit(iter, 1)) {
+                    if (NpyIter_IsFirstVisit(iter, 0)) {
                         if (stride[0] == 0) {
                             --count;
                             --skip_first_count;
@@ -2933,7 +2933,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                     npy_intp count = *count_ptr;
 
                     /* Skip any first-visit elements */
-                    if (NpyIter_IsFirstVisit(iter, 1)) {
+                    if (NpyIter_IsFirstVisit(iter, 0)) {
                         if (stride[0] == 0) {
                             --count;
                             --skip_first_count;
