@@ -874,16 +874,16 @@ _convert_from_dict(PyObject *obj, int align)
 
     totalsize = 0;
     for (i = 0; i < n; i++) {
-        PyObject *tup, *descr, *index, *title, *name, *off;
+        PyObject *tup, *descr, *ind, *title, *name, *off;
         int len, ret, _align = 1;
         PyArray_Descr *newdescr;
 
         /* Build item to insert (descr, offset, [title])*/
         len = 2;
         title = NULL;
-        index = PyInt_FromLong(i);
+        ind = PyInt_FromLong(i);
         if (titles) {
-            title=PyObject_GetItem(titles, index);
+            title=PyObject_GetItem(titles, ind);
             if (title && title != Py_None) {
                 len = 3;
             }
@@ -893,7 +893,7 @@ _convert_from_dict(PyObject *obj, int align)
             PyErr_Clear();
         }
         tup = PyTuple_New(len);
-        descr = PyObject_GetItem(descrs, index);
+        descr = PyObject_GetItem(descrs, ind);
         if (!descr) {
             goto fail;
         }
@@ -906,7 +906,7 @@ _convert_from_dict(PyObject *obj, int align)
         Py_DECREF(descr);
         if (ret == PY_FAIL) {
             Py_DECREF(tup);
-            Py_DECREF(index);
+            Py_DECREF(ind);
             goto fail;
         }
         PyTuple_SET_ITEM(tup, 0, (PyObject *)newdescr);
@@ -916,7 +916,7 @@ _convert_from_dict(PyObject *obj, int align)
         }
         if (offsets) {
             long offset;
-            off = PyObject_GetItem(offsets, index);
+            off = PyObject_GetItem(offsets, ind);
             if (!off) {
                 goto fail;
             }
@@ -949,11 +949,11 @@ _convert_from_dict(PyObject *obj, int align)
         if (len == 3) {
             PyTuple_SET_ITEM(tup, 2, title);
         }
-        name = PyObject_GetItem(names, index);
+        name = PyObject_GetItem(names, ind);
         if (!name) {
             goto fail;
         }
-        Py_DECREF(index);
+        Py_DECREF(ind);
 #if defined(NPY_PY3K)
         if (!PyUString_Check(name)) {
 #else
