@@ -111,7 +111,6 @@ def test_na_other_operations():
     assert_equal(type(np.NA / 2j), np.NAType)
     assert_equal(type(2j / np.NA), np.NAType)
     assert_equal(type(np.NA // 2j), np.NAType)
-    assert_equal(type(2j // np.NA), np.NAType)
     assert_equal(type(np.NA % 6), np.NAType)
     assert_equal(type(6 % np.NA), np.NAType)
     assert_equal(type(np.NA ** 2), np.NAType)
