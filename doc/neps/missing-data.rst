@@ -419,22 +419,34 @@ New functions added to the numpy namespace are::
 
 New functions added to the ndarray are::
 
-    arr.copy(..., replacena=None)
+    arr.copy(..., replacena=np.NA)
         Modification to the copy function which replaces NA values,
         either masked or with the NA bitpattern, with the 'replacena='
-        parameter suppled. When 'replacena' isn't None, the copied
+        parameter suppled. When 'replacena' isn't NA, the copied
         array is unmasked and has the 'NA' part stripped from the
-        parameterized type ('NA[f8]' becomes just 'f8').
+        parameterized dtype ('NA[f8]' becomes just 'f8').
+        
+        The default for replacena is chosen to be np.NA instead of None,
+        because it may be desirable to replace NA with None in an
+        NA-masked object array.
+        
+        For future multi-NA support, 'replacena' could accept a dictionary
+        mapping the NA payload to the value to substitute for that
+        particular NA. NAs with payloads not appearing in the dictionary
+        would remain as NA unless a 'default' key was also supplied.
+
+        Both the parameter to replacena and the values in the dictionaries
+        can be either scalars or arrays which get broadcast onto 'arr'.
 
     arr.view(maskna=True) [IMPLEMENTED]
         This is a shortcut for
         >>> a = arr.view()
-        >>> a.flags.hasmaskna = True
+        >>> a.flags.maskna = True
 
     arr.view(ownmaskna=True) [IMPLEMENTED]
         This is a shortcut for
         >>> a = arr.view()
-        >>> a.flags.hasmaskna = True
+        >>> a.flags.maskna = True
         >>> a.flags.ownmaskna = True
 
 Element-wise UFuncs With Missing Values
