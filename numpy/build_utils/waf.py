@@ -36,6 +36,10 @@ def validate_arguments(self, kw):
     if not 'errmsg' in kw:
         kw['errmsg'] = 'no !'
 
+    if 'define_name' in kw:
+        comment = kw.get('define_comment', None)
+        self.undefine_with_comment(kw['define_name'], comment)
+
 def try_compile(self, kw):
     self.start_msg(kw["msg"])
     ret = None
@@ -418,6 +422,17 @@ def define_with_comment(conf, define, value, comment=None, quote=True):
     return conf.define(define, value, quote)
 
 @waflib.Configure.conf
+def undefine_with_comment(conf, define, comment=None):
+    if comment is None:
+        return conf.undefine(define)
+
+    comment_tbl = conf.env[DEFINE_COMMENTS] or {}
+    comment_tbl[define] = comment
+    conf.env[DEFINE_COMMENTS] = comment_tbl
+
+    conf.undefine(define)
+
+@waflib.Configure.conf
 def get_comment(self, key):
     assert key and isinstance(key, str)
 
@@ -456,11 +471,11 @@ def get_config_header(self, defines=True, headers=False):
 
     if defines:
         for x in self.env[DEFKEYS]:
+            cmt = self.get_comment(x)
+            if cmt is not None:
+                lst.append(cmt)
             if self.is_defined(x):
                 val = self.get_define(x)
-                cmt = self.get_comment(x)
-                if cmt is not None:
-                    lst.append(cmt)
                 lst.append('#define %s %s\n' % (x, val))
             else:
                 lst.append('/* #undef %s */\n' % x)
