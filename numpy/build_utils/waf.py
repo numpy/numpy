@@ -373,7 +373,10 @@ def post_check(self, *k, **kw):
         if kw['success'] is not None:
             is_success = kw['success']
     else:
-        is_success = (kw['success'] == 0)
+        if kw["success"] == 0:
+            is_success = 1
+        else:
+            is_success = 0
 
     def define_or_stuff():
         nm = kw['define_name']
