@@ -18,6 +18,7 @@
 #include "ctors.h"
 #include "usertypes.h"
 #include "_datetime.h"
+#include "na_singleton.h"
 
 #include "numpyos.h"
 
@@ -142,6 +143,12 @@ static int
     if (PyArray_IsScalar(op, @kind@)) {
         temp = ((Py@kind@ScalarObject *)op)->obval;
     }
+    else if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
+        return -1;
+    }
     else {
         temp = (@type@)@func2@(op);
     }
@@ -204,7 +211,16 @@ static int
     c@type@ temp;
     int rsize;
 
-    if (!(PyArray_IsScalar(op, @kind@))) {
+    if (PyArray_IsScalar(op, @kind@)){
+        temp = ((Py@kind@ScalarObject *)op)->obval;
+    }
+    else if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
+        return -1;
+    }
+    else {
         if (PyArray_Check(op) && (PyArray_NDIM((PyArrayObject *)op) == 0)) {
             op2 = PyArray_DESCR((PyArrayObject *)op)->f->getitem(
                                     PyArray_BYTES((PyArrayObject *)op),
@@ -227,9 +243,7 @@ static int
         temp.real = (@type@) oop.real;
         temp.imag = (@type@) oop.imag;
     }
-    else {
-        temp = ((Py@kind@ScalarObject *)op)->obval;
-    }
+
     memcpy(ov, &temp, PyArray_DESCR(ap)->elsize);
     if (!PyArray_ISNOTSWAPPED(ap)) {
         byte_swap_vector(ov, 2, sizeof(@type@));
@@ -258,6 +272,12 @@ LONGDOUBLE_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
 
     if (PyArray_IsScalar(op, LongDouble)) {
         temp = ((PyLongDoubleScalarObject *)op)->obval;
+    }
+    else if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
+        return -1;
     }
     else {
         temp = (longdouble) MyPyFloat_AsDouble(op);
@@ -351,6 +371,12 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
             PySequence_Check(op) && PySequence_Size(op) > 0) {
         PyErr_SetString(PyExc_ValueError,
                 "setting an array element with a sequence");
+        return -1;
+    }
+    if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
         return -1;
     }
     /* Sequence_Size might have returned an error */
@@ -455,6 +481,12 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
             && PySequence_Check(op) && PySequence_Size(op) != 0) {
         PyErr_SetString(PyExc_ValueError,
                 "cannot set an array element with a sequence");
+        return -1;
+    }
+    if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
         return -1;
     }
 #if defined(NPY_PY3K)
@@ -750,6 +782,13 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         res = PyArray_CopyObject(ret, op);
         Py_DECREF(ret);
         return res;
+    }
+
+    if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
+        return -1;
     }
 
     /* Default is to use buffer interface to set item */
