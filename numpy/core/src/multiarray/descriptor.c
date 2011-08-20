@@ -2764,15 +2764,15 @@ arraydescr_struct_list_str(PyArray_Descr *dtype)
         }
         /* Special case subarray handling here */
         if (PyDataType_HASSUBARRAY(fld_dtype)) {
-            tmp = arraydescr_short_construction_repr(
-                            fld_dtype->subarray->base, 0);
+            tmp = arraydescr_construction_repr(
+                            fld_dtype->subarray->base, 0, 1);
             PyUString_ConcatAndDel(&ret, tmp);
             PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
             PyUString_ConcatAndDel(&ret,
                             PyObject_Str(fld_dtype->subarray->shape));
         }
         else {
-            tmp = arraydescr_short_construction_repr(fld_dtype, 0);
+            tmp = arraydescr_construction_repr(fld_dtype, 0, 1);
             PyUString_ConcatAndDel(&ret, tmp);
         }
         PyUString_ConcatAndDel(&ret, PyUString_FromString(")"));
@@ -2830,7 +2830,7 @@ arraydescr_struct_dict_str(PyArray_Descr *dtype, int includealignedflag)
         if (title != NULL && title != Py_None) {
             has_titles = 1;
         }
-        tmp = arraydescr_short_construction_repr(fld_dtype, 0);
+        tmp = arraydescr_construction_repr(fld_dtype, 0, 1);
         PyUString_ConcatAndDel(&ret, tmp);
         if (i != names_size - 1) {
             PyUString_ConcatAndDel(&ret, PyUString_FromString(","));
@@ -2914,7 +2914,7 @@ arraydescr_subarray_str(PyArray_Descr *dtype)
     PyObject *p, *ret;
 
     ret = PyUString_FromString("(");
-    p = arraydescr_short_construction_repr(dtype->subarray->base, 0);
+    p = arraydescr_construction_repr(dtype->subarray->base, 0, 1);
     PyUString_ConcatAndDel(&ret, p);
     PyUString_ConcatAndDel(&ret, PyUString_FromString(", "));
     PyUString_ConcatAndDel(&ret, PyObject_Str(dtype->subarray->shape));
@@ -2968,26 +2968,10 @@ arraydescr_struct_repr(PyArray_Descr *dtype)
     return s;
 }
 
-/*
- * This creates a shorter repr using 'kind' and 'itemsize',
- * instead of the longer type name. This is the object passed
- * as the first parameter to the dtype constructor, and if no
- * additional constructor parameters are given, will reproduce
- * the exact memory layout.
- *
- * If 'includealignflag' is true, this includes the 'align=True' parameter
- * inside the struct dtype construction dict when needed. Use this flag
- * if you want a proper repr string without the 'dtype()' part around it.
- *
- * If 'includealignflag' is false, this does not preserve the
- * 'align=True' parameter or sticky NPY_ALIGNED_STRUCT flag for
- * struct arrays like the regular repr does, because the 'align'
- * flag is not part of first dtype constructor parameter. This
- * mode is intended for a full 'repr', where the 'align=True' is
- * provided as the second parameter.
- */
+/* See descriptor.h for documentation */
 NPY_NO_EXPORT PyObject *
-arraydescr_short_construction_repr(PyArray_Descr *dtype, int includealignflag)
+arraydescr_construction_repr(PyArray_Descr *dtype, int includealignflag,
+                                int shortrepr)
 {
     PyObject *ret;
     PyArray_DatetimeMetaData *meta;
@@ -3019,11 +3003,44 @@ arraydescr_short_construction_repr(PyArray_Descr *dtype, int includealignflag)
 
     /* Handle booleans, numbers, and custom dtypes */
     if (dtype->type_num == NPY_BOOL) {
-        return PyUString_FromString("'?'");
+        if (shortrepr) {
+            return PyUString_FromString("'?'");
+        }
+        else {
+            return PyUString_FromString("'bool'");
+        }
     }
     else if (PyTypeNum_ISNUMBER(dtype->type_num)) {
-        return PyUString_FromFormat("'%s%c%d'", byteorder, (int)dtype->kind,
-                                                dtype->elsize);
+        /* Short repr with endianness, like '<f8' */
+        if (shortrepr || (dtype->byteorder != NPY_NATIVE &&
+                          dtype->byteorder != NPY_IGNORE)) {
+            return PyUString_FromFormat("'%s%c%d'", byteorder,
+                                        (int)dtype->kind, dtype->elsize);
+        }
+        /* Longer repr, like 'float64' */
+        else {
+            char *kindstr;
+            switch (dtype->kind) {
+                case 'u':
+                    kindstr = "uint";
+                    break;
+                case 'i':
+                    kindstr = "int";
+                    break;
+                case 'f':
+                    kindstr = "float";
+                    break;
+                case 'c':
+                    kindstr = "complex";
+                    break;
+                default:
+                    PyErr_Format(PyExc_RuntimeError,
+                            "internal dtype repr error, unknown kind '%c'",
+                            (int)dtype->kind);
+                    return NULL;
+            }
+            return PyUString_FromFormat("'%s%d'", kindstr, 8*dtype->elsize);
+        }
     }
     else if (PyTypeNum_ISUSERDEF(dtype->type_num)) {
         char *s = strrchr(dtype->typeobj->tp_name, '.');
@@ -3102,27 +3119,17 @@ arraydescr_short_construction_repr(PyArray_Descr *dtype, int includealignflag)
 static PyObject *
 arraydescr_repr(PyArray_Descr *dtype)
 {
-    PyObject *sub, *s;
+    PyObject *ret;
 
     if (PyDataType_HASFIELDS(dtype)) {
         return arraydescr_struct_repr(dtype);
     }
     else {
-        s = PyUString_FromString("dtype(");
-        sub = arraydescr_str(dtype);
-        if (sub == NULL) {
-            return NULL;
-        }
-        if (!PyDataType_HASSUBARRAY(dtype)) {
-            PyObject *t=PyUString_FromString("'");
-            PyUString_Concat(&sub, t);
-            PyUString_ConcatAndDel(&t, sub);
-            sub = t;
-        }
-        PyUString_ConcatAndDel(&s, sub);
-        sub = PyUString_FromString(")");
-        PyUString_ConcatAndDel(&s, sub);
-        return s;
+        ret = PyUString_FromString("dtype(");
+        PyUString_ConcatAndDel(&ret,
+                            arraydescr_construction_repr(dtype, 1, 0));
+        PyUString_ConcatAndDel(&ret, PyUString_FromString(")"));
+        return ret;
     }
 }
 
