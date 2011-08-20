@@ -610,7 +610,7 @@ class FloatFormat(object):
         err = _nc.seterr(invalid='ignore')
         try:
             if isna(x):
-                return str(x).replace('NA', _na_str, 1)
+                return self.special_fmt % (str(x).replace('NA', _na_str, 1),)
             elif isnan(x):
                 if self.sign:
                     return self.special_fmt % ('+' + _nan_str,)
