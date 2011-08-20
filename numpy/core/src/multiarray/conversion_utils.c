@@ -435,6 +435,223 @@ PyArray_SearchsideConverter(PyObject *obj, void *addr)
     return PY_SUCCEED;
 }
 
+/*NUMPY_API
+ * Convert an object to FORTRAN / C / ANY / KEEP
+ */
+NPY_NO_EXPORT int
+PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
+{
+    char *str;
+    /* Leave the desired default from the caller for NULL/Py_None */
+    if (object == NULL || object == Py_None) {
+        return PY_SUCCEED;
+    }
+    else if (PyUnicode_Check(object)) {
+        PyObject *tmp;
+        int ret;
+        tmp = PyUnicode_AsASCIIString(object);
+        ret = PyArray_OrderConverter(tmp, val);
+        Py_DECREF(tmp);
+        return ret;
+    }
+    else if (!PyBytes_Check(object) || PyBytes_GET_SIZE(object) < 1) {
+        if (PyObject_IsTrue(object)) {
+            *val = NPY_FORTRANORDER;
+        }
+        else {
+            *val = NPY_CORDER;
+        }
+        if (PyErr_Occurred()) {
+            return PY_FAIL;
+        }
+        return PY_SUCCEED;
+    }
+    else {
+        str = PyBytes_AS_STRING(object);
+        if (str[0] == 'C' || str[0] == 'c') {
+            *val = NPY_CORDER;
+        }
+        else if (str[0] == 'F' || str[0] == 'f') {
+            *val = NPY_FORTRANORDER;
+        }
+        else if (str[0] == 'A' || str[0] == 'a') {
+            *val = NPY_ANYORDER;
+        }
+        else if (str[0] == 'K' || str[0] == 'k') {
+            *val = NPY_KEEPORDER;
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                            "order not understood");
+            return PY_FAIL;
+        }
+    }
+    return PY_SUCCEED;
+}
+
+/*NUMPY_API
+ * Convert an object to NPY_RAISE / NPY_CLIP / NPY_WRAP
+ */
+NPY_NO_EXPORT int
+PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
+{
+    if (object == NULL || object == Py_None) {
+        *val = NPY_RAISE;
+    }
+    else if (PyBytes_Check(object)) {
+        char *str;
+        str = PyBytes_AS_STRING(object);
+        if (str[0] == 'C' || str[0] == 'c') {
+            *val = NPY_CLIP;
+        }
+        else if (str[0] == 'W' || str[0] == 'w') {
+            *val = NPY_WRAP;
+        }
+        else if (str[0] == 'R' || str[0] == 'r') {
+            *val = NPY_RAISE;
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                            "clipmode not understood");
+            return PY_FAIL;
+        }
+    }
+    else if (PyUnicode_Check(object)) {
+        PyObject *tmp;
+        int ret;
+        tmp = PyUnicode_AsASCIIString(object);
+        ret = PyArray_ClipmodeConverter(tmp, val);
+        Py_DECREF(tmp);
+        return ret;
+    }
+    else {
+        int number = PyInt_AsLong(object);
+        if (number == -1 && PyErr_Occurred()) {
+            goto fail;
+        }
+        if (number <= (int) NPY_RAISE
+                && number >= (int) NPY_CLIP) {
+            *val = (NPY_CLIPMODE) number;
+        }
+        else {
+            goto fail;
+        }
+    }
+    return PY_SUCCEED;
+
+ fail:
+    PyErr_SetString(PyExc_TypeError,
+                    "clipmode not understood");
+    return PY_FAIL;
+}
+
+/*NUMPY_API
+ * Convert an object to an array of n NPY_CLIPMODE values.
+ * This is intended to be used in functions where a different mode
+ * could be applied to each axis, like in ravel_multi_index.
+ */
+NPY_NO_EXPORT int
+PyArray_ConvertClipmodeSequence(PyObject *object, NPY_CLIPMODE *modes, int n)
+{
+    int i;
+    /* Get the clip mode(s) */
+    if (object && (PyTuple_Check(object) || PyList_Check(object))) {
+        if (PySequence_Size(object) != n) {
+            PyErr_Format(PyExc_ValueError,
+                    "list of clipmodes has wrong length (%d instead of %d)",
+                    (int)PySequence_Size(object), n);
+            return PY_FAIL;
+        }
+
+        for (i = 0; i < n; ++i) {
+            PyObject *item = PySequence_GetItem(object, i);
+            if(item == NULL) {
+                return PY_FAIL;
+            }
+
+            if(PyArray_ClipmodeConverter(item, &modes[i]) != PY_SUCCEED) {
+                Py_DECREF(item);
+                return PY_FAIL;
+            }
+
+            Py_DECREF(item);
+        }
+    }
+    else if (PyArray_ClipmodeConverter(object, &modes[0]) == PY_SUCCEED) {
+        for (i = 1; i < n; ++i) {
+            modes[i] = modes[0];
+        }
+    }
+    else {
+        return PY_FAIL;
+    }
+    return PY_SUCCEED;
+}
+
+/*NUMPY_API
+ * Convert any Python object, *obj*, to an NPY_CASTING enum.
+ */
+NPY_NO_EXPORT int
+PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
+{
+    char *str = NULL;
+    Py_ssize_t length = 0;
+
+    if (PyUnicode_Check(obj)) {
+        PyObject *str_obj;
+        int ret;
+        str_obj = PyUnicode_AsASCIIString(obj);
+        if (str_obj == NULL) {
+            return 0;
+        }
+        ret = PyArray_CastingConverter(str_obj, casting);
+        Py_DECREF(str_obj);
+        return ret;
+    }
+
+    if (PyBytes_AsStringAndSize(obj, &str, &length) == -1) {
+        return 0;
+    }
+
+    if (length >= 2) switch (str[2]) {
+        case 0:
+            if (strcmp(str, "no") == 0) {
+                *casting = NPY_NO_CASTING;
+                return 1;
+            }
+            break;
+        case 'u':
+            if (strcmp(str, "equiv") == 0) {
+                *casting = NPY_EQUIV_CASTING;
+                return 1;
+            }
+            break;
+        case 'f':
+            if (strcmp(str, "safe") == 0) {
+                *casting = NPY_SAFE_CASTING;
+                return 1;
+            }
+            break;
+        case 'm':
+            if (strcmp(str, "same_kind") == 0) {
+                *casting = NPY_SAME_KIND_CASTING;
+                return 1;
+            }
+            break;
+        case 's':
+            if (strcmp(str, "unsafe") == 0) {
+                *casting = NPY_UNSAFE_CASTING;
+                return 1;
+            }
+            break;
+    }
+
+    PyErr_SetString(PyExc_ValueError,
+            "casting must be one of 'no', 'equiv', 'safe', "
+            "'same_kind', or 'unsafe'");
+    return 0;
+}
+
 /*****************************
 * Other conversion functions
 *****************************/
