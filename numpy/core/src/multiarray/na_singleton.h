@@ -63,4 +63,19 @@ NpyNA_FromDTypeAndMaskValue(PyArray_Descr *dtype, npy_mask maskvalue,
 NPY_NO_EXPORT npy_mask
 NpyNA_AsMaskValue(NpyNA *na);
 
+/*
+ * Returns True if the object is an NA in the form of a 0-dimensional
+ * array.
+ */
+static NPY_INLINE npy_bool
+NpyNA_IsZeroDimArrayNA(PyObject *obj)
+{
+    return PyArray_Check(obj) &&
+            PyArray_NDIM((PyArrayObject *)obj) == 0 &&
+            PyArray_HASMASKNA((PyArrayObject *)obj) &&
+            !PyArray_HASFIELDS((PyArrayObject *)obj) &&
+            !NpyMaskValue_IsExposed((npy_mask)*PyArray_MASKNA_DATA(
+                                                    (PyArrayObject *)obj));
+}
+
 #endif
