@@ -31,8 +31,6 @@ class Extension(old_Extension):
                   language=None,
                   f2py_options=None,
                   module_dirs=None,
-                  extra_f77_compile_args=None,
-                  extra_f90_compile_args=None,
                  ):
         old_Extension.__init__(self,name, [],
                                include_dirs,
@@ -65,9 +63,7 @@ class Extension(old_Extension):
         # numpy_distutils features
         self.f2py_options = f2py_options or []
         self.module_dirs = module_dirs or []
-        self.extra_f77_compile_args = extra_f77_compile_args or []
-        self.extra_f90_compile_args = extra_f90_compile_args or []
-        
+
         return
 
     def has_cxx_sources(self):
