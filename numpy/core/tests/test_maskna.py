@@ -1157,5 +1157,20 @@ def test_array_maskna_var_std():
     res = np.std(a, axis=1, skipna=True)
     assert_array_almost_equal(res, [1.0, 0.81649658092772603])
 
+def test_array_maskna_linspace_logspace():
+    # np.linspace, np.logspace
+
+    a = np.linspace(2.0, 3.0, num=5)
+    b = np.linspace(2.0, 3.0, num=5, maskna=True)
+    assert_equal(a, b)
+    assert_(not a.flags.maskna)
+    assert_(b.flags.maskna)
+
+    a = np.logspace(2.0, 3.0, num=4)
+    b = np.logspace(2.0, 3.0, num=4, maskna=True)
+    assert_equal(a, b)
+    assert_(not a.flags.maskna)
+    assert_(b.flags.maskna)
+
 if __name__ == "__main__":
     run_module_suite()
