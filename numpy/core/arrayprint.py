@@ -681,7 +681,9 @@ class LongFloatFormat(object):
         self.sign = sign
 
     def __call__(self, x):
-        if isnan(x):
+        if isna(x):
+            return str(x).replace('NA', _na_str, 1)
+        elif isnan(x):
             if self.sign:
                 return '+' + _nan_str
             else:
@@ -694,8 +696,6 @@ class LongFloatFormat(object):
                     return ' ' + _inf_str
             else:
                 return '-' + _inf_str
-        elif isna(x):
-            return str(x).replace('NA', _na_str, 1)
         elif x >= 0:
             if self.sign:
                 return '+' + format_longfloat(x, self.precision)
