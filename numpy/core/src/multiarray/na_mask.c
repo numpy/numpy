@@ -413,13 +413,19 @@ PyArray_IsNA(PyObject *obj)
             return NULL;
         }
 
+        /*
+         * TODO: Could change this to use raw iteration to
+         *       avoid the iterator creation overhead.
+         */
         if (PyArray_HASMASKNA((PyArrayObject *)obj)) {
             NpyIter *iter;
             PyArrayObject *op[2] = {(PyArrayObject *)obj, NULL};
             npy_uint32 flags, op_flags[2];
             PyArray_Descr *op_dtypes[2] = {NULL, dtype};
 
-            flags = NPY_ITER_EXTERNAL_LOOP | NPY_ITER_ZEROSIZE_OK;
+            flags = NPY_ITER_EXTERNAL_LOOP |
+                    NPY_ITER_ZEROSIZE_OK |
+                    NPY_ITER_REFS_OK;
             /*
              * This USE_MASKNA causes there to be 3 operands, where operand
              * 2 is the mask for operand 0
