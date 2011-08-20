@@ -62,7 +62,7 @@ int main()
 """ % to_header({"header_name": header_name})
 
     kw["code"] = code
-    kw["define_comment"] = "/* Define to 1 if you have the `%s' header. */" % header_name
+    kw["define_comment"] = "/* Define to 1 if you have the <%s> header file. */" % header_name
     kw["define_name"] = "HAVE_%s" % sanitize_string(header_name)
     if not "features" in kw:
         kw["features"] = ["c"]
@@ -135,7 +135,7 @@ int main() {
         kw["define_value"] = 0
 
     kw["define_name"] = "HAVE_%s" % sanitize_string(type_name)
-    kw["define_comment"] = "/* Set to 1 if %s is defined. */" % type_name
+    kw["define_comment"] = "/* Define to 1 if the system has the type `%s'. */" % type_name
     self.post_check(**kw)
     if not kw.get('execute', False):
         return ret == 0
@@ -315,7 +315,7 @@ int main (void)
     if ret == 0:
         for f in funcs:
             self.define_with_comment("HAVE_%s" % sanitize_string(f), 1,
-                                "/* Define to 1 if you have the `%s' function */" % f)
+                                "/* Define to 1 if you have the `%s' function. */" % f)
 
     self.post_check(**kw)
     if not kw.get('execute', False):
