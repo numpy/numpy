@@ -330,9 +330,11 @@ defdict = {
           TD(ints+inexact),
           TD(O, f='Py_reciprocal'),
           ),
-'ones_like' :
+# This is no longer used as numpy.ones_like, however it is
+# still used by some internal calls.
+'_ones_like' :
     Ufunc(1, 1, None,
-          docstrings.get('numpy.core.umath.ones_like'),
+          docstrings.get('numpy.core.umath._ones_like'),
           'PyUFunc_OnesLikeTypeResolution',
           TD(noobj),
           TD(O, f='Py_get_one'),

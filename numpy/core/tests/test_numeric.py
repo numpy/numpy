@@ -1324,7 +1324,7 @@ class TestLikeFuncs(TestCase):
             if not value is None:
                 assert_(all(dz == value))
 
-        # Test the 'subok' parameter'
+        # Test the 'subok' parameter
         a = np.matrix([[1,2],[3,4]])
 
         b = like_function(a)
@@ -1332,6 +1332,20 @@ class TestLikeFuncs(TestCase):
 
         b = like_function(a, subok=False)
         assert_(not (type(b) is np.matrix))
+
+        # Test that 'maskna=True' works
+        a = np.arange(6).reshape(2,3)
+        res = like_function(a, maskna=True)
+        assert_(res.flags.maskna)
+        assert_(res.flags.ownmaskna)
+        assert_equal(res.shape, a.shape)
+        assert_equal(res.dtype, a.dtype)
+
+        # Test that no NA mask is created when the prototype is NA-masked
+        a = np.arange(6, maskna=True).reshape(2,3)
+        assert_(a.flags.maskna)
+        res = like_function(a)
+        assert_(not res.flags.maskna)
 
     def test_ones_like(self):
         self.check_like_function(np.ones_like, 1)

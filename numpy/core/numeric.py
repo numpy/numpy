@@ -5,7 +5,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'concatenate', 'fastCopyAndTranspose', 'lexsort', 'set_numeric_ops',
            'can_cast', 'promote_types', 'min_scalar_type', 'result_type',
            'asarray', 'asanyarray', 'ascontiguousarray', 'asfortranarray',
-           'isfortran', 'isna', 'empty_like', 'zeros_like',
+           'isfortran', 'isna', 'empty_like', 'zeros_like', 'ones_like',
            'correlate', 'convolve', 'inner', 'dot', 'einsum', 'outer', 'vdot',
            'alterdot', 'restoredot', 'roll', 'rollaxis', 'cross', 'tensordot',
            'array2string', 'get_printoptions', 'set_printoptions',
@@ -62,7 +62,6 @@ copyto = multiarray.copyto
 ufunc = type(sin)
 
 
-# originally from Fernando Perez's IPython
 def zeros_like(a, dtype=None, order='K', subok=True, maskna=False):
     """
     Return an array of zeros with the same shape and type as a given array.
@@ -119,7 +118,93 @@ def zeros_like(a, dtype=None, order='K', subok=True, maskna=False):
     multiarray.copyto(res, 0, casting='unsafe')
     return res
 
-# end Fernando's utilities
+def ones(shape, dtype=None, order='C', maskna=False):
+    """
+    Return a new array of given shape and type, filled with ones.
+
+    Please refer to the documentation for `zeros` for further details.
+
+    See Also
+    --------
+    zeros, ones_like
+
+    Examples
+    --------
+    >>> np.ones(5)
+    array([ 1.,  1.,  1.,  1.,  1.])
+
+    >>> np.ones((5,), dtype=np.int)
+    array([1, 1, 1, 1, 1])
+
+    >>> np.ones((2, 1))
+    array([[ 1.],
+           [ 1.]])
+
+    >>> s = (2,2)
+    >>> np.ones(s)
+    array([[ 1.,  1.],
+           [ 1.,  1.]])
+
+    """
+    a = empty(shape, dtype, order, maskna)
+    multiarray.copyto(a, 1, casting='unsafe')
+    return a
+
+def ones_like(a, dtype=None, order='K', subok=True, maskna=False):
+    """
+    Return an array of ones with the same shape and type as a given array.
+
+    With default parameters, is equivalent to ``a.copy().fill(1)``.
+
+    Parameters
+    ----------
+    a : array_like
+        The shape and data-type of `a` define these same attributes of
+        the returned array.
+    dtype : data-type, optional
+        Overrides the data type of the result.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Overrides the memory layout of the result. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' means match the layout of `a` as closely
+        as possible.
+    maskna : boolean
+        If this is true, the returned array will have an NA mask.
+
+    Returns
+    -------
+    out : ndarray
+        Array of ones with the same shape and type as `a`.
+
+    See Also
+    --------
+    zeros_like : Return an array of zeros with shape and type of input.
+    empty_like : Return an empty array with shape and type of input.
+    zeros : Return a new array setting values to zero.
+    ones : Return a new array setting values to one.
+    empty : Return a new uninitialized array.
+
+    Examples
+    --------
+    >>> x = np.arange(6)
+    >>> x = x.reshape((2, 3))
+    >>> x
+    array([[0, 1, 2],
+           [3, 4, 5]])
+    >>> np.ones_like(x)
+    array([[1, 1, 1],
+           [1, 1, 1]])
+
+    >>> y = np.arange(3, dtype=np.float)
+    >>> y
+    array([ 0.,  1.,  2.])
+    >>> np.ones_like(y)
+    array([ 1.,  1.,  1.])
+
+    """
+    res = empty_like(a, dtype=dtype, order=order, subok=subok, maskna=maskna)
+    multiarray.copyto(res, 1, casting='unsafe')
+    return res
 
 
 def extend_all(module):
@@ -1807,38 +1892,6 @@ def _maketup(descr, val):
     else:
         res = [_maketup(fields[name][0],val) for name in dt.names]
         return tuple(res)
-
-def ones(shape, dtype=None, order='C'):
-    """
-    Return a new array of given shape and type, filled with ones.
-
-    Please refer to the documentation for `zeros` for further details.
-
-    See Also
-    --------
-    zeros, ones_like
-
-    Examples
-    --------
-    >>> np.ones(5)
-    array([ 1.,  1.,  1.,  1.,  1.])
-
-    >>> np.ones((5,), dtype=np.int)
-    array([1, 1, 1, 1, 1])
-
-    >>> np.ones((2, 1))
-    array([[ 1.],
-           [ 1.]])
-
-    >>> s = (2,2)
-    >>> np.ones(s)
-    array([[ 1.,  1.],
-           [ 1.,  1.]])
-
-    """
-    a = empty(shape, dtype, order)
-    multiarray.copyto(a, 1, casting='unsafe')
-    return a
 
 def identity(n, dtype=None):
     """
