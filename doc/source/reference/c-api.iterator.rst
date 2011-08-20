@@ -1074,6 +1074,28 @@ Construction and Destruction
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
+.. cfunction:: npy_bool NpyIter_IsFirstVisit(NpyIter* iter, int iop)
+
+    Checks to see whether this is the first time the elements of the
+    specified reduction operand which the iterator points at are being
+    seen for the first time. The function returns a reasonable answer
+    for reduction operands and when buffering is disabled. The answer
+    may be incorrect for buffered non-reduction operands.
+
+    This function is intended to be used in EXTERNAL_LOOP mode only,
+    and will produce some wrong answers when that mode is not enabled.
+
+    If this function returns true, the caller should also check the inner
+    loop stride of the operand, because if that stride is 0, then only
+    the first element of the innermost external loop is being visited
+    for the first time.
+
+    *WARNING*: For performance reasons, 'iop' is not bounds-checked,
+    it is not confirmed that 'iop' is actually a reduction operand,
+    and it is not confirmed that EXTERNAL_LOOP mode is enabled. These
+    checks are the responsibility of the caller, and should be done
+    outside of any inner loops.
+
 Functions For Iteration
 -----------------------
 
