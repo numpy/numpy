@@ -58,10 +58,21 @@ def test_na_repr():
     assert_equal(repr(np.NA(10)), 'NA(10)')
 
     # With just a dtype
-    assert_equal(repr(np.NA(dtype='>c16')), "NA(dtype='>c16')")
+    assert_equal(repr(np.NA(dtype='?')), "NA(dtype='bool')")
+    if sys.byteorder == 'little':
+        assert_equal(repr(np.NA(dtype='<c16')), "NA(dtype='complex128')")
+        assert_equal(repr(np.NA(dtype='>c16')), "NA(dtype='>c16')")
+    else:
+        assert_equal(repr(np.NA(dtype='>c16')), "NA(dtype='complex128')")
+        assert_equal(repr(np.NA(dtype='<c16')), "NA(dtype='<c16')")
 
     # With a payload and a dtype
-    assert_equal(repr(np.NA(10, dtype='>f4')), "NA(10, dtype='>f4')")
+    if sys.byteorder == 'little':
+        assert_equal(repr(np.NA(10, dtype='<f4')), "NA(10, dtype='float32')")
+        assert_equal(repr(np.NA(10, dtype='>f4')), "NA(10, dtype='>f4')")
+    else:
+        assert_equal(repr(np.NA(10, dtype='>f4')), "NA(10, dtype='float32')")
+        assert_equal(repr(np.NA(10, dtype='<f4')), "NA(10, dtype='<f4')")
 
 def test_na_comparison():
     # NA cannot be converted to a boolean

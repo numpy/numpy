@@ -745,7 +745,8 @@ NpyIter_IsFirstVisit(NpyIter *iter, int iop)
     /*
      * In reduction buffering mode, there's a double loop being
      * tracked in the buffer part of the iterator data structure.
-     * We need to check the two levels of that loop as well.
+     * We only need to check the outer level of this two-level loop,
+     * because of the requirement that EXTERNAL_LOOP be enabled.
      */
     if (itflags&NPY_ITFLAG_BUFFER) {
         NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
