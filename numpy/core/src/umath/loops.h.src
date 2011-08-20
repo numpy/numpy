@@ -65,7 +65,7 @@ BOOL_@kind@(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 /**end repeat**/
 
 NPY_NO_EXPORT void
-BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+BOOL__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 /*
  *****************************************************************************
@@ -90,7 +90,7 @@ BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data
 #define @S@@TYPE@_fmin @S@@TYPE@_minimum
 
 NPY_NO_EXPORT void
-@S@@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+@S@@TYPE@__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 @S@@TYPE@_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
@@ -255,7 +255,7 @@ NPY_NO_EXPORT void
 
 
 NPY_NO_EXPORT void
-@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+@TYPE@__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 @TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
@@ -369,7 +369,7 @@ NPY_NO_EXPORT void
 C@TYPE@_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
-C@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+C@TYPE@__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 C@TYPE@_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
@@ -431,7 +431,7 @@ TIMEDELTA_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
  */
 
 NPY_NO_EXPORT void
-@TYPE@_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+@TYPE@__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 /**begin repeat1
  * #kind = equal, not_equal, greater, greater_equal, less, less_equal#

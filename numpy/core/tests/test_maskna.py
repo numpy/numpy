@@ -62,6 +62,12 @@ def test_array_maskna_construction():
     assert_(a.flags.maskna)
     assert_equal(np.isna(a), False)
 
+    a = np.ones((3,))
+    assert_(not a.flags.maskna)
+    a = np.ones((3,), maskna=True)
+    assert_(a.flags.maskna)
+    assert_equal(np.isna(a), False)
+
     # np.empty returns all NAs if maskna is set to True
     a = np.empty((3,))
     assert_(not a.flags.maskna)
