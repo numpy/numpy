@@ -389,6 +389,12 @@ def pbuild(context):
                                                use="cloadable")
     context.register_compiled_library_builder("npymath", builder)
 
+    def builder_sort(library):
+        return context.default_library_builder(library,
+                                               includes=[".", "src/private", "src/npysort"],
+                                               use="npymath")
+    context.register_compiled_library_builder("npysort", builder_sort)
+
     def builder_multiarray(extension):
         bld(name="multiarray_api",
             features="numpy_api_gen",
@@ -397,7 +403,7 @@ def pbuild(context):
 
         multiarray_templates = ["src/multiarray/scalartypes.c.src",
                 "src/multiarray/arraytypes.c.src", 
-                "src/multiarray/nditer.c.src",
+                "src/multiarray/nditer_templ.c.src",
                 "src/multiarray/lowlevel_strided_loops.c.src", 
                 "src/multiarray/einsum.c.src"]
         bld(target="multiarray_templates", source=multiarray_templates)
@@ -430,7 +436,7 @@ def pbuild(context):
                 pjoin('src', 'multiarray', 'refcount.c'),
                 pjoin('src', 'multiarray', 'arraytypes.c.src'),
                 pjoin('src', 'multiarray', 'scalartypes.c.src'),
-                pjoin('src', 'multiarray', 'nditer.c.src'),
+                pjoin('src', 'multiarray', 'nditer_templ.c.src'),
                 pjoin('src', 'multiarray', 'lowlevel_strided_loops.c.src'),
                 pjoin('src', 'multiarray', 'dtype_transfer.c'),
                 pjoin('src', 'multiarray', 'nditer_pywrap.c'),
@@ -443,14 +449,8 @@ def pbuild(context):
         return context.default_builder(extension,
                                        includes=includes,
                                        source=sources,
-                                       use="npymath")
+                                       use="npysort npymath")
     context.register_builder("multiarray", builder_multiarray)
-
-    def builder_sort(extension):
-        return context.default_builder(extension,
-                                       includes=[".", "src/private"],
-                                       use="npymath")
-    context.register_builder("_sort", builder_sort)
 
     def build_ufunc(extension):
         bld(features="ufunc_api_gen",
