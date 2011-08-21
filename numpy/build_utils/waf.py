@@ -5,6 +5,11 @@ import waflib.Configure
 import waflib.Tools.c_config
 from waflib import Logs, Utils
 
+from common \
+    import \
+        LONG_DOUBLE_REPRESENTATION_SRC, pyod, \
+        long_double_representation
+
 DEFKEYS = waflib.Tools.c_config.DEFKEYS
 DEFINE_COMMENTS = "define_commentz"
 
@@ -363,6 +368,45 @@ static %(inline)s int static_func (void)
         kw['success'] = ret
         conf.end_msg(inline)
         return inline
+
+@waflib.Configure.conf
+def check_ldouble_representation(conf, **kw):
+    msg = {
+        'INTEL_EXTENDED_12_BYTES_LE': "Intel extended, little endian",
+        'INTEL_EXTENDED_16_BYTES_LE': "Intel extended, little endian",
+        'IEEE_QUAD_BE': "IEEE Quad precision, big endian",
+        'IEEE_QUAD_LE': "IEEE Quad precision, little endian",
+        'IEEE_DOUBLE_LE': "IEEE Double precision, little endian",
+        'IEEE_DOUBLE_BE': "IEEE Double precision, big endian"
+    }
+
+    code = LONG_DOUBLE_REPRESENTATION_SRC % {'type': 'long double'}
+    validate_arguments(conf, kw)
+
+    conf.start_msg("Checking for long double representation... ")
+    try:
+        kw["code"] = code
+        ret = conf.run_c_code(**kw)
+    except conf.errors.ConfigurationError as e:
+        conf.end_msg(kw['errmsg'], 'YELLOW')
+        if Logs.verbose > 1:
+            raise
+        else:
+            conf.fatal('The configuration failed')
+    else:
+        task_gen = conf.test_bld.groups[0][0]
+        obj_filename = task_gen.tasks[0].outputs[0].abspath()
+        tp = long_double_representation(pyod(obj_filename))
+        kw['success'] = ret
+        conf.end_msg(msg[tp])
+        kw["define_name"] = "HAVE_LDOUBLE_%s" % tp
+        kw["define_comment"] = "/* Define for arch-specific long double representation */"
+    ret = kw["success"]
+
+    conf.post_check(**kw)
+    if not kw.get('execute', False):
+        return ret == 0
+    return ret
 
 @waflib.Configure.conf
 def post_check(self, *k, **kw):
