@@ -201,7 +201,8 @@ def check_math_runtime(conf):
     #conf.check_functions_at_once(mfuncs, use="M")
 
     header_name = "Python.h math.h"
-    features = "c pyext"
+    # XXX: with MSVC compiler, one needs to have cprogram defined. Find out why.
+    features = "c pyext cprogram"
     for f in OPTIONAL_STDFUNCS_MAYBE:
         try:
             conf.check_declaration("HAVE_%s" % numpy.build_utils.waf.sanitize_string(f),
