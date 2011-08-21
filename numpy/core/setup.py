@@ -125,7 +125,7 @@ def check_math_capabilities(config, moredefs, mathlibs):
         st = config.check_funcs_once(funcs_name, libraries=mathlibs,
                                      decl=decl, call=decl)
         if st:
-            moredefs.extend([fname2def(f) for f in funcs_name])
+            moredefs.extend([(fname2def(f), 1) for f in funcs_name])
         return st
 
     def check_funcs(funcs_name):
@@ -135,7 +135,7 @@ def check_math_capabilities(config, moredefs, mathlibs):
             # Global check failed, check func per func
             for f in funcs_name:
                 if check_func(f):
-                    moredefs.append(fname2def(f))
+                    moredefs.append((fname2def(f), 1))
             return 0
         else:
             return 1
@@ -180,8 +180,8 @@ def check_complex(config, mathlibs):
     # Check for complex support
     st = config.check_header('complex.h')
     if st:
-        priv.append('HAVE_COMPLEX_H')
-        pub.append('NPY_USE_C99_COMPLEX')
+        priv.append(('HAVE_COMPLEX_H', 1))
+        pub.append(('NPY_USE_C99_COMPLEX', 1))
 
         for t in C99_COMPLEX_TYPES:
             st = config.check_type(t, headers=["complex.h"])
@@ -196,9 +196,9 @@ def check_complex(config, mathlibs):
                 for f in flist:
                     if config.check_func(f, call=True, decl=True,
                                          libraries=mathlibs):
-                        priv.append(fname2def(f))
+                        priv.append((fname2def(f), 1))
             else:
-                priv.extend([fname2def(f) for f in flist])
+                priv.extend([(fname2def(f), 1) for f in flist])
 
         check_prec('')
         check_prec('f')
