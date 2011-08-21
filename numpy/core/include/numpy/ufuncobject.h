@@ -7,23 +7,36 @@
 extern "C" {
 #endif
 
-/* The most generic inner loop for a standard element-wise ufunc */
+/*
+ * The legacy generic inner loop for a standard element-wise or
+ * generalized ufunc.
+ */
 typedef void (*PyUFuncGenericFunction)
             (char **args,
              npy_intp *dimensions,
-             npy_intp *steps,
+             npy_intp *strides,
              void *innerloopdata);
 
 /*
- * The most generic inner loop for a masked standard element-wise ufunc.
+ * The most generic one-dimensional inner loop for
+ * a standard element-wise ufunc. This typedef is also
+ * more consistent with the other NumPy function pointer typedefs
+ * than PyUFuncGenericFunction.
  */
-typedef void (*PyUFuncGenericMaskedFunction)
-            (char **args,
-             char *mask_arg,
-             npy_intp *dimensions,
-             npy_intp *steps,
-             npy_intp mask_step,
-             NpyAuxData *innerloopdata);
+typedef void (PyUFunc_StridedInnerLoopFunc)(
+                char **dataptrs, npy_intp *strides,
+                npy_intp count,
+                NpyAuxData *innerloopdata);
+
+/*
+ * The most generic one-dimensional inner loop for
+ * a masked standard element-wise ufunc.
+ */
+typedef void (PyUFunc_MaskedStridedInnerLoopFunc)(
+                char **dataptrs, npy_intp *strides,
+                char *maskptr, npy_intp mask_stride,
+                npy_intp count,
+                NpyAuxData *innerloopdata);
 
 /* Forward declaration for the type resolution function */
 struct _tagPyUFuncObject;
@@ -49,10 +62,6 @@ struct _tagPyUFuncObject;
  *                    references to (ufunc->nin + ufunc->nout) new
  *                    dtypes, one for each input and output. These
  *                    dtypes should all be in native-endian format.
- * out_innerloop:     Should be populated with the correct ufunc inner
- *                    loop for the given type.
- * out_innerloopdata: Should be populated with the void* data to
- *                    be passed into the out_innerloop function.
  *
  * Should return 0 on success, -1 on failure (with exception set),
  * or -2 if Py_NotImplemented should be returned.
@@ -62,17 +71,53 @@ typedef int (PyUFunc_TypeResolutionFunc)(
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
-                                PyArray_Descr **out_dtypes,
-                                PyUFuncGenericFunction *out_innerloop,
-                                void **out_innerloopdata);
-typedef int (PyUFunc_TypeResolutionMaskedFunc)(
-                                struct _tagPyUFuncObject *ufunc,
-                                NPY_CASTING casting,
-                                PyArrayObject **operands,
-                                PyObject *type_tup,
-                                PyArray_Descr **out_dtypes,
-                                PyUFuncGenericMaskedFunction *out_innerloop,
-                                NpyAuxData **out_innerloopdata);
+                                PyArray_Descr **out_dtypes);
+
+/*
+ * Given an array of DTypes as returned by the PyUFunc_TypeResolutionFunc,
+ * and an array of fixed strides (the array will contain NPY_MAX_INTP for
+ * strides which are not necessarily fixed), returns an inner loop
+ * with associated auxiliary data.
+ *
+ * For backwards compatibility, there is a variant of the inner loop
+ * selection which returns an inner loop irrespective of the strides,
+ * and with a void* static auxiliary data instead of an NpyAuxData *
+ * dynamically allocatable auxiliary data.
+ *
+ * ufunc:             The ufunc object.
+ * dtypes:            An array which has been populated with dtypes,
+ *                    in most cases by the type resolution funciton
+ *                    for the same ufunc.
+ * fixed_strides:     For each input/output, either the stride that
+ *                    will be used every time the function is called
+ *                    or NPY_MAX_INTP if the stride might change or
+ *                    is not known ahead of time. The loop selection
+ *                    function may use this stride to pick inner loops
+ *                    which are optimized for contiguous or 0-stride
+ *                    cases.
+ * out_innerloop:     Should be populated with the correct ufunc inner
+ *                    loop for the given type.
+ * out_innerloopdata: Should be populated with the void* data to
+ *                    be passed into the out_innerloop function.
+ */
+typedef int (PyUFunc_LegacyInnerLoopSelectionFunc)(
+                            struct _tagPyUFuncObject *ufunc,
+                            PyArray_Descr **dtypes,
+                            PyUFuncGenericFunction *out_innerloop,
+                            void **out_innerloopdata);
+typedef int (PyUFunc_InnerLoopSelectionFunc)(
+                            struct _tagPyUFuncObject *ufunc,
+                            PyArray_Descr **dtypes,
+                            npy_intp *fixed_strides,
+                            PyUFunc_StridedInnerLoopFunc **out_innerloop,
+                            NpyAuxData **out_innerloopdata);
+typedef int (PyUFunc_MaskedInnerLoopSelectionFunc)(
+                            struct _tagPyUFuncObject *ufunc,
+                            PyArray_Descr **dtypes,
+                            npy_intp *fixed_strides,
+                            npy_intp fixed_mask_stride,
+                            PyUFunc_MaskedStridedInnerLoopFunc **out_innerloop,
+                            NpyAuxData **out_innerloopdata);
 
 typedef struct _tagPyUFuncObject {
         PyObject_HEAD
@@ -137,17 +182,27 @@ typedef struct _tagPyUFuncObject {
         char *core_signature;
 
         /*
-         * A function which resolves the types and returns an inner loop.
-         * This is used by the regular ufunc, the reduction operations
-         * have a different set of rules.
+         * A function which resolves the types and fills an array
+         * with the dtypes for the inputs and outputs.
          */
         PyUFunc_TypeResolutionFunc *type_resolution_function;
         /*
-         * A function which resolves the types and returns an inner loop.
-         * This is used by the regular ufunc when it requires using
-         * a mask to select which elements to compute.
+         * A function which returns an inner loop written for
+         * NumPy 1.6 and earlier ufuncs. This is for backwards
+         * compatibility, and may be NULL if inner_loop_selector
+         * is specified.
          */
-        PyUFunc_TypeResolutionMaskedFunc *type_resolution_masked_function;
+        PyUFunc_LegacyInnerLoopSelectionFunc *legacy_inner_loop_selector;
+        /*
+         * A function which returns an inner loop for the new mechanism
+         * in NumPy 1.7 and later. If provided, this is used, otherwise
+         * if NULL the legacy_inner_loop_selector is used instead.
+         */
+        PyUFunc_InnerLoopSelectionFunc *inner_loop_selector;
+        /*
+         * A function which returns a masked inner loop for the ufunc.
+         */
+        PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector;
 } PyUFuncObject;
 
 #include "arrayobject.h"
@@ -231,12 +286,12 @@ typedef struct _loop1d_info {
 
 #define UFUNC_PYVALS_NAME "UFUNC_PYVALS"
 
-#define UFUNC_CHECK_ERROR(arg)                                          \
-        do {if ((((arg)->obj & UFUNC_OBJ_NEEDS_API) && PyErr_Occurred()) ||                         \
-            ((arg)->errormask &&                                        \
-             PyUFunc_checkfperr((arg)->errormask,                       \
-                                (arg)->errobj,                          \
-                                &(arg)->first)))                        \
+#define UFUNC_CHECK_ERROR(arg) \
+        do {if ((((arg)->obj & UFUNC_OBJ_NEEDS_API) && PyErr_Occurred()) || \
+            ((arg)->errormask && \
+             PyUFunc_checkfperr((arg)->errormask, \
+                                (arg)->errobj, \
+                                &(arg)->first))) \
                 goto fail;} while (0)
 
 /* This code checks the IEEE status flags in a platform-dependent way */
@@ -251,12 +306,12 @@ typedef struct _loop1d_info {
 
 #include <machine/fpu.h>
 
-#define UFUNC_CHECK_STATUS(ret) {               \
-        unsigned long fpstatus;                 \
-                                                \
-        fpstatus = ieee_get_fp_control();                               \
+#define UFUNC_CHECK_STATUS(ret) { \
+        unsigned long fpstatus; \
+         \
+        fpstatus = ieee_get_fp_control(); \
         /* clear status bits as well as disable exception mode if on */ \
-        ieee_set_fp_control( 0 );                                       \
+        ieee_set_fp_control( 0 ); \
         ret = ((IEEE_STATUS_DZE & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
                 | ((IEEE_STATUS_OVF & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
                 | ((IEEE_STATUS_UNF & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
@@ -273,13 +328,13 @@ typedef struct _loop1d_info {
 #define UFUNC_NOFPE _control87(MCW_EM, MCW_EM);
 #endif
 
-#define UFUNC_CHECK_STATUS(ret) {                \
-        int fpstatus = (int) _clearfp();                        \
-                                                                        \
+#define UFUNC_CHECK_STATUS(ret) { \
+        int fpstatus = (int) _clearfp(); \
+         \
         ret = ((SW_ZERODIVIDE & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
-                | ((SW_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)   \
+                | ((SW_OVERFLOW & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
                 | ((SW_UNDERFLOW & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
-                | ((SW_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0);    \
+                | ((SW_INVALID & fpstatus) ? UFUNC_FPE_INVALID : 0); \
         }
 
 /* Solaris --------------------------------------------------------*/
@@ -290,15 +345,15 @@ typedef struct _loop1d_info {
       defined(__NetBSD__)
 #include <ieeefp.h>
 
-#define UFUNC_CHECK_STATUS(ret) {                               \
-        int fpstatus;                                           \
-                                                                \
-        fpstatus = (int) fpgetsticky();                                 \
-        ret = ((FP_X_DZ  & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0)      \
-                | ((FP_X_OFL & fpstatus) ? UFUNC_FPE_OVERFLOW : 0)      \
-                | ((FP_X_UFL & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0)     \
-                | ((FP_X_INV & fpstatus) ? UFUNC_FPE_INVALID : 0);      \
-        (void) fpsetsticky(0);                                          \
+#define UFUNC_CHECK_STATUS(ret) { \
+        int fpstatus; \
+         \
+        fpstatus = (int) fpgetsticky(); \
+        ret = ((FP_X_DZ  & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
+                | ((FP_X_OFL & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
+                | ((FP_X_UFL & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
+                | ((FP_X_INV & fpstatus) ? UFUNC_FPE_INVALID : 0); \
+        (void) fpsetsticky(0); \
         }
 
 #elif defined(__GLIBC__) || defined(__APPLE__) || \
@@ -312,15 +367,15 @@ typedef struct _loop1d_info {
 #include "fenv/fenv.c"
 #endif
 
-#define UFUNC_CHECK_STATUS(ret) {                                       \
-        int fpstatus = (int) fetestexcept(FE_DIVBYZERO | FE_OVERFLOW |  \
-                                          FE_UNDERFLOW | FE_INVALID);   \
+#define UFUNC_CHECK_STATUS(ret) { \
+        int fpstatus = (int) fetestexcept(FE_DIVBYZERO | FE_OVERFLOW | \
+                                          FE_UNDERFLOW | FE_INVALID); \
         ret = ((FE_DIVBYZERO  & fpstatus) ? UFUNC_FPE_DIVIDEBYZERO : 0) \
                 | ((FE_OVERFLOW   & fpstatus) ? UFUNC_FPE_OVERFLOW : 0) \
                 | ((FE_UNDERFLOW  & fpstatus) ? UFUNC_FPE_UNDERFLOW : 0) \
                 | ((FE_INVALID    & fpstatus) ? UFUNC_FPE_INVALID : 0); \
-        (void) feclearexcept(FE_DIVBYZERO | FE_OVERFLOW |               \
-                             FE_UNDERFLOW | FE_INVALID);                \
+        (void) feclearexcept(FE_DIVBYZERO | FE_OVERFLOW | \
+                             FE_UNDERFLOW | FE_INVALID); \
 }
 
 #elif defined(_AIX)
