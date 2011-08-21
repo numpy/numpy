@@ -233,7 +233,7 @@ def check_math_runtime(conf):
                 NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_DECL_%s' % f.upper(), ''))
 
 def check_complex(conf):
-    if conf.check_header("complex.h"):
+    if conf.check_header("complex.h", mandatory=False):
         NUMPYCONFIG_SYM.append(('DEFINE_NPY_USE_C99_COMPLEX',
                                 '#define NPY_USE_C99_COMPLEX 1'))
         for t in C99_COMPLEX_TYPES:
