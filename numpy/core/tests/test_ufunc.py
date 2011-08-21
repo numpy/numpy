@@ -630,6 +630,19 @@ class TestUfunc(TestCase):
         a = a[1:, 1:, 1:]
         self.check_unitless_reduction(a)
 
+    def test_unitless_reduction_nonreorderable(self):
+        a = np.array([[8.0, 2.0, 2.0], [1.0, 0.5, 0.25]])
+
+        res = np.divide.reduce(a, axis=0)
+        assert_equal(res, [8.0, 4.0, 8.0])
+
+        res = np.divide.reduce(a, axis=1)
+        assert_equal(res, [2.0, 8.0])
+
+        res = np.divide.reduce(a, axis=())
+        assert_equal(res, a)
+
+        assert_raises(ValueError, np.divide.reduce, a, axis=(0,1))
 
 if __name__ == "__main__":
     run_module_suite()

@@ -2011,7 +2011,7 @@ PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
 
     result = PyArray_ReduceWrapper(arr, out,
                             PyArray_DESCR(arr), dtype,
-                            axis_flags, skipna, keepdims,
+                            axis_flags, 1, skipna, keepdims,
                             &assign_reduce_unit_zero,
                             &reduce_count_nonzero_inner_loop,
                             &reduce_count_nonzero_masked_inner_loop,

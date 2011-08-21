@@ -244,6 +244,32 @@ PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
     return result;
 }
 
+/*
+ * Checks that there are only zero or one dimensions selected in 'axis_flags',
+ * and raises an error about a non-reorderable reduction if not.
+ */
+static int
+check_nonreorderable_axes(int ndim, npy_bool *axis_flags, const char *funcname)
+{
+    int idim, single_axis = 0;
+    for (idim = 0; idim < ndim; ++idim) {
+        if (axis_flags[idim]) {
+            if (single_axis) {
+                PyErr_Format(PyExc_ValueError,
+                        "reduction operation '%s' is not reorderable, "
+                        "so only one axis may be specified",
+                        funcname);
+                return -1;
+            }
+            else {
+                single_axis = 1;
+            }
+        }
+    }
+
+    return 0;
+}
+
 /*NUMPY_API
  *
  * This function initializes a result array for a reduction operation
@@ -285,6 +311,11 @@ PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
  * operand : The array being reduced.
  * axis_flags : An array of boolean flags, one for each axis of 'operand'.
  *              When a flag is True, it indicates to reduce along that axis.
+ * reorderable : If True, the reduction being done is reorderable, which
+ *               means specifying multiple axes of reduction at once is ok,
+ *               and the reduction code may calculate the reduction in an
+ *               arbitrary order. The calculation may be reordered because
+ *               of cache behavior or multithreading requirements.
  * skipna  : If True, indicates that the reduction is being calculated
  *           as if the NA values are being dropped from the computation
  *           instead of accumulating into an NA result.
@@ -301,7 +332,7 @@ PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
 NPY_NO_EXPORT PyArrayObject *
 PyArray_InitializeReduceResult(
                     PyArrayObject *result, PyArrayObject *operand,
-                    npy_bool *axis_flags, int skipna,
+                    npy_bool *axis_flags, int reorderable, int skipna,
                     npy_intp *out_skip_first_count, const char *funcname)
 {
     npy_intp *strides, *shape, shape_orig[NPY_MAXDIMS], shape0;
@@ -312,6 +343,15 @@ PyArray_InitializeReduceResult(
 
     /* Default to no skipping first-visit elements in the iteration */
     *out_skip_first_count = 0;
+
+    /*
+     * If this reduction is non-reorderable, make sure there are
+     * only 0 or 1 axes in axis_flags.
+     */
+    if (!reorderable && check_nonreorderable_axes(ndim,
+                                    axis_flags, funcname) < 0) {
+        return NULL;
+    }
 
     /*
      * If 'skipna' is False, or 'operand' has no NA mask in which
@@ -421,10 +461,10 @@ PyArray_InitializeReduceResult(
     }
 
     /*
-     * If there are zero or one reduction axes, adjust the view's
+     * If there is one reduction axis, adjust the view's
      * shape to only look at the remaining elements
      */
-    if (nreduce_axes <= 1) {
+    if (nreduce_axes == 1) {
         strides = PyArray_STRIDES(op_view);
         for (idim = 0; idim < ndim; ++idim) {
             if (axis_flags[idim]) {
@@ -442,6 +482,12 @@ PyArray_InitializeReduceResult(
             }
         }
     }
+    /* If there are zero reduction axes, make the view empty */
+    else if (nreduce_axes == 0) {
+        for (idim = 0; idim < ndim; ++idim) {
+            shape[idim] = 0;
+        }
+    }
     /*
      * Otherwise iterate over the whole operand, but tell the inner loop
      * to skip the elements we already copied by setting the skip_first_count.
@@ -457,7 +503,8 @@ PyArray_InitializeReduceResult(
     return op_view;
 }
 
-/*
+/*NUMPY_API
+ *
  * This function executes all the standard NumPy reduction function
  * boilerplate code, just calling assign_unit and the appropriate
  * inner loop function where necessary.
@@ -467,6 +514,11 @@ PyArray_InitializeReduceResult(
  * operand_dtype : The dtype the inner loop expects for the operand.
  * result_dtype : The dtype the inner loop expects for the result.
  * axis_flags  : Flags indicating the reduction axes of 'operand'.
+ * reorderable : If True, the reduction being done is reorderable, which
+ *               means specifying multiple axes of reduction at once is ok,
+ *               and the reduction code may calculate the reduction in an
+ *               arbitrary order. The calculation may be reordered because
+ *               of cache behavior or multithreading requirements.
  * skipna      : If true, NAs are skipped instead of propagating.
  * keepdims    : If true, leaves the reduction dimensions in the result
  *               with size one.
@@ -483,7 +535,8 @@ NPY_NO_EXPORT PyArrayObject *
 PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                         PyArray_Descr *operand_dtype,
                         PyArray_Descr *result_dtype,
-                        npy_bool *axis_flags, int skipna, int keepdims,
+                        npy_bool *axis_flags, int reorderable,
+                        int skipna, int keepdims,
                         PyArray_AssignReduceUnitFunc *assign_unit,
                         PyArray_ReduceInnerLoopFunc *inner_loop,
                         PyArray_ReduceInnerLoopFunc *masked_inner_loop,
@@ -552,6 +605,15 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
      * otherwise copy the initial values and get a view to the rest.
      */
     if (assign_unit != NULL) {
+        /*
+         * If this reduction is non-reorderable, make sure there are
+         * only 0 or 1 axes in axis_flags.
+         */
+        if (!reorderable && check_nonreorderable_axes(PyArray_NDIM(operand),
+                                        axis_flags, funcname) < 0) {
+            return NULL;
+        }
+
         if (assign_unit(result, !skipna, data) < 0) {
             goto fail;
         }
@@ -560,10 +622,16 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     }
     else {
         op_view = PyArray_InitializeReduceResult(result, operand,
-                            axis_flags, skipna, &skip_first_count, funcname);
+                            axis_flags, reorderable, skipna,
+                            &skip_first_count, funcname);
         if (op_view == NULL) {
             Py_DECREF(result);
             return NULL;
+        }
+        if (PyArray_SIZE(op_view) == 0) {
+            Py_DECREF(op_view);
+            op_view = NULL;
+            goto finish;
         }
     }
 

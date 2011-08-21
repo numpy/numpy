@@ -335,8 +335,9 @@ multiarray_funcs_api = {
     'PyArray_AssignArray':                  296,
     'PyArray_CreateReduceResult':           297,
     'PyArray_InitializeReduceResult':       298,
-    'PyArray_RemoveAxesInPlace':            299,
-    'PyArray_DebugPrint':                   300,
+    'PyArray_ReduceWrapper':                299,
+    'PyArray_RemoveAxesInPlace':            300,
+    'PyArray_DebugPrint':                   301,
 }
 
 ufunc_types_api = {
