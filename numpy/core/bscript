@@ -252,6 +252,16 @@ def check_complex(conf):
         for t in C99_COMPLEX_TYPES:
             NUMPYCONFIG_SYM.append(('DEFINE_NPY_HAVE_%s' % numpy.build_utils.waf.sanitize_string(t), ''))
 
+def check_win32_specifics(conf):
+    from numpy.distutils.misc_util import get_build_architecture
+    arch = get_build_architecture()
+
+    # On win32, force long double format string to be 'g', not
+    # 'Lg', since the MS runtime does not support long double whose
+    # size is > sizeof(double)
+    if arch == "Intel" or arch == "AMD64":
+        conf.define('FORCE_NO_LONG_DOUBLE_FORMATTING', 1)
+
 @pre_configure
 def configure(context):
     conf = context.waf_context
@@ -274,6 +284,7 @@ def configure(context):
     check_math_runtime(conf)
     numpy.build_utils.waf.check_inline(conf)
     check_complex(conf)
+    check_win32_specifics(conf)
 
     if ENABLE_SEPARATE_COMPILATION:
         conf.define("ENABLE_SEPARATE_COMPILATION", 1)
