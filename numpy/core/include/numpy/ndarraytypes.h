@@ -953,12 +953,12 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_BEGIN_THREADS _save = PyEval_SaveThread();
 #define NPY_END_THREADS   do {if (_save) PyEval_RestoreThread(_save);} while (0);
 
-#define NPY_BEGIN_THREADS_DESCR(dtype)                          \
-        do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI)))      \
+#define NPY_BEGIN_THREADS_DESCR(dtype) \
+        do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI))) \
                 NPY_BEGIN_THREADS;} while (0);
 
-#define NPY_END_THREADS_DESCR(dtype)                            \
-        do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI)))      \
+#define NPY_END_THREADS_DESCR(dtype) \
+        do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI))) \
                 NPY_END_THREADS; } while (0);
 
 #define NPY_ALLOW_C_API_DEF  PyGILState_STATE __save__;
@@ -978,7 +978,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #endif
 
 /*****************************
- * NA object
+ * NA object, added in 1.7
  *****************************/
 
 /* Direct access to the fields of the NA object is just internal to NumPy. */
@@ -1775,19 +1775,153 @@ struct NpyAuxData_tag {
     ((auxdata)->clone(auxdata))
 
 /************************************************************
- * A struct used by PyArray_CreateSortedStridePerm
+ * A struct used by PyArray_CreateSortedStridePerm, new in 1.7.
  ************************************************************/
 
 typedef struct {
     npy_intp perm, stride;
 } npy_stride_sort_item;
 
+/************************************************************
+ * Typedefs used by PyArray_ReduceWrapper, new in 1.7.
+ ************************************************************/
+
 /*
+ * This is a function for assigning a reduction unit to the result,
+ * before doing the reduction computation. If 'preservena' is True,
+ * any masked NA values in 'result' should not be overwritten. The
+ * value in 'data' is passed through from PyArray_ReduceWrapper.
+ *
+ * This function could, for example, simply be a call like
+ *      return PyArray_AssignZero(result, NULL, preservena, NULL);
+ *
+ * It should return -1 on failure, or 0 on success.
+ */
+typedef int (PyArray_AssignReduceUnitFunc)(PyArrayObject *result,
+                                            int preservena, void *data);
+
+/*
+ * This is a function for the inner reduce loop. Both the unmasked and
+ * masked variants have the same prototype, but should behave differently.
+ *
+ * The needs_api parameter indicates whether it's ok to release the GIL during
+ * the inner loop, such as when the iternext() function never calls
+ * a function which could raise a Python exception.
+ *
+ * Ths skip_first_count parameter indicates how many elements need to be
+ * skipped based on NpyIter_IsFirstVisit checks. This can only be positive
+ * when the 'assign_unit' parameter was NULL when calling
+ * PyArray_ReduceWrapper.
+ *
+ * The unmasked inner loop gets two data pointers and two strides, and should
+ * look roughly like this:
+ *  {
+ *      NPY_BEGIN_THREADS_DEF;
+ *      if (!needs_api) {
+ *          NPY_BEGIN_THREADS;
+ *      }
+ *      // This first-visit loop can be skipped if 'assign_unit' was non-NULL
+ *      if (skip_first_count > 0) {
+ *          do {
+ *              char *data0 = dataptr[0], *data1 = dataptr[1];
+ *              npy_intp stride0 = strideptr[0], stride1 = strideptr[1];
+ *              npy_intp count = *countptr;
+ *
+ *              // Skip any first-visit elements
+ *              if (NpyIter_IsFirstVisit(iter, 0)) {
+ *                  if (stride0 == 0) {
+ *                      --count;
+ *                      --skip_first_count;
+ *                      data1 += stride1;
+ *                      //data2 += stride2; // In masked loop
+ *                  }
+ *                  else {
+ *                      skip_first_count -= count;
+ *                      count = 0;
+ *                  }
+ *              }
+ *
+ *              while (count--) {
+ *                  *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
+ *                                                    *(operand_t *)data1);
+ *                  data0 += stride0;
+ *                  data1 += stride1;
+ *              }
+ *
+ *              // Jump to the faster loop when skipping is done
+ *              if (skip_first_count == 0) {
+ *                  if (iternext(iter)) {
+ *                      break;
+ *                  }
+ *                  else {
+ *                      goto finish_loop;
+ *                  }
+ *              }
+ *          } while (iternext(iter));
+ *      }
+ *      do {
+ *          char *data0 = dataptr[0], *data1 = dataptr[1];
+ *          npy_intp stride0 = strideptr[0], stride1 = strideptr[1];
+ *          npy_intp count = *countptr;
+ *
+ *          while (count--) {
+ *              *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
+ *                                                *(operand_t *)data1);
+ *              data0 += stride0;
+ *              data1 += stride1;
+ *          }
+ *      } while (iternext(iter));
+ *  finish_loop:
+ *      if (!needs_api) {
+ *          NPY_END_THREADS;
+ *      }
+ *      return (needs_api && PyErr_Occurred()) ? -1 : 0;
+ *  }
+ *
+ * The masked inner loop gets three data pointers and three strides, and
+ * looks identical except for the iteration inner loops which should be
+ * like this:
+ *      do {
+ *          char *data0 = dataptr[0], *data1 = dataptr[1], *data2 = dataptr[2];
+ *          npy_intp stride0 = strideptr[0], stride1 = strideptr[1],
+ *                      stride2 = strideptr[2];
+ *          npy_intp count = *countptr;
+ *
+ *          // Skipping first visits would go here
+ *
+ *          while (count--) {
+ *              if (NpyMaskValue_IsExposed((npy_mask)*data2)) {
+ *                  *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
+ *                                                    *(operand_t *)data1);
+ *              }
+ *              data0 += stride0;
+ *              data1 += stride1;
+ *              data2 += stride2;
+ *          }
+ *
+ *          // Jumping to the faster loop would go here
+ *
+ *      } while (iternext(iter));
+ *
+ * If needs_api is True, this function should call PyErr_Occurred()
+ * to check if an error occurred during processing, and return -1 for
+ * error, 0 for success.
+ */
+typedef int (PyArray_ReduceInnerLoopFunc)(NpyIter *iter,
+                                            char **dataptr,
+                                            npy_intp *strideptr,
+                                            npy_intp *countptr,
+                                            NpyIter_IterNextFunc *iternext,
+                                            int needs_api,
+                                            npy_intp skip_first_count,
+                                            void *data);
+
+/************************************************************
  * This is the form of the struct that's returned pointed by the
  * PyCObject attribute of an array __array_struct__. See
  * http://numpy.scipy.org/array_interface.shtml for the full
  * documentation.
- */
+ ************************************************************/
 typedef struct {
     int two;              /*
                            * contains the integer 2 as a sanity

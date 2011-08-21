@@ -2611,8 +2611,9 @@ initialize_reduce_result(int identity, PyArrayObject *result,
         return arr;
     }
     else {
+        int reorderable = (identity == PyUFunc_ReorderableNone);
         return PyArray_InitializeReduceResult(result, arr, axis_flags,
-                                skipna, out_skip_first_count, ufunc_name);
+                        reorderable, skipna, out_skip_first_count, ufunc_name);
     }
 }
 
@@ -2816,6 +2817,11 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                                         &skip_first_count, ufunc_name);
     if (arr_view == NULL) {
         goto fail;
+    }
+    if (PyArray_SIZE(arr_view) == 0) {
+        Py_DECREF(arr_view);
+        arr_view = NULL;
+        goto finish;
     }
 
     /* Now we can do a loop applying the ufunc in a straightforward manner */

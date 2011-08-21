@@ -11,6 +11,7 @@ sys.path.pop(0)
 Zero = "PyUFunc_Zero"
 One = "PyUFunc_One"
 None_ = "PyUFunc_None"
+ReorderableNone = "PyUFunc_ReorderableNone"
 
 # Sentinel value to specify using the full type description in the
 # function name
@@ -440,28 +441,28 @@ defdict = {
           TD(P, f='logical_xor'),
           ),
 'maximum' :
-    Ufunc(2, 1, None,
+    Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.maximum'),
           'PyUFunc_SimpleBinaryOperationTypeResolution',
           TD(noobj),
           TD(O, f='npy_ObjectMax')
           ),
 'minimum' :
-    Ufunc(2, 1, None,
+    Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.minimum'),
           'PyUFunc_SimpleBinaryOperationTypeResolution',
           TD(noobj),
           TD(O, f='npy_ObjectMin')
           ),
 'fmax' :
-    Ufunc(2, 1, None,
+    Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmax'),
           'PyUFunc_SimpleBinaryOperationTypeResolution',
           TD(noobj),
           TD(O, f='npy_ObjectMax')
           ),
 'fmin' :
-    Ufunc(2, 1, None,
+    Ufunc(2, 1, ReorderableNone,
           docstrings.get('numpy.core.umath.fmin'),
           'PyUFunc_SimpleBinaryOperationTypeResolution',
           TD(noobj),

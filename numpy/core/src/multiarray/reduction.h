@@ -132,38 +132,6 @@ typedef int (PyArray_ReduceInnerLoopFunc)(NpyIter *iter,
                                             void *data);
 
 /*
- * This function executes all the standard NumPy reduction function
- * boilerplate code, just calling assign_unit and the appropriate
- * inner loop function where necessary.
- *
- * operand     : The array to be reduced.
- * out         : NULL, or the array into which to place the result.
- * operand_dtype : The dtype the inner loop expects for the operand.
- * result_dtype : The dtype the inner loop expects for the result.
- * axis_flags  : Flags indicating the reduction axes of 'operand'.
- * skipna      : If true, NAs are skipped instead of propagating.
- * keepdims    : If true, leaves the reduction dimensions in the result
- *               with size one.
- * assign_unit : If NULL, PyArray_InitializeReduceResult is used, otherwise
- *               this function is called to initialize the result to
- *               the reduction's unit.
- * inner_loop  : The inner loop which does the reduction.
- * masked_inner_loop: The inner loop which does the reduction with a mask.
- * data        : Data which is passed to assign_unit and the inner loop.
- * buffersize  : Buffer size for the iterator. For the default, pass in 0.
- * funcname    : The name of the reduction function, for error messages.
- */
-NPY_NO_EXPORT PyArrayObject *
-PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
-                        PyArray_Descr *operand_dtype,
-                        PyArray_Descr *result_dtype,
-                        npy_bool *axis_flags, int skipna, int keepdims,
-                        PyArray_AssignReduceUnitFunc *assign_unit,
-                        PyArray_ReduceInnerLoopFunc *inner_loop,
-                        PyArray_ReduceInnerLoopFunc *masked_inner_loop,
-                        void *data, npy_intp buffersize, const char *funcname);
-
-/*
  * This function counts the number of elements that a reduction
  * will see along the reduction directions, given the provided options.
  *
