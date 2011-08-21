@@ -286,7 +286,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
      * unless input was already a VOID
      */
     if (outtype->type_num == PyArray_VOID &&
-        minitype->type_num != PyArray_VOID) {
+        (minitype == NULL || minitype->type_num != PyArray_VOID)) {
         Py_DECREF(outtype);
         return PyArray_DescrFromType(NPY_OBJECT);
     }
