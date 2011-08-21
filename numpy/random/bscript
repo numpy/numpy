@@ -1,19 +1,33 @@
 import os
+import sys
 
-from bento.commands.hooks \
-    import \
-        pre_build
+from bento.commands import hooks
+import waflib
 
-@pre_build
+@hooks.pre_configure
+def configure(context):
+    conf = context.waf_context
+
+    conf.env.USE_WINCRYPT = False
+    if conf.check_declaration("_WIN32"):
+        conf.env.USE_WINCRYPT = True
+
+    conf.env.NEEDS_MINGW32_WORKAROUND = False
+    if sys.platform == "win32" and conf.check_declaration("__GNUC__", mandatory=False):
+        conf.env.NEEDS_MINGW32_WORKAROUND = True
+
+@hooks.pre_build
 def build(context):
     bld = context.waf_context
 
-    if os.name == 'nt':
-        raise NotImplementedError("Check for wincrypt stuff")
+    if bld.env.NEEDS_MINGW32_WORKAROUND:
         raise NotImplementedError("Check for mingw time workaround stuff")
 
     def builder(extension):
         includes = ["../core/include", "../core/include/numpy", "../core",
                     "../core/src/private"]
-        return context.default_builder(extension, includes=includes)
+        kw = {}
+        if bld.env.USE_WINCRYPT:
+            kw["lib"] = "ADVAPI32"
+        return context.default_builder(extension, includes=includes, **kw)
     context.register_builder("mtrand", builder)
