@@ -39,6 +39,7 @@
 #include "numpy/noprefix.h"
 #include "numpy/ufuncobject.h"
 #include "lowlevel_strided_loops.h"
+#include "ufunc_type_resolution.h"
 
 #include "ufunc_object.h"
 
@@ -544,11 +545,11 @@ _is_same_name(const char* s1, const char* s2)
 
 /*
  * Sets core_num_dim_ix, core_num_dims, core_dim_ixs, core_offsets,
- * and core_signature in PyUFuncObject "self".  Returns 0 unless an
+ * and core_signature in PyUFuncObject "ufunc".  Returns 0 unless an
  * error occured.
  */
 static int
-_parse_signature(PyUFuncObject *self, const char *signature)
+_parse_signature(PyUFuncObject *ufunc, const char *signature)
 {
     size_t len;
     char const **var_names;
@@ -565,9 +566,9 @@ _parse_signature(PyUFuncObject *self, const char *signature)
     }
 
     len = strlen(signature);
-    self->core_signature = PyArray_malloc(sizeof(char) * (len+1));
-    if (self->core_signature) {
-        strcpy(self->core_signature, signature);
+    ufunc->core_signature = PyArray_malloc(sizeof(char) * (len+1));
+    if (ufunc->core_signature) {
+        strcpy(ufunc->core_signature, signature);
     }
     /* Allocate sufficient memory to store pointers to all dimension names */
     var_names = PyArray_malloc(sizeof(char const*) * len);
@@ -576,13 +577,13 @@ _parse_signature(PyUFuncObject *self, const char *signature)
         return -1;
     }
 
-    self->core_enabled = 1;
-    self->core_num_dim_ix = 0;
-    self->core_num_dims = PyArray_malloc(sizeof(int) * self->nargs);
-    self->core_dim_ixs = PyArray_malloc(sizeof(int) * len); /* shrink this later */
-    self->core_offsets = PyArray_malloc(sizeof(int) * self->nargs);
-    if (self->core_num_dims == NULL || self->core_dim_ixs == NULL
-        || self->core_offsets == NULL) {
+    ufunc->core_enabled = 1;
+    ufunc->core_num_dim_ix = 0;
+    ufunc->core_num_dims = PyArray_malloc(sizeof(int) * ufunc->nargs);
+    ufunc->core_dim_ixs = PyArray_malloc(sizeof(int) * len); /* shrink this later */
+    ufunc->core_offsets = PyArray_malloc(sizeof(int) * ufunc->nargs);
+    if (ufunc->core_num_dims == NULL || ufunc->core_dim_ixs == NULL
+        || ufunc->core_offsets == NULL) {
         PyErr_NoMemory();
         goto fail;
     }
@@ -590,7 +591,7 @@ _parse_signature(PyUFuncObject *self, const char *signature)
     i = _next_non_white_space(signature, 0);
     while (signature[i] != '\0') {
         /* loop over input/output arguments */
-        if (cur_arg == self->nin) {
+        if (cur_arg == ufunc->nin) {
             /* expect "->" */
             if (signature[i] != '-' || signature[i+1] != '>') {
                 parse_error = "expect '->'";
@@ -615,17 +616,17 @@ _parse_signature(PyUFuncObject *self, const char *signature)
                 parse_error = "expect dimension name";
                 goto fail;
             }
-            while (j < self->core_num_dim_ix) {
+            while (j < ufunc->core_num_dim_ix) {
                 if (_is_same_name(signature+i, var_names[j])) {
                     break;
                 }
                 j++;
             }
-            if (j >= self->core_num_dim_ix) {
+            if (j >= ufunc->core_num_dim_ix) {
                 var_names[j] = signature+i;
-                self->core_num_dim_ix++;
+                ufunc->core_num_dim_ix++;
             }
-            self->core_dim_ixs[cur_core_dim] = j;
+            ufunc->core_dim_ixs[cur_core_dim] = j;
             cur_core_dim++;
             nd++;
             i = _get_end_of_name(signature, i);
@@ -643,13 +644,13 @@ _parse_signature(PyUFuncObject *self, const char *signature)
                 }
             }
         }
-        self->core_num_dims[cur_arg] = nd;
-        self->core_offsets[cur_arg] = cur_core_dim-nd;
+        ufunc->core_num_dims[cur_arg] = nd;
+        ufunc->core_offsets[cur_arg] = cur_core_dim-nd;
         cur_arg++;
         nd = 0;
 
         i = _next_non_white_space(signature, i + 1);
-        if (cur_arg != self->nin && cur_arg != self->nargs) {
+        if (cur_arg != ufunc->nin && cur_arg != ufunc->nargs) {
             /*
              * The list of input arguments (or output arguments) was
              * only read partially
@@ -661,15 +662,15 @@ _parse_signature(PyUFuncObject *self, const char *signature)
             i = _next_non_white_space(signature, i + 1);
         }
     }
-    if (cur_arg != self->nargs) {
+    if (cur_arg != ufunc->nargs) {
         parse_error = "incomplete signature: not all arguments found";
         goto fail;
     }
-    self->core_dim_ixs = PyArray_realloc(self->core_dim_ixs,
+    ufunc->core_dim_ixs = PyArray_realloc(ufunc->core_dim_ixs,
             sizeof(int)*cur_core_dim);
     /* check for trivial core-signature, e.g. "(),()->()" */
     if (cur_core_dim == 0) {
-        self->core_enabled = 0;
+        ufunc->core_enabled = 0;
     }
     PyArray_free((void*)var_names);
     return 0;
@@ -701,7 +702,7 @@ fail:
  * non-zero references in out_op.  This
  * function does not do its own clean-up.
  */
-static int get_ufunc_arguments(PyUFuncObject *self,
+static int get_ufunc_arguments(PyUFuncObject *ufunc,
                 PyObject *args, PyObject *kwds,
                 PyArrayObject **out_op,
                 NPY_ORDER *out_order,
@@ -712,7 +713,7 @@ static int get_ufunc_arguments(PyUFuncObject *self,
                 PyArrayObject **out_wheremask,
                 int *out_use_maskna)
 {
-    int i, nargs, nin = self->nin, nout = self->nout;
+    int i, nargs, nin = ufunc->nin, nout = ufunc->nout;
     PyObject *obj, *context;
     PyObject *str_key_obj = NULL;
     char *ufunc_name;
@@ -720,7 +721,7 @@ static int get_ufunc_arguments(PyUFuncObject *self,
     int any_flexible = 0, any_object = 0;
     int any_non_maskna_out = 0, any_maskna_out = 0;
 
-    ufunc_name = self->name ? self->name : "<unnamed ufunc>";
+    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
     *out_extobj = NULL;
     *out_typetup = NULL;
@@ -730,7 +731,7 @@ static int get_ufunc_arguments(PyUFuncObject *self,
 
     /* Check number of arguments */
     nargs = PyTuple_Size(args);
-    if ((nargs < nin) || (nargs > self->nargs)) {
+    if ((nargs < nin) || (nargs > ufunc->nargs)) {
         PyErr_SetString(PyExc_ValueError, "invalid number of arguments");
         return -1;
     }
@@ -746,7 +747,7 @@ static int get_ufunc_arguments(PyUFuncObject *self,
              * TODO: There should be a comment here explaining what
              *       context does.
              */
-            context = Py_BuildValue("OOi", self, args, i);
+            context = Py_BuildValue("OOi", ufunc, args, i);
             if (context == NULL) {
                 return -1;
             }
@@ -1036,12 +1037,12 @@ fail:
  * -1 if there is an error.
  */
 static int
-check_for_trivial_loop(PyUFuncObject *self,
+check_for_trivial_loop(PyUFuncObject *ufunc,
                         PyArrayObject **op,
                         PyArray_Descr **dtype,
                         npy_intp buffersize)
 {
-    npy_intp i, nin = self->nin, nop = nin + self->nout;
+    npy_intp i, nin = ufunc->nin, nop = nin + ufunc->nout;
 
     for (i = 0; i < nop; ++i) {
         /*
@@ -1152,7 +1153,7 @@ trivial_three_operand_loop(PyArrayObject **op,
  * exactly the same, which may be more strict than before.
  */
 static int
-prepare_ufunc_output(PyUFuncObject *self,
+prepare_ufunc_output(PyUFuncObject *ufunc,
                     PyArrayObject **op,
                     PyObject *arr_prep,
                     PyObject *arr_prep_args,
@@ -1163,7 +1164,7 @@ prepare_ufunc_output(PyUFuncObject *self,
         PyArrayObject *arr;
 
         res = PyObject_CallFunction(arr_prep, "O(OOi)",
-                    *op, self, arr_prep_args, i);
+                    *op, ufunc, arr_prep_args, i);
         if ((res == NULL) || (res == Py_None) || !PyArray_Check(res)) {
             if (!PyErr_Occurred()){
                 PyErr_SetString(PyExc_TypeError,
@@ -1207,7 +1208,7 @@ prepare_ufunc_output(PyUFuncObject *self,
 }
 
 static int
-iterator_loop(PyUFuncObject *self,
+iterator_loop(PyUFuncObject *ufunc,
                     PyArrayObject **op,
                     PyArray_Descr **dtype,
                     NPY_ORDER order,
@@ -1217,7 +1218,7 @@ iterator_loop(PyUFuncObject *self,
                     PyUFuncGenericFunction innerloop,
                     void *innerloopdata)
 {
-    npy_intp i, nin = self->nin, nout = self->nout;
+    npy_intp i, nin = ufunc->nin, nout = ufunc->nout;
     npy_intp nop = nin + nout;
     npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
@@ -1278,7 +1279,7 @@ iterator_loop(PyUFuncObject *self,
 
     /* Call the __array_prepare__ functions where necessary */
     for (i = 0; i < nout; ++i) {
-        if (prepare_ufunc_output(self, &op[nin+i],
+        if (prepare_ufunc_output(ufunc, &op[nin+i],
                             arr_prep[i], arr_prep_args, i) < 0) {
             NpyIter_Deallocate(iter);
             return -1;
@@ -1341,18 +1342,27 @@ iterator_loop(PyUFuncObject *self,
  * innerloopdata   - data to pass to the inner loop
  */
 static int
-execute_ufunc_loop(PyUFuncObject *self,
+execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
                     int trivial_loop_ok,
                     PyArrayObject **op,
-                    PyArray_Descr **dtype,
+                    PyArray_Descr **dtypes,
                     NPY_ORDER order,
                     npy_intp buffersize,
                     PyObject **arr_prep,
-                    PyObject *arr_prep_args,
-                    PyUFuncGenericFunction innerloop,
-                    void *innerloopdata)
+                    PyObject *arr_prep_args)
 {
-    npy_intp nin = self->nin, nout = self->nout;
+    npy_intp nin = ufunc->nin, nout = ufunc->nout;
+    PyUFuncGenericFunction innerloop;
+    void *innerloopdata;
+
+    if (ufunc->legacy_inner_loop_selector(ufunc, dtypes,
+                    &innerloop, &innerloopdata) < 0) {
+        return -1;
+    }
+    /* If the loop wants the arrays, provide them. */
+    if (_does_loop_use_arrays(innerloopdata)) {
+        innerloopdata = (void*)op;
+    }
 
     /* First check for the trivial cases that don't need an iterator */
     if (trivial_loop_ok) {
@@ -1360,9 +1370,9 @@ execute_ufunc_loop(PyUFuncObject *self,
             if (op[1] == NULL &&
                         (order == NPY_ANYORDER || order == NPY_KEEPORDER) &&
                         PyArray_TRIVIALLY_ITERABLE(op[0])) {
-                Py_INCREF(dtype[1]);
+                Py_INCREF(dtypes[1]);
                 op[1] = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                             dtype[1],
+                             dtypes[1],
                              PyArray_NDIM(op[0]),
                              PyArray_DIMS(op[0]),
                              NULL, NULL,
@@ -1371,7 +1381,7 @@ execute_ufunc_loop(PyUFuncObject *self,
                              NULL);
 
                 /* Call the __prepare_array__ if necessary */
-                if (prepare_ufunc_output(self, &op[1],
+                if (prepare_ufunc_output(ufunc, &op[1],
                                     arr_prep[0], arr_prep_args, 0) < 0) {
                     return -1;
                 }
@@ -1386,7 +1396,7 @@ execute_ufunc_loop(PyUFuncObject *self,
                         PyArray_TRIVIALLY_ITERABLE_PAIR(op[0], op[1])) {
 
                 /* Call the __prepare_array__ if necessary */
-                if (prepare_ufunc_output(self, &op[1],
+                if (prepare_ufunc_output(ufunc, &op[1],
                                     arr_prep[0], arr_prep_args, 0) < 0) {
                     return -1;
                 }
@@ -1412,9 +1422,9 @@ execute_ufunc_loop(PyUFuncObject *self,
                 else {
                     tmp = op[1];
                 }
-                Py_INCREF(dtype[2]);
+                Py_INCREF(dtypes[2]);
                 op[2] = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
-                                 dtype[2],
+                                 dtypes[2],
                                  PyArray_NDIM(tmp),
                                  PyArray_DIMS(tmp),
                                  NULL, NULL,
@@ -1423,7 +1433,7 @@ execute_ufunc_loop(PyUFuncObject *self,
                                  NULL);
 
                 /* Call the __prepare_array__ if necessary */
-                if (prepare_ufunc_output(self, &op[2],
+                if (prepare_ufunc_output(ufunc, &op[2],
                                     arr_prep[0], arr_prep_args, 0) < 0) {
                     return -1;
                 }
@@ -1439,7 +1449,7 @@ execute_ufunc_loop(PyUFuncObject *self,
                     PyArray_TRIVIALLY_ITERABLE_TRIPLE(op[0], op[1], op[2])) {
 
                 /* Call the __prepare_array__ if necessary */
-                if (prepare_ufunc_output(self, &op[2],
+                if (prepare_ufunc_output(ufunc, &op[2],
                                     arr_prep[0], arr_prep_args, 0) < 0) {
                     return -1;
                 }
@@ -1458,7 +1468,7 @@ execute_ufunc_loop(PyUFuncObject *self,
      */
 
     NPY_UF_DBG_PRINT("iterator loop\n");
-    if (iterator_loop(self, op, dtype, order,
+    if (iterator_loop(ufunc, op, dtypes, order,
                     buffersize, arr_prep, arr_prep_args,
                     innerloop, innerloopdata) < 0) {
         return -1;
@@ -1513,19 +1523,17 @@ combine_ufunc_maskna(char **masks, npy_intp *strides, npy_intp count,
  * innerloopdata   - data to pass to the inner loop
  */
 static int
-execute_ufunc_masked_loop(PyUFuncObject *self,
+execute_ufunc_masked_loop(PyUFuncObject *ufunc,
                     PyArrayObject *wheremask,
                     int use_maskna,
                     PyArrayObject **op,
-                    PyArray_Descr **dtype,
+                    PyArray_Descr **dtypes,
                     NPY_ORDER order,
                     npy_intp buffersize,
                     PyObject **arr_prep,
-                    PyObject *arr_prep_args,
-                    PyUFuncGenericMaskedFunction innerloop,
-                    NpyAuxData *innerloopdata)
+                    PyObject *arr_prep_args)
 {
-    int i, nin = self->nin, nout = self->nout;
+    int i, nin = ufunc->nin, nout = ufunc->nout;
     int nop = nin + nout;
     npy_uint32 op_flags[NPY_MAXARGS];
     NpyIter *iter;
@@ -1534,8 +1542,8 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
 
     NpyIter_IterNextFunc *iternext;
     char **dataptr;
-    npy_intp *stride;
-    npy_intp *count_ptr;
+    npy_intp *strides;
+    npy_intp *countptr;
 
     PyArrayObject **op_it;
 
@@ -1548,7 +1556,7 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
             return -1;
         }
         op[nop] = wheremask;
-        dtype[nop] = NULL;
+        dtypes[nop] = NULL;
         default_op_out_flags |= NPY_ITER_WRITEMASKED;
     }
 
@@ -1598,7 +1606,7 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
                         NPY_ITER_BUFFERED |
                         NPY_ITER_GROWINNER,
                         order, NPY_UNSAFE_CASTING,
-                        op_flags, dtype,
+                        op_flags, dtypes,
                         0, NULL, NULL, buffersize);
     if (iter == NULL) {
         return -1;
@@ -1619,7 +1627,7 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
 
     /* Call the __array_prepare__ functions where necessary */
     for (i = 0; i < nout; ++i) {
-        if (prepare_ufunc_output(self, &op[nin+i],
+        if (prepare_ufunc_output(ufunc, &op[nin+i],
                             arr_prep[i], arr_prep_args, i) < 0) {
             NpyIter_Deallocate(iter);
             return -1;
@@ -1628,6 +1636,9 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
 
     /* Only do the loop if the iteration size is non-zero */
     if (NpyIter_GetIterSize(iter) != 0) {
+        PyUFunc_MaskedStridedInnerLoopFunc *innerloop;
+        NpyAuxData *innerloopdata;
+        npy_intp fixed_strides[2*NPY_MAXARGS];
 
         /* Validate that the prepare_ufunc_output didn't mess with pointers */
         for (i = nin; i < nop; ++i) {
@@ -1640,6 +1651,20 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
             }
         }
 
+        /*
+         * Get the inner loop, with the possibility of specialization
+         * based on the fixed strides.
+         */
+        NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+        if (ufunc->masked_inner_loop_selector(ufunc, dtypes,
+                        fixed_strides,
+                        wheremask != NULL ? fixed_strides[nop]
+                                          : fixed_strides[nop + nin],
+                        &innerloop, &innerloopdata) < 0) {
+            NpyIter_Deallocate(iter);
+            return -1;
+        }
+
         /* Get the variables needed for the loop */
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
@@ -1647,8 +1672,8 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
             return -1;
         }
         dataptr = NpyIter_GetDataPtrArray(iter);
-        stride = NpyIter_GetInnerStrideArray(iter);
-        count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
+        strides = NpyIter_GetInnerStrideArray(iter);
+        countptr = NpyIter_GetInnerLoopSizePtr(iter);
 
         if (!needs_api) {
             NPY_BEGIN_THREADS;
@@ -1658,26 +1683,30 @@ execute_ufunc_masked_loop(PyUFuncObject *self,
         /* Execute the loop */
         if (wheremask != NULL) {
             do {
-                NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)*count_ptr);
-                innerloop(dataptr, dataptr[nop], count_ptr,
-                                stride, stride[nop], innerloopdata);
+                NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)*countptr);
+                innerloop(dataptr, strides,
+                            dataptr[nop], strides[nop],
+                            *countptr, innerloopdata);
             } while (iternext(iter));
         }
         else {
             do {
-                NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)*count_ptr);
+                NPY_UF_DBG_PRINT1("iterator loop count %d\n", (int)*countptr);
                 /* Combine the input NA masks for the output */
-                combine_ufunc_maskna(&dataptr[nop], &stride[nop], *count_ptr,
+                combine_ufunc_maskna(&dataptr[nop], &strides[nop], *countptr,
                                         nin, nout);
                 /* Evaluate the ufunc wherever the NA mask says */
-                innerloop(dataptr, dataptr[nop + nin], count_ptr,
-                                stride, stride[nop + nin], innerloopdata);
+                innerloop(dataptr, strides,
+                            dataptr[nop + nin], strides[nop + nin],
+                            *countptr, innerloopdata);
             } while (iternext(iter));
         }
 
         if (!needs_api) {
             NPY_END_THREADS;
         }
+
+        NPY_AUXDATA_FREE(innerloopdata);
     }
 
     NpyIter_Deallocate(iter);
@@ -1723,7 +1752,7 @@ make_arr_prep_args(npy_intp nin, PyObject *args, PyObject *kwds)
 }
 
 static int
-PyUFunc_GeneralizedFunction(PyUFuncObject *self,
+PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                         PyObject *args, PyObject *kwds,
                         PyArrayObject **op)
 {
@@ -1732,7 +1761,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     char *ufunc_name;
     int retval = -1, subok = 1;
 
-    PyArray_Descr *dtype[NPY_MAXARGS];
+    PyArray_Descr *dtypes[NPY_MAXARGS];
 
     /* Use remapped axes for generalized ufunc */
     int broadcast_ndim, op_ndim;
@@ -1774,30 +1803,30 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     /* When provided, extobj and typetup contain borrowed references */
     PyObject *extobj = NULL, *type_tup = NULL;
 
-    if (self == NULL) {
+    if (ufunc == NULL) {
         PyErr_SetString(PyExc_ValueError, "function not supported");
         return -1;
     }
 
-    nin = self->nin;
-    nout = self->nout;
+    nin = ufunc->nin;
+    nout = ufunc->nout;
     nop = nin + nout;
 
-    ufunc_name = self->name ? self->name : "<unnamed ufunc>";
+    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
     /* Initialize all the operands and dtypes to NULL */
     for (i = 0; i < nop; ++i) {
         op[i] = NULL;
-        dtype[i] = NULL;
+        dtypes[i] = NULL;
         arr_prep[i] = NULL;
     }
 
     NPY_UF_DBG_PRINT("Getting arguments\n");
 
     /* Get all the arguments */
-    retval = get_ufunc_arguments(self, args, kwds,
+    retval = get_ufunc_arguments(ufunc, args, kwds,
                 op, &order, &casting, &extobj,
                 &type_tup, &subok, NULL, &use_maskna);
     if (retval < 0) {
@@ -1813,12 +1842,12 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     /* Figure out the number of dimensions needed by the iterator */
     broadcast_ndim = 0;
     for (i = 0; i < nin; ++i) {
-        int n = PyArray_NDIM(op[i]) - self->core_num_dims[i];
+        int n = PyArray_NDIM(op[i]) - ufunc->core_num_dims[i];
         if (n > broadcast_ndim) {
             broadcast_ndim = n;
         }
     }
-    op_ndim = broadcast_ndim + self->core_num_dim_ix;
+    op_ndim = broadcast_ndim + ufunc->core_num_dim_ix;
     if (op_ndim > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
                     "too many dimensions for generalized ufunc %s",
@@ -1829,7 +1858,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
 
     /* Fill in op_axes for all the operands */
     core_dim_ixs_size = 0;
-    core_dim_ixs = self->core_dim_ixs;
+    core_dim_ixs = ufunc->core_dim_ixs;
     for (i = 0; i < nop; ++i) {
         int n;
         if (op[i]) {
@@ -1837,7 +1866,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
              * Note that n may be negative if broadcasting
              * extends into the core dimensions.
              */
-            n = PyArray_NDIM(op[i]) - self->core_num_dims[i];
+            n = PyArray_NDIM(op[i]) - ufunc->core_num_dims[i];
         }
         else {
             n = broadcast_ndim;
@@ -1855,7 +1884,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
         for (idim = broadcast_ndim; idim < op_ndim; ++idim) {
             op_axes_arrays[i][idim] = -1;
         }
-        for (idim = 0; idim < self->core_num_dims[i]; ++idim) {
+        for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
             if (n + idim >= 0) {
                 op_axes_arrays[i][broadcast_ndim + core_dim_ixs[idim]] =
                                                                     n + idim;
@@ -1864,8 +1893,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
                 op_axes_arrays[i][broadcast_ndim + core_dim_ixs[idim]] = -1;
             }
         }
-        core_dim_ixs_size += self->core_num_dims[i];
-        core_dim_ixs += self->core_num_dims[i];
+        core_dim_ixs_size += ufunc->core_num_dims[i];
+        core_dim_ixs += ufunc->core_num_dims[i];
         op_axes[i] = op_axes_arrays[i];
     }
 
@@ -1888,8 +1917,14 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     NPY_UF_DBG_PRINT("Finding inner loop\n");
 
 
-    retval = self->type_resolution_function(self, casting,
-                        op, type_tup, dtype, &innerloop, &innerloopdata);
+    retval = ufunc->type_resolution_function(ufunc, casting,
+                            op, type_tup, dtypes);
+    if (retval < 0) {
+        goto fail;
+    }
+    /* For the generalized ufunc, we get the loop right away too */
+    retval = ufunc->legacy_inner_loop_selector(ufunc, dtypes,
+                                    &innerloop, &innerloopdata);
     if (retval < 0) {
         goto fail;
     }
@@ -1900,7 +1935,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
      * an attribute (signalling it can handle ndarray's)
      * and is not already an ndarray or a subtype of the same type.
     */
-    if (nin == 2 && nout == 1 && dtype[1]->type_num == NPY_OBJECT) {
+    if (nin == 2 && nout == 1 && dtypes[1]->type_num == NPY_OBJECT) {
         PyObject *_obj = PyTuple_GET_ITEM(args, 1);
         if (!PyArray_CheckExact(_obj)
                /* If both are same subtype of object arrays, then proceed */
@@ -1915,12 +1950,12 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
 #if NPY_UF_DBG_TRACING
     printf("input types:\n");
     for (i = 0; i < nin; ++i) {
-        PyObject_Print((PyObject *)dtype[i], stdout, 0);
+        PyObject_Print((PyObject *)dtypes[i], stdout, 0);
         printf(" ");
     }
     printf("\noutput types:\n");
     for (i = nin; i < nop; ++i) {
-        PyObject_Print((PyObject *)dtype[i], stdout, 0);
+        PyObject_Print((PyObject *)dtypes[i], stdout, 0);
         printf(" ");
     }
     printf("\n");
@@ -1969,7 +2004,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
                                       NPY_ITER_REFS_OK|
                                       NPY_ITER_REDUCE_OK,
                            order, NPY_UNSAFE_CASTING, op_flags,
-                           dtype, op_ndim, op_axes, NULL, 0);
+                           dtypes, op_ndim, op_axes, NULL, 0);
     if (iter == NULL) {
         retval = -1;
         goto fail;
@@ -1990,9 +2025,9 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     inner_strides = (npy_intp *)PyArray_malloc(
                         NPY_SIZEOF_INTP * (nop+core_dim_ixs_size));
     /* The strides after the first nop match core_dim_ixs */
-    core_dim_ixs = self->core_dim_ixs;
+    core_dim_ixs = ufunc->core_dim_ixs;
     inner_strides_tmp = inner_strides + nop;
-    for (idim = 0; idim < self->core_num_dim_ix; ++idim) {
+    for (idim = 0; idim < ufunc->core_num_dim_ix; ++idim) {
         ax_strides_tmp[idim] = NpyIter_GetAxisStrideArray(iter,
                                                 broadcast_ndim+idim);
         if (ax_strides_tmp[idim] == NULL) {
@@ -2001,12 +2036,12 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
         }
     }
     for (i = 0; i < nop; ++i) {
-        for (idim = 0; idim < self->core_num_dims[i]; ++idim) {
+        for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
             inner_strides_tmp[idim] = ax_strides_tmp[core_dim_ixs[idim]][i];
         }
 
-        core_dim_ixs += self->core_num_dims[i];
-        inner_strides_tmp += self->core_num_dims[i];
+        core_dim_ixs += ufunc->core_num_dims[i];
+        inner_strides_tmp += ufunc->core_num_dims[i];
     }
 
     /* Set up the inner dimensions array */
@@ -2016,10 +2051,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     }
     /* Move the core dimensions to start at the second element */
     memmove(&inner_dimensions[1], &inner_dimensions[broadcast_ndim],
-                        NPY_SIZEOF_INTP * self->core_num_dim_ix);
+                        NPY_SIZEOF_INTP * ufunc->core_num_dim_ix);
 
     /* Remove all the core dimensions from the iterator */
-    for (i = 0; i < self->core_num_dim_ix; ++i) {
+    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
         if (NpyIter_RemoveAxis(iter, broadcast_ndim) != NPY_SUCCEED) {
             retval = -1;
             goto fail;
@@ -2087,7 +2122,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *self,
     NpyIter_Deallocate(iter);
     /* The caller takes ownership of all the references in op */
     for (i = 0; i < nop; ++i) {
-        Py_XDECREF(dtype[i]);
+        Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
     Py_XDECREF(errobj);
@@ -2109,7 +2144,7 @@ fail:
     for (i = 0; i < nop; ++i) {
         Py_XDECREF(op[i]);
         op[i] = NULL;
-        Py_XDECREF(dtype[i]);
+        Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
     Py_XDECREF(errobj);
@@ -2127,7 +2162,7 @@ fail:
  * 'op' is an array of at least NPY_MAXARGS PyArrayObject *.
  */
 NPY_NO_EXPORT int
-PyUFunc_GenericFunction(PyUFuncObject *self,
+PyUFunc_GenericFunction(PyUFuncObject *ufunc,
                         PyObject *args, PyObject *kwds,
                         PyArrayObject **op)
 {
@@ -2137,23 +2172,12 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     int retval = -1, subok = 1;
     int usemaskedloop = 0;
 
-    PyArray_Descr *dtype[NPY_MAXARGS];
+    PyArray_Descr *dtypes[NPY_MAXARGS];
 
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
     PyObject *errobj = NULL;
     int first_error = 1;
-
-    /* The selected inner loop */
-    PyUFuncGenericFunction innerloop = NULL;
-    void *innerloopdata = NULL;
-
-    /*
-     * The selected masked inner loop, when the 'where='
-     * parameter or arrays with missing values are in op.
-     */
-    PyUFuncGenericMaskedFunction masked_innerloop = NULL;
-    NpyAuxData *masked_innerloopdata = NULL;
 
     /* The mask provided in the 'where=' parameter */
     PyArrayObject *wheremask = NULL;
@@ -2174,34 +2198,34 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     /* When provided, extobj and typetup contain borrowed references */
     PyObject *extobj = NULL, *type_tup = NULL;
 
-    if (self == NULL) {
+    if (ufunc == NULL) {
         PyErr_SetString(PyExc_ValueError, "function not supported");
         return -1;
     }
 
-    if (self->core_enabled) {
-        return PyUFunc_GeneralizedFunction(self, args, kwds, op);
+    if (ufunc->core_enabled) {
+        return PyUFunc_GeneralizedFunction(ufunc, args, kwds, op);
     }
 
-    nin = self->nin;
-    nout = self->nout;
+    nin = ufunc->nin;
+    nout = ufunc->nout;
     nop = nin + nout;
 
-    ufunc_name = self->name ? self->name : "<unnamed ufunc>";
+    ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
     NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s\n", ufunc_name);
 
     /* Initialize all the operands and dtypes to NULL */
     for (i = 0; i < nop; ++i) {
         op[i] = NULL;
-        dtype[i] = NULL;
+        dtypes[i] = NULL;
         arr_prep[i] = NULL;
     }
 
     NPY_UF_DBG_PRINT("Getting arguments\n");
 
     /* Get all the arguments */
-    retval = get_ufunc_arguments(self, args, kwds,
+    retval = get_ufunc_arguments(ufunc, args, kwds,
                 op, &order, &casting, &extobj,
                 &type_tup, &subok, &wheremask, &use_maskna);
     if (retval < 0) {
@@ -2245,30 +2269,19 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     NPY_UF_DBG_PRINT("Finding inner loop\n");
 
-    if (usemaskedloop) {
-        retval = self->type_resolution_masked_function(self, casting,
-                            op, type_tup, dtype,
-                            &masked_innerloop, &masked_innerloopdata);
-        if (retval < 0) {
-            goto fail;
-        }
+    retval = ufunc->type_resolution_function(ufunc, casting,
+                            op, type_tup, dtypes);
+    if (retval < 0) {
+        goto fail;
     }
-    else {
-        retval = self->type_resolution_function(self, casting,
-                            op, type_tup, dtype,
-                            &innerloop, &innerloopdata);
-        if (retval < 0) {
-            goto fail;
-        }
 
+    /* Only do the trivial loop check for the unmasked version. */
+    if (!usemaskedloop) {
         /*
-         * This checks whether a trivial loop is ok,
-         * making copies of scalar and one dimensional operands if that will
-         * help.
-         *
-         * Only do the trivial loop check for the unmasked version.
+         * This checks whether a trivial loop is ok, making copies of
+         * scalar and one dimensional operands if that will help.
          */
-        trivial_loop_ok = check_for_trivial_loop(self, op, dtype, buffersize);
+        trivial_loop_ok = check_for_trivial_loop(ufunc, op, dtypes, buffersize);
         if (trivial_loop_ok < 0) {
             goto fail;
         }
@@ -2280,7 +2293,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
      * an attribute (signalling it can handle ndarray's)
      * and is not already an ndarray or a subtype of the same type.
     */
-    if (nin == 2 && nout == 1 && dtype[1]->type_num == NPY_OBJECT) {
+    if (nin == 2 && nout == 1 && dtypes[1]->type_num == NPY_OBJECT) {
         PyObject *_obj = PyTuple_GET_ITEM(args, 1);
         if (!PyArray_CheckExact(_obj)
                /* If both are same subtype of object arrays, then proceed */
@@ -2296,12 +2309,12 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 #if NPY_UF_DBG_TRACING
     printf("input types:\n");
     for (i = 0; i < nin; ++i) {
-        PyObject_Print((PyObject *)dtype[i], stdout, 0);
+        PyObject_Print((PyObject *)dtypes[i], stdout, 0);
         printf(" ");
     }
     printf("\noutput types:\n");
     for (i = nin; i < nop; ++i) {
-        PyObject_Print((PyObject *)dtype[i], stdout, 0);
+        PyObject_Print((PyObject *)dtypes[i], stdout, 0);
         printf(" ");
     }
     printf("\n");
@@ -2323,17 +2336,6 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
         }
     }
 
-    /*
-     * If the loop wants the arrays, provide them.
-     *
-     * TODO: Remove this, since this is already basically broken
-     *       with the addition of the masked inner loops and
-     *       not worth fixing.
-     */
-    if (!usemaskedloop && _does_loop_use_arrays(innerloopdata)) {
-        innerloopdata = (void*)op;
-    }
-
     /* Start with the floating-point exception flags cleared */
     PyUFunc_clearfperr();
 
@@ -2341,18 +2343,29 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
     if (usemaskedloop) {
         NPY_UF_DBG_PRINT("Executing masked inner loop\n");
 
-        retval = execute_ufunc_masked_loop(self, wheremask, use_maskna,
-                            op, dtype, order,
-                            buffersize, arr_prep, arr_prep_args,
-                            masked_innerloop, masked_innerloopdata);
+        retval = execute_ufunc_masked_loop(ufunc, wheremask, use_maskna,
+                            op, dtypes, order,
+                            buffersize, arr_prep, arr_prep_args);
     }
     else {
         NPY_UF_DBG_PRINT("Executing unmasked inner loop\n");
 
-        retval = execute_ufunc_loop(self, trivial_loop_ok,
-                            op, dtype, order,
-                            buffersize, arr_prep, arr_prep_args,
-                            innerloop, innerloopdata);
+        if (ufunc->legacy_inner_loop_selector != NULL) {
+            retval = execute_legacy_ufunc_loop(ufunc, trivial_loop_ok,
+                                op, dtypes, order,
+                                buffersize, arr_prep, arr_prep_args);
+        }
+        else {
+            /*
+             * TODO: When this is supported, it should be preferred over
+             * the legacy_inner_loop_selector
+             */
+            PyErr_SetString(PyExc_RuntimeError,
+                    "usage of the new inner_loop_selector isn't "
+                    "implemented yet");
+            retval = -1;
+            goto fail;
+        }
     }
     if (retval < 0) {
         goto fail;
@@ -2367,7 +2380,7 @@ PyUFunc_GenericFunction(PyUFuncObject *self,
 
     /* The caller takes ownership of all the references in op */
     for (i = 0; i < nop; ++i) {
-        Py_XDECREF(dtype[i]);
+        Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
     Py_XDECREF(errobj);
@@ -2384,7 +2397,7 @@ fail:
     for (i = 0; i < nop; ++i) {
         Py_XDECREF(op[i]);
         op[i] = NULL;
-        Py_XDECREF(dtype[i]);
+        Py_XDECREF(dtypes[i]);
         Py_XDECREF(arr_prep[i]);
     }
     Py_XDECREF(errobj);
@@ -2403,7 +2416,7 @@ fail:
  * Returns 0 on success, -1 on failure.
  */
 static int
-get_binary_op_function(PyUFuncObject *self, int *otype,
+get_binary_op_function(PyUFuncObject *ufunc, int *otype,
                         PyUFuncGenericFunction *out_innerloop,
                         void **out_innerloopdata)
 {
@@ -2414,13 +2427,13 @@ get_binary_op_function(PyUFuncObject *self, int *otype,
                                 *otype);
 
     /* If the type is custom and there are userloops, search for it here */
-    if (self->userloops != NULL && PyTypeNum_ISUSERDEF(*otype)) {
+    if (ufunc->userloops != NULL && PyTypeNum_ISUSERDEF(*otype)) {
         PyObject *key, *obj;
         key = PyInt_FromLong(*otype);
         if (key == NULL) {
             return -1;
         }
-        obj = PyDict_GetItem(self->userloops, key);
+        obj = PyDict_GetItem(ufunc->userloops, key);
         Py_DECREF(key);
         if (obj != NULL) {
             funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
@@ -2440,8 +2453,8 @@ get_binary_op_function(PyUFuncObject *self, int *otype,
     }
 
     /* Search for a function with compatible inputs */
-    for (i = 0; i < self->ntypes; ++i) {
-        char *types = self->types + i*self->nargs;
+    for (i = 0; i < ufunc->ntypes; ++i) {
+        char *types = ufunc->types + i*ufunc->nargs;
 
         NPY_UF_DBG_PRINT3("Trying loop with signature %d %d -> %d\n",
                                 types[0], types[1], types[2]);
@@ -2451,8 +2464,8 @@ get_binary_op_function(PyUFuncObject *self, int *otype,
                     (*otype == NPY_OBJECT || types[0] != NPY_OBJECT)) {
             /* If the signature is "xx->x", we found the loop */
             if (types[2] == types[0]) {
-                *out_innerloop = self->functions[i];
-                *out_innerloopdata = self->data[i];
+                *out_innerloop = ufunc->functions[i];
+                *out_innerloopdata = ufunc->data[i];
                 *otype = types[0];
                 return 0;
             }
@@ -2468,16 +2481,16 @@ get_binary_op_function(PyUFuncObject *self, int *otype,
     }
 
     /* Search for the exact function */
-    for (i = 0; i < self->ntypes; ++i) {
-        char *types = self->types + i*self->nargs;
+    for (i = 0; i < ufunc->ntypes; ++i) {
+        char *types = ufunc->types + i*ufunc->nargs;
 
         if (PyArray_CanCastSafely(*otype, types[0]) &&
                     types[0] == types[1] &&
                     types[1] == types[2] &&
                     (*otype == NPY_OBJECT || types[0] != NPY_OBJECT)) {
             /* Since the signature is "xx->x", we found the loop */
-            *out_innerloop = self->functions[i];
-            *out_innerloopdata = self->data[i];
+            *out_innerloop = ufunc->functions[i];
+            *out_innerloopdata = ufunc->data[i];
             *otype = types[0];
             return 0;
         }
@@ -2495,17 +2508,17 @@ get_binary_op_function(PyUFuncObject *self, int *otype,
  * Returns 0 on success, -1 on failure.
  */
 static int
-get_masked_binary_op_function(PyUFuncObject *self, PyArrayObject *arr,
+get_masked_binary_op_function(PyUFuncObject *ufunc, PyArrayObject *arr,
                         int otype,
                         PyArray_Descr **out_dtype,
-                        PyUFuncGenericMaskedFunction *out_innerloop,
+                        PyUFunc_MaskedStridedInnerLoopFunc **out_innerloop,
                         NpyAuxData **out_innerloopdata)
 {
     int i, retcode;
     PyArrayObject *op[3] = {arr, arr, NULL};
-    PyArray_Descr *dtype[3] = {NULL, NULL, NULL};
-    PyObject *type_tup = NULL;
-    char *ufunc_name = self->name ? self->name : "(unknown)";
+    PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
+    char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
+    npy_intp fixed_strides[3] = {NPY_MAX_INTP, NPY_MAX_INTP, NPY_MAX_INTP};
 
     NPY_UF_DBG_PRINT1("Getting masked binary op function for type number %d\n",
                                 otype);
@@ -2513,49 +2526,58 @@ get_masked_binary_op_function(PyUFuncObject *self, PyArrayObject *arr,
     *out_dtype = NULL;
 
     /* Build a type tuple if otype is specified */
-    if (otype != NPY_NOTYPE) {
+    if (otype == NPY_NOTYPE) {
+        /* Use the type resolution function to find our loop */
+        retcode = ufunc->type_resolution_function(
+                            ufunc, NPY_SAME_KIND_CASTING,
+                            op, NULL, dtypes);
+        if (retcode == -1) {
+            return -1;
+        }
+        else if (retcode == -2) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "type resolution returned NotImplemented");
+            return -1;
+        }
+
+        /* The selected dtypes should all be equivalent */
+        if (!PyArray_EquivTypes(dtypes[0], dtypes[1]) ||
+                    !PyArray_EquivTypes(dtypes[1], dtypes[2])) {
+            for (i = 0; i < 3; ++i) {
+                Py_DECREF(dtypes[i]);
+            }
+            PyErr_Format(PyExc_RuntimeError,
+                    "could not find a type resolution appropriate for "
+                    "reduce ufunc %s", ufunc_name);
+            return -1;
+        }
+    }
+    else {
         PyArray_Descr *otype_dtype = PyArray_DescrFromType(otype);
         if (otype_dtype == NULL) {
             return -1;
         }
+        dtypes[0] = otype_dtype;
         Py_INCREF(otype_dtype);
+        dtypes[1] = otype_dtype;
         Py_INCREF(otype_dtype);
-        type_tup = Py_BuildValue("(NNN)",
-                        otype_dtype, otype_dtype, otype_dtype);
-        if (type_tup == NULL) {
-            return -1;
-        }
+        dtypes[2] = otype_dtype;
     }
 
-    /* Use the type resolution function to find our loop */
-    retcode = self->type_resolution_masked_function(self, NPY_SAME_KIND_CASTING,
-                        op, type_tup, dtype,
-                        out_innerloop, out_innerloopdata);
-    Py_XDECREF(type_tup);
-    if (retcode == -1) {
-        return -1;
-    }
-    else if (retcode == -2) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "type resolution returned NotImplemented");
+    /* Get the inner loop for the resolved dtypes */
+    if (ufunc->masked_inner_loop_selector(ufunc, dtypes,
+                            fixed_strides, NPY_MAX_INTP,
+                            out_innerloop, out_innerloopdata) < 0) {
+        Py_DECREF(dtypes[0]);
+        Py_DECREF(dtypes[1]);
+        Py_DECREF(dtypes[2]);
+
         return -1;
     }
 
-    /* The selected dtypes should all be equivalent */
-    if (!PyArray_EquivTypes(dtype[0], dtype[1]) ||
-                !PyArray_EquivTypes(dtype[1], dtype[2])) {
-        for (i = 0; i < 3; ++i) {
-            Py_DECREF(dtype[i]);
-        }
-        PyErr_Format(PyExc_RuntimeError,
-                "could not find a masked binary loop appropriate for "
-                "reduce ufunc %s", ufunc_name);
-        return -1;
-    }
-
-    *out_dtype = dtype[0];
-    Py_DECREF(dtype[1]);
-    Py_DECREF(dtype[2]);
+    *out_dtype = dtypes[0];
+    Py_DECREF(dtypes[1]);
+    Py_DECREF(dtypes[2]);
 
     return 0;
 }
@@ -2612,7 +2634,7 @@ initialize_reduce_result(int identity, PyArrayObject *result,
  * this function does not validate them.
  */
 static PyArrayObject *
-PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
+PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         int naxes, int *axes, int otype, int skipna, int keepdims)
 {
     int iaxes, ndim, retcode;
@@ -2627,10 +2649,10 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 
     /* The masked selected inner loop */
     int use_maskna = 0;
-    PyUFuncGenericMaskedFunction maskedinnerloop = NULL;
+    PyUFunc_MaskedStridedInnerLoopFunc *maskedinnerloop = NULL;
     NpyAuxData *maskedinnerloopdata = NULL;
 
-    char *ufunc_name = self->name ? self->name : "(unknown)";
+    char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
 
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -2679,12 +2701,12 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
 
     /* Get the appropriate ufunc inner loop */
     if (use_maskna) {
-        retcode = get_masked_binary_op_function(self, arr, otype,
+        retcode = get_masked_binary_op_function(ufunc, arr, otype,
                         &otype_dtype, &maskedinnerloop, &maskedinnerloopdata);
     }
     else {
         int otype_final = otype;
-        retcode = get_binary_op_function(self, &otype_final,
+        retcode = get_binary_op_function(ufunc, &otype_final,
                                 &innerloop, &innerloopdata);
 
         NPY_UF_DBG_PRINT2("Loop retcode %d, otype final %d\n",
@@ -2726,7 +2748,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         innerloopdata = (void*)op;
     }
 
-    /* Allocate an output or conform 'out' to 'self' */
+    /* Allocate an output or conform 'out' to 'ufunc' */
     Py_XINCREF(otype_dtype);
     result = PyArray_CreateReduceResult(arr, out,
                             otype_dtype, axis_flags, !skipna && use_maskna,
@@ -2789,7 +2811,7 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
      * copied from 'arr', and create a view of 'arr' containing
      * all the elements to reduce into 'result'.
      */
-    arr_view = initialize_reduce_result(self->identity, result,
+    arr_view = initialize_reduce_result(ufunc->identity, result,
                                         axis_flags, arr, skipna,
                                         &skip_first_count, ufunc_name);
     if (arr_view == NULL) {
@@ -2853,19 +2875,19 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         int needs_api;
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
-        npy_intp *stride;
-        npy_intp *count_ptr;
+        npy_intp *strides;
+        npy_intp *countptr;
 
         char *dataptr_copy[3];
-        npy_intp stride_copy[3];
+        npy_intp strides_copy[3];
 
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
             goto fail;
         }
         dataptr = NpyIter_GetDataPtrArray(iter);
-        stride = NpyIter_GetInnerStrideArray(iter);
-        count_ptr = NpyIter_GetInnerLoopSizePtr(iter);
+        strides = NpyIter_GetInnerStrideArray(iter);
+        countptr = NpyIter_GetInnerLoopSizePtr(iter);
 
         needs_api = NpyIter_IterationNeedsAPI(iter) ||
                     PyDataType_REFCHK(otype_dtype);
@@ -2878,14 +2900,14 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
         if (!use_maskna) {
             if (skip_first_count > 0) {
                 do {
-                    npy_intp count = *count_ptr;
+                    npy_intp count = *countptr;
 
                     /* Skip any first-visit elements */
                     if (NpyIter_IsFirstVisit(iter, 0)) {
-                        if (stride[0] == 0) {
+                        if (strides[0] == 0) {
                             --count;
                             --skip_first_count;
-                            dataptr[1] += stride[1];
+                            dataptr[1] += strides[1];
                         }
                         else {
                             skip_first_count -= count;
@@ -2897,11 +2919,11 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                     dataptr_copy[0] = dataptr[0];
                     dataptr_copy[1] = dataptr[1];
                     dataptr_copy[2] = dataptr[0];
-                    stride_copy[0] = stride[0];
-                    stride_copy[1] = stride[1];
-                    stride_copy[2] = stride[0];
+                    strides_copy[0] = strides[0];
+                    strides_copy[1] = strides[1];
+                    strides_copy[2] = strides[0];
                     innerloop(dataptr_copy, &count,
-                                stride_copy, innerloopdata);
+                                strides_copy, innerloopdata);
 
                     /* Jump to the faster loop when skipping is done */
                     if (skip_first_count == 0) {
@@ -2919,26 +2941,26 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                 dataptr_copy[0] = dataptr[0];
                 dataptr_copy[1] = dataptr[1];
                 dataptr_copy[2] = dataptr[0];
-                stride_copy[0] = stride[0];
-                stride_copy[1] = stride[1];
-                stride_copy[2] = stride[0];
-                innerloop(dataptr_copy, count_ptr,
-                            stride_copy, innerloopdata);
+                strides_copy[0] = strides[0];
+                strides_copy[1] = strides[1];
+                strides_copy[2] = strides[0];
+                innerloop(dataptr_copy, countptr,
+                            strides_copy, innerloopdata);
             } while (iternext(iter));
         }
         /* Masked reduction */
         else {
             if (skip_first_count > 0) {
                 do {
-                    npy_intp count = *count_ptr;
+                    npy_intp count = *countptr;
 
                     /* Skip any first-visit elements */
                     if (NpyIter_IsFirstVisit(iter, 0)) {
-                        if (stride[0] == 0) {
+                        if (strides[0] == 0) {
                             --count;
                             --skip_first_count;
-                            dataptr[1] += stride[1];
-                            dataptr[2] += stride[2];
+                            dataptr[1] += strides[1];
+                            dataptr[2] += strides[2];
                         }
                         else {
                             skip_first_count -= count;
@@ -2950,15 +2972,16 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                     dataptr_copy[0] = dataptr[0];
                     dataptr_copy[1] = dataptr[1];
                     dataptr_copy[2] = dataptr[0];
-                    stride_copy[0] = stride[0];
-                    stride_copy[1] = stride[1];
-                    stride_copy[2] = stride[0];
+                    strides_copy[0] = strides[0];
+                    strides_copy[1] = strides[1];
+                    strides_copy[2] = strides[0];
                     /*
                      * If skipna=True, this masks based on the mask in 'arr',
                      * otherwise it masks based on the mask in 'result'
                      */
-                    maskedinnerloop(dataptr_copy, dataptr[2], &count,
-                                stride_copy, stride[2], maskedinnerloopdata);
+                    maskedinnerloop(dataptr_copy, strides_copy,
+                                dataptr[2], strides[2],
+                                count, maskedinnerloopdata);
 
                     /* Jump to the faster loop when skipping is done */
                     if (skip_first_count == 0) {
@@ -2976,15 +2999,16 @@ PyUFunc_Reduce(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
                 dataptr_copy[0] = dataptr[0];
                 dataptr_copy[1] = dataptr[1];
                 dataptr_copy[2] = dataptr[0];
-                stride_copy[0] = stride[0];
-                stride_copy[1] = stride[1];
-                stride_copy[2] = stride[0];
+                strides_copy[0] = strides[0];
+                strides_copy[1] = strides[1];
+                strides_copy[2] = strides[0];
                 /*
                  * If skipna=True, this masks based on the mask in 'arr',
                  * otherwise it masks based on the mask in 'result'
                  */
-                maskedinnerloop(dataptr_copy, dataptr[2], count_ptr,
-                            stride_copy, stride[2], maskedinnerloopdata);
+                maskedinnerloop(dataptr_copy, strides_copy,
+                            dataptr[2], strides[2],
+                            *countptr, maskedinnerloopdata);
             } while (iternext(iter));
         }
 finish_loop:
@@ -3032,7 +3056,7 @@ fail:
 
 
 static PyObject *
-PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
+PyUFunc_Accumulate(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
                    int axis, int otype, int skipna)
 {
     PyArrayObject *op[2];
@@ -3049,7 +3073,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
-    char *ufunc_name = self->name ? self->name : "(unknown)";
+    char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
 
     /* These parameters come from extobj= or from a TLS global */
     int buffersize = 0, errormask = 0;
@@ -3084,7 +3108,7 @@ PyUFunc_Accumulate(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *out,
     Py_XINCREF(out);
 
     otype_final = otype;
-    if (get_binary_op_function(self, &otype_final,
+    if (get_binary_op_function(ufunc, &otype_final,
                                 &innerloop, &innerloopdata) < 0) {
         PyArray_Descr *dtype = PyArray_DescrFromType(otype);
         PyErr_Format(PyExc_ValueError,
@@ -3421,7 +3445,7 @@ fail:
  * output shape is based on the size of indices
  */
 static PyObject *
-PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
+PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                  PyArrayObject *out, int axis, int otype, int skipna)
 {
     PyArrayObject *op[3];
@@ -3442,7 +3466,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
     PyUFuncGenericFunction innerloop = NULL;
     void *innerloopdata = NULL;
 
-    char *ufunc_name = self->name ? self->name : "(unknown)";
+    char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
     char *opname = "reduceat";
 
     /* These parameters come from extobj= or from a TLS global */
@@ -3488,7 +3512,7 @@ PyUFunc_Reduceat(PyUFuncObject *self, PyArrayObject *arr, PyArrayObject *ind,
     Py_XINCREF(out);
 
     otype_final = otype;
-    if (get_binary_op_function(self, &otype_final,
+    if (get_binary_op_function(ufunc, &otype_final,
                                 &innerloop, &innerloopdata) < 0) {
         PyArray_Descr *dtype = PyArray_DescrFromType(otype);
         PyErr_Format(PyExc_ValueError,
@@ -3789,7 +3813,7 @@ fail:
  * but they are handled separately for speed)
  */
 static PyObject *
-PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
+PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                          PyObject *kwds, int operation)
 {
     int i, naxes=0;
@@ -3808,22 +3832,22 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
                                 "dtype", "out", "skipna", NULL};
     static char *_reduce_type[] = {"reduce", "accumulate", "reduceat", NULL};
 
-    if (self == NULL) {
+    if (ufunc == NULL) {
         PyErr_SetString(PyExc_ValueError, "function not supported");
         return NULL;
     }
-    if (self->core_enabled) {
+    if (ufunc->core_enabled) {
         PyErr_Format(PyExc_RuntimeError,
                      "Reduction not defined on ufunc with signature");
         return NULL;
     }
-    if (self->nin != 2) {
+    if (ufunc->nin != 2) {
         PyErr_Format(PyExc_ValueError,
                      "%s only supported for binary functions",
                      _reduce_type[operation]);
         return NULL;
     }
-    if (self->nout != 1) {
+    if (ufunc->nout != 1) {
         PyErr_Format(PyExc_ValueError,
                      "%s only supported for functions "
                      "returning a single value",
@@ -3865,7 +3889,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
     }
     /* Ensure input is an array */
     if (!PyArray_Check(op) && !PyArray_IsScalar(op, Generic)) {
-        context = Py_BuildValue("O(O)i", self, op, 0);
+        context = Py_BuildValue("O(O)i", ufunc, op, 0);
     }
     else {
         context = NULL;
@@ -4004,8 +4028,8 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
          */
         int typenum = PyArray_TYPE(mp);
         if ((PyTypeNum_ISBOOL(typenum) || PyTypeNum_ISINTEGER(typenum))
-            && ((strcmp(self->name,"add") == 0)
-                || (strcmp(self->name,"multiply") == 0))) {
+            && ((strcmp(ufunc->name,"add") == 0)
+                || (strcmp(ufunc->name,"multiply") == 0))) {
             if (PyTypeNum_ISBOOL(typenum)) {
                 typenum = NPY_LONG;
             }
@@ -4024,7 +4048,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
 
     switch(operation) {
     case UFUNC_REDUCE:
-        ret = PyUFunc_Reduce(self, mp, out, naxes, axes,
+        ret = PyUFunc_Reduce(ufunc, mp, out, naxes, axes,
                                           otype->type_num, skipna, keepdims);
         break;
     case UFUNC_ACCUMULATE:
@@ -4035,7 +4059,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
             Py_DECREF(mp);
             return NULL;
         }
-        ret = (PyArrayObject *)PyUFunc_Accumulate(self, mp, out, axes[0],
+        ret = (PyArrayObject *)PyUFunc_Accumulate(ufunc, mp, out, axes[0],
                                                   otype->type_num, skipna);
         break;
     case UFUNC_REDUCEAT:
@@ -4046,7 +4070,7 @@ PyUFunc_GenericReduction(PyUFuncObject *self, PyObject *args,
             Py_DECREF(mp);
             return NULL;
         }
-        ret = (PyArrayObject *)PyUFunc_Reduceat(self, mp, indices, out,
+        ret = (PyArrayObject *)PyUFunc_Reduceat(ufunc, mp, indices, out,
                                             axes[0], otype->type_num, skipna);
         Py_DECREF(indices);
         break;
@@ -4218,7 +4242,7 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
 
 
 static PyObject *
-ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
+ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
     int i;
     PyTupleObject *ret;
@@ -4232,19 +4256,19 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
      * Initialize all array objects to NULL to make cleanup easier
      * if something goes wrong.
      */
-    for(i = 0; i < self->nargs; i++) {
+    for(i = 0; i < ufunc->nargs; i++) {
         mps[i] = NULL;
     }
 
-    errval = PyUFunc_GenericFunction(self, args, kwds, mps);
+    errval = PyUFunc_GenericFunction(ufunc, args, kwds, mps);
     if (errval < 0) {
-        for (i = 0; i < self->nargs; i++) {
+        for (i = 0; i < ufunc->nargs; i++) {
             PyArray_XDECREF_ERR(mps[i]);
         }
         if (errval == -1) {
             return NULL;
         }
-        else if (self->nin == 2 && self->nout == 1) {
+        else if (ufunc->nin == 2 && ufunc->nout == 1) {
             /* To allow the other argument to be given a chance */
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
@@ -4257,7 +4281,7 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
     }
 
     /* Free the input references */
-    for (i = 0; i < self->nin; i++) {
+    for (i = 0; i < ufunc->nin; i++) {
         Py_XDECREF(mps[i]);
     }
 
@@ -4278,11 +4302,11 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
      * None --- array-object passed in don't call PyArray_Return
      * method --- the __array_wrap__ method to call.
      */
-    _find_array_wrap(args, kwds, wraparr, self->nin, self->nout);
+    _find_array_wrap(args, kwds, wraparr, ufunc->nin, ufunc->nout);
 
     /* wrap outputs */
-    for (i = 0; i < self->nout; i++) {
-        int j = self->nin+i;
+    for (i = 0; i < ufunc->nout; i++) {
+        int j = ufunc->nin+i;
         PyObject *wrap = wraparr[i];
 
         if (wrap != NULL) {
@@ -4291,7 +4315,7 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
                 retobj[i] = (PyObject *)mps[j];
                 continue;
             }
-            res = PyObject_CallFunction(wrap, "O(OOi)", mps[j], self, args, i);
+            res = PyObject_CallFunction(wrap, "O(OOi)", mps[j], ufunc, args, i);
             if (res == NULL && PyErr_ExceptionMatches(PyExc_TypeError)) {
                 PyErr_Clear();
                 res = PyObject_CallFunctionObjArgs(wrap, mps[j], NULL);
@@ -4316,19 +4340,19 @@ ufunc_generic_call(PyUFuncObject *self, PyObject *args, PyObject *kwds)
 
     }
 
-    if (self->nout == 1) {
+    if (ufunc->nout == 1) {
         return retobj[0];
     }
     else {
-        ret = (PyTupleObject *)PyTuple_New(self->nout);
-        for (i = 0; i < self->nout; i++) {
+        ret = (PyTupleObject *)PyTuple_New(ufunc->nout);
+        for (i = 0; i < ufunc->nout; i++) {
             PyTuple_SET_ITEM(ret, i, retobj[i]);
         }
         return (PyObject *)ret;
     }
 
 fail:
-    for (i = self->nin; i < self->nargs; i++) {
+    for (i = ufunc->nin; i < ufunc->nargs; i++) {
         Py_XDECREF(mps[i]);
     }
     return NULL;
@@ -4484,59 +4508,61 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
                                      char *name, char *doc,
                                      int check_return, const char *signature)
 {
-    PyUFuncObject *self;
+    PyUFuncObject *ufunc;
 
-    self = PyArray_malloc(sizeof(PyUFuncObject));
-    if (self == NULL) {
+    ufunc = PyArray_malloc(sizeof(PyUFuncObject));
+    if (ufunc == NULL) {
         return NULL;
     }
-    PyObject_Init((PyObject *)self, &PyUFunc_Type);
+    PyObject_Init((PyObject *)ufunc, &PyUFunc_Type);
 
-    self->nin = nin;
-    self->nout = nout;
-    self->nargs = nin+nout;
-    self->identity = identity;
+    ufunc->nin = nin;
+    ufunc->nout = nout;
+    ufunc->nargs = nin+nout;
+    ufunc->identity = identity;
 
-    self->functions = func;
-    self->data = data;
-    self->types = types;
-    self->ntypes = ntypes;
-    self->check_return = check_return;
-    self->ptr = NULL;
-    self->obj = NULL;
-    self->userloops=NULL;
+    ufunc->functions = func;
+    ufunc->data = data;
+    ufunc->types = types;
+    ufunc->ntypes = ntypes;
+    ufunc->check_return = check_return;
+    ufunc->ptr = NULL;
+    ufunc->obj = NULL;
+    ufunc->userloops=NULL;
 
-    self->type_resolution_function = &PyUFunc_DefaultTypeResolution;
-    self->type_resolution_masked_function =
-                            &PyUFunc_DefaultTypeResolutionMasked;
+    /* Type resolution and inner loop selection functions */
+    ufunc->type_resolution_function = &PyUFunc_DefaultTypeResolution;
+    ufunc->legacy_inner_loop_selector = &PyUFunc_DefaultLegacyInnerLoopSelector;
+    ufunc->inner_loop_selector = NULL;
+    ufunc->masked_inner_loop_selector = &PyUFunc_DefaultMaskedInnerLoopSelector;
 
     if (name == NULL) {
-        self->name = "?";
+        ufunc->name = "?";
     }
     else {
-        self->name = name;
+        ufunc->name = name;
     }
     if (doc == NULL) {
-        self->doc = "NULL";
+        ufunc->doc = "NULL";
     }
     else {
-        self->doc = doc;
+        ufunc->doc = doc;
     }
 
     /* generalized ufunc */
-    self->core_enabled = 0;
-    self->core_num_dim_ix = 0;
-    self->core_num_dims = NULL;
-    self->core_dim_ixs = NULL;
-    self->core_offsets = NULL;
-    self->core_signature = NULL;
+    ufunc->core_enabled = 0;
+    ufunc->core_num_dim_ix = 0;
+    ufunc->core_num_dims = NULL;
+    ufunc->core_dim_ixs = NULL;
+    ufunc->core_offsets = NULL;
+    ufunc->core_signature = NULL;
     if (signature != NULL) {
-        if (_parse_signature(self, signature) != 0) {
-            Py_DECREF(self);
+        if (_parse_signature(ufunc, signature) != 0) {
+            Py_DECREF(ufunc);
             return NULL;
         }
     }
-    return (PyObject *)self;
+    return (PyObject *)ufunc;
 }
 
 /* Specify that the loop specified by the given index should use the array of
@@ -4556,6 +4582,12 @@ PyUFunc_SetUsesArraysAsData(void **data, size_t i)
  *
  * NOTE: This is easier to specify with the type_resolution_function
  *       in the ufunc object.
+ *
+ * TODO: Remove this, since this is already basically broken
+ *       with the addition of the masked inner loops and
+ *       not worth fixing since the new loop selection functions
+ *       have access to the full dtypes and can dynamically allocate
+ *       arbitrary auxiliary data.
  */
 static int
 _does_loop_use_arrays(void *data)
@@ -4749,34 +4781,34 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
 
 
 static void
-ufunc_dealloc(PyUFuncObject *self)
+ufunc_dealloc(PyUFuncObject *ufunc)
 {
-    if (self->core_num_dims) {
-        PyArray_free(self->core_num_dims);
+    if (ufunc->core_num_dims) {
+        PyArray_free(ufunc->core_num_dims);
     }
-    if (self->core_dim_ixs) {
-        PyArray_free(self->core_dim_ixs);
+    if (ufunc->core_dim_ixs) {
+        PyArray_free(ufunc->core_dim_ixs);
     }
-    if (self->core_offsets) {
-        PyArray_free(self->core_offsets);
+    if (ufunc->core_offsets) {
+        PyArray_free(ufunc->core_offsets);
     }
-    if (self->core_signature) {
-        PyArray_free(self->core_signature);
+    if (ufunc->core_signature) {
+        PyArray_free(ufunc->core_signature);
     }
-    if (self->ptr) {
-        PyArray_free(self->ptr);
+    if (ufunc->ptr) {
+        PyArray_free(ufunc->ptr);
     }
-    Py_XDECREF(self->userloops);
-    Py_XDECREF(self->obj);
-    PyArray_free(self);
+    Py_XDECREF(ufunc->userloops);
+    Py_XDECREF(ufunc->obj);
+    PyArray_free(ufunc);
 }
 
 static PyObject *
-ufunc_repr(PyUFuncObject *self)
+ufunc_repr(PyUFuncObject *ufunc)
 {
     char buf[100];
 
-    sprintf(buf, "<ufunc '%.50s'>", self->name);
+    sprintf(buf, "<ufunc '%.50s'>", ufunc->name);
     return PyUString_FromString(buf);
 }
 
@@ -4793,7 +4825,7 @@ ufunc_repr(PyUFuncObject *self)
  * The result has dimensions a.ndim + b.ndim
  */
 static PyObject *
-ufunc_outer(PyUFuncObject *self, PyObject *args, PyObject *kwds)
+ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
     int i;
     PyObject *ret;
@@ -4801,14 +4833,14 @@ ufunc_outer(PyUFuncObject *self, PyObject *args, PyObject *kwds)
     PyObject *new_args, *tmp;
     PyObject *shape1, *shape2, *newshape;
 
-    if (self->core_enabled) {
+    if (ufunc->core_enabled) {
         PyErr_Format(PyExc_TypeError,
                      "method outer is not allowed in ufunc with non-trivial"\
                      " signature");
         return NULL;
     }
 
-    if(self->nin != 2) {
+    if(ufunc->nin != 2) {
         PyErr_SetString(PyExc_ValueError,
                         "outer product only supported "\
                         "for binary functions");
@@ -4871,7 +4903,7 @@ ufunc_outer(PyUFuncObject *self, PyObject *args, PyObject *kwds)
     Py_DECREF(ap1);
     Py_DECREF(ap2);
     Py_DECREF(ap_new);
-    ret = ufunc_generic_call(self, new_args, kwds);
+    ret = ufunc_generic_call(ufunc, new_args, kwds);
     Py_DECREF(new_args);
     return ret;
 
@@ -4884,21 +4916,21 @@ ufunc_outer(PyUFuncObject *self, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
-ufunc_reduce(PyUFuncObject *self, PyObject *args, PyObject *kwds)
+ufunc_reduce(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
-    return PyUFunc_GenericReduction(self, args, kwds, UFUNC_REDUCE);
+    return PyUFunc_GenericReduction(ufunc, args, kwds, UFUNC_REDUCE);
 }
 
 static PyObject *
-ufunc_accumulate(PyUFuncObject *self, PyObject *args, PyObject *kwds)
+ufunc_accumulate(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
-    return PyUFunc_GenericReduction(self, args, kwds, UFUNC_ACCUMULATE);
+    return PyUFunc_GenericReduction(ufunc, args, kwds, UFUNC_ACCUMULATE);
 }
 
 static PyObject *
-ufunc_reduceat(PyUFuncObject *self, PyObject *args, PyObject *kwds)
+ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
-    return PyUFunc_GenericReduction(self, args, kwds, UFUNC_REDUCEAT);
+    return PyUFunc_GenericReduction(ufunc, args, kwds, UFUNC_REDUCEAT);
 }
 
 
@@ -4959,7 +4991,7 @@ _typecharfromnum(int num) {
 }
 
 static PyObject *
-ufunc_get_doc(PyUFuncObject *self)
+ufunc_get_doc(PyUFuncObject *ufunc)
 {
     /*
      * Put docstring first or FindMethod finds it... could so some
@@ -4968,20 +5000,20 @@ ufunc_get_doc(PyUFuncObject *self)
      * construct name(x1, x2, ...,[ out1, out2, ...]) __doc__
      */
     PyObject *outargs, *inargs, *doc;
-    outargs = _makeargs(self->nout, "out", 1);
-    inargs = _makeargs(self->nin, "x", 0);
+    outargs = _makeargs(ufunc->nout, "out", 1);
+    inargs = _makeargs(ufunc->nin, "x", 0);
     if (outargs == NULL) {
         doc = PyUString_FromFormat("%s(%s)\n\n%s",
-                                   self->name,
+                                   ufunc->name,
                                    PyString_AS_STRING(inargs),
-                                   self->doc);
+                                   ufunc->doc);
     }
     else {
         doc = PyUString_FromFormat("%s(%s[, %s])\n\n%s",
-                                   self->name,
+                                   ufunc->name,
                                    PyString_AS_STRING(inargs),
                                    PyString_AS_STRING(outargs),
-                                   self->doc);
+                                   ufunc->doc);
         Py_DECREF(outargs);
     }
     Py_DECREF(inargs);
@@ -4989,38 +5021,38 @@ ufunc_get_doc(PyUFuncObject *self)
 }
 
 static PyObject *
-ufunc_get_nin(PyUFuncObject *self)
+ufunc_get_nin(PyUFuncObject *ufunc)
 {
-    return PyInt_FromLong(self->nin);
+    return PyInt_FromLong(ufunc->nin);
 }
 
 static PyObject *
-ufunc_get_nout(PyUFuncObject *self)
+ufunc_get_nout(PyUFuncObject *ufunc)
 {
-    return PyInt_FromLong(self->nout);
+    return PyInt_FromLong(ufunc->nout);
 }
 
 static PyObject *
-ufunc_get_nargs(PyUFuncObject *self)
+ufunc_get_nargs(PyUFuncObject *ufunc)
 {
-    return PyInt_FromLong(self->nargs);
+    return PyInt_FromLong(ufunc->nargs);
 }
 
 static PyObject *
-ufunc_get_ntypes(PyUFuncObject *self)
+ufunc_get_ntypes(PyUFuncObject *ufunc)
 {
-    return PyInt_FromLong(self->ntypes);
+    return PyInt_FromLong(ufunc->ntypes);
 }
 
 static PyObject *
-ufunc_get_types(PyUFuncObject *self)
+ufunc_get_types(PyUFuncObject *ufunc)
 {
     /* return a list with types grouped input->output */
     PyObject *list;
     PyObject *str;
-    int k, j, n, nt = self->ntypes;
-    int ni = self->nin;
-    int no = self->nout;
+    int k, j, n, nt = ufunc->ntypes;
+    int ni = ufunc->nin;
+    int no = ufunc->nout;
     char *t;
     list = PyList_New(nt);
     if (list == NULL) {
@@ -5030,13 +5062,13 @@ ufunc_get_types(PyUFuncObject *self)
     n = 0;
     for (k = 0; k < nt; k++) {
         for (j = 0; j<ni; j++) {
-            t[j] = _typecharfromnum(self->types[n]);
+            t[j] = _typecharfromnum(ufunc->types[n]);
             n++;
         }
         t[ni] = '-';
         t[ni+1] = '>';
         for (j = 0; j < no; j++) {
-            t[ni + 2 + j] = _typecharfromnum(self->types[n]);
+            t[ni + 2 + j] = _typecharfromnum(ufunc->types[n]);
             n++;
         }
         str = PyUString_FromStringAndSize(t, no + ni + 2);
@@ -5047,15 +5079,15 @@ ufunc_get_types(PyUFuncObject *self)
 }
 
 static PyObject *
-ufunc_get_name(PyUFuncObject *self)
+ufunc_get_name(PyUFuncObject *ufunc)
 {
-    return PyUString_FromString(self->name);
+    return PyUString_FromString(ufunc->name);
 }
 
 static PyObject *
-ufunc_get_identity(PyUFuncObject *self)
+ufunc_get_identity(PyUFuncObject *ufunc)
 {
-    switch(self->identity) {
+    switch(ufunc->identity) {
     case PyUFunc_One:
         return PyInt_FromLong(1);
     case PyUFunc_Zero:
@@ -5065,12 +5097,12 @@ ufunc_get_identity(PyUFuncObject *self)
 }
 
 static PyObject *
-ufunc_get_signature(PyUFuncObject *self)
+ufunc_get_signature(PyUFuncObject *ufunc)
 {
-    if (!self->core_enabled) {
+    if (!ufunc->core_enabled) {
         Py_RETURN_NONE;
     }
-    return PyUString_FromString(self->core_signature);
+    return PyUString_FromString(ufunc->core_signature);
 }
 
 #undef _typecharfromnum
