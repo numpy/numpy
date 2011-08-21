@@ -192,11 +192,13 @@ def check_math_runtime(conf):
     # XXX: this is ugly: mathlib has nothing to do in a public header file
     NUMPYCONFIG_SYM.append(('MATHLIB', ','.join(mlib)))
 
+    # FIXME: look more into those additional mandatory functions
+    MANDATORY_FUNCS.extend(["pow"])
     conf.check_functions_at_once(MANDATORY_FUNCS, use="M")
 
-    mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
-              'rint', 'trunc')
-    conf.check_functions_at_once(mfuncs, use="M")
+    #mfuncs = ('expl', 'expf', 'log1p', 'expm1', 'asinh', 'atanhf', 'atanhl',
+    #          'rint', 'trunc')
+    #conf.check_functions_at_once(mfuncs, use="M")
 
     header_name = "Python.h math.h"
     features = "c pyext"
