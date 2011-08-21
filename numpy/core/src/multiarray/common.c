@@ -253,7 +253,8 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
             }
             if (minitype == NULL) {
                 minitype = chktype;
-            } else {
+            }
+            else {
                 newtype = PyArray_PromoteTypes(chktype, minitype);
                 Py_DECREF(minitype);
                 minitype = newtype;
@@ -273,7 +274,8 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
  finish:
     if (minitype == NULL) {
         outtype = chktype;
-    } else {
+    }
+    else {
         outtype = PyArray_PromoteTypes(chktype, minitype);
         Py_DECREF(chktype);
         Py_DECREF(minitype);
@@ -286,7 +288,7 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
      * unless input was already a VOID
      */
     if (outtype->type_num == PyArray_VOID &&
-        minitype->type_num != PyArray_VOID) {
+            (minitype == NULL || minitype->type_num != PyArray_VOID)) {
         Py_DECREF(outtype);
         return PyArray_DescrFromType(NPY_OBJECT);
     }
