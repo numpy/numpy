@@ -188,8 +188,7 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
     return (PyArrayObject *)ret;
 }
 
-/*NUMPY_API
- *
+/*
  * Creates a result for reducing 'operand' along the axes specified
  * in 'axis_flags'. If 'dtype' isn't NULL, this function steals a
  * reference to 'dtype'.
@@ -270,8 +269,7 @@ check_nonreorderable_axes(int ndim, npy_bool *axis_flags, const char *funcname)
     return 0;
 }
 
-/*NUMPY_API
- *
+/*
  * This function initializes a result array for a reduction operation
  * which has no identity. This means it needs to copy the first element
  * it sees along the reduction axes to result, then return a view of
