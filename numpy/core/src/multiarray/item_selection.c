@@ -1893,15 +1893,15 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
 }
 
 static int
-assign_reduce_unit_zero(PyArrayObject *result, int preservena, void *data)
+assign_reduce_identity_zero(PyArrayObject *result, int preservena, void *data)
 {
     return PyArray_AssignZero(result, NULL, preservena, NULL);
 }
 
 static int
-reduce_count_nonzero_inner_loop(NpyIter *iter,
+reduce_count_nonzero_loop(NpyIter *iter,
                                             char **dataptr,
-                                            npy_intp *strideptr,
+                                            npy_intp *strides,
                                             npy_intp *countptr,
                                             NpyIter_IterNextFunc *iternext,
                                             int needs_api,
@@ -1919,7 +1919,7 @@ reduce_count_nonzero_inner_loop(NpyIter *iter,
 
     do {
         char *data0 = dataptr[0], *data1 = dataptr[1];
-        npy_intp stride0 = strideptr[0], stride1 = strideptr[1];
+        npy_intp stride0 = strides[0], stride1 = strides[1];
         npy_intp count = *countptr;
 
         while (count--) {
@@ -1939,9 +1939,9 @@ reduce_count_nonzero_inner_loop(NpyIter *iter,
 }
 
 static int
-reduce_count_nonzero_masked_inner_loop(NpyIter *iter,
+reduce_count_nonzero_masked_loop(NpyIter *iter,
                                             char **dataptr,
-                                            npy_intp *strideptr,
+                                            npy_intp *strides,
                                             npy_intp *countptr,
                                             NpyIter_IterNextFunc *iternext,
                                             int needs_api,
@@ -1959,8 +1959,8 @@ reduce_count_nonzero_masked_inner_loop(NpyIter *iter,
 
     do {
         char *data0 = dataptr[0], *data1 = dataptr[1], *data2 = dataptr[2];
-        npy_intp stride0 = strideptr[0], stride1 = strideptr[1],
-                    stride2 = strideptr[2];
+        npy_intp stride0 = strides[0], stride1 = strides[1],
+                    stride2 = strides[2];
         npy_intp count = *countptr;
 
         while (count--) {
@@ -2011,10 +2011,11 @@ PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
 
     result = PyArray_ReduceWrapper(arr, out,
                             PyArray_DESCR(arr), dtype,
+                            NPY_SAME_KIND_CASTING,
                             axis_flags, 1, skipna, keepdims,
-                            &assign_reduce_unit_zero,
-                            &reduce_count_nonzero_inner_loop,
-                            &reduce_count_nonzero_masked_inner_loop,
+                            &assign_reduce_identity_zero,
+                            &reduce_count_nonzero_loop,
+                            &reduce_count_nonzero_masked_loop,
                             nonzero, 0, "count_nonzero");
     Py_DECREF(dtype);
     if (out == NULL && result != NULL) {

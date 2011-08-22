@@ -1787,7 +1787,7 @@ typedef struct {
  ************************************************************/
 
 /*
- * This is a function for assigning a reduction unit to the result,
+ * This is a function for assigning a reduction identity to the result,
  * before doing the reduction computation. If 'preservena' is True,
  * any masked NA values in 'result' should not be overwritten. The
  * value in 'data' is passed through from PyArray_ReduceWrapper.
@@ -1797,30 +1797,30 @@ typedef struct {
  *
  * It should return -1 on failure, or 0 on success.
  */
-typedef int (PyArray_AssignReduceUnitFunc)(PyArrayObject *result,
+typedef int (PyArray_AssignReduceIdentityFunc)(PyArrayObject *result,
                                             int preservena, void *data);
 
 /*
- * This is a function for the inner reduce loop. Both the unmasked and
+ * This is a function for the reduce loop. Both the unmasked and
  * masked variants have the same prototype, but should behave differently.
  *
  * The needs_api parameter indicates whether it's ok to release the GIL during
- * the inner loop, such as when the iternext() function never calls
+ * the loop, such as when the iternext() function never calls
  * a function which could raise a Python exception.
  *
  * Ths skip_first_count parameter indicates how many elements need to be
  * skipped based on NpyIter_IsFirstVisit checks. This can only be positive
- * when the 'assign_unit' parameter was NULL when calling
+ * when the 'assign_identity' parameter was NULL when calling
  * PyArray_ReduceWrapper.
  *
- * The unmasked inner loop gets two data pointers and two strides, and should
+ * The unmasked loop gets two data pointers and two strides, and should
  * look roughly like this:
  *  {
  *      NPY_BEGIN_THREADS_DEF;
  *      if (!needs_api) {
  *          NPY_BEGIN_THREADS;
  *      }
- *      // This first-visit loop can be skipped if 'assign_unit' was non-NULL
+ *      // This first-visit loop can be skipped if 'assign_identity' was non-NULL
  *      if (skip_first_count > 0) {
  *          do {
  *              char *data0 = dataptr[0], *data1 = dataptr[1];
@@ -1878,8 +1878,8 @@ typedef int (PyArray_AssignReduceUnitFunc)(PyArrayObject *result,
  *      return (needs_api && PyErr_Occurred()) ? -1 : 0;
  *  }
  *
- * The masked inner loop gets three data pointers and three strides, and
- * looks identical except for the iteration inner loops which should be
+ * The masked loop gets three data pointers and three strides, and
+ * looks identical except for the iteration loops which should be
  * like this:
  *      do {
  *          char *data0 = dataptr[0], *data1 = dataptr[1], *data2 = dataptr[2];
@@ -1907,7 +1907,7 @@ typedef int (PyArray_AssignReduceUnitFunc)(PyArrayObject *result,
  * to check if an error occurred during processing, and return -1 for
  * error, 0 for success.
  */
-typedef int (PyArray_ReduceInnerLoopFunc)(NpyIter *iter,
+typedef int (PyArray_ReduceLoopFunc)(NpyIter *iter,
                                             char **dataptr,
                                             npy_intp *strideptr,
                                             npy_intp *countptr,

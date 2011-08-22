@@ -506,13 +506,14 @@ PyArray_InitializeReduceResult(
 /*NUMPY_API
  *
  * This function executes all the standard NumPy reduction function
- * boilerplate code, just calling assign_unit and the appropriate
+ * boilerplate code, just calling assign_identity and the appropriate
  * inner loop function where necessary.
  *
  * operand     : The array to be reduced.
  * out         : NULL, or the array into which to place the result.
  * operand_dtype : The dtype the inner loop expects for the operand.
  * result_dtype : The dtype the inner loop expects for the result.
+ * casting     : The casting rule to apply to the operands.
  * axis_flags  : Flags indicating the reduction axes of 'operand'.
  * reorderable : If True, the reduction being done is reorderable, which
  *               means specifying multiple axes of reduction at once is ok,
@@ -522,12 +523,12 @@ PyArray_InitializeReduceResult(
  * skipna      : If true, NAs are skipped instead of propagating.
  * keepdims    : If true, leaves the reduction dimensions in the result
  *               with size one.
- * assign_unit : If NULL, PyArray_InitializeReduceResult is used, otherwise
+ * assign_identity : If NULL, PyArray_InitializeReduceResult is used, otherwise
  *               this function is called to initialize the result to
  *               the reduction's unit.
- * inner_loop  : The inner loop which does the reduction.
- * masked_inner_loop: The inner loop which does the reduction with a mask.
- * data        : Data which is passed to assign_unit and the inner loop.
+ * loop        : The loop which does the reduction.
+ * masked_loop : The loop which does the reduction with a mask.
+ * data        : Data which is passed to assign_identity and the inner loop.
  * buffersize  : Buffer size for the iterator. For the default, pass in 0.
  * funcname    : The name of the reduction function, for error messages.
  */
@@ -535,11 +536,12 @@ NPY_NO_EXPORT PyArrayObject *
 PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                         PyArray_Descr *operand_dtype,
                         PyArray_Descr *result_dtype,
+                        NPY_CASTING casting,
                         npy_bool *axis_flags, int reorderable,
                         int skipna, int keepdims,
-                        PyArray_AssignReduceUnitFunc *assign_unit,
-                        PyArray_ReduceInnerLoopFunc *inner_loop,
-                        PyArray_ReduceInnerLoopFunc *masked_inner_loop,
+                        PyArray_AssignReduceIdentityFunc *assign_identity,
+                        PyArray_ReduceLoopFunc *loop,
+                        PyArray_ReduceLoopFunc *masked_loop,
                         void *data, npy_intp buffersize, const char *funcname)
 {
     int use_maskna;
@@ -604,7 +606,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
      * Initialize the result to the reduction unit if possible,
      * otherwise copy the initial values and get a view to the rest.
      */
-    if (assign_unit != NULL) {
+    if (assign_identity != NULL) {
         /*
          * If this reduction is non-reorderable, make sure there are
          * only 0 or 1 axes in axis_flags.
@@ -614,7 +616,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
             return NULL;
         }
 
-        if (assign_unit(result, !skipna, data) < 0) {
+        if (assign_identity(result, !skipna, data) < 0) {
             goto fail;
         }
         op_view = operand;
@@ -679,7 +681,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     }
 
     iter = NpyIter_AdvancedNew(2, op, flags,
-                               NPY_KEEPORDER, NPY_SAME_KIND_CASTING,
+                               NPY_KEEPORDER, casting,
                                op_flags,
                                op_dtypes,
                                0, NULL, NULL, buffersize);
@@ -711,14 +713,14 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
 
         /* Straightforward reduction */
         if (!use_maskna) {
-            if (inner_loop == NULL) {
+            if (loop == NULL) {
                 PyErr_Format(PyExc_RuntimeError,
                         "reduction operation %s did not supply an "
                         "unmasked inner loop function", funcname);
                 goto fail;
             }
 
-            if (inner_loop(iter, dataptr, strideptr, countptr,
+            if (loop(iter, dataptr, strideptr, countptr,
                             iternext, needs_api, skip_first_count, data) < 0) {
 
                 goto fail;
@@ -726,14 +728,14 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         }
         /* Masked reduction */
         else {
-            if (masked_inner_loop == NULL) {
+            if (masked_loop == NULL) {
                 PyErr_Format(PyExc_RuntimeError,
                         "reduction operation %s did not supply a "
                         "masked inner loop function", funcname);
                 goto fail;
             }
 
-            if (masked_inner_loop(iter, dataptr, strideptr, countptr,
+            if (masked_loop(iter, dataptr, strideptr, countptr,
                             iternext, needs_api, skip_first_count, data) < 0) {
                 goto fail;
             }
