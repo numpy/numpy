@@ -16,8 +16,8 @@ Creating a new universal function
 
 Before reading this, it may help to familiarize yourself with the basics
 of C extensions for Python by reading/skimming the tutorials in Section 1
-of `Extending and Embedding the Python Interpreter 
-<http://docs.python.org/extending/index.html>`_ and in `How to extend 
+of `Extending and Embedding the Python Interpreter
+<http://docs.python.org/extending/index.html>`_ and in `How to extend
 Numpy <http://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html>`_
 
 The umath module is a computer-generated C-module that creates many
@@ -43,7 +43,7 @@ built-in data-types is given below. A different mechanism is used to
 register ufuncs for user-defined data-types.
 
 In the next several sections we give example code that can be
-easily modified to create your own ufuncs. The examples are 
+easily modified to create your own ufuncs. The examples are
 successively more complete or complicated versions of the logit
 function, a common function in statistical modeling. Logit is also
 interesting because, due to the magic of IEEE standards (specifically
@@ -59,8 +59,8 @@ nan
 >>> logit(-2)
 nan
 
-This is wonderful because the function writer doesn't have to 
-manually propagate infs or nans. 
+This is wonderful because the function writer doesn't have to
+manually propagate infs or nans.
 
 .. _`sec:Non-numpy-example`:
 
@@ -72,24 +72,24 @@ Example Non-ufunc extension
 
 For comparison and general edificaiton of the reader we provide
 a simple implementation of a C extension of logit that uses no
-numpy. 
+numpy.
 
 To do this we need two files. The first is the C file which contains
 the actual code, and the second is the setup.py file used to create
-the module. 
+the module.
 
-    .. code-block:: c 
-        
+    .. code-block:: c
+
         #include <Python.h>
         #include <math.h>
 
         /*
          * spammodule.c
-         * This is the C code for a non-numpy Python extension to 
+         * This is the C code for a non-numpy Python extension to
          * define the logit function, where logit(p) = log(p/(1-p)).
-         * This function will not work on numpy arrays automatically. 
+         * This function will not work on numpy arrays automatically.
          * numpy.vectorize must be called in python to generate
-         * a numpy-friendly function. 
+         * a numpy-friendly function.
          *
          * Details explaining the Python-C API can be found under
          * 'Extending and Embedding' and 'Python/C API' at
@@ -101,27 +101,27 @@ the module.
         static PyObject* spam_logit(PyObject *self, PyObject *args);
 
 
-        /* 
-         * This tells Python what methods this module has. 
-         * See the Python-C API for more information. 
+        /*
+         * This tells Python what methods this module has.
+         * See the Python-C API for more information.
          */
         static PyMethodDef SpamMethods[] = {
-            {"logit", 
-                spam_logit, 
+            {"logit",
+                spam_logit,
                 METH_VARARGS, "compute logit"},
             {NULL, NULL, 0, NULL}
         };
 
 
-        /* 
-         * This actually defines the logit function for 
+        /*
+         * This actually defines the logit function for
          * input args from Python.
          */
 
         static PyObject* spam_logit(PyObject *self, PyObject *args)
         {
             double p;
-            
+
             /* This parses the Python argument into a double */
             if(!PyArg_ParseTuple(args, "d", &p)) {
                 return NULL;
@@ -130,7 +130,7 @@ the module.
             /* THE ACTUAL LOGIT FUNCTION */
             p = p/(1-p);
             p = log(p);
-            
+
             /*This builds the answer back into a python object */
             return Py_BuildValue("d", p);
         }
@@ -150,7 +150,7 @@ the module.
             NULL
         };
 
-        PyObject *PyInit_npspam(void) 
+        PyObject *PyInit_spam(void)
         {
             PyObject *m;
             m = PyModule_Create(&moduledef);
@@ -172,33 +172,33 @@ the module.
         #endif
 
 To use the setup.py file, place setup.py and spammodule.c in the same
-folder. Then python setup.py build will build the module to import, 
-or setup.py install will install the module to your site-packages 
+folder. Then python setup.py build will build the module to import,
+or setup.py install will install the module to your site-packages
 directory.
 
     .. code-block:: python
-        
+
         '''
             setup.py file for spammodule.c
-  
-            Calling 
+
+            Calling
             $python setup.py build_ext --inplace
             will build the extension library in the current file.
-            
+
             Calling
-            $python setup.py build 
+            $python setup.py build
             will build a file that looks like ./build/lib*, where
             lib* is a file that begins with lib. The library will
-            be in this file and end with a C library extension, 
+            be in this file and end with a C library extension,
             such as .so
-          
+
             Calling
             $python setup.py install
             will install the module in your site-packages file.
 
-            See the distutils section of 
+            See the distutils section of
             'Extending and Embedding the Python Interpreter'
-            at docs.python.org for more information. 
+            at docs.python.org for more information.
         '''
 
 
@@ -236,13 +236,13 @@ TypeError: only length-1 arrays can be converted to Python scalars
 array([       -inf, -2.07944154, -1.25276297, -0.69314718, -0.22314355,
     0.22314355,  0.69314718,  1.25276297,  2.07944154,         inf])
 
-THE RESULTING LOGIT FUNCTION IS NOT FAST! numpy.vectorize simply 
+THE RESULTING LOGIT FUNCTION IS NOT FAST! numpy.vectorize simply
 loops over spam.logit. The loop is done at the C level, but the numpy
-array is constantly being parsed and build back up. This is expensive. 
+array is constantly being parsed and build back up. This is expensive.
 When the author compared numpy.vectorize(spam.logit) against the
 logit ufuncs constructed below, the logit ufuncs were almost exactly
-4 times faster. Larger or smaller speedups are, of course, possible 
-depending on the nature of the function. 
+4 times faster. Larger or smaller speedups are, of course, possible
+depending on the nature of the function.
 
 
 .. _`sec:Numpy-one-loop`:
@@ -254,13 +254,13 @@ Example Numpy ufunc for one dtype
    pair: ufunc; adding new
 
 For simplicity we give a ufunc for a single dtype, the 'f8' double.
-As in the previous section, we first give the .c file and then the 
-setup.py file used to create the module containing the ufunc.  
+As in the previous section, we first give the .c file and then the
+setup.py file used to create the module containing the ufunc.
 
 The place in the code corresponding to the actual computations for
-the ufunc are marked with /\*BEGIN main ufunc computation\*/ and 
+the ufunc are marked with /\*BEGIN main ufunc computation\*/ and
 /\*END main ufunc computation\*/. The code in between those lines is
-the primary thing that must be changed to create your own ufunc. 
+the primary thing that must be changed to create your own ufunc.
 
     .. code-block:: c
 
@@ -272,14 +272,14 @@ the primary thing that must be changed to create your own ufunc.
 
         /*
          * single_type_logit.c
-         * This is the C code for creating your own 
-         * Numpy ufunc for a logit function. 
+         * This is the C code for creating your own
+         * Numpy ufunc for a logit function.
          *
-         * In this code we only define the ufunc for 
+         * In this code we only define the ufunc for
          * a single dtype. The computations that must
          * be replaced to create a ufunc for
          * a different funciton are marked with BEGIN
-         * and END. 
+         * and END.
          *
          * Details explaining the Python-C API can be found under
          * 'Extending and Embedding' and 'Python/C API' at
@@ -299,9 +299,9 @@ the primary thing that must be changed to create your own ufunc.
             npy_intp n = dimensions[0];
             char *in = args[0], *out = args[1];
             npy_intp in_step = steps[0], out_step = steps[1];
-            
+
             double tmp;
-            
+
             for (i = 0; i < n; i++) {
                 /*BEGIN main ufunc computation*/
                 tmp = *(double *)in;
@@ -325,7 +325,7 @@ the primary thing that must be changed to create your own ufunc.
         #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
-            "npspam",
+            "npufunc",
             NULL,
             -1,
             LogitMethods,
@@ -335,7 +335,7 @@ the primary thing that must be changed to create your own ufunc.
             NULL
         };
 
-        PyObject *PyInit_npspam(void) 
+        PyObject *PyInit_npufunc(void)
         {
             PyObject *m, *logit, *d;
             m = PyModule_Create(&moduledef);
@@ -345,11 +345,11 @@ the primary thing that must be changed to create your own ufunc.
 
             import_array();
             import_umath();
-           
-            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 1, 1, 
-                                            PyUFunc_None, "logit", 
+
+            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 1, 1,
+                                            PyUFunc_None, "logit",
                                             "logit_docstring", 0);
-            
+
             d = PyModule_GetDict(m);
 
             PyDict_SetItemString(d, "logit", logit);
@@ -358,23 +358,23 @@ the primary thing that must be changed to create your own ufunc.
             return m;
         }
         #else
-        PyMODINIT_FUNC initnpspam(void)
+        PyMODINIT_FUNC initnpufunc(void)
         {
             PyObject *m, *logit, *d;
-            
-            
-            m = Py_InitModule("npspam", LogitMethods);
-            if (m == NULL) { 
+
+
+            m = Py_InitModule("npufunc", LogitMethods);
+            if (m == NULL) {
                 return;
             }
 
             import_array();
             import_umath();
-           
-            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 1, 1, 
-                                            PyUFunc_None, "logit", 
+
+            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 1, 1,
+                                            PyUFunc_None, "logit",
                                             "logit_docstring", 0);
-            
+
             d = PyModule_GetDict(m);
 
             PyDict_SetItemString(d, "logit", logit);
@@ -383,26 +383,26 @@ the primary thing that must be changed to create your own ufunc.
         #endif
 
 This is a setup.py file for the above code. As before, the module
-can be build via calling python setup.py build at the command prompt, 
-or installed to site-packages via python setup.py install. 
+can be build via calling python setup.py build at the command prompt,
+or installed to site-packages via python setup.py install.
 
     .. code-block:: python
 
         '''
             setup.py file for logit.c
             Note that since this is a numpy extension
-            we use numpy.distutils instead of 
+            we use numpy.distutils instead of
             distutils from the python standard library.
 
-            Calling 
+            Calling
             $python setup.py build_ext --inplace
             will build the extension library in the current file.
-            
+
             Calling
-            $python setup.py build 
+            $python setup.py build
             will build a file that looks like ./build/lib*, where
             lib* is a file that begins with lib. The library will
-            be in this file and end with a C library extension, 
+            be in this file and end with a C library extension,
             such as .so
 
             Calling
@@ -417,28 +417,28 @@ or installed to site-packages via python setup.py install.
 
 
         def configuration(parent_package='', top_path=None):
-            import numpy 
+            import numpy
             from numpy.distutils.misc_util import Configuration
-           
-            config = Configuration('npspam_directory',
+
+            config = Configuration('npufunc_directory',
                                    parent_package,
                                    top_path)
-            config.add_extension('npspam', ['single_type_logit.c'])
-            
+            config.add_extension('npufunc', ['single_type_logit.c'])
+
             return config
 
         if __name__ == "__main__":
             from numpy.distutils.core import setup
-            setup(configuration=configuration) 
+            setup(configuration=configuration)
 
 After the above has been installed, it can be imported and used as follows.
 
 >>> import numpy as np
->>> import npspam
->>> npspam.logit(0.5)
+>>> import npufunc
+>>> npufunc.logit(0.5)
 0.0
 >>> a = np.linspace(0,1,5)
->>> npspam.logit(a)
+>>> npufunc.logit(a)
 array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
 
 
@@ -451,19 +451,19 @@ Example Numpy ufunc with multiple dtypes
 .. index::
    pair: ufunc; adding new
 
-We finally give an example of a full ufunc, with inner loops for 
-half-floats, floats, doubles, and long doubles. As in the previous 
+We finally give an example of a full ufunc, with inner loops for
+half-floats, floats, doubles, and long doubles. As in the previous
 sections we first give the .c file and then the corresponding
-setup.py file. 
+setup.py file.
 
 The places in the code corresponding to the actual computations for
-the ufunc are marked with /\*BEGIN main ufunc computation\*/ and 
+the ufunc are marked with /\*BEGIN main ufunc computation\*/ and
 /\*END main ufunc computation\*/. The code in between those lines is
-the primary thing that must be changed to create your own ufunc. 
+the primary thing that must be changed to create your own ufunc.
 
 
     .. code-block:: c
-        
+
         #include "Python.h"
         #include "math.h"
         #include "numpy/ndarraytypes.h"
@@ -472,21 +472,21 @@ the primary thing that must be changed to create your own ufunc.
 
         /*
          * multi_type_logit.c
-         * This is the C code for creating your own 
-         * Numpy ufunc for a logit function. 
-         *   
+         * This is the C code for creating your own
+         * Numpy ufunc for a logit function.
+         *
          * Each function of the form type_logit defines the
          * logit function for a different numpy dtype. Each
          * of these functions must be modified when you
          * create your own ufunc. The computations that must
          * be replaced to create a ufunc for
          * a different funciton are marked with BEGIN
-         * and END. 
-         *   
+         * and END.
+         *
          * Details explaining the Python-C API can be found under
          * 'Extending and Embedding' and 'Python/C API' at
          * docs.python.org .
-         *   
+         *
          */
 
 
@@ -503,15 +503,15 @@ the primary thing that must be changed to create your own ufunc.
             npy_intp n = dimensions[0];
             char *in = args[0], *out=args[1];
             npy_intp in_step = steps[0], out_step = steps[1];
-            
+
             long double tmp;
-            
+
             for (i = 0; i < n; i++) {
                 /*BEGIN main ufunc computation*/
                 tmp = *(long double *)in;
                 tmp /= 1-tmp;
                 *((long double *)out) = logl(tmp);
-                /*END main ufunc computation*/ 
+                /*END main ufunc computation*/
 
                 in += in_step;
                 out += out_step;
@@ -525,9 +525,9 @@ the primary thing that must be changed to create your own ufunc.
             npy_intp n = dimensions[0];
             char *in = args[0], *out = args[1];
             npy_intp in_step = steps[0], out_step = steps[1];
-            
+
             double tmp;
-            
+
             for (i = 0; i < n; i++) {
                 /*BEGIN main ufunc computation*/
                 tmp = *(double *)in;
@@ -547,9 +547,9 @@ the primary thing that must be changed to create your own ufunc.
             npy_intp n = dimensions[0];
             char *in=args[0], *out = args[1];
             npy_intp in_step = steps[0], out_step = steps[1];
-            
+
             float tmp;
-            
+
             for (i = 0; i < n; i++) {
                 /*BEGIN main ufunc computation*/
                 tmp = *(float *)in;
@@ -570,9 +570,9 @@ the primary thing that must be changed to create your own ufunc.
             npy_intp n = dimensions[0];
             char *in = args[0], *out = args[1];
             npy_intp in_step = steps[0], out_step = steps[1];
-            
+
             float tmp;
-            
+
             for (i = 0; i < n; i++) {
 
                 /*BEGIN main ufunc computation*/
@@ -582,7 +582,7 @@ the primary thing that must be changed to create your own ufunc.
                 tmp = logf(tmp);
                 *((npy_half *)out) = npy_float_to_half(tmp);
                 /*END main ufunc computation*/
-                
+
                 in += in_step;
                 out += out_step;
             }
@@ -590,21 +590,21 @@ the primary thing that must be changed to create your own ufunc.
 
 
         /*This gives pointers to the above functions*/
-        PyUFuncGenericFunction funcs[4] = {&half_float_logit, 
-                                           &float_logit, 
-                                           &double_logit, 
+        PyUFuncGenericFunction funcs[4] = {&half_float_logit,
+                                           &float_logit,
+                                           &double_logit,
                                            &long_double_logit};
 
-        static char types[8] = {NPY_HALF, NPY_HALF, 
-                        NPY_FLOAT, NPY_FLOAT, 
-                        NPY_DOUBLE,NPY_DOUBLE, 
+        static char types[8] = {NPY_HALF, NPY_HALF,
+                        NPY_FLOAT, NPY_FLOAT,
+                        NPY_DOUBLE,NPY_DOUBLE,
                         NPY_LONGDOUBLE, NPY_LONGDOUBLE};
         static void *data[4] = {NULL, NULL, NULL, NULL};
 
         #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
-            "npspam",
+            "npufunc",
             NULL,
             -1,
             LogitMethods,
@@ -614,7 +614,7 @@ the primary thing that must be changed to create your own ufunc.
             NULL
         };
 
-        PyObject *PyInit_npspam(void)
+        PyObject *PyInit_npufunc(void)
         {
             PyObject *m, *logit, *d;
             m = PyModule_Create(&moduledef);
@@ -624,11 +624,11 @@ the primary thing that must be changed to create your own ufunc.
 
             import_array();
             import_umath();
-           
-            logit = PyUFunc_FromFuncAndData(funcs,data, types, 4, 1, 1, 
-                                            PyUFunc_None, "logit", 
+
+            logit = PyUFunc_FromFuncAndData(funcs,data, types, 4, 1, 1,
+                                            PyUFunc_None, "logit",
                                             "logit_docstring", 0);
-            
+
             d = PyModule_GetDict(m);
 
             PyDict_SetItemString(d, "logit", logit);
@@ -637,51 +637,51 @@ the primary thing that must be changed to create your own ufunc.
             return m;
         }
         #else
-        PyMODINIT_FUNC initnpspam(void)
+        PyMODINIT_FUNC initnpufunc(void)
         {
             PyObject *m, *logit, *d;
-            
-            
-            m = Py_InitModule("npspam", LogitMethods);
-            if (m == NULL) { 
+
+
+            m = Py_InitModule("npufunc", LogitMethods);
+            if (m == NULL) {
                 return;
             }
 
             import_array();
             import_umath();
-           
-            logit = PyUFunc_FromFuncAndData(funcs,data, types, 4, 1, 1, 
-                                            PyUFunc_None, "logit", 
+
+            logit = PyUFunc_FromFuncAndData(funcs,data, types, 4, 1, 1,
+                                            PyUFunc_None, "logit",
                                             "logit_docstring", 0);
-            
+
             d = PyModule_GetDict(m);
 
             PyDict_SetItemString(d, "logit", logit);
             Py_DECREF(logit);
         }
         #endif
-        
+
 This is a setup.py file for the above code. As before, the module
-can be build via calling python setup.py build at the command prompt, 
-or installed to site-packages via python setup.py install. 
+can be build via calling python setup.py build at the command prompt,
+or installed to site-packages via python setup.py install.
 
     .. code-block:: python
 
         '''
             setup.py file for logit.c
             Note that since this is a numpy extension
-            we use numpy.distutils instead of 
+            we use numpy.distutils instead of
             distutils from the python standard library.
- 
-            Calling 
+
+            Calling
             $python setup.py build_ext --inplace
             will build the extension library in the current file.
-            
+
             Calling
-            $python setup.py build 
+            $python setup.py build
             will build a file that looks like ./build/lib*, where
             lib* is a file that begins with lib. The library will
-            be in this file and end with a C library extension, 
+            be in this file and end with a C library extension,
             such as .so
 
             Calling
@@ -696,20 +696,20 @@ or installed to site-packages via python setup.py install.
 
 
         def configuration(parent_package='', top_path=None):
-            import numpy 
+            import numpy
             from numpy.distutils.misc_util import Configuration
             from numpy.distutils.misc_util import get_info
-            
-            #Necessary for the half-float d-type. 
+
+            #Necessary for the half-float d-type.
             info = get_info('npymath')
 
-            config = Configuration('npspam_directory', 
-                                    parent_package, 
+            config = Configuration('npufunc_directory',
+                                    parent_package,
                                     top_path)
-            config.add_extension('npspam', 
-                                    ['multi_type_logit.c'], 
+            config.add_extension('npufunc',
+                                    ['multi_type_logit.c'],
                                     extra_info=info)
-            
+
             return config
 
         if __name__ == "__main__":
@@ -719,11 +719,11 @@ or installed to site-packages via python setup.py install.
 After the above has been installed, it can be imported and used as follows.
 
 >>> import numpy as np
->>> import npspam
->>> npspam.logit(0.5)
+>>> import npufunc
+>>> npufunc.logit(0.5)
 0.0
 >>> a = np.linspace(0,1,5)
->>> npspam.logit(a)
+>>> npufunc.logit(a)
 array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
 
 
@@ -735,29 +735,29 @@ Example Numpy ufunc with multiple arguments/return values
 
 Our final example is a ufunc with multiple arguments. It is a modification
 of the code for a logit ufunc for data with a single dtype. We
-compute (A*B, logit(A*B)). 
+compute (A*B, logit(A*B)).
 
-We only give the C code as the setup.py file is exactly the same as 
+We only give the C code as the setup.py file is exactly the same as
 the setup.py file in `Example Numpy ufunc for one dtype`_, except that
 the line
 
     .. code-block:: python
-        
-        config.add_extension('npspam', ['single_type_logit.c'])
+
+        config.add_extension('npufunc', ['single_type_logit.c'])
 
 is replaced with
-    
-    .. code-block:: python
-        
-        config.add_extension('npspam', ['multi_arg_logit.c'])
 
-The C file is given below. The ufunc generated takes two arguments A 
+    .. code-block:: python
+
+        config.add_extension('npufunc', ['multi_arg_logit.c'])
+
+The C file is given below. The ufunc generated takes two arguments A
 and B. It returns a tuple whose first element is A*B and whose second
-element is logit(A*B). Note that it automatically supports broadcasting, 
-as well as all other properties of a ufunc. 
+element is logit(A*B). Note that it automatically supports broadcasting,
+as well as all other properties of a ufunc.
 
     .. code-block:: c
-        
+
         #include "Python.h"
         #include "math.h"
         #include "numpy/ndarraytypes.h"
@@ -766,16 +766,16 @@ as well as all other properties of a ufunc.
 
         /*
          * multi_arg_logit.c
-         * This is the C code for creating your own 
+         * This is the C code for creating your own
          * Numpy ufunc for a multiple argument, multiple
-         * return value ufunc. The places where the 
-         * ufunc computation is carried out are marked 
+         * return value ufunc. The places where the
+         * ufunc computation is carried out are marked
          * with comments.
-         *   
+         *
          * Details explaining the Python-C API can be found under
          * 'Extending and Embedding' and 'Python/C API' at
          * docs.python.org .
-         *   
+         *
          */
 
 
@@ -794,9 +794,9 @@ as well as all other properties of a ufunc.
             char *out1 = args[2], *out2 = args[3];
             npy_intp in1_step = steps[0], in2_step = steps[1];
             npy_intp out1_step = steps[2], out2_step = steps[3];
-            
+
             double tmp;
-            
+
             for (i = 0; i < n; i++) {
                 /*BEGIN main ufunc computation*/
                 tmp = *(double *)in1;
@@ -818,16 +818,16 @@ as well as all other properties of a ufunc.
 
         /* These are the input and return dtypes of logit.*/
 
-        static char types[4] = {NPY_DOUBLE, NPY_DOUBLE, 
+        static char types[4] = {NPY_DOUBLE, NPY_DOUBLE,
                                 NPY_DOUBLE, NPY_DOUBLE};
 
 
         static void *data[1] = {NULL};
-        
+
         #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
-            "npspam",
+            "npufunc",
             NULL,
             -1,
             LogitMethods,
@@ -837,7 +837,7 @@ as well as all other properties of a ufunc.
             NULL
         };
 
-        PyObject *PyInit_npspam(void)
+        PyObject *PyInit_npufunc(void)
         {
             PyObject *m, *logit, *d;
             m = PyModule_Create(&moduledef);
@@ -847,11 +847,11 @@ as well as all other properties of a ufunc.
 
             import_array();
             import_umath();
-           
-            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 2, 2, 
-                                            PyUFunc_None, "logit", 
+
+            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 2, 2,
+                                            PyUFunc_None, "logit",
                                             "logit_docstring", 0);
-            
+
             d = PyModule_GetDict(m);
 
             PyDict_SetItemString(d, "logit", logit);
@@ -860,23 +860,23 @@ as well as all other properties of a ufunc.
             return m;
         }
         #else
-        PyMODINIT_FUNC initnpspam(void)
+        PyMODINIT_FUNC initnpufunc(void)
         {
             PyObject *m, *logit, *d;
-            
-            
-            m = Py_InitModule("npspam", LogitMethods);
-            if (m == NULL) { 
+
+
+            m = Py_InitModule("npufunc", LogitMethods);
+            if (m == NULL) {
                 return;
             }
 
             import_array();
             import_umath();
-           
-            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 2, 2, 
-                                            PyUFunc_None, "logit", 
+
+            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 2, 2,
+                                            PyUFunc_None, "logit",
                                             "logit_docstring", 0);
-            
+
             d = PyModule_GetDict(m);
 
             PyDict_SetItemString(d, "logit", logit);
@@ -889,8 +889,8 @@ as well as all other properties of a ufunc.
 PyUFunc_FromFuncAndData Specification
 =====================================
 
-What follows is the full specification of PyUFunc_FromFuncAndData, which 
-automatically generates a ufunc from a C function with the correct signature. 
+What follows is the full specification of PyUFunc_FromFuncAndData, which
+automatically generates a ufunc from a C function with the correct signature.
 
 
 .. cfunction:: PyObject *PyUFunc_FromFuncAndData( PyUFuncGenericFunction* func,
@@ -941,10 +941,10 @@ automatically generates a ufunc from a C function with the correct signature.
                 npy_intp os = steps[2], n = dimensions[0];
                 char *i1 = args[0], *i2 = args[1], *op = args[2];
                 for (i = 0; i < n; i++) {
-                    *((double *)op) = *((double *)i1) + 
+                    *((double *)op) = *((double *)i1) +
                                       *((double *)i2);
-                    i1 += is1; 
-                    i2 += is2; 
+                    i1 += is1;
+                    i2 += is2;
                     op += os;
                  }
             }
@@ -969,7 +969,7 @@ automatically generates a ufunc from a C function with the correct signature.
         types array would be
 
         .. code-block:: c
-        
+
             static char types[3] = {NPY_INT, NPY_DOUBLE, NPY_CDOUBLE}
 
         The bit-width names can also be used (e.g. :cdata:`NPY_INT32`,
@@ -1028,7 +1028,7 @@ adapted from the umath module
                               (void *)atan2l,(void *)"arctan2"};
         static char atan2_signatures[] = {
                       NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
-                      NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, 
+                      NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
                       NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_LONGDOUBLE
                       NPY_OBJECT, NPY_OBJECT, NPY_OBJECT};
         ...
