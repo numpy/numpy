@@ -334,6 +334,9 @@ def test_array_maskna_view_function():
     assert_(c.flags.maskna)
     assert_(not c.flags.ownmaskna)
 
+    # Taking a view of a masked array with maskna=False is invalid
+    assert_raises(ValueError, b.view, maskna=False)
+
     # Taking a view of a masked array, making sure there's a mask
     c = b.view(maskna = True)
     assert_(b.flags.maskna)
