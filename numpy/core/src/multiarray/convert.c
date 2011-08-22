@@ -515,8 +515,9 @@ PyArray_AssignOne(PyArrayObject *dst,
 NPY_NO_EXPORT PyObject *
 PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
 {
-    PyArrayObject *ret = (PyArrayObject *)PyArray_NewLikeArray(
-                                                    obj, order, NULL, 1);
+    PyArrayObject *ret;
+    
+    ret = (PyArrayObject *)PyArray_NewLikeArray(obj, order, NULL, 1);
     if (ret == NULL) {
         return NULL;
     }
@@ -528,7 +529,7 @@ PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
         }
     }
 
-    if (PyArray_CopyInto(ret, obj) == -1) {
+    if (PyArray_AssignArray(ret, obj, NULL, NPY_UNSAFE_CASTING, 0, NULL) < 0) {
         Py_DECREF(ret);
         return NULL;
     }

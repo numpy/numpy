@@ -83,6 +83,70 @@ def test_array_maskna_construction():
     assert_(a.flags.maskna)
     assert_equal(np.isna(a), True)
 
+def test_array_maskna_copy():
+    a = np.array([1,2,3])
+    b = np.array([2,3,4], maskna=True)
+    c = np.array([3,4,np.NA], maskna=True)
+
+    # Make a copy, adding a mask
+    res = a.copy(maskna=True)
+    assert_equal(res, a)
+    assert_(res.flags.maskna)
+    assert_(res.flags.ownmaskna)
+
+    res = np.copy(a, maskna=True)
+    assert_equal(res, a)
+    assert_(res.flags.maskna)
+    assert_(res.flags.ownmaskna)
+
+    # Make a copy, removing a mask
+    res = b.copy(maskna=False)
+    assert_equal(res, b)
+    assert_(not res.flags.maskna)
+    assert_(not res.flags.ownmaskna)
+
+    res = np.copy(b, maskna=False)
+    assert_equal(res, b)
+    assert_(not res.flags.maskna)
+    assert_(not res.flags.ownmaskna)
+
+    # Copy with removing a mask doesn't work if there are NAs
+    assert_raises(ValueError, c.copy, maskna=False)
+    assert_raises(ValueError, np.copy, c, maskna=False)
+
+    # Make a copy, preserving non-masked
+    res = a.copy()
+    assert_equal(res, a)
+    assert_(not res.flags.maskna)
+    assert_(not res.flags.ownmaskna)
+
+    res = np.copy(a)
+    assert_equal(res, a)
+    assert_(not res.flags.maskna)
+    assert_(not res.flags.ownmaskna)
+
+    # Make a copy, preserving masked
+    res = b.copy()
+    assert_equal(res, b)
+    assert_(res.flags.maskna)
+    assert_(res.flags.ownmaskna)
+
+    res = np.copy(b)
+    assert_equal(res, b)
+    assert_(res.flags.maskna)
+    assert_(res.flags.ownmaskna)
+
+    # Make a copy, preserving masked with an NA
+    res = c.copy()
+    assert_array_equal(res, c)
+    assert_(res.flags.maskna)
+    assert_(res.flags.ownmaskna)
+
+    res = np.copy(c)
+    assert_array_equal(res, c)
+    assert_(res.flags.maskna)
+    assert_(res.flags.ownmaskna)
+
 def test_array_maskna_repr():
     # Test some simple reprs with NA in them
     a = np.array(np.NA, maskna=True)

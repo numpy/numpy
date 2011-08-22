@@ -3247,17 +3247,21 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('conjugate',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
     """
-    a.copy(order='C')
+    a.copy(order='C', maskna=None)
 
     Return a copy of the array.
 
     Parameters
     ----------
-    order : {'C', 'F', 'A'}, optional
-        By default, the result is stored in C-contiguous (row-major) order in
-        memory.  If `order` is `F`, the result has 'Fortran' (column-major)
-        order.  If order is 'A' ('Any'), then the result has the same order
-        as the input.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Controls the memory layout of the copy. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' means match the layout of `a` as closely
+        as possible.
+    maskna : bool, optional
+        If specifies, forces the copy to have or to not have an
+        NA mask. This is a way to remove an NA mask from an array
+        while making a copy.
 
     See also
     --------

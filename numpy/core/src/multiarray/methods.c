@@ -1009,14 +1009,53 @@ static PyObject *
 array_copy(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     PyArray_ORDER order = NPY_CORDER;
-    static char *kwlist[] = {"order", NULL};
+    PyObject *maskna_in = Py_None;
+    int maskna = -1;
+    static char *kwlist[] = {"order", "maskna", NULL};
+    PyArrayObject *ret;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
-                            PyArray_OrderConverter, &order)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O", kwlist,
+                            PyArray_OrderConverter, &order,
+                            &maskna_in)) {
         return NULL;
     }
 
-    return PyArray_NewCopy(self, order);
+    /* Treat None the same as not providing the parameter */
+    if (maskna_in != Py_None) {
+        maskna = PyObject_IsTrue(maskna_in);
+        if (maskna == -1) {
+            return NULL;
+        }
+    }
+
+    /* If maskna=False was passed and self has an NA mask, strip it away */
+    if (maskna == 0 && PyArray_HASMASKNA(self)) {
+        /* An array with no NA mask */
+        ret = (PyArrayObject *)PyArray_NewLikeArray(self, order, NULL, 1);
+        if (ret == NULL) {
+            return NULL;
+        }
+
+        /* AssignArray validates that 'self' contains no NA values */
+        if (PyArray_AssignArray(ret, self, NULL, NPY_UNSAFE_CASTING,
+                                                        0, NULL) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+    else {
+        ret = (PyArrayObject *)PyArray_NewCopy(self, order);
+
+        /* Add the NA mask if requested */
+        if (ret != NULL && maskna == 1) {
+            if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
+                Py_DECREF(ret);
+                return NULL;
+            }
+        }
+    }
+
+    return (PyObject *)ret;
 }
 
 #include <stdio.h>

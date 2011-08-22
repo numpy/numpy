@@ -1610,8 +1610,9 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     int ndmin = 0, nd;
     PyArray_Descr *type = NULL;
     PyArray_Descr *oldtype = NULL;
-    NPY_ORDER order = NPY_ANYORDER;
-    int flags = 0, maskna = 0, ownmaskna = 0;
+    NPY_ORDER order = NPY_KEEPORDER;
+    int flags = 0, maskna = -1, ownmaskna = 0;
+    PyObject *maskna_in = Py_None;
 
     static char *kwd[]= {"object", "dtype", "copy", "order", "subok",
                          "ndmin", "maskna", "ownmaskna", NULL};
@@ -1621,21 +1622,39 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
                         "only 2 non-keyword arguments accepted");
         return NULL;
     }
-    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&iii", kwd,
+    if(!PyArg_ParseTupleAndKeywords(args, kws, "O|O&O&O&O&iOi", kwd,
                 &op,
                 PyArray_DescrConverter2, &type,
                 PyArray_BoolConverter, &copy,
                 PyArray_OrderConverter, &order,
                 PyArray_BoolConverter, &subok,
                 &ndmin,
-                &maskna,
+                &maskna_in,
                 &ownmaskna)) {
         goto clean_type;
     }
 
+    /*
+     * Treat None the same as not providing the parameter, set
+     * maskna to -1 (unprovided), 0 (False), or 1 (True).
+     */
+    if (maskna_in != Py_None) {
+        maskna = PyObject_IsTrue(maskna_in);
+        if (maskna == -1) {
+            return NULL;
+        }
+    }
+
     /* 'ownmaskna' forces 'maskna' to be True */
     if (ownmaskna) {
-        maskna = 1;
+        if (maskna == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "cannot specify maskna=False and ownmaskna=True");
+            return NULL;
+        }
+        else {
+            maskna = 1;
+        }
     }
 
     if (ndmin > NPY_MAXDIMS) {
@@ -1647,8 +1666,9 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     /* fast exit if simple call */
     if (((subok && PyArray_Check(op)) ||
                  (!subok && PyArray_CheckExact(op))) &&
-              ((maskna && PyArray_HASMASKNA((PyArrayObject *)op)) ||
-               (!maskna && !PyArray_HASMASKNA((PyArrayObject *)op)))) {
+              ((maskna == -1) ||
+               (maskna == 1 && PyArray_HASMASKNA((PyArrayObject *)op)) ||
+               (maskna == 0 && !PyArray_HASMASKNA((PyArrayObject *)op)))) {
         oparr = (PyArrayObject *)op;
         if (type == NULL) {
             if (!copy && STRIDING_OK(oparr, order)) {
@@ -1715,14 +1735,25 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
     if (!subok) {
         flags |= NPY_ARRAY_ENSUREARRAY;
     }
-    if (maskna) {
-        flags |= NPY_ARRAY_MASKNA;
-    }
-    if (ownmaskna) {
-        flags |= NPY_ARRAY_OWNMASKNA;
-    }
 
-    flags |= (NPY_ARRAY_FORCECAST | NPY_ARRAY_ALLOWNA);
+    /* If maskna is the default, allow NA to pass through */
+    if (maskna == -1) {
+        flags |= NPY_ARRAY_ALLOWNA;
+    }
+    /* If maskna is True, force there to be an NA mask */
+    else if (maskna == 1) {
+        flags |= NPY_ARRAY_MASKNA | NPY_ARRAY_ALLOWNA;
+        if (ownmaskna) {
+            flags |= NPY_ARRAY_OWNMASKNA;
+        }
+    }
+    /*
+     * Otherwise maskna is False, so we don't specify NPY_ARRAY_ALLOWNA.
+     * An array with an NA mask will cause a copy into an array
+     * without an NA mask
+     */
+
+    flags |= NPY_ARRAY_FORCECAST;
     Py_XINCREF(type);
     ret = (PyArrayObject *)PyArray_CheckFromAny(op, type,
                                                 0, 0, flags, NULL);
