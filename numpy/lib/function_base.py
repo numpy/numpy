@@ -778,7 +778,7 @@ def select(condlist, choicelist, default=0):
             S = S*ones(asarray(pfac).shape, S.dtype)
     return choose(S, tuple(choicelist))
 
-def copy(a):
+def copy(a, order='C', maskna=None):
     """
     Return an array copy of the given object.
 
@@ -786,6 +786,15 @@ def copy(a):
     ----------
     a : array_like
         Input data.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Controls the memory layout of the copy. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' means match the layout of `a` as closely
+        as possible.
+    maskna : bool, optional
+        If specifies, forces the copy to have or to not have an
+        NA mask. This is a way to remove an NA mask from an array
+        while making a copy.
 
     Returns
     -------
@@ -815,7 +824,7 @@ def copy(a):
     False
 
     """
-    return array(a, copy=True)
+    return array(a, order=order, copy=True, maskna=maskna)
 
 # Basic operations
 
