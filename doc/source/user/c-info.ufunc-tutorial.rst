@@ -139,7 +139,7 @@ the module.
         /* This initiates the module using the above definitions. */
         #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
-            PyModuleDef HEAT_INIT,
+            PyModuleDef_HEAD_INIT,
             "spam",
             NULL,
             -1,
@@ -150,7 +150,7 @@ the module.
             NULL
         };
 
-        PyObject *PyInit__npspam(void)
+        PyObject *PyInit_npspam(void)
         {
             PyObject *m;
             m = PyModule_Create(&moduledef);
@@ -182,10 +182,15 @@ directory.
             setup.py file for spammodule.c
 
             Calling
+            $python setup.py build_ext --inplace
+            will build the extension library in the current file.
+
+            Calling
             $python setup.py build
-            will build the extension library in a file
-            that looks like ./build/lib*, where lib* is
-            a file that begins with lib.
+            will build a file that looks like ./build/lib*, where
+            lib* is a file that begins with lib. The library will
+            be in this file and end with a C library extension,
+            such as .so
 
             Calling
             $python setup.py install
@@ -211,11 +216,25 @@ directory.
 Once the spam module is imported into python, you can call logit
 via spam.logit. Note that the function used above cannot be applied
 as-is to numpy arrays. To do so we must call numpy.vectorize on it.
-For example:
+For example, if a python interpreter is opened in the file containing
+the spam library or spam has been installed, one can perform the
+following commands:
 
 >>> import numpy as np
 >>> import spam
+>>> spam.logit(0)
+-inf
+>>> spam.logit(1)
+inf
+>>> spam.logit(0.5)
+0.0
+>>> x = np.linspace(0,1,10)
+>>> spam.logit(x)
+TypeError: only length-1 arrays can be converted to Python scalars
 >>> f = np.vectorize(spam.logit)
+>>> f(x)
+array([       -inf, -2.07944154, -1.25276297, -0.69314718, -0.22314355,
+    0.22314355,  0.69314718,  1.25276297,  2.07944154,         inf])
 
 THE RESULTING LOGIT FUNCTION IS NOT FAST! numpy.vectorize simply
 loops over spam.logit. The loop is done at the C level, but the numpy
@@ -305,7 +324,7 @@ the primary thing that must be changed to create your own ufunc.
 
         #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
-            PyModuleDef HEAT_INIT,
+            PyModuleDef_HEAD_INIT,
             "npspam",
             NULL,
             -1,
@@ -316,9 +335,9 @@ the primary thing that must be changed to create your own ufunc.
             NULL
         };
 
-        PyObject *PyInit__npspam(void)
+        PyObject *PyInit_npspam(void)
         {
-            PyObject *m;
+            PyObject *m, *logit, *d;
             m = PyModule_Create(&moduledef);
             if (!m) {
                 return NULL;
@@ -376,10 +395,15 @@ or installed to site-packages via python setup.py install.
             distutils from the python standard library.
 
             Calling
+            $python setup.py build_ext --inplace
+            will build the extension library in the current file.
+
+            Calling
             $python setup.py build
-            will build the extension library in a file
-            that looks like ./build/lib*, where lib* is
-            a file that begins with lib.
+            will build a file that looks like ./build/lib*, where
+            lib* is a file that begins with lib. The library will
+            be in this file and end with a C library extension,
+            such as .so
 
             Calling
             $python setup.py install
@@ -579,7 +603,7 @@ the primary thing that must be changed to create your own ufunc.
 
         #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
-            PyModuleDef HEAT_INIT,
+            PyModuleDef_HEAD_INIT,
             "npspam",
             NULL,
             -1,
@@ -590,9 +614,9 @@ the primary thing that must be changed to create your own ufunc.
             NULL
         };
 
-        PyObject *PyInit__npspam(void)
+        PyObject *PyInit_npspam(void)
         {
-            PyObject *m;
+            PyObject *m, *logit, *d;
             m = PyModule_Create(&moduledef);
             if (!m) {
                 return NULL;
@@ -650,10 +674,15 @@ or installed to site-packages via python setup.py install.
             distutils from the python standard library.
 
             Calling
+            $python setup.py build_ext --inplace
+            will build the extension library in the current file.
+
+            Calling
             $python setup.py build
-            will build the extension library in a file
-            that looks like ./build/lib*, where lib* is
-            a file that begins with lib.
+            will build a file that looks like ./build/lib*, where
+            lib* is a file that begins with lib. The library will
+            be in this file and end with a C library extension,
+            such as .so
 
             Calling
             $python setup.py install
@@ -797,7 +826,7 @@ as well as all other properties of a ufunc.
 
         #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
-            PyModuleDef HEAT_INIT,
+            PyModuleDef_HEAD_INIT,
             "npspam",
             NULL,
             -1,
@@ -808,9 +837,9 @@ as well as all other properties of a ufunc.
             NULL
         };
 
-        PyObject *PyInit__npspam(void)
+        PyObject *PyInit_npspam(void)
         {
-            PyObject *m;
+            PyObject *m, *logit, *d;
             m = PyModule_Create(&moduledef);
             if (!m) {
                 return NULL;
