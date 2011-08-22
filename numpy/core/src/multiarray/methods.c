@@ -171,15 +171,36 @@ array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
     PyObject *out_type = NULL;
     PyArray_Descr *dtype = NULL;
     PyObject *ret;
-    int maskna = 0, ownmaskna = 0;
+    int maskna = -1, ownmaskna = 0;
+    PyObject *maskna_in = Py_None;
 
     static char *kwlist[] = {"dtype", "type", "maskna", "ownmaskna", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOii", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOOi", kwlist,
                                      &out_dtype,
                                      &out_type,
-                                     &maskna,
+                                     &maskna_in,
                                      &ownmaskna)) {
         return NULL;
+    }
+
+    /* Treat None the same as not providing the parameter */
+    if (maskna_in != Py_None) {
+        maskna = PyObject_IsTrue(maskna_in);
+        if (maskna == -1) {
+            return NULL;
+        }
+    }
+
+    /* 'ownmaskna' forces 'maskna' to be True */
+    if (ownmaskna) {
+        if (maskna == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "cannot specify maskna=False and ownmaskna=True");
+            return NULL;
+        }
+        else {
+            maskna = 1;
+        }
     }
 
     /* If user specified a positional argument, guess whether it
@@ -213,8 +234,11 @@ array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     ret = PyArray_View(self, dtype, (PyTypeObject*)out_type);
+    if (ret == NULL) {
+        return NULL;
+    }
 
-    if (maskna || ownmaskna) {
+    if (maskna == 1) {
         /* Ensure there is an NA mask if requested */
         if (PyArray_AllocateMaskNA((PyArrayObject *)ret,
                                         ownmaskna, 0, 1) < 0) {
@@ -222,6 +246,13 @@ array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
             return NULL;
         }
         return ret;
+    }
+    else if (maskna == 0 && PyArray_HASMASKNA(ret)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot take a view of an NA-masked array "
+                    "with maskna=False");
+        Py_DECREF(ret);
+        return NULL;
     }
     else {
         return ret;
