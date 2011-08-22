@@ -1392,6 +1392,7 @@ unmasked_ufunc_loop_as_masked(
 NPY_NO_EXPORT int
 PyUFunc_DefaultMaskedInnerLoopSelector(PyUFuncObject *ufunc,
                             PyArray_Descr **dtypes,
+                            PyArray_Descr *mask_dtype,
                             npy_intp *NPY_UNUSED(fixed_strides),
                             npy_intp NPY_UNUSED(fixed_mask_stride),
                             PyUFunc_MaskedStridedInnerLoopFunc **out_innerloop,
@@ -1406,6 +1407,13 @@ PyUFunc_DefaultMaskedInnerLoopSelector(PyUFuncObject *ufunc,
                 "the ufunc default masked inner loop selector doesn't "
                 "yet support wrapping the new inner loop selector, it "
                 "still only wraps the legacy inner loop selector");
+        return -1;
+    }
+
+    if (mask_dtype->type_num != NPY_BOOL) {
+        PyErr_SetString(PyExc_ValueError,
+                "only boolean masks are supported in ufunc inner loops "
+                "presently");
         return -1;
     }
 
