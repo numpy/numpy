@@ -2,136 +2,6 @@
 #define _NPY_PRIVATE__REDUCTION_H_
 
 /*
- * This is a function for assigning a reduction unit to the result,
- * before doing the reduction computation. If 'preservena' is True,
- * any masked NA values in 'result' should not be overwritten. The
- * value in 'data' is passed through from PyArray_ReduceWrapper.
- *
- * This function could, for example, simply be a call like
- *      return PyArray_AssignZero(result, NULL, preservena, NULL);
- *
- * It should return -1 on failure, or 0 on success.
- */
-typedef int (PyArray_AssignReduceUnitFunc)(PyArrayObject *result,
-                                            int preservena, void *data);
-
-/*
- * This is a function for the inner reduce loop. Both the unmasked and
- * masked variants have the same prototype, but should behave differently.
- *
- * The needs_api parameter indicates whether it's ok to release the GIL during
- * the inner loop, such as when the iternext() function never calls
- * a function which could raise a Python exception.
- *
- * Ths skip_first_count parameter indicates how many elements need to be
- * skipped based on NpyIter_IsFirstVisit checks. This can only be positive
- * when the 'assign_unit' parameter was NULL when calling
- * PyArray_ReduceWrapper.
- *
- * The unmasked inner loop gets two data pointers and two strides, and should
- * look roughly like this:
- *  {
- *      NPY_BEGIN_THREADS_DEF;
- *      if (!needs_api) {
- *          NPY_BEGIN_THREADS;
- *      }
- *      // This first-visit loop can be skipped if 'assign_unit' was non-NULL
- *      if (skip_first_count > 0) {
- *          do {
- *              char *data0 = dataptr[0], *data1 = dataptr[1];
- *              npy_intp stride0 = strideptr[0], stride1 = strideptr[1];
- *              npy_intp count = *countptr;
- *
- *              // Skip any first-visit elements
- *              if (NpyIter_IsFirstVisit(iter, 0)) {
- *                  if (stride0 == 0) {
- *                      --count;
- *                      --skip_first_count;
- *                      data1 += stride1;
- *                      //data2 += stride2; // In masked loop
- *                  }
- *                  else {
- *                      skip_first_count -= count;
- *                      count = 0;
- *                  }
- *              }
- *
- *              while (count--) {
- *                  *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
- *                                                    *(operand_t *)data1);
- *                  data0 += stride0;
- *                  data1 += stride1;
- *              }
- *
- *              // Jump to the faster loop when skipping is done
- *              if (skip_first_count == 0) {
- *                  if (iternext(iter)) {
- *                      break;
- *                  }
- *                  else {
- *                      goto finish_loop;
- *                  }
- *              }
- *          } while (iternext(iter));
- *      }
- *      do {
- *          char *data0 = dataptr[0], *data1 = dataptr[1];
- *          npy_intp stride0 = strideptr[0], stride1 = strideptr[1];
- *          npy_intp count = *countptr;
- *
- *          while (count--) {
- *              *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
- *                                                *(operand_t *)data1);
- *              data0 += stride0;
- *              data1 += stride1;
- *          }
- *      } while (iternext(iter));
- *  finish_loop:
- *      if (!needs_api) {
- *          NPY_END_THREADS;
- *      }
- *      return (needs_api && PyErr_Occurred()) ? -1 : 0;
- *  }
- *
- * The masked inner loop gets three data pointers and three strides, and
- * looks identical except for the iteration inner loops which should be
- * like this:
- *      do {
- *          char *data0 = dataptr[0], *data1 = dataptr[1], *data2 = dataptr[2];
- *          npy_intp stride0 = strideptr[0], stride1 = strideptr[1],
- *                      stride2 = strideptr[2];
- *          npy_intp count = *countptr;
- *
- *          // Skipping first visits would go here
- *
- *          while (count--) {
- *              if (NpyMaskValue_IsExposed((npy_mask)*data2)) {
- *                  *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
- *                                                    *(operand_t *)data1);
- *              }
- *              data0 += stride0;
- *              data1 += stride1;
- *              data2 += stride2;
- *          }
- *
- *          // Jumping to the faster loop would go here
- *
- *      } while (iternext(iter));
- *
- * If needs_api is True, this function should call PyErr_Occurred()
- * to check if an error occurred during processing, and return -1 for
- * error, 0 for success.
- */
-typedef int (PyArray_ReduceInnerLoopFunc)(NpyIter *iter,
-                                            char **dataptr,
-                                            npy_intp *strideptr,
-                                            npy_intp *countptr,
-                                            NpyIter_IterNextFunc *iternext,
-                                            int needs_api,
-                                            npy_intp skip_first_count,
-                                            void *data);
-
-/*
  * This function counts the number of elements that a reduction
  * will see along the reduction directions, given the provided options.
  *
@@ -147,5 +17,90 @@ NPY_NO_EXPORT PyObject *
 PyArray_CountReduceItems(PyArrayObject *operand,
                             npy_bool *axis_flags, int skipna, int keepdims);
 
+/*
+ * This function initializes a result array for a reduction operation
+ * which has no identity. This means it needs to copy the first element
+ * it sees along the reduction axes to result, then return a view of
+ * the operand which excludes that element.
+ *
+ * If a reduction has an identity, such as 0 or 1, the result should
+ * be initialized by calling PyArray_AssignZero(result, NULL, !skipna, NULL)
+ * or PyArray_AssignOne(result, NULL, !skipna, NULL), because this
+ * function raises an exception when there are no elements to reduce.
+ *
+ * For regular reduction, this means it copies the subarray indexed
+ * at zero along each reduction axis into 'result', then returns a view
+ * into 'operand' excluding those copied elements. If 'operand' has
+ * an NA mask in this case, the caller should have already done
+ * the reduction on the mask. This function copies the subarray with
+ * 'replacena' set to True, so that the already accumulated NA mask
+ * in result doesn't get overwritten.
+ *
+ * For 'skipna' reduction, this is more complicated. In the one dimensional
+ * case, it searches for the first non-NA element, copies that element
+ * to 'result', then returns a view into the rest of 'operand'. For
+ * multi-dimensional reductions, the initial elements may be scattered
+ * throughout the array.
+ *
+ * To deal with this, a view of 'operand' is taken, and given its own
+ * copy of the NA mask. Additionally, an array of flags is created,
+ * matching the shape of 'result', and initialized to all False.
+ * Then, the elements of the 'operand' view are gone through, and any time
+ * an exposed element is encounted which isn't already flagged in the
+ * auxiliary array, it is copied into 'result' and flagged as copied.
+ * The element is masked as an NA in the view of 'operand', so that the
+ * later reduction step will skip it during processing.
+ *
+ * result  : The array into which the result is computed. This must have
+ *           the same number of dimensions as 'operand', but for each
+ *           axis i where 'axis_flags[i]' is True, it has a single element.
+ * operand : The array being reduced.
+ * axis_flags : An array of boolean flags, one for each axis of 'operand'.
+ *              When a flag is True, it indicates to reduce along that axis.
+ * reorderable : If True, the reduction being done is reorderable, which
+ *               means specifying multiple axes of reduction at once is ok,
+ *               and the reduction code may calculate the reduction in an
+ *               arbitrary order. The calculation may be reordered because
+ *               of cache behavior or multithreading requirements.
+ * skipna  : If True, indicates that the reduction is being calculated
+ *           as if the NA values are being dropped from the computation
+ *           instead of accumulating into an NA result.
+ * out_skip_first_count : This gets populated with the number of first-visit
+ *                        elements that should be skipped during the
+ *                        iteration loop.
+ * funcname : The name of the reduction operation, for the purpose of
+ *            better quality error messages. For example, "numpy.max"
+ *            would be a good name for NumPy's max function.
+ *
+ * Returns a view which contains the remaining elements on which to do
+ * the reduction.
+ */
+NPY_NO_EXPORT PyArrayObject *
+PyArray_InitializeReduceResult(
+                    PyArrayObject *result, PyArrayObject *operand,
+                    npy_bool *axis_flags, int reorderable, int skipna,
+                    npy_intp *out_skip_first_count, const char *funcname);
+
+/*
+ * Creates a result for reducing 'operand' along the axes specified
+ * in 'axis_flags'. If 'dtype' isn't NULL, this function steals a
+ * reference to 'dtype'.
+ *
+ * If 'out' isn't NULL, this function creates a view conforming
+ * to the number of dimensions of 'operand', adding a singleton dimension
+ * for each reduction axis specified. In this case, 'dtype' is ignored
+ * (but its reference is still stolen), and the caller must handle any
+ * type conversion/validity check for 'out'. When 'need_namask' is true,
+ * raises an exception if 'out' doesn't have an NA mask.
+ *
+ * If 'out' is NULL, it allocates a new array whose shape matches
+ * that of 'operand', except for at the reduction axes. An NA mask
+ * is added if 'need_namask' is true.  If 'dtype' is NULL, the dtype
+ * of 'operand' is used for the result.
+ */
+NPY_NO_EXPORT PyArrayObject *
+PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
+                    PyArray_Descr *dtype, npy_bool *axis_flags,
+                    int need_namask, int keepdims, const char *funcname);
 
 #endif
