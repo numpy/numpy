@@ -119,6 +119,7 @@ typedef int (PyUFunc_InnerLoopSelectionFunc)(
 typedef int (PyUFunc_MaskedInnerLoopSelectionFunc)(
                             struct _tagPyUFuncObject *ufunc,
                             PyArray_Descr **dtypes,
+                            PyArray_Descr *mask_dtype,
                             npy_intp *fixed_strides,
                             npy_intp fixed_mask_stride,
                             PyUFunc_MaskedStridedInnerLoopFunc **out_innerloop,
