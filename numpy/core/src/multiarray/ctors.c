@@ -1856,16 +1856,7 @@ PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
             ret = NULL;
         }
         else {
-            if (PyArray_HASMASKNA((PyArrayObject *)arr) &&
-                                (flags & NPY_ARRAY_ALLOWNA) == 0) {
-                PyErr_SetString(PyExc_ValueError,
-                        "this operation does not support "
-                        "arrays with NA masks");
-                ret = NULL;
-            }
-            else {
-                ret = (PyArrayObject *)PyArray_FromArray(arr, newtype, flags);
-            }
+            ret = (PyArrayObject *)PyArray_FromArray(arr, newtype, flags);
             Py_DECREF(arr);
         }
     }
@@ -1962,13 +1953,12 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     int copy = 0;
     int arrflags;
     PyArray_Descr *oldtype;
-    PyTypeObject *subtype;
     NPY_CASTING casting = NPY_SAFE_CASTING;
 
     oldtype = PyArray_DESCR(arr);
-    subtype = Py_TYPE(arr);
     if (newtype == NULL) {
-        newtype = oldtype; Py_INCREF(oldtype);
+        newtype = oldtype;
+        Py_INCREF(oldtype);
     }
     itemsize = newtype->elsize;
     if (itemsize == 0) {
@@ -2005,141 +1995,79 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         return NULL;
     }
 
-    /* Don't copy if sizes are compatible */
-    if ((flags & NPY_ARRAY_ENSURECOPY) ||
-                            PyArray_EquivTypes(oldtype, newtype)) {
-        arrflags = PyArray_FLAGS(arr);
-        if (PyArray_NDIM(arr) <= 1 && (flags & NPY_ARRAY_F_CONTIGUOUS)) {
-            flags |= NPY_ARRAY_C_CONTIGUOUS;
-        }
-        copy = (flags & NPY_ARRAY_ENSURECOPY) ||
-            ((flags & NPY_ARRAY_C_CONTIGUOUS) &&
-                    (!(arrflags & NPY_ARRAY_C_CONTIGUOUS)))
-            || ((flags & NPY_ARRAY_ALIGNED) &&
-                    (!(arrflags & NPY_ARRAY_ALIGNED)))
-            || (PyArray_NDIM(arr) > 1 &&
-                    ((flags & NPY_ARRAY_F_CONTIGUOUS) &&
-                    (!(arrflags & NPY_ARRAY_F_CONTIGUOUS))))
-            || ((flags & NPY_ARRAY_WRITEABLE) &&
-                    (!(arrflags & NPY_ARRAY_WRITEABLE)));
-
-        if (copy) {
-            if ((flags & NPY_ARRAY_UPDATEIFCOPY) &&
-                                (!PyArray_ISWRITEABLE(arr))) {
-                Py_DECREF(newtype);
-                PyErr_SetString(PyExc_ValueError,
-                        "cannot copy back to a read-only array");
-                return NULL;
-            }
-            if ((flags & NPY_ARRAY_ENSUREARRAY)) {
-                subtype = &PyArray_Type;
-            }
-            ret = (PyArrayObject *)
-                PyArray_NewFromDescr(subtype, newtype,
-                                     PyArray_NDIM(arr),
-                                     PyArray_DIMS(arr),
-                                     NULL, NULL,
-                                     flags & NPY_ARRAY_F_CONTIGUOUS,
-                                     (PyObject *)arr);
-            if (ret == NULL) {
-                return NULL;
-            }
-
-            /* Allocate an NA mask if necessary from the input */
-            if (PyArray_HASMASKNA(arr)) {
-                if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
-                    Py_DECREF(ret);
-                    return NULL;
-                }
-            }
-
-            if (PyArray_CopyInto(ret, arr) < 0) {
-                Py_DECREF(ret);
-                return NULL;
-            }
-
-            /* Allocate an NA mask if requested but wasn't from the input */
-            if ((flags & (NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA)) != 0 &&
-                                !PyArray_HASMASKNA(ret)) {
-                if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
-                    Py_DECREF(ret);
-                    return NULL;
-                }
-            }
-
-            if (flags & NPY_ARRAY_UPDATEIFCOPY)  {
-                /*
-                 * Don't use PyArray_SetBaseObject, because that compresses
-                 * the chain of bases.
-                 */
-                Py_INCREF(arr);
-                ((PyArrayObject_fieldaccess *)ret)->base = (PyObject *)arr;
-                PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
-                PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEABLE);
-            }
-        }
-        /*
-         * If no copy then just increase the reference
-         * count and return the input
-         */
-        else {
-            Py_DECREF(newtype);
-            if ((flags & NPY_ARRAY_ENSUREARRAY) &&
-                                    !PyArray_CheckExact(arr)) {
-                PyArray_Descr *dtype = PyArray_DESCR(arr);
-                Py_INCREF(dtype);
-                ret = (PyArrayObject *)
-                    PyArray_NewFromDescr(&PyArray_Type,
-                                         dtype,
-                                         PyArray_NDIM(arr),
-                                         PyArray_DIMS(arr),
-                                         PyArray_STRIDES(arr),
-                                         PyArray_DATA(arr),
-                                         PyArray_FLAGS(arr),
-                                         NULL);
-                if (ret == NULL) {
-                    return NULL;
-                }
-                if (PyArray_SetBaseObject(ret, (PyObject *)arr)) {
-                    Py_DECREF(ret);
-                    return NULL;
-                }
-            }
-            else {
-                ret = arr;
-            }
-            Py_INCREF(arr);
-        }
+    arrflags = PyArray_FLAGS(arr);
+    if (PyArray_NDIM(arr) <= 1 && (flags & NPY_ARRAY_F_CONTIGUOUS)) {
+        flags |= NPY_ARRAY_C_CONTIGUOUS;
     }
+    copy = (flags & NPY_ARRAY_ENSURECOPY) ||
+        ((flags & NPY_ARRAY_C_CONTIGUOUS) &&
+                (!(arrflags & NPY_ARRAY_C_CONTIGUOUS)))
+        || ((flags & NPY_ARRAY_ALIGNED) &&
+                (!(arrflags & NPY_ARRAY_ALIGNED)))
+        || (PyArray_NDIM(arr) > 1 &&
+                ((flags & NPY_ARRAY_F_CONTIGUOUS) &&
+                (!(arrflags & NPY_ARRAY_F_CONTIGUOUS))))
+        || ((flags & NPY_ARRAY_WRITEABLE) &&
+                (!(arrflags & NPY_ARRAY_WRITEABLE))) ||
+           !PyArray_EquivTypes(oldtype, newtype);
 
-    /*
-     * The desired output type is different than the input
-     * array type and copy was not specified
-     */
-    else {
+    if (copy) {
+        NPY_ORDER order = NPY_KEEPORDER;
+        int subok = 1;
+
+        /* Set the order for the copy being made based on the flags */
+        if (flags & NPY_ARRAY_F_CONTIGUOUS) {
+            order = NPY_FORTRANORDER;
+        }
+        else if (flags & NPY_ARRAY_C_CONTIGUOUS) {
+            order = NPY_CORDER;
+        }
+
         if ((flags & NPY_ARRAY_UPDATEIFCOPY) &&
                             (!PyArray_ISWRITEABLE(arr))) {
             Py_DECREF(newtype);
             PyErr_SetString(PyExc_ValueError,
-                    "cannot copy back to a read-only array B");
+                    "cannot copy back to a read-only array");
             return NULL;
         }
         if ((flags & NPY_ARRAY_ENSUREARRAY)) {
-            subtype = &PyArray_Type;
+            subok = 0;
         }
-        ret = (PyArrayObject *)
-            PyArray_NewFromDescr(subtype, newtype,
-                                 PyArray_NDIM(arr), PyArray_DIMS(arr),
-                                 NULL, NULL,
-                                 flags & NPY_ARRAY_F_CONTIGUOUS,
-                                 (PyObject *)arr);
+        ret = (PyArrayObject *)PyArray_NewLikeArray(arr, order,
+                                                    newtype, subok);
         if (ret == NULL) {
             return NULL;
         }
-        if (PyArray_CastTo(ret, arr) < 0) {
+
+        /*
+         * Allocate an NA mask if necessary from the input,
+         * is NAs are being allowed.
+         */
+        if (PyArray_HASMASKNA(arr) && (flags & NPY_ARRAY_ALLOWNA)) {
+            if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
+                Py_DECREF(ret);
+                return NULL;
+            }
+        }
+
+        /*
+         * If a ALLOWNA was not enabled, and 'arr' has an NA mask,
+         * this will raise an error if 'arr' contains any NA values.
+         */
+        if (PyArray_CopyInto(ret, arr) < 0) {
             Py_DECREF(ret);
             return NULL;
         }
+
+        /* Allocate an NA mask if requested but wasn't from the input */
+        if ((flags & (NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA)) != 0 &&
+                            !PyArray_HASMASKNA(ret)) {
+            if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
+                Py_DECREF(ret);
+                return NULL;
+            }
+        }
+
         if (flags & NPY_ARRAY_UPDATEIFCOPY)  {
             /*
              * Don't use PyArray_SetBaseObject, because that compresses
@@ -2151,6 +2079,28 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEABLE);
         }
     }
+    /*
+     * If no copy then just increase the reference
+     * count and return the input
+     */
+    else {
+        Py_DECREF(newtype);
+        if ((flags & NPY_ARRAY_ENSUREARRAY) &&
+                                !PyArray_CheckExact(arr)) {
+            PyArray_Descr *dtype = PyArray_DESCR(arr);
+            Py_INCREF(dtype);
+
+            ret = (PyArrayObject *)PyArray_View(arr, NULL, &PyArray_Type);
+            if (ret == NULL) {
+                return NULL;
+            }
+        }
+        else {
+            ret = arr;
+        }
+        Py_INCREF(arr);
+    }
+
     return (PyObject *)ret;
 }
 

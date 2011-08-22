@@ -240,5 +240,70 @@ def test_copyto_maskna():
     assert_equal(a_orig, [[0,3,3],[3,4,12]])
     assert_equal(np.isna(a), [[0,1,0],[1,1,1]])
 
+def test_copy_order():
+    a = np.arange(24).reshape(2,3,4)
+    b = a.copy(order='F')
+    c = np.arange(24).reshape(2,4,3).swapaxes(1,2)
+
+    def check_copy_result(x, y, ccontig, fcontig, strides=False):
+        assert_(not (x is y))
+        assert_equal(x, y)
+        assert_equal(res.flags.c_contiguous, ccontig)
+        assert_equal(res.flags.f_contiguous, fcontig)
+        if strides:
+            assert_equal(x.strides, y.strides)
+        else:
+            assert_(x.strides != y.strides)
+
+    # Validate the initial state of a, b, and c
+    assert_(a.flags.c_contiguous)
+    assert_(not a.flags.f_contiguous)
+    assert_(not b.flags.c_contiguous)
+    assert_(b.flags.f_contiguous)
+    assert_(not c.flags.c_contiguous)
+    assert_(not c.flags.f_contiguous)
+
+    # Copy with order='C'
+    res = a.copy(order='C')
+    check_copy_result(res, a, ccontig=True, fcontig=False, strides=True)
+    res = b.copy(order='C')
+    check_copy_result(res, b, ccontig=True, fcontig=False, strides=False)
+    res = c.copy(order='C')
+    check_copy_result(res, c, ccontig=True, fcontig=False, strides=False)
+    res = np.copy(a, order='C')
+    check_copy_result(res, a, ccontig=True, fcontig=False, strides=True)
+    res = np.copy(b, order='C')
+    check_copy_result(res, b, ccontig=True, fcontig=False, strides=False)
+    res = np.copy(c, order='C')
+    check_copy_result(res, c, ccontig=True, fcontig=False, strides=False)
+
+    # Copy with order='F'
+    res = a.copy(order='F')
+    check_copy_result(res, a, ccontig=False, fcontig=True, strides=False)
+    res = b.copy(order='F')
+    check_copy_result(res, b, ccontig=False, fcontig=True, strides=True)
+    res = c.copy(order='F')
+    check_copy_result(res, c, ccontig=False, fcontig=True, strides=False)
+    res = np.copy(a, order='F')
+    check_copy_result(res, a, ccontig=False, fcontig=True, strides=False)
+    res = np.copy(b, order='F')
+    check_copy_result(res, b, ccontig=False, fcontig=True, strides=True)
+    res = np.copy(c, order='F')
+    check_copy_result(res, c, ccontig=False, fcontig=True, strides=False)
+
+    # Copy with order='K'
+    res = a.copy(order='K')
+    check_copy_result(res, a, ccontig=True, fcontig=False, strides=True)
+    res = b.copy(order='K')
+    check_copy_result(res, b, ccontig=False, fcontig=True, strides=True)
+    res = c.copy(order='K')
+    check_copy_result(res, c, ccontig=False, fcontig=False, strides=True)
+    res = np.copy(a, order='K')
+    check_copy_result(res, a, ccontig=True, fcontig=False, strides=True)
+    res = np.copy(b, order='K')
+    check_copy_result(res, b, ccontig=False, fcontig=True, strides=True)
+    res = np.copy(c, order='K')
+    check_copy_result(res, c, ccontig=False, fcontig=False, strides=True)
+
 if __name__ == "__main__":
     run_module_suite()
