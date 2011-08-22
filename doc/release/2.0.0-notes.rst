@@ -42,6 +42,7 @@ What doesn't work with NA:
     * UFunc.reduce of multi-dimensional arrays, with skipna=True and a ufunc
       that doesn't have an identity.
     * UFunc.accumulate, UFunc.reduceat.
+    * Ufuncs calls with both NA masks and a where= mask at the same time.
     * np.logical_and, np.logical_or, np.all, and np.any don't satisfy the
       rules NA | True == True and NA & False == False yet.
     * The reduction methods like <ndarray>.sum, etc. do not yet support
@@ -95,6 +96,13 @@ The default casting rule for UFunc out= parameters has been changed from
 'unsafe' to 'same_kind'.  Most usages which violate the 'same_kind'
 rule are likely bugs, so this change may expose previously undetected
 errors in projects that depend on NumPy.
+
+Full-array boolean indexing used to allow boolean arrays with a size
+non-broadcastable to the array size. Now it forces this to be broadcastable.
+Since this affects some legacy code, this change will require discussion
+during alpha or early beta testing, and a decision to either keep the
+stricter behavior, or add in a hack to allow the previous behavior to
+work.
 
 The functions np.diag, np.diagonal, and <ndarray>.diagonal now return a
 view into the original array instead of making a copy. This makes these
