@@ -1354,9 +1354,10 @@ execute_legacy_ufunc_loop(PyUFuncObject *ufunc,
     npy_intp nin = ufunc->nin, nout = ufunc->nout;
     PyUFuncGenericFunction innerloop;
     void *innerloopdata;
+    int needs_api = 0;
 
     if (ufunc->legacy_inner_loop_selector(ufunc, dtypes,
-                    &innerloop, &innerloopdata) < 0) {
+                    &innerloop, &innerloopdata, &needs_api) < 0) {
         return -1;
     }
     /* If the loop wants the arrays, provide them. */
@@ -1660,7 +1661,7 @@ execute_ufunc_masked_loop(PyUFuncObject *ufunc,
                         fixed_strides,
                         wheremask != NULL ? fixed_strides[nop]
                                           : fixed_strides[nop + nin],
-                        &innerloop, &innerloopdata) < 0) {
+                        &innerloop, &innerloopdata, &needs_api) < 0) {
             NpyIter_Deallocate(iter);
             return -1;
         }
@@ -1760,6 +1761,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     int i, idim, nop;
     char *ufunc_name;
     int retval = -1, subok = 1;
+    int needs_api = 0;
 
     PyArray_Descr *dtypes[NPY_MAXARGS];
 
@@ -1917,14 +1919,14 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     NPY_UF_DBG_PRINT("Finding inner loop\n");
 
 
-    retval = ufunc->type_resolution_function(ufunc, casting,
+    retval = ufunc->type_resolver(ufunc, casting,
                             op, type_tup, dtypes);
     if (retval < 0) {
         goto fail;
     }
     /* For the generalized ufunc, we get the loop right away too */
     retval = ufunc->legacy_inner_loop_selector(ufunc, dtypes,
-                                    &innerloop, &innerloopdata);
+                                    &innerloop, &innerloopdata, &needs_api);
     if (retval < 0) {
         goto fail;
     }
@@ -2269,7 +2271,7 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
 
     NPY_UF_DBG_PRINT("Finding inner loop\n");
 
-    retval = ufunc->type_resolution_function(ufunc, casting,
+    retval = ufunc->type_resolver(ufunc, casting,
                             op, type_tup, dtypes);
     if (retval < 0) {
         goto fail;
@@ -2499,122 +2501,270 @@ get_binary_op_function(PyUFuncObject *ufunc, int *otype,
     return -1;
 }
 
-/*
- * Given the output type, finds the specified binary op, and
- * returns a masked inner loop.  The ufunc must have nin==2
- * and nout==1.  The function may modify otype if the given
- * type isn't found.
- *
- * Returns 0 on success, -1 on failure.
- */
 static int
-get_masked_binary_op_function(PyUFuncObject *ufunc, PyArrayObject *arr,
-                        int otype,
-                        PyArray_Descr **out_dtype,
-                        PyUFunc_MaskedStridedInnerLoopFunc **out_innerloop,
-                        NpyAuxData **out_innerloopdata)
+reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
+                        PyArray_Descr *odtype, PyArray_Descr **out_dtype)
 {
     int i, retcode;
     PyArrayObject *op[3] = {arr, arr, NULL};
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
     char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
-    npy_intp fixed_strides[3] = {NPY_MAX_INTP, NPY_MAX_INTP, NPY_MAX_INTP};
-
-    NPY_UF_DBG_PRINT1("Getting masked binary op function for type number %d\n",
-                                otype);
+    PyObject *type_tup = NULL;
 
     *out_dtype = NULL;
 
-    /* Build a type tuple if otype is specified */
-    if (otype == NPY_NOTYPE) {
-        /* Use the type resolution function to find our loop */
-        retcode = ufunc->type_resolution_function(
-                            ufunc, NPY_SAME_KIND_CASTING,
-                            op, NULL, dtypes);
-        if (retcode == -1) {
-            return -1;
-        }
-        else if (retcode == -2) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "type resolution returned NotImplemented");
-            return -1;
-        }
-
-        /* The selected dtypes should all be equivalent */
-        if (!PyArray_EquivTypes(dtypes[0], dtypes[1]) ||
-                    !PyArray_EquivTypes(dtypes[1], dtypes[2])) {
-            for (i = 0; i < 3; ++i) {
-                Py_DECREF(dtypes[i]);
-            }
-            PyErr_Format(PyExc_RuntimeError,
-                    "could not find a type resolution appropriate for "
-                    "reduce ufunc %s", ufunc_name);
+    /*
+     * If odtype is specified, make a type tuple for the type
+     * resolution.
+     */
+    if (odtype != NULL) {
+        type_tup = Py_BuildValue("OOO", odtype, odtype, Py_None);
+        if (type_tup == NULL) {
             return -1;
         }
     }
-    else {
-        PyArray_Descr *otype_dtype = PyArray_DescrFromType(otype);
-        if (otype_dtype == NULL) {
-            return -1;
-        }
-        dtypes[0] = otype_dtype;
-        Py_INCREF(otype_dtype);
-        dtypes[1] = otype_dtype;
-        Py_INCREF(otype_dtype);
-        dtypes[2] = otype_dtype;
+
+    /* Use the type resolution function to find our loop */
+    retcode = ufunc->type_resolver(
+                        ufunc, NPY_UNSAFE_CASTING,
+                        op, type_tup, dtypes);
+    if (retcode == -1) {
+        return -1;
     }
-
-    /* Get the inner loop for the resolved dtypes */
-    if (ufunc->masked_inner_loop_selector(ufunc, dtypes,
-                            fixed_strides, NPY_MAX_INTP,
-                            out_innerloop, out_innerloopdata) < 0) {
-        Py_DECREF(dtypes[0]);
-        Py_DECREF(dtypes[1]);
-        Py_DECREF(dtypes[2]);
-
+    else if (retcode == -2) {
+        PyErr_Format(PyExc_RuntimeError,
+                "type resolution returned NotImplemented to "
+                "reduce ufunc %s", ufunc_name);
         return -1;
     }
 
-    *out_dtype = dtypes[0];
+    /*
+     * The first two type should be equivalent. Because of how
+     * reduce has historically behaved in NumPy, the return type
+     * could be different, and it is the return type on which the
+     * reduction occurs.
+     */
+    if (!PyArray_EquivTypes(dtypes[0], dtypes[1])) {
+        for (i = 0; i < 3; ++i) {
+            Py_DECREF(dtypes[i]);
+        }
+        PyErr_Format(PyExc_RuntimeError,
+                "could not find a type resolution appropriate for "
+                "reduce ufunc %s", ufunc_name);
+        return -1;
+    }
+
+    Py_DECREF(dtypes[0]);
     Py_DECREF(dtypes[1]);
-    Py_DECREF(dtypes[2]);
+    *out_dtype = dtypes[2];
 
     return 0;
 }
 
-/*
- * Either:
- *   1) Fills 'result' with the identity, and returns a reference to 'arr'.
- *   2) Copies the first values along each reduction axis into 'result',
- *      returns a view to the rest of the elements of 'arr'.
- */
-static PyArrayObject *
-initialize_reduce_result(int identity, PyArrayObject *result,
-                        npy_bool *axis_flags, PyArrayObject *arr,
-                        int skipna, npy_intp *out_skip_first_count,
-                        char *ufunc_name)
+static int
+assign_reduce_identity_zero(PyArrayObject *result, int preservena, void *data)
 {
-    if (identity == PyUFunc_One) {
-        *out_skip_first_count = 0;
-        if (PyArray_AssignOne(result, NULL, !skipna, NULL) < 0) {
-            return NULL;
-        }
-        Py_INCREF(arr);
-        return arr;
+    return PyArray_AssignZero(result, NULL, preservena, NULL);
+}
+
+static int
+assign_reduce_identity_one(PyArrayObject *result, int preservena, void *data)
+{
+    return PyArray_AssignOne(result, NULL, preservena, NULL);
+}
+
+static int
+reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
+            npy_intp *countptr, NpyIter_IterNextFunc *iternext,
+            int needs_api, npy_intp skip_first_count, void *data)
+{
+    PyArray_Descr *dtypes[3], **iter_dtypes;
+    PyUFuncObject *ufunc = (PyUFuncObject *)data;
+    char *dataptrs_copy[3];
+    npy_intp strides_copy[3];
+
+    /* The normal selected inner loop */
+    PyUFuncGenericFunction innerloop = NULL;
+    void *innerloopdata = NULL;
+
+    NPY_BEGIN_THREADS_DEF;
+
+    /* Get the inner loop */
+    iter_dtypes = NpyIter_GetDescrArray(iter);
+    dtypes[0] = iter_dtypes[0];
+    dtypes[1] = iter_dtypes[1];
+    dtypes[2] = iter_dtypes[0];
+    if (ufunc->legacy_inner_loop_selector(ufunc, dtypes,
+                            &innerloop, &innerloopdata, &needs_api) < 0) {
+        return -1;
     }
-    else if (identity == PyUFunc_Zero) {
-        *out_skip_first_count = 0;
-        if (PyArray_AssignZero(result, NULL, !skipna, NULL) < 0) {
-            return NULL;
-        }
-        Py_INCREF(arr);
-        return arr;
+
+    if (!needs_api) {
+        NPY_BEGIN_THREADS;
     }
-    else {
-        int reorderable = (identity == PyUFunc_ReorderableNone);
-        return PyArray_InitializeReduceResult(result, arr, axis_flags,
-                        reorderable, skipna, out_skip_first_count, ufunc_name);
+
+    if (skip_first_count > 0) {
+        do {
+            npy_intp count = *countptr;
+
+            /* Skip any first-visit elements */
+            if (NpyIter_IsFirstVisit(iter, 0)) {
+                if (strides[0] == 0) {
+                    --count;
+                    --skip_first_count;
+                    dataptrs[1] += strides[1];
+                }
+                else {
+                    skip_first_count -= count;
+                    count = 0;
+                }
+            }
+
+            /* Turn the two items into three for the inner loop */
+            dataptrs_copy[0] = dataptrs[0];
+            dataptrs_copy[1] = dataptrs[1];
+            dataptrs_copy[2] = dataptrs[0];
+            strides_copy[0] = strides[0];
+            strides_copy[1] = strides[1];
+            strides_copy[2] = strides[0];
+            innerloop(dataptrs_copy, &count,
+                        strides_copy, innerloopdata);
+
+            /* Jump to the faster loop when skipping is done */
+            if (skip_first_count == 0) {
+                if (iternext(iter)) {
+                    break;
+                }
+                else {
+                    goto finish_loop;
+                }
+            }
+        } while (iternext(iter));
     }
+    do {
+        /* Turn the two items into three for the inner loop */
+        dataptrs_copy[0] = dataptrs[0];
+        dataptrs_copy[1] = dataptrs[1];
+        dataptrs_copy[2] = dataptrs[0];
+        strides_copy[0] = strides[0];
+        strides_copy[1] = strides[1];
+        strides_copy[2] = strides[0];
+        innerloop(dataptrs_copy, countptr,
+                    strides_copy, innerloopdata);
+    } while (iternext(iter));
+
+finish_loop:
+    if (!needs_api) {
+        NPY_END_THREADS;
+    }
+
+    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+}
+
+static int
+masked_reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
+            npy_intp *countptr, NpyIter_IterNextFunc *iternext,
+            int needs_api, npy_intp skip_first_count, void *data)
+{
+    PyArray_Descr *dtypes[3], **iter_dtypes;
+    npy_intp fixed_strides[3], fixed_mask_stride;
+    PyUFuncObject *ufunc = (PyUFuncObject *)data;
+    char *dataptrs_copy[3];
+    npy_intp strides_copy[3];
+
+    /* The masked selected inner loop */
+    PyUFunc_MaskedStridedInnerLoopFunc *innerloop = NULL;
+    NpyAuxData *innerloopdata = NULL;
+
+    NPY_BEGIN_THREADS_DEF;
+
+    /* Get the inner loop */
+    NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+    fixed_mask_stride = fixed_strides[2];
+    fixed_strides[2] = fixed_strides[0];
+    iter_dtypes = NpyIter_GetDescrArray(iter);
+    dtypes[0] = iter_dtypes[0];
+    dtypes[1] = iter_dtypes[1];
+    dtypes[2] = iter_dtypes[0];
+    if (ufunc->masked_inner_loop_selector(ufunc, dtypes,
+                            fixed_strides, fixed_mask_stride,
+                            &innerloop, &innerloopdata, &needs_api) < 0) {
+        return -1;
+    }
+
+    if (!needs_api) {
+        NPY_BEGIN_THREADS;
+    }
+
+    if (skip_first_count > 0) {
+        do {
+            npy_intp count = *countptr;
+
+            /* Skip any first-visit elements */
+            if (NpyIter_IsFirstVisit(iter, 0)) {
+                if (strides[0] == 0) {
+                    --count;
+                    --skip_first_count;
+                    dataptrs[1] += strides[1];
+                    dataptrs[2] += strides[2];
+                }
+                else {
+                    skip_first_count -= count;
+                    count = 0;
+                }
+            }
+
+            /* Turn the two items into three for the inner loop */
+            dataptrs_copy[0] = dataptrs[0];
+            dataptrs_copy[1] = dataptrs[1];
+            dataptrs_copy[2] = dataptrs[0];
+            strides_copy[0] = strides[0];
+            strides_copy[1] = strides[1];
+            strides_copy[2] = strides[0];
+            /*
+             * If skipna=True, this masks based on the mask in 'arr',
+             * otherwise it masks based on the mask in 'result'
+             */
+            innerloop(dataptrs_copy, strides_copy,
+                        dataptrs[2], strides[2],
+                        count, innerloopdata);
+
+            /* Jump to the faster loop when skipping is done */
+            if (skip_first_count == 0) {
+                if (iternext(iter)) {
+                    break;
+                }
+                else {
+                    goto finish_loop;
+                }
+            }
+        } while (iternext(iter));
+    }
+    do {
+        /* Turn the two items into three for the inner loop */
+        dataptrs_copy[0] = dataptrs[0];
+        dataptrs_copy[1] = dataptrs[1];
+        dataptrs_copy[2] = dataptrs[0];
+        strides_copy[0] = strides[0];
+        strides_copy[1] = strides[1];
+        strides_copy[2] = strides[0];
+        /*
+         * If skipna=True, this masks based on the mask in 'arr',
+         * otherwise it masks based on the mask in 'result'
+         */
+        innerloop(dataptrs_copy, strides_copy,
+                    dataptrs[2], strides[2],
+                    *countptr, innerloopdata);
+    } while (iternext(iter));
+
+finish_loop:
+    if (!needs_api) {
+        NPY_END_THREADS;
+    }
+
+    NPY_AUXDATA_FREE(innerloopdata);
+
+    return (needs_api && PyErr_Occurred()) ? -1 : 0;
 }
 
 /*
@@ -2636,42 +2786,19 @@ initialize_reduce_result(int identity, PyArrayObject *result,
  */
 static PyArrayObject *
 PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
-        int naxes, int *axes, int otype, int skipna, int keepdims)
+        int naxes, int *axes, PyArray_Descr *odtype, int skipna, int keepdims)
 {
-    int iaxes, ndim, retcode;
-    PyArray_Descr *otype_dtype = NULL;
+    int iaxes, reorderable, ndim;
     npy_bool axis_flags[NPY_MAXDIMS];
-    PyArrayObject *arr_view = NULL, *result = NULL;
-    npy_intp skip_first_count = 0;
-
-    /* The normal selected inner loop */
-    PyUFuncGenericFunction innerloop = NULL;
-    void *innerloopdata = NULL;
-
-    /* The masked selected inner loop */
-    int use_maskna = 0;
-    PyUFunc_MaskedStridedInnerLoopFunc *maskedinnerloop = NULL;
-    NpyAuxData *maskedinnerloopdata = NULL;
-
+    PyArray_Descr *dtype;
+    PyArrayObject *result;
+    PyArray_AssignReduceIdentityFunc *assign_identity = NULL;
     char *ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
-
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
     PyObject *errobj = NULL;
 
-    /* Iterator parameters */
-    NpyIter *iter = NULL;
-    PyArrayObject *op[3];
-    PyArray_Descr *op_dtypes[2] = {NULL, NULL};
-    npy_uint32 flags, op_flags[2];
-
-    NPY_BEGIN_THREADS_DEF;
-
     ndim = PyArray_NDIM(arr);
-
-    if (PyUFunc_GetPyValues("reduce", &buffersize, &errormask, &errobj) < 0) {
-        return NULL;
-    }
 
     /* Create an array of flags for reduction */
     memset(axis_flags, 0, ndim);
@@ -2685,379 +2812,50 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         axis_flags[axis] = 1;
     }
 
-    use_maskna = PyArray_HASMASKNA(arr);
-
-    /* Detect whether to ignore the MASKNA */
-    if (use_maskna && !skipna && out != NULL && !PyArray_HASMASKNA(out)) {
-        if (PyArray_ContainsNA(arr)) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Cannot assign NA value to an array which "
-                    "does not support NAs");
+    switch (ufunc->identity) {
+        case PyUFunc_Zero:
+            assign_identity = &assign_reduce_identity_zero;
+            reorderable = 1;
+            break;
+        case PyUFunc_One:
+            assign_identity = &assign_reduce_identity_one;
+            reorderable = 1;
+            break;
+        case PyUFunc_None:
+            reorderable = 0;
+            break;
+        case PyUFunc_ReorderableNone:
+            reorderable = 1;
+            break;
+        default:
+            PyErr_Format(PyExc_ValueError,
+                    "ufunc %s has an invalid identity for reduction",
+                    ufunc_name);
             return NULL;
-        }
-        else {
-            use_maskna = 0;
-        }
     }
 
-    /* Get the appropriate ufunc inner loop */
-    if (use_maskna) {
-        retcode = get_masked_binary_op_function(ufunc, arr, otype,
-                        &otype_dtype, &maskedinnerloop, &maskedinnerloopdata);
-    }
-    else {
-        int otype_final = otype;
-        retcode = get_binary_op_function(ufunc, &otype_final,
-                                &innerloop, &innerloopdata);
-
-        NPY_UF_DBG_PRINT2("Loop retcode %d, otype final %d\n",
-                                                retcode, otype_final);
-        /*
-         * Set up the output data type, using the input's exact
-         * data type if the type number didn't change to preserve
-         * metadata
-         */
-        if (PyArray_DESCR(arr)->type_num == otype_final) {
-            if (PyArray_ISNBO(PyArray_DESCR(arr)->byteorder)) {
-                otype_dtype = PyArray_DESCR(arr);
-                Py_INCREF(otype_dtype);
-            }
-            else {
-                otype_dtype = PyArray_DescrNewByteorder(PyArray_DESCR(arr),
-                                                        NPY_NATIVE);
-            }
-        }
-        else {
-            otype_dtype = PyArray_DescrFromType(otype_final);
-        }
-        if (otype_dtype == NULL) {
-            return NULL;
-        }
-    }
-    if (retcode < 0) {
-        //PyArray_Descr *dtype = PyArray_DescrFromType(otype);
-        //PyErr_Format(PyExc_ValueError,
-        //             "could not find a matching type for %s.reduce, "
-        //             "requested type has type code '%c'",
-        //                    ufunc_name, dtype ? dtype->type : '-');
-        //Py_XDECREF(dtype);
+    if (PyUFunc_GetPyValues("reduce", &buffersize, &errormask, &errobj) < 0) {
         return NULL;
     }
 
-    /* If the loop wants the arrays, provide them */
-    if (_does_loop_use_arrays(innerloopdata)) {
-        innerloopdata = (void*)op;
-    }
-
-    /* Allocate an output or conform 'out' to 'ufunc' */
-    Py_XINCREF(otype_dtype);
-    result = PyArray_CreateReduceResult(arr, out,
-                            otype_dtype, axis_flags, !skipna && use_maskna,
-                            keepdims, ufunc_name);
-    if (result == NULL) {
+    /* Get the reduction dtype */
+    if (reduce_type_resolver(ufunc, arr, odtype, &dtype) < 0) {
+        Py_XDECREF(errobj);
         return NULL;
     }
 
-    /* Prepare the NA mask if there is one */
-    if (use_maskna) {
-        /*
-         * Do the reduction on the NA mask before the data. This way
-         * we can avoid modifying the outputs which end up masked, obeying
-         * the required NA masking semantics.
-         */
-        if (!skipna) {
-            if (PyArray_ReduceMaskNAArray(result, arr) < 0) {
-                goto fail;
-            }
+    result = PyArray_ReduceWrapper(arr, out, dtype, dtype,
+                                NPY_UNSAFE_CASTING,
+                                axis_flags, reorderable,
+                                skipna, keepdims,
+                                assign_identity,
+                                reduce_loop,
+                                masked_reduce_loop,
+                                ufunc, buffersize, ufunc_name);
 
-            /* Short circuit any calculation if the result is 0-dim NA */
-            if (PyArray_SIZE(result) == 1 &&
-                    !NpyMaskValue_IsExposed(
-                                (npy_mask)*PyArray_MASKNA_DATA(result))) {
-                goto finish;
-            }
-        }
-        else {
-            /* Special case a one-value input */
-            if (PyArray_SIZE(arr) == 1) {
-                if (NpyMaskValue_IsExposed(
-                                (npy_mask)*PyArray_MASKNA_DATA(arr))) {
-                    /* Copy the element into the result */
-                    if (PyArray_CopyInto(result, arr) < 0) {
-                        goto finish;
-                    }
-                }
-                else {
-                    PyErr_Format(PyExc_ValueError,
-                            "fully NA array with skipna=True to "
-                            "%s.reduce which has no identity", ufunc_name);
-                    goto fail;
-                }
-            }
-
-            /*
-             * If the result has a mask (i.e. from the out= parameter),
-             * Set it to all exposed.
-             */
-            if (PyArray_HASMASKNA(result)) {
-                if (PyArray_AssignMaskNA(result, NULL, 1) < 0) {
-                    goto fail;
-                }
-            }
-        }
-    }
-
-    /*
-     * Initialize 'result' to the identity or initial elements
-     * copied from 'arr', and create a view of 'arr' containing
-     * all the elements to reduce into 'result'.
-     */
-    arr_view = initialize_reduce_result(ufunc->identity, result,
-                                        axis_flags, arr, skipna,
-                                        &skip_first_count, ufunc_name);
-    if (arr_view == NULL) {
-        goto fail;
-    }
-    if (PyArray_SIZE(arr_view) == 0) {
-        Py_DECREF(arr_view);
-        arr_view = NULL;
-        goto finish;
-    }
-
-    /* Now we can do a loop applying the ufunc in a straightforward manner */
-    op[0] = result;
-    op[1] = arr_view;
-    /* op is length 3 in case the inner loop wanted these as its data */
-    op[2] = result;
-    op_dtypes[0] = otype_dtype;
-    op_dtypes[1] = otype_dtype;
-
-    flags = NPY_ITER_BUFFERED |
-            NPY_ITER_EXTERNAL_LOOP |
-            NPY_ITER_GROWINNER |
-            NPY_ITER_DONT_NEGATE_STRIDES |
-            NPY_ITER_ZEROSIZE_OK |
-            NPY_ITER_REDUCE_OK |
-            NPY_ITER_REFS_OK;
-    op_flags[0] = NPY_ITER_READWRITE |
-                  NPY_ITER_ALIGNED |
-                  NPY_ITER_NO_SUBTYPE;
-    op_flags[1] = NPY_ITER_READONLY |
-                  NPY_ITER_ALIGNED;
-
-    /* Add mask-related flags */
-    if (use_maskna) {
-        if (skipna) {
-            /* The output's mask has been set to all exposed already */
-            op_flags[0] |= NPY_ITER_IGNORE_MASKNA;
-            /* Need the input's mask to determine what to skip */
-            op_flags[1] |= NPY_ITER_USE_MASKNA;
-        }
-        else {
-            /* Iterate over the output's mask */
-            op_flags[0] |= NPY_ITER_USE_MASKNA;
-            /* The input's mask is already incorporated in the output's mask */
-            op_flags[1] |= NPY_ITER_IGNORE_MASKNA;
-        }
-    }
-    else {
-        /*
-         * If 'out' had no mask, and 'arr' did, we checked that 'arr'
-         * contains no NA values and can ignore the masks.
-         */
-        op_flags[0] |= NPY_ITER_IGNORE_MASKNA;
-        op_flags[1] |= NPY_ITER_IGNORE_MASKNA;
-    }
-
-    iter = NpyIter_MultiNew(2, op, flags,
-                               NPY_KEEPORDER, NPY_UNSAFE_CASTING,
-                               op_flags,
-                               op_dtypes);
-    if (iter == NULL) {
-        goto fail;
-    }
-
-    if (NpyIter_GetIterSize(iter) != 0) {
-        int needs_api;
-        NpyIter_IterNextFunc *iternext;
-        char **dataptr;
-        npy_intp *strides;
-        npy_intp *countptr;
-
-        char *dataptr_copy[3];
-        npy_intp strides_copy[3];
-
-        iternext = NpyIter_GetIterNext(iter, NULL);
-        if (iternext == NULL) {
-            goto fail;
-        }
-        dataptr = NpyIter_GetDataPtrArray(iter);
-        strides = NpyIter_GetInnerStrideArray(iter);
-        countptr = NpyIter_GetInnerLoopSizePtr(iter);
-
-        needs_api = NpyIter_IterationNeedsAPI(iter) ||
-                    PyDataType_REFCHK(otype_dtype);
-
-        if (!needs_api) {
-            NPY_BEGIN_THREADS;
-        }
-
-        /* Straightforward reduction */
-        if (!use_maskna) {
-            if (skip_first_count > 0) {
-                do {
-                    npy_intp count = *countptr;
-
-                    /* Skip any first-visit elements */
-                    if (NpyIter_IsFirstVisit(iter, 0)) {
-                        if (strides[0] == 0) {
-                            --count;
-                            --skip_first_count;
-                            dataptr[1] += strides[1];
-                        }
-                        else {
-                            skip_first_count -= count;
-                            count = 0;
-                        }
-                    }
-
-                    /* Turn the two items into three for the inner loop */
-                    dataptr_copy[0] = dataptr[0];
-                    dataptr_copy[1] = dataptr[1];
-                    dataptr_copy[2] = dataptr[0];
-                    strides_copy[0] = strides[0];
-                    strides_copy[1] = strides[1];
-                    strides_copy[2] = strides[0];
-                    innerloop(dataptr_copy, &count,
-                                strides_copy, innerloopdata);
-
-                    /* Jump to the faster loop when skipping is done */
-                    if (skip_first_count == 0) {
-                        if (iternext(iter)) {
-                            break;
-                        }
-                        else {
-                            goto finish_loop;
-                        }
-                    }
-                } while (iternext(iter));
-            }
-            do {
-                /* Turn the two items into three for the inner loop */
-                dataptr_copy[0] = dataptr[0];
-                dataptr_copy[1] = dataptr[1];
-                dataptr_copy[2] = dataptr[0];
-                strides_copy[0] = strides[0];
-                strides_copy[1] = strides[1];
-                strides_copy[2] = strides[0];
-                innerloop(dataptr_copy, countptr,
-                            strides_copy, innerloopdata);
-            } while (iternext(iter));
-        }
-        /* Masked reduction */
-        else {
-            if (skip_first_count > 0) {
-                do {
-                    npy_intp count = *countptr;
-
-                    /* Skip any first-visit elements */
-                    if (NpyIter_IsFirstVisit(iter, 0)) {
-                        if (strides[0] == 0) {
-                            --count;
-                            --skip_first_count;
-                            dataptr[1] += strides[1];
-                            dataptr[2] += strides[2];
-                        }
-                        else {
-                            skip_first_count -= count;
-                            count = 0;
-                        }
-                    }
-
-                    /* Turn the two items into three for the inner loop */
-                    dataptr_copy[0] = dataptr[0];
-                    dataptr_copy[1] = dataptr[1];
-                    dataptr_copy[2] = dataptr[0];
-                    strides_copy[0] = strides[0];
-                    strides_copy[1] = strides[1];
-                    strides_copy[2] = strides[0];
-                    /*
-                     * If skipna=True, this masks based on the mask in 'arr',
-                     * otherwise it masks based on the mask in 'result'
-                     */
-                    maskedinnerloop(dataptr_copy, strides_copy,
-                                dataptr[2], strides[2],
-                                count, maskedinnerloopdata);
-
-                    /* Jump to the faster loop when skipping is done */
-                    if (skip_first_count == 0) {
-                        if (iternext(iter)) {
-                            break;
-                        }
-                        else {
-                            goto finish_loop;
-                        }
-                    }
-                } while (iternext(iter));
-            }
-            do {
-                /* Turn the two items into three for the inner loop */
-                dataptr_copy[0] = dataptr[0];
-                dataptr_copy[1] = dataptr[1];
-                dataptr_copy[2] = dataptr[0];
-                strides_copy[0] = strides[0];
-                strides_copy[1] = strides[1];
-                strides_copy[2] = strides[0];
-                /*
-                 * If skipna=True, this masks based on the mask in 'arr',
-                 * otherwise it masks based on the mask in 'result'
-                 */
-                maskedinnerloop(dataptr_copy, strides_copy,
-                            dataptr[2], strides[2],
-                            *countptr, maskedinnerloopdata);
-            } while (iternext(iter));
-        }
-finish_loop:
-        if (!needs_api) {
-            NPY_END_THREADS;
-        }
-
-        if (needs_api && PyErr_Occurred()) {
-            goto fail;
-        }
-    }
-
-finish:
-
-    /* Strip out the extra 'one' dimensions in the result */
-    if (out == NULL) {
-        if (!keepdims) {
-            PyArray_RemoveAxesInPlace(result, axis_flags);
-        }
-    }
-    else {
-        Py_DECREF(result);
-        result = out;
-        Py_INCREF(result);
-    }
-
-    if (iter != NULL) {
-        NpyIter_Deallocate(iter);
-    }
-    Py_XDECREF(arr_view);
-    Py_XDECREF(otype_dtype);
-    NPY_AUXDATA_FREE(maskedinnerloopdata);
+    Py_DECREF(dtype);
+    Py_XDECREF(errobj);
     return result;
-
-fail:
-    if (iter != NULL) {
-        NpyIter_Deallocate(iter);
-    }
-    Py_XDECREF(result);
-    Py_XDECREF(arr_view);
-    Py_XDECREF(otype_dtype);
-    NPY_AUXDATA_FREE(maskedinnerloopdata);
-    return NULL;
 }
 
 
@@ -4055,7 +3853,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     switch(operation) {
     case UFUNC_REDUCE:
         ret = PyUFunc_Reduce(ufunc, mp, out, naxes, axes,
-                                          otype->type_num, skipna, keepdims);
+                                          otype, skipna, keepdims);
         break;
     case UFUNC_ACCUMULATE:
         if (naxes != 1) {
@@ -4537,7 +4335,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     ufunc->userloops=NULL;
 
     /* Type resolution and inner loop selection functions */
-    ufunc->type_resolution_function = &PyUFunc_DefaultTypeResolution;
+    ufunc->type_resolver = &PyUFunc_DefaultTypeResolver;
     ufunc->legacy_inner_loop_selector = &PyUFunc_DefaultLegacyInnerLoopSelector;
     ufunc->inner_loop_selector = NULL;
     ufunc->masked_inner_loop_selector = &PyUFunc_DefaultMaskedInnerLoopSelector;
@@ -4586,7 +4384,7 @@ PyUFunc_SetUsesArraysAsData(void **data, size_t i)
  * Return 1 if the given data pointer for the loop specifies that it needs the
  * arrays as the data pointer.
  *
- * NOTE: This is easier to specify with the type_resolution_function
+ * NOTE: This is easier to specify with the type_resolver
  *       in the ufunc object.
  *
  * TODO: Remove this, since this is already basically broken

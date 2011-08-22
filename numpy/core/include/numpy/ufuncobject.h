@@ -38,7 +38,7 @@ typedef void (PyUFunc_MaskedStridedInnerLoopFunc)(
                 npy_intp count,
                 NpyAuxData *innerloopdata);
 
-/* Forward declaration for the type resolution function */
+/* Forward declaration for the type resolver and loop selector typedefs */
 struct _tagPyUFuncObject;
 
 /*
@@ -99,25 +99,31 @@ typedef int (PyUFunc_TypeResolutionFunc)(
  *                    loop for the given type.
  * out_innerloopdata: Should be populated with the void* data to
  *                    be passed into the out_innerloop function.
+ * out_needs_api:     If the inner loop needs to use the Python API,
+ *                    should set the to 1, otherwise should leave
+ *                    this untouched.
  */
 typedef int (PyUFunc_LegacyInnerLoopSelectionFunc)(
                             struct _tagPyUFuncObject *ufunc,
                             PyArray_Descr **dtypes,
                             PyUFuncGenericFunction *out_innerloop,
-                            void **out_innerloopdata);
+                            void **out_innerloopdata,
+                            int *out_needs_api);
 typedef int (PyUFunc_InnerLoopSelectionFunc)(
                             struct _tagPyUFuncObject *ufunc,
                             PyArray_Descr **dtypes,
                             npy_intp *fixed_strides,
                             PyUFunc_StridedInnerLoopFunc **out_innerloop,
-                            NpyAuxData **out_innerloopdata);
+                            NpyAuxData **out_innerloopdata,
+                            int *out_needs_api);
 typedef int (PyUFunc_MaskedInnerLoopSelectionFunc)(
                             struct _tagPyUFuncObject *ufunc,
                             PyArray_Descr **dtypes,
                             npy_intp *fixed_strides,
                             npy_intp fixed_mask_stride,
                             PyUFunc_MaskedStridedInnerLoopFunc **out_innerloop,
-                            NpyAuxData **out_innerloopdata);
+                            NpyAuxData **out_innerloopdata,
+                            int *out_needs_api);
 
 typedef struct _tagPyUFuncObject {
         PyObject_HEAD
@@ -185,7 +191,7 @@ typedef struct _tagPyUFuncObject {
          * A function which resolves the types and fills an array
          * with the dtypes for the inputs and outputs.
          */
-        PyUFunc_TypeResolutionFunc *type_resolution_function;
+        PyUFunc_TypeResolutionFunc *type_resolver;
         /*
          * A function which returns an inner loop written for
          * NumPy 1.6 and earlier ufuncs. This is for backwards

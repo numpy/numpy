@@ -2,63 +2,63 @@
 #define _NPY_PRIVATE__UFUNC_TYPE_RESOLUTION_H_
 
 NPY_NO_EXPORT int
-PyUFunc_SimpleBinaryComparisonTypeResolution(PyUFuncObject *ufunc,
+PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_SimpleUnaryOperationTypeResolution(PyUFuncObject *ufunc,
+PyUFunc_SimpleUnaryOperationTypeResolver(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_OnesLikeTypeResolution(PyUFuncObject *ufunc,
+PyUFunc_OnesLikeTypeResolver(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_SimpleBinaryOperationTypeResolution(PyUFuncObject *ufunc,
+PyUFunc_SimpleBinaryOperationTypeResolver(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_AbsoluteTypeResolution(PyUFuncObject *ufunc,
+PyUFunc_AbsoluteTypeResolver(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_AdditionTypeResolution(PyUFuncObject *ufunc,
+PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_SubtractionTypeResolution(PyUFuncObject *ufunc,
+PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_MultiplicationTypeResolution(PyUFuncObject *ufunc,
+PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
                                 PyArray_Descr **out_dtypes);
 
 NPY_NO_EXPORT int
-PyUFunc_DivisionTypeResolution(PyUFuncObject *ufunc,
+PyUFunc_DivisionTypeResolver(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
@@ -71,7 +71,7 @@ PyUFunc_DivisionTypeResolution(PyUFuncObject *ufunc,
  * references in out_dtype.  This function does not do its own clean-up.
  */
 NPY_NO_EXPORT int
-linear_search_type_resolution(PyUFuncObject *self,
+linear_search_type_resolver(PyUFuncObject *self,
                         PyArrayObject **op,
                         NPY_CASTING input_casting,
                         NPY_CASTING output_casting,
@@ -85,7 +85,7 @@ linear_search_type_resolution(PyUFuncObject *self,
  * references in out_dtype.  This function does not do its own clean-up.
  */
 NPY_NO_EXPORT int
-type_tuple_type_resolution(PyUFuncObject *self,
+type_tuple_type_resolver(PyUFuncObject *self,
                         PyObject *type_tup,
                         PyArrayObject **op,
                         NPY_CASTING casting,
@@ -96,7 +96,8 @@ NPY_NO_EXPORT int
 PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
                                 PyArray_Descr **dtypes,
                                 PyUFuncGenericFunction *out_innerloop,
-                                void **out_innerloopdata);
+                                void **out_innerloopdata,
+                                int *out_needs_api);
 
 NPY_NO_EXPORT int
 PyUFunc_DefaultMaskedInnerLoopSelector(PyUFuncObject *ufunc,
@@ -104,7 +105,8 @@ PyUFunc_DefaultMaskedInnerLoopSelector(PyUFuncObject *ufunc,
                             npy_intp *NPY_UNUSED(fixed_strides),
                             npy_intp NPY_UNUSED(fixed_mask_stride),
                             PyUFunc_MaskedStridedInnerLoopFunc **out_innerloop,
-                            NpyAuxData **out_innerloopdata);
+                            NpyAuxData **out_innerloopdata,
+                            int *out_needs_api);
 
 
 #endif
