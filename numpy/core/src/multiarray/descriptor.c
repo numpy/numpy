@@ -120,6 +120,7 @@ static int
 _check_for_commastring(char *type, Py_ssize_t len)
 {
     Py_ssize_t i;
+    int sqbracket;
 
     /* Check for ints at start of string */
     if ((type[0] >= '0'
@@ -140,10 +141,21 @@ _check_for_commastring(char *type, Py_ssize_t len)
                 && type[2] == ')'))) {
         return 1;
     }
-    /* Check for presence of commas */
+    /* Check for presence of commas outside square [] brackets */
+    sqbracket = 0;
     for (i = 1; i < len; i++) {
-        if (type[i] == ',') {
-            return 1;
+        switch (type[i]) {
+            case ',':
+                if (sqbracket == 0) {
+                    return 1;
+                }
+                break;
+            case '[':
+                ++sqbracket;
+                break;
+            case ']':
+                --sqbracket;
+                break;
         }
     }
     return 0;
@@ -582,6 +594,9 @@ _convert_from_list(PyObject *obj, int align)
  * found in the _internal.py file patterned after that one -- the approach is
  * to try to convert to a list (with tuples if any repeat information is
  * present) and then call the _convert_from_list)
+ *
+ * TODO: Calling Python from C like this in critical-path code is not
+ *       a good idea. This should all be converted to C code.
  */
 static PyArray_Descr *
 _convert_from_commastring(PyObject *obj, int align)

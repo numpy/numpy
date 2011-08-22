@@ -247,7 +247,7 @@ array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
         }
         return ret;
     }
-    else if (maskna == 0 && PyArray_HASMASKNA(ret)) {
+    else if (maskna == 0 && PyArray_HASMASKNA((PyArrayObject *)ret)) {
         PyErr_SetString(PyExc_ValueError,
                     "Cannot take a view of an NA-masked array "
                     "with maskna=False");
