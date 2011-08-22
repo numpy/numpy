@@ -102,6 +102,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
 NPY_NO_EXPORT int
 PyUFunc_DefaultMaskedInnerLoopSelector(PyUFuncObject *ufunc,
                             PyArray_Descr **dtypes,
+                            PyArray_Descr *mask_dtypes,
                             npy_intp *NPY_UNUSED(fixed_strides),
                             npy_intp NPY_UNUSED(fixed_mask_stride),
                             PyUFunc_MaskedStridedInnerLoopFunc **out_innerloop,

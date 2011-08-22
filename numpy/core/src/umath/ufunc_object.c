@@ -1640,6 +1640,7 @@ execute_ufunc_masked_loop(PyUFuncObject *ufunc,
         PyUFunc_MaskedStridedInnerLoopFunc *innerloop;
         NpyAuxData *innerloopdata;
         npy_intp fixed_strides[2*NPY_MAXARGS];
+        PyArray_Descr **iter_dtypes;
 
         /* Validate that the prepare_ufunc_output didn't mess with pointers */
         for (i = nin; i < nop; ++i) {
@@ -1657,7 +1658,10 @@ execute_ufunc_masked_loop(PyUFuncObject *ufunc,
          * based on the fixed strides.
          */
         NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+        iter_dtypes = NpyIter_GetDescrArray(iter);
         if (ufunc->masked_inner_loop_selector(ufunc, dtypes,
+                        wheremask != NULL ? iter_dtypes[nop]
+                                          : iter_dtypes[nop + nin],
                         fixed_strides,
                         wheremask != NULL ? fixed_strides[nop]
                                           : fixed_strides[nop + nin],
@@ -2686,7 +2690,7 @@ masked_reduce_loop(NpyIter *iter, char **dataptrs, npy_intp *strides,
     dtypes[0] = iter_dtypes[0];
     dtypes[1] = iter_dtypes[1];
     dtypes[2] = iter_dtypes[0];
-    if (ufunc->masked_inner_loop_selector(ufunc, dtypes,
+    if (ufunc->masked_inner_loop_selector(ufunc, dtypes, iter_dtypes[2],
                             fixed_strides, fixed_mask_stride,
                             &innerloop, &innerloopdata, &needs_api) < 0) {
         return -1;
