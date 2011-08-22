@@ -150,7 +150,7 @@ the module.
             NULL
         };
 
-        PyObject *PyInit_npspam(void)
+        PyObject *PyInit_spam(void)
         {
             PyObject *m;
             m = PyModule_Create(&moduledef);
@@ -325,7 +325,7 @@ the primary thing that must be changed to create your own ufunc.
         #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
-            "npspam",
+            "npufunc",
             NULL,
             -1,
             LogitMethods,
@@ -335,7 +335,7 @@ the primary thing that must be changed to create your own ufunc.
             NULL
         };
 
-        PyObject *PyInit_npspam(void)
+        PyObject *PyInit_npufunc(void)
         {
             PyObject *m, *logit, *d;
             m = PyModule_Create(&moduledef);
@@ -346,7 +346,7 @@ the primary thing that must be changed to create your own ufunc.
             import_array();
             import_umath();
 
-            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 1, 1,
+            logit = PyUFunc_FromFuncAndData(funcs, data, types, 1, 1, 1,
                                             PyUFunc_None, "logit",
                                             "logit_docstring", 0);
 
@@ -358,12 +358,12 @@ the primary thing that must be changed to create your own ufunc.
             return m;
         }
         #else
-        PyMODINIT_FUNC initnpspam(void)
+        PyMODINIT_FUNC initnpufunc(void)
         {
             PyObject *m, *logit, *d;
 
 
-            m = Py_InitModule("npspam", LogitMethods);
+            m = Py_InitModule("npufunc", LogitMethods);
             if (m == NULL) {
                 return;
             }
@@ -371,7 +371,7 @@ the primary thing that must be changed to create your own ufunc.
             import_array();
             import_umath();
 
-            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 1, 1,
+            logit = PyUFunc_FromFuncAndData(funcs, data, types, 1, 1, 1,
                                             PyUFunc_None, "logit",
                                             "logit_docstring", 0);
 
@@ -420,10 +420,10 @@ or installed to site-packages via python setup.py install.
             import numpy
             from numpy.distutils.misc_util import Configuration
 
-            config = Configuration('npspam_directory',
+            config = Configuration('npufunc_directory',
                                    parent_package,
                                    top_path)
-            config.add_extension('npspam', ['single_type_logit.c'])
+            config.add_extension('npufunc', ['single_type_logit.c'])
 
             return config
 
@@ -434,11 +434,11 @@ or installed to site-packages via python setup.py install.
 After the above has been installed, it can be imported and used as follows.
 
 >>> import numpy as np
->>> import npspam
->>> npspam.logit(0.5)
+>>> import npufunc
+>>> npufunc.logit(0.5)
 0.0
 >>> a = np.linspace(0,1,5)
->>> npspam.logit(a)
+>>> npufunc.logit(a)
 array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
 
 
@@ -604,7 +604,7 @@ the primary thing that must be changed to create your own ufunc.
         #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
-            "npspam",
+            "npufunc",
             NULL,
             -1,
             LogitMethods,
@@ -614,7 +614,7 @@ the primary thing that must be changed to create your own ufunc.
             NULL
         };
 
-        PyObject *PyInit_npspam(void)
+        PyObject *PyInit_npufunc(void)
         {
             PyObject *m, *logit, *d;
             m = PyModule_Create(&moduledef);
@@ -625,7 +625,7 @@ the primary thing that must be changed to create your own ufunc.
             import_array();
             import_umath();
 
-            logit = PyUFunc_FromFuncAndData(funcs,data, types, 4, 1, 1,
+            logit = PyUFunc_FromFuncAndData(funcs, data, types, 4, 1, 1,
                                             PyUFunc_None, "logit",
                                             "logit_docstring", 0);
 
@@ -637,12 +637,12 @@ the primary thing that must be changed to create your own ufunc.
             return m;
         }
         #else
-        PyMODINIT_FUNC initnpspam(void)
+        PyMODINIT_FUNC initnpufunc(void)
         {
             PyObject *m, *logit, *d;
 
 
-            m = Py_InitModule("npspam", LogitMethods);
+            m = Py_InitModule("npufunc", LogitMethods);
             if (m == NULL) {
                 return;
             }
@@ -650,7 +650,7 @@ the primary thing that must be changed to create your own ufunc.
             import_array();
             import_umath();
 
-            logit = PyUFunc_FromFuncAndData(funcs,data, types, 4, 1, 1,
+            logit = PyUFunc_FromFuncAndData(funcs, data, types, 4, 1, 1,
                                             PyUFunc_None, "logit",
                                             "logit_docstring", 0);
 
@@ -703,10 +703,10 @@ or installed to site-packages via python setup.py install.
             #Necessary for the half-float d-type.
             info = get_info('npymath')
 
-            config = Configuration('npspam_directory',
+            config = Configuration('npufunc_directory',
                                     parent_package,
                                     top_path)
-            config.add_extension('npspam',
+            config.add_extension('npufunc',
                                     ['multi_type_logit.c'],
                                     extra_info=info)
 
@@ -719,11 +719,11 @@ or installed to site-packages via python setup.py install.
 After the above has been installed, it can be imported and used as follows.
 
 >>> import numpy as np
->>> import npspam
->>> npspam.logit(0.5)
+>>> import npufunc
+>>> npufunc.logit(0.5)
 0.0
 >>> a = np.linspace(0,1,5)
->>> npspam.logit(a)
+>>> npufunc.logit(a)
 array([       -inf, -1.09861229,  0.        ,  1.09861229,         inf])
 
 
@@ -743,13 +743,13 @@ the line
 
     .. code-block:: python
 
-        config.add_extension('npspam', ['single_type_logit.c'])
+        config.add_extension('npufunc', ['single_type_logit.c'])
 
 is replaced with
 
     .. code-block:: python
 
-        config.add_extension('npspam', ['multi_arg_logit.c'])
+        config.add_extension('npufunc', ['multi_arg_logit.c'])
 
 The C file is given below. The ufunc generated takes two arguments A
 and B. It returns a tuple whose first element is A*B and whose second
@@ -827,7 +827,7 @@ as well as all other properties of a ufunc.
         #if PY_VERSION_HEX >= 0x03000000
         static struct PyModuleDef moduledef = {
             PyModuleDef_HEAD_INIT,
-            "npspam",
+            "npufunc",
             NULL,
             -1,
             LogitMethods,
@@ -837,7 +837,7 @@ as well as all other properties of a ufunc.
             NULL
         };
 
-        PyObject *PyInit_npspam(void)
+        PyObject *PyInit_npufunc(void)
         {
             PyObject *m, *logit, *d;
             m = PyModule_Create(&moduledef);
@@ -848,7 +848,7 @@ as well as all other properties of a ufunc.
             import_array();
             import_umath();
 
-            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 2, 2,
+            logit = PyUFunc_FromFuncAndData(funcs, data, types, 1, 2, 2,
                                             PyUFunc_None, "logit",
                                             "logit_docstring", 0);
 
@@ -860,12 +860,12 @@ as well as all other properties of a ufunc.
             return m;
         }
         #else
-        PyMODINIT_FUNC initnpspam(void)
+        PyMODINIT_FUNC initnpufunc(void)
         {
             PyObject *m, *logit, *d;
 
 
-            m = Py_InitModule("npspam", LogitMethods);
+            m = Py_InitModule("npufunc", LogitMethods);
             if (m == NULL) {
                 return;
             }
@@ -873,7 +873,7 @@ as well as all other properties of a ufunc.
             import_array();
             import_umath();
 
-            logit = PyUFunc_FromFuncAndData(funcs,data, types, 1, 2, 2,
+            logit = PyUFunc_FromFuncAndData(funcs, data, types, 1, 2, 2,
                                             PyUFunc_None, "logit",
                                             "logit_docstring", 0);
 
