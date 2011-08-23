@@ -2638,7 +2638,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
      * to be exposed, then proceed without worrying about the mask.
      */
     else if (PyArray_HASMASKNA(dst)) {
-        if (PyArray_AssignMaskNA(dst, NULL, 1) < 0) {
+        if (PyArray_AssignMaskNA(dst, 1, NULL, 0, NULL) < 0) {
             return -1;
         }
         baseflags |= NPY_ITER_IGNORE_MASKNA;
