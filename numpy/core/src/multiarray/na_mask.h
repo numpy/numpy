@@ -4,17 +4,6 @@
 #include "lowlevel_strided_loops.h"
 
 /*
- * Assigns the given NA value to all the elements in the array.
- *
- * If 'wheremask' isn't NULL, it specifies which elements to assign
- * NA to.
- *
- * Returns -1 on failure, 0 on success.
- */
-NPY_NO_EXPORT int
-PyArray_AssignNA(PyArrayObject *arr, PyArrayObject *wheremask, NpyNA *na);
-
-/*
  * A ufunc-like function, which returns a boolean or an array
  * of booleans indicating which values are NA.
  */
