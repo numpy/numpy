@@ -228,11 +228,18 @@ fill_raw_byte_array(int ndim, npy_intp *shape,
  * If 'wheremask' isn't NULL, it should be a boolean mask which
  * specifies where to do the assignment.
  *
+ * The parameters 'preservena' and 'preservewhichna' are NOT YET
+ * SUPPORTED, but are in place to allow for future expansion to
+ * multi-NA. 'preservewhichna' should be set to NULL, while
+ * preservena has no effect for straight NPY_BOOL NA masks, because
+ * different NAs are indistinguishable.
+ *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_AssignMaskNA(PyArrayObject *arr, PyArrayObject *wheremask,
-                        npy_mask maskvalue)
+PyArray_AssignMaskNA(PyArrayObject *arr, npy_mask maskvalue,
+                PyArrayObject *wheremask,
+                npy_bool preservena, npy_bool *preservewhichna)
 {
     PyArray_Descr *maskvalue_dtype;
     int retcode = 0;
@@ -242,6 +249,12 @@ PyArray_AssignMaskNA(PyArrayObject *arr, PyArrayObject *wheremask,
         PyErr_SetString(PyExc_ValueError,
                 "Cannot assign to the NA mask of an "
                 "array which has no NA mask");
+        return -1;
+    }
+
+    if (preservewhichna != NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "multi-NA support is not yet implemented");
         return -1;
     }
 
@@ -440,20 +453,21 @@ PyArray_AllocateMaskNA(PyArrayObject *arr,
  * In the future, when 'arr' has an NA dtype, will assign the
  * appropriate NA bitpatterns to the elements.
  *
+ * The parameters 'preservena' and 'preservewhichna' are NOT YET
+ * SUPPORTED, but are in place to allow for future expansion to
+ * multi-NA. 'preservewhichna' should be set to NULL, while
+ * preservena has no effect for straight NPY_BOOL NA masks, because
+ * different NAs are indistinguishable.
+ *
  * Returns -1 on failure, 0 on success.
  */
 NPY_NO_EXPORT int
-PyArray_AssignNA(PyArrayObject *arr, PyArrayObject *wheremask, NpyNA *na)
+PyArray_AssignNA(PyArrayObject *arr, NpyNA *na,
+                PyArrayObject *wheremask,
+                npy_bool preservena, npy_bool *preservewhichna)
 {
     NpyNA_fields *fna = (NpyNA_fields *)na;
     char maskvalue;
-
-    if (!PyArray_HASMASKNA(arr)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot assign an NA to an "
-                "array with no NA support");
-        return -1;
-    }
 
     /* Turn the payload into a mask value */
     if (fna->payload == NPY_NA_NOPAYLOAD) {
@@ -471,7 +485,8 @@ PyArray_AssignNA(PyArrayObject *arr, PyArrayObject *wheremask, NpyNA *na)
         maskvalue = (char)NpyMaskValue_Create(0, fna->payload);
     }
 
-    return PyArray_AssignMaskNA(arr, wheremask, maskvalue);
+    return PyArray_AssignMaskNA(arr, maskvalue,
+                        wheremask, preservena, preservewhichna);
 }
 
 /*

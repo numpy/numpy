@@ -1010,7 +1010,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
     else if (!(*out_use_maskna) && any_maskna_out) {
         for (i = nin; i < nin+nout; ++i) {
             if (PyArray_HASMASKNA(out_op[i])) {
-                if (PyArray_AssignMaskNA(out_op[i], NULL, 1) < 0) {
+                if (PyArray_AssignMaskNA(out_op[i], 1, NULL, 0, NULL) < 0) {
                     return -1;
                 }
             }

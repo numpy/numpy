@@ -405,7 +405,8 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
         if (!preservena || !dst_has_maskna) {
             /* If assigning to an array with an NA mask, set to all exposed */
             if (dst_has_maskna) {
-                if (PyArray_AssignMaskNA(dst, NULL, 1) < 0) {
+                if (PyArray_AssignMaskNA(dst, 1, NULL,
+                                    preservena, preservewhichna) < 0) {
                     goto fail;
                 }
             }
@@ -468,7 +469,8 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
                  * TODO: If the where mask has NA values, this part
                  *       changes too.
                  */
-                if (PyArray_AssignMaskNA(dst, wheremask, 1) < 0) {
+                if (PyArray_AssignMaskNA(dst, 1, wheremask,
+                                    preservena, preservewhichna) < 0) {
                     goto fail;
                 }
             }

@@ -404,7 +404,8 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
 
             if (na != NULL) {
                 /* TODO: With multi-NA, preservena must also be followed */
-                int retcode = PyArray_AssignNA(dst, wheremask, na);
+                int retcode = PyArray_AssignNA(dst, na, wheremask,
+                                            preservena, preservewhichna);
                 Py_DECREF(na);
                 return retcode;
             }
@@ -608,7 +609,8 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
                     goto finish;
                 }
                 else {
-                    if (PyArray_AssignMaskNA(dst, NULL, 1) < 0) {
+                    if (PyArray_AssignMaskNA(dst, 1, NULL,
+                                        preservena, preservewhichna) < 0) {
                         goto fail;
                     }
                 }
@@ -733,7 +735,8 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
                     goto finish;
                 }
                 else {
-                    if (PyArray_AssignMaskNA(dst, wheremask, 1) < 0) {
+                    if (PyArray_AssignMaskNA(dst, 1, wheremask,
+                                        preservena, preservewhichna) < 0) {
                         goto fail;
                     }
                 }
