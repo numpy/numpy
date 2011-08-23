@@ -217,6 +217,9 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
         Py_INCREF(out_dtypes[1]);
     }
     else {
+        PyObject *item;
+        PyArray_Descr *dtype = NULL;
+
         /*
          * If the type tuple isn't a single-element tuple, let the
          * default type resolution handle this one.
@@ -226,14 +229,18 @@ PyUFunc_SimpleBinaryComparisonTypeResolver(PyUFuncObject *ufunc,
                     operands, type_tup, out_dtypes);
         }
 
-        if (!PyArray_DescrCheck(PyTuple_GET_ITEM(type_tup, 0))) {
+        item = PyTuple_GET_ITEM(type_tup, 0);
+
+        if (item == Py_None) {
             PyErr_SetString(PyExc_ValueError,
                     "require data type in the type tuple");
             return -1;
         }
+        else if (!PyArray_DescrConverter(item, &dtype)) {
+            return -1;
+        }
 
-        out_dtypes[0] = ensure_dtype_nbo(
-                            (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 0));
+        out_dtypes[0] = ensure_dtype_nbo(dtype);
         if (out_dtypes[0] == NULL) {
             return -1;
         }
@@ -314,6 +321,9 @@ PyUFunc_SimpleUnaryOperationTypeResolver(PyUFuncObject *ufunc,
         Py_INCREF(out_dtypes[1]);
     }
     else {
+        PyObject *item;
+        PyArray_Descr *dtype = NULL;
+
         /*
          * If the type tuple isn't a single-element tuple, let the
          * default type resolution handle this one.
@@ -323,14 +333,18 @@ PyUFunc_SimpleUnaryOperationTypeResolver(PyUFuncObject *ufunc,
                     operands, type_tup, out_dtypes);
         }
 
-        if (!PyArray_DescrCheck(PyTuple_GET_ITEM(type_tup, 0))) {
+        item = PyTuple_GET_ITEM(type_tup, 0);
+
+        if (item == Py_None) {
             PyErr_SetString(PyExc_ValueError,
                     "require data type in the type tuple");
             return -1;
         }
+        else if (!PyArray_DescrConverter(item, &dtype)) {
+            return -1;
+        }
 
-        out_dtypes[0] = ensure_dtype_nbo(
-                            (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 0));
+        out_dtypes[0] = ensure_dtype_nbo(dtype);
         if (out_dtypes[0] == NULL) {
             return -1;
         }
@@ -424,6 +438,9 @@ PyUFunc_SimpleBinaryOperationTypeResolver(PyUFuncObject *ufunc,
         Py_INCREF(out_dtypes[2]);
     }
     else {
+        PyObject *item;
+        PyArray_Descr *dtype = NULL;
+
         /*
          * If the type tuple isn't a single-element tuple, let the
          * default type resolution handle this one.
@@ -433,14 +450,18 @@ PyUFunc_SimpleBinaryOperationTypeResolver(PyUFuncObject *ufunc,
                     operands, type_tup, out_dtypes);
         }
 
-        if (!PyArray_DescrCheck(PyTuple_GET_ITEM(type_tup, 0))) {
+        item = PyTuple_GET_ITEM(type_tup, 0);
+
+        if (item == Py_None) {
             PyErr_SetString(PyExc_ValueError,
                     "require data type in the type tuple");
             return -1;
         }
+        else if (!PyArray_DescrConverter(item, &dtype)) {
+            return -1;
+        }
 
-        out_dtypes[0] = ensure_dtype_nbo(
-                            (PyArray_Descr *)PyTuple_GET_ITEM(type_tup, 0));
+        out_dtypes[0] = ensure_dtype_nbo(dtype);
         if (out_dtypes[0] == NULL) {
             return -1;
         }
@@ -591,8 +612,8 @@ PyUFunc_AdditionTypeResolver(PyUFuncObject *ufunc,
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
-                    type_tup, out_dtypes);
+        return PyUFunc_SimpleBinaryOperationTypeResolver(ufunc, casting,
+                    operands, type_tup, out_dtypes);
     }
 
     if (type_num1 == NPY_TIMEDELTA) {
@@ -780,8 +801,8 @@ PyUFunc_SubtractionTypeResolver(PyUFuncObject *ufunc,
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
-                    type_tup, out_dtypes);
+        return PyUFunc_SimpleBinaryOperationTypeResolver(ufunc, casting,
+                    operands, type_tup, out_dtypes);
     }
 
     if (type_num1 == NPY_TIMEDELTA) {
@@ -947,8 +968,8 @@ PyUFunc_MultiplicationTypeResolver(PyUFuncObject *ufunc,
 
     /* Use the default when datetime and timedelta are not involved */
     if (!PyTypeNum_ISDATETIME(type_num1) && !PyTypeNum_ISDATETIME(type_num2)) {
-        return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
-                    type_tup, out_dtypes);
+        return PyUFunc_SimpleBinaryOperationTypeResolver(ufunc, casting,
+                    operands, type_tup, out_dtypes);
     }
 
     if (type_num1 == NPY_TIMEDELTA) {

@@ -49,6 +49,54 @@ NpyArg_ParseKeywords(PyObject *keys, const char *format, char **kwlist, ...)
     return ret;
 }
 
+/*
+ * Forwards an ndarray method to a the Python function
+ * numpy.core._methods.<name>(...)
+ */
+static PyObject *
+forward_ndarray_method(PyArrayObject *self, PyObject *args, PyObject *kwds,
+                            const char *name)
+{
+    PyObject *sargs, *ret;
+    PyObject *module_methods, *callable;
+    int i, n;
+    
+    /* Get a reference to the function we're calling */
+    module_methods = PyImport_ImportModule("numpy.core._methods");
+    if (module_methods == NULL) {
+        return NULL;
+    }
+    callable = PyDict_GetItemString(PyModule_GetDict(module_methods), name);
+    if (callable == NULL) {
+        Py_DECREF(module_methods);
+        PyErr_Format(PyExc_RuntimeError,
+                "NumPy internal error: could not find function "
+                "numpy.core._methods.%s", name);
+        return NULL;
+    }
+
+    /* Combine 'self' and 'args' together into one tuple */
+    n = PyTuple_GET_SIZE(args);
+    sargs = PyTuple_New(n + 1);
+    if (sargs == NULL) {
+        Py_DECREF(module_methods);
+        return NULL;
+    }
+    Py_INCREF(self);
+    PyTuple_SET_ITEM(sargs, 0, (PyObject *)self);
+    for (i = 0; i < n; ++i) {
+        PyObject *item = PyTuple_GET_ITEM(args, i);
+        Py_INCREF(item);
+        PyTuple_SET_ITEM(sargs, i+1, item);
+    }
+
+    /* Call the function and return */
+    ret = PyObject_Call(callable, sargs, kwds);
+    Py_DECREF(sargs);
+    Py_DECREF(module_methods);
+    return ret;
+}
+
 static PyObject *
 array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
@@ -292,16 +340,13 @@ array_argmin(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_max(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
-    PyArrayObject *out = NULL;
-    static char *kwlist[] = {"axis", "out", NULL};
+    return forward_ndarray_method(self, args, kwds, "_amax");
+}
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
-                                     PyArray_AxisConverter, &axis,
-                                     PyArray_OutputConverter, &out))
-        return NULL;
-
-    return PyArray_Max(self, axis, out);
+static PyObject *
+array_min(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+    return forward_ndarray_method(self, args, kwds, "_amin");
 }
 
 static PyObject *
@@ -319,21 +364,6 @@ array_ptp(PyArrayObject *self, PyObject *args, PyObject *kwds)
     return PyArray_Ptp(self, axis, out);
 }
 
-
-static PyObject *
-array_min(PyArrayObject *self, PyObject *args, PyObject *kwds)
-{
-    int axis = MAX_DIMS;
-    PyArrayObject *out = NULL;
-    static char *kwlist[] = {"axis", "out", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
-                                     PyArray_AxisConverter, &axis,
-                                     PyArray_OutputConverter, &out))
-        return NULL;
-
-    return PyArray_Min(self, axis, out);
-}
 
 static PyObject *
 array_swapaxes(PyArrayObject *self, PyObject *args)
@@ -1855,45 +1885,13 @@ _get_type_num_double(PyArray_Descr *dtype1, PyArray_Descr *dtype2)
 static PyObject *
 array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
-    PyArray_Descr *dtype = NULL;
-    PyArrayObject *out = NULL;
-    int num;
-    static char *kwlist[] = {"axis", "dtype", "out", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
-                                     PyArray_AxisConverter, &axis,
-                                     PyArray_DescrConverter2, &dtype,
-                                     PyArray_OutputConverter, &out)) {
-        Py_XDECREF(dtype);
-        return NULL;
-    }
-
-    num = _get_type_num_double(PyArray_DESCR(self), dtype);
-    Py_XDECREF(dtype);
-    return PyArray_Mean(self, axis, num, out);
+    return forward_ndarray_method(self, args, kwds, "_mean");
 }
 
 static PyObject *
 array_sum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
-    PyArray_Descr *dtype = NULL;
-    PyArrayObject *out = NULL;
-    int rtype;
-    static char *kwlist[] = {"axis", "dtype", "out", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
-                                     PyArray_AxisConverter, &axis,
-                                     PyArray_DescrConverter2, &dtype,
-                                     PyArray_OutputConverter, &out)) {
-        Py_XDECREF(dtype);
-        return NULL;
-    }
-
-    rtype = _CHKTYPENUM(dtype);
-    Py_XDECREF(dtype);
-    return PyArray_Sum(self, axis, rtype, out);
+    return forward_ndarray_method(self, args, kwds, "_sum");
 }
 
 
@@ -1922,23 +1920,7 @@ array_cumsum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_prod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
-    PyArray_Descr *dtype = NULL;
-    PyArrayObject *out = NULL;
-    int rtype;
-    static char *kwlist[] = {"axis", "dtype", "out", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&", kwlist,
-                                     PyArray_AxisConverter, &axis,
-                                     PyArray_DescrConverter2, &dtype,
-                                     PyArray_OutputConverter, &out)) {
-        Py_XDECREF(dtype);
-        return NULL;
-    }
-
-    rtype = _CHKTYPENUM(dtype);
-    Py_XDECREF(dtype);
-    return PyArray_Prod(self, axis, rtype, out);
+    return forward_ndarray_method(self, args, kwds, "_prod");
 }
 
 static PyObject *
@@ -2022,50 +2004,14 @@ array_all(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
-    PyArray_Descr *dtype = NULL;
-    PyArrayObject *out = NULL;
-    int num;
-    int ddof = 0;
-    static char *kwlist[] = {"axis", "dtype", "out", "ddof", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&i", kwlist,
-                                     PyArray_AxisConverter, &axis,
-                                     PyArray_DescrConverter2, &dtype,
-                                     PyArray_OutputConverter, &out,
-                                     &ddof)) {
-        Py_XDECREF(dtype);
-        return NULL;
-    }
-
-    num = _get_type_num_double(PyArray_DESCR(self), dtype);
-    Py_XDECREF(dtype);
-    return __New_PyArray_Std(self, axis, num, out, 0, ddof);
+    return forward_ndarray_method(self, args, kwds, "_std");
 }
 
 
 static PyObject *
 array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
-    PyArray_Descr *dtype = NULL;
-    PyArrayObject *out = NULL;
-    int num;
-    int ddof = 0;
-    static char *kwlist[] = {"axis", "dtype", "out", "ddof", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&i", kwlist,
-                                     PyArray_AxisConverter, &axis,
-                                     PyArray_DescrConverter2, &dtype,
-                                     PyArray_OutputConverter, &out,
-                                     &ddof)) {
-        Py_XDECREF(dtype);
-        return NULL;
-    }
-
-    num = _get_type_num_double(PyArray_DESCR(self), dtype);
-    Py_XDECREF(dtype);
-    return __New_PyArray_Std(self, axis, num, out, 1, ddof);
+    return forward_ndarray_method(self, args, kwds, "_var");
 }
 
 

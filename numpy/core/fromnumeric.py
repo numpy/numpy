@@ -16,6 +16,7 @@ import multiarray as mu
 import umath as um
 import numerictypes as nt
 from numeric import asarray, array, asanyarray, concatenate
+import _methods
 _dt_ = nt.sctype2char
 
 import types
@@ -1482,12 +1483,12 @@ def sum(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
         try:
             sum = a.sum
         except AttributeError:
-            return um.add.reduce(a, axis=axis, dtype=dtype,
+            return _methods._sum(a, axis=axis, dtype=dtype,
                                 out=out, skipna=skipna, keepdims=keepdims)
         # NOTE: Dropping the skipna and keepdims parameters here...
         return sum(axis=axis, dtype=dtype, out=out)
     else:
-        return um.add.reduce(a, axis=axis, dtype=dtype,
+        return _methods._sum(a, axis=axis, dtype=dtype,
                             out=out, skipna=skipna, keepdims=keepdims)
 
 def product (a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
@@ -1603,7 +1604,8 @@ def any(a, axis=None, out=None, skipna=False, keepdims=False):
     (191614240, 191614240)
 
     """
-    return um.logical_or.reduce(a, axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+    return _methods._any(a, axis=axis, out=out,
+                            skipna=skipna, keepdims=keepdims)
 
 def all(a, axis=None, out=None, skipna=False, keepdims=False):
     """
@@ -1674,7 +1676,8 @@ def all(a, axis=None, out=None, skipna=False, keepdims=False):
     (28293632, 28293632, array([ True], dtype=bool))
 
     """
-    return um.logical_and.reduce(a, axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+    return _methods._all(a, axis=axis, out=out,
+                            skipna=skipna, keepdims=keepdims)
 
 def cumsum (a, axis=None, dtype=None, out=None):
     """
@@ -1873,12 +1876,12 @@ def amax(a, axis=None, out=None, skipna=False, keepdims=False):
         try:
             amax = a.max
         except AttributeError:
-            return um.maximum.reduce(a, axis=axis,
+            return _methods._amax(a, axis=axis,
                                 out=out, skipna=skipna, keepdims=keepdims)
         # NOTE: Dropping the skipna and keepdims parameters
         return amax(axis=axis, out=out)
     else:
-        return um.maximum.reduce(a, axis=axis,
+        return _methods._amax(a, axis=axis,
                             out=out, skipna=skipna, keepdims=keepdims)
 
 def amin(a, axis=None, out=None, skipna=False, keepdims=False):
@@ -1947,12 +1950,12 @@ def amin(a, axis=None, out=None, skipna=False, keepdims=False):
         try:
             amin = a.min
         except AttributeError:
-            return um.minimum.reduce(a, axis=axis,
+            return _methods._amin(a, axis=axis,
                                 out=out, skipna=skipna, keepdims=keepdims)
         # NOTE: Dropping the skipna and keepdims parameters
         return amin(axis=axis, out=out)
     else:
-        return um.minimum.reduce(a, axis=axis,
+        return _methods._amin(a, axis=axis,
                             out=out, skipna=skipna, keepdims=keepdims)
 
 def alen(a):
@@ -2080,11 +2083,11 @@ def prod(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
         try:
             prod = a.prod
         except AttributeError:
-            return um.multiply.reduce(a, axis=axis, dtype=dtype,
+            return _methods._prod(a, axis=axis, dtype=dtype,
                                 out=out, skipna=skipna, keepdims=keepdims)
         return prod(axis=axis, dtype=dtype, out=out)
     else:
-        return um.multiply.reduce(a, axis=axis, dtype=dtype,
+        return _methods._prod(a, axis=axis, dtype=dtype,
                             out=out, skipna=skipna, keepdims=keepdims)
 
 def cumprod(a, axis=None, dtype=None, out=None):
@@ -2459,22 +2462,8 @@ def mean(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
         except AttributeError:
             pass
 
-    arr = asarray(a)
-
-    # Upgrade bool, unsigned int, and int to float64
-    if dtype is None and arr.dtype.kind in ['b','u','i']:
-        ret = um.add.reduce(arr, axis=axis, dtype='f8',
+    return _methods._mean(a, axis=axis, dtype=dtype,
                             out=out, skipna=skipna, keepdims=keepdims)
-    else:
-        ret = um.add.reduce(arr, axis=axis, dtype=dtype,
-                            out=out, skipna=skipna, keepdims=keepdims)
-    rcount = mu.count_reduce_items(arr, axis=axis,
-                            skipna=skipna, keepdims=keepdims)
-    if isinstance(ret, mu.ndarray):
-        um.true_divide(ret, rcount, out=ret, casting='unsafe')
-    else:
-        ret = ret / float(rcount)
-    return ret
 
 
 def std(a, axis=None, dtype=None, out=None, ddof=0,
@@ -2579,15 +2568,8 @@ def std(a, axis=None, dtype=None, out=None, ddof=0,
         except AttributeError:
             pass
 
-    ret = var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+    return _methods._std(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                                 skipna=skipna, keepdims=keepdims)
-
-    if isinstance(ret, mu.ndarray):
-        um.sqrt(ret, out=ret)
-    else:
-        ret = um.sqrt(ret)
-
-    return ret
 
 def var(a, axis=None, dtype=None, out=None, ddof=0,
                             skipna=False, keepdims=False):
@@ -2692,43 +2674,6 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
         except AttributeError:
             pass
 
-    arr = asarray(a)
-
-    # First compute the mean, saving 'rcount' for reuse later
-    if dtype is None and arr.dtype.kind in ['b','u','i']:
-        arrmean = um.add.reduce(arr, axis=axis, dtype='f8',
-                            skipna=skipna, keepdims=True)
-    else:
-        arrmean = um.add.reduce(arr, axis=axis, dtype=dtype,
-                            skipna=skipna, keepdims=True)
-    rcount = mu.count_reduce_items(arr, axis=axis,
-                            skipna=skipna, keepdims=True)
-    if isinstance(arrmean, mu.ndarray):
-        um.true_divide(arrmean, rcount, out=arrmean, casting='unsafe')
-    else:
-        arrmean = arrmean / float(rcount)
-
-    # arr - arrmean
-    x = arr - arrmean
-
-    # (arr - arrmean) ** 2
-    if arr.dtype.kind == 'c':
-        um.multiply(x, um.conjugate(x), out=x)
-        x = x.real
-    else:
-        um.multiply(x, x, out=x)
-
-    # add.reduce((arr - arrmean) ** 2, axis)
-    ret = um.add.reduce(x, axis=axis, dtype=dtype, out=out,
+    return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                                 skipna=skipna, keepdims=keepdims)
 
-    # add.reduce((arr - arrmean) ** 2, axis) / (n - ddof)
-    if not keepdims and isinstance(rcount, mu.ndarray):
-        rcount = rcount.squeeze(axis=axis)
-    rcount -= ddof
-    if isinstance(ret, mu.ndarray):
-        um.true_divide(ret, rcount, out=ret, casting='unsafe')
-    else:
-        ret = ret / float(rcount)
-
-    return ret
