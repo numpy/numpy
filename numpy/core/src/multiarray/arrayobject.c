@@ -1272,8 +1272,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             if (_res) {
                 Py_DECREF(result);
                 result = _void_compare(self, array_other, cmp_op);
-                Py_DECREF(array_other);
             }
+            Py_DECREF(array_other);
             return result;
         }
         /*
