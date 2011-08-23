@@ -173,10 +173,6 @@ PyUFunc_DefaultTypeResolver(PyUFuncObject *ufunc,
  * PyArray_ResultType instead of a linear search to get the best
  * loop.
  *
- * Note that a simpler linear search through the functions loop
- * is still done, but switching to a simple array lookup for
- * built-in types would be better at some point.
- *
  * Returns 0 on success, -1 on error.
  */
 NPY_NO_EXPORT int
