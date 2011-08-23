@@ -25,7 +25,7 @@ list of things that do and do not work with NA values:
 What works with NA:
     * Basic indexing and slicing, as well as full boolean mask indexing.
     * All element-wise ufuncs.
-    * UFunc.reduce methods, with a new skipna parameter.
+    * All UFunc.reduce methods, with a new skipna parameter.
     * The nditer object.
     * Array methods:
        + ndarray.clip, ndarray.min, ndarray.max, ndarray.sum, ndarray.prod,
@@ -40,8 +40,6 @@ What doesn't work with NA:
       mechanism instead of the newer nditer.
     * Struct dtypes, which will have corresponding struct masks with
       one mask value per primitive field of the struct dtype.
-    * UFunc.reduce of multi-dimensional arrays, with skipna=True and a ufunc
-      that doesn't have an identity.
     * UFunc.accumulate, UFunc.reduceat.
     * Ufuncs calls with both NA masks and a where= mask at the same time.
     * np.logical_and, np.logical_or, np.all, and np.any don't satisfy the
@@ -59,7 +57,7 @@ Differences with R:
     * np.isna(nan) is False, but R's is.na(nan) is TRUE. This is because
       NumPy's NA is treated independently of the underlying data type.
     * Boolean indexing, where the result is compressed to just
-      the elements with true in the mask, raises if the booelan mask
+      the elements with true in the mask, raises if the boolean mask
       has an NA value in it. This is because that value could be either
       True or False, meaning the count of the output array is actually
       NA. R treats this case in a manner inconsistent with the NA model,

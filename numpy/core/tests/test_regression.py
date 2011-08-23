@@ -1626,5 +1626,11 @@ class TestRegression(TestCase):
             a = np.empty((100000000,), dtype='i1')
             del a
 
+    def test_ufunc_reduce_memoryleak(self):
+        a = np.arange(6)
+        acnt = sys.getrefcount(a)
+        res = np.add.reduce(a)
+        assert_equal(sys.getrefcount(a), acnt)
+
 if __name__ == "__main__":
     run_module_suite()

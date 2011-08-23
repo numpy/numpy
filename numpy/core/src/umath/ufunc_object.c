@@ -2536,6 +2536,7 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
     retcode = ufunc->type_resolver(
                         ufunc, NPY_UNSAFE_CASTING,
                         op, type_tup, dtypes);
+    Py_DECREF(type_tup);
     if (retcode == -1) {
         return -1;
     }
@@ -2805,6 +2806,8 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     /* These parameters come from a TLS global */
     int buffersize = 0, errormask = 0;
     PyObject *errobj = NULL;
+
+    NPY_UF_DBG_PRINT1("\nEvaluating ufunc %s.reduce\n", ufunc_name);
 
     ndim = PyArray_NDIM(arr);
 
@@ -3628,7 +3631,7 @@ static PyObject *
 PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                          PyObject *kwds, int operation)
 {
-    int i, naxes=0;
+    int i, naxes=0, ndim;
     int axes[NPY_MAXDIMS];
     PyObject *axes_in = NULL;
     PyArrayObject *mp, *ret = NULL;
@@ -3712,6 +3715,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     if (mp == NULL) {
         return NULL;
     }
+
+    ndim = PyArray_NDIM(mp);
+
     /* Check to see that type (and otype) is not FLEXIBLE */
     if (PyArray_ISFLEXIBLE(mp) ||
         (otype && PyTypeNum_ISFLEXIBLE(otype->type_num))) {
@@ -3730,7 +3736,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     }
     /* Convert 'None' into all the axes */
     else if (axes_in == Py_None) {
-        naxes = PyArray_NDIM(mp);
+        naxes = ndim;
         for (i = 0; i < naxes; ++i) {
             axes[i] = i;
         }
@@ -3753,9 +3759,9 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
                 return NULL;
             }
             if (axis < 0) {
-                axis += PyArray_NDIM(mp);
+                axis += ndim;
             }
-            if (axis < 0 || axis >= PyArray_NDIM(mp)) {
+            if (axis < 0 || axis >= ndim) {
                 PyErr_SetString(PyExc_ValueError,
                         "'axis' entry is out of bounds");
                 Py_XDECREF(otype);
@@ -3775,11 +3781,13 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             return NULL;
         }
         if (axis < 0) {
-            axis += PyArray_NDIM(mp);
+            axis += ndim;
         }
-        /* Special case letting axis=0 slip through for scalars */
-        if ((axis < 0 || axis >= PyArray_NDIM(mp)) &&
-                !(axis == 0 && PyArray_NDIM(mp) == 0)) {
+        /* Special case letting axis={0 or -1} slip through for scalars */
+        if (ndim == 0 && (axis == 0 || axis == -1)) {
+            axis = 0;
+        }
+        else if (axis < 0 || axis >= ndim) {
             PyErr_SetString(PyExc_ValueError,
                     "'axis' entry is out of bounds");
             Py_XDECREF(otype);
@@ -3791,7 +3799,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     }
 
     /* Check to see if input is zero-dimensional. */
-    if (PyArray_NDIM(mp) == 0) {
+    if (ndim == 0) {
         /*
          * A reduction with no axes is still valid but trivial.
          * As a special case for backwards compatibility in 'sum',

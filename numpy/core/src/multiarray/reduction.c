@@ -366,6 +366,13 @@ initialize_reduce_result_noidentity_skipna(
         goto fail;
     }
 
+    /*
+     * Track how many initializations we've done, both to
+     * short circuit completion and to raise an error if
+     * any remained uninitialized.
+     */
+    initialized_countdown = PyArray_SIZE(result);
+
     if (NpyIter_GetIterSize(iter) != 0) {
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
@@ -380,13 +387,6 @@ initialize_reduce_result_noidentity_skipna(
         dataptr = NpyIter_GetDataPtrArray(iter);
         strideptr = NpyIter_GetInnerStrideArray(iter);
         countptr = NpyIter_GetInnerLoopSizePtr(iter);
-
-        /*
-         * Track how many initializations we've done, both to
-         * short circuit completion and to raise an error if
-         * any remained uninitialized.
-         */
-        initialized_countdown = PyArray_SIZE(result);
 
         if (!needs_api) {
             NPY_BEGIN_THREADS;
@@ -870,7 +870,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
          */
         if (!reorderable && check_nonreorderable_axes(PyArray_NDIM(operand),
                                         axis_flags, funcname) < 0) {
-            return NULL;
+            goto fail;
         }
 
         if (assign_identity(result, !skipna, data) < 0) {
@@ -884,8 +884,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                             axis_flags, reorderable, skipna,
                             &skip_first_count, funcname);
         if (op_view == NULL) {
-            Py_DECREF(result);
-            return NULL;
+            goto fail;
         }
         if (PyArray_SIZE(op_view) == 0) {
             Py_DECREF(op_view);
@@ -943,9 +942,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                                op_dtypes,
                                0, NULL, NULL, buffersize);
     if (iter == NULL) {
-        Py_DECREF(result);
-        Py_DECREF(op_dtypes[0]);
-        return NULL;
+        goto fail;
     }
 
     if (NpyIter_GetIterSize(iter) != 0) {
@@ -957,10 +954,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
 
         iternext = NpyIter_GetIterNext(iter, NULL);
         if (iternext == NULL) {
-            Py_DECREF(result);
-            Py_DECREF(op_dtypes[0]);
-            NpyIter_Deallocate(iter);
-            return NULL;
+            goto fail;
         }
         dataptr = NpyIter_GetDataPtrArray(iter);
         strideptr = NpyIter_GetInnerStrideArray(iter);
@@ -1000,6 +994,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     }
 
     NpyIter_Deallocate(iter);
+    Py_DECREF(op_view);
 
 finish:
     /* Strip out the extra 'one' dimensions in the result */
