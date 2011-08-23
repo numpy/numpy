@@ -431,8 +431,12 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
     }
     else {
         npy_intp wheremask_strides[NPY_MAXDIMS];
+        int containsna = PyArray_ContainsNA(wheremask, NULL, NULL);
 
-        if (PyArray_ContainsNA(wheremask)) {
+        if (containsna == -1) {
+            goto fail;
+        }
+        else if (containsna) {
             if (!dst_has_maskna) {
                 PyErr_SetString(PyExc_ValueError,
                         "Cannot assign NA to an array which "

@@ -14,8 +14,9 @@ New features
 Mask-based NA missing values
 ----------------------------
 
-Support for NA missing values similar to those in R has been implemented.
-This was done by adding optional NA masks to the core array object.
+Preliminary support for NA missing values similar to those in R has
+been implemented.  This was done by adding optional NA masks to the core
+array object.
 
 While a significant amount of the NumPy functionality has been extended to
 support NA masks, not everything is yet supported. Here is an (incomplete)

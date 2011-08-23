@@ -101,7 +101,11 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
     /* Check if it's an ndarray */
     if (PyArray_Check(obj)) {
         /* Check for any NAs in the array */
-        if (PyArray_ContainsNA((PyArrayObject *)obj)) {
+        int containsna = PyArray_ContainsNA((PyArrayObject *)obj, NULL, NULL);
+        if (containsna == -1) {
+            goto fail;
+        }
+        else if (containsna) {
             *out_contains_na = 1;
         }
         dtype = PyArray_DESCR((PyArrayObject *)obj);

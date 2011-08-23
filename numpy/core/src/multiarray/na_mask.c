@@ -39,42 +39,136 @@ PyArray_HasNASupport(PyArrayObject *arr)
  * Returns false if the array has no NA support. Returns
  * true if the array has NA support AND there is an
  * NA anywhere in the array.
+ *
+ * If 'wheremask' is non-NULL, only positions with True
+ * in 'wheremask' are checked for NA.
+ *
+ * The parameter 'whichna' is not yet supported, but is
+ * provided for future multi-NA support. It should be set
+ * to NULL.
+ *
+ * Returns -1 on failure, otherwise 0 for False and 1 for True.
  */
-NPY_NO_EXPORT npy_bool
-PyArray_ContainsNA(PyArrayObject *arr)
+NPY_NO_EXPORT int
+PyArray_ContainsNA(PyArrayObject *arr, PyArrayObject *wheremask,
+                    npy_bool *whichna)
 {
-    /* Need NA support to contain NA */
-    if (PyArray_HASMASKNA(arr)) {
-        int idim, ndim;
-        char *data;
-        npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
-        npy_intp i, coord[NPY_MAXDIMS];
+    /* Validate that the parameter for future expansion is NULL */
+    if (whichna != NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "multi-NA is not yet supported in PyArray_ContainsNA");
+        return -1;
+    }
 
-        if (PyArray_HASFIELDS(arr)) {
-            /* TODO: need to add field-NA support */
-            return 1;
-        }
+    if (wheremask == NULL) {
+        /* Need NA support to contain NA */
+        if (PyArray_HASMASKNA(arr)) {
+            int idim, ndim;
+            char *data;
+            npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+            npy_intp i, coord[NPY_MAXDIMS];
 
-        /* Use raw iteration with no heap memory allocation */
-        if (PyArray_PrepareOneRawArrayIter(
+            if (PyArray_HASFIELDS(arr)) {
+                PyErr_SetString(PyExc_RuntimeError,
+                        "field-NA is not yet supported");
+                return -1;
+            }
+
+            /* Use raw iteration with no heap memory allocation */
+            if (PyArray_PrepareOneRawArrayIter(
                         PyArray_NDIM(arr), PyArray_DIMS(arr),
                         PyArray_MASKNA_DATA(arr), PyArray_MASKNA_STRIDES(arr),
                         &ndim, shape,
                         &data, strides) < 0) {
-            PyErr_Clear();
-            return 1;
+                return -1;
+            }
+
+            /* Do the iteration */
+            NPY_RAW_ITER_START(idim, ndim, coord, shape) {
+                char *d = data;
+                /* Process the innermost dimension */
+                for (i = 0; i < shape[0]; ++i, d += strides[0]) {
+                    if (!NpyMaskValue_IsExposed((npy_mask)(*d))) {
+                        return 1;
+                    }
+                }
+            } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
+        }
+    }
+    else {
+        npy_intp wheremask_strides_bcast[NPY_MAXDIMS];
+        int containsna;
+
+        containsna = PyArray_ContainsNA(wheremask, NULL, NULL);
+        if (containsna != 0) {
+            if (containsna == -1) {
+                return -1;
+            }
+            else {
+                PyErr_SetString(PyExc_ValueError,
+                        "the where mask may not contain any NA values");
+                return -1;
+            }
         }
 
-        /* Do the iteration */
-        NPY_RAW_ITER_START(idim, ndim, coord, shape) {
-            char *d = data;
-            /* Process the innermost dimension */
-            for (i = 0; i < shape[0]; ++i, d += strides[0]) {
-                if (!NpyMaskValue_IsExposed((npy_mask)(*d))) {
-                    return 1;
-                }
+        /*
+         * Broadcast the where-mask onto arr. Note that this
+         * is before checking if 'arr' has an NA mask, to
+         * catch any broadcasting errors.
+         */
+        if (broadcast_strides(PyArray_NDIM(arr), PyArray_DIMS(arr),
+                        PyArray_NDIM(wheremask), PyArray_DIMS(wheremask),
+                        PyArray_STRIDES(wheremask), "where mask",
+                        wheremask_strides_bcast) < 0) {
+            return -1;
+        }
+
+        if (PyArray_DTYPE(wheremask)->type_num != NPY_BOOL) {
+            PyErr_SetString(PyExc_ValueError,
+                    "the where mask must have a 'bool' dtype");
+            return -1;
+        }
+
+        if (PyArray_HASMASKNA(arr)) {
+            int idim, ndim;
+            char *data, *wheremask_data;
+            npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+            npy_intp wheremask_strides[NPY_MAXDIMS];
+            npy_intp i, coord[NPY_MAXDIMS];
+
+            if (PyArray_HASFIELDS(arr)) {
+                PyErr_SetString(PyExc_RuntimeError,
+                        "field-NA is not yet supported");
+                return -1;
             }
-        } NPY_RAW_ITER_ONE_NEXT(idim, ndim, coord, shape, data, strides);
+
+            /* Use raw iteration with no heap memory allocation */
+            if (PyArray_PrepareTwoRawArrayIter(
+                        PyArray_NDIM(arr), PyArray_DIMS(arr),
+                        PyArray_MASKNA_DATA(arr), PyArray_MASKNA_STRIDES(arr),
+                        PyArray_DATA(wheremask), wheremask_strides_bcast,
+                        &ndim, shape,
+                        &data, strides,
+                        &wheremask_data, wheremask_strides) < 0) {
+                return -1;
+            }
+
+            /* Do the iteration */
+            NPY_RAW_ITER_START(idim, ndim, coord, shape) {
+                char *d = data, *where_d = wheremask_data;
+                /* Process the innermost dimension */
+                for (i = 0; i < shape[0]; ++i) {
+                    if (*where_d && !NpyMaskValue_IsExposed((npy_mask)(*d))) {
+                        return 1;
+                    }
+
+                    d += strides[0];
+                    where_d += wheremask_strides[0];
+                }
+            } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape,
+                                    data, strides,
+                                    wheremask_data, wheremask_strides);
+        }
     }
 
     return 0;
