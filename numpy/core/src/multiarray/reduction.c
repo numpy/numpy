@@ -613,7 +613,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
      * the required NA masking semantics.
      */
     if (use_maskna && !skipna) {
-        if (PyArray_ReduceMaskNAArray(result, operand) < 0) {
+        if (PyArray_ReduceMaskNAArray(operand, result, NULL, NULL) < 0) {
             goto fail;
         }
 
