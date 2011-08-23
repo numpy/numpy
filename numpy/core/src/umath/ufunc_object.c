@@ -987,7 +987,11 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
         /* Check all the inputs for NA */
         for(i = 0; i < nin; ++i) {
             if (PyArray_HASMASKNA(out_op[i])) {
-                if (PyArray_ContainsNA(out_op[i])) {
+                int containsna = PyArray_ContainsNA(out_op[i], NULL, NULL);
+                if (containsna == -1) {
+                    return -1;
+                }
+                else if (containsna) {
                     PyErr_SetString(PyExc_ValueError,
                             "Cannot assign NA value to an array which "
                             "does not support NAs");
@@ -2848,10 +2852,10 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         return NULL;
     }
 
-    result = PyArray_ReduceWrapper(arr, out, dtype, dtype,
+    result = PyArray_ReduceWrapper(arr, out, NULL, dtype, dtype,
                                 NPY_UNSAFE_CASTING,
                                 axis_flags, reorderable,
-                                skipna, keepdims,
+                                skipna, NULL, keepdims,
                                 assign_identity,
                                 reduce_loop,
                                 masked_reduce_loop,

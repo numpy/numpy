@@ -312,6 +312,35 @@ def test_array_maskna_isna_2D():
 
     # TODO: fancy indexing is next...
 
+def test_array_maskna_to_nomask():
+    # Assignment from an array with NAs to a non-masked array,
+    # excluding the NAs with a mask
+    a = np.array([[2,np.NA,5],[1,6,np.NA]], maskna=True)
+    mask = np.array([[1,0,0],[1,1,0]], dtype='?')
+    badmask = np.array([[1,0,0],[0,1,1]], dtype='?')
+    expected = np.array([[2,1,2],[1,6,5]])
+
+    # With masked indexing
+    b = np.arange(6).reshape(2,3)
+    b[mask] = a[mask]
+    assert_array_equal(b, expected)
+
+    # With copyto
+    b = np.arange(6).reshape(2,3)
+    np.copyto(b, a, where=mask)
+    assert_array_equal(b, expected)
+
+    # With masked indexing
+    b = np.arange(6).reshape(2,3)
+    def asn():
+        b[badmask] = a[badmask]
+    assert_raises(ValueError, asn)
+
+    # With copyto
+    b = np.arange(6).reshape(2,3)
+    assert_raises(ValueError, np.copyto, b, a, where=badmask)
+
+
 def test_array_maskna_view_function():
     a = np.arange(10)
 

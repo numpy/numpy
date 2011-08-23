@@ -509,6 +509,9 @@ PyArray_InitializeReduceResult(
  *
  * operand     : The array to be reduced.
  * out         : NULL, or the array into which to place the result.
+ * wheremask   : NOT YET SUPPORTED, but this parameter is placed here
+ *               so that support can be added in the future without breaking
+ *               API compatibility. Pass in NULL.
  * operand_dtype : The dtype the inner loop expects for the operand.
  * result_dtype : The dtype the inner loop expects for the result.
  * casting     : The casting rule to apply to the operands.
@@ -519,6 +522,9 @@ PyArray_InitializeReduceResult(
  *               arbitrary order. The calculation may be reordered because
  *               of cache behavior or multithreading requirements.
  * skipna      : If true, NAs are skipped instead of propagating.
+ * whichskipna : NOT YET SUPPORTED, but this parameter is placed here
+ *               so that support can be added for multi-NA without
+ *               breaking API compatibility. Pass in NULL.
  * keepdims    : If true, leaves the reduction dimensions in the result
  *               with size one.
  * assign_identity : If NULL, PyArray_InitializeReduceResult is used, otherwise
@@ -532,11 +538,12 @@ PyArray_InitializeReduceResult(
  */
 NPY_NO_EXPORT PyArrayObject *
 PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
+                        PyArrayObject *wheremask,
                         PyArray_Descr *operand_dtype,
                         PyArray_Descr *result_dtype,
                         NPY_CASTING casting,
                         npy_bool *axis_flags, int reorderable,
-                        int skipna, int keepdims,
+                        int skipna, npy_bool *skipwhichna, int keepdims,
                         PyArray_AssignReduceIdentityFunc *assign_identity,
                         PyArray_ReduceLoopFunc *loop,
                         PyArray_ReduceLoopFunc *masked_loop,
@@ -552,6 +559,20 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     PyArray_Descr *op_dtypes[2];
     npy_uint32 flags, op_flags[2];
 
+    /* Validate that the parameters for future expansion are NULL */
+    if (wheremask != NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "Reduce operations in NumPy do not yet support "
+                "a where mask");
+        return NULL;
+    }
+    if (skipwhichna != NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "multi-NA support is not yet implemented in "
+                "reduce operations");
+        return NULL;
+    }
+
     use_maskna = PyArray_HASMASKNA(operand);
 
     /*
@@ -559,7 +580,11 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
      * contains no NA values so we can ignore the mask entirely.
      */
     if (use_maskna && !skipna && out != NULL && !PyArray_HASMASKNA(out)) {
-        if (PyArray_ContainsNA(operand)) {
+        int containsna = PyArray_ContainsNA(operand, wheremask, NULL);
+        if (containsna == -1) {
+            goto fail;
+        }
+        else if (containsna) {
             PyErr_SetString(PyExc_ValueError,
                     "Cannot assign NA to an array which "
                     "does not support NAs");
