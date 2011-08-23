@@ -340,7 +340,6 @@ def test_array_maskna_to_nomask():
     b = np.arange(6).reshape(2,3)
     assert_raises(ValueError, np.copyto, b, a, where=badmask)
 
-
 def test_array_maskna_view_function():
     a = np.arange(10)
 
@@ -807,7 +806,6 @@ def test_maskna_ufunc_1D():
     assert_equal(np.isna(a), [[1], [0]])
     assert_equal(a[~np.isna(a)], [4.])
 
-
 def test_maskna_ufunc_sum_1D():
     check_maskna_ufunc_sum_1D(np.sum)
 
@@ -905,6 +903,78 @@ def check_ufunc_max_1D(max_func):
     # for an empty array
     a[...] = np.NA
     assert_raises(ValueError, max_func, a, skipna=True)
+
+def test_ufunc_skipna_max_3D():
+    check_ufunc_skipna_max_3D(np.max)
+
+def test_ufunc_skipna_maximum_reduce_3D():
+    check_ufunc_skipna_max_3D(np.maximum.reduce)
+
+def check_ufunc_skipna_max_3D(max_func):
+    a_orig = np.array([[[29,  6, 24, 11, 24],
+                    [17, 26, 10, 29, 21],
+                    [ 4,  4,  7,  9, 30],
+                    [ 9, 20,  5, 12, 23]],
+                   [[ 8,  9, 10, 31, 22],
+                    [ 5, 20,  2, 29, 27],
+                    [21, 22, 13, 30, 20],
+                    [24, 27,  9, 20, 31]],
+                   [[14,  0, 13, 11, 22],
+                    [ 0, 16, 16, 14,  2],
+                    [ 0,  2,  1, 29, 12],
+                    [24, 25, 12, 11,  9]]])
+    a = a_orig.view(maskna=True)
+    b = a_orig.copy()
+
+    def check_all_axis_combos(x, y, badaxes=()):
+        if 0 not in badaxes:
+            res = max_func(x, axis=0, skipna=True)
+            assert_array_equal(res, max_func(y, axis=0, skipna=True))
+        if 1 not in badaxes:
+            res = max_func(x, axis=1, skipna=True)
+            assert_array_equal(res, max_func(y, axis=1, skipna=True))
+        if 2 not in badaxes:
+            res = max_func(x, axis=2, skipna=True)
+            assert_array_equal(res, max_func(y, axis=2, skipna=True))
+        res = max_func(x, axis=(0,1), skipna=True)
+        assert_array_equal(res, max_func(y, axis=(0,1), skipna=True))
+        res = max_func(x, axis=(0,2), skipna=True)
+        assert_array_equal(res, max_func(y, axis=(0,2), skipna=True))
+        res = max_func(x, axis=(1,2), skipna=True)
+        assert_array_equal(res, max_func(y, axis=(1,2), skipna=True))
+        res = max_func(x, axis=(0,1,2), skipna=True)
+        assert_array_equal(res, max_func(y, axis=(0,1,2), skipna=True))
+
+    # Straightforward reduce with no NAs
+    check_all_axis_combos(a, b)
+
+    # Set a few values in 'a' to NA, and set the corresponding
+    # values in 'b' to -1 to definitely eliminate them from the maximum
+    for coord in [(0,1,2), (1,2,2), (0,2,4), (2,1,0)]:
+        a[coord] = np.NA
+        b[coord] = -1
+    check_all_axis_combos(a, b)
+
+    # Set a few more values in 'a' to NA
+    for coord in [(2,1,1), (2,1,2), (2,1,3), (0,0,4), (0,3,4)]:
+        a[coord] = np.NA
+        b[coord] = -1
+    check_all_axis_combos(a, b)
+
+    # Set it so that there's a full set of NAs along the third dimension
+    for coord in [(2,1,4)]:
+        a[coord] = np.NA
+        b[coord] = -1
+    check_all_axis_combos(a, b, badaxes=(2,))
+    assert_raises(ValueError, max_func, a, axis=2, skipna=True)
+
+    # Set it so that there's a full set of NAs along the second dimension
+    for coord in [(0,1,4)]:
+        a[coord] = np.NA
+        b[coord] = -1
+    check_all_axis_combos(a, b, badaxes=(1,2))
+    assert_raises(ValueError, max_func, a, axis=1, skipna=True)
+    assert_raises(ValueError, max_func, a, axis=2, skipna=True)
 
 def test_count_reduce_items():
     # np.count_reduce_items

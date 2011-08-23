@@ -18,6 +18,7 @@
 #include "numpy/npy_3kcompat.h"
 
 #include "lowlevel_strided_loops.h"
+#include "na_mask.h"
 #include "reduction.h"
 
 /*
@@ -270,6 +271,241 @@ check_nonreorderable_axes(int ndim, npy_bool *axis_flags, const char *funcname)
 }
 
 /*
+ * Initializes the reduce result for skipna reductions where operand
+ * has more than one dimension.
+ *
+ * 'operand must have an NA mask, 'result' may or may not have an
+ * NA mask, and 'skipna' must be True to call this function.
+ */
+static PyArrayObject *
+initialize_reduce_result_noidentity_skipna(
+                    PyArrayObject *operand, PyArrayObject *result,
+                    npy_bool *axis_flags, const char *funcname)
+{
+    PyArrayObject *initialized = NULL;
+    npy_intp initialized_countdown;
+    npy_intp op_itemsize;
+    PyArray_Descr *bool_dtype;
+
+    /* Iterator parameters */
+    NpyIter *iter = NULL;
+    PyArrayObject *op[3];
+    npy_uint32 flags, op_flags[3];
+    npy_intp fixed_strides[4];
+
+    /* Data transfer function */
+    PyArray_StridedUnaryOp *stransfer = NULL;
+    NpyAuxData *transferdata = NULL;
+    int needs_api;
+
+    op_itemsize = PyArray_DTYPE(operand)->elsize;
+
+    /*
+     * Create a view of operand which owns its its own mask, so that
+     * we can change it.
+     */
+    operand = (PyArrayObject *)PyArray_View(operand, NULL, &PyArray_Type);
+    if (operand == NULL) {
+        goto fail;
+    }
+    if (PyArray_AllocateMaskNA(operand, 1, 0, 1) < 0) {
+        goto fail;
+    }
+
+    /*
+     * Allocate a flag array to keep track of which elements in the result
+     * have already been initialized.
+     *
+     * This reference to bool_dtype gets stolen by NewLikeArray.
+     */
+    bool_dtype = PyArray_DescrFromType(NPY_BOOL);
+    if (bool_dtype == NULL) {
+        goto fail;
+    }
+    initialized = (PyArrayObject *)PyArray_NewLikeArray(result,
+                                            NPY_KEEPORDER, bool_dtype, 0);
+    if (initialized == NULL) {
+        goto fail;
+    }
+    if (PyArray_AssignZero(initialized, NULL, 0, NULL) < 0) {
+        Py_DECREF(initialized);
+        goto fail;
+    }
+
+    /* Set up the iterator for copying the elements */
+    op[0] = operand;
+    op[1] = result;
+    op[2] = initialized;
+    op_flags[0] = NPY_ITER_READWRITE | NPY_ITER_USE_MASKNA;
+    op_flags[1] = NPY_ITER_READWRITE | NPY_ITER_IGNORE_MASKNA;
+    op_flags[2] = NPY_ITER_READWRITE;
+    flags = NPY_ITER_EXTERNAL_LOOP |
+            NPY_ITER_REFS_OK |
+            NPY_ITER_REDUCE_OK |
+            NPY_ITER_ZEROSIZE_OK |
+            NPY_ITER_DONT_NEGATE_STRIDES;
+
+    iter = NpyIter_MultiNew(3, op, flags,
+                               NPY_KEEPORDER, NPY_UNSAFE_CASTING,
+                               op_flags,
+                               NULL);
+    if (iter == NULL) {
+        goto fail;
+    }
+    NpyIter_GetInnerFixedStrideArray(iter, fixed_strides);
+    needs_api = NpyIter_IterationNeedsAPI(iter);
+
+    /* Get a function for copying the elements */
+    if (PyArray_GetDTypeTransferFunction(
+                    PyArray_ISALIGNED(operand) && PyArray_ISALIGNED(result),
+                    fixed_strides[0], fixed_strides[1],
+                    PyArray_DTYPE(operand), PyArray_DTYPE(result),
+                    0,
+                    &stransfer, &transferdata,
+                    &needs_api) != NPY_SUCCEED) {
+        goto fail;
+    }
+
+    if (NpyIter_GetIterSize(iter) != 0) {
+        NpyIter_IterNextFunc *iternext;
+        char **dataptr;
+        npy_intp *strideptr;
+        npy_intp *countptr, count, subcount;
+        NPY_BEGIN_THREADS_DEF;
+
+        iternext = NpyIter_GetIterNext(iter, NULL);
+        if (iternext == NULL) {
+            goto fail;
+        }
+        dataptr = NpyIter_GetDataPtrArray(iter);
+        strideptr = NpyIter_GetInnerStrideArray(iter);
+        countptr = NpyIter_GetInnerLoopSizePtr(iter);
+
+        /*
+         * Track how many initializations we've done, both to
+         * short circuit completion and to raise an error if
+         * any remained uninitialized.
+         */
+        initialized_countdown = PyArray_SIZE(result);
+
+        if (!needs_api) {
+            NPY_BEGIN_THREADS;
+        }
+
+        do {
+            char *op_d = dataptr[0], *res_d = dataptr[1];
+            char *init_d = dataptr[2], *op_namask_d = dataptr[3];
+            npy_intp op_s = strideptr[0], res_s = strideptr[1];
+            npy_intp init_s = strideptr[2], op_namask_s = strideptr[3];
+
+            count = *countptr;
+
+            /* If the result stride is 0, copy at most one value */
+            if (res_s == 0) {
+                npy_intp i;
+                for (i = 0; i < count; ++i) {
+                    if (*init_d == 0 && NpyMaskValue_IsExposed(
+                                                *(npy_mask *)op_namask_d)) {
+
+                        /* Mark it as initialized */
+                        *init_d = 1;
+                        stransfer(res_d, 0, op_d + i * op_s, op_s,
+                                        1, op_itemsize, transferdata);
+
+                        --initialized_countdown;
+                        if (initialized_countdown == 0) {
+                            goto finish_loop;
+                        }
+                        break;
+                    }
+
+                    init_d += init_s;
+                    op_namask_d += op_namask_s;
+                }
+            }
+            /* Otherwise process the data in runs as large as possible */
+            else {
+                do {
+                    /* Skip values that are initialized or masked */
+                    subcount = 0;
+                    while (subcount < count && (*init_d == 1 ||
+                                !NpyMaskValue_IsExposed(
+                                                *(npy_mask *)op_namask_d))) {
+                        ++subcount;
+                        init_d += init_s;
+                        op_namask_d += op_namask_s;
+                    }
+                    op_d += subcount * op_s;
+                    res_d += subcount * res_s;
+                    count -= subcount;
+
+                    /* Transfer values that are uninitialized and exposed */
+                    subcount = 0;
+                    while (subcount < count && (*init_d == 0 &&
+                                NpyMaskValue_IsExposed(
+                                                *(npy_mask *)op_namask_d))) {
+                        ++subcount;
+                        /* Mark it as initialized */
+                        *init_d = 1;
+                        init_d += init_s;
+                        op_namask_d += op_namask_s;
+                    }
+                    stransfer(res_d, res_s, op_d, op_s,
+                                subcount, op_itemsize, transferdata);
+                    op_d += subcount * op_s;
+                    res_d += subcount * res_s;
+                    count -= subcount;
+
+                    initialized_countdown -= subcount;
+                    if (initialized_countdown == 0) {
+                        goto finish_loop;
+                    }
+                } while (count > 0);
+            }
+        } while (iternext(iter));
+
+    finish_loop:
+        if (!needs_api) {
+            NPY_END_THREADS;
+        }
+    }
+
+    if (needs_api && PyErr_Occurred()) {
+        goto fail;
+    }
+
+    /* Since this ufunc has no identity, all elements must be initialized */
+    if (initialized_countdown != 0) {
+        PyErr_Format(PyExc_ValueError,
+                "reduction operation %s with skipna=True "
+                "had an output element with all its inputs NA", funcname);
+        goto fail;
+    }
+
+    /* If 'result' has an NA mask, set it to all exposed */
+    if (PyArray_HASMASKNA(result)) {
+        if (PyArray_AssignMaskNA(result, 1, NULL, 0, NULL) < 0) {
+            goto fail;
+        }
+    }
+
+    Py_DECREF(initialized);
+    NpyIter_Deallocate(iter);
+    NPY_AUXDATA_FREE(transferdata);
+    return operand;
+
+fail:
+    Py_XDECREF(operand);
+    Py_XDECREF(initialized);
+    if (iter != NULL) {
+        NpyIter_Deallocate(iter);
+    }
+    NPY_AUXDATA_FREE(transferdata);
+
+    return NULL;
+}
+
+/*
  * This function initializes a result array for a reduction operation
  * which has no identity. This means it needs to copy the first element
  * it sees along the reduction axes to result, then return a view of
@@ -423,10 +659,8 @@ PyArray_InitializeReduceResult(
      * case
      */
     else {
-        PyErr_SetString(PyExc_ValueError,
-                    "skipna=True with a non-identity reduction "
-                    "and an array with ndim > 1 isn't implemented yet");
-            return NULL;
+        return initialize_reduce_result_noidentity_skipna(
+                                    operand, result, axis_flags, funcname);
     }
 
     /*
