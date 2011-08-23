@@ -49,17 +49,10 @@ NpyArg_ParseKeywords(PyObject *keys, const char *format, char **kwlist, ...)
     return ret;
 }
 
-/*
- * Forwards an ndarray method to a the Python function
- * numpy.core._methods.<name>(...)
- */
 static PyObject *
-forward_ndarray_method(PyArrayObject *self, PyObject *args, PyObject *kwds,
-                            const char *name)
+get_forwarding_ndarray_method(const char *name)
 {
-    PyObject *sargs, *ret;
     PyObject *module_methods, *callable;
-    int i, n;
     
     /* Get a reference to the function we're calling */
     module_methods = PyImport_ImportModule("numpy.core._methods");
@@ -72,14 +65,28 @@ forward_ndarray_method(PyArrayObject *self, PyObject *args, PyObject *kwds,
         PyErr_Format(PyExc_RuntimeError,
                 "NumPy internal error: could not find function "
                 "numpy.core._methods.%s", name);
-        return NULL;
     }
+
+    Py_INCREF(callable);
+    Py_DECREF(module_methods);
+    return callable;
+}
+
+/*
+ * Forwards an ndarray method to a the Python function
+ * numpy.core._methods.<name>(...)
+ */
+static PyObject *
+forward_ndarray_method(PyArrayObject *self, PyObject *args, PyObject *kwds,
+                            PyObject *forwarding_callable)
+{
+    PyObject *sargs, *ret;
+    int i, n;
 
     /* Combine 'self' and 'args' together into one tuple */
     n = PyTuple_GET_SIZE(args);
     sargs = PyTuple_New(n + 1);
     if (sargs == NULL) {
-        Py_DECREF(module_methods);
         return NULL;
     }
     Py_INCREF(self);
@@ -91,11 +98,27 @@ forward_ndarray_method(PyArrayObject *self, PyObject *args, PyObject *kwds,
     }
 
     /* Call the function and return */
-    ret = PyObject_Call(callable, sargs, kwds);
+    ret = PyObject_Call(forwarding_callable, sargs, kwds);
     Py_DECREF(sargs);
-    Py_DECREF(module_methods);
     return ret;
 }
+
+/*
+ * Forwards an ndarray method to the function numpy.core._methods.<name>(...),
+ * caching the callable in a local static variable. Note that the
+ * initialization is not thread-safe, but relies on the CPython GIL to
+ * be correct.
+ */
+#define NPY_FORWARD_NDARRAY_METHOD(name) \
+        static PyObject *callable = NULL; \
+        if (callable == NULL) { \
+            callable = get_forwarding_ndarray_method(name); \
+            if (callable == NULL) { \
+                return NULL; \
+            } \
+        } \
+        return forward_ndarray_method(self, args, kwds, callable)
+
 
 static PyObject *
 array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -340,13 +363,13 @@ array_argmin(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_max(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    return forward_ndarray_method(self, args, kwds, "_amax");
+    NPY_FORWARD_NDARRAY_METHOD("_amax");
 }
 
 static PyObject *
 array_min(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    return forward_ndarray_method(self, args, kwds, "_amin");
+    NPY_FORWARD_NDARRAY_METHOD("_amin");
 }
 
 static PyObject *
@@ -1885,13 +1908,13 @@ _get_type_num_double(PyArray_Descr *dtype1, PyArray_Descr *dtype2)
 static PyObject *
 array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    return forward_ndarray_method(self, args, kwds, "_mean");
+    NPY_FORWARD_NDARRAY_METHOD("_mean");
 }
 
 static PyObject *
 array_sum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    return forward_ndarray_method(self, args, kwds, "_sum");
+    NPY_FORWARD_NDARRAY_METHOD("_sum");
 }
 
 
@@ -1920,7 +1943,7 @@ array_cumsum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_prod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    return forward_ndarray_method(self, args, kwds, "_prod");
+    NPY_FORWARD_NDARRAY_METHOD("_prod");
 }
 
 static PyObject *
@@ -2004,14 +2027,14 @@ array_all(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    return forward_ndarray_method(self, args, kwds, "_std");
+    NPY_FORWARD_NDARRAY_METHOD("_std");
 }
 
 
 static PyObject *
 array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    return forward_ndarray_method(self, args, kwds, "_var");
+    NPY_FORWARD_NDARRAY_METHOD("_var");
 }
 
 
