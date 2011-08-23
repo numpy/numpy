@@ -717,7 +717,7 @@ array_boolean_subscript(PyArrayObject *self,
     char *ret_data, *ret_maskna_data = NULL;
     PyArray_Descr *dtype;
     PyArrayObject *ret;
-    int self_has_maskna = PyArray_HASMASKNA(self), needs_api = 0;
+    int self_has_maskna = PyArray_HASMASKNA(self), needs_api = 0, containsna;
     npy_intp bmask_size;
 
     if (PyArray_DESCR(bmask)->type_num != NPY_BOOL) {
@@ -728,10 +728,12 @@ array_boolean_subscript(PyArrayObject *self,
 
     /*
      * See the Boolean Indexing section of the missing data NEP.
-     *
-     * TODO: Add 'wheremask' as a parameter to ContainsNA.
      */
-    if (PyArray_ContainsNA(bmask)) {
+    containsna = PyArray_ContainsNA(bmask, NULL, NULL);
+    if (containsna == -1) {
+        return NULL;
+    }
+    else if (containsna) {
         PyErr_SetString(PyExc_ValueError,
                 "The boolean mask indexing array "
                 "may not contain any NA values");
@@ -957,7 +959,7 @@ array_ass_boolean_subscript(PyArrayObject *self,
     char *v_data, *v_maskna_data = NULL;
     int self_has_maskna = PyArray_HASMASKNA(self);
     int v_has_maskna = PyArray_HASMASKNA(v);
-    int needs_api = 0;
+    int needs_api = 0, containsna;
     npy_intp bmask_size;
     char constant_valid_mask = 1;
 
@@ -985,7 +987,11 @@ array_ass_boolean_subscript(PyArrayObject *self,
     }
 
     /* See the Boolean Indexing section of the missing data NEP */
-    if (PyArray_ContainsNA(bmask)) {
+    containsna = PyArray_ContainsNA(bmask, NULL, NULL);
+    if (containsna == -1) {
+        return -1;
+    }
+    else if (containsna) {
         PyErr_SetString(PyExc_ValueError,
                 "The boolean mask assignment indexing array "
                 "may not contain any NA values");
@@ -994,7 +1000,11 @@ array_ass_boolean_subscript(PyArrayObject *self,
 
     /* Can't assign an NA to an array which doesn't support it */
     if (v_has_maskna && !self_has_maskna) {
-        if (PyArray_ContainsNA(v)) {
+        containsna = PyArray_ContainsNA(v, NULL, NULL);
+        if (containsna == -1) {
+            return -1;
+        }
+        else if (containsna) {
             PyErr_SetString(PyExc_ValueError,
                     "Cannot assign NA to an array which "
                     "does not support NAs");

@@ -2620,7 +2620,11 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
             baseflags |= NPY_ITER_USE_MASKNA;
         }
         else {
-            if (PyArray_ContainsNA(src)) {
+            int containsna = PyArray_ContainsNA(src, NULL, NULL);
+            if (containsna == -1) {
+                return -1;
+            }
+            else if (containsna) {
                 PyErr_SetString(PyExc_ValueError,
                         "Cannot assign NA to an array which "
                         "does not support NAs");

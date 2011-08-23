@@ -123,11 +123,17 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             if (PyArray_HASMASKNA(obj)) {
                 use_maskna = 1;
             }
-            else if (PyArray_ContainsNA(self)) {
-                PyErr_SetString(PyExc_ValueError,
-                        "Cannot assign NA to an array which "
-                        "does not support NAs");
-                goto fail;
+            else {
+                int containsna = PyArray_ContainsNA(self, NULL, NULL);
+                if (containsna == -1) {
+                    goto fail;
+                }
+                else if (containsna) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "Cannot assign NA to an array which "
+                            "does not support NAs");
+                    goto fail;
+                }
             }
         }
     }
@@ -2009,10 +2015,10 @@ PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
         return NULL;
     }
 
-    result = PyArray_ReduceWrapper(arr, out,
+    result = PyArray_ReduceWrapper(arr, out, NULL,
                             PyArray_DESCR(arr), dtype,
                             NPY_SAME_KIND_CASTING,
-                            axis_flags, 1, skipna, keepdims,
+                            axis_flags, 1, skipna, NULL, keepdims,
                             &assign_reduce_identity_zero,
                             &reduce_count_nonzero_loop,
                             &reduce_count_nonzero_masked_loop,
@@ -2047,7 +2053,11 @@ PyArray_CountNonzero(PyArrayObject *self)
 
     /* If 'self' has an NA mask, make sure it has no NA values */
     if (PyArray_HASMASKNA(self)) {
-        if (PyArray_ContainsNA(self)) {
+        int containsna = PyArray_ContainsNA(self, NULL, NULL);
+        if (containsna == -1) {
+            return -1;
+        }
+        else if (containsna) {
             PyErr_SetString(PyExc_ValueError,
                     "Cannot count the number of nonzeros in an array "
                     "which contains an NA");
