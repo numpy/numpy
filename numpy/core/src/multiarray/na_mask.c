@@ -699,22 +699,28 @@ raw_reduce_maskna_array(int ndim, npy_intp *shape,
     return 0;
 }
 
-/*NUMPY_API
- *
+/*
  * This function performs a reduction on the masks for an array.
  *
  * This is for use with a reduction where 'skipna=False'.
  *
+ * operand: The operand for which the reduction is being done. This array
+ *          must have an NA mask.
  * result: The result array, which should have the same 'ndim' as
  *         'operand' but with dimensions of size one for every reduction
  *         axis. This array must have an NA mask.
- * operand: The operand for which the reduction is being done. This array
- *          must have an NA mask.
+ * wheremask: NOT SUPPORTED YET, but is for a boolean mask which can
+ *            broadcast to 'result', indicating where to do the reduction.
+ *            Should pass in NULL.
+ * skipwhichna: NOT SUPPORTED YET, but for future expansion to multi-NA,
+ *              where reductions can be done on NAs with a subset of
+ *              the possible payloads. Should pass in NULL.
  *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_ReduceMaskNAArray(PyArrayObject *result, PyArrayObject *operand)
+PyArray_ReduceMaskNAArray(PyArrayObject *operand, PyArrayObject *result,
+                            PyArrayObject *wheremask, npy_bool *skipwhichna)
 {
     int idim, ndim;
     npy_intp result_strides[NPY_MAXDIMS];
@@ -732,6 +738,20 @@ PyArray_ReduceMaskNAArray(PyArrayObject *result, PyArrayObject *operand)
         PyErr_SetString(PyExc_ValueError,
                 "both result and operand must have NA masks in "
                 "ReduceMaskNAArray");
+        return -1;
+    }
+
+    /* Validate that the parameters for future expansion are NULL */
+    if (wheremask != NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "the NA mask reduction operation in NumPy does not "
+                "yet support a where mask");
+        return -1;
+    }
+    if (skipwhichna != NULL) {
+        PyErr_SetString(PyExc_RuntimeError,
+                "multi-NA support is not yet implemented in "
+                "the NA mask reduction operation");
         return -1;
     }
 
