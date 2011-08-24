@@ -1941,19 +1941,21 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     /*
      * FAIL with NotImplemented if the other object has
-     * the __r<op>__ method and has __array_priority__ as
-     * an attribute (signalling it can handle ndarray's)
-     * and is not already an ndarray or a subtype of the same type.
+     * the __r<op>__ method and has a higher priority than
+     * the current op (signalling it can handle ndarray's).
     */
     if (nin == 2 && nout == 1 && dtypes[1]->type_num == NPY_OBJECT) {
         PyObject *_obj = PyTuple_GET_ITEM(args, 1);
-        if (!PyArray_CheckExact(_obj)
-               /* If both are same subtype of object arrays, then proceed */
-                && !(Py_TYPE(_obj) == Py_TYPE(PyTuple_GET_ITEM(args, 0)))
-                && PyObject_HasAttrString(_obj, "__array_priority__")
-                && _has_reflected_op(_obj, ufunc_name)) {
-            retval = -2;
-            goto fail;
+        if (!PyArray_CheckExact(_obj)) {
+            double self_prio, other_prio;
+            self_prio = PyArray_GetPriority(PyTuple_GET_ITEM(args, 0),
+                                                        NPY_SCALAR_PRIORITY);
+            other_prio = PyArray_GetPriority(_obj, NPY_SCALAR_PRIORITY);
+            if (self_prio < other_prio &&
+                            _has_reflected_op(_obj, ufunc_name)) {
+                retval = -2;
+                goto fail;
+            }
         }
     }
 
@@ -2305,16 +2307,18 @@ PyUFunc_GenericFunction(PyUFuncObject *ufunc,
     */
     if (nin == 2 && nout == 1 && dtypes[1]->type_num == NPY_OBJECT) {
         PyObject *_obj = PyTuple_GET_ITEM(args, 1);
-        if (!PyArray_CheckExact(_obj)
-               /* If both are same subtype of object arrays, then proceed */
-                && !(Py_TYPE(_obj) == Py_TYPE(PyTuple_GET_ITEM(args, 0)))
-                && PyObject_HasAttrString(_obj, "__array_priority__")
-                && _has_reflected_op(_obj, ufunc_name)) {
-            retval = -2;
-            goto fail;
+        if (!PyArray_CheckExact(_obj)) {
+            double self_prio, other_prio;
+            self_prio = PyArray_GetPriority(PyTuple_GET_ITEM(args, 0),
+                                                        NPY_SCALAR_PRIORITY);
+            other_prio = PyArray_GetPriority(_obj, NPY_SCALAR_PRIORITY);
+            if (self_prio < other_prio &&
+                            _has_reflected_op(_obj, ufunc_name)) {
+                retval = -2;
+                goto fail;
+            }
         }
     }
-
 
 #if NPY_UF_DBG_TRACING
     printf("input types:\n");
