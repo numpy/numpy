@@ -1338,5 +1338,22 @@ def test_array_maskna_linspace_logspace():
     assert_(not a.flags.maskna)
     assert_(b.flags.maskna)
 
+def test_array_maskna_eye():
+    # np.eye
+
+    # By default there should be no NA mask
+    a = np.eye(3)
+    assert_(not a.flags.maskna)
+
+    a = np.eye(3, maskna=True)
+    assert_(a.flags.maskna)
+    assert_(a.flags.ownmaskna)
+    assert_equal(a, np.eye(3))
+
+    a = np.eye(3, k=2, maskna=True)
+    assert_(a.flags.maskna)
+    assert_(a.flags.ownmaskna)
+    assert_equal(a, np.eye(3, k=2))
+
 if __name__ == "__main__":
     run_module_suite()

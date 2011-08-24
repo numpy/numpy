@@ -41,11 +41,9 @@ What doesn't work with NA:
     * Struct dtypes, which will have corresponding struct masks with
       one mask value per primitive field of the struct dtype.
     * UFunc.accumulate, UFunc.reduceat.
-    * Ufuncs calls with both NA masks and a where= mask at the same time.
+    * Ufunc calls with both NA masks and a where= mask at the same time.
     * np.logical_and, np.logical_or, np.all, and np.any don't satisfy the
       rules NA | True == True and NA & False == False yet.
-    * The reduction methods like <ndarray>.sum, etc. do not yet support
-      the new extended axis=, skipna= and keepdims= parameters.
     * Array methods:
        + ndarray.argmax, ndarray.argmin,
        + numpy.repeat, numpy.delete (relies on fancy indexing),
