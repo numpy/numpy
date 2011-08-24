@@ -98,7 +98,7 @@ def _std(a, axis=None, dtype=None, out=None, ddof=0,
                                 skipna=skipna, keepdims=keepdims)
 
     if isinstance(ret, mu.ndarray):
-        um.sqrt(ret, out=ret)
+        ret = um.sqrt(ret, out=ret)
     else:
         ret = um.sqrt(ret)
 
