@@ -50,17 +50,11 @@ array_shape_set(PyArrayObject *self, PyObject *val)
     if (!PyArray_IntpConverter(val, &newdims)) {
 	return -1;
     }
-    ret = (PyArrayObject *)PyArray_Newshape(self, &newdims, PyArray_CORDER);
+    ret = (PyArrayObject *)PyArray_Newshape_Nocopy(self, &newdims,
+						   PyArray_CORDER);
     PyDimMem_FREE(newdims.ptr);
 
     if (ret == NULL) {
-        return -1;
-    }
-    if (PyArray_DATA(ret) != PyArray_DATA(self)) {
-        Py_DECREF(ret);
-        PyErr_SetString(PyExc_AttributeError,
-                        "incompatible shape for a non-contiguous "\
-                        "array");
         return -1;
     }
 

@@ -326,6 +326,160 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     return NULL;
 }
 
+/*
+ * Performs the same operations as PyArray_Newshape,
+ * but won't ever copy, instead raises an
+ * AttributeError on fail.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_Newshape_Nocopy(PyArrayObject *self, PyArray_Dims *newdims,
+                 NPY_ORDER order)
+{
+    intp i;
+    intp *dimensions = newdims->ptr;
+    PyArrayObject *ret;
+    int n = newdims->len;
+    Bool same, incref = TRUE;
+    intp *strides = NULL;
+    intp newstrides[MAX_DIMS];
+    int flags;
+
+    if (order == NPY_ANYORDER) {
+        order = PyArray_ISFORTRAN(self);
+    }
+    /*  Quick check to make sure anything actually needs to be done */
+    if (n == PyArray_NDIM(self)) {
+        same = TRUE;
+        i = 0;
+        while (same && i < n) {
+            if (PyArray_DIM(self,i) != dimensions[i]) {
+                same=FALSE;
+            }
+            i++;
+        }
+        if (same) {
+            return PyArray_View(self, NULL, NULL);
+        }
+    }
+
+    /*
+     * Returns a pointer to an appropriate strides array
+     * if all we are doing is inserting ones into the shape,
+     * or removing ones from the shape
+     * or doing a combination of the two
+     * In this case we don't need to do anything but update strides and
+     * dimensions.  So, we can handle non single-segment cases.
+     */
+    i = _check_ones(self, n, dimensions, newstrides);
+    if (i == 0) {
+        strides = newstrides;
+    }
+    flags = PyArray_FLAGS(self);
+
+    if (strides == NULL) {
+        /*
+         * we are really re-shaping not just adding ones to the shape somewhere
+         * fix any -1 dimensions and check new-dimensions against old size
+         */
+        if (_fix_unknown_dimension(newdims, PyArray_SIZE(self)) < 0) {
+            return NULL;
+        }
+        /*
+         * sometimes we have to create a new copy of the array
+         * in order to get the right orientation and
+         * because we can't just re-use the buffer with the
+         * data in the order it is in.
+         */
+        if (!(PyArray_ISONESEGMENT(self)) ||
+            (((PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS) &&
+               order == NPY_FORTRANORDER) ||
+              (PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS) &&
+                  order == NPY_CORDER)) && (PyArray_NDIM(self) > 1))) {
+            int success = 0;
+            success = _attempt_nocopy_reshape(self,n,dimensions,
+                                              newstrides,order);
+            if (success) {
+                /* no need to copy the array after all */
+                strides = newstrides;
+                flags = PyArray_FLAGS(self);
+            }
+            else {
+		PyErr_SetString(PyExc_AttributeError,
+                        "incompatible shape for a non-contiguous "\
+                        "array");
+		return NULL;
+            }
+        }
+
+        /* We always have to interpret the contiguous buffer correctly */
+
+        /* Make sure the flags argument is set. */
+        if (n > 1) {
+            if (order == NPY_FORTRANORDER) {
+                flags &= ~NPY_ARRAY_C_CONTIGUOUS;
+                flags |= NPY_ARRAY_F_CONTIGUOUS;
+            }
+            else {
+                flags &= ~NPY_ARRAY_F_CONTIGUOUS;
+                flags |= NPY_ARRAY_C_CONTIGUOUS;
+            }
+        }
+    }
+    else if (n > 0) {
+        /*
+         * replace any 0-valued strides with
+         * appropriate value to preserve contiguousness
+         */
+        if (order == NPY_FORTRANORDER) {
+            if (strides[0] == 0) {
+                strides[0] = PyArray_DESCR(self)->elsize;
+            }
+            for (i = 1; i < n; i++) {
+                if (strides[i] == 0) {
+                    strides[i] = strides[i-1] * dimensions[i-1];
+                }
+            }
+        }
+        else {
+            if (strides[n-1] == 0) {
+                strides[n-1] = PyArray_DESCR(self)->elsize;
+            }
+            for (i = n - 2; i > -1; i--) {
+                if (strides[i] == 0) {
+                    strides[i] = strides[i+1] * dimensions[i+1];
+                }
+            }
+        }
+    }
+
+    Py_INCREF(PyArray_DESCR(self));
+    ret = (PyAO *)PyArray_NewFromDescr(Py_TYPE(self),
+                                       PyArray_DESCR(self),
+                                       n, dimensions,
+                                       strides,
+                                       PyArray_DATA(self),
+                                       flags, (PyObject *)self);
+
+    if (ret == NULL) {
+        goto fail;
+    }
+    if (incref) {
+        Py_INCREF(self);
+    }
+    if (PyArray_SetBaseObject(ret, (PyObject *)self)) {
+        Py_DECREF(ret);
+        return NULL;
+    }
+    PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
+    return (PyObject *)ret;
+
+ fail:
+    if (!incref) {
+        Py_DECREF(self);
+    }
+    return NULL;
+}
+
 
 
 /* For back-ward compatability -- Not recommended */
