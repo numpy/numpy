@@ -254,7 +254,7 @@ putmask = multiarray.putmask
 einsum = multiarray.einsum
 isna = multiarray.isna
 
-def asarray(a, dtype=None, order=None):
+def asarray(a, dtype=None, order=None, maskna=None, ownmaskna=False):
     """
     Convert the input to an array.
 
@@ -269,6 +269,13 @@ def asarray(a, dtype=None, order=None):
     order : {'C', 'F'}, optional
         Whether to use row-major ('C') or column-major ('F' for FORTRAN)
         memory representation.  Defaults to 'C'.
+   maskna : bool or None, optional
+        If this is set to True, it forces the array to have an NA mask.
+        If this is set to False, it forces the array to not have an NA
+        mask.
+    ownmaskna : bool, optional
+        If this is set to True, forces the array to have a mask which
+        it owns.
 
     Returns
     -------
@@ -322,9 +329,10 @@ def asarray(a, dtype=None, order=None):
     True
 
     """
-    return array(a, dtype, copy=False, order=order)
+    return array(a, dtype, copy=False, order=order,
+                            maskna=maskna, ownmaskna=ownmaskna)
 
-def asanyarray(a, dtype=None, order=None):
+def asanyarray(a, dtype=None, order=None, maskna=None, ownmaskna=False):
     """
     Convert the input to an ndarray, but pass ndarray subclasses through.
 
@@ -339,6 +347,13 @@ def asanyarray(a, dtype=None, order=None):
     order : {'C', 'F'}, optional
         Whether to use row-major ('C') or column-major ('F') memory
         representation.  Defaults to 'C'.
+   maskna : bool or None, optional
+        If this is set to True, it forces the array to have an NA mask.
+        If this is set to False, it forces the array to not have an NA
+        mask.
+    ownmaskna : bool, optional
+        If this is set to True, forces the array to have a mask which
+        it owns.
 
     Returns
     -------
@@ -374,9 +389,10 @@ def asanyarray(a, dtype=None, order=None):
     True
 
     """
-    return array(a, dtype, copy=False, order=order, subok=True)
+    return array(a, dtype, copy=False, order=order, subok=True,
+                                maskna=maskna, ownmaskna=ownmaskna)
 
-def ascontiguousarray(a, dtype=None):
+def ascontiguousarray(a, dtype=None, maskna=None, ownmaskna=False):
     """
     Return a contiguous array in memory (C order).
 
@@ -386,6 +402,13 @@ def ascontiguousarray(a, dtype=None):
         Input array.
     dtype : str or dtype object, optional
         Data-type of returned array.
+   maskna : bool or None, optional
+        If this is set to True, it forces the array to have an NA mask.
+        If this is set to False, it forces the array to not have an NA
+        mask.
+    ownmaskna : bool, optional
+        If this is set to True, forces the array to have a mask which
+        it owns.
 
     Returns
     -------
@@ -410,9 +433,10 @@ def ascontiguousarray(a, dtype=None):
     True
 
     """
-    return array(a, dtype, copy=False, order='C', ndmin=1)
+    return array(a, dtype, copy=False, order='C', ndmin=1,
+                                maskna=maskna, ownmaskna=ownmaskna)
 
-def asfortranarray(a, dtype=None):
+def asfortranarray(a, dtype=None, maskna=None, ownmaskna=False):
     """
     Return an array laid out in Fortran order in memory.
 
@@ -422,6 +446,13 @@ def asfortranarray(a, dtype=None):
         Input array.
     dtype : str or dtype object, optional
         By default, the data-type is inferred from the input data.
+   maskna : bool or None, optional
+        If this is set to True, it forces the array to have an NA mask.
+        If this is set to False, it forces the array to not have an NA
+        mask.
+    ownmaskna : bool, optional
+        If this is set to True, forces the array to have a mask which
+        it owns.
 
     Returns
     -------
@@ -446,7 +477,8 @@ def asfortranarray(a, dtype=None):
     True
 
     """
-    return array(a, dtype, copy=False, order='F', ndmin=1)
+    return array(a, dtype, copy=False, order='F', ndmin=1,
+                                maskna=maskna, ownmaskna=ownmaskna)
 
 def require(a, dtype=None, requirements=None):
     """

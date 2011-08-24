@@ -93,18 +93,41 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
                 "dependency more than once");
         return -1;
     }
+
     /*
      * Don't allow chains of views, always set the base
-     * to the owner of the data
+     * to the owner of the data. That is, either the first object
+     * which isn't an array, the first object with an NA mask
+     * which owns that NA mask, or the first object which owns
+     * its own data.
      */
-    while (PyArray_Check(obj) &&
-                            (PyObject *)arr != obj &&
-                            PyArray_BASE((PyArrayObject *)obj) != NULL) {
-        PyObject *tmp = PyArray_BASE((PyArrayObject *)obj);
+    while (PyArray_Check(obj) && (PyObject *)arr != obj) {
+        PyArrayObject *obj_arr = (PyArrayObject *)arr;
+        PyObject *tmp;
+
+        /* If this array owns its own data, stop collapsing */
+        if (PyArray_CHKFLAGS(obj_arr, NPY_ARRAY_OWNDATA)) {
+            break;
+        }
+        /*
+         * If 'arr' doesn't own its NA mask, then if
+         * 'obj' is NA masked and owns the mask, stop collapsing
+         */
+        if (!PyArray_CHKFLAGS(arr, NPY_ARRAY_OWNMASKNA) &&
+                        PyArray_CHKFLAGS(obj_arr, NPY_ARRAY_OWNMASKNA)) {
+            break;
+        }
+        /* If there's no base, stop collapsing */
+        tmp = PyArray_BASE(obj_arr);
+        if (tmp == NULL) {
+            break;
+        }
+
         Py_INCREF(tmp);
         Py_DECREF(obj);
         obj = tmp;
     }
+
     /* Disallow circular references */
     if ((PyObject *)arr == obj) {
         Py_DECREF(obj);
@@ -112,6 +135,7 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
                 "Cannot create a circular NumPy array 'base' dependency");
         return -1;
     }
+
     ((PyArrayObject_fieldaccess *)arr)->base = obj;
 
     return 0;
