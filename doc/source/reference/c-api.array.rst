@@ -92,6 +92,12 @@ sub-types).
     A synonym for PyArray_DESCR, named to be consistent with the
     'dtype' usage within Python.
 
+.. cfunction:: npy_bool PyArray_HASMASKNA(PyArrayObject* arr)
+
+    .. versionadded:: 1.7
+
+    Returns true if the array has an NA-mask, false otherwise.
+
 .. cfunction:: PyArray_Descr *PyArray_MASKNA_DTYPE(PyArrayObject* arr)
 
     .. versionadded:: 1.7
@@ -2284,50 +2290,6 @@ an element copier function as a primitive.::
 
     A macro which calls the auxdata's clone function appropriately,
     returning a deep copy of the auxiliary data.
-
-Masks for Selecting Elements to Modify
---------------------------------------
-
-.. versionadded:: 1.7.0
-
-The array iterator, :ctype:`NpyIter`, has some new flags which
-allow control over which elements are intended to be modified,
-providing the ability to do masking even when doing casts to a buffer
-of a different type. Some inline functions have been added
-to facilitate consistent usage of these masks.
-
-A mask dtype can be one of three different possibilities. It can
-be :cdata:`NPY_BOOL`, :cdata:`NPY_MASK`, or a struct dtype whose
-fields are all mask dtypes.
-
-A mask of :cdata:`NPY_BOOL` can just indicate True, with underlying
-value 1, for an element that is exposed, and False, with underlying
-value 0, for an element that is hidden.
-
-A mask of :cdata:`NPY_MASK` can additionally carry a payload which
-is a value from 0 to 127. This allows for missing data implementations
-based on such masks to support multiple reasons for data being missing.
-
-A mask of a struct dtype can only pair up with another struct dtype
-with the same field names. In this way, each field of the mask controls
-the masking for the corresponding field in the associated data array.
-
-Inline functions to work with masks are as follows.
-
-.. cfunction:: npy_bool NpyMask_IsExposed(npy_mask mask)
-
-    Returns true if the data element corresponding to the mask element
-    can be modified, false if not.
-
-.. cfunction:: npy_uint8 NpyMask_GetPayload(npy_mask mask)
-
-    Returns the payload contained in the mask. The return value
-    is between 0 and 127.
-
-.. cfunction:: npy_mask NpyMask_Create(npy_bool exposed, npy_int8 payload)
-
-    Creates a mask from a flag indicating whether the element is exposed
-    or not and a payload value.
 
 Array Iterators
 ---------------
