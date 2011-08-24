@@ -4170,8 +4170,8 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyDict_SetItemString(d, "NAType", (PyObject *)&NpyNA_Type);
     Py_INCREF(&NpyNA_Type);
     /* NA  Singleton */
-    PyDict_SetItemString(d, "NA", (PyObject *)&_Npy_NASingleton);
-    Py_INCREF(&_Npy_NASingleton);
+    Py_INCREF(Npy_NA);
+    PyDict_SetItemString(d, "NA", Npy_NA);
 
     set_flaginfo(d);
 

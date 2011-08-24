@@ -749,3 +749,4 @@ NPY_NO_EXPORT NpyNA_fields _Npy_NASingleton = {
     1                  /* is_singleton */
 };
 
+NPY_NO_EXPORT PyObject *Npy_NA = (PyObject *)&_Npy_NASingleton;
