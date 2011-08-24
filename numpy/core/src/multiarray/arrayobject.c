@@ -50,7 +50,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "getset.h"
 #include "sequence.h"
 #include "buffer.h"
-#include "na_singleton.h"
+#include "na_object.h"
 #include "na_mask.h"
 
 /*NUMPY_API

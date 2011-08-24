@@ -18,7 +18,7 @@
 #include "arrayobject.h"
 #include "ctors.h"
 #include "lowlevel_strided_loops.h"
-#include "na_singleton.h"
+#include "na_object.h"
 #include "reduction.h"
 
 #include "item_selection.h"

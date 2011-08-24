@@ -52,7 +52,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "item_selection.h"
 #include "shape.h"
 #include "ctors.h"
-#include "na_singleton.h"
+#include "na_object.h"
 #include "na_mask.h"
 #include "reduction.h"
 

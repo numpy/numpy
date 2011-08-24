@@ -20,7 +20,7 @@
 
 #include "descriptor.h"
 #include "common.h"
-#include "na_singleton.h"
+#include "na_object.h"
 
 static PyObject *
 na_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)

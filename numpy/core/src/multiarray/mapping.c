@@ -15,7 +15,7 @@
 #include "common.h"
 #include "iterators.h"
 #include "mapping.h"
-#include "na_singleton.h"
+#include "na_object.h"
 #include "lowlevel_strided_loops.h"
 #include "item_selection.h"
 
