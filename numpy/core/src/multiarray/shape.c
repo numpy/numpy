@@ -18,8 +18,6 @@
 
 #include "shape.h"
 
-#define PyArrayObject PyArrayObject
-
 static int
 _check_ones(PyArrayObject *self, int newnd,
                 npy_intp* newdims, npy_intp *strides, npy_intp *masknastrides);
@@ -1082,7 +1080,7 @@ PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
  * Returns a contiguous array
  */
 NPY_NO_EXPORT PyObject *
-PyArray_Ravel(PyArrayObject *a, NPY_ORDER order)
+PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
 {
     PyArray_Dims newdim = {NULL,1};
     npy_intp val[1] = {-1};
@@ -1090,70 +1088,93 @@ PyArray_Ravel(PyArrayObject *a, NPY_ORDER order)
     newdim.ptr = val;
 
     if (order == NPY_ANYORDER) {
-        order = PyArray_ISFORTRAN(a) ? NPY_FORTRANORDER : NPY_CORDER;
+        order = PyArray_ISFORTRAN(arr) ? NPY_FORTRANORDER : NPY_CORDER;
     }
     else if (order == NPY_KEEPORDER) {
-        if (PyArray_IS_C_CONTIGUOUS(a)) {
+        if (PyArray_IS_C_CONTIGUOUS(arr)) {
             order = NPY_CORDER;
         }
-        else if (PyArray_IS_F_CONTIGUOUS(a)) {
+        else if (PyArray_IS_F_CONTIGUOUS(arr)) {
             order = NPY_FORTRANORDER;
         }
     }
 
-    if (order == NPY_CORDER && PyArray_ISCONTIGUOUS(a)) {
-        return PyArray_Newshape(a, &newdim, NPY_CORDER);
+    if (order == NPY_CORDER && PyArray_ISCONTIGUOUS(arr)) {
+        return PyArray_Newshape(arr, &newdim, NPY_CORDER);
     }
-    else if (order == NPY_FORTRANORDER && PyArray_ISFORTRAN(a)) {
-        return PyArray_Newshape(a, &newdim, NPY_FORTRANORDER);
+    else if (order == NPY_FORTRANORDER && PyArray_ISFORTRAN(arr)) {
+        return PyArray_Newshape(arr, &newdim, NPY_FORTRANORDER);
     }
     /* For KEEPORDER, check if we can make a flattened view */
     else if (order == NPY_KEEPORDER) {
         npy_stride_sort_item strideperm[NPY_MAXDIMS];
         npy_intp stride;
-        int i, ndim = PyArray_NDIM(a);
+        int i, ndim = PyArray_NDIM(arr);
 
-        PyArray_CreateSortedStridePerm(PyArray_NDIM(a), PyArray_SHAPE(a),
-                                PyArray_STRIDES(a), strideperm);
+        PyArray_CreateSortedStridePerm(PyArray_NDIM(arr), PyArray_SHAPE(arr),
+                                PyArray_STRIDES(arr), strideperm);
 
-        stride = PyArray_DESCR(a)->elsize;
+        stride = strideperm[ndim-1].stride;
         for (i = ndim-1; i >= 0; --i) {
             if (strideperm[i].stride != stride) {
                 break;
             }
-            stride *= PyArray_DIM(a, strideperm[i].perm);
+            stride *= PyArray_DIM(arr, strideperm[i].perm);
         }
 
         /* If all the strides matched a contiguous layout, return a view */
         if (i < 0) {
             PyArrayObject *ret;
-            npy_intp stride = PyArray_DESCR(a)->elsize;
+            npy_intp stride = strideperm[ndim-1].stride;
 
-            val[0] = PyArray_SIZE(a);
+            val[0] = PyArray_SIZE(arr);
 
-            Py_INCREF(PyArray_DESCR(a));
-            ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(a),
-                               PyArray_DESCR(a),
+            Py_INCREF(PyArray_DESCR(arr));
+            ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(arr),
+                               PyArray_DESCR(arr),
                                1, val,
                                &stride,
-                               PyArray_BYTES(a),
-                               PyArray_FLAGS(a),
-                               (PyObject *)a);
-
-            if (ret != NULL) {
-                PyArray_UpdateFlags(ret,
-                            NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS);
-                Py_INCREF(a);
-                if (PyArray_SetBaseObject(ret, (PyObject *)a) < 0) {
-                    Py_DECREF(ret);
-                    ret = NULL;
-                }
+                               PyArray_BYTES(arr),
+                PyArray_FLAGS(arr) & ~(NPY_ARRAY_OWNMASKNA | NPY_ARRAY_MASKNA),
+                               (PyObject *)arr);
+            if (ret == NULL) {
+                return NULL;
             }
+
+            /* Take a view of the NA mask as well if necessary */
+            if (PyArray_HASMASKNA(arr)) {
+                PyArrayObject_fieldaccess *fa =
+                                    (PyArrayObject_fieldaccess *)ret;
+
+                fa->maskna_dtype = PyArray_MASKNA_DTYPE(arr);
+                Py_INCREF(fa->maskna_dtype);
+                fa->maskna_data = PyArray_MASKNA_DATA(arr);
+
+                /*
+                 * Because the strides of the NA mask always match up
+                 * layout-wise with the strides of the data, we don't
+                 * have to also check them the same way. This is due
+                 * to the fact that PyArray_AllocateMaskNA is the only
+                 * mechanism ever used to create an NA mask.
+                 */
+                fa->maskna_strides[0] =
+                        PyArray_MASKNA_STRIDES(arr)[strideperm[ndim-1].perm];
+                fa->flags |= NPY_ARRAY_MASKNA;
+            }
+
+            PyArray_UpdateFlags(ret,
+                        NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS);
+            Py_INCREF(arr);
+            if (PyArray_SetBaseObject(ret, (PyObject *)arr) < 0) {
+                Py_DECREF(ret);
+                return NULL;
+            }
+
             return (PyObject *)ret;
         }
     }
 
-    return PyArray_Flatten(a, order);
+    return PyArray_Flatten(arr, order);
 }
 
 /*NUMPY_API
