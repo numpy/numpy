@@ -1893,7 +1893,7 @@ def _maketup(descr, val):
         res = [_maketup(fields[name][0],val) for name in dt.names]
         return tuple(res)
 
-def identity(n, dtype=None):
+def identity(n, dtype=None, maskna=False):
     """
     Return the identity array.
 
@@ -1906,6 +1906,8 @@ def identity(n, dtype=None):
         Number of rows (and columns) in `n` x `n` output.
     dtype : data-type, optional
         Data-type of the output.  Defaults to ``float``.
+    maskna : bool, optional
+        If this is true, the returned array will have an NA mask.
 
     Returns
     -------
@@ -1921,8 +1923,8 @@ def identity(n, dtype=None):
            [ 0.,  0.,  1.]])
 
     """
-    a = zeros((n,n), dtype=dtype)
-    a.flat[::n+1] = 1
+    a = zeros((n,n), dtype=dtype, maskna=maskna)
+    a.diagonal()[...] = 1
     return a
 
 def allclose(a, b, rtol=1.e-5, atol=1.e-8):
