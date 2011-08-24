@@ -44,9 +44,15 @@ array_shape_set(PyArrayObject *self, PyObject *val)
 {
     int nd;
     PyArrayObject *ret;
+    PyArray_Dims newdims;
 
     /* Assumes C-order */
-    ret = (PyArrayObject *)PyArray_Reshape(self, val);
+    if (!PyArray_IntpConverter(val, &newdims)) {
+	return -1;
+    }
+    ret = (PyArrayObject *)PyArray_Newshape(self, &newdims, PyArray_CORDER);
+    PyDimMem_FREE(newdims.ptr);
+
     if (ret == NULL) {
         return -1;
     }
