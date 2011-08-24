@@ -44,17 +44,17 @@ array_shape_set(PyArrayObject *self, PyObject *val)
 {
     int nd;
     PyArrayObject *ret;
+    PyArray_Dims newdims;
 
     /* Assumes C-order */
-    ret = (PyArrayObject *)PyArray_Reshape(self, val);
-    if (ret == NULL) {
-        return -1;
+    if (!PyArray_IntpConverter(val, &newdims)) {
+	return -1;
     }
-    if (PyArray_DATA(ret) != PyArray_DATA(self)) {
-        Py_DECREF(ret);
-        PyErr_SetString(PyExc_AttributeError,
-                        "incompatible shape for a non-contiguous "\
-                        "array");
+    ret = (PyArrayObject *)PyArray_Newshape_Nocopy(self, &newdims,
+						   PyArray_CORDER);
+    PyDimMem_FREE(newdims.ptr);
+
+    if (ret == NULL) {
         return -1;
     }
 

@@ -163,19 +163,9 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     return Py_None;
 }
 
-/*
- * Returns a new array
- * with the new shape from the data
- * in the old array --- order-perspective depends on order argument.
- * copy-only-if-necessary
- */
-
-/*NUMPY_API
- * New shape for an array
- */
-NPY_NO_EXPORT PyObject *
-PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
-                 NPY_ORDER order)
+static PyObject *
+_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
+                 NPY_ORDER order, int copy)
 {
     intp i;
     intp *dimensions = newdims->ptr;
@@ -245,7 +235,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                 strides = newstrides;
                 flags = PyArray_FLAGS(self);
             }
-            else {
+            else if (copy) {
                 PyObject *new;
                 new = PyArray_NewCopy(self, order);
                 if (new == NULL) {
@@ -255,6 +245,12 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                 self = (PyArrayObject *)new;
                 flags = PyArray_FLAGS(self);
             }
+            else {
+		PyErr_SetString(PyExc_AttributeError,
+                        "incompatible shape for a non-contiguous "\
+                        "array");
+		return NULL;
+	    }
         }
 
         /* We always have to interpret the contiguous buffer correctly */
@@ -324,6 +320,35 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         Py_DECREF(self);
     }
     return NULL;
+}
+
+/*
+ * Returns a new array
+ * with the new shape from the data
+ * in the old array --- order-perspective depends on order argument.
+ * copy-only-if-necessary
+ */
+
+/*NUMPY_API
+ * New shape for an array
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
+                 NPY_ORDER order)
+{
+    return _Newshape(self, newdims, order, 1);
+}
+
+/*
+ * Performs the same operations as PyArray_Newshape,
+ * but won't ever copy, instead raises an
+ * AttributeError on fail.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_Newshape_Nocopy(PyArrayObject *self, PyArray_Dims *newdims,
+                 NPY_ORDER order)
+{
+    return _Newshape(self, newdims, order, 0);
 }
 
 
