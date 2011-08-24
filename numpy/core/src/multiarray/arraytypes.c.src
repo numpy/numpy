@@ -18,7 +18,7 @@
 #include "ctors.h"
 #include "usertypes.h"
 #include "_datetime.h"
-#include "na_singleton.h"
+#include "na_object.h"
 
 #include "numpyos.h"
 

@@ -24,7 +24,7 @@
 #include "methods.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
-#include "na_singleton.h"
+#include "na_object.h"
 
 /*
  * Imports the PyDateTime functions so we can create these objects.

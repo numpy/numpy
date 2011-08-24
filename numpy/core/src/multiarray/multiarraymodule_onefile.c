@@ -50,7 +50,7 @@
 #include "array_assign_array.c"
 #include "reduction.c"
 #include "na_mask.c"
-#include "na_singleton.c"
+#include "na_object.c"
 
 #ifndef Py_UNICODE_WIDE
 #include "ucsnarrow.c"

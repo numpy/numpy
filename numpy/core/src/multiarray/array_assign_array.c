@@ -21,7 +21,7 @@
 #include "methods.h"
 #include "shape.h"
 #include "lowlevel_strided_loops.h"
-#include "na_singleton.h"
+#include "na_object.h"
 #include "na_mask.h"
 
 #include "array_assign.h"
