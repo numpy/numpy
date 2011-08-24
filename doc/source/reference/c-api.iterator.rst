@@ -551,9 +551,10 @@ Construction and Destruction
         .. cvar:: NPY_ITER_ALLOCATE
 
             This is for output arrays, and requires that the flag
-            :cdata:`NPY_ITER_WRITEONLY` be set.  If ``op[i]`` is NULL,
-            creates a new array with the final broadcast dimensions,
-            and a layout matching the iteration order of the iterator.
+            :cdata:`NPY_ITER_WRITEONLY` or :cdata:`NPY_ITER_READWRITE`
+            be set.  If ``op[i]`` is NULL, creates a new array with
+            the final broadcast dimensions, and a layout matching
+            the iteration order of the iterator.
 
             When ``op[i]`` is NULL, the requested data type
             ``op_dtypes[i]`` may be NULL as well, in which case it is
