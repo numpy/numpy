@@ -571,12 +571,6 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     if (ret == NULL) {
         return NULL;
     }
-    Py_INCREF(self);
-    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
-        Py_DECREF(ret);
-        Py_DECREF(type);
-        return NULL;
-    }
 
     /* Take a view of the mask if it exists */
     if (PyArray_HASMASKNA(self)) {
@@ -598,6 +592,14 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
                                             fa->nd * sizeof(npy_intp));
         }
         fa->flags |= NPY_ARRAY_MASKNA;
+    }
+
+    /* Set the base object */
+    Py_INCREF(self);
+    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
+        Py_DECREF(ret);
+        Py_DECREF(type);
+        return NULL;
     }
 
     if (type != NULL) {

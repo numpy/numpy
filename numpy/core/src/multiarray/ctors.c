@@ -1999,16 +1999,26 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     if (PyArray_NDIM(arr) <= 1 && (flags & NPY_ARRAY_F_CONTIGUOUS)) {
         flags |= NPY_ARRAY_C_CONTIGUOUS;
     }
+           /* If a guaranteed copy was requested */
     copy = (flags & NPY_ARRAY_ENSURECOPY) ||
-        ((flags & NPY_ARRAY_C_CONTIGUOUS) &&
-                (!(arrflags & NPY_ARRAY_C_CONTIGUOUS)))
-        || ((flags & NPY_ARRAY_ALIGNED) &&
-                (!(arrflags & NPY_ARRAY_ALIGNED)))
-        || (PyArray_NDIM(arr) > 1 &&
-                ((flags & NPY_ARRAY_F_CONTIGUOUS) &&
-                (!(arrflags & NPY_ARRAY_F_CONTIGUOUS))))
-        || ((flags & NPY_ARRAY_WRITEABLE) &&
-                (!(arrflags & NPY_ARRAY_WRITEABLE))) ||
+           /* If C contiguous was requested, and arr is not */
+           ((flags & NPY_ARRAY_C_CONTIGUOUS) &&
+                   (!(arrflags & NPY_ARRAY_C_CONTIGUOUS))) ||
+           /* If an aligned array was requested, and arr is not */
+           ((flags & NPY_ARRAY_ALIGNED) &&
+                   (!(arrflags & NPY_ARRAY_ALIGNED))) ||
+           /* If a Fortran contiguous array was requested, and arr is not */
+           (PyArray_NDIM(arr) > 1 &&
+                   ((flags & NPY_ARRAY_F_CONTIGUOUS) &&
+                   (!(arrflags & NPY_ARRAY_F_CONTIGUOUS)))) ||
+           /* If a writeable array was requested, and arr is not */
+           ((flags & NPY_ARRAY_WRITEABLE) &&
+                   (!(arrflags & NPY_ARRAY_WRITEABLE))) ||
+           /* If an array with no NA mask was requested, and arr has one */
+           ((flags & (NPY_ARRAY_ALLOWNA |
+                      NPY_ARRAY_MASKNA |
+                      NPY_ARRAY_OWNMASKNA)) == 0 &&
+                   (arrflags & NPY_ARRAY_MASKNA)) ||
            !PyArray_EquivTypes(oldtype, newtype);
 
     if (copy) {
@@ -2043,7 +2053,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
          * Allocate an NA mask if necessary from the input,
          * is NAs are being allowed.
          */
-        if (PyArray_HASMASKNA(arr) && (flags & NPY_ARRAY_ALLOWNA)) {
+        if ((arrflags & NPY_ARRAY_MASKNA) && (flags & NPY_ARRAY_ALLOWNA)) {
             if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
                 Py_DECREF(ret);
                 return NULL;
@@ -2080,25 +2090,44 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         }
     }
     /*
-     * If no copy then just increase the reference
-     * count and return the input
+     * If no copy then take an appropriate view if necessary, or
+     * just return a reference to ret itself.
      */
     else {
-        Py_DECREF(newtype);
-        if ((flags & NPY_ARRAY_ENSUREARRAY) &&
-                                !PyArray_CheckExact(arr)) {
-            PyArray_Descr *dtype = PyArray_DESCR(arr);
-            Py_INCREF(dtype);
+        int needview = ((flags & NPY_ARRAY_ENSUREARRAY) &&
+                            !PyArray_CheckExact(arr)) ||
+                       ((flags & NPY_ARRAY_MASKNA) &&
+                            !(arrflags & NPY_ARRAY_MASKNA)) ||
+                       ((flags & NPY_ARRAY_OWNMASKNA) &&
+                            !(arrflags & NPY_ARRAY_OWNMASKNA));
 
-            ret = (PyArrayObject *)PyArray_View(arr, NULL, &PyArray_Type);
+        Py_DECREF(newtype);
+        if (needview) {
+            PyArray_Descr *dtype = PyArray_DESCR(arr);
+            PyTypeObject *subtype = NULL;
+
+            if (flags & NPY_ARRAY_ENSUREARRAY) {
+                subtype = &PyArray_Type;
+            }
+
+            Py_INCREF(dtype);
+            ret = (PyArrayObject *)PyArray_View(arr, NULL, subtype);
             if (ret == NULL) {
                 return NULL;
             }
+
+            if (flags & (NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA)) {
+                int ownmaskna = (flags & NPY_ARRAY_OWNMASKNA) != 0;
+                if (PyArray_AllocateMaskNA(ret, ownmaskna, 0, 1) < 0) {
+                    Py_DECREF(ret);
+                    return NULL;
+                }
+            }
         }
         else {
+            Py_INCREF(arr);
             ret = arr;
         }
-        Py_INCREF(arr);
     }
 
     return (PyObject *)ret;

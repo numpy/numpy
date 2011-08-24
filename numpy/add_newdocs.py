@@ -631,7 +631,7 @@ add_newdoc('numpy.core', 'broadcast', ('reset',
 
 add_newdoc('numpy.core.multiarray', 'array',
     """
-    array(object, dtype=None, copy=True, order=None, subok=False, ndmin=0)
+    array(object, dtype=None, copy=True, order=None, subok=False, ndmin=0, maskna=None, ownmaskna=False)
 
     Create an array.
 
@@ -667,6 +667,19 @@ add_newdoc('numpy.core.multiarray', 'array',
         Specifies the minimum number of dimensions that the resulting
         array should have.  Ones will be pre-pended to the shape as
         needed to meet this requirement.
+    maskna : bool or None, optional
+        If this is set to True, it forces the array to have an NA mask.
+        If the input is an array without a mask, this means a view with
+        an NA mask is created. If the input is an array with a mask, the
+        mask is preserved as-is.
+
+        If this is set to False, it forces the array to not have an NA
+        mask. If the input is an array with a mask, and has no NA values,
+        it will create a copy of the input without an NA mask.
+    ownmaskna : bool, optional
+        If this is set to True, forces the array to have a mask which
+        it owns. It may still return a view of the data from the input,
+        but the result will always own its own mask.
 
     Returns
     -------
