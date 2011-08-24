@@ -83,6 +83,43 @@ def test_array_maskna_construction():
     assert_(a.flags.maskna)
     assert_equal(np.isna(a), True)
 
+def test_array_maskna_asarray():
+    a = np.arange(6).reshape(2,3)
+
+    # Should not add an NA mask by default
+    res = np.asarray(a)
+    assert_(res is a)
+    assert_(not res.flags.maskna)
+
+    # Should add an NA mask if requested
+    res = np.asarray(a, maskna=True)
+    assert_(res.flags.maskna)
+    assert_(res.flags.ownmaskna)
+    res = np.asarray(a, ownmaskna=True)
+    assert_(res.flags.maskna)
+    assert_(res.flags.ownmaskna)
+
+    a.flags.maskna = True
+
+    # Should view or create a copy of the NA mask
+    res = np.asarray(a)
+    assert_(res is a)
+    res = np.asarray(a, maskna=True)
+    assert_(res is a)
+    res = np.asarray(a, ownmaskna=True)
+    assert_(res is a)
+
+    b = a.view()
+    assert_(not b.flags.ownmaskna)
+
+    res = np.asarray(b)
+    assert_(res is b)
+    res = np.asarray(b, maskna=True)
+    assert_(res is b)
+    res = np.asarray(b, ownmaskna=True)
+    assert_(not (res is b))
+    assert_(res.flags.ownmaskna)
+
 def test_array_maskna_copy():
     a = np.array([1,2,3])
     b = np.array([2,3,4], maskna=True)
@@ -444,9 +481,16 @@ def test_array_maskna_array_function_1D():
 
     # Should produce a view with an owned mask with 'ownmaskna=True'
     c = np.array(b_view, copy=False, ownmaskna=True)
-    assert_(c.base is a)
+    assert_(c.base is b_view)
     assert_(c.flags.ownmaskna)
     assert_(not (c is b_view))
+
+    # Should produce a view whose base is 'c', because 'c' owns
+    # the data for its mask
+    d = c.view()
+    assert_(d.base is c)
+    assert_(d.flags.maskna)
+    assert_(not d.flags.ownmaskna)
 
 def test_array_maskna_setasflat():
     # Copy from a C to a F array with some NAs
