@@ -19,7 +19,7 @@
 #include "scalartypes.h"
 
 #include "common.h"
-#include "na_singleton.h"
+#include "na_object.h"
 
 static PyArray_Descr *
 _descr_from_subtype(PyObject *type)

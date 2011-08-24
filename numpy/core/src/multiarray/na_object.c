@@ -20,7 +20,7 @@
 
 #include "descriptor.h"
 #include "common.h"
-#include "na_singleton.h"
+#include "na_object.h"
 
 static PyObject *
 na_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
@@ -748,4 +748,3 @@ NPY_NO_EXPORT NpyNA_fields _Npy_NASingleton = {
     NULL,              /* dtype */
     1                  /* is_singleton */
 };
-

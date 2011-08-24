@@ -20,7 +20,7 @@
 #include "shape.h"
 #include "lowlevel_strided_loops.h"
 #include "array_assign.h"
-#include "na_singleton.h"
+#include "na_object.h"
 
 /*NUMPY_API
  *
