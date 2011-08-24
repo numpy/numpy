@@ -2575,6 +2575,9 @@ Array Scalars
     if so, returns the appropriate array scalar. It should be used
     whenever 0-dimensional arrays could be returned to Python.
 
+    If *arr* is a 0-dimensional NA-masked array with its value hidden,
+    an instance of :ctype:`NpyNA *` is returned.
+
 .. cfunction:: PyObject* PyArray_Scalar(void* data, PyArray_Descr* dtype, PyObject* itemsize)
 
     Return an array scalar object of the given enumerated *typenum*

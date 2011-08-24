@@ -988,6 +988,19 @@ Construction and Destruction
 
     Returns the number of operands in the iterator.
 
+    When :cdata:`NPY_ITER_USE_MASKNA` is used on an operand, a new
+    operand is added to the end of the operand list in the iterator
+    to track that operand's NA mask. Thus, this equals the number
+    of construction operands plus the number of operands for
+    which the flag :cdata:`NPY_ITER_USE_MASKNA` was specified.
+
+.. cfunction:: int NpyIter_GetFirstMaskNAOp(NpyIter* iter)
+
+    .. versionadded:: 1.7
+
+    Returns the index of the first NA mask operand in the array. This
+    value is equal to the number of operands passed into the constructor.
+
 .. cfunction:: npy_intp* NpyIter_GetAxisStrideArray(NpyIter* iter, int axis)
 
     Gets the array of strides for the specified axis. Requires that
@@ -1023,6 +1036,16 @@ Construction and Destruction
     This gives back a pointer to the ``nop`` operand PyObjects
     that are being iterated.  The result points into ``iter``,
     so the caller does not gain any references to the PyObjects.
+
+.. cfunction:: npy_int8* NpyIter_GetMaskNAIndexArray(NpyIter* iter)
+
+    .. versionadded:: 1.7
+
+    This gives back a pointer to the ``nop`` indices which map
+    construction operands with :cdata:`NPY_ITER_USE_MASKNA` flagged
+    to their corresponding NA mask operands and vice versa. For
+    operands which were not flagged with :cdata:`NPY_ITER_USE_MASKNA`,
+    this array contains negative values.
 
 .. cfunction:: PyObject* NpyIter_GetIterView(NpyIter* iter, npy_intp i)
 
@@ -1075,6 +1098,8 @@ Construction and Destruction
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
 .. cfunction:: npy_bool NpyIter_IsFirstVisit(NpyIter* iter, int iop)
+
+    .. versionadded:: 1.7
 
     Checks to see whether this is the first time the elements of the
     specified reduction operand which the iterator points at are being
