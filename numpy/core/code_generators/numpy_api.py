@@ -14,10 +14,12 @@ exception, so it should hopefully not get unnoticed).
 
 multiarray_global_vars = {
     'NPY_NUMUSERTYPES':             7,
+    'Npy_NA':                       299,
 }
 
 multiarray_global_vars_types = {
     'NPY_NUMUSERTYPES':             'int',
+    'Npy_NA':                       'PyObject *',
 }
 
 multiarray_scalar_bool_values = {

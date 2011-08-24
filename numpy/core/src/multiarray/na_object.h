@@ -12,9 +12,6 @@ typedef struct {
     int is_singleton;
 } NpyNA_fields;
 
-NPY_NO_EXPORT NpyNA_fields _Npy_NASingleton;
-#define Npy_NA ((PyObject *)&_Npy_NASingleton)
-
 #define NPY_NA_NOPAYLOAD (255)
 
 static NPY_INLINE npy_uint8
