@@ -1803,8 +1803,8 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
                                                     (PyObject *)self);
             }
             else {
-                return (PyObject *)NpyNA_FromDTypeAndMaskValue(
-                            PyArray_DESCR(self), (npy_mask)*maskna_item, 0);
+                return (PyObject *)NpyNA_FromDTypeAndPayload(
+                                        PyArray_DESCR(self), 0, 0);
             }
         }
     }

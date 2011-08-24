@@ -368,7 +368,45 @@ NpyNA_CombineNAWithObject(NpyNA *na, PyObject *obj)
 
     return (NpyNA *)ret;
 }
-/*
+
+/*NUMPY_API
+ *
+ * Returns the *dtype* field of the NA object, which is NULL when
+ * the NA has no dtype.  Does not raise an error.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+NpyNA_GetDType(NpyNA* na)
+{
+    NpyNA_fields *fna = (NpyNA_fields *)na;
+    return fna->dtype;
+}
+
+/*NUMPY_API
+ *
+ * Returns true if the NA has a multi-NA payload, false otherwise.
+ */
+NPY_NO_EXPORT npy_bool
+NpyNA_IsMultiNA(NpyNA* na)
+{
+    NpyNA_fields *fna = (NpyNA_fields *)na;
+    return fna->payload != NPY_NA_NOPAYLOAD;
+}
+
+/*NUMPY_API
+ *
+ * Gets the multi-NA payload of the NA, or 0 if *na* doesn't have
+ * a multi-NA payload.
+ */
+NPY_NO_EXPORT int
+NpyNA_GetPayload(NpyNA* na)
+{
+    NpyNA_fields *fna = (NpyNA_fields *)na;
+    return fna->payload == NPY_NA_NOPAYLOAD ? 0 : fna->payload;
+}
+
+
+/*NUMPY_API
+ *
  * Converts an object into an NA if possible.
  *
  * If 'suppress_error' is enabled, doesn't raise an error when something
@@ -433,26 +471,20 @@ NpyNA_FromObject(PyObject *obj, int suppress_error)
     return NULL;
 }
 
-/*
- * Converts a dtype reference and mask value into an NA.
+/*NUMPY_API
+ *
+ * Converts a dtype reference and payload value into an NA.
  * Doesn't steal the 'dtype' reference. Raises an error
- * if 'maskvalue' represents an exposed mask.
+ * if the payload is invalid
  */
 NPY_NO_EXPORT NpyNA *
-NpyNA_FromDTypeAndMaskValue(PyArray_Descr *dtype, npy_mask maskvalue,
-                                                                int multina)
+NpyNA_FromDTypeAndPayload(PyArray_Descr *dtype, int multina, int payload)
 {
     NpyNA_fields *fna;
 
-    if (dtype == NULL && maskvalue == 0) {
+    if (dtype == NULL && multina == 0 && payload == 0) {
         Py_INCREF(Npy_NA);
         return (NpyNA *)Npy_NA;
-    }
-
-    if (NpyMaskValue_IsExposed(maskvalue)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot convert exposed mask value into NA");
-        return NULL;
     }
 
     fna = (NpyNA_fields *)na_new(&NpyNA_Type, NULL, NULL);
@@ -464,11 +496,17 @@ NpyNA_FromDTypeAndMaskValue(PyArray_Descr *dtype, npy_mask maskvalue,
     Py_XINCREF(fna->dtype);
 
     if (multina) {
-        fna->payload = NpyMaskValue_GetPayload(maskvalue);
+        if (payload < 0 || payload > 0x7f) {
+            PyErr_Format(PyExc_ValueError,
+                    "Given NA payload, %d, is out of bounds [0, 128)",
+                    payload);
+            Py_DECREF(fna);
+        }
+        fna->payload = (npy_uint8)payload;
     }
-    else if (NpyMaskValue_GetPayload(maskvalue) != 0) {
+    else if (payload != 0) {
         PyErr_SetString(PyExc_ValueError,
-                "Cannot convert mask value into NA without enabling multi-NA");
+                "NA payload must be zero when multi-NA is disabled");
         Py_DECREF(fna);
         return NULL;
     }
@@ -482,14 +520,7 @@ NpyNA_FromDTypeAndMaskValue(PyArray_Descr *dtype, npy_mask maskvalue,
 NPY_NO_EXPORT npy_mask
 NpyNA_AsMaskValue(NpyNA *na)
 {
-    NpyNA_fields *fna = (NpyNA_fields *)na;
-
-    if (fna->payload == NPY_NA_NOPAYLOAD) {
-        return 0;
-    }
-    else {
-        return NpyMaskValue_Create(0, fna->payload);
-    }
+    return NpyMaskValue_Create(0, NpyNA_GetPayload(na));
 }
 
 /* An NA unary op simply passes along the same NA */
@@ -749,4 +780,5 @@ NPY_NO_EXPORT NpyNA_fields _Npy_NASingleton = {
     1                  /* is_singleton */
 };
 
+/* This symbol is exported in the NumPy C API */
 NPY_NO_EXPORT PyObject *Npy_NA = (PyObject *)&_Npy_NASingleton;

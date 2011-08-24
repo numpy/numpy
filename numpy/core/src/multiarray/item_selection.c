@@ -2343,9 +2343,8 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
             return PyArray_DESCR(self)->f->getitem(data, self);
         }
         else {
-            return (PyObject *)NpyNA_FromDTypeAndMaskValue(
-                                                PyArray_DTYPE(self),
-                                                maskvalue, 0);
+            return (PyObject *)NpyNA_FromDTypeAndPayload(
+                                                PyArray_DTYPE(self), 0, 0);
         }
     }
     /* Case without an NA mask */
