@@ -529,6 +529,9 @@ def test_array_maskna_ravel():
     assert_(b.flags.ownmaskna)
     assert_equal(np.isna(b), [0,0,1,0,0,1])
 
+    a = np.arange(12, maskna=True).reshape(2,3,2).swapaxes(1,2)
+    assert_equal(a.ravel(order='K'), np.arange(12))
+
 def test_array_maskna_reshape():
     # Simple reshape 1D -> 2D
     a = np.arange(6, maskna=True)
