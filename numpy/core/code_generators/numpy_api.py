@@ -337,6 +337,11 @@ multiarray_funcs_api = {
     'PyArray_ReduceWrapper':                296,
     'PyArray_RemoveAxesInPlace':            297,
     'PyArray_DebugPrint':                   298,
+    'NpyNA_GetDType':                       300,
+    'NpyNA_IsMultiNA':                      301,
+    'NpyNA_GetPayload':                     302,
+    'NpyNA_FromObject':                     303,
+    'NpyNA_FromDTypeAndPayload':            304,
 }
 
 ufunc_types_api = {

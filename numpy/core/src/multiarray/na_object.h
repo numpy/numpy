@@ -37,24 +37,6 @@ NPY_NO_EXPORT NpyNA *
 NpyNA_CombineNAWithObject(NpyNA *na, PyObject *obj);
 
 /*
- * Converts an object into an NA if possible.
- *
- * If 'suppress_error' is enabled, doesn't raise an error when something
- * isn't NA.
- */
-NPY_NO_EXPORT NpyNA *
-NpyNA_FromObject(PyObject *obj, int suppress_error);
-
-/*
- * Converts a dtype reference and mask value into an NA.
- * Doesn't steal the 'dtype' reference. Raises an error
- * if 'maskvalue' represents an exposed mask.
- */
-NPY_NO_EXPORT NpyNA *
-NpyNA_FromDTypeAndMaskValue(PyArray_Descr *dtype, npy_mask maskvalue,
-                                                            int multina);
-
-/*
  * Returns a mask value corresponding to the NA.
  */
 NPY_NO_EXPORT npy_mask
