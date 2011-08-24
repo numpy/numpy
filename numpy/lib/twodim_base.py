@@ -9,7 +9,7 @@ __all__ = ['diag','diagflat','eye','fliplr','flipud','rot90','tri','triu',
 
 from numpy.core.numeric import asanyarray, equal, subtract, arange, \
      zeros, greater_equal, multiply, ones, asarray, alltrue, where, \
-     empty
+     empty, diagonal
 
 def fliplr(m):
     """
@@ -166,7 +166,7 @@ def rot90(m, k=1):
         # k == 3
         return fliplr(m.swapaxes(0,1))
 
-def eye(N, M=None, k=0, dtype=float):
+def eye(N, M=None, k=0, dtype=float, maskna=False):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
 
@@ -182,6 +182,8 @@ def eye(N, M=None, k=0, dtype=float):
       to a lower diagonal.
     dtype : data-type, optional
       Data-type of the returned array.
+    maskna : boolean
+      If this is true, the returned array will have an NA mask.
 
     Returns
     -------
@@ -207,14 +209,8 @@ def eye(N, M=None, k=0, dtype=float):
     """
     if M is None:
         M = N
-    m = zeros((N, M), dtype=dtype)
-    if k >= M:
-        return m
-    if k >= 0:
-        i = k
-    else:
-        i = (-k) * M
-    m[:M-k].flat[i::M+1] = 1
+    m = zeros((N, M), dtype=dtype, maskna=maskna)
+    diagonal(m, k)[...] = 1
     return m
 
 def diag(v, k=0):
