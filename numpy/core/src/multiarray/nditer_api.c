@@ -1162,7 +1162,7 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
      * Add the mask to the view if the operand was NPY_ITER_USE_MASKNA.
      */
     if (maskna_indices[i] >= 0) {
-        PyArrayObject_fieldaccess *fview = (PyArrayObject_fieldaccess *)view;
+        PyArrayObject_fields *fview = (PyArrayObject_fields *)view;
         int i_maskna = maskna_indices[i];
         npy_intp *maskna_strides = fview->maskna_strides;
 

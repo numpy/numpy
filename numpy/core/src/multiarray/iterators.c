@@ -1260,7 +1260,7 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
          * the chain of bases.
          */
         Py_INCREF(it->ao);
-        ((PyArrayObject_fieldaccess *)ret)->base = (PyObject *)it->ao;
+        ((PyArrayObject_fields *)ret)->base = (PyObject *)it->ao;
         PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
         PyArray_CLEARFLAGS(it->ao, NPY_ARRAY_WRITEABLE);
     }
@@ -1912,7 +1912,7 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
         storeflags = PyArray_FLAGS(ar->ao);
         PyArray_ENABLEFLAGS(ar->ao, NPY_ARRAY_BEHAVED);
         st = PyArray_DESCR(ar->ao)->f->setitem((PyObject*)fill, ret, ar->ao);
-        ((PyArrayObject_fieldaccess *)ar->ao)->flags = storeflags;
+        ((PyArrayObject_fields *)ar->ao)->flags = storeflags;
 
         if (st < 0) {
             PyDataMem_FREE(ret);

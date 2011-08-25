@@ -97,7 +97,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
         if ((refcnt > 2)
                 || (PyArray_BASE(self) != NULL)
-                || (((PyArrayObject_fieldaccess *)self)->weakreflist != NULL)) {
+                || (((PyArrayObject_fields *)self)->weakreflist != NULL)) {
             PyErr_SetString(PyExc_ValueError,
                     "cannot resize an array references or is referenced\n"\
                     "by another array in this way.  Use the resize function");
@@ -117,7 +117,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                     "cannot allocate memory for array");
             return NULL;
         }
-        ((PyArrayObject_fieldaccess *)self)->data = new_data;
+        ((PyArrayObject_fields *)self)->data = new_data;
     }
 
     if ((newsize > oldsize) && PyArray_ISWRITEABLE(self)) {
@@ -141,7 +141,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
 
     if (PyArray_NDIM(self) != new_nd) {
         /* Different number of dimensions. */
-        ((PyArrayObject_fieldaccess *)self)->nd = new_nd;
+        ((PyArrayObject_fields *)self)->nd = new_nd;
         /* Need new dimensions and strides arrays */
         dimptr = PyDimMem_RENEW(PyArray_DIMS(self), 3*new_nd);
         if (dimptr == NULL) {
@@ -149,15 +149,15 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
                     "cannot allocate memory for array");
             return NULL;
         }
-        ((PyArrayObject_fieldaccess *)self)->dimensions = dimptr;
-        ((PyArrayObject_fieldaccess *)self)->strides = dimptr + new_nd;
-        ((PyArrayObject_fieldaccess *)self)->maskna_strides = dimptr + 2*new_nd;
+        ((PyArrayObject_fields *)self)->dimensions = dimptr;
+        ((PyArrayObject_fields *)self)->strides = dimptr + new_nd;
+        ((PyArrayObject_fields *)self)->maskna_strides = dimptr + 2*new_nd;
     }
 
     /* make new_strides variable */
     sd = (size_t) PyArray_DESCR(self)->elsize;
     sd = (size_t) _array_fill_strides(new_strides, new_dimensions, new_nd, sd,
-            PyArray_FLAGS(self), &(((PyArrayObject_fieldaccess *)self)->flags));
+            PyArray_FLAGS(self), &(((PyArrayObject_fields *)self)->flags));
     memmove(PyArray_DIMS(self), new_dimensions, new_nd*sizeof(npy_intp));
     memmove(PyArray_STRIDES(self), new_strides, new_nd*sizeof(npy_intp));
     Py_INCREF(Py_None);
@@ -327,7 +327,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
 
     /* If there's an NA mask, make sure to view it too */
     if (PyArray_HASMASKNA(self)) {
-        PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)ret;
+        PyArrayObject_fields *fa = (PyArrayObject_fields *)ret;
         fa->maskna_dtype = PyArray_MASKNA_DTYPE(self);
         Py_INCREF(fa->maskna_dtype);
         fa->maskna_data = PyArray_MASKNA_DATA(self);
@@ -894,7 +894,7 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
 
     /* Take a view of the NA mask as well if necessary */
     if (flags & NPY_ARRAY_MASKNA) {
-        PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)ret;
+        PyArrayObject_fields *fa = (PyArrayObject_fields *)ret;
 
         fa->maskna_dtype = PyArray_MASKNA_DTYPE(ap);
         Py_INCREF(fa->maskna_dtype);
@@ -1143,8 +1143,8 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
 
             /* Take a view of the NA mask as well if necessary */
             if (PyArray_HASMASKNA(arr)) {
-                PyArrayObject_fieldaccess *fa =
-                                    (PyArrayObject_fieldaccess *)ret;
+                PyArrayObject_fields *fa =
+                                    (PyArrayObject_fields *)ret;
 
                 fa->maskna_dtype = PyArray_MASKNA_DTYPE(arr);
                 Py_INCREF(fa->maskna_dtype);
@@ -1283,7 +1283,7 @@ build_shape_string(npy_intp n, npy_intp *vals)
 NPY_NO_EXPORT void
 PyArray_RemoveAxesInPlace(PyArrayObject *arr, npy_bool *flags)
 {
-    PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)arr;
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
     npy_intp *shape = fa->dimensions, *strides = fa->strides;
     int idim, ndim = fa->nd, idim_out = 0;
 
