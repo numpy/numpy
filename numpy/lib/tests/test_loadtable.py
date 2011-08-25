@@ -79,11 +79,24 @@ def test_num_lines_search():
     check_datafile("num_lines_search.txt", "num_lines_search_masked.py",
                         force_mask=True, num_lines_search=2)
 
-def test_minstrsize():
-    check_datafile("min_strsize.txt", "min_strsize.py",
-                        min_string_size=20)
-    check_datafile("min_strsize.txt", "min_strsize_masked.py",
-                        force_mask=True, min_string_size=20)
+def test_string_sizes_size():
+    check_datafile("string_sizes.txt", "string_sizes.py",
+                        string_sizes=20)
+    check_datafile("string_sizes.txt", "string_sizes_masked.py",
+                        force_mask=True, string_sizes=20)
+    def wrong_sizes():
+        data_dir = path.join(path.dirname(__file__), 'loadtable_data')
+        np.loadtable(path.join(data_dir, 'check_sizes.txt'),
+                        string_sizes = [3,3])
+    assert_raises(ValueError, wrong_sizes)
+
+def test_check_sizes():
+    check_datafile("check_sizes.txt", "check_sizes1.py", check_sizes=False)
+    check_datafile("check_sizes.txt", "check_sizes2.py", check_sizes=1)
+    check_datafile("check_sizes.txt", "check_sizes3.py", check_sizes=2)
+    check_datafile("check_sizes.txt", "check_sizes4.py",
+                        check_sizes=1, string_sizes=[7,1,1])
+
 
 def test_rowname():
     check_datafile("rowname.txt", "rowname.py",
@@ -127,6 +140,11 @@ def test_no_entry():
                         NA_re=None, header=False)
     check_datafile("no_entry.txt", "no_entry_masked.py",
                         force_mask=True, header=False)
+
+def test_na_column():
+    check_datafile("na_column.txt", "na_column.py", NA_re=None, header=False)
+    check_datafile("na_column.txt", "na_column_masked.py",
+                        NA_re=r'NA|na|')
 
 def test_na():
     check_datafile("na.txt", "na.py", NA_re=None)
@@ -245,7 +263,6 @@ def test_comma_float_mixed():
                         quoted=True,
                         comma_decimals=True,
                         force_mask=True)
-
 
 def test_real_dataset1():
     check_datafile("real_dataset1.txt", "real_dataset1.py",

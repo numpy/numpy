@@ -14,17 +14,6 @@ import datetime as dt
 
 
 
-# Regular expression used to match string size
-# number %d variable, represents 2 less than the
-# actual string size. (If string length greater than 1)
-# Done this way so spaces between characters can be matched
-string_size_re_base = r'((\S.{0,%d}\S)|\S)'
-
-# Same as above, but forces match with whole string. For use
-# when determining size of substrings
-string_size_re_full_match = '^' + string_size_re_base + '$'
-
-
 # Dictionary mapping dtype name to regular expression
 # matching that dtype, assuming data isn't quoted
 dtype_to_re = {
@@ -309,14 +298,12 @@ def bool_conv(bool_string):
     elif bool_false_pattern.match(bool_string):
         return False
 
-comma_pattern = re.compile(r',')
 def comma_float_conv(comma_float_string):
     """
     Simple converter for floats with comma instead of decimal
     point, e.g. 3,1416 instead of 3.1416
     """
-    float_string = comma_pattern.sub('.', comma_float_string)
-    return float(float_string)
+    return float(comma_float_string.replace(',','.'))
 
 # Dict relating type string to numpy dtype
 dtype_dict = {
@@ -392,7 +379,6 @@ dtype_default_missing = {
 
 # For easy in the loadtable function, so the re's aren't recompiled
 # every time loadtable is called.
-quote_pattern = re.compile(r'"')
 quoted_entry_pattern = re.compile(r'"[^"]*"')
 entry_re = r'"[^"]*"|[^"]*?'
 
@@ -405,7 +391,8 @@ def loadtable(fname,
         type_search_order=['b1', 'i8', 'f8','M8[D]'],
         skip_lines=0,
         num_lines_search=0,
-        min_string_size=1,
+        string_sizes=1,
+        check_sizes=True,
         is_Inf_NaN=True,
         NA_re='NA|',
         quoted=False,
@@ -426,6 +413,12 @@ def loadtable(fname,
     to make loading data saved from some other systems, such as R,
     easy to load.
 
+    For most users, the only parameters of interest are fname, delimiter,
+    header, and (possibly) type_search_order. The rest are for various
+    more specialzed/unusual data formats.
+
+    See Notes for performance tips.
+
     Parameters
     ----------
     fname: string or file
@@ -433,7 +426,9 @@ def loadtable(fname,
         object for the file. If the filename, can be
         relative or absolute.
     delimiter: string
-        Regular expression for the delimeter between data.
+        Regular expression for the delimeter between data. The regular
+        expression must be non-capturing. (i.e. r'(?:3.14)' instead of
+        r'(3.14)')
     comments: string
         Regular expression for the symbol(s) indicating the start
         of a comment.
@@ -450,12 +445,24 @@ def loadtable(fname,
         for type and size information. Done to decrease the time required
         to determine the type and size information for data that is very
         homogenous.
-    min_string_size: int
-        Minimum string size for string types.
+    string_sizes: int or list of ints
+        If a single int, interpreted as a minimum string size for all entries.
+        If a list of ints, interpreted as the minimum string size for each
+        individual entry. An error is thrown if the lenght of this list
+        differs from the number of entries per row found. If check_sizes is
+        False, then these minimum sizes are never changed.
+   check_sizes: boolean or int
+        Whether to check string sizes in each row for determining the size of
+        string dtypes. This is an expensive option.
+        If true it will check all lines for sizes. If an integer, it will
+        check up to that number of rows from the beginning. And if false
+        it will check no rows and use the defaults given from string_size.
     is_Inf_NaN: bool
         Whether to allow floats that are Inf and NaN
     NA_re: string
-        Regular expression for missing data
+        Regular expression for missing data The regular
+        expression must be non-capturing. (i.e. r'(?:3.14)' instead of
+        r'(3.14)')
     quoted: bool
         Whether to allow the data to contain quotes, such as "3.14" or
         "North America"
@@ -466,7 +473,9 @@ def loadtable(fname,
         Whether to force the returned array to be a masked array
     date_re: string
         The regular expression for dates. This assumes that all dates
-        follow the same format. Defaults to the ISO standard.
+        follow the same format. Defaults to the ISO standard. The regular
+        expression must be non-capturing. (i.e. r'(?:3.14)' instead of
+        r'(3.14)')
     date_strp: string
         The format to use for converting a date string to a date. Uses
         the format from datetime.datetime.strptime in the Python Standard
@@ -494,6 +503,36 @@ def loadtable(fname,
     See Also
     --------
     loadtxt, genfromtxt
+
+    Notes
+    -----
+    This function operates by making two passes through the text file given.
+    In the first pass it determines the dtypes based on regular expressions
+    for the dtypes and custom promotion rules between dtypes. (The promotion
+    rules are used, for example, if a column appears to be integer and then
+    a float is seen.) In the first pass it can also determine the sizes of
+    strings, if that option is enabled. After determining the dtypes and
+    string sizes, it pre-allocates a numpy array of the appropriate size
+    (or masked array in the prescense of missing data) and fills it line
+    by line.
+
+    The methods within this function are fairly modular, and it requires
+    little difficulty to extract, for example, the method that determines
+    dtypes or change the method for reading in data.
+
+    Performance Tips:
+
+     * Determning the sizes is expensive. For large arrays containing no
+     string data it is best to set check_sizes to False.
+     * Similarly, determining the dtypes can be expensive. If the text
+     file is very large but has very homogeneous data (i.e. the dtypes are
+     easily determined), then it is best to only check the first k lines
+     for some reasonable value of k.
+     * This method defaults to 64-bit ints and floats. If these sizes are
+     unnecessary they should be reduced to 32-bit ints and floats to
+     conserve space.
+     * Converting comma float strings (i.e. '3,24') is about twice as
+     expensive as converting decimal float strings
 
     Examples
     --------
@@ -573,7 +612,8 @@ def loadtable(fname,
                                                 delimiter_pattern,
                                                 type_search_order,
                                                 num_lines_search,
-                                                min_string_size,
+                                                string_sizes,
+                                                check_sizes,
                                                 col_names,
                                                 NA_re,
                                                 skip_lines,
@@ -587,7 +627,7 @@ def loadtable(fname,
 
     # Read data into array
     if force_mask or exists_NA:
-        dtype_dict['NA'] = np.dtype(default_missing_dtype).name
+        dtype_dict['NA'] = np.dtype(default_missing_dtype).str
         data = get_data_missing(f,
                                 ignore_pattern,
                                 entry_pattern,
@@ -598,7 +638,8 @@ def loadtable(fname,
                                 header,
                                 col_names,
                                 skip_lines,
-                                re_dict)
+                                re_dict,
+                                quoted)
     else:
         data = get_data_no_missing(f,
                                     ignore_pattern,
@@ -609,7 +650,8 @@ def loadtable(fname,
                                     coltypes,
                                     header,
                                     col_names,
-                                    skip_lines)
+                                    skip_lines,
+                                    quoted)
 
     return data
 
@@ -732,6 +774,8 @@ def init_datetime(date_re, date_strp, re_dict, quoted):
     # Set date regular expression
     # Since this is a global variable it must be reset to default
     # in case previous calls set it to a non-default regular expression
+    if re.compile(date_re).groups>0:
+        raise ValueError("Date regular expression must be non-capturing.")
     re_dict['datetime64[D]'] = date_re
     if quoted and date_re==r'\d{4}-\d{2}-\d{2}':
         re_dict['datetime64[D]'] = ''.join(['(?:\d{4}-\d{2}-\d{2}|"',
@@ -777,6 +821,8 @@ def init_delimiter_and_NA(delimiter,
                             ')\s*'])
     if NA_re:
         type_search_order.append('NA')
+        if re.compile(NA_re).groups>0:
+            raise ValueError("NA regular expression must be non-capturing")
         re_dict['NA'] = NA_re
     return delimiter, NA_re
 
@@ -805,6 +851,8 @@ def init_patterns(comments, delimiter):
     # RE for the delimiter including white space
     delimiter_pattern = re.compile(''.join(['\s*(?:',
                                     delimiter,')\s*']))
+    if delimiter_pattern.groups>0:
+        raise ValueError("Delimiter regular expression must be non-capturing")
     return ignore_pattern, delimiter_pattern
 
 def get_data_missing(f,
@@ -817,7 +865,8 @@ def get_data_missing(f,
             header,
             col_names,
             skip_lines,
-            re_dict):
+            re_dict,
+            quoted):
     """
     Function that actually loads the data into a masked array.
 
@@ -846,6 +895,9 @@ def get_data_missing(f,
         The number of lines to skip before reading the text file for data
     re_dict: dictionary
         Dictionary mapping the types to their associated regular expressions
+    quoted: bool
+        Whether to allow the data to contain quotes, such as "3.14" or
+        "North America"
 
     Returns
     -------
@@ -887,7 +939,9 @@ def get_data_missing(f,
                     data[i] = dtype_default_missing[coltypes[0]]
                     data.mask[i] = True
                 else:
-                    rowelem = quote_pattern.sub('', line.strip())
+                    rowelem = line.strip()
+                    if quoted:
+                        rowelem = rowelem.replace('"','')
                     rowelem = dtype_to_conv[coltypes[0]](rowelem)
                     data[i] = rowelem
                 i = i+1
@@ -911,7 +965,8 @@ def get_data_missing(f,
                                           dtype_dict[coltypes[j]]]
                         tmpmask[j] = True
                     else:
-                        rowelem = quote_pattern.sub('', rowelem)
+                        if quoted:
+                            rowelem = rowelem.replace('"','')
                         tmpline[j] = dtype_to_conv[coltypes[j]](rowelem)
                 data[i] = tuple(tmpline)
                 data.mask[i] = tuple(tmpmask)
@@ -931,7 +986,8 @@ def get_data_no_missing(f,
             coltypes,
             header,
             col_names,
-            skip_lines):
+            skip_lines,
+            quoted):
     """
     Function that actually loads the data into a numpy array
 
@@ -958,6 +1014,9 @@ def get_data_no_missing(f,
         The column names, if header is True
     skip_lines: integer
         The number of lines to skip before reading the text file for data
+    quoted: bool
+        Whether to allow the data to contain quotes, such as "3.14" or
+        "North America"
 
     Returns
     -------
@@ -991,7 +1050,11 @@ def get_data_no_missing(f,
             elif header and not seen_header:
                 seen_header = True
             else:
-                rowelem = dtype_to_conv[coltypes[0]](line.strip())
+                if quoted:
+                    rowelem = line.strip().replace('"','')
+                    rowelem = dtype_to_conv[coltypes[0]](rowelem)
+                else:
+                    rowelem = dtype_to_conv[coltypes[0]](line.strip())
                 data[i] = rowelem
                 i = i+1
     else:
@@ -1005,17 +1068,19 @@ def get_data_no_missing(f,
                 if not matches:
                     raise RuntimeError('Cannot parse column data')
                 rowelems = matches.groups()
-                rowelems = [dtype_to_conv[coltypes[j]](
-                                quote_pattern.sub('',rowelem))
-                                for j,rowelem in
-                                enumerate(rowelems)]
+                if quoted:
+                    rowelems = [dtype_to_conv[coltypes[j]](
+                                    rowelem.replace('"',''))
+                                    for j,rowelem in
+                                    enumerate(rowelems)]
+                else:
+                    rowelems = [dtype_to_conv[coltypes[j]](
+                                    rowelem)
+                                    for j,rowelem in
+                                    enumerate(rowelems)]
                 data[i] = tuple(rowelems)
                 i += 1
     return data
-
-
-
-
 
 def get_col_names(f,
                   ignore_pattern,
@@ -1061,7 +1126,7 @@ def get_col_names(f,
             matches = m.match(line.strip())
             if not matches:
                 raise RuntimeError('Cannot parse column names')
-            col_names = [quote_pattern.sub('', rowelem)
+            col_names = [rowelem.replace('"','')
                             for rowelem in matches.groups()]
             return col_names
     return None
@@ -1102,7 +1167,8 @@ def get_nrows_sizes_coltypes(f,
                             delimiter_pattern,
                             type_search_order,
                             num_lines_search,
-                            min_string_size,
+                            string_sizes,
+                            check_sizes,
                             col_names,
                             NA_re,
                             skip_lines,
@@ -1129,8 +1195,19 @@ def get_nrows_sizes_coltypes(f,
     num_lines_search: int
         The number of lines to use when determining the dtype for each
         column
-    min_string_size: int
-        The minimum string size for columns of string dtype
+    string_sizes: int or list of ints
+        If a single int, interpreted as a minimum string size for all entries.
+        If a list of ints, interpreted as the minimum string size for each
+        individual entry. An error is thrown if the lenght of this list
+        differs from the number of entries per row found. If check_sizes is
+        False, then these minimum sizes are never changed.
+    check_sizes: int
+        Number of lines of data to use for baseline size estimates before
+        checking via regular expressions. This is included because for
+        complicated data files it can be extremely expensive to discover
+        that the current size estimates are wrong, and it is much cheaper
+        to simply spend a longer time determining sizes before assuming
+        you have the correct sizes.
     col_names:
         The names for each column
     NA_re: string
@@ -1152,6 +1229,8 @@ def get_nrows_sizes_coltypes(f,
     nrows_data = 0
     coltypes = None
     sizes = None
+    if check_sizes and isinstance(check_sizes,type(True)):
+        check_sizes = np.Inf
 
     # RE of types in search order, to discover what type input matches
     # according to precedence.
@@ -1175,15 +1254,20 @@ def get_nrows_sizes_coltypes(f,
                                             ' column titles differ.']))
             coltypes = [None]*ncol
             entry_pattern = build_entry_pattern(ncol, delimiter)
-            sizes = [min_string_size-2 for i in xrange(ncol)]
+            if isinstance(string_sizes, type(1)):
+                sizes = [string_sizes]*ncol
+            elif isinstance(string_sizes, type([1])):
+                if len(string_sizes) != ncol:
+                    raise ValueError(''.join(['string_sizes has wrong ',
+                                              'number of elements']))
+                sizes = string_sizes
+            sizes = np.array(sizes)
             coltypes = update_coltypes(type_search_order,
                                     type_re, line, coltypes,
                                     delimiter_pattern,
                                     entry_pattern)
-            size_re = build_size_re(ncol, white, delimiter)
-            size_re_pattern = re.compile(size_re % tuple(sizes))
-            sizes, size_re_pattern = update_sizes(sizes,
-                                    size_re, line, delimiter_pattern)
+            if 0<check_sizes:
+                update_sizes(sizes, line, entry_pattern)
             row_re = make_row_re(coltypes,
                                     white,
                                     delimiter,
@@ -1192,8 +1276,6 @@ def get_nrows_sizes_coltypes(f,
             row_re_pattern = re.compile(row_re)
             nrows_data = 1
             break
-
-
     # Process the rest of the lines
     for line in f:
         if not ignore_pattern.match(line):
@@ -1214,46 +1296,11 @@ def get_nrows_sizes_coltypes(f,
                                         NA_re,
                                         re_dict)
                 row_re_pattern = re.compile(row_re)
-            # check if line has predicted size pattern, if not update
-            # the size pattern
-            if not size_re_pattern.match(line):
-                sizes, size_re_pattern = update_sizes(sizes,
-                                    size_re, line, delimiter_pattern)
-    if nrows_data:
-        # increase sizes since we matched \S.{0,size[i]}\S, meaning
-        # sizes will be two less than actual size
-        sizes = [size+2 for size in sizes]
+            if nrows_data<=check_sizes:
+                update_sizes(sizes, line, entry_pattern)
     return nrows_data, sizes, coltypes, entry_pattern
 
-
-
-
-def build_size_re(ncol, white, delimiter):
-    """
-    Build the regular expression for sizes seperated by the
-    file delimiter with whitespace. The actual sizes are left
-    variable.
-
-    Parameters
-    ----------
-    ncol: int
-        The number of columns in the data text file
-    white: string
-        Regular expression for the white space in the data
-    delimiter: string
-        Regular expression for the delimieters separating the data
-
-    Returns
-    -------
-    string regular expression
-    """
-
-    pieces = ['^', white]
-    pieces += [string_size_re_base, white, delimiter, white] * (ncol-1)
-    pieces += [string_size_re_base, white, '$']
-    return ''.join(pieces)
-
-def update_sizes(sizes, size_re, line, delimiter_pattern):
+def update_sizes(sizes, line, entry_pattern):
     """
     Update the sizes for a row of data. Checks a re of the
     current upper limit for the sizes against the line. If it
@@ -1265,9 +1312,6 @@ def update_sizes(sizes, size_re, line, delimiter_pattern):
     ----------
     sizes: list of integers
         The current maximum size of each entry in the data
-    size_re: string
-        The basis for the size regular expressions. Is a regular expression
-        once the string lengths are given.
     line: string
         The current line of data
     delimiter_pattern: compiled regular expression
@@ -1278,12 +1322,13 @@ def update_sizes(sizes, size_re, line, delimiter_pattern):
     list of ints, compiled regular expression
         The new sizes and compiled regular expression for those sizes
     """
-    rowelems = delimiter_pattern.split(line.strip())
-    for i in xrange(len(sizes)):
-        if not re.match(string_size_re_full_match % sizes[i], rowelems[i]):
-            sizes[i] = max(len(rowelems[i])-2,sizes[i])
-    size_re_pattern = re.compile(size_re % tuple(sizes))
-    return sizes, size_re_pattern
+
+    matches = entry_pattern.match(line.strip())
+    if not matches:
+        raise RuntimeError('Cannot parse column data')
+    rowelems = map(len, matches.groups())
+    rowelems = np.array(rowelems)
+    sizes = np.maximum(rowelems, sizes, out=sizes)
 
 def build_type_re(type_search_order, re_dict):
     """
@@ -1351,7 +1396,6 @@ def update_coltypes(type_search_order,
     determines the type of each entry in the line.
     """
     newcoltypes = [None] * len(coltypes)
-
     matches = entry_pattern.match(line.strip())
     if not matches:
         raise RuntimeError('Cannot parse column data')
@@ -1403,10 +1447,10 @@ def make_row_re(coltypes, white, delimiter, NA_re, re_dict):
         pieces = ['^', white, re_dict[coltypes[0]]]
     for ct in coltypes[1:]:
         if na_type.match(ct):
-            pieces += [white, delimiter, white, '(?:', re_dict[ct],
+            pieces += [ delimiter, '(?:', re_dict[ct],
                        '|', NA_re,')']
         else:
-            pieces += [white, delimiter, white, re_dict[ct]]
+            pieces += [delimiter, re_dict[ct]]
     pieces += [white, '$']
     return ''.join(pieces)
 
