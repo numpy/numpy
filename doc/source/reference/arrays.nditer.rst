@@ -399,7 +399,11 @@ just the two operands to the iterator, and it handled the rest.
 
 When adding the 'out' parameter, we have to explicitly provide those flags,
 because if someone passes in an array as 'out', the iterator will default
-to 'readonly', and our inner loop would fail.
+to 'readonly', and our inner loop would fail. The reason 'readonly' is
+the default for input arrays is to prevent confusion about unintentionally
+triggering a reduction operation. If the default were 'readwrite', any
+broadcasting operation would also trigger a reduction, a topic
+which is covered later in this document.
 
 While we're at it, let's also introduce the 'no_broadcast' flag, which
 will prevent the output from being broadcast. This is important, because
