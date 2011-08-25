@@ -148,6 +148,8 @@ add_newdoc('numpy.core', 'flatiter', ('copy',
 add_newdoc('numpy.core', 'nditer',
     """
     Efficient multi-dimensional iterator object to iterate over arrays.
+    To get started using this object, see the
+    :ref:`introductory guide to array iteration <arrays.nditer>`.
 
     Parameters
     ----------
