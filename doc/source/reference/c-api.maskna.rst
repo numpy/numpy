@@ -12,13 +12,13 @@ Array NA Mask API
 NA Masks in Arrays
 ------------------
 
-NumPy supports the idea of NA (Not Available) missing values in its arrays.
-In the design document leading up to the implementation, two mechanisms
-for this were proposed, NA masks and NA bitpatterns. NA masks have been
-implemented as the first representation of these values. This mechanism
-supports working with NA values similar to the approach taking in the R
-project, while when combined with views, allows one to temporarily mark
-elements as NA since the mask is independent of the raw array data.
+NumPy supports the idea of NA (Not Available) missing values in its
+arrays.  In the design document leading up to the implementation, two
+mechanisms for this were proposed, NA masks and NA bitpatterns. NA masks
+have been implemented as the first representation of these values. This
+mechanism supports working with NA values similar to what the R language
+provides, and when combined with views, allows one to temporarily mark
+elements as NA without affecting the original data.
 
 The C API has been updated with mechanisms to allow NumPy extensions
 to work with these masks, and this document provides some examples and
@@ -46,7 +46,7 @@ it returns an NpyNA instance, the object is NA and you can then
 access its *dtype* and *payload* fields as needed.
 
 To make new :ctype:`NpyNA` objects, use
-:cfunc:`NpyNA_FromDTypeAndPayload`, and the functions
+:cfunc:`NpyNA_FromDTypeAndPayload`. The functions
 :cfunc:`NpyNA_GetDType`, :cfunc:`NpyNA_IsMultiNA`, and
 :cfunc:`NpyNA_GetPayload` provide access to the data members.
 
@@ -148,7 +148,7 @@ Example NA-Masked Operation in C
 
 As an example, let's implement a simple binary NA-masked operation
 for the double dtype. We'll make a divide operation which turns
-divide by zero into NA instead of NaN.
+divide by zero into NA instead of Inf or NaN.
 
 To start, we define the function prototype and some basic
 :ctype:`NpyIter` boilerplate setup. We'll make a function which
@@ -314,7 +314,16 @@ consisting of::
             return NULL;
         }
 
-        return (PyObject *)SpecialDivide(a, b, out);
+        /*
+         * The usual NumPy way is to only use PyArray_Return when
+         * the 'out' parameter is not provided.
+         */
+        if (out == NULL) {
+            return PyArray_Return(SpecialDivide(a, b, out));
+        }
+        else {
+            return (PyObject *)SpecialDivide(a, b, out);
+        }
     }
 
     static PyMethodDef SpDivMethods[] = {
@@ -359,19 +368,22 @@ Now you can try out this sample, to see how it behaves.::
     >>> import numpy as np
     >>> from spdiv_mod import spdiv
 
-It always produces a masked output array. To get the NumPy scalar returning
-behavior, replace the return in spdiv() with
-"PyArray_Return(SpecialDivide(a, b, out)".::
+Because we used :cfunc:`PyArray_Return` when wrapping SpecialDivide,
+it returns scalars like any typical NumPy function does::
 
-    >>> spdiv(1,2)
-    array(0.5, maskna=True)
+    >>> spdiv(1, 2)
+    0.5
+    >>> spdiv(2, 0)
+    NA(dtype='float64')
+    >>> spdiv(np.NA, 1.5)
+    NA(dtype='float64')
 
 Here we can see how NAs propagate, and how 0 in the output turns into NA
 as desired.::
 
     >>> a = np.arange(6)
     >>> b = np.array([0,np.NA,0,2,1,0])
-    >>> spdiv(a,b)
+    >>> spdiv(a, b)
     array([  NA,   NA,   NA,  1.5,  4. ,   NA])
 
 Finally, we can see the masking behavior by creating a masked
@@ -380,7 +392,7 @@ NA got assigned.::
 
     >>> c_orig = np.ones(6)
     >>> c = c_orig.view(maskna=True)
-    >>> spdiv(a,b,out=c)
+    >>> spdiv(a, b, out=c)
     array([  NA,   NA,   NA,  1.5,  4. ,   NA])
     >>> c_orig
     array([ 1. ,  1. ,  1. ,  1.5,  4. ,  1. ])
