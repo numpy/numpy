@@ -135,11 +135,18 @@ to get an NA-masked view.::
 
     >>> a = np.array([1,3,5])
     >>> b = a.view(maskna=True)
+
     >>> b[2] = np.NA
     >>> a
     array([1, 3, 5])
     >>> b
     array([1, 3, NA])
+
+    >>> b[0] = 2
+    >>> a
+    array([2, 3, 5])
+    >>> b
+    array([2, 3, NA])
 
 
 It is important to be cautious here, though, since if the array already
@@ -148,11 +155,19 @@ array's mask will be affected by assigning NA to the view.::
 
     >>> a = np.array([1,np.NA,5])
     >>> b = a.view(maskna=True)
+
     >>> b[2] = np.NA
     >>> a
     array([1, NA, NA])
     >>> b
     array([1, NA, NA])
+
+    >>> b[1] = 4
+    >>> a
+    array([1, 4, NA])
+    >>> b
+    array([1, 4, NA])
+
 
 To guarantee that the view created has its own NA-mask, there is another
 flag *ownmaskna*. Using this flag will cause a copy of the array's mask
@@ -160,11 +175,19 @@ to be created for the view when the array already has a mask.::
 
     >>> a = np.array([1,np.NA,5])
     >>> b = a.view(ownmaskna=True)
+
     >>> b[2] = np.NA
     >>> a
     array([1, NA, 5])
     >>> b
     array([1, NA, NA])
+
+    >>> b[1] = 4
+    >>> a
+    array([1, NA, 5])
+    >>> b
+    array([1, 4, NA])
+
 
 In general, when an NA-masked view of an array has been taken, any time
 an NA is assigned to an element of the array the data for that element
