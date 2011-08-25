@@ -197,6 +197,15 @@ add_newdoc('numpy.core', 'nditer',
           * "allocate" causes the array to be allocated if it is None
             in the `op` parameter.
           * "no_subtype" prevents an "allocate" operand from using a subtype.
+          * "arraymask" indicates that this operand is the mask to use
+            for selecting elements when writing to operands with the
+            'writemasked' flag set. The iterator does not enforce this,
+            but when writing from a buffer back to the array, it only
+            copies those elements indicated by this mask.
+          * 'writemasked' indicates that only elements where the chosen
+            'arraymask' operand is True will be written to.
+          * 'use_maskna' indicates that this operand should be treated
+            like an NA-masked array.
     op_dtypes : dtype or tuple of dtype(s), optional
         The required data type(s) of the operands. If copying or buffering
         is enabled, the data will be converted to/from their original types.
@@ -897,6 +906,35 @@ add_newdoc('numpy.core.multiarray', 'zeros',
     array([(0, 0), (0, 0)],
           dtype=[('x', '<i4'), ('y', '<i4')])
 
+    """)
+
+add_newdoc('numpy.core.multiarray', 'isna',
+    """
+    isna(a)
+
+    Returns an array with True for each element of *a* that is NA.
+
+    Parameters
+    ----------
+    a : array_like
+        The array for which to check for NA.
+
+    Returns
+    -------
+    result : bool or array of bool
+        Number of non-zero values in the array.
+
+    Examples
+    --------
+    >>> np.isna(np.NA)
+    True
+    >>> np.isna(1.5)
+    False
+    >>> np.isna(np.nan)
+    False
+    >>> a = np.array([0, np.NA, 3.5, np.NA])
+    >>> np.isna(a)
+    array([False,  True, False,  True], dtype=bool)
     """)
 
 add_newdoc('numpy.core.multiarray', 'count_nonzero',
