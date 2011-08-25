@@ -599,14 +599,14 @@ VOID_getitem(char *ip, PyArrayObject *ap)
             tup = PyDict_GetItem(descr->fields, key);
             if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, &title)) {
                 Py_DECREF(ret);
-                ((PyArrayObject_fieldaccess *)ap)->descr = descr;
+                ((PyArrayObject_fields *)ap)->descr = descr;
                 return NULL;
             }
             /*
              * TODO: temporarily modifying the array like this
              *       is bad coding style, should be changed.
              */
-            ((PyArrayObject_fieldaccess *)ap)->descr = new;
+            ((PyArrayObject_fields *)ap)->descr = new;
             /* update alignment based on offset */
             if ((new->alignment > 1)
                     && ((((intp)(ip+offset)) % new->alignment) != 0)) {
@@ -616,9 +616,9 @@ VOID_getitem(char *ip, PyArrayObject *ap)
                 PyArray_ENABLEFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
             PyTuple_SET_ITEM(ret, i, new->f->getitem(ip+offset, ap));
-            ((PyArrayObject_fieldaccess *)ap)->flags = savedflags;
+            ((PyArrayObject_fields *)ap)->flags = savedflags;
         }
-        ((PyArrayObject_fieldaccess *)ap)->descr = descr;
+        ((PyArrayObject_fields *)ap)->descr = descr;
         return ret;
     }
 
@@ -729,14 +729,14 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
             key = PyTuple_GET_ITEM(names, i);
             tup = PyDict_GetItem(descr->fields, key);
             if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, &title)) {
-                ((PyArrayObject_fieldaccess *)ap)->descr = descr;
+                ((PyArrayObject_fields *)ap)->descr = descr;
                 return -1;
             }
             /*
              * TODO: temporarily modifying the array like this
              *       is bad coding style, should be changed.
              */
-            ((PyArrayObject_fieldaccess *)ap)->descr = new;
+            ((PyArrayObject_fields *)ap)->descr = new;
             /* remember to update alignment flags */
             if ((new->alignment > 1)
                     && ((((intp)(ip+offset)) % new->alignment) != 0)) {
@@ -746,12 +746,12 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
                 PyArray_ENABLEFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
             res = new->f->setitem(PyTuple_GET_ITEM(op, i), ip+offset, ap);
-            ((PyArrayObject_fieldaccess *)ap)->flags = savedflags;
+            ((PyArrayObject_fields *)ap)->flags = savedflags;
             if (res < 0) {
                 break;
             }
         }
-        ((PyArrayObject_fieldaccess *)ap)->descr = descr;
+        ((PyArrayObject_fields *)ap)->descr = descr;
         return res;
     }
 
@@ -1883,19 +1883,19 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
                 continue;
             }
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
-                ((PyArrayObject_fieldaccess *)arr)->descr = descr;
+                ((PyArrayObject_fields *)arr)->descr = descr;
                 return;
             }
             /*
              * TODO: temporarily modifying the array like this
              *       is bad coding style, should be changed.
              */
-            ((PyArrayObject_fieldaccess *)arr)->descr = new;
+            ((PyArrayObject_fields *)arr)->descr = new;
             new->f->copyswapn(dst+offset, dstride,
                     (src != NULL ? src+offset : NULL),
                     sstride, n, swap, arr);
         }
-        ((PyArrayObject_fieldaccess *)arr)->descr = descr;
+        ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
     if (swap && PyArray_DESCR(arr)->subarray != NULL) {
@@ -1911,7 +1911,7 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
          * TODO: temporarily modifying the array like this
          *       is bad coding style, should be changed.
          */
-        ((PyArrayObject_fieldaccess *)arr)->descr = new;
+        ((PyArrayObject_fields *)arr)->descr = new;
         dstptr = dst;
         srcptr = src;
         subitemsize = new->elsize;
@@ -1924,7 +1924,7 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
                 srcptr += sstride;
             }
         }
-        ((PyArrayObject_fieldaccess *)arr)->descr = descr;
+        ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
     if (src != NULL) {
@@ -1951,19 +1951,19 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                 continue;
             }
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
-                ((PyArrayObject_fieldaccess *)arr)->descr = descr;
+                ((PyArrayObject_fields *)arr)->descr = descr;
                 return;
             }
             /*
              * TODO: temporarily modifying the array like this
              *       is bad coding style, should be changed.
              */
-            ((PyArrayObject_fieldaccess *)arr)->descr = new;
+            ((PyArrayObject_fields *)arr)->descr = new;
             new->f->copyswap(dst+offset,
                     (src != NULL ? src+offset : NULL),
                     swap, arr);
         }
-        ((PyArrayObject_fieldaccess *)arr)->descr = descr;
+        ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
     if (swap && PyArray_DESCR(arr)->subarray != NULL) {
@@ -1977,12 +1977,12 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
          * TODO: temporarily modifying the array like this
          *       is bad coding style, should be changed.
          */
-        ((PyArrayObject_fieldaccess *)arr)->descr = new;
+        ((PyArrayObject_fields *)arr)->descr = new;
         itemsize = new->elsize;
         num = descr->elsize / itemsize;
         new->f->copyswapn(dst, itemsize, src,
                 itemsize, num, swap, arr);
-        ((PyArrayObject_fieldaccess *)arr)->descr = descr;
+        ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
     if (src != NULL) {
@@ -2258,8 +2258,8 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
              * TODO: temporarily modifying the array like this
              *       is bad coding style, should be changed.
              */
-            ((PyArrayObject_fieldaccess *)ap)->descr = descr;
-            ((PyArrayObject_fieldaccess *)ap)->flags = savedflags;
+            ((PyArrayObject_fields *)ap)->descr = descr;
+            ((PyArrayObject_fields *)ap)->flags = savedflags;
             if ((new->alignment > 1) && !__ALIGNED(ip+offset, new->alignment)) {
                 PyArray_CLEARFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
@@ -2271,8 +2271,8 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
                 break;
             }
         }
-        ((PyArrayObject_fieldaccess *)ap)->descr = descr;
-        ((PyArrayObject_fieldaccess *)ap)->flags = savedflags;
+        ((PyArrayObject_fields *)ap)->descr = descr;
+        ((PyArrayObject_fields *)ap)->flags = savedflags;
         return nonz;
     }
     len = PyArray_DESCR(ap)->elsize;
@@ -2562,7 +2562,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
          * TODO: temporarily modifying the array like this
          *       is bad coding style, should be changed.
          */
-        ((PyArrayObject_fieldaccess *)ap)->descr = new;
+        ((PyArrayObject_fields *)ap)->descr = new;
         swap = PyArray_ISBYTESWAPPED(ap);
         nip1 = ip1+offset;
         nip2 = ip2+offset;
@@ -2606,7 +2606,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     }
 
 finish:
-    ((PyArrayObject_fieldaccess *)ap)->descr = descr;
+    ((PyArrayObject_fields *)ap)->descr = descr;
     return res;
 }
 

@@ -88,7 +88,7 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
     npy_intp *shape_out = PyArray_DIMS(out);
     int idim, idim_out, ndim_out = PyArray_NDIM(out);
     PyArray_Descr *dtype;
-    PyArrayObject_fieldaccess *ret;
+    PyArrayObject_fields *ret;
 
     /*
      * If the 'keepdims' parameter is true, do a simpler validation and
@@ -149,7 +149,7 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
     /* Allocate the view */
     dtype = PyArray_DESCR(out);
     Py_INCREF(dtype);
-    ret = (PyArrayObject_fieldaccess *)PyArray_NewFromDescr(&PyArray_Type,
+    ret = (PyArrayObject_fields *)PyArray_NewFromDescr(&PyArray_Type,
                                dtype,
                                ndim, shape,
                                strides,
@@ -650,8 +650,8 @@ PyArray_InitializeReduceResult(
          * non-skipna case.
          */
         shape[0] = shape0;
-        ((PyArrayObject_fieldaccess *)op_view)->data = data;
-        ((PyArrayObject_fieldaccess *)op_view)->maskna_data = maskna_data;
+        ((PyArrayObject_fields *)op_view)->data = data;
+        ((PyArrayObject_fields *)op_view)->maskna_data = maskna_data;
     }
     /*
      * Here 'skipna' is True and 'operand' has an NA mask, but
@@ -701,14 +701,14 @@ PyArray_InitializeReduceResult(
         for (idim = 0; idim < ndim; ++idim) {
             if (axis_flags[idim]) {
                 shape[idim] = shape_orig[idim] - 1;
-                ((PyArrayObject_fieldaccess *)op_view)->data += strides[idim];
+                ((PyArrayObject_fields *)op_view)->data += strides[idim];
             }
         }
         if (PyArray_HASMASKNA(op_view)) {
             strides = PyArray_MASKNA_STRIDES(op_view);
             for (idim = 0; idim < ndim; ++idim) {
                 if (axis_flags[idim]) {
-                    ((PyArrayObject_fieldaccess *)op_view)->maskna_data +=
+                    ((PyArrayObject_fields *)op_view)->maskna_data +=
                                                                 strides[idim];
                 }
             }

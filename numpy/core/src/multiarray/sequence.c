@@ -86,7 +86,7 @@ array_slice(PyArrayObject *self, Py_ssize_t ilow, Py_ssize_t ihigh)
 
     /* Also take a view of the NA mask if it exists */
     if (PyArray_HASMASKNA(self)) {
-        PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
+        PyArrayObject_fields *fret = (PyArrayObject_fields *)ret;
 
         fret->maskna_dtype = PyArray_MASKNA_DTYPE(self);
         Py_INCREF(fret->maskna_dtype);

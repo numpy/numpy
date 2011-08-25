@@ -329,7 +329,7 @@ PyArray_AllocateMaskNA(PyArrayObject *arr,
                 npy_bool multina,
                 npy_mask defaultmask)
 {
-    PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)arr;
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)arr;
     PyArray_Descr *maskna_dtype = NULL;
     char *maskna_data = NULL;
     npy_intp size;

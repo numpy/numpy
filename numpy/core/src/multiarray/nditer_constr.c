@@ -3030,7 +3030,7 @@ npyiter_allocate_arrays(NpyIter *iter,
                  * the chain of bases.
                  */
                 Py_INCREF(op[iop]);
-                ((PyArrayObject_fieldaccess *)temp)->base =
+                ((PyArrayObject_fields *)temp)->base =
                                                         (PyObject *)op[iop];
                 PyArray_ENABLEFLAGS(temp, NPY_ARRAY_UPDATEIFCOPY);
                 PyArray_CLEARFLAGS(op[iop], NPY_ARRAY_WRITEABLE);

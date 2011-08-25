@@ -1268,13 +1268,13 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         }
         newd = PyArray_DescrNew(saved);
         newd->names = new_name;
-        ((PyArrayObject_fieldaccess *)self)->descr = newd;
+        ((PyArrayObject_fields *)self)->descr = newd;
     }
 
     val = PyArray_Sort(self, axis, sortkind);
     if (order != NULL) {
         Py_XDECREF(PyArray_DESCR(self));
-        ((PyArrayObject_fieldaccess *)self)->descr = saved;
+        ((PyArrayObject_fields *)self)->descr = saved;
     }
     if (val < 0) {
         return NULL;
@@ -1322,13 +1322,13 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
         }
         newd = PyArray_DescrNew(saved);
         newd->names = new_name;
-        ((PyArrayObject_fieldaccess *)self)->descr = newd;
+        ((PyArrayObject_fields *)self)->descr = newd;
     }
 
     res = PyArray_ArgSort(self, axis, sortkind);
     if (order != NULL) {
         Py_XDECREF(PyArray_DESCR(self));
-        ((PyArrayObject_fieldaccess *)self)->descr = saved;
+        ((PyArrayObject_fields *)self)->descr = saved;
     }
     return PyArray_Return((PyArrayObject *)res);
 }
@@ -1570,7 +1570,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     npy_intp size, dimensions[MAX_DIMS];
     int nd;
 
-    PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)self;
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
     /* This will free any memory associated with a and
        use the string in setstate as the (writeable) memory.
@@ -2202,7 +2202,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
     PyObject *uic = Py_None;
     int flagback = PyArray_FLAGS(self);
 
-    PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)self;
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO", kwlist,
                                      &write,
