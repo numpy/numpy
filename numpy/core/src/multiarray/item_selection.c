@@ -1781,7 +1781,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 
     /* Take a view of the mask if it exists */
     if (self_has_maskna) {
-        PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
+        PyArrayObject_fields *fret = (PyArrayObject_fields *)ret;
         npy_intp *maskna_strides = PyArray_MASKNA_STRIDES(self);
 
         fret->maskna_dtype = PyArray_MASKNA_DTYPE(self);
@@ -2264,7 +2264,7 @@ finish:
     /* Create views into ret, one for each dimension */
     if (ndim == 1) {
         /* Directly switch to one dimensions (dimension 1 is 1 anyway) */
-        ((PyArrayObject_fieldaccess *)ret)->nd = 1;
+        ((PyArrayObject_fields *)ret)->nd = 1;
         PyTuple_SET_ITEM(ret_tuple, 0, (PyObject *)ret);
     }
     else {

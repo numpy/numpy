@@ -319,7 +319,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
     int strideperm[NPY_MAXDIMS];
     PyArray_Descr *dtype = NULL;
     PyArrayObject *ret = NULL;
-    PyArrayObject_fieldaccess *sliding_view = NULL;
+    PyArrayObject_fields *sliding_view = NULL;
     int has_maskna;
 
     if (narrays <= 0) {
@@ -438,7 +438,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
      * Create a view which slides through ret for assigning the
      * successive input arrays.
      */
-    sliding_view = (PyArrayObject_fieldaccess *)PyArray_View(ret,
+    sliding_view = (PyArrayObject_fields *)PyArray_View(ret,
                                                         NULL, &PyArray_Type);
     if (sliding_view == NULL) {
         Py_DECREF(ret);
@@ -482,7 +482,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
     npy_intp shape[2], strides[2];
     PyArray_Descr *dtype = NULL;
     PyArrayObject *ret = NULL;
-    PyArrayObject_fieldaccess *sliding_view = NULL;
+    PyArrayObject_fields *sliding_view = NULL;
     int has_maskna;
 
     if (narrays <= 0) {
@@ -557,7 +557,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
      * Create a view which slides through ret for assigning the
      * successive input arrays.
      */
-    sliding_view = (PyArrayObject_fieldaccess *)PyArray_View(ret,
+    sliding_view = (PyArrayObject_fields *)PyArray_View(ret,
                                                         NULL, &PyArray_Type);
     if (sliding_view == NULL) {
         Py_DECREF(ret);
@@ -1574,7 +1574,7 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
 
     /* Take a view of the NA mask as well if necessary */
     if (PyArray_HASMASKNA(arr)) {
-        PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
+        PyArrayObject_fields *fret = (PyArrayObject_fields *)ret;
 
         fret->maskna_dtype = PyArray_MASKNA_DTYPE(arr);
         Py_INCREF(fret->maskna_dtype);
@@ -1714,7 +1714,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
                 }
                 Py_INCREF(oldtype);
                 Py_DECREF(PyArray_DESCR(ret));
-                ((PyArrayObject_fieldaccess *)ret)->descr = oldtype;
+                ((PyArrayObject_fields *)ret)->descr = oldtype;
                 goto finish;
             }
         }

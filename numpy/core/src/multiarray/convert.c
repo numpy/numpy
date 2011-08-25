@@ -574,7 +574,7 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 
     /* Take a view of the mask if it exists */
     if (PyArray_HASMASKNA(self)) {
-        PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)ret;
+        PyArrayObject_fields *fa = (PyArrayObject_fields *)ret;
 
         if (PyArray_HASFIELDS(self)) {
             PyErr_SetString(PyExc_RuntimeError,

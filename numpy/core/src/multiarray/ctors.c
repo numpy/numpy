@@ -870,7 +870,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
                      npy_intp *dims, npy_intp *strides, void *data,
                      int flags, PyObject *obj)
 {
-    PyArrayObject_fieldaccess *fa;
+    PyArrayObject_fields *fa;
     int i;
     size_t sd;
     npy_intp largest;
@@ -958,7 +958,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         largest /= dim;
     }
 
-    fa = (PyArrayObject_fieldaccess *) subtype->tp_alloc(subtype, 0);
+    fa = (PyArrayObject_fields *) subtype->tp_alloc(subtype, 0);
     if (fa == NULL) {
         Py_DECREF(descr);
         return NULL;
@@ -1311,7 +1311,7 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
     r = PyArray_NewFromDescr(&PyArray_Type, descr,
                              nd, shape, strides, view->buf,
                              flags, NULL);
-    ((PyArrayObject_fieldaccess *)r)->base = memoryview;
+    ((PyArrayObject_fields *)r)->base = memoryview;
     PyArray_UpdateFlags((PyArrayObject *)r, NPY_ARRAY_UPDATE_ALL);
 
     *out = r;
@@ -2084,7 +2084,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
              * the chain of bases.
              */
             Py_INCREF(arr);
-            ((PyArrayObject_fieldaccess *)ret)->base = (PyObject *)arr;
+            ((PyArrayObject_fields *)ret)->base = (PyObject *)arr;
             PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
             PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEABLE);
         }
@@ -3328,7 +3328,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
         Py_DECREF(new);
         Py_DECREF(PyArray_DESCR(range));
         /* steals the reference */
-        ((PyArrayObject_fieldaccess *)range)->descr = dtype;
+        ((PyArrayObject_fields *)range)->descr = dtype;
     }
     Py_DECREF(start);
     Py_DECREF(step);
@@ -3453,7 +3453,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
                 err = 1;
                 break;
             }
-            ((PyArrayObject_fieldaccess *)r)->data = tmp;
+            ((PyArrayObject_fields *)r)->data = tmp;
             dptr = tmp + (totalbytes - bytes);
             thisbuf = 0;
         }
@@ -3468,7 +3468,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
         }
         else {
             PyArray_DIMS(r)[0] = *nread;
-            ((PyArrayObject_fieldaccess *)r)->data = tmp;
+            ((PyArrayObject_fields *)r)->data = tmp;
         }
     }
     NPY_END_ALLOW_THREADS;
@@ -3548,7 +3548,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
             Py_DECREF(ret);
             return PyErr_NoMemory();
         }
-        ((PyArrayObject_fieldaccess *)ret)->data = tmp;
+        ((PyArrayObject_fields *)ret)->data = tmp;
         PyArray_DIMS(ret)[0] = nread;
     }
     return (PyObject *)ret;
@@ -3832,7 +3832,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
                 Py_DECREF(value);
                 goto done;
             }
-            ((PyArrayObject_fieldaccess *)ret)->data = new_data;
+            ((PyArrayObject_fields *)ret)->data = new_data;
         }
         PyArray_DIMS(ret)[0] = i + 1;
 
@@ -3861,7 +3861,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         PyErr_SetString(PyExc_MemoryError, "cannot allocate array memory");
         goto done;
     }
-    ((PyArrayObject_fieldaccess *)ret)->data = new_data;
+    ((PyArrayObject_fields *)ret)->data = new_data;
 
  done:
     Py_XDECREF(iter);

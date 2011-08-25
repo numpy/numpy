@@ -1681,7 +1681,7 @@ PyArray_Zero(PyArrayObject *arr)
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
     ret = PyArray_DESCR(arr)->f->setitem(obj, zeroval, arr);
-    ((PyArrayObject_fieldaccess *)arr)->flags = storeflags;
+    ((PyArrayObject_fields *)arr)->flags = storeflags;
     Py_DECREF(obj);
     if (ret < 0) {
         PyDataMem_FREE(zeroval);
@@ -1719,7 +1719,7 @@ PyArray_One(PyArrayObject *arr)
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
     ret = PyArray_DESCR(arr)->f->setitem(obj, oneval, arr);
-    ((PyArrayObject_fieldaccess *)arr)->flags = storeflags;
+    ((PyArrayObject_fields *)arr)->flags = storeflags;
     Py_DECREF(obj);
     if (ret < 0) {
         PyDataMem_FREE(oneval);

@@ -619,7 +619,7 @@ typedef struct _arr_descr {
  * #define NPY_NO_DEPRECATED_API.
  */
 /* This struct will be moved to a private header in a future release */
-typedef struct tagPyArrayObject_fieldaccess {
+typedef struct tagPyArrayObject_fields {
     PyObject_HEAD
     /* Pointer to the raw data buffer */
     char *data;
@@ -679,7 +679,7 @@ typedef struct tagPyArrayObject_fieldaccess {
      * of whether there is an NA mask or not.
      */
     npy_intp *maskna_strides;
-} PyArrayObject_fieldaccess;
+} PyArrayObject_fields;
 
 /*
  * To hide the implementation details, we only expose
@@ -694,10 +694,10 @@ typedef struct tagPyArrayObject {
  * Can't put this in npy_deprecated_api.h like the others.
  * PyArrayObject field access is deprecated as of NumPy 1.7.
  */
-typedef PyArrayObject_fieldaccess PyArrayObject;
+typedef PyArrayObject_fields PyArrayObject;
 #endif
 
-#define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fieldaccess))
+#define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fields))
 
 /* Array Flags Object */
 typedef struct PyArrayFlagsObject {
@@ -1436,67 +1436,67 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 static NPY_INLINE int
 PyArray_NDIM(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->nd;
+    return ((PyArrayObject_fields *)arr)->nd;
 }
 
 static NPY_INLINE char *
 PyArray_DATA(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->data;
+    return ((PyArrayObject_fields *)arr)->data;
 }
 
 static NPY_INLINE npy_intp *
 PyArray_DIMS(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->dimensions;
+    return ((PyArrayObject_fields *)arr)->dimensions;
 }
 
 static NPY_INLINE npy_intp *
 PyArray_STRIDES(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->strides;
+    return ((PyArrayObject_fields *)arr)->strides;
 }
 
 static NPY_INLINE npy_intp
 PyArray_DIM(PyArrayObject *arr, int idim)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->dimensions[idim];
+    return ((PyArrayObject_fields *)arr)->dimensions[idim];
 }
 
 static NPY_INLINE npy_intp
 PyArray_STRIDE(PyArrayObject *arr, int istride)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->strides[istride];
+    return ((PyArrayObject_fields *)arr)->strides[istride];
 }
 
 static NPY_INLINE PyObject *
 PyArray_BASE(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->base;
+    return ((PyArrayObject_fields *)arr)->base;
 }
 
 static NPY_INLINE PyArray_Descr *
 PyArray_DESCR(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->descr;
+    return ((PyArrayObject_fields *)arr)->descr;
 }
 
 static NPY_INLINE int
 PyArray_FLAGS(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->flags;
+    return ((PyArrayObject_fields *)arr)->flags;
 }
 
 static NPY_INLINE npy_intp
 PyArray_ITEMSIZE(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->descr->elsize;
+    return ((PyArrayObject_fields *)arr)->descr->elsize;
 }
 
 static NPY_INLINE int
 PyArray_TYPE(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->descr->type_num;
+    return ((PyArrayObject_fields *)arr)->descr->type_num;
 }
 
 static NPY_INLINE int
@@ -1508,14 +1508,14 @@ PyArray_CHKFLAGS(PyArrayObject *arr, int flags)
 static NPY_INLINE PyObject *
 PyArray_GETITEM(PyArrayObject *arr, char *itemptr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->descr->f->getitem(
+    return ((PyArrayObject_fields *)arr)->descr->f->getitem(
                                                         itemptr, arr);
 }
 
 static NPY_INLINE int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->descr->f->setitem(
+    return ((PyArrayObject_fields *)arr)->descr->f->setitem(
                                                         v, itemptr, arr);
 }
 
@@ -1525,22 +1525,22 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 #else
 
 /* These macros are deprecated as of NumPy 1.7. */
-#define PyArray_NDIM(obj) (((PyArrayObject_fieldaccess *)(obj))->nd)
-#define PyArray_BYTES(obj) ((char *)(((PyArrayObject_fieldaccess *)(obj))->data))
-#define PyArray_DATA(obj) ((void *)(((PyArrayObject_fieldaccess *)(obj))->data))
-#define PyArray_DIMS(obj) (((PyArrayObject_fieldaccess *)(obj))->dimensions)
-#define PyArray_STRIDES(obj) (((PyArrayObject_fieldaccess *)(obj))->strides)
+#define PyArray_NDIM(obj) (((PyArrayObject_fields *)(obj))->nd)
+#define PyArray_BYTES(obj) ((char *)(((PyArrayObject_fields *)(obj))->data))
+#define PyArray_DATA(obj) ((void *)(((PyArrayObject_fields *)(obj))->data))
+#define PyArray_DIMS(obj) (((PyArrayObject_fields *)(obj))->dimensions)
+#define PyArray_STRIDES(obj) (((PyArrayObject_fields *)(obj))->strides)
 #define PyArray_DIM(obj,n) (PyArray_DIMS(obj)[n])
 #define PyArray_STRIDE(obj,n) (PyArray_STRIDES(obj)[n])
-#define PyArray_BASE(obj) (((PyArrayObject_fieldaccess *)(obj))->base)
-#define PyArray_DESCR(obj) (((PyArrayObject_fieldaccess *)(obj))->descr)
-#define PyArray_FLAGS(obj) (((PyArrayObject_fieldaccess *)(obj))->flags)
+#define PyArray_BASE(obj) (((PyArrayObject_fields *)(obj))->base)
+#define PyArray_DESCR(obj) (((PyArrayObject_fields *)(obj))->descr)
+#define PyArray_FLAGS(obj) (((PyArrayObject_fields *)(obj))->flags)
 #define PyArray_CHKFLAGS(m, FLAGS) \
-        ((((PyArrayObject_fieldaccess *)(m))->flags & (FLAGS)) == (FLAGS))
+        ((((PyArrayObject_fields *)(m))->flags & (FLAGS)) == (FLAGS))
 #define PyArray_ITEMSIZE(obj) \
-                    (((PyArrayObject_fieldaccess *)(obj))->descr->elsize)
+                    (((PyArrayObject_fields *)(obj))->descr->elsize)
 #define PyArray_TYPE(obj) \
-                    (((PyArrayObject_fieldaccess *)(obj))->descr->type_num)
+                    (((PyArrayObject_fields *)(obj))->descr->type_num)
 #define PyArray_GETITEM(obj,itemptr) \
         PyArray_DESCR(obj)->f->getitem((char *)(itemptr), \
                                      (PyArrayObject *)(obj))
@@ -1554,13 +1554,13 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 static NPY_INLINE PyArray_Descr *
 PyArray_DTYPE(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->descr;
+    return ((PyArrayObject_fields *)arr)->descr;
 }
 
 static NPY_INLINE npy_intp *
 PyArray_SHAPE(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->dimensions;
+    return ((PyArrayObject_fields *)arr)->dimensions;
 }
 
 /*
@@ -1570,7 +1570,7 @@ PyArray_SHAPE(PyArrayObject *arr)
 static NPY_INLINE void
 PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
 {
-    ((PyArrayObject_fieldaccess *)arr)->flags |= flags;
+    ((PyArrayObject_fields *)arr)->flags |= flags;
 }
 
 /*
@@ -1580,7 +1580,7 @@ PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
 static NPY_INLINE void
 PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 {
-    ((PyArrayObject_fieldaccess *)arr)->flags &= ~flags;
+    ((PyArrayObject_fields *)arr)->flags &= ~flags;
 }
 
 /* Access to the missing values NA mask, added in 1.7 */
@@ -1588,26 +1588,26 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 static NPY_INLINE PyArray_Descr *
 PyArray_MASKNA_DTYPE(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->maskna_dtype;
+    return ((PyArrayObject_fields *)arr)->maskna_dtype;
 }
 
 static NPY_INLINE char *
 PyArray_MASKNA_DATA(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->maskna_data;
+    return ((PyArrayObject_fields *)arr)->maskna_data;
 }
 
 /* For the corresponding DIMS, use PyArray_DIMS(arr) */
 static NPY_INLINE npy_intp *
 PyArray_MASKNA_STRIDES(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->maskna_strides;
+    return ((PyArrayObject_fields *)arr)->maskna_strides;
 }
 
 static NPY_INLINE npy_bool
 PyArray_HASMASKNA(PyArrayObject *arr)
 {
-    return (((PyArrayObject_fieldaccess *)arr)->flags & NPY_ARRAY_MASKNA) != 0;
+    return (((PyArrayObject_fields *)arr)->flags & NPY_ARRAY_MASKNA) != 0;
 }
 
 

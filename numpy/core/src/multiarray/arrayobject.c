@@ -136,7 +136,7 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
         return -1;
     }
 
-    ((PyArrayObject_fieldaccess *)arr)->base = obj;
+    ((PyArrayObject_fields *)arr)->base = obj;
 
     return 0;
 }
@@ -357,7 +357,7 @@ PyArray_TypeNumFromName(char *str)
 static void
 array_dealloc(PyArrayObject *self)
 {
-    PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)self;
+    PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
     _array_dealloc_buffer_info(self);
 
@@ -486,7 +486,7 @@ NPY_NO_EXPORT void
 PyArray_DebugPrint(PyArrayObject *obj)
 {
     int i;
-    PyArrayObject_fieldaccess *fobj = (PyArrayObject_fieldaccess *)obj;
+    PyArrayObject_fields *fobj = (PyArrayObject_fields *)obj;
 
     printf("-------------------------------------------------------\n");
     printf(" Dump of NumPy ndarray at address %p\n", obj);
@@ -1673,7 +1673,7 @@ NPY_NO_EXPORT PyTypeObject PyArray_Type = {
     (traverseproc)0,                            /* tp_traverse */
     (inquiry)0,                                 /* tp_clear */
     (richcmpfunc)array_richcompare,             /* tp_richcompare */
-    offsetof(PyArrayObject_fieldaccess, weakreflist), /* tp_weaklistoffset */
+    offsetof(PyArrayObject_fields, weakreflist), /* tp_weaklistoffset */
     (getiterfunc)array_iter,                    /* tp_iter */
     (iternextfunc)0,                            /* tp_iternext */
     array_methods,                              /* tp_methods */

@@ -82,7 +82,7 @@ array_big_item(PyArrayObject *self, npy_intp i)
 
     /* Take a view of the NA mask if it exists */
     if (PyArray_HASMASKNA(self)) {
-        PyArrayObject_fieldaccess *fa = (PyArrayObject_fieldaccess *)ret;
+        PyArrayObject_fields *fa = (PyArrayObject_fields *)ret;
 
         fa->maskna_dtype = PyArray_MASKNA_DTYPE(self);
         Py_INCREF(fa->maskna_dtype);
@@ -492,7 +492,7 @@ add_new_axes_0d(PyArrayObject *arr,  int newaxis_count)
 
     /* Take a view of the NA mask if it exists */
     if (PyArray_HASMASKNA(arr)) {
-        PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
+        PyArrayObject_fields *fret = (PyArrayObject_fields *)ret;
 
         fret->maskna_dtype = PyArray_MASKNA_DTYPE(arr);
         Py_INCREF(fret->maskna_dtype);
@@ -679,7 +679,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
 
     /* Take a view of the NA mask if it exists */
     if (PyArray_HASMASKNA(self)) {
-        PyArrayObject_fieldaccess *fret = (PyArrayObject_fieldaccess *)ret;
+        PyArrayObject_fields *fret = (PyArrayObject_fields *)ret;
 
         fret->maskna_dtype = PyArray_MASKNA_DTYPE(self);
         Py_INCREF(fret->maskna_dtype);
