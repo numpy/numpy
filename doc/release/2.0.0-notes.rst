@@ -42,6 +42,7 @@ What doesn't work with NA:
       one mask value per primitive field of the struct dtype.
     * UFunc.accumulate, UFunc.reduceat.
     * Ufunc calls with both NA masks and a where= mask at the same time.
+    * File I/O has not been extended to support NA-masks.
     * np.logical_and, np.logical_or, np.all, and np.any don't satisfy the
       rules NA | True == True and NA & False == False yet.
     * Array methods:
