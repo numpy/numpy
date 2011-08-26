@@ -1791,7 +1791,7 @@ array_copyto(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O!O&|O&Oi", kwlist,
                 &PyArray_Type, &dst,
-                &PyArray_Converter, &src,
+                &PyArray_AllowNAConverter, &src,
                 &PyArray_CastingConverter, &casting,
                 &wheremask_in,
                 &preservena)) {
@@ -1896,9 +1896,9 @@ array_empty_like(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     int subok = 1, maskna = 0;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&|O&O&ii", kwlist,
-                PyArray_Converter, &prototype,
-                PyArray_DescrConverter2, &dtype,
-                PyArray_OrderConverter, &order,
+                &PyArray_AllowNAConverter, &prototype,
+                &PyArray_DescrConverter2, &dtype,
+                &PyArray_OrderConverter, &order,
                 &subok,
                 &maskna)) {
         goto fail;

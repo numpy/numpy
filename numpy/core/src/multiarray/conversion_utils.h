@@ -2,12 +2,6 @@
 #define _NPY_PRIVATE_CONVERSION_UTILS_H_
 
 NPY_NO_EXPORT int
-PyArray_Converter(PyObject *object, PyObject **address);
-
-NPY_NO_EXPORT int
-PyArray_OutputConverter(PyObject *object, PyArrayObject **address);
-
-NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq);
 
 NPY_NO_EXPORT int
