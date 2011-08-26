@@ -155,8 +155,15 @@ na_richcompare(NpyNA_fields *self, PyObject *other, int cmp_op)
     }
     /* Otherwise always return the NA singleton */
     else {
-        Py_INCREF(Npy_NA);
-        return Npy_NA;
+        PyArray_Descr *bool_dtype;
+        NpyNA *ret;
+        bool_dtype = PyArray_DescrFromType(NPY_BOOL);
+        if (bool_dtype == NULL) {
+            return NULL;
+        }
+        ret = NpyNA_FromDTypeAndPayload(bool_dtype, 0, 0);
+        Py_DECREF(bool_dtype);
+        return (PyObject *)ret;
     }
 }
 
