@@ -291,3 +291,11 @@ release should be possible without changing existing API functions in any way.
 
 To see a more complete list of what is supported and unsupported in the
 1.7 release of NumPy, please refer to the release notes.
+
+During the design phase of this feature, two implementation approaches
+for NA values were discussed, called "mask" and "bitpattern". What
+has been implemented is the "mask" approach, but the design document,
+or "NEP", describes a way both approaches could co-operatively exist
+in NumPy, since each has both pros and cons. This design document is
+available in the file "doc/neps/missing-data.rst" of the NumPy source
+code.
