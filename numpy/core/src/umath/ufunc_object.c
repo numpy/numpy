@@ -3695,12 +3695,24 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
             return NULL;
         }
     }
-    else {
+    else if (operation == UFUNC_ACCUMULATE) {
         if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&ii", kwlist1,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
                                         PyArray_OutputConverter, &out,
+                                        &skipna,
+                                        &keepdims)) {
+            Py_XDECREF(otype);
+            return NULL;
+        }
+    }
+    else {
+        if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&ii", kwlist1,
+                                        &op,
+                                        &axes_in,
+                                        PyArray_DescrConverter2, &otype,
+                                        PyArray_OutputAllowNAConverter, &out,
                                         &skipna,
                                         &keepdims)) {
             Py_XDECREF(otype);

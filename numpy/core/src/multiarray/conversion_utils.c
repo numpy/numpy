@@ -29,11 +29,45 @@
  * PyArg_ParseTuple.  It will immediately return an object of array type
  * or will convert to a NPY_ARRAY_CARRAY any other object.
  *
+ * This function will not allow an array which supports NA through,
+ * to allow code which doesn't support NA to continue working as is.
+ *
  * If you use PyArray_Converter, you must DECREF the array when finished
  * as you get a new reference to it.
  */
 NPY_NO_EXPORT int
 PyArray_Converter(PyObject *object, PyObject **address)
+{
+    if (PyArray_Check(object) && !PyArray_HASMASKNA((PyArrayObject *)object)) {
+        *address = object;
+        Py_INCREF(object);
+        return PY_SUCCEED;
+    }
+    else {
+        *address = PyArray_FromAny(object, NULL, 0, 0,
+                                NPY_ARRAY_CARRAY, NULL);
+        if (*address == NULL) {
+            return PY_FAIL;
+        }
+        return PY_SUCCEED;
+    }
+}
+
+/*NUMPY_API
+ *
+ * Useful to pass as converter function for O& processing in PyArgs_ParseTuple.
+ *
+ * This conversion function can be used with the "O&" argument for
+ * PyArg_ParseTuple.  It will immediately return an object of array type
+ * or will convert to a NPY_ARRAY_CARRAY any other object.
+ *
+ * This function allows NA-arrays through.
+ *
+ * If you use PyArray_AllowNAConverter, you must DECREF the array when finished
+ * as you get a new reference to it.
+ */
+NPY_NO_EXPORT int
+PyArray_AllowNAConverter(PyObject *object, PyObject **address)
 {
     if (PyArray_Check(object)) {
         *address = object;
@@ -56,6 +90,36 @@ PyArray_Converter(PyObject *object, PyObject **address)
  */
 NPY_NO_EXPORT int
 PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
+{
+    if (object == NULL || object == Py_None) {
+        *address = NULL;
+        return PY_SUCCEED;
+    }
+    if (PyArray_Check(object)) {
+        if (PyArray_HASMASKNA((PyArrayObject *)object)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "this operation does not yet support output "
+                            "arrays with NA support");
+            *address = NULL;
+            return PY_FAIL;
+        }
+        *address = (PyArrayObject *)object;
+        return PY_SUCCEED;
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+                        "output must be an array");
+        *address = NULL;
+        return PY_FAIL;
+    }
+}
+
+/*NUMPY_API
+ * Useful to pass as converter function for O& processing in
+ * PyArgs_ParseTuple for output arrays
+ */
+NPY_NO_EXPORT int
+PyArray_OutputAllowNAConverter(PyObject *object, PyArrayObject **address)
 {
     if (object == NULL || object == Py_None) {
         *address = NULL;
@@ -105,9 +169,9 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
                         "expected sequence object with len >= 0");
         return PY_FAIL;
     }
-    if (len > MAX_DIMS) {
-        PyErr_Format(PyExc_ValueError, "sequence too large; "   \
-                     "must be smaller than %d", MAX_DIMS);
+    if (len > NPY_MAXDIMS) {
+        PyErr_Format(PyExc_ValueError, "sequence too large; "
+                     "must be smaller than %d", NPY_MAXDIMS);
         return PY_FAIL;
     }
     if (len > 0) {
@@ -185,7 +249,7 @@ NPY_NO_EXPORT int
 PyArray_AxisConverter(PyObject *obj, int *axis)
 {
     if (obj == Py_None) {
-        *axis = MAX_DIMS;
+        *axis = NPY_MAXDIMS;
     }
     else {
         *axis = (int) PyInt_AsLong(obj);

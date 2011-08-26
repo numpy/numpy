@@ -2752,6 +2752,19 @@ to.
     . No matter what is returned, you must DECREF the object returned
     by this routine in *address* when you are done with it.
 
+    If the input is an array with NA support, this will either raise
+    an error if it contains any NAs, or will make a copy of the array
+    without NA support if it does not contain any NAs. Use the function
+    :cfunc:`PyArray_AllowNAConverter` to support NA-arrays directly
+    and more efficiently.
+
+.. cfunction:: int PyArray_AllowConverter(PyObject* obj, PyObject** address)
+
+    This is the same as :cfunc:`PyArray_Converter`, but allows arrays
+    with NA support to pass through untouched. This function was created
+    so that the existing converter could raise errors appropriately
+    for functions which have not been updated with NA support
+
 .. cfunction:: int PyArray_OutputConverter(PyObject* obj, PyArrayObject** address)
 
     This is a default converter for output arrays given to
@@ -2759,6 +2772,17 @@ to.
     will be ``NULL`` but the call will succeed. If :cfunc:`PyArray_Check` (
     *obj*) is TRUE then it is returned in *\*address* without
     incrementing its reference count.
+
+    If the output is an array with NA support, this will raise an error.
+    Use the function :cfunc:`PyArray_OutputAllowNAConverter` to support
+    NA-arrays directly.
+
+.. cfunction:: int PyArray_OutputAllowNAConverter(PyObject* obj, PyArrayObject** address)
+
+    This is the same as :cfunc:`PyArray_OutputConverter`, but allows arrays
+    with NA support to pass through. This function was created
+    so that the existing output converter could raise errors appropriately
+    for functions which have not been updated with NA support
 
 .. cfunction:: int PyArray_IntpConverter(PyObject* obj, PyArray_Dims* seq)
 
