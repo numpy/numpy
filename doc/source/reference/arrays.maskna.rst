@@ -14,10 +14,19 @@ core ndarray. This system is highly flexible, allowing NAs to be used
 with any underlying dtype, and supports creating multiple views of the same
 data with different choices of NAs.
 
+Other Missing Data Approaches
+=============================
+
 The previous recommended approach for working with missing values was the
 :mod:`numpy.ma` module, a subclass of ndarray written purely in Python.
 By placing NA-masks directly in the NumPy core, it's possible to avoid
 the need for calling "ma.<func>(arr)" instead of "np.<func>(arr)".
+
+Another approach many people have taken is to use NaN as the
+placeholder for missing values. There are a few functions
+like :func:`numpy.nansum` which behave similarly to usage of the
+ufunc.reduce *skipna* parameter.
+
 As experienced in the R language, a programming interface based on an
 NA placeholder is generally more intuitive to work with than direct
 mask manipulation.
@@ -28,13 +37,15 @@ Missing Data Model
 The model adopted by NumPy for missing values is that NA is a
 placeholder for a value which is there, but is unknown to computations.
 The value may be temporarily hidden by the mask, or may be unknown
-for any reason, but all computations must reason as if there is a value
-in existence hidden in a box.
+for any reason.
 
 This model is layered on top of the existing NumPy dtypes, so the value
-behind the NA may be any value the dtype can take on. For example, an
-NA with a floating point dtype could be any finite number, Inf, or NaN,
-computations may not assume anything about its value.
+behind the NA may be any value the dtype can take on.  Consider substiting
+different values for the NA in a computation, and see what comes out. If
+different substitutions produce different outputs, that output must
+be NA as well. If all possible substitutions produce the same output,
+it is acceptable, though not strictly necessary, to return that output
+instead of an NA.
 
 A consequence of separating the NA model from the dtype is that unlike
 in R, NaNs are not considered to be NA. An NA is a value that is completely
@@ -47,6 +58,12 @@ all possible values of the dtype on the left hand side produce the
 same answer. This means that np.logical_or(np.NA, True) can produce
 True instead of the more conservative np.NA. There is a similar case
 for np.logical_and.
+
+A similar, but slightly deceptive example is wanting to treat (NA * 0.0)
+as 0.0 instead of as NA. This is invalid because the NA might be Inf
+or NaN, in which case the result is NaN instead of 0.0. This idea is
+valid for integer dtypes, but NumPy still chooses to return NA because
+checking this special case would adversely affect performance.
 
 The NA Singleton
 ================
@@ -72,6 +89,11 @@ To check whether a value is NA, use the :func:`numpy.isna` function::
     False
     >>> np.isna(np.nan)
     False
+    >>> np.isna(np.NA * 3)
+    True
+    >>> (np.NA * 3) is np.NA
+    False
+
 
 Creating NA-Masked Arrays
 =========================
@@ -221,9 +243,7 @@ Iterating Over NA-Masked Arrays
 ===============================
 
 The :class:`nditer` object can be used to iterate over arrays with
-NA values just like over normal arrays. The one additional detail to
-be aware of is that the per-operand flag 'use_maskna' must be specified
-when they are being used.::
+NA values just like over normal arrays.::
 
     >>> a = np.array([1,3,np.NA])
     >>> for x in np.nditer(a):
@@ -231,13 +251,17 @@ when they are being used.::
     ... 
     1 3 NA
     >>> b = np.zeros(3, maskna=True)
-    >>> for x, y in np.nditer([a,b], op_flags=[['readonly','use_maskna'],
-    ...                                        ['writeonly', 'use_maskna']]):
+    >>> for x, y in np.nditer([a,b], op_flags=[['readonly'],
+    ...                                        ['writeonly']]):
     ...     y[...] = -x
     ... 
     >>> b
     array([-1., -3.,  NA])
 
+When using the C-API version of the nditer, one must explicitly
+add the NPY_ITER_USE_MASKNA flag and take care to deal with the NA
+mask appropriately. In the Python exposure, this flag is added
+automatically.
 
 Planned Future Additions
 ========================
