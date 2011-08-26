@@ -36,7 +36,7 @@
  */
 static PyArrayObject *
 allocate_reduce_result(PyArrayObject *arr, npy_bool *axis_flags,
-                        PyArray_Descr *dtype)
+                        PyArray_Descr *dtype, int subok)
 {
     npy_intp strides[NPY_MAXDIMS], stride;
     npy_intp shape[NPY_MAXDIMS], *arr_shape = PyArray_DIMS(arr);
@@ -67,9 +67,10 @@ allocate_reduce_result(PyArrayObject *arr, npy_bool *axis_flags,
     }
 
     /* Finally, allocate the array */
-    return (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
-                                    ndim, shape, strides,
-                                    NULL, 0, NULL);
+    return (PyArrayObject *)PyArray_NewFromDescr(
+                                    subok ? Py_TYPE(arr) : &PyArray_Type,
+                                    dtype, ndim, shape, strides,
+                                    NULL, 0, subok ? (PyObject *)arr : NULL);
 }
 
 /*
@@ -201,6 +202,9 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
  * type conversion/validity check for 'out'. When 'need_namask' is true,
  * raises an exception if 'out' doesn't have an NA mask.
  *
+ * If 'subok' is true, creates a result with the subtype of 'operand',
+ * otherwise creates on with the base ndarray class.
+ *
  * If 'out' is NULL, it allocates a new array whose shape matches
  * that of 'operand', except for at the reduction axes. An NA mask
  * is added if 'need_namask' is true.  If 'dtype' is NULL, the dtype
@@ -209,13 +213,14 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
 NPY_NO_EXPORT PyArrayObject *
 PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
                     PyArray_Descr *dtype, npy_bool *axis_flags,
-                    int need_namask, int keepdims, const char *funcname)
+                    int need_namask, int keepdims, int subok,
+                    const char *funcname)
 {
     PyArrayObject *result;
 
     if (out == NULL) {
         /* This function steals the reference to 'dtype' */
-        result = allocate_reduce_result(operand, axis_flags, dtype);
+        result = allocate_reduce_result(operand, axis_flags, dtype, subok);
 
         /* Allocate an NA mask if necessary */
         if (need_namask && result != NULL) {
@@ -761,11 +766,20 @@ PyArray_InitializeReduceResult(
  *               breaking API compatibility. Pass in NULL.
  * keepdims    : If true, leaves the reduction dimensions in the result
  *               with size one.
+ * subok       : If true, the result uses the subclass of operand, otherwise
+ *               it is always a base class ndarray.
  * assign_identity : If NULL, PyArray_InitializeReduceResult is used, otherwise
  *               this function is called to initialize the result to
  *               the reduction's unit.
  * loop        : The loop which does the reduction.
  * masked_loop : The loop which does the reduction with a mask.
+ * advanced_masked_loop: If non-NULL, this is a loop which uses a mask from
+ *               both the operand and the result. The 'result' is
+ *               initialized to a usual reduction of the operand's mask,
+ *               but both the operand's mask and the result's mask
+ *               are provided so that the loop may decide to expose
+ *               elements, which normally would not be exposed by the
+ *               normal NA propagation rules, based on the input data.
  * data        : Data which is passed to assign_identity and the inner loop.
  * buffersize  : Buffer size for the iterator. For the default, pass in 0.
  * funcname    : The name of the reduction function, for error messages.
@@ -778,9 +792,11 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                         NPY_CASTING casting,
                         npy_bool *axis_flags, int reorderable,
                         int skipna, npy_bool *skipwhichna, int keepdims,
+                        int subok,
                         PyArray_AssignReduceIdentityFunc *assign_identity,
                         PyArray_ReduceLoopFunc *loop,
                         PyArray_ReduceLoopFunc *masked_loop,
+                        PyArray_ReduceLoopFunc *advanced_masked_loop,
                         void *data, npy_intp buffersize, const char *funcname)
 {
     int use_maskna;
@@ -836,7 +852,7 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
     Py_INCREF(result_dtype);
     result = PyArray_CreateReduceResult(operand, out,
                             result_dtype, axis_flags, !skipna && use_maskna,
-                            keepdims, funcname);
+                            keepdims, subok, funcname);
     if (result == NULL) {
         goto fail;
     }
@@ -851,8 +867,12 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
             goto fail;
         }
 
-        /* Short circuit any calculation if the result is 0-dim NA */
-        if (PyArray_SIZE(result) == 1 &&
+        /*
+         * Short circuit any calculation if the result is a 0-dim NA
+         * and the advanced masked loop which could expose it isn't
+         * provided.
+         */
+        if (advanced_masked_loop == NULL && PyArray_SIZE(result) == 1 &&
                 !NpyMaskValue_IsExposed(
                             (npy_mask)*PyArray_MASKNA_DATA(result))) {
             goto finish;
@@ -923,8 +943,14 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
         else {
             /* Iterate over the output's mask */
             op_flags[0] |= NPY_ITER_USE_MASKNA;
-            /* The input's mask is already incorporated in the output's mask */
-            op_flags[1] |= NPY_ITER_IGNORE_MASKNA;
+            if (advanced_masked_loop == NULL) {
+                /* Input's mask is already incorporated in the output's mask */
+                op_flags[1] |= NPY_ITER_IGNORE_MASKNA;
+            }
+            else {
+                /* The reduction wants to use the operand's mask as well */
+                op_flags[1] |= NPY_ITER_USE_MASKNA;
+            }
         }
     }
     else {
@@ -977,7 +1003,14 @@ PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                 goto fail;
             }
         }
-        /* Masked reduction */
+        /* Masked reduction with both masks */
+        else if (!skipna && advanced_masked_loop != NULL) {
+            if (advanced_masked_loop(iter, dataptr, strideptr, countptr,
+                            iternext, needs_api, skip_first_count, data) < 0) {
+                goto fail;
+            }
+        }
+        /* Regular masked reduction with just one mask */
         else {
             if (masked_loop == NULL) {
                 PyErr_Format(PyExc_RuntimeError,
@@ -1099,7 +1132,7 @@ PyArray_CountReduceItems(PyArrayObject *operand,
         }
         result = PyArray_CreateReduceResult(operand, NULL,
                                 result_dtype, axis_flags, 0,
-                                keepdims, "count_reduce_items");
+                                keepdims, 0, "count_reduce_items");
         if (result == NULL) {
             return NULL;
         }

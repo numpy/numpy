@@ -2862,10 +2862,11 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
     result = PyArray_ReduceWrapper(arr, out, NULL, dtype, dtype,
                                 NPY_UNSAFE_CASTING,
                                 axis_flags, reorderable,
-                                skipna, NULL, keepdims,
+                                skipna, NULL, keepdims, 0,
                                 assign_identity,
                                 reduce_loop,
                                 masked_reduce_loop,
+                                NULL,
                                 ufunc, buffersize, ufunc_name);
 
     Py_DECREF(dtype);
