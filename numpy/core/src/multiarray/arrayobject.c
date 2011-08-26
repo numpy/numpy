@@ -110,7 +110,7 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
             break;
         }
         /*
-         * If 'arr' doesn't own its NA mask, then if 
+         * If 'arr' doesn't own its NA mask, then if
          * 'obj' is NA masked and owns the mask, stop collapsing
          */
         if (!PyArray_CHKFLAGS(arr, NPY_ARRAY_OWNMASKNA) &&
@@ -122,7 +122,7 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
         if (tmp == NULL) {
             break;
         }
-                        
+
         Py_INCREF(tmp);
         Py_DECREF(obj);
         obj = tmp;

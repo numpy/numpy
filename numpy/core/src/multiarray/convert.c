@@ -382,7 +382,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     /* Python complex */
     else if (PyComplex_Check(obj)) {
         npy_double re, im;
-        
+
         re = PyComplex_RealAsDouble(obj);
         if (re == -1 && PyErr_Occurred()) {
             return -1;
@@ -516,7 +516,7 @@ NPY_NO_EXPORT PyObject *
 PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
 {
     PyArrayObject *ret;
-    
+
     ret = (PyArrayObject *)PyArray_NewLikeArray(obj, order, NULL, 1);
     if (ret == NULL) {
         return NULL;

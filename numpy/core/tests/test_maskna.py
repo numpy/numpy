@@ -906,7 +906,7 @@ def check_maskna_ufunc_sum_1D(sum_func):
     b[...] = 0.5
     sum_func(a, skipna=True, out=b)
     assert_equal(b, 2.0)
-    
+
     # With 'skipna=True', and out= parameter with a mask
     c[...] = 0.5
     c[...] = np.NA
@@ -1176,7 +1176,7 @@ def test_count_reduce_items():
 def test_array_maskna_clip_method():
     # ndarray.clip
     a = np.array([2, np.NA, 10, 4, np.NA, 7], maskna=True)
-    
+
     b = np.clip(a, 3, None)
     assert_equal(np.isna(b), [0,1,0,0,1,0])
     assert_equal(b[~np.isna(b)], [3, 10, 4, 7])
@@ -1225,7 +1225,7 @@ def test_array_maskna_sum_prod_methods():
                   [4, 8, 7],
                   [12, 4, np.NA],
                   [3, 2, 5]], maskna=True)
-    
+
     res = a.sum(axis=0)
     assert_equal(np.isna(res), [0,1,1])
     assert_equal(res[~np.isna(res)], [21])
@@ -1233,7 +1233,7 @@ def test_array_maskna_sum_prod_methods():
     res = a.sum(axis=-1)
     assert_equal(np.isna(res), [1,0,1,0])
     assert_equal(res[~np.isna(res)], [19,10])
-    
+
     res = a.prod(axis=0)
     assert_equal(np.isna(res), [0,1,1])
     assert_equal(res[~np.isna(res)], [2*4*12*3])
@@ -1255,7 +1255,7 @@ def test_array_maskna_sum_prod_methods():
     res = a.sum(axis=-1)
     assert_equal(np.isna(res), [1,0,1,0])
     assert_equal(res[~np.isna(res)], [19,10])
-    
+
 
 def test_array_maskna_std_mean_methods():
     # ndarray.std, ndarray.mean

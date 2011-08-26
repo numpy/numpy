@@ -457,7 +457,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
     }
 
     /* Check the casting rule */
-    if (!PyArray_CanCastTypeTo(PyArray_DESCR(src), 
+    if (!PyArray_CanCastTypeTo(PyArray_DESCR(src),
                                 PyArray_DESCR(dst), casting)) {
         PyObject *errmsg;
         errmsg = PyUString_FromString("Cannot cast scalar from ");

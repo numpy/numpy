@@ -322,7 +322,7 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
         }
         Py_DECREF(ip);
     }
-    
+
     return 0;
 
 

@@ -2433,7 +2433,7 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
         else {
             char maskvalue = (char)NpyNA_AsMaskValue(na);
 
-            if (maskvalue != 0 && 
+            if (maskvalue != 0 &&
                         PyArray_MASKNA_DTYPE(self)->type_num != NPY_MASK) {
                 /* TODO: also handle struct-NA mask dtypes */
                 PyErr_SetString(PyExc_ValueError,

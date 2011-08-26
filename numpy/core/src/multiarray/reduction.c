@@ -411,7 +411,7 @@ initialize_reduce_result_noidentity_skipna(
                 for (i = 0; i < count; ++i) {
                     if (*init_d == 0 && NpyMaskValue_IsExposed(
                                                 *(npy_mask *)op_namask_d)) {
-                        
+
                         /* Mark it as initialized */
                         *init_d = 1;
                         stransfer(res_d, 0, op_d + i * op_s, op_s,

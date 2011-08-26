@@ -54,7 +54,7 @@ static PyObject *
 get_forwarding_ndarray_method(const char *name)
 {
     PyObject *module_methods, *callable;
-    
+
     /* Get a reference to the function we're calling */
     module_methods = PyImport_ImportModule("numpy.core._methods");
     if (module_methods == NULL) {
