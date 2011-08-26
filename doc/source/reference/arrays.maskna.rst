@@ -58,7 +58,7 @@ as defined in the IEEE 754 floating point arithmetic specification.
 Most computations whose input is NA will output NA as well, a property
 known as propagation. Some operations, however, always produce the
 same result no matter what the value of the NA is. The clearest
-example of this is with the logical operands *and* and *or*.  Since both
+example of this is with the logical operations *and* and *or*.  Since both
 np.logical_or(True, True) and np.logical_or(False, True) are True,
 all possible boolean values on the left hand side produce the
 same answer. This means that np.logical_or(np.NA, True) can produce

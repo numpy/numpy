@@ -308,9 +308,9 @@ consisting of::
         static char *kwlist[] = {"a", "b", "out", NULL};
 
         if (!PyArg_ParseTupleAndKeywords(args, kwds, "O&O&|O&", kwlist, 
-                                    &PyArray_Converter, &a,
-                                    &PyArray_Converter, &b,
-                                    &PyArray_OutputConverter, &out)) {
+                                &PyArray_AllowNAConverter, &a,
+                                &PyArray_AllowNAConverter, &b,
+                                &PyArray_OutputAllowNAConverter, &out)) {
             return NULL;
         }
 

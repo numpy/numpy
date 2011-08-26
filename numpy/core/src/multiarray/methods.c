@@ -133,7 +133,7 @@ array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&O&", kwlist,
                                      &indices,
                                      PyArray_AxisConverter, &dimension,
-                                     PyArray_OutputConverter, &out,
+                                     PyArray_OutputAllowNAConverter, &out,
                                      PyArray_ClipmodeConverter, &mode))
         return NULL;
 
@@ -382,7 +382,7 @@ array_ptp(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
                                      PyArray_AxisConverter, &axis,
-                                     PyArray_OutputConverter, &out))
+                                     PyArray_OutputAllowNAConverter, &out))
         return NULL;
 
     return PyArray_Ptp(self, axis, out);
@@ -2007,7 +2007,7 @@ array_any(PyArrayObject *array, PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTupleAndKeywords(args, kwds,
                                 "|OO&ii:any", kwlist,
                                 &axis_in,
-                                &PyArray_OutputConverter, &out,
+                                &PyArray_OutputAllowNAConverter, &out,
                                 &skipna,
                                 &keepdims)) {
         return NULL;
@@ -2043,7 +2043,7 @@ array_all(PyArrayObject *array, PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTupleAndKeywords(args, kwds,
                                 "|OO&ii:all", kwlist,
                                 &axis_in,
-                                &PyArray_OutputConverter, &out,
+                                &PyArray_OutputAllowNAConverter, &out,
                                 &skipna,
                                 &keepdims)) {
         return NULL;
@@ -2087,7 +2087,7 @@ array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O&", kwlist,
                                      &condition,
                                      PyArray_AxisConverter, &axis,
-                                     PyArray_OutputConverter, &out)) {
+                                     PyArray_OutputAllowNAConverter, &out)) {
         return NULL;
     }
     return PyArray_Return(
@@ -2119,7 +2119,7 @@ array_trace(PyArrayObject *self, PyObject *args, PyObject *kwds)
                                      &axis1,
                                      &axis2,
                                      PyArray_DescrConverter2, &dtype,
-                                     PyArray_OutputConverter, &out)) {
+                                     PyArray_OutputAllowNAConverter, &out)) {
         Py_XDECREF(dtype);
         return NULL;
     }
@@ -2142,7 +2142,7 @@ array_clip(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO&", kwlist,
                                      &min,
                                      &max,
-                                     PyArray_OutputConverter, &out)) {
+                                     PyArray_OutputAllowNAConverter, &out)) {
         return NULL;
     }
     if (max == NULL && min == NULL) {
@@ -2159,7 +2159,7 @@ array_conjugate(PyArrayObject *self, PyObject *args)
 
     PyArrayObject *out = NULL;
     if (!PyArg_ParseTuple(args, "|O&",
-                          PyArray_OutputConverter,
+                          PyArray_OutputAllowNAConverter,
                           &out)) {
         return NULL;
     }
@@ -2223,7 +2223,7 @@ array_round(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|iO&", kwlist,
                                      &decimals,
-                                     PyArray_OutputConverter, &out)) {
+                                     PyArray_OutputAllowNAConverter, &out)) {
         return NULL;
     }
     return PyArray_Return((PyArrayObject *)PyArray_Round(self, decimals, out));

@@ -342,6 +342,8 @@ multiarray_funcs_api = {
     'NpyNA_GetPayload':                     302,
     'NpyNA_FromObject':                     303,
     'NpyNA_FromDTypeAndPayload':            304,
+    'PyArray_AllowNAConverter':             305,
+    'PyArray_OutputAllowNAConverter':       306,
 }
 
 ufunc_types_api = {
