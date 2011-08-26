@@ -93,6 +93,9 @@ PyArray_InitializeReduceResult(
  * type conversion/validity check for 'out'. When 'need_namask' is true,
  * raises an exception if 'out' doesn't have an NA mask.
  *
+ * If 'subok' is true, creates a result with the subtype of 'operand',
+ * otherwise creates on with the base ndarray class.
+ *
  * If 'out' is NULL, it allocates a new array whose shape matches
  * that of 'operand', except for at the reduction axes. An NA mask
  * is added if 'need_namask' is true.  If 'dtype' is NULL, the dtype
@@ -101,6 +104,7 @@ PyArray_InitializeReduceResult(
 NPY_NO_EXPORT PyArrayObject *
 PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
                     PyArray_Descr *dtype, npy_bool *axis_flags,
-                    int need_namask, int keepdims, const char *funcname);
+                    int need_namask, int keepdims, int subok,
+                    const char *funcname);
 
 #endif
