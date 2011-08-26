@@ -37,39 +37,45 @@ Missing Data Model
 The model adopted by NumPy for missing values is that NA is a
 placeholder for a value which is there, but is unknown to computations.
 The value may be temporarily hidden by the mask, or may be unknown
-for any reason.
+for any reason, but could be any value the dtype of the array is able
+to hold.
 
-This model is layered on top of the existing NumPy dtypes, so the value
-behind the NA may be any value the dtype can take on.  Consider substiting
-different values for the NA in a computation, and see what comes out. If
-different substitutions produce different outputs, that output must
-be NA as well. If all possible substitutions produce the same output,
-it is acceptable, though not strictly necessary, to return that output
-instead of an NA.
+This model affects computations in specific, well-defined ways. Any time
+we have a computation, like *c = NA + 1*, we must reason about whether
+*c* will be an NA or not. The NA is not available now, but maybe a
+measurement will be made later to determine what its value is, so anything
+we calculate must be consistent with it eventually being revealed. One way
+to do this is with thought experiments imagining we have discovered
+the value of this NA. If the NA is 0, then *c* is 1. If the NA is
+100, then *c* is 101. Because the value of *c* is ambiguous, it
+isn't available either, so must be NA as well.
 
-A consequence of separating the NA model from the dtype is that unlike
+A consequence of separating the NA model from the dtype is that, unlike
 in R, NaNs are not considered to be NA. An NA is a value that is completely
-unknown, whereas a NaN is known to be the result of an invalid computation.
+unknown, whereas a NaN is usually the result of an invalid computation
+as defined in the IEEE 754 floating point arithmetic specification.
 
-The NA placeholder generally propagates during computations, however
-for booleans there is a clear exception to the rule. Since both
+Most computations whose input is NA will output NA as well, a property
+known as propagation. Some operations, however, always produce the
+same result no matter what the value of the NA is. The clearest
+example of this is with the logical operands *and* and *or*.  Since both
 np.logical_or(True, True) and np.logical_or(False, True) are True,
-all possible values of the dtype on the left hand side produce the
+all possible boolean values on the left hand side produce the
 same answer. This means that np.logical_or(np.NA, True) can produce
 True instead of the more conservative np.NA. There is a similar case
 for np.logical_and.
 
-A similar, but slightly deceptive example is wanting to treat (NA * 0.0)
+A similar, but slightly deceptive, example is wanting to treat (NA * 0.0)
 as 0.0 instead of as NA. This is invalid because the NA might be Inf
 or NaN, in which case the result is NaN instead of 0.0. This idea is
 valid for integer dtypes, but NumPy still chooses to return NA because
 checking this special case would adversely affect performance.
 
-The NA Singleton
-================
+The NA Object
+=============
 
-In the root numpy namespace, there is a new singleton object NA. Unlike
-None, this is not the only possible instance of the class, since an NA
+In the root numpy namespace, there is a new object NA. This is not
+the only possible instance of an NA as is the case for None, since an NA
 may have a dtype associated with it and has been designed for future
 expansion to carry a multi-NA payload. It can be used in computations
 like any value::
@@ -119,7 +125,7 @@ If one already has an array without an NA-mask, it can be added
 by directly setting the *maskna* flag to True. Assigning an NA
 to an array without NA support will raise an error rather than
 automatically creating an NA-mask, with the idea that supporting
-NA should be an explicit thing the user wants.::
+NA should be an explicit user choice.::
 
     >>> a = np.array([1,3,5])
     >>> a[1] = np.NA

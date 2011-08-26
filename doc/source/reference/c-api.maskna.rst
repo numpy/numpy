@@ -154,7 +154,7 @@ To start, we define the function prototype and some basic
 :ctype:`NpyIter` boilerplate setup. We'll make a function which
 supports an optional *out* parameter, which may be NULL.::
 
-    PyArrayObject*
+    static PyArrayObject*
     SpecialDivide(PyArrayObject* a, PyArrayObject* b, PyArrayObject *out)
     {
         NpyIter *iter = NULL;
