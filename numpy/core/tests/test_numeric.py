@@ -690,7 +690,7 @@ class TestArrayComparisons(TestCase):
         assert_(type(res) is bool)
         res = array_equiv(array((1,2), dtype=[('i','i4'),('v','f8')]),
                           array((1,2), dtype=[('n','i4'),('f','f8')]))
-        assert_(not res)
+        assert_(res)
         assert_(type(res) is bool)
 
 def assert_array_strict_equal(x, y):
