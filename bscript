@@ -20,7 +20,23 @@ import waflib
 def check_blas_lapack(conf):
     conf.env.HAS_CBLAS = False
     if sys.platform == "win32":
-        print("No blas/lapack check implemented on win32")
+        mkl_libs = "mkl_lapack95,mkl_blas95,mkl_intel_c,mkl_intel_thread,mkl_core,libiomp5md".split(",")
+        mkl_base = r"C:\Program Files\Intel\Compiler\11.1\051"
+        conf.env.INCLUDES.append("%s\mkl\include" % mkl_base)
+        conf.env.LIBPATH.extend(["%s\mkl\ia32\lib" % mkl_base,
+                                 "%s\lib\ia32" % mkl_base])
+
+        try:
+            conf.check_cc(lib=mkl_libs, msg="Checking for MKL (CBLAS)",
+                          uselib_store="CBLAS")
+            conf.env.HAS_CBLAS = True
+
+            conf.check_cc(lib=mkl_libs, msg="Checking for MKL (LAPACK)",
+                          uselib_store="LAPACK")
+            conf.env.HAS_LAPACK = True
+        except waflib.Errors.ConfigurationError:
+            pass
+
     elif sys.platform == "darwin":
         try:
             conf.check(framework="Accelerate", msg="Checking for framework Accelerate", uselib_store="CBLAS")
