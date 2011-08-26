@@ -613,6 +613,7 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
                     int *nop_out)
 {
     int iop, nop;
+    int any_maskna;
 
     /* nop and op */
     if (PyTuple_Check(op_in) || PyList_Check(op_in)) {
@@ -666,11 +667,6 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
             }
             else {
                 op_flags[iop] = NPY_ITER_READONLY;
-
-                /* Enable MASKNA iteration if the op needs it */
-                if (PyArray_HASMASKNA(op[iop])) {
-                    op_flags[iop] |= NPY_ITER_USE_MASKNA;
-                }
             }
         }
     }
@@ -710,6 +706,33 @@ npyiter_convert_ops(PyObject *op_in, PyObject *op_flags_in,
             }
             Py_DECREF(op[iop]);
             op[iop] = ao;
+        }
+    }
+
+    /*
+     * Because the Python exposure of nditer knows how to deal with
+     * NA-masked arrays, we automatically add NPY_ITER_USE_MASKNA
+     * flags for convenience.
+     */
+    any_maskna = 0;
+    for (iop = 0; iop < nop; ++iop) {
+        /* Enable MASKNA iteration if the op needs it */
+        if (op[iop] != NULL && PyArray_HASMASKNA(op[iop])) {
+            op_flags[iop] |= NPY_ITER_USE_MASKNA;
+            any_maskna = 1;
+        }
+    }
+    /*
+     * If any operands had an NA-mask, add it to the 'allocate' ones too.
+     * This causes the Python exposure nditer to have slightly less control
+     * than the C NpyIter usage, but is generally going to be what people
+     * want.
+     */
+    if (any_maskna) {
+        for (iop = 0; iop < nop; ++iop) {
+            if (op[iop] == NULL) {
+                op_flags[iop] |= NPY_ITER_USE_MASKNA;
+            }
         }
     }
 
@@ -807,6 +830,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         PyDimMem_FREE(itershape.ptr);
         itershape.ptr = NULL;
     }
+
 
     self->iter = NpyIter_AdvancedNew(nop, op, flags, order, casting, op_flags,
                                   op_request_dtypes,
