@@ -2063,7 +2063,7 @@ def array_equal(a1, a2):
         return False
     if a1.shape != a2.shape:
         return False
-    return bool(logical_and.reduce(equal(a1,a2).ravel()))
+    return bool(equal(a1,a2).all())
 
 def array_equiv(a1, a2):
     """
@@ -2105,7 +2105,7 @@ def array_equiv(a1, a2):
     except:
         return False
     try:
-        return bool(logical_and.reduce(equal(a1,a2).ravel()))
+        return bool(equal(a1,a2).all())
     except ValueError:
         return False
 

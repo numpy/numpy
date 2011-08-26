@@ -626,7 +626,7 @@ class TestJoinBy2(TestCase):
                         dtype=[('a', int), ('b', int), ('d', int)])
 
     def test_no_r1postfix(self):
-        "Basic test of join_by"
+        "Basic test of join_by no_r1postfix"
         a, b = self.a, self.b
 
         test = join_by('a', a, b, r1postfix='', r2postfix='2', jointype='inner')
@@ -644,7 +644,7 @@ class TestJoinBy2(TestCase):
         self.assertRaises(ValueError, join_by, 'a', self.a, self.b, r1postfix='', r2postfix='')
 
     def test_no_r2postfix(self):
-        "Basic test of join_by"
+        "Basic test of join_by no_r2postfix"
         a, b = self.a, self.b
 
         test = join_by('a', a, b, r1postfix='1', r2postfix='', jointype='inner')
