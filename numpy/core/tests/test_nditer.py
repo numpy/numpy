@@ -2533,5 +2533,26 @@ def test_iter_maskna():
                                  ['readonly','use_maskna'],
                                  ['readonly','arraymask']])
 
+def test_iter_maskna_default_use_maskna():
+    # The Python exposure of nditer adds the USE_MASKNA flag automatically
+    a = np.array([3, 5, np.NA, 2, 1])
+    b = np.array([1, 1.0, 4.5, 2, 0])
+
+    # The output should automatically get an NA mask
+    it = np.nditer([a,b,None])
+    for x,y,z in it:
+        z[...] = x+y
+    assert_(it.operands[2].flags.maskna)
+    assert_array_equal(it.operands[2], a+b)
+
+    # This holds even when we specify the op_flags
+    it = np.nditer([a,b.copy(),None], op_flags=[['readonly'],
+                                    ['readwrite'], ['writeonly', 'allocate']])
+    for x,y,z in it:
+        y[...] = y[...] + 1
+        z[...] = x+y
+    assert_(it.operands[2].flags.maskna)
+    assert_array_equal(it.operands[2], a+b+1)
+
 if __name__ == "__main__":
     run_module_suite()
