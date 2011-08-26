@@ -20,6 +20,7 @@
 #include "item_selection.h"
 #include "conversion_utils.h"
 #include "shape.h"
+#include "boolean_ops.h"
 
 #include "methods.h"
 
@@ -1993,36 +1994,47 @@ array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
-array_any(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_any(PyArrayObject *array, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
+    static char *kwlist[] = {"axis", "out", "skipna", "keepdims", NULL};
+
+    PyObject *axis_in = NULL;
     PyArrayObject *out = NULL;
-    static char *kwlist[] = {"axis", "out", NULL};
+    PyArrayObject *ret = NULL;
+    npy_bool axis_flags[NPY_MAXDIMS];
+    int skipna = 0, keepdims = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
-                                     PyArray_AxisConverter, &axis,
-                                     PyArray_OutputConverter, &out))
+    if (!PyArg_ParseTupleAndKeywords(args, kwds,
+                                "|OO&ii:count_reduce_items", kwlist,
+                                &axis_in,
+                                &PyArray_OutputConverter, &out,
+                                &skipna,
+                                &keepdims)) {
         return NULL;
+    }
 
-    return PyArray_Any(self, axis, out);
+    if (PyArray_ConvertMultiAxis(axis_in, PyArray_NDIM(array),
+                                        axis_flags) != NPY_SUCCEED) {
+        Py_DECREF(array);
+        return NULL;
+    }
+
+    ret = PyArray_ReduceAny(array, out, axis_flags, skipna, keepdims);
+
+    if (out == NULL) {
+        return PyArray_Return(ret);
+    }
+    else {
+        return (PyObject *)ret;
+    }
 }
 
 
 static PyObject *
 array_all(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
-    PyArrayObject *out = NULL;
-    static char *kwlist[] = {"axis", "out", NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&", kwlist,
-                                     PyArray_AxisConverter, &axis,
-                                     PyArray_OutputConverter, &out))
-        return NULL;
-
-    return PyArray_All(self, axis, out);
+    NPY_FORWARD_NDARRAY_METHOD("_all");
 }
-
 
 static PyObject *
 array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -2030,13 +2042,11 @@ array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
     NPY_FORWARD_NDARRAY_METHOD("_std");
 }
 
-
 static PyObject *
 array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     NPY_FORWARD_NDARRAY_METHOD("_var");
 }
-
 
 static PyObject *
 array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)

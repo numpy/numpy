@@ -1923,6 +1923,11 @@ reduce_count_nonzero_loop(NpyIter *iter,
         NPY_BEGIN_THREADS;
     }
 
+    /*
+     * 'skip_first_count' will always be 0 because we are doing a reduction
+     * with an identity.
+     */
+
     do {
         char *data0 = dataptr[0], *data1 = dataptr[1];
         npy_intp stride0 = strides[0], stride1 = strides[1];
@@ -1962,6 +1967,11 @@ reduce_count_nonzero_masked_loop(NpyIter *iter,
     if (!needs_api) {
         NPY_BEGIN_THREADS;
     }
+
+    /*
+     * 'skip_first_count' will always be 0 because we are doing a reduction
+     * with an identity.
+     */
 
     do {
         char *data0 = dataptr[0], *data1 = dataptr[1], *data2 = dataptr[2];
@@ -2018,10 +2028,11 @@ PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
     result = PyArray_ReduceWrapper(arr, out, NULL,
                             PyArray_DESCR(arr), dtype,
                             NPY_SAME_KIND_CASTING,
-                            axis_flags, 1, skipna, NULL, keepdims,
+                            axis_flags, 1, skipna, NULL, keepdims, 0,
                             &assign_reduce_identity_zero,
                             &reduce_count_nonzero_loop,
                             &reduce_count_nonzero_masked_loop,
+                            NULL,
                             nonzero, 0, "count_nonzero");
     Py_DECREF(dtype);
     if (out == NULL && result != NULL) {
