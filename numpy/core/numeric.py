@@ -1961,7 +1961,15 @@ def array_equal(a1, a2):
         return False
     if a1.shape != a2.shape:
         return False
-    return bool(logical_and.reduce(equal(a1,a2).ravel()))
+    # test for structured arrays
+    if a1.dtype.names:
+        if a1.dtype != a2.dtype:
+            return False
+        return bool( all([ logical_and.reduce(equal(a1[n],a2[n]).ravel())
+                           for n in a1.dtype.names ]) )
+    else:
+        return bool(logical_and.reduce(equal(a1,a2).ravel()))
+
 
 def array_equiv(a1, a2):
     """
@@ -2002,8 +2010,15 @@ def array_equiv(a1, a2):
         a1, a2 = asarray(a1), asarray(a2)
     except:
         return False
+    # test for structured arrays
     try:
-        return bool(logical_and.reduce(equal(a1,a2).ravel()))
+        if a1.dtype.names:
+            if a1.dtype.names != a2.dtype.names:
+                return False
+            return bool( all([ logical_and.reduce(equal(a1[n],a2[n]).ravel())
+                               for n in a1.dtype.names ]) )
+        else:
+            return bool(logical_and.reduce(equal(a1,a2).ravel()))
     except ValueError:
         return False
 
