@@ -1023,6 +1023,82 @@ def check_ufunc_skipna_max_3D(max_func):
     assert_raises(ValueError, max_func, a, axis=1, skipna=True)
     assert_raises(ValueError, max_func, a, axis=2, skipna=True)
 
+def test_ufunc_ndarray_any():
+    a = np.array([0,0,0,0,0], dtype='?', maskna=True)
+    assert_array_equal(a.any(), False)
+    a[0] = np.NA
+    assert_array_equal(a.any(), np.NA)
+    assert_array_equal(a.any(skipna=True), False)
+    a[0] = 0
+    a[-1] = np.NA
+    assert_array_equal(a.any(), np.NA)
+    assert_array_equal(a.any(skipna=True), False)
+    a[0] = 1
+    assert_array_equal(a.any(), True)
+    assert_array_equal(a.any(skipna=True), True)
+    a[-1] = 1
+    a[-2] = np.NA
+    assert_array_equal(a.any(), True)
+    assert_array_equal(a.any(skipna=True), True)
+
+    a = np.array([[0,0,0],[0,np.NA,0]], dtype='?')
+    assert_array_equal(a.any(axis=0), [False, np.NA, False])
+    assert_array_equal(a.any(axis=1), [False, np.NA])
+    assert_array_equal(a.any(axis=0, skipna=True), [False, False, False])
+    assert_array_equal(a.any(axis=1, skipna=True), [False, False])
+
+    a[0,1] = 1
+    assert_array_equal(a.any(axis=0), [False, True, False])
+    assert_array_equal(a.any(axis=1), [True, np.NA])
+    assert_array_equal(a.any(axis=0, skipna=True), [False, True, False])
+    assert_array_equal(a.any(axis=1, skipna=True), [True, False])
+
+    a[0,1] = np.NA
+    a[1,1] = 0
+    a[0,2] = 1
+    assert_array_equal(a.any(axis=0), [False, np.NA, True])
+    assert_array_equal(a.any(axis=1), [True, False])
+    assert_array_equal(a.any(axis=0, skipna=True), [False, False, True])
+    assert_array_equal(a.any(axis=1, skipna=True), [True, False])
+
+def test_ufunc_ndarray_all():
+    a = np.array([1,1,1,1,1], dtype='?', maskna=True)
+    assert_array_equal(a.all(), True)
+    a[0] = np.NA
+    assert_array_equal(a.all(), np.NA)
+    assert_array_equal(a.all(skipna=True), True)
+    a[0] = 1
+    a[-1] = np.NA
+    assert_array_equal(a.all(), np.NA)
+    assert_array_equal(a.all(skipna=True), True)
+    a[0] = 0
+    assert_array_equal(a.all(), False)
+    assert_array_equal(a.all(skipna=True), False)
+    a[-1] = 0
+    a[-2] = np.NA
+    assert_array_equal(a.all(), False)
+    assert_array_equal(a.all(skipna=True), False)
+
+    a = np.array([[1,1,1],[1,np.NA,1]], dtype='?')
+    assert_array_equal(a.all(axis=0), [True, np.NA, True])
+    assert_array_equal(a.all(axis=1), [True, np.NA])
+    assert_array_equal(a.all(axis=0, skipna=True), [True, True, True])
+    assert_array_equal(a.all(axis=1, skipna=True), [True, True])
+
+    a[0,1] = 0
+    assert_array_equal(a.all(axis=0), [True, False, True])
+    assert_array_equal(a.all(axis=1), [False, np.NA])
+    assert_array_equal(a.all(axis=0, skipna=True), [True, False, True])
+    assert_array_equal(a.all(axis=1, skipna=True), [False, True])
+
+    a[0,1] = np.NA
+    a[1,1] = 1
+    a[0,2] = 0
+    assert_array_equal(a.all(axis=0), [True, np.NA, False])
+    assert_array_equal(a.all(axis=1), [False, True])
+    assert_array_equal(a.all(axis=0, skipna=True), [True, True, False])
+    assert_array_equal(a.all(axis=1, skipna=True), [False, True])
+
 def test_count_reduce_items():
     # np.count_reduce_items
 
