@@ -90,7 +90,8 @@ def pre_configure(context):
         remove_flag_prevalue("ppc", conf.env.LINKFLAGS_PYEXT)
         conf.env["MACOSX_DEPLOYMENT_TARGET"] = "10.4"
 
-    conf.env.CFLAGS_PYEXT.append("-Wfatal-errors")
+    if conf.env["CC_NAME"] == "gcc":
+        conf.env.CFLAGS_PYEXT.append("-Wfatal-errors")
     check_blas_lapack(conf)
 
 # FIXME: abstract those module gen tasks...
