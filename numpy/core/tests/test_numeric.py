@@ -640,7 +640,15 @@ class TestArrayComparisons(TestCase):
         res = array_equal(array([1,2]), array([1,3]))
         assert_(not res)
         assert_(type(res) is bool)
-
+        res = array_equal(array((1,2), dtype=[('i','i4'),('v','f8')]),
+                          array((1,2), dtype=[('i','i4'),('v','f8')]))
+        assert_(res)
+        assert_(type(res) is bool)
+        res = array_equal(array((1,2), dtype=[('i','i4'),('v','f8')]),
+                          array((1,2), dtype=[('n','i4'),('f','f8')]))
+        assert_(not res)
+        assert_(type(res) is bool)
+                
     def test_array_equiv(self):
         res = array_equiv(array([1,2]), array([1,2]))
         assert_(res)
@@ -670,7 +678,20 @@ class TestArrayComparisons(TestCase):
         res = array_equiv(array([1,2]), array([[1,2,3],[4,5,6],[7,8,9]]))
         assert_(not res)
         assert_(type(res) is bool)
-
+        res = array_equiv(array((1,2), dtype=[('i','i4'),('v','f8')]),
+                          array((1,2), dtype=[('i','i4'),('v','f8')]))
+        assert_(res)
+        assert_(type(res) is bool)
+        res = array_equiv(array([(1,2),(3,4)],
+                                dtype=[('i','i4'),('v','f8')]),
+                          array([(1,2),(3,4)],
+                                dtype=[('i','i4'),('v','f8')]).reshape((1,-1)))
+        assert_(res)
+        assert_(type(res) is bool)
+        res = array_equiv(array((1,2), dtype=[('i','i4'),('v','f8')]),
+                          array((1,2), dtype=[('n','i4'),('f','f8')]))
+        assert_(res)
+        assert_(type(res) is bool)
 
 def assert_array_strict_equal(x, y):
     assert_array_equal(x, y)

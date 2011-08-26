@@ -1924,7 +1924,8 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
 
 def array_equal(a1, a2):
     """
-    True if two arrays have the same shape and elements, False otherwise.
+    True if two arrays have the same shape and elements, including field
+    names (dtype.names) for structured arrays. False otherwise.
 
     Parameters
     ----------
@@ -1961,7 +1962,15 @@ def array_equal(a1, a2):
         return False
     if a1.shape != a2.shape:
         return False
-    return bool(logical_and.reduce(equal(a1,a2).ravel()))
+    # test for structured arrays
+    if a1.dtype.names:
+        if a1.dtype != a2.dtype:
+            return False
+        return bool( all([ logical_and.reduce(equal(a1[n],a2[n]).ravel())
+                           for n in a1.dtype.names ]) )
+    else:
+        return bool(logical_and.reduce(equal(a1,a2).ravel()))
+
 
 def array_equiv(a1, a2):
     """
@@ -1969,6 +1978,8 @@ def array_equiv(a1, a2):
 
     Shape consistent means they are either the same shape, or one input array
     can be broadcasted to create the same shape as the other one.
+    Fields of structured arrays are considered consistent if all fields are
+    consistent (in order of dtype), even if they are differently named.
 
     Parameters
     ----------
@@ -2002,8 +2013,16 @@ def array_equiv(a1, a2):
         a1, a2 = asarray(a1), asarray(a2)
     except:
         return False
+    # for structured arrays try to compare all fields,
+    # even if they have different names
     try:
-        return bool(logical_and.reduce(equal(a1,a2).ravel()))
+        if a1.dtype.names:
+            if len(a1.dtype.names) != len(a2.dtype.names):
+                return False
+            return bool( all([logical_and.reduce(equal(a1[n],a2[m]).ravel())
+                              for n,m in zip(a1.dtype.names,a2.dtype.names)]) )
+        else:
+            return bool(logical_and.reduce(equal(a1,a2).ravel()))
     except ValueError:
         return False
 
