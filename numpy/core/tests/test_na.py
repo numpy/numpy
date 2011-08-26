@@ -78,21 +78,48 @@ def test_na_comparison():
     # NA cannot be converted to a boolean
     assert_raises(ValueError, bool, np.NA)
 
-    # Comparison with different objects produces the singleton NA
-    assert_((np.NA < 3) is np.NA)
-    assert_((np.NA <= 3) is np.NA)
-    assert_((np.NA == 3) is np.NA)
-    assert_((np.NA != 3) is np.NA)
-    assert_((np.NA >= 3) is np.NA)
-    assert_((np.NA > 3) is np.NA)
+    # Comparison results should be np.NA(dtype='bool')
+    def check_comparison_result(res):
+        assert_(np.isna(res))
+        assert_(res.dtype == np.dtype('bool'))
+
+    # Comparison with different objects produces an NA with boolean type
+    check_comparison_result(np.NA < 3)
+    check_comparison_result(np.NA <= 3)
+    check_comparison_result(np.NA == 3)
+    check_comparison_result(np.NA != 3)
+    check_comparison_result(np.NA >= 3)
+    check_comparison_result(np.NA > 3)
 
     # Should work with NA on the other side too
-    assert_((3 < np.NA) is np.NA)
-    assert_((3 <= np.NA) is np.NA)
-    assert_((3 == np.NA) is np.NA)
-    assert_((3 != np.NA) is np.NA)
-    assert_((3 >= np.NA) is np.NA)
-    assert_((3 > np.NA) is np.NA)
+    check_comparison_result(3 < np.NA)
+    check_comparison_result(3 <= np.NA)
+    check_comparison_result(3 == np.NA)
+    check_comparison_result(3 != np.NA)
+    check_comparison_result(3 >= np.NA)
+    check_comparison_result(3 > np.NA)
+
+    # Comparison with an array should produce an array
+    a = np.array([0,1,2]) < np.NA
+    assert_equal(np.isna(a), [1,1,1])
+    assert_equal(a.dtype, np.dtype('bool'))
+    a = np.array([0,1,2]) == np.NA
+    assert_equal(np.isna(a), [1,1,1])
+    assert_equal(a.dtype, np.dtype('bool'))
+    a = np.array([0,1,2]) != np.NA
+    assert_equal(np.isna(a), [1,1,1])
+    assert_equal(a.dtype, np.dtype('bool'))
+
+    # Comparison with an array should work on the other side too
+    a = np.NA > np.array([0,1,2])
+    assert_equal(np.isna(a), [1,1,1])
+    assert_equal(a.dtype, np.dtype('bool'))
+    a = np.NA == np.array([0,1,2])
+    assert_equal(np.isna(a), [1,1,1])
+    assert_equal(a.dtype, np.dtype('bool'))
+    a = np.NA != np.array([0,1,2])
+    assert_equal(np.isna(a), [1,1,1])
+    assert_equal(a.dtype, np.dtype('bool'))
 
 def test_na_operations():
     # The minimum of the payload is taken
