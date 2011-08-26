@@ -26,6 +26,8 @@ What works with NA:
     * Basic indexing and slicing, as well as full boolean mask indexing.
     * All element-wise ufuncs.
     * All UFunc.reduce methods, with a new skipna parameter.
+    * np.all and np.any satisfy the rules NA | True == True and
+      NA & False == False
     * The nditer object.
     * Array methods:
        + ndarray.clip, ndarray.min, ndarray.max, ndarray.sum, ndarray.prod,
@@ -43,7 +45,7 @@ What doesn't work with NA:
     * UFunc.accumulate, UFunc.reduceat.
     * Ufunc calls with both NA masks and a where= mask at the same time.
     * File I/O has not been extended to support NA-masks.
-    * np.logical_and, np.logical_or, np.all, and np.any don't satisfy the
+    * np.logical_and and np.logical_or don't satisfy the
       rules NA | True == True and NA & False == False yet.
     * Array methods:
        + ndarray.argmax, ndarray.argmin,
