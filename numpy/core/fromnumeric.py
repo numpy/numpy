@@ -1514,8 +1514,12 @@ def sometrue(a, axis=None, out=None, skipna=False, keepdims=False):
     any : equivalent function
 
     """
-    return um.logical_or.reduce(a, axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+    arr = asanyarray(a)
 
+    try:
+        return arr.any(axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+    except TypeError:
+        return arr.any(axis=axis, out=out)
 
 def alltrue (a, axis=None, out=None, skipna=False, keepdims=False):
     """
@@ -1526,7 +1530,12 @@ def alltrue (a, axis=None, out=None, skipna=False, keepdims=False):
     numpy.all : Equivalent function; see for details.
 
     """
-    return um.logical_and.reduce(a, axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+    arr = asanyarray(a)
+
+    try:
+        return arr.all(axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+    except TypeError:
+        return arr.all(axis=axis, out=out)
 
 def any(a, axis=None, out=None, skipna=False, keepdims=False):
     """
@@ -1604,8 +1613,12 @@ def any(a, axis=None, out=None, skipna=False, keepdims=False):
     (191614240, 191614240)
 
     """
-    return _methods._any(a, axis=axis, out=out,
-                            skipna=skipna, keepdims=keepdims)
+    arr = asanyarray(a)
+
+    try:
+        return arr.any(axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+    except TypeError:
+        return arr.any(axis=axis, out=out)
 
 def all(a, axis=None, out=None, skipna=False, keepdims=False):
     """
@@ -1676,8 +1689,12 @@ def all(a, axis=None, out=None, skipna=False, keepdims=False):
     (28293632, 28293632, array([ True], dtype=bool))
 
     """
-    return _methods._all(a, axis=axis, out=out,
-                            skipna=skipna, keepdims=keepdims)
+    arr = asanyarray(a)
+
+    try:
+        return arr.all(axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+    except TypeError:
+        return arr.all(axis=axis, out=out)
 
 def cumsum (a, axis=None, dtype=None, out=None):
     """

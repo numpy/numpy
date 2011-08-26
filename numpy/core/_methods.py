@@ -21,14 +21,6 @@ def _prod(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
     return um.multiply.reduce(a, axis=axis, dtype=dtype,
                             out=out, skipna=skipna, keepdims=keepdims)
 
-def _any(a, axis=None, out=None, skipna=False, keepdims=False):
-    return um.logical_or.reduce(a, axis=axis,
-                            out=out, skipna=skipna, keepdims=keepdims)
-
-def _all(a, axis=None, out=None, skipna=False, keepdims=False):
-    return um.logical_and.reduce(a, axis=axis,
-                            out=out, skipna=skipna, keepdims=keepdims)
-
 def _mean(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
     arr = asanyarray(a)
 

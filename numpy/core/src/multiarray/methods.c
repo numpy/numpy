@@ -2005,7 +2005,7 @@ array_any(PyArrayObject *array, PyObject *args, PyObject *kwds)
     int skipna = 0, keepdims = 0;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                                "|OO&ii:count_reduce_items", kwlist,
+                                "|OO&ii:any", kwlist,
                                 &axis_in,
                                 &PyArray_OutputConverter, &out,
                                 &skipna,
@@ -2015,7 +2015,6 @@ array_any(PyArrayObject *array, PyObject *args, PyObject *kwds)
 
     if (PyArray_ConvertMultiAxis(axis_in, PyArray_NDIM(array),
                                         axis_flags) != NPY_SUCCEED) {
-        Py_DECREF(array);
         return NULL;
     }
 
@@ -2031,9 +2030,38 @@ array_any(PyArrayObject *array, PyObject *args, PyObject *kwds)
 
 
 static PyObject *
-array_all(PyArrayObject *self, PyObject *args, PyObject *kwds)
+array_all(PyArrayObject *array, PyObject *args, PyObject *kwds)
 {
-    NPY_FORWARD_NDARRAY_METHOD("_all");
+    static char *kwlist[] = {"axis", "out", "skipna", "keepdims", NULL};
+
+    PyObject *axis_in = NULL;
+    PyArrayObject *out = NULL;
+    PyArrayObject *ret = NULL;
+    npy_bool axis_flags[NPY_MAXDIMS];
+    int skipna = 0, keepdims = 0;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds,
+                                "|OO&ii:all", kwlist,
+                                &axis_in,
+                                &PyArray_OutputConverter, &out,
+                                &skipna,
+                                &keepdims)) {
+        return NULL;
+    }
+
+    if (PyArray_ConvertMultiAxis(axis_in, PyArray_NDIM(array),
+                                        axis_flags) != NPY_SUCCEED) {
+        return NULL;
+    }
+
+    ret = PyArray_ReduceAll(array, out, axis_flags, skipna, keepdims);
+
+    if (out == NULL) {
+        return PyArray_Return(ret);
+    }
+    else {
+        return (PyObject *)ret;
+    }
 }
 
 static PyObject *

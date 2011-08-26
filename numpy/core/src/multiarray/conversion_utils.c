@@ -225,6 +225,7 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
         for (i = 0; i < naxes; ++i) {
             PyObject *tmp = PyTuple_GET_ITEM(axis_in, i);
             long axis = PyInt_AsLong(tmp);
+            long axis_orig = axis;
             if (axis == -1 && PyErr_Occurred()) {
                 return NPY_FAIL;
             }
@@ -232,8 +233,9 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
                 axis += ndim;
             }
             if (axis < 0 || axis >= ndim) {
-                PyErr_SetString(PyExc_ValueError,
-                        "'axis' entry is out of bounds");
+                PyErr_Format(PyExc_ValueError,
+                        "'axis' entry %ld is out of bounds [-%d, %d)",
+                        axis_orig, ndim, ndim);
                 return NPY_FAIL;
             }
             if (out_axis_flags[axis]) {
@@ -248,11 +250,12 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
     }
     /* Try to interpret axis as an integer */
     else {
-        long axis;
+        long axis, axis_orig;
 
         memset(out_axis_flags, 0, ndim);
 
         axis = PyInt_AsLong(axis_in);
+        axis_orig = axis;
         /* TODO: PyNumber_Index would be good to use here */
         if (axis == -1 && PyErr_Occurred()) {
             return NPY_FAIL;
@@ -261,16 +264,17 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
             axis += ndim;
         }
         /*
-         * Special case letting axis=0 slip through for scalars,
+         * Special case letting axis={-1,0} slip through for scalars,
          * for backwards compatibility reasons.
          */
-        if (axis == 0 && ndim == 0) {
+        if (ndim == 0 && (axis == 0 || axis == -1)) {
             return NPY_SUCCEED;
         }
 
         if (axis < 0 || axis >= ndim) {
-            PyErr_SetString(PyExc_ValueError,
-                    "'axis' entry is out of bounds");
+            PyErr_Format(PyExc_ValueError,
+                    "'axis' entry %ld is out of bounds [-%d, %d)",
+                    axis_orig, ndim, ndim);
             return NPY_FAIL;
         }
 

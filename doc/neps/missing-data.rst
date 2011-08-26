@@ -240,7 +240,7 @@ NA dtype versions respectively.
 The np.NA singleton may accept a dtype= keyword parameter, indicating
 that it should be treated as an NA of a particular data type. This is also
 a mechanism for preserving the dtype in a NumPy scalar-like fashion.
-Here's what this could look like::
+Here's what this looks like::
 
     >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], maskna=True))
     NA(dtype='<f8')
