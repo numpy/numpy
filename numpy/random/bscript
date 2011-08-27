@@ -9,7 +9,7 @@ def configure(context):
     conf = context.waf_context
 
     conf.env.USE_WINCRYPT = False
-    if conf.check_declaration("_WIN32"):
+    if conf.check_declaration("_WIN32", mandatory=False):
         conf.env.USE_WINCRYPT = True
 
     conf.env.NEEDS_MINGW32_WORKAROUND = False
