@@ -18,6 +18,11 @@ DOCLINES = __doc__.split("\n")
 import __builtin__
 import os
 import sys
+import warnings
+
+warnings.warn("""\
+Numscons scripts are being deprecated - most of numscons features should now be
+supported by bento""")
 
 CLASSIFIERS = """\
 Development Status :: 4 - Beta
