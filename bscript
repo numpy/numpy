@@ -131,9 +131,6 @@ def pre_configure(context):
     conf.check_python_version((2, 4, 0))
     conf.check_python_headers()
     if sys.platform == "darwin":
-        # FIXME: fix upstream waf tool to work on mac os X
-        conf.env.CC = ["/usr/bin/gcc-4.0"]
-        conf.env.LINK_CC = ["/usr/bin/gcc-4.0"]
         remove_flag_prevalue("ppc", conf.env.CFLAGS_PYEXT)
         remove_flag_prevalue("ppc", conf.env.LINKFLAGS_PYEXT)
         conf.env["MACOSX_DEPLOYMENT_TARGET"] = "10.4"
