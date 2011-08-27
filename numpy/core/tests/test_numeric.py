@@ -549,15 +549,19 @@ class TestFromiter(TestCase):
 class TestNonzero(TestCase):
     def test_nonzero_trivial(self):
         assert_equal(np.count_nonzero(array([])), 0)
+        assert_equal(np.count_nonzero(array([], dtype='?')), 0)
         assert_equal(np.nonzero(array([])), ([],))
 
         assert_equal(np.count_nonzero(array(0)), 0)
+        assert_equal(np.count_nonzero(array(0, dtype='?')), 0)
         assert_equal(np.nonzero(array(0)), ([],))
         assert_equal(np.count_nonzero(array(1)), 1)
+        assert_equal(np.count_nonzero(array(1, dtype='?')), 1)
         assert_equal(np.nonzero(array(1)), ([0],))
 
     def test_nonzero_onedim(self):
         x = array([1,0,2,-1,0,0,8])
+        assert_equal(np.count_nonzero(x), 4)
         assert_equal(np.count_nonzero(x), 4)
         assert_equal(np.nonzero(x), ([0, 2, 3, 6],))
 
@@ -590,6 +594,50 @@ class TestNonzero(TestCase):
         assert_equal(np.nonzero(x['a'].T), ([0,1,1,2],[1,1,2,0]))
         assert_equal(np.nonzero(x['b'].T), ([0,0,1,2,2],[0,1,2,0,2]))
 
+    def test_count_nonzero_axis(self):
+        a = array([[0,1,0],[2,3,0]])
+        assert_equal(np.count_nonzero(a, axis=()), [[0,1,0],[1,1,0]])
+        assert_equal(np.count_nonzero(a, axis=0), [1,2,0])
+        assert_equal(np.count_nonzero(a, axis=1), [1,2])
+        assert_equal(np.count_nonzero(a, axis=(0,1)), 3)
+
+        res = array([-1,-1,-1], dtype='i2')
+        np.count_nonzero(a, axis=0, out=res)
+        assert_equal(res, [1,2,0])
+
+        # A 3-dimensional array with an NA
+        a = array([[[0,1,0],[2,np.NA,0]], [[0,1,0],[2,3,0]]], maskna=True)
+
+        # Test that the NA reduces correctly
+        assert_array_equal(np.count_nonzero(a, axis=()),
+                            [[[0,1,0],[1,np.NA,0]], [[0,1,0],[1,1,0]]])
+        assert_array_equal(np.count_nonzero(a, axis=0), [[0,2,0], [2,np.NA,0]])
+        assert_array_equal(np.count_nonzero(a, axis=1), [[1,np.NA,0], [1,2,0]])
+        assert_array_equal(np.count_nonzero(a, axis=2), [[1,np.NA], [1,2]])
+        assert_array_equal(np.count_nonzero(a, axis=(0,1)), [2,np.NA,0])
+        assert_array_equal(np.count_nonzero(a, axis=(0,2)), [2,np.NA])
+        assert_array_equal(np.count_nonzero(a, axis=(1,2)), [np.NA,3])
+        assert_array_equal(np.count_nonzero(a, axis=(0,1,2)),
+                                                np.NA(dtype=np.intp))
+        assert_array_equal(np.count_nonzero(a, axis=None),
+                                                np.NA(dtype=np.intp))
+
+        # Test that the NA gets skipped correctly
+        assert_array_equal(np.count_nonzero(a, axis=(), skipna=True),
+                            [[[0,1,0],[1,0,0]], [[0,1,0],[1,1,0]]])
+        assert_array_equal(np.count_nonzero(a, axis=0, skipna=True),
+                            [[0,2,0], [2,1,0]])
+        assert_array_equal(np.count_nonzero(a, axis=1, skipna=True),
+                            [[1,1,0], [1,2,0]])
+        assert_array_equal(np.count_nonzero(a, axis=2, skipna=True),
+                            [[1,1], [1,2]])
+        assert_array_equal(np.count_nonzero(a, axis=(0,1), skipna=True),
+                            [2,3,0])
+        assert_array_equal(np.count_nonzero(a, axis=(0,2), skipna=True), [2,3])
+        assert_array_equal(np.count_nonzero(a, axis=(1,2), skipna=True), [2,3])
+        assert_array_equal(np.count_nonzero(a, axis=(0,1,2), skipna=True), 5)
+        assert_array_equal(np.count_nonzero(a, axis=None, skipna=True), 5)
+
 class TestIndex(TestCase):
     def test_boolean(self):
         a = rand(3,5,8)
@@ -598,6 +646,13 @@ class TestIndex(TestCase):
         g2 = randint(0,8,size=15)
         V[g1,g2] = -V[g1,g2]
         assert_((array([a[0][V>0],a[1][V>0],a[2][V>0]]) == a[:,V>0]).all())
+
+    def test_boolean_edgecase(self):
+        a = np.array([], dtype='int32')
+        b = np.array([], dtype='bool')
+        c = a[b]
+        assert_equal(c, [])
+        assert_equal(c.dtype, np.dtype('int32'))
 
 
 class TestBinaryRepr(TestCase):
@@ -1269,7 +1324,7 @@ class TestLikeFuncs(TestCase):
             if not value is None:
                 assert_(all(dz == value))
 
-        # Test the 'subok' parameter'
+        # Test the 'subok' parameter
         a = np.matrix([[1,2],[3,4]])
 
         b = like_function(a)
@@ -1277,6 +1332,20 @@ class TestLikeFuncs(TestCase):
 
         b = like_function(a, subok=False)
         assert_(not (type(b) is np.matrix))
+
+        # Test that 'maskna=True' works
+        a = np.arange(6).reshape(2,3)
+        res = like_function(a, maskna=True)
+        assert_(res.flags.maskna)
+        assert_(res.flags.ownmaskna)
+        assert_equal(res.shape, a.shape)
+        assert_equal(res.dtype, a.dtype)
+
+        # Test that no NA mask is created when the prototype is NA-masked
+        a = np.arange(6, maskna=True).reshape(2,3)
+        assert_(a.flags.maskna)
+        res = like_function(a)
+        assert_(not res.flags.maskna)
 
     def test_ones_like(self):
         self.check_like_function(np.ones_like, 1)

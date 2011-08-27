@@ -29,11 +29,45 @@
  * PyArg_ParseTuple.  It will immediately return an object of array type
  * or will convert to a NPY_ARRAY_CARRAY any other object.
  *
+ * This function will not allow an array which supports NA through,
+ * to allow code which doesn't support NA to continue working as is.
+ *
  * If you use PyArray_Converter, you must DECREF the array when finished
  * as you get a new reference to it.
  */
 NPY_NO_EXPORT int
 PyArray_Converter(PyObject *object, PyObject **address)
+{
+    if (PyArray_Check(object) && !PyArray_HASMASKNA((PyArrayObject *)object)) {
+        *address = object;
+        Py_INCREF(object);
+        return PY_SUCCEED;
+    }
+    else {
+        *address = PyArray_FromAny(object, NULL, 0, 0,
+                                NPY_ARRAY_CARRAY, NULL);
+        if (*address == NULL) {
+            return PY_FAIL;
+        }
+        return PY_SUCCEED;
+    }
+}
+
+/*NUMPY_API
+ *
+ * Useful to pass as converter function for O& processing in PyArgs_ParseTuple.
+ *
+ * This conversion function can be used with the "O&" argument for
+ * PyArg_ParseTuple.  It will immediately return an object of array type
+ * or will convert to a NPY_ARRAY_CARRAY any other object.
+ *
+ * This function allows NA-arrays through.
+ *
+ * If you use PyArray_AllowNAConverter, you must DECREF the array when finished
+ * as you get a new reference to it.
+ */
+NPY_NO_EXPORT int
+PyArray_AllowNAConverter(PyObject *object, PyObject **address)
 {
     if (PyArray_Check(object)) {
         *address = object;
@@ -41,7 +75,8 @@ PyArray_Converter(PyObject *object, PyObject **address)
         return PY_SUCCEED;
     }
     else {
-        *address = PyArray_FromAny(object, NULL, 0, 0, NPY_ARRAY_CARRAY, NULL);
+        *address = PyArray_FromAny(object, NULL, 0, 0,
+                                NPY_ARRAY_CARRAY | NPY_ARRAY_ALLOWNA, NULL);
         if (*address == NULL) {
             return PY_FAIL;
         }
@@ -55,6 +90,36 @@ PyArray_Converter(PyObject *object, PyObject **address)
  */
 NPY_NO_EXPORT int
 PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
+{
+    if (object == NULL || object == Py_None) {
+        *address = NULL;
+        return PY_SUCCEED;
+    }
+    if (PyArray_Check(object)) {
+        if (PyArray_HASMASKNA((PyArrayObject *)object)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "this operation does not yet support output "
+                            "arrays with NA support");
+            *address = NULL;
+            return PY_FAIL;
+        }
+        *address = (PyArrayObject *)object;
+        return PY_SUCCEED;
+    }
+    else {
+        PyErr_SetString(PyExc_TypeError,
+                        "output must be an array");
+        *address = NULL;
+        return PY_FAIL;
+    }
+}
+
+/*NUMPY_API
+ * Useful to pass as converter function for O& processing in
+ * PyArgs_ParseTuple for output arrays
+ */
+NPY_NO_EXPORT int
+PyArray_OutputAllowNAConverter(PyObject *object, PyArrayObject **address)
 {
     if (object == NULL || object == Py_None) {
         *address = NULL;
@@ -104,9 +169,9 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
                         "expected sequence object with len >= 0");
         return PY_FAIL;
     }
-    if (len > MAX_DIMS) {
-        PyErr_Format(PyExc_ValueError, "sequence too large; "   \
-                     "must be smaller than %d", MAX_DIMS);
+    if (len > NPY_MAXDIMS) {
+        PyErr_Format(PyExc_ValueError, "sequence too large; "
+                     "must be smaller than %d", NPY_MAXDIMS);
         return PY_FAIL;
     }
     if (len > 0) {
@@ -177,12 +242,14 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
 
 /*NUMPY_API
  * Get axis from an object (possibly None) -- a converter function,
+ *
+ * See also PyArray_ConvertMultiAxis, which also handles a tuple of axes.
  */
 NPY_NO_EXPORT int
 PyArray_AxisConverter(PyObject *obj, int *axis)
 {
     if (obj == Py_None) {
-        *axis = MAX_DIMS;
+        *axis = NPY_MAXDIMS;
     }
     else {
         *axis = (int) PyInt_AsLong(obj);
@@ -191,6 +258,94 @@ PyArray_AxisConverter(PyObject *obj, int *axis)
         }
     }
     return PY_SUCCEED;
+}
+
+/*
+ * Converts an axis parameter into an ndim-length C-array of
+ * boolean flags, True for each axis specified.
+ *
+ * If obj is None or NULL, everything is set to True. If obj is a tuple,
+ * each axis within the tuple is set to True. If obj is an integer,
+ * just that axis is set to True.
+ */
+NPY_NO_EXPORT int
+PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
+{
+    /* None means all of the axes */
+    if (axis_in == Py_None || axis_in == NULL) {
+        memset(out_axis_flags, 1, ndim);
+        return NPY_SUCCEED;
+    }
+    /* A tuple of which axes */
+    else if (PyTuple_Check(axis_in)) {
+        int i, naxes;
+
+        memset(out_axis_flags, 0, ndim);
+
+        naxes = PyTuple_Size(axis_in);
+        if (naxes < 0) {
+            return NPY_FAIL;
+        }
+        for (i = 0; i < naxes; ++i) {
+            PyObject *tmp = PyTuple_GET_ITEM(axis_in, i);
+            long axis = PyInt_AsLong(tmp);
+            long axis_orig = axis;
+            if (axis == -1 && PyErr_Occurred()) {
+                return NPY_FAIL;
+            }
+            if (axis < 0) {
+                axis += ndim;
+            }
+            if (axis < 0 || axis >= ndim) {
+                PyErr_Format(PyExc_ValueError,
+                        "'axis' entry %ld is out of bounds [-%d, %d)",
+                        axis_orig, ndim, ndim);
+                return NPY_FAIL;
+            }
+            if (out_axis_flags[axis]) {
+                PyErr_SetString(PyExc_ValueError,
+                        "duplicate value in 'axis'");
+                return NPY_FAIL;
+            }
+            out_axis_flags[axis] = 1;
+        }
+
+        return NPY_SUCCEED;
+    }
+    /* Try to interpret axis as an integer */
+    else {
+        long axis, axis_orig;
+
+        memset(out_axis_flags, 0, ndim);
+
+        axis = PyInt_AsLong(axis_in);
+        axis_orig = axis;
+        /* TODO: PyNumber_Index would be good to use here */
+        if (axis == -1 && PyErr_Occurred()) {
+            return NPY_FAIL;
+        }
+        if (axis < 0) {
+            axis += ndim;
+        }
+        /*
+         * Special case letting axis={-1,0} slip through for scalars,
+         * for backwards compatibility reasons.
+         */
+        if (ndim == 0 && (axis == 0 || axis == -1)) {
+            return NPY_SUCCEED;
+        }
+
+        if (axis < 0 || axis >= ndim) {
+            PyErr_Format(PyExc_ValueError,
+                    "'axis' entry %ld is out of bounds [-%d, %d)",
+                    axis_orig, ndim, ndim);
+            return NPY_FAIL;
+        }
+
+        out_axis_flags[axis] = 1;
+
+        return NPY_SUCCEED;
+    }
 }
 
 /*NUMPY_API
@@ -349,6 +504,223 @@ PyArray_SearchsideConverter(PyObject *obj, void *addr)
     return PY_SUCCEED;
 }
 
+/*NUMPY_API
+ * Convert an object to FORTRAN / C / ANY / KEEP
+ */
+NPY_NO_EXPORT int
+PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
+{
+    char *str;
+    /* Leave the desired default from the caller for NULL/Py_None */
+    if (object == NULL || object == Py_None) {
+        return PY_SUCCEED;
+    }
+    else if (PyUnicode_Check(object)) {
+        PyObject *tmp;
+        int ret;
+        tmp = PyUnicode_AsASCIIString(object);
+        ret = PyArray_OrderConverter(tmp, val);
+        Py_DECREF(tmp);
+        return ret;
+    }
+    else if (!PyBytes_Check(object) || PyBytes_GET_SIZE(object) < 1) {
+        if (PyObject_IsTrue(object)) {
+            *val = NPY_FORTRANORDER;
+        }
+        else {
+            *val = NPY_CORDER;
+        }
+        if (PyErr_Occurred()) {
+            return PY_FAIL;
+        }
+        return PY_SUCCEED;
+    }
+    else {
+        str = PyBytes_AS_STRING(object);
+        if (str[0] == 'C' || str[0] == 'c') {
+            *val = NPY_CORDER;
+        }
+        else if (str[0] == 'F' || str[0] == 'f') {
+            *val = NPY_FORTRANORDER;
+        }
+        else if (str[0] == 'A' || str[0] == 'a') {
+            *val = NPY_ANYORDER;
+        }
+        else if (str[0] == 'K' || str[0] == 'k') {
+            *val = NPY_KEEPORDER;
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                            "order not understood");
+            return PY_FAIL;
+        }
+    }
+    return PY_SUCCEED;
+}
+
+/*NUMPY_API
+ * Convert an object to NPY_RAISE / NPY_CLIP / NPY_WRAP
+ */
+NPY_NO_EXPORT int
+PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
+{
+    if (object == NULL || object == Py_None) {
+        *val = NPY_RAISE;
+    }
+    else if (PyBytes_Check(object)) {
+        char *str;
+        str = PyBytes_AS_STRING(object);
+        if (str[0] == 'C' || str[0] == 'c') {
+            *val = NPY_CLIP;
+        }
+        else if (str[0] == 'W' || str[0] == 'w') {
+            *val = NPY_WRAP;
+        }
+        else if (str[0] == 'R' || str[0] == 'r') {
+            *val = NPY_RAISE;
+        }
+        else {
+            PyErr_SetString(PyExc_TypeError,
+                            "clipmode not understood");
+            return PY_FAIL;
+        }
+    }
+    else if (PyUnicode_Check(object)) {
+        PyObject *tmp;
+        int ret;
+        tmp = PyUnicode_AsASCIIString(object);
+        ret = PyArray_ClipmodeConverter(tmp, val);
+        Py_DECREF(tmp);
+        return ret;
+    }
+    else {
+        int number = PyInt_AsLong(object);
+        if (number == -1 && PyErr_Occurred()) {
+            goto fail;
+        }
+        if (number <= (int) NPY_RAISE
+                && number >= (int) NPY_CLIP) {
+            *val = (NPY_CLIPMODE) number;
+        }
+        else {
+            goto fail;
+        }
+    }
+    return PY_SUCCEED;
+
+ fail:
+    PyErr_SetString(PyExc_TypeError,
+                    "clipmode not understood");
+    return PY_FAIL;
+}
+
+/*NUMPY_API
+ * Convert an object to an array of n NPY_CLIPMODE values.
+ * This is intended to be used in functions where a different mode
+ * could be applied to each axis, like in ravel_multi_index.
+ */
+NPY_NO_EXPORT int
+PyArray_ConvertClipmodeSequence(PyObject *object, NPY_CLIPMODE *modes, int n)
+{
+    int i;
+    /* Get the clip mode(s) */
+    if (object && (PyTuple_Check(object) || PyList_Check(object))) {
+        if (PySequence_Size(object) != n) {
+            PyErr_Format(PyExc_ValueError,
+                    "list of clipmodes has wrong length (%d instead of %d)",
+                    (int)PySequence_Size(object), n);
+            return PY_FAIL;
+        }
+
+        for (i = 0; i < n; ++i) {
+            PyObject *item = PySequence_GetItem(object, i);
+            if(item == NULL) {
+                return PY_FAIL;
+            }
+
+            if(PyArray_ClipmodeConverter(item, &modes[i]) != PY_SUCCEED) {
+                Py_DECREF(item);
+                return PY_FAIL;
+            }
+
+            Py_DECREF(item);
+        }
+    }
+    else if (PyArray_ClipmodeConverter(object, &modes[0]) == PY_SUCCEED) {
+        for (i = 1; i < n; ++i) {
+            modes[i] = modes[0];
+        }
+    }
+    else {
+        return PY_FAIL;
+    }
+    return PY_SUCCEED;
+}
+
+/*NUMPY_API
+ * Convert any Python object, *obj*, to an NPY_CASTING enum.
+ */
+NPY_NO_EXPORT int
+PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
+{
+    char *str = NULL;
+    Py_ssize_t length = 0;
+
+    if (PyUnicode_Check(obj)) {
+        PyObject *str_obj;
+        int ret;
+        str_obj = PyUnicode_AsASCIIString(obj);
+        if (str_obj == NULL) {
+            return 0;
+        }
+        ret = PyArray_CastingConverter(str_obj, casting);
+        Py_DECREF(str_obj);
+        return ret;
+    }
+
+    if (PyBytes_AsStringAndSize(obj, &str, &length) == -1) {
+        return 0;
+    }
+
+    if (length >= 2) switch (str[2]) {
+        case 0:
+            if (strcmp(str, "no") == 0) {
+                *casting = NPY_NO_CASTING;
+                return 1;
+            }
+            break;
+        case 'u':
+            if (strcmp(str, "equiv") == 0) {
+                *casting = NPY_EQUIV_CASTING;
+                return 1;
+            }
+            break;
+        case 'f':
+            if (strcmp(str, "safe") == 0) {
+                *casting = NPY_SAFE_CASTING;
+                return 1;
+            }
+            break;
+        case 'm':
+            if (strcmp(str, "same_kind") == 0) {
+                *casting = NPY_SAME_KIND_CASTING;
+                return 1;
+            }
+            break;
+        case 's':
+            if (strcmp(str, "unsafe") == 0) {
+                *casting = NPY_UNSAFE_CASTING;
+                return 1;
+            }
+            break;
+    }
+
+    PyErr_SetString(PyExc_ValueError,
+            "casting must be one of 'no', 'equiv', 'safe', "
+            "'same_kind', or 'unsafe'");
+    return 0;
+}
+
 /*****************************
 * Other conversion functions
 *****************************/
@@ -405,7 +777,7 @@ PyArray_PyIntAsInt(PyObject *o)
         goto finish;
     }
 #endif
-    if (Py_TYPE(o)->tp_as_number != NULL &&         \
+    if (Py_TYPE(o)->tp_as_number != NULL &&
         Py_TYPE(o)->tp_as_number->nb_int != NULL) {
         obj = Py_TYPE(o)->tp_as_number->nb_int(o);
         if (obj == NULL) {
@@ -415,7 +787,7 @@ PyArray_PyIntAsInt(PyObject *o)
         Py_DECREF(obj);
     }
 #if !defined(NPY_PY3K)
-    else if (Py_TYPE(o)->tp_as_number != NULL &&                    \
+    else if (Py_TYPE(o)->tp_as_number != NULL &&
              Py_TYPE(o)->tp_as_number->nb_long != NULL) {
         obj = Py_TYPE(o)->tp_as_number->nb_long(o);
         if (obj == NULL) {

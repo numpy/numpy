@@ -272,7 +272,9 @@ NpyIter_Reset(NpyIter *iter, char **errmsg)
 }
 
 /*NUMPY_API
- * Resets the iterator to its initial state, with new base data pointers
+ * Resets the iterator to its initial state, with new base data pointers.
+ * This function requires great caution, even more so if any
+ * NPY_ITER_USE_MASKNA operands were specified.
  *
  * If errmsg is non-NULL, it should point to a variable which will
  * receive the error message, and no Python exception will be set.
@@ -691,6 +693,74 @@ NpyIter_HasIndex(NpyIter *iter)
 }
 
 /*NUMPY_API
+ * Checks to see whether this is the first time the elements
+ * of the specified reduction operand which the iterator points at are
+ * being seen for the first time. The function returns
+ * a reasonable answer for reduction operands and when buffering is
+ * disabled. The answer may be incorrect for buffered non-reduction
+ * operands.
+ *
+ * This function is intended to be used in EXTERNAL_LOOP mode only,
+ * and will produce some wrong answers when that mode is not enabled.
+ *
+ * If this function returns true, the caller should also
+ * check the inner loop stride of the operand, because if
+ * that stride is 0, then only the first element of the innermost
+ * external loop is being visited for the first time.
+ *
+ * WARNING: For performance reasons, 'iop' is not bounds-checked,
+ *          it is not confirmed that 'iop' is actually a reduction
+ *          operand, and it is not confirmed that EXTERNAL_LOOP
+ *          mode is enabled. These checks are the responsibility of
+ *          the caller, and should be done outside of any inner loops.
+ */
+NPY_NO_EXPORT npy_bool
+NpyIter_IsFirstVisit(NpyIter *iter, int iop)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    int idim, ndim = NIT_NDIM(iter);
+    int nop = NIT_NOP(iter);
+
+    NpyIter_AxisData *axisdata;
+    npy_intp sizeof_axisdata;
+
+    sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
+    axisdata = NIT_AXISDATA(iter);
+
+    for (idim = 0; idim < ndim; ++idim) {
+        npy_intp coord = NAD_INDEX(axisdata);
+        npy_intp stride = NAD_STRIDES(axisdata)[iop];
+
+        /*
+         * If this is a reduction dimension and the coordinate
+         * is not at the start, it's definitely not the first visit
+         */
+        if (stride == 0 && coord != 0) {
+            return 0;
+        }
+
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
+    }
+
+    /*
+     * In reduction buffering mode, there's a double loop being
+     * tracked in the buffer part of the iterator data structure.
+     * We only need to check the outer level of this two-level loop,
+     * because of the requirement that EXTERNAL_LOOP be enabled.
+     */
+    if (itflags&NPY_ITFLAG_BUFFER) {
+        NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
+        /* The outer reduce loop */
+        if (NBF_REDUCE_OUTERSTRIDES(bufferdata)[iop] == 0 &&
+                NBF_REDUCE_POS(bufferdata) != 0) {
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+/*NUMPY_API
  * Whether the iteration could be done with no buffering.
  */
 NPY_NO_EXPORT npy_bool
@@ -745,6 +815,35 @@ NPY_NO_EXPORT int
 NpyIter_GetNOp(NpyIter *iter)
 {
     return NIT_NOP(iter);
+}
+
+/*NUMPY_API
+ * Gets the index of the first operand which is the
+ * mask for an NPY_ITER_USE_MASKNA operand.
+ */
+NPY_NO_EXPORT int
+NpyIter_GetFirstMaskNAOp(NpyIter *iter)
+{
+    return NIT_FIRST_MASKNA_OP(iter);
+}
+
+/*NUMPY_API
+ * Gets the correspondences between the operands with
+ * NPY_ITER_USEMASKNA set and their corresponding masks.
+ *
+ * If i < NpyIter_GetFirstMaskNAOp(iter), then
+ * NpyIter_GetMaskNAIndices(iter)[i] is either -1 or
+ * an index >= NpyIter_GetFirstMaskNAOp(iter) of the corresponding
+ * mask.
+ *
+ * If i >= NpyIter_GetFirstMaskNAOp(iter), then
+ * NpyIter_GetMaskNAIndices(iter)[i] is the index
+ * of the corresponding maskna operand for the mask.
+ */
+NPY_NO_EXPORT npy_int8 *
+NpyIter_GetMaskNAIndexArray(NpyIter *iter)
+{
+    return NIT_MASKNA_INDICES(iter);
 }
 
 /*NUMPY_API
@@ -1004,6 +1103,7 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
     int nop = NIT_NOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
     npy_intp shape[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     PyArrayObject *obj, *view;
@@ -1012,8 +1112,9 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
     int writeable;
+    npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
 
-    if (i < 0 || i >= nop) {
+    if (i < 0 || i >= first_maskna_op) {
         PyErr_SetString(PyExc_IndexError,
                 "index provided for an iterator view was out of bounds");
         return NULL;
@@ -1034,9 +1135,11 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
 
     /* Retrieve the shape and strides from the axisdata */
-    for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+    for (idim = 0; idim < ndim; ++idim) {
         shape[ndim-idim-1] = NAD_SHAPE(axisdata);
         strides[ndim-idim-1] = NAD_STRIDES(axisdata)[i];
+
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
     }
 
     Py_INCREF(dtype);
@@ -1055,6 +1158,29 @@ NpyIter_GetIterView(NpyIter *iter, npy_intp i)
     }
     /* Make sure all the flags are good */
     PyArray_UpdateFlags(view, NPY_ARRAY_UPDATE_ALL);
+    /*
+     * Add the mask to the view if the operand was NPY_ITER_USE_MASKNA.
+     */
+    if (maskna_indices[i] >= 0) {
+        PyArrayObject_fields *fview = (PyArrayObject_fields *)view;
+        int i_maskna = maskna_indices[i];
+        npy_intp *maskna_strides = fview->maskna_strides;
+
+        fview->maskna_dtype = PyArray_MASKNA_DTYPE(obj);
+        Py_INCREF(fview->maskna_dtype);
+        fview->maskna_data = NIT_RESETDATAPTR(iter)[i_maskna];
+
+        axisdata = NIT_AXISDATA(iter);
+        for (idim = 0; idim < ndim; ++idim) {
+            maskna_strides[ndim-idim-1] = NAD_STRIDES(axisdata)[i_maskna];
+
+            NIT_ADVANCE_AXISDATA(axisdata, 1);
+        }
+
+        /* This view doesn't own the mask */
+        fview->flags |= NPY_ARRAY_MASKNA;
+        fview->flags &= ~NPY_ARRAY_OWNMASKNA;
+    }
 
     return view;
 }
@@ -1337,9 +1463,20 @@ NpyIter_DebugPrint(NpyIter *iter)
         printf("REDUCE ");
     if (itflags&NPY_ITFLAG_REUSE_REDUCE_LOOPS)
         printf("REUSE_REDUCE_LOOPS ");
+    if (itflags&NPY_ITFLAG_HAS_MASKNA_OP)
+        printf("HAS_MASKNA_OP ");
+
     printf("\n");
     printf("| NDim: %d\n", (int)ndim);
     printf("| NOp: %d\n", (int)nop);
+    if (itflags&NPY_ITFLAG_HAS_MASKNA_OP) {
+        printf("| First MaskNA Op: %d\n", (int)NIT_FIRST_MASKNA_OP(iter));
+        printf("| MaskNA Indices: ");
+        for (iop = 0; iop < nop; ++iop) {
+            printf("%d ", (int)NIT_MASKNA_INDICES(iter)[iop]);
+        }
+        printf("\n");
+    }
     if (NIT_MASKOP(iter) >= 0) {
         printf("| MaskOp: %d\n", (int)NIT_MASKOP(iter));
     }
@@ -1522,6 +1659,7 @@ NpyIter_DebugPrint(NpyIter *iter)
     }
 
     printf("------- END ITERATOR DUMP -------\n");
+    fflush(stdout);
 
     PyGILState_Release(gilstate);
 }
@@ -1599,7 +1737,6 @@ npyiter_coalesce_axes(NpyIter *iter)
 }
 
 /*
- *
  * If errmsg is non-NULL, it should point to a variable which will
  * receive the error message, and no Python exception will be set.
  * This is so that the function can be called from code not holding
@@ -1749,6 +1886,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
     int ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
     int maskop = NIT_MASKOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
     char *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
@@ -1764,11 +1902,12 @@ npyiter_copy_from_buffers(NpyIter *iter)
     char **ptrs = NBF_PTRS(bufferdata), **ad_ptrs = NAD_PTRS(axisdata);
     char **buffers = NBF_BUFFERS(bufferdata);
     char *buffer;
+    npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
 
     npy_intp reduce_outerdim = 0;
     npy_intp *reduce_outerstrides = NULL;
 
-    PyArray_StridedTransferFn *stransfer = NULL;
+    PyArray_StridedUnaryOp *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
 
     npy_intp axisdata_incr = NIT_AXISDATA_SIZEOF(itflags, ndim, nop) /
@@ -1866,7 +2005,37 @@ npyiter_copy_from_buffers(NpyIter *iter)
                                     "operand %d (%d items)\n",
                                     (int)iop, (int)op_transfersize);
 
-                if (op_itflags[iop] & NPY_OP_ITFLAG_WRITEMASKED) {
+                /* USE_MASKNA operand */
+                if (iop < first_maskna_op && maskna_indices[iop] >= 0) {
+                    int iop_maskna = maskna_indices[iop];
+                    npy_mask *maskptr;
+                    /* TODO: support WRITEMASKED + USE_MASKNA together */
+
+                    /*
+                     * The mask pointer may be in the buffer or in
+                     * the array, detect which one.
+                     */
+                    delta = (ptrs[iop_maskna] - buffers[iop_maskna]);
+                    if (0 <= delta &&
+                            delta <= buffersize*dtypes[iop_maskna]->elsize) {
+                        maskptr = (npy_mask *)buffers[iop_maskna];
+                    }
+                    else {
+                        maskptr = (npy_mask *)ad_ptrs[iop_maskna];
+                    }
+
+                    PyArray_TransferMaskedStridedToNDim(ndim_transfer,
+                            ad_ptrs[iop], dst_strides, axisdata_incr,
+                            buffer, src_stride,
+                            maskptr, strides[iop_maskna],
+                            dst_coords, axisdata_incr,
+                            dst_shape, axisdata_incr,
+                            op_transfersize, dtypes[iop]->elsize,
+                            (PyArray_MaskedStridedUnaryOp *)stransfer,
+                            transferdata);
+                }
+                /* WRITEMASKED operand */
+                else if (op_itflags[iop] & NPY_OP_ITFLAG_WRITEMASKED) {
                     npy_mask *maskptr;
 
                     /*
@@ -1889,9 +2058,10 @@ npyiter_copy_from_buffers(NpyIter *iter)
                             dst_coords, axisdata_incr,
                             dst_shape, axisdata_incr,
                             op_transfersize, dtypes[iop]->elsize,
-                            (PyArray_MaskedStridedTransferFn *)stransfer,
+                            (PyArray_MaskedStridedUnaryOp *)stransfer,
                             transferdata);
                 }
+                /* Regular operand */
                 else {
                     PyArray_TransferStridedToNDim(ndim_transfer,
                             ad_ptrs[iop], dst_strides, axisdata_incr,
@@ -1943,6 +2113,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
     char *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
@@ -1963,7 +2134,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
     npy_intp *reduce_outerstrides = NULL;
     char **reduce_outerptrs = NULL;
 
-    PyArray_StridedTransferFn *stransfer = NULL;
+    PyArray_StridedUnaryOp *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
 
     /*
@@ -2272,13 +2443,21 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
         }
 
         if (stransfer != NULL) {
-            npy_intp src_itemsize = PyArray_DESCR(operands[iop])->elsize;
+            npy_intp src_itemsize;
             npy_intp op_transfersize;
 
             npy_intp dst_stride, *src_strides, *src_coords, *src_shape;
             int ndim_transfer;
 
             npy_bool skip_transfer = 0;
+
+            /* Need to pick the right item size for the data vs mask */
+            if (iop < first_maskna_op) {
+                src_itemsize = PyArray_DTYPE(operands[iop])->elsize;
+            }
+            else {
+                src_itemsize = PyArray_MASKNA_DTYPE(operands[iop])->elsize;
+            }
 
             /* If stransfer wasn't set to NULL, buffering is required */
             any_buffered = 1;
@@ -2454,7 +2633,7 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     npy_intp sizeof_axisdata;
     npy_intp coord, shape, *strides;
     npy_intp reducespace = 1, factor;
-    npy_bool nonzerocoord = 0;
+    npy_bool nonzerocoord;
 
     char *op_itflags = NIT_OPITFLAGS(iter);
     char stride0op[NPY_MAXARGS];
@@ -2463,7 +2642,7 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     *reduce_outerdim = 0;
 
     /* If there's only one dimension, no need to calculate anything */
-    if (ndim == 1) {
+    if (ndim == 1 || count == 0) {
         *reduce_innersize = count;
         return count;
     }
@@ -2484,6 +2663,9 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     reducespace += (shape-coord-1);
     factor = shape;
     NIT_ADVANCE_AXISDATA(axisdata, 1);
+
+    /* Initialize nonzerocoord based on the first coordinate */
+    nonzerocoord = (coord != 0);
 
     /* Go forward through axisdata, calculating the space available */
     for (idim = 1; idim < ndim && reducespace < count;

@@ -13,6 +13,11 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn);
 NPY_NO_EXPORT int
 PyArray_ValidType(int type);
 
+/* Like PyArray_CanCastArrayTo */
+NPY_NO_EXPORT npy_bool
+can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
+                    PyArray_Descr *to, NPY_CASTING casting);
+
 /*
  * This function calls Py_DECREF on flex_dtype, and replaces it with
  * a new dtype that has been adapted based on the values in data_dtype

@@ -120,9 +120,9 @@ class TestUfunc(TestCase):
 
         # class to use in testing object method loops
         class foo(object):
-            def logical_not(self) :
+            def conjugate(self) :
                 return np.bool_(1)
-            def logical_and(self, obj) :
+            def logical_xor(self, obj) :
                 return np.bool_(1)
 
         # check unary PyUFunc_O_O
@@ -134,7 +134,7 @@ class TestUfunc(TestCase):
         x = np.zeros(10, dtype=np.object)[0::2]
         for i in range(len(x)) :
             x[i] = foo()
-        assert_(np.all(np.logical_not(x) == True), msg)
+        assert_(np.all(np.conjugate(x) == True), msg)
 
         # check binary PyUFunc_OO_O
         msg = "PyUFunc_OO_O"
@@ -145,7 +145,7 @@ class TestUfunc(TestCase):
         x = np.zeros(10, dtype=np.object)[0::2]
         for i in range(len(x)) :
             x[i] = foo()
-        assert_(np.all(np.logical_and(x,x) == 1), msg)
+        assert_(np.all(np.logical_xor(x,x)), msg)
 
         # check PyUFunc_On_Om
         # fixme -- I don't know how to do this yet
@@ -471,6 +471,67 @@ class TestUfunc(TestCase):
 
         assert_equal(ref, True, err_msg="reference check")
 
+    def test_object_logical(self):
+        a = np.array([3, None, True, False, "test", ""], dtype=object)
+        assert_equal(np.logical_or(a, None),
+                        np.array([x or None for x in a], dtype=object))
+        assert_equal(np.logical_or(a, True),
+                        np.array([x or True for x in a], dtype=object))
+        assert_equal(np.logical_or(a, 12),
+                        np.array([x or 12 for x in a], dtype=object))
+        assert_equal(np.logical_or(a, "blah"),
+                        np.array([x or "blah" for x in a], dtype=object))
+
+        assert_equal(np.logical_and(a, None),
+                        np.array([x and None for x in a], dtype=object))
+        assert_equal(np.logical_and(a, True),
+                        np.array([x and True for x in a], dtype=object))
+        assert_equal(np.logical_and(a, 12),
+                        np.array([x and 12 for x in a], dtype=object))
+        assert_equal(np.logical_and(a, "blah"),
+                        np.array([x and "blah" for x in a], dtype=object))
+
+        assert_equal(np.logical_not(a),
+                        np.array([not x for x in a], dtype=object))
+
+        assert_equal(np.logical_or.reduce(a), 3)
+        assert_equal(np.logical_and.reduce(a), None)
+
+    def test_zerosize_reduction(self):
+        assert_equal(np.sum([]), 0)
+        assert_equal(np.prod([]), 1)
+        assert_equal(np.any([]), False)
+        assert_equal(np.all([]), True)
+        assert_raises(ValueError, np.max, [])
+        assert_raises(ValueError, np.min, [])
+
+    def test_axis_out_of_bounds(self):
+        a = np.array([False, False])
+        assert_raises(ValueError, a.all, axis=1)
+        a = np.array([False, False])
+        assert_raises(ValueError, a.all, axis=-2)
+
+        a = np.array([False, False])
+        assert_raises(ValueError, a.any, axis=1)
+        a = np.array([False, False])
+        assert_raises(ValueError, a.any, axis=-2)
+
+    def test_scalar_reduction(self):
+        # The functions 'sum', 'prod', etc allow specifying axis=0
+        # even for scalars
+        assert_equal(np.sum(3, axis=0), 3)
+        assert_equal(np.prod(3.5, axis=0), 3.5)
+        assert_equal(np.any(True, axis=0), True)
+        assert_equal(np.all(False, axis=0), False)
+        assert_equal(np.max(3, axis=0), 3)
+        assert_equal(np.min(2.5, axis=0), 2.5)
+
+        # Make sure that scalars are coming out from this operation
+        assert_(type(np.prod(np.float32(2.5), axis=0)) is np.float32)
+        assert_(type(np.sum(np.float32(2.5), axis=0)) is np.float32)
+        assert_(type(np.max(np.float32(2.5), axis=0)) is np.float32)
+        assert_(type(np.min(np.float32(2.5), axis=0)) is np.float32)
+
     def test_casting_out_param(self):
         # Test that it's possible to do casts on output
         a = np.ones((200,100), np.int64)
@@ -509,6 +570,90 @@ class TestUfunc(TestCase):
         c = 1.5 * np.ones(10, np.float64)
         np.add(a, b, out=c, where=[1,0,0,1,0,0,1,1,1,0])
         assert_equal(c, [2,1.5,1.5,2,1.5,1.5,2,2,2,1.5])
+
+    def check_identityless_reduction(self, a):
+        # np.minimum.reduce is a identityless reduction
+
+        # Verify that it sees the zero at various positions
+        a[...] = 1
+        a[1,0,0] = 0
+        assert_equal(np.minimum.reduce(a, axis=None), 0)
+        assert_equal(np.minimum.reduce(a, axis=(0,1)), [0,1,1,1])
+        assert_equal(np.minimum.reduce(a, axis=(0,2)), [0,1,1])
+        assert_equal(np.minimum.reduce(a, axis=(1,2)), [1,0])
+        assert_equal(np.minimum.reduce(a, axis=0),
+                                    [[0,1,1,1], [1,1,1,1], [1,1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=1),
+                                    [[1,1,1,1], [0,1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=2),
+                                    [[1,1,1], [0,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=()), a)
+
+        a[...] = 1
+        a[0,1,0] = 0
+        assert_equal(np.minimum.reduce(a, axis=None), 0)
+        assert_equal(np.minimum.reduce(a, axis=(0,1)), [0,1,1,1])
+        assert_equal(np.minimum.reduce(a, axis=(0,2)), [1,0,1])
+        assert_equal(np.minimum.reduce(a, axis=(1,2)), [0,1])
+        assert_equal(np.minimum.reduce(a, axis=0),
+                                    [[1,1,1,1], [0,1,1,1], [1,1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=1),
+                                    [[0,1,1,1], [1,1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=2),
+                                    [[1,0,1], [1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=()), a)
+
+        a[...] = 1
+        a[0,0,1] = 0
+        assert_equal(np.minimum.reduce(a, axis=None), 0)
+        assert_equal(np.minimum.reduce(a, axis=(0,1)), [1,0,1,1])
+        assert_equal(np.minimum.reduce(a, axis=(0,2)), [0,1,1])
+        assert_equal(np.minimum.reduce(a, axis=(1,2)), [0,1])
+        assert_equal(np.minimum.reduce(a, axis=0),
+                                    [[1,0,1,1], [1,1,1,1], [1,1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=1),
+                                    [[1,0,1,1], [1,1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=2),
+                                    [[0,1,1], [1,1,1]])
+        assert_equal(np.minimum.reduce(a, axis=()), a)
+
+    def test_identityless_reduction_corder(self):
+        a = np.empty((2,3,4), order='C')
+        self.check_identityless_reduction(a)
+
+    def test_identityless_reduction_forder(self):
+        a = np.empty((2,3,4), order='F')
+        self.check_identityless_reduction(a)
+
+    def test_identityless_reduction_otherorder(self):
+        a = np.empty((2,4,3), order='C').swapaxes(1,2)
+        self.check_identityless_reduction(a)
+
+    def test_identityless_reduction_noncontig(self):
+        a = np.empty((3,5,4), order='C').swapaxes(1,2)
+        a = a[1:, 1:, 1:]
+        self.check_identityless_reduction(a)
+
+    def test_identityless_reduction_noncontig_unaligned(self):
+        a = np.empty((3*4*5*8 + 1,), dtype='i1')
+        a = a[1:].view(dtype='f8')
+        a.shape = (3,4,5)
+        a = a[1:, 1:, 1:]
+        self.check_identityless_reduction(a)
+
+    def test_identityless_reduction_nonreorderable(self):
+        a = np.array([[8.0, 2.0, 2.0], [1.0, 0.5, 0.25]])
+
+        res = np.divide.reduce(a, axis=0)
+        assert_equal(res, [8.0, 4.0, 8.0])
+
+        res = np.divide.reduce(a, axis=1)
+        assert_equal(res, [2.0, 8.0])
+
+        res = np.divide.reduce(a, axis=())
+        assert_equal(res, a)
+
+        assert_raises(ValueError, np.divide.reduce, a, axis=(0,1))
 
 if __name__ == "__main__":
     run_module_suite()

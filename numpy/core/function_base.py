@@ -3,7 +3,7 @@ __all__ = ['logspace', 'linspace']
 import numeric as _nx
 from numeric import array
 
-def linspace(start, stop, num=50, endpoint=True, retstep=False):
+def linspace(start, stop, num=50, endpoint=True, retstep=False, maskna=False):
     """
     Return evenly spaced numbers over a specified interval.
 
@@ -29,6 +29,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
     retstep : bool, optional
         If True, return (`samples`, `step`), where `step` is the spacing
         between samples.
+    maskna : boolean
+        If this is true, the returned array will have an NA mask.
 
     Returns
     -------
@@ -73,22 +75,22 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
     """
     num = int(num)
     if num <= 0:
-        return array([], float)
+        return array([], float, maskna=maskna)
     if endpoint:
         if num == 1:
-            return array([float(start)])
+            return array([float(start)], maskna=maskna)
         step = (stop-start)/float((num-1))
-        y = _nx.arange(0, num) * step + start
+        y = _nx.arange(0, num, maskna=maskna) * step + start
         y[-1] = stop
     else:
         step = (stop-start)/float(num)
-        y = _nx.arange(0, num) * step + start
+        y = _nx.arange(0, num, maskna=maskna) * step + start
     if retstep:
         return y, step
     else:
         return y
 
-def logspace(start,stop,num=50,endpoint=True,base=10.0):
+def logspace(start,stop,num=50,endpoint=True,base=10.0, maskna=False):
     """
     Return numbers spaced evenly on a log scale.
 
@@ -114,6 +116,8 @@ def logspace(start,stop,num=50,endpoint=True,base=10.0):
         The base of the log space. The step size between the elements in
         ``ln(samples) / ln(base)`` (or ``log_base(samples)``) is uniform.
         Default is 10.0.
+    maskna : boolean
+        If this is true, the returned array will have an NA mask.
 
     Returns
     -------
@@ -162,6 +166,6 @@ def logspace(start,stop,num=50,endpoint=True,base=10.0):
     >>> plt.show()
 
     """
-    y = linspace(start,stop,num=num,endpoint=endpoint)
+    y = linspace(start,stop,num=num,endpoint=endpoint,maskna=maskna)
     return _nx.power(base,y)
 

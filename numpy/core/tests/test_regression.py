@@ -638,8 +638,9 @@ class TestRegression(TestCase):
     def test_bool_indexing_invalid_nr_elements(self, level=rlevel):
         s = np.ones(10,dtype=float)
         x = np.array((15,),dtype=float)
-        def ia(x,s): x[(s>0)]=1.0
-        self.assertRaises(ValueError,ia,x,s)
+        def ia(x,s,v): x[(s>0)]=v
+        self.assertRaises(ValueError,ia,x,s,np.zeros(9,dtype=float))
+        self.assertRaises(ValueError,ia,x,s,np.zeros(11,dtype=float))
 
     def test_mem_scalar_indexing(self, level=rlevel):
         """Ticket #603"""
@@ -1624,6 +1625,12 @@ class TestRegression(TestCase):
             # 100MB times 1000 would give 100GB of memory usage if it leaks
             a = np.empty((100000000,), dtype='i1')
             del a
+
+    def test_ufunc_reduce_memoryleak(self):
+        a = np.arange(6)
+        acnt = sys.getrefcount(a)
+        res = np.add.reduce(a)
+        assert_equal(sys.getrefcount(a), acnt)
 
 if __name__ == "__main__":
     run_module_suite()

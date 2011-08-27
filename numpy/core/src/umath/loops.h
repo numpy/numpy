@@ -161,7 +161,7 @@ BOOL_logical_not(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
 
 
 NPY_NO_EXPORT void
-BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+BOOL__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 /*
  *****************************************************************************
@@ -178,7 +178,7 @@ BOOL_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data
 #define BYTE_fmin BYTE_minimum
 
 NPY_NO_EXPORT void
-BYTE_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+BYTE__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 BYTE_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
@@ -301,7 +301,7 @@ BYTE_fmod(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 #define UBYTE_fmin UBYTE_minimum
 
 NPY_NO_EXPORT void
-UBYTE_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+UBYTE__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 UBYTE_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
@@ -451,7 +451,7 @@ UBYTE_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fun
 #define SHORT_fmin SHORT_minimum
 
 NPY_NO_EXPORT void
-SHORT_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+SHORT__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 SHORT_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
@@ -574,7 +574,7 @@ SHORT_fmod(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 #define USHORT_fmin USHORT_minimum
 
 NPY_NO_EXPORT void
-USHORT_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+USHORT__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 USHORT_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
@@ -724,7 +724,7 @@ USHORT_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
 #define INT_fmin INT_minimum
 
 NPY_NO_EXPORT void
-INT_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+INT__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 INT_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
@@ -847,7 +847,7 @@ INT_fmod(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 #define UINT_fmin UINT_minimum
 
 NPY_NO_EXPORT void
-UINT_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+UINT__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 UINT_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
@@ -997,7 +997,7 @@ UINT_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
 #define LONG_fmin LONG_minimum
 
 NPY_NO_EXPORT void
-LONG_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+LONG__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 LONG_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
@@ -1120,7 +1120,7 @@ LONG_fmod(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 #define ULONG_fmin ULONG_minimum
 
 NPY_NO_EXPORT void
-ULONG_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+ULONG__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 ULONG_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
@@ -1270,7 +1270,7 @@ ULONG_remainder(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fun
 #define LONGLONG_fmin LONGLONG_minimum
 
 NPY_NO_EXPORT void
-LONGLONG_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+LONGLONG__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 LONGLONG_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
@@ -1393,7 +1393,7 @@ LONGLONG_fmod(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func)
 #define ULONGLONG_fmin ULONGLONG_minimum
 
 NPY_NO_EXPORT void
-ULONGLONG_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+ULONGLONG__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 ULONGLONG_square(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
@@ -1662,7 +1662,7 @@ HALF_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(dat
 
 
 NPY_NO_EXPORT void
-HALF_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+HALF__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 HALF_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
@@ -1816,7 +1816,7 @@ FLOAT_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(da
 
 
 NPY_NO_EXPORT void
-FLOAT_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+FLOAT__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 FLOAT_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
@@ -1970,7 +1970,7 @@ DOUBLE_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(d
 
 
 NPY_NO_EXPORT void
-DOUBLE_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+DOUBLE__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 DOUBLE_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
@@ -2124,7 +2124,7 @@ LONGDOUBLE_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUS
 
 
 NPY_NO_EXPORT void
-LONGDOUBLE_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+LONGDOUBLE__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 LONGDOUBLE_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
@@ -2254,7 +2254,7 @@ NPY_NO_EXPORT void
 CFLOAT_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
-CFLOAT_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+CFLOAT__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 CFLOAT_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
@@ -2370,7 +2370,7 @@ NPY_NO_EXPORT void
 CDOUBLE_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
-CDOUBLE_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+CDOUBLE__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 CDOUBLE_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
@@ -2486,7 +2486,7 @@ NPY_NO_EXPORT void
 CLONGDOUBLE_reciprocal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
-CLONGDOUBLE_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+CLONGDOUBLE__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 NPY_NO_EXPORT void
 CLONGDOUBLE_conjugate(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
@@ -2547,7 +2547,7 @@ TIMEDELTA_sign(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func
 #line 432
 
 NPY_NO_EXPORT void
-DATETIME_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+DATETIME__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 #line 440
 NPY_NO_EXPORT void
@@ -2587,7 +2587,7 @@ DATETIME_minimum(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(fu
 #line 432
 
 NPY_NO_EXPORT void
-TIMEDELTA_ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
+TIMEDELTA__ones_like(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(data));
 
 #line 440
 NPY_NO_EXPORT void

@@ -61,22 +61,24 @@ array_shape_set(PyArrayObject *self, PyObject *val)
     /* Free old dimensions and strides */
     PyDimMem_FREE(PyArray_DIMS(self));
     nd = PyArray_NDIM(ret);
-    ((PyArrayObject_fieldaccess *)self)->nd = nd;
+    ((PyArrayObject_fields *)self)->nd = nd;
     if (nd > 0) {
         /* create new dimensions and strides */
-        ((PyArrayObject_fieldaccess *)self)->dimensions = PyDimMem_NEW(2*nd);
+        ((PyArrayObject_fields *)self)->dimensions = PyDimMem_NEW(3*nd);
         if (PyArray_DIMS(self) == NULL) {
             Py_DECREF(ret);
             PyErr_SetString(PyExc_MemoryError,"");
             return -1;
         }
-        ((PyArrayObject_fieldaccess *)self)->strides = PyArray_DIMS(self) + nd;
+        ((PyArrayObject_fields *)self)->strides = PyArray_DIMS(self) + nd;
+        ((PyArrayObject_fields *)self)->maskna_strides = PyArray_DIMS(self) + 2*nd;
         memcpy(PyArray_DIMS(self), PyArray_DIMS(ret), nd*sizeof(intp));
         memcpy(PyArray_STRIDES(self), PyArray_STRIDES(ret), nd*sizeof(intp));
+        memcpy(PyArray_MASKNA_STRIDES(self), PyArray_MASKNA_STRIDES(ret), nd*sizeof(intp));
     }
     else {
-        ((PyArrayObject_fieldaccess *)self)->dimensions = NULL;
-        ((PyArrayObject_fieldaccess *)self)->strides = NULL;
+        ((PyArrayObject_fields *)self)->dimensions = NULL;
+        ((PyArrayObject_fields *)self)->strides = NULL;
     }
     Py_DECREF(ret);
     PyArray_UpdateFlags(self, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
@@ -341,9 +343,9 @@ array_data_set(PyArrayObject *self, PyObject *op)
         Py_DECREF(PyArray_BASE(self));
     }
     Py_INCREF(op);
-    ((PyArrayObject_fieldaccess *)self)->base = op;
-    ((PyArrayObject_fieldaccess *)self)->data = buf;
-    ((PyArrayObject_fieldaccess *)self)->flags = NPY_ARRAY_CARRAY;
+    ((PyArrayObject_fields *)self)->base = op;
+    ((PyArrayObject_fields *)self)->data = buf;
+    ((PyArrayObject_fields *)self)->flags = NPY_ARRAY_CARRAY;
     if (!writeable) {
         PyArray_CLEARFLAGS(self, ~NPY_ARRAY_WRITEABLE);
     }
@@ -498,18 +500,18 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
             return -1;
         }
         PyDimMem_FREE(PyArray_DIMS(self));
-        ((PyArrayObject_fieldaccess *)self)->dimensions = PyArray_DIMS(temp);
-        ((PyArrayObject_fieldaccess *)self)->nd = PyArray_NDIM(temp);
-        ((PyArrayObject_fieldaccess *)self)->strides = PyArray_STRIDES(temp);
+        ((PyArrayObject_fields *)self)->dimensions = PyArray_DIMS(temp);
+        ((PyArrayObject_fields *)self)->nd = PyArray_NDIM(temp);
+        ((PyArrayObject_fields *)self)->strides = PyArray_STRIDES(temp);
         newtype = PyArray_DESCR(temp);
         Py_INCREF(PyArray_DESCR(temp));
         /* Fool deallocator not to delete these*/
-        ((PyArrayObject_fieldaccess *)temp)->nd = 0;
-        ((PyArrayObject_fieldaccess *)temp)->dimensions = NULL;
+        ((PyArrayObject_fields *)temp)->nd = 0;
+        ((PyArrayObject_fields *)temp)->dimensions = NULL;
         Py_DECREF(temp);
     }
 
-    ((PyArrayObject_fieldaccess *)self)->descr = newtype;
+    ((PyArrayObject_fields *)self)->descr = newtype;
     PyArray_UpdateFlags(self, NPY_ARRAY_UPDATE_ALL);
     return 0;
 
@@ -775,7 +777,7 @@ array_flat_set(PyArrayObject *self, PyObject *val)
     typecode = PyArray_DESCR(self);
     Py_INCREF(typecode);
     arr = (PyArrayObject *)PyArray_FromAny(val, typecode,
-                          0, 0, NPY_ARRAY_FORCECAST | FORTRAN_IF(self), NULL);
+                  0, 0, NPY_ARRAY_FORCECAST | PyArray_FORTRAN_IF(self), NULL);
     if (arr == NULL) {
         return -1;
     }

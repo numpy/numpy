@@ -45,7 +45,13 @@
 #include "lowlevel_strided_loops.c"
 #include "dtype_transfer.c"
 #include "einsum.c"
-
+#include "array_assign.c"
+#include "array_assign_scalar.c"
+#include "array_assign_array.c"
+#include "reduction.c"
+#include "na_mask.c"
+#include "na_object.c"
+#include "boolean_ops.c"
 
 #ifndef Py_UNICODE_WIDE
 #include "ucsnarrow.c"

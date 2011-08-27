@@ -639,6 +639,62 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
 static int min_scalar_type_num(char *valueptr, int type_num,
                                             int *is_small_unsigned);
 
+NPY_NO_EXPORT npy_bool
+can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
+                    PyArray_Descr *to, NPY_CASTING casting)
+{
+    int swap;
+    int is_small_unsigned = 0, type_num;
+    npy_bool ret;
+    PyArray_Descr *dtype;
+
+    /* An aligned memory buffer large enough to hold any type */
+    npy_longlong value[4];
+
+    if (casting == NPY_UNSAFE_CASTING) {
+        return 1;
+    }
+
+    /*
+     * If the scalar isn't a number, or the rule is stricter than
+     * NPY_SAFE_CASTING, use the straight type-based rules
+     */
+    if (!PyTypeNum_ISNUMBER(scal_type->type_num) ||
+                            casting < NPY_SAFE_CASTING) {
+        return PyArray_CanCastTypeTo(scal_type, to, casting);
+    }
+
+    swap = !PyArray_ISNBO(scal_type->byteorder);
+    scal_type->f->copyswap(&value, scal_data, swap, NULL);
+
+    type_num = min_scalar_type_num((char *)&value, scal_type->type_num,
+                                    &is_small_unsigned);
+
+    /*
+     * If we've got a small unsigned scalar, and the 'to' type
+     * is not unsigned, then make it signed to allow the value
+     * to be cast more appropriately.
+     */
+    if (is_small_unsigned && !(PyTypeNum_ISUNSIGNED(to->type_num))) {
+        type_num = type_num_unsigned_to_signed(type_num);
+    }
+
+    dtype = PyArray_DescrFromType(type_num);
+    if (dtype == NULL) {
+        return 0;
+    }
+#if 0
+    printf("min scalar cast ");
+    PyObject_Print(dtype, stdout, 0);
+    printf(" to ");
+    PyObject_Print(to, stdout, 0);
+    printf("\n");
+#endif
+    ret = PyArray_CanCastTypeTo(dtype, to, casting);
+    Py_DECREF(dtype);
+    return ret;
+}
+
 /*NUMPY_API
  * Returns 1 if the array object may be cast to the given data type using
  * the casting rule, 0 otherwise.  This differs from PyArray_CanCastTo in
@@ -651,49 +707,17 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
 {
     PyArray_Descr *from = PyArray_DESCR(arr);
 
-    /* If it's not a scalar, use the standard rules */
-    if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(from->type_num)) {
-        return PyArray_CanCastTypeTo(from, to, casting);
-    }
-    /* Otherwise, check the value */
-    else {
-        int swap = !PyArray_ISNBO(from->byteorder);
-        int is_small_unsigned = 0, type_num;
-        npy_bool ret;
-        PyArray_Descr *dtype;
-
-        /* An aligned memory buffer large enough to hold any type */
-        npy_longlong value[4];
-
-        from->f->copyswap(&value, PyArray_BYTES(arr), swap, NULL);
-
-        type_num = min_scalar_type_num((char *)&value, from->type_num,
-                                        &is_small_unsigned);
-
-        /*
-         * If we've got a small unsigned scalar, and the 'to' type
-         * is not unsigned, then make it signed to allow the value
-         * to be cast more appropriately.
-         */
-        if (is_small_unsigned && !(PyTypeNum_ISUNSIGNED(to->type_num))) {
-            type_num = type_num_unsigned_to_signed(type_num);
+    /* If it's a scalar, check the value */
+    if (PyArray_NDIM(arr) == 0 && !PyArray_HASFIELDS(arr)) {
+        /* Only check the value if it's not masked */
+        if (!PyArray_HASMASKNA(arr) ||
+                NpyMaskValue_IsExposed((npy_mask)*PyArray_MASKNA_DATA(arr))) {
+            return can_cast_scalar_to(from, PyArray_DATA(arr), to, casting);
         }
-
-        dtype = PyArray_DescrFromType(type_num);
-        if (dtype == NULL) {
-            return 0;
-        }
-#if 0
-        printf("min scalar cast ");
-        PyObject_Print(dtype, stdout, 0);
-        printf(" to ");
-        PyObject_Print(to, stdout, 0);
-        printf("\n");
-#endif
-        ret = PyArray_CanCastTypeTo(dtype, to, casting);
-        Py_DECREF(dtype);
-        return ret;
     }
+
+    /* Otherwise, use the standard rules */
+    return PyArray_CanCastTypeTo(from, to, casting);
 }
 
 /*NUMPY_API
@@ -1307,7 +1331,13 @@ NPY_NO_EXPORT PyArray_Descr *
 PyArray_MinScalarType(PyArrayObject *arr)
 {
     PyArray_Descr *dtype = PyArray_DESCR(arr);
-    if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(dtype->type_num)) {
+    /*
+     * If the array isn't a numeric scalar or is a scalar but with
+     * its value masked out, just return the array's dtype.
+     */
+    if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(dtype->type_num) ||
+                    (PyArray_HASMASKNA(arr) && !NpyMaskValue_IsExposed(
+                                    (npy_mask)*PyArray_MASKNA_DATA(arr)))) {
         Py_INCREF(dtype);
         return dtype;
     }
@@ -1651,7 +1681,7 @@ PyArray_Zero(PyArrayObject *arr)
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
     ret = PyArray_DESCR(arr)->f->setitem(obj, zeroval, arr);
-    ((PyArrayObject_fieldaccess *)arr)->flags = storeflags;
+    ((PyArrayObject_fields *)arr)->flags = storeflags;
     Py_DECREF(obj);
     if (ret < 0) {
         PyDataMem_FREE(zeroval);
@@ -1689,7 +1719,7 @@ PyArray_One(PyArrayObject *arr)
     storeflags = PyArray_FLAGS(arr);
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_BEHAVED);
     ret = PyArray_DESCR(arr)->f->setitem(obj, oneval, arr);
-    ((PyArrayObject_fieldaccess *)arr)->flags = storeflags;
+    ((PyArrayObject_fields *)arr)->flags = storeflags;
     Py_DECREF(obj);
     if (ret < 0) {
         PyDataMem_FREE(oneval);
@@ -1702,22 +1732,38 @@ PyArray_One(PyArrayObject *arr)
 
 /*NUMPY_API
  * Return the typecode of the array a Python object would be converted to
+ *
+ * Returns the type number the result should have, or NPY_NOTYPE on error.
  */
 NPY_NO_EXPORT int
 PyArray_ObjectType(PyObject *op, int minimum_type)
 {
-    PyArray_Descr *intype;
-    PyArray_Descr *outtype;
-    int ret;
+    PyArray_Descr *dtype = NULL;
+    int ret, contains_na = 0;
 
-    intype = PyArray_DescrFromType(minimum_type);
-    if (intype == NULL) {
-        PyErr_Clear();
+    if (minimum_type != NPY_NOTYPE && minimum_type >= 0) {
+        dtype = PyArray_DescrFromType(minimum_type);
+        if (dtype == NULL) {
+            return NPY_NOTYPE;
+        }
     }
-    outtype = _array_find_type(op, intype, MAX_DIMS);
-    ret = outtype->type_num;
-    Py_DECREF(outtype);
-    Py_XDECREF(intype);
+
+    if (PyArray_DTypeFromObject(op, NPY_MAXDIMS, &contains_na, &dtype) < 0) {
+        return NPY_NOTYPE;
+    }
+
+    if (contains_na) {
+        ret = NPY_OBJECT;
+    }
+    else if (dtype == NULL) {
+        ret = NPY_DEFAULT_TYPE;
+    }
+    else {
+        ret = dtype->type_num;
+    }
+
+    Py_XDECREF(dtype);
+
     return ret;
 }
 
@@ -1820,7 +1866,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 
     /* Make sure all arrays are actual array objects. */
     for (i = 0; i < n; i++) {
-        int flags = NPY_ARRAY_CARRAY;
+        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_ALLOWNA;
 
         if ((otmp = PySequence_GetItem(op, i)) == NULL) {
             goto fail;
