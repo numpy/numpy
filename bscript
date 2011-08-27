@@ -1,3 +1,35 @@
+"""
+To build numpy with bento, you currently need to do the following::
+
+    # get recent bento and bootstrap it::
+    git clone http://github.com/cournape/Bento.git $BENTO_ROOT
+    (cd $BENTO_ROOT && python bootstrap.py)
+    # get special waf branch
+    git clone http://github.com/cournape/waf.git $WAF_ROOT
+    (cd $WAF_ROOT && git checkout fix_macosx_python)
+    # Tell bento where to look for waf
+    export WAFDIR=$WAF_ROOT
+    # Install numpy in the default location (you can list files to be installed
+    # with --list-files option first to check)
+    $BENTO_ROOT/bentomaker install
+
+Caveats:
+
+    - no automatic detection for BLAS/LAPACK/etc... You need to set it up
+      manually for now (except on Mac OS X and Debian/Ubuntu). The upside is
+      that it is extremely easy to do so
+    - bento is still in flux, and some things may changes between releases.
+
+Things to try out::
+
+    # parallel builds should work easily
+    $BENTO_ROOT/bentomaker build -j8
+    # Verbose output for build
+    $BENTO_ROOT/bentomaker build -v
+    # Progress-based output
+    $BENTO_ROOT/bentomaker build -p
+"""
+    
 import os
 import sys
 import shutil
