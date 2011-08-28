@@ -452,7 +452,7 @@ class TestTrapz(TestCase):
     def test_simple(self):
         r = trapz(exp(-1.0 / 2 * (arange(-10, 10, .1)) ** 2) / sqrt(2 * pi), dx=0.1)
         #check integral of normal equals 1
-        assert_almost_equal(sum(r, axis=0), 1, 7)
+        assert_almost_equal(r, 1, 7)
 
     def test_ndim(self):
         x = linspace(0, 1, 3)

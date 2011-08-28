@@ -267,5 +267,10 @@ def hstack(tup):
            [3, 4]])
 
     """
-    return _nx.concatenate(map(atleast_1d,tup),1)
+    arrs = map(atleast_1d,tup)
+    # As a special case, dimension 0 of 1-dimensional arrays is "horizontal"
+    if arrs[0].ndim == 1:
+        return _nx.concatenate(arrs, 0)
+    else:
+        return _nx.concatenate(arrs, 1)
 

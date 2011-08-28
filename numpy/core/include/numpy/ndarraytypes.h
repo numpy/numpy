@@ -204,6 +204,9 @@ typedef enum {
         NPY_UNSAFE_CASTING=4
 } NPY_CASTING;
 
+/* The default casting to use for typical assignment operations */
+#define NPY_DEFAULT_ASSIGN_CASTING NPY_SAME_KIND_CASTING
+
 typedef enum {
         NPY_CLIP=0,
         NPY_WRAP=1,
@@ -286,6 +289,40 @@ typedef enum {
     /* Raise an exception for non-business days. */
     NPY_BUSDAY_RAISE
 } NPY_BUSDAY_ROLL;
+
+/*********************************************************************
+ * NumPy functions for dealing with masks, such as in masked iteration
+ *********************************************************************/
+
+typedef npy_uint8 npy_mask;
+#define NPY_MASK NPY_UINT8
+
+/*
+ * Bit 0 of the mask indicates whether a value is exposed
+ * or hidden. This is compatible with a 'where=' boolean
+ * mask, because NumPy booleans are 1 byte, and contain
+ * either the value 0 or 1.
+ */
+static NPY_INLINE npy_bool
+NpyMaskValue_IsExposed(npy_mask mask)
+{
+    return (mask & 0x01) != 0;
+}
+
+/*
+ * Bits 1 through 7 of the mask contain the payload.
+ */
+static NPY_INLINE npy_uint8
+NpyMaskValue_GetPayload(npy_mask mask)
+{
+    return ((npy_uint8)mask) >> 1;
+}
+
+static NPY_INLINE npy_mask
+NpyMaskValue_Create(npy_bool exposed, npy_uint8 payload)
+{
+    return (npy_mask)(exposed != 0) | (npy_mask)(payload << 1);
+}
 
 
 #define NPY_ERR(str) fprintf(stderr, #str); fflush(stderr);
@@ -512,17 +549,17 @@ typedef struct {
  *These are inherited for global data-type if any data-types in the
  * field have them
  */
-#define NPY_FROM_FIELDS    (NPY_NEEDS_INIT | NPY_LIST_PICKLE |             \
+#define NPY_FROM_FIELDS    (NPY_NEEDS_INIT | NPY_LIST_PICKLE | \
                             NPY_ITEM_REFCOUNT | NPY_NEEDS_PYAPI)
 
-#define NPY_OBJECT_DTYPE_FLAGS (NPY_LIST_PICKLE | NPY_USE_GETITEM |       \
+#define NPY_OBJECT_DTYPE_FLAGS (NPY_LIST_PICKLE | NPY_USE_GETITEM | \
                                 NPY_ITEM_IS_POINTER | NPY_ITEM_REFCOUNT | \
                                 NPY_NEEDS_INIT | NPY_NEEDS_PYAPI)
 
 #define PyDataType_FLAGCHK(dtype, flag) \
         (((dtype)->flags & (flag)) == (flag))
 
-#define PyDataType_REFCHK(dtype)                                          \
+#define PyDataType_REFCHK(dtype) \
         PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)
 
 typedef struct _PyArray_Descr {
@@ -582,34 +619,67 @@ typedef struct _arr_descr {
  * #define NPY_NO_DEPRECATED_API.
  */
 /* This struct will be moved to a private header in a future release */
-typedef struct tagPyArrayObject_fieldaccess {
-        PyObject_HEAD
-        char *data;             /* pointer to raw data buffer */
-        int nd;                 /* number of dimensions, also called ndim */
-        npy_intp *dimensions;   /* size in each dimension */
-        npy_intp *strides;      /*
-                                 * bytes to jump to get to the
-                                 * next element in each dimension
-                                 */
-        PyObject *base;         /*
-                                 * This object should be decref'd upon
-                                 * deletion of array
-                                 *
-                                 * For views it points to the original
-                                 * array
-                                 *
-                                 * For creation from buffer object it
-                                 * points to an object that shold be
-                                 * decref'd on deletion
-                                 *
-                                 * For UPDATEIFCOPY flag this is an
-                                 * array to-be-updated upon deletion
-                                 * of this one
-                                 */
-        PyArray_Descr *descr;   /* Pointer to type structure */
-        int flags;              /* Flags describing array -- see below */
-        PyObject *weakreflist;  /* For weakreferences */
-} PyArrayObject_fieldaccess;
+typedef struct tagPyArrayObject_fields {
+    PyObject_HEAD
+    /* Pointer to the raw data buffer */
+    char *data;
+    /* The number of dimensions, also called 'ndim' */
+    int nd;
+    /* The size in each dimension, also called 'shape' */
+    npy_intp *dimensions;
+    /*
+     * Number of bytes to jump to get to the
+     * next element in each dimension
+     */
+    npy_intp *strides;
+    /*
+     * This object is decref'd upon
+     * deletion of array. Except in the
+     * case of UPDATEIFCOPY which has
+     * special handling.
+     *
+     * For views it points to the original
+     * array, collapsed so no chains of
+     * views occur.
+     *
+     * For creation from buffer object it
+     * points to an object that shold be
+     * decref'd on deletion
+     *
+     * For UPDATEIFCOPY flag this is an
+     * array to-be-updated upon deletion
+     * of this one
+     */
+    PyObject *base;
+    /* Pointer to type structure */
+    PyArray_Descr *descr;
+    /* Flags describing array -- see below */
+    int flags;
+    /* For weak references */
+    PyObject *weakreflist;
+
+    /* New fields added as of NumPy 1.7 */
+
+    /*
+     * Descriptor for the mask dtype.
+     *   If no mask: NULL
+     *   If mask   : bool/uint8/structured dtype of mask dtypes
+     */
+    PyArray_Descr *maskna_dtype;
+    /*
+     * Raw data buffer for mask. If the array has the flag
+     * NPY_ARRAY_OWNMASKNA enabled, it owns this memory and
+     * must call PyArray_free on it when destroyed.
+     */
+    char *maskna_data;
+    /*
+     * Just like dimensions and strides point into the same memory
+     * buffer, we now just make that buffer 3x the nd instead of 2x
+     * and use the same buffer. This is always allocated, regardless
+     * of whether there is an NA mask or not.
+     */
+    npy_intp *maskna_strides;
+} PyArrayObject_fields;
 
 /*
  * To hide the implementation details, we only expose
@@ -624,10 +694,10 @@ typedef struct tagPyArrayObject {
  * Can't put this in npy_deprecated_api.h like the others.
  * PyArrayObject field access is deprecated as of NumPy 1.7.
  */
-typedef PyArrayObject_fieldaccess PyArrayObject;
+typedef PyArrayObject_fields PyArrayObject;
 #endif
 
-#define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fieldaccess))
+#define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fields))
 
 /* Array Flags Object */
 typedef struct PyArrayFlagsObject {
@@ -680,6 +750,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 /*
  * Means c-style contiguous (last index varies the fastest). The data
  * elements right after each other.
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
  */
 #define NPY_ARRAY_C_CONTIGUOUS    0x0001
 
@@ -687,8 +760,11 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  * Set if array is a contiguous Fortran array: the first index varies
  * the fastest in memory (strides array is reverse of C-contiguous
  * array)
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
  */
-#define NPY_ARRAY_F_CONTIGUOUS       0x0002
+#define NPY_ARRAY_F_CONTIGUOUS    0x0002
 
 /*
  * Note: all 0-d arrays are C_CONTIGUOUS and F_CONTIGUOUS. If a
@@ -698,52 +774,108 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 /*
  * If set, the array owns the data: it will be free'd when the array
  * is deleted.
+ *
+ * This flag may be tested for in PyArray_FLAGS(arr).
  */
-#define NPY_ARRAY_OWNDATA       0x0004
+#define NPY_ARRAY_OWNDATA         0x0004
 
 /*
  * An array never has the next four set; they're only used as parameter
  * flags to the the various FromAny functions
+ *
+ * This flag may be requested in constructor functions.
  */
 
 /* Cause a cast to occur regardless of whether or not it is safe. */
-#define NPY_ARRAY_FORCECAST     0x0010
+#define NPY_ARRAY_FORCECAST       0x0010
 
 /*
  * Always copy the array. Returned arrays are always CONTIGUOUS,
  * ALIGNED, and WRITEABLE.
+ *
+ * This flag may be requested in constructor functions.
  */
-#define NPY_ARRAY_ENSURECOPY    0x0020
+#define NPY_ARRAY_ENSURECOPY      0x0020
 
-/* Make sure the returned array is a base-class ndarray */
-#define NPY_ARRAY_ENSUREARRAY   0x0040
+/*
+ * Make sure the returned array is a base-class ndarray
+ *
+ * This flag may be requested in constructor functions.
+ */
+#define NPY_ARRAY_ENSUREARRAY     0x0040
 
 /*
  * Make sure that the strides are in units of the element size Needed
  * for some operations with record-arrays.
+ *
+ * This flag may be requested in constructor functions.
  */
-#define NPY_ARRAY_ELEMENTSTRIDES 0x0080
+#define NPY_ARRAY_ELEMENTSTRIDES  0x0080
 
 /*
  * Array data is aligned on the appropiate memory address for the type
  * stored according to how the compiler would align things (e.g., an
  * array of integers (4 bytes each) starts on a memory address that's
  * a multiple of 4)
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
  */
-#define NPY_ARRAY_ALIGNED       0x0100
+#define NPY_ARRAY_ALIGNED         0x0100
 
-/* Array data has the native endianness */
-#define NPY_ARRAY_NOTSWAPPED    0x0200
+/*
+ * Array data has the native endianness
+ *
+ * This flag may be requested in constructor functions.
+ */
+#define NPY_ARRAY_NOTSWAPPED      0x0200
 
-/* Array data is writeable */
-#define NPY_ARRAY_WRITEABLE     0x0400
+/*
+ * Array data is writeable
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
+ */
+#define NPY_ARRAY_WRITEABLE       0x0400
 
 /*
  * If this flag is set, then base contains a pointer to an array of
  * the same size that should be updated with the current contents of
  * this array when this array is deallocated
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
  */
-#define NPY_ARRAY_UPDATEIFCOPY  0x1000
+#define NPY_ARRAY_UPDATEIFCOPY    0x1000
+
+/*
+ * If this flag is set, then the array has an NA mask corresponding
+ * to the array data. If the flag NPY_ARRAY_OWNMASKNA is requested
+ * in a constructor, this flag is also implied even if it is not set.
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
+ */
+#define NPY_ARRAY_MASKNA          0x2000
+
+/*
+ * If this flag is set, then the array owns the memory for the
+ * missing values NA mask.
+ *
+ * This flag may be requested in constructor functions.
+ * This flag may be tested for in PyArray_FLAGS(arr).
+ */
+#define NPY_ARRAY_OWNMASKNA       0x4000
+
+/*
+ * If this flag is set, then arrays which have an NA mask, or arrays
+ * which have an NA dtype are permitted to pass through. If not,
+ * an array with NA support causes an error to be thrown.
+ *
+ * This flag may be requested in constructor functions.
+ */
+#define NPY_ARRAY_ALLOWNA         0x8000
+
 
 #define NPY_ARRAY_BEHAVED      (NPY_ARRAY_ALIGNED | \
                                 NPY_ARRAY_WRITEABLE)
@@ -772,7 +904,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
                                 NPY_ARRAY_F_CONTIGUOUS | \
                                 NPY_ARRAY_ALIGNED)
 
-/* This flag is for the array interface */
+/* This flag is for the array interface, not PyArrayObject */
 #define NPY_ARR_HAS_DESCR  0x0800
 
 
@@ -821,12 +953,12 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_BEGIN_THREADS _save = PyEval_SaveThread();
 #define NPY_END_THREADS   do {if (_save) PyEval_RestoreThread(_save);} while (0);
 
-#define NPY_BEGIN_THREADS_DESCR(dtype)                          \
-        do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI)))      \
+#define NPY_BEGIN_THREADS_DESCR(dtype) \
+        do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI))) \
                 NPY_BEGIN_THREADS;} while (0);
 
-#define NPY_END_THREADS_DESCR(dtype)                            \
-        do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI)))      \
+#define NPY_END_THREADS_DESCR(dtype) \
+        do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI))) \
                 NPY_END_THREADS; } while (0);
 
 #define NPY_ALLOW_C_API_DEF  PyGILState_STATE __save__;
@@ -846,8 +978,19 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #endif
 
 /*****************************
- * New iterator object
+ * NA object, added in 1.7
  *****************************/
+
+/* Direct access to the fields of the NA object is just internal to NumPy. */
+typedef struct tagNpyNA {
+        PyObject_HEAD
+} NpyNA;
+
+#define NpyNA_Check(op) PyObject_TypeCheck(op, &NpyNA_Type)
+
+/**********************************
+ * The nditer object, added in 1.6
+ **********************************/
 
 /* The actual structure of the iterator is an internal detail */
 typedef struct NpyIter_InternalOnly NpyIter;
@@ -916,6 +1059,10 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_WRITEMASKED                0x10000000
 /* This array is the mask for all WRITEMASKED operands */
 #define NPY_ITER_ARRAYMASK                  0x20000000
+/* Split this operand up into data and an NA mask */
+#define NPY_ITER_USE_MASKNA                 0x40000000
+/* Iterate over the data, even if it has an NA mask and without USE_MASKNA */
+#define NPY_ITER_IGNORE_MASKNA              0x80000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000
@@ -1278,8 +1425,6 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyArray_FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) ? \
                                NPY_ARRAY_F_CONTIGUOUS : 0))
 
-#define FORTRAN_IF PyArray_FORTRAN_IF
-
 #ifdef NPY_NO_DEPRECATED_API
 /*
  * Changing access macros into functions, to allow for future hiding
@@ -1291,67 +1436,67 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 static NPY_INLINE int
 PyArray_NDIM(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->nd;
+    return ((PyArrayObject_fields *)arr)->nd;
 }
 
 static NPY_INLINE char *
 PyArray_DATA(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->data;
+    return ((PyArrayObject_fields *)arr)->data;
 }
 
 static NPY_INLINE npy_intp *
 PyArray_DIMS(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->dimensions;
+    return ((PyArrayObject_fields *)arr)->dimensions;
 }
 
 static NPY_INLINE npy_intp *
 PyArray_STRIDES(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->strides;
+    return ((PyArrayObject_fields *)arr)->strides;
 }
 
 static NPY_INLINE npy_intp
 PyArray_DIM(PyArrayObject *arr, int idim)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->dimensions[idim];
+    return ((PyArrayObject_fields *)arr)->dimensions[idim];
 }
 
 static NPY_INLINE npy_intp
 PyArray_STRIDE(PyArrayObject *arr, int istride)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->strides[istride];
+    return ((PyArrayObject_fields *)arr)->strides[istride];
 }
 
 static NPY_INLINE PyObject *
 PyArray_BASE(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->base;
+    return ((PyArrayObject_fields *)arr)->base;
 }
 
 static NPY_INLINE PyArray_Descr *
 PyArray_DESCR(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->descr;
+    return ((PyArrayObject_fields *)arr)->descr;
 }
 
 static NPY_INLINE int
 PyArray_FLAGS(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->flags;
+    return ((PyArrayObject_fields *)arr)->flags;
 }
 
 static NPY_INLINE npy_intp
 PyArray_ITEMSIZE(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->descr->elsize;
+    return ((PyArrayObject_fields *)arr)->descr->elsize;
 }
 
 static NPY_INLINE int
 PyArray_TYPE(PyArrayObject *arr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->descr->type_num;
+    return ((PyArrayObject_fields *)arr)->descr->type_num;
 }
 
 static NPY_INLINE int
@@ -1363,18 +1508,15 @@ PyArray_CHKFLAGS(PyArrayObject *arr, int flags)
 static NPY_INLINE PyObject *
 PyArray_GETITEM(PyArrayObject *arr, char *itemptr)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->descr->f->getitem(
-                                                itemptr,
-                                                arr);
+    return ((PyArrayObject_fields *)arr)->descr->f->getitem(
+                                                        itemptr, arr);
 }
 
 static NPY_INLINE int
 PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 {
-    return ((PyArrayObject_fieldaccess *)arr)->descr->f->setitem(
-                                                v,
-                                                itemptr,
-                                                arr);
+    return ((PyArrayObject_fields *)arr)->descr->f->setitem(
+                                                        v, itemptr, arr);
 }
 
 /* Same as PyArray_DATA */
@@ -1382,23 +1524,23 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 
 #else
 
-/* Macros are deprecated as of NumPy 1.7. */
-#define PyArray_NDIM(obj) (((PyArrayObject_fieldaccess *)(obj))->nd)
-#define PyArray_BYTES(obj) ((char *)(((PyArrayObject_fieldaccess *)(obj))->data))
-#define PyArray_DATA(obj) ((void *)(((PyArrayObject_fieldaccess *)(obj))->data))
-#define PyArray_DIMS(obj) (((PyArrayObject_fieldaccess *)(obj))->dimensions)
-#define PyArray_STRIDES(obj) (((PyArrayObject_fieldaccess *)(obj))->strides)
+/* These macros are deprecated as of NumPy 1.7. */
+#define PyArray_NDIM(obj) (((PyArrayObject_fields *)(obj))->nd)
+#define PyArray_BYTES(obj) ((char *)(((PyArrayObject_fields *)(obj))->data))
+#define PyArray_DATA(obj) ((void *)(((PyArrayObject_fields *)(obj))->data))
+#define PyArray_DIMS(obj) (((PyArrayObject_fields *)(obj))->dimensions)
+#define PyArray_STRIDES(obj) (((PyArrayObject_fields *)(obj))->strides)
 #define PyArray_DIM(obj,n) (PyArray_DIMS(obj)[n])
 #define PyArray_STRIDE(obj,n) (PyArray_STRIDES(obj)[n])
-#define PyArray_BASE(obj) (((PyArrayObject_fieldaccess *)(obj))->base)
-#define PyArray_DESCR(obj) (((PyArrayObject_fieldaccess *)(obj))->descr)
-#define PyArray_FLAGS(obj) (((PyArrayObject_fieldaccess *)(obj))->flags)
+#define PyArray_BASE(obj) (((PyArrayObject_fields *)(obj))->base)
+#define PyArray_DESCR(obj) (((PyArrayObject_fields *)(obj))->descr)
+#define PyArray_FLAGS(obj) (((PyArrayObject_fields *)(obj))->flags)
 #define PyArray_CHKFLAGS(m, FLAGS) \
-        ((((PyArrayObject_fieldaccess *)(m))->flags & (FLAGS)) == (FLAGS))
+        ((((PyArrayObject_fields *)(m))->flags & (FLAGS)) == (FLAGS))
 #define PyArray_ITEMSIZE(obj) \
-                    (((PyArrayObject_fieldaccess *)(obj))->descr->elsize)
+                    (((PyArrayObject_fields *)(obj))->descr->elsize)
 #define PyArray_TYPE(obj) \
-                    (((PyArrayObject_fieldaccess *)(obj))->descr->type_num)
+                    (((PyArrayObject_fields *)(obj))->descr->type_num)
 #define PyArray_GETITEM(obj,itemptr) \
         PyArray_DESCR(obj)->f->getitem((char *)(itemptr), \
                                      (PyArrayObject *)(obj))
@@ -1409,6 +1551,18 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
                                      (PyArrayObject *)(obj))
 #endif
 
+static NPY_INLINE PyArray_Descr *
+PyArray_DTYPE(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fields *)arr)->descr;
+}
+
+static NPY_INLINE npy_intp *
+PyArray_SHAPE(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fields *)arr)->dimensions;
+}
+
 /*
  * Enables the specified array flags. Does no checking,
  * assumes you know what you're doing.
@@ -1416,7 +1570,7 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
 static NPY_INLINE void
 PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
 {
-    ((PyArrayObject_fieldaccess *)arr)->flags |= flags;
+    ((PyArrayObject_fields *)arr)->flags |= flags;
 }
 
 /*
@@ -1426,8 +1580,36 @@ PyArray_ENABLEFLAGS(PyArrayObject *arr, int flags)
 static NPY_INLINE void
 PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
 {
-    ((PyArrayObject_fieldaccess *)arr)->flags &= ~flags;
+    ((PyArrayObject_fields *)arr)->flags &= ~flags;
 }
+
+/* Access to the missing values NA mask, added in 1.7 */
+
+static NPY_INLINE PyArray_Descr *
+PyArray_MASKNA_DTYPE(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fields *)arr)->maskna_dtype;
+}
+
+static NPY_INLINE char *
+PyArray_MASKNA_DATA(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fields *)arr)->maskna_data;
+}
+
+/* For the corresponding DIMS, use PyArray_DIMS(arr) */
+static NPY_INLINE npy_intp *
+PyArray_MASKNA_STRIDES(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fields *)arr)->maskna_strides;
+}
+
+static NPY_INLINE npy_bool
+PyArray_HASMASKNA(PyArrayObject *arr)
+{
+    return (((PyArrayObject_fields *)arr)->flags & NPY_ARRAY_MASKNA) != 0;
+}
+
 
 #define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
 
@@ -1592,46 +1774,154 @@ struct NpyAuxData_tag {
 #define NPY_AUXDATA_CLONE(auxdata) \
     ((auxdata)->clone(auxdata))
 
-/*********************************************************************
- * NumPy functions for dealing with masks, such as in masked iteration
- *********************************************************************/
+/************************************************************
+ * A struct used by PyArray_CreateSortedStridePerm, new in 1.7.
+ ************************************************************/
 
-typedef npy_uint8 npy_mask;
-#define NPY_MASK NPY_UINT8
+typedef struct {
+    npy_intp perm, stride;
+} npy_stride_sort_item;
+
+/************************************************************
+ * Typedefs used by PyArray_ReduceWrapper, new in 1.7.
+ ************************************************************/
 
 /*
- * Bit 0 of the mask indicates whether a value is exposed
- * or hidden. This is compatible with a 'where=' boolean
- * mask, because NumPy booleans are 1 byte, and contain
- * either the value 0 or 1.
+ * This is a function for assigning a reduction identity to the result,
+ * before doing the reduction computation. If 'preservena' is True,
+ * any masked NA values in 'result' should not be overwritten. The
+ * value in 'data' is passed through from PyArray_ReduceWrapper.
+ *
+ * This function could, for example, simply be a call like
+ *      return PyArray_AssignZero(result, NULL, preservena, NULL);
+ *
+ * It should return -1 on failure, or 0 on success.
  */
-static NPY_INLINE npy_bool
-NpyMask_IsExposed(npy_mask mask)
-{
-    return (mask & 0x01) != 0;
-}
+typedef int (PyArray_AssignReduceIdentityFunc)(PyArrayObject *result,
+                                            int preservena, void *data);
 
 /*
- * Bits 1 through 7 of the mask contain the payload.
+ * This is a function for the reduce loop. Both the unmasked and
+ * masked variants have the same prototype, but should behave differently.
+ *
+ * The needs_api parameter indicates whether it's ok to release the GIL during
+ * the loop, such as when the iternext() function never calls
+ * a function which could raise a Python exception.
+ *
+ * Ths skip_first_count parameter indicates how many elements need to be
+ * skipped based on NpyIter_IsFirstVisit checks. This can only be positive
+ * when the 'assign_identity' parameter was NULL when calling
+ * PyArray_ReduceWrapper.
+ *
+ * The unmasked loop gets two data pointers and two strides, and should
+ * look roughly like this:
+ *  {
+ *      NPY_BEGIN_THREADS_DEF;
+ *      if (!needs_api) {
+ *          NPY_BEGIN_THREADS;
+ *      }
+ *      // This first-visit loop can be skipped if 'assign_identity' was non-NULL
+ *      if (skip_first_count > 0) {
+ *          do {
+ *              char *data0 = dataptr[0], *data1 = dataptr[1];
+ *              npy_intp stride0 = strideptr[0], stride1 = strideptr[1];
+ *              npy_intp count = *countptr;
+ *
+ *              // Skip any first-visit elements
+ *              if (NpyIter_IsFirstVisit(iter, 0)) {
+ *                  if (stride0 == 0) {
+ *                      --count;
+ *                      --skip_first_count;
+ *                      data1 += stride1;
+ *                      //data2 += stride2; // In masked loop
+ *                  }
+ *                  else {
+ *                      skip_first_count -= count;
+ *                      count = 0;
+ *                  }
+ *              }
+ *
+ *              while (count--) {
+ *                  *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
+ *                                                    *(operand_t *)data1);
+ *                  data0 += stride0;
+ *                  data1 += stride1;
+ *              }
+ *
+ *              // Jump to the faster loop when skipping is done
+ *              if (skip_first_count == 0) {
+ *                  if (iternext(iter)) {
+ *                      break;
+ *                  }
+ *                  else {
+ *                      goto finish_loop;
+ *                  }
+ *              }
+ *          } while (iternext(iter));
+ *      }
+ *      do {
+ *          char *data0 = dataptr[0], *data1 = dataptr[1];
+ *          npy_intp stride0 = strideptr[0], stride1 = strideptr[1];
+ *          npy_intp count = *countptr;
+ *
+ *          while (count--) {
+ *              *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
+ *                                                *(operand_t *)data1);
+ *              data0 += stride0;
+ *              data1 += stride1;
+ *          }
+ *      } while (iternext(iter));
+ *  finish_loop:
+ *      if (!needs_api) {
+ *          NPY_END_THREADS;
+ *      }
+ *      return (needs_api && PyErr_Occurred()) ? -1 : 0;
+ *  }
+ *
+ * The masked loop gets three data pointers and three strides, and
+ * looks identical except for the iteration loops which should be
+ * like this:
+ *      do {
+ *          char *data0 = dataptr[0], *data1 = dataptr[1], *data2 = dataptr[2];
+ *          npy_intp stride0 = strideptr[0], stride1 = strideptr[1],
+ *                      stride2 = strideptr[2];
+ *          npy_intp count = *countptr;
+ *
+ *          // Skipping first visits would go here
+ *
+ *          while (count--) {
+ *              if (NpyMaskValue_IsExposed((npy_mask)*data2)) {
+ *                  *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
+ *                                                    *(operand_t *)data1);
+ *              }
+ *              data0 += stride0;
+ *              data1 += stride1;
+ *              data2 += stride2;
+ *          }
+ *
+ *          // Jumping to the faster loop would go here
+ *
+ *      } while (iternext(iter));
+ *
+ * If needs_api is True, this function should call PyErr_Occurred()
+ * to check if an error occurred during processing, and return -1 for
+ * error, 0 for success.
  */
-static NPY_INLINE npy_uint8
-NpyMask_GetPayload(npy_mask mask)
-{
-    return ((npy_uint8)mask) >> 1;
-}
+typedef int (PyArray_ReduceLoopFunc)(NpyIter *iter,
+                                            char **dataptr,
+                                            npy_intp *strideptr,
+                                            npy_intp *countptr,
+                                            NpyIter_IterNextFunc *iternext,
+                                            int needs_api,
+                                            npy_intp skip_first_count,
+                                            void *data);
 
-static NPY_INLINE npy_mask
-NpyMask_Create(npy_bool exposed, npy_uint8 payload)
-{
-    return (npy_mask)(exposed != 0) | (npy_mask)(payload << 1);
-}
-
-/*
+/************************************************************
  * This is the form of the struct that's returned pointed by the
  * PyCObject attribute of an array __array_struct__. See
  * http://numpy.scipy.org/array_interface.shtml for the full
  * documentation.
- */
+ ************************************************************/
 typedef struct {
     int two;              /*
                            * contains the integer 2 as a sanity

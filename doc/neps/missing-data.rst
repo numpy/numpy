@@ -237,21 +237,15 @@ mask [Exposed, Exposed, Hidden, Exposed], and
 values [1.0, 2.0, <NA bitpattern>, 7.0] for the masked and
 NA dtype versions respectively.
 
-It may be worth overloading the np.NA __call__ method to accept a dtype,
-returning a zero-dimensional array with a missing value of that dtype.
-Without doing this, NA printouts would look like::
+The np.NA singleton may accept a dtype= keyword parameter, indicating
+that it should be treated as an NA of a particular data type. This is also
+a mechanism for preserving the dtype in a NumPy scalar-like fashion.
+Here's what this looks like::
 
     >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], maskna=True))
-    array(NA, dtype='float64', maskna=True)
+    NA(dtype='<f8')
     >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]'))
-    array(NA, dtype='NA[<f8]')
-
-but with this, they could be printed as::
-
-    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], maskna=True))
-    NA('float64')
-    >>> np.sum(np.array([1.0, 2.0, np.NA, 7.0], dtype='NA[f8]'))
-    NA('NA[<f8]')
+    NA(dtype='NA[<f8]')
 
 Assigning a value to an array always causes that element to not be NA,
 transparently unmasking it if necessary. Assigning numpy.NA to the array
@@ -259,32 +253,25 @@ masks that element or assigns the NA bitpattern for the particular dtype.
 In the mask-based implementation, the storage behind a missing value may never
 be accessed in any way, other than to unmask it by assigning its value.
 
-While numpy.NA works to mask values, it does not itself have a dtype.
-This means that returning the numpy.NA singleton from an operation
-like 'arr[0]' would be throwing away the dtype, which is still
-valuable to retain, so 'arr[0]' will return a zero-dimensional
-array either with its value masked, or containing the NA bitpattern
-for the array's dtype. To test if the value is missing, the function
-"np.isna(arr[0])" will be provided. One of the key reasons for the
-NumPy scalars is to allow their values into dictionaries. Having a
-missing value as the key in a dictionary is a bad idea, so the NumPy
-scalars will not support missing values in any form.
+To test if a value is missing, the function "np.isna(arr[0])" will
+be provided. One of the key reasons for the NumPy scalars is to allow
+their values into dictionaries.
 
 All operations which write to masked arrays will not affect the value
 unless they also unmask that value. This allows the storage behind
 masked elements to still be relied on if they are still accessible
-from another view which doesn't have them masked. For example::
+from another view which doesn't have them masked. For example, the
+following was run on the missingdata work-in-progress branch::
 
     >>> a = np.array([1,2])
-    >>> b = a.view()
-    >>> b.flags.hasmaskna = True
+    >>> b = a.view(maskna=True)
     >>> b
-    array([1,2], maskna=True)
+    array([1, 2], maskna=True)
     >>> b[0] = np.NA
     >>> b
-    array([NA,2], maskna=True)
+    array([NA, 2], maskna=True)
     >>> a
-    array([1,2])
+    array([1, 2])
     >>> # The underlying number 1 value in 'a[0]' was untouched
 
 Copying values between the mask-based implementation and the
@@ -308,9 +295,16 @@ performance in unexpected ways.
 
 By default, the string "NA" will be used to represent missing values
 in str and repr outputs. A global configuration will allow
-this to be changed. The array2string function will also gain a
-'nastr=' parameter so this could be changed to "<missing>" or
-other values people may desire.
+this to be changed, exactly extending the way nan and inf are treated.
+The following works in the current draft implementation::
+
+    >>> a = np.arange(6, maskna=True)
+    >>> a[3] = np.NA
+    >>> a
+    array([0, 1, 2, NA, 4, 5], maskna=True)
+    >>> np.set_printoptions(nastr='blah')
+    >>> a
+    array([0, 1, 2, blah, 4, 5], maskna=True)
 
 For floating point numbers, Inf and NaN are separate concepts from
 missing values. If a division by zero occurs in an array with default
@@ -322,14 +316,19 @@ these semantics without the extra manipulation.
 
 A manual loop through a masked array like::
 
-    for i in xrange(len(a)):
-        a[i] = np.log(a[i])
+    >>> a = np.arange(5., maskna=True)
+    >>> a[3] = np.NA
+    >>> a
+    array([ 0.,  1.,  2., NA,  4.], maskna=True)
+    >>> for i in xrange(len(a)):
+    ...     a[i] = np.log(a[i])
+    ...
+    __main__:2: RuntimeWarning: divide by zero encountered in log
+    >>> a
+    array([       -inf,  0.        ,  0.69314718, NA,  1.38629436], maskna=True)
 
-works even with masked values, because 'a[i]' returns a zero-dimensional
-array with a missing value instead of the singleton np.NA for the missing
-elements. If np.NA was returned, np.log would have to raise an exception
-because it doesn't know the log of which dtype it's meant to call, whether
-it's a missing float or a missing string, for example.
+works even with masked values, because 'a[i]' returns an NA object
+with a data type associated, that can be treated properly by the ufuncs.
 
 Accessing a Boolean Mask
 ========================
@@ -348,20 +347,42 @@ instead of masked and unmasked values. The functions are
 'np.isna' and 'np.isavail', which test for NA or available values
 respectively.
 
-Creating Masked Arrays
-======================
+Creating NA-Masked Arrays
+=========================
 
-There are two flags which indicate and control the nature of the mask
-used in masked arrays.
+The usual way to create an array with an NA mask is to pass the keyword
+parameter maskna=True to one of the constructors. Most functions that
+create a new array take this parameter, and produce an NA-masked
+array with all its elements exposed when the parameter is set to True.
 
-First is 'arr.flags.hasmaskna', which is True for all masked arrays and
+There are also two flags which indicate and control the nature of the mask
+used in masked arrays. These flags can be used to add a mask, or ensure
+the mask isn't a view into another array's mask.
+
+First is 'arr.flags.maskna', which is True for all masked arrays and
 may be set to True to add a mask to an array which does not have one.
 
 Second is 'arr.flags.ownmaskna', which is True if the array owns the
 memory to the mask, and False if the array has no mask, or has a view
-into the mask of another array. If this is set to False in a masked
+into the mask of another array. If this is set to True in a masked
 array, the array will create a copy of the mask so that further modifications
-to the mask will not affect the array being viewed.
+to the mask will not affect the original mask from which the view was taken.
+
+NA-Masks When Constructing From Lists
+=====================================
+
+The initial design of NA-mask construction was to make all construction
+fully explicit. This turns out to be unwieldy when working interactively
+with NA-masked arrays, and having an object array be created instead of
+an NA-masked array can be very surprising.
+
+Because of this, the design has been changed to enable an NA-mask whenever
+creating an array from lists which have an NA object in them. There could
+be some debate of whether one should create NA-masks or NA-bitpatterns
+by default, but due to the time constraints it was only feasible to tackle
+NA-masks, and extending the NA-mask support more fully throughout NumPy seems
+much more reasonable than starting another system and ending up with two
+incomplete systems.
 
 Mask Implementation Details
 ===========================
@@ -388,7 +409,7 @@ New ndarray Methods
 
 New functions added to the numpy namespace are::
 
-    np.isna(arr)
+    np.isna(arr) [IMPLEMENTED]
         Returns a boolean array with True whereever the array is masked
         or matches the NA bitpattern, and False elsewhere
 
@@ -398,22 +419,34 @@ New functions added to the numpy namespace are::
 
 New functions added to the ndarray are::
 
-    arr.copy(..., replacena=None)
+    arr.copy(..., replacena=np.NA)
         Modification to the copy function which replaces NA values,
         either masked or with the NA bitpattern, with the 'replacena='
-        parameter suppled. When 'replacena' isn't None, the copied
+        parameter suppled. When 'replacena' isn't NA, the copied
         array is unmasked and has the 'NA' part stripped from the
-        parameterized type ('NA[f8]' becomes just 'f8').
+        parameterized dtype ('NA[f8]' becomes just 'f8').
 
-    arr.view(maskna=True)
+        The default for replacena is chosen to be np.NA instead of None,
+        because it may be desirable to replace NA with None in an
+        NA-masked object array.
+
+        For future multi-NA support, 'replacena' could accept a dictionary
+        mapping the NA payload to the value to substitute for that
+        particular NA. NAs with payloads not appearing in the dictionary
+        would remain as NA unless a 'default' key was also supplied.
+
+        Both the parameter to replacena and the values in the dictionaries
+        can be either scalars or arrays which get broadcast onto 'arr'.
+
+    arr.view(maskna=True) [IMPLEMENTED]
         This is a shortcut for
         >>> a = arr.view()
-        >>> a.flags.hasmaskna = True
+        >>> a.flags.maskna = True
 
-    arr.view(ownmaskna=True)
+    arr.view(ownmaskna=True) [IMPLEMENTED]
         This is a shortcut for
         >>> a = arr.view()
-        >>> a.flags.hasmaskna = True
+        >>> a.flags.maskna = True
         >>> a.flags.ownmaskna = True
 
 Element-wise UFuncs With Missing Values
@@ -478,7 +511,7 @@ Some examples::
     >>> np.sum(a, skipna=True)
     11.0
     >>> np.mean(a)
-    NA('<f8')
+    NA(dtype='<f8')
     >>> np.mean(a, skipna=True)
     3.6666666666666665
 
@@ -488,7 +521,7 @@ Some examples::
     >>> np.max(a, skipna=True)
     array(NA, dtype='<f8', maskna=True)
     >>> np.mean(a)
-    NA('<f8')
+    NA(dtype='<f8')
     >>> np.mean(a, skipna=True)
     /home/mwiebe/virtualenvs/dev/lib/python2.7/site-packages/numpy/core/fromnumeric.py:2374: RuntimeWarning: invalid value encountered in double_scalars
       return mean(axis, dtype, out)
@@ -743,6 +776,38 @@ to be consistent with the result of np.sum([])::
     >>> np.sum([])
     0.0
 
+Boolean Indexing
+================
+
+Indexing using a boolean array containing NAs does not have a consistent
+interpretation according to the NA abstraction. For example::
+
+    >>> a = np.array([1, 2])
+    >>> mask = np.array([np.NA, True], maskna=True)
+    >>> a[mask]
+    What should happen here?
+
+Since the NA represents a valid but unknown value, and it is a boolean,
+it has two possible underlying values::
+
+    >>> a[np.array([True, True])]
+    array([1, 2])
+    >>> a[np.array([False, True])]
+    array([2])
+
+The thing which changes is the length of the output array, nothing which
+itself can be substituted for NA. For this reason, at least initially,
+NumPy will raise an exception for this case.
+
+Another possibility is to add an inconsistency, and follow the approach
+R uses. That is, to produce the following::
+
+    >>> a[mask]
+    array([NA, 2], maskna=True)
+
+If, in user testing, this is found necessary for pragmatic reasons,
+the feature should be added even though it is inconsistent.
+
 PEP 3118
 ========
 
@@ -823,7 +888,7 @@ This gives us the following additions to the PyArrayObject::
      *   If no mask: NULL
      *   If mask   : bool/uint8/structured dtype of mask dtypes
      */
-    PyArray_Descr *maskna_descr;
+    PyArray_Descr *maskna_dtype;
     /*
      * Raw data buffer for mask. If the array has the flag
      * NPY_ARRAY_OWNMASKNA enabled, it owns this memory and
@@ -837,9 +902,24 @@ This gives us the following additions to the PyArrayObject::
      */
     npy_intp *maskna_strides;
 
-There are 2 (or 3) flags which must be added to the array flags::
+These fields can be accessed through the inline functions::
 
-    NPY_ARRAY_HASMASKNA
+    PyArray_Descr *
+    PyArray_MASKNA_DTYPE(PyArrayObject *arr);
+
+    npy_mask *
+    PyArray_MASKNA_DATA(PyArrayObject *arr);
+
+    npy_intp *
+    PyArray_MASKNA_STRIDES(PyArrayObject *arr);
+
+    npy_bool
+    PyArray_HASMASKNA(PyArrayObject *arr);
+
+There are 2 or 3 flags which must be added to the array flags, both
+for requesting NA masks and for testing for them::
+
+    NPY_ARRAY_MASKNA
     NPY_ARRAY_OWNMASKNA
     /* To possibly add in a later revision */
     NPY_ARRAY_HARDMASKNA
@@ -859,6 +939,10 @@ PyArray_ContainsNA(PyArrayObject* obj)
     Returns false if the array has no NA support. Returns
     true if the array has NA support AND there is an
     NA anywhere in the array.
+
+int PyArray_AllocateMaskNA(PyArrayObject* arr, npy_bool ownmaskna, npy_bool multina)
+    Allocates an NA mask for the array, ensuring ownership if requested
+    and using NPY_MASK instead of NPY_BOOL for the dtype if multina is True.
 
 Mask Binary Format
 ==================
@@ -955,7 +1039,7 @@ We add several new per-operand flags:
 NPY_ITER_USE_MASKNA
     If the operand has an NA dtype, an NA mask, or both, this adds a new
     virtual operand to the end of the operand list which iterates
-    over the mask of the particular operand.
+    over the mask for the particular operand.
 
 NPY_ITER_IGNORE_MASKNA
     If an operand has an NA mask, by default the iterator will raise
@@ -989,7 +1073,7 @@ to 12.5% overhead for a separately kept mask.
 Acknowledgments
 ***************
 
-In addition to feedback Travis Oliphant and others at Enthought,
+In addition to feedback from Travis Oliphant and others at Enthought,
 this NEP has been revised based on a great deal of feedback from
 the NumPy-Discussion mailing list. The people participating in
 the discussion are::

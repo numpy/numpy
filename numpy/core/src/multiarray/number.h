@@ -10,7 +10,7 @@ typedef struct {
     PyObject *power;
     PyObject *square;
     PyObject *reciprocal;
-    PyObject *ones_like;
+    PyObject *_ones_like;
     PyObject *sqrt;
     PyObject *negative;
     PyObject *absolute;

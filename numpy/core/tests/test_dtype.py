@@ -37,7 +37,8 @@ class TestBuiltin(TestCase):
         # Make sure invalid type strings raise exceptions
         for typestr in ['O3', 'O5', 'O7', 'b3', 'h4', 'I5', 'l4', 'l8',
                         'L4', 'L8', 'q8', 'q16', 'Q8', 'Q16', 'e3',
-                        'f5', 'd8', 't8', 'g12', 'g16']:
+                        'f5', 'd8', 't8', 'g12', 'g16',
+                        'NA[u4,0xffffffff]']:
             #print typestr
             assert_raises(TypeError, np.dtype, typestr)
 

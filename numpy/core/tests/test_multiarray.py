@@ -328,7 +328,7 @@ class TestCreation(TestCase):
             assert_equal(array(nstr, dtype=type), result, err_msg=msg)
 
     def test_void(self):
-        arr = np.array([np.void(0)], dtype='V')
+        arr = np.array([], dtype='V')
         assert_equal(arr.dtype.kind, 'V')
 
     def test_non_sequence_sequence(self):

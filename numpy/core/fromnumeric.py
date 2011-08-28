@@ -16,6 +16,7 @@ import multiarray as mu
 import umath as um
 import numerictypes as nt
 from numeric import asarray, array, asanyarray, concatenate
+import _methods
 _dt_ = nt.sctype2char
 
 import types
@@ -868,7 +869,7 @@ def resize(a, new_shape):
     return reshape(a, new_shape)
 
 
-def squeeze(a):
+def squeeze(a, axis=None):
     """
     Remove single-dimensional entries from the shape of an array.
 
@@ -876,12 +877,19 @@ def squeeze(a):
     ----------
     a : array_like
         Input data.
+    axis : None or int or tuple of ints, optional
+        .. versionadded:: 1.7.0
+
+        Selects a subset of the single-dimensional entries in the
+        shape. If an axis is selected with shape entry greater than
+        one, an error is raised.
 
     Returns
     -------
     squeezed : ndarray
-        The input array, but with with all dimensions of length 1
-        removed.  Whenever possible, a view on `a` is returned.
+        The input array, but with with all or a subset of the
+        dimensions of length 1 removed. This is always `a` itself
+        or a view into `a`.
 
     Examples
     --------
@@ -890,13 +898,20 @@ def squeeze(a):
     (1, 3, 1)
     >>> np.squeeze(x).shape
     (3,)
+    >>> np.squeeze(x, axis=(2,)).shape
+    (1, 3)
 
     """
     try:
         squeeze = a.squeeze
     except AttributeError:
         return _wrapit(a, 'squeeze')
-    return squeeze()
+    try:
+        # First try to use the new axis= parameter
+        return squeeze(axis=axis)
+    except TypeError:
+        # For backwards compatibility
+        return squeeze()
 
 
 def diagonal(a, offset=0, axis1=0, axis2=1):
@@ -910,6 +925,8 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     returned.  The shape of the resulting array can be determined by
     removing `axis1` and `axis2` and appending an index to the right equal
     to the size of the resulting diagonals.
+
+    As of NumPy 1.7, this function always returns a view into `a`.
 
     Parameters
     ----------
@@ -1376,7 +1393,7 @@ def clip(a, a_min, a_max, out=None):
     return clip(a_min, a_max, out)
 
 
-def sum(a, axis=None, dtype=None, out=None):
+def sum(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
     """
     Sum of array elements over a given axis.
 
@@ -1384,9 +1401,16 @@ def sum(a, axis=None, dtype=None, out=None):
     ----------
     a : array_like
         Elements to sum.
-    axis : integer, optional
-        Axis over which the sum is taken. By default `axis` is None,
-        and all elements are summed.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which a sum is performed.
+        The default (`axis` = `None`) is perform a sum over all
+        the dimensions of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        .. versionadded:: 1.7.0
+
+        If this is a tuple of ints, a sum is performed on multiple
+        axes, instead of a single axis or all the axes as before.
     dtype : dtype, optional
         The type of the returned array and of the accumulator in which
         the elements are summed.  By default, the dtype of `a` is used.
@@ -1399,6 +1423,13 @@ def sum(a, axis=None, dtype=None, out=None):
         (the shape of `a` with `axis` removed, i.e.,
         ``numpy.delete(a.shape, axis)``).  Its type is preserved. See
         `doc.ufuncs` (Section "Output arguments") for more details.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during summation
+        instead of propagating them.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -1448,14 +1479,19 @@ def sum(a, axis=None, dtype=None, out=None):
             out[...] = res
             return out
         return res
-    try:
-        sum = a.sum
-    except AttributeError:
-        return _wrapit(a, 'sum', axis, dtype, out)
-    return sum(axis, dtype, out)
+    elif not (type(a) is mu.ndarray):
+        try:
+            sum = a.sum
+        except AttributeError:
+            return _methods._sum(a, axis=axis, dtype=dtype,
+                                out=out, skipna=skipna, keepdims=keepdims)
+        # NOTE: Dropping the skipna and keepdims parameters here...
+        return sum(axis=axis, dtype=dtype, out=out)
+    else:
+        return _methods._sum(a, axis=axis, dtype=dtype,
+                            out=out, skipna=skipna, keepdims=keepdims)
 
-
-def product (a, axis=None, dtype=None, out=None):
+def product (a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
     """
     Return the product of array elements over a given axis.
 
@@ -1464,14 +1500,10 @@ def product (a, axis=None, dtype=None, out=None):
     prod : equivalent function; see for details.
 
     """
-    try:
-        prod = a.prod
-    except AttributeError:
-        return _wrapit(a, 'prod', axis, dtype, out)
-    return prod(axis, dtype, out)
+    return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out, skipna=skipna, keepdims=keepdims)
 
 
-def sometrue(a, axis=None, out=None):
+def sometrue(a, axis=None, out=None, skipna=False, keepdims=False):
     """
     Check whether some values are true.
 
@@ -1482,14 +1514,14 @@ def sometrue(a, axis=None, out=None):
     any : equivalent function
 
     """
+    arr = asanyarray(a)
+
     try:
-        any = a.any
-    except AttributeError:
-        return _wrapit(a, 'any', axis, out)
-    return any(axis, out)
+        return arr.any(axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+    except TypeError:
+        return arr.any(axis=axis, out=out)
 
-
-def alltrue (a, axis=None, out=None):
+def alltrue (a, axis=None, out=None, skipna=False, keepdims=False):
     """
     Check if all elements of input array are true.
 
@@ -1498,14 +1530,14 @@ def alltrue (a, axis=None, out=None):
     numpy.all : Equivalent function; see for details.
 
     """
+    arr = asanyarray(a)
+
     try:
-        all = a.all
-    except AttributeError:
-        return _wrapit(a, 'all', axis, out)
-    return all(axis, out)
+        return arr.all(axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+    except TypeError:
+        return arr.all(axis=axis, out=out)
 
-
-def any(a,axis=None, out=None):
+def any(a, axis=None, out=None, skipna=False, keepdims=False):
     """
     Test whether any array element along a given axis evaluates to True.
 
@@ -1515,17 +1547,29 @@ def any(a,axis=None, out=None):
     ----------
     a : array_like
         Input array or object that can be converted to an array.
-    axis : int, optional
-        Axis along which a logical OR is performed.  The default
-        (`axis` = `None`) is to perform a logical OR over a flattened
-        input array. `axis` may be negative, in which case it counts
-        from the last to the first axis.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which a logical OR reduction is performed.
+        The default (`axis` = `None`) is perform a logical OR over all
+        the dimensions of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        .. versionadded:: 1.7.0
+
+        If this is a tuple of ints, a reduction is performed on multiple
+        axes, instead of a single axis or all the axes as before.
     out : ndarray, optional
         Alternate output array in which to place the result.  It must have
         the same shape as the expected output and its type is preserved
         (e.g., if it is of type float, then it will remain so, returning
         1.0 for True and 0.0 for False, regardless of the type of `a`).
         See `doc.ufuncs` (Section "Output arguments") for details.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during summation
+        instead of propagating them.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -1569,14 +1613,14 @@ def any(a,axis=None, out=None):
     (191614240, 191614240)
 
     """
+    arr = asanyarray(a)
+
     try:
-        any = a.any
-    except AttributeError:
-        return _wrapit(a, 'any', axis, out)
-    return any(axis, out)
+        return arr.any(axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+    except TypeError:
+        return arr.any(axis=axis, out=out)
 
-
-def all(a,axis=None, out=None):
+def all(a, axis=None, out=None, skipna=False, keepdims=False):
     """
     Test whether all array elements along a given axis evaluate to True.
 
@@ -1584,17 +1628,29 @@ def all(a,axis=None, out=None):
     ----------
     a : array_like
         Input array or object that can be converted to an array.
-    axis : int, optional
-        Axis along which a logical AND is performed.
-        The default (`axis` = `None`) is to perform a logical AND
-        over a flattened input array.  `axis` may be negative, in which
-        case it counts from the last to the first axis.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which a logical AND reduction is performed.
+        The default (`axis` = `None`) is perform a logical OR over all
+        the dimensions of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        .. versionadded:: 1.7.0
+
+        If this is a tuple of ints, a reduction is performed on multiple
+        axes, instead of a single axis or all the axes as before.
     out : ndarray, optional
         Alternate output array in which to place the result.
         It must have the same shape as the expected output and its
         type is preserved (e.g., if ``dtype(out)`` is float, the result
         will consist of 0.0's and 1.0's).  See `doc.ufuncs` (Section
         "Output arguments") for more details.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during summation
+        instead of propagating them.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -1633,12 +1689,12 @@ def all(a,axis=None, out=None):
     (28293632, 28293632, array([ True], dtype=bool))
 
     """
-    try:
-        all = a.all
-    except AttributeError:
-        return _wrapit(a, 'all', axis, out)
-    return all(axis, out)
+    arr = asanyarray(a)
 
+    try:
+        return arr.all(axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+    except TypeError:
+        return arr.all(axis=axis, out=out)
 
 def cumsum (a, axis=None, dtype=None, out=None):
     """
@@ -1771,7 +1827,7 @@ def ptp(a, axis=None, out=None):
     return ptp(axis, out)
 
 
-def amax(a, axis=None, out=None):
+def amax(a, axis=None, out=None, skipna=False, keepdims=False):
     """
     Return the maximum of an array or maximum along an axis.
 
@@ -1785,6 +1841,13 @@ def amax(a, axis=None, out=None):
         Alternate output array in which to place the result.  Must be of
         the same shape and buffer length as the expected output.  See
         `doc.ufuncs` (Section "Output arguments") for more details.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during reduction
+        instead of propagating them.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -1826,14 +1889,19 @@ def amax(a, axis=None, out=None):
     4.0
 
     """
-    try:
-        amax = a.max
-    except AttributeError:
-        return _wrapit(a, 'max', axis, out)
-    return amax(axis, out)
+    if not (type(a) is mu.ndarray):
+        try:
+            amax = a.max
+        except AttributeError:
+            return _methods._amax(a, axis=axis,
+                                out=out, skipna=skipna, keepdims=keepdims)
+        # NOTE: Dropping the skipna and keepdims parameters
+        return amax(axis=axis, out=out)
+    else:
+        return _methods._amax(a, axis=axis,
+                            out=out, skipna=skipna, keepdims=keepdims)
 
-
-def amin(a, axis=None, out=None):
+def amin(a, axis=None, out=None, skipna=False, keepdims=False):
     """
     Return the minimum of an array or minimum along an axis.
 
@@ -1847,6 +1915,13 @@ def amin(a, axis=None, out=None):
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
         See `doc.ufuncs` (Section "Output arguments") for more details.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during reduction
+        instead of propagating them.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -1888,12 +1963,17 @@ def amin(a, axis=None, out=None):
     0.0
 
     """
-    try:
-        amin = a.min
-    except AttributeError:
-        return _wrapit(a, 'min', axis, out)
-    return amin(axis, out)
-
+    if not (type(a) is mu.ndarray):
+        try:
+            amin = a.min
+        except AttributeError:
+            return _methods._amin(a, axis=axis,
+                                out=out, skipna=skipna, keepdims=keepdims)
+        # NOTE: Dropping the skipna and keepdims parameters
+        return amin(axis=axis, out=out)
+    else:
+        return _methods._amin(a, axis=axis,
+                            out=out, skipna=skipna, keepdims=keepdims)
 
 def alen(a):
     """
@@ -1928,7 +2008,7 @@ def alen(a):
         return len(array(a,ndmin=1))
 
 
-def prod(a, axis=None, dtype=None, out=None):
+def prod(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
     """
     Return the product of array elements over a given axis.
 
@@ -1936,9 +2016,16 @@ def prod(a, axis=None, dtype=None, out=None):
     ----------
     a : array_like
         Input data.
-    axis : int, optional
-        Axis over which the product is taken.  By default, the product
-        of all elements is calculated.
+    axis : None or int or tuple of ints, optional
+        Axis or axes along which a product is performed.
+        The default (`axis` = `None`) is perform a product over all
+        the dimensions of the input array. `axis` may be negative, in
+        which case it counts from the last to the first axis.
+
+        .. versionadded:: 1.7.0
+
+        If this is a tuple of ints, a product is performed on multiple
+        axes, instead of a single axis or all the axes as before.
     dtype : data-type, optional
         The data-type of the returned array, as well as of the accumulator
         in which the elements are multiplied.  By default, if `a` is of
@@ -1949,6 +2036,13 @@ def prod(a, axis=None, dtype=None, out=None):
         Alternative output array in which to place the result. It must have
         the same shape as the expected output, but the type of the
         output values will be cast if necessary.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during reduction
+        instead of propagating them.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -2002,12 +2096,16 @@ def prod(a, axis=None, dtype=None, out=None):
     True
 
     """
-    try:
-        prod = a.prod
-    except AttributeError:
-        return _wrapit(a, 'prod', axis, dtype, out)
-    return prod(axis, dtype, out)
-
+    if not (type(a) is mu.ndarray):
+        try:
+            prod = a.prod
+        except AttributeError:
+            return _methods._prod(a, axis=axis, dtype=dtype,
+                                out=out, skipna=skipna, keepdims=keepdims)
+        return prod(axis=axis, dtype=dtype, out=out)
+    else:
+        return _methods._prod(a, axis=axis, dtype=dtype,
+                            out=out, skipna=skipna, keepdims=keepdims)
 
 def cumprod(a, axis=None, dtype=None, out=None):
     """
@@ -2296,7 +2394,7 @@ def round_(a, decimals=0, out=None):
     return round(decimals, out)
 
 
-def mean(a, axis=None, dtype=None, out=None):
+def mean(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
     """
     Compute the arithmetic mean along the specified axis.
 
@@ -2321,6 +2419,13 @@ def mean(a, axis=None, dtype=None, out=None):
         is ``None``; if provided, it must have the same shape as the
         expected output, but the type will be cast if necessary.
         See `doc.ufuncs` for details.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during calculation
+        instead of propagating them.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -2367,14 +2472,19 @@ def mean(a, axis=None, dtype=None, out=None):
     0.55000000074505806
 
     """
-    try:
-        mean = a.mean
-    except AttributeError:
-        return _wrapit(a, 'mean', axis, dtype, out)
-    return mean(axis, dtype, out)
+    if not (type(a) is mu.ndarray):
+        try:
+            mean = a.mean
+            return mean(axis=axis, dtype=dtype, out=out)
+        except AttributeError:
+            pass
+
+    return _methods._mean(a, axis=axis, dtype=dtype,
+                            out=out, skipna=skipna, keepdims=keepdims)
 
 
-def std(a, axis=None, dtype=None, out=None, ddof=0):
+def std(a, axis=None, dtype=None, out=None, ddof=0,
+                            skipna=False, keepdims=False):
     """
     Compute the standard deviation along the specified axis.
 
@@ -2401,6 +2511,13 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
         Means Delta Degrees of Freedom.  The divisor used in calculations
         is ``N - ddof``, where ``N`` represents the number of elements.
         By default `ddof` is zero.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during calculation
+        instead of propagating them.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -2418,14 +2535,15 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
     The standard deviation is the square root of the average of the squared
     deviations from the mean, i.e., ``std = sqrt(mean(abs(x - x.mean())**2))``.
 
-    The average squared deviation is normally calculated as ``x.sum() / N``, where
-    ``N = len(x)``.  If, however, `ddof` is specified, the divisor ``N - ddof``
-    is used instead. In standard statistical practice, ``ddof=1`` provides an
-    unbiased estimator of the variance of the infinite population. ``ddof=0``
-    provides a maximum likelihood estimate of the variance for normally
-    distributed variables. The standard deviation computed in this function
-    is the square root of the estimated variance, so even with ``ddof=1``, it
-    will not be an unbiased estimate of the standard deviation per se.
+    The average squared deviation is normally calculated as
+    ``x.sum() / N``, where ``N = len(x)``.  If, however, `ddof` is specified,
+    the divisor ``N - ddof`` is used instead. In standard statistical
+    practice, ``ddof=1`` provides an unbiased estimator of the variance
+    of the infinite population. ``ddof=0`` provides a maximum likelihood
+    estimate of the variance for normally distributed variables. The
+    standard deviation computed in this function is the square root of
+    the estimated variance, so even with ``ddof=1``, it will not be an
+    unbiased estimate of the standard deviation per se.
 
     Note that, for complex numbers, `std` takes the absolute
     value before squaring, so that the result is always real and nonnegative.
@@ -2460,14 +2578,18 @@ def std(a, axis=None, dtype=None, out=None, ddof=0):
     0.44999999925552653
 
     """
-    try:
-        std = a.std
-    except AttributeError:
-        return _wrapit(a, 'std', axis, dtype, out, ddof)
-    return std(axis, dtype, out, ddof)
+    if not (type(a) is mu.ndarray):
+        try:
+            std = a.std
+            return std(axis=axis, dtype=dtype, out=out, ddof=ddof)
+        except AttributeError:
+            pass
 
+    return _methods._std(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+                                skipna=skipna, keepdims=keepdims)
 
-def var(a, axis=None, dtype=None, out=None, ddof=0):
+def var(a, axis=None, dtype=None, out=None, ddof=0,
+                            skipna=False, keepdims=False):
     """
     Compute the variance along the specified axis.
 
@@ -2495,6 +2617,13 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
         "Delta Degrees of Freedom": the divisor used in the calculation is
         ``N - ddof``, where ``N`` represents the number of elements. By
         default `ddof` is zero.
+    skipna : bool, optional
+        If this is set to True, skips any NA values during calculation
+        instead of propagating them.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -2534,9 +2663,9 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     >>> a = np.array([[1,2],[3,4]])
     >>> np.var(a)
     1.25
-    >>> np.var(a,0)
+    >>> np.var(a, axis=0)
     array([ 1.,  1.])
-    >>> np.var(a,1)
+    >>> np.var(a, axis=1)
     array([ 0.25,  0.25])
 
     In single precision, var() can be inaccurate:
@@ -2547,7 +2676,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     >>> np.var(a)
     0.20405951142311096
 
-    Computing the standard deviation in float64 is more accurate:
+    Computing the variance in float64 is more accurate:
 
     >>> np.var(a, dtype=np.float64)
     0.20249999932997387
@@ -2555,8 +2684,13 @@ def var(a, axis=None, dtype=None, out=None, ddof=0):
     0.20250000000000001
 
     """
-    try:
-        var = a.var
-    except AttributeError:
-        return _wrapit(a, 'var', axis, dtype, out, ddof)
-    return var(axis, dtype, out, ddof)
+    if not (type(a) is mu.ndarray):
+        try:
+            var = a.var
+            return var(axis=axis, dtype=dtype, out=out, ddof=ddof)
+        except AttributeError:
+            pass
+
+    return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+                                skipna=skipna, keepdims=keepdims)
+

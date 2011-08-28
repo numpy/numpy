@@ -14,10 +14,12 @@ exception, so it should hopefully not get unnoticed).
 
 multiarray_global_vars = {
     'NPY_NUMUSERTYPES':             7,
+    'Npy_NA':                       299,
 }
 
 multiarray_global_vars_types = {
     'NPY_NUMUSERTYPES':             'int',
+    'Npy_NA':                       'PyObject *',
 }
 
 multiarray_scalar_bool_values = {
@@ -68,6 +70,8 @@ multiarray_types_api = {
     'PyTimedeltaArrType_Type':          216,
     'PyHalfArrType_Type':               217,
     'NpyIter_Type':                     218,
+    # End 1.6 API
+    'NpyNA_Type':                       281,
 }
 
 #define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
@@ -316,9 +320,30 @@ multiarray_funcs_api = {
     'PyArray_ConvertClipmodeSequence':      279,
     'PyArray_MatrixProduct2':               280,
     # End 1.6 API
-    'PyArray_MaskedCopyInto':               281,
-    'PyArray_MaskedMoveInto':               282,
-    'PyArray_SetBaseObject':                      283,
+    'NpyIter_GetFirstMaskNAOp':             282,
+    'NpyIter_GetMaskNAIndexArray':          283,
+    'NpyIter_IsFirstVisit':                 284,
+    'PyArray_SetBaseObject':                285,
+    'PyArray_HasNASupport':                 286,
+    'PyArray_ContainsNA':                   287,
+    'PyArray_AllocateMaskNA':               288,
+    'PyArray_CreateSortedStridePerm':       289,
+    'PyArray_AssignZero':                   290,
+    'PyArray_AssignOne':                    291,
+    'PyArray_AssignNA':                     292,
+    'PyArray_AssignMaskNA':                 293,
+    'PyArray_AssignRawScalar':              294,
+    'PyArray_AssignArray':                  295,
+    'PyArray_ReduceWrapper':                296,
+    'PyArray_RemoveAxesInPlace':            297,
+    'PyArray_DebugPrint':                   298,
+    'NpyNA_GetDType':                       300,
+    'NpyNA_IsMultiNA':                      301,
+    'NpyNA_GetPayload':                     302,
+    'NpyNA_FromObject':                     303,
+    'NpyNA_FromDTypeAndPayload':            304,
+    'PyArray_AllowNAConverter':             305,
+    'PyArray_OutputAllowNAConverter':       306,
 }
 
 ufunc_types_api = {
@@ -366,9 +391,8 @@ ufunc_funcs_api = {
     'PyUFunc_ee_e_As_ff_f':                     37,
     'PyUFunc_ee_e_As_dd_d':                     38,
     # End 1.6 API
-    'PyUFunc_DefaultTypeResolution':            39,
+    'PyUFunc_DefaultTypeResolver':              39,
     'PyUFunc_ValidateCasting':                  40,
-    'PyUFunc_DefaultTypeResolutionMasked':      41,
 }
 
 # List of all the dicts which define the C API

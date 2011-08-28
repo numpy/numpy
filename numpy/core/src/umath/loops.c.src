@@ -611,7 +611,7 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 /**end repeat**/
 
 NPY_NO_EXPORT void
-BOOL_ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
         *((Bool *)op1) = 1;
@@ -642,7 +642,7 @@ BOOL_ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
 #define @S@@TYPE@_fmin @S@@TYPE@_minimum
 
 NPY_NO_EXPORT void
-@S@@TYPE@_ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+@S@@TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
         *((@s@@type@ *)op1) = 1;
@@ -985,7 +985,7 @@ TIMEDELTA_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
  */
 
 NPY_NO_EXPORT void
-@TYPE@_ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+@TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
         *((@type@ *)op1) = 1;
@@ -1458,7 +1458,7 @@ NPY_NO_EXPORT void
 }
 
 NPY_NO_EXPORT void
-@TYPE@_ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+@TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
         *((@type@ *)op1) = 1;
@@ -1762,7 +1762,7 @@ HALF_reciprocal(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
 }
 
 NPY_NO_EXPORT void
-HALF_ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+HALF__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
         *((npy_half *)op1) = NPY_HALF_ONE;
@@ -2093,7 +2093,7 @@ C@TYPE@_reciprocal(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY
 }
 
 NPY_NO_EXPORT void
-C@TYPE@_ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
+C@TYPE@__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
         ((@type@ *)op1)[0] = 1;
