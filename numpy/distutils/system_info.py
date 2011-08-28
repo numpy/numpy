@@ -194,6 +194,8 @@ else:
                                  '/opt/local/lib','/sw/lib'], platform_bits)
     default_include_dirs = ['/usr/local/include',
                             '/opt/include', '/usr/include',
+                            # path of umfpack under macports
+                            '/opt/local/include/ufsparse',
                             '/opt/local/include', '/sw/include',
                             '/usr/include/suitesparse']
     default_src_dirs = ['.','/usr/local/src', '/opt/src','/sw/src']
