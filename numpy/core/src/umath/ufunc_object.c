@@ -4379,12 +4379,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     else {
         ufunc->name = name;
     }
-    if (doc == NULL) {
-        ufunc->doc = "NULL";
-    }
-    else {
-        ufunc->doc = doc;
-    }
+    ufunc->doc = doc;
 
     /* generalized ufunc */
     ufunc->core_enabled = 0;
@@ -4839,19 +4834,35 @@ ufunc_get_doc(PyUFuncObject *ufunc)
     PyObject *outargs, *inargs, *doc;
     outargs = _makeargs(ufunc->nout, "out", 1);
     inargs = _makeargs(ufunc->nin, "x", 0);
-    if (outargs == NULL) {
-        doc = PyUString_FromFormat("%s(%s)\n\n%s",
-                                   ufunc->name,
-                                   PyString_AS_STRING(inargs),
-                                   ufunc->doc);
+    
+    if(ufunc->doc == NULL){
+        if(outargs == NULL){
+            doc = PyUString_FromFormat("%s(%s)\n\n",
+                                        ufunc->name,
+                                        PyString_AS_STRING(inargs));
+        }else{
+            doc = PyUString_FromFormat("%s(%s[, %s])\n\n",
+                                        ufunc->name,
+                                        PyString_AS_STRING(inargs),
+                                        PyString_AS_STRING(outargs));
+            Py_DECREF(outargs);
+        }
     }
-    else {
-        doc = PyUString_FromFormat("%s(%s[, %s])\n\n%s",
-                                   ufunc->name,
-                                   PyString_AS_STRING(inargs),
-                                   PyString_AS_STRING(outargs),
-                                   ufunc->doc);
-        Py_DECREF(outargs);
+    else{
+        if (outargs == NULL) {
+            doc = PyUString_FromFormat("%s(%s)\n\n%s",
+                                       ufunc->name,
+                                       PyString_AS_STRING(inargs),
+                                       ufunc->doc);
+        }
+        else {
+            doc = PyUString_FromFormat("%s(%s[, %s])\n\n%s",
+                                       ufunc->name,
+                                       PyString_AS_STRING(inargs),
+                                       PyString_AS_STRING(outargs),
+                                       ufunc->doc);
+            Py_DECREF(outargs);
+        }
     }
     Py_DECREF(inargs);
     return doc;

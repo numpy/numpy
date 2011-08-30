@@ -4,6 +4,8 @@
 #include "numpy/noprefix.h"
 #include "numpy/npy_3kcompat.h"
 #include "npy_config.h"
+#include "numpy/ufuncobject.h"
+#include "string.h"
 
 static npy_intp
 incr_slot_(double x, double *bins, npy_intp lbins)
@@ -1170,6 +1172,49 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
 }
 
 
+/* docstring in numpy.add_newdocs.py */ 
+static PyObject *
+add_newdoc_ufunc(PyObject *NPY_UNUSED(dummy), PyObject *args)
+{
+    PyUFuncObject *ufunc;
+    PyObject *str;
+    char *docstr, *newdocstr;
+
+    if (!PyArg_ParseTuple(args, "O!O!", &PyUFunc_Type, &ufunc,
+                                        &PyString_Type, &str)) {
+        return NULL;
+    }
+
+    if(NULL != ufunc->doc){
+        PyErr_SetString(PyExc_ValueError, 
+                        "Cannot change docstring of ufunc "
+                        "with non-NULL docstring");
+        return NULL;
+    }
+
+#if defined(NPY_PY3K)
+    docstr = PyBytes_AS_STRING(PyUnicode_AsUTF8String(str));
+#else
+    docstr = PyString_AS_STRING(str);
+#endif
+   
+    /* 
+     * This introduces a memory leak, as the memory allocated for the doc
+     * will not be freed even if the ufunc itself is deleted. In practice
+     * this should not be a problem since the user would have to
+     * repeatedly create, document, and throw away ufuncs. 
+     */ 
+
+    newdocstr = malloc(strlen(docstr) + 1);
+    strcpy(newdocstr, docstr);
+
+    ufunc->doc = newdocstr;
+
+    Py_INCREF(Py_None);
+    return Py_None;
+
+}
+
 /*  PACKBITS
  *
  *  This function packs binary (0 or 1) 1-bit per pixel arrays
@@ -1436,6 +1481,8 @@ static struct PyMethodDef methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"add_docstring", (PyCFunction)arr_add_docstring,
         METH_VARARGS, NULL},
+    {"add_newdoc_ufunc", (PyCFunction)add_newdoc_ufunc,
+        METH_VARARGS, NULL},
     {"packbits", (PyCFunction)io_pack,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"unpackbits", (PyCFunction)io_unpack,
@@ -1505,6 +1552,7 @@ init_compiled_base(void)
 
     /* Import the array objects */
     import_array();
+    import_umath();
 
     /* Add some symbolic constants to the module */
     d = PyModule_GetDict(m);
