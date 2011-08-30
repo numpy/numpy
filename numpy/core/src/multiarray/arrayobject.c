@@ -102,7 +102,7 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
      * its own data.
      */
     while (PyArray_Check(obj) && (PyObject *)arr != obj) {
-        PyArrayObject *obj_arr = (PyArrayObject *)arr;
+        PyArrayObject *obj_arr = (PyArrayObject *)obj;
         PyObject *tmp;
 
         /* If this array owns its own data, stop collapsing */

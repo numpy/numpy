@@ -481,7 +481,7 @@ def test_array_maskna_array_function_1D():
 
     # Should produce a view with an owned mask with 'ownmaskna=True'
     c = np.array(b_view, copy=False, ownmaskna=True)
-    assert_(c.base is b_view)
+    assert_(c.base is b_view.base)
     assert_(c.flags.ownmaskna)
     assert_(not (c is b_view))
 
