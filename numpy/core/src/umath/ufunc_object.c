@@ -740,7 +740,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
     *out_use_maskna = 0;
 
     /* Get input arguments */
-    for(i = 0; i < nin; ++i) {
+    for (i = 0; i < nin; ++i) {
         obj = PyTuple_GET_ITEM(args, i);
         if (!PyArray_Check(obj) && !PyArray_IsScalar(obj, Generic)) {
             /*
@@ -985,7 +985,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
      */
     if (*out_use_maskna && any_non_maskna_out) {
         /* Check all the inputs for NA */
-        for(i = 0; i < nin; ++i) {
+        for (i = 0; i < nin; ++i) {
             if (PyArray_HASMASKNA(out_op[i])) {
                 int containsna = PyArray_ContainsNA(out_op[i], NULL, NULL);
                 if (containsna == -1) {
@@ -3678,7 +3678,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
         indtype = PyArray_DescrFromType(PyArray_INTP);
-        if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&i", kwlist2,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&i", kwlist2,
                                         &op,
                                         &obj_ind,
                                         &axes_in,
@@ -3696,7 +3696,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     else if (operation == UFUNC_ACCUMULATE) {
-        if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&ii", kwlist1,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&ii", kwlist1,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
@@ -3708,7 +3708,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
         }
     }
     else {
-        if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&ii", kwlist1,
+        if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|OO&O&ii", kwlist1,
                                         &op,
                                         &axes_in,
                                         PyArray_DescrConverter2, &otype,
@@ -4093,7 +4093,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
      * Initialize all array objects to NULL to make cleanup easier
      * if something goes wrong.
      */
-    for(i = 0; i < ufunc->nargs; i++) {
+    for (i = 0; i < ufunc->nargs; i++) {
         mps[i] = NULL;
     }
 
@@ -4672,7 +4672,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    if(ufunc->nin != 2) {
+    if (ufunc->nin != 2) {
         PyErr_SetString(PyExc_ValueError,
                         "outer product only supported "\
                         "for binary functions");
@@ -4835,12 +4835,13 @@ ufunc_get_doc(PyUFuncObject *ufunc)
     outargs = _makeargs(ufunc->nout, "out", 1);
     inargs = _makeargs(ufunc->nin, "x", 0);
 
-    if(ufunc->doc == NULL){
-        if(outargs == NULL){
+    if (ufunc->doc == NULL) {
+        if (outargs == NULL) {
             doc = PyUString_FromFormat("%s(%s)\n\n",
                                         ufunc->name,
                                         PyString_AS_STRING(inargs));
-        }else{
+        }
+        else {
             doc = PyUString_FromFormat("%s(%s[, %s])\n\n",
                                         ufunc->name,
                                         PyString_AS_STRING(inargs),
@@ -4848,7 +4849,7 @@ ufunc_get_doc(PyUFuncObject *ufunc)
             Py_DECREF(outargs);
         }
     }
-    else{
+    else {
         if (outargs == NULL) {
             doc = PyUString_FromFormat("%s(%s)\n\n%s",
                                        ufunc->name,

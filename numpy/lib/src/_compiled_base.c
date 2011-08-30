@@ -402,7 +402,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             /* compute indx into input array */
             rem_indx = mindx;
             indx = 0;
-            for(i = nd - 1; i > 0; --i) {
+            for (i = nd - 1; i > 0; --i) {
                 indx += (rem_indx % inshape[i]) * instrides[i];
                 rem_indx /= inshape[i];
             }
@@ -646,35 +646,35 @@ ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
             j = *(npy_intp *)coords[i];
             switch (modes[i]) {
                 case NPY_RAISE:
-                    if(j < 0 || j>=m) {
+                    if (j < 0 || j >= m) {
                         PyErr_SetString(PyExc_ValueError,
                               "invalid entry in coordinates array");
                         return NPY_FAIL;
                     }
                     break;
                 case NPY_WRAP:
-                    if(j < 0) {
+                    if (j < 0) {
                         j += m;
-                        if(j < 0) {
-                            j = j%m;
-                            if(j != 0) {
+                        if (j < 0) {
+                            j = j % m;
+                            if (j != 0) {
                                 j += m;
                             }
                         }
                     }
-                    else if(j >= m) {
+                    else if (j >= m) {
                         j -= m;
-                        if(j >= m) {
-                            j = j%m;
+                        if (j >= m) {
+                            j = j % m;
                         }
                     }
                     break;
                 case NPY_CLIP:
-                    if(j < 0) {
+                    if (j < 0) {
                         j = 0;
                     }
-                    else if(j >= m) {
-                        j = m-1;
+                    else if (j >= m) {
+                        j = m - 1;
                     }
                     break;
 
@@ -713,7 +713,7 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
     memset(op, 0, sizeof(op));
     dtype[0] = NULL;
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds,
                         "OO&|OO&:ravel_multi_index", kwlist,
                      &coords0,
                      PyArray_IntpConverter, &dimensions,
@@ -728,7 +728,7 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
         goto fail;
     }
 
-    if(!PyArray_ConvertClipmodeSequence(mode0, modes, dimensions.len)) {
+    if (!PyArray_ConvertClipmodeSequence(mode0, modes, dimensions.len)) {
        goto fail;
     }
 
@@ -902,7 +902,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
 
     char *kwlist[] = {"indices", "dims", "order", NULL};
 
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|O&:unravel_index",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO&|O&:unravel_index",
                     kwlist,
                     &indices0,
                     PyArray_IntpConverter, &dimensions,
@@ -918,10 +918,10 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
 
     unravel_size = PyArray_MultiplyList(dimensions.ptr, dimensions.len);
 
-    if(!PyArray_Check(indices0)) {
+    if (!PyArray_Check(indices0)) {
         indices = (PyArrayObject*)PyArray_FromAny(indices0,
                                                     NULL, 0, 0, 0, NULL);
-        if(indices == NULL) {
+        if (indices == NULL) {
             goto fail;
         }
     }
