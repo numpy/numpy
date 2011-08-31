@@ -110,6 +110,12 @@ functions more consistent with NumPy's general approach of taking views
 where possible, and performs much faster as well. This has the
 potential to break code that assumes a copy is made instead of a view.
 
+The <ufunc>.reduce functions evaluates some reductions in a different
+order than in previous versions of NumPy, generally providing higher
+performance. Because of the nature of floating-point arithmetic, this
+may subtly change some results, just as linking NumPy to a different
+BLAS implementations such as MKL can.
+
 The function np.concatenate tries to match the layout of its input
 arrays. Previously, the layout did not follow any particular reason,
 and depended in an undesirable way on the particular axis chosen for
