@@ -3367,6 +3367,7 @@ gen_arrtype_subscript(PyObject *self, PyObject *key)
     /* Must be a Tuple */
     N = count_new_axes_0d(key);
     if (N < 0) {
+        Py_DECREF(res);
         return NULL;
     }
     ret = add_new_axes_0d((PyArrayObject *)res, N);
