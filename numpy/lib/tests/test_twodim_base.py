@@ -239,6 +239,18 @@ class TestTri(TestCase):
         assert_array_equal(tri(3,dtype=bool),out.astype(bool))
 
 
+def test_tril_triu():
+    for dtype in np.typecodes['AllFloat'] + np.typecodes['AllInteger']:
+        a = np.ones((2, 2), dtype=dtype)
+        b = np.tril(a)
+        c = np.triu(a)
+        assert_array_equal(b, [[1, 0], [1, 1]])
+        assert_array_equal(c, b.T)
+        # should return the same dtype as the original array
+        assert_equal(b.dtype, a.dtype)
+        assert_equal(c.dtype, a.dtype)
+
+
 def test_mask_indices():
     # simple test without offset
     iu = mask_indices(3, np.triu)
