@@ -421,10 +421,10 @@ def loadtable(fname,
 
     Parameters
     ----------
-    fname: string or file
-        Either the filename of the file containing the data or the file
-        object for the file. If the filename, can be
-        relative or absolute.
+    fname: string or iterable (see description)
+        Either the filename of the file containing the data or an iterable
+        (such as a file object). If an iterable, must have __iter__, next,
+        and seek methods.
     delimiter: string
         Regular expression for the delimeter between data. The regular
         expression must be non-capturing. (i.e. r'(?:3.14)' instead of
@@ -434,9 +434,8 @@ def loadtable(fname,
         of a comment.
     header: bool
         Flag indicating whether the data contains a row of column names.
-    type_search_order: list of strings
-        List of strings giving dtype names for the order in which
-        type should be checked, and which types to check for.
+    type_search_order: list of strings/dtypes
+        List of objects which np.dtype will recognize as dtypes.
     skip_lines: int
         Number of lines in the beginning of the text file to skip before
         reading the data
@@ -502,7 +501,7 @@ def loadtable(fname,
 
     See Also
     --------
-    loadtxt, genfromtxt
+    loadtxt, genfromtxt, dtype
 
     Notes
     -----
@@ -672,7 +671,8 @@ def init_file(fname):
     """
     if isinstance(fname, basestring):
         f = open(fname, 'U')
-    elif isinstance(fname, file):
+    elif hasattr(fname, '__iter__') and hasattr(fname, 'seek') and\
+            hasattr(fname, 'next'):
         f = fname
     else:
         raise ValueError('fname must be string or file type')
