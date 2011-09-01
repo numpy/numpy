@@ -12,7 +12,7 @@ class TestRegression(TestCase):
 
     def test_cov_parameters(self,level=rlevel):
         """Ticket #91"""
-        x = np.random.random((3,3))
+        x = np.random.random_sample((3,3))
         y = x.copy()
         np.cov(x, rowvar=1)
         np.cov(y, rowvar=0)

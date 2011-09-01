@@ -15,6 +15,7 @@ Simple random data
    randint
    random_integers
    random_sample
+   sample
    bytes
 
 Permutations

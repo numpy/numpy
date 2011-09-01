@@ -1406,7 +1406,7 @@ M   33  21.99
 
 
 def test_gzip_load():
-    a = np.random.random((5, 5))
+    a = np.random.random_sample((5, 5))
 
     s = StringIO()
     f = gzip.GzipFile(fileobj=s, mode="w")
