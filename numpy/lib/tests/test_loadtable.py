@@ -146,9 +146,15 @@ def test_na_column():
     check_datafile("na_column.txt", "na_column_masked.py",
                         NA_re=r'NA|na|')
 
+def test_na_column_string():
+    check_datafile("na_column_string.txt", "na_column_string.py")
+
 def test_na():
     check_datafile("na.txt", "na.py", NA_re=None)
     check_datafile("na.txt", "na_masked.py")
+
+def test_not_na():
+    check_datafile("not_na.txt", "not_na.py")
 
 def test_bool_str_size():
     check_datafile("bool_str_size.txt", "bool_str_size.py", delimiter=' ')

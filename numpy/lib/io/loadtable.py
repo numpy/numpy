@@ -823,6 +823,7 @@ def init_delimiter_and_NA(delimiter,
         type_search_order.append('NA')
         if re.compile(NA_re).groups>0:
             raise ValueError("NA regular expression must be non-capturing")
+        NA_re  = ''.join(['(?:', NA_re,')'])
         re_dict['NA'] = NA_re
     return delimiter, NA_re
 
@@ -905,9 +906,9 @@ def get_data_missing(f,
         numpy masked array containing the data in f
     """
 
-    NA_pattern = re.compile(''.join(['^\s*(',
+    NA_pattern = re.compile(''.join(['^\s*',
                                 re_dict['NA'],
-                                ')\s*$']))
+                                '\s*$']))
     # Construct the array of dtypes for each row entry
     coltypes_input = [dtype_dict[t] if t not in
                         ['|S1','NA|S1'] else '|S%d' %sizes[i]
@@ -1413,7 +1414,8 @@ def update_coltypes(type_search_order,
             # All strings recorded as string size of length 1 to allow
             # consistent use in np.promote_types, and since
             # sizes recorded seperately
-            newcoltypes[i] = '|S1'
+            newtype = dtype_promotion['|S1'][coltypes[i]]
+            newcoltypes[i] = str(newtype)
     return newcoltypes
 
 def make_row_re(coltypes, white, delimiter, NA_re, re_dict):
