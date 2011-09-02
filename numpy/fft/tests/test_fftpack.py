@@ -14,7 +14,7 @@ class TestFFTShift(TestCase):
 
 class TestFFT1D(TestCase):
     def test_basic(self):
-        rand = np.random.random_sample
+        rand = np.random.random
         x = rand(30) + 1j*rand(30)
         assert_array_almost_equal(fft1(x), np.fft.fft(x))
 

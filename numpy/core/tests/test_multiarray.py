@@ -1088,7 +1088,7 @@ class TestClip(TestCase):
             for byteorder in byte_orders:
                 dtype = np.dtype(T).newbyteorder(byteorder)
 
-                x = (np.random.random_sample(1000) * array_max).astype(dtype)
+                x = (np.random.random(1000) * array_max).astype(dtype)
                 if inplace:
                     x.clip(clip_min,clip_max,x)
                 else:
@@ -1108,8 +1108,7 @@ class TestClip(TestCase):
             self._clip_type('int',1024,-120,100.5, inplace=inplace)
             self._clip_type('int',1024,0,0, inplace=inplace)
 
-            x = self._clip_type('uint',1024,-120,100,expected_min=0,
-                                inplace=inplace)
+            x = self._clip_type('uint',1024,-120,100,expected_min=0, inplace=inplace)
             x = self._clip_type('uint',1024,0,0, inplace=inplace)
 
     def test_record_array(self):
@@ -1137,7 +1136,7 @@ class TestPutmask(object):
     def test_ip_types(self):
         unchecked_types = [str, unicode, np.void, object]
 
-        x = np.random.random_sample(1000)*100
+        x = np.random.random(1000)*100
         mask = x < 40
 
         for val in [-100,0,15]:
@@ -1186,7 +1185,7 @@ class TestTake(object):
     def test_ip_types(self):
         unchecked_types = [str, unicode, np.void, object]
 
-        x = np.random.random_sample(24)*100
+        x = np.random.random(24)*100
         x.shape = 2,3,4
         for types in np.sctypes.itervalues():
             for T in types:
@@ -1194,20 +1193,20 @@ class TestTake(object):
                     yield self.tst_basic,x.copy().astype(T)
 
     def test_raise(self):
-        x = np.random.random_sample(24)*100
+        x = np.random.random(24)*100
         x.shape = 2,3,4
         assert_raises(IndexError, x.take, [0,1,2], axis=0)
         assert_raises(IndexError, x.take, [-3], axis=0)
         assert_array_equal(x.take([-1], axis=0)[0], x[1])
 
     def test_clip(self):
-        x = np.random.random_sample(24)*100
+        x = np.random.random(24)*100
         x.shape = 2,3,4
         assert_array_equal(x.take([-1], axis=0, mode='clip')[0], x[0])
         assert_array_equal(x.take([2], axis=0, mode='clip')[0], x[1])
 
     def test_wrap(self):
-        x = np.random.random_sample(24)*100
+        x = np.random.random(24)*100
         x.shape = 2,3,4
         assert_array_equal(x.take([-1], axis=0, mode='wrap')[0], x[1])
         assert_array_equal(x.take([2], axis=0, mode='wrap')[0], x[0])
@@ -1249,7 +1248,7 @@ class TestIO(object):
 
     def setUp(self):
         shape = (2,4,3)
-        rand = np.random.random_sample
+        rand = np.random.random
         self.x = rand(shape) + rand(shape).astype(np.complex)*1j
         self.x[0,:,1] = [nan, inf, -inf, nan]
         self.dtype = self.x.dtype
@@ -1450,7 +1449,7 @@ class TestFromBuffer(object):
         for byteorder in ['<','>']:
             for dtype in [float,int,np.complex]:
                 dt = np.dtype(dtype).newbyteorder(byteorder)
-                x = (np.random.random_sample((4,7))*5).astype(dt)
+                x = (np.random.random((4,7))*5).astype(dt)
                 buf = x.tostring()
                 yield self.tst_basic,buf,x.flat,{'dtype':dt}
 

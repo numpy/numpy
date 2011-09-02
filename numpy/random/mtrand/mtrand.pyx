@@ -914,9 +914,9 @@ cdef class RandomState:
         return bytestring
 
 
-    def sample(self, a, size, replace=True, p=None):
+    def choice(self, a, size=1, replace=True, p=None):
         """
-        sample(a, size[, replace, p])
+        choice(a, size=1, replace=True, p=None)
 
         Generates a random sample from a given 1-D array
 
@@ -956,33 +956,33 @@ cdef class RandomState:
         ---------
         Generate a uniform random sample from np.arange(5) of size 3:
 
-        >>> np.random.sample(5, 3)
+        >>> np.random.choice(5, 3)
         array([0, 3, 4])
         >>> #This is equivalent to np.random.randint(0,5,3)
 
         Generate a non-uniform random sample from np.arange(5) of size 3:
 
-        >>> np.random.sample(5, 3, p=[0.1, 0, 0.3, 0.6, 0])
+        >>> np.random.choice(5, 3, p=[0.1, 0, 0.3, 0.6, 0])
         array([3, 3, 0])
 
         Generate a uniform random sample from np.arange(5) of size 3 without
         replacement:
 
-        >>> np.random.sample(5, 3, replace=False)
+        >>> np.random.choice(5, 3, replace=False)
         array([3,1,0])
         >>> #This is equivalent to np.random.shuffle(np.arange(5))[:3]
 
         Generate a non-uniform random sample from np.arange(5) of size
         3 without replacement:
 
-        >>> np.random.sample(5, 3, replace=False, p=[0.1, 0, 0.3, 0.6, 0])
+        >>> np.random.choice(5, 3, replace=False, p=[0.1, 0, 0.3, 0.6, 0])
         array([2, 3, 0])
 
         Any of the above can be repeated with an arbitrary array-like
         instead of just integers. For instance:
 
         >>> aa_milne_arr = ['pooh', 'rabbit', 'piglet', 'Christopher']
-        >>> np.random.sample(aa_milne_arr, 5, p=[0.5, 0.1, 0.1, 0.3])
+        >>> np.random.choice(aa_milne_arr, 5, p=[0.5, 0.1, 0.1, 0.3])
         array(['pooh', 'pooh', 'pooh', 'Christopher', 'piglet'],
               dtype='|S11')
 
@@ -1017,7 +1017,7 @@ cdef class RandomState:
         if replace:
             if None != p:
                 x = np.arange(pop_size)
-                number_each = np.random.multinomial(size, p)
+                number_each = self.multinomial(size, p)
                 idx = np.repeat(x, number_each)
                 self.shuffle(idx)
             else:
@@ -1034,7 +1034,7 @@ cdef class RandomState:
                 p = p.copy()
                 found = np.zeros(size, dtype=np.int)
                 while n_uniq < size:
-                    x = np.random.rand(size-n_uniq)
+                    x = self.rand(size-n_uniq)
                     if n_uniq > 0:
                         p[found[0:n_uniq]] = 0
                     p = p/p.sum()
@@ -4472,7 +4472,7 @@ seed = _rand.seed
 get_state = _rand.get_state
 set_state = _rand.set_state
 random_sample = _rand.random_sample
-sample = _rand.sample
+choice = _rand.choice
 randint = _rand.randint
 bytes = _rand.bytes
 uniform = _rand.uniform
