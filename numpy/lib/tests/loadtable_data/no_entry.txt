@@ -1,3 +1,0 @@
-A, AA, AAA, 
-, A, AAAA, B
-D, AA, B, C

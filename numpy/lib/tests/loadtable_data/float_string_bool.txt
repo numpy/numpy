@@ -1,2 +1,0 @@
-3, hello, True
-1.5, 2.4,  False

@@ -1,6 +1,0 @@
-Shouldn't pay any attention to this. 
-Or to this. 
-Not this either. 
-field1, field2, field3
-1, 2, 3
-4, 5, 6

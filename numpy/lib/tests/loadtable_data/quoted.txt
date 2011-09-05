@@ -1,5 +1,0 @@
-bool, int, float, string, complex, datetime
-"True", "6", "3", "2", "6", "1994-04-01"
-"FALSE", "-6", "5.24", "BAH!", "2j", "1992-04-29"
-"false", "-400", "4.e4", "Yellow Helicopter", "5.2+7.3J", "3003-04-01"
-"true", "323", "-3e-2", "Righteous Rabbit", "-3.4-4.2e2j", "1676-05-07"

@@ -1,3 +1,0 @@
-col1 col2 col3
-meat 1 2 3
-potatoes 4 5 6

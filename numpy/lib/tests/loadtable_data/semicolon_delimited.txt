@@ -1,3 +1,0 @@
-1 ; abc ; True
-4 ; def ; False
-8 ; ghi ; True

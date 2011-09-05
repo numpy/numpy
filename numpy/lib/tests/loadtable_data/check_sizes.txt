@@ -1,3 +1,0 @@
-a, aa, aaa
-ab, aabb, aaabbb
-abcc, aabbcccc, aaabbbcccccc

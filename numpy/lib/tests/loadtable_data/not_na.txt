@@ -1,4 +1,0 @@
-A, B, NA
-NAC, NAB, NAC
-D, NA, NA
-NAD, NAE, NAF

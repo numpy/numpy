@@ -385,7 +385,7 @@ entry_re = r'"[^"]*"|[^"]*?'
 
 
 def loadtable(fname,
-        delimiter=',',
+        delimiter=' ',
         comments='#',
         header=False,
         type_search_order=['b1', 'i8', 'f8','M8[D]'],
