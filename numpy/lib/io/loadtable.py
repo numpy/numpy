@@ -394,7 +394,8 @@ def loadtable(fname,
         string_sizes=1,
         check_sizes=True,
         is_Inf_NaN=True,
-        NA_re='NA|',
+        NA_re='NA',
+        usecols=None,
         quoted=False,
         comma_decimals=False,
         force_mask=False,
@@ -425,61 +426,66 @@ def loadtable(fname,
         Either the filename of the file containing the data or an iterable
         (such as a file object). If an iterable, must have __iter__, next,
         and seek methods.
-    delimiter: string
+    delimiter: string, optional
         Regular expression for the delimeter between data. The regular
         expression must be non-capturing. (i.e. r'(?:3.14)' instead of
         r'(3.14)')
-    comments: string
+    comments: string, optional
         Regular expression for the symbol(s) indicating the start
         of a comment.
-    header: bool
+    header: bool, optional
         Flag indicating whether the data contains a row of column names.
     type_search_order: list of strings/dtypes
         List of objects which np.dtype will recognize as dtypes.
-    skip_lines: int
+    skip_lines: int, optional
         Number of lines in the beginning of the text file to skip before
         reading the data
-    num_lines_search: int
+    num_lines_search: int, optional
         Number of lines, not including comments and header, to search
         for type and size information. Done to decrease the time required
         to determine the type and size information for data that is very
         homogenous.
-    string_sizes: int or list of ints
+    string_sizes: int or list of ints, optional
         If a single int, interpreted as a minimum string size for all entries.
         If a list of ints, interpreted as the minimum string size for each
         individual entry. An error is thrown if the lenght of this list
         differs from the number of entries per row found. If check_sizes is
         False, then these minimum sizes are never changed.
-   check_sizes: boolean or int
+   check_sizes: boolean or int, optional
         Whether to check string sizes in each row for determining the size of
         string dtypes. This is an expensive option.
         If true it will check all lines for sizes. If an integer, it will
         check up to that number of rows from the beginning. And if false
         it will check no rows and use the defaults given from string_size.
-    is_Inf_NaN: bool
+    is_Inf_NaN: bool, optional
         Whether to allow floats that are Inf and NaN
-    NA_re: string
+    NA_re: string, optional
         Regular expression for missing data The regular
         expression must be non-capturing. (i.e. r'(?:3.14)' instead of
         r'(3.14)')
-    quoted: bool
+    usecols : int or sequence, optional
+        Which columns to use. Selected with 0-indexing, using the same
+        sytax as selecting elements of a list. (i.e. -1 refers to the
+        last element, -2 to the second to last, etc.) If this is used,
+        no additional memory will be used for the unselected columns.
+   quoted: bool, optional
         Whether to allow the data to contain quotes, such as "3.14" or
         "North America"
-    comma_decimals: bool
+    comma_decimals: bool, optional
         Whether floats may use commas instead of decimals, e.g. "3,14"
         instead of "3.14".
-    force_mask: bool
+    force_mask: bool, optional
         Whether to force the returned array to be a masked array
-    date_re: string
+    date_re: string, optional
         The regular expression for dates. This assumes that all dates
         follow the same format. Defaults to the ISO standard. The regular
         expression must be non-capturing. (i.e. r'(?:3.14)' instead of
         r'(3.14)')
-    date_strp: string
+    date_strp: string, optional
         The format to use for converting a date string to a date. Uses
         the format from datetime.datetime.strptime in the Python Standard
         Library datetime module.
-    default_missing_dtype: string
+    default_missing_dtype: string, optional
         String representation for the default dtype for columns all of whose
         entries are missing data.
 
@@ -621,6 +627,7 @@ def loadtable(fname,
     if not nrows_data:
        raise ValueError('File has no data')
 
+    usecols = init_usecols(usecols, coltypes)
     # Determine if there are any missing values
     exists_NA = any([re.match('NA', coltype) for coltype in coltypes])
 
@@ -638,7 +645,8 @@ def loadtable(fname,
                                 col_names,
                                 skip_lines,
                                 re_dict,
-                                quoted)
+                                quoted,
+                                usecols)
     else:
         data = get_data_no_missing(f,
                                     ignore_pattern,
@@ -650,7 +658,8 @@ def loadtable(fname,
                                     header,
                                     col_names,
                                     skip_lines,
-                                    quoted)
+                                    quoted,
+                                    usecols)
 
     return data
 
@@ -856,6 +865,30 @@ def init_patterns(comments, delimiter):
         raise ValueError("Delimiter regular expression must be non-capturing")
     return ignore_pattern, delimiter_pattern
 
+def init_usecols(usecols, coltypes):
+    """
+    Initialize the usecols of columns to be used
+
+    Parameters
+    ----------
+    usecols: int or sequence
+    The columns to be used
+
+    Returns
+    -------
+    Formatted version of usecols as tuple of positive integers, if usecols
+    not None
+    """
+    if usecols:
+        if isinstance(usecols, (int, long, np.int)):
+            usecols = [usecols]
+        tmp = xrange(len(coltypes))
+        usecols = (tmp[i] for i in usecols)
+        return tuple(usecols)
+    else:
+        return None
+
+
 def get_data_missing(f,
             ignore_pattern,
             entry_pattern,
@@ -867,7 +900,8 @@ def get_data_missing(f,
             col_names,
             skip_lines,
             re_dict,
-            quoted):
+            quoted,
+            usecols):
     """
     Function that actually loads the data into a masked array.
 
@@ -899,6 +933,11 @@ def get_data_missing(f,
     quoted: bool
         Whether to allow the data to contain quotes, such as "3.14" or
         "North America"
+    usecols : int or sequence, optional
+        Which columns to use. Selected with 0-indexing, using the same
+        sytax as selecting elements of a list. (i.e. -1 refers to the
+        last element, -2 to the second to last, etc.) If this is used,
+        no additional memory will be used for the unselected columns.
 
     Returns
     -------
@@ -918,7 +957,11 @@ def get_data_missing(f,
         col_names = []
         for i in xrange(len(coltypes_input)):
             col_names.append('f'+str(i))
-    data_dtype = np.dtype(zip(col_names, coltypes_input))
+    names_types = zip(col_names, coltypes_input)
+    if usecols:
+        names_types = [names_types[i] for i in usecols]
+        coltypes = [coltypes[i] for i in usecols]
+    data_dtype = np.dtype(names_types)
     data = np.ma.zeros((nrows_data,), dtype = data_dtype)
     data.mask = np.zeros((nrows_data,), dtype='bool')
     f.seek(0)
@@ -947,7 +990,12 @@ def get_data_missing(f,
                     data[i] = rowelem
                 i = i+1
     else:
-        num_columns = len(coltypes_input)
+        if usecols:
+            num_columns = len(usecols)
+            # Increment usecols for re match numbering
+            usecols = [j+1 for j in usecols]
+        else:
+            num_columns = len(coltypes_input)
         tmpline = [0]*num_columns
         for line in f:
             if(ignore_pattern.match(line)):
@@ -959,7 +1007,12 @@ def get_data_missing(f,
                 matches = entry_pattern.match(line.strip())
                 if not matches:
                     raise RuntimeError('Cannot parse column data')
-                rowelems = matches.groups()
+                if usecols:
+                    rowelems = matches.group(*usecols)
+                    if not isinstance(rowelems, tuple):
+                        rowelems = (rowelems,)
+                else:
+                    rowelems = matches.groups()
                 for j,rowelem in enumerate(rowelems):
                     if NA_pattern.match(rowelem):
                         tmpline[j] = dtype_default_missing[
@@ -988,7 +1041,8 @@ def get_data_no_missing(f,
             header,
             col_names,
             skip_lines,
-            quoted):
+            quoted,
+            usecols):
     """
     Function that actually loads the data into a numpy array
 
@@ -1018,13 +1072,17 @@ def get_data_no_missing(f,
     quoted: bool
         Whether to allow the data to contain quotes, such as "3.14" or
         "North America"
+    usecols : int or sequence, optional
+        Which columns to use. Selected with 0-indexing, using the same
+        sytax as selecting elements of a list. (i.e. -1 refers to the
+        last element, -2 to the second to last, etc.) If this is used,
+        no additional memory will be used for the unselected columns.
 
     Returns
     -------
     numpy array
         numpy array containing the data in f
     """
-
 
     # Construct the array of dtypes for each row entry
     coltypes_input = [dtype_dict[t] if t != '|S1' else '|S%d' %sizes[i]
@@ -1034,7 +1092,13 @@ def get_data_no_missing(f,
         col_names = []
         for i in xrange(len(coltypes_input)):
             col_names.append('f'+str(i))
-    data_dtype = np.dtype(zip(col_names, coltypes_input))
+    names_types  = zip(col_names, coltypes_input)
+    if usecols:
+        names_types = [names_types[i] for i in usecols]
+        coltypes = [coltypes[i] for i in usecols]
+        # Increase usecols because of re match numbering
+        usecols = [i+1 for i in usecols]
+    data_dtype = np.dtype(names_types)
     data = np.zeros((nrows_data,), dtype = data_dtype)
     f.seek(0)
     for count in xrange(skip_lines):
@@ -1068,7 +1132,12 @@ def get_data_no_missing(f,
                 matches = entry_pattern.match(line.strip())
                 if not matches:
                     raise RuntimeError('Cannot parse column data')
-                rowelems = matches.groups()
+                if usecols:
+                    rowelems = matches.group(*usecols)
+                    if not isinstance(rowelems, tuple):
+                        rowelems = (rowelems,)
+                else:
+                    rowelems = matches.groups()
                 if quoted:
                     rowelems = [dtype_to_conv[coltypes[j]](
                                     rowelem.replace('"',''))
