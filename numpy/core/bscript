@@ -400,7 +400,7 @@ def pbuild(context):
         # library
         return context.default_library_builder(library,
                                                includes=["src/private", "src/npymath", "include"],
-                                               use="cloadable")
+                                               use="cshlib")
     context.register_compiled_library_builder("npymath", builder)
 
     def builder_sort(library):
