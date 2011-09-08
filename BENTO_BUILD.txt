@@ -1,0 +1,19 @@
+No-frill version:
+
+	* Clone bento::
+
+		git clone git://github.com/cournape/Bento.git bento-git
+	
+	* Bootstrap bento::
+
+		cd bento-git && python bootstrap.py
+
+	* Download waf from svn (svn >= r11575 is required)
+	* Build numpy with bento:
+
+		export WAFDIR=ROOT_OF_WAF_SVN_TRUNK # WAFDIR should be such as $WAFDIR/waflib exists
+		$BENTO_ROOT/bentomaker build -j 4 # 4 threads in parallel
+		# or with progress bar
+		$BENTO_ROOT/bentomaker build -p
+		# or with verbose output
+		$BENTO_ROOT/bentomaker build -v
