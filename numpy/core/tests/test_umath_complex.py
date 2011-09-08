@@ -19,11 +19,7 @@ try:
 finally:
     np.seterr(**olderr)
 # TODO: replace with a check on whether platform-provided C99 funcs are used
-have_platform_functions = (sys.platform.startswith('sunos') or
-                           (sys.platform == 'darwin' and 'powerpc' in
-                                             platform.processor()))
-skip_complex_tests = (sys.platform.startswith('win') or
-                      (have_platform_functions and functions_seem_flaky))
+skip_complex_tests = (not sys.platform.startswith('linux') or functions_seem_flaky)
 
 def platform_skip(func):
     return dec.skipif(skip_complex_tests,
