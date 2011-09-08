@@ -1929,7 +1929,7 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta)
     }
 
     PyTuple_SET_ITEM(dt_tuple, 0,
-            PyBytes_FromString(_datetime_strings[meta->base]));
+            PyUString_FromString(_datetime_strings[meta->base]));
     PyTuple_SET_ITEM(dt_tuple, 1,
             PyInt_FromLong(meta->num));
 
@@ -1948,6 +1948,7 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
     char *basestr = NULL;
     Py_ssize_t len = 0, tuple_size;
     int den = 1;
+    PyObject *unit_str = NULL;
 
     if (!PyTuple_Check(tuple)) {
         PyObject_Print(tuple, stderr, 0);
@@ -1965,15 +1966,29 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
         return -1;
     }
 
-    if (PyBytes_AsStringAndSize(PyTuple_GET_ITEM(tuple, 0),
-                                        &basestr, &len) < 0) {
+    unit_str = PyTuple_GET_ITEM(tuple, 0);
+    Py_INCREF(unit_str);
+    if (PyUnicode_Check(unit_str)) {
+        /* Allow unicode format strings: convert to bytes */
+        PyObject *tmp = PyUnicode_AsASCIIString(unit_str);
+        Py_DECREF(unit_str);
+        if (tmp == NULL) {
+            return -1;
+        }
+        unit_str = tmp;
+    }
+    if (PyBytes_AsStringAndSize(unit_str, &basestr, &len) < 0) {
+        Py_DECREF(unit_str);
         return -1;
     }
 
     out_meta->base = parse_datetime_unit_from_string(basestr, len, NULL);
     if (out_meta->base == -1) {
+        Py_DECREF(unit_str);
         return -1;
     }
+
+    Py_DECREF(unit_str);
 
     /* Convert the values to longs */
     out_meta->num = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 1));
