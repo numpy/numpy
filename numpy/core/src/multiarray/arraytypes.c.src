@@ -663,7 +663,6 @@ VOID_getitem(char *ip, PyArrayObject *ap)
      */
     {
         intp dims[1], strides[1];
-        PyArray_Descr *descr;
         dims[0] = itemsize;
         strides[0] = 1;
         descr = PyArray_DescrNewFromType(NPY_BYTE);
@@ -672,7 +671,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
                              PyArray_ISWRITEABLE(ap) ? NPY_ARRAY_WRITEABLE : 0,
                              NULL);
         Py_INCREF(ap);
-        if (PyArray_SetBaseObject(u, ap) < 0) {
+        if (PyArray_SetBaseObject(u, (PyObject *)ap) < 0) {
             Py_DECREF(u);
             return NULL;
         }
