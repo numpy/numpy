@@ -1292,7 +1292,7 @@ NPY_NO_EXPORT PyObject *
 array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
                                 PyObject *kwds)
 {
-    PyObject *arr_in = NULL, *unit_in = NULL, *timezone = NULL;
+    PyObject *arr_in = NULL, *unit_in = NULL, *timezone_obj = NULL;
     NPY_DATETIMEUNIT unit;
     NPY_CASTING casting = NPY_SAME_KIND_CASTING;
 
@@ -1313,13 +1313,13 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
                                 "O|OOO&:datetime_as_string", kwlist,
                                 &arr_in,
                                 &unit_in,
-                                &timezone,
+                                &timezone_obj,
                                 &PyArray_CastingConverter, &casting)) {
         return NULL;
     }
 
     /* Claim a reference to timezone for later */
-    Py_XINCREF(timezone);
+    Py_XINCREF(timezone_obj);
 
     op[0] = (PyArrayObject *)PyArray_FromAny(arr_in,
                                     NULL, 0, 0, 0, NULL);
@@ -1385,37 +1385,37 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     }
 
     /* Get the input time zone */
-    if (timezone != NULL) {
+    if (timezone_obj != NULL) {
         /* Convert to ASCII if it's unicode */
-        if (PyUnicode_Check(timezone)) {
+        if (PyUnicode_Check(timezone_obj)) {
             /* accept unicode input */
             PyObject *obj_str;
-            obj_str = PyUnicode_AsASCIIString(timezone);
+            obj_str = PyUnicode_AsASCIIString(timezone_obj);
             if (obj_str == NULL) {
                 goto fail;
             }
-            Py_DECREF(timezone);
-            timezone = obj_str;
+            Py_DECREF(timezone_obj);
+            timezone_obj = obj_str;
         }
 
         /* Check for the supported string inputs */
-        if (PyBytes_Check(timezone)) {
+        if (PyBytes_Check(timezone_obj)) {
             char *str;
             Py_ssize_t len;
 
-            if (PyBytes_AsStringAndSize(timezone, &str, &len) < 0) {
+            if (PyBytes_AsStringAndSize(timezone_obj, &str, &len) < 0) {
                 goto fail;
             }
 
             if (strcmp(str, "local") == 0) {
                 local = 1;
-                Py_DECREF(timezone);
-                timezone = NULL;
+                Py_DECREF(timezone_obj);
+                timezone_obj = NULL;
             }
             else if (strcmp(str, "UTC") == 0) {
                 local = 0;
-                Py_DECREF(timezone);
-                timezone = NULL;
+                Py_DECREF(timezone_obj);
+                timezone_obj = NULL;
             }
             else {
                 PyErr_Format(PyExc_ValueError, "Unsupported timezone "
@@ -1429,12 +1429,30 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
         }
     }
 
-    /* Create the output string data type with a big enough length */
+    /* Get a string size long enough for any datetimes we're given */
+    strsize = get_datetime_iso_8601_strlen(local, unit);
+#if defined(NPY_PY3K)
+    /*
+     * For Python3, allocate the output array as a UNICODE array, so
+     * that it will behave as strings properly
+     */
+    op_dtypes[1] = PyArray_DescrNewFromType(NPY_UNICODE);
+    if (op_dtypes[1] == NULL) {
+        goto fail;
+    }
+    op_dtypes[1]->elsize = strsize * 4;
+    /* This steals the UNICODE dtype reference in op_dtypes[1] */
+    op[1] = PyArray_NewLikeArray(op[0], NPY_KEEPORDER, op_dtypes[1], 1);
+    if (op[1] == NULL) {
+        op_dtypes[1] = NULL;
+        goto fail;
+    }
+#endif
+    /* Create the iteration string data type (always ASCII string) */
     op_dtypes[1] = PyArray_DescrNewFromType(NPY_STRING);
     if (op_dtypes[1] == NULL) {
         goto fail;
     }
-    strsize = get_datetime_iso_8601_strlen(local, unit);
     op_dtypes[1]->elsize = strsize;
 
     flags = NPY_ITER_ZEROSIZE_OK|
@@ -1444,7 +1462,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     op_flags[1] = NPY_ITER_WRITEONLY|
                   NPY_ITER_ALLOCATE;
 
-    iter = NpyIter_MultiNew(2, op, flags, NPY_KEEPORDER, NPY_NO_CASTING,
+    iter = NpyIter_MultiNew(2, op, flags, NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                             op_flags, op_dtypes);
     if (iter == NULL) {
         goto fail;
@@ -1474,8 +1492,8 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
             }
 
             /* Get the tzoffset from the timezone if provided */
-            if (local && timezone != NULL) {
-                tzoffset = get_tzoffset_from_pytzinfo(timezone, &dts);
+            if (local && timezone_obj != NULL) {
+                tzoffset = get_tzoffset_from_pytzinfo(timezone_obj, &dts);
                 if (tzoffset == -1) {
                     goto fail;
                 }
@@ -1494,7 +1512,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     ret = NpyIter_GetOperandArray(iter)[1];
     Py_INCREF(ret);
 
-    Py_XDECREF(timezone);
+    Py_XDECREF(timezone_obj);
     Py_XDECREF(op[0]);
     Py_XDECREF(op[1]);
     Py_XDECREF(op_dtypes[0]);
@@ -1506,7 +1524,7 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     return PyArray_Return(ret);
 
 fail:
-    Py_XDECREF(timezone);
+    Py_XDECREF(timezone_obj);
     Py_XDECREF(op[0]);
     Py_XDECREF(op[1]);
     Py_XDECREF(op_dtypes[0]);

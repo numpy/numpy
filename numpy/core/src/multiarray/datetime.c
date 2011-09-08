@@ -2441,7 +2441,7 @@ invalid_time:
  * the Python datetime.tzinfo object.
  */
 NPY_NO_EXPORT int
-get_tzoffset_from_pytzinfo(PyObject *timezone, npy_datetimestruct *dts)
+get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
 {
     PyObject *dt, *loc_dt;
     npy_datetimestruct loc_dts;
@@ -2454,7 +2454,7 @@ get_tzoffset_from_pytzinfo(PyObject *timezone, npy_datetimestruct *dts)
     }
 
     /* Convert the datetime from UTC to local time */
-    loc_dt = PyObject_CallMethod(timezone, "fromutc", "O", dt);
+    loc_dt = PyObject_CallMethod(timezone_obj, "fromutc", "O", dt);
     Py_DECREF(dt);
     if (loc_dt == NULL) {
         return -1;

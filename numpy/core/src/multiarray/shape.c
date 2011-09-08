@@ -1125,8 +1125,8 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
         /* If all the strides matched a contiguous layout, return a view */
         if (i < 0) {
             PyArrayObject *ret;
-            npy_intp stride = strideperm[ndim-1].stride;
 
+            stride = strideperm[ndim-1].stride;
             val[0] = PyArray_SIZE(arr);
 
             Py_INCREF(PyArray_DESCR(arr));
