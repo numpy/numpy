@@ -2668,8 +2668,10 @@ TIMEDELTA_mm_d_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUS
 
 #define TIMEDELTA_mq_m_true_divide TIMEDELTA_mq_m_divide
 #define TIMEDELTA_md_m_true_divide TIMEDELTA_md_m_divide
+#define TIMEDELTA_mm_d_true_divide TIMEDELTA_mm_d_divide
 #define TIMEDELTA_mq_m_floor_divide TIMEDELTA_mq_m_divide
 #define TIMEDELTA_md_m_floor_divide TIMEDELTA_md_m_divide
+#define TIMEDELTA_mm_d_floor_divide TIMEDELTA_mm_d_divide
 #define TIMEDELTA_fmin TIMEDELTA_minimum
 #define TIMEDELTA_fmax TIMEDELTA_maximum
 #define DATETIME_fmin DATETIME_minimum
@@ -2681,27 +2683,27 @@ TIMEDELTA_mm_d_divide(char **args, intp *dimensions, intp *steps, void *NPY_UNUS
  *****************************************************************************
  */
 
-#line 514
+#line 516
 NPY_NO_EXPORT void
 OBJECT_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 514
+#line 516
 NPY_NO_EXPORT void
 OBJECT_not_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 514
+#line 516
 NPY_NO_EXPORT void
 OBJECT_greater(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 514
+#line 516
 NPY_NO_EXPORT void
 OBJECT_greater_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 514
+#line 516
 NPY_NO_EXPORT void
 OBJECT_less(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
-#line 514
+#line 516
 NPY_NO_EXPORT void
 OBJECT_less_equal(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func));
 
