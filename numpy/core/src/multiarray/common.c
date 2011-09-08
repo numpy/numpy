@@ -318,6 +318,7 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
         }
         if (PyArray_DTypeFromObject(ip, maxdims - 1,
                             out_contains_na, out_dtype) < 0) {
+            Py_DECREF(ip);
             goto fail;
         }
         Py_DECREF(ip);
