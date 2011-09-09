@@ -13,7 +13,6 @@ import numpy as np
 import datetime as dt
 
 
-
 # Dictionary mapping dtype name to regular expression
 # matching that dtype, assuming data isn't quoted
 dtype_to_re = {
@@ -679,12 +678,14 @@ def init_file(fname):
         The file object for the text file containing the data
     """
     if isinstance(fname, basestring):
-        f = open(fname, 'U')
+        f = np.lib._datasource.open(fname, 'rbU')
     elif hasattr(fname, '__iter__') and hasattr(fname, 'seek') and\
             hasattr(fname, 'next'):
         f = fname
     else:
-        raise ValueError('fname must be string or file type')
+        raise ValueError(''.join(['fname must be filename, file, ',
+                            'iterable with seek, or valid input to ',
+                            'np.DataSource.']))
     return f
 
 def init_re_dict(quoted):
