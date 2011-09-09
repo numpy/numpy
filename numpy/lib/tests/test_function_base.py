@@ -1243,4 +1243,4 @@ class TestAdd_newdoc_ufunc(TestCase):
 
 
 if __name__ == "__main__":
-    run_module_suite('')
+    run_module_suite()
