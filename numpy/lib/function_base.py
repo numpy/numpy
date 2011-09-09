@@ -2,12 +2,12 @@ __docformat__ = "restructuredtext en"
 __all__ = ['select', 'piecewise', 'trim_zeros', 'copy', 'iterable',
         'percentile', 'diff', 'gradient', 'angle', 'unwrap', 'sort_complex',
         'disp', 'extract', 'place', 'nansum', 'nanmax', 'nanargmax',
-        'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
+        'nanargmin', 'nanmin', 'argrelmax', 'argrelmin', 'vectorize',
+        'asarray_chkfinite', 'average',
         'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
         'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
         'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-        'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
-        'argrelmax','argrelmin']
+        'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc']
 
 import warnings
 import types
@@ -1648,16 +1648,12 @@ def nanargmax(a, axis=None):
     """
     return _nanop(np.argmax, -np.inf, a, axis)
 
+def _argrelextrema(data,comparator,axis=0,order=1,mode='clip'):
 
-
-def _argrelextrema(data,comparator,
-                  axis=0,order=1,mode='clip'):
-    
     int_order = int(order)
     if( (int_order != order) or (order < 1) ):
         raise ValueError('Order must be an integer >= 1')
 
-    
     datalen = data.shape[axis]
     locs = np.arange(0,datalen)
 
@@ -1687,7 +1683,7 @@ def argrelmin(data,axis=0,order=1,mode='clip'):
 def argrelmax(data,axis=0,order=1,mode='clip'):
     """
     Calculate the relative maxima of `data`.
-    
+
     Parameters
     -----------
     data: array-like
@@ -1716,13 +1712,13 @@ def argrelmax(data,axis=0,order=1,mode='clip'):
     >>>> totlen = 30
     >>>> nx = 15
     >>>> xinds = np.arange(0,np.pi,np.pi/nx)
-    >>>> sininds = np.arange(8,8+nx) 
+    >>>> sininds = np.arange(8,8+nx)
     >>>> a = np.ones(totlen)
     >>>> a[sininds] = 0.9*np.sin(xinds)
     >>>> print np.argrelmax(a)
     >>>> (array([16]),)
     
-    This function is 1 on each side, with a curve in the center. 
+    This function is 1 on each side, with a curve in the center.
     The curve in the center represents a relative maximum,
     and that is what is returned.
         
@@ -1786,6 +1782,7 @@ def _get_nargs(obj):
 
     terr = re.compile(r'.*? takes (exactly|at least) (?P<exargs>(\d+)|(\w+))' +
             r' argument(s|) \((?P<gargs>(\d+)|(\w+)) given\)')
+    
     def _convert_to_int(strval):
         try:
             result = int(strval)
