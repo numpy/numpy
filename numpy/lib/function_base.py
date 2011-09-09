@@ -6,7 +6,8 @@ __all__ = ['select', 'piecewise', 'trim_zeros', 'copy', 'iterable',
         'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
         'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
         'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-        'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc']
+        'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc',
+        'argrelmax','argrelmin']
 
 import warnings
 import types
@@ -1646,6 +1647,94 @@ def nanargmax(a, axis=None):
 
     """
     return _nanop(np.argmax, -np.inf, a, axis)
+
+
+
+def _argrelextrema(data,comparator,
+                  axis=0,order=1,mode='clip'):
+    
+    int_order = int(order)
+    if( (int_order != order) or (order < 1) ):
+        raise ValueError('Order must be an integer >= 1')
+
+    
+    datalen = data.shape[axis]
+    locs = np.arange(0,datalen)
+
+    results = ones(data.shape,dtype=bool)
+    main = data.take(locs,axis=axis,mode=mode)
+    for shift in xrange(1,int_order+1):
+        plus = data.take(locs + shift,axis=axis,mode=mode)
+        minus = data.take(locs - shift,axis=axis,mode=mode)
+        results &= comparator(main,plus)
+        results &= comparator(main,minus)
+        if(~results.any()):
+            return np.array([],)*2
+    arglocs = np.where(results)
+    return arglocs
+
+def argrelmin(data,axis=0,order=1,mode='clip'):
+    """
+    Calculate the relative minima of `data`.
+
+    See also
+    --------
+    argmax : Similar function.  Please refer to `numpy.argmax` for detailed
+        documentation.
+    """
+    return _argrelextrema(data,np.less,axis,order,mode)
+
+def argrelmax(data,axis=0,order=1,mode='clip'):
+    """
+    Calculate the relative maxima of `data`.
+    
+    Parameters
+    -----------
+    data: array-like
+    axis: integer, optional
+        axis over which to select data. Default is 0.
+    order: integer, optional
+        Default is 1
+    mode: string, optional
+        How the edges of the vector are treated.
+        'wrap' (wrap around) or 'clip' (treat overflow
+        as the same as the last (or first) element).
+        Default 'clip'. See numpy.take
+        
+    Returns
+    ----------
+    maxima: array-like
+        Indices of the maxima, same format as
+        numpy.where
+    
+    See also
+    --------
+    argrelmin : Similar function
+    
+    Examples
+    ---------
+    >>>> totlen = 30
+    >>>> nx = 15
+    >>>> xinds = np.arange(0,np.pi,np.pi/nx)
+    >>>> sininds = np.arange(8,8+nx) 
+    >>>> a = np.ones(totlen)
+    >>>> a[sininds] = 0.9*np.sin(xinds)
+    >>>> print np.argrelmax(a)
+    >>>> (array([16]),)
+    
+    This function is 1 on each side, with a curve in the center. 
+    The curve in the center represents a relative maximum,
+    and that is what is returned.
+        
+    Notes
+    --------
+    Relative maxima are calculated by finding locations where
+    data[n] > data[n+1:n+order+1:+1] &
+    data[n] > data[n-1:n-order-1:-1]. 
+
+    """
+
+    return _argrelextrema(data,np.greater,axis,order,mode)
 
 def disp(mesg, device=None, linefeed=True):
     """
