@@ -1338,7 +1338,7 @@ def get_nrows_sizes_coltypes(f,
                                     delimiter_pattern,
                                     entry_pattern)
             if 0<check_sizes:
-                update_sizes(sizes, line, entry_pattern)
+                sizes = update_sizes(sizes, line, entry_pattern)
             row_re = make_row_re(coltypes,
                                     white,
                                     delimiter,
@@ -1368,7 +1368,7 @@ def get_nrows_sizes_coltypes(f,
                                         re_dict)
                 row_re_pattern = re.compile(row_re)
             if nrows_data<=check_sizes:
-                update_sizes(sizes, line, entry_pattern)
+                sizes = update_sizes(sizes, line, entry_pattern)
     return nrows_data, sizes, coltypes, entry_pattern
 
 def update_sizes(sizes, line, entry_pattern):
@@ -1397,9 +1397,8 @@ def update_sizes(sizes, line, entry_pattern):
     matches = entry_pattern.match(line.strip())
     if not matches:
         raise RuntimeError('Cannot parse column data')
-    rowelems = map(len, matches.groups())
-    rowelems = np.array(rowelems)
-    sizes = np.maximum(rowelems, sizes, out=sizes)
+    return map(max, zip(sizes, map(len, matches.groups())))
+
 
 def build_type_re(type_search_order, re_dict):
     """
