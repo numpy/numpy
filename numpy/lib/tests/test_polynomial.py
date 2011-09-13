@@ -100,10 +100,27 @@ class TestDocs(TestCase):
 
     def test_polyfit(self) :
         c = np.array([3., 2., 1.])
-        x = np.linspace(0,2,5)
+        x = np.linspace(0,2,7)
         y = np.polyval(c,x)
+        err = [1,-1,1,-1,1,-1,1]
+        weights = arange(8,1,-1)**2/7.0
+
         # check 1D case
-        assert_almost_equal(c, np.polyfit(x,y,2))
+        m, cov = np.polyfit(x,y+err,2,cov=True)
+        est = [3.8571, 0.2857, 1.619]
+        assert_almost_equal(est, m, decimal=4)
+        val0 = [[2.9388, -5.8776, 1.6327],
+                [-5.8776, 12.7347, -4.2449],
+                [1.6327, -4.2449, 2.3220]]
+        assert_almost_equal(val0, cov, decimal=4)
+
+        m2, cov2 = np.polyfit(x,y+err,2,w=weights,cov=True)
+        assert_almost_equal([4.8927, -1.0177,  1.7768], m2, decimal=4)
+        val = [[  8.7929, -10.0103,   0.9756],
+               [-10.0103,  13.6134,  -1.8178],
+               [  0.9756,  -1.8178,   0.6674]]
+        assert_almost_equal(val, cov2, decimal=4)
+
         # check 2D (n,1) case
         y = y[:,np.newaxis]
         c = c[:,np.newaxis]
@@ -112,6 +129,12 @@ class TestDocs(TestCase):
         yy = np.concatenate((y,y), axis=1)
         cc = np.concatenate((c,c), axis=1)
         assert_almost_equal(cc, np.polyfit(x,yy,2))
+
+        m, cov = np.polyfit(x,yy+array(err)[:,np.newaxis],2,cov=True)
+        assert_almost_equal(est, m[:,0], decimal=4)
+        assert_almost_equal(est, m[:,1], decimal=4)
+        assert_almost_equal(val0, cov[:,:,0], decimal=4)
+        assert_almost_equal(val0, cov[:,:,1], decimal=4)
 
     def test_objects(self):
         from decimal import Decimal
