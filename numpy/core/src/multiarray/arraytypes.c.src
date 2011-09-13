@@ -2906,14 +2906,14 @@ OBJECT_fill(PyObject **buffer, intp length, void *NPY_UNUSED(ignored))
     if (!delta) {
         return;
     }
-    start = PyNumber_Add(start, delta);
+    second = start = PyNumber_Add(start, delta);
     if (!start) {
         goto finish;
     }
     buffer += 2;
 
     for (i = 2; i < length; i++, buffer++) {
-        second = start = PyNumber_Add(start, delta);
+        start = PyNumber_Add(start, delta);
         if (!start) {
             goto finish;
         }
