@@ -9,6 +9,26 @@ A Guide to NumPy/SciPy Documentation
    For an accompanying example, see `example.py
    <http://github.com/numpy/numpy/blob/master/doc/example.py>`_.
 
+   When using `Sphinx <http://sphinx.pocoo.org/>`_ in combination with the numpy
+   conventions, you may be interested in the ``numpydoc`` extension, which will
+   handle your docstrings correctly. For example, it will extract the
+   ``Parameters`` section from your docstring and convert this into a field list.
+   It can also help alleviate reStructuredText errors encounterde when using
+   plain sphinx. Sphinx gets confused because the numpy docstrings have section
+   headers (e.g. ``-------------``) which sphinx does not expect to find in
+   docstrings.
+
+   It is available from:
+
+   * `numpydoc on PyPI <http://pypi.python.org/pypi/numpydoc>`_
+   * `numpydoc on GitHub (in main numpy repository)
+     <https://github.com/numpy/numpy/blob/master/doc/sphinxext/numpydoc.py>`_
+
+   Details of how to use it can be found `here
+   <https://github.com/numpy/numpy/blob/master/doc/sphinxext/README.txt>`_ and
+   `here
+   <https://github.com/numpy/numpy/blob/master/doc/HOWTO_BUILD_DOCS.rst.txt>`_
+
 Overview
 --------
 In general, we follow the standard Python style conventions as described here:
