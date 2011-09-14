@@ -296,13 +296,24 @@ def generate_def(dll, dfile):
     d.close()
 
 def find_dll(dll_name):
+
+    def _find_dll_in_winsxs(dll_name):
+        # Walk through the WinSxS directory to find the dll.
+        winsxs_path = os.path.join(os.environ['WINDIR'], 'winsxs')
+        if not os.path.exists(winsxs_path):
+            return None
+        for root, dirs, files in os.walk(winsxs_path):
+            if dll_name in files:
+                return os.path.join(root, dll_name)
+        return None
+
     # First, look in the Python directory, then scan PATH for
-    # the given dll name.
+    # the given dll name. Lastly, look in the WinSxS directory.
     for path in [sys.prefix] + os.environ['PATH'].split(';'):
         filepath = os.path.join(path, dll_name)
         if os.path.exists(filepath):
             return os.path.abspath(filepath)
-    return None
+    return _find_dll_in_winsxs(dll_name)
 
 def build_msvcr_library(debug=False):
     if os.name != 'nt':
