@@ -12,6 +12,12 @@
 
 #include <time.h>
 
+#if defined(_WIN32) && \
+    defined(__GNUC__) && \
+    defined(NPY_MINGW_USE_CUSTOM_MSVCR)
+#define time_t __time64_t
+#endif
+
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #include <numpy/arrayobject.h>
