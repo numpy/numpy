@@ -295,9 +295,11 @@ def generate_def(dll, dfile):
         d.write('%s\n' % s[1])
     d.close()
 
-def find_msvcr_dll(msvcr_dll_name):
+def find_dll(dll_name):
+    # First, look in the Python directory, then scan PATH for
+    # the given dll name.
     for path in [sys.prefix] + os.environ['PATH'].split(';'):
-        filepath = os.path.join(path, msvcr_dll_name)
+        filepath = os.path.join(path, dll_name)
         if os.path.exists(filepath):
             return os.path.abspath(filepath)
     return None
@@ -311,8 +313,15 @@ def build_msvcr_library(debug=False):
         return False
 
     msvcr_name = msvc_runtime_library()
+
+    # Skip using a custom library for versions < MSVC 8.0
+    if int(msvcr_name[-2:]) < 80:
+        log.debug('Skip building msvcr library: custom functionality not present')
+        return False
+
+    # Find the msvcr dll
     msvcr_dll_name = msvcr_name + '.dll'
-    dll_file = find_msvcr_dll(msvcr_dll_name)
+    dll_file = find_dll(msvcr_dll_name)
     if not dll_file:
         log.warn('Cannot build msvcr library: "%s" not found' % msvcr_dll_name)
         return False
@@ -329,8 +338,10 @@ def build_msvcr_library(debug=False):
     log.info('Building msvcr library: "%s" (from %s)' \
              % (out_file, dll_file))
 
+    # Generate a symbol definition file from the msvcr dll
     generate_def(dll_file, def_file)
 
+    # Create a custom mingw library for the given symbol definitions
     cmd = ['dlltool', '-d', def_file, '-l', out_file]
     retcode = subprocess.call(cmd)
 
