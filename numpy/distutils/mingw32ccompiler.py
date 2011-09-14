@@ -90,6 +90,11 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
 
         build_import_library()
 
+        # Check for custom msvc runtime library on Windows. Build if it doesn't exist.
+        if build_msvcr_library():
+            # add preprocessor statement for using customized msvcr lib
+            self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR', '1')
+
         # **changes: eric jones 4/11/01
         # 2. increased optimization and turned off all warnings
         # 3. also added --driver-name g++
@@ -289,6 +294,47 @@ def generate_def(dll, dfile):
         #d.write('@%d    %s\n' % (s[0], s[1]))
         d.write('%s\n' % s[1])
     d.close()
+
+def find_msvcr_dll(msvcr_dll_name):
+    for path in [sys.prefix] + os.environ['PATH'].split(';'):
+        filepath = os.path.join(path, msvcr_dll_name)
+        if os.path.exists(filepath):
+            return os.path.abspath(filepath)
+    return None
+
+def build_msvcr_library(debug=False):
+    if os.name != 'nt':
+        return False
+
+    if debug:
+        log.warn('Cannot build msvcr-dbg library: not yet implemented')
+        return False
+
+    msvcr_name = msvc_runtime_library()
+    msvcr_dll_name = msvcr_name + '.dll'
+    dll_file = find_msvcr_dll(msvcr_dll_name)
+    if not dll_file:
+        log.warn('Cannot build msvcr library: "%s" not found' % msvcr_dll_name)
+        return False
+
+    out_name = "lib%s.a" % msvcr_name
+    out_file = os.path.join(sys.prefix, 'libs', out_name)
+    if os.path.isfile(out_file):
+        log.debug('Skip building msvcr library: "%s" exists' % (out_file))
+        return True
+
+    def_name = "lib%s.def" % msvcr_name
+    def_file = os.path.join(sys.prefix, 'libs', def_name)
+
+    log.info('Building msvcr library: "%s" (from %s)' \
+             % (out_file, dll_file))
+
+    generate_def(dll_file, def_file)
+
+    cmd = ['dlltool', '-d', def_file, '-l', out_file]
+    retcode = subprocess.call(cmd)
+
+    return (not retcode)
 
 def build_import_library():
     if os.name != 'nt':
