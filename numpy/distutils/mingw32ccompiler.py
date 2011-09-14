@@ -175,6 +175,9 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             if not libraries:
                 libraries = []
             libraries.append(runtime_library)
+        if debug:
+            # There is no customized msvcr lib in debug mode
+            self.undefine_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
         args = (self,
                 target_desc,
                 objects,
