@@ -345,6 +345,9 @@ def build_msvcr_library(debug=False):
     cmd = ['dlltool', '-d', def_file, '-l', out_file]
     retcode = subprocess.call(cmd)
 
+    # Clean up symbol definitions
+    os.remove(def_file)
+
     return (not retcode)
 
 def build_import_library():
