@@ -91,9 +91,9 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         build_import_library()
 
         # Check for custom msvc runtime library on Windows. Build if it doesn't exist.
-        if build_msvcr_library():
+        if build_msvcr_library() | build_msvcr_library(debug=True):
             # add preprocessor statement for using customized msvcr lib
-            self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR', '1')
+            self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
 
         # **changes: eric jones 4/11/01
         # 2. increased optimization and turned off all warnings
@@ -175,9 +175,6 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
             if not libraries:
                 libraries = []
             libraries.append(runtime_library)
-        if debug:
-            # There is no customized msvcr lib in debug mode
-            self.undefine_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
         args = (self,
                 target_desc,
                 objects,
@@ -311,16 +308,15 @@ def build_msvcr_library(debug=False):
     if os.name != 'nt':
         return False
 
-    if debug:
-        log.warn('Cannot build msvcr-dbg library: not yet implemented')
-        return False
-
     msvcr_name = msvc_runtime_library()
 
     # Skip using a custom library for versions < MSVC 8.0
-    if int(msvcr_name[-2:]) < 80:
+    if int(msvcr_name.lstrip('msvcr')) < 80:
         log.debug('Skip building msvcr library: custom functionality not present')
         return False
+
+    if debug:
+        msvcr_name += 'd'
 
     # Find the msvcr dll
     msvcr_dll_name = msvcr_name + '.dll'
