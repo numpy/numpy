@@ -103,7 +103,7 @@ class TestDocs(TestCase):
         x = np.linspace(0,2,7)
         y = np.polyval(c,x)
         err = [1,-1,1,-1,1,-1,1]
-        weights = arange(8,1,-1)**2/7.0
+        weights = np.arange(8,1,-1)**2/7.0
 
         # check 1D case
         m, cov = np.polyfit(x,y+err,2,cov=True)
@@ -130,7 +130,7 @@ class TestDocs(TestCase):
         cc = np.concatenate((c,c), axis=1)
         assert_almost_equal(cc, np.polyfit(x,yy,2))
 
-        m, cov = np.polyfit(x,yy+array(err)[:,np.newaxis],2,cov=True)
+        m, cov = np.polyfit(x,yy + np.array(err)[:,np.newaxis],2,cov=True)
         assert_almost_equal(est, m[:,0], decimal=4)
         assert_almost_equal(est, m[:,1], decimal=4)
         assert_almost_equal(val0, cov[:,:,0], decimal=4)
