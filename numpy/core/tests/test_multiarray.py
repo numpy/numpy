@@ -7,6 +7,9 @@ from nose import SkipTest
 from numpy.core import *
 from numpy.core.multiarray_tests import test_neighborhood_iterator, test_neighborhood_iterator_oob
 
+# Need to test an object that does not fully implement math interface
+from datetime import timedelta
+
 from numpy.compat import asbytes, getexception, strchar
 
 from test_print import in_foreign_locale
@@ -925,6 +928,38 @@ class TestArgmax(TestCase):
         ([complex(0, 0), complex(0, 2), complex(0, 1)], 1),
         ([complex(1, 0), complex(0, 2), complex(0, 1)], 0),
         ([complex(1, 0), complex(0, 2), complex(1, 1)], 2),
+
+        # Fails on 32-bit systems (haven't tested 64-bit) due to y2.038k bug
+        #([np.datetime64('1923-04-14T12:43:12'),
+        #  np.datetime64('1994-06-21T14:43:15'),
+        #  np.datetime64('2001-10-15T04:10:32'),
+        #  np.datetime64('1995-11-25T16:02:16'),
+        #  np.datetime64('2005-01-04T03:14:12'),
+        #  np.datetime64('2041-12-03T14:05:03')], 5),
+        ([np.datetime64('1935-09-14T04:40:11'),
+          np.datetime64('1949-10-12T12:32:11'),
+          np.datetime64('2010-01-03T05:14:12'),
+          np.datetime64('2015-11-20T12:20:59'),
+          np.datetime64('1932-09-23T10:10:13'),
+          np.datetime64('2014-10-10T03:50:30')], 3),
+        #([np.datetime64('2059-03-14T12:43:12'),
+        #  np.datetime64('1996-09-21T14:43:15'),
+        #  np.datetime64('2001-10-15T04:10:32'),
+        #  np.datetime64('2022-12-25T16:02:16'),
+        #  np.datetime64('1963-10-04T03:14:12'),
+        #  np.datetime64('2013-05-08T18:15:23')], 0),
+
+        ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
+          timedelta(days=-1, seconds=23)], 0),
+        ([timedelta(days=1, seconds=43), timedelta(days=10, seconds=5),
+          timedelta(days=5, seconds=14)], 1),
+        ([timedelta(days=10, seconds=24), timedelta(days=10, seconds=5),
+          timedelta(days=10, seconds=43)], 2),
+
+        # Can't reduce a "flexible type"
+        #(['a', 'z', 'aa', 'zz'], 3),
+        #(['zz', 'a', 'aa', 'a'], 0),
+        #(['aa', 'z', 'zz', 'a'], 2),
     ]
 
     def test_all(self):
@@ -940,6 +975,76 @@ class TestArgmax(TestCase):
         for arr, pos in self.nan_arr:
             assert_equal(np.argmax(arr), pos, err_msg="%r"%arr)
             assert_equal(arr[np.argmax(arr)], np.max(arr), err_msg="%r"%arr)
+
+
+class TestArgmin(TestCase):
+
+    nan_arr = [
+        ([0, 1, 2, 3, np.nan], 4),
+        ([0, 1, 2, np.nan, 3], 3),
+        ([np.nan, 0, 1, 2, 3], 0),
+        ([np.nan, 0, np.nan, 2, 3], 0),
+        ([0, 1, 2, 3, complex(0,np.nan)], 4),
+        ([0, 1, 2, 3, complex(np.nan,0)], 4),
+        ([0, 1, 2, complex(np.nan,0), 3], 3),
+        ([0, 1, 2, complex(0,np.nan), 3], 3),
+        ([complex(0,np.nan), 0, 1, 2, 3], 0),
+        ([complex(np.nan, np.nan), 0, 1, 2, 3], 0),
+        ([complex(np.nan, 0), complex(np.nan, 2), complex(np.nan, 1)], 0),
+        ([complex(np.nan, np.nan), complex(np.nan, 2), complex(np.nan, 1)], 0),
+        ([complex(np.nan, 0), complex(np.nan, 2), complex(np.nan, np.nan)], 0),
+
+        ([complex(0, 0), complex(0, 2), complex(0, 1)], 0),
+        ([complex(1, 0), complex(0, 2), complex(0, 1)], 2),
+        ([complex(1, 0), complex(0, 2), complex(1, 1)], 1),
+
+        # Fails on 32-bit systems (haven't tested 64-bit) due to y2.038k bug
+        #([np.datetime64('1923-04-14T12:43:12'),
+        #  np.datetime64('1994-06-21T14:43:15'),
+        #  np.datetime64('2001-10-15T04:10:32'),
+        #  np.datetime64('1995-11-25T16:02:16'),
+        #  np.datetime64('2005-01-04T03:14:12'),
+        # np.datetime64('2041-12-03T14:05:03')], 0),
+        ([np.datetime64('1935-09-14T04:40:11'),
+          np.datetime64('1949-10-12T12:32:11'),
+          np.datetime64('2010-01-03T05:14:12'),
+          np.datetime64('2014-11-20T12:20:59'),
+          np.datetime64('2015-09-23T10:10:13'),
+          np.datetime64('1932-10-10T03:50:30')], 5),
+        #([np.datetime64('2059-03-14T12:43:12'),
+        #  np.datetime64('1996-09-21T14:43:15'),
+        #  np.datetime64('2001-10-15T04:10:32'),
+        #  np.datetime64('2022-12-25T16:02:16'),
+        #  np.datetime64('1963-10-04T03:14:12'),
+        #  np.datetime64('2013-05-08T18:15:23')], 4),
+
+        ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
+          timedelta(days=-1, seconds=23)], 2),
+        ([timedelta(days=1, seconds=43), timedelta(days=10, seconds=5),
+          timedelta(days=5, seconds=14)], 0),
+        ([timedelta(days=10, seconds=24), timedelta(days=10, seconds=5),
+          timedelta(days=10, seconds=43)], 1),
+
+        # Can't reduce a "flexible type"
+        #(['a', 'z', 'aa', 'zz'], 0),
+        #(['zz', 'a', 'aa', 'a'], 1),
+        #(['aa', 'z', 'zz', 'a'], 3),
+    ]
+
+    def test_all(self):
+        a = np.random.normal(0,1,(4,5,6,7,8))
+        for i in xrange(a.ndim):
+            amin = a.min(i)
+            aargmin = a.argmin(i)
+            axes = range(a.ndim)
+            axes.remove(i)
+            assert_(all(amin == aargmin.choose(*a.transpose(i,*axes))))
+
+    def test_combinations(self):
+        for arr, pos in self.nan_arr:
+            assert_equal(np.argmin(arr), pos, err_msg="%r"%arr)
+            assert_equal(arr[np.argmin(arr)], np.min(arr), err_msg="%r"%arr)
+
 
 
 class TestMinMax(TestCase):

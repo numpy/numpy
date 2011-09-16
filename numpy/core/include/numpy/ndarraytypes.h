@@ -524,6 +524,13 @@ typedef struct {
         PyArray_FastClipFunc *fastclip;
         PyArray_FastPutmaskFunc *fastputmask;
         PyArray_FastTakeFunc *fasttake;
+
+        /*
+         * Function to select smallest
+         * Can be NULL
+         */
+        PyArray_ArgFunc *argmin;
+
 } PyArray_ArrFuncs;
 
 /* The item must be reference counted when it is inserted or extracted. */
