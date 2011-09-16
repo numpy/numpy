@@ -460,6 +460,12 @@ typedef struct {
         PyArray_ArgFunc *argmax;
 
         /*
+         * Function to select smallest
+         * Can be NULL
+         */
+        PyArray_ArgFunc *argmin;
+
+        /*
          * Function to compute dot product
          * Can be NULL
          */
