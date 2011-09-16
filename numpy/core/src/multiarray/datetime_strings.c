@@ -130,8 +130,38 @@ parse_iso_8601_datetime(char *str, int len,
         time_t rawtime = 0;
         struct tm tm_;
 
+#if defined(_WIN32) && defined(__GNUC__)
+/* This is a quagmire in mingw... */
+#  if 0
+        struct tm * tm_ptr;
         time(&rawtime);
-#if defined(_WIN32)
+        /*
+         * MINGW supports neither localtime_s nor localtime_r, but
+         * supposedly uses thread-local storage, so this should
+         * be ok.
+         */
+        tm_ptr = localtime(&rawtime);
+        if (tm_ptr == NULL) {
+            PyErr_SetString(PyExc_OSError, "Failed to use localtime to "
+                                        "get a local time");
+            return -1;
+        }
+        tm_ = *tm_ptr;
+#  else
+        /*
+         * Hoping that directly calling the _gmtime64_s and _localtime_s
+         * functions will allow linking against different MSVC versions.
+         */
+        npy_int64 rawtime64 = 0;
+        _time64(&rawtime64);
+        if (_localtime64_s(&tm_, &rawtime64) != 0) {
+            PyErr_SetString(PyExc_OSError, "Failed to obtain local time "
+                                        "from localtime64_s");
+            return -1;
+        }
+#  endif
+#elif defined(_WIN32)
+        time(&rawtime);
         if (localtime_s(&tm_, &rawtime) != 0) {
             PyErr_SetString(PyExc_OSError, "Failed to obtain local time "
                                         "from localtime_s");
@@ -139,6 +169,7 @@ parse_iso_8601_datetime(char *str, int len,
         }
 #else
         /* Other platforms may require something else */
+        time(&rawtime);
         if (localtime_r(&rawtime, &tm_) == NULL) {
             PyErr_SetString(PyExc_OSError, "Failed obtain local time "
                                         "from localtime_r");
@@ -532,7 +563,35 @@ parse_timezone:
             }
 
             /* gmtime converts a 'time_t' into a UTC 'struct tm' */
-#if defined(_WIN32)
+#if defined(_WIN32) && defined(__GNUC__)
+/* This is a quagmire in mingw... */
+#  if 0
+            struct tm * tm_ptr;
+            /*
+             * MINGW supports neither gmtime_s nor gmtime_r, but
+             * supposedly uses thread-local storage, so this should
+             * be ok.
+             */
+            tm_ptr = gmtime(&rawtime);
+            if (tm_ptr == NULL) {
+                PyErr_SetString(PyExc_OSError, "Failed to use gmtime to "
+                                            "get a UTC time");
+                goto error;
+            }
+            tm_ = *tm_ptr;
+#  else
+            /*
+             * Hoping that directly calling the _gmtime64_s and _localtime_s
+             * functions will allow linking against different MSVC versions.
+             */
+            npy_int64 rawtime64 = rawtime;
+            if (_gmtime64_s(&tm_, &rawtime64) != 0) {
+                PyErr_SetString(PyExc_OSError, "Failed to obtain UTC time "
+                                            "from _gmtime64_s");
+                goto error;
+            }
+#  endif
+#elif defined(_WIN32)
             if (gmtime_s(&tm_, &rawtime) != 0) {
                 PyErr_SetString(PyExc_OSError, "Failed to use gmtime_s to "
                                             "get a UTC time");
@@ -884,7 +943,35 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
         rawtime += dts->min * 60;
 
         /* localtime converts a 'time_t' into a local 'struct tm' */
-#if defined(_WIN32)
+#if defined(_WIN32) && defined(__GNUC__)
+/* This is a quagmire in mingw... */
+#  if 0
+        struct tm * tm_ptr;
+        /*
+         * MINGW supports neither localtime_s nor localtime_r, but
+         * supposedly uses thread-local storage, so this should
+         * be ok.
+         */
+        tm_ptr = localtime(&rawtime);
+        if (tm_ptr == NULL) {
+            PyErr_SetString(PyExc_OSError, "Failed to use localtime to "
+                                        "get a local time");
+            return -1;
+        }
+        tm_ = *tm_ptr;
+#  else
+        /*
+         * Hoping that directly calling the _gmtime64_s and _localtime_s
+         * functions will allow linking against different MSVC versions.
+         */
+        npy_int64 rawtime64 = rawtime;
+        if (_localtime64_s(&tm_, &rawtime64) != 0) {
+            PyErr_SetString(PyExc_OSError, "Failed to obtain local time "
+                                        "from _localtime64_s");
+            return -1;
+        }
+#  endif
+#elif defined(_WIN32)
         if (localtime_s(&tm_, &rawtime) != 0) {
             PyErr_SetString(PyExc_OSError, "Failed to use localtime_s to "
                                         "get a local time");
