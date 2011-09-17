@@ -3001,6 +3001,7 @@ PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
         return NULL;
     }
     if (_zerofill(ret) < 0) {
+        Py_DECREF(ret);
         return NULL;
     }
     return (PyObject *)ret;
@@ -3698,6 +3699,9 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
 
     if (dtype == NULL) {
         dtype=PyArray_DescrFromType(NPY_DEFAULT_TYPE);
+        if (dtype == NULL) {
+            return NULL;
+        }
     }
     if (PyDataType_FLAGCHK(dtype, NPY_ITEM_IS_POINTER) ||
                     PyDataType_REFCHK(dtype)) {
