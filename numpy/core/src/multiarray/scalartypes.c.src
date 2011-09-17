@@ -681,9 +681,13 @@ timedeltatype_repr(PyObject *self)
         ret = PyUString_FromString("numpy.timedelta64('NaT'");
     }
     else {
-        /* Can't use "%lld" in Python < 2.7, or if HAVE_LONG_LONG is not
-         * defined */
-#if defined(HAVE_LONG_LONG) && (PY_VERSION_HEX >= 0x02070000)
+        /*
+         * Can't use "%lld" in Python < 2.7, Python3 < 3.2,
+         * or if HAVE_LONG_LONG is not defined
+         */
+#if defined(HAVE_LONG_LONG) && \
+           ((PY_VERSION_HEX >= 0x02070000 && PY_VERSION_HEX < 0x03000000) || \
+            (PY_VERSION_HEX >= 0x03020000))
         ret = PyUString_FromFormat("numpy.timedelta64(%lld",
                                             (long long)scal->obval);
 #else
@@ -791,9 +795,13 @@ timedeltatype_str(PyObject *self)
         ret = PyUString_FromString("NaT");
     }
     else {
-        /* Can't use "%lld" in Python < 2.7, or if HAVE_LONG_LONG is not
-         * defined */
-#if defined(HAVE_LONG_LONG) && (PY_VERSION_HEX >= 0x02070000)
+        /*
+         * Can't use "%lld" in Python < 2.7, Python3 < 3.2,
+         * or if HAVE_LONG_LONG is not defined
+         */
+#if defined(HAVE_LONG_LONG) && \
+           ((PY_VERSION_HEX >= 0x02070000 && PY_VERSION_HEX < 0x03000000) || \
+            (PY_VERSION_HEX >= 0x03020000))
         ret = PyUString_FromFormat("%lld ",
                                 (long long)(scal->obval * scal->obmeta.num));
 #else
