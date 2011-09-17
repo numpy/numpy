@@ -98,6 +98,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
 
     """
     try:
+        a = asanyarray(a)
         take = a.take
     except AttributeError:
         return _wrapit(a, 'take', indices, axis, out, mode)
@@ -166,6 +167,7 @@ def reshape(a, newshape, order='C'):
 
     """
     try:
+        a = asanyarray(a)
         reshape = a.reshape
     except AttributeError:
         return _wrapit(a, 'reshape', newshape, order=order)
@@ -292,6 +294,7 @@ def choose(a, choices, out=None, mode='raise'):
 
     """
     try:
+        a = asanyarray(a)
         choose = a.choose
     except AttributeError:
         return _wrapit(a, 'choose', choices, out=out, mode=mode)
@@ -338,6 +341,7 @@ def repeat(a, repeats, axis=None):
 
     """
     try:
+        a = asanyarray(a)
         repeat = a.repeat
     except AttributeError:
         return _wrapit(a, 'repeat', repeats, axis)
@@ -437,6 +441,7 @@ def swapaxes(a, axis1, axis2):
 
     """
     try:
+        a = asanyarray(a)
         swapaxes = a.swapaxes
     except AttributeError:
         return _wrapit(a, 'swapaxes', axis1, axis2)
@@ -482,6 +487,7 @@ def transpose(a, axes=None):
 
     """
     try:
+        a = asanyarray(a)
         transpose = a.transpose
     except AttributeError:
         return _wrapit(a, 'transpose', axes)
@@ -675,6 +681,7 @@ def argsort(a, axis=-1, kind='quicksort', order=None):
 
     """
     try:
+        a = asanyarray(a)
         argsort = a.argsort
     except AttributeError:
         return _wrapit(a, 'argsort', axis, kind, order)
@@ -749,6 +756,7 @@ def argmin(a, axis=None):
 
     """
     try:
+        a = asanyarray(a)
         argmin = a.argmin
     except AttributeError:
         return _wrapit(a, 'argmin', axis)
@@ -802,6 +810,7 @@ def searchsorted(a, v, side='left'):
 
     """
     try:
+        a = asanyarray(a)
         searchsorted = a.searchsorted
     except AttributeError:
         return _wrapit(a, 'searchsorted', v, side)
@@ -1217,6 +1226,7 @@ def nonzero(a):
 
     """
     try:
+        a = asanyarray(a)
         nonzero = a.nonzero
     except AttributeError:
         res = _wrapit(a, 'nonzero')
@@ -1330,6 +1340,7 @@ def compress(condition, a, axis=None, out=None):
 
     """
     try:
+        a = asanyarray(a)
         compress = a.compress
     except AttributeError:
         return _wrapit(a, 'compress', condition, axis, out)
@@ -1387,6 +1398,7 @@ def clip(a, a_min, a_max, out=None):
 
     """
     try:
+        a = asanyarray(a)
         clip = a.clip
     except AttributeError:
         return _wrapit(a, 'clip', a_min, a_max, out)
@@ -1481,6 +1493,7 @@ def sum(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
         return res
     elif not (type(a) is mu.ndarray):
         try:
+            a = asanyarray(a)
             sum = a.sum
         except AttributeError:
             return _methods._sum(a, axis=axis, dtype=dtype,
@@ -1759,6 +1772,7 @@ def cumsum (a, axis=None, dtype=None, out=None):
 
     """
     try:
+        a = asanyarray(a)
         cumsum = a.cumsum
     except AttributeError:
         return _wrapit(a, 'cumsum', axis, dtype, out)
@@ -1776,6 +1790,7 @@ def cumproduct(a, axis=None, dtype=None, out=None):
 
     """
     try:
+        a = asanyarray(a)
         cumprod = a.cumprod
     except AttributeError:
         return _wrapit(a, 'cumprod', axis, dtype, out)
@@ -1821,6 +1836,7 @@ def ptp(a, axis=None, out=None):
 
     """
     try:
+        a = asanyarray(a)
         ptp = a.ptp
     except AttributeError:
         return _wrapit(a, 'ptp', axis, out)
@@ -1891,6 +1907,7 @@ def amax(a, axis=None, out=None, skipna=False, keepdims=False):
     """
     if not (type(a) is mu.ndarray):
         try:
+            a = asanyarray(a)
             amax = a.max
         except AttributeError:
             return _methods._amax(a, axis=axis,
@@ -1965,6 +1982,7 @@ def amin(a, axis=None, out=None, skipna=False, keepdims=False):
     """
     if not (type(a) is mu.ndarray):
         try:
+            a = asanyarray(a)
             amin = a.min
         except AttributeError:
             return _methods._amin(a, axis=axis,
@@ -2098,6 +2116,7 @@ def prod(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
     """
     if not (type(a) is mu.ndarray):
         try:
+            a = asanyarray(a)
             prod = a.prod
         except AttributeError:
             return _methods._prod(a, axis=axis, dtype=dtype,
@@ -2168,6 +2187,7 @@ def cumprod(a, axis=None, dtype=None, out=None):
 
     """
     try:
+        a = asanyarray(a)
         cumprod = a.cumprod
     except AttributeError:
         return _wrapit(a, 'cumprod', axis, dtype, out)
@@ -2474,6 +2494,7 @@ def mean(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
     """
     if not (type(a) is mu.ndarray):
         try:
+            a = asanyarray(a)
             mean = a.mean
             return mean(axis=axis, dtype=dtype, out=out)
         except AttributeError:
@@ -2580,6 +2601,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0,
     """
     if not (type(a) is mu.ndarray):
         try:
+            a = asanyarray(a)
             std = a.std
             return std(axis=axis, dtype=dtype, out=out, ddof=ddof)
         except AttributeError:
@@ -2686,6 +2708,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
     """
     if not (type(a) is mu.ndarray):
         try:
+            a = asanyarray(a)
             var = a.var
             return var(axis=axis, dtype=dtype, out=out, ddof=ddof)
         except AttributeError:
