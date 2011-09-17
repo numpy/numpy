@@ -91,13 +91,15 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         build_import_library()
 
         # Check for custom msvc runtime library on Windows. Build if it doesn't exist.
-        if build_msvcr_library() | build_msvcr_library(debug=True):
+        msvcr_success = build_msvcr_library()
+        msvcr_dbg_success = build_msvcr_library(debug=True)
+        if msvcr_success or msvcr_dbg_success:
             # add preprocessor statement for using customized msvcr lib
             self.define_macro('NPY_MINGW_USE_CUSTOM_MSVCR')
-        # Else do a check if the current runtime version is >= VS2005
-        elif int(msvc_runtime_library().lstrip('msvcr')) >= 80:
-            # add preprocessor statement to use 64-bit fallback
-            self.define_macro('NPY_MINGW_USE_64BIT_MSVCR')
+
+        # Define the MSVC version as hint for MinGW
+        msvcr_version = '0x%03i0' % int(msvc_runtime_library().lstrip('msvcr'))
+        self.define_macro('__MSVCRT_VERSION__', msvcr_version)
 
         # **changes: eric jones 4/11/01
         # 2. increased optimization and turned off all warnings

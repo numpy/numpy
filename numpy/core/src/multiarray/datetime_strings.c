@@ -12,13 +12,6 @@
 
 #include <time.h>
 
-#if defined(_WIN32) && \
-    defined(__GNUC__) && \
-    (defined(NPY_MINGW_USE_CUSTOM_MSVCR) | \
-    defined(NPY_MINGW_USE_64BIT_MSVCR))
-#define time_t __time64_t
-#endif
-
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
 #include <numpy/arrayobject.h>
@@ -55,14 +48,6 @@ get_localtime(NPY_TIME_T *ts, struct tm *tms)
         func_name = "_localtime64_s";
         goto fail;
     }
- #elif defined(__GNUC__) && defined(NPY_MINGW_USE_64BIT_MSVCR)
-    struct tm *tms_tmp;
-    tms_tmp = _localtime64(ts);
-    if (tms_tmp == NULL) {
-        func_name = "_localtime64";
-        goto fail;
-    }
-    memcpy((void*)tms, (void*)tms_tmp, sizeof(struct tm));
  #else
     struct tm *tms_tmp;
     tms_tmp = localtime(ts);
@@ -108,14 +93,6 @@ get_gmtime(NPY_TIME_T *ts, struct tm *tms)
         func_name = "_gmtime64_s";
         goto fail;
     }
- #elif defined(__GNUC__) && defined(NPY_MINGW_USE_64BIT_MSVCR)
-    struct tm *tms_tmp;
-    tms_tmp = _gmtime64(ts);
-    if (tms_tmp == NULL) {
-        func_name = "_gmtime64";
-        goto fail;
-    }
-    memcpy((void*)tms, (void*)tms_tmp, sizeof(struct tm));
  #else
     struct tm *tms_tmp;
     tms_tmp = gmtime(ts);
