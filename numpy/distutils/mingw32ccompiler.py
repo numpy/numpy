@@ -274,15 +274,14 @@ def generate_def(dll, dfile):
     The .def file will be overwritten"""
     dump = dump_table(dll)
     for i in range(len(dump)):
-        if _START.match(dump[i]):
+        if _START.match(dump[i].decode()):
             break
-
-    if i == len(dump):
+    else:
         raise ValueError("Symbol table not found")
 
     syms = []
     for j in range(i+1, len(dump)):
-        m = _TABLE.match(dump[j])
+        m = _TABLE.match(dump[j].decode())
         if m:
             syms.append((int(m.group(1).strip()), m.group(2)))
         else:
@@ -313,13 +312,15 @@ def find_dll(dll_name):
                 return os.path.join(root, dll_name)
         return None
 
-    # First, look in the Python directory, then scan PATH for
-    # the given dll name. Lastly, look in the WinSxS directory.
-    for path in [sys.prefix] + os.environ['PATH'].split(';'):
-        filepath = os.path.join(path, dll_name)
-        if os.path.exists(filepath):
-            return os.path.abspath(filepath)
-    return _find_dll_in_winsxs(dll_name)
+    def _find_dll_in_path(dll_name):
+        # First, look in the Python directory, then scan PATH for
+        # the given dll name.
+        for path in [sys.prefix] + os.environ['PATH'].split(';'):
+            filepath = os.path.join(path, dll_name)
+            if os.path.exists(filepath):
+                return os.path.abspath(filepath)
+
+    return _find_dll_in_winsxs(dll_name) or _find_dll_in_path(dll_name)
 
 def build_msvcr_library(debug=False):
     if os.name != 'nt':
@@ -335,18 +336,19 @@ def build_msvcr_library(debug=False):
     if debug:
         msvcr_name += 'd'
 
+    # Skip if custom library already exists
+    out_name = "lib%s.a" % msvcr_name
+    out_file = os.path.join(sys.prefix, 'libs', out_name)
+    if os.path.isfile(out_file):
+        log.debug('Skip building msvcr library: "%s" exists' % (out_file))
+        return True
+
     # Find the msvcr dll
     msvcr_dll_name = msvcr_name + '.dll'
     dll_file = find_dll(msvcr_dll_name)
     if not dll_file:
         log.warn('Cannot build msvcr library: "%s" not found' % msvcr_dll_name)
         return False
-
-    out_name = "lib%s.a" % msvcr_name
-    out_file = os.path.join(sys.prefix, 'libs', out_name)
-    if os.path.isfile(out_file):
-        log.debug('Skip building msvcr library: "%s" exists' % (out_file))
-        return True
 
     def_name = "lib%s.def" % msvcr_name
     def_file = os.path.join(sys.prefix, 'libs', def_name)
