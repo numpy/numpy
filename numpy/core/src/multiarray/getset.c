@@ -406,7 +406,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 {
     PyArray_Descr *newtype = NULL;
     intp newdim;
-    int index;
+    int i;
     char *msg = "new type not compatible with array.";
 
     if (!(PyArray_DescrConverter(arg, &newtype)) ||
@@ -450,10 +450,10 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         goto fail;
     }
     if (PyArray_ISCONTIGUOUS(self)) {
-        index = PyArray_NDIM(self) - 1;
+        i = PyArray_NDIM(self) - 1;
     }
     else {
-        index = 0;
+        i = 0;
     }
     if (newtype->elsize < PyArray_DESCR(self)->elsize) {
         /*
@@ -464,20 +464,20 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
             goto fail;
         }
         newdim = PyArray_DESCR(self)->elsize / newtype->elsize;
-        PyArray_DIMS(self)[index] *= newdim;
-        PyArray_STRIDES(self)[index] = newtype->elsize;
+        PyArray_DIMS(self)[i] *= newdim;
+        PyArray_STRIDES(self)[i] = newtype->elsize;
     }
     else if (newtype->elsize > PyArray_DESCR(self)->elsize) {
         /*
          * Determine if last (or first if NPY_ARRAY_F_CONTIGUOUS) dimension
          * is compatible
          */
-        newdim = PyArray_DIMS(self)[index] * PyArray_DESCR(self)->elsize;
+        newdim = PyArray_DIMS(self)[i] * PyArray_DESCR(self)->elsize;
         if ((newdim % newtype->elsize) != 0) {
             goto fail;
         }
-        PyArray_DIMS(self)[index] = newdim / newtype->elsize;
-        PyArray_STRIDES(self)[index] = newtype->elsize;
+        PyArray_DIMS(self)[i] = newdim / newtype->elsize;
+        PyArray_STRIDES(self)[i] = newtype->elsize;
     }
 
     /* fall through -- adjust type*/
@@ -673,7 +673,7 @@ array_real_set(PyArrayObject *self, PyObject *val)
 {
     PyArrayObject *ret;
     PyArrayObject *new;
-    int rint;
+    int retcode;
 
     if (PyArray_ISCOMPLEX(self)) {
         ret = _get_part(self, 0);
@@ -690,10 +690,10 @@ array_real_set(PyArrayObject *self, PyObject *val)
         Py_DECREF(ret);
         return -1;
     }
-    rint = PyArray_MoveInto(ret, new);
+    retcode = PyArray_MoveInto(ret, new);
     Py_DECREF(ret);
     Py_DECREF(new);
-    return rint;
+    return retcode;
 }
 
 /* For Object arrays we need to get
@@ -735,7 +735,7 @@ array_imag_set(PyArrayObject *self, PyObject *val)
     if (PyArray_ISCOMPLEX(self)) {
         PyArrayObject *ret;
         PyArrayObject *new;
-        int rint;
+        int retcode;
 
         ret = _get_part(self, 1);
         if (ret == NULL) {
@@ -746,10 +746,10 @@ array_imag_set(PyArrayObject *self, PyObject *val)
             Py_DECREF(ret);
             return -1;
         }
-        rint = PyArray_MoveInto(ret, new);
+        retcode = PyArray_MoveInto(ret, new);
         Py_DECREF(ret);
         Py_DECREF(new);
-        return rint;
+        return retcode;
     }
     else {
         PyErr_SetString(PyExc_TypeError, "array does not have "\

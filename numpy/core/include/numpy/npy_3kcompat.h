@@ -15,7 +15,7 @@
 
 #if PY_VERSION_HEX >= 0x03000000
 #ifndef NPY_PY3K
-#define NPY_PY3K
+#define NPY_PY3K 1
 #endif
 #endif
 

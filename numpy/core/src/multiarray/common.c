@@ -44,6 +44,7 @@ _array_find_python_scalar_type(PyObject *op)
     return NULL;
 }
 
+#if !defined(NPY_PY3K)
 static PyArray_Descr *
 _use_default_type(PyObject *op)
 {
@@ -65,6 +66,7 @@ _use_default_type(PyObject *op)
     }
     return PyArray_DescrFromType(typenum);
 }
+#endif
 
 /*
  * Recursively examines the object to determine an appropriate dtype

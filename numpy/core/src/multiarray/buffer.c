@@ -21,6 +21,7 @@
 
 /* removed multiple segment interface */
 
+#if !defined(NPY_PY3K)
 static Py_ssize_t
 array_getsegcount(PyArrayObject *self, Py_ssize_t *lenp)
 {
@@ -72,6 +73,7 @@ array_getcharbuf(PyArrayObject *self, Py_ssize_t segment, constchar **ptrptr)
 {
     return array_getreadbuf(self, segment, (void **) ptrptr);
 }
+#endif /* !defined(NPY_PY3K) */
 
 
 /*************************************************************************

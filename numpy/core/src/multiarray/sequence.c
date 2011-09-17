@@ -190,7 +190,7 @@ NPY_NO_EXPORT PySequenceMethods array_as_sequence = {
 static int
 array_any_nonzero(PyArrayObject *arr)
 {
-    intp index;
+    npy_intp counter;
     PyArrayIterObject *it;
     Bool anyTRUE = FALSE;
 
@@ -198,8 +198,8 @@ array_any_nonzero(PyArrayObject *arr)
     if (it == NULL) {
         return anyTRUE;
     }
-    index = it->size;
-    while(index--) {
+    counter = it->size;
+    while(counter--) {
         if (PyArray_DESCR(arr)->f->nonzero(it->dataptr, arr)) {
             anyTRUE = TRUE;
             break;

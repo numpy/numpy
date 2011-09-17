@@ -1688,7 +1688,7 @@ class TestDateTimeData(TestCase):
 
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)
-        assert_equal(np.datetime_data(a.dtype), (asbytes('D'), 1))
+        assert_equal(np.datetime_data(a.dtype), ('D', 1))
 
 if __name__ == "__main__":
     run_module_suite()

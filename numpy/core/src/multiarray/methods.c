@@ -1885,25 +1885,6 @@ array_transpose(PyArrayObject *self, PyObject *args)
     return ret;
 }
 
-/* Return typenumber from dtype2 unless it is NULL, then return
-   NPY_DOUBLE if dtype1->type_num is integer or bool
-   and dtype1->type_num otherwise.
-*/
-static int
-_get_type_num_double(PyArray_Descr *dtype1, PyArray_Descr *dtype2)
-{
-    if (dtype2 != NULL) {
-        return dtype2->type_num;
-    }
-    /* For integer or bool data-types */
-    if (dtype1->type_num < NPY_FLOAT) {
-        return NPY_DOUBLE;
-    }
-    else {
-        return dtype1->type_num;
-    }
-}
-
 #define _CHKTYPENUM(typ) ((typ) ? (typ)->type_num : PyArray_NOTYPE)
 
 static PyObject *
@@ -2235,21 +2216,21 @@ static PyObject *
 array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"write", "align", "uic", NULL};
-    PyObject *write = Py_None;
-    PyObject *align = Py_None;
+    PyObject *write_flag = Py_None;
+    PyObject *align_flag = Py_None;
     PyObject *uic = Py_None;
     int flagback = PyArray_FLAGS(self);
 
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO", kwlist,
-                                     &write,
-                                     &align,
+                                     &write_flag,
+                                     &align_flag,
                                      &uic))
         return NULL;
 
-    if (align != Py_None) {
-        if (PyObject_Not(align)) {
+    if (align_flag != Py_None) {
+        if (PyObject_Not(align_flag)) {
             PyArray_CLEARFLAGS(self, NPY_ARRAY_ALIGNED);
         }
         else if (_IsAligned(self)) {
@@ -2278,8 +2259,8 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
         }
     }
 
-    if (write != Py_None) {
-        if (PyObject_IsTrue(write)) {
+    if (write_flag != Py_None) {
+        if (PyObject_IsTrue(write_flag)) {
             if (_IsWriteable(self)) {
                 PyArray_ENABLEFLAGS(self, NPY_ARRAY_WRITEABLE);
             }
