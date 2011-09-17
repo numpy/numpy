@@ -922,8 +922,8 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
  */
 int _npy_stride_sort_item_comparator(const void *a, const void *b)
 {
-    npy_intp astride = ((npy_stride_sort_item *)a)->stride,
-            bstride = ((npy_stride_sort_item *)b)->stride;
+    npy_intp astride = ((const npy_stride_sort_item *)a)->stride,
+            bstride = ((const npy_stride_sort_item *)b)->stride;
 
     /* Sort the absolute value of the strides */
     if (astride < 0) {
@@ -938,8 +938,8 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
          * Make the qsort stable by next comparing the perm order.
          * (Note that two perm entries will never be equal)
          */
-        npy_intp aperm = ((npy_stride_sort_item *)a)->perm,
-                bperm = ((npy_stride_sort_item *)b)->perm;
+        npy_intp aperm = ((const npy_stride_sort_item *)a)->perm,
+                bperm = ((const npy_stride_sort_item *)b)->perm;
         return (aperm < bperm) ? -1 : 1;
     }
     if (astride > bstride) {
@@ -1001,7 +1001,7 @@ NPY_NO_EXPORT void
 PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
                         int ndim, int *out_strideperm)
 {
-    int i0, i1, ipos, j0, j1, iarrays;
+    int i0, i1, ipos, ax_j0, ax_j1, iarrays;
 
     /* Initialize the strideperm values to the identity. */
     for (i0 = 0; i0 < ndim; ++i0) {
@@ -1018,18 +1018,18 @@ PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
     for (i0 = 1; i0 < ndim; ++i0) {
 
         ipos = i0;
-        j0 = out_strideperm[i0];
+        ax_j0 = out_strideperm[i0];
 
         for (i1 = i0 - 1; i1 >= 0; --i1) {
             int ambig = 1, shouldswap = 0;
 
-            j1 = out_strideperm[i1];
+            ax_j1 = out_strideperm[i1];
 
             for (iarrays = 0; iarrays < narrays; ++iarrays) {
-                if (PyArray_SHAPE(arrays[iarrays])[j0] != 1 &&
-                            PyArray_SHAPE(arrays[iarrays])[j1] != 1) {
-                    if (s_intp_abs(PyArray_STRIDES(arrays[iarrays])[j0]) <=
-                            s_intp_abs(PyArray_STRIDES(arrays[iarrays])[j1])) {
+                if (PyArray_SHAPE(arrays[iarrays])[ax_j0] != 1 &&
+                            PyArray_SHAPE(arrays[iarrays])[ax_j1] != 1) {
+                    if (s_intp_abs(PyArray_STRIDES(arrays[iarrays])[ax_j0]) <=
+                            s_intp_abs(PyArray_STRIDES(arrays[iarrays])[ax_j1])) {
                         /*
                          * Set swap even if it's not ambiguous already,
                          * because in the case of conflicts between
@@ -1070,7 +1070,7 @@ PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
             for (i1 = i0; i1 > ipos; --i1) {
                 out_strideperm[i1] = out_strideperm[i1-1];
             }
-            out_strideperm[ipos] = j0;
+            out_strideperm[ipos] = ax_j0;
         }
     }
 }

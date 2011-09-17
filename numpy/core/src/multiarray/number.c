@@ -262,11 +262,13 @@ array_multiply(PyArrayObject *m1, PyObject *m2)
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.multiply);
 }
 
+#if !defined(NPY_PY3K)
 static PyObject *
 array_divide(PyArrayObject *m1, PyObject *m2)
 {
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.divide);
 }
+#endif
 
 static PyObject *
 array_remainder(PyArrayObject *m1, PyObject *m2)
@@ -275,17 +277,17 @@ array_remainder(PyArrayObject *m1, PyObject *m2)
 }
 
 static int
-array_power_is_scalar(PyObject *o2, double* exp)
+array_power_is_scalar(PyObject *o2, double* out_exponent)
 {
     PyObject *temp;
     const int optimize_fpexps = 1;
 
     if (PyInt_Check(o2)) {
-        *exp = (double)PyInt_AsLong(o2);
+        *out_exponent = (double)PyInt_AsLong(o2);
         return 1;
     }
     if (optimize_fpexps && PyFloat_Check(o2)) {
-        *exp = PyFloat_AsDouble(o2);
+        *out_exponent = PyFloat_AsDouble(o2);
         return 1;
     }
     if ((PyArray_IsZeroDim(o2) &&
@@ -295,7 +297,7 @@ array_power_is_scalar(PyObject *o2, double* exp)
         (optimize_fpexps && PyArray_IsScalar(o2, Floating))) {
         temp = Py_TYPE(o2)->tp_as_number->nb_float(o2);
         if (temp != NULL) {
-            *exp = PyFloat_AsDouble(o2);
+            *out_exponent = PyFloat_AsDouble(o2);
             Py_DECREF(temp);
             return 1;
         }
@@ -315,7 +317,7 @@ array_power_is_scalar(PyObject *o2, double* exp)
             PyErr_Clear();
             return 0;
         }
-        *exp = (double) val;
+        *out_exponent = (double) val;
         return 1;
     }
 #endif
@@ -326,12 +328,12 @@ array_power_is_scalar(PyObject *o2, double* exp)
 static PyObject *
 fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
 {
-    double exp;
+    double exponent;
 
-    if (PyArray_Check(a1) && array_power_is_scalar(o2, &exp)) {
+    if (PyArray_Check(a1) && array_power_is_scalar(o2, &exponent)) {
         PyObject *fastop = NULL;
         if (PyArray_ISFLOAT(a1) || PyArray_ISCOMPLEX(a1)) {
-            if (exp == 1.0) {
+            if (exponent == 1.0) {
                 /* we have to do this one special, as the
                    "copy" method of array objects isn't set
                    up early enough to be added
@@ -344,16 +346,16 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
                     return PyArray_Copy(a1);
                 }
             }
-            else if (exp == -1.0) {
+            else if (exponent == -1.0) {
                 fastop = n_ops.reciprocal;
             }
-            else if (exp ==  0.0) {
+            else if (exponent ==  0.0) {
                 fastop = n_ops._ones_like;
             }
-            else if (exp ==  0.5) {
+            else if (exponent ==  0.5) {
                 fastop = n_ops.sqrt;
             }
-            else if (exp ==  2.0) {
+            else if (exponent ==  2.0) {
                 fastop = n_ops.square;
             }
             else {
@@ -366,7 +368,7 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
                 return PyArray_GenericUnaryFunction(a1, fastop);
             }
         }
-        else if (exp==2.0) {
+        else if (exponent==2.0) {
             fastop = n_ops.multiply;
             if (inplace) {
                 return PyArray_GenericInplaceBinaryFunction
@@ -460,11 +462,13 @@ array_inplace_multiply(PyArrayObject *m1, PyObject *m2)
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.multiply);
 }
 
+#if !defined(NPY_PY3K)
 static PyObject *
 array_inplace_divide(PyArrayObject *m1, PyObject *m2)
 {
     return PyArray_GenericInplaceBinaryFunction(m1, m2, n_ops.divide);
 }
+#endif
 
 static PyObject *
 array_inplace_remainder(PyArrayObject *m1, PyObject *m2)
@@ -798,8 +802,7 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_add,                      /*nb_add*/
     (binaryfunc)array_subtract,                 /*nb_subtract*/
     (binaryfunc)array_multiply,                 /*nb_multiply*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     (binaryfunc)array_divide,                   /*nb_divide*/
 #endif
     (binaryfunc)array_remainder,                /*nb_remainder*/
@@ -815,8 +818,7 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_bitwise_and,              /*nb_and*/
     (binaryfunc)array_bitwise_xor,              /*nb_xor*/
     (binaryfunc)array_bitwise_or,               /*nb_or*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     0,                                          /*nb_coerce*/
 #endif
     (unaryfunc)array_int,                       /*nb_int*/
@@ -826,8 +828,7 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (unaryfunc)array_long,                      /*nb_long*/
 #endif
     (unaryfunc)array_float,                     /*nb_float*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     (unaryfunc)array_oct,                       /*nb_oct*/
     (unaryfunc)array_hex,                       /*nb_hex*/
 #endif
@@ -839,8 +840,7 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_inplace_add,              /*inplace_add*/
     (binaryfunc)array_inplace_subtract,         /*inplace_subtract*/
     (binaryfunc)array_inplace_multiply,         /*inplace_multiply*/
-#if defined(NPY_PY3K)
-#else
+#if !defined(NPY_PY3K)
     (binaryfunc)array_inplace_divide,           /*inplace_divide*/
 #endif
     (binaryfunc)array_inplace_remainder,        /*inplace_remainder*/

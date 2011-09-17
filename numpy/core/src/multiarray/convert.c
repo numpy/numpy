@@ -247,8 +247,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 NPY_NO_EXPORT PyObject *
 PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 {
-    intp numbytes;
-    intp index;
+    npy_intp numbytes;
+    npy_intp i;
     char *dptr;
     int elsize;
     PyObject *ret;
@@ -293,9 +293,9 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
             return NULL;
         }
         dptr = PyBytes_AS_STRING(ret);
-        index = it->size;
+        i = it->size;
         elsize = PyArray_DESCR(self)->elsize;
-        while (index--) {
+        while (i--) {
             memcpy(dptr, it->dataptr, elsize);
             dptr += elsize;
             PyArray_ITER_NEXT(it);

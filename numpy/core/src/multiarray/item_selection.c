@@ -1782,7 +1782,8 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     /* Take a view of the mask if it exists */
     if (self_has_maskna) {
         PyArrayObject_fields *fret = (PyArrayObject_fields *)ret;
-        npy_intp *maskna_strides = PyArray_MASKNA_STRIDES(self);
+
+        maskna_strides = PyArray_MASKNA_STRIDES(self);
 
         fret->maskna_dtype = PyArray_MASKNA_DTYPE(self);
         Py_INCREF(fret->maskna_dtype);

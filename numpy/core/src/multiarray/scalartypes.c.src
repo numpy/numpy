@@ -2247,6 +2247,7 @@ gentype_getreadbuf(PyObject *self, Py_ssize_t segment, void **ptrptr)
     return numbytes;
 }
 
+#if !defined(NPY_PY3K)
 static Py_ssize_t
 gentype_getsegcount(PyObject *self, Py_ssize_t *lenp)
 {
@@ -2279,6 +2280,7 @@ gentype_getcharbuf(PyObject *self, Py_ssize_t segment, constchar **ptrptr)
         return -1;
     }
 }
+#endif /* !defined(NPY_PY3K) */
 
 #if PY_VERSION_HEX >= 0x02060000
 

@@ -1442,7 +1442,8 @@ array_datetime_as_string(PyObject *NPY_UNUSED(self), PyObject *args,
     }
     op_dtypes[1]->elsize = strsize * 4;
     /* This steals the UNICODE dtype reference in op_dtypes[1] */
-    op[1] = PyArray_NewLikeArray(op[0], NPY_KEEPORDER, op_dtypes[1], 1);
+    op[1] = (PyArrayObject *)PyArray_NewLikeArray(op[0],
+                                        NPY_KEEPORDER, op_dtypes[1], 1);
     if (op[1] == NULL) {
         op_dtypes[1] = NULL;
         goto fail;
