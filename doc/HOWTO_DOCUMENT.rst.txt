@@ -9,14 +9,14 @@ A Guide to NumPy/SciPy Documentation
    For an accompanying example, see `example.py
    <http://github.com/numpy/numpy/blob/master/doc/example.py>`_.
 
-   When using `Sphinx <http://sphinx.pocoo.org/>`_ in combination with the numpy
-   conventions, you may be interested in the ``numpydoc`` extension, which will
-   handle your docstrings correctly. For example, it will extract the
-   ``Parameters`` section from your docstring and convert this into a field list.
-   It can also help alleviate reStructuredText errors encounterde when using
-   plain sphinx. Sphinx gets confused because the numpy docstrings have section
-   headers (e.g. ``-------------``) which sphinx does not expect to find in
-   docstrings.
+   When using `Sphinx <http://sphinx.pocoo.org/>`_ in combination with the
+   numpy conventions, you should use the ``numpydoc`` extension so that your
+   docstrings will be handled correctly. For example, Sphinx will extract the
+   ``Parameters`` section from your docstring and convert it into a field
+   list.  Using numpydoc will also avoid the reStructuredText errors produced
+   by plain Sphinx when it encounters numpy docstring conventions like
+   section headers (e.g. ``-------------``) that sphinx does not expect to
+   find in docstrings.
 
    It is available from:
 
