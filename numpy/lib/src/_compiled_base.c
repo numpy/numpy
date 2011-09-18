@@ -220,6 +220,7 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     int m, i;
     static char *kwlist[] = {"x", "bins", NULL};
     PyArray_Descr *type;
+    int bins_non_monotonic = 0;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist, &ox, &obins)) {
         goto fail;
@@ -252,9 +253,8 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
                 "Both x and bins must have non-zero length");
             goto fail;
     }
-
+    NPY_BEGIN_ALLOW_THREADS;
     if (lbins == 1)  {
-        NPY_BEGIN_ALLOW_THREADS;
         for (i = 0; i < lx; i++) {
             if (dx [i] >= dbins[0]) {
                 iret[i] = 1;
@@ -263,33 +263,30 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
                 iret[i] = 0;
             }
         }
-        NPY_END_ALLOW_THREADS;
     }
     else {
-        NPY_BEGIN_ALLOW_THREADS;
         m = monotonic_ (dbins, lbins);
-        NPY_END_ALLOW_THREADS;
         if ( m == -1 ) {
-            NPY_BEGIN_ALLOW_THREADS;
             for ( i = 0; i < lx; i ++ ) {
                 iret [i] = decr_slot_ ((double)dx[i], dbins, lbins);
             }
-            NPY_END_ALLOW_THREADS;
         }
         else if ( m == 1 ) {
-            NPY_BEGIN_ALLOW_THREADS;
             for ( i = 0; i < lx; i ++ ) {
                 iret [i] = incr_slot_ ((double)dx[i], dbins, lbins);
             }
-            NPY_END_ALLOW_THREADS;
         }
         else {
-            PyErr_SetString(PyExc_ValueError,
-                    "The bins must be montonically increasing or decreasing");
-            goto fail;
+            /* defer PyErr_SetString until after NPY_END_ALLOW_THREADS */
+            bins_non_monotonic = 1;
         }
     }
-
+    NPY_END_ALLOW_THREADS;
+    if (bins_non_monotonic) {
+        PyErr_SetString(PyExc_ValueError,
+                "The bins must be monotonically increasing or decreasing");
+        goto fail;
+    }
     Py_DECREF(ax);
     Py_DECREF(abins);
     return (PyObject *)aret;
