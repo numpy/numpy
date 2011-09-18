@@ -368,7 +368,7 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
                 return PyArray_GenericUnaryFunction(a1, fastop);
             }
         }
-        else if (exponent==2.0) {
+        else if (exponent == 2.0) {
             fastop = n_ops.multiply;
             if (inplace) {
                 return PyArray_GenericInplaceBinaryFunction
