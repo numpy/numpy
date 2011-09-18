@@ -802,6 +802,51 @@ class TestCheckFinite(TestCase):
         a = numpy.lib.asarray_chkfinite(a, order='F', dtype=numpy.float64)
         assert_(a.dtype == numpy.float64)
 
+class TestRelExtFuncts(TestCase):
+    def _gen_gaussians(self,center_locs,sigmas,total_length):
+        num_peaks = len(sigmas)
+        xdata = np.arange(0,total_length).astype(float)
+        out_data = np.zeros(total_length,dtype=float)
+        for ind,sigma in enumerate(sigmas):
+            tmp = (xdata - center_locs[ind])/sigma
+            out_data += np.exp(-(tmp**2))
+        return out_data
+
+    def _gen_gaussians_even(self,sigmas,total_length):
+        num_peaks = len(sigmas)
+        delta = total_length / num_peaks
+        center_locs = np.arange(1,total_length,delta)
+        out_data = self._gen_gaussians(center_locs,sigmas,total_length)
+        return out_data,center_locs
+
+    def test_argrelmax_highorder(self,order = 2):
+        sigmas = [1.0,2.0,10.0,5.0,15.0]
+        test_data,act_locs = self._gen_gaussians_even(sigmas,500)
+        test_data[act_locs + order] = test_data[act_locs]*0.99999
+        test_data[act_locs - order] = test_data[act_locs]*0.99999
+        rel_max_locs = argrelmax(test_data,order=2,mode='clip')[0]
+
+        assert_(len(rel_max_locs) == len(act_locs))
+        assert_((rel_max_locs == act_locs).all())
+
+    def test_argrelmax_2d_gaussians(self):
+        sigmas = [1.0,2.0,10.0]
+        test_data,act_locs = self._gen_gaussians_even(sigmas,100)
+        rot_factor = 20
+        rot_range = numpy.arange(0,len(test_data)) - rot_factor
+        test_data_2 = numpy.vstack([test_data,test_data[rot_range]])
+        rel_max_rows,rel_max_cols = argrelmax(test_data_2,axis=1,order=1.0)
+
+        for rw in xrange(0,test_data_2.shape[0]):
+            inds = (rel_max_rows == rw)
+            assert_(len(rel_max_cols[inds]) == len(act_locs))
+            assert_((act_locs == (rel_max_cols[inds]-rot_factor*rw)).all())
+
+    def test_argrelextrama_badorder(self):
+        data = np.arange(0,10)
+        comparator = np.greater
+        assert_raises(ValueError,argrelmax,data,comparator,order = 0)
+        assert_raises(ValueError,argrelmax,data,comparator,order = 0.5)
 
 class TestNaNFuncts(TestCase):
     def setUp(self):
