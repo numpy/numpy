@@ -159,8 +159,10 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
             goto fail;
         }
         ians = (npy_intp *)(PyArray_DATA(ans));
+        NPY_BEGIN_ALLOW_THREADS;
         for (i = 0; i < len; i++)
             ians [numbers [i]] += 1;
+        NPY_END_ALLOW_THREADS;
         Py_DECREF(lst);
     }
     else {
@@ -181,9 +183,11 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
             goto fail;
         }
         dans = (double *)PyArray_DATA(ans);
+        NPY_BEGIN_ALLOW_THREADS;
         for (i = 0; i < len; i++) {
             dans[numbers[i]] += weights[i];
         }
+        NPY_END_ALLOW_THREADS;
         Py_DECREF(lst);
         Py_DECREF(wts);
     }
@@ -250,6 +254,7 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
 
     if (lbins == 1)  {
+        NPY_BEGIN_ALLOW_THREADS;
         for (i = 0; i < lx; i++) {
             if (dx [i] >= dbins[0]) {
                 iret[i] = 1;
@@ -258,18 +263,25 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
                 iret[i] = 0;
             }
         }
+        NPY_END_ALLOW_THREADS;
     }
     else {
+        NPY_BEGIN_ALLOW_THREADS;
         m = monotonic_ (dbins, lbins);
+        NPY_END_ALLOW_THREADS;
         if ( m == -1 ) {
+            NPY_BEGIN_ALLOW_THREADS;
             for ( i = 0; i < lx; i ++ ) {
                 iret [i] = decr_slot_ ((double)dx[i], dbins, lbins);
             }
+            NPY_END_ALLOW_THREADS;
         }
         else if ( m == 1 ) {
+            NPY_BEGIN_ALLOW_THREADS;
             for ( i = 0; i < lx; i ++ ) {
                 iret [i] = incr_slot_ ((double)dx[i], dbins, lbins);
             }
+            NPY_END_ALLOW_THREADS;
         }
         else {
             PyErr_SetString(PyExc_ValueError,
@@ -548,6 +560,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
 
     slopes = (double *) PyDataMem_NEW((lenxp - 1)*sizeof(double));
+    NPY_BEGIN_ALLOW_THREADS;
     for (i = 0; i < lenxp - 1; i++) {
         slopes[i] = (dy[i + 1] - dy[i])/(dx[i + 1] - dx[i]);
     }
@@ -567,6 +580,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         }
     }
 
+    NPY_END_ALLOW_THREADS;
     PyDataMem_FREE(slopes);
     Py_DECREF(afp);
     Py_DECREF(axp);
