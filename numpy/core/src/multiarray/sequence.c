@@ -199,7 +199,7 @@ array_any_nonzero(PyArrayObject *arr)
         return anyTRUE;
     }
     counter = it->size;
-    while(counter--) {
+    while (counter--) {
         if (PyArray_DESCR(arr)->f->nonzero(it->dataptr, arr)) {
             anyTRUE = TRUE;
             break;
