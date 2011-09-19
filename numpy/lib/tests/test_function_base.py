@@ -792,7 +792,9 @@ class TestCheckFinite(TestCase):
         a = [1, 2, 3]
         b = [1, 2, inf]
         c = [1, 2, nan]
+        d = [numpy.finfo(numpy.float).max] * 10
         numpy.lib.asarray_chkfinite(a)
+        numpy.lib.asarray_chkfinite(d)
         assert_raises(ValueError, numpy.lib.asarray_chkfinite, b)
         assert_raises(ValueError, numpy.lib.asarray_chkfinite, c)
 
