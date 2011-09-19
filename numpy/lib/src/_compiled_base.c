@@ -220,7 +220,7 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     int m, i;
     static char *kwlist[] = {"x", "bins", NULL};
     PyArray_Descr *type;
-    int bins_non_monotonic = 0;
+    char bins_non_monotonic = 0;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist, &ox, &obins)) {
         goto fail;
