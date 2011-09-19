@@ -1,4 +1,6 @@
 import sys
+from os import path
+import pickle
 from decimal import Decimal
 
 import numpy as np
@@ -1439,6 +1441,18 @@ class TestStringFunction(object):
         assert_equal(str(a), "FOO")
         np.set_string_function(None, repr=False)
         assert_equal(str(a), "[1]")
+
+class TestFunctionsOnDataFrame(object):
+    def test_std(self):
+        data_dir = path.join(path.dirname(__file__), 'data')
+        filename = path.join(data_dir, "data_frame.pkl")
+        if sys.version_info[0] >= 3:
+            df = pickle.load(open(filename, 'rb'), encoding='latin1')
+        else:
+            df = pickle.load(open(filename))
+        assert_almost_equal(np.std(df, 0), [0.31730669, 0.26223124, 0.2751796 ,
+                            0.28767573, 0.330989], 4)
+
 
 if __name__ == "__main__":
     run_module_suite()
