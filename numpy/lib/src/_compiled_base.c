@@ -648,8 +648,11 @@ ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
                         char **coords, npy_intp *coords_strides)
 {
     int i;
+    char invalid;
     npy_intp j, m;
 
+    NPY_BEGIN_ALLOW_THREADS;
+    invalid = 0;
     while (count--) {
         npy_intp raveled = 0;
         for (i = 0; i < ravel_ndim; ++i) {
@@ -657,11 +660,8 @@ ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
             j = *(npy_intp *)coords[i];
             switch (modes[i]) {
                 case NPY_RAISE:
-                    if (j < 0 || j >= m) {
-                        PyErr_SetString(PyExc_ValueError,
-                              "invalid entry in coordinates array");
-                        return NPY_FAIL;
-                    }
+                    if (j < 0 || j >= m)
+                        invalid = 1;
                     break;
                 case NPY_WRAP:
                     if (j < 0) {
@@ -694,10 +694,18 @@ ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
 
             coords[i] += coords_strides[i];
         }
+        if (invalid) {
+            break;
+        }
         *(npy_intp *)coords[ravel_ndim] = raveled;
         coords[ravel_ndim] += coords_strides[ravel_ndim];
     }
-
+    NPY_END_ALLOW_THREADS;
+    if (invalid) {
+        PyErr_SetString(PyExc_ValueError,
+              "invalid entry in coordinates array");
+        return NPY_FAIL;
+    }
     return NPY_SUCCEED;
 }
 
@@ -848,14 +856,16 @@ unravel_index_loop_corder(int unravel_ndim, npy_intp *unravel_dims,
                         npy_intp *coords)
 {
     int i;
+    char invalid;
     npy_intp val;
 
+    NPY_BEGIN_ALLOW_THREADS;
+    invalid = 0;
     while (count--) {
         val = *(npy_intp *)indices;
         if (val < 0 || val >= unravel_size) {
-            PyErr_SetString(PyExc_ValueError,
-                  "invalid entry in index array");
-            return NPY_FAIL;
+            invalid = 1;
+            break;
         }
         for (i = unravel_ndim-1; i >= 0; --i) {
             coords[i] = val % unravel_dims[i];
@@ -864,7 +874,12 @@ unravel_index_loop_corder(int unravel_ndim, npy_intp *unravel_dims,
         coords += unravel_ndim;
         indices += indices_stride;
     }
-
+    NPY_END_ALLOW_THREADS;
+    if (invalid) {
+        PyErr_SetString(PyExc_ValueError,
+              "invalid entry in index array");
+        return NPY_FAIL;
+    }
     return NPY_SUCCEED;
 }
 
@@ -876,14 +891,16 @@ unravel_index_loop_forder(int unravel_ndim, npy_intp *unravel_dims,
                         npy_intp *coords)
 {
     int i;
+    char invalid;
     npy_intp val;
 
+    NPY_BEGIN_ALLOW_THREADS;
+    invalid = 0;
     while (count--) {
         val = *(npy_intp *)indices;
         if (val < 0 || val >= unravel_size) {
-            PyErr_SetString(PyExc_ValueError,
-                  "invalid entry in index array");
-            return NPY_FAIL;
+            invalid = 1;
+            break;
         }
         for (i = 0; i < unravel_ndim; ++i) {
             *coords++ = val % unravel_dims[i];
@@ -891,7 +908,12 @@ unravel_index_loop_forder(int unravel_ndim, npy_intp *unravel_dims,
         }
         indices += indices_stride;
     }
-
+    NPY_END_ALLOW_THREADS;
+    if (invalid) {
+        PyErr_SetString(PyExc_ValueError,
+              "invalid entry in index array");
+        return NPY_FAIL;
+    }
     return NPY_SUCCEED;
 }
 
