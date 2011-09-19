@@ -1445,6 +1445,9 @@ class TestFromBuffer:
                 buf = x.tostring()
                 yield self.tst_basic,buf,x.flat,{'dtype':dt}
 
+    def test_empty(self):
+        yield self.tst_basic, '', np.array([]), {}
+
 
 class TestResize(TestCase):
     def test_basic(self):
