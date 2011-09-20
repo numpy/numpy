@@ -683,8 +683,10 @@ ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
             j = *(npy_intp *)coords[i];
             switch (modes[i]) {
                 case NPY_RAISE:
-                    if (j < 0 || j >= m)
+                    if (j < 0 || j >= m) {
                         invalid = 1;
+                        goto end_while;
+                    }
                     break;
                 case NPY_WRAP:
                     if (j < 0) {
@@ -717,12 +719,10 @@ ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
 
             coords[i] += coords_strides[i];
         }
-        if (invalid) {
-            break;
-        }
         *(npy_intp *)coords[ravel_ndim] = raveled;
         coords[ravel_ndim] += coords_strides[ravel_ndim];
     }
+end_while:
     NPY_END_ALLOW_THREADS;
     if (invalid) {
         PyErr_SetString(PyExc_ValueError,
