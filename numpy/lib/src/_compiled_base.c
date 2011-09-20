@@ -302,6 +302,46 @@ fail:
 
 static char arr_insert__doc__[] = "Insert vals sequentially into equivalent 1-d positions indicated by mask.";
 
+static void
+arr_insert_loop(char *mptr, char *vptr, char *input_data, char *zero,
+                char *avals_data, int melsize, int delsize, int objarray,
+                int totmask, int numvals, int nd, npy_intp *instrides,
+                npy_intp *inshape)
+{
+    /*
+     * Walk through mask array, when non-zero is encountered
+     * copy next value in the vals array to the input array.
+     * If we get through the value array, repeat it as necessary.
+     */
+    int mindx, rem_indx, indx, i, copied;
+    copied = 0;
+    for (mindx = 0; mindx < totmask; mindx++) {
+        if (memcmp(mptr,zero,melsize) != 0) {
+            /* compute indx into input array */
+            rem_indx = mindx;
+            indx = 0;
+            for (i = nd - 1; i > 0; --i) {
+                indx += (rem_indx % inshape[i]) * instrides[i];
+                rem_indx /= inshape[i];
+            }
+            indx += rem_indx * instrides[0];
+            /* fprintf(stderr, "mindx = %d, indx=%d\n", mindx, indx); */
+            /* Copy value element over to input array */
+            memcpy(input_data+indx,vptr,delsize);
+            if (objarray) {
+                Py_INCREF(*((PyObject **)vptr));
+            }
+            vptr += delsize;
+            copied += 1;
+            /* If we move past value data.  Reset */
+            if (copied >= numvals) {
+                vptr = avals_data;
+            }
+        }
+        mptr += melsize;
+    }
+}
+
 /*
  * Returns input array with values inserted sequentially into places
  * indicated by the mask
@@ -313,9 +353,8 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     PyArrayObject *ainput = NULL, *amask = NULL, *avals = NULL, *tmp = NULL;
     int numvals, totmask, sameshape;
     char *input_data, *mptr, *vptr, *zero = NULL;
-    int melsize, delsize, copied, nd;
+    int melsize, delsize, copied, nd, objarray, k;
     npy_intp *instrides, *inshape;
-    int mindx, rem_indx, indx, i, k, objarray;
 
     static char *kwlist[] = {"input", "mask", "vals", NULL};
 
@@ -397,40 +436,13 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         return Py_None;
     }
 
-    /*
-     * Walk through mask array, when non-zero is encountered
-     * copy next value in the vals array to the input array.
-     * If we get through the value array, repeat it as necessary.
-     */
     totmask = (int) PyArray_SIZE(amask);
     copied = 0;
     instrides = PyArray_STRIDES(ainput);
     inshape = PyArray_DIMS(ainput);
-    for (mindx = 0; mindx < totmask; mindx++) {
-        if (memcmp(mptr,zero,melsize) != 0) {
-            /* compute indx into input array */
-            rem_indx = mindx;
-            indx = 0;
-            for (i = nd - 1; i > 0; --i) {
-                indx += (rem_indx % inshape[i]) * instrides[i];
-                rem_indx /= inshape[i];
-            }
-            indx += rem_indx * instrides[0];
-            /* fprintf(stderr, "mindx = %d, indx=%d\n", mindx, indx); */
-            /* Copy value element over to input array */
-            memcpy(input_data+indx,vptr,delsize);
-            if (objarray) {
-                Py_INCREF(*((PyObject **)vptr));
-            }
-            vptr += delsize;
-            copied += 1;
-            /* If we move past value data.  Reset */
-            if (copied >= numvals) {
-                vptr = PyArray_DATA(avals);
-            }
-        }
-        mptr += melsize;
-    }
+    arr_insert_loop(mptr, vptr, input_data, zero, PyArray_DATA(avals),
+                    melsize, delsize, objarray, totmask, numvals, nd,
+                    instrides, inshape);
 
     Py_DECREF(amask);
     Py_DECREF(avals);
