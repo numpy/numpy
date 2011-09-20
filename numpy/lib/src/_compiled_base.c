@@ -440,9 +440,20 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     copied = 0;
     instrides = PyArray_STRIDES(ainput);
     inshape = PyArray_DIMS(ainput);
-    arr_insert_loop(mptr, vptr, input_data, zero, PyArray_DATA(avals),
-                    melsize, delsize, objarray, totmask, numvals, nd,
-                    instrides, inshape);
+    if (objarray) {
+        /* object array, need to refcount, can't release the GIL */
+        arr_insert_loop(mptr, vptr, input_data, zero, PyArray_DATA(avals),
+                        melsize, delsize, objarray, totmask, numvals, nd,
+                        instrides, inshape);
+    }
+    else {
+        /* No increfs take place in arr_insert_loop, so release the GIL */
+        NPY_BEGIN_ALLOW_THREADS;
+        arr_insert_loop(mptr, vptr, input_data, zero, PyArray_DATA(avals),
+                        melsize, delsize, objarray, totmask, numvals, nd,
+                        instrides, inshape);
+        NPY_END_ALLOW_THREADS;
+    }
 
     Py_DECREF(amask);
     Py_DECREF(avals);
