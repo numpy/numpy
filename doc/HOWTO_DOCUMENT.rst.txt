@@ -526,6 +526,17 @@ belong in docstrings.
 
 Other points to keep in mind
 ----------------------------
+* Equations : as discussed in the Notes section above, LaTeX formatting should
+  be kept to a minimum.  Often it's possible to show equations as Python code
+  or pseudo-code instead, which is much better readable in a terminal.  For
+  inline display use double backticks (like ``y = np.sin(x)``).  For display
+  with blank lines above and below, use a double colon and indent the code,
+  like::
+
+    end of previous sentence::
+
+      y = np.sin(x)
+
 * Notes and Warnings : If there are points in the docstring that deserve
   special emphasis, the reST directives for a note or warning can be used
   in the vicinity of the context of the warning (inside a section). Syntax:
