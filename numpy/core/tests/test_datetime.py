@@ -1688,6 +1688,24 @@ class TestDateTime(TestCase):
         assert_equal(np.is_busday(holidays, busdaycal=bdd),
                      np.zeros(len(holidays), dtype='?'))
 
+    def test_datetime_y2038(self):
+        # Test parsing on either side of the Y2038 boundary
+        a = np.datetime64('2038-01-19T03:14:07Z')
+        assert_equal(a.view(np.int64), 2**31 - 1)
+        a = np.datetime64('2038-01-19T03:14:08Z')
+        assert_equal(a.view(np.int64), 2**31)
+
+        # Test parsing on either side of the Y2038 boundary with
+        # a manually specified timezone offset
+        a = np.datetime64('2038-01-19T04:14:07+0100')
+        assert_equal(a.view(np.int64), 2**31 - 1)
+        a = np.datetime64('2038-01-19T04:14:08+0100')
+        assert_equal(a.view(np.int64), 2**31)
+
+        # Test parsing a date after Y2038 in the local timezone
+        a = np.datetime64('2038-01-20T13:21:14')
+        assert_equal(str(a)[:-5], '2038-01-20T13:21:14')
+
 class TestDateTimeData(TestCase):
 
     def test_basic(self):
