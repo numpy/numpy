@@ -206,8 +206,8 @@ finish:
 static int
 qsort_datetime_compare(const void *elem1, const void *elem2)
 {
-    npy_datetime e1 = *(npy_datetime *)elem1;
-    npy_datetime e2 = *(npy_datetime *)elem2;
+    npy_datetime e1 = *(const npy_datetime *)elem1;
+    npy_datetime e2 = *(const npy_datetime *)elem2;
 
     return (e1 < e2) ? -1 : (e1 == e2) ? 0 : 1;
 }

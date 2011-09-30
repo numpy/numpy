@@ -34,20 +34,20 @@ NPY_NO_EXPORT npy_intp
 parse_index_entry(PyObject *op, npy_intp *step_size,
                     npy_intp *n_steps, npy_intp max)
 {
-    npy_intp index;
+    npy_intp i;
 
     if (op == Py_None) {
         *n_steps = NEWAXIS_INDEX;
-        index = 0;
+        i = 0;
     }
     else if (op == Py_Ellipsis) {
         *n_steps = ELLIPSIS_INDEX;
-        index = 0;
+        i = 0;
     }
     else if (PySlice_Check(op)) {
         npy_intp stop;
         if (slice_GetIndices((PySliceObject *)op, max,
-                             &index, &stop, step_size, n_steps) < 0) {
+                             &i, &stop, step_size, n_steps) < 0) {
             if (!PyErr_Occurred()) {
                 PyErr_SetString(PyExc_IndexError,
                                 "invalid slice");
@@ -57,11 +57,11 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
         if (*n_steps <= 0) {
             *n_steps = 0;
             *step_size = 1;
-            index = 0;
+            i = 0;
         }
     }
     else {
-        if (!slice_coerce_index(op, &index)) {
+        if (!slice_coerce_index(op, &i)) {
             PyErr_SetString(PyExc_IndexError,
                             "each index entry must be either a "
                             "slice, an integer, Ellipsis, or "
@@ -70,15 +70,15 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
         }
         *n_steps = SINGLE_INDEX;
         *step_size = 0;
-        if (index < 0) {
-            index += max;
+        if (i < 0) {
+            i += max;
         }
-        if (index >= max || index < 0) {
+        if (i >= max || i < 0) {
             PyErr_SetString(PyExc_IndexError, "invalid index");
             goto fail;
         }
     }
-    return index;
+    return i;
 
  fail:
     return -1;
@@ -645,7 +645,7 @@ iter_length(PyArrayIterObject *self)
 static PyArrayObject *
 iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
 {
-    npy_intp index, strides;
+    npy_intp counter, strides;
     int itemsize;
     npy_intp count = 0;
     char *dptr, *optr;
@@ -659,8 +659,8 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
                         "boolean index array should have 1 dimension");
         return NULL;
     }
-    index = PyArray_DIMS(ind)[0];
-    if (index > self->size) {
+    counter = PyArray_DIMS(ind)[0];
+    if (counter > self->size) {
         PyErr_SetString(PyExc_ValueError,
                         "too many boolean indices");
         return NULL;
@@ -669,7 +669,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
     strides = PyArray_STRIDES(ind)[0];
     dptr = PyArray_DATA(ind);
     /* Get size of return array */
-    while (index--) {
+    while (counter--) {
         if (*((Bool *)dptr) != 0) {
             count++;
         }
@@ -686,12 +686,12 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
     }
     /* Set up loop */
     optr = PyArray_DATA(ret);
-    index = PyArray_DIMS(ind)[0];
+    counter = PyArray_DIMS(ind)[0];
     dptr = PyArray_DATA(ind);
     copyswap = PyArray_DESCR(self->ao)->f->copyswap;
     /* Loop over Boolean array */
     swap = (PyArray_ISNOTSWAPPED(self->ao) != PyArray_ISNOTSWAPPED(ret));
-    while (index--) {
+    while (counter--) {
         if (*((Bool *)dptr) != 0) {
             copyswap(optr, self->dataptr, swap, self->ao);
             optr += itemsize;
@@ -712,7 +712,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
     int itemsize;
     int swap;
     char *optr;
-    npy_intp index;
+    npy_intp counter;
     PyArray_CopySwapFunc *copyswap;
 
     itemsize = PyArray_DESCR(self->ao)->elsize;
@@ -754,10 +754,10 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
         Py_DECREF(ret);
         return NULL;
     }
-    index = ind_it->size;
+    counter = ind_it->size;
     copyswap = PyArray_DESCR(ret)->f->copyswap;
     swap = (PyArray_ISNOTSWAPPED(ret) != PyArray_ISNOTSWAPPED(self->ao));
-    while (index--) {
+    while (counter--) {
         num = *((npy_intp *)(ind_it->dataptr));
         if (num < 0) {
             num += self->size;
@@ -941,7 +941,7 @@ static int
 iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
                   PyArrayIterObject *val, int swap)
 {
-    npy_intp index, strides;
+    npy_intp counter, strides;
     char *dptr;
     PyArray_CopySwapFunc *copyswap;
 
@@ -951,8 +951,8 @@ iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
         return -1;
     }
 
-    index = PyArray_DIMS(ind)[0];
-    if (index > self->size) {
+    counter = PyArray_DIMS(ind)[0];
+    if (counter > self->size) {
         PyErr_SetString(PyExc_ValueError,
                         "boolean index array has too many values");
         return -1;
@@ -963,7 +963,7 @@ iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
     PyArray_ITER_RESET(self);
     /* Loop over Boolean array */
     copyswap = PyArray_DESCR(self->ao)->f->copyswap;
-    while (index--) {
+    while (counter--) {
         if (*((Bool *)dptr) != 0) {
             copyswap(self->dataptr, val->dataptr, swap, self->ao);
             PyArray_ITER_NEXT(val);
@@ -984,7 +984,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
 {
     npy_intp num;
     PyArrayIterObject *ind_it;
-    npy_intp index;
+    npy_intp counter;
     PyArray_CopySwapFunc *copyswap;
 
     copyswap = PyArray_DESCR(self->ao)->f->copyswap;
@@ -998,8 +998,8 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
     if (ind_it == NULL) {
         return -1;
     }
-    index = ind_it->size;
-    while (index--) {
+    counter = ind_it->size;
+    while (counter--) {
         num = *((npy_intp *)(ind_it->dataptr));
         if (num < 0) {
             num += self->size;

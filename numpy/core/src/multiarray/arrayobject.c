@@ -209,15 +209,9 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 
             /* If there's one dest element and src is a Python scalar */
             if (PyArray_IsScalar(src_object, Generic)) {
-                PyArray_Descr *dtype;
                 char *value;
                 int retcode;
 
-                dtype = PyArray_DescrFromScalar(src_object);
-                if (dtype == NULL) {
-                    Py_DECREF(src_object);
-                    return -1;
-                }
                 value = scalar_value(src_object, dtype);
                 if (value == NULL) {
                     Py_DECREF(dtype);
@@ -235,6 +229,7 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
             /* Assigning NA affects the mask if it exists */
             else if (na != NULL) {
                 if (PyArray_AssignNA(dest, na, NULL, 0, NULL) < 0) {
+                    Py_DECREF(dtype);
                     Py_DECREF(na);
                     Py_DECREF(src_object);
                     return -1;
