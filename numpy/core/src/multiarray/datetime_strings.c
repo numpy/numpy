@@ -185,6 +185,81 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
 }
 
 /*
+ * Converts a datetimestruct in local time to a datetimestruct in UTC.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+static int
+convert_datetimestruct_local_to_utc(npy_datetimestruct *out_dts_utc,
+                const npy_datetimestruct *dts_local)
+{
+    npy_int64 year_correction = 0;
+
+    /* Make a copy of the input 'dts' to modify */
+    *out_dts_utc = *dts_local;
+
+    /* HACK: Use a year < 2038 for later years for small time_t */
+    if (sizeof(NPY_TIME_T) == 4 && out_dts_utc->year >= 2038) {
+        if (is_leapyear(out_dts_utc->year)) {
+            /* 2036 is a leap year */
+            year_correction = out_dts_utc->year - 2036;
+            out_dts_utc->year -= year_correction;
+        }
+        else {
+            /* 2037 is not a leap year */
+            year_correction = out_dts_utc->year - 2037;
+            out_dts_utc->year -= year_correction;
+        }
+    }
+
+    /*
+     * ISO 8601 states to treat date-times without a timezone offset
+     * or 'Z' for UTC as local time. The C standard libary functions
+     * mktime and gmtime allow us to do this conversion.
+     *
+     * Only do this timezone adjustment for recent and future years.
+     * In this case, "recent" is defined to be 1970 and later, because
+     * on MS Windows, mktime raises an error when given an earlier date.
+     */
+    if (out_dts_utc->year >= 1970) {
+        NPY_TIME_T rawtime = 0;
+        struct tm tm_;
+
+        tm_.tm_sec = out_dts_utc->sec;
+        tm_.tm_min = out_dts_utc->min;
+        tm_.tm_hour = out_dts_utc->hour;
+        tm_.tm_mday = out_dts_utc->day;
+        tm_.tm_mon = out_dts_utc->month - 1;
+        tm_.tm_year = out_dts_utc->year - 1900;
+        tm_.tm_isdst = -1;
+
+        /* mktime converts a local 'struct tm' into a time_t */
+        rawtime = mktime(&tm_);
+        if (rawtime == -1) {
+            PyErr_SetString(PyExc_OSError, "Failed to use mktime to "
+                                        "convert local time to UTC");
+            return -1;
+        }
+
+        /* gmtime converts a 'time_t' into a UTC 'struct tm' */
+        if (get_gmtime(&rawtime, &tm_) < 0) {
+            return -1;
+        }
+        out_dts_utc->sec = tm_.tm_sec;
+        out_dts_utc->min = tm_.tm_min;
+        out_dts_utc->hour = tm_.tm_hour;
+        out_dts_utc->day = tm_.tm_mday;
+        out_dts_utc->month = tm_.tm_mon + 1;
+        out_dts_utc->year = tm_.tm_year + 1900;
+    }
+
+    /* Reapply the year 2038 year correction HACK */
+    out_dts_utc->year += year_correction;
+
+    return 0;
+}
+
+/*
  * Parses (almost) standard ISO 8601 date strings. The differences are:
  *
  * + The date "20100312" is parsed as the year 20100312, not as
@@ -653,43 +728,8 @@ parse_iso_8601_datetime(char *str, int len,
 
 parse_timezone:
     if (sublen == 0) {
-        /*
-         * ISO 8601 states to treat date-times without a timezone offset
-         * or 'Z' for UTC as local time. The C standard libary functions
-         * mktime and gmtime allow us to do this conversion.
-         *
-         * Only do this timezone adjustment for recent and future years.
-         */
-        if (out->year > 1900 && out->year < 10000) {
-            NPY_TIME_T rawtime = 0;
-            struct tm tm_;
-
-            tm_.tm_sec = out->sec;
-            tm_.tm_min = out->min;
-            tm_.tm_hour = out->hour;
-            tm_.tm_mday = out->day;
-            tm_.tm_mon = out->month - 1;
-            tm_.tm_year = out->year - 1900;
-            tm_.tm_isdst = -1;
-
-            /* mktime converts a local 'struct tm' into a time_t */
-            rawtime = mktime(&tm_);
-            if (rawtime == -1) {
-                PyErr_SetString(PyExc_OSError, "Failed to use mktime to "
-                                            "convert local time to UTC");
-                goto error;
-            }
-
-            /* gmtime converts a 'time_t' into a UTC 'struct tm' */
-            if (get_gmtime(&rawtime, &tm_) < 0) {
-                goto error;
-            }
-            out->sec = tm_.tm_sec;
-            out->min = tm_.tm_min;
-            out->hour = tm_.tm_hour;
-            out->day = tm_.tm_mday;
-            out->month = tm_.tm_mon + 1;
-            out->year = tm_.tm_year + 1900;
+        if (convert_datetimestruct_local_to_utc(out, out) < 0) {
+            goto error;
         }
 
         /* Since neither "Z" nor a time-zone was specified, it's local */
