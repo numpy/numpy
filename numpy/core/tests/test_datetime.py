@@ -924,11 +924,15 @@ class TestDateTime(TestCase):
             assert_equal((tda / 0.5).dtype, np.dtype('m8[h]'))
             # m8 / m8
             assert_equal(tda / tdb, 6.0 / 9.0)
+            assert_equal(np.divide(tda, tdb), 6.0 / 9.0)
+            assert_equal(np.true_divide(tda, tdb), 6.0 / 9.0)
             assert_equal(tdb / tda, 9.0 / 6.0)
             assert_equal((tda / tdb).dtype, np.dtype('f8'))
             assert_equal(tda / tdd, 60.0)
             assert_equal(tdd / tda, 1.0 / 60.0)
 
+            # m8 // m8
+            assert_raises(TypeError, np.floor_divide, tda, tdb)
             # int / m8
             assert_raises(TypeError, np.divide, 2, tdb)
             # float / m8
@@ -1684,11 +1688,29 @@ class TestDateTime(TestCase):
         assert_equal(np.is_busday(holidays, busdaycal=bdd),
                      np.zeros(len(holidays), dtype='?'))
 
+    def test_datetime_y2038(self):
+        # Test parsing on either side of the Y2038 boundary
+        a = np.datetime64('2038-01-19T03:14:07Z')
+        assert_equal(a.view(np.int64), 2**31 - 1)
+        a = np.datetime64('2038-01-19T03:14:08Z')
+        assert_equal(a.view(np.int64), 2**31)
+
+        # Test parsing on either side of the Y2038 boundary with
+        # a manually specified timezone offset
+        a = np.datetime64('2038-01-19T04:14:07+0100')
+        assert_equal(a.view(np.int64), 2**31 - 1)
+        a = np.datetime64('2038-01-19T04:14:08+0100')
+        assert_equal(a.view(np.int64), 2**31)
+
+        # Test parsing a date after Y2038 in the local timezone
+        a = np.datetime64('2038-01-20T13:21:14')
+        assert_equal(str(a)[:-5], '2038-01-20T13:21:14')
+
 class TestDateTimeData(TestCase):
 
     def test_basic(self):
         a = np.array(['1980-03-23'], dtype=np.datetime64)
-        assert_equal(np.datetime_data(a.dtype), (asbytes('D'), 1))
+        assert_equal(np.datetime_data(a.dtype), ('D', 1))
 
 if __name__ == "__main__":
     run_module_suite()
