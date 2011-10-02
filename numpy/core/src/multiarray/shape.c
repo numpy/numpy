@@ -246,11 +246,11 @@ _Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                 flags = PyArray_FLAGS(self);
             }
             else {
-		PyErr_SetString(PyExc_AttributeError,
+                PyErr_SetString(PyExc_AttributeError,
                         "incompatible shape for a non-contiguous "\
                         "array");
-		return NULL;
-	    }
+                return NULL;
+            }
         }
 
         /* We always have to interpret the contiguous buffer correctly */
