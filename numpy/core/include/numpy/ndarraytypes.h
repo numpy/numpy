@@ -187,7 +187,10 @@ typedef enum {
         /* Fortran order */
         NPY_FORTRANORDER=1,
         /* An order as close to the inputs as possible */
-        NPY_KEEPORDER=2
+        NPY_KEEPORDER=2,
+        /* Don't copy data, so order obviously is kept.
+         * used as special value in PyArray_Newshape */
+        NPY_NOCOPY=3
 } NPY_ORDER;
 
 /* For specifying allowed casting in operations which support it */

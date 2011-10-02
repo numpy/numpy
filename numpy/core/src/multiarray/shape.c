@@ -164,14 +164,22 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
 }
 
 /*
- * Bring array `self` into into new shape `newdims`, 
- * in order `order`. If `copy`, the array may be copied to
- * achieve this goal. This function is the gcd of
- * PyArray_Newshape and PyArray_Newshape_Nocopy.
+ * Returns a new array
+ * with the new shape from the data
+ * in the old array --- order-perspective depends on order argument.
+ * The data is copied only if it is necessary. Otherwise a view
+ * on the original array is returned. Copying can be prevented by setting
+ * `order` to the special value `NPY_NOCOPY`, which is equivalent to
+ * `NPY_CORDER`, just that an `AttributeError` is flagged if reshaping
+ * is impossible without copying.
  */
-static PyObject *
-_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
-                 NPY_ORDER order, int copy)
+
+/*NUMPY_API
+ * New shape for an array
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
+                 NPY_ORDER order)
 {
     intp i;
     intp *dimensions = newdims->ptr;
@@ -232,16 +240,17 @@ _Newshape(PyArrayObject *self, PyArray_Dims *newdims,
             (((PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS) &&
                order == NPY_FORTRANORDER) ||
               (PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS) &&
-                  order == NPY_CORDER)) && (PyArray_NDIM(self) > 1))) {
+                  (order == NPY_CORDER || order == NPY_NOCOPY)
+               )) && (PyArray_NDIM(self) > 1))) {
             int success = 0;
-            success = _attempt_nocopy_reshape(self,n,dimensions,
-                                              newstrides,order);
+            success = _attempt_nocopy_reshape(self,n,dimensions, newstrides,
+                                    order == NPY_NOCOPY ? NPY_CORDER : order);
             if (success) {
                 /* no need to copy the array after all */
                 strides = newstrides;
                 flags = PyArray_FLAGS(self);
             }
-            else if (copy) {
+            else if (order != NPY_NOCOPY) {
                 PyObject *new;
                 new = PyArray_NewCopy(self, order);
                 if (new == NULL) {
@@ -253,8 +262,7 @@ _Newshape(PyArrayObject *self, PyArray_Dims *newdims,
             }
             else {
                 PyErr_SetString(PyExc_AttributeError,
-                        "incompatible shape for a non-contiguous "\
-                        "array");
+                        "incompatible shape for a non-contiguous array");
                 return NULL;
             }
         }
@@ -326,35 +334,6 @@ _Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         Py_DECREF(self);
     }
     return NULL;
-}
-
-/*
- * Returns a new array
- * with the new shape from the data
- * in the old array --- order-perspective depends on order argument.
- * copy-only-if-necessary
- */
-
-/*NUMPY_API
- * New shape for an array
- */
-NPY_NO_EXPORT PyObject *
-PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
-                 NPY_ORDER order)
-{
-    return _Newshape(self, newdims, order, 1);
-}
-
-/*
- * Performs the same operations as PyArray_Newshape,
- * but won't ever copy, instead raises an
- * AttributeError on fail.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_Newshape_Nocopy(PyArrayObject *self, PyArray_Dims *newdims,
-                 NPY_ORDER order)
-{
-    return _Newshape(self, newdims, order, 0);
 }
 
 

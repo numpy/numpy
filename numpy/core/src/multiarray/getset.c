@@ -50,8 +50,7 @@ array_shape_set(PyArrayObject *self, PyObject *val)
     if (!PyArray_IntpConverter(val, &newdims)) {
         return -1;
     }
-    ret = (PyArrayObject *)PyArray_Newshape_Nocopy(self, &newdims,
-                                                   PyArray_CORDER);
+    ret = (PyArrayObject *)PyArray_Newshape(self, &newdims, NPY_NOCOPY);
     PyDimMem_FREE(newdims.ptr);
 
     if (ret == NULL) {

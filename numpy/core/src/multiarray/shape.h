@@ -14,8 +14,5 @@ typedef struct {
 NPY_NO_EXPORT void
 PyArray_CreateSortedStridePerm(PyArrayObject *arr,
                            _npy_stride_sort_item *strideperm);
-NPY_NO_EXPORT PyObject *
-PyArray_Newshape_Nocopy(PyArrayObject *self, PyArray_Dims *newdims,
-                 NPY_ORDER order);
 
 #endif
