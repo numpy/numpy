@@ -163,6 +163,12 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
     return Py_None;
 }
 
+/*
+ * Bring array `self` into into new shape `newdims`, 
+ * in order `order`. If `copy`, the array may be copied to
+ * achieve this goal. This function is the gcd of
+ * PyArray_Newshape and PyArray_Newshape_Nocopy.
+ */
 static PyObject *
 _Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                  NPY_ORDER order, int copy)
