@@ -42,8 +42,36 @@ array_length(PyArrayObject *self)
     }
 }
 
+
+NPY_NO_EXPORT int
+_array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
+{
+    return array_ass_big_item(self, (npy_intp) i, v);
+}
+
+/* Get array item as scalar type */
 NPY_NO_EXPORT PyObject *
-array_big_item(PyArrayObject *self, npy_intp i)
+array_item_asscalar(PyArrayObject *self, npy_intp i)
+{
+    char *item;
+    npy_intp dim0;
+
+    /* Bounds check and get the data pointer */
+    dim0 = PyArray_DIM(self, 0);
+    if (i < 0) {
+        i += dim0;
+    }
+    if (i < 0 || i >= dim0) {
+        PyErr_SetString(PyExc_IndexError, "index out of bounds");
+        return NULL;
+    }
+    item = PyArray_BYTES(self) + i * PyArray_STRIDE(self, 0);
+    return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
+}
+
+/* Get array item as ndarray type */
+NPY_NO_EXPORT PyObject *
+array_item_asarray(PyArrayObject *self, npy_intp i)
 {
     char *item;
     PyArrayObject *ret;
@@ -86,35 +114,18 @@ array_big_item(PyArrayObject *self, npy_intp i)
     return (PyObject *)ret;
 }
 
-NPY_NO_EXPORT int
-_array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
-{
-    return array_ass_big_item(self, (npy_intp) i, v);
-}
-
-/* contains optimization for 1-d arrays */
+/* Get array item at given index */
 NPY_NO_EXPORT PyObject *
-array_item_nice(PyArrayObject *self, Py_ssize_t _i)
+array_item(PyArrayObject *self, Py_ssize_t i)
 {
     /* Workaround Python 2.4: Py_ssize_t not the same as npyint_p */
     npy_intp i = _i;
 
     if (PyArray_NDIM(self) == 1) {
-        char *item;
-        npy_intp dim0;
-
-        /* Bounds check and get the data pointer */
-        dim0 = PyArray_DIM(self, 0);
-        if (check_and_adjust_index(&i, dim0, 0) < 0) {
-            return NULL;
-        }
-        item = PyArray_BYTES(self) + i * PyArray_STRIDE(self, 0);
-
-        return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
+        return array_item_asscalar(self, (npy_intp) i);
     }
     else {
-        return PyArray_Return(
-                (PyArrayObject *) array_big_item(self, (npy_intp) i));
+        return array_item_asarray(self, (npy_intp) i);
     }
 }
 
@@ -145,7 +156,7 @@ array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v)
 
     /* For multi-dimensional arrays, use CopyObject */
     if (PyArray_NDIM(self) > 1) {
-        tmp = (PyArrayObject *)array_big_item(self, i);
+        tmp = (PyArrayObject *)array_item_asarray(self, i);
         if(tmp == NULL) {
             return -1;
         }
@@ -578,7 +589,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
         PyErr_Clear();
     }
     else {
-        return array_big_item(self, value);
+        return array_item_asarray(self, value);
     }
 
     /* Standard (view-based) Indexing */
@@ -1393,7 +1404,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
             PyErr_Clear();
         }
         else {
-            return array_item_nice(self, (Py_ssize_t) value);
+            return array_item(self, (Py_ssize_t) value);
         }
     }
     /*
