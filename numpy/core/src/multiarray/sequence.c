@@ -134,7 +134,7 @@ NPY_NO_EXPORT PySequenceMethods array_as_sequence = {
     (lenfunc)array_length,                  /*sq_length*/
     (binaryfunc)NULL,                       /*sq_concat is handled by nb_add*/
     (ssizeargfunc)NULL,
-    (ssizeargfunc)array_item_nice,
+    (ssizeargfunc)array_item,
     (ssizessizeargfunc)array_slice,
     (ssizeobjargproc)array_ass_item,        /*sq_ass_item*/
     (ssizessizeobjargproc)array_ass_slice,  /*sq_ass_slice*/
@@ -145,7 +145,7 @@ NPY_NO_EXPORT PySequenceMethods array_as_sequence = {
     (inquiry)array_length,                  /*sq_length*/
     (binaryfunc)NULL,                       /*sq_concat is handled by nb_add*/
     (intargfunc)NULL,                       /*sq_repeat is handled nb_multiply*/
-    (intargfunc)array_item_nice,            /*sq_item*/
+    (intargfunc)array_item,                 /*sq_item*/
     (intintargfunc)array_slice,             /*sq_slice*/
     (intobjargproc)array_ass_item,          /*sq_ass_item*/
     (intintobjargproc)array_ass_slice,      /*sq_ass_slice*/

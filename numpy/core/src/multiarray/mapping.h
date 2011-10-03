@@ -7,14 +7,17 @@ extern NPY_NO_EXPORT PyMappingMethods array_as_mapping;
 NPY_NO_EXPORT PyMappingMethods array_as_mapping;
 #endif
 
-NPY_NO_EXPORT PyObject *
-array_big_item(PyArrayObject *self, npy_intp i);
-
 NPY_NO_EXPORT Py_ssize_t
 array_length(PyArrayObject *self);
 
 NPY_NO_EXPORT PyObject *
-array_item_nice(PyArrayObject *self, Py_ssize_t i);
+array_item_asarray(PyArrayObject *self, intp i);
+
+NPY_NO_EXPORT PyObject *
+array_item_asscalar(PyArrayObject *self, intp i);
+
+NPY_NO_EXPORT PyObject *
+array_item(PyArrayObject *self, Py_ssize_t i);
 
 NPY_NO_EXPORT PyObject *
 array_subscript(PyArrayObject *self, PyObject *op);
