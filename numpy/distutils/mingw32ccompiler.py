@@ -115,7 +115,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         # bad consequences, like using Py_ModuleInit4 instead of
         # Py_ModuleInit4_64, etc... So we add it here
         if get_build_architecture() == 'AMD64':
-            if self.gcc_version < "4.":
+            if self.gcc_version < "4.0":
                 self.set_executables(
                     compiler='gcc -g -DDEBUG -DMS_WIN64 -mno-cygwin -O0 -Wall',
                     compiler_so='gcc -g -DDEBUG -DMS_WIN64 -mno-cygwin -O0 -Wall -Wstrict-prototypes',
@@ -135,7 +135,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
                                      linker_exe='g++ -mno-cygwin',
                                      linker_so='%s -mno-cygwin -mdll -static %s'
                                      % (self.linker, entry_point))
-            elif self.gcc_version < "4.":
+            elif self.gcc_version < "4.0":
                 self.set_executables(compiler='gcc -mno-cygwin -O2 -Wall',
                                      compiler_so='gcc -mno-cygwin -O2 -Wall -Wstrict-prototypes',
                                      linker_exe='g++ -mno-cygwin',
