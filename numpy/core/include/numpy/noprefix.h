@@ -122,7 +122,6 @@ compatibility measure*/
 #define BITSOF_DATETIME   NPY_BITSOF_DATETIME
 #define BITSOF_TIMEDELTA   NPY_BITSOF_TIMEDELTA
 
-#define PyArray_UCS4 npy_ucs4
 #define _pya_malloc PyArray_malloc
 #define _pya_free PyArray_free
 #define _pya_realloc PyArray_realloc
