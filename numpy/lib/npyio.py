@@ -285,7 +285,8 @@ def load(file, mmap_mode=None):
     Returns
     -------
     result : array, tuple, dict, etc.
-        Data stored in the file.
+        Data stored in the file. For '.npz' files, the returned instance of
+        NpzFile class must be closed to avoid leaking file descriptors.
 
     Raises
     ------
@@ -314,6 +315,17 @@ def load(file, mmap_mode=None):
     >>> np.load('/tmp/123.npy')
     array([[1, 2, 3],
            [4, 5, 6]])
+
+    Store compressed data to disk, and load it again:
+
+    >>> np.savez('/tmp/123.npz', a=np.array([[1, 2, 3], [4, 5, 6]]), b=np.array([1, 2]))
+    >>> data = np.load('/tmp/123.npy')
+    >>> data['a']
+    array([[1, 2, 3],
+           [4, 5, 6]])
+    >>> data['b']
+    array([1, 2])
+    >>> data.close()
 
     Mem-map the stored array, and then access the second row
     directly from disk:
