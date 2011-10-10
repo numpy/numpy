@@ -195,6 +195,12 @@ class NpzFile(object):
         else:
             self.fid = None
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
     def close(self):
         """
         Close the file.
@@ -306,6 +312,13 @@ def load(file, mmap_mode=None):
     - If the file is a ``.npz`` file, then a dictionary-like object is
       returned, containing ``{filename: array}`` key-value pairs, one for
       each file in the archive.
+    - If the file is a ``.npz`` file, the returned value supports the context
+      manager protocol in a similar fashion to the open function::
+
+        with load('foo.npz') as data:
+            a = data['a']
+
+      The underlyling file descriptor is always closed when exiting the with block.
 
     Examples
     --------
