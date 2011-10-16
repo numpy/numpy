@@ -20,6 +20,9 @@ NPY_NO_EXPORT PyObject *
 array_item(PyArrayObject *self, Py_ssize_t i);
 
 NPY_NO_EXPORT PyObject *
+array_subscript_asarray(PyArrayObject *self, PyObject *op);
+
+NPY_NO_EXPORT PyObject *
 array_subscript(PyArrayObject *self, PyObject *op);
 
 NPY_NO_EXPORT int
