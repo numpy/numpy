@@ -994,6 +994,13 @@ array_subscript_fancy(PyArrayObject *self, PyObject *op, int fancy)
     return other;
 }
 
+/* make sure subscript always returns an array object */
+NPY_NO_EXPORT PyObject *
+array_subscript_asarray(PyArrayObject *self, PyObject *op)
+{
+    return PyArray_EnsureAnyArray(array_subscript(self, op));
+}
+
 NPY_NO_EXPORT PyObject *
 array_subscript(PyArrayObject *self, PyObject *op)
 {
