@@ -922,12 +922,101 @@ array_ass_boolean_subscript(PyArrayObject *self,
     return 0;
 }
 
+/* return -1 if tuple-object seq is not a tuple of integers.
+   otherwise fill vals with converted integers
+*/
+static int
+_tuple_of_integers(PyObject *seq, npy_intp *vals, int maxvals)
+{
+    int i;
+    PyObject *obj;
+    npy_intp temp;
+
+    for(i=0; i<maxvals; i++) {
+        obj = PyTuple_GET_ITEM(seq, i);
+        if ((PyArray_Check(obj) && PyArray_NDIM((PyArrayObject *)obj) > 0)
+                || PyList_Check(obj)) {
+            return -1;
+        }
+        temp = PyArray_PyIntAsIntp(obj);
+        if (error_converting(temp)) {
+            return -1;
+        }
+        vals[i] = temp;
+    }
+    return 0;
+}
+
+/* return TRUE if ellipses are found else return FALSE */
+static npy_bool
+_check_ellipses(PyObject *op)
+{
+    if ((op == Py_Ellipsis) || PyString_Check(op) || PyUnicode_Check(op)) {
+        return TRUE;
+    }
+    else if (PyBool_Check(op) || PyArray_IsScalar(op, Bool) ||
+             (PyArray_Check(op) &&
+                (PyArray_DIMS((PyArrayObject *)op)==0) &&
+                 PyArray_ISBOOL((PyArrayObject *)op))) {
+        return TRUE;
+    }
+    else if (PySequence_Check(op)) {
+        Py_ssize_t n, i;
+        PyObject *temp;
+
+        n = PySequence_Size(op);
+        i = 0;
+        while (i < n) {
+            temp = PySequence_GetItem(op, i);
+            if (temp == Py_Ellipsis) {
+                Py_DECREF(temp);
+                return TRUE;
+            }
+            Py_DECREF(temp);
+            i++;
+        }
+    }
+    return FALSE;
+}
+
+NPY_NO_EXPORT PyObject *
+array_subscript_fancy(PyArrayObject *self, PyObject *op, int fancy)
+ {
+    int oned;
+    PyObject *other;
+    PyArrayMapIterObject *mit;
+    
+    oned = ((PyArray_NDIM(self) == 1) &&
+            !(PyTuple_Check(op) && PyTuple_GET_SIZE(op) > 1));
+
+    /* wrap arguments into a mapiter object */
+    mit = (PyArrayMapIterObject *) PyArray_MapIterNew(op, oned, fancy);
+    if (mit == NULL) {
+        return NULL;
+    }
+    if (oned) {
+        PyArrayIterObject *it;
+        PyObject *rval;
+        it = (PyArrayIterObject *) PyArray_IterNew((PyObject *)self);
+        if (it == NULL) {
+            Py_DECREF(mit);
+            return NULL;
+        }
+        rval = iter_subscript(it, mit->indexobj);
+        Py_DECREF(it);
+        Py_DECREF(mit);
+        return rval;
+    }
+    PyArray_MapIterBind(mit, self);
+    other = (PyObject *)PyArray_GetMap(mit);
+    Py_DECREF(mit);
+    return other;
+}
+
 NPY_NO_EXPORT PyObject *
 array_subscript(PyArrayObject *self, PyObject *op)
 {
     int nd, fancy;
-    PyArrayObject *other;
-    PyArrayMapIterObject *mit;
     PyObject *obj;
 
     if (PyString_Check(op) || PyUnicode_Check(op)) {
@@ -1049,38 +1138,11 @@ array_subscript(PyArrayObject *self, PyObject *op)
 
     fancy = fancy_indexing_check(op);
     if (fancy != SOBJ_NOTFANCY) {
-        int oned;
-
-        oned = ((PyArray_NDIM(self) == 1) &&
-                !(PyTuple_Check(op) && PyTuple_GET_SIZE(op) > 1));
-
-        /* wrap arguments into a mapiter object */
-        mit = (PyArrayMapIterObject *) PyArray_MapIterNew(op, oned, fancy);
-        if (mit == NULL) {
-            return NULL;
-        }
-        if (oned) {
-            PyArrayIterObject *it;
-            PyObject *rval;
-            it = (PyArrayIterObject *) PyArray_IterNew((PyObject *)self);
-            if (it == NULL) {
-                Py_DECREF(mit);
-                return NULL;
-            }
-            rval = iter_subscript(it, mit->indexobj);
-            Py_DECREF(it);
-            Py_DECREF(mit);
-            return rval;
-        }
-        PyArray_MapIterBind(mit, self);
-        other = (PyArrayObject *)PyArray_GetMap(mit);
-        Py_DECREF(mit);
-        return (PyObject *)other;
+        return array_subscript_fancy(self, op, fancy);
     }
 
     return array_subscript_simple(self, op);
 }
-
 
 /*
  * Another assignment hacked by using CopyObject.
@@ -1135,32 +1197,6 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *ind, PyObject *op)
     ret = PyArray_CopyObject(tmp, op);
     Py_DECREF(tmp);
     return ret;
-}
-
-
-/* return -1 if tuple-object seq is not a tuple of integers.
-   otherwise fill vals with converted integers
-*/
-static int
-_tuple_of_integers(PyObject *seq, npy_intp *vals, int maxvals)
-{
-    int i;
-    PyObject *obj;
-    npy_intp temp;
-
-    for(i=0; i<maxvals; i++) {
-        obj = PyTuple_GET_ITEM(seq, i);
-        if ((PyArray_Check(obj) && PyArray_NDIM((PyArrayObject *)obj) > 0)
-                || PyList_Check(obj)) {
-            return -1;
-        }
-        temp = PyArray_PyIntAsIntp(obj);
-        if (error_converting(temp)) {
-            return -1;
-        }
-        vals[i] = temp;
-    }
-    return 0;
 }
 
 
@@ -1415,32 +1451,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
      */
 
     if (PyArray_Check(mp) && PyArray_NDIM(mp) == 0) {
-        npy_bool noellipses = NPY_TRUE;
-        if ((op == Py_Ellipsis) || PyString_Check(op) || PyUnicode_Check(op)) {
-            noellipses = NPY_FALSE;
-        }
-        else if (PyBool_Check(op) || PyArray_IsScalar(op, Bool) ||
-                 (PyArray_Check(op) &&
-                    (PyArray_DIMS((PyArrayObject *)op)==0) &&
-                     PyArray_ISBOOL((PyArrayObject *)op))) {
-            noellipses = NPY_FALSE;
-        }
-        else if (PySequence_Check(op)) {
-            Py_ssize_t n, i;
-            PyObject *temp;
-
-            n = PySequence_Size(op);
-            i = 0;
-            while (i < n && noellipses) {
-                temp = PySequence_GetItem(op, i);
-                if (temp == Py_Ellipsis) {
-                    noellipses = NPY_FALSE;
-                }
-                Py_DECREF(temp);
-                i++;
-            }
-        }
-        if (noellipses) {
+        if (!_check_ellipses(op)) {
             return PyArray_Return(mp);
         }
     }
