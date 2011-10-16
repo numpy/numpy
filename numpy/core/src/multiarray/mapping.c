@@ -1004,11 +1004,86 @@ array_subscript_asarray(PyArrayObject *self, PyObject *op)
 NPY_NO_EXPORT PyObject *
 array_subscript(PyArrayObject *self, PyObject *op)
 {
-    int nd, fancy;
-    PyObject *obj;
+    int fancy;
+    npy_intp vals[NPY_MAXDIMS];
+    
+    /* Integer index */
+    if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) ||
+        PyLong_Check(op) || (PyIndex_Check(op) &&
+                             !PySequence_Check(op))) {
+        npy_intp value;
+        value = PyArray_PyIntAsIntp(op);
+        if (PyErr_Occurred()) {
+            PyErr_Clear();
+        }
+        else {
+            return array_item(self, (Py_ssize_t) value);
+        }
+    }
+    /* Optimization for a tuple of integers */
+    if (PyArray_NDIM(self) > 1 &&
+                PyTuple_Check(op) &&
+                (PyTuple_GET_SIZE(op) == PyArray_NDIM(self)) &&
+                (_tuple_of_integers(op, vals, PyArray_NDIM(self)) >= 0)) {
+        int idim, ndim = PyArray_NDIM(self);
+        npy_intp *shape = PyArray_DIMS(self);
+        npy_intp *strides = PyArray_STRIDES(self);
+        char *item = PyArray_DATA(self);
 
+        if (!PyArray_HASMASKNA(self)) {
+            for (idim = 0; idim < ndim; idim++) {
+                npy_intp v = vals[idim];
+                if (v < 0) {
+                    v += shape[idim];
+                }
+                if (v < 0 || v >= shape[idim]) {
+                    PyErr_Format(PyExc_IndexError,
+                                 "index (%"INTP_FMT") out of range "\
+                                 "(0<=index<%"INTP_FMT") in dimension %d",
+                                 vals[idim], PyArray_DIMS(self)[idim], idim);
+                    return NULL;
+                }
+                else {
+                    item += v * strides[idim];
+                }
+            }
+            return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
+        }
+        else {
+            char *maskna_item = PyArray_MASKNA_DATA(self);
+            npy_intp *maskna_strides = PyArray_MASKNA_STRIDES(self);
+
+            for (idim = 0; idim < ndim; idim++) {
+                npy_intp v = vals[idim];
+                if (v < 0) {
+                    v += shape[idim];
+                }
+                if (v < 0 || v >= shape[idim]) {
+                    PyErr_Format(PyExc_IndexError,
+                                 "index (%"INTP_FMT") out of range "\
+                                 "(0<=index<%"INTP_FMT") in dimension %d",
+                                 vals[idim], PyArray_DIMS(self)[idim], idim);
+                    return NULL;
+                }
+                else {
+                    item += v * strides[idim];
+                    maskna_item += v * maskna_strides[idim];
+                }
+            }
+            if (NpyMaskValue_IsExposed((npy_mask)*maskna_item)) {
+                return PyArray_Scalar(item, PyArray_DESCR(self),
+                                                    (PyObject *)self);
+            }
+            else {
+                return (PyObject *)NpyNA_FromDTypeAndPayload(
+                                        PyArray_DESCR(self), 0, 0);
+            }
+        }
+    }
+
+    /* Check for single field access */
     if (PyString_Check(op) || PyUnicode_Check(op)) {
-        PyObject *temp;
+        PyObject *temp, *obj;
 
         if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
             obj = PyDict_GetItem(PyArray_DESCR(self)->fields, op);
@@ -1029,7 +1104,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
             temp = PyUnicode_AsUnicodeEscapeString(op);
         }
         PyErr_Format(PyExc_ValueError,
-                     "field named %s not found.",
+                     "field named %s not found",
                      PyBytes_AsString(temp));
         if (temp != op) {
             Py_DECREF(temp);
@@ -1042,6 +1117,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                         PySequence_Check(op) &&
                         !PyTuple_Check(op)) {
         int seqlen, i;
+        PyObject *obj;
         seqlen = PySequence_Size(op);
         for (i = 0; i < seqlen; i++) {
             obj = PySequence_GetItem(op, i);
@@ -1052,7 +1128,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
             Py_DECREF(obj);
         }
         /*
-         * extract multiple fields if all elements in sequence
+         * Extract multiple fields if all elements in sequence
          * are either string or unicode (i.e. no break occurred).
          */
         fancy = ((seqlen > 0) && (i == seqlen));
@@ -1073,15 +1149,19 @@ array_subscript(PyArrayObject *self, PyObject *op)
         }
     }
 
+    /* Check for Ellipsis index */
     if (op == Py_Ellipsis) {
         Py_INCREF(self);
         return (PyObject *)self;
     }
 
     if (PyArray_NDIM(self) == 0) {
+        int nd;
+        /* Check for None index */
         if (op == Py_None) {
             return add_new_axes_0d(self, 1);
         }
+        /* Check for (empty) tuple index */
         if (PyTuple_Check(op)) {
             if (0 == PyTuple_GET_SIZE(op))  {
                 Py_INCREF(self);
@@ -1111,7 +1191,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
                                             NULL);
             }
         }
-        PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed.");
+        PyErr_SetString(PyExc_IndexError, "0-dimensional arrays can't be indexed");
         return NULL;
     }
 
