@@ -1053,10 +1053,11 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
     if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) ||
         PyLong_Check(op) || (PyIndex_Check(op) &&
                              !PySequence_Check(op))) {
-        npy_intp value;
-        value = PyArray_PyIntAsIntp(op);
-        if (PyErr_Occurred()) {
-            PyErr_Clear();
+        npy_intp value = PyArray_PyIntAsIntp(op);
+        if (value == -1 && PyErr_Occurred()) {
+            /* fail on error */
+            PyErr_SetString(PyExc_IndexError, "integer index out of bounds");
+            return NULL;
         }
         else {
             return array_item(self, (Py_ssize_t) value);
