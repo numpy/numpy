@@ -1152,24 +1152,6 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
             }
             return add_new_axes_0d(self, nd);
         }
-        /* Allow Boolean mask selection also */
-        if ((PyArray_Check(op) && (PyArray_DIMS((PyArrayObject *)op)==0)
-                                && PyArray_ISBOOL((PyArrayObject *)op))) {
-            if (PyObject_IsTrue(op)) {
-                Py_INCREF(self);
-                return (PyObject *)self;
-            }
-            else {
-                npy_intp oned = 0;
-                Py_INCREF(PyArray_DESCR(self));
-                return PyArray_NewFromDescr(Py_TYPE(self),
-                                            PyArray_DESCR(self),
-                                            1, &oned,
-                                            NULL, NULL,
-                                            NPY_ARRAY_DEFAULT,
-                                            NULL);
-            }
-        }
         PyErr_SetString(PyExc_IndexError, "0-dimensional arrays can't be indexed");
         return NULL;
     }
@@ -1193,11 +1175,9 @@ array_subscript(PyArrayObject *self, PyObject *op)
     }
     
     /* Boolean indexing special case */
-    /* The SIZE check might be overly cautious */
-    if (PyArray_Check(op) && (PyArray_TYPE((PyArrayObject *)op) == NPY_BOOL)
-                && (PyArray_NDIM(self) == PyArray_NDIM((PyArrayObject *)op))
-                && (PyArray_SIZE((PyArrayObject *)op) == PyArray_SIZE(self))) {
-        return (PyObject *)array_boolean_subscript(self,
+    else if (PyArray_Check(op) && (PyArray_TYPE((PyArrayObject *)op) == NPY_BOOL)
+                && (PyArray_NDIM(self) == PyArray_NDIM((PyArrayObject *)op))) {
+        ret = (PyObject *)array_boolean_subscript(self,
                                         (PyArrayObject *)op, NPY_CORDER);
     }
     /* Error case when indexing 0-dim array with non-boolean. */
