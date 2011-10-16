@@ -926,6 +926,48 @@ array_ass_boolean_subscript(PyArrayObject *self,
 }
 
 
+/* Check if ind is a tuple and if it has as many elements as arr has axes. */
+static NPY_INLINE int
+_is_full_index(PyObject *ind, PyArrayObject *arr)
+{
+    return PyTuple_Check(ind) && (PyTuple_GET_SIZE(ind) == PyArray_NDIM(arr));
+}
+
+/*
+ * Returns 0 if tuple-object seq is not a tuple of integers.
+ * If the return value is positive, vals will be filled with the elements
+ * from the tuple.
+ * Returns -1 on error.
+ */
+static int
+_tuple_of_integers(PyObject *seq, npy_intp *vals, int maxvals)
+{
+    int i;
+    PyObject *obj;
+    npy_intp temp;
+
+    for(i=0; i<maxvals; i++) {
+        obj = PyTuple_GET_ITEM(seq, i);
+        if ((PyArray_Check(obj) && PyArray_NDIM((PyArrayObject *)obj) > 0)
+                || PyList_Check(obj)) {
+            return 0;
+        }
+        temp = PyArray_PyIntAsIntp(obj);
+        if (error_converting(temp)) {
+            return 0;
+        }
+        if (!PyIndex_Check_Or_Unsupported(obj)) {
+            if (DEPRECATE("non-integer scalar index. In a future numpy "
+                          "release, this will raise an error.") < 0) {
+                return -1;
+            }
+        }
+        vals[i] = temp;
+    }
+    return 1;
+}
+
+
 /* return TRUE if ellipses are found else return FALSE */
 static npy_bool
 _check_ellipses(PyObject *op)
@@ -1002,7 +1044,7 @@ array_subscript_asarray(PyArrayObject *self, PyObject *op)
 }
 
 NPY_NO_EXPORT PyObject *
-array_subscript(PyArrayObject *self, PyObject *op)
+array_subscript_fromobject(PyArrayObject *self, PyObject *op)
 {
     int fancy;
     npy_intp vals[NPY_MAXDIMS];
@@ -1020,65 +1062,27 @@ array_subscript(PyArrayObject *self, PyObject *op)
             return array_item(self, (Py_ssize_t) value);
         }
     }
-    /* Optimization for a tuple of integers */
-    if (PyArray_NDIM(self) > 1 &&
-                PyTuple_Check(op) &&
-                (PyTuple_GET_SIZE(op) == PyArray_NDIM(self)) &&
-                (_tuple_of_integers(op, vals, PyArray_NDIM(self)) >= 0)) {
-        int idim, ndim = PyArray_NDIM(self);
-        npy_intp *shape = PyArray_DIMS(self);
-        npy_intp *strides = PyArray_STRIDES(self);
-        char *item = PyArray_DATA(self);
-
-        if (!PyArray_HASMASKNA(self)) {
+    /* optimization for a tuple of integers */
+    if (PyArray_NDIM(self) > 1 && _is_full_index(op, self)) {
+        int ret = _tuple_of_integers(op, vals, PyArray_NDIM(self));
+        /* In case an exception occurred (e.g. in PyErr_WarnEx) */
+         if (ret < 0) {
+             return NULL;
+         }
+        else if (ret > 0) {
+            int idim, ndim = PyArray_NDIM(self);
+            npy_intp *shape = PyArray_DIMS(self);
+            npy_intp *strides = PyArray_STRIDES(self);
+            char *item = PyArray_DATA(self);
             for (idim = 0; idim < ndim; idim++) {
                 npy_intp v = vals[idim];
-                if (v < 0) {
-                    v += shape[idim];
+                if (check_and_adjust_index(&v, shape[idim], idim) < 0) {
+                  return NULL;
                 }
-                if (v < 0 || v >= shape[idim]) {
-                    PyErr_Format(PyExc_IndexError,
-                                 "index (%"INTP_FMT") out of range "\
-                                 "(0<=index<%"INTP_FMT") in dimension %d",
-                                 vals[idim], PyArray_DIMS(self)[idim], idim);
-                    return NULL;
-                }
-                else {
-                    item += v * strides[idim];
-                }
-            }
-            return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
-        }
-        else {
-            char *maskna_item = PyArray_MASKNA_DATA(self);
-            npy_intp *maskna_strides = PyArray_MASKNA_STRIDES(self);
-
-            for (idim = 0; idim < ndim; idim++) {
-                npy_intp v = vals[idim];
-                if (v < 0) {
-                    v += shape[idim];
-                }
-                if (v < 0 || v >= shape[idim]) {
-                    PyErr_Format(PyExc_IndexError,
-                                 "index (%"INTP_FMT") out of range "\
-                                 "(0<=index<%"INTP_FMT") in dimension %d",
-                                 vals[idim], PyArray_DIMS(self)[idim], idim);
-                    return NULL;
-                }
-                else {
-                    item += v * strides[idim];
-                    maskna_item += v * maskna_strides[idim];
-                }
-            }
-            if (NpyMaskValue_IsExposed((npy_mask)*maskna_item)) {
-                return PyArray_Scalar(item, PyArray_DESCR(self),
-                                                    (PyObject *)self);
-            }
-            else {
-                return (PyObject *)NpyNA_FromDTypeAndPayload(
-                                        PyArray_DESCR(self), 0, 0);
+                item += v * strides[idim];
             }
         }
+        return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
     }
 
     /* Check for single field access */
@@ -1195,6 +1199,24 @@ array_subscript(PyArrayObject *self, PyObject *op)
         return NULL;
     }
 
+    fancy = fancy_indexing_check(op);
+    if (fancy != SOBJ_NOTFANCY) {
+        return array_subscript_fancy(self, op, fancy);
+    }
+    else {
+        return array_subscript_simple(self, op);
+    }
+}
+
+NPY_NO_EXPORT PyObject *
+array_subscript(PyArrayObject *self, PyObject *op)
+{
+    int fancy;
+    PyObject *ret = NULL;
+    if (!PyArray_Check(op)) {
+        ret = array_subscript_fromobject(self, op);
+    }
+    
     /* Boolean indexing special case */
     /* The SIZE check might be overly cautious */
     if (PyArray_Check(op) && (PyArray_TYPE((PyArrayObject *)op) == NPY_BOOL)
@@ -1203,13 +1225,35 @@ array_subscript(PyArrayObject *self, PyObject *op)
         return (PyObject *)array_boolean_subscript(self,
                                         (PyArrayObject *)op, NPY_CORDER);
     }
-
-    fancy = fancy_indexing_check(op);
-    if (fancy != SOBJ_NOTFANCY) {
-        return array_subscript_fancy(self, op, fancy);
+    /* Error case when indexing 0-dim array with non-boolean. */
+    else if (PyArray_NDIM(self) == 0) {
+        PyErr_SetString(PyExc_IndexError, "0-dimensional arrays can't be indexed");
+        return NULL;
     }
-
-    return array_subscript_simple(self, op);
+    
+    else {
+        fancy = fancy_indexing_check(op);
+        if (fancy != SOBJ_NOTFANCY) {
+            ret = array_subscript_fancy(self, op, fancy);
+        }
+        else {
+            ret = array_subscript_simple(self, op);
+        }
+    }
+    if (ret == NULL) {
+        return NULL;
+    }
+    
+    if (PyErr_Occurred()) {
+        Py_XDECREF(ret);
+        return NULL;
+    }
+    
+    if (PyArray_Check(ret) && PyArray_NDIM((PyArrayObject *)ret) == 0 
+                                                && !_check_ellipses(op)) {
+        return PyArray_Return((PyArrayObject *)ret);
+    }
+    return ret;
 }
 
 /*
@@ -1265,47 +1309,6 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *ind, PyObject *op)
     ret = PyArray_CopyObject(tmp, op);
     Py_DECREF(tmp);
     return ret;
-}
-
-/* Check if ind is a tuple and if it has as many elements as arr has axes. */
-static NPY_INLINE int
-_is_full_index(PyObject *ind, PyArrayObject *arr)
-{
-    return PyTuple_Check(ind) && (PyTuple_GET_SIZE(ind) == PyArray_NDIM(arr));
-}
-
-/*
- * Returns 0 if tuple-object seq is not a tuple of integers.
- * If the return value is positive, vals will be filled with the elements
- * from the tuple.
- * Returns -1 on error.
- */
-static int
-_tuple_of_integers(PyObject *seq, npy_intp *vals, int maxvals)
-{
-    int i;
-    PyObject *obj;
-    npy_intp temp;
-
-    for(i=0; i<maxvals; i++) {
-        obj = PyTuple_GET_ITEM(seq, i);
-        if ((PyArray_Check(obj) && PyArray_NDIM((PyArrayObject *)obj) > 0)
-                || PyList_Check(obj)) {
-            return 0;
-        }
-        temp = PyArray_PyIntAsIntp(obj);
-        if (error_converting(temp)) {
-            return 0;
-        }
-        if (!PyIndex_Check_Or_Unsupported(obj)) {
-            if (DEPRECATE("non-integer scalar index. In a future numpy "
-                          "release, this will raise an error.") < 0) {
-                return -1;
-            }
-        }
-        vals[i] = temp;
-    }
-    return 1;
 }
 
 static int
@@ -1503,105 +1506,13 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     return array_ass_sub_simple(self, ind, op);
 }
 
-
-/*
- * There are places that require that array_subscript return a PyArrayObject
- * and not possibly a scalar.  Thus, this is the function exposed to
- * Python so that 0-dim arrays are passed as scalars
- */
-
-
-static PyObject *
-array_subscript_nice(PyArrayObject *self, PyObject *op)
-{
-
-    PyArrayObject *mp;
-    int ret;
-    npy_intp vals[NPY_MAXDIMS];
-
-    if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) ||
-        PyLong_Check(op) || (PyIndex_Check(op) &&
-                             !PySequence_Check(op))) {
-        npy_intp value;
-        value = PyArray_PyIntAsIntp(op);
-        if (PyErr_Occurred()) {
-            PyErr_Clear();
-        }
-        else {
-            return array_item(self, (Py_ssize_t) value);
-        }
-    }
-    /*
-     * Optimization for a tuple of integers that is the same size as the
-     * array's dimension.
-     */
-    if (PyArray_NDIM(self) > 1 && _is_full_index(op,  self)) {
-        ret = _tuple_of_integers(op, vals, PyArray_NDIM(self));
-        /* In case an exception occurred (e.g. in PyErr_WarnEx) */
-        if (ret < 0) {
-            return NULL;
-        }
-        else if (ret > 0) {
-            int idim, ndim = PyArray_NDIM(self);
-            npy_intp *shape = PyArray_DIMS(self);
-            npy_intp *strides = PyArray_STRIDES(self);
-            char *item = PyArray_DATA(self);
-            for (idim = 0; idim < ndim; idim++) {
-                npy_intp v = vals[idim];
-                if (check_and_adjust_index(&v, shape[idim], idim) < 0) {
-                  return NULL;
-                }
-                item += v * strides[idim];
-            }
-            return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
-        }
-    }
-    PyErr_Clear();
-    if ((PyNumber_Check(op) || PyArray_IsScalar(op, Number)) &&
-            !PyIndex_Check_Or_Unsupported(op)) {
-        if (DEPRECATE("non-integer scalar index. In a future numpy "
-                      "release, this will raise an error.") < 0) {
-            return NULL;
-        }
-    }
-    mp = (PyArrayObject *)array_subscript(self, op);
-    /*
-     * mp could be a scalar if op is not an Int, Scalar, Long or other Index
-     * object and still convertable to an integer (so that the code goes to
-     * array_subscript_simple).  So, this cast is a bit dangerous..
-     */
-
-    if (mp == NULL) {
-        return NULL;
-    }
-
-    if (PyErr_Occurred()) {
-        Py_XDECREF(mp);
-        return NULL;
-    }
-
-    /*
-     * The following adds some additional logic to avoid calling
-     * PyArray_Return if there is an ellipsis.
-     */
-
-    if (PyArray_Check(mp) && PyArray_NDIM(mp) == 0) {
-        if (!_check_ellipses(op)) {
-            return PyArray_Return(mp);
-        }
-    }
-
-    return (PyObject *)mp;
-}
-
-
 NPY_NO_EXPORT PyMappingMethods array_as_mapping = {
 #if PY_VERSION_HEX >= 0x02050000
     (lenfunc)array_length,              /*mp_length*/
 #else
     (inquiry)array_length,              /*mp_length*/
 #endif
-    (binaryfunc)array_subscript_nice,       /*mp_subscript*/
+    (binaryfunc)array_subscript,        /*mp_subscript*/
     (objobjargproc)array_ass_sub,       /*mp_ass_subscript*/
 };
 
