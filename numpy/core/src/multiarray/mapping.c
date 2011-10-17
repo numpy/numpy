@@ -42,13 +42,6 @@ array_length(PyArrayObject *self)
     }
 }
 
-
-NPY_NO_EXPORT int
-_array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
-{
-    return array_ass_big_item(self, (npy_intp) i, v);
-}
-
 /* Get array item as scalar type */
 NPY_NO_EXPORT PyObject *
 array_item_asscalar(PyArrayObject *self, npy_intp i)
@@ -130,7 +123,13 @@ array_item(PyArrayObject *self, Py_ssize_t i)
 }
 
 NPY_NO_EXPORT int
-array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v)
+array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
+{
+    return array_ass_item_object(self, (npy_intp) i, v);
+}
+
+NPY_NO_EXPORT int
+array_ass_item_object(PyArrayObject *self, npy_intp i, PyObject *v)
 {
     PyArrayObject *tmp;
     char *item;
@@ -172,7 +171,7 @@ array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v)
     }
     item = PyArray_BYTES(self) + i * PyArray_STRIDE(self, 0);
 
-    return PyArray_DESCR(self)->f->setitem(v, item, self);
+    return PyArray_SETITEM(self, item, v);
 }
 
 /* -------------------------------------------------------------- */
@@ -1283,7 +1282,7 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *ind, PyObject *op)
 
     value = PyArray_PyIntAsIntp(ind);
     if (!error_converting(value)) {
-        return array_ass_big_item(self, value, op);
+        return array_ass_item_object(self, value, op);
     }
     PyErr_Clear();
 
@@ -1346,7 +1345,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
             PyErr_Clear();
         }
         else {
-            return array_ass_big_item(self, value, op);
+            return array_ass_item_object(self, value, op);
         }
     }
 
