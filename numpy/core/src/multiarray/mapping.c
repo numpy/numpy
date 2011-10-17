@@ -1235,13 +1235,20 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *ind, PyObject *op)
     npy_intp value;
 
     value = PyArray_PyIntAsIntp(ind);
-    if (!error_converting(value)) {
+    if (value == -1 && PyErr_Occurred()) {
+        if (PyErr_ExceptionMatches(PyExc_TypeError)) {
+            /* Operand is not an integer type */
+            PyErr_Clear();
+        }
+        else {
+            return -1;
+        }
+    }
+    else {
         return array_ass_item_object(self, value, op);
     }
-    PyErr_Clear();
 
     /* Rest of standard (view-based) indexing */
-
     if (PyArray_CheckExact(self)) {
         tmp = (PyArrayObject *)array_subscript_simple(self, ind);
         if (tmp == NULL) {
@@ -1274,12 +1281,41 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *ind, PyObject *op)
     return ret;
 }
 
+static int
+array_ass_sub_fancy(PyArrayObject *self, PyObject *ind, PyObject *op, int fancy)
+{
+    int oned, ret;
+    PyArrayMapIterObject *mit;
+    oned = ((PyArray_NDIM(self) == 1) &&
+            !(PyTuple_Check(ind) && PyTuple_GET_SIZE(ind) > 1));
+    mit = (PyArrayMapIterObject *) PyArray_MapIterNew(ind, oned, fancy);
+    if (mit == NULL) {
+        return -1;
+    }
+    if (oned) {
+        PyArrayIterObject *it;
+        int rval;
+
+        it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
+        if (it == NULL) {
+            Py_DECREF(mit);
+            return -1;
+        }
+        rval = iter_ass_subscript(it, mit->indexobj, op);
+        Py_DECREF(it);
+        Py_DECREF(mit);
+        return rval;
+    }
+    PyArray_MapIterBind(mit, self);
+    ret = PyArray_SetMap(mit, op);
+    Py_DECREF(mit);
+    return ret;
+}
 
 static int
 array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
 {
-    int ret, oned, fancy;
-    PyArrayMapIterObject *mit;
+    int fancy;
     npy_intp vals[NPY_MAXDIMS];
 
     if (op == NULL) {
@@ -1291,19 +1327,22 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         return -1;
     }
 
+    /* Integer index */
     if (PyInt_Check(ind) || PyArray_IsScalar(ind, Integer) ||
         PyLong_Check(ind) || (PyIndex_Check(ind) &&
                                 !PySequence_Check(ind))) {
-        npy_intp value;
-        value = PyArray_PyIntAsIntp(ind);
-        if (PyErr_Occurred()) {
-            PyErr_Clear();
+        npy_intp value = PyArray_PyIntAsIntp(ind);
+        if (value == -1 && PyErr_Occurred()) {
+            /* fail on error */
+            PyErr_SetString(PyExc_IndexError, "integer index out of bounds");
+            return -1;
         }
         else {
             return array_ass_item_object(self, value, op);
         }
     }
 
+    /* Single field access */
     if (PyString_Check(ind) || PyUnicode_Check(ind)) {
         if (PyDataType_HASFIELDS(PyArray_DESCR(self))) {
             PyObject *obj;
@@ -1320,7 +1359,6 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
                 }
             }
         }
-
 #if defined(NPY_PY3K)
         PyErr_Format(PyExc_ValueError,
                      "field named %S not found.",
@@ -1333,6 +1371,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         return -1;
     }
 
+    /* Ellipsis index */
     if (ind == Py_Ellipsis) {
         /*
          * Doing "a[...] += 1" triggers assigning an array to itself,
@@ -1355,27 +1394,30 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
          *  3) Using newaxis (None)
          *  4) Boolean mask indexing
          */
+
+        /* Check for None or empty tuple */
         if (ind == Py_None || (PyTuple_Check(ind) &&
                                         (0 == PyTuple_GET_SIZE(ind) ||
                                          count_new_axes_0d(ind) > 0))) {
-            return PyArray_DESCR(self)->f->setitem(op, PyArray_DATA(self), self);
+            return PyArray_SETITEM(self, PyArray_DATA(self), op);
         }
+        /* Check for boolean index */
         if (PyBool_Check(ind) || PyArray_IsScalar(ind, Bool) ||
                         (PyArray_Check(ind) &&
-                         (PyArray_DIMS((PyArrayObject *)ind)==0) &&
+                         (PyArray_NDIM((PyArrayObject *)ind)==0) &&
                          PyArray_ISBOOL((PyArrayObject *)ind))) {
             if (PyObject_IsTrue(ind)) {
                 return PyArray_CopyObject(self, op);
             }
-            else { /* don't do anything */
+            else { /* False: don't do anything */
                 return 0;
             }
         }
-        PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed.");
+        PyErr_SetString(PyExc_IndexError, "0-dimensional arrays can't be indexed.");
         return -1;
     }
 
-    /* Integer-tuple */
+    /* Integer-tuple index */
     if (PyTuple_Check(ind) &&
                 (PyTuple_GET_SIZE(ind) == PyArray_NDIM(self)) &&
                 (_tuple_of_integers(ind, vals, PyArray_NDIM(self)) >= 0)) {
@@ -1391,9 +1433,8 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
             }
             item += v * strides[idim];
         }
-        return PyArray_DESCR(self)->f->setitem(op, item, self);
+        return PyArray_SETITEM(self, item, op);
     }
-    PyErr_Clear();
 
     /* Boolean indexing special case */
     if (PyArray_Check(ind) &&
@@ -1426,34 +1467,11 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
 
     fancy = fancy_indexing_check(ind);
     if (fancy != SOBJ_NOTFANCY) {
-
-        oned = ((PyArray_NDIM(self) == 1) &&
-                !(PyTuple_Check(ind) && PyTuple_GET_SIZE(ind) > 1));
-        mit = (PyArrayMapIterObject *) PyArray_MapIterNew(ind, oned, fancy);
-        if (mit == NULL) {
-            return -1;
-        }
-        if (oned) {
-            PyArrayIterObject *it;
-            int rval;
-
-            it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)self);
-            if (it == NULL) {
-                Py_DECREF(mit);
-                return -1;
-            }
-            rval = iter_ass_subscript(it, mit->indexobj, op);
-            Py_DECREF(it);
-            Py_DECREF(mit);
-            return rval;
-        }
-        PyArray_MapIterBind(mit, self);
-        ret = PyArray_SetMap(mit, op);
-        Py_DECREF(mit);
-        return ret;
+        return array_ass_sub_fancy(self, ind, op, fancy);
     }
-
-    return array_ass_sub_simple(self, ind, op);
+    else {
+        return array_ass_sub_simple(self, ind, op);
+    }
 }
 
 NPY_NO_EXPORT PyMappingMethods array_as_mapping = {
