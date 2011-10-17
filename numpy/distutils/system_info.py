@@ -125,6 +125,7 @@ from distutils.errors import DistutilsError
 from distutils.dist import Distribution
 import distutils.sysconfig
 from distutils import log
+from distutils.util import get_platform
 
 from numpy.distutils.exec_command import \
     find_executable, exec_command, get_pythonexe
@@ -1273,7 +1274,6 @@ Make sure that -lgfortran is used for C++ extensions.
     result = _cached_atlas_version[key] = atlas_version, info
     return result
 
-from distutils.util import get_platform
 
 class lapack_opt_info(system_info):
 
@@ -1284,7 +1284,8 @@ class lapack_opt_info(system_info):
         if sys.platform=='darwin' and not os.environ.get('ATLAS',None):
             args = []
             link_args = []
-            if get_platform()[-4:] == 'i386':
+            if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
+                'i386' in platform.platform():
                 intel = 1
             else:
                 intel = 0
@@ -1371,7 +1372,8 @@ class blas_opt_info(system_info):
         if sys.platform=='darwin' and not os.environ.get('ATLAS',None):
             args = []
             link_args = []
-            if get_platform()[-4:] == 'i386':
+            if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
+                'i386' in platform.platform():
                 intel = 1
             else:
                 intel = 0
