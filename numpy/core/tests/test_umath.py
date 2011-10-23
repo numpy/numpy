@@ -470,6 +470,11 @@ class TestMaximum(TestCase):
             out  = np.array([nan, nan, nan], dtype=np.complex)
             assert_equal(np.maximum(arg1, arg2), out)
 
+    def test_object_array(self):
+        arg1 = np.arange(5, dtype=np.object)
+        arg2 = arg1 + 1
+        assert_equal(np.maximum(arg1, arg2), arg2)
+
 
 class TestMinimum(TestCase):
     def test_reduce(self):
@@ -511,6 +516,11 @@ class TestMinimum(TestCase):
             arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
             out  = np.array([nan, nan, nan], dtype=np.complex)
             assert_equal(np.minimum(arg1, arg2), out)
+
+    def test_object_array(self):
+        arg1 = np.arange(5, dtype=np.object)
+        arg2 = arg1 + 1
+        assert_equal(np.minimum(arg1, arg2), arg1)
 
 
 class TestFmax(TestCase):
