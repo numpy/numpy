@@ -146,32 +146,109 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
  * ArgMin
  */
 NPY_NO_EXPORT PyObject *
-PyArray_ArgMin(PyArrayObject *ap, int axis, PyArrayObject *out)
+PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
 {
-    PyObject *obj, *new, *ret;
+    PyArrayObject *ap = NULL, *rp = NULL;
+    PyArray_ArgFunc* arg_func;
+    char *ip;
+    intp *rptr;
+    intp i, n, m;
+    int elsize;
+    NPY_BEGIN_THREADS_DEF;
 
-    if (PyArray_ISFLEXIBLE(ap)) {
-        PyErr_SetString(PyExc_TypeError,
-                        "argmin is unsupported for this type");
+    if ((ap=(PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
         return NULL;
     }
-    else if (PyArray_ISUNSIGNED(ap)) {
-        obj = PyInt_FromLong((long) -1);
-    }
-    else if (PyArray_TYPE(ap) == PyArray_BOOL) {
-        obj = PyInt_FromLong((long) 1);
+    /*
+     * We need to permute the array so that axis is placed at the end.
+     * And all other dimensions are shifted left.
+     */
+    if (axis != PyArray_NDIM(ap)-1) {
+        PyArray_Dims newaxes;
+        intp dims[MAX_DIMS];
+        int i;
+
+        newaxes.ptr = dims;
+        newaxes.len = PyArray_NDIM(ap);
+        for (i = 0; i < axis; i++) dims[i] = i;
+        for (i = axis; i < PyArray_NDIM(ap) - 1; i++) dims[i] = i + 1;
+        dims[PyArray_NDIM(ap) - 1] = axis;
+        op = (PyArrayObject *)PyArray_Transpose(ap, &newaxes);
+        Py_DECREF(ap);
+        if (op == NULL) {
+            return NULL;
+        }
     }
     else {
-        obj = PyInt_FromLong((long) 0);
+        op = ap;
     }
-    new = PyArray_EnsureAnyArray(PyNumber_Subtract(obj, (PyObject *)ap));
-    Py_DECREF(obj);
-    if (new == NULL) {
+
+    /* Will get native-byte order contiguous copy. */
+    ap = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)op,
+                                  PyArray_DESCR(op)->type_num, 1, 0);
+    Py_DECREF(op);
+    if (ap == NULL) {
         return NULL;
     }
-    ret = PyArray_ArgMax((PyArrayObject *)new, axis, out);
-    Py_DECREF(new);
-    return ret;
+    arg_func = PyArray_DESCR(ap)->f->argmin;
+    if (arg_func == NULL) {
+        PyErr_SetString(PyExc_TypeError, "data type not ordered");
+        goto fail;
+    }
+    elsize = PyArray_DESCR(ap)->elsize;
+    m = PyArray_DIMS(ap)[PyArray_NDIM(ap)-1];
+    if (m == 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "attempt to get argmax/argmin "\
+                        "of an empty sequence");
+        goto fail;
+    }
+
+    if (!out) {
+        rp = (PyArrayObject *)PyArray_New(Py_TYPE(ap), PyArray_NDIM(ap)-1,
+                                          PyArray_DIMS(ap), PyArray_INTP,
+                                          NULL, NULL, 0, 0,
+                                          (PyObject *)ap);
+        if (rp == NULL) {
+            goto fail;
+        }
+    }
+    else {
+        if (PyArray_SIZE(out) !=
+                PyArray_MultiplyList(PyArray_DIMS(ap), PyArray_NDIM(ap) - 1)) {
+            PyErr_SetString(PyExc_TypeError,
+                            "invalid shape for output array.");
+        }
+        rp = (PyArrayObject *)PyArray_FromArray(out,
+                              PyArray_DescrFromType(PyArray_INTP),
+                              NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
+        if (rp == NULL) {
+            goto fail;
+        }
+    }
+
+    NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap));
+    n = PyArray_SIZE(ap)/m;
+    rptr = (intp *)PyArray_DATA(rp);
+    for (ip = PyArray_DATA(ap), i = 0; i < n; i++, ip += elsize*m) {
+        arg_func(ip, m, rptr, ap);
+        rptr += 1;
+    }
+    NPY_END_THREADS_DESCR(PyArray_DESCR(ap));
+
+    Py_DECREF(ap);
+    /* Trigger the UPDATEIFCOPY if necessary */
+    if (out != NULL && out != rp) {
+        Py_DECREF(rp);
+        rp = out;
+        Py_INCREF(rp);
+    }
+    return (PyObject *)rp;
+
+ fail:
+    Py_DECREF(ap);
+    Py_XDECREF(rp);
+    return NULL;
 }
 
 /*NUMPY_API
