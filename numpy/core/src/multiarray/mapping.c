@@ -1368,8 +1368,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
     }
 
     /* Boolean indexing special case which supports mask NA */
-    if (PyArray_Check(op) && (PyArray_TYPE((PyArrayObject *)op) == NPY_BOOL)
-                && (PyArray_NDIM(self) == PyArray_NDIM((PyArrayObject *)op))) {
+    if (PyArray_Check(op) && (PyArray_TYPE((PyArrayObject *)op) == NPY_BOOL)) {
         return (PyObject *)array_boolean_subscript(self,
                                         (PyArrayObject *)op, NPY_CORDER);
     }
