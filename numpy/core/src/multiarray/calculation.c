@@ -47,7 +47,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     int elsize;
     NPY_BEGIN_THREADS_DEF;
 
-    if ((ap=(PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
+    if ((ap = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
         return NULL;
     }
     /*
@@ -61,8 +61,12 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
 
         newaxes.ptr = dims;
         newaxes.len = PyArray_NDIM(ap);
-        for (j = 0; j < axis; j++) dims[j] = j;
-        for (j = axis; j < PyArray_NDIM(ap) - 1; j++) dims[j] = j + 1;
+        for (j = 0; j < axis; j++) {
+            dims[j] = j;
+        }
+        for (j = axis; j < PyArray_NDIM(ap) - 1; j++) {
+            dims[j] = j + 1;
+        }
         dims[PyArray_NDIM(ap) - 1] = axis;
         op = (PyArrayObject *)PyArray_Transpose(ap, &newaxes);
         Py_DECREF(ap);
@@ -83,15 +87,15 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
     }
     arg_func = PyArray_DESCR(ap)->f->argmax;
     if (arg_func == NULL) {
-        PyErr_SetString(PyExc_TypeError, "data type not ordered");
+        PyErr_SetString(PyExc_TypeError,
+                "data type not ordered");
         goto fail;
     }
     elsize = PyArray_DESCR(ap)->elsize;
     m = PyArray_DIMS(ap)[PyArray_NDIM(ap)-1];
     if (m == 0) {
         PyErr_SetString(PyExc_ValueError,
-                        "attempt to get argmax/argmin "\
-                        "of an empty sequence");
+                "attempt to get argmax of an empty sequence");
         goto fail;
     }
 
@@ -108,7 +112,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
         if (PyArray_SIZE(out) !=
                 PyArray_MultiplyList(PyArray_DIMS(ap), PyArray_NDIM(ap) - 1)) {
             PyErr_SetString(PyExc_TypeError,
-                            "invalid shape for output array.");
+                    "invalid shape for output array.");
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
                               PyArray_DescrFromType(PyArray_INTP),
@@ -156,7 +160,7 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
     int elsize;
     NPY_BEGIN_THREADS_DEF;
 
-    if ((ap=(PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
+    if ((ap = (PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
         return NULL;
     }
     /*
@@ -170,8 +174,12 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
 
         newaxes.ptr = dims;
         newaxes.len = PyArray_NDIM(ap);
-        for (i = 0; i < axis; i++) dims[i] = i;
-        for (i = axis; i < PyArray_NDIM(ap) - 1; i++) dims[i] = i + 1;
+        for (i = 0; i < axis; i++) {
+            dims[i] = i;
+        }
+        for (i = axis; i < PyArray_NDIM(ap) - 1; i++) {
+            dims[i] = i + 1;
+        }
         dims[PyArray_NDIM(ap) - 1] = axis;
         op = (PyArrayObject *)PyArray_Transpose(ap, &newaxes);
         Py_DECREF(ap);
@@ -192,15 +200,15 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
     }
     arg_func = PyArray_DESCR(ap)->f->argmin;
     if (arg_func == NULL) {
-        PyErr_SetString(PyExc_TypeError, "data type not ordered");
+        PyErr_SetString(PyExc_TypeError,
+                "data type not ordered");
         goto fail;
     }
     elsize = PyArray_DESCR(ap)->elsize;
     m = PyArray_DIMS(ap)[PyArray_NDIM(ap)-1];
     if (m == 0) {
         PyErr_SetString(PyExc_ValueError,
-                        "attempt to get argmax/argmin "\
-                        "of an empty sequence");
+                "attempt to get argmin of an empty sequence");
         goto fail;
     }
 
@@ -217,7 +225,7 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
         if (PyArray_SIZE(out) !=
                 PyArray_MultiplyList(PyArray_DIMS(ap), PyArray_NDIM(ap) - 1)) {
             PyErr_SetString(PyExc_TypeError,
-                            "invalid shape for output array.");
+                    "invalid shape for output array.");
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
                               PyArray_DescrFromType(PyArray_INTP),
