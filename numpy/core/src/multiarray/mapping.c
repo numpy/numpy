@@ -1182,8 +1182,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
         ret = array_subscript_fromobject(self, op);
     }
     
-    /* Boolean indexing special case */
-    else if (PyArray_Check(op) && (PyArray_TYPE((PyArrayObject *)op) == NPY_BOOL)
+    /* Boolean indexing special case which supports mask NA */
+    else if (PyArray_ISBOOL((PyArrayObject *)op)
                 && (PyArray_NDIM(self) == PyArray_NDIM((PyArrayObject *)op))) {
         ret = (PyObject *)array_boolean_subscript(self,
                                         (PyArrayObject *)op, NPY_CORDER);
