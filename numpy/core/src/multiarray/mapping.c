@@ -1253,11 +1253,6 @@ array_subscript(PyArrayObject *self, PyObject *op)
         return NULL;
     }
     
-    if (PyErr_Occurred()) {
-        Py_XDECREF(ret);
-        return NULL;
-    }
-    
     if (PyArray_Check(ret) && PyArray_NDIM((PyArrayObject *)ret) == 0 
                                                 && !_check_ellipses(op)) {
         return PyArray_Return((PyArrayObject *)ret);
