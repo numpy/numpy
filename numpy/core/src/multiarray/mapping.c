@@ -1225,10 +1225,9 @@ array_subscript(PyArrayObject *self, PyObject *op)
     if (!PyArray_Check(op)) {
         ret = array_subscript_fromobject(self, op);
     }
-    
     /* Boolean indexing special case */
     /* The SIZE check might be overly cautious */
-    if (PyArray_Check(op) && (PyArray_TYPE((PyArrayObject *)op) == NPY_BOOL)
+    else if (PyArray_ISBOOL((PyArrayObject *)op)
                 && (PyArray_NDIM(self) == PyArray_NDIM((PyArrayObject *)op))
                 && (PyArray_SIZE((PyArrayObject *)op) == PyArray_SIZE(self))) {
         return (PyObject *)array_boolean_subscript(self,
