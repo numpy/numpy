@@ -123,12 +123,6 @@ array_item(PyArrayObject *self, Py_ssize_t i)
 }
 
 NPY_NO_EXPORT int
-array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
-{
-    return array_ass_item_object(self, (npy_intp) i, v);
-}
-
-NPY_NO_EXPORT int
 array_ass_item_object(PyArrayObject *self, npy_intp i, PyObject *v)
 {
     PyArrayObject *tmp;
@@ -314,6 +308,12 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
         }
     }
     return (PyObject *)ret;
+}
+
+NPY_NO_EXPORT int
+array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
+{
+    return array_ass_item_object(self, (npy_intp) i, v);
 }
 
 static int
