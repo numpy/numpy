@@ -962,6 +962,7 @@ _tuple_of_integers(PyObject *seq, npy_intp *vals, int maxvals)
         }
         temp = PyArray_PyIntAsIntp(obj);
         if (error_converting(temp)) {
+            PyErr_Clear();
             return 0;
         }
         if (!PyIndex_Check_Or_Unsupported(obj)) {
