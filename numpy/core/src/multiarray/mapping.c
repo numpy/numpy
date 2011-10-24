@@ -948,6 +948,8 @@ _tuple_of_integers(PyObject *seq, npy_intp *vals, int maxvals)
         }
         temp = PyArray_PyIntAsIntp(obj);
         if (error_converting(temp)) {
+            /* Reject conversion errors */
+            PyErr_Clear();
             return -1;
         }
         vals[i] = temp;
