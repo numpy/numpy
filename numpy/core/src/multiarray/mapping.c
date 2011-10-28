@@ -1043,7 +1043,8 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
         npy_intp value = PyArray_PyIntAsIntp(op);
         if (value == -1 && PyErr_Occurred()) {
             /* fail on error */
-            PyErr_SetString(PyExc_IndexError, "integer index out of bounds");
+            PyErr_SetString(PyExc_ValueError,
+                            "cannot convert index to integer");
             return NULL;
         }
         else {
@@ -1162,7 +1163,8 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
             }
             return add_new_axes_0d(self, nd);
         }
-        PyErr_SetString(PyExc_IndexError, "0-dimensional arrays can't be indexed");
+        PyErr_SetString(PyExc_IndexError,
+                        "0-dimensional arrays can't be indexed");
         return NULL;
     }
 
@@ -1192,7 +1194,8 @@ array_subscript(PyArrayObject *self, PyObject *op)
     }
     /* Error case when indexing 0-dim array with non-boolean. */
     else if (PyArray_NDIM(self) == 0) {
-        PyErr_SetString(PyExc_IndexError, "0-dimensional arrays can't be indexed");
+        PyErr_SetString(PyExc_IndexError,
+                        "0-dimensional arrays can't be indexed");
         return NULL;
     }
     
@@ -1331,7 +1334,8 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         npy_intp value = PyArray_PyIntAsIntp(ind);
         if (value == -1 && PyErr_Occurred()) {
             /* fail on error */
-            PyErr_SetString(PyExc_IndexError, "integer index out of bounds");
+            PyErr_SetString(PyExc_ValueError,
+                            "cannot convert index to integer");
             return -1;
         }
         else {
@@ -1410,7 +1414,8 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
                 return 0;
             }
         }
-        PyErr_SetString(PyExc_IndexError, "0-dimensional arrays can't be indexed.");
+        PyErr_SetString(PyExc_IndexError,
+                        "0-dimensional arrays can't be indexed.");
         return -1;
     }
 
