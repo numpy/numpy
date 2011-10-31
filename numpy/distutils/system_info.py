@@ -199,11 +199,18 @@ else:
                             '/opt/local/include', '/sw/include',
                             '/usr/include/suitesparse']
     default_src_dirs = ['.','/usr/local/src', '/opt/src','/sw/src']
-
     default_x11_lib_dirs = libpaths(['/usr/X11R6/lib','/usr/X11/lib',
                                      '/usr/lib'], platform_bits)
     default_x11_include_dirs = ['/usr/X11R6/include','/usr/X11/include',
                                 '/usr/include']
+    if os.path.exists('/usr/lib/X11'):
+        globbed_x11_dir = glob('/usr/lib/*/libX11.so')
+        if globbed_x11_dir:
+            x11_so_dir = os.path.split(globbed_x11_dir[0])[0]
+            default_x11_lib_dirs.extend([x11_so_dir, '/usr/lib/X11'])
+            default_x11_include_dirs.extend(['/usr/lib/X11/include',
+                                             '/usr/include/X11'])
+
 
 if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_lib_dirs.insert(0,os.path.join(sys.prefix, 'lib'))
