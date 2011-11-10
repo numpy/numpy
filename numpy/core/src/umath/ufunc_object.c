@@ -4111,7 +4111,7 @@ ufunc_generic_call(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
             return Py_NotImplemented;
         }
         else {
-            PyErr_SetString(PyExc_NotImplementedError,
+            PyErr_SetString(PyExc_TypeError,
                                         "Not implemented for this type");
             return NULL;
         }
