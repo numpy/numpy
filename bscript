@@ -12,6 +12,10 @@ Caveats:
 import os
 import sys
 import shutil
+import subprocess
+import string
+
+import os.path as op
 
 # Ugly but necessary hack: import numpy here so that wscript in sub directories
 # will see this numpy and not an already installed one
@@ -27,6 +31,12 @@ from bento.commands.extras.waf \
         ConfigureWafContext, BuildWafContext, register_options
 
 import waflib
+
+sys.path.insert(0, os.getcwd())
+try:
+    _SETUP_PY = __import__("setup")
+finally:
+    sys.path.pop(0)
 
 def check_blas_lapack(conf):
     conf.env.HAS_CBLAS = False
@@ -144,9 +154,40 @@ def process_write_config(self):
     tsk.set_outputs(output)
     return tsk
 
+def set_revision(template, version):
+    try:
+        proc = subprocess.Popen('git rev-parse --short HEAD',
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE,
+                                shell=True)
+        git_revision, _ = proc.communicate()
+        git_revision = git_revision.strip()
+    except Exception:
+        git_revision = "Unknown"
+
+    full_version = version
+    template_str = template.read()
+
+    if not _SETUP_PY.ISRELEASED:
+        full_version += '.dev-' + git_revision[:7]
+    content = string.Template(template_str).substitute(version=version,
+            full_version=full_version, git_revision=git_revision,
+            is_released=_SETUP_PY.ISRELEASED)
+    output = template.change_ext("")
+    output.safe_write(content)
+    return output
+
+def make_git_commit_info(ctx):
+    commit_template = ctx.make_source_node(op.join("numpy", "version.py.in"))
+    return set_revision(commit_template, ctx.pkg.version)
+
 @hooks.pre_build
 def pre_build(context):
     bld = context.waf_context
+
+    context.register_category("git_info")
+    commit_output = make_git_commit_info(context)
+    context.register_outputs("git_info", "git_commit_info", [commit_output])
 
     def iregistrer(category, name, nodes, from_node, target_dir):
         source_dir = os.path.join("$_srcrootdir", from_node.bldpath())
@@ -159,13 +200,6 @@ def pre_build(context):
         content="""\
 def show():
     pass
-""",
-        always=True)
-    bld(features="gen_pymodule",
-        target="numpy/version.py",
-        content="""\
-git_revision = ""
-version = ""
 """,
         always=True)
 
