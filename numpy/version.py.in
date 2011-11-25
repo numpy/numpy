@@ -1,0 +1,9 @@
+# THIS FILE IS GENERATED FROM NUMPY BENTO SCRIPTS
+short_version = "$version"
+version = "$version"
+full_version = "$full_version"
+git_revision = "$git_revision"
+release = $is_released
+
+if not release:
+    version = full_version
