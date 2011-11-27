@@ -848,7 +848,15 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
     fmt : str or sequence of strs
         A single format (%10.5f), a sequence of formats, or a
         multi-format string, e.g. 'Iteration %d -- %10.5f', in which
-        case `delimiter` is ignored.
+        case `delimiter` is ignored. For complex `X`, the legal options
+        for `fmt` are:
+            a) a single specifier, `fmt='%.4e'`, resulting in numbers formatted
+                like `' (%s+%sj)' % (fmt, fmt)`
+            b) a full string specifying every real and imaginary part, e.g.
+                `' %.4e %+.4j %.4e %+.4j %.4e %+.4j'` for 3 columns
+            c) a list of specifiers, one per column - in this case, the real
+                and imaginary part must have separate specifiers,
+                e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
     delimiter : str
         Character separating columns.
     newline : str
