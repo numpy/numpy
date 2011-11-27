@@ -273,6 +273,39 @@ class TestSaveTxt(TestCase):
         finally:
             os.unlink(name)
 
+    def test_complex_arrays(self):
+        ncols = 2
+        nrows = 2
+        a = np.zeros((ncols, nrows), dtype=np.complex128)
+        re = np.pi
+        im = np.e
+        a[:] = re + 1.0j * im
+        # One format only
+        c = StringIO()
+        np.savetxt(c, a, fmt=' %+.3e')
+        c.seek(0)
+        lines = c.readlines()
+        assert_equal(lines, asbytes_nested([
+            ' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)\n',
+            ' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)\n']))
+        # One format for each real and imaginary part
+        c = StringIO()
+        np.savetxt(c, a, fmt='  %+.3e' * 2 * ncols)
+        c.seek(0)
+        lines = c.readlines()
+        assert_equal(lines, asbytes_nested([
+            '  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00\n',
+            '  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00\n']))
+        # One format for each complex number
+        c = StringIO()
+        np.savetxt(c, a, fmt=['(%.3e%+.3ej)'] * ncols)
+        c.seek(0)
+        lines = c.readlines()
+        assert_equal(lines, asbytes_nested([
+            '(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n',
+            '(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n']))
+
+
 
 class TestLoadTxt(TestCase):
     def test_record(self):
