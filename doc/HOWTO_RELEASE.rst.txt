@@ -67,7 +67,9 @@ The same gcc version is used as the one with which Python itself is built on
 each platform. At the moment this means:
 
 * OS X uses gcc-4.0 (since that is what Python itself is built with).
-* Windows build uses latest released version from MinGW, now at 3.4.5.
+* Windows build uses the latest released version from MinGW.  Note that NumPy
+  releases until 1.6.x and SciPy releases until 0.10.x were made with GCC
+  3.4.5.  For NumPy 1.7.x ad later GCC 4.x is required.
 
 Cython is not needed for building the binaries, because generated C files from
 Cython sources are checked in at the moment. It is worth keeping an eye on what

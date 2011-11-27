@@ -42,7 +42,9 @@ of also more complicated arrangements of data.
    arrays.scalars
    arrays.dtypes
    arrays.indexing
+   arrays.nditer
    arrays.classes
+   arrays.maskna
    maskedarray
    arrays.interface
    arrays.datetime

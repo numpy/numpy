@@ -54,6 +54,34 @@ npy_ObjectPower(PyObject *x, PyObject *y)
     return PyNumber_Power(x, y, Py_None);
 }
 
+
+#if defined(NPY_PY3K)
+/**begin repeat
+ * #Kind = Max, Min#
+ * #OP = Py_GE, Py_LE#
+ */
+static PyObject *
+npy_Object@Kind@(PyObject *i1, PyObject *i2)
+{
+    PyObject *result;
+    int cmp;
+
+    cmp = PyObject_RichCompareBool(i1, i2, @OP@);
+    if (cmp < 0) {
+        return NULL;
+    }
+    if (cmp == 1) {
+        result = i1;
+    }
+    else {
+        result = i2;
+    }
+    Py_INCREF(result);
+    return result;
+}
+/**end repeat**/
+
+#else
 /**begin repeat
  * #Kind = Max, Min#
  * #OP = >=, <=#
@@ -77,7 +105,86 @@ npy_Object@Kind@(PyObject *i1, PyObject *i2)
     return result;
 }
 /**end repeat**/
+#endif
 
+
+/* Emulates Python's 'a or b' behavior */
+static PyObject *
+npy_ObjectLogicalOr(PyObject *i1, PyObject *i2)
+{
+    if (i1 == NULL) {
+        Py_XINCREF(i2);
+        return i2;
+    }
+    else if (i2 == NULL) {
+        Py_INCREF(i2);
+        return i1;
+    }
+    else {
+        int retcode = PyObject_IsTrue(i1);
+        if (retcode == -1) {
+            return NULL;
+        }
+        else if (retcode) {
+            Py_INCREF(i1);
+            return i1;
+        }
+        else {
+            Py_INCREF(i2);
+            return i2;
+        }
+    }
+}
+
+/* Emulates Python's 'a and b' behavior */
+static PyObject *
+npy_ObjectLogicalAnd(PyObject *i1, PyObject *i2)
+{
+    if (i1 == NULL) {
+        return NULL;
+    }
+    else if (i2 == NULL) {
+        return NULL;
+    }
+    else {
+        int retcode = PyObject_IsTrue(i1);
+        if (retcode == -1) {
+            return NULL;
+        }
+        else if (!retcode) {
+            Py_INCREF(i1);
+            return i1;
+        }
+        else {
+            Py_INCREF(i2);
+            return i2;
+        }
+    }
+}
+
+
+/* Emulates Python's 'not b' behavior */
+static PyObject *
+npy_ObjectLogicalNot(PyObject *i1)
+{
+    if (i1 == NULL) {
+        return NULL;
+    }
+    else {
+        int retcode = PyObject_Not(i1);
+        if (retcode == -1) {
+            return NULL;
+        }
+        else if (retcode) {
+            Py_INCREF(Py_True);
+            return Py_True;
+        }
+        else {
+            Py_INCREF(Py_False);
+            return Py_False;
+        }
+    }
+}
 
 /*
  *****************************************************************************

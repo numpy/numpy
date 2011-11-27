@@ -1,4 +1,13 @@
 # Docstrings for generated ufuncs
+#
+# The syntax is designed to look like the function add_newdoc is being
+# called from numpy.lib, but in this file  add_newdoc puts the docstrings
+# in a dictionary. This dictionary is used in
+# numpy/core/code_generators/generate_umath.py to generate the docstrings
+# for the ufuncs in numpy.core at the C level when the ufuncs are created
+# at compile time.
+
+
 
 docdict = {}
 
@@ -2490,24 +2499,16 @@ add_newdoc('numpy.core.umath', 'not_equal',
 
     """)
 
-add_newdoc('numpy.core.umath', 'ones_like',
+add_newdoc('numpy.core.umath', '_ones_like',
     """
-    Returns an array of ones with the same shape and type as a given array.
-
-    Equivalent to ``a.copy().fill(1)``.
-
-    Please refer to the documentation for `zeros_like` for further details.
+    This function used to be the numpy.ones_like, but now a
+    specific function for that has been written for consistency with
+    the other *_like functions. It is only used internally in a limited
+    fashion now.
 
     See Also
     --------
-    zeros_like, ones
-
-    Examples
-    --------
-    >>> a = np.array([[1, 2, 3], [4, 5, 6]])
-    >>> np.ones_like(a)
-    array([[1, 1, 1],
-           [1, 1, 1]])
+    ones_like
 
     """)
 

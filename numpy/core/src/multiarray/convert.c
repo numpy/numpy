@@ -15,6 +15,7 @@
 #include "arrayobject.h"
 #include "mapping.h"
 #include "lowlevel_strided_loops.h"
+#include "scalartypes.h"
 
 #include "convert.h"
 
@@ -246,8 +247,8 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 NPY_NO_EXPORT PyObject *
 PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 {
-    intp numbytes;
-    intp index;
+    npy_intp numbytes;
+    npy_intp i;
     char *dptr;
     int elsize;
     PyObject *ret;
@@ -292,9 +293,9 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
             return NULL;
         }
         dptr = PyBytes_AS_STRING(ret);
-        index = it->size;
+        i = it->size;
         elsize = PyArray_DESCR(self)->elsize;
-        while (index--) {
+        while (i--) {
             memcpy(dptr, it->dataptr, elsize);
             dptr += elsize;
             PyArray_ITER_NEXT(it);
@@ -308,174 +309,227 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
 NPY_NO_EXPORT int
 PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
 {
-    PyArrayObject *newarr;
-    int itemsize, swap;
-    void *fromptr;
-    PyArray_Descr *descr;
-    intp size;
-    PyArray_CopySwapFunc *copyswap;
+    PyArray_Descr *dtype = NULL;
+    npy_longlong value_buffer[4];
+    char *value = NULL;
+    int retcode = 0;
 
-    itemsize = PyArray_DESCR(arr)->elsize;
-    if (PyArray_ISOBJECT(arr)) {
-        fromptr = &obj;
-        swap = 0;
-        newarr = NULL;
-    }
-    else {
-        descr = PyArray_DESCR(arr);
-        Py_INCREF(descr);
-        newarr = (PyArrayObject *)PyArray_FromAny(obj, descr,
-                                        0,0, NPY_ARRAY_ALIGNED, NULL);
-        if (newarr == NULL) {
+    /*
+     * If 'arr' is an object array, copy the object as is unless
+     * 'obj' is a zero-dimensional array, in which case we copy
+     * the element in that array instead.
+     */
+    if (PyArray_DESCR(arr)->type_num == NPY_OBJECT &&
+                        !(PyArray_Check(obj) &&
+                          PyArray_NDIM((PyArrayObject *)obj) == 0)) {
+        value = (char *)&obj;
+
+        dtype = PyArray_DescrFromType(NPY_OBJECT);
+        if (dtype == NULL) {
             return -1;
         }
-        fromptr = PyArray_DATA(newarr);
-        swap = (PyArray_ISNOTSWAPPED(arr) != PyArray_ISNOTSWAPPED(newarr));
     }
-    size=PyArray_SIZE(arr);
-    copyswap = PyArray_DESCR(arr)->f->copyswap;
-    if (PyArray_ISONESEGMENT(arr)) {
-        char *toptr=PyArray_DATA(arr);
-        PyArray_FillWithScalarFunc* fillwithscalar =
-            PyArray_DESCR(arr)->f->fillwithscalar;
-        if (fillwithscalar && PyArray_ISALIGNED(arr)) {
-            copyswap(fromptr, NULL, swap, newarr);
-            fillwithscalar(toptr, size, fromptr, arr);
-        }
-        else {
-            while (size--) {
-                copyswap(toptr, fromptr, swap, arr);
-                toptr += itemsize;
-            }
-        }
-    }
-    else {
-        PyArrayIterObject *iter;
-
-        iter = (PyArrayIterObject *)\
-            PyArray_IterNew((PyObject *)arr);
-        if (iter == NULL) {
-            Py_XDECREF(newarr);
+    /* NumPy scalar */
+    else if (PyArray_IsScalar(obj, Generic)) {
+        dtype = PyArray_DescrFromScalar(obj);
+        if (dtype == NULL) {
             return -1;
         }
-        while (size--) {
-            copyswap(iter->dataptr, fromptr, swap, arr);
-            PyArray_ITER_NEXT(iter);
+        value = scalar_value(obj, dtype);
+        if (value == NULL) {
+            Py_DECREF(dtype);
+            return -1;
         }
-        Py_DECREF(iter);
     }
-    Py_XDECREF(newarr);
-    return 0;
+    /* Python boolean */
+    else if (PyBool_Check(obj)) {
+        value = (char *)value_buffer;
+        *value = (obj == Py_True);
+
+        dtype = PyArray_DescrFromType(NPY_BOOL);
+        if (dtype == NULL) {
+            return -1;
+        }
+    }
+    /* Python integer */
+    else if (PyLong_Check(obj) || PyInt_Check(obj)) {
+        npy_longlong v = PyLong_AsLongLong(obj);
+        if (v == -1 && PyErr_Occurred()) {
+            return -1;
+        }
+        value = (char *)value_buffer;
+        *(npy_longlong *)value = v;
+
+        dtype = PyArray_DescrFromType(NPY_LONGLONG);
+        if (dtype == NULL) {
+            return -1;
+        }
+    }
+    /* Python float */
+    else if (PyFloat_Check(obj)) {
+        npy_double v = PyFloat_AsDouble(obj);
+        if (v == -1 && PyErr_Occurred()) {
+            return -1;
+        }
+        value = (char *)value_buffer;
+        *(npy_double *)value = v;
+
+        dtype = PyArray_DescrFromType(NPY_DOUBLE);
+        if (dtype == NULL) {
+            return -1;
+        }
+    }
+    /* Python complex */
+    else if (PyComplex_Check(obj)) {
+        npy_double re, im;
+
+        re = PyComplex_RealAsDouble(obj);
+        if (re == -1 && PyErr_Occurred()) {
+            return -1;
+        }
+        im = PyComplex_ImagAsDouble(obj);
+        if (im == -1 && PyErr_Occurred()) {
+            return -1;
+        }
+        value = (char *)value_buffer;
+        ((npy_double *)value)[0] = re;
+        ((npy_double *)value)[1] = im;
+
+        dtype = PyArray_DescrFromType(NPY_CDOUBLE);
+        if (dtype == NULL) {
+            return -1;
+        }
+    }
+
+    /* Use the value pointer we got if possible */
+    if (value != NULL) {
+        /* TODO: switch to SAME_KIND casting */
+        retcode = PyArray_AssignRawScalar(arr, dtype, value,
+                                NULL, NPY_UNSAFE_CASTING, 0, NULL);
+        Py_DECREF(dtype);
+        return retcode;
+    }
+    /* Otherwise convert to an array to do the assignment */
+    else {
+        PyArrayObject *src_arr;
+
+        src_arr = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0,
+                                            NPY_ARRAY_ALLOWNA, NULL);
+        if (src_arr == NULL) {
+            return -1;
+        }
+
+        if (PyArray_NDIM(src_arr) != 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Input object to FillWithScalar is not a scalar");
+            Py_DECREF(src_arr);
+            return -1;
+        }
+
+        retcode = PyArray_CopyInto(arr, src_arr);
+
+        Py_DECREF(src_arr);
+        return retcode;
+    }
 }
 
-/*
+/*NUMPY_API
+ *
  * Fills an array with zeros.
+ *
+ * dst: The destination array.
+ * wheremask: If non-NULL, a boolean mask specifying where to set the values.
+ * preservena: If 0, overwrites everything in 'dst', if 1, it
+ *              preserves elements in 'dst' which are NA.
+ * preservewhichna: Must be NULL. When multi-NA support is implemented,
+ *                   this will be an array of flags for 'preservena=True',
+ *                   indicating which NA payload values to preserve.
  *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_FillWithZero(PyArrayObject *a)
+PyArray_AssignZero(PyArrayObject *dst,
+                    PyArrayObject *wheremask,
+                    npy_bool preservena, npy_bool *preservewhichna)
 {
-    PyArray_StridedTransferFn *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
-    PyArray_Descr *dtype = PyArray_DESCR(a);
-    NpyIter *iter;
+    npy_bool value;
+    PyArray_Descr *bool_dtype;
+    int retcode;
 
-    NpyIter_IterNextFunc *iternext;
-    char **dataptr;
-    npy_intp stride, *countptr;
-    int needs_api;
-
-    NPY_BEGIN_THREADS_DEF;
-
-    if (!PyArray_ISWRITEABLE(a)) {
-        PyErr_SetString(PyExc_RuntimeError, "cannot write to array");
+    /* Create a raw bool scalar with the value False */
+    bool_dtype = PyArray_DescrFromType(NPY_BOOL);
+    if (bool_dtype == NULL) {
         return -1;
     }
+    value = 0;
 
-    /* A zero-sized array needs no zeroing */
-    if (PyArray_SIZE(a) == 0) {
-        return 0;
-    }
+    retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
+                                wheremask, NPY_SAFE_CASTING,
+                                preservena, preservewhichna);
 
-    /* If it's possible to do a simple memset, do so */
-    if (!PyDataType_REFCHK(dtype) && (PyArray_ISCONTIGUOUS(a) ||
-                                      PyArray_ISFORTRAN(a))) {
-        memset(PyArray_DATA(a), 0, PyArray_NBYTES(a));
-        return 0;
-    }
+    Py_DECREF(bool_dtype);
+    return retcode;
+}
 
-    /* Use an iterator to go through all the data */
-    iter = NpyIter_New(a, NPY_ITER_WRITEONLY|NPY_ITER_EXTERNAL_LOOP,
-                    NPY_KEEPORDER, NPY_NO_CASTING, NULL);
+/*NUMPY_API
+ *
+ * Fills an array with ones.
+ *
+ * dst: The destination array.
+ * wheremask: If non-NULL, a boolean mask specifying where to set the values.
+ * preservena: If 0, overwrites everything in 'dst', if 1, it
+ *              preserves elements in 'dst' which are NA.
+ * preservewhichna: Must be NULL. When multi-NA support is implemented,
+ *                   this will be an array of flags for 'preservena=True',
+ *                   indicating which NA payload values to preserve.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_AssignOne(PyArrayObject *dst,
+                    PyArrayObject *wheremask,
+                    npy_bool preservena, npy_bool *preservewhichna)
+{
+    npy_bool value;
+    PyArray_Descr *bool_dtype;
+    int retcode;
 
-    if (iter == NULL) {
+    /* Create a raw bool scalar with the value True */
+    bool_dtype = PyArray_DescrFromType(NPY_BOOL);
+    if (bool_dtype == NULL) {
         return -1;
     }
+    value = 1;
 
-    iternext = NpyIter_GetIterNext(iter, NULL);
-    if (iternext == NULL) {
-        NpyIter_Deallocate(iter);
-        return -1;
-    }
-    dataptr = NpyIter_GetDataPtrArray(iter);
-    stride = NpyIter_GetInnerStrideArray(iter)[0];
-    countptr = NpyIter_GetInnerLoopSizePtr(iter);
+    retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
+                                wheremask, NPY_SAFE_CASTING,
+                                preservena, preservewhichna);
 
-    needs_api = NpyIter_IterationNeedsAPI(iter);
-
-    /*
-     * Because buffering is disabled in the iterator, the inner loop
-     * strides will be the same throughout the iteration loop.  Thus,
-     * we can pass them to this function to take advantage of
-     * contiguous strides, etc.
-     *
-     * By setting the src_dtype to NULL, we get a function which sets
-     * the destination to zeros.
-     */
-    if (PyArray_GetDTypeTransferFunction(
-                    PyArray_ISALIGNED(a),
-                    0, stride,
-                    NULL, PyArray_DESCR(a),
-                    0,
-                    &stransfer, &transferdata,
-                    &needs_api) != NPY_SUCCEED) {
-        NpyIter_Deallocate(iter);
-        return -1;
-    }
-
-    if (!needs_api) {
-        NPY_BEGIN_THREADS;
-    }
-
-    do {
-        stransfer(*dataptr, stride, NULL, 0,
-                    *countptr, 0, transferdata);
-    } while(iternext(iter));
-
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
-
-    NPY_AUXDATA_FREE(transferdata);
-    NpyIter_Deallocate(iter);
-
-    return 0;
+    Py_DECREF(bool_dtype);
+    return retcode;
 }
 
 /*NUMPY_API
  * Copy an array.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER order)
+PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
 {
-    PyArrayObject *ret = (PyArrayObject *)PyArray_NewLikeArray(
-                                                    m1, order, NULL, 1);
+    PyArrayObject *ret;
+
+    ret = (PyArrayObject *)PyArray_NewLikeArray(obj, order, NULL, 1);
     if (ret == NULL) {
         return NULL;
     }
 
-    if (PyArray_CopyInto(ret, m1) == -1) {
+    if (PyArray_HASMASKNA(obj)) {
+        if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+
+    if (PyArray_AssignArray(ret, obj, NULL, NPY_UNSAFE_CASTING, 0, NULL) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
@@ -490,9 +544,10 @@ PyArray_NewCopy(PyArrayObject *m1, NPY_ORDER order)
 NPY_NO_EXPORT PyObject *
 PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
 {
-    PyArrayObject *new = NULL;
+    PyArrayObject *ret = NULL;
     PyArray_Descr *dtype;
     PyTypeObject *subtype;
+    int flags;
 
     if (pytype) {
         subtype = pytype;
@@ -500,32 +555,61 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     else {
         subtype = Py_TYPE(self);
     }
+
+    flags = PyArray_FLAGS(self);
+    flags &= ~(NPY_ARRAY_MASKNA|NPY_ARRAY_OWNMASKNA);
+
     dtype = PyArray_DESCR(self);
     Py_INCREF(dtype);
-    new = (PyArrayObject *)PyArray_NewFromDescr(subtype,
+    ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
                                dtype,
                                PyArray_NDIM(self), PyArray_DIMS(self),
                                PyArray_STRIDES(self),
                                PyArray_DATA(self),
-                               PyArray_FLAGS(self), (PyObject *)self);
-    if (new == NULL) {
+                               flags,
+                               (PyObject *)self);
+    if (ret == NULL) {
         return NULL;
     }
+
+    /* Take a view of the mask if it exists */
+    if (PyArray_HASMASKNA(self)) {
+        PyArrayObject_fields *fa = (PyArrayObject_fields *)ret;
+
+        if (PyArray_HASFIELDS(self)) {
+            PyErr_SetString(PyExc_RuntimeError,
+                    "NA masks with fields are not supported yet");
+            Py_DECREF(ret);
+            Py_DECREF(type);
+            return NULL;
+        }
+
+        fa->maskna_dtype = PyArray_MASKNA_DTYPE(self);
+        Py_INCREF(fa->maskna_dtype);
+        fa->maskna_data = PyArray_MASKNA_DATA(self);
+        if (fa->nd > 0) {
+            memcpy(fa->maskna_strides, PyArray_MASKNA_STRIDES(self),
+                                            fa->nd * sizeof(npy_intp));
+        }
+        fa->flags |= NPY_ARRAY_MASKNA;
+    }
+
+    /* Set the base object */
     Py_INCREF(self);
-    if (PyArray_SetBaseObject(new, (PyObject *)self) < 0) {
-        Py_DECREF(new);
+    if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
+        Py_DECREF(ret);
         Py_DECREF(type);
         return NULL;
     }
 
     if (type != NULL) {
-        if (PyObject_SetAttrString((PyObject *)new, "dtype",
+        if (PyObject_SetAttrString((PyObject *)ret, "dtype",
                                    (PyObject *)type) < 0) {
-            Py_DECREF(new);
+            Py_DECREF(ret);
             Py_DECREF(type);
             return NULL;
         }
         Py_DECREF(type);
     }
-    return (PyObject *)new;
+    return (PyObject *)ret;
 }

@@ -195,6 +195,12 @@ class NpzFile(object):
         else:
             self.fid = None
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close()
+
     def close(self):
         """
         Close the file.
@@ -285,7 +291,8 @@ def load(file, mmap_mode=None):
     Returns
     -------
     result : array, tuple, dict, etc.
-        Data stored in the file.
+        Data stored in the file. For '.npz' files, the returned instance of
+        NpzFile class must be closed to avoid leaking file descriptors.
 
     Raises
     ------
@@ -305,6 +312,13 @@ def load(file, mmap_mode=None):
     - If the file is a ``.npz`` file, then a dictionary-like object is
       returned, containing ``{filename: array}`` key-value pairs, one for
       each file in the archive.
+    - If the file is a ``.npz`` file, the returned value supports the context
+      manager protocol in a similar fashion to the open function::
+
+        with load('foo.npz') as data:
+            a = data['a']
+
+      The underlyling file descriptor is always closed when exiting the with block.
 
     Examples
     --------
@@ -314,6 +328,17 @@ def load(file, mmap_mode=None):
     >>> np.load('/tmp/123.npy')
     array([[1, 2, 3],
            [4, 5, 6]])
+
+    Store compressed data to disk, and load it again:
+
+    >>> np.savez('/tmp/123.npz', a=np.array([[1, 2, 3], [4, 5, 6]]), b=np.array([1, 2]))
+    >>> data = np.load('/tmp/123.npy')
+    >>> data['a']
+    array([[1, 2, 3],
+           [4, 5, 6]])
+    >>> data['b']
+    array([1, 2])
+    >>> data.close()
 
     Mem-map the stored array, and then access the second row
     directly from disk:
@@ -705,11 +730,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             if len(shape) == 0:
                 return ([dt.base], None)
             else:
-                packing = [(shape[-1], tuple)]
+                packing = [(shape[-1], list)]
                 if len(shape) > 1:
-                    for dim in dt.shape[-2:0:-1]:
-                        packing = [(dim*packing[0][0],packing*dim)]
-                    packing = packing*shape[0]
+                    for dim in dt.shape[-2::-1]:
+                        packing = [(dim*packing[0][0], packing*dim)]
                 return ([dt.base] * int(np.prod(dt.shape)), packing)
         else:
             types = []
@@ -718,7 +742,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 tp, bytes = dt.fields[field]
                 flat_dt, flat_packing = flatten_dtype(tp)
                 types.extend(flat_dt)
-                packing.append((len(flat_dt),flat_packing))
+                # Avoid extra nesting for subarrays
+                if len(tp.shape) > 0:
+                    packing.extend(flat_packing)
+                else:
+                    packing.append((len(flat_dt), flat_packing))
             return (types, packing)
 
     def pack_items(items, packing):
@@ -727,6 +755,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             return items[0]
         elif packing is tuple:
             return tuple(items)
+        elif packing is list:
+            return list(items)
         else:
             start = 0
             ret = []
@@ -763,6 +793,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # End of lines reached
             first_line = ''
             first_vals = []
+            warnings.warn('loadtxt: Empty input file: "%s"' % fname)
         N = len(usecols or first_vals)
 
         dtype_types, packing = flatten_dtype(dtype)
@@ -833,7 +864,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         return X
 
 
-def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
+def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
+        footer='', comments='# '):
     """
     Save an array to a text file.
 
@@ -845,7 +877,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
         transparently.
     X : array_like
         Data to be saved to a text file.
-    fmt : str or sequence of strs
+    fmt : str or sequence of strs, optional
         A single format (%10.5f), a sequence of formats, or a
         multi-format string, e.g. 'Iteration %d -- %10.5f', in which
         case `delimiter` is ignored. For complex `X`, the legal options
@@ -857,10 +889,21 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
             c) a list of specifiers, one per column - in this case, the real
                 and imaginary part must have separate specifiers,
                 e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
-    delimiter : str
+    delimiter : str, optional
         Character separating columns.
-    newline : str
+    newline : str, optional
         .. versionadded:: 1.5.0
+    header : str, optional
+        String that will be written at the beginning of the file.
+        .. versionadded:: 2.0.0
+    footer : str, optional
+        String that will be written at the end of the file.
+        .. versionadded:: 2.0.0
+    comments : str, optional
+        String that will be prepended to the ``header`` and ``footer`` strings,
+        to mark them as comments. Default: '# ',  as expected by e.g.
+        ``numpy.loadtxt``.
+        .. versionadded:: 2.0.0
 
         Character separating lines.
 
@@ -991,6 +1034,9 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
             else:
                 format = fmt
 
+        if len(header) > 0:
+            header = header.replace('\n', '\n' + comments)
+            fh.write(asbytes(comments + header + newline))
         if iscomplex_X:
             for row in X:
                 row2 = []
@@ -1001,6 +1047,9 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
         else:
             for row in X:
                 fh.write(asbytes(format % tuple(row) + newline))
+        if len(footer) > 0:
+            footer = footer.replace('\n', '\n' + comments)
+            fh.write(asbytes(comments + footer + newline))
     finally:
         if own_fh:
             fh.close()
@@ -1298,7 +1347,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             first_values = split_line(first_line)
     except StopIteration:
         # return an empty array if the datafile is empty
-        first_line = ''
+        first_line = asbytes('')
         first_values = []
         warnings.warn('genfromtxt: Empty input file: "%s"' % fname)
 

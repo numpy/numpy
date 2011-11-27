@@ -18,6 +18,7 @@
 #include "ctors.h"
 #include "usertypes.h"
 #include "_datetime.h"
+#include "na_object.h"
 
 #include "numpyos.h"
 
@@ -142,6 +143,12 @@ static int
     if (PyArray_IsScalar(op, @kind@)) {
         temp = ((Py@kind@ScalarObject *)op)->obval;
     }
+    else if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
+        return -1;
+    }
     else {
         temp = (@type@)@func2@(op);
     }
@@ -204,7 +211,16 @@ static int
     c@type@ temp;
     int rsize;
 
-    if (!(PyArray_IsScalar(op, @kind@))) {
+    if (PyArray_IsScalar(op, @kind@)){
+        temp = ((Py@kind@ScalarObject *)op)->obval;
+    }
+    else if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
+        return -1;
+    }
+    else {
         if (PyArray_Check(op) && (PyArray_NDIM((PyArrayObject *)op) == 0)) {
             op2 = PyArray_DESCR((PyArrayObject *)op)->f->getitem(
                                     PyArray_BYTES((PyArrayObject *)op),
@@ -227,9 +243,7 @@ static int
         temp.real = (@type@) oop.real;
         temp.imag = (@type@) oop.imag;
     }
-    else {
-        temp = ((Py@kind@ScalarObject *)op)->obval;
-    }
+
     memcpy(ov, &temp, PyArray_DESCR(ap)->elsize);
     if (!PyArray_ISNOTSWAPPED(ap)) {
         byte_swap_vector(ov, 2, sizeof(@type@));
@@ -258,6 +272,12 @@ LONGDOUBLE_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
 
     if (PyArray_IsScalar(op, LongDouble)) {
         temp = ((PyLongDoubleScalarObject *)op)->obval;
+    }
+    else if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
+        return -1;
     }
     else {
         temp = (longdouble) MyPyFloat_AsDouble(op);
@@ -351,6 +371,12 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
             PySequence_Check(op) && PySequence_Size(op) > 0) {
         PyErr_SetString(PyExc_ValueError,
                 "setting an array element with a sequence");
+        return -1;
+    }
+    if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
         return -1;
     }
     /* Sequence_Size might have returned an error */
@@ -455,6 +481,12 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
             && PySequence_Check(op) && PySequence_Size(op) != 0) {
         PyErr_SetString(PyExc_ValueError,
                 "cannot set an array element with a sequence");
+        return -1;
+    }
+    if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
         return -1;
     }
 #if defined(NPY_PY3K)
@@ -567,14 +599,14 @@ VOID_getitem(char *ip, PyArrayObject *ap)
             tup = PyDict_GetItem(descr->fields, key);
             if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, &title)) {
                 Py_DECREF(ret);
-                ((PyArrayObject_fieldaccess *)ap)->descr = descr;
+                ((PyArrayObject_fields *)ap)->descr = descr;
                 return NULL;
             }
             /*
              * TODO: temporarily modifying the array like this
              *       is bad coding style, should be changed.
              */
-            ((PyArrayObject_fieldaccess *)ap)->descr = new;
+            ((PyArrayObject_fields *)ap)->descr = new;
             /* update alignment based on offset */
             if ((new->alignment > 1)
                     && ((((intp)(ip+offset)) % new->alignment) != 0)) {
@@ -584,9 +616,9 @@ VOID_getitem(char *ip, PyArrayObject *ap)
                 PyArray_ENABLEFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
             PyTuple_SET_ITEM(ret, i, new->f->getitem(ip+offset, ap));
-            ((PyArrayObject_fieldaccess *)ap)->flags = savedflags;
+            ((PyArrayObject_fields *)ap)->flags = savedflags;
         }
-        ((PyArrayObject_fieldaccess *)ap)->descr = descr;
+        ((PyArrayObject_fields *)ap)->descr = descr;
         return ret;
     }
 
@@ -631,7 +663,6 @@ VOID_getitem(char *ip, PyArrayObject *ap)
      */
     {
         intp dims[1], strides[1];
-        PyArray_Descr *descr;
         dims[0] = itemsize;
         strides[0] = 1;
         descr = PyArray_DescrNewFromType(NPY_BYTE);
@@ -640,7 +671,7 @@ VOID_getitem(char *ip, PyArrayObject *ap)
                              PyArray_ISWRITEABLE(ap) ? NPY_ARRAY_WRITEABLE : 0,
                              NULL);
         Py_INCREF(ap);
-        if (PyArray_SetBaseObject(u, ap) < 0) {
+        if (PyArray_SetBaseObject(u, (PyObject *)ap) < 0) {
             Py_DECREF(u);
             return NULL;
         }
@@ -697,14 +728,14 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
             key = PyTuple_GET_ITEM(names, i);
             tup = PyDict_GetItem(descr->fields, key);
             if (!PyArg_ParseTuple(tup, "Oi|O", &new, &offset, &title)) {
-                ((PyArrayObject_fieldaccess *)ap)->descr = descr;
+                ((PyArrayObject_fields *)ap)->descr = descr;
                 return -1;
             }
             /*
              * TODO: temporarily modifying the array like this
              *       is bad coding style, should be changed.
              */
-            ((PyArrayObject_fieldaccess *)ap)->descr = new;
+            ((PyArrayObject_fields *)ap)->descr = new;
             /* remember to update alignment flags */
             if ((new->alignment > 1)
                     && ((((intp)(ip+offset)) % new->alignment) != 0)) {
@@ -714,12 +745,12 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
                 PyArray_ENABLEFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
             res = new->f->setitem(PyTuple_GET_ITEM(op, i), ip+offset, ap);
-            ((PyArrayObject_fieldaccess *)ap)->flags = savedflags;
+            ((PyArrayObject_fields *)ap)->flags = savedflags;
             if (res < 0) {
                 break;
             }
         }
-        ((PyArrayObject_fieldaccess *)ap)->descr = descr;
+        ((PyArrayObject_fields *)ap)->descr = descr;
         return res;
     }
 
@@ -750,6 +781,13 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         res = PyArray_CopyObject(ret, op);
         Py_DECREF(ret);
         return res;
+    }
+
+    if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
+        return -1;
     }
 
     /* Default is to use buffer interface to set item */
@@ -1844,19 +1882,19 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
                 continue;
             }
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
-                ((PyArrayObject_fieldaccess *)arr)->descr = descr;
+                ((PyArrayObject_fields *)arr)->descr = descr;
                 return;
             }
             /*
              * TODO: temporarily modifying the array like this
              *       is bad coding style, should be changed.
              */
-            ((PyArrayObject_fieldaccess *)arr)->descr = new;
+            ((PyArrayObject_fields *)arr)->descr = new;
             new->f->copyswapn(dst+offset, dstride,
                     (src != NULL ? src+offset : NULL),
                     sstride, n, swap, arr);
         }
-        ((PyArrayObject_fieldaccess *)arr)->descr = descr;
+        ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
     if (swap && PyArray_DESCR(arr)->subarray != NULL) {
@@ -1872,7 +1910,7 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
          * TODO: temporarily modifying the array like this
          *       is bad coding style, should be changed.
          */
-        ((PyArrayObject_fieldaccess *)arr)->descr = new;
+        ((PyArrayObject_fields *)arr)->descr = new;
         dstptr = dst;
         srcptr = src;
         subitemsize = new->elsize;
@@ -1885,7 +1923,7 @@ VOID_copyswapn (char *dst, intp dstride, char *src, intp sstride,
                 srcptr += sstride;
             }
         }
-        ((PyArrayObject_fieldaccess *)arr)->descr = descr;
+        ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
     if (src != NULL) {
@@ -1912,19 +1950,19 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
                 continue;
             }
             if (!PyArg_ParseTuple(value, "Oi|O", &new, &offset, &title)) {
-                ((PyArrayObject_fieldaccess *)arr)->descr = descr;
+                ((PyArrayObject_fields *)arr)->descr = descr;
                 return;
             }
             /*
              * TODO: temporarily modifying the array like this
              *       is bad coding style, should be changed.
              */
-            ((PyArrayObject_fieldaccess *)arr)->descr = new;
+            ((PyArrayObject_fields *)arr)->descr = new;
             new->f->copyswap(dst+offset,
                     (src != NULL ? src+offset : NULL),
                     swap, arr);
         }
-        ((PyArrayObject_fieldaccess *)arr)->descr = descr;
+        ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
     if (swap && PyArray_DESCR(arr)->subarray != NULL) {
@@ -1938,12 +1976,12 @@ VOID_copyswap (char *dst, char *src, int swap, PyArrayObject *arr)
          * TODO: temporarily modifying the array like this
          *       is bad coding style, should be changed.
          */
-        ((PyArrayObject_fieldaccess *)arr)->descr = new;
+        ((PyArrayObject_fields *)arr)->descr = new;
         itemsize = new->elsize;
         num = descr->elsize / itemsize;
         new->f->copyswapn(dst, itemsize, src,
                 itemsize, num, swap, arr);
-        ((PyArrayObject_fieldaccess *)arr)->descr = descr;
+        ((PyArrayObject_fields *)arr)->descr = descr;
         return;
     }
     if (src != NULL) {
@@ -2219,8 +2257,8 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
              * TODO: temporarily modifying the array like this
              *       is bad coding style, should be changed.
              */
-            ((PyArrayObject_fieldaccess *)ap)->descr = descr;
-            ((PyArrayObject_fieldaccess *)ap)->flags = savedflags;
+            ((PyArrayObject_fields *)ap)->descr = descr;
+            ((PyArrayObject_fields *)ap)->flags = savedflags;
             if ((new->alignment > 1) && !__ALIGNED(ip+offset, new->alignment)) {
                 PyArray_CLEARFLAGS(ap, NPY_ARRAY_ALIGNED);
             }
@@ -2232,8 +2270,8 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
                 break;
             }
         }
-        ((PyArrayObject_fieldaccess *)ap)->descr = descr;
-        ((PyArrayObject_fieldaccess *)ap)->flags = savedflags;
+        ((PyArrayObject_fields *)ap)->descr = descr;
+        ((PyArrayObject_fields *)ap)->flags = savedflags;
         return nonz;
     }
     len = PyArray_DESCR(ap)->elsize;
@@ -2523,7 +2561,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
          * TODO: temporarily modifying the array like this
          *       is bad coding style, should be changed.
          */
-        ((PyArrayObject_fieldaccess *)ap)->descr = new;
+        ((PyArrayObject_fields *)ap)->descr = new;
         swap = PyArray_ISBYTESWAPPED(ap);
         nip1 = ip1+offset;
         nip2 = ip2+offset;
@@ -2567,7 +2605,7 @@ VOID_compare(char *ip1, char *ip2, PyArrayObject *ap)
     }
 
 finish:
-    ((PyArrayObject_fieldaccess *)ap)->descr = descr;
+    ((PyArrayObject_fields *)ap)->descr = descr;
     return res;
 }
 
@@ -2653,6 +2691,79 @@ static int
 
 /**end repeat**/
 
+/**begin repeat
+ *
+ * #fname = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *          LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *          CFLOAT, CDOUBLE, CLONGDOUBLE, DATETIME, TIMEDELTA#
+ * #type = Bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong, npy_half, float, double, longdouble,
+ *         float, double, longdouble, datetime, timedelta#
+ * #isfloat = 0*11, 1*7, 0*2#
+ * #isnan = nop*11, npy_half_isnan, npy_isnan*6, nop*2#
+ * #le = _LESS_THAN_OR_EQUAL*11, npy_half_le, _LESS_THAN_OR_EQUAL*8#
+ * #iscomplex = 0*15, 1*3, 0*2#
+ * #incr = ip++*15, ip+=2*3, ip++*2#
+ */
+static int
+@fname@_argmin(@type@ *ip, intp n, intp *min_ind, PyArrayObject *NPY_UNUSED(aip))
+{
+    intp i;
+    @type@ mp = *ip;
+#if @iscomplex@
+    @type@ mp_im = ip[1];
+#endif
+
+    *min_ind = 0;
+
+#if @isfloat@
+    if (@isnan@(mp)) {
+        /* nan encountered; it's minimal */
+        return 0;
+    }
+#endif
+#if @iscomplex@
+    if (@isnan@(mp_im)) {
+        /* nan encountered; it's minimal */
+        return 0;
+    }
+#endif
+
+    for (i = 1; i < n; i++) {
+        @incr@;
+        /*
+         * Propagate nans, similarly as max() and min()
+         */
+#if @iscomplex@
+        /* Lexical order for complex numbers */
+        if ((mp > ip[0]) || ((ip[0] == mp) && (mp_im > ip[1]))
+                || @isnan@(ip[0]) || @isnan@(ip[1])) {
+            mp = ip[0];
+            mp_im = ip[1];
+            *min_ind = i;
+            if (@isnan@(mp) || @isnan@(mp_im)) {
+                /* nan encountered, it's minimal */
+                break;
+            }
+        }
+#else
+        if (!@le@(mp, *ip)) {  /* negated, for correct nan handling */
+            mp = *ip;
+            *min_ind = i;
+#if @isfloat@
+            if (@isnan@(mp)) {
+                /* nan encountered, it's minimal */
+                break;
+            }
+#endif
+        }
+#endif
+    }
+    return 0;
+}
+
+/**end repeat**/
+
 #undef _LESS_THAN_OR_EQUAL
 
 static int
@@ -2710,6 +2821,63 @@ static int
 /**end repeat**/
 
 #define VOID_argmax NULL
+
+static int
+OBJECT_argmin(PyObject **ip, intp n, intp *min_ind, PyArrayObject *NPY_UNUSED(aip))
+{
+    intp i;
+    PyObject *mp = ip[0];
+
+    *min_ind = 0;
+    i = 1;
+    while (i < n && mp == NULL) {
+        mp = ip[i];
+        i++;
+    }
+    for (; i < n; i++) {
+        ip++;
+#if defined(NPY_PY3K)
+        if (*ip != NULL && PyObject_RichCompareBool(mp, *ip, Py_GT) == 1) {
+#else
+        if (*ip != NULL && PyObject_Compare(mp, *ip) > 0) {
+#endif
+            mp = *ip;
+            *min_ind = i;
+        }
+    }
+    return 0;
+}
+
+/**begin repeat
+ *
+ * #fname = STRING, UNICODE#
+ * #type = char, PyArray_UCS4#
+ */
+static int
+@fname@_argmin(@type@ *ip, intp n, intp *min_ind, PyArrayObject *aip)
+{
+    intp i;
+    int elsize = PyArray_DESCR(aip)->elsize;
+    @type@ *mp = (@type@ *)PyArray_malloc(elsize);
+
+    if (mp==NULL) return 0;
+    memcpy(mp, ip, elsize);
+    *min_ind = 0;
+    for(i=1; i<n; i++) {
+        ip += elsize;
+        if (@fname@_compare(mp,ip,aip) > 0) {
+            memcpy(mp, ip, elsize);
+            *min_ind=i;
+        }
+    }
+    PyArray_free(mp);
+    return 0;
+}
+
+/**end repeat**/
+
+
+#define VOID_argmin NULL
 
 
 /*
@@ -2861,12 +3029,13 @@ OBJECT_fill(PyObject **buffer, intp length, void *NPY_UNUSED(ignored))
     intp i;
     PyObject *start = buffer[0];
     PyObject *delta = buffer[1];
+    PyObject *second;
 
     delta = PyNumber_Subtract(delta, start);
     if (!delta) {
         return;
     }
-    start = PyNumber_Add(start, delta);
+    second = start = PyNumber_Add(start, delta);
     if (!start) {
         goto finish;
     }
@@ -2882,6 +3051,7 @@ OBJECT_fill(PyObject **buffer, intp length, void *NPY_UNUSED(ignored))
     }
 
 finish:
+    Py_XDECREF(second);
     Py_DECREF(delta);
     return;
 }
@@ -3370,7 +3540,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     NULL,
     (PyArray_FastClipFunc *)NULL,
     (PyArray_FastPutmaskFunc *)NULL,
-    (PyArray_FastTakeFunc *)NULL
+    (PyArray_FastTakeFunc *)NULL,
+    (PyArray_ArgFunc*)@from@_argmin
 };
 
 /*
@@ -3478,7 +3649,8 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
     NULL,
     (PyArray_FastClipFunc*)@from@_fastclip,
     (PyArray_FastPutmaskFunc*)@from@_fastputmask,
-    (PyArray_FastTakeFunc*)@from@_fasttake
+    (PyArray_FastTakeFunc*)@from@_fasttake,
+    (PyArray_ArgFunc*)@from@_argmin
 };
 
 /*

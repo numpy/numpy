@@ -65,7 +65,7 @@ compatibility measure*/
 #define LONGLONG_FMT NPY_LONGLONG_FMT
 #define ULONGLONG_FMT NPY_ULONGLONG_FMT
 #define LONGLONG_SUFFIX NPY_LONGLONG_SUFFIX
-#define ULONGLONG_SUFFIX NPY_ULONGLONG_SUFFIX(x)
+#define ULONGLONG_SUFFIX NPY_ULONGLONG_SUFFIX
 
 #define MAX_INT8 127
 #define MIN_INT8 -128
@@ -122,7 +122,6 @@ compatibility measure*/
 #define BITSOF_DATETIME   NPY_BITSOF_DATETIME
 #define BITSOF_TIMEDELTA   NPY_BITSOF_TIMEDELTA
 
-#define PyArray_UCS4 npy_ucs4
 #define _pya_malloc PyArray_malloc
 #define _pya_free PyArray_free
 #define _pya_realloc PyArray_realloc

@@ -1,0 +1,12 @@
+HookFile: bscript
+
+Library:
+    Extension: lapack_lite
+        Sources:
+            blas_lite.c,
+            dlamch.c,
+            dlapack_lite.c,
+            f2c_lite.c,
+            lapack_litemodule.c,
+            python_xerbla.c,
+            zlapack_lite.c

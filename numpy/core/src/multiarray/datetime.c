@@ -24,6 +24,7 @@
 #include "methods.h"
 #include "_datetime.h"
 #include "datetime_strings.h"
+#include "na_object.h"
 
 /*
  * Imports the PyDateTime functions so we can create these objects.
@@ -806,6 +807,7 @@ get_datetime_metadata_from_dtype(PyArray_Descr *dtype)
 
     /* Check that the dtype has an NpyCapsule for the metadata */
     meta = (PyArray_DatetimeMetaData *)NpyCapsule_AsVoidPtr(metacobj);
+    Py_DECREF(metacobj);
     if (meta == NULL) {
         PyErr_SetString(PyExc_TypeError,
                 "Datetime type object is invalid, unit metadata is corrupt");
@@ -1928,7 +1930,7 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta)
     }
 
     PyTuple_SET_ITEM(dt_tuple, 0,
-            PyBytes_FromString(_datetime_strings[meta->base]));
+            PyUString_FromString(_datetime_strings[meta->base]));
     PyTuple_SET_ITEM(dt_tuple, 1,
             PyInt_FromLong(meta->num));
 
@@ -1947,6 +1949,7 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
     char *basestr = NULL;
     Py_ssize_t len = 0, tuple_size;
     int den = 1;
+    PyObject *unit_str = NULL;
 
     if (!PyTuple_Check(tuple)) {
         PyObject_Print(tuple, stderr, 0);
@@ -1964,15 +1967,29 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
         return -1;
     }
 
-    if (PyBytes_AsStringAndSize(PyTuple_GET_ITEM(tuple, 0),
-                                        &basestr, &len) < 0) {
+    unit_str = PyTuple_GET_ITEM(tuple, 0);
+    Py_INCREF(unit_str);
+    if (PyUnicode_Check(unit_str)) {
+        /* Allow unicode format strings: convert to bytes */
+        PyObject *tmp = PyUnicode_AsASCIIString(unit_str);
+        Py_DECREF(unit_str);
+        if (tmp == NULL) {
+            return -1;
+        }
+        unit_str = tmp;
+    }
+    if (PyBytes_AsStringAndSize(unit_str, &basestr, &len) < 0) {
+        Py_DECREF(unit_str);
         return -1;
     }
 
     out_meta->base = parse_datetime_unit_from_string(basestr, len, NULL);
     if (out_meta->base == -1) {
+        Py_DECREF(unit_str);
         return -1;
     }
+
+    Py_DECREF(unit_str);
 
     /* Convert the values to longs */
     out_meta->num = PyInt_AsLong(PyTuple_GET_ITEM(tuple, 1));
@@ -2440,7 +2457,7 @@ invalid_time:
  * the Python datetime.tzinfo object.
  */
 NPY_NO_EXPORT int
-get_tzoffset_from_pytzinfo(PyObject *timezone, npy_datetimestruct *dts)
+get_tzoffset_from_pytzinfo(PyObject *timezone_obj, npy_datetimestruct *dts)
 {
     PyObject *dt, *loc_dt;
     npy_datetimestruct loc_dts;
@@ -2453,7 +2470,7 @@ get_tzoffset_from_pytzinfo(PyObject *timezone, npy_datetimestruct *dts)
     }
 
     /* Convert the datetime from UTC to local time */
-    loc_dt = PyObject_CallMethod(timezone, "fromutc", "O", dt);
+    loc_dt = PyObject_CallMethod(timezone_obj, "fromutc", "O", dt);
     Py_DECREF(dt);
     if (loc_dt == NULL) {
         return -1;
@@ -2654,6 +2671,13 @@ convert_pyobject_to_datetime(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
         *out = NPY_DATETIME_NAT;
         return 0;
+    }
+    /* Check for NA */
+    else if (NpyNA_Check(obj) || NpyNA_IsZeroDimArrayNA(obj)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
+        return -1;
     }
     else {
         PyErr_SetString(PyExc_ValueError,
@@ -2915,6 +2939,13 @@ convert_pyobject_to_timedelta(PyArray_DatetimeMetaData *meta, PyObject *obj,
         }
         *out = NPY_DATETIME_NAT;
         return 0;
+    }
+    /* Check for NA */
+    else if (NpyNA_Check(obj) || NpyNA_IsZeroDimArrayNA(obj)) {
+        PyErr_SetString(PyExc_ValueError,
+                    "Cannot assign NA to an array which "
+                    "does not support NAs");
+        return -1;
     }
     else {
         PyErr_SetString(PyExc_ValueError,

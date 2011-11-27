@@ -1102,13 +1102,13 @@ class TestMaskedArrayArithmetic(TestCase):
             output.fill(-9999)
             result = npfunc(xm, axis=0, out=output)
             # ... the result should be the given output
-            self.assertTrue(result is output)
+            assert_(result is output)
             assert_equal(result, xmmeth(axis=0, out=output))
             #
             output = empty(4, dtype=int)
             result = xmmeth(axis=0, out=output)
-            self.assertTrue(result is output)
-            self.assertTrue(output[0] is masked)
+            assert_(result is output)
+            assert_(output[0] is masked)
 
 
     def test_eq_on_structured(self):
@@ -2034,7 +2034,7 @@ class TestMaskedArrayMethods(TestCase):
 
     def test_allany_oddities(self):
         "Some fun with all and any"
-        store = empty(1, dtype=bool)
+        store = empty((), dtype=bool)
         full = array([1, 2, 3], mask=True)
         #
         self.assertTrue(full.all() is masked)
@@ -2043,7 +2043,7 @@ class TestMaskedArrayMethods(TestCase):
         self.assertTrue(store._mask, True)
         self.assertTrue(store is not masked)
         #
-        store = empty(1, dtype=bool)
+        store = empty((), dtype=bool)
         self.assertTrue(full.any() is masked)
         full.any(out=store)
         self.assertTrue(not store)

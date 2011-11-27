@@ -1,0 +1,24 @@
+import os
+
+from bento.commands.hooks \
+    import \
+        pre_build
+
+@pre_build
+def pbuild(context):
+    bld = context.waf_context
+
+    def build_lapack_lite(extension):
+        kw = {}
+        if bld.env.HAS_LAPACK:
+            for s in ['python_xerbla.c', 'zlapack_lite.c', 'dlapack_lite.c',
+                      'blas_lite.c', 'dlamch.c', 'f2c_lite.c']:
+                extension.sources.pop(extension.sources.index(s))
+            kw["uselib"] = "LAPACK"
+
+        includes = ["../core/include", "../core/include/numpy", "../core",
+                    "../core/src/private"]
+        return context.default_builder(extension,
+                                       includes=includes,
+                                       **kw)
+    context.register_builder("lapack_lite", build_lapack_lite)

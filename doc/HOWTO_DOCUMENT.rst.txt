@@ -9,6 +9,26 @@ A Guide to NumPy/SciPy Documentation
    For an accompanying example, see `example.py
    <http://github.com/numpy/numpy/blob/master/doc/example.py>`_.
 
+   When using `Sphinx <http://sphinx.pocoo.org/>`_ in combination with the
+   numpy conventions, you should use the ``numpydoc`` extension so that your
+   docstrings will be handled correctly. For example, Sphinx will extract the
+   ``Parameters`` section from your docstring and convert it into a field
+   list.  Using numpydoc will also avoid the reStructuredText errors produced
+   by plain Sphinx when it encounters numpy docstring conventions like
+   section headers (e.g. ``-------------``) that sphinx does not expect to
+   find in docstrings.
+
+   It is available from:
+
+   * `numpydoc on PyPI <http://pypi.python.org/pypi/numpydoc>`_
+   * `numpydoc on GitHub (in main numpy repository)
+     <https://github.com/numpy/numpy/blob/master/doc/sphinxext/numpydoc.py>`_
+
+   Details of how to use it can be found `here
+   <https://github.com/numpy/numpy/blob/master/doc/sphinxext/README.txt>`_ and
+   `here
+   <https://github.com/numpy/numpy/blob/master/doc/HOWTO_BUILD_DOCS.rst.txt>`_
+
 Overview
 --------
 In general, we follow the standard Python style conventions as described here:
@@ -506,6 +526,17 @@ belong in docstrings.
 
 Other points to keep in mind
 ----------------------------
+* Equations : as discussed in the Notes section above, LaTeX formatting should
+  be kept to a minimum.  Often it's possible to show equations as Python code
+  or pseudo-code instead, which is much better readable in a terminal.  For
+  inline display use double backticks (like ``y = np.sin(x)``).  For display
+  with blank lines above and below, use a double colon and indent the code,
+  like::
+
+    end of previous sentence::
+
+      y = np.sin(x)
+
 * Notes and Warnings : If there are points in the docstring that deserve
   special emphasis, the reST directives for a note or warning can be used
   in the vicinity of the context of the warning (inside a section). Syntax:

@@ -227,6 +227,41 @@ class TestSaveTxt(TestCase):
         lines = c.readlines()
         assert_equal(lines, asbytes_nested(['01 : 2.0\n', '03 : 4.0\n']))
 
+    def test_header_footer(self):
+        """
+        Test the functionality of the header and footer keyword argument.
+        """
+        c = StringIO()
+        a = np.array([(1, 2), (3, 4)], dtype=np.int)
+        test_header_footer = 'Test header / footer'
+        # Test the header keyword argument
+        np.savetxt(c, a, fmt='%1d', header=test_header_footer)
+        c.seek(0)
+        assert_equal(c.read(),
+                asbytes('# ' + test_header_footer +'\n1 2\n3 4\n' ))
+        # Test the footer keyword argument
+        c = StringIO()
+        np.savetxt(c, a, fmt='%1d', footer=test_header_footer)
+        c.seek(0)
+        assert_equal(c.read(),
+                asbytes('1 2\n3 4\n# ' + test_header_footer + '\n'))
+        # Test the commentstr keyword argument used on the header
+        c = StringIO()
+        commentstr = '% '
+        np.savetxt(c, a, fmt='%1d', header=test_header_footer,
+                comments=commentstr)
+        c.seek(0)
+        assert_equal(c.read(),
+                asbytes(commentstr + test_header_footer + '\n' + '1 2\n3 4\n'))
+        # Test the commentstr keyword argument used on the footer
+        c = StringIO()
+        commentstr = '% '
+        np.savetxt(c, a, fmt='%1d', footer=test_header_footer,
+                comments=commentstr)
+        c.seek(0)
+        assert_equal(c.read(),
+                asbytes('1 2\n3 4\n' + commentstr + test_header_footer + '\n'))
+
     def test_file_roundtrip(self):
         f, name = mkstemp()
         os.close(f)
@@ -428,6 +463,7 @@ class TestLoadTxt(TestCase):
         assert_array_equal(x, a)
 
     def test_empty_file(self):
+        warnings.filterwarnings("ignore", message="loadtxt: Empty input file:")
         c = StringIO()
         x = np.loadtxt(c)
         assert_equal(x.shape, (0,))

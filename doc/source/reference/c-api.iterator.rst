@@ -23,6 +23,11 @@ branch, so will integrate naturally into the refactored code base.
 The iterator is named ``NpyIter`` and functions are
 named ``NpyIter_*``.
 
+There is an :ref:`introductory guide to array iteration <arrays.nditer>`
+which may be of interest for those using this C API. In many instances,
+testing out ideas by creating the iterator in Python is a good idea
+before writing the C iteration code.
+
 Converting from Previous NumPy Iterators
 ----------------------------------------
 
@@ -546,9 +551,10 @@ Construction and Destruction
         .. cvar:: NPY_ITER_ALLOCATE
 
             This is for output arrays, and requires that the flag
-            :cdata:`NPY_ITER_WRITEONLY` be set.  If ``op[i]`` is NULL,
-            creates a new array with the final broadcast dimensions,
-            and a layout matching the iteration order of the iterator.
+            :cdata:`NPY_ITER_WRITEONLY` or :cdata:`NPY_ITER_READWRITE`
+            be set.  If ``op[i]`` is NULL, creates a new array with
+            the final broadcast dimensions, and a layout matching
+            the iteration order of the iterator.
 
             When ``op[i]`` is NULL, the requested data type
             ``op_dtypes[i]`` may be NULL as well, in which case it is
@@ -581,6 +587,8 @@ Construction and Destruction
 
         .. cvar:: NPY_ITER_ARRAYMASK
 
+            .. versionadded:: 1.7
+
             Indicates that this operand is the mask to use for
             selecting elements when writing to operands which have
             the :cdata:`NPY_ITER_WRITEMASKED` flag applied to them.
@@ -604,6 +612,8 @@ Construction and Destruction
 
         .. cvar:: NPY_ITER_WRITEMASKED
 
+            .. versionadded:: 1.7
+
             Indicates that only elements which the operand with
             the ARRAYMASK flag indicates are intended to be modified
             by the iteration. In general, the iterator does not enforce
@@ -618,6 +628,35 @@ Construction and Destruction
             elements in the buffer for which :cfunc:`NpyMask_IsExposed`
             returns true from the corresponding element in the ARRAYMASK
             operand.
+
+        .. cvar:: NPY_ITER_USE_MASKNA
+
+            .. versionadded:: 1.7
+
+            Adds a new operand to the end of the operand list which
+            iterates over the mask of this operand. If this operand has
+            no mask and is read-only, it broadcasts a constant
+            one-valued mask to indicate every value is valid. If this
+            operand has no mask and is writeable, an error is raised.
+
+            Each operand which has this flag applied to it causes
+            an additional operand to be tacked on the end of the operand
+            list, in an order matching that of the operand array.
+            For example, if there are four operands, and operands with index
+            one and three have the flag :cdata:`NPY_ITER_USE_MASKNA`
+            specified, there will be six operands total, and they will
+            look like [op0, op1, op2, op3, op1_mask, op3_mask].
+
+        .. cvar:: NPY_ITER_IGNORE_MASKNA
+
+            .. versionadded:: 1.7
+
+            Under some circumstances, code doing an iteration will
+            have already called :cfunc:`PyArray_ContainsNA` on an
+            operand which has a mask, and seen that its return value
+            was false. When this occurs, it is safe to do the iteration
+            without simultaneously iterating over the mask, and this
+            flag allows that to be done.
 
 .. cfunction:: NpyIter* NpyIter_AdvancedNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes, npy_intp* itershape, npy_intp buffersize)
 
@@ -950,6 +989,19 @@ Construction and Destruction
 
     Returns the number of operands in the iterator.
 
+    When :cdata:`NPY_ITER_USE_MASKNA` is used on an operand, a new
+    operand is added to the end of the operand list in the iterator
+    to track that operand's NA mask. Thus, this equals the number
+    of construction operands plus the number of operands for
+    which the flag :cdata:`NPY_ITER_USE_MASKNA` was specified.
+
+.. cfunction:: int NpyIter_GetFirstMaskNAOp(NpyIter* iter)
+
+    .. versionadded:: 1.7
+
+    Returns the index of the first NA mask operand in the array. This
+    value is equal to the number of operands passed into the constructor.
+
 .. cfunction:: npy_intp* NpyIter_GetAxisStrideArray(NpyIter* iter, int axis)
 
     Gets the array of strides for the specified axis. Requires that
@@ -985,6 +1037,16 @@ Construction and Destruction
     This gives back a pointer to the ``nop`` operand PyObjects
     that are being iterated.  The result points into ``iter``,
     so the caller does not gain any references to the PyObjects.
+
+.. cfunction:: npy_int8* NpyIter_GetMaskNAIndexArray(NpyIter* iter)
+
+    .. versionadded:: 1.7
+
+    This gives back a pointer to the ``nop`` indices which map
+    construction operands with :cdata:`NPY_ITER_USE_MASKNA` flagged
+    to their corresponding NA mask operands and vice versa. For
+    operands which were not flagged with :cdata:`NPY_ITER_USE_MASKNA`,
+    this array contains negative values.
 
 .. cfunction:: PyObject* NpyIter_GetIterView(NpyIter* iter, npy_intp i)
 
@@ -1035,6 +1097,30 @@ Construction and Destruction
     iterator.
 
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
+
+.. cfunction:: npy_bool NpyIter_IsFirstVisit(NpyIter* iter, int iop)
+
+    .. versionadded:: 1.7
+
+    Checks to see whether this is the first time the elements of the
+    specified reduction operand which the iterator points at are being
+    seen for the first time. The function returns a reasonable answer
+    for reduction operands and when buffering is disabled. The answer
+    may be incorrect for buffered non-reduction operands.
+
+    This function is intended to be used in EXTERNAL_LOOP mode only,
+    and will produce some wrong answers when that mode is not enabled.
+
+    If this function returns true, the caller should also check the inner
+    loop stride of the operand, because if that stride is 0, then only
+    the first element of the innermost external loop is being visited
+    for the first time.
+
+    *WARNING*: For performance reasons, 'iop' is not bounds-checked,
+    it is not confirmed that 'iop' is actually a reduction operand,
+    and it is not confirmed that EXTERNAL_LOOP mode is enabled. These
+    checks are the responsibility of the caller, and should be done
+    outside of any inner loops.
 
 Functions For Iteration
 -----------------------

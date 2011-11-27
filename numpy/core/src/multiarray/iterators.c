@@ -17,28 +17,37 @@
 #include "ctors.h"
 #include "common.h"
 
-#define PseudoIndex -1
-#define RubberIndex -2
-#define SingleIndex -3
+#define NEWAXIS_INDEX -1
+#define ELLIPSIS_INDEX -2
+#define SINGLE_INDEX -3
 
+static int
+slice_coerce_index(PyObject *o, npy_intp *v);
+
+/*
+ * This function converts one element of the indexing tuple
+ * into a step size and a number of steps, returning the
+ * starting index. Non-slices are signalled in 'n_steps',
+ * as NEWAXIS_INDEX, ELLIPSIS_INDEX, or SINGLE_INDEX.
+ */
 NPY_NO_EXPORT npy_intp
-parse_subindex(PyObject *op, npy_intp *step_size,
+parse_index_entry(PyObject *op, npy_intp *step_size,
                     npy_intp *n_steps, npy_intp max)
 {
-    npy_intp index;
+    npy_intp i;
 
     if (op == Py_None) {
-        *n_steps = PseudoIndex;
-        index = 0;
+        *n_steps = NEWAXIS_INDEX;
+        i = 0;
     }
     else if (op == Py_Ellipsis) {
-        *n_steps = RubberIndex;
-        index = 0;
+        *n_steps = ELLIPSIS_INDEX;
+        i = 0;
     }
     else if (PySlice_Check(op)) {
         npy_intp stop;
         if (slice_GetIndices((PySliceObject *)op, max,
-                             &index, &stop, step_size, n_steps) < 0) {
+                             &i, &stop, step_size, n_steps) < 0) {
             if (!PyErr_Occurred()) {
                 PyErr_SetString(PyExc_IndexError,
                                 "invalid slice");
@@ -48,42 +57,51 @@ parse_subindex(PyObject *op, npy_intp *step_size,
         if (*n_steps <= 0) {
             *n_steps = 0;
             *step_size = 1;
-            index = 0;
+            i = 0;
         }
     }
     else {
-        index = PyArray_PyIntAsIntp(op);
-        if (error_converting(index)) {
+        if (!slice_coerce_index(op, &i)) {
             PyErr_SetString(PyExc_IndexError,
-                            "each subindex must be either a "\
-                            "slice, an integer, Ellipsis, or "\
+                            "each index entry must be either a "
+                            "slice, an integer, Ellipsis, or "
                             "newaxis");
             goto fail;
         }
-        *n_steps = SingleIndex;
+        *n_steps = SINGLE_INDEX;
         *step_size = 0;
-        if (index < 0) {
-            index += max;
+        if (i < 0) {
+            i += max;
         }
-        if (index >= max || index < 0) {
+        if (i >= max || i < 0) {
             PyErr_SetString(PyExc_IndexError, "invalid index");
             goto fail;
         }
     }
-    return index;
+    return i;
 
  fail:
     return -1;
 }
 
 
+/*
+ * Parses an index that has no fancy indexing. Populates
+ * out_dimensions, out_strides, and out_offset. If out_maskna_strides
+ * and out_maskoffset aren't NULL, then 'self' must have an NA mask
+ * which is used to populate those variables as well.
+ */
 NPY_NO_EXPORT int
 parse_index(PyArrayObject *self, PyObject *op,
-            npy_intp *dimensions, npy_intp *strides, npy_intp *offset_ptr)
+            npy_intp *out_dimensions,
+            npy_intp *out_strides,
+            npy_intp *out_offset,
+            npy_intp *out_maskna_strides,
+            npy_intp *out_maskna_offset)
 {
     int i, j, n;
-    int nd_old, nd_new, n_add, n_pseudo;
-    npy_intp n_steps, start, offset, step_size;
+    int nd_old, nd_new, n_add, n_ellipsis;
+    npy_intp n_steps, start, offset, maskna_offset, step_size;
     PyObject *op1 = NULL;
     int is_slice;
 
@@ -97,7 +115,7 @@ parse_index(PyArrayObject *self, PyObject *op,
     else {
         if (!PySequence_Check(op)) {
             PyErr_SetString(PyExc_IndexError,
-                            "index must be either an int "\
+                            "index must be either an int "
                             "or a sequence");
             return -1;
         }
@@ -108,62 +126,71 @@ parse_index(PyArrayObject *self, PyObject *op,
     nd_old = nd_new = 0;
 
     offset = 0;
+    maskna_offset = 0;
     for (i = 0; i < n; i++) {
         if (!is_slice) {
-            if (!(op1=PySequence_GetItem(op, i))) {
-                PyErr_SetString(PyExc_IndexError,
-                                "invalid index");
+            op1 = PySequence_GetItem(op, i);
+            if (op1 == NULL) {
                 return -1;
             }
         }
-        start = parse_subindex(op1, &step_size, &n_steps,
+        start = parse_index_entry(op1, &step_size, &n_steps,
                                nd_old < PyArray_NDIM(self) ?
                                PyArray_DIMS(self)[nd_old] : 0);
         Py_DECREF(op1);
         if (start == -1) {
             break;
         }
-        if (n_steps == PseudoIndex) {
-            dimensions[nd_new] = 1; strides[nd_new] = 0;
+        if (n_steps == NEWAXIS_INDEX) {
+            out_dimensions[nd_new] = 1;
+            out_strides[nd_new] = 0;
+            if (out_maskna_strides != NULL) {
+                out_maskna_strides[nd_new] = 0;
+            }
             nd_new++;
         }
-        else {
-            if (n_steps == RubberIndex) {
-                for (j = i + 1, n_pseudo = 0; j < n; j++) {
-                    op1 = PySequence_GetItem(op, j);
-                    if (op1 == Py_None) {
-                        n_pseudo++;
-                    }
-                    Py_DECREF(op1);
+        else if (n_steps == ELLIPSIS_INDEX) {
+            for (j = i + 1, n_ellipsis = 0; j < n; j++) {
+                op1 = PySequence_GetItem(op, j);
+                if (op1 == Py_None) {
+                    n_ellipsis++;
                 }
-                n_add = PyArray_NDIM(self)-(n-i-n_pseudo-1+nd_old);
-                if (n_add < 0) {
-                    PyErr_SetString(PyExc_IndexError,
-                                    "too many indices");
-                    return -1;
-                }
-                for (j = 0; j < n_add; j++) {
-                    dimensions[nd_new] = \
-                        PyArray_DIMS(self)[nd_old];
-                    strides[nd_new] = \
-                        PyArray_STRIDES(self)[nd_old];
-                    nd_new++; nd_old++;
-                }
+                Py_DECREF(op1);
             }
-            else {
-                if (nd_old >= PyArray_NDIM(self)) {
-                    PyErr_SetString(PyExc_IndexError,
-                                    "too many indices");
-                    return -1;
+            n_add = PyArray_NDIM(self)-(n-i-n_ellipsis-1+nd_old);
+            if (n_add < 0) {
+                PyErr_SetString(PyExc_IndexError, "too many indices");
+                return -1;
+            }
+            for (j = 0; j < n_add; j++) {
+                out_dimensions[nd_new] = PyArray_DIMS(self)[nd_old];
+                out_strides[nd_new] = PyArray_STRIDES(self)[nd_old];
+                if (out_maskna_strides != NULL) {
+                    out_maskna_strides[nd_new] =
+                                    PyArray_MASKNA_STRIDES(self)[nd_old];
                 }
-                offset += PyArray_STRIDES(self)[nd_old]*start;
-                nd_old++;
-                if (n_steps != SingleIndex) {
-                    dimensions[nd_new] = n_steps;
-                    strides[nd_new] = step_size * \
-                        PyArray_STRIDES(self)[nd_old-1];
-                    nd_new++;
+                nd_new++; nd_old++;
+            }
+        }
+        else {
+            if (nd_old >= PyArray_NDIM(self)) {
+                PyErr_SetString(PyExc_IndexError, "too many indices");
+                return -1;
+            }
+            offset += PyArray_STRIDES(self)[nd_old]*start;
+            if (out_maskna_offset != NULL) {
+                maskna_offset += PyArray_MASKNA_STRIDES(self)[nd_old]*start;
+            }
+            nd_old++;
+            if (n_steps != SINGLE_INDEX) {
+                out_dimensions[nd_new] = n_steps;
+                out_strides[nd_new] = step_size *
+                                            PyArray_STRIDES(self)[nd_old-1];
+                if (out_maskna_strides != NULL) {
+                    out_maskna_strides[nd_new] = step_size *
+                                        PyArray_MASKNA_STRIDES(self)[nd_old-1];
                 }
+                nd_new++;
             }
         }
     }
@@ -172,20 +199,50 @@ parse_index(PyArrayObject *self, PyObject *op,
     }
     n_add = PyArray_NDIM(self)-nd_old;
     for (j = 0; j < n_add; j++) {
-        dimensions[nd_new] = PyArray_DIMS(self)[nd_old];
-        strides[nd_new] = PyArray_STRIDES(self)[nd_old];
+        out_dimensions[nd_new] = PyArray_DIMS(self)[nd_old];
+        out_strides[nd_new] = PyArray_STRIDES(self)[nd_old];
+        if (out_maskna_strides != NULL) {
+            out_maskna_strides[nd_new] = PyArray_MASKNA_STRIDES(self)[nd_old];
+        }
         nd_new++;
         nd_old++;
     }
-    *offset_ptr = offset;
+    *out_offset = offset;
+    if (out_maskna_offset != NULL) {
+        *out_maskna_offset = maskna_offset;
+    }
     return nd_new;
 }
 
+/*
+ * Tries to convert 'o' into an npy_intp interpreted as an
+ * index. Returns 1 if it was successful, 0 otherwise. Does
+ * not set an exception.
+ */
 static int
 slice_coerce_index(PyObject *o, npy_intp *v)
 {
+    /*
+     * PyNumber_Index was introduced in Python 2.5 because of NumPy.
+     * http://www.python.org/dev/peps/pep-0357/
+     * Let's use it for indexing!
+     *
+     * Unfortunately, SciPy and possibly other code seems to rely
+     * on the lenient coercion. :(
+     */
+#if 0 /*PY_VERSION_HEX >= 0x02050000*/
+    PyObject *ind = PyNumber_Index(o);
+    if (ind != NULL) {
+        *v = PyArray_PyIntAsIntp(ind);
+        Py_DECREF(ind);
+    }
+    else {
+        *v = -1;
+    }
+#else
     *v = PyArray_PyIntAsIntp(o);
-    if (error_converting(*v)) {
+#endif
+    if ((*v) == -1 && PyErr_Occurred()) {
         PyErr_Clear();
         return 0;
     }
@@ -343,14 +400,22 @@ NPY_NO_EXPORT PyObject *
 PyArray_IterNew(PyObject *obj)
 {
     PyArrayIterObject *it;
-    PyArrayObject *ao = (PyArrayObject *)obj;
+    PyArrayObject *ao;
 
-    if (!PyArray_Check(ao)) {
+    if (!PyArray_Check(obj)) {
         PyErr_BadInternalCall();
         return NULL;
     }
+    ao = (PyArrayObject *)obj;
 
-    it = (PyArrayIterObject *)_pya_malloc(sizeof(PyArrayIterObject));
+    if (PyArray_HASMASKNA(ao)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Old-style NumPy iterators do not support NA masks, "
+                "use numpy.nditer instead");
+        return NULL;
+    }
+
+    it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
     PyObject_Init((PyObject *)it, &PyArrayIter_Type);
     /* it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);*/
     if (it == NULL) {
@@ -371,6 +436,13 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     int i, diff, j, compat, k;
     PyArrayObject *ao = (PyArrayObject *)obj;
 
+    if (PyArray_HASMASKNA(ao)) {
+        PyErr_SetString(PyExc_ValueError,
+                "Old-style NumPy iterators do not support NA masks, "
+                "use numpy.nditer instead");
+        return NULL;
+    }
+
     if (PyArray_NDIM(ao) > nd) {
         goto err;
     }
@@ -388,7 +460,7 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     if (!compat) {
         goto err;
     }
-    it = (PyArrayIterObject *)_pya_malloc(sizeof(PyArrayIterObject));
+    it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
     PyObject_Init((PyObject *)it, &PyArrayIter_Type);
 
     if (it == NULL) {
@@ -573,7 +645,7 @@ iter_length(PyArrayIterObject *self)
 static PyArrayObject *
 iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
 {
-    npy_intp index, strides;
+    npy_intp counter, strides;
     int itemsize;
     npy_intp count = 0;
     char *dptr, *optr;
@@ -587,8 +659,8 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
                         "boolean index array should have 1 dimension");
         return NULL;
     }
-    index = PyArray_DIMS(ind)[0];
-    if (index > self->size) {
+    counter = PyArray_DIMS(ind)[0];
+    if (counter > self->size) {
         PyErr_SetString(PyExc_ValueError,
                         "too many boolean indices");
         return NULL;
@@ -597,7 +669,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
     strides = PyArray_STRIDES(ind)[0];
     dptr = PyArray_DATA(ind);
     /* Get size of return array */
-    while (index--) {
+    while (counter--) {
         if (*((Bool *)dptr) != 0) {
             count++;
         }
@@ -614,12 +686,12 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
     }
     /* Set up loop */
     optr = PyArray_DATA(ret);
-    index = PyArray_DIMS(ind)[0];
+    counter = PyArray_DIMS(ind)[0];
     dptr = PyArray_DATA(ind);
     copyswap = PyArray_DESCR(self->ao)->f->copyswap;
     /* Loop over Boolean array */
     swap = (PyArray_ISNOTSWAPPED(self->ao) != PyArray_ISNOTSWAPPED(ret));
-    while (index--) {
+    while (counter--) {
         if (*((Bool *)dptr) != 0) {
             copyswap(optr, self->dataptr, swap, self->ao);
             optr += itemsize;
@@ -640,7 +712,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
     int itemsize;
     int swap;
     char *optr;
-    npy_intp index;
+    npy_intp counter;
     PyArray_CopySwapFunc *copyswap;
 
     itemsize = PyArray_DESCR(self->ao)->elsize;
@@ -682,10 +754,10 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
         Py_DECREF(ret);
         return NULL;
     }
-    index = ind_it->size;
+    counter = ind_it->size;
     copyswap = PyArray_DESCR(ret)->f->copyswap;
     swap = (PyArray_ISNOTSWAPPED(ret) != PyArray_ISNOTSWAPPED(self->ao));
-    while (index--) {
+    while (counter--) {
         num = *((npy_intp *)(ind_it->dataptr));
         if (num < 0) {
             num += self->size;
@@ -769,18 +841,18 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
 
     /* Check for Integer or Slice */
     if (PyLong_Check(ind) || PyInt_Check(ind) || PySlice_Check(ind)) {
-        start = parse_subindex(ind, &step_size, &n_steps,
+        start = parse_index_entry(ind, &step_size, &n_steps,
                                self->size);
         if (start == -1) {
             goto fail;
         }
-        if (n_steps == RubberIndex || n_steps == PseudoIndex) {
+        if (n_steps == ELLIPSIS_INDEX || n_steps == NEWAXIS_INDEX) {
             PyErr_SetString(PyExc_IndexError,
                             "cannot use Ellipsis or newaxes here");
             goto fail;
         }
         PyArray_ITER_GOTO1D(self, start)
-            if (n_steps == SingleIndex) { /* Integer */
+            if (n_steps == SINGLE_INDEX) { /* Integer */
                 PyObject *tmp;
                 tmp = PyArray_ToScalar(self->dataptr, self->ao);
                 PyArray_ITER_RESET(self);
@@ -869,7 +941,7 @@ static int
 iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
                   PyArrayIterObject *val, int swap)
 {
-    npy_intp index, strides;
+    npy_intp counter, strides;
     char *dptr;
     PyArray_CopySwapFunc *copyswap;
 
@@ -879,8 +951,8 @@ iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
         return -1;
     }
 
-    index = PyArray_DIMS(ind)[0];
-    if (index > self->size) {
+    counter = PyArray_DIMS(ind)[0];
+    if (counter > self->size) {
         PyErr_SetString(PyExc_ValueError,
                         "boolean index array has too many values");
         return -1;
@@ -891,7 +963,7 @@ iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
     PyArray_ITER_RESET(self);
     /* Loop over Boolean array */
     copyswap = PyArray_DESCR(self->ao)->f->copyswap;
-    while (index--) {
+    while (counter--) {
         if (*((Bool *)dptr) != 0) {
             copyswap(self->dataptr, val->dataptr, swap, self->ao);
             PyArray_ITER_NEXT(val);
@@ -912,7 +984,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
 {
     npy_intp num;
     PyArrayIterObject *ind_it;
-    npy_intp index;
+    npy_intp counter;
     PyArray_CopySwapFunc *copyswap;
 
     copyswap = PyArray_DESCR(self->ao)->f->copyswap;
@@ -926,8 +998,8 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
     if (ind_it == NULL) {
         return -1;
     }
-    index = ind_it->size;
-    while (index--) {
+    counter = ind_it->size;
+    while (counter--) {
         num = *((npy_intp *)(ind_it->dataptr));
         if (num < 0) {
             num += self->size;
@@ -1041,17 +1113,17 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 
     /* Check Slice */
     if (PySlice_Check(ind)) {
-        start = parse_subindex(ind, &step_size, &n_steps, self->size);
+        start = parse_index_entry(ind, &step_size, &n_steps, self->size);
         if (start == -1) {
             goto finish;
         }
-        if (n_steps == RubberIndex || n_steps == PseudoIndex) {
+        if (n_steps == ELLIPSIS_INDEX || n_steps == NEWAXIS_INDEX) {
             PyErr_SetString(PyExc_IndexError,
                             "cannot use Ellipsis or newaxes here");
             goto finish;
         }
         PyArray_ITER_GOTO1D(self, start);
-        if (n_steps == SingleIndex) {
+        if (n_steps == SINGLE_INDEX) {
             /* Integer */
             copyswap(self->dataptr, PyArray_DATA(arrval), swap, arrval);
             PyArray_ITER_RESET(self);
@@ -1188,7 +1260,7 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
          * the chain of bases.
          */
         Py_INCREF(it->ao);
-        ((PyArrayObject_fieldaccess *)ret)->base = (PyObject *)it->ao;
+        ((PyArrayObject_fields *)ret)->base = (PyObject *)it->ao;
         PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
         PyArray_CLEARFLAGS(it->ao, NPY_ARRAY_WRITEABLE);
     }
@@ -1452,7 +1524,7 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
                      "array objects (inclusive).", NPY_MAXARGS);
         return NULL;
     }
-    multi = _pya_malloc(sizeof(PyArrayMultiIterObject));
+    multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
     if (multi == NULL) {
         return PyErr_NoMemory();
     }
@@ -1517,7 +1589,7 @@ PyArray_MultiIterNew(int n, ...)
 
     /* fprintf(stderr, "multi new...");*/
 
-    multi = _pya_malloc(sizeof(PyArrayMultiIterObject));
+    multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
     if (multi == NULL) {
         return PyErr_NoMemory();
     }
@@ -1580,7 +1652,7 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
         return NULL;
     }
 
-    multi = _pya_malloc(sizeof(PyArrayMultiIterObject));
+    multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
     if (multi == NULL) {
         return PyErr_NoMemory();
     }
@@ -1634,6 +1706,7 @@ arraymultiter_next(PyArrayMultiIterObject *multi)
         multi->index++;
         return ret;
     }
+    Py_DECREF(ret);
     return NULL;
 }
 
@@ -1840,7 +1913,7 @@ static char* _set_constant(PyArrayNeighborhoodIterObject* iter,
         storeflags = PyArray_FLAGS(ar->ao);
         PyArray_ENABLEFLAGS(ar->ao, NPY_ARRAY_BEHAVED);
         st = PyArray_DESCR(ar->ao)->f->setitem((PyObject*)fill, ret, ar->ao);
-        ((PyArrayObject_fieldaccess *)ar->ao)->flags = storeflags;
+        ((PyArrayObject_fields *)ar->ao)->flags = storeflags;
 
         if (st < 0) {
             PyDataMem_FREE(ret);
@@ -1977,7 +2050,7 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, npy_intp *bounds,
     int i;
     PyArrayNeighborhoodIterObject *ret;
 
-    ret = _pya_malloc(sizeof(*ret));
+    ret = PyArray_malloc(sizeof(*ret));
     if (ret == NULL) {
         return NULL;
     }

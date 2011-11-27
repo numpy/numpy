@@ -1,0 +1,24 @@
+Recurse:
+    core, fft, lib, linalg, random
+
+Library:
+    Packages:
+        build_utils,
+        compat,
+        core,
+        core.code_generators,
+        distutils,
+        distutils.command,
+        distutils.fcompiler,
+        doc,
+        f2py,
+        fft,
+        lib,
+        linalg,
+        ma,
+        matrixlib,
+        numarray,
+        oldnumeric,
+        polynomial,
+        random,
+        testing

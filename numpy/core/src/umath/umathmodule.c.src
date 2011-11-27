@@ -46,28 +46,38 @@
 static PyUFuncGenericFunction pyfunc_functions[] = {PyUFunc_On_Om};
 
 static int
-object_ufunc_type_resolution(PyUFuncObject *ufunc,
+object_ufunc_type_resolver(PyUFuncObject *ufunc,
                                 NPY_CASTING casting,
                                 PyArrayObject **operands,
                                 PyObject *type_tup,
-                                PyArray_Descr **out_dtypes,
-                                PyUFuncGenericFunction *out_innerloop,
-                                void **out_innerloopdata)
+                                PyArray_Descr **out_dtypes)
 {
     int i, nop = ufunc->nin + ufunc->nout;
+    PyArray_Descr *obj_dtype;
 
-    out_dtypes[0] = PyArray_DescrFromType(NPY_OBJECT);
-    if (out_dtypes[0] == NULL) {
+    obj_dtype = PyArray_DescrFromType(NPY_OBJECT);
+    if (obj_dtype == NULL) {
         return -1;
     }
 
-    for (i = 1; i < nop; ++i) {
-        out_dtypes[i] = out_dtypes[0];
-        Py_INCREF(out_dtypes[0]);
+    for (i = 0; i < nop; ++i) {
+        Py_INCREF(obj_dtype);
+        out_dtypes[i] = obj_dtype;
     }
 
+    return 0;
+}
+
+static int
+object_ufunc_loop_selector(PyUFuncObject *ufunc,
+                            PyArray_Descr **NPY_UNUSED(dtypes),
+                            PyUFuncGenericFunction *out_innerloop,
+                            void **out_innerloopdata,
+                            int *out_needs_api)
+{
     *out_innerloop = ufunc->functions[0];
     *out_innerloopdata = ufunc->data[0];
+    *out_needs_api = 1;
 
     return 0;
 }
@@ -114,7 +124,8 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     self->core_offsets = NULL;
     self->core_signature = NULL;
 
-    self->type_resolution_function = &object_ufunc_type_resolution;
+    self->type_resolver = &object_ufunc_type_resolver;
+    self->legacy_inner_loop_selector = &object_ufunc_loop_selector;
 
     pyname = PyObject_GetAttrString(function, "__name__");
     if (pyname) {

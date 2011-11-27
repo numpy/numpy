@@ -14,6 +14,8 @@
 #define NPY_ITERATOR_IMPLEMENTATION_CODE
 #include "nditer_impl.h"
 
+#include "arrayobject.h"
+
 /* Internal helper functions private to this file */
 static int
 npyiter_check_global_flags(npy_uint32 flags, npy_uint32* itflags);
@@ -33,14 +35,16 @@ npyiter_prepare_one_operand(PyArrayObject **op,
                         npy_uint32 flags,
                         npy_uint32 op_flags, char *op_itflags);
 static int
-npyiter_prepare_operands(int nop, PyArrayObject **op_in,
+npyiter_prepare_operands(int nop, int first_maskna_op,
+                    PyArrayObject **op_in,
                     PyArrayObject **op,
                     char **op_dataptr,
                     PyArray_Descr **op_request_dtypes,
                     PyArray_Descr **op_dtype,
                     npy_uint32 flags,
                     npy_uint32 *op_flags, char *op_itflags,
-                    npy_int8 *out_maskop);
+                    npy_int8 *out_maskop,
+                    npy_int8 *out_maskna_indices);
 static int
 npyiter_check_casting(int nop, PyArrayObject **op,
                     PyArray_Descr **op_dtype,
@@ -68,7 +72,7 @@ npyiter_reverse_axis_ordering(NpyIter *iter);
 static void
 npyiter_find_best_axis_ordering(NpyIter *iter);
 static PyArray_Descr *
-npyiter_get_common_dtype(int nop, PyArrayObject **op,
+npyiter_get_common_dtype(int first_maskna_op, PyArrayObject **op,
                         char *op_itflags, PyArray_Descr **op_dtype,
                         PyArray_Descr **op_request_dtypes,
                         int only_inputs, int output_scalars);
@@ -83,8 +87,10 @@ npyiter_allocate_arrays(NpyIter *iter,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
                         npy_uint32 *op_flags, char *op_itflags,
                         int **op_axes, int output_scalars);
+static int
+npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes);
 static void
-npyiter_get_priority_subtype(int nop, PyArrayObject **op,
+npyiter_get_priority_subtype(int first_maskna_op, PyArrayObject **op,
                             char *op_itflags,
                             double *subtype_priority, PyTypeObject **subtype);
 static int
@@ -105,7 +111,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 {
     npy_uint32 itflags = NPY_ITFLAG_IDENTPERM;
     int idim, ndim;
-    int iop;
+    int iop, maskna_nop, first_maskna_op;
 
     /* The iterator being constructed */
     NpyIter *iter;
@@ -179,6 +185,18 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 
     NPY_IT_TIME_POINT(c_calculate_ndim);
 
+    /* Calculate maskna_nop */
+    maskna_nop = 0;
+    for (iop = 0; iop < nop; ++iop) {
+        if (op_flags[iop]&NPY_ITER_USE_MASKNA) {
+            itflags |= NPY_ITFLAG_HAS_MASKNA_OP;
+            ++maskna_nop;
+        }
+    }
+    /* Adjust nop to include the masks at the end */
+    first_maskna_op = nop;
+    nop += maskna_nop;
+
     /* Allocate memory for the iterator */
     iter = (NpyIter*)
                 PyArray_malloc(NIT_SIZEOF_ITERATOR(itflags, ndim, nop));
@@ -189,6 +207,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     NIT_ITFLAGS(iter) = itflags;
     NIT_NDIM(iter) = ndim;
     NIT_NOP(iter) = nop;
+    NIT_FIRST_MASKNA_OP(iter) = first_maskna_op;
     NIT_MASKOP(iter) = -1;
     NIT_ITERINDEX(iter) = 0;
     memset(NIT_BASEOFFSETS(iter), 0, (nop+1)*NPY_SIZEOF_INTP);
@@ -199,10 +218,12 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     op_dataptr = NIT_RESETDATAPTR(iter);
 
     /* Prepare all the operands */
-    if (!npyiter_prepare_operands(nop, op_in, op, op_dataptr,
+    if (!npyiter_prepare_operands(nop, first_maskna_op, op_in, op, op_dataptr,
                         op_request_dtypes, op_dtype,
                         flags,
-                        op_flags, op_itflags, &NIT_MASKOP(iter))) {
+                        op_flags, op_itflags,
+                        &NIT_MASKOP(iter),
+                        NIT_MASKNA_INDICES(iter))) {
         PyArray_free(iter);
         return NULL;
     }
@@ -219,6 +240,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
         bufferdata = NIT_BUFFERDATA(iter);
         NBF_SIZE(bufferdata) = 0;
         memset(NBF_BUFFERS(bufferdata), 0, nop*NPY_SIZEOF_INTP);
+        memset(NBF_PTRS(bufferdata), 0, nop*NPY_SIZEOF_INTP);
         memset(NBF_READTRANSFERDATA(bufferdata), 0, nop*NPY_SIZEOF_INTP);
         memset(NBF_WRITETRANSFERDATA(bufferdata), 0, nop*NPY_SIZEOF_INTP);
     }
@@ -273,7 +295,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     NPY_IT_TIME_POINT(c_apply_forced_iteration_order);
 
     /* Set some flags for allocated outputs */
-    for (iop = 0; iop < nop; ++iop) {
+    for (iop = 0; iop < first_maskna_op; ++iop) {
         if (op[iop] == NULL) {
             /* Flag this so later we can avoid flipping axes */
             any_allocate = 1;
@@ -312,7 +334,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     NPY_IT_TIME_POINT(c_find_best_axis_ordering);
 
     if (need_subtype) {
-        npyiter_get_priority_subtype(nop, op, op_itflags,
+        npyiter_get_priority_subtype(first_maskna_op, op, op_itflags,
                                      &subtype_priority, &subtype);
     }
 
@@ -329,7 +351,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
         op = NIT_OPERANDS(iter);
         op_dtype = NIT_DTYPES(iter);
 
-        dtype = npyiter_get_common_dtype(nop, op,
+        dtype = npyiter_get_common_dtype(first_maskna_op, op,
                                     op_itflags, op_dtype,
                                     op_request_dtypes,
                                     only_inputs,
@@ -341,7 +363,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
         if (flags & NPY_ITER_COMMON_DTYPE) {
             NPY_IT_DBG_PRINT("Iterator: Replacing all data types\n");
             /* Replace all the data types */
-            for (iop = 0; iop < nop; ++iop) {
+            for (iop = 0; iop < first_maskna_op; ++iop) {
                 if (op_dtype[iop] != dtype) {
                     Py_XDECREF(op_dtype[iop]);
                     Py_INCREF(dtype);
@@ -352,7 +374,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
         else {
             NPY_IT_DBG_PRINT("Iterator: Setting unset output data types\n");
             /* Replace the NULL data types */
-            for (iop = 0; iop < nop; ++iop) {
+            for (iop = 0; iop < first_maskna_op; ++iop) {
                 if (op_dtype[iop] == NULL) {
                     Py_INCREF(dtype);
                     op_dtype[iop] = dtype;
@@ -369,7 +391,8 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      * to check that data type conversions are following the
      * casting rules.
      */
-    if (!npyiter_check_casting(nop, op, op_dtype, casting, op_itflags)) {
+    if (!npyiter_check_casting(first_maskna_op, op,
+                                op_dtype, casting, op_itflags)) {
         NpyIter_Deallocate(iter);
         return NULL;
     }
@@ -386,6 +409,58 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
                             op_itflags, op_axes, output_scalars)) {
         NpyIter_Deallocate(iter);
         return NULL;
+    }
+
+    /*
+     * If there were any NA masks added to the iteration, fill in
+     * the strides and other data they need. This is being done
+     * after all the 'allocate' arrays are finished.
+     */
+    if (maskna_nop > 0) {
+        npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
+
+        /* Copy op references to the maskna op's masks */
+        for (iop = first_maskna_op; iop < nop; ++iop) {
+            int iop_maskna = maskna_indices[iop];
+            op[iop] = op[iop_maskna];
+            Py_INCREF(op[iop]);
+            /* If the operand has a mask, use its dtype */
+            if (PyArray_HASMASKNA(op[iop])) {
+                op_dtype[iop] = PyArray_MASKNA_DTYPE(op[iop]);
+                Py_INCREF(op_dtype[iop]);
+            }
+            /* Otherwise a virtual all-ones operand will be used */
+            else {
+                if (PyArray_HASFIELDS(op[iop])) {
+                    PyErr_SetString(PyExc_ValueError,
+                            "struct-NA is not supported yet");
+                    NpyIter_Deallocate(iter);
+                    return NULL;
+                }
+                else {
+                    op_dtype[iop] = PyArray_DescrFromType(NPY_BOOL);
+                    if (op_dtype[iop] == NULL) {
+                        NpyIter_Deallocate(iter);
+                        return NULL;
+                    }
+                }
+            }
+            /* Propagate select flags from the main operand */
+            op_itflags[iop] = op_itflags[iop_maskna] &
+                                (NPY_OP_ITFLAG_WRITE |
+                                 NPY_OP_ITFLAG_READ |
+                                 NPY_OP_ITFLAG_BUFNEVER |
+                                 NPY_OP_ITFLAG_REDUCE |
+                                 NPY_OP_ITFLAG_WRITEMASKED);
+            /* The mask is always aligned (alignment 1) */
+            op_itflags[iop] |= NPY_OP_ITFLAG_ALIGNED;
+        }
+
+        /* Fill in the strides for the masks */
+        if (!npyiter_fill_maskna_axisdata(iter, op_axes)) {
+            NpyIter_Deallocate(iter);
+            return NULL;
+        }
     }
 
     NPY_IT_TIME_POINT(c_allocate_arrays);
@@ -431,7 +506,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      * reference arrays and flag it if so.
      */
     if (flags & NPY_ITER_REFS_OK) {
-        for (iop = 0; iop < nop; ++iop) {
+        for (iop = 0; iop < first_maskna_op; ++iop) {
             PyArray_Descr *rdt = op_dtype[iop];
             if ((rdt->flags & (NPY_ITEM_REFCOUNT |
                                      NPY_ITEM_IS_POINTER |
@@ -448,12 +523,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
             NpyIter_Deallocate(iter);
             return NULL;
         }
-        if (itflags & NPY_ITFLAG_DELAYBUF) {
-            bufferdata = NIT_BUFFERDATA(iter);
-            /* Make the data pointers NULL */
-            memset(NBF_PTRS(bufferdata), 0, nop*NPY_SIZEOF_INTP);
-        }
-        else {
+        if (!(itflags & NPY_ITFLAG_DELAYBUF)) {
             /* Allocate the buffers */
             if (!npyiter_allocate_buffers(iter, NULL)) {
                 NpyIter_Deallocate(iter);
@@ -915,6 +985,18 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
                 "be used together with ARRAYMASK");
             return 0;
         }
+        /*
+         * When WRITEMASKED and USE_MASKNA are supported together,
+         * it will probably require that buffering is enabled as well,
+         * because that will need yet another temporary mask buffer to combine
+         * the two masks before doing the masked copies.
+         */
+        if ((op_flags & NPY_ITER_USE_MASKNA) != 0) {
+            PyErr_SetString(PyExc_ValueError,
+                "The combination of iterator flags WRITEMASKED "
+                "and USE_MASKNA is not yet supported");
+            return 0;
+        }
         *op_itflags |= NPY_OP_ITFLAG_WRITEMASKED;
     }
 
@@ -933,8 +1015,8 @@ npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
 
 /*
  * Prepares a a constructor operand.  Assumes a reference to 'op'
- * is owned, and that 'op' may be replaced.  Fills in 'op_dtype'
- * and 'ndim'.
+ * is owned, and that 'op' may be replaced.  Fills in 'op_dataptr',
+ * 'op_dtype', and may modify 'op_itflags'.
  *
  * Returns 1 on success, 0 on failure.
  */
@@ -1011,17 +1093,41 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         return 0;
     }
 
+
     if (PyArray_Check(*op)) {
+        npy_uint32 tmp;
+
         if (((*op_itflags) & NPY_OP_ITFLAG_WRITE) &&
                     (!PyArray_CHKFLAGS(*op, NPY_ARRAY_WRITEABLE))) {
             PyErr_SetString(PyExc_ValueError,
-                    "Iterator operand was a non-writeable array, but was "
+                    "Operand was a non-writeable array, but "
                     "flagged as writeable");
             return 0;
         }
         if (!(flags & NPY_ITER_ZEROSIZE_OK) && PyArray_SIZE(*op) == 0) {
             PyErr_SetString(PyExc_ValueError,
                     "Iteration of zero-sized operands is not enabled");
+            return 0;
+        }
+        /*
+         * Writeable USE_MASKNA operands must have a mask
+         * (or NA dtype, later)
+         */
+        if ((op_flags & NPY_ITER_USE_MASKNA) != 0 &&
+                            ((*op_itflags) & NPY_OP_ITFLAG_WRITE) != 0 &&
+                            !PyArray_HASMASKNA(*op)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Operand is writeable and flagged USE_MASKNA, "
+                    "but the operand does not have an NA mask");
+            return 0;
+        }
+        /* Arrays with NA masks must have USE_MASKNA specified */
+        tmp = op_flags & (NPY_ITER_USE_MASKNA | NPY_ITER_IGNORE_MASKNA);
+        if (tmp != NPY_ITER_USE_MASKNA && tmp != NPY_ITER_IGNORE_MASKNA &&
+                                    PyArray_HASMASKNA(*op)) {
+            PyErr_SetString(PyExc_ValueError,
+                    "Operand has an NA mask but the operation does "
+                    "not support NA via the flag USE_MASKNA");
             return 0;
         }
         *op_dataptr = PyArray_BYTES(*op);
@@ -1115,20 +1221,26 @@ npyiter_prepare_one_operand(PyArrayObject **op,
  * can replace the arrays if copying is necessary.
  */
 static int
-npyiter_prepare_operands(int nop, PyArrayObject **op_in,
+npyiter_prepare_operands(int nop, int first_maskna_op, PyArrayObject **op_in,
                     PyArrayObject **op,
                     char **op_dataptr,
                     PyArray_Descr **op_request_dtypes,
                     PyArray_Descr **op_dtype,
                     npy_uint32 flags,
                     npy_uint32 *op_flags, char *op_itflags,
-                    npy_int8 *out_maskop)
+                    npy_int8 *out_maskop,
+                    npy_int8 *out_maskna_indices)
 {
-    int iop, i;
+    int iop, iop_maskna = first_maskna_op, i;
     npy_int8 maskop = -1;
     int any_writemasked_ops = 0;
 
-    for (iop = 0; iop < nop; ++iop) {
+    /*
+     * Here we just prepare the provided operands. The masks for
+     * the maskna operands get prepared later, after any 'allocate'
+     * operands are allocated.
+     */
+    for (iop = 0; iop < first_maskna_op; ++iop) {
         op[iop] = op_in[iop];
         Py_XINCREF(op[iop]);
         op_dtype[iop] = NULL;
@@ -1163,6 +1275,16 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
             any_writemasked_ops = 1;
         }
 
+        /* Link the operands to their maskna operands */
+        if (op_flags[iop] & NPY_ITER_USE_MASKNA) {
+            out_maskna_indices[iop] = iop_maskna;
+            out_maskna_indices[iop_maskna] = iop;
+            ++iop_maskna;
+        }
+        else {
+            out_maskna_indices[iop] = -1;
+        }
+
         /*
          * Prepare the operand.  This produces an op_dtype[iop] reference
          * on success.
@@ -1181,11 +1303,17 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
         }
     }
 
+    /* Initialize the mask virtual operands to NULL for now */
+    for (iop = first_maskna_op; iop < nop; ++iop) {
+        op[iop] = NULL;
+        op_dataptr[iop] = NULL;
+        op_dtype[iop] = NULL;
+    }
 
     /* If all the operands were NULL, it's an error */
     if (op[0] == NULL) {
         int all_null = 1;
-        for (iop = 1; iop < nop; ++iop) {
+        for (iop = 1; iop < first_maskna_op; ++iop) {
             if (op[iop] != NULL) {
                 all_null = 0;
                 break;
@@ -1197,7 +1325,7 @@ npyiter_prepare_operands(int nop, PyArrayObject **op_in,
                 Py_XDECREF(op_dtype[i]);
             }
             PyErr_SetString(PyExc_ValueError,
-                    "At least one iterator input must be non-NULL");
+                    "At least one iterator operand must be non-NULL");
             return 0;
         }
     }
@@ -1247,7 +1375,7 @@ npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
 
     /*
      * Negative dimension indicates "newaxis", which can
-     * be discarded for printing if its a leading dimension.
+     * be discarded for printing if it's a leading dimension.
      * Find the first non-"newaxis" dimension.
      */
     i = 0;
@@ -1289,14 +1417,14 @@ npyiter_shape_string(npy_intp n, npy_intp *vals, char *ending)
 }
 
 static int
-npyiter_check_casting(int nop, PyArrayObject **op,
+npyiter_check_casting(int first_maskna_op, PyArrayObject **op,
                     PyArray_Descr **op_dtype,
                     NPY_CASTING casting,
                     char *op_itflags)
 {
     int iop;
 
-    for(iop = 0; iop < nop; ++iop) {
+    for(iop = 0; iop < first_maskna_op; ++iop) {
         NPY_IT_DBG_PRINT1("Iterator: Checking casting for operand %d\n",
                             (int)iop);
 #if NPY_IT_DBG_TRACING
@@ -1439,6 +1567,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
     int maskop = NIT_MASKOP(iter);
 
     int ondim;
@@ -1462,7 +1591,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
             }
         }
     }
-    for (iop = 0; iop < nop; ++iop) {
+    for (iop = 0; iop < first_maskna_op; ++iop) {
         op_cur = op[iop];
         if (op_cur != NULL) {
             npy_intp *shape = PyArray_DIMS(op_cur);
@@ -1543,7 +1672,8 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
         NAD_INDEX(axisdata) = 0;
         memcpy(NAD_PTRS(axisdata), op_dataptr, NPY_SIZEOF_INTP*nop);
 
-        for (iop = 0; iop < nop; ++iop) {
+        /* Not processing the maskna masks until after allocation */
+        for (iop = 0; iop < first_maskna_op; ++iop) {
             op_cur = op[iop];
 
             if (op_axes == NULL || op_axes[iop] == NULL) {
@@ -1555,7 +1685,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
                     if (bshape == 1) {
                         strides[iop] = 0;
                         if (idim >= ondim && !output_scalars &&
-                                        (op_flags[iop] & NPY_ITER_NO_BROADCAST)) {
+                                    (op_flags[iop] & NPY_ITER_NO_BROADCAST)) {
                             goto operand_different_than_broadcast;
                         }
                     }
@@ -1696,7 +1826,7 @@ broadcast_error: {
             if (errmsg == NULL) {
                 return 0;
             }
-            for (iop = 0; iop < nop; ++iop) {
+            for (iop = 0; iop < first_maskna_op; ++iop) {
                 if (op[iop] != NULL) {
                     tmp = npyiter_shape_string(PyArray_NDIM(op[iop]),
                                                     PyArray_DIMS(op[iop]),
@@ -1739,7 +1869,7 @@ broadcast_error: {
             errmsg = PyUString_FromString("operands could not be broadcast "
                                           "together with remapped shapes "
                                           "[original->remapped]: ");
-            for (iop = 0; iop < nop; ++iop) {
+            for (iop = 0; iop < first_maskna_op; ++iop) {
                 if (op[iop] != NULL) {
                     int *axes = op_axes[iop];
 
@@ -2077,6 +2207,7 @@ npyiter_apply_forced_iteration_order(NpyIter *iter, NPY_ORDER order)
     /*npy_uint32 itflags = NIT_ITFLAGS(iter);*/
     int ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
     switch (order) {
     case NPY_CORDER:
@@ -2097,7 +2228,7 @@ npyiter_apply_forced_iteration_order(NpyIter *iter, NPY_ORDER order)
             int forder = 1;
 
             /* Check that all the array inputs are fortran order */
-            for (iop = 0; iop < nop; ++iop, ++op) {
+            for (iop = 0; iop < first_maskna_op; ++iop, ++op) {
                 if (*op && !PyArray_CHKFLAGS(*op, NPY_ARRAY_F_CONTIGUOUS)) {
                    forder = 0;
                    break;
@@ -2127,6 +2258,7 @@ npyiter_flip_negative_strides(NpyIter *iter)
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
     npy_intp istrides, nstrides = NAD_NSTRIDES();
     NpyIter_AxisData *axisdata, *axisdata0;
@@ -2141,10 +2273,9 @@ npyiter_flip_negative_strides(NpyIter *iter)
         int any_negative = 0;
 
         /*
-         * Check the signs of all the strides, excluding
-         * the index stride at the end.
+         * Check the signs of all the operand strides.
          */
-        for (iop = 0; iop < nop; ++iop) {
+        for (iop = 0; iop < first_maskna_op; ++iop) {
             if (strides[iop] < 0) {
                 any_negative = 1;
             }
@@ -2153,10 +2284,10 @@ npyiter_flip_negative_strides(NpyIter *iter)
             }
         }
         /*
-         * If at least on stride is negative and none are positive,
+         * If at least one stride is negative and none are positive,
          * flip all the strides for this dimension.
          */
-        if (any_negative && iop == nop) {
+        if (any_negative && iop == first_maskna_op) {
             npy_intp shapem1 = NAD_SHAPE(axisdata) - 1;
 
             for (istrides = 0; istrides < nstrides; ++istrides) {
@@ -2238,7 +2369,7 @@ npyiter_reverse_axis_ordering(NpyIter *iter)
     NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_IDENTPERM;
 }
 
-static npy_intp
+static NPY_INLINE npy_intp
 intp_abs(npy_intp x)
 {
     return (x < 0) ? -x : x;
@@ -2250,6 +2381,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
     npy_intp ax_i0, ax_i1, ax_ipos;
     npy_int8 ax_j0, ax_j1;
@@ -2281,7 +2413,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
 
             strides1 = NAD_STRIDES(NIT_INDEX_AXISDATA(axisdata, ax_j1));
 
-            for (iop = 0; iop < nop; ++iop) {
+            for (iop = 0; iop < first_maskna_op; ++iop) {
                 if (strides0[iop] != 0 && strides1[iop] != 0) {
                     if (intp_abs(strides1[iop]) <=
                                             intp_abs(strides0[iop])) {
@@ -2388,7 +2520,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
  * are not read from out of the calculation.
  */
 static PyArray_Descr *
-npyiter_get_common_dtype(int nop, PyArrayObject **op,
+npyiter_get_common_dtype(int first_maskna_op, PyArrayObject **op,
                         char *op_itflags, PyArray_Descr **op_dtype,
                         PyArray_Descr **op_request_dtypes,
                         int only_inputs, int output_scalars)
@@ -2401,7 +2533,7 @@ npyiter_get_common_dtype(int nop, PyArrayObject **op,
 
     NPY_IT_DBG_PRINT("Iterator: Getting a common data type from operands\n");
 
-    for (iop = 0; iop < nop; ++iop) {
+    for (iop = 0; iop < first_maskna_op; ++iop) {
         if (op_dtype[iop] != NULL &&
                     (!only_inputs || (op_itflags[iop] & NPY_OP_ITFLAG_READ))) {
             /* If no dtype was requested and the op is a scalar, pass the op */
@@ -2737,6 +2869,7 @@ npyiter_allocate_arrays(NpyIter *iter,
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
     int iop, nop = NIT_NOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
     int check_writemasked_reductions = 0;
 
@@ -2747,7 +2880,7 @@ npyiter_allocate_arrays(NpyIter *iter,
         bufferdata = NIT_BUFFERDATA(iter);
     }
 
-    for (iop = 0; iop < nop; ++iop) {
+    for (iop = 0; iop < first_maskna_op; ++iop) {
         /*
          * Check whether there are any WRITEMASKED REDUCE operands
          * which should be validated after all the strides are filled
@@ -2783,6 +2916,17 @@ npyiter_allocate_arrays(NpyIter *iter,
             op[iop] = out;
 
             /*
+             * Add an NA mask to the array if needed. When NA dtypes
+             * are supported, this should skip allocating the mask
+             * if the allocated array has an NA dtype.
+             */
+            if (op_flags[iop] & NPY_ITER_USE_MASKNA) {
+                if (PyArray_AllocateMaskNA(out, 1, 0, 1) < 0) {
+                    return 0;
+                }
+            }
+
+            /*
              * Now we need to replace the pointers and strides with values
              * from the new array.
              */
@@ -2810,6 +2954,15 @@ npyiter_allocate_arrays(NpyIter *iter,
                                         0, NULL, NULL, NULL, 0, NULL);
             if (temp == NULL) {
                 return 0;
+            }
+            /*
+             * Add an NA mask if needed, defaulting to all NAs because
+             * the data is uninitialized
+             */
+            if (PyArray_HASMASKNA(op[iop])) {
+                if (PyArray_AllocateMaskNA(temp, 1, 0, 0) < 0) {
+                    return 0;
+                }
             }
             if (PyArray_CopyInto(temp, op[iop]) != 0) {
                 Py_DECREF(temp);
@@ -2852,8 +3005,18 @@ npyiter_allocate_arrays(NpyIter *iter,
             if (temp == NULL) {
                 return 0;
             }
+            /* Add an NA mask if needed */
+            if (PyArray_HASMASKNA(op[iop])) {
+                if (PyArray_AllocateMaskNA(temp, 1, 0, 1) < 0) {
+                    return 0;
+                }
+            }
 
-            /* If the data will be read, copy it into temp */
+            /*
+             * If the data will be read, copy it into temp.
+             * TODO: It might be possible to do a view into
+             *       op[iop]'s mask instead here.
+             */
             if (op_itflags[iop] & NPY_OP_ITFLAG_READ) {
                 if (PyArray_CopyInto(temp, op[iop]) != 0) {
                     Py_DECREF(temp);
@@ -2867,7 +3030,7 @@ npyiter_allocate_arrays(NpyIter *iter,
                  * the chain of bases.
                  */
                 Py_INCREF(op[iop]);
-                ((PyArrayObject_fieldaccess *)temp)->base =
+                ((PyArrayObject_fields *)temp)->base =
                                                         (PyObject *)op[iop];
                 PyArray_ENABLEFLAGS(temp, NPY_ARRAY_UPDATEIFCOPY);
                 PyArray_CLEARFLAGS(op[iop], NPY_ARRAY_WRITEABLE);
@@ -2929,7 +3092,7 @@ npyiter_allocate_arrays(NpyIter *iter,
         }
 
         /*
-         * If no alignment, byte swap, or casting is needed, and
+         * If no alignment, byte swap, or casting is needed,
          * the inner stride of this operand works for the whole
          * array, we can set NPY_OP_ITFLAG_BUFNEVER.
          */
@@ -2987,7 +3150,7 @@ npyiter_allocate_arrays(NpyIter *iter,
     }
 
     if (check_writemasked_reductions) {
-        for (iop = 0; iop < nop; ++iop) {
+        for (iop = 0; iop < first_maskna_op; ++iop) {
             /*
              * Check whether there are any WRITEMASKED REDUCE operands
              * which should be validated now that all the strides are filled
@@ -3015,19 +3178,167 @@ npyiter_allocate_arrays(NpyIter *iter,
 }
 
 /*
+ * Prepares the maskna virtual operands for the constructor
+ * operands, and fills in the axisdata. Fills in 'op_maskna_dataptr',
+ * 'op_maskna_dtype', and may modify 'op_maskna_itflags'.
+ *
+ * This needs to be called after any 'allocate' operands have
+ * been allocated. There is no validation of the shape/strides done,
+ * because the shape of a mask exactly matches the shape of the
+ * operand to which it attached.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+static int
+npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
+{
+    npy_uint32 itflags = NIT_ITFLAGS(iter);
+    int idim, ndim = NIT_NDIM(iter);
+    int iop, iop_maskna, nop = NIT_NOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
+    npy_int8 *perm;
+
+    char *op_itflags = NIT_OPITFLAGS(iter);
+    npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
+    NpyIter_AxisData *axisdata;
+    npy_intp sizeof_axisdata;
+    PyArrayObject **op = NIT_OPERANDS(iter), *op_cur;
+    char **op_dataptr = NIT_RESETDATAPTR(iter);
+    NpyIter_BufferData *bufferdata = NULL;
+
+    axisdata = NIT_AXISDATA(iter);
+    sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
+    perm = NIT_PERM(iter);
+
+    if (itflags & NPY_ITFLAG_BUFFER) {
+        bufferdata = NIT_BUFFERDATA(iter);
+    }
+
+    /* Fill in the reset dataptr array with the mask pointers */
+    for (iop = first_maskna_op; iop < nop; ++iop) {
+        /* If there's a mask, process that */
+        if (PyArray_HASMASKNA(op[iop])) {
+            op_dataptr[iop] = PyArray_MASKNA_DATA(op[iop]);
+        }
+        /*
+         * Otherwise we create a virtual operand a single one value
+         * broadcast everywhere
+         */
+        else {
+            static char ones_virtual_mask_data = 1;
+
+            op_itflags[iop] |= (NPY_OP_ITFLAG_VIRTUAL |
+                                NPY_OP_ITFLAG_BUFNEVER);
+            op_dataptr[iop] = &ones_virtual_mask_data;
+            if (itflags & NPY_ITFLAG_BUFFER) {
+                NBF_PTRS(bufferdata)[iop] = op_dataptr[iop];
+            }
+        }
+    }
+
+    /* Process the maskna operands, filling in the axisdata */
+    for (idim = 0; idim < ndim; ++idim) {
+        npy_intp *strides = NAD_STRIDES(axisdata);
+        npy_int8 p;
+        int idim_permuted;
+
+        p = perm[idim];
+        if (p < 0) {
+            idim_permuted = -1-p;
+        }
+        else {
+            idim_permuted = p;
+        }
+        for (iop = first_maskna_op; iop < nop; ++iop) {
+            /*
+             * iop_maskna is the index of the USE_MASKNA input,
+             * iop is the index of the corresponding mask.
+             */
+            iop_maskna = maskna_indices[iop];
+            op_cur = op[iop_maskna];
+
+            /*
+             * The strides of the mask will be zero exactly
+             * where they're zero for the main data, or will
+             * be zero always if the operand has no NA support and
+             * a virtual mask of all ones is being used.
+             */
+            if (strides[iop_maskna] == 0 || !PyArray_HASMASKNA(op_cur)) {
+                strides[iop] = 0;
+            }
+            else {
+                int i;
+
+                if (op_axes == NULL || op_axes[iop_maskna] == NULL) {
+                    i = PyArray_NDIM(op_cur) - idim_permuted - 1;
+                }
+                else {
+                    i = op_axes[iop_maskna][ndim-idim_permuted-1];
+                }
+
+                strides[iop] = PyArray_MASKNA_STRIDES(op_cur)[i];
+                /* Reverse the axis if necessary */
+                if (p < 0) {
+                    op_dataptr[iop] += (NAD_SHAPE(axisdata)-1) * strides[iop];
+                    strides[iop] = -strides[iop];
+                }
+            }
+        }
+
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
+    }
+
+    /* Initialize the mask data pointers */
+    axisdata = NIT_AXISDATA(iter);
+    for (idim = 0; idim < ndim; ++idim) {
+        memcpy(NAD_PTRS(axisdata) + first_maskna_op,
+                op_dataptr + first_maskna_op,
+                NPY_SIZEOF_INTP*(nop - first_maskna_op));
+
+        NIT_ADVANCE_AXISDATA(axisdata, 1);
+    }
+
+    /* Initialize the strides of any BUFNEVER mask operands */
+    if (itflags & NPY_ITFLAG_BUFFER) {
+        npy_intp *strides = NBF_STRIDES(bufferdata);
+
+        for (iop = first_maskna_op; iop < nop; ++iop) {
+            if (op_itflags[iop] & NPY_OP_ITFLAG_BUFNEVER) {
+                if (PyArray_HASMASKNA(op[iop])) {
+                    axisdata = NIT_AXISDATA(iter);
+                    /* Find stride of the first non-empty shape */
+                    for (idim = 0; idim < ndim; ++idim) {
+                        if (NAD_SHAPE(axisdata) != 1) {
+                            strides[iop] = NAD_STRIDES(axisdata)[iop];
+                            break;
+                        }
+                        NIT_ADVANCE_AXISDATA(axisdata, 1);
+                    }
+                }
+                else {
+                    strides[iop] = 0;
+                }
+            }
+        }
+    }
+
+    return 1;
+}
+
+/*
  * The __array_priority__ attribute of the inputs determines
  * the subtype of any output arrays.  This function finds the
  * subtype of the input array with highest priority.
  */
 static void
-npyiter_get_priority_subtype(int nop, PyArrayObject **op,
+npyiter_get_priority_subtype(int first_maskna_op, PyArrayObject **op,
                             char *op_itflags,
                             double *subtype_priority,
                             PyTypeObject **subtype)
 {
     int iop;
 
-    for (iop = 0; iop < nop; ++iop) {
+    for (iop = 0; iop < first_maskna_op; ++iop) {
         if (op[iop] != NULL && op_itflags[iop] & NPY_OP_ITFLAG_READ) {
             double priority = PyArray_GetPriority((PyObject *)op[iop], 0.0);
             if (priority > *subtype_priority) {
@@ -3044,6 +3355,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     /*int ndim = NIT_NDIM(iter);*/
     int iop = 0, nop = NIT_NOP(iter);
+    int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
     npy_intp i;
     char *op_itflags = NIT_OPITFLAGS(iter);
@@ -3052,12 +3364,13 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     PyArrayObject **op = NIT_OPERANDS(iter);
     PyArray_Descr **op_dtype = NIT_DTYPES(iter);
     npy_intp *strides = NAD_STRIDES(axisdata), op_stride;
-    PyArray_StridedTransferFn **readtransferfn = NBF_READTRANSFERFN(bufferdata),
+    PyArray_StridedUnaryOp **readtransferfn = NBF_READTRANSFERFN(bufferdata),
                         **writetransferfn = NBF_WRITETRANSFERFN(bufferdata);
     NpyAuxData **readtransferdata = NBF_READTRANSFERDATA(bufferdata),
                **writetransferdata = NBF_WRITETRANSFERDATA(bufferdata);
+    npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
 
-    PyArray_StridedTransferFn *stransfer = NULL;
+    PyArray_StridedUnaryOp *stransfer = NULL;
     NpyAuxData *transferdata = NULL;
     int needs_api = 0;
 
@@ -3075,13 +3388,18 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
          * allocate the appropriate transfer functions
          */
         if (!(flags & NPY_OP_ITFLAG_BUFNEVER)) {
+            PyArray_Descr *op_orig_dtype;
+
+            /* Get either the array's or the array namask's dtype */
+            op_orig_dtype = (iop < first_maskna_op) ? PyArray_DESCR(op[iop])
+                                           : PyArray_MASKNA_DTYPE(op[iop]);
             if (flags & NPY_OP_ITFLAG_READ) {
                 int move_references = 0;
                 if (PyArray_GetDTypeTransferFunction(
                                         (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
                                         op_stride,
                                         op_dtype[iop]->elsize,
-                                        PyArray_DESCR(op[iop]),
+                                        op_orig_dtype,
                                         op_dtype[iop],
                                         move_references,
                                         &stransfer,
@@ -3099,9 +3417,39 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                 int move_references = 1;
 
                 /*
-                 * If the operand is WRITEMASKED, use a masked transfer fn.
+                 * If the operand has USE_MASKNA, use a masked transfer fn.
+                 * The masks for the maskna operands can be copied straight
+                 * unless the operand is also WRITEMASKED.
                  */
-                if (flags & NPY_OP_ITFLAG_WRITEMASKED) {
+                if (iop < first_maskna_op && maskna_indices[iop] >= 0) {
+                    /* TODO: support USE_MASKNA + WRITEMASKED together */
+                    PyArray_Descr *mask_dtype =
+                                    PyArray_MASKNA_DTYPE(op[iop]);
+                    int iop_maskna = maskna_indices[iop];
+
+                    /*
+                     * If the mask's stride is contiguous, use it, otherwise
+                     * the mask may or may not be buffered, so the stride
+                     * could be inconsistent.
+                     */
+                    if (PyArray_GetMaskedDTypeTransferFunction(
+                                (flags & NPY_OP_ITFLAG_ALIGNED) != 0,
+                                op_dtype[iop]->elsize,
+                                op_stride,
+                            (flags & NPY_OP_ITFLAG_REDUCE) ? NPY_MAX_INTP :
+                                                   strides[iop_maskna],
+                                op_dtype[iop],
+                                op_orig_dtype,
+                                mask_dtype,
+                                move_references,
+                                (PyArray_MaskedStridedUnaryOp **)&stransfer,
+                                &transferdata,
+                                &needs_api) != NPY_SUCCEED) {
+                        goto fail;
+                    }
+                }
+                /* If the operand is WRITEMASKED, use a masked transfer fn */
+                else if (flags & NPY_OP_ITFLAG_WRITEMASKED) {
                     int maskop = NIT_MASKOP(iter);
                     PyArray_Descr *mask_dtype = PyArray_DESCR(op[maskop]);
 
@@ -3118,10 +3466,10 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                                 mask_dtype->elsize :
                                                 NPY_MAX_INTP,
                                 op_dtype[iop],
-                                PyArray_DESCR(op[iop]),
+                                op_orig_dtype,
                                 mask_dtype,
                                 move_references,
-                                (PyArray_MaskedStridedTransferFn **)&stransfer,
+                                (PyArray_MaskedStridedUnaryOp **)&stransfer,
                                 &transferdata,
                                 &needs_api) != NPY_SUCCEED) {
                         goto fail;
@@ -3133,7 +3481,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
                                         op_dtype[iop]->elsize,
                                         op_stride,
                                         op_dtype[iop],
-                                        PyArray_DESCR(op[iop]),
+                                        op_orig_dtype,
                                         move_references,
                                         &stransfer,
                                         &transferdata,

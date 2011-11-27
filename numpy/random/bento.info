@@ -1,0 +1,9 @@
+HookFile: bscript
+
+Library:
+    Extension: mtrand
+        Sources:
+             mtrand/mtrand.c,
+             mtrand/randomkit.c,
+             mtrand/initarray.c,
+             mtrand/distributions.c

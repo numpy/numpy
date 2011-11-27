@@ -35,6 +35,7 @@ indentation.
    routines.set
    routines.window
    routines.err
+   routines.maskna
    routines.ma
    routines.help
    routines.other

@@ -452,7 +452,7 @@ class TestTrapz(TestCase):
     def test_simple(self):
         r = trapz(exp(-1.0 / 2 * (arange(-10, 10, .1)) ** 2) / sqrt(2 * pi), dx=0.1)
         #check integral of normal equals 1
-        assert_almost_equal(sum(r, axis=0), 1, 7)
+        assert_almost_equal(r, 1, 7)
 
     def test_ndim(self):
         x = linspace(0, 1, 3)
@@ -1183,6 +1183,18 @@ def test_median():
     assert_allclose(np.median(a2), 2.5)
     assert_allclose(np.median(a2, axis=0), [1.5,  2.5,  3.5])
     assert_allclose(np.median(a2, axis=1), [1, 4])
+
+
+class TestAdd_newdoc_ufunc(TestCase):
+
+    def test_ufunc_arg(self):
+        assert_raises(TypeError, add_newdoc_ufunc, 2, "blah")
+        assert_raises(ValueError, add_newdoc_ufunc,np.add, "blah")
+
+    def test_string_arg(self):
+        assert_raises(TypeError, add_newdoc_ufunc,np.add, 3)
+
+
 
 
 if __name__ == "__main__":

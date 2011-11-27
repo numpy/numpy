@@ -6,7 +6,7 @@ __all__ = ['select', 'piecewise', 'trim_zeros', 'copy', 'iterable',
         'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
         'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
         'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-        'meshgrid', 'delete', 'insert', 'append', 'interp']
+        'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc']
 
 import warnings
 import types
@@ -27,6 +27,7 @@ from _compiled_base import _insert, add_docstring
 from _compiled_base import digitize, bincount, interp as compiled_interp
 from arraysetops import setdiff1d
 from utils import deprecate
+from _compiled_base import add_newdoc_ufunc
 import numpy as np
 
 
@@ -585,8 +586,7 @@ def asarray_chkfinite(a, dtype=None, order=None):
 
     """
     a = asarray(a, dtype=dtype, order=order)
-    if (a.dtype.char in typecodes['AllFloat']) \
-           and (_nx.isnan(a).any() or _nx.isinf(a).any()):
+    if a.dtype.char in typecodes['AllFloat'] and not np.isfinite(a).all():
         raise ValueError(
                 "array must not contain infs or NaNs")
     return a
@@ -779,7 +779,7 @@ def select(condlist, choicelist, default=0):
             S = S*ones(asarray(pfac).shape, S.dtype)
     return choose(S, tuple(choicelist))
 
-def copy(a):
+def copy(a, order='C', maskna=None):
     """
     Return an array copy of the given object.
 
@@ -787,6 +787,15 @@ def copy(a):
     ----------
     a : array_like
         Input data.
+    order : {'C', 'F', 'A', 'K'}, optional
+        Controls the memory layout of the copy. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' means match the layout of `a` as closely
+        as possible.
+    maskna : bool, optional
+        If specifies, forces the copy to have or to not have an
+        NA mask. This is a way to remove an NA mask from an array
+        while making a copy.
 
     Returns
     -------
@@ -816,7 +825,7 @@ def copy(a):
     False
 
     """
-    return array(a, copy=True)
+    return array(a, order=order, copy=True, maskna=maskna)
 
 # Basic operations
 
@@ -3171,6 +3180,11 @@ def add_newdoc(place, obj, doc):
        (method2, docstring2), ...]
 
     This routine never raises an error.
+
+    This routine cannot modify read-only docstrings, as appear
+    in new-style classes or built-in functions. Because this
+    routine never raises an error the caller must check manually
+    that the docstrings were changed.
        """
     try:
         new = {}
@@ -3318,6 +3332,7 @@ def delete(arr, obj, axis=None):
                     "invalid entry")
         newshape[axis]-=1;
         new = empty(newshape, arr.dtype, arr.flags.fnc)
+        new.flags.maskna = arr.flags.maskna
         slobj[axis] = slice(None, obj)
         new[slobj] = arr[slobj]
         slobj[axis] = slice(obj,None)
@@ -3334,6 +3349,7 @@ def delete(arr, obj, axis=None):
                 return arr.copy()
         newshape[axis] -= numtodel
         new = empty(newshape, arr.dtype, arr.flags.fnc)
+        new.flags.maskna = arr.flags.maskna
         # copy initial chunk
         if start == 0:
             pass
@@ -3465,6 +3481,7 @@ def insert(arr, obj, values, axis=None):
                     "in dimension %d" % (obj, N, axis))
         newshape[axis] += 1;
         new = empty(newshape, arr.dtype, arr.flags.fnc)
+        new.flags.maskna = arr.flags.maskna
         slobj[axis] = slice(None, obj)
         new[slobj] = arr[slobj]
         slobj[axis] = obj
@@ -3491,6 +3508,7 @@ def insert(arr, obj, values, axis=None):
     index2 = setdiff1d(arange(numnew+N),index1)
     newshape[axis] += numnew
     new = empty(newshape, arr.dtype, arr.flags.fnc)
+    new.flags.maskna = arr.flags.maskna
     slobj2 = [slice(None)]*ndim
     slobj[axis] = index1
     slobj2[axis] = index2

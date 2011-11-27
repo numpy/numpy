@@ -1,18 +1,31 @@
 #ifndef _NPY_ARRAY_SHAPE_H_
 #define _NPY_ARRAY_SHAPE_H_
 
-typedef struct {
-    npy_intp perm, stride;
-} _npy_stride_sort_item;
+/*
+ * Builds a string representation of the shape given in 'vals'.
+ * A negative value in 'vals' gets interpreted as newaxis.
+ */
+NPY_NO_EXPORT PyObject *
+build_shape_string(npy_intp n, npy_intp *vals);
 
 /*
- * This function populates the first PyArray_NDIM(arr) elements
- * of strideperm with sorted descending by their absolute values.
- * For example, the stride array (4, -2, 12) becomes
- * [(2, 12), (0, 4), (1, -2)].
+ * Creates a sorted stride perm matching the KEEPORDER behavior
+ * of the NpyIter object. Because this operates based on multiple
+ * input strides, the 'stride' member of the npy_stride_sort_item
+ * would be useless and we simply argsort a list of indices instead.
+ *
+ * The caller should have already validated that 'ndim' matches for
+ * every array in the arrays list.
  */
 NPY_NO_EXPORT void
-PyArray_CreateSortedStridePerm(PyArrayObject *arr,
-                           _npy_stride_sort_item *strideperm);
+PyArray_CreateMultiSortedStridePerm(int narrays, PyArrayObject **arrays,
+                        int ndim, int *out_strideperm);
+
+/*
+ * Just like PyArray_Squeeze, but allows the caller to select
+ * a subset of the size-one dimensions to squeeze out.
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_SqueezeSelected(PyArrayObject *self, npy_bool *axis_flags);
 
 #endif
