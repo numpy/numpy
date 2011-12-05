@@ -1737,7 +1737,7 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                     /* It works */
                     case 1:
                         set_ufunc_loop_data_types(self, op, out_dtype, types);
-                        return 0;
+                        return 1;
                     /* Didn't match */
                     case 0:
                         PyErr_Format(PyExc_TypeError,
