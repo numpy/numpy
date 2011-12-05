@@ -345,7 +345,7 @@ NpyCapsule_GetDesc(PyObject *obj)
 static NPY_INLINE int
 NpyCapsule_Check(PyObject *ptr)
 {
-    return ptr && PyCapsule_CheckExact(ptr);
+    return PyCapsule_CheckExact(ptr);
 }
 
 static NPY_INLINE void
@@ -384,7 +384,7 @@ NpyCapsule_GetDesc(PyObject *obj)
 static NPY_INLINE int
 NpyCapsule_Check(PyObject *ptr)
 {
-    return ptr && PyCObject_Check(ptr);
+    return PyCObject_Check(ptr);
 }
 
 static NPY_INLINE void
