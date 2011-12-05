@@ -475,7 +475,7 @@ initialize_reduce_result_noidentity_skipna(
         }
     }
 
-    if (needs_api && PyErr_Occurred()) {
+    if (PyErr_Occurred()) {
         goto fail;
     }
 

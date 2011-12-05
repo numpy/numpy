@@ -89,7 +89,7 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
 
     NPY_AUXDATA_FREE(transferdata);
 
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+    return PyErr_Occurred() ? -1 : 0;
 }
 
 /*
@@ -164,7 +164,7 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
 
     NPY_AUXDATA_FREE(transferdata);
 
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+    return PyErr_Occurred() ? -1 : 0;
 }
 
 /*
@@ -301,7 +301,7 @@ raw_array_wheremasked_assign_scalar_preservena(int ndim, npy_intp *shape,
     NPY_AUXDATA_FREE(transferdata);
     NPY_AUXDATA_FREE(maskand_transferdata);
 
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+    return PyErr_Occurred() ? -1 : 0;
 }
 
 

@@ -1947,7 +1947,7 @@ reduce_count_nonzero_loop(NpyIter *iter,
         NPY_END_THREADS;
     }
 
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+    return PyErr_Occurred() ? -1 : 0;
 }
 
 static int
@@ -1995,7 +1995,7 @@ reduce_count_nonzero_masked_loop(NpyIter *iter,
         NPY_END_THREADS;
     }
 
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+    return PyErr_Occurred() ? -1 : 0;
 }
 
 
