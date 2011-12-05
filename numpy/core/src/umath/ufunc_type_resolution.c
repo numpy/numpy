@@ -1656,7 +1656,7 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
                     /* Found a match */
                     case 1:
                         set_ufunc_loop_data_types(self, op, out_dtype, types);
-                        return 0;
+                        return 1;
                 }
 
                 funcdata = funcdata->next;
