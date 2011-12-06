@@ -945,12 +945,16 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     char *op;
     npy_intp dimensions[NPY_MAXDIMS];
     PyArray_DotFunc *dot;
-    PyArray_Descr *typec;
+    PyArray_Descr *typec = NULL;
     NPY_BEGIN_THREADS_DEF;
 
     typenum = PyArray_ObjectType(op1, 0);
     typenum = PyArray_ObjectType(op2, typenum);
     typec = PyArray_DescrFromType(typenum);
+    if (typec == NULL) {
+        PyErr_SetString(PyExc_ValueError, "Cannot find a common data type.");
+        return NULL;
+    }
 
     Py_INCREF(typec);
     ap1 = (PyArrayObject *)PyArray_FromAny(op1, typec, 0, 0,
