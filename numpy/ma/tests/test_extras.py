@@ -632,11 +632,13 @@ class TestPolynomial(TestCase):
             assert_almost_equal(a, a_)
         #
         w =  np.random.rand(10) + 1
+        wo = w.copy()
         xs = x[1:-1]
         ys = y[1:-1]
         ws = w[1:-1]
         (C, R, K, S, D) = polyfit(x, y, 3, full=True, w=w)
         (c, r, k, s, d) = np.polyfit(xs, ys, 3, full=True, w=ws)
+        assert_equal(w, wo)
         for (a, a_) in zip((C, R, K, S, D), (c, r, k, s, d)):
             assert_almost_equal(a, a_)
 
