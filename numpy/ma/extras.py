@@ -1852,22 +1852,27 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     x = asarray(x)
     y = asarray(y)
 
-    mx = getmask(x)
+    m = getmask(x)
     if y.ndim == 1:
-        m = mask_or(mx, getmask(y))
+        m = mask_or(m, getmask(y))
     elif y.ndim == 2:
-        y = mask_rows(y)
-        my = getmask(y)
+        my = getmask(mask_rows(y))
         if my is not nomask:
-            m = mask_or(mx, my[:, 0])
-        else:
-            m = mx
+            m = mask_or(m, my[:, 0])
     else:
         raise TypeError("Expected a 1D or 2D array for y!")
 
+    if w is not None:
+        w = asarray(w)
+        if w.ndim != 1:
+            raise TypeError, "expected a 1-d array for weights"
+        if w.shape[0] != y.shape[0] :
+            raise TypeError, "expected w and y to have the same length"
+        m = mask_or(m, getmask(w))
+
     if m is not nomask:
         if w is not None:
-            w *= ~m
+            w = ~m*w
         else:
             w = ~m
 
