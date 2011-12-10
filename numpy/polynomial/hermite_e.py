@@ -1,47 +1,51 @@
 """
-Objects for dealing with Hermite series.
+Objects for dealing with Hermite_e series.
 
 This module provides a number of objects (mostly functions) useful for
-dealing with Hermite series, including a `Hermite` class that
+dealing with Hermite_e series, including a `HermiteE` class that
 encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Constants
 ---------
-- `hermedomain` -- Hermite series default domain, [-1,1].
-- `hermezero` -- Hermite series that evaluates identically to 0.
-- `hermeone` -- Hermite series that evaluates identically to 1.
-- `hermex` -- Hermite series for the identity map, ``f(x) = x``.
+- `hermedomain` -- Hermite_e series default domain, [-1,1].
+- `hermezero` -- Hermite_e series that evaluates identically to 0.
+- `hermeone` -- Hermite_e series that evaluates identically to 1.
+- `hermex` -- Hermite_e series for the identity map, ``f(x) = x``.
 
 Arithmetic
 ----------
-- `hermemulx` -- multiply a Hermite series in ``P_i(x)`` by ``x``.
-- `hermeadd` -- add two Hermite series.
-- `hermesub` -- subtract one Hermite series from another.
-- `hermemul` -- multiply two Hermite series.
-- `hermediv` -- divide one Hermite series by another.
-- `hermeval` -- evaluate a Hermite series at given points.
+- `hermemulx` -- multiply a Hermite_e series in ``P_i(x)`` by ``x``.
+- `hermeadd` -- add two Hermite_e series.
+- `hermesub` -- subtract one Hermite_e series from another.
+- `hermemul` -- multiply two Hermite_e series.
+- `hermediv` -- divide one Hermite_e series by another.
+- `hermeval` -- evaluate a Hermite_e series at given points.
+- `hermeval2d` -- evaluate a 2D Hermite_e series at given points.
+- `hermeval3d` -- evaluate a 3D Hermite_e series at given points.
+- `hermegrid2d` -- evaluate a 2D Hermite_e series on a Cartesian product.
+- `hermegrid3d` -- evaluate a 3D Hermite_e series on a Cartesian product.
 
 Calculus
 --------
-- `hermeder` -- differentiate a Hermite series.
-- `hermeint` -- integrate a Hermite series.
+- `hermeder` -- differentiate a Hermite_e series.
+- `hermeint` -- integrate a Hermite_e series.
 
 Misc Functions
 --------------
-- `hermefromroots` -- create a Hermite series with specified roots.
-- `hermeroots` -- find the roots of a Hermite series.
-- `hermevander` -- Vandermonde-like matrix for Hermite polynomials.
-- `hermefit` -- least-squares fit returning a Hermite series.
-- `hermetrim` -- trim leading coefficients from a Hermite series.
-- `hermeline` -- Hermite series of given straight line.
-- `herme2poly` -- convert a Hermite series to a polynomial.
-- `poly2herme` -- convert a polynomial to a Hermite series.
+- `hermefromroots` -- create a Hermite_e series with specified roots.
+- `hermeroots` -- find the roots of a Hermite_e series.
+- `hermevander` -- Vandermonde-like matrix for Hermite_e polynomials.
+- `hermefit` -- least-squares fit returning a Hermite_e series.
+- `hermetrim` -- trim leading coefficients from a Hermite_e series.
+- `hermeline` -- Hermite_e series of given straight line.
+- `herme2poly` -- convert a Hermite_e series to a polynomial.
+- `poly2herme` -- convert a polynomial to a Hermite_e series.
 
 Classes
 -------
-- `Hermite` -- A Hermite series class.
+- `HermiteE` -- A Hermite_e series class.
 
 See also
 --------
@@ -57,9 +61,10 @@ import warnings
 from polytemplate import polytemplate
 
 __all__ = ['hermezero', 'hermeone', 'hermex', 'hermedomain', 'hermeline',
-        'hermeadd', 'hermesub', 'hermemulx', 'hermemul', 'hermediv', 'hermeval',
-        'hermeder', 'hermeint', 'herme2poly', 'poly2herme', 'hermefromroots',
-        'hermevander', 'hermefit', 'hermetrim', 'hermeroots', 'HermiteE']
+    'hermeadd', 'hermesub', 'hermemulx', 'hermemul', 'hermediv', 'hermpow',
+    'legval', 'legval2d', 'legval3d', 'leggrid2d', 'leggrid3d',
+    'hermeder', 'hermeint', 'herme2poly', 'poly2herme', 'hermefromroots',
+    'hermevander', 'hermefit', 'hermetrim', 'hermeroots', 'HermiteE']
 
 hermetrim = pu.trimcoef
 
@@ -750,7 +755,7 @@ def hermeint(cs, m=1, k=[], lbnd=0, scl=1):
     >>> from numpy.polynomial.hermite_e import hermeint
     >>> hermeint([1, 2, 3]) # integrate once, value 0 at 0.
     array([ 1.,  1.,  1.,  1.])
-    >>> hermeint([1, 2, 3], m=2) # integrate twice, value & deriv 0 at 0 
+    >>> hermeint([1, 2, 3], m=2) # integrate twice, value & deriv 0 at 0
     array([-0.25      ,  1.        ,  0.5       ,  0.33333333,  0.25      ])
     >>> hermeint([1, 2, 3], k=1) # integrate once, value 1 at 0.
     array([ 2.,  1.,  1.,  1.])
@@ -793,36 +798,58 @@ def hermeint(cs, m=1, k=[], lbnd=0, scl=1):
     return cs
 
 
-def hermeval(x, cs):
-    """Evaluate a Hermite series.
+def hermeval(x, c, tensor=True):
+    """ Evaluate a Hermite_e series.
 
-    If `cs` is of length `n`, this function returns :
+    If `c` is of length ``n + 1``, this function returns the value:
 
-    ``p(x) = cs[0]*P_0(x) + cs[1]*P_1(x) + ... + cs[n-1]*P_{n-1}(x)``
+    ``p(x) = c[0]*He_0(x) + c[1]*He_1(x) + ... + c[n]*He_n(x)``
 
-    If x is a sequence or array then p(x) will have the same shape as x.
-    If r is a ring_like object that supports multiplication and addition
-    by the values in `cs`, then an object of the same type is returned.
+    If `x` is a sequence or array and `c` is 1 dimensional, then ``p(x)``
+    will have the same shape as `x`.  If `x` is a algebra_like object that
+    supports multiplication and addition with itself and the values in `c`,
+    then an object of the same type is returned.
+
+    In the case where c is multidimensional, the shape of the result
+    depends on the value of `tensor`. If tensor is true the shape of the
+    return will be ``c.shape[1:] + x.shape``, where the shape of a scalar
+    is the empty tuple. If tensor is false the shape is ``c.shape[1:]`` if
+    `x` is broadcast compatible with that.
+
+    If there are trailing zeros in the coefficients they still take part in
+    the evaluation, so they should be avoided if efficiency is a concern.
 
     Parameters
     ----------
-    x : array_like, ring_like
-        Array of numbers or objects that support multiplication and
-        addition with themselves and with the elements of `cs`.
-    cs : array_like
-        1-d array of Hermite coefficients ordered from low to high.
+    x : array_like, algebra_like
+        If x is a list or tuple, it is converted to an ndarray. Otherwise
+        it is left unchanged and if it isn't an ndarray it is treated as a
+        scalar. In either case, `x` or any element of an ndarray must
+        support addition and multiplication with itself and the elements of
+        `c`.
+    c : array_like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree n are contained in ``c[n]``. If `c` is multidimesional the
+        remaining indices enumerate multiple Hermite_e series. In the two
+        dimensional case the coefficients may be thought of as stored in
+        the columns of `c`.
+    tensor : boolean, optional
+        If true, the coefficient array shape is extended with ones on the
+        right, one for each dimension of `x`. Scalars are treated as having
+        dimension 0 for this action. The effect is that every column of
+        coefficients in `c` is evaluated for every value in `x`. If False,
+        the `x` are broadcast over the columns of `c` in the usual way.
+        This gives some flexibility in evaluations in the multidimensional
+        case. The default value it ``True``.
 
     Returns
     -------
-    values : ndarray, ring_like
-        If the return is an ndarray then it has the same shape as `x`.
+    values : ndarray, algebra_like
+        The shape of the return value is described above.
 
     See Also
     --------
-    hermefit
-
-    Examples
-    --------
+    hermeval2d, hermegrid2d, hermeval3d, hermegrid3d
 
     Notes
     -----
@@ -839,27 +866,185 @@ def hermeval(x, cs):
            [ 31.,  54.]])
 
     """
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
-    if isinstance(x, tuple) or isinstance(x, list) :
+    c = np.array(c, ndmin=1, copy=0)
+    if c.dtype.char not in 'efdgFDGO':
+        c = c + 0.0
+    if isinstance(x, (tuple, list)):
         x = np.asarray(x)
+    if isinstance(x, np.ndarray) and tensor:
+       c = c.reshape(c.shape + (1,)*x.ndim)
 
-    if len(cs) == 1 :
-        c0 = cs[0]
+    if len(c) == 1 :
+        c0 = c[0]
         c1 = 0
-    elif len(cs) == 2 :
-        c0 = cs[0]
-        c1 = cs[1]
+    elif len(c) == 2 :
+        c0 = c[0]
+        c1 = c[1]
     else :
-        nd = len(cs)
-        c0 = cs[-2]
-        c1 = cs[-1]
-        for i in range(3, len(cs) + 1) :
+        nd = len(c)
+        c0 = c[-2]
+        c1 = c[-1]
+        for i in range(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
-            c0 = cs[-i] - c1*(nd - 1)
+            c0 = c[-i] - c1*(nd - 1)
             c1 = tmp + c1*x
     return c0 + c1*x
+
+
+def hermeval2d(x, y, c):
+    """
+    Evaluate 2D Hermite_e series at points (x,y).
+
+    This function returns the values:
+
+    ``p(x,y) = \sum_{i,j} c[i,j] * He_i(x) * He_j(y)``
+
+    Parameters
+    ----------
+    x,y : array_like, algebra_like
+        The two dimensional Hermite_e seres is evaluated at the points
+        ``(x,y)``, where `x` and `y` must have the same shape.  If `x` or
+        `y` is a list or tuple, it is first converted to an ndarray.
+        Otherwise it is left unchanged and if it isn't an ndarray it is
+        treated as a scalar.  See `hermeval` for explanation of algebra_like.
+    c : array_like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree i,j are contained in ``c[i,j]``. If `c` has dimension
+        greater than 2 the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, algebra_like
+        The values of the two dimensional Hermite_e series at points formed
+        from pairs of corresponding values from `x` and `y`.
+
+    See Also
+    --------
+    hermeval, hermegrid2d, hermeval3d, hermegrid3d
+
+    """
+    return hermeval(y, hermeval(x, c), False)
+
+
+def hermegrid2d(x, y, c):
+    """
+    Evaluate 2D Hermite_e series on the Cartesion product of x,y.
+
+    This function returns the values:
+
+    ``p(a,b) = \sum_{i,j} c[i,j] * He_i(a) * He_j(b)``
+
+    where the points ``(a,b)`` consist of all pairs of points formed by
+    taking ``a`` from `x` and ``b`` from `y`. The resulting points form a
+    grid with `x` in the first dimension and `y` in the second.
+
+    Parameters
+    ----------
+    x,y : array_like, algebra_like
+        The two dimensional Hermite_e series is evaluated at the points in
+        the Cartesian product of `x` and `y`.  If `x` or `y` is a list or
+        tuple, it is first converted to an ndarray, Otherwise it is left
+        unchanged and if it isn't an ndarray it is treated as a scalar. See
+        `hermeval` for explanation of algebra_like.
+    c : array_like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree i,j are contained in ``c[i,j]``. If `c` has dimension
+        greater than 2 the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, algebra_like
+        The values of the two dimensional Hermite_e series at points in the
+        Cartesion product of `x` and `y`.
+
+    See Also
+    --------
+    hermeval, hermeval2d, hermeval3d, hermegrid3d
+
+    """
+    return hermeval(y, hermeval(x, c))
+
+
+def hermeval3d(x, y, z, c):
+    """
+    Evaluate 3D Hermite_e series at points (x,y,z).
+
+    This function returns the values:
+
+    ``p(x,y,z) = \sum_{i,j,k} c[i,j,k] * He_i(x) * He_j(y) * He_k(z)``
+
+    Parameters
+    ----------
+    x,y,z : array_like, algebra_like
+        The three dimensional Hermite_e seres is evaluated at the points
+        ``(x,y,z)``, where `x`, `y`, and `z` must have the same shape.  If
+        any of `x`, `y`, or `z` is a list or tuple, it is first converted
+        to an ndarray. Otherwise it is left unchanged and if it isn't an
+        ndarray it is treated as a scalar.  See `hermeval` for explanation of
+        algebra_like.
+    c : array_like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree i,j are contained in ``c[i,j]``. If `c` has dimension
+        greater than 2 the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, algebra_like
+        The values of the three dimensional Hermite_e series at points formed
+        from triples of corresponding values from `x`, `y`, and `z`.
+
+    See Also
+    --------
+    hermeval, hermeval2d, hermegrid2d, hermegrid3d
+
+    """
+    return hermeval(z, hermeval2d(x, y, c), False)
+
+
+def hermegrid3d(x, y, z, c):
+    """
+    Evaluate 3D Hermite_e series on the Cartesian product of x,y,z.
+
+    This function returns the values:
+
+    ``p(a,b,c) = \sum_{i,j,k} c[i,j,k] * He_i(a) * He_j(b) * He_k(c)``
+
+    where the points ``(a,b,c)`` consist of all triples formed by taking
+    ``a`` from `x`, ``b`` from `y`, and ``c`` from `z`. The resulting
+    points form a grid with `x` in the first dimension, `y` in the second,
+    and `z` in the third.
+
+    Parameters
+    ----------
+    x,y,z : array_like, algebra_like
+        The three dimensional Hermite_e seres is evaluated at the points
+        in the cartesian product of `x`, `y`, and `z`
+        ``(x,y,z)``, where `x` and `y` must have the same shape.  If `x` or
+        `y` is a list or tuple, it is first converted to an ndarray,
+        otherwise it is left unchanged and treated as a scalar.  See
+        `hermeval` for explanation of algebra_like.
+    c : array_like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree i,j are contained in ``c[i,j]``. If `c` has dimension
+        greater than 2 the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, algebra_like
+        The values of the three dimensional Hermite_e series at points formed
+        from triples of corresponding values from `x`, `y`, and `z`.
+
+    See Also
+    --------
+    hermeval, hermeval2d, hermegrid2d, hermeval3d
+
+    """
+    return hermeval(z, hermegrid2d(x, y, c))
 
 
 def hermevander(x, deg) :

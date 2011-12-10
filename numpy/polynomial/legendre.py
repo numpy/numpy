@@ -23,6 +23,10 @@ Arithmetic
 - `legdiv` -- divide one Legendre series by another.
 - `legpow` -- raise a Legendre series to an positive integer power
 - `legval` -- evaluate a Legendre series at given points.
+- `legval2d` -- evaluate a 2D Legendre series at given points.
+- `legval3d` -- evaluate a 3D Legendre series at given points.
+- `leggrid2d` -- evaluate a 2D Legendre series on a Cartesian product.
+- `leggrid3d` -- evaluate a 3D Legendre series on a Cartesian product.
 
 Calculus
 --------
@@ -51,17 +55,17 @@ See also
 """
 from __future__ import division
 
-__all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
-        'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow',
-        'legval', 'legder', 'legint', 'leg2poly', 'poly2leg',
-        'legfromroots', 'legvander', 'legfit', 'legtrim', 'legroots',
-        'Legendre']
-
 import numpy as np
 import numpy.linalg as la
 import polyutils as pu
 import warnings
 from polytemplate import polytemplate
+
+__all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
+    'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow',
+    'legval', 'legval2d', 'legval3d', 'leggrid2d', 'leggrid3d',
+    'legder', 'legint', 'leg2poly', 'poly2leg', 'legfromroots',
+    'legvander', 'legfit', 'legtrim', 'legroots', 'Legendre']
 
 legtrim = pu.trimcoef
 
@@ -814,33 +818,58 @@ def legint(cs, m=1, k=[], lbnd=0, scl=1):
     return cs
 
 
-def legval(x, cs):
-    """Evaluate a Legendre series.
+def legval(x, c, tensor=True):
+    """ Evaluate a Legendre series.
 
-    If `cs` is of length `n`, this function returns :
+    If `c` is of length ``n + 1``, this function returns the value:
 
-    ``p(x) = cs[0]*P_0(x) + cs[1]*P_1(x) + ... + cs[n-1]*P_{n-1}(x)``
+    ``p(x) = c[0]*L_0(x) + c[1]*L_1(x) + ... + c[n]*L_n(x)``
 
-    If x is a sequence or array then p(x) will have the same shape as x.
-    If r is a ring_like object that supports multiplication and addition
-    by the values in `cs`, then an object of the same type is returned.
+    If `x` is a sequence or array and `c` is 1 dimensional, then ``p(x)``
+    will have the same shape as `x`.  If `x` is a algebra_like object that
+    supports multiplication and addition with itself and the values in `c`,
+    then an object of the same type is returned.
+
+    In the case where c is multidimensional, the shape of the result
+    depends on the value of `tensor`. If tensor is true the shape of the
+    return will be ``c.shape[1:] + x.shape``, where the shape of a scalar
+    is the empty tuple. If tensor is false the shape is ``c.shape[1:]`` if
+    `x` is broadcast compatible with that.
+
+    If there are trailing zeros in the coefficients they still take part in
+    the evaluation, so they should be avoided if efficiency is a concern.
 
     Parameters
     ----------
-    x : array_like, ring_like
-        Array of numbers or objects that support multiplication and
-        addition with themselves and with the elements of `cs`.
-    cs : array_like
-        1-d array of Legendre coefficients ordered from low to high.
+    x : array_like, algebra_like
+        If x is a list or tuple, it is converted to an ndarray. Otherwise
+        it is left unchanged and if it isn't an ndarray it is treated as a
+        scalar. In either case, `x` or any element of an ndarray must
+        support addition and multiplication with itself and the elements of
+        `c`.
+    c : array_like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree n are contained in ``c[n]``. If `c` is multidimesional the
+        remaining indices enumerate multiple Legendre series. In the two
+        dimensional case the coefficients may be thought of as stored in
+        the columns of `c`.
+    tensor : boolean, optional
+        If true, the coefficient array shape is extended with ones on the
+        right, one for each dimension of `x`. Scalars are treated as having
+        dimension 0 for this action. The effect is that every column of
+        coefficients in `c` is evaluated for every value in `x`. If False,
+        the `x` are broadcast over the columns of `c` in the usual way.
+        This gives some flexibility in evaluations in the multidimensional
+        case. The default value it ``True``.
 
     Returns
     -------
-    values : ndarray, ring_like
-        If the return is an ndarray then it has the same shape as `x`.
+    values : ndarray, algebra_like
+        The shape of the return value is described above.
 
     See Also
     --------
-    legfit
+    legval2d, leggrid2d, legval3d, leggrid3d
 
     Notes
     -----
@@ -850,27 +879,185 @@ def legval(x, cs):
     --------
 
     """
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
-    if isinstance(x, tuple) or isinstance(x, list) :
+    c = np.array(c, ndmin=1, copy=0)
+    if c.dtype.char not in 'efdgFDGO':
+        c = c + 0.0
+    if isinstance(x, (tuple, list)):
         x = np.asarray(x)
+    if isinstance(x, np.ndarray) and tensor:
+       c = c.reshape(c.shape + (1,)*x.ndim)
 
-    if len(cs) == 1 :
-        c0 = cs[0]
+    if len(c) == 1 :
+        c0 = c[0]
         c1 = 0
-    elif len(cs) == 2 :
-        c0 = cs[0]
-        c1 = cs[1]
+    elif len(c) == 2 :
+        c0 = c[0]
+        c1 = c[1]
     else :
-        nd = len(cs)
-        c0 = cs[-2]
-        c1 = cs[-1]
-        for i in range(3, len(cs) + 1) :
+        nd = len(c)
+        c0 = c[-2]
+        c1 = c[-1]
+        for i in range(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
-            c0 = cs[-i] - (c1*(nd - 1))/nd
+            c0 = c[-i] - (c1*(nd - 1))/nd
             c1 = tmp + (c1*x*(2*nd - 1))/nd
     return c0 + c1*x
+
+
+def legval2d(x, y, c):
+    """
+    Evaluate 2D Legendre series at points (x,y).
+
+    This function returns the values:
+
+    ``p(x,y) = \sum_{i,j} c[i,j] * L_i(x) * L_j(y)``
+
+    Parameters
+    ----------
+    x,y : array_like, algebra_like
+        The two dimensional Legendre seres is evaluated at the points
+        ``(x,y)``, where `x` and `y` must have the same shape.  If `x` or
+        `y` is a list or tuple, it is first converted to an ndarray.
+        Otherwise it is left unchanged and if it isn't an ndarray it is
+        treated as a scalar.  See `legval` for explanation of algebra_like.
+    c : array_like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree i,j are contained in ``c[i,j]``. If `c` has dimension
+        greater than 2 the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, algebra_like
+        The values of the two dimensional Legendre series at points formed
+        from pairs of corresponding values from `x` and `y`.
+
+    See Also
+    --------
+    legval, leggrid2d, legval3d, leggrid3d
+
+    """
+    return legval(y, legval(x, c), False)
+
+
+def leggrid2d(x, y, c):
+    """
+    Evaluate 2D Legendre series on the Cartesion product of x,y.
+
+    This function returns the values:
+
+    ``p(a,b) = \sum_{i,j} c[i,j] * L_i(a) * L_j(b)``
+
+    where the points ``(a,b)`` consist of all pairs of points formed by
+    taking ``a`` from `x` and ``b`` from `y`. The resulting points form a
+    grid with `x` in the first dimension and `y` in the second.
+
+    Parameters
+    ----------
+    x,y : array_like, algebra_like
+        The two dimensional Legendre series is evaluated at the points in
+        the Cartesian product of `x` and `y`.  If `x` or `y` is a list or
+        tuple, it is first converted to an ndarray, Otherwise it is left
+        unchanged and if it isn't an ndarray it is treated as a scalar. See
+        `legval` for explanation of algebra_like.
+    c : array_like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree i,j are contained in ``c[i,j]``. If `c` has dimension
+        greater than 2 the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, algebra_like
+        The values of the two dimensional Legendre series at points in the
+        Cartesion product of `x` and `y`.
+
+    See Also
+    --------
+    legval, legval2d, legval3d, leggrid3d
+
+    """
+    return legval(y, legval(x, c))
+
+
+def legval3d(x, y, z, c):
+    """
+    Evaluate 3D Legendre series at points (x,y,z).
+
+    This function returns the values:
+
+    ``p(x,y,z) = \sum_{i,j,k} c[i,j,k] * L_i(x) * L_j(y) * L_k(z)``
+
+    Parameters
+    ----------
+    x,y,z : array_like, algebra_like
+        The three dimensional Legendre seres is evaluated at the points
+        ``(x,y,z)``, where `x`, `y`, and `z` must have the same shape.  If
+        any of `x`, `y`, or `z` is a list or tuple, it is first converted
+        to an ndarray. Otherwise it is left unchanged and if it isn't an
+        ndarray it is treated as a scalar.  See `legval` for explanation of
+        algebra_like.
+    c : array_like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree i,j are contained in ``c[i,j]``. If `c` has dimension
+        greater than 2 the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, algebra_like
+        The values of the three dimensional Legendre series at points formed
+        from triples of corresponding values from `x`, `y`, and `z`.
+
+    See Also
+    --------
+    legval, legval2d, leggrid2d, leggrid3d
+
+    """
+    return legval(z, legval2d(x, y, c), False)
+
+
+def leggrid3d(x, y, z, c):
+    """
+    Evaluate 3D Legendre series on the Cartesian product of x,y,z.
+
+    This function returns the values:
+
+    ``p(a,b,c) = \sum_{i,j,k} c[i,j,k] * L_i(a) * L_j(b) * L_k(c)``
+
+    where the points ``(a,b,c)`` consist of all triples formed by taking
+    ``a`` from `x`, ``b`` from `y`, and ``c`` from `z`. The resulting
+    points form a grid with `x` in the first dimension, `y` in the second,
+    and `z` in the third.
+
+    Parameters
+    ----------
+    x,y,z : array_like, algebra_like
+        The three dimensional Legendre seres is evaluated at the points
+        in the cartesian product of `x`, `y`, and `z`
+        ``(x,y,z)``, where `x` and `y` must have the same shape.  If `x` or
+        `y` is a list or tuple, it is first converted to an ndarray,
+        otherwise it is left unchanged and treated as a scalar.  See
+        `legval` for explanation of algebra_like.
+    c : array_like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree i,j are contained in ``c[i,j]``. If `c` has dimension
+        greater than 2 the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, algebra_like
+        The values of the three dimensional Legendre series at points formed
+        from triples of corresponding values from `x`, `y`, and `z`.
+
+    See Also
+    --------
+    legval, legval2d, leggrid2d, legval3d
+
+    """
+    return legval(z, leggrid2d(x, y, c))
 
 
 def legvander(x, deg) :
