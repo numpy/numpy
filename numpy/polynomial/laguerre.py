@@ -63,6 +63,7 @@ from polytemplate import polytemplate
 
 lagtrim = pu.trimcoef
 
+
 def poly2lag(pol) :
     """
     poly2lag(pol)

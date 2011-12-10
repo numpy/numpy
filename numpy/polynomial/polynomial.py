@@ -82,6 +82,7 @@ polyx = np.array([0,1])
 # Polynomial series functions
 #
 
+
 def polyline(off, scl) :
     """
     Returns an array representing a linear polynomial.
@@ -114,6 +115,7 @@ def polyline(off, scl) :
         return np.array([off,scl])
     else :
         return np.array([off])
+
 
 def polyfromroots(roots) :
     """
@@ -394,6 +396,7 @@ def polydiv(c1, c2):
             j -= 1
         return c1[j+1:]/scl, pu.trimseq(c1[:j+1])
 
+
 def polypow(cs, pow, maxpower=None) :
     """Raise a polynomial to a power.
 
@@ -443,6 +446,7 @@ def polypow(cs, pow, maxpower=None) :
         for i in range(2, power + 1) :
             prd = np.convolve(prd, cs)
         return prd
+
 
 def polyder(cs, m=1, scl=1):
     """
@@ -507,6 +511,7 @@ def polyder(cs, m=1, scl=1):
         for i in range(cnt):
             cs[i:] *= d[:n-i]
         return cs[i+1:].copy()
+
 
 def polyint(cs, m=1, k=[], lbnd=0, scl=1):
     """
@@ -605,9 +610,10 @@ def polyint(cs, m=1, k=[], lbnd=0, scl=1):
             tmp = np.empty(n + 1, dtype=cs.dtype)
             tmp[0] = cs[0]*0
             tmp[1:] = cs/np.arange(1, n + 1)
-            tmp[0] += k[i] - polyval(lbnd, tmp) 
+            tmp[0] += k[i] - polyval(lbnd, tmp)
             cs = tmp
     return cs
+
 
 def polyval(x, cs):
     """
@@ -654,6 +660,7 @@ def polyval(x, cs):
         c0 = cs[-i] + c0*x
     return c0
 
+
 def polyvander(x, deg) :
     """Vandermonde matrix of given degree.
 
@@ -691,6 +698,7 @@ def polyvander(x, deg) :
         for i in range(2, ideg + 1) :
             v[i] = v[i-1]*x
     return np.rollaxis(v, 0, v.ndim)
+
 
 def polyfit(x, y, deg, rcond=None, full=False, w=None):
     """

@@ -63,6 +63,7 @@ from polytemplate import polytemplate
 
 hermtrim = pu.trimcoef
 
+
 def poly2herm(pol) :
     """
     poly2herm(pol)

@@ -121,6 +121,7 @@ def _cseries_to_zseries(cs) :
     zs[n-1:] = cs/2
     return zs + zs[::-1]
 
+
 def _zseries_to_cseries(zs) :
     """Covert z-series to a Chebyshev series.
 
@@ -144,6 +145,7 @@ def _zseries_to_cseries(zs) :
     cs = zs[n-1:].copy()
     cs[1:n] *= 2
     return cs
+
 
 def _zseries_mul(z1, z2) :
     """Multiply two z-series.
@@ -170,6 +172,7 @@ def _zseries_mul(z1, z2) :
 
     """
     return np.convolve(z1, z2)
+
 
 def _zseries_div(z1, z2) :
     """Divide the first z-series by the second.
@@ -237,6 +240,7 @@ def _zseries_div(z1, z2) :
         rem = z1[i+1:i-1+len2].copy()
         return quo, rem
 
+
 def _zseries_der(zs) :
     """Differentiate a z-series.
 
@@ -267,6 +271,7 @@ def _zseries_der(zs) :
     zs *= np.arange(-n, n+1)*2
     d, r = _zseries_div(zs, ns)
     return d
+
 
 def _zseries_int(zs) :
     """Integrate a z-series.
@@ -434,6 +439,7 @@ chebone = np.array([1])
 # Chebyshev coefficients representing the identity x.
 chebx = np.array([0,1])
 
+
 def chebline(off, scl) :
     """
     Chebyshev series whose graph is a straight line.
@@ -468,6 +474,7 @@ def chebline(off, scl) :
         return np.array([off,scl])
     else :
         return np.array([off])
+
 
 def chebfromroots(roots) :
     """
@@ -787,6 +794,7 @@ def chebdiv(c1, c2):
         rem = pu.trimseq(_zseries_to_cseries(rem))
         return quo, rem
 
+
 def chebpow(cs, pow, maxpower=16) :
     """Raise a Chebyshev series to a power.
 
@@ -837,6 +845,7 @@ def chebpow(cs, pow, maxpower=16) :
         for i in range(2, power + 1) :
             prd = np.convolve(prd, zs)
         return _zseries_to_cseries(prd)
+
 
 def chebder(cs, m=1, scl=1) :
     """
@@ -1015,6 +1024,7 @@ def chebint(cs, m=1, k=[], lbnd=0, scl=1):
             cs[0] += k[i] - chebval(lbnd, cs)
     return cs
 
+
 def chebval(x, cs):
     """Evaluate a Chebyshev series.
 
@@ -1074,6 +1084,7 @@ def chebval(x, cs):
             c0 = cs[-i] - c1
             c1 = tmp + c1*x2
     return c0 + c1*x
+
 
 def chebvander(x, deg) :
     """Vandermonde matrix of given degree.
