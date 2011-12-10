@@ -65,6 +65,7 @@ from polytemplate import polytemplate
 
 legtrim = pu.trimcoef
 
+
 def poly2leg(pol) :
     """
     Convert a polynomial to a Legendre series.

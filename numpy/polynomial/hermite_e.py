@@ -63,6 +63,7 @@ __all__ = ['hermezero', 'hermeone', 'hermex', 'hermedomain', 'hermeline',
 
 hermetrim = pu.trimcoef
 
+
 def poly2herme(pol) :
     """
     poly2herme(pol)
