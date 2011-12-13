@@ -1043,8 +1043,6 @@ class TestMeshgrid(TestCase):
                                [7]])))
 
 
-
-
 class TestPiecewise(TestCase):
     def test_simple(self):
         # Condition is single bool list

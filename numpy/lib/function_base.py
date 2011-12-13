@@ -6,7 +6,7 @@ __all__ = ['select', 'piecewise', 'trim_zeros', 'copy', 'iterable',
         'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
         'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
         'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-        'meshgrid', 'ndgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc']
+        'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc']
 
 import warnings
 import types
@@ -3213,16 +3213,18 @@ def meshgrid(*xi, **kwargs):
     ----------
     x1, x2,..., xn : array_like
         1-D arrays representing the coordinates of a grid.
-    indexing : 'xy' or 'ij' (optional)
-        cartesian ('xy', default) or matrix ('ij') indexing of output
-    sparse : True or False (default) (optional)
+    indexing : {'xy', 'ij'}, optional
+        Cartesian ('xy', default) or matrix ('ij') indexing of output.
+    sparse : bool, optional
          If True a sparse grid is returned in order to conserve memory.
-    copy : True (default) or False (optional)
-        If False a view into the original arrays are returned in order to
-        conserve memory. Please note that sparse=False, copy=False will likely 
-        return non-contiguous arrays. Furthermore, more than one element of a
-        broadcasted array may refer to a single memory location.  If you
-        need to write to the arrays, make copies first.
+         Default is False.
+    copy : bool, optional
+        If False, a view into the original arrays are returned in
+        order to conserve memory.  Default is True.  Please note that
+        ``sparse=False, copy=False`` will likely return non-contiguous arrays.
+        Furthermore, more than one element of a broadcasted array may refer to
+        a single memory location.  If you need to write to the arrays, make
+        copies first.
 
     Returns
     -------
@@ -3232,23 +3234,23 @@ def meshgrid(*xi, **kwargs):
         or ``(N2, N1, N3,...Nn)`` shaped arrays if indexing='xy'
         with the elements of `xi` repeated to fill the matrix along
         the first dimension for `x1`, the second for `x2` and so on.
-    
+
     Notes
     -----
-    This function supports both indexing conventions through the indexing keyword 
-    argument. Giving the string 'ij' returns a meshgrid with matrix indexing, 
-    while 'xy' returns a meshgrid with Cartesian indexing. The difference is 
-    illustrated by the following code snippet:
-    
-    xv, yv = meshgrid(x, y, sparse=False, indexing='ij')
-    for i in range(nx):
-        for j in range(ny):
-            # treat xv[i,j], yv[i,j]
-    
-    xv, yv = meshgrid(x, y, sparse=False, indexing='xy')
-    for i in range(nx):
-        for j in range(ny):
-            # treat xv[j,i], yv[j,i]
+    This function supports both indexing conventions through the indexing keyword
+    argument. Giving the string 'ij' returns a meshgrid with matrix indexing,
+    while 'xy' returns a meshgrid with Cartesian indexing. The difference is
+    illustrated by the following code snippet::
+
+        xv, yv = meshgrid(x, y, sparse=False, indexing='ij')
+        for i in range(nx):
+            for j in range(ny):
+                # treat xv[i,j], yv[i,j]
+
+        xv, yv = meshgrid(x, y, sparse=False, indexing='xy')
+        for i in range(nx):
+            for j in range(ny):
+                # treat xv[j,i], yv[j,i]
 
     See Also
     --------
@@ -3260,9 +3262,9 @@ def meshgrid(*xi, **kwargs):
     Examples
     --------
     >>> nx, ny = (3, 2)
-    >>> x = np.linspace(0, 1, nx)   
-    >>> y = np.linspace(0, 1, ny)   
-    >>> xv, yv = meshgrid(x, y)     
+    >>> x = np.linspace(0, 1, nx)
+    >>> y = np.linspace(0, 1, ny)
+    >>> xv, yv = meshgrid(x, y)
     >>> xv
     array([[ 0. ,  0.5,  1. ],
            [ 0. ,  0.5,  1. ]])
@@ -3281,17 +3283,17 @@ def meshgrid(*xi, **kwargs):
     >>> x = np.arange(-5, 5, 0.1)
     >>> y = np.arange(-5, 5, 0.1)
     >>> xx, yy = meshgrid(x, y, sparse=True)
-    >>> z = np.sin(xx**2+yy**2)/(xx**2+yy**2)
-    
-    >>> import matplotlib.pyplot as plt
+    >>> z = np.sin(xx**2 + yy**2) / (xx**2 + yy**2)
     >>> h = plt.contourf(x,y,z)
+
     """
     copy_ = kwargs.get('copy', True)
     args = np.atleast_1d(*xi)
     ndim = len(args)
-    
-    if not isinstance(args, list) or ndim<2:
-        raise TypeError('meshgrid() takes 2 or more arguments (%d given)' % int(ndim>0))
+
+    if ndim < 2:
+        msg = 'meshgrid() takes 2 or more arguments (%d given)' % int(ndim > 0)
+        raise TypeError(msg)
 
     sparse = kwargs.get('sparse', False)
     indexing = kwargs.get('indexing', 'xy')
@@ -3320,14 +3322,6 @@ def meshgrid(*xi, **kwargs):
         else:
             return np.broadcast_arrays(*output)
 
-
-def ndgrid(*args, **kwargs):
-    """
-    Same as calling meshgrid with indexing='ij' (see meshgrid for
-    documentation).
-    """
-    kwargs['indexing'] = 'ij'
-    return meshgrid(*args, **kwargs)
 
 def delete(arr, obj, axis=None):
     """
