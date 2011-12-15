@@ -1845,50 +1845,39 @@ def vander(x, n=None):
 vander.__doc__ = ma.doc_note(np.vander.__doc__, vander.__doc__)
 
 
-def polyfit(x, y, deg, rcond=None, full=False):
+def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     """
     Any masked values in x is propagated in y, and vice-versa.
     """
-    order = int(deg) + 1
     x = asarray(x)
-    mx = getmask(x)
     y = asarray(y)
+
+    m = getmask(x)
     if y.ndim == 1:
-        m = mask_or(mx, getmask(y))
+        m = mask_or(m, getmask(y))
     elif y.ndim == 2:
-        y = mask_rows(y)
-        my = getmask(y)
+        my = getmask(mask_rows(y))
         if my is not nomask:
-            m = mask_or(mx, my[:, 0])
-        else:
-            m = mx
+            m = mask_or(m, my[:, 0])
     else:
         raise TypeError("Expected a 1D or 2D array for y!")
+
+    if w is not None:
+        w = asarray(w)
+        if w.ndim != 1:
+            raise TypeError, "expected a 1-d array for weights"
+        if w.shape[0] != y.shape[0] :
+            raise TypeError, "expected w and y to have the same length"
+        m = mask_or(m, getmask(w))
+
     if m is not nomask:
-        x[m] = y[m] = masked
-    # Set rcond
-    if rcond is None :
-        rcond = len(x) * np.finfo(x.dtype).eps
-    # Scale x to improve condition number
-    scale = abs(x).max()
-    if scale != 0 :
-        x = x / scale
-    # solve least squares equation for powers of x
-    v = vander(x, order)
-    c, resids, rank, s = lstsq(v, y.filled(0), rcond)
-    # warn on rank reduction, which indicates an ill conditioned matrix
-    if rank != order and not full:
-        warnings.warn("Polyfit may be poorly conditioned", np.RankWarning)
-    # scale returned coefficients
-    if scale != 0 :
-        if c.ndim == 1 :
-            c /= np.vander([scale], order)[0]
-        else :
-            c /= np.vander([scale], order).T
-    if full :
-        return c, resids, rank, s, rcond
-    else :
-        return c
+        if w is not None:
+            w = ~m*w
+        else:
+            w = ~m
+
+    return np.polyfit(x, y, deg, rcond, full, w, cov)
+
 polyfit.__doc__ = ma.doc_note(np.polyfit.__doc__, polyfit.__doc__)
 
 ################################################################################
