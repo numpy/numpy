@@ -40,6 +40,8 @@ Misc Functions
 - `chebfromroots` -- create a Chebyshev series with specified roots.
 - `chebroots` -- find the roots of a Chebyshev series.
 - `chebvander` -- Vandermonde-like matrix for Chebyshev polynomials.
+- `chebvander2d` -- Vandermonde-like matrix for 2D power series.
+- `chebvander3d` -- Vandermonde-like matrix for 3D power series.
 - `chebfit` -- least-squares fit returning a Chebyshev series.
 - `chebpts1` -- Chebyshev points of the first kind.
 - `chebpts2` -- Chebyshev points of the second kind.
@@ -90,10 +92,10 @@ from polytemplate import polytemplate
 
 __all__ = ['chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline',
     'chebadd', 'chebsub', 'chebmulx', 'chebmul', 'chebdiv', 'chebpow',
-    'chebval', 'chebval2d', 'chebval3d', 'chebgrid2d', 'chebgrid3d',
-    'chebder', 'chebint', 'cheb2poly', 'poly2cheb', 'chebfromroots',
-    'chebvander', 'chebfit', 'chebtrim', 'chebroots', 'chebpts1',
-    'chebpts2', 'Chebyshev']
+    'chebval', 'chebder', 'chebint', 'cheb2poly', 'poly2cheb',
+    'chebfromroots', 'chebvander', 'chebfit', 'chebtrim', 'chebroots',
+    'chebpts1', 'chebpts2', 'Chebyshev', 'chebval2d', 'chebval3d',
+    'chebgrid2d', 'chebgrid3d', 'chebvander2d','chebvander3d']
 
 chebtrim = pu.trimcoef
 
@@ -1313,6 +1315,98 @@ def chebvander(x, deg) :
         for i in range(2, ideg + 1) :
             v[i] = v[i-1]*x2 - v[i-2]
     return np.rollaxis(v, 0, v.ndim)
+
+
+def chebvander2d(x, y, deg) :
+    """Psuedo Vandermonde matrix of given degree.
+
+    Returns the pseudo Vandermonde matrix for 2D Chebyshev series in `x`
+    and `y`. The sample point coordinates must all have the same shape
+    after conversion to arrays and the dtype will be converted to either
+    float64 or complex128 depending on whether any of `x` or 'y' are
+    complex.  The maximum degrees of the 2D Chebyshev series in each
+    variable are specified in the list `deg` in the form ``[xdeg, ydeg]``.
+    The return array has the shape ``x.shape + (order,)`` if `x`, and `y`
+    are arrays or ``(1, order) if they are scalars. Here order is the
+    number of elements in a flattened coefficient array of original shape
+    ``(xdeg + 1, ydeg + 1)``.  The flattening is done so that the resulting
+    pseudo Vandermonde array can be easily used in least squares fits.
+
+    Parameters
+    ----------
+    x,y : array_like
+        Arrays of point coordinates, each of the same shape.
+    deg : list
+        List of maximum degrees of the form [x_deg, y_deg].
+
+    Returns
+    -------
+    vander2d : ndarray
+        The shape of the returned matrix is described above.
+
+    See Also
+    --------
+    chebvander, chebvander3d. chebval2d, chebval3d
+
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy = deg
+    x, y = np.array((x, y), copy=0) + 0.0
+
+    vx = chebvander(x, degx)
+    vy = chebvander(y, degy)
+    v = np.einsum("...i,...j->...ij", vx, vy)
+    return v.reshape(v.shape[:-2] + (-1,))
+
+
+def chebvander3d(x, y, z, deg) :
+    """Psuedo Vandermonde matrix of given degree.
+
+    Returns the pseudo Vandermonde matrix for 3D Chebyshev series in `x`,
+    `y`, or `z`. The sample point coordinates must all have the same shape
+    after conversion to arrays and the dtype will be converted to either
+    float64 or complex128 depending on whether any of `x`, `y`, or 'z' are
+    complex.  The maximum degrees of the 3D Chebeshev series in each
+    variable are specified in the list `deg` in the form ``[xdeg, ydeg,
+    zdeg]``. The return array has the shape ``x.shape + (order,)`` if `x`,
+    `y`, and `z` are arrays or ``(1, order) if they are scalars. Here order
+    is the number of elements in a flattened coefficient array of original
+    shape ``(xdeg + 1, ydeg + 1, zdeg + 1)``.  The flattening is done so
+    that the resulting pseudo Vandermonde array can be easily used in least
+    squares fits.
+
+    Parameters
+    ----------
+    x,y,z : array_like
+        Arrays of point coordinates, each of the same shape.
+    deg : list
+        List of maximum degrees of the form [x_deg, y_deg, z_deg].
+
+    Returns
+    -------
+    vander3d : ndarray
+        The shape of the returned matrix is described above.
+
+    See Also
+    --------
+    chebvander, chebvander3d. chebval2d, chebval3d
+
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy, degz = deg
+    x, y, z = np.array((x, y, z), copy=0) + 0.0
+
+    vx = chebvander(x, deg_x)
+    vy = chebvander(y, deg_y)
+    vz = chebvander(z, deg_z)
+    v = np.einsum("...i,...j,...k->...ijk", vx, vy, vz)
+    return v.reshape(v.shape[:-3] + (-1,))
 
 
 def chebfit(x, y, deg, rcond=None, full=False, w=None):

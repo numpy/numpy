@@ -37,6 +37,8 @@ Misc Functions
 - `lagfromroots` -- create a Laguerre series with specified roots.
 - `lagroots` -- find the roots of a Laguerre series.
 - `lagvander` -- Vandermonde-like matrix for Laguerre polynomials.
+- `lagvander2d` -- Vandermonde-like matrix for 2D power series.
+- `lagvander3d` -- Vandermonde-like matrix for 3D power series.
 - `lagfit` -- least-squares fit returning a Laguerre series.
 - `lagtrim` -- trim leading coefficients from a Laguerre series.
 - `lagline` -- Laguerre series of given straight line.
@@ -62,9 +64,9 @@ from polytemplate import polytemplate
 
 __all__ = ['lagzero', 'lagone', 'lagx', 'lagdomain', 'lagline',
     'lagadd', 'lagsub', 'lagmulx', 'lagmul', 'lagdiv', 'lagpow',
-    'lagval', 'lagval2d', 'lagval3d', 'laggrid2d', 'laggrid3d',
-    'lagder', 'lagint', 'lag2poly', 'poly2lag', 'lagfromroots',
-    'lagvander', 'lagfit', 'lagtrim', 'lagroots', 'Laguerre']
+    'lagval', 'lagder', 'lagint', 'lag2poly', 'poly2lag', 'lagfromroots',
+    'lagvander', 'lagfit', 'lagtrim', 'lagroots', 'Laguerre', 'lagval2d',
+    'lagval3d', 'laggrid2d', 'laggrid3d', 'lagvander2d', 'lagvander3d']
 
 lagtrim = pu.trimcoef
 
@@ -1098,6 +1100,98 @@ def lagvander(x, deg) :
         for i in range(2, ideg + 1) :
             v[i] = (v[i-1]*(2*i - 1 - x) - v[i-2]*(i - 1))/i
     return np.rollaxis(v, 0, v.ndim)
+
+
+def lagvander2d(x, y, deg) :
+    """Pseudo Vandermonde matrix of given degree.
+
+    Returns the pseudo Vandermonde matrix for 2D Laguerre series in `x` and
+    `y`. The sample point coordinates must all have the same shape after
+    conversion to arrays and the dtype will be converted to either float64
+    or complex128 depending on whether any of `x` or 'y' are complex.  The
+    maximum degrees of the 2D Laguerre series in each variable are specified in
+    the list `deg` in the form ``[xdeg, ydeg]``. The return array has the
+    shape ``x.shape + (order,)`` if `x`, and `y` are arrays or ``(1, order)
+    if they are scalars. Here order is the number of elements in a
+    flattened coefficient array of original shape ``(xdeg + 1, ydeg + 1)``.
+    The flattening is done so that the resulting pseudo Vandermonde array
+    can be easily used in least squares fits.
+
+    Parameters
+    ----------
+    x,y : array_like
+        Arrays of point coordinates, each of the same shape.
+    deg : list
+        List of maximum degrees of the form [x_deg, y_deg].
+
+    Returns
+    -------
+    vander2d : ndarray
+        The shape of the returned matrix is described above.
+
+    See Also
+    --------
+    lagvander, lagvander3d. lagval2d, lagval3d
+
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy = deg
+    x, y = np.array((x, y), copy=0) + 0.0
+
+    vx = lagvander(x, degx)
+    vy = lagvander(y, degy)
+    v = np.einsum("...i,...j->...ij", vx, vy)
+    return v.reshape(v.shape[:-2] + (-1,))
+
+
+def lagvander3d(x, y, z, deg) :
+    """Psuedo Vandermonde matrix of given degree.
+
+    Returns the pseudo Vandermonde matrix for 3D Laguerre series in `x`,
+    `y`, or `z`. The sample point coordinates must all have the same shape
+    after conversion to arrays and the dtype will be converted to either
+    float64 or complex128 depending on whether any of `x`, `y`, or 'z' are
+    complex.  The maximum degrees of the 3D Laguerre series in each
+    variable are specified in the list `deg` in the form ``[xdeg, ydeg,
+    zdeg]``. The return array has the shape ``x.shape + (order,)`` if `x`,
+    `y`, and `z` are arrays or ``(1, order) if they are scalars. Here order
+    is the number of elements in a flattened coefficient array of original
+    shape ``(xdeg + 1, ydeg + 1, zdeg + 1)``.  The flattening is done so
+    that the resulting pseudo Vandermonde array can be easily used in least
+    squares fits.
+
+    Parameters
+    ----------
+    x,y,z : array_like
+        Arrays of point coordinates, each of the same shape.
+    deg : list
+        List of maximum degrees of the form [x_deg, y_deg, z_deg].
+
+    Returns
+    -------
+    vander3d : ndarray
+        The shape of the returned matrix is described above.
+
+    See Also
+    --------
+    lagvander, lagvander3d. lagval2d, lagval3d
+
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy, degz = deg
+    x, y, z = np.array((x, y, z), copy=0) + 0.0
+
+    vx = lagvander(x, deg_x)
+    vy = lagvander(y, deg_y)
+    vz = lagvander(z, deg_z)
+    v = np.einsum("...i,...j,...k->...ijk", vx, vy, vz)
+    return v.reshape(v.shape[:-3] + (-1,))
 
 
 def lagfit(x, y, deg, rcond=None, full=False, w=None):

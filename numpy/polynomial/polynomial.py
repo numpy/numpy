@@ -37,6 +37,8 @@ Misc Functions
 - `polyfromroots` -- create a polynomial with specified roots.
 - `polyroots` -- find the roots of a polynomial.
 - `polyvander` -- Vandermonde-like matrix for powers.
+- `polyvander2d` -- Vandermonde-like matrix for 2D power series.
+- `polyvander3d` -- Vandermonde-like matrix for 3D power series.
 - `polyfit` -- least-squares fit returning a polynomial.
 - `polytrim` -- trim leading coefficients from a polynomial.
 - `polyline` -- polynomial representing given straight line.
@@ -54,9 +56,9 @@ from __future__ import division
 
 __all__ = ['polyzero', 'polyone', 'polyx', 'polydomain', 'polyline',
     'polyadd', 'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow',
-    'polyval', 'polyval2d', 'polyval3d', 'polygrid2d', 'polygrid3d',
-    'polyder', 'polyint', 'polyfromroots', 'polyvander', 'polyfit',
-    'polytrim', 'polyroots', 'Polynomial']
+    'polyval', 'polyder', 'polyint', 'polyfromroots', 'polyvander',
+    'polyfit', 'polytrim', 'polyroots', 'Polynomial','polyval2d',
+    'polyval3d', 'polygrid2d', 'polygrid3d', 'polyvander2d','polyvander3d']
 
 import numpy as np
 import numpy.linalg as la
@@ -891,6 +893,10 @@ def polyvander(x, deg) :
         The shape of the returned matrix is ``x.shape + (deg+1,)``. The last
         index is the degree.
 
+    See Also
+    --------
+    polyvander2d, polyvander3d
+
     """
     ideg = int(deg)
     if ideg != deg:
@@ -906,6 +912,98 @@ def polyvander(x, deg) :
         for i in range(2, ideg + 1) :
             v[i] = v[i-1]*x
     return np.rollaxis(v, 0, v.ndim)
+
+
+def polyvander2d(x, y, deg) :
+    """Pseudo Vandermonde matrix of given degree.
+
+    Returns the pseudo Vandermonde matrix for 2D polynomials in `x` and
+    `y`. The sample point coordinates must all have the same shape after
+    conversion to arrays and the dtype will be converted to either float64
+    or complex128 depending on whether any of `x` or 'y' are complex.  The
+    maximum degrees of the 2D polynomials in each variable are specified in
+    the list `deg` in the form ``[xdeg, ydeg]``. The return array has the
+    shape ``x.shape + (order,)`` if `x`, and `y` are arrays or ``(1, order)
+    if they are scalars. Here order is the number of elements in a
+    flattened coefficient array of original shape ``(xdeg + 1, ydeg + 1)``.
+    The flattening is done so that the resulting pseudo Vandermonde array
+    can be easily used in least squares fits.
+
+    Parameters
+    ----------
+    x,y : array_like
+        Arrays of point coordinates, each of the same shape.
+    deg : list
+        List of maximum degrees of the form [x_deg, y_deg].
+
+    Returns
+    -------
+    vander2d : ndarray
+        The shape of the returned matrix is described above.
+
+    See Also
+    --------
+    polyvander, polyvander3d. polyval2d, polyval3d
+
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy = deg
+    x, y = np.array((x, y), copy=0) + 0.0
+
+    vx = polyvander(x, degx)
+    vy = polyvander(y, degy)
+    v = np.einsum("...i,...j->...ij", vx, vy)
+    return v.reshape(v.shape[:-2] + (-1,))
+
+
+def polyvander3d(x, y, z, deg) :
+    """Psuedo Vandermonde matrix of given degree.
+
+    Returns the pseudo Vandermonde matrix for 3D polynomials in `x`, `y`,
+    or `z`. The sample point coordinates must all have the same shape after
+    conversion to arrays and the dtype will be converted to either float64
+    or complex128 depending on whether any of `x`, `y`, or 'z' are complex.
+    The maximum degrees of the 3D polynomials in each variable are
+    specified in the list `deg` in the form ``[xdeg, ydeg, zdeg]``. The
+    return array has the shape ``x.shape + (order,)`` if `x`, `y`, and `z`
+    are arrays or ``(1, order) if they are scalars. Here order is the
+    number of elements in a flattened coefficient array of original shape
+    ``(xdeg + 1, ydeg + 1, zdeg + 1)``.  The flattening is done so that the
+    resulting pseudo Vandermonde array can be easily used in least squares
+    fits.
+
+    Parameters
+    ----------
+    x,y,z : array_like
+        Arrays of point coordinates, each of the same shape.
+    deg : list
+        List of maximum degrees of the form [x_deg, y_deg, z_deg].
+
+    Returns
+    -------
+    vander3d : ndarray
+        The shape of the returned matrix is described above.
+
+    See Also
+    --------
+    polyvander, polyvander3d. polyval2d, polyval3d
+
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy, degz = deg
+    x, y, z = np.array((x, y, z), copy=0) + 0.0
+
+    vx = polyvander(x, deg_x)
+    vy = polyvander(y, deg_y)
+    vz = polyvander(z, deg_z)
+    v = np.einsum("...i,...j,...k->...ijk", vx, vy, vz)
+    return v.reshape(v.shape[:-3] + (-1,))
 
 
 def polyfit(x, y, deg, rcond=None, full=False, w=None):
