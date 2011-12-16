@@ -38,6 +38,8 @@ Misc Functions
 - `legfromroots` -- create a Legendre series with specified roots.
 - `legroots` -- find the roots of a Legendre series.
 - `legvander` -- Vandermonde-like matrix for Legendre polynomials.
+- `legvander2d` -- Vandermonde-like matrix for 2D power series.
+- `legvander3d` -- Vandermonde-like matrix for 3D power series.
 - `legfit` -- least-squares fit returning a Legendre series.
 - `legtrim` -- trim leading coefficients from a Legendre series.
 - `legline` -- Legendre series representing given straight line.
@@ -62,10 +64,10 @@ import warnings
 from polytemplate import polytemplate
 
 __all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
-    'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow',
-    'legval', 'legval2d', 'legval3d', 'leggrid2d', 'leggrid3d',
+    'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow', 'legval',
     'legder', 'legint', 'leg2poly', 'poly2leg', 'legfromroots',
-    'legvander', 'legfit', 'legtrim', 'legroots', 'Legendre']
+    'legvander', 'legfit', 'legtrim', 'legroots', 'Legendre','legval2d',
+    'legval3d', 'leggrid2d', 'leggrid3d', 'legvander2d', 'legvander3d']
 
 legtrim = pu.trimcoef
 
@@ -1101,6 +1103,98 @@ def legvander(x, deg) :
         for i in range(2, ideg + 1) :
             v[i] = (v[i-1]*x*(2*i - 1) - v[i-2]*(i - 1))/i
     return np.rollaxis(v, 0, v.ndim)
+
+
+def legvander2d(x, y, deg) :
+    """Pseudo Vandermonde matrix of given degree.
+
+    Returns the pseudo Vandermonde matrix for 2D Legendre series in `x` and
+    `y`. The sample point coordinates must all have the same shape after
+    conversion to arrays and the dtype will be converted to either float64
+    or complex128 depending on whether any of `x` or 'y' are complex.  The
+    maximum degrees of the 2D Legendre series in each variable are specified in
+    the list `deg` in the form ``[xdeg, ydeg]``. The return array has the
+    shape ``x.shape + (order,)`` if `x`, and `y` are arrays or ``(1, order)
+    if they are scalars. Here order is the number of elements in a
+    flattened coefficient array of original shape ``(xdeg + 1, ydeg + 1)``.
+    The flattening is done so that the resulting pseudo Vandermonde array
+    can be easily used in least squares fits.
+
+    Parameters
+    ----------
+    x,y : array_like
+        Arrays of point coordinates, each of the same shape.
+    deg : list
+        List of maximum degrees of the form [x_deg, y_deg].
+
+    Returns
+    -------
+    vander2d : ndarray
+        The shape of the returned matrix is described above.
+
+    See Also
+    --------
+    legvander, legvander3d. legval2d, legval3d
+
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy = deg
+    x, y = np.array((x, y), copy=0) + 0.0
+
+    vx = legvander(x, degx)
+    vy = legvander(y, degy)
+    v = np.einsum("...i,...j->...ij", vx, vy)
+    return v.reshape(v.shape[:-2] + (-1,))
+
+
+def legvander3d(x, y, z, deg) :
+    """Psuedo Vandermonde matrix of given degree.
+
+    Returns the pseudo Vandermonde matrix for 3D Legendre series in `x`, `y`,
+    or `z`. The sample point coordinates must all have the same shape after
+    conversion to arrays and the dtype will be converted to either float64
+    or complex128 depending on whether any of `x`, `y`, or 'z' are complex.
+    The maximum degrees of the 3D Legendre series in each variable are
+    specified in the list `deg` in the form ``[xdeg, ydeg, zdeg]``. The
+    return array has the shape ``x.shape + (order,)`` if `x`, `y`, and `z`
+    are arrays or ``(1, order) if they are scalars. Here order is the
+    number of elements in a flattened coefficient array of original shape
+    ``(xdeg + 1, ydeg + 1, zdeg + 1)``.  The flattening is done so that the
+    resulting pseudo Vandermonde array can be easily used in least squares
+    fits.
+
+    Parameters
+    ----------
+    x,y,z : array_like
+        Arrays of point coordinates, each of the same shape.
+    deg : list
+        List of maximum degrees of the form [x_deg, y_deg, z_deg].
+
+    Returns
+    -------
+    vander3d : ndarray
+        The shape of the returned matrix is described above.
+
+    See Also
+    --------
+    legvander, legvander3d. legval2d, legval3d
+
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy, degz = deg
+    x, y, z = np.array((x, y, z), copy=0) + 0.0
+
+    vx = legvander(x, deg_x)
+    vy = legvander(y, deg_y)
+    vz = legvander(z, deg_z)
+    v = np.einsum("...i,...j,...k->...ijk", vx, vy, vz)
+    return v.reshape(v.shape[:-3] + (-1,))
 
 
 def legfit(x, y, deg, rcond=None, full=False, w=None):

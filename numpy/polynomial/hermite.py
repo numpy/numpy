@@ -37,6 +37,8 @@ Misc Functions
 - `hermfromroots` -- create a Hermite series with specified roots.
 - `hermroots` -- find the roots of a Hermite series.
 - `hermvander` -- Vandermonde-like matrix for Hermite polynomials.
+- `hermvander2d` -- Vandermonde-like matrix for 2D power series.
+- `hermvander3d` -- Vandermonde-like matrix for 3D power series.
 - `hermfit` -- least-squares fit returning a Hermite series.
 - `hermtrim` -- trim leading coefficients from a Hermite series.
 - `hermline` -- Hermite series of given straight line.
@@ -62,9 +64,10 @@ from polytemplate import polytemplate
 
 __all__ = ['hermzero', 'hermone', 'hermx', 'hermdomain', 'hermline',
     'hermadd', 'hermsub', 'hermmulx', 'hermmul', 'hermdiv', 'hermpow',
-    'hermval', 'hermval2d', 'hermval3d', 'hermgrid2d', 'hermgrid3d',
-    'hermder', 'hermint', 'herm2poly', 'poly2herm', 'hermfromroots',
-    'hermvander', 'hermfit', 'hermtrim', 'hermroots', 'Hermite']
+    'hermval', 'hermder', 'hermint', 'herm2poly', 'poly2herm',
+    'hermfromroots', 'hermvander', 'hermfit', 'hermtrim', 'hermroots',
+    'Hermite', 'hermval2d', 'hermval3d', 'hermgrid2d', 'hermgrid3d',
+    'hermvander2d', 'hermvander3d']
 
 hermtrim = pu.trimcoef
 
@@ -1100,6 +1103,98 @@ def hermvander(x, deg) :
         for i in range(2, ideg + 1) :
             v[i] = (v[i-1]*x2 - v[i-2]*(2*(i - 1)))
     return np.rollaxis(v, 0, v.ndim)
+
+
+def hermvander2d(x, y, deg) :
+    """Pseudo Vandermonde matrix of given degree.
+
+    Returns the pseudo Vandermonde matrix for 2D Hermite series in `x` and
+    `y`. The sample point coordinates must all have the same shape after
+    conversion to arrays and the dtype will be converted to either float64
+    or complex128 depending on whether any of `x` or 'y' are complex.  The
+    maximum degrees of the 2D Hermite series in each variable are specified
+    in the list `deg` in the form ``[xdeg, ydeg]``. The return array has
+    the shape ``x.shape + (order,)`` if `x`, and `y` are arrays or
+    ``(1, order) if they are scalars. Here order is the number of elements
+    in a flattened coefficient array of original shape ``(xdeg + 1, ydeg +
+    1)``.  The flattening is done so that the resulting pseudo Vandermonde
+    array can be easily used in least squares fits.
+
+    Parameters
+    ----------
+    x,y : array_like
+        Arrays of point coordinates, each of the same shape.
+    deg : list
+        List of maximum degrees of the form [x_deg, y_deg].
+
+    Returns
+    -------
+    vander2d : ndarray
+        The shape of the returned matrix is described above.
+
+    See Also
+    --------
+    hermvander, hermvander3d. hermval2d, hermval3d
+
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy = deg
+    x, y = np.array((x, y), copy=0) + 0.0
+
+    vx = hermvander(x, degx)
+    vy = hermvander(y, degy)
+    v = np.einsum("...i,...j->...ij", vx, vy)
+    return v.reshape(v.shape[:-2] + (-1,))
+
+
+def hermvander3d(x, y, z, deg) :
+    """Psuedo Vandermonde matrix of given degree.
+
+    Returns the pseudo Vandermonde matrix for 3D Hermite series in `x`,
+    `y`, or `z`. The sample point coordinates must all have the same shape
+    after conversion to arrays and the dtype will be converted to either
+    float64 or complex128 depending on whether any of `x`, `y`, or 'z' are
+    complex.  The maximum degrees of the 3D Hermite series in each variable
+    are specified in the list `deg` in the form ``[xdeg, ydeg, zdeg]``. The
+    return array has the shape ``x.shape + (order,)`` if `x`, `y`, and `z`
+    are arrays or ``(1, order) if they are scalars. Here order is the
+    number of elements in a flattened coefficient array of original shape
+    ``(xdeg + 1, ydeg + 1, zdeg + 1)``.  The flattening is done so that the
+    resulting pseudo Vandermonde array can be easily used in least squares
+    fits.
+
+    Parameters
+    ----------
+    x,y,z : array_like
+        Arrays of point coordinates, each of the same shape.
+    deg : list
+        List of maximum degrees of the form [x_deg, y_deg, z_deg].
+
+    Returns
+    -------
+    vander3d : ndarray
+        The shape of the returned matrix is described above.
+
+    See Also
+    --------
+    hermvander, hermvander3d. hermval2d, hermval3d
+
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy, degz = deg
+    x, y, z = np.array((x, y, z), copy=0) + 0.0
+
+    vx = hermvander(x, deg_x)
+    vy = hermvander(y, deg_y)
+    vz = hermvander(z, deg_z)
+    v = np.einsum("...i,...j,...k->...ijk", vx, vy, vz)
+    return v.reshape(v.shape[:-3] + (-1,))
 
 
 def hermfit(x, y, deg, rcond=None, full=False, w=None):
