@@ -997,16 +997,16 @@ cdef class RandomState:
             else:
                 raise ValueError("a must be greater than 0")
         else:
-            a = np.asarray(a)
-            if len(a.shape) != 1:
+            a = np.array(a, ndmin=1, copy=0)
+            if a.ndim != 1:
                 raise ValueError("a must be 1-dimensional")
             pop_size = a.size
             if pop_size is 0:
                 raise ValueError("a must be non-empty")
 
         if None != p:
-            p = np.asarray(p)
-            if len(p.shape) != 1:
+            p = np.array(p, dtype=np.double, ndmin=1, copy=0)
+            if p.ndim != 1:
                 raise ValueError("p must be 1-dimensional")
             if p.size != pop_size:
                 raise ValueError("a and p must have same size")
@@ -1019,6 +1019,7 @@ cdef class RandomState:
         if replace:
             if None != p:
                 cdf = p.cumsum()
+                cdf /= cdf[-1]
                 uniform_samples = np.random.random(size)
                 idx = cdf.searchsorted(uniform_samples, side='right')
             else:
@@ -1029,20 +1030,20 @@ cdef class RandomState:
                                           "population when 'replace=False'"]))
 
             if None != p:
-                if np.sum(p>0) < size:
+                if np.sum(p > 0) < size:
                     raise ValueError("Fewer non-zero entries in p than size")
                 n_uniq = 0
                 p = p.copy()
                 found = np.zeros(size, dtype=np.int)
                 while n_uniq < size:
-                    x = self.rand(size-n_uniq)
+                    x = self.rand(size - n_uniq)
                     if n_uniq > 0:
                         p[found[0:n_uniq]] = 0
-                    p = p/p.sum()
                     cdf = np.cumsum(p)
+                    cdf /= cdf[-1]
                     new = cdf.searchsorted(x, side='right')
                     new = np.unique(new)
-                    found[n_uniq:n_uniq+new.size] = new
+                    found[n_uniq:n_uniq + new.size] = new
                     n_uniq += new.size
                 idx = found
             else:
