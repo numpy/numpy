@@ -116,6 +116,51 @@ class TestRandomDist(TestCase):
                          [ 0.4575674820298663 ,  0.7781880808593471 ]])
         np.testing.assert_array_almost_equal(actual, desired, decimal=15)
 
+    def test_choice_uniform_replace(self):
+        np.random.seed(self.seed)
+        actual = np.random.choice(4, 4)
+        desired = np.array([2, 3, 2, 3])
+        np.testing.assert_array_equal(actual, desired)
+
+    def test_choice_nonuniform_replace(self):
+        np.random.seed(self.seed)
+        actual = np.random.choice(4, 4, p=[0.4, 0.4, 0.1, 0.1])
+        desired = np.array([1, 1, 2, 2])
+        np.testing.assert_array_equal(actual, desired)
+
+    def test_choice_uniform_noreplace(self):
+        np.random.seed(self.seed)
+        actual = np.random.choice(4, 3, replace=False)
+        desired = np.array([0, 1, 3])
+        np.testing.assert_array_equal(actual, desired)
+
+    def test_choice_nonuniform_noreplace(self):
+        np.random.seed(self.seed)
+        actual = np.random.choice(4, 3, replace=False,
+                                  p=[0.1, 0.3, 0.5, 0.1])
+        desired = np.array([2, 1, 3])
+        np.testing.assert_array_equal(actual, desired)
+
+    def test_choice_noninteger(self):
+        np.random.seed(self.seed)
+        actual = np.random.choice(['a', 'b', 'c', 'd'], 4)
+        desired = np.array(['c', 'd', 'c', 'd'])
+        np.testing.assert_array_equal(actual, desired)
+
+    def test_choice_exceptions(self):
+        sample = np.random.choice
+        assert_raises(ValueError, sample, -1,3)
+        assert_raises(ValueError, sample, [[1,2],[3,4]], 3)
+        assert_raises(ValueError, sample, [], 3)
+        assert_raises(ValueError, sample, [1,2,3,4], 3,
+                                          p=[[0.25,0.25],[0.25,0.25]])
+        assert_raises(ValueError, sample, [1,2], 3, p=[0.4,0.4,0.2])
+        assert_raises(ValueError, sample, [1,2], 3, p=[1.1,-0.1])
+        assert_raises(ValueError, sample, [1,2], 3, p=[0.4,0.4])
+        assert_raises(ValueError, sample, [1,2,3], 4, replace=False)
+        assert_raises(ValueError, sample, [1,2,3], 2, replace=False,
+                                          p=[1,0,0])
+
     def test_bytes(self):
         np.random.seed(self.seed)
         actual = np.random.bytes(10)
