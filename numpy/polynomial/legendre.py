@@ -632,26 +632,33 @@ def legpow(cs, pow, maxpower=16) :
         return prd
 
 
-def legder(cs, m=1, scl=1) :
+def legder(c, m=1, scl=1, axis=0) :
     """
     Differentiate a Legendre series.
 
-    Returns the series `cs` differentiated `m` times.  At each iteration the
-    result is multiplied by `scl` (the scaling factor is for use in a linear
-    change of variable).  The argument `cs` is the sequence of coefficients
-    from lowest order "term" to highest, e.g., [1,2,3] represents the series
-    ``P_0 + 2*P_1 + 3*P_2``.
+    Returns the Legendre series coefficients `c` differentiated `m` times
+    along `axis`.  At each iteration the result is multiplied by `scl` (the
+    scaling factor is for use in a linear change of variable). The argument
+    `c` is an array of coefficients from low to high degree along each
+    axis, e.g., [1,2,3] represents the series ``1*L_0 + 2*L_1 + 3*L_2``
+    while [[1,2],[1,2]] represents ``1*L_0(x)*L_0(y) + 1*L_1(x)*L_0(y) +
+    2*L_0(x)*L_1(y) + 2*L_1(x)*L_1(y)`` if axis=0 is ``x`` and axis=1 is
+    ``y``.
 
     Parameters
     ----------
-    cs : array_like
-        1-D array of Legendre series coefficients ordered from low to high.
+    c : array_like
+        Array of Legendre series coefficients. If c is multidimensional the
+        different axis correspond to different variables with the degree in
+        each axis given by the corresponding index.
     m : int, optional
         Number of derivatives taken, must be non-negative. (Default: 1)
     scl : scalar, optional
         Each differentiation is multiplied by `scl`.  The end result is
         multiplication by ``scl**m``.  This is for use in a linear change of
         variable. (Default: 1)
+    axis : int, optional
+        Axis over which the derivative is taken. (Default: 0).
 
     Returns
     -------
@@ -672,60 +679,78 @@ def legder(cs, m=1, scl=1) :
     Examples
     --------
     >>> from numpy.polynomial import legendre as L
-    >>> cs = (1,2,3,4)
-    >>> L.legder(cs)
+    >>> c = (1,2,3,4)
+    >>> L.legder(c)
     array([  6.,   9.,  20.])
-    >>> L.legder(cs,3)
+    >>> L.legder(c, 3)
     array([ 60.])
-    >>> L.legder(cs,scl=-1)
+    >>> L.legder(c, scl=-1)
     array([ -6.,  -9., -20.])
-    >>> L.legder(cs,2,-1)
+    >>> L.legder(c, 2,-1)
     array([  9.,  60.])
 
     """
-    cnt = int(m)
+    c = np.array(c, ndmin=1, copy=1)
+    if c.dtype.char in '?bBhHiIlLqQpP':
+        c = c.astype(np.double)
+    cnt, iaxis = [int(t) for t in [m, axis]]
 
     if cnt != m:
         raise ValueError("The order of derivation must be integer")
-    if cnt < 0 :
+    if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
+    if iaxis != axis:
+        raise ValueError("The axis must be integer")
+    if not -c.ndim <= iaxis < c.ndim:
+        raise ValueError("The axis is out of range")
+    if iaxis < 0:
+        iaxis += c.ndim
 
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
     if cnt == 0:
-        return cs
-    elif cnt >= len(cs):
-        return cs[:1]*0
+        return c
+
+    c = np.rollaxis(c, iaxis)
+    n = len(c)
+    if cnt >= n:
+        c = c[:1]*0
     else :
         for i in range(cnt):
-            n = len(cs) - 1
-            cs *= scl
-            der = np.empty(n, dtype=cs.dtype)
-            for j in range(n, 0, -1):
-                der[j - 1] = (2*j - 1)*cs[j]
-                cs[j - 2] += cs[j]
-            cs = der
-        return cs
+            n = n - 1
+            c *= scl
+            der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
+            for j in range(n, 2, -1):
+                der[j - 1] = (2*j - 1)*c[j]
+                c[j - 2] += c[j]
+            if n > 1:
+                der[1] = 3*c[2]
+            der[0] = c[1]
+            c = der
+    c = np.rollaxis(c, 0, iaxis + 1)
+    return c
 
 
-def legint(cs, m=1, k=[], lbnd=0, scl=1):
+def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     """
     Integrate a Legendre series.
 
-    Returns a Legendre series that is the Legendre series `cs`, integrated
-    `m` times from `lbnd` to `x`.  At each iteration the resulting series
-    is **multiplied** by `scl` and an integration constant, `k`, is added.
+    Returns the Legendre series coefficients `c` integrated `m` times from
+    `lbnd` along `axis`. At each iteration the resulting series is
+    **multiplied** by `scl` and an integration constant, `k`, is added.
     The scaling factor is for use in a linear change of variable.  ("Buyer
     beware": note that, depending on what one is doing, one may want `scl`
     to be the reciprocal of what one might expect; for more information,
-    see the Notes section below.)  The argument `cs` is a sequence of
-    coefficients, from lowest order Legendre series "term" to highest,
-    e.g., [1,2,3] represents the series :math:`P_0(x) + 2P_1(x) + 3P_2(x)`.
+    see the Notes section below.)  The argument `c` is an array of
+    coefficients from low to high degree along each axix, e.g., [1,2,3]
+    represents the series ``L_0 + 2*L_1 + 3*L_2`` while [[1,2],[1,2]]
+    represents ``1*L_0(x)*L_0(y) + 1*L_1(x)*L_0(y) + 2*L_0(x)*L_1(y) +
+    2*L_1(x)*L_1(y)`` if axis=0 is ``x`` and axis=1 is ``y``.
 
     Parameters
     ----------
-    cs : array_like
-        1-d array of Legendre series coefficients, ordered from low to high.
+    c : array_like
+        Array of Legendre series coefficients. If c is multidimensional the
+        different axis correspond to different variables with the degree in
+        each axis given by the corresponding index.
     m : int, optional
         Order of integration, must be positive. (Default: 1)
     k : {[], list, scalar}, optional
@@ -739,11 +764,13 @@ def legint(cs, m=1, k=[], lbnd=0, scl=1):
     scl : scalar, optional
         Following each integration the result is *multiplied* by `scl`
         before the integration constant is added. (Default: 1)
+    axis : int, optional
+        Axis over which the derivative is taken. (Default: 0).
 
     Returns
     -------
     S : ndarray
-        Legendre series coefficients of the integral.
+        Legendre series coefficient array of the integral.
 
     Raises
     ------
@@ -771,23 +798,26 @@ def legint(cs, m=1, k=[], lbnd=0, scl=1):
     Examples
     --------
     >>> from numpy.polynomial import legendre as L
-    >>> cs = (1,2,3)
+    >>> c = (1,2,3)
     >>> L.legint(cs)
     array([ 0.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.legint(cs,3)
+    >>> L.legint(c, 3)
     array([  1.66666667e-02,  -1.78571429e-02,   4.76190476e-02,
             -1.73472348e-18,   1.90476190e-02,   9.52380952e-03])
-    >>> L.legint(cs, k=3)
+    >>> L.legint(c, k=3)
     array([ 3.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.legint(cs, lbnd=-2)
+    >>> L.legint(c, lbnd=-2)
     array([ 7.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.legint(cs, scl=2)
+    >>> L.legint(c, scl=2)
     array([ 0.66666667,  0.8       ,  1.33333333,  1.2       ])
 
     """
-    cnt = int(m)
-    if np.isscalar(k) :
+    c = np.array(c, ndmin=1, copy=1)
+    if c.dtype.char in '?bBhHiIlLqQpP':
+        c = c.astype(np.double)
+    if not np.iterable(k):
         k = [k]
+    cnt, iaxis = [int(t) for t in [m, axis]]
 
     if cnt != m:
         raise ValueError("The order of integration must be integer")
@@ -795,29 +825,37 @@ def legint(cs, m=1, k=[], lbnd=0, scl=1):
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt :
         raise ValueError("Too many integration constants")
+    if iaxis != axis:
+        raise ValueError("The axis must be integer")
+    if not -c.ndim <= iaxis < c.ndim:
+        raise ValueError("The axis is out of range")
+    if iaxis < 0:
+        iaxis += c.ndim
 
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
     if cnt == 0:
-        return cs
+        return c
 
+    c = np.rollaxis(c, iaxis)
     k = list(k) + [0]*(cnt - len(k))
     for i in range(cnt) :
-        n = len(cs)
-        cs *= scl
-        if n == 1 and cs[0] == 0:
-            cs[0] += k[i]
+        n = len(c)
+        c *= scl
+        if n == 1 and np.all(c[0] == 0):
+            c[0] += k[i]
         else:
-            tmp = np.empty(n + 1, dtype=cs.dtype)
-            tmp[0] = cs[0]*0
-            tmp[1] = cs[0]
-            for j in range(1, n):
-                t = cs[j]/(2*j + 1)
+            tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
+            tmp[0] = c[0]*0
+            tmp[1] = c[0]
+            if n > 1:
+                tmp[2] = c[1]/3
+            for j in range(2, n):
+                t = c[j]/(2*j + 1)
                 tmp[j + 1] = t
                 tmp[j - 1] -= t
             tmp[0] += k[i] - legval(lbnd, tmp)
-            cs = tmp
-    return cs
+            c = tmp
+    c = np.rollaxis(c, 0, iaxis + 1)
+    return c
 
 
 def legval(x, c, tensor=True):
@@ -882,12 +920,12 @@ def legval(x, c, tensor=True):
 
     """
     c = np.array(c, ndmin=1, copy=0)
-    if c.dtype.char not in 'efdgFDGO':
-        c = c + 0.0
+    if c.dtype.char in '?bBhHiIlLqQpP':
+        c = c.astype(np.double)
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-       c = c.reshape(c.shape + (1,)*x.ndim)
+        c = c.reshape(c.shape + (1,)*x.ndim)
 
     if len(c) == 1 :
         c0 = c[0]

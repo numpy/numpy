@@ -625,26 +625,33 @@ def hermpow(cs, pow, maxpower=16) :
         return prd
 
 
-def hermder(cs, m=1, scl=1) :
+def hermder(c, m=1, scl=1, axis=0) :
     """
     Differentiate a Hermite series.
 
-    Returns the series `cs` differentiated `m` times.  At each iteration the
-    result is multiplied by `scl` (the scaling factor is for use in a linear
-    change of variable).  The argument `cs` is the sequence of coefficients
-    from lowest order "term" to highest, e.g., [1,2,3] represents the series
-    ``P_0 + 2*P_1 + 3*P_2``.
+    Returns the Hermite series coefficients `c` differentiated `m` times
+    along `axis`.  At each iteration the result is multiplied by `scl` (the
+    scaling factor is for use in a linear change of variable). The argument
+    `c` is an array of coefficients from low to high degree along each
+    axis, e.g., [1,2,3] represents the series ``1*H_0 + 2*H_1 + 3*H_2``
+    while [[1,2],[1,2]] represents ``1*H_0(x)*H_0(y) + 1*H_1(x)*H_0(y) +
+    2*H_0(x)*H_1(y) + 2*H_1(x)*H_1(y)`` if axis=0 is ``x`` and axis=1 is
+    ``y``.
 
     Parameters
     ----------
-    cs: array_like
-        1-d array of Hermite series coefficients ordered from low to high.
+    c : array_like
+        Array of Hermite series coefficients. If `c` is multidimensional the
+        different axis correspond to different variables with the degree in
+        each axis given by the corresponding index.
     m : int, optional
         Number of derivatives taken, must be non-negative. (Default: 1)
     scl : scalar, optional
         Each differentiation is multiplied by `scl`.  The end result is
         multiplication by ``scl**m``.  This is for use in a linear change of
         variable. (Default: 1)
+    axis : int, optional
+        Axis over which the derivative is taken. (Default: 0).
 
     Returns
     -------
@@ -671,48 +678,63 @@ def hermder(cs, m=1, scl=1) :
     array([ 1.,  2.,  3.])
 
     """
-    cnt = int(m)
+    c = np.array(c, ndmin=1, copy=1)
+    if c.dtype.char in '?bBhHiIlLqQpP':
+        c = c.astype(np.double)
+    cnt, iaxis = [int(t) for t in [m, axis]]
 
     if cnt != m:
         raise ValueError("The order of derivation must be integer")
-    if cnt < 0 :
+    if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
+    if iaxis != axis:
+        raise ValueError("The axis must be integer")
+    if not -c.ndim <= iaxis < c.ndim:
+        raise ValueError("The axis is out of range")
+    if iaxis < 0:
+        iaxis += c.ndim
 
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
     if cnt == 0:
-        return cs
-    elif cnt >= len(cs):
-        return cs[:1]*0
+        return c
+
+    c = np.rollaxis(c, iaxis)
+    n = len(c)
+    if cnt >= n:
+        c = c[:1]*0
     else :
         for i in range(cnt):
-            n = len(cs) - 1
-            cs *= scl
-            der = np.empty(n, dtype=cs.dtype)
+            n = n - 1
+            c *= scl
+            der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
             for j in range(n, 0, -1):
-                der[j - 1] = (2*j)*cs[j]
-            cs = der
-        return cs
+                der[j - 1] = (2*j)*c[j]
+            c = der
+    c = np.rollaxis(c, 0, iaxis + 1)
+    return c
 
 
-def hermint(cs, m=1, k=[], lbnd=0, scl=1):
+def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     """
     Integrate a Hermite series.
 
-    Returns a Hermite series that is the Hermite series `cs`, integrated
-    `m` times from `lbnd` to `x`.  At each iteration the resulting series
-    is **multiplied** by `scl` and an integration constant, `k`, is added.
+    Returns the Hermite series coefficients `c` integrated `m` times from
+    `lbnd` along `axis`. At each iteration the resulting series is
+    **multiplied** by `scl` and an integration constant, `k`, is added.
     The scaling factor is for use in a linear change of variable.  ("Buyer
     beware": note that, depending on what one is doing, one may want `scl`
     to be the reciprocal of what one might expect; for more information,
-    see the Notes section below.)  The argument `cs` is a sequence of
-    coefficients, from lowest order Hermite series "term" to highest,
-    e.g., [1,2,3] represents the series :math:`P_0(x) + 2P_1(x) + 3P_2(x)`.
+    see the Notes section below.)  The argument `c` is an array of
+    coefficients from low to high degree along each axix, e.g., [1,2,3]
+    represents the series ``H_0 + 2*H_1 + 3*H_2`` while [[1,2],[1,2]]
+    represents ``1*H_0(x)*H_0(y) + 1*H_1(x)*H_0(y) + 2*H_0(x)*H_1(y) +
+    2*H_1(x)*H_1(y)`` if axis=0 is ``x`` and axis=1 is ``y``.
 
     Parameters
     ----------
-    cs : array_like
-        1-d array of Hermite series coefficients, ordered from low to high.
+    c : array_like
+        Array of Hermite series coefficients. If c is multidimensional the
+        different axis correspond to different variables with the degree in
+        each axis given by the corresponding index.
     m : int, optional
         Order of integration, must be positive. (Default: 1)
     k : {[], list, scalar}, optional
@@ -726,6 +748,8 @@ def hermint(cs, m=1, k=[], lbnd=0, scl=1):
     scl : scalar, optional
         Following each integration the result is *multiplied* by `scl`
         before the integration constant is added. (Default: 1)
+    axis : int, optional
+        Axis over which the derivative is taken. (Default: 0).
 
     Returns
     -------
@@ -760,7 +784,7 @@ def hermint(cs, m=1, k=[], lbnd=0, scl=1):
     >>> from numpy.polynomial.hermite import hermint
     >>> hermint([1,2,3]) # integrate once, value 0 at 0.
     array([ 1. ,  0.5,  0.5,  0.5])
-    >>> hermint([1,2,3], m=2) # integrate twice, value & deriv 0 at 0 
+    >>> hermint([1,2,3], m=2) # integrate twice, value & deriv 0 at 0
     array([-0.5       ,  0.5       ,  0.125     ,  0.08333333,  0.0625    ])
     >>> hermint([1,2,3], k=1) # integrate once, value 1 at 0.
     array([ 2. ,  0.5,  0.5,  0.5])
@@ -770,9 +794,12 @@ def hermint(cs, m=1, k=[], lbnd=0, scl=1):
     array([ 1.66666667, -0.5       ,  0.125     ,  0.08333333,  0.0625    ])
 
     """
-    cnt = int(m)
-    if np.isscalar(k) :
+    c = np.array(c, ndmin=1, copy=1)
+    if c.dtype.char in '?bBhHiIlLqQpP':
+        c = c.astype(np.double)
+    if not np.iterable(k):
         k = [k]
+    cnt, iaxis = [int(t) for t in [m, axis]]
 
     if cnt != m:
         raise ValueError("The order of integration must be integer")
@@ -780,27 +807,33 @@ def hermint(cs, m=1, k=[], lbnd=0, scl=1):
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt :
         raise ValueError("Too many integration constants")
+    if iaxis != axis:
+        raise ValueError("The axis must be integer")
+    if not -c.ndim <= iaxis < c.ndim:
+        raise ValueError("The axis is out of range")
+    if iaxis < 0:
+        iaxis += c.ndim
 
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
     if cnt == 0:
-        return cs
+        return c
 
+    c = np.rollaxis(c, iaxis)
     k = list(k) + [0]*(cnt - len(k))
     for i in range(cnt) :
-        n = len(cs)
-        cs *= scl
-        if n == 1 and cs[0] == 0:
-            cs[0] += k[i]
+        n = len(c)
+        c *= scl
+        if n == 1 and np.all(c[0] == 0):
+            c[0] += k[i]
         else:
-            tmp = np.empty(n + 1, dtype=cs.dtype)
-            tmp[0] = cs[0]*0
-            tmp[1] = cs[0]/2
+            tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
+            tmp[0] = c[0]*0
+            tmp[1] = c[0]/2
             for j in range(1, n):
-                tmp[j + 1] = cs[j]/(2*(j + 1))
+                tmp[j + 1] = c[j]/(2*(j + 1))
             tmp[0] += k[i] - hermval(lbnd, tmp)
-            cs = tmp
-    return cs
+            c = tmp
+    c = np.rollaxis(c, 0, iaxis + 1)
+    return c
 
 
 def hermval(x, c, tensor=True):
@@ -873,8 +906,8 @@ def hermval(x, c, tensor=True):
 
     """
     c = np.array(c, ndmin=1, copy=0)
-    if c.dtype.char not in 'efdgFDGO':
-        c = c + 0.0
+    if c.dtype.char in '?bBhHiIlLqQpP':
+        c = c.astype(np.double)
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
