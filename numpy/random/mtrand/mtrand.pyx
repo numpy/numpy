@@ -920,6 +920,8 @@ cdef class RandomState:
 
         Generates a random sample from a given 1-D array
 
+                .. versionadded:: 1.7.0
+
         Parameters
         -----------
         a : 1-D array-like or int
@@ -991,7 +993,7 @@ cdef class RandomState:
         # Format and Verify input
         if isinstance(a, int):
             if a > 0:
-                pop_size = a
+                pop_size = a #population size
             else:
                 raise ValueError("a must be greater than 0")
         else:
@@ -1008,7 +1010,7 @@ cdef class RandomState:
                 raise ValueError("p must be 1-dimensional")
             if p.size != pop_size:
                 raise ValueError("a and p must have same size")
-            if any(p<0):
+            if any(p < 0):
                 raise ValueError("probabilities are not non-negative")
             if not np.allclose(p.sum(), 1):
                 raise ValueError("probabilities do not sum to 1")
@@ -1016,10 +1018,9 @@ cdef class RandomState:
         # Actual sampling
         if replace:
             if None != p:
-                x = np.arange(pop_size)
-                number_each = self.multinomial(size, p)
-                idx = np.repeat(x, number_each)
-                self.shuffle(idx)
+                cdf = p.cumsum()
+                uniform_samples = np.random.random(size)
+                idx = cdf.searchsorted(uniform_samples, side='right')
             else:
                 idx = self.randint(0, pop_size, size=size)
         else:
@@ -1039,7 +1040,7 @@ cdef class RandomState:
                         p[found[0:n_uniq]] = 0
                     p = p/p.sum()
                     cdf = np.cumsum(p)
-                    new = np.searchsorted(cdf, x)
+                    new = cdf.searchsorted(x, side='right')
                     new = np.unique(new)
                     found[n_uniq:n_uniq+new.size] = new
                     n_uniq += new.size

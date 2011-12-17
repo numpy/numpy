@@ -87,7 +87,9 @@ to the original operand which was reduced.
 Custom formatter for printing arrays
 ------------------------------------
 
-
+New function numpy.random.choice
+---------------------------------
+A generic sampling function has been added which will generate samples from a given array-like. The samples can be with or without replacement, and with uniform or given non-uniform probabilities.
 
 Changes
 =======

@@ -125,7 +125,7 @@ class TestRandomDist(TestCase):
     def test_choice_nonuniform_replace(self):
         np.random.seed(self.seed)
         actual = np.random.choice(4, 4, p=[0.4, 0.4, 0.1, 0.1])
-        desired = np.array([1, 0, 3, 0])
+        desired = np.array([1, 1, 2, 2])
         np.testing.assert_array_equal(actual, desired)
 
     def test_choice_uniform_noreplace(self):
