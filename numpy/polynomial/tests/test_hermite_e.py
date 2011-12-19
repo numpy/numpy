@@ -220,21 +220,21 @@ class TestCalculus(TestCase) :
 
         # check that zeroth deriviative does nothing
         for i in range(5) :
-            tgt = [1] + [0]*i
+            tgt = [0]*i + [1]
             res = herme.hermeder(tgt, m=0)
             assert_equal(trim(res), trim(tgt))
 
         # check that derivation is the inverse of integration
         for i in range(5) :
             for j in range(2,5) :
-                tgt = [1] + [0]*i
+                tgt = [0]*i + [1]
                 res = herme.hermeder(herme.hermeint(tgt, m=j), m=j)
                 assert_almost_equal(trim(res), trim(tgt))
 
         # check derivation with scaling
         for i in range(5) :
             for j in range(2,5) :
-                tgt = [1] + [0]*i
+                tgt = [0]*i + [1]
                 res = herme.hermeder(herme.hermeint(tgt, m=j, scl=2), m=j, scl=.5)
                 assert_almost_equal(trim(res), trim(tgt))
 
