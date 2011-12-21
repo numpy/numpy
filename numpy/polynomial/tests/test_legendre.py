@@ -5,21 +5,21 @@ from __future__ import division
 
 import numpy as np
 import numpy.polynomial.legendre as leg
-import numpy.polynomial.polynomial as poly
+from numpy.polynomial.polynomial import polyval
 from numpy.testing import *
 
-P0 = np.array([ 1])
-P1 = np.array([ 0,  1])
-P2 = np.array([-1,  0,    3])/2
-P3 = np.array([ 0, -3,    0,    5])/2
-P4 = np.array([ 3,  0,  -30,    0,  35])/8
-P5 = np.array([ 0, 15,    0,  -70,   0,   63])/8
-P6 = np.array([-5,  0,  105,    0,-315,    0,   231])/16
-P7 = np.array([ 0,-35,    0,  315,   0, -693,     0,   429])/16
-P8 = np.array([35,  0,-1260,    0,6930,    0,-12012,     0,6435])/128
-P9 = np.array([ 0,315,    0,-4620,   0,18018,     0,-25740,   0,12155])/128
+L0 = np.array([ 1])
+L1 = np.array([ 0,  1])
+L2 = np.array([-1,  0,    3])/2
+L3 = np.array([ 0, -3,    0,    5])/2
+L4 = np.array([ 3,  0,  -30,    0,  35])/8
+L5 = np.array([ 0, 15,    0,  -70,   0,   63])/8
+L6 = np.array([-5,  0,  105,    0,-315,    0,   231])/16
+L7 = np.array([ 0,-35,    0,  315,   0, -693,     0,   429])/16
+L8 = np.array([35,  0,-1260,    0,6930,    0,-12012,     0,6435])/128
+L9 = np.array([ 0,315,    0,-4620,   0,18018,     0,-25740,   0,12155])/128
 
-Plist = [P0, P1, P2, P3, P4, P5, P6, P7, P8, P9]
+Llist = [L0, L1, L2, L3, L4, L5, L6, L7, L8, L9]
 
 def trim(x) :
     return leg.legtrim(x, tol=1e-6)
@@ -42,40 +42,6 @@ class TestConstants(TestCase) :
 
 class TestArithmetic(TestCase) :
     x = np.linspace(-1, 1, 100)
-    y0 = poly.polyval(x, P0)
-    y1 = poly.polyval(x, P1)
-    y2 = poly.polyval(x, P2)
-    y3 = poly.polyval(x, P3)
-    y4 = poly.polyval(x, P4)
-    y5 = poly.polyval(x, P5)
-    y6 = poly.polyval(x, P6)
-    y7 = poly.polyval(x, P7)
-    y8 = poly.polyval(x, P8)
-    y9 = poly.polyval(x, P9)
-    y = [y0, y1, y2, y3, y4, y5, y6, y7, y8, y9]
-
-    def test_legval(self) :
-        def f(x) :
-            return x*(x**2 - 1)
-
-        #check empty input
-        assert_equal(leg.legval([], [1]).size, 0)
-
-        #check normal input)
-        for i in range(10) :
-            msg = "At i=%d" % i
-            ser = np.zeros
-            tgt = self.y[i]
-            res = leg.legval(self.x, [0]*i + [1])
-            assert_almost_equal(res, tgt, err_msg=msg)
-
-        #check that shape is preserved
-        for i in range(3) :
-            dims = [2]*i
-            x = np.zeros(dims)
-            assert_equal(leg.legval(x, [1]).shape, dims)
-            assert_equal(leg.legval(x, [1,0]).shape, dims)
-            assert_equal(leg.legval(x, [1,0,0]).shape, dims)
 
     def test_legadd(self) :
         for i in range(5) :
@@ -132,7 +98,102 @@ class TestArithmetic(TestCase) :
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
-class TestCalculus(TestCase) :
+class TestEvaluation(TestCase) :
+    # coefficients of 1 + 2*x + 3*x**2
+    c1d = np.array([2., 2., 2.])
+    c2d = np.einsum('i,j->ij', c1d, c1d)
+    c3d = np.einsum('i,j,k->ijk', c1d, c1d, c1d)
+
+    # some random values in [-1, 1)
+    x = np.random.random((3, 5))*2 - 1
+    y = polyval(x, [1., 2., 3.])
+
+    def test_legval(self) :
+        #check empty input
+        assert_equal(leg.legval([], [1]).size, 0)
+
+        #check normal input)
+        x = np.linspace(-1,1)
+        y = [polyval(x, c) for c in Llist]
+        for i in range(10) :
+            msg = "At i=%d" % i
+            ser = np.zeros
+            tgt = y[i]
+            res = leg.legval(x, [0]*i + [1])
+            assert_almost_equal(res, tgt, err_msg=msg)
+
+        #check that shape is preserved
+        for i in range(3) :
+            dims = [2]*i
+            x = np.zeros(dims)
+            assert_equal(leg.legval(x, [1]).shape, dims)
+            assert_equal(leg.legval(x, [1,0]).shape, dims)
+            assert_equal(leg.legval(x, [1,0,0]).shape, dims)
+
+    def test_legval2d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test exceptions
+        assert_raises(ValueError, leg.legval2d, x1, x2[:2], self.c2d)
+
+        #test values
+        tgt = y1*y2
+        res = leg.legval2d(x1, x2, self.c2d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = leg.legval2d(z, z, self.c2d)
+        assert_(res.shape == (2,3))
+
+    def test_legval3d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test exceptions
+        assert_raises(ValueError, leg.legval3d, x1, x2, x3[:2], self.c3d)
+
+        #test values
+        tgt = y1*y2*y3
+        res = leg.legval3d(x1, x2, x3, self.c3d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = leg.legval3d(z, z, z, self.c3d)
+        assert_(res.shape == (2, 3))
+
+    def test_leggrid2d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test values
+        tgt = np.einsum('i,j->ij', y1, y2)
+        res = leg.leggrid2d(x1, x2, self.c2d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = leg.leggrid2d(z, z, self.c2d)
+        assert_(res.shape == (2, 3)*2)
+
+    def test_leggrid3d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test values
+        tgt = np.einsum('i,j,k->ijk', y1, y2, y3)
+        res = leg.leggrid3d(x1, x2, x3, self.c3d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = leg.leggrid3d(z, z, z, self.c3d)
+        assert_(res.shape == (2, 3)*3)
+
+
+class TestIntegral(TestCase) :
 
     def test_legint(self) :
         # check exceptions
@@ -214,6 +275,25 @@ class TestCalculus(TestCase) :
                 res = leg.legint(pol, m=j, k=range(j), scl=2)
                 assert_almost_equal(trim(res), trim(tgt))
 
+    def test_legint_axis(self):
+        # check that axis keyword works
+        c2d = np.random.random((3, 4))
+
+        tgt = np.vstack([leg.legint(c) for c in c2d.T]).T
+        res = leg.legint(c2d, axis=0)
+        assert_almost_equal(res, tgt)
+
+        tgt = np.vstack([leg.legint(c) for c in c2d])
+        res = leg.legint(c2d, axis=1)
+        assert_almost_equal(res, tgt)
+
+        tgt = np.vstack([leg.legint(c, k=3) for c in c2d])
+        res = leg.legint(c2d, k=3, axis=1)
+        assert_almost_equal(res, tgt)
+
+
+class TestDerivative(TestCase) :
+
     def test_legder(self) :
         # check exceptions
         assert_raises(ValueError, leg.legder, [0], .5)
@@ -239,6 +319,67 @@ class TestCalculus(TestCase) :
                 res = leg.legder(leg.legint(tgt, m=j, scl=2), m=j, scl=.5)
                 assert_almost_equal(trim(res), trim(tgt))
 
+    def test_legder_axis(self):
+        # check that axis keyword works
+        c2d = np.random.random((3, 4))
+
+        tgt = np.vstack([leg.legder(c) for c in c2d.T]).T
+        res = leg.legder(c2d, axis=0)
+        assert_almost_equal(res, tgt)
+
+        tgt = np.vstack([leg.legder(c) for c in c2d])
+        res = leg.legder(c2d, axis=1)
+        assert_almost_equal(res, tgt)
+
+
+class TestVander(TestCase):
+    # some random values in [-1, 1)
+    x = np.random.random((3, 5))*2 - 1
+
+
+    def test_legvander(self) :
+        # check for 1d x
+        x = np.arange(3)
+        v = leg.legvander(x, 3)
+        assert_(v.shape == (3, 4))
+        for i in range(4) :
+            coef = [0]*i + [1]
+            assert_almost_equal(v[..., i], leg.legval(x, coef))
+
+        # check for 2d x
+        x = np.array([[1, 2], [3, 4], [5, 6]])
+        v = leg.legvander(x, 3)
+        assert_(v.shape == (3, 2, 4))
+        for i in range(4) :
+            coef = [0]*i + [1]
+            assert_almost_equal(v[..., i], leg.legval(x, coef))
+
+    def test_legvander2d(self) :
+        # also tests polyval2d for non-square coefficient array
+        x1, x2, x3 = self.x
+        c = np.random.random((2, 3))
+        van = leg.legvander2d(x1, x2, [1, 2])
+        tgt = leg.legval2d(x1, x2, c)
+        res = np.dot(van, c.flat)
+        assert_almost_equal(res, tgt)
+
+        # check shape
+        van = leg.legvander2d([x1], [x2], [1, 2])
+        assert_(van.shape == (1, 5, 6))
+
+    def test_legvander3d(self) :
+        # also tests polyval3d for non-square coefficient array
+        x1, x2, x3 = self.x
+        c = np.random.random((2, 3, 4))
+        van = leg.legvander3d(x1, x2, x3, [1, 2, 3])
+        tgt = leg.legval3d(x1, x2, x3, c)
+        res = np.dot(van, c.flat)
+        assert_almost_equal(res, tgt)
+
+        # check shape
+        van = leg.legvander3d([x1], [x2], [x3], [1, 2, 3])
+        assert_(van.shape == (1, 5, 24))
+
 
 class TestMisc(TestCase) :
 
@@ -261,23 +402,6 @@ class TestMisc(TestCase) :
             tgt = np.linspace(-1, 1, i)
             res = leg.legroots(leg.legfromroots(tgt))
             assert_almost_equal(trim(res), trim(tgt))
-
-    def test_legvander(self) :
-        # check for 1d x
-        x = np.arange(3)
-        v = leg.legvander(x, 3)
-        assert_(v.shape == (3,4))
-        for i in range(4) :
-            coef = [0]*i + [1]
-            assert_almost_equal(v[...,i], leg.legval(x, coef))
-
-        # check for 2d x
-        x = np.array([[1,2],[3,4],[5,6]])
-        v = leg.legvander(x, 3)
-        assert_(v.shape == (3,2,4))
-        for i in range(4) :
-            coef = [0]*i + [1]
-            assert_almost_equal(v[...,i], leg.legval(x, coef))
 
     def test_legfit(self) :
         def f(x) :
@@ -334,11 +458,11 @@ class TestMisc(TestCase) :
 
     def test_leg2poly(self) :
         for i in range(10) :
-            assert_almost_equal(leg.leg2poly([0]*i + [1]), Plist[i])
+            assert_almost_equal(leg.leg2poly([0]*i + [1]), Llist[i])
 
     def test_poly2leg(self) :
         for i in range(10) :
-            assert_almost_equal(leg.poly2leg(Plist[i]), [0]*i + [1])
+            assert_almost_equal(leg.poly2leg(Llist[i]), [0]*i + [1])
 
 
 def assert_poly_almost_equal(p1, p2):
