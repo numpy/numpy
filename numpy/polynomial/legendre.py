@@ -978,7 +978,14 @@ def legval2d(x, y, c):
     legval, leggrid2d, legval3d, leggrid3d
 
     """
-    return legval(y, legval(x, c), False)
+    try:
+        x, y = np.array((x, y), copy=0)
+    except:
+        raise ValueError('x, y are incompatible')
+
+    c = legval(x, c)
+    c = legval(y, c, tensor=False)
+    return c
 
 
 def leggrid2d(x, y, c):
@@ -1018,7 +1025,9 @@ def leggrid2d(x, y, c):
     legval, legval2d, legval3d, leggrid3d
 
     """
-    return legval(y, legval(x, c))
+    c = legval(x, c)
+    c = legval(y, c)
+    return c
 
 
 def legval3d(x, y, z, c):
@@ -1055,7 +1064,15 @@ def legval3d(x, y, z, c):
     legval, legval2d, leggrid2d, leggrid3d
 
     """
-    return legval(z, legval2d(x, y, c), False)
+    try:
+        x, y, z = np.array((x, y, z), copy=0)
+    except:
+        raise ValueError('x, y, z are incompatible')
+
+    c = legval(x, c)
+    c = legval(y, c, tensor=False)
+    c = legval(z, c, tensor=False)
+    return c
 
 
 def leggrid3d(x, y, z, c):
@@ -1097,7 +1114,10 @@ def leggrid3d(x, y, z, c):
     legval, legval2d, leggrid2d, legval3d
 
     """
-    return legval(z, leggrid2d(x, y, c))
+    c = legval(x, c)
+    c = legval(y, c)
+    c = legval(z, c)
+    return c
 
 
 def legvander(x, deg) :
@@ -1179,12 +1199,12 @@ def legvander2d(x, y, deg) :
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
     if is_valid != [1, 1]:
         raise ValueError("degrees must be non-negative integers")
-    degx, degy = deg
+    degx, degy = ideg
     x, y = np.array((x, y), copy=0) + 0.0
 
     vx = legvander(x, degx)
     vy = legvander(y, degy)
-    v = np.einsum("...i,...j->...ij", vx, vy)
+    v = vx[..., None]*vy[..., None, :]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1225,13 +1245,13 @@ def legvander3d(x, y, z, deg) :
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
     if is_valid != [1, 1, 1]:
         raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = deg
+    degx, degy, degz = ideg
     x, y, z = np.array((x, y, z), copy=0) + 0.0
 
-    vx = legvander(x, deg_x)
-    vy = legvander(y, deg_y)
-    vz = legvander(z, deg_z)
-    v = np.einsum("...i,...j,...k->...ijk", vx, vy, vz)
+    vx = legvander(x, degx)
+    vy = legvander(y, degy)
+    vz = legvander(z, degz)
+    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
     return v.reshape(v.shape[:-3] + (-1,))
 
 

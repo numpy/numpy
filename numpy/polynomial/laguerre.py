@@ -965,7 +965,14 @@ def lagval2d(x, y, c):
     lagval, laggrid2d, lagval3d, laggrid3d
 
     """
-    return lagval(y, lagval(x, c), False)
+    try:
+        x, y = np.array((x, y), copy=0)
+    except:
+        raise ValueError('x, y are incompatible')
+
+    c = lagval(x, c)
+    c = lagval(y, c, tensor=False)
+    return c
 
 
 def laggrid2d(x, y, c):
@@ -1005,7 +1012,9 @@ def laggrid2d(x, y, c):
     lagval, lagval2d, lagval3d, laggrid3d
 
     """
-    return lagval(y, lagval(x, c))
+    c = lagval(x, c)
+    c = lagval(y, c)
+    return c
 
 
 def lagval3d(x, y, z, c):
@@ -1042,7 +1051,15 @@ def lagval3d(x, y, z, c):
     lagval, lagval2d, laggrid2d, laggrid3d
 
     """
-    return lagval(z, lagval2d(x, y, c), False)
+    try:
+        x, y, z = np.array((x, y, z), copy=0)
+    except:
+        raise ValueError('x, y, z are incompatible')
+
+    c = lagval(x, c)
+    c = lagval(y, c, tensor=False)
+    c = lagval(z, c, tensor=False)
+    return c
 
 
 def laggrid3d(x, y, z, c):
@@ -1084,7 +1101,10 @@ def laggrid3d(x, y, z, c):
     lagval, lagval2d, laggrid2d, lagval3d
 
     """
-    return lagval(z, laggrid2d(x, y, c))
+    c = lagval(x, c)
+    c = lagval(y, c)
+    c = lagval(z, c)
+    return c
 
 
 def lagvander(x, deg) :
@@ -1173,12 +1193,12 @@ def lagvander2d(x, y, deg) :
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
     if is_valid != [1, 1]:
         raise ValueError("degrees must be non-negative integers")
-    degx, degy = deg
+    degx, degy = ideg
     x, y = np.array((x, y), copy=0) + 0.0
 
     vx = lagvander(x, degx)
     vy = lagvander(y, degy)
-    v = np.einsum("...i,...j->...ij", vx, vy)
+    v = vx[..., None]*vy[..., None, :]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1219,13 +1239,13 @@ def lagvander3d(x, y, z, deg) :
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
     if is_valid != [1, 1, 1]:
         raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = deg
+    degx, degy, degz = ideg
     x, y, z = np.array((x, y, z), copy=0) + 0.0
 
-    vx = lagvander(x, deg_x)
-    vy = lagvander(y, deg_y)
-    vz = lagvander(z, deg_z)
-    v = np.einsum("...i,...j,...k->...ijk", vx, vy, vz)
+    vx = lagvander(x, degx)
+    vy = lagvander(y, degy)
+    vz = lagvander(z, degz)
+    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
     return v.reshape(v.shape[:-3] + (-1,))
 
 

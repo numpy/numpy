@@ -1200,7 +1200,14 @@ def chebval2d(x, y, c):
     chebval, chebgrid2d, chebval3d, chebgrid3d
 
     """
-    return chebval(y, chebval(x, c), False)
+    try:
+        x, y = np.array((x, y), copy=0)
+    except:
+        raise ValueError('x, y are incompatible')
+
+    c = chebval(x, c)
+    c = chebval(y, c, tensor=False)
+    return c
 
 
 def chebgrid2d(x, y, c):
@@ -1240,7 +1247,9 @@ def chebgrid2d(x, y, c):
     chebval, chebval2d, chebval3d, chebgrid3d
 
     """
-    return chebval(y, chebval(x, c))
+    c = chebval(x, c)
+    c = chebval(y, c)
+    return c
 
 
 def chebval3d(x, y, z, c):
@@ -1277,7 +1286,15 @@ def chebval3d(x, y, z, c):
     chebval, chebval2d, chebgrid2d, chebgrid3d
 
     """
-    return chebval(z, chebval2d(x, y, c), False)
+    try:
+        x, y, z = np.array((x, y, z), copy=0)
+    except:
+        raise ValueError('x, y, z are incompatible')
+
+    c = chebval(x, c)
+    c = chebval(y, c, tensor=False)
+    c = chebval(z, c, tensor=False)
+    return c
 
 
 def chebgrid3d(x, y, z, c):
@@ -1319,7 +1336,10 @@ def chebgrid3d(x, y, z, c):
     chebval, chebval2d, chebgrid2d, chebval3d
 
     """
-    return chebval(z, chebgrid2d(x, y, c))
+    c = chebval(x, c)
+    c = chebval(y, c)
+    c = chebval(z, c)
+    return c
 
 
 def chebvander(x, deg) :
@@ -1401,12 +1421,12 @@ def chebvander2d(x, y, deg) :
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
     if is_valid != [1, 1]:
         raise ValueError("degrees must be non-negative integers")
-    degx, degy = deg
+    degx, degy = ideg
     x, y = np.array((x, y), copy=0) + 0.0
 
     vx = chebvander(x, degx)
     vy = chebvander(y, degy)
-    v = np.einsum("...i,...j->...ij", vx, vy)
+    v = vx[..., None]*vy[..., None, :]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1447,13 +1467,13 @@ def chebvander3d(x, y, z, deg) :
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
     if is_valid != [1, 1, 1]:
         raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = deg
+    degx, degy, degz = ideg
     x, y, z = np.array((x, y, z), copy=0) + 0.0
 
-    vx = chebvander(x, deg_x)
-    vy = chebvander(y, deg_y)
-    vz = chebvander(z, deg_z)
-    v = np.einsum("...i,...j,...k->...ijk", vx, vy, vz)
+    vx = chebvander(x, degx)
+    vy = chebvander(y, degy)
+    vz = chebvander(z, degz)
+    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
