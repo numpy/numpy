@@ -786,7 +786,14 @@ def polyval2d(x, y, c):
     polyval, polygrid2d, polyval3d, polygrid3d
 
     """
-    return polyval(y, polyval(x, c), False)
+    try:
+        x, y = np.array((x, y), copy=0)
+    except:
+        raise ValueError('x, y are incompatible')
+
+    c = polyval(x, c)
+    c = polyval(y, c, tensor=False)
+    return c
 
 
 def polygrid2d(x, y, c):
@@ -826,7 +833,9 @@ def polygrid2d(x, y, c):
     polyval, polyval2d, polyval3d, polygrid3d
 
     """
-    return polyval(y, polyval(x, c))
+    c = polyval(x, c)
+    c = polyval(y, c)
+    return c
 
 
 def polyval3d(x, y, z, c):
@@ -863,7 +872,15 @@ def polyval3d(x, y, z, c):
     polyval, polyval2d, polygrid2d, polygrid3d
 
     """
-    return polyval(z, polyval2d(x, y, c), False)
+    try:
+        x, y, z = np.array((x, y, z), copy=0)
+    except:
+        raise ValueError('x, y, z are incompatible')
+
+    c = polyval(x, c)
+    c = polyval(y, c, tensor=False)
+    c = polyval(z, c, tensor=False)
+    return c
 
 
 def polygrid3d(x, y, z, c):
@@ -904,7 +921,10 @@ def polygrid3d(x, y, z, c):
     polyval, polyval2d, polygrid2d, polyval3d
 
     """
-    return polyval(z, polygrid2d(x, y, c))
+    c = polyval(x, c)
+    c = polyval(y, c)
+    c = polyval(z, c)
+    return c
 
 
 def polyvander(x, deg) :
@@ -986,12 +1006,14 @@ def polyvander2d(x, y, deg) :
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
     if is_valid != [1, 1]:
         raise ValueError("degrees must be non-negative integers")
-    degx, degy = deg
+    degx, degy = ideg
     x, y = np.array((x, y), copy=0) + 0.0
 
     vx = polyvander(x, degx)
     vy = polyvander(y, degy)
-    v = np.einsum("...i,...j->...ij", vx, vy)
+    v = vx[..., None]*vy[..., None, :]
+    # einsum bug
+    #v = np.einsum("...i,...j->...ij", vx, vy)
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1032,13 +1054,15 @@ def polyvander3d(x, y, z, deg) :
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
     if is_valid != [1, 1, 1]:
         raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = deg
+    degx, degy, degz = ideg
     x, y, z = np.array((x, y, z), copy=0) + 0.0
 
-    vx = polyvander(x, deg_x)
-    vy = polyvander(y, deg_y)
-    vz = polyvander(z, deg_z)
-    v = np.einsum("...i,...j,...k->...ijk", vx, vy, vz)
+    vx = polyvander(x, degx)
+    vy = polyvander(y, degy)
+    vz = polyvander(z, degz)
+    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
+    # einsum bug
+    #v = np.einsum("...i, ...j, ...k->...ijk", vx, vy, vz)
     return v.reshape(v.shape[:-3] + (-1,))
 
 

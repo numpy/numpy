@@ -962,7 +962,14 @@ def hermeval2d(x, y, c):
     hermeval, hermegrid2d, hermeval3d, hermegrid3d
 
     """
-    return hermeval(y, hermeval(x, c), False)
+    try:
+        x, y = np.array((x, y), copy=0)
+    except:
+        raise ValueError('x, y are incompatible')
+
+    c = hermeval(x, c)
+    c = hermeval(y, c, tensor=False)
+    return c
 
 
 def hermegrid2d(x, y, c):
@@ -1002,7 +1009,9 @@ def hermegrid2d(x, y, c):
     hermeval, hermeval2d, hermeval3d, hermegrid3d
 
     """
-    return hermeval(y, hermeval(x, c))
+    c = hermeval(x, c)
+    c = hermeval(y, c)
+    return c
 
 
 def hermeval3d(x, y, z, c):
@@ -1039,7 +1048,15 @@ def hermeval3d(x, y, z, c):
     hermeval, hermeval2d, hermegrid2d, hermegrid3d
 
     """
-    return hermeval(z, hermeval2d(x, y, c), False)
+    try:
+        x, y, z = np.array((x, y, z), copy=0)
+    except:
+        raise ValueError('x, y, z are incompatible')
+
+    c = hermeval(x, c)
+    c = hermeval(y, c, tensor=False)
+    c = hermeval(z, c, tensor=False)
+    return c
 
 
 def hermegrid3d(x, y, z, c):
@@ -1081,7 +1098,10 @@ def hermegrid3d(x, y, z, c):
     hermeval, hermeval2d, hermegrid2d, hermeval3d
 
     """
-    return hermeval(z, hermegrid2d(x, y, c))
+    c = hermeval(x, c)
+    c = hermeval(y, c)
+    c = hermeval(z, c)
+    return c
 
 
 def hermevander(x, deg) :
@@ -1170,12 +1190,12 @@ def hermevander2d(x, y, deg) :
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
     if is_valid != [1, 1]:
         raise ValueError("degrees must be non-negative integers")
-    degx, degy = deg
+    degx, degy = ideg
     x, y = np.array((x, y), copy=0) + 0.0
 
     vx = hermevander(x, degx)
     vy = hermevander(y, degy)
-    v = np.einsum("...i,...j->...ij", vx, vy)
+    v = vx[..., None]*vy[..., None, :]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
@@ -1216,13 +1236,13 @@ def hermevander3d(x, y, z, deg) :
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
     if is_valid != [1, 1, 1]:
         raise ValueError("degrees must be non-negative integers")
-    degx, degy, degz = deg
+    degx, degy, degz = ideg
     x, y, z = np.array((x, y, z), copy=0) + 0.0
 
-    vx = hermevander(x, deg_x)
-    vy = hermevander(y, deg_y)
-    vz = hermevander(z, deg_z)
-    v = np.einsum("...i,...j,...k->...ijk", vx, vy, vz)
+    vx = hermevander(x, degx)
+    vy = hermevander(y, degy)
+    vz = hermevander(z, degz)
+    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
