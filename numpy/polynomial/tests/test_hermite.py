@@ -288,6 +288,10 @@ class TestIntegral(TestCase) :
         res = herm.hermint(c2d, axis=1)
         assert_almost_equal(res, tgt)
 
+        tgt = np.vstack([herm.hermint(c, k=3) for c in c2d])
+        res = herm.hermint(c2d, k=3, axis=1)
+        assert_almost_equal(res, tgt)
+
 
 class TestDerivative(TestCase) :
 
@@ -326,10 +330,6 @@ class TestDerivative(TestCase) :
 
         tgt = np.vstack([herm.hermder(c) for c in c2d])
         res = herm.hermder(c2d, axis=1)
-        assert_almost_equal(res, tgt)
-
-        tgt = np.vstack([herm.hermder(c, k=3) for c in c2d])
-        res = herm.hermder(c2d, k=3, axis=1)
         assert_almost_equal(res, tgt)
 
 
