@@ -1,11 +1,11 @@
-"""Tests for hermendre module.
+"""Tests for laguerre module.
 
 """
 from __future__ import division
 
 import numpy as np
 import numpy.polynomial.laguerre as lag
-import numpy.polynomial.polynomial as poly
+from numpy.polynomial.polynomial import polyval
 from numpy.testing import *
 
 L0 = np.array([1 ])/1
@@ -39,37 +39,6 @@ class TestConstants(TestCase) :
 
 class TestArithmetic(TestCase) :
     x = np.linspace(-3, 3, 100)
-    y0 = poly.polyval(x, L0)
-    y1 = poly.polyval(x, L1)
-    y2 = poly.polyval(x, L2)
-    y3 = poly.polyval(x, L3)
-    y4 = poly.polyval(x, L4)
-    y5 = poly.polyval(x, L5)
-    y6 = poly.polyval(x, L6)
-    y = [y0, y1, y2, y3, y4, y5, y6]
-
-    def test_lagval(self) :
-        def f(x) :
-            return x*(x**2 - 1)
-
-        #check empty input
-        assert_equal(lag.lagval([], [1]).size, 0)
-
-        #check normal input)
-        for i in range(7) :
-            msg = "At i=%d" % i
-            ser = np.zeros
-            tgt = self.y[i]
-            res = lag.lagval(self.x, [0]*i + [1])
-            assert_almost_equal(res, tgt, err_msg=msg)
-
-        #check that shape is preserved
-        for i in range(3) :
-            dims = [2]*i
-            x = np.zeros(dims)
-            assert_equal(lag.lagval(x, [1]).shape, dims)
-            assert_equal(lag.lagval(x, [1,0]).shape, dims)
-            assert_equal(lag.lagval(x, [1,0,0]).shape, dims)
 
     def test_lagadd(self) :
         for i in range(5) :
@@ -125,7 +94,102 @@ class TestArithmetic(TestCase) :
                 assert_almost_equal(trim(res), trim(tgt), err_msg=msg)
 
 
-class TestCalculus(TestCase) :
+class TestEvaluation(TestCase) :
+    # coefficients of 1 + 2*x + 3*x**2
+    c1d = np.array([9., -14., 6.])
+    c2d = np.einsum('i,j->ij', c1d, c1d)
+    c3d = np.einsum('i,j,k->ijk', c1d, c1d, c1d)
+
+    # some random values in [-1, 1)
+    x = np.random.random((3, 5))*2 - 1
+    y = polyval(x, [1., 2., 3.])
+
+    def test_lagval(self) :
+        #check empty input
+        assert_equal(lag.lagval([], [1]).size, 0)
+
+        #check normal input)
+        x = np.linspace(-1,1)
+        y = [polyval(x, c) for c in Llist]
+        for i in range(7) :
+            msg = "At i=%d" % i
+            ser = np.zeros
+            tgt = y[i]
+            res = lag.lagval(x, [0]*i + [1])
+            assert_almost_equal(res, tgt, err_msg=msg)
+
+        #check that shape is preserved
+        for i in range(3) :
+            dims = [2]*i
+            x = np.zeros(dims)
+            assert_equal(lag.lagval(x, [1]).shape, dims)
+            assert_equal(lag.lagval(x, [1,0]).shape, dims)
+            assert_equal(lag.lagval(x, [1,0,0]).shape, dims)
+
+    def test_lagval2d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test exceptions
+        assert_raises(ValueError, lag.lagval2d, x1, x2[:2], self.c2d)
+
+        #test values
+        tgt = y1*y2
+        res = lag.lagval2d(x1, x2, self.c2d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = lag.lagval2d(z, z, self.c2d)
+        assert_(res.shape == (2,3))
+
+    def test_lagval3d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test exceptions
+        assert_raises(ValueError, lag.lagval3d, x1, x2, x3[:2], self.c3d)
+
+        #test values
+        tgt = y1*y2*y3
+        res = lag.lagval3d(x1, x2, x3, self.c3d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = lag.lagval3d(z, z, z, self.c3d)
+        assert_(res.shape == (2,3))
+
+    def test_laggrid2d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test values
+        tgt = np.einsum('i,j->ij', y1, y2)
+        res = lag.laggrid2d(x1, x2, self.c2d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = lag.laggrid2d(z, z, self.c2d)
+        assert_(res.shape == (2, 3)*2)
+
+    def test_laggrid3d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test values
+        tgt = np.einsum('i,j,k->ijk', y1, y2, y3)
+        res = lag.laggrid3d(x1, x2, x3, self.c3d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = lag.laggrid3d(z, z, z, self.c3d)
+        assert_(res.shape == (2, 3)*3)
+
+
+class TestIntegral(TestCase) :
 
     def test_lagint(self) :
         # check exceptions
@@ -207,6 +271,25 @@ class TestCalculus(TestCase) :
                 res = lag.lagint(pol, m=j, k=range(j), scl=2)
                 assert_almost_equal(trim(res), trim(tgt))
 
+    def test_lagint_axis(self):
+        # check that axis keyword works
+        c2d = np.random.random((3, 4))
+
+        tgt = np.vstack([lag.lagint(c) for c in c2d.T]).T
+        res = lag.lagint(c2d, axis=0)
+        assert_almost_equal(res, tgt)
+
+        tgt = np.vstack([lag.lagint(c) for c in c2d])
+        res = lag.lagint(c2d, axis=1)
+        assert_almost_equal(res, tgt)
+
+        tgt = np.vstack([lag.lagint(c, k=3) for c in c2d])
+        res = lag.lagint(c2d, k=3, axis=1)
+        assert_almost_equal(res, tgt)
+
+
+class TestDerivative(TestCase) :
+
     def test_lagder(self) :
         # check exceptions
         assert_raises(ValueError, lag.lagder, [0], .5)
@@ -232,6 +315,68 @@ class TestCalculus(TestCase) :
                 res = lag.lagder(lag.lagint(tgt, m=j, scl=2), m=j, scl=.5)
                 assert_almost_equal(trim(res), trim(tgt))
 
+    def test_lagder_axis(self):
+        # check that axis keyword works
+        c2d = np.random.random((3, 4))
+
+        tgt = np.vstack([lag.lagder(c) for c in c2d.T]).T
+        res = lag.lagder(c2d, axis=0)
+        assert_almost_equal(res, tgt)
+
+        tgt = np.vstack([lag.lagder(c) for c in c2d])
+        res = lag.lagder(c2d, axis=1)
+        assert_almost_equal(res, tgt)
+
+
+class TestVander(TestCase):
+    # some random values in [-1, 1)
+    x = np.random.random((3, 5))*2 - 1
+
+
+    def test_lagvander(self) :
+        # check for 1d x
+        x = np.arange(3)
+        v = lag.lagvander(x, 3)
+        assert_(v.shape == (3, 4))
+        for i in range(4) :
+            coef = [0]*i + [1]
+            assert_almost_equal(v[..., i], lag.lagval(x, coef))
+
+        # check for 2d x
+        x = np.array([[1, 2], [3, 4], [5, 6]])
+        v = lag.lagvander(x, 3)
+        assert_(v.shape == (3, 2, 4))
+        for i in range(4) :
+            coef = [0]*i + [1]
+            assert_almost_equal(v[..., i], lag.lagval(x, coef))
+
+    def test_lagvander2d(self) :
+        # also tests lagval2d for non-square coefficient array
+        x1, x2, x3 = self.x
+        c = np.random.random((2, 3))
+        van = lag.lagvander2d(x1, x2, [1, 2])
+        tgt = lag.lagval2d(x1, x2, c)
+        res = np.dot(van, c.flat)
+        assert_almost_equal(res, tgt)
+
+        # check shape
+        van = lag.lagvander2d([x1], [x2], [1, 2])
+        assert_(van.shape == (1, 5, 6))
+
+
+    def test_lagvander3d(self) :
+        # also tests lagval3d for non-square coefficient array
+        x1, x2, x3 = self.x
+        c = np.random.random((2, 3, 4))
+        van = lag.lagvander3d(x1, x2, x3, [1, 2, 3])
+        tgt = lag.lagval3d(x1, x2, x3, c)
+        res = np.dot(van, c.flat)
+        assert_almost_equal(res, tgt)
+
+        # check shape
+        van = lag.lagvander3d([x1], [x2], [x3], [1, 2, 3])
+        assert_(van.shape == (1, 5, 24))
+
 
 class TestMisc(TestCase) :
 
@@ -254,23 +399,6 @@ class TestMisc(TestCase) :
             tgt = np.linspace(0, 3, i)
             res = lag.lagroots(lag.lagfromroots(tgt))
             assert_almost_equal(trim(res), trim(tgt))
-
-    def test_lagvander(self) :
-        # check for 1d x
-        x = np.arange(3)
-        v = lag.lagvander(x, 3)
-        assert_(v.shape == (3,4))
-        for i in range(4) :
-            coef = [0]*i + [1]
-            assert_almost_equal(v[...,i], lag.lagval(x, coef))
-
-        # check for 2d x
-        x = np.array([[1,2],[3,4],[5,6]])
-        v = lag.lagvander(x, 3)
-        assert_(v.shape == (3,2,4))
-        for i in range(4) :
-            coef = [0]*i + [1]
-            assert_almost_equal(v[...,i], lag.lagval(x, coef))
 
     def test_lagfit(self) :
         def f(x) :

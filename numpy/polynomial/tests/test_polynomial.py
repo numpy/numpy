@@ -99,20 +99,30 @@ class TestArithmetic(TestCase) :
                 res = poly.polyadd(poly.polymul(quo, ci), rem)
                 assert_equal(res, tgt, err_msg=msg)
 
-    def test_polyval(self) :
-        def f(x) :
-            return x*(x**2 - 1)
 
+class TestEvaluation(TestCase):
+    # coefficients of 1 + 2*x + 3*x**2
+    c1d = np.array([1., 2., 3.])
+    c2d = np.einsum('i,j->ij', c1d, c1d)
+    c3d = np.einsum('i,j,k->ijk', c1d, c1d, c1d)
+
+    # some random values in [-1, 1)
+    x = np.random.random((3, 5))*2 - 1
+    y = poly.polyval(x, [1., 2., 3.])
+
+
+    def test_polyval(self) :
         #check empty input
         assert_equal(poly.polyval([], [1]).size, 0)
 
         #check normal input)
         x = np.linspace(-1,1)
+        y = [x**i for i in range(5)]
         for i in range(5) :
-            tgt = x**i
+            tgt = y[i]
             res = poly.polyval(x, [0]*i + [1])
             assert_almost_equal(res, tgt)
-        tgt = f(x)
+        tgt = x*(x**2 - 1)
         res = poly.polyval(x, [0, -1, 0, 1])
         assert_almost_equal(res, tgt)
 
@@ -124,8 +134,70 @@ class TestArithmetic(TestCase) :
             assert_equal(poly.polyval(x, [1,0]).shape, dims)
             assert_equal(poly.polyval(x, [1,0,0]).shape, dims)
 
+    def test_polyval2d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
 
-class TestCalculus(TestCase) :
+        #test exceptions
+        assert_raises(ValueError, poly.polyval2d, x1, x2[:2], self.c2d)
+
+        #test values
+        tgt = y1*y2
+        res = poly.polyval2d(x1, x2, self.c2d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = poly.polyval2d(z, z, self.c2d)
+        assert_(res.shape == (2,3))
+
+    def test_polyval3d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test exceptions
+        assert_raises(ValueError, poly.polyval3d, x1, x2, x3[:2], self.c3d)
+
+        #test values
+        tgt = y1*y2*y3
+        res = poly.polyval3d(x1, x2, x3, self.c3d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = poly.polyval3d(z, z, z, self.c3d)
+        assert_(res.shape == (2, 3))
+
+    def test_polygrid2d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test values
+        tgt = np.einsum('i,j->ij', y1, y2)
+        res = poly.polygrid2d(x1, x2, self.c2d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = poly.polygrid2d(z, z, self.c2d)
+        assert_(res.shape == (2, 3)*2)
+
+    def test_polygrid3d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test values
+        tgt = np.einsum('i,j,k->ijk', y1, y2, y3)
+        res = poly.polygrid3d(x1, x2, x3, self.c3d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = poly.polygrid3d(z, z, z, self.c3d)
+        assert_(res.shape == (2, 3)*3)
+
+
+class TestIntegral(TestCase):
 
     def test_polyint(self) :
         # check exceptions
@@ -202,6 +274,25 @@ class TestCalculus(TestCase) :
                 res = poly.polyint(pol, m=j, k=range(j), scl=2)
                 assert_almost_equal(trim(res), trim(tgt))
 
+    def test_polyint_axis(self):
+        # check that axis keyword works
+        c2d = np.random.random((3, 4))
+
+        tgt = np.vstack([poly.polyint(c) for c in c2d.T]).T
+        res = poly.polyint(c2d, axis=0)
+        assert_almost_equal(res, tgt)
+
+        tgt = np.vstack([poly.polyint(c) for c in c2d])
+        res = poly.polyint(c2d, axis=1)
+        assert_almost_equal(res, tgt)
+
+        tgt = np.vstack([poly.polyint(c, k=3) for c in c2d])
+        res = poly.polyint(c2d, k=3, axis=1)
+        assert_almost_equal(res, tgt)
+
+
+class TestDerivative(TestCase) :
+
     def test_polyder(self) :
         # check exceptions
         assert_raises(ValueError, poly.polyder, [0], .5)
@@ -227,6 +318,68 @@ class TestCalculus(TestCase) :
                 res = poly.polyder(poly.polyint(tgt, m=j, scl=2), m=j, scl=.5)
                 assert_almost_equal(trim(res), trim(tgt))
 
+    def test_polyder_axis(self):
+        # check that axis keyword works
+        c2d = np.random.random((3, 4))
+
+        tgt = np.vstack([poly.polyder(c) for c in c2d.T]).T
+        res = poly.polyder(c2d, axis=0)
+        assert_almost_equal(res, tgt)
+
+        tgt = np.vstack([poly.polyder(c) for c in c2d])
+        res = poly.polyder(c2d, axis=1)
+        assert_almost_equal(res, tgt)
+
+
+class TestVander(TestCase):
+    # some random values in [-1, 1)
+    x = np.random.random((3, 5))*2 - 1
+
+
+    def test_polyvander(self) :
+        # check for 1d x
+        x = np.arange(3)
+        v = poly.polyvander(x, 3)
+        assert_(v.shape == (3, 4))
+        for i in range(4) :
+            coef = [0]*i + [1]
+            assert_almost_equal(v[..., i], poly.polyval(x, coef))
+
+        # check for 2d x
+        x = np.array([[1, 2], [3, 4], [5, 6]])
+        v = poly.polyvander(x, 3)
+        assert_(v.shape == (3, 2, 4))
+        for i in range(4) :
+            coef = [0]*i + [1]
+            assert_almost_equal(v[..., i], poly.polyval(x, coef))
+
+    def test_polyvander2d(self) :
+        # also tests polyval2d for non-square coefficient array
+        x1, x2, x3 = self.x
+        c = np.random.random((2, 3))
+        van = poly.polyvander2d(x1, x2, [1, 2])
+        tgt = poly.polyval2d(x1, x2, c)
+        res = np.dot(van, c.flat)
+        assert_almost_equal(res, tgt)
+
+        # check shape
+        van = poly.polyvander2d([x1], [x2], [1, 2])
+        assert_(van.shape == (1, 5, 6))
+
+
+    def test_polyvander3d(self) :
+        # also tests polyval3d for non-square coefficient array
+        x1, x2, x3 = self.x
+        c = np.random.random((2, 3, 4))
+        van = poly.polyvander3d(x1, x2, x3, [1, 2, 3])
+        tgt = poly.polyval3d(x1, x2, x3, c)
+        res = np.dot(van, c.flat)
+        assert_almost_equal(res, tgt)
+
+        # check shape
+        van = poly.polyvander3d([x1], [x2], [x3], [1, 2, 3])
+        assert_(van.shape == (1, 5, 24))
+
 
 class TestMisc(TestCase) :
 
@@ -246,23 +399,6 @@ class TestMisc(TestCase) :
             tgt = np.linspace(-1, 1, i)
             res = poly.polyroots(poly.polyfromroots(tgt))
             assert_almost_equal(trim(res), trim(tgt))
-
-    def test_polyvander(self) :
-        # check for 1d x
-        x = np.arange(3)
-        v = poly.polyvander(x, 3)
-        assert_(v.shape == (3,4))
-        for i in range(4) :
-            coef = [0]*i + [1]
-            assert_almost_equal(v[...,i], poly.polyval(x, coef))
-
-        # check for 2d x
-        x = np.array([[1,2],[3,4],[5,6]])
-        v = poly.polyvander(x, 3)
-        assert_(v.shape == (3,2,4))
-        for i in range(4) :
-            coef = [0]*i + [1]
-            assert_almost_equal(v[...,i], poly.polyval(x, coef))
 
     def test_polyfit(self) :
         def f(x) :

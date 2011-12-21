@@ -1,11 +1,11 @@
-"""Tests for hermeendre module.
+"""Tests for hermite_e module.
 
 """
 from __future__ import division
 
 import numpy as np
 import numpy.polynomial.hermite_e as herme
-import numpy.polynomial.polynomial as poly
+from numpy.polynomial.polynomial import polyval
 from numpy.testing import *
 
 He0 = np.array([ 1 ])
@@ -42,40 +42,6 @@ class TestConstants(TestCase) :
 
 class TestArithmetic(TestCase) :
     x = np.linspace(-3, 3, 100)
-    y0 = poly.polyval(x, He0)
-    y1 = poly.polyval(x, He1)
-    y2 = poly.polyval(x, He2)
-    y3 = poly.polyval(x, He3)
-    y4 = poly.polyval(x, He4)
-    y5 = poly.polyval(x, He5)
-    y6 = poly.polyval(x, He6)
-    y7 = poly.polyval(x, He7)
-    y8 = poly.polyval(x, He8)
-    y9 = poly.polyval(x, He9)
-    y = [y0, y1, y2, y3, y4, y5, y6, y7, y8, y9]
-
-    def test_hermeval(self) :
-        def f(x) :
-            return x*(x**2 - 1)
-
-        #check empty input
-        assert_equal(herme.hermeval([], [1]).size, 0)
-
-        #check normal input)
-        for i in range(10) :
-            msg = "At i=%d" % i
-            ser = np.zeros
-            tgt = self.y[i]
-            res = herme.hermeval(self.x, [0]*i + [1])
-            assert_almost_equal(res, tgt, err_msg=msg)
-
-        #check that shape is preserved
-        for i in range(3) :
-            dims = [2]*i
-            x = np.zeros(dims)
-            assert_equal(herme.hermeval(x, [1]).shape, dims)
-            assert_equal(herme.hermeval(x, [1,0]).shape, dims)
-            assert_equal(herme.hermeval(x, [1,0,0]).shape, dims)
 
     def test_hermeadd(self) :
         for i in range(5) :
@@ -131,7 +97,103 @@ class TestArithmetic(TestCase) :
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
 
-class TestCalculus(TestCase) :
+class TestEvaluation(TestCase) :
+    # coefficients of 1 + 2*x + 3*x**2
+    c1d = np.array([4., 2., 3.])
+    c2d = np.einsum('i,j->ij', c1d, c1d)
+    c3d = np.einsum('i,j,k->ijk', c1d, c1d, c1d)
+
+    # some random values in [-1, 1)
+    x = np.random.random((3, 5))*2 - 1
+    y = polyval(x, [1., 2., 3.])
+
+
+    def test_hermeval(self) :
+        #check empty input
+        assert_equal(herme.hermeval([], [1]).size, 0)
+
+        #check normal input)
+        x = np.linspace(-1,1)
+        y = [polyval(x, c) for c in Helist]
+        for i in range(10) :
+            msg = "At i=%d" % i
+            ser = np.zeros
+            tgt = y[i]
+            res = herme.hermeval(x, [0]*i + [1])
+            assert_almost_equal(res, tgt, err_msg=msg)
+
+        #check that shape is preserved
+        for i in range(3) :
+            dims = [2]*i
+            x = np.zeros(dims)
+            assert_equal(herme.hermeval(x, [1]).shape, dims)
+            assert_equal(herme.hermeval(x, [1,0]).shape, dims)
+            assert_equal(herme.hermeval(x, [1,0,0]).shape, dims)
+
+    def test_hermeval2d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test exceptions
+        assert_raises(ValueError, herme.hermeval2d, x1, x2[:2], self.c2d)
+
+        #test values
+        tgt = y1*y2
+        res = herme.hermeval2d(x1, x2, self.c2d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = herme.hermeval2d(z, z, self.c2d)
+        assert_(res.shape == (2,3))
+
+    def test_hermeval3d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test exceptions
+        assert_raises(ValueError, herme.hermeval3d, x1, x2, x3[:2], self.c3d)
+
+        #test values
+        tgt = y1*y2*y3
+        res = herme.hermeval3d(x1, x2, x3, self.c3d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = herme.hermeval3d(z, z, z, self.c3d)
+        assert_(res.shape == (2,3))
+
+    def test_hermegrid2d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test values
+        tgt = np.einsum('i,j->ij', y1, y2)
+        res = herme.hermegrid2d(x1, x2, self.c2d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = herme.hermegrid2d(z, z, self.c2d)
+        assert_(res.shape == (2, 3)*2)
+
+    def test_hermegrid3d(self):
+        x1, x2, x3 = self.x
+        y1, y2, y3 = self.y
+
+        #test values
+        tgt = np.einsum('i,j,k->ijk', y1, y2, y3)
+        res = herme.hermegrid3d(x1, x2, x3, self.c3d)
+        assert_almost_equal(res, tgt)
+
+        #test shape
+        z = np.ones((2,3))
+        res = herme.hermegrid3d(z, z, z, self.c3d)
+        assert_(res.shape == (2, 3)*3)
+
+
+class TestIntegral(TestCase):
 
     def test_hermeint(self) :
         # check exceptions
@@ -213,6 +275,25 @@ class TestCalculus(TestCase) :
                 res = herme.hermeint(pol, m=j, k=range(j), scl=2)
                 assert_almost_equal(trim(res), trim(tgt))
 
+    def test_hermeint_axis(self):
+        # check that axis keyword works
+        c2d = np.random.random((3, 4))
+
+        tgt = np.vstack([herme.hermeint(c) for c in c2d.T]).T
+        res = herme.hermeint(c2d, axis=0)
+        assert_almost_equal(res, tgt)
+
+        tgt = np.vstack([herme.hermeint(c) for c in c2d])
+        res = herme.hermeint(c2d, axis=1)
+        assert_almost_equal(res, tgt)
+
+        tgt = np.vstack([herme.hermeint(c, k=3) for c in c2d])
+        res = herme.hermeint(c2d, k=3, axis=1)
+        assert_almost_equal(res, tgt)
+
+
+class TestDerivative(TestCase) :
+
     def test_hermeder(self) :
         # check exceptions
         assert_raises(ValueError, herme.hermeder, [0], .5)
@@ -238,6 +319,68 @@ class TestCalculus(TestCase) :
                 res = herme.hermeder(herme.hermeint(tgt, m=j, scl=2), m=j, scl=.5)
                 assert_almost_equal(trim(res), trim(tgt))
 
+    def test_hermeder_axis(self):
+        # check that axis keyword works
+        c2d = np.random.random((3, 4))
+
+        tgt = np.vstack([herme.hermeder(c) for c in c2d.T]).T
+        res = herme.hermeder(c2d, axis=0)
+        assert_almost_equal(res, tgt)
+
+        tgt = np.vstack([herme.hermeder(c) for c in c2d])
+        res = herme.hermeder(c2d, axis=1)
+        assert_almost_equal(res, tgt)
+
+
+class TestVander(TestCase):
+    # some random values in [-1, 1)
+    x = np.random.random((3, 5))*2 - 1
+
+
+    def test_hermevander(self) :
+        # check for 1d x
+        x = np.arange(3)
+        v = herme.hermevander(x, 3)
+        assert_(v.shape == (3, 4))
+        for i in range(4) :
+            coef = [0]*i + [1]
+            assert_almost_equal(v[..., i], herme.hermeval(x, coef))
+
+        # check for 2d x
+        x = np.array([[1, 2], [3, 4], [5, 6]])
+        v = herme.hermevander(x, 3)
+        assert_(v.shape == (3, 2, 4))
+        for i in range(4) :
+            coef = [0]*i + [1]
+            assert_almost_equal(v[..., i], herme.hermeval(x, coef))
+
+    def test_hermevander2d(self) :
+        # also tests hermeval2d for non-square coefficient array
+        x1, x2, x3 = self.x
+        c = np.random.random((2, 3))
+        van = herme.hermevander2d(x1, x2, [1, 2])
+        tgt = herme.hermeval2d(x1, x2, c)
+        res = np.dot(van, c.flat)
+        assert_almost_equal(res, tgt)
+
+        # check shape
+        van = herme.hermevander2d([x1], [x2], [1, 2])
+        assert_(van.shape == (1, 5, 6))
+
+
+    def test_hermevander3d(self) :
+        # also tests hermeval3d for non-square coefficient array
+        x1, x2, x3 = self.x
+        c = np.random.random((2, 3, 4))
+        van = herme.hermevander3d(x1, x2, x3, [1, 2, 3])
+        tgt = herme.hermeval3d(x1, x2, x3, c)
+        res = np.dot(van, c.flat)
+        assert_almost_equal(res, tgt)
+
+        # check shape
+        van = herme.hermevander3d([x1], [x2], [x3], [1, 2, 3])
+        assert_(van.shape == (1, 5, 24))
+
 
 class TestMisc(TestCase) :
 
@@ -260,23 +403,6 @@ class TestMisc(TestCase) :
             tgt = np.linspace(-1, 1, i)
             res = herme.hermeroots(herme.hermefromroots(tgt))
             assert_almost_equal(trim(res), trim(tgt))
-
-    def test_hermevander(self) :
-        # check for 1d x
-        x = np.arange(3)
-        v = herme.hermevander(x, 3)
-        assert_(v.shape == (3,4))
-        for i in range(4) :
-            coef = [0]*i + [1]
-            assert_almost_equal(v[...,i], herme.hermeval(x, coef))
-
-        # check for 2d x
-        x = np.array([[1,2],[3,4],[5,6]])
-        v = herme.hermevander(x, 3)
-        assert_(v.shape == (3,2,4))
-        for i in range(4) :
-            coef = [0]*i + [1]
-            assert_almost_equal(v[...,i], herme.hermeval(x, coef))
 
     def test_hermefit(self) :
         def f(x) :
