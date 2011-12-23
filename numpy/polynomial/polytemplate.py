@@ -45,11 +45,11 @@ class $name(pu.PolyBase) :
 
     Attributes
     ----------
-    coef : (N,) array
+    coef : (N,) ndarray
         $name coefficients, from low to high.
-    domain : (2,) array
+    domain : (2,) ndarray
         Domain that is mapped to ``window``.
-    window : (2,) array
+    window : (2,) ndarray
         Window that ``domain`` is mapped to.
 
     Class Attributes
@@ -659,14 +659,19 @@ class $name(pu.PolyBase) :
     def linspace(self, n=100, domain=None):
         """Return x,y values at equally spaced points in domain.
 
-        Returns x, y values at `n` equally spaced points across domain.
-        Here y is the value of the polynomial at the points x.  This is
-        intended as a plotting aid.
+        Returns x, y values at `n` linearly spaced points across domain.
+        Here y is the value of the polynomial at the points x. By default
+        the domain is the same as that of the $name instance.  This method
+        is intended mostly as a plotting aid.
 
         Parameters
         ----------
         n : int, optional
             Number of point pairs to return. The default value is 100.
+        domain : {None, array_like}
+            If not None, the specified domain is used instead of that of
+            the calling instance. It should be of the form ``[beg,end]``.
+            The default is None.
 
         Returns
         -------
@@ -784,7 +789,7 @@ class $name(pu.PolyBase) :
 
         Returns
         -------
-        object : $name
+        object : $name instance
             Series with the specified roots.
 
         See Also
@@ -808,7 +813,7 @@ class $name(pu.PolyBase) :
         Parameters
         ----------
         domain : array_like
-            The resulting array must be if the form ``[beg, end]``, where
+            The resulting array must be of the form ``[beg, end]``, where
             ``beg`` and ``end`` are the endpoints of the domain.
         window : array_like
             The resulting array must be if the form ``[beg, end]``, where
@@ -816,10 +821,76 @@ class $name(pu.PolyBase) :
 
         Returns
         -------
-        identity : $name object
+        identity : $name instance
 
         """
         off, scl = pu.mapparms(window, domain)
         coef = ${nick}line(off, scl)
         return $name(coef, domain, window)
+
+    @staticmethod
+    def basis(deg, domain=$domain, window=$domain):
+        """$name polynomial of degree `deg`.
+
+        Returns an instance of the $name polynomial of degree `d`.
+
+        Parameters
+        ----------
+        deg : int
+            Degree of the $name polynomial. Must be >= 0.
+        domain : array_like
+            The resulting array must be of the form ``[beg, end]``, where
+            ``beg`` and ``end`` are the endpoints of the domain.
+        window : array_like
+            The resulting array must be if the form ``[beg, end]``, where
+            ``beg`` and ``end`` are the endpoints of the window.
+
+        Returns
+        p : $name instance
+
+        Notes
+        -----
+        .. versionadded:: 1.7.0
+
+        """
+        ideg = int(deg)
+        if ideg != deg or ideg < 0:
+            raise ValueError("deg must be non-negative integer")
+        return $name([0]*ideg + [1], domain, window)
+
+    @staticmethod
+    def cast(series, domain=$domain, window=$domain):
+        """Convert instance to equivalent $name series.
+
+        The `series` is expected to be an instance of some polynomial
+        series of one of the types supported by by the numpy.polynomial
+        module, but could be some other class that supports the convert
+        method.
+
+        Parameters
+        ----------
+        series : series
+            The instance series to be converted.
+        domain : array_like
+            The resulting array must be of the form ``[beg, end]``, where
+            ``beg`` and ``end`` are the endpoints of the domain.
+        window : array_like
+            The resulting array must be if the form ``[beg, end]``, where
+            ``beg`` and ``end`` are the endpoints of the window.
+
+        Returns
+        p : $name instance
+            A $name series equal to the `poly` series.
+
+        See Also
+        --------
+        convert -- similar instance method
+
+        Notes
+        -----
+        .. versionadded:: 1.7.0
+
+        """
+        return series.convert(domain, $name, window)
+
 '''.replace('REL_IMPORT', rel_import))
