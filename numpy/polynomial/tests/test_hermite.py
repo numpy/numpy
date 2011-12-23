@@ -6,7 +6,9 @@ from __future__ import division
 import numpy as np
 import numpy.polynomial.hermite as herm
 from numpy.polynomial.polynomial import polyval
-from numpy.testing import *
+from numpy.testing import (
+        TestCase, assert_almost_equal, assert_raises,
+        assert_equal, assert_, run_module_suite)
 
 H0 = np.array([   1])
 H1 = np.array([0,     2])
@@ -383,27 +385,7 @@ class TestVander(TestCase):
         assert_(van.shape == (1, 5, 24))
 
 
-class TestMisc(TestCase) :
-
-    def test_hermfromroots(self) :
-        res = herm.hermfromroots([])
-        assert_almost_equal(trim(res), [1])
-        for i in range(1,5) :
-            roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
-            pol = herm.hermfromroots(roots)
-            res = herm.hermval(roots, pol)
-            tgt = 0
-            assert_(len(pol) == i + 1)
-            assert_almost_equal(herm.herm2poly(pol)[-1], 1)
-            assert_almost_equal(res, tgt)
-
-    def test_hermroots(self) :
-        assert_almost_equal(herm.hermroots([1]), [])
-        assert_almost_equal(herm.hermroots([1, 1]), [-.5])
-        for i in range(2,5) :
-            tgt = np.linspace(-1, 1, i)
-            res = herm.hermroots(herm.hermfromroots(tgt))
-            assert_almost_equal(trim(res), trim(tgt))
+class TestFitting(TestCase):
 
     def test_hermfit(self) :
         def f(x) :
@@ -444,6 +426,48 @@ class TestMisc(TestCase) :
         wcoef2d = herm.hermfit(x, np.array([yw,yw]).T, 3, w=w)
         assert_almost_equal(wcoef2d, np.array([coef3,coef3]).T)
 
+
+class TestGauss(TestCase):
+
+    def test_100(self):
+        x, w = herm.hermgauss(100)
+
+        # test orthogonality. Note that the results need to be normalized,
+        # otherwise the huge values that can arise from fast growing
+        # functions like Laguerre can be very confusing.
+        v = herm.hermvander(x, 99)
+        vv = np.dot(v.T * w, v)
+        vd = 1/np.sqrt(vv.diagonal())
+        vv = vd[:,None] * vv * vd
+        assert_almost_equal(vv, np.eye(100))
+
+        # check that the integral of 1 is correct
+        tgt = np.sqrt(np.pi)
+        assert_almost_equal(w.sum(), tgt)
+
+
+class TestMisc(TestCase) :
+
+    def test_hermfromroots(self) :
+        res = herm.hermfromroots([])
+        assert_almost_equal(trim(res), [1])
+        for i in range(1,5) :
+            roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
+            pol = herm.hermfromroots(roots)
+            res = herm.hermval(roots, pol)
+            tgt = 0
+            assert_(len(pol) == i + 1)
+            assert_almost_equal(herm.herm2poly(pol)[-1], 1)
+            assert_almost_equal(res, tgt)
+
+    def test_hermroots(self) :
+        assert_almost_equal(herm.hermroots([1]), [])
+        assert_almost_equal(herm.hermroots([1, 1]), [-.5])
+        for i in range(2,5) :
+            tgt = np.linspace(-1, 1, i)
+            res = herm.hermroots(herm.hermfromroots(tgt))
+            assert_almost_equal(trim(res), trim(tgt))
+
     def test_hermtrim(self) :
         coef = [2, -1, 1, 0]
 
@@ -465,6 +489,12 @@ class TestMisc(TestCase) :
     def test_poly2herm(self) :
         for i in range(10) :
             assert_almost_equal(herm.poly2herm(Hlist[i]), [0]*i + [1])
+
+    def test_weight(self):
+        x = np.linspace(-5, 5, 11)
+        tgt = np.exp(-x**2)
+        res = herm.hermweight(x)
+        assert_almost_equal(res, tgt)
 
 
 def assert_poly_almost_equal(p1, p2):

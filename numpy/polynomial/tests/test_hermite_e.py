@@ -382,27 +382,7 @@ class TestVander(TestCase):
         assert_(van.shape == (1, 5, 24))
 
 
-class TestMisc(TestCase) :
-
-    def test_hermefromroots(self) :
-        res = herme.hermefromroots([])
-        assert_almost_equal(trim(res), [1])
-        for i in range(1,5) :
-            roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
-            pol = herme.hermefromroots(roots)
-            res = herme.hermeval(roots, pol)
-            tgt = 0
-            assert_(len(pol) == i + 1)
-            assert_almost_equal(herme.herme2poly(pol)[-1], 1)
-            assert_almost_equal(res, tgt)
-
-    def test_hermeroots(self) :
-        assert_almost_equal(herme.hermeroots([1]), [])
-        assert_almost_equal(herme.hermeroots([1, 1]), [-1])
-        for i in range(2,5) :
-            tgt = np.linspace(-1, 1, i)
-            res = herme.hermeroots(herme.hermefromroots(tgt))
-            assert_almost_equal(trim(res), trim(tgt))
+class TestFitting(TestCase):
 
     def test_hermefit(self) :
         def f(x) :
@@ -443,6 +423,48 @@ class TestMisc(TestCase) :
         wcoef2d = herme.hermefit(x, np.array([yw,yw]).T, 3, w=w)
         assert_almost_equal(wcoef2d, np.array([coef3,coef3]).T)
 
+
+class TestGauss(TestCase):
+
+    def test_100(self):
+        x, w = herme.hermegauss(100)
+
+        # test orthogonality. Note that the results need to be normalized,
+        # otherwise the huge values that can arise from fast growing
+        # functions like Laguerre can be very confusing.
+        v = herme.hermevander(x, 99)
+        vv = np.dot(v.T * w, v)
+        vd = 1/np.sqrt(vv.diagonal())
+        vv = vd[:,None] * vv * vd
+        assert_almost_equal(vv, np.eye(100))
+
+        # check that the integral of 1 is correct
+        tgt = np.sqrt(2*np.pi)
+        assert_almost_equal(w.sum(), tgt)
+
+
+class TestMisc(TestCase) :
+
+    def test_hermefromroots(self) :
+        res = herme.hermefromroots([])
+        assert_almost_equal(trim(res), [1])
+        for i in range(1,5) :
+            roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
+            pol = herme.hermefromroots(roots)
+            res = herme.hermeval(roots, pol)
+            tgt = 0
+            assert_(len(pol) == i + 1)
+            assert_almost_equal(herme.herme2poly(pol)[-1], 1)
+            assert_almost_equal(res, tgt)
+
+    def test_hermeroots(self) :
+        assert_almost_equal(herme.hermeroots([1]), [])
+        assert_almost_equal(herme.hermeroots([1, 1]), [-1])
+        for i in range(2,5) :
+            tgt = np.linspace(-1, 1, i)
+            res = herme.hermeroots(herme.hermefromroots(tgt))
+            assert_almost_equal(trim(res), trim(tgt))
+
     def test_hermetrim(self) :
         coef = [2, -1, 1, 0]
 
@@ -464,6 +486,12 @@ class TestMisc(TestCase) :
     def test_poly2herme(self) :
         for i in range(10) :
             assert_almost_equal(herme.poly2herme(Helist[i]), [0]*i + [1])
+
+    def test_weight(self):
+        x = np.linspace(-5, 5, 11)
+        tgt = np.exp(-.5*x**2)
+        res = herme.hermeweight(x)
+        assert_almost_equal(res, tgt)
 
 
 def assert_poly_almost_equal(p1, p2):

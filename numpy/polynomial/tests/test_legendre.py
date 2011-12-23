@@ -6,7 +6,9 @@ from __future__ import division
 import numpy as np
 import numpy.polynomial.legendre as leg
 from numpy.polynomial.polynomial import polyval
-from numpy.testing import *
+from numpy.testing import (
+        TestCase, assert_almost_equal, assert_raises,
+        assert_equal, assert_, run_module_suite)
 
 L0 = np.array([ 1])
 L1 = np.array([ 0,  1])
@@ -381,27 +383,7 @@ class TestVander(TestCase):
         assert_(van.shape == (1, 5, 24))
 
 
-class TestMisc(TestCase) :
-
-    def test_legfromroots(self) :
-        res = leg.legfromroots([])
-        assert_almost_equal(trim(res), [1])
-        for i in range(1,5) :
-            roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
-            pol = leg.legfromroots(roots)
-            res = leg.legval(roots, pol)
-            tgt = 0
-            assert_(len(pol) == i + 1)
-            assert_almost_equal(leg.leg2poly(pol)[-1], 1)
-            assert_almost_equal(res, tgt)
-
-    def test_legroots(self) :
-        assert_almost_equal(leg.legroots([1]), [])
-        assert_almost_equal(leg.legroots([1, 2]), [-.5])
-        for i in range(2,5) :
-            tgt = np.linspace(-1, 1, i)
-            res = leg.legroots(leg.legfromroots(tgt))
-            assert_almost_equal(trim(res), trim(tgt))
+class TestFitting(TestCase):
 
     def test_legfit(self) :
         def f(x) :
@@ -442,6 +424,48 @@ class TestMisc(TestCase) :
         wcoef2d = leg.legfit(x, np.array([yw,yw]).T, 3, w=w)
         assert_almost_equal(wcoef2d, np.array([coef3,coef3]).T)
 
+
+class TestGauss(TestCase):
+
+    def test_100(self):
+        x, w = leg.leggauss(100)
+
+        # test orthogonality. Note that the results need to be normalized,
+        # otherwise the huge values that can arise from fast growing
+        # functions like Laguerre can be very confusing.
+        v = leg.legvander(x, 99)
+        vv = np.dot(v.T * w, v)
+        vd = 1/np.sqrt(vv.diagonal())
+        vv = vd[:,None] * vv * vd
+        assert_almost_equal(vv, np.eye(100))
+
+        # check that the integral of 1 is correct
+        tgt = 2.0
+        assert_almost_equal(w.sum(), tgt)
+
+
+class TestMisc(TestCase) :
+
+    def test_legfromroots(self) :
+        res = leg.legfromroots([])
+        assert_almost_equal(trim(res), [1])
+        for i in range(1,5) :
+            roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
+            pol = leg.legfromroots(roots)
+            res = leg.legval(roots, pol)
+            tgt = 0
+            assert_(len(pol) == i + 1)
+            assert_almost_equal(leg.leg2poly(pol)[-1], 1)
+            assert_almost_equal(res, tgt)
+
+    def test_legroots(self) :
+        assert_almost_equal(leg.legroots([1]), [])
+        assert_almost_equal(leg.legroots([1, 2]), [-.5])
+        for i in range(2,5) :
+            tgt = np.linspace(-1, 1, i)
+            res = leg.legroots(leg.legfromroots(tgt))
+            assert_almost_equal(trim(res), trim(tgt))
+
     def test_legtrim(self) :
         coef = [2, -1, 1, 0]
 
@@ -463,6 +487,12 @@ class TestMisc(TestCase) :
     def test_poly2leg(self) :
         for i in range(10) :
             assert_almost_equal(leg.poly2leg(Llist[i]), [0]*i + [1])
+
+    def test_weight(self):
+        x = np.linspace(-1, 1, 11)
+        tgt = 1.
+        res = leg.legweight(x)
+        assert_almost_equal(res, tgt)
 
 
 def assert_poly_almost_equal(p1, p2):
