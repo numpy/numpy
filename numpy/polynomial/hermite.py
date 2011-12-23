@@ -39,6 +39,9 @@ Misc Functions
 - `hermvander` -- Vandermonde-like matrix for Hermite polynomials.
 - `hermvander2d` -- Vandermonde-like matrix for 2D power series.
 - `hermvander3d` -- Vandermonde-like matrix for 3D power series.
+- `hermgauss` -- Gauss-Hermite quadrature, points and weights.
+- `hermweight` -- Hermite weight function.
+- `hermcompanion` -- symmetrized companion matrix in Hermite form.
 - `hermfit` -- least-squares fit returning a Hermite series.
 - `hermtrim` -- trim leading coefficients from a Hermite series.
 - `hermline` -- Hermite series of given straight line.
@@ -67,7 +70,8 @@ __all__ = ['hermzero', 'hermone', 'hermx', 'hermdomain', 'hermline',
     'hermval', 'hermder', 'hermint', 'herm2poly', 'poly2herm',
     'hermfromroots', 'hermvander', 'hermfit', 'hermtrim', 'hermroots',
     'Hermite', 'hermval2d', 'hermval3d', 'hermgrid2d', 'hermgrid3d',
-    'hermvander2d', 'hermvander3d']
+    'hermvander2d', 'hermvander3d', 'hermcompanion', 'hermgauss',
+    'hermweight']
 
 hermtrim = pu.trimcoef
 
@@ -1505,6 +1509,93 @@ def hermroots(cs):
     r = la.eigvals(m)
     r.sort()
     return r
+
+
+def hermgauss(deg):
+    """Gauss Hermite quadrature.
+
+    Computes the sample points and weights for Gauss-Hermite quadrature.
+    These sample points and weights will correctly integrate polynomials of
+    degree ``2*deg - 1`` or less over the interval ``[-inf, inf]`` with the
+    weight function ``f(x) = exp(-x**2)``.
+
+    Parameters
+    ----------
+    deg : int
+        Number of sample points and weights. It must be >= 1.
+
+    Returns
+    -------
+    x : ndarray
+        1-D ndarray containing the sample points.
+    y : ndarray
+        1-D ndarray containing the weights.
+
+    Notes
+    -----
+    The results have only been tested up to degree 100. Higher degrees may
+    be problematic. The weights are determined by using the fact that
+
+          w = c / (H'_n(x_k) * H_{n-1}(x_k))
+
+    where ``c`` is a constant independent of ``k`` and ``x_k`` is the k'th
+    root of ``H_n``, and then scaling the results to get the right value
+    when integrating 1.
+
+    """
+    ideg = int(deg)
+    if ideg != deg or ideg < 1:
+        raise ValueError("deg must be a non-negative integer")
+
+    # first approximation of roots. We use the fact that the companion
+    # matrix is symmetric in this case in order to obtain better zeros.
+    c = np.array([0]*deg + [1])
+    m = hermcompanion(c)
+    x = la.eigvals(m)
+    x.sort()
+
+    # improve roots by one application of Newton
+    dy = hermval(x, c)
+    df = hermval(x, hermder(c))
+    x -= dy/df
+
+    # compute the weights. We scale the factor to avoid possible numerical
+    # overflow.
+    fm = hermval(x, c[1:])
+    fm /= np.abs(fm).max()
+    df /= np.abs(df).max()
+    w = 1/(fm * df)
+
+    # for Hermite we can also symmetrize
+    w = (w + w[::-1])/2
+    x = (x - x[::-1])/2
+
+    # scale w to get the right value
+    w *= np.sqrt(np.pi) / w.sum()
+
+    return x, w
+
+
+def hermweight(x):
+    """Weight function of the Hermite polynomials.
+
+    The weight function for which the Hermite polynomials are orthogonal.
+    In this case the weight function is ``exp(-x**2)``. Note that the
+    Hermite polynomials are not normalized.
+
+    Parameters
+    ----------
+    x : array_like
+       Values at which the weight function will be computed.
+
+    Returns
+    -------
+    w : ndarray
+       The weight function at `x`.
+
+    """
+    w = np.exp(-x**2)
+    return w
 
 
 #

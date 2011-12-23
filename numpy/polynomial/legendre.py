@@ -40,6 +40,9 @@ Misc Functions
 - `legvander` -- Vandermonde-like matrix for Legendre polynomials.
 - `legvander2d` -- Vandermonde-like matrix for 2D power series.
 - `legvander3d` -- Vandermonde-like matrix for 3D power series.
+- `leggauss` -- Gauss-Legendre quadrature, points and weights.
+- `legweight` -- Legendre weight function.
+- `legcompanion` -- symmetrized companion matrix in Legendre form.
 - `legfit` -- least-squares fit returning a Legendre series.
 - `legtrim` -- trim leading coefficients from a Legendre series.
 - `legline` -- Legendre series representing given straight line.
@@ -67,7 +70,8 @@ __all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
     'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow', 'legval',
     'legder', 'legint', 'leg2poly', 'poly2leg', 'legfromroots',
     'legvander', 'legfit', 'legtrim', 'legroots', 'Legendre','legval2d',
-    'legval3d', 'leggrid2d', 'leggrid3d', 'legvander2d', 'legvander3d']
+    'legval3d', 'leggrid2d', 'leggrid3d', 'legvander2d', 'legvander3d',
+    'legcompanion', 'leggauss', 'legweight']
 
 legtrim = pu.trimcoef
 
@@ -1509,6 +1513,92 @@ def legroots(cs):
     r.sort()
     return r
 
+
+def leggauss(deg):
+    """Gauss Legendre quadrature.
+
+    Computes the sample points and weights for Gauss-Legendre quadrature.
+    These sample points and weights will correctly integrate polynomials of
+    degree ``2*deg - 1`` or less over the interval ``[-1, 1]`` with the
+    weight function ``f(x) = 1``.
+
+    Parameters
+    ----------
+    deg : int
+        Number of sample points and weights. It must be >= 1.
+
+    Returns
+    -------
+    x : ndarray
+        1-D ndarray containing the sample points.
+    y : ndarray
+        1-D ndarray containing the weights.
+
+    Notes
+    -----
+    The results have only been tested up to degree 100. Higher degrees may
+    be problematic. The weights are determined by using the fact that
+
+          w = c / (L'_n(x_k) * L_{n-1}(x_k))
+
+    where ``c`` is a constant independent of ``k`` and ``x_k`` is the k'th
+    root of ``L_n``, and then scaling the results to get the right value
+    when integrating 1.
+
+    """
+    ideg = int(deg)
+    if ideg != deg or ideg < 1:
+        raise ValueError("deg must be a non-negative integer")
+
+    # first approximation of roots. We use the fact that the companion
+    # matrix is symmetric in this case in order to obtain better zeros.
+    c = np.array([0]*deg + [1])
+    m = legcompanion(c)
+    x = la.eigvals(m)
+    x.sort()
+
+    # improve roots by one application of Newton
+    dy = legval(x, c)
+    df = legval(x, legder(c))
+    x -= dy/df
+
+    # compute the weights. We scale the factor to avoid possible numerical
+    # overflow.
+    fm = legval(x, c[1:])
+    fm /= np.abs(fm).max()
+    df /= np.abs(df).max()
+    w = 1/(fm * df)
+
+    # for Legendre we can also symmetrize
+    w = (w + w[::-1])/2
+    x = (x - x[::-1])/2
+
+    # scale w to get the right value
+    w *= 2. / w.sum()
+
+    return x, w
+
+
+def legweight(x):
+    """Weight function of the Legendre polynomials.
+
+    The weight function for which the Legendre polynomials are orthogonal.
+    In this case the weight function is simply one. Note that the Legendre
+    polynomials are not normalized.
+
+    Parameters
+    ----------
+    x : array_like
+       Values at which the weight function will be computed.
+
+    Returns
+    -------
+    w : ndarray
+       The weight function at `x`.
+
+    """
+    w = x*0.0 + 1.0
+    return w
 
 #
 # Legendre series class

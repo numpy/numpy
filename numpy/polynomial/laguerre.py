@@ -39,6 +39,9 @@ Misc Functions
 - `lagvander` -- Vandermonde-like matrix for Laguerre polynomials.
 - `lagvander2d` -- Vandermonde-like matrix for 2D power series.
 - `lagvander3d` -- Vandermonde-like matrix for 3D power series.
+- `laggauss` -- Gauss-Laguerre quadrature, points and weights.
+- `lagweight` -- Laguerre weight function.
+- `lagcompanion` -- symmetrized companion matrix in Laguerre form.
 - `lagfit` -- least-squares fit returning a Laguerre series.
 - `lagtrim` -- trim leading coefficients from a Laguerre series.
 - `lagline` -- Laguerre series of given straight line.
@@ -66,7 +69,8 @@ __all__ = ['lagzero', 'lagone', 'lagx', 'lagdomain', 'lagline',
     'lagadd', 'lagsub', 'lagmulx', 'lagmul', 'lagdiv', 'lagpow',
     'lagval', 'lagder', 'lagint', 'lag2poly', 'poly2lag', 'lagfromroots',
     'lagvander', 'lagfit', 'lagtrim', 'lagroots', 'Laguerre', 'lagval2d',
-    'lagval3d', 'laggrid2d', 'laggrid3d', 'lagvander2d', 'lagvander3d']
+    'lagval3d', 'laggrid2d', 'laggrid3d', 'lagvander2d', 'lagvander3d',
+    'lagcompanion', 'laggauss', 'lagweight']
 
 lagtrim = pu.trimcoef
 
@@ -1503,6 +1507,89 @@ def lagroots(cs):
     r.sort()
     return r
 
+
+def laggauss(deg):
+    """Gauss Laguerre quadrature.
+
+    Computes the sample points and weights for Gauss-Laguerre quadrature.
+    These sample points and weights will correctly integrate polynomials of
+    degree ``2*deg - 1`` or less over the interval ``[0, inf]`` with the
+    weight function ``f(x) = exp(-x)``.
+
+    Parameters
+    ----------
+    deg : int
+        Number of sample points and weights. It must be >= 1.
+
+    Returns
+    -------
+    x : ndarray
+        1-D ndarray containing the sample points.
+    y : ndarray
+        1-D ndarray containing the weights.
+
+    Notes
+    -----
+    The results have only been tested up to degree 100. Higher degrees may
+    be problematic. The weights are determined by using the fact that
+
+          w = c / (L'_n(x_k) * L_{n-1}(x_k))
+
+    where ``c`` is a constant independent of ``k`` and ``x_k`` is the k'th
+    root of ``L_n``, and then scaling the results to get the right value
+    when integrating 1.
+
+    """
+    ideg = int(deg)
+    if ideg != deg or ideg < 1:
+        raise ValueError("deg must be a non-negative integer")
+
+    # first approximation of roots. We use the fact that the companion
+    # matrix is symmetric in this case in order to obtain better zeros.
+    c = np.array([0]*deg + [1])
+    m = lagcompanion(c)
+    x = la.eigvals(m)
+    x.sort()
+
+    # improve roots by one application of Newton
+    dy = lagval(x, c)
+    df = lagval(x, lagder(c))
+    x -= dy/df
+
+    # compute the weights. We scale the factor to avoid possible numerical
+    # overflow.
+    fm = lagval(x, c[1:])
+    fm /= np.abs(fm).max()
+    df /= np.abs(df).max()
+    w = 1/(fm * df)
+
+    # scale w to get the right value, 1 in this case
+    w /= w.sum()
+
+    return x, w
+
+
+def lagweight(x):
+    """Weight function of the Laguerre polynomials.
+
+    The weight function for which the Laguerre polynomials are orthogonal.
+    In this case the weight function is ``exp(-x)``. Note that the Laguerre
+    polynomials are not normalized, indeed, may be much greater than the
+    normalized versions.
+
+    Parameters
+    ----------
+    x : array_like
+       Values at which the weight function will be computed.
+
+    Returns
+    -------
+    w : ndarray
+       The weight function at `x`.
+
+    """
+    w = np.exp(-x)
+    return w
 
 #
 # Laguerre series class
