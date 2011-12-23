@@ -42,6 +42,9 @@ Misc Functions
 - `chebvander` -- Vandermonde-like matrix for Chebyshev polynomials.
 - `chebvander2d` -- Vandermonde-like matrix for 2D power series.
 - `chebvander3d` -- Vandermonde-like matrix for 3D power series.
+- `chebgauss` -- Gauss-Chebyshev quadrature, points and weights.
+- `chebweight` -- Chebyshev weight function.
+- `chebcompanion` -- symmetrized companion matrix in Chebyshev form.
 - `chebfit` -- least-squares fit returning a Chebyshev series.
 - `chebpts1` -- Chebyshev points of the first kind.
 - `chebpts2` -- Chebyshev points of the second kind.
@@ -95,7 +98,8 @@ __all__ = ['chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline',
     'chebval', 'chebder', 'chebint', 'cheb2poly', 'poly2cheb',
     'chebfromroots', 'chebvander', 'chebfit', 'chebtrim', 'chebroots',
     'chebpts1', 'chebpts2', 'Chebyshev', 'chebval2d', 'chebval3d',
-    'chebgrid2d', 'chebgrid3d', 'chebvander2d','chebvander3d']
+    'chebgrid2d', 'chebgrid3d', 'chebvander2d','chebvander3d',
+    'chebcompanion', 'chebgauss', 'chebweight']
 
 chebtrim = pu.trimcoef
 
@@ -1722,6 +1726,72 @@ def chebroots(cs):
     r = la.eigvals(m)
     r.sort()
     return r
+
+
+def chebgauss(deg):
+    """Gauss Chebyshev quadrature.
+
+    Computes the sample points and weights for Gauss-Chebyshev quadrature.
+    These sample points and weights will correctly integrate polynomials of
+    degree ``2*deg - 1`` or less over the interval ``[-1, 1]`` with the
+    weight function ``f(x) = 1/sqrt(1 - x**2)``.
+
+    Parameters
+    ----------
+    deg : int
+        Number of sample points and weights. It must be >= 1.
+
+    Returns
+    -------
+    x : ndarray
+        1-D ndarray containing the sample points.
+    y : ndarray
+        1-D ndarray containing the weights.
+
+    Notes
+    -----
+    The results have only been tested up to degree 100. Higher degrees may
+    be problematic. There are closed form solutions for the sample points
+    and weights. If ``n = deg``, then
+
+          ``x_i = cos(pi*(2*i - 1)/(2*n))``
+          ``w_i = pi/n``
+
+    where ``c`` is a constant independent of ``k`` and ``x_k`` is the k'th
+    root of ``L_n``, and then scaling the results to get the right value
+    when integrating 1.
+
+    """
+    ideg = int(deg)
+    if ideg != deg or ideg < 1:
+        raise ValueError("deg must be a non-negative integer")
+
+    x = np.cos(np.pi * np.arange(1, 2*ideg, 2) / (2.0*ideg))
+    w = np.ones(ideg)*(np.pi/ideg)
+
+    return x, w
+
+
+def chebweight(x):
+    """Weight function of the Chebyshev polynomials.
+
+    The weight function for which the Chebyshev polynomials are orthogonal.
+    In this case the weight function is ``1/(1 - x**2)``. Note that the
+    Chebyshev polynomials are not normalized.
+
+    Parameters
+    ----------
+    x : array_like
+       Values at which the weight function will be computed.
+
+    Returns
+    -------
+    w : ndarray
+       The weight function at `x`.
+
+    """
+    w = 1./(np.sqrt(1. + x) * np.sqrt(1. - x))
+    return w
 
 
 def chebpts1(npts):
