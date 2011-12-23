@@ -6,7 +6,9 @@ from __future__ import division
 import numpy as np
 import numpy.polynomial.laguerre as lag
 from numpy.polynomial.polynomial import polyval
-from numpy.testing import *
+from numpy.testing import (
+        TestCase, assert_almost_equal, assert_raises,
+        assert_equal, assert_, run_module_suite)
 
 L0 = np.array([1 ])/1
 L1 = np.array([1 , -1 ])/1
@@ -378,27 +380,7 @@ class TestVander(TestCase):
         assert_(van.shape == (1, 5, 24))
 
 
-class TestMisc(TestCase) :
-
-    def test_lagfromroots(self) :
-        res = lag.lagfromroots([])
-        assert_almost_equal(trim(res), [1])
-        for i in range(1,5) :
-            roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
-            pol = lag.lagfromroots(roots)
-            res = lag.lagval(roots, pol)
-            tgt = 0
-            assert_(len(pol) == i + 1)
-            assert_almost_equal(lag.lag2poly(pol)[-1], 1)
-            assert_almost_equal(res, tgt)
-
-    def test_lagroots(self) :
-        assert_almost_equal(lag.lagroots([1]), [])
-        assert_almost_equal(lag.lagroots([0, 1]), [1])
-        for i in range(2,5) :
-            tgt = np.linspace(0, 3, i)
-            res = lag.lagroots(lag.lagfromroots(tgt))
-            assert_almost_equal(trim(res), trim(tgt))
+class TestFitting(TestCase):
 
     def test_lagfit(self) :
         def f(x) :
@@ -439,6 +421,48 @@ class TestMisc(TestCase) :
         wcoef2d = lag.lagfit(x, np.array([yw,yw]).T, 3, w=w)
         assert_almost_equal(wcoef2d, np.array([coef3,coef3]).T)
 
+
+class TestGauss(TestCase):
+
+    def test_100(self):
+        x, w = lag.laggauss(100)
+
+        # test orthogonality. Note that the results need to be normalized,
+        # otherwise the huge values that can arise from fast growing
+        # functions like Laguerre can be very confusing.
+        v = lag.lagvander(x, 99)
+        vv = np.dot(v.T * w, v)
+        vd = 1/np.sqrt(vv.diagonal())
+        vv = vd[:,None] * vv * vd
+        assert_almost_equal(vv, np.eye(100))
+
+        # check that the integral of 1 is correct
+        tgt = 1.0
+        assert_almost_equal(w.sum(), tgt)
+
+
+class TestMisc(TestCase) :
+
+    def test_lagfromroots(self) :
+        res = lag.lagfromroots([])
+        assert_almost_equal(trim(res), [1])
+        for i in range(1,5) :
+            roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
+            pol = lag.lagfromroots(roots)
+            res = lag.lagval(roots, pol)
+            tgt = 0
+            assert_(len(pol) == i + 1)
+            assert_almost_equal(lag.lag2poly(pol)[-1], 1)
+            assert_almost_equal(res, tgt)
+
+    def test_lagroots(self) :
+        assert_almost_equal(lag.lagroots([1]), [])
+        assert_almost_equal(lag.lagroots([0, 1]), [1])
+        for i in range(2,5) :
+            tgt = np.linspace(0, 3, i)
+            res = lag.lagroots(lag.lagfromroots(tgt))
+            assert_almost_equal(trim(res), trim(tgt))
+
     def test_lagtrim(self) :
         coef = [2, -1, 1, 0]
 
@@ -460,6 +484,12 @@ class TestMisc(TestCase) :
     def test_poly2lag(self) :
         for i in range(7) :
             assert_almost_equal(lag.poly2lag(Llist[i]), [0]*i + [1])
+
+    def test_weight(self):
+        x = np.linspace(0, 10, 11)
+        tgt = np.exp(-x)
+        res = lag.lagweight(x)
+        assert_almost_equal(res, tgt)
 
 
 def assert_poly_almost_equal(p1, p2):

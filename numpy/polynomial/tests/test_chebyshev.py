@@ -6,7 +6,9 @@ from __future__ import division
 import numpy as np
 import numpy.polynomial.chebyshev as cheb
 from numpy.polynomial.polynomial import polyval
-from numpy.testing import *
+from numpy.testing import (
+        TestCase, assert_almost_equal, assert_raises,
+        assert_equal, assert_, run_module_suite)
 
 def trim(x) :
     return cheb.chebtrim(x, tol=1e-6)
@@ -393,24 +395,7 @@ class TestVander(TestCase):
         assert_(van.shape == (1, 5, 24))
 
 
-class TestMisc(TestCase) :
-
-    def test_chebfromroots(self) :
-        res = cheb.chebfromroots([])
-        assert_almost_equal(trim(res), [1])
-        for i in range(1,5) :
-            roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
-            tgt = [0]*i + [1]
-            res = cheb.chebfromroots(roots)*2**(i-1)
-            assert_almost_equal(trim(res),trim(tgt))
-
-    def test_chebroots(self) :
-        assert_almost_equal(cheb.chebroots([1]), [])
-        assert_almost_equal(cheb.chebroots([1, 2]), [-.5])
-        for i in range(2,5) :
-            tgt = np.linspace(-1, 1, i)
-            res = cheb.chebroots(cheb.chebfromroots(tgt))
-            assert_almost_equal(trim(res), trim(tgt))
+class TestFitting(TestCase):
 
     def test_chebfit(self) :
         def f(x) :
@@ -451,6 +436,45 @@ class TestMisc(TestCase) :
         wcoef2d = cheb.chebfit(x, np.array([yw,yw]).T, 3, w=w)
         assert_almost_equal(wcoef2d, np.array([coef3,coef3]).T)
 
+
+class TestGauss(TestCase):
+
+    def test_100(self):
+        x, w = cheb.chebgauss(100)
+
+        # test orthogonality. Note that the results need to be normalized,
+        # otherwise the huge values that can arise from fast growing
+        # functions like Laguerre can be very confusing.
+        v = cheb.chebvander(x, 99)
+        vv = np.dot(v.T * w, v)
+        vd = 1/np.sqrt(vv.diagonal())
+        vv = vd[:,None] * vv * vd
+        assert_almost_equal(vv, np.eye(100))
+
+        # check that the integral of 1 is correct
+        tgt = np.pi
+        assert_almost_equal(w.sum(), tgt)
+
+
+class TestMisc(TestCase) :
+
+    def test_chebfromroots(self) :
+        res = cheb.chebfromroots([])
+        assert_almost_equal(trim(res), [1])
+        for i in range(1,5) :
+            roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
+            tgt = [0]*i + [1]
+            res = cheb.chebfromroots(roots)*2**(i-1)
+            assert_almost_equal(trim(res),trim(tgt))
+
+    def test_chebroots(self) :
+        assert_almost_equal(cheb.chebroots([1]), [])
+        assert_almost_equal(cheb.chebroots([1, 2]), [-.5])
+        for i in range(2,5) :
+            tgt = np.linspace(-1, 1, i)
+            res = cheb.chebroots(cheb.chebfromroots(tgt))
+            assert_almost_equal(trim(res), trim(tgt))
+
     def test_chebtrim(self) :
         coef = [2, -1, 1, 0]
 
@@ -472,6 +496,12 @@ class TestMisc(TestCase) :
     def test_poly2cheb(self) :
         for i in range(10) :
             assert_almost_equal(cheb.poly2cheb(Tlist[i]), [0]*i + [1])
+
+    def test_weight(self):
+        x = np.linspace(-1, 1, 11)[1:-1]
+        tgt = 1./(np.sqrt(1 + x) * np.sqrt(1 - x))
+        res = cheb.chebweight(x)
+        assert_almost_equal(res, tgt)
 
     def test_chebpts1(self):
         #test exceptions
