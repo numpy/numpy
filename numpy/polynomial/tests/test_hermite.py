@@ -582,9 +582,6 @@ class TestHermiteClass(TestCase) :
         xx = 2*x - 1
         assert_almost_equal(self.p2(x), self.p1(xx))
 
-    def test_degree(self) :
-        assert_equal(self.p1.degree(), 2)
-
     def test_cutdeg(self) :
         assert_raises(ValueError, self.p1.cutdeg, .5)
         assert_raises(ValueError, self.p1.cutdeg, -1)
@@ -592,11 +589,6 @@ class TestHermiteClass(TestCase) :
         assert_equal(len(self.p1.cutdeg(2)), 3)
         assert_equal(len(self.p1.cutdeg(1)), 2)
         assert_equal(len(self.p1.cutdeg(0)), 1)
-
-    def test_convert(self) :
-        x = np.linspace(-1,1)
-        p = self.p1.convert(domain=[0,1])
-        assert_almost_equal(p(x), self.p1(x))
 
     def test_mapparms(self) :
         parms = self.p2.mapparms()
@@ -617,10 +609,6 @@ class TestHermiteClass(TestCase) :
         assert_equal(len(self.p1.truncate(2)), 2)
         assert_equal(len(self.p1.truncate(1)), 1)
 
-    def test_copy(self) :
-        p = self.p1.copy()
-        assert_(self.p1 == p)
-
     def test_integ(self) :
         p = self.p2.integ()
         assert_almost_equal(p.coef, herm.hermint([1,2,3], 1, 0, scl=.5))
@@ -631,63 +619,13 @@ class TestHermiteClass(TestCase) :
         p = self.p2.integ(2, [1, 2])
         assert_almost_equal(p.coef, herm.hermint([1,2,3], 2, [1,2], scl=.5))
 
-    def test_deriv(self) :
-        p = self.p2.integ(2, [1, 2])
-        assert_almost_equal(p.deriv(1).coef, self.p2.integ(1, [1]).coef)
-        assert_almost_equal(p.deriv(2).coef, self.p2.coef)
-
-    def test_roots(self) :
-        p = herm.Hermite(herm.poly2herm([0, -1, 0, 1]), [0, 1])
-        res = p.roots()
-        tgt = [0, .5, 1]
-        assert_almost_equal(res, tgt)
-
-    def test_linspace(self):
-        xdes = np.linspace(0, 1, 20)
-        ydes = self.p2(xdes)
-        xres, yres = self.p2.linspace(20)
-        assert_almost_equal(xres, xdes)
-        assert_almost_equal(yres, ydes)
-
-    def test_fromroots(self) :
-        roots = [0, .5, 1]
-        p = herm.Hermite.fromroots(roots, domain=[0, 1])
-        res = p.coef
-        tgt = herm.poly2herm([0, -1, 0, 1])
-        assert_almost_equal(res, tgt)
-
-    def test_fit(self) :
-        def f(x) :
-            return x*(x - 1)*(x - 2)
-        x = np.linspace(0,3)
-        y = f(x)
-
-        # test default value of domain
-        p = herm.Hermite.fit(x, y, 3)
-        assert_almost_equal(p.domain, [0,3])
-
-        # test that fit works in given domains
-        p = herm.Hermite.fit(x, y, 3, None)
-        assert_almost_equal(p(x), y)
-        assert_almost_equal(p.domain, [0,3])
-        p = herm.Hermite.fit(x, y, 3, [])
-        assert_almost_equal(p(x), y)
-        assert_almost_equal(p.domain, [-1, 1])
-        # test that fit accepts weights.
-        w = np.zeros_like(x)
-        yw = y.copy()
-        w[1::2] = 1
-        yw[0::2] = 0
-        p = herm.Hermite.fit(x, yw, 3, w=w)
-        assert_almost_equal(p(x), y)
-
     def test_identity(self) :
         x = np.linspace(0,3)
         p = herm.Hermite.identity()
         assert_almost_equal(p(x), x)
         p = herm.Hermite.identity([1,3])
         assert_almost_equal(p(x), x)
-#
+
 
 if __name__ == "__main__":
     run_module_suite()
