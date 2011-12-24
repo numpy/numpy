@@ -455,69 +455,6 @@ class TestMisc(TestCase) :
     def test_polyline(self) :
         assert_equal(poly.polyline(3,4), [3, 4])
 
-class TestPolynomialClass(TestCase) :
-
-    p1 = poly.Polynomial([1,2,3])
-    p2 = poly.Polynomial([1,2,3], [0,1])
-    p3 = poly.Polynomial([1,2])
-    p4 = poly.Polynomial([2,2,3])
-    p5 = poly.Polynomial([3,2,3])
-
-    def test_pow(self) :
-        tgt = poly.Polynomial([1])
-        for i in range(5) :
-            res = self.p1**i
-            assert_(res == tgt)
-            tgt *= self.p1
-
-    def test_call(self) :
-        # domain = [-1, 1]
-        x = np.linspace(-1, 1)
-        tgt = (3*x + 2)*x + 1
-        assert_almost_equal(self.p1(x), tgt)
-
-        # domain = [0, 1]
-        x = np.linspace(0, 1)
-        xx = 2*x - 1
-        assert_almost_equal(self.p2(x), self.p1(xx))
-
-    def test_cutdeg(self) :
-        assert_raises(ValueError, self.p1.cutdeg, .5)
-        assert_raises(ValueError, self.p1.cutdeg, -1)
-        assert_equal(len(self.p1.cutdeg(3)), 3)
-        assert_equal(len(self.p1.cutdeg(2)), 3)
-        assert_equal(len(self.p1.cutdeg(1)), 2)
-        assert_equal(len(self.p1.cutdeg(0)), 1)
-
-    def test_mapparms(self) :
-        parms = self.p2.mapparms()
-        assert_almost_equal(parms, [-1, 2])
-
-    def test_trim(self) :
-        coef = [1, 1e-6, 1e-12, 0]
-        p = poly.Polynomial(coef)
-        assert_equal(p.trim().coef, coef[:3])
-        assert_equal(p.trim(1e-10).coef, coef[:2])
-        assert_equal(p.trim(1e-5).coef, coef[:1])
-
-    def test_truncate(self) :
-        assert_raises(ValueError, self.p1.truncate, .5)
-        assert_raises(ValueError, self.p1.truncate, 0)
-        assert_equal(len(self.p1.truncate(4)), 3)
-        assert_equal(len(self.p1.truncate(3)), 3)
-        assert_equal(len(self.p1.truncate(2)), 2)
-        assert_equal(len(self.p1.truncate(1)), 1)
-
-    def test_integ(self) :
-        p = self.p2.integ()
-        assert_almost_equal(p.coef, poly.polyint([1,2,3], 1, 0, scl=.5))
-        p = self.p2.integ(lbnd=0)
-        assert_almost_equal(p(0), 0)
-        p = self.p2.integ(1, 1)
-        assert_almost_equal(p.coef, poly.polyint([1,2,3], 1, 1, scl=.5))
-        p = self.p2.integ(2, [1, 2])
-        assert_almost_equal(p.coef, poly.polyint([1,2,3], 2, [1, 2], scl=.5))
-
 
 if __name__ == "__main__":
     run_module_suite()
