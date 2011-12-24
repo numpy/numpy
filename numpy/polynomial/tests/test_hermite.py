@@ -510,60 +510,6 @@ class TestHermiteClass(TestCase) :
     p4 = herm.Hermite([2,2,3])
     p5 = herm.Hermite([3,2,3])
 
-    def test_equal(self) :
-        assert_(self.p1 == self.p1)
-        assert_(self.p2 == self.p2)
-        assert_(not self.p1 == self.p2)
-        assert_(not self.p1 == self.p3)
-        assert_(not self.p1 == [1,2,3])
-
-    def test_not_equal(self) :
-        assert_(not self.p1 != self.p1)
-        assert_(not self.p2 != self.p2)
-        assert_(self.p1 != self.p2)
-        assert_(self.p1 != self.p3)
-        assert_(self.p1 != [1,2,3])
-
-    def test_add(self) :
-        tgt = herm.Hermite([2,4,6])
-        assert_(self.p1 + self.p1 == tgt)
-        assert_(self.p1 + [1,2,3] == tgt)
-        assert_([1,2,3] + self.p1 == tgt)
-
-    def test_sub(self) :
-        tgt = herm.Hermite([1])
-        assert_(self.p4 - self.p1 == tgt)
-        assert_(self.p4 - [1,2,3] == tgt)
-        assert_([2,2,3] - self.p1 == tgt)
-
-    def test_mul(self) :
-        tgt = herm.Hermite([ 81.,  52.,  82.,  12.,   9.])
-        assert_poly_almost_equal(self.p1 * self.p1, tgt)
-        assert_poly_almost_equal(self.p1 * [1,2,3], tgt)
-        assert_poly_almost_equal([1,2,3] * self.p1, tgt)
-
-    def test_floordiv(self) :
-        tgt = herm.Hermite([1])
-        assert_(self.p4 // self.p1 == tgt)
-        assert_(self.p4 // [1,2,3] == tgt)
-        assert_([2,2,3] // self.p1 == tgt)
-
-    def test_mod(self) :
-        tgt = herm.Hermite([1])
-        assert_((self.p4 % self.p1) == tgt)
-        assert_((self.p4 % [1,2,3]) == tgt)
-        assert_(([2,2,3] % self.p1) == tgt)
-
-    def test_divmod(self) :
-        tquo = herm.Hermite([1])
-        trem = herm.Hermite([2])
-        quo, rem = divmod(self.p5, self.p1)
-        assert_(quo == tquo and rem == trem)
-        quo, rem = divmod(self.p5, [1,2,3])
-        assert_(quo == tquo and rem == trem)
-        quo, rem = divmod([3,2,3], self.p1)
-        assert_(quo == tquo and rem == trem)
-
     def test_pow(self) :
         tgt = herm.Hermite([1])
         for i in range(5) :
@@ -618,13 +564,6 @@ class TestHermiteClass(TestCase) :
         assert_almost_equal(p.coef, herm.hermint([1,2,3], 1, 1, scl=.5))
         p = self.p2.integ(2, [1, 2])
         assert_almost_equal(p.coef, herm.hermint([1,2,3], 2, [1,2], scl=.5))
-
-    def test_identity(self) :
-        x = np.linspace(0,3)
-        p = herm.Hermite.identity()
-        assert_almost_equal(p(x), x)
-        p = herm.Hermite.identity([1,3])
-        assert_almost_equal(p(x), x)
 
 
 if __name__ == "__main__":
