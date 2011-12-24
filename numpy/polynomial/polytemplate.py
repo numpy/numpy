@@ -80,7 +80,7 @@ class $name(pu.PolyBase) :
     # Default window
     window = np.array($domain)
     # Don't let participate in array operations. Value doesn't matter.
-    __array_priority__ = 0
+    __array_priority__ = 1000
 
     def has_samecoef(self, other):
         """Check if coefficients match.
@@ -319,6 +319,7 @@ class $name(pu.PolyBase) :
             try :
                 quo, rem = ${nick}div(self.coef, other)
             except :
+                print 'hi'
                 return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
         rem = self.__class__(rem, self.domain, self.window)
@@ -555,7 +556,7 @@ class $name(pu.PolyBase) :
         applied to the input arguments before the series is evaluated. The
         map depends on the ``domain`` and ``window``; if the current
         ``domain`` is equal to the ``window`` the resulting map is the
-        identity.  If the coeffients of the ``$name`` instance are to be
+        identity.  If the coefficients of the ``$name`` instance are to be
         used by themselves outside this class, then the linear function
         must be substituted for the ``x`` in the standard representation of
         the base polynomials.
