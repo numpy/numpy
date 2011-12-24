@@ -341,6 +341,7 @@ class $name(pu.PolyBase) :
             try :
                 quo, rem = ${nick}div(self.coef, other)
             except :
+                print 'hi'
                 return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
         rem = self.__class__(rem, self.domain, self.window)
