@@ -576,10 +576,17 @@ array_divmod(PyArrayObject *op1, PyObject *op2)
     if (divp == NULL) {
         return NULL;
     }
+    else if(divp == Py_NotImplemented) {
+        return divp;
+    }
     modp = array_remainder(op1, op2);
     if (modp == NULL) {
         Py_DECREF(divp);
         return NULL;
+    }
+    else if(modp == Py_NotImplemented) {
+        Py_DECREF(divp);
+        return modp;
     }
     result = Py_BuildValue("OO", divp, modp);
     Py_DECREF(divp);
