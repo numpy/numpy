@@ -505,60 +505,6 @@ class TestLaguerreClass(TestCase) :
     p4 = lag.Laguerre([2,2,3])
     p5 = lag.Laguerre([3,2,3])
 
-    def test_equal(self) :
-        assert_(self.p1 == self.p1)
-        assert_(self.p2 == self.p2)
-        assert_(not self.p1 == self.p2)
-        assert_(not self.p1 == self.p3)
-        assert_(not self.p1 == [1,2,3])
-
-    def test_not_equal(self) :
-        assert_(not self.p1 != self.p1)
-        assert_(not self.p2 != self.p2)
-        assert_(self.p1 != self.p2)
-        assert_(self.p1 != self.p3)
-        assert_(self.p1 != [1,2,3])
-
-    def test_add(self) :
-        tgt = lag.Laguerre([2,4,6])
-        assert_(self.p1 + self.p1 == tgt)
-        assert_(self.p1 + [1,2,3] == tgt)
-        assert_([1,2,3] + self.p1 == tgt)
-
-    def test_sub(self) :
-        tgt = lag.Laguerre([1])
-        assert_(self.p4 - self.p1 == tgt)
-        assert_(self.p4 - [1,2,3] == tgt)
-        assert_([2,2,3] - self.p1 == tgt)
-
-    def test_mul(self) :
-        tgt = lag.Laguerre([ 14., -16.,  56., -72.,  54.])
-        assert_poly_almost_equal(self.p1 * self.p1, tgt)
-        assert_poly_almost_equal(self.p1 * [1,2,3], tgt)
-        assert_poly_almost_equal([1,2,3] * self.p1, tgt)
-
-    def test_floordiv(self) :
-        tgt = lag.Laguerre([1])
-        assert_(self.p4 // self.p1 == tgt)
-        assert_(self.p4 // [1,2,3] == tgt)
-        assert_([2,2,3] // self.p1 == tgt)
-
-    def test_mod(self) :
-        tgt = lag.Laguerre([1])
-        assert_((self.p4 % self.p1) == tgt)
-        assert_((self.p4 % [1,2,3]) == tgt)
-        assert_(([2,2,3] % self.p1) == tgt)
-
-    def test_divmod(self) :
-        tquo = lag.Laguerre([1])
-        trem = lag.Laguerre([2])
-        quo, rem = divmod(self.p5, self.p1)
-        assert_(quo == tquo and rem == trem)
-        quo, rem = divmod(self.p5, [1,2,3])
-        assert_(quo == tquo and rem == trem)
-        quo, rem = divmod([3,2,3], self.p1)
-        assert_(quo == tquo and rem == trem)
-
     def test_pow(self) :
         tgt = lag.Laguerre([1])
         for i in range(5) :
@@ -613,13 +559,6 @@ class TestLaguerreClass(TestCase) :
         assert_almost_equal(p.coef, lag.lagint([1,2,3], 1, 1, scl=.5))
         p = self.p2.integ(2, [1, 2])
         assert_almost_equal(p.coef, lag.lagint([1,2,3], 2, [1,2], scl=.5))
-
-    def test_identity(self) :
-        x = np.linspace(0,3)
-        p = lag.Laguerre.identity()
-        assert_almost_equal(p(x), x)
-        p = lag.Laguerre.identity([1,3])
-        assert_almost_equal(p(x), x)
 
 
 if __name__ == "__main__":
