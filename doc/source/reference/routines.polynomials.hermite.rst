@@ -1,21 +1,21 @@
-Polynomial Module (:mod:`numpy.polynomial.polynomial`)
+Hermite Module (:mod:`numpy.polynomial.hermite`)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. currentmodule:: numpy.polynomial.polynomial
+.. currentmodule:: numpy.polynomial.hermite
 
 This module provides a number of objects (mostly functions) useful for
-dealing with Polynomial series, including a `Polynomial` class that
+dealing with Hermite series, including a `Hermite` class that
 encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
-Polynomial Class
-----------------
+Hermite Class
+-------------
 .. autosummary::
    :toctree: generated/
 
-   .. _polynomial-class:
-   Polynomial
+   .. _hermite-class:
+   Hermite
 
 Basics
 ------
@@ -23,13 +23,13 @@ Basics
 .. autosummary::
    :toctree: generated/
 
-   polyval
-   polyval2d
-   polyval3d
-   polygrid2d
-   polygrid3d
-   polyroots
-   polyfromroots
+   hermval
+   hermval2d
+   hermval3d
+   hermgrid2d
+   hermgrid3d
+   hermroots
+   hermfromroots
 
 Fitting
 -------
@@ -37,10 +37,10 @@ Fitting
 .. autosummary::
    :toctree: generated/
 
-   polyfit
-   polyvander
-   polyvander2d
-   polyvander3d
+   hermfit
+   hermvander
+   hermvander2d
+   hermvander3d
 
 Calculus
 --------
@@ -48,8 +48,8 @@ Calculus
 .. autosummary::
    :toctree: generated/
 
-   polyder
-   polyint
+   hermder
+   hermint
 
 Algebra
 -------
@@ -57,12 +57,21 @@ Algebra
 .. autosummary::
    :toctree: generated/
 
-   polyadd
-   polysub
-   polymul
-   polymulx
-   polydiv
-   polypow
+   hermadd
+   hermsub
+   hermmul
+   hermmulx
+   hermdiv
+   hermpow
+
+Quadrature
+----------
+
+.. autosummary::
+   :toctree: generated/
+
+   hermgauss
+   hermweight
 
 Miscellaneous
 -------------
@@ -70,10 +79,12 @@ Miscellaneous
 .. autosummary::
    :toctree: generated/
 
-   polycompanion
-   polydomain
-   polyzero
-   polyone
-   polyx
-   polytrim
-   polyline
+   hermcompanion
+   hermdomain
+   hermzero
+   hermone
+   hermx
+   hermtrim
+   hermline
+   herm2poly
+   poly2herm

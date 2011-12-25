@@ -1,5 +1,8 @@
 """
-Objects for dealing with Legendre series.
+Legendre Series (:mod: `numpy.polynomial.legendre`)
+===================================================
+
+.. currentmodule:: numpy.polynomial.polynomial
 
 This module provides a number of objects (mostly functions) useful for
 dealing with Legendre series, including a `Legendre` class that
@@ -9,53 +12,73 @@ docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Constants
 ---------
-- `legdomain` -- Legendre series default domain, [-1,1].
-- `legzero` -- Legendre series that evaluates identically to 0.
-- `legone` -- Legendre series that evaluates identically to 1.
-- `legx` -- Legendre series for the identity map, ``f(x) = x``.
+
+.. autosummary::
+   :toctree: generated/
+
+   legdomain            Legendre series default domain, [-1,1].
+   legzero              Legendre series that evaluates identically to 0.
+   legone               Legendre series that evaluates identically to 1.
+   legx                 Legendre series for the identity map, ``f(x) = x``.
 
 Arithmetic
 ----------
-- `legmulx` -- multiply a Legendre series in ``P_i(x)`` by ``x``.
-- `legadd` -- add two Legendre series.
-- `legsub` -- subtract one Legendre series from another.
-- `legmul` -- multiply two Legendre series.
-- `legdiv` -- divide one Legendre series by another.
-- `legpow` -- raise a Legendre series to an positive integer power
-- `legval` -- evaluate a Legendre series at given points.
-- `legval2d` -- evaluate a 2D Legendre series at given points.
-- `legval3d` -- evaluate a 3D Legendre series at given points.
-- `leggrid2d` -- evaluate a 2D Legendre series on a Cartesian product.
-- `leggrid3d` -- evaluate a 3D Legendre series on a Cartesian product.
+
+.. autosummary::
+   :toctree: generated/
+
+   legmulx              multiply a Legendre series in P_i(x) by x.
+   legadd               add two Legendre series.
+   legsub               subtract one Legendre series from another.
+   legmul               multiply two Legendre series.
+   legdiv               divide one Legendre series by another.
+   legpow               raise a Legendre series to an positive integer power
+   legval               evaluate a Legendre series at given points.
+   legval2d             evaluate a 2D Legendre series at given points.
+   legval3d             evaluate a 3D Legendre series at given points.
+   leggrid2d            evaluate a 2D Legendre series on a Cartesian product.
+   leggrid3d            evaluate a 3D Legendre series on a Cartesian product.
 
 Calculus
 --------
-- `legder` -- differentiate a Legendre series.
-- `legint` -- integrate a Legendre series.
+
+.. autosummary::
+   :toctree: generated/
+
+   legder               differentiate a Legendre series.
+   legint               integrate a Legendre series.
 
 Misc Functions
 --------------
-- `legfromroots` -- create a Legendre series with specified roots.
-- `legroots` -- find the roots of a Legendre series.
-- `legvander` -- Vandermonde-like matrix for Legendre polynomials.
-- `legvander2d` -- Vandermonde-like matrix for 2D power series.
-- `legvander3d` -- Vandermonde-like matrix for 3D power series.
-- `leggauss` -- Gauss-Legendre quadrature, points and weights.
-- `legweight` -- Legendre weight function.
-- `legcompanion` -- symmetrized companion matrix in Legendre form.
-- `legfit` -- least-squares fit returning a Legendre series.
-- `legtrim` -- trim leading coefficients from a Legendre series.
-- `legline` -- Legendre series representing given straight line.
-- `leg2poly` -- convert a Legendre series to a polynomial.
-- `poly2leg` -- convert a polynomial to a Legendre series.
+
+.. autosummary::
+   :toctree: generated/
+
+   legfromroots          create a Legendre series with specified roots.
+   legroots              find the roots of a Legendre series.
+   legvander             Vandermonde-like matrix for Legendre polynomials.
+   legvander2d           Vandermonde-like matrix for 2D power series.
+   legvander3d           Vandermonde-like matrix for 3D power series.
+   leggauss              Gauss-Legendre quadrature, points and weights.
+   legweight             Legendre weight function.
+   legcompanion          symmetrized companion matrix in Legendre form.
+   legfit                least-squares fit returning a Legendre series.
+   legtrim               trim leading coefficients from a Legendre series.
+   legline               Legendre series representing given straight line.
+   leg2poly              convert a Legendre series to a polynomial.
+   poly2leg              convert a polynomial to a Legendre series.
 
 Classes
 -------
-- `Legendre` -- A Legendre series class.
+    Legendre            A Legendre series class.
 
 See also
 --------
-`numpy.polynomial`
+numpy.polynomial.polynomial
+numpy.polynomial.chebyshev
+numpy.polynomial.laguerre
+numpy.polynomial.hermite
+numpy.polynomial.hermite_e
 
 """
 from __future__ import division
