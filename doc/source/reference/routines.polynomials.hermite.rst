@@ -1,5 +1,5 @@
 Hermite Module (:mod:`numpy.polynomial.hermite`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+================================================
 
 .. currentmodule:: numpy.polynomial.hermite
 
@@ -11,10 +11,10 @@ docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Hermite Class
 -------------
+
 .. autosummary::
    :toctree: generated/
 
-   .. _hermite-class:
    Hermite
 
 Basics
