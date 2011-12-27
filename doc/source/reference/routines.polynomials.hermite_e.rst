@@ -1,5 +1,5 @@
 HermiteE Module (:mod:`numpy.polynomial.hermite_e`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+===================================================
 
 .. currentmodule:: numpy.polynomial.hermite_e
 
@@ -9,10 +9,9 @@ encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
-.. _hermite_e:
-
 HermiteE Class
 --------------
+
 .. autosummary::
    :toctree: generated/
 

@@ -1,5 +1,5 @@
 Laguerre Module (:mod:`numpy.polynomial.laguerre`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+==================================================
 
 .. currentmodule:: numpy.polynomial.laguerre
 
@@ -11,10 +11,10 @@ docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Laguerre Class
 --------------
+
 .. autosummary::
    :toctree: generated/
 
-   .. _laguerre-class:
    Laguerre
 
 Basics

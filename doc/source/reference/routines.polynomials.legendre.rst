@@ -1,5 +1,5 @@
 Legendre Module (:mod:`numpy.polynomial.legendre`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+==================================================
 
 .. currentmodule:: numpy.polynomial.legendre
 
@@ -11,10 +11,10 @@ docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Legendre Class
 --------------
+
 .. autosummary::
    :toctree: generated/
 
-   .. _legendre-class:
    Legendre
 
 Basics
