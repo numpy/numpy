@@ -11,10 +11,10 @@ docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Chebyshev Class
 ---------------
+
 .. autosummary::
    :toctree: generated/
 
-   .. _chebyshev-class:
    Chebyshev
 
 Basics

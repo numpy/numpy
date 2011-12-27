@@ -1,5 +1,5 @@
 Polynomial Module (:mod:`numpy.polynomial.polynomial`)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+======================================================
 
 .. currentmodule:: numpy.polynomial.polynomial
 
@@ -11,10 +11,10 @@ docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Polynomial Class
 ----------------
+
 .. autosummary::
    :toctree: generated/
 
-   .. _polynomial-class:
    Polynomial
 
 Basics
