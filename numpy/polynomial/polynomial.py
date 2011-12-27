@@ -126,15 +126,24 @@ def polyline(off, scl) :
 
 def polyfromroots(roots) :
     """
-    Generate a polynomial with the given roots.
+    Generate a monic polynomial with given roots.
 
-    Return the array of coefficients for the polynomial whose leading
-    coefficient (i.e., that of the highest order term) is `1` and whose
-    roots (a.k.a. "zeros") are given by *roots*.  The returned array of
-    coefficients is ordered from lowest order term to highest, and zeros
-    of multiplicity greater than one must be included in *roots* a number
-    of times equal to their multiplicity (e.g., if `2` is a root of
-    multiplicity three, then [2,2,2] must be in *roots*).
+    Return the coefficients of the polynomial
+
+    .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
+
+    where the `r_n` are the roots specified in `roots`.  If a zero has
+    multiplicity n, then it must appear in `roots` n times. For instance,
+    if 2 is a root of multiplicity three and 3 is a root of multiplicity 2,
+    then `roots` looks something like [2, 2, 2, 3, 3]. The roots can appear
+    in any order.
+
+    If the returned coefficients are `c`, then
+
+    .. math:: p(x) = c_0 + c_1 * x + ... +  x^n
+
+    The coefficient of the last term is 1 for monic polynomials in this
+    form.
 
     Parameters
     ----------
@@ -144,24 +153,23 @@ def polyfromroots(roots) :
     Returns
     -------
     out : ndarray
-        1-d array of the polynomial's coefficients, ordered from low to
-        high.  If all roots are real, ``out.dtype`` is a float type;
-        otherwise, ``out.dtype`` is a complex type, even if all the
-        coefficients in the result are real (see Examples below).
+        1-D array of the polynomial's coefficients If all the roots are
+        real, then `out` is also real, otherwise it is complex.  (see
+        Examples below).
 
     See Also
     --------
-    chebfromroots
+    chebfromroots, legfromroots, lagfromroots, hermfromroots
+    hermefromroots
 
     Notes
     -----
-    What is returned are the :math:`a_i` such that:
+    The coefficients are determined by multiplying together linear factors
+    of the form `(x - r_i)`, i.e.
 
-    .. math::
+    .. math:: p(x) = (x - r_0) (x - r_1) ... (x - r_n)
 
-        \\sum_{i=0}^{n} a_ix^i = \\prod_{i=0}^{n} (x - roots[i])
-
-    where ``n == len(roots)``; note that this implies that `1` is always
+    where ``n == len(roots) - 1``; note that this implies that `1` is always
     returned for :math:`a_n`.
 
     Examples
@@ -274,16 +282,16 @@ def polysub(c1, c2):
     return pu.trimseq(ret)
 
 
-def polymulx(cs):
+def polymulx(c):
     """Multiply a polynomial by x.
 
-    Multiply the polynomial `cs` by x, where x is the independent
+    Multiply the polynomial `c` by x, where x is the independent
     variable.
 
 
     Parameters
     ----------
-    cs : array_like
+    c : array_like
         1-d array of polynomial coefficients ordered from low to
         high.
 
@@ -297,15 +305,15 @@ def polymulx(cs):
     .. versionadded:: 1.5.0
 
     """
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
+    # c is a trimmed copy
+    [c] = pu.as_series([c])
     # The zero series needs special treatment
-    if len(cs) == 1 and cs[0] == 0:
-        return cs
+    if len(c) == 1 and c[0] == 0:
+        return c
 
-    prd = np.empty(len(cs) + 1, dtype=cs.dtype)
-    prd[0] = cs[0]*0
-    prd[1:] = cs
+    prd = np.empty(len(c) + 1, dtype=c.dtype)
+    prd[0] = c[0]*0
+    prd[1:] = c
     return prd
 
 
@@ -404,16 +412,16 @@ def polydiv(c1, c2):
         return c1[j+1:]/scl, pu.trimseq(c1[:j+1])
 
 
-def polypow(cs, pow, maxpower=None) :
+def polypow(c, pow, maxpower=None) :
     """Raise a polynomial to a power.
 
-    Returns the polynomial `cs` raised to the power `pow`. The argument
-    `cs` is a sequence of coefficients ordered from low to high. i.e.,
+    Returns the polynomial `c` raised to the power `pow`. The argument
+    `c` is a sequence of coefficients ordered from low to high. i.e.,
     [1,2,3] is the series  ``1 + 2*x + 3*x**2.``
 
     Parameters
     ----------
-    cs : array_like
+    c : array_like
         1d array of array of series coefficients ordered from low to
         high degree.
     pow : integer
@@ -435,23 +443,23 @@ def polypow(cs, pow, maxpower=None) :
     --------
 
     """
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
+    # c is a trimmed copy
+    [c] = pu.as_series([c])
     power = int(pow)
     if power != pow or power < 0 :
         raise ValueError("Power must be a non-negative integer.")
     elif maxpower is not None and power > maxpower :
         raise ValueError("Power is too large")
     elif power == 0 :
-        return np.array([1], dtype=cs.dtype)
+        return np.array([1], dtype=c.dtype)
     elif power == 1 :
-        return cs
+        return c
     else :
         # This can be made more efficient by using powers of two
         # in the usual way.
-        prd = cs
+        prd = c
         for i in range(2, power + 1) :
-            prd = np.convolve(prd, cs)
+            prd = np.convolve(prd, c)
         return prd
 
 
@@ -592,11 +600,11 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     Notes
     -----
-    Note that the result of each integration is *multiplied* by `scl`.
-    Why is this important to note?  Say one is making a linear change of
-    variable :math:`u = ax + b` in an integral relative to `x`.  Then
-    :math:`dx = du/a`, so one will need to set `scl` equal to :math:`1/a`
-    - perhaps not what one would have first thought.
+    Note that the result of each integration is *multiplied* by `scl`.  Why
+    is this important to note?  Say one is making a linear change of
+    variable :math:`u = ax + b` in an integral relative to `x`. Then
+    .. math::`dx = du/a`, so one will need to set `scl` equal to
+    :math:`1/a` - perhaps not what one would have first thought.
 
     Examples
     --------
@@ -660,53 +668,53 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
 def polyval(x, c, tensor=True):
     """
-    Evaluate a polynomial.
+    Evaluate a polynomial at points x.
 
-    If `c` is of length ``n + 1``, this function returns the value:
+    If `c` is of length `n + 1`, this function returns the value
 
-    ``p(x) = c[0] + c[1]*x + ... + c[n]*x**(n)``
+    .. math:: p(x) = c_0 + c_1 * x + ... + c_n * x^n
 
-    If `x` is a sequence or array and `c` is 1 dimensional, then ``p(x)``
-    will have the same shape as `x`.  If `x` is a algebra_like object that
-    supports multiplication and addition with itself and the values in `c`,
-    then an object of the same type is returned.
+    The parameter `x` is converted to an array only if it is a tuple or a
+    list, otherwise it is treated as a scalar. In either case, either `x`
+    or its elements must support multiplication and addition both with
+    themselves and with the elements of `c`.
 
-    In the case where c is multidimensional, the shape of the result
-    depends on the value of `tensor`. If tensor is true the shape of the
-    return will be ``c.shape[1:] + x.shape``, where the shape of a scalar
-    is the empty tuple. If tensor is false the shape is ``c.shape[1:]`` if
-    `x` is broadcast compatible with that.
+    If `c` is a 1-D array, then `p(x)` will have the same shape as `x`.  If
+    `c` is multidimensional, then the shape of the result depends on the
+    value of `tensor`. If `tensor` is true the shape will be c.shape[1:] +
+    x.shape. If `tensor` is false the shape will be c.shape[1:]. Note that
+    scalars have shape (,).
 
-    If there are trailing zeros in the coefficients they still take part in
-    the evaluation, so they should be avoided if efficiency is a concern.
+    Trailing zeros in the coefficients will be used in the evaluation, so
+    they should be avoided if efficiency is a concern.
 
     Parameters
     ----------
-    x : array_like, algebra_like
-        If x is a list or tuple, it is converted to an ndarray. Otherwise
-        it is left unchanged and if it isn't an ndarray it is treated as a
-        scalar. In either case, `x` or any element of an ndarray must
-        support addition and multiplication with itself and the elements of
-        `c`.
+    x : array_like, compatible object
+        If `x` is a list or tuple, it is converted to an ndarray, otherwise
+        it is left unchanged and treated as a scalar. In either case, `x`
+        or its elements must support addition and multiplication with
+        with themselves and with the elements of `c`.
     c : array_like
         Array of coefficients ordered so that the coefficients for terms of
-        degree n are contained in ``c[n]``. If `c` is multidimesional the
+        degree n are contained in c[n]. If `c` is multidimesional the
         remaining indices enumerate multiple polynomials. In the two
         dimensional case the coefficients may be thought of as stored in
         the columns of `c`.
     tensor : boolean, optional
-        If true, the coefficient array shape is extended with ones on the
-        right, one for each dimension of `x`. Scalars are treated as having
-        dimension 0 for this action. The effect is that every column of
-        coefficients in `c` is evaluated for every value in `x`. If False,
-        the `x` are broadcast over the columns of `c` in the usual way.
-        This gives some flexibility in evaluations in the multidimensional
-        case. The default value it ``True``.
+        If True, the shape of the coefficient array is extended with ones
+        on the right, one for each dimension of `x`. Scalars have dimension 0
+        for this action. The result is that every column of coefficients in
+        `c` is evaluated for every element of `x`. If False, `x` is broadcast
+        over the columns of `c` for the evaluation.  This keyword is useful
+        when `c` is multidimensional. The default value is True.
+
+        .. versionadded:: 1.7.0
 
     Returns
     -------
-    values : ndarray, algebra_like
-        The shape of the return value is described above.
+    values : ndarray, compatible object
+        The shape of the returned array is described above.
 
     See Also
     --------
@@ -755,29 +763,40 @@ def polyval(x, c, tensor=True):
 
 def polyval2d(x, y, c):
     """
-    Evaluate 2D polynomials at points (x,y).
+    Evaluate a 2-D polynomial at points (x, y).
 
-    This function returns the values:
+    This function returns the value
 
-    ``p(x,y) = \sum_{i,j} c[i,j] * x^i * y^j``
+    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * x^i * y^j
+
+    The parameters `x` and `y` are converted to arrays only if they are
+    tuples or a lists, otherwise they are treated as a scalars and they
+    must have the same shape after conversion. In either case, either `x`
+    and `y` or their elements must support multiplication and addition both
+    with themselves and with the elements of `c`.
+
+    If `c` has fewer than two dimensions, ones are implicitly appended to
+    its shape to make it 2-D. The shape of the result will be c.shape[2:] +
+    x.shape.
+
+    .. versionadded:: 1.7.0
 
     Parameters
     ----------
-    x,y : array_like, algebra_like
-        The two dimensional polynomial is evaluated at the points
-        ``(x,y)``, where `x` and `y` must have the same shape. If `x` or
-        `y` is a list or tuple, it is first converted to an ndarray,
-        otherwise it is left unchanged and if it isn't an ndarray it is
-        treated as a scalar. See `polyval` for explanation of algebra_like.
+    x, y : array_like, compatible objects
+        The two dimensional series is evaluated at the points `(x, y)`,
+        where `x` and `y` must have the same shape. If `x` or `y` is a list
+        or tuple, it is first converted to an ndarray, otherwise it is left
+        unchanged and, if it isn't an ndarray, it is treated as a scalar.
     c : array_like
-        Array of coefficients ordered so that the coefficients for terms of
-        degree i,j are contained in ``c[i,j]``. If `c` has dimension
-        greater than 2 the remaining indices enumerate multiple sets of
-        coefficients.
+        Array of coefficients ordered so that the coefficient of the term
+        of multi-degree i,j is contained in `c[i,j]`. If `c` has
+        dimension greater than two the remaining indices enumerate multiple
+        sets of coefficients.
 
     Returns
     -------
-    values : ndarray, algebra_like
+    values : ndarray, compatible object
         The values of the two dimensional polynomial at points formed with
         pairs of corresponding values from `x` and `y`.
 
@@ -798,33 +817,43 @@ def polyval2d(x, y, c):
 
 def polygrid2d(x, y, c):
     """
-    Evaluate 2D polynomials on the Cartesion product of x,y.
+    Evaluate a 2-D polynomial on the Cartesion product of x and y.
 
     This function returns the values:
 
-    ``p(a,b) = \sum_{i,j} c[i,j] * a^i * b^j``
+    .. math:: p(a,b) = \\sum_{i,j} c_{i,j} * a^i * b^j
 
-    where the points ``(a,b)`` consist of all pairs of points formed by
-    taking ``a`` from `x` and ``b`` from `y`. The resulting points form a
-    grid with `x` in the first dimension and `y` in the second.
+    where the points `(a, b)` consist of all pairs formed by taking
+    `a` from `x` and `b` from `y`. The resulting points form a grid with
+    `x` in the first dimension and `y` in the second.
+
+    The parameters `x` and `y` are converted to arrays only if they are
+    tuples or a lists, otherwise they are treated as a scalars. In either
+    case, either `x` and `y` or their elements must support multiplication
+    and addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than two dimensions, ones are implicitly appended to
+    its shape to make it 2-D. The shape of the result will be c.shape[2:] +
+    x.shape + y.shape.
+
+    .. versionadded:: 1.7.0
 
     Parameters
     ----------
-    x,y : array_like, algebra_like
-        The two dimensional polynomial is evaluated at the points in the
+    x, y : array_like, compatible objects
+        The two dimensional series is evaluated at the points in the
         Cartesian product of `x` and `y`.  If `x` or `y` is a list or
         tuple, it is first converted to an ndarray, otherwise it is left
-        unchanged and if it isn't an ndarray it is treated as a scalar. See
-        `polyval` for explanation of algebra_like.
+        unchanged and, if it isn't an ndarray, it is treated as a scalar.
     c : array_like
         Array of coefficients ordered so that the coefficients for terms of
         degree i,j are contained in ``c[i,j]``. If `c` has dimension
-        greater than 2 the remaining indices enumerate multiple sets of
+        greater than two the remaining indices enumerate multiple sets of
         coefficients.
 
     Returns
     -------
-    values : ndarray, algebra_like
+    values : ndarray, compatible object
         The values of the two dimensional polynomial at points in the Cartesion
         product of `x` and `y`.
 
@@ -840,30 +869,41 @@ def polygrid2d(x, y, c):
 
 def polyval3d(x, y, z, c):
     """
-    Evaluate 3D polynomials at points (x,y,z).
+    Evaluate a 3-D polynomial at points (x, y, z).
 
     This function returns the values:
 
-    ``p(x,y,z) = \sum_{i,j,k} c[i,j,k] * x^i * y^j * z^k``
+    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * x^i * y^j * z^k
+
+    The parameters `x`, `y`, and `z` are converted to arrays only if
+    they are tuples or a lists, otherwise they are treated as a scalars and
+    they must have the same shape after conversion. In either case, either
+    `x`, `y`, and `z` or their elements must support multiplication and
+    addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than 3 dimensions, ones are implicitly appended to its
+    shape to make it 3-D. The shape of the result will be c.shape[3:] +
+    x.shape.
+
+    .. versionadded::1.7.0
 
     Parameters
     ----------
-    x,y,z : array_like, algebra_like
-        The three dimensional polynomial is evaluated at the points
-        ``(x,y,z)``, where `x`, `y`, and `z` must have the same shape.  If
+    x, y, z : array_like, compatible object
+        The three dimensional series is evaluated at the points
+        `(x, y, z)`, where `x`, `y`, and `z` must have the same shape.  If
         any of `x`, `y`, or `z` is a list or tuple, it is first converted
         to an ndarray, otherwise it is left unchanged and if it isn't an
-        ndarray it is  treated as a scalar. See `polyval` for an
-        explanation of algebra_like.
+        ndarray it is  treated as a scalar.
     c : array_like
-        Array of coefficients ordered so that the coefficients for terms of
-        degree i, j are contained in ``c[i,j,k]``. If `c` has dimension
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k is contained in ``c[i,j,k]``. If `c` has dimension
         greater than 3 the remaining indices enumerate multiple sets of
         coefficients.
 
     Returns
     -------
-    values : ndarray, algebra_like
+    values : ndarray, compatible object
         The values of the multidimension polynomial on points formed with
         triples of corresponding values from `x`, `y`, and `z`.
 
@@ -885,36 +925,48 @@ def polyval3d(x, y, z, c):
 
 def polygrid3d(x, y, z, c):
     """
-    Evaluate 3D polynomials on the Cartesion product of x,y,z.
+    Evaluate a 3-D polynomial on the Cartesion product of x, y and z.
 
     This function returns the values:
 
-    ``p(a,b,c) = \sum_{i,j,k} c[i,j,k] * a^i * b^j * c^k``
+    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * a^i * b^j * c^k
 
-    where the points ``(a,b,c)`` consist of all triples formed by taking
-    ``a`` from `x`, ``b`` from `y`, and ``c`` from `z`. The resulting
-    points form a grid with `x` in the first dimension, `y` in the second,
-    and `z` in the third.
+    where the points `(a, b, c)` consist of all triples formed by taking
+    `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
+    a grid with `x` in the first dimension, `y` in the second, and `z` in
+    the third.
+
+    The parameters `x`, `y`, and `z` are converted to arrays only if they
+    are tuples or a lists, otherwise they are treated as a scalars. In
+    either case, either `x`, `y`, and `z` or their elements must support
+    multiplication and addition both with themselves and with the elements
+    of `c`.
+
+    If `c` has fewer than three dimensions, ones are implicitly appended to
+    its shape to make it 3-D. The shape of the result will be c.shape[3:] +
+    x.shape + yshape + z.shape.
+
+    .. versionadded:: 1.7.0
 
     Parameters
     ----------
-    x,y,z : array_like, algebra_like
-        The three dimensional polynomial is evaluated at the points
-        ``(x,y,z)``, where `x` and `y` must have the same shape. If `x` or
-        `y` is a list or tuple, it is first converted to an ndarray,
-        otherwise it is left unchanged and treated as a scalar. See
-        `polyval` for explanation of algebra_like.
+    x, y, z : array_like, compatible objects
+        The three dimensional series is evaluated at the points in the
+        Cartesian product of `x`, `y`, and `z`.  If `x`,`y`, or `z` is a
+        list or tuple, it is first converted to an ndarray, otherwise it is
+        left unchanged and, if it isn't an ndarray, it is treated as a
+        scalar.
     c : array_like
         Array of coefficients ordered so that the coefficients for terms of
-        degree i,j are contained in ``c[i,j,k]``. If `c` has dimension
-        greater than 3 the remaining indices enumerate multiple sets of
+        degree i,j are contained in ``c[i,j]``. If `c` has dimension
+        greater than two the remaining indices enumerate multiple sets of
         coefficients.
 
     Returns
     -------
-    values : ndarray, algebra_like
-        The values of the multidimensional polynomial on the cartesion
-        product of `x`, `y`, and `z`.
+    values : ndarray, compatible object
+        The values of the two dimensional polynomial at points in the Cartesion
+        product of `x` and `y`.
 
     See Also
     --------
@@ -1018,7 +1070,7 @@ def polyvander2d(x, y, deg) :
 
 
 def polyvander3d(x, y, z, deg) :
-    """Psuedo Vandermonde matrix of given degree.
+    """Pseudo Vandermonde matrix of given degree.
 
     Returns the pseudo Vandermonde matrix for 3D polynomials in `x`, `y`,
     or `z`. The sample point coordinates must all have the same shape after
@@ -1246,13 +1298,13 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
-def polycompanion(cs):
-    """Return the companion matrix of cs.
+def polycompanion(c):
+    """Return the companion matrix of c.
 
 
     Parameters
     ----------
-    cs : array_like
+    c : array_like
         1-d array of series coefficients ordered from low to high degree.
 
     Returns
@@ -1261,40 +1313,39 @@ def polycompanion(cs):
         Scaled companion matrix of dimensions (deg, deg).
 
     """
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
-    if len(cs) < 2 :
+    # c is a trimmed copy
+    [c] = pu.as_series([c])
+    if len(c) < 2 :
         raise ValueError('Series must have maximum degree of at least 1.')
-    if len(cs) == 2:
-        return np.array(-cs[0]/cs[1])
+    if len(c) == 2:
+        return np.array(-c[0]/c[1])
 
-    n = len(cs) - 1
-    mat = np.zeros((n, n), dtype=cs.dtype)
+    n = len(c) - 1
+    mat = np.zeros((n, n), dtype=c.dtype)
     bot = mat.reshape(-1)[n::n+1]
     bot[...] = 1
-    mat[:,-1] -= cs[:-1]/cs[-1]
+    mat[:,-1] -= c[:-1]/c[-1]
     return mat
 
 
-def polyroots(cs):
+def polyroots(c):
     """
     Compute the roots of a polynomial.
 
-    Return the roots (a.k.a. "zeros") of the "polynomial" `cs`, the
-    polynomial's coefficients from lowest order term to highest
-    (e.g., [1,2,3] represents the polynomial ``1 + 2*x + 3*x**2``).
+    Return the roots (a.k.a. "zeros") of the polynomial
+
+    .. math:: p(x) = \\sum_i c[i] * x^i.
 
     Parameters
     ----------
-    cs : array_like of shape (M,)
-        1-d array of polynomial coefficients ordered from low to high.
+    c : 1-D array_like
+        1-D array of polynomial coefficients.
 
     Returns
     -------
     out : ndarray
-        Array of the roots of the polynomial.  If all the roots are real,
-        then so is the dtype of ``out``; otherwise, ``out``'s dtype is
-        complex.
+        Array of the roots of the polynomial. If all the roots are real,
+        then `out` is also real, otherwise it is complex.
 
     See Also
     --------
@@ -1322,14 +1373,14 @@ def polyroots(cs):
     array([  0.00000000e+00+0.j,   0.00000000e+00+1.j,   2.77555756e-17-1.j])
 
     """
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
-    if len(cs) < 2:
-        return np.array([], dtype=cs.dtype)
-    if len(cs) == 2:
-        return np.array([-cs[0]/cs[1]])
+    # c is a trimmed copy
+    [c] = pu.as_series([c])
+    if len(c) < 2:
+        return np.array([], dtype=c.dtype)
+    if len(c) == 2:
+        return np.array([-c[0]/c[1]])
 
-    m = polycompanion(cs)
+    m = polycompanion(c)
     r = la.eigvals(m)
     r.sort()
     return r
