@@ -1524,9 +1524,16 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     """
     Least squares fit of Chebyshev series to data.
 
-    Fit a Chebyshev series ``p(x) = p[0] * T_{0}(x) + ... + p[deg] *
-    T_{deg}(x)`` of degree `deg` to points `(x, y)`. Returns a vector of
-    coefficients `p` that minimises the squared error.
+    Return the coefficients of a Legendre series of degree `deg` that is the
+    least squares fit to the data values `y` given at points `x`. If `y` is
+    1-D the returned coefficients will also be 1-D. If `y` is 2-D multiple
+    fits are done, one for each column of `y`, and the resulting
+    coefficients are stored in the corresponding columns of a 2-D return.
+    The fitted polynomial(s) are in the form
+
+    .. math::  p(x) = c_0 + c_1 * T_1(x) + ... + c_n * T_n(x),
+
+    where `n` is `deg`.
 
     Parameters
     ----------
@@ -1537,7 +1544,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         points sharing the same x-coordinates can be fitted at once by
         passing in a 2D-array that contains one dataset per column.
     deg : int
-        Degree of the fitting polynomial
+        Degree of the fitting series
     rcond : float, optional
         Relative condition number of the fit. Singular values smaller than
         this relative to the largest singular value will be ignored. The
@@ -1552,6 +1559,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
+
         .. versionadded:: 1.5.0
 
     Returns
@@ -1578,30 +1586,31 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
+    polyfit, legfit, lagfit, hermfit, hermefit
     chebval : Evaluates a Chebyshev series.
     chebvander : Vandermonde matrix of Chebyshev series.
-    polyfit : least squares fit using polynomials.
+    chebweight : Chebyshev weight function.
     linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
     -----
-    The solution are the coefficients ``c[i]`` of the Chebyshev series
-    ``T(x)`` that minimizes the squared error
+    The solution is the coefficients of the Chebyshev series `p` that
+    minimizes the sum of the weighted squared errors
 
-    ``E = \\sum_j |y_j - T(x_j)|^2``.
+    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
 
-    This problem is solved by setting up as the overdetermined matrix
-    equation
+    where :math:`w_j` are the weights. This problem is solved by setting up
+    as the (typically) overdetermined matrix equation
 
-    ``V(x)*c = y``,
+    .. math:: V(x) * c = w * y,
 
-    where ``V`` is the Vandermonde matrix of `x`, the elements of ``c`` are
-    the coefficients to be solved for, and the elements of `y` are the
+    where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
+    coefficients to be solved for, `w` are the weights, and `y` are the
     observed values.  This equation is then solved using the singular value
-    decomposition of ``V``.
+    decomposition of `V`.
 
-    If some of the singular values of ``V`` are so small that they are
+    If some of the singular values of `V` are so small that they are
     neglected, then a `RankWarning` will be issued. This means that the
     coeficient values may be poorly determined. Using a lower order fit
     will usually get rid of the warning.  The `rcond` parameter can also be
