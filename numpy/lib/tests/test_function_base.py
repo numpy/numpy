@@ -1025,6 +1025,10 @@ class TestMeshgrid(TestCase):
                                [5, 5, 5],
                                [6, 6, 6],
                                [7, 7, 7]])))
+
+    def test_single_input(self):
+        assert_raises(ValueError, meshgrid, np.arange(5))
+
     def test_indexing(self):
         [X, Y] = meshgrid([1, 2, 3], [4, 5, 6, 7], indexing='ij')
         assert_(all(X == array([[1, 1, 1, 1],

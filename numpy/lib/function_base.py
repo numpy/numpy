@@ -3288,12 +3288,13 @@ def meshgrid(*xi, **kwargs):
 
     """
     copy_ = kwargs.get('copy', True)
+
+    if len(xi) < 2:
+        msg = 'meshgrid() takes 2 or more arguments (%d given)' % int(len(xi) > 0)
+        raise ValueError(msg)
+
     args = np.atleast_1d(*xi)
     ndim = len(args)
-
-    if ndim < 2:
-        msg = 'meshgrid() takes 2 or more arguments (%d given)' % int(ndim > 0)
-        raise TypeError(msg)
 
     sparse = kwargs.get('sparse', False)
     indexing = kwargs.get('indexing', 'xy')
