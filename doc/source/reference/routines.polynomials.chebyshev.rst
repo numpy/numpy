@@ -1,6 +1,8 @@
 Chebyshev Module (:mod:`numpy.polynomial.chebyshev`)
 ====================================================
 
+.. versionadded:: 1.4.0
+
 .. currentmodule:: numpy.polynomial.chebyshev
 
 This module provides a number of objects (mostly functions) useful for

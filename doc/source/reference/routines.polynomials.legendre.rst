@@ -1,6 +1,8 @@
 Legendre Module (:mod:`numpy.polynomial.legendre`)
 ==================================================
 
+.. versionadded:: 1.6.0
+
 .. currentmodule:: numpy.polynomial.legendre
 
 This module provides a number of objects (mostly functions) useful for
