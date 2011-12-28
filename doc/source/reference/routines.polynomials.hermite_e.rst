@@ -1,6 +1,8 @@
 HermiteE Module (:mod:`numpy.polynomial.hermite_e`)
 ===================================================
 
+.. versionadded:: 1.6.0
+
 .. currentmodule:: numpy.polynomial.hermite_e
 
 This module provides a number of objects (mostly functions) useful for
