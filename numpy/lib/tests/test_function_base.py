@@ -1030,13 +1030,24 @@ class TestMeshgrid(TestCase):
         assert_raises(ValueError, meshgrid, np.arange(5))
 
     def test_indexing(self):
-        [X, Y] = meshgrid([1, 2, 3], [4, 5, 6, 7], indexing='ij')
+        x = [1, 2, 3]
+        y = [4, 5, 6, 7]
+        [X, Y] = meshgrid(x, y, indexing='ij')
         assert_(all(X == array([[1, 1, 1, 1],
                                [2, 2, 2, 2],
                                [3, 3, 3, 3]])))
         assert_(all(Y == array([[4, 5, 6, 7],
                                [4, 5, 6, 7],
                                [4, 5, 6, 7]])))
+
+        # Test expected shapes:
+        z = [8, 9]
+        assert_(meshgrid(x, y)[0].shape == (4, 3))
+        assert_(meshgrid(x, y, indexing='ij')[0].shape == (3, 4))
+        assert_(meshgrid(x, y, z)[0].shape == (4, 3, 2))
+        assert_(meshgrid(x, y, z, indexing='ij')[0].shape == (3, 4, 2))
+
+        assert_raises(ValueError, meshgrid, x, y, indexing='notvalid')
 
     def test_sparse(self):
         [X, Y] = meshgrid([1, 2, 3], [4, 5, 6, 7], sparse=True)

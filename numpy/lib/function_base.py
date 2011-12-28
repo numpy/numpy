@@ -3215,6 +3215,7 @@ def meshgrid(*xi, **kwargs):
         1-D arrays representing the coordinates of a grid.
     indexing : {'xy', 'ij'}, optional
         Cartesian ('xy', default) or matrix ('ij') indexing of output.
+        See Notes for more details.
     sparse : bool, optional
          If True a sparse grid is returned in order to conserve memory.
          Default is False.
@@ -3238,9 +3239,13 @@ def meshgrid(*xi, **kwargs):
     Notes
     -----
     This function supports both indexing conventions through the indexing keyword
-    argument. Giving the string 'ij' returns a meshgrid with matrix indexing,
-    while 'xy' returns a meshgrid with Cartesian indexing. The difference is
-    illustrated by the following code snippet::
+    argument.  Giving the string 'ij' returns a meshgrid with matrix indexing,
+    while 'xy' returns a meshgrid with Cartesian indexing.  In the 2-D case
+    with inputs of length M and N, the outputs are of shape (N, M) for 'xy'
+    indexing and (M, N) for 'ij' indexing.  In the 3-D case with inputs of
+    length M, N and P, outputs are of shape (N, M, P) for 'xy' indexing and (M,
+    N, P) for 'ij' indexing.  The difference is illustrated by the following
+    code snippet::
 
         xv, yv = meshgrid(x, y, sparse=False, indexing='ij')
         for i in range(nx):
@@ -3287,8 +3292,6 @@ def meshgrid(*xi, **kwargs):
     >>> h = plt.contourf(x,y,z)
 
     """
-    copy_ = kwargs.get('copy', True)
-
     if len(xi) < 2:
         msg = 'meshgrid() takes 2 or more arguments (%d given)' % int(len(xi) > 0)
         raise ValueError(msg)
@@ -3296,8 +3299,11 @@ def meshgrid(*xi, **kwargs):
     args = np.atleast_1d(*xi)
     ndim = len(args)
 
+    copy_ = kwargs.get('copy', True)
     sparse = kwargs.get('sparse', False)
     indexing = kwargs.get('indexing', 'xy')
+    if not indexing in ['xy', 'ij']:
+        raise ValueError("Valid values for `indexing` are 'xy' and 'ij'.")
 
     s0 = (1,) * ndim
     output = [x.reshape(s0[:i] + (-1,) + s0[i + 1::]) for i, x in enumerate(args)]
