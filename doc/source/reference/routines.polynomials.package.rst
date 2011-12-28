@@ -1,6 +1,8 @@
 Polynomial Package
 ==================
 
+.. versionadded:: 1.4.0
+
 .. currentmodule:: numpy.polynomial
 
 .. toctree::

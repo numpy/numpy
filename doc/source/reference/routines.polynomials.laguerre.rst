@@ -1,6 +1,8 @@
 Laguerre Module (:mod:`numpy.polynomial.laguerre`)
 ==================================================
 
+.. versionadded:: 1.6.0
+
 .. currentmodule:: numpy.polynomial.laguerre
 
 This module provides a number of objects (mostly functions) useful for

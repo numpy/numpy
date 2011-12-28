@@ -1,6 +1,8 @@
 Hermite Module (:mod:`numpy.polynomial.hermite`)
 ================================================
 
+.. versionadded:: 1.6.0
+
 .. currentmodule:: numpy.polynomial.hermite
 
 This module provides a number of objects (mostly functions) useful for

@@ -1,6 +1,8 @@
 Polynomial Module (:mod:`numpy.polynomial.polynomial`)
 ======================================================
 
+.. versionadded:: 1.4.0
+
 .. currentmodule:: numpy.polynomial.polynomial
 
 This module provides a number of objects (mostly functions) useful for
