@@ -537,7 +537,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     PyObject *fp, *xp, *x;
     PyObject *left = NULL, *right = NULL;
     PyArrayObject *afp = NULL, *axp = NULL, *ax = NULL, *af = NULL;
-    npy_intp i, lenx, lenxp, indx;
+    npy_intp i, lenx, lenxp;
     double lval, rval;
     double *dy, *dx, *dz, *dres, *slopes;
 
@@ -604,29 +604,54 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         }
     }
 
-    slopes = (double *) PyDataMem_NEW((lenxp - 1)*sizeof(double));
-    NPY_BEGIN_ALLOW_THREADS;
-    for (i = 0; i < lenxp - 1; i++) {
-        slopes[i] = (dy[i + 1] - dy[i])/(dx[i + 1] - dx[i]);
+    /* only pre-calculate slopes if there are relatively few of them. */
+    if (lenxp <= lenx) {
+        slopes = (double *) PyDataMem_NEW((lenxp - 1)*sizeof(double));
+        NPY_BEGIN_ALLOW_THREADS;
+        for (i = 0; i < lenxp - 1; i++) {
+            slopes[i] = (dy[i + 1] - dy[i])/(dx[i + 1] - dx[i]);
+        }
+        for (i = 0; i < lenx; i++) {
+            npy_intp j = binary_search(dz[i], dx, lenxp);
+
+            if (j == -1) {
+                dres[i] = lval;
+            }
+            else if (j == lenxp - 1) {
+                dres[i] = dy[j];
+            }
+            else if (j == lenxp) {
+                dres[i] = rval;
+            }
+            else {
+                dres[i] = slopes[j]*(dz[i] - dx[j]) + dy[j];
+            }
+        }
+        NPY_END_ALLOW_THREADS;
+        PyDataMem_FREE(slopes);
     }
-    for (i = 0; i < lenx; i++) {
-        indx = binary_search(dz[i], dx, lenxp);
-        if (indx == -1) {
-            dres[i] = lval;
+    else {
+        NPY_BEGIN_ALLOW_THREADS;
+        for (i = 0; i < lenx; i++) {
+            npy_intp j = binary_search(dz[i], dx, lenxp);
+
+            if (j == -1) {
+                dres[i] = lval;
+            }
+            else if (j == lenxp - 1) {
+                dres[i] = dy[j];
+            }
+            else if (j == lenxp) {
+                dres[i] = rval;
+            }
+            else {
+                double slope = (dy[j + 1] - dy[j])/(dx[j + 1] - dx[j]);
+                dres[i] = slope*(dz[i] - dx[j]) + dy[j];
+            }
         }
-        else if (indx == lenxp - 1) {
-            dres[i] = dy[indx];
-        }
-        else if (indx == lenxp) {
-            dres[i] = rval;
-        }
-        else {
-            dres[i] = slopes[indx]*(dz[i] - dx[indx]) + dy[indx];
-        }
+        NPY_END_ALLOW_THREADS;
     }
 
-    NPY_END_ALLOW_THREADS;
-    PyDataMem_FREE(slopes);
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
