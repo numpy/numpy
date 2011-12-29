@@ -547,27 +547,48 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         }
     }
 
-    slopes = (double *) PyDataMem_NEW((lenxp - 1)*sizeof(double));
-    for (i = 0; i < lenxp - 1; i++) {
-        slopes[i] = (dy[i + 1] - dy[i])/(dx[i + 1] - dx[i]);
+    // we pre-calculate all the slopes if there are relatively few of them.
+    if (lenxp <= lenx) {
+      slopes = (double *) PyDataMem_NEW((lenxp - 1)*sizeof(double));
+      for (i = 0; i < lenxp - 1; i++) {
+          slopes[i] = (dy[i + 1] - dy[i])/(dx[i + 1] - dx[i]);
+      }
+      for (i = 0; i < lenx; i++) {
+          indx = binary_search(dz[i], dx, lenxp);
+          if (indx == -1) {
+              dres[i] = lval;
+          }
+          else if (indx == lenxp - 1) {
+              dres[i] = dy[indx];
+          }
+          else if (indx == lenxp) {
+              dres[i] = rval;
+          }
+          else {
+              dres[i] = slopes[indx]*(dz[i] - dx[indx]) + dy[indx];
+          }
+      }
+      PyDataMem_FREE(slopes);
     }
-    for (i = 0; i < lenx; i++) {
-        indx = binary_search(dz[i], dx, lenxp);
-        if (indx == -1) {
-            dres[i] = lval;
-        }
-        else if (indx == lenxp - 1) {
-            dres[i] = dy[indx];
-        }
-        else if (indx == lenxp) {
-            dres[i] = rval;
-        }
-        else {
-            dres[i] = slopes[indx]*(dz[i] - dx[indx]) + dy[indx];
-        }
+    else {
+      for (i = 0; i < lenx; i++) {
+          indx = binary_search(dz[i], dx, lenxp);
+          if (indx == -1) {
+              dres[i] = lval;
+          }
+          else if (indx == lenxp - 1) {
+              dres[i] = dy[indx];
+          }
+          else if (indx == lenxp) {
+              dres[i] = rval;
+          }
+          else {
+              double slope = (dy[indx + 1] - dy[indx])/(dx[indx + 1] - dx[indx]);
+              dres[i] = slope*(dz[i] - dx[indx]) + dy[indx];
+          }
+      }
     }
 
-    PyDataMem_FREE(slopes);
     Py_DECREF(afp);
     Py_DECREF(axp);
     Py_DECREF(ax);
