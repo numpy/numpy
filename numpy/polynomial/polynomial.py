@@ -302,6 +302,7 @@ def polymulx(c):
 
     Notes
     -----
+
     .. versionadded:: 1.5.0
 
     """
@@ -490,6 +491,8 @@ def polyder(c, m=1, scl=1, axis=0):
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
 
+        .. versionadded:: 1.7.0
+
     Returns
     -------
     der : ndarray
@@ -583,6 +586,8 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the integral is taken. (Default: 0).
+
+        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -779,8 +784,6 @@ def polyval2d(x, y, c):
     its shape to make it 2-D. The shape of the result will be c.shape[2:] +
     x.shape.
 
-    .. versionadded:: 1.7.0
-
     Parameters
     ----------
     x, y : array_like, compatible objects
@@ -803,6 +806,11 @@ def polyval2d(x, y, c):
     See Also
     --------
     polyval, polygrid2d, polyval3d, polygrid3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     try:
@@ -836,8 +844,6 @@ def polygrid2d(x, y, c):
     its shape to make it 2-D. The shape of the result will be c.shape[2:] +
     x.shape + y.shape.
 
-    .. versionadded:: 1.7.0
-
     Parameters
     ----------
     x, y : array_like, compatible objects
@@ -860,6 +866,11 @@ def polygrid2d(x, y, c):
     See Also
     --------
     polyval, polyval2d, polyval3d, polygrid3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     c = polyval(x, c)
@@ -885,8 +896,6 @@ def polyval3d(x, y, z, c):
     shape to make it 3-D. The shape of the result will be c.shape[3:] +
     x.shape.
 
-    .. versionadded::1.7.0
-
     Parameters
     ----------
     x, y, z : array_like, compatible object
@@ -910,6 +919,11 @@ def polyval3d(x, y, z, c):
     See Also
     --------
     polyval, polyval2d, polygrid2d, polygrid3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     try:
@@ -946,8 +960,6 @@ def polygrid3d(x, y, z, c):
     its shape to make it 3-D. The shape of the result will be c.shape[3:] +
     x.shape + yshape + z.shape.
 
-    .. versionadded:: 1.7.0
-
     Parameters
     ----------
     x, y, z : array_like, compatible objects
@@ -972,6 +984,11 @@ def polygrid3d(x, y, z, c):
     --------
     polyval, polyval2d, polygrid2d, polyval3d
 
+    Notes
+    -----
+
+    .. versionadded::1.7.0
+
     """
     c = polyval(x, c)
     c = polyval(y, c)
@@ -982,24 +999,35 @@ def polygrid3d(x, y, z, c):
 def polyvander(x, deg) :
     """Vandermonde matrix of given degree.
 
-    Returns the Vandermonde matrix of degree `deg` and sample points `x`.
-    This isn't a true Vandermonde matrix because `x` can be an arbitrary
-    ndarray. If ``V`` is the returned matrix and `x` is a 2d array, then
-    the elements of ``V`` are ``V[i,j,k] = x[i,j]**k``
+    Returns the Vandermonde matrix of degree `deg` and sample points
+    `x`. The Vandermonde matrix is defined by
+
+    .. math:: V[..., i] = x^i,
+
+    where `0 <= i <= deg`. The leading indices of `V` index the elements of
+    `x` and the last index is the power of `x`.
+
+    If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
+    matrix ``V = polyvander(x, n)``, then ``np.dot(V, c)`` and
+    ``polyval(x, c)`` are the same up to roundoff. This equivalence is
+    useful both for least squares fitting and for the evaluation of a large
+    number of polynomials of the same degree and sample points.
 
     Parameters
     ----------
     x : array_like
-        Array of points. The values are converted to double or complex
-        doubles. If x is scalar it is converted to a 1D array.
-    deg : integer
+        Array of points. The dtype is converted to float64 or complex128
+        depending on whether any of the elements are complex. If `x` is
+        scalar it is converted to a 1-D array.
+    deg : int
         Degree of the resulting matrix.
 
     Returns
     -------
-    vander : Vandermonde matrix.
-        The shape of the returned matrix is ``x.shape + (deg+1,)``. The last
-        index is the degree.
+    vander : ndarray.
+        The Vandermonde matrix. The shape of the returned matrix is
+        ``x.shape + (deg + 1,)``, where the last index is the power of `x`.
+        The dtype will be the same as the converted `x`.
 
     See Also
     --------
@@ -1023,31 +1051,40 @@ def polyvander(x, deg) :
 
 
 def polyvander2d(x, y, deg) :
-    """Pseudo Vandermonde matrix of given degree.
+    """Pseudo-Vandermonde matrix of given degrees.
 
-    Returns the pseudo Vandermonde matrix for 2D polynomials in `x` and
-    `y`. The sample point coordinates must all have the same shape after
-    conversion to arrays and the dtype will be converted to either float64
-    or complex128 depending on whether any of `x` or 'y' are complex.  The
-    maximum degrees of the 2D polynomials in each variable are specified in
-    the list `deg` in the form ``[xdeg, ydeg]``. The return array has the
-    shape ``x.shape + (order,)`` if `x`, and `y` are arrays or ``(1, order)
-    if they are scalars. Here order is the number of elements in a
-    flattened coefficient array of original shape ``(xdeg + 1, ydeg + 1)``.
-    The flattening is done so that the resulting pseudo Vandermonde array
-    can be easily used in least squares fits.
+    Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
+    points `(x, y)`. The pseudo-Vandermonde matrix is defined by
+
+    .. math:: V[..., deg[1]*i + j] = x^i * y^j,
+
+    where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
+    `V` index the points `(x, y)` and the last index encodes the powers of
+    `x` and `y`.
+
+    If `c` is a 2-D array of coefficients of shape `(m + 1, n + 1)` and `V`
+    is the matrix ``V = polyvander2d(x, y, [m, n])``, then
+    ``np.dot(V, c.flat)`` and ``polyval2d(x, y, c)`` are the same up to
+    roundoff. This equivalence is useful both for least squares fitting and
+    for the evaluation of a large number of 2-D polynomials of the same
+    degrees and sample points.
 
     Parameters
     ----------
-    x,y : array_like
-        Arrays of point coordinates, each of the same shape.
-    deg : list
+    x, y : array_like
+        Arrays of point coordinates, all of the same shape. The dtypes
+        will be converted to either float64 or complex128 depending on
+        whether any of the elements are complex. Scalars are converted to
+        1-D arrays.
+    deg : list of ints
         List of maximum degrees of the form [x_deg, y_deg].
 
     Returns
     -------
     vander2d : ndarray
-        The shape of the returned matrix is described above.
+        The shape of the returned matrix is ``x.shape + (order,)``, where
+        :math:`order = (deg[0]+1)*(deg([1]+1)`.  The dtype will be the same
+        as the converted `x` and `y`.
 
     See Also
     --------
@@ -1070,36 +1107,50 @@ def polyvander2d(x, y, deg) :
 
 
 def polyvander3d(x, y, z, deg) :
-    """Pseudo Vandermonde matrix of given degree.
+    """Pseudo-Vandermonde matrix of given degrees.
 
-    Returns the pseudo Vandermonde matrix for 3D polynomials in `x`, `y`,
-    or `z`. The sample point coordinates must all have the same shape after
-    conversion to arrays and the dtype will be converted to either float64
-    or complex128 depending on whether any of `x`, `y`, or 'z' are complex.
-    The maximum degrees of the 3D polynomials in each variable are
-    specified in the list `deg` in the form ``[xdeg, ydeg, zdeg]``. The
-    return array has the shape ``x.shape + (order,)`` if `x`, `y`, and `z`
-    are arrays or ``(1, order) if they are scalars. Here order is the
-    number of elements in a flattened coefficient array of original shape
-    ``(xdeg + 1, ydeg + 1, zdeg + 1)``.  The flattening is done so that the
-    resulting pseudo Vandermonde array can be easily used in least squares
-    fits.
+    Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
+    points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
+    then The pseudo-Vandermonde matrix is defined by
+
+    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = x^i * y^j * z^k,
+
+    where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
+    indices of `V` index the points `(x, y, z)` and the last index encodes
+    the powers of `x`, `y`, and `z`.
+
+    If `c` is a 3-D array of coefficients of shape `(l + 1, m + 1, n + 1)`
+    and `V` is the matrix ``V = polyvander3d(x, y, z, [l, m, n])``, then
+    ``np.dot(V, c.flat)`` and ``polyval3d(x, y, z, c)`` are the same up to
+    roundoff. This equivalence is useful both for least squares fitting and
+    for the evaluation of a large number of 3-D polynomials of the same
+    degrees and sample points.
 
     Parameters
     ----------
-    x,y,z : array_like
-        Arrays of point coordinates, each of the same shape.
-    deg : list
+    x, y, z : array_like
+        Arrays of point coordinates, all of the same shape. The dtypes will
+        be converted to either float64 or complex128 depending on whether
+        any of the elements are complex. Scalars are converted to 1-D
+        arrays.
+    deg : list of ints
         List of maximum degrees of the form [x_deg, y_deg, z_deg].
 
     Returns
     -------
     vander3d : ndarray
-        The shape of the returned matrix is described above.
+        The shape of the returned matrix is ``x.shape + (order,)``, where
+        :math:`order = (deg[0]+1)*(deg([1]+1)*(deg[2]+1)`.  The dtype will
+        be the same as the converted `x`, `y`, and `z`.
 
     See Also
     --------
     polyvander, polyvander3d. polyval2d, polyval3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1307,18 +1358,28 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
 
 
 def polycompanion(c):
-    """Return the companion matrix of c.
+    """
+    Return the companion matrix of c.
 
+    The companion matrix for power series cannot be made symmetric by
+    scaling the basis, so this function differs from those for the
+    orthogonal polynomials.
 
     Parameters
     ----------
     c : array_like
-        1-d array of series coefficients ordered from low to high degree.
+        1-d array of polynomial coefficients ordered from low to high
+        degree.
 
     Returns
     -------
     mat : ndarray
-        Scaled companion matrix of dimensions (deg, deg).
+        Companion matrix of dimensions (deg, deg).
+
+    Notes
+    -----
+
+    .. versionadded:: 1.7.0
 
     """
     # c is a trimmed copy

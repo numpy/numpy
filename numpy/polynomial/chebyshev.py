@@ -669,6 +669,7 @@ def chebmulx(c):
 
     Notes
     -----
+
     .. versionadded:: 1.5.0
 
     """
@@ -883,6 +884,8 @@ def chebder(c, m=1, scl=1, axis=0) :
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
 
+        .. versionadded:: 1.7.0
+
     Returns
     -------
     der : ndarray
@@ -989,6 +992,8 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
+
+        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -1185,8 +1190,6 @@ def chebval2d(x, y, c):
     If `c` is a 1-D array a one is implicitly appended to its shape to make
     it 2-D. The shape of the result will be c.shape[2:] + x.shape.
 
-    .. versionadded::1.7.0
-
     Parameters
     ----------
     x, y : array_like, compatible objects
@@ -1209,6 +1212,11 @@ def chebval2d(x, y, c):
     See Also
     --------
     chebval, chebgrid2d, chebval3d, chebgrid3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     try:
@@ -1242,8 +1250,6 @@ def chebgrid2d(x, y, c):
     its shape to make it 2-D. The shape of the result will be c.shape[2:] +
     x.shape + y.shape.
 
-    .. versionadded:: 1.7.0
-
     Parameters
     ----------
     x, y : array_like, compatible objects
@@ -1266,6 +1272,11 @@ def chebgrid2d(x, y, c):
     See Also
     --------
     chebval, chebval2d, chebval3d, chebgrid3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     c = chebval(x, c)
@@ -1291,8 +1302,6 @@ def chebval3d(x, y, z, c):
     shape to make it 3-D. The shape of the result will be c.shape[3:] +
     x.shape.
 
-    .. versionadded::1.7.0
-
     Parameters
     ----------
     x, y, z : array_like, compatible object
@@ -1316,6 +1325,11 @@ def chebval3d(x, y, z, c):
     See Also
     --------
     chebval, chebval2d, chebgrid2d, chebgrid3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     try:
@@ -1352,8 +1366,6 @@ def chebgrid3d(x, y, z, c):
     its shape to make it 3-D. The shape of the result will be c.shape[3:] +
     x.shape + yshape + z.shape.
 
-    .. versionadded:: 1.7.0
-
     Parameters
     ----------
     x, y, z : array_like, compatible objects
@@ -1378,6 +1390,11 @@ def chebgrid3d(x, y, z, c):
     --------
     chebval, chebval2d, chebgrid2d, chebval3d
 
+    Notes
+    -----
+
+    .. versionadded::1.7.0
+
     """
     c = chebval(x, c)
     c = chebval(y, c)
@@ -1386,28 +1403,38 @@ def chebgrid3d(x, y, z, c):
 
 
 def chebvander(x, deg) :
-    """Vandermonde matrix of given degree.
+    """Pseudo-Vandermonde matrix of given degree.
 
-    Returns the Vandermonde matrix of degree `deg` and sample points `x`.
-    This isn't a true Vandermonde matrix because `x` can be an arbitrary
-    ndarray and the Chebyshev polynomials aren't powers. If ``V`` is the
-    returned matrix and `x` is a 2d array, then the elements of ``V`` are
-    ``V[i,j,k] = T_k(x[i,j])``, where ``T_k`` is the Chebyshev polynomial
-    of degree ``k``.
+    Returns the pseudo-Vandermonde matrix of degree `deg` and sample points
+    `x`. The pseudo-Vandermonde matrix is defined by
+
+    .. math:: V[..., i] = T_i(x),
+
+    where `0 <= i <= deg`. The leading indices of `V` index the elements of
+    `x` and the last index is the degree of the Chebyshev polynomial.
+
+    If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
+    matrix ``V = chebvander(x, n)``, then ``np.dot(V, c)`` and
+    ``chebval(x, c)`` are the same up to roundoff.  This equivalence is
+    useful both for least squares fitting and for the evaluation of a large
+    number of Chebyshev series of the same degree and sample points.
 
     Parameters
     ----------
     x : array_like
-        Array of points. The values are converted to double or complex
-        doubles. If x is scalar it is converted to a 1D array.
-    deg : integer
+        Array of points. The dtype is converted to float64 or complex128
+        depending on whether any of the elements are complex. If `x` is
+        scalar it is converted to a 1-D array.
+    deg : int
         Degree of the resulting matrix.
 
     Returns
     -------
-    vander : Vandermonde matrix.
-        The shape of the returned matrix is ``x.shape + (deg+1,)``. The last
-        index is the degree.
+    vander: ndarray
+        The pseudo Vandermonde matrix. The shape of the returned matrix is
+        ``x.shape + (deg + 1,)``, where The last index is the degree of the
+        corresponding Chebyshev polynomial.  The dtype will be the same as
+        the converted `x`.
 
     """
     ideg = int(deg)
@@ -1429,35 +1456,49 @@ def chebvander(x, deg) :
 
 
 def chebvander2d(x, y, deg) :
-    """Pseudo Vandermonde matrix of given degree.
+    """Pseudo-Vandermonde matrix of given degrees.
 
-    Returns the pseudo Vandermonde matrix for 2D Chebyshev series in `x`
-    and `y`. The sample point coordinates must all have the same shape
-    after conversion to arrays and the dtype will be converted to either
-    float64 or complex128 depending on whether any of `x` or 'y' are
-    complex.  The maximum degrees of the 2D Chebyshev series in each
-    variable are specified in the list `deg` in the form ``[xdeg, ydeg]``.
-    The return array has the shape ``x.shape + (order,)`` if `x`, and `y`
-    are arrays or ``(1, order) if they are scalars. Here order is the
-    number of elements in a flattened coefficient array of original shape
-    ``(xdeg + 1, ydeg + 1)``.  The flattening is done so that the resulting
-    pseudo Vandermonde array can be easily used in least squares fits.
+    Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
+    points `(x, y)`. The pseudo-Vandermonde matrix is defined by
+
+    .. math:: V[..., deg[1]*i + j] = T_i(x) * T_j(y),
+
+    where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
+    `V` index the points `(x, y)` and the last index encodes the degrees of
+    the Chebyshev polynomials.
+
+    If `c` is a 2-D array of coefficients of shape `(m + 1, n + 1)` and `V`
+    is the matrix ``V = chebvander2d(x, y, [m, n])``, then
+    ``np.dot(V, c.flat)`` and ``chebval2d(x, y, c)`` are the same up to
+    roundoff. This equivalence is useful both for least squares fitting and
+    for the evaluation of a large number of 2-D Chebyshev series of the
+    same degrees and sample points.
 
     Parameters
     ----------
-    x,y : array_like
-        Arrays of point coordinates, each of the same shape.
-    deg : list
+    x, y : array_like
+        Arrays of point coordinates, all of the same shape. The dtypes
+        will be converted to either float64 or complex128 depending on
+        whether any of the elements are complex. Scalars are converted to
+        1-D arrays.
+    deg : list of ints
         List of maximum degrees of the form [x_deg, y_deg].
 
     Returns
     -------
     vander2d : ndarray
-        The shape of the returned matrix is described above.
+        The shape of the returned matrix is ``x.shape + (order,)``, where
+        :math:`order = (deg[0]+1)*(deg([1]+1)`.  The dtype will be the same
+        as the converted `x` and `y`.
 
     See Also
     --------
     chebvander, chebvander3d. chebval2d, chebval3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1474,36 +1515,50 @@ def chebvander2d(x, y, deg) :
 
 
 def chebvander3d(x, y, z, deg) :
-    """Pseudo Vandermonde matrix of given degree.
+    """Pseudo-Vandermonde matrix of given degrees.
 
-    Returns the pseudo Vandermonde matrix for 3D Chebyshev series in `x`,
-    `y`, or `z`. The sample point coordinates must all have the same shape
-    after conversion to arrays and the dtype will be converted to either
-    float64 or complex128 depending on whether any of `x`, `y`, or 'z' are
-    complex.  The maximum degrees of the 3D Chebeshev series in each
-    variable are specified in the list `deg` in the form ``[xdeg, ydeg,
-    zdeg]``. The return array has the shape ``x.shape + (order,)`` if `x`,
-    `y`, and `z` are arrays or ``(1, order) if they are scalars. Here order
-    is the number of elements in a flattened coefficient array of original
-    shape ``(xdeg + 1, ydeg + 1, zdeg + 1)``.  The flattening is done so
-    that the resulting pseudo Vandermonde array can be easily used in least
-    squares fits.
+    Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
+    points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
+    then The pseudo-Vandermonde matrix is defined by
+
+    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = T_i(x)*T_j(y)*T_k(z),
+
+    where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
+    indices of `V` index the points `(x, y, z)` and the last index encodes
+    the degrees of the Chebyshev polynomials.
+
+    If `c` is a 3-D array of coefficients of shape `(l + 1, m + 1, n + 1)`
+    and `V` is the matrix ``V = chebvander3d(x, y, z, [l, m, n])``, then
+    ``np.dot(V, c.flat)`` and ``chebval3d(x, y, z, c)`` are the same up to
+    roundoff. This equivalence is useful both for least squares fitting and
+    for the evaluation of a large number of 3-D Chebyshev series of the
+    same degrees and sample points.
 
     Parameters
     ----------
-    x,y,z : array_like
-        Arrays of point coordinates, each of the same shape.
-    deg : list
+    x, y, z : array_like
+        Arrays of point coordinates, all of the same shape. The dtypes will
+        be converted to either float64 or complex128 depending on whether
+        any of the elements are complex. Scalars are converted to 1-D
+        arrays.
+    deg : list of ints
         List of maximum degrees of the form [x_deg, y_deg, z_deg].
 
     Returns
     -------
     vander3d : ndarray
-        The shape of the returned matrix is described above.
+        The shape of the returned matrix is ``x.shape + (order,)``, where
+        :math:`order = (deg[0]+1)*(deg([1]+1)*(deg[2]+1)`.  The dtype will
+        be the same as the converted `x`, `y`, and `z`.
 
     See Also
     --------
     chebvander, chebvander3d. chebval2d, chebval3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1688,21 +1743,26 @@ def chebcompanion(c):
     """Return the scaled companion matrix of c.
 
     The basis polynomials are scaled so that the companion matrix is
-    symmetric when `c` represents a single Chebyshev polynomial. This
-    provides better eigenvalue estimates than the unscaled case and in the
-    single polynomial case the eigenvalues are guaranteed to be real if
-    np.eigvalsh is used to obtain them.
+    symmetric when `c` is aa Chebyshev basis polynomial. This provides
+    better eigenvalue estimates than the unscaled case and for basis
+    polynomials the eigenvalues are guaranteed to be real if
+    `numpy.linalg.eigvalsh` is used to obtain them.
 
     Parameters
     ----------
     c : array_like
-        1-d array of Legendre series coefficients ordered from low to high
+        1-d array of Chebyshev series coefficients ordered from low to high
         degree.
 
     Returns
     -------
     mat : ndarray
         Scaled companion matrix of dimensions (deg, deg).
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     # c is a trimmed copy
@@ -1781,12 +1841,13 @@ def chebroots(c):
 
 
 def chebgauss(deg):
-    """Gauss Chebyshev quadrature.
+    """
+    Gauss-Chebyshev quadrature.
 
     Computes the sample points and weights for Gauss-Chebyshev quadrature.
     These sample points and weights will correctly integrate polynomials of
-    degree ``2*deg - 1`` or less over the interval ``[-1, 1]`` with the
-    weight function ``f(x) = 1/sqrt(1 - x**2)``.
+    degree :math:`2*deg - 1` or less over the interval :math:`[-1, 1]` with
+    the weight function :math:`f(x) = 1/\sqrt{1 - x^2}`.
 
     Parameters
     ----------
@@ -1802,16 +1863,16 @@ def chebgauss(deg):
 
     Notes
     -----
-    The results have only been tested up to degree 100. Higher degrees may
-    be problematic. There are closed form solutions for the sample points
-    and weights. If ``n = deg``, then
 
-          ``x_i = cos(pi*(2*i - 1)/(2*n))``
-          ``w_i = pi/n``
+    .. versionadded:: 1.7.0
 
-    where ``c`` is a constant independent of ``k`` and ``x_k`` is the k'th
-    root of ``L_n``, and then scaling the results to get the right value
-    when integrating 1.
+    The results have only been tested up to degree 100, higher degrees may
+    be problematic. For Gauss-Chebyshev there are closed form solutions for
+    the sample points and weights. If n = `deg`, then
+
+    .. math:: x_i = \cos(\pi (2 i - 1) / (2 n))
+
+    .. math:: w_i = \pi / n
 
     """
     ideg = int(deg)
@@ -1825,11 +1886,12 @@ def chebgauss(deg):
 
 
 def chebweight(x):
-    """Weight function of the Chebyshev polynomials.
+    """
+    The weight function of the Chebyshev polynomials.
 
-    The weight function for which the Chebyshev polynomials are orthogonal.
-    In this case the weight function is ``1/(1 - x**2)``. Note that the
-    Chebyshev polynomials are not normalized.
+    The weight function is :math:`1/\sqrt{1 - x^2}` and the interval of
+    integration is :math:`[-1, 1]`. The Chebyshev polynomials are orthogonal, but
+    not normalized, with respect to this weight function.
 
     Parameters
     ----------
@@ -1841,16 +1903,22 @@ def chebweight(x):
     w : ndarray
        The weight function at `x`.
 
+    Notes
+    -----
+
+    .. versionadded:: 1.7.0
+
     """
     w = 1./(np.sqrt(1. + x) * np.sqrt(1. - x))
     return w
 
 
 def chebpts1(npts):
-    """Chebyshev points of the first kind.
+    """
+    Chebyshev points of the first kind.
 
-    Chebyshev points of the first kind are the set ``{cos(x_k)}``,
-    where ``x_k = pi*(k + .5)/npts`` for k in ``range(npts}``.
+    The Chebyshev points of the first kind are the points ``cos(x)``,
+    where ``x = [pi*(k + .5)/npts for k in range(npts)]``.
 
     Parameters
     ----------
@@ -1860,10 +1928,15 @@ def chebpts1(npts):
     Returns
     -------
     pts : ndarray
-        The Chebyshev points of the second kind.
+        The Chebyshev points of the first kind.
+
+    See Also
+    --------
+    chebpts2
 
     Notes
     -----
+
     .. versionadded:: 1.5.0
 
     """
@@ -1878,10 +1951,11 @@ def chebpts1(npts):
 
 
 def chebpts2(npts):
-    """Chebyshev points of the second kind.
+    """
+    Chebyshev points of the second kind.
 
-    Chebyshev points of the second kind are the set ``{cos(x_k)}``,
-    where ``x_k = pi*/(npts - 1)`` for k in ``range(npts}``.
+    The Chebyshev points of the second kind are the points ``cos(x)``,
+    where ``x = [pi*k/(npts - 1) for k in range(npts)]``.
 
     Parameters
     ----------
@@ -1895,6 +1969,7 @@ def chebpts2(npts):
 
     Notes
     -----
+
     .. versionadded:: 1.5.0
 
     """

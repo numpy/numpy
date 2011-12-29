@@ -654,6 +654,8 @@ def hermder(c, m=1, scl=1, axis=0) :
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
 
+        .. versionadded:: 1.7.0
+
     Returns
     -------
     der : ndarray
@@ -751,6 +753,8 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
+
+        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -950,8 +954,6 @@ def hermval2d(x, y, c):
     If `c` is a 1-D array a one is implicitly appended to its shape to make
     it 2-D. The shape of the result will be c.shape[2:] + x.shape.
 
-    .. versionadded::1.7.0
-
     Parameters
     ----------
     x, y : array_like, compatible objects
@@ -974,6 +976,11 @@ def hermval2d(x, y, c):
     See Also
     --------
     hermval, hermgrid2d, hermval3d, hermgrid3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     try:
@@ -1007,8 +1014,6 @@ def hermgrid2d(x, y, c):
     its shape to make it 2-D. The shape of the result will be c.shape[2:] +
     x.shape.
 
-    .. versionadded:: 1.7.0
-
     Parameters
     ----------
     x, y : array_like, compatible objects
@@ -1031,6 +1036,11 @@ def hermgrid2d(x, y, c):
     See Also
     --------
     hermval, hermval2d, hermval3d, hermgrid3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     c = hermval(x, c)
@@ -1056,8 +1066,6 @@ def hermval3d(x, y, z, c):
     shape to make it 3-D. The shape of the result will be c.shape[3:] +
     x.shape.
 
-    .. versionadded::1.7.0
-
     Parameters
     ----------
     x, y, z : array_like, compatible object
@@ -1081,6 +1089,11 @@ def hermval3d(x, y, z, c):
     See Also
     --------
     hermval, hermval2d, hermgrid2d, hermgrid3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     try:
@@ -1117,8 +1130,6 @@ def hermgrid3d(x, y, z, c):
     its shape to make it 3-D. The shape of the result will be c.shape[3:] +
     x.shape + yshape + z.shape.
 
-    .. versionadded:: 1.7.0
-
     Parameters
     ----------
     x, y, z : array_like, compatible objects
@@ -1143,6 +1154,11 @@ def hermgrid3d(x, y, z, c):
     --------
     hermval, hermval2d, hermgrid2d, hermval3d
 
+    Notes
+    -----
+
+    .. versionadded::1.7.0
+
     """
     c = hermval(x, c)
     c = hermval(y, c)
@@ -1151,28 +1167,38 @@ def hermgrid3d(x, y, z, c):
 
 
 def hermvander(x, deg) :
-    """Vandermonde matrix of given degree.
+    """Pseudo-Vandermonde matrix of given degree.
 
-    Returns the Vandermonde matrix of degree `deg` and sample points `x`.
-    This isn't a true Vandermonde matrix because `x` can be an arbitrary
-    ndarray and the Hermite polynomials aren't powers. If ``V`` is the
-    returned matrix and `x` is a 2d array, then the elements of ``V`` are
-    ``V[i,j,k] = P_k(x[i,j])``, where ``P_k`` is the Hermite polynomial
-    of degree ``k``.
+    Returns the pseudo-Vandermonde matrix of degree `deg` and sample points
+    `x`. The pseudo-Vandermonde matrix is defined by
+
+    .. math:: V[..., i] = H_i(x),
+
+    where `0 <= i <= deg`. The leading indices of `V` index the elements of
+    `x` and the last index is the degree of the Hermite polynomial.
+
+    If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
+    array ``V = hermvander(x, n)``, then ``np.dot(V, c)`` and
+    ``hermval(x, c)`` are the same up to roundoff. This equivalence is
+    useful both for least squares fitting and for the evaluation of a large
+    number of Hermite series of the same degree and sample points.
 
     Parameters
     ----------
     x : array_like
-        Array of points. The values are converted to double or complex
-        doubles. If x is scalar it is converted to a 1D array.
-    deg : integer
+        Array of points. The dtype is converted to float64 or complex128
+        depending on whether any of the elements are complex. If `x` is
+        scalar it is converted to a 1-D array.
+    deg : int
         Degree of the resulting matrix.
 
     Returns
     -------
-    vander : Vandermonde matrix.
-        The shape of the returned matrix is ``x.shape + (deg+1,)``. The last
-        index is the degree.
+    vander: ndarray
+        The pseudo-Vandermonde matrix. The shape of the returned matrix is
+        ``x.shape + (deg + 1,)``, where The last index is the degree of the
+        corresponding Hermite polynomial.  The dtype will be the same as
+        the converted `x`.
 
     Examples
     --------
@@ -1202,35 +1228,49 @@ def hermvander(x, deg) :
 
 
 def hermvander2d(x, y, deg) :
-    """Pseudo Vandermonde matrix of given degree.
+    """Pseudo-Vandermonde matrix of given degrees.
 
-    Returns the pseudo Vandermonde matrix for 2D Hermite series in `x` and
-    `y`. The sample point coordinates must all have the same shape after
-    conversion to arrays and the dtype will be converted to either float64
-    or complex128 depending on whether any of `x` or 'y' are complex.  The
-    maximum degrees of the 2D Hermite series in each variable are specified
-    in the list `deg` in the form ``[xdeg, ydeg]``. The return array has
-    the shape ``x.shape + (order,)`` if `x`, and `y` are arrays or
-    ``(1, order) if they are scalars. Here order is the number of elements
-    in a flattened coefficient array of original shape ``(xdeg + 1, ydeg +
-    1)``.  The flattening is done so that the resulting pseudo Vandermonde
-    array can be easily used in least squares fits.
+    Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
+    points `(x, y)`. The pseudo-Vandermonde matrix is defined by
+
+    .. math:: V[..., deg[1]*i + j] = H_i(x) * H_j(y),
+
+    where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
+    `V` index the points `(x, y)` and the last index encodes the degrees of
+    the Hermite polynomials.
+
+    If `c` is a 2-D array of coefficients of shape `(m + 1, n + 1)` and `V`
+    is the matrix ``V = hermvander2d(x, y, [m, n])``, then
+    ``np.dot(V, c.flat)`` and ``hermval2d(x, y, c)`` are the same up to
+    roundoff. This equivalence is useful both for least squares fitting and
+    for the evaluation of a large number of 2-D Hermite series of the same
+    degrees and sample points.
 
     Parameters
     ----------
-    x,y : array_like
-        Arrays of point coordinates, each of the same shape.
-    deg : list
+    x, y : array_like
+        Arrays of point coordinates, all of the same shape. The dtypes
+        will be converted to either float64 or complex128 depending on
+        whether any of the elements are complex. Scalars are converted to 1-D
+        arrays.
+    deg : list of ints
         List of maximum degrees of the form [x_deg, y_deg].
 
     Returns
     -------
     vander2d : ndarray
-        The shape of the returned matrix is described above.
+        The shape of the returned matrix is ``x.shape + (order,)``, where
+        :math:`order = (deg[0]+1)*(deg([1]+1)`.  The dtype will be the same
+        as the converted `x` and `y`.
 
     See Also
     --------
     hermvander, hermvander3d. hermval2d, hermval3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1247,36 +1287,50 @@ def hermvander2d(x, y, deg) :
 
 
 def hermvander3d(x, y, z, deg) :
-    """Pseudo Vandermonde matrix of given degree.
+    """Pseudo-Vandermonde matrix of given degrees.
 
-    Returns the pseudo Vandermonde matrix for 3D Hermite series in `x`,
-    `y`, or `z`. The sample point coordinates must all have the same shape
-    after conversion to arrays and the dtype will be converted to either
-    float64 or complex128 depending on whether any of `x`, `y`, or 'z' are
-    complex.  The maximum degrees of the 3D Hermite series in each variable
-    are specified in the list `deg` in the form ``[xdeg, ydeg, zdeg]``. The
-    return array has the shape ``x.shape + (order,)`` if `x`, `y`, and `z`
-    are arrays or ``(1, order) if they are scalars. Here order is the
-    number of elements in a flattened coefficient array of original shape
-    ``(xdeg + 1, ydeg + 1, zdeg + 1)``.  The flattening is done so that the
-    resulting pseudo Vandermonde array can be easily used in least squares
-    fits.
+    Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
+    points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
+    then The pseudo-Vandermonde matrix is defined by
+
+    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = H_i(x)*H_j(y)*H_k(z),
+
+    where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
+    indices of `V` index the points `(x, y, z)` and the last index encodes
+    the degrees of the Hermite polynomials.
+
+    If `c` is a 3-D array of coefficients of shape `(l + 1, m + 1, n + 1)`
+    and `V` is the matrix ``V = hermvander3d(x, y, z, [l, m, n])``, then
+    ``np.dot(V, c.flat)`` and ``hermval3d(x, y, z, c)`` are the same up to
+    roundoff. This equivalence is useful both for least squares fitting and
+    for the evaluation of a large number of 3-D Hermite series of the
+    same degrees and sample points.
 
     Parameters
     ----------
-    x,y,z : array_like
-        Arrays of point coordinates, each of the same shape.
-    deg : list
+    x, y, z : array_like
+        Arrays of point coordinates, all of the same shape. The dtypes will
+        be converted to either float64 or complex128 depending on whether
+        any of the elements are complex. Scalars are converted to 1-D
+        arrays.
+    deg : list of ints
         List of maximum degrees of the form [x_deg, y_deg, z_deg].
 
     Returns
     -------
     vander3d : ndarray
-        The shape of the returned matrix is described above.
+        The shape of the returned matrix is ``x.shape + (order,)``, where
+        :math:`order = (deg[0]+1)*(deg([1]+1)*(deg[2]+1)`.  The dtype will
+        be the same as the converted `x`, `y`, and `z`.
 
     See Also
     --------
     hermvander, hermvander3d. hermval2d, hermval3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     ideg = [int(d) for d in deg]
@@ -1466,21 +1520,26 @@ def hermcompanion(c):
     """Return the scaled companion matrix of c.
 
     The basis polynomials are scaled so that the companion matrix is
-    symmetric when `c` represents a single Hermite polynomial. This
-    provides better eigenvalue estimates than the unscaled case and in the
-    single polynomial case the eigenvalues are guaranteed to be real if
+    symmetric when `c` is an Hermite basis polynomial. This provides
+    better eigenvalue estimates than the unscaled case and for basis
+    polynomials the eigenvalues are guaranteed to be real if
     `numpy.linalg.eigvalsh` is used to obtain them.
 
     Parameters
     ----------
     c : array_like
-        1-d array of Legendre series coefficients ordered from low to high
+        1-d array of Hermite series coefficients ordered from low to high
         degree.
 
     Returns
     -------
     mat : ndarray
         Scaled companion matrix of dimensions (deg, deg).
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     accprod = np.multiply.accumulate
@@ -1563,12 +1622,13 @@ def hermroots(c):
 
 
 def hermgauss(deg):
-    """Gauss Hermite quadrature.
+    """
+    Gauss-Hermite quadrature.
 
     Computes the sample points and weights for Gauss-Hermite quadrature.
     These sample points and weights will correctly integrate polynomials of
-    degree ``2*deg - 1`` or less over the interval ``[-inf, inf]`` with the
-    weight function ``f(x) = exp(-x**2)``.
+    degree :math:`2*deg - 1` or less over the interval :math:`[-\inf, \inf]`
+    with the weight function :math:`f(x) = \exp(-x^2)`.
 
     Parameters
     ----------
@@ -1584,14 +1644,17 @@ def hermgauss(deg):
 
     Notes
     -----
-    The results have only been tested up to degree 100. Higher degrees may
+
+    .. versionadded::1.7.0
+
+    The results have only been tested up to degree 100, higher degrees may
     be problematic. The weights are determined by using the fact that
 
-          w = c / (H'_n(x_k) * H_{n-1}(x_k))
+    .. math:: w_k = c / (H'_n(x_k) * H_{n-1}(x_k))
 
-    where ``c`` is a constant independent of ``k`` and ``x_k`` is the k'th
-    root of ``H_n``, and then scaling the results to get the right value
-    when integrating 1.
+    where :math:`c` is a constant independent of :math:`k` and :math:`x_k`
+    is the k'th root of :math:`H_n`, and then scaling the results to get
+    the right value when integrating 1.
 
     """
     ideg = int(deg)
@@ -1628,11 +1691,12 @@ def hermgauss(deg):
 
 
 def hermweight(x):
-    """Weight function of the Hermite polynomials.
+    """
+    Weight function of the Hermite polynomials.
 
-    The weight function for which the Hermite polynomials are orthogonal.
-    In this case the weight function is ``exp(-x**2)``. Note that the
-    Hermite polynomials are not normalized.
+    The weight function is :math:`\exp(-x^2)` and the interval of
+    integration is :math:`[-\inf, \inf]`. the Hermite polynomials are
+    orthogonal, but not normalized, with respect to this weight function.
 
     Parameters
     ----------
@@ -1643,6 +1707,11 @@ def hermweight(x):
     -------
     w : ndarray
        The weight function at `x`.
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
 
     """
     w = np.exp(-x**2)
