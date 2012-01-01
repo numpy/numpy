@@ -19,8 +19,9 @@ else:
 
 polytemplate = string.Template('''
 from __future__ import division
-REL_IMPORT polyutils as pu
 import numpy as np
+import warnings
+REL_IMPORT polyutils as pu
 
 class $name(pu.PolyBase) :
     """A $name series class.
@@ -147,21 +148,25 @@ class $name(pu.PolyBase) :
         """
         return np.all(self.window == other.window)
 
-    def has_samewindow(self, other):
-        """Check if windows match.
+    def has_sametype(self, other):
+        """Check if types match.
 
         Parameters
         ----------
-        other : class instance
-            The other class must have the ``window`` attribute.
+        other : object
+            Class instance.
 
         Returns
         -------
         bool : boolean
-            True if the windows are the same, False otherwise.
+            True if other is same class as self
+
+        Notes
+        -----
+        .. versionadded:: 1.7.0
 
         """
-        return np.all(self.window == other.window)
+        return isinstance(other, self.__class__)
 
     def __init__(self, coef, domain=$domain, window=$domain) :
         [coef, dom, win] = pu.as_series([coef, domain, window], trim=False)
@@ -220,11 +225,15 @@ class $name(pu.PolyBase) :
 
     def __add__(self, other) :
         """Returns sum"""
-        if isinstance(other, self.__class__) :
-            if self.has_samedomain(other) and self.has_samewindow(other):
+        if isinstance(other, pu.PolyBase):
+            if not self.has_sametype(other):
+                raise TypeError("Polynomial types differ")
+            elif not self.has_samedomain(other):
+                raise TypeError("Domains differ")
+            elif not self.has_samewindow(other):
+                raise TypeError("Windows differ")
+            else:
                 coef = ${nick}add(self.coef, other.coef)
-            else :
-                raise PolyDomainError()
         else :
             try :
                 coef = ${nick}add(self.coef, other)
@@ -234,11 +243,15 @@ class $name(pu.PolyBase) :
 
     def __sub__(self, other) :
         """Returns difference"""
-        if isinstance(other, self.__class__) :
-            if self.has_samedomain(other) and self.has_samewindow(other):
+        if isinstance(other, pu.PolyBase):
+            if not self.has_sametype(other):
+                raise TypeError("Polynomial types differ")
+            elif not self.has_samedomain(other):
+                raise TypeError("Domains differ")
+            elif not self.has_samewindow(other):
+                raise TypeError("Windows differ")
+            else:
                 coef = ${nick}sub(self.coef, other.coef)
-            else :
-                raise PolyDomainError()
         else :
             try :
                 coef = ${nick}sub(self.coef, other)
@@ -248,11 +261,15 @@ class $name(pu.PolyBase) :
 
     def __mul__(self, other) :
         """Returns product"""
-        if isinstance(other, self.__class__) :
-            if self.has_samedomain(other) and self.has_samewindow(other):
+        if isinstance(other, pu.PolyBase):
+            if not self.has_sametype(other):
+                raise TypeError("Polynomial types differ")
+            elif not self.has_samedomain(other):
+                raise TypeError("Domains differ")
+            elif not self.has_samewindow(other):
+                raise TypeError("Windows differ")
+            else:
                 coef = ${nick}mul(self.coef, other.coef)
-            else :
-                raise PolyDomainError()
         else :
             try :
                 coef = ${nick}mul(self.coef, other)
@@ -261,32 +278,31 @@ class $name(pu.PolyBase) :
         return self.__class__(coef, self.domain, self.window)
 
     def __div__(self, other):
-        # set to __floordiv__ /.
+        # set to __floordiv__,  /, for now.
         return self.__floordiv__(other)
 
     def __truediv__(self, other) :
         # there is no true divide if the rhs is not a scalar, although it
         # could return the first n elements of an infinite series.
         # It is hard to see where n would come from, though.
-        if isinstance(other, self.__class__) :
-            if len(other.coef) == 1 :
-                coef = div(self.coef, other.coef)
-            else :
-                return NotImplemented
-        elif np.isscalar(other) :
+        if np.isscalar(other) :
             # this might be overly restrictive
             coef = self.coef/other
+            return self.__class__(coef, self.domain, self.window)
         else :
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
 
     def __floordiv__(self, other) :
         """Returns the quotient."""
-        if isinstance(other, self.__class__) :
-            if np.all(self.domain == other.domain) :
+        if isinstance(other, pu.PolyBase):
+            if not self.has_sametype(other):
+                raise TypeError("Polynomial types differ")
+            elif not self.has_samedomain(other):
+                raise TypeError("Domains differ")
+            elif not self.has_samewindow(other):
+                raise TypeError("Windows differ")
+            else:
                 quo, rem = ${nick}div(self.coef, other.coef)
-            else :
-                raise PolyDomainError()
         else :
             try :
                 quo, rem = ${nick}div(self.coef, other)
@@ -296,11 +312,15 @@ class $name(pu.PolyBase) :
 
     def __mod__(self, other) :
         """Returns the remainder."""
-        if isinstance(other, self.__class__) :
-            if self.has_samedomain(other) and self.has_samewindow(other):
+        if isinstance(other, pu.PolyBase):
+            if not self.has_sametype(other):
+                raise TypeError("Polynomial types differ")
+            elif not self.has_samedomain(other):
+                raise TypeError("Domains differ")
+            elif not self.has_samewindow(other):
+                raise TypeError("Windows differ")
+            else:
                 quo, rem = ${nick}div(self.coef, other.coef)
-            else :
-                raise PolyDomainError()
         else :
             try :
                 quo, rem = ${nick}div(self.coef, other)
@@ -311,15 +331,16 @@ class $name(pu.PolyBase) :
     def __divmod__(self, other) :
         """Returns quo, remainder"""
         if isinstance(other, self.__class__) :
-            if self.has_samedomain(other) and self.has_samewindow(other):
+            if not self.has_samedomain(other):
+                raise TypeError("Domains are not equal")
+            elif not self.has_samewindow(other):
+                raise TypeError("Windows are not equal")
+            else:
                 quo, rem = ${nick}div(self.coef, other.coef)
-            else :
-                raise PolyDomainError()
         else :
             try :
                 quo, rem = ${nick}div(self.coef, other)
             except :
-                print 'hi'
                 return NotImplemented
         quo = self.__class__(quo, self.domain, self.window)
         rem = self.__class__(rem, self.domain, self.window)
