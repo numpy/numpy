@@ -219,6 +219,13 @@ def check_add(Poly) :
     assert_poly_almost_equal(tuple(c2) + p1, p3)
     assert_poly_almost_equal(p1 + np.array(c2), p3)
     assert_poly_almost_equal(np.array(c2) + p1, p3)
+    assert_raises(TypeError, p1.__add__, Poly([0], domain=Poly.domain + 1))
+    assert_raises(TypeError, p1.__add__, Poly([0], window=Poly.window + 1))
+    if Poly is Polynomial:
+        assert_raises(TypeError, p1.__add__, Chebyshev([0]))
+    else:
+        assert_raises(TypeError, p1.__add__, Polynomial([0]))
+
 
 
 def check_sub(Poly) :
@@ -235,6 +242,12 @@ def check_sub(Poly) :
     assert_poly_almost_equal(tuple(c2) - p1, -p3)
     assert_poly_almost_equal(p1 - np.array(c2), p3)
     assert_poly_almost_equal(np.array(c2) - p1, -p3)
+    assert_raises(TypeError, p1.__sub__, Poly([0], domain=Poly.domain + 1))
+    assert_raises(TypeError, p1.__sub__, Poly([0], window=Poly.window + 1))
+    if Poly is Polynomial:
+        assert_raises(TypeError, p1.__sub__, Chebyshev([0]))
+    else:
+        assert_raises(TypeError, p1.__sub__, Polynomial([0]))
 
 
 def check_mul(Poly) :
@@ -252,6 +265,12 @@ def check_mul(Poly) :
     assert_poly_almost_equal(np.array(c2) * p1, p3)
     assert_poly_almost_equal(p1 * 2, p1 * Poly([2]))
     assert_poly_almost_equal(2 * p1, p1 * Poly([2]))
+    assert_raises(TypeError, p1.__mul__, Poly([0], domain=Poly.domain + 1))
+    assert_raises(TypeError, p1.__mul__, Poly([0], window=Poly.window + 1))
+    if Poly is Polynomial:
+        assert_raises(TypeError, p1.__mul__, Chebyshev([0]))
+    else:
+        assert_raises(TypeError, p1.__mul__, Polynomial([0]))
 
 
 def check_floordiv(Poly) :
@@ -272,6 +291,12 @@ def check_floordiv(Poly) :
     assert_poly_almost_equal(np.array(c4) // p2, p1)
     assert_poly_almost_equal(2 // p2, Poly([0]))
     assert_poly_almost_equal(p2 // 2, 0.5*p2)
+    assert_raises(TypeError, p1.__floordiv__, Poly([0], domain=Poly.domain + 1))
+    assert_raises(TypeError, p1.__floordiv__, Poly([0], window=Poly.window + 1))
+    if Poly is Polynomial:
+        assert_raises(TypeError, p1.__floordiv__, Chebyshev([0]))
+    else:
+        assert_raises(TypeError, p1.__floordiv__, Polynomial([0]))
 
 
 def check_mod(Poly) :
@@ -293,6 +318,12 @@ def check_mod(Poly) :
     assert_poly_almost_equal(np.array(c4) % p2, p3)
     assert_poly_almost_equal(2 % p2, Poly([2]))
     assert_poly_almost_equal(p2 % 2, Poly([0]))
+    assert_raises(TypeError, p1.__mod__, Poly([0], domain=Poly.domain + 1))
+    assert_raises(TypeError, p1.__mod__, Poly([0], window=Poly.window + 1))
+    if Poly is Polynomial:
+        assert_raises(TypeError, p1.__mod__, Chebyshev([0]))
+    else:
+        assert_raises(TypeError, p1.__mod__, Polynomial([0]))
 
 
 def check_divmod(Poly) :
@@ -332,6 +363,12 @@ def check_divmod(Poly) :
     quo, rem = divmod(2, p2)
     assert_poly_almost_equal(quo, Poly([0]))
     assert_poly_almost_equal(rem, Poly([2]))
+    assert_raises(TypeError, divmod, p1, Poly([0], domain=Poly.domain + 1))
+    assert_raises(TypeError, divmod, p1, Poly([0], window=Poly.window + 1))
+    if Poly is Polynomial:
+        assert_raises(TypeError, divmod, p1, Chebyshev([0]))
+    else:
+        assert_raises(TypeError, divmod, p1, Polynomial([0]))
 
 
 def check_roots(Poly):
@@ -424,6 +461,8 @@ def check_pow(Poly) :
     for i in range(5) :
         assert_poly_almost_equal(tst**i, tgt)
         tgt = tgt * tst
+    assert_raises(ValueError, tgt.__pow__, 1.5)
+    assert_raises(ValueError, tgt.__pow__, -1)
 
 
 def check_call(Poly) :
