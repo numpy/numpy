@@ -720,8 +720,9 @@ class $name(pu.PolyBase) :
         Return a `$name` instance that is the least squares fit to the data
         `y` sampled at `x`. Unlike `${nick}fit`, the domain of the returned
         instance can be specified and this will often result in a superior
-        fit with less chance of ill conditioning. See `${nick}fit` for full
-        documentation of the implementation.
+        fit with less chance of ill conditioning. Support for NA was added
+        in version 1.7.0. See `${nick}fit` for full documentation of the
+        implementation.
 
         Parameters
         ----------

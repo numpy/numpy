@@ -517,8 +517,13 @@ def polyder(c, m=1, scl=1, axis=0):
 
     """
     c = np.array(c, ndmin=1, copy=1)
+    if c.flags.maskna and isna(c).any():
+        raise ValueError("Coefficient array contains NA")
     if c.dtype.char in '?bBhHiIlLqQpP':
-        c = c.astype(np.double)
+        # astype fails with NA
+        c = c + 0.0
+    mna = c.flags.maskna
+    cdt = c.dtype
     cnt, iaxis = [int(t) for t in [m, axis]]
 
     if cnt != m:
@@ -543,7 +548,7 @@ def polyder(c, m=1, scl=1, axis=0):
         for i in range(cnt):
             n = n - 1
             c *= scl
-            der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
+            der = np.empty((n,) + c.shape[1:], dtype=cdt, maskna=mna)
             for j in range(n, 0, -1):
                 der[j - 1] = j*c[j]
             c = der
@@ -629,8 +634,13 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     """
     c = np.array(c, ndmin=1, copy=1)
-    if c.dtype.char in '?bBhHiIlLqQpP':
-        c = c.astype(np.double)
+    if c.flags.maskna and isna(c).any():
+        raise ValueError("Coefficient array contains NA")
+    elif c.dtype.char in '?bBhHiIlLqQpP':
+        # astype doesn't preserve mask attribute.
+        c = c + 0.0
+    mna = c.flags.maskna
+    cdt = c.dtype
     if not np.iterable(k):
         k = [k]
     cnt, iaxis = [int(t) for t in [m, axis]]
@@ -660,7 +670,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         if n == 1 and np.all(c[0] == 0):
             c[0] += k[i]
         else:
-            tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
+            tmp = np.empty((n + 1,) + c.shape[1:], dtype=cdt, maskna=mna)
             tmp[0] = c[0]*0
             tmp[1] = c[0]
             for j in range(1, n):
@@ -753,8 +763,11 @@ def polyval(x, c, tensor=True):
 
     """
     c = np.array(c, ndmin=1, copy=0)
+    if c.flags.maskna and isna(c).any():
+        raise ValueError("Coefficient array contains NA")
     if c.dtype.char in '?bBhHiIlLqQpP':
-        c = c.astype(np.double)
+        # astype fails with NA
+        c = c + 0.0
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
@@ -1041,7 +1054,10 @@ def polyvander(x, deg) :
         raise ValueError("deg must be non-negative")
 
     x = np.array(x, copy=0, ndmin=1) + 0.0
-    v = np.empty((ideg + 1,) + x.shape, dtype=x.dtype)
+    dims = (ideg + 1,) + x.shape
+    mask = x.flags.maskna
+    dtyp = x.dtype
+    v = np.empty(dims, dtype=dtyp, maskna=mask)
     v[0] = x*0 + 1
     if ideg > 0 :
         v[1] = x
@@ -1184,6 +1200,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
 
     where `n` is `deg`.
 
+    Since numpy version 1.7.0, polyfit also supports NA. If any of the
+    elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
+    linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
+    then an NA in any row of `y` invalidates that whole row.
+
     Parameters
     ----------
     x : array_like, shape (`M`,)
@@ -1320,30 +1341,37 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     if len(x) != len(y):
         raise TypeError("expected x and y to have same length")
 
-    # set up the least squares matrices
-    lhs = polyvander(x, deg)
-    rhs = y
+    # set up the least squares matrices in transposed form
+    lhs = polyvander(x, deg).T
+    rhs = y.T
     if w is not None:
         w = np.asarray(w) + 0.0
         if w.ndim != 1:
             raise TypeError("expected 1D vector for w")
         if len(x) != len(w):
             raise TypeError("expected x and w to have same length")
-        # apply weights
-        if rhs.ndim == 2:
-            lhs *= w[:, np.newaxis]
-            rhs *= w[:, np.newaxis]
+        # apply weights. Don't use inplace operations as they
+        # can cause problems with NA.
+        lhs = lhs * w
+        rhs = rhs * w
+
+    # deal with NA. Note that polyvander propagates NA from x
+    # into all columns, that is rows for transposed form.
+    if lhs.flags.maskna or rhs.flags.maskna:
+        if rhs.ndim == 1:
+            mask = np.isna(lhs[0]) | np.isna(rhs)
         else:
-            lhs *= w[:, np.newaxis]
-            rhs *= w
+            mask = np.isna(lhs[0]) | np.isna(rhs).any(0)
+        np.copyto(lhs, 0, where=mask)
+        np.copyto(rhs, 0, where=mask)
 
     # set rcond
     if rcond is None :
         rcond = len(x)*np.finfo(x.dtype).eps
 
     # scale the design matrix and solve the least squares equation
-    scl = np.sqrt((lhs*lhs).sum(0))
-    c, resids, rank, s = la.lstsq(lhs/scl, rhs, rcond)
+    scl = np.sqrt((lhs*lhs).sum(1))
+    c, resids, rank, s = la.lstsq(lhs.T/scl, rhs.T, rcond)
     c = (c.T/scl).T
 
     # warn on rank reduction
