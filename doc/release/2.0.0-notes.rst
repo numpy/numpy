@@ -89,7 +89,26 @@ Custom formatter for printing arrays
 
 New function numpy.random.choice
 ---------------------------------
-A generic sampling function has been added which will generate samples from a given array-like. The samples can be with or without replacement, and with uniform or given non-uniform probabilities.
+
+A generic sampling function has been added which will generate samples from
+a given array-like. The samples can be with or without replacement, and
+with uniform or given non-uniform probabilities.
+
+Preliminary multi-dimensional support in the polynomial package
+---------------------------------------------------------------
+
+Axis keywords have been added to the integration and differentiation
+functions and a tensor keyword was added to the evaluation functions.
+These additions allow multi-dimensional coefficient arrays to be used in
+those functions. New functions for evaluating 2-D and 3-D coefficient
+arrays on grids or sets of points were added together with 2-D and 3-D
+pseudo-Vandermonde matrices that can be used for fitting.
+
+Support for mask-based NA values in the polynomial package fits
+---------------------------------------------------------------
+
+The fitting functions recognize and remove masked data from the fit.
+
 
 Changes
 =======
@@ -129,6 +148,8 @@ behavior with object arrays, instead of trying to call methods on the
 objects. For example the expression (3 and 'test') produces the string
 'test', and now np.logical_and(np.array(3, 'O'), np.array('test', 'O'))
 produces 'test' as well.
+
+The deprecated imports in the polynomial package have been removed.
 
 Deprecations
 ============
