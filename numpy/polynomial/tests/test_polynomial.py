@@ -469,7 +469,7 @@ class TestMisc(TestCase) :
         wm[10] = np.NA
         res = poly.polyfit(x, y, 3, w=wm)
         assert_almost_equal(res, coef3)
-        
+
 
     def test_polytrim(self) :
         coef = [2, -1, 1, 0]

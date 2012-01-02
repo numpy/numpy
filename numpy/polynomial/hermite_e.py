@@ -238,7 +238,7 @@ def hermefromroots(roots) :
     Generate a HermiteE series with given roots.
 
     The function returns the coefficients of the polynomial
-    
+
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
     in HermiteE form, where the `r_n` are the roots specified in `roots`.
@@ -246,7 +246,7 @@ def hermefromroots(roots) :
     For instance, if 2 is a root of multiplicity three and 3 is a root of
     multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The
     roots can appear in any order.
-    
+
     If the returned coefficients are `c`, then
 
     .. math:: p(x) = c_0 + c_1 * He_1(x) + ... +  c_n * He_n(x)
@@ -651,7 +651,7 @@ def hermeder(c, m=1, scl=1, axis=0) :
         variable. (Default: 1)
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
-        
+
         .. versionadded:: 1.7.0
 
     Returns
@@ -751,7 +751,7 @@ def hermeint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
-        
+
         .. versionadded:: 1.7.0
 
     Returns
@@ -978,7 +978,7 @@ def hermeval2d(x, y, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     try:
         x, y = np.array((x, y), copy=0)
@@ -1038,7 +1038,7 @@ def hermegrid2d(x, y, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     c = hermeval(x, c)
     c = hermeval(y, c)
@@ -1091,7 +1091,7 @@ def hermeval3d(x, y, z, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     try:
         x, y, z = np.array((x, y, z), copy=0)
@@ -1155,7 +1155,7 @@ def hermegrid3d(x, y, z, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     c = hermeval(x, c)
     c = hermeval(y, c)
@@ -1170,10 +1170,10 @@ def hermevander(x, deg) :
     `x`. The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., i] = He_i(x),
-    
+
     where `0 <= i <= deg`. The leading indices of `V` index the elements of
     `x` and the last index is the degree of the HermiteE polynomial.
-    
+
     If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
     array ``V = hermevander(x, n)``, then ``np.dot(V, c)`` and
     ``hermeval(x, c)`` are the same up to roundoff. This equivalence is
@@ -1233,11 +1233,11 @@ def hermevander2d(x, y, deg) :
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., deg[1]*i + j] = He_i(x) * He_j(y),
-    
+
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
     the HermiteE polynomials.
-    
+
     If `c` is a 2-D array of coefficients of shape `(m + 1, n + 1)` and `V`
     is the matrix ``V = hermevander2d(x, y, [m, n])``, then
     ``np.dot(V, c.flat)`` and ``hermeval2d(x, y, c)`` are the same up to
@@ -1270,7 +1270,7 @@ def hermevander2d(x, y, deg) :
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     ideg = [int(d) for d in deg]
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
@@ -1293,11 +1293,11 @@ def hermevander3d(x, y, z, deg) :
     then Hehe pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = He_i(x)*He_j(y)*He_k(z),
-    
+
     where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
     indices of `V` index the points `(x, y, z)` and the last index encodes
     the degrees of the HermiteE polynomials.
-    
+
     If `c` is a 3-D array of coefficients of shape `(l + 1, m + 1, n + 1)`
     and `V` is the matrix ``V = hermevander3d(x, y, z, [l, m, n])``, then
     ``np.dot(V, c.flat)`` and ``hermeval3d(x, y, z, c)`` are the same up to
@@ -1330,7 +1330,7 @@ def hermevander3d(x, y, z, deg) :
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     ideg = [int(d) for d in deg]
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
@@ -1364,7 +1364,7 @@ def hermefit(x, y, deg, rcond=None, full=False, w=None):
     Since numpy version 1.7.0, hermefit also supports NA. If any of the
     elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
     linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
-    then an NA in any row of `y` invalidates that whole row. 
+    then an NA in any row of `y` invalidates that whole row.
 
     Parameters
     ----------
@@ -1552,7 +1552,7 @@ def hermecompanion(c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     accprod = np.multiply.accumulate
     # c is a trimmed copy
@@ -1723,7 +1723,7 @@ def hermeweight(x):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     w = np.exp(-.5*x**2)
     return w

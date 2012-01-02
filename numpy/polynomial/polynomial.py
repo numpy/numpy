@@ -129,7 +129,7 @@ def polyfromroots(roots) :
     Generate a monic polynomial with given roots.
 
     Return the coefficients of the polynomial
-    
+
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
     where the `r_n` are the roots specified in `roots`.  If a zero has
@@ -137,14 +137,14 @@ def polyfromroots(roots) :
     if 2 is a root of multiplicity three and 3 is a root of multiplicity 2,
     then `roots` looks something like [2, 2, 2, 3, 3]. The roots can appear
     in any order.
-    
+
     If the returned coefficients are `c`, then
 
     .. math:: p(x) = c_0 + c_1 * x + ... +  x^n
 
     The coefficient of the last term is 1 for monic polynomials in this
     form.
-    
+
     Parameters
     ----------
     roots : array_like
@@ -490,7 +490,7 @@ def polyder(c, m=1, scl=1, axis=0):
         of variable. (Default: 1)
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
-        
+
         .. versionadded:: 1.7.0
 
     Returns
@@ -591,7 +591,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the integral is taken. (Default: 0).
-        
+
         .. versionadded:: 1.7.0
 
     Returns
@@ -693,7 +693,7 @@ def polyval(x, c, tensor=True):
     list, otherwise it is treated as a scalar. In either case, either `x`
     or its elements must support multiplication and addition both with
     themselves and with the elements of `c`.
-    
+
     If `c` is a 1-D array, then `p(x)` will have the same shape as `x`.  If
     `c` is multidimensional, then the shape of the result depends on the
     value of `tensor`. If `tensor` is true the shape will be c.shape[1:] +
@@ -824,7 +824,7 @@ def polyval2d(x, y, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     try:
         x, y = np.array((x, y), copy=0)
@@ -884,7 +884,7 @@ def polygrid2d(x, y, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     c = polyval(x, c)
     c = polyval(y, c)
@@ -937,7 +937,7 @@ def polyval3d(x, y, z, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     try:
         x, y, z = np.array((x, y, z), copy=0)
@@ -1001,7 +1001,7 @@ def polygrid3d(x, y, z, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     c = polyval(x, c)
     c = polyval(y, c)
@@ -1016,10 +1016,10 @@ def polyvander(x, deg) :
     `x`. The Vandermonde matrix is defined by
 
     .. math:: V[..., i] = x^i,
-    
+
     where `0 <= i <= deg`. The leading indices of `V` index the elements of
     `x` and the last index is the power of `x`.
-    
+
     If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
     matrix ``V = polyvander(x, n)``, then ``np.dot(V, c)`` and
     ``polyval(x, c)`` are the same up to roundoff. This equivalence is
@@ -1073,11 +1073,11 @@ def polyvander2d(x, y, deg) :
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., deg[1]*i + j] = x^i * y^j,
-    
+
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the powers of
     `x` and `y`.
-    
+
     If `c` is a 2-D array of coefficients of shape `(m + 1, n + 1)` and `V`
     is the matrix ``V = polyvander2d(x, y, [m, n])``, then
     ``np.dot(V, c.flat)`` and ``polyval2d(x, y, c)`` are the same up to
@@ -1130,11 +1130,11 @@ def polyvander3d(x, y, z, deg) :
     then The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = x^i * y^j * z^k,
-    
+
     where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
     indices of `V` index the points `(x, y, z)` and the last index encodes
     the powers of `x`, `y`, and `z`.
-    
+
     If `c` is a 3-D array of coefficients of shape `(l + 1, m + 1, n + 1)`
     and `V` is the matrix ``V = polyvander3d(x, y, z, [l, m, n])``, then
     ``np.dot(V, c.flat)`` and ``polyval3d(x, y, z, c)`` are the same up to
@@ -1167,7 +1167,7 @@ def polyvander3d(x, y, z, deg) :
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     ideg = [int(d) for d in deg]
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
@@ -1203,7 +1203,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     Since numpy version 1.7.0, polyfit also supports NA. If any of the
     elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
     linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
-    then an NA in any row of `y` invalidates that whole row. 
+    then an NA in any row of `y` invalidates that whole row.
 
     Parameters
     ----------
@@ -1488,4 +1488,3 @@ def polyroots(c):
 #
 
 exec polytemplate.substitute(name='Polynomial', nick='poly', domain='[-1,1]')
-

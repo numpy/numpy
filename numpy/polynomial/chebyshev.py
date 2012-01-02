@@ -492,7 +492,7 @@ def chebfromroots(roots) :
     Generate a Chebyshev series with given roots.
 
     The function returns the coefficients of the polynomial
-    
+
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
     in Chebyshev form, where the `r_n` are the roots specified in `roots`.
@@ -500,7 +500,7 @@ def chebfromroots(roots) :
     For instance, if 2 is a root of multiplicity three and 3 is a root of
     multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The
     roots can appear in any order.
-    
+
     If the returned coefficients are `c`, then
 
     .. math:: p(x) = c_0 + c_1 * T_1(x) + ... +  c_n * T_n(x)
@@ -883,7 +883,7 @@ def chebder(c, m=1, scl=1, axis=0) :
         variable. (Default: 1)
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
-        
+
         .. versionadded:: 1.7.0
 
     Returns
@@ -992,7 +992,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
-        
+
         .. versionadded:: 1.7.0
 
     Returns
@@ -1217,7 +1217,7 @@ def chebval2d(x, y, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     try:
         x, y = np.array((x, y), copy=0)
@@ -1277,7 +1277,7 @@ def chebgrid2d(x, y, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     c = chebval(x, c)
     c = chebval(y, c)
@@ -1330,7 +1330,7 @@ def chebval3d(x, y, z, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     try:
         x, y, z = np.array((x, y, z), copy=0)
@@ -1394,7 +1394,7 @@ def chebgrid3d(x, y, z, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     c = chebval(x, c)
     c = chebval(y, c)
@@ -1409,10 +1409,10 @@ def chebvander(x, deg) :
     `x`. The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., i] = T_i(x),
-    
+
     where `0 <= i <= deg`. The leading indices of `V` index the elements of
     `x` and the last index is the degree of the Chebyshev polynomial.
-    
+
     If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
     matrix ``V = chebvander(x, n)``, then ``np.dot(V, c)`` and
     ``chebval(x, c)`` are the same up to roundoff.  This equivalence is
@@ -1465,11 +1465,11 @@ def chebvander2d(x, y, deg) :
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., deg[1]*i + j] = T_i(x) * T_j(y),
-    
+
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
     the Chebyshev polynomials.
-    
+
     If `c` is a 2-D array of coefficients of shape `(m + 1, n + 1)` and `V`
     is the matrix ``V = chebvander2d(x, y, [m, n])``, then
     ``np.dot(V, c.flat)`` and ``chebval2d(x, y, c)`` are the same up to
@@ -1502,7 +1502,7 @@ def chebvander2d(x, y, deg) :
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     ideg = [int(d) for d in deg]
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
@@ -1525,11 +1525,11 @@ def chebvander3d(x, y, z, deg) :
     then The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = T_i(x)*T_j(y)*T_k(z),
-    
+
     where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
     indices of `V` index the points `(x, y, z)` and the last index encodes
     the degrees of the Chebyshev polynomials.
-    
+
     If `c` is a 3-D array of coefficients of shape `(l + 1, m + 1, n + 1)`
     and `V` is the matrix ``V = chebvander3d(x, y, z, [l, m, n])``, then
     ``np.dot(V, c.flat)`` and ``chebval3d(x, y, z, c)`` are the same up to
@@ -1562,7 +1562,7 @@ def chebvander3d(x, y, z, deg) :
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     ideg = [int(d) for d in deg]
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
@@ -1596,7 +1596,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     Since numpy version 1.7.0, chebfit also supports NA. If any of the
     elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
     linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
-    then an NA in any row of `y` invalidates that whole row. 
+    then an NA in any row of `y` invalidates that whole row.
 
     Parameters
     ----------
@@ -1778,7 +1778,7 @@ def chebcompanion(c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])

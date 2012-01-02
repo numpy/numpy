@@ -234,7 +234,7 @@ def lagfromroots(roots) :
     Generate a Laguerre series with given roots.
 
     The function returns the coefficients of the polynomial
-    
+
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
     in Laguerre form, where the `r_n` are the roots specified in `roots`.
@@ -242,7 +242,7 @@ def lagfromroots(roots) :
     For instance, if 2 is a root of multiplicity three and 3 is a root of
     multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The
     roots can appear in any order.
-    
+
     If the returned coefficients are `c`, then
 
     .. math:: p(x) = c_0 + c_1 * L_1(x) + ... +  c_n * L_n(x)
@@ -649,7 +649,7 @@ def lagder(c, m=1, scl=1, axis=0) :
         variable. (Default: 1)
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
-        
+
         .. versionadded:: 1.7.0
 
     Returns
@@ -752,7 +752,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         before the integration constant is added. (Default: 1)
     axis : int, optional
         Axis over which the derivative is taken. (Default: 0).
-        
+
         .. versionadded:: 1.7.0
 
     Returns
@@ -981,7 +981,7 @@ def lagval2d(x, y, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     try:
         x, y = np.array((x, y), copy=0)
@@ -1041,7 +1041,7 @@ def laggrid2d(x, y, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     c = lagval(x, c)
     c = lagval(y, c)
@@ -1094,7 +1094,7 @@ def lagval3d(x, y, z, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     try:
         x, y, z = np.array((x, y, z), copy=0)
@@ -1158,7 +1158,7 @@ def laggrid3d(x, y, z, c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     c = lagval(x, c)
     c = lagval(y, c)
@@ -1173,10 +1173,10 @@ def lagvander(x, deg) :
     `x`. The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., i] = L_i(x)
-    
+
     where `0 <= i <= deg`. The leading indices of `V` index the elements of
     `x` and the last index is the degree of the Laguerre polynomial.
-    
+
     If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
     array ``V = lagvander(x, n)``, then ``np.dot(V, c)`` and
     ``lagval(x, c)`` are the same up to roundoff. This equivalence is
@@ -1236,11 +1236,11 @@ def lagvander2d(x, y, deg) :
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., deg[1]*i + j] = L_i(x) * L_j(y),
-    
+
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
     the Laguerre polynomials.
-    
+
     If `c` is a 2-D array of coefficients of shape `(m + 1, n + 1)` and `V`
     is the matrix ``V = lagvander2d(x, y, [m, n])``, then
     ``np.dot(V, c.flat)`` and ``lagval2d(x, y, c)`` are the same up to
@@ -1273,7 +1273,7 @@ def lagvander2d(x, y, deg) :
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     ideg = [int(d) for d in deg]
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
@@ -1296,11 +1296,11 @@ def lagvander3d(x, y, z, deg) :
     then The pseudo-Vandermonde matrix is defined by
 
     .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = L_i(x)*L_j(y)*L_k(z),
-    
+
     where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
     indices of `V` index the points `(x, y, z)` and the last index encodes
     the degrees of the Laguerre polynomials.
-    
+
     If `c` is a 3-D array of coefficients of shape `(l + 1, m + 1, n + 1)`
     and `V` is the matrix ``V = lagvander3d(x, y, z, [l, m, n])``, then
     ``np.dot(V, c.flat)`` and ``lagval3d(x, y, z, c)`` are the same up to
@@ -1333,7 +1333,7 @@ def lagvander3d(x, y, z, deg) :
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     ideg = [int(d) for d in deg]
     is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
@@ -1367,7 +1367,7 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
     Since numpy version 1.7.0, lagfit also supports NA. If any of the
     elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
     linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
-    then an NA in any row of `y` invalidates that whole row. 
+    then an NA in any row of `y` invalidates that whole row.
 
     Parameters
     ----------
@@ -1553,7 +1553,7 @@ def lagcompanion(c):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     accprod = np.multiply.accumulate
     # c is a trimmed copy
@@ -1668,7 +1668,7 @@ def laggauss(deg):
     where :math:`c` is a constant independent of :math:`k` and :math:`x_k`
     is the k'th root of :math:`L_n`, and then scaling the results to get
     the right value when integrating 1.
-    
+
     """
     ideg = int(deg)
     if ideg != deg or ideg < 1:
@@ -1720,7 +1720,7 @@ def lagweight(x):
     -----
 
     .. versionadded::1.7.0
-    
+
     """
     w = np.exp(-x)
     return w
