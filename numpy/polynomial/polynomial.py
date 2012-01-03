@@ -1078,12 +1078,16 @@ def polyvander2d(x, y, deg) :
     `V` index the points `(x, y)` and the last index encodes the powers of
     `x` and `y`.
 
-    If `c` is a 2-D array of coefficients of shape `(m + 1, n + 1)` and `V`
-    is the matrix ``V = polyvander2d(x, y, [m, n])``, then
-    ``np.dot(V, c.flat)`` and ``polyval2d(x, y, c)`` are the same up to
-    roundoff. This equivalence is useful both for least squares fitting and
-    for the evaluation of a large number of 2-D polynomials of the same
-    degrees and sample points.
+    If ``V = polyvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
+    correspond to the elements of a 2-D coefficient array `c` of shape
+    (xdeg + 1, ydeg + 1) in the order
+
+    .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
+
+    and ``np.dot(V, c.flat)`` and ``polyval2d(x, y, c)`` will be the same
+    up to roundoff. This equivalence is useful both for least squares
+    fitting and for the evaluation of a large number of 2-D polynomials
+    of the same degrees and sample points.
 
     Parameters
     ----------
@@ -1135,12 +1139,16 @@ def polyvander3d(x, y, z, deg) :
     indices of `V` index the points `(x, y, z)` and the last index encodes
     the powers of `x`, `y`, and `z`.
 
-    If `c` is a 3-D array of coefficients of shape `(l + 1, m + 1, n + 1)`
-    and `V` is the matrix ``V = polyvander3d(x, y, z, [l, m, n])``, then
-    ``np.dot(V, c.flat)`` and ``polyval3d(x, y, z, c)`` are the same up to
-    roundoff. This equivalence is useful both for least squares fitting and
-    for the evaluation of a large number of 3-D polynomials of the same
-    degrees and sample points.
+    If ``V = polyvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
+    of `V` correspond to the elements of a 3-D coefficient array `c` of
+    shape (xdeg + 1, ydeg + 1, zdeg + 1) in the order
+
+    .. math:: c_{000}, c_{001}, c_{002},... , c_{010}, c_{011}, c_{012},...
+
+    and  ``np.dot(V, c.flat)`` and ``polyval3d(x, y, z, c)`` will be the
+    same up to roundoff. This equivalence is useful both for least squares
+    fitting and for the evaluation of a large number of 3-D polynomials
+    of the same degrees and sample points.
 
     Parameters
     ----------
