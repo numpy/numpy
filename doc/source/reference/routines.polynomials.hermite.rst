@@ -1,5 +1,5 @@
-Hermite Module (:mod:`numpy.polynomial.hermite`)
-================================================
+Hermite Module, "Physicists'" (:mod:`numpy.polynomial.hermite`)
+===============================================================
 
 .. versionadded:: 1.6.0
 
