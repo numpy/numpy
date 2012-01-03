@@ -751,7 +751,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         Following each integration the result is *multiplied* by `scl`
         before the integration constant is added. (Default: 1)
     axis : int, optional
-        Axis over which the derivative is taken. (Default: 0).
+        Axis over which the integral is taken. (Default: 0).
 
         .. versionadded:: 1.7.0
 
