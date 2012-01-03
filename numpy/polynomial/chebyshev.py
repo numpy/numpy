@@ -118,12 +118,12 @@ def _cseries_to_zseries(c) :
 
     Parameters
     ----------
-    c : 1-d ndarray
+    c : 1-D ndarray
         Chebyshev coefficients, ordered from low to high
 
     Returns
     -------
-    zs : 1-d ndarray
+    zs : 1-D ndarray
         Odd length symmetric z-series, ordered from  low to high.
 
     """
@@ -143,12 +143,12 @@ def _zseries_to_cseries(zs) :
 
     Parameters
     ----------
-    zs : 1-d ndarray
+    zs : 1-D ndarray
         Odd length symmetric z-series, ordered from  low to high.
 
     Returns
     -------
-    c : 1-d ndarray
+    c : 1-D ndarray
         Chebyshev coefficients, ordered from  low to high.
 
     """
@@ -165,17 +165,17 @@ def _zseries_mul(z1, z2) :
 
     Parameters
     ----------
-    z1, z2 : 1-d ndarray
-        The arrays must be 1-d but this is not checked.
+    z1, z2 : 1-D ndarray
+        The arrays must be 1-D but this is not checked.
 
     Returns
     -------
-    product : 1-d ndarray
+    product : 1-D ndarray
         The product z-series.
 
     Notes
     -----
-    This is simply convolution. If symmetic/anti-symmetric z-series are
+    This is simply convolution. If symmetric/anti-symmetric z-series are
     denoted by S/A then the following rules apply:
 
     S*S, A*A -> S
@@ -194,27 +194,27 @@ def _zseries_div(z1, z2) :
 
     Parameters
     ----------
-    z1, z2 : 1-d ndarray
-        The arrays must be 1-d and have the same symmetry, but this is not
+    z1, z2 : 1-D ndarray
+        The arrays must be 1-D and have the same symmetry, but this is not
         checked.
 
     Returns
     -------
 
-    (quotient, remainder) : 1-d ndarrays
+    (quotient, remainder) : 1-D ndarrays
         Quotient and remainder as z-series.
 
     Notes
     -----
     This is not the same as polynomial division on account of the desired form
-    of the remainder. If symmetic/anti-symmetric z-series are denoted by S/A
+    of the remainder. If symmetric/anti-symmetric z-series are denoted by S/A
     then the following rules apply:
 
     S/S -> S,S
     A/A -> S,A
 
     The restriction to types of the same symmetry could be fixed but seems like
-    uneeded generality. There is no natural form for the remainder in the case
+    unneeded generality. There is no natural form for the remainder in the case
     where there is no symmetry.
 
     """
@@ -334,12 +334,12 @@ def poly2cheb(pol) :
     Parameters
     ----------
     pol : array_like
-        1-d array containing the polynomial coefficients
+        1-D array containing the polynomial coefficients
 
     Returns
     -------
     c : ndarray
-        1-d array containing the coefficients of the equivalent Chebyshev
+        1-D array containing the coefficients of the equivalent Chebyshev
         series.
 
     See Also
@@ -384,13 +384,13 @@ def cheb2poly(c) :
     Parameters
     ----------
     c : array_like
-        1-d array containing the Chebyshev series coefficients, ordered
+        1-D array containing the Chebyshev series coefficients, ordered
         from lowest order term to highest.
 
     Returns
     -------
     pol : ndarray
-        1-d array containing the coefficients of the equivalent polynomial
+        1-D array containing the coefficients of the equivalent polynomial
         (relative to the "standard" basis) ordered from lowest order term
         to highest.
 
@@ -557,7 +557,7 @@ def chebadd(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Chebyshev series coefficients ordered from low to
+        1-D arrays of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
@@ -607,7 +607,7 @@ def chebsub(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Chebyshev series coefficients ordered from low to
+        1-D arrays of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
@@ -659,7 +659,7 @@ def chebmulx(c):
     Parameters
     ----------
     c : array_like
-        1-d array of Chebyshev series coefficients ordered from low to
+        1-D array of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
@@ -700,7 +700,7 @@ def chebmul(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Chebyshev series coefficients ordered from low to
+        1-D arrays of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
@@ -716,9 +716,9 @@ def chebmul(c1, c2):
     -----
     In general, the (polynomial) product of two C-series results in terms
     that are not in the Chebyshev polynomial basis set.  Thus, to express
-    the product as a C-series, it is typically necessary to "re-project"
+    the product as a C-series, it is typically necessary to "reproject"
     the product onto said basis set, which typically produces
-    "un-intuitive" (but correct) results; see Examples section below.
+    "unintuitive live" (but correct) results; see Examples section below.
 
     Examples
     --------
@@ -750,7 +750,7 @@ def chebdiv(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Chebyshev series coefficients ordered from low to
+        1-D arrays of Chebyshev series coefficients ordered from low to
         high.
 
     Returns
@@ -768,8 +768,8 @@ def chebdiv(c1, c2):
     In general, the (polynomial) division of one C-series by another
     results in quotient and remainder terms that are not in the Chebyshev
     polynomial basis set.  Thus, to express these results as C-series, it
-    is typically necessary to "re-project" the results onto said basis
-    set, which typically produces "un-intuitive" (but correct) results;
+    is typically necessary to "reproject" the results onto said basis
+    set, which typically produces "unintuitive" (but correct) results;
     see Examples section below.
 
     Examples
@@ -808,19 +808,19 @@ def chebpow(c, pow, maxpower=16) :
     """Raise a Chebyshev series to a power.
 
     Returns the Chebyshev series `c` raised to the power `pow`. The
-    arguement `c` is a sequence of coefficients ordered from low to high.
+    argument `c` is a sequence of coefficients ordered from low to high.
     i.e., [1,2,3] is the series  ``T_0 + 2*T_1 + 3*T_2.``
 
     Parameters
     ----------
     c : array_like
-        1d array of chebyshev series coefficients ordered from low to
+        1-D array of Chebyshev series coefficients ordered from low to
         high.
     pow : integer
         Power to which the series will be raised
     maxpower : integer, optional
         Maximum power allowed. This is mainly to limit growth of the series
-        to umanageable size. Default is 16
+        to unmanageable size. Default is 16
 
     Returns
     -------
@@ -898,8 +898,8 @@ def chebder(c, m=1, scl=1, axis=0) :
     Notes
     -----
     In general, the result of differentiating a C-series needs to be
-    "re-projected" onto the C-series basis set. Thus, typically, the
-    result of this function is "un-intuitive," albeit correct; see Examples
+    "reprojected" onto the C-series basis set. Thus, typically, the
+    result of this function is "unintuitive," albeit correct; see Examples
     section below.
 
     Examples
@@ -959,14 +959,14 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     """
     Integrate a Chebyshev series.
 
-    Returns the Chebeshev series coefficients `c` integrated `m` times from
+    Returns the Chebyshev series coefficients `c` integrated `m` times from
     `lbnd` along `axis`. At each iteration the resulting series is
     **multiplied** by `scl` and an integration constant, `k`, is added.
     The scaling factor is for use in a linear change of variable.  ("Buyer
     beware": note that, depending on what one is doing, one may want `scl`
     to be the reciprocal of what one might expect; for more information,
     see the Notes section below.)  The argument `c` is an array of
-    coefficients from low to high degree along each axix, e.g., [1,2,3]
+    coefficients from low to high degree along each axis, e.g., [1,2,3]
     represents the series ``T_0 + 2*T_1 + 3*T_2`` while [[1,2],[1,2]]
     represents ``1*T_0(x)*T_0(y) + 1*T_1(x)*T_0(y) + 2*T_0(x)*T_1(y) +
     2*T_1(x)*T_1(y)`` if axis=0 is ``x`` and axis=1 is ``y``.
@@ -1019,8 +1019,8 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     :math:`1/a`- perhaps not what one would have first thought.
 
     Also note that, in general, the result of integrating a C-series needs
-    to be "re-projected" onto the C-series basis set.  Thus, typically,
-    the result of this function is "un-intuitive," albeit correct; see
+    to be "reprojected" onto the C-series basis set.  Thus, typically,
+    the result of this function is "unintuitive," albeit correct; see
     Examples section below.
 
     Examples
@@ -1117,7 +1117,7 @@ def chebval(x, c, tensor=True):
         with themselves and with the elements of `c`.
     c : array_like
         Array of coefficients ordered so that the coefficients for terms of
-        degree n are contained in c[n]. If `c` is multidimesional the
+        degree n are contained in c[n]. If `c` is multidimensional the
         remaining indices enumerate multiple polynomials. In the two
         dimensional case the coefficients may be thought of as stored in
         the columns of `c`.
@@ -1231,11 +1231,11 @@ def chebval2d(x, y, c):
 
 def chebgrid2d(x, y, c):
     """
-    Evaluate a 2-D Chebyshev series on the Cartesion product of x and y.
+    Evaluate a 2-D Chebyshev series on the Cartesian product of x and y.
 
     This function returns the values:
 
-    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * T_i(a) * T_j(b)
+    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * T_i(a) * T_j(b),
 
     where the points `(a, b)` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
@@ -1267,7 +1267,7 @@ def chebgrid2d(x, y, c):
     -------
     values : ndarray, compatible object
         The values of the two dimensional Chebyshev series at points in the
-        Cartesion product of `x` and `y`.
+        Cartesian product of `x` and `y`.
 
     See Also
     --------
@@ -1319,7 +1319,7 @@ def chebval3d(x, y, z, c):
     Returns
     -------
     values : ndarray, compatible object
-        The values of the multidimension polynomial on points formed with
+        The values of the multidimensional polynomial on points formed with
         triples of corresponding values from `x`, `y`, and `z`.
 
     See Also
@@ -1364,7 +1364,7 @@ def chebgrid3d(x, y, z, c):
 
     If `c` has fewer than three dimensions, ones are implicitly appended to
     its shape to make it 3-D. The shape of the result will be c.shape[3:] +
-    x.shape + yshape + z.shape.
+    x.shape + y.shape + z.shape.
 
     Parameters
     ----------
@@ -1383,7 +1383,7 @@ def chebgrid3d(x, y, z, c):
     Returns
     -------
     values : ndarray, compatible object
-        The values of the two dimensional polynomial at points in the Cartesion
+        The values of the two dimensional polynomial at points in the Cartesian
         product of `x` and `y`.
 
     See Also
@@ -1675,7 +1675,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
     If some of the singular values of `V` are so small that they are
     neglected, then a `RankWarning` will be issued. This means that the
-    coeficient values may be poorly determined. Using a lower order fit
+    coefficient values may be poorly determined. Using a lower order fit
     will usually get rid of the warning.  The `rcond` parameter can also be
     set to a value smaller than its default, but the resulting fit may be
     spurious and have large contributions from roundoff error.
@@ -1766,7 +1766,7 @@ def chebcompanion(c):
     Parameters
     ----------
     c : array_like
-        1-d array of Chebyshev series coefficients ordered from low to high
+        1-D array of Chebyshev series coefficients ordered from low to high
         degree.
 
     Returns
