@@ -56,7 +56,7 @@ the conventional Polynomial class because of its familiarity.::
 
 Note that there are three parts to the long version of the printout. The
 first is the coefficients, the second is the domain, and the third is the
-window.::
+window::
 
    >>> p.coef
    array([ 1.,  2.,  3.])
@@ -66,7 +66,7 @@ window.::
    array([-1.,  1.])
 
 Printing a polynomial yields a shorter form without the domain
-and window.::
+and window::
 
    >>> print p
    poly([ 1.  2.  3.])
@@ -91,7 +91,13 @@ Powers::
    >>> p**2
    Polynomial([  1.,   4.,  10.,  12.,   9.], [-1.,  1.], [-1.,  1.])
 
-Division::
+Division:
+
+Floor_division, '//', is the division operator for the polynomial classes,
+polynomials are treated like integers in this regard. For Python versions <
+3.x the '/' operator maps to '//', as it does for Python, for later
+versions the '/' will only work for division by scalars. At some point it
+will be deprecated::
 
    >>> p // P([-1, 1])
    Polynomial([ 5.,  3.], [-1.,  1.], [-1.,  1.])
@@ -120,7 +126,12 @@ Evaluation::
           [ 17.,  34.],
           [ 57.,  86.]])
 
-Substitution::
+Substitution:
+
+Substitute a polynomial for x and expand the result. Here we substitute
+p in itself leading to a new polynomial of degree 4 after expansion. If
+the polynomials are regarded as functions this is composition of
+functions::
 
    >>> p(p)
    Polynomial([  6.,  16.,  36.,  36.,  27.], [-1.,  1.], [-1.,  1.])
@@ -130,15 +141,11 @@ Roots::
    >>> p.roots()
    array([-0.33333333-0.47140452j, -0.33333333+0.47140452j])
 
-Floor_division, '//', is the division operator for the polynomial classes,
-polynomials are treated like integers in this regard. For Python versions <
-3.x the '/' operator maps to '//', as it does for Python, for later
-versions the '/' will only work for division by scalars. At some point it
-will be deprecated.
+
 
 It isn't always convenient to explicitly use Polynomial instances, so
 tuples, lists, arrays, and scalars are automatically cast in the arithmetic
-operations.::
+operations::
 
    >>> p + [1, 2, 3]
    Polynomial([ 2.,  4.,  6.], [-1.,  1.], [-1.,  1.])
@@ -170,12 +177,15 @@ arithmetic::
 
 But different types can be used for substitution. In fact, this is how
 conversion of Polynomial classes among themselves is done for type, domain,
-and window casting.::
+and window casting::
 
     >>> p(T([0, 1]))
     Chebyshev([ 2.5,  2. ,  1.5], [-1.,  1.], [-1.,  1.])
 
-The result is the polynomial 'p' cast to a Chebyshev series.
+Which gives the polynomial 'p' in Chebyshev form. This works because
+:math:`T_1(x) = x` and substituting :math:`x` for :math:`x` doesn't change
+the original polynomial. However, all the multiplications and divisions
+will be done using Chebyshev series, hence the type of the result.
 
 Calculus
 --------
