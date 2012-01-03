@@ -149,8 +149,6 @@ objects. For example the expression (3 and 'test') produces the string
 'test', and now np.logical_and(np.array(3, 'O'), np.array('test', 'O'))
 produces 'test' as well.
 
-The deprecated imports in the polynomial package have been removed.
-
 Deprecations
 ============
 
@@ -164,3 +162,5 @@ now you can test your code against the deprecated C API by #defining
 NPY_NO_DEPRECATED_API before including any NumPy headers. Expect
 something similar for PyArray_Descr* and other core objects in the
 future as preparation for NumPy 2.0.
+
+The deprecated imports in the polynomial package have been removed.
