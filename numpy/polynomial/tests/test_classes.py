@@ -20,8 +20,7 @@ classes = (
         Hermite, HermiteE)
 
 
-def check_class_methods():
-    """Test all class methods"""
+def test_class_methods():
     for Poly1 in classes:
         for Poly2 in classes:
             yield check_conversion, Poly1, Poly2
@@ -517,21 +516,6 @@ def check_mapparms(Poly) :
     w = 2*d + 1
     p = Poly([1], domain=d, window=w)
     assert_almost_equal([1, 2], p.mapparms())
-
-for test in check_class_methods():
-    if len(test) == 3:
-        f, a, b = [t.__name__ for t in test]
-        prefix = "def %s_%s_%s(): " % (f, a, b)
-        prefix = prefix.replace('check', 'test')
-        suffix = "%s(%s, %s)" % (f, a, b)
-        exec prefix + suffix
-    if len(test) == 2:
-        f, a = [t.__name__ for t in test]
-        prefix = "def %s_%s(): " % (f, a)
-        prefix = prefix.replace('check', 'test')
-        suffix = "%s(%s)" % (f, a)
-        exec prefix + suffix
-
 
 
 if __name__ == "__main__":
