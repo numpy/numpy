@@ -203,7 +203,7 @@ def polyadd(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of polynomial coefficients ordered from low to high.
+        1-D arrays of polynomial coefficients ordered from low to high.
 
     Returns
     -------
@@ -247,7 +247,7 @@ def polysub(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of polynomial coefficients ordered from low to
+        1-D arrays of polynomial coefficients ordered from low to
         high.
 
     Returns
@@ -292,7 +292,7 @@ def polymulx(c):
     Parameters
     ----------
     c : array_like
-        1-d array of polynomial coefficients ordered from low to
+        1-D array of polynomial coefficients ordered from low to
         high.
 
     Returns
@@ -329,7 +329,7 @@ def polymul(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of coefficients representing a polynomial, relative to the
+        1-D arrays of coefficients representing a polynomial, relative to the
         "standard" basis, and ordered from lowest order term to highest.
 
     Returns
@@ -367,7 +367,7 @@ def polydiv(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of polynomial coefficients ordered from low to high.
+        1-D arrays of polynomial coefficients ordered from low to high.
 
     Returns
     -------
@@ -423,13 +423,13 @@ def polypow(c, pow, maxpower=None) :
     Parameters
     ----------
     c : array_like
-        1d array of array of series coefficients ordered from low to
+        1-D array of array of series coefficients ordered from low to
         high degree.
     pow : integer
         Power to which the series will be raised
     maxpower : integer, optional
         Maximum power allowed. This is mainly to limit growth of the series
-        to umanageable size. Default is 16
+        to unmanageable size. Default is 16
 
     Returns
     -------
@@ -575,7 +575,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Parameters
     ----------
     c : array_like
-        1-d array of polynomial coefficients, ordered from low to high.
+        1-D array of polynomial coefficients, ordered from low to high.
     m : int, optional
         Order of integration, must be positive. (Default: 1)
     k : {[], list, scalar}, optional
@@ -712,7 +712,7 @@ def polyval(x, c, tensor=True):
         with themselves and with the elements of `c`.
     c : array_like
         Array of coefficients ordered so that the coefficients for terms of
-        degree n are contained in c[n]. If `c` is multidimesional the
+        degree n are contained in c[n]. If `c` is multidimensional the
         remaining indices enumerate multiple polynomials. In the two
         dimensional case the coefficients may be thought of as stored in
         the columns of `c`.
@@ -751,14 +751,14 @@ def polyval(x, c, tensor=True):
     >>> polyval(a, [1,2,3])
     array([[  1.,   6.],
            [ 17.,  34.]])
-    >>> c = np.arange(4).reshape(2,2)
-    >>> c
+    >>> coef = np.arange(4).reshape(2,2) # multidimensional coefficients
+    >>> coef
     array([[[  0,   1],
             [  2,   3]],
-    >>> polyval([1,2], c, tensor=True)
+    >>> polyval([1,2], coef, tensor=True)
     array([[ 2.,  4.],
            [ 4.,  7.]])
-    >>> polyval([1,2], c, tensor=False)
+    >>> polyval([1,2], coef, tensor=False)
     array([ 2.,  7.])
 
     """
@@ -838,7 +838,7 @@ def polyval2d(x, y, c):
 
 def polygrid2d(x, y, c):
     """
-    Evaluate a 2-D polynomial on the Cartesion product of x and y.
+    Evaluate a 2-D polynomial on the Cartesian product of x and y.
 
     This function returns the values:
 
@@ -873,7 +873,7 @@ def polygrid2d(x, y, c):
     Returns
     -------
     values : ndarray, compatible object
-        The values of the two dimensional polynomial at points in the Cartesion
+        The values of the two dimensional polynomial at points in the Cartesian
         product of `x` and `y`.
 
     See Also
@@ -926,7 +926,7 @@ def polyval3d(x, y, z, c):
     Returns
     -------
     values : ndarray, compatible object
-        The values of the multidimension polynomial on points formed with
+        The values of the multidimensional polynomial on points formed with
         triples of corresponding values from `x`, `y`, and `z`.
 
     See Also
@@ -952,7 +952,7 @@ def polyval3d(x, y, z, c):
 
 def polygrid3d(x, y, z, c):
     """
-    Evaluate a 3-D polynomial on the Cartesion product of x, y and z.
+    Evaluate a 3-D polynomial on the Cartesian product of x, y and z.
 
     This function returns the values:
 
@@ -971,7 +971,7 @@ def polygrid3d(x, y, z, c):
 
     If `c` has fewer than three dimensions, ones are implicitly appended to
     its shape to make it 3-D. The shape of the result will be c.shape[3:] +
-    x.shape + yshape + z.shape.
+    x.shape + y.shape + z.shape.
 
     Parameters
     ----------
@@ -990,7 +990,7 @@ def polygrid3d(x, y, z, c):
     Returns
     -------
     values : ndarray, compatible object
-        The values of the two dimensional polynomial at points in the Cartesion
+        The values of the two dimensional polynomial at points in the Cartesian
         product of `x` and `y`.
 
     See Also
@@ -1396,7 +1396,7 @@ def polycompanion(c):
     Parameters
     ----------
     c : array_like
-        1-d array of polynomial coefficients ordered from low to high
+        1-D array of polynomial coefficients ordered from low to high
         degree.
 
     Returns

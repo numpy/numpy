@@ -89,12 +89,12 @@ def poly2lag(pol) :
     Parameters
     ----------
     pol : array_like
-        1-d array containing the polynomial coefficients
+        1-D array containing the polynomial coefficients
 
     Returns
     -------
     c : ndarray
-        1-d array containing the coefficients of the equivalent Laguerre
+        1-D array containing the coefficients of the equivalent Laguerre
         series.
 
     See Also
@@ -133,13 +133,13 @@ def lag2poly(c) :
     Parameters
     ----------
     c : array_like
-        1-d array containing the Laguerre series coefficients, ordered
+        1-D array containing the Laguerre series coefficients, ordered
         from lowest order term to highest.
 
     Returns
     -------
     pol : ndarray
-        1-d array containing the coefficients of the equivalent polynomial
+        1-D array containing the coefficients of the equivalent polynomial
         (relative to the "standard" basis) ordered from lowest order term
         to highest.
 
@@ -300,7 +300,7 @@ def lagadd(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Laguerre series coefficients ordered from low to
+        1-D arrays of Laguerre series coefficients ordered from low to
         high.
 
     Returns
@@ -349,7 +349,7 @@ def lagsub(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Laguerre series coefficients ordered from low to
+        1-D arrays of Laguerre series coefficients ordered from low to
         high.
 
     Returns
@@ -397,7 +397,7 @@ def lagmulx(c):
     Parameters
     ----------
     c : array_like
-        1-d array of Laguerre series coefficients ordered from low to
+        1-D array of Laguerre series coefficients ordered from low to
         high.
 
     Returns
@@ -448,7 +448,7 @@ def lagmul(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Laguerre series coefficients ordered from low to
+        1-D arrays of Laguerre series coefficients ordered from low to
         high.
 
     Returns
@@ -464,8 +464,8 @@ def lagmul(c1, c2):
     -----
     In general, the (polynomial) product of two C-series results in terms
     that are not in the Laguerre polynomial basis set.  Thus, to express
-    the product as a Laguerre series, it is necessary to "re-project" the
-    product onto said basis set, which may produce "un-intuitive" (but
+    the product as a Laguerre series, it is necessary to "reproject" the
+    product onto said basis set, which may produce "unintuitive" (but
     correct) results; see Examples section below.
 
     Examples
@@ -515,7 +515,7 @@ def lagdiv(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Laguerre series coefficients ordered from low to
+        1-D arrays of Laguerre series coefficients ordered from low to
         high.
 
     Returns
@@ -533,8 +533,8 @@ def lagdiv(c1, c2):
     In general, the (polynomial) division of one Laguerre series by another
     results in quotient and remainder terms that are not in the Laguerre
     polynomial basis set.  Thus, to express these results as a Laguerre
-    series, it is necessary to "re-project" the results onto the Laguerre
-    basis set, which may produce "un-intuitive" (but correct) results; see
+    series, it is necessary to "reproject" the results onto the Laguerre
+    basis set, which may produce "unintuitive" (but correct) results; see
     Examples section below.
 
     Examples
@@ -572,19 +572,19 @@ def lagpow(c, pow, maxpower=16) :
     """Raise a Laguerre series to a power.
 
     Returns the Laguerre series `c` raised to the power `pow`. The
-    arguement `c` is a sequence of coefficients ordered from low to high.
+    argument `c` is a sequence of coefficients ordered from low to high.
     i.e., [1,2,3] is the series  ``P_0 + 2*P_1 + 3*P_2.``
 
     Parameters
     ----------
     c : array_like
-        1d array of Laguerre series coefficients ordered from low to
+        1-D array of Laguerre series coefficients ordered from low to
         high.
     pow : integer
         Power to which the series will be raised
     maxpower : integer, optional
         Maximum power allowed. This is mainly to limit growth of the series
-        to umanageable size. Default is 16
+        to unmanageable size. Default is 16
 
     Returns
     -------
@@ -665,7 +665,7 @@ def lagder(c, m=1, scl=1, axis=0) :
     -----
     In general, the result of differentiating a Laguerre series does not
     resemble the same operation on a power series. Thus the result of this
-    function may be "un-intuitive," albeit correct; see Examples section
+    function may be "unintuitive," albeit correct; see Examples section
     below.
 
     Examples
@@ -725,7 +725,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     beware": note that, depending on what one is doing, one may want `scl`
     to be the reciprocal of what one might expect; for more information,
     see the Notes section below.)  The argument `c` is an array of
-    coefficients from low to high degree along each axix, e.g., [1,2,3]
+    coefficients from low to high degree along each axis, e.g., [1,2,3]
     represents the series ``L_0 + 2*L_1 + 3*L_2`` while [[1,2],[1,2]]
     represents ``1*L_0(x)*L_0(y) + 1*L_1(x)*L_0(y) + 2*L_0(x)*L_1(y) +
     2*L_1(x)*L_1(y)`` if axis=0 is ``x`` and axis=1 is ``y``.
@@ -779,8 +779,8 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     :math:`1/a` - perhaps not what one would have first thought.
 
     Also note that, in general, the result of integrating a C-series needs
-    to be "re-projected" onto the C-series basis set.  Thus, typically,
-    the result of this function is "un-intuitive," albeit correct; see
+    to be "reprojected" onto the C-series basis set.  Thus, typically,
+    the result of this function is "unintuitive," albeit correct; see
     Examples section below.
 
     Examples
@@ -872,7 +872,7 @@ def lagval(x, c, tensor=True):
         with themselves and with the elements of `c`.
     c : array_like
         Array of coefficients ordered so that the coefficients for terms of
-        degree n are contained in c[n]. If `c` is multidimesional the
+        degree n are contained in c[n]. If `c` is multidimensional the
         remaining indices enumerate multiple polynomials. In the two
         dimensional case the coefficients may be thought of as stored in
         the columns of `c`.
@@ -995,7 +995,7 @@ def lagval2d(x, y, c):
 
 def laggrid2d(x, y, c):
     """
-    Evaluate a 2-D Laguerre series on the Cartesion product of x and y.
+    Evaluate a 2-D Laguerre series on the Cartesian product of x and y.
 
     This function returns the values:
 
@@ -1031,7 +1031,7 @@ def laggrid2d(x, y, c):
     -------
     values : ndarray, compatible object
         The values of the two dimensional Chebyshev series at points in the
-        Cartesion product of `x` and `y`.
+        Cartesian product of `x` and `y`.
 
     See Also
     --------
@@ -1128,7 +1128,7 @@ def laggrid3d(x, y, z, c):
 
     If `c` has fewer than three dimensions, ones are implicitly appended to
     its shape to make it 3-D. The shape of the result will be c.shape[3:] +
-    x.shape + yshape + z.shape.
+    x.shape + y.shape + z.shape.
 
     Parameters
     ----------
@@ -1147,7 +1147,7 @@ def laggrid3d(x, y, z, c):
     Returns
     -------
     values : ndarray, compatible object
-        The values of the two dimensional polynomial at points in the Cartesion
+        The values of the two dimensional polynomial at points in the Cartesian
         product of `x` and `y`.
 
     See Also
@@ -1444,14 +1444,14 @@ def lagfit(x, y, deg, rcond=None, full=False, w=None):
 
     If some of the singular values of `V` are so small that they are
     neglected, then a `RankWarning` will be issued. This means that the
-    coeficient values may be poorly determined. Using a lower order fit
+    coefficient values may be poorly determined. Using a lower order fit
     will usually get rid of the warning.  The `rcond` parameter can also be
     set to a value smaller than its default, but the resulting fit may be
     spurious and have large contributions from roundoff error.
 
     Fits using Laguerre series are probably most useful when the data can
     be approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the Laguerre
-    weight. In that case the wieght ``sqrt(w(x[i])`` should be used
+    weight. In that case the weight ``sqrt(w(x[i])`` should be used
     together with data values ``y[i]/sqrt(w(x[i])``. The weight function is
     available as `lagweight`.
 
@@ -1541,7 +1541,7 @@ def lagcompanion(c):
     Parameters
     ----------
     c : array_like
-        1-d array of Laguerre series coefficients ordered from low to high
+        1-D array of Laguerre series coefficients ordered from low to high
         degree.
 
     Returns
