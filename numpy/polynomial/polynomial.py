@@ -746,15 +746,15 @@ def polyval(x, c, tensor=True):
     6.0
     >>> a = np.arange(4).reshape(2,2)
     >>> a
-    array([[[  0,   1],
-            [  2,   3]],
+    array([[0, 1],
+           [2, 3]])
     >>> polyval(a, [1,2,3])
     array([[  1.,   6.],
            [ 17.,  34.]])
     >>> coef = np.arange(4).reshape(2,2) # multidimensional coefficients
     >>> coef
-    array([[[  0,   1],
-            [  2,   3]],
+    array([[0, 1],
+           [2, 3]])
     >>> polyval([1,2], coef, tensor=True)
     array([[ 2.,  4.],
            [ 4.,  7.]])
