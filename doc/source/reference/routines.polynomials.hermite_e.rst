@@ -1,5 +1,5 @@
-HermiteE Module (:mod:`numpy.polynomial.hermite_e`)
-===================================================
+HermiteE Module, "Probabilists'" (:mod:`numpy.polynomial.hermite_e`)
+====================================================================
 
 .. versionadded:: 1.6.0
 
