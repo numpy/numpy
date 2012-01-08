@@ -1188,7 +1188,7 @@ cdef class RandomState:
 
     def randn(self, *args):
         """
-        randn([d1, ..., dn])
+        randn(d0, d1, ..., dn)
 
         Return a sample (or samples) from the "standard normal" distribution.
 
@@ -1205,13 +1205,13 @@ cdef class RandomState:
 
         Parameters
         ----------
-        d1, ..., dn : `n` ints, optional
+        d0, d1, ..., dn : `n` ints, optional
             The dimensions of the returned array, should be all positive.
 
         Returns
         -------
         Z : ndarray or float
-            A ``(d1, ..., dn)``-shaped array of floating-point samples from
+            A ``(d0, d1, ..., dn)``-shaped array of floating-point samples from
             the standard normal distribution, or a single such float if
             no parameters were supplied.
 
