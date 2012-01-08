@@ -1145,7 +1145,7 @@ cdef class RandomState:
 
     def rand(self, *args):
         """
-        rand(d0, d1, ..., dn)
+        rand(d1, ..., dn)
 
         Random values in a given shape.
 
@@ -1155,12 +1155,12 @@ cdef class RandomState:
 
         Parameters
         ----------
-        d0, d1, ..., dn : int
+        d1, ..., dn : int
             Shape of the output.
 
         Returns
         -------
-        out : ndarray, shape ``(d0, d1, ..., dn)``
+        out : ndarray, shape ``(d1, ..., dn)``
             Random values.
 
         See Also
@@ -1188,7 +1188,7 @@ cdef class RandomState:
 
     def randn(self, *args):
         """
-        randn([d1, ..., dn])
+        randn(d1, ..., dn)
 
         Return a sample (or samples) from the "standard normal" distribution.
 
