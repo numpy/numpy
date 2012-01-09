@@ -14,10 +14,14 @@
 #include "common.h"
 #include "buffer.h"
 
+#include "_datetime.h"
 
 NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op)
 {
+#if NPY_ARRAY_AUTOCONVERT_PYDATETIME
+    PyArray_Descr *res;
+#endif
     if (PyFloat_Check(op)) {
         return PyArray_DescrFromType(PyArray_DOUBLE);
     }
@@ -41,6 +45,14 @@ _array_find_python_scalar_type(PyObject *op)
         }
         return PyArray_DescrFromType(PyArray_LONGLONG);
     }
+#if NPY_ARRAY_AUTOCONVERT_PYDATETIME
+    else {
+        res = get_datetime_dtype_for_obj(op);
+        if (res != NULL) {
+            return res;
+        }
+    }
+#endif
     return NULL;
 }
 

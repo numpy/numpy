@@ -1,6 +1,12 @@
 #ifndef _NPY_PRIVATE__DATETIME_H_
 #define _NPY_PRIVATE__DATETIME_H_
 
+/*
+ * Set to non-zero to make np.array() automatically convert python datetime.date
+ * and datetime.datetime to np.datetime64.
+ */
+#define NPY_ARRAY_AUTOCONVERT_PYDATETIME 0
+
 NPY_NO_EXPORT char *_datetime_strings[NPY_DATETIME_NUMUNITS];
 
 NPY_NO_EXPORT int _days_per_month_table[2][12];
@@ -19,6 +25,12 @@ is_leapyear(npy_int64 year);
  */
 NPY_NO_EXPORT npy_int64
 get_datetimestruct_days(const npy_datetimestruct *dts);
+
+/*
+ * Gets a descr for a Date or Datetime
+ */
+NPY_NO_EXPORT PyArray_Descr *
+get_datetime_dtype_for_obj(PyObject *obj);
 
 /*
  * Creates a datetime or timedelta dtype using a copy of the provided metadata.

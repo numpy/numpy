@@ -26,6 +26,9 @@
 #include "datetime_strings.h"
 #include "na_object.h"
 
+static PyObject *dtype_us;
+static PyObject *dtype_D;
+
 /*
  * Imports the PyDateTime functions so we can create these objects.
  * This is called during module initialization
@@ -33,7 +36,17 @@
 NPY_NO_EXPORT void
 numpy_pydatetime_import()
 {
+    PyArray_DatetimeMetaData meta;
+
     PyDateTime_IMPORT;
+
+    meta.num = 1;
+
+    meta.base = NPY_FR_us;
+    dtype_us = create_datetime_dtype(PyArray_DATETIME, &meta);
+
+    meta.base = NPY_FR_D;
+    dtype_D = create_datetime_dtype(PyArray_DATETIME, &meta);
 }
 
 /* Exported as DATETIMEUNITS in multiarraymodule.c */
@@ -682,6 +695,23 @@ PyArray_TimedeltaToTimedeltaStruct(npy_timedelta val, NPY_DATETIMEUNIT fr,
             "The NumPy PyArray_TimedeltaToTimedeltaStruct function has "
             "been removed");
     memset(result, -1, sizeof(npy_timedeltastruct));
+}
+
+/*
+ * Gets a descr for a Date or Datetime
+ */
+NPY_NO_EXPORT PyArray_Descr *
+get_datetime_dtype_for_obj(PyObject *datetime)
+{
+    if (PyDateTime_Check(datetime)) {
+        Py_INCREF(dtype_us);
+        return dtype_us;
+    } else if (PyDate_Check(datetime)) {
+        Py_INCREF(dtype_D);
+        return dtype_D;
+    } else {
+        return NULL;
+    }
 }
 
 /*
