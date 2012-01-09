@@ -19,8 +19,9 @@ else:
 
 polytemplate = string.Template('''
 from __future__ import division
-REL_IMPORT polyutils as pu
 import numpy as np
+import warnings
+REL_IMPORT polyutils as pu
 
 class $name(pu.PolyBase) :
     """A $name series class.
@@ -45,11 +46,11 @@ class $name(pu.PolyBase) :
 
     Attributes
     ----------
-    coef : (N,) array
+    coef : (N,) ndarray
         $name coefficients, from low to high.
-    domain : (2,) array
+    domain : (2,) ndarray
         Domain that is mapped to ``window``.
-    window : (2,) array
+    window : (2,) ndarray
         Window that ``domain`` is mapped to.
 
     Class Attributes
@@ -80,7 +81,7 @@ class $name(pu.PolyBase) :
     # Default window
     window = np.array($domain)
     # Don't let participate in array operations. Value doesn't matter.
-    __array_priority__ = 0
+    __array_priority__ = 1000
 
     def has_samecoef(self, other):
         """Check if coefficients match.
@@ -147,21 +148,25 @@ class $name(pu.PolyBase) :
         """
         return np.all(self.window == other.window)
 
-    def has_samewindow(self, other):
-        """Check if windows match.
+    def has_sametype(self, other):
+        """Check if types match.
 
         Parameters
         ----------
-        other : class instance
-            The other class must have the ``window`` attribute.
+        other : object
+            Class instance.
 
         Returns
         -------
         bool : boolean
-            True if the windows are the same, False otherwise.
+            True if other is same class as self
+
+        Notes
+        -----
+        .. versionadded:: 1.7.0
 
         """
-        return np.all(self.window == other.window)
+        return isinstance(other, self.__class__)
 
     def __init__(self, coef, domain=$domain, window=$domain) :
         [coef, dom, win] = pu.as_series([coef, domain, window], trim=False)
@@ -220,11 +225,15 @@ class $name(pu.PolyBase) :
 
     def __add__(self, other) :
         """Returns sum"""
-        if isinstance(other, self.__class__) :
-            if self.has_samedomain(other) and self.has_samewindow(other):
+        if isinstance(other, pu.PolyBase):
+            if not self.has_sametype(other):
+                raise TypeError("Polynomial types differ")
+            elif not self.has_samedomain(other):
+                raise TypeError("Domains differ")
+            elif not self.has_samewindow(other):
+                raise TypeError("Windows differ")
+            else:
                 coef = ${nick}add(self.coef, other.coef)
-            else :
-                raise PolyDomainError()
         else :
             try :
                 coef = ${nick}add(self.coef, other)
@@ -234,11 +243,15 @@ class $name(pu.PolyBase) :
 
     def __sub__(self, other) :
         """Returns difference"""
-        if isinstance(other, self.__class__) :
-            if self.has_samedomain(other) and self.has_samewindow(other):
+        if isinstance(other, pu.PolyBase):
+            if not self.has_sametype(other):
+                raise TypeError("Polynomial types differ")
+            elif not self.has_samedomain(other):
+                raise TypeError("Domains differ")
+            elif not self.has_samewindow(other):
+                raise TypeError("Windows differ")
+            else:
                 coef = ${nick}sub(self.coef, other.coef)
-            else :
-                raise PolyDomainError()
         else :
             try :
                 coef = ${nick}sub(self.coef, other)
@@ -248,11 +261,15 @@ class $name(pu.PolyBase) :
 
     def __mul__(self, other) :
         """Returns product"""
-        if isinstance(other, self.__class__) :
-            if self.has_samedomain(other) and self.has_samewindow(other):
+        if isinstance(other, pu.PolyBase):
+            if not self.has_sametype(other):
+                raise TypeError("Polynomial types differ")
+            elif not self.has_samedomain(other):
+                raise TypeError("Domains differ")
+            elif not self.has_samewindow(other):
+                raise TypeError("Windows differ")
+            else:
                 coef = ${nick}mul(self.coef, other.coef)
-            else :
-                raise PolyDomainError()
         else :
             try :
                 coef = ${nick}mul(self.coef, other)
@@ -261,32 +278,31 @@ class $name(pu.PolyBase) :
         return self.__class__(coef, self.domain, self.window)
 
     def __div__(self, other):
-        # set to __floordiv__ /.
+        # set to __floordiv__,  /, for now.
         return self.__floordiv__(other)
 
     def __truediv__(self, other) :
         # there is no true divide if the rhs is not a scalar, although it
         # could return the first n elements of an infinite series.
         # It is hard to see where n would come from, though.
-        if isinstance(other, self.__class__) :
-            if len(other.coef) == 1 :
-                coef = div(self.coef, other.coef)
-            else :
-                return NotImplemented
-        elif np.isscalar(other) :
+        if np.isscalar(other) :
             # this might be overly restrictive
             coef = self.coef/other
+            return self.__class__(coef, self.domain, self.window)
         else :
             return NotImplemented
-        return self.__class__(coef, self.domain, self.window)
 
     def __floordiv__(self, other) :
         """Returns the quotient."""
-        if isinstance(other, self.__class__) :
-            if np.all(self.domain == other.domain) :
+        if isinstance(other, pu.PolyBase):
+            if not self.has_sametype(other):
+                raise TypeError("Polynomial types differ")
+            elif not self.has_samedomain(other):
+                raise TypeError("Domains differ")
+            elif not self.has_samewindow(other):
+                raise TypeError("Windows differ")
+            else:
                 quo, rem = ${nick}div(self.coef, other.coef)
-            else :
-                raise PolyDomainError()
         else :
             try :
                 quo, rem = ${nick}div(self.coef, other)
@@ -296,11 +312,15 @@ class $name(pu.PolyBase) :
 
     def __mod__(self, other) :
         """Returns the remainder."""
-        if isinstance(other, self.__class__) :
-            if self.has_samedomain(other) and self.has_samewindow(other):
+        if isinstance(other, pu.PolyBase):
+            if not self.has_sametype(other):
+                raise TypeError("Polynomial types differ")
+            elif not self.has_samedomain(other):
+                raise TypeError("Domains differ")
+            elif not self.has_samewindow(other):
+                raise TypeError("Windows differ")
+            else:
                 quo, rem = ${nick}div(self.coef, other.coef)
-            else :
-                raise PolyDomainError()
         else :
             try :
                 quo, rem = ${nick}div(self.coef, other)
@@ -311,10 +331,12 @@ class $name(pu.PolyBase) :
     def __divmod__(self, other) :
         """Returns quo, remainder"""
         if isinstance(other, self.__class__) :
-            if self.has_samedomain(other) and self.has_samewindow(other):
+            if not self.has_samedomain(other):
+                raise TypeError("Domains are not equal")
+            elif not self.has_samewindow(other):
+                raise TypeError("Windows are not equal")
+            else:
                 quo, rem = ${nick}div(self.coef, other.coef)
-            else :
-                raise PolyDomainError()
         else :
             try :
                 quo, rem = ${nick}div(self.coef, other)
@@ -555,7 +577,7 @@ class $name(pu.PolyBase) :
         applied to the input arguments before the series is evaluated. The
         map depends on the ``domain`` and ``window``; if the current
         ``domain`` is equal to the ``window`` the resulting map is the
-        identity.  If the coeffients of the ``$name`` instance are to be
+        identity.  If the coefficients of the ``$name`` instance are to be
         used by themselves outside this class, then the linear function
         must be substituted for the ``x`` in the standard representation of
         the base polynomials.
@@ -659,14 +681,19 @@ class $name(pu.PolyBase) :
     def linspace(self, n=100, domain=None):
         """Return x,y values at equally spaced points in domain.
 
-        Returns x, y values at `n` equally spaced points across domain.
-        Here y is the value of the polynomial at the points x.  This is
-        intended as a plotting aid.
+        Returns x, y values at `n` linearly spaced points across domain.
+        Here y is the value of the polynomial at the points x. By default
+        the domain is the same as that of the $name instance.  This method
+        is intended mostly as a plotting aid.
 
         Parameters
         ----------
         n : int, optional
             Number of point pairs to return. The default value is 100.
+        domain : {None, array_like}
+            If not None, the specified domain is used instead of that of
+            the calling instance. It should be of the form ``[beg,end]``.
+            The default is None.
 
         Returns
         -------
@@ -693,8 +720,9 @@ class $name(pu.PolyBase) :
         Return a `$name` instance that is the least squares fit to the data
         `y` sampled at `x`. Unlike `${nick}fit`, the domain of the returned
         instance can be specified and this will often result in a superior
-        fit with less chance of ill conditioning. See `${nick}fit` for full
-        documentation of the implementation.
+        fit with less chance of ill conditioning. Support for NA was added
+        in version 1.7.0. See `${nick}fit` for full documentation of the
+        implementation.
 
         Parameters
         ----------
@@ -742,7 +770,7 @@ class $name(pu.PolyBase) :
             has the domain specified in the call.
 
         [residuals, rank, singular_values, rcond] : only if `full` = True
-            Residuals of the least-squares fit, the effective rank of the
+            Residuals of the least squares fit, the effective rank of the
             scaled Vandermonde matrix and its singular values, and the
             specified value of `rcond`. For more details, see
             `linalg.lstsq`.
@@ -784,7 +812,7 @@ class $name(pu.PolyBase) :
 
         Returns
         -------
-        object : $name
+        object : $name instance
             Series with the specified roots.
 
         See Also
@@ -808,7 +836,7 @@ class $name(pu.PolyBase) :
         Parameters
         ----------
         domain : array_like
-            The resulting array must be if the form ``[beg, end]``, where
+            The resulting array must be of the form ``[beg, end]``, where
             ``beg`` and ``end`` are the endpoints of the domain.
         window : array_like
             The resulting array must be if the form ``[beg, end]``, where
@@ -816,10 +844,76 @@ class $name(pu.PolyBase) :
 
         Returns
         -------
-        identity : $name object
+        identity : $name instance
 
         """
         off, scl = pu.mapparms(window, domain)
         coef = ${nick}line(off, scl)
         return $name(coef, domain, window)
+
+    @staticmethod
+    def basis(deg, domain=$domain, window=$domain):
+        """$name polynomial of degree `deg`.
+
+        Returns an instance of the $name polynomial of degree `d`.
+
+        Parameters
+        ----------
+        deg : int
+            Degree of the $name polynomial. Must be >= 0.
+        domain : array_like
+            The resulting array must be of the form ``[beg, end]``, where
+            ``beg`` and ``end`` are the endpoints of the domain.
+        window : array_like
+            The resulting array must be if the form ``[beg, end]``, where
+            ``beg`` and ``end`` are the endpoints of the window.
+
+        Returns
+        p : $name instance
+
+        Notes
+        -----
+        .. versionadded:: 1.7.0
+
+        """
+        ideg = int(deg)
+        if ideg != deg or ideg < 0:
+            raise ValueError("deg must be non-negative integer")
+        return $name([0]*ideg + [1], domain, window)
+
+    @staticmethod
+    def cast(series, domain=$domain, window=$domain):
+        """Convert instance to equivalent $name series.
+
+        The `series` is expected to be an instance of some polynomial
+        series of one of the types supported by by the numpy.polynomial
+        module, but could be some other class that supports the convert
+        method.
+
+        Parameters
+        ----------
+        series : series
+            The instance series to be converted.
+        domain : array_like
+            The resulting array must be of the form ``[beg, end]``, where
+            ``beg`` and ``end`` are the endpoints of the domain.
+        window : array_like
+            The resulting array must be if the form ``[beg, end]``, where
+            ``beg`` and ``end`` are the endpoints of the window.
+
+        Returns
+        p : $name instance
+            A $name series equal to the `poly` series.
+
+        See Also
+        --------
+        convert -- similar instance method
+
+        Notes
+        -----
+        .. versionadded:: 1.7.0
+
+        """
+        return series.convert(domain, $name, window)
+
 '''.replace('REL_IMPORT', rel_import))
