@@ -242,6 +242,8 @@ _INTEL_EXTENDED_12B = ['000', '000', '000', '000', '240', '242', '171', '353',
                        '031', '300', '000', '000']
 _INTEL_EXTENDED_16B = ['000', '000', '000', '000', '240', '242', '171', '353',
                        '031', '300', '000', '000', '000', '000', '000', '000']
+_MOTOROLA_EXTENDED_12B = ['300', '031', '000', '000', '353', '171',
+                          '242', '240', '000', '000', '000', '000']
 _IEEE_QUAD_PREC_BE = ['300', '031', '326', '363', '105', '100', '000', '000',
                       '000', '000', '000', '000', '000', '000', '000', '000']
 _IEEE_QUAD_PREC_LE = _IEEE_QUAD_PREC_BE[::-1]
@@ -275,6 +277,8 @@ def long_double_representation(lines):
                 if read[:12] == _BEFORE_SEQ[4:]:
                     if read[12:-8] == _INTEL_EXTENDED_12B:
                         return 'INTEL_EXTENDED_12_BYTES_LE'
+                    if read[12:-8] == _MOTOROLA_EXTENDED_12B:
+                        return 'MOTOROLA_EXTENDED_12_BYTES_BE'
                 elif read[:8] == _BEFORE_SEQ[8:]:
                     if read[8:-8] == _INTEL_EXTENDED_16B:
                         return 'INTEL_EXTENDED_16_BYTES_LE'

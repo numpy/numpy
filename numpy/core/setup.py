@@ -456,6 +456,7 @@ def configuration(parent_package='',top_path=None):
                 rep = check_long_double_representation(config_cmd)
                 if rep in ['INTEL_EXTENDED_12_BYTES_LE',
                            'INTEL_EXTENDED_16_BYTES_LE',
+                           'MOTOROLA_EXTENDED_12_BYTES_BE',
                            'IEEE_QUAD_LE', 'IEEE_QUAD_BE',
                            'IEEE_DOUBLE_LE', 'IEEE_DOUBLE_BE',
                            'DOUBLE_DOUBLE_BE']:

@@ -40,6 +40,7 @@
       defined(HAVE_LDOUBLE_IEEE_DOUBLE_16_BYTES_BE) || \
       defined(HAVE_LDOUBLE_INTEL_EXTENDED_16_BYTES_LE) || \
       defined(HAVE_LDOUBLE_INTEL_EXTENDED_12_BYTES_LE) || \
+      defined(HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE) || \
       defined(HAVE_LDOUBLE_DOUBLE_DOUBLE_BE))
     #error No long double representation defined
 #endif
