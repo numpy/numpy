@@ -36,7 +36,8 @@
             || defined(NPY_CPU_PPC64)   \
             || defined(NPY_CPU_ARMEB)   \
             || defined(NPY_CPU_SH_BE)   \
-            || defined(NPY_CPU_MIPSEB)
+            || defined(NPY_CPU_MIPSEB)  \
+            || defined(NPY_CPU_M68K)
         #define NPY_BYTE_ORDER NPY_BIG_ENDIAN
     #else
         #error Unknown CPU: can not set endianness
