@@ -184,6 +184,31 @@ def test_array_maskna_copy():
     assert_(res.flags.maskna)
     assert_(res.flags.ownmaskna)
 
+def test_array_maskna_astype():
+    dtsrc = [np.dtype(d) for d in '?bhilqpBHILQPefdgFDGSUO']
+    #dtsrc.append(np.dtype([('b', np.int, (1,))]))
+    dtsrc.append(np.dtype('datetime64[D]'))
+    dtsrc.append(np.dtype('timedelta64[s]'))
+
+    dtdst = [np.dtype(d) for d in '?bhilqpBHILQPefdgFDGSUO']
+    #dtdst.append(np.dtype([('b', np.int, (1,))]))
+    dtdst.append(np.dtype('datetime64[D]'))
+    dtdst.append(np.dtype('timedelta64[s]'))
+
+    try:
+        warnings.simplefilter("ignore", np.ComplexWarning)
+        for dt1 in dtsrc:
+            a = np.ones(2, dt1, maskna=1)
+            a[1] = np.NA
+            for dt2 in dtdst:
+                msg = 'type %s to %s conversion' % (dt1, dt2)
+                b = a.astype(dt2)
+                assert_(b.flags.maskna, msg)
+                assert_(b.flags.ownmaskna, msg)
+                assert_(np.isna(b[1]), msg)
+    finally:
+        warnings.simplefilter("default", np.ComplexWarning)
+
 def test_array_maskna_repr():
     # Test some simple reprs with NA in them
     a = np.array(np.NA, maskna=True)
