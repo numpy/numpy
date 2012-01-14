@@ -3,6 +3,7 @@ from numpy.compat import asbytes
 from numpy.testing import *
 import sys, warnings
 
+
 def test_array_maskna_flags():
     a = np.arange(3)
     assert_(not a.flags.maskna)
@@ -22,6 +23,7 @@ def test_array_maskna_flags():
     def setownmaskna(x, v):
         x.ownmaskna = v
     assert_raises(ValueError, setownmaskna, a.flags, False)
+
 
 def test_array_maskna_construction():
     # Construction with NA inputs
@@ -83,6 +85,7 @@ def test_array_maskna_construction():
     assert_(a.flags.maskna)
     assert_equal(np.isna(a), True)
 
+
 def test_array_maskna_asarray():
     a = np.arange(6).reshape(2,3)
 
@@ -119,6 +122,7 @@ def test_array_maskna_asarray():
     res = np.asarray(b, ownmaskna=True)
     assert_(not (res is b))
     assert_(res.flags.ownmaskna)
+
 
 def test_array_maskna_copy():
     a = np.array([1,2,3])
@@ -184,6 +188,7 @@ def test_array_maskna_copy():
     assert_(res.flags.maskna)
     assert_(res.flags.ownmaskna)
 
+
 def test_array_maskna_astype():
     dtsrc = [np.dtype(d) for d in '?bhilqpBHILQPefdgFDGSUO']
     #dtsrc.append(np.dtype([('b', np.int, (1,))]))
@@ -209,6 +214,7 @@ def test_array_maskna_astype():
     finally:
         warnings.simplefilter("default", np.ComplexWarning)
 
+
 def test_array_maskna_repr():
     # Test some simple reprs with NA in them
     a = np.array(np.NA, maskna=True)
@@ -226,6 +232,7 @@ def test_array_maskna_repr():
     a = np.array([3.75, 6.25], maskna=True, dtype='f4')
     assert_equal(repr(a), 'array([ 3.75,  6.25], maskna=True, dtype=float32)')
 
+
 def test_isna():
     # Objects which are not np.NA or ndarray all return False
     assert_equal(np.isna(True), False)
@@ -238,6 +245,7 @@ def test_isna():
     assert_equal(np.isna(np.NA(5)), True)
     assert_equal(np.isna(np.NA(dtype='f4')), True)
     assert_equal(np.isna(np.NA(12,dtype='f4')), True)
+
 
 def test_array_maskna_item():
     # With a zero-dimensional array
@@ -281,6 +289,7 @@ def test_array_maskna_item():
     a.itemset((1,1), np.NA)
     assert_(np.isna(a[1,1]))
 
+
 def test_array_maskna_payload():
     # Single numbered index
     a = np.zeros((2,), maskna=True)
@@ -291,6 +300,7 @@ def test_array_maskna_payload():
     a = np.zeros((2,3), maskna=True)
     a[1,1] = np.NA
     assert_equal(a[1,1].payload, None)
+
 
 def test_array_maskna_isna_1D():
     a = np.arange(10)
@@ -333,6 +343,7 @@ def test_array_maskna_isna_1D():
 
     # TODO: fancy indexing is next...
 
+
 def test_array_maskna_isna_2D():
     a = np.zeros((3,4))
 
@@ -374,6 +385,7 @@ def test_array_maskna_isna_2D():
 
     # TODO: fancy indexing is next...
 
+
 def test_array_maskna_to_nomask():
     # Assignment from an array with NAs to a non-masked array,
     # excluding the NAs with a mask
@@ -401,6 +413,7 @@ def test_array_maskna_to_nomask():
     # With copyto
     b = np.arange(6).reshape(2,3)
     assert_raises(ValueError, np.copyto, b, a, where=badmask)
+
 
 def test_array_maskna_view_function():
     a = np.arange(10)
@@ -440,6 +453,7 @@ def test_array_maskna_view_function():
     assert_(b.flags.ownmaskna)
     assert_(c.flags.maskna)
     assert_(c.flags.ownmaskna)
+
 
 def test_array_maskna_array_function_1D():
     a = np.arange(10)
@@ -517,6 +531,7 @@ def test_array_maskna_array_function_1D():
     assert_(d.flags.maskna)
     assert_(not d.flags.ownmaskna)
 
+
 def test_array_maskna_setasflat():
     # Copy from a C to a F array with some NAs
     a_orig = np.empty((2,3), order='C')
@@ -531,6 +546,7 @@ def test_array_maskna_setasflat():
     assert_equal(np.isna(a), [[0,1,0],[0,0,1]])
     assert_equal(b_orig, [[1,2],[1,1],[1,2]])
     assert_equal(np.isna(b), [[0,1],[0,0],[0,1]])
+
 
 def test_array_maskna_ravel():
     # From a C array
@@ -557,6 +573,7 @@ def test_array_maskna_ravel():
     a = np.arange(12, maskna=True).reshape(2,3,2).swapaxes(1,2)
     assert_equal(a.ravel(order='K'), np.arange(12))
 
+
 def test_array_maskna_reshape():
     # Simple reshape 1D -> 2D
     a = np.arange(6, maskna=True)
@@ -582,6 +599,7 @@ def test_array_maskna_reshape():
     # Add a new axis using 'newaxis'
     a = np.array(np.NA, maskna=True)
     assert_equal(np.isna(a[np.newaxis]), [True])
+
 
 def test_array_maskna_view_NA_assignment_1D():
     a = np.arange(10)
@@ -620,6 +638,7 @@ def test_array_maskna_view_NA_assignment_1D():
     assert_equal(a, a_ref)
 
     # TODO: fancy indexing is next...
+
 
 def test_array_maskna_view_NA_assignment_2D():
     a = np.arange(6).reshape(2,3)
@@ -664,6 +683,7 @@ def test_array_maskna_view_NA_assignment_2D():
     assert_equal(a, a_ref)
 
     # TODO: fancy indexing is next...
+
 
 def test_array_maskna_view_array_assignment_1D():
     a = np.arange(5)
@@ -758,6 +778,7 @@ def test_array_maskna_view_array_assignment_1D():
 
     # TODO: fancy indexing is next...
 
+
 def test_maskna_nonzero_1D():
     a = np.zeros((5,), maskna=True)
 
@@ -775,6 +796,7 @@ def test_maskna_nonzero_1D():
     a[2] = np.NA
     assert_(np.isna(np.count_nonzero(a)))
     assert_raises(ValueError, np.nonzero, a)
+
 
 def test_maskna_take_1D():
     a = np.arange(5, maskna=True)
@@ -820,6 +842,7 @@ def test_maskna_take_1D():
     a[0] = np.NA
     res = a.take([1,2,3,4])
     assert_equal(res, [1,2,3,4])
+
 
 def test_maskna_ufunc_1D():
     a_orig = np.arange(3)
@@ -878,11 +901,14 @@ def test_maskna_ufunc_1D():
     assert_equal(np.isna(a), [[1], [0]])
     assert_equal(a[~np.isna(a)], [4.])
 
+
 def test_maskna_ufunc_sum_1D():
     check_maskna_ufunc_sum_1D(np.sum)
 
+
 def test_maskna_ufunc_add_reduce_1D():
     check_maskna_ufunc_sum_1D(np.add.reduce)
+
 
 def check_maskna_ufunc_sum_1D(sum_func):
     a = np.arange(3.0, maskna=True)
@@ -939,11 +965,14 @@ def check_maskna_ufunc_sum_1D(sum_func):
     assert_(not np.isna(c))
     assert_equal(c, 2.0)
 
+
 def test_ufunc_max_1D():
     check_ufunc_max_1D(np.max)
 
+
 def test_ufunc_maximum_reduce_1D():
     check_ufunc_max_1D(np.maximum.reduce)
+
 
 def check_ufunc_max_1D(max_func):
     a_orig = np.array([0, 3, 2, 10, -1, 5, 7, -2])
@@ -976,11 +1005,14 @@ def check_ufunc_max_1D(max_func):
     a[...] = np.NA
     assert_raises(ValueError, max_func, a, skipna=True)
 
+
 def test_ufunc_skipna_max_3D():
     check_ufunc_skipna_max_3D(np.max)
 
+
 def test_ufunc_skipna_maximum_reduce_3D():
     check_ufunc_skipna_max_3D(np.maximum.reduce)
+
 
 def check_ufunc_skipna_max_3D(max_func):
     a_orig = np.array([[[29,  6, 24, 11, 24],
@@ -1048,6 +1080,7 @@ def check_ufunc_skipna_max_3D(max_func):
     assert_raises(ValueError, max_func, a, axis=1, skipna=True)
     assert_raises(ValueError, max_func, a, axis=2, skipna=True)
 
+
 def test_ufunc_ndarray_any():
     a = np.array([0,0,0,0,0], dtype='?', maskna=True)
     assert_array_equal(a.any(), False)
@@ -1086,6 +1119,7 @@ def test_ufunc_ndarray_any():
     assert_array_equal(a.any(axis=0, skipna=True), [False, False, True])
     assert_array_equal(a.any(axis=1, skipna=True), [True, False])
 
+
 def test_ufunc_ndarray_all():
     a = np.array([1,1,1,1,1], dtype='?', maskna=True)
     assert_array_equal(a.all(), True)
@@ -1123,6 +1157,7 @@ def test_ufunc_ndarray_all():
     assert_array_equal(a.all(axis=1), [False, True])
     assert_array_equal(a.all(axis=0, skipna=True), [True, True, False])
     assert_array_equal(a.all(axis=1, skipna=True), [False, True])
+
 
 def test_count_reduce_items():
     # np.count_reduce_items
@@ -1214,6 +1249,7 @@ def test_array_maskna_clip_method():
     assert_equal(np.isna(res), [0,1,0,0,1,0])
     assert_equal(res[~np.isna(res)], [4, 7, 4, 7])
 
+
 def test_array_maskna_max_min_ptp_methods():
     # ndarray.max, ndarray.min, ndarray.ptp
     a = np.array([[2, np.NA, 10],
@@ -1243,6 +1279,7 @@ def test_array_maskna_max_min_ptp_methods():
     res = a.ptp(axis=-1)
     assert_equal(np.isna(res), [1,0,1])
     assert_equal(res[~np.isna(res)], [4])
+
 
 def test_array_maskna_sum_prod_methods():
     # ndarray.sum, ndarray.prod
@@ -1304,6 +1341,7 @@ def test_array_maskna_std_mean_methods():
     assert_equal(np.isna(res), [1,0,1])
     assert_equal(res[~np.isna(res)], [np.array([4,8,7]).std()])
 
+
 def test_array_maskna_conjugate_method():
     # ndarray.conjugate
     a = np.array([1j, 2+4j, np.NA, 2-1.5j, np.NA], maskna=True)
@@ -1311,6 +1349,7 @@ def test_array_maskna_conjugate_method():
     b = a.conjugate()
     assert_equal(np.isna(b), [0,0,1,0,1])
     assert_equal(b[~np.isna(b)], [-1j, 2-4j, 2+1.5j])
+
 
 def test_array_maskna_diagonal():
     # ndarray.diagonal
@@ -1342,6 +1381,7 @@ def test_array_maskna_diagonal():
     res = a.diagonal(3)
     assert_equal(res, [])
 
+
 def test_array_maskna_concatenate():
     # np.concatenate
     a = np.arange(6, maskna=True, dtype='i4').reshape(2,3)
@@ -1365,6 +1405,7 @@ def test_array_maskna_concatenate():
     assert_equal(res[~np.isna(res)], [0,1,4,2,5,10])
     assert_equal(res.strides, (4, 16))
 
+
 def test_array_maskna_column_stack():
     # np.column_stack
     a = np.array((1,2,3), maskna=True)
@@ -1374,6 +1415,7 @@ def test_array_maskna_column_stack():
     assert_equal(np.isna(res), [[0,0], [0,0], [0,1]])
     assert_equal(res[~np.isna(res)], [1,2,2,3,3])
 
+
 def test_array_maskna_compress():
     # ndarray.compress
     a = np.arange(5., maskna=True)
@@ -1382,6 +1424,7 @@ def test_array_maskna_compress():
     mask = np.array([0,1,1,1,1], dtype='?')
     res = a.compress(mask)
     assert_equal(res, [1,2,3,4])
+
 
 def test_array_maskna_squeeze():
     # np.squeeze
@@ -1395,6 +1438,7 @@ def test_array_maskna_squeeze():
     res = np.squeeze(a, axis=(0,2,6))
     assert_equal(res.shape, (3,1,4,2))
     assert_(np.isna(res[1,0,3,0]))
+
 
 def test_array_maskna_mean():
     # np.mean
@@ -1429,6 +1473,7 @@ def test_array_maskna_mean():
 
     res = np.mean(a, axis=1, skipna=True)
     assert_array_equal(res, [1.0, 4.0])
+
 
 def test_array_maskna_var_std():
     # np.var, np.std
@@ -1471,6 +1516,7 @@ def test_array_maskna_var_std():
     res = np.std(a, axis=1, skipna=True)
     assert_array_almost_equal(res, [1.0, 0.81649658092772603])
 
+
 def test_array_maskna_linspace_logspace():
     # np.linspace, np.logspace
 
@@ -1485,6 +1531,7 @@ def test_array_maskna_linspace_logspace():
     assert_equal(a, b)
     assert_(not a.flags.maskna)
     assert_(b.flags.maskna)
+
 
 def test_array_maskna_eye_identity():
     # np.eye
