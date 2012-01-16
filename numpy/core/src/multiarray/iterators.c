@@ -461,11 +461,11 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
         goto err;
     }
     it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
-    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
-
     if (it == NULL) {
         return NULL;
     }
+    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
+
     PyArray_UpdateFlags(ao, NPY_ARRAY_C_CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
         it->contiguous = 1;
@@ -851,13 +851,13 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
                             "cannot use Ellipsis or newaxes here");
             goto fail;
         }
-        PyArray_ITER_GOTO1D(self, start)
-            if (n_steps == SINGLE_INDEX) { /* Integer */
-                PyObject *tmp;
-                tmp = PyArray_ToScalar(self->dataptr, self->ao);
-                PyArray_ITER_RESET(self);
-                return tmp;
-            }
+        PyArray_ITER_GOTO1D(self, start);
+        if (n_steps == SINGLE_INDEX) { /* Integer */
+            PyObject *tmp;
+            tmp = PyArray_ToScalar(self->dataptr, self->ao);
+            PyArray_ITER_RESET(self);
+            return tmp;
+        }
         size = PyArray_DESCR(self->ao)->elsize;
         dtype = PyArray_DESCR(self->ao);
         Py_INCREF(dtype);
@@ -874,8 +874,8 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
         while (n_steps--) {
             copyswap(dptr, self->dataptr, 0, ret);
             start += step_size;
-            PyArray_ITER_GOTO1D(self, start)
-                dptr += size;
+            PyArray_ITER_GOTO1D(self, start);
+            dptr += size;
         }
         PyArray_ITER_RESET(self);
         return (PyObject *)ret;
