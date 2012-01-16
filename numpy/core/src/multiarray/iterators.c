@@ -461,11 +461,11 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
         goto err;
     }
     it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
-    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
-
     if (it == NULL) {
         return NULL;
     }
+    PyObject_Init((PyObject *)it, &PyArrayIter_Type);
+
     PyArray_UpdateFlags(ao, NPY_ARRAY_C_CONTIGUOUS);
     if (PyArray_ISCONTIGUOUS(ao)) {
         it->contiguous = 1;
