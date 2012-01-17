@@ -1902,7 +1902,7 @@ add_newdoc('numpy.core.multiarray', 'result_type',
     Categories are determined by first checking which of boolean,
     integer (int/uint), or floating point (float/complex) the maximum
     kind of all the arrays and the scalars are.
-    
+
     If there are only scalars or the maximum category of the scalars
     is higher than the maximum category of the arrays,
     the data types are combined with :func:`promote_types`
@@ -3863,15 +3863,17 @@ add_newdoc('numpy.core.multiarray', 'putmask',
     """
     putmask(a, mask, values)
 
-    This function is deprecated as of NumPy 1.7. Use the function
-    ``np.copyto(a, values, where=mask)`` to achieve this functionality.
-
     Changes elements of an array based on conditional and input values.
 
     Sets ``a.flat[n] = values[n]`` for each n where ``mask.flat[n]==True``.
 
     If `values` is not the same size as `a` and `mask` then it will repeat.
     This gives behavior different from ``a[mask] = values``.
+
+    .. note:: The `putmask` functionality is also provided by `copyto`, which
+              can be significantly faster and in addition is NA-aware
+              (`preservena` keyword).  Replacing `putmask` with
+              ``np.copyto(a, values, where=mask)`` is recommended.
 
     Parameters
     ----------

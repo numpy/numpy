@@ -15,6 +15,10 @@ Simple random data
    randint
    random_integers
    random_sample
+   random
+   ranf
+   sample
+   choice
    bytes
 
 Permutations

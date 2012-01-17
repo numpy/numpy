@@ -81,7 +81,7 @@ PyArray_GetCastFunc(PyArray_Descr *descr, int type_num)
             key = PyInt_FromLong(type_num);
             cobj = PyDict_GetItem(obj, key);
             Py_DECREF(key);
-            if (NpyCapsule_Check(cobj)) {
+            if (cobj && NpyCapsule_Check(cobj)) {
                 castfunc = NpyCapsule_AsVoidPtr(cobj);
             }
         }

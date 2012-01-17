@@ -80,7 +80,7 @@ if sys.version_info[:2] < (2,5) :
         return False
 
 #
-# Helper functions to convert inputs to 1d arrays
+# Helper functions to convert inputs to 1-D arrays
 #
 def trimseq(seq) :
     """Remove small Poly series coefficients.
@@ -133,7 +133,7 @@ def as_series(alist, trim=True) :
 
     Returns
     -------
-    [a1, a2,...] : list of 1d-arrays
+    [a1, a2,...] : list of 1-D arrays
         A copy of the input data as a list of 1-d arrays.
 
     Raises

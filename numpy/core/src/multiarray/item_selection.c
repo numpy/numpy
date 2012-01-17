@@ -522,11 +522,6 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     char *src, *dest;
     int copied = 0;
 
-    if (DEPRECATE("putmask has been deprecated. Use copyto with 'where' as "
-                  "the mask instead") < 0) {
-        return NULL;
-    }
-
     mask = NULL;
     values = NULL;
     if (!PyArray_Check(self)) {

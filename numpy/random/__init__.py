@@ -10,6 +10,10 @@ random               Uniformly distributed values of a given shape.
 bytes                Uniformly distributed random bytes.
 random_integers      Uniformly distributed integers in a given range.
 random_sample        Uniformly distributed floats in a given range.
+random               Alias for random_sample
+ranf                 Alias for random_sample
+sample               Alias for random_sample
+choice               Generate a weighted random sample from a given array-like
 permutation          Randomly permute a sequence / generate a random sequence.
 shuffle              Randomly permute a sequence in place.
 seed                 Seed the random number generator.

@@ -1,5 +1,8 @@
 """
-Objects for dealing with Legendre series.
+Legendre Series (:mod: `numpy.polynomial.legendre`)
+===================================================
+
+.. currentmodule:: numpy.polynomial.polynomial
 
 This module provides a number of objects (mostly functions) useful for
 dealing with Legendre series, including a `Legendre` class that
@@ -9,53 +12,76 @@ docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Constants
 ---------
-- `legdomain` -- Legendre series default domain, [-1,1].
-- `legzero` -- Legendre series that evaluates identically to 0.
-- `legone` -- Legendre series that evaluates identically to 1.
-- `legx` -- Legendre series for the identity map, ``f(x) = x``.
+
+.. autosummary::
+   :toctree: generated/
+
+   legdomain            Legendre series default domain, [-1,1].
+   legzero              Legendre series that evaluates identically to 0.
+   legone               Legendre series that evaluates identically to 1.
+   legx                 Legendre series for the identity map, ``f(x) = x``.
 
 Arithmetic
 ----------
-- `legmulx` -- multiply a Legendre series in ``P_i(x)`` by ``x``.
-- `legadd` -- add two Legendre series.
-- `legsub` -- subtract one Legendre series from another.
-- `legmul` -- multiply two Legendre series.
-- `legdiv` -- divide one Legendre series by another.
-- `legpow` -- raise a Legendre series to an positive integer power
-- `legval` -- evaluate a Legendre series at given points.
+
+.. autosummary::
+   :toctree: generated/
+
+   legmulx              multiply a Legendre series in P_i(x) by x.
+   legadd               add two Legendre series.
+   legsub               subtract one Legendre series from another.
+   legmul               multiply two Legendre series.
+   legdiv               divide one Legendre series by another.
+   legpow               raise a Legendre series to an positive integer power
+   legval               evaluate a Legendre series at given points.
+   legval2d             evaluate a 2D Legendre series at given points.
+   legval3d             evaluate a 3D Legendre series at given points.
+   leggrid2d            evaluate a 2D Legendre series on a Cartesian product.
+   leggrid3d            evaluate a 3D Legendre series on a Cartesian product.
 
 Calculus
 --------
-- `legder` -- differentiate a Legendre series.
-- `legint` -- integrate a Legendre series.
+
+.. autosummary::
+   :toctree: generated/
+
+   legder               differentiate a Legendre series.
+   legint               integrate a Legendre series.
 
 Misc Functions
 --------------
-- `legfromroots` -- create a Legendre series with specified roots.
-- `legroots` -- find the roots of a Legendre series.
-- `legvander` -- Vandermonde-like matrix for Legendre polynomials.
-- `legfit` -- least-squares fit returning a Legendre series.
-- `legtrim` -- trim leading coefficients from a Legendre series.
-- `legline` -- Legendre series representing given straight line.
-- `leg2poly` -- convert a Legendre series to a polynomial.
-- `poly2leg` -- convert a polynomial to a Legendre series.
+
+.. autosummary::
+   :toctree: generated/
+
+   legfromroots          create a Legendre series with specified roots.
+   legroots              find the roots of a Legendre series.
+   legvander             Vandermonde-like matrix for Legendre polynomials.
+   legvander2d           Vandermonde-like matrix for 2D power series.
+   legvander3d           Vandermonde-like matrix for 3D power series.
+   leggauss              Gauss-Legendre quadrature, points and weights.
+   legweight             Legendre weight function.
+   legcompanion          symmetrized companion matrix in Legendre form.
+   legfit                least-squares fit returning a Legendre series.
+   legtrim               trim leading coefficients from a Legendre series.
+   legline               Legendre series representing given straight line.
+   leg2poly              convert a Legendre series to a polynomial.
+   poly2leg              convert a polynomial to a Legendre series.
 
 Classes
 -------
-- `Legendre` -- A Legendre series class.
+    Legendre            A Legendre series class.
 
 See also
 --------
-`numpy.polynomial`
+numpy.polynomial.polynomial
+numpy.polynomial.chebyshev
+numpy.polynomial.laguerre
+numpy.polynomial.hermite
+numpy.polynomial.hermite_e
 
 """
 from __future__ import division
-
-__all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
-        'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow',
-        'legval', 'legder', 'legint', 'leg2poly', 'poly2leg',
-        'legfromroots', 'legvander', 'legfit', 'legtrim', 'legroots',
-        'Legendre']
 
 import numpy as np
 import numpy.linalg as la
@@ -63,7 +89,15 @@ import polyutils as pu
 import warnings
 from polytemplate import polytemplate
 
+__all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
+    'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow', 'legval',
+    'legder', 'legint', 'leg2poly', 'poly2leg', 'legfromroots',
+    'legvander', 'legfit', 'legtrim', 'legroots', 'Legendre','legval2d',
+    'legval3d', 'leggrid2d', 'leggrid3d', 'legvander2d', 'legvander3d',
+    'legcompanion', 'leggauss', 'legweight']
+
 legtrim = pu.trimcoef
+
 
 def poly2leg(pol) :
     """
@@ -77,12 +111,12 @@ def poly2leg(pol) :
     Parameters
     ----------
     pol : array_like
-        1-d array containing the polynomial coefficients
+        1-D array containing the polynomial coefficients
 
     Returns
     -------
-    cs : ndarray
-        1-d array containing the coefficients of the equivalent Legendre
+    c : ndarray
+        1-D array containing the coefficients of the equivalent Legendre
         series.
 
     See Also
@@ -113,7 +147,7 @@ def poly2leg(pol) :
     return res
 
 
-def leg2poly(cs) :
+def leg2poly(c) :
     """
     Convert a Legendre series to a polynomial.
 
@@ -124,14 +158,14 @@ def leg2poly(cs) :
 
     Parameters
     ----------
-    cs : array_like
-        1-d array containing the Legendre series coefficients, ordered
+    c : array_like
+        1-D array containing the Legendre series coefficients, ordered
         from lowest order term to highest.
 
     Returns
     -------
     pol : ndarray
-        1-d array containing the coefficients of the equivalent polynomial
+        1-D array containing the coefficients of the equivalent polynomial
         (relative to the "standard" basis) ordered from lowest order term
         to highest.
 
@@ -159,17 +193,17 @@ def leg2poly(cs) :
     """
     from polynomial import polyadd, polysub, polymulx
 
-    [cs] = pu.as_series([cs])
-    n = len(cs)
+    [c] = pu.as_series([c])
+    n = len(c)
     if n < 3:
-        return cs
+        return c
     else:
-        c0 = cs[-2]
-        c1 = cs[-1]
+        c0 = c[-2]
+        c1 = c[-1]
         # i is the current degree of c1
         for i in range(n - 1, 1, -1) :
             tmp = c0
-            c0 = polysub(cs[i - 2], (c1*(i - 1))/i)
+            c0 = polysub(c[i - 2], (c1*(i - 1))/i)
             c1 = polyadd(tmp, (polymulx(c1)*(2*i - 1))/i)
         return polyadd(c0, polymulx(c1))
 
@@ -229,14 +263,24 @@ def legline(off, scl) :
 
 def legfromroots(roots) :
     """
-    Generate a Legendre series with the given roots.
+    Generate a Legendre series with given roots.
 
-    Return the array of coefficients for the P-series whose roots (a.k.a.
-    "zeros") are given by *roots*.  The returned array of coefficients is
-    ordered from lowest order "term" to highest, and zeros of multiplicity
-    greater than one must be included in *roots* a number of times equal
-    to their multiplicity (e.g., if `2` is a root of multiplicity three,
-    then [2,2,2] must be in *roots*).
+    The function returns the coefficients of the polynomial
+
+    .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
+
+    in Legendre form, where the `r_n` are the roots specified in `roots`.
+    If a zero has multiplicity n, then it must appear in `roots` n times.
+    For instance, if 2 is a root of multiplicity three and 3 is a root of
+    multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The
+    roots can appear in any order.
+
+    If the returned coefficients are `c`, then
+
+    .. math:: p(x) = c_0 + c_1 * L_1(x) + ... +  c_n * L_n(x)
+
+    The coefficient of the last term is not generally 1 for monic
+    polynomials in Legendre form.
 
     Parameters
     ----------
@@ -246,28 +290,15 @@ def legfromroots(roots) :
     Returns
     -------
     out : ndarray
-        1-d array of the Legendre series coefficients, ordered from low to
-        high.  If all roots are real, ``out.dtype`` is a float type;
-        otherwise, ``out.dtype`` is a complex type, even if all the
-        coefficients in the result are real (see Examples below).
+        1-D array of coefficients.  If all roots are real then `out` is a
+        real array, if some of the roots are complex, then `out` is complex
+        even if all the coefficients in the result are real (see Examples
+        below).
 
     See Also
     --------
-    polyfromroots, chebfromroots
-
-    Notes
-    -----
-    What is returned are the :math:`c_i` such that:
-
-    .. math::
-
-        \\sum_{i=0}^{n} c_i*P_i(x) = \\prod_{i=0}^{n} (x - roots[i])
-
-    where ``n == len(roots)`` and :math:`P_i(x)` is the `i`-th Legendre
-    (basis) polynomial over the domain `[-1,1]`.  Note that, unlike
-    `polyfromroots`, due to the nature of the Legendre basis set, the
-    above identity *does not* imply :math:`c_n = 1` identically (see
-    Examples).
+    polyfromroots, chebfromroots, lagfromroots, hermfromroots,
+    hermefromroots.
 
     Examples
     --------
@@ -300,7 +331,7 @@ def legadd(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Legendre series coefficients ordered from low to
+        1-D arrays of Legendre series coefficients ordered from low to
         high.
 
     Returns
@@ -350,7 +381,7 @@ def legsub(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Legendre series coefficients ordered from low to
+        1-D arrays of Legendre series coefficients ordered from low to
         high.
 
     Returns
@@ -392,17 +423,17 @@ def legsub(c1, c2):
     return pu.trimseq(ret)
 
 
-def legmulx(cs):
+def legmulx(c):
     """Multiply a Legendre series by x.
 
-    Multiply the Legendre series `cs` by x, where x is the independent
+    Multiply the Legendre series `c` by x, where x is the independent
     variable.
 
 
     Parameters
     ----------
-    cs : array_like
-        1-d array of Legendre series coefficients ordered from low to
+    c : array_like
+        1-D array of Legendre series coefficients ordered from low to
         high.
 
     Returns
@@ -420,21 +451,21 @@ def legmulx(cs):
       xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
 
     """
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
+    # c is a trimmed copy
+    [c] = pu.as_series([c])
     # The zero series needs special treatment
-    if len(cs) == 1 and cs[0] == 0:
-        return cs
+    if len(c) == 1 and c[0] == 0:
+        return c
 
-    prd = np.empty(len(cs) + 1, dtype=cs.dtype)
-    prd[0] = cs[0]*0
-    prd[1] = cs[0]
-    for i in range(1, len(cs)):
+    prd = np.empty(len(c) + 1, dtype=c.dtype)
+    prd[0] = c[0]*0
+    prd[1] = c[0]
+    for i in range(1, len(c)):
         j = i + 1
         k = i - 1
         s = i + j
-        prd[j] = (cs[i]*j)/s
-        prd[k] += (cs[i]*i)/s
+        prd[j] = (c[i]*j)/s
+        prd[k] += (c[i]*i)/s
     return prd
 
 
@@ -449,7 +480,7 @@ def legmul(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-d arrays of Legendre series coefficients ordered from low to
+        1-D arrays of Legendre series coefficients ordered from low to
         high.
 
     Returns
@@ -465,8 +496,8 @@ def legmul(c1, c2):
     -----
     In general, the (polynomial) product of two C-series results in terms
     that are not in the Legendre polynomial basis set.  Thus, to express
-    the product as a Legendre series, it is necessary to "re-project" the
-    product onto said basis set, which may produce "un-intuitive" (but
+    the product as a Legendre series, it is necessary to "reproject" the
+    product onto said basis set, which may produce "unintuitive" (but
     correct) results; see Examples section below.
 
     Examples
@@ -482,26 +513,26 @@ def legmul(c1, c2):
     [c1, c2] = pu.as_series([c1, c2])
 
     if len(c1) > len(c2):
-        cs = c2
+        c = c2
         xs = c1
     else:
-        cs = c1
+        c = c1
         xs = c2
 
-    if len(cs) == 1:
-        c0 = cs[0]*xs
+    if len(c) == 1:
+        c0 = c[0]*xs
         c1 = 0
-    elif len(cs) == 2:
-        c0 = cs[0]*xs
-        c1 = cs[1]*xs
+    elif len(c) == 2:
+        c0 = c[0]*xs
+        c1 = c[1]*xs
     else :
-        nd = len(cs)
-        c0 = cs[-2]*xs
-        c1 = cs[-1]*xs
-        for i in range(3, len(cs) + 1) :
+        nd = len(c)
+        c0 = c[-2]*xs
+        c1 = c[-1]*xs
+        for i in range(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
-            c0 = legsub(cs[-i]*xs, (c1*(nd - 1))/nd)
+            c0 = legsub(c[-i]*xs, (c1*(nd - 1))/nd)
             c1 = legadd(tmp, (legmulx(c1)*(2*nd - 1))/nd)
     return legadd(c0, legmulx(c1))
 
@@ -536,8 +567,8 @@ def legdiv(c1, c2):
     In general, the (polynomial) division of one Legendre series by another
     results in quotient and remainder terms that are not in the Legendre
     polynomial basis set.  Thus, to express these results as a Legendre
-    series, it is necessary to "re-project" the results onto the Legendre
-    basis set, which may produce "un-intuitive" (but correct) results; see
+    series, it is necessary to "reproject" the results onto the Legendre
+    basis set, which may produce "unintuitive" (but correct) results; see
     Examples section below.
 
     Examples
@@ -574,23 +605,23 @@ def legdiv(c1, c2):
         return quo, pu.trimseq(rem)
 
 
-def legpow(cs, pow, maxpower=16) :
+def legpow(c, pow, maxpower=16) :
     """Raise a Legendre series to a power.
 
-    Returns the Legendre series `cs` raised to the power `pow`. The
-    arguement `cs` is a sequence of coefficients ordered from low to high.
+    Returns the Legendre series `c` raised to the power `pow`. The
+    arguement `c` is a sequence of coefficients ordered from low to high.
     i.e., [1,2,3] is the series  ``P_0 + 2*P_1 + 3*P_2.``
 
     Parameters
     ----------
-    cs : array_like
-        1d array of Legendre series coefficients ordered from low to
+    c : array_like
+        1-D array of Legendre series coefficients ordered from low to
         high.
     pow : integer
         Power to which the series will be raised
     maxpower : integer, optional
         Maximum power allowed. This is mainly to limit growth of the series
-        to umanageable size. Default is 16
+        to unmanageable size. Default is 16
 
     Returns
     -------
@@ -605,46 +636,55 @@ def legpow(cs, pow, maxpower=16) :
     --------
 
     """
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
+    # c is a trimmed copy
+    [c] = pu.as_series([c])
     power = int(pow)
     if power != pow or power < 0 :
         raise ValueError("Power must be a non-negative integer.")
     elif maxpower is not None and power > maxpower :
         raise ValueError("Power is too large")
     elif power == 0 :
-        return np.array([1], dtype=cs.dtype)
+        return np.array([1], dtype=c.dtype)
     elif power == 1 :
-        return cs
+        return c
     else :
         # This can be made more efficient by using powers of two
         # in the usual way.
-        prd = cs
+        prd = c
         for i in range(2, power + 1) :
-            prd = legmul(prd, cs)
+            prd = legmul(prd, c)
         return prd
 
 
-def legder(cs, m=1, scl=1) :
+def legder(c, m=1, scl=1, axis=0) :
     """
     Differentiate a Legendre series.
 
-    Returns the series `cs` differentiated `m` times.  At each iteration the
-    result is multiplied by `scl` (the scaling factor is for use in a linear
-    change of variable).  The argument `cs` is the sequence of coefficients
-    from lowest order "term" to highest, e.g., [1,2,3] represents the series
-    ``P_0 + 2*P_1 + 3*P_2``.
+    Returns the Legendre series coefficients `c` differentiated `m` times
+    along `axis`.  At each iteration the result is multiplied by `scl` (the
+    scaling factor is for use in a linear change of variable). The argument
+    `c` is an array of coefficients from low to high degree along each
+    axis, e.g., [1,2,3] represents the series ``1*L_0 + 2*L_1 + 3*L_2``
+    while [[1,2],[1,2]] represents ``1*L_0(x)*L_0(y) + 1*L_1(x)*L_0(y) +
+    2*L_0(x)*L_1(y) + 2*L_1(x)*L_1(y)`` if axis=0 is ``x`` and axis=1 is
+    ``y``.
 
     Parameters
     ----------
-    cs : array_like
-        1-D array of Legendre series coefficients ordered from low to high.
+    c : array_like
+        Array of Legendre series coefficients. If c is multidimensional the
+        different axis correspond to different variables with the degree in
+        each axis given by the corresponding index.
     m : int, optional
         Number of derivatives taken, must be non-negative. (Default: 1)
     scl : scalar, optional
         Each differentiation is multiplied by `scl`.  The end result is
         multiplication by ``scl**m``.  This is for use in a linear change of
         variable. (Default: 1)
+    axis : int, optional
+        Axis over which the derivative is taken. (Default: 0).
+
+        .. versionadded:: 1.7.0
 
     Returns
     -------
@@ -659,66 +699,84 @@ def legder(cs, m=1, scl=1) :
     -----
     In general, the result of differentiating a Legendre series does not
     resemble the same operation on a power series. Thus the result of this
-    function may be "un-intuitive," albeit correct; see Examples section
+    function may be "unintuitive," albeit correct; see Examples section
     below.
 
     Examples
     --------
     >>> from numpy.polynomial import legendre as L
-    >>> cs = (1,2,3,4)
-    >>> L.legder(cs)
+    >>> c = (1,2,3,4)
+    >>> L.legder(c)
     array([  6.,   9.,  20.])
-    >>> L.legder(cs,3)
+    >>> L.legder(c, 3)
     array([ 60.])
-    >>> L.legder(cs,scl=-1)
+    >>> L.legder(c, scl=-1)
     array([ -6.,  -9., -20.])
-    >>> L.legder(cs,2,-1)
+    >>> L.legder(c, 2,-1)
     array([  9.,  60.])
 
     """
-    cnt = int(m)
+    c = np.array(c, ndmin=1, copy=1)
+    if c.dtype.char in '?bBhHiIlLqQpP':
+        c = c.astype(np.double)
+    cnt, iaxis = [int(t) for t in [m, axis]]
 
     if cnt != m:
         raise ValueError("The order of derivation must be integer")
-    if cnt < 0 :
+    if cnt < 0:
         raise ValueError("The order of derivation must be non-negative")
+    if iaxis != axis:
+        raise ValueError("The axis must be integer")
+    if not -c.ndim <= iaxis < c.ndim:
+        raise ValueError("The axis is out of range")
+    if iaxis < 0:
+        iaxis += c.ndim
 
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
     if cnt == 0:
-        return cs
-    elif cnt >= len(cs):
-        return cs[:1]*0
+        return c
+
+    c = np.rollaxis(c, iaxis)
+    n = len(c)
+    if cnt >= n:
+        c = c[:1]*0
     else :
         for i in range(cnt):
-            n = len(cs) - 1
-            cs *= scl
-            der = np.empty(n, dtype=cs.dtype)
-            for j in range(n, 0, -1):
-                der[j - 1] = (2*j - 1)*cs[j]
-                cs[j - 2] += cs[j]
-            cs = der
-        return cs
+            n = n - 1
+            c *= scl
+            der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
+            for j in range(n, 2, -1):
+                der[j - 1] = (2*j - 1)*c[j]
+                c[j - 2] += c[j]
+            if n > 1:
+                der[1] = 3*c[2]
+            der[0] = c[1]
+            c = der
+    c = np.rollaxis(c, 0, iaxis + 1)
+    return c
 
 
-def legint(cs, m=1, k=[], lbnd=0, scl=1):
+def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     """
     Integrate a Legendre series.
 
-    Returns a Legendre series that is the Legendre series `cs`, integrated
-    `m` times from `lbnd` to `x`.  At each iteration the resulting series
-    is **multiplied** by `scl` and an integration constant, `k`, is added.
+    Returns the Legendre series coefficients `c` integrated `m` times from
+    `lbnd` along `axis`. At each iteration the resulting series is
+    **multiplied** by `scl` and an integration constant, `k`, is added.
     The scaling factor is for use in a linear change of variable.  ("Buyer
     beware": note that, depending on what one is doing, one may want `scl`
     to be the reciprocal of what one might expect; for more information,
-    see the Notes section below.)  The argument `cs` is a sequence of
-    coefficients, from lowest order Legendre series "term" to highest,
-    e.g., [1,2,3] represents the series :math:`P_0(x) + 2P_1(x) + 3P_2(x)`.
+    see the Notes section below.)  The argument `c` is an array of
+    coefficients from low to high degree along each axis, e.g., [1,2,3]
+    represents the series ``L_0 + 2*L_1 + 3*L_2`` while [[1,2],[1,2]]
+    represents ``1*L_0(x)*L_0(y) + 1*L_1(x)*L_0(y) + 2*L_0(x)*L_1(y) +
+    2*L_1(x)*L_1(y)`` if axis=0 is ``x`` and axis=1 is ``y``.
 
     Parameters
     ----------
-    cs : array_like
-        1-d array of Legendre series coefficients, ordered from low to high.
+    c : array_like
+        Array of Legendre series coefficients. If c is multidimensional the
+        different axis correspond to different variables with the degree in
+        each axis given by the corresponding index.
     m : int, optional
         Order of integration, must be positive. (Default: 1)
     k : {[], list, scalar}, optional
@@ -732,11 +790,15 @@ def legint(cs, m=1, k=[], lbnd=0, scl=1):
     scl : scalar, optional
         Following each integration the result is *multiplied* by `scl`
         before the integration constant is added. (Default: 1)
+    axis : int, optional
+        Axis over which the integral is taken. (Default: 0).
+
+        .. versionadded:: 1.7.0
 
     Returns
     -------
     S : ndarray
-        Legendre series coefficients of the integral.
+        Legendre series coefficient array of the integral.
 
     Raises
     ------
@@ -753,34 +815,37 @@ def legint(cs, m=1, k=[], lbnd=0, scl=1):
     Note that the result of each integration is *multiplied* by `scl`.
     Why is this important to note?  Say one is making a linear change of
     variable :math:`u = ax + b` in an integral relative to `x`.  Then
-    :math:`dx = du/a`, so one will need to set `scl` equal to :math:`1/a`
-    - perhaps not what one would have first thought.
+    .. math::`dx = du/a`, so one will need to set `scl` equal to
+    :math:`1/a` - perhaps not what one would have first thought.
 
     Also note that, in general, the result of integrating a C-series needs
-    to be "re-projected" onto the C-series basis set.  Thus, typically,
-    the result of this function is "un-intuitive," albeit correct; see
+    to be "reprojected" onto the C-series basis set.  Thus, typically,
+    the result of this function is "unintuitive," albeit correct; see
     Examples section below.
 
     Examples
     --------
     >>> from numpy.polynomial import legendre as L
-    >>> cs = (1,2,3)
-    >>> L.legint(cs)
+    >>> c = (1,2,3)
+    >>> L.legint(c)
     array([ 0.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.legint(cs,3)
+    >>> L.legint(c, 3)
     array([  1.66666667e-02,  -1.78571429e-02,   4.76190476e-02,
             -1.73472348e-18,   1.90476190e-02,   9.52380952e-03])
-    >>> L.legint(cs, k=3)
+    >>> L.legint(c, k=3)
     array([ 3.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.legint(cs, lbnd=-2)
+    >>> L.legint(c, lbnd=-2)
     array([ 7.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.legint(cs, scl=2)
+    >>> L.legint(c, scl=2)
     array([ 0.66666667,  0.8       ,  1.33333333,  1.2       ])
 
     """
-    cnt = int(m)
-    if np.isscalar(k) :
+    c = np.array(c, ndmin=1, copy=1)
+    if c.dtype.char in '?bBhHiIlLqQpP':
+        c = c.astype(np.double)
+    if not np.iterable(k):
         k = [k]
+    cnt, iaxis = [int(t) for t in [m, axis]]
 
     if cnt != m:
         raise ValueError("The order of integration must be integer")
@@ -788,58 +853,92 @@ def legint(cs, m=1, k=[], lbnd=0, scl=1):
         raise ValueError("The order of integration must be non-negative")
     if len(k) > cnt :
         raise ValueError("Too many integration constants")
+    if iaxis != axis:
+        raise ValueError("The axis must be integer")
+    if not -c.ndim <= iaxis < c.ndim:
+        raise ValueError("The axis is out of range")
+    if iaxis < 0:
+        iaxis += c.ndim
 
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
     if cnt == 0:
-        return cs
+        return c
 
+    c = np.rollaxis(c, iaxis)
     k = list(k) + [0]*(cnt - len(k))
     for i in range(cnt) :
-        n = len(cs)
-        cs *= scl
-        if n == 1 and cs[0] == 0:
-            cs[0] += k[i]
+        n = len(c)
+        c *= scl
+        if n == 1 and np.all(c[0] == 0):
+            c[0] += k[i]
         else:
-            tmp = np.empty(n + 1, dtype=cs.dtype)
-            tmp[0] = cs[0]*0
-            tmp[1] = cs[0]
-            for j in range(1, n):
-                t = cs[j]/(2*j + 1)
+            tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
+            tmp[0] = c[0]*0
+            tmp[1] = c[0]
+            if n > 1:
+                tmp[2] = c[1]/3
+            for j in range(2, n):
+                t = c[j]/(2*j + 1)
                 tmp[j + 1] = t
                 tmp[j - 1] -= t
             tmp[0] += k[i] - legval(lbnd, tmp)
-            cs = tmp
-    return cs
+            c = tmp
+    c = np.rollaxis(c, 0, iaxis + 1)
+    return c
 
 
-def legval(x, cs):
-    """Evaluate a Legendre series.
+def legval(x, c, tensor=True):
+    """
+    Evaluate a Legendre series at points x.
 
-    If `cs` is of length `n`, this function returns :
+    If `c` is of length `n + 1`, this function returns the value:
 
-    ``p(x) = cs[0]*P_0(x) + cs[1]*P_1(x) + ... + cs[n-1]*P_{n-1}(x)``
+    .. math:: p(x) = c_0 * L_0(x) + c_1 * L_1(x) + ... + c_n * L_n(x)
 
-    If x is a sequence or array then p(x) will have the same shape as x.
-    If r is a ring_like object that supports multiplication and addition
-    by the values in `cs`, then an object of the same type is returned.
+    The parameter `x` is converted to an array only if it is a tuple or a
+    list, otherwise it is treated as a scalar. In either case, either `x`
+    or its elements must support multiplication and addition both with
+    themselves and with the elements of `c`.
+
+    If `c` is a 1-D array, then `p(x)` will have the same shape as `x`.  If
+    `c` is multidimensional, then the shape of the result depends on the
+    value of `tensor`. If `tensor` is true the shape will be c.shape[1:] +
+    x.shape. If `tensor` is false the shape will be c.shape[1:]. Note that
+    scalars have shape (,).
+
+    Trailing zeros in the coefficients will be used in the evaluation, so
+    they should be avoided if efficiency is a concern.
 
     Parameters
     ----------
-    x : array_like, ring_like
-        Array of numbers or objects that support multiplication and
-        addition with themselves and with the elements of `cs`.
-    cs : array_like
-        1-d array of Legendre coefficients ordered from low to high.
+    x : array_like, compatible object
+        If `x` is a list or tuple, it is converted to an ndarray, otherwise
+        it is left unchanged and treated as a scalar. In either case, `x`
+        or its elements must support addition and multiplication with
+        with themselves and with the elements of `c`.
+    c : array_like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree n are contained in c[n]. If `c` is multidimensional the
+        remaining indices enumerate multiple polynomials. In the two
+        dimensional case the coefficients may be thought of as stored in
+        the columns of `c`.
+    tensor : boolean, optional
+        If True, the shape of the coefficient array is extended with ones
+        on the right, one for each dimension of `x`. Scalars have dimension 0
+        for this action. The result is that every column of coefficients in
+        `c` is evaluated for every element of `x`. If False, `x` is broadcast
+        over the columns of `c` for the evaluation.  This keyword is useful
+        when `c` is multidimensional. The default value is True.
+
+        .. versionadded:: 1.7.0
 
     Returns
     -------
-    values : ndarray, ring_like
-        If the return is an ndarray then it has the same shape as `x`.
+    values : ndarray, algebra_like
+        The shape of the return value is described above.
 
     See Also
     --------
-    legfit
+    legval2d, leggrid2d, legval3d, leggrid3d
 
     Notes
     -----
@@ -849,52 +948,294 @@ def legval(x, cs):
     --------
 
     """
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
-    if isinstance(x, tuple) or isinstance(x, list) :
+    c = np.array(c, ndmin=1, copy=0)
+    if c.dtype.char in '?bBhHiIlLqQpP':
+        c = c.astype(np.double)
+    if isinstance(x, (tuple, list)):
         x = np.asarray(x)
+    if isinstance(x, np.ndarray) and tensor:
+        c = c.reshape(c.shape + (1,)*x.ndim)
 
-    if len(cs) == 1 :
-        c0 = cs[0]
+    if len(c) == 1 :
+        c0 = c[0]
         c1 = 0
-    elif len(cs) == 2 :
-        c0 = cs[0]
-        c1 = cs[1]
+    elif len(c) == 2 :
+        c0 = c[0]
+        c1 = c[1]
     else :
-        nd = len(cs)
-        c0 = cs[-2]
-        c1 = cs[-1]
-        for i in range(3, len(cs) + 1) :
+        nd = len(c)
+        c0 = c[-2]
+        c1 = c[-1]
+        for i in range(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
-            c0 = cs[-i] - (c1*(nd - 1))/nd
+            c0 = c[-i] - (c1*(nd - 1))/nd
             c1 = tmp + (c1*x*(2*nd - 1))/nd
     return c0 + c1*x
 
 
-def legvander(x, deg) :
-    """Vandermonde matrix of given degree.
+def legval2d(x, y, c):
+    """
+    Evaluate a 2-D Legendre series at points (x, y).
 
-    Returns the Vandermonde matrix of degree `deg` and sample points `x`.
-    This isn't a true Vandermonde matrix because `x` can be an arbitrary
-    ndarray and the Legendre polynomials aren't powers. If ``V`` is the
-    returned matrix and `x` is a 2d array, then the elements of ``V`` are
-    ``V[i,j,k] = P_k(x[i,j])``, where ``P_k`` is the Legendre polynomial
-    of degree ``k``.
+    This function returns the values:
+
+    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * L_i(x) * L_j(y)
+
+    The parameters `x` and `y` are converted to arrays only if they are
+    tuples or a lists, otherwise they are treated as a scalars and they
+    must have the same shape after conversion. In either case, either `x`
+    and `y` or their elements must support multiplication and addition both
+    with themselves and with the elements of `c`.
+
+    If `c` is a 1-D array a one is implicitly appended to its shape to make
+    it 2-D. The shape of the result will be c.shape[2:] + x.shape.
+
+    Parameters
+    ----------
+    x, y : array_like, compatible objects
+        The two dimensional series is evaluated at the points `(x, y)`,
+        where `x` and `y` must have the same shape. If `x` or `y` is a list
+        or tuple, it is first converted to an ndarray, otherwise it is left
+        unchanged and if it isn't an ndarray it is treated as a scalar.
+    c : array_like
+        Array of coefficients ordered so that the coefficient of the term
+        of multi-degree i,j is contained in ``c[i,j]``. If `c` has
+        dimension greater than two the remaining indices enumerate multiple
+        sets of coefficients.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the two dimensional Legendre series at points formed
+        from pairs of corresponding values from `x` and `y`.
+
+    See Also
+    --------
+    legval, leggrid2d, legval3d, leggrid3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
+
+    """
+    try:
+        x, y = np.array((x, y), copy=0)
+    except:
+        raise ValueError('x, y are incompatible')
+
+    c = legval(x, c)
+    c = legval(y, c, tensor=False)
+    return c
+
+
+def leggrid2d(x, y, c):
+    """
+    Evaluate a 2-D Legendre series on the Cartesian product of x and y.
+
+    This function returns the values:
+
+    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * L_i(a) * L_j(b)
+
+    where the points `(a, b)` consist of all pairs formed by taking
+    `a` from `x` and `b` from `y`. The resulting points form a grid with
+    `x` in the first dimension and `y` in the second.
+
+    The parameters `x` and `y` are converted to arrays only if they are
+    tuples or a lists, otherwise they are treated as a scalars. In either
+    case, either `x` and `y` or their elements must support multiplication
+    and addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than two dimensions, ones are implicitly appended to
+    its shape to make it 2-D. The shape of the result will be c.shape[2:] +
+    x.shape + y.shape.
+
+    Parameters
+    ----------
+    x, y : array_like, compatible objects
+        The two dimensional series is evaluated at the points in the
+        Cartesian product of `x` and `y`.  If `x` or `y` is a list or
+        tuple, it is first converted to an ndarray, otherwise it is left
+        unchanged and, if it isn't an ndarray, it is treated as a scalar.
+    c : array_like
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j is contained in `c[i,j]`. If `c` has dimension
+        greater than two the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the two dimensional Chebyshev series at points in the
+        Cartesian product of `x` and `y`.
+
+    See Also
+    --------
+    legval, legval2d, legval3d, leggrid3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
+
+    """
+    c = legval(x, c)
+    c = legval(y, c)
+    return c
+
+
+def legval3d(x, y, z, c):
+    """
+    Evaluate a 3-D Legendre series at points (x, y, z).
+
+    This function returns the values:
+
+    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * L_i(x) * L_j(y) * L_k(z)
+
+    The parameters `x`, `y`, and `z` are converted to arrays only if
+    they are tuples or a lists, otherwise they are treated as a scalars and
+    they must have the same shape after conversion. In either case, either
+    `x`, `y`, and `z` or their elements must support multiplication and
+    addition both with themselves and with the elements of `c`.
+
+    If `c` has fewer than 3 dimensions, ones are implicitly appended to its
+    shape to make it 3-D. The shape of the result will be c.shape[3:] +
+    x.shape.
+
+    Parameters
+    ----------
+    x, y, z : array_like, compatible object
+        The three dimensional series is evaluated at the points
+        `(x, y, z)`, where `x`, `y`, and `z` must have the same shape.  If
+        any of `x`, `y`, or `z` is a list or tuple, it is first converted
+        to an ndarray, otherwise it is left unchanged and if it isn't an
+        ndarray it is  treated as a scalar.
+    c : array_like
+        Array of coefficients ordered so that the coefficient of the term of
+        multi-degree i,j,k is contained in ``c[i,j,k]``. If `c` has dimension
+        greater than 3 the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the multidimensional polynomial on points formed with
+        triples of corresponding values from `x`, `y`, and `z`.
+
+    See Also
+    --------
+    legval, legval2d, leggrid2d, leggrid3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
+
+    """
+    try:
+        x, y, z = np.array((x, y, z), copy=0)
+    except:
+        raise ValueError('x, y, z are incompatible')
+
+    c = legval(x, c)
+    c = legval(y, c, tensor=False)
+    c = legval(z, c, tensor=False)
+    return c
+
+
+def leggrid3d(x, y, z, c):
+    """
+    Evaluate a 3-D Legendre series on the Cartesian product of x, y, and z.
+
+    This function returns the values:
+
+    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * L_i(a) * L_j(b) * L_k(c)
+
+    where the points `(a, b, c)` consist of all triples formed by taking
+    `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
+    a grid with `x` in the first dimension, `y` in the second, and `z` in
+    the third.
+
+    The parameters `x`, `y`, and `z` are converted to arrays only if they
+    are tuples or a lists, otherwise they are treated as a scalars. In
+    either case, either `x`, `y`, and `z` or their elements must support
+    multiplication and addition both with themselves and with the elements
+    of `c`.
+
+    If `c` has fewer than three dimensions, ones are implicitly appended to
+    its shape to make it 3-D. The shape of the result will be c.shape[3:] +
+    x.shape + y.shape + z.shape.
+
+    Parameters
+    ----------
+    x, y, z : array_like, compatible objects
+        The three dimensional series is evaluated at the points in the
+        Cartesian product of `x`, `y`, and `z`.  If `x`,`y`, or `z` is a
+        list or tuple, it is first converted to an ndarray, otherwise it is
+        left unchanged and, if it isn't an ndarray, it is treated as a
+        scalar.
+    c : array_like
+        Array of coefficients ordered so that the coefficients for terms of
+        degree i,j are contained in ``c[i,j]``. If `c` has dimension
+        greater than two the remaining indices enumerate multiple sets of
+        coefficients.
+
+    Returns
+    -------
+    values : ndarray, compatible object
+        The values of the two dimensional polynomial at points in the Cartesian
+        product of `x` and `y`.
+
+    See Also
+    --------
+    legval, legval2d, leggrid2d, legval3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
+
+    """
+    c = legval(x, c)
+    c = legval(y, c)
+    c = legval(z, c)
+    return c
+
+
+def legvander(x, deg) :
+    """Pseudo-Vandermonde matrix of given degree.
+
+    Returns the pseudo-Vandermonde matrix of degree `deg` and sample points
+    `x`. The pseudo-Vandermonde matrix is defined by
+
+    .. math:: V[..., i] = L_i(x)
+
+    where `0 <= i <= deg`. The leading indices of `V` index the elements of
+    `x` and the last index is the degree of the Legendre polynomial.
+
+    If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
+    array ``V = legvander(x, n)``, then ``np.dot(V, c)`` and
+    ``legval(x, c)`` are the same up to roundoff. This equivalence is
+    useful both for least squares fitting and for the evaluation of a large
+    number of Legendre series of the same degree and sample points.
 
     Parameters
     ----------
     x : array_like
-        Array of points. The values are converted to double or complex
-        doubles. If x is scalar it is converted to a 1D array.
-    deg : integer
+        Array of points. The dtype is converted to float64 or complex128
+        depending on whether any of the elements are complex. If `x` is
+        scalar it is converted to a 1-D array.
+    deg : int
         Degree of the resulting matrix.
 
     Returns
     -------
-    vander : Vandermonde matrix.
-        The shape of the returned matrix is ``x.shape + (deg+1,)``. The last
-        index is the degree.
+    vander: ndarray
+        The pseudo-Vandermonde matrix. The shape of the returned matrix is
+        ``x.shape + (deg + 1,)``, where The last index is the degree of the
+        corresponding Legendre polynomial.  The dtype will be the same as
+        the converted `x`.
 
     """
     ideg = int(deg)
@@ -904,7 +1245,10 @@ def legvander(x, deg) :
         raise ValueError("deg must be non-negative")
 
     x = np.array(x, copy=0, ndmin=1) + 0.0
-    v = np.empty((ideg + 1,) + x.shape, dtype=x.dtype)
+    dims = (ideg + 1,) + x.shape
+    mask = x.flags.maskna
+    dtyp = x.dtype
+    v = np.empty(dims, dtype=dtyp, maskna=mask)
     # Use forward recursion to generate the entries. This is not as accurate
     # as reverse recursion in this application but it is more efficient.
     v[0] = x*0 + 1
@@ -915,13 +1259,153 @@ def legvander(x, deg) :
     return np.rollaxis(v, 0, v.ndim)
 
 
+def legvander2d(x, y, deg) :
+    """Pseudo-Vandermonde matrix of given degrees.
+
+    Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
+    points `(x, y)`. The pseudo-Vandermonde matrix is defined by
+
+    .. math:: V[..., deg[1]*i + j] = L_i(x) * L_j(y),
+
+    where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
+    `V` index the points `(x, y)` and the last index encodes the degrees of
+    the Legendre polynomials.
+
+    If ``V = legvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
+    correspond to the elements of a 2-D coefficient array `c` of shape
+    (xdeg + 1, ydeg + 1) in the order
+
+    .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
+
+    and ``np.dot(V, c.flat)`` and ``legval2d(x, y, c)`` will be the same
+    up to roundoff. This equivalence is useful both for least squares
+    fitting and for the evaluation of a large number of 2-D Legendre
+    series of the same degrees and sample points.
+
+    Parameters
+    ----------
+    x, y : array_like
+        Arrays of point coordinates, all of the same shape. The dtypes
+        will be converted to either float64 or complex128 depending on
+        whether any of the elements are complex. Scalars are converted to
+        1-D arrays.
+    deg : list of ints
+        List of maximum degrees of the form [x_deg, y_deg].
+
+    Returns
+    -------
+    vander2d : ndarray
+        The shape of the returned matrix is ``x.shape + (order,)``, where
+        :math:`order = (deg[0]+1)*(deg([1]+1)`.  The dtype will be the same
+        as the converted `x` and `y`.
+
+    See Also
+    --------
+    legvander, legvander3d. legval2d, legval3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
+
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy = ideg
+    x, y = np.array((x, y), copy=0) + 0.0
+
+    vx = legvander(x, degx)
+    vy = legvander(y, degy)
+    v = vx[..., None]*vy[..., None, :]
+    return v.reshape(v.shape[:-2] + (-1,))
+
+
+def legvander3d(x, y, z, deg) :
+    """Pseudo-Vandermonde matrix of given degrees.
+
+    Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
+    points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
+    then The pseudo-Vandermonde matrix is defined by
+
+    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = L_i(x)*L_j(y)*L_k(z),
+
+    where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
+    indices of `V` index the points `(x, y, z)` and the last index encodes
+    the degrees of the Legendre polynomials.
+
+    If ``V = legvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
+    of `V` correspond to the elements of a 3-D coefficient array `c` of
+    shape (xdeg + 1, ydeg + 1, zdeg + 1) in the order
+
+    .. math:: c_{000}, c_{001}, c_{002},... , c_{010}, c_{011}, c_{012},...
+
+    and ``np.dot(V, c.flat)`` and ``legval3d(x, y, z, c)`` will be the
+    same up to roundoff. This equivalence is useful both for least squares
+    fitting and for the evaluation of a large number of 3-D Legendre
+    series of the same degrees and sample points.
+
+    Parameters
+    ----------
+    x, y, z : array_like
+        Arrays of point coordinates, all of the same shape. The dtypes will
+        be converted to either float64 or complex128 depending on whether
+        any of the elements are complex. Scalars are converted to 1-D
+        arrays.
+    deg : list of ints
+        List of maximum degrees of the form [x_deg, y_deg, z_deg].
+
+    Returns
+    -------
+    vander3d : ndarray
+        The shape of the returned matrix is ``x.shape + (order,)``, where
+        :math:`order = (deg[0]+1)*(deg([1]+1)*(deg[2]+1)`.  The dtype will
+        be the same as the converted `x`, `y`, and `z`.
+
+    See Also
+    --------
+    legvander, legvander3d. legval2d, legval3d
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
+
+    """
+    ideg = [int(d) for d in deg]
+    is_valid = [id == d and id >= 0 for id, d in zip(ideg, deg)]
+    if is_valid != [1, 1, 1]:
+        raise ValueError("degrees must be non-negative integers")
+    degx, degy, degz = ideg
+    x, y, z = np.array((x, y, z), copy=0) + 0.0
+
+    vx = legvander(x, degx)
+    vy = legvander(y, degy)
+    vz = legvander(z, degz)
+    v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
+    return v.reshape(v.shape[:-3] + (-1,))
+
+
 def legfit(x, y, deg, rcond=None, full=False, w=None):
     """
     Least squares fit of Legendre series to data.
 
-    Fit a Legendre series ``p(x) = p[0] * P_{0}(x) + ... + p[deg] *
-    P_{deg}(x)`` of degree `deg` to points `(x, y)`. Returns a vector of
-    coefficients `p` that minimises the squared error.
+    Return the coefficients of a Legendre series of degree `deg` that is the
+    least squares fit to the data values `y` given at points `x`. If `y` is
+    1-D the returned coefficients will also be 1-D. If `y` is 2-D multiple
+    fits are done, one for each column of `y`, and the resulting
+    coefficients are stored in the corresponding columns of a 2-D return.
+    The fitted polynomial(s) are in the form
+
+    .. math::  p(x) = c_0 + c_1 * L_1(x) + ... + c_n * L_n(x),
+
+    where `n` is `deg`.
+
+    Since numpy version 1.7.0, legfit also supports NA. If any of the
+    elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
+    linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
+    then an NA in any row of `y` invalidates that whole row.
 
     Parameters
     ----------
@@ -948,6 +1432,8 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
 
+        .. versionadded:: 1.5.0
+
     Returns
     -------
     coef : ndarray, shape (M,) or (M, K)
@@ -972,33 +1458,33 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
+    chebfit, polyfit, lagfit, hermfit, hermefit
     legval : Evaluates a Legendre series.
     legvander : Vandermonde matrix of Legendre series.
-    polyfit : least squares fit using polynomials.
-    chebfit : least squares fit using Chebyshev series.
+    legweight : Legendre weight function (= 1).
     linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
     -----
-    The solution are the coefficients ``c[i]`` of the Legendre series
-    ``P(x)`` that minimizes the squared error
+    The solution is the coefficients of the Legendre series `p` that
+    minimizes the sum of the weighted squared errors
 
-    ``E = \\sum_j |y_j - P(x_j)|^2``.
+    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
 
-    This problem is solved by setting up as the overdetermined matrix
-    equation
+    where :math:`w_j` are the weights. This problem is solved by setting up
+    as the (typically) overdetermined matrix equation
 
-    ``V(x)*c = y``,
+    .. math:: V(x) * c = w * y,
 
-    where ``V`` is the Vandermonde matrix of `x`, the elements of ``c`` are
-    the coefficients to be solved for, and the elements of `y` are the
+    where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
+    coefficients to be solved for, `w` are the weights, and `y` are the
     observed values.  This equation is then solved using the singular value
-    decomposition of ``V``.
+    decomposition of `V`.
 
-    If some of the singular values of ``V`` are so small that they are
+    If some of the singular values of `V` are so small that they are
     neglected, then a `RankWarning` will be issued. This means that the
-    coeficient values may be poorly determined. Using a lower order fit
+    coefficient values may be poorly determined. Using a lower order fit
     will usually get rid of the warning.  The `rcond` parameter can also be
     set to a value smaller than its default, but the resulting fit may be
     spurious and have large contributions from roundoff error.
@@ -1033,30 +1519,37 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     if len(x) != len(y):
         raise TypeError("expected x and y to have same length")
 
-    # set up the least squares matrices
-    lhs = legvander(x, deg)
-    rhs = y
+    # set up the least squares matrices in transposed form
+    lhs = legvander(x, deg).T
+    rhs = y.T
     if w is not None:
         w = np.asarray(w) + 0.0
         if w.ndim != 1:
             raise TypeError("expected 1D vector for w")
         if len(x) != len(w):
             raise TypeError("expected x and w to have same length")
-        # apply weights
-        if rhs.ndim == 2:
-            lhs *= w[:, np.newaxis]
-            rhs *= w[:, np.newaxis]
+        # apply weights. Don't use inplace operations as they
+        # can cause problems with NA.
+        lhs = lhs * w
+        rhs = rhs * w
+
+    # deal with NA. Note that polyvander propagates NA from x
+    # into all columns, that is rows for transposed form.
+    if lhs.flags.maskna or rhs.flags.maskna:
+        if rhs.ndim == 1:
+            mask = np.isna(lhs[0]) | np.isna(rhs)
         else:
-            lhs *= w[:, np.newaxis]
-            rhs *= w
+            mask = np.isna(lhs[0]) | np.isna(rhs).any(0)
+        np.copyto(lhs, 0, where=mask)
+        np.copyto(rhs, 0, where=mask)
 
     # set rcond
     if rcond is None :
         rcond = len(x)*np.finfo(x.dtype).eps
 
     # scale the design matrix and solve the least squares equation
-    scl = np.sqrt((lhs*lhs).sum(0))
-    c, resids, rank, s = la.lstsq(lhs/scl, rhs, rcond)
+    scl = np.sqrt((lhs*lhs).sum(1))
+    c, resids, rank, s = la.lstsq(lhs.T/scl, rhs.T, rcond)
     c = (c.T/scl).T
 
     # warn on rank reduction
@@ -1070,70 +1563,201 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
-def legroots(cs):
-    """
-    Compute the roots of a Legendre series.
+def legcompanion(c):
+    """Return the scaled companion matrix of c.
 
-    Return the roots (a.k.a "zeros") of the Legendre series represented by
-    `cs`, which is the sequence of coefficients from lowest order "term"
-    to highest, e.g., [1,2,3] is the series ``L_0 + 2*L_1 + 3*L_2``.
+    The basis polynomials are scaled so that the companion matrix is
+    symmetric when `c` is an Legendre basis polynomial. This provides
+    better eigenvalue estimates than the unscaled case and for basis
+    polynomials the eigenvalues are guaranteed to be real if
+    `numpy.linalg.eigvalsh` is used to obtain them.
 
     Parameters
     ----------
-    cs : array_like
-        1-d array of Legendre series coefficients ordered from low to high.
+    c : array_like
+        1-D array of Legendre series coefficients ordered from low to high
+        degree.
+
+    Returns
+    -------
+    mat : ndarray
+        Scaled companion matrix of dimensions (deg, deg).
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
+
+    """
+    # c is a trimmed copy
+    [c] = pu.as_series([c])
+    if len(c) < 2:
+        raise ValueError('Series must have maximum degree of at least 1.')
+    if len(c) == 2:
+        return np.array(-c[0]/c[1])
+
+    n = len(c) - 1
+    mat = np.zeros((n, n), dtype=c.dtype)
+    scl = 1./np.sqrt(2*np.arange(n) + 1)
+    top = mat.reshape(-1)[1::n+1]
+    bot = mat.reshape(-1)[n::n+1]
+    top[...] = np.arange(1, n)*scl[:n-1]*scl[1:n]
+    bot[...] = top
+    mat[:,-1] -= (c[:-1]/c[-1])*(scl/scl[-1])*(n/(2*n - 1))
+    return mat
+
+
+def legroots(c):
+    """
+    Compute the roots of a Legendre series.
+
+    Return the roots (a.k.a. "zeros") of the polynomial
+
+    .. math:: p(x) = \\sum_i c[i] * L_i(x).
+
+    Parameters
+    ----------
+    c : 1-D array_like
+        1-D array of coefficients.
 
     Returns
     -------
     out : ndarray
-        Array of the roots.  If all the roots are real, then so is the
-        dtype of ``out``; otherwise, ``out``'s dtype is complex.
+        Array of the roots of the series. If all the roots are real,
+        then `out` is also real, otherwise it is complex.
 
     See Also
     --------
-    polyroots
-    chebroots
+    polyroots, chebroots, lagroots, hermroots, hermeroots
 
     Notes
     -----
-    Algorithm(s) used:
+    The root estimates are obtained as the eigenvalues of the companion
+    matrix, Roots far from the origin of the complex plane may have large
+    errors due to the numerical instability of the series for such
+    values. Roots with multiplicity greater than 1 will also show larger
+    errors as the value of the series near such points is relatively
+    insensitive to errors in the roots. Isolated roots near the origin can
+    be improved by a few iterations of Newton's method.
 
-    Remember: because the Legendre series basis set is different from the
-    "standard" basis set, the results of this function *may* not be what
-    one is expecting.
+    The Legendre series basis polynomials aren't powers of ``x`` so the
+    results of this function may seem unintuitive.
 
     Examples
     --------
-    >>> import numpy.polynomial as P
-    >>> P.polyroots((1, 2, 3, 4)) # 4x^3 + 3x^2 + 2x + 1 has two complex roots
-    array([-0.60582959+0.j        , -0.07208521-0.63832674j,
-           -0.07208521+0.63832674j])
-    >>> P.legroots((1, 2, 3, 4)) # 4L_3 + 3L_2 + 2L_1 + 1L_0 has only real roots
+    >>> import numpy.polynomial.legendre as leg
+    >>> leg.legroots((1, 2, 3, 4)) # 4L_3 + 3L_2 + 2L_1 + 1L_0 has only real roots
     array([-0.85099543, -0.11407192,  0.51506735])
 
     """
-    # cs is a trimmed copy
-    [cs] = pu.as_series([cs])
-    if len(cs) <= 1 :
-        return np.array([], dtype=cs.dtype)
-    if len(cs) == 2 :
-        return np.array([-cs[0]/cs[1]])
+    # c is a trimmed copy
+    [c] = pu.as_series([c])
+    if len(c) < 2:
+        return np.array([], dtype=c.dtype)
+    if len(c) == 2:
+        return np.array([-c[0]/c[1]])
 
-    n = len(cs) - 1
-    cs /= cs[-1]
-    cmat = np.zeros((n,n), dtype=cs.dtype)
-    cmat[1, 0] = 1
-    for i in range(1, n):
-        tmp = 2*i + 1
-        cmat[i - 1, i] = i/tmp
-        if i != n - 1:
-            cmat[i + 1, i] = (i + 1)/tmp
-        else:
-            cmat[:, i] -= cs[:-1]*(i + 1)/tmp
-    roots = la.eigvals(cmat)
-    roots.sort()
-    return roots
+    m = legcompanion(c)
+    r = la.eigvals(m)
+    r.sort()
+    return r
 
+
+def leggauss(deg):
+    """
+    Gauss-Legendre quadrature.
+
+    Computes the sample points and weights for Gauss-Legendre quadrature.
+    These sample points and weights will correctly integrate polynomials of
+    degree :math:`2*deg - 1` or less over the interval :math:`[-1, 1]` with
+    the weight function :math:`f(x) = 1`.
+
+    Parameters
+    ----------
+    deg : int
+        Number of sample points and weights. It must be >= 1.
+
+    Returns
+    -------
+    x : ndarray
+        1-D ndarray containing the sample points.
+    y : ndarray
+        1-D ndarray containing the weights.
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
+
+    The results have only been tested up to degree 100, higher degrees may
+    be problematic. The weights are determined by using the fact that
+
+    .. math:: w_k = c / (L'_n(x_k) * L_{n-1}(x_k))
+
+    where :math:`c` is a constant independent of :math:`k` and :math:`x_k`
+    is the k'th root of :math:`L_n`, and then scaling the results to get
+    the right value when integrating 1.
+
+    """
+    ideg = int(deg)
+    if ideg != deg or ideg < 1:
+        raise ValueError("deg must be a non-negative integer")
+
+    # first approximation of roots. We use the fact that the companion
+    # matrix is symmetric in this case in order to obtain better zeros.
+    c = np.array([0]*deg + [1])
+    m = legcompanion(c)
+    x = la.eigvals(m)
+    x.sort()
+
+    # improve roots by one application of Newton
+    dy = legval(x, c)
+    df = legval(x, legder(c))
+    x -= dy/df
+
+    # compute the weights. We scale the factor to avoid possible numerical
+    # overflow.
+    fm = legval(x, c[1:])
+    fm /= np.abs(fm).max()
+    df /= np.abs(df).max()
+    w = 1/(fm * df)
+
+    # for Legendre we can also symmetrize
+    w = (w + w[::-1])/2
+    x = (x - x[::-1])/2
+
+    # scale w to get the right value
+    w *= 2. / w.sum()
+
+    return x, w
+
+
+def legweight(x):
+    """
+    Weight function of the Legendre polynomials.
+
+    The weight function is :math:`1` and the interval of integration is
+    :math:`[-1, 1]`. The Legendre polynomials are orthogonal, but not
+    normalized, with respect to this weight function.
+
+    Parameters
+    ----------
+    x : array_like
+       Values at which the weight function will be computed.
+
+    Returns
+    -------
+    w : ndarray
+       The weight function at `x`.
+
+    Notes
+    -----
+
+    .. versionadded::1.7.0
+
+    """
+    w = x*0.0 + 1.0
+    return w
 
 #
 # Legendre series class
