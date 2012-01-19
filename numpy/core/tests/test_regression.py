@@ -1620,5 +1620,10 @@ class TestRegression(TestCase):
         resw = np.unique(w,return_index=True)
         assert_equal(resv, resw)
 
+    def test_search_sorted_invalid_arguments(self):
+        # Ticket #2021, should not segfault.
+        x = np.arange(0, 4, dtype='datetime64[D]')
+        assert_raises(TypeError, x.searchsorted, 1)
+
 if __name__ == "__main__":
     run_module_suite()
