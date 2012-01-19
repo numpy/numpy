@@ -2269,8 +2269,7 @@ PyArray_FromInterface(PyObject *input)
             longlong num = PyLong_AsLongLong(attr);
             if (error_converting(num)) {
                 PyErr_SetString(PyExc_TypeError,
-                                "__array_interface__ offset "
-                                "must be an integer");
+                        "__array_interface__ offset must be an integer");
                 goto fail;
             }
             data += num;
@@ -2281,9 +2280,8 @@ PyArray_FromInterface(PyObject *input)
         PyObject *dataptr;
         if (PyTuple_GET_SIZE(attr) != 2) {
             PyErr_SetString(PyExc_TypeError,
-                            "__array_interface__ data must be " \
-                            "a 2-tuple with (data pointer "\
-                            "integer, read-only flag)");
+                    "__array_interface__ data must be a 2-tuple with "
+                    "(data pointer integer, read-only flag)");
             goto fail;
         }
         dataptr = PyTuple_GET_ITEM(attr, 0);
@@ -2292,8 +2290,7 @@ PyArray_FromInterface(PyObject *input)
                          "%p", (void **)&data);
             if (res < 1) {
                 PyErr_SetString(PyExc_TypeError,
-                                "__array_interface__ data string cannot be " \
-                                "converted");
+                        "__array_interface__ data string cannot be converted");
                 goto fail;
             }
         }
@@ -2301,9 +2298,9 @@ PyArray_FromInterface(PyObject *input)
             data = PyLong_AsVoidPtr(dataptr);
         }
         else {
-            PyErr_SetString(PyExc_TypeError, "first element "
-                            "of __array_interface__ data tuple "
-                            "must be integer or string.");
+            PyErr_SetString(PyExc_TypeError,
+                    "first element of __array_interface__ data tuple "
+                    "must be integer or string.");
             goto fail;
         }
         if (PyObject_IsTrue(PyTuple_GET_ITEM(attr,1))) {
@@ -2333,7 +2330,8 @@ PyArray_FromInterface(PyObject *input)
     }
     attr = shape;
     if (!PyTuple_Check(attr)) {
-        PyErr_SetString(PyExc_TypeError, "shape must be a tuple");
+        PyErr_SetString(PyExc_TypeError,
+                "shape must be a tuple");
         Py_DECREF(type);
         goto fail;
     }
@@ -2363,14 +2361,13 @@ PyArray_FromInterface(PyObject *input)
     if (attr != NULL && attr != Py_None) {
         if (!PyTuple_Check(attr)) {
             PyErr_SetString(PyExc_TypeError,
-                            "strides must be a tuple");
+                    "strides must be a tuple");
             Py_DECREF(ret);
             return NULL;
         }
         if (n != PyTuple_GET_SIZE(attr)) {
             PyErr_SetString(PyExc_ValueError,
-                            "mismatch in length of "\
-                            "strides and shape");
+                    "mismatch in length of strides and shape");
             Py_DECREF(ret);
             return NULL;
         }
@@ -3224,19 +3221,29 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
     if (!dtype) {
         PyArray_Descr *deftype;
         PyArray_Descr *newtype;
-        /* intentionally made to be PyArray_LONG default */
-        deftype = PyArray_DescrFromType(PyArray_LONG);
+
+        /* intentionally made to be at least NPY_LONG */
+        deftype = PyArray_DescrFromType(NPY_LONG);
         newtype = PyArray_DescrFromObject(start, deftype);
         Py_DECREF(deftype);
+        if (newtype == NULL) {
+            return NULL;
+        }
         deftype = newtype;
         if (stop && stop != Py_None) {
             newtype = PyArray_DescrFromObject(stop, deftype);
             Py_DECREF(deftype);
+            if (newtype == NULL) {
+                return NULL;
+            }
             deftype = newtype;
         }
         if (step && step != Py_None) {
             newtype = PyArray_DescrFromObject(step, deftype);
             Py_DECREF(deftype);
+            if (newtype == NULL) {
+                return NULL;
+            }
             deftype = newtype;
         }
         dtype = deftype;
