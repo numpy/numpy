@@ -432,8 +432,8 @@ NumPyOS_ascii_strtod_plain(const char *s, char** endptr)
 {
     double result;
 #if PY_VERSION_HEX >= 0x02070000
-    NPY_ALLOW_C_API_DEF
-    NPY_ALLOW_C_API
+    NPY_ALLOW_C_API_DEF;
+    NPY_ALLOW_C_API;
     result = PyOS_string_to_double(s, endptr, NULL);
     if (PyErr_Occurred()) {
         if (endptr) {
@@ -441,7 +441,7 @@ NumPyOS_ascii_strtod_plain(const char *s, char** endptr)
         }
         PyErr_Clear();
     }
-    NPY_DISABLE_C_API
+    NPY_DISABLE_C_API;
 #else
     result = PyOS_ascii_strtod(s, endptr);
 #endif
