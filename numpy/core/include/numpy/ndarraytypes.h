@@ -1882,7 +1882,7 @@ typedef int (PyArray_AssignReduceIdentityFunc)(PyArrayObject *result,
  *      if (!needs_api) {
  *          NPY_END_THREADS;
  *      }
- *      return (needs_api && PyErr_Occurred()) ? -1 : 0;
+ *      return PyErr_Occurred() ? -1 : 0;
  *  }
  *
  * The masked loop gets three data pointers and three strides, and
@@ -1910,9 +1910,10 @@ typedef int (PyArray_AssignReduceIdentityFunc)(PyArrayObject *result,
  *
  *      } while (iternext(iter));
  *
- * If needs_api is True, this function should call PyErr_Occurred()
- * to check if an error occurred during processing, and return -1 for
- * error, 0 for success.
+ * Regardless of whether needs_api is True, we call PyErr_Occurred()
+ * to check if an error occurred during processing, since clever loop
+ * code can run normally without the GIL but grab it only on error.
+ * We return -1 for error, 0 for success.
  */
 typedef int (PyArray_ReduceLoopFunc)(NpyIter *iter,
                                             char **dataptr,

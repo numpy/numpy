@@ -3869,7 +3869,7 @@ PyArray_CastRawArrays(npy_intp count,
     NPY_AUXDATA_FREE(transferdata);
 
     /* If needs_api was set to 1, it may have raised a Python exception */
-    return (needs_api && PyErr_Occurred()) ? NPY_FAIL : NPY_SUCCEED;
+    return PyErr_Occurred() ? NPY_FAIL : NPY_SUCCEED;
 }
 
 /*
@@ -4475,6 +4475,7 @@ PyArray_CastRawNDimArrays(int ndim, npy_intp *shape,
     /* Cleanup */
     NPY_AUXDATA_FREE(transferdata);
 
-    /* If needs_api was set to 1, it may have raised a Python exception */
-    return (needs_api && PyErr_Occurred()) ? NPY_FAIL : NPY_SUCCEED;
+    /* Regardless of whether needs_api is 1, we may have raised a Python exception
+       (by catching and releasing the GIL only on error if !needs_api). */
+    return PyErr_Occurred() ? NPY_FAIL : NPY_SUCCEED;
 }

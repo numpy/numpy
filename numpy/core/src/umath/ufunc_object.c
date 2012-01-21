@@ -2671,7 +2671,7 @@ finish_loop:
         NPY_END_THREADS;
     }
 
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+    return PyErr_Occurred() ? -1 : 0;
 }
 
 static int
@@ -2777,7 +2777,7 @@ finish_loop:
 
     NPY_AUXDATA_FREE(innerloopdata);
 
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
+    return PyErr_Occurred() ? -1 : 0;
 }
 
 /*
