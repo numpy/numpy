@@ -491,5 +491,14 @@ class TestEinSum(TestCase):
         assert_equal(np.einsum('ijklm,ijn,ijn->',a,b,b),
                         np.einsum('ijklm,ijn->',a,b))
 
+        # Issue #2027, was a problem in the contiguous 3-argument
+        # inner loop implementation
+        a = np.arange(1, 3)
+        b = np.arange(1, 5).reshape(2, 2)
+        c = np.arange(1, 9).reshape(4, 2)
+        assert_equal(np.einsum('x,yx,zx->xzy', a, b, c),
+                    [[[1,  3], [3,  9], [5, 15], [7, 21]],
+                    [[8, 16], [16, 32], [24, 48], [32, 64]]])
+
 if __name__ == "__main__":
     run_module_suite()

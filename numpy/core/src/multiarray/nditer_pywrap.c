@@ -170,7 +170,12 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
                 }
                 break;
             case 'g':
-                if (strcmp(str, "growinner") == 0) {
+                /*
+                 * Documentation is grow_inner, but initial implementation
+                 * was growinner, so allowing for either.
+                 */
+                if (strcmp(str, "grow_inner") == 0 ||
+                            strcmp(str, "growinner") == 0) {
                     flag = NPY_ITER_GROWINNER;
                 }
                 break;
