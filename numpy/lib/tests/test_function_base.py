@@ -265,10 +265,12 @@ class TestDiff(TestCase):
 
 class TestGradient(TestCase):
     def test_basic(self):
-        x = array([[1, 1], [3, 4]])
+        v = [[1, 1], [3, 4]]
+        x = array(v)
         dx = [array([[2., 3.], [2., 3.]]),
               array([[0., 0.], [1., 1.]])]
         assert_array_equal(gradient(x), dx)
+        assert_array_equal(gradient(v), dx)
 
     def test_badargs(self):
         # for 2D array, gradient can take 0,1, or 2 extra args
@@ -280,6 +282,22 @@ class TestGradient(TestCase):
         # Make sure that gradient supports subclasses like masked arrays
         x = np.ma.array([[1, 1], [3, 4]])
         assert_equal(type(gradient(x)[0]), type(x))
+
+    def test_datetime64(self):
+        # Make sure gradient() can handle special types like datetime64
+        x = array(['1910-08-16', '1910-08-11', '1910-08-10', '1910-08-12',
+                   '1910-10-12', '1910-12-12', '1912-12-12'],
+                  dtype='datetime64[D]')
+        dx = array([ -5,  -3,   0,  31,  61, 396, 731], dtype='timedelta64[D]')
+        assert_array_equal(gradient(x), dx)
+        assert_(dx.dtype == np.dtype('timedelta64[D]'))
+
+    def test_timedelta64(self):
+        # Make sure gradient() can handle special types like timedelta64
+        x = array([-5, -3, 10, 12, 61, 321, 300], dtype='timedelta64[D]')
+        dx = array([ 2, 7, 7, 25, 154, 119, -21], dtype='timedelta64[D]')
+        assert_array_equal(gradient(x), dx)
+        assert_(dx.dtype == np.dtype('timedelta64[D]'))
 
 
 class TestAngle(TestCase):
