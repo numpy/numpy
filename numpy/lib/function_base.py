@@ -897,6 +897,9 @@ def gradient(f, *varargs):
     if otype == 'M' :
         # Need to use the full dtype name because it contains unit information
         otype = f.dtype.name.replace('datetime', 'timedelta')
+    elif otype == 'm' :
+        # Needs to keep the specific units, can't be a general unit
+        otype = f.dtype
 
     for axis in range(N):
         # select out appropriate parts for this dimension
