@@ -281,6 +281,20 @@ class TestGradient(TestCase):
         x = np.ma.array([[1, 1], [3, 4]])
         assert_equal(type(gradient(x)[0]), type(x))
 
+    def test_datetime64(self):
+        # Make sure gradient() can handle special types like datetime64
+        x = array(['1910-08-16', '1910-08-11', '1910-08-10', '1910-08-12',
+                   '1910-10-12', '1910-12-12', '1912-12-12'],
+                  dtype='datetime64[D]')
+        dx = array([ -5,  -3,   0,  31,  61, 396, 731], dtype='timedelta64[D]')
+        assert_array_equal(gradient(x), dx)
+
+    def test_timedelta64(self):
+        # Make sure gradient() can handle special types like timedelta64
+        x = array([-5, -3, 10, 12, 61, 321, 300], dtype='timedelta64[D]')
+        dx = array([ 2, 7, 7, 25, 154, 119, -21], dtype='timedelta64[D]')
+        assert_array_equal(gradient(x), dx)
+
 
 class TestAngle(TestCase):
     def test_basic(self):
