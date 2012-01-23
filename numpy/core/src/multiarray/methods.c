@@ -917,6 +917,14 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
             return NULL;
         }
 
+        /* Keep maskna property */
+        if (PyArray_HASMASKNA(self)) {
+            if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
+                Py_DECREF(ret);
+                return NULL;
+            }
+        }
+
         if (PyArray_CopyInto(ret, self) < 0) {
             Py_DECREF(ret);
             return NULL;

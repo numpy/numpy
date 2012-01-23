@@ -1828,6 +1828,9 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
         else {
             newtype = PyArray_DescrFromObject(otmp, stype);
             Py_XDECREF(stype);
+            if (newtype == NULL) {
+                goto fail;
+            }
             stype = newtype;
             scalarkind = PyArray_ScalarKind(newtype->type_num, NULL);
             mps[i] = (PyArrayObject *)Py_None;
@@ -1835,7 +1838,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
         }
         Py_XDECREF(otmp);
     }
-    if (intype==NULL) {
+    if (intype == NULL) {
         /* all scalars */
         allscalars = 1;
         intype = stype;

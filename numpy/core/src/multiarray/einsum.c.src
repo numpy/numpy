@@ -948,6 +948,7 @@ static void
 /**end repeat2**/
         data0 += 8;
         data1 += 8;
+        data2 += 8;
         data_out += 8;
     }
 

@@ -1582,7 +1582,31 @@ local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
 }
 
 /*NUMPY_API
- * Numeric.searchsorted(a,v)
+ *
+ * Search the sorted array op1 for the location of the items in op2. The
+ * result is an array of indexes, one for each element in op2, such that if
+ * the item were to be inserted in op1 just before that index the array
+ * would still be in sorted order.
+ *
+ * Parameters
+ * ----------
+ * op1 : PyArrayObject *
+ *     Array to be searched, must be 1-D.
+ * op2 : PyObject *
+ *     Array of items whose insertion indexes in op1 are wanted
+ * side : {NPY_SEARCHLEFT, NPY_SEARCHRIGHT}
+ *     If NPY_SEARCHLEFT, return first valid insertion indexes
+ *     If NPY_SEARCHRIGHT, return last valid insertion indexes
+ *
+ * Returns
+ * -------
+ * ret : PyObject *
+ *   New reference to npy_intp array containing indexes where items in op2
+ *   could be validly inserted into op1. NULL on error.
+ *
+ * Notes
+ * -----
+ * Binary search is used to find the indexes.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
@@ -1593,7 +1617,12 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
     PyArray_Descr *dtype;
     NPY_BEGIN_THREADS_DEF;
 
+    /* Find common type */
     dtype = PyArray_DescrFromObject((PyObject *)op2, PyArray_DESCR(op1));
+    if (dtype == NULL) {
+        return NULL;
+    }
+
     /* need ap1 as contiguous array and of right type */
     Py_INCREF(dtype);
     ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
@@ -1611,6 +1640,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
     if (ap2 == NULL) {
         goto fail;
     }
+
     /* ret is a contiguous array of intp type to hold returned indices */
     ret = (PyArrayObject *)PyArray_New(Py_TYPE(ap2), PyArray_NDIM(ap2),
                                        PyArray_DIMS(ap2), NPY_INTP,
