@@ -302,6 +302,14 @@ fail:
 
 static char arr_insert__doc__[] = "Insert vals sequentially into equivalent 1-d positions indicated by mask.";
 
+/*
+ * Insert values from an input array into an output array, at positions
+ * indicated by a mask. If the arrays are of dtype object (indicated by
+ * the objarray flag), take care of reference counting.
+ *
+ * This function implements the copying logic of arr_insert() defined
+ * below.
+ */
 static void
 arr_insert_loop(char *mptr, char *vptr, char *input_data, char *zero,
                 char *avals_data, int melsize, int delsize, int objarray,
