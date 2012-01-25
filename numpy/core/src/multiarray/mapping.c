@@ -299,7 +299,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
 
     PyArrayObject *ret, *temp;
     PyArrayIterObject *it;
-    int counter;
+    npy_intp counter;
     int swap;
     PyArray_CopySwapFunc *copyswap;
 
@@ -359,7 +359,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
 {
     PyArrayObject *arr = NULL;
     PyArrayIterObject *it;
-    int counter;
+    npy_intp counter;
     int swap;
     PyArray_CopySwapFunc *copyswap;
     PyArray_Descr *descr;
