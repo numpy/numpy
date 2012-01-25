@@ -676,7 +676,7 @@ array_toscalar(PyArrayObject *self, PyObject *args)
         else {
             PyErr_SetString(PyExc_ValueError,
                             "can only convert an array "
-                            " of size 1 to a Python scalar");
+                            "of size 1 to a Python scalar");
         }
     }
     /* Special case of C-order flat indexing... :| */
@@ -739,6 +739,12 @@ array_setscalar(PyArrayObject *self, PyObject *args)
                         "itemset must have at least one argument");
         return NULL;
     }
+    if (!PyArray_ISWRITEABLE(self)) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "array is not writeable");
+        return NULL;
+    }
+
     obj = PyTuple_GET_ITEM(args, n);
 
     /* If there is a tuple as a single argument, treat it as the argument */
@@ -756,7 +762,7 @@ array_setscalar(PyArrayObject *self, PyObject *args)
         else {
             PyErr_SetString(PyExc_ValueError,
                             "can only convert an array "
-                            " of size 1 to a Python scalar");
+                            "of size 1 to a Python scalar");
         }
     }
     /* Special case of C-order flat indexing... :| */
