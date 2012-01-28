@@ -1155,8 +1155,9 @@ cdef class RandomState:
 
         Parameters
         ----------
-        d0, d1, ..., dn : int
-            Shape of the output.
+        d0, d1, ..., dn : int, optional
+            The dimensions of the returned array, should all be positive.
+            If no argument is given a single Python float is returned.
 
         Returns
         -------
@@ -1205,8 +1206,9 @@ cdef class RandomState:
 
         Parameters
         ----------
-        d0, d1, ..., dn : `n` ints, optional
+        d0, d1, ..., dn : int, optional
             The dimensions of the returned array, should be all positive.
+            If no argument is given a single Python float is returned.
 
         Returns
         -------
