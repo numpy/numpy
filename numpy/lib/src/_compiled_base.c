@@ -754,7 +754,7 @@ arr_ravel_multi_index(PyObject *self, PyObject *args, PyObject *kwds)
     PyArrayObject *ret = NULL;
     PyArray_Dims dimensions={0,0};
     npy_intp ravel_strides[NPY_MAXDIMS];
-    PyArray_ORDER order = NPY_CORDER;
+    NPY_ORDER order = NPY_CORDER;
     NPY_CLIPMODE modes[NPY_MAXDIMS];
 
     PyArrayObject *op[NPY_MAXARGS];
@@ -962,7 +962,7 @@ arr_unravel_index(PyObject *self, PyObject *args, PyObject *kwds)
     PyArrayObject *indices = NULL;
     PyArray_Descr *dtype = NULL;
     PyArray_Dims dimensions={0,0};
-    PyArray_ORDER order = PyArray_CORDER;
+    NPY_ORDER order = NPY_CORDER;
     npy_intp unravel_size;
 
     NpyIter *iter = NULL;
