@@ -662,9 +662,9 @@ _signbit_set(PyArrayObject *arr)
     byteorder = PyArray_DESCR(arr)->byteorder;
     ptr = PyArray_DATA(arr);
     if (elsize > 1 &&
-        (byteorder == PyArray_LITTLE ||
-         (byteorder == PyArray_NATIVE &&
-          PyArray_ISNBO(PyArray_LITTLE)))) {
+        (byteorder == NPY_LITTLE ||
+         (byteorder == NPY_NATIVE &&
+          PyArray_ISNBO(NPY_LITTLE)))) {
         ptr += elsize - 1;
     }
     return ((*ptr & bitmask) != 0);
@@ -684,14 +684,14 @@ _signbit_set(PyArrayObject *arr)
 NPY_NO_EXPORT NPY_SCALARKIND
 PyArray_ScalarKind(int typenum, PyArrayObject **arr)
 {
-    NPY_SCALARKIND ret = PyArray_NOSCALAR;
+    NPY_SCALARKIND ret = NPY_NOSCALAR;
 
     if ((unsigned int)typenum < NPY_NTYPES) {
         ret = _npy_scalar_kinds_table[typenum];
         /* Signed integer types are INTNEG in the table */
-        if (ret == PyArray_INTNEG_SCALAR) {
+        if (ret == NPY_INTNEG_SCALAR) {
             if (!arr || !_signbit_set(*arr)) {
-                ret = PyArray_INTPOS_SCALAR;
+                ret = NPY_INTPOS_SCALAR;
             }
         }
     } else if (PyTypeNum_ISUSERDEF(typenum)) {
@@ -719,13 +719,13 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     int *castlist;
 
     /* If 'thistype' is not a scalar, it must be safely castable */
-    if (scalar == PyArray_NOSCALAR) {
+    if (scalar == NPY_NOSCALAR) {
         return PyArray_CanCastSafely(thistype, neededtype);
     }
     if ((unsigned int)neededtype < NPY_NTYPES) {
         NPY_SCALARKIND neededscalar;
 
-        if (scalar == PyArray_OBJECT_SCALAR) {
+        if (scalar == NPY_OBJECT_SCALAR) {
             return PyArray_CanCastSafely(thistype, neededtype);
         }
 
@@ -754,7 +754,7 @@ PyArray_CanCoerceScalar(int thistype, int neededtype,
     from = PyArray_DescrFromType(thistype);
     if (from->f->cancastscalarkindto
         && (castlist = from->f->cancastscalarkindto[scalar])) {
-        while (*castlist != PyArray_NOTYPE) {
+        while (*castlist != NPY_NOTYPE) {
             if (*castlist++ == neededtype) {
                 Py_DECREF(from);
                 return 1;

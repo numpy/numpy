@@ -19,27 +19,27 @@ NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op)
 {
     if (PyFloat_Check(op)) {
-        return PyArray_DescrFromType(PyArray_DOUBLE);
+        return PyArray_DescrFromType(NPY_DOUBLE);
     }
     else if (PyComplex_Check(op)) {
-        return PyArray_DescrFromType(PyArray_CDOUBLE);
+        return PyArray_DescrFromType(NPY_CDOUBLE);
     }
     else if (PyInt_Check(op)) {
         /* bools are a subclass of int */
         if (PyBool_Check(op)) {
-            return PyArray_DescrFromType(PyArray_BOOL);
+            return PyArray_DescrFromType(NPY_BOOL);
         }
         else {
-            return  PyArray_DescrFromType(PyArray_LONG);
+            return  PyArray_DescrFromType(NPY_LONG);
         }
     }
     else if (PyLong_Check(op)) {
         /* if integer can fit into a longlong then return that*/
         if ((PyLong_AsLongLong(op) == -1) && PyErr_Occurred()) {
             PyErr_Clear();
-            return PyArray_DescrFromType(PyArray_OBJECT);
+            return PyArray_DescrFromType(NPY_OBJECT);
         }
-        return PyArray_DescrFromType(PyArray_LONGLONG);
+        return PyArray_DescrFromType(NPY_LONGLONG);
     }
     return NULL;
 }

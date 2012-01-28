@@ -379,7 +379,7 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
     if (!PyArray_IntpConverter(shape, &newdims)) {
         return NULL;
     }
-    ret = PyArray_Newshape(self, &newdims, PyArray_CORDER);
+    ret = PyArray_Newshape(self, &newdims, NPY_CORDER);
     PyDimMem_FREE(newdims.ptr);
     return ret;
 }
@@ -433,7 +433,7 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
     if (!PyDataType_FLAGCHK(dtype, NPY_ITEM_REFCOUNT)) {
         memset(optr, 0, dtype->elsize);
     }
-    else if (PyDescr_HASFIELDS(dtype)) {
+    else if (PyDataType_HASFIELDS(dtype)) {
         PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
         int offset;

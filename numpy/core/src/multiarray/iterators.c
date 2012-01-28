@@ -882,7 +882,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     }
 
     /* convert to INTP array if Integer array scalar or List */
-    indtype = PyArray_DescrFromType(PyArray_INTP);
+    indtype = PyArray_DescrFromType(NPY_INTP);
     if (PyArray_IsScalar(ind, Integer) || PyList_Check(ind)) {
         Py_INCREF(indtype);
         obj = PyArray_FromAny(ind, indtype, 0, 0, NPY_ARRAY_FORCECAST, NULL);
@@ -1145,7 +1145,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     }
 
     /* convert to INTP array if Integer array scalar or List */
-    indtype = PyArray_DescrFromType(PyArray_INTP);
+    indtype = PyArray_DescrFromType(NPY_INTP);
     if (PyList_Check(ind)) {
         Py_INCREF(indtype);
         obj = PyArray_FromAny(ind, indtype, 0, 0, NPY_ARRAY_FORCECAST, NULL);
@@ -1157,7 +1157,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 
     if (obj != NULL && PyArray_Check(obj)) {
         /* Check for Boolean object */
-        if (PyArray_TYPE((PyArrayObject *)obj)==PyArray_BOOL) {
+        if (PyArray_TYPE((PyArrayObject *)obj)==NPY_BOOL) {
             if (iter_ass_sub_Bool(self, (PyArrayObject *)obj,
                                   val_it, swap) < 0) {
                 goto finish;
