@@ -156,12 +156,12 @@ lapack_lite_dgeev(PyObject *NPY_UNUSED(self), PyObject *args)
                          &jobvl,&jobvr,&n,&a,&lda,&wr,&wi,&vl,&ldvl,
                          &vr,&ldvr,&work,&lwork,&info));
 
-    TRY(check_object(a,PyArray_DOUBLE,"a","PyArray_DOUBLE","dgeev"));
-    TRY(check_object(wr,PyArray_DOUBLE,"wr","PyArray_DOUBLE","dgeev"));
-    TRY(check_object(wi,PyArray_DOUBLE,"wi","PyArray_DOUBLE","dgeev"));
-    TRY(check_object(vl,PyArray_DOUBLE,"vl","PyArray_DOUBLE","dgeev"));
-    TRY(check_object(vr,PyArray_DOUBLE,"vr","PyArray_DOUBLE","dgeev"));
-    TRY(check_object(work,PyArray_DOUBLE,"work","PyArray_DOUBLE","dgeev"));
+    TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dgeev"));
+    TRY(check_object(wr,NPY_DOUBLE,"wr","NPY_DOUBLE","dgeev"));
+    TRY(check_object(wi,NPY_DOUBLE,"wi","NPY_DOUBLE","dgeev"));
+    TRY(check_object(vl,NPY_DOUBLE,"vl","NPY_DOUBLE","dgeev"));
+    TRY(check_object(vr,NPY_DOUBLE,"vr","NPY_DOUBLE","dgeev"));
+    TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dgeev"));
 
     lapack_lite_status__ = \
             FNAME(dgeev)(&jobvl,&jobvr,&n,DDATA(a),&lda,DDATA(wr),DDATA(wi),
@@ -242,10 +242,10 @@ lapack_lite_dsyevd(PyObject *NPY_UNUSED(self), PyObject *args)
                          &jobz,&uplo,&n,&a,&lda,&w,&work,&lwork,
                          &iwork,&liwork,&info));
 
-    TRY(check_object(a,PyArray_DOUBLE,"a","PyArray_DOUBLE","dsyevd"));
-    TRY(check_object(w,PyArray_DOUBLE,"w","PyArray_DOUBLE","dsyevd"));
-    TRY(check_object(work,PyArray_DOUBLE,"work","PyArray_DOUBLE","dsyevd"));
-    TRY(check_object(iwork,PyArray_INT,"iwork","PyArray_INT","dsyevd"));
+    TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dsyevd"));
+    TRY(check_object(w,NPY_DOUBLE,"w","NPY_DOUBLE","dsyevd"));
+    TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dsyevd"));
+    TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","dsyevd"));
 
     lapack_lite_status__ = \
             FNAME(dsyevd)(&jobz,&uplo,&n,DDATA(a),&lda,DDATA(w),DDATA(work),
@@ -328,11 +328,11 @@ lapack_lite_zheevd(PyObject *NPY_UNUSED(self), PyObject *args)
                          &jobz,&uplo,&n,&a,&lda,&w,&work,&lwork,&rwork,
                          &lrwork,&iwork,&liwork,&info));
 
-    TRY(check_object(a,PyArray_CDOUBLE,"a","PyArray_CDOUBLE","zheevd"));
-    TRY(check_object(w,PyArray_DOUBLE,"w","PyArray_DOUBLE","zheevd"));
-    TRY(check_object(work,PyArray_CDOUBLE,"work","PyArray_CDOUBLE","zheevd"));
-    TRY(check_object(w,PyArray_DOUBLE,"rwork","PyArray_DOUBLE","zheevd"));
-    TRY(check_object(iwork,PyArray_INT,"iwork","PyArray_INT","zheevd"));
+    TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zheevd"));
+    TRY(check_object(w,NPY_DOUBLE,"w","NPY_DOUBLE","zheevd"));
+    TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zheevd"));
+    TRY(check_object(w,NPY_DOUBLE,"rwork","NPY_DOUBLE","zheevd"));
+    TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","zheevd"));
 
     lapack_lite_status__ = \
     FNAME(zheevd)(&jobz,&uplo,&n,ZDATA(a),&lda,DDATA(w),ZDATA(work),
@@ -366,11 +366,11 @@ lapack_lite_dgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
                          &m,&n,&nrhs,&a,&lda,&b,&ldb,&s,&rcond,
                          &rank,&work,&lwork,&iwork,&info));
 
-    TRY(check_object(a,PyArray_DOUBLE,"a","PyArray_DOUBLE","dgelsd"));
-    TRY(check_object(b,PyArray_DOUBLE,"b","PyArray_DOUBLE","dgelsd"));
-    TRY(check_object(s,PyArray_DOUBLE,"s","PyArray_DOUBLE","dgelsd"));
-    TRY(check_object(work,PyArray_DOUBLE,"work","PyArray_DOUBLE","dgelsd"));
-    TRY(check_object(iwork,PyArray_INT,"iwork","PyArray_INT","dgelsd"));
+    TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dgelsd"));
+    TRY(check_object(b,NPY_DOUBLE,"b","NPY_DOUBLE","dgelsd"));
+    TRY(check_object(s,NPY_DOUBLE,"s","NPY_DOUBLE","dgelsd"));
+    TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dgelsd"));
+    TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","dgelsd"));
 
     lapack_lite_status__ = \
             FNAME(dgelsd)(&m,&n,&nrhs,DDATA(a),&lda,DDATA(b),&ldb,
@@ -397,9 +397,9 @@ lapack_lite_dgesv(PyObject *NPY_UNUSED(self), PyObject *args)
     int info;
     TRY(PyArg_ParseTuple(args,"iiOiOOii",&n,&nrhs,&a,&lda,&ipiv,&b,&ldb,&info));
 
-    TRY(check_object(a,PyArray_DOUBLE,"a","PyArray_DOUBLE","dgesv"));
-    TRY(check_object(ipiv,PyArray_INT,"ipiv","PyArray_INT","dgesv"));
-    TRY(check_object(b,PyArray_DOUBLE,"b","PyArray_DOUBLE","dgesv"));
+    TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dgesv"));
+    TRY(check_object(ipiv,NPY_INT,"ipiv","NPY_INT","dgesv"));
+    TRY(check_object(b,NPY_DOUBLE,"b","NPY_DOUBLE","dgesv"));
 
     lapack_lite_status__ = \
     FNAME(dgesv)(&n,&nrhs,DDATA(a),&lda,IDATA(ipiv),DDATA(b),&ldb,&info);
@@ -431,12 +431,12 @@ lapack_lite_dgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
                          &jobz,&m,&n,&a,&lda,&s,&u,&ldu,&vt,&ldvt,
                          &work,&lwork,&iwork,&info));
 
-    TRY(check_object(a,PyArray_DOUBLE,"a","PyArray_DOUBLE","dgesdd"));
-    TRY(check_object(s,PyArray_DOUBLE,"s","PyArray_DOUBLE","dgesdd"));
-    TRY(check_object(u,PyArray_DOUBLE,"u","PyArray_DOUBLE","dgesdd"));
-    TRY(check_object(vt,PyArray_DOUBLE,"vt","PyArray_DOUBLE","dgesdd"));
-    TRY(check_object(work,PyArray_DOUBLE,"work","PyArray_DOUBLE","dgesdd"));
-    TRY(check_object(iwork,PyArray_INT,"iwork","PyArray_INT","dgesdd"));
+    TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dgesdd"));
+    TRY(check_object(s,NPY_DOUBLE,"s","NPY_DOUBLE","dgesdd"));
+    TRY(check_object(u,NPY_DOUBLE,"u","NPY_DOUBLE","dgesdd"));
+    TRY(check_object(vt,NPY_DOUBLE,"vt","NPY_DOUBLE","dgesdd"));
+    TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dgesdd"));
+    TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","dgesdd"));
 
     lapack_lite_status__ = \
             FNAME(dgesdd)(&jobz,&m,&n,DDATA(a),&lda,DDATA(s),DDATA(u),&ldu,
@@ -487,8 +487,8 @@ lapack_lite_dgetrf(PyObject *NPY_UNUSED(self), PyObject *args)
     int info;
     TRY(PyArg_ParseTuple(args,"iiOiOi",&m,&n,&a,&lda,&ipiv,&info));
 
-    TRY(check_object(a,PyArray_DOUBLE,"a","PyArray_DOUBLE","dgetrf"));
-    TRY(check_object(ipiv,PyArray_INT,"ipiv","PyArray_INT","dgetrf"));
+    TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dgetrf"));
+    TRY(check_object(ipiv,NPY_INT,"ipiv","NPY_INT","dgetrf"));
 
     lapack_lite_status__ = \
             FNAME(dgetrf)(&m,&n,DDATA(a),&lda,IDATA(ipiv),&info);
@@ -508,7 +508,7 @@ lapack_lite_dpotrf(PyObject *NPY_UNUSED(self), PyObject *args)
     int info;
 
     TRY(PyArg_ParseTuple(args,"ciOii",&uplo,&n,&a,&lda,&info));
-    TRY(check_object(a,PyArray_DOUBLE,"a","PyArray_DOUBLE","dpotrf"));
+    TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dpotrf"));
 
     lapack_lite_status__ = \
             FNAME(dpotrf)(&uplo,&n,DDATA(a),&lda,&info);
@@ -529,9 +529,9 @@ lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
         TRY(PyArg_ParseTuple(args,"iiOiOOii",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
 
         /* check objects and convert to right storage order */
-        TRY(check_object(a,PyArray_DOUBLE,"a","PyArray_DOUBLE","dgeqrf"));
-        TRY(check_object(tau,PyArray_DOUBLE,"tau","PyArray_DOUBLE","dgeqrf"));
-        TRY(check_object(work,PyArray_DOUBLE,"work","PyArray_DOUBLE","dgeqrf"));
+        TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dgeqrf"));
+        TRY(check_object(tau,NPY_DOUBLE,"tau","NPY_DOUBLE","dgeqrf"));
+        TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dgeqrf"));
 
         lapack_lite_status__ = \
                 FNAME(dgeqrf)(&m, &n, DDATA(a), &lda, DDATA(tau),
@@ -553,9 +553,9 @@ lapack_lite_dorgqr(PyObject *NPY_UNUSED(self), PyObject *args)
         int info;
 
         TRY(PyArg_ParseTuple(args,"iiiOiOOii",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
-        TRY(check_object(a,PyArray_DOUBLE,"a","PyArray_DOUBLE","dorgqr"));
-        TRY(check_object(tau,PyArray_DOUBLE,"tau","PyArray_DOUBLE","dorgqr"));
-        TRY(check_object(work,PyArray_DOUBLE,"work","PyArray_DOUBLE","dorgqr"));
+        TRY(check_object(a,NPY_DOUBLE,"a","NPY_DOUBLE","dorgqr"));
+        TRY(check_object(tau,NPY_DOUBLE,"tau","NPY_DOUBLE","dorgqr"));
+        TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dorgqr"));
         lapack_lite_status__ = \
         FNAME(dorgqr)(&m, &n, &k, DDATA(a), &lda, DDATA(tau), DDATA(work), &lwork, &info);
 
@@ -586,12 +586,12 @@ lapack_lite_zgeev(PyObject *NPY_UNUSED(self), PyObject *args)
                          &jobvl,&jobvr,&n,&a,&lda,&w,&vl,&ldvl,
                          &vr,&ldvr,&work,&lwork,&rwork,&info));
 
-    TRY(check_object(a,PyArray_CDOUBLE,"a","PyArray_CDOUBLE","zgeev"));
-    TRY(check_object(w,PyArray_CDOUBLE,"w","PyArray_CDOUBLE","zgeev"));
-    TRY(check_object(vl,PyArray_CDOUBLE,"vl","PyArray_CDOUBLE","zgeev"));
-    TRY(check_object(vr,PyArray_CDOUBLE,"vr","PyArray_CDOUBLE","zgeev"));
-    TRY(check_object(work,PyArray_CDOUBLE,"work","PyArray_CDOUBLE","zgeev"));
-    TRY(check_object(rwork,PyArray_DOUBLE,"rwork","PyArray_DOUBLE","zgeev"));
+    TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zgeev"));
+    TRY(check_object(w,NPY_CDOUBLE,"w","NPY_CDOUBLE","zgeev"));
+    TRY(check_object(vl,NPY_CDOUBLE,"vl","NPY_CDOUBLE","zgeev"));
+    TRY(check_object(vr,NPY_CDOUBLE,"vr","NPY_CDOUBLE","zgeev"));
+    TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zgeev"));
+    TRY(check_object(rwork,NPY_DOUBLE,"rwork","NPY_DOUBLE","zgeev"));
 
     lapack_lite_status__ = \
             FNAME(zgeev)(&jobvl,&jobvr,&n,ZDATA(a),&lda,ZDATA(w),ZDATA(vl),
@@ -627,12 +627,12 @@ lapack_lite_zgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
                          &m,&n,&nrhs,&a,&lda,&b,&ldb,&s,&rcond,
                          &rank,&work,&lwork,&rwork,&iwork,&info));
 
-    TRY(check_object(a,PyArray_CDOUBLE,"a","PyArray_CDOUBLE","zgelsd"));
-    TRY(check_object(b,PyArray_CDOUBLE,"b","PyArray_CDOUBLE","zgelsd"));
-    TRY(check_object(s,PyArray_DOUBLE,"s","PyArray_DOUBLE","zgelsd"));
-    TRY(check_object(work,PyArray_CDOUBLE,"work","PyArray_CDOUBLE","zgelsd"));
-    TRY(check_object(rwork,PyArray_DOUBLE,"rwork","PyArray_DOUBLE","zgelsd"));
-    TRY(check_object(iwork,PyArray_INT,"iwork","PyArray_INT","zgelsd"));
+    TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zgelsd"));
+    TRY(check_object(b,NPY_CDOUBLE,"b","NPY_CDOUBLE","zgelsd"));
+    TRY(check_object(s,NPY_DOUBLE,"s","NPY_DOUBLE","zgelsd"));
+    TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zgelsd"));
+    TRY(check_object(rwork,NPY_DOUBLE,"rwork","NPY_DOUBLE","zgelsd"));
+    TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","zgelsd"));
 
     lapack_lite_status__ = \
     FNAME(zgelsd)(&m,&n,&nrhs,ZDATA(a),&lda,ZDATA(b),&ldb,DDATA(s),&rcond,
@@ -657,9 +657,9 @@ lapack_lite_zgesv(PyObject *NPY_UNUSED(self), PyObject *args)
     int info;
     TRY(PyArg_ParseTuple(args,"iiOiOOii",&n,&nrhs,&a,&lda,&ipiv,&b,&ldb,&info));
 
-    TRY(check_object(a,PyArray_CDOUBLE,"a","PyArray_CDOUBLE","zgesv"));
-    TRY(check_object(ipiv,PyArray_INT,"ipiv","PyArray_INT","zgesv"));
-    TRY(check_object(b,PyArray_CDOUBLE,"b","PyArray_CDOUBLE","zgesv"));
+    TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zgesv"));
+    TRY(check_object(ipiv,NPY_INT,"ipiv","NPY_INT","zgesv"));
+    TRY(check_object(b,NPY_CDOUBLE,"b","NPY_CDOUBLE","zgesv"));
 
     lapack_lite_status__ = \
     FNAME(zgesv)(&n,&nrhs,ZDATA(a),&lda,IDATA(ipiv),ZDATA(b),&ldb,&info);
@@ -692,13 +692,13 @@ lapack_lite_zgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
                          &jobz,&m,&n,&a,&lda,&s,&u,&ldu,
                          &vt,&ldvt,&work,&lwork,&rwork,&iwork,&info));
 
-    TRY(check_object(a,PyArray_CDOUBLE,"a","PyArray_CDOUBLE","zgesdd"));
-    TRY(check_object(s,PyArray_DOUBLE,"s","PyArray_DOUBLE","zgesdd"));
-    TRY(check_object(u,PyArray_CDOUBLE,"u","PyArray_CDOUBLE","zgesdd"));
-    TRY(check_object(vt,PyArray_CDOUBLE,"vt","PyArray_CDOUBLE","zgesdd"));
-    TRY(check_object(work,PyArray_CDOUBLE,"work","PyArray_CDOUBLE","zgesdd"));
-    TRY(check_object(rwork,PyArray_DOUBLE,"rwork","PyArray_DOUBLE","zgesdd"));
-    TRY(check_object(iwork,PyArray_INT,"iwork","PyArray_INT","zgesdd"));
+    TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zgesdd"));
+    TRY(check_object(s,NPY_DOUBLE,"s","NPY_DOUBLE","zgesdd"));
+    TRY(check_object(u,NPY_CDOUBLE,"u","NPY_CDOUBLE","zgesdd"));
+    TRY(check_object(vt,NPY_CDOUBLE,"vt","NPY_CDOUBLE","zgesdd"));
+    TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zgesdd"));
+    TRY(check_object(rwork,NPY_DOUBLE,"rwork","NPY_DOUBLE","zgesdd"));
+    TRY(check_object(iwork,NPY_INT,"iwork","NPY_INT","zgesdd"));
 
     lapack_lite_status__ = \
     FNAME(zgesdd)(&jobz,&m,&n,ZDATA(a),&lda,DDATA(s),ZDATA(u),&ldu,
@@ -723,8 +723,8 @@ lapack_lite_zgetrf(PyObject *NPY_UNUSED(self), PyObject *args)
     int info;
     TRY(PyArg_ParseTuple(args,"iiOiOi",&m,&n,&a,&lda,&ipiv,&info));
 
-    TRY(check_object(a,PyArray_CDOUBLE,"a","PyArray_CDOUBLE","zgetrf"));
-    TRY(check_object(ipiv,PyArray_INT,"ipiv","PyArray_INT","zgetrf"));
+    TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zgetrf"));
+    TRY(check_object(ipiv,NPY_INT,"ipiv","NPY_INT","zgetrf"));
 
     lapack_lite_status__ = \
     FNAME(zgetrf)(&m,&n,ZDATA(a),&lda,IDATA(ipiv),&info);
@@ -744,7 +744,7 @@ lapack_lite_zpotrf(PyObject *NPY_UNUSED(self), PyObject *args)
     int info;
 
     TRY(PyArg_ParseTuple(args,"ciOii",&uplo,&n,&a,&lda,&info));
-    TRY(check_object(a,PyArray_CDOUBLE,"a","PyArray_CDOUBLE","zpotrf"));
+    TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zpotrf"));
     lapack_lite_status__ = \
     FNAME(zpotrf)(&uplo,&n,ZDATA(a),&lda,&info);
 
@@ -764,9 +764,9 @@ lapack_lite_zgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
         TRY(PyArg_ParseTuple(args,"iiOiOOii",&m,&n,&a,&lda,&tau,&work,&lwork,&info));
 
 /* check objects and convert to right storage order */
-        TRY(check_object(a,PyArray_CDOUBLE,"a","PyArray_CDOUBLE","zgeqrf"));
-        TRY(check_object(tau,PyArray_CDOUBLE,"tau","PyArray_CDOUBLE","zgeqrf"));
-        TRY(check_object(work,PyArray_CDOUBLE,"work","PyArray_CDOUBLE","zgeqrf"));
+        TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zgeqrf"));
+        TRY(check_object(tau,NPY_CDOUBLE,"tau","NPY_CDOUBLE","zgeqrf"));
+        TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zgeqrf"));
 
         lapack_lite_status__ = \
         FNAME(zgeqrf)(&m, &n, ZDATA(a), &lda, ZDATA(tau), ZDATA(work), &lwork, &info);
@@ -785,9 +785,9 @@ lapack_lite_zungqr(PyObject *NPY_UNUSED(self), PyObject *args)
         int info;
 
         TRY(PyArg_ParseTuple(args,"iiiOiOOii",  &m, &n, &k, &a, &lda, &tau, &work, &lwork, &info));
-        TRY(check_object(a,PyArray_CDOUBLE,"a","PyArray_CDOUBLE","zungqr"));
-        TRY(check_object(tau,PyArray_CDOUBLE,"tau","PyArray_CDOUBLE","zungqr"));
-        TRY(check_object(work,PyArray_CDOUBLE,"work","PyArray_CDOUBLE","zungqr"));
+        TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zungqr"));
+        TRY(check_object(tau,NPY_CDOUBLE,"tau","NPY_CDOUBLE","zungqr"));
+        TRY(check_object(work,NPY_CDOUBLE,"work","NPY_CDOUBLE","zungqr"));
 
 
         lapack_lite_status__ = \
