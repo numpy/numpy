@@ -156,10 +156,10 @@ static PyObject *
 array_priority_get(PyArrayObject *self)
 {
     if (PyArray_CheckExact(self)) {
-        return PyFloat_FromDouble(PyArray_PRIORITY);
+        return PyFloat_FromDouble(NPY_PRIORITY);
     }
     else {
-        return PyFloat_FromDouble(PyArray_SUBTYPE_PRIORITY);
+        return PyFloat_FromDouble(NPY_PRIORITY);
     }
 }
 
@@ -601,14 +601,14 @@ _get_part(PyArrayObject *self, int imag)
     int offset;
 
     switch (PyArray_DESCR(self)->type_num) {
-        case PyArray_CFLOAT:
-            float_type_num = PyArray_FLOAT;
+        case NPY_CFLOAT:
+            float_type_num = NPY_FLOAT;
             break;
-        case PyArray_CDOUBLE:
-            float_type_num = PyArray_DOUBLE;
+        case NPY_CDOUBLE:
+            float_type_num = NPY_DOUBLE;
             break;
-        case PyArray_CLONGDOUBLE:
-            float_type_num = PyArray_LONGDOUBLE;
+        case NPY_CLONGDOUBLE:
+            float_type_num = NPY_LONGDOUBLE;
             break;
         default:
             PyErr_Format(PyExc_ValueError,

@@ -242,7 +242,7 @@ _swap_axes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
         for (i = 0; i < mit->nd-PyArray_NDIM(arr); i++) {
             permute.ptr[i] = 1;
         }
-        new = PyArray_Newshape(arr, &permute, PyArray_ANYORDER);
+        new = PyArray_Newshape(arr, &permute, NPY_ANYORDER);
         Py_DECREF(arr);
         *ret = (PyArrayObject *)new;
         if (new == NULL) {
@@ -1928,7 +1928,7 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
     /* create count-sized index arrays for each dimension */
     for (j = 0; j < nd; j++) {
         new = (PyArrayObject *)PyArray_New(&PyArray_Type, 1, &count,
-                                           PyArray_INTP, NULL, NULL,
+                                           NPY_INTP, NULL, NULL,
                                            0, 0, NULL);
         if (new == NULL) {
             goto fail;
@@ -2000,7 +2000,7 @@ _convert_obj(PyObject *obj, PyArrayIterObject **iter)
         return _nonzero_indices(obj, iter);
     }
     else {
-        indtype = PyArray_DescrFromType(PyArray_INTP);
+        indtype = PyArray_DescrFromType(NPY_INTP);
         arr = PyArray_FromAny(obj, indtype, 0, 0, NPY_ARRAY_FORCECAST, NULL);
         if (arr == NULL) {
             return -1;

@@ -279,10 +279,10 @@ _find_array_prepare(PyObject *args, PyObject *kwds,
         prep = preps[0];
         if (np > 1) {
             double maxpriority = PyArray_GetPriority(with_prep[0],
-                        PyArray_SUBTYPE_PRIORITY);
+                        NPY_PRIORITY);
             for (i = 1; i < np; ++i) {
                 double priority = PyArray_GetPriority(with_prep[i],
-                            PyArray_SUBTYPE_PRIORITY);
+                            NPY_PRIORITY);
                 if (priority > maxpriority) {
                     maxpriority = priority;
                     Py_DECREF(prep);
@@ -386,14 +386,14 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
     if ((*bufsize == -1) && PyErr_Occurred()) {
         return -1;
     }
-    if ((*bufsize < PyArray_MIN_BUFSIZE)
-        || (*bufsize > PyArray_MAX_BUFSIZE)
+    if ((*bufsize < NPY_MIN_BUFSIZE)
+        || (*bufsize > NPY_MAX_BUFSIZE)
         || (*bufsize % 16 != 0)) {
         PyErr_Format(PyExc_ValueError,
                      "buffer size (%d) is not in range "
                      "(%"INTP_FMT" - %"INTP_FMT") or not a multiple of 16",
-                     *bufsize, (intp) PyArray_MIN_BUFSIZE,
-                     (intp) PyArray_MAX_BUFSIZE);
+                     *bufsize, (intp) NPY_MIN_BUFSIZE,
+                     (intp) NPY_MAX_BUFSIZE);
         return -1;
     }
 
@@ -459,7 +459,7 @@ PyUFunc_GetPyValues(char *name, int *bufsize, int *errmask, PyObject **errobj)
     if (ref == NULL) {
         *errmask = UFUNC_ERR_DEFAULT;
         *errobj = Py_BuildValue("NO", PyBytes_FromString(name), Py_None);
-        *bufsize = PyArray_BUFSIZE;
+        *bufsize = NPY_BUFSIZE;
         return 0;
     }
     return _extract_pyvals(ref, name, bufsize, errmask, errobj);
@@ -3677,7 +3677,7 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
 
     if (operation == UFUNC_REDUCEAT) {
         PyArray_Descr *indtype;
-        indtype = PyArray_DescrFromType(PyArray_INTP);
+        indtype = PyArray_DescrFromType(NPY_INTP);
         if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|OO&O&i", kwlist2,
                                         &op,
                                         &obj_ind,
@@ -4003,10 +4003,10 @@ _find_array_wrap(PyObject *args, PyObject *kwds,
         wrap = wraps[0];
         if (np > 1) {
             double maxpriority = PyArray_GetPriority(with_wrap[0],
-                        PyArray_SUBTYPE_PRIORITY);
+                        NPY_PRIORITY);
             for (i = 1; i < np; ++i) {
                 double priority = PyArray_GetPriority(with_wrap[i],
-                            PyArray_SUBTYPE_PRIORITY);
+                            NPY_PRIORITY);
                 if (priority > maxpriority) {
                     maxpriority = priority;
                     Py_DECREF(wrap);
@@ -4221,7 +4221,7 @@ ufunc_geterr(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (res == NULL) {
         return NULL;
     }
-    PyList_SET_ITEM(res, 0, PyInt_FromLong(PyArray_BUFSIZE));
+    PyList_SET_ITEM(res, 0, PyInt_FromLong(NPY_BUFSIZE));
     PyList_SET_ITEM(res, 1, PyInt_FromLong(UFUNC_ERR_DEFAULT));
     PyList_SET_ITEM(res, 2, Py_None); Py_INCREF(Py_None);
     return res;
@@ -4248,7 +4248,7 @@ ufunc_update_use_defaults(void)
         Py_XDECREF(errobj);
         return -1;
     }
-    if ((errmask != UFUNC_ERR_DEFAULT) || (bufsize != PyArray_BUFSIZE)
+    if ((errmask != UFUNC_ERR_DEFAULT) || (bufsize != NPY_BUFSIZE)
             || (PyTuple_GET_ITEM(errobj, 1) != Py_None)) {
         PyUFunc_NUM_NODEFAULTS += 1;
     }
@@ -4507,7 +4507,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     int *newtypes=NULL;
 
     descr=PyArray_DescrFromType(usertype);
-    if ((usertype < PyArray_USERDEF) || (descr==NULL)) {
+    if ((usertype < NPY_USERDEF) || (descr==NULL)) {
         PyErr_SetString(PyExc_TypeError, "unknown user-defined type");
         return -1;
     }
@@ -4688,7 +4688,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (tmp == NULL) {
         return NULL;
     }
-    ap1 = (PyArrayObject *) PyArray_FromObject(tmp, PyArray_NOTYPE, 0, 0);
+    ap1 = (PyArrayObject *) PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
     Py_DECREF(tmp);
     if (ap1 == NULL) {
         return NULL;
@@ -4697,7 +4697,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (tmp == NULL) {
         return NULL;
     }
-    ap2 = (PyArrayObject *)PyArray_FromObject(tmp, PyArray_NOTYPE, 0, 0);
+    ap2 = (PyArrayObject *)PyArray_FromObject(tmp, NPY_NOTYPE, 0, 0);
     Py_DECREF(tmp);
     if (ap2 == NULL) {
         Py_DECREF(ap1);

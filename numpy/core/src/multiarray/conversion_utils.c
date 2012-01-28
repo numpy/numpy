@@ -379,7 +379,7 @@ PyArray_ByteorderConverter(PyObject *obj, char *endian)
         obj = tmp = PyUnicode_AsASCIIString(obj);
     }
 
-    *endian = PyArray_SWAP;
+    *endian = NPY_SWAP;
     str = PyBytes_AsString(obj);
     if (!str) {
         Py_XDECREF(tmp);
@@ -392,22 +392,22 @@ PyArray_ByteorderConverter(PyObject *obj, char *endian)
         return PY_FAIL;
     }
     *endian = str[0];
-    if (str[0] != PyArray_BIG && str[0] != PyArray_LITTLE
-        && str[0] != PyArray_NATIVE && str[0] != PyArray_IGNORE) {
+    if (str[0] != NPY_BIG && str[0] != NPY_LITTLE
+        && str[0] != NPY_NATIVE && str[0] != NPY_IGNORE) {
         if (str[0] == 'b' || str[0] == 'B') {
-            *endian = PyArray_BIG;
+            *endian = NPY_BIG;
         }
         else if (str[0] == 'l' || str[0] == 'L') {
-            *endian = PyArray_LITTLE;
+            *endian = NPY_LITTLE;
         }
         else if (str[0] == 'n' || str[0] == 'N') {
-            *endian = PyArray_NATIVE;
+            *endian = NPY_NATIVE;
         }
         else if (str[0] == 'i' || str[0] == 'I') {
-            *endian = PyArray_IGNORE;
+            *endian = NPY_IGNORE;
         }
         else if (str[0] == 's' || str[0] == 'S') {
-            *endian = PyArray_SWAP;
+            *endian = NPY_SWAP;
         }
         else {
             PyErr_Format(PyExc_ValueError,
@@ -434,7 +434,7 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
         obj = tmp = PyUnicode_AsASCIIString(obj);
     }
 
-    *sortkind = PyArray_QUICKSORT;
+    *sortkind = NPY_QUICKSORT;
     str = PyBytes_AsString(obj);
     if (!str) {
         Py_XDECREF(tmp);
@@ -447,13 +447,13 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
         return PY_FAIL;
     }
     if (str[0] == 'q' || str[0] == 'Q') {
-        *sortkind = PyArray_QUICKSORT;
+        *sortkind = NPY_QUICKSORT;
     }
     else if (str[0] == 'h' || str[0] == 'H') {
-        *sortkind = PyArray_HEAPSORT;
+        *sortkind = NPY_HEAPSORT;
     }
     else if (str[0] == 'm' || str[0] == 'M') {
-        *sortkind = PyArray_MERGESORT;
+        *sortkind = NPY_MERGESORT;
     }
     else {
         PyErr_Format(PyExc_ValueError,
@@ -1030,7 +1030,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
                 case 8:
                     newtype = NPY_INT64;
                     break;
-#ifdef PyArray_INT128
+#ifdef NPY_INT128
                 case 16:
                     newtype = NPY_INT128;
                     break;
@@ -1052,7 +1052,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
                 case 8:
                     newtype = NPY_UINT64;
                     break;
-#ifdef PyArray_INT128
+#ifdef NPY_INT128
                 case 16:
                     newtype = NPY_UINT128;
                     break;
@@ -1071,17 +1071,17 @@ PyArray_TypestrConvert(int itemsize, int gentype)
                 case 8:
                     newtype = NPY_FLOAT64;
                     break;
-#ifdef PyArray_FLOAT80
+#ifdef NPY_FLOAT80
                 case 10:
                     newtype = NPY_FLOAT80;
                     break;
 #endif
-#ifdef PyArray_FLOAT96
+#ifdef NPY_FLOAT96
                 case 12:
                     newtype = NPY_FLOAT96;
                     break;
 #endif
-#ifdef PyArray_FLOAT128
+#ifdef NPY_FLOAT128
                 case 16:
                     newtype = NPY_FLOAT128;
                     break;
@@ -1097,17 +1097,17 @@ PyArray_TypestrConvert(int itemsize, int gentype)
                 case 16:
                     newtype = NPY_COMPLEX128;
                     break;
-#ifdef PyArray_FLOAT80
+#ifdef NPY_FLOAT80
                 case 20:
                     newtype = NPY_COMPLEX160;
                     break;
 #endif
-#ifdef PyArray_FLOAT96
+#ifdef NPY_FLOAT96
                 case 24:
                     newtype = NPY_COMPLEX192;
                     break;
 #endif
-#ifdef PyArray_FLOAT128
+#ifdef NPY_FLOAT128
                 case 32:
                     newtype = NPY_COMPLEX256;
                     break;

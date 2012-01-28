@@ -101,7 +101,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
 
     if (!out) {
         rp = (PyArrayObject *)PyArray_New(Py_TYPE(ap), PyArray_NDIM(ap)-1,
-                                          PyArray_DIMS(ap), PyArray_INTP,
+                                          PyArray_DIMS(ap), NPY_INTP,
                                           NULL, NULL, 0, 0,
                                           (PyObject *)ap);
         if (rp == NULL) {
@@ -115,7 +115,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
                     "invalid shape for output array.");
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
-                              PyArray_DescrFromType(PyArray_INTP),
+                              PyArray_DescrFromType(NPY_INTP),
                               NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
         if (rp == NULL) {
             goto fail;
@@ -214,7 +214,7 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
 
     if (!out) {
         rp = (PyArrayObject *)PyArray_New(Py_TYPE(ap), PyArray_NDIM(ap)-1,
-                                          PyArray_DIMS(ap), PyArray_INTP,
+                                          PyArray_DIMS(ap), NPY_INTP,
                                           NULL, NULL, 0, 0,
                                           (PyObject *)ap);
         if (rp == NULL) {
@@ -228,7 +228,7 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
                     "invalid shape for output array.");
         }
         rp = (PyArrayObject *)PyArray_FromArray(out,
-                              PyArray_DescrFromType(PyArray_INTP),
+                              PyArray_DescrFromType(NPY_INTP),
                               NPY_ARRAY_CARRAY | NPY_ARRAY_UPDATEIFCOPY);
         if (rp == NULL) {
             goto fail;
@@ -795,7 +795,7 @@ PyArray_Any(PyArrayObject *self, int axis, PyArrayObject *out)
     }
     ret = PyArray_GenericReduceFunction((PyArrayObject *)arr,
                                         n_ops.logical_or, axis,
-                                        PyArray_BOOL, out);
+                                        NPY_BOOL, out);
     Py_DECREF(arr);
     return ret;
 }
@@ -814,7 +814,7 @@ PyArray_All(PyArrayObject *self, int axis, PyArrayObject *out)
     }
     ret = PyArray_GenericReduceFunction((PyArrayObject *)arr,
                                         n_ops.logical_and, axis,
-                                        PyArray_BOOL, out);
+                                        NPY_BOOL, out);
     Py_DECREF(arr);
     return ret;
 }

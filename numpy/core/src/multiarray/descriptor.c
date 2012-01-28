@@ -227,7 +227,7 @@ _convert_from_tuple(PyObject *obj)
             goto fail;
         }
         PyArray_DESCR_REPLACE(type);
-        if (type->type_num == PyArray_UNICODE) {
+        if (type->type_num == NPY_UNICODE) {
             type->elsize = itemsize << 2;
         }
         else {
@@ -244,7 +244,7 @@ _convert_from_tuple(PyObject *obj)
     else {
         /*
          * interpret next item as shape (if it's a tuple)
-         * and reset the type to PyArray_VOID with
+         * and reset the type to NPY_VOID with
          * a new fields attribute.
          */
         PyArray_Dims shape = {NULL, -1};
@@ -268,7 +268,7 @@ _convert_from_tuple(PyObject *obj)
             PyDimMem_FREE(shape.ptr);
             return type;
         }
-        newdescr = PyArray_DescrNewFromType(PyArray_VOID);
+        newdescr = PyArray_DescrNewFromType(NPY_VOID);
         if (newdescr == NULL) {
             PyDimMem_FREE(shape.ptr);
             goto fail;
@@ -471,7 +471,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, maxalign);
     }
 
-    new = PyArray_DescrNewFromType(PyArray_VOID);
+    new = PyArray_DescrNewFromType(NPY_VOID);
     if (new == NULL) {
         Py_XDECREF(fields);
         Py_XDECREF(nameslist);
@@ -565,7 +565,7 @@ _convert_from_list(PyObject *obj, int align)
         PyTuple_SET_ITEM(nameslist, i, key);
         totalsize += conv->elsize;
     }
-    new = PyArray_DescrNewFromType(PyArray_VOID);
+    new = PyArray_DescrNewFromType(NPY_VOID);
     new->fields = fields;
     new->names = nameslist;
     new->flags = dtypeflags;
@@ -1142,7 +1142,7 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
 NPY_NO_EXPORT int
 PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
 {
-    int check_num = PyArray_NOTYPE + 10;
+    int check_num = NPY_NOTYPE + 10;
     PyObject *item;
     int elsize = 0;
     char endian = '=';
@@ -1376,7 +1376,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     }
 
 finish:
-    if ((check_num == PyArray_NOTYPE + 10)
+    if ((check_num == NPY_NOTYPE + 10)
         || (*at = PyArray_DescrFromType(check_num)) == NULL) {
         PyErr_Clear();
         /* Now check to see if the object is registered in typeDict */
@@ -1552,7 +1552,7 @@ arraydescr_protocol_typestr_get(PyArray_Descr *self)
             endian = '>';
         }
     }
-    if (self->type_num == PyArray_UNICODE) {
+    if (self->type_num == NPY_UNICODE) {
         size >>= 2;
     }
 
@@ -2100,14 +2100,14 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
     PyTuple_SET_ITEM(ret, 0, obj);
     if (PyTypeNum_ISUSERDEF(self->type_num)
-            || ((self->type_num == PyArray_VOID
+            || ((self->type_num == NPY_VOID
                     && self->typeobj != &PyVoidArrType_Type))) {
         obj = (PyObject *)self->typeobj;
         Py_INCREF(obj);
     }
     else {
         elsize = self->elsize;
-        if (self->type_num == PyArray_UNICODE) {
+        if (self->type_num == NPY_UNICODE) {
             elsize >>= 2;
         }
         obj = PyUString_FromFormat("%c%d",self->kind, elsize);
@@ -2193,11 +2193,11 @@ static int
 _descr_find_object(PyArray_Descr *self)
 {
     if (self->flags
-            || self->type_num == PyArray_OBJECT
+            || self->type_num == NPY_OBJECT
             || self->kind == 'O') {
         return NPY_OBJECT_DTYPE_FLAGS;
     }
-    if (PyDescr_HASFIELDS(self)) {
+    if (PyDataType_HASFIELDS(self)) {
         PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
         int offset;
@@ -2483,7 +2483,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
  * naming).  If itemsize is given it must be >= size computed from fields
  *
  * The .fields attribute must return a convertible dictionary if present.
- * Result inherits from PyArray_VOID.
+ * Result inherits from NPY_VOID.
 */
 NPY_NO_EXPORT int
 PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
@@ -2580,18 +2580,18 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
 
     new = PyArray_DescrNew(self);
     endian = new->byteorder;
-    if (endian != PyArray_IGNORE) {
-        if (newendian == PyArray_SWAP) {
+    if (endian != NPY_IGNORE) {
+        if (newendian == NPY_SWAP) {
             /* swap byteorder */
             if PyArray_ISNBO(endian) {
-                endian = PyArray_OPPBYTE;
+                endian = NPY_OPPBYTE;
             }
             else {
-                endian = PyArray_NATBYTE;
+                endian = NPY_NATBYTE;
             }
             new->byteorder = endian;
         }
-        else if (newendian != PyArray_IGNORE) {
+        else if (newendian != NPY_IGNORE) {
             new->byteorder = newendian;
         }
     }
@@ -2649,7 +2649,7 @@ PyArray_DescrNewByteorder(PyArray_Descr *self, char newendian)
 static PyObject *
 arraydescr_newbyteorder(PyArray_Descr *self, PyObject *args)
 {
-    char endian=PyArray_SWAP;
+    char endian=NPY_SWAP;
 
     if (!PyArg_ParseTuple(args, "|O&", PyArray_ByteorderConverter,
                 &endian)) {

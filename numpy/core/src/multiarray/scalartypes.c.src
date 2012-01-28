@@ -1220,16 +1220,16 @@ static PyArray_Descr *
 _realdescr_fromcomplexscalar(PyObject *self, int *typenum)
 {
     if (PyArray_IsScalar(self, CDouble)) {
-        *typenum = PyArray_CDOUBLE;
-        return PyArray_DescrFromType(PyArray_DOUBLE);
+        *typenum = NPY_CDOUBLE;
+        return PyArray_DescrFromType(NPY_DOUBLE);
     }
     if (PyArray_IsScalar(self, CFloat)) {
-        *typenum = PyArray_CFLOAT;
-        return PyArray_DescrFromType(PyArray_FLOAT);
+        *typenum = NPY_CFLOAT;
+        return PyArray_DescrFromType(NPY_FLOAT);
     }
     if (PyArray_IsScalar(self, CLongDouble)) {
-        *typenum = PyArray_CLONGDOUBLE;
-        return PyArray_DescrFromType(PyArray_LONGDOUBLE);
+        *typenum = NPY_CLONGDOUBLE;
+        return PyArray_DescrFromType(NPY_LONGDOUBLE);
     }
     return NULL;
 }
@@ -1281,7 +1281,7 @@ gentype_imag_get(PyObject *self)
         if (ret == NULL) {
             PyErr_Clear();
             obj = PyInt_FromLong(0);
-            newtype = PyArray_DescrFromType(PyArray_OBJECT);
+            newtype = PyArray_DescrFromType(NPY_OBJECT);
             ret = PyArray_Scalar((char *)&obj, newtype, NULL);
             Py_DECREF(newtype);
             Py_DECREF(obj);
@@ -1624,7 +1624,7 @@ voidtype_setfield(PyVoidScalarObject *self, PyObject *args, PyObject *kwds)
 
     dptr = self->obval + offset;
 
-    if (typecode->type_num == PyArray_OBJECT) {
+    if (typecode->type_num == NPY_OBJECT) {
         PyObject *temp;
         Py_INCREF(value);
         NPY_COPY_PYOBJECT_PTR(&temp, dptr);
@@ -1709,7 +1709,7 @@ gentype_reduce(PyObject *self, PyObject *NPY_UNUSED(args))
             }
             alloc = 1;
             newlen = PyUCS2Buffer_AsUCS4((Py_UNICODE *)buffer,
-                    (PyArray_UCS4 *)tmp,
+                    (npy_ucs4 *)tmp,
                     buflen / 2, buflen / 2);
             buflen = newlen*4;
             buffer = tmp;
@@ -2051,7 +2051,7 @@ voidtype_item(PyVoidScalarObject *self, Py_ssize_t n)
     intp m;
     PyObject *flist=NULL, *fieldinfo;
 
-    if (!(PyDescr_HASFIELDS(self->descr))) {
+    if (!(PyDataType_HASFIELDS(self->descr))) {
         PyErr_SetString(PyExc_IndexError,
                 "can't index void scalar without fields");
         return NULL;
@@ -2078,7 +2078,7 @@ voidtype_subscript(PyVoidScalarObject *self, PyObject *ind)
     intp n;
     PyObject *fieldinfo;
 
-    if (!(PyDescr_HASFIELDS(self->descr))) {
+    if (!(PyDataType_HASFIELDS(self->descr))) {
         PyErr_SetString(PyExc_IndexError,
                 "can't index void scalar without fields");
         return NULL;
@@ -2116,7 +2116,7 @@ voidtype_ass_item(PyVoidScalarObject *self, Py_ssize_t n, PyObject *val)
     PyObject *flist=NULL, *fieldinfo, *newtup;
     PyObject *res;
 
-    if (!(PyDescr_HASFIELDS(self->descr))) {
+    if (!(PyDataType_HASFIELDS(self->descr))) {
         PyErr_SetString(PyExc_IndexError,
                 "can't index void scalar without fields");
         return -1;
@@ -2156,7 +2156,7 @@ voidtype_ass_subscript(PyVoidScalarObject *self, PyObject *ind, PyObject *val)
     PyObject *fieldinfo, *newtup;
     PyObject *res;
 
-    if (!PyDescr_HASFIELDS(self->descr)) {
+    if (!PyDataType_HASFIELDS(self->descr)) {
         PyErr_SetString(PyExc_IndexError,
                 "can't index void scalar without fields");
         return -1;
@@ -2840,7 +2840,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
         ((PyVoidScalarObject *)ret)->obval = destptr;
         Py_SIZE((PyVoidScalarObject *)ret) = (int) memu;
         ((PyVoidScalarObject *)ret)->descr =
-            PyArray_DescrNewFromType(PyArray_VOID);
+            PyArray_DescrNewFromType(NPY_VOID);
         ((PyVoidScalarObject *)ret)->descr->elsize = (int) memu;
         ((PyVoidScalarObject *)ret)->flags = NPY_ARRAY_BEHAVED |
                                              NPY_ARRAY_OWNDATA;
@@ -2849,7 +2849,7 @@ void_arrtype_new(PyTypeObject *type, PyObject *args, PyObject *NPY_UNUSED(kwds))
         return ret;
     }
 
-    arr = PyArray_FROM_OTF(obj, PyArray_VOID, NPY_ARRAY_FORCECAST);
+    arr = PyArray_FROM_OTF(obj, NPY_VOID, NPY_ARRAY_FORCECAST);
     return PyArray_Return((PyArrayObject *)arr);
 }
 
@@ -3701,7 +3701,7 @@ initialize_casting_tables(void)
     _npy_smallest_type_of_kind_table[NPY_OBJECT_SCALAR] = NPY_OBJECT;
 
     /* Default for built-in types is object scalar */
-    memset(_npy_scalar_kinds_table, PyArray_OBJECT_SCALAR,
+    memset(_npy_scalar_kinds_table, NPY_OBJECT_SCALAR,
                                         sizeof(_npy_scalar_kinds_table));
     /* Default for next largest type is -1, signalling no bigger */
     memset(_npy_next_larger_type_table, -1,
@@ -4165,9 +4165,9 @@ _typenum_fromtypeobj(PyObject *type, int user)
 {
     int typenum, i;
 
-    typenum = PyArray_NOTYPE;
+    typenum = NPY_NOTYPE;
     i = 0;
-    while(i < PyArray_NTYPES) {
+    while(i < NPY_NTYPES) {
         if (type == (PyObject *)typeobjects[i]) {
             typenum = i;
             break;
@@ -4180,9 +4180,9 @@ _typenum_fromtypeobj(PyObject *type, int user)
     }
     /* Search any registered types */
     i = 0;
-    while (i < PyArray_NUMUSERTYPES) {
+    while (i < NPY_NUMUSERTYPES) {
         if (type == (PyObject *)(userdescrs[i]->typeobj)) {
-            typenum = i + PyArray_USERDEF;
+            typenum = i + NPY_USERDEF;
             break;
         }
         i++;

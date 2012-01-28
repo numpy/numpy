@@ -29,11 +29,11 @@
    values above 0xffff are converted to surrogate pairs.
 */
 NPY_NO_EXPORT int
-PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs4length)
+PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs4length)
 {
     int i;
     int numucs2 = 0;
-    PyArray_UCS4 chr;
+    npy_ucs4 chr;
     for (i=0; i<ucs4length; i++) {
         chr = *ucs4++;
         if (chr > 0xffff) {
@@ -61,10 +61,10 @@ PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs4length)
 */
 
 NPY_NO_EXPORT int
-PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs2len, int ucs4len)
+PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs2len, int ucs4len)
 {
     int i;
-    PyArray_UCS4 chr;
+    npy_ucs4 chr;
     Py_UNICODE ch;
     int numchars=0;
 
@@ -72,12 +72,12 @@ PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs2len, int ucs4l
         ch = *ucs2++;
         if (ch >= 0xd800 && ch <= 0xdfff) {
             /* surrogate pair */
-            chr = ((PyArray_UCS4)(ch-0xd800)) << 10;
+            chr = ((npy_ucs4)(ch-0xd800)) << 10;
             chr += *ucs2++ + 0x2400;  /* -0xdc00 + 0x10000 */
             i++;
         }
         else {
-            chr = (PyArray_UCS4) ch;
+            chr = (npy_ucs4) ch;
         }
         *ucs4++ = chr;
         numchars++;
