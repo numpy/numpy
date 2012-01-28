@@ -867,6 +867,7 @@ def gradient(f, *varargs):
            [ 1. ,  1. ,  1. ]])]
 
     """
+    f = np.asanyarray(f)
     N = len(f.shape)  # number of dimensions
     n = len(varargs)
     if n == 0:
@@ -889,12 +890,20 @@ def gradient(f, *varargs):
     slice3 = [slice(None)]*N
 
     otype = f.dtype.char
-    if otype not in ['f', 'd', 'F', 'D']:
+    if otype not in ['f', 'd', 'F', 'D', 'm', 'M']:
         otype = 'd'
+
+    # Difference of datetime64 elements results in timedelta64
+    if otype == 'M' :
+        # Need to use the full dtype name because it contains unit information
+        otype = f.dtype.name.replace('datetime', 'timedelta')
+    elif otype == 'm' :
+        # Needs to keep the specific units, can't be a general unit
+        otype = f.dtype
 
     for axis in range(N):
         # select out appropriate parts for this dimension
-        out = np.zeros_like(f).astype(otype)
+        out = np.empty_like(f, dtype=otype)
         slice1[axis] = slice(1, -1)
         slice2[axis] = slice(2, None)
         slice3[axis] = slice(None, -2)
