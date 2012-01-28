@@ -159,8 +159,10 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
             goto fail;
         }
         ians = (npy_intp *)(PyArray_DATA(ans));
+        NPY_BEGIN_ALLOW_THREADS;
         for (i = 0; i < len; i++)
             ians [numbers [i]] += 1;
+        NPY_END_ALLOW_THREADS;
         Py_DECREF(lst);
     }
     else {
@@ -181,9 +183,11 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
             goto fail;
         }
         dans = (double *)PyArray_DATA(ans);
+        NPY_BEGIN_ALLOW_THREADS;
         for (i = 0; i < len; i++) {
             dans[numbers[i]] += weights[i];
         }
+        NPY_END_ALLOW_THREADS;
         Py_DECREF(lst);
         Py_DECREF(wts);
     }
@@ -216,6 +220,7 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     int m, i;
     static char *kwlist[] = {"x", "bins", NULL};
     PyArray_Descr *type;
+    char bins_non_monotonic = 0;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist, &ox, &obins)) {
         goto fail;
@@ -248,7 +253,7 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
                 "Both x and bins must have non-zero length");
             goto fail;
     }
-
+    NPY_BEGIN_ALLOW_THREADS;
     if (lbins == 1)  {
         for (i = 0; i < lx; i++) {
             if (dx [i] >= dbins[0]) {
@@ -272,12 +277,16 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
             }
         }
         else {
-            PyErr_SetString(PyExc_ValueError,
-                    "The bins must be montonically increasing or decreasing");
-            goto fail;
+            /* defer PyErr_SetString until after NPY_END_ALLOW_THREADS */
+            bins_non_monotonic = 1;
         }
     }
-
+    NPY_END_ALLOW_THREADS;
+    if (bins_non_monotonic) {
+        PyErr_SetString(PyExc_ValueError,
+                "The bins must be monotonically increasing or decreasing");
+        goto fail;
+    }
     Py_DECREF(ax);
     Py_DECREF(abins);
     return (PyObject *)aret;
@@ -294,6 +303,54 @@ fail:
 static char arr_insert__doc__[] = "Insert vals sequentially into equivalent 1-d positions indicated by mask.";
 
 /*
+ * Insert values from an input array into an output array, at positions
+ * indicated by a mask. If the arrays are of dtype object (indicated by
+ * the objarray flag), take care of reference counting.
+ *
+ * This function implements the copying logic of arr_insert() defined
+ * below.
+ */
+static void
+arr_insert_loop(char *mptr, char *vptr, char *input_data, char *zero,
+                char *avals_data, int melsize, int delsize, int objarray,
+                int totmask, int numvals, int nd, npy_intp *instrides,
+                npy_intp *inshape)
+{
+    /*
+     * Walk through mask array, when non-zero is encountered
+     * copy next value in the vals array to the input array.
+     * If we get through the value array, repeat it as necessary.
+     */
+    int mindx, rem_indx, indx, i, copied;
+    copied = 0;
+    for (mindx = 0; mindx < totmask; mindx++) {
+        if (memcmp(mptr,zero,melsize) != 0) {
+            /* compute indx into input array */
+            rem_indx = mindx;
+            indx = 0;
+            for (i = nd - 1; i > 0; --i) {
+                indx += (rem_indx % inshape[i]) * instrides[i];
+                rem_indx /= inshape[i];
+            }
+            indx += rem_indx * instrides[0];
+            /* fprintf(stderr, "mindx = %d, indx=%d\n", mindx, indx); */
+            /* Copy value element over to input array */
+            memcpy(input_data+indx,vptr,delsize);
+            if (objarray) {
+                Py_INCREF(*((PyObject **)vptr));
+            }
+            vptr += delsize;
+            copied += 1;
+            /* If we move past value data.  Reset */
+            if (copied >= numvals) {
+                vptr = avals_data;
+            }
+        }
+        mptr += melsize;
+    }
+}
+
+/*
  * Returns input array with values inserted sequentially into places
  * indicated by the mask
  */
@@ -304,9 +361,8 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     PyArrayObject *ainput = NULL, *amask = NULL, *avals = NULL, *tmp = NULL;
     int numvals, totmask, sameshape;
     char *input_data, *mptr, *vptr, *zero = NULL;
-    int melsize, delsize, copied, nd;
+    int melsize, delsize, copied, nd, objarray, k;
     npy_intp *instrides, *inshape;
-    int mindx, rem_indx, indx, i, k, objarray;
 
     static char *kwlist[] = {"input", "mask", "vals", NULL};
 
@@ -388,39 +444,23 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         return Py_None;
     }
 
-    /*
-     * Walk through mask array, when non-zero is encountered
-     * copy next value in the vals array to the input array.
-     * If we get through the value array, repeat it as necessary.
-     */
     totmask = (int) PyArray_SIZE(amask);
     copied = 0;
     instrides = PyArray_STRIDES(ainput);
     inshape = PyArray_DIMS(ainput);
-    for (mindx = 0; mindx < totmask; mindx++) {
-        if (memcmp(mptr,zero,melsize) != 0) {
-            /* compute indx into input array */
-            rem_indx = mindx;
-            indx = 0;
-            for (i = nd - 1; i > 0; --i) {
-                indx += (rem_indx % inshape[i]) * instrides[i];
-                rem_indx /= inshape[i];
-            }
-            indx += rem_indx * instrides[0];
-            /* fprintf(stderr, "mindx = %d, indx=%d\n", mindx, indx); */
-            /* Copy value element over to input array */
-            memcpy(input_data+indx,vptr,delsize);
-            if (objarray) {
-                Py_INCREF(*((PyObject **)vptr));
-            }
-            vptr += delsize;
-            copied += 1;
-            /* If we move past value data.  Reset */
-            if (copied >= numvals) {
-                vptr = PyArray_DATA(avals);
-            }
-        }
-        mptr += melsize;
+    if (objarray) {
+        /* object array, need to refcount, can't release the GIL */
+        arr_insert_loop(mptr, vptr, input_data, zero, PyArray_DATA(avals),
+                        melsize, delsize, objarray, totmask, numvals, nd,
+                        instrides, inshape);
+    }
+    else {
+        /* No increfs take place in arr_insert_loop, so release the GIL */
+        NPY_BEGIN_ALLOW_THREADS;
+        arr_insert_loop(mptr, vptr, input_data, zero, PyArray_DATA(avals),
+                        melsize, delsize, objarray, totmask, numvals, nd,
+                        instrides, inshape);
+        NPY_END_ALLOW_THREADS;
     }
 
     Py_DECREF(amask);
@@ -548,6 +588,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
 
     slopes = (double *) PyDataMem_NEW((lenxp - 1)*sizeof(double));
+    NPY_BEGIN_ALLOW_THREADS;
     for (i = 0; i < lenxp - 1; i++) {
         slopes[i] = (dy[i + 1] - dy[i])/(dx[i + 1] - dx[i]);
     }
@@ -567,6 +608,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
         }
     }
 
+    NPY_END_ALLOW_THREADS;
     PyDataMem_FREE(slopes);
     Py_DECREF(afp);
     Py_DECREF(axp);
@@ -637,8 +679,11 @@ ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
                         char **coords, npy_intp *coords_strides)
 {
     int i;
+    char invalid;
     npy_intp j, m;
 
+    NPY_BEGIN_ALLOW_THREADS;
+    invalid = 0;
     while (count--) {
         npy_intp raveled = 0;
         for (i = 0; i < ravel_ndim; ++i) {
@@ -647,9 +692,8 @@ ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
             switch (modes[i]) {
                 case NPY_RAISE:
                     if (j < 0 || j >= m) {
-                        PyErr_SetString(PyExc_ValueError,
-                              "invalid entry in coordinates array");
-                        return NPY_FAIL;
+                        invalid = 1;
+                        goto end_while;
                     }
                     break;
                 case NPY_WRAP:
@@ -686,7 +730,13 @@ ravel_multi_index_loop(int ravel_ndim, npy_intp *ravel_dims,
         *(npy_intp *)coords[ravel_ndim] = raveled;
         coords[ravel_ndim] += coords_strides[ravel_ndim];
     }
-
+end_while:
+    NPY_END_ALLOW_THREADS;
+    if (invalid) {
+        PyErr_SetString(PyExc_ValueError,
+              "invalid entry in coordinates array");
+        return NPY_FAIL;
+    }
     return NPY_SUCCEED;
 }
 
@@ -837,14 +887,16 @@ unravel_index_loop_corder(int unravel_ndim, npy_intp *unravel_dims,
                         npy_intp *coords)
 {
     int i;
+    char invalid;
     npy_intp val;
 
+    NPY_BEGIN_ALLOW_THREADS;
+    invalid = 0;
     while (count--) {
         val = *(npy_intp *)indices;
         if (val < 0 || val >= unravel_size) {
-            PyErr_SetString(PyExc_ValueError,
-                  "invalid entry in index array");
-            return NPY_FAIL;
+            invalid = 1;
+            break;
         }
         for (i = unravel_ndim-1; i >= 0; --i) {
             coords[i] = val % unravel_dims[i];
@@ -853,7 +905,12 @@ unravel_index_loop_corder(int unravel_ndim, npy_intp *unravel_dims,
         coords += unravel_ndim;
         indices += indices_stride;
     }
-
+    NPY_END_ALLOW_THREADS;
+    if (invalid) {
+        PyErr_SetString(PyExc_ValueError,
+              "invalid entry in index array");
+        return NPY_FAIL;
+    }
     return NPY_SUCCEED;
 }
 
@@ -865,14 +922,16 @@ unravel_index_loop_forder(int unravel_ndim, npy_intp *unravel_dims,
                         npy_intp *coords)
 {
     int i;
+    char invalid;
     npy_intp val;
 
+    NPY_BEGIN_ALLOW_THREADS;
+    invalid = 0;
     while (count--) {
         val = *(npy_intp *)indices;
         if (val < 0 || val >= unravel_size) {
-            PyErr_SetString(PyExc_ValueError,
-                  "invalid entry in index array");
-            return NPY_FAIL;
+            invalid = 1;
+            break;
         }
         for (i = 0; i < unravel_ndim; ++i) {
             *coords++ = val % unravel_dims[i];
@@ -880,7 +939,12 @@ unravel_index_loop_forder(int unravel_ndim, npy_intp *unravel_dims,
         }
         indices += indices_stride;
     }
-
+    NPY_END_ALLOW_THREADS;
+    if (invalid) {
+        PyErr_SetString(PyExc_ValueError,
+              "invalid entry in index array");
+        return NPY_FAIL;
+    }
     return NPY_SUCCEED;
 }
 
