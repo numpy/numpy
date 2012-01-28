@@ -33,8 +33,13 @@ decr_slot_(double x, double * bins, npy_intp lbins)
     return 0;
 }
 
+/**
+ * Returns -1 if the array is monotonic decreasing,
+ * +1 if the array is monotonic increasing,
+ * and 0 if the array is not monotonic.
+ */
 static int
-monotonic_(double * a, int lena)
+check_array_monotonic(double * a, int lena)
 {
     int i;
 
@@ -265,7 +270,7 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         }
     }
     else {
-        m = monotonic_ (dbins, lbins);
+        m = check_array_monotonic(dbins, lbins);
         if ( m == -1 ) {
             for ( i = 0; i < lx; i ++ ) {
                 iret [i] = decr_slot_ ((double)dx[i], dbins, lbins);
