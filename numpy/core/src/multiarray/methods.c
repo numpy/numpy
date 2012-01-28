@@ -639,8 +639,8 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
     fd = npy_PyFile_Dup(file, "wb");
     if (fd == NULL) {
-        PyErr_SetString(PyExc_IOError, "first argument must be a " \
-                        "string or open file");
+        PyErr_SetString(PyExc_IOError,
+                "first argument must be a string or open file");
         Py_DECREF(file);
         return NULL;
     }
@@ -675,8 +675,7 @@ array_toscalar(PyArrayObject *self, PyObject *args)
         }
         else {
             PyErr_SetString(PyExc_ValueError,
-                            "can only convert an array "
-                            "of size 1 to a Python scalar");
+                    "can only convert an array of size 1 to a Python scalar");
         }
     }
     /* Special case of C-order flat indexing... :| */
@@ -695,7 +694,8 @@ array_toscalar(PyArrayObject *self, PyObject *args)
         }
 
         if (value < 0 || value >= size) {
-            PyErr_SetString(PyExc_ValueError, "index out of bounds");
+            PyErr_SetString(PyExc_ValueError,
+                    "index out of bounds");
             return NULL;
         }
 
@@ -719,7 +719,7 @@ array_toscalar(PyArrayObject *self, PyObject *args)
     }
     else {
         PyErr_SetString(PyExc_ValueError,
-                        "incorrect number of indices for array");
+                "incorrect number of indices for array");
         return NULL;
     }
 
@@ -736,12 +736,12 @@ array_setscalar(PyArrayObject *self, PyObject *args)
 
     if (n < 0) {
         PyErr_SetString(PyExc_ValueError,
-                        "itemset must have at least one argument");
+                "itemset must have at least one argument");
         return NULL;
     }
     if (!PyArray_ISWRITEABLE(self)) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "array is not writeable");
+                "array is not writeable");
         return NULL;
     }
 
@@ -761,8 +761,7 @@ array_setscalar(PyArrayObject *self, PyObject *args)
         }
         else {
             PyErr_SetString(PyExc_ValueError,
-                            "can only convert an array "
-                            "of size 1 to a Python scalar");
+                    "can only convert an array of size 1 to a Python scalar");
         }
     }
     /* Special case of C-order flat indexing... :| */
@@ -781,7 +780,8 @@ array_setscalar(PyArrayObject *self, PyObject *args)
         }
 
         if (value < 0 || value >= size) {
-            PyErr_SetString(PyExc_ValueError, "index out of bounds");
+            PyErr_SetString(PyExc_ValueError,
+                    "index out of bounds");
             return NULL;
         }
 
@@ -805,7 +805,7 @@ array_setscalar(PyArrayObject *self, PyObject *args)
     }
     else {
         PyErr_SetString(PyExc_ValueError,
-                        "incorrect number of indices for array");
+                "incorrect number of indices for array");
         return NULL;
     }
 
