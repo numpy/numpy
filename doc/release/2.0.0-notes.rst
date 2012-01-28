@@ -149,6 +149,15 @@ objects. For example the expression (3 and 'test') produces the string
 'test', and now np.logical_and(np.array(3, 'O'), np.array('test', 'O'))
 produces 'test' as well.
 
+The following macros now require trailing semicolons::
+
+    NPY_BEGIN_THREADS_DEF
+    NPY_BEGIN_THREADS
+    NPY_ALLOW_C_API
+    NPY_ALLOW_C_API_DEF
+    NPY_DISABLE_C_API
+
+
 Deprecations
 ============
 
