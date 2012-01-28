@@ -23,6 +23,12 @@ class TestFinancial(TestCase):
         assert_almost_equal(np.pmt(0.08/12,5*12,15000),
                             -304.146, 3)
 
+    def test_ppmt(self):
+        np.round(np.ppmt(0.1/12,1,60,55000),2) == 710.25
+
+    def test_ipmt(self):
+        np.round(np.ipmt(0.1/12,1,24,2000),2) == 16.67
+
     def test_nper(self):
         assert_almost_equal(np.nper(0.075,-2000,0,100000.),
                             21.54, 2)
@@ -47,15 +53,6 @@ class TestFinancial(TestCase):
 
         val = [39000,30000,21000,37000,46000]
         assert_(np.isnan(np.mirr(val, 0.10, 0.12)))
-
-
-
-def test_unimplemented():
-    # np.round(np.ppmt(0.1/12,1,60,55000),2) == 710.25
-    assert_raises(NotImplementedError, np.ppmt, 0.1/12, 1, 60, 55000)
-
-    # np.round(np.ipmt(0.1/12,1,24,2000),2) == 16.67
-    assert_raises(NotImplementedError, np.ipmt, 0.1/12, 1, 24, 2000)
 
 
 if __name__ == "__main__":
