@@ -22,11 +22,11 @@ fftpack_cfftf(PyObject *NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
     data = (PyArrayObject *)PyArray_CopyFromObject(op1,
-            PyArray_CDOUBLE, 1, 0);
+            NPY_CDOUBLE, 1, 0);
     if (data == NULL) {
         return NULL;
     }
-    descr = PyArray_DescrFromType(PyArray_DOUBLE);
+    descr = PyArray_DescrFromType(NPY_DOUBLE);
     if (PyArray_AsCArray(&op2, (void *)&wsave, &nsave, 1, descr) == -1) {
         goto fail;
     }
@@ -73,11 +73,11 @@ fftpack_cfftb(PyObject *NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
     data = (PyArrayObject *)PyArray_CopyFromObject(op1,
-            PyArray_CDOUBLE, 1, 0);
+            NPY_CDOUBLE, 1, 0);
     if (data == NULL) {
         return NULL;
     }
-    descr = PyArray_DescrFromType(PyArray_DOUBLE);
+    descr = PyArray_DescrFromType(NPY_DOUBLE);
     if (PyArray_AsCArray(&op2, (void *)&wsave, &nsave, 1, descr) == -1) {
         goto fail;
     }
@@ -123,7 +123,7 @@ fftpack_cffti(PyObject *NPY_UNUSED(self), PyObject *args)
     /*Magic size needed by cffti*/
     dim = 4*n + 15;
     /*Create a 1 dimensional array of dimensions of type double*/
-    op = (PyArrayObject *)PyArray_SimpleNew(1, &dim, PyArray_DOUBLE);
+    op = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
     if (op == NULL) {
         return NULL;
     }
@@ -151,18 +151,18 @@ fftpack_rfftf(PyObject *NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
     data = (PyArrayObject *)PyArray_ContiguousFromObject(op1,
-            PyArray_DOUBLE, 1, 0);
+            NPY_DOUBLE, 1, 0);
     if (data == NULL) {
         return NULL;
     }
     npts = data->dimensions[data->nd-1];
     data->dimensions[data->nd - 1] = npts/2 + 1;
     ret = (PyArrayObject *)PyArray_Zeros(data->nd, data->dimensions,
-            PyArray_DescrFromType(PyArray_CDOUBLE), 0);
+            PyArray_DescrFromType(NPY_CDOUBLE), 0);
     data->dimensions[data->nd - 1] = npts;
     rstep = (ret->dimensions[ret->nd - 1])*2;
 
-    descr = PyArray_DescrFromType(PyArray_DOUBLE);
+    descr = PyArray_DescrFromType(NPY_DOUBLE);
     if (PyArray_AsCArray(&op2, (void *)&wsave, &nsave, 1, descr) == -1) {
         goto fail;
     }
@@ -217,15 +217,15 @@ fftpack_rfftb(PyObject *NPY_UNUSED(self), PyObject *args)
         return NULL;
     }
     data = (PyArrayObject *)PyArray_ContiguousFromObject(op1,
-            PyArray_CDOUBLE, 1, 0);
+            NPY_CDOUBLE, 1, 0);
     if (data == NULL) {
         return NULL;
     }
     npts = data->dimensions[data->nd - 1];
     ret = (PyArrayObject *)PyArray_Zeros(data->nd, data->dimensions,
-            PyArray_DescrFromType(PyArray_DOUBLE), 0);
+            PyArray_DescrFromType(NPY_DOUBLE), 0);
 
-    descr = PyArray_DescrFromType(PyArray_DOUBLE);
+    descr = PyArray_DescrFromType(NPY_DOUBLE);
     if (PyArray_AsCArray(&op2, (void *)&wsave, &nsave, 1, descr) == -1) {
         goto fail;
     }
@@ -277,7 +277,7 @@ fftpack_rffti(PyObject *NPY_UNUSED(self), PyObject *args)
   /*Magic size needed by rffti*/
   dim = 2*n + 15;
   /*Create a 1 dimensional array of dimensions of type double*/
-  op = (PyArrayObject *)PyArray_SimpleNew(1, &dim, PyArray_DOUBLE);
+  op = (PyArrayObject *)PyArray_SimpleNew(1, &dim, NPY_DOUBLE);
   if (op == NULL) {
       return NULL;
   }
