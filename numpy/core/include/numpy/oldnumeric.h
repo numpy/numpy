@@ -6,7 +6,7 @@
 #endif
 
 #define PyArray_UNSIGNED_TYPES
-#define PyArray_SBYTE PyArray_BYTE
+#define PyArray_SBYTE NPY_BYTE
 #define PyArray_CopyArray PyArray_CopyInto
 #define _PyArray_multiply_list PyArray_MultiplyIntList
 #define PyArray_ISSPACESAVER(m) NPY_FALSE
