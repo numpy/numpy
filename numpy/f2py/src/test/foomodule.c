@@ -63,10 +63,10 @@ static PyObject *mod_init(PyObject *capi_self, PyObject *capi_args,
 
 /* F90 module */
 static FortranDataDef f2py_mod_def[] = {
-    {"a",0, {}, PyArray_INT},
-    {"b",0, {}, PyArray_DOUBLE},
-    {"c",1, {3}, PyArray_DOUBLE},
-    {"d",1, {-1}, PyArray_DOUBLE},
+    {"a",0, {}, NPY_INT},
+    {"b",0, {}, NPY_DOUBLE},
+    {"c",1, {3}, NPY_DOUBLE},
+    {"d",1, {-1}, NPY_DOUBLE},
     {"init",-1,{},0,NULL,(void *)mod_init},
     {NULL}
 };
@@ -84,9 +84,9 @@ extern void F_FUNC(f2pyinitmod,F2PYINITMOD)();
 
 /* COMMON block */
 static FortranDataDef f2py_foodata_def[] = {
-    {"a",0, {}, PyArray_INT},
-    {"b",0, {}, PyArray_DOUBLE},
-    {"c",1, {3}, PyArray_DOUBLE},
+    {"a",0, {}, NPY_INT},
+    {"b",0, {}, NPY_DOUBLE},
+    {"c",1, {3}, NPY_DOUBLE},
     {NULL}
 };
 static void f2py_setup_foodata(char *a,char *b,char *c) {

@@ -49,45 +49,45 @@ c2py_map={'double':'float',
           'complex_long_double':'complex',          # forced casting
           'string':'string',
           }
-c2capi_map={'double':'PyArray_DOUBLE',
-            'float':'PyArray_FLOAT',
-            'long_double':'PyArray_DOUBLE',           # forced casting
-            'char':'PyArray_CHAR',
-            'unsigned_char':'PyArray_UBYTE',
-            'signed_char':'PyArray_SBYTE',
-            'short':'PyArray_SHORT',
-            'unsigned_short':'PyArray_USHORT',
-            'int':'PyArray_INT',
-            'unsigned':'PyArray_UINT',
-            'long':'PyArray_LONG',
-            'long_long':'PyArray_LONG',                # forced casting
-            'complex_float':'PyArray_CFLOAT',
-            'complex_double':'PyArray_CDOUBLE',
-            'complex_long_double':'PyArray_CDOUBLE',   # forced casting
-            'string':'PyArray_CHAR'}
+c2capi_map={'double':'NPY_DOUBLE',
+            'float':'NPY_FLOAT',
+            'long_double':'NPY_DOUBLE',           # forced casting
+            'char':'NPY_CHAR',
+            'unsigned_char':'NPY_UBYTE',
+            'signed_char':'NPY_BYTE',
+            'short':'NPY_SHORT',
+            'unsigned_short':'NPY_USHORT',
+            'int':'NPY_INT',
+            'unsigned':'NPY_UINT',
+            'long':'NPY_LONG',
+            'long_long':'NPY_LONG',                # forced casting
+            'complex_float':'NPY_CFLOAT',
+            'complex_double':'NPY_CDOUBLE',
+            'complex_long_double':'NPY_CDOUBLE',   # forced casting
+            'string':'NPY_CHAR'}
 
 #These new maps aren't used anyhere yet, but should be by default
 #  unless building numeric or numarray extensions.
 if using_newcore:
-    c2capi_map={'double':'PyArray_DOUBLE',
-            'float':'PyArray_FLOAT',
-            'long_double':'PyArray_LONGDOUBLE',
-            'char':'PyArray_BYTE',
-            'unsigned_char':'PyArray_UBYTE',
-            'signed_char':'PyArray_BYTE',
-            'short':'PyArray_SHORT',
-            'unsigned_short':'PyArray_USHORT',
-            'int':'PyArray_INT',
-            'unsigned':'PyArray_UINT',
-            'long':'PyArray_LONG',
-            'unsigned_long':'PyArray_ULONG',
-            'long_long':'PyArray_LONGLONG',
-            'unsigned_long_long':'Pyarray_ULONGLONG',
-            'complex_float':'PyArray_CFLOAT',
-            'complex_double':'PyArray_CDOUBLE',
-            'complex_long_double':'PyArray_CDOUBLE',
-            'string':'PyArray_CHAR', # f2py 2e is not ready for PyArray_STRING (must set itemisize etc)
-            #'string':'PyArray_STRING'
+    c2capi_map={'double':'NPY_DOUBLE',
+            'float':'NPY_FLOAT',
+            'long_double':'NPY_LONGDOUBLE',
+            'char':'NPY_BYTE',
+            'unsigned_char':'NPY_UBYTE',
+            'signed_char':'NPY_BYTE',
+            'short':'NPY_SHORT',
+            'unsigned_short':'NPY_USHORT',
+            'int':'NPY_INT',
+            'unsigned':'NPY_UINT',
+            'long':'NPY_LONG',
+            'unsigned_long':'NPY_ULONG',
+            'long_long':'NPY_LONGLONG',
+            'unsigned_long_long':'NPY_ULONGLONG',
+            'complex_float':'NPY_CFLOAT',
+            'complex_double':'NPY_CDOUBLE',
+            'complex_long_double':'NPY_CDOUBLE',
+            'string':'NPY_CHAR', # f2py 2e is not ready for NPY_STRING (must set itemisize etc)
+            #'string':'NPY_STRING'
 
                 }
 c2pycode_map={'double':'d',
