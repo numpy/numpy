@@ -283,10 +283,17 @@ def lagfromroots(roots) :
         return np.ones(1)
     else :
         [roots] = pu.as_series([roots], trim=False)
-        prd = np.array([1], dtype=roots.dtype)
-        for r in roots:
-            prd = lagsub(lagmulx(prd), r*prd)
-        return prd
+        roots.sort()
+        n = len(roots)
+        p = [lagline(-r, 1) for r in roots]
+        while n > 1:
+            m = n//2
+            tmp = [lagmul(p[i], p[i+m]) for i in range(m)]
+            if n%2:
+                tmp[0] = lagmul(tmp[0], p[-1])
+            p = tmp
+            n = m
+        return p[0]
 
 
 def lagadd(c1, c2):
