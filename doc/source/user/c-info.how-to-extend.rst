@@ -522,10 +522,10 @@ simpler forms exist that are easier to use.
     This function allocates new memory and places it in an ndarray
     with *nd* dimensions whose shape is determined by the array of
     at least *nd* items pointed to by *dims*. The memory for the
-    array is uninitialized (unless typenum is :cdata:`PyArray_OBJECT` in
+    array is uninitialized (unless typenum is :cdata:`NPY_OBJECT` in
     which case each element in the array is set to NULL). The
     *typenum* argument allows specification of any of the builtin
-    data-types such as :cdata:`PyArray_FLOAT` or :cdata:`PyArray_LONG`. The
+    data-types such as :cdata:`NPY_FLOAT` or :cdata:`NPY_LONG`. The
     memory for the array can be set to zero if desired using
     :cfunc:`PyArray_FILLWBYTE` (return_object, 0).
 

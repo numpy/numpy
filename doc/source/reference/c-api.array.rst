@@ -336,7 +336,7 @@ From scratch
     and data type given by *dtype*. If *fortran* is non-zero, then a
     Fortran-order array is created, otherwise a C-order array is
     created. Fill the memory with zeros (or the 0 object if *dtype*
-    corresponds to :ctype:`PyArray_OBJECT` ).
+    corresponds to :ctype:`NPY_OBJECT` ).
 
 .. cfunction:: PyObject* PyArray_ZEROS(int nd, npy_intp* dims, int type_num, int fortran)
 
@@ -349,7 +349,7 @@ From scratch
     and data type given by *dtype*. If *fortran* is non-zero, then a
     Fortran-order array is created, otherwise a C-order array is
     created. The array is uninitialized unless the data type
-    corresponds to :ctype:`PyArray_OBJECT` in which case the array is
+    corresponds to :ctype:`NPY_OBJECT` in which case the array is
     filled with :cdata:`Py_None`.
 
 .. cfunction:: PyObject* PyArray_EMPTY(int nd, npy_intp* dims, int typenum, int fortran)
@@ -1272,7 +1272,7 @@ New data types
     *totype*. Any old casting function is over-written. A ``0`` is
     returned on success or a ``-1`` on failure.
 
-.. cfunction:: int PyArray_RegisterCanCast(PyArray_Descr* descr, int totype, PyArray_SCALARKIND scalar)
+.. cfunction:: int PyArray_RegisterCanCast(PyArray_Descr* descr, int totype, NPY_SCALARKIND scalar)
 
     Register the data-type number, *totype*, as castable from
     data-type object, *descr*, of the given *scalar* kind. Use
@@ -1281,7 +1281,7 @@ New data types
     *totype*.
 
 
-Special functions for PyArray_OBJECT
+Special functions for NPY_OBJECT
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. cfunction:: int PyArray_INCREF(PyArrayObject* op)
@@ -1318,7 +1318,7 @@ Special functions for PyArray_OBJECT
 
     Fill a newly created array with a single value obj at all
     locations in the structure with object data-types. No checking is
-    performed but *arr* must be of data-type :ctype:`PyArray_OBJECT` and be
+    performed but *arr* must be of data-type :ctype:`NPY_OBJECT` and be
     single-segment and uninitialized (no previous objects in
     position). Use :cfunc:`PyArray_DECREF` (*arr*) if you need to
     decrement all the items in the object array prior to calling this
@@ -1952,7 +1952,7 @@ Calculation
     Equivalent to :meth:`ndarray.mean` (*self*, *axis*, *rtype*). Returns the
     mean of the elements along the given *axis*, using the enumerated
     type *rtype* as the data type to sum in. Default sum behavior is
-    obtained using :cdata:`PyArray_NOTYPE` for *rtype*.
+    obtained using :cdata:`NPY_NOTYPE` for *rtype*.
 
 .. cfunction:: PyObject* PyArray_Trace(PyArrayObject* self, int offset, int axis1, int axis2, int rtype, PyArrayObject* out)
 
