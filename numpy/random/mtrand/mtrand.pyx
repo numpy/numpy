@@ -1194,7 +1194,7 @@ cdef class RandomState:
         Return a sample (or samples) from the "standard normal" distribution.
 
         If positive, int_like or int-convertible arguments are provided,
-        `randn` generates an array of shape ``(d1, ..., dn)``, filled
+        `randn` generates an array of shape ``(d0, d1, ..., dn)``, filled
         with random floats sampled from a univariate "normal" (Gaussian)
         distribution of mean 0 and variance 1 (if any of the :math:`d_i` are
         floats, they are first converted to integers by truncation). A single
