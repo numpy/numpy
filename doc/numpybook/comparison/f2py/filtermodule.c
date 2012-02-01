@@ -163,7 +163,7 @@ f2py_start_clock();
   /* Processing variable a */
   ;
   capi_a_intent |= F2PY_INTENT_IN;
-  capi_a_tmp = array_from_pyobj(PyArray_DOUBLE,a_Dims,a_Rank,capi_a_intent,a_capi);
+  capi_a_tmp = array_from_pyobj(NPY_DOUBLE,a_Dims,a_Rank,capi_a_intent,a_capi);
   if (capi_a_tmp == NULL) {
     if (!PyErr_Occurred())
       PyErr_SetString(filter_error,"failed in converting 1st argument `a' of filter.dfilter2d to C/Fortran array" );
@@ -179,7 +179,7 @@ f2py_start_clock();
   /* Processing variable b */
   b_Dims[0]=m,b_Dims[1]=n;
   capi_b_intent |= F2PY_INTENT_OUT|F2PY_INTENT_HIDE;
-  capi_b_tmp = array_from_pyobj(PyArray_DOUBLE,b_Dims,b_Rank,capi_b_intent,Py_None);
+  capi_b_tmp = array_from_pyobj(NPY_DOUBLE,b_Dims,b_Rank,capi_b_intent,Py_None);
   if (capi_b_tmp == NULL) {
     if (!PyErr_Occurred())
       PyErr_SetString(filter_error,"failed in converting hidden `b' of filter.dfilter2d to C/Fortran array" );
