@@ -315,12 +315,12 @@ def legfromroots(roots) :
     else :
         [roots] = pu.as_series([roots], trim=False)
         roots.sort()
-        n = len(roots)
         p = [legline(-r, 1) for r in roots]
+        n = len(p)
         while n > 1:
-            m = n//2
+            m, r = divmod(n, 2)
             tmp = [legmul(p[i], p[i+m]) for i in range(m)]
-            if n%2:
+            if r:
                 tmp[0] = legmul(tmp[0], p[-1])
             p = tmp
             n = m
