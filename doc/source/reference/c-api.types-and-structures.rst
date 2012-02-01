@@ -388,7 +388,7 @@ PyArrayDescr_Type
     .. code-block:: c
 
        typedef struct {
-           PyArray_VectorUnaryFunc *cast[PyArray_NTYPES];
+           PyArray_VectorUnaryFunc *cast[NPY_NTYPES];
            PyArray_GetItemFunc *getitem;
            PyArray_SetItemFunc *setitem;
            PyArray_CopySwapNFunc *copyswapn;
@@ -401,8 +401,8 @@ PyArrayDescr_Type
            PyArray_NonzeroFunc *nonzero;
            PyArray_FillFunc *fill;
            PyArray_FillWithScalarFunc *fillwithscalar;
-           PyArray_SortFunc *sort[PyArray_NSORTS];
-           PyArray_ArgSortFunc *argsort[PyArray_NSORTS];
+           PyArray_SortFunc *sort[NPY_NSORTS];
+           PyArray_ArgSortFunc *argsort[NPY_NSORTS];
            PyObject *castdict;
            PyArray_ScalarKindFunc *scalarkind;
            int **cancastscalarkindto;
@@ -544,8 +544,8 @@ PyArrayDescr_Type
 
         An array of function pointers to a particular sorting
         algorithms. A particular sorting algorithm is obtained using a
-        key (so far :cdata:`PyArray_QUICKSORT`, :data`PyArray_HEAPSORT`, and
-        :cdata:`PyArray_MERGESORT` are defined). These sorts are done
+        key (so far :cdata:`NPY_QUICKSORT`, :data`NPY_HEAPSORT`, and
+        :cdata:`NPY_MERGESORT` are defined). These sorts are done
         in-place assuming contiguous and aligned data.
 
     .. cmember:: int argsort(void* start, npy_intp* result, npy_intp length,
@@ -563,27 +563,27 @@ PyArrayDescr_Type
         functions for user- defined data-types. Each function is
         wrapped in a :ctype:`PyCObject *` and keyed by the data-type number.
 
-    .. cmember:: PyArray_SCALARKIND scalarkind(PyArrayObject* arr)
+    .. cmember:: NPY_SCALARKIND scalarkind(PyArrayObject* arr)
 
         A function to determine how scalars of this type should be
         interpreted. The argument is ``NULL`` or a 0-dimensional array
         containing the data (if that is needed to determine the kind
         of scalar). The return value must be of type
-        :ctype:`PyArray_SCALARKIND`.
+        :ctype:`NPY_SCALARKIND`.
 
     .. cmember:: int **cancastscalarkindto
 
-        Either ``NULL`` or an array of :ctype:`PyArray_NSCALARKINDS`
+        Either ``NULL`` or an array of :ctype:`NPY_NSCALARKINDS`
         pointers. These pointers should each be either ``NULL`` or a
         pointer to an array of integers (terminated by
-        :cdata:`PyArray_NOTYPE`) indicating data-types that a scalar of
+        :cdata:`NPY_NOTYPE`) indicating data-types that a scalar of
         this data-type of the specified kind can be cast to safely
         (this usually means without losing precision).
 
     .. cmember:: int *cancastto
 
         Either ``NULL`` or an array of integers (terminated by
-        :cdata:`PyArray_NOTYPE` ) indicated data-types that this data-type
+        :cdata:`NPY_NOTYPE` ) indicated data-types that this data-type
         can be cast to safely (this usually means without losing
         precision).
 
