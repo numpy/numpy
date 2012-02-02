@@ -3550,11 +3550,11 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 static PyArray_Descr @from@_Descr = {
     PyObject_HEAD_INIT(&PyArrayDescr_Type)
     &Py@NAME@ArrType_Type,
-    PyArray_@from@LTR,
-    PyArray_@from@LTR,
+    NPY_@from@LTR,
+    NPY_@from@LTR,
     '@endian@',
     0,
-    PyArray_@from@,
+    NPY_@from@,
     0,
     _ALIGN(@align@),
     NULL,
@@ -3659,11 +3659,11 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     PyObject_HEAD_INIT(&PyArrayDescr_Type)
     &Py@NAME@ArrType_Type,
-    PyArray_@kind@LTR,
-    PyArray_@from@LTR,
+    NPY_@kind@LTR,
+    NPY_@from@LTR,
     '@endian@',
     @isobject@,
-    PyArray_@from@,
+    NPY_@from@,
     @num@*sizeof(@fromtyp@),
     _ALIGN(@fromtyp@),
     NULL,
@@ -3900,8 +3900,8 @@ set_typeinfo(PyObject *dict)
 #else
             s = Py_BuildValue("ciii@cx@@cn@O",
 #endif
-                PyArray_@name@LTR,
-                PyArray_@name@,
+                NPY_@name@LTR,
+                NPY_@name@,
                 BITSOF_@uname@,
                 _ALIGN(@type@),
                 @max@,
@@ -3922,11 +3922,11 @@ set_typeinfo(PyObject *dict)
  */
     PyDict_SetItemString(infodict, "@name@",
 #if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiO", PyArray_@name@LTR,
+            s = Py_BuildValue("CiiiO", NPY_@name@LTR,
 #else
-            s = Py_BuildValue("ciiiO", PyArray_@name@LTR,
+            s = Py_BuildValue("ciiiO", NPY_@name@LTR,
 #endif
-                PyArray_@name@,
+                NPY_@name@,
                 BITSOF_@name@,
                 _ALIGN(@type@),
                 (PyObject *) &Py@Name@ArrType_Type));
