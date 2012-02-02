@@ -95,4 +95,11 @@
  */
 #define FORTRAN_IF PyArray_FORTRAN_IF
 
+/*
+ * The macros in old_defines.h are Deprecated as of NumPy 1.7 and will be
+ * removed in the next major release.
+ */
+#include "old_defines.h"
+
+
 #endif

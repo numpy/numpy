@@ -733,7 +733,6 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
             join('include', 'numpy', 'npy_endian.h'),
-            join('include', 'numpy', 'old_defines.h'),
             join('include', 'numpy', 'arrayscalars.h'),
             join('include', 'numpy', 'noprefix.h'),
             join('include', 'numpy', 'npy_interrupt.h'),
