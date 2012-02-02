@@ -2828,7 +2828,7 @@ NA_NewAllFromBuffer(int ndim, maybelong *shape, NumarrayType type,
 
     if (byteorder != NA_ByteOrder()) {
         PyArray_Descr *temp;
-        temp = PyArray_DescrNewByteorder(dtype, PyArray_SWAP);
+        temp = PyArray_DescrNewByteorder(dtype, NPY_SWAP);
         Py_DECREF(dtype);
         if (temp == NULL) return NULL;
         dtype = temp;
@@ -2856,7 +2856,7 @@ NA_NewAllFromBuffer(int ndim, maybelong *shape, NumarrayType type,
         newdims.len = ndim;
         newdims.ptr = shape;
         newself = (PyArrayObject *)\
-                  PyArray_Newshape(self, &newdims, PyArray_CORDER);
+                  PyArray_Newshape(self, &newdims, NPY_CORDER);
         Py_DECREF(self);
         self = newself;
     }

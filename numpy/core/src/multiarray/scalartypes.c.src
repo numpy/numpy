@@ -2549,7 +2549,7 @@ finish:
         return NULL;
     }
     /* typecode will be NULL */
-    typecode = PyArray_DescrFromType(PyArray_@TYPE@);
+    typecode = PyArray_DescrFromType(NPY_@TYPE@);
     dest = scalar_value(obj, typecode);
     src = scalar_value(robj, typecode);
     Py_DECREF(typecode);
@@ -3719,7 +3719,7 @@ initialize_casting_tables(void)
  * #SCKIND = BOOL, (INTNEG, INTPOS)*5, FLOAT*4,
  *           COMPLEX*3#
  */
-    _npy_scalar_kinds_table[NPY_@NAME@] = PyArray_@SCKIND@_SCALAR;
+    _npy_scalar_kinds_table[NPY_@NAME@] = NPY_@SCKIND@_SCALAR;
     _npy_next_larger_type_table[NPY_@NAME@] = @BIGGERTYPE@;
 /**end repeat**/
 
