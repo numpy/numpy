@@ -11,7 +11,7 @@
 #define NO_IMPORT_ARRAY
 #endif
 
-#include "numpy/noprefix.h"
+#include "numpy/ndarrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
@@ -628,10 +628,10 @@ BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
 /**begin repeat
  * #TYPE = BYTE, UBYTE, SHORT, USHORT, INT, UINT,
  *         LONG, ULONG, LONGLONG, ULONGLONG#
- * #type = byte, ubyte, short, ushort, int, uint,
- *         long, ulong, longlong, ulonglong#
- * #ftype = float, float, float, float, double, double,
- *          double, double, double, double#
+ * #type = npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int, npy_uint,
+ *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
+ * #ftype = npy_float, npy_float, npy_float, npy_float, npy_double, npy_double,
+ *          npy_double, npy_double, npy_double, npy_double#
  */
 
 #define @TYPE@_floor_divide @TYPE@_divide
@@ -822,7 +822,7 @@ NPY_NO_EXPORT void
 
 /**begin repeat
  * #TYPE = BYTE, SHORT, INT, LONG, LONGLONG#
- * #type = byte, short, int, long, longlong#
+ * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong#
  */
 
 NPY_NO_EXPORT void
@@ -896,7 +896,7 @@ NPY_NO_EXPORT void
 
 /**begin repeat
  * #TYPE = UBYTE, USHORT, UINT, ULONG, ULONGLONG#
- * #type = ubyte, ushort, uint, ulong, ulonglong#
+ * #type = npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong#
  */
 
 NPY_NO_EXPORT void
@@ -995,7 +995,7 @@ TIMEDELTA_sign(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
 }
 
 /**begin repeat
- * #type = datetime, timedelta#
+ * #type = npy_datetime, npy_timedelta#
  * #TYPE = DATETIME, TIMEDELTA#
  */
 
@@ -1269,7 +1269,7 @@ TIMEDELTA_mm_d_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *
 
 /**begin repeat
  * Float types
- *  #type = float, double, longdouble#
+ *  #type = npy_float, npy_double, npy_longdouble#
  *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
  *  #c = f, , l#
  *  #C = F, , L#
@@ -1554,8 +1554,8 @@ NPY_NO_EXPORT void
 @TYPE@_ldexp_long(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     /*
-     * Additional loop to handle long integer inputs (cf. #866, #1633).
-     * long != int on many 64-bit platforms, so we need this second loop
+     * Additional loop to handle npy_long integer inputs (cf. #866, #1633).
+     * npy_long != npy_int on many 64-bit platforms, so we need this second loop
      * to handle the default integer type.
      */
     BINARY_LOOP {
@@ -1567,8 +1567,8 @@ NPY_NO_EXPORT void
         }
         else {
             /*
-             * Outside int range -- also ldexp will overflow in this case,
-             * given that exponent has less bits than int.
+             * Outside npy_int range -- also ldexp will overflow in this case,
+             * given that exponent has less bits than npy_int.
              */
             if (in2 > 0) {
                 *((@type@ *)op1) = ldexp@c@(in1, NPY_MAX_INT);
@@ -1862,8 +1862,8 @@ NPY_NO_EXPORT void
 HALF_ldexp_long(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     /*
-     * Additional loop to handle long integer inputs (cf. #866, #1633).
-     * long != int on many 64-bit platforms, so we need this second loop
+     * Additional loop to handle npy_long integer inputs (cf. #866, #1633).
+     * npy_long != npy_int on many 64-bit platforms, so we need this second loop
      * to handle the default integer type.
      */
     BINARY_LOOP {
@@ -1875,8 +1875,8 @@ HALF_ldexp_long(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
         }
         else {
             /*
-             * Outside int range -- also ldexp will overflow in this case,
-             * given that exponent has less bits than int.
+             * Outside npy_int range -- also ldexp will overflow in this case,
+             * given that exponent has less bits than npy_int.
              */
             if (in2 > 0) {
                 *((npy_half *)op1) = npy_float_to_half(ldexpf(in1, NPY_MAX_INT));
@@ -1912,7 +1912,7 @@ HALF_ldexp_long(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UN
 /**begin repeat
  * complex types
  * #TYPE = CFLOAT, CDOUBLE, CLONGDOUBLE#
- * #ftype = float, double, longdouble#
+ * #ftype = npy_float, npy_double, npy_longdouble#
  * #c = f, , l#
  * #C = F, , L#
  */
