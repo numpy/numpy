@@ -5,8 +5,10 @@
  **                            INCLUDES                                     **
  *****************************************************************************
  */
+#define NPY_NO_DEPRECATED_API
+
 #include "Python.h"
-#include "numpy/arrayobject.h"
+#include "numpy/ndarrayobject.h"
 #include "numpy/ufuncobject.h"
 
 #include "numpy/npy_3kcompat.h"
@@ -19,24 +21,24 @@
  *****************************************************************************
  */
 
-typedef npy_intp intp;
+typedef npy_intp npy_intp;
 
 #define INIT_OUTER_LOOP_1       \
-    intp dN = *dimensions++;    \
-    intp N_;                    \
-    intp s0 = *steps++;
+    npy_intp dN = *dimensions++;\
+    npy_intp N_;                \
+    npy_intp s0 = *steps++;
 
 #define INIT_OUTER_LOOP_2       \
     INIT_OUTER_LOOP_1           \
-    intp s1 = *steps++;
+    npy_intp s1 = *steps++;
 
 #define INIT_OUTER_LOOP_3       \
     INIT_OUTER_LOOP_2           \
-    intp s2 = *steps++;
+    npy_intp s2 = *steps++;
 
 #define INIT_OUTER_LOOP_4       \
     INIT_OUTER_LOOP_3           \
-    intp s3 = *steps++;
+    npy_intp s3 = *steps++;
 
 #define BEGIN_OUTER_LOOP_3      \
     for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2) {
@@ -66,12 +68,12 @@ char *inner1d_signature = "(i),(i)->()";
  *        out[n] = sum_i { in1[n, i] * in2[n, i] }.
  */
 static void
-@TYPE@_inner1d(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+@TYPE@_inner1d(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     INIT_OUTER_LOOP_3
-    intp di = dimensions[0];
-    intp i;
-    intp is1=steps[0], is2=steps[1];
+    npy_intp di = dimensions[0];
+    npy_intp i;
+    npy_intp is1=steps[0], is2=steps[1];
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
         @typ@ sum = 0;
@@ -101,12 +103,12 @@ char *innerwt_signature = "(i),(i),(i)->()";
  */
 
 static void
-@TYPE@_innerwt(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+@TYPE@_innerwt(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     INIT_OUTER_LOOP_4
-    intp di = dimensions[0];
-    intp i;
-    intp is1=steps[0], is2=steps[1], is3=steps[2];
+    npy_intp di = dimensions[0];
+    npy_intp i;
+    npy_intp is1=steps[0], is2=steps[1], is3=steps[2];
     BEGIN_OUTER_LOOP_4
         char *ip1=args[0], *ip2=args[1], *ip3=args[2], *op=args[3];
         @typ@ sum = 0;
@@ -137,20 +139,20 @@ char *matrix_multiply_signature = "(m,n),(n,p)->(m,p)";
 
 
 static void
-@TYPE@_matrix_multiply(char **args, intp *dimensions, intp *steps, void *NPY_UNUSED(func))
+@TYPE@_matrix_multiply(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     /* no BLAS is available */
     INIT_OUTER_LOOP_3
-    intp dm = dimensions[0];
-    intp dn = dimensions[1];
-    intp dp = dimensions[2];
-    intp m,n,p;
-    intp is1_m=steps[0], is1_n=steps[1], is2_n=steps[2], is2_p=steps[3],
+    npy_intp dm = dimensions[0];
+    npy_intp dn = dimensions[1];
+    npy_intp dp = dimensions[2];
+    npy_intp m,n,p;
+    npy_intp is1_m=steps[0], is1_n=steps[1], is2_n=steps[2], is2_p=steps[3],
          os_m=steps[4], os_p=steps[5];
-    intp ib1_n = is1_n*dn;
-    intp ib2_n = is2_n*dn;
-    intp ib2_p = is2_p*dp;
-    intp ob_p  = os_p *dp;
+    npy_intp ib1_n = is1_n*dn;
+    npy_intp ib2_n = is2_n*dn;
+    npy_intp ib2_p = is2_p*dp;
+    npy_intp ob_p  = os_p *dp;
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
         for (m = 0; m < dm; m++) {
