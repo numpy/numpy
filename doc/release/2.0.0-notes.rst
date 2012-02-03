@@ -113,6 +113,9 @@ The fitting functions recognize and remove masked data from the fit.
 Changes
 =======
 
+General
+-------
+
 The default casting rule for UFunc out= parameters has been changed from
 'unsafe' to 'same_kind'.  Most usages which violate the 'same_kind'
 rule are likely bugs, so this change may expose previously undetected
@@ -149,6 +152,9 @@ objects. For example the expression (3 and 'test') produces the string
 'test', and now np.logical_and(np.array(3, 'O'), np.array('test', 'O'))
 produces 'test' as well.
 
+C-API
+-----
+
 The following macros now require trailing semicolons::
 
     NPY_BEGIN_THREADS_DEF
@@ -173,14 +179,14 @@ The deprecated imports in the polynomial package have been removed.
 C-API
 -----
 
-Direct access to the fields of PyArrayObject* has been
-deprecated. Direct access has been recommended against for many releases.
+Direct access to the fields of PyArrayObject* has been deprecated. Direct
+access has been recommended against for many releases. Expect something
+similar for PyArray_Descr* and other core objects in the future as
+preparation for NumPy 2.0.
 
 The macros in old_defines.h are deprecated and will be removed in the next
 major release. The sed script tools/replace_old_macros.sed can be used to
 replace these macros with the newer versions.
 
 You can test your code against the deprecated C API by #defining
-NPY_NO_DEPRECATED_API before including any NumPy headers. Expect
-something similar for PyArray_Descr* and other core objects in the
-future as preparation for NumPy 2.0.
+NPY_NO_DEPRECATED_API before including any NumPy headers.
