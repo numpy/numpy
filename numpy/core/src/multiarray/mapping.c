@@ -1834,15 +1834,15 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
      */
 
     if (PyArray_Check(mp) && PyArray_NDIM(mp) == 0) {
-        npy_bool noellipses = TRUE;
+        npy_bool noellipses = NPY_TRUE;
         if ((op == Py_Ellipsis) || PyString_Check(op) || PyUnicode_Check(op)) {
-            noellipses = FALSE;
+            noellipses = NPY_FALSE;
         }
         else if (PyBool_Check(op) || PyArray_IsScalar(op, Bool) ||
                  (PyArray_Check(op) &&
                     (PyArray_DIMS((PyArrayObject *)op)==0) &&
                      PyArray_ISBOOL((PyArrayObject *)op))) {
-            noellipses = FALSE;
+            noellipses = NPY_FALSE;
         }
         else if (PySequence_Check(op)) {
             Py_ssize_t n, i;
@@ -1853,7 +1853,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
             while (i < n && noellipses) {
                 temp = PySequence_GetItem(op, i);
                 if (temp == Py_Ellipsis) {
-                    noellipses = FALSE;
+                    noellipses = NPY_FALSE;
                 }
                 Py_DECREF(temp);
                 i++;
@@ -1915,7 +1915,7 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
         iters[j] = NULL;
     }
     size = PyArray_SIZE(ba);
-    ptr = (Bool *)PyArray_DATA(ba);
+    ptr = (npy_bool *)PyArray_DATA(ba);
     count = 0;
 
     /* pre-determine how many nonzero entries there are */

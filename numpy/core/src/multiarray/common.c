@@ -372,7 +372,7 @@ _array_typedescr_fromstr(char *str)
     size = atoi(str + 1);
     switch (typechar) {
     case 'b':
-        if (size == sizeof(Bool)) {
+        if (size == sizeof(npy_bool)) {
             type_num = NPY_BOOL;
         }
         else {
@@ -381,7 +381,7 @@ _array_typedescr_fromstr(char *str)
         }
         break;
     case 'u':
-        if (size == sizeof(uintp)) {
+        if (size == sizeof(npy_uintp)) {
             type_num = NPY_UINTP;
         }
         else if (size == sizeof(char)) {
@@ -390,13 +390,13 @@ _array_typedescr_fromstr(char *str)
         else if (size == sizeof(short)) {
             type_num = NPY_USHORT;
         }
-        else if (size == sizeof(ulong)) {
+        else if (size == sizeof(npy_ulong)) {
             type_num = NPY_ULONG;
         }
         else if (size == sizeof(int)) {
             type_num = NPY_UINT;
         }
-        else if (size == sizeof(ulonglong)) {
+        else if (size == sizeof(npy_ulonglong)) {
             type_num = NPY_ULONGLONG;
         }
         else {
@@ -405,7 +405,7 @@ _array_typedescr_fromstr(char *str)
         }
         break;
     case 'i':
-        if (size == sizeof(intp)) {
+        if (size == sizeof(npy_intp)) {
             type_num = NPY_INTP;
         }
         else if (size == sizeof(char)) {
@@ -420,7 +420,7 @@ _array_typedescr_fromstr(char *str)
         else if (size == sizeof(int)) {
             type_num = NPY_INT;
         }
-        else if (size == sizeof(longlong)) {
+        else if (size == sizeof(npy_longlong)) {
             type_num = NPY_LONGLONG;
         }
         else {
@@ -435,7 +435,7 @@ _array_typedescr_fromstr(char *str)
         else if (size == sizeof(double)) {
             type_num = NPY_DOUBLE;
         }
-        else if (size == sizeof(longdouble)) {
+        else if (size == sizeof(npy_longdouble)) {
             type_num = NPY_LONGDOUBLE;
         }
         else {
@@ -450,7 +450,7 @@ _array_typedescr_fromstr(char *str)
         else if (size == sizeof(double)*2) {
             type_num = NPY_CDOUBLE;
         }
-        else if (size == sizeof(longdouble)*2) {
+        else if (size == sizeof(npy_longdouble)*2) {
             type_num = NPY_CLONGDOUBLE;
         }
         else {
@@ -504,9 +504,9 @@ _array_typedescr_fromstr(char *str)
 }
 
 NPY_NO_EXPORT char *
-index2ptr(PyArrayObject *mp, intp i)
+index2ptr(PyArrayObject *mp, npy_intp i)
 {
-    intp dim0;
+    npy_intp dim0;
 
     if (PyArray_NDIM(mp) == 0) {
         PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed");
@@ -539,7 +539,7 @@ _zerofill(PyArrayObject *ret)
         }
     }
     else {
-        intp n = PyArray_NBYTES(ret);
+        npy_intp n = PyArray_NBYTES(ret);
         memset(PyArray_DATA(ret), 0, n);
     }
     return 0;
@@ -549,7 +549,7 @@ NPY_NO_EXPORT int
 _IsAligned(PyArrayObject *ap)
 {
     int i, alignment, aligned = 1;
-    intp ptr;
+    npy_intp ptr;
 
     /* The special casing for STRING and VOID types was removed
      * in accordance with http://projects.scipy.org/numpy/ticket/1227
@@ -562,7 +562,7 @@ _IsAligned(PyArrayObject *ap)
     if (alignment == 1) {
         return 1;
     }
-    ptr = (intp) PyArray_DATA(ap);
+    ptr = (npy_intp) PyArray_DATA(ap);
     aligned = (ptr % alignment) == 0;
     for (i = 0; i < PyArray_NDIM(ap); i++) {
         aligned &= ((PyArray_STRIDES(ap)[i] % alignment) == 0);
@@ -570,7 +570,7 @@ _IsAligned(PyArrayObject *ap)
     return aligned != 0;
 }
 
-NPY_NO_EXPORT Bool
+NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap)
 {
     PyObject *base=PyArray_BASE(ap);
@@ -579,7 +579,7 @@ _IsWriteable(PyArrayObject *ap)
 
     /* If we own our own data, then no-problem */
     if ((base == NULL) || (PyArray_FLAGS(ap) & NPY_ARRAY_OWNDATA)) {
-        return TRUE;
+        return NPY_TRUE;
     }
     /*
      * Get to the final base object
@@ -607,10 +607,10 @@ _IsWriteable(PyArrayObject *ap)
      * -- could be abused --
      */
     if (PyString_Check(base)) {
-        return TRUE;
+        return NPY_TRUE;
     }
     if (PyObject_AsWriteBuffer(base, &dummy, &n) < 0) {
-        return FALSE;
+        return NPY_FALSE;
     }
-    return TRUE;
+    return NPY_TRUE;
 }

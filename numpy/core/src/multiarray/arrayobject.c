@@ -426,7 +426,7 @@ dump_data(char **string, int *n, int *max_n, char *data, int nd,
 
 #define CHECK_MEMORY do { if (*n >= *max_n-16) {         \
         *max_n *= 2;                                     \
-        *string = (char *)_pya_realloc(*string, *max_n); \
+        *string = (char *)PyArray_realloc(*string, *max_n); \
     }} while (0)
 
     if (nd == 0) {
@@ -513,17 +513,17 @@ PyArray_DebugPrint(PyArrayObject *obj)
 
     printf(" flags :");
     if (fobj->flags & NPY_ARRAY_C_CONTIGUOUS)
-        printf(" C_CONTIGUOUS");
+        printf(" NPY_C_CONTIGUOUS");
     if (fobj->flags & NPY_ARRAY_F_CONTIGUOUS)
-        printf(" F_CONTIGUOUS");
+        printf(" NPY_F_CONTIGUOUS");
     if (fobj->flags & NPY_ARRAY_OWNDATA)
-        printf(" OWNDATA");
+        printf(" NPY_OWNDATA");
     if (fobj->flags & NPY_ARRAY_ALIGNED)
-        printf(" ALIGNED");
+        printf(" NPY_ALIGNED");
     if (fobj->flags & NPY_ARRAY_WRITEABLE)
-        printf(" WRITEABLE");
+        printf(" NPY_WRITEABLE");
     if (fobj->flags & NPY_ARRAY_UPDATEIFCOPY)
-        printf(" UPDATEIFCOPY");
+        printf(" NPY_UPDATEIFCOPY");
     if (fobj->flags & NPY_ARRAY_MASKNA)
         printf(" MASKNA");
     if (fobj->flags & NPY_ARRAY_OWNMASKNA)
@@ -561,7 +561,7 @@ array_repr_builtin(PyArrayObject *self, int repr)
 
     max_n = PyArray_NBYTES(self)*4*sizeof(char) + 7;
 
-    if ((string = (char *)_pya_malloc(max_n)) == NULL) {
+    if ((string = (char *)PyArray_malloc(max_n)) == NULL) {
         return PyErr_NoMemory();
     }
 
@@ -575,7 +575,7 @@ array_repr_builtin(PyArrayObject *self, int repr)
     if (dump_data(&string, &n, &max_n, PyArray_DATA(self),
                   PyArray_NDIM(self), PyArray_DIMS(self),
                   PyArray_STRIDES(self), self) < 0) {
-        _pya_free(string);
+        PyArray_free(string);
         return NULL;
     }
 
@@ -595,7 +595,7 @@ array_repr_builtin(PyArrayObject *self, int repr)
         ret = PyUString_FromStringAndSize(string, n);
     }
 
-    _pya_free(string);
+    PyArray_free(string);
     return ret;
 }
 
@@ -730,7 +730,7 @@ _myunincmp(npy_ucs4 *s1, npy_ucs4 *s2, int len1, int len2)
         s2t = malloc(size);
         memcpy(s2t, s2, size);
     }
-    val = PyArray_CompareUCS4(s1t, s2t, MIN(len1,len2));
+    val = PyArray_CompareUCS4(s1t, s2t, PyArray_MIN(len1,len2));
     if ((val != 0) || (len1 == len2)) {
         goto finish;
     }
@@ -778,7 +778,7 @@ _mystrncmp(char *s1, char *s2, int len1, int len2)
     int val;
     int diff;
 
-    val = memcmp(s1, s2, MIN(len1, len2));
+    val = memcmp(s1, s2, PyArray_MIN(len1, len2));
     if ((val != 0) || (len1 == len2)) {
         return val;
     }
@@ -927,7 +927,7 @@ _compare_strings(PyArrayObject *result, PyArrayMultiIterObject *multi,
                  int cmp_op, void *func, int rstrip)
 {
     PyArrayIterObject *iself, *iother;
-    Bool *dptr;
+    npy_bool *dptr;
     npy_intp size;
     int val;
     int N1, N2;
@@ -936,7 +936,7 @@ _compare_strings(PyArrayObject *result, PyArrayMultiIterObject *multi,
     char* (*stripfunc)(char *, char *, int);
 
     compfunc = func;
-    dptr = (Bool *)PyArray_DATA(result);
+    dptr = (npy_bool *)PyArray_DATA(result);
     iself = multi->iters[0];
     iother = multi->iters[1];
     size = multi->size;
@@ -1163,7 +1163,7 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
                     newdims.ptr = dimensions;
                     newdims.len = result_ndim+1;
                     memcpy(dimensions, PyArray_DIMS((PyArrayObject *)temp),
-                           sizeof(intp)*result_ndim);
+                           sizeof(npy_intp)*result_ndim);
                     dimensions[result_ndim] = -1;
                     temp2 = PyArray_Newshape((PyArrayObject *)temp,
                                              &newdims, NPY_ANYORDER);
@@ -1415,7 +1415,7 @@ PyArray_ElementStrides(PyObject *obj)
  */
 
 /*NUMPY_API*/
-NPY_NO_EXPORT Bool
+NPY_NO_EXPORT npy_bool
 PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
                      npy_intp *dims, npy_intp *newstrides)
 {
@@ -1432,10 +1432,10 @@ PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
     for (i = 0; i < nd; i++) {
         byte_begin = newstrides[i]*(dims[i] - 1);
         if ((byte_begin < begin) || (byte_begin > end)) {
-            return FALSE;
+            return NPY_FALSE;
         }
     }
-    return TRUE;
+    return NPY_TRUE;
 }
 
 
@@ -1449,7 +1449,7 @@ array_new(PyTypeObject *subtype, PyObject *args, PyObject *kwds)
     PyArray_Dims dims = {NULL, 0};
     PyArray_Dims strides = {NULL, 0};
     PyArray_Chunk buffer;
-    longlong offset = 0;
+    npy_longlong offset = 0;
     NPY_ORDER order = NPY_CORDER;
     int is_f_order = 0;
     PyArrayObject *ret;
@@ -1608,7 +1608,7 @@ array_alloc(PyTypeObject *type, Py_ssize_t NPY_UNUSED(nitems))
 {
     PyObject *obj;
     /* nitems will always be 0 */
-    obj = (PyObject *)_pya_malloc(NPY_SIZEOF_PYARRAYOBJECT);
+    obj = (PyObject *)PyArray_malloc(NPY_SIZEOF_PYARRAYOBJECT);
     PyObject_Init(obj, type);
     return obj;
 }

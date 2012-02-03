@@ -16,7 +16,7 @@
 
 /* Functions only needed on narrow builds of Python
    for converting back and forth between the NumPy Unicode data-type
-   (always 4-byte)
+   (always 4-npy_byte)
    and the Python Unicode scalar (2-bytes on a narrow build).
 */
 

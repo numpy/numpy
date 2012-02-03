@@ -47,7 +47,7 @@ _arraydescr_fromobj(PyObject *obj)
     if (dtypedescr) {
         ret = PyArray_DescrConverter(dtypedescr, &new);
         Py_DECREF(dtypedescr);
-        if (ret == PY_SUCCEED) {
+        if (ret == NPY_SUCCEED) {
             return new;
         }
         PyErr_Clear();
@@ -58,7 +58,7 @@ _arraydescr_fromobj(PyObject *obj)
     if (dtypedescr) {
         ret = PyArray_DescrConverter(dtypedescr, &new);
         Py_DECREF(dtypedescr);
-        if (ret == PY_SUCCEED) {
+        if (ret == NPY_SUCCEED) {
             PyObject *length;
             length = PyObject_GetAttrString(obj, "_length_");
             PyErr_Clear();
@@ -69,7 +69,7 @@ _arraydescr_fromobj(PyObject *obj)
                 newtup = Py_BuildValue("NO", new, length);
                 ret = PyArray_DescrConverter(newtup, &derived);
                 Py_DECREF(newtup);
-                if (ret == PY_SUCCEED) {
+                if (ret == NPY_SUCCEED) {
                     return derived;
                 }
                 PyErr_Clear();
@@ -88,7 +88,7 @@ _arraydescr_fromobj(PyObject *obj)
     if (dtypedescr) {
         ret = PyArray_DescrAlignConverter(dtypedescr, &new);
         Py_DECREF(dtypedescr);
-        if (ret == PY_SUCCEED) {
+        if (ret == NPY_SUCCEED) {
             return new;
         }
         PyErr_Clear();
@@ -250,7 +250,7 @@ _convert_from_tuple(PyObject *obj)
         PyArray_Dims shape = {NULL, -1};
         PyArray_Descr *newdescr;
 
-        if (!(PyArray_IntpConverter(val, &shape)) || (shape.len > MAX_DIMS)) {
+        if (!(PyArray_IntpConverter(val, &shape)) || (shape.len > NPY_MAXDIMS)) {
             PyDimMem_FREE(shape.ptr);
             PyErr_SetString(PyExc_ValueError,
                     "invalid shape in fixed-type tuple.");
@@ -393,7 +393,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             else {
                 ret = PyArray_DescrConverter(PyTuple_GET_ITEM(item, 1), &conv);
             }
-            if (ret == PY_FAIL) {
+            if (ret == NPY_FAIL) {
                 PyObject_Print(PyTuple_GET_ITEM(item, 1), stderr, 0);
             }
         }
@@ -410,7 +410,7 @@ _convert_from_array_descr(PyObject *obj, int align)
         else {
             goto fail;
         }
-        if (ret == PY_FAIL) {
+        if (ret == NPY_FAIL) {
             goto fail;
         }
         if ((PyDict_GetItem(fields, name) != NULL)
@@ -435,7 +435,7 @@ _convert_from_array_descr(PyObject *obj, int align)
             if (_align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
-            maxalign = MAX(maxalign, _align);
+            maxalign = PyArray_MAX(maxalign, _align);
         }
         PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
 
@@ -543,7 +543,7 @@ _convert_from_list(PyObject *obj, int align)
         else {
             ret = PyArray_DescrConverter(PyList_GET_ITEM(obj, i), &conv);
         }
-        if (ret == PY_FAIL) {
+        if (ret == NPY_FAIL) {
             Py_DECREF(tup);
             Py_DECREF(key);
             goto fail;
@@ -557,7 +557,7 @@ _convert_from_list(PyObject *obj, int align)
             if (_align > 1) {
                 totalsize = NPY_NEXT_ALIGNED_OFFSET(totalsize, _align);
             }
-            maxalign = MAX(maxalign, _align);
+            maxalign = PyArray_MAX(maxalign, _align);
         }
         PyTuple_SET_ITEM(tup, 1, PyInt_FromLong((long) totalsize));
         PyDict_SetItem(fields, key, tup);
@@ -919,7 +919,7 @@ _convert_from_dict(PyObject *obj, int align)
             ret = PyArray_DescrConverter(descr, &newdescr);
         }
         Py_DECREF(descr);
-        if (ret == PY_FAIL) {
+        if (ret == NPY_FAIL) {
             Py_DECREF(tup);
             Py_DECREF(ind);
             goto fail;
@@ -927,7 +927,7 @@ _convert_from_dict(PyObject *obj, int align)
         PyTuple_SET_ITEM(tup, 0, (PyObject *)newdescr);
         if (align) {
             _align = newdescr->alignment;
-            maxalign = MAX(maxalign,_align);
+            maxalign = PyArray_MAX(maxalign,_align);
         }
         if (offsets) {
             long offset;
@@ -948,7 +948,7 @@ _convert_from_dict(PyObject *obj, int align)
                         "not divisible by the field alignment %d "
                         "with align=True",
                         (int)offset, (int)newdescr->alignment);
-                ret = PY_FAIL;
+                ret = NPY_FAIL;
             }
             else if (offset + newdescr->elsize > totalsize) {
                 totalsize = offset + newdescr->elsize;
@@ -976,14 +976,14 @@ _convert_from_dict(PyObject *obj, int align)
 #endif
             PyErr_SetString(PyExc_ValueError,
                     "field names must be strings");
-            ret = PY_FAIL;
+            ret = NPY_FAIL;
         }
 
         /* Insert into dictionary */
         if (PyDict_GetItem(fields, name) != NULL) {
             PyErr_SetString(PyExc_ValueError,
                     "name already used as a name or title");
-            ret = PY_FAIL;
+            ret = NPY_FAIL;
         }
         PyDict_SetItem(fields, name, tup);
         Py_DECREF(name);
@@ -996,13 +996,13 @@ _convert_from_dict(PyObject *obj, int align)
                 if (PyDict_GetItem(fields, title) != NULL) {
                     PyErr_SetString(PyExc_ValueError,
                             "title already used as a name or title.");
-                    ret=PY_FAIL;
+                    ret=NPY_FAIL;
                 }
                 PyDict_SetItem(fields, title, tup);
             }
         }
         Py_DECREF(tup);
-        if ((ret == PY_FAIL) || (newdescr->elsize == 0)) {
+        if ((ret == NPY_FAIL) || (newdescr->elsize == 0)) {
             goto fail;
         }
         dtypeflags |= (newdescr->flags & NPY_FROM_FIELDS);
@@ -1117,7 +1117,7 @@ PyArray_DescrConverter2(PyObject *obj, PyArray_Descr **at)
 {
     if (obj == Py_None) {
         *at = NULL;
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     else {
         return PyArray_DescrConverter(obj, at);
@@ -1152,19 +1152,19 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     /* default */
     if (obj == Py_None) {
         *at = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
 
     if (PyArray_DescrCheck(obj)) {
         *at = (PyArray_Descr *)obj;
         Py_INCREF(*at);
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
 
     if (PyType_Check(obj)) {
         if (PyType_IsSubtype((PyTypeObject *)obj, &PyGenericArrType_Type)) {
             *at = PyArray_DescrFromTypeObject(obj);
-            return (*at) ? PY_SUCCEED : PY_FAIL;
+            return (*at) ? NPY_SUCCEED : NPY_FAIL;
         }
         check_num = NPY_OBJECT;
 #if !defined(NPY_PY3K)
@@ -1204,7 +1204,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         else {
             *at = _arraydescr_fromobj(obj);
             if (*at) {
-                return PY_SUCCEED;
+                return NPY_SUCCEED;
             }
         }
         goto finish;
@@ -1218,7 +1218,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         PyObject *obj2;
         obj2 = PyUnicode_AsASCIIString(obj);
         if (obj2 == NULL) {
-            return PY_FAIL;
+            return NPY_FAIL;
         }
         retval = PyArray_DescrConverter(obj2, at);
         Py_DECREF(obj2);
@@ -1242,7 +1242,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         /* check for commas present or first (or second) element a digit */
         if (_check_for_commastring(type, len)) {
             *at = _convert_from_commastring(obj, 0);
-            return (*at) ? PY_SUCCEED : PY_FAIL;
+            return (*at) ? NPY_SUCCEED : NPY_FAIL;
         }
 
         /* Process the endian character */
@@ -1270,7 +1270,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         /* Check for datetime format */
         if (is_datetime_typestr(type, len)) {
             *at = parse_dtype_from_datetime_typestr(type, len);
-            return (*at) ? PY_SUCCEED : PY_FAIL;
+            return (*at) ? NPY_SUCCEED : NPY_FAIL;
         }
 
         /* A typecode like 'd' */
@@ -1330,33 +1330,33 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         *at = _convert_from_tuple(obj);
         if (*at == NULL){
             if (PyErr_Occurred()) {
-                return PY_FAIL;
+                return NPY_FAIL;
             }
             goto fail;
         }
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     else if (PyList_Check(obj)) {
         /* or a list */
         *at = _convert_from_array_descr(obj,0);
         if (*at == NULL) {
             if (PyErr_Occurred()) {
-                return PY_FAIL;
+                return NPY_FAIL;
             }
             goto fail;
         }
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     else if (PyDict_Check(obj)) {
         /* or a dictionary */
         *at = _convert_from_dict(obj,0);
         if (*at == NULL) {
             if (PyErr_Occurred()) {
-                return PY_FAIL;
+                return NPY_FAIL;
             }
             goto fail;
         }
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     else if (PyArray_Check(obj)) {
         goto fail;
@@ -1364,10 +1364,10 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     else {
         *at = _arraydescr_fromobj(obj);
         if (*at) {
-            return PY_SUCCEED;
+            return NPY_SUCCEED;
         }
         if (PyErr_Occurred()) {
-            return PY_FAIL;
+            return NPY_FAIL;
         }
         goto fail;
     }
@@ -1411,7 +1411,7 @@ finish:
         PyArray_DESCR_REPLACE(*at);
         (*at)->byteorder = endian;
     }
-    return PY_SUCCEED;
+    return NPY_SUCCEED;
 
 fail:
     if (PyBytes_Check(obj)) {
@@ -1424,7 +1424,7 @@ fail:
 
 error:
     *at = NULL;
-    return PY_FAIL;
+    return NPY_FAIL;
 }
 
 /** Array Descr Objects for dynamic types **/
@@ -1944,9 +1944,9 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
 {
     PyObject *odescr, *metadata=NULL;
     PyArray_Descr *descr, *conv;
-    npy_bool align = FALSE;
-    npy_bool copy = FALSE;
-    npy_bool copied = FALSE;
+    npy_bool align = NPY_FALSE;
+    npy_bool copy = NPY_FALSE;
+    npy_bool copied = NPY_FALSE;
 
     static char *kwlist[] = {"dtype", "align", "copy", "metadata", NULL};
 
@@ -1976,7 +1976,7 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
         descr = PyArray_DescrNew(conv);
         Py_DECREF(conv);
         conv = descr;
-        copied = TRUE;
+        copied = NPY_TRUE;
     }
 
     if ((metadata != NULL)) {
@@ -1985,7 +1985,7 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
          * underlying dictionary
          */
         if (!copied) {
-            copied = TRUE;
+            copied = NPY_TRUE;
             descr = PyArray_DescrNew(conv);
             Py_DECREF(conv);
             conv = descr;
@@ -2511,9 +2511,9 @@ PyArray_DescrAlignConverter(PyObject *obj, PyArray_Descr **at)
             PyErr_SetString(PyExc_ValueError,
                     "data-type-descriptor not understood");
         }
-        return PY_FAIL;
+        return NPY_FAIL;
     }
-    return PY_SUCCEED;
+    return NPY_SUCCEED;
 }
 
 /*NUMPY_API
@@ -2547,9 +2547,9 @@ PyArray_DescrAlignConverter2(PyObject *obj, PyArray_Descr **at)
             PyErr_SetString(PyExc_ValueError,
                     "data-type-descriptor not understood");
         }
-        return PY_FAIL;
+        return NPY_FAIL;
     }
-    return PY_SUCCEED;
+    return NPY_SUCCEED;
 }
 
 
@@ -3154,7 +3154,7 @@ arraydescr_richcompare(PyArray_Descr *self, PyObject *other, int cmp_op)
     PyArray_Descr *new = NULL;
     PyObject *result = Py_NotImplemented;
     if (!PyArray_DescrCheck(other)) {
-        if (PyArray_DescrConverter(other, &new) == PY_FAIL) {
+        if (PyArray_DescrConverter(other, &new) == NPY_FAIL) {
             return NULL;
         }
     }

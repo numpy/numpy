@@ -56,17 +56,17 @@ _append_new(int *types, int insert)
     return newtypes;
 }
 
-static Bool
+static npy_bool
 _default_nonzero(void *ip, void *arr)
 {
     int elsize = PyArray_ITEMSIZE(arr);
     char *ptr = ip;
     while (elsize--) {
         if (*ptr++ != 0) {
-            return TRUE;
+            return NPY_TRUE;
         }
     }
-    return FALSE;
+    return NPY_FALSE;
 }
 
 static void

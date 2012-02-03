@@ -56,7 +56,7 @@ PyArray_ArgMax(PyArrayObject *op, int axis, PyArrayObject *out)
      */
     if (axis != PyArray_NDIM(ap)-1) {
         PyArray_Dims newaxes;
-        npy_intp dims[MAX_DIMS];
+        npy_intp dims[NPY_MAXDIMS];
         int j;
 
         newaxes.ptr = dims;
@@ -155,8 +155,8 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
     PyArrayObject *ap = NULL, *rp = NULL;
     PyArray_ArgFunc* arg_func;
     char *ip;
-    intp *rptr;
-    intp i, n, m;
+    npy_intp *rptr;
+    npy_intp i, n, m;
     int elsize;
     NPY_BEGIN_THREADS_DEF;
 
@@ -169,7 +169,7 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
      */
     if (axis != PyArray_NDIM(ap)-1) {
         PyArray_Dims newaxes;
-        intp dims[MAX_DIMS];
+        npy_intp dims[NPY_MAXDIMS];
         int i;
 
         newaxes.ptr = dims;
@@ -237,7 +237,7 @@ PyArray_ArgMin(PyArrayObject *op, int axis, PyArrayObject *out)
 
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap));
     n = PyArray_SIZE(ap)/m;
-    rptr = (intp *)PyArray_DATA(rp);
+    rptr = (npy_intp *)PyArray_DATA(rp);
     for (ip = PyArray_DATA(ap), i = 0; i < n; i++, ip += elsize*m) {
         arg_func(ip, m, rptr, ap);
         rptr += 1;

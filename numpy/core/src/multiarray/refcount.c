@@ -99,7 +99,7 @@ PyArray_Item_XDECREF(char *data, PyArray_Descr *descr)
 NPY_NO_EXPORT int
 PyArray_INCREF(PyArrayObject *mp)
 {
-    intp i, n;
+    npy_intp i, n;
     PyObject **data;
     PyObject *temp;
     PyArrayIterObject *it;
@@ -157,7 +157,7 @@ PyArray_INCREF(PyArrayObject *mp)
 NPY_NO_EXPORT int
 PyArray_XDECREF(PyArrayObject *mp)
 {
-    intp i, n;
+    npy_intp i, n;
     PyObject **data;
     PyObject *temp;
     PyArrayIterObject *it;
@@ -212,7 +212,7 @@ PyArray_XDECREF(PyArrayObject *mp)
 NPY_NO_EXPORT void
 PyArray_FillObjectArray(PyArrayObject *arr, PyObject *obj)
 {
-    intp i,n;
+    npy_intp i,n;
     n = PyArray_SIZE(arr);
     if (PyArray_DESCR(arr)->type_num == NPY_OBJECT) {
         PyObject **optr;

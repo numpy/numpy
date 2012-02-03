@@ -192,7 +192,7 @@ array_any_nonzero(PyArrayObject *arr)
 {
     npy_intp counter;
     PyArrayIterObject *it;
-    Bool anyTRUE = FALSE;
+    npy_bool anyTRUE = NPY_FALSE;
 
     it = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
     if (it == NULL) {
@@ -201,7 +201,7 @@ array_any_nonzero(PyArrayObject *arr)
     counter = it->size;
     while (counter--) {
         if (PyArray_DESCR(arr)->f->nonzero(it->dataptr, arr)) {
-            anyTRUE = TRUE;
+            anyTRUE = NPY_TRUE;
             break;
         }
         PyArray_ITER_NEXT(it);
