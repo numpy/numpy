@@ -86,11 +86,11 @@
 typedef float halfUnaryFunc(npy_half x);
 typedef float floatUnaryFunc(float x);
 typedef double doubleUnaryFunc(double x);
-typedef longdouble longdoubleUnaryFunc(longdouble x);
+typedef npy_longdouble longdoubleUnaryFunc(npy_longdouble x);
 typedef npy_half halfBinaryFunc(npy_half x, npy_half y);
 typedef float floatBinaryFunc(float x, float y);
 typedef double doubleBinaryFunc(double x, double y);
-typedef longdouble longdoubleBinaryFunc(longdouble x, longdouble y);
+typedef npy_longdouble longdoubleBinaryFunc(npy_longdouble x, npy_longdouble y);
 
 
 /*UFUNC_API*/
@@ -237,8 +237,8 @@ PyUFunc_g_g(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
     longdoubleUnaryFunc *f = (longdoubleUnaryFunc *)func;
     UNARY_LOOP {
-        longdouble in1 = *(longdouble *)ip1;
-        *(longdouble *)op1 = f(in1);
+        npy_longdouble in1 = *(npy_longdouble *)ip1;
+        *(npy_longdouble *)op1 = f(in1);
     }
 }
 
@@ -248,9 +248,9 @@ PyUFunc_gg_g(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
     longdoubleBinaryFunc *f = (longdoubleBinaryFunc *)func;
     BINARY_LOOP {
-        longdouble in1 = *(longdouble *)ip1;
-        longdouble in2 = *(longdouble *)ip2;
-        *(longdouble *)op1 = f(in1, in2);
+        npy_longdouble in1 = *(npy_longdouble *)ip1;
+        npy_longdouble in2 = *(npy_longdouble *)ip2;
+        *(npy_longdouble *)op1 = f(in1, in2);
     }
 }
 
@@ -261,13 +261,13 @@ PyUFunc_gg_g(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
  *****************************************************************************/
 
 
-typedef void cdoubleUnaryFunc(cdouble *x, cdouble *r);
-typedef void cfloatUnaryFunc(cfloat *x, cfloat *r);
-typedef void clongdoubleUnaryFunc(clongdouble *x, clongdouble *r);
-typedef void cdoubleBinaryFunc(cdouble *x, cdouble *y, cdouble *r);
-typedef void cfloatBinaryFunc(cfloat *x, cfloat *y, cfloat *r);
-typedef void clongdoubleBinaryFunc(clongdouble *x, clongdouble *y,
-                                   clongdouble *r);
+typedef void cdoubleUnaryFunc(npy_cdouble *x, npy_cdouble *r);
+typedef void cfloatUnaryFunc(npy_cfloat *x, npy_cfloat *r);
+typedef void clongdoubleUnaryFunc(npy_clongdouble *x, npy_clongdouble *r);
+typedef void cdoubleBinaryFunc(npy_cdouble *x, npy_cdouble *y, npy_cdouble *r);
+typedef void cfloatBinaryFunc(npy_cfloat *x, npy_cfloat *y, npy_cfloat *r);
+typedef void clongdoubleBinaryFunc(npy_clongdouble *x, npy_clongdouble *y,
+                                   npy_clongdouble *r);
 
 /*UFUNC_API*/
 NPY_NO_EXPORT void
@@ -275,8 +275,8 @@ PyUFunc_F_F(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
     cfloatUnaryFunc *f = (cfloatUnaryFunc *)func;
     UNARY_LOOP {
-        cfloat in1 = *(cfloat *)ip1;
-        cfloat *out = (cfloat *)op1;
+        npy_cfloat in1 = *(npy_cfloat *)ip1;
+        npy_cfloat *out = (npy_cfloat *)op1;
         f(&in1, out);
     }
 }
@@ -287,7 +287,7 @@ PyUFunc_F_F_As_D_D(char **args, npy_intp *dimensions, npy_intp *steps, void *fun
 {
     cdoubleUnaryFunc *f = (cdoubleUnaryFunc *)func;
     UNARY_LOOP {
-        cdouble tmp, out;
+        npy_cdouble tmp, out;
         tmp.real = (double)((float *)ip1)[0];
         tmp.imag = (double)((float *)ip1)[1];
         f(&tmp, &out);
@@ -302,9 +302,9 @@ PyUFunc_FF_F(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
     cfloatBinaryFunc *f = (cfloatBinaryFunc *)func;
     BINARY_LOOP {
-        cfloat in1 = *(cfloat *)ip1;
-        cfloat in2 = *(cfloat *)ip2;
-        cfloat *out = (cfloat *)op1;
+        npy_cfloat in1 = *(npy_cfloat *)ip1;
+        npy_cfloat in2 = *(npy_cfloat *)ip2;
+        npy_cfloat *out = (npy_cfloat *)op1;
         f(&in1, &in2, out);
     }
 }
@@ -315,7 +315,7 @@ PyUFunc_FF_F_As_DD_D(char **args, npy_intp *dimensions, npy_intp *steps, void *f
 {
     cdoubleBinaryFunc *f = (cdoubleBinaryFunc *)func;
     BINARY_LOOP {
-        cdouble tmp1, tmp2, out;
+        npy_cdouble tmp1, tmp2, out;
         tmp1.real = (double)((float *)ip1)[0];
         tmp1.imag = (double)((float *)ip1)[1];
         tmp2.real = (double)((float *)ip2)[0];
@@ -332,8 +332,8 @@ PyUFunc_D_D(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
     cdoubleUnaryFunc *f = (cdoubleUnaryFunc *)func;
     UNARY_LOOP {
-        cdouble in1 = *(cdouble *)ip1;
-        cdouble *out = (cdouble *)op1;
+        npy_cdouble in1 = *(npy_cdouble *)ip1;
+        npy_cdouble *out = (npy_cdouble *)op1;
         f(&in1, out);
     }
 }
@@ -344,9 +344,9 @@ PyUFunc_DD_D(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
     cdoubleBinaryFunc *f = (cdoubleBinaryFunc *)func;
     BINARY_LOOP {
-        cdouble in1 = *(cdouble *)ip1;
-        cdouble in2 = *(cdouble *)ip2;
-        cdouble *out = (cdouble *)op1;
+        npy_cdouble in1 = *(npy_cdouble *)ip1;
+        npy_cdouble in2 = *(npy_cdouble *)ip2;
+        npy_cdouble *out = (npy_cdouble *)op1;
         f(&in1, &in2, out);
     }
 }
@@ -357,8 +357,8 @@ PyUFunc_G_G(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
     clongdoubleUnaryFunc *f = (clongdoubleUnaryFunc *)func;
     UNARY_LOOP {
-        clongdouble in1 = *(clongdouble *)ip1;
-        clongdouble *out = (clongdouble *)op1;
+        npy_clongdouble in1 = *(npy_clongdouble *)ip1;
+        npy_clongdouble *out = (npy_clongdouble *)op1;
         f(&in1, out);
     }
 }
@@ -369,9 +369,9 @@ PyUFunc_GG_G(char **args, npy_intp *dimensions, npy_intp *steps, void *func)
 {
     clongdoubleBinaryFunc *f = (clongdoubleBinaryFunc *)func;
     BINARY_LOOP {
-        clongdouble in1 = *(clongdouble *)ip1;
-        clongdouble in2 = *(clongdouble *)ip2;
-        clongdouble *out = (clongdouble *)op1;
+        npy_clongdouble in1 = *(npy_clongdouble *)ip1;
+        npy_clongdouble in2 = *(npy_clongdouble *)ip2;
+        npy_clongdouble *out = (npy_clongdouble *)op1;
         f(&in1, &in2, out);
     }
 }
@@ -533,9 +533,9 @@ NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        Bool in1 = *((Bool *)ip1) != 0;
-        Bool in2 = *((Bool *)ip2) != 0;
-        *((Bool *)op1)= in1 @OP@ in2;
+        npy_bool in1 = *((npy_bool *)ip1) != 0;
+        npy_bool in2 = *((npy_bool *)ip2) != 0;
+        *((npy_bool *)op1)= in1 @OP@ in2;
     }
 }
 /**end repeat**/
@@ -551,20 +551,20 @@ NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     if(IS_BINARY_REDUCE) {
-        BINARY_REDUCE_LOOP(Bool) {
-            const Bool in2 = *(Bool *)ip2;
+        BINARY_REDUCE_LOOP(npy_bool) {
+            const npy_bool in2 = *(npy_bool *)ip2;
             io1 = io1 @OP@ in2;
             if (io1 @SC@ 0) {
                 break;
             }
         }
-        *((Bool *)iop1) = io1;
+        *((npy_bool *)iop1) = io1;
     }
     else {
         BINARY_LOOP {
-            const Bool in1 = *(Bool *)ip1;
-            const Bool in2 = *(Bool *)ip2;
-            *((Bool *)op1) = in1 @OP@ in2;
+            const npy_bool in1 = *(npy_bool *)ip1;
+            const npy_bool in2 = *(npy_bool *)ip2;
+            *((npy_bool *)op1) = in1 @OP@ in2;
         }
     }
 }
@@ -575,9 +575,9 @@ NPY_NO_EXPORT void
 BOOL_logical_xor(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        Bool in1 = *((Bool *)ip1) != 0;
-        Bool in2 = *((Bool *)ip2) != 0;
-        *((Bool *)op1)= (in1 && !in2) || (!in1 && in2);
+        npy_bool in1 = *((npy_bool *)ip1) != 0;
+        npy_bool in2 = *((npy_bool *)ip2) != 0;
+        *((npy_bool *)op1)= (in1 && !in2) || (!in1 && in2);
     }
 }
 
@@ -589,9 +589,9 @@ NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        Bool in1 = *((Bool *)ip1) != 0;
-        Bool in2 = *((Bool *)ip2) != 0;
-        *((Bool *)op1) = (in1 @OP@ in2) ? in1 : in2;
+        npy_bool in1 = *((npy_bool *)ip1) != 0;
+        npy_bool in2 = *((npy_bool *)ip2) != 0;
+        *((npy_bool *)op1) = (in1 @OP@ in2) ? in1 : in2;
     }
 }
 /**end repeat**/
@@ -604,8 +604,8 @@ NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     UNARY_LOOP {
-        Bool in1 = *(Bool *)ip1;
-        *((Bool *)op1) = in1 @OP@ 0;
+        npy_bool in1 = *(npy_bool *)ip1;
+        *((npy_bool *)op1) = in1 @OP@ 0;
     }
 }
 /**end repeat**/
@@ -614,7 +614,7 @@ NPY_NO_EXPORT void
 BOOL__ones_like(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
     OUTPUT_LOOP {
-        *((Bool *)op1) = 1;
+        *((npy_bool *)op1) = 1;
     }
 }
 
@@ -690,7 +690,7 @@ NPY_NO_EXPORT void
 {
     UNARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
-        *((Bool *)op1) = !in1;
+        *((npy_bool *)op1) = !in1;
     }
 }
 
@@ -739,7 +739,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
         const @s@@type@ in2 = *(@s@@type@ *)ip2;
-        *((Bool *)op1) = in1 @OP@ in2;
+        *((npy_bool *)op1) = in1 @OP@ in2;
     }
 }
 /**end repeat2**/
@@ -750,7 +750,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @s@@type@ in1 = *(@s@@type@ *)ip1;
         const @s@@type@ in2 = *(@s@@type@ *)ip2;
-        *((Bool *)op1)= (in1 && !in2) || (!in1 && in2);
+        *((npy_bool *)op1)= (in1 && !in2) || (!in1 && in2);
     }
 }
 
@@ -1045,8 +1045,8 @@ NPY_NO_EXPORT void
 DATETIME_Mm_M_add(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(data))
 {
     BINARY_LOOP {
-        const datetime in1 = *(datetime *)ip1;
-        const timedelta in2 = *(timedelta *)ip2;
+        const npy_datetime in1 = *(npy_datetime *)ip1;
+        const npy_timedelta in2 = *(npy_timedelta *)ip2;
         if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
             *((npy_datetime *)op1) = NPY_DATETIME_NAT;
         }
@@ -1060,8 +1060,8 @@ NPY_NO_EXPORT void
 DATETIME_mM_M_add(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const timedelta in1 = *(timedelta *)ip1;
-        const datetime in2 = *(datetime *)ip2;
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        const npy_datetime in2 = *(npy_datetime *)ip2;
         if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
             *((npy_datetime *)op1) = NPY_DATETIME_NAT;
         }
@@ -1075,8 +1075,8 @@ NPY_NO_EXPORT void
 TIMEDELTA_mm_m_add(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const timedelta in1 = *(timedelta *)ip1;
-        const timedelta in2 = *(timedelta *)ip2;
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        const npy_timedelta in2 = *(npy_timedelta *)ip2;
         if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
@@ -1090,8 +1090,8 @@ NPY_NO_EXPORT void
 DATETIME_Mm_M_subtract(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const datetime in1 = *(datetime *)ip1;
-        const timedelta in2 = *(timedelta *)ip2;
+        const npy_datetime in1 = *(npy_datetime *)ip1;
+        const npy_timedelta in2 = *(npy_timedelta *)ip2;
         if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
             *((npy_datetime *)op1) = NPY_DATETIME_NAT;
         }
@@ -1105,8 +1105,8 @@ NPY_NO_EXPORT void
 DATETIME_MM_m_subtract(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const datetime in1 = *(datetime *)ip1;
-        const datetime in2 = *(datetime *)ip2;
+        const npy_datetime in1 = *(npy_datetime *)ip1;
+        const npy_datetime in2 = *(npy_datetime *)ip2;
         if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
@@ -1120,8 +1120,8 @@ NPY_NO_EXPORT void
 TIMEDELTA_mm_m_subtract(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     BINARY_LOOP {
-        const timedelta in1 = *(timedelta *)ip1;
-        const timedelta in2 = *(timedelta *)ip2;
+        const npy_timedelta in1 = *(npy_timedelta *)ip1;
+        const npy_timedelta in2 = *(npy_timedelta *)ip2;
         if (in1 == NPY_DATETIME_NAT || in2 == NPY_DATETIME_NAT) {
             *((npy_timedelta *)op1) = NPY_DATETIME_NAT;
         }
@@ -1296,7 +1296,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((Bool *)op1) = in1 @OP@ in2;
+        *((npy_bool *)op1) = in1 @OP@ in2;
     }
 }
 /**end repeat1**/
@@ -1307,7 +1307,7 @@ NPY_NO_EXPORT void
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
-        *((Bool *)op1)= (in1 && !in2) || (!in1 && in2);
+        *((npy_bool *)op1)= (in1 && !in2) || (!in1 && in2);
     }
 }
 
@@ -1316,7 +1316,7 @@ NPY_NO_EXPORT void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((Bool *)op1) = !in1;
+        *((npy_bool *)op1) = !in1;
     }
 }
 
@@ -1329,7 +1329,7 @@ NPY_NO_EXPORT void
 {
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
-        *((Bool *)op1) = @func@(in1) != 0;
+        *((npy_bool *)op1) = @func@(in1) != 0;
     }
 }
 /**end repeat1**/
@@ -1616,7 +1616,7 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
     BINARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
         const npy_half in2 = *(npy_half *)ip2;
-        *((Bool *)op1) = @OP@(in1, in2);
+        *((npy_bool *)op1) = @OP@(in1, in2);
     }
 }
 /**end repeat**/
@@ -1629,7 +1629,7 @@ HALF_logical_xor(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_U
     BINARY_LOOP {
         const int in1 = !npy_half_iszero(*(npy_half *)ip1);
         const int in2 = !npy_half_iszero(*(npy_half *)ip2);
-        *((Bool *)op1)= (in1 && !in2) || (!in1 && in2);
+        *((npy_bool *)op1)= (in1 && !in2) || (!in1 && in2);
     }
 }
 
@@ -1638,7 +1638,7 @@ HALF_logical_not(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_U
 {
     UNARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
-        *((Bool *)op1) = npy_half_iszero(in1);
+        *((npy_bool *)op1) = npy_half_iszero(in1);
     }
 }
 
@@ -1651,7 +1651,7 @@ HALF_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 {
     UNARY_LOOP {
         const npy_half in1 = *(npy_half *)ip1;
-        *((Bool *)op1) = @func@(in1) != 0;
+        *((npy_bool *)op1) = @func@(in1) != 0;
     }
 }
 /**end repeat**/
@@ -1998,7 +1998,7 @@ C@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        *((Bool *)op1) = @OP@(in1r,in1i,in2r,in2i);
+        *((npy_bool *)op1) = @OP@(in1r,in1i,in2r,in2i);
     }
 }
 /**end repeat1**/
@@ -2016,7 +2016,7 @@ C@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        *((Bool *)op1) = (in1r @OP1@ in1i) @OP2@ (in2r @OP1@ in2i);
+        *((npy_bool *)op1) = (in1r @OP1@ in1i) @OP2@ (in2r @OP1@ in2i);
     }
 }
 /**end repeat1**/
@@ -2029,9 +2029,9 @@ C@TYPE@_logical_xor(char **args, npy_intp *dimensions, npy_intp *steps, void *NP
         const @type@ in1i = ((@type@ *)ip1)[1];
         const @type@ in2r = ((@type@ *)ip2)[0];
         const @type@ in2i = ((@type@ *)ip2)[1];
-        const Bool tmp1 = (in1r || in1i);
-        const Bool tmp2 = (in2r || in2i);
-        *((Bool *)op1) = (tmp1 && !tmp2) || (!tmp1 && tmp2);
+        const npy_bool tmp1 = (in1r || in1i);
+        const npy_bool tmp2 = (in2r || in2i);
+        *((npy_bool *)op1) = (tmp1 && !tmp2) || (!tmp1 && tmp2);
     }
 }
 
@@ -2041,7 +2041,7 @@ C@TYPE@_logical_not(char **args, npy_intp *dimensions, npy_intp *steps, void *NP
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
-        *((Bool *)op1) = !(in1r || in1i);
+        *((npy_bool *)op1) = !(in1r || in1i);
     }
 }
 
@@ -2056,7 +2056,7 @@ C@TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNU
     UNARY_LOOP {
         const @type@ in1r = ((@type@ *)ip1)[0];
         const @type@ in1i = ((@type@ *)ip1)[1];
-        *((Bool *)op1) = @func@(in1r) @OP@ @func@(in1i);
+        *((npy_bool *)op1) = @func@(in1r) @OP@ @func@(in1i);
     }
 }
 /**end repeat1**/
@@ -2225,7 +2225,7 @@ OBJECT_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUS
         if (ret == -1) {
             return;
         }
-        *((Bool *)op1) = (Bool)ret;
+        *((npy_bool *)op1) = (npy_bool)ret;
     }
 }
 /**end repeat**/
