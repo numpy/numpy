@@ -827,7 +827,7 @@ class TestPickling(TestCase):
 
     def test_version0_object(self):
         s = '\x80\x02cnumpy.core._internal\n_reconstruct\nq\x01cnumpy\nndarray\nq\x02K\x00\x85U\x01b\x87Rq\x03(K\x02\x85cnumpy\ndtype\nq\x04U\x02O8K\x00K\x01\x87Rq\x05(U\x01|NNJ\xff\xff\xff\xffJ\xff\xff\xff\xfftb\x89]q\x06(}q\x07U\x01aK\x01s}q\x08U\x01bK\x02setb.'
-        a = array([{'a':1}, {'b':2}])
+        a = np.array([{'a':1}, {'b':2}])
         p = self._loads(asbytes(s))
         assert_equal(a, p)
 
