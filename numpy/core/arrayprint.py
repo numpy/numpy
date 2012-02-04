@@ -657,7 +657,7 @@ class IntegerFormat(object):
             max_str_len = max(len(str(maximum.reduce(data, skipna=True))),
                               len(str(minimum.reduce(data, skipna=True))))
             self.format = '%' + str(max_str_len) + 'd'
-        except TypeError, NotImplementedError:
+        except (TypeError, NotImplementedError):
             # if reduce(data) fails, this instance will not be called, just
             # instantiated in formatdict.
             pass
