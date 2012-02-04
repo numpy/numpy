@@ -1814,10 +1814,17 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
         return -1;
     }
 
-    if (DEPRECATE("Setting NumPy dtype names is deprecated, the dtype "
-                    "will become immutable in a future version") < 0) {
-        return -1;
-    }
+    /*
+     * This deprecation has been temporarily removed for the NumPy 1.7
+     * release. It should be re-added after the 1.7 branch is done,
+     * and a convenience API to replace the typical use-cases for
+     * mutable names should be implemented.
+     *
+     * if (DEPRECATE("Setting NumPy dtype names is deprecated, the dtype "
+     *                "will become immutable in a future version") < 0) {
+     *     return -1;
+     * }
+     */
 
     N = PyTuple_GET_SIZE(self->names);
     if (!PySequence_Check(val) || PyObject_Size((PyObject *)val) != N) {
