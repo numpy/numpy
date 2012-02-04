@@ -176,7 +176,7 @@ array_reshape(PyArrayObject *self, PyObject *args, PyObject *kwds)
     static char *keywords[] = {"order", NULL};
     PyArray_Dims newshape;
     PyObject *ret;
-    PyArray_ORDER order = NPY_CORDER;
+    NPY_ORDER order = NPY_CORDER;
     Py_ssize_t n = PyTuple_Size(args);
 
     if (!NpyArg_ParseKeywords(kwds, "|O&", keywords,
@@ -1107,7 +1107,7 @@ array_getarray(PyArrayObject *self, PyObject *args)
 static PyObject *
 array_copy(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArray_ORDER order = NPY_CORDER;
+    NPY_ORDER order = NPY_CORDER;
     PyObject *maskna_in = Py_None;
     int maskna = -1;
     static char *kwlist[] = {"order", "maskna", NULL};
@@ -1247,7 +1247,7 @@ array_sort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     int axis=-1;
     int val;
-    PyArray_SORTKIND sortkind = PyArray_QUICKSORT;
+    NPY_SORTKIND sortkind = NPY_QUICKSORT;
     PyObject *order = NULL;
     PyArray_Descr *saved = NULL;
     PyArray_Descr *newd;
@@ -1303,7 +1303,7 @@ static PyObject *
 array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
     int axis = -1;
-    PyArray_SORTKIND sortkind = PyArray_QUICKSORT;
+    NPY_SORTKIND sortkind = NPY_QUICKSORT;
     PyObject *order = NULL, *res;
     PyArray_Descr *newd, *saved=NULL;
     static char *kwlist[] = {"axis", "kind", "order", NULL};
@@ -1371,7 +1371,7 @@ _deepcopy_call(char *iptr, char *optr, PyArray_Descr *dtype,
     if (!PyDataType_REFCHK(dtype)) {
         return;
     }
-    else if (PyDescr_HASFIELDS(dtype)) {
+    else if (PyDataType_HASFIELDS(dtype)) {
         PyObject *key, *value, *title = NULL;
         PyArray_Descr *new;
         int offset;
@@ -1737,11 +1737,11 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 }
                 else {
                     fa->descr = PyArray_DescrNew(typecode);
-                    if (PyArray_DESCR(self)->byteorder == PyArray_BIG) {
-                        PyArray_DESCR(self)->byteorder = PyArray_LITTLE;
+                    if (PyArray_DESCR(self)->byteorder == NPY_BIG) {
+                        PyArray_DESCR(self)->byteorder = NPY_LITTLE;
                     }
-                    else if (PyArray_DESCR(self)->byteorder == PyArray_LITTLE) {
-                        PyArray_DESCR(self)->byteorder = PyArray_BIG;
+                    else if (PyArray_DESCR(self)->byteorder == NPY_LITTLE) {
+                        PyArray_DESCR(self)->byteorder = NPY_BIG;
                     }
                 }
                 Py_DECREF(typecode);
@@ -1900,7 +1900,7 @@ array_transpose(PyArrayObject *self, PyObject *args)
     return ret;
 }
 
-#define _CHKTYPENUM(typ) ((typ) ? (typ)->type_num : PyArray_NOTYPE)
+#define _CHKTYPENUM(typ) ((typ) ? (typ)->type_num : NPY_NOTYPE)
 
 static PyObject *
 array_mean(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -2185,7 +2185,7 @@ array_diagonal(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_flatten(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArray_ORDER order = NPY_CORDER;
+    NPY_ORDER order = NPY_CORDER;
     static char *kwlist[] = {"order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
@@ -2199,7 +2199,7 @@ array_flatten(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_ravel(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyArray_ORDER order = NPY_CORDER;
+    NPY_ORDER order = NPY_CORDER;
     static char *kwlist[] = {"order", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&", kwlist,
@@ -2301,7 +2301,7 @@ array_setflags(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_newbyteorder(PyArrayObject *self, PyObject *args)
 {
-    char endian = PyArray_SWAP;
+    char endian = NPY_SWAP;
     PyArray_Descr *new;
 
     if (!PyArg_ParseTuple(args, "|O&", PyArray_ByteorderConverter,

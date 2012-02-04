@@ -189,7 +189,7 @@ feature follows.
         PyArray_MultiIter_NEXT(mobj);
     }
 
-The function :cfunc:`PyArray_RemoveLargest` ( ``multi`` ) can be used to
+The function :cfunc:`PyArray_RemoveSmallest` ( ``multi`` ) can be used to
 take a multi-iterator object and adjust all the iterators so that
 iteration does not take place over the largest dimension (it makes
 that dimension of size 1). The code being looped over that makes use
@@ -330,7 +330,7 @@ function :cfunc:`PyArray_RegisterCanCast` (from_descr, totype_number,
 scalarkind) should be used to specify that the data-type object
 from_descr can be cast to the data-type with type number
 totype_number. If you are not trying to alter scalar coercion rules,
-then use :cdata:`PyArray_NOSCALAR` for the scalarkind argument.
+then use :cdata:`NPY_NOSCALAR` for the scalarkind argument.
 
 If you want to allow your new data-type to also be able to share in
 the scalar coercion rules, then you need to specify the scalarkind
@@ -340,7 +340,7 @@ available to that function). Then, you can register data-types that
 can be cast to separately for each scalar kind that may be returned
 from your user-defined data-type. If you don't register scalar
 coercion handling, then all of your user-defined data-types will be
-seen as :cdata:`PyArray_NOSCALAR`.
+seen as :cdata:`NPY_NOSCALAR`.
 
 
 Registering a ufunc loop

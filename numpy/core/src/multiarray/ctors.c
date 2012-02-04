@@ -918,7 +918,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             sd = descr->elsize = 1;
         }
         else {
-            sd = descr->elsize = sizeof(PyArray_UCS4);
+            sd = descr->elsize = sizeof(npy_ucs4);
         }
     }
 
@@ -1273,7 +1273,7 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
         }
     }
     else {
-        descr = PyArray_DescrNewFromType(PyArray_STRING);
+        descr = PyArray_DescrNewFromType(NPY_STRING);
         descr->elsize = view->itemsize;
     }
 
@@ -2142,7 +2142,7 @@ PyArray_FromStructInterface(PyObject *input)
     PyArrayInterface *inter;
     PyObject *attr;
     PyArrayObject *ret;
-    char endian = PyArray_NATBYTE;
+    char endian = NPY_NATBYTE;
 
     attr = PyObject_GetAttrString(input, "__array_struct__");
     if (attr == NULL) {
@@ -3288,7 +3288,7 @@ PyArray_ArangeObj(PyObject *start, PyObject *stop, PyObject *step, PyArray_Descr
      * order version.  And then swap on the way out.
      */
     if (!PyArray_ISNBO(dtype->byteorder)) {
-        native = PyArray_DescrNewByteorder(dtype, PyArray_NATBYTE);
+        native = PyArray_DescrNewByteorder(dtype, NPY_NATBYTE);
         swap = 1;
     }
     else {
@@ -3470,7 +3470,7 @@ array_from_text(PyArray_Descr *dtype, npy_intp num, char *sep, size_t *nread,
         }
     }
     if (num < 0) {
-        tmp = PyDataMem_RENEW(PyArray_DATA(r), NPY_MAX(*nread,1)*dtype->elsize);
+        tmp = PyDataMem_RENEW(PyArray_DATA(r), PyArray_MAX(*nread,1)*dtype->elsize);
         if (tmp == NULL) {
             err = 1;
         }
@@ -3549,7 +3549,7 @@ PyArray_FromFile(FILE *fp, PyArray_Descr *dtype, npy_intp num, char *sep)
     }
     if (((npy_intp) nread) < num) {
         /* Realloc memory for smaller number of elements */
-        const size_t nsize = NPY_MAX(nread,1)*PyArray_DESCR(ret)->elsize;
+        const size_t nsize = PyArray_MAX(nread,1)*PyArray_DESCR(ret)->elsize;
         char *tmp;
 
         if((tmp = PyDataMem_RENEW(PyArray_DATA(ret), nsize)) == NULL) {

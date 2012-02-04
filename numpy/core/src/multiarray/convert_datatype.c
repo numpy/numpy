@@ -287,7 +287,7 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
 /*
  * Must be broadcastable.
  * This code is very similar to PyArray_CopyInto/PyArray_MoveInto
- * except casting is done --- PyArray_BUFSIZE is used
+ * except casting is done --- NPY_BUFSIZE is used
  * as the size of the casting buffer.
  */
 
@@ -352,7 +352,7 @@ PyArray_CanCastSafely(int fromtype, int totype)
 
     from = PyArray_DescrFromType(fromtype);
     /*
-     * cancastto is a PyArray_NOTYPE terminated C-int-array of types that
+     * cancastto is a NPY_NOTYPE terminated C-int-array of types that
      * the data-type can be cast to safely.
      */
     if (from->f->cancastto) {
@@ -734,7 +734,7 @@ PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
 
     fromtype = _typenum_fromtypeobj((PyObject *)from, 0);
     totype = _typenum_fromtypeobj((PyObject *)to, 0);
-    if (fromtype == PyArray_NOTYPE || totype == PyArray_NOTYPE) {
+    if (fromtype == NPY_NOTYPE || totype == NPY_NOTYPE) {
         return FALSE;
     }
     return (npy_bool) PyArray_CanCastSafely(fromtype, totype);

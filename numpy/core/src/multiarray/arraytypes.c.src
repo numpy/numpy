@@ -306,9 +306,9 @@ static PyObject *
 UNICODE_getitem(char *ip, PyArrayObject *ap)
 {
     intp elsize = PyArray_DESCR(ap)->elsize;
-    intp mysize = elsize/sizeof(PyArray_UCS4);
+    intp mysize = elsize/sizeof(npy_ucs4);
     int alloc = 0;
-    PyArray_UCS4 *buffer = NULL;
+    npy_ucs4 *buffer = NULL;
     PyUnicodeObject *obj;
     intp i;
 
@@ -321,11 +321,11 @@ UNICODE_getitem(char *ip, PyArrayObject *ap)
         alloc = 1;
         memcpy(buffer, ip, elsize);
         if (!PyArray_ISNOTSWAPPED(ap)) {
-            byte_swap_vector(buffer, mysize, sizeof(PyArray_UCS4));
+            byte_swap_vector(buffer, mysize, sizeof(npy_ucs4));
         }
     }
     else {
-        buffer = (PyArray_UCS4 *)ip;
+        buffer = (npy_ucs4 *)ip;
     }
     for (i = mysize; i > 0 && buffer[--i] == 0; mysize = i);
 
@@ -418,7 +418,7 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
     else {
         buffer = ov;
     }
-    datalen = PyUCS2Buffer_AsUCS4(ptr, (PyArray_UCS4 *)buffer,
+    datalen = PyUCS2Buffer_AsUCS4(ptr, (npy_ucs4 *)buffer,
             datalen >> 1, PyArray_DESCR(ap)->elsize >> 2);
     datalen <<= 2;
     if (!PyArray_ISALIGNED(ap)) {
@@ -804,7 +804,7 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         if (res == -1) {
             goto fail;
         }
-        memcpy(ip, buffer, NPY_MIN(buflen, itemsize));
+        memcpy(ip, buffer, PyArray_MIN(buflen, itemsize));
         if (itemsize > buflen) {
             memset(ip + buflen, 0, itemsize - buflen);
         }
@@ -2176,7 +2176,7 @@ STRING_nonzero (char *ip, PyArrayObject *ap)
 #endif
 
 static Bool
-UNICODE_nonzero (PyArray_UCS4 *ip, PyArrayObject *ap)
+UNICODE_nonzero (npy_ucs4 *ip, PyArrayObject *ap)
 {
     int len = PyArray_DESCR(ap)->elsize >> 2;
     int i;
@@ -2192,7 +2192,7 @@ UNICODE_nonzero (PyArray_UCS4 *ip, PyArrayObject *ap)
         if (!PyArray_ISNOTSWAPPED(ap)) {
             byte_swap_vector(buffer, len, 4);
         }
-        ip = (PyArray_UCS4 *)buffer;
+        ip = (npy_ucs4 *)buffer;
     }
 
     for (i = 0; i < len; i++) {
@@ -2504,7 +2504,7 @@ STRING_compare(char *ip1, char *ip2, PyArrayObject *ap)
 /* unicode type */
 
 static int
-UNICODE_compare(PyArray_UCS4 *ip1, PyArray_UCS4 *ip2,
+UNICODE_compare(npy_ucs4 *ip1, npy_ucs4 *ip2,
                 PyArrayObject *ap)
 {
     int itemsize = PyArray_DESCR(ap)->elsize;
@@ -2513,8 +2513,8 @@ UNICODE_compare(PyArray_UCS4 *ip1, PyArray_UCS4 *ip2,
         return 0;
     }
     while (itemsize-- > 0) {
-        PyArray_UCS4 c1 = *ip1++;
-        PyArray_UCS4 c2 = *ip2++;
+        npy_ucs4 c1 = *ip1++;
+        npy_ucs4 c2 = *ip2++;
         if (c1 != c2) {
             return (c1 < c2) ? -1 : 1;
         }
@@ -2795,7 +2795,7 @@ OBJECT_argmax(PyObject **ip, intp n, intp *max_ind, PyArrayObject *NPY_UNUSED(ai
 /**begin repeat
  *
  * #fname = STRING, UNICODE#
- * #type = char, PyArray_UCS4#
+ * #type = char, npy_ucs4#
  */
 static int
 @fname@_argmax(@type@ *ip, intp n, intp *max_ind, PyArrayObject *aip)
@@ -2851,7 +2851,7 @@ OBJECT_argmin(PyObject **ip, intp n, intp *min_ind, PyArrayObject *NPY_UNUSED(ai
 /**begin repeat
  *
  * #fname = STRING, UNICODE#
- * #type = char, PyArray_UCS4#
+ * #type = char, npy_ucs4#
  */
 static int
 @fname@_argmin(@type@ *ip, intp n, intp *min_ind, PyArrayObject *aip)
@@ -3475,7 +3475,7 @@ static int
  * #from = VOID, STRING, UNICODE#
  * #suff = void, string, unicode#
  * #sort = 0, 1, 1#
- * #align = char, char, PyArray_UCS4#
+ * #align = char, char, npy_ucs4#
  * #NAME = Void, String, Unicode#
  * #endian = |, |, =#
 */
@@ -3550,11 +3550,11 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 static PyArray_Descr @from@_Descr = {
     PyObject_HEAD_INIT(&PyArrayDescr_Type)
     &Py@NAME@ArrType_Type,
-    PyArray_@from@LTR,
-    PyArray_@from@LTR,
+    NPY_@from@LTR,
+    NPY_@from@LTR,
     '@endian@',
     0,
-    PyArray_@from@,
+    NPY_@from@,
     0,
     _ALIGN(@align@),
     NULL,
@@ -3659,11 +3659,11 @@ static PyArray_ArrFuncs _Py@NAME@_ArrFuncs = {
 NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     PyObject_HEAD_INIT(&PyArrayDescr_Type)
     &Py@NAME@ArrType_Type,
-    PyArray_@kind@LTR,
-    PyArray_@from@LTR,
+    NPY_@kind@LTR,
+    NPY_@from@LTR,
     '@endian@',
     @isobject@,
-    PyArray_@from@,
+    NPY_@from@,
     @num@*sizeof(@fromtyp@),
     _ALIGN(@fromtyp@),
     NULL,
@@ -3900,8 +3900,8 @@ set_typeinfo(PyObject *dict)
 #else
             s = Py_BuildValue("ciii@cx@@cn@O",
 #endif
-                PyArray_@name@LTR,
-                PyArray_@name@,
+                NPY_@name@LTR,
+                NPY_@name@,
                 BITSOF_@uname@,
                 _ALIGN(@type@),
                 @max@,
@@ -3922,11 +3922,11 @@ set_typeinfo(PyObject *dict)
  */
     PyDict_SetItemString(infodict, "@name@",
 #if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiO", PyArray_@name@LTR,
+            s = Py_BuildValue("CiiiO", NPY_@name@LTR,
 #else
-            s = Py_BuildValue("ciiiO", PyArray_@name@LTR,
+            s = Py_BuildValue("ciiiO", NPY_@name@LTR,
 #endif
-                PyArray_@name@,
+                NPY_@name@,
                 BITSOF_@name@,
                 _ALIGN(@type@),
                 (PyObject *) &Py@Name@ArrType_Type));
@@ -3935,55 +3935,55 @@ set_typeinfo(PyObject *dict)
 
     PyDict_SetItemString(infodict, "OBJECT",
 #if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiO", PyArray_OBJECTLTR,
+            s = Py_BuildValue("CiiiO", NPY_OBJECTLTR,
 #else
-            s = Py_BuildValue("ciiiO", PyArray_OBJECTLTR,
+            s = Py_BuildValue("ciiiO", NPY_OBJECTLTR,
 #endif
-                PyArray_OBJECT,
+                NPY_OBJECT,
                 sizeof(PyObject *) * CHAR_BIT,
                 _ALIGN(PyObject *),
                 (PyObject *) &PyObjectArrType_Type));
     Py_DECREF(s);
     PyDict_SetItemString(infodict, "STRING",
 #if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiO", PyArray_STRINGLTR,
+            s = Py_BuildValue("CiiiO", NPY_STRINGLTR,
 #else
-            s = Py_BuildValue("ciiiO", PyArray_STRINGLTR,
+            s = Py_BuildValue("ciiiO", NPY_STRINGLTR,
 #endif
-                PyArray_STRING,
+                NPY_STRING,
                 0,
                 _ALIGN(char),
                 (PyObject *) &PyStringArrType_Type));
     Py_DECREF(s);
     PyDict_SetItemString(infodict, "UNICODE",
 #if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiO", PyArray_UNICODELTR,
+            s = Py_BuildValue("CiiiO", NPY_UNICODELTR,
 #else
-            s = Py_BuildValue("ciiiO", PyArray_UNICODELTR,
+            s = Py_BuildValue("ciiiO", NPY_UNICODELTR,
 #endif
-                PyArray_UNICODE,
+                NPY_UNICODE,
                 0,
-                _ALIGN(PyArray_UCS4),
+                _ALIGN(npy_ucs4),
                 (PyObject *) &PyUnicodeArrType_Type));
     Py_DECREF(s);
     PyDict_SetItemString(infodict, "VOID",
 #if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiO", PyArray_VOIDLTR,
+            s = Py_BuildValue("CiiiO", NPY_VOIDLTR,
 #else
-            s = Py_BuildValue("ciiiO", PyArray_VOIDLTR,
+            s = Py_BuildValue("ciiiO", NPY_VOIDLTR,
 #endif
-                PyArray_VOID,
+                NPY_VOID,
                 0,
                 _ALIGN(char),
                 (PyObject *) &PyVoidArrType_Type));
     Py_DECREF(s);
     PyDict_SetItemString(infodict, "DATETIME",
 #if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiNNO", PyArray_DATETIMELTR,
+            s = Py_BuildValue("CiiiNNO", NPY_DATETIMELTR,
 #else
-            s = Py_BuildValue("ciiiNNO", PyArray_DATETIMELTR,
+            s = Py_BuildValue("ciiiNNO", NPY_DATETIMELTR,
 #endif
-                PyArray_DATETIME,
+                NPY_DATETIME,
                 sizeof(npy_datetime) * CHAR_BIT,
                 _ALIGN(npy_datetime),
                 MyPyLong_FromInt64(MAX_DATETIME),
@@ -3992,11 +3992,11 @@ set_typeinfo(PyObject *dict)
     Py_DECREF(s);
     PyDict_SetItemString(infodict, "TIMEDELTA",
 #if defined(NPY_PY3K)
-            s = Py_BuildValue("CiiiNNO", PyArray_TIMEDELTALTR,
+            s = Py_BuildValue("CiiiNNO", NPY_TIMEDELTALTR,
 #else
-            s = Py_BuildValue("ciiiNNO",PyArray_TIMEDELTALTR,
+            s = Py_BuildValue("ciiiNNO",NPY_TIMEDELTALTR,
 #endif
-                PyArray_TIMEDELTA,
+                NPY_TIMEDELTA,
                 sizeof(npy_timedelta) * CHAR_BIT,
                 _ALIGN(npy_timedelta),
                 MyPyLong_FromInt64(MAX_TIMEDELTA),

@@ -140,9 +140,9 @@ static PyObject *
 _get_keywords(int rtype, PyArrayObject *out)
 {
     PyObject *kwds = NULL;
-    if (rtype != PyArray_NOTYPE || out != NULL) {
+    if (rtype != NPY_NOTYPE || out != NULL) {
         kwds = PyDict_New();
-        if (rtype != PyArray_NOTYPE) {
+        if (rtype != NPY_NOTYPE) {
             PyArray_Descr *descr;
             descr = PyArray_DescrFromType(rtype);
             if (descr) {

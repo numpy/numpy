@@ -77,7 +77,7 @@ typedef struct {
   int rank;                  /* array rank, 0 for scalar, max is F2PY_MAX_DIMS,
                                 || rank=-1 for Fortran routine */
   struct {int d[F2PY_MAX_DIMS];} dims;  /* dimensions of the array, || not used */
-  int type;                  /* PyArray_<type> || not used */
+  int type;                  /* NPY_<type> || not used */
   char *data;                /* pointer to array || Fortran routine */
   void (*func)();            /* initialization function for
                                 allocatable arrays:
@@ -182,7 +182,7 @@ In order to access the variable \texttt{i} from Python,
 \texttt{PyFortranObject} is defined as follows:
 \begin{verbatim}
 static FortranDataDef f2py_bar_def[] = {
-  {"i",0,{-1},PyArray_INT},
+  {"i",0,{-1},NPY_INT},
   {NULL}
 };
 static void f2py_setup_bar(char *i) {
@@ -328,7 +328,7 @@ end module fun
 Then
 \begin{verbatim}
 static FortranDataDef f2py_fun_def[] = {
-  {"i",0,{-1},PyArray_INT},
+  {"i",0,{-1},NPY_INT},
   {NULL}
 };
 static void f2py_setup_fun(char *i) {
@@ -370,7 +370,7 @@ end module fun
 Then
 \begin{verbatim}
 static FortranDataDef f2py_fun_def[] = {
-  {"r",1,{-1},PyArray_FLOAT},
+  {"r",1,{-1},NPY_FLOAT},
   {NULL}
 };
 static void f2py_setup_fun(void (*r)()) {

@@ -257,7 +257,7 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
     if (order == NPY_ANYORDER)
         order = PyArray_ISFORTRAN(self);
 
-    /*        if (PyArray_TYPE(self) == PyArray_OBJECT) {
+    /*        if (PyArray_TYPE(self) == NPY_OBJECT) {
               PyErr_SetString(PyExc_ValueError, "a string for the data" \
               "in an object array is not appropriate");
               return NULL;

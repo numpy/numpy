@@ -129,7 +129,7 @@ class Type(object):
 
     def _init(self,name):
         self.NAME = name.upper()
-        self.type_num = getattr(wrap,'PyArray_'+self.NAME)
+        self.type_num = getattr(wrap,'NPY_'+self.NAME)
         assert_equal(self.type_num,typeinfo[self.NAME][1])
         self.dtype = typeinfo[self.NAME][-1]
         self.elsize = typeinfo[self.NAME][2] / 8

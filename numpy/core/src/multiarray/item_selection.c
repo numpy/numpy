@@ -1125,7 +1125,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     if (PyArray_DESCR(op)->f->sort[which] != NULL) {
         return _new_sort(op, axis, which);
     }
-    if ((which != PyArray_QUICKSORT)
+    if ((which != NPY_QUICKSORT)
         || PyArray_DESCR(op)->f->compare == NULL) {
         PyErr_SetString(PyExc_TypeError,
                         "desired sort not supported for this type");
@@ -1221,7 +1221,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         return (PyObject *)ret;
     }
 
-    if ((which != PyArray_QUICKSORT) || PyArray_DESCR(op2)->f->compare == NULL) {
+    if ((which != NPY_QUICKSORT) || PyArray_DESCR(op2)->f->compare == NULL) {
         PyErr_SetString(PyExc_TypeError,
                         "requested sort not available for type");
         Py_DECREF(op2);
@@ -1232,7 +1232,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     /* ap will contain the reference to op2 */
     SWAPAXES(ap, op2);
     op = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)ap,
-                                                    PyArray_NOTYPE,
+                                                    NPY_NOTYPE,
                                                     1, 0);
     Py_DECREF(ap);
     if (op == NULL) {
@@ -1340,7 +1340,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 goto fail;
             }
         }
-        if (!PyArray_DESCR(mps[i])->f->argsort[PyArray_MERGESORT]) {
+        if (!PyArray_DESCR(mps[i])->f->argsort[NPY_MERGESORT]) {
             PyErr_Format(PyExc_TypeError,
                          "merge sort not available for item %d", i);
             goto fail;
@@ -1428,7 +1428,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
             for (j = 0; j < n; j++) {
                 elsize = PyArray_DESCR(mps[j])->elsize;
                 astride = PyArray_STRIDES(mps[j])[axis];
-                argsort = PyArray_DESCR(mps[j])->f->argsort[PyArray_MERGESORT];
+                argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_MERGESORT];
                 _unaligned_strided_byte_copy(valbuffer, (intp) elsize,
                                              its[j]->dataptr, astride, N, elsize);
                 if (swaps[j]) {
@@ -1457,7 +1457,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 *iptr++ = i;
             }
             for (j = 0; j < n; j++) {
-                argsort = PyArray_DESCR(mps[j])->f->argsort[PyArray_MERGESORT];
+                argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_MERGESORT];
                 if (argsort(its[j]->dataptr, (intp *)rit->dataptr,
                             N, mps[j]) < 0) {
                     goto fail;

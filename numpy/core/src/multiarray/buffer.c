@@ -762,7 +762,7 @@ _descriptor_from_pep3118_format(char *s)
     PyObject *_numpy_internal;
 
     if (s == NULL) {
-        return PyArray_DescrNewFromType(PyArray_BYTE);
+        return PyArray_DescrNewFromType(NPY_BYTE);
     }
 
     /* Strip whitespace, except from field names */

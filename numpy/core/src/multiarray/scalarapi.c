@@ -27,7 +27,7 @@ _descr_from_subtype(PyObject *type)
     PyObject *mro;
     mro = ((PyTypeObject *)type)->tp_mro;
     if (PyTuple_GET_SIZE(mro) < 2) {
-        return PyArray_DescrFromType(PyArray_OBJECT);
+        return PyArray_DescrFromType(NPY_OBJECT);
     }
     return PyArray_DescrFromTypeObject(PyTuple_GET_ITEM(mro, 1));
 }
@@ -277,7 +277,7 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 
     /* convert to 0-dim array of scalar typecode */
     typecode = PyArray_DescrFromScalar(scalar);
-    if ((typecode->type_num == PyArray_VOID) &&
+    if ((typecode->type_num == NPY_VOID) &&
             !(((PyVoidScalarObject *)scalar)->flags & NPY_ARRAY_OWNDATA) &&
             outcode == NULL) {
         r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
@@ -316,9 +316,9 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
     memptr = scalar_value(scalar, typecode);
 
 #ifndef Py_UNICODE_WIDE
-    if (typecode->type_num == PyArray_UNICODE) {
+    if (typecode->type_num == NPY_UNICODE) {
         PyUCS2Buffer_AsUCS4((Py_UNICODE *)memptr,
-                (PyArray_UCS4 *)PyArray_DATA(r),
+                (npy_ucs4 *)PyArray_DATA(r),
                 PyUnicode_GET_SIZE(scalar),
                 PyArray_ITEMSIZE(r) >> 2);
     }
@@ -454,7 +454,7 @@ PyArray_DescrFromTypeObject(PyObject *type)
         typenum = NPY_VOID;
     }
 
-    if (typenum != PyArray_NOTYPE) {
+    if (typenum != NPY_NOTYPE) {
         return PyArray_DescrFromType(typenum);
     }
 
@@ -538,13 +538,13 @@ PyArray_DescrFromScalar(PyObject *sc)
 
         dt_data = _pya_malloc(sizeof(PyArray_DatetimeMetaData));
         if (PyArray_IsScalar(sc, Datetime)) {
-            descr = PyArray_DescrNewFromType(PyArray_DATETIME);
+            descr = PyArray_DescrNewFromType(NPY_DATETIME);
             memcpy(dt_data, &((PyDatetimeScalarObject *)sc)->obmeta,
                    sizeof(PyArray_DatetimeMetaData));
         }
         else {
             /* Timedelta */
-            descr = PyArray_DescrNewFromType(PyArray_TIMEDELTA);
+            descr = PyArray_DescrNewFromType(NPY_TIMEDELTA);
             memcpy(dt_data, &((PyTimedeltaScalarObject *)sc)->obmeta,
                    sizeof(PyArray_DatetimeMetaData));
         }
@@ -572,10 +572,10 @@ PyArray_DescrFromScalar(PyObject *sc)
     if (descr->elsize == 0) {
         PyArray_DESCR_REPLACE(descr);
         type_num = descr->type_num;
-        if (type_num == PyArray_STRING) {
+        if (type_num == NPY_STRING) {
             descr->elsize = PyString_GET_SIZE(sc);
         }
-        else if (type_num == PyArray_UNICODE) {
+        else if (type_num == NPY_UNICODE) {
             descr->elsize = PyUnicode_GET_DATA_SIZE(sc);
 #ifndef Py_UNICODE_WIDE
             descr->elsize <<= 1;
@@ -636,7 +636,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     int swap;
 
     type_num = descr->type_num;
-    if (type_num == PyArray_BOOL) {
+    if (type_num == NPY_BOOL) {
         PyArrayScalar_RETURN_BOOL_FROM_LONG(*(Bool*)data);
     }
     else if (PyDataType_FLAGCHK(descr, NPY_USE_GETITEM)) {
@@ -654,7 +654,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
         while(itemsize && *dptr-- == 0) {
             itemsize--;
         }
-        if (type_num == PyArray_UNICODE && itemsize) {
+        if (type_num == NPY_UNICODE && itemsize) {
             /*
              * make sure itemsize is a multiple of 4
              * so round up to nearest multiple
@@ -689,7 +689,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
                sizeof(PyArray_DatetimeMetaData));
     }
     if (PyTypeNum_ISFLEXIBLE(type_num)) {
-        if (type_num == PyArray_STRING) {
+        if (type_num == NPY_STRING) {
             destptr = PyString_AS_STRING(obj);
             ((PyStringObject *)obj)->ob_shash = -1;
 #if !defined(NPY_PY3K)
@@ -698,7 +698,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             memcpy(destptr, data, itemsize);
             return obj;
         }
-        else if (type_num == PyArray_UNICODE) {
+        else if (type_num == NPY_UNICODE) {
             PyUnicodeObject *uni = (PyUnicodeObject*)obj;
             size_t length = itemsize >> 2;
 #ifndef Py_UNICODE_WIDE
@@ -746,7 +746,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
              * Now convert from the data-buffer
              */
             length = PyUCS2Buffer_FromUCS4(uni->str,
-                    (PyArray_UCS4 *)buffer, itemsize >> 2);
+                    (npy_ucs4 *)buffer, itemsize >> 2);
             if (alloc) {
                 _pya_free(buffer);
             }

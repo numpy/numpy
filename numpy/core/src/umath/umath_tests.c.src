@@ -200,13 +200,13 @@ defdict = {
 
 static PyUFuncGenericFunction inner1d_functions[] = { LONG_inner1d, DOUBLE_inner1d };
 static void * inner1d_data[] = { (void *)NULL, (void *)NULL };
-static char inner1d_signatures[] = { PyArray_LONG, PyArray_LONG, PyArray_LONG, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char inner1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction innerwt_functions[] = { LONG_innerwt, DOUBLE_innerwt };
 static void * innerwt_data[] = { (void *)NULL, (void *)NULL };
-static char innerwt_signatures[] = { PyArray_LONG, PyArray_LONG, PyArray_LONG, PyArray_LONG, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char innerwt_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 static PyUFuncGenericFunction matrix_multiply_functions[] = { LONG_matrix_multiply, FLOAT_matrix_multiply, DOUBLE_matrix_multiply };
 static void *matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
-static char matrix_multiply_signatures[] = { PyArray_LONG, PyArray_LONG, PyArray_LONG,  PyArray_FLOAT, PyArray_FLOAT, PyArray_FLOAT,  PyArray_DOUBLE, PyArray_DOUBLE, PyArray_DOUBLE };
+static char matrix_multiply_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
 
 static void
 addUfuncs(PyObject *dictionary) {

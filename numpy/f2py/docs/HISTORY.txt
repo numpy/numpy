@@ -491,7 +491,7 @@ Release 2.35.229-1505
 
   - Fixed reference counting bug that appeared when constructing extra
     argument list to callback functions.
-  - Added ``PyArray_LONG != PyArray_INT`` test.
+  - Added ``NPY_LONG != NPY_INT`` test.
 
 * f2py2e.py
 

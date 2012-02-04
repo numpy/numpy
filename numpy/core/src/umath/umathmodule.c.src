@@ -174,7 +174,7 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     self->data[0] = (void *)fdata;
     self->types = (char *)self->data + sizeof(void *);
     for (i = 0; i < self->nargs; i++) {
-        self->types[i] = PyArray_OBJECT;
+        self->types[i] = NPY_OBJECT;
     }
     str = self->types + offset[1];
     memcpy(str, fname, fname_len);
@@ -213,12 +213,12 @@ static void * blank6_data[] = { (void *)NULL, (void *)NULL, (void *)NULL,
                                 (void *)NULL, (void *)NULL, (void *)NULL};
 static char frexp_signatures[] = {
 #ifdef HAVE_FREXPF
-    PyArray_HALF, PyArray_HALF, PyArray_INT,
-    PyArray_FLOAT, PyArray_FLOAT, PyArray_INT,
+    NPY_HALF, NPY_HALF, NPY_INT,
+    NPY_FLOAT, NPY_FLOAT, NPY_INT,
 #endif
-    PyArray_DOUBLE, PyArray_DOUBLE, PyArray_INT
+    NPY_DOUBLE, NPY_DOUBLE, NPY_INT
 #ifdef HAVE_FREXPL
-    ,PyArray_LONGDOUBLE, PyArray_LONGDOUBLE, PyArray_INT
+    ,NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_INT
 #endif
 };
 
@@ -246,16 +246,16 @@ static PyUFuncGenericFunction ldexp_functions[] = {
 
 static char ldexp_signatures[] = {
 #ifdef HAVE_LDEXPF
-    PyArray_HALF, PyArray_INT, PyArray_HALF,
-    PyArray_FLOAT, PyArray_INT, PyArray_FLOAT,
-    PyArray_HALF, PyArray_LONG, PyArray_HALF,
-    PyArray_FLOAT, PyArray_LONG, PyArray_FLOAT,
+    NPY_HALF, NPY_INT, NPY_HALF,
+    NPY_FLOAT, NPY_INT, NPY_FLOAT,
+    NPY_HALF, NPY_LONG, NPY_HALF,
+    NPY_FLOAT, NPY_LONG, NPY_FLOAT,
 #endif
-    PyArray_DOUBLE, PyArray_INT, PyArray_DOUBLE,
-    PyArray_DOUBLE, PyArray_LONG, PyArray_DOUBLE
+    NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
+    NPY_DOUBLE, NPY_LONG, NPY_DOUBLE
 #ifdef HAVE_LDEXPL
-    ,PyArray_LONGDOUBLE, PyArray_INT, PyArray_LONGDOUBLE
-    ,PyArray_LONGDOUBLE, PyArray_LONG, PyArray_LONGDOUBLE
+    ,NPY_LONGDOUBLE, NPY_INT, NPY_LONGDOUBLE
+    ,NPY_LONGDOUBLE, NPY_LONG, NPY_LONGDOUBLE
 #endif
 };
 
@@ -410,7 +410,7 @@ PyMODINIT_FUNC initumath(void)
 
 #undef ADDCONST
 #undef ADDSCONST
-    PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)PyArray_BUFSIZE);
+    PyModule_AddIntConstant(m, "UFUNC_BUFSIZE_DEFAULT", (long)NPY_BUFSIZE);
 
     PyModule_AddObject(m, "PINF", PyFloat_FromDouble(NPY_INFINITY));
     PyModule_AddObject(m, "NINF", PyFloat_FromDouble(-NPY_INFINITY));

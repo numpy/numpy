@@ -1040,7 +1040,7 @@ typedef struct {
 \emph on
 *
 \emph default
-cast[PyArray_NTYPES];
+cast[NPY_NTYPES];
 \end_layout
 
 \begin_layout LyX-Code
@@ -1144,7 +1144,7 @@ PyArray_FillWithScalarFunc
 \emph on
 PyArray_SortFunc
 \emph default
- *sort[PyArray_NSORTS];
+ *sort[NPY_NSORTS];
 \end_layout
 
 \begin_layout LyX-Code
@@ -1152,7 +1152,7 @@ PyArray_SortFunc
 \emph on
 PyArray_ArgSortFunc
 \emph default
- *argsort[PyArray_NSORTS]; 
+ *argsort[NPY_NSORTS]; 
 \newline
     
 \emph on
@@ -1930,15 +1930,15 @@ void*
  An array of function pointers to a particular sorting algorithms.
  A particular sorting algorithm is obtained using a key (so far 
 \family typewriter
-PyArray_QUICKSORT
+NPY_QUICKSORT
 \family default
 , 
 \family typewriter
-PyArray_HEAPSORT
+NPY_HEAPSORT
 \family default
 , and 
 \family typewriter
-PyArray_MERGESORT
+NPY_MERGESORT
 \family default
  are defined).
  These sorts are done in-place assuming contiguous and aligned data.
@@ -1997,7 +1997,7 @@ PyCObject*
 \begin_layout Description
 scalarkind (
 \family typewriter
-PyArray_SCALARKIND
+NPY_SCALARKIND
 \family default
 ) (
 \family typewriter
@@ -2017,7 +2017,7 @@ NULL
  the kind of scalar).
  The return value must be of type 
 \family typewriter
-PyArray_SCALARKIND
+NPY_SCALARKIND
 \family default
 .
  
@@ -2035,7 +2035,7 @@ NULL
 \family default
  or an array of 
 \family typewriter
-PyArray_NSCALARKINDS
+NPY_NSCALARKINDS
 \family default
  pointers.
  These pointers should each be either 
@@ -2044,7 +2044,7 @@ NULL
 \family default
  or a pointer to an array of integers (terminated by 
 \family typewriter
-PyArray_NOTYPE
+NPY_NOTYPE
 \family default
 ) indicating data-types that a scalar of this data-type of the specified
  kind can be cast to safely (this usually means without losing precision).
@@ -2062,7 +2062,7 @@ NULL
 \family default
  or an array of integers (terminated by 
 \family typewriter
-PyArray_NOTYPE
+NPY_NOTYPE
 \family default
 ) indicated data-types that this data-type can be cast to safely (this usually
  means without losing precision).
@@ -4299,17 +4299,17 @@ Integer that can hold a pointer
 \begin_layout Standard
 The constants 
 \series bold
-PyArray_INTP
+NPY_INTP
 \series default
  and 
 \series bold
-PyArray_UINTP
+NPY_UINTP
 \series default
  refer to an enumerated integer type that is large enough to hold a pointer
  on the platform.
  Index arrays should always be converted to 
 \series bold
-PyArray_INTP
+NPY_INTP
 \series default
 , because the dimension of the array is of type npy_intp.
  
@@ -5517,7 +5517,7 @@ dtype
 \emph default
  corresponds to 
 \family typewriter
-PyArray_OBJECT
+NPY_OBJECT
 \family default
 ).
  
@@ -5603,7 +5603,7 @@ fortran
  array is created.
  The array is uninitialized unless the data type corresponds to 
 \family typewriter
-PyArray_OBJECT
+NPY_OBJECT
 \family default
  in which case the array is filled with 
 \family typewriter
@@ -8397,7 +8397,7 @@ int
 \family default
  totype, 
 \family typewriter
-PyArray_SCALARKIND
+NPY_SCALARKIND
 \family default
  scalar)
 \end_layout
@@ -8438,7 +8438,7 @@ totype
 \end_layout
 
 \begin_layout Subsubsection
-Special functions for PyArray_OBJECT
+Special functions for NPY_OBJECT
 \end_layout
 
 \begin_layout Description
@@ -8599,7 +8599,7 @@ arr
 \emph default
  must be of data-type 
 \family typewriter
-PyArray_OBJECT
+NPY_OBJECT
 \family default
  and be single-segment and uninitialized (no previous objects in position).
  Use 
@@ -11283,7 +11283,7 @@ rtype
  as the data type to sum in.
  Default sum behavior is obtained using 
 \family typewriter
-PyArray_NOTYPE
+NPY_NOTYPE
 \family default
  for 
 \emph on
@@ -18259,7 +18259,7 @@ dims
 .
  The memory for the array is uninitialized (unless typenum is 
 \series bold
-PyArray_OBJECT
+NPY_OBJECT
 \series default
  in which case each element in the array is set to NULL).
  The 
@@ -18269,11 +18269,11 @@ typenum
  argument allows specification of any of the builtin data-types such as
  
 \series bold
-PyArray_FLOAT
+NPY_FLOAT
 \series default
  or 
 \series bold
-PyArray_LONG
+NPY_LONG
 \series default
 .
  The memory for the array can be set to zero if desired using 
@@ -19104,7 +19104,7 @@ while(size--) {
 \begin_layout Standard
 The function 
 \series bold
-PyArray_RemoveLargest
+PyArray_RemoveSmallest
 \series default
 (
 \family typewriter
@@ -19782,7 +19782,7 @@ PyArray_RegisterCanCast
  number totype_number.
  If you are not trying to alter scalar coercion rules, then use 
 \series bold
-PyArray_NOSCALAR
+NPY_NOSCALAR
 \series default
  for the scalarkind argument.
 \end_layout
@@ -19805,7 +19805,7 @@ If you want to allow your new data-type to also be able to share in the
  If you don't register scalar coercion handling, then all of your user-defined
  data-types will be seen as 
 \series bold
-PyArray_NOSCALAR
+NPY_NOSCALAR
 \series default
 .
  

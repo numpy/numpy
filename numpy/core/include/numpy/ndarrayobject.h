@@ -214,7 +214,6 @@ PyArray_XDECREF_ERR(PyArrayObject *arr)
         PyArray_FromDimsAndDataAndDescr(nd, d, PyArray_DescrFromType(type),   \
                                         data)
 
-#include "old_defines.h"
 
 /*
    Check to see if this key in the dictionary is the "title"

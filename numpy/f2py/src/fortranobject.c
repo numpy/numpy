@@ -51,10 +51,10 @@ PyFortranObject_New(FortranDataDef* defs, f2py_void_func init) {
             PyDict_SetItemString(fp->dict,fp->defs[i].name,v);
         } else
             if ((fp->defs[i].data)!=NULL) { /* Is Fortran variable or array (not allocatable) */
-                if (fp->defs[i].type == PyArray_STRING) {
+                if (fp->defs[i].type == NPY_STRING) {
                     int n = fp->defs[i].rank-1;
                     v = PyArray_New(&PyArray_Type, n, fp->defs[i].dims.d,
-                                    PyArray_STRING, NULL, fp->defs[i].data, fp->defs[i].dims.d[n],
+                                    NPY_STRING, NULL, fp->defs[i].data, fp->defs[i].dims.d[n],
                                     NPY_FARRAY, NULL);
                 }
                 else {

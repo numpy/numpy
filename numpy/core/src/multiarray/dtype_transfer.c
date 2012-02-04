@@ -2509,7 +2509,7 @@ get_fields_transfer_function(int aligned,
     _single_field_transfer *fields;
 
     /* Copy the src value to all the fields of dst */
-    if (!PyDescr_HASFIELDS(src_dtype)) {
+    if (!PyDataType_HASFIELDS(src_dtype)) {
         names = dst_dtype->names;
         names_size = PyTuple_GET_SIZE(dst_dtype->names);
 
@@ -2582,7 +2582,7 @@ get_fields_transfer_function(int aligned,
         return NPY_SUCCEED;
     }
     /* Copy the value of the first field to dst */
-    else if (!PyDescr_HASFIELDS(dst_dtype)) {
+    else if (!PyDataType_HASFIELDS(dst_dtype)) {
         names = src_dtype->names;
         names_size = PyTuple_GET_SIZE(src_dtype->names);
 
