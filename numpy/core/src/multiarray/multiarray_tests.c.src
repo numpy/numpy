@@ -10,10 +10,11 @@
  */
 
 /**begin repeat
- * #type = double, int#
+ * #name = double, int#
+ * #type = npy_double, npy_int#
  * #typenum = NPY_DOUBLE, NPY_INT#
  */
-static int copy_@type@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *niterx,
+static int copy_@name@(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *niterx,
         npy_intp *bounds,
         PyObject **out)
 {
@@ -142,7 +143,8 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
             goto clean_itx;
         }
         if (!PyInt_Check(bound)) {
-            PyErr_SetString(PyExc_ValueError, "bound not long");
+            PyErr_SetString(PyExc_ValueError,
+                    "bound not long");
             Py_DECREF(bound);
             goto clean_itx;
         }
@@ -176,7 +178,8 @@ test_neighborhood_iterator(PyObject* NPY_UNUSED(self), PyObject* args)
             st = copy_double(itx, niterx, bounds, &out);
             break;
         default:
-            PyErr_SetString(PyExc_ValueError, "Type not supported");
+            PyErr_SetString(PyExc_ValueError,
+                    "Type not supported");
             goto clean_niterx;
     }
 
@@ -299,7 +302,8 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
             goto clean_itx;
         }
         if (!PyInt_Check(bound)) {
-            PyErr_SetString(PyExc_ValueError, "bound not long");
+            PyErr_SetString(PyExc_ValueError,
+                    "bound not long");
             Py_DECREF(bound);
             goto clean_itx;
         }
@@ -322,7 +326,8 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
             goto clean_itx;
         }
         if (!PyInt_Check(bound)) {
-            PyErr_SetString(PyExc_ValueError, "bound not long");
+            PyErr_SetString(PyExc_ValueError,
+                    "bound not long");
             Py_DECREF(bound);
             goto clean_itx;
         }
@@ -342,7 +347,8 @@ test_neighborhood_iterator_oob(PyObject* NPY_UNUSED(self), PyObject* args)
             st = copy_double_double(niterx1, niterx2, bounds, &out);
             break;
         default:
-            PyErr_SetString(PyExc_ValueError, "Type not supported");
+            PyErr_SetString(PyExc_ValueError,
+                    "Type not supported");
             goto clean_niterx2;
     }
 
