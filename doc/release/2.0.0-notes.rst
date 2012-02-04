@@ -185,7 +185,7 @@ similar for PyArray_Descr* and other core objects in the future as
 preparation for NumPy 2.0.
 
 The macros in old_defines.h are deprecated and will be removed in the next
-major release. The sed script tools/replace_old_macros.sed can be used to
+minor release (>= 1.8). The sed script tools/replace_old_macros.sed can be used to
 replace these macros with the newer versions.
 
 You can test your code against the deprecated C API by #defining
