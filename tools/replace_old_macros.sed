@@ -1,5 +1,15 @@
 # Replaces the macros in old_defines.h by current versions
-# Can be run as sed -i -f replace_old_macros.sed <file-paths>
+# Can be run as
+#
+# sed -i -f replace_old_macros.sed <file-paths>
+#
+# or
+#
+# find . -name '*.[c,h]' -exec sed  -i -f replace_old_macros.sed {} + ;
+#
+# This script is pretty reliable, but the diff should still
+# be checked after running it to make sure that nothing untoward
+# went down.
 s/\bNDARRAY_VERSION\b/NPY_VERSION/g
 s/\bPyArray_MIN_BUFSIZE\b/NPY_MIN_BUFSIZE/g
 s/\bPyArray_MAX_BUFSIZE\b/NPY_MAX_BUFSIZE/g
