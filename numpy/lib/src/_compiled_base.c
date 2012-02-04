@@ -1,7 +1,7 @@
 #define NPY_NO_DEPRECATED_API
 #include "Python.h"
 #include "structmember.h"
-#include "numpy/noprefix.h"
+#include "numpy/ndarrayobject.h"
 #include "numpy/npy_3kcompat.h"
 #include "npy_config.h"
 #include "numpy/ufuncobject.h"

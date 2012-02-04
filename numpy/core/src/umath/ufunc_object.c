@@ -36,7 +36,7 @@
 
 #include "numpy/npy_3kcompat.h"
 
-#include "numpy/noprefix.h"
+#include "numpy/ndarrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "lowlevel_strided_loops.h"
 #include "ufunc_type_resolution.h"
@@ -377,8 +377,8 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
 
     *errobj = NULL;
     if (!PyList_Check(ref) || (PyList_GET_SIZE(ref)!=3)) {
-        PyErr_Format(PyExc_TypeError, "%s must be a length 3 list.",
-                     UFUNC_PYVALS_NAME);
+        PyErr_Format(PyExc_TypeError,
+                "%s must be a length 3 list.", UFUNC_PYVALS_NAME);
         return -1;
     }
 
@@ -386,14 +386,14 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
     if ((*bufsize == -1) && PyErr_Occurred()) {
         return -1;
     }
-    if ((*bufsize < NPY_MIN_BUFSIZE)
-        || (*bufsize > NPY_MAX_BUFSIZE)
-        || (*bufsize % 16 != 0)) {
+    if ((*bufsize < NPY_MIN_BUFSIZE) ||
+            (*bufsize > NPY_MAX_BUFSIZE) ||
+            (*bufsize % 16 != 0)) {
         PyErr_Format(PyExc_ValueError,
-                     "buffer size (%d) is not in range "
-                     "(%"INTP_FMT" - %"INTP_FMT") or not a multiple of 16",
-                     *bufsize, (npy_intp) NPY_MIN_BUFSIZE,
-                     (npy_intp) NPY_MAX_BUFSIZE);
+                "buffer size (%d) is not in range "
+                "(%"NPY_INTP_FMT" - %"NPY_INTP_FMT") or not a multiple of 16",
+                *bufsize, (npy_intp) NPY_MIN_BUFSIZE,
+                (npy_intp) NPY_MAX_BUFSIZE);
         return -1;
     }
 
