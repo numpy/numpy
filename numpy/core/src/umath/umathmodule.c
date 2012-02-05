@@ -25,7 +25,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 #endif
 
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "abstract.h"
 

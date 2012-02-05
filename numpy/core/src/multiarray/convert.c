@@ -4,7 +4,7 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
@@ -143,7 +143,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
                     NPY_END_THREADS;
                     PyErr_Format(PyExc_IOError,
                             "problem writing element"\
-                            " %"INTP_FMT" to file",
+                            " %"NPY_INTP_FMT" to file",
                             it->index);
                     Py_DECREF(it);
                     return -1;
@@ -217,7 +217,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 #endif
             if (n < n2) {
                 PyErr_Format(PyExc_IOError,
-                        "problem writing element %"INTP_FMT\
+                        "problem writing element %"NPY_INTP_FMT\
                         " to file", it->index);
                 Py_DECREF(strobj);
                 Py_DECREF(it);

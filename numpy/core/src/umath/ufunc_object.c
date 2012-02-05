@@ -36,7 +36,7 @@
 
 #include "numpy/npy_3kcompat.h"
 
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "lowlevel_strided_loops.h"
 #include "ufunc_type_resolution.h"

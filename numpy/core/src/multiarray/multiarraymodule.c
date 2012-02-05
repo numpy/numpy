@@ -20,7 +20,7 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
 #include "numpy/npy_math.h"
@@ -3578,7 +3578,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 
 #ifndef __NPY_PRIVATE_NO_SIGNAL
 
-SIGJMP_BUF _NPY_SIGINT_BUF;
+NPY_SIGJMP_BUF _NPY_SIGINT_BUF;
 
 /*NUMPY_API
  */
@@ -3586,7 +3586,7 @@ NPY_NO_EXPORT void
 _PyArray_SigintHandler(int signum)
 {
     PyOS_setsig(signum, SIG_IGN);
-    SIGLONGJMP(_NPY_SIGINT_BUF, signum);
+    NPY_SIGLONGJMP(_NPY_SIGINT_BUF, signum);
 }
 
 /*NUMPY_API

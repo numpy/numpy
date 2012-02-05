@@ -4,7 +4,7 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
 #include "npy_config.h"
@@ -722,8 +722,8 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
         }
         if (num < 0 || num >= self->size) {
             PyErr_Format(PyExc_IndexError,
-                         "index %"INTP_FMT" out of bounds"   \
-                         " 0<=index<%"INTP_FMT,
+                         "index %"NPY_INTP_FMT" out of bounds"   \
+                         " 0<=index<%"NPY_INTP_FMT,
                          num, self->size);
             PyArray_ITER_RESET(self);
             return NULL;
@@ -763,8 +763,8 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
         }
         if (num < 0 || num >= self->size) {
             PyErr_Format(PyExc_IndexError,
-                         "index %"INTP_FMT" out of bounds" \
-                         " 0<=index<%"INTP_FMT,
+                         "index %"NPY_INTP_FMT" out of bounds" \
+                         " 0<=index<%"NPY_INTP_FMT,
                          num, self->size);
             Py_DECREF(ind_it);
             Py_DECREF(ret);
@@ -1005,8 +1005,8 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
         }
         if ((num < 0) || (num >= self->size)) {
             PyErr_Format(PyExc_IndexError,
-                         "index %"INTP_FMT" out of bounds"           \
-                         " 0<=index<%"INTP_FMT, num,
+                         "index %"NPY_INTP_FMT" out of bounds"           \
+                         " 0<=index<%"NPY_INTP_FMT, num,
                          self->size);
             Py_DECREF(ind_it);
             return -1;

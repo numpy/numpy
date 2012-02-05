@@ -5,7 +5,7 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 #include "numpy/npy_3kcompat.h"
 #include "numpy/npy_math.h"
@@ -1156,8 +1156,8 @@ BOOL_to_@TOTYPE@(npy_bool *ip, @totype@ *op, npy_intp n,
 
 /**begin repeat
  *
- * #TOTYPE = CFLOAT,CDOUBLE,CLONGDOUBLE#
- * #totype = float, double, longdouble#
+ * #TOTYPE = CFLOAT, CDOUBLE,CLONGDOUBLE#
+ * #totype = npy_float, npy_double, npy_longdouble#
  */
 
 /**begin repeat1
@@ -1431,7 +1431,7 @@ static void
  * #type = npy_short, npy_ushort, npy_int, npy_uint,
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong#
  * #format = "hd", "hu", "d", "u",
- *           "ld", "lu", LONGLONG_FMT, ULONGLONG_FMT#
+ *           "ld", "lu", NPY_LONGLONG_FMT, NPY_ULONGLONG_FMT#
  */
 static int
 @fname@_scan(FILE *fp, @type@ *ip, void *NPY_UNUSED(ignore),
@@ -1684,8 +1684,8 @@ static void
         {
             int i, nn;
 
-            b = a + (SIZEOF_@fsize@-1);
-            nn = SIZEOF_@fsize@ / 2;
+            b = a + (NPY_SIZEOF_@fsize@-1);
+            nn = NPY_SIZEOF_@fsize@ / 2;
             for (i = 0; i < nn; i++) {
                 c = *a;
                 *a++ = *b;
@@ -1848,16 +1848,16 @@ static void
         {
             int i, nn;
 
-            b = a + (SIZEOF_@fsize@ - 1);
-            nn = SIZEOF_@fsize@ / 2;
+            b = a + (NPY_SIZEOF_@fsize@ - 1);
+            nn = NPY_SIZEOF_@fsize@ / 2;
             for (i = 0; i < nn; i++) {
                 c = *a;
                 *a++ = *b;
                 *b-- = c;
             }
             a += nn / 2;
-            b = a + (SIZEOF_@fsize@ - 1);
-            nn = SIZEOF_@fsize@ / 2;
+            b = a + (NPY_SIZEOF_@fsize@ - 1);
+            nn = NPY_SIZEOF_@fsize@ / 2;
             for (i = 0; i < nn; i++) {
                 c = *a;
                 *a++ = *b;
@@ -3512,7 +3512,7 @@ static void
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_half, npy_float, npy_double, npy_longdouble,
  *         npy_cfloat, npy_cdouble, npy_clongdouble,
- *         datetime, npy_timedelta#
+ *         npy_datetime, npy_timedelta#
 */
 static int
 @name@_fasttake(@type@ *dest, @type@ *src, npy_intp *indarray,

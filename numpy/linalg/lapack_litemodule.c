@@ -4,7 +4,7 @@ More modifications by Jeff Whitaker
 */
 
 #include "Python.h"
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 
 #ifdef NO_APPEND_FORTRAN
 # define FNAME(x) x

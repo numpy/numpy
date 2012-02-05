@@ -3,7 +3,7 @@ static char module_doc[] =
 
 #include "Python.h"
 #include "npy_config.h"
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 #ifndef CBLAS_HEADER
 #define CBLAS_HEADER "cblas.h"
 #endif
