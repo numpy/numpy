@@ -82,7 +82,7 @@ typedef Py_uintptr_t npy_uintp;
         #define PyIntpArrType_Type PyLongArrType_Type
         #define PyUIntpArrType_Type PyULongArrType_Type
         #define NPY_MAX_INTP NPY_MAX_LONG
-        #define NPY_MIN_INTP MIN_LONG
+        #define NPY_MIN_INTP NPY_MIN_LONG
         #define NPY_MAX_UINTP NPY_MAX_ULONG
         #define NPY_INTP_FMT "ld"
 #elif defined(PY_LONG_LONG) && (NPY_SIZEOF_PY_INTPTR_T == NPY_SIZEOF_LONGLONG)
