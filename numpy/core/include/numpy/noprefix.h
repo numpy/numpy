@@ -1,8 +1,10 @@
 #ifndef NPY_NOPREFIX_H
 #define NPY_NOPREFIX_H
 
-/* You can directly include noprefix.h as a backward
-compatibility measure*/
+/*
+ * You can directly include noprefix.h as a backward
+ * compatibility measure
+ */
 #ifndef NPY_NO_PREFIX
 #include "ndarrayobject.h"
 #endif
