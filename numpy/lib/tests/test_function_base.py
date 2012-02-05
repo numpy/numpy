@@ -1052,10 +1052,7 @@ class TestMeshgrid(TestCase):
     def test_sparse(self):
         [X, Y] = meshgrid([1, 2, 3], [4, 5, 6, 7], sparse=True)
         assert_(all(X == array([[1, 2, 3]])))
-        assert_(all(Y == array([[4],
-                               [5],
-                               [6],
-                               [7]])))
+        assert_(all(Y == array([[4], [5], [6], [7]])))
 
 
 class TestPiecewise(TestCase):

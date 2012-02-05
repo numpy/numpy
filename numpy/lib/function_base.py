@@ -3223,7 +3223,7 @@ def meshgrid(*xi, **kwargs):
         If False, a view into the original arrays are returned in
         order to conserve memory.  Default is True.  Please note that
         ``sparse=False, copy=False`` will likely return non-contiguous arrays.
-        Furthermore, more than one element of a broadcasted array may refer to
+        Furthermore, more than one element of a broadcast array may refer to
         a single memory location.  If you need to write to the arrays, make
         copies first.
 
