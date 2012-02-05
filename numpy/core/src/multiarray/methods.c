@@ -1724,7 +1724,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 Py_DECREF(rawdata);
                 return PyErr_NoMemory();
             }
-            if (swap) { /* npy_byte-swap on pickle-read */
+            if (swap) {
+                /* byte-swap on pickle-read */
                 npy_intp numels = num / PyArray_DESCR(self)->elsize;
                 PyArray_DESCR(self)->f->copyswapn(PyArray_DATA(self),
                                         PyArray_DESCR(self)->elsize,
