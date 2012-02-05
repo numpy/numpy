@@ -26,7 +26,7 @@
  * The heap sort is included for completeness.
  */
 
-#define NPY_NO_DEPRECATED_API
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include <stdlib.h>
 #include "npy_sort.h"
