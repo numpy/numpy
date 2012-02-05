@@ -623,7 +623,8 @@ typedef struct _arr_descr {
  * (PyArray_DATA and friends) to access fields here for a number of
  * releases. Direct access to the members themselves is deprecated.
  * To ensure that your code does not use deprecated access,
- * #define NPY_NO_DEPRECATED_API.
+ * #define NPY_NO_DEPRECATED_API NPY_1_7_VERSION
+ * (or NPY_1_8_VERSION or higher as required).
  */
 /* This struct will be moved to a private header in a future release */
 typedef struct tagPyArrayObject_fields {
@@ -692,16 +693,16 @@ typedef struct tagPyArrayObject_fields {
  * To hide the implementation details, we only expose
  * the Python struct HEAD.
  */
-#ifdef NPY_NO_DEPRECATED_API
-typedef struct tagPyArrayObject {
-        PyObject_HEAD
-} PyArrayObject;
-#else
+#if !(defined(NPY_NO_DEPRECATED_API) && (NPY_API_VERSION <= NPY_NO_DEPRECATED_API))
 /*
  * Can't put this in npy_deprecated_api.h like the others.
  * PyArrayObject field access is deprecated as of NumPy 1.7.
  */
 typedef PyArrayObject_fields PyArrayObject;
+#else
+typedef struct tagPyArrayObject {
+        PyObject_HEAD
+} PyArrayObject;
 #endif
 
 #define NPY_SIZEOF_PYARRAYOBJECT (sizeof(PyArrayObject_fields))
@@ -1432,7 +1433,7 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyArray_FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) ? \
                                NPY_ARRAY_F_CONTIGUOUS : 0))
 
-#ifdef NPY_NO_DEPRECATED_API
+#if (defined(NPY_NO_DEPRECATED_API) && (NPY_API_VERSION <= NPY_NO_DEPRECATED_API))
 /*
  * Changing access macros into functions, to allow for future hiding
  * of the internal memory layout. This later hiding will allow the 2.x series
@@ -1968,7 +1969,7 @@ typedef struct {
                            */
 } PyArrayInterface;
 
-#ifndef NPY_NO_DEPRECATED_API
+#if !(defined(NPY_NO_DEPRECATED_API) && (NPY_API_VERSION <= NPY_NO_DEPRECATED_API))
 #include "npy_deprecated_api.h"
 #endif
 
