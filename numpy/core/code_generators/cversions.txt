@@ -6,6 +6,8 @@
 # version 4 added neighborhood iterators and PyArray_Correlate2
 0x00000004 = 3d8940bf7b0d2a4e25be4338c14c3c85
 0x00000005 = 77e2e846db87f25d7cf99f9d812076f0
-# Version 6 added new iterator, half float and casting functions,
+# Version 6 (NumPy 1.6) added new iterator, half float and casting functions,
 # PyArray_CountNonzero, PyArray_NewLikeArray and PyArray_MatrixProduct2.
 0x00000006 = e61d5dc51fa1c6459328266e215d6987
+# Version 7 (NumPy 1.7) added API for NA, improved datetime64.
+0x00000007 = 00000000000000000000000000000000
