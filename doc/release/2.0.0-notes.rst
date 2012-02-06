@@ -129,6 +129,18 @@ Support for mask-based NA values in the polynomial package fits
 
 The fitting functions recognize and remove masked data from the fit.
 
+Ability to pad rank-n arrays
+----------------------------
+
+A pad module containing functions for padding n-dimensional arrays has
+been added. The various private padding functions are exposed as options to
+a public 'pad' function.  Example:
+
+pad(a, 5, mode='mean')
+
+Current modes are 'constant', 'edge', 'linear_ramp', 'maximum', 'mean',
+'median', 'minimum', 'reflect', 'symmetric', 'wrap', and <function>
+
 
 New argument to searchsorted
 ----------------------------

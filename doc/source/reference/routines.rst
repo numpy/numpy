@@ -17,33 +17,34 @@ indentation.
 
    routines.array-creation
    routines.array-manipulation
-   routines.indexing
-   routines.dtype
-   routines.io
-   routines.fft
-   routines.linalg
-   routines.random
-   routines.sort
-   routines.logic
    routines.bitwise
-   routines.statistics
-   routines.math
-   routines.functional
-   routines.polynomials
+   routines.char
+   routines.ctypeslib
    routines.datetime
-   routines.financial
-   routines.set
-   routines.window
-   routines.err
-   routines.maskna
-   routines.ma
-   routines.help
-   routines.other
-   routines.testing
-   routines.emath
-   routines.matlib
+   routines.dtype
    routines.dual
+   routines.emath
+   routines.err
+   routines.fft
+   routines.financial
+   routines.functional
+   routines.help
+   routines.indexing
+   routines.io
+   routines.linalg
+   routines.logic
+   routines.ma
+   routines.maskna
+   routines.math
+   routines.matlib
    routines.numarray
    routines.oldnumeric
-   routines.ctypeslib
-   routines.char
+   routines.other
+   routines.padding
+   routines.polynomials
+   routines.random
+   routines.set
+   routines.sort
+   routines.statistics
+   routines.testing
+   routines.window
