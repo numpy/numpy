@@ -2778,6 +2778,8 @@ array__reconstruct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     PyArray_Dims shape = {NULL, 0};
     PyArray_Descr *dtype = NULL;
 
+    evil_global_disable_warn_O4O8_flag = 1;
+
     if (!PyArg_ParseTuple(args, "O!O&O&",
                 &PyType_Type, &subtype,
                 PyArray_IntpConverter, &shape,
@@ -2794,9 +2796,14 @@ array__reconstruct(PyObject *NPY_UNUSED(dummy), PyObject *args)
     if (shape.ptr) {
         PyDimMem_FREE(shape.ptr);
     }
+
+    evil_global_disable_warn_O4O8_flag = 0;
+
     return ret;
 
  fail:
+    evil_global_disable_warn_O4O8_flag = 0;
+
     Py_XDECREF(dtype);
     if (shape.ptr) {
         PyDimMem_FREE(shape.ptr);

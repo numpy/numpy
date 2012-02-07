@@ -45,4 +45,20 @@ PyArray_IntTupleFromIntp(int len, intp *vals);
 NPY_NO_EXPORT int
 PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags);
 
+/**
+ * WARNING: This flag is a bad idea, but was the only way to both
+ *   1) Support unpickling legacy pickles with object types.
+ *   2) Deprecate (and later disable) usage of O4 and O8
+ *
+ * The key problem is that the pickled representation unpickles by
+ * directly calling the dtype constructor, which has no way of knowing
+ * that it is in an unpickle context instead of a normal context without
+ * evil global state like we create here.
+ */
+#ifdef NPY_ENABLE_SEPARATE_COMPILATION
+extern NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag;
+#else
+NPY_NO_EXPORT int evil_global_disable_warn_O4O8_flag;
+#endif
+
 #endif
