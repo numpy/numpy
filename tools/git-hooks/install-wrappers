@@ -1,0 +1,16 @@
+#!/bin/bash
+
+for file in \
+    wrappers/applypatch-msg \
+    wrappers/commit-msg \
+    wrappers/post-commit \
+    wrappers/post-receive \
+    wrappers/post-update \
+    wrappers/pre-applypatch \
+    wrappers/pre-commit \
+    wrappers/prepare-commit-msg \
+    wrappers/pre-rebase \
+    wrappers/update
+do
+    cp ${file} ../../.git/hooks
+done

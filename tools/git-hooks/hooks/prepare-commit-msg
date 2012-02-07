@@ -1,0 +1,31 @@
+
+echo "$(grep -v '#' $1)
+# Please enter the log message for this commit.  Lines starting with '#' are
+# ignored and an empty log message aborts the commit.
+#
+# First line should contain one or more of the following codes separated by
+# commas, a ':' and then a short summary of the changes.  The entire first
+# line should be under 78 characters so that github does not cut the text off.
+#
+# API: An API change
+# BLD: Change in the building of numpy
+# BUG: Bug fix
+# DEV: Development tool or utility
+# DOC: Documentation
+# ENH: Enhancement
+# MISC: Miscellaneous
+# NEW: New feature
+# REV: Revert to earlier commit
+# SPELL: Spell fix
+# STY: Style fix
+# TEST: Addition or modification of tests
+# TODO: Identification of a TODO item
+# VER: Change in version strings
+#
+# Second line should be blank.
+#
+# The third line should start a detailed description of the changes
+# in this commit.
+# 
+$(grep '#' $1 | awk 'NR > 2 {print $0}')
+" > $1

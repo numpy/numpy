@@ -1,0 +1,11 @@
+#!/bin/sh
+
+PN=`basename "$0"`
+
+FP=tools/git-hooks/hooks/"${PN}"
+
+if [ -x "${FP}" ]; then
+    "${FP}" "$@"
+    fi
+
+
