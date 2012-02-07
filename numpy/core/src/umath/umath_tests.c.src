@@ -21,8 +21,6 @@
  *****************************************************************************
  */
 
-typedef npy_intp npy_intp;
-
 #define INIT_OUTER_LOOP_1       \
     npy_intp dN = *dimensions++;\
     npy_intp N_;                \
