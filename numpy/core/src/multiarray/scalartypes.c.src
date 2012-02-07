@@ -2913,7 +2913,7 @@ static long
 }
 /**end repeat**/
 
-#if (SIZEOF_INT != SIZEOF_LONG) || defined(NPY_PY3K)
+#if (NPY_SIZEOF_INT != NPY_SIZEOF_LONG) || defined(NPY_PY3K)
 static long
 int_arrtype_hash(PyObject *obj)
 {
@@ -2930,7 +2930,7 @@ int_arrtype_hash(PyObject *obj)
  * #Char = ,U#
  * #ext = && (x >= LONG_MIN),#
  */
-#if SIZEOF_LONG != NPY_SIZEOF_LONGLONG
+#if NPY_SIZEOF_LONG != NPY_SIZEOF_LONGLONG
 /* we assume SIZEOF_LONGLONG=2*SIZEOF_LONG */
 static long
 @char@longlong_arrtype_hash(PyObject *obj)
@@ -2944,7 +2944,7 @@ static long
     else {
         union Mask {
             long hashvals[2];
-            @char@longlong v;
+            npy_@char@longlong v;
         } both;
 
         both.v = x;
@@ -2975,7 +2975,7 @@ static long
  * #lname = datetime, timedelta#
  * #name = Datetime, Timedelta#
  */
-#if SIZEOF_LONG==NPY_SIZEOF_DATETIME
+#if NPY_SIZEOF_LONG==NPY_SIZEOF_DATETIME
 static long
 @lname@_arrtype_hash(PyObject *obj)
 {
@@ -4112,7 +4112,7 @@ initialize_numeric_types(void)
 
     /**end repeat**/
 
-#if (SIZEOF_INT != SIZEOF_LONG) || defined(NPY_PY3K)
+#if (NPY_SIZEOF_INT != NPY_SIZEOF_LONG) || defined(NPY_PY3K)
     /* We won't be inheriting from Python Int type. */
     PyIntArrType_Type.tp_hash = int_arrtype_hash;
 #endif
@@ -4122,7 +4122,7 @@ initialize_numeric_types(void)
     PyLongArrType_Type.tp_hash = int_arrtype_hash;
 #endif
 
-#if (SIZEOF_LONG != NPY_SIZEOF_LONGLONG) || defined(NPY_PY3K)
+#if (NPY_SIZEOF_LONG != NPY_SIZEOF_LONGLONG) || defined(NPY_PY3K)
     /* We won't be inheriting from Python Int type. */
     PyLongLongArrType_Type.tp_hash = longlong_arrtype_hash;
 #endif

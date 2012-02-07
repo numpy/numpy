@@ -1527,7 +1527,7 @@ BOOL_scan(FILE *fp, npy_bool *ip, void *NPY_UNUSED(ignore),
  *         npy_long, npy_ulong, npy_longlong, npy_ulonglong,
  *         npy_datetime, npy_timedelta#
  * #func = (l, ul)*5, l, l#
- * #btype = (long, ulong)*5, long, long#
+ * #btype = (npy_long, npy_ulong)*5, npy_long, npy_long#
  */
 static int
 @fname@_fromstr(char *str, @type@ *ip, char **endptr,
