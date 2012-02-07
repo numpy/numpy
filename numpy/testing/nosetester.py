@@ -6,6 +6,8 @@ This module implements ``test()`` and ``bench()`` functions for NumPy modules.
 """
 import os
 import sys
+import warnings
+import numpy.testing.utils
 
 def get_package_name(filepath):
     """
@@ -323,10 +325,21 @@ class NoseTester(object):
         import doctest
         doctest.master = None
 
-        argv, plugins = self.prepare_test_args(label, verbose, extra_argv,
-                                               doctests, coverage)
-        from noseclasses import NumpyTestProgram
-        t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
+        # Preserve the state of the warning filters
+        warn_ctx = numpy.testing.utils.WarningManager()
+        warn_ctx.__enter__()
+        try:
+
+            # Force deprecation warnings to raise
+            warnings.filterwarnings('error', category=DeprecationWarning)
+
+            argv, plugins = self.prepare_test_args(label, verbose, extra_argv,
+                                                   doctests, coverage)
+            from noseclasses import NumpyTestProgram
+            t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
+        finally:
+            warn_ctx.__exit__()
+
         return t.result
 
     def bench(self, label='fast', verbose=1, extra_argv=None):
