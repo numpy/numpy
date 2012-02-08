@@ -5,6 +5,15 @@ from numpy.testing import *
 import numpy.core.umath_tests as umt
 
 class TestUfunc(TestCase):
+    def test_pickle(self):
+        import pickle
+        assert pickle.loads(pickle.dumps(np.sin)) is np.sin
+
+    def test_pickle_withstring(self):
+        import pickle
+        astring = "cnumpy.core\n_ufunc_reconstruct\np0\n(S'numpy.core.umath'\np1\nS'cos'\np2\ntp3\nRp4\n."
+        assert pickle.loads(astring) is np.cos
+
     def test_reduceat_shifting_sum(self) :
         L = 6
         x = np.arange(L)
