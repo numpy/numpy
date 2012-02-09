@@ -18,6 +18,7 @@ import numpy.ma.core
 from numpy.ma.core import *
 
 from numpy.compat import asbytes, asbytes_nested
+from numpy.testing.utils import WarningManager
 
 pi = np.pi
 
@@ -426,9 +427,13 @@ class TestMaskedArray(TestCase):
         assert_equal(1.0, float(array([[1]])))
         self.assertRaises(TypeError, float, array([1, 1]))
         #
-        warnings.simplefilter('ignore', UserWarning)
-        assert_(np.isnan(float(array([1], mask=[1]))))
-        warnings.simplefilter('default', UserWarning)
+        warn_ctx = WarningManager()
+        warn_ctx.__enter__()
+        try:
+            warnings.simplefilter('ignore', UserWarning)
+            assert_(np.isnan(float(array([1], mask=[1]))))
+        finally:
+            warn_ctx.__exit__()
         #
         a = array([1, 2, 3], mask=[1, 0, 0])
         self.assertRaises(TypeError, lambda:float(a))

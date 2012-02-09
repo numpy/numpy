@@ -22,6 +22,9 @@ from numpy.ma.testutils import *
 import numpy.ma as ma
 from numpy.ma import masked, nomask
 
+import warnings
+from numpy.testing.utils import WarningManager
+
 from numpy.ma.mrecords import MaskedRecords, mrecarray, fromarrays, \
                               fromtextfile, fromrecords, addfield
 
@@ -136,11 +139,15 @@ class TestMRecords(TestCase):
         rdata = data.view(MaskedRecords)
         val = ma.array([10,20,30], mask=[1,0,0])
         #
-        import warnings
-        warnings.simplefilter("ignore")
-        rdata['num'] = val
-        assert_equal(rdata.num, val)
-        assert_equal(rdata.num.mask, [1,0,0])
+        warn_ctx = WarningManager()
+        warn_ctx.__enter__()
+        try:
+            warnings.simplefilter("ignore")
+            rdata['num'] = val
+            assert_equal(rdata.num, val)
+            assert_equal(rdata.num.mask, [1,0,0])
+        finally:
+            warn_ctx.__exit__()
 
     def test_set_fields_mask(self):
         "Tests setting the mask of a field."

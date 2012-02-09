@@ -6,6 +6,7 @@ from tempfile import mkstemp, NamedTemporaryFile
 import time
 from datetime import datetime
 import warnings
+from numpy.testing.utils import WarningManager
 
 import numpy as np
 import numpy.ma as ma
@@ -460,13 +461,19 @@ class TestLoadTxt(TestCase):
         assert_array_equal(x, a)
 
     def test_empty_file(self):
-        warnings.filterwarnings("ignore", message="loadtxt: Empty input file:")
-        c = StringIO()
-        x = np.loadtxt(c)
-        assert_equal(x.shape, (0,))
-        x = np.loadtxt(c, dtype=np.int64)
-        assert_equal(x.shape, (0,))
-        assert_(x.dtype == np.int64)
+        warn_ctx = WarningManager()
+        warn_ctx.__enter__()
+        try:
+            warnings.filterwarnings("ignore",
+                    message="loadtxt: Empty input file:")
+            c = StringIO()
+            x = np.loadtxt(c)
+            assert_equal(x.shape, (0,))
+            x = np.loadtxt(c, dtype=np.int64)
+            assert_equal(x.shape, (0,))
+            assert_(x.dtype == np.int64)
+        finally:
+            warn_ctx.__exit__()
 
 
     def test_unused_converter(self):
@@ -707,25 +714,29 @@ class TestFromTxt(TestCase):
         assert_equal(test, ctrl)
 
     def test_skip_footer_with_invalid(self):
-        basestr = '1 1\n2 2\n3 3\n4 4\n5  \n6  \n7  \n'
-        warnings.filterwarnings("ignore")
-        # Footer too small to get rid of all invalid values
-        assert_raises(ValueError, np.genfromtxt,
-                      StringIO(basestr), skip_footer=1)
-#        except ValueError:
-#            pass
-        a = np.genfromtxt(StringIO(basestr), skip_footer=1, invalid_raise=False)
-        assert_equal(a, np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]]))
-        #
-        a = np.genfromtxt(StringIO(basestr), skip_footer=3)
-        assert_equal(a, np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]]))
-        #
-        basestr = '1 1\n2  \n3 3\n4 4\n5  \n6 6\n7 7\n'
-        a = np.genfromtxt(StringIO(basestr), skip_footer=1, invalid_raise=False)
-        assert_equal(a, np.array([[1., 1.], [3., 3.], [4., 4.], [6., 6.]]))
-        a = np.genfromtxt(StringIO(basestr), skip_footer=3, invalid_raise=False)
-        assert_equal(a, np.array([[1., 1.], [3., 3.], [4., 4.]]))
-        warnings.resetwarnings()
+        warn_ctx = WarningManager()
+        warn_ctx.__enter__()
+        try:
+            basestr = '1 1\n2 2\n3 3\n4 4\n5  \n6  \n7  \n'
+            warnings.filterwarnings("ignore")
+            # Footer too small to get rid of all invalid values
+            assert_raises(ValueError, np.genfromtxt,
+                          StringIO(basestr), skip_footer=1)
+    #        except ValueError:
+    #            pass
+            a = np.genfromtxt(StringIO(basestr), skip_footer=1, invalid_raise=False)
+            assert_equal(a, np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]]))
+            #
+            a = np.genfromtxt(StringIO(basestr), skip_footer=3)
+            assert_equal(a, np.array([[1., 1.], [2., 2.], [3., 3.], [4., 4.]]))
+            #
+            basestr = '1 1\n2  \n3 3\n4 4\n5  \n6 6\n7 7\n'
+            a = np.genfromtxt(StringIO(basestr), skip_footer=1, invalid_raise=False)
+            assert_equal(a, np.array([[1., 1.], [3., 3.], [4., 4.], [6., 6.]]))
+            a = np.genfromtxt(StringIO(basestr), skip_footer=3, invalid_raise=False)
+            assert_equal(a, np.array([[1., 1.], [3., 3.], [4., 4.]]))
+        finally:
+            warn_ctx.__exit__()
 
 
     def test_header(self):
@@ -1030,10 +1041,15 @@ M   33  21.99
 
     def test_empty_file(self):
         "Test that an empty file raises the proper warning."
-        warnings.filterwarnings("ignore", message="genfromtxt: Empty input file:")
-        data = StringIO()
-        test = np.genfromtxt(data)
-        assert_equal(test, np.array([]))
+        warn_ctx = WarningManager()
+        warn_ctx.__enter__()
+        try:
+            warnings.filterwarnings("ignore", message="genfromtxt: Empty input file:")
+            data = StringIO()
+            test = np.genfromtxt(data)
+            assert_equal(test, np.array([]))
+        finally:
+            warn_ctx.__exit__()
 
     def test_fancy_dtype_alt(self):
         "Check that a nested dtype isn't MIA"

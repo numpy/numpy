@@ -7,6 +7,9 @@ from nose import SkipTest
 from numpy.core import *
 from numpy.core.multiarray_tests import test_neighborhood_iterator, test_neighborhood_iterator_oob
 
+import warnings
+from numpy.testing.utils import WarningManager
+
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta
 
@@ -1996,15 +1999,17 @@ class TestStackedNeighborhoodIter(TestCase):
 
 class TestWarnings(object):
     def test_complex_warning(self):
-        import warnings
-
         x = np.array([1,2])
         y = np.array([1-2j,1+2j])
 
-        warnings.simplefilter("error", np.ComplexWarning)
-        assert_raises(np.ComplexWarning, x.__setitem__, slice(None), y)
-        assert_equal(x, [1,2])
-        warnings.simplefilter("default", np.ComplexWarning)
+        warn_ctx = WarningManager()
+        warn_ctx.__enter__()
+        try:
+            warnings.simplefilter("error", np.ComplexWarning)
+            assert_raises(np.ComplexWarning, x.__setitem__, slice(None), y)
+            assert_equal(x, [1,2])
+        finally:
+            warn_ctx.__exit__()
 
 if sys.version_info >= (2, 6):
 
