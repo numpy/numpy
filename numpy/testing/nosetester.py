@@ -332,6 +332,8 @@ class NoseTester(object):
 
             # Force deprecation warnings to raise
             warnings.filterwarnings('error', category=DeprecationWarning)
+            # Force runtime warnings to raise
+            warnings.filterwarnings('error', category=RuntimeWarning)
 
             argv, plugins = self.prepare_test_args(label, verbose, extra_argv,
                                                    doctests, coverage)
