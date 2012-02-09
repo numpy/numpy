@@ -4,7 +4,6 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -556,7 +555,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
     int n, r, i;
 
     if (PyArray_Check(s)) {
-        *itemsize = MAX(*itemsize, PyArray_ITEMSIZE((PyArrayObject *)s));
+        *itemsize = PyArray_MAX(*itemsize, PyArray_ITEMSIZE((PyArrayObject *)s));
         return 0;
     }
 
@@ -574,7 +573,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
             PyErr_Clear();
         }
         else {
-            *itemsize = MAX(*itemsize, n);
+            *itemsize = PyArray_MAX(*itemsize, n);
         }
         return 0;
     }
@@ -2161,8 +2160,8 @@ PyArray_FromStructInterface(PyObject *input)
         inter->flags &= ~NPY_ARRAY_NOTSWAPPED;
     }
 
-    if (inter->flags & ARR_HAS_DESCR) {
-        if (PyArray_DescrConverter(inter->descr, &thetype) == PY_FAIL) {
+    if (inter->flags & NPY_ARR_HAS_DESCR) {
+        if (PyArray_DescrConverter(inter->descr, &thetype) == NPY_FAIL) {
             thetype = NULL;
             PyErr_Clear();
         }
@@ -2211,7 +2210,7 @@ PyArray_FromInterface(PyObject *input)
     char *data;
     Py_ssize_t buffer_len;
     int res, i, n;
-    intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
+    npy_intp dims[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     int dataflags = NPY_ARRAY_BEHAVED;
 
     /* Get the memory from __array_data__ and __array_offset__ */
@@ -2266,7 +2265,7 @@ PyArray_FromInterface(PyObject *input)
         }
         attr = PyDict_GetItemString(inter, "offset");
         if (attr) {
-            longlong num = PyLong_AsLongLong(attr);
+            npy_longlong num = PyLong_AsLongLong(attr);
             if (error_converting(num)) {
                 PyErr_SetString(PyExc_TypeError,
                         "__array_interface__ offset must be an integer");
@@ -3107,7 +3106,8 @@ PyArray_Arange(double start, double stop, double step, int type_num)
         return (PyObject *)range;
     }
     if (!funcs->fill) {
-        PyErr_SetString(PyExc_ValueError, "no fill-function for data-type.");
+        PyErr_SetString(PyExc_ValueError,
+                "no fill-function for data-type.");
         Py_DECREF(range);
         return NULL;
     }
@@ -3170,7 +3170,7 @@ _calc_length(PyObject *start, PyObject *stop, PyObject *step, PyObject **next, i
                     "arange: overflow while computing length");
             return -1;
         }
-        len = MIN(len, tmp);
+        len = PyArray_MIN(len, tmp);
     }
     else {
         value = PyFloat_AsDouble(val);
@@ -3621,7 +3621,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
     if ((offset < 0) || (offset > ts)) {
         PyErr_Format(PyExc_ValueError,
                      "offset must be non-negative and no greater than buffer "\
-                     "length (%" INTP_FMT ")", (npy_intp)ts);
+                     "length (%" NPY_INTP_FMT ")", (npy_intp)ts);
         Py_DECREF(buf);
         Py_DECREF(type);
         return NULL;
@@ -3702,7 +3702,7 @@ PyArray_FromString(char *data, npy_intp slen, PyArray_Descr *dtype,
 {
     int itemsize;
     PyArrayObject *ret;
-    Bool binary;
+    npy_bool binary;
 
     if (dtype == NULL) {
         dtype=PyArray_DescrFromType(NPY_DEFAULT_TYPE);

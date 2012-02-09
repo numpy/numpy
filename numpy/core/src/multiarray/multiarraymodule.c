@@ -20,7 +20,6 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -654,7 +653,7 @@ static int
 _signbit_set(PyArrayObject *arr)
 {
     static char bitmask = (char) 0x80;
-    char *ptr;  /* points to the byte to test */
+    char *ptr;  /* points to the npy_byte to test */
     char byteorder;
     int elsize;
 
@@ -1491,7 +1490,7 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     int type_num1, type_num2, size1, size2;
 
     if (type1 == type2) {
-        return TRUE;
+        return NPY_TRUE;
     }
 
     type_num1 = type1->type_num;
@@ -1500,10 +1499,10 @@ PyArray_EquivTypes(PyArray_Descr *type1, PyArray_Descr *type2)
     size2 = type2->elsize;
 
     if (size1 != size2) {
-        return FALSE;
+        return NPY_FALSE;
     }
     if (PyArray_ISNBO(type1->byteorder) != PyArray_ISNBO(type2->byteorder)) {
-        return FALSE;
+        return NPY_FALSE;
     }
     if (type1->subarray || type2->subarray) {
         return ((type_num1 == type_num2)
@@ -1529,7 +1528,7 @@ NPY_NO_EXPORT unsigned char
 PyArray_EquivTypenums(int typenum1, int typenum2)
 {
     PyArray_Descr *d1, *d2;
-    Bool ret;
+    npy_bool ret;
 
     d1 = PyArray_DescrFromType(typenum1);
     d2 = PyArray_DescrFromType(typenum2);
@@ -1609,8 +1608,8 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
 {
     PyObject *op;
     PyArrayObject *oparr = NULL, *ret = NULL;
-    Bool subok = FALSE;
-    Bool copy = TRUE;
+    npy_bool subok = NPY_FALSE;
+    npy_bool copy = NPY_TRUE;
     int ndmin = 0, nd;
     PyArray_Descr *type = NULL;
     PyArray_Descr *oldtype = NULL;
@@ -1854,10 +1853,10 @@ array_empty(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
     switch (order) {
         case NPY_CORDER:
-            is_f_order = FALSE;
+            is_f_order = NPY_FALSE;
             break;
         case NPY_FORTRANORDER:
-            is_f_order = TRUE;
+            is_f_order = NPY_TRUE;
             break;
         default:
             PyErr_SetString(PyExc_ValueError,
@@ -2002,7 +2001,7 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
     PyArray_Descr *typecode = NULL;
     PyArray_Dims shape = {NULL, 0};
     NPY_ORDER order = NPY_CORDER;
-    npy_bool is_f_order = FALSE;
+    npy_bool is_f_order = NPY_FALSE;
     PyArrayObject *ret = NULL;
     int maskna = 0;
 
@@ -2016,10 +2015,10 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 
     switch (order) {
         case NPY_CORDER:
-            is_f_order = FALSE;
+            is_f_order = NPY_FALSE;
             break;
         case NPY_FORTRANORDER:
-            is_f_order = TRUE;
+            is_f_order = NPY_TRUE;
             break;
         default:
             PyErr_SetString(PyExc_ValueError,
@@ -2945,7 +2944,7 @@ array_can_cast_safely(PyObject *NPY_UNUSED(self), PyObject *args,
     PyObject *from_obj = NULL;
     PyArray_Descr *d1 = NULL;
     PyArray_Descr *d2 = NULL;
-    Bool ret;
+    npy_bool ret;
     PyObject *retobj = NULL;
     NPY_CASTING casting = NPY_SAFE_CASTING;
     static char *kwlist[] = {"from", "to", "casting", NULL};
@@ -3193,7 +3192,7 @@ as_buffer(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *mem;
     Py_ssize_t size;
-    Bool ro = FALSE, check = TRUE;
+    npy_bool ro = NPY_FALSE, check = NPY_TRUE;
     void *memptr;
     static char *kwlist[] = {"mem", "size", "readonly", "check", NULL};
 
@@ -3260,7 +3259,7 @@ format_longfloat(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 {
     PyObject *obj;
     unsigned int precision;
-    longdouble x;
+    npy_longdouble x;
     static char *kwlist[] = {"x", "precision", NULL};
     static char repr[100];
 
@@ -3288,7 +3287,7 @@ compare_chararrays(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
     PyObject *other;
     PyArrayObject *newarr, *newoth;
     int cmp_op;
-    Bool rstrip;
+    npy_bool rstrip;
     char *cmp_str;
     Py_ssize_t strlength;
     PyObject *res = NULL;
@@ -3586,7 +3585,7 @@ _vec_string(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *kwds)
 
 #ifndef __NPY_PRIVATE_NO_SIGNAL
 
-SIGJMP_BUF _NPY_SIGINT_BUF;
+NPY_SIGJMP_BUF _NPY_SIGINT_BUF;
 
 /*NUMPY_API
  */
@@ -3594,7 +3593,7 @@ NPY_NO_EXPORT void
 _PyArray_SigintHandler(int signum)
 {
     PyOS_setsig(signum, SIG_IGN);
-    SIGLONGJMP(_NPY_SIGINT_BUF, signum);
+    NPY_SIGLONGJMP(_NPY_SIGINT_BUF, signum);
 }
 
 /*NUMPY_API
@@ -3913,7 +3912,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
 #else
     SINGLE_INHERIT(Long, SignedInteger);
 #endif
-#if SIZEOF_LONGLONG == SIZEOF_LONG && !defined(NPY_PY3K)
+#if NPY_SIZEOF_LONGLONG == SIZEOF_LONG && !defined(NPY_PY3K)
     DUAL_INHERIT(LongLong, Int, SignedInteger);
 #else
     SINGLE_INHERIT(LongLong, SignedInteger);

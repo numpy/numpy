@@ -6,7 +6,6 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
@@ -14,20 +13,20 @@
 
 #include "numpy/npy_3kcompat.h"
 
-/* Functions only needed on narrow builds of Python
-   for converting back and forth between the NumPy Unicode data-type
-   (always 4-byte)
-   and the Python Unicode scalar (2-bytes on a narrow build).
-*/
+/*
+ * Functions only needed on narrow builds of Python for converting back and
+ * forth between the NumPy Unicode data-type (always 4-bytes) and the
+ * Python Unicode scalar (2-bytes on a narrow build).
+ */
 
 /* the ucs2 buffer must be large enough to hold 2*ucs4length characters
-   due to the use of surrogate pairs.
-
-   The return value is the number of ucs2 bytes used-up which
-   is ucs4length + number of surrogate pairs found.
-
-   values above 0xffff are converted to surrogate pairs.
-*/
+ *  due to the use of surrogate pairs.
+ *
+ *  The return value is the number of ucs2 bytes used-up which
+ *  is ucs4length + number of surrogate pairs found.
+ *
+ * values above 0xffff are converted to surrogate pairs.
+ */
 NPY_NO_EXPORT int
 PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs4length)
 {
@@ -52,13 +51,13 @@ PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs4length)
 
 
 /* This converts a UCS2 buffer of the given length to UCS4 buffer.
-   It converts up to ucs4len characters of UCS2
-
-   It returns the number of characters converted which can
-   be less than ucs2len if there are surrogate pairs in ucs2.
-
-   The return value is the actual size of the used part of the ucs4 buffer.
-*/
+ *  It converts up to ucs4len characters of UCS2
+ *
+ *  It returns the number of characters converted which can
+ *  be less than ucs2len if there are surrogate pairs in ucs2.
+ *
+ *  The return value is the actual size of the used part of the ucs4 buffer.
+ */
 
 NPY_NO_EXPORT int
 PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs2len, int ucs4len)

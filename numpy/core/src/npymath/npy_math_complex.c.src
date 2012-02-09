@@ -36,7 +36,7 @@
  *=========================================================*/
 
 /**begin repeat
- * #type = float,double,npy_longdouble#
+ * #type = npy_float, npy_double, npy_longdouble#
  * #ctype = npy_cfloat,npy_cdouble,npy_clongdouble#
  * #c = f, , l#
  * #C = F, , L#
@@ -234,7 +234,7 @@
  *=========================================================*/
 
 /**begin repeat
- * #type = float, double, npy_longdouble#
+ * #type = npy_float, npy_double, npy_longdouble#
  * #ctype = npy_cfloat, npy_cdouble, npy_clongdouble#
  * #c = f, , l#
  * #C = F, , L#

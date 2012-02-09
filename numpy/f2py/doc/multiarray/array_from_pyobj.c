@@ -113,7 +113,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
     if (intent & F2PY_INTENT_OUT) {
       if ((!(intent & F2PY_INTENT_C)) && (rank>1)) {
 	lazy_transpose(arr);
-	arr->flags &= ~CONTIGUOUS;
+	arr->flags &= ~NPY_CONTIGUOUS;
       }
       Py_INCREF(arr);
     }
@@ -155,7 +155,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
       if ((rank>1) && (! (intent & F2PY_INTENT_C))) {
 	lazy_transpose(arr);
 	lazy_transpose(tmp_arr);
-	tmp_arr->flags &= ~CONTIGUOUS;
+	tmp_arr->flags &= ~NPY_CONTIGUOUS;
       }
       arr = tmp_arr;
     }
@@ -172,7 +172,7 @@ PyArrayObject* array_from_pyobj(const int type_num,
     if (intent & F2PY_INTENT_OUT) {
       if ((!(intent & F2PY_INTENT_C)) && (rank>1)) {
 	lazy_transpose(arr);
-	arr->flags &= ~CONTIGUOUS;
+	arr->flags &= ~NPY_CONTIGUOUS;
       }
       Py_INCREF(arr);
     }
@@ -192,13 +192,13 @@ PyArrayObject* array_from_pyobj(const int type_num,
     if ((rank>1) && (! (intent & F2PY_INTENT_C))) {
       PyArrayObject *tmp_arr = NULL;
       lazy_transpose(arr);
-      arr->flags &= ~CONTIGUOUS;
+      arr->flags &= ~NPY_CONTIGUOUS;
       tmp_arr = (PyArrayObject *) PyArray_CopyFromObject((PyObject *)arr,type_num,0,0);
       Py_DECREF(arr);
       arr = tmp_arr;
       ARR_IS_NULL(arr,"CopyFromObject(Array) failed: intent(fortran)\n");
       lazy_transpose(arr);
-      arr->flags &= ~CONTIGUOUS;
+      arr->flags &= ~NPY_CONTIGUOUS;
     }
     if (intent & F2PY_INTENT_OUT)
       Py_INCREF(arr);
@@ -238,7 +238,7 @@ void lazy_transpose(PyArrayObject* arr) {
     Changes the order of array strides and dimensions.  This
     corresponds to the lazy transpose of a Numeric array in-situ.
     Note that this function is assumed to be used even times for a
-    given array. Otherwise, the caller should set flags &= ~CONTIGUOUS.
+    given array. Otherwise, the caller should set flags &= ~NPY_CONTIGUOUS.
    */
   int rank,i,s,j;
   rank = arr->nd;

@@ -4,7 +4,6 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -37,7 +36,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
 {
     int type_num;
     int align;
-    intp memloc;
+    npy_intp memloc;
     if (descr == NULL) {
         descr = PyArray_DescrFromScalar(scalar);
         type_num = descr->type_num;
@@ -149,7 +148,7 @@ scalar_value(PyObject *scalar, PyArray_Descr *descr)
      * Use the alignment flag to figure out where the data begins
      * after a PyObject_HEAD
      */
-    memloc = (intp)scalar;
+    memloc = (npy_intp)scalar;
     memloc += sizeof(PyObject);
     /* now round-up to the nearest alignment value */
     align = descr->alignment;
@@ -399,7 +398,7 @@ PyArray_ScalarFromObject(PyObject *object)
         PyArrayScalar_VAL(ret, CDouble).imag = PyComplex_ImagAsDouble(object);
     }
     else if (PyLong_Check(object)) {
-        longlong val;
+        npy_longlong val;
         val = PyLong_AsLongLong(object);
         if (val==-1 && PyErr_Occurred()) {
             PyErr_Clear();
@@ -536,7 +535,7 @@ PyArray_DescrFromScalar(PyObject *sc)
         PyObject *cobj;
         PyArray_DatetimeMetaData *dt_data;
 
-        dt_data = _pya_malloc(sizeof(PyArray_DatetimeMetaData));
+        dt_data = PyArray_malloc(sizeof(PyArray_DatetimeMetaData));
         if (PyArray_IsScalar(sc, Datetime)) {
             descr = PyArray_DescrNewFromType(NPY_DATETIME);
             memcpy(dt_data, &((PyDatetimeScalarObject *)sc)->obmeta,
@@ -637,7 +636,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 
     type_num = descr->type_num;
     if (type_num == NPY_BOOL) {
-        PyArrayScalar_RETURN_BOOL_FROM_LONG(*(Bool*)data);
+        PyArrayScalar_RETURN_BOOL_FROM_LONG(*(npy_bool*)data);
     }
     else if (PyDataType_FLAGCHK(descr, NPY_USE_GETITEM)) {
         return descr->f->getitem(data, base);
@@ -726,8 +725,8 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             }
 #else
             /* need aligned data buffer */
-            if ((swap) || ((((intp)data) % descr->alignment) != 0)) {
-                buffer = _pya_malloc(itemsize);
+            if ((swap) || ((((npy_intp)data) % descr->alignment) != 0)) {
+                buffer = PyArray_malloc(itemsize);
                 if (buffer == NULL) {
                     return PyErr_NoMemory();
                 }
@@ -748,7 +747,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             length = PyUCS2Buffer_FromUCS4(uni->str,
                     (npy_ucs4 *)buffer, itemsize >> 2);
             if (alloc) {
-                _pya_free(buffer);
+                PyArray_free(buffer);
             }
             /* Resize the unicode result */
             if (MyPyUnicode_Resize(uni, length) < 0) {

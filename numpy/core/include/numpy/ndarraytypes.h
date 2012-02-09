@@ -919,10 +919,10 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 /*
  * Size of internal buffers used for alignment Make BUFSIZE a multiple
- * of sizeof(cdouble) -- usually 16 so that ufunc buffers are aligned
+ * of sizeof(npy_cdouble) -- usually 16 so that ufunc buffers are aligned
  */
-#define NPY_MIN_BUFSIZE ((int)sizeof(cdouble))
-#define NPY_MAX_BUFSIZE (((int)sizeof(cdouble))*1000000)
+#define NPY_MIN_BUFSIZE ((int)sizeof(npy_cdouble))
+#define NPY_MAX_BUFSIZE (((int)sizeof(npy_cdouble))*1000000)
 #define NPY_BUFSIZE 8192
 /* buffer stress test size: */
 /*#define NPY_BUFSIZE 17*/

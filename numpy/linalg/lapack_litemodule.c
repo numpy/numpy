@@ -4,7 +4,7 @@ More modifications by Jeff Whitaker
 */
 
 #include "Python.h"
-#include "numpy/noprefix.h"
+#include "numpy/arrayobject.h"
 
 #ifdef NO_APPEND_FORTRAN
 # define FNAME(x) x
@@ -105,7 +105,7 @@ check_object(PyObject *ob, int t, char *obname,
                      "Expected an array for parameter %s in lapack_lite.%s",
                      obname, funname);
         return 0;
-    } else if (!(((PyArrayObject *)ob)->flags & CONTIGUOUS)) {
+    } else if (!(((PyArrayObject *)ob)->flags & NPY_CONTIGUOUS)) {
         PyErr_Format(LapackError,
                      "Parameter %s is not contiguous in lapack_lite.%s",
                      obname, funname);
@@ -450,21 +450,21 @@ lapack_lite_dgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
                Change it to the maximum of the minimum and the optimal.
             */
             long work0 = (long) *DDATA(work);
-            int mn = MIN(m,n);
-            int mx = MAX(m,n);
+            int mn = PyArray_MIN(m,n);
+            int mx = PyArray_MAX(m,n);
 
             switch(jobz){
             case 'N':
-                    work0 = MAX(work0,3*mn + MAX(mx,6*mn)+500);
+                    work0 = PyArray_MAX(work0,3*mn + PyArray_MAX(mx,6*mn)+500);
                     break;
             case 'O':
-                    work0 = MAX(work0,3*mn*mn +                 \
-                                MAX(mx,5*mn*mn+4*mn+500));
+                    work0 = PyArray_MAX(work0,3*mn*mn +                 \
+                                PyArray_MAX(mx,5*mn*mn+4*mn+500));
                     break;
             case 'S':
             case 'A':
-                    work0 = MAX(work0,3*mn*mn +                 \
-                                MAX(mx,4*mn*(mn+1))+500);
+                    work0 = PyArray_MAX(work0,3*mn*mn +                 \
+                                PyArray_MAX(mx,4*mn*(mn+1))+500);
                     break;
             }
             *DDATA(work) = (double) work0;

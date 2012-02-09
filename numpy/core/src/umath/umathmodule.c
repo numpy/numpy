@@ -25,7 +25,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
 #endif
 
-#include "numpy/noprefix.h"
+#include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "abstract.h"
 
@@ -292,12 +292,15 @@ InitOtherOperators(PyObject *dictionary) {
 /*static PyTypeObject PyUFunc_Type;*/
 
 static struct PyMethodDef methods[] = {
-    {"frompyfunc", (PyCFunction) ufunc_frompyfunc,
-     METH_VARARGS | METH_KEYWORDS, NULL},
-    {"seterrobj", (PyCFunction) ufunc_seterr,
-     METH_VARARGS, NULL},
-    {"geterrobj", (PyCFunction) ufunc_geterr,
-     METH_VARARGS, NULL},
+    {"frompyfunc",
+        (PyCFunction) ufunc_frompyfunc,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"seterrobj",
+        (PyCFunction) ufunc_seterr,
+        METH_VARARGS, NULL},
+    {"geterrobj",
+        (PyCFunction) ufunc_geterr,
+        METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 

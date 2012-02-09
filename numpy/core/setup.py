@@ -829,8 +829,7 @@ def configuration(parent_package='',top_path=None):
         subpath = join('src', 'umath')
         # NOTE: For manual template conversion of loops.h.src, read the note
         #       in that file.
-        sources = [join(local_dir, subpath, 'loops.c.src'),
-                   join(local_dir, subpath, 'umathmodule.c.src')]
+        sources = [join(local_dir, subpath, 'loops.c.src')]
 
         # numpy.distutils generate .c from .c.src in weird directories, we have
         # to add them there as they depend on the build_dir
@@ -854,7 +853,7 @@ def configuration(parent_package='',top_path=None):
         return []
 
     umath_src = [
-            join('src', 'umath', 'umathmodule.c.src'),
+            join('src', 'umath', 'umathmodule.c'),
             join('src', 'umath', 'funcs.inc.src'),
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'ufunc_object.c'),

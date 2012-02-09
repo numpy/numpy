@@ -5,7 +5,6 @@
 /*#include <stdio.h>*/
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
@@ -1610,8 +1609,8 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
                 }
                 if (v < 0 || v >= shape[idim]) {
                     PyErr_Format(PyExc_IndexError,
-                                 "index (%"INTP_FMT") out of range "\
-                                 "(0<=index<%"INTP_FMT") in dimension %d",
+                                 "index (%"NPY_INTP_FMT") out of range "\
+                                 "(0<=index<%"NPY_INTP_FMT") in dimension %d",
                                  vals[idim], PyArray_DIMS(self)[idim], idim);
                     return -1;
                 }
@@ -1633,8 +1632,8 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
                 }
                 if (v < 0 || v >= shape[idim]) {
                     PyErr_Format(PyExc_IndexError,
-                                 "index (%"INTP_FMT") out of range "\
-                                 "(0<=index<%"INTP_FMT") in dimension %d",
+                                 "index (%"NPY_INTP_FMT") out of range "\
+                                 "(0<=index<%"NPY_INTP_FMT") in dimension %d",
                                  vals[idim], PyArray_DIMS(self)[idim], idim);
                     return -1;
                 }
@@ -1768,8 +1767,8 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
                 }
                 if (v < 0 || v >= shape[idim]) {
                     PyErr_Format(PyExc_IndexError,
-                                 "index (%"INTP_FMT") out of range "\
-                                 "(0<=index<%"INTP_FMT") in dimension %d",
+                                 "index (%"NPY_INTP_FMT") out of range "\
+                                 "(0<=index<%"NPY_INTP_FMT") in dimension %d",
                                  vals[idim], PyArray_DIMS(self)[idim], idim);
                     return NULL;
                 }
@@ -1790,8 +1789,8 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
                 }
                 if (v < 0 || v >= shape[idim]) {
                     PyErr_Format(PyExc_IndexError,
-                                 "index (%"INTP_FMT") out of range "\
-                                 "(0<=index<%"INTP_FMT") in dimension %d",
+                                 "index (%"NPY_INTP_FMT") out of range "\
+                                 "(0<=index<%"NPY_INTP_FMT") in dimension %d",
                                  vals[idim], PyArray_DIMS(self)[idim], idim);
                     return NULL;
                 }
@@ -1834,15 +1833,15 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
      */
 
     if (PyArray_Check(mp) && PyArray_NDIM(mp) == 0) {
-        npy_bool noellipses = TRUE;
+        npy_bool noellipses = NPY_TRUE;
         if ((op == Py_Ellipsis) || PyString_Check(op) || PyUnicode_Check(op)) {
-            noellipses = FALSE;
+            noellipses = NPY_FALSE;
         }
         else if (PyBool_Check(op) || PyArray_IsScalar(op, Bool) ||
                  (PyArray_Check(op) &&
                     (PyArray_DIMS((PyArrayObject *)op)==0) &&
                      PyArray_ISBOOL((PyArrayObject *)op))) {
-            noellipses = FALSE;
+            noellipses = NPY_FALSE;
         }
         else if (PySequence_Check(op)) {
             Py_ssize_t n, i;
@@ -1853,7 +1852,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
             while (i < n && noellipses) {
                 temp = PySequence_GetItem(op, i);
                 if (temp == Py_Ellipsis) {
-                    noellipses = FALSE;
+                    noellipses = NPY_FALSE;
                 }
                 Py_DECREF(temp);
                 i++;
@@ -1915,7 +1914,7 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
         iters[j] = NULL;
     }
     size = PyArray_SIZE(ba);
-    ptr = (Bool *)PyArray_DATA(ba);
+    ptr = (npy_bool *)PyArray_DATA(ba);
     count = 0;
 
     /* pre-determine how many nonzero entries there are */
@@ -2270,8 +2269,8 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
             }
             if (indval < 0 || indval >= dimsize) {
                 PyErr_Format(PyExc_IndexError,
-                             "index (%"INTP_FMT") out of range "\
-                             "(0<=index<%"INTP_FMT") in dimension %d",
+                             "index (%"NPY_INTP_FMT") out of range "\
+                             "(0<=index<%"NPY_INTP_FMT") in dimension %d",
                              indval, (dimsize-1), mit->iteraxes[i]);
                 goto fail;
             }

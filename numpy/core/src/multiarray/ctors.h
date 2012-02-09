@@ -3,11 +3,11 @@
 
 NPY_NO_EXPORT PyObject *
 PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
-                     intp *dims, intp *strides, void *data,
+                     npy_intp *dims, npy_intp *strides, void *data,
                      int flags, PyObject *obj);
 
-NPY_NO_EXPORT PyObject *PyArray_New(PyTypeObject *, int nd, intp *,
-                             int, intp *, void *, int, int, PyObject *);
+NPY_NO_EXPORT PyObject *PyArray_New(PyTypeObject *, int nd, npy_intp *,
+                             int, npy_intp *, void *, int, int, PyObject *);
 
 NPY_NO_EXPORT PyObject *
 PyArray_FromAny(PyObject *op, PyArray_Descr *newtype, int min_depth,
@@ -52,22 +52,22 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src,
 
 /* FIXME: remove those from here */
 NPY_NO_EXPORT size_t
-_array_fill_strides(intp *strides, intp *dims, int nd, size_t itemsize,
+_array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
                     int inflag, int *objflags);
 
 NPY_NO_EXPORT void
-_unaligned_strided_byte_copy(char *dst, intp outstrides, char *src,
-                             intp instrides, intp N, int elsize);
+_unaligned_strided_byte_copy(char *dst, npy_intp outstrides, char *src,
+                             npy_intp instrides, npy_intp N, int elsize);
 
 NPY_NO_EXPORT void
-_strided_byte_swap(void *p, intp stride, intp n, int size);
+_strided_byte_swap(void *p, npy_intp stride, npy_intp n, int size);
 
 NPY_NO_EXPORT void
-copy_and_swap(void *dst, void *src, int itemsize, intp numitems,
-              intp srcstrides, int swap);
+copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
+              npy_intp srcstrides, int swap);
 
 NPY_NO_EXPORT void
-byte_swap_vector(void *p, intp n, int size);
+byte_swap_vector(void *p, npy_intp n, int size);
 
 NPY_NO_EXPORT int
 PyArray_AssignFromSequence(PyArrayObject *self, PyObject *v);
