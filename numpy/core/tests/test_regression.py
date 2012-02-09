@@ -1406,11 +1406,13 @@ class TestRegression(TestCase):
         for tp in [np.csingle, np.cdouble, np.clongdouble]:
             x = tp(1+2j)
             assert_warns(np.ComplexWarning, float, x)
-            ctx = WarningManager()
-            ctx.__enter__()
-            warnings.simplefilter('ignore')
-            assert_equal(float(x), float(x.real))
-            ctx.__exit__()
+            warn_ctx = WarningManager()
+            warn_ctx.__enter__()
+            try:
+                warnings.simplefilter('ignore')
+                assert_equal(float(x), float(x.real))
+            finally:
+                warn_ctx.__exit__()
 
     def test_complex_scalar_complex_cast(self):
         for tp in [np.csingle, np.cdouble, np.clongdouble]:

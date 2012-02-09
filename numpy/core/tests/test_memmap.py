@@ -1,6 +1,5 @@
 from tempfile import NamedTemporaryFile, mktemp
 import os
-import warnings
 
 from numpy import memmap
 from numpy import arange, allclose
