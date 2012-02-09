@@ -49,3 +49,4 @@ code.
    c-api.ufunc
    c-api.generalized-ufuncs
    c-api.coremath
+   c-api.deprecations
