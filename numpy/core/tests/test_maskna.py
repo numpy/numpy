@@ -2,7 +2,7 @@ import numpy as np
 from numpy.compat import asbytes
 from numpy.testing import *
 import sys, warnings
-
+from numpy.testing.utils import WarningManager
 
 def test_array_maskna_flags():
     a = np.arange(3)
@@ -200,6 +200,8 @@ def test_array_maskna_astype():
     dtdst.append(np.dtype('datetime64[D]'))
     dtdst.append(np.dtype('timedelta64[s]'))
 
+    warn_ctx = WarningManager()
+    warn_ctx.__enter__()
     try:
         warnings.simplefilter("ignore", np.ComplexWarning)
         for dt1 in dtsrc:
@@ -212,7 +214,7 @@ def test_array_maskna_astype():
                 assert_(b.flags.ownmaskna, msg)
                 assert_(np.isna(b[1]), msg)
     finally:
-        warnings.simplefilter("default", np.ComplexWarning)
+        warn_ctx.__exit__()
 
 
 def test_array_maskna_repr():
