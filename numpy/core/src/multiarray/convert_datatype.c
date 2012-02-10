@@ -4,7 +4,6 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -735,7 +734,7 @@ PyArray_CanCastScalar(PyTypeObject *from, PyTypeObject *to)
     fromtype = _typenum_fromtypeobj((PyObject *)from, 0);
     totype = _typenum_fromtypeobj((PyObject *)to, 0);
     if (fromtype == NPY_NOTYPE || totype == NPY_NOTYPE) {
-        return FALSE;
+        return NPY_FALSE;
     }
     return (npy_bool) PyArray_CanCastSafely(fromtype, totype);
 }
@@ -1620,11 +1619,11 @@ NPY_NO_EXPORT int
 PyArray_ValidType(int type)
 {
     PyArray_Descr *descr;
-    int res=TRUE;
+    int res=NPY_TRUE;
 
     descr = PyArray_DescrFromType(type);
     if (descr == NULL) {
-        res = FALSE;
+        res = NPY_FALSE;
     }
     Py_DECREF(descr);
     return res;

@@ -315,7 +315,7 @@ double npy_log2(double x)
  */
 
 /**begin repeat
- * #type = npy_longdouble, float#
+ * #type = npy_longdouble, npy_float#
  * #TYPE = NPY_LONGDOUBLE, FLOAT#
  * #c = l,f#
  * #C = L,F#
@@ -376,7 +376,7 @@ double npy_log2(double x)
  */
 
 /**begin repeat
- * #type = npy_longdouble,double,float#
+ * #type = npy_longdouble, npy_double, npy_float#
  * #c = l,,f#
  * #C = L,,F#
  */
@@ -422,7 +422,7 @@ double npy_log2(double x)
  */
 
 /**begin repeat
- * #type = float, double, npy_longdouble#
+ * #type = npy_float, npy_double, npy_longdouble#
  * #c = f, ,l#
  * #C = F, ,L#
  */

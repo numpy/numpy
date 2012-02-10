@@ -1,7 +1,7 @@
 #define NPY_NO_DEPRECATED_API
 #include "Python.h"
 #include "structmember.h"
-#include "numpy/noprefix.h"
+#include "numpy/arrayobject.h"
 #include "numpy/npy_3kcompat.h"
 #include "npy_config.h"
 #include "numpy/ufuncobject.h"
@@ -1378,7 +1378,7 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
     PyArrayObject *inp;
     PyArrayObject *new = NULL;
     PyArrayObject *out = NULL;
-    npy_intp outdims[MAX_DIMS];
+    npy_intp outdims[NPY_MAXDIMS];
     int i;
     void (*thefunc)(void *, int, npy_intp, npy_intp, void *, npy_intp, npy_intp);
     PyArrayIterObject *it, *ot;

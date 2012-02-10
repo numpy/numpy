@@ -16,7 +16,7 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#include <numpy/ndarrayobject.h>
+#include <numpy/arrayobject.h>
 #include <numpy/npy_3kcompat.h>
 #include "convert_datatype.h"
 

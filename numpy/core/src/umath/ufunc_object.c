@@ -36,7 +36,7 @@
 
 #include "numpy/npy_3kcompat.h"
 
-#include "numpy/noprefix.h"
+#include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
 #include "lowlevel_strided_loops.h"
 #include "ufunc_type_resolution.h"
@@ -91,9 +91,9 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *
     PyObject *pyfunc, *ret, *args;
     char *name = PyBytes_AS_STRING(PyTuple_GET_ITEM(errobj,0));
     char msg[100];
-    ALLOW_C_API_DEF;
+    NPY_ALLOW_C_API_DEF;
 
-    ALLOW_C_API;
+    NPY_ALLOW_C_API;
     switch(method) {
     case UFUNC_ERR_WARN:
         PyOS_snprintf(msg, sizeof(msg), "%s encountered in %s", errtype, name);
@@ -153,11 +153,11 @@ _error_handler(int method, PyObject *errobj, char *errtype, int retstatus, int *
         }
         break;
     }
-    DISABLE_C_API;
+    NPY_DISABLE_C_API;
     return 0;
 
 fail:
-    DISABLE_C_API;
+    NPY_DISABLE_C_API;
     return -1;
 }
 
@@ -377,8 +377,8 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
 
     *errobj = NULL;
     if (!PyList_Check(ref) || (PyList_GET_SIZE(ref)!=3)) {
-        PyErr_Format(PyExc_TypeError, "%s must be a length 3 list.",
-                     UFUNC_PYVALS_NAME);
+        PyErr_Format(PyExc_TypeError,
+                "%s must be a length 3 list.", UFUNC_PYVALS_NAME);
         return -1;
     }
 
@@ -386,14 +386,14 @@ _extract_pyvals(PyObject *ref, char *name, int *bufsize,
     if ((*bufsize == -1) && PyErr_Occurred()) {
         return -1;
     }
-    if ((*bufsize < NPY_MIN_BUFSIZE)
-        || (*bufsize > NPY_MAX_BUFSIZE)
-        || (*bufsize % 16 != 0)) {
+    if ((*bufsize < NPY_MIN_BUFSIZE) ||
+            (*bufsize > NPY_MAX_BUFSIZE) ||
+            (*bufsize % 16 != 0)) {
         PyErr_Format(PyExc_ValueError,
-                     "buffer size (%d) is not in range "
-                     "(%"INTP_FMT" - %"INTP_FMT") or not a multiple of 16",
-                     *bufsize, (intp) NPY_MIN_BUFSIZE,
-                     (intp) NPY_MAX_BUFSIZE);
+                "buffer size (%d) is not in range "
+                "(%"NPY_INTP_FMT" - %"NPY_INTP_FMT") or not a multiple of 16",
+                *bufsize, (npy_intp) NPY_MIN_BUFSIZE,
+                (npy_intp) NPY_MAX_BUFSIZE);
         return -1;
     }
 
@@ -4710,7 +4710,7 @@ ufunc_outer(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     }
     for (i = 0; i < PyArray_NDIM(ap1); i++) {
         PyTuple_SET_ITEM(shape1, i,
-                PyLong_FromLongLong((longlong)PyArray_DIMS(ap1)[i]));
+                PyLong_FromLongLong((npy_longlong)PyArray_DIMS(ap1)[i]));
     }
     shape2 = PyTuple_New(PyArray_NDIM(ap2));
     for (i = 0; i < PyArray_NDIM(ap2); i++) {

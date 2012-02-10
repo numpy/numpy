@@ -22,8 +22,8 @@ NPY_NO_EXPORT int
 iter_ass_subscript(PyArrayIterObject *, PyObject *, PyObject *);
 
 NPY_NO_EXPORT int
-slice_GetIndices(PySliceObject *r, intp length,
-                 intp *start, intp *stop, intp *step,
-                 intp *slicelength);
+slice_GetIndices(PySliceObject *r, npy_intp length,
+                 npy_intp *start, npy_intp *stop, npy_intp *step,
+                 npy_intp *slicelength);
 
 #endif

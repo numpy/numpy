@@ -511,7 +511,7 @@ npy_longdouble npy_nextafterl(npy_longdouble x, npy_longdouble y)
 /**begin repeat
  * #suff = f,,l#
  * #SUFF = F,,L#
- * #type = float, double, npy_longdouble#
+ * #type = npy_float, npy_double, npy_longdouble#
  */
 @type@ npy_spacing@suff@(@type@ x)
 {

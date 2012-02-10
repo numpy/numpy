@@ -4,7 +4,6 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -338,7 +337,7 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
 
             if (is_native_only_type) {
                 /* It's not possible to express native-only data types
-                   in non-native byte orders */
+                   in non-native npy_byte orders */
                 PyErr_Format(PyExc_ValueError,
                              "cannot expose native-only dtype '%c' in "
                              "non-native byte order '%c' via buffer interface",
