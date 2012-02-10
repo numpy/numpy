@@ -1,0 +1,3 @@
+#ifndef NPY_NO_DEPRECATED_API
+#define NPY_NO_DEPRECATED_API
+#endif
