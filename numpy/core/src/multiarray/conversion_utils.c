@@ -4,10 +4,9 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-#include "numpy/ndarrayobject.h"
+#include "numpy/arrayobject.h"
 
 #include "npy_config.h"
 #include "numpy/npy_3kcompat.h"
@@ -41,15 +40,15 @@ PyArray_Converter(PyObject *object, PyObject **address)
     if (PyArray_Check(object) && !PyArray_HASMASKNA((PyArrayObject *)object)) {
         *address = object;
         Py_INCREF(object);
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     else {
         *address = PyArray_FromAny(object, NULL, 0, 0,
                                 NPY_ARRAY_CARRAY, NULL);
         if (*address == NULL) {
-            return PY_FAIL;
+            return NPY_FAIL;
         }
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
 }
 
@@ -72,15 +71,15 @@ PyArray_AllowNAConverter(PyObject *object, PyObject **address)
     if (PyArray_Check(object)) {
         *address = object;
         Py_INCREF(object);
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     else {
         *address = PyArray_FromAny(object, NULL, 0, 0,
                                 NPY_ARRAY_CARRAY | NPY_ARRAY_ALLOWNA, NULL);
         if (*address == NULL) {
-            return PY_FAIL;
+            return NPY_FAIL;
         }
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
 }
 
@@ -93,7 +92,7 @@ PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
 {
     if (object == NULL || object == Py_None) {
         *address = NULL;
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     if (PyArray_Check(object)) {
         if (PyArray_HASMASKNA((PyArrayObject *)object)) {
@@ -101,16 +100,16 @@ PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
                             "this operation does not yet support output "
                             "arrays with NA support");
             *address = NULL;
-            return PY_FAIL;
+            return NPY_FAIL;
         }
         *address = (PyArrayObject *)object;
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     else {
         PyErr_SetString(PyExc_TypeError,
                         "output must be an array");
         *address = NULL;
-        return PY_FAIL;
+        return NPY_FAIL;
     }
 }
 
@@ -123,17 +122,17 @@ PyArray_OutputAllowNAConverter(PyObject *object, PyArrayObject **address)
 {
     if (object == NULL || object == Py_None) {
         *address = NULL;
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     if (PyArray_Check(object)) {
         *address = (PyArrayObject *)object;
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     else {
         PyErr_SetString(PyExc_TypeError,
                         "output must be an array");
         *address = NULL;
-        return PY_FAIL;
+        return NPY_FAIL;
     }
 }
 
@@ -155,7 +154,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     seq->ptr = NULL;
     seq->len = 0;
     if (obj == Py_None) {
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     len = PySequence_Size(obj);
     if (len == -1) {
@@ -167,18 +166,18 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     if (len < 0) {
         PyErr_SetString(PyExc_TypeError,
                         "expected sequence object with len >= 0");
-        return PY_FAIL;
+        return NPY_FAIL;
     }
     if (len > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError, "sequence too large; "
                      "must be smaller than %d", NPY_MAXDIMS);
-        return PY_FAIL;
+        return NPY_FAIL;
     }
     if (len > 0) {
         seq->ptr = PyDimMem_NEW(len);
         if (seq->ptr == NULL) {
             PyErr_NoMemory();
-            return PY_FAIL;
+            return NPY_FAIL;
         }
     }
     seq->len = len;
@@ -186,9 +185,9 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     if (nd == -1 || nd != len) {
         PyDimMem_FREE(seq->ptr);
         seq->ptr = NULL;
-        return PY_FAIL;
+        return NPY_FAIL;
     }
-    return PY_SUCCEED;
+    return NPY_SUCCEED;
 }
 
 /*NUMPY_API
@@ -212,14 +211,14 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     buf->flags = NPY_ARRAY_BEHAVED;
     buf->base = NULL;
     if (obj == Py_None) {
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     if (PyObject_AsWriteBuffer(obj, &(buf->ptr), &buflen) < 0) {
         PyErr_Clear();
         buf->flags &= ~NPY_ARRAY_WRITEABLE;
         if (PyObject_AsReadBuffer(obj, (const void **)&(buf->ptr),
                                   &buflen) < 0) {
-            return PY_FAIL;
+            return NPY_FAIL;
         }
     }
     buf->len = (npy_intp) buflen;
@@ -237,7 +236,7 @@ PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf)
     if (buf->base == NULL) {
         buf->base = obj;
     }
-    return PY_SUCCEED;
+    return NPY_SUCCEED;
 }
 
 /*NUMPY_API
@@ -254,10 +253,10 @@ PyArray_AxisConverter(PyObject *obj, int *axis)
     else {
         *axis = (int) PyInt_AsLong(obj);
         if (PyErr_Occurred()) {
-            return PY_FAIL;
+            return NPY_FAIL;
         }
     }
-    return PY_SUCCEED;
+    return NPY_SUCCEED;
 }
 
 /*
@@ -352,18 +351,18 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
  * Convert an object to true / false
  */
 NPY_NO_EXPORT int
-PyArray_BoolConverter(PyObject *object, Bool *val)
+PyArray_BoolConverter(PyObject *object, npy_bool *val)
 {
     if (PyObject_IsTrue(object)) {
-        *val = TRUE;
+        *val = NPY_TRUE;
     }
     else {
-        *val = FALSE;
+        *val = NPY_FALSE;
     }
     if (PyErr_Occurred()) {
-        return PY_FAIL;
+        return NPY_FAIL;
     }
-    return PY_SUCCEED;
+    return NPY_SUCCEED;
 }
 
 /*NUMPY_API
@@ -383,13 +382,13 @@ PyArray_ByteorderConverter(PyObject *obj, char *endian)
     str = PyBytes_AsString(obj);
     if (!str) {
         Py_XDECREF(tmp);
-        return PY_FAIL;
+        return NPY_FAIL;
     }
     if (strlen(str) < 1) {
         PyErr_SetString(PyExc_ValueError,
                         "Byteorder string must be at least length 1");
         Py_XDECREF(tmp);
-        return PY_FAIL;
+        return NPY_FAIL;
     }
     *endian = str[0];
     if (str[0] != NPY_BIG && str[0] != NPY_LITTLE
@@ -414,11 +413,11 @@ PyArray_ByteorderConverter(PyObject *obj, char *endian)
                          "%s is an unrecognized byteorder",
                          str);
             Py_XDECREF(tmp);
-            return PY_FAIL;
+            return NPY_FAIL;
         }
     }
     Py_XDECREF(tmp);
-    return PY_SUCCEED;
+    return NPY_SUCCEED;
 }
 
 /*NUMPY_API
@@ -438,13 +437,13 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
     str = PyBytes_AsString(obj);
     if (!str) {
         Py_XDECREF(tmp);
-        return PY_FAIL;
+        return NPY_FAIL;
     }
     if (strlen(str) < 1) {
         PyErr_SetString(PyExc_ValueError,
                         "Sort kind string must be at least length 1");
         Py_XDECREF(tmp);
-        return PY_FAIL;
+        return NPY_FAIL;
     }
     if (str[0] == 'q' || str[0] == 'Q') {
         *sortkind = NPY_QUICKSORT;
@@ -460,10 +459,10 @@ PyArray_SortkindConverter(PyObject *obj, NPY_SORTKIND *sortkind)
                      "%s is an unrecognized kind of sort",
                      str);
         Py_XDECREF(tmp);
-        return PY_FAIL;
+        return NPY_FAIL;
     }
     Py_XDECREF(tmp);
-    return PY_SUCCEED;
+    return NPY_SUCCEED;
 }
 
 /*NUMPY_API
@@ -485,7 +484,7 @@ PyArray_SearchsideConverter(PyObject *obj, void *addr)
         PyErr_SetString(PyExc_ValueError,
                         "expected nonempty string for keyword 'side'");
         Py_XDECREF(tmp);
-        return PY_FAIL;
+        return NPY_FAIL;
     }
 
     if (str[0] == 'l' || str[0] == 'L') {
@@ -498,10 +497,10 @@ PyArray_SearchsideConverter(PyObject *obj, void *addr)
         PyErr_Format(PyExc_ValueError,
                      "'%s' is an invalid value for keyword 'side'", str);
         Py_XDECREF(tmp);
-        return PY_FAIL;
+        return NPY_FAIL;
     }
     Py_XDECREF(tmp);
-    return PY_SUCCEED;
+    return NPY_SUCCEED;
 }
 
 /*NUMPY_API
@@ -513,7 +512,7 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
     char *str;
     /* Leave the desired default from the caller for NULL/Py_None */
     if (object == NULL || object == Py_None) {
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     else if (PyUnicode_Check(object)) {
         PyObject *tmp;
@@ -531,9 +530,9 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
             *val = NPY_CORDER;
         }
         if (PyErr_Occurred()) {
-            return PY_FAIL;
+            return NPY_FAIL;
         }
-        return PY_SUCCEED;
+        return NPY_SUCCEED;
     }
     else {
         str = PyBytes_AS_STRING(object);
@@ -552,10 +551,10 @@ PyArray_OrderConverter(PyObject *object, NPY_ORDER *val)
         else {
             PyErr_SetString(PyExc_TypeError,
                             "order not understood");
-            return PY_FAIL;
+            return NPY_FAIL;
         }
     }
-    return PY_SUCCEED;
+    return NPY_SUCCEED;
 }
 
 /*NUMPY_API
@@ -582,7 +581,7 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
         else {
             PyErr_SetString(PyExc_TypeError,
                             "clipmode not understood");
-            return PY_FAIL;
+            return NPY_FAIL;
         }
     }
     else if (PyUnicode_Check(object)) {
@@ -606,12 +605,12 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
             goto fail;
         }
     }
-    return PY_SUCCEED;
+    return NPY_SUCCEED;
 
  fail:
     PyErr_SetString(PyExc_TypeError,
                     "clipmode not understood");
-    return PY_FAIL;
+    return NPY_FAIL;
 }
 
 /*NUMPY_API
@@ -629,32 +628,32 @@ PyArray_ConvertClipmodeSequence(PyObject *object, NPY_CLIPMODE *modes, int n)
             PyErr_Format(PyExc_ValueError,
                     "list of clipmodes has wrong length (%d instead of %d)",
                     (int)PySequence_Size(object), n);
-            return PY_FAIL;
+            return NPY_FAIL;
         }
 
         for (i = 0; i < n; ++i) {
             PyObject *item = PySequence_GetItem(object, i);
             if(item == NULL) {
-                return PY_FAIL;
+                return NPY_FAIL;
             }
 
-            if(PyArray_ClipmodeConverter(item, &modes[i]) != PY_SUCCEED) {
+            if(PyArray_ClipmodeConverter(item, &modes[i]) != NPY_SUCCEED) {
                 Py_DECREF(item);
-                return PY_FAIL;
+                return NPY_FAIL;
             }
 
             Py_DECREF(item);
         }
     }
-    else if (PyArray_ClipmodeConverter(object, &modes[0]) == PY_SUCCEED) {
+    else if (PyArray_ClipmodeConverter(object, &modes[0]) == NPY_SUCCEED) {
         for (i = 1; i < n; ++i) {
             modes[i] = modes[0];
         }
     }
     else {
-        return PY_FAIL;
+        return NPY_FAIL;
     }
-    return PY_SUCCEED;
+    return NPY_SUCCEED;
 }
 
 /*NUMPY_API
@@ -773,7 +772,7 @@ PyArray_PyIntAsInt(PyObject *o)
 #if (PY_VERSION_HEX >= 0x02050000)
     if (PyIndex_Check(o)) {
         PyObject* value = PyNumber_Index(o);
-        long_value = (longlong) PyInt_AsSsize_t(value);
+        long_value = (npy_longlong) PyInt_AsSsize_t(value);
         goto finish;
     }
 #endif
@@ -820,7 +819,7 @@ PyArray_PyIntAsInt(PyObject *o)
 NPY_NO_EXPORT npy_intp
 PyArray_PyIntAsIntp(PyObject *o)
 {
-    longlong long_value = -1;
+    npy_longlong long_value = -1;
     PyObject *obj;
     static char *msg = "an integer is required";
     PyArrayObject *arr;
@@ -832,16 +831,16 @@ PyArray_PyIntAsIntp(PyObject *o)
         return -1;
     }
     if (PyInt_Check(o)) {
-        long_value = (longlong) PyInt_AS_LONG(o);
+        long_value = (npy_longlong) PyInt_AS_LONG(o);
         goto finish;
     } else if (PyLong_Check(o)) {
-        long_value = (longlong) PyLong_AsLongLong(o);
+        long_value = (npy_longlong) PyLong_AsLongLong(o);
         goto finish;
     }
 
-#if SIZEOF_INTP == SIZEOF_LONG
+#if NPY_SIZEOF_INTP == SIZEOF_LONG
     descr = &LONG_Descr;
-#elif SIZEOF_INTP == SIZEOF_INT
+#elif NPY_SIZEOF_INTP == SIZEOF_INT
     descr = &INT_Descr;
 #else
     descr = &LONGLONG_Descr;
@@ -874,7 +873,7 @@ PyArray_PyIntAsIntp(PyObject *o)
         if (value == NULL) {
             return -1;
         }
-        long_value = (longlong) PyInt_AsSsize_t(value);
+        long_value = (npy_longlong) PyInt_AsSsize_t(value);
         goto finish;
     }
 #endif
@@ -883,7 +882,7 @@ PyArray_PyIntAsIntp(PyObject *o)
         Py_TYPE(o)->tp_as_number->nb_long != NULL) {
         obj = Py_TYPE(o)->tp_as_number->nb_long(o);
         if (obj != NULL) {
-            long_value = (longlong) PyLong_AsLongLong(obj);
+            long_value = (npy_longlong) PyLong_AsLongLong(obj);
             Py_DECREF(obj);
         }
     }
@@ -893,7 +892,7 @@ PyArray_PyIntAsIntp(PyObject *o)
              Py_TYPE(o)->tp_as_number->nb_int != NULL) {
         obj = Py_TYPE(o)->tp_as_number->nb_int(o);
         if (obj != NULL) {
-            long_value = (longlong) PyLong_AsLongLong(obj);
+            long_value = (npy_longlong) PyLong_AsLongLong(obj);
             Py_DECREF(obj);
         }
     }
@@ -907,8 +906,8 @@ PyArray_PyIntAsIntp(PyObject *o)
             return -1;
         }
 
-#if (SIZEOF_LONGLONG > SIZEOF_INTP)
-    if ((long_value < MIN_INTP) || (long_value > MAX_INTP)) {
+#if (NPY_SIZEOF_LONGLONG > NPY_SIZEOF_INTP)
+    if ((long_value < NPY_MIN_INTP) || (long_value > NPY_MAX_INTP)) {
         PyErr_SetString(PyExc_ValueError,
                         "integer won't fit into a C intp");
         return -1;
@@ -934,7 +933,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
      */
     if ((nd=PySequence_Length(seq)) == -1) {
         if (PyErr_Occurred()) PyErr_Clear();
-#if SIZEOF_LONG >= SIZEOF_INTP && !defined(NPY_PY3K)
+#if SIZEOF_LONG >= NPY_SIZEOF_INTP && !defined(NPY_PY3K)
         if (!(op = PyNumber_Int(seq))) {
             return -1;
         }
@@ -944,7 +943,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
         }
 #endif
         nd = 1;
-#if SIZEOF_LONG >= SIZEOF_INTP
+#if SIZEOF_LONG >= NPY_SIZEOF_INTP
         vals[0] = (npy_intp ) PyInt_AsLong(op);
 #else
         vals[0] = (npy_intp ) PyLong_AsLongLong(op);
@@ -968,12 +967,12 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
         }
     }
     else {
-        for (i = 0; i < MIN(nd,maxvals); i++) {
+        for (i = 0; i < PyArray_MIN(nd,maxvals); i++) {
             op = PySequence_GetItem(seq, i);
             if (op == NULL) {
                 return -1;
             }
-#if SIZEOF_LONG >= SIZEOF_INTP
+#if SIZEOF_LONG >= NPY_SIZEOF_INTP
             vals[i]=(npy_intp )PyInt_AsLong(op);
 #else
             vals[i]=(npy_intp )PyLong_AsLongLong(op);
@@ -1189,10 +1188,10 @@ PyArray_IntTupleFromIntp(int len, npy_intp *vals)
         goto fail;
     }
     for (i = 0; i < len; i++) {
-#if SIZEOF_INTP <= SIZEOF_LONG
+#if NPY_SIZEOF_INTP <= SIZEOF_LONG
         PyObject *o = PyInt_FromLong((long) vals[i]);
 #else
-        PyObject *o = PyLong_FromLongLong((longlong) vals[i]);
+        PyObject *o = PyLong_FromLongLong((npy_longlong) vals[i]);
 #endif
         if (!o) {
             Py_DECREF(intTuple);

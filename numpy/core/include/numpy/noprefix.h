@@ -1,11 +1,18 @@
 #ifndef NPY_NOPREFIX_H
 #define NPY_NOPREFIX_H
 
-/* You can directly include noprefix.h as a backward
-compatibility measure*/
+/*
+ * You can directly include noprefix.h as a backward
+ * compatibility measure
+ */
 #ifndef NPY_NO_PREFIX
 #include "ndarrayobject.h"
+#include "npy_interrupt.h"
 #endif
+
+#define SIGSETJMP   NPY_SIGSETJMP
+#define SIGLONGJMP  NPY_SIGLONGJMP
+#define SIGJMP_BUF  NPY_SIGJMP_BUF
 
 #define MAX_DIMS NPY_MAXDIMS
 

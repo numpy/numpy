@@ -386,8 +386,6 @@ boolean_ops_src = env.GenerateFromTemplate(
 lowlevel_strided_loops_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'lowlevel_strided_loops.c.src'))
 einsum_src = env.GenerateFromTemplate(pjoin('src', 'multiarray', 'einsum.c.src'))
-umathmodule_src = env.GenerateFromTemplate(pjoin('src', 'umath',
-    'umathmodule.c.src'))
 umath_tests_src = env.GenerateFromTemplate(pjoin('src', 'umath',
     'umath_tests.c.src'))
 multiarray_tests_src = env.GenerateFromTemplate(pjoin('src', 'multiarray',

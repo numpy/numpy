@@ -5,7 +5,6 @@
 /*#include <stdio.h>*/
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
@@ -547,7 +546,7 @@ array_inplace_true_divide(PyArrayObject *m1, PyObject *m2)
 static int
 _array_nonzero(PyArrayObject *mp)
 {
-    intp n;
+    npy_intp n;
 
     n = PyArray_SIZE(mp);
     if (n == 1) {

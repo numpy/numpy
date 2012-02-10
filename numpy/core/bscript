@@ -475,7 +475,6 @@ def pbuild(context):
             name="ufunc_api")
 
         ufunc_templates = ["src/umath/loops.c.src",
-                "src/umath/umathmodule.c.src",
                 "src/umath/funcs.inc.src"]
         bld(target="ufunc_templates", source=ufunc_templates)
 
@@ -485,7 +484,7 @@ def pbuild(context):
 
         includes = ["src/umath", "src/private"]
         if ENABLE_SEPARATE_COMPILATION:
-            sources = [pjoin("src", "umath", "umathmodule.c.src"),
+            sources = [pjoin("src", "umath", "umathmodule.c"),
                     pjoin("src", "umath", "ufunc_object.c"),
                     pjoin("src", "umath", "loops.c.src")]
         else:

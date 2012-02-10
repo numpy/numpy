@@ -8,7 +8,7 @@ NPY_NO_EXPORT int
 PyArray_BufferConverter(PyObject *obj, PyArray_Chunk *buf);
 
 NPY_NO_EXPORT int
-PyArray_BoolConverter(PyObject *object, Bool *val);
+PyArray_BoolConverter(PyObject *object, npy_bool *val);
 
 NPY_NO_EXPORT int
 PyArray_ByteorderConverter(PyObject *obj, char *endian);
@@ -22,17 +22,17 @@ PyArray_SearchsideConverter(PyObject *obj, void *addr);
 NPY_NO_EXPORT int
 PyArray_PyIntAsInt(PyObject *o);
 
-NPY_NO_EXPORT intp
+NPY_NO_EXPORT npy_intp
 PyArray_PyIntAsIntp(PyObject *o);
 
 NPY_NO_EXPORT int
-PyArray_IntpFromSequence(PyObject *seq, intp *vals, int maxvals);
+PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals);
 
 NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype);
 
 NPY_NO_EXPORT PyObject *
-PyArray_IntTupleFromIntp(int len, intp *vals);
+PyArray_IntTupleFromIntp(int len, npy_intp *vals);
 
 /*
  * Converts an axis parameter into an ndim-length C-array of

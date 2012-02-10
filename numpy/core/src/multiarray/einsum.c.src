@@ -14,7 +14,7 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#include <numpy/ndarrayobject.h>
+#include <numpy/arrayobject.h>
 #include <numpy/halffloat.h>
 #include <numpy/npy_3kcompat.h>
 
@@ -75,10 +75,14 @@ typedef enum {
  *         ubyte, ushort, uint, ulong, ulonglong,
  *         half, float, double, longdouble,
  *         cfloat, cdouble, clongdouble#
- * #temp = byte, short, int, long, longlong,
- *         ubyte, ushort, uint, ulong, ulonglong,
- *         float, float, double, longdouble,
- *         float, double, longdouble#
+ * #type = npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *         npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *         npy_half, npy_float, npy_double, npy_longdouble,
+ *         npy_cfloat, npy_cdouble, npy_clongdouble#
+ * #temptype = npy_byte, npy_short, npy_int, npy_long, npy_longlong,
+ *             npy_ubyte, npy_ushort, npy_uint, npy_ulong, npy_ulonglong,
+ *             npy_float, npy_float, npy_double, npy_longdouble,
+ *             npy_float, npy_double, npy_longdouble#
  * #to = ,,,,,
  *       ,,,,,
  *       npy_float_to_half,,,,
@@ -131,44 +135,44 @@ static void
     while (count--) {
 #if !@complex@
 #  if @nop@ == 1
-        *(npy_@name@ *)data_out = @to@(@from@(*(npy_@name@ *)data0) +
-                                         @from@(*(npy_@name@ *)data_out));
+        *(@type@ *)data_out = @to@(@from@(*(@type@ *)data0) +
+                                         @from@(*(@type@ *)data_out));
         data0 += stride0;
         data_out += stride_out;
 #  elif @nop@ == 2
-        *(npy_@name@ *)data_out = @to@(@from@(*(npy_@name@ *)data0) *
-                                         @from@(*(npy_@name@ *)data1) +
-                                         @from@(*(npy_@name@ *)data_out));
+        *(@type@ *)data_out = @to@(@from@(*(@type@ *)data0) *
+                                         @from@(*(@type@ *)data1) +
+                                         @from@(*(@type@ *)data_out));
         data0 += stride0;
         data1 += stride1;
         data_out += stride_out;
 #  elif @nop@ == 3
-        *(npy_@name@ *)data_out = @to@(@from@(*(npy_@name@ *)data0) *
-                                         @from@(*(npy_@name@ *)data1) *
-                                         @from@(*(npy_@name@ *)data2) +
-                                         @from@(*(npy_@name@ *)data_out));
+        *(@type@ *)data_out = @to@(@from@(*(@type@ *)data0) *
+                                         @from@(*(@type@ *)data1) *
+                                         @from@(*(@type@ *)data2) +
+                                         @from@(*(@type@ *)data_out));
         data0 += stride0;
         data1 += stride1;
         data2 += stride2;
         data_out += stride_out;
 #  else
-        npy_@temp@ temp = @from@(*(npy_@name@ *)dataptr[0]);
+        @temptype@ temp = @from@(*(@type@ *)dataptr[0]);
         int i;
         for (i = 1; i < nop; ++i) {
-            temp *= @from@(*(npy_@name@ *)dataptr[i]);
+            temp *= @from@(*(@type@ *)dataptr[i]);
         }
-        *(npy_@name@ *)dataptr[nop] = @to@(temp +
-                                           @from@(*(npy_@name@ *)dataptr[i]));
+        *(@type@ *)dataptr[nop] = @to@(temp +
+                                           @from@(*(@type@ *)dataptr[i]));
         for (i = 0; i <= nop; ++i) {
             dataptr[i] += strides[i];
         }
 #  endif
 #else /* complex */
 #  if @nop@ == 1
-        ((npy_@temp@ *)data_out)[0] = ((npy_@temp@ *)data0)[0] +
-                                         ((npy_@temp@ *)data_out)[0];
-        ((npy_@temp@ *)data_out)[1] = ((npy_@temp@ *)data0)[1] +
-                                         ((npy_@temp@ *)data_out)[1];
+        ((@temptype@ *)data_out)[0] = ((@temptype@ *)data0)[0] +
+                                         ((@temptype@ *)data_out)[0];
+        ((@temptype@ *)data_out)[1] = ((@temptype@ *)data0)[1] +
+                                         ((@temptype@ *)data_out)[1];
         data0 += stride0;
         data_out += stride_out;
 #  else
@@ -177,21 +181,21 @@ static void
 #    else
 #define _SUMPROD_NOP nop
 #    endif
-        npy_@temp@ re, im, tmp;
+        @temptype@ re, im, tmp;
         int i;
-        re = ((npy_@temp@ *)dataptr[0])[0];
-        im = ((npy_@temp@ *)dataptr[0])[1];
+        re = ((@temptype@ *)dataptr[0])[0];
+        im = ((@temptype@ *)dataptr[0])[1];
         for (i = 1; i < _SUMPROD_NOP; ++i) {
-            tmp = re * ((npy_@temp@ *)dataptr[i])[0] -
-                  im * ((npy_@temp@ *)dataptr[i])[1];
-            im = re * ((npy_@temp@ *)dataptr[i])[1] +
-                 im * ((npy_@temp@ *)dataptr[i])[0];
+            tmp = re * ((@temptype@ *)dataptr[i])[0] -
+                  im * ((@temptype@ *)dataptr[i])[1];
+            im = re * ((@temptype@ *)dataptr[i])[1] +
+                 im * ((@temptype@ *)dataptr[i])[0];
             re = tmp;
         }
-        ((npy_@temp@ *)dataptr[_SUMPROD_NOP])[0] = re +
-                                     ((npy_@temp@ *)dataptr[_SUMPROD_NOP])[0];
-        ((npy_@temp@ *)dataptr[_SUMPROD_NOP])[1] = im +
-                                     ((npy_@temp@ *)dataptr[_SUMPROD_NOP])[1];
+        ((@temptype@ *)dataptr[_SUMPROD_NOP])[0] = re +
+                                     ((@temptype@ *)dataptr[_SUMPROD_NOP])[0];
+        ((@temptype@ *)dataptr[_SUMPROD_NOP])[1] = im +
+                                     ((@temptype@ *)dataptr[_SUMPROD_NOP])[1];
 
         for (i = 0; i <= _SUMPROD_NOP; ++i) {
             dataptr[i] += strides[i];
@@ -208,8 +212,8 @@ static void
 @name@_sum_of_products_contig_one(int nop, char **dataptr,
                                 npy_intp *NPY_UNUSED(strides), npy_intp count)
 {
-    npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
-    npy_@name@ *data_out = (npy_@name@ *)dataptr[1];
+    @type@ *data0 = (@type@ *)dataptr[0];
+    @type@ *data_out = (@type@ *)dataptr[1];
 
     NPY_EINSUM_DBG_PRINT1("@name@_sum_of_products_contig_one (%d)\n",
                                                             (int)count);
@@ -225,12 +229,12 @@ finish_after_unrolled_loop:
             data_out[@i@] = @to@(@from@(data0[@i@]) +
                                  @from@(data_out[@i@]));
 #else
-            ((npy_@temp@ *)data_out + 2*@i@)[0] =
-                                    ((npy_@temp@ *)data0 + 2*@i@)[0] +
-                                    ((npy_@temp@ *)data_out + 2*@i@)[0];
-            ((npy_@temp@ *)data_out + 2*@i@)[1] =
-                                    ((npy_@temp@ *)data0 + 2*@i@)[1] +
-                                    ((npy_@temp@ *)data_out + 2*@i@)[1];
+            ((@temptype@ *)data_out + 2*@i@)[0] =
+                                    ((@temptype@ *)data0 + 2*@i@)[0] +
+                                    ((@temptype@ *)data_out + 2*@i@)[0];
+            ((@temptype@ *)data_out + 2*@i@)[1] =
+                                    ((@temptype@ *)data0 + 2*@i@)[1] +
+                                    ((@temptype@ *)data_out + 2*@i@)[1];
 #endif
 /**end repeat2**/
         case 0:
@@ -248,12 +252,12 @@ finish_after_unrolled_loop:
         data_out[@i@] = @to@(@from@(data0[@i@]) +
                              @from@(data_out[@i@]));
 #else /* complex */
-        ((npy_@temp@ *)data_out + 2*@i@)[0] =
-                                ((npy_@temp@ *)data0 + 2*@i@)[0] +
-                                ((npy_@temp@ *)data_out + 2*@i@)[0];
-        ((npy_@temp@ *)data_out + 2*@i@)[1] =
-                                ((npy_@temp@ *)data0 + 2*@i@)[1] +
-                                ((npy_@temp@ *)data_out + 2*@i@)[1];
+        ((@temptype@ *)data_out + 2*@i@)[0] =
+                                ((@temptype@ *)data0 + 2*@i@)[0] +
+                                ((@temptype@ *)data_out + 2*@i@)[0];
+        ((@temptype@ *)data_out + 2*@i@)[1] =
+                                ((@temptype@ *)data0 + 2*@i@)[1] +
+                                ((@temptype@ *)data_out + 2*@i@)[1];
 #endif
 /**end repeat2**/
         data0 += 8;
@@ -270,9 +274,9 @@ static void
 @name@_sum_of_products_contig_two(int nop, char **dataptr,
                                 npy_intp *NPY_UNUSED(strides), npy_intp count)
 {
-    npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
-    npy_@name@ *data1 = (npy_@name@ *)dataptr[1];
-    npy_@name@ *data_out = (npy_@name@ *)dataptr[2];
+    @type@ *data0 = (@type@ *)dataptr[0];
+    @type@ *data1 = (@type@ *)dataptr[1];
+    @type@ *data_out = (@type@ *)dataptr[2];
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, b;
@@ -356,9 +360,9 @@ static void
 @name@_sum_of_products_stride0_contig_outcontig_two(int nop, char **dataptr,
                                 npy_intp *NPY_UNUSED(strides), npy_intp count)
 {
-    npy_@temp@ value0 = @from@(*(npy_@name@ *)dataptr[0]);
-    npy_@name@ *data1 = (npy_@name@ *)dataptr[1];
-    npy_@name@ *data_out = (npy_@name@ *)dataptr[2];
+    @temptype@ value0 = @from@(*(@type@ *)dataptr[0]);
+    @type@ *data1 = (@type@ *)dataptr[1];
+    @type@ *data_out = (@type@ *)dataptr[2];
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, b, value0_sse;
@@ -485,9 +489,9 @@ static void
 @name@_sum_of_products_contig_stride0_outcontig_two(int nop, char **dataptr,
                                 npy_intp *NPY_UNUSED(strides), npy_intp count)
 {
-    npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
-    npy_@temp@ value1 = @from@(*(npy_@name@ *)dataptr[1]);
-    npy_@name@ *data_out = (npy_@name@ *)dataptr[2];
+    @type@ *data0 = (@type@ *)dataptr[0];
+    @temptype@ value1 = @from@(*(@type@ *)dataptr[1]);
+    @type@ *data_out = (@type@ *)dataptr[2];
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, b, value1_sse;
@@ -569,9 +573,9 @@ static void
 @name@_sum_of_products_contig_contig_outstride0_two(int nop, char **dataptr,
                                 npy_intp *NPY_UNUSED(strides), npy_intp count)
 {
-    npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
-    npy_@name@ *data1 = (npy_@name@ *)dataptr[1];
-    npy_@temp@ accum = 0;
+    @type@ *data0 = (@type@ *)dataptr[0];
+    @type@ *data1 = (@type@ *)dataptr[1];
+    @temptype@ accum = 0;
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, accum_sse = _mm_setzero_ps();
@@ -592,7 +596,7 @@ finish_after_unrolled_loop:
             accum += @from@(data0[@i@]) * @from@(data1[@i@]);
 /**end repeat2**/
         case 0:
-            *(npy_@name@ *)dataptr[2] += @to@(accum);
+            *(@type@ *)dataptr[2] += @to@(accum);
             return;
     }
 
@@ -729,9 +733,9 @@ static void
 @name@_sum_of_products_stride0_contig_outstride0_two(int nop, char **dataptr,
                                 npy_intp *NPY_UNUSED(strides), npy_intp count)
 {
-    npy_@temp@ value0 = @from@(*(npy_@name@ *)dataptr[0]);
-    npy_@name@ *data1 = (npy_@name@ *)dataptr[1];
-    npy_@temp@ accum = 0;
+    @temptype@ value0 = @from@(*(@type@ *)dataptr[0]);
+    @type@ *data1 = (@type@ *)dataptr[1];
+    @temptype@ accum = 0;
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, accum_sse = _mm_setzero_ps();
@@ -750,7 +754,7 @@ finish_after_unrolled_loop:
             accum += @from@(data1[@i@]);
 /**end repeat2**/
         case 0:
-            *(npy_@name@ *)dataptr[2] += @to@(value0 * accum);
+            *(@type@ *)dataptr[2] += @to@(value0 * accum);
             return;
     }
 
@@ -828,9 +832,9 @@ static void
 @name@_sum_of_products_contig_stride0_outstride0_two(int nop, char **dataptr,
                                 npy_intp *NPY_UNUSED(strides), npy_intp count)
 {
-    npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
-    npy_@temp@ value1 = @from@(*(npy_@name@ *)dataptr[1]);
-    npy_@temp@ accum = 0;
+    @type@ *data0 = (@type@ *)dataptr[0];
+    @temptype@ value1 = @from@(*(@type@ *)dataptr[1]);
+    @temptype@ accum = 0;
 
 #if EINSUM_USE_SSE1 && @float32@
     __m128 a, accum_sse = _mm_setzero_ps();
@@ -849,7 +853,7 @@ finish_after_unrolled_loop:
             accum += @from@(data0[@i@]);
 /**end repeat2**/
         case 0:
-            *(npy_@name@ *)dataptr[2] += @to@(accum * value1);
+            *(@type@ *)dataptr[2] += @to@(accum * value1);
             return;
     }
 
@@ -929,10 +933,10 @@ static void
 @name@_sum_of_products_contig_three(int nop, char **dataptr,
                                 npy_intp *NPY_UNUSED(strides), npy_intp count)
 {
-    npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
-    npy_@name@ *data1 = (npy_@name@ *)dataptr[1];
-    npy_@name@ *data2 = (npy_@name@ *)dataptr[2];
-    npy_@name@ *data_out = (npy_@name@ *)dataptr[3];
+    @type@ *data0 = (@type@ *)dataptr[0];
+    @type@ *data1 = (@type@ *)dataptr[1];
+    @type@ *data2 = (@type@ *)dataptr[2];
+    @type@ *data_out = (@type@ *)dataptr[3];
 
     /* Unroll the loop by 8 */
     while (count >= 8) {
@@ -978,15 +982,15 @@ static void
 
     while (count--) {
 #if !@complex@
-        npy_@temp@ temp = @from@(*(npy_@name@ *)dataptr[0]);
+        @temptype@ temp = @from@(*(@type@ *)dataptr[0]);
         int i;
         for (i = 1; i < nop; ++i) {
-            temp *= @from@(*(npy_@name@ *)dataptr[i]);
+            temp *= @from@(*(@type@ *)dataptr[i]);
         }
-        *(npy_@name@ *)dataptr[nop] = @to@(temp +
-                                           @from@(*(npy_@name@ *)dataptr[i]));
+        *(@type@ *)dataptr[nop] = @to@(temp +
+                                           @from@(*(@type@ *)dataptr[i]));
         for (i = 0; i <= nop; ++i) {
-            dataptr[i] += sizeof(npy_@name@);
+            dataptr[i] += sizeof(@type@);
         }
 #else /* complex */
 #  if @nop@ <= 3
@@ -994,24 +998,24 @@ static void
 #  else
 #    define _SUMPROD_NOP nop
 #  endif
-        npy_@temp@ re, im, tmp;
+        @temptype@ re, im, tmp;
         int i;
-        re = ((npy_@temp@ *)dataptr[0])[0];
-        im = ((npy_@temp@ *)dataptr[0])[1];
+        re = ((@temptype@ *)dataptr[0])[0];
+        im = ((@temptype@ *)dataptr[0])[1];
         for (i = 1; i < _SUMPROD_NOP; ++i) {
-            tmp = re * ((npy_@temp@ *)dataptr[i])[0] -
-                  im * ((npy_@temp@ *)dataptr[i])[1];
-            im = re * ((npy_@temp@ *)dataptr[i])[1] +
-                 im * ((npy_@temp@ *)dataptr[i])[0];
+            tmp = re * ((@temptype@ *)dataptr[i])[0] -
+                  im * ((@temptype@ *)dataptr[i])[1];
+            im = re * ((@temptype@ *)dataptr[i])[1] +
+                 im * ((@temptype@ *)dataptr[i])[0];
             re = tmp;
         }
-        ((npy_@temp@ *)dataptr[_SUMPROD_NOP])[0] = re +
-                                     ((npy_@temp@ *)dataptr[_SUMPROD_NOP])[0];
-        ((npy_@temp@ *)dataptr[_SUMPROD_NOP])[1] = im +
-                                     ((npy_@temp@ *)dataptr[_SUMPROD_NOP])[1];
+        ((@temptype@ *)dataptr[_SUMPROD_NOP])[0] = re +
+                                     ((@temptype@ *)dataptr[_SUMPROD_NOP])[0];
+        ((@temptype@ *)dataptr[_SUMPROD_NOP])[1] = im +
+                                     ((@temptype@ *)dataptr[_SUMPROD_NOP])[1];
 
         for (i = 0; i <= _SUMPROD_NOP; ++i) {
-            dataptr[i] += sizeof(npy_@name@);
+            dataptr[i] += sizeof(@type@);
         }
 #  undef _SUMPROD_NOP
 #endif
@@ -1027,11 +1031,11 @@ static void
                                 npy_intp *strides, npy_intp count)
 {
 #if @complex@
-    npy_@temp@ accum_re = 0, accum_im = 0;
-    npy_@temp@ *data0 = (npy_@temp@ *)dataptr[0];
+    @temptype@ accum_re = 0, accum_im = 0;
+    @temptype@ *data0 = (@temptype@ *)dataptr[0];
 #else
-    npy_@temp@ accum = 0;
-    npy_@name@ *data0 = (npy_@name@ *)dataptr[0];
+    @temptype@ accum = 0;
+    @type@ *data0 = (@type@ *)dataptr[0];
 #endif
 
 #if EINSUM_USE_SSE1 && @float32@
@@ -1060,11 +1064,11 @@ finish_after_unrolled_loop:
 /**end repeat2**/
         case 0:
 #if @complex@
-            ((npy_@temp@ *)dataptr[1])[0] += accum_re;
-            ((npy_@temp@ *)dataptr[1])[1] += accum_im;
+            ((@temptype@ *)dataptr[1])[0] += accum_re;
+            ((@temptype@ *)dataptr[1])[1] += accum_im;
 #else
-            *((npy_@name@ *)dataptr[1]) = @to@(accum +
-                                    @from@(*((npy_@name@ *)dataptr[1])));
+            *((@type@ *)dataptr[1]) = @to@(accum +
+                                    @from@(*((@type@ *)dataptr[1])));
 #endif
             return;
     }
@@ -1204,9 +1208,9 @@ static void
                                 npy_intp *strides, npy_intp count)
 {
 #if @complex@
-    npy_@temp@ accum_re = 0, accum_im = 0;
+    @temptype@ accum_re = 0, accum_im = 0;
 #else
-    npy_@temp@ accum = 0;
+    @temptype@ accum = 0;
 #endif
 
 #if (@nop@ == 1) || (@nop@ <= 3 && !@complex@)
@@ -1228,25 +1232,25 @@ static void
     while (count--) {
 #if !@complex@
 #  if @nop@ == 1
-        accum += @from@(*(npy_@name@ *)data0);
+        accum += @from@(*(@type@ *)data0);
         data0 += stride0;
 #  elif @nop@ == 2
-        accum += @from@(*(npy_@name@ *)data0) *
-                 @from@(*(npy_@name@ *)data1);
+        accum += @from@(*(@type@ *)data0) *
+                 @from@(*(@type@ *)data1);
         data0 += stride0;
         data1 += stride1;
 #  elif @nop@ == 3
-        accum += @from@(*(npy_@name@ *)data0) *
-                 @from@(*(npy_@name@ *)data1) *
-                 @from@(*(npy_@name@ *)data2);
+        accum += @from@(*(@type@ *)data0) *
+                 @from@(*(@type@ *)data1) *
+                 @from@(*(@type@ *)data2);
         data0 += stride0;
         data1 += stride1;
         data2 += stride2;
 #  else
-        npy_@temp@ temp = @from@(*(npy_@name@ *)dataptr[0]);
+        @temptype@ temp = @from@(*(@type@ *)dataptr[0]);
         int i;
         for (i = 1; i < nop; ++i) {
-            temp *= @from@(*(npy_@name@ *)dataptr[i]);
+            temp *= @from@(*(@type@ *)dataptr[i]);
         }
         accum += temp;
         for (i = 0; i < nop; ++i) {
@@ -1255,8 +1259,8 @@ static void
 #  endif
 #else /* complex */
 #  if @nop@ == 1
-        accum_re += ((npy_@temp@ *)data0)[0];
-        accum_im += ((npy_@temp@ *)data0)[1];
+        accum_re += ((@temptype@ *)data0)[0];
+        accum_im += ((@temptype@ *)data0)[1];
         data0 += stride0;
 #  else
 #    if @nop@ <= 3
@@ -1264,15 +1268,15 @@ static void
 #    else
 #define _SUMPROD_NOP nop
 #    endif
-        npy_@temp@ re, im, tmp;
+        @temptype@ re, im, tmp;
         int i;
-        re = ((npy_@temp@ *)dataptr[0])[0];
-        im = ((npy_@temp@ *)dataptr[0])[1];
+        re = ((@temptype@ *)dataptr[0])[0];
+        im = ((@temptype@ *)dataptr[0])[1];
         for (i = 1; i < _SUMPROD_NOP; ++i) {
-            tmp = re * ((npy_@temp@ *)dataptr[i])[0] -
-                  im * ((npy_@temp@ *)dataptr[i])[1];
-            im = re * ((npy_@temp@ *)dataptr[i])[1] +
-                 im * ((npy_@temp@ *)dataptr[i])[0];
+            tmp = re * ((@temptype@ *)dataptr[i])[0] -
+                  im * ((@temptype@ *)dataptr[i])[1];
+            im = re * ((@temptype@ *)dataptr[i])[1] +
+                 im * ((@temptype@ *)dataptr[i])[0];
             re = tmp;
         }
         accum_re += re;
@@ -1287,19 +1291,19 @@ static void
 
 #if @complex@
 #  if @nop@ <= 3
-    ((npy_@temp@ *)dataptr[@nop@])[0] += accum_re;
-    ((npy_@temp@ *)dataptr[@nop@])[1] += accum_im;
+    ((@temptype@ *)dataptr[@nop@])[0] += accum_re;
+    ((@temptype@ *)dataptr[@nop@])[1] += accum_im;
 #  else
-    ((npy_@temp@ *)dataptr[nop])[0] += accum_re;
-    ((npy_@temp@ *)dataptr[nop])[1] += accum_im;
+    ((@temptype@ *)dataptr[nop])[0] += accum_re;
+    ((@temptype@ *)dataptr[nop])[1] += accum_im;
 #  endif
 #else
 #  if @nop@ <= 3
-    *((npy_@name@ *)dataptr[@nop@]) = @to@(accum +
-                                    @from@(*((npy_@name@ *)dataptr[@nop@])));
+    *((@type@ *)dataptr[@nop@]) = @to@(accum +
+                                    @from@(*((@type@ *)dataptr[@nop@])));
 #  else
-    *((npy_@name@ *)dataptr[nop]) = @to@(accum +
-                                    @from@(*((npy_@name@ *)dataptr[nop])));
+    *((@type@ *)dataptr[nop]) = @to@(accum +
+                                    @from@(*((@type@ *)dataptr[nop])));
 #  endif
 #endif
 

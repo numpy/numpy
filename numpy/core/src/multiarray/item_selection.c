@@ -4,7 +4,6 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -33,8 +32,8 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     PyArray_Descr *dtype;
     PyArray_FastTakeFunc *func;
     PyArrayObject *obj = NULL, *self, *indices;
-    intp nd, i, j, n, m, max_item, tmp, chunk, nelem;
-    intp shape[MAX_DIMS];
+    npy_intp nd, i, j, n, m, max_item, tmp, chunk, nelem;
+    npy_intp shape[NPY_MAXDIMS];
     char *src, *dest;
     int err, use_maskna = 0;
 
@@ -174,7 +173,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         case NPY_RAISE:
             for (i = 0; i < n; i++) {
                 for (j = 0; j < m; j++) {
-                    tmp = ((intp *)(PyArray_DATA(indices)))[j];
+                    tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
                     if (tmp < 0) {
                         tmp = tmp + max_item;
                     }
@@ -199,7 +198,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         case NPY_WRAP:
             for (i = 0; i < n; i++) {
                 for (j = 0; j < m; j++) {
-                    tmp = ((intp *)(PyArray_DATA(indices)))[j];
+                    tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
                     if (tmp < 0) {
                         while (tmp < 0) {
                             tmp += max_item;
@@ -225,7 +224,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         case NPY_CLIP:
             for (i = 0; i < n; i++) {
                 for (j = 0; j < m; j++) {
-                    tmp = ((intp *)(PyArray_DATA(indices)))[j];
+                    tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
                     if (tmp < 0) {
                         tmp = 0;
                     }
@@ -252,7 +251,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         case NPY_RAISE:
             for (i = 0; i < n; i++) {
                 for (j = 0; j < m; j++) {
-                    tmp = ((intp *)(PyArray_DATA(indices)))[j];
+                    tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
                     if (tmp < 0) {
                         tmp = tmp + max_item;
                     }
@@ -271,7 +270,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         case NPY_WRAP:
             for (i = 0; i < n; i++) {
                 for (j = 0; j < m; j++) {
-                    tmp = ((intp *)(PyArray_DATA(indices)))[j];
+                    tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
                     if (tmp < 0) {
                         while (tmp < 0) {
                             tmp += max_item;
@@ -291,7 +290,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         case NPY_CLIP:
             for (i = 0; i < n; i++) {
                 for (j = 0; j < m; j++) {
-                    tmp = ((intp *)(PyArray_DATA(indices)))[j];
+                    tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
                     if (tmp < 0) {
                         tmp = 0;
                     }
@@ -307,7 +306,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         }
     }
     else {
-        err = func(dest, src, (intp *)(PyArray_DATA(indices)),
+        err = func(dest, src, (npy_intp *)(PyArray_DATA(indices)),
                     max_item, n, m, nelem, clipmode);
         if (err) {
             goto fail;
@@ -339,7 +338,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
               NPY_CLIPMODE clipmode)
 {
     PyArrayObject  *indices, *values;
-    intp i, chunk, ni, max_item, nv, tmp;
+    npy_intp i, chunk, ni, max_item, nv, tmp;
     char *src, *dest;
     int copied = 0;
 
@@ -389,7 +388,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         case NPY_RAISE:
             for (i = 0; i < ni; i++) {
                 src = PyArray_DATA(values) + chunk*(i % nv);
-                tmp = ((intp *)(PyArray_DATA(indices)))[i];
+                tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
                 if (tmp < 0) {
                     tmp = tmp + max_item;
                 }
@@ -407,7 +406,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         case NPY_WRAP:
             for (i = 0; i < ni; i++) {
                 src = PyArray_DATA(values) + chunk * (i % nv);
-                tmp = ((intp *)(PyArray_DATA(indices)))[i];
+                tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
                 if (tmp < 0) {
                     while (tmp < 0) {
                         tmp += max_item;
@@ -426,7 +425,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         case NPY_CLIP:
             for (i = 0; i < ni; i++) {
                 src = PyArray_DATA(values) + chunk * (i % nv);
-                tmp = ((intp *)(PyArray_DATA(indices)))[i];
+                tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
                 if (tmp < 0) {
                     tmp = 0;
                 }
@@ -445,7 +444,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         case NPY_RAISE:
             for (i = 0; i < ni; i++) {
                 src = PyArray_DATA(values) + chunk * (i % nv);
-                tmp = ((intp *)(PyArray_DATA(indices)))[i];
+                tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
                 if (tmp < 0) {
                     tmp = tmp + max_item;
                 }
@@ -461,7 +460,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         case NPY_WRAP:
             for (i = 0; i < ni; i++) {
                 src = PyArray_DATA(values) + chunk * (i % nv);
-                tmp = ((intp *)(PyArray_DATA(indices)))[i];
+                tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
                 if (tmp < 0) {
                     while (tmp < 0) {
                         tmp += max_item;
@@ -478,7 +477,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
         case NPY_CLIP:
             for (i = 0; i < ni; i++) {
                 src = PyArray_DATA(values) + chunk * (i % nv);
-                tmp = ((intp *)(PyArray_DATA(indices)))[i];
+                tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
                 if (tmp < 0) {
                     tmp = 0;
                 }
@@ -518,7 +517,7 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
     PyArray_FastPutmaskFunc *func;
     PyArrayObject  *mask, *values;
     PyArray_Descr *dtype;
-    intp i, chunk, ni, max_item, nv, tmp;
+    npy_intp i, chunk, ni, max_item, nv, tmp;
     char *src, *dest;
     int copied = 0;
 
@@ -622,9 +621,9 @@ PyArray_PutMask(PyArrayObject *self, PyObject* values0, PyObject* mask0)
 NPY_NO_EXPORT PyObject *
 PyArray_Repeat(PyArrayObject *aop, PyObject *op, int axis)
 {
-    intp *counts;
-    intp n, n_outer, i, j, k, chunk, total;
-    intp tmp;
+    npy_intp *counts;
+    npy_intp n, n_outer, i, j, k, chunk, total;
+    npy_intp tmp;
     int nd;
     PyArrayObject *repeats = NULL;
     PyObject *ap = NULL;
@@ -730,11 +729,11 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     PyArrayObject *obj = NULL;
     PyArray_Descr *dtype;
     int n, elsize;
-    intp i;
+    npy_intp i;
     char *ret_data;
     PyArrayObject **mps, *ap;
     PyArrayMultiIterObject *multi = NULL;
-    intp mi;
+    npy_intp mi;
     ap = NULL;
 
     /*
@@ -804,7 +803,7 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
     ret_data = PyArray_DATA(obj);
 
     while (PyArray_MultiIter_NOTDONE(multi)) {
-        mi = *((intp *)PyArray_MultiIter_DATA(multi, n));
+        mi = *((npy_intp *)PyArray_MultiIter_DATA(multi, n));
         if (mi < 0 || mi >= n) {
             switch(clipmode) {
             case NPY_RAISE:
@@ -877,11 +876,11 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 {
     PyArrayIterObject *it;
     int needcopy = 0, swap;
-    intp N, size;
+    npy_intp N, size;
     int elsize;
-    intp astride;
+    npy_intp astride;
     PyArray_SortFunc *sort;
-    BEGIN_THREADS_DEF;
+    NPY_BEGIN_THREADS_DEF;
 
     it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, &axis);
     swap = !PyArray_ISNOTSWAPPED(op);
@@ -897,25 +896,25 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     astride = PyArray_STRIDES(op)[axis];
 
     needcopy = !(PyArray_FLAGS(op) & NPY_ARRAY_ALIGNED) ||
-                (astride != (intp) elsize) || swap;
+                (astride != (npy_intp) elsize) || swap;
     if (needcopy) {
         char *buffer = PyDataMem_NEW(N*elsize);
 
         while (size--) {
-            _unaligned_strided_byte_copy(buffer, (intp) elsize, it->dataptr,
+            _unaligned_strided_byte_copy(buffer, (npy_intp) elsize, it->dataptr,
                                          astride, N, elsize);
             if (swap) {
-                _strided_byte_swap(buffer, (intp) elsize, N, elsize);
+                _strided_byte_swap(buffer, (npy_intp) elsize, N, elsize);
             }
             if (sort(buffer, N, op) < 0) {
                 PyDataMem_FREE(buffer);
                 goto fail;
             }
             if (swap) {
-                _strided_byte_swap(buffer, (intp) elsize, N, elsize);
+                _strided_byte_swap(buffer, (npy_intp) elsize, N, elsize);
             }
             _unaligned_strided_byte_copy(it->dataptr, astride, buffer,
-                                         (intp) elsize, N, elsize);
+                                         (npy_intp) elsize, N, elsize);
             PyArray_ITER_NEXT(it);
         }
         PyDataMem_FREE(buffer);
@@ -946,11 +945,11 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArrayIterObject *rit = NULL;
     PyArrayObject *ret;
     int needcopy = 0, i;
-    intp N, size;
+    npy_intp N, size;
     int elsize, swap;
-    intp astride, rstride, *iptr;
+    npy_intp astride, rstride, *iptr;
     PyArray_ArgSortFunc *argsort;
-    BEGIN_THREADS_DEF;
+    NPY_BEGIN_THREADS_DEF;
 
     ret = (PyArrayObject *)PyArray_New(Py_TYPE(op),
                             PyArray_NDIM(op),
@@ -976,30 +975,30 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     rstride = PyArray_STRIDE(ret,axis);
 
     needcopy = swap || !(PyArray_FLAGS(op) & NPY_ARRAY_ALIGNED) ||
-                         (astride != (intp) elsize) ||
-            (rstride != sizeof(intp));
+                         (astride != (npy_intp) elsize) ||
+            (rstride != sizeof(npy_intp));
     if (needcopy) {
         char *valbuffer, *indbuffer;
 
         valbuffer = PyDataMem_NEW(N*elsize);
-        indbuffer = PyDataMem_NEW(N*sizeof(intp));
+        indbuffer = PyDataMem_NEW(N*sizeof(npy_intp));
         while (size--) {
-            _unaligned_strided_byte_copy(valbuffer, (intp) elsize, it->dataptr,
+            _unaligned_strided_byte_copy(valbuffer, (npy_intp) elsize, it->dataptr,
                                          astride, N, elsize);
             if (swap) {
-                _strided_byte_swap(valbuffer, (intp) elsize, N, elsize);
+                _strided_byte_swap(valbuffer, (npy_intp) elsize, N, elsize);
             }
-            iptr = (intp *)indbuffer;
+            iptr = (npy_intp *)indbuffer;
             for (i = 0; i < N; i++) {
                 *iptr++ = i;
             }
-            if (argsort(valbuffer, (intp *)indbuffer, N, op) < 0) {
+            if (argsort(valbuffer, (npy_intp *)indbuffer, N, op) < 0) {
                 PyDataMem_FREE(valbuffer);
                 PyDataMem_FREE(indbuffer);
                 goto fail;
             }
             _unaligned_strided_byte_copy(rit->dataptr, rstride, indbuffer,
-                                         sizeof(intp), N, sizeof(intp));
+                                         sizeof(npy_intp), N, sizeof(npy_intp));
             PyArray_ITER_NEXT(it);
             PyArray_ITER_NEXT(rit);
         }
@@ -1008,11 +1007,11 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     }
     else {
         while (size--) {
-            iptr = (intp *)rit->dataptr;
+            iptr = (npy_intp *)rit->dataptr;
             for (i = 0; i < N; i++) {
                 *iptr++ = i;
             }
-            if (argsort(it->dataptr, (intp *)rit->dataptr, N, op) < 0) {
+            if (argsort(it->dataptr, (npy_intp *)rit->dataptr, N, op) < 0) {
                 goto fail;
             }
             PyArray_ITER_NEXT(it);
@@ -1074,7 +1073,7 @@ qsortCompare (const void *a, const void *b)
     }
 
 /* These swap axes in-place if necessary */
-#define SWAPINTP(a,b) {intp c; c=(a); (a) = (b); (b) = c;}
+#define SWAPINTP(a,b) {npy_intp c; c=(a); (a) = (b); (b) = c;}
 #define SWAPAXES2(ap) { \
         orign = PyArray_NDIM(ap)-1; \
         if (axis != orign) { \
@@ -1177,8 +1176,8 @@ static int
 argsort_static_compare(const void *ip1, const void *ip2)
 {
     int isize = PyArray_DESCR(global_obj)->elsize;
-    const intp *ipa = ip1;
-    const intp *ipb = ip2;
+    const npy_intp *ipa = ip1;
+    const npy_intp *ipb = ip2;
     return PyArray_DESCR(global_obj)->f->compare(global_data + (isize * *ipa),
                                          global_data + (isize * *ipb),
                                          global_obj);
@@ -1191,8 +1190,8 @@ NPY_NO_EXPORT PyObject *
 PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 {
     PyArrayObject *ap = NULL, *ret = NULL, *store, *op2;
-    intp *ip;
-    intp i, j, n, m, orign;
+    npy_intp *ip;
+    npy_intp i, j, n, m, orign;
     int argsort_elsize;
     char *store_ptr;
 
@@ -1206,7 +1205,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         if (ret == NULL) {
             return NULL;
         }
-        *((intp *)PyArray_DATA(ret)) = 0;
+        *((npy_intp *)PyArray_DATA(ret)) = 0;
         return (PyObject *)ret;
     }
 
@@ -1244,7 +1243,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     if (ret == NULL) {
         goto fail;
     }
-    ip = (intp *)PyArray_DATA(ret);
+    ip = (npy_intp *)PyArray_DATA(ret);
     argsort_elsize = PyArray_DESCR(op)->elsize;
     m = PyArray_DIMS(op)[PyArray_NDIM(op)-1];
     if (m == 0) {
@@ -1259,7 +1258,7 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         for (j = 0; j < m; j++) {
             ip[j] = j;
         }
-        qsort((char *)ip, m, sizeof(intp), argsort_static_compare);
+        qsort((char *)ip, m, sizeof(npy_intp), argsort_static_compare);
     }
     global_data = store_ptr;
     global_obj = store;
@@ -1295,10 +1294,10 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     int n;
     int nd;
     int needcopy = 0, i,j;
-    intp N, size;
+    npy_intp N, size;
     int elsize;
     int maxelsize;
-    intp astride, rstride, *iptr;
+    npy_intp astride, rstride, *iptr;
     int object = 0;
     PyArray_ArgSortFunc *argsort;
     NPY_BEGIN_THREADS_DEF;
@@ -1309,13 +1308,13 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 "need sequence of keys with len > 0 in lexsort");
         return NULL;
     }
-    mps = (PyArrayObject **) _pya_malloc(n*NPY_SIZEOF_PYARRAYOBJECT);
+    mps = (PyArrayObject **) PyArray_malloc(n*NPY_SIZEOF_PYARRAYOBJECT);
     if (mps == NULL) {
         return PyErr_NoMemory();
     }
-    its = (PyArrayIterObject **) _pya_malloc(n*sizeof(PyArrayIterObject));
+    its = (PyArrayIterObject **) PyArray_malloc(n*sizeof(PyArrayIterObject));
     if (its == NULL) {
-        _pya_free(mps);
+        PyArray_free(mps);
         return PyErr_NoMemory();
     }
     for (i = 0; i < n; i++) {
@@ -1368,7 +1367,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         if (ret == NULL) {
             goto fail;
         }
-        *((intp *)(PyArray_DATA(ret))) = 0;
+        *((npy_intp *)(PyArray_DATA(ret))) = 0;
         goto finish;
     }
     if (axis < 0) {
@@ -1399,12 +1398,12 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     N = PyArray_DIMS(mps[0])[axis];
     rstride = PyArray_STRIDE(ret, axis);
     maxelsize = PyArray_DESCR(mps[0])->elsize;
-    needcopy = (rstride != sizeof(intp));
+    needcopy = (rstride != sizeof(npy_intp));
     for (j = 0; j < n; j++) {
         needcopy = needcopy
             || PyArray_ISBYTESWAPPED(mps[j])
             || !(PyArray_FLAGS(mps[j]) & NPY_ARRAY_ALIGNED)
-            || (PyArray_STRIDES(mps[j])[axis] != (intp)PyArray_DESCR(mps[j])->elsize);
+            || (PyArray_STRIDES(mps[j])[axis] != (npy_intp)PyArray_DESCR(mps[j])->elsize);
         if (PyArray_DESCR(mps[j])->elsize > maxelsize) {
             maxelsize = PyArray_DESCR(mps[j])->elsize;
         }
@@ -1415,13 +1414,13 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         int *swaps;
 
         valbuffer = PyDataMem_NEW(N*maxelsize);
-        indbuffer = PyDataMem_NEW(N*sizeof(intp));
+        indbuffer = PyDataMem_NEW(N*sizeof(npy_intp));
         swaps = malloc(n*sizeof(int));
         for (j = 0; j < n; j++) {
             swaps[j] = PyArray_ISBYTESWAPPED(mps[j]);
         }
         while (size--) {
-            iptr = (intp *)indbuffer;
+            iptr = (npy_intp *)indbuffer;
             for (i = 0; i < N; i++) {
                 *iptr++ = i;
             }
@@ -1429,12 +1428,12 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 elsize = PyArray_DESCR(mps[j])->elsize;
                 astride = PyArray_STRIDES(mps[j])[axis];
                 argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_MERGESORT];
-                _unaligned_strided_byte_copy(valbuffer, (intp) elsize,
+                _unaligned_strided_byte_copy(valbuffer, (npy_intp) elsize,
                                              its[j]->dataptr, astride, N, elsize);
                 if (swaps[j]) {
-                    _strided_byte_swap(valbuffer, (intp) elsize, N, elsize);
+                    _strided_byte_swap(valbuffer, (npy_intp) elsize, N, elsize);
                 }
-                if (argsort(valbuffer, (intp *)indbuffer, N, mps[j]) < 0) {
+                if (argsort(valbuffer, (npy_intp *)indbuffer, N, mps[j]) < 0) {
                     PyDataMem_FREE(valbuffer);
                     PyDataMem_FREE(indbuffer);
                     free(swaps);
@@ -1443,7 +1442,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
                 PyArray_ITER_NEXT(its[j]);
             }
             _unaligned_strided_byte_copy(rit->dataptr, rstride, indbuffer,
-                                         sizeof(intp), N, sizeof(intp));
+                                         sizeof(npy_intp), N, sizeof(npy_intp));
             PyArray_ITER_NEXT(rit);
         }
         PyDataMem_FREE(valbuffer);
@@ -1452,13 +1451,13 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     }
     else {
         while (size--) {
-            iptr = (intp *)rit->dataptr;
+            iptr = (npy_intp *)rit->dataptr;
             for (i = 0; i < N; i++) {
                 *iptr++ = i;
             }
             for (j = 0; j < n; j++) {
                 argsort = PyArray_DESCR(mps[j])->f->argsort[NPY_MERGESORT];
-                if (argsort(its[j]->dataptr, (intp *)rit->dataptr,
+                if (argsort(its[j]->dataptr, (npy_intp *)rit->dataptr,
                             N, mps[j]) < 0) {
                     goto fail;
                 }
@@ -1478,8 +1477,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         Py_XDECREF(its[i]);
     }
     Py_XDECREF(rit);
-    _pya_free(mps);
-    _pya_free(its);
+    PyArray_free(mps);
+    PyArray_free(its);
     return (PyObject *)ret;
 
  fail:
@@ -1490,8 +1489,8 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         Py_XDECREF(mps[i]);
         Py_XDECREF(its[i]);
     }
-    _pya_free(mps);
-    _pya_free(its);
+    PyArray_free(mps);
+    PyArray_free(its);
     return NULL;
 }
 
@@ -1512,19 +1511,19 @@ static void
 local_search_left(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
 {
     PyArray_CompareFunc *compare = PyArray_DESCR(key)->f->compare;
-    intp nelts = PyArray_DIMS(arr)[PyArray_NDIM(arr) - 1];
-    intp nkeys = PyArray_SIZE(key);
+    npy_intp nelts = PyArray_DIMS(arr)[PyArray_NDIM(arr) - 1];
+    npy_intp nkeys = PyArray_SIZE(key);
     char *parr = PyArray_DATA(arr);
     char *pkey = PyArray_DATA(key);
-    intp *pret = (intp *)PyArray_DATA(ret);
+    npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
     int elsize = PyArray_DESCR(arr)->elsize;
-    intp i;
+    npy_intp i;
 
     for (i = 0; i < nkeys; ++i) {
-        intp imin = 0;
-        intp imax = nelts;
+        npy_intp imin = 0;
+        npy_intp imax = nelts;
         while (imin < imax) {
-            intp imid = imin + ((imax - imin) >> 1);
+            npy_intp imid = imin + ((imax - imin) >> 1);
             if (compare(parr + elsize*imid, pkey, key) < 0) {
                 imin = imid + 1;
             }
@@ -1555,19 +1554,19 @@ static void
 local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
 {
     PyArray_CompareFunc *compare = PyArray_DESCR(key)->f->compare;
-    intp nelts = PyArray_DIMS(arr)[PyArray_NDIM(arr) - 1];
-    intp nkeys = PyArray_SIZE(key);
+    npy_intp nelts = PyArray_DIMS(arr)[PyArray_NDIM(arr) - 1];
+    npy_intp nkeys = PyArray_SIZE(key);
     char *parr = PyArray_DATA(arr);
     char *pkey = PyArray_DATA(key);
-    intp *pret = (intp *)PyArray_DATA(ret);
+    npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
     int elsize = PyArray_DESCR(arr)->elsize;
-    intp i;
+    npy_intp i;
 
     for(i = 0; i < nkeys; ++i) {
-        intp imin = 0;
-        intp imax = nelts;
+        npy_intp imin = 0;
+        npy_intp imax = nelts;
         while (imin < imax) {
-            intp imid = imin + ((imax - imin) >> 1);
+            npy_intp imid = imin + ((imax - imin) >> 1);
             if (compare(parr + elsize*imid, pkey, key) <= 0) {
                 imin = imid + 1;
             }

@@ -27,7 +27,6 @@ maintainer email:  oliphant.travis@ieee.org
 /*#include <stdio.h>*/
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -56,17 +55,17 @@ _append_new(int *types, int insert)
     return newtypes;
 }
 
-static Bool
+static npy_bool
 _default_nonzero(void *ip, void *arr)
 {
     int elsize = PyArray_ITEMSIZE(arr);
     char *ptr = ip;
     while (elsize--) {
         if (*ptr++ != 0) {
-            return TRUE;
+            return NPY_TRUE;
         }
     }
-    return FALSE;
+    return NPY_FALSE;
 }
 
 static void

@@ -4,7 +4,6 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -632,7 +631,7 @@ static void
 arrayiter_dealloc(PyArrayIterObject *it)
 {
     array_iter_base_dealloc(it);
-    _pya_free(it);
+    PyArray_free(it);
 }
 
 static Py_ssize_t
@@ -670,7 +669,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
     dptr = PyArray_DATA(ind);
     /* Get size of return array */
     while (counter--) {
-        if (*((Bool *)dptr) != 0) {
+        if (*((npy_bool *)dptr) != 0) {
             count++;
         }
         dptr += strides;
@@ -692,7 +691,7 @@ iter_subscript_Bool(PyArrayIterObject *self, PyArrayObject *ind)
     /* Loop over Boolean array */
     swap = (PyArray_ISNOTSWAPPED(self->ao) != PyArray_ISNOTSWAPPED(ret));
     while (counter--) {
-        if (*((Bool *)dptr) != 0) {
+        if (*((npy_bool *)dptr) != 0) {
             copyswap(optr, self->dataptr, swap, self->ao);
             optr += itemsize;
         }
@@ -723,8 +722,8 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
         }
         if (num < 0 || num >= self->size) {
             PyErr_Format(PyExc_IndexError,
-                         "index %"INTP_FMT" out of bounds"   \
-                         " 0<=index<%"INTP_FMT,
+                         "index %"NPY_INTP_FMT" out of bounds"   \
+                         " 0<=index<%"NPY_INTP_FMT,
                          num, self->size);
             PyArray_ITER_RESET(self);
             return NULL;
@@ -764,8 +763,8 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
         }
         if (num < 0 || num >= self->size) {
             PyErr_Format(PyExc_IndexError,
-                         "index %"INTP_FMT" out of bounds" \
-                         " 0<=index<%"INTP_FMT,
+                         "index %"NPY_INTP_FMT" out of bounds" \
+                         " 0<=index<%"NPY_INTP_FMT,
                          num, self->size);
             Py_DECREF(ind_it);
             Py_DECREF(ret);
@@ -964,7 +963,7 @@ iter_ass_sub_Bool(PyArrayIterObject *self, PyArrayObject *ind,
     /* Loop over Boolean array */
     copyswap = PyArray_DESCR(self->ao)->f->copyswap;
     while (counter--) {
-        if (*((Bool *)dptr) != 0) {
+        if (*((npy_bool *)dptr) != 0) {
             copyswap(self->dataptr, val->dataptr, swap, self->ao);
             PyArray_ITER_NEXT(val);
             if (val->index == val->size) {
@@ -1006,8 +1005,8 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
         }
         if ((num < 0) || (num >= self->size)) {
             PyErr_Format(PyExc_IndexError,
-                         "index %"INTP_FMT" out of bounds"           \
-                         " 0<=index<%"INTP_FMT, num,
+                         "index %"NPY_INTP_FMT" out of bounds"           \
+                         " 0<=index<%"NPY_INTP_FMT, num,
                          self->size);
             Py_DECREF(ind_it);
             return -1;
@@ -1425,7 +1424,7 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
 
     /* Discover the broadcast number of dimensions */
     for (i = 0, nd = 0; i < mit->numiter; i++) {
-        nd = MAX(nd, PyArray_NDIM(mit->iters[i]->ao));
+        nd = PyArray_MAX(nd, PyArray_NDIM(mit->iters[i]->ao));
     }
     mit->nd = nd;
 
@@ -1724,14 +1723,14 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
 static PyObject *
 arraymultiter_size_get(PyArrayMultiIterObject *self)
 {
-#if SIZEOF_INTP <= SIZEOF_LONG
+#if NPY_SIZEOF_INTP <= SIZEOF_LONG
     return PyInt_FromLong((long) self->size);
 #else
-    if (self->size < MAX_LONG) {
+    if (self->size < NPY_MAX_LONG) {
         return PyInt_FromLong((long) self->size);
     }
     else {
-        return PyLong_FromLongLong((longlong) self->size);
+        return PyLong_FromLongLong((npy_longlong) self->size);
     }
 #endif
 }
@@ -1739,14 +1738,14 @@ arraymultiter_size_get(PyArrayMultiIterObject *self)
 static PyObject *
 arraymultiter_index_get(PyArrayMultiIterObject *self)
 {
-#if SIZEOF_INTP <= SIZEOF_LONG
+#if NPY_SIZEOF_INTP <= SIZEOF_LONG
     return PyInt_FromLong((long) self->index);
 #else
-    if (self->size < MAX_LONG) {
+    if (self->size < NPY_MAX_LONG) {
         return PyInt_FromLong((long) self->index);
     }
     else {
-        return PyLong_FromLongLong((longlong) self->index);
+        return PyLong_FromLongLong((npy_longlong) self->index);
     }
 #endif
 }
@@ -2138,7 +2137,7 @@ PyArray_NeighborhoodIterNew(PyArrayIterObject *x, npy_intp *bounds,
 clean_x:
     Py_DECREF(ret->_internal_iter);
     array_iter_base_dealloc((PyArrayIterObject*)ret);
-    _pya_free((PyArrayObject*)ret);
+    PyArray_free((PyArrayObject*)ret);
     return NULL;
 }
 
@@ -2155,7 +2154,7 @@ static void neighiter_dealloc(PyArrayNeighborhoodIterObject* iter)
     Py_DECREF(iter->_internal_iter);
 
     array_iter_base_dealloc((PyArrayIterObject*)iter);
-    _pya_free((PyArrayObject*)iter);
+    PyArray_free((PyArrayObject*)iter);
 }
 
 NPY_NO_EXPORT PyTypeObject PyArrayNeighborhoodIter_Type = {

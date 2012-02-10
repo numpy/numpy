@@ -8,7 +8,7 @@ NPY_NO_EXPORT PyMappingMethods array_as_mapping;
 #endif
 
 NPY_NO_EXPORT PyObject *
-array_big_item(PyArrayObject *self, intp i);
+array_big_item(PyArrayObject *self, npy_intp i);
 
 NPY_NO_EXPORT Py_ssize_t
 array_length(PyArrayObject *self);
@@ -20,14 +20,14 @@ NPY_NO_EXPORT PyObject *
 array_subscript(PyArrayObject *self, PyObject *op);
 
 NPY_NO_EXPORT int
-array_ass_big_item(PyArrayObject *self, intp i, PyObject *v);
+array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v);
 
 #if PY_VERSION_HEX < 0x02050000
-        #if SIZEOF_INT == SIZEOF_INTP
+        #if SIZEOF_INT == NPY_SIZEOF_INTP
                 #define array_ass_item array_ass_big_item
         #endif
 #else
-        #if SIZEOF_SIZE_T == SIZEOF_INTP
+        #if SIZEOF_SIZE_T == NPY_SIZEOF_INTP
                 #define array_ass_item array_ass_big_item
         #endif
 #endif

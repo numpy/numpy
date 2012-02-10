@@ -4,7 +4,6 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -65,7 +64,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         return NULL;
     }
     newsize = 1;
-    largest = MAX_INTP / PyArray_DESCR(self)->elsize;
+    largest = NPY_MAX_INTP / PyArray_DESCR(self)->elsize;
     for(k = 0; k < new_nd; k++) {
         if (new_dimensions[k] == 0) {
             break;
@@ -90,7 +89,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
 
         if (refcheck) {
-            refcnt = REFCOUNT(self);
+            refcnt = PyArray_REFCOUNT(self);
         }
         else {
             refcnt = 1;
@@ -182,7 +181,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     npy_intp *dimensions = newdims->ptr;
     PyArrayObject *ret;
     int ndim = newdims->len;
-    npy_bool same, incref = TRUE;
+    npy_bool same, incref = NPY_TRUE;
     npy_intp *strides = NULL;
     npy_intp newstrides[NPY_MAXDIMS];
     npy_intp newmasknastrides[NPY_MAXDIMS];
@@ -193,11 +192,11 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     }
     /*  Quick check to make sure anything actually needs to be done */
     if (ndim == PyArray_NDIM(self)) {
-        same = TRUE;
+        same = NPY_TRUE;
         i = 0;
         while (same && i < ndim) {
             if (PyArray_DIM(self,i) != dimensions[i]) {
-                same=FALSE;
+                same=NPY_FALSE;
             }
             i++;
         }
@@ -253,7 +252,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                 if (newcopy == NULL) {
                     return NULL;
                 }
-                incref = FALSE;
+                incref = NPY_FALSE;
                 self = (PyArrayObject *)newcopy;
                 build_maskna_strides = 1;
             }
@@ -391,7 +390,7 @@ _check_ones(PyArrayObject *self, int newnd,
 {
     int nd;
     npy_intp *dims;
-    npy_bool done=FALSE;
+    npy_bool done=NPY_FALSE;
     int j, k;
     int has_maskna = PyArray_HASMASKNA(self);
 
@@ -418,7 +417,7 @@ _check_ones(PyArrayObject *self, int newnd,
             j++;
         }
         else {
-            done = TRUE;
+            done = NPY_TRUE;
         }
     }
     if (done) {

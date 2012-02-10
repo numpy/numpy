@@ -85,22 +85,22 @@ Interrupt handling does not work well with threads.
 
 #ifndef sigsetjmp
 
-#define SIGSETJMP(arg1, arg2) setjmp(arg1)
-#define SIGLONGJMP(arg1, arg2) longjmp(arg1, arg2)
-#define SIGJMP_BUF jmp_buf
+#define NPY_SIGSETJMP(arg1, arg2) setjmp(arg1)
+#define NPY_SIGLONGJMP(arg1, arg2) longjmp(arg1, arg2)
+#define NPY_SIGJMP_BUF jmp_buf
 
 #else
 
-#define SIGSETJMP(arg1, arg2) sigsetjmp(arg1, arg2)
-#define SIGLONGJMP(arg1, arg2) siglongjmp(arg1, arg2)
-#define SIGJMP_BUF sigjmp_buf
+#define NPY_SIGSETJMP(arg1, arg2) sigsetjmp(arg1, arg2)
+#define NPY_SIGLONGJMP(arg1, arg2) siglongjmp(arg1, arg2)
+#define NPY_SIGJMP_BUF sigjmp_buf
 
 #endif
 
 #    define NPY_SIGINT_ON {                                             \
                    PyOS_sighandler_t _npy_sig_save;                     \
                    _npy_sig_save = PyOS_setsig(SIGINT, _PyArray_SigintHandler); \
-                   if (SIGSETJMP(*((SIGJMP_BUF *)_PyArray_GetSigintBuf()), \
+                   if (NPY_SIGSETJMP(*((NPY_SIGJMP_BUF *)_PyArray_GetSigintBuf()), \
                                  1) == 0) {                             \
 
 #    define NPY_SIGINT_OFF }                                      \
@@ -109,8 +109,8 @@ Interrupt handling does not work well with threads.
 
 #else /* NPY_NO_SIGNAL  */
 
-#  define NPY_SIGINT_ON
-#  define NPY_SIGINT_OFF
+#define NPY_SIGINT_ON
+#define NPY_SIGINT_OFF
 
 #endif /* HAVE_SIGSETJMP */
 

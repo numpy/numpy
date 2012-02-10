@@ -5,7 +5,6 @@
 
 #define NPY_NO_DEPRECATED_API
 #define _MULTIARRAYMODULE
-#define NPY_NO_PREFIX
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
 
@@ -124,7 +123,7 @@ forward_ndarray_method(PyArrayObject *self, PyObject *args, PyObject *kwds,
 static PyObject *
 array_take(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int dimension = MAX_DIMS;
+    int dimension = NPY_MAXDIMS;
     PyObject *indices;
     PyArrayObject *out = NULL;
     NPY_CLIPMODE mode = NPY_RAISE;
@@ -301,7 +300,7 @@ array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
     }
 
     if ((out_dtype) &&
-        (PyArray_DescrConverter(out_dtype, &dtype) == PY_FAIL)) {
+        (PyArray_DescrConverter(out_dtype, &dtype) == NPY_FAIL)) {
         return NULL;
     }
 
@@ -334,7 +333,7 @@ array_view(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_argmax(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
+    int axis = NPY_MAXDIMS;
     PyArrayObject *out = NULL;
     static char *kwlist[] = {"axis", "out", NULL};
 
@@ -349,7 +348,7 @@ array_argmax(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_argmin(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
+    int axis = NPY_MAXDIMS;
     PyArrayObject *out = NULL;
     static char *kwlist[] = {"axis", "out", NULL};
 
@@ -376,7 +375,7 @@ array_min(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_ptp(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
+    int axis = NPY_MAXDIMS;
     PyArrayObject *out = NULL;
     static char *kwlist[] = {"axis", "out", NULL};
 
@@ -524,7 +523,7 @@ array_setfield(PyArrayObject *self, PyObject *args, PyObject *kwds)
 
 /*NUMPY_API*/
 NPY_NO_EXPORT PyObject *
-PyArray_Byteswap(PyArrayObject *self, Bool inplace)
+PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
 {
     PyArrayObject *ret;
     npy_intp size;
@@ -565,7 +564,7 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
         if ((ret = (PyArrayObject *)PyArray_NewCopy(self,-1)) == NULL) {
             return NULL;
         }
-        new = PyArray_Byteswap(ret, TRUE);
+        new = PyArray_Byteswap(ret, NPY_TRUE);
         Py_DECREF(new);
         return (PyObject *)ret;
     }
@@ -575,7 +574,7 @@ PyArray_Byteswap(PyArrayObject *self, Bool inplace)
 static PyObject *
 array_byteswap(PyArrayObject *self, PyObject *args)
 {
-    Bool inplace = FALSE;
+    npy_bool inplace = NPY_FALSE;
 
     if (!PyArg_ParseTuple(args, "|O&",
                             PyArray_BoolConverter, &inplace)) {
@@ -1204,7 +1203,7 @@ array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_repeat(PyArrayObject *self, PyObject *args, PyObject *kwds) {
     PyObject *repeats;
-    int axis = MAX_DIMS;
+    int axis = NPY_MAXDIMS;
     static char *kwlist[] = {"repeats", "axis", NULL};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&", kwlist,
@@ -1535,7 +1534,7 @@ array_reduce(PyArrayObject *self, PyObject *NPY_UNUSED(args))
        1) an integer with the pickle version.
        2) a Tuple giving the shape
        3) a PyArray_Descr Object (with correct bytorder set)
-       4) a Bool stating if Fortran or not
+       4) a npy_bool stating if Fortran or not
        5) a Python object representing the data (a string, or
        a list or any user-defined object).
 
@@ -1583,7 +1582,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     PyObject *rawdata = NULL;
     char *datastr;
     Py_ssize_t len;
-    npy_intp size, dimensions[MAX_DIMS];
+    npy_intp size, dimensions[NPY_MAXDIMS];
     int nd;
 
     PyArrayObject_fields *fa = (PyArrayObject_fields *)self;
@@ -1621,7 +1620,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
     Py_XDECREF(PyArray_DESCR(self));
     fa->descr = typecode;
     Py_INCREF(typecode);
-    nd = PyArray_IntpFromSequence(shape, dimensions, MAX_DIMS);
+    nd = PyArray_IntpFromSequence(shape, dimensions, NPY_MAXDIMS);
     if (nd < 0) {
         return NULL;
     }
@@ -1630,7 +1629,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         PyErr_SetString(PyExc_ValueError, "Invalid data-type size.");
         return NULL;
     }
-    if (size < 0 || size > MAX_INTP / PyArray_DESCR(self)->elsize) {
+    if (size < 0 || size > NPY_MAX_INTP / PyArray_DESCR(self)->elsize) {
         PyErr_NoMemory();
         return NULL;
     }
@@ -1725,7 +1724,8 @@ array_setstate(PyArrayObject *self, PyObject *args)
                 Py_DECREF(rawdata);
                 return PyErr_NoMemory();
             }
-            if (swap) { /* byte-swap on pickle-read */
+            if (swap) {
+                /* byte-swap on pickle-read */
                 npy_intp numels = num / PyArray_DESCR(self)->elsize;
                 PyArray_DESCR(self)->f->copyswapn(PyArray_DATA(self),
                                         PyArray_DESCR(self)->elsize,
@@ -1918,7 +1918,7 @@ array_sum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_cumsum(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
+    int axis = NPY_MAXDIMS;
     PyArray_Descr *dtype = NULL;
     PyArrayObject *out = NULL;
     int rtype;
@@ -1946,7 +1946,7 @@ array_prod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
+    int axis = NPY_MAXDIMS;
     PyArray_Descr *dtype = NULL;
     PyArrayObject *out = NULL;
     int rtype;
@@ -2075,7 +2075,7 @@ array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_compress(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int axis = MAX_DIMS;
+    int axis = NPY_MAXDIMS;
     PyObject *condition;
     PyArrayObject *out = NULL;
     static char *kwlist[] = {"condition", "axis", "out", NULL};
