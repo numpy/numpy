@@ -1,16 +1,24 @@
 #!/bin/bash
 
 for file in \
-    wrappers/applypatch-msg \
-    wrappers/commit-msg \
-    wrappers/post-commit \
-    wrappers/post-receive \
-    wrappers/post-update \
-    wrappers/pre-applypatch \
-    wrappers/pre-commit \
-    wrappers/prepare-commit-msg \
-    wrappers/pre-rebase \
-    wrappers/update
+    applypatch-msg \
+    commit-msg \
+    post-commit \
+    post-receive \
+    post-update \
+    pre-applypatch \
+    pre-commit \
+    prepare-commit-msg \
+    pre-rebase \
+    update
 do
-    cp ${file} ../../.git/hooks
+    cat > ../../.git/hooks/${file} <<- EOT
+#!/bin/sh
+
+FP=tools/git-hooks/hooks/${file}
+
+if [ -x "\${FP}" ]; then
+    "\${FP}" "\$@"
+fi
+EOT
 done
