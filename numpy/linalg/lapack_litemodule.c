@@ -2,6 +2,7 @@
 Modified by Jim Hugunin
 More modifications by Jeff Whitaker
 */
+#define NPY_NO_DEPRECATED_API
 
 #include "Python.h"
 #include "numpy/arrayobject.h"
@@ -105,33 +106,37 @@ check_object(PyObject *ob, int t, char *obname,
                      "Expected an array for parameter %s in lapack_lite.%s",
                      obname, funname);
         return 0;
-    } else if (!(((PyArrayObject *)ob)->flags & NPY_CONTIGUOUS)) {
+    }
+    else if (!PyArray_IS_C_CONTIGUOUS((PyArrayObject *)ob)) {
         PyErr_Format(LapackError,
                      "Parameter %s is not contiguous in lapack_lite.%s",
                      obname, funname);
         return 0;
-    } else if (!(((PyArrayObject *)ob)->descr->type_num == t)) {
+    }
+    else if (!(PyArray_TYPE((PyArrayObject *)ob) == t)) {
         PyErr_Format(LapackError,
                      "Parameter %s is not of type %s in lapack_lite.%s",
                      obname, tname, funname);
         return 0;
-    } else if (PyArray_ISBYTESWAPPED(ob)) {
+    }
+    else if (PyArray_ISBYTESWAPPED(ob)) {
         PyErr_Format(LapackError,
                      "Parameter %s has non-native byte order in lapack_lite.%s",
                      obname, funname);
         return 0;
-    } else {
+    }
+    else {
         return 1;
     }
 }
 
-#define CHDATA(p) ((char *) (((PyArrayObject *)p)->data))
-#define SHDATA(p) ((short int *) (((PyArrayObject *)p)->data))
-#define DDATA(p) ((double *) (((PyArrayObject *)p)->data))
-#define FDATA(p) ((float *) (((PyArrayObject *)p)->data))
-#define CDATA(p) ((f2c_complex *) (((PyArrayObject *)p)->data))
-#define ZDATA(p) ((f2c_doublecomplex *) (((PyArrayObject *)p)->data))
-#define IDATA(p) ((int *) (((PyArrayObject *)p)->data))
+#define CHDATA(p) ((char *) PyArray_DATA((PyArrayObject *)p))
+#define SHDATA(p) ((short int *) PyArray_DATA((PyArrayObject *)p))
+#define DDATA(p) ((double *) PyArray_DATA((PyArrayObject *)p))
+#define FDATA(p) ((float *) PyArray_DATA((PyArrayObject *)p))
+#define CDATA(p) ((f2c_complex *) PyArray_DATA((PyArrayObject *)p))
+#define ZDATA(p) ((f2c_doublecomplex *) PyArray_DATA((PyArrayObject *)p))
+#define IDATA(p) ((int *) PyArray_DATA((PyArrayObject *)p))
 
 static PyObject *
 lapack_lite_dgeev(PyObject *NPY_UNUSED(self), PyObject *args)
