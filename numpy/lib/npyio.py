@@ -9,6 +9,7 @@ import os
 import sys
 import itertools
 import warnings
+import weakref
 from operator import itemgetter
 
 from cPickle import load as _cload, loads
@@ -107,7 +108,8 @@ class BagObj(object):
 
     """
     def __init__(self, obj):
-        self._obj = obj
+        # Use weakref to make NpzFile objects collectable by refcount
+        self._obj = weakref.proxy(obj)
     def __getattribute__(self, key):
         try:
             return object.__getattribute__(self, '_obj')[key]
@@ -205,6 +207,7 @@ class NpzFile(object):
         if self.fid is not None:
             self.fid.close()
             self.fid = None
+        self.f = None # break reference cycle
 
     def __del__(self):
         self.close()

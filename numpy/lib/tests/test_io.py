@@ -13,6 +13,9 @@ import threading
 from tempfile import mkstemp, NamedTemporaryFile
 import time
 from datetime import datetime
+import warnings
+import gc
+from numpy.testing.utils import WarningManager
 
 from numpy.lib._iotools import ConverterError, ConverterLockError, \
                                ConversionWarning
@@ -1428,6 +1431,21 @@ def test_npzfile_dict():
         assert f in ['x', 'y']
 
     assert 'x' in list(z.iterkeys())
+
+def test_load_refcount():
+    # Check that objects returned by np.load are directly freed based on
+    # their refcount, rather than needing the gc to collect them.
+
+    f = StringIO()
+    np.savez(f, [1, 2, 3])
+    f.seek(0)
+
+    gc.collect()
+    n_before = len(gc.get_objects())
+    np.load(f)
+    n_after = len(gc.get_objects())
+
+    assert_equal(n_before, n_after)
 
 if __name__ == "__main__":
     run_module_suite()
