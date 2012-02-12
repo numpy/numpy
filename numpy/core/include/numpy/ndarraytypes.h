@@ -1441,7 +1441,7 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
  */
 
 static NPY_INLINE int
-PyArray_NDIM(PyArrayObject *arr)
+PyArray_NDIM(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->nd;
 }
@@ -1465,13 +1465,13 @@ PyArray_STRIDES(PyArrayObject *arr)
 }
 
 static NPY_INLINE npy_intp
-PyArray_DIM(PyArrayObject *arr, int idim)
+PyArray_DIM(const PyArrayObject *arr, int idim)
 {
     return ((PyArrayObject_fields *)arr)->dimensions[idim];
 }
 
 static NPY_INLINE npy_intp
-PyArray_STRIDE(PyArrayObject *arr, int istride)
+PyArray_STRIDE(const PyArrayObject *arr, int istride)
 {
     return ((PyArrayObject_fields *)arr)->strides[istride];
 }
@@ -1489,31 +1489,31 @@ PyArray_DESCR(PyArrayObject *arr)
 }
 
 static NPY_INLINE int
-PyArray_FLAGS(PyArrayObject *arr)
+PyArray_FLAGS(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->flags;
 }
 
 static NPY_INLINE npy_intp
-PyArray_ITEMSIZE(PyArrayObject *arr)
+PyArray_ITEMSIZE(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr->elsize;
 }
 
 static NPY_INLINE int
-PyArray_TYPE(PyArrayObject *arr)
+PyArray_TYPE(const PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->descr->type_num;
 }
 
 static NPY_INLINE int
-PyArray_CHKFLAGS(PyArrayObject *arr, int flags)
+PyArray_CHKFLAGS(const PyArrayObject *arr, int flags)
 {
     return (PyArray_FLAGS(arr) & flags) == flags;
 }
 
 static NPY_INLINE PyObject *
-PyArray_GETITEM(PyArrayObject *arr, char *itemptr)
+PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
     return ((PyArrayObject_fields *)arr)->descr->f->getitem(
                                                         itemptr, arr);
