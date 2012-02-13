@@ -2313,7 +2313,7 @@ if sys.version_info >= (2, 6):
 
         def test_attribute_deletion(self):
             a = np.ones(2)
-            attr =  ['shape', 'stride', 'data', 'real', 'imag', 'flat']
+            attr =  ['shape', 'strides', 'data', 'dtype', 'real', 'imag', 'flat']
             for s in attr:
                 assert_raises(AttributeError, delattr, a, s)
 
