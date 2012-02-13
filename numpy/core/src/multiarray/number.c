@@ -275,8 +275,14 @@ array_remainder(PyArrayObject *m1, PyObject *m2)
     return PyArray_GenericBinaryFunction(m1, m2, n_ops.remainder);
 }
 
+/* Determine if object is a scalar and if so, convert the object
+ *   to a double and place it in the out_exponent argument
+ *   and return the "scalar kind" as a result.   If the object is 
+ *   not a scalar (or if there are other error conditions)
+ *   return NPY_NOSCALAR, and out_exponent is undefined.
+ */
 static NPY_SCALARKIND
-array_power_is_scalar(PyObject *o2, double* out_exponent)
+is_scalar_with_conversion(PyObject *o2, double* out_exponent)
 {
     PyObject *temp;
     const int optimize_fpexps = 1;
@@ -343,7 +349,7 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
     double exponent;
     NPY_SCALARKIND kind;   /* NPY_NOSCALAR is not scalar */
 
-    if (PyArray_Check(a1) && ((kind=array_power_is_scalar(o2, &exponent))>0)) {
+    if (PyArray_Check(a1) && ((kind=is_scalar_with_conversion(o2, &exponent))>0)) {
         PyObject *fastop = NULL;
         if (PyArray_ISFLOAT(a1) || PyArray_ISCOMPLEX(a1)) {
             if (exponent == 1.0) {
