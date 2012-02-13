@@ -2307,5 +2307,16 @@ if sys.version_info >= (2, 6):
             x3 = np.arange(dt3.itemsize, dtype=np.int8).view(dt3)
             self._check_roundtrip(x3)
 
+
+    class TestArrayAttributeDeletion(object):
+        """ticket #2046, should not seqfault, raise AttributeError"""
+
+        def test_attribute_deletion(self):
+            a = np.ones(2)
+            attr =  ['shape', 'strides', 'data', 'dtype', 'real', 'imag', 'flat']
+            for s in attr:
+                assert_raises(AttributeError, delattr, a, s)
+
+
 if __name__ == "__main__":
     run_module_suite()

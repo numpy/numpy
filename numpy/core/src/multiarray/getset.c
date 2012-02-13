@@ -44,6 +44,11 @@ array_shape_set(PyArrayObject *self, PyObject *val)
     int nd;
     PyArrayObject *ret;
 
+    if (val == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array shape");
+        return -1;
+    }
     /* Assumes C-order */
     ret = (PyArrayObject *)PyArray_Reshape(self, val);
     if (ret == NULL) {
@@ -101,6 +106,11 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
     Py_ssize_t buf_len;
     char *buf;
 
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array strides");
+        return -1;
+    }
     if (!PyArray_IntpConverter(obj, &newstrides) ||
         newstrides.ptr == NULL) {
         PyErr_SetString(PyExc_TypeError, "invalid strides");
@@ -311,6 +321,11 @@ array_data_set(PyArrayObject *self, PyObject *op)
     Py_ssize_t buf_len;
     int writeable=1;
 
+    if (op == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array data");
+        return -1;
+    }
     if (PyObject_AsWriteBuffer(op, &buf, &buf_len) < 0) {
         writeable = 0;
         if (PyObject_AsReadBuffer(op, (const void **)&buf, &buf_len) < 0) {
@@ -407,6 +422,12 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     npy_intp newdim;
     int i;
     char *msg = "new type not compatible with array.";
+
+    if (arg == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array dtype");
+        return -1;
+    }
 
     if (!(PyArray_DescrConverter(arg, &newtype)) ||
         newtype == NULL) {
@@ -674,6 +695,11 @@ array_real_set(PyArrayObject *self, PyObject *val)
     PyArrayObject *new;
     int retcode;
 
+    if (val == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array real part");
+        return -1;
+    }
     if (PyArray_ISCOMPLEX(self)) {
         ret = _get_part(self, 0);
         if (ret == NULL) {
@@ -731,6 +757,11 @@ array_imag_get(PyArrayObject *self)
 static int
 array_imag_set(PyArrayObject *self, PyObject *val)
 {
+    if (val == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array imaginary part");
+        return -1;
+    }
     if (PyArray_ISCOMPLEX(self)) {
         PyArrayObject *ret;
         PyArrayObject *new;
@@ -751,8 +782,8 @@ array_imag_set(PyArrayObject *self, PyObject *val)
         return retcode;
     }
     else {
-        PyErr_SetString(PyExc_TypeError, "array does not have "\
-                        "imaginary part to set");
+        PyErr_SetString(PyExc_TypeError,
+                "array does not have imaginary part to set");
         return -1;
     }
 }
@@ -773,6 +804,11 @@ array_flat_set(PyArrayObject *self, PyObject *val)
     int swap;
     PyArray_CopySwapFunc *copyswap;
 
+    if (val == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete array flat iterator");
+        return -1;
+    }
     typecode = PyArray_DESCR(self);
     Py_INCREF(typecode);
     arr = (PyArrayObject *)PyArray_FromAny(val, typecode,
