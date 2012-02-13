@@ -46,7 +46,7 @@ array_shape_set(PyArrayObject *self, PyObject *val)
 
     if (val == NULL) {
         PyErr_SetString(PyExc_AttributeError,
-                "Can't delete array shape");
+                "Cannot delete array shape");
         return -1;
     }
     /* Assumes C-order */
@@ -108,7 +108,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
 
     if (obj == NULL) {
         PyErr_SetString(PyExc_AttributeError,
-                "Can't delete array shape");
+                "Cannot delete array strides");
         return -1;
     }
     if (!PyArray_IntpConverter(obj, &newstrides) ||
@@ -323,7 +323,7 @@ array_data_set(PyArrayObject *self, PyObject *op)
 
     if (op == NULL) {
         PyErr_SetString(PyExc_AttributeError,
-                "Can't delete array data");
+                "Cannot delete array data");
         return -1;
     }
     if (PyObject_AsWriteBuffer(op, &buf, &buf_len) < 0) {
@@ -425,7 +425,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
 
     if (arg == NULL) {
         PyErr_SetString(PyExc_AttributeError,
-                "Can't delete array dtype");
+                "Cannot delete array dtype");
         return -1;
     }
 
@@ -697,7 +697,7 @@ array_real_set(PyArrayObject *self, PyObject *val)
 
     if (val == NULL) {
         PyErr_SetString(PyExc_AttributeError,
-                "Can't delete array real part");
+                "Cannot delete array real part");
         return -1;
     }
     if (PyArray_ISCOMPLEX(self)) {
@@ -759,7 +759,7 @@ array_imag_set(PyArrayObject *self, PyObject *val)
 {
     if (val == NULL) {
         PyErr_SetString(PyExc_AttributeError,
-                "Can't delete array imaginary part");
+                "Cannot delete array imaginary part");
         return -1;
     }
     if (PyArray_ISCOMPLEX(self)) {
@@ -806,7 +806,7 @@ array_flat_set(PyArrayObject *self, PyObject *val)
 
     if (val == NULL) {
         PyErr_SetString(PyExc_AttributeError,
-                "Can't delete array flat iterator");
+                "Cannot delete array flat iterator");
         return -1;
     }
     typecode = PyArray_DESCR(self);
