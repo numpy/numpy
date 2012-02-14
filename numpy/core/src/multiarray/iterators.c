@@ -1037,6 +1037,12 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     PyArray_CopySwapFunc *copyswap;
 
 
+    if (val == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "Cannot delete iterator elements");
+        return -1;
+    }
+
     if (ind == Py_Ellipsis) {
         ind = PySlice_New(NULL, NULL, NULL);
         retval = iter_ass_subscript(self, ind, val);
