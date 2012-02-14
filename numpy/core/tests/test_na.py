@@ -186,5 +186,13 @@ def test_na_other_operations():
     assert_equal((np.NA | False).dtype, np.array(False).dtype)
     assert_equal((np.NA & True).dtype, np.array(True).dtype)
 
+
+def test_na_writable_attributes_deletion():
+    a = np.NA(2)
+    attr =  ['payload', 'dtype']
+    for s in attr:
+        assert_raises(AttributeError, delattr, a, s)
+
+
 if __name__ == "__main__":
     run_module_suite()

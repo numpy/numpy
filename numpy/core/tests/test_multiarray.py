@@ -2309,13 +2309,50 @@ if sys.version_info >= (2, 6):
 
 
     class TestArrayAttributeDeletion(object):
-        """ticket #2046, should not seqfault, raise AttributeError"""
 
-        def test_attribute_deletion(self):
+        def test_multiarray_writable_attributes_deletion(self):
+            """ticket #2046, should not seqfault, raise AttributeError"""
             a = np.ones(2)
             attr =  ['shape', 'strides', 'data', 'dtype', 'real', 'imag', 'flat']
             for s in attr:
                 assert_raises(AttributeError, delattr, a, s)
+
+
+        def test_multiarray_not_writable_attributes_deletion(self):
+            a = np.ones(2)
+            attr = ["ndim", "flags", "itemsize", "size", "nbytes", "base",
+                    "ctypes", "T", "__array_interface__", "__array_struct__",
+                    "__array_priority__", "__array_finalize__"]
+            for s in attr:
+                assert_raises(AttributeError, delattr, a, s)
+
+
+        def test_multiarray_flags_writable_attribute_deletion(self):
+            a = np.ones(2).flags
+            attr = ['updateifcopy', 'aligned', 'writeable', 'maskna',
+                    'ownmaskna']
+            for s in attr:
+                assert_raises(AttributeError, delattr, a, s)
+
+
+        def test_multiarray_flags_not_writable_attribute_deletion(self):
+            a = np.ones(2).flags
+            attr = ["contiguous", "c_contiguous", "f_contiguous", "fortran",
+                    "owndata", "fnc", "forc", "behaved", "carray", "farray",
+                    "num"]
+            for s in attr:
+                assert_raises(AttributeError, delattr, a, s)
+
+
+def test_flat_element_deletion():
+    it = np.ones(3).flat
+    try:
+        del it[1]
+        del it[1:2]
+    except TypeError:
+        pass
+    except:
+        raise AssertionError
 
 
 if __name__ == "__main__":
