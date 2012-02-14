@@ -1840,7 +1840,13 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
     int i;
     PyObject *new_names;
     PyObject *new_fields;
-    if (self->names == NULL) {
+
+    if (val == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete dtype names attribute");
+        return -1;
+    }
+    if (!PyDataType_HASFIELDS(self)) {
         PyErr_SetString(PyExc_ValueError,
                 "there are no fields defined");
         return -1;

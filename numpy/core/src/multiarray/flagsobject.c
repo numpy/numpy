@@ -250,8 +250,15 @@ static int
 arrayflags_updateifcopy_set(PyArrayFlagsObject *self, PyObject *obj)
 {
     PyObject *res;
+
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete flags updateifcopy attribute");
+        return -1;
+    }
     if (self->arr == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Cannot set flags on array scalars.");
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot set flags on array scalars.");
         return -1;
     }
     res = PyObject_CallMethod(self->arr, "setflags", "OOO", Py_None, Py_None,
@@ -267,8 +274,15 @@ static int
 arrayflags_aligned_set(PyArrayFlagsObject *self, PyObject *obj)
 {
     PyObject *res;
+
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete flags aligned attribute");
+        return -1;
+    }
     if (self->arr == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Cannot set flags on array scalars.");
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot set flags on array scalars.");
         return -1;
     }
     res = PyObject_CallMethod(self->arr, "setflags", "OOO", Py_None,
@@ -285,8 +299,15 @@ static int
 arrayflags_writeable_set(PyArrayFlagsObject *self, PyObject *obj)
 {
     PyObject *res;
+
+    if (obj == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete flags writeable attribute");
+        return -1;
+    }
     if (self->arr == NULL) {
-        PyErr_SetString(PyExc_ValueError, "Cannot set flags on array scalars.");
+        PyErr_SetString(PyExc_ValueError,
+                "Cannot set flags on array scalars.");
         return -1;
     }
     res = PyObject_CallMethod(self->arr, "setflags", "OOO",
