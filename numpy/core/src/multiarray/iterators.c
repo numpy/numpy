@@ -1015,7 +1015,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
         copyswap(self->dataptr, val->dataptr, swap, self->ao);
         PyArray_ITER_NEXT(ind_it);
         PyArray_ITER_NEXT(val);
-            if (val->index == val->size) {
+        if (val->index == val->size) {
             PyArray_ITER_RESET(val);
         }
     }
