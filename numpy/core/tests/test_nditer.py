@@ -2554,5 +2554,33 @@ def test_iter_maskna_default_use_maskna():
     assert_(it.operands[2].flags.maskna)
     assert_array_equal(it.operands[2], a+b+1)
 
+
+def test_iter_writable_attribute_deletion():
+    it = np.nditer(np.ones(2))
+    attr = ["value", "shape", "operands", "itviews", "has_delayed_bufalloc",
+            "iterationneedsapi", "has_multi_index", "has_index", "dtypes",
+            "ndim", "nop", "itersize", "finished"]
+    for s in attr:
+        assert_raises(AttributeError, delattr, it, s)
+
+
+def test_iter_non_writable_attribute_deletion():
+    it = np.nditer(np.ones(2))
+    attr = [ "multi_index", "index", "iterrange", "iterindex"]
+    for s in attr:
+        assert_raises(AttributeError, delattr, it, s)
+
+
+def test_iter_element_deletion():
+    it = np.nditer(np.ones(3))
+    try:
+        del it[1]
+        del it[1:2]
+    except TypeError:
+        pass
+    except:
+        raise AssertionError
+
+
 if __name__ == "__main__":
     run_module_suite()
