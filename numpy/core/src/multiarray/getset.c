@@ -941,7 +941,7 @@ NPY_NO_EXPORT PyGetSetDef array_getsetlist[] = {
         (getter)array_ctypes_get,
         NULL,
         NULL, NULL},
-    {   "T",
+    {"T",
         (getter)array_transpose_get,
         NULL,
         NULL, NULL},

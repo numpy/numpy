@@ -1015,7 +1015,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
         copyswap(self->dataptr, val->dataptr, swap, self->ao);
         PyArray_ITER_NEXT(ind_it);
         PyArray_ITER_NEXT(val);
-        if (val->index == val->size) {
+            if (val->index == val->size) {
             PyArray_ITER_RESET(val);
         }
     }
@@ -1036,6 +1036,12 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
     PyObject *obj = NULL;
     PyArray_CopySwapFunc *copyswap;
 
+
+    if (val == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "Cannot delete iterator elements");
+        return -1;
+    }
 
     if (ind == Py_Ellipsis) {
         ind = PySlice_New(NULL, NULL, NULL);

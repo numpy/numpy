@@ -184,6 +184,12 @@ na_payload_set(NpyNA_fields *self, PyObject *value)
 {
     long payload;
 
+    if (value == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete NA payload attribute");
+        return -1;
+    }
+
     /* Don't allow changing the static singleton instance */
     if (self->is_singleton) {
         PyErr_SetString(PyExc_RuntimeError,
@@ -191,7 +197,7 @@ na_payload_set(NpyNA_fields *self, PyObject *value)
                     "make a new copy like 'numpy.NA(payload)'");
         return -1;
     }
-    else if (value == NULL || value == Py_None) {
+    else if (value == Py_None) {
         self->payload = NPY_NA_NOPAYLOAD;
     }
     else {
@@ -241,6 +247,11 @@ na_dtype_set(NpyNA_fields *self, PyObject *value)
 {
     PyArray_Descr *dtype = NULL;
 
+    if (value == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete NA dtype attribute");
+        return -1;
+    }
     /* Don't allow changing the static singleton instance */
     if (self->is_singleton) {
         PyErr_SetString(PyExc_RuntimeError,
