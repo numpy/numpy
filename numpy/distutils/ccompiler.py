@@ -2,9 +2,12 @@ import re
 import os
 import sys
 import new
+from copy import copy
 
 from distutils.ccompiler import *
 from distutils import ccompiler
+from distutils.errors import DistutilsExecError, DistutilsModuleError, \
+                             DistutilsPlatformError
 from distutils.sysconfig import customize_compiler
 from distutils.version import LooseVersion
 
