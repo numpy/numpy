@@ -1612,15 +1612,14 @@ npyiter_multi_index_set(NewNpyArrayIterObject *self, PyObject *value)
 {
     npy_intp idim, ndim, multi_index[NPY_MAXDIMS];
 
+    if (value == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete nditer multi_index");
+        return -1;
+    }
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is invalid");
-        return -1;
-    }
-
-    if (value == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot delete the multi_index");
         return -1;
     }
 
@@ -1684,15 +1683,14 @@ static PyObject *npyiter_index_get(NewNpyArrayIterObject *self)
 
 static int npyiter_index_set(NewNpyArrayIterObject *self, PyObject *value)
 {
+    if (value == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete nditer index");
+        return -1;
+    }
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is invalid");
-        return -1;
-    }
-
-    if (value == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot delete index");
         return -1;
     }
 
@@ -1737,15 +1735,14 @@ static int npyiter_iterindex_set(NewNpyArrayIterObject *self, PyObject *value)
 {
     npy_intp iterindex;
 
+    if (value == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete nditer iterindex");
+        return -1;
+    }
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is invalid");
-        return -1;
-    }
-
-    if (value == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot delete iterindex");
         return -1;
     }
 
@@ -1799,15 +1796,14 @@ static int npyiter_iterrange_set(NewNpyArrayIterObject *self, PyObject *value)
     long istart = 0, iend = 0;
 #endif
 
+    if (value == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete nditer iterrange");
+        return -1;
+    }
     if (self->iter == NULL) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is invalid");
-        return -1;
-    }
-
-    if (value == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot delete iterrange");
         return -1;
     }
 
@@ -2173,8 +2169,8 @@ npyiter_seq_ass_item(NewNpyArrayIterObject *self, Py_ssize_t i, PyObject *v)
 
 
     if (v == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                        "can't delete iterator operands");
+        PyErr_SetString(PyExc_TypeError,
+                "Cannot delete iterator elements");
         return -1;
     }
 
@@ -2271,8 +2267,8 @@ npyiter_seq_ass_slice(NewNpyArrayIterObject *self, Py_ssize_t ilow,
     Py_ssize_t i;
 
     if (v == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                        "cannot delete iterator elements");
+        PyErr_SetString(PyExc_TypeError,
+                "Cannot delete iterator elements");
         return -1;
     }
 
@@ -2376,6 +2372,11 @@ static int
 npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
                         PyObject *value)
 {
+    if (value == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "Cannot delete iterator elements");
+        return -1;
+    }
     if (self->iter == NULL || self->finished) {
         PyErr_SetString(PyExc_ValueError,
                 "Iterator is past the end");

@@ -401,5 +401,23 @@ class TestString(TestCase):
                     "dtype([('a', '<M8[D]'), ('b', '<m8[us]')])")
 
 
+class TestDtypeAttributeDeletion(object):
+
+    def test_dtype_non_writable_attributes_deletion(self):
+        dt = np.dtype(np.double)
+        attr = ["subdtype", "descr", "str", "name", "base", "shape",
+                "isbuiltin", "isnative", "isalignedstruct", "fields",
+                "metadata", "hasobject"]
+        for s in attr:
+            assert_raises(AttributeError, delattr, dt, s)
+
+
+    def test_dtype_writable_attributes_deletion(self):
+        dt = np.dtype(np.double)
+        attr = ["names"]
+        for s in attr:
+            assert_raises(AttributeError, delattr, dt, s)
+
+
 if __name__ == "__main__":
     run_module_suite()
