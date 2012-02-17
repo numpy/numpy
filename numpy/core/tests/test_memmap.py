@@ -42,8 +42,8 @@ class TestMemmap(TestCase):
         mode = "w+"
         fp = memmap(self.tmpfp, dtype=self.dtype, mode=mode,
                     shape=self.shape, offset=offset)
-        self.assertEquals(offset, fp.offset)
-        self.assertEquals(mode, fp.mode)
+        self.assertEqual(offset, fp.offset)
+        self.assertEqual(mode, fp.mode)
         del fp
 
     def test_filename(self):
@@ -52,9 +52,9 @@ class TestMemmap(TestCase):
                        shape=self.shape)
         abspath = os.path.abspath(tmpname)
         fp[:] = self.data[:]
-        self.assertEquals(abspath, fp.filename)
+        self.assertEqual(abspath, fp.filename)
         b = fp[:1]
-        self.assertEquals(abspath, b.filename)
+        self.assertEqual(abspath, b.filename)
         del b
         del fp
         os.unlink(tmpname)
@@ -62,7 +62,7 @@ class TestMemmap(TestCase):
     def test_filename_fileobj(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode="w+",
                     shape=self.shape)
-        self.assertEquals(fp.filename, self.tmpfp.name)
+        self.assertEqual(fp.filename, self.tmpfp.name)
 
     def test_flush(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
