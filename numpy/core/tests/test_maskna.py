@@ -209,6 +209,7 @@ def test_array_maskna_astype():
             a[1] = np.NA
             for dt2 in dtdst:
                 msg = 'type %s to %s conversion' % (dt1, dt2)
+                print msg, a
                 b = a.astype(dt2)
                 assert_(b.flags.maskna, msg)
                 assert_(b.flags.ownmaskna, msg)
