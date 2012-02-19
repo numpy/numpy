@@ -3,7 +3,6 @@
 from numpy.testing import *
 import numpy as np
 from numpy import pad
-from numpy.pad.pad import PadWidthWrongNumberOfValues, NegativePadWidth
 
 class TestNearest(TestCase):
     def test_check_simple(self):
@@ -306,7 +305,7 @@ class TestPadWidthError1(TestCase):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
         kwargs = dict(pad_width=((2, 3), (3, 2), (4,5)), stat_len=(3, ))
-        assert_raises(PadWidthWrongNumberOfValues, pad.with_mean, arr,
+        assert_raises(pad.pad.PadWidthWrongNumberOfValues, pad.with_mean, arr,
                 **kwargs)
 
 
@@ -315,7 +314,7 @@ class TestPadWidthError2(TestCase):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
         kwargs = dict(pad_width=((2, 3, 4), (3, 2)), stat_len=(3, ))
-        assert_raises(PadWidthWrongNumberOfValues, pad.with_mean, arr,
+        assert_raises(pad.pad.PadWidthWrongNumberOfValues, pad.with_mean, arr,
                 **kwargs)
 
 
@@ -324,7 +323,7 @@ class TestNegativePadWidth(TestCase):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
         kwargs = dict(pad_width=((-2, 3), (3, 2)), stat_len=(3, ))
-        assert_raises(NegativePadWidth, pad.with_mean, arr,
+        assert_raises(pad.pad.NegativePadWidth, pad.with_mean, arr,
                 **kwargs)
 
 
