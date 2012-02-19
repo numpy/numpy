@@ -62,32 +62,7 @@ class NegativePadWidth(Exception):
 
 
 ########
-
-import numpy as np
-
-
-######
-# Taken from numpy docs to add original slice attribute to array
-
-class PadArray(np.ndarray):
-    def __new__(cls, input_array, original_shape=None):
-        # Input array is an already formed ndarray instance
-        # We first cast to be our class type
-        obj = np.asarray(input_array).view(cls)
-        # add the new attribute to the created instance
-        obj.original_shape = original_shape
-        # Finally, we must return the newly created object:
-        return obj
-
-    def __array_finalize__(self, obj):
-        # see InfoArray.__array_finalize__ for comments
-        if obj is None: return
-        self.info = getattr(obj, 'original_shape', None)
-
-
-########
 # Private utility functions.
-
 
 def __create_vector(vector, pad_tuple, before_val, after_val):
     '''
@@ -165,7 +140,6 @@ def __loop_across(matrix, pad_width, function, **kw):
                             avec,
                             kw)
         original_shape.append(slice(pad_width[iaxis][0], -pad_width[iaxis][1]))
-    newmat = PadArray(newmat, original_shape = original_shape)
     return newmat
 
 
@@ -328,14 +302,14 @@ def with_maximum(matrix, pad_width=(1, ), stat_len=None):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.pad.pad.with_maximum(a, (2,))
-    PadArray([5, 5, 1, 2, 3, 4, 5, 5, 5])
+    >>> pad.with_maximum(a, (2,))
+    array([5, 5, 1, 2, 3, 4, 5, 5, 5])
 
-    >>> np.pad.pad.with_maximum(a, (1, 7))
-    PadArray([5, 1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5])
+    >>> pad.with_maximum(a, (1, 7))
+    array([5, 1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5])
 
-    >>> np.pad.pad.with_maximum(a, (0, 7))
-    PadArray([1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5])
+    >>> pad.with_maximum(a, (0, 7))
+    array([1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5])
 
     """
     return __loop_across(matrix, pad_width, __maximum, stat_len=stat_len)
@@ -380,15 +354,15 @@ def with_minimum(matrix, pad_width=(1, ), stat_len=None):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5, 6]
-    >>> np.pad.pad.with_minimum(a, (2,))
-    PadArray([1, 1, 1, 2, 3, 4, 5, 6, 1, 1])
+    >>> np.pad.with_minimum(a, (2,))
+    array([1, 1, 1, 2, 3, 4, 5, 6, 1, 1])
 
-    >>> np.pad.pad.with_minimum(a, (4, 2))
-    PadArray([1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 1, 1])
+    >>> np.pad.with_minimum(a, (4, 2))
+    array([1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 1, 1])
 
     >>> a = [[1,2], [3,4]]
-    >>> np.pad.pad.with_minimum(a, ((3, 2), (2, 3)))
-    PadArray([[1, 1, 1, 2, 1, 1, 1],
+    >>> np.pad.with_minimum(a, ((3, 2), (2, 3)))
+    array([[1, 1, 1, 2, 1, 1, 1],
            [1, 1, 1, 2, 1, 1, 1],
            [1, 1, 1, 2, 1, 1, 1],
            [1, 1, 1, 2, 1, 1, 1],
@@ -438,11 +412,11 @@ def with_median(matrix, pad_width=(1, ), stat_len=None):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.pad.pad.with_median(a, (2,))
-    PadArray([3, 3, 1, 2, 3, 4, 5, 3, 3])
+    >>> np.pad.with_median(a, (2,))
+    array([3, 3, 1, 2, 3, 4, 5, 3, 3])
 
-    >>> np.pad.pad.with_median(a, (4, 0))
-    PadArray([3, 3, 3, 3, 1, 2, 3, 4, 5])
+    >>> np.pad.with_median(a, (4, 0))
+    array([3, 3, 3, 3, 1, 2, 3, 4, 5])
 
     """
     return __loop_across(matrix, pad_width, __median, stat_len=stat_len)
@@ -486,8 +460,8 @@ def with_mean(matrix, pad_width=(1, ), stat_len=None):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.pad.pad.with_mean(a, (2,))
-    PadArray([3, 3, 1, 2, 3, 4, 5, 3, 3])
+    >>> np.pad.with_mean(a, (2,))
+    array([3, 3, 1, 2, 3, 4, 5, 3, 3])
 
     """
     return __loop_across(matrix, pad_width, __mean, stat_len=stat_len)
@@ -532,8 +506,8 @@ def with_constant(matrix, pad_width=(1, ), constant_values=(0, )):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.pad.pad.with_constant(a, (2,3), (4,6))
-    PadArray([4, 4, 1, 2, 3, 4, 5, 6, 6, 6])
+    >>> np.pad.with_constant(a, (2,3), (4,6))
+    array([4, 4, 1, 2, 3, 4, 5, 6, 6, 6])
 
     """
     return __loop_across(matrix,
@@ -581,8 +555,8 @@ def with_linear_ramp(matrix, pad_width=(1, ), end_value=(0, )):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.pad.pad.with_linear_ramp(a, (2,3), (5,-4))
-    PadArray([ 5,  3,  1,  2,  3,  4,  5,  2, -1, -4])
+    >>> np.pad.with_linear_ramp(a, (2,3), (5,-4))
+    array([ 5,  3,  1,  2,  3,  4,  5,  2, -1, -4])
 
     """
     return __loop_across(matrix, pad_width, __linear_ramp, end_value=end_value)
@@ -621,8 +595,8 @@ def with_reflect(matrix, pad_width=(1, )):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.pad.pad.with_reflect(a, (2,3))
-    PadArray([3, 2, 1, 2, 3, 4, 5, 4, 3, 2])
+    >>> np.pad.with_reflect(a, (2,3))
+    array([3, 2, 1, 2, 3, 4, 5, 4, 3, 2])
 
     """
     # TODO self.pad_length_before & self.pad_length_after < len(self.vector)
@@ -663,8 +637,8 @@ def with_wrap(matrix, pad_width=(1, )):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.pad.pad.with_wrap(a, (2,3))
-    PadArray([4, 5, 1, 2, 3, 4, 5, 1, 2, 3])
+    >>> np.pad.with_wrap(a, (2,3))
+    array([4, 5, 1, 2, 3, 4, 5, 1, 2, 3])
 
     """
     return __loop_across(matrix, pad_width, __wrap)
@@ -678,10 +652,13 @@ if __name__ == '__main__':
     This section is just used for testing.  Really you should only import
     this module.
     '''
+    import numpy.pad as pad
+    import doctest
+    doctest.testmod()
     arr = np.arange(100)
     print arr
     print with_median(arr, (3, ))
-    print with_constant(arr, (-25, 20), (10, 20))
+    print with_constant(arr, (25, 20), (10, 20))
     arr = np.arange(30)
     arr = np.reshape(arr, (6, 5))
-    print with_mean(arr, pad_width=((2, 3), (3, 2), (4, 5)), stat_len=(3, ))
+    print with_mean(arr, pad_width=((2, 3), (3, 2)), stat_len=(3, ))
