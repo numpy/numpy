@@ -811,6 +811,8 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(np.arctan(z), arctan(zm))
         assert_equal(np.arctan2(x, y), arctan2(xm, ym))
         assert_equal(np.absolute(x), absolute(xm))
+        assert_equal(np.angle(x + 1j*y), angle(xm + 1j*ym))
+        assert_equal(np.angle(x + 1j*y, deg=True), angle(xm + 1j*ym, deg=True))
         assert_equal(np.equal(x, y), equal(xm, ym))
         assert_equal(np.not_equal(x, y), not_equal(xm, ym))
         assert_equal(np.less(x, y), less(xm, ym))
