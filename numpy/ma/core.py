@@ -27,7 +27,7 @@ __docformat__ = "restructuredtext en"
 __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'bool_',
            'abs', 'absolute', 'add', 'all', 'allclose', 'allequal', 'alltrue',
-           'amax', 'amin', 'anom', 'anomalies', 'any', 'arange',
+           'amax', 'amin', 'angle', 'anom', 'anomalies', 'any', 'arange',
            'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctan2',
            'arctanh', 'argmax', 'argmin', 'argsort', 'around',
            'array', 'asarray', 'asanyarray',
@@ -74,6 +74,7 @@ from numpy import ndarray, amax, amin, iscomplexobj, bool_
 from numpy import array as narray
 
 import numpy.core.umath as umath
+from numpy.lib.function_base import angle
 import numpy.core.numerictypes as ntypes
 from numpy.compat import getargspec, formatargspec
 from numpy import expand_dims as n_expand_dims
@@ -1117,6 +1118,7 @@ sinh = _MaskedUnaryOperation(umath.sinh)
 cosh = _MaskedUnaryOperation(umath.cosh)
 tanh = _MaskedUnaryOperation(umath.tanh)
 abs = absolute = _MaskedUnaryOperation(umath.absolute)
+angle = _MaskedUnaryOperation(angle) # from numpy.lib.function_base
 fabs = _MaskedUnaryOperation(umath.fabs)
 negative = _MaskedUnaryOperation(umath.negative)
 floor = _MaskedUnaryOperation(umath.floor)
