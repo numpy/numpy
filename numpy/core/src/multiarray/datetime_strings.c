@@ -1016,8 +1016,18 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
         return 0;
     }
 
-    /* Only do local time within a reasonable year range */
-    if ((dts->year <= 1800 || dts->year >= 10000) && tzoffset == -1) {
+    /*
+     * Only do local time within a reasonable year range. The years
+     * earlier than 1970 are not made local, because the Windows API
+     * raises an error when they are attempted. For consistency, this
+     * restriction is applied to all platforms.
+     *
+     * Note that this only affects how the datetime becomes a string.
+     * The result is still completely unambiguous, it only means
+     * that datetimes outside this range will not include a time zone
+     * when they are printed.
+     */
+    if ((dts->year < 1970 || dts->year >= 10000) && tzoffset == -1) {
         local = 0;
     }
 
