@@ -814,6 +814,9 @@ def get_default_fcompiler(osname=None, platform=None, requiref90=False,
                                               c_compiler=c_compiler)
     return compiler_type
 
+# Flag to avoid rechecking for Fortran compiler every time
+failed_fcompiler = False
+
 def new_fcompiler(plat=None,
                   compiler=None,
                   verbose=0,
@@ -824,6 +827,10 @@ def new_fcompiler(plat=None,
     """Generate an instance of some FCompiler subclass for the supplied
     platform/compiler combination.
     """
+    global failed_fcompiler
+    if failed_fcompiler:
+        return None
+
     load_all_fcompiler_classes()
     if plat is None:
         plat = os.name
@@ -841,6 +848,7 @@ def new_fcompiler(plat=None,
             msg = msg + " Supported compilers are: %s)" \
                   % (','.join(fcompiler_class.keys()))
         log.warn(msg)
+        failed_fcompiler = True
         return None
 
     compiler = klass(verbose=verbose, dry_run=dry_run, force=force)
