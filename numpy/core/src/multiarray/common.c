@@ -95,20 +95,20 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
 {
     int res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, 0);
     if (res==1) {
-        res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, 1);
+        res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, NPY_STRING);
         if (res==2) {
-            res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, 2);
+            res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, NPY_UNICODE);
         }
     }
     else if (res==2) {
-        res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, 2);
+        res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, NPY_UNICODE);
     }
     return res;
 }
 
 NPY_NO_EXPORT int
 PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
-                              PyArray_Descr **out_dtype, int string_status)
+                              PyArray_Descr **out_dtype, int string_type)
 {
     int i, size;
     PyArray_Descr *dtype = NULL;
@@ -116,6 +116,13 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
 #if PY_VERSION_HEX >= 0x02060000
     Py_buffer buffer_view;
 #endif
+
+    if (string_type) {
+        *out_dtype = PyArray_DescrNewFromType(string_type);
+        if (*out_dtype == NULL) {
+            goto fail;
+        }
+    }
 
     /* Check if it's an ndarray */
     if (PyArray_Check(obj)) {
@@ -137,29 +144,14 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
         int itemsize;
         PyObject *temp;
 
-        if (string_status==0) {
+        if (!string_type) {
             dtype = PyArray_DescrFromScalar(obj);
             if (dtype == NULL) {
                 goto fail;
             }
         }
-        else if (string_status==1) {
-            dtype = PyArray_DescrNewFromType(NPY_STRING);
-            if (dtype == NULL) {
-                goto fail;
-            }
-            if ((temp = PyObject_Str(obj)) == NULL) {
-                return -1;
-            }   
-            itemsize = PyString_GET_SIZE(temp);
-            Py_DECREF(temp);
-            if (dtype->elsize >= itemsize) {
-                return 0;
-            }
-            dtype->elsize = itemsize;
-        }
-        else if (string_status==2) {
-            dtype = PyArray_DescrNewFromType(NPY_UNICODE);
+        else {
+            dtype = PyArray_DescrNewFromType(string_type);
             if (dtype == NULL) {
                 goto fail;
             }
@@ -182,23 +174,8 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
         int itemsize;
         PyObject *temp;
 
-        if (string_status==1) {
-            dtype = PyArray_DescrNewFromType(NPY_STRING);
-            if (dtype == NULL) {
-                goto fail;
-            }
-            if ((temp = PyObject_Str(obj)) == NULL) {
-                return -1;
-            }   
-            itemsize = PyString_GET_SIZE(temp);
-            Py_DECREF(temp);
-            if (dtype->elsize >= itemsize) {
-                return 0;
-            }
-            dtype->elsize = itemsize;
-        }
-        if (string_status==2) {
-            dtype = PyArray_DescrNewFromType(NPY_UNICODE);
+        if (string_type) {
+            dtype = PyArray_DescrNewFromType(string_type);
             if (dtype == NULL) {
                 goto fail;
             }
@@ -234,7 +211,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
             }
             else return 1;
         }
-        else if (string_status==0) return 1;
         dtype = PyArray_DescrNewFromType(NPY_STRING);
         if (dtype == NULL) {
             goto fail;
@@ -262,7 +238,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
             }
             else return 2;
         }
-        else if (string_status==0) return 2;
         dtype = PyArray_DescrNewFromType(NPY_UNICODE);
         if (dtype == NULL) {
             goto fail;
@@ -413,7 +388,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
             goto fail;
         }
         res = PyArray_DTypeFromObjectHelper(ip, maxdims - 1,
-                            out_contains_na, out_dtype, string_status);
+                            out_contains_na, out_dtype, string_type);
         if (res < 0) {
             Py_DECREF(ip);
             goto fail;
