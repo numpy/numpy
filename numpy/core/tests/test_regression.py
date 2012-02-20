@@ -1643,5 +1643,21 @@ class TestRegression(TestCase):
         x = np.arange(0, 4, dtype='datetime64[D]')
         assert_raises(TypeError, x.searchsorted, 1)
 
+    def test_string_truncation(self):
+        # Ticket #1990 - Data can be truncated in creation of an array from a
+        # mixed sequence of numeric values and strings
+        for val in [True, 1234, 123.4, complex(1, 234)]:
+            for tostr in [asunicode, asbytes]:
+                b = np.array([val, tostr('xx')])
+                assert_equal(tostr(b[0]), tostr(val))
+                b = np.array([tostr('xx'), val])
+                assert_equal(tostr(b[1]), tostr(val))
+
+                # test also with longer strings
+                b = np.array([val, tostr('xxxxxxxxxx')])
+                assert_equal(tostr(b[0]), tostr(val))
+                b = np.array([tostr('xxxxxxxxxx'), val])
+                assert_equal(tostr(b[1]), tostr(val))
+
 if __name__ == "__main__":
     run_module_suite()
