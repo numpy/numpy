@@ -25,7 +25,11 @@
 #include "datetime_strings.h"
 
 /* Platform-specific time_t typedef */
-typedef time_t NPY_TIME_T;
+#if defined(NPY_MINGW_USE_CUSTOM_MSVCR)
+ typedef __time64_t NPY_TIME_T;
+#else
+ typedef time_t NPY_TIME_T;
+#endif
 
 /*
  * Wraps `localtime` functionality for multiple platforms. This
@@ -43,7 +47,7 @@ get_localtime(NPY_TIME_T *ts, struct tm *tms)
         func_name = "localtime_s";
         goto fail;
     }
- #elif defined(__GNUC__) && defined(NPY_MINGW_USE_CUSTOM_MSVCR)
+ #elif defined(NPY_MINGW_USE_CUSTOM_MSVCR)
     if (_localtime64_s(tms, ts) != 0) {
         func_name = "_localtime64_s";
         goto fail;
@@ -88,7 +92,7 @@ get_gmtime(NPY_TIME_T *ts, struct tm *tms)
         func_name = "gmtime_s";
         goto fail;
     }
- #elif defined(__GNUC__) && defined(NPY_MINGW_USE_CUSTOM_MSVCR)
+ #elif defined(NPY_MINGW_USE_CUSTOM_MSVCR)
     if (_gmtime64_s(tms, ts) != 0) {
         func_name = "_gmtime64_s";
         goto fail;
