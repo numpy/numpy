@@ -122,6 +122,37 @@ fail:
 }
 
 /*
+ * Wraps `mktime` functionality for multiple platforms. This
+ * converts a local time struct to an UTC value.
+ *
+ * Returns timestamp on success, -1 on failure.
+ */
+static NPY_TIME_T
+get_mktime(struct tm *tms)
+{
+    char *func_name = "<unknown>";
+    NPY_TIME_T ts;
+#if defined(NPY_MINGW_USE_CUSTOM_MSVCR)
+    ts = _mktime64(tms);
+    if (ts == -1) {
+        func_name = "_mktime64";
+        goto fail;
+    }
+#else
+    ts = mktime(tms);
+    if (ts == -1) {
+        func_name = "mktime";
+        goto fail;
+    }
+#endif
+    return ts;
+fail:
+    PyErr_Format(PyExc_OSError, "Failed to use '%s' to convert "
+                                "local time to UTC", func_name);
+    return -1;
+}
+
+/*
  * Converts a datetimestruct in UTC to a datetimestruct in local time,
  * also returning the timezone offset applied.
  *
