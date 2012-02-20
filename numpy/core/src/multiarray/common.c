@@ -68,6 +68,10 @@ _use_default_type(PyObject *op)
 }
 #endif
 
+#define RETRY_STRING 1
+#define RETRY_UNICODE 1
+
+
 /*
  * Recursively examines the object to determine an appropriate dtype
  * to use for converting to an ndarray.
@@ -94,13 +98,13 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
                         PyArray_Descr **out_dtype)
 {
     int res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, 0);
-    if (res==1) {
+    if (res==RETRY_STRING) {
         res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, NPY_STRING);
-        if (res==2) {
+        if (res==RETRY_UNICODE) {
             res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, NPY_UNICODE);
         }
     }
-    else if (res==2) {
+    else if (res==RETRY_UNICODE) {
         res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, NPY_UNICODE);
     }
     return res;
@@ -203,13 +207,10 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
         int itemsize = PyString_GET_SIZE(obj);
 
         /* If it's already a big enough string, don't bother type promoting */
-        if (*out_dtype != NULL) {
-            if ((*out_dtype)->type_num == NPY_STRING) {
-                if ((*out_dtype)->elsize >= itemsize) {
-                    return 0;
-                }
-            }
-            else return 1;
+        if (*out_dtype != NULL &&
+                        (*out_dtype)->type_num == NPY_STRING &&
+                        (*out_dtype)->elsize >= itemsize) {
+            return 0;
         }
         dtype = PyArray_DescrNewFromType(NPY_STRING);
         if (dtype == NULL) {
@@ -230,13 +231,10 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
          * If it's already a big enough unicode object,
          * don't bother type promoting
          */
-        if (*out_dtype != NULL) {
-            if ((*out_dtype)->type_num == NPY_UNICODE) {
-                if((*out_dtype)->elsize >= itemsize) {
-                    return 0;
-                }
-            }
-            else return 2;
+        if (*out_dtype != NULL &&
+                        (*out_dtype)->type_num == NPY_UNICODE &&
+                        (*out_dtype)->elsize >= itemsize) {
+            return 0;
         }
         dtype = PyArray_DescrNewFromType(NPY_UNICODE);
         if (dtype == NULL) {
@@ -417,6 +415,12 @@ promote_types:
             return -1;
         }
         Py_DECREF(*out_dtype);
+        if (res_dtype->type_num == NPY_UNICODE && (*out_dtype)->type_num != NPY_UNICODE) {
+            return RETRY_UNICODE;
+        }
+        if (res_dtype->type_num == NPY_STRING && (*out_dtype)->type_num != NPY_STRING) {
+            return RETRY_STRING;
+        }
         *out_dtype = res_dtype;
         return 0;
     }
@@ -426,6 +430,9 @@ fail:
     *out_dtype = NULL;
     return -1;
 }
+
+#undef RETRY_STRING
+#undef RETRY_UNICODE
 
 /* new reference */
 NPY_NO_EXPORT PyArray_Descr *
