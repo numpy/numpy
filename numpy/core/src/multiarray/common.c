@@ -89,9 +89,26 @@ _use_default_type(PyObject *op)
  *
  * Returns 0 on success, -1 on failure.
  */
-NPY_NO_EXPORT int
+ NPY_NO_EXPORT int
 PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
                         PyArray_Descr **out_dtype)
+{
+    int res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, 0);
+    if (res==1) {
+        res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, 1);
+        if (res==2) {
+            res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, 2);
+        }
+    }
+    else if (res==2) {
+        res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, 2);
+    }
+    return res;
+}
+
+NPY_NO_EXPORT int
+PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
+                              PyArray_Descr **out_dtype, int string_status)
 {
     int i, size;
     PyArray_Descr *dtype = NULL;
@@ -117,9 +134,44 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
 
     /* Check if it's a NumPy scalar */
     if (PyArray_IsScalar(obj, Generic)) {
-        dtype = PyArray_DescrFromScalar(obj);
-        if (dtype == NULL) {
-            goto fail;
+        int itemsize;
+        PyObject *temp;
+
+        if (string_status==0) {
+            dtype = PyArray_DescrFromScalar(obj);
+            if (dtype == NULL) {
+                goto fail;
+            }
+        }
+        else if (string_status==1) {
+            dtype = PyArray_DescrNewFromType(NPY_STRING);
+            if (dtype == NULL) {
+                goto fail;
+            }
+            if ((temp = PyObject_Str(obj)) == NULL) {
+                return -1;
+            }   
+            itemsize = PyString_GET_SIZE(temp);
+            Py_DECREF(temp);
+            if (dtype->elsize >= itemsize) {
+                return 0;
+            }
+            dtype->elsize = itemsize;
+        }
+        else if (string_status==2) {
+            dtype = PyArray_DescrNewFromType(NPY_UNICODE);
+            if (dtype == NULL) {
+                goto fail;
+            }
+            if ((temp = PyObject_Str(obj)) == NULL) {
+                return -1;
+            }   
+            itemsize = PyString_GET_SIZE(temp);
+            Py_DECREF(temp);
+            if (dtype->elsize >= itemsize) {
+                return 0;
+            }
+            dtype->elsize = itemsize;
         }
         goto promote_types;
     }
@@ -127,6 +179,39 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
     /* Check if it's a Python scalar */
     dtype = _array_find_python_scalar_type(obj);
     if (dtype != NULL) {
+        int itemsize;
+        PyObject *temp;
+
+        if (string_status==1) {
+            dtype = PyArray_DescrNewFromType(NPY_STRING);
+            if (dtype == NULL) {
+                goto fail;
+            }
+            if ((temp = PyObject_Str(obj)) == NULL) {
+                return -1;
+            }   
+            itemsize = PyString_GET_SIZE(temp);
+            Py_DECREF(temp);
+            if (dtype->elsize >= itemsize) {
+                return 0;
+            }
+            dtype->elsize = itemsize;
+        }
+        if (string_status==2) {
+            dtype = PyArray_DescrNewFromType(NPY_UNICODE);
+            if (dtype == NULL) {
+                goto fail;
+            }
+            if ((temp = PyObject_Str(obj)) == NULL) {
+                return -1;
+            }   
+            itemsize = PyString_GET_SIZE(temp);
+            Py_DECREF(temp);
+            if (dtype->elsize >= itemsize) {
+                return 0;
+            }
+            dtype->elsize = itemsize;
+        }
         goto promote_types;
     }
 
@@ -141,11 +226,15 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
         int itemsize = PyString_GET_SIZE(obj);
 
         /* If it's already a big enough string, don't bother type promoting */
-        if (*out_dtype != NULL &&
-                        (*out_dtype)->type_num == NPY_STRING &&
-                        (*out_dtype)->elsize >= itemsize) {
-            return 0;
+        if (*out_dtype != NULL) {
+            if ((*out_dtype)->type_num == NPY_STRING) {
+                if ((*out_dtype)->elsize >= itemsize) {
+                    return 0;
+                }
+            }
+            else return 1;
         }
+        else if (string_status==0) return 1;
         dtype = PyArray_DescrNewFromType(NPY_STRING);
         if (dtype == NULL) {
             goto fail;
@@ -165,11 +254,15 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
          * If it's already a big enough unicode object,
          * don't bother type promoting
          */
-        if (*out_dtype != NULL &&
-                        (*out_dtype)->type_num == NPY_UNICODE &&
-                        (*out_dtype)->elsize >= itemsize) {
-            return 0;
+        if (*out_dtype != NULL) {
+            if ((*out_dtype)->type_num == NPY_UNICODE) {
+                if((*out_dtype)->elsize >= itemsize) {
+                    return 0;
+                }
+            }
+            else return 2;
         }
+        else if (string_status==0) return 2;
         dtype = PyArray_DescrNewFromType(NPY_UNICODE);
         if (dtype == NULL) {
             goto fail;
@@ -314,14 +407,20 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
     }
     /* Recursive call for each sequence item */
     for (i = 0; i < size; ++i) {
+        int res;
         ip = PySequence_GetItem(obj, i);
         if (ip==NULL) {
             goto fail;
         }
-        if (PyArray_DTypeFromObject(ip, maxdims - 1,
-                            out_contains_na, out_dtype) < 0) {
+        res = PyArray_DTypeFromObjectHelper(ip, maxdims - 1,
+                            out_contains_na, out_dtype, string_status);
+        if (res < 0) {
             Py_DECREF(ip);
             goto fail;
+        }
+        if (res > 0) {
+            Py_DECREF(ip);
+            return res;
         }
         Py_DECREF(ip);
     }
