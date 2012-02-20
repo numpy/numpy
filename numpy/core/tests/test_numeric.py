@@ -1159,6 +1159,12 @@ class TestAllclose(object):
     rtol = 1e-5
     atol = 1e-8
 
+    def setUp(self):
+        self.olderr = np.seterr(invalid='ignore')
+
+    def tearDown(self):
+        np.seterr(**self.olderr)
+
     def tst_allclose(self,x,y):
         assert_(allclose(x,y), "%s and %s not close" % (x,y))
 

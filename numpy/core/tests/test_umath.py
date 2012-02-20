@@ -10,7 +10,7 @@ class _FilterInvalids():
         self.olderr = np.seterr(invalid='ignore')
 
     def tearDown(self):
-        np.seterr(**olderr)
+        np.seterr(**self.olderr)
 
 
 class TestDivision(TestCase):
