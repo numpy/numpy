@@ -250,6 +250,7 @@ def find_python_dll():
     # - in system32,
     # - ortherwise (Sxs), I don't know how to get it.
     lib_dirs = []
+    lib_dirs.append(sys.prefix)
     lib_dirs.append(os.path.join(sys.prefix, 'lib'))
     try:
         lib_dirs.append(os.path.join(os.environ['SYSTEMROOT'], 'system32'))
@@ -302,13 +303,16 @@ def generate_def(dll, dfile):
 
 def find_dll(dll_name):
 
+    arch = {'AMD64' : 'amd64',
+            'Intel' : 'x86'}[get_build_architecture()]
+
     def _find_dll_in_winsxs(dll_name):
         # Walk through the WinSxS directory to find the dll.
         winsxs_path = os.path.join(os.environ['WINDIR'], 'winsxs')
         if not os.path.exists(winsxs_path):
             return None
         for root, dirs, files in os.walk(winsxs_path):
-            if dll_name in files:
+            if dll_name in files and arch in root:
                 return os.path.join(root, dll_name)
         return None
 
