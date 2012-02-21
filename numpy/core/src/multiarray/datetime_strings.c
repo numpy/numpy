@@ -269,10 +269,8 @@ convert_datetimestruct_local_to_utc(npy_datetimestruct *out_dts_utc,
         tm_.tm_isdst = -1;
 
         /* mktime converts a local 'struct tm' into a time_t */
-        rawtime = mktime(&tm_);
+        rawtime = get_mktime(&tm_);
         if (rawtime == -1) {
-            PyErr_SetString(PyExc_OSError, "Failed to use mktime to "
-                                        "convert local time to UTC");
             return -1;
         }
 
