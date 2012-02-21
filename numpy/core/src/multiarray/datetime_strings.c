@@ -139,7 +139,7 @@ get_mktime(struct tm *tms)
         goto fail;
     }
 #else
-    ts = mktime(tms)
+    ts = mktime(tms);
     if (ts == -1) {
         func_name = "mktime";
         goto fail;
