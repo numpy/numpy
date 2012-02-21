@@ -69,7 +69,7 @@ _use_default_type(PyObject *op)
 #endif
 
 #define RETRY_STRING 1
-#define RETRY_UNICODE 1
+#define RETRY_UNICODE 2
 
 
 /*
@@ -98,13 +98,13 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
                         PyArray_Descr **out_dtype)
 {
     int res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, 0);
-    if (res==RETRY_STRING) {
+    if (res == RETRY_STRING) {
         res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, NPY_STRING);
-        if (res==RETRY_UNICODE) {
+        if (res == RETRY_UNICODE) {
             res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, NPY_UNICODE);
         }
     }
-    else if (res==RETRY_UNICODE) {
+    else if (res == RETRY_UNICODE) {
         res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, out_dtype, NPY_UNICODE);
     }
     return res;
@@ -120,13 +120,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
 #if PY_VERSION_HEX >= 0x02060000
     Py_buffer buffer_view;
 #endif
-
-    if (string_type) {
-        *out_dtype = PyArray_DescrNewFromType(string_type);
-        if (*out_dtype == NULL) {
-            goto fail;
-        }
-    }
 
     /* Check if it's an ndarray */
     if (PyArray_Check(obj)) {
@@ -155,17 +148,19 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
             }
         }
         else {
-            dtype = PyArray_DescrNewFromType(string_type);
-            if (dtype == NULL) {
-                goto fail;
-            }
             if ((temp = PyObject_Str(obj)) == NULL) {
                 return -1;
             }   
             itemsize = PyString_GET_SIZE(temp);
             Py_DECREF(temp);
-            if (dtype->elsize >= itemsize) {
+            if (*out_dtype != NULL &&
+                (*out_dtype)->type_num == string_type &&
+                (*out_dtype)->elsize >= itemsize) {
                 return 0;
+            }
+            dtype = PyArray_DescrNewFromType(string_type);
+            if (dtype == NULL) {
+                goto fail;
             }
             dtype->elsize = itemsize;
         }
@@ -179,17 +174,19 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
         PyObject *temp;
 
         if (string_type) {
-            dtype = PyArray_DescrNewFromType(string_type);
-            if (dtype == NULL) {
-                goto fail;
-            }
             if ((temp = PyObject_Str(obj)) == NULL) {
                 return -1;
             }   
             itemsize = PyString_GET_SIZE(temp);
             Py_DECREF(temp);
-            if (dtype->elsize >= itemsize) {
+            if (*out_dtype != NULL &&
+                (*out_dtype)->type_num == string_type &&
+                (*out_dtype)->elsize >= itemsize) {
                 return 0;
+            }
+            dtype = PyArray_DescrNewFromType(string_type);
+            if (dtype == NULL) {
+                goto fail;
             }
             dtype->elsize = itemsize;
         }
@@ -404,6 +401,8 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
 promote_types:
     /* Set 'out_dtype' if it's NULL */
     if (*out_dtype == NULL) {
+        if (!string_type && dtype->type_num == NPY_STRING) return RETRY_STRING;
+        if (!string_type && dtype->type_num == NPY_UNICODE) return RETRY_UNICODE;
         *out_dtype = dtype;
         return 0;
     }
@@ -415,10 +414,10 @@ promote_types:
             return -1;
         }
         Py_DECREF(*out_dtype);
-        if (res_dtype->type_num == NPY_UNICODE && (*out_dtype)->type_num != NPY_UNICODE) {
+        if (!string_type && res_dtype->type_num == NPY_UNICODE && (*out_dtype)->type_num != NPY_UNICODE) {
             return RETRY_UNICODE;
         }
-        if (res_dtype->type_num == NPY_STRING && (*out_dtype)->type_num != NPY_STRING) {
+        if (!string_type && res_dtype->type_num == NPY_STRING && (*out_dtype)->type_num != NPY_STRING) {
             return RETRY_STRING;
         }
         *out_dtype = res_dtype;
