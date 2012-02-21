@@ -148,10 +148,22 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
             }
         }
         else {
-            if ((temp = PyObject_Str(obj)) == NULL) {
-                return -1;
-            }   
-            itemsize = PyString_GET_SIZE(temp);
+            if (string_type == NPY_STRING) {
+                if ((temp = PyObject_Str(obj)) == NULL) {
+                    return -1;
+                }
+                itemsize = PyString_GET_SIZE(temp);
+            }
+            else if (string_type == NPY_UNICODE) {
+#if defined(NPY_PY3K)
+                if ((temp = PyObject_Str(obj)) == NULL) {
+#else
+                if ((temp=PyObject_Unicode(obj)) == NULL) {
+#endif
+                    return -1;
+                }
+                itemsize = PyUnicode_GET_DATA_SIZE(temp);
+            }
             Py_DECREF(temp);
             if (*out_dtype != NULL &&
                 (*out_dtype)->type_num == string_type &&
@@ -174,10 +186,25 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
         PyObject *temp;
 
         if (string_type) {
-            if ((temp = PyObject_Str(obj)) == NULL) {
-                return -1;
-            }   
-            itemsize = PyString_GET_SIZE(temp);
+            if (string_type == NPY_STRING) {
+                if ((temp = PyObject_Str(obj)) == NULL) {
+                    return -1;
+                }
+                itemsize = PyString_GET_SIZE(temp);
+            }
+            else if (string_type == NPY_UNICODE) {
+#if defined(NPY_PY3K)
+                if ((temp = PyObject_Str(obj)) == NULL) {
+#else
+                if ((temp=PyObject_Unicode(obj)) == NULL) {
+#endif
+                    return -1;
+                }
+                itemsize = PyUnicode_GET_DATA_SIZE(temp);
+#ifndef Py_UNICODE_WIDE
+                itemsize <<= 1;
+#endif
+            }
             Py_DECREF(temp);
             if (*out_dtype != NULL &&
                 (*out_dtype)->type_num == string_type &&
