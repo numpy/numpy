@@ -160,7 +160,7 @@ class TestExp2(TestCase):
             assert_almost_equal(np.exp2(yf), xf)
 
 
-class TestLogAddExp2(TestCase, _FilterInvalids):
+class TestLogAddExp2(object, _FilterInvalids):
     # Need test for intermediate precisions
     def test_logaddexp2_values(self) :
         x = [1, 2, 3, 4, 5]
@@ -227,7 +227,7 @@ class TestExp(TestCase):
             assert_almost_equal(np.exp(yf), xf)
 
 
-class TestLogAddExp(TestCase, _FilterInvalids):
+class TestLogAddExp(object, _FilterInvalids):
     def test_logaddexp_values(self) :
         x = [1, 2, 3, 4, 5]
         y = [5, 4, 3, 2, 1]
@@ -440,7 +440,7 @@ class TestLdexp(TestCase):
             np.seterr(**err)
 
 
-class TestMaximum(TestCase, _FilterInvalids):
+class TestMaximum(object, _FilterInvalids):
     def test_reduce(self):
         dflt = np.typecodes['AllFloat']
         dint = np.typecodes['AllInteger']
@@ -487,7 +487,7 @@ class TestMaximum(TestCase, _FilterInvalids):
         assert_equal(np.maximum(arg1, arg2), arg2)
 
 
-class TestMinimum(TestCase, _FilterInvalids):
+class TestMinimum(object, _FilterInvalids):
     def test_reduce(self):
         dflt = np.typecodes['AllFloat']
         dint = np.typecodes['AllInteger']
@@ -534,7 +534,7 @@ class TestMinimum(TestCase, _FilterInvalids):
         assert_equal(np.minimum(arg1, arg2), arg1)
 
 
-class TestFmax(TestCase, _FilterInvalids):
+class TestFmax(object, _FilterInvalids):
     def test_reduce(self):
         dflt = np.typecodes['AllFloat']
         dint = np.typecodes['AllInteger']
@@ -576,7 +576,7 @@ class TestFmax(TestCase, _FilterInvalids):
             assert_equal(np.fmax(arg1, arg2), out)
 
 
-class TestFmin(TestCase, _FilterInvalids):
+class TestFmin(object, _FilterInvalids):
     def test_reduce(self):
         dflt = np.typecodes['AllFloat']
         dint = np.typecodes['AllInteger']
