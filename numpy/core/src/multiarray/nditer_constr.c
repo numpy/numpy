@@ -2605,20 +2605,21 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
 
     PyArrayObject *ret;
 
+    /*
+     * There is an interaction with array-dtypes here, which
+     * generally works. Let's say you make an nditer with an
+     * output dtype of a 2-double array. All-scalar inputs
+     * will result in a 1-dimensional output with shape (2).
+     * Everything still works out in the nditer, because the
+     * new dimension is always added on the end, and it cares
+     * about what happens at the beginning.
+     */
+
     /* If it's a scalar, don't need to check the axes */
     if (op_ndim == 0) {
         Py_INCREF(op_dtype);
         ret = (PyArrayObject *)PyArray_NewFromDescr(subtype, op_dtype, 0,
                                NULL, NULL, NULL, 0, NULL);
-
-        /* Double-check that the subtype didn't mess with the dimensions */
-        if (PyArray_NDIM(ret) != 0) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "Iterator automatic output has an array subtype "
-                    "which changed the dimensions of the output");
-            Py_DECREF(ret);
-            return NULL;
-        }
 
         return ret;
     }
