@@ -454,6 +454,17 @@ def test_array_maskna_view_function():
     assert_(c.flags.maskna)
     assert_(c.flags.ownmaskna)
 
+def test_array_maskna_view_dtype():
+    codes = np.typecodes['AllFloat'] + \
+            np.typecodes['AllInteger'] + \
+            np.typecodes['Complex']
+    tcs = [(x,y) for x in codes for y in codes if x != y]
+
+    for (from_type, to_type) in tcs:
+        a = np.arange(10, dtype=from_type, maskna=True)
+
+        # Ensure that a view of a masked array cannot change dtype
+        assert_raises(TypeError, a.view, to_type)
 
 def test_array_maskna_array_function_1D():
     a = np.arange(10)
