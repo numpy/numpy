@@ -434,13 +434,20 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         PyErr_SetString(PyExc_TypeError, "invalid data-type for array");
         return -1;
     }
+
+    if (PyArray_HASMASKNA(self) &&
+            newtype->elsize != PyArray_DESCR(self)->elsize) {
+        PyErr_SetString(PyExc_TypeError,   
+                        "data-type for NA-masked array must match itemsize.");
+        return -1;
+    }
+
     if (PyDataType_FLAGCHK(newtype, NPY_ITEM_HASOBJECT) ||
         PyDataType_FLAGCHK(newtype, NPY_ITEM_IS_POINTER) ||
         PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_HASOBJECT) ||
         PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_IS_POINTER)) {
-        PyErr_SetString(PyExc_TypeError,                      \
-                        "Cannot change data-type for object " \
-                        "array.");
+        PyErr_SetString(PyExc_TypeError, 
+                        "Cannot change data-type for object array.");
         Py_DECREF(newtype);
         return -1;
     }
