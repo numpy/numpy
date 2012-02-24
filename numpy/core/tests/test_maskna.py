@@ -3,6 +3,7 @@ from numpy.compat import asbytes
 from numpy.testing import *
 import sys, warnings
 from numpy.testing.utils import WarningManager
+import itertools
 
 def test_array_maskna_flags():
     a = np.arange(3)
@@ -456,6 +457,31 @@ def test_array_maskna_view_function():
     assert_(c.flags.maskna)
     assert_(c.flags.ownmaskna)
 
+def test_array_maskna_view_dtype():
+    tcs = np.typecodes['AllFloat'] + \
+          np.typecodes['AllInteger'] + \
+          np.typecodes['Complex']
+
+    same_size = []
+    diff_size = []
+    for x in itertools.combinations(tcs, 2):
+        if np.dtype(x[0]).itemsize == np.dtype(x[1]).itemsize:
+            same_size.append(x)
+        else: diff_size.append(x)
+
+    for (from_type, to_type) in diff_size:
+        a = np.arange(10, dtype=from_type, maskna=True)
+
+        # Ensure that a view of a masked array cannot change to
+        # different sized dtype
+        assert_raises(TypeError, a.view, to_type)
+
+    for (from_type, to_type) in same_size:
+        a = np.arange(10, dtype=from_type, maskna=True)
+
+        # Ensure that a view of a masked array can change to
+        # same sized dtype
+        b = a.view(dtype=to_type)
 
 def test_array_maskna_array_function_1D():
     a = np.arange(10)
