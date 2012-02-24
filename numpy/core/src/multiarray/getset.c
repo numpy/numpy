@@ -409,6 +409,13 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     int i;
     char *msg = "new type not compatible with array.";
 
+    if (PyArray_HASMASKNA(self)) {
+        PyErr_SetString(PyExc_TypeError,                      \
+                        "Cannot change data-type for masked " \
+                        "array.");
+        return -1;
+    }
+
     if (!(PyArray_DescrConverter(arg, &newtype)) ||
         newtype == NULL) {
         PyErr_SetString(PyExc_TypeError, "invalid data-type for array");
