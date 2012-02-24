@@ -2,12 +2,12 @@
 
 from numpy.testing import *
 import numpy as np
-from numpy import pad
+from numpy.lib.pad import PadWidthWrongNumberOfValues, NegativePadWidth
 
 class TestNearest(TestCase):
     def test_check_simple(self):
         a = np.arange(100).astype('f')
-        a = pad.with_mean(a, ((25, 20), ), stat_len=((2, 3), ))
+        a = np.lib.pad_mean(a, ((25, 20), ), stat_len=((2, 3), ))
         b = np.array([
                      0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
                      0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5,
@@ -32,7 +32,7 @@ class TestNearest(TestCase):
 class TestMaximum1(TestCase):
     def test_check_simple(self):
         a = np.arange(100)
-        a = pad.with_maximum(a, (25, 20))
+        a = np.lib.pad_maximum(a, (25, 20))
         b = np.array([
                      99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
                      99, 99, 99, 99, 99, 99, 99, 99, 99, 99,
@@ -57,7 +57,7 @@ class TestMaximum1(TestCase):
 class TestMaximum2(TestCase):
     def test_check_simple(self):
         a = np.arange(100) + 1
-        a = pad.with_maximum(a, (25, 20))
+        a = np.lib.pad_maximum(a, (25, 20))
         b = np.array([
                      100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
                      100, 100, 100, 100, 100, 100, 100, 100, 100, 100,
@@ -82,7 +82,7 @@ class TestMaximum2(TestCase):
 class TestMinimum1(TestCase):
     def test_check_simple(self):
         a = np.arange(100)
-        a = pad.with_minimum(a, (25, 20))
+        a = np.lib.pad_minimum(a, (25, 20))
         b = np.array([
                        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
                        0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -107,7 +107,7 @@ class TestMinimum1(TestCase):
 class TestMinimum2(TestCase):
     def test_check_simple(self):
         a = np.arange(100) + 2
-        a = pad.with_minimum(a, (25, 20))
+        a = np.lib.pad_minimum(a, (25, 20))
         b = np.array([
                        2,  2,  2,  2,  2,  2,  2,  2,  2,  2,
                        2,  2,  2,  2,  2,  2,  2,  2,  2,  2,
@@ -132,7 +132,7 @@ class TestMinimum2(TestCase):
 class TestMedian(TestCase):
     def test_check_simple(self):
         a = np.arange(100).astype('f')
-        a = pad.with_median(a, (25, 20))
+        a = np.lib.pad_median(a, (25, 20))
         b = np.array([
                     49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5,
                     49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5,
@@ -157,7 +157,7 @@ class TestMedian(TestCase):
 class TestMean(TestCase):
     def test_check_simple(self, level=1):
         a = np.arange(100).astype('f')
-        a = pad.with_mean(a, (25, 20))
+        a = np.lib.pad_mean(a, (25, 20))
         b = np.array([
                     49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5,
                     49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5, 49.5,
@@ -182,7 +182,7 @@ class TestMean(TestCase):
 class TestConstant(TestCase):
     def test_check_simple(self):
         a = np.arange(100)
-        a = pad.with_constant(a, (25, 20), (10, 20))
+        a = np.lib.pad_constant(a, (25, 20), (10, 20))
         b = np.array([10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
                      10, 10, 10, 10, 10, 10, 10, 10, 10, 10,
                      10, 10, 10, 10, 10,
@@ -206,7 +206,7 @@ class TestConstant(TestCase):
 class TestLinearRamp(TestCase):
     def test_check_simple(self):
         a = np.arange(100).astype('f')
-        a = pad.with_linear_ramp(a, (25, 20), (4, 5))
+        a = np.lib.pad_linear_ramp(a, (25, 20), (4, 5))
         b = np.array([
                      4.00, 3.84, 3.68, 3.52, 3.36, 3.20, 3.04, 2.88, 2.72, 2.56,
                      2.40, 2.24, 2.08, 1.92, 1.76, 1.60, 1.44, 1.28, 1.12, 0.96,
@@ -231,7 +231,7 @@ class TestLinearRamp(TestCase):
 class TestReflect(TestCase):
     def test_check_simple(self):
         a = np.arange(100)
-        a = pad.with_reflect(a, (25, 20))
+        a = np.lib.pad_reflect(a, (25, 20))
         b = np.array([
                      25, 24, 23, 22, 21, 20, 19, 18, 17, 16,
                      15, 14, 13, 12, 11, 10,  9,  8,  7,  6,
@@ -257,7 +257,7 @@ class TestWrap(TestCase):
 
     def test_check_simple(self):
         a = np.arange(100)
-        a = pad.with_wrap(a, (25, 20))
+        a = np.lib.pad_wrap(a, (25, 20))
         b = np.array([
                      75, 76, 77, 78, 79, 80, 81, 82, 83, 84,
                      85, 86, 87, 88, 89, 90, 91, 92, 93, 94,
@@ -283,7 +283,7 @@ class TestNearestRank2(TestCase):
     def test_check_simple(self):
         a = np.arange(30)
         a = np.reshape(a, (6,5))
-        a = pad.with_mean(a, pad_width=((2,3),(3,2)), stat_len=(3,))
+        a = np.lib.pad_mean(a, pad_width=((2,3),(3,2)), stat_len=(3,))
         b = np.array([[6,  6,  6,     5,  6,  7,  8,  9,     8,  8],
                      [ 6,  6,  6,     5,  6,  7,  8,  9,     8,  8],
 
@@ -305,7 +305,7 @@ class TestPadWidthError1(TestCase):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
         kwargs = dict(pad_width=((2, 3), (3, 2), (4,5)), stat_len=(3, ))
-        assert_raises(pad.pad.PadWidthWrongNumberOfValues, pad.with_mean, arr,
+        assert_raises(PadWidthWrongNumberOfValues, np.lib.pad_mean, arr,
                 **kwargs)
 
 
@@ -314,7 +314,7 @@ class TestPadWidthError2(TestCase):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
         kwargs = dict(pad_width=((2, 3, 4), (3, 2)), stat_len=(3, ))
-        assert_raises(pad.pad.PadWidthWrongNumberOfValues, pad.with_mean, arr,
+        assert_raises(PadWidthWrongNumberOfValues, np.lib.pad_mean, arr,
                 **kwargs)
 
 
@@ -323,7 +323,7 @@ class TestNegativePadWidth(TestCase):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
         kwargs = dict(pad_width=((-2, 3), (3, 2)), stat_len=(3, ))
-        assert_raises(pad.pad.NegativePadWidth, pad.with_mean, arr,
+        assert_raises(NegativePadWidth, np.lib.pad_mean, arr,
                 **kwargs)
 
 
