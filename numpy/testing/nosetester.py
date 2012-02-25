@@ -338,6 +338,9 @@ class NoseTester(object):
             # Reset the warning filters to the default state,
             # so that running the tests is more repeatable.
             warnings.resetwarnings()
+            # If deprecation warnings are not set to 'error' below,
+            # at least set them to 'warn'
+            warnings.filterwarnings('always', category=DeprecationWarning)
             # Force the requested warnings to raise
             for warningtype in raisewarnings:
                 warnings.filterwarnings('error', category=warningtype)
