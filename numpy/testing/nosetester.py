@@ -252,8 +252,9 @@ class NoseTester(object):
                 argv += ['--with-' + plug.name]
         return argv, plugins
 
-    def test(self, label='fast', verbose=1, extra_argv=None, doctests=False,
-             coverage=False):
+    def test(self, label='fast', verbose=1, extra_argv=None,
+            doctests=False, coverage=False,
+            raisewarnings=(DeprecationWarning, RuntimeWarning)):
         """
         Run tests for module using nose.
 
@@ -279,6 +280,11 @@ class NoseTester(object):
             If True, report coverage of NumPy code. Default is False.
             (This requires the `coverage module:
              <http://nedbatchelder.com/code/modules/coverage.html>`_).
+        raisewarnings : tuple of warnings, optional
+            This specifies which warnings to configure as 'raise' instead
+            of 'warn' during the test execution. To disable this feature,
+            pass an empty tuple. The default is (DeprecationWarning,
+            RuntimeWarning).
 
         Returns
         -------
@@ -329,11 +335,12 @@ class NoseTester(object):
         warn_ctx = numpy.testing.utils.WarningManager()
         warn_ctx.__enter__()
         try:
-
-            # Force deprecation warnings to raise
-            warnings.filterwarnings('error', category=DeprecationWarning)
-            # Force runtime warnings to raise
-            warnings.filterwarnings('error', category=RuntimeWarning)
+            # Reset the warning filters to the default state,
+            # so that running the tests is more repeatable.
+            warnings.resetwarnings()
+            # Force the requested warnings to raise
+            for warningtype in raisewarnings:
+                warnings.filterwarnings('error', category=warningtype)
 
             argv, plugins = self.prepare_test_args(label, verbose, extra_argv,
                                                    doctests, coverage)
