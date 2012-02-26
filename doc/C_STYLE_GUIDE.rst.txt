@@ -2,11 +2,11 @@
 NumPy C Style Guide
 ===================
 
-The NumPy C coding conventions are based on Python PEP-0007 by Guido Rossum
-with a few added strictures. There are many C coding conventions and it
-must be emphasized that the primary goal of the NumPy conventions isn't to
-choose the 'best' style, about which there is certain to be disagreement,
-but to achieve uniformity. Because the Numpy conventions are very close to
+The NumPy C coding conventions are based on Python PEP-0007 by Guido van
+Rossum with a few added strictures. There are many C coding conventions and
+it must be emphasized that the primary goal of the NumPy conventions isn't
+to choose the 'best', about which there is certain to be disagreement, but
+to achieve uniformity. Because the Numpy conventions are very close to
 those in PEP-0007, that PEP is used as a template below with the NumPy
 additions and variations in the appropriate spots.
 
@@ -36,7 +36,7 @@ C dialect
   must be at the top of a block (not necessarily at the top of
   function).
 
-* Don't use GCC extensions (e.g. don't write multi*line strings
+* Don't use GCC extensions (e.g. don't write multi-line strings
   without trailing backslashes). Preferably break long strings
   up onto separate lines like so::
 
@@ -59,19 +59,18 @@ C dialect
 Code lay-out
 ------------
 
-* Use 4*space indents and no tabs at all.
+* Use 4-space indents and no tabs at all.
 
 * No line should be longer than 80 characters.  If this and the
-  previous rule together don't give you enough room to code, your
-  code is too complicated ** consider using subroutines.
+  previous rule together don't give you enough room to code, your code is
+  too complicated, consider using subroutines.
 
 * No line should end in whitespace.  If you think you need
-  significant trailing whitespace, think again ** somebody's
-  editor might delete it as a matter of routine.
+  significant trailing whitespace, think again, somebody's editor might
+  delete it as a matter of routine.
 
 * Function definition style: function name in column 1, outermost
-  curly braces in column 1, blank line after local variable
-  declarations::
+  curly braces in column 1, blank line after local variable declarations::
 
         static int
         extra_ivars(PyTypeObject *type, PyTypeObject *base)
@@ -83,6 +82,11 @@ Code lay-out
             ...
             return 1;
         }
+
+  If the transition to C++ goes through it is possible that this form will
+  be relaxed so that short class methods meant to be inlined can have the
+  return type on the same line as the function name. However, that is yet to
+  be determined.
 
 * Code structure: one space between keywords like ``if``, ``for`` and
   the following left parenthesis; no spaces inside the parenthesis; braces
@@ -116,6 +120,10 @@ Code lay-out
         PyErr_SetString(PyExc_TypeError,
                 "Oh dear, you messed up.");
 
+  Here appropriately means at least two tabs. It isn't necessary to
+  line everything up with the opening parenthesis of the function
+  call.
+
 * When you break a long expression at a binary operator, the
   operator goes at the end of the previous line, e.g., ::
 
@@ -125,6 +133,9 @@ Code lay-out
                 (size_t)t_size == b_size + sizeof(PyObject *)) {
             return 0;
         }
+
+  Note that the terms in the multi-line Boolean expression are indented so
+  as to make the beginning of the code block clearly visible.
 
 * Put blank lines around functions, structure definitions, and
   major sections inside functions.
@@ -171,8 +182,8 @@ Naming conventions
 Function documentation
 ----------------------
 
-Numpy doesn't have a function documentation standard at this time, but
+Numpy doesn't have a C function documentation standard at this time, but
 needs one. Most numpy functions are not documented in the code and that
-needs to change. One possibility is Doxygen with a plugin so that the same
+should change. One possibility is Doxygen with a plugin so that the same
 NumPy style used for Python functions can also be used for documenting
 C functions, see the files in doc/cdoc/.
