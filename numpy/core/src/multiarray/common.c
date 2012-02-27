@@ -104,23 +104,19 @@ PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
 {
     int res;
 
-    res = PyArray_DTypeFromObjectHelper(
-            obj, maxdims, out_contains_na, out_dtype, 0
-          );
+    res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, 
+                out_dtype, 0);
     if (res == RETRY_WITH_STRING) {
-        res = PyArray_DTypeFromObjectHelper(
-                obj, maxdims, out_contains_na, out_dtype, NPY_STRING
-              );
+        res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, 
+                    out_dtype, NPY_STRING);
         if (res == RETRY_WITH_UNICODE) {
-            res = PyArray_DTypeFromObjectHelper(
-                    obj, maxdims, out_contains_na, out_dtype, NPY_UNICODE
-                  );
+            res = PyArray_DTypeFromObjectHelper(obj, maxdims, 
+                        out_contains_na, out_dtype, NPY_UNICODE);
         }
     }
     else if (res == RETRY_WITH_UNICODE) {
-        res = PyArray_DTypeFromObjectHelper(
-                obj, maxdims, out_contains_na, out_dtype, NPY_UNICODE
-              );
+        res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na, 
+                    out_dtype, NPY_UNICODE);
     }
     return res;
 }
@@ -181,8 +177,8 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
             }
             Py_DECREF(temp);
             if (*out_dtype != NULL &&
-                (*out_dtype)->type_num == string_type &&
-                (*out_dtype)->elsize >= itemsize) {
+                    (*out_dtype)->type_num == string_type &&
+                    (*out_dtype)->elsize >= itemsize) {
                 return 0;
             }
             dtype = PyArray_DescrNewFromType(string_type);
@@ -222,8 +218,8 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
             }
             Py_DECREF(temp);
             if (*out_dtype != NULL &&
-                (*out_dtype)->type_num == string_type &&
-                (*out_dtype)->elsize >= itemsize) {
+                    (*out_dtype)->type_num == string_type &&
+                    (*out_dtype)->elsize >= itemsize) {
                 return 0;
             }
             dtype = PyArray_DescrNewFromType(string_type);
@@ -443,8 +439,12 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
 promote_types:
     /* Set 'out_dtype' if it's NULL */
     if (*out_dtype == NULL) {
-        if (!string_type && dtype->type_num == NPY_STRING) return RETRY_WITH_STRING;
-        if (!string_type && dtype->type_num == NPY_UNICODE) return RETRY_WITH_UNICODE;
+        if (!string_type && dtype->type_num == NPY_STRING) {
+            return RETRY_WITH_STRING;
+        }
+        if (!string_type && dtype->type_num == NPY_UNICODE) {
+            return RETRY_WITH_UNICODE;
+        }
         *out_dtype = dtype;
         return 0;
     }
