@@ -430,9 +430,8 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     }
 
     if (PyArray_HASMASKNA(self)) {
-        PyErr_SetString(PyExc_TypeError,                      \
-                        "Cannot change data-type for masked " \
-                        "array.");
+        PyErr_SetString(PyExc_TypeError,   
+                        "Cannot change data-type for NA-masked array.");
         return -1;
     }
 
@@ -445,9 +444,8 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         PyDataType_FLAGCHK(newtype, NPY_ITEM_IS_POINTER) ||
         PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_HASOBJECT) ||
         PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_IS_POINTER)) {
-        PyErr_SetString(PyExc_TypeError,                      \
-                        "Cannot change data-type for object " \
-                        "array.");
+        PyErr_SetString(PyExc_TypeError, 
+                        "Cannot change data-type for object array.");
         Py_DECREF(newtype);
         return -1;
     }
