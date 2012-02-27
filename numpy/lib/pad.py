@@ -77,6 +77,7 @@ class IncorrectKeywordValue(Exception):
 ########
 # Private utility functions.
 
+
 def _create_vector(vector, pad_tuple, before_val, after_val):
     '''
     Private function which creates the padded vector to pad_mean, pad_maximum,
@@ -87,11 +88,12 @@ def _create_vector(vector, pad_tuple, before_val, after_val):
         vector[-pad_tuple[1]:] = after_val
     return vector
 
+
 def _normalize_shape(vector, shape):
     pw = None
     shapelen = len(np.shape(vector))
     if (isinstance(shape, int)):
-        pw = ((shape, shape), )*shapelen
+        pw = ((shape, shape), ) * shapelen
     elif (isinstance(shape, (tuple, list))
             and isinstance(shape[0], (tuple, list))
             and len(shape) == shapelen):
@@ -103,7 +105,7 @@ def _normalize_shape(vector, shape):
     elif (isinstance(shape, (tuple, list))
             and isinstance(shape[0], (int, float, long))
             and len(shape) == 2):
-        pw = (shape, )*shapelen
+        pw = (shape, ) * shapelen
     return pw
 
 
@@ -240,19 +242,19 @@ def _linear_ramp(vector, pad_tuple, iaxis, bvec, avec, kw):
     '''
     end_values = kw['end_values'][iaxis]
     before_delta = ((vector[pad_tuple[0]] - end_values[0])
-                    /float(pad_tuple[0]))
+                    / float(pad_tuple[0]))
     after_delta = ((vector[-pad_tuple[1] - 1] - end_values[1])
-                   /float(pad_tuple[1]))
+                   / float(pad_tuple[1]))
 
     before_vector = np.ones((pad_tuple[0], )) * end_values[0]
     before_vector = before_vector.astype(vector.dtype)
     for i in range(len(before_vector)):
-        before_vector[i] = before_vector[i] + i*before_delta
+        before_vector[i] = before_vector[i] + i * before_delta
 
     after_vector = np.ones((pad_tuple[1], )) * end_values[1]
     after_vector = after_vector.astype(vector.dtype)
     for i in range(len(after_vector)):
-        after_vector[i] = after_vector[i] + i*after_delta
+        after_vector[i] = after_vector[i] + i * after_delta
     after_vector = after_vector[::-1]
 
     return _create_vector(vector, pad_tuple, before_vector, after_vector)
@@ -262,13 +264,13 @@ def _reflect(vector, pad_tuple, iaxis, bvec, avec, kw):
     '''
     Private function to calculate the before/after vectors.
     '''
-    before_vector = (vector[pad_tuple[0] + 1:2*pad_tuple[0] + 1])[::-1]
-    after_vector = (vector[-2*pad_tuple[1] - 1:-pad_tuple[1] - 1])[::-1]
+    before_vector = (vector[pad_tuple[0] + 1:2 * pad_tuple[0] + 1])[::-1]
+    after_vector = (vector[-2 * pad_tuple[1] - 1: -pad_tuple[1] - 1])[::-1]
     if kw['reflect_type'] == 'even':
         pass
     elif kw['reflect_type'] == 'odd':
-        before_vector = 2*vector[pad_tuple[0]] - before_vector
-        after_vector = 2*vector[-pad_tuple[-1] - 1] - after_vector
+        before_vector = 2 * vector[pad_tuple[0]] - before_vector
+        after_vector = 2 * vector[-pad_tuple[-1] - 1] - after_vector
     else:
         raise IncorrectKeywordValue('reflect_type', kw['reflect_type'])
     return _create_vector(vector, pad_tuple, before_vector, after_vector)
