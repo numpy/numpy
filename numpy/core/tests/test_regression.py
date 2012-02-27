@@ -1641,10 +1641,16 @@ class TestRegression(TestCase):
         # Ticket #1990 - Data can be truncated in creation of an array from a
         # mixed sequence of numeric values and strings
         for numericval in [True, 1234, 123.4, complex(1, 234)]:
-            for stringconversion in [str, unicode, bytes]:
+            for stringconversion in [str, asunicode, asbytes]:
                 b = np.array([numericval, stringconversion('xx')])
                 assert_equal(stringconversion(b[0]), stringconversion(numericval))
                 b = np.array([stringconversion('xx'), numericval])
+                assert_equal(stringconversion(b[1]), stringconversion(numericval))
+
+                # test also with longer strings
+                b = np.array([numericval, stringconversion('xxxxxxxxxx')])
+                assert_equal(stringconversion(b[0]), stringconversion(numericval))
+                b = np.array([stringconversion('xxxxxxxxxx'), numericval])
                 assert_equal(stringconversion(b[1]), stringconversion(numericval))
 
 if __name__ == "__main__":
