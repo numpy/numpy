@@ -438,7 +438,7 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
     if (PyArray_HASMASKNA(self) &&
             newtype->elsize != PyArray_DESCR(self)->elsize) {
         PyErr_SetString(PyExc_TypeError,   
-                        "data-type for NA-masked array must match itemsize.");
+                        "data-type for NA-masked array muat match itemsize.");
         return -1;
     }
 
