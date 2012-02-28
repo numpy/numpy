@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 """The pad.py module contains a group of functions to pad values onto the edges
 of an n-dimensional array.
-
-
 """
+
 # Make sure this line is here such that epydoc 3 can parse the docstrings for
 # auto-generated documentation.
 __docformat__ = "restructuredtext en"
@@ -12,7 +11,6 @@ __docformat__ = "restructuredtext en"
 import numpy as np
 
 #===globals======================
-modname = "pad"
 
 #---other---
 __all__ = [
@@ -53,9 +51,6 @@ class NegativePadWidth(Exception):
     '''
     Error class for the negative pad width.
     '''
-    def __init__(self):
-        pass
-
     def __str__(self):
         return "\n\nCannot have negative values for the pad_width."
 
@@ -74,6 +69,7 @@ class IncorrectKeywordValue(Exception):
             The keyword '%s' cannot have the value '%s'.
             """ % (self.keyword, self.value)
 
+
 ########
 # Private utility functions.
 
@@ -90,23 +86,37 @@ def _create_vector(vector, pad_tuple, before_val, after_val):
 
 
 def _normalize_shape(vector, shape):
-    pw = None
+    '''
+    Private function to normalize all the possible ways to input a tuple of
+    tuples to define before and after vectors or the stat_len used.
+
+    int                               => ((int, int), (int, int), ...)
+    [[int1, int2], [int3, int4], ...] => ((int1, int2), (int3, int4), ...)
+    ((int1, int2), (int3, int4), ...) => no change
+    [[int1, int2], ]                  => ((int1, int2), (int1, int2), ...]
+    ((int1, int2), )                  => ((int1, int2), (int1, int2), ...)
+    [[int ,     ), )                  => ((int, int), (int, int), ...)
+    ((int ,     ), )                  => ((int, int), (int, int), ...)
+
+    The length of the returned tuple is the rank of vector.
+    '''
+    normshp = None
     shapelen = len(np.shape(vector))
     if (isinstance(shape, int)):
-        pw = ((shape, shape), ) * shapelen
+        normshp = ((shape, shape), ) * shapelen
     elif (isinstance(shape, (tuple, list))
             and isinstance(shape[0], (tuple, list))
             and len(shape) == shapelen):
-        pw = shape
+        normshp = shape
     elif (isinstance(shape, (tuple, list))
             and isinstance(shape[0], (int, float, long))
             and len(shape) == 1):
-        pw = ((shape[0], shape[0]), ) * shapelen
+        normshp = ((shape[0], shape[0]), ) * shapelen
     elif (isinstance(shape, (tuple, list))
             and isinstance(shape[0], (int, float, long))
             and len(shape) == 2):
-        pw = (shape, ) * shapelen
-    return pw
+        normshp = (shape, ) * shapelen
+    return normshp
 
 
 def _validate_pad_width(vector, pad_width):
@@ -115,18 +125,18 @@ def _validate_pad_width(vector, pad_width):
     tuple.
     '''
     shapelen = len(np.shape(vector))
-    pw = _normalize_shape(vector, pad_width)
-    if pw == None:
+    normshp = _normalize_shape(vector, pad_width)
+    if normshp == None:
         raise PadWidthWrongNumberOfValues(shapelen, pad_width)
-    for i in pw:
+    for i in normshp:
         if len(i) != 2:
-            raise PadWidthWrongNumberOfValues(shapelen, pw)
+            raise PadWidthWrongNumberOfValues(shapelen, normshp)
         if i[0] < 0 or i[1] < 0:
             raise NegativePadWidth()
-    return pw
+    return normshp
 
 
-def _loop_across(matrix, pad_width, function, **kw):
+def _loop_across(matrix, pad_width, function, **kwds):
     '''
     Private function to prepare the data for the np.apply_along_axis command
     to move through the matrix.
@@ -134,9 +144,9 @@ def _loop_across(matrix, pad_width, function, **kw):
     nmatrix = np.array(matrix)
     pad_width = _validate_pad_width(nmatrix, pad_width)
     # Need to only normalize particular keywords.
-    for i in kw:
+    for i in kwds:
         if i in ['stat_len', 'end_values', 'constant_values']:
-            kw[i] = _normalize_shape(nmatrix, kw[i])
+            kwds[i] = _normalize_shape(nmatrix, kwds[i])
     rank = range(len(nmatrix.shape))
     total_dim_increase = [np.sum(pad_width[i]) for i in rank]
     offset_slices = [slice(pad_width[i][0],
@@ -148,21 +158,17 @@ def _loop_across(matrix, pad_width, function, **kw):
 
     original_shape = []
     for iaxis in rank:
-        bvec = np.zeros(pad_width[iaxis][0])
-        avec = np.zeros(pad_width[iaxis][1])
         np.apply_along_axis(function,
                             iaxis,
                             newmat,
                             pad_width[iaxis],
                             iaxis,
-                            bvec,
-                            avec,
-                            kw)
+                            kwds)
         original_shape.append(slice(pad_width[iaxis][0], -pad_width[iaxis][1]))
     return newmat
 
 
-def _create_stat_vectors(vector, pad_tuple, iaxis, kw):
+def _create_stat_vectors(vector, pad_tuple, iaxis, kwds):
     '''
     Returns the portion of the vector required for any statistic.
     '''
@@ -171,8 +177,8 @@ def _create_stat_vectors(vector, pad_tuple, iaxis, kw):
         pt1 = None
     sbvec = vector[pad_tuple[0]:pt1]
     savec = vector[pad_tuple[0]:pt1]
-    if kw['stat_len']:
-        stat_len = kw['stat_len'][iaxis]
+    if kwds['stat_len']:
+        stat_len = kwds['stat_len'][iaxis]
         sbvec = np.arange(1)
         savec = np.arange(1)
         if pad_tuple[0] > 0:
@@ -182,65 +188,75 @@ def _create_stat_vectors(vector, pad_tuple, iaxis, kw):
     return (sbvec, savec)
 
 
-def _maximum(vector, pad_tuple, iaxis, bvec, avec, kw):
+def _maximum(vector, pad_tuple, iaxis, kwds):
     '''
     Private function to calculate the before/after vectors.
     '''
-    sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kw)
+    sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kwds)
 
+    bvec = np.zeros(pad_tuple[0])
+    avec = np.zeros(pad_tuple[1])
     bvec[:] = max(sbvec)
     avec[:] = max(savec)
     return _create_vector(vector, pad_tuple, bvec, avec)
 
 
-def _minimum(vector, pad_tuple, iaxis, bvec, avec, kw):
+def _minimum(vector, pad_tuple, iaxis, kwds):
     '''
     Private function to calculate the before/after vectors.
     '''
-    sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kw)
+    sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kwds)
 
+    bvec = np.zeros(pad_tuple[0])
+    avec = np.zeros(pad_tuple[1])
     bvec[:] = min(sbvec)
     avec[:] = min(savec)
     return _create_vector(vector, pad_tuple, bvec, avec)
 
 
-def _median(vector, pad_tuple, iaxis, bvec, avec, kw):
+def _median(vector, pad_tuple, iaxis, kwds):
     '''
     Private function to calculate the before/after vectors.
     '''
-    sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kw)
+    sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kwds)
 
+    bvec = np.zeros(pad_tuple[0])
+    avec = np.zeros(pad_tuple[1])
     bvec[:] = np.median(sbvec)
     avec[:] = np.median(savec)
     return _create_vector(vector, pad_tuple, bvec, avec)
 
 
-def _mean(vector, pad_tuple, iaxis, bvec, avec, kw):
+def _mean(vector, pad_tuple, iaxis, kwds):
     '''
     Private function to calculate the before/after vectors.
     '''
-    sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kw)
+    sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kwds)
 
+    bvec = np.zeros(pad_tuple[0])
+    avec = np.zeros(pad_tuple[1])
     bvec[:] = np.average(sbvec)
     avec[:] = np.average(savec)
     return _create_vector(vector, pad_tuple, bvec, avec)
 
 
-def _constant(vector, pad_tuple, iaxis, bvec, avec, kw):
+def _constant(vector, pad_tuple, iaxis, kwds):
     '''
     Private function to calculate the before/after vectors.
     '''
-    nconstant = kw['constant_values'][iaxis]
+    nconstant = kwds['constant_values'][iaxis]
+    bvec = np.zeros(pad_tuple[0])
+    avec = np.zeros(pad_tuple[1])
     bvec[:] = nconstant[0]
     avec[:] = nconstant[1]
     return _create_vector(vector, pad_tuple, bvec, avec)
 
 
-def _linear_ramp(vector, pad_tuple, iaxis, bvec, avec, kw):
+def _linear_ramp(vector, pad_tuple, iaxis, kwds):
     '''
     Private function to calculate the before/after vectors.
     '''
-    end_values = kw['end_values'][iaxis]
+    end_values = kwds['end_values'][iaxis]
     before_delta = ((vector[pad_tuple[0]] - end_values[0])
                     / float(pad_tuple[0]))
     after_delta = ((vector[-pad_tuple[1] - 1] - end_values[1])
@@ -260,23 +276,23 @@ def _linear_ramp(vector, pad_tuple, iaxis, bvec, avec, kw):
     return _create_vector(vector, pad_tuple, before_vector, after_vector)
 
 
-def _reflect(vector, pad_tuple, iaxis, bvec, avec, kw):
+def _reflect(vector, pad_tuple, iaxis, kwds):
     '''
     Private function to calculate the before/after vectors.
     '''
     before_vector = (vector[pad_tuple[0] + 1:2 * pad_tuple[0] + 1])[::-1]
     after_vector = (vector[-2 * pad_tuple[1] - 1: -pad_tuple[1] - 1])[::-1]
-    if kw['reflect_type'] == 'even':
+    if kwds['reflect_type'] == 'even':
         pass
-    elif kw['reflect_type'] == 'odd':
+    elif kwds['reflect_type'] == 'odd':
         before_vector = 2 * vector[pad_tuple[0]] - before_vector
         after_vector = 2 * vector[-pad_tuple[-1] - 1] - after_vector
     else:
-        raise IncorrectKeywordValue('reflect_type', kw['reflect_type'])
+        raise IncorrectKeywordValue('reflect_type', kwds['reflect_type'])
     return _create_vector(vector, pad_tuple, before_vector, after_vector)
 
 
-def _wrap(vector, pad_tuple, iaxis, bvec, avec, kw):
+def _wrap(vector, pad_tuple, iaxis, kwds):
     '''
     Private function to calculate the before/after vectors.
     '''
@@ -285,10 +301,12 @@ def _wrap(vector, pad_tuple, iaxis, bvec, avec, kw):
     return _create_vector(vector, pad_tuple, before_vector, after_vector)
 
 
-def _edge(vector, pad_tuple, iaxis, bvec, avec, kw):
+def _edge(vector, pad_tuple, iaxis, kwds):
     '''
     Private function to calculate the before/after vectors.
     '''
+    bvec = np.zeros(pad_tuple[0])
+    avec = np.zeros(pad_tuple[1])
     bvec[:] = vector[pad_tuple[0]]
     avec[:] = vector[-pad_tuple[1] - 1]
     return _create_vector(vector, pad_tuple, bvec, avec)
@@ -640,7 +658,6 @@ def pad_reflect(matrix, pad_width=(1, ), reflect_type='even'):
     array([-1,  0,  1,  2,  3,  4,  5,  6,  7,  8])
 
     """
-    # TODO self.pad_length_before & self.pad_length_after < len(self.vector)
     return _loop_across(matrix, pad_width, _reflect, reflect_type=reflect_type)
 
 
@@ -731,14 +748,14 @@ if __name__ == '__main__':
     This section is just used for testing.  Really you should only import
     this module.
     '''
+
     import numpy.lib.pad as pad
-    import numpy as np
     import doctest
     doctest.testmod()
-    arr = np.arange(100)
-    print arr
-    print pad.pad_median(arr, (3, ))
-    print pad.pad_constant(arr, (25, 20), (10, 20))
-    arr = np.arange(30)
-    arr = np.reshape(arr, (6, 5))
-    print pad.pad_mean(arr, pad_width=((2, 3), (3, 2)), stat_len=(3, ))
+    ARR = np.arange(100)
+    print ARR
+    print pad.pad_median(ARR, (3, ))
+    print pad.pad_constant(ARR, (25, 20), (10, 20))
+    ARR = np.arange(30)
+    ARR = np.reshape(ARR, (6, 5))
+    print pad.pad_mean(ARR, pad_width=((2, 3), (3, 2)), stat_len=(3, ))
