@@ -469,12 +469,12 @@ def test_array_maskna_view_dtype():
             same_size.append(x)
         else: diff_size.append(x)
 
-    for (from_type, to_type) in same_size:
+    for (from_type, to_type) in diff_size:
         a = np.arange(10, dtype=from_type, maskna=True)
 
         # Ensure that a view of a masked array cannot change to 
         # different sized dtype
-        a.view(dtype=to_type)
+        assert_raises(TypeError, a.view, to_type)
 
     for (from_type, to_type) in same_size:
         a = np.arange(10, dtype=from_type, maskna=True)
