@@ -100,6 +100,35 @@ Code lay-out
             ...
         }
 
+
+        for (i = 0; i < n; i++) {
+            one_line_statement;
+        }
+
+
+        while (isstuff) {
+            dostuff;
+        }
+
+
+        do {
+            stuff;
+        } while (isstuff);
+
+
+        switch (kind) {
+            /* Boolean kind */
+            case 'b':
+                return 0;
+            /* Unsigned int kind */
+            case 'u':
+                ...
+            /* Anything else */
+            default:
+                return 3;
+        }
+
+
 * The return statement should *not* get redundant parentheses::
 
         return Py_None; /* correct */
@@ -166,9 +195,11 @@ Code lay-out
 Naming conventions
 ------------------
 
-* There is no consistent prefix for Numpy public functions, but
+* There has been no consistent prefix for Numpy public functions, but
   they all begin with a prefix of some sort, followed by an underscore, and
   are in camel case: ``PyArray_DescrAlignConverter``, ``NpyIter_GetIterNext``.
+  In the future the names should be of the form ``Npy*_PublicFunction``,
+  where the star is something appropriate.
 
 * Public Macros should have a NPY_ prefix and then use upper case,
   for example, ``NPY_DOUBLE``.
