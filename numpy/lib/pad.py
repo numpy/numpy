@@ -307,7 +307,7 @@ def _reflect(vector, pad_tuple, iaxis, kwds):
     # Need to figure our how many time need to concatenate.
     # Tried np.resize, but couldn't figure out when would fill with zeros and
     # when would replicate the array.
-    # repeatcnt must create a before_vector longer than pad_width[0]
+    # repeatcnt must create a before_vector longer than pad_tuple[0]
     repeatcnt = int(pad_tuple[0] / (len(after_vector[1:-1]) +
                                     len(reverse))) + 1
     before_vector = np.concatenate(
@@ -342,7 +342,7 @@ def _symmetric(vector, pad_tuple, iaxis, kwds):
     # Need to figure our how many time need to concatenate.
     # Tried np.resize, but couldn't figure out when would fill with zeros and
     # when would replicate the array.
-    # repeatcnt must create a before_vector longer than pad_width[0]
+    # repeatcnt must create a before_vector longer than pad_tuple[0]
     repeatcnt = int(pad_tuple[0] / (len(after_vector) * 2)) + 1
     before_vector = np.concatenate(
                            (after_vector,
@@ -377,7 +377,7 @@ def _wrap(vector, pad_tuple, iaxis, kwds):
     # Need to figure our how many time need to concatenate.
     # Tried np.resize, but couldn't figure out when would fill with zeros and
     # when would replicate the array.
-    # repeatcnt must create a before_vector longer than pad_width[0]
+    # repeatcnt must create a before_vector longer than pad_tuple[0]
     repeatcnt = int(pad_tuple[0] / len(after_vector)) + 1
     before_vector = np.concatenate(
                            (after_vector[::-1],) *
@@ -420,12 +420,17 @@ def pad_maximum(array, pad_width=1, stat_length=None):
         (pad,) or int is a shortcut for before = after = pad width for all
         axes.
         Default is 1.
-    stat_length : {tuple of N tuples(before, after), tuple(len,), int}, optional
-        How many values at each end of vector to determine the statistic.
-        ((before_len, after_len),) * np.rank(`array`)
-        (len,) or int is a shortcut for before = after = len for all dimensions
-        ``None`` uses the entire vector.
-        Default is ``None``.
+    stat_length : {sequence of N sequences(int,int), sequence(int,int),
+                   sequence(int,), int}, optional
+        How many values at each end of the vector to calculate the statistic
+        used to pad each vector.
+        ((before_1, after_2), ... (before_N, after_N)) unique statistic
+        lengths for each vector.
+        ((before, after),) yields same before and after statistic lengths for
+        each vector.
+        (stat_length,) or int is a shortcut for before = after = statistic
+        length for all vectors.
+        Default is ``None``, to use the entire vector.
 
     Returns
     -------
@@ -484,12 +489,17 @@ def pad_minimum(array, pad_width=1, stat_length=None):
         (pad,) or int is a shortcut for before = after = pad width for all
         axes.
         Default is 1.
-    stat_length : {tuple of N tuples(int, int), tuple(int, int), tuple(int,), int}, optional
-        How many values at each end of vector to determine the statistic.
-        ((before_len, after_len),) * np.rank(`array`)
-        (len,) or int is a shortcut for before = after = len for all dimensions
-        ``None`` uses the entire vector.
-        Default is ``None``.
+    stat_length : {sequence of N sequences(int,int), sequence(int,int),
+                   sequence(int,), int}, optional
+        How many values at each end of the vector to calculate the statistic
+        used to pad each vector.
+        ((before_1, after_2), ... (before_N, after_N)) unique statistic
+        lengths for each vector.
+        ((before, after),) yields same before and after statistic lengths for
+        each vector.
+        (stat_length,) or int is a shortcut for before = after = statistic
+        length for all vectors.
+        Default is ``None``, to use the entire vector.
 
     Returns
     -------
@@ -556,20 +566,16 @@ def pad_median(array, pad_width=1, stat_length=None):
         axes.
         Default is 1.
     stat_length : {sequence of N sequences(int,int), sequence(int,int),
-                sequence(int,), int}, optional
+                   sequence(int,), int}, optional
         How many values at each end of the vector to calculate the statistic
-        used to pad the each vector.
+        used to pad each vector.
         ((before_1, after_2), ... (before_N, after_N)) unique statistic
-        lengths for each axis.
-        ((before, after),) yields same before and after statistic lengths for each axis.
-        (pad,) or int is a shortcut for before = after = statistic length for all
-        axes.
-        Default is 1.
-    stat_length : {tuple of N tuples(int, int), tuple(int, int), tuple(int,), int}, optional
-        ((before_len, after_len),) * np.rank(`array`)
-        (len,) or int is a shortcut for before = after = len for all dimensions
-        ``None`` uses the entire vector.
-        Default is ``None``.
+        lengths for each vector.
+        ((before, after),) yields same before and after statistic lengths for
+        each vector.
+        (stat_length,) or int is a shortcut for before = after = statistic
+        length for all vectors.
+        Default is ``None``, to use the entire vector.
 
     Returns
     -------
@@ -625,12 +631,17 @@ def pad_mean(array, pad_width=1, stat_length=None):
         (pad,) or int is a shortcut for before = after = pad width for all
         axes.
         Default is 1.
-    stat_length : {tuple of N tuples(int, int), tuple(int, int), tuple(int,), int}, optional
-        How many values at each end of vector to determine the statistic.
-        ((before_len, after_len),) * np.rank(`array`)
-        (len,) or int is a shortcut for before = after = len for all dimensions
-        ``None`` uses the entire vector.
-        Default is ``None``.
+    stat_length : {sequence of N sequences(int,int), sequence(int,int),
+                   sequence(int,), int}, optional
+        How many values at each end of the vector to calculate the statistic
+        used to pad each vector.
+        ((before_1, after_2), ... (before_N, after_N)) unique statistic
+        lengths for each vector.
+        ((before, after),) yields same before and after statistic lengths for
+        each vector.
+        (stat_length,) or int is a shortcut for before = after = statistic
+        length for all vectors.
+        Default is ``None``, to use the entire vector.
 
     Returns
     -------
@@ -666,7 +677,7 @@ def pad_mean(array, pad_width=1, stat_length=None):
     return _loop_across(array, pad_width, _mean, stat_length=stat_length)
 
 
-def pad_constant(array, pad_width=1, constant_values=(0, )):
+def pad_constant(array, pad_width=1, constant_values=0):
     """
     Pads with a constant value.
 
@@ -683,13 +694,16 @@ def pad_constant(array, pad_width=1, constant_values=(0, )):
         (pad,) or int is a shortcut for before = after = pad width for all
         axes.
         Default is 1.
-    constant_values : {tuple of N tuples(int, int), tuple(int, int), tuple(int,), int},
-                      optional
-        The values to set the padded values to.
-        ((before_len, after_len),) * np.rank(`array`)
-        (len,) or int is a shortcut for before = after = len for all dimensions
-        ``None`` uses the entire vector.
-        Default is ``None``.
+    constant_values : {sequence of N sequences(int,int), sequence(int,int),
+                       sequence(int,), int}, optional
+        The values to set the padded values for each axis.
+        ((before_1, after_2), ... (before_N, after_N)) unique pad constants
+        for each axis.
+        ((before, after),) yields same before and after constants for each
+        axis.
+        (constant,) or int is a shortcut for before = after = constant for all
+        axes.
+        Default is 0.
 
     Returns
     -------
@@ -728,7 +742,7 @@ def pad_constant(array, pad_width=1, constant_values=(0, )):
                          constant_values=constant_values)
 
 
-def pad_linear_ramp(array, pad_width=1, end_values=(0, )):
+def pad_linear_ramp(array, pad_width=1, end_values=0):
     """
     Pads with the linear ramp between end_value and the begining/end of the
     vector along each axis.
@@ -746,12 +760,17 @@ def pad_linear_ramp(array, pad_width=1, end_values=(0, )):
         (pad,) or int is a shortcut for before = after = pad width for all
         axes.
         Default is 1.
-    end_values: {tuple of N tuples(int, int), tuple(int, int), tuple(int,), int}, optional
-        What value should the padded values end with.
-        ((before_len, after_len),) * np.rank(`array`)
-        (len,) or int is a shortcut for before = after = len for all dimensions
-        ``None`` uses the entire vector.
-        Default is ``None``.
+    end_values : {sequence of N sequences(int,int), sequence(int,int),
+                  sequence(int,), int}, optional
+        The values used for the edge of the vector and ending value of the
+        linear_ramp.
+        ((before_1, after_2), ... (before_N, after_N)) unique end values
+        for each axis.
+        ((before, after),) yields same before and after end values for each
+        axis.
+        (constant,) or int is a shortcut for before = after = end value for all
+        axes.
+        Default is 0.
 
     Returns
     -------
