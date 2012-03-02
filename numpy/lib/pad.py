@@ -304,22 +304,9 @@ def _reflect(vector, pad_tuple, iaxis, kwds):
 
     reverse = after_vector[::-1]
 
-    # Need to figure our how many time need to concatenate.
-    # Tried np.resize, but couldn't figure out when would fill with zeros and
-    # when would replicate the array.
-    # repeatcnt must create a before_vector longer than pad_tuple[0]
-    repeatcnt = int(pad_tuple[0] / (len(after_vector[1:-1]) +
-                                    len(reverse))) + 1
-    before_vector = np.concatenate(
-                           (after_vector[1:-1],
-                            reverse) * repeatcnt)[:pad_tuple[0]][::-1]
+    before_vector = np.resize(np.concatenate((after_vector[1:-1], reverse)), pad_tuple[0])[::-1]
+    after_vector = np.resize(np.concatenate((reverse[1:-1], after_vector)), pad_tuple[1])
 
-    # repeatcnt must create a after_vector longer than pad_width[1]
-    repeatcnt = int(pad_tuple[1] / (len(after_vector) +
-                                    len(reverse[1:-1]))) + 1
-    after_vector = np.concatenate(
-                          (reverse[1:-1],
-                           after_vector) * repeatcnt)[:pad_tuple[1]]
     if kwds['reflect_type'] == 'even':
         pass
     elif kwds['reflect_type'] == 'odd':
@@ -339,22 +326,9 @@ def _symmetric(vector, pad_tuple, iaxis, kwds):
     else:
         after_vector = vector[pad_tuple[0]:-pad_tuple[1]]
 
-    # Need to figure our how many time need to concatenate.
-    # Tried np.resize, but couldn't figure out when would fill with zeros and
-    # when would replicate the array.
-    # repeatcnt must create a before_vector longer than pad_tuple[0]
-    repeatcnt = int(pad_tuple[0] / (len(after_vector) * 2)) + 1
-    before_vector = np.concatenate(
-                           (after_vector,
-                            after_vector[::-1]) *
-                            repeatcnt)[:pad_tuple[0]][::-1]
+    before_vector = np.resize(np.concatenate((after_vector, after_vector[::-1])), pad_tuple[0])[::-1]
+    after_vector = np.resize(np.concatenate((after_vector[::-1], after_vector)), pad_tuple[1])
 
-    # repeatcnt must create a after_vector longer than pad_width[1]
-    repeatcnt = int(pad_tuple[1] / (len(after_vector) * 2)) + 1
-    after_vector = np.concatenate(
-                          (after_vector[::-1],
-                           after_vector) *
-                           repeatcnt)[:pad_tuple[1]]
     if kwds['reflect_type'] == 'even':
         pass
     elif kwds['reflect_type'] == 'odd':
@@ -374,18 +348,9 @@ def _wrap(vector, pad_tuple, iaxis, kwds):
     else:
         after_vector = vector[pad_tuple[0]:-pad_tuple[1]]
 
-    # Need to figure our how many time need to concatenate.
-    # Tried np.resize, but couldn't figure out when would fill with zeros and
-    # when would replicate the array.
-    # repeatcnt must create a before_vector longer than pad_tuple[0]
-    repeatcnt = int(pad_tuple[0] / len(after_vector)) + 1
-    before_vector = np.concatenate(
-                           (after_vector[::-1],) *
-                            repeatcnt)[:pad_tuple[0]][::-1]
+    before_vector = np.resize(after_vector[::-1], pad_tuple[0])[::-1]
+    after_vector = np.resize(after_vector, pad_tuple[1])
 
-    # repeatcnt must create a after_vector longer than pad_width[1]
-    repeatcnt = int(pad_tuple[1] / len(after_vector)) + 1
-    after_vector = np.concatenate((after_vector,) * repeatcnt)[:pad_tuple[1]]
     return _create_vector(vector, pad_tuple, before_vector, after_vector)
 
 
