@@ -12,7 +12,7 @@ import numpy as np
 # At least on Windows the results of many complex functions are not conforming
 # to the C99 standard. See ticket 1574.
 # Ditto for Solaris (ticket 1642) and OS X on PowerPC.
-olderr = np.seterr(divide='ignore')
+olderr = np.seterr(all='ignore')
 try:
     functions_seem_flaky = ((np.exp(complex(np.inf, 0)).imag != 0)
                             or (np.log(complex(np.NZERO, 0)).imag != np.pi))
@@ -381,16 +381,18 @@ class TestCsqrt(object):
         # cuts first)
 
 class TestCpow(TestCase):
+    def setUp(self):
+        self.olderr = np.seterr(invalid='ignore')
+
+    def tearDown(self):
+        np.seterr(**self.olderr)
+
     def test_simple(self):
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
-        err = np.seterr(invalid='ignore')
-        try:
-            y_r = x ** 2
-            y = np.power(x, 2)
-            for i in range(len(x)):
-                assert_almost_equal(y[i], y_r[i])
-        finally:
-            np.seterr(**err)
+        y_r = x ** 2
+        y = np.power(x, 2)
+        for i in range(len(x)):
+            assert_almost_equal(y[i], y_r[i])
 
     def test_scalar(self):
         x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
@@ -401,13 +403,9 @@ class TestCpow(TestCase):
         # Substitute a result allowed by C99 standard
         p_r[4] = complex(np.inf, np.nan)
         # Do the same with numpy complex scalars
-        err = np.seterr(invalid='ignore')
-        try:
-            n_r = [x[i] ** y[i] for i in lx]
-            for i in lx:
-                assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
-        finally:
-            np.seterr(**err)
+        n_r = [x[i] ** y[i] for i in lx]
+        for i in lx:
+            assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
 
     def test_array(self):
         x = np.array([1, 1j,         2,  2.5+.37j, np.inf, np.nan])
@@ -418,15 +416,17 @@ class TestCpow(TestCase):
         # Substitute a result allowed by C99 standard
         p_r[4] = complex(np.inf, np.nan)
         # Do the same with numpy arrays
-        err = np.seterr(invalid='ignore')
-        try:
-            n_r = x ** y
-            for i in lx:
-                assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
-        finally:
-            np.seterr(**err)
+        n_r = x ** y
+        for i in lx:
+            assert_almost_equal(n_r[i], p_r[i], err_msg='Loop %d\n' % i)
 
 class TestCabs(object):
+    def setUp(self):
+        self.olderr = np.seterr(invalid='ignore')
+
+    def tearDown(self):
+        np.seterr(**self.olderr)
+
     def test_simple(self):
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
         y_r = np.array([np.sqrt(2.), 2, np.sqrt(5), np.inf, np.nan])

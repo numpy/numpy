@@ -586,9 +586,18 @@ class TestLoadTxt(TestCase):
         e.seek(0)
         x = np.loadtxt(e, dtype=int, delimiter=',', ndmin=0)
         assert_(x.shape == (3,))
-        f = StringIO()
-        assert_(np.loadtxt(f, ndmin=2).shape == (0, 1,))
-        assert_(np.loadtxt(f, ndmin=1).shape == (0,))
+
+        # Test ndmin kw with empty file.
+        warn_ctx = WarningManager()
+        warn_ctx.__enter__()
+        try:
+            warnings.filterwarnings("ignore",
+                    message="loadtxt: Empty input file:")
+            f = StringIO()
+            assert_(np.loadtxt(f, ndmin=2).shape == (0, 1,))
+            assert_(np.loadtxt(f, ndmin=1).shape == (0,))
+        finally:
+            warn_ctx.__exit__()
 
     def test_generator_source(self):
         def count():
