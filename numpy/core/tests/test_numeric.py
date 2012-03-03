@@ -1220,6 +1220,85 @@ class TestAllclose(object):
         assert_array_equal(y,array([0,inf]))
 
 
+class TestIsclose(object):
+    rtol = 1e-5
+    atol = 1e-8
+
+    def test_ip_isclose(self):
+        atol = self.atol
+        rtol = self.rtol
+
+        tests = [([inf, 0], [inf, atol*2]),
+                 ([atol, 1, 1e6*(1 + 2*rtol) + atol], [0, nan, 1e6]),
+                 (arange(3), [0, 1, 2.1])
+                ]
+        results = [[True, False],
+                   [True, False, False],
+                   [True, True, False],
+                  ]
+
+        for (x, y), result in zip(tests, results):
+            yield (assert_array_equal, isclose(x, y), result)
+
+    def tst_all_isclose(self, x, y):
+        assert_(all(isclose(x, y)), "%s and %s not close" % (x, y))
+
+    def tst_none_isclose(self, x, y):
+        msg = "%s and %s shouldn't be close"
+        assert_(not any(isclose(x, y)), msg % (x, y))
+
+    def test_ip_all_isclose(self):
+        arr = array([100,1000])
+        aran = arange(125).reshape((5,5,5))
+
+        atol = self.atol
+        rtol = self.rtol
+
+        data = [([1, 0], [1, 0]),
+                ([atol], [0]),
+                ([1], [1 + rtol + atol]),
+                (arr, arr + arr*rtol),
+                (arr, arr + arr*rtol + atol),
+                (aran, aran + aran*rtol),
+                (inf, inf),
+                (inf, [inf]),
+                ([inf, -inf], [inf, -inf])]
+
+        for (x,y) in data:
+            yield (self.tst_all_isclose, x, y)
+
+    def test_ip_none_isclose(self):
+        aran = arange(125).reshape((5,5,5))
+
+        atol = self.atol
+        rtol = self.rtol
+
+        data = [([inf, 0], [1, inf]),
+                ([inf, -inf], [1, 0]),
+                ([inf, inf], [1, -inf]),
+                ([inf, inf], [1, 0]),
+                ([nan, 0], [nan, -inf]),
+                ([atol*2], [0]),
+                ([1], [1 + rtol + atol*2]),
+                (aran, aran + rtol*1.1*aran + atol*1.1),
+                (array([inf, 1]), array([0, inf]))]
+
+        for (x,y) in data:
+            yield (self.tst_none_isclose, x, y)
+
+    def test_equal_nan(self):
+        assert_array_equal(isclose(nan, nan, equal_nan=True), [True])
+        arr = array([1.0, nan])
+        assert_array_equal(isclose(arr, arr, equal_nan=True), [True, True])
+
+    def test_no_parameter_modification(self):
+        x = array([inf, 1])
+        y = array([0, inf])
+        isclose(x, y)
+        assert_array_equal(x, array([inf, 1]))
+        assert_array_equal(y, array([0, inf]))
+
+
 class TestStdVar(TestCase):
     def setUp(self):
         self.A = array([1,-1,1,-1])
