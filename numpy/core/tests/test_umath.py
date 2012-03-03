@@ -5,7 +5,7 @@ import numpy.core.umath as ncu
 import numpy as np
 
 
-class _FilterInvalids:
+class _FilterInvalids(object):
     def setUp(self):
         self.olderr = np.seterr(invalid='ignore')
 
@@ -160,7 +160,7 @@ class TestExp2(TestCase):
             assert_almost_equal(np.exp2(yf), xf)
 
 
-class TestLogAddExp2(object, _FilterInvalids):
+class TestLogAddExp2(_FilterInvalids):
     # Need test for intermediate precisions
     def test_logaddexp2_values(self) :
         x = [1, 2, 3, 4, 5]
@@ -227,7 +227,7 @@ class TestExp(TestCase):
             assert_almost_equal(np.exp(yf), xf)
 
 
-class TestLogAddExp(object, _FilterInvalids):
+class TestLogAddExp(_FilterInvalids):
     def test_logaddexp_values(self) :
         x = [1, 2, 3, 4, 5]
         y = [5, 4, 3, 2, 1]
@@ -440,7 +440,7 @@ class TestLdexp(TestCase):
             np.seterr(**err)
 
 
-class TestMaximum(object, _FilterInvalids):
+class TestMaximum(_FilterInvalids):
     def test_reduce(self):
         dflt = np.typecodes['AllFloat']
         dint = np.typecodes['AllInteger']
@@ -487,7 +487,7 @@ class TestMaximum(object, _FilterInvalids):
         assert_equal(np.maximum(arg1, arg2), arg2)
 
 
-class TestMinimum(object, _FilterInvalids):
+class TestMinimum(_FilterInvalids):
     def test_reduce(self):
         dflt = np.typecodes['AllFloat']
         dint = np.typecodes['AllInteger']
@@ -534,7 +534,7 @@ class TestMinimum(object, _FilterInvalids):
         assert_equal(np.minimum(arg1, arg2), arg1)
 
 
-class TestFmax(object, _FilterInvalids):
+class TestFmax(_FilterInvalids):
     def test_reduce(self):
         dflt = np.typecodes['AllFloat']
         dint = np.typecodes['AllInteger']
@@ -576,7 +576,7 @@ class TestFmax(object, _FilterInvalids):
             assert_equal(np.fmax(arg1, arg2), out)
 
 
-class TestFmin(object, _FilterInvalids):
+class TestFmin(_FilterInvalids):
     def test_reduce(self):
         dflt = np.typecodes['AllFloat']
         dint = np.typecodes['AllInteger']
