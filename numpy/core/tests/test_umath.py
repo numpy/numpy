@@ -5,7 +5,7 @@ import numpy.core.umath as ncu
 import numpy as np
 
 
-class _FilterInvalids():
+class _FilterInvalids:
     def setUp(self):
         self.olderr = np.seterr(invalid='ignore')
 

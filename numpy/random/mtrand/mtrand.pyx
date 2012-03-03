@@ -1010,7 +1010,7 @@ cdef class RandomState:
                 raise ValueError("p must be 1-dimensional")
             if p.size != pop_size:
                 raise ValueError("a and p must have same size")
-            if any(p < 0):
+            if np.any(p < 0):
                 raise ValueError("probabilities are not non-negative")
             if not np.allclose(p.sum(), 1):
                 raise ValueError("probabilities do not sum to 1")
