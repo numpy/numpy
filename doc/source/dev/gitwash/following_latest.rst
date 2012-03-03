@@ -10,7 +10,7 @@ These are the instructions if you just want to follow the latest
 The steps are:
 
 * :ref:`install-git`
-* get local copy of the git repository from github_
+* get local copy of the git repository from Github_
 * update local copy from time to time
 
 Get the local copy of the code
@@ -21,6 +21,9 @@ From the command line::
    git clone git://github.com/numpy/numpy.git
 
 You now have a copy of the code tree in the new ``numpy`` directory.
+If this doesn't work you can try the alternative read-only url::
+
+   git clone https://github.com/numpy/numpy.git
 
 Updating the code
 =================
@@ -34,4 +37,4 @@ From time to time you may want to pull down the latest code.  Do this with::
 The tree in ``numpy`` will now have the latest changes from the initial
 repository.
 
-.. include:: git_links.inc
+.. _Github: https://github.com/numpy

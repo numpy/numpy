@@ -3012,21 +3012,26 @@ cdef class RandomState:
 
         Return samples drawn from a log-normal distribution.
 
-        Draw samples from a log-normal distribution with specified mean, standard
-        deviation, and shape. Note that the mean and standard deviation are not the
-        values for the distribution itself, but of the underlying normal
-        distribution it is derived from.
-
+        Draw samples from a log-normal distribution with specified mean,
+        standard deviation, and array shape.  Note that the mean and standard
+        deviation are not the values for the distribution itself, but of the
+        underlying normal distribution it is derived from.
 
         Parameters
         ----------
         mean : float
             Mean value of the underlying normal distribution
-        sigma : float, >0.
+        sigma : float, > 0.
             Standard deviation of the underlying normal distribution
         size : tuple of ints
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.
+
+        Returns
+        -------
+        samples : ndarray or float
+            The desired samples. An array of the same shape as `size` if given,
+            if `size` is None a float is returned.
 
         See Also
         --------
@@ -3036,41 +3041,28 @@ cdef class RandomState:
         Notes
         -----
         A variable `x` has a log-normal distribution if `log(x)` is normally
-        distributed.
-
-        The probability density function for the log-normal distribution is
+        distributed.  The probability density function for the log-normal
+        distribution is:
 
         .. math:: p(x) = \\frac{1}{\\sigma x \\sqrt{2\\pi}}
                          e^{(-\\frac{(ln(x)-\\mu)^2}{2\\sigma^2})}
 
-        where :math:`\\mu` is the mean and :math:`\\sigma` is the standard deviation
-        of the normally distributed logarithm of the variable.
-
-        A log-normal distribution results if a random variable is the *product* of
-        a large number of independent, identically-distributed variables in the
-        same way that a normal distribution results if the variable is the *sum*
-        of a large number of independent, identically-distributed variables
-        (see the last example). It is one of the so-called "fat-tailed"
-        distributions.
-
-        The log-normal distribution is commonly used to model the lifespan of units
-        with fatigue-stress failure modes. Since this includes
-        most mechanical systems, the log-normal distribution has widespread
-        application.
-
-        It is also commonly used to model oil field sizes, species abundance, and
-        latent periods of infectious diseases.
+        where :math:`\\mu` is the mean and :math:`\\sigma` is the standard
+        deviation of the normally distributed logarithm of the variable.
+        A log-normal distribution results if a random variable is the *product*
+        of a large number of independent, identically-distributed variables in
+        the same way that a normal distribution results if the variable is the
+        *sum* of a large number of independent, identically-distributed
+        variables.
 
         References
         ----------
-        .. [1] Eckhard Limpert, Werner A. Stahel, and Markus Abbt, "Log-normal
-               Distributions across the Sciences: Keys and Clues", May 2001
-               Vol. 51 No. 5 BioScience
-               http://stat.ethz.ch/~stahel/lognormal/bioscience.pdf
-        .. [2] Reiss, R.D., Thomas, M.(2001), Statistical Analysis of Extreme
-               Values, Birkhauser Verlag, Basel, pp 31-32.
-        .. [3] Wikipedia, "Lognormal distribution",
-               http://en.wikipedia.org/wiki/Lognormal_distribution
+        Limpert, E., Stahel, W. A., and Abbt, M., "Log-normal Distributions
+        across the Sciences: Keys and Clues," *BioScience*, Vol. 51, No. 5,
+        May, 2001.  http://stat.ethz.ch/~stahel/lognormal/bioscience.pdf
+
+        Reiss, R.D. and Thomas, M., *Statistical Analysis of Extreme Values*,
+        Basel: Birkhauser Verlag, 2001, pp. 31-32.
 
         Examples
         --------
@@ -3104,9 +3096,7 @@ cdef class RandomState:
         ...    b.append(np.product(a))
 
         >>> b = np.array(b) / np.min(b) # scale values to be positive
-
         >>> count, bins, ignored = plt.hist(b, 100, normed=True, align='center')
-
         >>> sigma = np.std(np.log(b))
         >>> mu = np.mean(np.log(b))
 

@@ -1663,12 +1663,11 @@ def fromfunction(function, shape, **kwargs):
     Parameters
     ----------
     function : callable
-        The function is called with N parameters, each of which
-        represents the coordinates of the array varying along a
-        specific axis.  For example, if `shape` were ``(2, 2)``, then
-        the parameters would be two arrays, ``[[0, 0], [1, 1]]`` and
-        ``[[0, 1], [0, 1]]``.  `function` must be capable of operating on
-        arrays, and should return a scalar value.
+        The function is called with N parameters, where N is the rank of
+        `shape`.  Each parameter represents the coordinates of the array
+        varying along a specific axis.  For example, if `shape`
+        were ``(2, 2)``, then the parameters in turn be (0, 0), (0, 1),
+        (1, 0), (1, 1).
     shape : (N,) tuple of ints
         Shape of the output array, which also determines the shape of
         the coordinate arrays passed to `function`.
@@ -1678,10 +1677,11 @@ def fromfunction(function, shape, **kwargs):
 
     Returns
     -------
-    out : any
+    fromfunction : any
         The result of the call to `function` is passed back directly.
-        Therefore the type and shape of `out` is completely determined by
-        `function`.
+        Therefore the shape of `fromfunction` is completely determined by
+        `function`.  If `function` returns a scalar value, the shape of
+        `fromfunction` would match the `shape` parameter.
 
     See Also
     --------
@@ -1689,7 +1689,7 @@ def fromfunction(function, shape, **kwargs):
 
     Notes
     -----
-    Keywords other than `shape` and `dtype` are passed to `function`.
+    Keywords other than `dtype` are passed to `function`.
 
     Examples
     --------
@@ -1979,7 +1979,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
 
     Returns
     -------
-    y : bool
+    allclose : bool
         Returns True if the two arrays are equal within the given
         tolerance; False otherwise. If either array contains NaN, then
         False is returned.
@@ -2159,7 +2159,7 @@ def seterr(all=None, divide=None, over=None, under=None, invalid=None):
     See also
     --------
     seterrcall : Set a callback function for the 'call' mode.
-    geterr, geterrcall
+    geterr, geterrcall, errstate
 
     Notes
     -----

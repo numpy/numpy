@@ -60,11 +60,16 @@ class memmap(ndarray):
         Default is 'r+'.
     offset : int, optional
         In the file, array data starts at this offset. Since `offset` is
-        measured in bytes, it should be a multiple of the byte-size of
-        `dtype`. Requires ``shape=None``. The default is 0.
+        measured in bytes, it should normally be a multiple of the byte-size
+        of `dtype`. When ``mode != 'r'``, even positive offsets beyond end of
+        file are valid; The file will be extended to accommodate the
+        additional data. The default offset is 0.
     shape : tuple, optional
-        The desired shape of the array. By default, the returned array will be
-        1-D with the number of elements determined by file size and data-type.
+        The desired shape of the array. If ``mode == 'r'`` and the number
+        of remaining bytes after `offset` is not a multiple of the byte-size
+        of `dtype`, you must specify `shape`. By default, the returned array
+        will be 1-D with the number of elements determined by file size
+        and data-type.
     order : {'C', 'F'}, optional
         Specify the order of the ndarray memory layout: C (row-major) or
         Fortran (column-major).  This only has an effect if the shape is
@@ -79,7 +84,6 @@ class memmap(ndarray):
     mode : str
         File mode.
 
-
     Methods
     -------
     close
@@ -88,6 +92,7 @@ class memmap(ndarray):
         Flush any changes in memory to file on disk.
         When you delete a memmap object, flush is called first to write
         changes to disk before removing the object.
+
 
     Notes
     -----

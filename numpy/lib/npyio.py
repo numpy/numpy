@@ -274,7 +274,7 @@ class NpzFile(object):
 
 def load(file, mmap_mode=None):
     """
-    Load a pickled, ``.npy``, or ``.npz`` binary file.
+    Load an array(s) or pickled objects from .npy, .npz, or pickled files.
 
     Parameters
     ----------
@@ -283,13 +283,11 @@ def load(file, mmap_mode=None):
         If the filename extension is ``.gz``, the file is first decompressed.
     mmap_mode: {None, 'r+', 'r', 'w+', 'c'}, optional
         If not None, then memory-map the file, using the given mode
-        (see `numpy.memmap`).  The mode has no effect for pickled or
-        zipped files.
-        A memory-mapped array is stored on disk, and not directly loaded
-        into memory.  However, it can be accessed and sliced like any
-        ndarray.  Memory mapping is especially useful for accessing
-        small fragments of large files without reading the entire file
-        into memory.
+        (see `numpy.memmap` for a detailed description of the modes).
+        A memory-mapped array is kept on disk. However, it can be accessed
+        and sliced like any ndarray.  Memory mapping is especially useful for
+        accessing small fragments of large files without reading the entire
+        file into memory.
 
     Returns
     -------
@@ -309,9 +307,9 @@ def load(file, mmap_mode=None):
 
     Notes
     -----
-    - If the file contains pickle data, then whatever is stored in the
-      pickle is returned.
-    - If the file is a ``.npy`` file, then an array is returned.
+    - If the file contains pickle data, then whatever object is stored
+      in the pickle is returned.
+    - If the file is a ``.npy`` file, then a single array is returned.
     - If the file is a ``.npz`` file, then a dictionary-like object is
       returned, containing ``{filename: array}`` key-value pairs, one for
       each file in the archive.
@@ -321,7 +319,7 @@ def load(file, mmap_mode=None):
         with load('foo.npz') as data:
             a = data['a']
 
-      The underlyling file descriptor is always closed when exiting the with block.
+      The underlyling file descriptor is closed when exiting the 'with' block.
 
     Examples
     --------
@@ -334,8 +332,10 @@ def load(file, mmap_mode=None):
 
     Store compressed data to disk, and load it again:
 
-    >>> np.savez('/tmp/123.npz', a=np.array([[1, 2, 3], [4, 5, 6]]), b=np.array([1, 2]))
-    >>> data = np.load('/tmp/123.npy')
+    >>> a=np.array([[1, 2, 3], [4, 5, 6]])
+    >>> b=np.array([1, 2])
+    >>> np.savez('/tmp/123.npz', a=a, b=b)
+    >>> data = np.load('/tmp/123.npz')
     >>> data['a']
     array([[1, 2, 3],
            [4, 5, 6]])
@@ -454,12 +454,12 @@ def savez(file, *args, **kwds):
         Either the file name (string) or an open file (file-like object)
         where the data will be saved. If file is a string, the ``.npz``
         extension will be appended to the file name if it is not already there.
-    *args : Arguments, optional
+    args : Arguments, optional
         Arrays to save to the file. Since it is not possible for Python to
         know the names of the arrays outside `savez`, the arrays will be saved
         with names "arr_0", "arr_1", and so on. These arguments can be any
         expression.
-    **kwds : Keyword arguments, optional
+    kwds : Keyword arguments, optional
         Arrays to save to the file. Arrays will be saved in the file with the
         keyword names.
 
@@ -471,6 +471,8 @@ def savez(file, *args, **kwds):
     --------
     save : Save a single array to a binary file in NumPy format.
     savetxt : Save an array to a file as plain text.
+    numpy.savez_compressed : Save several arrays into a compressed .npz file
+    format
 
     Notes
     -----
@@ -491,7 +493,7 @@ def savez(file, *args, **kwds):
     >>> x = np.arange(10)
     >>> y = np.sin(x)
 
-    Using `savez` with *args, the arrays are saved with default names.
+    Using `savez` with \\*args, the arrays are saved with default names.
 
     >>> np.savez(outfile, x, y)
     >>> outfile.seek(0) # Only needed here to simulate closing & reopening file
@@ -501,7 +503,7 @@ def savez(file, *args, **kwds):
     >>> npzfile['arr_0']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 
-    Using `savez` with **kwds, the arrays are saved with the keyword names.
+    Using `savez` with \\**kwds, the arrays are saved with the keyword names.
 
     >>> outfile = TemporaryFile()
     >>> np.savez(outfile, x=x, y=y)
@@ -511,10 +513,6 @@ def savez(file, *args, **kwds):
     ['y', 'x']
     >>> npzfile['x']
     array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-
-    See Also
-    --------
-    numpy.savez_compressed : Save several arrays into a compressed .npz file format
 
     """
     _savez(file, args, kwds, False)
@@ -1210,8 +1208,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     autostrip : bool, optional
         Whether to automatically strip white spaces from the variables.
     replace_space : char, optional
-        Character(s) used in replacement of white spaces in the variables names.
-        By default, use a '_'.
+        Character(s) used in replacement of white spaces in the variables
+        names. By default, use a '_'.
     case_sensitive : {True, False, 'upper', 'lower'}, optional
         If True, field names are case sensitive.
         If False or 'upper', field names are converted to upper case.
@@ -1246,6 +1244,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
       exception is raised).
     * Individual values are not stripped of spaces by default.
       When using a custom converter, make sure the function does remove spaces.
+
+    References
+    ----------
+    .. [1] Numpy User Guide, section `I/O with Numpy
+           <http://docs.scipy.org/doc/numpy/user/basics.io.genfromtxt.html>`_.
 
     Examples
     ---------
@@ -1770,8 +1773,9 @@ def ndfromtxt(fname, **kwargs):
     """
     Load ASCII data stored in a file and return it as a single array.
 
-    Complete description of all the optional input parameters is available in
-    the docstring of the `genfromtxt` function.
+    Parameters
+    ----------
+    fname, kwargs : For a description of input parameters, see `genfromtxt`.
 
     See Also
     --------
@@ -1786,7 +1790,9 @@ def mafromtxt(fname, **kwargs):
     """
     Load ASCII data stored in a text file and return a masked array.
 
-    For a complete description of all the input parameters, see `genfromtxt`.
+    Parameters
+    ----------
+    fname, kwargs : For a description of input parameters, see `genfromtxt`.
 
     See Also
     --------
@@ -1804,8 +1810,9 @@ def recfromtxt(fname, **kwargs):
     If ``usemask=False`` a standard `recarray` is returned,
     if ``usemask=True`` a MaskedRecords array is returned.
 
-    Complete description of all the optional input parameters is available in
-    the docstring of the `genfromtxt` function.
+    Parameters
+    ----------
+    fname, kwargs : For a description of input parameters, see `genfromtxt`.
 
     See Also
     --------
@@ -1836,7 +1843,9 @@ def recfromcsv(fname, **kwargs):
     `recarray`) or a masked record array (if ``usemask=True``,
     see `ma.mrecords.MaskedRecords`).
 
-    For a complete description of all the input parameters, see `genfromtxt`.
+    Parameters
+    ----------
+    fname, kwargs : For a description of input parameters, see `genfromtxt`.
 
     See Also
     --------

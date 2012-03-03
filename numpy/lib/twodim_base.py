@@ -358,7 +358,7 @@ def tri(N, M=None, k=0, dtype=float):
 
     Returns
     -------
-    T : ndarray of shape (N, M)
+    tri : ndarray of shape (N, M)
         Array with its lower triangle filled with ones and zero elsewhere;
         in other words ``T[i,j] == 1`` for ``i <= j + k``, 0 otherwise.
 
@@ -396,7 +396,7 @@ def tril(m, k=0):
 
     Returns
     -------
-    L : ndarray, shape (M, N)
+    tril : ndarray, shape (M, N)
         Lower triangle of `m`, of same shape and data-type as `m`.
 
     See Also
@@ -790,9 +790,10 @@ def triu_indices(n, k=0):
 
     Returns
     -------
-    inds : tuple of arrays
+    inds : tuple, shape(2) of ndarrays, shape(`n`)
         The indices for the triangle. The returned tuple contains two arrays,
-        each with the indices along one dimension of the array.
+        each with the indices along one dimension of the array.  Can be used
+        to slice a ndarray of shape(`n`, `n`).
 
     See also
     --------
@@ -852,17 +853,21 @@ def triu_indices(n, k=0):
 
 def triu_indices_from(arr, k=0):
     """
-    Return the indices for the upper-triangle of an (n, n) array.
+    Return the indices for the upper-triangle of a (N, N) array.
 
     See `triu_indices` for full details.
 
     Parameters
     ----------
-    arr : array_like
-        The indices will be valid for square arrays whose dimensions are
-        the same as arr.
+    arr : ndarray, shape(N, N)
+        The indices will be valid for square arrays.
     k : int, optional
-      Diagonal offset (see `triu` for details).
+        Diagonal offset (see `triu` for details).
+
+    Returns
+    -------
+    triu_indices_from : tuple, shape(2) of ndarray, shape(N)
+        Indices for the upper-triangle of `arr`.
 
     See Also
     --------

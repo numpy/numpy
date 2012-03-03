@@ -1406,7 +1406,7 @@ add_newdoc('numpy.core.multiarray', 'arange',
     (in other words, the interval including `start` but excluding `stop`).
     For integer arguments the function is equivalent to the Python built-in
     `range <http://docs.python.org/lib/built-in-funcs.html>`_ function,
-    but returns a ndarray rather than a list.
+    but returns an ndarray rather than a list.
 
     When using a non-integer step, such as 0.1, the results will often not
     be consistent.  It is better to use ``linspace`` for these cases.
@@ -1432,7 +1432,7 @@ add_newdoc('numpy.core.multiarray', 'arange',
 
     Returns
     -------
-    out : ndarray
+    arange : ndarray
         Array of evenly spaced values.
 
         For floating point arguments, the length of the result is
@@ -1443,8 +1443,8 @@ add_newdoc('numpy.core.multiarray', 'arange',
     See Also
     --------
     linspace : Evenly spaced numbers with careful handling of endpoints.
-    ogrid: Arrays of evenly spaced numbers in N-dimensions
-    mgrid: Grid-shaped arrays of evenly spaced numbers in N-dimensions
+    ogrid: Arrays of evenly spaced numbers in N-dimensions.
+    mgrid: Grid-shaped arrays of evenly spaced numbers in N-dimensions.
 
     Examples
     --------
@@ -1583,6 +1583,17 @@ add_newdoc('numpy.core.multiarray', 'where',
     array([[ 0.,  1.,  2.],
            [ 3.,  4., -1.],
            [-1., -1., -1.]])
+
+    Find the indices of elements of `x` that are in `goodvalues`.
+
+    >>> goodvalues = [3, 4, 7]
+    >>> ix = np.in1d(x.ravel(), goodvalues).reshape(x.shape)
+    >>> ix
+    array([[False, False, False],
+           [ True,  True, False],
+           [False,  True, False]], dtype=bool)
+    >>> np.where(ix)
+    (array([1, 1, 2]), array([0, 1, 1]))
 
     """)
 
@@ -2236,7 +2247,7 @@ add_newdoc('numpy.core', 'einsum',
 
 add_newdoc('numpy.core', 'alterdot',
     """
-    Change `dot`, `vdot`, and `innerproduct` to use accelerated BLAS functions.
+    Change `dot`, `vdot`, and `inner` to use accelerated BLAS functions.
 
     Typically, as a user of Numpy, you do not explicitly call this function. If
     Numpy is built with an accelerated BLAS, this function is automatically

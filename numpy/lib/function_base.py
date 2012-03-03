@@ -2408,7 +2408,7 @@ def hamming(M):
     -----
     The Hamming window is defined as
 
-    .. math::  w(n) = 0.54 + 0.46cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
+    .. math::  w(n) = 0.54 - 0.46cos\\left(\\frac{2\\pi{n}}{M-1}\\right)
                \\qquad 0 \\leq n \\leq M-1
 
     The Hamming was named for R. W. Hamming, an associate of J. W. Tukey and
@@ -3000,8 +3000,8 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
     Given a vector V of length N, the qth percentile of V is the qth ranked
     value in a sorted copy of V.  A weighted average of the two nearest
     neighbors is used if the normalized ranking does not match q exactly.
-    The same as the median if ``q=0.5``, the same as the minimum if ``q=0``
-    and the same as the maximum if ``q=1``.
+    The same as the median if ``q=50``, the same as the minimum if ``q=0``
+    and the same as the maximum if ``q=100``.
 
     Examples
     --------
@@ -3108,7 +3108,7 @@ def trapz(y, x=None, dx=1.0, axis=-1):
 
     Returns
     -------
-    out : float
+    trapz : float
         Definite integral as approximated by trapezoidal rule.
 
     See Also
@@ -3547,7 +3547,7 @@ def append(arr, values, axis=None):
 
     Returns
     -------
-    out : ndarray
+    append : ndarray
         A copy of `arr` with `values` appended to `axis`.  Note that `append`
         does not occur in-place: a new array is allocated and filled.  If
         `axis` is None, `out` is a flattened array.

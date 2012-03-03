@@ -4,7 +4,6 @@ Discrete Fourier Transform (:mod:`numpy.fft`)
 
 .. currentmodule:: numpy.fft
 
-
 Standard FFTs
 -------------
 
@@ -31,7 +30,6 @@ Real FFTs
    rfftn     Real discrete Fourier transform in N dimensions.
    irfftn    Inverse real discrete Fourier transform in N dimensions.
 
-
 Hermitian FFTs
 --------------
 
@@ -40,7 +38,6 @@ Hermitian FFTs
 
    hfft      Hermitian discrete Fourier transform.
    ihfft     Inverse Hermitian discrete Fourier transform.
-
 
 Helper routines
 ---------------
@@ -52,11 +49,12 @@ Helper routines
    fftshift  Shift zero-frequency component to center of spectrum.
    ifftshift Inverse of fftshift.
 
+
 Background information
 ----------------------
 
 Fourier analysis is fundamentally a method for expressing a function as a
-sum of periodic components, and for recovering the signal from those
+sum of periodic components, and for recovering the function from those
 components.  When both the function and its Fourier transform are
 replaced with discretized counterparts, it is called the discrete Fourier
 transform (DFT).  The DFT has become a mainstay of numerical computing in
@@ -73,6 +71,9 @@ this context the discretized input to the transform is customarily
 referred to as a *signal*, which exists in the *time domain*.  The output
 is called a *spectrum* or *transform* and exists in the *frequency
 domain*.
+
+Implementation details
+----------------------
 
 There are many ways to define the DFT, varying in the sign of the
 exponent, normalization, etc.  In this implementation, the DFT is defined
@@ -97,7 +98,7 @@ For an even number of input points, ``A[n/2]`` represents both positive and
 negative Nyquist frequency, and is also purely real for real input.  For
 an odd number of input points, ``A[(n-1)/2]`` contains the largest positive
 frequency, while ``A[(n+1)/2]`` contains the largest negative frequency.
-The routine ``np.fft.fftfreq(A)`` returns an array giving the frequencies
+The routine ``np.fft.fftfreq(n)`` returns an array giving the frequencies
 of corresponding elements in the output.  The routine
 ``np.fft.fftshift(A)`` shifts transforms and their frequencies to put the
 zero-frequency components in the middle, and ``np.fft.ifftshift(A)`` undoes
@@ -117,7 +118,7 @@ It differs from the forward transform by the sign of the exponential
 argument and the normalization by :math:`1/n`.
 
 Real and Hermitian transforms
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 When the input is purely real, its transform is Hermitian, i.e., the
 component at frequency :math:`f_k` is the complex conjugate of the
@@ -142,18 +143,21 @@ also be a faster way to compute large convolutions, using the property
 that a convolution in the time domain is equivalent to a point-by-point
 multiplication in the frequency domain.
 
+Higher dimensions
+-----------------
+
 In two dimensions, the DFT is defined as
 
 .. math::
    A_{kl} =  \\sum_{m=0}^{M-1} \\sum_{n=0}^{N-1}
    a_{mn}\\exp\\left\\{-2\\pi i \\left({mk\\over M}+{nl\\over N}\\right)\\right\\}
-   \\qquad k = 0, \\ldots, N-1;\\quad l = 0, \\ldots, M-1,
+   \\qquad k = 0, \\ldots, M-1;\\quad l = 0, \\ldots, N-1,
 
 which extends in the obvious way to higher dimensions, and the inverses
 in higher dimensions also extend in the same way.
 
 References
-^^^^^^^^^^
+----------
 
 .. [CT] Cooley, James W., and John W. Tukey, 1965, "An algorithm for the
         machine calculation of complex Fourier series," *Math. Comput.*
@@ -164,7 +168,7 @@ References
         12-13.  Cambridge Univ. Press, Cambridge, UK.
 
 Examples
-^^^^^^^^
+--------
 
 For examples, see the various functions.
 

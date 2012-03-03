@@ -18,7 +18,7 @@ The Array Interface
    uses the :pep:`3118` API; see the `Cython numpy
    tutorial`__. Cython provides a way to write code that supports the buffer
    protocol with Python versions older than 2.6 because it has a
-   backward-compatible implementation utilizing the legacy array interface
+   backward-compatible implementation utilizing the array interface
    described here.
 
 __ http://cython.org/

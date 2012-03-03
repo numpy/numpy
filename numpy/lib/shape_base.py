@@ -29,7 +29,7 @@ def apply_along_axis(func1d,axis,arr,*args):
 
     Returns
     -------
-    outarr : ndarray
+    apply_along_axis : ndarray
         The output array. The shape of `outarr` is identical to the shape of
         `arr`, except along the `axis` dimension, where the length of `outarr`
         is equal to the size of the return value of `func1d`.  If `func1d`
@@ -142,7 +142,7 @@ def apply_over_axes(func, a, axes):
 
     Returns
     -------
-    val : ndarray
+    apply_over_axis : ndarray
         The output array.  The number of dimensions is the same as `a`,
         but the shape can be different.  This depends on whether `func`
         changes the shape of its output with respect to its input.

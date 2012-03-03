@@ -265,12 +265,14 @@ def add(x1, x2):
     Parameters
     ----------
     x1 : array_like of str or unicode
+
     x2 : array_like of str or unicode
 
     Returns
     -------
-    out : ndarray
+    add : ndarray
         Output array of `string_` or `unicode_`, depending on input types
+
     """
     arr1 = numpy.asarray(x1)
     arr2 = numpy.asarray(x2)
@@ -608,14 +610,16 @@ def expandtabs(a, tabsize=8):
     Return a copy of each string element where all tab characters are
     replaced by one or more spaces, depending on the current column
     and the given `tabsize`. The column number is reset to zero after
-    each newline occurring in the string. If `tabsize` is not given, a
-    tab size of 8 characters is assumed. This doesn't understand other
+    each newline occurring in the string. This doesn't understand other
     non-printing characters or escape sequences.
 
     Parameters
     ----------
     a : array_like of str or unicode
+        Input array
     tabsize : int, optional
+        Replace tabs with `tabsize` number of spaces.  If not given defaults
+        to 8 spaces.
 
     Returns
     -------
@@ -625,6 +629,7 @@ def expandtabs(a, tabsize=8):
     See also
     --------
     str.expandtabs
+
     """
     return _to_string_or_unicode_array(
         _vec_string(a, object_, 'expandtabs', (tabsize,)))

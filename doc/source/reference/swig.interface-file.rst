@@ -98,13 +98,13 @@ above will produce wrapper code that looks something like::
      6   PyArrayObject *array1 = NULL ;
      7   int is_new_object1 = 0 ;
      8   PyObject * obj0 = 0 ;
-     9  
+     9
     10   if (!PyArg_ParseTuple(args,(char *)"O:rms",&obj0)) SWIG_fail;
     11   {
     12     array1 = obj_to_array_contiguous_allow_conversion(
     13                  obj0, NPY_DOUBLE, &is_new_object1);
     14     npy_intp size[1] = {
-    15       -1 
+    15       -1
     16     };
     17     if (!array1 || !require_dimensions(array1, 1) ||
     18         !require_size(array1, size, 1)) SWIG_fail;
@@ -484,7 +484,7 @@ If you get a Python error that looks like the following::
 and the argument you are passing is an integer extracted from a
 NumPy array, then you have stumbled upon this problem.  The
 solution is to modify the `SWIG`_ type conversion system to accept
-`Numpy`_ array scalars in addition to the standard integer types.
+Numpy array scalars in addition to the standard integer types.
 Fortunately, this capabilitiy has been provided for you.  Simply copy
 the file::
 
@@ -927,4 +927,3 @@ wrapper developers, including:
   * Nine C macros and 13 C functions that can be used to write
     specialized typemaps, extensions, or inlined functions that handle
     cases not covered by the provided typemaps.
-

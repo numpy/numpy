@@ -1986,7 +1986,7 @@ def alen(a):
 
     Returns
     -------
-    l : int
+    alen : int
        Length of the first dimension of `a`.
 
     See Also

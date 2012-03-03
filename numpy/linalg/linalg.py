@@ -1454,6 +1454,7 @@ def matrix_rank(M, tol=None):
 
     Examples
     --------
+    >>> from numpy.linalg import matrix_rank
     >>> matrix_rank(np.eye(4)) # Full rank matrix
     4
     >>> I=np.eye(4); I[-1,-1] = 0. # rank deficient matrix
