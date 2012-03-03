@@ -238,7 +238,7 @@ in ``scipy/linalg/tests/``, the namespace will be created such that
 
 Rather than keeping the code and the tests in the same directory, we
 put all the tests for a given subpackage in a ``tests/``
-subdirectory. For our example, if it doesn't all ready exist you will
+subdirectory. For our example, if it doesn't already exist you will
 need to create a ``tests/`` directory in ``scipy/xxx/``. So the path
 for ``test_yyy.py`` is ``scipy/xxx/tests/test_yyy.py``.
 
