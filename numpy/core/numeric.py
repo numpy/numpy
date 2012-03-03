@@ -2084,7 +2084,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     def within_tol(x, y, atol, rtol):
         result = less_equal(abs(x-y), atol + rtol * abs(y))
         if isscalar(a) and isscalar(b):
-            result = result[0]
+            result = bool(result)
         return result
     x = array(a, copy=False, ndmin=1)
     y = array(b, copy=False, ndmin=1)
