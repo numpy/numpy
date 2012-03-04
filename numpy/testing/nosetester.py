@@ -108,18 +108,22 @@ class NoseTester(object):
         The package to test. If a string, this should be the full path to
         the package. If None (default), `package` is set to the module from
         which `NoseTester` is initialized.
-    raise_warnings : sequence of warnings, optional
+    raise_warnings : str or sequence of warnings, optional
         This specifies which warnings to configure as 'raise' instead
-        of 'warn' during the test execution. To disable this feature,
-        pass an empty tuple.  See Notes for more details.
+        of 'warn' during the test execution.  Valid strings are:
+
+          - "develop" : equals ``(DeprecationWarning, RuntimeWarning)``
+          - "release" : equals ``()``, don't raise on any warnings.
+
+        See Notes for more details.
 
     Notes
     -----
     The default for `raise_warnings` is ``(DeprecationWarning, RuntimeWarning)``
-    for the master branch of NumPy, and ``()`` for released versions.  The
-    purpose of this switching behavior is to catch as many warnings as possible
-    during development, but not give problems for packaging of released
-    versions.
+    for the master branch of NumPy, and ``()`` for maintenance branches and
+    released versions.  The purpose of this switching behavior is to catch as
+    many warnings as possible during development, but not give problems for
+    packaging of released versions.
 
     """
     # Stuff to exclude from tests. These are from numpy.distutils
@@ -129,8 +133,7 @@ class NoseTester(object):
                 'pyrex_ext',
                 'swig_ext']
 
-    def __init__(self, package=None,
-                 raise_warnings=(DeprecationWarning, RuntimeWarning)):
+    def __init__(self, package=None, raise_warnings="develop"):
         package_name = None
         if package is None:
             f = sys._getframe(1)
@@ -287,13 +290,12 @@ class NoseTester(object):
             If True, report coverage of NumPy code. Default is False.
             (This requires the `coverage module:
              <http://nedbatchelder.com/code/modules/coverage.html>`_).
-        raise_warnings : sequence of warnings, optional
+        raise_warnings : str or sequence of warnings, optional
             This specifies which warnings to configure as 'raise' instead
-            of 'warn' during the test execution. To disable this feature,
-            pass an empty sequence.
-            The default (None) is determined by the `NoseTester` constructor.
-            For NumPy it is set to ``(DeprecationWarning, RuntimeWarning)``
-            during development, and to ``()`` for released versions.
+            of 'warn' during the test execution.  Valid strings are:
+
+              - "develop" : equals ``(DeprecationWarning, RuntimeWarning)``
+              - "release" : equals ``()``, don't raise on any warnings.
 
         Returns
         -------
@@ -342,6 +344,11 @@ class NoseTester(object):
 
         if raise_warnings is None:
             raise_warnings = self.raise_warnings
+
+        _warn_opts = dict(develop=(DeprecationWarning, RuntimeWarning),
+                          release=())
+        if raise_warnings in _warn_opts.keys():
+            raise_warnings = _warn_opts[raise_warnings]
 
         # Preserve the state of the warning filters
         warn_ctx = numpy.testing.utils.WarningManager()
