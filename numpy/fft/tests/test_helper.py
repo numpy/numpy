@@ -3,8 +3,10 @@
 """ Test functions for fftpack.helper module
 """
 
+import numpy
 from numpy.testing import *
-from numpy.fft import fftshift,ifftshift,fftfreq
+from numpy import fft
+from numpy.fft import irfftn,fftshift,ifftshift,fftfreq
 
 from numpy import pi
 
@@ -45,6 +47,18 @@ class TestFFTFreq(TestCase):
         assert_array_almost_equal(10*fftfreq(10),x)
         assert_array_almost_equal(10*pi*fftfreq(10,pi),x)
 
+class TestIRFFTN(TestCase):
+
+    def test_not_last_axis_success(self):
+        a_shape = (16, 8, 32)
+        a = numpy.complex128(numpy.random.rand(*a_shape)+\
+                1j*numpy.random.rand(*a_shape))
+
+        axes = (-2,)
+        fft.irfftn(a, axes=axes)
+        
+        # It didn't raise an exception
+        self.assertTrue(True)
 
 if __name__ == "__main__":
     run_module_suite()
