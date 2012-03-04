@@ -1233,11 +1233,13 @@ class TestIsclose(object):
                  (arange(3), [0, 1, 2.1]),
                  (nan, [nan, nan, nan]),
                  ([0], [atol, inf, -inf, nan]),
+                 (0, [atol, inf, -inf, nan]),
                 ]
         results = [[True, False],
                    [True, False, False],
                    [True, True, False],
                    [False, False, False],
+                   [True, False, False, False],
                    [True, False, False, False],
                   ]
 
@@ -1294,6 +1296,22 @@ class TestIsclose(object):
         assert_array_equal(isclose(nan, nan, equal_nan=True), [True])
         arr = array([1.0, nan])
         assert_array_equal(isclose(arr, arr, equal_nan=True), [True, True])
+
+    def test_masked_arrays(self):
+        x = np.ma.masked_where([True, True, False], np.arange(3))
+        assert_(type(x) == type(isclose(2, x)))
+
+        x = np.ma.masked_where([True, True, False], [nan, inf, nan])
+        assert_(type(x) == type(isclose(inf, x)))
+
+        x = np.ma.masked_where([True, True, False], [nan, nan, nan])
+        y = isclose(nan, x, equal_nan=True)
+        assert_(type(x) == type(y))
+        # Ensure that the mask isn't modified...
+        assert_array_equal([True, True, False], y.mask)
+
+    def test_scalar_return(self):
+        assert_(isscalar(isclose(1, 1)))
 
     def test_no_parameter_modification(self):
         x = array([inf, 1])
