@@ -94,6 +94,13 @@ A generic sampling function has been added which will generate samples from
 a given array-like. The samples can be with or without replacement, and
 with uniform or given non-uniform probabilities.
 
+New function isclose
+--------------------
+
+Returns a boolean array where two arrays are element-wise equal within a
+tolerance. Both relative and absolute tolerance can be specified. The
+function is NA aware.
+
 Preliminary multi-dimensional support in the polynomial package
 ---------------------------------------------------------------
 

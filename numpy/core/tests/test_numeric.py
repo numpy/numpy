@@ -1220,6 +1220,130 @@ class TestAllclose(object):
         assert_array_equal(y,array([0,inf]))
 
 
+class TestIsclose(object):
+    rtol = 1e-5
+    atol = 1e-8
+
+    def setup(self):
+        atol = self.atol
+        rtol = self.rtol
+        arr = array([100,1000])
+        aran = arange(125).reshape((5,5,5))
+
+        self.all_close_tests = [
+                ([1, 0], [1, 0]),
+                ([atol], [0]),
+                ([1], [1 + rtol + atol]),
+                (arr, arr + arr*rtol),
+                (arr, arr + arr*rtol + atol),
+                (aran, aran + aran*rtol),
+                (inf, inf),
+                (inf, [inf]),
+                ([inf, -inf], [inf, -inf]),
+                ]
+        self.none_close_tests = [
+                ([inf, 0], [1, inf]),
+                ([inf, -inf], [1, 0]),
+                ([inf, inf], [1, -inf]),
+                ([inf, inf], [1, 0]),
+                ([nan, 0], [nan, -inf]),
+                ([atol*2], [0]),
+                ([1], [1 + rtol + atol*2]),
+                (aran, aran + rtol*1.1*aran + atol*1.1),
+                (array([inf, 1]), array([0, inf])),
+                ]
+        self.some_close_tests = [
+                ([inf, 0], [inf, atol*2]),
+                ([atol, 1, 1e6*(1 + 2*rtol) + atol], [0, nan, 1e6]),
+                (arange(3), [0, 1, 2.1]),
+                (nan, [nan, nan, nan]),
+                ([0], [atol, inf, -inf, nan]),
+                (0, [atol, inf, -inf, nan]),
+                ]
+        self.some_close_results = [
+                [True, False],
+                [True, False, False],
+                [True, True, False],
+                [False, False, False],
+                [True, False, False, False],
+                [True, False, False, False],
+                ]
+
+    def test_ip_isclose(self):
+        self.setup()
+        tests = self.some_close_tests
+        results = self.some_close_results
+        for (x, y), result in zip(tests, results):
+            yield (assert_array_equal, isclose(x, y), result)
+
+    def tst_all_isclose(self, x, y):
+        assert_(all(isclose(x, y)), "%s and %s not close" % (x, y))
+
+    def tst_none_isclose(self, x, y):
+        msg = "%s and %s shouldn't be close"
+        assert_(not any(isclose(x, y)), msg % (x, y))
+
+    def tst_isclose_allclose(self, x, y):
+        msg = "isclose.all() and allclose aren't same for %s and %s"
+        assert_array_equal(isclose(x, y).all(), allclose(x, y), msg % (x, y))
+
+    def test_ip_all_isclose(self):
+        self.setup()
+        for (x,y) in self.all_close_tests:
+            yield (self.tst_all_isclose, x, y)
+
+    def test_ip_none_isclose(self):
+        self.setup()
+        for (x,y) in self.none_close_tests:
+            yield (self.tst_none_isclose, x, y)
+
+    def test_ip_isclose_allclose(self):
+        self.setup()
+        tests = (self.all_close_tests + self.none_close_tests +
+                 self.some_close_tests)
+        for (x, y) in tests:
+            yield (self.tst_isclose_allclose, x, y)
+
+    def test_equal_nan(self):
+        assert_array_equal(isclose(nan, nan, equal_nan=True), [True])
+        arr = array([1.0, nan])
+        assert_array_equal(isclose(arr, arr, equal_nan=True), [True, True])
+
+    def test_masked_arrays(self):
+        x = np.ma.masked_where([True, True, False], np.arange(3))
+        assert_(type(x) == type(isclose(2, x)))
+
+        x = np.ma.masked_where([True, True, False], [nan, inf, nan])
+        assert_(type(x) == type(isclose(inf, x)))
+
+        x = np.ma.masked_where([True, True, False], [nan, nan, nan])
+        y = isclose(nan, x, equal_nan=True)
+        assert_(type(x) == type(y))
+        # Ensure that the mask isn't modified...
+        assert_array_equal([True, True, False], y.mask)
+
+    def test_maskna_arrays(self):
+        x = array([NA, 1, 2, 3])
+        y = array([0, 1, 2, NA])
+        assert_array_equal(isclose(x, y), array([NA, True, True, NA]))
+
+        assert_array_equal(isclose(NA, arange(3)), array([NA, NA, NA]))
+
+        x = array([NA, nan, 2, 3])
+        y = array([nan, 1, 2, NA])
+        assert_array_equal(isclose(x, y), array([NA, False, True, NA]))
+
+    def test_scalar_return(self):
+        assert_(isscalar(isclose(1, 1)))
+
+    def test_no_parameter_modification(self):
+        x = array([inf, 1])
+        y = array([0, inf])
+        isclose(x, y)
+        assert_array_equal(x, array([inf, 1]))
+        assert_array_equal(y, array([0, inf]))
+
+
 class TestStdVar(TestCase):
     def setUp(self):
         self.A = array([1,-1,1,-1])
