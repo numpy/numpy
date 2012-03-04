@@ -1224,25 +1224,55 @@ class TestIsclose(object):
     rtol = 1e-5
     atol = 1e-8
 
-    def test_ip_isclose(self):
+    def setup(self):
         atol = self.atol
         rtol = self.rtol
+        arr = array([100,1000])
+        aran = arange(125).reshape((5,5,5))
 
-        tests = [([inf, 0], [inf, atol*2]),
-                 ([atol, 1, 1e6*(1 + 2*rtol) + atol], [0, nan, 1e6]),
-                 (arange(3), [0, 1, 2.1]),
-                 (nan, [nan, nan, nan]),
-                 ([0], [atol, inf, -inf, nan]),
-                 (0, [atol, inf, -inf, nan]),
+        self.all_close_tests = [
+                ([1, 0], [1, 0]),
+                ([atol], [0]),
+                ([1], [1 + rtol + atol]),
+                (arr, arr + arr*rtol),
+                (arr, arr + arr*rtol + atol),
+                (aran, aran + aran*rtol),
+                (inf, inf),
+                (inf, [inf]),
+                ([inf, -inf], [inf, -inf]),
                 ]
-        results = [[True, False],
-                   [True, False, False],
-                   [True, True, False],
-                   [False, False, False],
-                   [True, False, False, False],
-                   [True, False, False, False],
-                  ]
+        self.none_close_tests = [
+                ([inf, 0], [1, inf]),
+                ([inf, -inf], [1, 0]),
+                ([inf, inf], [1, -inf]),
+                ([inf, inf], [1, 0]),
+                ([nan, 0], [nan, -inf]),
+                ([atol*2], [0]),
+                ([1], [1 + rtol + atol*2]),
+                (aran, aran + rtol*1.1*aran + atol*1.1),
+                (array([inf, 1]), array([0, inf])),
+                ]
+        self.some_close_tests = [
+                ([inf, 0], [inf, atol*2]),
+                ([atol, 1, 1e6*(1 + 2*rtol) + atol], [0, nan, 1e6]),
+                (arange(3), [0, 1, 2.1]),
+                (nan, [nan, nan, nan]),
+                ([0], [atol, inf, -inf, nan]),
+                (0, [atol, inf, -inf, nan]),
+                ]
+        self.some_close_results = [
+                [True, False],
+                [True, False, False],
+                [True, True, False],
+                [False, False, False],
+                [True, False, False, False],
+                [True, False, False, False],
+                ]
 
+    def test_ip_isclose(self):
+        self.setup()
+        tests = self.some_close_tests
+        results = self.some_close_results
         for (x, y), result in zip(tests, results):
             yield (assert_array_equal, isclose(x, y), result)
 
@@ -1253,44 +1283,26 @@ class TestIsclose(object):
         msg = "%s and %s shouldn't be close"
         assert_(not any(isclose(x, y)), msg % (x, y))
 
+    def tst_isclose_allclose(self, x, y):
+        msg = "isclose.all() and allclose aren't same for %s and %s"
+        assert_array_equal(isclose(x, y).all(), allclose(x, y), msg % (x, y))
+
     def test_ip_all_isclose(self):
-        arr = array([100,1000])
-        aran = arange(125).reshape((5,5,5))
-
-        atol = self.atol
-        rtol = self.rtol
-
-        data = [([1, 0], [1, 0]),
-                ([atol], [0]),
-                ([1], [1 + rtol + atol]),
-                (arr, arr + arr*rtol),
-                (arr, arr + arr*rtol + atol),
-                (aran, aran + aran*rtol),
-                (inf, inf),
-                (inf, [inf]),
-                ([inf, -inf], [inf, -inf])]
-
-        for (x,y) in data:
+        self.setup()
+        for (x,y) in self.all_close_tests:
             yield (self.tst_all_isclose, x, y)
 
     def test_ip_none_isclose(self):
-        aran = arange(125).reshape((5,5,5))
-
-        atol = self.atol
-        rtol = self.rtol
-
-        data = [([inf, 0], [1, inf]),
-                ([inf, -inf], [1, 0]),
-                ([inf, inf], [1, -inf]),
-                ([inf, inf], [1, 0]),
-                ([nan, 0], [nan, -inf]),
-                ([atol*2], [0]),
-                ([1], [1 + rtol + atol*2]),
-                (aran, aran + rtol*1.1*aran + atol*1.1),
-                (array([inf, 1]), array([0, inf]))]
-
-        for (x,y) in data:
+        self.setup()
+        for (x,y) in self.none_close_tests:
             yield (self.tst_none_isclose, x, y)
+
+    def test_ip_isclose_allclose(self):
+        self.setup()
+        tests = (self.all_close_tests + self.none_close_tests +
+                 self.some_close_tests)
+        for (x, y) in tests:
+            yield (self.tst_isclose_allclose, x, y)
 
     def test_equal_nan(self):
         assert_array_equal(isclose(nan, nan, equal_nan=True), [True])
