@@ -2093,17 +2093,17 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     if all(xfin) and all(yfin):
         return within_tol(x, y, atol, rtol)
     else:
-        mask = xfin & yfin
+        finite = xfin & yfin
         # Because we're using boolean indexing, x & y must be the same shape.
         # Ideally, we'd just do x, y = broadcast_arrays(x, y). It's in 
         # lib.stride_tricks, though, so we can't import it here.
-        cond = zeros_like(mask, subok=True)
+        cond = zeros_like(finite, subok=True)
         x = x * ones_like(cond)
         y = y * ones_like(cond)
         # Avoid subtraction with infinite/nan values...
-        cond[mask] = within_tol(x[mask], y[mask], atol, rtol)
+        cond[finite] = within_tol(x[finite], y[finite], atol, rtol)
         # Check for equality of infinite values...
-        cond[~mask] = (x[~mask] == y[~mask])
+        cond[~finite] = (x[~finite] == y[~finite])
         if equal_nan:
             # Make NaN == NaN
             cond[isnan(x) & isnan(y)] = True
