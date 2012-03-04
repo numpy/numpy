@@ -2026,7 +2026,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
 
 def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
-    Returns a boolean array where two arrays are element-wise equal within a 
+    Returns a boolean array where two arrays are element-wise equal within a
     tolerance.
 
     The tolerance values are positive, typically very small numbers.  The
@@ -2043,13 +2043,13 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     atol : float
         The absolute tolerance parameter (see Notes).
     equal_nan : bool
-        Whether to compare NaN's as equal.  If True, NaN's in `a` will be 
+        Whether to compare NaN's as equal.  If True, NaN's in `a` will be
         considered equal to NaN's in `b` in the output array.
 
     Returns
     -------
     y : array_like
-        Returns a boolean array of where `a` and `b` are equal within the 
+        Returns a boolean array of where `a` and `b` are equal within the
         given tolerance. If both `a` and `b` are scalars, returns a single
         boolean value.
 
@@ -2059,7 +2059,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     Notes
     -----
-    For finite values, isclose uses the following equation to test whether 
+    For finite values, isclose uses the following equation to test whether
     two floating point values are equivalent.
 
      absolute(`a` - `b`) <= (`atol` + `rtol` * absolute(`b`))
@@ -2099,7 +2099,7 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     else:
         finite = xfin & yfin
         # Because we're using boolean indexing, x & y must be the same shape.
-        # Ideally, we'd just do x, y = broadcast_arrays(x, y). It's in 
+        # Ideally, we'd just do x, y = broadcast_arrays(x, y). It's in
         # lib.stride_tricks, though, so we can't import it here.
         maskna = x.flags.maskna or y.flags.maskna
         cond = zeros_like(finite, subok=True, maskna=maskna)

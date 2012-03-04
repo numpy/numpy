@@ -1330,7 +1330,7 @@ class TestIsclose(object):
 
     def test_scalar_return(self):
         assert_(isscalar(isclose(1, 1)))
-        
+
     def test_no_parameter_modification(self):
         x = array([inf, 1])
         y = array([0, inf])
