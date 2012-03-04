@@ -2059,6 +2059,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
 
     Notes
     -----
+    .. versionadded:: 1.7.0
+
     For finite values, isclose uses the following equation to test whether
     two floating point values are equivalent.
 
@@ -2090,17 +2092,18 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     y = array(b, copy=False, subok=True, ndmin=1)
     xfin = isfinite(x)
     yfin = isfinite(y)
-    if all(xfin) and all(yfin):
+    if all(xfin, skipna=True) and all(yfin, skipna=True):
         return within_tol(x, y, atol, rtol)
     else:
         finite = xfin & yfin
+        cond = zeros_like(finite, subok=True, maskna=finite.flags.maskna)
         # Because we're using boolean indexing, x & y must be the same shape.
         # Ideally, we'd just do x, y = broadcast_arrays(x, y). It's in
         # lib.stride_tricks, though, so we can't import it here.
-        cond = zeros_like(finite, subok=True)
         x = x * ones_like(cond)
         y = y * ones_like(cond)
-        # Avoid subtraction with infinite/nan values...
+        # Avoid subtraction with infinite/nan values and indexing with na...
+        finite[isna(finite)] = False
         cond[finite] = within_tol(x[finite], y[finite], atol, rtol)
         # Check for equality of infinite values...
         cond[~finite] = (x[~finite] == y[~finite])

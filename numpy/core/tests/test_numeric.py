@@ -1322,6 +1322,17 @@ class TestIsclose(object):
         # Ensure that the mask isn't modified...
         assert_array_equal([True, True, False], y.mask)
 
+    def test_maskna_arrays(self):
+        x = array([NA, 1, 2, 3])
+        y = array([0, 1, 2, NA])
+        assert_array_equal(isclose(x, y), array([NA, True, True, NA]))
+
+        assert_array_equal(isclose(NA, arange(3)), array([NA, NA, NA]))
+
+        x = array([NA, nan, 2, 3])
+        y = array([nan, 1, 2, NA])
+        assert_array_equal(isclose(x, y), array([NA, False, True, NA]))
+
     def test_scalar_return(self):
         assert_(isscalar(isclose(1, 1)))
 
