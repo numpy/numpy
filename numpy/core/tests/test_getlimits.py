@@ -63,7 +63,18 @@ class TestRepr(TestCase):
     def test_finfo_repr(self):
         expected = "finfo(resolution=1e-06, min=-3.4028235e+38," + \
                    " max=3.4028235e+38, dtype=float32)"
-        assert_equal(repr(np.finfo(np.float32)), expected)
+        # Python 2.5 float formatting on Windows adds an extra 0 to the
+        # exponent.  So test for both.  Once 2.5 compatibility is dropped, this
+        # can simply use `assert_equal(repr(np.finfo(np.float32)), expected)`.
+        expected_win25 = "finfo(resolution=1e-006, min=-3.4028235e+038," + \
+                         " max=3.4028235e+038, dtype=float32)"
+
+        actual = repr(np.finfo(np.float32))
+        if not actual == expected:
+            if not actual == expected_win25:
+                msg = build_err_msg([actual, desired], verbose=True)
+                raise AssertionError(msg)
+
 
 def test_instances():
     iinfo(10)

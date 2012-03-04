@@ -287,7 +287,7 @@ class TestSaveTxt(TestCase):
         np.savetxt(c, a, fmt=' %+.3e')
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, asbytes_nested([
+        _assert_floatstr_lines_equal(lines, asbytes_nested([
             ' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)\n',
             ' ( +3.142e+00+ +2.718e+00j)  ( +3.142e+00+ +2.718e+00j)\n']))
         # One format for each real and imaginary part
@@ -295,7 +295,7 @@ class TestSaveTxt(TestCase):
         np.savetxt(c, a, fmt='  %+.3e' * 2 * ncols)
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, asbytes_nested([
+        _assert_floatstr_lines_equal(lines, asbytes_nested([
             '  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00\n',
             '  +3.142e+00  +2.718e+00  +3.142e+00  +2.718e+00\n']))
         # One format for each complex number
@@ -303,10 +303,29 @@ class TestSaveTxt(TestCase):
         np.savetxt(c, a, fmt=['(%.3e%+.3ej)'] * ncols)
         c.seek(0)
         lines = c.readlines()
-        assert_equal(lines, asbytes_nested([
+        _assert_floatstr_lines_equal(lines, asbytes_nested([
             '(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n',
             '(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n']))
 
+
+def _assert_floatstr_lines_equal(actual_lines, expected_lines):
+    """A string comparison function that also works on Windows + Python 2.5.
+
+    This is necessary because Python 2.5 on Windows inserts an extra 0 in
+    the exponent of the string representation of floating point numbers.
+
+    Only used in TestSaveTxt.test_complex_arrays, no attempt made to make this
+    more generic.
+
+    Once Python 2.5 compatibility is dropped, simply use `assert_equal` instead
+    of this function.
+    """
+    for actual, expected in zip(actual_lines, expected_lines):
+        if not actual == expected:
+            expected_win25 = expected.replace("e+00", "e+000")
+            if not actual == expected_win25:
+                msg = build_err_msg([actual, desired], verbose=True)
+                raise AssertionError(msg)
 
 
 class TestLoadTxt(TestCase):
