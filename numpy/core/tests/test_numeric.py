@@ -1230,11 +1230,15 @@ class TestIsclose(object):
 
         tests = [([inf, 0], [inf, atol*2]),
                  ([atol, 1, 1e6*(1 + 2*rtol) + atol], [0, nan, 1e6]),
-                 (arange(3), [0, 1, 2.1])
+                 (arange(3), [0, 1, 2.1]),
+                 (nan, [nan, nan, nan]),
+                 ([0], [atol, inf, -inf, nan]),
                 ]
         results = [[True, False],
                    [True, False, False],
                    [True, True, False],
+                   [False, False, False],
+                   [True, False, False, False],
                   ]
 
         for (x, y), result in zip(tests, results):
