@@ -896,10 +896,10 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
         .. versionadded:: 1.5.0
     header : str, optional
         String that will be written at the beginning of the file.
-        .. versionadded:: 2.0.0
+        .. versionadded:: 1.7.0
     footer : str, optional
         String that will be written at the end of the file.
-        .. versionadded:: 2.0.0
+        .. versionadded:: 1.7.0
     comments : str, optional
         String that will be prepended to the ``header`` and ``footer`` strings,
         to mark them as comments. Default: '# ',  as expected by e.g.
