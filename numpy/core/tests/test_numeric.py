@@ -1225,7 +1225,6 @@ class TestIsclose(object):
     atol = 1e-8
 
     def test_ip_isclose(self):
-        """Parametric test factory."""
         atol = self.atol
         rtol = self.rtol
 
@@ -1249,7 +1248,6 @@ class TestIsclose(object):
         assert_(not any(isclose(x, y)), msg % (x, y))
 
     def test_ip_all_isclose(self):
-        """Parametric test factory."""
         arr = array([100,1000])
         aran = arange(125).reshape((5,5,5))
 
@@ -1270,7 +1268,6 @@ class TestIsclose(object):
             yield (self.tst_all_isclose, x, y)
 
     def test_ip_none_isclose(self):
-        """Parametric test factory."""
         aran = arange(125).reshape((5,5,5))
 
         atol = self.atol
