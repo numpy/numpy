@@ -41,13 +41,6 @@ follows::
   >>> import numpy
   >>> numpy.test()
 
-Note that for Python >= 2.7 deprecation warnings are silent by default. They
-can be turned on (recommended after installation and before upgrading) by
-starting the interpreter with the -Wd switch, or by::
-
-  >>> import warnings
-  >>> warnings.simplefilter('always', DeprecationWarning)
-
 The test method may take two or more arguments; the first is a string
 label specifying what should be tested and the second is an integer
 giving the level of output verbosity. See the docstring for numpy.test
