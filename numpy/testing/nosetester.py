@@ -156,7 +156,7 @@ class NoseTester(object):
             package_name = get_package_name(package_path)
         self.package_name = package_name
 
-        # Set to empty tuple in constructor in maintenance branches.
+        # Set to "release" in constructor in maintenance branches.
         self.raise_warnings = raise_warnings
 
     def _test_argv(self, label, verbose, extra_argv):
