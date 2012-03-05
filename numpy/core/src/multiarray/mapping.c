@@ -1910,6 +1910,11 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
         return -1;
     }
     nd = PyArray_NDIM(ba);
+
+    if (iters == NULL) {
+        return nd;  /* just count iters needed */
+    }
+
     for (j = 0; j < nd; j++) {
         iters[j] = NULL;
     }
@@ -1998,7 +2003,7 @@ _convert_obj(PyObject *obj, PyArrayIterObject **iter)
     else if (PyArray_Check(obj) && PyArray_ISBOOL((PyArrayObject *)obj)) {
         return _nonzero_indices(obj, iter);
     }
-    else {
+    else if (iter != NULL) {
         indtype = PyArray_DescrFromType(NPY_INTP);
         arr = PyArray_FromAny(obj, indtype, 0, 0, NPY_ARRAY_FORCECAST, NULL);
         if (arr == NULL) {
@@ -2313,9 +2318,6 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
     if (mit == NULL) {
         return NULL;
     }
-    for (i = 0; i < NPY_MAXDIMS; i++) {
-        mit->iters[i] = NULL;
-    }
     mit->index = 0;
     mit->ait = NULL;
     mit->subspace = NULL;
@@ -2353,8 +2355,11 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
     /* convert all inputs to iterators */
     if (PyArray_Check(indexobj) &&
                     (PyArray_TYPE((PyArrayObject *)indexobj) == NPY_BOOL)) {
-        mit->numiter = _nonzero_indices(indexobj, mit->iters);
+        multiter_allociters((PyArrayMultiIterObject *)mit, _nonzero_indices(indexobj, NULL));
         if (mit->numiter < 0) {
+            goto fail;
+        }
+        if (_nonzero_indices(indexobj, mit->iters) < 0) {
             goto fail;
         }
         mit->nd = 1;
@@ -2369,7 +2374,7 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
         }
     }
     else if (PyArray_Check(indexobj) || !PyTuple_Check(indexobj)) {
-        mit->numiter = 1;
+        multiter_allociters((PyArrayMultiIterObject *)mit, 1);
         indtype = PyArray_DescrFromType(NPY_INTP);
         arr = (PyArrayObject *)PyArray_FromAny(indexobj, indtype, 0, 0,
                                 NPY_ARRAY_FORCECAST, NULL);
@@ -2393,7 +2398,7 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
         PyObject *obj;
         PyArrayIterObject **iterp;
         PyObject *new;
-        int numiters, j, n2;
+        int numiters, j, n2, totniters;
         /*
          * Make a copy of the tuple -- we will be replacing
          * index objects with 0's
@@ -2407,9 +2412,23 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
         started = 0;
         nonindex = 0;
         j = 0;
+        /* count iters */
+        totniters = 0;
         for (i = 0; i < n; i++) {
             obj = PyTuple_GET_ITEM(indexobj,i);
             iterp = mit->iters + mit->numiter;
+            if ((numiters=_convert_obj(obj, NULL)) < 0) {
+                Py_DECREF(new);
+                goto fail;
+            }
+            totniters += numiters;
+        }
+        /* set up iters */
+        multiter_allociters((PyArrayMultiIterObject *)mit, totniters);
+        totniters = 0;
+        for (i = 0; i < n; i++) {
+            obj = PyTuple_GET_ITEM(indexobj,i);
+            iterp = mit->iters + totniters;
             if ((numiters=_convert_obj(obj, iterp)) < 0) {
                 Py_DECREF(new);
                 goto fail;
@@ -2419,7 +2438,7 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
                 if (nonindex) {
                     mit->consec = 0;
                 }
-                mit->numiter += numiters;
+                totniters += numiters;
                 if (numiters == 1) {
                     PyTuple_SET_ITEM(new,j++, PyInt_FromLong(0));
                 }

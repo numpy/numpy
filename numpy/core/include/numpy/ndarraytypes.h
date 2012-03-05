@@ -1247,8 +1247,11 @@ typedef struct {
         npy_intp             index;                   /* current index */
         int                  nd;                      /* number of dims */
         npy_intp             dimensions[NPY_MAXDIMS]; /* dimensions */
-        PyArrayIterObject    *iters[NPY_MAXARGS];     /* iterators */
+        PyArrayIterObject    **iters;                 /* iterators */
 } PyArrayMultiIterObject;
+
+void multiter_allociters(PyArrayMultiIterObject *multi, int n);
+
 
 #define _PyMIT(m) ((PyArrayMultiIterObject *)(m))
 #define PyArray_MultiIter_RESET(multi) do {                                   \
@@ -1308,7 +1311,7 @@ typedef struct {
         npy_intp              index;                   /* current index */
         int                   nd;                      /* number of dims */
         npy_intp              dimensions[NPY_MAXDIMS]; /* dimensions */
-        PyArrayIterObject     *iters[NPY_MAXDIMS];     /* index object
+        PyArrayIterObject     **iters;                 /* index object
                                                           iterators */
         PyArrayIterObject     *ait;                    /* flat Iterator for
                                                           underlying array */
