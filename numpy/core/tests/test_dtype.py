@@ -33,6 +33,18 @@ class TestBuiltin(TestCase):
                 self.assertTrue(dt.byteorder != dt3.byteorder, "bogus test")
                 assert_dtype_equal(dt, dt3)
 
+    def test_equivalent_dtype_hashing(self):
+        # Make sure equivalent dtypes with different type num hash equal
+        uintp = np.dtype(np.uintp)
+        if uintp.itemsize == 4:
+            left = uintp
+            right = np.dtype(np.uint32)
+        else:
+            left = uintp
+            right = np.dtype(np.ulonglong)
+        self.assertTrue(left == right)
+        self.assertTrue(hash(left) == hash(right))
+
     def test_invalid_types(self):
         # Make sure invalid type strings raise exceptions
         for typestr in ['O3', 'O5', 'O7', 'b3', 'h4', 'I5', 'l4', 'l8',
