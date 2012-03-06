@@ -199,10 +199,12 @@ else:
                             '/opt/local/include', '/sw/include',
                             '/usr/include/suitesparse']
     default_src_dirs = ['.','/usr/local/src', '/opt/src','/sw/src']
+
     default_x11_lib_dirs = libpaths(['/usr/X11R6/lib','/usr/X11/lib',
                                      '/usr/lib'], platform_bits)
     default_x11_include_dirs = ['/usr/X11R6/include','/usr/X11/include',
                                 '/usr/include']
+
     if os.path.exists('/usr/lib/X11'):
         globbed_x11_dir = glob('/usr/lib/*/libX11.so')
         if globbed_x11_dir:
@@ -210,7 +212,6 @@ else:
             default_x11_lib_dirs.extend([x11_so_dir, '/usr/lib/X11'])
             default_x11_include_dirs.extend(['/usr/lib/X11/include',
                                              '/usr/include/X11'])
-
 
 if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_lib_dirs.insert(0,os.path.join(sys.prefix, 'lib'))
@@ -434,11 +435,7 @@ class system_info:
         dirs = self.get_lib_dirs()
         info = {}
         for lib in libs:
-            i = None
-            for d in dirs:
-                i = self.check_libs(d,[lib])
-                if i is not None:
-                    break
+            i = self.check_libs(dirs,[lib])
             if i is not None:
                 dict_append(info,**i)
             else:
@@ -586,7 +583,7 @@ class system_info:
         #    exts.append('.so.3gf')
         return exts
 
-    def check_libs(self,lib_dir,libs,opt_libs =[]):
+    def check_libs(self,lib_dirs,libs,opt_libs =[]):
         """If static or shared libraries are available then return
         their info dictionary.
 
@@ -596,23 +593,23 @@ class system_info:
         exts = self.library_extensions()
         info = None
         for ext in exts:
-            info = self._check_libs(lib_dir,libs,opt_libs,[ext])
+            info = self._check_libs(lib_dirs,libs,opt_libs,[ext])
             if info is not None:
                 break
         if not info:
-            log.info('  libraries %s not found in %s', ','.join(libs), lib_dir)
+            log.info('  libraries %s not found in %s', ','.join(libs), lib_dirs)
         return info
 
-    def check_libs2(self, lib_dir, libs, opt_libs =[]):
+    def check_libs2(self, lib_dirs, libs, opt_libs =[]):
         """If static or shared libraries are available then return
         their info dictionary.
 
         Checks each library for shared or static.
         """
         exts = self.library_extensions()
-        info = self._check_libs(lib_dir,libs,opt_libs,exts)
+        info = self._check_libs(lib_dirs,libs,opt_libs,exts)
         if not info:
-            log.info('  libraries %s not found in %s', ','.join(libs), lib_dir)
+            log.info('  libraries %s not found in %s', ','.join(libs), lib_dirs)
         return info
 
     def _lib_list(self, lib_dir, libs, exts):
@@ -640,13 +637,36 @@ class system_info:
                     break
         return liblist
 
-    def _check_libs(self, lib_dir, libs, opt_libs, exts):
-        found_libs = self._lib_list(lib_dir, libs, exts)
+    def _check_libs(self, lib_dirs, libs, opt_libs, exts):
+        """Find mandatory and optional libs in expected paths.
+
+        Missing optional libraries are silently forgotten.
+        """
+        # First, try to find the mandatory libraries
+        if is_sequence(lib_dirs):
+            found_libs, found_dirs = [], []
+            for dir_ in lib_dirs:
+                found_libs1 = self._lib_list(dir_, libs, exts)
+                if found_libs1:
+                    found_libs.extend(found_libs1)
+                    found_dirs.append(dir_)
+        else:
+            found_libs = self._lib_list(lib_dirs, libs, exts)
+            found_dirs = [lib_dirs]
         if len(found_libs) == len(libs):
-            info = {'libraries' : found_libs, 'library_dirs' : [lib_dir]}
-            opt_found_libs = self._lib_list(lib_dir, opt_libs, exts)
-            if len(opt_found_libs) == len(opt_libs):
-                info['libraries'].extend(opt_found_libs)
+            info = {'libraries' : found_libs, 'library_dirs' : found_dirs}
+            # Now, check for optional libraries
+            if is_sequence(lib_dirs):
+                for dir_ in lib_dirs:
+                    opt_found_libs = self._lib_list(dir_, opt_libs, exts)
+                    if opt_found_libs:
+                        if dir_ not in found_dirs:
+                            found_dirs.extend(dir_)
+                        found_libs.extend(opt_found_libs)
+            else:
+                opt_found_libs = self._lib_list(lib_dirs, opt_libs, exts)
+                if opt_found_libs:
+                    found_libs.extend(opt_found_libs)
             return info
         else:
             return None
@@ -695,12 +715,7 @@ class fftw_info(system_info):
         incl_dirs = self.get_include_dirs()
         incl_dir = None
         libs = self.get_libs(self.section+'_libs', ver_param['libs'])
-        info = None
-        for d in lib_dirs:
-            r = self.check_libs(d,libs)
-            if r is not None:
-                info = r
-                break
+        info = self.check_libs(lib_dirs,libs)
         if info is not None:
             flag = 0
             for d in incl_dirs:
@@ -871,23 +886,18 @@ class mkl_info(system_info):
                 #l = 'mkl_ia32'
             if l not in self._lib_mkl:
                 self._lib_mkl.insert(0,l)
-            system_info.__init__(self,
-                                 default_lib_dirs=[os.path.join(mklroot,'lib',plt)],
-                                 default_include_dirs=[os.path.join(mklroot,'include')])
+            system_info.__init__(
+                self,
+                default_lib_dirs=[os.path.join(mklroot,'lib',plt)],
+                default_include_dirs=[os.path.join(mklroot,'include')])
 
     def calc_info(self):
         lib_dirs = self.get_lib_dirs()
         incl_dirs = self.get_include_dirs()
         mkl_libs = self.get_libs('mkl_libs',self._lib_mkl)
-        mkl = None
-        for d in lib_dirs:
-            mkl = self.check_libs2(d,mkl_libs)
-            if mkl is not None:
-                break
-        if mkl is None:
+        info = self.check_libs2(lib_dirs,mkl_libs)
+        if info is None:
             return
-        info = {}
-        dict_append(info,**mkl)
         dict_append(info,
                     define_macros=[('SCIPY_MKL_H',None)],
                     include_dirs = incl_dirs)
@@ -950,12 +960,7 @@ class atlas_info(system_info):
             lapack_atlas = self.check_libs2(d,['lapack_atlas'],[])
             if atlas is not None:
                 lib_dirs2 = [d] + self.combine_paths(d,['atlas*','ATLAS*'])
-                for d2 in lib_dirs2:
-                    lapack = self.check_libs2(d2,lapack_libs,[])
-                    if lapack is not None:
-                        break
-                else:
-                    lapack = None
+                lapack = self.check_libs2(lib_dirs2,lapack_libs,[])
                 if lapack is not None:
                     break
             if atlas:
@@ -1035,11 +1040,7 @@ class atlas_blas_info(atlas_info):
         info = {}
         atlas_libs = self.get_libs('atlas_libs',
                                    self._lib_names + self._lib_atlas)
-        atlas = None
-        for d in lib_dirs:
-            atlas = self.check_libs2(d,atlas_libs,[])
-            if atlas is not None:
-                break
+        atlas = self.check_libs2(lib_dirs,atlas_libs,[])
         if atlas is None:
             return
         include_dirs = self.get_include_dirs()
@@ -1082,12 +1083,8 @@ class lapack_info(system_info):
         lib_dirs = self.get_lib_dirs()
 
         lapack_libs = self.get_libs('lapack_libs', self._lib_names)
-        for d in lib_dirs:
-            lapack = self.check_libs(d,lapack_libs,[])
-            if lapack is not None:
-                info = lapack
-                break
-        else:
+        info = self.check_libs(lib_dirs,lapack_libs_libs,[])
+        if info is None:
             return
         info['language'] = 'f77'
         self.set_info(**info)
@@ -1253,8 +1250,8 @@ Make sure that -lgfortran is used for C++ extensions.
             if m:
                 atlas_version = m.group('version')
             if atlas_version is not None:
-
                 break
+
         # final choice --- look at ATLAS_VERSION environment
         #   variable
         if atlas_version is None:
@@ -1294,7 +1291,7 @@ class lapack_opt_info(system_info):
             args = []
             link_args = []
             if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
-                'i386' in platform.platform():
+               'i386' in platform.platform():
                 intel = 1
             else:
                 intel = 0
@@ -1382,7 +1379,7 @@ class blas_opt_info(system_info):
             args = []
             link_args = []
             if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
-                'i386' in platform.platform():
+               'i386' in platform.platform():
                 intel = 1
             else:
                 intel = 0
@@ -1452,12 +1449,8 @@ class blas_info(system_info):
         lib_dirs = self.get_lib_dirs()
 
         blas_libs = self.get_libs('blas_libs', self._lib_names)
-        for d in lib_dirs:
-            blas = self.check_libs(d,blas_libs,[])
-            if blas is not None:
-                info = blas
-                break
-        else:
+        info = self.check_libs(lib_dirs,blas_libs,[])
+        if info is None:
             return
         info['language'] = 'f77'  # XXX: is it generally true?
         self.set_info(**info)
@@ -1529,11 +1522,8 @@ class x11_info(system_info):
         lib_dirs = self.get_lib_dirs()
         include_dirs = self.get_include_dirs()
         x11_libs = self.get_libs('x11_libs', ['X11'])
-        for lib_dir in lib_dirs:
-            info = self.check_libs(lib_dir, x11_libs, [])
-            if info is not None:
-                break
-        else:
+        info = self.check_libs(lib_dirs, x11_libs, [])
+        if info is None:
             return
         inc_dir = None
         for d in include_dirs:
@@ -1880,12 +1870,8 @@ class amd_info(system_info):
         lib_dirs = self.get_lib_dirs()
 
         amd_libs = self.get_libs('amd_libs', self._lib_names)
-        for d in lib_dirs:
-            amd = self.check_libs(d,amd_libs,[])
-            if amd is not None:
-                info = amd
-                break
-        else:
+        info = self.check_libs(lib_dirs,amd_libs,[])
+        if info is None:
             return
 
         include_dirs = self.get_include_dirs()
@@ -1914,12 +1900,8 @@ class umfpack_info(system_info):
         lib_dirs = self.get_lib_dirs()
 
         umfpack_libs = self.get_libs('umfpack_libs', self._lib_names)
-        for d in lib_dirs:
-            umf = self.check_libs(d,umfpack_libs,[])
-            if umf is not None:
-                info = umf
-                break
-        else:
+        info = self.check_libs(lib_dirs,umfpack_libs,[])
+        if info is None:
             return
 
         include_dirs = self.get_include_dirs()
