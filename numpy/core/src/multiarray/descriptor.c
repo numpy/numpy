@@ -323,7 +323,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     PyObject *nameslist;
     PyArray_Descr *new;
     PyArray_Descr *conv;
-    int dtypeflags = 0;
+    char dtypeflags = 0;
     int maxalign = 0;
 
     n = PyList_GET_SIZE(obj);
@@ -479,7 +479,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     new->fields = fields;
     new->names = nameslist;
     new->elsize = totalsize;
-    new->flags=dtypeflags;
+    new->flags = dtypeflags;
 
     /* Structured arrays get a sticky aligned bit */
     if (align) {
@@ -512,7 +512,7 @@ _convert_from_list(PyObject *obj, int align)
     PyObject *nameslist = NULL;
     int ret;
     int maxalign = 0;
-    int dtypeflags = 0;
+    char dtypeflags = 0;
 
     n = PyList_GET_SIZE(obj);
     /*
@@ -844,7 +844,7 @@ _convert_from_dict(PyObject *obj, int align)
     int n, i;
     int totalsize, itemsize;
     int maxalign = 0;
-    int dtypeflags = 0;
+    char dtypeflags = 0;
     int has_out_of_order_fields = 0;
 
     fields = PyDict_New();
@@ -1522,7 +1522,7 @@ static PyMemberDef arraydescr_members[] = {
     {"alignment",
         T_INT, offsetof(PyArray_Descr, alignment), READONLY, NULL},
     {"flags",
-        T_INT, offsetof(PyArray_Descr, flags), READONLY, NULL},
+        T_BYTE, offsetof(PyArray_Descr, flags), READONLY, NULL},
     {NULL, 0, 0, 0, NULL},
 };
 
@@ -2190,7 +2190,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
     }
     PyTuple_SET_ITEM(state, 5, PyInt_FromLong(elsize));
     PyTuple_SET_ITEM(state, 6, PyInt_FromLong(alignment));
-    PyTuple_SET_ITEM(state, 7, PyInt_FromLong(self->flags));
+    PyTuple_SET_ITEM(state, 7, PyUString_FromFormat("%c", self->flags));
 
     PyTuple_SET_ITEM(ret, 2, state);
     return ret;
@@ -2200,7 +2200,7 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
  * returns 1 if this data-type has an object portion
  * used when setting the state because hasobject is not stored.
  */
-static int
+static char
 _descr_find_object(PyArray_Descr *self)
 {
     if (self->flags
@@ -2247,7 +2247,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 #endif
     PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
     int incref_names = 1;
-    int dtypeflags = 0;
+    char dtypeflags = 0;
 
     if (self->fields == Py_None) {
         Py_INCREF(Py_None);
@@ -2261,9 +2261,9 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     switch (PyTuple_GET_SIZE(PyTuple_GET_ITEM(args,0))) {
     case 9:
 #if defined(NPY_PY3K)
-#define _ARGSTR_ "(iCOOOiiiO)"
+#define _ARGSTR_ "(iCOOOiiCO)"
 #else
-#define _ARGSTR_ "(icOOOiiiO)"
+#define _ARGSTR_ "(icOOOiicO)"
 #endif
         if (!PyArg_ParseTuple(args, _ARGSTR_, &version, &endian,
                     &subarray, &names, &fields, &elsize,
@@ -2274,9 +2274,9 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         break;
     case 8:
 #if defined(NPY_PY3K)
-#define _ARGSTR_ "(iCOOOiii)"
+#define _ARGSTR_ "(iCOOOiiC)"
 #else
-#define _ARGSTR_ "(icOOOiii)"
+#define _ARGSTR_ "(icOOOiic)"
 #endif
         if (!PyArg_ParseTuple(args, _ARGSTR_, &version, &endian,
                     &subarray, &names, &fields, &elsize,
