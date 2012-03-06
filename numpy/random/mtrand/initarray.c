@@ -107,13 +107,13 @@ init_genrand(rk_state *self, unsigned long s)
  * key_length is its length
  */
 extern void
-init_by_array(rk_state *self, unsigned long init_key[], size_t key_length)
+init_by_array(rk_state *self, unsigned long init_key[], npy_intp key_length)
 {
     /* was signed in the original code. RDH 12/16/2002 */
-    size_t i = 1;
-    size_t j = 0;
+    npy_intp i = 1;
+    npy_intp j = 0;
     unsigned long *mt = self->key;
-    size_t k;
+    npy_intp k;
 
     init_genrand(self, 19650218UL);
     k = (RK_STATE_LEN > key_length ? RK_STATE_LEN : key_length);
