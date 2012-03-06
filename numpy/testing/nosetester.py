@@ -104,10 +104,26 @@ class NoseTester(object):
 
     Parameters
     ----------
-    package : module, str or None
+    package : module, str or None, optional
         The package to test. If a string, this should be the full path to
         the package. If None (default), `package` is set to the module from
         which `NoseTester` is initialized.
+    raise_warnings : str or sequence of warnings, optional
+        This specifies which warnings to configure as 'raise' instead
+        of 'warn' during the test execution.  Valid strings are:
+
+          - "develop" : equals ``(DeprecationWarning, RuntimeWarning)``
+          - "release" : equals ``()``, don't raise on any warnings.
+
+        See Notes for more details.
+
+    Notes
+    -----
+    The default for `raise_warnings` is ``(DeprecationWarning, RuntimeWarning)``
+    for the master branch of NumPy, and ``()`` for maintenance branches and
+    released versions.  The purpose of this switching behavior is to catch as
+    many warnings as possible during development, but not give problems for
+    packaging of released versions.
 
     """
     # Stuff to exclude from tests. These are from numpy.distutils
@@ -117,16 +133,7 @@ class NoseTester(object):
                 'pyrex_ext',
                 'swig_ext']
 
-    def __init__(self, package=None):
-        ''' Test class init
-
-        Parameters
-        ----------
-        package : string or module
-            If string, gives full path to package
-            If None, extract calling module path
-            Default is None
-        '''
+    def __init__(self, package=None, raise_warnings="develop"):
         package_name = None
         if package is None:
             f = sys._getframe(1)
@@ -143,11 +150,14 @@ class NoseTester(object):
 
         self.package_path = package_path
 
-        # find the package name under test; this name is used to limit coverage
-        # reporting (if enabled)
+        # Find the package name under test; this name is used to limit coverage
+        # reporting (if enabled).
         if package_name is None:
             package_name = get_package_name(package_path)
         self.package_name = package_name
+
+        # Set to "release" in constructor in maintenance branches.
+        self.raise_warnings = raise_warnings
 
     def _test_argv(self, label, verbose, extra_argv):
         ''' Generate argv for nosetest command
@@ -252,8 +262,9 @@ class NoseTester(object):
                 argv += ['--with-' + plug.name]
         return argv, plugins
 
-    def test(self, label='fast', verbose=1, extra_argv=None, doctests=False,
-             coverage=False):
+    def test(self, label='fast', verbose=1, extra_argv=None,
+            doctests=False, coverage=False,
+            raise_warnings=None):
         """
         Run tests for module using nose.
 
@@ -279,6 +290,12 @@ class NoseTester(object):
             If True, report coverage of NumPy code. Default is False.
             (This requires the `coverage module:
              <http://nedbatchelder.com/code/modules/coverage.html>`_).
+        raise_warnings : str or sequence of warnings, optional
+            This specifies which warnings to configure as 'raise' instead
+            of 'warn' during the test execution.  Valid strings are:
+
+              - "develop" : equals ``(DeprecationWarning, RuntimeWarning)``
+              - "release" : equals ``()``, don't raise on any warnings.
 
         Returns
         -------
@@ -325,15 +342,27 @@ class NoseTester(object):
         import doctest
         doctest.master = None
 
+        if raise_warnings is None:
+            raise_warnings = self.raise_warnings
+
+        _warn_opts = dict(develop=(DeprecationWarning, RuntimeWarning),
+                          release=())
+        if raise_warnings in _warn_opts.keys():
+            raise_warnings = _warn_opts[raise_warnings]
+
         # Preserve the state of the warning filters
         warn_ctx = numpy.testing.utils.WarningManager()
         warn_ctx.__enter__()
         try:
-
-            # Force deprecation warnings to raise
-            warnings.filterwarnings('error', category=DeprecationWarning)
-            # Force runtime warnings to raise
-            warnings.filterwarnings('error', category=RuntimeWarning)
+            # Reset the warning filters to the default state,
+            # so that running the tests is more repeatable.
+            warnings.resetwarnings()
+            # If deprecation warnings are not set to 'error' below,
+            # at least set them to 'warn'.
+            warnings.filterwarnings('always', category=DeprecationWarning)
+            # Force the requested warnings to raise
+            for warningtype in raise_warnings:
+                warnings.filterwarnings('error', category=warningtype)
 
             argv, plugins = self.prepare_test_args(label, verbose, extra_argv,
                                                    doctests, coverage)
