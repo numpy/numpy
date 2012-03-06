@@ -187,6 +187,16 @@ Check the buildbot
 ------------------
 The buildbot is located at `<http://buildbot.scipy.org/>`_.
 
+Handle test warnings
+--------------------
+The default behavior of the test suite in the master branch is to report errors
+for DeprecationWarnings and RuntimeWarnings that are issued.  For a released
+version this is not desired.  Therefore any known warnings should be solved or
+explicitly silenced before making the release branch, then when the branch is
+made, the default behavior should be switched to not raise errors.  This is
+done in the constructor of the NoseTester class in numpy/testing/nosetester.py,
+by replacing ``raise_warnings="develop"`` with ``raise_warnings="release"``.
+
 Make sure current trunk builds a package correctly
 --------------------------------------------------
 ::
