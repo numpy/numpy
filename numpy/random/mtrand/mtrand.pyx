@@ -118,7 +118,7 @@ ctypedef long (* rk_discd)(rk_state *state, double a)
 
 cdef extern from "initarray.h":
    void init_by_array(rk_state *self, unsigned long *init_key,
-                      size_t key_length)
+                      npy_intp key_length)
 
 # Initialize numpy
 import_array()
