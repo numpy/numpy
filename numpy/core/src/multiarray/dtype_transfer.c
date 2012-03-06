@@ -3846,9 +3846,9 @@ PyArray_CastRawArrays(npy_intp count,
     }
 
     /* Check data alignment */
-    aligned = (((npy_intp)src_dtype | src_stride) &
+    aligned = (((npy_intp)src | src_stride) &
                                 (src_dtype->alignment - 1)) == 0 &&
-              (((npy_intp)dst_dtype | dst_stride) &
+              (((npy_intp)dst | dst_stride) &
                                 (dst_dtype->alignment - 1)) == 0;
 
     /* Get the function to do the casting */
