@@ -1522,7 +1522,7 @@ static PyMemberDef arraydescr_members[] = {
     {"alignment",
         T_INT, offsetof(PyArray_Descr, alignment), READONLY, NULL},
     {"flags",
-        T_INT, offsetof(PyArray_Descr, flags), READONLY, NULL},
+        T_BYTE, offsetof(PyArray_Descr, flags), READONLY, NULL},
     {NULL, 0, 0, 0, NULL},
 };
 
