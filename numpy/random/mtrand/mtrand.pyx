@@ -32,7 +32,7 @@ cdef extern from "math.h":
     double cos(double x)
 
 cdef extern from "mtrand_py_helper.h":
-    object empty_py_bytes(unsigned long length, void **bytes)
+    object empty_py_bytes(npy_intp length, void **bytes)
 
 cdef extern from "randomkit.h":
 
@@ -118,7 +118,7 @@ ctypedef long (* rk_discd)(rk_state *state, double a)
 
 cdef extern from "initarray.h":
    void init_by_array(rk_state *self, unsigned long *init_key,
-                      unsigned long key_length)
+                      npy_intp key_length)
 
 # Initialize numpy
 import_array()
@@ -128,8 +128,8 @@ import numpy as np
 cdef object cont0_array(rk_state *state, rk_cont0 func, object size):
     cdef double *array_data
     cdef ndarray array "arrayObject"
-    cdef long length
-    cdef long i
+    cdef npy_intp length
+    cdef npy_intp i
 
     if size is None:
         return func(state)
@@ -145,8 +145,8 @@ cdef object cont0_array(rk_state *state, rk_cont0 func, object size):
 cdef object cont1_array_sc(rk_state *state, rk_cont1 func, object size, double a):
     cdef double *array_data
     cdef ndarray array "arrayObject"
-    cdef long length
-    cdef long i
+    cdef npy_intp length
+    cdef npy_intp i
 
     if size is None:
         return func(state, a)
@@ -192,8 +192,8 @@ cdef object cont2_array_sc(rk_state *state, rk_cont2 func, object size, double a
                            double b):
     cdef double *array_data
     cdef ndarray array "arrayObject"
-    cdef long length
-    cdef long i
+    cdef npy_intp length
+    cdef npy_intp i
 
     if size is None:
         return func(state, a, b)
@@ -244,8 +244,8 @@ cdef object cont3_array_sc(rk_state *state, rk_cont3 func, object size, double a
 
     cdef double *array_data
     cdef ndarray array "arrayObject"
-    cdef long length
-    cdef long i
+    cdef npy_intp length
+    cdef npy_intp i
 
     if size is None:
         return func(state, a, b, c)
@@ -297,8 +297,8 @@ cdef object cont3_array(rk_state *state, rk_cont3 func, object size, ndarray oa,
 cdef object disc0_array(rk_state *state, rk_disc0 func, object size):
     cdef long *array_data
     cdef ndarray array "arrayObject"
-    cdef long length
-    cdef long i
+    cdef npy_intp length
+    cdef npy_intp i
 
     if size is None:
         return func(state)
@@ -313,8 +313,8 @@ cdef object disc0_array(rk_state *state, rk_disc0 func, object size):
 cdef object discnp_array_sc(rk_state *state, rk_discnp func, object size, long n, double p):
     cdef long *array_data
     cdef ndarray array "arrayObject"
-    cdef long length
-    cdef long i
+    cdef npy_intp length
+    cdef npy_intp i
 
     if size is None:
         return func(state, n, p)
@@ -362,8 +362,8 @@ cdef object discnp_array(rk_state *state, rk_discnp func, object size, ndarray o
 cdef object discdd_array_sc(rk_state *state, rk_discdd func, object size, double n, double p):
     cdef long *array_data
     cdef ndarray array "arrayObject"
-    cdef long length
-    cdef long i
+    cdef npy_intp length
+    cdef npy_intp i
 
     if size is None:
         return func(state, n, p)
@@ -412,8 +412,8 @@ cdef object discnmN_array_sc(rk_state *state, rk_discnmN func, object size,
     long n, long m, long N):
     cdef long *array_data
     cdef ndarray array "arrayObject"
-    cdef long length
-    cdef long i
+    cdef npy_intp length
+    cdef npy_intp i
 
     if size is None:
         return func(state, n, m, N)
@@ -465,8 +465,8 @@ cdef object discnmN_array(rk_state *state, rk_discnmN func, object size,
 cdef object discd_array_sc(rk_state *state, rk_discd func, object size, double a):
     cdef long *array_data
     cdef ndarray array "arrayObject"
-    cdef long length
-    cdef long i
+    cdef npy_intp length
+    cdef npy_intp i
 
     if size is None:
         return func(state, a)
@@ -507,9 +507,9 @@ cdef object discd_array(rk_state *state, rk_discd func, object size, ndarray oa)
             PyArray_MultiIter_NEXTi(multi, 1)
     return array
 
-cdef double kahan_sum(double *darr, long n):
+cdef double kahan_sum(double *darr, npy_intp n):
     cdef double c, y, t, sum
-    cdef long i
+    cdef npy_intp i
     sum = darr[0]
     c = 0.0
     for i from 1 <= i < n:
@@ -860,8 +860,8 @@ cdef class RandomState:
         cdef unsigned long diff
         cdef long *array_data
         cdef ndarray array "arrayObject"
-        cdef long length
-        cdef long i
+        cdef npy_intp length
+        cdef npy_intp i
 
         if high is None:
             lo = 0
@@ -886,7 +886,7 @@ cdef class RandomState:
                 array_data[i] = rv
             return array
 
-    def bytes(self, unsigned int length):
+    def bytes(self, npy_intp length):
         """
         bytes(length)
 
@@ -4147,7 +4147,7 @@ cdef class RandomState:
         x.shape = tuple(final_shape)
         return x
 
-    def multinomial(self, long n, object pvals, size=None):
+    def multinomial(self, npy_intp n, object pvals, size=None):
         """
         multinomial(n, pvals, size=None)
 
@@ -4199,11 +4199,11 @@ cdef class RandomState:
         array([13, 16, 13, 16, 42])
 
         """
-        cdef long d
+        cdef npy_intp d
         cdef ndarray parr "arrayObject_parr", mnarr "arrayObject_mnarr"
         cdef double *pix
         cdef long *mnix
-        cdef long i, j, dn
+        cdef npy_intp i, j, dn
         cdef double Sum
 
         d = len(pvals)
@@ -4319,11 +4319,11 @@ cdef class RandomState:
 
         #return val
 
-        cdef long       k
-        cdef long       totsize
+        cdef npy_intp   k
+        cdef npy_intp   totsize
         cdef ndarray    alpha_arr, val_arr
         cdef double     *alpha_data, *val_data
-        cdef long       i, j
+        cdef npy_intp   i, j
         cdef double     acc, invacc
 
         k           = len(alpha)
@@ -4389,7 +4389,7 @@ cdef class RandomState:
                [0, 1, 2]])
 
         """
-        cdef long i, j
+        cdef npy_intp i, j
         cdef int copy
 
         i = len(x) - 1
