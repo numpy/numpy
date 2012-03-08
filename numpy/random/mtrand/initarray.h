@@ -1,3 +1,5 @@
+#include "Python.h"
+#include "numpy/arrayobject.h"
 #include "randomkit.h"
 
 extern void
