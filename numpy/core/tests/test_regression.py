@@ -882,9 +882,13 @@ class TestRegression(TestCase):
         data_dir = path.join(path.dirname(__file__), 'data')
         filename = path.join(data_dir, "astype_copy.pkl")
         if sys.version_info[0] >= 3:
-            xp = pickle.load(open(filename, 'rb'), encoding='latin1')
+            f = open(filename, 'rb')
+            xp = pickle.load(f, encoding='latin1')
+            f.close()
         else:
-            xp = pickle.load(open(filename))
+            f = open(filename)
+            xp = pickle.load(f)
+            f.close()
         xpd = xp.astype(np.float64)
         assert_((xp.__array_interface__['data'][0] !=
                 xpd.__array_interface__['data'][0]))
