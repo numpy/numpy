@@ -623,6 +623,7 @@ def openfile(fname):
     if f.readline()[:2] != "\\x":
         f.seek(0, 0)
         return f
+    f.close()
     raise NotImplementedError("Wow, binary file")
 
 
@@ -652,6 +653,7 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
     Ultra simple: the varnames are in the header, one line"""
     # Try to open the file ......................
     f = openfile(fname)
+
     # Get the first non-empty line as the varnames
     while True:
         line = f.readline()
@@ -661,10 +663,13 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
             break
     if varnames is None:
         varnames = _varnames
+
     # Get the data ..............................
     _variables = masked_array([line.strip().split(delimitor) for line in f
                                   if line[0] != commentchar and len(line) > 1])
     (_, nfields) = _variables.shape
+    f.close()
+
     # Try to guess the dtype ....................
     if vartypes is None:
         vartypes = _guessvartypes(_variables[0])
@@ -675,14 +680,17 @@ def fromtextfile(fname, delimitor=None, commentchar='#', missingchar='',
             msg += " Reverting to default."
             warnings.warn(msg % (len(vartypes), nfields))
             vartypes = _guessvartypes(_variables[0])
+
     # Construct the descriptor ..................
     mdescr = [(n, f) for (n, f) in zip(varnames, vartypes)]
     mfillv = [ma.default_fill_value(f) for f in vartypes]
+
     # Get the data and the mask .................
     # We just need a list of masked_arrays. It's easier to create it like that:
     _mask = (_variables.T == missingchar)
     _datalist = [masked_array(a, mask=m, dtype=t, fill_value=f)
                  for (a, m, t, f) in zip(_variables.T, _mask, vartypes, mfillv)]
+
     return fromarrays(_datalist, dtype=mdescr)
 
 #....................................................................
