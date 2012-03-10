@@ -203,8 +203,10 @@ class memmap(ndarray):
 
         if hasattr(filename,'read'):
             fid = filename
+            own_file = False
         else:
             fid = open(filename, (mode == 'c' and 'r' or mode)+'b')
+            own_file = True
 
         if (mode == 'w+') and shape is None:
             raise ValueError("shape must be given")
@@ -262,6 +264,9 @@ class memmap(ndarray):
             self.filename = os.path.abspath(filename)
         elif hasattr(filename, "name"):
             self.filename = os.path.abspath(filename.name)
+
+        if own_file:
+            fid.close()
 
         return self
 
