@@ -613,7 +613,7 @@ array_tostring(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    int ret, ret2;
+    int own;
     PyObject *file;
     FILE *fd;
     char *sep = "";
@@ -632,25 +632,35 @@ array_tofile(PyArrayObject *self, PyObject *args, PyObject *kwds)
         if (file == NULL) {
             return NULL;
         }
+        own = 1;
     }
     else {
         Py_INCREF(file);
+        own = 0;
     }
+
     fd = npy_PyFile_Dup(file, "wb");
     if (fd == NULL) {
         PyErr_SetString(PyExc_IOError,
                 "first argument must be a string or open file");
-        Py_DECREF(file);
-        return NULL;
+        goto fail;
     }
-    ret = PyArray_ToFile(self, fd, sep, format);
-    ret2 = npy_PyFile_DupClose(file, fd);
+    if (PyArray_ToFile(self, fd, sep, format) < 0) {
+        goto fail;
+    }
+    if (npy_PyFile_DupClose(file, fd) < 0) {
+        goto fail;
+    }
+    if (own && npy_PyFile_CloseFile(file) < 0) {
+        goto fail;
+    }
     Py_DECREF(file);
-    if (ret < 0 || ret2 < 0) {
-        return NULL;
-    }
     Py_INCREF(Py_None);
     return Py_None;
+
+fail:
+    Py_DECREF(file);
+    return NULL;
 }
 
 static PyObject *
