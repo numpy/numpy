@@ -258,6 +258,19 @@ npy_PyFile_OpenFile(PyObject *filename, char *mode)
     return PyObject_CallFunction(open, "Os", filename, mode);
 }
 
+static NPY_INLINE PyObject*
+npy_PyFile_CloseFile(PyObject *file)
+{
+    PyObject *ret;
+
+    ret = PyObject_CallMethod(file, "close", NULL);
+    if (ret == NULL) {
+        return -1;
+    }
+    Py_DECREF(ret);
+    return 0;
+}
+
 /*
  * PyObject_Cmp
  */

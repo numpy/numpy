@@ -2159,12 +2159,12 @@ static PyObject *
 array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
 {
     PyObject *file = NULL, *ret;
-    int ok;
-    FILE *fp;
     char *sep = "";
     Py_ssize_t nin = -1;
     static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
     PyArray_Descr *type = NULL;
+    int own;
+    FILE *fp;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
                 "O|O&" NPY_SSIZE_T_PYFMT "s", kwlist,
@@ -2177,9 +2177,11 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         if (file == NULL) {
             return NULL;
         }
+        own = 1;
     }
     else {
         Py_INCREF(file);
+        own = 0;
     }
     fp = npy_PyFile_Dup(file, "rb");
     if (fp == NULL) {
@@ -2192,13 +2194,20 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
         type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
     ret = PyArray_FromFile(fp, type, (npy_intp) nin, sep);
-    ok = npy_PyFile_DupClose(file, fp);
-    Py_DECREF(file);
-    if (ok < 0) {
-        Py_DECREF(ret);
-        return NULL;
+
+    if (npy_PyFile_DupClose(file, fp) < 0) {
+        goto fail;
     }
+    if (own && npy_PyFile_CloseFile(file) < 0) {
+        goto fail;
+    }
+    Py_DECREF(file);
     return ret;
+
+fail:
+    Py_DECREF(file);
+    Py_DECREF(ret);
+    return NULL;
 }
 
 static PyObject *
