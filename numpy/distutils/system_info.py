@@ -2118,7 +2118,7 @@ def show_all(argv=None):
         conf.verbosity = 2
         r = conf.get_info()
     if show_only:
-        log.info('Info classes not defined: %s', ', '.join(show_only))
+        log.info('Info classes not defined: %s', ','.join(show_only))
 
 if __name__ == "__main__":
     show_all()
