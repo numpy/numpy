@@ -6,6 +6,7 @@ from numpy.testing import *
 from nose import SkipTest
 from numpy.core import *
 from numpy.core.multiarray_tests import test_neighborhood_iterator, test_neighborhood_iterator_oob
+from numpy.compat import asbytes
 
 import warnings
 from numpy.testing.utils import WarningManager
@@ -1455,10 +1456,10 @@ class TestFromBuffer(object):
                 dt = np.dtype(dtype).newbyteorder(byteorder)
                 x = (np.random.random((4,7))*5).astype(dt)
                 buf = x.tostring()
-                yield self.tst_basic,buf,x.flat,{'dtype':dt}
+                yield self.tst_basic, buf, x.flat, {'dtype':dt}
 
     def test_empty(self):
-        yield self.tst_basic, '', np.array([]), {}
+        yield self.tst_basic, asbytes(''), np.array([]), {}
 
 
 class TestResize(TestCase):
