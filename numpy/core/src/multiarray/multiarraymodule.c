@@ -2163,7 +2163,7 @@ array_fromfile(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *keywds)
     Py_ssize_t nin = -1;
     static char *kwlist[] = {"file", "dtype", "count", "sep", NULL};
     PyArray_Descr *type = NULL;
-    int ok, own;
+    int own;
     FILE *fp;
 
     if (!PyArg_ParseTupleAndKeywords(args, keywds,
