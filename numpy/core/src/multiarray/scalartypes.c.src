@@ -1809,8 +1809,10 @@ gentype_setflags(PyObject *NPY_UNUSED(self), PyObject *NPY_UNUSED(args),
     return Py_None;
 }
 
-/* casting complex numbers (that don't inherit from Python complex)
- * to Python complex */
+/*
+ * casting complex numbers (that don't inherit from Python complex)
+ * to Python complex
+ */
 
 /**begin repeat
  * #name = cfloat, clongdouble#
@@ -1825,9 +1827,10 @@ static PyObject *
 }
 /**end repeat**/
 
-/* need to fill in doc-strings for these methods on import -- copy from
-   array docstrings
-*/
+/*
+ * need to fill in doc-strings for these methods on import -- copy from
+ * array docstrings
+ */
 static PyMethodDef gentype_methods[] = {
     {"tolist",
         (PyCFunction)gentype_tolist,
