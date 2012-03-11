@@ -1327,12 +1327,15 @@ OBJECT_to_@TOTYPE@(PyObject **ip, @totype@ *op, npy_intp n,
  *            0*23#
  * #convstr = (Int*9, Long*2, Float*4, Complex*3, Tuple*3, Long*2)*3#
  */
+
+#define IS_@from@
+
 static void
 @from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, npy_intp n, PyArrayObject *aip,
              PyArrayObject *aop)
 {
     npy_intp i;
-    PyObject *temp = NULL;
+    PyObject *temp = NULL, *new;
     int skip = PyArray_DESCR(aip)->elsize;
     int oskip = @oskip@;
 
@@ -1341,24 +1344,35 @@ static void
         if (temp == NULL) {
             return;
         }
-        /* convert from Python object to needed one */
 #if @convert@
-        {
-        PyObject *new, *args;
-        /* call out to the Python builtin given by convstr */
-        args = Py_BuildValue("(N)", temp);
-#if defined(NPY_PY3K)
-#define PyInt_Type PyLong_Type
-#endif
-        new = Py@convstr@_Type.tp_new(&Py@convstr@_Type, args, NULL);
-#if defined(NPY_PY3K)
-#undef PyInt_Type
-#endif
-        Py_DECREF(args);
+
+#if defined(NPY_PY3K) && defined(IS_STRING)
+        /* Work around some Python 3K */
+        new = PyUnicode_FromEncodedObject(temp, "ascii", "strict");
+        Py_DECREF(temp);
         temp = new;
         if (temp == NULL) {
             return;
         }
+#endif
+        /* convert from Python object to needed one */
+        {
+            PyObject *args;
+
+            /* call out to the Python builtin given by convstr */
+            args = Py_BuildValue("(N)", temp);
+#if defined(NPY_PY3K)
+#define PyInt_Type PyLong_Type
+#endif
+            new = Py@convstr@_Type.tp_new(&Py@convstr@_Type, args, NULL);
+#if defined(NPY_PY3K)
+#undef PyInt_Type
+#endif
+            Py_DECREF(args);
+            temp = new;
+            if (temp == NULL) {
+                return;
+            }
         }
 #endif /* @convert@ */
         if (@to@_setitem(temp,(char *)op, aop)) {
@@ -1368,6 +1382,9 @@ static void
         Py_DECREF(temp);
     }
 }
+
+#undef IS_@from@
+
 /**end repeat**/
 
 
