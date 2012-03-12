@@ -248,7 +248,7 @@ npy_PyFile_Check(PyObject *file)
 #endif
 
 static NPY_INLINE PyObject*
-npy_PyFile_OpenFile(PyObject *filename, char *mode)
+npy_PyFile_OpenFile(PyObject *filename, const char *mode)
 {
     PyObject *open;
     open = PyDict_GetItemString(PyEval_GetBuiltins(), "open");
@@ -258,7 +258,7 @@ npy_PyFile_OpenFile(PyObject *filename, char *mode)
     return PyObject_CallFunction(open, "Os", filename, mode);
 }
 
-static NPY_INLINE PyObject*
+static NPY_INLINE int
 npy_PyFile_CloseFile(PyObject *file)
 {
     PyObject *ret;
