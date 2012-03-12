@@ -34,33 +34,33 @@ static int _array_descr_builtin(PyArray_Descr* descr, PyObject *l);
 /*
  * normalize endian character: always return 'I', '<' or '>'
  */
- static char _normalize_byteorder(char byteorder)
- {
-    switch(byteorder) {
-    case '=':
-        if (PyArray_GetEndianness() == NPY_CPU_BIG) {
-            return '>';
-        }
-        else {
-            return '<';
-        }
-    default:
-        return byteorder;
-    }
- }
+static char _normalize_byteorder(char byteorder)
+{
+   switch(byteorder) {
+       case '=':
+           if (PyArray_GetEndianness() == NPY_CPU_BIG) {
+               return '>';
+           }
+           else {
+               return '<';
+           }
+       default:
+           return byteorder;
+   }
+}
 
 /*
  * Return true if descr is a builtin type
  */
 static int _is_array_descr_builtin(PyArray_Descr* descr)
 {
-        if (descr->fields != NULL && descr->fields != Py_None) {
-                return 0;
-        }
-        if (PyDataType_HASSUBARRAY(descr)) {
-                return 0;
-        }
-        return 1;
+    if (descr->fields != NULL && descr->fields != Py_None) {
+        return 0;
+    }
+    if (PyDataType_HASSUBARRAY(descr)) {
+        return 0;
+    }
+    return 1;
 }
 
 /*

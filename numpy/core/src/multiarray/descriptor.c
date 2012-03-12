@@ -2449,16 +2449,19 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         self->alignment = alignment;
     }
 
-    /* We use an integer converted to char for backward compatibility with
+    /*
+     * We use an integer converted to char for backward compatibility with
      * pickled arrays. Pickled arrays created with previous versions encoded
      * flags as an int even though it actually was a char in the PyArray_Descr
-     * structure */
+     * structure
+     */
     dtypeflags = int_dtypeflags;
     if (dtypeflags != int_dtypeflags) {
         PyErr_Format(PyExc_ValueError,
                      "incorrect value for flags variable (overflow)");
         return NULL;
-    } else {
+    }
+    else {
         self->flags = dtypeflags;
     }
 
