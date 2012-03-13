@@ -15,4 +15,8 @@ NPY_NO_EXPORT void
 PyArray_CreateSortedStridePerm(PyArrayObject *arr,
                            _npy_stride_sort_item *strideperm);
 
+/* Make sure the following value does not coincide with
+ * any value in the enum NPY_ORDER */
+#define NPY_NOCOPY 42
+
 #endif
