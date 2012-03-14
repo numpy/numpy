@@ -424,3 +424,15 @@ class TestHalf(TestCase):
             float16(-2**-14-2**-23)/float16(2)
         finally:
             np.seterr(**oldsettings)
+
+    def test_half_array_interface(self):
+        """Test that half is compatible with __array_interface__"""
+        class Dummy:
+            pass
+
+        a = np.ones((1,), dtype=float16)
+        b = Dummy()
+        b.__array_interface__ = a.__array_interface__
+        c = np.array(b)
+        assert_(c.dtype == float16)
+        assert_equal(a, c)
