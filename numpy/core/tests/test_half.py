@@ -1,8 +1,8 @@
+import warnings
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import *
+from numpy.testing import TestCase, run_module_suite, assert_, assert_equal 
 
-import warnings
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
     try:
@@ -424,3 +424,19 @@ class TestHalf(TestCase):
             float16(-2**-14-2**-23)/float16(2)
         finally:
             np.seterr(**oldsettings)
+
+    def test_half_array_interface(self):
+        """Test that half is compatible with __array_interface__"""
+        class Dummy:
+            pass
+
+        a = np.ones((1,), dtype=float16)
+        b = Dummy()
+        b.__array_interface__ = a.__array_interface__
+        c = np.array(b)
+        assert_(c.dtype == float16)
+        assert_equal(a, c)
+
+
+if __name__ == "__main__":
+    run_module_suite()
