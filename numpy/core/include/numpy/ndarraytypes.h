@@ -1516,7 +1516,7 @@ static NPY_INLINE PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
     return ((PyArrayObject_fields *)arr)->descr->f->getitem(
-                                                        itemptr, arr);
+					(void *)itemptr, (PyArrayObject *)arr);
 }
 
 static NPY_INLINE int
