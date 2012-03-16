@@ -1087,6 +1087,7 @@ class atlas_blas_info(atlas_info):
             dict_append(info, include_dirs=[h])
         info['language'] = 'c'
 
+        atlas_version, atlas_extra_info = get_atlas_version(**atlas)
         dict_append(atlas, **atlas_extra_info)
 
         dict_append(info, **atlas)
