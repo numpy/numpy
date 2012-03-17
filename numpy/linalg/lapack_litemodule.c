@@ -115,8 +115,7 @@ check_object(PyObject *ob, int t, char *obname,
                      "Parameter %s is not of type %s in lapack_lite.%s",
                      obname, tname, funname);
         return 0;
-    } else if (((PyArrayObject *)ob)->descr->byteorder != '=' &&
-               ((PyArrayObject *)ob)->descr->byteorder != '|') {
+    } else if (PyArray_ISBYTESWAPPED(ob)) {
         PyErr_Format(LapackError,
                      "Parameter %s has non-native byte order in lapack_lite.%s",
                      obname, funname);
