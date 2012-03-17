@@ -174,6 +174,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
                     return -1;
                 }
                 itemsize = PyUnicode_GET_DATA_SIZE(temp);
+#ifndef Py_UNICODE_WIDE
+                itemsize <<= 1;
+#endif
             }
             Py_DECREF(temp);
             if (*out_dtype != NULL &&

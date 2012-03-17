@@ -1663,5 +1663,16 @@ class TestRegression(TestCase):
                 b = np.array([tostr('xxxxxxxxxx'), val])
                 assert_equal(tostr(b[1]), tostr(val))
 
+    def test_string_truncation_ucs2(self):
+        # Ticket #2081. Python compiled with two byte unicode
+        # can lead to truncation if numpy itemsize is adjusted
+        # for 4 byte unicode.
+        if sys.version_info.major >= 3:
+            a = np.array(['abcd'])
+        else:
+            a = np.array([u'abcd'])
+        assert_equal(a.dtype.itemsize, 16)
+
+
 if __name__ == "__main__":
     run_module_suite()
