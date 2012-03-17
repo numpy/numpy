@@ -1351,14 +1351,14 @@ class lapack_opt_info(system_info):
                     args.extend(['-msse3'])
                 else:
                     args.extend(['-faltivec'])
-                link_args.extend(['-Wl, -framework', '-Wl,Accelerate'])
+                link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
             elif os.path.exists('/System/Library/Frameworks'
                                 '/vecLib.framework/'):
                 if intel:
                     args.extend(['-msse3'])
                 else:
                     args.extend(['-faltivec'])
-                link_args.extend(['-Wl, -framework', '-Wl,vecLib'])
+                link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
             if args:
                 self.set_info(extra_compile_args=args,
                               extra_link_args=link_args,
@@ -1442,7 +1442,7 @@ class blas_opt_info(system_info):
                     args.extend(['-faltivec'])
                 args.extend([
                     '-I/System/Library/Frameworks/vecLib.framework/Headers'])
-                link_args.extend(['-Wl, -framework', '-Wl,Accelerate'])
+                link_args.extend(['-Wl,-framework', '-Wl,Accelerate'])
             elif os.path.exists('/System/Library/Frameworks'
                                 '/vecLib.framework/'):
                 if intel:
@@ -1451,7 +1451,7 @@ class blas_opt_info(system_info):
                     args.extend(['-faltivec'])
                 args.extend([
                     '-I/System/Library/Frameworks/vecLib.framework/Headers'])
-                link_args.extend(['-Wl, -framework', '-Wl,vecLib'])
+                link_args.extend(['-Wl,-framework', '-Wl,vecLib'])
             if args:
                 self.set_info(extra_compile_args=args,
                               extra_link_args=link_args,
