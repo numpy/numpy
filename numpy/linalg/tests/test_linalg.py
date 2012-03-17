@@ -1,5 +1,6 @@
 """ Test functions for linalg module
 """
+import sys
 
 import numpy as np
 from numpy.testing import *
@@ -454,6 +455,27 @@ class TestQR(TestCase):
     def test_qr_empty(self):
         a = np.zeros((0,2))
         self.assertRaises(linalg.LinAlgError, linalg.qr, a)
+
+
+def test_byteorder_check():
+    # Byte order check should pass for native order
+    if sys.byteorder == 'little':
+        native = '<'
+    else:
+        native = '>'
+
+    for dtt in (np.float32, np.float64):
+        arr = np.eye(4, dtype=dtt)
+        n_arr = arr.newbyteorder(native)
+        sw_arr = arr.newbyteorder('S').byteswap()
+        assert_equal(arr.dtype.byteorder, '=')
+        for routine in (linalg.inv, linalg.det, linalg.pinv):
+            # Normal call
+            res = routine(arr)
+            # Native but not '='
+            assert_array_equal(res, routine(n_arr))
+            # Swapped
+            assert_array_equal(res, routine(sw_arr))
 
 
 if __name__ == "__main__":
