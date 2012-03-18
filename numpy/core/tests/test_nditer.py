@@ -2555,16 +2555,22 @@ def test_iter_maskna_default_use_maskna():
     assert_array_equal(it.operands[2], a+b+1)
 
 
-def test_iter_writable_attribute_deletion():
+def test_iter_non_writable_attribute_deletion():
     it = np.nditer(np.ones(2))
     attr = ["value", "shape", "operands", "itviews", "has_delayed_bufalloc",
             "iterationneedsapi", "has_multi_index", "has_index", "dtypes",
             "ndim", "nop", "itersize", "finished"]
+
+    if sys.version[:3] == '2.4':
+        error = TypeError
+    else:
+        error = AttributeError
+
     for s in attr:
-        assert_raises(AttributeError, delattr, it, s)
+        assert_raises(error, delattr, it, s)
 
 
-def test_iter_non_writable_attribute_deletion():
+def test_iter_writable_attribute_deletion():
     it = np.nditer(np.ones(2))
     attr = [ "multi_index", "index", "iterrange", "iterindex"]
     for s in attr:
