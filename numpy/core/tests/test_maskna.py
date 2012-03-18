@@ -3,7 +3,30 @@ from numpy.compat import asbytes
 from numpy.testing import *
 import sys, warnings
 from numpy.testing.utils import WarningManager
-import itertools
+
+
+def combinations(iterable, r):
+    # copied from 2.7 documentation in order to support
+    # Python < 2.6
+    # combinations('ABCD', 2) --> AB AC AD BC BD CD
+    # combinations(range(4), 3) --> 012 013 023 123
+    pool = tuple(iterable)
+    n = len(pool)
+    if r > n:
+        return
+    indices = range(r)
+    yield tuple(pool[i] for i in indices)
+    while True:
+        for i in reversed(range(r)):
+            if indices[i] != i + n - r:
+                break
+        else:
+            return
+        indices[i] += 1
+        for j in range(i+1, r):
+            indices[j] = indices[j-1] + 1
+        yield tuple(pool[i] for i in indices)
+
 
 def test_array_maskna_flags():
     a = np.arange(3)
@@ -464,7 +487,7 @@ def test_array_maskna_view_dtype():
 
     same_size = []
     diff_size = []
-    for x in itertools.combinations(tcs, 2):
+    for x in combinations(tcs, 2):
         if np.dtype(x[0]).itemsize == np.dtype(x[1]).itemsize:
             same_size.append(x)
         else: diff_size.append(x)
