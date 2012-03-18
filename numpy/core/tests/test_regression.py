@@ -1665,8 +1665,8 @@ class TestRegression(TestCase):
 
     def test_string_truncation_ucs2(self):
         # Ticket #2081. Python compiled with two byte unicode
-        # can lead to truncation if numpy itemsize is adjusted
-        # for 4 byte unicode.
+        # can lead to truncation if itemsize is not properly
+        # adjusted for Numpy's four byte unicode.
         if sys.version_info[0] >= 3:
             a = np.array(['abcd'])
         else:
