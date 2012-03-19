@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 from numpy.testing import *
 
@@ -420,8 +421,14 @@ class TestDtypeAttributeDeletion(object):
         attr = ["subdtype", "descr", "str", "name", "base", "shape",
                 "isbuiltin", "isnative", "isalignedstruct", "fields",
                 "metadata", "hasobject"]
+
+        if sys.version[:3] == '2.4':
+            error = TypeError
+        else:
+            error = AttributeError
+
         for s in attr:
-            assert_raises(AttributeError, delattr, dt, s)
+            assert_raises(error, delattr, dt, s)
 
 
     def test_dtype_writable_attributes_deletion(self):
