@@ -112,8 +112,8 @@ def unique(ar, return_index=False, return_inverse=False):
     unique : ndarray
         The sorted unique values.
     unique_indices : ndarray, optional
-        The indices of the unique values in the (flattened) original array.
-        Only provided if `return_index` is True.
+        The indices of the first occurrences of the unique values in the
+        (flattened) original array. Only provided if `return_index` is True.
     unique_inverse : ndarray, optional
         The indices to reconstruct the (flattened) original array from the
         unique array. Only provided if `return_inverse` is True.
@@ -174,7 +174,10 @@ def unique(ar, return_index=False, return_inverse=False):
             return ar
 
     if return_inverse or return_index:
-        perm = ar.argsort()
+        if return_index:
+            perm = ar.argsort(kind='mergesort')
+        else:
+            perm = ar.argsort()
         aux = ar[perm]
         flag = np.concatenate(([True], aux[1:] != aux[:-1]))
         if return_inverse:
