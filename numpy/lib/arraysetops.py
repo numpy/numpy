@@ -174,12 +174,12 @@ def unique(ar, return_index=False, return_inverse=False):
             return ar
 
     if return_inverse or return_index:
-        perm = ar.argsort()
+        perm = ar.argsort(kind='mergesort')
         aux = ar[perm]
         flag = np.concatenate(([True], aux[1:] != aux[:-1]))
         if return_inverse:
             iflag = np.cumsum(flag) - 1
-            iperm = perm.argsort()
+            iperm = perm.argsort(kind='mergesort')
             if return_index:
                 return aux[flag], perm[flag], iflag[iperm]
             else:
