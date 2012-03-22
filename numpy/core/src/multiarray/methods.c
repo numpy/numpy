@@ -1361,16 +1361,17 @@ array_argsort(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_searchsorted(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"keys", "side", NULL};
+    static char *kwlist[] = {"keys", "side", "sorter", NULL};
     PyObject *keys;
+    PyObject *sorter;
     NPY_SEARCHSIDE side = NPY_SEARCHLEFT;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&:searchsorted",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O:searchsorted",
                                      kwlist, &keys,
-                                     PyArray_SearchsideConverter, &side)) {
+                                     PyArray_SearchsideConverter, &side, &sorter)) {
         return NULL;
     }
-    return PyArray_Return((PyArrayObject *)PyArray_SearchSorted(self, keys, side));
+    return PyArray_Return((PyArrayObject *)PyArray_SearchSorted(self, keys, side, sorter));
 }
 
 static void
