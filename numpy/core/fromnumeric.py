@@ -755,24 +755,30 @@ def argmin(a, axis=None):
     return argmin(axis)
 
 
-def searchsorted(a, v, side='left'):
+def searchsorted(a, v, side='left', sorter=None):
     """
     Find indices where elements should be inserted to maintain order.
 
-    Find the indices into a sorted array `a` such that, if the corresponding
-    elements in `v` were inserted before the indices, the order of `a` would
-    be preserved.
+    Find the indices into a sorted array `a` such that, if the
+    corresponding elements in `v` were inserted before the indices, the
+    order of `a` would be preserved.
 
     Parameters
     ----------
     a : 1-D array_like
-        Input array, sorted in ascending order.
+        Input array. If `sorter` is None, then it must be sorted in
+        ascending order, otherwise `sorter` must be an array of indices
+        that sort it.
     v : array_like
         Values to insert into `a`.
     side : {'left', 'right'}, optional
-        If 'left', the index of the first suitable location found is given.  If
-        'right', return the last such index.  If there is no suitable
+        If 'left', the index of the first suitable location found is given.
+        If 'right', return the last such index.  If there is no suitable
         index, return either 0 or N (where N is the length of `a`).
+    sorter : 1-D array_like, optional
+        .. versionadded:: 1.7.0
+        Optional array of integer indices that sort array a into ascending
+        order. They are typically the result of argsort.
 
     Returns
     -------
@@ -804,8 +810,8 @@ def searchsorted(a, v, side='left'):
     try:
         searchsorted = a.searchsorted
     except AttributeError:
-        return _wrapit(a, 'searchsorted', v, side)
-    return searchsorted(v, side)
+        return _wrapit(a, 'searchsorted', v, side, sorter)
+    return searchsorted(v, side, sorter)
 
 
 def resize(a, new_shape):
@@ -2693,4 +2699,3 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                                 skipna=skipna, keepdims=keepdims)
-

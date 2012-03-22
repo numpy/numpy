@@ -1580,6 +1580,95 @@ local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
     }
 }
 
+/** @brief Use bisection of sorted array to find first entries >= keys.
+ *
+ * For each key use bisection to find the first index i s.t. key <= arr[i].
+ * When there is no such index i, set i = len(arr). Return the results in ret.
+ * All arrays are assumed contiguous on entry and both arr and key must be of
+ * the same comparable type.
+ *
+ * @param arr contiguous sorted array to be searched.
+ * @param key contiguous array of keys.
+ * @param ret contiguous array of intp for returned indices.
+ * @return void
+ */
+static void
+local_argsearch_left(PyArrayObject *arr, PyArrayObject *key,
+                     PyArrayObject *sorter, PyArrayObject *ret)
+{
+    PyArray_CompareFunc *compare = PyArray_DESCR(key)->f->compare;
+    npy_intp nelts = PyArray_DIMS(arr)[PyArray_NDIM(arr) - 1];
+    npy_intp nkeys = PyArray_SIZE(key);
+    char *parr = PyArray_DATA(arr);
+    char *pkey = PyArray_DATA(key);
+    npy_intp *psorter = PyArray_DATA(sorter);
+    npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
+    int elsize = PyArray_DESCR(arr)->elsize;
+    npy_intp i;
+
+    for (i = 0; i < nkeys; ++i) {
+        npy_intp imin = 0;
+        npy_intp imax = nelts;
+        while (imin < imax) {
+            npy_intp imid = imin + ((imax - imin) >> 1);
+            if (compare(parr + elsize*psorter[imid], pkey, key) < 0) {
+                imin = imid + 1;
+            }
+            else {
+                imax = imid;
+            }
+        }
+        *pret = imin;
+        pret += 1;
+        pkey += elsize;
+    }
+}
+
+
+/** @brief Use bisection of sorted array to find first entries > keys.
+ *
+ * For each key use bisection to find the first index i s.t. key < arr[i].
+ * When there is no such index i, set i = len(arr). Return the results in ret.
+ * All arrays are assumed contiguous on entry and both arr and key must be of
+ * the same comparable type.
+ *
+ * @param arr contiguous sorted array to be searched.
+ * @param key contiguous array of keys.
+ * @param ret contiguous array of intp for returned indices.
+ * @return void
+ */
+static void
+local_argsearch_right(PyArrayObject *arr, PyArrayObject *key,
+                      PyArrayObject *sorter, PyArrayObject *ret)
+{
+    PyArray_CompareFunc *compare = PyArray_DESCR(key)->f->compare;
+    npy_intp nelts = PyArray_DIMS(arr)[PyArray_NDIM(arr) - 1];
+    npy_intp nkeys = PyArray_SIZE(key);
+    char *parr = PyArray_DATA(arr);
+    char *pkey = PyArray_DATA(key);
+    npy_intp *psorter = PyArray_DATA(sorter);
+    npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
+    int elsize = PyArray_DESCR(arr)->elsize;
+    npy_intp i;
+
+    for(i = 0; i < nkeys; ++i) {
+        npy_intp imin = 0;
+        npy_intp imax = nelts;
+        while (imin < imax) {
+            npy_intp imid = imin + ((imax - imin) >> 1);
+            if (compare(parr + elsize*psorter[imid], pkey, key) <= 0) {
+                imin = imid + 1;
+            }
+            else {
+                imax = imid;
+            }
+        }
+        *pret = imin;
+        pret += 1;
+        pkey += elsize;
+    }
+}
+
 /*NUMPY_API
  *
  * Search the sorted array op1 for the location of the items in op2. The
@@ -1596,6 +1685,8 @@ local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
  * side : {NPY_SEARCHLEFT, NPY_SEARCHRIGHT}
  *     If NPY_SEARCHLEFT, return first valid insertion indexes
  *     If NPY_SEARCHRIGHT, return last valid insertion indexes
+ * perm : PyObject *
+ *     Permutation array that sorts op1 (optional)
  *
  * Returns
  * -------
@@ -1608,10 +1699,15 @@ local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
  * Binary search is used to find the indexes.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
+PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
+                     NPY_SEARCHSIDE side, PyObject *perm)
 {
     PyArrayObject *ap1 = NULL;
     PyArrayObject *ap2 = NULL;
+    PyArrayObject *ap3 = NULL;
+    PyArrayObject *sorter = NULL;
+    PyObject *max = NULL;
+    PyObject *min = NULL;
     PyArrayObject *ret = NULL;
     PyArray_Descr *dtype;
     NPY_BEGIN_THREADS_DEF;
@@ -1625,8 +1721,9 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
     /* need ap1 as contiguous array and of right type */
     Py_INCREF(dtype);
     ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
-                                1, 1, NPY_ARRAY_DEFAULT |
-                                      NPY_ARRAY_NOTSWAPPED, NULL);
+                                1, 1,
+                                NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED,
+                                NULL);
     if (ap1 == NULL) {
         Py_DECREF(dtype);
         return NULL;
@@ -1634,17 +1731,10 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
 
     /* need ap2 as contiguous array and of right type */
     ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
-                                0, 0, NPY_ARRAY_DEFAULT |
-                                      NPY_ARRAY_NOTSWAPPED, NULL);
+                                0, 0,
+                                NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED,
+                                NULL);
     if (ap2 == NULL) {
-        goto fail;
-    }
-
-    /* ret is a contiguous array of intp type to hold returned indices */
-    ret = (PyArrayObject *)PyArray_New(Py_TYPE(ap2), PyArray_NDIM(ap2),
-                                       PyArray_DIMS(ap2), NPY_INTP,
-                                       NULL, NULL, 0, 0, (PyObject *)ap2);
-    if (ret == NULL) {
         goto fail;
     }
     /* check that comparison function exists */
@@ -1654,15 +1744,83 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
         goto fail;
     }
 
-    if (side == NPY_SEARCHLEFT) {
-        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
-        local_search_left(ap1, ap2, ret);
-        NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
+    if (perm) {
+        /* need ap3 as contiguous array and of right type */
+        ap3 = (PyArrayObject *)PyArray_CheckFromAny(perm, NULL,
+                                    1, 1,
+                                    NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED,
+                                    NULL);
+        if (ap3 == NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                        "could not parse sorter argument");
+            goto fail;
+        }
+        if (!PyArray_ISINTEGER(ap3)) {
+            PyErr_SetString(PyExc_TypeError,
+                        "sorter must only contain integers");
+            goto fail;
+        }
+        /* convert to known integer size */
+        sorter = (PyArrayObject *)PyArray_FromArray(ap3,
+                                    PyArray_DescrFromType(NPY_INTP),
+                                    NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED);
+        if (sorter == NULL) {
+            PyErr_SetString(PyExc_ValueError,
+                        "could not parse sorter argument");
+            goto fail;
+        }
+        if (PyArray_SIZE(sorter) != PyArray_SIZE(ap1)) {
+            PyErr_SetString(PyExc_ValueError,
+                        "sorter.size must equal a.size");
+            goto fail;
+        }
+        max = PyArray_Max(sorter, 0, NULL);
+        if (PyLong_AsLong(max) >= PyArray_SIZE(ap1)) {
+            PyErr_SetString(PyExc_ValueError,
+                        "sorter.max() must be less than a.size");
+            goto fail;
+        }
+        min = PyArray_Min(sorter, 0, NULL);
+        if (PyLong_AsLong(min) < 0) {
+            PyErr_SetString(PyExc_ValueError,
+                        "sorter elements must be non-negative");
+            goto fail;
+        }
     }
-    else if (side == NPY_SEARCHRIGHT) {
-        NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
-        local_search_right(ap1, ap2, ret);
-        NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
+
+    /* ret is a contiguous array of intp type to hold returned indices */
+    ret = (PyArrayObject *)PyArray_New(Py_TYPE(ap2), PyArray_NDIM(ap2),
+                                       PyArray_DIMS(ap2), NPY_INTP,
+                                       NULL, NULL, 0, 0, (PyObject *)ap2);
+    if (ret == NULL) {
+        goto fail;
+    }
+
+    if (ap3 == NULL) {
+        if (side == NPY_SEARCHLEFT) {
+            NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
+            local_search_left(ap1, ap2, ret);
+            NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
+        }
+        else if (side == NPY_SEARCHRIGHT) {
+            NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
+            local_search_right(ap1, ap2, ret);
+            NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
+        }
+    }
+    else {
+        if (side == NPY_SEARCHLEFT) {
+            NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
+            local_argsearch_left(ap1, ap2, sorter, ret);
+            NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
+        }
+        else if (side == NPY_SEARCHRIGHT) {
+            NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
+            local_argsearch_right(ap1, ap2, sorter, ret);
+            NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
+        }
+        Py_DECREF(ap3);
+        Py_DECREF(sorter);
     }
     Py_DECREF(ap1);
     Py_DECREF(ap2);
@@ -1671,6 +1829,8 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side)
  fail:
     Py_XDECREF(ap1);
     Py_XDECREF(ap2);
+    Py_XDECREF(ap3);
+    Py_XDECREF(sorter);
     Py_XDECREF(ret);
     return NULL;
 }

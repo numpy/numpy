@@ -130,6 +130,12 @@ Support for mask-based NA values in the polynomial package fits
 The fitting functions recognize and remove masked data from the fit.
 
 
+New argument to searchsorted
+----------------------------
+
+The function searchsorted now accepts a 'sorter' argument that is a
+permuation array that sorts the array to search.
+
 Changes
 =======
 

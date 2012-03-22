@@ -746,6 +746,28 @@ class TestMethods(TestCase):
         assert_equal([a.searchsorted(a[i], 'left') for i in ind], ind)
         assert_equal([a.searchsorted(a[i], 'right') for i in ind], ind + 1)
 
+    def test_searchsorted_with_sorter(self):
+        a = np.array([5,2,1,3,4])
+        s = np.argsort(a)
+        assert_raises(TypeError, np.searchsorted, a, 0, sorter=(1,(2,3)))
+        assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1.1])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1,2,3,4])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1,2,3,4,6])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1,2,3,4,5,5])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[-1,2,3,4])
+
+        a = np.random.rand(100)
+        s = a.argsort()
+        b = np.sort(a)
+        k = np.linspace(0, 1, 20)
+        assert_equal(b.searchsorted(k), a.searchsorted(k, sorter=s))
+
+        a = np.array([0, 1, 2, 3, 5]*20)
+        s = a.argsort()
+        k = [0, 1, 2, 3, 5]
+        assert_equal(a.searchsorted(k, side='l', sorter=s), [0, 20, 40, 60, 80])
+        assert_equal(a.searchsorted(k, side='r', sorter=s), [20, 40, 60, 80, 100])
+
     def test_flatten(self):
         x0 = np.array([[1,2,3],[4,5,6]], np.int32)
         x1 = np.array([[[1,2],[3,4]],[[5,6],[7,8]]], np.int32)

@@ -4082,7 +4082,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('round',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('searchsorted',
     """
-    a.searchsorted(v, side='left')
+    a.searchsorted(v, side='left', sorter=None)
 
     Find indices where elements of v should be inserted in a to maintain order.
 
