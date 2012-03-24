@@ -1244,7 +1244,7 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
             return (*at) ? NPY_SUCCEED : NPY_FAIL;
         }
 
-        /* Process the endian character */
+        /* Process the endian character. '|' is replaced by '='*/
         switch (type[0]) {
             case '>':
             case '<':
@@ -1375,8 +1375,8 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
     }
 
 finish:
-    if ((check_num == NPY_NOTYPE + 10)
-        || (*at = PyArray_DescrFromType(check_num)) == NULL) {
+    if ((check_num == NPY_NOTYPE + 10) ||
+            (*at = PyArray_DescrFromType(check_num)) == NULL) {
         PyErr_Clear();
         /* Now check to see if the object is registered in typeDict */
         if (typeDict != NULL) {
@@ -1414,11 +1414,12 @@ finish:
 
 fail:
     if (PyBytes_Check(obj)) {
-        PyErr_Format(PyExc_TypeError, "data type \"%s\" not understood",
-                            PyBytes_AS_STRING(obj));
+        PyErr_Format(PyExc_TypeError,
+                "data type \"%s\" not understood", PyBytes_AS_STRING(obj));
     }
     else {
-        PyErr_SetString(PyExc_TypeError, "data type not understood");
+        PyErr_SetString(PyExc_TypeError,
+                "data type not understood");
     }
 
 error:
