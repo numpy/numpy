@@ -25,6 +25,7 @@ class TestDateTime(TestCase):
                 np.dtype("<M8") == np.dtype("M8"))
         assert_(np.dtype(">M8[D]") == np.dtype("M8[D]") or
                 np.dtype("<M8[D]") == np.dtype("M8[D]"))
+        assert_(np.dtype(">M8") != np.dtype("<M8"))
 
         assert_equal(np.dtype("=m8"), np.dtype("m8"))
         assert_equal(np.dtype("=m8[s]"), np.dtype("m8[s]"))
@@ -32,6 +33,7 @@ class TestDateTime(TestCase):
                 np.dtype("<m8") == np.dtype("m8"))
         assert_(np.dtype(">m8[D]") == np.dtype("m8[D]") or
                 np.dtype("<m8[D]") == np.dtype("m8[D]"))
+        assert_(np.dtype(">m8") != np.dtype("<m8"))
 
         # Check that the parser rejects bad datetime types
         assert_raises(TypeError, np.dtype, 'M8[badunit]')

@@ -1269,7 +1269,14 @@ PyArray_DescrConverter(PyObject *obj, PyArray_Descr **at)
         /* Check for datetime format */
         if (is_datetime_typestr(type, len)) {
             *at = parse_dtype_from_datetime_typestr(type, len);
-            return (*at) ? NPY_SUCCEED : NPY_FAIL;
+            if (*at == NULL) {
+                return NPY_FAIL;
+            }
+            /* *at has byte order '=' at this point */
+            if (!PyArray_ISNBO(endian)) {
+                (*at)->byteorder = endian;
+            }
+            return NPY_SUCCEED;
         }
 
         /* A typecode like 'd' */
