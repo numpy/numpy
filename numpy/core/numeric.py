@@ -2012,26 +2012,26 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     False
 
     """
-    def within_tol(x, y, atol, rtol):
-        err = seterr(invalid='ignore')
-        try:
-            result = less_equal(abs(x-y), atol + rtol * abs(y))
-        finally:
-            seterr(**err)
-        return result
-
     x = array(a, copy=False, ndmin=1)
     y = array(b, copy=False, ndmin=1)
+
+    if any(isnan(x)) or any(isnan(y)):
+        return False
+
     xinf = isinf(x)
-    if not all(xinf == isinf(y)):
-        return False
-    if not any(xinf):
-        return all(within_tol(x, y, atol, rtol))
-    if not all(x[xinf] == y[xinf]):
-        return False
-    x = x[~xinf]
-    y = y[~xinf]
-    return all(within_tol(x, y, atol, rtol))
+    yinf = isinf(y)
+    if any(xinf) or any(yinf):
+        # Check that x and y have inf's only in the same positions
+        if not all(xinf == yinf):
+            return False
+        # Check that sign of inf's in x and y is the same
+        if not all(x[xinf] == y[xinf]):
+            return False
+
+        x = x[~xinf]
+        y = y[~xinf]
+
+    return all(less_equal(abs(x-y), atol + rtol * abs(y)))
 
 def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
