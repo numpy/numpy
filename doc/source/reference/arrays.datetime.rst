@@ -13,6 +13,9 @@ support datetime functionality. The data type is called "datetime64",
 so named because "datetime" is already taken by the datetime library
 included in Python.
 
+.. note:: The datetime API is *experimental* in 1.7.0, and may undergo changes
+   in future versions of NumPy.
+
 Basic Datetimes
 ===============
 

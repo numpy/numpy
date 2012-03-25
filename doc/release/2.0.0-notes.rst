@@ -88,6 +88,14 @@ throw away the reduction axes but instead sets them to have size one.
 When this option is set, the reduction result will broadcast correctly
 to the original operand which was reduced.
 
+Datetime support
+----------------
+
+.. note:: The datetime API is *experimental* in 1.7.0, and may undergo changes
+   in future versions of NumPy.
+
+TODO: describe changes in datetime
+
 
 Custom formatter for printing arrays
 ------------------------------------
