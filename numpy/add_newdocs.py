@@ -685,10 +685,16 @@ add_newdoc('numpy.core.multiarray', 'array',
         If this is set to False, it forces the array to not have an NA
         mask. If the input is an array with a mask, and has no NA values,
         it will create a copy of the input without an NA mask.
+
+        .. versionadded:: 1.7.0
+
     ownmaskna : bool, optional
         If this is set to True, forces the array to have a mask which
         it owns. It may still return a view of the data from the input,
         but the result will always own its own mask.
+
+        .. versionadded:: 1.7.0
+
 
     Returns
     -------
@@ -698,6 +704,11 @@ add_newdoc('numpy.core.multiarray', 'array',
     See Also
     --------
     empty, empty_like, zeros, zeros_like, ones, ones_like, fill
+
+    Notes
+    -----
+    The `maskna` and `ownmaskna` keywords are *experimental* in the 1.7
+    release; their behavior may change in future versions.
 
     Examples
     --------

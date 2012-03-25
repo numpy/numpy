@@ -14,6 +14,11 @@ core ndarray. This system is highly flexible, allowing NAs to be used
 with any underlying dtype, and supports creating multiple views of the same
 data with different choices of NAs.
 
+.. note:: The NA API is *experimental*, and may undergo changes in future
+   versions of NumPy.  The current implementation based on masks will likely be
+   supplemented by a second one based on bit-patterns, and it is possible that
+   a difference will be made between missing and ignored data.
+
 Other Missing Data Approaches
 =============================
 
