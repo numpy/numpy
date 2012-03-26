@@ -1,9 +1,10 @@
-#!/usr/bin/env python
+'''
+Tests for the pad functions.
+'''
 
 from numpy.testing import TestCase, run_module_suite, assert_array_equal
 from numpy.testing import assert_raises, assert_array_almost_equal
 import numpy as np
-from numpy.lib.pad import PadWidthWrongNumberOfValues, NegativePadWidth
 
 
 class TestStatistic(TestCase):
@@ -483,30 +484,30 @@ class TestEdge(TestCase):
         assert_array_equal(a, b)
 
 
-class TestPadWidthError1(TestCase):
+class ValueError1(TestCase):
     def test_check_simple(self):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
         kwargs = dict(pad_width=((2, 3), (3, 2), (4, 5)), stat_length=(3, ))
-        assert_raises(PadWidthWrongNumberOfValues, np.lib.pad_mean, arr,
+        assert_raises(ValueError, np.lib.pad_mean, arr,
                 **kwargs)
 
 
-class TestPadWidthError2(TestCase):
+class ValueError2(TestCase):
     def test_check_simple(self):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
         kwargs = dict(pad_width=((2, 3, 4), (3, 2)), stat_length=(3, ))
-        assert_raises(PadWidthWrongNumberOfValues, np.lib.pad_mean, arr,
+        assert_raises(ValueError, np.lib.pad_mean, arr,
                 **kwargs)
 
 
-class TestNegativePadWidth(TestCase):
+class ValueError3(TestCase):
     def test_check_simple(self):
         arr = np.arange(30)
         arr = np.reshape(arr, (6, 5))
         kwargs = dict(pad_width=((-2, 3), (3, 2)), stat_length=(3, ))
-        assert_raises(NegativePadWidth, np.lib.pad_mean, arr,
+        assert_raises(ValueError, np.lib.pad_mean, arr,
                 **kwargs)
 
 
