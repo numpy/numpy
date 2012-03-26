@@ -1,6 +1,3 @@
-Note: NumPy 1.6.0 is not yet released.
-
-
 =========================
 NumPy 1.6.0 Release Notes
 =========================
@@ -92,9 +89,6 @@ not match the ufunc implementation.
 
 Changes
 =======
-
-Changes and improvements in the numpy core
-------------------------------------------
 
 ``default error handling``
 --------------------------
