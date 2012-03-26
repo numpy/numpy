@@ -1,14 +1,10 @@
-#!/usr/bin/env python
-"""The pad.py module contains a group of functions to pad values onto the edges
+"""
+The pad.py module contains a group of functions to pad values onto the edges
 of an n-dimensional array.
 """
 
-#===imports======================
 import numpy as np
 
-#===globals======================
-
-#---other---
 __all__ = [
            'pad_minimum',
            'pad_maximum',
@@ -23,53 +19,7 @@ __all__ = [
            ]
 
 
-########
-# Exception classes
-
-
-class PadWidthWrongNumberOfValues(Exception):
-    '''
-    Error class for the wrong number of parameters to define the pad width.
-    '''
-    def __init__(self, rnk, pdw):
-        super(PadWidthWrongNumberOfValues, self).__init__()
-        self.rnk = rnk
-        self.pdw = pdw
-
-    def __str__(self):
-        return """
-
-            For pad_width should get a list/tuple with length
-            equal to rank (%i) of lists/tuples with length of 2.
-            Instead have %s
-            """ % (self.rnk, self.pdw)
-
-
-class NegativePadWidth(Exception):
-    '''
-    Error class for the negative pad width.
-    '''
-    def __str__(self):
-        return "\n\nCannot have negative values for the pad_width."
-
-
-class IncorrectKeywordValue(Exception):
-    '''
-    Error class for the negative pad width.
-    '''
-    def __init__(self, keyword, value):
-        super(IncorrectKeywordValue, self).__init__()
-        self.keyword = keyword
-        self.value = str(value)
-
-    def __str__(self):
-        return """
-
-            The keyword '%s' cannot have the value '%s'.
-            """ % (self.keyword, self.value)
-
-
-########
+################################################################################
 # Private utility functions.
 
 
@@ -126,12 +76,14 @@ def _validate_pad_width(vector, pad_width):
     shapelen = len(np.shape(vector))
     normshp = _normalize_shape(vector, pad_width)
     if normshp == None:
-        raise PadWidthWrongNumberOfValues(shapelen, pad_width)
+        raise ValueError("Unable to create correctly shaped tuple from %s"
+                          % (pad_width,))
     for i in normshp:
         if len(i) != 2:
-            raise PadWidthWrongNumberOfValues(shapelen, normshp)
+            raise ValueError("Unable to create correctly shaped tuple from %s"
+                              % (normshp,))
         if i[0] < 0 or i[1] < 0:
-            raise NegativePadWidth()
+            raise ValueError("Cannot have negative values for the pad_width.")
     return normshp
 
 
@@ -188,7 +140,8 @@ def _create_stat_vectors(vector, pad_tuple, iaxis, kwds):
     if kwds['stat_length']:
         stat_length = kwds['stat_length'][iaxis]
         if stat_length[0] < 0 or stat_length[1] < 0:
-            raise IncorrectKeywordValue('stat_length', kwds['stat_length'])
+            raise ValueError("The keyword '%s' cannot have the value '%s'."
+                              % ('stat_length', kwds['stat_length']))
         sl0 = stat_length[0]
         sl1 = stat_length[1]
         if stat_length[0] > len(sbvec):
@@ -304,8 +257,12 @@ def _reflect(vector, pad_tuple, iaxis, kwds):
 
     reverse = after_vector[::-1]
 
-    before_vector = np.resize(np.concatenate((after_vector[1:-1], reverse)), pad_tuple[0])[::-1]
-    after_vector = np.resize(np.concatenate((reverse[1:-1], after_vector)), pad_tuple[1])
+    before_vector = np.resize(
+                        np.concatenate(
+                        (after_vector[1:-1], reverse)), pad_tuple[0])[::-1]
+    after_vector = np.resize(
+                       np.concatenate(
+                       (reverse[1:-1], after_vector)), pad_tuple[1])
 
     if kwds['reflect_type'] == 'even':
         pass
@@ -313,7 +270,8 @@ def _reflect(vector, pad_tuple, iaxis, kwds):
         before_vector = 2 * vector[pad_tuple[0]] - before_vector
         after_vector = 2 * vector[-pad_tuple[-1] - 1] - after_vector
     else:
-        raise IncorrectKeywordValue('reflect_type', kwds['reflect_type'])
+        raise ValueError("The keyword '%s' cannot have the value '%s'."
+                          % ('reflect_type', kwds['reflect_type']))
     return _create_vector(vector, pad_tuple, before_vector, after_vector)
 
 
@@ -326,8 +284,12 @@ def _symmetric(vector, pad_tuple, iaxis, kwds):
     else:
         after_vector = vector[pad_tuple[0]:-pad_tuple[1]]
 
-    before_vector = np.resize(np.concatenate((after_vector, after_vector[::-1])), pad_tuple[0])[::-1]
-    after_vector = np.resize(np.concatenate((after_vector[::-1], after_vector)), pad_tuple[1])
+    before_vector = np.resize(
+                        np.concatenate(
+                        (after_vector, after_vector[::-1])), pad_tuple[0])[::-1]
+    after_vector = np.resize(
+                       np.concatenate(
+                       (after_vector[::-1], after_vector)), pad_tuple[1])
 
     if kwds['reflect_type'] == 'even':
         pass
@@ -335,7 +297,8 @@ def _symmetric(vector, pad_tuple, iaxis, kwds):
         before_vector = 2 * vector[pad_tuple[0]] - before_vector
         after_vector = 2 * vector[-pad_tuple[1] - 1] - after_vector
     else:
-        raise IncorrectKeywordValue('reflect_type', kwds['reflect_type'])
+        raise ValueError("The keyword '%s' cannot have the value '%s'."
+                          % ('reflect_type', kwds['reflect_type']))
     return _create_vector(vector, pad_tuple, before_vector, after_vector)
 
 
@@ -364,7 +327,8 @@ def _edge(vector, pad_tuple, iaxis, kwds):
     avec[:] = vector[-pad_tuple[1] - 1]
     return _create_vector(vector, pad_tuple, bvec, avec)
 
-########
+
+################################################################################
 # Public functions
 
 
@@ -378,8 +342,8 @@ def pad_maximum(array, pad_width=1, stat_length=None):
         Input array
     pad_width : {sequence of N sequences(int,int), sequence(int,int),
                  sequence(int,), int}, optional
-        How many values padded to each edge for each axis.
-        ((before_1, after_2), ... (before_N, after_N)) unique pad widths for
+        Number of values padded to each edge of each axis.
+        ((before_1, after_1), ... (before_N, after_N)) unique pad widths for
         each axis.
         ((before, after),) yields same before and after pad for each axis.
         (pad,) or int is a shortcut for before = after = pad width for all
@@ -387,15 +351,14 @@ def pad_maximum(array, pad_width=1, stat_length=None):
         Default is 1.
     stat_length : {sequence of N sequences(int,int), sequence(int,int),
                    sequence(int,), int}, optional
-        How many values at each end of the vector to calculate the statistic
-        used to pad each vector.
-        ((before_1, after_2), ... (before_N, after_N)) unique statistic
-        lengths for each vector.
+        Number of values at edge of each axis used to calculate the pad value.
+        ((before_1, after_1), ... (before_N, after_N)) unique statistic
+        lengths for each axis.
         ((before, after),) yields same before and after statistic lengths for
-        each vector.
+        each axis.
         (stat_length,) or int is a shortcut for before = after = statistic
-        length for all vectors.
-        Default is ``None``, to use the entire vector.
+        length for all axes.
+        Default is ``None``, to use the entire axis.
 
     Returns
     -------
@@ -447,8 +410,8 @@ def pad_minimum(array, pad_width=1, stat_length=None):
         Input array
     pad_width : {sequence of N sequences(int,int), sequence(int,int),
                  sequence(int,), int}, optional
-        How many values padded to each edge for each axis.
-        ((before_1, after_2), ... (before_N, after_N)) unique pad widths for
+        Number of values padded to each edge of each axis.
+        ((before_1, after_1), ... (before_N, after_N)) unique pad widths for
         each axis.
         ((before, after),) yields same before and after pad for each axis.
         (pad,) or int is a shortcut for before = after = pad width for all
@@ -456,15 +419,14 @@ def pad_minimum(array, pad_width=1, stat_length=None):
         Default is 1.
     stat_length : {sequence of N sequences(int,int), sequence(int,int),
                    sequence(int,), int}, optional
-        How many values at each end of the vector to calculate the statistic
-        used to pad each vector.
-        ((before_1, after_2), ... (before_N, after_N)) unique statistic
-        lengths for each vector.
+        Number of values at edge of each axis used to calculate the pad value.
+        ((before_1, after_1), ... (before_N, after_N)) unique statistic
+        lengths for each axis.
         ((before, after),) yields same before and after statistic lengths for
-        each vector.
+        each axis.
         (stat_length,) or int is a shortcut for before = after = statistic
-        length for all vectors.
-        Default is ``None``, to use the entire vector.
+        length for all axes.
+        Default is ``None``, to use the entire axis.
 
     Returns
     -------
@@ -523,8 +485,8 @@ def pad_median(array, pad_width=1, stat_length=None):
         Input array
     pad_width : {sequence of N sequences(int,int), sequence(int,int),
                  sequence(int,), int}, optional
-        How many values padded to each edge for each axis.
-        ((before_1, after_2), ... (before_N, after_N)) unique pad widths for
+        Number of values padded to each edge of each axis.
+        ((before_1, after_1), ... (before_N, after_N)) unique pad widths for
         each axis.
         ((before, after),) yields same before and after pad for each axis.
         (pad,) or int is a shortcut for before = after = pad width for all
@@ -532,15 +494,14 @@ def pad_median(array, pad_width=1, stat_length=None):
         Default is 1.
     stat_length : {sequence of N sequences(int,int), sequence(int,int),
                    sequence(int,), int}, optional
-        How many values at each end of the vector to calculate the statistic
-        used to pad each vector.
-        ((before_1, after_2), ... (before_N, after_N)) unique statistic
-        lengths for each vector.
+        Number of values at edge of each axis used to calculate the pad value.
+        ((before_1, after_1), ... (before_N, after_N)) unique statistic
+        lengths for each axis.
         ((before, after),) yields same before and after statistic lengths for
-        each vector.
+        each axis.
         (stat_length,) or int is a shortcut for before = after = statistic
-        length for all vectors.
-        Default is ``None``, to use the entire vector.
+        length for all axes.
+        Default is ``None``, to use the entire axis.
 
     Returns
     -------
@@ -589,8 +550,8 @@ def pad_mean(array, pad_width=1, stat_length=None):
         Input array
     pad_width : {sequence of N sequences(int,int), sequence(int,int),
                  sequence(int,), int}, optional
-        How many values padded to each edge for each axis.
-        ((before_1, after_2), ... (before_N, after_N)) unique pad widths for
+        Number of values padded to each edge of each axis.
+        ((before_1, after_1), ... (before_N, after_N)) unique pad widths for
         each axis.
         ((before, after),) yields same before and after pad for each axis.
         (pad,) or int is a shortcut for before = after = pad width for all
@@ -598,15 +559,14 @@ def pad_mean(array, pad_width=1, stat_length=None):
         Default is 1.
     stat_length : {sequence of N sequences(int,int), sequence(int,int),
                    sequence(int,), int}, optional
-        How many values at each end of the vector to calculate the statistic
-        used to pad each vector.
-        ((before_1, after_2), ... (before_N, after_N)) unique statistic
-        lengths for each vector.
+        Number of values at edge of each axis used to calculate the pad value.
+        ((before_1, after_1), ... (before_N, after_N)) unique statistic
+        lengths for each axis.
         ((before, after),) yields same before and after statistic lengths for
-        each vector.
+        each axis.
         (stat_length,) or int is a shortcut for before = after = statistic
-        length for all vectors.
-        Default is ``None``, to use the entire vector.
+        length for all axes.
+        Default is ``None``, to use the entire axis.
 
     Returns
     -------
@@ -652,8 +612,8 @@ def pad_constant(array, pad_width=1, constant_values=0):
         Input array
     pad_width : {sequence of N sequences(int,int), sequence(int,int),
                  sequence(int,), int}, optional
-        How many values padded to each edge for each axis.
-        ((before_1, after_2), ... (before_N, after_N)) unique pad widths for
+        Number of values padded to each edge of each axis.
+        ((before_1, after_1), ... (before_N, after_N)) unique pad widths for
         each axis.
         ((before, after),) yields same before and after pad for each axis.
         (pad,) or int is a shortcut for before = after = pad width for all
@@ -662,7 +622,7 @@ def pad_constant(array, pad_width=1, constant_values=0):
     constant_values : {sequence of N sequences(int,int), sequence(int,int),
                        sequence(int,), int}, optional
         The values to set the padded values for each axis.
-        ((before_1, after_2), ... (before_N, after_N)) unique pad constants
+        ((before_1, after_1), ... (before_N, after_N)) unique pad constants
         for each axis.
         ((before, after),) yields same before and after constants for each
         axis.
@@ -718,8 +678,8 @@ def pad_linear_ramp(array, pad_width=1, end_values=0):
         Input array
     pad_width : {sequence of N sequences(int,int), sequence(int,int),
                  sequence(int,), int}, optional
-        How many values padded to each edge for each axis.
-        ((before_1, after_2), ... (before_N, after_N)) unique pad widths for
+        Number of values padded to each edge of each axis.
+        ((before_1, after_1), ... (before_N, after_N)) unique pad widths for
         each axis.
         ((before, after),) yields same before and after pad for each axis.
         (pad,) or int is a shortcut for before = after = pad width for all
@@ -729,7 +689,7 @@ def pad_linear_ramp(array, pad_width=1, end_values=0):
                   sequence(int,), int}, optional
         The values used for the edge of the vector and ending value of the
         linear_ramp.
-        ((before_1, after_2), ... (before_N, after_N)) unique end values
+        ((before_1, after_1), ... (before_N, after_N)) unique end values
         for each axis.
         ((before, after),) yields same before and after end values for each
         axis.
@@ -782,8 +742,8 @@ def pad_symmetric(array, pad_width=1, reflect_type='even'):
         Input array
     pad_width : {sequence of N sequences(int,int), sequence(int,int),
                  sequence(int,), int}, optional
-        How many values padded to each edge for each axis.
-        ((before_1, after_2), ... (before_N, after_N)) unique pad widths for
+        Number of values padded to each edge of each axis.
+        ((before_1, after_1), ... (before_N, after_N)) unique pad widths for
         each axis.
         ((before, after),) yields same before and after pad for each axis.
         (pad,) or int is a shortcut for before = after = pad width for all
@@ -845,8 +805,8 @@ def pad_reflect(array, pad_width=1, reflect_type='even'):
         Input array
     pad_width : {sequence of N sequences(int,int), sequence(int,int),
                  sequence(int,), int}, optional
-        How many values padded to each edge for each axis.
-        ((before_1, after_2), ... (before_N, after_N)) unique pad widths for
+        Number of values padded to each edge of each axis.
+        ((before_1, after_1), ... (before_N, after_N)) unique pad widths for
         each axis.
         ((before, after),) yields same before and after pad for each axis.
         (pad,) or int is a shortcut for before = after = pad width for all
@@ -905,8 +865,8 @@ def pad_wrap(array, pad_width=1):
         Input array
     pad_width : {sequence of N sequences(int,int), sequence(int,int),
                  sequence(int,), int}, optional
-        How many values padded to each edge for each axis.
-        ((before_1, after_2), ... (before_N, after_N)) unique pad widths for
+        Number of values padded to each edge of each axis.
+        ((before_1, after_1), ... (before_N, after_N)) unique pad widths for
         each axis.
         ((before, after),) yields same before and after pad for each axis.
         (pad,) or int is a shortcut for before = after = pad width for all
@@ -957,8 +917,8 @@ def pad_edge(array, pad_width=1):
         Input array
     pad_width : {sequence of N sequences(int,int), sequence(int,int),
                  sequence(int,), int}, optional
-        How many values padded to each edge for each axis.
-        ((before_1, after_2), ... (before_N, after_N)) unique pad widths for
+        Number of values padded to each edge of each axis.
+        ((before_1, after_1), ... (before_N, after_N)) unique pad widths for
         each axis.
         ((before, after),) yields same before and after pad for each axis.
         (pad,) or int is a shortcut for before = after = pad width for all
@@ -997,27 +957,4 @@ def pad_edge(array, pad_width=1):
 
     """
     return _loop_across(array, pad_width, _edge)
-########
 
-
-if __name__ == '__main__':
-    '''
-    This section is just used for testing.  Really you should only import
-    this module.
-    '''
-
-    import numpy.lib.pad as pad
-    import doctest
-    ARR = np.arange(100)
-    print ARR
-    print pad.pad_median(ARR, (3, ))
-    print pad.pad_constant(ARR, (25, 20), (10, 20))
-    ARR = np.arange(30)
-    ARR = np.reshape(ARR, (6, 5))
-    print pad.pad_mean(ARR, pad_width=((2, 3), (3, 2)), stat_length=(3, ))
-    ARR = np.arange(10)
-    print ARR
-    print pad.pad_wrap(ARR, 15)
-    print pad.pad_reflect(ARR, 15)
-    print pad.pad_symmetric(ARR, 15)
-    doctest.testmod()
