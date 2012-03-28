@@ -692,6 +692,8 @@ def pad_maximum(array, pad_width=1, stat_length=None):
 
     Notes
     -----
+    .. versionadded:: 1.7.0
+
     For `array` with rank greater than 1, some of the padding of later axes is
     calculated from padding of previous axes.  This is easiest to think about
     with a rank 2 array where the corners of the padded array are calculated
@@ -761,6 +763,8 @@ def pad_minimum(array, pad_width=1, stat_length=None):
 
     Notes
     -----
+    .. versionadded:: 1.7.0
+
     For `array` with rank greater than 1, some of the padding of later axes is
     calculated from padding of previous axes.  This is easiest to think about
     with a rank 2 array where the corners of the padded array are calculated
@@ -837,6 +841,8 @@ def pad_median(array, pad_width=1, stat_length=None):
 
     Notes
     -----
+    .. versionadded:: 1.7.0
+
     For `array` with rank greater than 1, some of the padding of later axes is
     calculated from padding of previous axes.  This is easiest to think about
     with a rank 2 array where the corners of the padded array are calculated
@@ -903,6 +909,8 @@ def pad_mean(array, pad_width=1, stat_length=None):
 
     Notes
     -----
+    .. versionadded:: 1.7.0
+
     For `array` with rank greater than 1, some of the padding of later axes is
     calculated from padding of previous axes.  This is easiest to think about
     with a rank 2 array where the corners of the padded array are calculated
@@ -965,6 +973,8 @@ def pad_constant(array, pad_width=1, constant_values=0):
 
     Notes
     -----
+    .. versionadded:: 1.7.0
+
     For `array` with rank greater than 1, some of the padding of later axes is
     calculated from padding of previous axes.  This is easiest to think about
     with a rank 2 array where the corners of the padded array are calculated
@@ -1032,6 +1042,8 @@ def pad_linear_ramp(array, pad_width=1, end_values=0):
 
     Notes
     -----
+    .. versionadded:: 1.7.0
+
     For `array` with rank greater than 1, some of the padding of later axes is
     calculated from padding of previous axes.  This is easiest to think about
     with a rank 2 array where the corners of the padded array are calculated
@@ -1090,6 +1102,8 @@ def pad_symmetric(array, pad_width=1, reflect_type='even'):
 
     Notes
     -----
+    .. versionadded:: 1.7.0
+
     Very similar to pad_reflect, but includes the edge values in the
     reflection.
 
@@ -1153,6 +1167,8 @@ def pad_reflect(array, pad_width=1, reflect_type='even'):
 
     Notes
     -----
+    .. versionadded:: 1.7.0
+
     For `array` with rank greater than 1, some of the padding of later axes is
     calculated from padding of previous axes.  This is easiest to think about
     with a rank 2 array where the corners of the padded array are calculated
@@ -1208,6 +1224,8 @@ def pad_wrap(array, pad_width=1):
 
     Notes
     -----
+    .. versionadded:: 1.7.0
+
     For `array` with rank greater than 1, some of the padding of later axes is
     calculated from padding of previous axes.  This is easiest to think about
     with a rank 2 array where the corners of the padded array are calculated
@@ -1260,6 +1278,8 @@ def pad_edge(array, pad_width=1):
 
     Notes
     -----
+    .. versionadded:: 1.7.0
+
     For `array` with rank greater than 1, some of the padding of later axes is
     calculated from padding of previous axes.  This is easiest to think about
     with a rank 2 array where the corners of the padded array are calculated
