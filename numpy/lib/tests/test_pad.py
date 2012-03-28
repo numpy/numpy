@@ -492,6 +492,20 @@ class ValueError1(TestCase):
         assert_raises(ValueError, np.lib.pad_mean, arr,
                 **kwargs)
 
+    def test_check_negative_stat_length(self):
+        arr = np.arange(30)
+        arr = np.reshape(arr, (6, 5))
+        kwargs = dict(pad_width=((2, 3), (3, 2)), stat_length=(-3, ))
+        assert_raises(ValueError, np.lib.pad_mean, arr,
+                **kwargs)
+
+    def test_check_negative_pad_width(self):
+        arr = np.arange(30)
+        arr = np.reshape(arr, (6, 5))
+        kwargs = dict(pad_width=((-2, 3), (3, 2)), stat_length=(3, ))
+        assert_raises(ValueError, np.lib.pad_mean, arr,
+                **kwargs)
+
 
 class ValueError2(TestCase):
     def test_check_simple(self):

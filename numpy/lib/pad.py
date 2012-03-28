@@ -25,8 +25,25 @@ __all__ = [
 
 def _create_vector(vector, pad_tuple, before_val, after_val):
     '''
-    Private function which creates the padded vector to pad_mean, pad_maximum,
-    pad_minimum, and pad_median.
+    Private function which creates the padded vector.
+
+    Parameters
+    ----------
+    vector : ndarray of rank 1, length N + pad_tuple[0] + pad_tuple[1]
+        Input vector including blank padded values.  `N` is the lenth of the
+        original vector.
+    pad_tuple : tuple of 2 ints
+        This tuple represents the (before, after) width of the padding along
+        this particular iaxis.
+    before_val : scalar or ndarray of rank 1, length pad_tuple[0]
+        This is the value(s) that will pad the beginning of `vector`.
+    after_val : scalar or ndarray of rank 1, length pad_tuple[1]
+        This is the value(s) that will pad the end of the `vector`.
+
+    Returns
+    -------
+    _create_vector : ndarray of rank 1, length N + pad_tuple[0] + pad_tuple[1]
+        Vector with before_val and after_val replacing the blank pad values.
     '''
     vector[:pad_tuple[0]] = before_val
     if pad_tuple[1] > 0:
@@ -34,29 +51,50 @@ def _create_vector(vector, pad_tuple, before_val, after_val):
     return vector
 
 
-def _normalize_shape(vector, shape):
+def _normalize_shape(narray, shape):
     '''
-    Private function to normalize all the possible ways to input a tuple of
-    tuples to define before and after vectors or the stat_length used.
+    Private function which does some checks and normalizes the possibly much
+    simpler representations of 'pad_width', 'stat_length', 'constant_values',
+    'end_values'.
 
-    int                               => ((int, int), (int, int), ...)
-    [[int1, int2], [int3, int4], ...] => ((int1, int2), (int3, int4), ...)
-    ((int1, int2), (int3, int4), ...) => no change
-    [[int1, int2], ]                  => ((int1, int2), (int1, int2), ...]
-    ((int1, int2), )                  => ((int1, int2), (int1, int2), ...)
-    [[int ,     ), )                  => ((int, int), (int, int), ...)
-    ((int ,     ), )                  => ((int, int), (int, int), ...)
+    Parameters
+    ----------
+    narray : ndarray
+        Input ndarray
+    shape : {sequence of N sequences(int,int), sequence(int,int),
+            sequence(int,), int}, optional
+        The width of padding (pad_width) or the number of elements on the edge
+        of the narray used for statistics (stat_length).
+        ((before_1, after_1), ... (before_N, after_N)) unique number of
+        elements for each axis where `N` is rank of `narray`.
+        ((before, after),) yields same before and after constants for each
+        axis.
+        (constant,) or int is a shortcut for before = after = constant for all
+        axes.
 
-    The length of the returned tuple is the rank of vector.
+    Returns
+    -------
+    _normalize_shape : int 2-tuple of tuples
+        int                               => ((int, int), (int, int), ...)
+        [[int1, int2], [int3, int4], ...] => ((int1, int2), (int3, int4), ...)
+        ((int1, int2), (int3, int4), ...) => no change
+        [[int1, int2], ]                  => ((int1, int2), (int1, int2), ...]
+        ((int1, int2), )                  => ((int1, int2), (int1, int2), ...)
+        [[int ,     ), )                  => ((int, int), (int, int), ...)
+        ((int ,     ), )                  => ((int, int), (int, int), ...)
     '''
     normshp = None
-    shapelen = len(np.shape(vector))
+    shapelen = len(np.shape(narray))
     if (isinstance(shape, int)):
         normshp = ((shape, shape), ) * shapelen
     elif (isinstance(shape, (tuple, list))
             and isinstance(shape[0], (tuple, list))
             and len(shape) == shapelen):
         normshp = shape
+        for i in normshp:
+            if len(i) != 2:
+                raise ValueError("Unable to create correctly shaped tuple from %s"
+                                  % (normshp,))
     elif (isinstance(shape, (tuple, list))
             and isinstance(shape[0], (int, float, long))
             and len(shape) == 1):
@@ -65,25 +103,50 @@ def _normalize_shape(vector, shape):
             and isinstance(shape[0], (int, float, long))
             and len(shape) == 2):
         normshp = (shape, ) * shapelen
+    if normshp == None:
+        raise ValueError("Unable to create correctly shaped tuple from %s"
+                          % (shape,))
     return normshp
 
 
-def _validate_pad_width(vector, pad_width):
+def _validate_lengths(narray, number_elements):
     '''
-    Private function which does some checks and reformats the pad_width
-    tuple.
+    Private function which does some checks and reformats pad_width and
+    stat_length using _normalize_shape.
+
+    Parameters
+    ----------
+    narray : ndarray
+        Input ndarray
+    number_elements : {sequence of N sequences(int,int), sequence(int,int),
+                       sequence(int,), int}, optional
+        The width of padding (pad_width) or the number of elements on the edge
+        of the narray used for statistics (stat_length).
+        ((before_1, after_1), ... (before_N, after_N)) unique number of
+        elements for each axis.
+        ((before, after),) yields same before and after constants for each
+        axis.
+        (constant,) or int is a shortcut for before = after = constant for all
+        axes.
+
+    Returns
+    -------
+    _validate_lengths : int 2-tuple of tuples
+        int                               => ((int, int), (int, int), ...)
+        [[int1, int2], [int3, int4], ...] => ((int1, int2), (int3, int4), ...)
+        ((int1, int2), (int3, int4), ...) => no change
+        [[int1, int2], ]                  => ((int1, int2), (int1, int2), ...]
+        ((int1, int2), )                  => ((int1, int2), (int1, int2), ...)
+        [[int ,     ), )                  => ((int, int), (int, int), ...)
+        ((int ,     ), )                  => ((int, int), (int, int), ...)
     '''
-    shapelen = len(np.shape(vector))
-    normshp = _normalize_shape(vector, pad_width)
-    if normshp == None:
-        raise ValueError("Unable to create correctly shaped tuple from %s"
-                          % (pad_width,))
+    shapelen = len(np.shape(narray))
+    normshp = _normalize_shape(narray, number_elements)
     for i in normshp:
-        if len(i) != 2:
-            raise ValueError("Unable to create correctly shaped tuple from %s"
-                              % (normshp,))
         if i[0] < 0 or i[1] < 0:
-            raise ValueError("Cannot have negative values for the pad_width.")
+            raise ValueError(
+                  "Cannot have negative values in %s to represent number of elements."
+                  % (number_elements,))
     return normshp
 
 
@@ -91,13 +154,72 @@ def _loop_across(array, pad_width, function, **kwds):
     '''
     Private function to prepare the data for the np.apply_along_axis command
     to move through the array.
+
+    Parameters
+    ----------
+    array : array_like
+        Input array to be padded.
+    pad_width : {sequence of N sequences(int,int), sequence(int,int),
+                 sequence(int,), int}, optional
+        Number of values padded to each edge of each axis.
+        ((before_1, after_1), ... (before_N, after_N)) unique pad widths for
+        each axis.
+        ((before, after),) yields same before and after pad for each axis.
+        (pad,) or int is a shortcut for before = after = pad width for all
+        axes.
+        Default is 1.
+    function: function
+        Function applied along each axis.  Must accept a vector (rank-1 array)
+        that includes empty padded values on each edge, tuple of pad_width for
+        that axis, and an integer representing the axis.  Possible keywords
+        are 'stat_length' (for functions that need to calculate statistics
+        from the original array), 'end_values' (for pad_linear_ramp), and
+        'constant_values' (for pad_constant).
+    **kwds:
+    stat_length : {sequence of N sequences(int,int), sequence(int,int),
+                   sequence(int,), int}, optional
+        Number of values at edge of each axis used to calculate the statistic
+        value.
+        ((before_1, after_1), ... (before_N, after_N)) unique statistic
+        lengths for each axis.
+        ((before, after),) yields same before and after statistic lengths for
+        each axis.
+        (stat_length,) or int is a shortcut for before = after = statistic
+        length for all axes.
+        If ``None``, will use the entire vector.
+    end_values : {sequence of N sequences(int,int), sequence(int,int),
+                  sequence(int,), int}, optional
+        The values used for the edge of the vector and ending value of the
+        linear_ramp.
+        ((before_1, after_1), ... (before_N, after_N)) unique end values
+        for each axis.
+        ((before, after),) yields same before and after end values for each
+        axis.
+        (constant,) or int is a shortcut for before = after = end value for all
+        axes.
+    constant_values : {sequence of N sequences(int,int), sequence(int,int),
+                       sequence(int,), int}, optional
+        The values to set the padded values for each axis.
+        ((before_1, after_1), ... (before_N, after_N)) unique pad constants
+        for each axis.
+        ((before, after),) yields same before and after constants for each
+        axis.
+        (constant,) or int is a shortcut for before = after = constant for all
+        axes.
+
+    Return
+    ------
+    _loop_across : ndarray with rank of array and shape of array plus
+                   'pad_width's
     '''
     narray = np.array(array)
-    pad_width = _validate_pad_width(narray, pad_width)
+    pad_width = _validate_lengths(narray, pad_width)
 
     # Need to only normalize particular keywords.
     for i in kwds:
-        if i in ['stat_length', 'end_values', 'constant_values']:
+        if i == 'stat_length' and kwds[i]:
+            kwds[i] = _validate_lengths(narray, kwds[i])
+        if i in ['end_values', 'constant_values']:
             kwds[i] = _normalize_shape(narray, kwds[i])
 
     # Create a new padded array
@@ -126,6 +248,28 @@ def _loop_across(array, pad_width, function, **kwds):
 def _create_stat_vectors(vector, pad_tuple, iaxis, kwds):
     '''
     Returns the portion of the vector required for any statistic.
+
+    Parameters
+    ----------
+    vector : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Input vector that already includes empty padded values.
+    pad_tuple : tuple of 2 ints
+        This tuple represents the (before, after) width of the padding along
+        this particular iaxis.
+    iaxis : int
+        The axis currently being looped across.
+    kwds : keyword arguments
+        Keyword arguments.  Only 'stat_length' is used.  'stat_length'
+        defaults to the entire vector if not supplied.
+
+    Return
+    ------
+    _create_stat_vectors : (ndarray of length stat_length[iaxis][0],
+                            ndarray of length stat_length[iaxis][1]) OR
+                           (ndarray of length N,
+                            ndarray of length N)
+        The values from the original vector that will be used to calculate the
+        statistic.
     '''
 
     # Can't have 0 represent the end if a slice... a[1:0] doesnt' work
@@ -139,15 +283,8 @@ def _create_stat_vectors(vector, pad_tuple, iaxis, kwds):
 
     if kwds['stat_length']:
         stat_length = kwds['stat_length'][iaxis]
-        if stat_length[0] < 0 or stat_length[1] < 0:
-            raise ValueError("The keyword '%s' cannot have the value '%s'."
-                              % ('stat_length', kwds['stat_length']))
-        sl0 = stat_length[0]
-        sl1 = stat_length[1]
-        if stat_length[0] > len(sbvec):
-            sl0 = len(sbvec)
-        if stat_length[1] > len(savec):
-            sl1 = len(savec)
+        sl0 = min(stat_length[0], len(sbvec))
+        sl1 = min(stat_length[1], len(savec))
         sbvec = np.arange(0)
         savec = np.arange(0)
         if pad_tuple[0] > 0:
@@ -159,7 +296,25 @@ def _create_stat_vectors(vector, pad_tuple, iaxis, kwds):
 
 def _maximum(vector, pad_tuple, iaxis, kwds):
     '''
-    Private function to calculate the before/after vectors.
+    Private function to calculate the before/after vectors for pad_maximum.
+
+    Parameters
+    ----------
+    vector : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Input vector that already includes empty padded values.
+    pad_tuple : tuple of 2 ints
+        This tuple represents the (before, after) width of the padding along
+        this particular iaxis.
+    iaxis : int
+        The axis currently being looped across.
+    kwds : keyword arguments
+        Keyword arguments.  Only 'stat_length' is used.  'stat_length'
+        defaults to the entire vector if not supplied.
+
+    Return
+    ------
+    _maximum : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Padded vector
     '''
     sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kwds)
 
@@ -172,7 +327,25 @@ def _maximum(vector, pad_tuple, iaxis, kwds):
 
 def _minimum(vector, pad_tuple, iaxis, kwds):
     '''
-    Private function to calculate the before/after vectors.
+    Private function to calculate the before/after vectors for pad_minimum.
+
+    Parameters
+    ----------
+    vector : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Input vector that already includes empty padded values.
+    pad_tuple : tuple of 2 ints
+        This tuple represents the (before, after) width of the padding along
+        this particular iaxis.
+    iaxis : int
+        The axis currently being looped across.
+    kwds : keyword arguments
+        Keyword arguments.  Only 'stat_length' is used.  'stat_length'
+        defaults to the entire vector if not supplied.
+
+    Return
+    ------
+    _minimum : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Padded vector
     '''
     sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kwds)
 
@@ -185,7 +358,25 @@ def _minimum(vector, pad_tuple, iaxis, kwds):
 
 def _median(vector, pad_tuple, iaxis, kwds):
     '''
-    Private function to calculate the before/after vectors.
+    Private function to calculate the before/after vectors for pad_median.
+
+    Parameters
+    ----------
+    vector : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Input vector that already includes empty padded values.
+    pad_tuple : tuple of 2 ints
+        This tuple represents the (before, after) width of the padding along
+        this particular iaxis.
+    iaxis : int
+        The axis currently being looped across.
+    kwds : keyword arguments
+        Keyword arguments.  Only 'stat_length' is used.  'stat_length'
+        defaults to the entire vector if not supplied.
+
+    Return
+    ------
+    _median : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Padded vector
     '''
     sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kwds)
 
@@ -198,7 +389,25 @@ def _median(vector, pad_tuple, iaxis, kwds):
 
 def _mean(vector, pad_tuple, iaxis, kwds):
     '''
-    Private function to calculate the before/after vectors.
+    Private function to calculate the before/after vectors for pad_mean.
+
+    Parameters
+    ----------
+    vector : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Input vector that already includes empty padded values.
+    pad_tuple : tuple of 2 ints
+        This tuple represents the (before, after) width of the padding along
+        this particular iaxis.
+    iaxis : int
+        The axis currently being looped across.
+    kwds : keyword arguments
+        Keyword arguments.  Only 'stat_length' is used.  'stat_length'
+        defaults to the entire vector if not supplied.
+
+    Return
+    ------
+    _mean : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Padded vector
     '''
     sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kwds)
 
@@ -211,7 +420,24 @@ def _mean(vector, pad_tuple, iaxis, kwds):
 
 def _constant(vector, pad_tuple, iaxis, kwds):
     '''
-    Private function to calculate the before/after vectors.
+    Private function to calculate the before/after vectors for pad_constant.
+
+    Parameters
+    ----------
+    vector : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Input vector that already includes empty padded values.
+    pad_tuple : tuple of 2 ints
+        This tuple represents the (before, after) width of the padding along
+        this particular iaxis.
+    iaxis : int
+        The axis currently being looped across.
+    kwds : keyword arguments
+        Keyword arguments.  Need 'constant_values' keyword argument.
+
+    Return
+    ------
+    _constant : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Padded vector
     '''
     nconstant = kwds['constant_values'][iaxis]
     bvec = np.zeros(pad_tuple[0])
@@ -223,7 +449,24 @@ def _constant(vector, pad_tuple, iaxis, kwds):
 
 def _linear_ramp(vector, pad_tuple, iaxis, kwds):
     '''
-    Private function to calculate the before/after vectors.
+    Private function to calculate the before/after vectors for pad_linear_ramp.
+
+    Parameters
+    ----------
+    vector : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Input vector that already includes empty padded values.
+    pad_tuple : tuple of 2 ints
+        This tuple represents the (before, after) width of the padding along
+        this particular iaxis.
+    iaxis : int
+        The axis currently being looped across.  Not used in _linear_ramp.
+    kwds : keyword arguments
+        Keyword arguments. Not used in _linear_ramp.
+
+    Return
+    ------
+    _linear_ramp : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Padded vector
     '''
     end_values = kwds['end_values'][iaxis]
     before_delta = ((vector[pad_tuple[0]] - end_values[0])
@@ -247,7 +490,24 @@ def _linear_ramp(vector, pad_tuple, iaxis, kwds):
 
 def _reflect(vector, pad_tuple, iaxis, kwds):
     '''
-    Private function to calculate the before/after vectors.
+    Private function to calculate the before/after vectors for pad_reflect.
+
+    Parameters
+    ----------
+    vector : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Input vector that already includes empty padded values.
+    pad_tuple : tuple of 2 ints
+        This tuple represents the (before, after) width of the padding along
+        this particular iaxis.
+    iaxis : int
+        The axis currently being looped across.  Not used in _reflect.
+    kwds : keyword arguments
+        Keyword arguments. Not used in _reflect.
+
+    Return
+    ------
+    _reflect : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Padded vector
     '''
     # Can't have pad_tuple[1] be used in the slice if == to 0.
     if pad_tuple[1] == 0:
@@ -277,7 +537,24 @@ def _reflect(vector, pad_tuple, iaxis, kwds):
 
 def _symmetric(vector, pad_tuple, iaxis, kwds):
     '''
-    Private function to calculate the before/after vectors.
+    Private function to calculate the before/after vectors for pad_symmetric.
+
+    Parameters
+    ----------
+    vector : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Input vector that already includes empty padded values.
+    pad_tuple : tuple of 2 ints
+        This tuple represents the (before, after) width of the padding along
+        this particular iaxis.
+    iaxis : int
+        The axis currently being looped across.  Not used in _symmetric.
+    kwds : keyword arguments
+        Keyword arguments. Not used in _symmetric.
+
+    Return
+    ------
+    _symmetric : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Padded vector
     '''
     if pad_tuple[1] == 0:
         after_vector = vector[pad_tuple[0]:None]
@@ -304,7 +581,24 @@ def _symmetric(vector, pad_tuple, iaxis, kwds):
 
 def _wrap(vector, pad_tuple, iaxis, kwds):
     '''
-    Private function to calculate the before/after vectors.
+    Private function to calculate the before/after vectors for pad_wrap.
+
+    Parameters
+    ----------
+    vector : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Input vector that already includes empty padded values.
+    pad_tuple : tuple of 2 ints
+        This tuple represents the (before, after) width of the padding along
+        this particular iaxis.
+    iaxis : int
+        The axis currently being looped across.  Not used in _wrap.
+    kwds : keyword arguments
+        Keyword arguments. Not used in _wrap.
+
+    Return
+    ------
+    _wrap : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Padded vector
     '''
     if pad_tuple[1] == 0:
         after_vector = vector[pad_tuple[0]:None]
@@ -319,8 +613,26 @@ def _wrap(vector, pad_tuple, iaxis, kwds):
 
 def _edge(vector, pad_tuple, iaxis, kwds):
     '''
-    Private function to calculate the before/after vectors.
+    Private function to calculate the before/after vectors for pad_edge.
+
+    Parameters
+    ----------
+    vector : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Input vector that already includes empty padded values.
+    pad_tuple : tuple of 2 ints
+        This tuple represents the (before, after) width of the padding along
+        this particular iaxis.
+    iaxis : int
+        The axis currently being looped across.  Not used in _edge.
+    kwds : keyword arguments
+        Keyword arguments. Not used in _edge.
+
+    Return
+    ------
+    _edge : ndarray of rank 1, length N + pad_tuple(0) + pad_tuple(1)
+        Padded vector
     '''
+
     bvec = np.zeros(pad_tuple[0])
     avec = np.zeros(pad_tuple[1])
     bvec[:] = vector[pad_tuple[0]]
@@ -351,7 +663,8 @@ def pad_maximum(array, pad_width=1, stat_length=None):
         Default is 1.
     stat_length : {sequence of N sequences(int,int), sequence(int,int),
                    sequence(int,), int}, optional
-        Number of values at edge of each axis used to calculate the pad value.
+        Number of values at edge of each axis used to calculate the statistic
+        value.
         ((before_1, after_1), ... (before_N, after_N)) unique statistic
         lengths for each axis.
         ((before, after),) yields same before and after statistic lengths for
@@ -419,7 +732,8 @@ def pad_minimum(array, pad_width=1, stat_length=None):
         Default is 1.
     stat_length : {sequence of N sequences(int,int), sequence(int,int),
                    sequence(int,), int}, optional
-        Number of values at edge of each axis used to calculate the pad value.
+        Number of values at edge of each axis used to calculate the statistic
+        value.
         ((before_1, after_1), ... (before_N, after_N)) unique statistic
         lengths for each axis.
         ((before, after),) yields same before and after statistic lengths for
@@ -494,7 +808,8 @@ def pad_median(array, pad_width=1, stat_length=None):
         Default is 1.
     stat_length : {sequence of N sequences(int,int), sequence(int,int),
                    sequence(int,), int}, optional
-        Number of values at edge of each axis used to calculate the pad value.
+        Number of values at edge of each axis used to calculate the statistic
+        value.
         ((before_1, after_1), ... (before_N, after_N)) unique statistic
         lengths for each axis.
         ((before, after),) yields same before and after statistic lengths for
@@ -559,7 +874,8 @@ def pad_mean(array, pad_width=1, stat_length=None):
         Default is 1.
     stat_length : {sequence of N sequences(int,int), sequence(int,int),
                    sequence(int,), int}, optional
-        Number of values at edge of each axis used to calculate the pad value.
+        Number of values at edge of each axis used to calculate the statistic
+        value.
         ((before_1, after_1), ... (before_N, after_N)) unique statistic
         lengths for each axis.
         ((before, after),) yields same before and after statistic lengths for
