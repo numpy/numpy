@@ -715,6 +715,31 @@ class TestMethods(TestCase):
         b = a.searchsorted(np.array(128,dtype='>i4'))
         assert_equal(b, 1, msg)
 
+    def test_searchsorted_unicode(self):
+        # Test searchsorted on unicode strings.
+
+        # 1.6.1 contained a string length miscalculation in
+        # arraytypes.c.src:UNICODE_compare() which manifested as
+        # incorrect/inconsistent results from searchsorted.
+        a = np.array([u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100185_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100186_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100187_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100189_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100190_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100191_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100192_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100193_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100194_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100195_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100196_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100197_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100198_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100199_1'])
+        assert_equal([a.searchsorted(v, 'left') for v in a], np.arange(len(a)))
+        assert_equal([a.searchsorted(v, 'right') for v in a], np.arange(len(a)) + 1)
+        assert_equal([a.searchsorted(a[i], 'left') for i in range(len(a))], np.arange(len(a)))
+        assert_equal([a.searchsorted(a[i], 'right') for i in range(len(a))], np.arange(len(a)) + 1)
+
     def test_flatten(self):
         x0 = np.array([[1,2,3],[4,5,6]], np.int32)
         x1 = np.array([[[1,2],[3,4]],[[5,6],[7,8]]], np.int32)
