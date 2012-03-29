@@ -715,6 +715,19 @@ class TestMethods(TestCase):
         b = a.searchsorted(np.array(128,dtype='>i4'))
         assert_equal(b, 1, msg)
 
+    def test_searchsorted_with_sorter(self):
+        a = np.array([5,2,1,3,4])
+        s = np.argsort(a)
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1.1])
+        assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1,2,3,4])
+        assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1,2,3,4,6])
+        assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1,2,3,4,5,5])
+        assert_raises(TypeError, np.searchsorted, a, 0, sorter=[-1,2,3,4])
+        for x in [-1, 0, 1.5, 3, 5]:
+            assert_equal(a[s][np.searchsorted(a[s], x)], a[s[np.searchsorted(a, x, sorter=s)]])
+
+
+
     def test_flatten(self):
         x0 = np.array([[1,2,3],[4,5,6]], np.int32)
         x1 = np.array([[[1,2],[3,4]],[[5,6],[7,8]]], np.int32)
