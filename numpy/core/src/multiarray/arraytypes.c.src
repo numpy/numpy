@@ -2749,6 +2749,7 @@ UNICODE_compare(PyArray_UCS4 *ip1, PyArray_UCS4 *ip2,
     if (itemsize < 0) {
         return 0;
     }
+    itemsize >>= 2;
     while (itemsize-- > 0) {
         PyArray_UCS4 c1 = *ip1++;
         PyArray_UCS4 c2 = *ip2++;
