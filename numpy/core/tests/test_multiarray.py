@@ -718,7 +718,7 @@ class TestMethods(TestCase):
     def test_searchsorted_with_sorter(self):
         a = np.array([5,2,1,3,4])
         s = np.argsort(a)
-        assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1.1])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1.1])
         assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1,2,3,4])
         assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1,2,3,4,6])
         assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1,2,3,4,5,5])

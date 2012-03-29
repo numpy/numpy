@@ -1593,14 +1593,15 @@ local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
  * @return void
  */
 static void
-local_argsearch_left(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *sorter, PyArrayObject *ret)
+local_argsearch_left(PyArrayObject *arr, PyArrayObject *key, 
+                     PyArrayObject *sorter, PyArrayObject *ret)
 {
     PyArray_CompareFunc *compare = PyArray_DESCR(key)->f->compare;
     npy_intp nelts = PyArray_DIMS(arr)[PyArray_NDIM(arr) - 1];
     npy_intp nkeys = PyArray_SIZE(key);
     char *parr = PyArray_DATA(arr);
     char *pkey = PyArray_DATA(key);
-    npy_long *psorter = PyArray_DATA(sorter);
+    npy_intp *psorter = PyArray_DATA(sorter);
     npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
     int elsize = PyArray_DESCR(arr)->elsize;
     npy_intp i;
@@ -1637,14 +1638,15 @@ local_argsearch_left(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *sort
  * @return void
  */
 static void
-local_argsearch_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *sorter, PyArrayObject *ret)
+local_argsearch_right(PyArrayObject *arr, PyArrayObject *key, 
+                      PyArrayObject *sorter, PyArrayObject *ret)
 {
     PyArray_CompareFunc *compare = PyArray_DESCR(key)->f->compare;
     npy_intp nelts = PyArray_DIMS(arr)[PyArray_NDIM(arr) - 1];
     npy_intp nkeys = PyArray_SIZE(key);
     char *parr = PyArray_DATA(arr);
     char *pkey = PyArray_DATA(key);
-    npy_long *psorter = PyArray_DATA(sorter);  // TODO
+    npy_intp *psorter = PyArray_DATA(sorter);  
     npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
     int elsize = PyArray_DESCR(arr)->elsize;
     npy_intp i;
@@ -1683,7 +1685,7 @@ local_argsearch_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *sor
  * side : {NPY_SEARCHLEFT, NPY_SEARCHRIGHT}
  *     If NPY_SEARCHLEFT, return first valid insertion indexes
  *     If NPY_SEARCHRIGHT, return last valid insertion indexes
- * op3 : PyObject *
+ * perm : PyObject *
  *     Permutation array that sorts op1 (optional)
  *
  * Returns
@@ -1697,7 +1699,8 @@ local_argsearch_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *sor
  * Binary search is used to find the indexes.
  */
 NPY_NO_EXPORT PyObject *
-PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side, PyObject *op3)
+PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, 
+                     NPY_SEARCHSIDE side, PyObject *perm)
 {
     PyArrayObject *ap1 = NULL;
     PyArrayObject *ap2 = NULL;
@@ -1739,24 +1742,25 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side, PyO
         goto fail;
     }
 
-    if (op3) {
+    if (perm) {
         /* need ap3 as contiguous array and of right type */
-        ap3 = (PyArrayObject *)PyArray_CheckFromAny(op3, NULL,
-                                    1, 1, NPY_ARRAY_DEFAULT |
-                                          NPY_ARRAY_NOTSWAPPED, NULL);
+        ap3 = (PyArrayObject *)PyArray_CheckFromAny(perm, NULL,
+                                    1, 1, 
+                                    NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED, 
+                                    NULL);
         if (ap3 == NULL) {
             PyErr_SetString(PyExc_TypeError,
                         "could not parse sorter argument");
             goto fail;
         }
         if (!PyArray_ISINTEGER(ap3)) {
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(PyExc_ValueError,
                         "sorter must only contain integers");
             goto fail;
         }
-        // convert to known integer size
+        /* convert to known integer size */
         sorter = (PyArrayObject *)PyArray_FromArray(ap3, 
-                                    PyArray_DescrFromType(NPY_LONG),
+                                    PyArray_DescrFromType(NPY_INTP),
                                     NPY_ARRAY_DEFAULT |
                                     NPY_ARRAY_NOTSWAPPED);
         if (sorter == NULL) {
