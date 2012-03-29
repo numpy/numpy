@@ -702,13 +702,13 @@ def pad_maximum(array, pad_width=1, stat_length=None):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad_maximum(a, (2,))
+    >>> np.lib.pad.pad_maximum(a, (2,))
     array([5, 5, 1, 2, 3, 4, 5, 5, 5])
 
-    >>> np.lib.pad_maximum(a, (1, 7))
+    >>> np.lib.pad.pad_maximum(a, (1, 7))
     array([5, 1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5])
 
-    >>> np.lib.pad_maximum(a, (0, 7))
+    >>> np.lib.pad.pad_maximum(a, (0, 7))
     array([1, 2, 3, 4, 5, 5, 5, 5, 5, 5, 5, 5])
 
     """
@@ -773,14 +773,14 @@ def pad_minimum(array, pad_width=1, stat_length=None):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5, 6]
-    >>> np.lib.pad_minimum(a, (2,))
+    >>> np.lib.pad.pad_minimum(a, (2,))
     array([1, 1, 1, 2, 3, 4, 5, 6, 1, 1])
 
-    >>> np.lib.pad_minimum(a, (4, 2))
+    >>> np.lib.pad.pad_minimum(a, (4, 2))
     array([1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 1, 1])
 
     >>> a = [[1,2], [3,4]]
-    >>> np.lib.pad_minimum(a, ((3, 2), (2, 3)))
+    >>> np.lib.pad.pad_minimum(a, ((3, 2), (2, 3)))
     array([[1, 1, 1, 2, 1, 1, 1],
            [1, 1, 1, 2, 1, 1, 1],
            [1, 1, 1, 2, 1, 1, 1],
@@ -851,10 +851,10 @@ def pad_median(array, pad_width=1, stat_length=None):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad_median(a, (2,))
+    >>> np.lib.pad.pad_median(a, (2,))
     array([3, 3, 1, 2, 3, 4, 5, 3, 3])
 
-    >>> np.lib.pad_median(a, (4, 0))
+    >>> np.lib.pad.pad_median(a, (4, 0))
     array([3, 3, 3, 3, 1, 2, 3, 4, 5])
 
     """
@@ -919,7 +919,7 @@ def pad_mean(array, pad_width=1, stat_length=None):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad_mean(a, (2,))
+    >>> np.lib.pad.pad_mean(a, (2,))
     array([3, 3, 1, 2, 3, 4, 5, 3, 3])
 
     """
@@ -983,7 +983,7 @@ def pad_constant(array, pad_width=1, constant_values=0):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad_constant(a, (2,3), (4,6))
+    >>> np.lib.pad.pad_constant(a, (2,3), (4,6))
     array([4, 4, 1, 2, 3, 4, 5, 6, 6, 6])
 
     """
@@ -1052,7 +1052,7 @@ def pad_linear_ramp(array, pad_width=1, end_values=0):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad_linear_ramp(a, (2,3), (5,-4))
+    >>> np.lib.pad.pad_linear_ramp(a, (2,3), (5,-4))
     array([ 5,  3,  1,  2,  3,  4,  5,  2, -1, -4])
 
     """
@@ -1115,9 +1115,9 @@ def pad_symmetric(array, pad_width=1, reflect_type='even'):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad_symmetric(a, (2,3))
+    >>> np.lib.pad.pad_symmetric(a, (2,3))
     array([2, 1, 1, 2, 3, 4, 5, 5, 4, 3])
-    >>> np.lib.pad_symmetric(a, (2,3), reflect_type='odd')
+    >>> np.lib.pad.pad_symmetric(a, (2,3), reflect_type='odd')
     array([0, 1, 1, 2, 3, 4, 5, 5, 6, 7])
     """
     return _loop_across(array, pad_width, _symmetric,
@@ -1177,9 +1177,9 @@ def pad_reflect(array, pad_width=1, reflect_type='even'):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad_reflect(a, (2,3))
+    >>> np.lib.pad.pad_reflect(a, (2,3))
     array([3, 2, 1, 2, 3, 4, 5, 4, 3, 2])
-    >>> np.lib.pad_reflect(a, (2,3), reflect_type='odd')
+    >>> np.lib.pad.pad_reflect(a, (2,3), reflect_type='odd')
     array([-1,  0,  1,  2,  3,  4,  5,  6,  7,  8])
 
     """
@@ -1234,7 +1234,7 @@ def pad_wrap(array, pad_width=1):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad_wrap(a, (2,3))
+    >>> np.lib.pad.pad_wrap(a, (2,3))
     array([4, 5, 1, 2, 3, 4, 5, 1, 2, 3])
 
     """
@@ -1288,7 +1288,7 @@ def pad_edge(array, pad_width=1):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad_edge(a, (2,3))
+    >>> np.lib.pad.pad_edge(a, (2,3))
     array([1, 1, 1, 2, 3, 4, 5, 5, 5, 5])
 
     """
