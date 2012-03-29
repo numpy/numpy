@@ -1366,10 +1366,14 @@ array_searchsorted(PyArrayObject *self, PyObject *args, PyObject *kwds)
     PyObject *sorter;
     NPY_SEARCHSIDE side = NPY_SEARCHLEFT;
 
+    sorter = NULL;
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O&O:searchsorted",
                                      kwlist, &keys,
                                      PyArray_SearchsideConverter, &side, &sorter)) {
         return NULL;
+    }
+    if (sorter == Py_None) {
+        sorter = NULL;
     }
     return PyArray_Return((PyArrayObject *)PyArray_SearchSorted(self, keys, side, sorter));
 }

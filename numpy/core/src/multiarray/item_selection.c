@@ -1739,7 +1739,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2, NPY_SEARCHSIDE side, PyO
         goto fail;
     }
 
-    if (op3 != Py_None) {
+    if (op3) {
         /* need ap3 as contiguous array and of right type */
         ap3 = (PyArrayObject *)PyArray_CheckFromAny(op3, NULL,
                                     1, 1, NPY_ARRAY_DEFAULT |
