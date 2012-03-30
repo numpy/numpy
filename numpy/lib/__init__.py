@@ -18,7 +18,7 @@ from npyio import *
 from financial import *
 import math
 from arrayterator import *
-import pad
+from pad import *
 
 __all__ = ['emath','math']
 __all__ += type_check.__all__
