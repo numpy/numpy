@@ -804,3 +804,20 @@ def array(obj, dtype=None, shape=None, offset=0, strides=None, formats=None,
         if issubclass(res.dtype.type, nt.void):
             res.dtype = sb.dtype((record, res.dtype))
         return res
+
+def install_ipython_completers():
+    """Register the recarray type with IPython's tab completion machinery, so
+    that it knows about accessing column names as attributes."""
+    from IPython.utils.generics import complete_object
+
+    @complete_object.when_type(recarray)
+    def complete_recarray_colname(obj, prev_completions):
+        return prev_completions + list(obj.dtype.names)
+
+# Importing IPython brings in about 200 modules, so we want to avoid it unless
+# we're in IPython (when those modules are loaded anyway).
+if "IPython" in sys.modules:
+    try:
+        install_ipython_completers()
+    except Exception:
+        pass
