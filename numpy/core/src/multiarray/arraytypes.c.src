@@ -2631,7 +2631,7 @@ UNICODE_compare(npy_ucs4 *ip1, npy_ucs4 *ip2,
     if (itemsize < 0) {
         return 0;
     }
-    itemsize >>= 2;
+    itemsize /= sizeof(npy_ucs4);
     while (itemsize-- > 0) {
         npy_ucs4 c1 = *ip1++;
         npy_ucs4 c2 = *ip2++;
