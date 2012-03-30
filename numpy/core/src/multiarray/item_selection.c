@@ -1749,7 +1749,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
                                     NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED, 
                                     NULL);
         if (ap3 == NULL) {
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(PyExc_ValueError,
                         "could not parse sorter argument");
             goto fail;
         }
@@ -1764,24 +1764,24 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
                                     NPY_ARRAY_DEFAULT |
                                     NPY_ARRAY_NOTSWAPPED);
         if (sorter == NULL) {
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(PyExc_ValueError,
                         "could not parse sorter argument");
             goto fail;
         }
         if (PyArray_SIZE(sorter) != PyArray_SIZE(ap1)) {
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(PyExc_ValueError,
                         "sorter.size must equal a.size");
             goto fail;
         }
         max = PyArray_Max(sorter, 0, NULL);
         if (PyLong_AsLong(max) >= PyArray_SIZE(ap1)) {
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(PyExc_ValueError,
                         "sorter.max() must be less than a.size");
             goto fail;
         }
         min = PyArray_Min(sorter, 0, NULL);
         if (PyLong_AsLong(min) < 0) {
-            PyErr_SetString(PyExc_TypeError,
+            PyErr_SetString(PyExc_ValueError,
                         "sorter elements must be non-negative");
             goto fail;
         }

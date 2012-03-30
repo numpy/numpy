@@ -719,10 +719,10 @@ class TestMethods(TestCase):
         a = np.array([5,2,1,3,4])
         s = np.argsort(a)
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1.1])
-        assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1,2,3,4])
-        assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1,2,3,4,6])
-        assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1,2,3,4,5,5])
-        assert_raises(TypeError, np.searchsorted, a, 0, sorter=[-1,2,3,4])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1,2,3,4])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1,2,3,4,6])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1,2,3,4,5,5])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[-1,2,3,4])
         for x in [-1, 0, 1.5, 3, 5]:
             assert_equal(a[s][np.searchsorted(a[s], x)], a[s[np.searchsorted(a, x, sorter=s)]])
 
