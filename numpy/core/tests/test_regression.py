@@ -1,16 +1,20 @@
-from StringIO import StringIO
 import pickle
 import sys
 import platform
 import gc
 import copy
-from os import path
-from numpy.testing import *
-from numpy.testing.utils import _assert_valid_refcount, WarningManager
-from numpy.compat import asbytes, asunicode, asbytes_nested
 import warnings
 import tempfile
+from StringIO import StringIO
+from os import path
 import numpy as np
+from numpy.testing import (
+        run_module_suite, TestCase, assert_, assert_equal,
+        assert_almost_equal, assert_array_equal, assert_array_almost_equal,
+        assert_raises, assert_warns, dec
+        )
+from numpy.testing.utils import _assert_valid_refcount, WarningManager
+from numpy.compat import asbytes, asunicode, asbytes_nested
 
 if sys.version_info[0] >= 3:
     import io
@@ -1676,11 +1680,10 @@ class TestRegression(TestCase):
     def test_unique_stable(self):
         # Ticket #2063 must always choose stable sort for argsort to
         # get consistent results
-        v=np.array([0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2]*4)
-        w=np.array([0,0,0,0,0,1,1,1,1,1,1,2,2,2,2])
-        resv = np.unique(v,return_index=True)
-        resw = np.unique(w,return_index=True)
-        assert_equal(resv, resw)
+        v = np.array(([0]*5 + [1]*6 + [2]*6)*4)
+        res = np.unique(v, return_index=True)
+        tgt = (np.array([0, 1, 2]), np.array([ 0,  5, 11]))
+        assert_equal(res, tgt)
 
 if __name__ == "__main__":
     run_module_suite()
