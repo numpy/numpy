@@ -586,7 +586,8 @@ def asarray_chkfinite(a, dtype=None, order=None):
 
     """
     a = asarray(a, dtype=dtype, order=order)
-    if a.dtype.char in typecodes['AllFloat'] and not np.isfinite(a).all():
+    if (a.dtype.char in typecodes['AllFloat'] and not np.isfinite(a.sum()) and
+            not np.isfinite(a).all()):
         raise ValueError(
                 "array must not contain infs or NaNs")
     return a
