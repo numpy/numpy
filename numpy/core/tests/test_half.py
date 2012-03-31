@@ -1,8 +1,8 @@
+import warnings
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import *
+from numpy.testing import TestCase, run_module_suite, assert_, assert_equal 
 
-import warnings
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
     try:
@@ -436,3 +436,7 @@ class TestHalf(TestCase):
         c = np.array(b)
         assert_(c.dtype == float16)
         assert_equal(a, c)
+
+
+if __name__ == "__main__":
+    run_module_suite()
