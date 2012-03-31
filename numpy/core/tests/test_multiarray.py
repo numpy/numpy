@@ -1,22 +1,26 @@
 import tempfile
 import sys
 import os
+import warnings
 import numpy as np
-from numpy.testing import *
 from nose import SkipTest
 from numpy.core import *
-from numpy.core.multiarray_tests import test_neighborhood_iterator, test_neighborhood_iterator_oob
 from numpy.compat import asbytes
-
-import warnings
 from numpy.testing.utils import WarningManager
+from numpy.compat import asbytes, getexception, strchar
+from test_print import in_foreign_locale
+from numpy.core.multiarray_tests import (
+        test_neighborhood_iterator, test_neighborhood_iterator_oob
+        )
+from numpy.testing import (
+        TestCase, run_module_suite, assert_, assert_raises,
+        assert_equal, assert_almost_equal, assert_array_equal,
+        assert_array_almost_equal, assert_allclose, runstring, dec
+        )
 
 # Need to test an object that does not fully implement math interface
 from datetime import timedelta
 
-from numpy.compat import asbytes, getexception, strchar
-
-from test_print import in_foreign_locale
 
 class TestFlags(TestCase):
     def setUp(self):
@@ -734,11 +738,13 @@ class TestMethods(TestCase):
                       'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100196_1',
                       'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100197_1',
                       'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100198_1',
-                      'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100199_1'], dtype=np.unicode)
-        assert_equal([a.searchsorted(v, 'left') for v in a], np.arange(len(a)))
-        assert_equal([a.searchsorted(v, 'right') for v in a], np.arange(len(a)) + 1)
-        assert_equal([a.searchsorted(a[i], 'left') for i in range(len(a))], np.arange(len(a)))
-        assert_equal([a.searchsorted(a[i], 'right') for i in range(len(a))], np.arange(len(a)) + 1)
+                      'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100199_1'],
+                      dtype=np.unicode)
+        ind = np.arange(len(a))
+        assert_equal([a.searchsorted(v, 'left') for v in a], ind)
+        assert_equal([a.searchsorted(v, 'right') for v in a], ind + 1)
+        assert_equal([a.searchsorted(a[i], 'left') for i in ind], ind)
+        assert_equal([a.searchsorted(a[i], 'right') for i in ind], ind + 1)
 
     def test_flatten(self):
         x0 = np.array([[1,2,3],[4,5,6]], np.int32)
@@ -1138,7 +1144,8 @@ class TestClip(TestCase):
             self._clip_type('int',1024,-120,100.5, inplace=inplace)
             self._clip_type('int',1024,0,0, inplace=inplace)
 
-            x = self._clip_type('uint',1024,-120,100,expected_min=0, inplace=inplace)
+            x = self._clip_type('uint',1024,-120,100,expected_min=0,
+                    inplace=inplace)
             x = self._clip_type('uint',1024,0,0, inplace=inplace)
 
     def test_record_array(self):
@@ -1491,7 +1498,8 @@ class TestResize(TestCase):
     def test_basic(self):
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         x.resize((5,5))
-        assert_array_equal(x.flat[:9],np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).flat)
+        assert_array_equal(x.flat[:9],
+                np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]]).flat)
         assert_array_equal(x[9:].flat,0)
 
     def test_check_reference(self):
@@ -1763,21 +1771,24 @@ class TestNeighborhoodIter(TestCase):
              np.array([[0, 0, 0], [0, 1, 0]], dtype=dt),
              np.array([[0, 0, 1], [0, 2, 3]], dtype=dt),
              np.array([[0, 1, 0], [2, 3, 0]], dtype=dt)]
-        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0], NEIGH_MODE['zero'])
+        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0],
+                NEIGH_MODE['zero'])
         assert_array_equal(l, r)
 
         r = [np.array([[1, 1, 1], [1, 0, 1]], dtype=dt),
              np.array([[1, 1, 1], [0, 1, 1]], dtype=dt),
              np.array([[1, 0, 1], [1, 2, 3]], dtype=dt),
              np.array([[0, 1, 1], [2, 3, 1]], dtype=dt)]
-        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0], NEIGH_MODE['one'])
+        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0],
+                NEIGH_MODE['one'])
         assert_array_equal(l, r)
 
         r = [np.array([[4, 4, 4], [4, 0, 1]], dtype=dt),
              np.array([[4, 4, 4], [0, 1, 4]], dtype=dt),
              np.array([[4, 0, 1], [4, 2, 3]], dtype=dt),
              np.array([[0, 1, 4], [2, 3, 4]], dtype=dt)]
-        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], 4, NEIGH_MODE['constant'])
+        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], 4,
+                NEIGH_MODE['constant'])
         assert_array_equal(l, r)
 
     def test_simple2d(self):
@@ -1796,7 +1807,8 @@ class TestNeighborhoodIter(TestCase):
              np.array([[0, 1, 1], [0, 1, 1]], dtype=dt),
              np.array([[0, 0, 1], [2, 2, 3]], dtype=dt),
              np.array([[0, 1, 1], [2, 3, 3]], dtype=dt)]
-        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0], NEIGH_MODE['mirror'])
+        l = test_neighborhood_iterator(x, [-1, 0, -1, 1], x[0],
+                NEIGH_MODE['mirror'])
         assert_array_equal(l, r)
 
     def test_mirror2d(self):
@@ -2092,14 +2104,22 @@ if sys.version_info >= (2, 6):
             self._check('^i7x', [('f0', 'i'), ('', 'V7')])
 
         def test_native_padding_3(self):
-            dt = np.dtype([('a', 'b'), ('b', 'i'), ('sub', np.dtype('b,i')), ('c', 'i')], align=True)
+            dt = np.dtype(
+                    [('a', 'b'), ('b', 'i'),
+                        ('sub', np.dtype('b,i')), ('c', 'i')],
+                    align=True)
             self._check("T{b:a:xxxi:b:T{b:f0:=i:f1:}:sub:xxxi:c:}", dt)
 
-            dt = np.dtype([('a', 'b'), ('b', 'i'), ('c', 'b'), ('d', 'b'), ('e', 'b'), ('sub', np.dtype('b,i', align=True))])
+            dt = np.dtype(
+                    [('a', 'b'), ('b', 'i'), ('c', 'b'), ('d', 'b'),
+                        ('e', 'b'), ('sub', np.dtype('b,i', align=True))])
             self._check("T{b:a:=i:b:b:c:b:d:b:e:T{b:f0:xxxi:f1:}:sub:}", dt)
 
         def test_padding_with_array_inside_struct(self):
-            dt = np.dtype([('a', 'b'), ('b', 'i'), ('c', 'b', (3,)), ('d', 'i')], align=True)
+            dt = np.dtype(
+                    [('a', 'b'), ('b', 'i'), ('c', 'b', (3,)),
+                        ('d', 'i')],
+                    align=True)
             self._check("T{b:a:xxxi:b:3b:c:xi:d:}", dt)
 
         def test_byteorder_inside_struct(self):
@@ -2161,9 +2181,10 @@ if sys.version_info >= (2, 6):
                   ('o', '?'),
                   ('p', np.half),
                  ]
-            x = np.array([(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                           asbytes('aaaa'), 'bbbb', asbytes('xxx'), True, 1.0)],
-                         dtype=dt)
+            x = np.array(
+                    [(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                        asbytes('aaaa'), 'bbbb', asbytes('xxx'), True, 1.0)],
+                    dtype=dt)
             self._check_roundtrip(x)
 
             x = np.array(([[1,2],[3,4]],), dtype=[('a', (int, (2,2)))])
@@ -2266,9 +2287,10 @@ if sys.version_info >= (2, 6):
                   ('o', '?'),
                   ('p', np.half),
                  ]
-            x = np.array([(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                           asbytes('aaaa'), 'bbbb', asbytes('   '), True, 1.0)],
-                         dtype=dt)
+            x = np.array(
+                    [(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                        asbytes('aaaa'), 'bbbb', asbytes('   '), True, 1.0)],
+                    dtype=dt)
             y = memoryview(x)
             assert_equal(y.shape, (1,))
             assert_equal(y.ndim, 1)
@@ -2321,15 +2343,21 @@ if sys.version_info >= (2, 6):
             assert_equal(count_1, count_2)
 
         def test_padded_struct_array(self):
-            dt1 = np.dtype([('a', 'b'), ('b', 'i'), ('sub', np.dtype('b,i')), ('c', 'i')], align=True)
+            dt1 = np.dtype(
+                    [('a', 'b'), ('b', 'i'), ('sub', np.dtype('b,i')), ('c', 'i')],
+                    align=True)
             x1 = np.arange(dt1.itemsize, dtype=np.int8).view(dt1)
             self._check_roundtrip(x1)
 
-            dt2 = np.dtype([('a', 'b'), ('b', 'i'), ('c', 'b', (3,)), ('d', 'i')], align=True)
+            dt2 = np.dtype(
+                    [('a', 'b'), ('b', 'i'), ('c', 'b', (3,)), ('d', 'i')],
+                    align=True)
             x2 = np.arange(dt2.itemsize, dtype=np.int8).view(dt2)
             self._check_roundtrip(x2)
 
-            dt3 = np.dtype([('a', 'b'), ('b', 'i'), ('c', 'b'), ('d', 'b'), ('e', 'b'), ('sub', np.dtype('b,i', align=True))])
+            dt3 = np.dtype(
+                    [('a', 'b'), ('b', 'i'), ('c', 'b'), ('d', 'b'),
+                        ('e', 'b'), ('sub', np.dtype('b,i', align=True))])
             x3 = np.arange(dt3.itemsize, dtype=np.int8).view(dt3)
             self._check_roundtrip(x3)
 
