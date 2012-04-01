@@ -587,6 +587,12 @@ def _savez(file, args, kwds, compress):
     zip.close()
 
 # Adapted from matplotlib
+def _floatconv(x):
+    try:
+        return float(x)
+    except ValueError:
+        pass
+    return float.fromhex(x)
 
 def _getconv(dtype):
     typ = dtype.type
@@ -599,7 +605,7 @@ def _getconv(dtype):
     if issubclass(typ, np.integer):
         return lambda x: int(float(x))
     elif issubclass(typ, np.floating):
-        return float
+        return _floatconv
     elif issubclass(typ, np.complex):
         return complex
     elif issubclass(typ, np.bytes_):
