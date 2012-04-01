@@ -140,11 +140,11 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         else if (!(minlength = PyArray_PyIntAsIntp(mlength))) {
             goto fail;
         }
-        if (!(ans = PyArray_Zeros(1, &minlength, type, 0))){
+        if (!(ans = (PyArrayObject *)PyArray_Zeros(1, &minlength, type, 0))){
             goto fail;
         }
         Py_DECREF(lst);
-        return ans;
+        return (PyObject *)ans;
     }
 
     numbers = (npy_intp *) PyArray_DATA(lst);
@@ -333,12 +333,13 @@ arr_insert_loop(char *mptr, char *vptr, char *input_data, char *zero,
                 int totmask, int numvals, int nd, npy_intp *instrides,
                 npy_intp *inshape)
 {
+    int mindx, rem_indx, indx, i, copied;
+
     /*
      * Walk through mask array, when non-zero is encountered
      * copy next value in the vals array to the input array.
      * If we get through the value array, repeat it as necessary.
      */
-    int mindx, rem_indx, indx, i, copied;
     copied = 0;
     for (mindx = 0; mindx < totmask; mindx++) {
         if (memcmp(mptr,zero,melsize) != 0) {
@@ -378,7 +379,7 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     PyArrayObject *ainput = NULL, *amask = NULL, *avals = NULL, *tmp = NULL;
     int numvals, totmask, sameshape;
     char *input_data, *mptr, *vptr, *zero = NULL;
-    int melsize, delsize, copied, nd, objarray, k;
+    int melsize, delsize, nd, objarray, k;
     npy_intp *instrides, *inshape;
 
     static char *kwlist[] = {"input", "mask", "vals", NULL};
@@ -462,7 +463,6 @@ arr_insert(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
     }
 
     totmask = (int) PyArray_SIZE(amask);
-    copied = 0;
     instrides = PyArray_STRIDES(ainput);
     inshape = PyArray_DIMS(ainput);
     if (objarray) {
