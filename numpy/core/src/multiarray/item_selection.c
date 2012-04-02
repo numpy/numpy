@@ -1721,8 +1721,9 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     /* need ap1 as contiguous array and of right type */
     Py_INCREF(dtype);
     ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
-                                1, 1, NPY_ARRAY_DEFAULT |
-                                      NPY_ARRAY_NOTSWAPPED, NULL);
+                                1, 1, 
+                                NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED, 
+                                NULL);
     if (ap1 == NULL) {
         Py_DECREF(dtype);
         return NULL;
@@ -1730,8 +1731,9 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
 
     /* need ap2 as contiguous array and of right type */
     ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
-                                0, 0, NPY_ARRAY_DEFAULT |
-                                      NPY_ARRAY_NOTSWAPPED, NULL);
+                                0, 0, 
+                                NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED, 
+                                NULL);
     if (ap2 == NULL) {
         goto fail;
     }
@@ -1761,8 +1763,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         /* convert to known integer size */
         sorter = (PyArrayObject *)PyArray_FromArray(ap3, 
                                     PyArray_DescrFromType(NPY_INTP),
-                                    NPY_ARRAY_DEFAULT |
-                                    NPY_ARRAY_NOTSWAPPED);
+                                    NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED);
         if (sorter == NULL) {
             PyErr_SetString(PyExc_ValueError,
                         "could not parse sorter argument");
