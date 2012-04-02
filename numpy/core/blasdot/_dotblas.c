@@ -1,5 +1,8 @@
-static char module_doc[] =
-"This module provides a BLAS optimized\nmatrix multiply, inner product and dot for numpy arrays";
+/*
+ * This module provides a BLAS optimized\nmatrix multiply,
+ * inner product and dot for numpy arrays
+ */
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "Python.h"
 #include "npy_config.h"
@@ -16,6 +19,9 @@ static char module_doc[] =
 #define Py_REFCNT(o)  (((PyObject*)(o))->ob_refcnt)
 #define Py_SIZE(o)    (((PyVarObject*)(o))->ob_size)
 #endif
+
+static char module_doc[] =
+"This module provides a BLAS optimized\nmatrix multiply, inner product and dot for numpy arrays";
 
 static PyArray_DotFunc *oldFunctions[NPY_NTYPES];
 
