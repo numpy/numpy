@@ -774,7 +774,9 @@ def searchsorted(a, v, side='left', sorter=None):
         'right', return the last such index.  If there is no suitable
         index, return either 0 or N (where N is the length of `a`).
     sorter : 1-D array_like
-             permutation array that will sort array a
+        .. versionadded:: 1.7.0
+        
+        permutation array that will sort array a
 
     Returns
     -------
