@@ -1749,12 +1749,12 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
                                     NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED, 
                                     NULL);
         if (ap3 == NULL) {
-            PyErr_SetString(PyExc_ValueError,
+            PyErr_SetString(PyExc_TypeError,
                         "could not parse sorter argument");
             goto fail;
         }
         if (!PyArray_ISINTEGER(ap3)) {
-            PyErr_SetString(PyExc_ValueError,
+            PyErr_SetString(PyExc_TypeError,
                         "sorter must only contain integers");
             goto fail;
         }
