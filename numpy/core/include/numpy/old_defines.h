@@ -1,5 +1,5 @@
 /* This header is deprecated as of NumPy 1.7 */
-#ifdef NPY_NO_DEPRECATED_API
+#if defined(NPY_NO_DEPRECATED_API) && NPY_NO_DEPRECATED_API >= NPY_1_7_API_VERSION
 #error The header "old_defines.h" is deprecated as of NumPy 1.7.
 #endif
 

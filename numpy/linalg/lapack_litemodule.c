@@ -2,7 +2,7 @@
 Modified by Jim Hugunin
 More modifications by Jeff Whitaker
 */
-#define NPY_NO_DEPRECATED_API
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #include "Python.h"
 #include "numpy/arrayobject.h"
