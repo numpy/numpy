@@ -70,10 +70,10 @@ doc/cdoc/build
 
 # OS generated files #
 ######################
-.DS_Store
+.DS_Store*
 .VolumeIcon.icns
 .fseventsd
-Icon^M^M
+Icon?
 .gdb_history
 ehthumbs.db
 Thumbs.db
