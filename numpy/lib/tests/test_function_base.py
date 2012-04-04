@@ -429,6 +429,21 @@ class TestDigitize(TestCase):
         bin = np.linspace(x.min(), x.max(), 10)
         assert_(np.all(digitize(x, bin) != 0))
 
+    def test_right_open(self):
+        x = arange(-6, 5)
+        bins = arange(-6, 4)
+        assert_array_equal(digitize(x,bins,True), arange(11))
+
+    def test_right_open_reverse(self):
+        x = arange(5, -6, -1)
+        bins = arange(4, -6, -1)
+        assert_array_equal(digitize(x, bins, True), arange(11))
+
+    def test_right_open_random(self):
+        x = rand(10)
+        bins = linspace(x.min(), x.max(), 10)
+        assert_(all(digitize(x, bins, True) != 10))
+
 
 class TestUnwrap(TestCase):
     def test_simple(self):

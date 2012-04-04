@@ -4865,14 +4865,17 @@ add_newdoc('numpy.core.umath', 'seterrobj',
 
 add_newdoc('numpy.lib._compiled_base', 'digitize',
     """
-    digitize(x, bins)
+    digitize(x, bins, right=False)
 
     Return the indices of the bins to which each value in input array belongs.
 
     Each index ``i`` returned is such that ``bins[i-1] <= x < bins[i]`` if
     `bins` is monotonically increasing, or ``bins[i-1] > x >= bins[i]`` if
     `bins` is monotonically decreasing. If values in `x` are beyond the
-    bounds of `bins`, 0 or ``len(bins)`` is returned as appropriate.
+    bounds of `bins`, 0 or ``len(bins)`` is returned as appropriate. If right
+    is True, then the right bin is closed so that the index ``i`` is such
+    that ``bins[i-1] < x <= bins[i]`` or bins[i-1] >= x > bins[i]`` if `bins`
+    is monotonically increasing or decreasing, respectively.
 
     Parameters
     ----------
@@ -4880,6 +4883,12 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
         Input array to be binned. It has to be 1-dimensional.
     bins : array_like
         Array of bins. It has to be 1-dimensional and monotonic.
+    right : bool, optional
+        Indicating whether the intervals include the right or the left bin.
+        Default behavior is (right==False) indicating that the interval
+        includes the left bin and is open on the right. Ie.,
+        bins[i-1] <= x < bins[i] is the default behavior for monotonically
+        increasing bins.
 
     Returns
     -------

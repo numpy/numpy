@@ -33,6 +33,32 @@ decr_slot_(double x, double * bins, npy_intp lbins)
     return 0;
 }
 
+static npy_intp
+incr_slot_right_(double x, double *bins, npy_intp lbins)
+{
+    npy_intp i;
+
+    for ( i = 0; i < lbins; i ++ ) {
+        if ( x <= bins [i] ) {
+            return i;
+        }
+    }
+    return lbins;
+}
+
+static npy_intp
+decr_slot_right_(double x, double * bins, npy_intp lbins)
+{
+    npy_intp i;
+
+    for ( i = lbins - 1; i >= 0; i -- ) {
+        if (x <= bins [i]) {
+            return i + 1;
+        }
+    }
+    return 0;
+}
+
 /**
  * Returns -1 if the array is monotonic decreasing,
  * +1 if the array is monotonic increasing,
@@ -219,11 +245,13 @@ fail:
 
 
 /*
- * digitize (x, bins) returns an array of python integers the same
+ * digitize (x, bins, right=False) returns an array of python integers the same
  * length of x. The values i returned are such that bins [i - 1] <= x <
  * bins [i] if bins is monotonically increasing, or bins [i - 1] > x >=
  * bins [i] if bins is monotonically decreasing.  Beyond the bounds of
  * bins, returns either i = 0 or i = len (bins) as appropriate.
+ * if right == True the comparison is bins [i - 1] < x <= bins[i]
+ * or bins [i - 1] >= x > bins[i]
  */
 static PyObject *
 arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
@@ -233,13 +261,15 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     PyArrayObject *ax = NULL, *abins = NULL, *aret = NULL;
     double *dx, *dbins;
     npy_intp lbins, lx;             /* lengths */
+    npy_intp right = 0; /* whether right or left is inclusive */
     npy_intp *iret;
     int m, i;
-    static char *kwlist[] = {"x", "bins", NULL};
+    static char *kwlist[] = {"x", "bins", "right", NULL};
     PyArray_Descr *type;
     char bins_non_monotonic = 0;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO", kwlist, &ox, &obins)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i", kwlist, &ox, &obins,
+                &right)) {
         goto fail;
     }
     type = PyArray_DescrFromType(NPY_DOUBLE);
@@ -272,30 +302,64 @@ arr_digitize(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
     NPY_BEGIN_ALLOW_THREADS;
     if (lbins == 1)  {
-        for (i = 0; i < lx; i++) {
-            if (dx [i] >= dbins[0]) {
-                iret[i] = 1;
+        if (right == 0) {
+            for (i = 0; i < lx; i++) {
+                if (dx [i] >= dbins[0]) {
+                    iret[i] = 1;
+                }
+                else {
+                    iret[i] = 0;
+                }
             }
-            else {
-                iret[i] = 0;
+        }
+        else {
+            for (i = 0; i < lx; i++) {
+                if (dx [i] > dbins[0]) {
+                    iret[i] = 1;
+                }
+                else {
+                    iret[i] = 0;
+                }
             }
+
         }
     }
     else {
         m = check_array_monotonic(dbins, lbins);
-        if ( m == -1 ) {
-            for ( i = 0; i < lx; i ++ ) {
-                iret [i] = decr_slot_ ((double)dx[i], dbins, lbins);
+        if (right == 0) {
+            if ( m == -1 ) {
+                for ( i = 0; i < lx; i ++ ) {
+                    iret [i] = decr_slot_ ((double)dx[i], dbins, lbins);
+                }
             }
-        }
-        else if ( m == 1 ) {
-            for ( i = 0; i < lx; i ++ ) {
-                iret [i] = incr_slot_ ((double)dx[i], dbins, lbins);
+            else if ( m == 1 ) {
+                for ( i = 0; i < lx; i ++ ) {
+                    iret [i] = incr_slot_ ((double)dx[i], dbins, lbins);
+                }
+            }
+            else {
+            /* defer PyErr_SetString until after NPY_END_ALLOW_THREADS */
+                bins_non_monotonic = 1;
             }
         }
         else {
+            if ( m == -1 ) {
+                for ( i = 0; i < lx; i ++ ) {
+                    iret [i] = decr_slot_right_ ((double)dx[i], dbins,
+                                                                lbins);
+                }
+            }
+            else if ( m == 1 ) {
+                for ( i = 0; i < lx; i ++ ) {
+                    iret [i] = incr_slot_right_ ((double)dx[i], dbins,
+                                                               lbins);
+                }
+            }
+            else {
             /* defer PyErr_SetString until after NPY_END_ALLOW_THREADS */
-            bins_non_monotonic = 1;
+                bins_non_monotonic = 1;
+            }
+
         }
     }
     NPY_END_ALLOW_THREADS;
