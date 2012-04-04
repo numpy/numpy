@@ -509,7 +509,7 @@ def _edge(vector, pad_tuple, iaxis, kwargs):
 # Public functions
 
 
-def pad(mode, array, pad_width=1, **kwargs):
+def pad(array, pad_width, mode=None, **kwargs):
     """
     Pads an array.
 
@@ -557,14 +557,13 @@ def pad(mode, array, pad_width=1, **kwargs):
                         any keyword arguments the function requires.
     array : array_like of rank N
         Input array
-    pad_width : {sequence, int}, optional
+    pad_width : {sequence, int}
         Number of values padded to each edge of each axis.
         ((before_1, after_1), ... (before_N, after_N)) unique pad widths for
         each axis.
         ((before, after),) yields same before and after pad for each axis.
         (pad,) or int is a shortcut for before = after = pad width for all
         axes.
-        Default is 1.
     stat_length : {sequence, int}, optional
         Used in 'maximum', 'mean', 'median', and 'minimum'.
         Number of values at edge of each axis used to calculate the statistic
@@ -622,26 +621,26 @@ def pad(mode, array, pad_width=1, **kwargs):
     Examples
     --------
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad('constant', a, (2,3), constant_values=(4,6))
+    >>> np.lib.pad(a, (2,3), 'constant', constant_values=(4,6))
     array([4, 4, 1, 2, 3, 4, 5, 6, 6, 6])
 
-    >>> np.lib.pad('edge', a, (2,3))
+    >>> np.lib.pad(a, (2,3), 'edge')
     array([1, 1, 1, 2, 3, 4, 5, 5, 5, 5])
 
-    >>> np.lib.pad('linear_ramp', a, (2,3), end_values=(5,-4))
+    >>> np.lib.pad(a, (2,3), 'linear_ramp', end_values=(5,-4))
     array([ 5,  3,  1,  2,  3,  4,  5,  2, -1, -4])
 
-    >>> np.lib.pad('maximum', a, (2,))
+    >>> np.lib.pad(a, (2,), 'maximum')
     array([5, 5, 1, 2, 3, 4, 5, 5, 5])
 
-    >>> np.lib.pad('mean', a, (2,))
+    >>> np.lib.pad(a, (2,), 'mean')
     array([3, 3, 1, 2, 3, 4, 5, 3, 3])
 
-    >>> np.lib.pad('median', a, (2,))
+    >>> np.lib.pad(a, (2,), 'median')
     array([3, 3, 1, 2, 3, 4, 5, 3, 3])
 
     >>> a = [[1,2], [3,4]]
-    >>> np.lib.pad('minimum', a, ((3, 2), (2, 3)))
+    >>> np.lib.pad(a, ((3, 2), (2, 3)), 'minimum')
     array([[1, 1, 1, 2, 1, 1, 1],
            [1, 1, 1, 2, 1, 1, 1],
            [1, 1, 1, 2, 1, 1, 1],
@@ -651,19 +650,19 @@ def pad(mode, array, pad_width=1, **kwargs):
            [1, 1, 1, 2, 1, 1, 1]])
 
     >>> a = [1, 2, 3, 4, 5]
-    >>> np.lib.pad('reflect', a, (2,3))
+    >>> np.lib.pad(a, (2,3), 'reflect')
     array([3, 2, 1, 2, 3, 4, 5, 4, 3, 2])
 
-    >>> np.lib.pad('reflect', a, (2,3), reflect_type='odd')
+    >>> np.lib.pad(a, (2,3), 'reflect', reflect_type='odd')
     array([-1,  0,  1,  2,  3,  4,  5,  6,  7,  8])
 
-    >>> np.lib.pad('symmetric', a, (2,3))
+    >>> np.lib.pad(a, (2,3), 'symmetric')
     array([2, 1, 1, 2, 3, 4, 5, 5, 4, 3])
 
-    >>> np.lib.pad('symmetric', a, (2,3), reflect_type='odd')
+    >>> np.lib.pad(a, (2,3), 'symmetric', reflect_type='odd')
     array([0, 1, 1, 2, 3, 4, 5, 5, 6, 7])
 
-    >>> np.lib.pad('wrap', a, (2,3))
+    >>> np.lib.pad(a, (2,3), 'wrap')
     array([4, 5, 1, 2, 3, 4, 5, 1, 2, 3])
 
     >>> def padwithtens(vector, pad_width, iaxis, kwargs):
@@ -674,7 +673,7 @@ def pad(mode, array, pad_width=1, **kwargs):
     >>> a = np.arange(6)
     >>> a = a.reshape((2,3))
 
-    >>> np.lib.pad(padwithtens, a, 2)
+    >>> np.lib.pad(a, 2, padwithtens)
     array([[10, 10, 10, 10, 10, 10, 10],
            [10, 10, 10, 10, 10, 10, 10],
            [10, 10,  0,  1,  2, 10, 10],
@@ -682,6 +681,7 @@ def pad(mode, array, pad_width=1, **kwargs):
            [10, 10, 10, 10, 10, 10, 10],
            [10, 10, 10, 10, 10, 10, 10]])
     """
+
 
     narray = np.array(array)
     pad_width = _validate_lengths(narray, pad_width)
@@ -725,7 +725,8 @@ def pad(mode, array, pad_width=1, **kwargs):
         # Make sure have allowed kwargs appropriate for mode
         for key in kwargs:
             if key not in allowedkwargs[mode]:
-                raise ValueError
+                raise ValueError('%s keyword not in allowed keywords %s' %
+                                  (key, allowedkwargs[mode]))
 
         # Set kwarg defaults
         for kw in allowedkwargs[mode]:
@@ -737,6 +738,9 @@ def pad(mode, array, pad_width=1, **kwargs):
                 kwargs[i] = _validate_lengths(narray, kwargs[i])
             if i in ['end_values', 'constant_values']:
                 kwargs[i] = _normalize_shape(narray, kwargs[i])
+    elif mode == None:
+        raise ValueError('Keyword "mode" must be a function or one of %s.' %
+                          (modefunc.keys(),))
     else:
         # User supplied function, I hope
         function = mode
