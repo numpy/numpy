@@ -752,9 +752,11 @@ class TestMethods(TestCase):
         assert_raises(TypeError, np.searchsorted, a, 0, sorter=(1,(2,3)))
         assert_raises(TypeError, np.searchsorted, a, 0, sorter=[1.1])
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1,2,3,4])
-        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1,2,3,4,6])
-        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1,2,3,4,5,5])
-        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[-1,2,3,4])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[1,2,3,4,5,6])
+
+        # bounds check
+        assert_raises(ValueError, np.searchsorted, a, 4, sorter=[0,1,2,3,5])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[-1,0,1,2,3])
 
         a = np.random.rand(100)
         s = a.argsort()
