@@ -1,5 +1,5 @@
 """
-The pad.py module contains a group of functions to pad values onto the edges
+The arraypad module contains a group of functions to pad values onto the edges
 of an n-dimensional array.
 """
 
@@ -42,23 +42,23 @@ def _create_vector(vector, pad_tuple, before_val, after_val):
 
 def _normalize_shape(narray, shape):
     '''
-    Private function which does some checks and normalizes the possibly much
-    simpler representations of 'pad_width', 'stat_length', 'constant_values',
-    'end_values'.
+    Private function which does some checks and normalizes the possibly
+    much simpler representations of 'pad_width', 'stat_length',
+    'constant_values', 'end_values'.
 
     Parameters
     ----------
     narray : ndarray
         Input ndarray
     shape : {sequence, int}, optional
-        The width of padding (pad_width) or the number of elements on the edge
-        of the narray used for statistics (stat_length).
+        The width of padding (pad_width) or the number of elements on the
+        edge of the narray used for statistics (stat_length).
         ((before_1, after_1), ... (before_N, after_N)) unique number of
         elements for each axis where `N` is rank of `narray`.
         ((before, after),) yields same before and after constants for each
         axis.
-        (constant,) or int is a shortcut for before = after = constant for all
-        axes.
+        (constant,) or int is a shortcut for before = after = constant for
+        all axes.
 
     Returns
     -------
@@ -81,8 +81,8 @@ def _normalize_shape(narray, shape):
         normshp = shape
         for i in normshp:
             if len(i) != 2:
-                raise ValueError("Unable to create correctly shaped tuple from %s"
-                                  % (normshp,))
+                fmt = "Unable to create correctly shaped tuple from %s"
+                raise ValueError(fmt % (normshp,))
     elif (isinstance(shape, (tuple, list))
             and isinstance(shape[0], (int, float, long))
             and len(shape) == 1):
@@ -92,8 +92,8 @@ def _normalize_shape(narray, shape):
             and len(shape) == 2):
         normshp = (shape, ) * shapelen
     if normshp == None:
-        raise ValueError("Unable to create correctly shaped tuple from %s"
-                          % (shape,))
+        fmt = "Unable to create correctly shaped tuple from %s"
+        raise ValueError(fmt % (shape,))
     return normshp
 
 
@@ -131,9 +131,8 @@ def _validate_lengths(narray, number_elements):
     normshp = _normalize_shape(narray, number_elements)
     for i in normshp:
         if i[0] < 0 or i[1] < 0:
-            raise ValueError(
-                  "Cannot have negative values in %s to represent number of elements."
-                  % (number_elements,))
+            fmt ="%s cannot contain negative values."
+            raise ValueError(fmt % (number_elements,))
     return normshp
 
 
@@ -146,8 +145,8 @@ def _create_stat_vectors(vector, pad_tuple, iaxis, kwargs):
     vector : ndarray
         Input vector that already includes empty padded values.
     pad_tuple : tuple
-        This tuple represents the (before, after) width of the padding along
-        this particular iaxis.
+        This tuple represents the (before, after) width of the padding
+        along this particular iaxis.
     iaxis : int
         The axis currently being looped across.
     kwargs : keyword arguments
@@ -157,8 +156,8 @@ def _create_stat_vectors(vector, pad_tuple, iaxis, kwargs):
     Return
     ------
     _create_stat_vectors : ndarray
-        The values from the original vector that will be used to calculate the
-        statistic.
+        The values from the original vector that will be used to calculate
+        the statistic.
     '''
 
     # Can't have 0 represent the end if a slice... a[1:0] doesnt' work
@@ -192,8 +191,8 @@ def _maximum(vector, pad_tuple, iaxis, kwargs):
     vector : ndarray
         Input vector that already includes empty padded values.
     pad_tuple : tuple
-        This tuple represents the (before, after) width of the padding along
-        this particular iaxis.
+        This tuple represents the (before, after) width of the padding
+        along this particular iaxis.
     iaxis : int
         The axis currently being looped across.
     kwargs : keyword arguments
@@ -218,8 +217,8 @@ def _minimum(vector, pad_tuple, iaxis, kwargs):
     vector : ndarray
         Input vector that already includes empty padded values.
     pad_tuple : tuple
-        This tuple represents the (before, after) width of the padding along
-        this particular iaxis.
+        This tuple represents the (before, after) width of the padding
+        along this particular iaxis.
     iaxis : int
         The axis currently being looped across.
     kwargs : keyword arguments
@@ -244,8 +243,8 @@ def _median(vector, pad_tuple, iaxis, kwargs):
     vector : ndarray
         Input vector that already includes empty padded values.
     pad_tuple : tuple
-        This tuple represents the (before, after) width of the padding along
-        this particular iaxis.
+        This tuple represents the (before, after) width of the padding
+        along this particular iaxis.
     iaxis : int
         The axis currently being looped across.
     kwargs : keyword arguments
@@ -271,8 +270,8 @@ def _mean(vector, pad_tuple, iaxis, kwargs):
     vector : ndarray
         Input vector that already includes empty padded values.
     pad_tuple : tuple
-        This tuple represents the (before, after) width of the padding along
-        this particular iaxis.
+        This tuple represents the (before, after) width of the padding
+        along this particular iaxis.
     iaxis : int
         The axis currently being looped across.
     kwargs : keyword arguments
@@ -291,15 +290,16 @@ def _mean(vector, pad_tuple, iaxis, kwargs):
 
 def _constant(vector, pad_tuple, iaxis, kwargs):
     '''
-    Private function to calculate the before/after vectors for pad_constant.
+    Private function to calculate the before/after vectors for
+    pad_constant.
 
     Parameters
     ----------
     vector : ndarray
         Input vector that already includes empty padded values.
     pad_tuple : tuple
-        This tuple represents the (before, after) width of the padding along
-        this particular iaxis.
+        This tuple represents the (before, after) width of the padding
+        along this particular iaxis.
     iaxis : int
         The axis currently being looped across.
     kwargs : keyword arguments
@@ -316,15 +316,16 @@ def _constant(vector, pad_tuple, iaxis, kwargs):
 
 def _linear_ramp(vector, pad_tuple, iaxis, kwargs):
     '''
-    Private function to calculate the before/after vectors for pad_linear_ramp.
+    Private function to calculate the before/after vectors for
+    pad_linear_ramp.
 
     Parameters
     ----------
     vector : ndarray
         Input vector that already includes empty padded values.
     pad_tuple : tuple
-        This tuple represents the (before, after) width of the padding along
-        this particular iaxis.
+        This tuple represents the (before, after) width of the padding
+        along this particular iaxis.
     iaxis : int
         The axis currently being looped across.  Not used in _linear_ramp.
     kwargs : keyword arguments
@@ -364,8 +365,8 @@ def _reflect(vector, pad_tuple, iaxis, kwargs):
     vector : ndarray
         Input vector that already includes empty padded values.
     pad_tuple : tuple
-        This tuple represents the (before, after) width of the padding along
-        this particular iaxis.
+        This tuple represents the (before, after) width of the padding
+        along this particular iaxis.
     iaxis : int
         The axis currently being looped across.  Not used in _reflect.
     kwargs : keyword arguments
@@ -404,15 +405,16 @@ def _reflect(vector, pad_tuple, iaxis, kwargs):
 
 def _symmetric(vector, pad_tuple, iaxis, kwargs):
     '''
-    Private function to calculate the before/after vectors for pad_symmetric.
+    Private function to calculate the before/after vectors for
+    pad_symmetric.
 
     Parameters
     ----------
     vector : ndarray
         Input vector that already includes empty padded values.
     pad_tuple : tuple
-        This tuple represents the (before, after) width of the padding along
-        this particular iaxis.
+        This tuple represents the (before, after) width of the padding
+        along this particular iaxis.
     iaxis : int
         The axis currently being looped across.  Not used in _symmetric.
     kwargs : keyword arguments
@@ -428,12 +430,10 @@ def _symmetric(vector, pad_tuple, iaxis, kwargs):
     else:
         after_vector = vector[pad_tuple[0]:-pad_tuple[1]]
 
-    before_vector = np.resize(
-                        np.concatenate(
-                        (after_vector, after_vector[::-1])), pad_tuple[0])[::-1]
-    after_vector = np.resize(
-                       np.concatenate(
-                       (after_vector[::-1], after_vector)), pad_tuple[1])
+    before_vector = np.resize( np.concatenate( (after_vector,
+        after_vector[::-1])), pad_tuple[0])[::-1]
+    after_vector = np.resize( np.concatenate( (after_vector[::-1],
+        after_vector)), pad_tuple[1])
 
     if kwargs['reflect_type'] == 'even':
         pass
@@ -455,8 +455,8 @@ def _wrap(vector, pad_tuple, iaxis, kwargs):
     vector : ndarray
         Input vector that already includes empty padded values.
     pad_tuple : tuple
-        This tuple represents the (before, after) width of the padding along
-        this particular iaxis.
+        This tuple represents the (before, after) width of the padding
+        along this particular iaxis.
     iaxis : int
         The axis currently being looped across.  Not used in _wrap.
     kwargs : keyword arguments
@@ -487,8 +487,8 @@ def _edge(vector, pad_tuple, iaxis, kwargs):
     vector : ndarray
         Input vector that already includes empty padded values.
     pad_tuple : tuple
-        This tuple represents the (before, after) width of the padding along
-        this particular iaxis.
+        This tuple represents the (before, after) width of the padding
+        along this particular iaxis.
     iaxis : int
         The axis currently being looped across.  Not used in _edge.
     kwargs : keyword arguments
@@ -513,108 +513,122 @@ def pad(array, pad_width, mode=None, **kwargs):
 
     Parameters
     ----------
-    mode : {'constant', 'edge', 'linear_ramp', 'maximum', 'mean', 'median',
-            'minimum', 'reflect', 'symmetric', 'wrap', function}
+    array : array_like of rank N
+        Input array
+    pad_width : {sequence, int}
+        Number of values padded to the edges of each axis.
+        ((before_1, after_1), ... (before_N, after_N)) unique pad widths
+        for each axis.
+        ((before, after),) yields same before and after pad for each axis.
+        (pad,) or int is a shortcut for before = after = pad width for all
+        axes.
+    mode : {str, function}
         One of the following string values or a user supplied function.
+
         'constant'      Pads with a constant value.
         'edge'          Pads with the edge values of array.
         'linear_ramp'   Pads with the linear ramp between end_value and the
                         array edge value.
         'maximum'       Pads with the maximum value of all or part of the
                         vector along each axis.
-        'mean'          Pads with the mean value of all or part of the vector
-                        along each axis.
+        'mean'          Pads with the mean value of all or part of the
+                        vector along each axis.
         'median'        Pads with the median value of all or part of the
                         vector along each axis.
         'minimum'       Pads with the minimum value of all or part of the
                         vector along each axis.
-        'reflect'       Pads with the reflection of the vector mirrored on the
-                        first and last values of the vector along each axis.
-        'symmetric'     Pads with the reflection of the vector mirrored along
-                        the edge of the array.
-        'wrap'          Pads with the wrap of the vector along the axis.  The
-                        first values are used to pad the end and the end
-                        values are used to pad the beginning.
-        function(vector, iaxis_pad_width, iaxis, **kwargs)
-                        if a user supplied function must accept arguments
-                        (vector, iaxis_pad_width, iaxis, **kwargs) and return
-                        a rank 1 array equal in length to `vector` with padded
-                        values replaced.
-            vector
-                        a rank 1 array already padded with zeros.  Padded
-                        values are vector[:pad_tuple[0]] and
-                        vector[-pad_tuple[1]:].
-            iaxis_pad_width
-                        a 2-tuple of ints, iaxis_pad_width[0] represents the
-                        number of values padded at the beginning of `vector`
-                        where iaxis_pad_width[1] represents the number of
-                        values padded at the end of `vector`.
-            iaxis
-                        the axis currently being calculated.
-            kwargs
-                        any keyword arguments the function requires.
-    array : array_like of rank N
-        Input array
-    pad_width : {sequence, int}
-        Number of values padded to each edge of each axis.
-        ((before_1, after_1), ... (before_N, after_N)) unique pad widths for
-        each axis.
-        ((before, after),) yields same before and after pad for each axis.
-        (pad,) or int is a shortcut for before = after = pad width for all
-        axes.
+        'reflect'       Pads with the reflection of the vector mirrored on
+                        the first and last values of the vector along each
+                        axis.
+        'symmetric'     Pads with the reflection of the vector mirrored
+                        along the edge of the array.
+        'wrap'          Pads with the wrap of the vector along the axis.
+                        The first values are used to pad the end and the
+                        end values are used to pad the beginning.
+        <function>      Padding function, see Notes.
     stat_length : {sequence, int}, optional
-        Used in 'maximum', 'mean', 'median', and 'minimum'.
-        Number of values at edge of each axis used to calculate the statistic
-        value.
+        Used in 'maximum', 'mean', 'median', and 'minimum'.  Number of
+        values at edge of each axis used to calculate the statistic value.
+
         ((before_1, after_1), ... (before_N, after_N)) unique statistic
         lengths for each axis.
-        ((before, after),) yields same before and after statistic lengths for
-        each axis.
+
+        ((before, after),) yields same before and after statistic lengths
+        for each axis.
+
         (stat_length,) or int is a shortcut for before = after = statistic
         length for all axes.
+
         Default is ``None``, to use the entire axis.
     constant_values : {sequence, int}, optional
-        Used in 'constant'.
-        The values to set the padded values for each axis.
+        Used in 'constant'.  The values to set the padded values for each
+        axis.
+
         ((before_1, after_1), ... (before_N, after_N)) unique pad constants
         for each axis.
+
         ((before, after),) yields same before and after constants for each
         axis.
-        (constant,) or int is a shortcut for before = after = constant for all
-        axes.
+
+        (constant,) or int is a shortcut for before = after = constant for
+        all axes.
+
         Default is 0.
     end_values : {sequence, int}, optional
-        Used in 'linear_ramp'.
-        The values used for the ending value of the linear_ramp and that will
-        form the edge of the padded array.
+        Used in 'linear_ramp'.  The values used for the ending value of the
+        linear_ramp and that will form the edge of the padded array.
+
         ((before_1, after_1), ... (before_N, after_N)) unique end values
         for each axis.
+
         ((before, after),) yields same before and after end values for each
         axis.
-        (constant,) or int is a shortcut for before = after = end value for all
-        axes.
+
+        (constant,) or int is a shortcut for before = after = end value for
+        all axes.
+
         Default is 0.
     reflect_type : str {'even', 'odd'}, optional
-        Used in 'reflect', and 'symmetric'.
-        The 'even' style is the default with an unaltered reflection around
-        the edge value.  For the 'odd' style, the extented part of the array
-        is created by subtracting the reflected values from two times the edge
-        value.
+        Used in 'reflect', and 'symmetric'.  The 'even' style is the
+        default with an unaltered reflection around the edge value.  For
+        the 'odd' style, the extented part of the array is created by
+        subtracting the reflected values from two times the edge value.
 
     Returns
     -------
     pad : ndarray
-        Padded array of rank equal to `array` with shape increased according
-        to `pad_width`.
+        Padded array of rank equal to `array` with shape increased
+        according to `pad_width`.
 
     Notes
     -----
     .. versionadded:: 1.7.0
 
-    For `array` with rank greater than 1, some of the padding of later axes is
-    calculated from padding of previous axes.  This is easiest to think about
-    with a rank 2 array where the corners of the padded array are calculated
-    by using padded values from the first axis.
+    For an array with rank greater than 1, some of the padding of later
+    axes is calculated from padding of previous axes.  This is easiest to
+    think about with a rank 2 array where the corners of the padded array
+    are calculated by using padded values from the first axis.
+
+    The padding function, if used, should return a rank 1 array equal in
+    length to the vector argument with padded values replaced. It has the
+    following signature:
+
+        padding_func(vector, iaxis_pad_width, iaxis, **kwargs)
+
+    where
+
+        vector: ndarray
+            A rank 1 array already padded with zeros.  Padded values are
+            vector[:pad_tuple[0]] and vector[-pad_tuple[1]:].
+        iaxis_pad_width: tuple
+            A 2-tuple of ints, iaxis_pad_width[0] represents the number of
+            values padded at the beginning of vector where
+            iaxis_pad_width[1] represents the number of values padded at
+            the end of vector.
+        iaxis : int
+            The axis currently being calculated.
+        kwargs : misc
+            Any keyword arguments the function requires.
 
     Examples
     --------
