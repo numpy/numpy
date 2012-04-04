@@ -129,6 +129,32 @@ Support for mask-based NA values in the polynomial package fits
 
 The fitting functions recognize and remove masked data from the fit.
 
+Ability to pad rank-n arrays
+----------------------------
+
+A series of functions have been added to pad arrays in various ways. ::
+
+    * np.lib.pad.pad_constant - pad with a input constant
+    * np.lib.pad.pad_edge - pad with the edge values of each vector along each
+      axis
+    * np.lib.pad.pad_linear_ramp - pad with the linear ramp between given end_value
+      and the begining/end of the vector along each axis.
+    * np.lib.pad.pad_maximum - pad with the maximum value of all or part of
+      the vector along each axis
+    * np.lib.pad.pad_mean - pad with the mean of all or part of the vector
+      along the each axis
+    * np.lib.pad.pad_median - pad with median of all or part of the vector
+      along the each axis
+    * np.lib.pad.pad_minimum - pad with the minimum value of all or part of
+      the vector along each axis
+    * np.lib.pad.pad_reflect - pad with the reflection of the vector mirrored
+      on the first and last values of the vector along each axis
+    * np.lib.pad.pad_symetric - pad with the reflection of the vector mirrored
+      along the edge of the array.
+    * np.lib.pad.pad_wrap - pad with the wrap of the vector along the axis.
+      The first values are used to pad the end and the end values are used to
+      pad the beginning.
+
 
 New argument to searchsorted
 ----------------------------
