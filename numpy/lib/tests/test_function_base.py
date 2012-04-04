@@ -191,10 +191,10 @@ class TestCumsum(TestCase):
 
             tgt =  np.array([1, 3, 13, 24, 30, 35, 39], ctype)
             assert_array_equal(np.cumsum(a, axis=0), tgt)
-            
+
             tgt = np.array([[1, 2, 3, 4], [6, 8, 10, 13], [16, 11, 14, 18]], ctype)
             assert_array_equal(np.cumsum(a2, axis=0), tgt)
-            
+
             tgt = np.array([[1, 3, 6, 10], [5, 11, 18, 27], [10, 13, 17, 22]], ctype)
             assert_array_equal(np.cumsum(a2, axis=1), tgt)
 
@@ -429,19 +429,27 @@ class TestDigitize(TestCase):
         bin = np.linspace(x.min(), x.max(), 10)
         assert_(np.all(digitize(x, bin) != 0))
 
+    def test_right_basic(self):
+        x = [1,5,4,10,8,11,0]
+        bins = [1,5,10]
+        default_answer = [1,2,1,3,2,3,0]
+        assert_array_equal(digitize(x, bins), default_answer)
+        right_answer = [0,1,1,2,2,3,0]
+        assert_array_equal(digitize(x, bins, True), right_answer)
+
     def test_right_open(self):
-        x = arange(-6, 5)
-        bins = arange(-6, 4)
-        assert_array_equal(digitize(x,bins,True), arange(11))
+        x = np.arange(-6, 5)
+        bins = np.arange(-6, 4)
+        assert_array_equal(digitize(x,bins,True), np.arange(11))
 
     def test_right_open_reverse(self):
-        x = arange(5, -6, -1)
-        bins = arange(4, -6, -1)
-        assert_array_equal(digitize(x, bins, True), arange(11))
+        x = np.arange(5, -6, -1)
+        bins = np.arange(4, -6, -1)
+        assert_array_equal(digitize(x, bins, True), np.arange(11))
 
     def test_right_open_random(self):
         x = rand(10)
-        bins = linspace(x.min(), x.max(), 10)
+        bins = np.linspace(x.min(), x.max(), 10)
         assert_(all(digitize(x, bins, True) != 10))
 
 
