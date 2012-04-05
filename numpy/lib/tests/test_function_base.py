@@ -450,7 +450,7 @@ class TestDigitize(TestCase):
     def test_right_open_random(self):
         x = rand(10)
         bins = np.linspace(x.min(), x.max(), 10)
-        assert_(all(digitize(x, bins, True) != 10))
+        assert_(np.all(digitize(x, bins, True) != 10))
 
 
 class TestUnwrap(TestCase):
