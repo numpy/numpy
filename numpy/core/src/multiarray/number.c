@@ -387,7 +387,7 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
                 return PyArray_GenericUnaryFunction(a1, fastop);
             }
         }
-        /* Because this is called with all arrays, we need to 
+        /* Because this is called with all arrays, we need to
          *  change the output if the kind of the scalar is different
          *  than that of the input and inplace is not on ---
          *  (thus, the input should be up-cast)
@@ -399,19 +399,22 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
                     (a1, (PyObject *)a1, fastop);
             }
             else {
-                PyObject *a1_conv;
-                PyArray_Descr *dtype=NULL;
+                PyArray_Descr *dtype = NULL;
                 PyObject *res;
+
                 /* We only special-case the FLOAT_SCALAR and integer types */
                 if (kind == NPY_FLOAT_SCALAR && PyArray_ISINTEGER(a1)) {
                     dtype = PyArray_DescrFromType(NPY_DOUBLE);
-                    a1 = PyArray_CastToType(a1, dtype, PyArray_ISFORTRAN(a1));
-                    if (a1 == NULL) return NULL;
+                    a1 = (PyArrayObject *)PyArray_CastToType(a1, dtype,
+                            PyArray_ISFORTRAN(a1));
+                    if (a1 == NULL) {
+                        return NULL;
+                    }
                 }
                 else {
                     Py_INCREF(a1);
                 }
-                res = PyArray_GenericBinaryFunction(a1, a1, fastop);
+                res = PyArray_GenericBinaryFunction(a1, (PyObject *)a1, fastop);
                 Py_DECREF(a1);
                 return res;
             }

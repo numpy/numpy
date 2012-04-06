@@ -1601,7 +1601,7 @@ local_argsearch_left(PyArrayObject *arr, PyArrayObject *key,
     npy_intp nkeys = PyArray_SIZE(key);
     char *parr = PyArray_DATA(arr);
     char *pkey = PyArray_DATA(key);
-    npy_intp *psorter = PyArray_DATA(sorter);
+    npy_intp *psorter = (npy_intp *)PyArray_DATA(sorter);
     npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
     int elsize = PyArray_DESCR(arr)->elsize;
     npy_intp i;
@@ -1652,7 +1652,7 @@ local_argsearch_right(PyArrayObject *arr, PyArrayObject *key,
     npy_intp nkeys = PyArray_SIZE(key);
     char *parr = PyArray_DATA(arr);
     char *pkey = PyArray_DATA(key);
-    npy_intp *psorter = PyArray_DATA(sorter);
+    npy_intp *psorter = (npy_intp *)PyArray_DATA(sorter);
     npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
     int elsize = PyArray_DESCR(arr)->elsize;
     npy_intp i;
@@ -1718,8 +1718,6 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     PyArrayObject *ap2 = NULL;
     PyArrayObject *ap3 = NULL;
     PyArrayObject *sorter = NULL;
-    PyObject *max = NULL;
-    PyObject *min = NULL;
     PyArrayObject *ret = NULL;
     PyArray_Descr *dtype;
     NPY_BEGIN_THREADS_DEF;
@@ -1809,7 +1807,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         }
     }
     else {
-        int err;
+        int err=0;
 
         if (side == NPY_SEARCHLEFT) {
             NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));

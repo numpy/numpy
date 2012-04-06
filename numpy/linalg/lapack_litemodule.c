@@ -119,7 +119,7 @@ check_object(PyObject *ob, int t, char *obname,
                      obname, tname, funname);
         return 0;
     }
-    else if (PyArray_ISBYTESWAPPED(ob)) {
+    else if (PyArray_ISBYTESWAPPED((PyArrayObject *)ob)) {
         PyErr_Format(LapackError,
                      "Parameter %s has non-native byte order in lapack_lite.%s",
                      obname, funname);

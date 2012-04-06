@@ -242,7 +242,7 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwa
                                     &op1, &op2, &out)) {
         return NULL;
     }
-    if (out == Py_None) {
+    if ((PyObject *)out == Py_None) {
         out = NULL;
     }
 
@@ -260,7 +260,7 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwa
         return PyArray_Return((PyArrayObject *)PyArray_MatrixProduct2(
                                                     (PyObject *)op1,
                                                     (PyObject *)op2,
-                                                    (PyObject *)out));
+                                                    out));
     }
 
     dtype = PyArray_DescrFromType(typenum);
@@ -295,7 +295,7 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwa
         }
         ret = (PyArrayObject *)PyArray_MatrixProduct2((PyObject *)ap1,
                                                       (PyObject *)ap2,
-                                                      (PyObject *)out);
+                                                      out);
         Py_DECREF(ap1);
         Py_DECREF(ap2);
         return PyArray_Return(ret);
@@ -1236,15 +1236,19 @@ PyObject *PyInit__dotblas(void)
 PyMODINIT_FUNC init_dotblas(void)
 #endif
 {
-    int i;
-    PyObject *d, *s, *m;
-
-    /* Create the module and add the functions */
 #if defined(NPY_PY3K)
+    int i;
+
+    PyObject *d, *s, *m;
     m = PyModule_Create(&moduledef);
 #else
-    m = Py_InitModule3("_dotblas", dotblas_module_methods, module_doc);
+    int i;
+
+    PyObject *d, *s;
+    Py_InitModule3("_dotblas", dotblas_module_methods, module_doc);
 #endif
+
+    /* add the functions */
 
     /* Import the array object */
     import_array();

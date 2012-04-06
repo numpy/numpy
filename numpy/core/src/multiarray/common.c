@@ -149,9 +149,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
 
     /* Check if it's a NumPy scalar */
     if (PyArray_IsScalar(obj, Generic)) {
-        int itemsize;
-        PyObject *temp;
-
         if (!string_type) {
             dtype = PyArray_DescrFromScalar(obj);
             if (dtype == NULL) {
@@ -159,6 +156,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
             }
         }
         else {
+            int itemsize;
+            PyObject *temp;
+
             if (string_type == NPY_STRING) {
                 if ((temp = PyObject_Str(obj)) == NULL) {
                     return -1;
@@ -177,6 +177,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
 #ifndef Py_UNICODE_WIDE
                 itemsize <<= 1;
 #endif
+            }
+            else {
+                goto fail;
             }
             Py_DECREF(temp);
             if (*out_dtype != NULL &&
@@ -196,10 +199,10 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
     /* Check if it's a Python scalar */
     dtype = _array_find_python_scalar_type(obj);
     if (dtype != NULL) {
-        int itemsize;
-        PyObject *temp;
-
         if (string_type) {
+            int itemsize;
+            PyObject *temp;
+
             if (string_type == NPY_STRING) {
                 if ((temp = PyObject_Str(obj)) == NULL) {
                     return -1;
@@ -218,6 +221,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
 #ifndef Py_UNICODE_WIDE
                 itemsize <<= 1;
 #endif
+            }
+            else {
+                goto fail;
             }
             Py_DECREF(temp);
             if (*out_dtype != NULL &&
