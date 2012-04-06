@@ -469,7 +469,7 @@ mergesort0_@suff@(@type@ *pl, @type@ *pr, @type@ *pw, @type@ *vp, size_t len)
 int
 mergesort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
 {
-    const size_t elsize = PyArray_DESCR(arr)->elsize;
+    const size_t elsize = PyArray_ITEMSIZE(arr);
     const size_t len = elsize / sizeof(@type@);
     @type@ *pl, *pr, *pw, *vp;
     int err = 0;
@@ -500,8 +500,8 @@ fail_0:
 int
 quicksort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
 {
-    const size_t len = PyArray_DESCR(arr)->elsize/sizeof(@type@);
-    @type@ *vp = malloc(PyArray_DESCR(arr)->elsize);
+    const size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
+    @type@ *vp = malloc(PyArray_ITEMSIZE(arr));
     @type@ *pl = start;
     @type@ *pr = start + (num - 1)*len;
     @type@ *stack[PYA_QS_STACK], **sptr = stack, *pm, *pi, *pj, *pk;
@@ -567,8 +567,8 @@ quicksort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
 int
 heapsort_@suff@(@type@ *start, npy_intp n, PyArrayObject *arr)
 {
-    size_t len = PyArray_DESCR(arr)->elsize/sizeof(@type@);
-    @type@ *tmp = malloc(PyArray_DESCR(arr)->elsize);
+    size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
+    @type@ *tmp = malloc(PyArray_ITEMSIZE(arr));
     @type@ *a = start - len;
     npy_intp i,j,l;
 
@@ -616,7 +616,7 @@ heapsort_@suff@(@type@ *start, npy_intp n, PyArrayObject *arr)
 int
 aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
 {
-    size_t len = PyArray_DESCR(arr)->elsize/sizeof(@type@);
+    size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
     npy_intp *a, i,j,l, tmp;
 
     /* The array needs to be offset by one for heapsort indexing */
@@ -665,7 +665,7 @@ aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
 int
 aquicksort_@suff@(@type@ *v, npy_intp* tosort, npy_intp num, PyArrayObject *arr)
 {
-    size_t len = PyArray_DESCR(arr)->elsize/sizeof(@type@);
+    size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
     @type@ *vp;
     npy_intp *pl = tosort;
     npy_intp *pr = tosort + num - 1;
@@ -775,7 +775,7 @@ amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw, int len)
 int
 amergesort_@suff@(@type@ *v, npy_intp *tosort, npy_intp num, PyArrayObject *arr)
 {
-    const size_t elsize = PyArray_DESCR(arr)->elsize;
+    const size_t elsize = PyArray_ITEMSIZE(arr);
     const size_t len = elsize / sizeof(@type@);
     npy_intp *pl, *pr, *pw;
 
