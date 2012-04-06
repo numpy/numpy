@@ -1904,6 +1904,53 @@ class vectorize(object):
                           for x, c in zip(self.ufunc(*newargs), self.otypes)])
         return _res
 
+def kwvectorize(pyfunc, otypes='', doc=None):
+    r"""Wrapper for :func:`vectorize` which provides support for keyword arguments.
+
+    Example
+    -------
+    >>> @vectorize
+    ... def theta(x, x0=0.0):
+    ...     if x > x0:
+    ...         return 1.0
+    ...     else:
+    ...         return 0.0
+    >>> theta(1.0, 2.0)
+    array(0.0)
+    >>> theta([1.0, 3.0], 2.0)
+    array([ 0., 1.])
+    >>> theta([1.0, 3.0], [2.0, 4.0])
+    array([ 0., 0.])
+    >>> theta(x0=[2.0, 4.0], x=[1.0, 3.0]) # This will fail with np.vectorize
+    array([ 0., 0.])
+    """
+
+    # Using inspect *may* be more robust.
+    #varnames, _vargs, _kwargs, defaults = inspect.getargspec(a)
+    varnames = pyfunc.func_code.co_varnames
+    defaults = pyfunc.func_defaults
+    if defaults:
+        defaults = dict(zip(varnames[-len(defaults):], defaults))
+    else:
+        defaults = {}
+    vfunc = vectorize(pyfunc, otypes=otypes)
+    
+    @wraps(pyfunc)
+    def wrapper(*v, **kw):
+        v = list(v)
+        for _k in varnames[len(v):]: # Only fill in kwargs after positional args
+            if _k in kw:
+                v.append(kw[_k])
+            else:
+                v.append(defaults[_k])
+
+        return vfunc(*v)
+
+    if not doc:
+        doc = pyfunc.__doc__
+    wrapper.__doc__ = doc
+    return wrapper
+
 def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     """
     Estimate a covariance matrix, given data.
