@@ -21,4 +21,13 @@
 	#endif
 #endif
 
+/**
+ * To help with the NPY_NO_DEPRECATED_API macro, we include API version
+ * numbers for specific versions of NumPy. To exclude all API that was
+ * deprecated as of 1.7, add the following before #including any NumPy
+ * headers:
+ *   #define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
+ */
+#define NPY_1_7_API_VERSION 0x00000007
+
 #endif

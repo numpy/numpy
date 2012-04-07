@@ -1,6 +1,6 @@
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _libnumarray_MODULE
 #include "include/numpy/libnumarray.h"
 #include "numpy/npy_3kcompat.h"

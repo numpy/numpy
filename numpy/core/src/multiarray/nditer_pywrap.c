@@ -10,7 +10,7 @@
 #include "Python.h"
 #include "structmember.h"
 
-#define NPY_NO_DEPRECATED_API
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include <numpy/arrayobject.h>
 #include <numpy/npy_3kcompat.h>
@@ -2350,7 +2350,7 @@ npyiter_subscript(NewNpyArrayIterObject *self, PyObject *op)
     }
     else if (PySlice_Check(op)) {
         Py_ssize_t istart = 0, iend = 0, istep = 0;
-        if (PySlice_GetIndices(op,
+        if (PySlice_GetIndices((PySliceObject *)op,
                             NpyIter_GetNOp(self->iter),
                             &istart, &iend, &istep) < 0) {
             return NULL;
@@ -2400,7 +2400,7 @@ npyiter_ass_subscript(NewNpyArrayIterObject *self, PyObject *op,
     }
     else if (PySlice_Check(op)) {
         Py_ssize_t istart = 0, iend = 0, istep = 0;
-        if (PySlice_GetIndices(op,
+        if (PySlice_GetIndices((PySliceObject *)op,
                             NpyIter_GetNOp(self->iter),
                             &istart, &iend, &istep) < 0) {
             return -1;

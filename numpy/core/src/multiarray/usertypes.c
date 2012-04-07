@@ -25,7 +25,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "structmember.h"
 
 /*#include <stdio.h>*/
-#define NPY_NO_DEPRECATED_API
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
