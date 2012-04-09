@@ -6,7 +6,8 @@ __all__ = ['select', 'piecewise', 'trim_zeros', 'copy', 'iterable',
         'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
         'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
         'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-        'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc']
+        'meshgrid', 'delete', 'insert', 'append', 'interp',
+        'add_newdoc_ufunc', 'cut']
 
 import warnings
 import types
@@ -409,6 +410,88 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
                 "Internal Shape Error")
     return hist, edges
 
+def cut(x, bins, right=True, retbins=False):
+    """
+    Return indices of half-open bins to which each value of `x` belongs.
+
+    Parameters
+    ----------
+    x : array-like
+        Input array to be binned. It has to be 1-dimensional.
+    bins : int or sequence of scalars
+        If `bins` is an int, it defines the number of equal-width bins in the
+        range of `x`. The range of `x`, however, is extended by .1% on each
+        side to include the min or max values of `x`. If `bins` is a sequence
+        it defines the bin edges allowing for non-uniform bin width.
+    right : bool, optional
+        Indicates whether the bins include the rightmost edge or not. If
+        right == True (the default), then the bins [1,2,3,4] indicate
+        (1,2], (2,3], (3,4].
+    retbins : bool, optional
+        Whether to return the bins or not. Can be useful if bins is given
+        as a scalar.
+
+    Returns
+    -------
+    out : ndarray of ints
+        Output array of indices, of same shape as `x`.
+    bins : ndarray of floats
+        Returned only if `retbins` is True.
+
+    Notes
+    -----
+    The binning behavior for a scalar `bins` is not exactly the same as
+    histogram if `x` is constant. In this case, the end points are first
+    extended by .1% on each side and then equal-width bins are created.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> np.cut(np.ones(5), 4)
+    array([2, 2, 2, 2, 2])
+    >>> np.cut(np.array([.2, 1.4, 2.5, 6.2, 9.7, 2.1]), 3, retbins=True)
+    (array([1, 1, 1, 2, 3, 1]),
+     array([ 0.1998    ,  3.36666667,  6.53333333,  9.7097    ]))
+    >>> np.cut(np.array([.2, 1.4, 2.5, 6.2, 9.7, 2.1, 2.575]), 4,
+    ...     retbins=True)
+    (array([1, 1, 1, 3, 4, 1, 1]),
+     array([ 0.1998,  2.575 ,  4.95  ,  7.325 ,  9.7097]))
+    >>> np.cut(np.array([.2, 1.4, 2.5, 6.2, 9.7, 2.1, 2.575]), 4, right=False,
+    ...    retbins=True)
+    (array([1, 1, 1, 3, 4, 1, 2]),
+     array([ 0.1998,  2.575 ,  4.95  ,  7.325 ,  9.7097]))
+    """
+    #NOTE: this binning code is changed a bit from histogram for var(x) == 0
+    if not np.iterable(bins):
+        if np.isscalar(bins) and bins < 1:
+            raise ValueError("`bins` should be a positive integer.")
+        try: # for array-like
+            sz = x.size
+        except AttributeError, err:
+            x = np.asarray(x)
+            sz = x.size
+        if sz == 0:
+            # handle empty arrays. Can't determine range, so use 0-1.
+            range = (0, 1)
+        else:
+            range = (x.min(), x.max())
+        mn, mx = [mi+0.0 for mi in range]
+        if mn == mx: # adjust end points before binning
+            mn -= .001 * mn
+            mx += .001 * mx
+            bins = np.linspace(mn, mx, bins+1, endpoint=True)
+        else: # adjust end points after binning
+            bins = np.linspace(mn, mx, bins+1, endpoint=True)
+            bins[0] -= .001*mn
+            bins[-1] += .001*mx
+    else:
+        bins = np.asarray(bins)
+        if (diff(bins) < 0).any():
+            raise AttributeError('bins must increase monotonically.')
+
+    if not retbins:
+        return digitize(x, bins, right)
+    return digitize(x, bins, right), bins
 
 def average(a, axis=None, weights=None, returned=False):
     """
