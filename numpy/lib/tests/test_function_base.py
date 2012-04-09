@@ -1260,8 +1260,35 @@ class TestAdd_newdoc_ufunc(TestCase):
     def test_string_arg(self):
         assert_raises(TypeError, add_newdoc_ufunc,np.add, 3)
 
+class TestCut(TestCase):
+    def test_simple(self):
+        result = cut(np.ones(5), 4)
+        desired = [2,2,2,2,2]
+        assert_equal(result, desired)
+
+    def test_bins(self):
+        result, bins = cut(np.array([.2, 1.4, 2.5, 6.2, 9.7, 2.1]), 3,
+                           retbins=True)
+        assert_equal(result, [1, 1, 1, 2, 3, 1])
+        assert_almost_equal(bins, [ 0.1998, 3.36666667, 6.53333333, 9.7097])
+
+    def test_right(self):
+        result, bins = cut(np.array([.2, 1.4, 2.5, 6.2, 9.7, 2.1, 2.575]), 4,
+                           right=True, retbins=True)
+        assert_equal(result, [1, 1, 1, 3, 4, 1, 1])
+        assert_almost_equal(bins, [0.1998, 2.575, 4.95, 7.325, 9.7097])
+
+    def test_noright(self):
+        result, bins = cut(np.array([.2, 1.4, 2.5, 6.2, 9.7, 2.1, 2.575]), 4,
+                right=False, retbins=True)
+        assert_equal(result, [1, 1, 1, 3, 4, 1, 2])
+        assert_almost_equal(bins, [ 0.1998, 2.575, 4.95, 7.325, 9.7097])
 
 
+    def test_arraylike(self):
+        result, bins = cut([.2, 1.4, 2.5, 6.2, 9.7, 2.1], 3, retbins=True)
+        assert_equal(result, [1, 1, 1, 2, 3, 1])
+        assert_almost_equal(bins, [ 0.1998, 3.36666667, 6.53333333, 9.7097])
 
 if __name__ == "__main__":
     run_module_suite()
