@@ -412,6 +412,37 @@ class TestVectorize(TestCase):
         except:
             raise AssertionError()
 
+    def test_keywords2(self):
+        import math
+        def foo(a, b=1):
+            return a + b
+        f = vectorize(foo)
+        args = np.array([1,2,3])
+        r1 = f(a=args)
+        r2 = np.array([2,3,4])
+        assert_array_equal(r1, r2)
+        r1 = f(b=1, a=args)
+        assert_array_equal(r1, r2)
+        r1 = f(args, b=2)
+        r2 = np.array([3,4,5])
+        assert_array_equal(r1, r2)
+
+    def test_coverage1(self):
+        def foo():
+            return 1
+        f = vectorize(foo)
+        #assert_array_equal(f(), 1)
+        # Is this supposed to work?  How else to get to nin=0, ndefaults=0
+
+    def test_coverage2(self):
+        """Assigning documentation"""
+        def foo(x):
+            return x
+        doc = "Provided documentation"
+        f = vectorize(foo, doc=doc)
+        assert f.__doc__ == doc
+
+
 
 class TestDigitize(TestCase):
     def test_forward(self):

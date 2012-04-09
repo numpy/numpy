@@ -1768,10 +1768,26 @@ def _get_nargs(obj):
     raise ValueError(
             "failed to determine the number of arguments for %s" % (obj))
 
+def _get_argspec(obj):
+    r"""Return `(argnames, vargs, kwargs, defaults)`, the argument specification
+    of `obj`.  This is the same information returned by
+    :func:`inspect.getargspec`, but this apparently fails for some functions
+    like :func:`math.cos` so we provide additional tests here.
+    """
+    import inspect
+    try:
+        return inspect.getargspec(obj)
+    except:
+        pass
+    
+    nargs, ndefaults = _get_nargs(obj)
+
+    return [None,]*nargs, None, None, [None,]*ndefaults
 
 class vectorize(object):
     """
-    vectorize(pyfunc, otypes='', doc=None)
+    vectorize(pyfunc, otypes='', doc=None,
+              exclude=None)
 
     Generalized function class.
 
@@ -1796,6 +1812,14 @@ class vectorize(object):
     doc : str, optional
         The docstring for the function. If None, the docstring will be the
         `pyfunc` one.
+    argspec : (argnames, vargs, kwargs, defaults)
+        Tuple returned by :func:`inspect.getargspec` defining the argument names
+        `argnames` in order and the default values `defaults` for the trailing
+        arguments.  Use this, for example, if `inspect.getargspec(pyfunc)` will
+        fail for some reason.
+    exclude : set, option
+        Keyword arguments for the function will not be vectorized over the
+        variable names in `exclude`.
 
     Examples
     --------
@@ -1806,7 +1830,7 @@ class vectorize(object):
     ...     else:
     ...         return a + b
 
-    >>> vfunc = np.vectorize(myfunc)
+    >>> vfunc = vectorize(myfunc)
     >>> vfunc([1, 2, 3, 4], 2)
     array([3, 4, 1, 2])
 
@@ -1815,7 +1839,7 @@ class vectorize(object):
 
     >>> vfunc.__doc__
     'Return a-b if a>b, otherwise return a+b'
-    >>> vfunc = np.vectorize(myfunc, doc='Vectorized `myfunc`')
+    >>> vfunc = vectorize(myfunc, doc='Vectorized `myfunc`')
     >>> vfunc.__doc__
     'Vectorized `myfunc`'
 
@@ -1825,16 +1849,74 @@ class vectorize(object):
     >>> out = vfunc([1, 2, 3, 4], 2)
     >>> type(out[0])
     <type 'numpy.int32'>
-    >>> vfunc = np.vectorize(myfunc, otypes=[np.float])
+    >>> vfunc = vectorize(myfunc, otypes=[np.float])
     >>> out = vfunc([1, 2, 3, 4], 2)
     >>> type(out[0])
     <type 'numpy.float64'>
 
+    The `exclude` argument can be used to prevent vectorizing over certain
+    variables
+
+    >>> def mypolyval(p, x):
+    ...     _p = list(p)
+    ...     res = _p.pop(0)
+    ...     while _p:
+    ...         res = res*x + _p.pop(0)
+    ...     return res
+    >>> vpolyval = vectorize(mypolyval, exclude='p')
+    >>> vpolyval(p=[1, 2, 3], x=[0, 1])
+    array([3, 6])
+    >>> vpolyval(x=[0, 1], p=[1, 2, 3])
+    array([3, 6])
+
+    Key keyword arguments are now supported.
+
+    Notes
+    -----
+    In order for vectorize to be able to generate a function that processes
+    keyword arguments properly, it must know the original signature.  (This can
+    be obscured if the function is wrapped):
+
+    >>> def f(a):
+    ...     return 2*a
+    >>> def wrapped_f(*v, **kw):
+    ...     return f(*v, **kw)
+    >>> vectorize(wrapped_f)(a=[1,2])
+    Traceback (most recent call last):
+       ...
+    TypeError: wrapped_f() go an unexpected keyword argument 'a'
+
+    One can provide this information either with the `argspec` argument:
+
+    >>> import inspect
+    >>> vectorize(wrapped_f, argspec=inspect.getargspec(f))(a=[1,2])
+    array([2, 4])
+
+    or by including the original function as `pyfunc.original_function`.
+
+    >>> wrapped_f.original_function = f
+    >>> vectorize(wrapped_f)(a=[1,2])
+    array([2, 4])
     """
-    def __init__(self, pyfunc, otypes='', doc=None):
+    def __init__(self, pyfunc, otypes='', doc=None,
+                 argspec=None, exclude=None):
+        
+        original_function = getattr(pyfunc, 'original_function', pyfunc)
+        if not argspec:
+            argspec = _get_argspec(original_function)
+
+        self.fname = getattr(original_function, 'func_name', 'vectorized(f)')
+        argnames, vargs, kwargs, defaults = argspec
+        self.argspec = argspec
         self.thefunc = pyfunc
         self.ufunc = None
-        nin, ndefault = _get_nargs(pyfunc)
+        nin = len(argnames)
+        if defaults:
+            ndefault = len(defaults)
+            self.defaults = dict(zip(argnames[-ndefault:], defaults))
+        else:
+            ndefault = 0
+            self.defaults = {}
         if nin == 0 and ndefault == 0:
             self.nin = None
             self.nin_wo_defaults = None
@@ -1843,7 +1925,7 @@ class vectorize(object):
             self.nin_wo_defaults = nin - ndefault
         self.nout = None
         if doc is None:
-            self.__doc__ = pyfunc.__doc__
+            self.__doc__ = original_function.__doc__
         else:
             self.__doc__ = doc
         if isinstance(otypes, str):
@@ -1859,7 +1941,77 @@ class vectorize(object):
                     "Invalid otype specification")
         self.lastcallargs = 0
 
-    def __call__(self, *args):
+        if not exclude: exclude = set()
+        else: exclude = set(exclude)
+        self.excluded = exclude
+        if exclude:
+            varnames = self.argspec[0]
+            for _k in exclude:
+                if _k not in varnames:
+                    raise ValueError(
+                        "Variable to be excluded '%s' not a recognized " +
+                        "keyword argument")
+            self.nin = self.nin - len(exclude)
+            self.nin_wo_defaults = self.nin_wo_defaults - len(exclude)
+
+    def __call__(self, *args, **kwargs):
+        thefunc = self.thefunc
+        if kwargs:
+            # Process kwargs, appending them to args as positional arguments
+            varnames = self.argspec[0]
+            if self.excluded:
+                # Exclude variables by defining a new function akin to
+                # functools.partial, but backward compatible with 2.4.  The new
+                # function calls the old function with all kwargs for
+                # simplicity.
+                old_args = list(args)
+                args = []
+                new_arg_names = []
+                constants = {}
+                for _n, _v in enumerate(varnames):
+                    if _n < len(args):                        
+                        if _v in self.excluded:
+                            constants[_v] = args.pop(0)
+                        else:
+                            new_arg_names.append(_v)
+                            args.append(args.pop(0))
+                    else:
+                        if _v in self.excluded:
+                            constants[_v] = kwargs.pop(_v)
+                        else:
+                            new_arg_names.append(_v)
+                            args.append(kwargs.pop(_v))
+                
+                # This is the wrapper.  It accepts only positional arguments then
+                # packs everything as a kwarg to call the original function.
+                def thefunc(*v):
+                    all_args = dict(zip(new_arg_names, v))
+                    all_args.update(constants)
+                    return self.thefunc(**all_args)
+            else:
+                # If there is nothing to exclude, we just append the kwargs to
+                # the arglist:
+                args = list(args)
+                for _k in varnames[len(args):]:
+                    # Only fill in kwargs after positional args
+                    if _k in kwargs:
+                        args.append(kwargs.pop(_k))
+                    elif _k in self.defaults:
+                        args.append(self.defaults[_k])
+                    else:
+                        raise TypeError(
+                            "%s() got an unexpected keyword argument '%s'" %
+                            (self.fname, _k))
+            if kwargs:
+                raise TypeError(
+                    "%s() go an unexpected keyword argument '%s'" %
+                    (self.fname, kwargs.keys()[0]))
+
+        return self._vectorize_call(thefunc=thefunc, args=args)
+
+    def _vectorize_call(self, thefunc, args):
+        r"""Implements the vectorized call to the function with only positional
+        arguments."""
         # get number of outputs and output types by calling
         #  the function on the first entries of args
         nargs = len(args)
@@ -1878,7 +2030,7 @@ class vectorize(object):
             newargs = []
             for arg in args:
                 newargs.append(asarray(arg).flat[0])
-            theout = self.thefunc(*newargs)
+            theout = thefunc(*newargs)
             if isinstance(theout, tuple):
                 self.nout = len(theout)
             else:
@@ -1892,7 +2044,7 @@ class vectorize(object):
 
         # Create ufunc if not already created
         if (self.ufunc is None):
-            self.ufunc = frompyfunc(self.thefunc, nargs, self.nout)
+            self.ufunc = frompyfunc(thefunc, nargs, self.nout)
 
         # Convert to object arrays first
         newargs = [array(arg,copy=False,subok=True,dtype=object) for arg in args]
@@ -1903,53 +2055,6 @@ class vectorize(object):
             _res = tuple([array(x,copy=False,subok=True,dtype=c) \
                           for x, c in zip(self.ufunc(*newargs), self.otypes)])
         return _res
-
-def kwvectorize(pyfunc, otypes='', doc=None):
-    r"""Wrapper for :func:`vectorize` which provides support for keyword arguments.
-
-    Example
-    -------
-    >>> @vectorize
-    ... def theta(x, x0=0.0):
-    ...     if x > x0:
-    ...         return 1.0
-    ...     else:
-    ...         return 0.0
-    >>> theta(1.0, 2.0)
-    array(0.0)
-    >>> theta([1.0, 3.0], 2.0)
-    array([ 0., 1.])
-    >>> theta([1.0, 3.0], [2.0, 4.0])
-    array([ 0., 0.])
-    >>> theta(x0=[2.0, 4.0], x=[1.0, 3.0]) # This will fail with np.vectorize
-    array([ 0., 0.])
-    """
-
-    # Using inspect *may* be more robust.
-    #varnames, _vargs, _kwargs, defaults = inspect.getargspec(a)
-    varnames = pyfunc.func_code.co_varnames
-    defaults = pyfunc.func_defaults
-    if defaults:
-        defaults = dict(zip(varnames[-len(defaults):], defaults))
-    else:
-        defaults = {}
-    vfunc = vectorize(pyfunc, otypes=otypes)
-    
-    @wraps(pyfunc)
-    def wrapper(*v, **kw):
-        v = list(v)
-        for _k in varnames[len(v):]: # Only fill in kwargs after positional args
-            if _k in kw:
-                v.append(kw[_k])
-            else:
-                v.append(defaults[_k])
-
-        return vfunc(*v)
-
-    if not doc:
-        doc = pyfunc.__doc__
-    wrapper.__doc__ = doc
-    return wrapper
 
 def cov(m, y=None, rowvar=1, bias=0, ddof=None):
     """
