@@ -49,3 +49,4 @@ Histograms
    histogramdd
    bincount
    digitize
+   cut
