@@ -1,5 +1,7 @@
 # :Author:    Travis Oliphant
 
+cdef extern from "numpy/npy_no_deprecated_api.h": pass
+
 cdef extern from "numpy/arrayobject.h":
 
     cdef enum NPY_TYPES:
@@ -28,35 +30,35 @@ cdef extern from "numpy/arrayobject.h":
         NPY_NOTYPE
 
     cdef enum requirements:
-        NPY_CONTIGUOUS
-        NPY_FORTRAN
-        NPY_OWNDATA
-        NPY_FORCECAST
-        NPY_ENSURECOPY
-        NPY_ENSUREARRAY
-        NPY_ELEMENTSTRIDES
-        NPY_ALIGNED
-        NPY_NOTSWAPPED
-        NPY_WRITEABLE
-        NPY_UPDATEIFCOPY
+        NPY_ARRAY_C_CONTIGUOUS
+        NPY_ARRAY_F_CONTIGUOUS
+        NPY_ARRAY_OWNDATA
+        NPY_ARRAY_FORCECAST
+        NPY_ARRAY_ENSURECOPY
+        NPY_ARRAY_ENSUREARRAY
+        NPY_ARRAY_ELEMENTSTRIDES
+        NPY_ARRAY_ALIGNED
+        NPY_ARRAY_NOTSWAPPED
+        NPY_ARRAY_WRITEABLE
+        NPY_ARRAY_UPDATEIFCOPY
         NPY_ARR_HAS_DESCR
 
-        NPY_BEHAVED
-        NPY_BEHAVED_NS
-        NPY_CARRAY
-        NPY_CARRAY_RO
-        NPY_FARRAY
-        NPY_FARRAY_RO
-        NPY_DEFAULT
+        NPY_ARRAY_BEHAVED
+        NPY_ARRAY_BEHAVED_NS
+        NPY_ARRAY_CARRAY
+        NPY_ARRAY_CARRAY_RO
+        NPY_ARRAY_FARRAY
+        NPY_ARRAY_FARRAY_RO
+        NPY_ARRAY_DEFAULT
 
-        NPY_IN_ARRAY
-        NPY_OUT_ARRAY
-        NPY_INOUT_ARRAY
-        NPY_IN_FARRAY
-        NPY_OUT_FARRAY
-        NPY_INOUT_FARRAY
+        NPY_ARRAY_IN_ARRAY
+        NPY_ARRAY_OUT_ARRAY
+        NPY_ARRAY_INOUT_ARRAY
+        NPY_ARRAY_IN_FARRAY
+        NPY_ARRAY_OUT_FARRAY
+        NPY_ARRAY_INOUT_FARRAY
 
-        NPY_UPDATE_ALL
+        NPY_ARRAY_UPDATE_ALL
 
     cdef enum defines:
         NPY_MAXDIMS
@@ -71,19 +73,9 @@ cdef extern from "numpy/arrayobject.h":
 
     ctypedef int npy_intp
 
-    ctypedef extern class numpy.dtype [object PyArray_Descr]:
-        cdef int type_num, elsize, alignment
-        cdef char type, kind, byteorder, flags
-        cdef object fields, typeobj
+    ctypedef extern class numpy.dtype [object PyArray_Descr]: pass
 
-    ctypedef extern class numpy.ndarray [object PyArrayObject]:
-        cdef char *data
-        cdef int nd
-        cdef npy_intp *dimensions
-        cdef npy_intp *strides
-        cdef object base
-        cdef dtype descr
-        cdef int flags
+    ctypedef extern class numpy.ndarray [object PyArrayObject]: pass
 
     ctypedef extern class numpy.flatiter [object PyArrayIterObject]:
         cdef int  nd_m1
@@ -109,7 +101,6 @@ cdef extern from "numpy/arrayobject.h":
         int mindim, int maxdim)
     npy_intp PyArray_SIZE(ndarray arr)
     npy_intp PyArray_NBYTES(ndarray arr)
-    void *PyArray_DATA(ndarray arr)
     object PyArray_FromAny(object obj, dtype newtype, int mindim, int maxdim,
                             int requirements, object context)
     object PyArray_FROMANY(object obj, NPY_TYPES type_num, int min,
@@ -131,3 +122,19 @@ cdef extern from "numpy/arrayobject.h":
     void PyArray_ITER_NEXT(flatiter it)
 
     void import_array()
+
+# include functions that were once macros in the new api
+
+    int PyArray_NDIM(ndarray arr)
+    char * PyArray_DATA(ndarray arr)
+    npy_intp * PyArray_DIMS(ndarray arr)
+    npy_intp * PyArray_STRIDES(ndarray arr)
+    npy_intp PyArray_DIM(ndarray arr, int idim)
+    npy_intp PyArray_STRIDE(ndarray arr, int istride)
+    object PyArray_BASE(ndarray arr)
+    dtype PyArray_DESCR(ndarray arr)
+    int PyArray_FLAGS(ndarray arr)
+    npy_intp PyArray_ITEMSIZE(ndarray arr)
+    int PyArray_TYPE(ndarray arr)
+    int PyArray_CHKFLAGS(ndarray arr, int flags)
+    object PyArray_GETITEM(ndarray arr, char *itemptr)

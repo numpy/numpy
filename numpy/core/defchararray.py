@@ -1881,7 +1881,7 @@ class chararray(ndarray):
 
     def __getitem__(self, obj):
         val = ndarray.__getitem__(self, obj)
-        if issubclass(val.dtype.type, character):
+        if issubclass(val.dtype.type, character) and not _len(val) == 0:
             temp = val.rstrip()
             if _len(temp) == 0:
                 val = ''

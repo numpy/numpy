@@ -218,13 +218,14 @@ C-API
 -----
 
 Direct access to the fields of PyArrayObject* has been deprecated. Direct
-access has been recommended against for many releases. Expect something
-similar for PyArray_Descr* and other core objects in the future as
+access has been recommended against for many releases. Expect similar
+deprecations for PyArray_Descr* and other core objects in the future as
 preparation for NumPy 2.0.
 
 The macros in old_defines.h are deprecated and will be removed in the next
-minor release (>= 1.8). The sed script tools/replace_old_macros.sed can be used to
-replace these macros with the newer versions.
+minor release (>= 1.8). The sed script tools/replace_old_macros.sed can
+be used to replace these macros with the newer versions.
 
 You can test your code against the deprecated C API by #defining
-NPY_NO_DEPRECATED_API before including any NumPy headers.
+NPY_NO_DEPRECATED_API to the target version number, for example
+NPY_1_7_API_VERSION, before including any NumPy headers.
