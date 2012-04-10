@@ -355,7 +355,7 @@ def _replace_zero_by_x_arrays(sub_arys):
 
 def array_split(ary,indices_or_sections,axis = 0):
     """
-    Split an array into multiple sub-arrays of equal or near-equal size.
+    Split an array into multiple sub-arrays.
 
     Please refer to the ``split`` documentation.  The only difference
     between these functions is that ``array_split`` allows
@@ -396,17 +396,17 @@ def array_split(ary,indices_or_sections,axis = 0):
         st = div_points[i]; end = div_points[i+1]
         sub_arys.append(_nx.swapaxes(sary[st:end],axis,0))
 
-    # there is a wierd issue with array slicing that allows
-    # 0x10 arrays and other such things.  The following cluge is needed
+    # there is a weird issue with array slicing that allows
+    # 0x10 arrays and other such things. The following kludge is needed
     # to get around this issue.
     sub_arys = _replace_zero_by_x_arrays(sub_arys)
-    # end cluge.
+    # end kludge.
 
     return sub_arys
 
 def split(ary,indices_or_sections,axis=0):
     """
-    Split an array into multiple sub-arrays of equal size.
+    Split an array into multiple sub-arrays.
 
     Parameters
     ----------
