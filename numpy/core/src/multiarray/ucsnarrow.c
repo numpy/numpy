@@ -1,10 +1,11 @@
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
 #include <locale.h>
 #include <stdio.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
@@ -19,13 +20,14 @@
  * Python Unicode scalar (2-bytes on a narrow build).
  */
 
-/* the ucs2 buffer must be large enough to hold 2*ucs4length characters
- *  due to the use of surrogate pairs.
+/*
+ * The ucs2 buffer must be large enough to hold 2*ucs4length characters
+ * due to the use of surrogate pairs.
  *
- *  The return value is the number of ucs2 bytes used-up which
- *  is ucs4length + number of surrogate pairs found.
+ * The return value is the number of ucs2 bytes used-up which
+ * is ucs4length + number of surrogate pairs found.
  *
- * values above 0xffff are converted to surrogate pairs.
+ * Values above 0xffff are converted to surrogate pairs.
  */
 NPY_NO_EXPORT int
 PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs4length)
@@ -33,7 +35,7 @@ PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs4length)
     int i;
     int numucs2 = 0;
     npy_ucs4 chr;
-    for (i=0; i<ucs4length; i++) {
+    for (i = 0; i < ucs4length; i++) {
         chr = *ucs4++;
         if (chr > 0xffff) {
             numucs2++;
@@ -50,15 +52,15 @@ PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs4length)
 }
 
 
-/* This converts a UCS2 buffer of the given length to UCS4 buffer.
- *  It converts up to ucs4len characters of UCS2
+/*
+ * This converts a UCS2 buffer of the given length to UCS4 buffer.
+ * It converts up to ucs4len characters of UCS2
  *
- *  It returns the number of characters converted which can
- *  be less than ucs2len if there are surrogate pairs in ucs2.
+ * It returns the number of characters converted which can
+ * be less than ucs2len if there are surrogate pairs in ucs2.
  *
- *  The return value is the actual size of the used part of the ucs4 buffer.
+ * The return value is the actual size of the used part of the ucs4 buffer.
  */
-
 NPY_NO_EXPORT int
 PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs2len, int ucs4len)
 {
@@ -67,7 +69,7 @@ PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs2len, int ucs4len)
     Py_UNICODE ch;
     int numchars=0;
 
-    for (i=0; (i < ucs2len) && (numchars < ucs4len); i++) {
+    for (i = 0; (i < ucs2len) && (numchars < ucs4len); i++) {
         ch = *ucs2++;
         if (ch >= 0xd800 && ch <= 0xdfff) {
             /* surrogate pair */
