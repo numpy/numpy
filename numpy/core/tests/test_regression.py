@@ -1692,5 +1692,10 @@ class TestRegression(TestCase):
         a = np.array(['abc'], dtype=np.unicode)[0]
         del a
 
+    def test_maskna_deallocation(self):
+        # This caused a segfault when running under python-debug
+        a = np.array([1]).view(maskna=True)
+        del a
+
 if __name__ == "__main__":
     run_module_suite()
