@@ -90,8 +90,14 @@ MyPyUnicode_New(int length)
 {
     PyUnicodeObject *unicode;
     unicode = PyObject_New(PyUnicodeObject, &PyUnicode_Type);
-    if (unicode == NULL) return NULL;
-    unicode->str = PyMem_NEW(Py_UNICODE, length+1);
+    if (unicode == NULL) {
+        return NULL;
+    }
+#if PY_VERSION_HEX >= 0x02070000
+    unicode->str = PyObject_MALLOC(sizeof(Py_UNICODE) * (length + 1));
+#else
+    unicode->str = PyMem_NEW(Py_UNICODE, length + 1);
+#endif
     if (!unicode->str) {
         _Py_ForgetReference((PyObject *)unicode);
         PyObject_Del(unicode);
@@ -114,7 +120,11 @@ MyPyUnicode_Resize(PyUnicodeObject *uni, int length)
     void *oldstr;
 
     oldstr = uni->str;
-    PyMem_RESIZE(uni->str, Py_UNICODE, length+1);
+#if PY_VERSION_HEX >= 0x02070000
+    PyObject_REALLOC(uni->str, sizeof(Py_UNICODE) * (length + 1));
+#else
+    PyMem_RESIZE(uni->str, Py_UNICODE, length + 1);
+#endif
     if (!uni->str) {
         uni->str = oldstr;
         PyErr_NoMemory();
