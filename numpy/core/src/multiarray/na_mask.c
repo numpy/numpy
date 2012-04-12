@@ -361,7 +361,7 @@ PyArray_AllocateMaskNA(PyArrayObject *arr,
     }
 
     /* Allocate the mask memory */
-    maskna_data = PyArray_malloc(size * maskna_dtype->elsize);
+    maskna_data = PyDataMem_NEW(size * maskna_dtype->elsize);
     if (maskna_data == NULL) {
         Py_DECREF(maskna_dtype);
         PyErr_NoMemory();
