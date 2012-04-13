@@ -497,7 +497,7 @@ def define_cond(self, name, value, comment):
         self.undefine(name)
 
 @waflib.Configure.conf
-def get_config_header(self, defines=True, headers=False):
+def get_config_header(self, defines=True, headers=False, define_prefix=None):
     """
     Create the contents of a ``config.h`` file from the defines and includes
     set in conf.env.define_key / conf.env.include_key. No include guards are added.

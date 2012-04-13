@@ -70,8 +70,8 @@ DataFiles: tests
         testing/tests/*.py
 
 HookFile: bscript
-
 Recurse: numpy
+UseBackends: Waf
 
 Library:
     Packages:
