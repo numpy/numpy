@@ -1685,5 +1685,17 @@ class TestRegression(TestCase):
         tgt = (np.array([0, 1, 2]), np.array([ 0,  5, 11]))
         assert_equal(res, tgt)
 
+    def test_unicode_alloc_dealloc_match(self):
+        # Ticket #1578, the mismatch only showed up when running
+        # python-debug for python versions >= 2.7, and then as
+        # a core dump and error message.
+        a = np.array(['abc'], dtype=np.unicode)[0]
+        del a
+
+    def test_maskna_deallocation(self):
+        # This caused a segfault when running under python-debug
+        a = np.array([1]).view(maskna=True)
+        del a
+
 if __name__ == "__main__":
     run_module_suite()

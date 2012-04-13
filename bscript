@@ -26,9 +26,6 @@ from bento.installed_package_description \
     import \
         InstalledSection
 from bento.commands import hooks
-from bento.commands.extras.waf \
-    import \
-        ConfigureWafContext, BuildWafContext, register_options
 
 import waflib
 
@@ -202,12 +199,3 @@ def show():
     pass
 """,
         always=True)
-
-@hooks.options
-def options(context):
-    register_options(context)
-
-@hooks.startup
-def startup(context):
-    context.register_context("configure", ConfigureWafContext)
-    context.register_context("build", BuildWafContext)
