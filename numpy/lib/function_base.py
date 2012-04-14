@@ -1761,7 +1761,8 @@ def _get_nargs(obj):
         if m:
             nargs = _convert_to_int(m.group('exargs'))
             ndefaults = _convert_to_int(m.group('gargs'))
-            if isinstance(obj, types.MethodType):
+            if (isinstance(obj, types.MethodType) 
+                and not isinstance(obj, types.UnboundMethod)): # Fix #1156
                 nargs -= 1
             return nargs, ndefaults
 
@@ -1778,11 +1779,8 @@ def _get_argspec(obj):
     try:
         return inspect.getargspec(obj)
     except:
-        pass
-    
-    nargs, ndefaults = _get_nargs(obj)
-
-    return [None,]*nargs, None, None, [None,]*ndefaults
+        nargs, ndefaults = _get_nargs(obj)
+        return [None,]*nargs, None, None, [None,]*ndefaults
 
 class vectorize(object):
     """
