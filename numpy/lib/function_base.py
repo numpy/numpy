@@ -1898,7 +1898,8 @@ class vectorize(object):
     """
     def __init__(self, pyfunc, otypes='', doc=None,
                  argspec=None, exclude=None):
-        
+
+        # Implements enhancement ticket #2100
         original_function = getattr(pyfunc, 'original_function', pyfunc)
         if not argspec:
             argspec = _get_argspec(original_function)
@@ -1954,7 +1955,7 @@ class vectorize(object):
 
     def __call__(self, *args, **kwargs):
         thefunc = self.thefunc
-        if kwargs:
+        if kwargs: # Implements enhancement ticket #2100
             # Process kwargs, appending them to args as positional arguments
             varnames = self.argspec[0]
             if self.excluded:
@@ -1980,8 +1981,9 @@ class vectorize(object):
                             new_arg_names.append(_v)
                             args.append(kwargs.pop(_v))
                 
-                # This is the wrapper.  It accepts only positional arguments then
-                # packs everything as a kwarg to call the original function.
+                # This is the wrapper.  It accepts only positional arguments
+                # then packs everything as a kwarg to call the original
+                # function.
                 def thefunc(*v):
                     all_args = dict(zip(new_arg_names, v))
                     all_args.update(constants)
