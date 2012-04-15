@@ -360,6 +360,9 @@ class NoseTester(object):
             # If deprecation warnings are not set to 'error' below,
             # at least set them to 'warn'.
             warnings.filterwarnings('always', category=DeprecationWarning)
+            warnings.filterwarnings('ignore',
+                                    message='Not importing directory',
+                                    category=ImportWarning)
             # Force the requested warnings to raise
             for warningtype in raise_warnings:
                 warnings.filterwarnings('error', category=warningtype)
