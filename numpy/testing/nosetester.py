@@ -353,23 +353,27 @@ class NoseTester(object):
         # Preserve the state of the warning filters
         warn_ctx = numpy.testing.utils.WarningManager()
         warn_ctx.__enter__()
+        # Reset the warning filters to the default state,
+        # so that running the tests is more repeatable.
+        warnings.resetwarnings()
+        # If deprecation warnings are not set to 'error' below,
+        # at least set them to 'warn'.
+        warnings.filterwarnings('always', category=DeprecationWarning)
+        # Force the requested warnings to raise
+        for warningtype in raise_warnings:
+            warnings.filterwarnings('error', category=warningtype)
+        # ImportWarning not available in Python 2.4
         try:
-            # Reset the warning filters to the default state,
-            # so that running the tests is more repeatable.
-            warnings.resetwarnings()
-            # If deprecation warnings are not set to 'error' below,
-            # at least set them to 'warn'.
-            warnings.filterwarnings('always', category=DeprecationWarning)
             warnings.filterwarnings('ignore',
-                                    message='Not importing directory',
-                                    category=ImportWarning)
-            # Force the requested warnings to raise
-            for warningtype in raise_warnings:
-                warnings.filterwarnings('error', category=warningtype)
+                    message='Not importing directory', category=ImportWarning)
+        except:
+            pass
 
-            argv, plugins = self.prepare_test_args(label, verbose, extra_argv,
-                                                   doctests, coverage)
+        try:
             from noseclasses import NumpyTestProgram
+
+            argv, plugins = self.prepare_test_args(label,
+                    verbose, extra_argv, doctests, coverage)
             t = NumpyTestProgram(argv=argv, exit=False, plugins=plugins)
         finally:
             warn_ctx.__exit__()
