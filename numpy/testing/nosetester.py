@@ -362,12 +362,8 @@ class NoseTester(object):
         # Force the requested warnings to raise
         for warningtype in raise_warnings:
             warnings.filterwarnings('error', category=warningtype)
-        # ImportWarning not available in Python 2.4
-        try:
-            warnings.filterwarnings('ignore',
-                    message='Not importing directory', category=ImportWarning)
-        except:
-            pass
+        # Filter out annoying import messages.
+        warnings.filterwarnings('ignore', message='Not importing directory')
 
         try:
             from noseclasses import NumpyTestProgram
