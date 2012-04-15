@@ -5,6 +5,14 @@ from numpy.testing import *
 from numpy.compat import asbytes
 import datetime
 
+# Use pytz to test out various time zones if available
+try:
+    from pytz import timezone as tz
+    _has_pytz = True
+except ImportError:
+    _has_pytz = False
+
+
 class TestDateTime(TestCase):
     def test_datetime_dtype_creation(self):
         for unit in ['Y', 'M', 'W', 'D',
@@ -1276,6 +1284,7 @@ class TestDateTime(TestCase):
                                             unit='auto'),
                             '2032-01-01')
 
+    @dec.skipif(not _has_pytz, "The pytz module is not available.")
     def test_datetime_as_string_timezone(self):
         # timezone='local' vs 'UTC'
         a = np.datetime64('2010-03-15T06:30Z', 'm')
@@ -1284,39 +1293,32 @@ class TestDateTime(TestCase):
         assert_(np.datetime_as_string(a, timezone='local') !=
                 '2010-03-15T06:30Z')
 
-        # Use pytz to test out various time zones
-        try:
-            from pytz import timezone as tz
+        b = np.datetime64('2010-02-15T06:30Z', 'm')
 
-            b = np.datetime64('2010-02-15T06:30Z', 'm')
+        assert_equal(np.datetime_as_string(a, timezone=tz('US/Central')),
+                     '2010-03-15T01:30-0500')
+        assert_equal(np.datetime_as_string(a, timezone=tz('US/Eastern')),
+                     '2010-03-15T02:30-0400')
+        assert_equal(np.datetime_as_string(a, timezone=tz('US/Pacific')),
+                     '2010-03-14T23:30-0700')
 
-            assert_equal(np.datetime_as_string(a, timezone=tz('US/Central')),
-                         '2010-03-15T01:30-0500')
-            assert_equal(np.datetime_as_string(a, timezone=tz('US/Eastern')),
-                         '2010-03-15T02:30-0400')
-            assert_equal(np.datetime_as_string(a, timezone=tz('US/Pacific')),
-                         '2010-03-14T23:30-0700')
+        assert_equal(np.datetime_as_string(b, timezone=tz('US/Central')),
+                     '2010-02-15T00:30-0600')
+        assert_equal(np.datetime_as_string(b, timezone=tz('US/Eastern')),
+                     '2010-02-15T01:30-0500')
+        assert_equal(np.datetime_as_string(b, timezone=tz('US/Pacific')),
+                     '2010-02-14T22:30-0800')
 
-            assert_equal(np.datetime_as_string(b, timezone=tz('US/Central')),
-                         '2010-02-15T00:30-0600')
-            assert_equal(np.datetime_as_string(b, timezone=tz('US/Eastern')),
-                         '2010-02-15T01:30-0500')
-            assert_equal(np.datetime_as_string(b, timezone=tz('US/Pacific')),
-                         '2010-02-14T22:30-0800')
-
-            # Dates to strings with a timezone attached is disabled by default
-            assert_raises(TypeError, np.datetime_as_string, a, unit='D',
-                               timezone=tz('US/Pacific'))
-            # Check that we can print out the date in the specified time zone
-            assert_equal(np.datetime_as_string(a, unit='D',
-                               timezone=tz('US/Pacific'), casting='unsafe'),
-                         '2010-03-14')
-            assert_equal(np.datetime_as_string(b, unit='D',
-                               timezone=tz('US/Central'), casting='unsafe'),
-                         '2010-02-15')
-        except ImportError:
-            import warnings
-            warnings.warn("pytz not found, pytz compatibility tests skipped")
+        # Dates to strings with a timezone attached is disabled by default
+        assert_raises(TypeError, np.datetime_as_string, a, unit='D',
+                           timezone=tz('US/Pacific'))
+        # Check that we can print out the date in the specified time zone
+        assert_equal(np.datetime_as_string(a, unit='D',
+                           timezone=tz('US/Pacific'), casting='unsafe'),
+                     '2010-03-14')
+        assert_equal(np.datetime_as_string(b, unit='D',
+                           timezone=tz('US/Central'), casting='unsafe'),
+                     '2010-02-15')
 
     def test_datetime_arange(self):
         # With two datetimes provided as strings
