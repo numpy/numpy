@@ -707,11 +707,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 #endif
             /* Need an extra slot and need to use Python memory manager */
             uni->str = NULL;
-#if PY_VERSION_HEX >= 0x02070000
-            destptr = PyObject_MALLOC(sizeof(Py_UNICODE) * (length + 1));
-#else            
-            destptr = PyMem_NEW(Py_UNICODE, length + 1);
-#endif            
+            destptr = PyMem_NEW(Py_UNICODE,length+1);
             if (destptr == NULL) {
                 Py_DECREF(obj);
                 return PyErr_NoMemory();
