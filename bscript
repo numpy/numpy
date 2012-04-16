@@ -11,7 +11,6 @@ Caveats:
     
 import os
 import sys
-import shutil
 import subprocess
 import string
 
@@ -22,9 +21,6 @@ import os.path as op
 import __builtin__
 __builtin__.__NUMPY_SETUP__ = True
 
-from bento.installed_package_description \
-    import \
-        InstalledSection
 from bento.commands import hooks
 
 import waflib
@@ -81,76 +77,6 @@ def check_blas_lapack(conf):
     #conf.env.HAS_LAPACK = True
     #conf.env.LIB_LAPACK = ["lapack", "f77blas", "cblas", "atlas"]
 
-def remove_flag(name, flag):
-    while True:
-        if name in flag:
-            i = flag.index(name)
-            flag.pop(i)
-        else:
-            break
-
-def remove_flag_postvalue(name, flag):
-    while True:
-        if name in flag:
-            i = flag.index(name)
-            flag.pop(i)
-            flag.pop(i)
-        else:
-            break
-
-def remove_flag_prevalue(name, flag):
-    while True:
-        if name in flag:
-            i = flag.index(name)
-            flag.pop(i-1)
-            flag.pop(i-1)
-        else:
-            break
-
-@hooks.pre_configure
-def pre_configure(context):
-    conf = context.waf_context
-
-    conf.load("compiler_c")
-    conf.load("python")
-
-    conf.check_python_version((2, 4, 0))
-    conf.check_python_headers()
-    if sys.platform == "darwin":
-        remove_flag_prevalue("ppc", conf.env.CFLAGS_PYEXT)
-        remove_flag_prevalue("ppc", conf.env.LINKFLAGS_PYEXT)
-        conf.env["MACOSX_DEPLOYMENT_TARGET"] = "10.4"
-
-    if conf.env["CC_NAME"] == "gcc":
-        conf.env.CFLAGS_PYEXT.append("-Wfatal-errors")
-    check_blas_lapack(conf)
-
-# FIXME: abstract those module gen tasks...
-class write_module(waflib.Task.Task):
-    color = "CYAN"
-    vars = ["CONTENT"]
-    def run(self):
-        # FIXME: put actual data here
-        self.outputs[0].write(self.env.CONTENT)
-
-@waflib.TaskGen.feature("gen_pymodule")
-def process_write_config(self):
-    if not hasattr(self, "content"):
-        raise ValueError("task gen %r expects a 'content' argument" % self.name)
-    else:
-        self.env.CONTENT = self.content
-    output = self.path.find_or_declare(self.target)
-    name = getattr(self, "name", None) or self.target
-
-    bento_context = self.bld.bento_context
-    b_output = bento_context.build_node.make_node(output.bldpath())
-    bento_context.outputs_registry.register_outputs(
-        "gen_pymodule", name, [b_output], bento_context.build_node, "$sitedir")
-
-    tsk = self.create_task("write_module")
-    tsk.set_outputs(output)
-    return tsk
-
 def set_revision(template, version):
     try:
         proc = subprocess.Popen('git rev-parse --short HEAD',
@@ -178,24 +104,29 @@ def make_git_commit_info(ctx):
     commit_template = ctx.make_source_node(op.join("numpy", "version.py.in"))
     return set_revision(commit_template, ctx.pkg.version)
 
+@hooks.pre_configure
+def pre_configure(context):
+    conf = context.waf_context
+
+    conf.load("compiler_c")
+    conf.load("python")
+
+    conf.check_python_version((2, 4, 0))
+    conf.check_python_headers()
+
+    if conf.env["CC_NAME"] == "gcc":
+        conf.env.CFLAGS_PYEXT.append("-Wfatal-errors")
+    check_blas_lapack(conf)
+
 @hooks.pre_build
 def pre_build(context):
-    bld = context.waf_context
-
     context.register_category("git_info")
     commit_output = make_git_commit_info(context)
     context.register_outputs("git_info", "git_commit_info", [commit_output])
 
-    def iregistrer(category, name, nodes, from_node, target_dir):
-        source_dir = os.path.join("$_srcrootdir", from_node.bldpath())
-        files = [n.path_from(from_node) for n in nodes]
-        return InstalledSection.from_source_target_directories(category, name, source_dir, target_dir, files)
-    context.isection_registry.register_category("gen_pymodule", iregistrer)
-    context.outputs_registry.register_category("gen_pymodule", "pythonfiles")
-    bld(features="gen_pymodule",
-        target="numpy/__config__.py",
-        content="""\
-def show():
-    pass
-""",
-        always=True)
+    # FIXME: we write a dummy show for now - the original show function is not
+    # super useful anyway.
+    context.register_category("gen_config")
+    config_node = context.make_build_node("numpy/__config__.py")
+    config_node.safe_write("def show(): pass")
+    context.register_outputs("gen_config", "top_config", [config_node])
