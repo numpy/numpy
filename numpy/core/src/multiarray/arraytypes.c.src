@@ -1283,6 +1283,8 @@ OBJECT_to_@TOTYPE@(PyObject **ip, @totype@ *op, npy_intp n,
  * #convstr = (Int*9, Long*2, Float*4, Complex*3, Tuple*3, Long*2)*3#
  */
 
+#if @convert@
+
 #define IS_@from@
 
 static void
@@ -1299,7 +1301,6 @@ static void
         if (temp == NULL) {
             return;
         }
-#if @convert@
 
 #if defined(NPY_PY3K) && defined(IS_STRING)
         /* Work around some Python 3K */
@@ -1329,7 +1330,7 @@ static void
                 return;
             }
         }
-#endif /* @convert@ */
+
         if (@to@_setitem(temp,(char *)op, aop)) {
             Py_DECREF(temp);
             return;
@@ -1339,6 +1340,32 @@ static void
 }
 
 #undef IS_@from@
+
+#else
+
+static void
+@from@_to_@to@(@fromtyp@ *ip, @totyp@ *op, npy_intp n, PyArrayObject *aip,
+             PyArrayObject *aop)
+{
+    npy_intp i;
+    PyObject *temp = NULL;
+    int skip = PyArray_DESCR(aip)->elsize;
+    int oskip = @oskip@;
+
+    for (i = 0; i < n; i++, ip+=skip, op+=oskip) {
+        temp = @from@_getitem((char *)ip, aip);
+        if (temp == NULL) {
+            return;
+        }
+        if (@to@_setitem(temp,(char *)op, aop)) {
+            Py_DECREF(temp);
+            return;
+        }
+        Py_DECREF(temp);
+    }
+}
+
+#endif
 
 /**end repeat**/
 
