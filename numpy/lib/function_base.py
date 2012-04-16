@@ -420,9 +420,11 @@ def cut(x, bins, right=True, retbins=False):
         Input array to be binned. It has to be 1-dimensional.
     bins : int or sequence of scalars
         If `bins` is an int, it defines the number of equal-width bins in the
-        range of `x`. The range of `x`, however, is extended by .1% on each
-        side to include the min or max values of `x`. If `bins` is a sequence
-        it defines the bin edges allowing for non-uniform bin width.
+        range of `x`. However, in this case, the range of `x` is extended
+        by .1% on each side to include the min or max values of `x`. If
+        `bins` is a sequence it defines the bin edges allowing for
+        non-uniform bin width. No extension of the range of `x` is done in
+        this case.
     right : bool, optional
         Indicates whether the bins include the rightmost edge or not. If
         right == True (the default), then the bins [1,2,3,4] indicate
@@ -440,9 +442,9 @@ def cut(x, bins, right=True, retbins=False):
 
     Notes
     -----
-    The binning behavior for a scalar `bins` is not exactly the same as
-    histogram if `x` is constant. In this case, the end points are first
-    extended by .1% on each side and then equal-width bins are created.
+    The `cut` function can be useful for going from a continuous variable to
+    a categorical variable. For example, `cut` could convert ages to groups
+    of age ranges.
 
     Examples
     --------
