@@ -19,24 +19,23 @@
 
 /** numarray adapted routines.... **/
 
-#if SIZEOF_LONGLONG == 64 || SIZEOF_LONGLONG == 128
-static int ulonglong_overflow(npy_ulonglong a, npy_ulonglong b)
-{
-    npy_ulonglong ah, al, bh, bl, w, x, y, z;
+/*
+ * Note that the C standard requires signed/unsigned integral
+ * types of the same rank to have the same width.
+ */
 
 #if SIZEOF_LONGLONG == 64
+
+static int
+ulonglong_overflow(npy_ulonglong a, npy_ulonglong b)
+{
+    npy_ulonglong ah, al, bh, bl, w, x, y, z;
+    unsigned long long mask = 0xFFFFFFFFL;
+
     ah = (a >> 32);
-    al = (a & 0xFFFFFFFFL);
+    al = (a & mask);
     bh = (b >> 32);
-    bl = (b & 0xFFFFFFFFL);
-#elif SIZEOF_LONGLONG == 128
-    ah = (a >> 64);
-    al = (a & 0xFFFFFFFFFFFFFFFFL);
-    bh = (b >> 64);
-    bl = (b & 0xFFFFFFFFFFFFFFFFL);
-#else
-    ah = al = bh = bl = 0;
-#endif
+    bl = (b & mask);
 
     /* 128-bit product:  z*2**64 + (x+y)*2**32 + w  */
     w = al*bl;
@@ -45,81 +44,99 @@ static int ulonglong_overflow(npy_ulonglong a, npy_ulonglong b)
     z = ah*bh;
 
     /* *c = ((x + y)<<32) + w; */
-#if SIZEOF_LONGLONG == 64
-    return z || (x>>32) || (y>>32) ||
-        (((x & 0xFFFFFFFFL) + (y & 0xFFFFFFFFL) + (w >> 32)) >> 32);
-#elif SIZEOF_LONGLONG == 128
-    return z || (x>>64) || (y>>64) ||
-        (((x & 0xFFFFFFFFFFFFFFFFL) + (y & 0xFFFFFFFFFFFFFFFFL) + (w >> 64)) >> 64);
-#else
-    return 0;
-#endif
-
+    return z || (x >> 32) || (y >> 32) ||
+        (((x & mask) + (y & mask) + (w >> 32)) >> 32);
 }
-#else
-static int ulonglong_overflow(npy_ulonglong NPY_UNUSED(a), npy_ulonglong NPY_UNUSED(b))
-{
-        return 0;
-}
-#endif
 
-static int slonglong_overflow(npy_longlong a0, npy_longlong b0)
+static int
+slonglong_overflow(npy_longlong a0, npy_longlong b0)
 {
     npy_ulonglong a, b;
     npy_ulonglong ah, al, bh, bl, w, x, y, z;
+    long long mask = 0xFFFFFFFFL;
 
-    /* Convert to non-negative quantities */
-    if (a0 < 0) {
-        a = -a0;
-    }
-    else {
-        a = a0;
-    }
-    if (b0 < 0) {
-        b = -b0;
-    }
-    else {
-        b = b0;
-    }
+    a = (a0 < 0) ? -a0 : a0;
+    b = (b0 < 0) ? -b0 : b0;
 
-
-#if SIZEOF_LONGLONG == 64
     ah = (a >> 32);
-    al = (a & 0xFFFFFFFFL);
+    al = (a & mask);
     bh = (b >> 32);
-    bl = (b & 0xFFFFFFFFL);
-#elif SIZEOF_LONGLONG == 128
-    ah = (a >> 64);
-    al = (a & 0xFFFFFFFFFFFFFFFFL);
-    bh = (b >> 64);
-    bl = (b & 0xFFFFFFFFFFFFFFFFL);
-#else
-    ah = al = bh = bl = 0;
-#endif
+    bl = (b & mask);
 
     w = al*bl;
     x = bh*al;
     y = ah*bl;
     z = ah*bh;
 
-    /*
-      ulonglong c = ((x + y)<<32) + w;
-      if ((a0 < 0) ^ (b0 < 0))
-      *c = -c;
-      else
-      *c = c
-      */
-
-#if SIZEOF_LONGLONG == 64
-    return z || (x>>31) || (y>>31) ||
-        (((x & 0xFFFFFFFFL) + (y & 0xFFFFFFFFL) + (w >> 32)) >> 31);
-#elif SIZEOF_LONGLONG == 128
-    return z || (x>>63) || (y>>63) ||
-        (((x & 0xFFFFFFFFFFFFFFFFL) + (y & 0xFFFFFFFFFFFFFFFFL) + (w >> 64)) >> 63);
-#else
-    return 0;
-#endif
+    return z || (x >> 31) || (y >> 31) ||
+        (((x & mask) + (y & mask) + (w >> 32)) >> 31);
 }
+
+#elif SIZEOF_LONGLONG == 128
+
+static int
+ulonglong_overflow(npy_ulonglong a, npy_ulonglong b)
+{
+    npy_ulonglong ah, al, bh, bl, w, x, y, z;
+    unsigned long long mask = 0xFFFFFFFFFFFFFFFFL;
+
+    ah = (a >> 64);
+    al = (a & mask);
+    bh = (b >> 64);
+    bl = (b & mask);
+
+    /* 128-bit product:  z*2**64 + (x+y)*2**32 + w  */
+    w = al*bl;
+    x = bh*al;
+    y = ah*bl;
+    z = ah*bh;
+
+    /* *c = ((x + y)<<32) + w; */
+    return z || (x >> 64) || (y >> 64) ||
+        (((x & mask) + (y & mask) + (w >> 64)) >> 64);
+}
+
+static int
+slonglong_overflow(npy_longlong a0, npy_longlong b0)
+{
+    npy_ulonglong a, b;
+    npy_ulonglong ah, al, bh, bl, w, x, y, z;
+    long long mask = 0xFFFFFFFFFFFFFFFFL;
+
+    a = (a0 < 0) ? -a0 : a0;
+    b = (b0 < 0) ? -b0 : b0;
+
+    ah = (a >> 64);
+    al = (a & mask);
+    bh = (b >> 64);
+    bl = (b & mask);
+
+    w = al*bl;
+    x = bh*al;
+    y = ah*bl;
+    z = ah*bh;
+
+    return z || (x >> 63) || (y >> 63) ||
+        (((x & mask) + (y & mask) + (w >> 64)) >> 63);
+}
+
+#else
+
+static int
+ulonglong_overflow(npy_ulonglong NPY_UNUSED(a), npy_ulonglong NPY_UNUSED(b))
+{
+        return 0;
+}
+
+static int
+slonglong_overflow(npy_longlong NPY_UNUSED(a0), npy_longlong NPY_UNUSED(b0))
+{
+    return 0;
+}
+
+#endif
+
+
 /** end direct numarray code **/
 
 
@@ -910,7 +927,7 @@ static PyObject *
 
 #undef CODEGEN_SKIP_divide_FLAG
 
-#define _IS_ZERO(x) (x ==0)
+#define _IS_ZERO(x) (x == 0)
 
 /**begin repeat
  *
@@ -944,6 +961,7 @@ static PyObject *
  * #one = 1*10, NPY_HALF_ONE, 1*6#
  */
 
+#if @cmplx@
 static PyObject *
 @name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
 {
@@ -951,15 +969,7 @@ static PyObject *
     @type@ arg1, arg2;
     int retstatus;
     int first;
-
-#if @cmplx@
     @type@ out = {@zero@, @zero@};
-    @otype@ out1;
-    out1.real = out.imag = @zero@;
-#else
-    @type@ out = @zero@;
-    @otype@ out1 = @zero@;
-#endif
 
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
@@ -988,22 +998,10 @@ static PyObject *
      * here we do the actual calculation with arg1 and arg2
      * as a function call.
      */
-#if @cmplx@
     if (@iszero@(arg2.real) && @iszero@(arg2.imag)) {
-        out1.real = out.real = @one@;
-        out1.imag = out.imag = @zero@;
+        out.real = @one@;
+        out.imag = @zero@;
     }
-#else
-    if (@iszero@(arg2)) {
-        out1 = out = @one@;
-    }
-#endif
-#if @isint@
-    else if (arg2 < 0) {
-        @name@_ctype_power(arg1, -arg2, &out);
-        out1 = (@otype@) (1.0 / out);
-    }
-#endif
     else {
         @name@_ctype_power(arg1, arg2, &out);
     }
@@ -1026,7 +1024,83 @@ static PyObject *
         Py_XDECREF(errobj);
     }
 
-#if @isint@
+    ret = PyArrayScalar_New(@Name@);
+    if (ret == NULL) {
+        return NULL;
+    }
+    PyArrayScalar_ASSIGN(ret, @Name@, out);
+
+    return ret;
+}
+
+#elif @isint@
+
+static PyObject *
+@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+{
+    PyObject *ret;
+    @type@ arg1, arg2;
+    int retstatus;
+    int first;
+    @type@ out = @zero@;
+    @otype@ out1 = @zero@;
+
+    switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
+        case 0:
+            break;
+        case -1:
+            /* can't cast both safely mixed-types? */
+            return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
+        case -2:
+            /* use default handling */
+            if (PyErr_Occurred()) {
+                return NULL;
+            }
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+        case -3:
+            /*
+             * special case for longdouble and clongdouble
+             * because they have a recursive getitem in their dtype
+             */
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
+    }
+
+    PyUFunc_clearfperr();
+
+    /*
+     * here we do the actual calculation with arg1 and arg2
+     * as a function call.
+     */
+    if (@iszero@(arg2)) {
+        out1 = out = @one@;
+    }
+    else if (arg2 < 0) {
+        @name@_ctype_power(arg1, -arg2, &out);
+        out1 = (@otype@) (1.0 / out);
+    }
+    else {
+        @name@_ctype_power(arg1, arg2, &out);
+    }
+
+    /* Check status flag.  If it is set, then look up what to do */
+    retstatus = PyUFunc_getfperr();
+    if (retstatus) {
+        int bufsize, errmask;
+        PyObject *errobj;
+
+        if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
+                                &errobj) < 0) {
+            return NULL;
+        }
+        first = 1;
+        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
+            Py_XDECREF(errobj);
+            return NULL;
+        }
+        Py_XDECREF(errobj);
+    }
+
     if (arg2 < 0) {
         ret = PyArrayScalar_New(@OName@);
         if (ret == NULL) {
@@ -1041,16 +1115,85 @@ static PyObject *
         }
         PyArrayScalar_ASSIGN(ret, @Name@, out);
     }
+
+    return ret;
+}
+
 #else
+
+static PyObject *
+@name@_power(PyObject *a, PyObject *b, PyObject *NPY_UNUSED(c))
+{
+    PyObject *ret;
+    @type@ arg1, arg2;
+    int retstatus;
+    int first;
+
+    @type@ out = @zero@;
+
+    switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
+        case 0:
+            break;
+        case -1:
+            /* can't cast both safely mixed-types? */
+            return PyArray_Type.tp_as_number->nb_power(a,b,NULL);
+        case -2:
+            /* use default handling */
+            if (PyErr_Occurred()) {
+                return NULL;
+            }
+            return PyGenericArrType_Type.tp_as_number->nb_power(a,b,NULL);
+        case -3:
+            /*
+             * special case for longdouble and clongdouble
+             * because they have a recursive getitem in their dtype
+             */
+            Py_INCREF(Py_NotImplemented);
+            return Py_NotImplemented;
+    }
+
+    PyUFunc_clearfperr();
+
+    /*
+     * here we do the actual calculation with arg1 and arg2
+     * as a function call.
+     */
+    if (@iszero@(arg2)) {
+        out = @one@;
+    }
+    else {
+        @name@_ctype_power(arg1, arg2, &out);
+    }
+
+    /* Check status flag.  If it is set, then look up what to do */
+    retstatus = PyUFunc_getfperr();
+    if (retstatus) {
+        int bufsize, errmask;
+        PyObject *errobj;
+
+        if (PyUFunc_GetPyValues("@name@_scalars", &bufsize, &errmask,
+                                &errobj) < 0) {
+            return NULL;
+        }
+        first = 1;
+        if (PyUFunc_handlefperr(errmask, errobj, retstatus, &first)) {
+            Py_XDECREF(errobj);
+            return NULL;
+        }
+        Py_XDECREF(errobj);
+    }
+
     ret = PyArrayScalar_New(@Name@);
     if (ret == NULL) {
         return NULL;
     }
     PyArrayScalar_ASSIGN(ret, @Name@, out);
-#endif
 
     return ret;
 }
+
+#endif
+
 /**end repeat**/
 #undef _IS_ZERO
 
