@@ -1,11 +1,6 @@
 #ifndef _NPY_UCSNARROW_H_
 #define _NPY_UCSNARROW_H_
 
-#ifdef Py_UNICODE_WIDE
-#error this should not be included if Py_UNICODE_WIDE is defined
-int int int;
-#endif
-
 NPY_NO_EXPORT int
 PyUCS2Buffer_FromUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs4length);
 
