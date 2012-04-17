@@ -24,8 +24,6 @@ _IsAligned(PyArrayObject *ap);
 NPY_NO_EXPORT Bool
 _IsWriteable(PyArrayObject *ap);
 
-#ifndef Py_UNICODE_WIDE
 #include "ucsnarrow.h"
-#endif
 
 #endif

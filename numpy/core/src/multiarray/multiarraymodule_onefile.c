@@ -40,11 +40,7 @@
 #include "lowlevel_strided_loops.c"
 #include "dtype_transfer.c"
 #include "einsum.c"
-
-
-#ifndef Py_UNICODE_WIDE
 #include "ucsnarrow.c"
-#endif
 
 #include "arrayobject.c"
 

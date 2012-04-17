@@ -84,43 +84,87 @@ PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, PyArray_UCS4 *ucs4, int ucs2len, int ucs4l
     return numchars;
 }
 
-
-NPY_NO_EXPORT PyObject *
-MyPyUnicode_New(int length)
+/*
+ * Returns a PyUnicodeObject initialized from a buffer containing
+ * UCS4 unicode.
+ *
+ * Parameters
+ * ----------
+ *  src: char *
+ *      Pointer to buffer containing UCS4 unicode.
+ *  size: Py_ssize_t
+ *      Size of buffer in bytes.
+ *  swap: int
+ *      If true, the data will be swapped.
+ *  align: int
+ *      If true, the data will be aligned.
+ *
+ * Returns
+ * -------
+ * new_reference: PyUnicodeObject
+ */
+NPY_NO_EXPORT PyUnicodeObject *
+PyUnicode_FromUCS4(char *src, Py_ssize_t size, int swap, int align)
 {
-    PyUnicodeObject *unicode;
-    unicode = PyObject_New(PyUnicodeObject, &PyUnicode_Type);
-    if (unicode == NULL) return NULL;
-    unicode->str = PyMem_NEW(Py_UNICODE, length+1);
-    if (!unicode->str) {
-        _Py_ForgetReference((PyObject *)unicode);
-        PyObject_Del(unicode);
-        return PyErr_NoMemory();
+    Py_ssize_t ucs4len = size / sizeof(npy_ucs4);
+    npy_ucs4 *buf = (npy_ucs4 *)src;
+    int alloc = 0;
+    PyUnicodeObject *ret;
+
+    /* swap and align if needed */
+    if (swap || align) {
+        buf = (npy_ucs4 *)malloc(size);
+        if (buf == NULL) {
+            PyErr_NoMemory();
+            goto fail;
+        }
+        alloc = 1;
+        memcpy(buf, src, size);
+        if (swap) {
+            byte_swap_vector(buf, ucs4len, sizeof(npy_ucs4));
+        }
     }
-    unicode->str[0] = 0;
-    unicode->str[length] = 0;
-    unicode->length = length;
-    unicode->hash = -1;
-    unicode->defenc = NULL;
-#if defined(NPY_PY3K)
-    unicode->state = 0; /* Not interned */
+
+    /* trim trailing zeros */
+    while (ucs4len > 0 && buf[ucs4len - 1] == 0) {
+        ucs4len--;
+    }
+
+    /* produce PyUnicode object */
+#ifdef Py_UNICODE_WIDE
+    {
+        ret = (PyUnicodeObject *)PyUnicode_FromUnicode(buf, (Py_ssize_t) ucs4len);
+        if (ret == NULL) {
+            goto fail;
+        }
+    }
+#else
+    {
+        Py_ssize_t tmpsiz = 2 * sizeof(Py_UNICODE) * ucs4len;
+        Py_ssize_t ucs2len;
+        Py_UNICODE *tmp;
+
+        if ((tmp = (Py_UNICODE *)malloc(tmpsiz)) == NULL) {
+            PyErr_NoMemory();
+            goto fail;
+        }
+        ucs2len = PyUCS2Buffer_FromUCS4(tmp, buf, ucs4len);
+        ret = (PyUnicodeObject *)PyUnicode_FromUnicode(tmp, (Py_ssize_t) ucs2len);
+        free(tmp);
+        if (ret == NULL) {
+            goto fail;
+        }
+    }
 #endif
-    return (PyObject *)unicode;
-}
 
-NPY_NO_EXPORT int
-MyPyUnicode_Resize(PyUnicodeObject *uni, int length)
-{
-    void *oldstr;
-
-    oldstr = uni->str;
-    PyMem_RESIZE(uni->str, Py_UNICODE, length+1);
-    if (!uni->str) {
-        uni->str = oldstr;
-        PyErr_NoMemory();
-        return -1;
+    if (alloc) {
+        free(buf);
     }
-    uni->str[length] = 0;
-    uni->length = length;
-    return 0;
+    return ret;
+
+fail:
+    if (alloc) {
+        free(buf);
+    }
+    return NULL;
 }

@@ -773,10 +773,9 @@ def configuration(parent_package='',top_path=None):
         join('src', 'multiarray', 'lowlevel_strided_loops.c.src'),
         join('src', 'multiarray', 'dtype_transfer.c'),
         join('src', 'multiarray', 'nditer_pywrap.c'),
-        join('src', 'multiarray', 'einsum.c.src')]
+        join('src', 'multiarray', 'einsum.c.src'),
+        join('src', 'multiarray', 'ucsnarrow.c')]
 
-    if PYTHON_HAS_UNICODE_WIDE:
-        multiarray_src.append(join('src', 'multiarray', 'ucsnarrow.c'))
 
     umath_src = [join('src', 'umath', 'umathmodule.c.src'),
             join('src', 'umath', 'funcs.inc.src'),
