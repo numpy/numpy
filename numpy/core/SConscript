@@ -479,15 +479,14 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'nditer_api.c'),
         pjoin('src', 'multiarray', 'nditer_constr.c'),
         pjoin('src', 'multiarray', 'nditer_pywrap.c'),
-        pjoin('src', 'multiarray', 'dtype_transfer.c')]
+        pjoin('src', 'multiarray', 'dtype_transfer.c'),
+        pjoin("src", "multiarray", "ucsnarrow.c")]
     multiarray_src.extend(arraytypes_src)
     multiarray_src.extend(scalartypes_src)
     multiarray_src.extend(lowlevel_strided_loops_src)
     multiarray_src.extend(boolean_ops_src)
     multiarray_src.extend(nditer_src)
     multiarray_src.extend(einsum_src)
-    if PYTHON_HAS_UNICODE_WIDE:
-        multiarray_src.extend([pjoin("src", "multiarray", "ucsnarrow.c")])
 else:
     multiarray_src = [pjoin('src', 'multiarray', 'multiarraymodule_onefile.c')]
 multiarray = env.DistutilsPythonExtension('multiarray', source = multiarray_src)

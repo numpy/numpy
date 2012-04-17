@@ -796,10 +796,9 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'shape.c'),
             join('src', 'multiarray', 'scalarapi.c'),
             join('src', 'multiarray', 'scalartypes.c.src'),
-            join('src', 'multiarray', 'usertypes.c')]
+            join('src', 'multiarray', 'usertypes.c'),
+            join('src', 'multiarray', 'ucsnarrow.c')]
 
-    if PYTHON_HAS_UNICODE_WIDE:
-        multiarray_src.append(join('src', 'multiarray', 'ucsnarrow.c'))
 
     if not ENABLE_SEPARATE_COMPILATION:
         multiarray_deps.extend(multiarray_src)
