@@ -358,7 +358,7 @@ The sections of the docstring are:
 11. **Examples**
 
    An optional section for examples, using the `doctest
-   <http://www.python.org/doc/lib/module-doctest.html>`_ format.
+   <http://docs.python.org/library/doctest.html>`_ format.
    This section is meant to illustrate usage, not to provide a
    testing framework -- for that, use the ``tests/`` directory.
    While optional, this section is very strongly encouraged.
@@ -382,9 +382,23 @@ The sections of the docstring are:
      >>> np.random.rand(2)
      array([ 0.35773152,  0.38568979])  #random     
 
-   You can run examples using::
+   You can run examples as doctests using::
 
      >>> np.test(doctests=True)
+     >>> np.linalg.test(doctests=True)  # for a single module
+
+   In IPython it is also possible to run individual examples simply by
+   copy-pasting them in doctest mode::
+
+     In [1]: %doctest_mode
+     Exception reporting mode: Plain
+     Doctest mode is: ON
+     >>> %paste
+      import numpy.random
+      np.random.rand(2)
+     ## -- End pasted text --
+     array([ 0.8519522 ,  0.15492887])
+
 
    It is not necessary to use the doctest markup ``<BLANKLINE>`` to
    indicate empty lines in the output. Note that the option to run
