@@ -86,6 +86,90 @@ PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs2len, int ucs4len)
     return numchars;
 }
 
+/*
+ * Returns a PyUnicodeObject initialized from a buffer containing
+ * UCS4 unicode.
+ *
+ * Parameters
+ * ----------
+ *  src: char *
+ *      Pointer to buffer containing UCS4 unicode.
+ *  size: Py_ssize_t
+ *      Size of buffer in bytes.
+ *  swap: int
+ *      If true, the data will be swapped.
+ *  align: int
+ *      If true, the data will be aligned.
+ *
+ * Returns
+ * -------
+ * new_reference: PyUnicodeObject
+ */ 
+NPY_NO_EXPORT PyUnicodeObject *
+PyUnicode_FromUCS4(char *src, Py_ssize_t size, int swap, int align)
+{
+    Py_ssize_t ucs4len = size / sizeof(npy_ucs4);
+    npy_ucs4 *buf = (npy_ucs4 *)src;
+    int alloc = 0;
+    PyUnicodeObject *ret;
+
+    /* swap and align if needed */
+    if (swap || align) {
+        buf = (npy_ucs4 *)malloc(size);
+        if (buf == NULL) {
+            PyErr_NoMemory();
+            goto fail;
+        }
+        alloc = 1;
+        memcpy(buf, src, size);
+        if (swap) {
+            byte_swap_vector(buf, ucs4len, sizeof(npy_ucs4));
+        }
+    }
+
+    /* trim trailing zeros */
+    while (ucs4len > 0 && buf[ucs4len - 1] == 0) {
+        ucs4len--;
+    }
+
+    /* produce PyUnicode object */
+#ifdef Py_UNICODE_WIDE
+    {
+        ret = (PyUnicodeObject *)PyUnicode_FromUnicode(buf, (Py_ssize_t) ucs4len);
+        if (ret == NULL) {
+            goto fail;
+        }
+    }
+#else
+    {
+        Py_ssize_t tmpsiz = 2 * sizeof(Py_UNICODE) * ucs4len;
+        Py_ssize_t ucs2len;
+        Py_UNICODE *tmp;
+
+        if ((tmp = (Py_UNICODE *)malloc(tmpsiz)) == NULL) {
+            PyErr_NoMemory();
+            goto fail;
+        }
+        ucs2len = PyUCS2Buffer_FromUCS4(tmp, buf, ucs4len);
+        ret = (PyUnicodeObject *)PyUnicode_FromUnicode(tmp, (Py_ssize_t) ucs2len);
+        free(tmp);
+        if (ret == NULL) {
+            goto fail;
+        }
+    }
+#endif
+
+    if (alloc) {
+        free(buf);
+    }
+    return ret;
+
+fail:
+    if (alloc) {
+        free(buf);
+    }
+    return NULL;   
+}
 
 NPY_NO_EXPORT PyObject *
 MyPyUnicode_New(int length)

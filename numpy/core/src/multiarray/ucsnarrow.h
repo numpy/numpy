@@ -13,4 +13,7 @@ MyPyUnicode_New(int length);
 NPY_NO_EXPORT int
 MyPyUnicode_Resize(PyUnicodeObject *uni, int length);
 
+NPY_NO_EXPORT PyUnicodeObject *
+PyUnicode_FromUCS4(char *src, Py_ssize_t size, int swap, int align);
+
 #endif
