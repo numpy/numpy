@@ -315,56 +315,11 @@ CLONGDOUBLE_getitem(char *ip, PyArrayObject *ap)
 static PyObject *
 UNICODE_getitem(char *ip, PyArrayObject *ap)
 {
-    npy_intp elsize = PyArray_DESCR(ap)->elsize;
-    npy_intp mysize = elsize/sizeof(npy_ucs4);
-    int alloc = 0;
-    npy_ucs4 *buffer = NULL;
-    PyUnicodeObject *obj;
-    npy_intp i;
+    Py_ssize_t size = PyArray_ITEMSIZE(ap);
+    int swap = !PyArray_ISNOTSWAPPED(ap);
+    int align = !PyArray_ISALIGNED(ap);
 
-    if (!PyArray_ISBEHAVED_RO(ap)) {
-        buffer = malloc(elsize);
-        if (buffer == NULL) {
-            PyErr_NoMemory();
-            goto fail;
-        }
-        alloc = 1;
-        memcpy(buffer, ip, elsize);
-        if (!PyArray_ISNOTSWAPPED(ap)) {
-            byte_swap_vector(buffer, mysize, sizeof(npy_ucs4));
-        }
-    }
-    else {
-        buffer = (npy_ucs4 *)ip;
-    }
-    for (i = mysize; i > 0 && buffer[--i] == 0; mysize = i);
-
-#ifdef Py_UNICODE_WIDE
-    obj = (PyUnicodeObject *)PyUnicode_FromUnicode(buffer, mysize);
-#else
-    /* create new empty unicode object of length mysize*2 */
-    obj = (PyUnicodeObject *)MyPyUnicode_New(mysize*2);
-    if (obj == NULL) {
-        goto fail;
-    }
-    mysize = PyUCS2Buffer_FromUCS4(obj->str, buffer, mysize);
-    /* reset length of unicode object to ucs2size */
-    if (MyPyUnicode_Resize(obj, mysize) < 0) {
-        Py_DECREF(obj);
-        goto fail;
-    }
-#endif
-
-    if (alloc) {
-        free(buffer);
-    }
-    return (PyObject *)obj;
-
-fail:
-    if (alloc) {
-        free(buffer);
-    }
-    return NULL;
+    return (PyObject *)PyUnicode_FromUCS4(ip, size, swap, align);
 }
 
 static int
