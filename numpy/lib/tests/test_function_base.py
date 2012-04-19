@@ -412,6 +412,45 @@ class TestVectorize(TestCase):
         except:
             raise AssertionError()
 
+    def test_keywords2_trac_2100(self):
+        r"""Test kwarg support: enhancement ticket 2100"""
+        import math
+        def foo(a, b=1):
+            return a + b
+        f = vectorize(foo)
+        args = np.array([1,2,3])
+        r1 = f(a=args)
+        r2 = np.array([2,3,4])
+        assert_array_equal(r1, r2)
+        r1 = f(b=1, a=args)
+        assert_array_equal(r1, r2)
+        r1 = f(args, b=2)
+        r2 = np.array([3,4,5])
+        assert_array_equal(r1, r2)
+
+    def test_coverage1_trac_2100(self):
+        def foo():
+            return 1
+        f = vectorize(foo)
+        #assert_array_equal(f(), 1)
+        # Is this supposed to work?  How else to get to nin=0, ndefaults=0
+
+    def test_coverage2_trac_2100(self):
+        """Assigning documentation"""
+        def foo(x):
+            return x
+        doc = "Provided documentation"
+        f = vectorize(foo, doc=doc)
+        assert f.__doc__ == doc
+
+    def test_UnboundMethod_trac_1156(self):
+        r"""Regression test for issue 1156"""
+        class foo:
+            b=2
+            def bar(self, a):
+                return a**self.b
+        assert np.all(vectorize(foo.bar)(foo(), np.arange(9)) 
+                      == np.arange(9)**2)
 
 class TestDigitize(TestCase):
     def test_forward(self):
