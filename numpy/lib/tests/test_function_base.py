@@ -441,16 +441,18 @@ class TestVectorize(TestCase):
             return x
         doc = "Provided documentation"
         f = vectorize(foo, doc=doc)
-        assert f.__doc__ == doc
+        assert_equal(f.__doc__, doc)
 
     def test_UnboundMethod_trac_1156(self):
         r"""Regression test for issue 1156"""
-        class foo:
+        class Foo:
             b=2
             def bar(self, a):
                 return a**self.b
-        assert np.all(vectorize(foo.bar)(foo(), np.arange(9)) 
-                      == np.arange(9)**2)
+        assert_array_equal(vectorize(Foo().bar)(np.arange(9)),
+                           np.arange(9)**2)
+        assert_array_equal(vectorize(Foo.bar)(Foo(), np.arange(9)),
+                           np.arange(9)**2)
 
 class TestDigitize(TestCase):
     def test_forward(self):

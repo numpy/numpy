@@ -1749,7 +1749,8 @@ def _get_nargs(obj):
             ndefaults = len(obj.func_defaults)
         else:
             ndefaults = 0
-        if isinstance(obj, types.MethodType):
+        if (isinstance(obj, types.MethodType) 
+            and obj.im_self is not None): # Fix #1156
             nargs -= 1
         return nargs, ndefaults
 
@@ -1762,7 +1763,7 @@ def _get_nargs(obj):
             nargs = _convert_to_int(m.group('exargs'))
             ndefaults = _convert_to_int(m.group('gargs'))
             if (isinstance(obj, types.MethodType) 
-                and not isinstance(obj, types.UnboundMethod)): # Fix #1156
+                and obj.im_self is not None): # Fix #1156
                 nargs -= 1
             return nargs, ndefaults
 
@@ -1772,15 +1773,24 @@ def _get_nargs(obj):
 def _get_argspec(obj):
     r"""Return `(argnames, vargs, kwargs, defaults)`, the argument specification
     of `obj`.  This is the same information returned by
-    :func:`inspect.getargspec`, but this apparently fails for some functions
-    like :func:`math.cos` so we provide additional tests here.
+    `inspect.getargspec`, but this apparently fails for some functions
+    like `math.cos` so we provide additional tests here.
     """
     import inspect
     try:
-        return inspect.getargspec(obj)
+        argnames, vargs, kwargs, defaults = inspect.getargspec(obj)
+        if (inspect.ismethod(obj) 
+            and obj.im_self is not None): # Fix #1156
+            argnames = argnames[1:] # Remove self
     except:
+        # Fallback to _get_nargs if inspect fails.
         nargs, ndefaults = _get_nargs(obj)
-        return [None,]*nargs, None, None, [None,]*ndefaults
+        argnames = [None,]*nargs
+        vargs = kwargs = None
+        defaults = ndefaults
+    
+    return (argnames, vargs, kwargs, defaults)
+
 
 class vectorize(object):
     """
@@ -1811,7 +1821,7 @@ class vectorize(object):
         The docstring for the function. If None, the docstring will be the
         `pyfunc` one.
     argspec : (argnames, vargs, kwargs, defaults)
-        Tuple returned by :func:`inspect.getargspec` defining the argument names
+        Tuple returned by `inspect.getargspec` defining the argument names
         `argnames` in order and the default values `defaults` for the trailing
         arguments.  Use this, for example, if `inspect.getargspec(pyfunc)` will
         fail for some reason.
@@ -1940,8 +1950,10 @@ class vectorize(object):
                     "Invalid otype specification")
         self.lastcallargs = 0
 
-        if not exclude: exclude = set()
-        else: exclude = set(exclude)
+        if not exclude:
+            exclude = set()
+        else:
+            exclude = set(exclude)
         self.excluded = exclude
         if exclude:
             varnames = self.argspec[0]
