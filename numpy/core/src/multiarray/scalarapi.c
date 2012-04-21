@@ -698,37 +698,43 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             return obj;
         }
         else if (type_num == NPY_UNICODE) {
+            /* tp_alloc inherited from Python PyBaseObject_Type */
             PyUnicodeObject *uni = (PyUnicodeObject*)obj;
             size_t length = itemsize >> 2;
+            Py_UNICODE *dst;
 #ifndef Py_UNICODE_WIDE
             char *buffer;
+            Py_UNICODE *tmp;
             int alloc = 0;
+
             length *= 2;
 #endif
-            /* Need an extra slot and need to use Python memory manager */
+            /* Set uni->str so that object can be deallocated on failure */
             uni->str = NULL;
-            destptr = PyMem_NEW(Py_UNICODE,length+1);
-            if (destptr == NULL) {
+            uni->defenc = NULL;
+            uni->hash = -1;
+            dst = PyObject_MALLOC(sizeof(Py_UNICODE) * (length + 1));
+            if (dst == NULL) {
                 Py_DECREF(obj);
-                return PyErr_NoMemory();
+                PyErr_NoMemory();
+                return NULL;
             }
-            uni->str = (Py_UNICODE *)destptr;
-            uni->str[0] = 0;
+#ifdef Py_UNICODE_WIDE
+            memcpy(dst, data, itemsize);
+            if (swap) {
+                byte_swap_vector(dst, length, 4);
+            }
+            uni->str = dst;
             uni->str[length] = 0;
             uni->length = length;
-            uni->hash = -1;
-            uni->defenc = NULL;
-#ifdef Py_UNICODE_WIDE
-            memcpy(destptr, data, itemsize);
-            if (swap) {
-                byte_swap_vector(destptr, length, 4);
-            }
 #else
             /* need aligned data buffer */
             if ((swap) || ((((npy_intp)data) % descr->alignment) != 0)) {
-                buffer = PyArray_malloc(itemsize);
+                buffer = malloc(itemsize);
                 if (buffer == NULL) {
-                    return PyErr_NoMemory();
+                    PyObject_FREE(dst);
+                    Py_DECREF(obj);
+                    PyErr_NoMemory();
                 }
                 alloc = 1;
                 memcpy(buffer, data, itemsize);
@@ -744,16 +750,21 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
              * Allocated enough for 2-characters per itemsize.
              * Now convert from the data-buffer
              */
-            length = PyUCS2Buffer_FromUCS4(uni->str,
+            length = PyUCS2Buffer_FromUCS4(dst,
                     (npy_ucs4 *)buffer, itemsize >> 2);
             if (alloc) {
-                PyArray_free(buffer);
+                free(buffer);
             }
             /* Resize the unicode result */
-            if (MyPyUnicode_Resize(uni, length) < 0) {
+            tmp = PyObject_REALLOC(dst, sizeof(Py_UNICODE)*(length + 1));
+            if (tmp == NULL) {
+                PyObject_FREE(dst);
                 Py_DECREF(obj);
                 return NULL;
             }
+            uni->str = tmp;
+            uni->str[length] = 0;
+            uni->length = length;
 #endif
             return obj;
         }
