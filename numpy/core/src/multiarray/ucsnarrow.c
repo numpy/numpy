@@ -104,7 +104,7 @@ PyUCS2Buffer_AsUCS4(Py_UNICODE *ucs2, npy_ucs4 *ucs4, int ucs2len, int ucs4len)
  * Returns
  * -------
  * new_reference: PyUnicodeObject
- */ 
+ */
 NPY_NO_EXPORT PyUnicodeObject *
 PyUnicode_FromUCS4(char *src, Py_ssize_t size, int swap, int align)
 {
@@ -168,5 +168,5 @@ fail:
     if (alloc) {
         free(buf);
     }
-    return NULL;   
+    return NULL;
 }

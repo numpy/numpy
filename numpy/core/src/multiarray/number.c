@@ -277,7 +277,7 @@ array_remainder(PyArrayObject *m1, PyObject *m2)
 
 /* Determine if object is a scalar and if so, convert the object
  *   to a double and place it in the out_exponent argument
- *   and return the "scalar kind" as a result.   If the object is 
+ *   and return the "scalar kind" as a result.   If the object is
  *   not a scalar (or if there are other error conditions)
  *   return NPY_NOSCALAR, and out_exponent is undefined.
  */
