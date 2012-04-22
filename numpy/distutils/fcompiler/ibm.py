@@ -12,7 +12,7 @@ compilers = ['IBMFCompiler']
 class IBMFCompiler(FCompiler):
     compiler_type = 'ibm'
     description = 'IBM XL Fortran Compiler'
-    version_pattern =  r'(xlf\(1\)\s*|)IBM XL Fortran ((Advanced Edition |)Version |Enterprise Edition V)(?P<version>[^\s*]*)'
+    version_pattern =  r'(xlf\(1\)\s*|)IBM XL Fortran ((Advanced Edition |)Version |Enterprise Edition V|for AIX, V)(?P<version>[^\s*]*)'
     #IBM XL Fortran Enterprise Edition V10.1 for AIX \nVersion: 10.01.0000.0004
 
     executables = {
@@ -86,7 +86,7 @@ class IBMFCompiler(FCompiler):
         return opt
 
     def get_flags_opt(self):
-        return ['-O5']
+        return ['-O3']
 
 if __name__ == '__main__':
     log.set_verbosity(2)

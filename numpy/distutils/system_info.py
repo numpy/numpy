@@ -125,6 +125,7 @@ from distutils.errors import DistutilsError
 from distutils.dist import Distribution
 import distutils.sysconfig
 from distutils import log
+from distutils.util import get_platform
 
 from numpy.distutils.exec_command import \
     find_executable, exec_command, get_pythonexe
@@ -193,14 +194,23 @@ else:
                                  '/opt/local/lib','/sw/lib'], platform_bits)
     default_include_dirs = ['/usr/local/include',
                             '/opt/include', '/usr/include',
+                            # path of umfpack under macports
+                            '/opt/local/include/ufsparse',
                             '/opt/local/include', '/sw/include',
                             '/usr/include/suitesparse']
     default_src_dirs = ['.','/usr/local/src', '/opt/src','/sw/src']
-
     default_x11_lib_dirs = libpaths(['/usr/X11R6/lib','/usr/X11/lib',
                                      '/usr/lib'], platform_bits)
     default_x11_include_dirs = ['/usr/X11R6/include','/usr/X11/include',
                                 '/usr/include']
+    if os.path.exists('/usr/lib/X11'):
+        globbed_x11_dir = glob('/usr/lib/*/libX11.so')
+        if globbed_x11_dir:
+            x11_so_dir = os.path.split(globbed_x11_dir[0])[0]
+            default_x11_lib_dirs.extend([x11_so_dir, '/usr/lib/X11'])
+            default_x11_include_dirs.extend(['/usr/lib/X11/include',
+                                             '/usr/include/X11'])
+
 
 if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_lib_dirs.insert(0,os.path.join(sys.prefix, 'lib'))
@@ -1273,7 +1283,6 @@ Make sure that -lgfortran is used for C++ extensions.
     result = _cached_atlas_version[key] = atlas_version, info
     return result
 
-from distutils.util import get_platform
 
 class lapack_opt_info(system_info):
 
@@ -1284,7 +1293,8 @@ class lapack_opt_info(system_info):
         if sys.platform=='darwin' and not os.environ.get('ATLAS',None):
             args = []
             link_args = []
-            if get_platform()[-4:] == 'i386':
+            if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
+                'i386' in platform.platform():
                 intel = 1
             else:
                 intel = 0
@@ -1371,7 +1381,8 @@ class blas_opt_info(system_info):
         if sys.platform=='darwin' and not os.environ.get('ATLAS',None):
             args = []
             link_args = []
-            if get_platform()[-4:] == 'i386':
+            if get_platform()[-4:] == 'i386' or 'intel' in get_platform() or \
+                'i386' in platform.platform():
                 intel = 1
             else:
                 intel = 0

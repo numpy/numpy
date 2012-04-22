@@ -58,7 +58,11 @@ def CCompiler_spawn(self, cmd, display=None):
     if s:
         if is_sequence(cmd):
             cmd = ' '.join(list(cmd))
-        print(o)
+        try:
+            print(o)
+        except UnicodeError:
+            # When installing through pip, `o` can contain non-ascii chars
+            pass
         if re.search('Too many open files', o):
             msg = '\nTry rerunning setup command until build succeeds.'
         else:
