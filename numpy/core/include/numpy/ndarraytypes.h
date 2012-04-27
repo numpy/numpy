@@ -85,8 +85,6 @@ enum NPY_TYPES {    NPY_BOOL=0,
                     NPY_NTYPES_ABI_COMPATIBLE=21
 };
 
-#define NPY_METADATA_DTSTR "__timeunit__"
-
 /* basetype array priority */
 #define NPY_PRIORITY 0.0
 
@@ -215,6 +213,7 @@ typedef enum {
 
 /* The special not-a-time (NaT) value */
 #define NPY_DATETIME_NAT NPY_MIN_INT64
+
 /*
  * Upper bound on the length of a DATETIME ISO 8601 string
  *   YEAR: 21 (64-bit year)
@@ -248,20 +247,6 @@ typedef enum {
 
 #define NPY_DATETIME_NUMUNITS (NPY_FR_GENERIC + 1)
 #define NPY_DATETIME_DEFAULTUNIT NPY_FR_GENERIC
-
-#define NPY_STR_Y "Y"
-#define NPY_STR_M "M"
-#define NPY_STR_W "W"
-#define NPY_STR_D "D"
-#define NPY_STR_h "h"
-#define NPY_STR_m "m"
-#define NPY_STR_s "s"
-#define NPY_STR_ms "ms"
-#define NPY_STR_us "us"
-#define NPY_STR_ns "ns"
-#define NPY_STR_ps "ps"
-#define NPY_STR_fs "fs"
-#define NPY_STR_as "as"
 
 /*
  * Business day conventions for mapping invalid business
@@ -775,19 +760,15 @@ typedef struct {
         int flags;
 } PyArray_Chunk;
 
+typedef struct {
+    NPY_DATETIMEUNIT base;
+    int num;
+} PyArray_DatetimeMetaData;
 
 typedef struct {
-        NPY_DATETIMEUNIT base;
-        int num;
-        /*
-         * 'den' and 'events are unused, kept here for ABI
-         * compatibility with 1.6.
-         *
-         * TODO: Remove for 2.0.
-         */
-        int den;
-        int events;
-} PyArray_DatetimeMetaData;
+    NpyAuxData base;
+    PyArray_DatetimeMetaData meta;
+} PyArray_DatetimeDTypeMetaData;
 
 /*
  * This structure contains an exploded view of a date-time value.
@@ -798,7 +779,7 @@ typedef struct {
         npy_int32 month, day, hour, min, sec, us, ps, as;
 } npy_datetimestruct;
 
-/* TO BE REMOVED - NOT USED INTERNALLY. */
+/* This is not used internally. */
 typedef struct {
         npy_int64 day;
         npy_int32 sec, us, ps, as;

@@ -8,7 +8,6 @@ __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, asanyarray, array, isnan, \
                 obj2sctype, zeros
-from numpy.core.multiarray import METADATA_DTSTR
 from ufunclike import isneginf, isposinf
 
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
