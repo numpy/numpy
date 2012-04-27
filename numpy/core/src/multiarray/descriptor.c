@@ -34,38 +34,35 @@ static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 static PyArray_Descr *
 _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag);
 
-NPY_NO_EXPORT PyArray_Descr *
-_arraydescr_fromobj(PyObject *obj)
+/*
+ * Creates a dtype object from ctypes inputs.
+ *
+ * Returns NULL if this is not possible, but does not
+ * set a Python exception.
+ */
+static PyArray_Descr *
+_arraydescr_fromctypes(PyObject *obj)
 {
     PyObject *dtypedescr;
-    PyArray_Descr *new;
+    PyArray_Descr *newdescr;
     int ret;
 
-    dtypedescr = PyObject_GetAttrString(obj, "dtype");
-    PyErr_Clear();
-    if (dtypedescr) {
-        ret = PyArray_DescrConverter(dtypedescr, &new);
-        Py_DECREF(dtypedescr);
-        if (ret == NPY_SUCCEED) {
-            return new;
-        }
-        PyErr_Clear();
-    }
     /* Understand basic ctypes */
     dtypedescr = PyObject_GetAttrString(obj, "_type_");
     PyErr_Clear();
     if (dtypedescr) {
-        ret = PyArray_DescrConverter(dtypedescr, &new);
+        ret = PyArray_DescrConverter(dtypedescr, &newdescr);
         Py_DECREF(dtypedescr);
         if (ret == NPY_SUCCEED) {
             PyObject *length;
+            /* Check for ctypes arrays */
             length = PyObject_GetAttrString(obj, "_length_");
             PyErr_Clear();
             if (length) {
                 /* derived type */
                 PyObject *newtup;
                 PyArray_Descr *derived;
-                newtup = Py_BuildValue("NO", new, length);
+                newtup = Py_BuildValue("NO", newdescr, length);
                 ret = PyArray_DescrConverter(newtup, &derived);
                 Py_DECREF(newtup);
                 if (ret == NPY_SUCCEED) {
@@ -74,7 +71,7 @@ _arraydescr_fromobj(PyObject *obj)
                 PyErr_Clear();
                 return NULL;
             }
-            return new;
+            return newdescr;
         }
         PyErr_Clear();
         return NULL;
@@ -85,16 +82,52 @@ _arraydescr_fromobj(PyObject *obj)
     dtypedescr = PyObject_GetAttrString(obj, "_fields_");
     PyErr_Clear();
     if (dtypedescr) {
-        ret = PyArray_DescrAlignConverter(dtypedescr, &new);
+        ret = PyArray_DescrAlignConverter(dtypedescr, &newdescr);
         Py_DECREF(dtypedescr);
         if (ret == NPY_SUCCEED) {
-            return new;
+            return newdescr;
         }
         PyErr_Clear();
     }
+
     return NULL;
 }
 
+/*
+ * This function creates a dtype object when:
+ *  - The object has a "dtype" attribute, and it can be converted
+ *    to a dtype object.
+ *  - The object is a ctypes type object, including array
+ *    and structure types.
+ *
+ * Returns NULL if this is not possible, but does not
+ * set a Python exception.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+_arraydescr_fromobj(PyObject *obj)
+{
+    PyObject *dtypedescr;
+    PyArray_Descr *newdescr = NULL;
+    int ret;
+
+    /* For arbitrary objects that have a "dtype" attribute */
+    dtypedescr = PyObject_GetAttrString(obj, "dtype");
+    PyErr_Clear();
+    if (dtypedescr != NULL) {
+        ret = PyArray_DescrConverter(dtypedescr, &newdescr);
+        Py_DECREF(dtypedescr);
+        if (ret == NPY_SUCCEED) {
+            return newdescr;
+        }
+        PyErr_Clear();
+    }
+    return _arraydescr_fromctypes(obj);
+}
+
+/*
+ * Sets the global typeDict object, which is a dictionary mapping
+ * dtype names to numpy scalar types.
+ */
 NPY_NO_EXPORT PyObject *
 array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args)
 {
@@ -140,7 +173,10 @@ _check_for_commastring(char *type, Py_ssize_t len)
                 && type[2] == ')'))) {
         return 1;
     }
-    /* Check for presence of commas outside square [] brackets */
+    /*
+     * Check for presence of commas outside square [] brackets. This
+     * allows commas inside of [], for parameterized dtypes to use.
+     */
     sqbracket = 0;
     for (i = 1; i < len; i++) {
         switch (type[i]) {
@@ -310,9 +346,9 @@ _convert_from_tuple(PyObject *obj)
  * shape parameter).
  *
  * field-name can be a string or a 2-tuple
- * data-type can now be a list, string, or 2-tuple (string, metadata dictionary))
+ * data-type can now be a list, string, or 2-tuple
+ *          (string, metadata dictionary)
  */
-
 static PyArray_Descr *
 _convert_from_array_descr(PyObject *obj, int align)
 {
@@ -834,6 +870,9 @@ _use_fields_dict(PyObject *obj, int align)
     return res;
 }
 
+/*
+ * Creates a struct dtype object from a Python dictionary.
+ */
 static PyArray_Descr *
 _convert_from_dict(PyObject *obj, int align)
 {
@@ -1463,6 +1502,16 @@ PyArray_DescrNew(PyArray_Descr *base)
     memcpy((char *)new + sizeof(PyObject),
            (char *)base + sizeof(PyObject),
            sizeof(PyArray_Descr) - sizeof(PyObject));
+
+    /* The c_metadata has a by-value ownership model, need to clone it */
+    if (new->c_metadata != NULL) {
+        new->c_metadata = NPY_AUXDATA_CLONE(new->c_metadata);
+        if (new->c_metadata == NULL) {
+            PyErr_NoMemory();
+            Py_DECREF(new);
+            return NULL;
+        }
+    }
 
     if (new->fields == Py_None) {
         new->fields = NULL;
