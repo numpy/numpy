@@ -508,38 +508,6 @@ PyUFunc_AbsoluteTypeResolver(PyUFuncObject *ufunc,
     }
 }
 
-
-/*
- * This function returns the a new reference to the
- * capsule with the datetime metadata.
- *
- * NOTE: This function is copied from datetime.c in multiarray,
- *       because umath and multiarray are not linked together.
- */
-static PyObject *
-get_datetime_metacobj_from_dtype(PyArray_Descr *dtype)
-{
-    PyObject *metacobj;
-
-    /* Check that the dtype has metadata */
-    if (dtype->metadata == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "Datetime type object is invalid, lacks metadata");
-        return NULL;
-    }
-
-    /* Check that the dtype has unit metadata */
-    metacobj = PyDict_GetItemString(dtype->metadata, NPY_METADATA_DTSTR);
-    if (metacobj == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                "Datetime type object is invalid, lacks unit metadata");
-        return NULL;
-    }
-
-    Py_INCREF(metacobj);
-    return metacobj;
-}
-
 /*
  * Creates a new NPY_TIMEDELTA dtype, copying the datetime metadata
  * from the given dtype.
@@ -551,31 +519,20 @@ static PyArray_Descr *
 timedelta_dtype_with_copied_meta(PyArray_Descr *dtype)
 {
     PyArray_Descr *ret;
-    PyObject *metacobj;
+    PyArray_DatetimeMetaData *dst, *src;
+    PyArray_DatetimeDTypeMetaData *dst_dtmd, *src_dtmd;
 
     ret = PyArray_DescrNewFromType(NPY_TIMEDELTA);
     if (ret == NULL) {
         return NULL;
     }
-    Py_XDECREF(ret->metadata);
-    ret->metadata = PyDict_New();
-    if (ret->metadata == NULL) {
-        Py_DECREF(ret);
-        return NULL;
-    }
 
-    metacobj = get_datetime_metacobj_from_dtype(dtype);
-    if (metacobj == NULL) {
-        Py_DECREF(ret);
-        return NULL;
-    }
+    src_dtmd = ((PyArray_DatetimeDTypeMetaData *)dtype->c_metadata);
+    dst_dtmd = ((PyArray_DatetimeDTypeMetaData *)ret->c_metadata);
+    src = &(src_dtmd->meta);
+    dst = &(dst_dtmd->meta);
 
-    if (PyDict_SetItemString(ret->metadata, NPY_METADATA_DTSTR,
-                                                metacobj) < 0) {
-        Py_DECREF(metacobj);
-        Py_DECREF(ret);
-        return NULL;
-    }
+    *dst = *src;
 
     return ret;
 }

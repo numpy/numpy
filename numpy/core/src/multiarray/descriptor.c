@@ -1482,7 +1482,7 @@ error:
  * If a mistake is made in reference counting, deallocation on these
  * builtins will be attempted leading to problems.
  *
- * This let's us deal with all PyArray_Descr objects using reference
+ * This lets us deal with all PyArray_Descr objects using reference
  * counting (regardless of whether they are statically or dynamically
  * allocated).
  */
@@ -1554,6 +1554,8 @@ arraydescr_dealloc(PyArray_Descr *self)
         PyArray_free(self->subarray);
     }
     Py_XDECREF(self->metadata);
+    NPY_AUXDATA_FREE(self->c_metadata);
+    self->c_metadata = NULL;
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
@@ -1989,23 +1991,6 @@ static PyGetSetDef arraydescr_getsets[] = {
     {NULL, NULL, NULL, NULL, NULL},
 };
 
-static int
-_invalid_metadata_check(PyObject *metadata)
-{
-    PyObject *res;
-
-    /* borrowed reference */
-    res = PyDict_GetItemString(metadata, NPY_METADATA_DTSTR);
-    if (res == NULL) {
-        return 0;
-    }
-    else {
-        PyErr_SetString(PyExc_ValueError,
-                "cannot set " NPY_METADATA_DTSTR "in dtype metadata");
-        return 1;
-    }
-}
-
 static PyObject *
 arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
                 PyObject *args, PyObject *kwds)
@@ -2023,10 +2008,6 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
                 PyArray_BoolConverter, &align,
                 PyArray_BoolConverter, &copy,
                 &PyDict_Type, &metadata)) {
-        return NULL;
-    }
-
-    if ((metadata != NULL) && (_invalid_metadata_check(metadata))) {
         return NULL;
     }
 
@@ -2105,14 +2086,14 @@ _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
         return NULL;
     }
 
-    /* Make a cleaned copy of the metadata dictionary */
-    newdict = PyDict_Copy(dtype->metadata);
-    if (newdict == NULL) {
-        Py_DECREF(ret);
-        return NULL;
+    /* Store the metadata dictionary */
+    if (dtype->metadata != NULL) {
+        Py_INCREF(dtype->metadata);
+        PyTuple_SET_ITEM(ret, 0, dtype->metadata);
+    } else {
+        Py_INCREF(Py_None);
+        PyTuple_SET_ITEM(ret, 0, Py_None);
     }
-    PyDict_DelItemString(newdict, NPY_METADATA_DTSTR);
-    PyTuple_SET_ITEM(ret, 0, newdict);
 
     /* Convert the datetime metadata into a tuple */
     meta = get_datetime_metadata_from_dtype(dtype);
@@ -2193,28 +2174,27 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
             endian = '>';
         }
     }
-    if (self->metadata) {
+    if (PyDataType_ISDATETIME(self)) {
+        PyObject *newobj;
         state = PyTuple_New(9);
         PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
-        if (PyDataType_ISDATETIME(self)) {
-            PyObject *newobj;
-            /* Handle CObject in NPY_METADATA_DTSTR key separately */
-            /*
-             * newobj is a tuple of cleaned metadata dictionary
-             * and tuple of date_time info (str, num)
-             */
-            newobj = _get_pickleabletype_from_datetime_metadata(self);
-            if (newobj == NULL) {
-                Py_DECREF(state);
-                Py_DECREF(ret);
-                return NULL;
-            }
-            PyTuple_SET_ITEM(state, 8, newobj);
+        /*
+         * newobj is a tuple of the Python metadata dictionary
+         * and tuple of date_time info (str, num)
+         */
+        newobj = _get_pickleabletype_from_datetime_metadata(self);
+        if (newobj == NULL) {
+            Py_DECREF(state);
+            Py_DECREF(ret);
+            return NULL;
         }
-        else {
-            Py_INCREF(self->metadata);
-            PyTuple_SET_ITEM(state, 8, self->metadata);
-        }
+        PyTuple_SET_ITEM(state, 8, newobj);
+    }
+    else if (self->metadata) {
+        state = PyTuple_New(9);
+        PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
+        Py_INCREF(self->metadata);
+        PyTuple_SET_ITEM(state, 8, self->metadata);
     }
     else { /* Use version 3 pickle format */
         state = PyTuple_New(8);
@@ -2526,29 +2506,30 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         self->flags = _descr_find_object(self);
     }
 
+    /*
+     * We have a borrowed reference to metadata so no need
+     * to alter reference count when throwing away Py_None.
+     */
+    if (metadata == Py_None) {
+        metadata = NULL;
+    }
+
     Py_XDECREF(self->metadata);
-    if (PyDataType_ISDATETIME(self)
-            && (metadata != Py_None)
-            && (metadata != NULL)) {
-        PyObject *cobj;
+    if (PyDataType_ISDATETIME(self) && (metadata != NULL)) {
+        PyArray_DatetimeMetaData *dt_data;
+
+        /* The Python metadata */
         self->metadata = PyTuple_GET_ITEM(metadata, 0);
-        Py_INCREF(self->metadata);
-        cobj = convert_datetime_metadata_tuple_to_metacobj(
-                                    PyTuple_GET_ITEM(metadata, 1));
-        if (cobj == NULL) {
+
+        /* The datetime metadata */
+        dt_data = &(((PyArray_DatetimeDTypeMetaData *)self->c_metadata)->meta);
+        if (convert_datetime_metadata_tuple_to_datetime_metadata(
+                                    PyTuple_GET_ITEM(metadata, 1),
+                                    dt_data) < 0) {
             return NULL;
         }
-        PyDict_SetItemString(self->metadata, NPY_METADATA_DTSTR, cobj);
-        Py_DECREF(cobj);
     }
     else {
-        /*
-         * We have a borrowed reference to metadata so no need
-         * to alter reference count
-         */
-        if (metadata == Py_None) {
-            metadata = NULL;
-        }
         self->metadata = metadata;
         Py_XINCREF(metadata);
     }

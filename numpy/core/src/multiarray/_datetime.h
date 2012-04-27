@@ -33,13 +33,6 @@ NPY_NO_EXPORT PyArray_Descr *
 create_datetime_dtype_with_unit(int type_num, NPY_DATETIMEUNIT unit);
 
 /*
- * This function returns the a new reference to the
- * capsule with the datetime metadata.
- */
-NPY_NO_EXPORT PyObject *
-get_datetime_metacobj_from_dtype(PyArray_Descr *dtype);
-
-/*
  * This function returns a pointer to the DateTimeMetaData
  * contained within the provided datetime dtype.
  */
@@ -158,20 +151,6 @@ can_cast_timedelta64_metadata(PyArray_DatetimeMetaData *src_meta,
                              NPY_CASTING casting);
 
 /*
- * Computes the GCD of the two date-time metadata values. Raises
- * an exception if there is no reasonable GCD, such as with
- * years and days.
- *
- * Returns a capsule with the GCD metadata.
- */
-NPY_NO_EXPORT PyObject *
-compute_datetime_metadata_greatest_common_divisor_capsule(
-                        PyArray_Descr *type1,
-                        PyArray_Descr *type2,
-                        int strict_with_nonlinear_units1,
-                        int strict_with_nonlinear_units2);
-
-/*
  * Computes the conversion factor to convert data with 'src_meta' metadata
  * into data with 'dst_meta' metadata.
  *
@@ -184,7 +163,7 @@ get_datetime_conversion_factor(PyArray_DatetimeMetaData *src_meta,
                                 npy_int64 *out_num, npy_int64 *out_denom);
 
 /*
- * Given an the capsule datetime metadata object,
+ * Given a pointer to datetime metadata,
  * returns a tuple for pickling and other purposes.
  */
 NPY_NO_EXPORT PyObject *
@@ -198,13 +177,6 @@ convert_datetime_metadata_to_tuple(PyArray_DatetimeMetaData *meta);
 NPY_NO_EXPORT int
 convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
                                         PyArray_DatetimeMetaData *out_meta);
-
-/*
- * Given a tuple representing datetime metadata,
- * returns a capsule datetime metadata object.
- */
-NPY_NO_EXPORT PyObject *
-convert_datetime_metadata_tuple_to_metacobj(PyObject *tuple);
 
 /*
  * Gets a tzoffset in minutes by calling the fromutc() function on

@@ -95,6 +95,30 @@
  */
 #define FORTRAN_IF PyArray_FORTRAN_IF
 
+/* Deprecated as of NumPy 1.7, datetime64 uses c_metadata instead */
+#define NPY_METADATA_DTSTR "__timeunit__"
+
+/*
+ * Deprecated as of NumPy 1.7.
+ * The reasoning:
+ *  - These are for datetime, but there's no datetime "namespace".
+ *  - They just turn NPY_STR_<x> into "<x>", which is just
+ *    making something simple be indirected.
+ */
+#define NPY_STR_Y "Y"
+#define NPY_STR_M "M"
+#define NPY_STR_W "W"
+#define NPY_STR_D "D"
+#define NPY_STR_h "h"
+#define NPY_STR_m "m"
+#define NPY_STR_s "s"
+#define NPY_STR_ms "ms"
+#define NPY_STR_us "us"
+#define NPY_STR_ns "ns"
+#define NPY_STR_ps "ps"
+#define NPY_STR_fs "fs"
+#define NPY_STR_as "as"
+
 /*
  * The macros in old_defines.h are Deprecated as of NumPy 1.7 and will be
  * removed in the next major release.
