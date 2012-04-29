@@ -54,6 +54,86 @@ class TestFinancial(TestCase):
         val = [39000,30000,21000,37000,46000]
         assert_(np.isnan(np.mirr(val, 0.10, 0.12)))
 
+    def test_when(self):
+        #begin
+        assert_almost_equal(np.rate(10,20,-3500,10000,1),
+                            np.rate(10,20,-3500,10000,'begin'), 4)
+        #end
+        assert_almost_equal(np.rate(10,20,-3500,10000),
+                            np.rate(10,20,-3500,10000,'end'), 4)
+        assert_almost_equal(np.rate(10,20,-3500,10000,0),
+                            np.rate(10,20,-3500,10000,'end'), 4)
+
+        # begin
+        assert_almost_equal(np.pv(0.07,20,12000,0,1),
+                            np.pv(0.07,20,12000,0,'begin'), 2)
+        # end
+        assert_almost_equal(np.pv(0.07,20,12000,0),
+                            np.pv(0.07,20,12000,0,'end'), 2)
+        assert_almost_equal(np.pv(0.07,20,12000,0,0),
+                            np.pv(0.07,20,12000,0,'end'), 2)
+
+        # begin
+        assert_almost_equal(np.fv(0.075, 20, -2000,0,1),
+                            np.fv(0.075, 20, -2000,0,'begin'), 4)
+        # end
+        assert_almost_equal(np.fv(0.075, 20, -2000,0),
+                            np.fv(0.075, 20, -2000,0,'end'), 4)
+        assert_almost_equal(np.fv(0.075, 20, -2000,0,0),
+                            np.fv(0.075, 20, -2000,0,'end'), 4)
+
+        # begin
+        assert_almost_equal(np.pmt(0.08/12,5*12,15000.,0,1),
+                            np.pmt(0.08/12,5*12,15000.,0,'begin'), 4)
+        # end
+        assert_almost_equal(np.pmt(0.08/12,5*12,15000.,0),
+                            np.pmt(0.08/12,5*12,15000.,0,'end'), 4)
+        assert_almost_equal(np.pmt(0.08/12,5*12,15000.,0,0),
+                            np.pmt(0.08/12,5*12,15000.,0,'end'), 4)
+
+        # begin
+        assert_almost_equal(np.ppmt(0.1/12,1,60,55000,0,1),
+                            np.ppmt(0.1/12,1,60,55000,0,'begin'), 4)
+        # end
+        assert_almost_equal(np.ppmt(0.1/12,1,60,55000,0),
+                            np.ppmt(0.1/12,1,60,55000,0,'end'), 4)
+        assert_almost_equal(np.ppmt(0.1/12,1,60,55000,0,0),
+                            np.ppmt(0.1/12,1,60,55000,0,'end'), 4)
+
+        # begin
+        assert_almost_equal(np.ipmt(0.1/12,1,24,2000,0,1),
+                            np.ipmt(0.1/12,1,24,2000,0,'begin'), 4)
+        # end
+        assert_almost_equal(np.ipmt(0.1/12,1,24,2000,0),
+                            np.ipmt(0.1/12,1,24,2000,0,'end'), 4)
+        assert_almost_equal(np.ipmt(0.1/12,1,24,2000,0,0),
+                            np.ipmt(0.1/12,1,24,2000,0,'end'), 4)
+
+        # begin
+        assert_almost_equal(np.nper(0.075,-2000,0,100000.,1),
+                            np.nper(0.075,-2000,0,100000.,'begin'), 4)
+        # end
+        assert_almost_equal(np.nper(0.075,-2000,0,100000.),
+                            np.nper(0.075,-2000,0,100000.,'end'), 4)
+        assert_almost_equal(np.nper(0.075,-2000,0,100000.,0),
+                            np.nper(0.075,-2000,0,100000.,'end'), 4)
+
+    def test_broadcast(self):
+        assert_almost_equal(np.nper(0.075,-2000,0,100000.,[0,1]),
+                            [ 21.5449442 ,  20.76156441], 4)
+
+        assert_almost_equal(np.ipmt(0.1/12,range(5), 24, 2000),
+                            [-17.29165168, -16.66666667, -16.03647345,
+                                -15.40102862, -14.76028842], 4)
+
+        assert_almost_equal(np.ppmt(0.1/12,range(5), 24, 2000),
+                            [-74.998201  , -75.62318601, -76.25337923,
+                                -76.88882405, -77.52956425], 4)
+
+        assert_almost_equal(np.ppmt(0.1/12,range(5), 24, 2000, 0,
+            [0,0,1,'end','begin']),
+                            [-74.998201  , -75.62318601, -75.62318601,
+                                -76.88882405, -76.88882405], 4)
 
 if __name__ == "__main__":
     run_module_suite()
