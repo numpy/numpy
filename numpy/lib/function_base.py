@@ -1805,7 +1805,7 @@ class vectorize(object):
     successive tuples of the input arrays like the python map function,
     except it uses the broadcasting rules of numpy.
 
-    The data type of the output of `vectorized` is determined by calling
+    The data type of the output of `vectorize` is determined by calling
     the function with the first element of the input.  This can be avoided
     by specifying the `otypes` argument.
 
@@ -1823,11 +1823,15 @@ class vectorize(object):
     argspec : (argnames, vargs, kwargs, defaults)
         Tuple returned by `inspect.getargspec` defining the argument names
         `argnames` in order and the default values `defaults` for the trailing
-        arguments.  Use this, for example, if `inspect.getargspec(pyfunc)` will
-        fail for some reason.
+        arguments.  Use this, for example, if ``inspect.getargspec(pyfunc)``
+        will fail for some reason.
+        
+        .. versionadded:: 1.7.0
     exclude : set, option
         Keyword arguments for the function will not be vectorized over the
         variable names in `exclude`.
+
+        .. versionadded:: 1.7.0
 
     Examples
     --------
@@ -1838,7 +1842,7 @@ class vectorize(object):
     ...     else:
     ...         return a + b
 
-    >>> vfunc = vectorize(myfunc)
+    >>> vfunc = np.vectorize(myfunc)
     >>> vfunc([1, 2, 3, 4], 2)
     array([3, 4, 1, 2])
 
@@ -1847,7 +1851,7 @@ class vectorize(object):
 
     >>> vfunc.__doc__
     'Return a-b if a>b, otherwise return a+b'
-    >>> vfunc = vectorize(myfunc, doc='Vectorized `myfunc`')
+    >>> vfunc = np.vectorize(myfunc, doc='Vectorized `myfunc`')
     >>> vfunc.__doc__
     'Vectorized `myfunc`'
 
@@ -1857,7 +1861,7 @@ class vectorize(object):
     >>> out = vfunc([1, 2, 3, 4], 2)
     >>> type(out[0])
     <type 'numpy.int32'>
-    >>> vfunc = vectorize(myfunc, otypes=[np.float])
+    >>> vfunc = np.vectorize(myfunc, otypes=[np.float])
     >>> out = vfunc([1, 2, 3, 4], 2)
     >>> type(out[0])
     <type 'numpy.float64'>
@@ -1871,16 +1875,12 @@ class vectorize(object):
     ...     while _p:
     ...         res = res*x + _p.pop(0)
     ...     return res
-    >>> vpolyval = vectorize(mypolyval, exclude='p')
+    >>> vpolyval = np.vectorize(mypolyval, exclude='p')
     >>> vpolyval(p=[1, 2, 3], x=[0, 1])
     array([3, 6])
     >>> vpolyval(x=[0, 1], p=[1, 2, 3])
     array([3, 6])
 
-    Key keyword arguments are now supported.
-
-    Notes
-    -----
     In order for vectorize to be able to generate a function that processes
     keyword arguments properly, it must know the original signature.  (This can
     be obscured if the function is wrapped):
@@ -1889,7 +1889,7 @@ class vectorize(object):
     ...     return 2*a
     >>> def wrapped_f(*v, **kw):
     ...     return f(*v, **kw)
-    >>> vectorize(wrapped_f)(a=[1,2])
+    >>> np.vectorize(wrapped_f)(a=[1,2])
     Traceback (most recent call last):
        ...
     TypeError: wrapped_f() go an unexpected keyword argument 'a'
@@ -1897,13 +1897,13 @@ class vectorize(object):
     One can provide this information either with the `argspec` argument:
 
     >>> import inspect
-    >>> vectorize(wrapped_f, argspec=inspect.getargspec(f))(a=[1,2])
+    >>> np.vectorize(wrapped_f, argspec=inspect.getargspec(f))(a=[1,2])
     array([2, 4])
 
     or by including the original function as `pyfunc.original_function`.
 
     >>> wrapped_f.original_function = f
-    >>> vectorize(wrapped_f)(a=[1,2])
+    >>> np.vectorize(wrapped_f)(a=[1,2])
     array([2, 4])
     """
     def __init__(self, pyfunc, otypes='', doc=None,
