@@ -62,7 +62,7 @@ class TestPower(TestCase):
 
 class TestComplexDivision(TestCase):
     def test_zero_division(self):
-        err = np.seterr(over="ignore")
+        err = np.seterr(over="ignore", invalid="ignore", divide='ignore')
         try:
             for t in [np.complex64, np.complex128]:
                 a = t(0.0)

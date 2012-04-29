@@ -30,7 +30,7 @@ class TestDivision(TestCase):
         assert_almost_equal(y/x, [1, 1], err_msg=msg)
 
     def test_zero_division_complex(self):
-        err = np.seterr(invalid="ignore")
+        err = np.seterr(invalid="ignore", divide='ignore')
         try:
             x = np.array([0.0], dtype=np.complex128)
             y = 1.0/x
