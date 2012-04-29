@@ -1103,7 +1103,7 @@ class TestClip(TestCase):
         self.assertTrue(a2 is a)
 
 
-class TestAllclose():
+class TestAllclose(object):
     rtol = 1e-5
     atol = 1e-8
 

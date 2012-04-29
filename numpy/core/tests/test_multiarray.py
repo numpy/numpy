@@ -1446,7 +1446,7 @@ class TestFromBuffer:
                 yield self.tst_basic,buf,x.flat,{'dtype':dt}
 
     def test_empty(self):
-        yield self.tst_basic, '', np.array([]), {}
+        yield self.tst_basic, asbytes(''), np.array([]), {}
 
 
 class TestResize(TestCase):
