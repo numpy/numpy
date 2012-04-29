@@ -351,10 +351,11 @@ PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
 
 NPY_NO_EXPORT PyObject *
 __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
-                  int variance, int num)
+                  int variance, double num)
 {
     PyObject *obj1 = NULL, *obj2 = NULL, *obj3 = NULL, *new = NULL;
     PyObject *ret = NULL, *newshape = NULL;
+    double scl;
     int i, n;
     intp val;
 
@@ -451,11 +452,11 @@ __New_PyArray_Std(PyArrayObject *self, int axis, int rtype, PyArrayObject *out,
     }
     n = PyArray_DIM(new,axis);
     Py_DECREF(new);
-    n = (n-num);
-    if (n == 0) {
-        n = 1;
+    scl = n - num;
+    if (scl <= 0) {
+        scl = NPY_NAN;
     }
-    obj2 = PyFloat_FromDouble(1.0/((double )n));
+    obj2 = PyFloat_FromDouble(1.0/scl);
     if (obj2 == NULL) {
         Py_DECREF(obj1);
         return NULL;
