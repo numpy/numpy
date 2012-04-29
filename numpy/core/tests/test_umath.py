@@ -129,6 +129,10 @@ class TestPower(TestCase):
             assert_complex_equal(np.power(zero, -p), cnan)
         assert_complex_equal(np.power(zero, -1+0.2j), cnan)
 
+    def test_fast_power(self):
+        x=np.array([1,2,3], np.int16)
+        assert (x**2.00001).dtype is (x**2.0).dtype
+
 
 class TestLog2(TestCase):
     def test_log2_values(self) :
@@ -1232,6 +1236,7 @@ def test_complex_nan_comparisons():
             assert_equal(x <= y, False, err_msg="%r <= %r" % (x, y))
             assert_equal(x >= y, False, err_msg="%r >= %r" % (x, y))
             assert_equal(x == y, False, err_msg="%r == %r" % (x, y))
+
 
 if __name__ == "__main__":
     run_module_suite()
