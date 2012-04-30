@@ -1794,8 +1794,7 @@ def _get_argspec(obj):
 
 class vectorize(object):
     """
-    vectorize(pyfunc, otypes='', doc=None,
-              exclude=None)
+    vectorize(pyfunc, otypes='', doc=None, argspec=None, exclude=None)
 
     Generalized function class.
 
@@ -1805,7 +1804,7 @@ class vectorize(object):
     successive tuples of the input arrays like the python map function,
     except it uses the broadcasting rules of numpy.
 
-    The data type of the output of `vectorize` is determined by calling
+    The data type of the output of `vectorized` is determined by calling
     the function with the first element of the input.  This can be avoided
     by specifying the `otypes` argument.
 
@@ -1827,11 +1826,22 @@ class vectorize(object):
         will fail for some reason.
         
         .. versionadded:: 1.7.0
-    exclude : set, option
-        Keyword arguments for the function will not be vectorized over the
-        variable names in `exclude`.
+    exclude : set, optional
+        Keyword arguments in the set `exclude` will not be vectorized.
 
         .. versionadded:: 1.7.0
+
+    Returns
+    -------
+    vectorized : callable
+        Vectorized function.
+
+    Notes
+    -----
+    The `vectorize` function is provided for convenience, not performance: The
+    implementation is essentially a for loop, with similar performance
+    characteristics.
+
 
     Examples
     --------
@@ -1882,8 +1892,9 @@ class vectorize(object):
     array([3, 6])
 
     In order for vectorize to be able to generate a function that processes
-    keyword arguments properly, it must know the original signature.  (This can
-    be obscured if the function is wrapped):
+    keyword arguments properly, it must know the original signature.  If this
+    cannot be deduced from the function (for example if the original function is
+    wrapped)
 
     >>> def f(a):
     ...     return 2*a
@@ -1894,13 +1905,13 @@ class vectorize(object):
        ...
     TypeError: wrapped_f() go an unexpected keyword argument 'a'
 
-    One can provide this information either with the `argspec` argument:
+    then it can be specified using the `argspec` argument,
 
     >>> import inspect
     >>> np.vectorize(wrapped_f, argspec=inspect.getargspec(f))(a=[1,2])
     array([2, 4])
 
-    or by including the original function as `pyfunc.original_function`.
+    or by including the original function as ``pyfunc.original_function``.
 
     >>> wrapped_f.original_function = f
     >>> np.vectorize(wrapped_f)(a=[1,2])
