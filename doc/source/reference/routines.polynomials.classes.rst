@@ -244,15 +244,6 @@ The convert method can also convert domain and window::
     >>> p.convert(kind=P, domain=[0, 1])
     Polynomial([-1.875,  2.875, -1.125,  0.125], [ 0.,  1.], [-1.,  1.])
 
-In numpy versions >= 1.7.0 the 'basis' and 'cast' class methods are also
-available. The cast method works like the convert method while the basis
-method returns the basis polynomial of given degree.::
-
-    >>> P.basis(3)
-    Polynomial([ 0.,  0.,  0.,  1.], [-1.,  1.], [-1.,  1.])
-    >>> T.cast(p)
-    Chebyshev([ -9.  ,  11.75,  -3.  ,   0.25], [-1.,  1.], [-1.,  1.])
-
 Conversions between types can be useful, but it is *not* recommended
 for routine use. The loss of numerical precision in passing from a
 Chebyshev series of degree 50 to a Polynomial series of the same degree
@@ -323,30 +314,3 @@ illustrated below for a fit to a noisy sin curve.
     array([-1.,  1.])
     >>> plt.show()
 
-The fit will ignore data points masked with NA. We demonstrate this with
-the previous example, but add an outlier that messes up the fit, then mask
-it out.
-
-.. plot::
-
-    >>> import numpy as np
-    >>> import matplotlib.pyplot as plt
-    >>> from numpy.polynomial import Chebyshev as T
-    >>> np.random.seed(11)
-    >>> x = np.linspace(0, 2*np.pi, 20)
-    >>> y = np.sin(x) + np.random.normal(scale=.1, size=x.shape)
-    >>> y[10] = 2
-    >>> p = T.fit(x, y, 5)
-    >>> plt.plot(x, y, 'o')
-    [<matplotlib.lines.Line2D object at 0x2136c10>]
-    >>> xx, yy = p.linspace()
-    >>> plt.plot(xx, yy, lw=2, label="unmasked")
-    [<matplotlib.lines.Line2D object at 0x1cf2890>]
-    >>> ym = y.view(maskna=1)
-    >>> ym[10] = np.NA
-    >>> p = T.fit(x, ym, 5)
-    >>> xx, yy = p.linspace()
-    >>> plt.plot(xx, yy, lw=2, label="masked")
-    >>> plt.legend(loc="upper right")
-    <matplotlib.legend.Legend object at 0x3b3ee10>
-    >>> plt.show()
