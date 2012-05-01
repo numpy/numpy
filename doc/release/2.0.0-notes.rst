@@ -201,6 +201,13 @@ The following macros now require trailing semicolons::
     NPY_ALLOW_C_API_DEF
     NPY_DISABLE_C_API
 
+DATETIME
+--------
+
+There have been a lot of fixes and enhancements to datetime64. The notes
+in doc/source/reference/arrays.datetime.rst or in the generated
+documentation should be consulted for the details.
+
 
 Deprecations
 ============
