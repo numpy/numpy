@@ -18,7 +18,7 @@ from numpy.compat import asbytes, asbytes_nested, bytes
 from nose import SkipTest
 from numpy.ma.testutils import (TestCase, assert_equal, assert_array_equal,
     assert_raises, run_module_suite)
-from numpy.testing import assert_warns, assert_
+from numpy.testing import assert_warns, assert_, build_err_msg
 
 if sys.version_info[0] >= 3:
     from io import BytesIO
@@ -321,10 +321,10 @@ def _assert_floatstr_lines_equal(actual_lines, expected_lines):
     of this function.
     """
     for actual, expected in zip(actual_lines, expected_lines):
-        if not actual == expected:
+        if actual != expected:
             expected_win25 = expected.replace("e+00", "e+000")
-            if not actual == expected_win25:
-                msg = build_err_msg([actual, desired], verbose=True)
+            if actual != expected_win25:
+                msg = build_err_msg([actual, expected], '', verbose=True)
                 raise AssertionError(msg)
 
 

@@ -87,7 +87,7 @@ def test_complex_types():
 
 def test_complex_inf_nan():
     """Check inf/nan formatting of complex types."""
-    if sys.version_info >= (2, 6):
+    if sys.version_info[:2] >= (2, 6):
         TESTS = {
             complex(np.inf, 0): "(inf+0j)",
             complex(0, np.inf): "inf*j",
@@ -198,7 +198,7 @@ def test_complex_type_print():
     for t in [np.complex64, np.cdouble, np.clongdouble] :
         yield check_complex_type_print, t
 
-@dec.skipif(sys.version_info < (2,6))
+@dec.skipif(sys.version_info[:2] < (2, 6))
 def test_scalar_format():
     """Test the str.format method with NumPy scalar types"""
     tests = [('{0}', True, np.bool_),
@@ -216,7 +216,7 @@ def test_scalar_format():
             ('{0:g}', 1.5, np.float64),
             ('{0:g}', 1.5, np.longdouble)]
     # Python 2.6 doesn't implement complex.__format__
-    if sys.version_info <= (2,6):
+    if sys.version_info[:2] > (2, 6):
         tests += [('{0:g}', 1.5+0.5j, np.complex64),
                 ('{0:g}', 1.5+0.5j, np.complex128),
                 ('{0:g}', 1.5+0.5j, np.clongdouble)]
