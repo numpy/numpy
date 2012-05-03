@@ -214,10 +214,7 @@ def test_scalar_format():
             ('{0:g}', 1.5, np.float16),
             ('{0:g}', 1.5, np.float32),
             ('{0:g}', 1.5, np.float64),
-            ('{0:g}', 1.5, np.longdouble),
-            ('{0:g}', 1.5+0.5j, np.complex64),
-            ('{0:g}', 1.5+0.5j, np.complex128),
-            ('{0:g}', 1.5+0.5j, np.clongdouble)]
+            ('{0:g}', 1.5, np.longdouble)]
 
     for (fmat, val, valtype) in tests:
         assert_equal(fmat.format(val), fmat.format(valtype(val)),
