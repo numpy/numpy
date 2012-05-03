@@ -6,6 +6,9 @@ from numpy.testing import *
 from numpy.core import *
 from numpy.core.multiarray_tests import test_neighborhood_iterator, test_neighborhood_iterator_oob
 
+# Need to test an object that does not fully implement math interface
+from datetime import timedelta
+
 from numpy.compat import asbytes, getexception, strchar
 
 from test_print import in_foreign_locale
@@ -703,6 +706,31 @@ class TestMethods(TestCase):
         b = a.searchsorted(np.array(128,dtype='>i4'))
         assert_equal(b, 1, msg)
 
+    def test_searchsorted_unicode(self):
+        # Test searchsorted on unicode strings.
+
+        # 1.6.1 contained a string length miscalculation in
+        # arraytypes.c.src:UNICODE_compare() which manifested as
+        # incorrect/inconsistent results from searchsorted.
+        a = np.array([u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100185_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100186_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100187_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100189_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100190_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100191_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100192_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100193_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100194_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100195_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100196_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100197_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100198_1',
+                      u'P:\\20x_dapi_cy3\\20x_dapi_cy3_20100199_1'])
+        assert_equal([a.searchsorted(v, 'left') for v in a], np.arange(len(a)))
+        assert_equal([a.searchsorted(v, 'right') for v in a], np.arange(len(a)) + 1)
+        assert_equal([a.searchsorted(a[i], 'left') for i in range(len(a))], np.arange(len(a)))
+        assert_equal([a.searchsorted(a[i], 'right') for i in range(len(a))], np.arange(len(a)) + 1)
+
     def test_flatten(self):
         x0 = np.array([[1,2,3],[4,5,6]], np.int32)
         x1 = np.array([[[1,2],[3,4]],[[5,6],[7,8]]], np.int32)
@@ -921,6 +949,37 @@ class TestArgmax(TestCase):
         ([complex(0, 0), complex(0, 2), complex(0, 1)], 1),
         ([complex(1, 0), complex(0, 2), complex(0, 1)], 0),
         ([complex(1, 0), complex(0, 2), complex(1, 1)], 2),
+
+        ([np.datetime64('1923-04-14T12:43:12'),
+          np.datetime64('1994-06-21T14:43:15'),
+          np.datetime64('2001-10-15T04:10:32'),
+          np.datetime64('1995-11-25T16:02:16'),
+          np.datetime64('2005-01-04T03:14:12'),
+          np.datetime64('2041-12-03T14:05:03')], 5),
+        ([np.datetime64('1935-09-14T04:40:11'),
+          np.datetime64('1949-10-12T12:32:11'),
+          np.datetime64('2010-01-03T05:14:12'),
+          np.datetime64('2015-11-20T12:20:59'),
+          np.datetime64('1932-09-23T10:10:13'),
+          np.datetime64('2014-10-10T03:50:30')], 3),
+        ([np.datetime64('2059-03-14T12:43:12'),
+          np.datetime64('1996-09-21T14:43:15'),
+          np.datetime64('2001-10-15T04:10:32'),
+          np.datetime64('2022-12-25T16:02:16'),
+          np.datetime64('1963-10-04T03:14:12'),
+          np.datetime64('2013-05-08T18:15:23')], 0),
+
+        ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
+          timedelta(days=-1, seconds=23)], 0),
+        ([timedelta(days=1, seconds=43), timedelta(days=10, seconds=5),
+          timedelta(days=5, seconds=14)], 1),
+        ([timedelta(days=10, seconds=24), timedelta(days=10, seconds=5),
+          timedelta(days=10, seconds=43)], 2),
+
+        # Can't reduce a "flexible type"
+        #(['a', 'z', 'aa', 'zz'], 3),
+        #(['zz', 'a', 'aa', 'a'], 0),
+        #(['aa', 'z', 'zz', 'a'], 2),
     ]
 
     def test_all(self):
@@ -936,6 +995,75 @@ class TestArgmax(TestCase):
         for arr, pos in self.nan_arr:
             assert_equal(np.argmax(arr), pos, err_msg="%r"%arr)
             assert_equal(arr[np.argmax(arr)], np.max(arr), err_msg="%r"%arr)
+
+
+class TestArgmin(TestCase):
+
+    nan_arr = [
+        ([0, 1, 2, 3, np.nan], 4),
+        ([0, 1, 2, np.nan, 3], 3),
+        ([np.nan, 0, 1, 2, 3], 0),
+        ([np.nan, 0, np.nan, 2, 3], 0),
+        ([0, 1, 2, 3, complex(0,np.nan)], 4),
+        ([0, 1, 2, 3, complex(np.nan,0)], 4),
+        ([0, 1, 2, complex(np.nan,0), 3], 3),
+        ([0, 1, 2, complex(0,np.nan), 3], 3),
+        ([complex(0,np.nan), 0, 1, 2, 3], 0),
+        ([complex(np.nan, np.nan), 0, 1, 2, 3], 0),
+        ([complex(np.nan, 0), complex(np.nan, 2), complex(np.nan, 1)], 0),
+        ([complex(np.nan, np.nan), complex(np.nan, 2), complex(np.nan, 1)], 0),
+        ([complex(np.nan, 0), complex(np.nan, 2), complex(np.nan, np.nan)], 0),
+
+        ([complex(0, 0), complex(0, 2), complex(0, 1)], 0),
+        ([complex(1, 0), complex(0, 2), complex(0, 1)], 2),
+        ([complex(1, 0), complex(0, 2), complex(1, 1)], 1),
+
+        ([np.datetime64('1923-04-14T12:43:12'),
+          np.datetime64('1994-06-21T14:43:15'),
+          np.datetime64('2001-10-15T04:10:32'),
+          np.datetime64('1995-11-25T16:02:16'),
+          np.datetime64('2005-01-04T03:14:12'),
+          np.datetime64('2041-12-03T14:05:03')], 0),
+        ([np.datetime64('1935-09-14T04:40:11'),
+          np.datetime64('1949-10-12T12:32:11'),
+          np.datetime64('2010-01-03T05:14:12'),
+          np.datetime64('2014-11-20T12:20:59'),
+          np.datetime64('2015-09-23T10:10:13'),
+          np.datetime64('1932-10-10T03:50:30')], 5),
+        ([np.datetime64('2059-03-14T12:43:12'),
+          np.datetime64('1996-09-21T14:43:15'),
+          np.datetime64('2001-10-15T04:10:32'),
+          np.datetime64('2022-12-25T16:02:16'),
+          np.datetime64('1963-10-04T03:14:12'),
+          np.datetime64('2013-05-08T18:15:23')], 4),
+
+        ([timedelta(days=5, seconds=14), timedelta(days=2, seconds=35),
+          timedelta(days=-1, seconds=23)], 2),
+        ([timedelta(days=1, seconds=43), timedelta(days=10, seconds=5),
+          timedelta(days=5, seconds=14)], 0),
+        ([timedelta(days=10, seconds=24), timedelta(days=10, seconds=5),
+          timedelta(days=10, seconds=43)], 1),
+
+        # Can't reduce a "flexible type"
+        #(['a', 'z', 'aa', 'zz'], 0),
+        #(['zz', 'a', 'aa', 'a'], 1),
+        #(['aa', 'z', 'zz', 'a'], 3),
+    ]
+
+    def test_all(self):
+        a = np.random.normal(0,1,(4,5,6,7,8))
+        for i in xrange(a.ndim):
+            amin = a.min(i)
+            aargmin = a.argmin(i)
+            axes = range(a.ndim)
+            axes.remove(i)
+            assert_(all(amin == aargmin.choose(*a.transpose(i,*axes))))
+
+    def test_combinations(self):
+        for arr, pos in self.nan_arr:
+            assert_equal(np.argmin(arr), pos, err_msg="%r"%arr)
+            assert_equal(arr[np.argmin(arr)], np.min(arr), err_msg="%r"%arr)
+
 
 
 class TestMinMax(TestCase):
@@ -1341,6 +1469,9 @@ class TestFromBuffer:
                 x = (np.random.random((4,7))*5).astype(dt)
                 buf = x.tostring()
                 yield self.tst_basic,buf,x.flat,{'dtype':dt}
+
+    def test_empty(self):
+        yield self.tst_basic, asbytes(''), np.array([]), {}
 
 
 class TestResize(TestCase):
@@ -2143,6 +2274,17 @@ if sys.version_info >= (2, 6):
             dt3 = np.dtype([('a', 'b'), ('b', 'i'), ('c', 'b'), ('d', 'b'), ('e', 'b'), ('sub', np.dtype('b,i', align=True))])
             x3 = np.arange(dt3.itemsize, dtype=np.int8).view(dt3)
             self._check_roundtrip(x3)
+
+
+    class TestArrayAttributeDeletion(object):
+        """ticket #2046, should not seqfault, raise AttributeError"""
+
+        def test_attribute_deletion(self):
+            a = np.ones(2)
+            attr =  ['shape', 'strides', 'data', 'dtype', 'real', 'imag', 'flat']
+            for s in attr:
+                assert_raises(AttributeError, delattr, a, s)
+
 
 if __name__ == "__main__":
     run_module_suite()

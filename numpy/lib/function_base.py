@@ -2868,14 +2868,14 @@ def median(a, axis=None, out=None, overwrite_input=False):
     ----------
     a : array_like
         Input array or object that can be converted to an array.
-    axis : {None, int}, optional
+    axis : int, optional
         Axis along which the medians are computed. The default (axis=None)
         is to compute the median along a flattened version of the array.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
         but the type (of the output) will be cast if necessary.
-    overwrite_input : {False, True}, optional
+    overwrite_input : bool optional
        If True, then allow use of memory of input array (a) for
        calculations. The input array will be modified by the call to
        median. This will save memory when you do not need to preserve
@@ -2941,6 +2941,9 @@ def median(a, axis=None, out=None, overwrite_input=False):
             sorted = a
     else:
         sorted = sort(a, axis=axis)
+    if sorted.shape == ():
+        # make 0-D arrays work
+        return sorted.item()
     if axis is None:
         axis = 0
     indexer = [slice(None)] * sorted.ndim

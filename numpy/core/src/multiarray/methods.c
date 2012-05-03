@@ -1854,10 +1854,10 @@ array_stddev(PyArrayObject *self, PyObject *args, PyObject *kwds)
     PyArray_Descr *dtype = NULL;
     PyArrayObject *out = NULL;
     int num;
-    int ddof = 0;
+    double ddof = 0;
     static char *kwlist[] = {"axis", "dtype", "out", "ddof", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&i", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&d", kwlist,
                                      PyArray_AxisConverter, &axis,
                                      PyArray_DescrConverter2, &dtype,
                                      PyArray_OutputConverter, &out,
@@ -1879,10 +1879,10 @@ array_variance(PyArrayObject *self, PyObject *args, PyObject *kwds)
     PyArray_Descr *dtype = NULL;
     PyArrayObject *out = NULL;
     int num;
-    int ddof = 0;
+    double ddof = 0;
     static char *kwlist[] = {"axis", "dtype", "out", "ddof", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&i", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O&O&O&d", kwlist,
                                      PyArray_AxisConverter, &axis,
                                      PyArray_DescrConverter2, &dtype,
                                      PyArray_OutputConverter, &out,

@@ -274,29 +274,42 @@ array_remainder(PyArrayObject *m1, PyObject *m2)
 }
 
 static int
-array_power_is_scalar(PyObject *o2, double* exp)
+array_power_is_scalar(PyObject *o2, double* out_exponent)
 {
     PyObject *temp;
     const int optimize_fpexps = 1;
 
     if (PyInt_Check(o2)) {
-        *exp = (double)PyInt_AsLong(o2);
-        return 1;
+        *out_exponent = (double)PyInt_AsLong(o2);
+        return NPY_INTPOS_SCALAR;
     }
     if (optimize_fpexps && PyFloat_Check(o2)) {
-        *exp = PyFloat_AsDouble(o2);
-        return 1;
+        *out_exponent = PyFloat_AsDouble(o2);
+        return NPY_FLOAT_SCALAR;
     }
     if ((PyArray_IsZeroDim(o2) &&
-         ((PyArray_ISINTEGER(o2) ||
-           (optimize_fpexps && PyArray_ISFLOAT(o2))))) ||
+         ((PyArray_ISINTEGER((PyArrayObject *)o2) ||
+           (optimize_fpexps && PyArray_ISFLOAT((PyArrayObject *)o2))))) ||
         PyArray_IsScalar(o2, Integer) ||
         (optimize_fpexps && PyArray_IsScalar(o2, Floating))) {
         temp = Py_TYPE(o2)->tp_as_number->nb_float(o2);
         if (temp != NULL) {
-            *exp = PyFloat_AsDouble(o2);
+            *out_exponent = PyFloat_AsDouble(o2);
             Py_DECREF(temp);
-            return 1;
+            if (PyArray_IsZeroDim(o2)) {
+                if (PyArray_ISINTEGER((PyArrayObject *)o2)) {
+                    return NPY_INTPOS_SCALAR;
+                }
+                else { /* ISFLOAT */
+                    return NPY_FLOAT_SCALAR;
+                }
+            }
+            else if PyArray_IsScalar(o2, Integer) {
+                    return NPY_INTPOS_SCALAR;
+            }
+            else { /* IsScalar(o2, Floating) */
+                return NPY_FLOAT_SCALAR;
+            }
         }
     }
 #if (PY_VERSION_HEX >= 0x02050000)
@@ -307,30 +320,30 @@ array_power_is_scalar(PyObject *o2, double* exp)
             if (PyErr_Occurred()) {
                 PyErr_Clear();
             }
-            return 0;
+            return NPY_NOSCALAR;
         }
         val = PyInt_AsSsize_t(value);
         if (val == -1 && PyErr_Occurred()) {
             PyErr_Clear();
-            return 0;
+            return NPY_NOSCALAR;
         }
-        *exp = (double) val;
-        return 1;
+        *out_exponent = (double) val;
+        return NPY_INTPOS_SCALAR;
     }
 #endif
-    return 0;
+    return NPY_NOSCALAR;
 }
 
-/* optimize float array or complex array to a scalar power */
 static PyObject *
 fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
 {
-    double exp;
+    double exponent;
+    NPY_SCALARKIND kind;   /* NPY_NOSCALAR is not scalar */
 
-    if (PyArray_Check(a1) && array_power_is_scalar(o2, &exp)) {
+    if (PyArray_Check(a1) && ((kind=array_power_is_scalar(o2, &exponent))>0)) {
         PyObject *fastop = NULL;
         if (PyArray_ISFLOAT(a1) || PyArray_ISCOMPLEX(a1)) {
-            if (exp == 1.0) {
+            if (exponent == 1.0) {
                 /* we have to do this one special, as the
                    "copy" method of array objects isn't set
                    up early enough to be added
@@ -343,16 +356,16 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
                     return PyArray_Copy(a1);
                 }
             }
-            else if (exp == -1.0) {
+            else if (exponent == -1.0) {
                 fastop = n_ops.reciprocal;
             }
-            else if (exp ==  0.0) {
+            else if (exponent ==  0.0) {
                 fastop = n_ops.ones_like;
             }
-            else if (exp ==  0.5) {
+            else if (exponent ==  0.5) {
                 fastop = n_ops.sqrt;
             }
-            else if (exp ==  2.0) {
+            else if (exponent ==  2.0) {
                 fastop = n_ops.square;
             }
             else {
@@ -365,20 +378,42 @@ fast_scalar_power(PyArrayObject *a1, PyObject *o2, int inplace)
                 return PyArray_GenericUnaryFunction(a1, fastop);
             }
         }
-        else if (exp==2.0) {
+        /* Because this is called with all arrays, we need to
+         *  change the output if the kind of the scalar is different
+         *  than that of the input and inplace is not on ---
+         *  (thus, the input should be up-cast)
+         */
+        else if (exponent == 2.0) {
             fastop = n_ops.multiply;
             if (inplace) {
                 return PyArray_GenericInplaceBinaryFunction
                     (a1, (PyObject *)a1, fastop);
             }
             else {
-                return PyArray_GenericBinaryFunction
-                    (a1, (PyObject *)a1, fastop);
+                PyArray_Descr *dtype = NULL;
+                PyObject *res;
+
+                /* We only special-case the FLOAT_SCALAR and integer types */
+                if (kind == NPY_FLOAT_SCALAR && PyArray_ISINTEGER(a1)) {
+                    dtype = PyArray_DescrFromType(NPY_DOUBLE);
+                    a1 = (PyArrayObject *)PyArray_CastToType(a1, dtype,
+                            PyArray_ISFORTRAN(a1));
+                    if (a1 == NULL) {
+                        return NULL;
+                    }
+                }
+                else {
+                    Py_INCREF(a1);
+                }
+                res = PyArray_GenericBinaryFunction(a1, (PyObject *)a1, fastop);
+                Py_DECREF(a1);
+                return res;
             }
         }
     }
     return NULL;
 }
+
 
 static PyObject *
 array_power(PyArrayObject *a1, PyObject *o2, PyObject *NPY_UNUSED(modulo))
@@ -571,10 +606,17 @@ array_divmod(PyArrayObject *op1, PyObject *op2)
     if (divp == NULL) {
         return NULL;
     }
+    else if(divp == Py_NotImplemented) {
+        return divp;
+    }
     modp = array_remainder(op1, op2);
     if (modp == NULL) {
         Py_DECREF(divp);
         return NULL;
+    }
+    else if(modp == Py_NotImplemented) {
+        Py_DECREF(divp);
+        return modp;
     }
     result = Py_BuildValue("OO", divp, modp);
     Py_DECREF(divp);

@@ -291,151 +291,19 @@ _array_find_type(PyObject *op, PyArray_Descr *minitype, int max)
 
 /* new reference */
 NPY_NO_EXPORT PyArray_Descr *
-_array_typedescr_fromstr(char *str)
+_array_typedescr_fromstr(char *c_str)
 {
-    PyArray_Descr *descr;
-    int type_num;
-    char typechar;
-    int size;
-    char msg[] = "unsupported typestring";
-    int swap;
-    char swapchar;
+    PyArray_Descr *descr = NULL;
+    PyObject *stringobj = PyString_FromString(c_str);
 
-    swapchar = str[0];
-    str += 1;
-
-    typechar = str[0];
-    size = atoi(str + 1);
-    switch (typechar) {
-    case 'b':
-        if (size == sizeof(Bool)) {
-            type_num = PyArray_BOOL;
-        }
-        else {
-            PyErr_SetString(PyExc_ValueError, msg);
-            return NULL;
-        }
-        break;
-    case 'u':
-        if (size == sizeof(uintp)) {
-            type_num = PyArray_UINTP;
-        }
-        else if (size == sizeof(char)) {
-            type_num = PyArray_UBYTE;
-        }
-        else if (size == sizeof(short)) {
-            type_num = PyArray_USHORT;
-        }
-        else if (size == sizeof(ulong)) {
-            type_num = PyArray_ULONG;
-        }
-        else if (size == sizeof(int)) {
-            type_num = PyArray_UINT;
-        }
-        else if (size == sizeof(ulonglong)) {
-            type_num = PyArray_ULONGLONG;
-        }
-        else {
-            PyErr_SetString(PyExc_ValueError, msg);
-            return NULL;
-        }
-        break;
-    case 'i':
-        if (size == sizeof(intp)) {
-            type_num = PyArray_INTP;
-        }
-        else if (size == sizeof(char)) {
-            type_num = PyArray_BYTE;
-        }
-        else if (size == sizeof(short)) {
-            type_num = PyArray_SHORT;
-        }
-        else if (size == sizeof(long)) {
-            type_num = PyArray_LONG;
-        }
-        else if (size == sizeof(int)) {
-            type_num = PyArray_INT;
-        }
-        else if (size == sizeof(longlong)) {
-            type_num = PyArray_LONGLONG;
-        }
-        else {
-            PyErr_SetString(PyExc_ValueError, msg);
-            return NULL;
-        }
-        break;
-    case 'f':
-        if (size == sizeof(float)) {
-            type_num = PyArray_FLOAT;
-        }
-        else if (size == sizeof(double)) {
-            type_num = PyArray_DOUBLE;
-        }
-        else if (size == sizeof(longdouble)) {
-            type_num = PyArray_LONGDOUBLE;
-        }
-        else {
-            PyErr_SetString(PyExc_ValueError, msg);
-            return NULL;
-        }
-        break;
-    case 'c':
-        if (size == sizeof(float)*2) {
-            type_num = PyArray_CFLOAT;
-        }
-        else if (size == sizeof(double)*2) {
-            type_num = PyArray_CDOUBLE;
-        }
-        else if (size == sizeof(longdouble)*2) {
-            type_num = PyArray_CLONGDOUBLE;
-        }
-        else {
-            PyErr_SetString(PyExc_ValueError, msg);
-            return NULL;
-        }
-        break;
-    case 'O':
-        if (size == sizeof(PyObject *)) {
-            type_num = PyArray_OBJECT;
-        }
-        else {
-            PyErr_SetString(PyExc_ValueError, msg);
-            return NULL;
-        }
-        break;
-    case PyArray_STRINGLTR:
-        type_num = PyArray_STRING;
-        break;
-    case PyArray_UNICODELTR:
-        type_num = PyArray_UNICODE;
-        size <<= 2;
-        break;
-    case 'V':
-        type_num = PyArray_VOID;
-        break;
-    default:
-        PyErr_SetString(PyExc_ValueError, msg);
+    if (stringobj == NULL) {
         return NULL;
     }
-
-    descr = PyArray_DescrFromType(type_num);
-    if (descr == NULL) {
+    if (PyArray_DescrConverter(stringobj, &descr) != NPY_SUCCEED) {
+        Py_DECREF(stringobj);
         return NULL;
     }
-    swap = !PyArray_ISNBO(swapchar);
-    if (descr->elsize == 0 || swap) {
-        /* Need to make a new PyArray_Descr */
-        PyArray_DESCR_REPLACE(descr);
-        if (descr==NULL) {
-            return NULL;
-        }
-        if (descr->elsize == 0) {
-            descr->elsize = size;
-        }
-        if (swap) {
-            descr->byteorder = swapchar;
-        }
-    }
+    Py_DECREF(stringobj);
     return descr;
 }
 

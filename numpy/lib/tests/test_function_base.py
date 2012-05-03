@@ -1165,5 +1165,16 @@ def test_percentile_out():
     assert_equal(y, np.percentile(x, p, axis=1))
 
 
+def test_median():
+    a0 = np.array(1)
+    a1 = np.arange(2)
+    a2 = np.arange(6).reshape(2, 3)
+    assert_allclose(np.median(a0), 1)
+    assert_allclose(np.median(a1), 0.5)
+    assert_allclose(np.median(a2), 2.5)
+    assert_allclose(np.median(a2, axis=0), [1.5,  2.5,  3.5])
+    assert_allclose(np.median(a2, axis=1), [1, 4])
+
+
 if __name__ == "__main__":
     run_module_suite()

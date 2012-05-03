@@ -361,6 +361,79 @@ gentype_repr(PyObject *self)
     return ret;
 }
 
+#if PY_VERSION_HEX >= 0x02060000
+/*
+ * The __format__ method for PEP 3101.
+ */
+static PyObject *
+gentype_format(PyObject *self, PyObject *args)
+{
+    PyObject *format_spec;
+    PyObject *obj, *ret;
+
+#if defined(NPY_PY3K)
+    if (!PyArg_ParseTuple(args, "U:__format__", &format_spec)) {
+        return NULL;
+    }
+#else
+    if (!PyArg_ParseTuple(args, "O:__format__", &format_spec)) {
+        return NULL;
+    }
+
+    if (!PyUnicode_Check(format_spec) && !PyString_Check(format_spec)) {
+        PyErr_SetString(PyExc_TypeError,
+                "format must be a string");
+        return NULL;
+    }
+#endif
+
+    /*
+     * Convert to an appropriate Python type and call its format.
+     * TODO: For some types, like long double, this isn't right,
+     *       because it throws away precision.
+     */
+    if (Py_TYPE(self) == &PyBoolArrType_Type) {
+        obj = PyBool_FromLong(((PyBoolScalarObject *)self)->obval);
+    }
+    else if (PyArray_IsScalar(self, Integer)) {
+#if defined(NPY_PY3K)
+        obj = Py_TYPE(self)->tp_as_number->nb_int(self);
+#else
+        obj = Py_TYPE(self)->tp_as_number->nb_long(self);
+#endif
+    }
+    else if (PyArray_IsScalar(self, Floating)) {
+        obj = Py_TYPE(self)->tp_as_number->nb_float(self);
+    }
+    else if (PyArray_IsScalar(self, ComplexFloating)) {
+        double val[2];
+        PyArray_Descr *dtype = PyArray_DescrFromScalar(self);
+
+        if (dtype == NULL) {
+            return NULL;
+        }
+        if (PyArray_CastScalarDirect(self, dtype, &val[0], NPY_CDOUBLE) < 0) {
+            Py_DECREF(dtype);
+            return NULL;
+        }
+        obj = PyComplex_FromDoubles(val[0], val[1]);
+        Py_DECREF(dtype);
+    }
+    else {
+        obj = self;
+        Py_INCREF(obj);
+    }
+
+    if (obj == NULL) {
+        return NULL;
+    }
+
+    ret = PyObject_Format(obj, format_spec);
+    Py_DECREF(obj);
+    return ret;
+}
+#endif
+
 #ifdef FORCE_NO_LONG_DOUBLE_FORMATTING
 #undef NPY_LONGDOUBLE_FMT
 #define NPY_LONGDOUBLE_FMT NPY_DOUBLE_FMT
@@ -1682,6 +1755,13 @@ static PyMethodDef gentype_methods[] = {
     {"__round__",
         (PyCFunction)gentype_round,
         METH_VARARGS | METH_KEYWORDS, NULL},
+#endif
+#if PY_VERSION_HEX >= 0x02060000
+    /* For the format function */
+    {"__format__",
+        gentype_format,
+        METH_VARARGS,
+        "NumPy array scalar formatter"},
 #endif
     {"setflags",
         (PyCFunction)gentype_setflags,

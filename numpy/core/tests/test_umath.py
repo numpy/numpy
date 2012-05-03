@@ -29,6 +29,23 @@ class TestDivision(TestCase):
         y = x**2/x
         assert_almost_equal(y/x, [1, 1], err_msg=msg)
 
+    def test_zero_division_complex(self):
+        err = np.seterr(invalid="ignore", divide='ignore')
+        try:
+            x = np.array([0.0], dtype=np.complex128)
+            y = 1.0/x
+            assert_(np.isinf(y)[0])
+            y = complex(np.inf, np.nan)/x
+            assert_(np.isinf(y)[0])
+            y = complex(np.nan, np.inf)/x
+            assert_(np.isinf(y)[0])
+            y = complex(np.inf, np.inf)/x
+            assert_(np.isinf(y)[0])
+            y = 0.0/x
+            assert_(np.isnan(y)[0])
+        finally:
+            np.seterr(**err)
+
     def test_floor_division_complex(self):
         # check that implementation is correct
         msg = "Complex floor division implementation check"
@@ -111,6 +128,10 @@ class TestPower(TestCase):
         for p in [0.33, 0.5, 1, 1.5, 2, 3, 4, 5, 6.6]:
             assert_complex_equal(np.power(zero, -p), cnan)
         assert_complex_equal(np.power(zero, -1+0.2j), cnan)
+
+    def test_fast_power(self):
+        x=np.array([1,2,3], np.int16)
+        assert (x**2.00001).dtype is (x**2.0).dtype
 
 
 class TestLog2(TestCase):
@@ -454,6 +475,11 @@ class TestMaximum(TestCase):
             out  = np.array([nan, nan, nan], dtype=np.complex)
             assert_equal(np.maximum(arg1, arg2), out)
 
+    def test_object_array(self):
+        arg1 = np.arange(5, dtype=np.object)
+        arg2 = arg1 + 1
+        assert_equal(np.maximum(arg1, arg2), arg2)
+
 
 class TestMinimum(TestCase):
     def test_reduce(self):
@@ -495,6 +521,11 @@ class TestMinimum(TestCase):
             arg2 = np.array([cnan, 0, cnan], dtype=np.complex)
             out  = np.array([nan, nan, nan], dtype=np.complex)
             assert_equal(np.minimum(arg1, arg2), out)
+
+    def test_object_array(self):
+        arg1 = np.arange(5, dtype=np.object)
+        arg2 = arg1 + 1
+        assert_equal(np.minimum(arg1, arg2), arg1)
 
 
 class TestFmax(TestCase):
@@ -1205,6 +1236,7 @@ def test_complex_nan_comparisons():
             assert_equal(x <= y, False, err_msg="%r <= %r" % (x, y))
             assert_equal(x >= y, False, err_msg="%r >= %r" % (x, y))
             assert_equal(x == y, False, err_msg="%r == %r" % (x, y))
+
 
 if __name__ == "__main__":
     run_module_suite()
