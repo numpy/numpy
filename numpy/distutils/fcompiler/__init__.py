@@ -213,6 +213,10 @@ class FCompiler(CCompiler):
     # command/{build_ext.py, build_clib.py, config.py} files.
     c_compiler = None
 
+    # extra_{f77,f90}_compile_args are set by build_ext.build_extension method
+    extra_f77_compile_args = []
+    extra_f90_compile_args = []
+
     def __init__(self, *args, **kw):
         CCompiler.__init__(self, *args, **kw)
         self.distutils_vars = self.distutils_vars.clone(self._environment_hook)
@@ -560,18 +564,21 @@ class FCompiler(CCompiler):
             flavor = ':f77'
             compiler = self.compiler_f77
             src_flags = get_f77flags(src)
+            extra_compile_args = self.extra_f77_compile_args or []
         elif is_free_format(src):
             flavor = ':f90'
             compiler = self.compiler_f90
             if compiler is None:
                 raise DistutilsExecError('f90 not supported by %s needed for %s'\
                       % (self.__class__.__name__,src))
+            extra_compile_args = self.extra_f90_compile_args or []
         else:
             flavor = ':fix'
             compiler = self.compiler_fix
             if compiler is None:
                 raise DistutilsExecError('f90 (fixed) not supported by %s needed for %s'\
                       % (self.__class__.__name__,src))
+            extra_compile_args = self.extra_f90_compile_args or []
         if self.object_switch[-1]==' ':
             o_args = [self.object_switch.strip(),obj]
         else:
@@ -580,13 +587,17 @@ class FCompiler(CCompiler):
         assert self.compile_switch.strip()
         s_args = [self.compile_switch, src]
 
+        if extra_compile_args:
+            log.info('extra %s options: %r' \
+                     % (flavor[1:], ' '.join(extra_compile_args)))
+
         extra_flags = src_flags.get(self.compiler_type,[])
         if extra_flags:
             log.info('using compile options from source: %r' \
                      % ' '.join(extra_flags))
 
         command = compiler + cc_args + extra_flags + s_args + o_args \
-                  + extra_postargs
+                  + extra_postargs + extra_compile_args
 
         display = '%s: %s' % (os.path.basename(compiler[0]) + flavor,
                               src)
@@ -960,6 +971,8 @@ def get_f77flags(src):
         flags[fcname] = split_quoted(fflags)
     f.close()
     return flags
+
+# TODO: implement get_f90flags and use it in _compile similarly to get_f77flags
 
 if __name__ == '__main__':
     show_fcompilers()
