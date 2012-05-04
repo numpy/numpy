@@ -525,10 +525,17 @@ def chebfromroots(roots) :
         return np.ones(1)
     else :
         [roots] = pu.as_series([roots], trim=False)
-        prd = np.array([1], dtype=roots.dtype)
-        for r in roots:
-            prd = chebsub(chebmulx(prd), r*prd)
-        return prd
+        roots.sort()
+        p = [chebline(-r, 1) for r in roots]
+        n = len(p)
+        while n > 1:
+            m, r = divmod(n, 2)
+            tmp = [chebmul(p[i], p[i+m]) for i in range(m)]
+            if r:
+                tmp[0] = chebmul(tmp[0], p[-1])
+            p = tmp
+            n = m
+        return p[0]
 
 
 def chebadd(c1, c2):
@@ -1122,9 +1129,16 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
     """
     Least squares fit of Chebyshev series to data.
 
-    Fit a Chebyshev series ``p(x) = p[0] * T_{0}(x) + ... + p[deg] *
-    T_{deg}(x)`` of degree `deg` to points `(x, y)`. Returns a vector of
-    coefficients `p` that minimises the squared error.
+    Return the coefficients of a Legendre series of degree `deg` that is the
+    least squares fit to the data values `y` given at points `x`. If `y` is
+    1-D the returned coefficients will also be 1-D. If `y` is 2-D multiple
+    fits are done, one for each column of `y`, and the resulting
+    coefficients are stored in the corresponding columns of a 2-D return.
+    The fitted polynomial(s) are in the form
+
+    .. math::  p(x) = c_0 + c_1 * T_1(x) + ... + c_n * T_n(x),
+
+    where `n` is `deg`.
 
     Parameters
     ----------
@@ -1135,7 +1149,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         points sharing the same x-coordinates can be fitted at once by
         passing in a 2D-array that contains one dataset per column.
     deg : int
-        Degree of the fitting polynomial
+        Degree of the fitting series
     rcond : float, optional
         Relative condition number of the fit. Singular values smaller than
         this relative to the largest singular value will be ignored. The
@@ -1150,6 +1164,7 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
+
         .. versionadded:: 1.5.0
 
     Returns
@@ -1176,30 +1191,31 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
+    polyfit, legfit, lagfit, hermfit, hermefit
     chebval : Evaluates a Chebyshev series.
     chebvander : Vandermonde matrix of Chebyshev series.
-    polyfit : least squares fit using polynomials.
+    chebweight : Chebyshev weight function.
     linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
     -----
-    The solution are the coefficients ``c[i]`` of the Chebyshev series
-    ``T(x)`` that minimizes the squared error
+    The solution is the coefficients of the Chebyshev series `p` that
+    minimizes the sum of the weighted squared errors
 
-    ``E = \\sum_j |y_j - T(x_j)|^2``.
+    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
 
-    This problem is solved by setting up as the overdetermined matrix
-    equation
+    where :math:`w_j` are the weights. This problem is solved by setting up
+    as the (typically) overdetermined matrix equation
 
-    ``V(x)*c = y``,
+    .. math:: V(x) * c = w * y,
 
-    where ``V`` is the Vandermonde matrix of `x`, the elements of ``c`` are
-    the coefficients to be solved for, and the elements of `y` are the
+    where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
+    coefficients to be solved for, `w` are the weights, and `y` are the
     observed values.  This equation is then solved using the singular value
-    decomposition of ``V``.
+    decomposition of `V`.
 
-    If some of the singular values of ``V`` are so small that they are
+    If some of the singular values of `V` are so small that they are
     neglected, then a `RankWarning` will be issued. This means that the
     coeficient values may be poorly determined. Using a lower order fit
     will usually get rid of the warning.  The `rcond` parameter can also be
@@ -1273,6 +1289,46 @@ def chebfit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
+def chebcompanion(cs):
+    """Return the scaled companion matrix of cs.
+
+    The basis polynomials are scaled so that the companion matrix is
+    symmetric when `cs` represents a single Chebyshev polynomial. This
+    provides better eigenvalue estimates than the unscaled case and in the
+    single polynomial case the eigenvalues are guaranteed to be real if
+    np.eigvalsh is used to obtain them.
+
+    Parameters
+    ----------
+    cs : array_like
+        1-d array of Legendre series coefficients ordered from low to high
+        degree.
+
+    Returns
+    -------
+    mat : ndarray
+        Scaled companion matrix of dimensions (deg, deg).
+
+    """
+    # cs is a trimmed copy
+    [cs] = pu.as_series([cs])
+    if len(cs) < 2:
+        raise ValueError('Series must have maximum degree of at least 1.')
+    if len(cs) == 2:
+        return np.array(-cs[0]/cs[1])
+
+    n = len(cs) - 1
+    mat = np.zeros((n, n), dtype=cs.dtype)
+    scl = np.array([1.] + [np.sqrt(.5)]*(n-1))
+    top = mat.reshape(-1)[1::n+1]
+    bot = mat.reshape(-1)[n::n+1]
+    top[0] = np.sqrt(.5)
+    top[1:] = 1/2
+    bot[...] = top
+    mat[:,-1] -= (cs[:-1]/cs[-1])*(scl/scl[-1])*.5
+    return mat
+
+
 def chebroots(cs):
     """
     Compute the roots of a Chebyshev series.
@@ -1307,34 +1363,22 @@ def chebroots(cs):
 
     Examples
     --------
-    >>> import numpy.polynomial as P
-    >>> import numpy.polynomial.chebyshev as C
-    >>> P.polyroots((-1,1,-1,1)) # x^3 - x^2 + x - 1 has two complex roots
-    array([ -4.99600361e-16-1.j,  -4.99600361e-16+1.j,   1.00000e+00+0.j])
-    >>> C.chebroots((-1,1,-1,1)) # T3 - T2 + T1 - T0 has only real roots
+    >>> import numpy.polynomial.chebyshev as cheb
+    >>> cheb.chebroots((-1, 1,-1, 1)) # T3 - T2 + T1 - T0 has real roots
     array([ -5.00000000e-01,   2.60860684e-17,   1.00000000e+00])
 
     """
     # cs is a trimmed copy
     [cs] = pu.as_series([cs])
-    if len(cs) <= 1 :
+    if len(cs) < 2:
         return np.array([], dtype=cs.dtype)
-    if len(cs) == 2 :
+    if len(cs) == 2:
         return np.array([-cs[0]/cs[1]])
 
-    n = len(cs) - 1
-    cs /= cs[-1]
-    cmat = np.zeros((n,n), dtype=cs.dtype)
-    cmat[1, 0] = 1
-    for i in range(1, n):
-        cmat[i - 1, i] = .5
-        if i != n - 1:
-            cmat[i + 1, i] = .5
-        else:
-            cmat[:, i] -= cs[:-1]*.5
-    roots = la.eigvals(cmat)
-    roots.sort()
-    return roots
+    m = chebcompanion(cs)
+    r = la.eigvals(m)
+    r.sort()
+    return r
 
 
 def chebpts1(npts):
