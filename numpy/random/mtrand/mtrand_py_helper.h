@@ -3,7 +3,7 @@
 
 #include <Python.h>
 
-static PyObject *empty_py_bytes(unsigned long length, void **bytes)
+static PyObject *empty_py_bytes(npy_intp length, void **bytes)
 {
     PyObject *b;
 #if PY_MAJOR_VERSION >= 3
