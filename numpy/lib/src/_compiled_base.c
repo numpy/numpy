@@ -1,6 +1,7 @@
 #include "Python.h"
 #include "structmember.h"
 #include "numpy/noprefix.h"
+#include "numpy/npy_3kcompat.h"
 #include "npy_config.h"
 
 static intp
@@ -115,16 +116,30 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
                 kwlist, &list, &weight, &mlength)) {
             goto fail;
     }
-    if (!(lst = PyArray_ContiguousFromAny(list, PyArray_INTP, 1, 1))) {
-            goto fail;
-    }
-    len = PyArray_SIZE(lst);
-    if (len < 1) {
-        PyErr_SetString(PyExc_ValueError,
-                "The first argument cannot be empty.");
+
+    lst = (PyArrayObject *)PyArray_ContiguousFromAny(list, NPY_INTP, 1, 1);
+    if (lst == NULL) {
         goto fail;
     }
-    numbers = (intp *) PyArray_DATA(lst);
+    len = PyArray_SIZE(lst);
+    type = PyArray_DescrFromType(NPY_INTP);
+
+    /* handle empty list */
+    if (len < 1) {
+        if (mlength == Py_None) {
+            minlength = 0;
+        }
+        else if (!(minlength = PyArray_PyIntAsIntp(mlength))) {
+            goto fail;
+        }
+        if (!(ans = PyArray_Zeros(1, &minlength, type, 0))){
+            goto fail;
+        }
+        Py_DECREF(lst);
+        return ans;
+    }
+
+    numbers = (npy_intp *) PyArray_DATA(lst);
     mxi = mxx(numbers, len);
     mni = mnx(numbers, len);
     if (numbers[mni] < 0) {
@@ -147,7 +162,6 @@ arr_bincount(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
             ans_size = minlength;
         }
     }
-    type = PyArray_DescrFromType(PyArray_INTP);
     if (weight == Py_None) {
         if (!(ans = PyArray_Zeros(1, &ans_size, type, 0))) {
             goto fail;
@@ -1096,8 +1110,8 @@ arr_add_docstring(PyObject *NPY_UNUSED(dummy), PyObject *args)
     docstr = PyString_AS_STRING(str);
 #endif
 
-#define _TESTDOC1(typebase) (obj->ob_type == &Py##typebase##_Type)
-#define _TESTDOC2(typebase) (obj->ob_type == Py##typebase##_TypePtr)
+#define _TESTDOC1(typebase) (Py_TYPE(obj) == &Py##typebase##_Type)
+#define _TESTDOC2(typebase) (Py_TYPE(obj) == Py##typebase##_TypePtr)
 #define _ADDDOC(typebase, doc, name) do {                               \
         Py##typebase##Object *new = (Py##typebase##Object *)obj;        \
         if (!(doc)) {                                                   \
@@ -1297,8 +1311,8 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
             new = temp;
         }
         else {
-            ubyte *optr, *iptr;
-            out = PyArray_New(new->ob_type, 0, NULL, NPY_UBYTE,
+            char *optr, *iptr;
+            out = (PyArrayObject *)PyArray_New(Py_TYPE(new), 0, NULL, NPY_UBYTE,
                     NULL, NULL, 0, 0, NULL);
             if (out == NULL) {
                 goto fail;
@@ -1338,8 +1352,9 @@ pack_or_unpack_bits(PyObject *input, int axis, int unpack)
     }
 
     /* Create output array */
-    out = PyArray_New(new->ob_type, PyArray_NDIM(new), outdims, PyArray_UBYTE,
-            NULL, NULL, 0, PyArray_ISFORTRAN(new), NULL);
+    out = (PyArrayObject *)PyArray_New(Py_TYPE(new),
+                        PyArray_NDIM(new), outdims, NPY_UBYTE,
+                        NULL, NULL, 0, PyArray_ISFORTRAN(new), NULL);
     if (out == NULL) {
         goto fail;
     }
@@ -1437,17 +1452,17 @@ define_types(void)
     if (myobj == NULL) {
         return;
     }
-    PyGetSetDescr_TypePtr = myobj->ob_type;
+    PyGetSetDescr_TypePtr = Py_TYPE(myobj);
     myobj = PyDict_GetItemString(tp_dict, "alignment");
     if (myobj == NULL) {
         return;
     }
-    PyMemberDescr_TypePtr = myobj->ob_type;
+    PyMemberDescr_TypePtr = Py_TYPE(myobj);
     myobj = PyDict_GetItemString(tp_dict, "newbyteorder");
     if (myobj == NULL) {
         return;
     }
-    PyMethodDescr_TypePtr = myobj->ob_type;
+    PyMethodDescr_TypePtr = Py_TYPE(myobj);
     return;
 }
 
