@@ -1868,6 +1868,10 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     `atol` are added together to compare against the absolute difference
     between `a` and `b`.
 
+    If either array contains one or more NaNs, False is returned.
+    Infs are treated as equal if they are in the same place and of the same
+    sign in both arrays.
+
     Parameters
     ----------
     a, b : array_like
@@ -1881,8 +1885,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     -------
     y : bool
         Returns True if the two arrays are equal within the given
-        tolerance; False otherwise. If either array contains NaN, then
-        False is returned.
+        tolerance; False otherwise.
 
     See Also
     --------
@@ -1913,16 +1916,24 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     """
     x = array(a, copy=False, ndmin=1)
     y = array(b, copy=False, ndmin=1)
+
+    if any(isnan(x)) or any(isnan(y)):
+        return False
+
     xinf = isinf(x)
-    if not all(xinf == isinf(y)):
-        return False
-    if not any(xinf):
-        return all(less_equal(absolute(x-y), atol + rtol * absolute(y)))
-    if not all(x[xinf] == y[xinf]):
-        return False
-    x = x[~xinf]
-    y = y[~xinf]
-    return all(less_equal(absolute(x-y), atol + rtol * absolute(y)))
+    yinf = isinf(y)
+    if any(xinf) or any(yinf):
+        # Check that x and y have inf's only in the same positions
+        if not all(xinf == yinf):
+            return False
+        # Check that sign of inf's in x and y is the same
+        if not all(x[xinf] == y[xinf]):
+            return False
+
+        x = x[~xinf]
+        y = y[~xinf]
+
+    return all(less_equal(abs(x-y), atol + rtol * abs(y)))
 
 def array_equal(a1, a2):
     """

@@ -299,7 +299,7 @@ _convert_from_array_descr(PyObject *obj, int align)
     PyObject *nameslist;
     PyArray_Descr *new;
     PyArray_Descr *conv;
-    int dtypeflags = 0;
+    char dtypeflags = 0;
     int maxalign = 0;
 
     n = PyList_GET_SIZE(obj);
@@ -436,10 +436,9 @@ _convert_from_array_descr(PyObject *obj, int align)
     new->fields = fields;
     new->names = nameslist;
     new->elsize = totalsize;
-    new->flags=dtypeflags;
-    if (maxalign > 1) {
-        totalsize = ((totalsize + maxalign - 1)/maxalign)*maxalign;
-    }
+    new->flags = dtypeflags;
+
+    /* Structured arrays get a sticky aligned bit */
     if (align) {
         new->alignment = maxalign;
     }
@@ -469,7 +468,7 @@ _convert_from_list(PyObject *obj, int align)
     PyObject *nameslist = NULL;
     int ret;
     int maxalign = 0;
-    int dtypeflags = 0;
+    char dtypeflags = 0;
 
     n = PyList_GET_SIZE(obj);
     /*
@@ -975,7 +974,8 @@ _convert_from_dict(PyObject *obj, int align)
     int n, i;
     int totalsize;
     int maxalign = 0;
-    int dtypeflags = 0;
+    char dtypeflags = 0;
+    int has_out_of_order_fields = 0;
 
     fields = PyDict_New();
     if (fields == NULL) {
@@ -1539,7 +1539,7 @@ static PyMemberDef arraydescr_members[] = {
     {"alignment",
         T_INT, offsetof(PyArray_Descr, alignment), READONLY, NULL},
     {"flags",
-        T_INT, offsetof(PyArray_Descr, flags), READONLY, NULL},
+        T_BYTE, offsetof(PyArray_Descr, flags), READONLY, NULL},
     {NULL, 0, 0, 0, NULL},
 };
 
@@ -1840,7 +1840,13 @@ arraydescr_names_set(PyArray_Descr *self, PyObject *val)
     int i;
     PyObject *new_names;
     PyObject *new_fields;
-    if (self->names == NULL) {
+
+    if (val == NULL) {
+        PyErr_SetString(PyExc_AttributeError,
+                "Cannot delete dtype names attribute");
+        return -1;
+    }
+    if (!PyDataType_HASFIELDS(self)) {
         PyErr_SetString(PyExc_ValueError,
                 "there are no fields defined");
         return -1;
@@ -2175,10 +2181,10 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
 }
 
 /*
- * returns 1 if this data-type has an object portion
- * used when setting the state because hasobject is not stored.
+ * returns NPY_OBJECT_DTYPE_FLAGS if this data-type has an object portion used
+ * when setting the state because hasobject is not stored.
  */
-static int
+static char
 _descr_find_object(PyArray_Descr *self)
 {
     if (self->flags
@@ -2225,7 +2231,8 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 #endif
     PyObject *subarray, *fields, *names = NULL, *metadata=NULL;
     int incref_names = 1;
-    int dtypeflags = 0;
+    int int_dtypeflags = 0;
+    char dtypeflags;
 
     if (self->fields == Py_None) {
         Py_INCREF(Py_None);
@@ -2245,7 +2252,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 #endif
         if (!PyArg_ParseTuple(args, _ARGSTR_, &version, &endian,
                     &subarray, &names, &fields, &elsize,
-                    &alignment, &dtypeflags, &metadata)) {
+                    &alignment, &int_dtypeflags, &metadata)) {
             return NULL;
 #undef _ARGSTR_
         }
@@ -2258,7 +2265,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 #endif
         if (!PyArg_ParseTuple(args, _ARGSTR_, &version, &endian,
                     &subarray, &names, &fields, &elsize,
-                    &alignment, &dtypeflags)) {
+                    &alignment, &int_dtypeflags)) {
             return NULL;
 #undef _ARGSTR_
         }
@@ -2423,7 +2430,22 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         self->alignment = alignment;
     }
 
-    self->flags = dtypeflags;
+    /*
+     * We use an integer converted to char for backward compatibility with
+     * pickled arrays. Pickled arrays created with previous versions encoded
+     * flags as an int even though it actually was a char in the PyArray_Descr
+     * structure
+     */
+    dtypeflags = int_dtypeflags;
+    if (dtypeflags != int_dtypeflags) {
+        PyErr_Format(PyExc_ValueError,
+                     "incorrect value for flags variable (overflow)");
+        return NULL;
+    }
+    else {
+        self->flags = dtypeflags;
+    }
+
     if (version < 3) {
         self->flags = _descr_find_object(self);
     }

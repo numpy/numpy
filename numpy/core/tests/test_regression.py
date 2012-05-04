@@ -1611,5 +1611,19 @@ class TestRegression(TestCase):
         a[...] = [[1,2]]
         assert_equal(a, [[1,2], [1,2]])
 
+    def test_unique_stable(self):
+        # Ticket #2063 must always choose stable sort for argsort to
+        # get consistent results
+        v=np.array([0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2]*4)
+        w=np.array([0,0,0,0,0,1,1,1,1,1,1,2,2,2,2])
+        resv = np.unique(v,return_index=True)
+        resw = np.unique(w,return_index=True)
+        assert_equal(resv, resw)
+
+    def test_search_sorted_invalid_arguments(self):
+        # Ticket #2021, should not segfault.
+        x = np.arange(0, 4, dtype='datetime64[D]')
+        assert_raises(TypeError, x.searchsorted, 1)
+
 if __name__ == "__main__":
     run_module_suite()

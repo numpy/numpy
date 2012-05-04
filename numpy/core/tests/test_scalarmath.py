@@ -60,6 +60,28 @@ class TestPower(TestCase):
                 assert_almost_equal(b, 6765201, err_msg=msg)
 
 
+class TestComplexDivision(TestCase):
+    def test_zero_division(self):
+        err = np.seterr(over="ignore", invalid="ignore", divide='ignore')
+        try:
+            for t in [np.complex64, np.complex128]:
+                a = t(0.0)
+                b = t(1.0)
+                assert_(np.isinf(b/a))
+                b = t(complex(np.inf, np.inf))
+                assert_(np.isinf(b/a))
+                b = t(complex(np.inf, np.nan))
+                assert_(np.isinf(b/a))
+                b = t(complex(np.nan, np.inf))
+                assert_(np.isinf(b/a))
+                b = t(complex(np.nan, np.nan))
+                assert_(np.isnan(b/a))
+                b = t(0.)
+                assert_(np.isnan(b/a))
+        finally:
+            np.seterr(**err)
+
+
 class TestConversion(TestCase):
     def test_int_from_long(self):
         l = [1e6, 1e12, 1e18, -1e6, -1e12, -1e18]

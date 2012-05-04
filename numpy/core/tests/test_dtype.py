@@ -33,6 +33,18 @@ class TestBuiltin(TestCase):
                 self.assertTrue(dt.byteorder != dt3.byteorder, "bogus test")
                 assert_dtype_equal(dt, dt3)
 
+    def test_equivalent_dtype_hashing(self):
+        # Make sure equivalent dtypes with different type num hash equal
+        uintp = np.dtype(np.uintp)
+        if uintp.itemsize == 4:
+            left = uintp
+            right = np.dtype(np.uint32)
+        else:
+            left = uintp
+            right = np.dtype(np.ulonglong)
+        self.assertTrue(left == right)
+        self.assertTrue(hash(left) == hash(right))
+
 class TestRecord(TestCase):
     def test_equivalent_record(self):
         """Test whether equivalent record dtypes hash the same."""
