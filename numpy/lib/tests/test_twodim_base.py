@@ -224,7 +224,10 @@ class TestHistogram2d(TestCase):
 
     def test_empty(self):
         a, edge1, edge2 = histogram2d([],[], bins=([0,1],[0,1]))
-        assert_array_max_ulp(a, array([ 0., 0.]))
+        assert_array_max_ulp(a, array([[ 0.]]))
+
+        a, edge1, edge2 = histogram2d([], [], bins=4)
+        assert_array_max_ulp(a, np.zeros((4, 4)))
 
 
 class TestTri(TestCase):
@@ -234,6 +237,18 @@ class TestTri(TestCase):
                      [1,1,1]])
         assert_array_equal(tri(3),out)
         assert_array_equal(tri(3,dtype=bool),out.astype(bool))
+
+
+def test_tril_triu():
+    for dtype in np.typecodes['AllFloat'] + np.typecodes['AllInteger']:
+        a = np.ones((2, 2), dtype=dtype)
+        b = np.tril(a)
+        c = np.triu(a)
+        assert_array_equal(b, [[1, 0], [1, 1]])
+        assert_array_equal(c, b.T)
+        # should return the same dtype as the original array
+        assert_equal(b.dtype, a.dtype)
+        assert_equal(c.dtype, a.dtype)
 
 
 def test_mask_indices():

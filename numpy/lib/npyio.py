@@ -9,6 +9,7 @@ import os
 import sys
 import itertools
 import warnings
+import weakref
 from operator import itemgetter
 
 from cPickle import load as _cload, loads
@@ -107,7 +108,8 @@ class BagObj(object):
 
     """
     def __init__(self, obj):
-        self._obj = obj
+        # Use weakref to make NpzFile objects collectable by refcount
+        self._obj = weakref.proxy(obj)
     def __getattribute__(self, key):
         try:
             return object.__getattribute__(self, '_obj')[key]
@@ -205,6 +207,7 @@ class NpzFile(object):
         if self.fid is not None:
             self.fid.close()
             self.fid = None
+        self.f = None # break reference cycle
 
     def __del__(self):
         self.close()
@@ -704,11 +707,10 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             if len(shape) == 0:
                 return ([dt.base], None)
             else:
-                packing = [(shape[-1], tuple)]
+                packing = [(shape[-1], list)]
                 if len(shape) > 1:
-                    for dim in dt.shape[-2:0:-1]:
-                        packing = [(dim*packing[0][0],packing*dim)]
-                    packing = packing*shape[0]
+                    for dim in dt.shape[-2::-1]:
+                        packing = [(dim*packing[0][0], packing*dim)]
                 return ([dt.base] * int(np.prod(dt.shape)), packing)
         else:
             types = []
@@ -717,7 +719,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 tp, bytes = dt.fields[field]
                 flat_dt, flat_packing = flatten_dtype(tp)
                 types.extend(flat_dt)
-                packing.append((len(flat_dt),flat_packing))
+                # Avoid extra nesting for subarrays
+                if len(tp.shape) > 0:
+                    packing.extend(flat_packing)
+                else:
+                    packing.append((len(flat_dt), flat_packing))
             return (types, packing)
 
     def pack_items(items, packing):
@@ -726,6 +732,8 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             return items[0]
         elif packing is tuple:
             return tuple(items)
+        elif packing is list:
+            return list(items)
         else:
             start = 0
             ret = []
@@ -762,6 +770,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # End of lines reached
             first_line = ''
             first_vals = []
+            warnings.warn('loadtxt: Empty input file: "%s"' % fname)
         N = len(usecols or first_vals)
 
         dtype_types, packing = flatten_dtype(dtype)
@@ -847,14 +856,21 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
     fmt : str or sequence of strs
         A single format (%10.5f), a sequence of formats, or a
         multi-format string, e.g. 'Iteration %d -- %10.5f', in which
-        case `delimiter` is ignored.
-    delimiter : str
+        case `delimiter` is ignored. For complex `X`, the legal options
+        for `fmt` are:
+            a) a single specifier, `fmt='%.4e'`, resulting in numbers formatted
+                like `' (%s+%sj)' % (fmt, fmt)`
+            b) a full string specifying every real and imaginary part, e.g.
+                `' %.4e %+.4j %.4e %+.4j %.4e %+.4j'` for 3 columns
+            c) a list of specifiers, one per column - in this case, the real
+                and imaginary part must have separate specifiers,
+                e.g. `['%.3e + %.3ej', '(%.15e%+.15ej)']` for 2 columns
+    delimiter : str, optional
         Character separating columns.
     newline : str
         .. versionadded:: 1.5.0
 
         Character separating lines.
-
 
     See Also
     --------
@@ -959,6 +975,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
         else:
             ncol = X.shape[1]
 
+        iscomplex_X = np.iscomplexobj(X)
         # `fmt` can be a string with multiple insertion points or a
         # list of formats.  E.g. '%10.5f\t%10d' or ('%10.5f', '$10d')
         if type(fmt) in (list, tuple):
@@ -966,17 +983,31 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n'):
                 raise AttributeError('fmt has wrong shape.  %s' % str(fmt))
             format = asstr(delimiter).join(map(asstr, fmt))
         elif type(fmt) is str:
-            if fmt.count('%') == 1:
-                fmt = [fmt, ]*ncol
+            n_fmt_chars = fmt.count('%')
+            error = ValueError('fmt has wrong number of %% formats:  %s' % fmt)
+            if n_fmt_chars == 1:
+                if iscomplex_X:
+                    fmt = [' (%s+%sj)' % (fmt, fmt),] * ncol
+                else:
+                    fmt = [fmt, ] * ncol
                 format = delimiter.join(fmt)
-            elif fmt.count('%') != ncol:
-                raise AttributeError('fmt has wrong number of %% formats.  %s'
-                                     % fmt)
+            elif iscomplex_X and n_fmt_chars != (2 * ncol):
+                raise error
+            elif ((not iscomplex_X) and n_fmt_chars != ncol):
+                raise error
             else:
                 format = fmt
 
-        for row in X:
-            fh.write(asbytes(format % tuple(row) + newline))
+        if iscomplex_X:
+            for row in X:
+                row2 = []
+                for number in row:
+                    row2.append(number.real)
+                    row2.append(number.imag)
+                fh.write(asbytes(format % tuple(row2) + newline))
+        else:
+            for row in X:
+                fh.write(asbytes(format % tuple(row) + newline))
     finally:
         if own_fh:
             fh.close()
@@ -1274,8 +1305,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     first_line = asbytes('').join(first_line.split(comments)[1:])
             first_values = split_line(first_line)
     except StopIteration:
-        # might want to return empty array instead of raising error.
-        raise IOError('End-of-file reached before encountering data.')
+        # return an empty array if the datafile is empty
+        first_line = asbytes('')
+        first_values = []
+        warnings.warn('genfromtxt: Empty input file: "%s"' % fname)
 
     # Should we take the first values as names ?
     if names is True:
