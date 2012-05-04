@@ -1,5 +1,8 @@
 """
-Objects for dealing with Legendre series.
+Legendre Series (:mod: `numpy.polynomial.legendre`)
+===================================================
+
+.. currentmodule:: numpy.polynomial.polynomial
 
 This module provides a number of objects (mostly functions) useful for
 dealing with Legendre series, including a `Legendre` class that
@@ -9,44 +12,64 @@ docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Constants
 ---------
-- `legdomain` -- Legendre series default domain, [-1,1].
-- `legzero` -- Legendre series that evaluates identically to 0.
-- `legone` -- Legendre series that evaluates identically to 1.
-- `legx` -- Legendre series for the identity map, ``f(x) = x``.
+
+.. autosummary::
+   :toctree: generated/
+
+   legdomain            Legendre series default domain, [-1,1].
+   legzero              Legendre series that evaluates identically to 0.
+   legone               Legendre series that evaluates identically to 1.
+   legx                 Legendre series for the identity map, ``f(x) = x``.
 
 Arithmetic
 ----------
-- `legmulx` -- multiply a Legendre series in ``P_i(x)`` by ``x``.
-- `legadd` -- add two Legendre series.
-- `legsub` -- subtract one Legendre series from another.
-- `legmul` -- multiply two Legendre series.
-- `legdiv` -- divide one Legendre series by another.
-- `legpow` -- raise a Legendre series to an positive integer power
-- `legval` -- evaluate a Legendre series at given points.
+
+.. autosummary::
+   :toctree: generated/
+
+   legmulx              multiply a Legendre series in P_i(x) by x.
+   legadd               add two Legendre series.
+   legsub               subtract one Legendre series from another.
+   legmul               multiply two Legendre series.
+   legdiv               divide one Legendre series by another.
+   legpow               raise a Legendre series to an positive integer power
+   legval               evaluate a Legendre series at given points.
 
 Calculus
 --------
-- `legder` -- differentiate a Legendre series.
-- `legint` -- integrate a Legendre series.
+
+.. autosummary::
+   :toctree: generated/
+
+   legder               differentiate a Legendre series.
+   legint               integrate a Legendre series.
 
 Misc Functions
 --------------
-- `legfromroots` -- create a Legendre series with specified roots.
-- `legroots` -- find the roots of a Legendre series.
-- `legvander` -- Vandermonde-like matrix for Legendre polynomials.
-- `legfit` -- least-squares fit returning a Legendre series.
-- `legtrim` -- trim leading coefficients from a Legendre series.
-- `legline` -- Legendre series representing given straight line.
-- `leg2poly` -- convert a Legendre series to a polynomial.
-- `poly2leg` -- convert a polynomial to a Legendre series.
+
+.. autosummary::
+   :toctree: generated/
+
+   legfromroots          create a Legendre series with specified roots.
+   legroots              find the roots of a Legendre series.
+   legvander             Vandermonde-like matrix for Legendre polynomials.
+   legfit                least-squares fit returning a Legendre series.
+   legtrim               trim leading coefficients from a Legendre series.
+   legline               Legendre series representing given straight line.
+   leg2poly              convert a Legendre series to a polynomial.
+   poly2leg              convert a polynomial to a Legendre series.
 
 Classes
 -------
-- `Legendre` -- A Legendre series class.
+    Legendre            A Legendre series class.
 
 See also
 --------
-`numpy.polynomial`
+numpy.polynomial.polynomial
+numpy.polynomial.chebyshev
+numpy.polynomial.laguerre
+numpy.polynomial.hermite
+numpy.polynomial.hermite_e
 
 """
 from __future__ import division
@@ -283,10 +306,17 @@ def legfromroots(roots) :
         return np.ones(1)
     else :
         [roots] = pu.as_series([roots], trim=False)
-        prd = np.array([1], dtype=roots.dtype)
-        for r in roots:
-            prd = legsub(legmulx(prd), r*prd)
-        return prd
+        roots.sort()
+        p = [legline(-r, 1) for r in roots]
+        n = len(p)
+        while n > 1:
+            m, r = divmod(n, 2)
+            tmp = [legmul(p[i], p[i+m]) for i in range(m)]
+            if r:
+                tmp[0] = legmul(tmp[0], p[-1])
+            p = tmp
+            n = m
+        return p[0]
 
 
 def legadd(c1, c2):
@@ -919,9 +949,16 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     """
     Least squares fit of Legendre series to data.
 
-    Fit a Legendre series ``p(x) = p[0] * P_{0}(x) + ... + p[deg] *
-    P_{deg}(x)`` of degree `deg` to points `(x, y)`. Returns a vector of
-    coefficients `p` that minimises the squared error.
+    Return the coefficients of a Legendre series of degree `deg` that is the
+    least squares fit to the data values `y` given at points `x`. If `y` is
+    1-D the returned coefficients will also be 1-D. If `y` is 2-D multiple
+    fits are done, one for each column of `y`, and the resulting
+    coefficients are stored in the corresponding columns of a 2-D return.
+    The fitted polynomial(s) are in the form
+
+    .. math::  p(x) = c_0 + c_1 * L_1(x) + ... + c_n * L_n(x),
+
+    where `n` is `deg`.
 
     Parameters
     ----------
@@ -948,6 +985,8 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
 
+        .. versionadded:: 1.5.0
+
     Returns
     -------
     coef : ndarray, shape (M,) or (M, K)
@@ -972,31 +1011,31 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
+    chebfit, polyfit, lagfit, hermfit, hermefit
     legval : Evaluates a Legendre series.
     legvander : Vandermonde matrix of Legendre series.
-    polyfit : least squares fit using polynomials.
-    chebfit : least squares fit using Chebyshev series.
+    legweight : Legendre weight function (= 1).
     linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
     -----
-    The solution are the coefficients ``c[i]`` of the Legendre series
-    ``P(x)`` that minimizes the squared error
+    The solution is the coefficients of the Legendre series `p` that
+    minimizes the sum of the weighted squared errors
 
-    ``E = \\sum_j |y_j - P(x_j)|^2``.
+    .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
 
-    This problem is solved by setting up as the overdetermined matrix
-    equation
+    where :math:`w_j` are the weights. This problem is solved by setting up
+    as the (typically) overdetermined matrix equation
 
-    ``V(x)*c = y``,
+    .. math:: V(x) * c = w * y,
 
-    where ``V`` is the Vandermonde matrix of `x`, the elements of ``c`` are
-    the coefficients to be solved for, and the elements of `y` are the
+    where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
+    coefficients to be solved for, `w` are the weights, and `y` are the
     observed values.  This equation is then solved using the singular value
-    decomposition of ``V``.
+    decomposition of `V`.
 
-    If some of the singular values of ``V`` are so small that they are
+    If some of the singular values of `V` are so small that they are
     neglected, then a `RankWarning` will be issued. This means that the
     coeficient values may be poorly determined. Using a lower order fit
     will usually get rid of the warning.  The `rcond` parameter can also be
@@ -1070,11 +1109,50 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
+def legcompanion(cs):
+    """Return the scaled companion matrix of cs.
+
+    The basis polynomials are scaled so that the companion matrix is
+    symmetric when `cs` represents a single Legendre polynomial. This
+    provides better eigenvalue estimates than the unscaled case and in the
+    single polynomial case the eigenvalues are guaranteed to be real if
+    `numpy.linalg.eigvalsh` is used to obtain them.
+
+    Parameters
+    ----------
+    cs : array_like
+        1-d array of Legendre series coefficients ordered from low to high
+        degree.
+
+    Returns
+    -------
+    mat : ndarray
+        Scaled companion matrix of dimensions (deg, deg).
+
+    """
+    # cs is a trimmed copy
+    [cs] = pu.as_series([cs])
+    if len(cs) < 2:
+        raise ValueError('Series must have maximum degree of at least 1.')
+    if len(cs) == 2:
+        return np.array(-cs[0]/cs[1])
+
+    n = len(cs) - 1
+    mat = np.zeros((n, n), dtype=cs.dtype)
+    scl = 1./np.sqrt(2*np.arange(n) + 1)
+    top = mat.reshape(-1)[1::n+1]
+    bot = mat.reshape(-1)[n::n+1]
+    top[...] = np.arange(1, n)*scl[:n-1]*scl[1:n]
+    bot[...] = top
+    mat[:,-1] -= (cs[:-1]/cs[-1])*(scl/scl[-1])*(n/(2*n - 1))
+    return mat
+
+
 def legroots(cs):
     """
     Compute the roots of a Legendre series.
 
-    Return the roots (a.k.a "zeros") of the Legendre series represented by
+    Returns the roots (a.k.a "zeros") of the Legendre series represented by
     `cs`, which is the sequence of coefficients from lowest order "term"
     to highest, e.g., [1,2,3] is the series ``L_0 + 2*L_1 + 3*L_2``.
 
@@ -1082,12 +1160,15 @@ def legroots(cs):
     ----------
     cs : array_like
         1-d array of Legendre series coefficients ordered from low to high.
+    maxiter : int, optional
+        Maximum number of iterations of Newton to use in refining the
+        roots.
 
     Returns
     -------
     out : ndarray
-        Array of the roots.  If all the roots are real, then so is the
-        dtype of ``out``; otherwise, ``out``'s dtype is complex.
+        Sorted array of the roots. If all the roots are real, then so is
+        the dtype of ``out``; otherwise, ``out``'s dtype is complex.
 
     See Also
     --------
@@ -1096,43 +1177,36 @@ def legroots(cs):
 
     Notes
     -----
-    Algorithm(s) used:
+    The root estimates are obtained as the eigenvalues of the companion
+    matrix, Roots far from the real interval [-1, 1] in the complex plane
+    may have large errors due to the numerical instability of the Lengendre
+    series for such values. Roots with multiplicity greater than 1 will
+    also show larger errors as the value of the series near such points is
+    relatively insensitive to errors in the roots. Isolated roots near the
+    interval [-1, 1] can be improved by a few iterations of Newton's
+    method.
 
-    Remember: because the Legendre series basis set is different from the
-    "standard" basis set, the results of this function *may* not be what
-    one is expecting.
+    The Legendre series basis polynomials aren't powers of ``x`` so the
+    results of this function may seem unintuitive.
 
     Examples
     --------
-    >>> import numpy.polynomial as P
-    >>> P.polyroots((1, 2, 3, 4)) # 4x^3 + 3x^2 + 2x + 1 has two complex roots
-    array([-0.60582959+0.j        , -0.07208521-0.63832674j,
-           -0.07208521+0.63832674j])
-    >>> P.legroots((1, 2, 3, 4)) # 4L_3 + 3L_2 + 2L_1 + 1L_0 has only real roots
+    >>> import numpy.polynomial.legendre as leg
+    >>> leg.legroots((1, 2, 3, 4)) # 4L_3 + 3L_2 + 2L_1 + 1L_0 has only real roots
     array([-0.85099543, -0.11407192,  0.51506735])
 
     """
     # cs is a trimmed copy
     [cs] = pu.as_series([cs])
-    if len(cs) <= 1 :
+    if len(cs) < 2:
         return np.array([], dtype=cs.dtype)
-    if len(cs) == 2 :
+    if len(cs) == 2:
         return np.array([-cs[0]/cs[1]])
 
-    n = len(cs) - 1
-    cs /= cs[-1]
-    cmat = np.zeros((n,n), dtype=cs.dtype)
-    cmat[1, 0] = 1
-    for i in range(1, n):
-        tmp = 2*i + 1
-        cmat[i - 1, i] = i/tmp
-        if i != n - 1:
-            cmat[i + 1, i] = (i + 1)/tmp
-        else:
-            cmat[:, i] -= cs[:-1]*(i + 1)/tmp
-    roots = la.eigvals(cmat)
-    roots.sort()
-    return roots
+    m = legcompanion(cs)
+    r = la.eigvals(m)
+    r.sort()
+    return r
 
 
 #

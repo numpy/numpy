@@ -169,10 +169,17 @@ def polyfromroots(roots) :
         return np.ones(1)
     else :
         [roots] = pu.as_series([roots], trim=False)
-        prd = np.array([1], dtype=roots.dtype)
-        for r in roots:
-            prd = polysub(polymulx(prd), r*prd)
-        return prd
+        roots.sort()
+        p = [polyline(-r, 1) for r in roots]
+        n = len(p)
+        while n > 1:
+            m, r = divmod(n, 2)
+            tmp = [polymul(p[i], p[i+m]) for i in range(m)]
+            if r:
+                tmp[0] = polymul(tmp[0], p[-1])
+            p = tmp
+            n = m
+        return p[0]
 
 
 def polyadd(c1, c2):
@@ -696,10 +703,16 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     """
     Least-squares fit of a polynomial to data.
 
-    Fit a polynomial ``c0 + c1*x + c2*x**2 + ... + c[deg]*x**deg`` to
-    points (`x`, `y`).  Returns a 1-d (if `y` is 1-d) or 2-d (if `y` is 2-d)
-    array of coefficients representing, from lowest order term to highest,
-    the polynomial(s) which minimize the total square error.
+    Return the coefficients of a polynomial of degree `deg` that is the
+    least squares fit to the data values `y` given at points `x`. If `y` is
+    1-D the returned coefficients will also be 1-D. If `y` is 2-D multiple
+    fits are done, one for each column of `y`, and the resulting
+    coefficients are stored in the corresponding columns of a 2-D return.
+    The fitted polynomial(s) are in the form
+
+    .. math::  p(x) = c_0 + c_1 * x + ... + c_n * x^n,
+
+    where `n` is `deg`.
 
     Parameters
     ----------
@@ -708,7 +721,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     y : array_like, shape (`M`,) or (`M`, `K`)
         y-coordinates of the sample points.  Several sets of sample points
         sharing the same x-coordinates can be (independently) fit with one
-        call to `polyfit` by passing in for `y` a 2-d array that contains
+        call to `polyfit` by passing in for `y` a 2-D array that contains
         one data set per column.
     deg : int
         Degree of the polynomial(s) to be fit.
@@ -728,12 +741,13 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         ``(x[i],y[i])`` to the fit is weighted by `w[i]`. Ideally the
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
+
         .. versionadded:: 1.5.0
 
     Returns
     -------
     coef : ndarray, shape (`deg` + 1,) or (`deg` + 1, `K`)
-        Polynomial coefficients ordered from low to high.  If `y` was 2-d,
+        Polynomial coefficients ordered from low to high.  If `y` was 2-D,
         the coefficients in column `k` of `coef` represent the polynomial
         fit to the data in `y`'s `k`-th column.
 
@@ -755,27 +769,27 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
+    chebfit, legfit, lagfit, hermfit, hermefit
     polyval : Evaluates a polynomial.
     polyvander : Vandermonde matrix for powers.
-    chebfit : least squares fit using Chebyshev series.
     linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
     -----
-    The solutions are the coefficients ``c[i]`` of the polynomial ``P(x)``
-    that minimizes the total squared error:
+    The solution is the coefficients of the polynomial `p` that minimizes
+    the sum of the weighted squared errors
 
-    .. math :: E = \\sum_j (y_j - P(x_j))^2
+    .. math :: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
 
-    This problem is solved by setting up the (typically) over-determined
-    matrix equation:
+    where the :math:`w_j` are the weights. This problem is solved by
+    setting up the (typically) over-determined matrix equation:
 
-    .. math :: V(x)*c = y
+    .. math :: V(x) * c = w * y,
 
-    where `V` is the Vandermonde matrix of `x`, the elements of `c` are the
-    coefficients to be solved for, and the elements of `y` are the observed
-    values.  This equation is then solved using the singular value
+    where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
+    coefficients to be solved for, `w` are the weights, and `y` are the
+    observed values.  This equation is then solved using the singular value
     decomposition of `V`.
 
     If some of the singular values of `V` are so small that they are
@@ -790,10 +804,11 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
     contributions from roundoff error.
 
     Polynomial fits using double precision tend to "fail" at about
-    (polynomial) degree 20. Fits using Chebyshev series are generally
-    better conditioned, but much can still depend on the distribution of
-    the sample points and the smoothness of the data.  If the quality of
-    the fit is inadequate, splines may be a good alternative.
+    (polynomial) degree 20. Fits using Chebyshev or Legendre series are
+    generally better conditioned, but much can still depend on the
+    distribution of the sample points and the smoothness of the data.  If
+    the quality of the fit is inadequate, splines may be a good
+    alternative.
 
     Examples
     --------
@@ -872,6 +887,36 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
+def polycompanion(cs):
+    """Return the companion matrix of cs.
+
+
+    Parameters
+    ----------
+    cs : array_like
+        1-d array of series coefficients ordered from low to high degree.
+
+    Returns
+    -------
+    mat : ndarray
+        Scaled companion matrix of dimensions (deg, deg).
+
+    """
+    # cs is a trimmed copy
+    [cs] = pu.as_series([cs])
+    if len(cs) < 2 :
+        raise ValueError('Series must have maximum degree of at least 1.')
+    if len(cs) == 2:
+        return np.array(-cs[0]/cs[1])
+
+    n = len(cs) - 1
+    mat = np.zeros((n, n), dtype=cs.dtype)
+    bot = mat.reshape(-1)[n::n+1]
+    bot[...] = 1
+    mat[:,-1] -= cs[:-1]/cs[-1]
+    return mat
+
+
 def polyroots(cs):
     """
     Compute the roots of a polynomial.
@@ -896,32 +941,39 @@ def polyroots(cs):
     --------
     chebroots
 
+    Notes
+    -----
+    The root estimates are obtained as the eigenvalues of the companion
+    matrix, Roots far from the origin of the complex plane may have large
+    errors due to the numerical instability of the power series for such
+    values. Roots with multiplicity greater than 1 will also show larger
+    errors as the value of the series near such points is relatively
+    insensitive to errors in the roots. Isolated roots near the origin can
+    be improved by a few iterations of Newton's method.
+
     Examples
     --------
-    >>> import numpy.polynomial as P
-    >>> P.polyroots(P.polyfromroots((-1,0,1)))
+    >>> import numpy.polynomial.polynomial as poly
+    >>> poly.polyroots(poly.polyfromroots((-1,0,1)))
     array([-1.,  0.,  1.])
-    >>> P.polyroots(P.polyfromroots((-1,0,1))).dtype
+    >>> poly.polyroots(poly.polyfromroots((-1,0,1))).dtype
     dtype('float64')
     >>> j = complex(0,1)
-    >>> P.polyroots(P.polyfromroots((-j,0,j)))
+    >>> poly.polyroots(poly.polyfromroots((-j,0,j)))
     array([  0.00000000e+00+0.j,   0.00000000e+00+1.j,   2.77555756e-17-1.j])
 
     """
     # cs is a trimmed copy
     [cs] = pu.as_series([cs])
-    if len(cs) <= 1 :
+    if len(cs) < 2:
         return np.array([], dtype=cs.dtype)
-    if len(cs) == 2 :
+    if len(cs) == 2:
         return np.array([-cs[0]/cs[1]])
 
-    n = len(cs) - 1
-    cmat = np.zeros((n,n), dtype=cs.dtype)
-    cmat.flat[n::n+1] = 1
-    cmat[:,-1] -= cs[:-1]/cs[-1]
-    roots = la.eigvals(cmat)
-    roots.sort()
-    return roots
+    m = polycompanion(cs)
+    r = la.eigvals(m)
+    r.sort()
+    return r
 
 
 #
