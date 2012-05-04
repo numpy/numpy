@@ -1117,9 +1117,6 @@ class TestArgmin(TestCase):
         a = np.array([1, -2**63, -2**63 + 1], dtype=np.int64)
         assert_equal(np.argmin(a), 1)
 
-        a = np.array([1, 2**31 - 1, -2**31], dtype=np.int32)
-        assert_equal(np.argmin(a), 2)
-
 
 class TestMinMax(TestCase):
     def test_scalar(self):
