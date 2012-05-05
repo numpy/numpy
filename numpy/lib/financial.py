@@ -18,11 +18,13 @@ _when_to_num = {'end':0, 'begin':1,
                 'finish':0}
 
 def _convert_when(when):
+    #Test to see if when has already been converted to ndarray
+    #This will happen if one function calls another, for example ppmt
     if isinstance(when, np.ndarray):
         return when
     try:
         return _when_to_num[when]
-    except KeyError:
+    except (KeyError, TypeError):
         return [_when_to_num[x] for x in when]
 
 
@@ -238,8 +240,8 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     If you only had $150/month to pay towards the loan, how long would it take
     to pay-off a loan of $8,000 at 7% annual interest?
 
-    >>> print round(np.nper(0.07/12, -150, 8000), 6)
-    64.073348
+    >>> print round(np.nper(0.07/12, -150, 8000), 5)
+    64.07335
 
     So, over 64 months would be required to pay off the loan.
 
@@ -356,12 +358,12 @@ def ipmt(rate, per, nper, pv, fv=0.0, when='end'):
     12  -216.26    -1.49    -0.00
 
     >>> interestpd = np.sum(ipmt)
-    >>> interestpd
-    -112.98308424136215
+    >>> np.round(interestpd, 2)
+    -112.98
 
     """
     when = _convert_when(when)
-    rate, per, nper, pv, fv, when = map(np.asarray, [rate, per, nper, pv, fv, when])
+    rate, per, nper, pv, fv, when = np.broadcast_arrays(rate, per, nper, pv, fv, when)
     total_pmt = pmt(rate, nper, pv, fv, when)
     ipmt = _rbl(rate, per, total_pmt, pv, when)*rate
     try:
@@ -624,8 +626,8 @@ def irr(values):
 
     Examples
     --------
-    >>> print round(np.irr([-100, 39, 59, 55, 20]), 6)
-    0.280948
+    >>> print round(np.irr([-100, 39, 59, 55, 20]), 5)
+    0.28095
 
     (Compare with the Example given for numpy.lib.financial.npv)
 
