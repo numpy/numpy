@@ -67,7 +67,7 @@ STY:   Code cleanup in polynomial [*]fromroots functions
 DOC:   Remove references to cast and NA, which were added in 1.7
 
 
-``numy.distutils`` issues fixed
+``numpy.distutils`` issues fixed
 -------------------------------
 
 #1261  change compile flag on AIX from -O5 to -O3
