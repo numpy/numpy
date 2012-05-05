@@ -57,8 +57,8 @@ PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"]
 MAJOR               = 1
 MINOR               = 6
 MICRO               = 2
-ISRELEASED          = True
-VERSION             = '%d.%d.%drc1' % (MAJOR, MINOR, MICRO)
+ISRELEASED          = False
+VERSION             = '%d.%d.%drc2' % (MAJOR, MINOR, MICRO)
 
 # Return the git revision as a string
 def git_version():
