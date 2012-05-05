@@ -2178,13 +2178,13 @@ cdef class RandomState:
 
         References
         ----------
-        ..[1] NIST/SEMATECH e-Handbook of Statistical Methods, "Cauchy
+        .. [1] NIST/SEMATECH e-Handbook of Statistical Methods, "Cauchy
               Distribution",
               http://www.itl.nist.gov/div898/handbook/eda/section3/eda3663.htm
-        ..[2] Weisstein, Eric W. "Cauchy Distribution." From MathWorld--A
+        .. [2] Weisstein, Eric W. "Cauchy Distribution." From MathWorld--A
               Wolfram Web Resource.
               http://mathworld.wolfram.com/CauchyDistribution.html
-        ..[3] Wikipedia, "Cauchy distribution"
+        .. [3] Wikipedia, "Cauchy distribution"
               http://en.wikipedia.org/wiki/Cauchy_distribution
 
         Examples
@@ -2516,10 +2516,10 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.weibull : probability density function,
-            distribution or cumulative density function, etc.
-
-        gumbel, scipy.stats.distributions.genextreme
+        scipy.stats.distributions.weibull_max
+        scipy.stats.distributions.weibull_min
+        scipy.stats.distributions.genextreme
+        gumbel
 
         Notes
         -----
@@ -3159,9 +3159,9 @@ cdef class RandomState:
 
         References
         ----------
-        ..[1] Brighton Webs Ltd., Rayleigh Distribution,
+        .. [1] Brighton Webs Ltd., Rayleigh Distribution,
               http://www.brighton-webs.co.uk/distributions/rayleigh.asp
-        ..[2] Wikipedia, "Rayleigh distribution"
+        .. [2] Wikipedia, "Rayleigh distribution"
               http://en.wikipedia.org/wiki/Rayleigh_distribution
 
         Examples
@@ -3247,12 +3247,12 @@ cdef class RandomState:
 
         References
         ----------
-        ..[1] Brighton Webs Ltd., Wald Distribution,
+        .. [1] Brighton Webs Ltd., Wald Distribution,
               http://www.brighton-webs.co.uk/distributions/wald.asp
-        ..[2] Chhikara, Raj S., and Folks, J. Leroy, "The Inverse Gaussian
+        .. [2] Chhikara, Raj S., and Folks, J. Leroy, "The Inverse Gaussian
               Distribution: Theory : Methodology, and Applications", CRC Press,
               1988.
-        ..[3] Wikipedia, "Wald distribution"
+        .. [3] Wikipedia, "Wald distribution"
               http://en.wikipedia.org/wiki/Wald_distribution
 
         Examples
@@ -3331,7 +3331,7 @@ cdef class RandomState:
 
         References
         ----------
-        ..[1] Wikipedia, "Triangular distribution"
+        .. [1] Wikipedia, "Triangular distribution"
               http://en.wikipedia.org/wiki/Triangular_distribution
 
         Examples

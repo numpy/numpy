@@ -4,8 +4,8 @@ Statistics
 .. currentmodule:: numpy
 
 
-Extremal values
----------------
+Order statistics
+----------------
 
 .. autosummary::
    :toctree: generated/
@@ -15,6 +15,7 @@ Extremal values
    nanmin
    nanmax
    ptp
+   percentile
 
 Averages and variances
 ----------------------

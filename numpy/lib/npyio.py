@@ -470,8 +470,7 @@ def savez(file, *args, **kwds):
     --------
     save : Save a single array to a binary file in NumPy format.
     savetxt : Save an array to a file as plain text.
-    numpy.savez_compressed : Save several arrays into a compressed .npz file
-    format
+    savez_compressed : Save several arrays into a compressed .npz file format
 
     Notes
     -----

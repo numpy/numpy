@@ -7,6 +7,7 @@ NumPy Reference
 :Release: |version|
 :Date: |today|
 
+
 .. module:: numpy
 
 This reference manual details functions, modules, and objects

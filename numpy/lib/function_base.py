@@ -1316,9 +1316,10 @@ def place(arr, mask, vals):
     """
     Change elements of an array based on conditional and input values.
 
-    Similar to ``np.copyto(arr, vals, where=mask)``, the difference is that `place`
-    uses the first N elements of `vals`, where N is the number of True values
-    in `mask`, while `copyto` uses the elements where `mask` is True.
+    Similar to ``np.copyto(arr, vals, where=mask)``, the difference is that
+    `place` uses the first N elements of `vals`, where N is the number of
+    True values in `mask`, while `copyto` uses the elements where `mask`
+    is True.
 
     Note that `extract` does the exact opposite of `place`.
 
