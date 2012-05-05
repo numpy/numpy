@@ -413,7 +413,7 @@ class TestVectorize(TestCase):
             raise AssertionError()
 
     def test_keywords2_trac_2100(self):
-        r"""Test kwarg support: enhancement ticket 2100"""
+        """Test kwarg support: enhancement ticket 2100"""
         import math
         def foo(a, b=1):
             return a + b
@@ -435,16 +435,15 @@ class TestVectorize(TestCase):
         #assert_array_equal(f(), 1)
         # Is this supposed to work?  How else to get to nin=0, ndefaults=0
 
-    def test_coverage2_trac_2100(self):
-        """Assigning documentation"""
+    def test_assigning_docstring(self):
         def foo(x):
             return x
         doc = "Provided documentation"
         f = vectorize(foo, doc=doc)
         assert_equal(f.__doc__, doc)
 
-    def test_UnboundMethod_trac_1156(self):
-        r"""Regression test for issue 1156"""
+    def test_UnboundMethod_ticket_1156(self):
+        """Regression test for ticket 1156"""
         class Foo:
             b=2
             def bar(self, a):
