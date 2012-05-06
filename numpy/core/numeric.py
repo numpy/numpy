@@ -24,6 +24,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
 
 import sys
 import warnings
+import functools
 import multiarray
 import umath
 from umath import *
@@ -2604,14 +2605,24 @@ class errstate(object):
     def __init__(self, **kwargs):
         self.call = kwargs.pop('call',_Unspecified)
         self.kwargs = kwargs
+
     def __enter__(self):
         self.oldstate = seterr(**self.kwargs)
         if self.call is not _Unspecified:
             self.oldcall = seterrcall(self.call)
+
     def __exit__(self, *exc_info):
         seterr(**self.oldstate)
         if self.call is not _Unspecified:
             seterrcall(self.oldcall)
+
+    def __call__(self, func):
+        @functools.wraps(func)
+        def func_with_error_handling(*args, **kwargs):
+            with self:
+                return func(*args, **kwargs)
+        
+        return func_with_error_handling
 
 def _setdef():
     defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT2, None]
