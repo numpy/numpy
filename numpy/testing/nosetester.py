@@ -239,7 +239,7 @@ class NoseTester(object):
         # our way of doing coverage
         if coverage:
             argv+=['--cover-package=%s' % self.package_name, '--with-coverage',
-                   '--cover-tests', '--cover-inclusive', '--cover-erase']
+                   '--cover-tests', '--cover-erase']
         # construct list of plugins
         import nose.plugins.builtin
         from noseclasses import KnownFailure, Unplugger
