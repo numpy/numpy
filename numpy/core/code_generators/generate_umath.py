@@ -387,7 +387,7 @@ defdict = {
 'greater_equal' :
     Ufunc(2, 1, None,
           docstrings.get('numpy.core.umath.greater_equal'),
-          None,
+          'PyUFunc_SimpleBinaryComparisonTypeResolver',
           TD(all, out='?'),
           ),
 'less' :

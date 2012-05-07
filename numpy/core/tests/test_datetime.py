@@ -960,6 +960,22 @@ class TestDateTime(TestCase):
             # float / M8
             assert_raises(TypeError, np.divide, 1.5, dta)
 
+    def test_datetime_compare(self):
+        # Test all the comparison operators
+        a = np.datetime64('2000-03-12T18:00:00.000000-0600')
+        b = np.array(['2000-03-12T18:00:00.000000-0600',
+                      '2000-03-12T17:59:59.999999-0600',
+                      '2000-03-12T18:00:00.000001-0600',
+                      '1970-01-11T12:00:00.909090-0600',
+                      '2016-01-11T12:00:00.909090-0600'],
+                      dtype='datetime64[us]')
+        assert_equal(np.equal(a, b), [1, 0, 0, 0, 0])
+        assert_equal(np.not_equal(a, b), [0, 1, 1, 1, 1])
+        assert_equal(np.less(a, b), [0, 0, 1, 0, 1])
+        assert_equal(np.less_equal(a, b), [1, 0, 1, 0, 1])
+        assert_equal(np.greater(a, b), [0, 1, 0, 1, 0])
+        assert_equal(np.greater_equal(a, b), [1, 1, 0, 1, 0])
+
     def test_datetime_minmax(self):
         # The metadata of the result should become the GCD
         # of the operand metadata
