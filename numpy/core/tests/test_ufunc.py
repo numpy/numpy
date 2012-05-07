@@ -507,13 +507,29 @@ class TestUfunc(TestCase):
         assert_equal(np.logical_or.reduce(a), 3)
         assert_equal(np.logical_and.reduce(a), None)
 
+    def test_object_array_reduction(self):
+        # Reductions on object arrays
+        a = np.array(['a', 'b', 'c'], dtype=object)
+        assert_equal(np.sum(a), 'abc')
+        assert_equal(np.max(a), 'c')
+        assert_equal(np.min(a), 'a')
+        a = np.array([True, False, True], dtype=object)
+        assert_equal(np.sum(a), 2)
+        assert_equal(np.prod(a), 0)
+        assert_equal(np.any(a), True)
+        assert_equal(np.all(a), False)
+        assert_equal(np.max(a), True)
+        assert_equal(np.min(a), False)
+
     def test_zerosize_reduction(self):
-        assert_equal(np.sum([]), 0)
-        assert_equal(np.prod([]), 1)
-        assert_equal(np.any([]), False)
-        assert_equal(np.all([]), True)
-        assert_raises(ValueError, np.max, [])
-        assert_raises(ValueError, np.min, [])
+        # Test with default dtype and object dtype
+        for a in [[], np.array([], dtype=object)]:
+            assert_equal(np.sum(a), 0)
+            assert_equal(np.prod(a), 1)
+            assert_equal(np.any(a), False)
+            assert_equal(np.all(a), True)
+            assert_raises(ValueError, np.max, a)
+            assert_raises(ValueError, np.min, a)
 
     def test_axis_out_of_bounds(self):
         a = np.array([False, False])

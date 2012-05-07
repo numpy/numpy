@@ -2831,10 +2831,24 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         case PyUFunc_Zero:
             assign_identity = &assign_reduce_identity_zero;
             reorderable = 1;
+            /*
+             * The identity for a dynamic dtype like
+             * object arrays can't be used in general
+             */
+            if (PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
+                assign_identity = NULL;
+            }
             break;
         case PyUFunc_One:
             assign_identity = &assign_reduce_identity_one;
             reorderable = 1;
+            /*
+             * The identity for a dynamic dtype like
+             * object arrays can't be used in general
+             */
+            if (PyArray_ISOBJECT(arr) && PyArray_SIZE(arr) != 0) {
+                assign_identity = NULL;
+            }
             break;
         case PyUFunc_None:
             reorderable = 0;
