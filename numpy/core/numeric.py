@@ -1179,7 +1179,10 @@ def roll(a, shift, axis=None):
         n = a.size
         reshape = True
     else:
-        n = a.shape[axis]
+        try:
+            n = a.shape[axis]
+        except IndexError:
+            raise ValueError('axis must be >= 0 and < %d' % a.ndim)
         reshape = False
     shift %= n
     indexes = concatenate((arange(n-shift,n),arange(n-shift)))
