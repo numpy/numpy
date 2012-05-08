@@ -1184,13 +1184,16 @@ def roll(a, shift, axis=None):
         except IndexError:
             raise ValueError('axis must be >= 0 and < %d' % a.ndim)
         reshape = False
-    shift %= n
-    indexes = concatenate((arange(n-shift,n),arange(n-shift)))
-    res = a.take(indexes, axis)
-    if reshape:
-        return res.reshape(a.shape)
+    if n == 0:
+        return a
     else:
-        return res
+        shift %= n
+        indexes = concatenate((arange(n-shift,n),arange(n-shift)))
+        res = a.take(indexes, axis)
+        if reshape:
+            return res.reshape(a.shape)
+        else:
+            return res
 
 def rollaxis(a, axis, start=0):
     """
