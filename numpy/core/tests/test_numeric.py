@@ -1570,5 +1570,27 @@ class TestStringFunction(object):
         np.set_string_function(None, repr=False)
         assert_equal(str(a), "[1]")
 
+class TestRoll(TestCase):
+    def test_roll1d(self):
+        x = np.arange(10)
+        xr = np.roll(x, 2)
+        assert_equal(xr, np.array([8, 9, 0, 1, 2, 3, 4, 5, 6, 7]))
+
+    def test_roll2d(self):
+        x2 = np.reshape(np.arange(10), (2,5))
+        x2r = np.roll(x2, 1)
+        assert_equal(x2r, np.array([[9, 0, 1, 2, 3], [4, 5, 6, 7, 8]]))
+
+        x2r = np.roll(x2, 1, axis=0)
+        assert_equal(x2r, np.array([[5, 6, 7, 8, 9], [0, 1, 2, 3, 4]]))
+
+        x2r = np.roll(x2, 1, axis=1)
+        assert_equal(x2r, np.array([[4, 0, 1, 2, 3], [9, 5, 6, 7, 8]]))
+
+    def test_roll_empty(self):
+        x = np.array([])
+        assert_equal(np.roll(x, 1), np.array([]))
+
+
 if __name__ == "__main__":
     run_module_suite()
