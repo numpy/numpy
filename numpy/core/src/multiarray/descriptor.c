@@ -2091,8 +2091,7 @@ _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
         Py_INCREF(dtype->metadata);
         PyTuple_SET_ITEM(ret, 0, dtype->metadata);
     } else {
-        Py_INCREF(Py_None);
-        PyTuple_SET_ITEM(ret, 0, Py_None);
+        PyTuple_SET_ITEM(ret, 0, PyDict_New());
     }
 
     /* Convert the datetime metadata into a tuple */
@@ -2101,11 +2100,21 @@ _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
         Py_DECREF(ret);
         return NULL;
     }
-    dt_tuple = convert_datetime_metadata_to_tuple(meta);
+    /* Use a 4-tuple that numpy 1.6 knows how to unpickle */
+    dt_tuple = PyTuple_New(4);
     if (dt_tuple == NULL) {
         Py_DECREF(ret);
         return NULL;
     }
+    PyTuple_SET_ITEM(dt_tuple, 0,
+            PyBytes_FromString(_datetime_strings[meta->base]));
+    PyTuple_SET_ITEM(dt_tuple, 1,
+            PyInt_FromLong(meta->num));
+    PyTuple_SET_ITEM(dt_tuple, 2,
+            PyInt_FromLong(1));
+    PyTuple_SET_ITEM(dt_tuple, 3,
+            PyInt_FromLong(1));
+
     PyTuple_SET_ITEM(ret, 1, dt_tuple);
 
     return ret;
