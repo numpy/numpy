@@ -44,6 +44,7 @@
 #include <math.h>
 #include "distributions.h"
 #include <stdio.h>
+#include <limits.h>
 
 #ifndef min
 #define min(x,y) ((x<y)?x:y)
@@ -519,17 +520,44 @@ long rk_poisson_ptrs(rk_state *state, double lam)
 
 }
 
+/* lambda max represents the highest (nearly) complete poissonian distribution
+ * that can be (nearly) fully represented by the bits in the return value.
+ * The 10*sqrt(LONG_MAX) provides us with 10*sigma upwards width before we hit
+ * the rollover of long integers.
+ *
+ * Note that sqrt(LONG_MAX) can also be written
+ *  sqrt( 1 << (sizeof(long)*8 - 1 ) - 1 )
+ *                            (^ -1 here is because longs are signed).
+ * To avoid non-constant expressions in the initializer of lambda_max (thus to
+ * conform with ansi c), we will approximate this as
+ *  0.5* ( sqrt( 1 << (sizeof(long)*8) ) + sqrt( 1 << (sizeof(long)*8-2) ) )
+ * which can be written as
+ *  0.5* ( ( 1 << (sizeof(long)*8/2) ) + ( 1 << ((sizeof(long)*8-2)/2) ) )
+ * or rather
+ *  0.5* ( ( 1 << (sizeof(long)*4) ) + ( 1 << (sizeof(long)*4-1) ) )
+ * This is a little larger than sqrt(LONG_MAX), but not by too much.
+ */
+const double lambda_max
+  =        (double)LONG_MAX
+  - 10.0 * 0.5 * (  (double)( 1uL << ( sizeof(long)*4uL       ) )
+                  + (double)( 1uL << ( sizeof(long)*4uL - 1ul ) ) );
+
 long rk_poisson(rk_state *state, double lam)
 {
     if (lam >= 10)
     {
         return rk_poisson_ptrs(state, lam);
     }
-    else if (lam == 0) 
+    else if (lam == 0)
     {
         return 0;
     }
-    else 
+    else if (lam >= lambda_max)
+    {
+        /* we return the expected value when we run out of bits */
+        return (long)lam;
+    }
+    else
     {
         return rk_poisson_mult(state, lam);
     }
