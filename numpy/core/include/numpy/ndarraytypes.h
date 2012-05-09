@@ -303,10 +303,11 @@ struct NpyAuxData_tag {
 
 /* Macros to use for freeing and cloning auxiliary data */
 #define NPY_AUXDATA_FREE(auxdata) \
-    if ((auxdata) == NULL) \
-        ; \
-    else \
-        ((auxdata)->free(auxdata))
+    do { \
+        if ((auxdata) != NULL) { \
+            (auxdata)->free(auxdata); \
+        } \
+    } while(0)
 #define NPY_AUXDATA_CLONE(auxdata) \
     ((auxdata)->clone(auxdata))
 
