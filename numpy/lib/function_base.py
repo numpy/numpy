@@ -1771,12 +1771,12 @@ def _get_nargs(obj):
             "failed to determine the number of arguments for %s" % (obj))
 
 def _get_argspec(obj):
-    r"""
+    """
     Return (argnames, vargs, kwargs, defaults), the argument specification
     of `obj`.
 
     This is the same information returned by ``inspect.getargspec``, but
-    this apparently fails for some functions like `math.cos` so we 
+    this apparently fails for some functions like `math.cos` so we
     provide additional tests here.
     """
     import inspect
@@ -1792,7 +1792,7 @@ def _get_argspec(obj):
         vargs = None
         kwargs = None
         defaults = ndefaults
-    
+
     return (argnames, vargs, kwargs, defaults)
 
 
@@ -1828,7 +1828,7 @@ class vectorize(object):
         `argnames` in order and the default values `defaults` for the trailing
         arguments.  Use this, for example, if ``inspect.getargspec(pyfunc)``
         will fail for some reason.
-        
+
         .. versionadded:: 1.7.0
 
     exclude : sequence, optional
@@ -1846,7 +1846,6 @@ class vectorize(object):
     The `vectorize` function is provided for convenience, not performance: The
     implementation is essentially a for loop, with similar performance
     characteristics.
-
 
     Examples
     --------
@@ -2011,7 +2010,7 @@ class vectorize(object):
                         else:
                             new_arg_names.append(_v)
                             args.append(kwargs.pop(_v))
-                
+
                 # This is the wrapper.  It accepts only positional arguments
                 # then packs everything as a kwarg to call the original
                 # function.
@@ -2042,7 +2041,7 @@ class vectorize(object):
 
     def _vectorize_call(self, thefunc, args):
         """
-        Implements vectorized call to the function with only positional arg.
+        Implements vectorized call to the function with only positional args.
         """
         # get number of outputs and output types by calling
         #  the function on the first entries of args
