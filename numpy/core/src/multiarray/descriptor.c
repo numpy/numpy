@@ -37,8 +37,9 @@ _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag);
 /*
  * Creates a dtype object from ctypes inputs.
  *
- * Returns NULL if this is not possible, but does not
- * set a Python exception.
+ * Returns a new reference to a dtype object, or NULL
+ * if this is not possible. When it returns NULL, it does
+ * not set a Python exception.
  */
 static PyArray_Descr *
 _arraydescr_fromctypes(PyObject *obj)
@@ -100,8 +101,9 @@ _arraydescr_fromctypes(PyObject *obj)
  *  - The object is a ctypes type object, including array
  *    and structure types.
  *
- * Returns NULL if this is not possible, but does not
- * set a Python exception.
+ * Returns a new reference to a dtype object, or NULL
+ * if this is not possible. When it returns NULL, it does
+ * not set a Python exception.
  */
 NPY_NO_EXPORT PyArray_Descr *
 _arraydescr_fromobj(PyObject *obj)
