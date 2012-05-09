@@ -532,38 +532,19 @@ PyArray_DescrFromScalar(PyObject *sc)
     }
 
     if (PyArray_IsScalar(sc, Datetime) || PyArray_IsScalar(sc, Timedelta)) {
-        PyObject *cobj;
         PyArray_DatetimeMetaData *dt_data;
 
-        dt_data = PyArray_malloc(sizeof(PyArray_DatetimeMetaData));
         if (PyArray_IsScalar(sc, Datetime)) {
             descr = PyArray_DescrNewFromType(NPY_DATETIME);
-            memcpy(dt_data, &((PyDatetimeScalarObject *)sc)->obmeta,
-                   sizeof(PyArray_DatetimeMetaData));
         }
         else {
             /* Timedelta */
             descr = PyArray_DescrNewFromType(NPY_TIMEDELTA);
-            memcpy(dt_data, &((PyTimedeltaScalarObject *)sc)->obmeta,
-                   sizeof(PyArray_DatetimeMetaData));
         }
-        cobj = NpyCapsule_FromVoidPtr((void *)dt_data, simple_capsule_dtor);
+        dt_data = &(((PyArray_DatetimeDTypeMetaData *)descr->c_metadata)->meta);
+        memcpy(dt_data, &((PyDatetimeScalarObject *)sc)->obmeta,
+               sizeof(PyArray_DatetimeMetaData));
 
-        /* Add correct meta-data to the data-type */
-        if (descr == NULL) {
-            Py_DECREF(cobj);
-            return NULL;
-        }
-        Py_XDECREF(descr->metadata);
-        if ((descr->metadata = PyDict_New()) == NULL) {
-            Py_DECREF(descr);
-            Py_DECREF(cobj);
-            return NULL;
-        }
-
-        /* Assume this sets a new reference to cobj */
-        PyDict_SetItemString(descr->metadata, NPY_METADATA_DTSTR, cobj);
-        Py_DECREF(cobj);
         return descr;
     }
 
@@ -676,14 +657,9 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
          * We need to copy the resolution information over to the scalar
          * Get the void * from the metadata dictionary
          */
-        PyObject *cobj;
         PyArray_DatetimeMetaData *dt_data;
-        cobj = PyDict_GetItemString(descr->metadata, NPY_METADATA_DTSTR);
 
-/* FIXME
- * There is no error handling here.
- */
-        dt_data = NpyCapsule_AsVoidPtr(cobj);
+        dt_data = &(((PyArray_DatetimeDTypeMetaData *)descr->c_metadata)->meta);
         memcpy(&(((PyDatetimeScalarObject *)obj)->obmeta), dt_data,
                sizeof(PyArray_DatetimeMetaData));
     }
