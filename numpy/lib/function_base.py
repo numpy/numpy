@@ -1749,7 +1749,7 @@ def _get_nargs(obj):
             ndefaults = len(obj.func_defaults)
         else:
             ndefaults = 0
-        if (isinstance(obj, types.MethodType) 
+        if (isinstance(obj, types.MethodType)
             and obj.im_self is not None): # Fix #1156
             nargs -= 1
         return nargs, ndefaults
@@ -1762,7 +1762,7 @@ def _get_nargs(obj):
         if m:
             nargs = _convert_to_int(m.group('exargs'))
             ndefaults = _convert_to_int(m.group('gargs'))
-            if (isinstance(obj, types.MethodType) 
+            if (isinstance(obj, types.MethodType)
                 and obj.im_self is not None): # Fix #1156
                 nargs -= 1
             return nargs, ndefaults
@@ -1771,22 +1771,26 @@ def _get_nargs(obj):
             "failed to determine the number of arguments for %s" % (obj))
 
 def _get_argspec(obj):
-    r"""Return `(argnames, vargs, kwargs, defaults)`, the argument specification
-    of `obj`.  This is the same information returned by
-    `inspect.getargspec`, but this apparently fails for some functions
-    like `math.cos` so we provide additional tests here.
+    r"""
+    Return (argnames, vargs, kwargs, defaults), the argument specification
+    of `obj`.
+
+    This is the same information returned by ``inspect.getargspec``, but
+    this apparently fails for some functions like `math.cos` so we 
+    provide additional tests here.
     """
     import inspect
     try:
         argnames, vargs, kwargs, defaults = inspect.getargspec(obj)
-        if (inspect.ismethod(obj) 
+        if (inspect.ismethod(obj)
             and obj.im_self is not None): # Fix #1156
             argnames = argnames[1:] # Remove self
     except:
         # Fallback to _get_nargs if inspect fails.
         nargs, ndefaults = _get_nargs(obj)
-        argnames = [None,]*nargs
-        vargs = kwargs = None
+        argnames = [None,] * nargs
+        vargs = None
+        kwargs = None
         defaults = ndefaults
     
     return (argnames, vargs, kwargs, defaults)
@@ -1826,7 +1830,8 @@ class vectorize(object):
         will fail for some reason.
         
         .. versionadded:: 1.7.0
-    exclude : set, optional
+
+    exclude : sequence, optional
         Keyword arguments in the set `exclude` will not be vectorized.
 
         .. versionadded:: 1.7.0
@@ -1846,7 +1851,7 @@ class vectorize(object):
     Examples
     --------
     >>> def myfunc(a, b):
-    ...     \"\"\"Return a-b if a>b, otherwise return a+b\"\"\"
+    ...     "Return a-b if a>b, otherwise return a+b"
     ...     if a > b:
     ...         return a - b
     ...     else:
@@ -1916,16 +1921,20 @@ class vectorize(object):
     >>> wrapped_f.original_function = f
     >>> np.vectorize(wrapped_f)(a=[1,2])
     array([2, 4])
+
     """
     def __init__(self, pyfunc, otypes='', doc=None,
                  argspec=None, exclude=None):
 
-        # Implements enhancement ticket #2100
+        # Implements enhancement ticket #2100: kwarg support.
+
+        # Look for an attribute the user may have added to function 
+        # (see the example for argspec in the docstring)
         original_function = getattr(pyfunc, 'original_function', pyfunc)
         if not argspec:
             argspec = _get_argspec(original_function)
 
-        self.fname = getattr(original_function, 'func_name', 'vectorized(f)')
+        self.fname = getattr(original_function, '__name__', 'vectorized(f)')
         argnames, vargs, kwargs, defaults = argspec
         self.argspec = argspec
         self.thefunc = pyfunc
@@ -1937,6 +1946,7 @@ class vectorize(object):
         else:
             ndefault = 0
             self.defaults = {}
+
         if nin == 0 and ndefault == 0:
             self.nin = None
             self.nin_wo_defaults = None
@@ -1944,43 +1954,41 @@ class vectorize(object):
             self.nin = nin
             self.nin_wo_defaults = nin - ndefault
         self.nout = None
+
         if doc is None:
             self.__doc__ = original_function.__doc__
         else:
             self.__doc__ = doc
+
         if isinstance(otypes, str):
             self.otypes = otypes
             for char in self.otypes:
                 if char not in typecodes['All']:
-                    raise ValueError(
-                            "invalid otype specified")
+                    raise ValueError("Invalid otype specified")
         elif iterable(otypes):
             self.otypes = ''.join([_nx.dtype(x).char for x in otypes])
         else:
-            raise ValueError(
-                    "Invalid otype specification")
+            raise ValueError("Invalid otype specification")
         self.lastcallargs = 0
 
         if not exclude:
             exclude = set()
         else:
             exclude = set(exclude)
-        self.excluded = exclude
-        if exclude:
-            varnames = self.argspec[0]
             for _k in exclude:
-                if _k not in varnames:
+                if _k not in argnames:
                     raise ValueError(
                         "Variable to be excluded '%s' not a recognized " +
-                        "keyword argument")
+                        "keyword argument" % (_k,))
             self.nin = self.nin - len(exclude)
             self.nin_wo_defaults = self.nin_wo_defaults - len(exclude)
+       self.excluded = exclude
 
     def __call__(self, *args, **kwargs):
         thefunc = self.thefunc
-        if kwargs: # Implements enhancement ticket #2100
+        if kwargs:
             # Process kwargs, appending them to args as positional arguments
-            varnames = self.argspec[0]
+            argnames = self.argspec[0]
             if self.excluded:
                 # Exclude variables by defining a new function akin to
                 # functools.partial, but backward compatible with 2.4.  The new
@@ -1990,8 +1998,8 @@ class vectorize(object):
                 args = []
                 new_arg_names = []
                 constants = {}
-                for _n, _v in enumerate(varnames):
-                    if _n < len(args):                        
+                for _n, _v in enumerate(argnames):
+                    if _n < len(args):
                         if _v in self.excluded:
                             constants[_v] = args.pop(0)
                         else:
@@ -2015,7 +2023,7 @@ class vectorize(object):
                 # If there is nothing to exclude, we just append the kwargs to
                 # the arglist:
                 args = list(args)
-                for _k in varnames[len(args):]:
+                for _k in argnames[len(args):]:
                     # Only fill in kwargs after positional args
                     if _k in kwargs:
                         args.append(kwargs.pop(_k))
@@ -2033,15 +2041,15 @@ class vectorize(object):
         return self._vectorize_call(thefunc=thefunc, args=args)
 
     def _vectorize_call(self, thefunc, args):
-        r"""Implements the vectorized call to the function with only positional
-        arguments."""
+        """
+        Implements vectorized call to the function with only positional arg.
+        """
         # get number of outputs and output types by calling
         #  the function on the first entries of args
         nargs = len(args)
         if self.nin:
             if (nargs > self.nin) or (nargs < self.nin_wo_defaults):
-                raise ValueError(
-                        "Invalid number of arguments")
+                raise ValueError("Invalid number of arguments")
 
         # we need a new ufunc if this is being called with more arguments.
         if (self.lastcallargs != nargs):
@@ -2070,12 +2078,13 @@ class vectorize(object):
             self.ufunc = frompyfunc(thefunc, nargs, self.nout)
 
         # Convert to object arrays first
-        newargs = [array(arg,copy=False,subok=True,dtype=object) for arg in args]
+        newargs = [array(arg,copy=False, subok=True, dtype=object) 
+                   for arg in args]
         if self.nout == 1:
             _res = array(self.ufunc(*newargs),copy=False,
                          subok=True,dtype=self.otypes[0])
         else:
-            _res = tuple([array(x,copy=False,subok=True,dtype=c) \
+            _res = tuple([array(x,copy=False,subok=True,dtype=c)
                           for x, c in zip(self.ufunc(*newargs), self.otypes)])
         return _res
 
