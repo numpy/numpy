@@ -1495,41 +1495,47 @@ error:
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base)
 {
-    PyArray_Descr *new = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
+    PyArray_Descr *newdescr = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
 
-    if (new == NULL) {
+    if (newdescr == NULL) {
         return NULL;
     }
     /* Don't copy PyObject_HEAD part */
-    memcpy((char *)new + sizeof(PyObject),
+    memcpy((char *)newdescr + sizeof(PyObject),
            (char *)base + sizeof(PyObject),
            sizeof(PyArray_Descr) - sizeof(PyObject));
 
-    /* The c_metadata has a by-value ownership model, need to clone it */
-    if (new->c_metadata != NULL) {
-        new->c_metadata = NPY_AUXDATA_CLONE(new->c_metadata);
-        if (new->c_metadata == NULL) {
+    /*
+     * The c_metadata has a by-value ownership model, need to clone it
+     * (basically a deep copy, but the auxdata clone function has some
+     * flexibility still) so the new PyArray_Descr object owns
+     * a copy of the data. Having both 'base' and 'newdescr' point to
+     * the same auxdata pointer would cause a double-free of memory.
+     */
+    if (base->c_metadata != NULL) {
+        newdescr->c_metadata = NPY_AUXDATA_CLONE(base->c_metadata);
+        if (newdescr->c_metadata == NULL) {
             PyErr_NoMemory();
-            Py_DECREF(new);
+            Py_DECREF(newdescr);
             return NULL;
         }
     }
 
-    if (new->fields == Py_None) {
-        new->fields = NULL;
+    if (newdescr->fields == Py_None) {
+        newdescr->fields = NULL;
     }
-    Py_XINCREF(new->fields);
-    Py_XINCREF(new->names);
-    if (new->subarray) {
-        new->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
-        memcpy(new->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
-        Py_INCREF(new->subarray->shape);
-        Py_INCREF(new->subarray->base);
+    Py_XINCREF(newdescr->fields);
+    Py_XINCREF(newdescr->names);
+    if (newdescr->subarray) {
+        newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
+        memcpy(newdescr->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
+        Py_INCREF(newdescr->subarray->shape);
+        Py_INCREF(newdescr->subarray->base);
     }
-    Py_XINCREF(new->typeobj);
-    Py_XINCREF(new->metadata);
+    Py_XINCREF(newdescr->typeobj);
+    Py_XINCREF(newdescr->metadata);
 
-    return new;
+    return newdescr;
 }
 
 /*
