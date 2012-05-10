@@ -328,7 +328,7 @@ convert_datetimestruct_local_to_utc(npy_datetimestruct *out_dts_utc,
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-parse_iso_8601_datetime(char *str, int len,
+parse_iso_8601_datetime(char *str, Py_ssize_t len,
                     NPY_DATETIMEUNIT unit,
                     NPY_CASTING casting,
                     npy_datetimestruct *out,
@@ -338,7 +338,8 @@ parse_iso_8601_datetime(char *str, int len,
 {
     int year_leap = 0;
     int i, numdigits;
-    char *substr, sublen;
+    char *substr;
+    Py_ssize_t sublen;
     NPY_DATETIMEUNIT bestunit;
 
     /* Initialize the output to all zeros */

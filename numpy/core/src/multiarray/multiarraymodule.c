@@ -4132,10 +4132,6 @@ PyMODINIT_FUNC initmultiarray(void) {
     PyDict_SetItemString(d, "__version__", s);
     Py_DECREF(s);
 
-    s = PyUString_InternFromString(NPY_METADATA_DTSTR);
-    PyDict_SetItemString(d, "METADATA_DTSTR", s);
-    Py_DECREF(s);
-
 /* FIXME
  * There is no error handling here
  */

@@ -34,38 +34,36 @@ static PyObject *typeDict = NULL;   /* Must be explicitly loaded */
 static PyArray_Descr *
 _use_inherit(PyArray_Descr *type, PyObject *newobj, int *errflag);
 
-NPY_NO_EXPORT PyArray_Descr *
-_arraydescr_fromobj(PyObject *obj)
+/*
+ * Creates a dtype object from ctypes inputs.
+ *
+ * Returns a new reference to a dtype object, or NULL
+ * if this is not possible. When it returns NULL, it does
+ * not set a Python exception.
+ */
+static PyArray_Descr *
+_arraydescr_fromctypes(PyObject *obj)
 {
     PyObject *dtypedescr;
-    PyArray_Descr *new;
+    PyArray_Descr *newdescr;
     int ret;
 
-    dtypedescr = PyObject_GetAttrString(obj, "dtype");
-    PyErr_Clear();
-    if (dtypedescr) {
-        ret = PyArray_DescrConverter(dtypedescr, &new);
-        Py_DECREF(dtypedescr);
-        if (ret == NPY_SUCCEED) {
-            return new;
-        }
-        PyErr_Clear();
-    }
     /* Understand basic ctypes */
     dtypedescr = PyObject_GetAttrString(obj, "_type_");
     PyErr_Clear();
     if (dtypedescr) {
-        ret = PyArray_DescrConverter(dtypedescr, &new);
+        ret = PyArray_DescrConverter(dtypedescr, &newdescr);
         Py_DECREF(dtypedescr);
         if (ret == NPY_SUCCEED) {
             PyObject *length;
+            /* Check for ctypes arrays */
             length = PyObject_GetAttrString(obj, "_length_");
             PyErr_Clear();
             if (length) {
                 /* derived type */
                 PyObject *newtup;
                 PyArray_Descr *derived;
-                newtup = Py_BuildValue("NO", new, length);
+                newtup = Py_BuildValue("NO", newdescr, length);
                 ret = PyArray_DescrConverter(newtup, &derived);
                 Py_DECREF(newtup);
                 if (ret == NPY_SUCCEED) {
@@ -74,7 +72,7 @@ _arraydescr_fromobj(PyObject *obj)
                 PyErr_Clear();
                 return NULL;
             }
-            return new;
+            return newdescr;
         }
         PyErr_Clear();
         return NULL;
@@ -85,16 +83,53 @@ _arraydescr_fromobj(PyObject *obj)
     dtypedescr = PyObject_GetAttrString(obj, "_fields_");
     PyErr_Clear();
     if (dtypedescr) {
-        ret = PyArray_DescrAlignConverter(dtypedescr, &new);
+        ret = PyArray_DescrAlignConverter(dtypedescr, &newdescr);
         Py_DECREF(dtypedescr);
         if (ret == NPY_SUCCEED) {
-            return new;
+            return newdescr;
         }
         PyErr_Clear();
     }
+
     return NULL;
 }
 
+/*
+ * This function creates a dtype object when:
+ *  - The object has a "dtype" attribute, and it can be converted
+ *    to a dtype object.
+ *  - The object is a ctypes type object, including array
+ *    and structure types.
+ *
+ * Returns a new reference to a dtype object, or NULL
+ * if this is not possible. When it returns NULL, it does
+ * not set a Python exception.
+ */
+NPY_NO_EXPORT PyArray_Descr *
+_arraydescr_fromobj(PyObject *obj)
+{
+    PyObject *dtypedescr;
+    PyArray_Descr *newdescr = NULL;
+    int ret;
+
+    /* For arbitrary objects that have a "dtype" attribute */
+    dtypedescr = PyObject_GetAttrString(obj, "dtype");
+    PyErr_Clear();
+    if (dtypedescr != NULL) {
+        ret = PyArray_DescrConverter(dtypedescr, &newdescr);
+        Py_DECREF(dtypedescr);
+        if (ret == NPY_SUCCEED) {
+            return newdescr;
+        }
+        PyErr_Clear();
+    }
+    return _arraydescr_fromctypes(obj);
+}
+
+/*
+ * Sets the global typeDict object, which is a dictionary mapping
+ * dtype names to numpy scalar types.
+ */
 NPY_NO_EXPORT PyObject *
 array_set_typeDict(PyObject *NPY_UNUSED(ignored), PyObject *args)
 {
@@ -140,7 +175,10 @@ _check_for_commastring(char *type, Py_ssize_t len)
                 && type[2] == ')'))) {
         return 1;
     }
-    /* Check for presence of commas outside square [] brackets */
+    /*
+     * Check for presence of commas outside square [] brackets. This
+     * allows commas inside of [], for parameterized dtypes to use.
+     */
     sqbracket = 0;
     for (i = 1; i < len; i++) {
         switch (type[i]) {
@@ -310,9 +348,9 @@ _convert_from_tuple(PyObject *obj)
  * shape parameter).
  *
  * field-name can be a string or a 2-tuple
- * data-type can now be a list, string, or 2-tuple (string, metadata dictionary))
+ * data-type can now be a list, string, or 2-tuple
+ *          (string, metadata dictionary)
  */
-
 static PyArray_Descr *
 _convert_from_array_descr(PyObject *obj, int align)
 {
@@ -834,6 +872,9 @@ _use_fields_dict(PyObject *obj, int align)
     return res;
 }
 
+/*
+ * Creates a struct dtype object from a Python dictionary.
+ */
 static PyArray_Descr *
 _convert_from_dict(PyObject *obj, int align)
 {
@@ -1443,7 +1484,7 @@ error:
  * If a mistake is made in reference counting, deallocation on these
  * builtins will be attempted leading to problems.
  *
- * This let's us deal with all PyArray_Descr objects using reference
+ * This lets us deal with all PyArray_Descr objects using reference
  * counting (regardless of whether they are statically or dynamically
  * allocated).
  */
@@ -1454,31 +1495,47 @@ error:
 NPY_NO_EXPORT PyArray_Descr *
 PyArray_DescrNew(PyArray_Descr *base)
 {
-    PyArray_Descr *new = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
+    PyArray_Descr *newdescr = PyObject_New(PyArray_Descr, &PyArrayDescr_Type);
 
-    if (new == NULL) {
+    if (newdescr == NULL) {
         return NULL;
     }
     /* Don't copy PyObject_HEAD part */
-    memcpy((char *)new + sizeof(PyObject),
+    memcpy((char *)newdescr + sizeof(PyObject),
            (char *)base + sizeof(PyObject),
            sizeof(PyArray_Descr) - sizeof(PyObject));
 
-    if (new->fields == Py_None) {
-        new->fields = NULL;
+    /*
+     * The c_metadata has a by-value ownership model, need to clone it
+     * (basically a deep copy, but the auxdata clone function has some
+     * flexibility still) so the new PyArray_Descr object owns
+     * a copy of the data. Having both 'base' and 'newdescr' point to
+     * the same auxdata pointer would cause a double-free of memory.
+     */
+    if (base->c_metadata != NULL) {
+        newdescr->c_metadata = NPY_AUXDATA_CLONE(base->c_metadata);
+        if (newdescr->c_metadata == NULL) {
+            PyErr_NoMemory();
+            Py_DECREF(newdescr);
+            return NULL;
+        }
     }
-    Py_XINCREF(new->fields);
-    Py_XINCREF(new->names);
-    if (new->subarray) {
-        new->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
-        memcpy(new->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
-        Py_INCREF(new->subarray->shape);
-        Py_INCREF(new->subarray->base);
-    }
-    Py_XINCREF(new->typeobj);
-    Py_XINCREF(new->metadata);
 
-    return new;
+    if (newdescr->fields == Py_None) {
+        newdescr->fields = NULL;
+    }
+    Py_XINCREF(newdescr->fields);
+    Py_XINCREF(newdescr->names);
+    if (newdescr->subarray) {
+        newdescr->subarray = PyArray_malloc(sizeof(PyArray_ArrayDescr));
+        memcpy(newdescr->subarray, base->subarray, sizeof(PyArray_ArrayDescr));
+        Py_INCREF(newdescr->subarray->shape);
+        Py_INCREF(newdescr->subarray->base);
+    }
+    Py_XINCREF(newdescr->typeobj);
+    Py_XINCREF(newdescr->metadata);
+
+    return newdescr;
 }
 
 /*
@@ -1505,6 +1562,8 @@ arraydescr_dealloc(PyArray_Descr *self)
         PyArray_free(self->subarray);
     }
     Py_XDECREF(self->metadata);
+    NPY_AUXDATA_FREE(self->c_metadata);
+    self->c_metadata = NULL;
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
@@ -1940,23 +1999,6 @@ static PyGetSetDef arraydescr_getsets[] = {
     {NULL, NULL, NULL, NULL, NULL},
 };
 
-static int
-_invalid_metadata_check(PyObject *metadata)
-{
-    PyObject *res;
-
-    /* borrowed reference */
-    res = PyDict_GetItemString(metadata, NPY_METADATA_DTSTR);
-    if (res == NULL) {
-        return 0;
-    }
-    else {
-        PyErr_SetString(PyExc_ValueError,
-                "cannot set " NPY_METADATA_DTSTR "in dtype metadata");
-        return 1;
-    }
-}
-
 static PyObject *
 arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
                 PyObject *args, PyObject *kwds)
@@ -1974,10 +2016,6 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
                 PyArray_BoolConverter, &align,
                 PyArray_BoolConverter, &copy,
                 &PyDict_Type, &metadata)) {
-        return NULL;
-    }
-
-    if ((metadata != NULL) && (_invalid_metadata_check(metadata))) {
         return NULL;
     }
 
@@ -2056,14 +2094,13 @@ _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
         return NULL;
     }
 
-    /* Make a cleaned copy of the metadata dictionary */
-    newdict = PyDict_Copy(dtype->metadata);
-    if (newdict == NULL) {
-        Py_DECREF(ret);
-        return NULL;
+    /* Store the metadata dictionary */
+    if (dtype->metadata != NULL) {
+        Py_INCREF(dtype->metadata);
+        PyTuple_SET_ITEM(ret, 0, dtype->metadata);
+    } else {
+        PyTuple_SET_ITEM(ret, 0, PyDict_New());
     }
-    PyDict_DelItemString(newdict, NPY_METADATA_DTSTR);
-    PyTuple_SET_ITEM(ret, 0, newdict);
 
     /* Convert the datetime metadata into a tuple */
     meta = get_datetime_metadata_from_dtype(dtype);
@@ -2071,11 +2108,21 @@ _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
         Py_DECREF(ret);
         return NULL;
     }
-    dt_tuple = convert_datetime_metadata_to_tuple(meta);
+    /* Use a 4-tuple that numpy 1.6 knows how to unpickle */
+    dt_tuple = PyTuple_New(4);
     if (dt_tuple == NULL) {
         Py_DECREF(ret);
         return NULL;
     }
+    PyTuple_SET_ITEM(dt_tuple, 0,
+            PyBytes_FromString(_datetime_strings[meta->base]));
+    PyTuple_SET_ITEM(dt_tuple, 1,
+            PyInt_FromLong(meta->num));
+    PyTuple_SET_ITEM(dt_tuple, 2,
+            PyInt_FromLong(1));
+    PyTuple_SET_ITEM(dt_tuple, 3,
+            PyInt_FromLong(1));
+
     PyTuple_SET_ITEM(ret, 1, dt_tuple);
 
     return ret;
@@ -2144,28 +2191,27 @@ arraydescr_reduce(PyArray_Descr *self, PyObject *NPY_UNUSED(args))
             endian = '>';
         }
     }
-    if (self->metadata) {
+    if (PyDataType_ISDATETIME(self)) {
+        PyObject *newobj;
         state = PyTuple_New(9);
         PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
-        if (PyDataType_ISDATETIME(self)) {
-            PyObject *newobj;
-            /* Handle CObject in NPY_METADATA_DTSTR key separately */
-            /*
-             * newobj is a tuple of cleaned metadata dictionary
-             * and tuple of date_time info (str, num)
-             */
-            newobj = _get_pickleabletype_from_datetime_metadata(self);
-            if (newobj == NULL) {
-                Py_DECREF(state);
-                Py_DECREF(ret);
-                return NULL;
-            }
-            PyTuple_SET_ITEM(state, 8, newobj);
+        /*
+         * newobj is a tuple of the Python metadata dictionary
+         * and tuple of date_time info (str, num)
+         */
+        newobj = _get_pickleabletype_from_datetime_metadata(self);
+        if (newobj == NULL) {
+            Py_DECREF(state);
+            Py_DECREF(ret);
+            return NULL;
         }
-        else {
-            Py_INCREF(self->metadata);
-            PyTuple_SET_ITEM(state, 8, self->metadata);
-        }
+        PyTuple_SET_ITEM(state, 8, newobj);
+    }
+    else if (self->metadata) {
+        state = PyTuple_New(9);
+        PyTuple_SET_ITEM(state, 0, PyInt_FromLong(version));
+        Py_INCREF(self->metadata);
+        PyTuple_SET_ITEM(state, 8, self->metadata);
     }
     else { /* Use version 3 pickle format */
         state = PyTuple_New(8);
@@ -2477,29 +2523,30 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         self->flags = _descr_find_object(self);
     }
 
+    /*
+     * We have a borrowed reference to metadata so no need
+     * to alter reference count when throwing away Py_None.
+     */
+    if (metadata == Py_None) {
+        metadata = NULL;
+    }
+
     Py_XDECREF(self->metadata);
-    if (PyDataType_ISDATETIME(self)
-            && (metadata != Py_None)
-            && (metadata != NULL)) {
-        PyObject *cobj;
+    if (PyDataType_ISDATETIME(self) && (metadata != NULL)) {
+        PyArray_DatetimeMetaData *dt_data;
+
+        /* The Python metadata */
         self->metadata = PyTuple_GET_ITEM(metadata, 0);
-        Py_INCREF(self->metadata);
-        cobj = convert_datetime_metadata_tuple_to_metacobj(
-                                    PyTuple_GET_ITEM(metadata, 1));
-        if (cobj == NULL) {
+
+        /* The datetime metadata */
+        dt_data = &(((PyArray_DatetimeDTypeMetaData *)self->c_metadata)->meta);
+        if (convert_datetime_metadata_tuple_to_datetime_metadata(
+                                    PyTuple_GET_ITEM(metadata, 1),
+                                    dt_data) < 0) {
             return NULL;
         }
-        PyDict_SetItemString(self->metadata, NPY_METADATA_DTSTR, cobj);
-        Py_DECREF(cobj);
     }
     else {
-        /*
-         * We have a borrowed reference to metadata so no need
-         * to alter reference count
-         */
-        if (metadata == Py_None) {
-            metadata = NULL;
-        }
         self->metadata = metadata;
         Py_XINCREF(metadata);
     }

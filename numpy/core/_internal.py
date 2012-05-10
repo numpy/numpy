@@ -80,7 +80,6 @@ def _usefields(adict, align):
 #  a simple typestring
 
 def _array_descr(descriptor):
-    from multiarray import METADATA_DTSTR
     fields = descriptor.fields
     if fields is None:
         subdtype = descriptor.subdtype
@@ -89,8 +88,6 @@ def _array_descr(descriptor):
                 return descriptor.str
             else:
                 new = descriptor.metadata.copy()
-                # Eliminate any key related to internal implementation
-                new.pop(METADATA_DTSTR, None)
                 if new:
                     return (descriptor.str, new)
                 else:

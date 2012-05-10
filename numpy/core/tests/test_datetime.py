@@ -529,9 +529,23 @@ class TestDateTime(TestCase):
     def test_pickle(self):
         # Check that pickle roundtripping works
         dt = np.dtype('M8[7D]')
-        assert_equal(dt, pickle.loads(pickle.dumps(dt)))
+        assert_equal(pickle.loads(pickle.dumps(dt)), dt)
         dt = np.dtype('M8[W]')
-        assert_equal(dt, pickle.loads(pickle.dumps(dt)))
+        assert_equal(pickle.loads(pickle.dumps(dt)), dt)
+
+        # Check that loading pickles from 1.6 works
+        pkl = "cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
+              "(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'D'\np6\n" + \
+              "I7\nI1\nI1\ntp7\ntp8\ntp9\nb."
+        assert_equal(pickle.loads(asbytes(pkl)), np.dtype('<M8[7D]'))
+        pkl = "cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
+              "(I4\nS'<'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'W'\np6\n" + \
+              "I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
+        assert_equal(pickle.loads(asbytes(pkl)), np.dtype('<M8[W]'))
+        pkl = "cnumpy\ndtype\np0\n(S'M8'\np1\nI0\nI1\ntp2\nRp3\n" + \
+              "(I4\nS'>'\np4\nNNNI-1\nI-1\nI0\n((dp5\n(S'us'\np6\n" + \
+              "I1\nI1\nI1\ntp7\ntp8\ntp9\nb."
+        assert_equal(pickle.loads(asbytes(pkl)), np.dtype('>M8[us]'))
 
     def test_dtype_promotion(self):
         # datetime <op> datetime computes the metadata gcd
