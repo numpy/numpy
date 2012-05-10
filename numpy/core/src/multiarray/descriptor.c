@@ -2084,7 +2084,6 @@ arraydescr_new(PyTypeObject *NPY_UNUSED(subtype),
 static PyObject *
 _get_pickleabletype_from_datetime_metadata(PyArray_Descr *dtype)
 {
-    PyObject *newdict;
     PyObject *ret, *dt_tuple;
     PyArray_DatetimeMetaData *meta;
 
@@ -3324,7 +3323,7 @@ descr_repeat(PyObject *self, Py_ssize_t length)
     PyArray_Descr *new;
     if (length < 0) {
         return PyErr_Format(PyExc_ValueError,
-                "Array length must be >= 0, not %"NPY_INTP_FMT, length);
+                "Array length must be >= 0, not %"NPY_INTP_FMT, (npy_intp)length);
     }
     tup = Py_BuildValue("O" NPY_SSIZE_T_PYFMT, self, length);
     if (tup == NULL) {
