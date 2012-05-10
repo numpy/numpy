@@ -109,6 +109,14 @@ def test_array_maskna_construction():
     assert_(a.flags.maskna)
     assert_equal(np.isna(a), True)
 
+@dec.skipif(sys.version_info < (2, 6))
+def test_array_maskna_pep3188():
+    if sys.version_info[:2] == (2, 6):
+        from numpy.core.multiarray import memorysimpleview as memoryview
+
+    a = np.array([0, 1, np.NA], maskna=True)
+    # The buffer protocol doesn't support NA masks, should raise an error
+    assert_raises(TypeError, memoryview, a)
 
 def test_array_maskna_asarray():
     a = np.arange(6).reshape(2,3)
