@@ -41,18 +41,18 @@ follows::
   >>> import numpy
   >>> numpy.test()
 
-The test method may take two or more arguments; the first is a string
-label specifying what should be tested and the second is an integer
-giving the level of output verbosity. See the docstring for numpy.test
-for details.  The default value for the label is 'fast' - which will
-run the standard tests.  The string 'full' will run the full battery
-of tests, including those identified as being slow to run. If the
-verbosity is 1 or less, the tests will just show information messages
-about the tests that are run; but if it is greater than 1, then the
-tests will also provide warnings on missing tests. So if you want to
-run every test and get messages about which modules don't have tests::
+The test method may take two or more arguments; the first, ``label`` is a
+string specifying what should be tested and the second, ``verbose`` is an
+integer giving the level of output verbosity. See the docstring for
+numpy.test for details.  The default value for ``label`` is 'fast' - which
+will run the standard tests.  The string 'full' will run the full battery
+of tests, including those identified as being slow to run. If ``verbose``
+is 1 or less, the tests will just show information messages about the tests
+that are run; but if it is greater than 1, then the tests will also provide
+warnings on missing tests. So if you want to run every test and get
+messages about which modules don't have tests::
 
-  >>> scipy.test(label='full', verbosity=2) # or scipy.test('full', 2)
+  >>> scipy.test(label='full', verbose=2) # or scipy.test('full', 2)
 
 Finally, if you are only interested in testing a subset of SciPy, for
 example, the ``integrate`` module, use the following::
@@ -357,6 +357,6 @@ failure by passing ``True`` as the first argument to ``skipif`` or
 
 A total of the number of skipped and known failing tests is displayed
 at the end of the test run.  Skipped tests are marked as ``'S'`` in
-the test results (or ``'SKIPPED'`` for ``verbosity > 1``), and known
-failing tests are marked as ``'K'`` (or ``'KNOWN'`` if ``verbosity >
+the test results (or ``'SKIPPED'`` for ``verbose > 1``), and known
+failing tests are marked as ``'K'`` (or ``'KNOWN'`` if ``verbose >
 1``).
