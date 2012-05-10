@@ -870,6 +870,83 @@ both the mask and the data are taken simultaneously. The result
 is two views which share the same mask memory and the same data memory,
 which still preserves the missing value abstraction.
 
+Interaction With Pre-existing C API Usage
+=========================================
+
+Making sure existing code using the C API, whether it's written in C, C++,
+or Cython, does something reasonable is an important goal of this implementation.
+The general strategy is to make existing code which does not explicitly
+tell numpy it supports NA masks fail with an exception saying so. There are
+a few different access patterns people use to get ahold of the numpy array data,
+here we examine a few of them to see what numpy can do. These examples are
+found from doing google searches of numpy C API array access.
+
+Numpy Documentation - How to extend NumPy
+-----------------------------------------
+
+http://docs.scipy.org/doc/numpy/user/c-info.how-to-extend.html#dealing-with-array-objects
+
+This page has a section "Dealing with array objects" which has some advice for how
+to access numpy arrays from C. When accepting arrays, the first step it suggests is
+to use PyArray_FromAny or a macro built on that function, so code following this
+advice will properly fail when given an NA-masked array it doesn't know how to handle.
+
+The way this is handled is that PyArray_FromAny requires a special flag, NPY_ARRAY_ALLOWNA,
+before it will allow NA-masked arrays to flow through.
+
+http://docs.scipy.org/doc/numpy/reference/c-api.array.html#NPY_ARRAY_ALLOWNA
+
+Code which does not follow this advice, and instead just calls PyArray_Check() to verify
+its an ndarray and checks some flags, will silently produce incorrect results. This style
+of code does not provide any opportunity for numpy to say "hey, this array is special",
+so also is not compatible with future ideas of lazy evaluation, derived dtypes, etc.
+
+Tutorial From Cython Website
+----------------------------
+
+http://docs.cython.org/src/tutorial/numpy.html
+
+This tutorial gives a convolution example, and all the examples fail with
+Python exceptions when given inputs that contain NA values.
+
+Before any Cython type annotation is introduced, the code functions just
+as equivalent Python would in the interpreter.
+
+When the type information is introduced, it is done via numpy.pxd which
+defines a mapping between an ndarray declaration and PyArrayObject \*.
+Under the hood, this maps to __Pyx_ArgTypeTest, which does a direct
+comparison of Py_TYPE(obj) against the PyTypeObject for the ndarray.
+
+Then the code does some dtype comparisons, and uses regular python indexing
+to access the array elements. This python indexing still goes through the
+Python API, so the NA handling and error checking in numpy still can work
+like normal and fail if the inputs have NAs which cannot fit in the output
+array. In this case it fails when trying to convert the NA into an integer
+to set in in the output.
+
+The next version of the code introduces more efficient indexing. This
+operates based on Python's buffer protocol. This causes Cython to call
+__Pyx_GetBufferAndValidate, which calls __Pyx_GetBuffer, which calls
+PyObject_GetBuffer. This call gives numpy the opportunity to raise an
+exception if the inputs are arrays with NA-masks, something not supported
+by the Python buffer protocol.
+
+Numerical Python - JPL website
+------------------------------
+
+http://dsnra.jpl.nasa.gov/software/Python/numpydoc/numpy-13.html
+
+This document is from 2001, so does not reflect recent numpy, but it is the
+second hit when searching for "numpy c api example" on google.
+
+There first example, heading "A simple example", is in fact already invalid for
+recent numpy even without the NA support. In particular, if the data is misaligned
+or in a different byteorder, it may crash or produce incorrect results.
+
+The next thing the document does is introduce PyArray_ContiguousFromObject, which
+gives numpy an opportunity to raise an exception when NA-masked arrays are used,
+so the later code will raise exceptions as desired.
+
 ************************
 C Implementation Details
 ************************
