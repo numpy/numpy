@@ -441,36 +441,6 @@ class TestMisc(TestCase) :
         wcoef2d = poly.polyfit(x, np.array([yw,yw]).T, 3, w=w)
         assert_almost_equal(wcoef2d, np.array([coef3,coef3]).T)
 
-        #test NA
-        y = f(x)
-        y[10] = 100
-
-        xm = x.view(maskna=1)
-        xm[10] = np.NA
-        res = poly.polyfit(xm, y, 3)
-        assert_almost_equal(res, coef3)
-
-        ym = y.view(maskna=1)
-        ym[10] = np.NA
-        res = poly.polyfit(x, ym, 3)
-        assert_almost_equal(res, coef3)
-
-        y2 = np.vstack((y,y)).T
-        y2[10,0] = 100
-        y2[15,1] = 100
-        y2m = y2.view(maskna=1)
-        y2m[10,0] = np.NA
-        y2m[15,1] = np.NA
-        res = poly.polyfit(x, y2m, 3).T
-        assert_almost_equal(res[0], coef3)
-        assert_almost_equal(res[1], coef3)
-
-        wm = np.ones_like(x, maskna=1)
-        wm[10] = np.NA
-        res = poly.polyfit(x, y, 3, w=wm)
-        assert_almost_equal(res, coef3)
-
-
     def test_polytrim(self) :
         coef = [2, -1, 1, 0]
 

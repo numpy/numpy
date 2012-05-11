@@ -30,12 +30,11 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
 /*
  * A full reduction version of PyArray_CountNonzero, supporting
  * an 'out' parameter and doing the count as a reduction along
- * selected axes. It also supports a 'skipna' parameter, which
- * skips over any NA masked values in arr.
+ * selected axes.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
-                        npy_bool *axis_flags, int skipna, int keepdims);
+                        npy_bool *axis_flags, int keepdims);
 
 
 

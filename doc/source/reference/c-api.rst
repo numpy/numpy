@@ -45,7 +45,6 @@ code.
    c-api.dtype
    c-api.array
    c-api.iterator
-   c-api.maskna
    c-api.ufunc
    c-api.generalized-ufuncs
    c-api.coremath

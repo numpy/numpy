@@ -14,11 +14,6 @@
  * src_order: The rule for how 'src' is to be made flat.
  * casting: An exception is raised if the copy violates this
  *          casting rule.
- * preservena: If 0, overwrites everything in 'dst', if 1, it
- *              preserves elements in 'dst' which are NA.
- * preservewhichna: Must be NULL. When multi-NA support is implemented,
- *                   this will be an array of flags for 'preservena=True',
- *                   indicating which NA payload values to preserve.
  *
  * Returns 0 on success, -1 on failure.
  */
@@ -30,7 +25,16 @@ PyArray_AssignArrayAsFlat(PyArrayObject *dst, NPY_ORDER dst_order,
                   npy_bool preservena, npy_bool *preservewhichna);
 */
 
+NPY_NO_EXPORT int
+PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
+                    PyArrayObject *wheremask,
+                    NPY_CASTING casting);
 
+NPY_NO_EXPORT int
+PyArray_AssignRawScalar(PyArrayObject *dst,
+                        PyArray_Descr *src_dtype, char *src_data,
+                        PyArrayObject *wheremask,
+                        NPY_CASTING casting);
 
 /******** LOW-LEVEL SCALAR TO ARRAY ASSIGNMENT ********/
 

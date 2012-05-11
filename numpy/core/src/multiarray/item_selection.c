@@ -17,7 +17,6 @@
 #include "arrayobject.h"
 #include "ctors.h"
 #include "lowlevel_strided_loops.h"
-#include "na_object.h"
 #include "reduction.h"
 
 #include "item_selection.h"
@@ -35,11 +34,11 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     npy_intp nd, i, j, n, m, max_item, tmp, chunk, nelem;
     npy_intp shape[NPY_MAXDIMS];
     char *src, *dest;
-    int err, use_maskna = 0;
+    int err;
 
     indices = NULL;
     self = (PyArrayObject *)PyArray_CheckAxis(self0, &axis,
-                                    NPY_ARRAY_CARRAY | NPY_ARRAY_ALLOWNA);
+                                    NPY_ARRAY_CARRAY);
     if (self == NULL) {
         return NULL;
     }
@@ -83,18 +82,10 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             goto fail;
         }
 
-        /* Allocate an NA mask if necessary */
-        if (PyArray_HASMASKNA(self)) {
-            if (PyArray_AllocateMaskNA(obj, 1, 0, 1) < 0) {
-                goto fail;
-            }
-            use_maskna = 1;
-        }
     }
     else {
         int flags = NPY_ARRAY_CARRAY |
-                    NPY_ARRAY_UPDATEIFCOPY |
-                    NPY_ARRAY_ALLOWNA;
+                    NPY_ARRAY_UPDATEIFCOPY;
 
         if ((PyArray_NDIM(out) != nd) ||
             !PyArray_CompareLists(PyArray_DIMS(out), shape, nd)) {
@@ -117,24 +108,6 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         if (obj == NULL) {
             goto fail;
         }
-
-        if (PyArray_HASMASKNA(self)) {
-            if (PyArray_HASMASKNA(obj)) {
-                use_maskna = 1;
-            }
-            else {
-                int containsna = PyArray_ContainsNA(self, NULL, NULL);
-                if (containsna == -1) {
-                    goto fail;
-                }
-                else if (containsna) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "Cannot assign NA to an array which "
-                            "does not support NAs");
-                    goto fail;
-                }
-            }
-        }
     }
 
     max_item = PyArray_DIMS(self)[axis];
@@ -144,104 +117,7 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     dest = PyArray_DATA(obj);
 
     func = PyArray_DESCR(self)->f->fasttake;
-    if (use_maskna) {
-        char *dst_maskna = NULL, *src_maskna = NULL;
-        npy_intp itemsize = PyArray_DESCR(obj)->elsize;
-        PyArray_MaskedStridedUnaryOp *maskedstransfer = NULL;
-        NpyAuxData *transferdata = NULL;
-        int needs_api = 0;
-
-        if (PyArray_GetMaskedDTypeTransferFunction(
-                        1,
-                        itemsize,
-                        itemsize,
-                        1,
-                        PyArray_DESCR(obj),
-                        PyArray_DESCR(obj),
-                        PyArray_MASKNA_DTYPE(obj),
-                        0,
-                        &maskedstransfer, &transferdata,
-                        &needs_api) != NPY_SUCCEED) {
-            goto fail;
-        }
-
-
-        src_maskna = PyArray_MASKNA_DATA(self);
-        dst_maskna = PyArray_MASKNA_DATA(obj);
-
-        switch(clipmode) {
-        case NPY_RAISE:
-            for (i = 0; i < n; i++) {
-                for (j = 0; j < m; j++) {
-                    tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
-                    if (check_and_adjust_index(&tmp, max_item, axis) < 0) {
-                        NPY_AUXDATA_FREE(transferdata);
-                        goto fail;
-                    }
-                    maskedstransfer(dest, itemsize,
-                                    src + tmp*chunk, itemsize,
-                                    (npy_mask *)(src_maskna + tmp*nelem), 1,
-                                    nelem, itemsize, transferdata);
-                    dest += chunk;
-                    memmove(dst_maskna, src_maskna + tmp*nelem, nelem);
-                    dst_maskna += nelem;
-                }
-                src += chunk*max_item;
-                src_maskna += nelem*max_item;
-            }
-            break;
-        case NPY_WRAP:
-            for (i = 0; i < n; i++) {
-                for (j = 0; j < m; j++) {
-                    tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
-                    if (tmp < 0) {
-                        while (tmp < 0) {
-                            tmp += max_item;
-                        }
-                    }
-                    else if (tmp >= max_item) {
-                        while (tmp >= max_item) {
-                            tmp -= max_item;
-                        }
-                    }
-                    maskedstransfer(dest, itemsize,
-                                    src + tmp*chunk, itemsize,
-                                    (npy_mask *)(src_maskna + tmp*nelem), 1,
-                                    nelem, itemsize, transferdata);
-                    dest += chunk;
-                    memmove(dst_maskna, src_maskna + tmp*nelem, nelem);
-                    dst_maskna += nelem;
-                }
-                src += chunk*max_item;
-                src_maskna += nelem*max_item;
-            }
-            break;
-        case NPY_CLIP:
-            for (i = 0; i < n; i++) {
-                for (j = 0; j < m; j++) {
-                    tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
-                    if (tmp < 0) {
-                        tmp = 0;
-                    }
-                    else if (tmp >= max_item) {
-                        tmp = max_item - 1;
-                    }
-                    maskedstransfer(dest, itemsize,
-                                    src + tmp*chunk, itemsize,
-                                    (npy_mask *)(src_maskna + tmp*nelem), 1,
-                                    nelem, itemsize, transferdata);
-                    dest += chunk;
-                    memmove(dst_maskna, src_maskna + tmp*nelem, nelem);
-                    dst_maskna += nelem;
-                }
-                src += chunk*max_item;
-                src_maskna += nelem*max_item;
-            }
-            break;
-        }
-        NPY_AUXDATA_FREE(transferdata);
-    }
-    else if (func == NULL) {
+    if (func == NULL) {
         switch(clipmode) {
         case NPY_RAISE:
             for (i = 0; i < n; i++) {
@@ -1829,12 +1705,11 @@ NPY_NO_EXPORT PyObject *
 PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 {
     int i, idim, ndim = PyArray_NDIM(self);
-    npy_intp *strides, *maskna_strides = NULL;
-    npy_intp stride1, stride2, maskna_stride1 = 0, maskna_stride2 = 0;
+    npy_intp *strides;
+    npy_intp stride1, stride2;
     npy_intp *shape, dim1, dim2;
-    int self_has_maskna = PyArray_HASMASKNA(self);
 
-    char *data, *maskna_data;
+    char *data;
     npy_intp diag_size;
     PyArrayObject *ret;
     PyArray_Descr *dtype;
@@ -1876,22 +1751,15 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     strides = PyArray_STRIDES(self);
     stride1 = strides[axis1];
     stride2 = strides[axis2];
-    if (self_has_maskna) {
-        maskna_strides = PyArray_MASKNA_STRIDES(self);
-        maskna_stride1 = maskna_strides[axis1];
-        maskna_stride2 = maskna_strides[axis2];
-    }
 
     /* Compute the data pointers and diag_size for the view */
     data = PyArray_DATA(self);
-    maskna_data = PyArray_MASKNA_DATA(self);
     if (offset > 0) {
         if (offset >= dim2) {
             diag_size = 0;
         }
         else {
             data += offset * stride2;
-            maskna_data += offset * maskna_stride2;
 
             diag_size = dim2 - offset;
             if (dim1 < diag_size) {
@@ -1906,7 +1774,6 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
         }
         else {
             data += offset * stride1;
-            maskna_data += offset * maskna_stride1;
 
             diag_size = dim1 - offset;
             if (dim2 < diag_size) {
@@ -1938,7 +1805,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
                                ndim-1, ret_shape,
                                ret_strides,
                                data,
-               PyArray_FLAGS(self) & ~(NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA),
+                               PyArray_FLAGS(self),
                                (PyObject *)self);
     if (ret == NULL) {
         return NULL;
@@ -1947,27 +1814,6 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     if (PyArray_SetBaseObject(ret, (PyObject *)self) < 0) {
         Py_DECREF(ret);
         return NULL;
-    }
-
-    /* Take a view of the mask if it exists */
-    if (self_has_maskna) {
-        PyArrayObject_fields *fret = (PyArrayObject_fields *)ret;
-
-        maskna_strides = PyArray_MASKNA_STRIDES(self);
-
-        fret->maskna_dtype = PyArray_MASKNA_DTYPE(self);
-        Py_INCREF(fret->maskna_dtype);
-        fret->maskna_data = maskna_data;
-        /* Build the strides for the mask */
-        i = 0;
-        for (idim = 0; idim < ndim; ++idim) {
-            if (idim != axis1 && idim != axis2) {
-                fret->maskna_strides[i] = maskna_strides[idim];
-                ++i;
-            }
-        }
-        fret->maskna_strides[ndim-2] = maskna_stride1 + maskna_stride2;
-        fret->flags |= NPY_ARRAY_MASKNA;
     }
 
     /* For backwards compatibility, during the deprecation period: */
@@ -1999,7 +1845,7 @@ PyArray_Compress(PyArrayObject *self, PyObject *condition, int axis,
             return NULL;
         }
         cond = (PyArrayObject *)PyArray_FromAny(condition, dtype,
-                                    0, 0, NPY_ARRAY_ALLOWNA, NULL);
+                                    0, 0, 0, NULL);
         if (cond == NULL) {
             return NULL;
         }
@@ -2076,9 +1922,9 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
 }
 
 static int
-assign_reduce_identity_zero(PyArrayObject *result, int preservena, void *data)
+assign_reduce_identity_zero(PyArrayObject *result, void *data)
 {
-    return PyArray_AssignZero(result, NULL, preservena, NULL);
+    return PyArray_AssignZero(result, NULL);
 }
 
 static int
@@ -2126,64 +1972,14 @@ reduce_count_nonzero_loop(NpyIter *iter,
     return (needs_api && PyErr_Occurred()) ? -1 : 0;
 }
 
-static int
-reduce_count_nonzero_masked_loop(NpyIter *iter,
-                                            char **dataptr,
-                                            npy_intp *strides,
-                                            npy_intp *countptr,
-                                            NpyIter_IterNextFunc *iternext,
-                                            int needs_api,
-                                            npy_intp skip_first_count,
-                                            void *data)
-{
-    PyArray_NonzeroFunc *nonzero = (PyArray_NonzeroFunc *)data;
-    PyArrayObject *arr = NpyIter_GetOperandArray(iter)[1];
-
-    NPY_BEGIN_THREADS_DEF;
-
-    if (!needs_api) {
-        NPY_BEGIN_THREADS;
-    }
-
-    /*
-     * 'skip_first_count' will always be 0 because we are doing a reduction
-     * with an identity.
-     */
-
-    do {
-        char *data0 = dataptr[0], *data1 = dataptr[1], *data2 = dataptr[2];
-        npy_intp stride0 = strides[0], stride1 = strides[1],
-                    stride2 = strides[2];
-        npy_intp count = *countptr;
-
-        while (count--) {
-            if (NpyMaskValue_IsExposed((npy_mask)*data2) &&
-                                        nonzero(data1, arr)) {
-                ++(*(npy_intp *)data0);
-            }
-            data0 += stride0;
-            data1 += stride1;
-            data2 += stride2;
-        }
-    } while (iternext(iter));
-
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
-
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
-}
-
-
 /*
  * A full reduction version of PyArray_CountNonzero, supporting
  * an 'out' parameter and doing the count as a reduction along
- * selected axes. It also supports a 'skipna' parameter, which
- * skips over any NA masked values in arr.
+ * selected axes.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
-                        npy_bool *axis_flags, int skipna, int keepdims)
+                        npy_bool *axis_flags, int keepdims)
 {
     PyArray_NonzeroFunc *nonzero;
     PyArrayObject *result;
@@ -2205,11 +2001,9 @@ PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
     result = PyArray_ReduceWrapper(arr, out, NULL,
                             PyArray_DESCR(arr), dtype,
                             NPY_SAME_KIND_CASTING,
-                            axis_flags, 1, skipna, NULL, keepdims, 0,
+                            axis_flags, 1, keepdims, 0,
                             &assign_reduce_identity_zero,
                             &reduce_count_nonzero_loop,
-                            &reduce_count_nonzero_masked_loop,
-                            NULL,
                             nonzero, 0, "count_nonzero");
     Py_DECREF(dtype);
     if (out == NULL && result != NULL) {
@@ -2221,8 +2015,7 @@ PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
 }
 
 /*NUMPY_API
- * Counts the number of non-zero elements in the array. Raises
- * an error if the array contains an NA.
+ * Counts the number of non-zero elements in the array.
  *
  * Returns -1 on error.
  */
@@ -2238,20 +2031,6 @@ PyArray_CountNonzero(PyArrayObject *self)
     NpyIter_IterNextFunc *iternext;
     char **dataptr;
     npy_intp *strideptr, *innersizeptr;
-
-    /* If 'self' has an NA mask, make sure it has no NA values */
-    if (PyArray_HASMASKNA(self)) {
-        int containsna = PyArray_ContainsNA(self, NULL, NULL);
-        if (containsna == -1) {
-            return -1;
-        }
-        else if (containsna) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Cannot count the number of nonzeros in an array "
-                    "which contains an NA");
-            return -1;
-        }
-    }
 
     /* Special low-overhead version specific to the boolean type */
     if (PyArray_DESCR(self)->type_num == NPY_BOOL) {
@@ -2285,11 +2064,8 @@ PyArray_CountNonzero(PyArrayObject *self)
 
     /*
      * Otherwise create and use an iterator to count the nonzeros.
-     * Can ignore any NAs because we already checked PyArray_ContainsNA
-     * earlier.
      */
     iter = NpyIter_New(self, NPY_ITER_READONLY |
-                             NPY_ITER_IGNORE_MASKNA |
                              NPY_ITER_EXTERNAL_LOOP |
                              NPY_ITER_REFS_OK,
                         NPY_KEEPORDER, NPY_NO_CASTING,
@@ -2352,9 +2128,7 @@ PyArray_Nonzero(PyArrayObject *self)
     char **dataptr;
 
     /*
-     * First count the number of non-zeros in 'self'. If 'self' contains
-     * an NA value, this will raise an error, so after this call
-     * we can assume 'self' contains no NAs.
+     * First count the number of non-zeros in 'self'.
      */
     nonzero_count = PyArray_CountNonzero(self);
     if (nonzero_count < 0) {
@@ -2391,12 +2165,9 @@ PyArray_Nonzero(PyArrayObject *self)
     }
 
     /*
-     * Build an iterator tracking a multi-index, in C order. We
-     * can ignore NAs because the PyArray_CountNonzero call checked
-     * that there were no NAs already.
+     * Build an iterator tracking a multi-index, in C order.
      */
     iter = NpyIter_New(self, NPY_ITER_READONLY |
-                             NPY_ITER_IGNORE_MASKNA |
                              NPY_ITER_MULTI_INDEX |
                              NPY_ITER_ZEROSIZE_OK |
                              NPY_ITER_REFS_OK,
@@ -2496,56 +2267,18 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
     npy_intp *shape = PyArray_SHAPE(self);
     npy_intp *strides = PyArray_STRIDES(self);
 
-    /* Case with an NA mask */
-    if (PyArray_HASMASKNA(self)) {
-        char *maskdata = PyArray_MASKNA_DATA(self);
-        npy_mask maskvalue;
-        npy_intp *maskstrides = PyArray_MASKNA_STRIDES(self);
+    /* Get the data pointer */
+    for (idim = 0; idim < ndim; ++idim) {
+        npy_intp shapevalue = shape[idim];
+        npy_intp ind = multi_index[idim];
 
-        if (PyArray_HASFIELDS(self)) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "field-NA is not supported yet in MultiIndexGetItem");
-            return NULL;
+        if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
+          return NULL;
         }
-
-        /* Get the data and maskdata pointer */
-        for (idim = 0; idim < ndim; ++idim) {
-            npy_intp shapevalue = shape[idim];
-            npy_intp ind = multi_index[idim];
-
-            if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
-                return NULL;
-            }
-
-            data += ind * strides[idim];
-            maskdata += ind * maskstrides[idim];
-        }
-
-        maskvalue = (npy_mask)*maskdata;
-        if (NpyMaskValue_IsExposed(maskvalue)) {
-            return PyArray_DESCR(self)->f->getitem(data, self);
-        }
-        else {
-            return (PyObject *)NpyNA_FromDTypeAndPayload(
-                                                PyArray_DTYPE(self), 0, 0);
-        }
+        data += ind * strides[idim];
     }
-    /* Case without an NA mask */
-    else {
-        /* Get the data pointer */
-        for (idim = 0; idim < ndim; ++idim) {
-            npy_intp shapevalue = shape[idim];
-            npy_intp ind = multi_index[idim];
 
-            if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
-                return NULL;
-            }
-
-            data += ind * strides[idim];
-        }
-
-        return PyArray_DESCR(self)->f->getitem(data, self);
-    }
+    return PyArray_DESCR(self)->f->getitem(data, self);
 }
 
 /*
@@ -2563,67 +2296,16 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
     npy_intp *shape = PyArray_SHAPE(self);
     npy_intp *strides = PyArray_STRIDES(self);
 
-    /* Case with an NA mask */
-    if (PyArray_HASMASKNA(self)) {
-        char *maskdata = PyArray_MASKNA_DATA(self);
-        npy_intp *maskstrides = PyArray_MASKNA_STRIDES(self);
-        NpyNA *na = NpyNA_FromObject(obj, 1);
+    /* Get the data pointer */
+    for (idim = 0; idim < ndim; ++idim) {
+        npy_intp shapevalue = shape[idim];
+        npy_intp ind = multi_index[idim];
 
-        if (PyArray_HASFIELDS(self)) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "field-NA is not supported yet in MultiIndexSetItem");
+        if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
             return -1;
         }
-
-        /* Get the data and maskdata pointer */
-        for (idim = 0; idim < ndim; ++idim) {
-            npy_intp shapevalue = shape[idim];
-            npy_intp ind = multi_index[idim];
-
-            if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
-                return -1;
-            }
-
-            data += ind * strides[idim];
-            maskdata += ind * maskstrides[idim];
-        }
-
-        if (na == NULL) {
-            *maskdata = 1;
-            return PyArray_DESCR(self)->f->setitem(obj, data, self);
-        }
-        else {
-            char maskvalue = (char)NpyNA_AsMaskValue(na);
-
-            if (maskvalue != 0 &&
-                        PyArray_MASKNA_DTYPE(self)->type_num != NPY_MASK) {
-                /* TODO: also handle struct-NA mask dtypes */
-                PyErr_SetString(PyExc_ValueError,
-                        "Cannot assign an NA with a payload to an "
-                        "NA-array with a boolean mask, requires a "
-                        "multi-NA mask");
-                return -1;
-            }
-
-            *maskdata = maskvalue;
-
-            return 0;
-        }
+        data += ind * strides[idim];
     }
-    /* Case without an NA mask */
-    else {
-        /* Get the data pointer */
-        for (idim = 0; idim < ndim; ++idim) {
-            npy_intp shapevalue = shape[idim];
-            npy_intp ind = multi_index[idim];
 
-            if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
-                return -1;
-            }
-
-            data += ind * strides[idim];
-        }
-
-        return PyArray_DESCR(self)->f->setitem(obj, data, self);
-    }
+    return PyArray_DESCR(self)->f->setitem(obj, data, self);
 }

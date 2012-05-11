@@ -606,39 +606,6 @@ class TestNonzero(TestCase):
         np.count_nonzero(a, axis=0, out=res)
         assert_equal(res, [1,2,0])
 
-        # A 3-dimensional array with an NA
-        a = array([[[0,1,0],[2,np.NA,0]], [[0,1,0],[2,3,0]]], maskna=True)
-
-        # Test that the NA reduces correctly
-        assert_array_equal(np.count_nonzero(a, axis=()),
-                            [[[0,1,0],[1,np.NA,0]], [[0,1,0],[1,1,0]]])
-        assert_array_equal(np.count_nonzero(a, axis=0), [[0,2,0], [2,np.NA,0]])
-        assert_array_equal(np.count_nonzero(a, axis=1), [[1,np.NA,0], [1,2,0]])
-        assert_array_equal(np.count_nonzero(a, axis=2), [[1,np.NA], [1,2]])
-        assert_array_equal(np.count_nonzero(a, axis=(0,1)), [2,np.NA,0])
-        assert_array_equal(np.count_nonzero(a, axis=(0,2)), [2,np.NA])
-        assert_array_equal(np.count_nonzero(a, axis=(1,2)), [np.NA,3])
-        assert_array_equal(np.count_nonzero(a, axis=(0,1,2)),
-                                                np.NA(dtype=np.intp))
-        assert_array_equal(np.count_nonzero(a, axis=None),
-                                                np.NA(dtype=np.intp))
-
-        # Test that the NA gets skipped correctly
-        assert_array_equal(np.count_nonzero(a, axis=(), skipna=True),
-                            [[[0,1,0],[1,0,0]], [[0,1,0],[1,1,0]]])
-        assert_array_equal(np.count_nonzero(a, axis=0, skipna=True),
-                            [[0,2,0], [2,1,0]])
-        assert_array_equal(np.count_nonzero(a, axis=1, skipna=True),
-                            [[1,1,0], [1,2,0]])
-        assert_array_equal(np.count_nonzero(a, axis=2, skipna=True),
-                            [[1,1], [1,2]])
-        assert_array_equal(np.count_nonzero(a, axis=(0,1), skipna=True),
-                            [2,3,0])
-        assert_array_equal(np.count_nonzero(a, axis=(0,2), skipna=True), [2,3])
-        assert_array_equal(np.count_nonzero(a, axis=(1,2), skipna=True), [2,3])
-        assert_array_equal(np.count_nonzero(a, axis=(0,1,2), skipna=True), 5)
-        assert_array_equal(np.count_nonzero(a, axis=None, skipna=True), 5)
-
 class TestIndex(TestCase):
     def test_boolean(self):
         a = rand(3,5,8)
@@ -1323,17 +1290,6 @@ class TestIsclose(object):
         # Ensure that the mask isn't modified...
         assert_array_equal([True, True, False], y.mask)
 
-    def test_maskna_arrays(self):
-        x = array([NA, 1, 2, 3])
-        y = array([0, 1, 2, NA])
-        assert_array_equal(isclose(x, y), array([NA, True, True, NA]))
-
-        assert_array_equal(isclose(NA, arange(3)), array([NA, NA, NA]))
-
-        x = array([NA, nan, 2, 3])
-        y = array([nan, 1, 2, NA])
-        assert_array_equal(isclose(x, y), array([NA, False, True, NA]))
-
     def test_scalar_return(self):
         assert_(isscalar(isclose(1, 1)))
 
@@ -1463,20 +1419,6 @@ class TestLikeFuncs(TestCase):
 
         b = like_function(a, subok=False)
         assert_(not (type(b) is np.matrix))
-
-        # Test that 'maskna=True' works
-        a = np.arange(6).reshape(2,3)
-        res = like_function(a, maskna=True)
-        assert_(res.flags.maskna)
-        assert_(res.flags.ownmaskna)
-        assert_equal(res.shape, a.shape)
-        assert_equal(res.dtype, a.dtype)
-
-        # Test that no NA mask is created when the prototype is NA-masked
-        a = np.arange(6, maskna=True).reshape(2,3)
-        assert_(a.flags.maskna)
-        res = like_function(a)
-        assert_(not res.flags.maskna)
 
     def test_ones_like(self):
         self.check_like_function(np.ones_like, 1)

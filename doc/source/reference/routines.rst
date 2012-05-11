@@ -34,7 +34,6 @@ indentation.
    routines.linalg
    routines.logic
    routines.ma
-   routines.maskna
    routines.math
    routines.matlib
    routines.numarray

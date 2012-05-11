@@ -71,7 +71,7 @@ array_slice(PyArrayObject *self, Py_ssize_t ilow, Py_ssize_t ihigh)
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self), dtype,
                              PyArray_NDIM(self), shape,
                              PyArray_STRIDES(self), data,
-             PyArray_FLAGS(self) & ~(NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA),
+                             PyArray_FLAGS(self),
                              (PyObject *)self);
     if (ret == NULL) {
         return NULL;
@@ -82,27 +82,6 @@ array_slice(PyArrayObject *self, Py_ssize_t ilow, Py_ssize_t ihigh)
         return NULL;
     }
     PyArray_UpdateFlags(ret, NPY_ARRAY_UPDATE_ALL);
-
-    /* Also take a view of the NA mask if it exists */
-    if (PyArray_HASMASKNA(self)) {
-        PyArrayObject_fields *fret = (PyArrayObject_fields *)ret;
-
-        fret->maskna_dtype = PyArray_MASKNA_DTYPE(self);
-        Py_INCREF(fret->maskna_dtype);
-
-        data = PyArray_MASKNA_DATA(self);
-        if (ilow < ihigh) {
-            data += ilow * PyArray_MASKNA_STRIDES(self)[0];
-        }
-        fret->maskna_data = data;
-
-        memcpy(fret->maskna_strides, PyArray_MASKNA_STRIDES(self),
-                        PyArray_NDIM(self) * sizeof(npy_intp));
-
-        /* This view doesn't own the mask */
-        fret->flags |= NPY_ARRAY_MASKNA;
-        fret->flags &= ~NPY_ARRAY_OWNMASKNA;
-    }
 
     return (PyObject *)ret;
 }

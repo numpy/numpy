@@ -85,21 +85,17 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
 
 /*
  * Parses an index that has no fancy indexing. Populates
- * out_dimensions, out_strides, and out_offset. If out_maskna_strides
- * and out_maskoffset aren't NULL, then 'self' must have an NA mask
- * which is used to populate those variables as well.
+ * out_dimensions, out_strides, and out_offset.
  */
 NPY_NO_EXPORT int
 parse_index(PyArrayObject *self, PyObject *op,
             npy_intp *out_dimensions,
             npy_intp *out_strides,
-            npy_intp *out_offset,
-            npy_intp *out_maskna_strides,
-            npy_intp *out_maskna_offset)
+            npy_intp *out_offset)
 {
     int i, j, n;
     int nd_old, nd_new, n_add, n_ellipsis;
-    npy_intp n_steps, start, offset, maskna_offset, step_size;
+    npy_intp n_steps, start, offset, step_size;
     PyObject *op1 = NULL;
     int is_slice;
 
@@ -124,7 +120,6 @@ parse_index(PyArrayObject *self, PyObject *op,
     nd_old = nd_new = 0;
 
     offset = 0;
-    maskna_offset = 0;
     for (i = 0; i < n; i++) {
         if (!is_slice) {
             op1 = PySequence_GetItem(op, i);
@@ -143,9 +138,6 @@ parse_index(PyArrayObject *self, PyObject *op,
         if (n_steps == NEWAXIS_INDEX) {
             out_dimensions[nd_new] = 1;
             out_strides[nd_new] = 0;
-            if (out_maskna_strides != NULL) {
-                out_maskna_strides[nd_new] = 0;
-            }
             nd_new++;
         }
         else if (n_steps == ELLIPSIS_INDEX) {
@@ -164,10 +156,6 @@ parse_index(PyArrayObject *self, PyObject *op,
             for (j = 0; j < n_add; j++) {
                 out_dimensions[nd_new] = PyArray_DIMS(self)[nd_old];
                 out_strides[nd_new] = PyArray_STRIDES(self)[nd_old];
-                if (out_maskna_strides != NULL) {
-                    out_maskna_strides[nd_new] =
-                                    PyArray_MASKNA_STRIDES(self)[nd_old];
-                }
                 nd_new++; nd_old++;
             }
         }
@@ -177,18 +165,11 @@ parse_index(PyArrayObject *self, PyObject *op,
                 return -1;
             }
             offset += PyArray_STRIDES(self)[nd_old]*start;
-            if (out_maskna_offset != NULL) {
-                maskna_offset += PyArray_MASKNA_STRIDES(self)[nd_old]*start;
-            }
             nd_old++;
             if (n_steps != SINGLE_INDEX) {
                 out_dimensions[nd_new] = n_steps;
                 out_strides[nd_new] = step_size *
                                             PyArray_STRIDES(self)[nd_old-1];
-                if (out_maskna_strides != NULL) {
-                    out_maskna_strides[nd_new] = step_size *
-                                        PyArray_MASKNA_STRIDES(self)[nd_old-1];
-                }
                 nd_new++;
             }
         }
@@ -200,16 +181,10 @@ parse_index(PyArrayObject *self, PyObject *op,
     for (j = 0; j < n_add; j++) {
         out_dimensions[nd_new] = PyArray_DIMS(self)[nd_old];
         out_strides[nd_new] = PyArray_STRIDES(self)[nd_old];
-        if (out_maskna_strides != NULL) {
-            out_maskna_strides[nd_new] = PyArray_MASKNA_STRIDES(self)[nd_old];
-        }
         nd_new++;
         nd_old++;
     }
     *out_offset = offset;
-    if (out_maskna_offset != NULL) {
-        *out_maskna_offset = maskna_offset;
-    }
     return nd_new;
 }
 
@@ -407,13 +382,6 @@ PyArray_IterNew(PyObject *obj)
     }
     ao = (PyArrayObject *)obj;
 
-    if (PyArray_HASMASKNA(ao)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Old-style NumPy iterators do not support NA masks, "
-                "use numpy.nditer instead");
-        return NULL;
-    }
-
     it = (PyArrayIterObject *)PyArray_malloc(sizeof(PyArrayIterObject));
     PyObject_Init((PyObject *)it, &PyArrayIter_Type);
     /* it = PyObject_New(PyArrayIterObject, &PyArrayIter_Type);*/
@@ -434,13 +402,6 @@ PyArray_BroadcastToShape(PyObject *obj, npy_intp *dims, int nd)
     PyArrayIterObject *it;
     int i, diff, j, compat, k;
     PyArrayObject *ao = (PyArrayObject *)obj;
-
-    if (PyArray_HASMASKNA(ao)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Old-style NumPy iterators do not support NA masks, "
-                "use numpy.nditer instead");
-        return NULL;
-    }
 
     if (PyArray_NDIM(ao) > nd) {
         goto err;

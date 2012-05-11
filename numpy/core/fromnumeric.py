@@ -1419,7 +1419,7 @@ def clip(a, a_min, a_max, out=None):
     return clip(a_min, a_max, out)
 
 
-def sum(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
+def sum(a, axis=None, dtype=None, out=None, keepdims=False):
     """
     Sum of array elements over a given axis.
 
@@ -1449,9 +1449,6 @@ def sum(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
         (the shape of `a` with `axis` removed, i.e.,
         ``numpy.delete(a.shape, axis)``).  Its type is preserved. See
         `doc.ufuncs` (Section "Output arguments") for more details.
-    skipna : bool, optional
-        If this is set to True, skips any NA values during summation
-        instead of propagating them.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -1510,14 +1507,14 @@ def sum(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
             sum = a.sum
         except AttributeError:
             return _methods._sum(a, axis=axis, dtype=dtype,
-                                out=out, skipna=skipna, keepdims=keepdims)
-        # NOTE: Dropping the skipna and keepdims parameters here...
+                                out=out, keepdims=keepdims)
+        # NOTE: Dropping the keepdims parameters here...
         return sum(axis=axis, dtype=dtype, out=out)
     else:
         return _methods._sum(a, axis=axis, dtype=dtype,
-                            out=out, skipna=skipna, keepdims=keepdims)
+                            out=out, keepdims=keepdims)
 
-def product (a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
+def product (a, axis=None, dtype=None, out=None, keepdims=False):
     """
     Return the product of array elements over a given axis.
 
@@ -1526,10 +1523,10 @@ def product (a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
     prod : equivalent function; see for details.
 
     """
-    return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out, skipna=skipna, keepdims=keepdims)
+    return um.multiply.reduce(a, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
 
 
-def sometrue(a, axis=None, out=None, skipna=False, keepdims=False):
+def sometrue(a, axis=None, out=None, keepdims=False):
     """
     Check whether some values are true.
 
@@ -1543,11 +1540,11 @@ def sometrue(a, axis=None, out=None, skipna=False, keepdims=False):
     arr = asanyarray(a)
 
     try:
-        return arr.any(axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+        return arr.any(axis=axis, out=out, keepdims=keepdims)
     except TypeError:
         return arr.any(axis=axis, out=out)
 
-def alltrue (a, axis=None, out=None, skipna=False, keepdims=False):
+def alltrue (a, axis=None, out=None, keepdims=False):
     """
     Check if all elements of input array are true.
 
@@ -1559,11 +1556,11 @@ def alltrue (a, axis=None, out=None, skipna=False, keepdims=False):
     arr = asanyarray(a)
 
     try:
-        return arr.all(axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+        return arr.all(axis=axis, out=out, keepdims=keepdims)
     except TypeError:
         return arr.all(axis=axis, out=out)
 
-def any(a, axis=None, out=None, skipna=False, keepdims=False):
+def any(a, axis=None, out=None, keepdims=False):
     """
     Test whether any array element along a given axis evaluates to True.
 
@@ -1589,9 +1586,6 @@ def any(a, axis=None, out=None, skipna=False, keepdims=False):
         (e.g., if it is of type float, then it will remain so, returning
         1.0 for True and 0.0 for False, regardless of the type of `a`).
         See `doc.ufuncs` (Section "Output arguments") for details.
-    skipna : bool, optional
-        If this is set to True, skips any NA values during summation
-        instead of propagating them.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -1642,11 +1636,11 @@ def any(a, axis=None, out=None, skipna=False, keepdims=False):
     arr = asanyarray(a)
 
     try:
-        return arr.any(axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+        return arr.any(axis=axis, out=out, keepdims=keepdims)
     except TypeError:
         return arr.any(axis=axis, out=out)
 
-def all(a, axis=None, out=None, skipna=False, keepdims=False):
+def all(a, axis=None, out=None, keepdims=False):
     """
     Test whether all array elements along a given axis evaluate to True.
 
@@ -1670,9 +1664,6 @@ def all(a, axis=None, out=None, skipna=False, keepdims=False):
         type is preserved (e.g., if ``dtype(out)`` is float, the result
         will consist of 0.0's and 1.0's).  See `doc.ufuncs` (Section
         "Output arguments") for more details.
-    skipna : bool, optional
-        If this is set to True, skips any NA values during summation
-        instead of propagating them.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -1718,7 +1709,7 @@ def all(a, axis=None, out=None, skipna=False, keepdims=False):
     arr = asanyarray(a)
 
     try:
-        return arr.all(axis=axis, out=out, skipna=skipna, keepdims=keepdims)
+        return arr.all(axis=axis, out=out, keepdims=keepdims)
     except TypeError:
         return arr.all(axis=axis, out=out)
 
@@ -1853,7 +1844,7 @@ def ptp(a, axis=None, out=None):
     return ptp(axis, out)
 
 
-def amax(a, axis=None, out=None, skipna=False, keepdims=False):
+def amax(a, axis=None, out=None, keepdims=False):
     """
     Return the maximum of an array or maximum along an axis.
 
@@ -1867,9 +1858,6 @@ def amax(a, axis=None, out=None, skipna=False, keepdims=False):
         Alternate output array in which to place the result.  Must be of
         the same shape and buffer length as the expected output.  See
         `doc.ufuncs` (Section "Output arguments") for more details.
-    skipna : bool, optional
-        If this is set to True, skips any NA values during reduction
-        instead of propagating them.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -1920,14 +1908,14 @@ def amax(a, axis=None, out=None, skipna=False, keepdims=False):
             amax = a.max
         except AttributeError:
             return _methods._amax(a, axis=axis,
-                                out=out, skipna=skipna, keepdims=keepdims)
-        # NOTE: Dropping the skipna and keepdims parameters
+                                out=out, keepdims=keepdims)
+        # NOTE: Dropping and keepdims parameter
         return amax(axis=axis, out=out)
     else:
         return _methods._amax(a, axis=axis,
-                            out=out, skipna=skipna, keepdims=keepdims)
+                            out=out, keepdims=keepdims)
 
-def amin(a, axis=None, out=None, skipna=False, keepdims=False):
+def amin(a, axis=None, out=None, keepdims=False):
     """
     Return the minimum of an array or minimum along an axis.
 
@@ -1941,9 +1929,6 @@ def amin(a, axis=None, out=None, skipna=False, keepdims=False):
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
         See `doc.ufuncs` (Section "Output arguments") for more details.
-    skipna : bool, optional
-        If this is set to True, skips any NA values during reduction
-        instead of propagating them.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -1994,12 +1979,12 @@ def amin(a, axis=None, out=None, skipna=False, keepdims=False):
             amin = a.min
         except AttributeError:
             return _methods._amin(a, axis=axis,
-                                out=out, skipna=skipna, keepdims=keepdims)
-        # NOTE: Dropping the skipna and keepdims parameters
+                                out=out, keepdims=keepdims)
+        # NOTE: Dropping the keepdims parameter
         return amin(axis=axis, out=out)
     else:
         return _methods._amin(a, axis=axis,
-                            out=out, skipna=skipna, keepdims=keepdims)
+                            out=out, keepdims=keepdims)
 
 def alen(a):
     """
@@ -2034,7 +2019,7 @@ def alen(a):
         return len(array(a,ndmin=1))
 
 
-def prod(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
+def prod(a, axis=None, dtype=None, out=None, keepdims=False):
     """
     Return the product of array elements over a given axis.
 
@@ -2062,9 +2047,6 @@ def prod(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
         Alternative output array in which to place the result. It must have
         the same shape as the expected output, but the type of the
         output values will be cast if necessary.
-    skipna : bool, optional
-        If this is set to True, skips any NA values during reduction
-        instead of propagating them.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -2127,11 +2109,11 @@ def prod(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
             prod = a.prod
         except AttributeError:
             return _methods._prod(a, axis=axis, dtype=dtype,
-                                out=out, skipna=skipna, keepdims=keepdims)
+                                out=out, keepdims=keepdims)
         return prod(axis=axis, dtype=dtype, out=out)
     else:
         return _methods._prod(a, axis=axis, dtype=dtype,
-                            out=out, skipna=skipna, keepdims=keepdims)
+                            out=out, keepdims=keepdims)
 
 def cumprod(a, axis=None, dtype=None, out=None):
     """
@@ -2420,7 +2402,7 @@ def round_(a, decimals=0, out=None):
     return round(decimals, out)
 
 
-def mean(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
+def mean(a, axis=None, dtype=None, out=None, keepdims=False):
     """
     Compute the arithmetic mean along the specified axis.
 
@@ -2445,9 +2427,6 @@ def mean(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
         is ``None``; if provided, it must have the same shape as the
         expected output, but the type will be cast if necessary.
         See `doc.ufuncs` for details.
-    skipna : bool, optional
-        If this is set to True, skips any NA values during calculation
-        instead of propagating them.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -2506,11 +2485,10 @@ def mean(a, axis=None, dtype=None, out=None, skipna=False, keepdims=False):
             pass
 
     return _methods._mean(a, axis=axis, dtype=dtype,
-                            out=out, skipna=skipna, keepdims=keepdims)
+                            out=out, keepdims=keepdims)
 
 
-def std(a, axis=None, dtype=None, out=None, ddof=0,
-                            skipna=False, keepdims=False):
+def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     """
     Compute the standard deviation along the specified axis.
 
@@ -2537,9 +2515,6 @@ def std(a, axis=None, dtype=None, out=None, ddof=0,
         Means Delta Degrees of Freedom.  The divisor used in calculations
         is ``N - ddof``, where ``N`` represents the number of elements.
         By default `ddof` is zero.
-    skipna : bool, optional
-        If this is set to True, skips any NA values during calculation
-        instead of propagating them.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -2612,10 +2587,10 @@ def std(a, axis=None, dtype=None, out=None, ddof=0,
             pass
 
     return _methods._std(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                                skipna=skipna, keepdims=keepdims)
+                                keepdims=keepdims)
 
 def var(a, axis=None, dtype=None, out=None, ddof=0,
-                            skipna=False, keepdims=False):
+                            keepdims=False):
     """
     Compute the variance along the specified axis.
 
@@ -2643,9 +2618,6 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
         "Delta Degrees of Freedom": the divisor used in the calculation is
         ``N - ddof``, where ``N`` represents the number of elements. By
         default `ddof` is zero.
-    skipna : bool, optional
-        If this is set to True, skips any NA values during calculation
-        instead of propagating them.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -2718,4 +2690,4 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
             pass
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                                skipna=skipna, keepdims=keepdims)
+                                keepdims=keepdims)

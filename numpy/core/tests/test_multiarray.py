@@ -965,24 +965,6 @@ class TestMethods(TestCase):
         assert_equal(a.ravel(order='K'), [2,3,0,1])
         assert_(a.ravel(order='K').flags.owndata)
 
-    def test_setasflat(self):
-        # In this case, setasflat can treat a as a flat array,
-        # and must treat b in chunks of 3
-        a = np.arange(3*3*4).reshape(3,3,4)
-        b = np.arange(3*4*3, dtype='f4').reshape(3,4,3).T
-
-        assert_(not np.all(a.ravel() == b.ravel()))
-        a.setasflat(b)
-        assert_equal(a.ravel(), b.ravel())
-
-        # A case where the strides of neither a nor b can be collapsed
-        a = np.arange(3*2*4).reshape(3,2,4)[:,:,:-1]
-        b = np.arange(3*3*3, dtype='f4').reshape(3,3,3).T[:,:,:-1]
-
-        assert_(not np.all(a.ravel() == b.ravel()))
-        a.setasflat(b)
-        assert_equal(a.ravel(), b.ravel())
-
 class TestSubscripting(TestCase):
     def test_test_zero_rank(self):
         x = array([1,2,3])
@@ -2608,8 +2590,7 @@ if sys.version_info >= (2, 6):
 
         def test_multiarray_flags_writable_attribute_deletion(self):
             a = np.ones(2).flags
-            attr = ['updateifcopy', 'aligned', 'writeable', 'maskna',
-                    'ownmaskna']
+            attr = ['updateifcopy', 'aligned', 'writeable']
             for s in attr:
                 assert_raises(AttributeError, delattr, a, s)
 

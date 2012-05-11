@@ -14,12 +14,10 @@ exception, so it should hopefully not get unnoticed).
 
 multiarray_global_vars = {
     'NPY_NUMUSERTYPES':             7,
-    'Npy_NA':                       299,
 }
 
 multiarray_global_vars_types = {
     'NPY_NUMUSERTYPES':             'int',
-    'Npy_NA':                       'PyObject *',
 }
 
 multiarray_scalar_bool_values = {
@@ -71,7 +69,6 @@ multiarray_types_api = {
     'PyHalfArrType_Type':               217,
     'NpyIter_Type':                     218,
     # End 1.6 API
-    'NpyNA_Type':                       281,
 }
 
 #define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
@@ -320,32 +317,14 @@ multiarray_funcs_api = {
     'PyArray_ConvertClipmodeSequence':      279,
     'PyArray_MatrixProduct2':               280,
     # End 1.6 API
-    'NpyIter_GetFirstMaskNAOp':             282,
-    'NpyIter_GetMaskNAIndexArray':          283,
-    'NpyIter_IsFirstVisit':                 284,
-    'PyArray_SetBaseObject':                285,
-    'PyArray_HasNASupport':                 286,
-    'PyArray_ContainsNA':                   287,
-    'PyArray_AllocateMaskNA':               288,
-    'PyArray_CreateSortedStridePerm':       289,
-    'PyArray_AssignZero':                   290,
-    'PyArray_AssignOne':                    291,
-    'PyArray_AssignNA':                     292,
-    'PyArray_AssignMaskNA':                 293,
-    'PyArray_AssignRawScalar':              294,
-    'PyArray_AssignArray':                  295,
-    'PyArray_ReduceWrapper':                296,
-    'PyArray_RemoveAxesInPlace':            297,
-    'PyArray_DebugPrint':                   298,
-    'NpyNA_GetDType':                       300,
-    'NpyNA_IsMultiNA':                      301,
-    'NpyNA_GetPayload':                     302,
-    'NpyNA_FromObject':                     303,
-    'NpyNA_FromDTypeAndPayload':            304,
-    'PyArray_AllowNAConverter':             305,
-    'PyArray_OutputAllowNAConverter':       306,
-    'PyArray_FailUnlessWriteable':          307,
-    'PyArray_SetUpdateIfCopyBase':          308,
+    'NpyIter_IsFirstVisit':                 281,
+    'PyArray_SetBaseObject':                282,
+    'PyArray_ReduceWrapper':                283,
+    'PyArray_CreateSortedStridePerm':       284,
+    'PyArray_RemoveAxesInPlace':            285,
+    'PyArray_DebugPrint':                   286,
+    'PyArray_FailUnlessWriteable':          287,
+    'PyArray_SetUpdateIfCopyBase':          288,
 }
 
 ufunc_types_api = {

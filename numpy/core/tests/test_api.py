@@ -101,36 +101,6 @@ def test_copyto_fromscalar():
     np.copyto(a.T, 4.5, where=mask)
     assert_equal(a, [[2.5,4.5,4.5],[4.5,4.5,3.5]])
 
-    # Simple copy to NA-masked
-    a_orig = a
-    a = a_orig.view(maskna=True)
-    a[...] = np.NA
-    np.copyto(a, 0.5)
-    assert_equal(a, 0.5)
-    a[...] = np.NA
-    np.copyto(a.T, 1.5)
-    assert_equal(a, 1.5)
-
-    # Where-masked copy to NA-masked
-    a[0,0] = np.NA
-    a[1,1] = np.NA
-    mask = np.array([[1,0,1],[0,0,1]], dtype='?')
-    np.copyto(a, 2.5, where=mask)
-    assert_equal(np.isna(a), [[0,0,0],[0,1,0]])
-    assert_equal(a_orig, [[2.5,1.5,2.5],[1.5,1.5,2.5]])
-
-    # Simple preservena=True copy
-    a[0,0] = np.NA
-    np.copyto(a, 3.5, preservena=True)
-    assert_equal(np.isna(a), [[1,0,0],[0,1,0]])
-    assert_equal(a_orig, [[2.5,3.5,3.5],[3.5,1.5,3.5]])
-
-    # Where-masked preservena=True copy
-    mask = np.array([[1,0,1],[0,0,1]], dtype='?')
-    np.copyto(a, 4.5, where=mask, preservena=True)
-    assert_equal(np.isna(a), [[1,0,0],[0,1,0]])
-    assert_equal(a_orig, [[2.5,3.5,4.5],[3.5,1.5,4.5]])
-
 def test_copyto():
     a = np.arange(6, dtype='i4').reshape(2,3)
 
@@ -166,79 +136,6 @@ def test_copyto():
 
     # 'dst' must be an array
     assert_raises(TypeError, np.copyto, [1,2,3], [2,3,4])
-
-def test_copyto_maskna():
-    a_orig = np.zeros((2,3), dtype='f8')
-    a = a_orig.view(maskna=True)
-
-    # Simple copy from non-masked to NA-masked
-    a[...] = np.NA
-    np.copyto(a, np.arange(6).reshape(2,3))
-    assert_equal(a, [[0,1,2],[3,4,5]])
-    a[...] = np.NA
-    np.copyto(a.T, np.arange(6).reshape(3,2) + 1)
-    assert_equal(a, [[1,3,5],[2,4,6]])
-
-    # Simple copy from NA-masked to NA-masked
-    a[...] = np.NA
-    a[1,2] = 12
-    tmp = np.arange(6, maskna=True).reshape(2,3)
-    tmp[0,1] = np.NA
-    tmp[1,2] = np.NA
-    np.copyto(a, tmp)
-    assert_equal(a_orig, [[0,3,2],[3,4,12]])
-    assert_equal(np.isna(a), [[0,1,0],[0,0,1]])
-
-    # Where-masked copy from non-masked to NA-masked
-    a[...] = np.NA
-    a[0,2] = 6
-    mask = np.array([[0,0,1],[0,1,0]], dtype='?')
-    tmp = np.arange(6).reshape(2,3) + 1
-    np.copyto(a, tmp, where=mask)
-    assert_equal(a_orig, [[0,3,3],[3,5,12]])
-    assert_equal(np.isna(a), ~mask)
-
-    # Where-masked copy from NA-masked to NA-masked
-    a[1,2] = 12
-    mask = np.array([[0,1,1],[0,0,1]], dtype='?')
-    tmp = np.arange(6, maskna=True).reshape(2,3) + 3
-    tmp[0,0] = np.NA
-    tmp[0,1] = np.NA
-    tmp[1,2] = np.NA
-    np.copyto(a, tmp, where=mask)
-    assert_equal(a_orig, [[0,3,5],[3,5,12]])
-    assert_equal(np.isna(a), [[1,1,0],[1,0,1]])
-
-    # Preserve-NA copy from non-masked to NA-masked
-    np.copyto(a, np.arange(6).reshape(2,3), preservena=True)
-    assert_equal(a_orig, [[0,3,2],[3,4,12]])
-    assert_equal(np.isna(a), [[1,1,0],[1,0,1]])
-
-    # Preserve-NA copy from NA-masked to NA-masked
-    tmp = np.arange(6, maskna=True).reshape(2,3) + 1
-    tmp[0,0] = np.NA
-    tmp[1,1] = np.NA
-    np.copyto(a, tmp, preservena=True)
-    assert_equal(a_orig, [[0,3,3],[3,4,12]])
-    assert_equal(np.isna(a), [[1,1,0],[1,1,1]])
-
-    # Where-masked preserve-NA copy from non-masked to NA-masked
-    tmp = np.arange(6).reshape(2,3) + 3
-    a[1,2] = 12
-    mask = np.array([[0,1,1],[0,1,0]], dtype='?')
-    np.copyto(a, tmp, where=mask, preservena=True)
-    assert_equal(a_orig, [[0,3,5],[3,4,12]])
-    assert_equal(np.isna(a), [[1,1,0],[1,1,0]])
-
-    # Where-masked preserve-NA copy from NA-masked to NA-masked
-    a[0,0] = 0
-    mask = np.array([[0,1,1],[1,0,1]], dtype='?')
-    tmp = np.arange(6, maskna=True).reshape(2,3) + 1
-    tmp[1,0] = np.NA
-    tmp[1,2] = np.NA
-    np.copyto(a, tmp, where=mask, preservena=True)
-    assert_equal(a_orig, [[0,3,3],[3,4,12]])
-    assert_equal(np.isna(a), [[0,1,0],[1,1,1]])
 
 def test_copy_order():
     a = np.arange(24).reshape(2,3,4)

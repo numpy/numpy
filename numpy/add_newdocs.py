@@ -204,8 +204,6 @@ add_newdoc('numpy.core', 'nditer',
             copies those elements indicated by this mask.
           * 'writemasked' indicates that only elements where the chosen
             'arraymask' operand is True will be written to.
-          * 'use_maskna' indicates that this operand should be treated
-            like an NA-masked array.
     op_dtypes : dtype or tuple of dtype(s), optional
         The required data type(s) of the operands. If copying or buffering
         is enabled, the data will be converted to/from their original types.
@@ -640,7 +638,7 @@ add_newdoc('numpy.core', 'broadcast', ('reset',
 
 add_newdoc('numpy.core.multiarray', 'array',
     """
-    array(object, dtype=None, copy=True, order=None, subok=False, ndmin=0, maskna=None, ownmaskna=False)
+    array(object, dtype=None, copy=True, order=None, subok=False, ndmin=0)
 
     Create an array.
 
@@ -676,25 +674,6 @@ add_newdoc('numpy.core.multiarray', 'array',
         Specifies the minimum number of dimensions that the resulting
         array should have.  Ones will be pre-pended to the shape as
         needed to meet this requirement.
-    maskna : bool or None, optional
-        If this is set to True, it forces the array to have an NA mask.
-        If the input is an array without a mask, this means a view with
-        an NA mask is created. If the input is an array with a mask, the
-        mask is preserved as-is.
-
-        If this is set to False, it forces the array to not have an NA
-        mask. If the input is an array with a mask, and has no NA values,
-        it will create a copy of the input without an NA mask.
-
-        .. versionadded:: 1.7.0
-
-    ownmaskna : bool, optional
-        If this is set to True, forces the array to have a mask which
-        it owns. It may still return a view of the data from the input,
-        but the result will always own its own mask.
-
-        .. versionadded:: 1.7.0
-
 
     Returns
     -------
@@ -704,11 +683,6 @@ add_newdoc('numpy.core.multiarray', 'array',
     See Also
     --------
     empty, empty_like, zeros, zeros_like, ones, ones_like, fill
-
-    Notes
-    -----
-    The `maskna` and `ownmaskna` keywords are *experimental* in the 1.7
-    release; their behavior may change in future versions.
 
     Examples
     --------
@@ -769,8 +743,6 @@ add_newdoc('numpy.core.multiarray', 'empty',
     order : {'C', 'F'}, optional
         Whether to store multi-dimensional data in C (row-major) or
         Fortran (column-major) order in memory.
-    maskna : boolean
-        If this is true, the returned array will have an NA mask.
 
     See Also
     --------
@@ -919,35 +891,6 @@ add_newdoc('numpy.core.multiarray', 'zeros',
 
     """)
 
-add_newdoc('numpy.core.multiarray', 'isna',
-    """
-    isna(a)
-
-    Returns an array with True for each element of *a* that is NA.
-
-    Parameters
-    ----------
-    a : array_like
-        The array for which to check for NA.
-
-    Returns
-    -------
-    result : bool or array of bool
-        Number of non-zero values in the array.
-
-    Examples
-    --------
-    >>> np.isna(np.NA)
-    True
-    >>> np.isna(1.5)
-    False
-    >>> np.isna(np.nan)
-    False
-    >>> a = np.array([0, np.NA, 3.5, np.NA])
-    >>> np.isna(a)
-    array([False,  True, False,  True], dtype=bool)
-    """)
-
 add_newdoc('numpy.core.multiarray', 'count_nonzero',
     """
     count_nonzero(a)
@@ -962,9 +905,6 @@ add_newdoc('numpy.core.multiarray', 'count_nonzero',
         Axis or axes along which a reduction is performed.
         The default (`axis` = None) is perform a reduction over all
         the dimensions of the input array.
-    skipna : bool, optional
-        If this is set to True, any NA elements in the array are skipped
-        instead of propagating.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -990,60 +930,6 @@ add_newdoc('numpy.core.multiarray', 'count_nonzero',
     >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]], axis=1, keepdims=True)
     array([[2],
            [3]])
-    """)
-
-add_newdoc('numpy.core.multiarray', 'count_reduce_items',
-    """
-    count_reduce_items(arr, axis=None, skipna=False, keepdims=False)
-
-    Counts the number of items a reduction with the same `axis`
-    and `skipna` parameter values would use. The purpose of this
-    function is for the creation of reduction operations
-    which use the item count, such as :func:`mean`.
-
-    When `skipna` is False or `arr` doesn't have an NA mask,
-    the result is simply the product of the reduction axis
-    sizes, returned as a single scalar.
-
-    Parameters
-    ----------
-    arr : array_like
-        The array for which to count the reduce items.
-    axis : None or int or tuple of ints, optional
-        Axis or axes along which a reduction is performed.
-        The default (`axis` = None) is perform a reduction over all
-        the dimensions of the input array.
-    skipna : bool, optional
-        If this is set to True, any NA elements in the array are not
-        counted. The only time this function does any actual counting
-        instead of a cheap multiply of a few sizes is when `skipna` is
-        true and `arr` has an NA mask.
-    keepdims : bool, optional
-        If this is set to True, the axes which are reduced are left
-        in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
-
-    Returns
-    -------
-    count : intp or array of intp
-        Number of items that would be used in a reduction with the
-        same `axis` and `skipna` parameter values.
-
-    Examples
-    --------
-    >>> a = np.array([[1,np.NA,1], [1,1,np.NA]])
-
-    >>> np.count_reduce_items(a)
-    6
-    >>> np.count_reduce_items(a, skipna=True)
-    4
-    >>> np.sum(a, skipna=True)
-    4
-
-    >>> np.count_reduce_items(a, axis=0, skipna=True)
-    array([2, 1, 1])
-    >>> np.sum(a, axis=0, skipna=True)
-    array([2, 1, 1])
     """)
 
 add_newdoc('numpy.core.multiarray','set_typeDict',
@@ -1409,7 +1295,7 @@ add_newdoc('numpy.core.multiarray','correlate',
 
 add_newdoc('numpy.core.multiarray', 'arange',
     """
-    arange([start,] stop[, step,], dtype=None, maskna=False)
+    arange([start,] stop[, step,], dtype=None)
 
     Return evenly spaced values within a given interval.
 
@@ -1438,8 +1324,6 @@ add_newdoc('numpy.core.multiarray', 'arange',
     dtype : dtype
         The type of the output array.  If `dtype` is not given, infer the data
         type from the other input arguments.
-    maskna : boolean
-        If this is true, the returned array will have an NA mask.
 
     Returns
     -------
@@ -3320,7 +3204,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('conjugate',
 
 add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
     """
-    a.copy(order='C', maskna=None)
+    a.copy(order='C')
 
     Return a copy of the array.
 
@@ -3331,10 +3215,6 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
         as possible.
-    maskna : bool, optional
-        If specifies, forces the copy to have or to not have an
-        NA mask. This is a way to remove an NA mask from an array
-        while making a copy.
 
     See also
     --------
@@ -5470,7 +5350,7 @@ add_newdoc('numpy.core', 'ufunc', ('types',
 
 add_newdoc('numpy.core', 'ufunc', ('reduce',
     """
-    reduce(a, axis=0, dtype=None, out=None, skipna=False, keepdims=False)
+    reduce(a, axis=0, dtype=None, out=None, keepdims=False)
 
     Reduces `a`'s dimension by one, by applying ufunc along one axis.
 
@@ -5515,11 +5395,6 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
     out : ndarray, optional
         A location into which the result is stored. If not provided, a
         freshly-allocated array is returned.
-    skipna : bool, optional
-        If this is set to True, the reduction is done as if any NA elements
-        were not counted in the array. The default, False, causes the
-        NA values to propagate, so if any element in a set of elements
-        being reduced is NA, the result will be NA.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,

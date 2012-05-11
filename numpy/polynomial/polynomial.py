@@ -205,7 +205,7 @@ def polyadd(c1, c2):
 
     Returns the sum of two polynomials `c1` + `c2`.  The arguments are
     sequences of coefficients from lowest order term to highest, i.e.,
-    [1,2,3] represents the polynomial ``1 + 2*x + 3*x**2"``.
+    [1,2,3] represents the polynomial ``1 + 2*x + 3*x**2``.
 
     Parameters
     ----------
@@ -524,12 +524,9 @@ def polyder(c, m=1, scl=1, axis=0):
 
     """
     c = np.array(c, ndmin=1, copy=1)
-    if c.flags.maskna and isna(c).any():
-        raise ValueError("Coefficient array contains NA")
     if c.dtype.char in '?bBhHiIlLqQpP':
         # astype fails with NA
         c = c + 0.0
-    mna = c.flags.maskna
     cdt = c.dtype
     cnt, iaxis = [int(t) for t in [m, axis]]
 
@@ -555,7 +552,7 @@ def polyder(c, m=1, scl=1, axis=0):
         for i in range(cnt):
             n = n - 1
             c *= scl
-            der = np.empty((n,) + c.shape[1:], dtype=cdt, maskna=mna)
+            der = np.empty((n,) + c.shape[1:], dtype=cdt)
             for j in range(n, 0, -1):
                 der[j - 1] = j*c[j]
             c = der
@@ -641,12 +638,9 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     """
     c = np.array(c, ndmin=1, copy=1)
-    if c.flags.maskna and isna(c).any():
-        raise ValueError("Coefficient array contains NA")
-    elif c.dtype.char in '?bBhHiIlLqQpP':
+    if c.dtype.char in '?bBhHiIlLqQpP':
         # astype doesn't preserve mask attribute.
         c = c + 0.0
-    mna = c.flags.maskna
     cdt = c.dtype
     if not np.iterable(k):
         k = [k]
@@ -677,7 +671,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         if n == 1 and np.all(c[0] == 0):
             c[0] += k[i]
         else:
-            tmp = np.empty((n + 1,) + c.shape[1:], dtype=cdt, maskna=mna)
+            tmp = np.empty((n + 1,) + c.shape[1:], dtype=cdt)
             tmp[0] = c[0]*0
             tmp[1] = c[0]
             for j in range(1, n):
@@ -770,8 +764,6 @@ def polyval(x, c, tensor=True):
 
     """
     c = np.array(c, ndmin=1, copy=0)
-    if c.flags.maskna and isna(c).any():
-        raise ValueError("Coefficient array contains NA")
     if c.dtype.char in '?bBhHiIlLqQpP':
         # astype fails with NA
         c = c + 0.0
@@ -1062,9 +1054,8 @@ def polyvander(x, deg) :
 
     x = np.array(x, copy=0, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
-    mask = x.flags.maskna
     dtyp = x.dtype
-    v = np.empty(dims, dtype=dtyp, maskna=mask)
+    v = np.empty(dims, dtype=dtyp)
     v[0] = x*0 + 1
     if ideg > 0 :
         v[1] = x
@@ -1369,16 +1360,6 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None):
         # can cause problems with NA.
         lhs = lhs * w
         rhs = rhs * w
-
-    # deal with NA. Note that polyvander propagates NA from x
-    # into all columns, that is rows for transposed form.
-    if lhs.flags.maskna or rhs.flags.maskna:
-        if rhs.ndim == 1:
-            mask = np.isna(lhs[0]) | np.isna(rhs)
-        else:
-            mask = np.isna(lhs[0]) | np.isna(rhs).any(0)
-        np.copyto(lhs, 0, where=mask)
-        np.copyto(rhs, 0, where=mask)
 
     # set rcond
     if rcond is None :
