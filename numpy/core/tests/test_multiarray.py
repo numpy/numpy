@@ -792,6 +792,25 @@ class TestMethods(TestCase):
         assert_equal(np.dot(a, b), a.dot(b))
         assert_equal(np.dot(np.dot(a, b), c), a.dot(b).dot(c))
 
+    def test_diagonal(self):
+        a = np.arange(12).reshape((3, 4))
+        assert_equal(a.diagonal(), [0, 5, 10])
+        assert_equal(a.diagonal(0), [0, 5, 10])
+        assert_equal(a.diagonal(1), [1, 6, 11])
+        assert_equal(a.diagonal(-1), [4, 9])
+
+        b = np.arange(8).reshape((2, 2, 2))
+        assert_equal(b.diagonal(), [[0, 6], [1, 7]])
+        assert_equal(b.diagonal(0), [[0, 6], [1, 7]])
+        assert_equal(b.diagonal(1), [[2], [3]])
+        assert_equal(b.diagonal(-1), [[4], [5]])
+        assert_raises(ValueError, b.diagonal, axis1=0, axis2=0)
+        assert_equal(b.diagonal(0, 1, 2), [[0, 3], [4, 7]])
+        assert_equal(b.diagonal(0, 0, 1), [[0, 6], [1, 7]])
+        assert_equal(b.diagonal(offset=1, axis1=0, axis2=2), [[1], [3]])
+        # Order of axis argument doesn't matter:
+        assert_equal(b.diagonal(0, 2, 1), [[0, 3], [4, 7]])
+
     def test_ravel(self):
         a = np.array([[0,1],[2,3]])
         assert_equal(a.ravel(), [0,1,2,3])
