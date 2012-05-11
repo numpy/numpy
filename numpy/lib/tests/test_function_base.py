@@ -274,7 +274,7 @@ class TestGradient(TestCase):
         assert_array_equal(gradient(v), dx)
 
     def test_badargs(self):
-        # for 2D array, gradient can take 0,1, or 2 extra args
+        # for 2D array, gradient can take 0, 1, or 2 extra args
         x = np.array([[1, 1], [3, 4]])
         assert_raises(SyntaxError, gradient, x, np.array([1., 1.]),
                       np.array([1., 1.]), np.array([1., 1.]))
@@ -394,12 +394,12 @@ class TestVectorize(TestCase):
         def foo(a, b=1):
             return a + b
         f = vectorize(foo)
-        args = np.array([1,2,3])
+        args = np.array([1, 2, 3])
         r1 = f(args)
-        r2 = np.array([2,3,4])
+        r2 = np.array([2, 3, 4])
         assert_array_equal(r1, r2)
         r1 = f(args, 2)
-        r2 = np.array([3,4,5])
+        r2 = np.array([3, 4, 5])
         assert_array_equal(r1, r2)
 
     def test_keywords_no_func_code(self):
@@ -412,45 +412,87 @@ class TestVectorize(TestCase):
         except:
             raise AssertionError()
 
-    def test_keywords2_trac_2100(self):
+    def test_keywords2_ticket_2100(self):
         r"""Test kwarg support: enhancement ticket 2100"""
         import math
         def foo(a, b=1):
             return a + b
         f = vectorize(foo)
-        args = np.array([1,2,3])
+        args = np.array([1, 2, 3])
         r1 = f(a=args)
-        r2 = np.array([2,3,4])
+        r2 = np.array([2, 3, 4])
         assert_array_equal(r1, r2)
         r1 = f(b=1, a=args)
         assert_array_equal(r1, r2)
         r1 = f(args, b=2)
-        r2 = np.array([3,4,5])
+        r2 = np.array([3, 4, 5])
         assert_array_equal(r1, r2)
 
-    def test_coverage1_trac_2100(self):
+    def test_keywords3_ticket_2100(self):
+        """Test exclude with mixed positional and kwargs: ticket 2100"""
+        def mypolyval(x, p):
+            _p = list(p)
+            res = _p.pop(0)
+            while _p:
+                res = res*x + _p.pop(0)
+            return res
+        vpolyval = np.vectorize(mypolyval, exclude='p')
+        ans = [3, 6]
+        assert_array_equal(ans, vpolyval(x=[0, 1], p=[1, 2, 3]))
+        assert_array_equal(ans, vpolyval([0, 1], p=[1, 2, 3]))
+        #assert_array_equal(ans, vpolyval([0, 1], [1, 2, 3]))
+
+    def test_keywords4_ticket_2100(self):
+        """Test vectorizing function with no positional args."""
+        @vectorize
+        def f(**kw):
+            res = 1.0
+            for _k in kw:
+                res *= kw[_k]
+            return res
+        assert_array_equal(f(a=[1, 2], b=[3, 4]), [3, 8])
+
+    def test_keywords5_ticket_2100(self):
+        """Test vectorizing function with no kwargs args."""
+        @vectorize
+        def f(*v):
+            return np.prod(v)
+        assert_array_equal(f([1, 2], [3, 4]), [3, 8])
+
+    def test_coverage1_ticket_2100(self):
         def foo():
             return 1
         f = vectorize(foo)
-        #assert_array_equal(f(), 1)
-        # Is this supposed to work?  How else to get to nin=0, ndefaults=0
+        assert_array_equal(f(), 1)
 
-    def test_coverage2_trac_2100(self):
-        """Assigning documentation"""
+    def test_assigning_docstring(self):
         def foo(x):
             return x
         doc = "Provided documentation"
         f = vectorize(foo, doc=doc)
-        assert f.__doc__ == doc
+        assert_equal(f.__doc__, doc)
 
-    def test_UnboundMethod_trac_1156(self):
-        r"""Regression test for issue 1156"""
-        class foo:
-            b=2
+    def test_UnboundMethod_ticket_1156(self):
+        """Regression test for issue 1156"""
+        class Foo:
+            b = 2
             def bar(self, a):
                 return a**self.b
-        assert np.all(vectorize(foo.bar)(foo(), np.arange(9)) 
-                      == np.arange(9)**2)
+        assert_array_equal(vectorize(Foo().bar)(np.arange(9)),
+                           np.arange(9)**2)
+        assert_array_equal(vectorize(Foo.bar)(Foo(), np.arange(9)),
+                           np.arange(9)**2)
+
+    def test_execution_order_ticket_1487(self):
+        """Regression test for dependence on execution order: issue 1487"""
+        f1 = vectorize(lambda x: x)
+        res1a = f1(np.arange(3))
+        res1b = f1(np.arange(0.1, 3))
+        f2 = vectorize(lambda x: x)
+        res2b = f2(np.arange(0.1, 3))
+        res2a = f2(np.arange(3))
+        assert_equal(res1a, res2a)
+        assert_equal(res1b, res2b)
 
 class TestDigitize(TestCase):
     def test_forward(self):
@@ -469,17 +511,17 @@ class TestDigitize(TestCase):
         assert_(np.all(digitize(x, bin) != 0))
 
     def test_right_basic(self):
-        x = [1,5,4,10,8,11,0]
-        bins = [1,5,10]
-        default_answer = [1,2,1,3,2,3,0]
+        x = [1, 5, 4, 10, 8, 11, 0]
+        bins = [1, 5, 10]
+        default_answer = [1, 2, 1, 3, 2, 3, 0]
         assert_array_equal(digitize(x, bins), default_answer)
-        right_answer = [0,1,1,2,2,3,0]
+        right_answer = [0, 1, 1, 2, 2, 3, 0]
         assert_array_equal(digitize(x, bins, True), right_answer)
 
     def test_right_open(self):
         x = np.arange(-6, 5)
         bins = np.arange(-6, 4)
-        assert_array_equal(digitize(x,bins,True), np.arange(11))
+        assert_array_equal(digitize(x, bins, True), np.arange(11))
 
     def test_right_open_reverse(self):
         x = np.arange(5, -6, -1)
@@ -637,10 +679,10 @@ class TestHistogram(TestCase):
     def test_one_bin(self):
         # Ticket 632
         hist, edges = histogram([1, 2, 3, 4], [1, 2])
-        assert_array_equal(hist, [2, ])
+        assert_array_equal(hist, [2,])
         assert_array_equal(edges, [1, 2])
         assert_raises(ValueError, histogram, [1, 2], bins=0)
-        h, e = histogram([1,2], bins=1)
+        h, e = histogram([1, 2], bins=1)
         assert_equal(h, np.array([2]))
         assert_allclose(e, np.array([1., 2.]))
 
@@ -669,7 +711,7 @@ class TestHistogram(TestCase):
 
         # Check with non-constant bin widths
         v = np.arange(10)
-        bins = [0,1,3,6,10]
+        bins = [0, 1, 3, 6, 10]
         a, b = histogram(v, bins, density=True)
         assert_array_equal(a, .1)
         assert_equal(np.sum(a*diff(b)), 1)
@@ -677,13 +719,13 @@ class TestHistogram(TestCase):
         # Variale bin widths are especially useful to deal with
         # infinities.
         v = np.arange(10)
-        bins = [0,1,3,6,np.inf]
+        bins = [0, 1, 3, 6, np.inf]
         a, b = histogram(v, bins, density=True)
-        assert_array_equal(a, [.1,.1,.1,0.])
+        assert_array_equal(a, [.1, .1, .1, 0.])
 
         # Taken from a bug report from N. Becker on the numpy-discussion
         # mailing list Aug. 6, 2010.
-        counts, dmy = np.histogram([1,2,3,4], [0.5,1.5,np.inf], density=True)
+        counts, dmy = np.histogram([1, 2, 3, 4], [0.5, 1.5, np.inf], density=True)
         assert_equal(counts, [.25, 0])
 
     def test_outliers(self):
@@ -748,12 +790,12 @@ class TestHistogram(TestCase):
         assert_array_almost_equal(wa, np.array([4, 5, 0, 1]) / 10. / 3. * 4)
 
         # Check weights with non-uniform bin widths
-        a,b = histogram(np.arange(9), [0,1,3,6,10], \
-                        weights=[2,1,1,1,1,1,1,1,1], density=True)
+        a, b = histogram(np.arange(9), [0, 1, 3, 6, 10], \
+                        weights=[2, 1, 1, 1, 1, 1, 1, 1, 1], density=True)
         assert_almost_equal(a, [.2, .1, .1, .075])
 
     def test_empty(self):
-        a, b = histogram([], bins=([0,1]))
+        a, b = histogram([], bins=([0, 1]))
         assert_array_equal(a, np.array([0]))
         assert_array_equal(b, np.array([0, 1]))
 
@@ -831,7 +873,7 @@ class TestHistogramdd(TestCase):
         assert_array_equal(edges[0], np.array([-0.5, 0. , 0.5]))
 
     def test_empty(self):
-        a, b = histogramdd([[], []], bins=([0,1], [0,1]))
+        a, b = histogramdd([[], []], bins=([0, 1], [0, 1]))
         assert_array_max_ulp(a, np.array([[ 0.]]))
         a, b = np.histogramdd([[], [], []], bins=2)
         assert_array_max_ulp(a, np.zeros((2, 2, 2)))
@@ -1050,7 +1092,7 @@ class TestCorrCoef(TestCase):
 class TestCov(TestCase):
     def test_basic(self):
         x = np.array([[0, 2], [1, 1], [2, 0]]).T
-        assert_allclose(np.cov(x), np.array([[ 1.,-1.], [-1.,1.]]))
+        assert_allclose(np.cov(x), np.array([[ 1., -1.], [-1., 1.]]))
 
     def test_empty(self):
         assert_equal(cov(np.array([])).size, 0)
@@ -1201,7 +1243,7 @@ class TestBincount(TestCase):
     def test_empty(self):
         x = np.array([], dtype=int)
         y = np.bincount(x)
-        assert_array_equal(x,y)
+        assert_array_equal(x, y)
 
     def test_empty_with_minlength(self):
         x = np.array([], dtype=int)
@@ -1221,10 +1263,10 @@ class TestInterp(TestCase):
         assert_almost_equal(np.interp(x0, x, y), x0)
 
     def test_right_left_behavior(self):
-        assert_equal(interp([-1, 0, 1], [0], [1]), [1,1,1])
-        assert_equal(interp([-1, 0, 1], [0], [1], left=0), [0,1,1])
-        assert_equal(interp([-1, 0, 1], [0], [1], right=0), [1,1,0])
-        assert_equal(interp([-1, 0, 1], [0], [1], left=0, right=0), [0,1,0])
+        assert_equal(interp([-1, 0, 1], [0], [1]), [1, 1, 1])
+        assert_equal(interp([-1, 0, 1], [0], [1], left=0), [0, 1, 1])
+        assert_equal(interp([-1, 0, 1], [0], [1], right=0), [1, 1, 0])
+        assert_equal(interp([-1, 0, 1], [0], [1], left=0, right=0), [0, 1, 0])
 
     def test_scalar_interpolation_point(self):
         x = np.linspace(0, 1, 5)
@@ -1294,10 +1336,10 @@ class TestAdd_newdoc_ufunc(TestCase):
 
     def test_ufunc_arg(self):
         assert_raises(TypeError, add_newdoc_ufunc, 2, "blah")
-        assert_raises(ValueError, add_newdoc_ufunc,np.add, "blah")
+        assert_raises(ValueError, add_newdoc_ufunc, np.add, "blah")
 
     def test_string_arg(self):
-        assert_raises(TypeError, add_newdoc_ufunc,np.add, 3)
+        assert_raises(TypeError, add_newdoc_ufunc, np.add, 3)
 
 
 
