@@ -82,3 +82,9 @@ BLD:   add ufsparse to the libraries search path.
 BLD:   add 'pgfortran' as a valid compiler in the Portland Group 	
 BLD:   update version match regexp for IBM AIX Fortran compilers.
 
+
+``numpy.random`` issues fixed
+-----------------------------
+
+BUG:  Use npy_intp instead of long in mtrand
+
