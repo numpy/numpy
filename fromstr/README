@@ -1,0 +1,3 @@
+Please build with the following command::
+
+    python setup.py build_ext --inplace
