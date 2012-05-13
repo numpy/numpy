@@ -429,18 +429,18 @@ class TestVectorize(TestCase):
         assert_array_equal(r1, r2)
 
     def test_keywords3_ticket_2100(self):
-        """Test exclude with mixed positional and kwargs: ticket 2100"""
+        """Test excluded with mixed positional and kwargs: ticket 2100"""
         def mypolyval(x, p):
             _p = list(p)
             res = _p.pop(0)
             while _p:
                 res = res*x + _p.pop(0)
             return res
-        vpolyval = np.vectorize(mypolyval, exclude='p')
+        vpolyval = np.vectorize(mypolyval, excluded=['p',1])
         ans = [3, 6]
         assert_array_equal(ans, vpolyval(x=[0, 1], p=[1, 2, 3]))
         assert_array_equal(ans, vpolyval([0, 1], p=[1, 2, 3]))
-        #assert_array_equal(ans, vpolyval([0, 1], [1, 2, 3]))
+        assert_array_equal(ans, vpolyval([0, 1], [1, 2, 3]))
 
     def test_keywords4_ticket_2100(self):
         """Test vectorizing function with no positional args."""
@@ -493,6 +493,17 @@ class TestVectorize(TestCase):
         res2a = f2(np.arange(3))
         assert_equal(res1a, res2a)
         assert_equal(res1b, res2b)
+
+    def test_cache(self):
+        """Ensure that vectorized func called exactly once per argument."""
+        _calls = [0]
+        @vectorize
+        def f(x):
+            _calls[0] += 1
+            return x**2
+        x = np.arange(5)
+        assert_array_equal(f(x), x*x)
+        assert_equal(_calls[0], len(x))
 
 class TestDigitize(TestCase):
     def test_forward(self):

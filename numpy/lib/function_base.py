@@ -1701,7 +1701,7 @@ def disp(mesg, device=None, linefeed=True):
 
 class vectorize(object):
     """
-    vectorize(pyfunc, otypes='', doc=None, exclude=None)
+    vectorize(pyfunc, otypes='', doc=None, excluded=None)
 
     Generalized function class.
 
@@ -1724,11 +1724,12 @@ class vectorize(object):
         typecode characters or a list of data type specifiers. There should
         be one data type specifier for each output.
     doc : str, optional
-        The docstring for the function. If None, the docstring will be the
-        `pyfunc` one.
-    exclude : set, option
-        Keyword arguments for the function will not be vectorized over the
-        variable names in `exclude`.
+        The docstring for the function. If `None`, the docstring will be the
+        ``pyfunc.__doc__``.
+    excluded : set, optional
+        Set of strings or integers representing the positional or keyword
+        arguments for which the function will not be vectorized.  These will be
+        passed directly to `pyfunc` unmodified.
         
         .. versionadded:: 1.7.0
 
@@ -1770,53 +1771,55 @@ class vectorize(object):
     >>> type(out[0])
     <type 'numpy.float64'>
 
-    The `exclude` argument can be used to prevent vectorizing over certain
-    variables
+    The `excluded` argument can be used to prevent vectorizing over certain
+    arguments.  This can be useful for array-like arguments of a fixed length
+    such as the coefficients for a polynomial as in `polyval`:
 
-    >>> def mypolyval(x, p):
+    >>> def mypolyval(p, x):
     ...     _p = list(p)
     ...     res = _p.pop(0)
     ...     while _p:
     ...         res = res*x + _p.pop(0)
     ...     return res
-    >>> vpolyval = np.vectorize(mypolyval, exclude='p')
-    >>> vpolyval(x=[0, 1], p=[1, 2, 3])
-    array([3, 6])
-    >>> vpolyval([0, 1], p=[1, 2, 3])
+    >>> vpolyval = np.vectorize(mypolyval, excluded=['p'])
+    >>> vpolyval(p=[1, 2, 3], x=[0, 1])
     array([3, 6])
 
-    Note that, presently, only keyword arguments may be excluded:
-    >>> vpolyval([0, 1], [1, 2, 3])
+    Positional arguments may also be excluded by specifying their position:
+
+    >>> vpolyval.excluded.add(0)
+    >>> vpolyval([1, 2, 3], x=[0, 1])
     array([3, 6])
     """
-    def __init__(self, pyfunc, otypes='', doc=None, exclude=None):
-        self.fname = getattr(pyfunc, '__name__', 'vectorized(f)')
-        self.thefunc = pyfunc
+    def __init__(self, pyfunc, otypes='', doc=None, excluded=None,):
+        self.pyfunc = pyfunc
 
         if doc is None:
             self.__doc__ = pyfunc.__doc__
         else:
             self.__doc__ = doc
+
         if isinstance(otypes, str):
             self.otypes = otypes
             for char in self.otypes:
                 if char not in typecodes['All']:
-                    raise ValueError(
-                            "invalid otype specified")
+                    raise ValueError("Invalid otype specified: %s" % (char,))
         elif iterable(otypes):
             self.otypes = ''.join([_nx.dtype(x).char for x in otypes])
         else:
             raise ValueError("Invalid otype specification")
 
         # Excluded variable support
-        if exclude is None:
-            exclude = set()
-        self.excluded = set(exclude)
-
+        if excluded is None:
+            excluded = set()
+        self.excluded = set(excluded)
 
     def __call__(self, *args, **kwargs):
+        """
+        Return array containing `pyfunc` broadcast (vectorized) over arguments
+        """
         if not kwargs and not self.excluded:
-            thefunc = self.thefunc
+            func = self.pyfunc
             vargs = args
         else:
             # The wrapper accepts only positional arguments: we use `names` and
@@ -1826,27 +1829,36 @@ class vectorize(object):
             names = list(set(kwargs).difference(self.excluded))
             inds = [_n for _n in range(nargs) if _n not in self.excluded]
             the_args = list(args)
-            def thefunc(*vargs):
+            def func(*vargs):
                 for _n, _i in enumerate(inds):
                     the_args[_i] = vargs[_n] 
                 kwargs.update(zip(names, vargs[len(inds):]))
-                return self.thefunc(*the_args, **kwargs)
+                return self.pyfunc(*the_args, **kwargs)
 
             vargs = [args[_i] for _i in inds]
             vargs.extend([kwargs[_n] for _n in names])
 
-        return self._vectorize_call(thefunc=thefunc, args=vargs)
+        return self._vectorize_call(func=func, args=vargs)
 
-    def _get_ufunc_and_otypes(self, thefunc, args):
+    def _get_ufunc_and_otypes(self, func, args):
         """Return (ufunc, otypes)."""
         if self.otypes:
+            _func = func
             otypes = self.otypes
             nout = len(otypes)
         else:
-            # get number of outputs and output types by calling
-            # the function on the first entries of args
+            # Get number of outputs and output types by calling the function on
+            # the first entries of args.  We also cache the result to prevent
+            # the subsequent call when the ufunc is evaluated.
             inputs = [asarray(_a).flat[0] for _a in args]
-            outputs = thefunc(*inputs)
+            outputs = func(*inputs)
+            _cache = [outputs]
+            def _func(*vargs):
+                if _cache:
+                    return _cache.pop()
+                else:
+                    return func(*vargs)
+                
             if hasattr(outputs, '__len__'):
                 nout = len(outputs)
             else:
@@ -1857,18 +1869,17 @@ class vectorize(object):
                               for _k in range(nout)])
 
         # Create ufunc if not already created
-        ufunc = frompyfunc(thefunc, len(args), nout)
+        ufunc = frompyfunc(_func, len(args), nout)
         return ufunc, otypes
         
-    def _vectorize_call(self, thefunc, args):
-        """Implements the vectorized call to the function with only positional
-        arguments."""
+    def _vectorize_call(self, func, args):
+        """Vectorized call to `func` over positional `args`."""
         nargs = len(args)
 
-        ufunc, otypes = self._get_ufunc_and_otypes(thefunc=thefunc, args=args)
+        ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
 
         if nargs == 0:
-            _res = thefunc()
+            _res = func()
         else:
             # Convert args to object arrays first
             inputs = [array(_a, copy=False, subok=True, dtype=object) 
