@@ -336,10 +336,7 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
     int allocated_src_data = 0, dst_has_maskna = PyArray_HASMASKNA(dst);
     npy_longlong scalarbuffer[4];
 
-    /* Check that 'dst' is writeable */
-    if (!PyArray_ISWRITEABLE(dst)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "cannot assign a scalar value to a read-only array");
+    if (PyArray_RequireWriteable(dst, "cannot assign to read-only array") < 0) {
         return -1;
     }
 

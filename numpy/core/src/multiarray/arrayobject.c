@@ -704,6 +704,27 @@ PyArray_CompareString(char *s1, char *s2, size_t len)
 }
 
 
+/*NUMPY_API
+ *
+ * This function does nothing if obj is writeable, and raises an exception
+ * (and returns -1) if obj is not writeable. In the future it may also do
+ * other house-keeping, such as issuing warnings on arrays which are
+ * transitioning to become views. Always call this function at some point
+ * before writing to an array.
+ */
+NPY_NO_EXPORT int
+PyArray_RequireWriteable(PyArrayObject *obj, const char * err)
+{
+    if (!err) {
+        err = "array must be writeable (but isn't)";
+    }
+    if (!PyArray_ISWRITEABLE(obj)) {
+        PyErr_SetString(PyExc_ValueError, err);
+        return -1;
+    }
+    return 0;
+}
+
 /* This also handles possibly mis-aligned data */
 /* Compare s1 and s2 which are not necessarily NULL-terminated.
    s1 is of length len1

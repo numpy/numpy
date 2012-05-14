@@ -1348,9 +1348,8 @@ PyArray_GetArrayParamsFromObjectEx(PyObject *op,
 
     /* If op is an array */
     if (PyArray_Check(op)) {
-        if (writeable && !PyArray_ISWRITEABLE((PyArrayObject *)op)) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "cannot write to array");
+        if (writeable
+            && PyArray_RequireWriteable((PyArrayObject *)op, NULL) < 0) {
             return -1;
         }
         Py_INCREF(op);
@@ -1419,9 +1418,10 @@ PyArray_GetArrayParamsFromObjectEx(PyObject *op,
     /* If op supports the PEP 3118 buffer interface */
     if (!PyBytes_Check(op) && !PyUnicode_Check(op) &&
              _array_from_buffer_3118(op, (PyObject **)out_arr) == 0) {
-        if (writeable && !PyArray_ISWRITEABLE(*out_arr)) {
-            PyErr_SetString(PyExc_RuntimeError,
-                                "cannot write to PEP 3118 buffer");
+        if (writeable
+            && PyArray_RequireWriteable(*out_arr,
+                                        "PEP 3118 buffer is not writeable")
+               < 0) {
             Py_DECREF(*out_arr);
             return -1;
         }
@@ -1440,9 +1440,10 @@ PyArray_GetArrayParamsFromObjectEx(PyObject *op,
         }
     }
     if (tmp != Py_NotImplemented) {
-        if (writeable && !PyArray_ISWRITEABLE((PyArrayObject *)tmp)) {
-            PyErr_SetString(PyExc_RuntimeError,
-                                "cannot write to array interface object");
+        if (writeable
+            && PyArray_RequireWriteable((PyArrayObject *)tmp,
+                                        "array interface object is not "
+                                        "writeable") < 0) {
             Py_DECREF(tmp);
             return -1;
         }
@@ -1462,9 +1463,10 @@ PyArray_GetArrayParamsFromObjectEx(PyObject *op,
     if (!writeable) {
         tmp = PyArray_FromArrayAttr(op, requested_dtype, context);
         if (tmp != Py_NotImplemented) {
-            if (writeable && !PyArray_ISWRITEABLE((PyArrayObject *)tmp)) {
-                PyErr_SetString(PyExc_RuntimeError,
-                                    "cannot write to array interface object");
+            if (writeable
+                && PyArray_RequireWriteable((PyArrayObject *)tmp,
+                                            "array interface object is not "
+                                            "writeable") < 0) {
                 Py_DECREF(tmp);
                 return -1;
             }
@@ -2032,12 +2034,12 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
             order = NPY_CORDER;
         }
 
-        if ((flags & NPY_ARRAY_UPDATEIFCOPY) &&
-                            (!PyArray_ISWRITEABLE(arr))) {
-            Py_DECREF(newtype);
-            PyErr_SetString(PyExc_ValueError,
-                    "cannot copy back to a read-only array");
-            return NULL;
+        if (flags & NPY_ARRAY_UPDATEIFCOPY) {
+            const char * msg = "cannot copy back to a read-only array";
+            if (PyArray_RequireWriteable(arr, msg) < 0) {
+                Py_DECREF(newtype);
+                return NULL;
+            }
         }
         if ((flags & NPY_ARRAY_ENSUREARRAY)) {
             subok = 0;
@@ -2599,9 +2601,7 @@ PyArray_CopyAsFlat(PyArrayObject *dst, PyArrayObject *src, NPY_ORDER order)
 
     NPY_BEGIN_THREADS_DEF;
 
-    if (!PyArray_ISWRITEABLE(dst)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "cannot write to array");
+    if (PyArray_RequireWriteable(dst, NULL) < 0) {
         return -1;
     }
 

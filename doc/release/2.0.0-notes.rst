@@ -148,6 +148,14 @@ New argument to searchsorted
 The function searchsorted now accepts a 'sorter' argument that is a
 permuation array that sorts the array to search.
 
+C API
+-----
+
+New function ``PyArray_RequireWriteable`` provides a consistent
+interface for checking array writeability -- any C code which works
+with arrays whose WRITEABLE flag is not know to be True a priori,
+should make sure to call this function before writing.
+
 Changes
 =======
 
@@ -165,6 +173,11 @@ Since this affects some legacy code, this change will require discussion
 during alpha or early beta testing, and a decision to either keep the
 stricter behavior, or add in a hack to allow the previous behavior to
 work.
+
+Attempting to write to a read-only array (one with
+``arr.flags.writeable`` set to ``False``) used to raise either a
+RuntimeError, ValueError, or TypeError inconsistently, depending on
+which code path was taken. It now consistently raises a ValueError.
 
 The functions np.diag, np.diagonal, and <ndarray>.diagonal now return a
 view into the original array instead of making a copy. This makes these

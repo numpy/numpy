@@ -449,10 +449,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
         return 0;
     }
 
-    /* Check that 'dst' is writeable */
-    if (!PyArray_ISWRITEABLE(dst)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "cannot assign to a read-only array");
+    if (PyArray_RequireWriteable(dst, NULL) < 0) {
         goto fail;
     }
 

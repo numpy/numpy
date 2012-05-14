@@ -176,9 +176,7 @@ array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v)
         return -1;
     }
 
-    if (!PyArray_ISWRITEABLE(self)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "array is not writeable");
+    if (PyArray_RequireWriteable(self, NULL) < 0) {
         return -1;
     }
 
@@ -1502,9 +1500,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
                         "cannot delete array elements");
         return -1;
     }
-    if (!PyArray_ISWRITEABLE(self)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "array is not writeable");
+    if (PyArray_RequireWriteable(self, NULL) < 0) {
         return -1;
     }
 

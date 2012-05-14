@@ -1114,9 +1114,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         PyErr_Format(PyExc_ValueError, "axis(=%d) out of bounds", axis);
         return -1;
     }
-    if (!PyArray_ISWRITEABLE(op)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "attempted sort on unwriteable array.");
+    if (PyArray_RequireWriteable(op, "attempted sort on read-only array") < 0) {
         return -1;
     }
 

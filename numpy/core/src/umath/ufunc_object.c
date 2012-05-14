@@ -795,9 +795,8 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
         }
         /* If it's an array, can use it */
         if (PyArray_Check(obj)) {
-            if (!PyArray_ISWRITEABLE((PyArrayObject *)obj)) {
-                PyErr_SetString(PyExc_ValueError,
-                                "return array is not writeable");
+            const char *msg = "output array not writeable";
+            if (PyArray_RequireWriteable((PyArrayObject *)obj, msg) < 0) {
                 return -1;
             }
             Py_INCREF(obj);
@@ -894,9 +893,9 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
                         }
 
                         if (PyArray_Check(value)) {
-                            if (!PyArray_ISWRITEABLE((PyArrayObject *)value)) {
-                                PyErr_SetString(PyExc_ValueError,
-                                        "return array is not writeable");
+                            const char *msg = "output array not writeable";
+                            PyArrayObject *value_arr = (PyArrayObject *)value;
+                            if (PyArray_RequireWriteable(value_arr, msg) < 0) {
                                 goto fail;
                             }
                             Py_INCREF(value);

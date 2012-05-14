@@ -57,14 +57,12 @@ array_getreadbuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
 static Py_ssize_t
 array_getwritebuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
 {
-    if (PyArray_CHKFLAGS(self, NPY_ARRAY_WRITEABLE)) {
-        return array_getreadbuf(self, segment, (void **) ptrptr);
-    }
-    else {
-        PyErr_SetString(PyExc_ValueError, "array cannot be "
-                        "accessed as a writeable buffer");
+    if (PyArray_RequireWriteable(self,
+                                 "cannot get writeable buffer from "
+                                 "non-writeable array") < 0) {
         return -1;
     }
+    return array_getreadbuf(self, segment, (void **) ptrptr);
 }
 
 static Py_ssize_t
@@ -628,10 +626,10 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
         PyErr_SetString(PyExc_ValueError, "ndarray is not C-contiguous");
         goto fail;
     }
-    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE &&
-        !PyArray_ISWRITEABLE(self)) {
-        PyErr_SetString(PyExc_ValueError, "ndarray is not writeable");
-        goto fail;
+    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        if (PyArray_RequireWriteable(self, NULL) < 0) {
+            goto fail;
+        }
     }
 
     if (view == NULL) {

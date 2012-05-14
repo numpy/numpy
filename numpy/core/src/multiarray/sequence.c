@@ -119,9 +119,7 @@ array_ass_slice(PyArrayObject *self, Py_ssize_t ilow,
                         "cannot delete array elements");
         return -1;
     }
-    if (!PyArray_ISWRITEABLE(self)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                        "array is not writeable");
+    if (PyArray_RequireWriteable(self, NULL) < 0) {
         return -1;
     }
     tmp = (PyArrayObject *)array_slice(self, ilow, ihigh);

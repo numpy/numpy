@@ -29,8 +29,8 @@ class TestFlags(TestCase):
     def test_writeable(self):
         mydict = locals()
         self.a.flags.writeable = False
-        self.assertRaises(RuntimeError, runstring, 'self.a[0] = 3', mydict)
-        self.assertRaises(RuntimeError, runstring, 'self.a[0:1].itemset(3)', mydict)
+        self.assertRaises(ValueError, runstring, 'self.a[0] = 3', mydict)
+        self.assertRaises(ValueError, runstring, 'self.a[0:1].itemset(3)', mydict)
         self.a.flags.writeable = True
         self.a[0] = 5
         self.a[0] = 0
