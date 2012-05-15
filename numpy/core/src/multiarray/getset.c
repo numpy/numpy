@@ -355,9 +355,12 @@ array_data_set(PyArrayObject *self, PyObject *op)
             PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
         }
         Py_DECREF(PyArray_BASE(self));
+        ((PyArrayObject_fields *)self)->base = NULL;
     }
     Py_INCREF(op);
-    ((PyArrayObject_fields *)self)->base = op;
+    if (PyArray_SetBaseObject(self, op) < 0) {
+        return -1;
+    }
     ((PyArrayObject_fields *)self)->data = buf;
     ((PyArrayObject_fields *)self)->flags = NPY_ARRAY_CARRAY;
     if (!writeable) {

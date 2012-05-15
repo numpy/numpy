@@ -1101,12 +1101,10 @@ NA_OutputArray(PyObject *a, NumarrayType t, int requires)
                                         PyArray_DIMS((PyArrayObject *)a),
                                         dtype, 0);
     Py_INCREF(a);
-    if (PyArray_SetBaseObject(ret, a) < 0) {
+    if (PyArray_SetUpdateIfCopyBase(ret, a) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
-    PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
-    PyArray_CLEARFLAGS((PyArrayObject *)a, NPY_ARRAY_WRITEABLE);
     return ret;
 }
 

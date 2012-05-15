@@ -3027,15 +3027,11 @@ npyiter_allocate_arrays(NpyIter *iter,
             }
             /* If the data will be written to, set UPDATEIFCOPY */
             if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
-                /*
-                 * Don't use PyArray_SetBaseObject, because that compresses
-                 * the chain of bases.
-                 */
                 Py_INCREF(op[iop]);
-                ((PyArrayObject_fields *)temp)->base =
-                                                        (PyObject *)op[iop];
-                PyArray_ENABLEFLAGS(temp, NPY_ARRAY_UPDATEIFCOPY);
-                PyArray_CLEARFLAGS(op[iop], NPY_ARRAY_WRITEABLE);
+                if (PyArray_SetUpdateIfCopyBase(temp, op[iop]) < 0) {
+                    Py_DECREF(temp);
+                    return 0;
+                }
             }
 
             Py_DECREF(op[iop]);

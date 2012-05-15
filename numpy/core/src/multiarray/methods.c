@@ -1694,6 +1694,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));
+    fa->base = NULL;
 
     PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
 
@@ -1766,7 +1767,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
             Py_DECREF(rawdata);
         }
         else {
-            fa->base = rawdata;
+            if (PyArray_SetBaseObject(self, rawdata) < 0) {
+                return NULL;
+            }
         }
     }
     else {

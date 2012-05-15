@@ -345,6 +345,7 @@ multiarray_funcs_api = {
     'PyArray_AllowNAConverter':             305,
     'PyArray_OutputAllowNAConverter':       306,
     'PyArray_RequireWriteable':             307,
+    'PyArray_SetUpdateIfCopyBase':          308,
 }
 
 ufunc_types_api = {

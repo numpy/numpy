@@ -1310,7 +1310,9 @@ _array_from_buffer_3118(PyObject *obj, PyObject **out)
     r = PyArray_NewFromDescr(&PyArray_Type, descr,
                              nd, shape, strides, view->buf,
                              flags, NULL);
-    ((PyArrayObject_fields *)r)->base = memoryview;
+    if (PyArray_SetBaseObject((PyArrayObject *)r, memoryview) < 0) {
+        goto fail;
+    }
     PyArray_UpdateFlags((PyArrayObject *)r, NPY_ARRAY_UPDATE_ALL);
 
     *out = r;
@@ -2080,14 +2082,11 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         }
 
         if (flags & NPY_ARRAY_UPDATEIFCOPY)  {
-            /*
-             * Don't use PyArray_SetBaseObject, because that compresses
-             * the chain of bases.
-             */
             Py_INCREF(arr);
-            ((PyArrayObject_fields *)ret)->base = (PyObject *)arr;
-            PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
-            PyArray_CLEARFLAGS(arr, NPY_ARRAY_WRITEABLE);
+            if (PyArray_SetUpdateIfCopyBase(ret, arr) < 0) {
+                Py_DECREF(ret);
+                return NULL;
+            }
         }
     }
     /*

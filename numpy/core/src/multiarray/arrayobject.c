@@ -67,6 +67,45 @@ PyArray_Size(PyObject *op)
 }
 
 /*NUMPY_API
+ * 
+ * Sets up the UPDATEIFCOPY flag on the array, with the given 'base'. This
+ * steals a reference to 'base'.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base) 
+{
+    if (base == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                  "Cannot UPDATEIFCOPY to NULL array");
+        return -1;
+    }
+    if (PyArray_BASE(arr) != NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                  "Cannot set array with existing base to UPDATEIFCOPY");
+        goto fail;
+    }
+    const char *msg = "cannot UPDATEIFCOPY to a non-writeable array";
+    if (PyArray_RequireWriteable(base, msg) < 0) {
+        goto fail;
+    }
+    
+    /* Unlike PyArray_SetBaseObject, we do not compress the chain of base
+       references.
+    */
+    ((PyArrayObject_fields *)arr)->base = (PyObject *)base;
+    PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
+    PyArray_CLEARFLAGS(base, NPY_ARRAY_WRITEABLE);
+
+    return 0;
+
+  fail:
+    Py_DECREF(base);
+    return -1;
+}
+
+/*NUMPY_API
  * Sets the 'base' attribute of the array. This steals a reference
  * to 'obj'.
  *
