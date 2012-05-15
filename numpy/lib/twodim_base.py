@@ -210,7 +210,13 @@ def eye(N, M=None, k=0, dtype=float, maskna=False):
     if M is None:
         M = N
     m = zeros((N, M), dtype=dtype, maskna=maskna)
-    diagonal(m, k)[...] = 1
+    if k >= M:
+        return m
+    if k >= 0:
+        i = k
+    else:
+        i = (-k) * M
+    m[:M-k].flat[i::M+1] = 1
     return m
 
 def diag(v, k=0):

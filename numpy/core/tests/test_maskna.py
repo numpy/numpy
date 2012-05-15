@@ -1408,11 +1408,9 @@ def test_array_maskna_diagonal():
     a.shape = (2,3)
     a[0,1] = np.NA
 
-    # Should produce a view into a
     res = a.diagonal()
-    assert_(res.base is a)
     assert_(res.flags.maskna)
-    assert_(not res.flags.ownmaskna)
+    assert_(res.flags.ownmaskna)
     assert_equal(res, [0, 4])
 
     res = a.diagonal(-1)
@@ -1584,6 +1582,8 @@ def test_array_maskna_linspace_logspace():
     assert_(b.flags.maskna)
 
 
+from numpy.testing import dec
+@dec.knownfailureif(True, "eye is not implemented for maskna")
 def test_array_maskna_eye_identity():
     # np.eye
 

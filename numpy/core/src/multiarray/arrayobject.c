@@ -91,6 +91,13 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
         goto fail;
     }
     
+    /* Any writes to 'arr' will magicaly turn into writes to 'base', so we
+     * should warn if necessary.
+     */
+    if (PyArray_FLAGS(base) & NPY_ARRAY_WARN_ON_WRITE) {
+        PyArray_ENABLEFLAGS(arr, NPY_ARRAY_WARN_ON_WRITE);
+    }
+
     /* Unlike PyArray_SetBaseObject, we do not compress the chain of base
        references.
     */
@@ -142,6 +149,11 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
     while (PyArray_Check(obj) && (PyObject *)arr != obj) {
         PyArrayObject *obj_arr = (PyArrayObject *)obj;
         PyObject *tmp;
+
+        /* Propagate WARN_ON_WRITE through views. */
+        if (PyArray_FLAGS(obj_arr) & NPY_ARRAY_WARN_ON_WRITE) {
+            PyArray_ENABLEFLAGS(arr, NPY_ARRAY_WARN_ON_WRITE);
+        }
 
         /* If this array owns its own data, stop collapsing */
         if (PyArray_CHKFLAGS(obj_arr, NPY_ARRAY_OWNDATA)) {
@@ -743,6 +755,36 @@ PyArray_CompareString(char *s1, char *s2, size_t len)
 }
 
 
+/* Call this from contexts where an array might be written to, but we have no
+ * way to tell. (E.g., when converting to a read-write buffer.)
+ */
+NPY_NO_EXPORT int
+array_might_be_written(PyArrayObject *obj)
+{
+    const char *msg = "Traditionally, numpy.diagonal, numpy.diag, and "
+        "ndarray.diagonal have returned copies of an array's diagonal. "
+        "In a future version of numpy, they will return a view onto the "
+        "existing array (like slicing does). Numpy has detected that this "
+        "code (might be) writing to an array returned by one of these "
+        "functions, which in a future release will modify your original "
+        "array. To avoid this warning, make an explicit copy, e.g. by "
+        "replacing arr.diagonal() with arr.diagonal().copy().";
+    if (PyArray_FLAGS(obj) & NPY_ARRAY_WARN_ON_WRITE) {
+        if (PyErr_WarnEx(PyExc_DeprecationWarning, msg, 1) < 0) {
+            return -1;
+        }
+        /* Only warn once per array */
+        while (1) {
+            PyArray_CLEARFLAGS(obj, NPY_ARRAY_WARN_ON_WRITE);
+            if (!PyArray_BASE(obj) || !PyArray_Check(PyArray_BASE(obj))) {
+                break;
+            }
+            obj = (PyArrayObject *)PyArray_BASE(obj);
+        }
+    }
+    return 0;
+}
+
 /*NUMPY_API
  *
  * This function does nothing if obj is writeable, and raises an exception
@@ -759,6 +801,9 @@ PyArray_RequireWriteable(PyArrayObject *obj, const char * err)
     }
     if (!PyArray_ISWRITEABLE(obj)) {
         PyErr_SetString(PyExc_ValueError, err);
+        return -1;
+    }
+    if (array_might_be_written(obj) < 0) {
         return -1;
     }
     return 0;

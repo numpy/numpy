@@ -917,6 +917,15 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 #define NPY_ARRAY_ALLOWNA         0x8000
 
+/*
+ * This flag is used internally to mark arrays which we would like to, in the
+ * future, turn into views. It causes a warning to be issued on the first
+ * attempt to write to the array (but the write is allowed to succeed).
+ *
+ * Currently it is set on arrays returned by ndarray.diagonal.
+ */
+#define NPY_ARRAY_WARN_ON_WRITE  0x10000
+
 
 #define NPY_ARRAY_BEHAVED      (NPY_ARRAY_ALIGNED | \
                                 NPY_ARRAY_WRITEABLE)
@@ -1550,7 +1559,7 @@ static NPY_INLINE PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
     return ((PyArrayObject_fields *)arr)->descr->f->getitem(
-					(void *)itemptr, (PyArrayObject *)arr);
+                                        (void *)itemptr, (PyArrayObject *)arr);
 }
 
 static NPY_INLINE int

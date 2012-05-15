@@ -13,6 +13,7 @@
 
 #include "buffer.h"
 #include "numpyos.h"
+#include "arrayobject.h"
 
 /*************************************************************************
  ****************   Implement Buffer Protocol ****************************
@@ -628,6 +629,9 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     }
     if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
         if (PyArray_RequireWriteable(self, NULL) < 0) {
+            goto fail;
+        }
+        if (array_might_be_written(self) < 0) {
             goto fail;
         }
     }

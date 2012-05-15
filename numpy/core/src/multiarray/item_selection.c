@@ -1841,7 +1841,11 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
 /*NUMPY_API
  * Diagonal
  *
- * As of NumPy 1.7, this function always returns a view into 'self'.
+ * In NumPy versions prior to 1.7,  this function always returned a copy of
+ * the diagonal array. In 1.7, the code has been updated to compute a view
+ * onto 'self', but it still copies this array before returning, as well as
+ * setting the internal WARN_ON_WRITE flag. In a future version, it will
+ * simply return a view onto self.
  */
 NPY_NO_EXPORT PyObject *
 PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
@@ -1857,6 +1861,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
     PyArrayObject *ret;
     PyArray_Descr *dtype;
     npy_intp ret_shape[NPY_MAXDIMS], ret_strides[NPY_MAXDIMS];
+    PyObject *copy;
 
     if (ndim < 2) {
         PyErr_SetString(PyExc_ValueError,
@@ -1987,7 +1992,13 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
         fret->flags |= NPY_ARRAY_MASKNA;
     }
 
-    return (PyObject *)ret;
+    /* For backwards compatibility, during the deprecation period: */
+    copy = PyArray_NewCopy(ret, NPY_KEEPORDER);
+    if (!copy) {
+        return NULL;
+    }
+    PyArray_ENABLEFLAGS((PyArrayObject *)copy, NPY_ARRAY_WARN_ON_WRITE);
+    return copy;
 }
 
 /*NUMPY_API

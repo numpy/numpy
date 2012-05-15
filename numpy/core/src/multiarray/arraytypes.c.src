@@ -18,6 +18,7 @@
 #include "usertypes.h"
 #include "_datetime.h"
 #include "na_object.h"
+#include "arrayobject.h"
 
 #include "numpyos.h"
 
@@ -649,6 +650,9 @@ VOID_getitem(char *ip, PyArrayObject *ap)
      * current item a view of it
      */
     if (PyArray_ISWRITEABLE(ap)) {
+        if (array_might_be_written(ap) < 0) {
+            return NULL;
+        }
         u = (PyArrayObject *)PyBuffer_FromReadWriteMemory(ip, itemsize);
     }
     else {
