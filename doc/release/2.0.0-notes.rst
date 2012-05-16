@@ -8,6 +8,41 @@ Highlights
 ==========
 
 
+Compatibility notes
+===================
+
+In a future version of numpy, the functions np.diag, np.diagonal, and
+the diagonal method of ndarrays will return a view onto the original
+array, instead of producing a copy as they do now. This makes a
+difference if you write to the array returned by any of these
+functions. To facilitate this transition, numpy 1.7 produces a
+DeprecationWarning if it detects that you may be attempting to write
+to such an array. See the documentation for np.diagonal for details.
+
+The default casting rule for UFunc out= parameters has been changed from
+'unsafe' to 'same_kind'.  Most usages which violate the 'same_kind'
+rule are likely bugs, so this change may expose previously undetected
+errors in projects that depend on NumPy.
+
+Full-array boolean indexing used to allow boolean arrays with a size
+non-broadcastable to the array size. Now it forces this to be broadcastable.
+Since this affects some legacy code, this change will require discussion
+during alpha or early beta testing, and a decision to either keep the
+stricter behavior, or add in a hack to allow the previous behavior to
+work.
+
+Attempting to write to a read-only array (one with
+``arr.flags.writeable`` set to ``False``) used to raise either a
+RuntimeError, ValueError, or TypeError inconsistently, depending on
+which code path was taken. It now consistently raises a ValueError.
+
+The <ufunc>.reduce functions evaluate some reductions in a different
+order than in previous versions of NumPy, generally providing higher
+performance. Because of the nature of floating-point arithmetic, this
+may subtly change some results, just as linking NumPy to a different
+BLAS implementations such as MKL can.
+
+
 New features
 ============
 
@@ -161,35 +196,6 @@ Changes
 
 General
 -------
-
-The default casting rule for UFunc out= parameters has been changed from
-'unsafe' to 'same_kind'.  Most usages which violate the 'same_kind'
-rule are likely bugs, so this change may expose previously undetected
-errors in projects that depend on NumPy.
-
-Full-array boolean indexing used to allow boolean arrays with a size
-non-broadcastable to the array size. Now it forces this to be broadcastable.
-Since this affects some legacy code, this change will require discussion
-during alpha or early beta testing, and a decision to either keep the
-stricter behavior, or add in a hack to allow the previous behavior to
-work.
-
-Attempting to write to a read-only array (one with
-``arr.flags.writeable`` set to ``False``) used to raise either a
-RuntimeError, ValueError, or TypeError inconsistently, depending on
-which code path was taken. It now consistently raises a ValueError.
-
-The functions np.diag, np.diagonal, and <ndarray>.diagonal now return a
-view into the original array instead of making a copy. This makes these
-functions more consistent with NumPy's general approach of taking views
-where possible, and performs much faster as well. This has the
-potential to break code that assumes a copy is made instead of a view.
-
-The <ufunc>.reduce functions evaluates some reductions in a different
-order than in previous versions of NumPy, generally providing higher
-performance. Because of the nature of floating-point arithmetic, this
-may subtly change some results, just as linking NumPy to a different
-BLAS implementations such as MKL can.
 
 The function np.concatenate tries to match the layout of its input
 arrays. Previously, the layout did not follow any particular reason,
