@@ -665,9 +665,16 @@ class system_info:
             found_libs, found_dirs = [], []
             for dir_ in lib_dirs:
                 found_libs1 = self._lib_list(dir_, libs, exts)
-                if found_libs1:
-                    found_libs.extend(found_libs1)
-                    found_dirs.append(dir_)
+                # It's possible that we'll find the same library in multiple
+                # directories. It's also possible that we'll find some
+                # libraries on in directory, and some in another. So the
+                # obvious thing would be to use a set instead of a list, but I
+                # don't know if preserving order matters (does it?).
+                for found_lib in found_libs1:
+                    if found_lib not in found_libs:
+                        found_libs.append(found_lib)
+                        if dir_ not in found_dirs:
+                            found_dirs.append(dir_)
         else:
             found_libs = self._lib_list(lib_dirs, libs, exts)
             found_dirs = [lib_dirs]
