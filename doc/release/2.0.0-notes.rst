@@ -188,7 +188,7 @@ C API
 
 New function ``PyArray_RequireWriteable`` provides a consistent
 interface for checking array writeability -- any C code which works
-with arrays whose WRITEABLE flag is not know to be True a priori,
+with arrays whose WRITEABLE flag is not known to be True a priori,
 should make sure to call this function before writing.
 
 Changes
