@@ -501,6 +501,7 @@ class TestVectorize(TestCase):
         def f(x):
             _calls[0] += 1
             return x**2
+        f.cache = True
         x = np.arange(5)
         assert_array_equal(f(x), x*x)
         assert_equal(_calls[0], len(x))
