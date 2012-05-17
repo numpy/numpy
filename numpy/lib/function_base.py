@@ -1844,7 +1844,8 @@ class vectorize(object):
         Return arrays with the results of `pyfunc` broadcast (vectorized) over
         `args` and `kwargs` not in `excluded`.
         """
-        if not kwargs and not self.excluded:
+        excluded = self.excluded
+        if not kwargs and not excluded:
             func = self.pyfunc
             vargs = args
         else:
@@ -1852,8 +1853,9 @@ class vectorize(object):
             # `inds` to mutate `the_args` and `kwargs` to pass to the original
             # function.
             nargs = len(args)
-            names = list(set(kwargs).difference(self.excluded))
-            inds = [_n for _n in range(nargs) if _n not in self.excluded]
+
+            names = [_n for _n in kwargs if _n not in excluded]
+            inds = [_i for _i in range(nargs) if _i not in excluded]
             the_args = list(args)
             def func(*vargs):
                 for _n, _i in enumerate(inds):
@@ -1868,7 +1870,8 @@ class vectorize(object):
 
     def _get_ufunc_and_otypes(self, func, args):
         """Return (ufunc, otypes)."""
-        assert args             # Will fail if args is empty
+        # frompyfunc will fail if args is empty
+        assert args
 
         if self.otypes:
             otypes = self.otypes
