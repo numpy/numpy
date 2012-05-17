@@ -493,6 +493,14 @@ class TestVectorize(TestCase):
         res2a = f2(np.arange(3))
         assert_equal(res1a, res2a)
         assert_equal(res1b, res2b)
+        
+    def test_string_ticket_1892(self):
+        """Test vectorization over strings: issue 1892."""
+        f = np.vectorize(lambda x:x)
+        s = '0123456789'*10
+        assert_equal(s, f(s))
+        #z = f(np.array([s,s]))
+        #assert_array_equal([s,s], f(s))
 
     def test_cache(self):
         """Ensure that vectorized func called exactly once per argument."""

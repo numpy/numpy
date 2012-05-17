@@ -1902,7 +1902,7 @@ class vectorize(object):
             else:
                 _func = func
 
-            if hasattr(outputs, '__len__'):
+            if isinstance(outputs, tuple):
                 nout = len(outputs)
             else:
                 nout = 1
