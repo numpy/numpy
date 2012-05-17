@@ -1701,7 +1701,7 @@ def disp(mesg, device=None, linefeed=True):
 
 class vectorize(object):
     """
-    vectorize(pyfunc, otypes='', doc=None, excluded=None)
+    vectorize(pyfunc, otypes='', doc=None, excluded=None, cache=False)
 
     Generalized function class.
 
