@@ -110,7 +110,8 @@ def test_array_maskna_construction():
     assert_equal(np.isna(a), True)
 
 @dec.skipif(sys.version_info < (2, 6))
-def test_array_maskna_pep3188():
+def test_array_maskna_pep3118():
+    global memoryview
     if sys.version_info[:2] == (2, 6):
         from numpy.core.multiarray import memorysimpleview as memoryview
 
