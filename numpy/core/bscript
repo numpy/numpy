@@ -456,8 +456,8 @@ def pbuild(context):
                 pjoin('src', 'multiarray', 'scalartypes.c.src'),
                 pjoin('src', 'multiarray', 'sequence.c'),
                 pjoin('src', 'multiarray', 'shape.c'),
-                pjoin('src', 'multiarray', 'ucsnarrow.c')]
-                pjoin('src', 'multiarray', 'usertypes.c'),
+                pjoin('src', 'multiarray', 'ucsnarrow.c'),
+                pjoin('src', 'multiarray', 'usertypes.c')]
         else:
             sources = extension.sources
         includes = ["src/multiarray", "src/private"]
