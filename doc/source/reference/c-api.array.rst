@@ -224,6 +224,8 @@ From scratch
 
 .. cfunction:: PyObject* PyArray_NewFromDescr(PyTypeObject* subtype, PyArray_Descr* descr, int nd, npy_intp* dims, npy_intp* strides, void* data, int flags, PyObject* obj)
 
+    This function steals a reference to *descr* if it is not NULL.
+
     This is the main array creation function. Most new arrays are
     created with this flexible function.
 
@@ -321,6 +323,8 @@ From scratch
     array is indicated by *typenum*.
 
 .. cfunction:: PyObject* PyArray_SimpleNewFromDescr(int nd, npy_intp* dims, PyArray_Descr* descr)
+
+    This function steals a reference to *descr* if it is not NULL.
 
     Create a new array with the provided data-type descriptor, *descr*
     , of the shape deteremined by *nd* and *dims*.
