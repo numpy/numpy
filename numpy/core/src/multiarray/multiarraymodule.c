@@ -51,7 +51,6 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "item_selection.h"
 #include "shape.h"
 #include "ctors.h"
-#include "reduction.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -1895,20 +1894,11 @@ array_zeros(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 static PyObject *
 array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
 {
-    static char *kwlist[] = {"arr", "axis", "out", "keepdims", NULL};
+    PyObject *array_in;
+    PyArrayObject *array;
+    npy_intp count;
 
-    PyObject *array_in, *axis_in = NULL, *out_in = NULL;
-    PyObject *ret = NULL;
-    PyArrayObject *array, *out = NULL;
-    npy_bool axis_flags[NPY_MAXDIMS];
-    int keepdims = 0;
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds,
-                                "O|OOi:count_nonzero", kwlist,
-                                &array_in,
-                                &axis_in,
-                                &out_in,
-                                &keepdims)) {
+    if (!PyArg_ParseTuple(args, "O", &array_in)) {
         return NULL;
     }
 
@@ -1917,27 +1907,25 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
         return NULL;
     }
 
-    if (PyArray_ConvertMultiAxis(axis_in, PyArray_NDIM(array),
-                                        axis_flags) != NPY_SUCCEED) {
-        Py_DECREF(array);
-        return NULL;
-    }
-
-    if (out_in != NULL) {
-        if (PyArray_Check(out_in)) {
-            out = (PyArrayObject *)out_in;
-        }
-        else {
-            PyErr_SetString(PyExc_TypeError, "'out' must be an array");
-            return NULL;
-        }
-    }
-
-    ret = PyArray_ReduceCountNonzero(array, out, axis_flags, keepdims);
+    count =  PyArray_CountNonzero(array);
 
     Py_DECREF(array);
 
-    return ret;
+    if (count == -1) {
+        return NULL;
+    }
+#if defined(NPY_PY3K)
+    return PyLong_FromSsize_t(count);
+#elif PY_VERSION_HEX >= 0x02050000
+    return PyInt_FromSsize_t(count);
+#else
+    if ((npy_intp)((long)count) == count) {
+        return PyInt_FromLong(count);
+    }
+    else {
+        return PyLong_FromVoidPtr((void*)count);
+    }
+#endif
 }
 
 static PyObject *

@@ -595,17 +595,6 @@ class TestNonzero(TestCase):
         assert_equal(np.nonzero(x['a'].T), ([0,1,1,2],[1,1,2,0]))
         assert_equal(np.nonzero(x['b'].T), ([0,0,1,2,2],[0,1,2,0,2]))
 
-    def test_count_nonzero_axis(self):
-        a = array([[0,1,0],[2,3,0]])
-        assert_equal(np.count_nonzero(a, axis=()), [[0,1,0],[1,1,0]])
-        assert_equal(np.count_nonzero(a, axis=0), [1,2,0])
-        assert_equal(np.count_nonzero(a, axis=1), [1,2])
-        assert_equal(np.count_nonzero(a, axis=(0,1)), 3)
-
-        res = array([-1,-1,-1], dtype='i2')
-        np.count_nonzero(a, axis=0, out=res)
-        assert_equal(res, [1,2,0])
-
 class TestIndex(TestCase):
     def test_boolean(self):
         a = rand(3,5,8)

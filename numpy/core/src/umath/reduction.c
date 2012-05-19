@@ -166,6 +166,24 @@ conform_reduce_result(int ndim, npy_bool *axis_flags,
     return (PyArrayObject *)ret;
 }
 
+/*
+ * Creates a result for reducing 'operand' along the axes specified
+ * in 'axis_flags'. If 'dtype' isn't NULL, this function steals a
+ * reference to 'dtype'.
+ *
+ * If 'out' isn't NULL, this function creates a view conforming
+ * to the number of dimensions of 'operand', adding a singleton dimension
+ * for each reduction axis specified. In this case, 'dtype' is ignored
+ * (but its reference is still stolen), and the caller must handle any
+ * type conversion/validity check for 'out'
+ *
+ * If 'subok' is true, creates a result with the subtype of 'operand',
+ * otherwise creates on with the base ndarray class.
+ *
+ * If 'out' is NULL, it allocates a new array whose shape matches that of
+ * 'operand', except for at the reduction axes. If 'dtype' is NULL, the dtype
+ * of 'operand' is used for the result.
+ */
 NPY_NO_EXPORT PyArrayObject *
 PyArray_CreateReduceResult(PyArrayObject *operand, PyArrayObject *out,
                            PyArray_Descr *dtype, npy_bool *axis_flags,
@@ -215,6 +233,42 @@ check_nonreorderable_axes(int ndim, npy_bool *axis_flags, const char *funcname)
     return 0;
 }
 
+/*
+ * This function initializes a result array for a reduction operation
+ * which has no identity. This means it needs to copy the first element
+ * it sees along the reduction axes to result, then return a view of
+ * the operand which excludes that element.
+ *
+ * If a reduction has an identity, such as 0 or 1, the result should
+ * be initialized by calling PyArray_AssignZero(result, NULL, NULL)
+ * or PyArray_AssignOne(result, NULL, NULL), because this
+ * function raises an exception when there are no elements to reduce.
+ *
+ * This means it copies the subarray indexed at zero along each reduction axis
+ * into 'result', then returns a view into 'operand' excluding those copied
+ * elements.
+ *
+ * result  : The array into which the result is computed. This must have
+ *           the same number of dimensions as 'operand', but for each
+ *           axis i where 'axis_flags[i]' is True, it has a single element.
+ * operand : The array being reduced.
+ * axis_flags : An array of boolean flags, one for each axis of 'operand'.
+ *              When a flag is True, it indicates to reduce along that axis.
+ * reorderable : If True, the reduction being done is reorderable, which
+ *               means specifying multiple axes of reduction at once is ok,
+ *               and the reduction code may calculate the reduction in an
+ *               arbitrary order. The calculation may be reordered because
+ *               of cache behavior or multithreading requirements.
+ * out_skip_first_count : This gets populated with the number of first-visit
+ *                        elements that should be skipped during the
+ *                        iteration loop.
+ * funcname : The name of the reduction operation, for the purpose of
+ *            better quality error messages. For example, "numpy.max"
+ *            would be a good name for NumPy's max function.
+ *
+ * Returns a view which contains the remaining elements on which to do
+ * the reduction.
+ */
 NPY_NO_EXPORT PyArrayObject *
 PyArray_InitializeReduceResult(
                     PyArrayObject *result, PyArrayObject *operand,
@@ -274,7 +328,7 @@ PyArray_InitializeReduceResult(
     /*
      * Copy the elements into the result to start.
      */
-    if (PyArray_AssignArray(result, op_view, NULL, NPY_UNSAFE_CASTING) < 0) {
+    if (PyArray_CopyInto(result, op_view) < 0) {
         Py_DECREF(op_view);
         return NULL;
     }
@@ -313,8 +367,7 @@ PyArray_InitializeReduceResult(
     return op_view;
 }
 
-/*NUMPY_API
- * 
+/*
  * This function executes all the standard NumPy reduction function
  * boilerplate code, just calling assign_identity and the appropriate
  * inner loop function where necessary.
@@ -344,19 +397,28 @@ PyArray_InitializeReduceResult(
  * data        : Data which is passed to assign_identity and the inner loop.
  * buffersize  : Buffer size for the iterator. For the default, pass in 0.
  * funcname    : The name of the reduction function, for error messages.
+ *
+ * TODO FIXME: if you squint, this is essentially an second independent
+ * implementation of generalized ufuncs with signature (i)->(), plus a few
+ * extra bells and whistles. (Indeed, as far as I can tell, it was originally
+ * split out to support a fancy version of count_nonzero... which is not
+ * actually a reduction function at all, it's just a (i)->() function!) So
+ * probably these two implementation should be merged into one. (In fact it
+ * would be quite nice to support axis= and keepdims etc. for arbitrary
+ * generalized ufuncs!)
  */
 NPY_NO_EXPORT PyArrayObject *
-PyArray_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
-                        PyArrayObject *wheremask,
-                        PyArray_Descr *operand_dtype,
-                        PyArray_Descr *result_dtype,
-                        NPY_CASTING casting,
-                        npy_bool *axis_flags, int reorderable,
-                        int keepdims,
-                        int subok,
-                        PyArray_AssignReduceIdentityFunc *assign_identity,
-                        PyArray_ReduceLoopFunc *loop,
-                        void *data, npy_intp buffersize, const char *funcname)
+PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
+                      PyArrayObject *wheremask,
+                      PyArray_Descr *operand_dtype,
+                      PyArray_Descr *result_dtype,
+                      NPY_CASTING casting,
+                      npy_bool *axis_flags, int reorderable,
+                      int keepdims,
+                      int subok,
+                      PyArray_AssignReduceIdentityFunc *assign_identity,
+                      PyArray_ReduceLoopFunc *loop,
+                      void *data, npy_intp buffersize, const char *funcname)
 {
     PyArrayObject *result = NULL, *op_view = NULL;
     npy_intp skip_first_count = 0;

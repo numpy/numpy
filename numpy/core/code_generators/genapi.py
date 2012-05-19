@@ -48,7 +48,6 @@ API_FILES = [join('multiarray', 'array_assign_array.c'),
              join('multiarray', 'nditer_pywrap.c'),
              join('multiarray', 'nditer_templ.c.src'),
              join('multiarray', 'number.c'),
-             join('multiarray', 'reduction.c'),
              join('multiarray', 'refcount.c'),
              join('multiarray', 'scalartypes.c.src'),
              join('multiarray', 'scalarapi.c'),
@@ -58,6 +57,7 @@ API_FILES = [join('multiarray', 'array_assign_array.c'),
              join('umath', 'loops.c.src'),
              join('umath', 'ufunc_object.c'),
              join('umath', 'ufunc_type_resolution.c'),
+             join('umath', 'reduction.c'),
             ]
 THIS_DIR = os.path.dirname(__file__)
 API_FILES = [os.path.join(THIS_DIR, '..', 'src', a) for a in API_FILES]

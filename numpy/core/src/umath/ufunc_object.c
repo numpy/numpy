@@ -41,6 +41,7 @@
 #include "numpy/arrayscalars.h"
 #include "lowlevel_strided_loops.h"
 #include "ufunc_type_resolution.h"
+#include "reduction.h"
 
 #include "ufunc_object.h"
 
@@ -2624,13 +2625,13 @@ PyUFunc_Reduce(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *out,
         return NULL;
     }
 
-    result = PyArray_ReduceWrapper(arr, out, NULL, dtype, dtype,
-                                NPY_UNSAFE_CASTING,
-                                axis_flags, reorderable,
-                                keepdims, 0,
-                                assign_identity,
-                                reduce_loop,
-                                ufunc, buffersize, ufunc_name);
+    result = PyUFunc_ReduceWrapper(arr, out, NULL, dtype, dtype,
+                                   NPY_UNSAFE_CASTING,
+                                   axis_flags, reorderable,
+                                   keepdims, 0,
+                                   assign_identity,
+                                   reduce_loop,
+                                   ufunc, buffersize, ufunc_name);
 
     Py_DECREF(dtype);
     Py_XDECREF(errobj);

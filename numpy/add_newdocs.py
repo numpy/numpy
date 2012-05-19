@@ -901,14 +901,6 @@ add_newdoc('numpy.core.multiarray', 'count_nonzero',
     ----------
     a : array_like
         The array for which to count non-zeros.
-    axis : None or int or tuple of ints, optional
-        Axis or axes along which a reduction is performed.
-        The default (`axis` = None) is perform a reduction over all
-        the dimensions of the input array.
-    keepdims : bool, optional
-        If this is set to True, the axes which are reduced are left
-        in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
 
     Returns
     -------
@@ -925,11 +917,6 @@ add_newdoc('numpy.core.multiarray', 'count_nonzero',
     4
     >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]])
     5
-    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]], axis=1)
-    array([2, 3])
-    >>> np.count_nonzero([[0,1,7,0,0],[3,0,0,2,19]], axis=1, keepdims=True)
-    array([[2],
-           [3]])
     """)
 
 add_newdoc('numpy.core.multiarray','set_typeDict',

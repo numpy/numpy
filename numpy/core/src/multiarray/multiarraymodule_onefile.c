@@ -48,7 +48,6 @@
 #include "array_assign.c"
 #include "array_assign_scalar.c"
 #include "array_assign_array.c"
-#include "reduction.c"
 #include "ucsnarrow.c"
 
 #include "arrayobject.c"

@@ -319,12 +319,11 @@ multiarray_funcs_api = {
     # End 1.6 API
     'NpyIter_IsFirstVisit':                 281,
     'PyArray_SetBaseObject':                282,
-    'PyArray_ReduceWrapper':                283,
-    'PyArray_CreateSortedStridePerm':       284,
-    'PyArray_RemoveAxesInPlace':            285,
-    'PyArray_DebugPrint':                   286,
-    'PyArray_FailUnlessWriteable':          287,
-    'PyArray_SetUpdateIfCopyBase':          288,
+    'PyArray_CreateSortedStridePerm':       283,
+    'PyArray_RemoveAxesInPlace':            284,
+    'PyArray_DebugPrint':                   285,
+    'PyArray_FailUnlessWriteable':          286,
+    'PyArray_SetUpdateIfCopyBase':          287,
 }
 
 ufunc_types_api = {

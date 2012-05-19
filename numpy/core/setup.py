@@ -719,7 +719,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'numpymemoryview.h'),
             join('src', 'multiarray', 'number.h'),
             join('src', 'multiarray', 'numpyos.h'),
-            join('src', 'multiarray', 'reduction.h'),
             join('src', 'multiarray', 'refcount.h'),
             join('src', 'multiarray', 'scalartypes.h'),
             join('src', 'multiarray', 'sequence.h'),
@@ -784,7 +783,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'number.c'),
             join('src', 'multiarray', 'numpymemoryview.c'),
             join('src', 'multiarray', 'numpyos.c'),
-            join('src', 'multiarray', 'reduction.c'),
             join('src', 'multiarray', 'refcount.c'),
             join('src', 'multiarray', 'sequence.c'),
             join('src', 'multiarray', 'shape.c'),
@@ -847,6 +845,7 @@ def configuration(parent_package='',top_path=None):
 
     umath_src = [
             join('src', 'umath', 'umathmodule.c'),
+            join('src', 'umath', 'reduction.c'),
             join('src', 'umath', 'funcs.inc.src'),
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'ufunc_object.c'),

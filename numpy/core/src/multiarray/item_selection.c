@@ -17,7 +17,6 @@
 #include "arrayobject.h"
 #include "ctors.h"
 #include "lowlevel_strided_loops.h"
-#include "reduction.h"
 
 #include "item_selection.h"
 
@@ -1919,99 +1918,6 @@ count_boolean_trues(int ndim, char *data, npy_intp *ashape, npy_intp *astrides)
     }
 
     return count;
-}
-
-static int
-assign_reduce_identity_zero(PyArrayObject *result, void *data)
-{
-    return PyArray_AssignZero(result, NULL);
-}
-
-static int
-reduce_count_nonzero_loop(NpyIter *iter,
-                                            char **dataptr,
-                                            npy_intp *strides,
-                                            npy_intp *countptr,
-                                            NpyIter_IterNextFunc *iternext,
-                                            int needs_api,
-                                            npy_intp skip_first_count,
-                                            void *data)
-{
-    PyArray_NonzeroFunc *nonzero = (PyArray_NonzeroFunc *)data;
-    PyArrayObject *arr = NpyIter_GetOperandArray(iter)[1];
-
-    NPY_BEGIN_THREADS_DEF;
-
-    if (!needs_api) {
-        NPY_BEGIN_THREADS;
-    }
-
-    /*
-     * 'skip_first_count' will always be 0 because we are doing a reduction
-     * with an identity.
-     */
-
-    do {
-        char *data0 = dataptr[0], *data1 = dataptr[1];
-        npy_intp stride0 = strides[0], stride1 = strides[1];
-        npy_intp count = *countptr;
-
-        while (count--) {
-            if (nonzero(data1, arr)) {
-                ++(*(npy_intp *)data0);
-            }
-            data0 += stride0;
-            data1 += stride1;
-        }
-    } while (iternext(iter));
-
-    if (!needs_api) {
-        NPY_END_THREADS;
-    }
-
-    return (needs_api && PyErr_Occurred()) ? -1 : 0;
-}
-
-/*
- * A full reduction version of PyArray_CountNonzero, supporting
- * an 'out' parameter and doing the count as a reduction along
- * selected axes.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
-                        npy_bool *axis_flags, int keepdims)
-{
-    PyArray_NonzeroFunc *nonzero;
-    PyArrayObject *result;
-    PyArray_Descr *dtype;
-
-    nonzero = PyArray_DESCR(arr)->f->nonzero;
-    if (nonzero == NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                    "Cannot count the number of non-zeros for a dtype "
-                    "which doesn't have a 'nonzero' function");
-        return NULL;
-    }
-
-    dtype = PyArray_DescrFromType(NPY_INTP);
-    if (dtype == NULL) {
-        return NULL;
-    }
-
-    result = PyArray_ReduceWrapper(arr, out, NULL,
-                            PyArray_DESCR(arr), dtype,
-                            NPY_SAME_KIND_CASTING,
-                            axis_flags, 1, keepdims, 0,
-                            &assign_reduce_identity_zero,
-                            &reduce_count_nonzero_loop,
-                            nonzero, 0, "count_nonzero");
-    Py_DECREF(dtype);
-    if (out == NULL && result != NULL) {
-        return PyArray_Return(result);
-    }
-    else {
-        return (PyObject *)result;
-    }
 }
 
 /*NUMPY_API

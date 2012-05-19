@@ -27,15 +27,4 @@ NPY_NO_EXPORT int
 PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
                                                 PyObject *obj);
 
-/*
- * A full reduction version of PyArray_CountNonzero, supporting
- * an 'out' parameter and doing the count as a reduction along
- * selected axes.
- */
-NPY_NO_EXPORT PyObject *
-PyArray_ReduceCountNonzero(PyArrayObject *arr, PyArrayObject *out,
-                        npy_bool *axis_flags, int keepdims);
-
-
-
 #endif
