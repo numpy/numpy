@@ -202,7 +202,7 @@ class NoseTester(object):
         print "nose version %d.%d.%d" % nose.__versioninfo__
 
 
-    def prepare_test_args(self, label='fast', verbose=1, extra_argv=None, 
+    def prepare_test_args(self, label='fast', verbose=1, extra_argv=None,
                           doctests=False, coverage=False):
         """
         Run tests for module using nose.
@@ -228,7 +228,7 @@ class NoseTester(object):
 
         if coverage:
             argv+=['--cover-package=%s' % self.package_name, '--with-coverage',
-                   '--cover-tests', '--cover-inclusive', '--cover-erase']
+                   '--cover-tests', '--cover-erase']
 
         # bypass these samples under distutils
         argv += ['--exclude','f2py_ext']
