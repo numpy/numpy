@@ -286,9 +286,7 @@ class TestFloatExceptions(TestCase):
         self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()]);
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()]);
 
-    @dec.knownfailureif((sys.platform == "darwin") and
-                        ("powerpc" in platform.processor()),
-                        "See ticket 1755")
+    @dec.knownfailureif(True, "See ticket 1755")
     def test_floating_exceptions(self):
         """Test basic arithmetic function errors"""
         oldsettings = np.seterr(all='raise')
@@ -344,9 +342,7 @@ class TestFloatExceptions(TestCase):
         finally:
             np.seterr(**oldsettings)
 
-    @dec.knownfailureif(sys.platform.startswith('win') or
-                        (sys.platform == "darwin" and "powerpc" in platform.processor()),
-                        "See ticket 1755")
+    @dec.knownfailureif(True, "See ticket 1755")
     def test_floating_exceptions_power(self):
         """Test basic arithmetic function errors"""
         oldsettings = np.seterr(all='raise')
