@@ -310,7 +310,7 @@ class TestRandomDist(TestCase):
         desired = np.array([[  2.46852460439034849e+03,   1.41286880810518346e+03],
                          [  5.28287797029485181e+07,   6.57720981047328785e+07],
                          [  1.40840323350391515e+02,   1.98390255135251704e+05]])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        np.testing.assert_array_almost_equal(actual, desired, decimal=14)
 
     def test_poisson(self):
         np.random.seed(self.seed)
