@@ -285,6 +285,7 @@ class TestFloatExceptions(TestCase):
         self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()]);
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2[()]);
 
+    @dec.knownfailureif(True, "See ticket 1755")
     def test_floating_exceptions(self):
         """Test basic arithmetic function errors"""
         oldsettings = np.seterr(all='raise')
