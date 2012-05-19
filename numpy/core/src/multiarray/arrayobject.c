@@ -86,8 +86,8 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
                   "Cannot set array with existing base to UPDATEIFCOPY");
         goto fail;
     }
-    const char *msg = "cannot UPDATEIFCOPY to a non-writeable array";
-    if (PyArray_RequireWriteable(base, msg) < 0) {
+    if (PyArray_RequireWriteable(base,
+             "cannot UPDATEIFCOPY to a non-writeable array") < 0) {
         goto fail;
     }
     
