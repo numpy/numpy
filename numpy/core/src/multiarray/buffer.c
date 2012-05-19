@@ -605,6 +605,10 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     self = (PyArrayObject*)obj;
 
     /* Check whether we can provide the wanted properties */
+    if (PyArray_HASMASKNA(obj)) {
+        PyErr_SetString(PyExc_TypeError, "NA-masked arrays are not supported by the Python buffer protocol");
+        goto fail;
+    }
     if ((flags & PyBUF_C_CONTIGUOUS) == PyBUF_C_CONTIGUOUS &&
         !PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS)) {
         PyErr_SetString(PyExc_ValueError, "ndarray is not C-contiguous");

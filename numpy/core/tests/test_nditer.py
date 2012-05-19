@@ -840,6 +840,7 @@ def test_iter_array_cast():
     assert_equal(i.operands[0], a)
     assert_equal(i.operands[0].dtype, np.dtype('f8'))
     # The memory layout of the temporary should match a (a is (48,4,16))
+    # except negative strides get flipped to positive strides.
     assert_equal(i.operands[0].strides, (96,8,32))
     a = a[::-1,:,::-1]
     i = nditer(a, [], [['readonly','copy']],
@@ -847,7 +848,7 @@ def test_iter_array_cast():
             op_dtypes=[np.dtype('f8')])
     assert_equal(i.operands[0], a)
     assert_equal(i.operands[0].dtype, np.dtype('f8'))
-    assert_equal(i.operands[0].strides, (-96,8,-32))
+    assert_equal(i.operands[0].strides, (96,8,32))
 
     # Same-kind cast 'f8' -> 'f4' -> 'f8'
     a = np.arange(24, dtype='f8').reshape(2,3,4).T
@@ -877,10 +878,12 @@ def test_iter_array_cast_buggy():
             casting='unsafe',
             op_dtypes=[np.dtype('f4')])
     assert_equal(i.operands[0].dtype, np.dtype('f4'))
-    assert_equal(i.operands[0].strides, (-4,))
-    i.operands[0][:] = 1
+    # Even though the stride was negative in 'a', it
+    # becomes positive in the temporary
+    assert_equal(i.operands[0].strides, (4,))
+    i.operands[0][:] = [1,2,3]
     i = None
-    assert_equal(a, [1,1,1])
+    assert_equal(a, [1,2,3])
 
 def test_iter_array_cast_errors():
     # Check that invalid casts are caught

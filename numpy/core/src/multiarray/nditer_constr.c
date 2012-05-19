@@ -2599,7 +2599,6 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     npy_int8 *perm = NIT_PERM(iter);
     npy_intp new_shape[NPY_MAXDIMS], strides[NPY_MAXDIMS],
              stride = op_dtype->elsize;
-    char reversestride[NPY_MAXDIMS], anyreverse = 0;
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
     npy_intp i;
@@ -2628,7 +2627,6 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
     axisdata = NIT_AXISDATA(iter);
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
 
-    memset(reversestride, 0, NPY_MAXDIMS);
     /* Initialize the strides to invalid values */
     for (i = 0; i < NPY_MAXDIMS; ++i) {
         strides[i] = NPY_MAX_INTP;
@@ -2652,13 +2650,6 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                                     "for iterator dimension %d to %d\n", (int)i,
                                     (int)idim, (int)stride);
                 strides[i] = stride;
-                if (p < 0) {
-                    reversestride[i] = 1;
-                    anyreverse = 1;
-                }
-                else {
-                    reversestride[i] = 0;
-                }
                 if (shape == NULL) {
                     new_shape[i] = NAD_SHAPE(axisdata);
                     stride *= new_shape[i];
@@ -2721,13 +2712,6 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                                     "for iterator dimension %d to %d\n", (int)i,
                                     (int)idim, (int)stride);
                 strides[i] = stride;
-                if (p < 0) {
-                    reversestride[i] = 1;
-                    anyreverse = 1;
-                }
-                else {
-                    reversestride[i] = 0;
-                }
                 if (shape == NULL) {
                     new_shape[i] = NAD_SHAPE(axisdata);
                     stride *= new_shape[i];
@@ -2814,33 +2798,6 @@ npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                                shape, strides, NULL, 0, NULL);
     if (ret == NULL) {
         return NULL;
-    }
-
-    /* If there are any reversed axes, create a view that reverses them */
-    if (anyreverse) {
-        char *dataptr = PyArray_DATA(ret);
-        PyArrayObject *newret;
-
-        for (idim = 0; idim < op_ndim; ++idim) {
-            if (reversestride[idim]) {
-                dataptr += strides[idim]*(shape[idim]-1);
-                strides[idim] = -strides[idim];
-            }
-        }
-        Py_INCREF(op_dtype);
-        newret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
-                              op_dtype, op_ndim,
-                              shape, strides, dataptr,
-                              NPY_ARRAY_WRITEABLE, NULL);
-        if (newret == NULL) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-        if (PyArray_SetBaseObject(newret, (PyObject *)ret) < 0) {
-            Py_DECREF(newret);
-            return NULL;
-        }
-        ret = newret;
     }
 
     /* Make sure all the flags are good */

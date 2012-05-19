@@ -22,6 +22,7 @@ import __builtin__
 __builtin__.__NUMPY_SETUP__ = True
 
 from bento.commands import hooks
+from bento.backends import waf_backend
 
 import waflib
 
@@ -109,7 +110,7 @@ def pre_configure(context):
     conf = context.waf_context
 
     conf.load("compiler_c")
-    conf.load("python")
+    conf.load("custom_python", tooldir=[waf_backend.WAF_TOOLDIR])
 
     conf.check_python_version((2, 4, 0))
     conf.check_python_headers()
