@@ -903,9 +903,10 @@ class TestMethods(TestCase):
         # ro_diag.flags.writeable = False
         # assert_equal(collect_warning_types(getattr, ro_diag,
         #                                     "__array_interface__"), [])
-        ro_diag = a.diagonal()
-        ro_diag.flags.writeable = False
-        assert_equal(collect_warning_types(memoryview, ro_diag), [])
+        if hasattr(__builtins__, "memoryview"):
+            ro_diag = a.diagonal()
+            ro_diag.flags.writeable = False
+            assert_equal(collect_warning_types(memoryview, ro_diag), [])
         ro_diag = a.diagonal()
         ro_diag.flags.writeable = False
         assert_equal(collect_warning_types(getattr, ro_diag,
