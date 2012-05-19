@@ -865,13 +865,6 @@ def test_iter_array_cast():
     i = None
     assert_equal(a[2,1,1], -12.5)
 
-from numpy.testing import dec
-@dec.knownfailureif(True,
-                    "When casting is combined with a negative stepsize, "
-                    "nditer tries to assign two different bases to the same "
-                    "array, which was always a memory leak and is now an "
-                    "error.")
-def test_iter_array_cast_buggy():
     a = np.arange(6, dtype='i4')[::-2]
     i = nditer(a, [],
             [['writeonly','updateifcopy']],
