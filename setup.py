@@ -56,8 +56,8 @@ AUTHOR_EMAIL        = "oliphant@enthought.com"
 PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"]
 MAJOR               = 1
 MINOR               = 6
-MICRO               = 2
-ISRELEASED          = True
+MICRO               = 3
+ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 # Return the git revision as a string
