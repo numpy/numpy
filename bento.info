@@ -56,18 +56,13 @@ DataFiles: tests
     TargetDir: $sitedir/numpy
     SourceDir: numpy
     Files:
-        core/tests/*.py,
-        distutils/tests/*.py,
-        f2py/tests/*.py,
-        fft/tests/*.py,
-        lib/tests/*.py,
-        linalg/tests/*.py,
-        ma/tests/*.py,
-        matrixlib/tests/*.py,
-        oldnumeric/tests/*.py,
-        polynomial/tests/*.py,
-        random/tests/*.py,
-        testing/tests/*.py
+        **/tests/*.py,
+        core/tests/data/*.fits,
+        core/tests/data/*.pkl,
+        f2py/tests/src/array_from_pyobj/*.c,
+        f2py/src/test/*.c,
+        f2py/src/test/*.f,
+        f2py/src/test/*.f90
 
 HookFile: bscript
 Recurse: numpy
