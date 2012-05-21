@@ -2445,6 +2445,45 @@ def test_flat_element_deletion():
     except:
         raise AssertionError
 
+class TestAllocationTracing(object):
+    def setUp(self):
+        self.allocations = []
+        self.frees = []
+
+    def remember_allocations(self, ptr, size):
+        self.allocations.append(ptr)
+
+    def remember_frees(self, ptr):
+        self.frees.append(ptr)
+
+    def bad_remember_allocations(self, ptr, size):
+        # causes an error, but should not stop tracing
+        not_defined
+
+    def test_tracing(self):
+        try:
+            np.core.multiarray.trace_data_allocations(malloc_callback=self.remember_allocations,
+                                                      free_callback=self.remember_frees)
+            x = np.array([1, 2])  # should cause a malloc
+            # we can get the data pointer via the ctypes interface
+            ptr = x.ctypes.get_data()
+            assert_(ptr in self.allocations)
+            del x  # should cause a free
+            assert_(ptr in self.frees)
+        finally:
+            # deactivate tracing
+            np.core.multiarray.trace_data_allocations(malloc_callback=None,
+                                                      free_callback=None)
+
+    def test_error_in_callback(self):
+        try:
+            np.core.multiarray.trace_data_allocations(malloc_callback=self.bad_remember_allocations,
+                                                      free_callback=5)
+            x = np.array([1, 2])  # should cause a malloc, and an error in the callback.
+            del x  # should cause an error trying to call the callback.
+        finally:
+            # deactivate tracing
+            np.core.multiarray.trace_data_allocations(malloc_callback=None)
 
 if __name__ == "__main__":
     run_module_suite()
