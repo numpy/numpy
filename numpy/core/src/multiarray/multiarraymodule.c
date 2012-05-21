@@ -3662,7 +3662,7 @@ test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
 /* These functions allow tracing of data buffer allocations from within python. */
 #if NPY_TRACE_DATA_MALLOC == 1
 
-PyObject *trace_data_malloc_callback, *trace_data_free_callback, *trace_data_realloc_callback;
+static PyObject *trace_data_malloc_callback, *trace_data_free_callback, *trace_data_realloc_callback;
 
 char *
 PyDataMem_NEW(size_t size)

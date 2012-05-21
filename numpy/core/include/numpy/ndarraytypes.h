@@ -361,12 +361,10 @@ NpyMaskValue_Create(npy_bool exposed, npy_uint8 payload)
 #define NPY_TRACE_DATA_MALLOC 1
 
 #if NPY_TRACE_DATA_MALLOC == 1
-    /* Defined in core/src/multiarray/ctors.c */
-    char *PyDataMem_NEW(size_t size);
-    void PyDataMem_FREE(void *ptr);
-    char *PyDataMem_RENEW(void *ptr, size_t size);
     /* Defined in core/src/multiarray/multiarraymodule.c */
-    PyObject *trace_data_malloc_callback, *trace_data_free_callback, *trace_data_realloc_callback;
+    extern char *PyDataMem_NEW(size_t size);
+    extern void PyDataMem_FREE(void *ptr);
+    extern char *PyDataMem_RENEW(void *ptr, size_t size);
 #else /* not tracing */
     #define PyDataMem_NEW(size) ((char *)malloc(size))
     #define PyDataMem_FREE(ptr)  free(ptr)
