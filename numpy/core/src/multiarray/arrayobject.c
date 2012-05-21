@@ -67,9 +67,13 @@ PyArray_Size(PyObject *op)
 }
 
 /*NUMPY_API
- * 
- * Sets up the UPDATEIFCOPY flag on the array, with the given 'base'. This
- * steals a reference to 'base'.
+ *
+ * Precondition: 'arr' is a copy of 'base' (though possibly with different
+ * strides, ordering, etc.). This function sets the UPDATEIFCOPY flag and the
+ * ->base pointer on 'arr', so that when 'arr' is destructed, it will copy any
+ * changes back to 'base'.
+ *
+ * Steals a reference to 'base'.
  *
  * Returns 0 on success, -1 on failure.
  */
@@ -91,15 +95,17 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
         goto fail;
     }
     
-    /* Any writes to 'arr' will magicaly turn into writes to 'base', so we
+    /*
+     * Any writes to 'arr' will magicaly turn into writes to 'base', so we
      * should warn if necessary.
      */
     if (PyArray_FLAGS(base) & NPY_ARRAY_WARN_ON_WRITE) {
         PyArray_ENABLEFLAGS(arr, NPY_ARRAY_WARN_ON_WRITE);
     }
 
-    /* Unlike PyArray_SetBaseObject, we do not compress the chain of base
-       references.
+    /*
+     * Unlike PyArray_SetBaseObject, we do not compress the chain of base
+     * references.
     */
     ((PyArrayObject_fields *)arr)->base = (PyObject *)base;
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
@@ -761,16 +767,13 @@ PyArray_CompareString(char *s1, char *s2, size_t len)
 NPY_NO_EXPORT int
 array_might_be_written(PyArrayObject *obj)
 {
-    const char *msg = "Traditionally, numpy.diagonal, numpy.diag, and "
-        "ndarray.diagonal have returned copies of an array's diagonal. "
-        "In a future version of numpy, they will return a view onto the "
-        "existing array (like slicing does). Numpy has detected that this "
-        "code (might be) writing to an array returned by one of these "
-        "functions, which in a future release will modify your original "
-        "array. To avoid this warning, make an explicit copy, e.g. by "
-        "replacing arr.diagonal() with arr.diagonal().copy().";
+    const char *msg =
+        "Numpy has detected that you (may be) writing to an array returned\n"
+        "by numpy.diagonal. This code will likely break in the next numpy\n"
+        "release -- see numpy.diagonal docs for details. The quick fix is\n"
+        "to make an explicit copy (e.g., do arr.diagonal().copy()).";
     if (PyArray_FLAGS(obj) & NPY_ARRAY_WARN_ON_WRITE) {
-        if (PyErr_WarnEx(PyExc_DeprecationWarning, msg, 1) < 0) {
+        if (DEPRECATE(msg) < 0) {
             return -1;
         }
         /* Only warn once per array */
