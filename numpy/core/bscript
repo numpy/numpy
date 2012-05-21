@@ -513,8 +513,9 @@ def pbuild(context):
 
     def build_multiarray_tests(extension):
         return context.default_builder(extension,
-                                       use="npymath")
+                                       use="npymath", includes=["src/private"])
     context.register_builder("multiarray_tests", build_multiarray_tests)
+    context.register_builder("umath_tests", build_multiarray_tests)
 
     def build_dotblas(extension):
         if bld.env.HAS_CBLAS:
