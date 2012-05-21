@@ -1,0 +1,24 @@
+#!/bin/bash
+
+for file in \
+    applypatch-msg \
+    commit-msg \
+    post-commit \
+    post-receive \
+    post-update \
+    pre-applypatch \
+    pre-commit \
+    prepare-commit-msg \
+    pre-rebase \
+    update
+do
+    cat > ../../.git/hooks/${file} <<- EOT
+#!/bin/sh
+
+FP=tools/git-hooks/hooks/${file}
+
+if [ -x "\${FP}" ]; then
+    "\${FP}" "\$@"
+fi
+EOT
+done

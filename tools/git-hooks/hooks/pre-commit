@@ -1,0 +1,22 @@
+#!/bin/sh
+
+branch=`git branch | grep '^\*' | cut -c3- `
+
+if [ ${branch} = 'master' ]; then
+   echo "***********************************************"
+   echo "* Warning: Attempt to commit on master branch"
+   echo "*"
+   echo "* Typically this is not what you want!"
+   echo "*"
+   echo "* You should be working on a non-master branch."
+   echo "* Please be carefull in creating the new branch"
+   echo "*  that you don't loose your changes!"
+   echo "*"
+   echo "* The current commit is rejected."
+   echo "*"
+   echo "* If you really know that this is what you want"
+   echo "*  you can override this test by using the "
+   echo "*  '--no-verify' option."
+   echo "***********************************************"
+   exit 1
+fi

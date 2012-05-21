@@ -17,3 +17,5 @@ We have a few simple rules:
    * Add unit tests to exercise new code, and regression tests
      whenever you fix a bug.
 
+In tools/git-hooks directory there is a set of Numpy specific hooks for 'git'
+that are helpful in maintaining a community standardized workflow and style.
