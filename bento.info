@@ -69,6 +69,12 @@ DataFiles: f2py-data
     Files:
         numpy/f2py/src/fortranobject.*
 
+DataFiles: numpy-includes
+    TargetDir: $sitedir
+    Files:
+        numpy/core/include/numpy/*.h,
+        numpy/core/include/numpy/fenv/*.h
+
 HookFile: bscript
 Recurse: numpy
 UseBackends: Waf

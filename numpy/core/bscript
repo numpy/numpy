@@ -354,6 +354,10 @@ def process_multiarray_api_generator(self):
     txt = self.pattern + ".txt"
     files = [header, source, txt]
     tsk.set_outputs([self.path.find_or_declare(f) for f in files])
+
+    self.bld.register_outputs("numpy_gen_headers", "multiarray",
+                              [output for output in tsk.outputs if output.suffix() == ".h"],
+                              target_dir="$sitedir/numpy/core/include/numpy")
     return tsk
 
 @waflib.TaskGen.feature("ufunc_api_gen")
@@ -369,6 +373,10 @@ def process_api_ufunc_generator(self):
     txt = self.pattern + ".txt"
     files = [header, source, txt]
     tsk.set_outputs([self.path.find_or_declare(f) for f in files])
+
+    headers = [output for output in tsk.outputs if output.suffix() == ".h"]
+    self.bld.register_outputs("numpy_gen_headers", "ufunc", headers,
+                              target_dir="$sitedir/numpy/core/include/numpy")
     return tsk
 
 class umath_generator(Task):
@@ -394,6 +402,10 @@ from os.path import join as pjoin
 @pre_build
 def pbuild(context):
     bld = context.waf_context
+
+    context.register_category("numpy_gen_headers")
+    numpyconfig_h = context.local_node.declare(os.path.join("include", "numpy", "_numpyconfig.h"))
+    context.register_outputs("numpy_gen_headers", "numpyconfig", [numpyconfig_h])
 
     def builder(library):
         # FIXME: hack to build static library that can be linked into a dlopen-able
