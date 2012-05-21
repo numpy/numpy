@@ -307,9 +307,6 @@ array_data_get(PyArrayObject *self)
     }
     nbytes = PyArray_NBYTES(self);
     if (PyArray_ISWRITEABLE(self)) {
-        if (array_might_be_written(self) < 0) {
-            return NULL;
-        }
         return PyBuffer_FromReadWriteObject((PyObject *)self, 0, (Py_ssize_t) nbytes);
     }
     else {

@@ -791,10 +791,10 @@ array_might_be_written(PyArrayObject *obj)
 /*NUMPY_API
  *
  * This function does nothing if obj is writeable, and raises an exception
- * (and returns -1) if obj is not writeable. In the future it may also do
- * other house-keeping, such as issuing warnings on arrays which are
- * transitioning to become views. Always call this function at some point
- * before writing to an array.
+ * (and returns -1) if obj is not writeable. It may also do other
+ * house-keeping, such as issuing warnings on arrays which are transitioning
+ * to become views. Always call this function at some point before writing to
+ * an array.
  */
 NPY_NO_EXPORT int
 PyArray_RequireWriteable(PyArrayObject *obj, const char * err)

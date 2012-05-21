@@ -635,6 +635,14 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
         if (PyArray_RequireWriteable(self, NULL) < 0) {
             goto fail;
         }
+    }
+    /*
+     * If a read-only buffer is requested on a read-write array, we return a
+     * read-write buffer, which is dubious behavior. But that's why this call
+     * is guarded by PyArray_ISWRITEABLE rather than (flags &
+     * PyBUF_WRITEABLE).
+     */
+    if (PyArray_ISWRITEABLE(self)) {
         if (array_might_be_written(self) < 0) {
             goto fail;
         }

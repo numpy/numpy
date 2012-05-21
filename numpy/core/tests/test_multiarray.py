@@ -848,9 +848,28 @@ class TestMethods(TestCase):
                      [])
 
         # Other ways of accessing the data also warn:
-        # .data gives a read-write buffer:
-        assert_equal(collect_warning_types(getattr, a.diagonal(), "data"),
+        # .data goes via the C buffer API, gives a read-write
+        # buffer/memoryview. We don't warn until tp_getwritebuf is actually
+        # called, which is not until the buffer is written to.
+        have_memoryview = (hasattr(__builtins__, "memoryview")
+                           or "memoryview" in __builtins__)
+        def get_data_and_write(getter):
+            buf_or_memoryview = getter(a.diagonal())
+            if (have_memoryview and isinstance(buf_or_memoryview, memoryview)):
+                buf_or_memoryview[0] = np.array(1)
+            else:
+                buf_or_memoryview[0] = "x"
+        assert_equal(collect_warning_types(get_data_and_write,
+                                           lambda d: d.data),
                      [DeprecationWarning])
+        if hasattr(np, "getbuffer"):
+            assert_equal(collect_warning_types(get_data_and_write,
+                                               np.getbuffer),
+                         [DeprecationWarning])
+        # PEP 3118:
+        if have_memoryview:
+            assert_equal(collect_warning_types(get_data_and_write, memoryview),
+                         [DeprecationWarning])
         # Void dtypes can give us a read-write buffer, but only in Python 2:
         import sys
         if sys.version_info[0] < 3:
@@ -881,10 +900,6 @@ class TestMethods(TestCase):
         # __array_struct__
         log = collect_warning_types(getattr, a.diagonal(), "__array_struct__")
         assert_equal(log, [DeprecationWarning])
-        # PEP 3118:
-        if hasattr(__builtins__, "memoryview"):
-            assert_equal(collect_warning_types(memoryview, a.diagonal()),
-                          [DeprecationWarning])
 
         # Make sure that our recommendation to silence the warning by copying
         # the array actually works:
