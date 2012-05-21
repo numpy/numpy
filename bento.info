@@ -64,6 +64,11 @@ DataFiles: tests
         f2py/src/test/*.f,
         f2py/src/test/*.f90
 
+DataFiles: f2py-data
+    TargetDir: $sitedir
+    Files:
+        numpy/f2py/src/fortranobject.*
+
 HookFile: bscript
 Recurse: numpy
 UseBackends: Waf
