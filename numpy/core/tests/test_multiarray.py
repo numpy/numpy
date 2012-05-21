@@ -870,8 +870,14 @@ class TestMethods(TestCase):
                                     "__array_interface__")
         assert_equal(log, [DeprecationWarning])
         # ctypeslib goes via __array_interface__:
-        log = collect_warning_types(np.ctypeslib.as_ctypes, a.diagonal())
-        assert_equal(log, [DeprecationWarning])
+        try:
+            # may not exist in python 2.4:
+            import ctypes
+        except ImportError:
+            pass
+        else:
+            log = collect_warning_types(np.ctypeslib.as_ctypes, a.diagonal())
+            assert_equal(log, [DeprecationWarning])
         # __array_struct__
         log = collect_warning_types(getattr, a.diagonal(), "__array_struct__")
         assert_equal(log, [DeprecationWarning])
