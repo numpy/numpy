@@ -90,8 +90,7 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
                   "Cannot set array with existing base to UPDATEIFCOPY");
         goto fail;
     }
-    if (PyArray_RequireWriteable(base,
-             "cannot UPDATEIFCOPY to a non-writeable array") < 0) {
+    if (PyArray_FailUnlessWriteable(base, "UPDATEIFCOPY base") < 0) {
         goto fail;
     }
     
@@ -795,15 +794,16 @@ array_might_be_written(PyArrayObject *obj)
  * house-keeping, such as issuing warnings on arrays which are transitioning
  * to become views. Always call this function at some point before writing to
  * an array.
+ *
+ * 'name' is a name for the array, used to give better error
+ * messages. Something like "assignment destination", "output array", or even
+ * just "array".
  */
 NPY_NO_EXPORT int
-PyArray_RequireWriteable(PyArrayObject *obj, const char * err)
+PyArray_FailUnlessWriteable(PyArrayObject *obj, const char *name)
 {
-    if (!err) {
-        err = "array must be writeable (but isn't)";
-    }
     if (!PyArray_ISWRITEABLE(obj)) {
-        PyErr_SetString(PyExc_ValueError, err);
+        PyErr_Format(PyExc_ValueError, "%s is read-only", name);
         return -1;
     }
     if (array_might_be_written(obj) < 0) {

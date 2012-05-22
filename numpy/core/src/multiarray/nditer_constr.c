@@ -1099,10 +1099,8 @@ npyiter_prepare_one_operand(PyArrayObject **op,
         npy_uint32 tmp;
 
         if ((*op_itflags) & NPY_OP_ITFLAG_WRITE
-            && PyArray_RequireWriteable(*op,
-                                        "Operand array is not writeable, "
-                                        "but the iterator write flag is set"
-                ) < 0) {
+            && PyArray_FailUnlessWriteable(*op, "operand array with iterator "
+                                           "write flag set") < 0) {
             return 0;
         }
         if (!(flags & NPY_ITER_ZEROSIZE_OK) && PyArray_SIZE(*op) == 0) {

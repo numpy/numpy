@@ -449,7 +449,7 @@ PyArray_AssignArray(PyArrayObject *dst, PyArrayObject *src,
         return 0;
     }
 
-    if (PyArray_RequireWriteable(dst, NULL) < 0) {
+    if (PyArray_FailUnlessWriteable(dst, "assignment destination") < 0) {
         goto fail;
     }
 

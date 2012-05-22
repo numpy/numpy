@@ -119,7 +119,7 @@ array_ass_slice(PyArrayObject *self, Py_ssize_t ilow,
                         "cannot delete array elements");
         return -1;
     }
-    if (PyArray_RequireWriteable(self, NULL) < 0) {
+    if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
         return -1;
     }
     tmp = (PyArrayObject *)array_slice(self, ilow, ihigh);

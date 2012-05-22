@@ -344,7 +344,7 @@ multiarray_funcs_api = {
     'NpyNA_FromDTypeAndPayload':            304,
     'PyArray_AllowNAConverter':             305,
     'PyArray_OutputAllowNAConverter':       306,
-    'PyArray_RequireWriteable':             307,
+    'PyArray_FailUnlessWriteable':          307,
     'PyArray_SetUpdateIfCopyBase':          308,
 }
 

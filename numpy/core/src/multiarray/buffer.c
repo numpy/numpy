@@ -58,9 +58,7 @@ array_getreadbuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
 static Py_ssize_t
 array_getwritebuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
 {
-    if (PyArray_RequireWriteable(self,
-                                 "cannot get writeable buffer from "
-                                 "non-writeable array") < 0) {
+    if (PyArray_FailUnlessWriteable(self, "buffer source array") < 0) {
         return -1;
     }
     return array_getreadbuf(self, segment, (void **) ptrptr);
@@ -632,7 +630,7 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
         goto fail;
     }
     if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
-        if (PyArray_RequireWriteable(self, NULL) < 0) {
+        if (PyArray_FailUnlessWriteable(self, "buffer source array") < 0) {
             goto fail;
         }
     }

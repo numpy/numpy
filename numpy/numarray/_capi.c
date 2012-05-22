@@ -1082,7 +1082,7 @@ NA_OutputArray(PyObject *a, NumarrayType t, int requires)
                 "NA_OutputArray: only arrays work for output.");
         return NULL;
     }
-    if (PyArray_RequireWriteable((PyArrayObject *)a, NULL) < 0) {
+    if (PyArray_FailUnlessWriteable((PyArrayObject *)a, "output array") < 0) {
         return NULL;
     }
 
@@ -1128,7 +1128,7 @@ NA_IoArray(PyObject *a, NumarrayType t, int requires)
     /* Guard against non-writable, but otherwise satisfying requires.
        In this case,  shadow == a.
        */
-    if (!PyArray_RequireWriteable(shadow, NULL)) {
+    if (!PyArray_FailUnlessWriteable(shadow, "input/output array")) {
         PyArray_XDECREF_ERR(shadow);
         return NULL;
     }
@@ -2487,7 +2487,7 @@ _setFromPythonScalarCore(PyArrayObject *a, long offset, PyObject*value, int entr
 static int
 NA_setFromPythonScalar(PyArrayObject *a, long offset, PyObject *value)
 {
-    if (PyArray_RequireWriteable(a, NULL) < 0) {
+    if (PyArray_FailUnlessWriteable(a, "array") < 0) {
         return -1;
     }
     return _setFromPythonScalarCore(a, offset, value, 0);
