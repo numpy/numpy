@@ -7,7 +7,9 @@ import umath
 import _internal # for freeze programs
 import numerictypes as nt
 multiarray.set_typeDict(nt.sctypeDict)
+import numeric
 from numeric import *
+import fromnumeric
 from fromnumeric import *
 import defchararray as char
 import records as rec
@@ -15,9 +17,13 @@ from records import *
 from memmap import *
 from defchararray import chararray
 import scalarmath
+import function_base
 from function_base import *
+import machar
 from machar import *
+import getlimits
 from getlimits import *
+import shape_base
 from shape_base import *
 del nt
 
