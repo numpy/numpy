@@ -3659,111 +3659,100 @@ test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyInt_FromLong(a);
 }
 
-/* These functions allow tracing of data buffer allocations from within python. */
-#if NPY_TRACE_DATA_MALLOC == 1
+/* Array data memory allocation/free/reallocation functions, with
+ * hooks for tracing in python functions.
+ */
 
-static PyObject *trace_data_malloc_callback, *trace_data_free_callback, *trace_data_realloc_callback;
+/* Callback functions.  They are either NULL (no tracing for that type
+ * of call) or a Python callable.  They are controlled by
+ * numpy.core.trace_data_allocations, defined below.
+ */
+static PyObject *trace_data_malloc_callback = NULL;
+static PyObject *trace_data_free_callback = NULL;
+static PyObject *trace_data_realloc_callback = NULL;
 
-char *
+/* Core of the callback functions. Note that this function is responsible for DECREFing args. */
+static _trace_data_callback(PyObject *callback, const char *name, PyObject *args)
+{
+    PyObject *ret, *f, *err_type, *err_value, *err_traceback;
+    PyGILState_STATE gstate;
+
+    gstate = PyGILState_Ensure();
+    /* If tracing causes an error, we log it but do not pass it upward
+     * to prevent tracing from interfering with program behavior.
+     */
+    PyErr_Fetch(&err_type, &err_value, &err_traceback);
+    if (args != NULL) {
+        ret = PyObject_CallObject(callback, args);
+        Py_XDECREF(ret);
+    }
+    Py_XDECREF(args);
+    if (PyErr_Occurred()) {
+        f = PySys_GetObject("stderr");
+        if (f != NULL && f != Py_None) {
+            PyFile_WriteString("Exception encountered in ", f);
+            PyFile_WriteString(name, f);
+            PyFile_WriteString(":\n    ", f);
+            PyErr_WriteUnraisable(callback);
+        }
+    }
+    /* Restore any previous error state. */
+    PyErr_Restore(err_type, err_value, err_traceback);
+    PyGILState_Release(gstate);
+}
+
+/*NUMPY_API
+ * Allocates memory for array data, calling the
+ * trace_data_malloc_callback if it's nonzero.
+ */
+NPY_NO_EXPORT char *
 PyDataMem_NEW(size_t size)
 {
     void *result;
-    PyObject *err_type, *err_value, *err_traceback;
-    PyObject *ret;
 
     result = malloc(size);
-    if ((! trace_data_malloc_callback) || (trace_data_malloc_callback == Py_None))
-        goto finish;
-
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
-
-    /* If tracing causes an error, we log it but do not pass it upward
-     *  to prevent tracing from interfering with normal program behavior.
-     */
-    PyErr_Fetch(&err_type, &err_value, &err_traceback);
-    ret = PyObject_CallFunction(trace_data_malloc_callback, "Nl",
-                                PyLong_FromVoidPtr(result), (long) size);
-    Py_XDECREF(ret);
-    if (PyErr_Occurred()) {
-        fprintf(stderr, "Error while tracing numpy data memory malloc:\n");
-        PyErr_PrintEx(0);
+    if (trace_data_malloc_callback) {
+        _trace_data_callback(trace_data_malloc_callback, "trace_data_malloc_callback",
+                             Py_BuildValue("Nl", PyLong_FromVoidPtr(result), (long) size));
     }
-
-    /* Restore any previous error state. */
-    PyErr_Restore(err_type, err_value, err_traceback);
-    PyGILState_Release(gstate);
- finish:
     return (char *)result;
 }
 
-
-void
+/*NUMPY_API
+ * Free memory for array data, calling the
+ * trace_data_free_callback if it's nonzero.
+ */
+NPY_NO_EXPORT void
 PyDataMem_FREE(void *ptr)
 {
-    PyObject *err_type, *err_value, *err_traceback;
-    PyObject *npy, *ret;
-
     free(ptr);
-
-    if ((! trace_data_free_callback) || (trace_data_free_callback == Py_None))
-        goto finish;
-
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
-
-    /* If tracing causes an error, we log it but do not pass it upward
-     *  to prevent tracing from interfering with normal program behavior.
-     */
-    PyErr_Fetch(&err_type, &err_value, &err_traceback);
-    ret = PyObject_CallFunction(trace_data_free_callback, "N",
-                                PyLong_FromVoidPtr(ptr));
-    Py_XDECREF(ret);
-    if (PyErr_Occurred()) {
-        fprintf(stderr, "Error while tracing numpy data memory free:\n");
-        PyErr_PrintEx(0);
+    if (trace_data_free_callback) {
+        _trace_data_callback(trace_data_free_callback, "trace_data_free_callback",
+                             Py_BuildValue("(N)", PyLong_FromVoidPtr(ptr)));
     }
-
-    /* Restore any previous error state. */
-    PyErr_Restore(err_type, err_value, err_traceback);
-    PyGILState_Release(gstate);
- finish:
-    return;
 }
 
-char *
+/*NUMPY_API
+ * Reallocate/resize memory for array data, calling the
+ * trace_data_realloc_callback if it's nonzero.
+ */
+NPY_NO_EXPORT char *
 PyDataMem_RENEW(void *ptr, size_t size)
 {
     void *result;
-    PyObject *err_type, *err_value, *err_traceback;
-    PyObject *ret;
 
     result = realloc(ptr, size);
-    if ((! trace_data_realloc_callback) || (trace_data_realloc_callback == Py_None))
-        goto finish;
-
-    PyGILState_STATE gstate;
-    gstate = PyGILState_Ensure();
-
-    /* If tracing causes an error, we log it but do not pass it upward
-     *  to prevent tracing from interfering with normal program behavior.
-     */
-    PyErr_Fetch(&err_type, &err_value, &err_traceback);
-    ret = PyObject_CallFunction(trace_data_realloc_callback, "NNl",
-                                PyLong_FromVoidPtr(result), PyLong_FromVoidPtr(ptr), (long) size);
-    Py_XDECREF(ret);
-    if (PyErr_Occurred()) {
-        fprintf(stderr, "Error while tracing numpy data memory realloc:\n");
-        PyErr_PrintEx(0);
+    if (trace_data_realloc_callback) {
+        _trace_data_callback(trace_data_realloc_callback, "trace_data_realloc_callback",
+                             Py_BuildValue("NNl",
+                                           PyLong_FromVoidPtr(result),
+                                           PyLong_FromVoidPtr(ptr),
+                                           (long) size));
     }
-
-    /* Restore any previous error state. */
-    PyErr_Restore(err_type, err_value, err_traceback);
-    PyGILState_Release(gstate);
- finish:
     return (char *)result;
 }
 
+/* Control data allocation/free/reallocation tracing. */
 static PyObject *
 trace_data_allocations(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
 {
@@ -3772,36 +3761,38 @@ trace_data_allocations(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *
     PyObject *realloc_cb = Py_None;
     static char *kwlist[] = {"malloc_callback", "free_callback",
                              "realloc_callback", NULL};
-    PyObject *temp_mcb, *temp_fcb, *temp_rcb;
+    PyObject *result;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO", kwlist,
                                      &malloc_cb, &free_cb, &realloc_cb)) {
         return NULL;
     }
 
-    /* It's possible that a trace callback will happen when we DECREF,
-     * hence the use of temps below to try to keep a consistent state.
-     */
-    temp_mcb = trace_data_malloc_callback;
-    temp_fcb = trace_data_free_callback;
-    temp_rcb = trace_data_realloc_callback;
+    /* old callbacks are returned to caller */
+    result = PyTuple_Pack(3,
+                          trace_data_malloc_callback  ? trace_data_malloc_callback  : Py_None,
+                          trace_data_free_callback    ? trace_data_free_callback    : Py_None,
+                          trace_data_realloc_callback ? trace_data_realloc_callback : Py_None);
+    if (result == NULL)
+        return NULL;
 
-    trace_data_malloc_callback = malloc_cb;
-    trace_data_free_callback = free_cb;
-    trace_data_realloc_callback = realloc_cb;
+    Py_XDECREF(trace_data_malloc_callback);
+    Py_XDECREF(trace_data_free_callback);
+    Py_XDECREF(trace_data_realloc_callback);
 
-    Py_INCREF(trace_data_malloc_callback);
-    Py_INCREF(trace_data_free_callback);
-    Py_INCREF(trace_data_realloc_callback);
+    /* replace None with NULL for the C functions above */
+    trace_data_malloc_callback  = (malloc_cb == Py_None)  ? NULL : malloc_cb;
+    trace_data_free_callback    = (free_cb == Py_None)    ? NULL : free_cb;
+    trace_data_realloc_callback = (realloc_cb == Py_None) ? NULL : realloc_cb;
 
-    Py_DECREF(temp_mcb);
-    Py_DECREF(temp_fcb);
-    Py_DECREF(temp_rcb);
+    Py_XINCREF(trace_data_malloc_callback);
+    Py_XINCREF(trace_data_free_callback);
+    Py_XINCREF(trace_data_realloc_callback);
 
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_INCREF(result);
+    return result;
 }
-#endif /* NPY_TRACE_DATA_MALLOC == 1 */
+
 
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",
@@ -3949,11 +3940,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"test_interrupt",
         (PyCFunction)test_interrupt,
         METH_VARARGS, NULL},
-#if NPY_TRACE_DATA_MALLOC == 1
     {"trace_data_allocations",
         (PyCFunction)trace_data_allocations,
         METH_VARARGS | METH_KEYWORDS, NULL},
-#endif
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
@@ -4342,15 +4331,6 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (set_typeinfo(d) != 0) {
         goto err;
     }
-
-#if NPY_TRACE_DATA_MALLOC == 1
-    trace_data_malloc_callback = Py_None;
-    trace_data_free_callback = Py_None;
-    trace_data_realloc_callback = Py_None;
-    Py_INCREF(trace_data_malloc_callback);
-    Py_INCREF(trace_data_free_callback);
-    Py_INCREF(trace_data_realloc_callback);
-#endif
 
     return RETVAL;
 

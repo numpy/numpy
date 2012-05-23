@@ -344,6 +344,10 @@ multiarray_funcs_api = {
     'NpyNA_FromDTypeAndPayload':            304,
     'PyArray_AllowNAConverter':             305,
     'PyArray_OutputAllowNAConverter':       306,
+    'PyDataMem_NEW':                        307,
+    'PyDataMem_FREE':                       308,
+    'PyDataMem_RENEW':                      309,
+
 }
 
 ufunc_types_api = {

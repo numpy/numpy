@@ -11,3 +11,5 @@
 0x00000006 = e61d5dc51fa1c6459328266e215d6987
 # Version 7 (NumPy 1.7) added API for NA, improved datetime64.
 0x00000007 = eb54c77ff4149bab310324cd7c0cb176
+# Version 8 (Numpy 1.7) malloc tracing
+0x00000008 = 0600509478f8bed89b108d9ad980c684

@@ -6486,7 +6486,7 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
     53
     """)
 
-add_newdoc('numpy.core.multiarray', 'trace_data_allocations',
+add_newdoc('numpy.core', 'trace_data_allocations',
     """
     trace_data_allocations(malloc_callback=None, free_callback=None, realloc_callback=None)
 
@@ -6501,7 +6501,13 @@ add_newdoc('numpy.core.multiarray', 'trace_data_allocations',
     realloc_callback : function(newptr, oldptr, size)
         Callback for reallocation corresponding to newptr = realloc(oldptr, size).
 
-     Pointers are passed as Python longs.
+     Pointers are passed to callbacks as Python longs.
+
+    Returns
+    -------
+    trace_data_allocations : old_malloc_callback, old_free_callback, old_realloc_callback
+        The previous callbacks, with None for for callbacks that were not
+        active.
 
     Notes
     -----

@@ -25,6 +25,8 @@ from fromnumeric import amax as max, amin as min, \
      round_ as round
 from numeric import absolute as abs
 
+from multiarray import trace_data_allocations
+
 __all__ = ['char','rec','memmap']
 __all__ += numeric.__all__
 __all__ += fromnumeric.__all__
