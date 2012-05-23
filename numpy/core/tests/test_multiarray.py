@@ -2464,7 +2464,6 @@ class TestAllocationTracing(object):
         try:
             old = np.core.trace_data_allocations(malloc_callback=self.remember_allocations,
                                                  free_callback=self.remember_frees)
-            assert_(old == (None, None, None))
             x = np.array([1, 2])  # should cause a malloc
             # we can get the data pointer via the ctypes interface
             ptr = x.ctypes.get_data()
@@ -2473,20 +2472,18 @@ class TestAllocationTracing(object):
             assert_(ptr in self.frees)
         finally:
             # deactivate tracing
-            old = np.core.multiarray.trace_data_allocations(malloc_callback=None,
-                                                            free_callback=None)
-            assert_(old == (self.remember_allocations, self.remember_frees, None))
-
+            prev = np.core.trace_data_allocations(*old)
+            assert_(prev == (self.remember_allocations, self.remember_frees, None))
 
     def test_error_in_callback(self):
         try:
-            np.core.multiarray.trace_data_allocations(malloc_callback=self.bad_remember_allocations,
-                                                      free_callback=5)
+            old = np.core.trace_data_allocations(malloc_callback=self.bad_remember_allocations,
+                                                 free_callback=5)
             x = np.array([1, 2])  # should cause a malloc, and an error in the callback.
             del x  # should cause an error trying to call the callback.
         finally:
             # deactivate tracing
-            np.core.multiarray.trace_data_allocations(malloc_callback=None)
+            np.core.trace_data_allocations(*old)
 
 if __name__ == "__main__":
     run_module_suite()
