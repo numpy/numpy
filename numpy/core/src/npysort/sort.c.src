@@ -38,6 +38,9 @@
 #define SMALL_MERGESORT 20
 #define SMALL_STRING 16
 
+/* XXX - These have moved to the numpy API */
+#define PyDataMem_NEW(size) ((char *)malloc(size))
+#define PyDataMem_FREE(ptr)  free(ptr)
 
 /*
  *****************************************************************************

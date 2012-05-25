@@ -3659,6 +3659,39 @@ test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyInt_FromLong(a);
 }
 
+/*NUMPY_API
+ * Allocates memory for array data.
+ */
+NPY_NO_EXPORT char *
+PyDataMem_NEW(size_t size)
+{
+    void *result;
+
+    result = malloc(size);
+    return (char *)result;
+}
+
+/*NUMPY_API
+ * Free memory for array data.
+ */
+NPY_NO_EXPORT void
+PyDataMem_FREE(void *ptr)
+{
+    free(ptr);
+}
+
+/*NUMPY_API
+ * Reallocate/resize memory for array data.
+ */
+NPY_NO_EXPORT char *
+PyDataMem_RENEW(void *ptr, size_t size)
+{
+    void *result;
+
+    result = realloc(ptr, size);
+    return (char *)result;
+}
+
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",
         (PyCFunction)array__get_ndarray_c_version,
