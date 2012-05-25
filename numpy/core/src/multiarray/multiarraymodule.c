@@ -3659,6 +3659,70 @@ test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyInt_FromLong(a);
 }
 
+/* malloc/free/realloc hook */
+NPY_NO_EXPORT PyDataMem_EventHookFunc *_PyDataMem_eventhook;
+
+/*NUMPY_API
+ * Sets the allocation event hook for numpy array data.
+ * Takes a PyDataMem_EventHookFunc *, which has the signature:
+ *        void hook(void *old, void *new, size_t size).
+ * Returns a pointer to the previous hook or NULL.
+ *
+ * If not NULL, hook will be called at the end of each PyDataMem_NEW/FREE/RENEW:
+ *   result = PyDataMem_NEW(size)        -> (*hook)(NULL, result, size)
+ *   PyDataMem_FREE(ptr)                 -> (*hook)(ptr, NULL, 0)
+ *   result = PyDataMem_RENEW(ptr, size) -> (*hook)(ptr, result, size)
+ */
+NPY_NO_EXPORT PyDataMem_EventHookFunc *
+PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook)
+{
+    PyDataMem_EventHookFunc *temp = _PyDataMem_eventhook;
+    _PyDataMem_eventhook = newhook;
+    return temp;
+}
+
+/*NUMPY_API
+ * Allocates memory for array data.
+ */
+NPY_NO_EXPORT void *
+PyDataMem_NEW(size_t size)
+{
+    void *result;
+
+    result = malloc(size);
+    if (_PyDataMem_eventhook != NULL) {
+        (*_PyDataMem_eventhook)(NULL, result, size);
+    }
+    return (char *)result;
+}
+
+/*NUMPY_API
+ * Free memory for array data.
+ */
+NPY_NO_EXPORT void
+PyDataMem_FREE(void *ptr)
+{
+    free(ptr);
+    if (_PyDataMem_eventhook != NULL) {
+        (*_PyDataMem_eventhook)(ptr, NULL, 0);
+    }
+}
+
+/*NUMPY_API
+ * Reallocate/resize memory for array data.
+ */
+NPY_NO_EXPORT void *
+PyDataMem_RENEW(void *ptr, size_t size)
+{
+    void *result;
+
+    result = realloc(ptr, size);
+    if (_PyDataMem_eventhook != NULL) {
+        (*_PyDataMem_eventhook)(ptr, result, size);
+    }
+    return (char *)result;
+}
+
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",
         (PyCFunction)array__get_ndarray_c_version,

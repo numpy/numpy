@@ -670,7 +670,10 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
 
     /* only pre-calculate slopes if there are relatively few of them. */
     if (lenxp <= lenx) {
-        slopes = (double *) PyDataMem_NEW((lenxp - 1)*sizeof(double));
+        slopes = (double *) PyArray_malloc((lenxp - 1)*sizeof(double));
+        if (! slopes) {
+            goto fail;
+        }
         NPY_BEGIN_ALLOW_THREADS;
         for (i = 0; i < lenxp - 1; i++) {
             slopes[i] = (dy[i + 1] - dy[i])/(dx[i + 1] - dx[i]);
@@ -692,7 +695,7 @@ arr_interp(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwdict)
             }
         }
         NPY_END_ALLOW_THREADS;
-        PyDataMem_FREE(slopes);
+        PyArray_free(slopes);
     }
     else {
         NPY_BEGIN_ALLOW_THREADS;

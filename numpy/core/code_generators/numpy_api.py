@@ -346,6 +346,10 @@ multiarray_funcs_api = {
     'PyArray_OutputAllowNAConverter':       306,
     'PyArray_FailUnlessWriteable':          307,
     'PyArray_SetUpdateIfCopyBase':          308,
+    'PyDataMem_NEW':                        309,
+    'PyDataMem_FREE':                       310,
+    'PyDataMem_RENEW':                      311,
+    'PyDataMem_SetEventHook':               312,
 }
 
 ufunc_types_api = {

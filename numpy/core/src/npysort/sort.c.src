@@ -38,6 +38,12 @@
 #define SMALL_MERGESORT 20
 #define SMALL_STRING 16
 
+/* These should be changed to PyDataMem_NEW/FREE if npysort is moved
+ *  to the multiarray directory.
+ */
+#define NpySortArray_malloc(size) ((char *)malloc(size))
+#define NpySortArray_free(ptr)  free(ptr)
+
 
 /*
  *****************************************************************************
@@ -335,14 +341,14 @@ mergesort_@suff@(@type@ *start, npy_intp num, void *NOT_USED)
 
     pl = start;
     pr = pl + num;
-    pw = (@type@ *) PyDataMem_NEW((num/2)*sizeof(@type@));
+    pw = (@type@ *) NpySortArray_malloc((num/2)*sizeof(@type@));
     if (!pw) {
         PyErr_NoMemory();
         return -1;
     }
     mergesort0_@suff@(pl, pr, pw);
 
-    PyDataMem_FREE(pw);
+    NpySortArray_free(pw);
     return 0;
 }
 
@@ -476,13 +482,13 @@ mergesort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
 
     pl = start;
     pr = pl + num*len;
-    pw = (@type@ *) PyDataMem_NEW((num/2)*elsize);
+    pw = (@type@ *) NpySortArray_malloc((num/2)*elsize);
     if (!pw) {
         PyErr_NoMemory();
         err = -1;
         goto fail_0;
     }
-    vp = (@type@ *) PyDataMem_NEW(elsize);
+    vp = (@type@ *) NpySortArray_malloc(elsize);
     if (!vp) {
         PyErr_NoMemory();
         err = -1;
@@ -490,9 +496,9 @@ mergesort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
     }
     mergesort0_@suff@(pl, pr, pw, vp, len);
 
-    PyDataMem_FREE(vp);
+    NpySortArray_free(vp);
 fail_1:
-    PyDataMem_FREE(pw);
+    NpySortArray_free(pw);
 fail_0:
     return err;
 }
