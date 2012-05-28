@@ -56,6 +56,7 @@ doc/cdoc/build
 *.egg-info
 # The shelf plugin uses this dir
 ./.shelf
+MANIFEST
 
 # Logs and databases #
 ######################
@@ -88,3 +89,4 @@ numpy/core/include/numpy/__ufunc_api.h
 numpy/core/include/numpy/_numpyconfig.h
 numpy/version.py
 site.cfg
+.tox
