@@ -771,7 +771,7 @@ NpyIter_RequiresBuffering(NpyIter *iter)
     /*int ndim = NIT_NDIM(iter);*/
     int iop, nop = NIT_NOP(iter);
 
-    char *op_itflags;
+    npyiter_opitflags *op_itflags;
 
     if (!(itflags&NPY_ITFLAG_BUFFER)) {
         return 0;
@@ -1217,7 +1217,7 @@ NpyIter_GetReadFlags(NpyIter *iter, char *outreadflags)
     /*int ndim = NIT_NDIM(iter);*/
     int iop, nop = NIT_NOP(iter);
 
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
 
     for (iop = 0; iop < nop; ++iop) {
         outreadflags[iop] = (op_itflags[iop]&NPY_OP_ITFLAG_READ) != 0;
@@ -1234,7 +1234,7 @@ NpyIter_GetWriteFlags(NpyIter *iter, char *outwriteflags)
     /*int ndim = NIT_NDIM(iter);*/
     int iop, nop = NIT_NOP(iter);
 
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
 
     for (iop = 0; iop < nop; ++iop) {
         outwriteflags[iop] = (op_itflags[iop]&NPY_OP_ITFLAG_WRITE) != 0;
@@ -1330,7 +1330,7 @@ NpyIter_GetInnerFixedStrideArray(NpyIter *iter, npy_intp *out_strides)
 
     if (itflags&NPY_ITFLAG_BUFFER) {
         NpyIter_BufferData *data = NIT_BUFFERDATA(iter);
-        char *op_itflags = NIT_OPITFLAGS(iter);
+        npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
         npy_intp stride, *strides = NBF_STRIDES(data),
                 *ad_strides = NAD_STRIDES(axisdata0);
         PyArray_Descr **dtypes = NIT_DTYPES(iter);
@@ -1751,14 +1751,14 @@ npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
     int iop = 0, nop = NIT_NOP(iter);
 
     npy_intp i;
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
     PyArray_Descr **op_dtype = NIT_DTYPES(iter);
     npy_intp buffersize = NBF_BUFFERSIZE(bufferdata);
     char *buffer, **buffers = NBF_BUFFERS(bufferdata);
 
     for (iop = 0; iop < nop; ++iop) {
-        char flags = op_itflags[iop];
+        npyiter_opitflags flags = op_itflags[iop];
 
         /*
          * If we have determined that a buffer may be needed,
@@ -1889,7 +1889,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
     int maskop = NIT_MASKOP(iter);
     int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter),
                     *reduce_outeraxisdata = NULL;
@@ -2116,7 +2116,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
     int iop, nop = NIT_NOP(iter);
     int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter),
                     *reduce_outeraxisdata = NULL;
@@ -2636,7 +2636,7 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     npy_intp reducespace = 1, factor;
     npy_bool nonzerocoord;
 
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     char stride0op[NPY_MAXARGS];
 
     /* Default to no outer axis */

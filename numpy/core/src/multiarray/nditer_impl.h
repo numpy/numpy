@@ -147,6 +147,8 @@ struct NpyIter_InternalOnly {
 typedef struct NpyIter_AD NpyIter_AxisData;
 typedef struct NpyIter_BD NpyIter_BufferData;
 
+typedef npy_int8 npyiter_opitflags;
+
 /* Byte sizes of the iterator members */
 #define NIT_PERM_SIZEOF(itflags, ndim, nop) \
         NPY_INTP_ALIGNED(NPY_MAXDIMS)
@@ -161,7 +163,7 @@ typedef struct NpyIter_BD NpyIter_BufferData;
 #define NIT_OPERANDS_SIZEOF(itflags, ndim, nop) \
         ((NPY_SIZEOF_INTP)*(nop))
 #define NIT_OPITFLAGS_SIZEOF(itflags, ndim, nop) \
-        (NPY_INTP_ALIGNED(nop))
+        (NPY_INTP_ALIGNED(sizeof(npyiter_opitflags) * nop))
 #define NIT_BUFFERDATA_SIZEOF(itflags, ndim, nop) \
         ((itflags&NPY_ITFLAG_BUFFER) ? ((NPY_SIZEOF_INTP)*(6 + 9*nop)) : 0)
 
@@ -224,8 +226,8 @@ typedef struct NpyIter_BD NpyIter_BufferData;
         &(iter)->iter_flexdata + NIT_BASEOFFSETS_OFFSET(itflags, ndim, nop)))
 #define NIT_OPERANDS(iter) ((PyArrayObject **)( \
         &(iter)->iter_flexdata + NIT_OPERANDS_OFFSET(itflags, ndim, nop)))
-#define NIT_OPITFLAGS(iter) ( \
-        &(iter)->iter_flexdata + NIT_OPITFLAGS_OFFSET(itflags, ndim, nop))
+#define NIT_OPITFLAGS(iter) ((npyiter_opitflags *)( \
+        &(iter)->iter_flexdata + NIT_OPITFLAGS_OFFSET(itflags, ndim, nop)))
 #define NIT_BUFFERDATA(iter) ((NpyIter_BufferData *)( \
         &(iter)->iter_flexdata + NIT_BUFFERDATA_OFFSET(itflags, ndim, nop)))
 #define NIT_AXISDATA(iter) ((NpyIter_AxisData *)( \
