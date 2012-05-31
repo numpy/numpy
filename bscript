@@ -45,32 +45,42 @@ def check_blas_lapack(conf):
             conf.check_cc(lib=mkl_libs, msg="Checking for MKL (CBLAS)",
                           uselib_store="CBLAS")
             conf.env.HAS_CBLAS = True
+        except waflib.Errors.ConfigurationError:
+            conf.env.HAS_LAPACK = False
 
+        try:
             conf.check_cc(lib=mkl_libs, msg="Checking for MKL (LAPACK)",
                           uselib_store="LAPACK")
             conf.env.HAS_LAPACK = True
         except waflib.Errors.ConfigurationError:
-            pass
+            conf.env.HAS_LAPACK = False
+
 
     elif sys.platform == "darwin":
         try:
-            conf.check(framework="Accelerate", msg="Checking for framework Accelerate", uselib_store="CBLAS")
+            conf.check(framework="Accelerate", msg="Checking for framework Accelerate (CBLAS)", uselib_store="CBLAS")
             conf.env.HAS_CBLAS = True
+        except waflib.Errors.ConfigurationError:
+            conf.env.HAS_CBLAS = False
 
-            conf.check(framework="Accelerate", msg="Checking for framework Accelerate", uselib_store="LAPACK")
+        try:
+            conf.check(framework="Accelerate", msg="Checking for framework Accelerate (LAPACK)", uselib_store="LAPACK")
             conf.env.HAS_LAPACK = True
         except waflib.Errors.ConfigurationError:
-            pass
+            conf.env.HAS_LAPACK = False
     else:
         try:
             conf.check_cc(lib=["cblas", "atlas"], uselib_store="CBLAS")
             conf.env.HAS_CBLAS = True
+        except waflib.Errors.ConfigurationError:
+            conf.env.HAS_CBLAS = False
 
+        try:
             conf.check_cc(lib=["lapack", "f77blas", "cblas", "atlas"],
                           uselib_store="LAPACK")
             conf.env.HAS_LAPACK = True
         except waflib.Errors.ConfigurationError:
-            pass
+            conf.env.HAS_LAPACK = False
 
     # You can manually set up blas/lapack as follows:
     #conf.env.HAS_CBLAS = True
