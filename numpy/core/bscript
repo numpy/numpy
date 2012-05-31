@@ -407,19 +407,12 @@ def pre_build(context):
     numpyconfig_h = context.local_node.declare(os.path.join("include", "numpy", "_numpyconfig.h"))
     context.register_outputs("numpy_gen_headers", "numpyconfig", [numpyconfig_h])
 
-    def builder(library):
-        # FIXME: hack to build static library that can be linked into a dlopen-able
-        # library
-        return context.default_library_builder(library,
-                                               includes=["src/private", "src/npymath", "include"],
-                                               use="cshlib")
-    context.register_compiled_library_builder("npymath", builder)
+    context.tweak_library("npymath",
+                          includes=["src/private", "src/npymath", "include"])
 
-    def builder_sort(library):
-        return context.default_library_builder(library,
-                                               includes=[".", "src/private", "src/npysort"],
-                                               use="npymath")
-    context.register_compiled_library_builder("npysort", builder_sort)
+    context.tweak_library("npysort",
+                          includes=[".", "src/private", "src/npysort"],
+                          use="npymath")
 
     def builder_multiarray(extension):
         bld(name="multiarray_api",
@@ -506,19 +499,11 @@ def pre_build(context):
                                        use="npymath")
     context.register_builder("umath", build_ufunc)
 
-    def build_scalarmath(extension):
-        return context.default_builder(extension,
-                                       use="npymath")
-    context.register_builder("scalarmath", build_scalarmath)
-
-    def build_multiarray_tests(extension):
-        return context.default_builder(extension,
-                                       use="npymath", includes=["src/private"])
-    context.register_builder("multiarray_tests", build_multiarray_tests)
-    context.register_builder("umath_tests", build_multiarray_tests)
+    context.tweak_extension("scalarmath", use="npymath")
+    context.tweak_extension("multiarray_tests", use="npymath", includes=["src/private"])
+    context.tweak_extension("umath_tests", use="npymath", includes=["src/private"])
 
     def build_dotblas(extension):
         if bld.env.HAS_CBLAS:
-            return context.default_builder(extension,
-                                           use="CBLAS")
+            return context.default_builder(extension, use="CBLAS")
     context.register_builder("_dotblas", build_dotblas)
