@@ -105,29 +105,20 @@ def make_git_commit_info(ctx):
     commit_template = ctx.make_source_node(op.join("numpy", "version.py.in"))
     return set_revision(commit_template, ctx.pkg.version)
 
-@hooks.pre_configure
-def pre_configure(context):
+@hooks.post_configure
+def post_configure(context):
     conf = context.waf_context
-
-    conf.load("compiler_c")
-    conf.load("custom_python", tooldir=[waf_backend.WAF_TOOLDIR])
-
-    conf.check_python_version((2, 4, 0))
-    conf.check_python_headers()
-
     if conf.env["CC_NAME"] == "gcc":
         conf.env.CFLAGS_PYEXT.append("-Wfatal-errors")
     check_blas_lapack(conf)
 
 @hooks.pre_build
 def pre_build(context):
-    context.register_category("git_info")
     commit_output = make_git_commit_info(context)
-    context.register_outputs("git_info", "git_commit_info", [commit_output])
+    context.register_outputs_simple([commit_output])
 
     # FIXME: we write a dummy show for now - the original show function is not
     # super useful anyway.
-    context.register_category("gen_config")
     config_node = context.make_build_node("numpy/__config__.py")
     config_node.safe_write("def show(): pass")
-    context.register_outputs("gen_config", "top_config", [config_node])
+    context.register_outputs_simple([config_node])

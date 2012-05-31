@@ -1,9 +1,8 @@
 import os
 import sys
 
-from bento.commands.hooks \
-    import \
-        pre_configure, pre_build, post_build
+from bento.commands import hooks
+
 import waflib
 import waflib.Errors
 from waflib.Task \
@@ -263,8 +262,8 @@ def check_win32_specifics(conf):
     if arch == "Intel" or arch == "AMD64":
         conf.define('FORCE_NO_LONG_DOUBLE_FORMATTING', 1)
 
-@pre_configure
-def configure(context):
+@hooks.post_configure
+def post_configure(context):
     conf = context.waf_context
 
     try:
@@ -399,11 +398,12 @@ def process_umath_generator(self):
     return tsk
 
 from os.path import join as pjoin
-@pre_build
-def pbuild(context):
+@hooks.pre_build
+def pre_build(context):
     bld = context.waf_context
 
     context.register_category("numpy_gen_headers")
+
     numpyconfig_h = context.local_node.declare(os.path.join("include", "numpy", "_numpyconfig.h"))
     context.register_outputs("numpy_gen_headers", "numpyconfig", [numpyconfig_h])
 
