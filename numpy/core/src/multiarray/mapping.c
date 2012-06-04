@@ -57,12 +57,14 @@ array_big_item(PyArrayObject *self, npy_intp i)
 
     /* Bounds check and get the data pointer */
     dim0 = PyArray_DIM(self, 0);
+    if (i < -dim0 || i >= dim0) {
+        PyErr_Format(PyExc_IndexError,
+                     "index %"NPY_INTP_FMT" out of bounds in dimension 0",
+                     i);
+        return NULL;
+    }
     if (i < 0) {
         i += dim0;
-    }
-    if (i < 0 || i >= dim0) {
-        PyErr_SetString(PyExc_IndexError,"index out of bounds");
-        return NULL;
     }
     item = PyArray_DATA(self) + i * PyArray_STRIDE(self, 0);
 
@@ -121,12 +123,14 @@ array_item_nice(PyArrayObject *self, Py_ssize_t i)
 
         /* Bounds check and get the data pointer */
         dim0 = PyArray_DIM(self, 0);
+        if (i < -dim0 || i >= dim0) {
+            PyErr_Format(PyExc_IndexError,
+                         "index %"NPY_INTP_FMT" out of bounds in dimension 0",
+                         i);
+            return NULL;
+        }
         if (i < 0) {
             i += dim0;
-        }
-        if (i < 0 || i >= dim0) {
-            PyErr_SetString(PyExc_IndexError,"index out of bounds");
-            return NULL;
         }
         item = PyArray_DATA(self) + i * PyArray_STRIDE(self, 0);
 
@@ -202,12 +206,14 @@ array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v)
 
     /* Bounds check and get the data pointer */
     dim0 = PyArray_DIM(self, 0);
+    if (i < -dim0 || i >= dim0) {
+        PyErr_Format(PyExc_IndexError,
+                     "index %"NPY_INTP_FMT" out of bounds in dimension 0",
+                     i);
+        return -1;
+    }
     if (i < 0) {
         i += dim0;
-    }
-    if (i < 0 || i >= dim0) {
-        PyErr_SetString(PyExc_IndexError,"index out of bounds");
-        return -1;
     }
     item = PyArray_DATA(self) + i * PyArray_STRIDE(self, 0);
 

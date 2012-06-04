@@ -73,6 +73,7 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
             i += max;
         }
         if (i >= max || i < 0) {
+            /* TODO: should report out-of-range indices with axis */
             PyErr_SetString(PyExc_IndexError, "invalid index");
             goto fail;
         }

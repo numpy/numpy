@@ -174,14 +174,15 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             for (i = 0; i < n; i++) {
                 for (j = 0; j < m; j++) {
                     tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
-                    if (tmp < 0) {
-                        tmp = tmp + max_item;
-                    }
-                    if ((tmp < 0) || (tmp >= max_item)) {
-                        PyErr_SetString(PyExc_IndexError,
-                                "index out of range for array");
+                    if ((tmp < -max_item) || (tmp >= max_item)) {
+                        PyErr_Format(PyExc_IndexError,
+                                     "index %"NPY_INTP_FMT" out of range for array in dimension %"NPY_INTP_FMT,
+                                     tmp, axis);
                         NPY_AUXDATA_FREE(transferdata);
                         goto fail;
+                    }
+                    if (tmp < 0) {
+                        tmp = tmp + max_item;
                     }
                     maskedstransfer(dest, itemsize,
                                     src + tmp*chunk, itemsize,
@@ -252,14 +253,15 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             for (i = 0; i < n; i++) {
                 for (j = 0; j < m; j++) {
                     tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
+                    if ((tmp < -max_item) || (tmp >= max_item)) {
+                        PyErr_Format(PyExc_IndexError,
+                                     "index %"NPY_INTP_FMT" out of range for "
+                                     "array in dimension %"NPY_INTP_FMT,
+                                     tmp, axis);
+                        goto fail;
+                    }
                     if (tmp < 0) {
                         tmp = tmp + max_item;
-                    }
-                    if ((tmp < 0) || (tmp >= max_item)) {
-                        PyErr_SetString(PyExc_IndexError,
-                                "index out of range "\
-                                "for array");
-                        goto fail;
                     }
                     memmove(dest, src + tmp*chunk, chunk);
                     dest += chunk;
@@ -393,6 +395,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
                     tmp = tmp + max_item;
                 }
                 if ((tmp < 0) || (tmp >= max_item)) {
+                    /* TODO: should report out-of-range indices with axis */
                     PyErr_SetString(PyExc_IndexError,
                             "index out of " \
                             "range for array");
@@ -449,6 +452,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
                     tmp = tmp + max_item;
                 }
                 if ((tmp < 0) || (tmp >= max_item)) {
+                    /* TODO: should report out-of-range indices with axis */
                     PyErr_SetString(PyExc_IndexError,
                             "index out of " \
                             "range for array");
@@ -2531,7 +2535,9 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
             }
 
             if (ind < 0 || ind >= shapevalue) {
-                PyErr_SetString(PyExc_ValueError, "index out of bounds");
+                PyErr_Format(PyExc_IndexError,
+                             "index %"NPY_INTP_FMT" out of bounds in dimension %d",
+                             multi_index[idim], idim);
                 return NULL;
             }
 
@@ -2560,7 +2566,9 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
             }
 
             if (ind < 0 || ind >= shapevalue) {
-                PyErr_SetString(PyExc_ValueError, "index out of bounds");
+                PyErr_Format(PyExc_IndexError,
+                             "index %"NPY_INTP_FMT" out of bounds in dimension %d",
+                             multi_index[idim], idim);
                 return NULL;
             }
 
@@ -2608,7 +2616,9 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
             }
 
             if (ind < 0 || ind >= shapevalue) {
-                PyErr_SetString(PyExc_ValueError, "index out of bounds");
+                PyErr_Format(PyExc_IndexError,
+                             "index %"NPY_INTP_FMT" out of bounds in dimension %d",
+                             multi_index[idim], idim);
                 return -1;
             }
 
@@ -2650,7 +2660,9 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
             }
 
             if (ind < 0 || ind >= shapevalue) {
-                PyErr_SetString(PyExc_ValueError, "index out of bounds");
+                PyErr_Format(PyExc_IndexError,
+                             "index %"NPY_INTP_FMT" out of bounds in dimension %d",
+                             multi_index[idim], idim);
                 return -1;
             }
 

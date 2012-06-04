@@ -3387,13 +3387,13 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
         if (PyErr_Occurred()) {
             return NULL;
         }
+        if (value < -size || value >= size) {
+            PyErr_Format(PyExc_IndexError,
+                         "Field index %d out of range.", value);
+            return NULL;
+        }
         if (value < 0) {
             value += size;
-        }
-        if (value < 0 || value >= size) {
-            PyErr_Format(PyExc_IndexError,
-                    "Field index out of range.");
-            return NULL;
         }
         name = PyTuple_GET_ITEM(self->names, value);
         retval = descr_subscript(self, name);

@@ -510,6 +510,7 @@ NPY_NO_EXPORT char *
 index2ptr(PyArrayObject *mp, npy_intp i)
 {
     npy_intp dim0;
+    npy_intp orig_i = i;  /* in case of error. */
 
     if (PyArray_NDIM(mp) == 0) {
         PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed");
@@ -525,7 +526,7 @@ index2ptr(PyArrayObject *mp, npy_intp i)
     if (i > 0 && i < dim0) {
         return PyArray_DATA(mp)+i*PyArray_STRIDES(mp)[0];
     }
-    PyErr_SetString(PyExc_IndexError,"index out of bounds");
+    PyErr_Format(PyExc_IndexError, "index %"NPY_INTP_FMT" out of bounds in dimension 0", orig_i);
     return NULL;
 }
 
