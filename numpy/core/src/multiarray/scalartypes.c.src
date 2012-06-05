@@ -784,6 +784,7 @@ static char *_datetime_verbose_strings[NPY_DATETIME_NUMUNITS] = {
     "years",
     "months",
     "weeks",
+    "<invalid>",
     "days",
     "hours",
     "minutes",

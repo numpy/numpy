@@ -41,6 +41,7 @@ NPY_NO_EXPORT char *_datetime_strings[NPY_DATETIME_NUMUNITS] = {
     "Y",
     "M",
     "W",
+    "<invalid>",
     "D",
     "h",
     "m",
@@ -949,6 +950,8 @@ static NPY_DATETIMEUNIT _multiples_table[16][4] = {
     {NPY_FR_W, NPY_FR_D, NPY_FR_h},
     {7,  168, 10080},                         /* NPY_FR_W */
     {NPY_FR_D, NPY_FR_h, NPY_FR_m},
+    {0},                                      /* Gap for removed NPY_FR_B */
+    {0},
     {24, 1440, 86400},                        /* NPY_FR_D */
     {NPY_FR_h, NPY_FR_m, NPY_FR_s},
     {60, 3600},                               /* NPY_FR_h */
@@ -1045,6 +1048,7 @@ _datetime_factors[] = {
     1,  /* Years - not used */
     1,  /* Months - not used */
     7,  /* Weeks -> Days */
+    1,  /* Business Days - was removed but a gap still exists in the enum */
     24, /* Days -> Hours */
     60, /* Hours -> Minutes */
     60, /* Minutes -> Seconds */
