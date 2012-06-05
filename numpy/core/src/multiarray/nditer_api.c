@@ -771,7 +771,7 @@ NpyIter_RequiresBuffering(NpyIter *iter)
     /*int ndim = NIT_NDIM(iter);*/
     int iop, nop = NIT_NOP(iter);
 
-    char *op_itflags;
+    npyiter_opitflags *op_itflags;
 
     if (!(itflags&NPY_ITFLAG_BUFFER)) {
         return 0;
@@ -1217,7 +1217,7 @@ NpyIter_GetReadFlags(NpyIter *iter, char *outreadflags)
     /*int ndim = NIT_NDIM(iter);*/
     int iop, nop = NIT_NOP(iter);
 
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
 
     for (iop = 0; iop < nop; ++iop) {
         outreadflags[iop] = (op_itflags[iop]&NPY_OP_ITFLAG_READ) != 0;
@@ -1234,7 +1234,7 @@ NpyIter_GetWriteFlags(NpyIter *iter, char *outwriteflags)
     /*int ndim = NIT_NDIM(iter);*/
     int iop, nop = NIT_NOP(iter);
 
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
 
     for (iop = 0; iop < nop; ++iop) {
         outwriteflags[iop] = (op_itflags[iop]&NPY_OP_ITFLAG_WRITE) != 0;
@@ -1330,7 +1330,7 @@ NpyIter_GetInnerFixedStrideArray(NpyIter *iter, npy_intp *out_strides)
 
     if (itflags&NPY_ITFLAG_BUFFER) {
         NpyIter_BufferData *data = NIT_BUFFERDATA(iter);
-        char *op_itflags = NIT_OPITFLAGS(iter);
+        npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
         npy_intp stride, *strides = NBF_STRIDES(data),
                 *ad_strides = NAD_STRIDES(axisdata0);
         PyArray_Descr **dtypes = NIT_DTYPES(iter);
@@ -1751,14 +1751,14 @@ npyiter_allocate_buffers(NpyIter *iter, char **errmsg)
     int iop = 0, nop = NIT_NOP(iter);
 
     npy_intp i;
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
     PyArray_Descr **op_dtype = NIT_DTYPES(iter);
     npy_intp buffersize = NBF_BUFFERSIZE(bufferdata);
     char *buffer, **buffers = NBF_BUFFERS(bufferdata);
 
     for (iop = 0; iop < nop; ++iop) {
-        char flags = op_itflags[iop];
+        npyiter_opitflags flags = op_itflags[iop];
 
         /*
          * If we have determined that a buffer may be needed,
@@ -1889,7 +1889,7 @@ npyiter_copy_from_buffers(NpyIter *iter)
     int maskop = NIT_MASKOP(iter);
     int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter),
                     *reduce_outeraxisdata = NULL;
@@ -1935,168 +1935,165 @@ npyiter_copy_from_buffers(NpyIter *iter)
         /*
          * Copy the data back to the arrays.  If the type has refs,
          * this function moves them so the buffer's refs are released.
+         *
+         * The flag USINGBUFFER is set when the buffer was used, so
+         * only copy back when this flag is on.
          */
-        if ((stransfer != NULL) && (op_itflags[iop]&NPY_OP_ITFLAG_WRITE)) {
-            /* Copy back only if the pointer was pointing to the buffer */
-            npy_intp delta = (ptrs[iop] - buffer);
-            if (0 <= delta && delta <= buffersize*dtypes[iop]->elsize) {
-                npy_intp op_transfersize;
+        if ((stransfer != NULL) &&
+               (op_itflags[iop]&(NPY_OP_ITFLAG_WRITE|NPY_OP_ITFLAG_USINGBUFFER))
+                        == (NPY_OP_ITFLAG_WRITE|NPY_OP_ITFLAG_USINGBUFFER)) {
+            npy_intp op_transfersize;
 
-                npy_intp src_stride, *dst_strides, *dst_coords, *dst_shape;
-                int ndim_transfer;
+            npy_intp src_stride, *dst_strides, *dst_coords, *dst_shape;
+            int ndim_transfer;
 
-                NPY_IT_DBG_PRINT1("Iterator: Operand %d was buffered\n",
-                                            (int)iop);
+            NPY_IT_DBG_PRINT1("Iterator: Operand %d was buffered\n",
+                                        (int)iop);
+
+            /*
+             * If this operand is being reduced in the inner loop,
+             * its buffering stride was set to zero, and just
+             * one element was copied.
+             */
+            if (op_itflags[iop]&NPY_OP_ITFLAG_REDUCE) {
+                if (strides[iop] == 0) {
+                    if (reduce_outerstrides[iop] == 0) {
+                        op_transfersize = 1;
+                        src_stride = 0;
+                        dst_strides = &src_stride;
+                        dst_coords = &NAD_INDEX(reduce_outeraxisdata);
+                        dst_shape = &NAD_SHAPE(reduce_outeraxisdata);
+                        ndim_transfer = 1;
+                    }
+                    else {
+                        op_transfersize = NBF_REDUCE_OUTERSIZE(bufferdata);
+                        src_stride = reduce_outerstrides[iop];
+                        dst_strides =
+                                &NAD_STRIDES(reduce_outeraxisdata)[iop];
+                        dst_coords = &NAD_INDEX(reduce_outeraxisdata);
+                        dst_shape = &NAD_SHAPE(reduce_outeraxisdata);
+                        ndim_transfer = ndim - reduce_outerdim;
+                    }
+                }
+                else {
+                    if (reduce_outerstrides[iop] == 0) {
+                        op_transfersize = NBF_SIZE(bufferdata);
+                        src_stride = strides[iop];
+                        dst_strides = &ad_strides[iop];
+                        dst_coords = &NAD_INDEX(axisdata);
+                        dst_shape = &NAD_SHAPE(axisdata);
+                        ndim_transfer = reduce_outerdim ?
+                                        reduce_outerdim : 1;
+                    }
+                    else {
+                        op_transfersize = transfersize;
+                        src_stride = strides[iop];
+                        dst_strides = &ad_strides[iop];
+                        dst_coords = &NAD_INDEX(axisdata);
+                        dst_shape = &NAD_SHAPE(axisdata);
+                        ndim_transfer = ndim;
+                    }
+                }
+            }
+            else {
+                op_transfersize = transfersize;
+                src_stride = strides[iop];
+                dst_strides = &ad_strides[iop];
+                dst_coords = &NAD_INDEX(axisdata);
+                dst_shape = &NAD_SHAPE(axisdata);
+                ndim_transfer = ndim;
+            }
+
+            NPY_IT_DBG_PRINT2("Iterator: Copying buffer to "
+                                "operand %d (%d items)\n",
+                                (int)iop, (int)op_transfersize);
+
+            /* USE_MASKNA operand */
+            if (iop < first_maskna_op && maskna_indices[iop] >= 0) {
+                int iop_maskna = maskna_indices[iop];
+                npy_mask *maskptr;
+                /* TODO: support WRITEMASKED + USE_MASKNA together */
 
                 /*
-                 * If this operand is being reduced in the inner loop,
-                 * its buffering stride was set to zero, and just
-                 * one element was copied.
+                 * The mask pointer may be in the buffer or in
+                 * the array, detect which one.
                  */
-                if (op_itflags[iop]&NPY_OP_ITFLAG_REDUCE) {
-                    if (strides[iop] == 0) {
-                        if (reduce_outerstrides[iop] == 0) {
-                            op_transfersize = 1;
-                            src_stride = 0;
-                            dst_strides = &src_stride;
-                            dst_coords = &NAD_INDEX(reduce_outeraxisdata);
-                            dst_shape = &NAD_SHAPE(reduce_outeraxisdata);
-                            ndim_transfer = 1;
-                        }
-                        else {
-                            op_transfersize = NBF_REDUCE_OUTERSIZE(bufferdata);
-                            src_stride = reduce_outerstrides[iop];
-                            dst_strides =
-                                    &NAD_STRIDES(reduce_outeraxisdata)[iop];
-                            dst_coords = &NAD_INDEX(reduce_outeraxisdata);
-                            dst_shape = &NAD_SHAPE(reduce_outeraxisdata);
-                            ndim_transfer = ndim - reduce_outerdim;
-                        }
-                    }
-                    else {
-                        if (reduce_outerstrides[iop] == 0) {
-                            op_transfersize = NBF_SIZE(bufferdata);
-                            src_stride = strides[iop];
-                            dst_strides = &ad_strides[iop];
-                            dst_coords = &NAD_INDEX(axisdata);
-                            dst_shape = &NAD_SHAPE(axisdata);
-                            ndim_transfer = reduce_outerdim ?
-                                            reduce_outerdim : 1;
-                        }
-                        else {
-                            op_transfersize = transfersize;
-                            src_stride = strides[iop];
-                            dst_strides = &ad_strides[iop];
-                            dst_coords = &NAD_INDEX(axisdata);
-                            dst_shape = &NAD_SHAPE(axisdata);
-                            ndim_transfer = ndim;
-                        }
-                    }
+                if ((op_itflags[iop_maskna]&NPY_OP_ITFLAG_USINGBUFFER) != 0) {
+                    maskptr = (npy_mask *)buffers[iop_maskna];
                 }
                 else {
-                    op_transfersize = transfersize;
-                    src_stride = strides[iop];
-                    dst_strides = &ad_strides[iop];
-                    dst_coords = &NAD_INDEX(axisdata);
-                    dst_shape = &NAD_SHAPE(axisdata);
-                    ndim_transfer = ndim;
+                    maskptr = (npy_mask *)ad_ptrs[iop_maskna];
                 }
 
-                NPY_IT_DBG_PRINT2("Iterator: Copying buffer to "
-                                    "operand %d (%d items)\n",
-                                    (int)iop, (int)op_transfersize);
+                PyArray_TransferMaskedStridedToNDim(ndim_transfer,
+                        ad_ptrs[iop], dst_strides, axisdata_incr,
+                        buffer, src_stride,
+                        maskptr, strides[iop_maskna],
+                        dst_coords, axisdata_incr,
+                        dst_shape, axisdata_incr,
+                        op_transfersize, dtypes[iop]->elsize,
+                        (PyArray_MaskedStridedUnaryOp *)stransfer,
+                        transferdata);
+            }
+            /* WRITEMASKED operand */
+            else if (op_itflags[iop] & NPY_OP_ITFLAG_WRITEMASKED) {
+                npy_mask *maskptr;
 
-                /* USE_MASKNA operand */
-                if (iop < first_maskna_op && maskna_indices[iop] >= 0) {
-                    int iop_maskna = maskna_indices[iop];
-                    npy_mask *maskptr;
-                    /* TODO: support WRITEMASKED + USE_MASKNA together */
-
-                    /*
-                     * The mask pointer may be in the buffer or in
-                     * the array, detect which one.
-                     */
-                    delta = (ptrs[iop_maskna] - buffers[iop_maskna]);
-                    if (0 <= delta &&
-                            delta <= buffersize*dtypes[iop_maskna]->elsize) {
-                        maskptr = (npy_mask *)buffers[iop_maskna];
-                    }
-                    else {
-                        maskptr = (npy_mask *)ad_ptrs[iop_maskna];
-                    }
-
-                    PyArray_TransferMaskedStridedToNDim(ndim_transfer,
-                            ad_ptrs[iop], dst_strides, axisdata_incr,
-                            buffer, src_stride,
-                            maskptr, strides[iop_maskna],
-                            dst_coords, axisdata_incr,
-                            dst_shape, axisdata_incr,
-                            op_transfersize, dtypes[iop]->elsize,
-                            (PyArray_MaskedStridedUnaryOp *)stransfer,
-                            transferdata);
+                /*
+                 * The mask pointer may be in the buffer or in
+                 * the array, detect which one.
+                 */
+                if ((op_itflags[maskop]&NPY_OP_ITFLAG_USINGBUFFER) != 0) {
+                    maskptr = (npy_mask *)buffers[maskop];
                 }
-                /* WRITEMASKED operand */
-                else if (op_itflags[iop] & NPY_OP_ITFLAG_WRITEMASKED) {
-                    npy_mask *maskptr;
-
-                    /*
-                     * The mask pointer may be in the buffer or in
-                     * the array, detect which one.
-                     */
-                    delta = (ptrs[maskop] - buffers[maskop]);
-                    if (0 <= delta &&
-                                delta <= buffersize*dtypes[maskop]->elsize) {
-                        maskptr = (npy_mask *)buffers[maskop];
-                    }
-                    else {
-                        maskptr = (npy_mask *)ad_ptrs[maskop];
-                    }
-
-                    PyArray_TransferMaskedStridedToNDim(ndim_transfer,
-                            ad_ptrs[iop], dst_strides, axisdata_incr,
-                            buffer, src_stride,
-                            maskptr, strides[maskop],
-                            dst_coords, axisdata_incr,
-                            dst_shape, axisdata_incr,
-                            op_transfersize, dtypes[iop]->elsize,
-                            (PyArray_MaskedStridedUnaryOp *)stransfer,
-                            transferdata);
-                }
-                /* Regular operand */
                 else {
-                    PyArray_TransferStridedToNDim(ndim_transfer,
-                            ad_ptrs[iop], dst_strides, axisdata_incr,
-                            buffer, src_stride,
-                            dst_coords, axisdata_incr,
-                            dst_shape, axisdata_incr,
-                            op_transfersize, dtypes[iop]->elsize,
-                            stransfer,
-                            transferdata);
+                    maskptr = (npy_mask *)ad_ptrs[maskop];
                 }
+
+                PyArray_TransferMaskedStridedToNDim(ndim_transfer,
+                        ad_ptrs[iop], dst_strides, axisdata_incr,
+                        buffer, src_stride,
+                        maskptr, strides[maskop],
+                        dst_coords, axisdata_incr,
+                        dst_shape, axisdata_incr,
+                        op_transfersize, dtypes[iop]->elsize,
+                        (PyArray_MaskedStridedUnaryOp *)stransfer,
+                        transferdata);
+            }
+            /* Regular operand */
+            else {
+                PyArray_TransferStridedToNDim(ndim_transfer,
+                        ad_ptrs[iop], dst_strides, axisdata_incr,
+                        buffer, src_stride,
+                        dst_coords, axisdata_incr,
+                        dst_shape, axisdata_incr,
+                        op_transfersize, dtypes[iop]->elsize,
+                        stransfer,
+                        transferdata);
             }
         }
         /* If there's no copy back, we may have to decrement refs.  In
          * this case, the transfer function has a 'decsrcref' transfer
          * function, so we can use it to do the decrement.
+         *
+         * The flag USINGBUFFER is set when the buffer was used, so
+         * only decrement refs when this flag is on.
          */
-        else if (stransfer != NULL) {
-            /* Decrement refs only if the pointer was pointing to the buffer */
-            npy_intp delta = (ptrs[iop] - buffer);
-            if (0 <= delta && delta <= transfersize*dtypes[iop]->elsize) {
-                NPY_IT_DBG_PRINT1("Iterator: Freeing refs and zeroing buffer "
-                                    "of operand %d\n", (int)iop);
-                /* Decrement refs */
-                stransfer(NULL, 0, buffer, dtypes[iop]->elsize,
-                            transfersize, dtypes[iop]->elsize,
-                            transferdata);
-                /*
-                 * Zero out the memory for safety.  For instance,
-                 * if during iteration some Python code copied an
-                 * array pointing into the buffer, it will get None
-                 * values for its references after this.
-                 */
-                memset(buffer, 0, dtypes[iop]->elsize*transfersize);
-            }
+        else if (stransfer != NULL &&
+                       (op_itflags[iop]&NPY_OP_ITFLAG_USINGBUFFER) != 0) {
+            NPY_IT_DBG_PRINT1("Iterator: Freeing refs and zeroing buffer "
+                                "of operand %d\n", (int)iop);
+            /* Decrement refs */
+            stransfer(NULL, 0, buffer, dtypes[iop]->elsize,
+                        transfersize, dtypes[iop]->elsize,
+                        transferdata);
+            /*
+             * Zero out the memory for safety.  For instance,
+             * if during iteration some Python code copied an
+             * array pointing into the buffer, it will get None
+             * values for its references after this.
+             */
+            memset(buffer, 0, dtypes[iop]->elsize*transfersize);
         }
     }
 
@@ -2116,7 +2113,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
     int iop, nop = NIT_NOP(iter);
     int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter),
                     *reduce_outeraxisdata = NULL;
@@ -2265,6 +2262,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                  * to the first non-trivial stride.
                  */
                 stransfer = NULL;
+                /* The flag NPY_OP_ITFLAG_USINGBUFFER can be ignored here */
                 break;
             /* Never need to buffer this operand */
             case NPY_OP_ITFLAG_BUFNEVER|NPY_OP_ITFLAG_REDUCE:
@@ -2277,6 +2275,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                  * to the first non-trivial stride.
                  */
                 stransfer = NULL;
+                /* The flag NPY_OP_ITFLAG_USINGBUFFER can be ignored here */
                 break;
             /* Just a copy */
             case 0:
@@ -2290,6 +2289,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                     ptrs[iop] = ad_ptrs[iop];
                     strides[iop] = ad_strides[iop];
                     stransfer = NULL;
+                    /* Signal that the buffer is not being used */
+                    op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
                 }
                 /* If some other op is reduced, we have a double reduce loop */
                 else if ((itflags&NPY_ITFLAG_REDUCE) &&
@@ -2303,6 +2304,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                     reduce_outerstrides[iop] =
                                     NAD_STRIDES(reduce_outeraxisdata)[iop];
                     stransfer = NULL;
+                    /* Signal that the buffer is not being used */
+                    op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
                 }
                 else {
                     /* In this case, the buffer is being used */
@@ -2313,6 +2316,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                                                      strides[iop];
                         reduce_outerptrs[iop] = ptrs[iop];
                     }
+                    /* Signal that the buffer is being used */
+                    op_itflags[iop] |= NPY_OP_ITFLAG_USINGBUFFER;
                 }
                 break;
             /* Just a copy, but with a reduction */
@@ -2325,6 +2330,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                         ptrs[iop] = ad_ptrs[iop];
                         reduce_outerstrides[iop] = 0;
                         stransfer = NULL;
+                        /* Signal that the buffer is not being used */
+                        op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
                     }
                     /* It's all in one stride in the reduce outer loop */
                     else if ((reduce_outerdim > 0) &&
@@ -2338,6 +2345,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                         reduce_outerstrides[iop] =
                                 NAD_STRIDES(reduce_outeraxisdata)[iop];
                         stransfer = NULL;
+                        /* Signal that the buffer is not being used */
+                        op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
                     }
                     /* In this case, the buffer is being used */
                     else {
@@ -2351,6 +2360,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                         else {
                             reduce_outerstrides[iop] = dtypes[iop]->elsize;
                         }
+                        /* Signal that the buffer is being used */
+                        op_itflags[iop] |= NPY_OP_ITFLAG_USINGBUFFER;
                     }
 
                 }
@@ -2360,6 +2371,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                     strides[iop] = ad_strides[iop];
                     reduce_outerstrides[iop] = 0;
                     stransfer = NULL;
+                    /* Signal that the buffer is not being used */
+                    op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
                 }
                 else {
                     /* It's all in one stride in the reduce outer loop */
@@ -2373,6 +2386,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                         reduce_outerstrides[iop] =
                                 NAD_STRIDES(reduce_outeraxisdata)[iop];
                         stransfer = NULL;
+                        /* Signal that the buffer is not being used */
+                        op_itflags[iop] &= (~NPY_OP_ITFLAG_USINGBUFFER);
                     }
                     /* In this case, the buffer is being used */
                     else {
@@ -2388,6 +2403,8 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                             reduce_outerstrides[iop] = reduce_innersize *
                                                          dtypes[iop]->elsize;
                         }
+                        /* Signal that the buffer is being used */
+                        op_itflags[iop] |= NPY_OP_ITFLAG_USINGBUFFER;
                     }
                 }
                 reduce_outerptrs[iop] = ptrs[iop];
@@ -2395,6 +2412,9 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
             default:
                 /* In this case, the buffer is always being used */
                 any_buffered = 1;
+
+                /* Signal that the buffer is being used */
+                op_itflags[iop] |= NPY_OP_ITFLAG_USINGBUFFER;
 
                 if (!(op_itflags[iop]&NPY_OP_ITFLAG_REDUCE)) {
                     ptrs[iop] = buffers[iop];
@@ -2636,7 +2656,7 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
     npy_intp reducespace = 1, factor;
     npy_bool nonzerocoord;
 
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     char stride0op[NPY_MAXARGS];
 
     /* Default to no outer axis */

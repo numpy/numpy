@@ -107,21 +107,23 @@
 /* Internal iterator per-operand iterator flags */
 
 /* The operand will be written to */
-#define NPY_OP_ITFLAG_WRITE        0x01
+#define NPY_OP_ITFLAG_WRITE        0x0001
 /* The operand will be read from */
-#define NPY_OP_ITFLAG_READ         0x02
+#define NPY_OP_ITFLAG_READ         0x0002
 /* The operand needs type conversion/byte swapping/alignment */
-#define NPY_OP_ITFLAG_CAST         0x04
+#define NPY_OP_ITFLAG_CAST         0x0004
 /* The operand never needs buffering */
-#define NPY_OP_ITFLAG_BUFNEVER     0x08
+#define NPY_OP_ITFLAG_BUFNEVER     0x0008
 /* The operand is aligned */
-#define NPY_OP_ITFLAG_ALIGNED      0x10
+#define NPY_OP_ITFLAG_ALIGNED      0x0010
 /* The operand is being reduced */
-#define NPY_OP_ITFLAG_REDUCE       0x20
+#define NPY_OP_ITFLAG_REDUCE       0x0020
 /* The operand is for temporary use, does not have a backing array */
-#define NPY_OP_ITFLAG_VIRTUAL      0x40
+#define NPY_OP_ITFLAG_VIRTUAL      0x0040
 /* The operand requires masking when copying buffer -> array */
-#define NPY_OP_ITFLAG_WRITEMASKED  0x80
+#define NPY_OP_ITFLAG_WRITEMASKED  0x0080
+/* The operand's data pointer is pointing into its buffer */
+#define NPY_OP_ITFLAG_USINGBUFFER  0x0100
 
 /*
  * The data layout of the iterator is fully specified by
@@ -147,6 +149,8 @@ struct NpyIter_InternalOnly {
 typedef struct NpyIter_AD NpyIter_AxisData;
 typedef struct NpyIter_BD NpyIter_BufferData;
 
+typedef npy_int16 npyiter_opitflags;
+
 /* Byte sizes of the iterator members */
 #define NIT_PERM_SIZEOF(itflags, ndim, nop) \
         NPY_INTP_ALIGNED(NPY_MAXDIMS)
@@ -161,7 +165,7 @@ typedef struct NpyIter_BD NpyIter_BufferData;
 #define NIT_OPERANDS_SIZEOF(itflags, ndim, nop) \
         ((NPY_SIZEOF_INTP)*(nop))
 #define NIT_OPITFLAGS_SIZEOF(itflags, ndim, nop) \
-        (NPY_INTP_ALIGNED(nop))
+        (NPY_INTP_ALIGNED(sizeof(npyiter_opitflags) * nop))
 #define NIT_BUFFERDATA_SIZEOF(itflags, ndim, nop) \
         ((itflags&NPY_ITFLAG_BUFFER) ? ((NPY_SIZEOF_INTP)*(6 + 9*nop)) : 0)
 
@@ -224,8 +228,8 @@ typedef struct NpyIter_BD NpyIter_BufferData;
         &(iter)->iter_flexdata + NIT_BASEOFFSETS_OFFSET(itflags, ndim, nop)))
 #define NIT_OPERANDS(iter) ((PyArrayObject **)( \
         &(iter)->iter_flexdata + NIT_OPERANDS_OFFSET(itflags, ndim, nop)))
-#define NIT_OPITFLAGS(iter) ( \
-        &(iter)->iter_flexdata + NIT_OPITFLAGS_OFFSET(itflags, ndim, nop))
+#define NIT_OPITFLAGS(iter) ((npyiter_opitflags *)( \
+        &(iter)->iter_flexdata + NIT_OPITFLAGS_OFFSET(itflags, ndim, nop)))
 #define NIT_BUFFERDATA(iter) ((NpyIter_BufferData *)( \
         &(iter)->iter_flexdata + NIT_BUFFERDATA_OFFSET(itflags, ndim, nop)))
 #define NIT_AXISDATA(iter) ((NpyIter_AxisData *)( \
