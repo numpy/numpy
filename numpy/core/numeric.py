@@ -1956,9 +1956,8 @@ def identity(n, dtype=None, maskna=False):
            [ 0.,  0.,  1.]])
 
     """
-    a = zeros((n,n), dtype=dtype, maskna=maskna)
-    a.diagonal()[...] = 1
-    return a
+    from numpy import eye
+    return eye(n, dtype=dtype, maskna=maskna)
 
 def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     """

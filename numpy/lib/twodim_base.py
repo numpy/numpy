@@ -210,19 +210,28 @@ def eye(N, M=None, k=0, dtype=float, maskna=False):
     if M is None:
         M = N
     m = zeros((N, M), dtype=dtype, maskna=maskna)
-    diagonal(m, k)[...] = 1
+    if k >= M:
+        return m
+    if k >= 0:
+        i = k
+    else:
+        i = (-k) * M
+    m[:M-k].flat[i::M+1] = 1
     return m
 
 def diag(v, k=0):
     """
     Extract a diagonal or construct a diagonal array.
 
-    As of NumPy 1.7, extracting a diagonal always returns a view into `v`.
+    See the more detailed documentation for ``numpy.diagonal`` if you use this
+    function to extract a diagonal and wish to write to the resulting array;
+    whether it returns a copy or a view depends on what version of numpy you
+    are using.
 
     Parameters
     ----------
     v : array_like
-        If `v` is a 2-D array, return a view of its `k`-th diagonal.
+        If `v` is a 2-D array, return a copy of its `k`-th diagonal.
         If `v` is a 1-D array, return a 2-D array with `v` on the `k`-th
         diagonal.
     k : int, optional

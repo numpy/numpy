@@ -29,8 +29,8 @@ class TestFlags(TestCase):
     def test_writeable(self):
         mydict = locals()
         self.a.flags.writeable = False
-        self.assertRaises(RuntimeError, runstring, 'self.a[0] = 3', mydict)
-        self.assertRaises(RuntimeError, runstring, 'self.a[0:1].itemset(3)', mydict)
+        self.assertRaises(ValueError, runstring, 'self.a[0] = 3', mydict)
+        self.assertRaises(ValueError, runstring, 'self.a[0:1].itemset(3)', mydict)
         self.a.flags.writeable = True
         self.a[0] = 5
         self.a[0] = 0
@@ -791,6 +791,148 @@ class TestMethods(TestCase):
 
         assert_equal(np.dot(a, b), a.dot(b))
         assert_equal(np.dot(np.dot(a, b), c), a.dot(b).dot(c))
+
+    def test_diagonal(self):
+        a = np.arange(12).reshape((3, 4))
+        assert_equal(a.diagonal(), [0, 5, 10])
+        assert_equal(a.diagonal(0), [0, 5, 10])
+        assert_equal(a.diagonal(1), [1, 6, 11])
+        assert_equal(a.diagonal(-1), [4, 9])
+
+        b = np.arange(8).reshape((2, 2, 2))
+        assert_equal(b.diagonal(), [[0, 6], [1, 7]])
+        assert_equal(b.diagonal(0), [[0, 6], [1, 7]])
+        assert_equal(b.diagonal(1), [[2], [3]])
+        assert_equal(b.diagonal(-1), [[4], [5]])
+        assert_raises(ValueError, b.diagonal, axis1=0, axis2=0)
+        assert_equal(b.diagonal(0, 1, 2), [[0, 3], [4, 7]])
+        assert_equal(b.diagonal(0, 0, 1), [[0, 6], [1, 7]])
+        assert_equal(b.diagonal(offset=1, axis1=0, axis2=2), [[1], [3]])
+        # Order of axis argument doesn't matter:
+        assert_equal(b.diagonal(0, 2, 1), [[0, 3], [4, 7]])
+
+    def test_diagonal_deprecation(self):
+        import warnings
+        from numpy.testing.utils import WarningManager
+        def collect_warning_types(f, *args, **kwargs):
+            ctx = WarningManager(record=True)
+            warning_log = ctx.__enter__()
+            warnings.simplefilter("always")
+            try:
+                f(*args, **kwargs)
+            finally:
+                ctx.__exit__()
+            return [w.category for w in warning_log]
+        a = np.arange(9).reshape(3, 3)
+        # All the different functions raise a warning, but not an error, and
+        # 'a' is not modified:
+        assert_equal(collect_warning_types(a.diagonal().__setitem__, 0, 10),
+                     [DeprecationWarning])
+        assert_equal(a, np.arange(9).reshape(3, 3))
+        assert_equal(collect_warning_types(np.diagonal(a).__setitem__, 0, 10),
+                     [DeprecationWarning])
+        assert_equal(a, np.arange(9).reshape(3, 3))
+        assert_equal(collect_warning_types(np.diag(a).__setitem__, 0, 10),
+                     [DeprecationWarning])
+        assert_equal(a, np.arange(9).reshape(3, 3))
+        # Views also warn
+        d = np.diagonal(a)
+        d_view = d.view()
+        assert_equal(collect_warning_types(d_view.__setitem__, 0, 10),
+                     [DeprecationWarning])
+        # But the write goes through:
+        assert_equal(d[0], 10)
+        # Only one warning per call to diagonal, though (even if there are
+        # multiple views involved):
+        assert_equal(collect_warning_types(d.__setitem__, 0, 10),
+                     [])
+
+        # Other ways of accessing the data also warn:
+        # .data goes via the C buffer API, gives a read-write
+        # buffer/memoryview. We don't warn until tp_getwritebuf is actually
+        # called, which is not until the buffer is written to.
+        have_memoryview = (hasattr(__builtins__, "memoryview")
+                           or "memoryview" in __builtins__)
+        def get_data_and_write(getter):
+            buf_or_memoryview = getter(a.diagonal())
+            if (have_memoryview and isinstance(buf_or_memoryview, memoryview)):
+                buf_or_memoryview[0] = np.array(1)
+            else:
+                buf_or_memoryview[0] = "x"
+        assert_equal(collect_warning_types(get_data_and_write,
+                                           lambda d: d.data),
+                     [DeprecationWarning])
+        if hasattr(np, "getbuffer"):
+            assert_equal(collect_warning_types(get_data_and_write,
+                                               np.getbuffer),
+                         [DeprecationWarning])
+        # PEP 3118:
+        if have_memoryview:
+            assert_equal(collect_warning_types(get_data_and_write, memoryview),
+                         [DeprecationWarning])
+        # Void dtypes can give us a read-write buffer, but only in Python 2:
+        import sys
+        if sys.version_info[0] < 3:
+            aV = np.empty((3, 3), dtype="V10")
+            assert_equal(collect_warning_types(aV.diagonal().item, 0),
+                         [DeprecationWarning])
+            # XX it seems that direct indexing of a void object returns a void
+            # scalar, which ignores not just WARN_ON_WRITE but even WRITEABLE.
+            # i.e. in this:
+            #   a = np.empty(10, dtype="V10")
+            #   a.flags.writeable = False
+            #   buf = a[0].item()
+            # 'buf' ends up as a writeable buffer. I guess no-one actually
+            # uses void types like this though...
+        # __array_interface also lets a data pointer get away from us
+        log = collect_warning_types(getattr, a.diagonal(),
+                                    "__array_interface__")
+        assert_equal(log, [DeprecationWarning])
+        # ctypeslib goes via __array_interface__:
+        try:
+            # may not exist in python 2.4:
+            import ctypes
+        except ImportError:
+            pass
+        else:
+            log = collect_warning_types(np.ctypeslib.as_ctypes, a.diagonal())
+            assert_equal(log, [DeprecationWarning])
+        # __array_struct__
+        log = collect_warning_types(getattr, a.diagonal(), "__array_struct__")
+        assert_equal(log, [DeprecationWarning])
+
+        # Make sure that our recommendation to silence the warning by copying
+        # the array actually works:
+        diag_copy = a.diagonal().copy()
+        assert_equal(collect_warning_types(diag_copy.__setitem__, 0, 10),
+                      [])
+        # There might be people who get a spurious warning because they are
+        # extracting a buffer, but then use that buffer in a read-only
+        # fashion. And they might get cranky at having to create a superfluous
+        # copy just to work around this spurious warning. A reasonable
+        # solution would be for them to mark their usage as read-only, and
+        # thus safe for both past and future PyArray_Diagonal
+        # semantics. So let's make sure that setting the diagonal array to
+        # non-writeable will suppress these warnings:
+        ro_diag = a.diagonal()
+        ro_diag.flags.writeable = False
+        assert_equal(collect_warning_types(getattr, ro_diag, "data"), [])
+        # __array_interface__ has no way to communicate read-onlyness --
+        # effectively all __array_interface__ arrays are assumed to be
+        # writeable :-(
+        # ro_diag = a.diagonal()
+        # ro_diag.flags.writeable = False
+        # assert_equal(collect_warning_types(getattr, ro_diag,
+        #                                     "__array_interface__"), [])
+        if hasattr(__builtins__, "memoryview"):
+            ro_diag = a.diagonal()
+            ro_diag.flags.writeable = False
+            assert_equal(collect_warning_types(memoryview, ro_diag), [])
+        ro_diag = a.diagonal()
+        ro_diag.flags.writeable = False
+        assert_equal(collect_warning_types(getattr, ro_diag,
+                                           "__array_struct__"), [])
+        
 
     def test_ravel(self):
         a = np.array([[0,1],[2,3]])

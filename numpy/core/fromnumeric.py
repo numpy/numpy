@@ -932,7 +932,27 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
     removing `axis1` and `axis2` and appending an index to the right equal
     to the size of the resulting diagonals.
 
-    As of NumPy 1.7, this function always returns a view into `a`.
+    In versions of NumPy prior to 1.7, this function always returned a new,
+    independent array containing a copy of the values in the diagonal.
+
+    In NumPy 1.7, it continues to return a copy of the diagonal, but depending
+    on this fact is deprecated. Writing to the resulting array continues to
+    work as it used to, but a DeprecationWarning will be issued.
+
+    In NumPy 1.8, it will switch to returning a read-only view on the original
+    array. Attempting to write to the resulting array will produce an error.
+
+    In NumPy 1.9, it will still return a view, but this view will no longer be
+    marked read-only. Writing to the returned array will alter your original
+    array as well.
+
+    If you don't write to the array returned by this function, then you can
+    just ignore all of the above.
+
+    If you depend on the current behavior, then we suggest copying the
+    returned array explicitly, i.e., use ``np.diagonal(a).copy()`` instead of
+    just ``np.diagonal(a)``. This will work with both past and future versions
+    of NumPy.
 
     Parameters
     ----------

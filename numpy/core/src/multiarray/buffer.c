@@ -13,6 +13,7 @@
 
 #include "buffer.h"
 #include "numpyos.h"
+#include "arrayobject.h"
 
 /*************************************************************************
  ****************   Implement Buffer Protocol ****************************
@@ -57,14 +58,10 @@ array_getreadbuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
 static Py_ssize_t
 array_getwritebuf(PyArrayObject *self, Py_ssize_t segment, void **ptrptr)
 {
-    if (PyArray_CHKFLAGS(self, NPY_ARRAY_WRITEABLE)) {
-        return array_getreadbuf(self, segment, (void **) ptrptr);
-    }
-    else {
-        PyErr_SetString(PyExc_ValueError, "array cannot be "
-                        "accessed as a writeable buffer");
+    if (PyArray_FailUnlessWriteable(self, "buffer source array") < 0) {
         return -1;
     }
+    return array_getreadbuf(self, segment, (void **) ptrptr);
 }
 
 static Py_ssize_t
@@ -632,10 +629,21 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
         PyErr_SetString(PyExc_ValueError, "ndarray is not C-contiguous");
         goto fail;
     }
-    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE &&
-        !PyArray_ISWRITEABLE(self)) {
-        PyErr_SetString(PyExc_ValueError, "ndarray is not writeable");
-        goto fail;
+    if ((flags & PyBUF_WRITEABLE) == PyBUF_WRITEABLE) {
+        if (PyArray_FailUnlessWriteable(self, "buffer source array") < 0) {
+            goto fail;
+        }
+    }
+    /*
+     * If a read-only buffer is requested on a read-write array, we return a
+     * read-write buffer, which is dubious behavior. But that's why this call
+     * is guarded by PyArray_ISWRITEABLE rather than (flags &
+     * PyBUF_WRITEABLE).
+     */
+    if (PyArray_ISWRITEABLE(self)) {
+        if (array_might_be_written(self) < 0) {
+            goto fail;
+        }
     }
 
     if (view == NULL) {

@@ -16,6 +16,7 @@
 #include "scalartypes.h"
 #include "descriptor.h"
 #include "getset.h"
+#include "arrayobject.h"
 
 /*******************  array attribute get and set routines ******************/
 
@@ -260,6 +261,10 @@ array_interface_get(PyArrayObject *self)
         return NULL;
     }
 
+    if (array_might_be_written(self) < 0) {
+        return NULL;
+    }
+
     /* dataptr */
     obj = array_dataptr_get(self);
     PyDict_SetItemString(dict, "data", obj);
@@ -355,9 +360,12 @@ array_data_set(PyArrayObject *self, PyObject *op)
             PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
         }
         Py_DECREF(PyArray_BASE(self));
+        ((PyArrayObject_fields *)self)->base = NULL;
     }
     Py_INCREF(op);
-    ((PyArrayObject_fields *)self)->base = op;
+    if (PyArray_SetBaseObject(self, op) < 0) {
+        return -1;
+    }
     ((PyArrayObject_fields *)self)->data = buf;
     ((PyArrayObject_fields *)self)->flags = NPY_ARRAY_CARRAY;
     if (!writeable) {
@@ -554,6 +562,11 @@ array_struct_get(PyArrayObject *self)
     PyArrayInterface *inter;
     PyObject *ret;
 
+    if (PyArray_ISWRITEABLE(self)) {
+        if (array_might_be_written(self) < 0) {
+            return NULL;
+        }
+    }
     inter = (PyArrayInterface *)PyArray_malloc(sizeof(PyArrayInterface));
     if (inter==NULL) {
         return PyErr_NoMemory();

@@ -865,7 +865,6 @@ def test_iter_array_cast():
     i = None
     assert_equal(a[2,1,1], -12.5)
 
-    # Unsafe cast 'f4' -> 'i4'
     a = np.arange(6, dtype='i4')[::-2]
     i = nditer(a, [],
             [['writeonly','updateifcopy']],

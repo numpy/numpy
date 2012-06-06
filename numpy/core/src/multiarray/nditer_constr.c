@@ -1098,11 +1098,9 @@ npyiter_prepare_one_operand(PyArrayObject **op,
     if (PyArray_Check(*op)) {
         npy_uint32 tmp;
 
-        if (((*op_itflags) & NPY_OP_ITFLAG_WRITE) &&
-                    (!PyArray_CHKFLAGS(*op, NPY_ARRAY_WRITEABLE))) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Operand was a non-writeable array, but "
-                    "flagged as writeable");
+        if ((*op_itflags) & NPY_OP_ITFLAG_WRITE
+            && PyArray_FailUnlessWriteable(*op, "operand array with iterator "
+                                           "write flag set") < 0) {
             return 0;
         }
         if (!(flags & NPY_ITER_ZEROSIZE_OK) && PyArray_SIZE(*op) == 0) {
@@ -2984,15 +2982,11 @@ npyiter_allocate_arrays(NpyIter *iter,
             }
             /* If the data will be written to, set UPDATEIFCOPY */
             if (op_itflags[iop] & NPY_OP_ITFLAG_WRITE) {
-                /*
-                 * Don't use PyArray_SetBaseObject, because that compresses
-                 * the chain of bases.
-                 */
                 Py_INCREF(op[iop]);
-                ((PyArrayObject_fields *)temp)->base =
-                                                        (PyObject *)op[iop];
-                PyArray_ENABLEFLAGS(temp, NPY_ARRAY_UPDATEIFCOPY);
-                PyArray_CLEARFLAGS(op[iop], NPY_ARRAY_WRITEABLE);
+                if (PyArray_SetUpdateIfCopyBase(temp, op[iop]) < 0) {
+                    Py_DECREF(temp);
+                    return 0;
+                }
             }
 
             Py_DECREF(op[iop]);

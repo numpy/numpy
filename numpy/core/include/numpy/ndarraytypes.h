@@ -917,6 +917,10 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
  */
 #define NPY_ARRAY_ALLOWNA         0x8000
 
+/*
+ * NOTE: there are also internal flags defined in multiarray/arrayobject.h,
+ * which start at bit 31 and work down.
+ */
 
 #define NPY_ARRAY_BEHAVED      (NPY_ARRAY_ALIGNED | \
                                 NPY_ARRAY_WRITEABLE)
@@ -1550,7 +1554,7 @@ static NPY_INLINE PyObject *
 PyArray_GETITEM(const PyArrayObject *arr, const char *itemptr)
 {
     return ((PyArrayObject_fields *)arr)->descr->f->getitem(
-					(void *)itemptr, (PyArrayObject *)arr);
+                                        (void *)itemptr, (PyArrayObject *)arr);
 }
 
 static NPY_INLINE int

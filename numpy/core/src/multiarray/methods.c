@@ -532,10 +532,7 @@ PyArray_Byteswap(PyArrayObject *self, npy_bool inplace)
 
     copyswapn = PyArray_DESCR(self)->f->copyswapn;
     if (inplace) {
-        if (!PyArray_ISWRITEABLE(self)) {
-            PyErr_SetString(PyExc_RuntimeError,
-                            "Cannot byte-swap in-place on a " \
-                            "read-only array");
+        if (PyArray_FailUnlessWriteable(self, "array to be byte-swapped") < 0) {
             return NULL;
         }
         size = PyArray_SIZE(self);
@@ -748,9 +745,7 @@ array_setscalar(PyArrayObject *self, PyObject *args)
                 "itemset must have at least one argument");
         return NULL;
     }
-    if (!PyArray_ISWRITEABLE(self)) {
-        PyErr_SetString(PyExc_RuntimeError,
-                "array is not writeable");
+    if (PyArray_FailUnlessWriteable(self, "assignment destination") < 0) {
         return NULL;
     }
 
@@ -1697,6 +1692,7 @@ array_setstate(PyArrayObject *self, PyObject *args)
         PyArray_CLEARFLAGS(self, NPY_ARRAY_OWNDATA);
     }
     Py_XDECREF(PyArray_BASE(self));
+    fa->base = NULL;
 
     PyArray_CLEARFLAGS(self, NPY_ARRAY_UPDATEIFCOPY);
 
@@ -1769,7 +1765,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
             Py_DECREF(rawdata);
         }
         else {
-            fa->base = rawdata;
+            if (PyArray_SetBaseObject(self, rawdata) < 0) {
+                return NULL;
+            }
         }
     }
     else {

@@ -67,6 +67,57 @@ PyArray_Size(PyObject *op)
 }
 
 /*NUMPY_API
+ *
+ * Precondition: 'arr' is a copy of 'base' (though possibly with different
+ * strides, ordering, etc.). This function sets the UPDATEIFCOPY flag and the
+ * ->base pointer on 'arr', so that when 'arr' is destructed, it will copy any
+ * changes back to 'base'.
+ *
+ * Steals a reference to 'base'.
+ *
+ * Returns 0 on success, -1 on failure.
+ */
+NPY_NO_EXPORT int
+PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base) 
+{
+    if (base == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                  "Cannot UPDATEIFCOPY to NULL array");
+        return -1;
+    }
+    if (PyArray_BASE(arr) != NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                  "Cannot set array with existing base to UPDATEIFCOPY");
+        goto fail;
+    }
+    if (PyArray_FailUnlessWriteable(base, "UPDATEIFCOPY base") < 0) {
+        goto fail;
+    }
+    
+    /*
+     * Any writes to 'arr' will magicaly turn into writes to 'base', so we
+     * should warn if necessary.
+     */
+    if (PyArray_FLAGS(base) & NPY_ARRAY_WARN_ON_WRITE) {
+        PyArray_ENABLEFLAGS(arr, NPY_ARRAY_WARN_ON_WRITE);
+    }
+
+    /*
+     * Unlike PyArray_SetBaseObject, we do not compress the chain of base
+     * references.
+    */
+    ((PyArrayObject_fields *)arr)->base = (PyObject *)base;
+    PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
+    PyArray_CLEARFLAGS(base, NPY_ARRAY_WRITEABLE);
+
+    return 0;
+
+  fail:
+    Py_DECREF(base);
+    return -1;
+}
+
+/*NUMPY_API
  * Sets the 'base' attribute of the array. This steals a reference
  * to 'obj'.
  *
@@ -103,6 +154,11 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
     while (PyArray_Check(obj) && (PyObject *)arr != obj) {
         PyArrayObject *obj_arr = (PyArrayObject *)obj;
         PyObject *tmp;
+
+        /* Propagate WARN_ON_WRITE through views. */
+        if (PyArray_FLAGS(obj_arr) & NPY_ARRAY_WARN_ON_WRITE) {
+            PyArray_ENABLEFLAGS(arr, NPY_ARRAY_WARN_ON_WRITE);
+        }
 
         /* If this array owns its own data, stop collapsing */
         if (PyArray_CHKFLAGS(obj_arr, NPY_ARRAY_OWNDATA)) {
@@ -703,6 +759,58 @@ PyArray_CompareString(char *s1, char *s2, size_t len)
     return 0;
 }
 
+
+/* Call this from contexts where an array might be written to, but we have no
+ * way to tell. (E.g., when converting to a read-write buffer.)
+ */
+NPY_NO_EXPORT int
+array_might_be_written(PyArrayObject *obj)
+{
+    const char *msg =
+        "Numpy has detected that you (may be) writing to an array returned\n"
+        "by numpy.diagonal. This code will likely break in the next numpy\n"
+        "release -- see numpy.diagonal docs for details. The quick fix is\n"
+        "to make an explicit copy (e.g., do arr.diagonal().copy()).";
+    if (PyArray_FLAGS(obj) & NPY_ARRAY_WARN_ON_WRITE) {
+        if (DEPRECATE(msg) < 0) {
+            return -1;
+        }
+        /* Only warn once per array */
+        while (1) {
+            PyArray_CLEARFLAGS(obj, NPY_ARRAY_WARN_ON_WRITE);
+            if (!PyArray_BASE(obj) || !PyArray_Check(PyArray_BASE(obj))) {
+                break;
+            }
+            obj = (PyArrayObject *)PyArray_BASE(obj);
+        }
+    }
+    return 0;
+}
+
+/*NUMPY_API
+ *
+ * This function does nothing if obj is writeable, and raises an exception
+ * (and returns -1) if obj is not writeable. It may also do other
+ * house-keeping, such as issuing warnings on arrays which are transitioning
+ * to become views. Always call this function at some point before writing to
+ * an array.
+ *
+ * 'name' is a name for the array, used to give better error
+ * messages. Something like "assignment destination", "output array", or even
+ * just "array".
+ */
+NPY_NO_EXPORT int
+PyArray_FailUnlessWriteable(PyArrayObject *obj, const char *name)
+{
+    if (!PyArray_ISWRITEABLE(obj)) {
+        PyErr_Format(PyExc_ValueError, "%s is read-only", name);
+        return -1;
+    }
+    if (array_might_be_written(obj) < 0) {
+        return -1;
+    }
+    return 0;
+}
 
 /* This also handles possibly mis-aligned data */
 /* Compare s1 and s2 which are not necessarily NULL-terminated.

@@ -1077,9 +1077,12 @@ NA_OutputArray(PyObject *a, NumarrayType t, int requires)
     PyArray_Descr *dtype;
     PyArrayObject *ret;
 
-    if (!PyArray_Check(a) || !PyArray_ISWRITEABLE((PyArrayObject *)a)) {
+    if (!PyArray_Check(a)) {
         PyErr_Format(PyExc_TypeError,
-                "NA_OutputArray: only writeable arrays work for output.");
+                "NA_OutputArray: only arrays work for output.");
+        return NULL;
+    }
+    if (PyArray_FailUnlessWriteable((PyArrayObject *)a, "output array") < 0) {
         return NULL;
     }
 
@@ -1098,12 +1101,10 @@ NA_OutputArray(PyObject *a, NumarrayType t, int requires)
                                         PyArray_DIMS((PyArrayObject *)a),
                                         dtype, 0);
     Py_INCREF(a);
-    if (PyArray_SetBaseObject(ret, a) < 0) {
+    if (PyArray_SetUpdateIfCopyBase(ret, a) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
-    PyArray_ENABLEFLAGS(ret, NPY_ARRAY_UPDATEIFCOPY);
-    PyArray_CLEARFLAGS((PyArrayObject *)a, NPY_ARRAY_WRITEABLE);
     return ret;
 }
 
@@ -1127,9 +1128,7 @@ NA_IoArray(PyObject *a, NumarrayType t, int requires)
     /* Guard against non-writable, but otherwise satisfying requires.
        In this case,  shadow == a.
        */
-    if (!PyArray_ISWRITABLE(shadow)) {
-        PyErr_Format(PyExc_TypeError,
-                "NA_IoArray: I/O array must be writable array");
+    if (!PyArray_FailUnlessWriteable(shadow, "input/output array")) {
         PyArray_XDECREF_ERR(shadow);
         return NULL;
     }
@@ -2488,13 +2487,10 @@ _setFromPythonScalarCore(PyArrayObject *a, long offset, PyObject*value, int entr
 static int
 NA_setFromPythonScalar(PyArrayObject *a, long offset, PyObject *value)
 {
-    if (PyArray_FLAGS(a) & NPY_ARRAY_WRITEABLE)
-        return _setFromPythonScalarCore(a, offset, value, 0);
-    else {
-        PyErr_Format(
-                PyExc_ValueError, "NA_setFromPythonScalar: assigment to readonly array buffer");
+    if (PyArray_FailUnlessWriteable(a, "array") < 0) {
         return -1;
     }
+    return _setFromPythonScalarCore(a, offset, value, 0);
 }
 
 
