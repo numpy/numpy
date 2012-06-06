@@ -2203,7 +2203,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
         goto fail;
     }
     if (mit->ait->size == 0 && mit->size != 0) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_IndexError,
                         "invalid index into a 0-size array");
         goto fail;
     }

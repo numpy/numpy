@@ -975,6 +975,9 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
     copyswap = PyArray_DESCR(self->ao)->f->copyswap;
     if (PyArray_NDIM(ind) == 0) {
         num = *((npy_intp *)PyArray_DATA(ind));
+        if (check_and_adjust_index(&num, self->size, -1) < 0) {
+            return -1;
+        }
         PyArray_ITER_GOTO1D(self, num);
         copyswap(self->dataptr, val->dataptr, swap, self->ao);
         return 0;
@@ -1060,10 +1063,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
         PyErr_Clear();
     }
     else {
-        if (start < -self->size || start >= self->size) {
-            PyErr_Format(PyExc_ValueError,
-                         "index (%" NPY_INTP_FMT \
-                         ") out of range", start);
+        if (check_and_adjust_index(&start, self->size, -1) < 0) {
             goto finish;
         }
         retval = 0;
