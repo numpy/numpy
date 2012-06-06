@@ -6486,6 +6486,34 @@ add_newdoc('numpy.core.multiarray', 'busday_count',
     53
     """)
 
+add_newdoc('numpy.core', 'trace_data_allocations',
+    """
+    trace_data_allocations(malloc_callback=None, free_callback=None, realloc_callback=None)
+
+    Enables tracing of malloc/free/realloc calls for numpy array data.
+
+    Parameters
+    ----------
+    malloc_callback : function(ptr, size)
+        Callback for allocation corresponding to ptr = malloc(size).
+    free_callback : function(ptr)
+        Callback for deallocation corresponding to free(ptr).
+    realloc_callback : function(newptr, oldptr, size)
+        Callback for reallocation corresponding to newptr = realloc(oldptr, size).
+
+     Pointers are passed to callbacks as Python longs.
+
+    Returns
+    -------
+    trace_data_allocations : old_malloc_callback, old_free_callback, old_realloc_callback
+        The previous callbacks, with None for for callbacks that were not
+        active.
+
+    Notes
+    -----
+    Errors in callbacks are printed to stderr, but do not raise errors.
+    """)
+
 ##############################################################################
 #
 # nd_grid instances

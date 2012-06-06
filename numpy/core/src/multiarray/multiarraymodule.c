@@ -3659,6 +3659,238 @@ test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyInt_FromLong(a);
 }
 
+/* Array data memory allocation/free/reallocation functions, with
+ * hooks for tracing in python functions.
+ */
+
+/* Callback functions.  They are either NULL (no tracing for that type
+ * of call) or a Python callable.  They are controlled by
+ * numpy.core.trace_data_allocations, defined below.
+ */
+static PyObject *trace_data_malloc_callback = NULL;
+static PyObject *trace_data_free_callback = NULL;
+static PyObject *trace_data_realloc_callback = NULL;
+
+/*
+ * The callbacks might be arbitrarily complex, triggering a garbage
+ * collection, but the data memory allocation functions are called
+ * from C functions that are likely to have intermediate states where
+ * only those functions hold pointers to Python objects (e.g., arrays)
+ * that should not be collected.  Therefore, we pause the gc while
+ * running the callbacks.
+ *
+ * To keep from from allocating any python objects, we prefetch the gc
+ * enable/disable/isenabled Python functions when
+ * trace_data_allocations() is called from Python, and refuse to trace
+ * until those functions are available.
+ */
+static PyObject *gc_enable = NULL;
+static PyObject *gc_disable = NULL;
+static PyObject *gc_isenabled = NULL;
+static PyObject *gc_args = NULL;
+static int gc_functions_fetched = 0;
+
+/* Core of the callback functions. */
+static _trace_data_callback(PyObject *callback, const char *name, const char *fmt, ...)
+{
+    va_list vargs;
+    PyObject *gc_state, *args, *result, *err_type, *err_value, *err_traceback;
+    FILE *f;
+    PyGILState_STATE gstate;
+
+    /* if we can't pause gc, don't run at all. */
+    if (! gc_functions_fetched) {
+        /* XXX - should we log to stderr? */
+        return;
+    }
+
+    gstate = PyGILState_Ensure();
+
+    /* If tracing causes an error, we log it but do not pass it upward
+     * to prevent tracing from interfering with program behavior.
+     */
+    PyErr_Fetch(&err_type, &err_value, &err_traceback);
+
+    /*
+     * The enable/disable/isenabled functions in the gc module are
+     * extremely simple, so we probably don't need to check for errors
+     * in their return values.
+     */
+    gc_state = PyObject_Call(gc_isenabled, gc_args, NULL);
+    if (gc_state == NULL)
+        goto fail;
+    if (gc_state == Py_True) {
+        result = PyObject_Call(gc_disable, gc_args, NULL);
+        if (result == NULL) {
+            Py_DECREF(gc_state);
+            goto fail;
+        }
+        Py_DECREF(result);
+    }
+
+    va_start(vargs, fmt);
+    args = Py_VaBuildValue(fmt, vargs);
+    va_end(vargs);
+    if (args) {
+        result = PyObject_CallObject(callback, args);
+        Py_XDECREF(result);
+    }
+    Py_XDECREF(args);
+
+    if (PyErr_Occurred()) {
+        f = PySys_GetFile("stderr", (FILE *) NULL);
+        if (f != NULL) {
+            fprintf(f, "Exception encountered in %s:\n    ", name);
+            PyErr_WriteUnraisable(callback);
+        }
+    }
+
+    if (gc_state == Py_True) {
+        result = PyObject_Call(gc_enable, gc_args, NULL);
+        Py_XDECREF(result);
+    }
+    Py_DECREF(gc_state);
+
+ fail:
+    /* Restore any previous error state. */
+    PyErr_Restore(err_type, err_value, err_traceback);
+    PyGILState_Release(gstate);
+}
+
+
+
+/*NUMPY_API
+ * Allocates memory for array data, calling the
+ * trace_data_malloc_callback if it's nonzero.
+ */
+NPY_NO_EXPORT char *
+PyDataMem_NEW(size_t size)
+{
+    void *result;
+
+    result = malloc(size);
+    if (trace_data_malloc_callback) {
+        _trace_data_callback(trace_data_malloc_callback, "trace_data_malloc_callback",
+                             "Kk",
+                             (unsigned PY_LONG_LONG)(Py_uintptr_t) result,
+                             (unsigned long) size);
+    }
+    return (char *)result;
+}
+
+/*NUMPY_API
+ * Free memory for array data, calling the
+ * trace_data_free_callback if it's nonzero.
+ */
+NPY_NO_EXPORT void
+PyDataMem_FREE(void *ptr)
+{
+    free(ptr);
+    if (trace_data_free_callback) {
+        _trace_data_callback(trace_data_free_callback, "trace_data_free_callback",
+                             "(K)", (unsigned PY_LONG_LONG)(Py_uintptr_t) ptr);
+    }
+}
+
+/*NUMPY_API
+ * Reallocate/resize memory for array data, calling the
+ * trace_data_realloc_callback if it's nonzero.
+ */
+NPY_NO_EXPORT char *
+PyDataMem_RENEW(void *ptr, size_t size)
+{
+    void *result;
+
+    result = realloc(ptr, size);
+    if (trace_data_realloc_callback) {
+        _trace_data_callback(trace_data_realloc_callback, "trace_data_realloc_callback",
+                             "KKk",
+                             (unsigned PY_LONG_LONG)(Py_uintptr_t) result,
+                             (unsigned PY_LONG_LONG)(Py_uintptr_t) ptr,
+                             (unsigned long) result);
+    }
+    return (char *)result;
+}
+
+/* Control data allocation/free/reallocation tracing. */
+static PyObject *
+trace_data_allocations(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kwds)
+{
+    PyObject *malloc_cb = Py_None;
+    PyObject *free_cb = Py_None;
+    PyObject *realloc_cb = Py_None;
+    static char *kwlist[] = {"malloc_callback", "free_callback",
+                             "realloc_callback", NULL};
+    PyObject *result;
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|OOO", kwlist,
+                                     &malloc_cb, &free_cb, &realloc_cb)) {
+        return NULL;
+    }
+
+    /* Prefetch the gc functions for use in _trace_data_callback. */
+    if (! gc_functions_fetched) {
+        PyObject *gc_module = PyImport_ImportModule("gc");
+        if (gc_module == NULL)
+            goto fail;
+
+        gc_enable = PyObject_GetAttrString(gc_module, "enable");
+        if (gc_enable == NULL)
+            goto fail;
+
+        gc_disable = PyObject_GetAttrString(gc_module, "disable");
+        if (gc_disable == NULL)
+            goto fail;
+
+        gc_isenabled = PyObject_GetAttrString(gc_module, "isenabled");
+        if (gc_isenabled == NULL)
+            goto fail;
+
+        /* we need to be able to pass an empty tuple */
+        gc_args = PyTuple_New(0);
+        if (gc_args == NULL)
+            goto fail;
+
+        goto success;
+
+    fail:
+            /* one of the prefetches failed. */
+            Py_XDECREF(gc_module);
+            Py_XDECREF(gc_enable);
+            Py_XDECREF(gc_disable);
+            Py_XDECREF(gc_isenabled);
+            return NULL;
+
+    success:
+        gc_functions_fetched = 1;
+        Py_DECREF(gc_module);
+    }
+
+    /* old callbacks are returned to caller */
+    result = PyTuple_Pack(3,
+                          trace_data_malloc_callback  ? trace_data_malloc_callback  : Py_None,
+                          trace_data_free_callback    ? trace_data_free_callback    : Py_None,
+                          trace_data_realloc_callback ? trace_data_realloc_callback : Py_None);
+    if (result == NULL)
+        return NULL;
+
+    Py_XDECREF(trace_data_malloc_callback);
+    Py_XDECREF(trace_data_free_callback);
+    Py_XDECREF(trace_data_realloc_callback);
+
+    /* replace None with NULL for the C functions above */
+    trace_data_malloc_callback  = (malloc_cb == Py_None)  ? NULL : malloc_cb;
+    trace_data_free_callback    = (free_cb == Py_None)    ? NULL : free_cb;
+    trace_data_realloc_callback = (realloc_cb == Py_None) ? NULL : realloc_cb;
+
+    Py_XINCREF(trace_data_malloc_callback);
+    Py_XINCREF(trace_data_free_callback);
+    Py_XINCREF(trace_data_realloc_callback);
+
+    return result;
+}
+
+
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",
         (PyCFunction)array__get_ndarray_c_version,
@@ -3805,6 +4037,9 @@ static struct PyMethodDef array_module_methods[] = {
     {"test_interrupt",
         (PyCFunction)test_interrupt,
         METH_VARARGS, NULL},
+    {"trace_data_allocations",
+        (PyCFunction)trace_data_allocations,
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
@@ -4193,6 +4428,7 @@ PyMODINIT_FUNC initmultiarray(void) {
     if (set_typeinfo(d) != 0) {
         goto err;
     }
+
     return RETVAL;
 
  err:
