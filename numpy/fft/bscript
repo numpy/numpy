@@ -1,15 +1,7 @@
-import os
+from bento.commands import hooks
 
-from bento.commands.hooks \
-    import \
-        pre_build
-
-@pre_build
+@hooks.pre_build
 def build(context):
-    bld = context.waf_context
-
-    def build(extension):
-        includes = ["../core/include", "../core/include/numpy", "../core",
-                    "../core/src/private"]
-        return context.default_builder(extension, includes=includes)
-    context.register_builder("fftpack_lite", build)
+    context.tweak_extension("fftpack_lite",
+                            includes=["../core/include", "../core/include/numpy",
+                                      "../core", "../core/src/private"])

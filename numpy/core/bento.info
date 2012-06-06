@@ -20,6 +20,9 @@ Library:
     Extension: umath
         Sources:
             src/umath/umathmodule_onefile.c
+    Extension: umath_tests
+        Sources:
+            src/umath/umath_tests.c.src
     Extension: scalarmath
         Sources:
             src/scalarmathmodule.c.src

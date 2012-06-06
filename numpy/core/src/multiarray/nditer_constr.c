@@ -27,14 +27,14 @@ static int
 npyiter_calculate_ndim(int nop, PyArrayObject **op_in,
                        int oa_ndim);
 static int
-npyiter_check_per_op_flags(npy_uint32 flags, char *op_itflags);
+npyiter_check_per_op_flags(npy_uint32 flags, npyiter_opitflags *op_itflags);
 static int
 npyiter_prepare_one_operand(PyArrayObject **op,
                         char **op_dataptr,
                         PyArray_Descr *op_request_dtype,
                         PyArray_Descr** op_dtype,
                         npy_uint32 flags,
-                        npy_uint32 op_flags, char *op_itflags);
+                        npy_uint32 op_flags, npyiter_opitflags *op_itflags);
 static int
 npyiter_prepare_operands(int nop, int first_maskna_op,
                     PyArrayObject **op_in,
@@ -43,16 +43,16 @@ npyiter_prepare_operands(int nop, int first_maskna_op,
                     PyArray_Descr **op_request_dtypes,
                     PyArray_Descr **op_dtype,
                     npy_uint32 flags,
-                    npy_uint32 *op_flags, char *op_itflags,
+                    npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
                     npy_int8 *out_maskop,
                     npy_int8 *out_maskna_indices);
 static int
 npyiter_check_casting(int nop, PyArrayObject **op,
                     PyArray_Descr **op_dtype,
                     NPY_CASTING casting,
-                    char *op_itflags);
+                    npyiter_opitflags *op_itflags);
 static int
-npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
+npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
                     char **op_dataptr,
                     npy_uint32 *op_flags, int **op_axes,
                     npy_intp *itershape,
@@ -74,25 +74,25 @@ static void
 npyiter_find_best_axis_ordering(NpyIter *iter);
 static PyArray_Descr *
 npyiter_get_common_dtype(int first_maskna_op, PyArrayObject **op,
-                        char *op_itflags, PyArray_Descr **op_dtype,
+                        npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
                         PyArray_Descr **op_request_dtypes,
                         int only_inputs, int output_scalars);
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
-                npy_uint32 flags, char *op_itflags,
+                npy_uint32 flags, npyiter_opitflags *op_itflags,
                 int op_ndim, npy_intp *shape,
                 PyArray_Descr *op_dtype, int *op_axes);
 static int
 npyiter_allocate_arrays(NpyIter *iter,
                         npy_uint32 flags,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
-                        npy_uint32 *op_flags, char *op_itflags,
+                        npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
                         int **op_axes, int output_scalars);
 static int
 npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes);
 static void
 npyiter_get_priority_subtype(int first_maskna_op, PyArrayObject **op,
-                            char *op_itflags,
+                            npyiter_opitflags *op_itflags,
                             double *subtype_priority, PyTypeObject **subtype);
 static int
 npyiter_allocate_transfer_functions(NpyIter *iter);
@@ -120,7 +120,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     /* Per-operand values */
     PyArrayObject **op;
     PyArray_Descr **op_dtype;
-    char *op_itflags;
+    npyiter_opitflags *op_itflags;
     char **op_dataptr;
 
     npy_int8 *perm;
@@ -916,7 +916,7 @@ npyiter_calculate_ndim(int nop, PyArrayObject **op_in,
  * Returns 1 on success, 0 on failure.
  */
 static int
-npyiter_check_per_op_flags(npy_uint32 op_flags, char *op_itflags)
+npyiter_check_per_op_flags(npy_uint32 op_flags, npyiter_opitflags *op_itflags)
 {
     if ((op_flags & NPY_ITER_GLOBAL_FLAGS) != 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -1027,7 +1027,7 @@ npyiter_prepare_one_operand(PyArrayObject **op,
                         PyArray_Descr *op_request_dtype,
                         PyArray_Descr **op_dtype,
                         npy_uint32 flags,
-                        npy_uint32 op_flags, char *op_itflags)
+                        npy_uint32 op_flags, npyiter_opitflags *op_itflags)
 {
     /* NULL operands must be automatically allocated outputs */
     if (*op == NULL) {
@@ -1226,7 +1226,7 @@ npyiter_prepare_operands(int nop, int first_maskna_op, PyArrayObject **op_in,
                     PyArray_Descr **op_request_dtypes,
                     PyArray_Descr **op_dtype,
                     npy_uint32 flags,
-                    npy_uint32 *op_flags, char *op_itflags,
+                    npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
                     npy_int8 *out_maskop,
                     npy_int8 *out_maskna_indices)
 {
@@ -1419,7 +1419,7 @@ static int
 npyiter_check_casting(int first_maskna_op, PyArrayObject **op,
                     PyArray_Descr **op_dtype,
                     NPY_CASTING casting,
-                    char *op_itflags)
+                    npyiter_opitflags *op_itflags)
 {
     int iop;
 
@@ -1557,7 +1557,7 @@ check_mask_for_writemasked_reduction(NpyIter *iter, int iop)
  * Returns 1 on success, 0 on failure.
  */
 static int
-npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, char *op_itflags,
+npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
                     char **op_dataptr,
                     npy_uint32 *op_flags, int **op_axes,
                     npy_intp *itershape,
@@ -2520,7 +2520,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
  */
 static PyArray_Descr *
 npyiter_get_common_dtype(int first_maskna_op, PyArrayObject **op,
-                        char *op_itflags, PyArray_Descr **op_dtype,
+                        npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
                         PyArray_Descr **op_request_dtypes,
                         int only_inputs, int output_scalars)
 {
@@ -2586,7 +2586,7 @@ npyiter_get_common_dtype(int first_maskna_op, PyArrayObject **op,
  */
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
-                npy_uint32 flags, char *op_itflags,
+                npy_uint32 flags, npyiter_opitflags *op_itflags,
                 int op_ndim, npy_intp *shape,
                 PyArray_Descr *op_dtype, int *op_axes)
 {
@@ -2820,7 +2820,7 @@ static int
 npyiter_allocate_arrays(NpyIter *iter,
                         npy_uint32 flags,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
-                        npy_uint32 *op_flags, char *op_itflags,
+                        npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
                         int **op_axes, int output_scalars)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
@@ -3151,7 +3151,7 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
     int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
     npy_int8 *perm;
 
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     npy_int8 *maskna_indices = NIT_MASKNA_INDICES(iter);
     NpyIter_AxisData *axisdata;
     npy_intp sizeof_axisdata;
@@ -3285,7 +3285,7 @@ npyiter_fill_maskna_axisdata(NpyIter *iter, int **op_axes)
  */
 static void
 npyiter_get_priority_subtype(int first_maskna_op, PyArrayObject **op,
-                            char *op_itflags,
+                            npyiter_opitflags *op_itflags,
                             double *subtype_priority,
                             PyTypeObject **subtype)
 {
@@ -3311,7 +3311,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     int first_maskna_op = NIT_FIRST_MASKNA_OP(iter);
 
     npy_intp i;
-    char *op_itflags = NIT_OPITFLAGS(iter);
+    npyiter_opitflags *op_itflags = NIT_OPITFLAGS(iter);
     NpyIter_BufferData *bufferdata = NIT_BUFFERDATA(iter);
     NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
     PyArrayObject **op = NIT_OPERANDS(iter);
@@ -3328,7 +3328,7 @@ npyiter_allocate_transfer_functions(NpyIter *iter)
     int needs_api = 0;
 
     for (iop = 0; iop < nop; ++iop) {
-        char flags = op_itflags[iop];
+        npyiter_opitflags flags = op_itflags[iop];
         /*
          * Reduction operands may be buffered with a different stride,
          * so we must pass NPY_MAX_INTP to the transfer function factory.

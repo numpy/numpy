@@ -1,14 +1,7 @@
-import os
+from bento.commands import hooks
 
-from bento.commands.hooks \
-    import \
-        pre_build
-
-@pre_build
-def pbuild(context):
-    bld = context.waf_context
-    def builder_compiled_base(extension):
-        includes = ["../core/include", "../core/include/numpy", "../core",
-                    "../core/src/private"]
-        return context.default_builder(extension, includes=includes)
-    context.register_builder("_compiled_base", builder_compiled_base)
+@hooks.pre_build
+def build(context):
+    context.tweak_extension("_compiled_base",
+                  includes=["../core/include", "../core/include/numpy", "../core",
+                            "../core/src/private"])

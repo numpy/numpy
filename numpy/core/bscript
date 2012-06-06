@@ -1,9 +1,8 @@
 import os
 import sys
 
-from bento.commands.hooks \
-    import \
-        pre_configure, pre_build, post_build
+from bento.commands import hooks
+
 import waflib
 import waflib.Errors
 from waflib.Task \
@@ -263,8 +262,8 @@ def check_win32_specifics(conf):
     if arch == "Intel" or arch == "AMD64":
         conf.define('FORCE_NO_LONG_DOUBLE_FORMATTING', 1)
 
-@pre_configure
-def configure(context):
+@hooks.post_configure
+def post_configure(context):
     conf = context.waf_context
 
     try:
@@ -354,6 +353,10 @@ def process_multiarray_api_generator(self):
     txt = self.pattern + ".txt"
     files = [header, source, txt]
     tsk.set_outputs([self.path.find_or_declare(f) for f in files])
+
+    self.bld.register_outputs("numpy_gen_headers", "multiarray",
+                              [output for output in tsk.outputs if output.suffix() == ".h"],
+                              target_dir="$sitedir/numpy/core/include/numpy")
     return tsk
 
 @waflib.TaskGen.feature("ufunc_api_gen")
@@ -369,6 +372,10 @@ def process_api_ufunc_generator(self):
     txt = self.pattern + ".txt"
     files = [header, source, txt]
     tsk.set_outputs([self.path.find_or_declare(f) for f in files])
+
+    headers = [output for output in tsk.outputs if output.suffix() == ".h"]
+    self.bld.register_outputs("numpy_gen_headers", "ufunc", headers,
+                              target_dir="$sitedir/numpy/core/include/numpy")
     return tsk
 
 class umath_generator(Task):
@@ -391,23 +398,21 @@ def process_umath_generator(self):
     return tsk
 
 from os.path import join as pjoin
-@pre_build
-def pbuild(context):
+@hooks.pre_build
+def pre_build(context):
     bld = context.waf_context
 
-    def builder(library):
-        # FIXME: hack to build static library that can be linked into a dlopen-able
-        # library
-        return context.default_library_builder(library,
-                                               includes=["src/private", "src/npymath", "include"],
-                                               use="cshlib")
-    context.register_compiled_library_builder("npymath", builder)
+    context.register_category("numpy_gen_headers")
 
-    def builder_sort(library):
-        return context.default_library_builder(library,
-                                               includes=[".", "src/private", "src/npysort"],
-                                               use="npymath")
-    context.register_compiled_library_builder("npysort", builder_sort)
+    numpyconfig_h = context.local_node.declare(os.path.join("include", "numpy", "_numpyconfig.h"))
+    context.register_outputs("numpy_gen_headers", "numpyconfig", [numpyconfig_h])
+
+    context.tweak_library("npymath",
+                          includes=["src/private", "src/npymath", "include"])
+
+    context.tweak_library("npysort",
+                          includes=[".", "src/private", "src/npysort"],
+                          use="npymath")
 
     def builder_multiarray(extension):
         bld(name="multiarray_api",
@@ -494,18 +499,11 @@ def pbuild(context):
                                        use="npymath")
     context.register_builder("umath", build_ufunc)
 
-    def build_scalarmath(extension):
-        return context.default_builder(extension,
-                                       use="npymath")
-    context.register_builder("scalarmath", build_scalarmath)
-
-    def build_multiarray_tests(extension):
-        return context.default_builder(extension,
-                                       use="npymath")
-    context.register_builder("multiarray_tests", build_multiarray_tests)
+    context.tweak_extension("scalarmath", use="npymath")
+    context.tweak_extension("multiarray_tests", use="npymath", includes=["src/private"])
+    context.tweak_extension("umath_tests", use="npymath", includes=["src/private"])
 
     def build_dotblas(extension):
         if bld.env.HAS_CBLAS:
-            return context.default_builder(extension,
-                                           use="CBLAS")
+            return context.default_builder(extension, use="CBLAS")
     context.register_builder("_dotblas", build_dotblas)

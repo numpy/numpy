@@ -5,6 +5,15 @@
 # downloads, i.e. two versions for Python 2.7. The Intel 32/64-bit version is
 # for OS X 10.6+, the other dmg installers are for 10.3+ and are built on 10.5
 
+#---------------
+# Build tarballs
+#---------------
+paver sdist
+
+
+#--------------------
+# Build documentation
+#--------------------
 # Check we're using the correct g++/c++ for the 32-bit 2.6 version we build for
 # the docs and the 64-bit 2.7 dmg installer.
 # We do this because for Python 2.6 we use a symlink on the PATH to select
@@ -21,14 +30,13 @@ paver bootstrap
 source bootstrap/bin/activate
 python setupsconsegg.py install
 
-# build docs
+# build pdf docs
 paver pdf
 
-#------------------------------------------------------------------
-# Build tarballs, Windows and 64-bit OS X installers (on OS X 10.6)
-#------------------------------------------------------------------
-paver sdist
 
+#--------------------------------------------------------
+# Build Windows and 64-bit OS X installers (on OS X 10.6)
+#--------------------------------------------------------
 export MACOSX_DEPLOYMENT_TARGET=10.6
 # Use GCC 4.2 for 64-bit OS X installer for Python 2.7
 export PATH=~/Code/tmp/gpp42temp/:$PATH
@@ -58,3 +66,14 @@ paver bdist_superpack -p 2.5
 
 
 paver write_release_and_log
+
+
+#-------------------------------------------------------
+# Build basic (no SSE) Windows installers to put on PyPi
+#-------------------------------------------------------
+paver bdist_wininst_simple -p 2.5
+paver bdist_wininst_simple -p 2.6
+paver bdist_wininst_simple -p 2.7
+paver bdist_wininst_simple -p 3.1
+paver bdist_wininst_simple -p 3.2
+
