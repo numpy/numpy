@@ -174,15 +174,9 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             for (i = 0; i < n; i++) {
                 for (j = 0; j < m; j++) {
                     tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
-                    if ((tmp < -max_item) || (tmp >= max_item)) {
-                        PyErr_Format(PyExc_IndexError,
-                                     "index %"NPY_INTP_FMT" out of range for array in dimension %"NPY_INTP_FMT,
-                                     tmp, axis);
+                    if (check_and_adjust_index(&tmp, max_item, axis) < 0) {
                         NPY_AUXDATA_FREE(transferdata);
                         goto fail;
-                    }
-                    if (tmp < 0) {
-                        tmp = tmp + max_item;
                     }
                     maskedstransfer(dest, itemsize,
                                     src + tmp*chunk, itemsize,
@@ -253,15 +247,8 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
             for (i = 0; i < n; i++) {
                 for (j = 0; j < m; j++) {
                     tmp = ((npy_intp *)(PyArray_DATA(indices)))[j];
-                    if ((tmp < -max_item) || (tmp >= max_item)) {
-                        PyErr_Format(PyExc_IndexError,
-                                     "index %"NPY_INTP_FMT" out of range for "
-                                     "array in dimension %"NPY_INTP_FMT,
-                                     tmp, axis);
+                    if (check_and_adjust_index(&tmp, max_item, axis) < 0) {
                         goto fail;
-                    }
-                    if (tmp < 0) {
-                        tmp = tmp + max_item;
                     }
                     memmove(dest, src + tmp*chunk, chunk);
                     dest += chunk;
@@ -391,14 +378,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
             for (i = 0; i < ni; i++) {
                 src = PyArray_DATA(values) + chunk*(i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (tmp < 0) {
-                    tmp = tmp + max_item;
-                }
-                if ((tmp < 0) || (tmp >= max_item)) {
-                    /* TODO: should report out-of-range indices with axis */
-                    PyErr_SetString(PyExc_IndexError,
-                            "index out of " \
-                            "range for array");
+                if (check_and_adjust_index(&tmp, max_item, 0) < 0) {
                     goto fail;
                 }
                 PyArray_Item_INCREF(src, PyArray_DESCR(self));
@@ -448,14 +428,7 @@ PyArray_PutTo(PyArrayObject *self, PyObject* values0, PyObject *indices0,
             for (i = 0; i < ni; i++) {
                 src = PyArray_DATA(values) + chunk * (i % nv);
                 tmp = ((npy_intp *)(PyArray_DATA(indices)))[i];
-                if (tmp < 0) {
-                    tmp = tmp + max_item;
-                }
-                if ((tmp < 0) || (tmp >= max_item)) {
-                    /* TODO: should report out-of-range indices with axis */
-                    PyErr_SetString(PyExc_IndexError,
-                            "index out of " \
-                            "range for array");
+                if (check_and_adjust_index(&tmp, max_item, 0) < 0) {
                     goto fail;
                 }
                 memmove(dest + tmp * chunk, src, chunk);
@@ -1106,6 +1079,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArrayObject *ap = NULL, *store_arr = NULL;
     char *ip;
     int i, n, m, elsize, orign;
+    int axis_orig=axis;
 
     n = PyArray_NDIM(op);
     if ((n == 0) || (PyArray_SIZE(op) == 1)) {
@@ -1115,7 +1089,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         axis += n;
     }
     if ((axis < 0) || (axis >= n)) {
-        PyErr_Format(PyExc_ValueError, "axis(=%d) out of bounds", axis);
+        PyErr_Format(PyExc_ValueError, "axis(=%d) out of bounds", axis_orig);
         return -1;
     }
     if (!PyArray_ISWRITEABLE(op)) {
@@ -2530,14 +2504,7 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
             npy_intp shapevalue = shape[idim];
             npy_intp ind = multi_index[idim];
 
-            if (ind < 0) {
-                ind += shapevalue;
-            }
-
-            if (ind < 0 || ind >= shapevalue) {
-                PyErr_Format(PyExc_IndexError,
-                             "index %"NPY_INTP_FMT" out of bounds in dimension %d",
-                             multi_index[idim], idim);
+            if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
                 return NULL;
             }
 
@@ -2561,14 +2528,7 @@ PyArray_MultiIndexGetItem(PyArrayObject *self, npy_intp *multi_index)
             npy_intp shapevalue = shape[idim];
             npy_intp ind = multi_index[idim];
 
-            if (ind < 0) {
-                ind += shapevalue;
-            }
-
-            if (ind < 0 || ind >= shapevalue) {
-                PyErr_Format(PyExc_IndexError,
-                             "index %"NPY_INTP_FMT" out of bounds in dimension %d",
-                             multi_index[idim], idim);
+            if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
                 return NULL;
             }
 
@@ -2611,14 +2571,7 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
             npy_intp shapevalue = shape[idim];
             npy_intp ind = multi_index[idim];
 
-            if (ind < 0) {
-                ind += shapevalue;
-            }
-
-            if (ind < 0 || ind >= shapevalue) {
-                PyErr_Format(PyExc_IndexError,
-                             "index %"NPY_INTP_FMT" out of bounds in dimension %d",
-                             multi_index[idim], idim);
+            if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
                 return -1;
             }
 
@@ -2655,14 +2608,7 @@ PyArray_MultiIndexSetItem(PyArrayObject *self, npy_intp *multi_index,
             npy_intp shapevalue = shape[idim];
             npy_intp ind = multi_index[idim];
 
-            if (ind < 0) {
-                ind += shapevalue;
-            }
-
-            if (ind < 0 || ind >= shapevalue) {
-                PyErr_Format(PyExc_IndexError,
-                             "index %"NPY_INTP_FMT" out of bounds in dimension %d",
-                             multi_index[idim], idim);
+            if (check_and_adjust_index(&ind, shapevalue, idim) < 0) {
                 return -1;
             }
 

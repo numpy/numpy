@@ -697,14 +697,7 @@ array_toscalar(PyArrayObject *self, PyObject *args)
             return NULL;
         }
 
-        /* Negative indexing */
-        if (value < 0) {
-            value += size;
-        }
-
-        if (value < 0 || value >= size) {
-            PyErr_SetString(PyExc_ValueError,
-                    "index out of bounds");
+        if (check_and_adjust_index(&value, size, -1) < 0) {
             return NULL;
         }
 
@@ -783,14 +776,7 @@ array_setscalar(PyArrayObject *self, PyObject *args)
             return NULL;
         }
 
-        /* Negative indexing */
-        if (value < 0) {
-            value += size;
-        }
-
-        if (value < 0 || value >= size) {
-            PyErr_SetString(PyExc_ValueError,
-                    "index out of bounds");
+        if (check_and_adjust_index(&value, size, -1) < 0) {
             return NULL;
         }
 

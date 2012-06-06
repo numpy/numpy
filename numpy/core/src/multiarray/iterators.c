@@ -31,7 +31,8 @@ slice_coerce_index(PyObject *o, npy_intp *v);
  */
 NPY_NO_EXPORT npy_intp
 parse_index_entry(PyObject *op, npy_intp *step_size,
-                    npy_intp *n_steps, npy_intp max)
+                  npy_intp *n_steps, npy_intp max,
+                  int axis, int check_index)
 {
     npy_intp i;
 
@@ -69,13 +70,10 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
         }
         *n_steps = SINGLE_INDEX;
         *step_size = 0;
-        if (i < 0) {
-            i += max;
-        }
-        if (i >= max || i < 0) {
-            /* TODO: should report out-of-range indices with axis */
-            PyErr_SetString(PyExc_IndexError, "invalid index");
+        if (check_index) {
+            if (check_and_adjust_index(&i, max, axis) < 0) {
             goto fail;
+            }
         }
     }
     return i;
@@ -135,8 +133,9 @@ parse_index(PyArrayObject *self, PyObject *op,
             }
         }
         start = parse_index_entry(op1, &step_size, &n_steps,
-                               nd_old < PyArray_NDIM(self) ?
-                               PyArray_DIMS(self)[nd_old] : 0);
+                                  nd_old < PyArray_NDIM(self) ?
+                                  PyArray_DIMS(self)[nd_old] : 0,
+                                  nd_old, nd_old < PyArray_NDIM(self));
         Py_DECREF(op1);
         if (start == -1) {
             break;
@@ -718,14 +717,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
     itemsize = PyArray_DESCR(self->ao)->elsize;
     if (PyArray_NDIM(ind) == 0) {
         num = *((npy_intp *)PyArray_DATA(ind));
-        if (num < 0) {
-            num += self->size;
-        }
-        if (num < 0 || num >= self->size) {
-            PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" out of bounds"   \
-                         " 0<=index<%"NPY_INTP_FMT,
-                         num, self->size);
+        if (check_and_adjust_index(&num, self->size, -1) < 0) {
             PyArray_ITER_RESET(self);
             return NULL;
         }
@@ -759,14 +751,7 @@ iter_subscript_int(PyArrayIterObject *self, PyArrayObject *ind)
     swap = (PyArray_ISNOTSWAPPED(ret) != PyArray_ISNOTSWAPPED(self->ao));
     while (counter--) {
         num = *((npy_intp *)(ind_it->dataptr));
-        if (num < 0) {
-            num += self->size;
-        }
-        if (num < 0 || num >= self->size) {
-            PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" out of bounds" \
-                         " 0<=index<%"NPY_INTP_FMT,
-                         num, self->size);
+        if (check_and_adjust_index(&num, self->size, -1) < 0) {
             Py_DECREF(ind_it);
             Py_DECREF(ret);
             PyArray_ITER_RESET(self);
@@ -842,7 +827,7 @@ iter_subscript(PyArrayIterObject *self, PyObject *ind)
     /* Check for Integer or Slice */
     if (PyLong_Check(ind) || PyInt_Check(ind) || PySlice_Check(ind)) {
         start = parse_index_entry(ind, &step_size, &n_steps,
-                               self->size);
+                                  self->size, 0, 1);
         if (start == -1) {
             goto fail;
         }
@@ -1001,14 +986,7 @@ iter_ass_sub_int(PyArrayIterObject *self, PyArrayObject *ind,
     counter = ind_it->size;
     while (counter--) {
         num = *((npy_intp *)(ind_it->dataptr));
-        if (num < 0) {
-            num += self->size;
-        }
-        if ((num < 0) || (num >= self->size)) {
-            PyErr_Format(PyExc_IndexError,
-                         "index %"NPY_INTP_FMT" out of bounds"           \
-                         " 0<=index<%"NPY_INTP_FMT, num,
-                         self->size);
+        if (check_and_adjust_index(&num, self->size, -1) < 0) {
             Py_DECREF(ind_it);
             return -1;
         }
@@ -1119,7 +1097,7 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 
     /* Check Slice */
     if (PySlice_Check(ind)) {
-        start = parse_index_entry(ind, &step_size, &n_steps, self->size);
+        start = parse_index_entry(ind, &step_size, &n_steps, self->size, 0, 0);
         if (start == -1) {
             goto finish;
         }

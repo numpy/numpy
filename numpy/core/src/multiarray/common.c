@@ -506,28 +506,63 @@ _array_typedescr_fromstr(char *c_str)
     return descr;
 }
 
+NPY_NO_EXPORT int
+check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis)
+{
+    /* Check that index is valid, taking into account negative indices */
+    if ((*index < -max_item) || (*index >= max_item)) {
+        /* Try to be as clear as possible about what went wrong. */
+        if (axis >= 0) {
+            if (max_item > 0) {
+                PyErr_Format(PyExc_IndexError,
+                             "index %"NPY_INTP_FMT" is out of bounds for axis %d: "
+                             "[%"NPY_INTP_FMT",%"NPY_INTP_FMT")",
+                             *index, axis,
+                             -max_item, max_item);
+            } else {
+                PyErr_Format(PyExc_IndexError,
+                             "index %"NPY_INTP_FMT" is out of bounds for 0-d axis %d",
+                             *index, axis);
+            }
+        } else {
+            if (max_item > 0) {
+                PyErr_Format(PyExc_IndexError,
+                             "index %"NPY_INTP_FMT" is out of bounds: "
+                             "[%"NPY_INTP_FMT",%"NPY_INTP_FMT")",
+                             *index,
+                             -max_item, max_item);
+            } else {
+                /* I don't believe there are currently any cases where this occurs. */
+                PyErr_Format(PyExc_IndexError,
+                             "index %"NPY_INTP_FMT" is out of bounds for 0-d axis",
+                             *index);
+            }
+        }
+        return -1;
+    }
+    /* adjust negative indices */
+    if (*index < 0) {
+        *index += max_item;
+    }
+    return 0;
+}
+
 NPY_NO_EXPORT char *
 index2ptr(PyArrayObject *mp, npy_intp i)
 {
     npy_intp dim0;
-    npy_intp orig_i = i;  /* in case of error. */
 
     if (PyArray_NDIM(mp) == 0) {
         PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed");
         return NULL;
     }
     dim0 = PyArray_DIMS(mp)[0];
-    if (i < 0) {
-        i += dim0;
-    }
-    if (i == 0 && dim0 > 0) {
+    if (check_and_adjust_index(&i, dim0, 0) < 0)
+        return NULL;
+    if (i == 0) {
         return PyArray_DATA(mp);
     }
-    if (i > 0 && i < dim0) {
-        return PyArray_DATA(mp)+i*PyArray_STRIDES(mp)[0];
-    }
-    PyErr_Format(PyExc_IndexError, "index %"NPY_INTP_FMT" out of bounds in dimension 0", orig_i);
-    return NULL;
+    return PyArray_DATA(mp)+i*PyArray_STRIDES(mp)[0];
 }
 
 NPY_NO_EXPORT int

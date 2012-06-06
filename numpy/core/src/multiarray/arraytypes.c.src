@@ -3527,15 +3527,8 @@ static int
         for (i = 0; i < n_outer; i++) {
             for (j = 0; j < m_middle; j++) {
                 tmp = indarray[j];
-                if ((tmp < -nindarray) || (tmp >= nindarray)) {
-                    PyErr_Format(PyExc_IndexError,
-                                 "index %"NPY_INTP_FMT" out of bounds in dimension %"NPY_INTP_FMT,
-                                 tmp, j);
+                if (check_and_adjust_index(&tmp, nindarray, (int) j) < 0)
                     return 1;
-                }
-                if (tmp < 0) {
-                    tmp = tmp + nindarray;
-                }
                 if (nelem == 1) {
                     *dest++ = *(src + tmp);
                 }
