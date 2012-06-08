@@ -2531,7 +2531,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
     }
 
     if (PyDataType_ISDATETIME(self) && (metadata != NULL)) {
-        PyObject *new_metadata, *errmsg;
+        PyObject *old_metadata, *errmsg;
         PyArray_DatetimeMetaData temp_dt_data;
 
         if ((! PyTuple_Check(metadata)) || (PyTuple_Size(metadata) != 2)) {
@@ -2547,18 +2547,19 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
             return NULL;
         }
 
-        new_metadata = PyTuple_GET_ITEM(metadata, 0);
-        Py_XINCREF(new_metadata);
-        Py_XDECREF(self->metadata);
-        self->metadata = new_metadata;
+        old_metadata = self->metadata;
+        self->metadata = PyTuple_GET_ITEM(metadata, 0);
+        Py_XINCREF(self->metadata);
+        Py_XDECREF(old_metadata);
         memcpy((char *) &((PyArray_DatetimeDTypeMetaData *)self->c_metadata)->meta,
                (char *) &temp_dt_data,
                sizeof(PyArray_DatetimeMetaData));
     }
     else {
-        Py_XINCREF(metadata);
-        Py_XDECREF(self->metadata);
+        PyObject *old_metadata = self->metadata;
         self->metadata = metadata;
+        Py_XINCREF(self->metadata);
+        Py_XDECREF(old_metadata);
     }
 
     Py_INCREF(Py_None);
