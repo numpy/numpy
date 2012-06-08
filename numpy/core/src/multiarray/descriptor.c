@@ -2530,25 +2530,35 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
         metadata = NULL;
     }
 
-    Py_XDECREF(self->metadata);
     if (PyDataType_ISDATETIME(self) && (metadata != NULL)) {
-        PyArray_DatetimeMetaData *dt_data;
+        PyObject *new_metadata, *errmsg;
+        PyArray_DatetimeMetaData temp_dt_data;
 
-        /* The Python metadata */
-        self->metadata = PyTuple_GET_ITEM(metadata, 0);
-        Py_XINCREF(self->metadata);
-
-        /* The datetime metadata */
-        dt_data = &(((PyArray_DatetimeDTypeMetaData *)self->c_metadata)->meta);
-        if (convert_datetime_metadata_tuple_to_datetime_metadata(
-                                    PyTuple_GET_ITEM(metadata, 1),
-                                    dt_data) < 0) {
+        if ((! PyTuple_Check(metadata)) || (PyTuple_Size(metadata) != 2)) {
+            errmsg = PyUString_FromString("Invalid datetime dtype (metadata, c_metadata): ");
+            PyUString_ConcatAndDel(&errmsg, PyObject_Repr(metadata));
+            PyErr_SetObject(PyExc_ValueError, errmsg);
             return NULL;
         }
+
+        if (convert_datetime_metadata_tuple_to_datetime_metadata(
+                                    PyTuple_GET_ITEM(metadata, 1),
+                                    &temp_dt_data) < 0) {
+            return NULL;
+        }
+
+        new_metadata = PyTuple_GET_ITEM(metadata, 0);
+        Py_XINCREF(new_metadata);
+        Py_XDECREF(self->metadata);
+        self->metadata = new_metadata;
+        memcpy((char *) &((PyArray_DatetimeDTypeMetaData *)self->c_metadata)->meta,
+               (char *) &temp_dt_data,
+               sizeof(PyArray_DatetimeMetaData));
     }
     else {
-        self->metadata = metadata;
         Py_XINCREF(metadata);
+        Py_XDECREF(self->metadata);
+        self->metadata = metadata;
     }
 
     Py_INCREF(Py_None);
