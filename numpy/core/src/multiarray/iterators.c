@@ -1042,6 +1042,9 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
                 "Cannot delete iterator elements");
         return -1;
     }
+    
+    if (PyArray_FailUnlessWriteable(self->ao, "underlying array") < 0) 
+        return -1;
 
     if (ind == Py_Ellipsis) {
         ind = PySlice_New(NULL, NULL, NULL);
@@ -1224,10 +1227,13 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
 
     /* Two options:
      *  1) underlying array is contiguous
-     *  -- return 1-d wrapper around it
-     * 2) underlying array is not contiguous
-     * -- make new 1-d contiguous array with updateifcopy flag set
-     * to copy back to the old array
+     *     -- return 1-d wrapper around it
+     *  2) underlying array is not contiguous
+     *     -- make new 1-d contiguous array with updateifcopy flag set
+     *        to copy back to the old array
+     * 
+     *  If underlying array is readonly, then we make the output array readonly
+     *     and updateifcopy does not apply. 
      */
     size = PyArray_SIZE(it->ao);
     Py_INCREF(PyArray_DESCR(it->ao));
@@ -1260,10 +1266,15 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
             Py_DECREF(ret);
             return NULL;
         }
-        Py_INCREF(it->ao);
-        if (PyArray_SetUpdateIfCopyBase(ret, it->ao) < 0) {
-            Py_DECREF(ret);
-            return NULL;
+        if (PyArray_ISWRITEABLE(it->ao)) {
+            Py_INCREF(it->ao);
+            if (PyArray_SetUpdateIfCopyBase(ret, it->ao) < 0) {
+                Py_DECREF(ret);
+                return NULL;
+            }
+        }
+        else {
+            PyArray_CLEARFLAGS(ret, NPY_ARRAY_WRITEABLE);
         }
     }
     return ret;
