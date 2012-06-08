@@ -829,6 +829,7 @@ array_flat_set(PyArrayObject *self, PyObject *val)
                 "Cannot delete array flat iterator");
         return -1;
     }
+    if (PyArray_FailUnlessWriteable(self, "array") < 0) return -1;
     typecode = PyArray_DESCR(self);
     Py_INCREF(typecode);
     arr = (PyArrayObject *)PyArray_FromAny(val, typecode,
