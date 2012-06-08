@@ -2536,6 +2536,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
 
         /* The Python metadata */
         self->metadata = PyTuple_GET_ITEM(metadata, 0);
+        Py_XINCREF(self->metadata);
 
         /* The datetime metadata */
         dt_data = &(((PyArray_DatetimeDTypeMetaData *)self->c_metadata)->meta);
