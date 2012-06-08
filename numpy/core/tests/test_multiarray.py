@@ -1673,6 +1673,52 @@ class TestFromBuffer(object):
         yield self.tst_basic, asbytes(''), np.array([]), {}
 
 
+class TestFlat(TestCase):
+    def setUp(self):
+        a0 = arange(20.0)
+        a = a0.reshape(4,5)
+        a0.shape = (4,5)
+        a.flags.writeable = False
+        self.a = a
+        self.b = a[::2,::2]
+        self.a0 = a0
+        self.b0 = a0[::2,::2]
+        
+    def test_contiguous(self):
+        testpassed = False
+        try:
+            self.a.flat[12] = 100.0
+        except ValueError:
+            testpassed = True
+        assert testpassed
+        assert self.a.flat[12] == 12.0
+
+    def test_discontiguous(self):
+        testpassed = False
+        try:
+            self.b.flat[4] = 100.0
+        except ValueError:
+            testpassed = True
+        assert testpassed
+        assert self.b.flat[4] == 12.0
+
+    def test___array__(self):
+        c = self.a.flat.__array__()
+        d = self.b.flat.__array__()
+        e = self.a0.flat.__array__()
+        f = self.b0.flat.__array__()
+
+        assert c.flags.writeable is False
+        assert d.flags.writeable is False
+        assert e.flags.writeable is True
+        assert f.flags.writeable is True
+
+        assert c.flags.updateifcopy is False
+        assert d.flags.updateifcopy is False
+        assert e.flags.updateifcopy is False
+        assert f.flags.updateifcopy is True
+        assert f.base is self.b0    
+
 class TestResize(TestCase):
     def test_basic(self):
         x = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
