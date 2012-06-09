@@ -658,35 +658,48 @@ s_ = IndexExpression(maketuple=False)
 # The following functions complement those in twodim_base, but are
 # applicable to N-dimensions.
 
-def fill_diagonal(a, val):
+def fill_diagonal(a, val, offset=0):
     """
-    Fill the main diagonal of the given array of any dimensionality.
-
+    Fill a diagonal of the given array of any dimensionality.
+    
     For an array `a` with ``a.ndim > 2``, the diagonal is the list of
-    locations with indices ``a[i, i, ..., i]`` all identical. This function
-    modifies the input array in-place, it does not return a value.
-
+    locations with indices ``a[i, i, ..., i]``, all ``i`` identical. If a
+    positive offset is supplied, the last dimension is shifted like
+    ``a[i, i, ..., i + offset]``, and if a negative offset is supplied the first
+    dimension is shifted: ``a[i + abs(offset), i, ..., i]``.
+    
+    This function modifies the input array in-place, it does not return a value.
+    
     Parameters
     ----------
     a : array, at least 2-D.
-      Array whose diagonal is to be filled, it gets modified in-place.
-
-    val : scalar
+      Array whose diagonal is to be filled. If it has more than two dimensions
+      they should all be of equal length, otherwise a ValueError exception will
+      be raised.
+    
+    val : array_like or scalar
       Value to be written on the diagonal, its type must be compatible with
-      that of the array a.
-
+      that of the array a. Its' shape must broadcast to a vector of the length
+      of the diagonal.
+     
+     offset : int, optional
+         Offset of the diagonal from the main diagonal. Can be positive or 
+         negative, but its absolute value must be a valid index in the first
+         dimension of a, if positive, or in the last dimension, if negative.
+         Defaults to main diagonal (0).
+    
     See also
     --------
     diag_indices, diag_indices_from
-
+    
     Notes
     -----
     .. versionadded:: 1.4.0
-
+    
     This functionality can be obtained via `diag_indices`, but internally
     this version uses a much faster implementation that never constructs the
     indices and uses simple slicing.
-
+    
     Examples
     --------
     >>> a = np.zeros((3, 3), int)
@@ -695,14 +708,14 @@ def fill_diagonal(a, val):
     array([[5, 0, 0],
            [0, 5, 0],
            [0, 0, 5]])
-
+    
     The same function can operate on a 4-D array:
-
+    
     >>> a = np.zeros((3, 3, 3, 3), int)
     >>> np.fill_diagonal(a, 4)
-
+    
     We only show a few blocks for clarity:
-
+    
     >>> a[0, 0]
     array([[4, 0, 0],
            [0, 0, 0],
@@ -715,23 +728,58 @@ def fill_diagonal(a, val):
     array([[0, 0, 0],
            [0, 0, 0],
            [0, 0, 4]])
-
+    
+    The optional argument offset can be used to modify a diagonal below or above
+    the main diagonal.
+    
+    >>> a = np.zeros((4, 3), int)
+    >>> np.fill_diagonal(a, [2, 3], offset=1)
+    >>> a
+    array([[0, 2, 0],
+           [0, 0, 3],
+           [0, 0, 0],
+           [0, 0, 0]])
+    
+    A negative offset means a subdiagonal:
+    
+    >>> a = np.zeros((4, 2), int)
+    >>> np.fill_diagonal(a, [1,2], offset=-2)
+    >>> a
+    array([[0, 0],
+           [0, 0],
+           [1, 0],
+           [0, 2]])
+    
     """
     if a.ndim < 2:
         raise ValueError("array must be at least 2-d")
+        
+    if offset >= a.shape[-1] or -offset >= a.shape[0]:
+        raise ValueError("offset larger than array dimensions")
+    
     if a.ndim == 2:
         # Explicit, fast formula for the common case.  For 2-d arrays, we
         # accept rectangular ones.
         step = a.shape[1] + 1
+        end = (a.shape[1] - offset)*a.shape[1]
+        
+        #Correct the case of negative offset so we don't start in the end
+        if offset < 0:
+            offset = (1 - step)*offset
     else:
         # For more than d=2, the strided formula is only valid for arrays with
         # all dimensions equal, so we check first.
         if not alltrue(diff(a.shape)==0):
             raise ValueError("All dimensions of input must be of equal length")
         step = 1 + (cumprod(a.shape[:-1])).sum()
-
+        end = None
+        
+        #Correct the case of negative offset so we don't start in the end
+        if offset < 0:
+            offset = a.shape[0]**(a.ndim - 1)*-offset
+    
     # Write the value out into the diagonal.
-    a.flat[::step] = val
+    a.flat[offset:end:step] = val
 
 
 def diag_indices(n, ndim=2):
