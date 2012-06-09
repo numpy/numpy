@@ -672,7 +672,7 @@ def fill_diagonal(a, val):
       Array whose diagonal is to be filled, it gets modified in-place. If it
       has more than two dimensions, they should be of equal length.
 
-    val : scalar
+    val : array_like or scalar
       Value to be written on the diagonal, its type must be compatible with
       that of the array a. It must broadcast to a vector of the length of the
       diagonal.
