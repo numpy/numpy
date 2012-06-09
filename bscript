@@ -22,7 +22,6 @@ import __builtin__
 __builtin__.__NUMPY_SETUP__ = True
 
 from bento.commands import hooks
-from bento.backends import waf_backend
 
 import waflib
 
