@@ -3719,7 +3719,7 @@ _alloc_log_event(char *type, void *inptr, void *outptr, size_t size)
 /*NUMPY_API
  * Allocates memory for array data.
  */
-NPY_NO_EXPORT char *
+NPY_NO_EXPORT void *
 PyDataMem_NEW(size_t size)
 {
     void *result;
@@ -3728,7 +3728,7 @@ PyDataMem_NEW(size_t size)
     if (_alloc_log_enabled) {
         _alloc_log_event("malloc", NULL, result, size);
     }
-    return (char *)result;
+    return result;
 }
 
 /*NUMPY_API
@@ -3746,7 +3746,7 @@ PyDataMem_FREE(void *ptr)
 /*NUMPY_API
  * Reallocate/resize memory for array data.
  */
-NPY_NO_EXPORT char *
+NPY_NO_EXPORT void *
 PyDataMem_RENEW(void *ptr, size_t size)
 {
     void *result;
@@ -3755,7 +3755,7 @@ PyDataMem_RENEW(void *ptr, size_t size)
     if (_alloc_log_enabled) {
         _alloc_log_event("realloc", ptr, result, size);
     }
-    return (char *)result;
+    return result;
 }
 
 static PyObject *
