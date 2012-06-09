@@ -3784,7 +3784,6 @@ static PyObject *
 alloc_log_fetch(PyObject *NPY_UNUSED(module))
 {
     PyObject *ret, *event;
-    PyObject *inptr, *outptr, *size;
     int i, count;
     _alloc_event *buffer;
 
@@ -3803,29 +3802,12 @@ alloc_log_fetch(PyObject *NPY_UNUSED(module))
     }
 
     for (i = 0; i < count; i++) {
-        inptr = PyLong_FromVoidPtr(buffer[i].inptr);
-        if (inptr == NULL) {
-            goto fail;
-        }
-        outptr = PyLong_FromVoidPtr(buffer[i].outptr);
-        if (outptr == NULL) {
-            Py_DECREF(inptr);
-            goto fail;
-        }
-        size = PyLong_FromSsize_t(buffer[i].size);
-        if (size == NULL) {
-            Py_DECREF(inptr);
-            Py_DECREF(outptr);
-            goto fail;
-        }
-        /* Steal references to inptr, outptr, and size. */
         event = Py_BuildValue("sNNN",
                               buffer[i].type,
-                              inptr, outptr, size);
+                              PyLong_FromVoidPtr(buffer[i].inptr),
+                              PyLong_FromVoidPtr(buffer[i].outptr),
+                              PyLong_FromSsize_t(buffer[i].size));
         if (event == NULL) {
-            Py_DECREF(inptr);
-            Py_DECREF(outptr);
-            Py_DECREF(size);
             goto fail;
         }
         PyList_SET_ITEM(ret, i, event);
