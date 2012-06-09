@@ -669,15 +669,17 @@ def fill_diagonal(a, val):
     Parameters
     ----------
     a : array, at least 2-D.
-      Array whose diagonal is to be filled, it gets modified in-place.
+      Array whose diagonal is to be filled, it gets modified in-place. If it
+      has more than two dimensions, they should be of equal length.
 
     val : scalar
       Value to be written on the diagonal, its type must be compatible with
-      that of the array a.
+      that of the array a. It must broadcast to a vector of the length of the
+      diagonal.
 
     See also
     --------
-    diag_indices, diag_indices_from
+    diagonal, diag_indices, diag_indices_from
 
     Notes
     -----
@@ -687,14 +689,18 @@ def fill_diagonal(a, val):
     this version uses a much faster implementation that never constructs the
     indices and uses simple slicing.
 
+    As of NumPy 1.7, `diagonal` always returns a view, so it could be used for
+    setting a diagonal with an offset.
+
     Examples
     --------
-    >>> a = np.zeros((3, 3), int)
+    >>> a = np.zeros((4, 2), int)
     >>> np.fill_diagonal(a, 5)
     >>> a
-    array([[5, 0, 0],
-           [0, 5, 0],
-           [0, 0, 5]])
+    array([[5, 0],
+           [0, 5],
+           [0, 0],
+           [0, 0]])
 
     The same function can operate on a 4-D array:
 
@@ -723,15 +729,17 @@ def fill_diagonal(a, val):
         # Explicit, fast formula for the common case.  For 2-d arrays, we
         # accept rectangular ones.
         step = a.shape[1] + 1
+        end = a.shape[1]**2
     else:
         # For more than d=2, the strided formula is only valid for arrays with
         # all dimensions equal, so we check first.
         if not alltrue(diff(a.shape)==0):
             raise ValueError("All dimensions of input must be of equal length")
         step = 1 + (cumprod(a.shape[:-1])).sum()
+        end = None
 
     # Write the value out into the diagonal.
-    a.flat[::step] = val
+    a.flat[:end:step] = val
 
 
 def diag_indices(n, ndim=2):
