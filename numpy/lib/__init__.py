@@ -19,6 +19,7 @@ from financial import *
 import math
 from arrayterator import *
 from arraypad import *
+from neighbor import *
 
 __all__ = ['emath','math']
 __all__ += type_check.__all__
@@ -34,6 +35,7 @@ __all__ += utils.__all__
 __all__ += arraysetops.__all__
 __all__ += npyio.__all__
 __all__ += financial.__all__
+__all__ += ['neighbor']
 
 from numpy.testing import Tester
 test = Tester().test
