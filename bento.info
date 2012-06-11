@@ -76,6 +76,7 @@ DataFiles: numpy-includes
         numpy/core/include/numpy/fenv/*.h
 
 HookFile: bscript
+MetaTemplateFiles: numpy/version.py.in, numpy/__config__.py.in
 Recurse: numpy
 UseBackends: Waf
 

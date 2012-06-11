@@ -22,6 +22,9 @@ import __builtin__
 __builtin__.__NUMPY_SETUP__ = True
 
 from bento.commands import hooks
+from bento.utils.utils \
+    import \
+        cmd_is_runnable
 
 import waflib
 
@@ -87,32 +90,25 @@ def check_blas_lapack(conf):
     #conf.env.HAS_LAPACK = True
     #conf.env.LIB_LAPACK = ["lapack", "f77blas", "cblas", "atlas"]
 
-def set_revision(template, version):
-    try:
-        proc = subprocess.Popen('git rev-parse --short HEAD',
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE,
-                                shell=True)
-        git_revision, _ = proc.communicate()
-        git_revision = git_revision.strip()
-    except Exception:
-        git_revision = "Unknown"
+def compute_git_revision(top_node):
+    git_repo_node = top_node.find_node(".git")
+    if git_repo_node and cmd_is_runnable(["git", "--version"]):
+        s = subprocess.Popen(["git", "rev-parse", "HEAD"],
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, cwd=top_node.abspath())
+        out = s.communicate()[0]
+        return out.decode().strip()
+    else:
+        return ""
 
-    full_version = version
-    template_str = template.read()
-
+def _register_metadata(context):
+    git_revision = compute_git_revision(context.top_node)
+    full_version = context.pkg.version
     if not _SETUP_PY.ISRELEASED:
         full_version += '.dev-' + git_revision[:7]
-    content = string.Template(template_str).substitute(version=version,
-            full_version=full_version, git_revision=git_revision,
-            is_released=_SETUP_PY.ISRELEASED)
-    output = template.change_ext("")
-    output.safe_write(content)
-    return output
 
-def make_git_commit_info(ctx):
-    commit_template = ctx.make_source_node(op.join("numpy", "version.py.in"))
-    return set_revision(commit_template, ctx.pkg.version)
+    context.register_metadata("git_revision", git_revision)
+    context.register_metadata("is_released", _SETUP_PY.ISRELEASED)
+    context.register_metadata("full_version", full_version)
 
 @hooks.post_configure
 def post_configure(context):
@@ -123,11 +119,8 @@ def post_configure(context):
 
 @hooks.pre_build
 def pre_build(context):
-    commit_output = make_git_commit_info(context)
-    context.register_outputs_simple([commit_output])
+    _register_metadata(context)
 
-    # FIXME: we write a dummy show for now - the original show function is not
-    # super useful anyway.
-    config_node = context.make_build_node("numpy/__config__.py")
-    config_node.safe_write("def show(): pass")
-    context.register_outputs_simple([config_node])
+@hooks.pre_sdist
+def pre_sdist(context):
+    _register_metadata(context)
