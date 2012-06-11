@@ -385,6 +385,16 @@ class TestMaskedArray(TestCase):
         assert_equal(a_pickled, a)
         self.assertTrue(isinstance(a_pickled._data, np.matrix))
 
+    def test_pickling_maskedconstant(self):
+        "Test pickling MaskedConstant"
+
+        import cPickle
+        mc = np.ma.masked
+        mc_pickled = cPickle.loads(mc.dumps())
+        assert_equal(mc_pickled._baseclass, mc._baseclass)
+        assert_equal(mc_pickled._mask, mc._mask)
+        assert_equal(mc_pickled._data, mc._data)
+
     def test_pickling_wstructured(self):
         "Tests pickling w/ structured array"
         import cPickle
