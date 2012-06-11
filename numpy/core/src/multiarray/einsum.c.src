@@ -16,7 +16,7 @@
 #define _MULTIARRAYMODULE
 #include <numpy/arrayobject.h>
 #include <numpy/halffloat.h>
-#include <numpy/npy_3kcompat.h>
+#include <npy_pycompat.h>
 
 #include <ctype.h>
 

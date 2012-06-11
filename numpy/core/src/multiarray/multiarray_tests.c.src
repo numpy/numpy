@@ -2,7 +2,7 @@
 #include <Python.h>
 #include "numpy/arrayobject.h"
 
-#include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 
 /*
  * TODO:

@@ -9,7 +9,7 @@
 
 #include "npy_config.h"
 
-#include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 
 #include "arrayobject.h"
 #include "mapping.h"
