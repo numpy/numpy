@@ -149,6 +149,14 @@ PyUnicode_Concat2(PyObject **left, PyObject *right)
 #endif
 
 /*
+ * PyIndex_Check
+ */
+#if (PY_VERSION_HEX < 0x02050000)
+#undef PyIndex_Check
+#define PyIndex_Check(o)     0
+#endif
+
+/*
  * PyFile_* compatibility
  */
 #if defined(NPY_PY3K)
