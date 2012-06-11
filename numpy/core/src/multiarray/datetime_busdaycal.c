@@ -16,7 +16,7 @@
 #include <numpy/arrayobject.h>
 
 #include "npy_config.h"
-#include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 
 #include "numpy/arrayscalars.h"
 #include "lowlevel_strided_loops.h"
