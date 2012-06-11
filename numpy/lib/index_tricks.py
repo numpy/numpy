@@ -719,10 +719,13 @@ def fill_diagonal(a, val):
     """
     if a.ndim < 2:
         raise ValueError("array must be at least 2-d")
+    end = None
     if a.ndim == 2:
         # Explicit, fast formula for the common case.  For 2-d arrays, we
         # accept rectangular ones.
         step = a.shape[1] + 1
+        #This is needed to don't have tall matrix have the diagonal wrap.
+        end = a.shape[1] * a.shape[1]
     else:
         # For more than d=2, the strided formula is only valid for arrays with
         # all dimensions equal, so we check first.
@@ -731,7 +734,7 @@ def fill_diagonal(a, val):
         step = 1 + (cumprod(a.shape[:-1])).sum()
 
     # Write the value out into the diagonal.
-    a.flat[::step] = val
+    a.flat[:end:step] = val
 
 
 def diag_indices(n, ndim=2):

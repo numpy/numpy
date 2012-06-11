@@ -158,6 +158,28 @@ def test_fill_diagonal():
            array([[5, 0, 0],
                   [0, 5, 0],
                   [0, 0, 5]]))
+    #Test tall matrix
+    a = zeros((10, 3),int)
+    fill_diagonal(a, 5)
+    yield (assert_array_equal, a,
+           array([[5, 0, 0],
+                  [0, 5, 0],
+                  [0, 0, 5],
+                  [0, 0, 0],
+                  [0, 0, 0],
+                  [0, 0, 0],
+                  [0, 0, 0],
+                  [0, 0, 0],
+                  [0, 0, 0],
+                  [0, 0, 0]]))
+
+    #Test wide matrix
+    a = zeros((3, 10),int)
+    fill_diagonal(a, 5)
+    yield (assert_array_equal, a,
+           array([[5, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 5, 0, 0, 0, 0, 0, 0, 0, 0],
+                  [0, 0, 5, 0, 0, 0, 0, 0, 0, 0]]))
 
     # The same function can operate on a 4-d array:
     a = zeros((3, 3, 3, 3), int)
