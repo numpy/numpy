@@ -350,7 +350,6 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
     # Using digitize, values that fall on an edge are put in the right bin.
     # For the rightmost bin, we want values equal to the right
     # edge to be counted in the last bin, and not as an outlier.
-    outliers = zeros(N, int)
     for i in arange(D):
         # Rounding precision
         mindiff = dedges[i].min()
@@ -369,7 +368,6 @@ def histogramdd(sample, bins=10, range=None, normed=False, weights=None):
 
     # Compute the sample indices in the flattened histogram matrix.
     ni = nbin.argsort()
-    shape = []
     xy = zeros(N, int)
     for i in arange(0, D-1):
         xy += Ncount[ni[i]] * nbin[ni[i+1:]].prod()
