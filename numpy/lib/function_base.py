@@ -1,12 +1,13 @@
 __docformat__ = "restructuredtext en"
 __all__ = ['select', 'piecewise', 'trim_zeros', 'copy', 'iterable',
-        'percentile', 'diff', 'gradient', 'angle', 'unwrap', 'sort_complex',
-        'disp', 'extract', 'place', 'nansum', 'nanmax', 'nanargmax',
-        'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
-        'histogram', 'histogramdd', 'bincount', 'digitize', 'cov', 'corrcoef',
-        'msort', 'median', 'sinc', 'hamming', 'hanning', 'bartlett',
-        'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc', 'add_docstring',
-        'meshgrid', 'delete', 'insert', 'append', 'interp', 'add_newdoc_ufunc']
+           'percentile', 'diff', 'gradient', 'angle', 'unwrap', 'sort_complex',
+           'disp', 'extract', 'place', 'nansum', 'nanmax', 'nanargmax',
+           'nanargmin', 'nanmin', 'vectorize', 'asarray_chkfinite', 'average',
+           'histogram', 'histogramdd', 'bincount', 'digitize', 'cov',
+           'corrcoef', 'msort', 'median', 'sinc', 'hamming', 'hanning',
+           'bartlett', 'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc',
+           'add_docstring', 'meshgrid', 'delete', 'insert', 'append', 'interp',
+           'add_newdoc_ufunc']
 
 import warnings
 import types
@@ -1696,80 +1697,9 @@ def disp(mesg, device=None, linefeed=True):
     device.flush()
     return
 
-# return number of input arguments and
-#  number of default arguments
-
-def _get_nargs(obj):
-    import re
-
-    terr = re.compile(r'.*? takes (exactly|at least) (?P<exargs>(\d+)|(\w+))' +
-            r' argument(s|) \((?P<gargs>(\d+)|(\w+)) given\)')
-    def _convert_to_int(strval):
-        try:
-            result = int(strval)
-        except ValueError:
-            if strval=='zero':
-                result = 0
-            elif strval=='one':
-                result = 1
-            elif strval=='two':
-                result = 2
-            # How high to go? English only?
-            else:
-                raise
-        return result
-
-    if not callable(obj):
-        raise TypeError(
-                "Object is not callable.")
-    if sys.version_info[0] >= 3:
-        # inspect currently fails for binary extensions
-        # like math.cos. So fall back to other methods if
-        # it fails.
-        import inspect
-        try:
-            spec = inspect.getargspec(obj)
-            nargs = len(spec.args)
-            if spec.defaults:
-                ndefaults = len(spec.defaults)
-            else:
-                ndefaults = 0
-            if inspect.ismethod(obj):
-                nargs -= 1
-            return nargs, ndefaults
-        except:
-            pass
-
-    if hasattr(obj,'func_code'):
-        fcode = obj.func_code
-        nargs = fcode.co_argcount
-        if obj.func_defaults is not None:
-            ndefaults = len(obj.func_defaults)
-        else:
-            ndefaults = 0
-        if isinstance(obj, types.MethodType):
-            nargs -= 1
-        return nargs, ndefaults
-
-    try:
-        obj()
-        return 0, 0
-    except TypeError, msg:
-        m = terr.match(str(msg))
-        if m:
-            nargs = _convert_to_int(m.group('exargs'))
-            ndefaults = _convert_to_int(m.group('gargs'))
-            if isinstance(obj, types.MethodType):
-                nargs -= 1
-            return nargs, ndefaults
-
-    raise ValueError(
-            "failed to determine the number of arguments for %s" % (obj))
-
-
 class vectorize(object):
     """
-    vectorize(pyfunc, otypes='', doc=None)
+    vectorize(pyfunc, otypes='', doc=None, excluded=None, cache=False)
 
     Generalized function class.
 
@@ -1792,13 +1722,30 @@ class vectorize(object):
         typecode characters or a list of data type specifiers. There should
         be one data type specifier for each output.
     doc : str, optional
-        The docstring for the function. If None, the docstring will be the
-        `pyfunc` one.
+        The docstring for the function. If `None`, the docstring will be the
+        ``pyfunc.__doc__``.
+    excluded : set, optional
+        Set of strings or integers representing the positional or keyword
+        arguments for which the function will not be vectorized.  These will be
+        passed directly to `pyfunc` unmodified.
+        
+        .. versionadded:: 1.7.0
+    
+    cache : bool, optional
+       If `True`, then cache the first function call that determines the number
+       of outputs if `otypes` is not provided.
+
+        .. versionadded:: 1.7.0
+
+    Returns
+    -------
+    vectorized : callable
+        Vectorized function.
 
     Examples
     --------
     >>> def myfunc(a, b):
-    ...     \"\"\"Return a-b if a>b, otherwise return a+b\"\"\"
+    ...     "Return a-b if a>b, otherwise return a+b"
     ...     if a > b:
     ...         return a - b
     ...     else:
@@ -1828,78 +1775,169 @@ class vectorize(object):
     >>> type(out[0])
     <type 'numpy.float64'>
 
+    The `excluded` argument can be used to prevent vectorizing over certain
+    arguments.  This can be useful for array-like arguments of a fixed length
+    such as the coefficients for a polynomial as in `polyval`:
+
+    >>> def mypolyval(p, x):
+    ...     _p = list(p)
+    ...     res = _p.pop(0)
+    ...     while _p:
+    ...         res = res*x + _p.pop(0)
+    ...     return res
+    >>> vpolyval = np.vectorize(mypolyval, excluded=['p'])
+    >>> vpolyval(p=[1, 2, 3], x=[0, 1])
+    array([3, 6])
+
+    Positional arguments may also be excluded by specifying their position:
+
+    >>> vpolyval.excluded.add(0)
+    >>> vpolyval([1, 2, 3], x=[0, 1])
+    array([3, 6])
+
+    Notes
+    -----
+    The `vectorize` function is provided primarily for convenience, not for
+    performance. The implementation is essentially a for loop.
+
+    If `otypes` is not specified, then a call to the function with the first
+    argument will be used to determine the number of outputs.  The results of
+    this call will be cached if `cache` is `True` to prevent calling the
+    function twice.  However, to implement the cache, the original function must
+    be wrapped which will slow down subsequent calls, so only do this if your
+    function is expensive.
+
+    The new keyword argument interface and `excluded` argument support further
+    degrades performance.
     """
-    def __init__(self, pyfunc, otypes='', doc=None):
-        self.thefunc = pyfunc
-        self.ufunc = None
-        nin, ndefault = _get_nargs(pyfunc)
-        if nin == 0 and ndefault == 0:
-            self.nin = None
-            self.nin_wo_defaults = None
-        else:
-            self.nin = nin
-            self.nin_wo_defaults = nin - ndefault
-        self.nout = None
+    def __init__(self, pyfunc, otypes='', doc=None, excluded=None, cache=False):
+        self.pyfunc = pyfunc
+        self.cache = cache
+
         if doc is None:
             self.__doc__ = pyfunc.__doc__
         else:
             self.__doc__ = doc
+
         if isinstance(otypes, str):
             self.otypes = otypes
             for char in self.otypes:
                 if char not in typecodes['All']:
-                    raise ValueError(
-                            "invalid otype specified")
+                    raise ValueError("Invalid otype specified: %s" % (char,))
         elif iterable(otypes):
             self.otypes = ''.join([_nx.dtype(x).char for x in otypes])
         else:
-            raise ValueError(
-                    "Invalid otype specification")
-        self.lastcallargs = 0
+            raise ValueError("Invalid otype specification")
 
-    def __call__(self, *args):
-        # get number of outputs and output types by calling
-        #  the function on the first entries of args
-        nargs = len(args)
-        if self.nin:
-            if (nargs > self.nin) or (nargs < self.nin_wo_defaults):
-                raise ValueError(
-                        "Invalid number of arguments")
+        # Excluded variable support
+        if excluded is None:
+            excluded = set()
+        self.excluded = set(excluded)
 
-        # we need a new ufunc if this is being called with more arguments.
-        if (self.lastcallargs != nargs):
-            self.lastcallargs = nargs
-            self.ufunc = None
-            self.nout = None
+        if self.otypes and not self.excluded:
+            self._ufunc = None      # Caching to improve default performance
 
-        if self.nout is None or self.otypes == '':
-            newargs = []
-            for arg in args:
-                newargs.append(asarray(arg).flat[0])
-            theout = self.thefunc(*newargs)
-            if isinstance(theout, tuple):
-                self.nout = len(theout)
-            else:
-                self.nout = 1
-                theout = (theout,)
-            if self.otypes == '':
-                otypes = []
-                for k in range(self.nout):
-                    otypes.append(asarray(theout[k]).dtype.char)
-                self.otypes = ''.join(otypes)
-
-        # Create ufunc if not already created
-        if (self.ufunc is None):
-            self.ufunc = frompyfunc(self.thefunc, nargs, self.nout)
-
-        # Convert to object arrays first
-        newargs = [array(arg,copy=False,subok=True,dtype=object) for arg in args]
-        if self.nout == 1:
-            _res = array(self.ufunc(*newargs),copy=False,
-                         subok=True,dtype=self.otypes[0])
+    def __call__(self, *args, **kwargs):
+        """
+        Return arrays with the results of `pyfunc` broadcast (vectorized) over
+        `args` and `kwargs` not in `excluded`.
+        """
+        excluded = self.excluded
+        if not kwargs and not excluded:
+            func = self.pyfunc
+            vargs = args
         else:
-            _res = tuple([array(x,copy=False,subok=True,dtype=c) \
-                          for x, c in zip(self.ufunc(*newargs), self.otypes)])
+            # The wrapper accepts only positional arguments: we use `names` and
+            # `inds` to mutate `the_args` and `kwargs` to pass to the original
+            # function.
+            nargs = len(args)
+
+            names = [_n for _n in kwargs if _n not in excluded]
+            inds = [_i for _i in range(nargs) if _i not in excluded]
+            the_args = list(args)
+            def func(*vargs):
+                for _n, _i in enumerate(inds):
+                    the_args[_i] = vargs[_n] 
+                kwargs.update(zip(names, vargs[len(inds):]))
+                return self.pyfunc(*the_args, **kwargs)
+
+            vargs = [args[_i] for _i in inds]
+            vargs.extend([kwargs[_n] for _n in names])
+
+        return self._vectorize_call(func=func, args=vargs)
+
+    def _get_ufunc_and_otypes(self, func, args):
+        """Return (ufunc, otypes)."""
+        # frompyfunc will fail if args is empty
+        assert args
+
+        if self.otypes:
+            otypes = self.otypes
+            nout = len(otypes)
+
+            # Note logic here: We only *use* self._ufunc if func is self.pyfunc
+            # even though we set self._ufunc regardless.
+            if func is self.pyfunc and self._ufunc is not None:
+                ufunc = self._ufunc
+            else:
+                ufunc = self._ufunc = frompyfunc(func, len(args), nout)
+        else:
+            # Get number of outputs and output types by calling the function on
+            # the first entries of args.  We also cache the result to prevent
+            # the subsequent call when the ufunc is evaluated.
+            # Assumes that ufunc first evaluates the 0th elements in the input
+            # arrays (the input values are not checked to ensure this)
+            inputs = [asarray(_a).flat[0] for _a in args]
+            outputs = func(*inputs)
+
+            # Performance note: profiling indicates that -- for simple functions
+            # at least -- this wrapping can almost double the execution time.
+            # Hence we make it optional.
+            if self.cache:
+                _cache = [outputs]
+                def _func(*vargs):
+                    if _cache:
+                        return _cache.pop()
+                    else:
+                        return func(*vargs)
+            else:
+                _func = func
+
+            if isinstance(outputs, tuple):
+                nout = len(outputs)
+            else:
+                nout = 1
+                outputs = (outputs,)
+
+            otypes = ''.join([asarray(outputs[_k]).dtype.char
+                              for _k in range(nout)])
+
+            # Performance note: profiling indicates that creating the ufunc is
+            # not a significant cost compared with wrapping so it seems not
+            # worth trying to cache this.
+            ufunc = frompyfunc(_func, len(args), nout)
+
+        return ufunc, otypes
+        
+    def _vectorize_call(self, func, args):
+        """Vectorized call to `func` over positional `args`."""
+        if not args:
+            _res = func()
+        else:
+            ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
+
+            # Convert args to object arrays first
+            inputs = [array(_a, copy=False, subok=True, dtype=object) 
+                      for _a in args]            
+
+            outputs = ufunc(*inputs)
+
+            if ufunc.nout == 1:
+                _res = array(outputs,
+                             copy=False, subok=True, dtype=otypes[0])
+            else:
+                _res = tuple([array(_x, copy=False, subok=True, dtype=_t)
+                              for _x, _t in zip(outputs, otypes)])
         return _res
 
 def cov(m, y=None, rowvar=1, bias=0, ddof=None):
@@ -2593,7 +2631,7 @@ def i0(x):
 
     References
     ----------
-    .. [1] C. W. Clenshaw, "Chebyshev series for mathematical functions," in
+    .. [1] C. W. Clenshaw, "Chebyshev series for mathematical functions", in
            *National Physical Laboratory Mathematical Tables*, vol. 5, London:
            Her Majesty's Stationery Office, 1962.
     .. [2] M. Abramowitz and I. A. Stegun, *Handbook of Mathematical
