@@ -658,9 +658,8 @@ s_ = IndexExpression(maketuple=False)
 # The following functions complement those in twodim_base, but are
 # applicable to N-dimensions.
 
-def fill_diagonal(a, val):
-    """
-    Fill the main diagonal of the given array of any dimensionality.
+def fill_diagonal(a, val, wrap=False):
+    """Fill the main diagonal of the given array of any dimensionality.
 
     For an array `a` with ``a.ndim > 2``, the diagonal is the list of
     locations with indices ``a[i, i, ..., i]`` all identical. This function
@@ -674,6 +673,10 @@ def fill_diagonal(a, val):
     val : scalar
       Value to be written on the diagonal, its type must be compatible with
       that of the array a.
+
+    wrap: bool For tall matrices in NumPy version up to 1.6.2, the
+      diagonal "wrapped" after N columns. You can have this behavior
+      with this option. This affect only tall matrices.
 
     See also
     --------
@@ -716,13 +719,42 @@ def fill_diagonal(a, val):
            [0, 0, 0],
            [0, 0, 4]])
 
+    # tall matrices no wrap
+    >>> a = np.zeros((5, 3),int)
+    >>> fill_diagonal(a, 4)
+    array([[4, 0, 0],
+           [0, 4, 0],
+           [0, 0, 4],
+           [0, 0, 0],
+           [0, 0, 0]])
+
+    # tall matrices wrap
+    >>> a = np.zeros((5, 3),int)
+    >>> fill_diagonal(a, 4)
+    array([[4, 0, 0],
+           [0, 4, 0],
+           [0, 0, 4],
+           [0, 0, 0],
+           [4, 0, 0]])
+
+    # wide matrices
+    >>> a = np.zeros((3, 5),int)
+    >>> fill_diagonal(a, 4)
+    array([[4, 0, 0, 0, 0],
+           [0, 4, 0, 0, 0],
+           [0, 0, 4, 0, 0]])
+
     """
     if a.ndim < 2:
         raise ValueError("array must be at least 2-d")
+    end = None
     if a.ndim == 2:
         # Explicit, fast formula for the common case.  For 2-d arrays, we
         # accept rectangular ones.
         step = a.shape[1] + 1
+        #This is needed to don't have tall matrix have the diagonal wrap.
+        if not wrap:
+            end = a.shape[1] * a.shape[1]
     else:
         # For more than d=2, the strided formula is only valid for arrays with
         # all dimensions equal, so we check first.
@@ -731,7 +763,7 @@ def fill_diagonal(a, val):
         step = 1 + (cumprod(a.shape[:-1])).sum()
 
     # Write the value out into the diagonal.
-    a.flat[::step] = val
+    a.flat[:end:step] = val
 
 
 def diag_indices(n, ndim=2):
