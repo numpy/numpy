@@ -5718,6 +5718,12 @@ class MaskedConstant(MaskedArray):
     def flatten(self):
         return masked_array([self._data], dtype=float, mask=[True])
 
+    def __reduce__(self):
+        """Override of MaskedArray's __reduce__.
+        """
+        return (self.__class__, ())
+
+
 masked = masked_singleton = MaskedConstant()
 
 
