@@ -18,6 +18,13 @@ double npy_copysign(double x, double y)
 }
 #endif
 
+/*
+ The below code is provided for compilers which do not yet provide C11 compatibility (gcc 4.5 and older)
+ */
+#ifndef LDBL_TRUE_MIN  
+#define LDBL_TRUE_MIN __LDBL_DENORM_MIN__
+#endif
+
 #if !defined(HAVE_DECL_SIGNBIT)
 #include "_signbit.c"
 
@@ -205,7 +212,7 @@ npy_longdouble _nextl(npy_longdouble x, int p)
         }
         if(ihx <= 0x0360000000000000LL) {  /* x <= LDBL_MIN */
             u = math_opt_barrier (x);
-            x -= __LDBL_DENORM_MIN__;
+            x -= LDBL_TRUE_MIN;
             if (ihx < 0x0360000000000000LL
                     || (hx > 0 && (npy_int64) lx <= 0)
                     || (hx < 0 && (npy_int64) lx > 1)) {
@@ -229,14 +236,14 @@ npy_longdouble _nextl(npy_longdouble x, int p)
         }
         if(ihx <= 0x0360000000000000LL) {  /* x <= LDBL_MIN */
             u = math_opt_barrier (x);
-            x += __LDBL_DENORM_MIN__;
+            x += LDBL_TRUE_MIN;
             if (ihx < 0x0360000000000000LL
                     || (hx > 0 && (npy_int64) lx < 0 && lx != 0x8000000000000001LL)
                     || (hx < 0 && (npy_int64) lx >= 0)) {
                 u = u * u;
                 math_force_eval (u);        /* raise underflow flag */
             }
-            if (x == 0.0L)  /* handle negative __LDBL_DENORM_MIN__ case */
+            if (x == 0.0L)  /* handle negative LDBL_TRUE_MIN case */
                 x = -0.0L;
             return x;
         }
