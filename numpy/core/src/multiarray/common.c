@@ -513,30 +513,15 @@ check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis)
     if ((*index < -max_item) || (*index >= max_item)) {
         /* Try to be as clear as possible about what went wrong. */
         if (axis >= 0) {
-            if (max_item > 0) {
-                PyErr_Format(PyExc_IndexError,
-                             "index %"NPY_INTP_FMT" is out of bounds for axis %d: "
-                             "[%"NPY_INTP_FMT",%"NPY_INTP_FMT")",
-                             *index, axis,
-                             -max_item, max_item);
-            } else {
-                PyErr_Format(PyExc_IndexError,
-                             "index %"NPY_INTP_FMT" is out of bounds for 0-d axis %d",
-                             *index, axis);
-            }
+            PyErr_Format(PyExc_IndexError,
+                         "index %"NPY_INTP_FMT" is out of bounds "
+                         "for axis %d with size %"NPY_INTP_FMT,
+                         *index, axis, max_item);
         } else {
-            if (max_item > 0) {
-                PyErr_Format(PyExc_IndexError,
-                             "index %"NPY_INTP_FMT" is out of bounds: "
-                             "[%"NPY_INTP_FMT",%"NPY_INTP_FMT")",
-                             *index,
-                             -max_item, max_item);
-            } else {
-                /* I don't believe there are currently any cases where this occurs. */
-                PyErr_Format(PyExc_IndexError,
-                             "index %"NPY_INTP_FMT" is out of bounds for 0-d axis",
-                             *index);
-            }
+            PyErr_Format(PyExc_IndexError,
+                         "index %"NPY_INTP_FMT" is out of bounds "
+                         "for size %"NPY_INTP_FMT,
+                         *index, max_item);
         }
         return -1;
     }

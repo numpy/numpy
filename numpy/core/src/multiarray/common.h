@@ -45,7 +45,8 @@ _array_typedescr_fromstr(char *str);
  * Returns -1 and sets an exception if *index is an invalid index for
  * an array of size max_item, otherwise adjusts it in place to be
  * 0 <= *index < max_item, and returns 0.
- * If axis >= 0, it will be reported as part of the exception.
+ * 'axis' should be the array axis that is being indexed over, if known. If
+ * unknown, use -1.
  */
 NPY_NO_EXPORT int
 check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis);
