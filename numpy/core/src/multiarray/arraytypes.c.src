@@ -3531,14 +3531,9 @@ static int
         for (i = 0; i < n_outer; i++) {
             for (j = 0; j < m_middle; j++) {
                 tmp = indarray[j];
-                if (tmp < 0) {
-                    tmp = tmp + nindarray;
-                }
-                if ((tmp < 0) || (tmp >= nindarray)) {
-                    PyErr_SetString(PyExc_IndexError,
-                            "index out of range for array");
+                /* We don't know what axis we're operating on, so don't report it in case of an error. */
+                if (check_and_adjust_index(&tmp, nindarray, -1) < 0)
                     return 1;
-                }
                 if (nelem == 1) {
                     *dest++ = *(src + tmp);
                 }

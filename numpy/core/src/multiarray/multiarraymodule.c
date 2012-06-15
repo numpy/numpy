@@ -320,6 +320,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
     PyArrayObject *ret = NULL;
     PyArrayObject_fields *sliding_view = NULL;
     int has_maskna;
+    int orig_axis = axis;
 
     if (narrays <= 0) {
         PyErr_SetString(PyExc_ValueError,
@@ -342,7 +343,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
     }
     if (axis < 0 || axis >= ndim) {
         PyErr_Format(PyExc_IndexError,
-                        "axis %d out of bounds [0, %d)", axis, ndim);
+                     "axis %d out of bounds [0, %d)", orig_axis, ndim);
         return NULL;
     }
 

@@ -506,6 +506,32 @@ _array_typedescr_fromstr(char *c_str)
     return descr;
 }
 
+NPY_NO_EXPORT int
+check_and_adjust_index(npy_intp *index, npy_intp max_item, int axis)
+{
+    /* Check that index is valid, taking into account negative indices */
+    if ((*index < -max_item) || (*index >= max_item)) {
+        /* Try to be as clear as possible about what went wrong. */
+        if (axis >= 0) {
+            PyErr_Format(PyExc_IndexError,
+                         "index %"NPY_INTP_FMT" is out of bounds "
+                         "for axis %d with size %"NPY_INTP_FMT,
+                         *index, axis, max_item);
+        } else {
+            PyErr_Format(PyExc_IndexError,
+                         "index %"NPY_INTP_FMT" is out of bounds "
+                         "for size %"NPY_INTP_FMT,
+                         *index, max_item);
+        }
+        return -1;
+    }
+    /* adjust negative indices */
+    if (*index < 0) {
+        *index += max_item;
+    }
+    return 0;
+}
+
 NPY_NO_EXPORT char *
 index2ptr(PyArrayObject *mp, npy_intp i)
 {
@@ -516,17 +542,12 @@ index2ptr(PyArrayObject *mp, npy_intp i)
         return NULL;
     }
     dim0 = PyArray_DIMS(mp)[0];
-    if (i < 0) {
-        i += dim0;
-    }
-    if (i == 0 && dim0 > 0) {
+    if (check_and_adjust_index(&i, dim0, 0) < 0)
+        return NULL;
+    if (i == 0) {
         return PyArray_DATA(mp);
     }
-    if (i > 0 && i < dim0) {
-        return PyArray_DATA(mp)+i*PyArray_STRIDES(mp)[0];
-    }
-    PyErr_SetString(PyExc_IndexError,"index out of bounds");
-    return NULL;
+    return PyArray_DATA(mp)+i*PyArray_STRIDES(mp)[0];
 }
 
 NPY_NO_EXPORT int
