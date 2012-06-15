@@ -362,10 +362,7 @@ NpyMaskValue_Create(npy_bool exposed, npy_uint8 payload)
    * allocated.
    */
 
-  /* Data buffer */
-#define PyDataMem_NEW(size) ((char *)malloc(size))
-#define PyDataMem_FREE(ptr)  free(ptr)
-#define PyDataMem_RENEW(ptr,size) ((char *)realloc(ptr,size))
+  /* Data buffer - PyDataMem_NEW/FREE/RENEW are in multiarraymodule.c */
 
 #define NPY_USE_PYMEM 1
 

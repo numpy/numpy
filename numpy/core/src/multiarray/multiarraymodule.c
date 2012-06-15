@@ -3660,6 +3660,180 @@ test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
     return PyInt_FromLong(a);
 }
 
+/* Array memory management and allocation logging.
+ *
+ * When allocation logging is enabled, we use a dynamic buffer to
+ * record each malloc/free/realloc.  This buffer can be fetched using
+ * the alloc_log_fetch() python function, and cleared with
+ * alloc_log_clear().
+ */
+
+typedef struct {
+    char *type;   /* "malloc", "free", "realloc" */
+    void *inptr;  /* NULL for malloc */
+    void *outptr; /* NULL for free */
+    size_t size;  /* 0 for FREE */
+} _alloc_event;
+
+static int _alloc_log_enabled = 0;
+static _alloc_event *_alloc_log_buffer = NULL;
+static int _alloc_log_count = 0;
+static int _alloc_log_size = 0;
+
+static void
+_alloc_log_event(char *type, void *inptr, void *outptr, size_t size)
+{
+    /* Locking provided by the GIL. */
+    PyGILState_STATE gilstate = PyGILState_Ensure();
+
+    if (_alloc_log_count == _alloc_log_size) {
+        /* buffer is full, or not yet allocated. */
+        int new_size = (_alloc_log_size == 0 ? 1000 : 2 * _alloc_log_size);
+        _alloc_event *new_buffer;
+        new_buffer = (_alloc_event *) realloc((void *)_alloc_log_buffer,
+                                              new_size * sizeof(_alloc_event));
+        if (new_buffer == NULL) {
+            /* We leave the buffer in its current state, but disable logging. */
+            _alloc_log_enabled = 0;
+
+            /* We can't go into python to report the error. */
+            fprintf(stderr,
+                    "Numpy allocation log of size %d bytes could not be allocated.\n"
+                    "Disabling allocation logging.\n",
+                    new_size * sizeof(_alloc_event));
+            goto end;
+        }
+        _alloc_log_buffer = new_buffer;
+        _alloc_log_size = new_size;
+    }
+
+    _alloc_log_buffer[_alloc_log_count].type = type;
+    _alloc_log_buffer[_alloc_log_count].inptr = inptr;
+    _alloc_log_buffer[_alloc_log_count].outptr = outptr;
+    _alloc_log_buffer[_alloc_log_count].size = size;
+    _alloc_log_count++;
+
+ end:
+    PyGILState_Release(gilstate);
+}
+
+/*NUMPY_API
+ * Allocates memory for array data.
+ */
+NPY_NO_EXPORT void *
+PyDataMem_NEW(size_t size)
+{
+    void *result;
+
+    result = malloc(size);
+    if (_alloc_log_enabled) {
+        _alloc_log_event("malloc", NULL, result, size);
+    }
+    return result;
+}
+
+/*NUMPY_API
+ * Free memory for array data.
+ */
+NPY_NO_EXPORT void
+PyDataMem_FREE(void *ptr)
+{
+    free(ptr);
+    if (_alloc_log_enabled) {
+        _alloc_log_event("free", ptr, NULL, 0);
+    }
+}
+
+/*NUMPY_API
+ * Reallocate/resize memory for array data.
+ */
+NPY_NO_EXPORT void *
+PyDataMem_RENEW(void *ptr, size_t size)
+{
+    void *result;
+
+    result = realloc(ptr, size);
+    if (_alloc_log_enabled) {
+        _alloc_log_event("realloc", ptr, result, size);
+    }
+    return result;
+}
+
+static PyObject *
+alloc_log_enable(PyObject *NPY_UNUSED(module), PyObject *noargs)
+{
+    _alloc_log_enabled = 1;
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject *
+alloc_log_disable(PyObject *NPY_UNUSED(module), PyObject *noargs)
+{
+    _alloc_log_enabled = 0;
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
+static PyObject *
+alloc_log_isenabled(PyObject *NPY_UNUSED(module), PyObject *noargs)
+{
+    return PyBool_FromLong((long)_alloc_log_enabled);
+}
+
+static PyObject *
+alloc_log_fetch(PyObject *NPY_UNUSED(module))
+{
+    PyObject *ret, *event;
+    int i, count;
+    _alloc_event *buffer;
+
+    /* Reset the global buffer. Any events caused by a gc() during the
+     * calls below will start a new log.
+     */
+    count = _alloc_log_count;
+    buffer = _alloc_log_buffer;
+    _alloc_log_buffer = NULL;
+    _alloc_log_size = 0;
+    _alloc_log_count = 0;
+
+    ret = PyList_New(count);
+    if (ret == NULL) {
+        goto fail;
+    }
+
+    for (i = 0; i < count; i++) {
+        event = Py_BuildValue("sNNN",
+                              buffer[i].type,
+                              PyLong_FromVoidPtr(buffer[i].inptr),
+                              PyLong_FromVoidPtr(buffer[i].outptr),
+                              PyLong_FromSsize_t(buffer[i].size));
+        if (event == NULL) {
+            goto fail;
+        }
+        PyList_SET_ITEM(ret, i, event);
+    }
+
+    free(buffer);
+    return ret;
+
+ fail:
+    free(buffer);
+    Py_XDECREF(ret);
+    return NULL;
+}
+
+static PyObject *
+alloc_log_clear(PyObject *NPY_UNUSED(module))
+{
+    free(_alloc_log_buffer);
+    _alloc_log_buffer = NULL;
+    _alloc_log_size = 0;
+    _alloc_log_count = 0;
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",
         (PyCFunction)array__get_ndarray_c_version,
@@ -3806,6 +3980,21 @@ static struct PyMethodDef array_module_methods[] = {
     {"test_interrupt",
         (PyCFunction)test_interrupt,
         METH_VARARGS, NULL},
+    {"alloc_log_enable",
+        (PyCFunction)alloc_log_enable,
+        METH_NOARGS,  NULL},
+    {"alloc_log_disable",
+        (PyCFunction)alloc_log_disable,
+        METH_NOARGS,  NULL},
+    {"alloc_log_isenabled",
+        (PyCFunction)alloc_log_isenabled,
+        METH_NOARGS,  NULL},
+    {"alloc_log_fetch",
+        (PyCFunction)alloc_log_fetch,
+        METH_NOARGS,  NULL},
+    {"alloc_log_clear",
+        (PyCFunction)alloc_log_clear,
+        METH_NOARGS,  NULL},
     {NULL, NULL, 0, NULL}                /* sentinel */
 };
 
