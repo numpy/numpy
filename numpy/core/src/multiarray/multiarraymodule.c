@@ -3661,23 +3661,33 @@ test_interrupt(PyObject *NPY_UNUSED(self), PyObject *args)
 
 /* malloc/free/realloc hook */
 NPY_NO_EXPORT PyDataMem_EventHookFunc *_PyDataMem_eventhook;
+NPY_NO_EXPORT void *_PyDataMem_eventhook_user_data;
 
 /*NUMPY_API
  * Sets the allocation event hook for numpy array data.
  * Takes a PyDataMem_EventHookFunc *, which has the signature:
- *        void hook(void *old, void *new, size_t size).
- * Returns a pointer to the previous hook or NULL.
+ *        void hook(void *old, void *new, size_t size, void *user_data).
+ *   Also takes a void *user_data, and void **old_data.
+ *
+ * Returns a pointer to the previous hook or NULL.  If old_data is
+ * non-NULL, the previous user_data pointer will be copied to it.
+ *
  *
  * If not NULL, hook will be called at the end of each PyDataMem_NEW/FREE/RENEW:
- *   result = PyDataMem_NEW(size)        -> (*hook)(NULL, result, size)
- *   PyDataMem_FREE(ptr)                 -> (*hook)(ptr, NULL, 0)
- *   result = PyDataMem_RENEW(ptr, size) -> (*hook)(ptr, result, size)
+ *   result = PyDataMem_NEW(size)        -> (*hook)(NULL, result, size, user_data)
+ *   PyDataMem_FREE(ptr)                 -> (*hook)(ptr, NULL, 0, user_data)
+ *   result = PyDataMem_RENEW(ptr, size) -> (*hook)(ptr, result, size, user_data)
  */
 NPY_NO_EXPORT PyDataMem_EventHookFunc *
-PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook)
+PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook,
+                       void *user_data, void **old_data)
 {
     PyDataMem_EventHookFunc *temp = _PyDataMem_eventhook;
     _PyDataMem_eventhook = newhook;
+    if (old_data != NULL) {
+        *old_data = _PyDataMem_eventhook_user_data;
+    }
+    _PyDataMem_eventhook_user_data = user_data;
     return temp;
 }
 
@@ -3691,7 +3701,8 @@ PyDataMem_NEW(size_t size)
 
     result = malloc(size);
     if (_PyDataMem_eventhook != NULL) {
-        (*_PyDataMem_eventhook)(NULL, result, size);
+        (*_PyDataMem_eventhook)(NULL, result, size,
+                                _PyDataMem_eventhook_user_data);
     }
     return (char *)result;
 }
@@ -3704,7 +3715,8 @@ PyDataMem_FREE(void *ptr)
 {
     free(ptr);
     if (_PyDataMem_eventhook != NULL) {
-        (*_PyDataMem_eventhook)(ptr, NULL, 0);
+        (*_PyDataMem_eventhook)(ptr, NULL, 0,
+                                _PyDataMem_eventhook_user_data);
     }
 }
 
@@ -3718,7 +3730,8 @@ PyDataMem_RENEW(void *ptr, size_t size)
 
     result = realloc(ptr, size);
     if (_PyDataMem_eventhook != NULL) {
-        (*_PyDataMem_eventhook)(ptr, result, size);
+        (*_PyDataMem_eventhook)(ptr, result, size,
+                                _PyDataMem_eventhook_user_data);
     }
     return (char *)result;
 }

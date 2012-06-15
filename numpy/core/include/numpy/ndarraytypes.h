@@ -1977,7 +1977,8 @@ typedef struct {
  * This is a function for hooking into the PyDataMem_NEW/FREE/RENEW functions.
  * See the documentation for PyDataMem_SetEventHook.
  */
-typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size);
+typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
+                                       void *user_data);
 
 #if !(defined(NPY_NO_DEPRECATED_API) && (NPY_API_VERSION <= NPY_NO_DEPRECATED_API))
 #include "npy_deprecated_api.h"
