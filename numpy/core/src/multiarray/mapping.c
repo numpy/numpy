@@ -57,11 +57,7 @@ array_big_item(PyArrayObject *self, npy_intp i)
 
     /* Bounds check and get the data pointer */
     dim0 = PyArray_DIM(self, 0);
-    if (i < 0) {
-        i += dim0;
-    }
-    if (i < 0 || i >= dim0) {
-        PyErr_SetString(PyExc_IndexError,"index out of bounds");
+    if (check_and_adjust_index(&i, dim0, 0) < 0) {
         return NULL;
     }
     item = PyArray_DATA(self) + i * PyArray_STRIDE(self, 0);
@@ -113,19 +109,18 @@ _array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
 
 /* contains optimization for 1-d arrays */
 NPY_NO_EXPORT PyObject *
-array_item_nice(PyArrayObject *self, Py_ssize_t i)
+array_item_nice(PyArrayObject *self, Py_ssize_t _i)
 {
+    /* Workaround Python 2.4: Py_ssize_t not the same as npyint_p */
+    npy_intp i = _i;
+
     if (PyArray_NDIM(self) == 1) {
         char *item;
         npy_intp dim0;
 
         /* Bounds check and get the data pointer */
         dim0 = PyArray_DIM(self, 0);
-        if (i < 0) {
-            i += dim0;
-        }
-        if (i < 0 || i >= dim0) {
-            PyErr_SetString(PyExc_IndexError,"index out of bounds");
+        if (check_and_adjust_index(&i, dim0, 0) < 0) {
             return NULL;
         }
         item = PyArray_DATA(self) + i * PyArray_STRIDE(self, 0);
@@ -200,11 +195,7 @@ array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v)
 
     /* Bounds check and get the data pointer */
     dim0 = PyArray_DIM(self, 0);
-    if (i < 0) {
-        i += dim0;
-    }
-    if (i < 0 || i >= dim0) {
-        PyErr_SetString(PyExc_IndexError,"index out of bounds");
+    if (check_and_adjust_index(&i, dim0, 0) < 0) {
         return -1;
     }
     item = PyArray_DATA(self) + i * PyArray_STRIDE(self, 0);
@@ -1600,19 +1591,10 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         if (!PyArray_HASMASKNA(self)) {
             for (idim = 0; idim < ndim; idim++) {
                 npy_intp v = vals[idim];
-                if (v < 0) {
-                    v += shape[idim];
-                }
-                if (v < 0 || v >= shape[idim]) {
-                    PyErr_Format(PyExc_IndexError,
-                                 "index (%"NPY_INTP_FMT") out of range "\
-                                 "(0<=index<%"NPY_INTP_FMT") in dimension %d",
-                                 vals[idim], PyArray_DIMS(self)[idim], idim);
+                if (check_and_adjust_index(&v, shape[idim], idim) < 0) {
                     return -1;
                 }
-                else {
-                    item += v * strides[idim];
-                }
+                item += v * strides[idim];
             }
             return PyArray_DESCR(self)->f->setitem(op, item, self);
         }
@@ -1623,20 +1605,11 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
 
             for (idim = 0; idim < ndim; idim++) {
                 npy_intp v = vals[idim];
-                if (v < 0) {
-                    v += shape[idim];
-                }
-                if (v < 0 || v >= shape[idim]) {
-                    PyErr_Format(PyExc_IndexError,
-                                 "index (%"NPY_INTP_FMT") out of range "\
-                                 "(0<=index<%"NPY_INTP_FMT") in dimension %d",
-                                 vals[idim], PyArray_DIMS(self)[idim], idim);
+                if (check_and_adjust_index(&v, shape[idim], idim) < 0) {
                     return -1;
                 }
-                else {
-                    item += v * strides[idim];
-                    maskna_item += v * maskna_strides[idim];
-                }
+                item += v * strides[idim];
+                maskna_item += v * maskna_strides[idim];
             }
             na = NpyNA_FromObject(op, 1);
             if (na == NULL) {
@@ -1758,19 +1731,10 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
         if (!PyArray_HASMASKNA(self)) {
             for (idim = 0; idim < ndim; idim++) {
                 npy_intp v = vals[idim];
-                if (v < 0) {
-                    v += shape[idim];
-                }
-                if (v < 0 || v >= shape[idim]) {
-                    PyErr_Format(PyExc_IndexError,
-                                 "index (%"NPY_INTP_FMT") out of range "\
-                                 "(0<=index<%"NPY_INTP_FMT") in dimension %d",
-                                 vals[idim], PyArray_DIMS(self)[idim], idim);
+                if (check_and_adjust_index(&v, shape[idim], idim) < 0) { 
                     return NULL;
                 }
-                else {
-                    item += v * strides[idim];
-                }
+                item += v * strides[idim];
             }
             return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
         }
@@ -1780,20 +1744,11 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 
             for (idim = 0; idim < ndim; idim++) {
                 npy_intp v = vals[idim];
-                if (v < 0) {
-                    v += shape[idim];
-                }
-                if (v < 0 || v >= shape[idim]) {
-                    PyErr_Format(PyExc_IndexError,
-                                 "index (%"NPY_INTP_FMT") out of range "\
-                                 "(0<=index<%"NPY_INTP_FMT") in dimension %d",
-                                 vals[idim], PyArray_DIMS(self)[idim], idim);
+                if (check_and_adjust_index(&v, shape[idim], idim) < 0) {
                     return NULL;
                 }
-                else {
-                    item += v * strides[idim];
-                    maskna_item += v * maskna_strides[idim];
-                }
+                item += v * strides[idim];
+                maskna_item += v * maskna_strides[idim];
             }
             if (NpyMaskValue_IsExposed((npy_mask)*maskna_item)) {
                 return PyArray_Scalar(item, PyArray_DESCR(self),
@@ -2131,7 +2086,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 
     subnd = PyArray_NDIM(arr) - mit->numiter;
     if (subnd < 0) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_IndexError,
                         "too many indices for array");
         return;
     }
@@ -2247,7 +2202,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
         goto fail;
     }
     if (mit->ait->size == 0 && mit->size != 0) {
-        PyErr_SetString(PyExc_ValueError,
+        PyErr_SetString(PyExc_IndexError,
                         "invalid index into a 0-size array");
         goto fail;
     }
@@ -2260,14 +2215,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
         while (it->index < it->size) {
             indptr = ((npy_intp *)it->dataptr);
             indval = *indptr;
-            if (indval < 0) {
-                indval += dimsize;
-            }
-            if (indval < 0 || indval >= dimsize) {
-                PyErr_Format(PyExc_IndexError,
-                             "index (%"NPY_INTP_FMT") out of range "\
-                             "(0<=index<%"NPY_INTP_FMT") in dimension %d",
-                             indval, (dimsize-1), mit->iteraxes[i]);
+            if (check_and_adjust_index(&indval, dimsize, mit->iteraxes[i]) < 0) {
                 goto fail;
             }
             PyArray_ITER_NEXT(it);
