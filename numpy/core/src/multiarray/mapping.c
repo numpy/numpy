@@ -109,8 +109,11 @@ _array_ass_item(PyArrayObject *self, Py_ssize_t i, PyObject *v)
 
 /* contains optimization for 1-d arrays */
 NPY_NO_EXPORT PyObject *
-array_item_nice(PyArrayObject *self, Py_ssize_t i)
+array_item_nice(PyArrayObject *self, Py_ssize_t _i)
 {
+    /* Workaround Python 2.4: Py_ssize_t not the same as npyint_p */
+    npy_intp i = _i;
+
     if (PyArray_NDIM(self) == 1) {
         char *item;
         npy_intp dim0;
