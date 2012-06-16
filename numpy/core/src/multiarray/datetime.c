@@ -1809,10 +1809,11 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
     PyObject *unit_str = NULL;
 
     if (!PyTuple_Check(tuple)) {
-        PyObject_Print(tuple, stderr, 0);
-        PyErr_SetString(PyExc_TypeError,
-                        "Require tuple for tuple to NumPy datetime "
-                        "metadata conversion");
+        PyObject *errmsg;
+        errmsg = PyUString_FromString("Require tuple for tuple to NumPy "
+                                      "datetime metadata conversion, not ");
+        PyUString_ConcatAndDel(&errmsg, PyObject_Repr(tuple));
+        PyErr_SetObject(PyExc_TypeError, errmsg);
         return -1;
     }
 
