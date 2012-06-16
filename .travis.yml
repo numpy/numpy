@@ -2,29 +2,26 @@
 #   http://lint.travis-ci.org/
 language: python
 python:
-  # If more versions are added here, they should also be added to the
-  # exclude: block below.
   - 2.5
   - 2.6
   - 2.7
+  - 3.2
 env:
-  # Hack: we actually test:
-  #   - all versions of python with numpy 1.6.1
-  #   - python *2.4* with numpy 1.2.1 (this is the RHEL5 configuration)
-  # but travis doesn't support python 2.4, and never will:
+  # Hack: 
+  #
+  # We want to test from Python 2.4 to Python 3.2
+  # but Travis doesn't support python 2.4, and never will:
   #   https://github.com/travis-ci/travis-ci/issues/485
-  # So what we do is add 1.2.1 to the build matrix, then exclude it on
-  # all-but-one python version, and then for that one version we don't
-  # actually use the system python, but instead build 2.4 and use it.
-  - NUMPY_VER=1.2.1
-  # Currently the latest release:
-  - NUMPY_VER=1.6.2
+  #
+  # So what we do is add TEST_PY24=true to the build matrix, and then for that one
+  # version we don't actually use the system python, but instead build 2.4 and
+  # use it.
+  #
+  - TEST_PY24=""
 matrix:
-  exclude:
-    - python: 2.6
-      env: NUMPY_VER=1.2.1
-    - python: 2.7
-      env: NUMPY_VER=1.2.1
+  include:
+    - python: 2.5
+      env: TEST_PY24="true"
 before_install:
   - mkdir builds
   - pushd builds
@@ -33,7 +30,7 @@ before_install:
   # It's okay for it to be on multiple physical lines, so long as you remember:
   # - There can't be any leading "-"s
   # - All newlines will be removed, so use ";"s
-  - if [ "${NUMPY_VER}" == "1.2.1" ]; then
+  - if [ "${TEST_PY24}" == "true" ]; then
       deactivate; 
       ../.travis-make-py24-virtualenv.sh $PWD/py24-ve;
       source $PWD/py24-ve/bin/activate;
@@ -46,7 +43,7 @@ install:
   - python setup.py install
 script:
   # We change directories to make sure that python won't find the copy
-  # of charlton in the source directory.
+  # of numpy in the source directory.
   - mkdir empty
   - cd empty
   - INSTALLDIR=$(python -c "import os; import numpy; print(os.path.dirname(numpy.__file__))")
