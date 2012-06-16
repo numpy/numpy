@@ -27,7 +27,7 @@
 
 #include "npy_config.h"
 
-#include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 
 NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 

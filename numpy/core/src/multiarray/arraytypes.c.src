@@ -7,7 +7,7 @@
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-#include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 #include "numpy/npy_math.h"
 #include "numpy/halffloat.h"
 
