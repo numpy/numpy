@@ -3672,22 +3672,29 @@ NPY_NO_EXPORT void *_PyDataMem_eventhook_user_data;
  * Returns a pointer to the previous hook or NULL.  If old_data is
  * non-NULL, the previous user_data pointer will be copied to it.
  *
- *
  * If not NULL, hook will be called at the end of each PyDataMem_NEW/FREE/RENEW:
  *   result = PyDataMem_NEW(size)        -> (*hook)(NULL, result, size, user_data)
  *   PyDataMem_FREE(ptr)                 -> (*hook)(ptr, NULL, 0, user_data)
  *   result = PyDataMem_RENEW(ptr, size) -> (*hook)(ptr, result, size, user_data)
+ *
+ * When the hook is called, the GIL will be held by the calling
+ * thread.  The hook should be written to be reentrant, if it performs
+ * operations that might cause new allocation events (such as the
+ * creation/descruction numpy objects, or creating/destroying Python
+ * objects which might cause a gc)
  */
 NPY_NO_EXPORT PyDataMem_EventHookFunc *
 PyDataMem_SetEventHook(PyDataMem_EventHookFunc *newhook,
                        void *user_data, void **old_data)
 {
+    PyGILState_STATE gilstate = PyGILState_Ensure();
     PyDataMem_EventHookFunc *temp = _PyDataMem_eventhook;
     _PyDataMem_eventhook = newhook;
     if (old_data != NULL) {
         *old_data = _PyDataMem_eventhook_user_data;
     }
     _PyDataMem_eventhook_user_data = user_data;
+    PyGILState_Release(gilstate);
     return temp;
 }
 
@@ -3701,8 +3708,12 @@ PyDataMem_NEW(size_t size)
 
     result = malloc(size);
     if (_PyDataMem_eventhook != NULL) {
-        (*_PyDataMem_eventhook)(NULL, result, size,
-                                _PyDataMem_eventhook_user_data);
+        PyGILState_STATE gilstate = PyGILState_Ensure();
+        if (_PyDataMem_eventhook != NULL) {
+            (*_PyDataMem_eventhook)(NULL, result, size,
+                                    _PyDataMem_eventhook_user_data);
+        }
+        PyGILState_Release(gilstate);
     }
     return (char *)result;
 }
@@ -3715,8 +3726,12 @@ PyDataMem_FREE(void *ptr)
 {
     free(ptr);
     if (_PyDataMem_eventhook != NULL) {
-        (*_PyDataMem_eventhook)(ptr, NULL, 0,
-                                _PyDataMem_eventhook_user_data);
+        PyGILState_STATE gilstate = PyGILState_Ensure();
+        if (_PyDataMem_eventhook != NULL) {
+            (*_PyDataMem_eventhook)(ptr, NULL, 0,
+                                    _PyDataMem_eventhook_user_data);
+        }
+        PyGILState_Release(gilstate);
     }
 }
 
@@ -3730,8 +3745,12 @@ PyDataMem_RENEW(void *ptr, size_t size)
 
     result = realloc(ptr, size);
     if (_PyDataMem_eventhook != NULL) {
-        (*_PyDataMem_eventhook)(ptr, result, size,
-                                _PyDataMem_eventhook_user_data);
+        PyGILState_STATE gilstate = PyGILState_Ensure();
+        if (_PyDataMem_eventhook != NULL) {
+            (*_PyDataMem_eventhook)(ptr, result, size,
+                                    _PyDataMem_eventhook_user_data);
+        }
+        PyGILState_Release(gilstate);
     }
     return (char *)result;
 }
