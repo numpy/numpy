@@ -44,7 +44,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, maskna=False):
 
     See Also
     --------
-    arange : Similiar to `linspace`, but uses a step size (instead of the
+    arange : Similar to `linspace`, but uses a step size (instead of the
              number of samples).
     logspace : Samples uniformly distributed in log space.
 
@@ -126,7 +126,7 @@ def logspace(start,stop,num=50,endpoint=True,base=10.0, maskna=False):
 
     See Also
     --------
-    arange : Similiar to linspace, with the step size specified instead of the
+    arange : Similar to linspace, with the step size specified instead of the
              number of samples. Note that, when used with a float endpoint, the
              endpoint may or may not be included.
     linspace : Similar to logspace, but with the samples uniformly distributed
