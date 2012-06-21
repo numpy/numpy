@@ -1023,8 +1023,10 @@ array_subscript(PyArrayObject *self, PyObject *op)
     }
 
     /* Boolean indexing special case */
+    /* The SIZE check might be overly cautious */
     if (PyArray_Check(op) && (PyArray_TYPE((PyArrayObject *)op) == NPY_BOOL)
-                && (PyArray_NDIM(self) == PyArray_NDIM((PyArrayObject *)op))) {
+                && (PyArray_NDIM(self) == PyArray_NDIM((PyArrayObject *)op))
+                && (PyArray_SIZE((PyArrayObject *)op) == PyArray_SIZE(self))) {
         return (PyObject *)array_boolean_subscript(self,
                                         (PyArrayObject *)op, NPY_CORDER);
     }
@@ -1269,7 +1271,8 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     /* Boolean indexing special case */
     if (PyArray_Check(ind) &&
                 (PyArray_TYPE((PyArrayObject *)ind) == NPY_BOOL) &&
-                (PyArray_NDIM(self) == PyArray_NDIM((PyArrayObject *)ind))) {
+                (PyArray_NDIM(self) == PyArray_NDIM((PyArrayObject *)ind)) &&
+                (PyArray_SIZE(self) == PyArray_SIZE((PyArrayObject *)ind))) {
         int retcode;
         PyArrayObject *op_arr;
         PyArray_Descr *dtype = NULL;
