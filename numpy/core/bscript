@@ -425,12 +425,10 @@ def pre_build(context):
                 "src/multiarray/nditer_templ.c.src",
                 "src/multiarray/lowlevel_strided_loops.c.src",
                 "src/multiarray/einsum.c.src",
-                "src/multiarray/boolean_ops.c.src"]
         bld(target="multiarray_templates", source=multiarray_templates)
         if ENABLE_SEPARATE_COMPILATION:
             sources = [pjoin('src', 'multiarray', 'arrayobject.c'),
                 pjoin('src', 'multiarray', 'arraytypes.c.src'),
-                pjoin('src', 'multiarray', 'boolean_ops.c.src'),
                 pjoin('src', 'multiarray', 'buffer.c'),
                 pjoin('src', 'multiarray', 'calculation.c'),
                 pjoin('src', 'multiarray', 'common.c'),

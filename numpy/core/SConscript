@@ -381,8 +381,6 @@ arraytypes_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'arraytypes.c.src'))
 nditer_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'nditer_templ.c.src'))
-boolean_ops_src = env.GenerateFromTemplate(
-    pjoin('src', 'multiarray', 'boolean_ops.c.src'))
 lowlevel_strided_loops_src = env.GenerateFromTemplate(
     pjoin('src', 'multiarray', 'lowlevel_strided_loops.c.src'))
 einsum_src = env.GenerateFromTemplate(pjoin('src', 'multiarray', 'einsum.c.src'))
@@ -446,7 +444,6 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'array_assign.c'),
         pjoin('src', 'multiarray', 'array_assign_scalar.c'),
         pjoin('src', 'multiarray', 'array_assign_array.c'),
-        pjoin('src', 'multiarray', 'boolean_ops.c'),
         pjoin('src', 'multiarray', 'datetime.c'),
         pjoin('src', 'multiarray', 'datetime_strings.c'),
         pjoin('src', 'multiarray', 'datetime_busday.c'),
@@ -456,8 +453,6 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'descriptor.c'),
         pjoin('src', 'multiarray', 'iterators.c'),
         pjoin('src', 'multiarray', 'mapping.c'),
-        pjoin('src', 'multiarray', 'na_mask.c'),
-        pjoin('src', 'multiarray', 'na_object.c'),
         pjoin('src', 'multiarray', 'number.c'),
         pjoin('src', 'multiarray', 'getset.c'),
         pjoin('src', 'multiarray', 'sequence.c'),
@@ -483,7 +478,6 @@ if ENABLE_SEPARATE_COMPILATION:
     multiarray_src.extend(arraytypes_src)
     multiarray_src.extend(scalartypes_src)
     multiarray_src.extend(lowlevel_strided_loops_src)
-    multiarray_src.extend(boolean_ops_src)
     multiarray_src.extend(nditer_src)
     multiarray_src.extend(einsum_src)
 else:
