@@ -3060,7 +3060,7 @@ NpyAuxData *_masked_wrapper_transfer_data_clone(NpyAuxData *data)
 void _strided_masked_wrapper_decsrcref_transfer_function(
                                     char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
-                                    npy_mask *mask, npy_intp mask_stride,
+                                    npy_bool *mask, npy_intp mask_stride,
                                     npy_intp N, npy_intp src_itemsize,
                                     NpyAuxData *transferdata)
 {
@@ -3078,7 +3078,7 @@ void _strided_masked_wrapper_decsrcref_transfer_function(
     while (N > 0) {
         /* Skip masked values, still calling decsrcref for move_references */
         subloopsize = 0;
-        while (subloopsize < N && !NpyMaskValue_IsExposed(*mask)) {
+        while (subloopsize < N && !*mask) {
             ++subloopsize;
             mask += mask_stride;
         }
@@ -3089,7 +3089,7 @@ void _strided_masked_wrapper_decsrcref_transfer_function(
         N -= subloopsize;
         /* Process unmasked values */
         subloopsize = 0;
-        while (subloopsize < N && NpyMaskValue_IsExposed(*mask)) {
+        while (subloopsize < N && *mask) {
             ++subloopsize;
             mask += mask_stride;
         }
@@ -3104,7 +3104,7 @@ void _strided_masked_wrapper_decsrcref_transfer_function(
 void _strided_masked_wrapper_transfer_function(
                                     char *dst, npy_intp dst_stride,
                                     char *src, npy_intp src_stride,
-                                    npy_mask *mask, npy_intp mask_stride,
+                                    npy_bool *mask, npy_intp mask_stride,
                                     npy_intp N, npy_intp src_itemsize,
                                     NpyAuxData *transferdata)
 {
@@ -3121,7 +3121,7 @@ void _strided_masked_wrapper_transfer_function(
     while (N > 0) {
         /* Skip masked values */
         subloopsize = 0;
-        while (subloopsize < N && !NpyMaskValue_IsExposed(*mask)) {
+        while (subloopsize < N && !*mask) {
             ++subloopsize;
             mask += mask_stride;
         }
@@ -3130,7 +3130,7 @@ void _strided_masked_wrapper_transfer_function(
         N -= subloopsize;
         /* Process unmasked values */
         subloopsize = 0;
-        while (subloopsize < N && NpyMaskValue_IsExposed(*mask)) {
+        while (subloopsize < N && *mask) {
             ++subloopsize;
             mask += mask_stride;
         }
@@ -3765,7 +3765,7 @@ PyArray_GetMaskedDTypeTransferFunction(int aligned,
 
     /* TODO: Add struct-based mask_dtype support later */
     if (mask_dtype->type_num != NPY_BOOL &&
-                            mask_dtype->type_num != NPY_MASK) {
+                            mask_dtype->type_num != NPY_UINT8) {
         PyErr_SetString(PyExc_TypeError,
                 "Only bool and uint8 masks are supported at the moment, "
                 "structs of bool/uint8 is planned for the future");
@@ -3880,8 +3880,7 @@ PyArray_CastRawArrays(npy_intp count,
  *
  * This is intended for simple, lightweight iteration over arrays
  * where no buffering of any kind is needed, and the array may
- * not be stored as a PyArrayObject. For example, to iterate over
- * the NA mask of an array.
+ * not be stored as a PyArrayObject.
  *
  * The arrays shape, out_shape, strides, and out_strides must all
  * point to different data.
@@ -4261,220 +4260,3 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
     return 0;
 }
 
-/* See lowlevel_strided_loops.h for parameter docs. */
-NPY_NO_EXPORT int
-PyArray_PrepareFourRawArrayIter(int ndim, npy_intp *shape,
-                            char *dataA, npy_intp *stridesA,
-                            char *dataB, npy_intp *stridesB,
-                            char *dataC, npy_intp *stridesC,
-                            char *dataD, npy_intp *stridesD,
-                            int *out_ndim, npy_intp *out_shape,
-                            char **out_dataA, npy_intp *out_stridesA,
-                            char **out_dataB, npy_intp *out_stridesB,
-                            char **out_dataC, npy_intp *out_stridesC,
-                            char **out_dataD, npy_intp *out_stridesD)
-{
-    npy_stride_sort_item strideperm[NPY_MAXDIMS];
-    int i, j;
-
-    /* Special case 0 and 1 dimensions */
-    if (ndim == 0) {
-        *out_ndim = 1;
-        *out_dataA = dataA;
-        *out_dataB = dataB;
-        *out_dataC = dataC;
-        *out_dataD = dataD;
-        out_shape[0] = 1;
-        out_stridesA[0] = 0;
-        out_stridesB[0] = 0;
-        out_stridesC[0] = 0;
-        out_stridesD[0] = 0;
-        return 0;
-    }
-    else if (ndim == 1) {
-        npy_intp stride_entryA = stridesA[0];
-        npy_intp stride_entryB = stridesB[0];
-        npy_intp stride_entryC = stridesC[0];
-        npy_intp stride_entryD = stridesD[0];
-        npy_intp shape_entry = shape[0];
-        *out_ndim = 1;
-        out_shape[0] = shape[0];
-        /* Always make a positive stride for the first operand */
-        if (stride_entryA >= 0) {
-            *out_dataA = dataA;
-            *out_dataB = dataB;
-            *out_dataC = dataC;
-            *out_dataD = dataD;
-            out_stridesA[0] = stride_entryA;
-            out_stridesB[0] = stride_entryB;
-            out_stridesC[0] = stride_entryC;
-            out_stridesD[0] = stride_entryD;
-        }
-        else {
-            *out_dataA = dataA + stride_entryA * (shape_entry - 1);
-            *out_dataB = dataB + stride_entryB * (shape_entry - 1);
-            *out_dataC = dataC + stride_entryC * (shape_entry - 1);
-            *out_dataD = dataD + stride_entryD * (shape_entry - 1);
-            out_stridesA[0] = -stride_entryA;
-            out_stridesB[0] = -stride_entryB;
-            out_stridesC[0] = -stride_entryC;
-            out_stridesD[0] = -stride_entryD;
-        }
-        return 0;
-    }
-
-    /* Sort the axes based on the destination strides */
-    PyArray_CreateSortedStridePerm(ndim, shape, stridesA, strideperm);
-    for (i = 0; i < ndim; ++i) {
-        int iperm = strideperm[ndim - i - 1].perm;
-        out_shape[i] = shape[iperm];
-        out_stridesA[i] = stridesA[iperm];
-        out_stridesB[i] = stridesB[iperm];
-        out_stridesC[i] = stridesC[iperm];
-        out_stridesD[i] = stridesD[iperm];
-    }
-
-    /* Reverse any negative strides of operand A */
-    for (i = 0; i < ndim; ++i) {
-        npy_intp stride_entryA = out_stridesA[i];
-        npy_intp stride_entryB = out_stridesB[i];
-        npy_intp stride_entryC = out_stridesC[i];
-        npy_intp stride_entryD = out_stridesD[i];
-        npy_intp shape_entry = out_shape[i];
-
-        if (stride_entryA < 0) {
-            dataA += stride_entryA * (shape_entry - 1);
-            dataB += stride_entryB * (shape_entry - 1);
-            dataC += stride_entryC * (shape_entry - 1);
-            dataD += stride_entryD * (shape_entry - 1);
-            out_stridesA[i] = -stride_entryA;
-            out_stridesB[i] = -stride_entryB;
-            out_stridesC[i] = -stride_entryC;
-            out_stridesD[i] = -stride_entryD;
-        }
-        /* Detect 0-size arrays here */
-        if (shape_entry == 0) {
-            *out_ndim = 1;
-            *out_dataA = dataA;
-            *out_dataB = dataB;
-            *out_dataC = dataC;
-            *out_dataD = dataD;
-            out_shape[0] = 0;
-            out_stridesA[0] = 0;
-            out_stridesB[0] = 0;
-            out_stridesC[0] = 0;
-            out_stridesD[0] = 0;
-            return 0;
-        }
-    }
-
-    /* Coalesce any dimensions where possible */
-    i = 0;
-    for (j = 1; j < ndim; ++j) {
-        if (out_shape[i] == 1) {
-            /* Drop axis i */
-            out_shape[i] = out_shape[j];
-            out_stridesA[i] = out_stridesA[j];
-            out_stridesB[i] = out_stridesB[j];
-            out_stridesC[i] = out_stridesC[j];
-            out_stridesD[i] = out_stridesD[j];
-        }
-        else if (out_shape[j] == 1) {
-            /* Drop axis j */
-        }
-        else if (out_stridesA[i] * out_shape[i] == out_stridesA[j] &&
-                    out_stridesB[i] * out_shape[i] == out_stridesB[j] &&
-                    out_stridesC[i] * out_shape[i] == out_stridesC[j] &&
-                    out_stridesD[i] * out_shape[i] == out_stridesD[j]) {
-            /* Coalesce axes i and j */
-            out_shape[i] *= out_shape[j];
-        }
-        else {
-            /* Can't coalesce, go to next i */
-            ++i;
-            out_shape[i] = out_shape[j];
-            out_stridesA[i] = out_stridesA[j];
-            out_stridesB[i] = out_stridesB[j];
-            out_stridesC[i] = out_stridesC[j];
-            out_stridesD[i] = out_stridesD[j];
-        }
-    }
-    ndim = i+1;
-
-    *out_dataA = dataA;
-    *out_dataB = dataB;
-    *out_dataC = dataC;
-    *out_dataD = dataD;
-    *out_ndim = ndim;
-    return 0;
-}
-
-/*
- * Casts the elements from one n-dimensional array to another n-dimensional
- * array with identical shape but possibly different strides and dtypes.
- * Does not account for overlap.
- *
- * Returns NPY_SUCCEED or NPY_FAIL.
- */
-NPY_NO_EXPORT int
-PyArray_CastRawNDimArrays(int ndim, npy_intp *shape,
-                      char *src, char *dst,
-                      npy_intp *src_strides, npy_intp *dst_strides,
-                      PyArray_Descr *src_dtype, PyArray_Descr *dst_dtype,
-                      int move_references)
-{
-    PyArray_StridedUnaryOp *stransfer = NULL;
-    NpyAuxData *transferdata = NULL;
-    int idim;
-    npy_intp src_align, dst_align;
-    int aligned, needs_api = 0;
-    npy_intp coord[NPY_MAXDIMS];
-    npy_intp shape_it[NPY_MAXDIMS];
-    npy_intp src_strides_it[NPY_MAXDIMS];
-    npy_intp dst_strides_it[NPY_MAXDIMS];
-
-    /* Determine data alignment */
-    src_align = (npy_intp)src;
-    for (idim = 0; idim < ndim; ++idim) {
-        src_align |= src_strides[idim];
-    }
-    dst_align = (npy_intp)dst;
-    for (idim = 0; idim < ndim; ++idim) {
-        dst_align |= dst_strides[idim];
-    }
-    aligned = (src_align & (src_dtype->alignment - 1)) == 0 &&
-              (dst_align & (dst_dtype->alignment - 1)) == 0;
-
-    if (PyArray_PrepareTwoRawArrayIter(ndim, shape,
-                                    dst, dst_strides,
-                                    src, src_strides,
-                                    &ndim, shape_it,
-                                    &dst, dst_strides_it,
-                                    &src, src_strides_it) < 0) {
-        return NPY_FAIL;
-    }
-
-    /* Get the function to do the casting */
-    if (PyArray_GetDTypeTransferFunction(aligned,
-                        src_strides[0], dst_strides[0],
-                        src_dtype, dst_dtype,
-                        move_references,
-                        &stransfer, &transferdata,
-                        &needs_api) != NPY_SUCCEED) {
-        return NPY_FAIL;
-    }
-
-    NPY_RAW_ITER_START(idim, ndim, coord, shape_it) {
-        stransfer(dst, dst_strides_it[0],
-                    src, src_strides_it[0], shape_it[0],
-                    src_dtype->elsize, transferdata);
-    } NPY_RAW_ITER_TWO_NEXT(idim, ndim, coord, shape_it,
-                                src, src_strides_it,
-                                dst, dst_strides_it);
-
-    /* Cleanup */
-    NPY_AUXDATA_FREE(transferdata);
-
-    /* If needs_api was set to 1, it may have raised a Python exception */
-    return (needs_api && PyErr_Occurred()) ? NPY_FAIL : NPY_SUCCEED;
-}

@@ -84,12 +84,6 @@ _use_default_type(PyObject *op)
  *
  * 'maxdims' is the maximum recursion depth.
  *
- * 'out_contains_na' gets set to 1 if an np.NA object is encountered.
- * The NA does not affect the dtype produced, so if this is set to 1
- * and the result is for an array without NA support, the dtype should
- * be switched to NPY_OBJECT. When adding multi-NA support, this should
- * also signal whether just regular NAs or NAs with payloads were seen.
- *
  * 'out_dtype' should be either NULL or a minimal starting dtype when
  * the function is called. It is updated with the results of type
  * promotion. This dtype does not get updated when processing NA objects.
@@ -98,30 +92,28 @@ _use_default_type(PyObject *op)
  * Returns 0 on success, -1 on failure.
  */
  NPY_NO_EXPORT int
-PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
-                        PyArray_Descr **out_dtype)
+PyArray_DTypeFromObject(PyObject *obj, int maxdims, PyArray_Descr **out_dtype)
 {
     int res;
 
-    res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na,
-                out_dtype, 0);
+    res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_dtype, 0);
     if (res == RETRY_WITH_STRING) {
-        res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na,
-                    out_dtype, NPY_STRING);
+        res = PyArray_DTypeFromObjectHelper(obj, maxdims,
+                                            out_dtype, NPY_STRING);
         if (res == RETRY_WITH_UNICODE) {
             res = PyArray_DTypeFromObjectHelper(obj, maxdims,
-                        out_contains_na, out_dtype, NPY_UNICODE);
+                                                out_dtype, NPY_UNICODE);
         }
     }
     else if (res == RETRY_WITH_UNICODE) {
-        res = PyArray_DTypeFromObjectHelper(obj, maxdims, out_contains_na,
-                    out_dtype, NPY_UNICODE);
+        res = PyArray_DTypeFromObjectHelper(obj, maxdims,
+                                            out_dtype, NPY_UNICODE);
     }
     return res;
 }
 
 NPY_NO_EXPORT int
-PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
+PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                               PyArray_Descr **out_dtype, int string_type)
 {
     int i, size;
@@ -133,15 +125,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
 
     /* Check if it's an ndarray */
     if (PyArray_Check(obj)) {
-        /* Check for any NAs in the array */
-        int containsna = PyArray_ContainsNA((PyArrayObject *)obj, NULL, NULL);
-
-        if (containsna == -1) {
-            goto fail;
-        }
-        else if (containsna) {
-            *out_contains_na = 1;
-        }
         dtype = PyArray_DESCR((PyArrayObject *)obj);
         Py_INCREF(dtype);
         goto promote_types;
@@ -238,12 +221,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
             dtype->elsize = itemsize;
         }
         goto promote_types;
-    }
-
-    /* Check if it's an NA */
-    if (NpyNA_Check(obj)) {
-        *out_contains_na = 1;
-        return 0;
     }
 
     /* Check if it's an ASCII string */
@@ -430,7 +407,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
             goto fail;
         }
         res = PyArray_DTypeFromObjectHelper(ip, maxdims - 1,
-                            out_contains_na, out_dtype, string_type);
+                                            out_dtype, string_type);
         if (res < 0) {
             Py_DECREF(ip);
             goto fail;

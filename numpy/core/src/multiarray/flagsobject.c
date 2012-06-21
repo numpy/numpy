@@ -259,92 +259,6 @@ arrayflags_num_get(PyArrayFlagsObject *self)
     return PyInt_FromLong(self->flags);
 }
 
-static PyObject *
-arrayflags_maskna_get(PyArrayFlagsObject *self)
-{
-    PyObject *item;
-    if (self->flags & NPY_ARRAY_MASKNA) {
-        item = Py_True;
-    }
-    else {
-        item = Py_False;
-    }
-    Py_INCREF(item);
-    return item;
-}
-
-static int
-arrayflags_maskna_set(PyArrayFlagsObject *self, PyObject *obj)
-{
-    if (obj == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete flags maskna attribute");
-        return -1;
-    }
-    if (self->arr == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot set flags on array scalars.");
-        return -1;
-    }
-
-    if (PyObject_IsTrue(obj)) {
-        return PyArray_AllocateMaskNA((PyArrayObject *)self->arr, 0, 0, 1);
-    }
-    else {
-        if (self->flags & NPY_ARRAY_MASKNA) {
-            PyErr_SetString(PyExc_ValueError,
-                    "Cannot remove a NumPy array's NA mask");
-            return -1;
-        }
-        else {
-            return 0;
-        }
-    }
-}
-
-static PyObject *
-arrayflags_ownmaskna_get(PyArrayFlagsObject *self)
-{
-    PyObject *item;
-    if (self->flags & NPY_ARRAY_OWNMASKNA) {
-        item = Py_True;
-    }
-    else {
-        item = Py_False;
-    }
-    Py_INCREF(item);
-    return item;
-}
-
-static int
-arrayflags_ownmaskna_set(PyArrayFlagsObject *self, PyObject *obj)
-{
-    if (obj == NULL) {
-        PyErr_SetString(PyExc_AttributeError,
-                "Cannot delete flags ownmaskna attributes");
-        return -1;
-    }
-    if (self->arr == NULL) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot set flags on array scalars.");
-        return -1;
-    }
-
-    if (PyObject_IsTrue(obj)) {
-        return PyArray_AllocateMaskNA((PyArrayObject *)self->arr, 1, 0, 1);
-    }
-    else {
-        if (self->flags & NPY_ARRAY_OWNMASKNA) {
-            PyErr_SetString(PyExc_ValueError,
-                        "Cannot remove a NumPy array's NA mask");
-            return -1;
-        }
-        else {
-            return 0;
-        }
-    }
-}
-
 /* relies on setflags order being write, align, uic */
 static int
 arrayflags_updateifcopy_set(PyArrayFlagsObject *self, PyObject *obj)
@@ -454,14 +368,6 @@ static PyGetSetDef arrayflags_getsets[] = {
         (getter)arrayflags_writeable_get,
         (setter)arrayflags_writeable_set,
         NULL, NULL},
-    {"maskna",
-        (getter)arrayflags_maskna_get,
-        (setter)arrayflags_maskna_set,
-        NULL, NULL},
-    {"ownmaskna",
-        (getter)arrayflags_ownmaskna_get,
-        (setter)arrayflags_ownmaskna_set,
-        NULL, NULL},
     {"fnc",
         (getter)arrayflags_fnc_get,
         NULL,
@@ -564,9 +470,6 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
         if (strncmp(key, "FARRAY", n) == 0) {
             return arrayflags_farray_get(self);
         }
-        if (strncmp(key, "MASKNA", n) == 0) {
-            return arrayflags_maskna_get(self);
-        }
         break;
     case 7:
         if (strncmp(key,"FORTRAN",n) == 0) {
@@ -585,9 +488,6 @@ arrayflags_getitem(PyArrayFlagsObject *self, PyObject *ind)
     case 9:
         if (strncmp(key,"WRITEABLE",n) == 0) {
             return arrayflags_writeable_get(self);
-        }
-        if (strncmp(key, "OWNMASKNA", n) == 0) {
-            return arrayflags_ownmaskna_get(self);
         }
         break;
     case 10:
@@ -648,12 +548,6 @@ arrayflags_setitem(PyArrayFlagsObject *self, PyObject *ind, PyObject *item)
              ((n==1) && (strncmp(key, "U", n) == 0))) {
         return arrayflags_updateifcopy_set(self, item);
     }
-    else if ((n==6) && (strncmp(key, "MASKNA", n) == 0)) {
-        return arrayflags_maskna_set(self, item);
-    }
-    else if ((n==9) && (strncmp(key, "OWNMASKNA", n) == 0)) {
-        return arrayflags_ownmaskna_set(self, item);
-    }
 
  fail:
     PyErr_SetString(PyExc_KeyError, "Unknown flag");
@@ -679,13 +573,10 @@ arrayflags_print(PyArrayFlagsObject *self)
     return PyUString_FromFormat(
                         "  %s : %s\n  %s : %s\n"
                         "  %s : %s\n  %s : %s\n"
-                        "  %s : %s\n  %s : %s\n"
                         "  %s : %s\n  %s : %s",
                         "C_CONTIGUOUS", _torf_(fl, NPY_ARRAY_C_CONTIGUOUS),
                         "F_CONTIGUOUS", _torf_(fl, NPY_ARRAY_F_CONTIGUOUS),
                         "OWNDATA",      _torf_(fl, NPY_ARRAY_OWNDATA),
-                        "MASKNA",       _torf_(fl, NPY_ARRAY_MASKNA),
-                        "OWNMASKNA",    _torf_(fl, NPY_ARRAY_OWNMASKNA),
                         "WRITEABLE",    _torf_(fl, NPY_ARRAY_WRITEABLE),
                         "ALIGNED",      _torf_(fl, NPY_ARRAY_ALIGNED),
                         "UPDATEIFCOPY", _torf_(fl, NPY_ARRAY_UPDATEIFCOPY));

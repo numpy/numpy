@@ -11,19 +11,6 @@ class TestIndexErrors(TestCase):
         assert_raises(IndexError, x.take, [0], axis=2)
         assert_raises(IndexError, x.take, [1], axis=2)
 
-    def test_maskna_take_1D(self):
-        # Check exception taking from masked array
-        a = np.array([1, np.NA, 2, np.NA], maskna=True)
-        assert_raises(IndexError, a.take, [6])
-        a = np.array(np.NA, maskna=True)
-        assert_raises(IndexError, a.take, [6])
-
-        # Check exception taking from masked 0-d array
-        d = np.empty((5, 0), maskna=True)
-        assert_raises(IndexError, d.take, [1], axis=1)
-        assert_raises(IndexError, d.take, [0], axis=1)
-        assert_raises(IndexError, d.take, [0])
-
     def test_take_from_object(self):
         # Check exception taking from object array
         d = np.zeros(5, dtype=object)
@@ -40,18 +27,10 @@ class TestIndexErrors(TestCase):
         assert_raises(IndexError, a.item, 20)
         a = np.empty((5, 0), dtype=object)
         assert_raises(IndexError, a.item, (0, 0))
-        a = np.empty(5, dtype=object, maskna=True)
-        assert_raises(IndexError, a.item, 20)
-        a = np.empty((5, 0), dtype=object, maskna=True)
-        assert_raises(IndexError, a.item, (0, 0))
 
         a = np.empty(5, dtype=object)
         assert_raises(IndexError, a.itemset, 20, 0)
         a = np.empty((5, 0), dtype=object)
-        assert_raises(IndexError, a.itemset, (0, 0), 0)
-        a = np.empty(5, dtype=object, maskna=True)
-        assert_raises(IndexError, a.itemset, 20, 0)
-        a = np.empty((5, 0), dtype=object, maskna=True)
         assert_raises(IndexError, a.itemset, (0, 0), 0)
 
     def test_put_exceptions(self):
@@ -113,13 +92,6 @@ class TestIndexErrors(TestCase):
         assert_raises(IndexError, lambda: a[(10, 20)])
         assert_raises(IndexError, lambda: assign(a, (10, 20), 1))
         a = np.zeros((3,0))
-        assert_raises(IndexError, lambda: a[(1, 0)])
-        assert_raises(IndexError, lambda: assign(a, (1, 0), 1))
-
-        a = np.zeros((3,5), maskna=True)
-        assert_raises(IndexError, lambda: a[(10, 20)])
-        assert_raises(IndexError, lambda: assign(a, (10, 20), 1))
-        a = np.zeros((3,0), maskna=True)
         assert_raises(IndexError, lambda: a[(1, 0)])
         assert_raises(IndexError, lambda: assign(a, (1, 0), 1))
 

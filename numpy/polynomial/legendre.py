@@ -1253,9 +1253,8 @@ def legvander(x, deg) :
 
     x = np.array(x, copy=0, ndmin=1) + 0.0
     dims = (ideg + 1,) + x.shape
-    mask = x.flags.maskna
     dtyp = x.dtype
-    v = np.empty(dims, dtype=dtyp, maskna=mask)
+    v = np.empty(dims, dtype=dtyp)
     # Use forward recursion to generate the entries. This is not as accurate
     # as reverse recursion in this application but it is more efficient.
     v[0] = x*0 + 1
@@ -1539,16 +1538,6 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         # can cause problems with NA.
         lhs = lhs * w
         rhs = rhs * w
-
-    # deal with NA. Note that polyvander propagates NA from x
-    # into all columns, that is rows for transposed form.
-    if lhs.flags.maskna or rhs.flags.maskna:
-        if rhs.ndim == 1:
-            mask = np.isna(lhs[0]) | np.isna(rhs)
-        else:
-            mask = np.isna(lhs[0]) | np.isna(rhs).any(0)
-        np.copyto(lhs, 0, where=mask)
-        np.copyto(rhs, 0, where=mask)
 
     # set rcond
     if rcond is None :

@@ -166,7 +166,7 @@ def rot90(m, k=1):
         # k == 3
         return fliplr(m.swapaxes(0,1))
 
-def eye(N, M=None, k=0, dtype=float, maskna=False):
+def eye(N, M=None, k=0, dtype=float):
     """
     Return a 2-D array with ones on the diagonal and zeros elsewhere.
 
@@ -182,8 +182,6 @@ def eye(N, M=None, k=0, dtype=float, maskna=False):
       to a lower diagonal.
     dtype : data-type, optional
       Data-type of the returned array.
-    maskna : boolean
-      If this is true, the returned array will have an NA mask.
 
     Returns
     -------
@@ -209,7 +207,7 @@ def eye(N, M=None, k=0, dtype=float, maskna=False):
     """
     if M is None:
         M = N
-    m = zeros((N, M), dtype=dtype, maskna=maskna)
+    m = zeros((N, M), dtype=dtype)
     if k >= M:
         return m
     if k >= 0:

@@ -76,10 +76,8 @@ array_shape_set(PyArrayObject *self, PyObject *val)
             return -1;
         }
         ((PyArrayObject_fields *)self)->strides = PyArray_DIMS(self) + nd;
-        ((PyArrayObject_fields *)self)->maskna_strides = PyArray_DIMS(self) + 2*nd;
         memcpy(PyArray_DIMS(self), PyArray_DIMS(ret), nd*sizeof(npy_intp));
         memcpy(PyArray_STRIDES(self), PyArray_STRIDES(ret), nd*sizeof(npy_intp));
-        memcpy(PyArray_MASKNA_STRIDES(self), PyArray_MASKNA_STRIDES(ret), nd*sizeof(npy_intp));
     }
     else {
         ((PyArrayObject_fields *)self)->dimensions = NULL;
@@ -440,13 +438,6 @@ array_descr_set(PyArrayObject *self, PyObject *arg)
         newtype == NULL) {
         PyErr_SetString(PyExc_TypeError,
                 "invalid data-type for array");
-        return -1;
-    }
-
-    if (PyArray_HASMASKNA(self) &&
-            newtype->elsize != PyArray_DESCR(self)->elsize) {
-        PyErr_SetString(PyExc_TypeError,
-                "view cannot change element size of NA-masked array");
         return -1;
     }
 

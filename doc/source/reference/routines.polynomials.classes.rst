@@ -322,31 +322,3 @@ illustrated below for a fit to a noisy sin curve.
     >>> p.window
     array([-1.,  1.])
     >>> plt.show()
-
-The fit will ignore data points masked with NA. We demonstrate this with
-the previous example, but add an outlier that messes up the fit, then mask
-it out.
-
-.. plot::
-
-    >>> import numpy as np
-    >>> import matplotlib.pyplot as plt
-    >>> from numpy.polynomial import Chebyshev as T
-    >>> np.random.seed(11)
-    >>> x = np.linspace(0, 2*np.pi, 20)
-    >>> y = np.sin(x) + np.random.normal(scale=.1, size=x.shape)
-    >>> y[10] = 2
-    >>> p = T.fit(x, y, 5)
-    >>> plt.plot(x, y, 'o')
-    [<matplotlib.lines.Line2D object at 0x2136c10>]
-    >>> xx, yy = p.linspace()
-    >>> plt.plot(xx, yy, lw=2, label="unmasked")
-    [<matplotlib.lines.Line2D object at 0x1cf2890>]
-    >>> ym = y.view(maskna=1)
-    >>> ym[10] = np.NA
-    >>> p = T.fit(x, ym, 5)
-    >>> xx, yy = p.linspace()
-    >>> plt.plot(xx, yy, lw=2, label="masked")
-    >>> plt.legend(loc="upper right")
-    <matplotlib.legend.Legend object at 0x3b3ee10>
-    >>> plt.show()

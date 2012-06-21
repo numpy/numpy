@@ -11,12 +11,6 @@
  *
  * 'maxdims' is the maximum recursion depth.
  *
- * 'out_contains_na' gets set to 1 if an np.NA object is encountered.
- * The NA does not affect the dtype produced, so if this is set to 1
- * and the result is for an array without NA support, the dtype should
- * be switched to NPY_OBJECT. When adding multi-NA support, this should
- * also signal whether just regular NAs or NAs with payloads were seen.
- *
  * 'out_dtype' should be either NULL or a minimal starting dtype when
  * the function is called. It is updated with the results of type
  * promotion. This dtype does not get updated when processing NA objects.
@@ -24,11 +18,11 @@
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
-PyArray_DTypeFromObject(PyObject *obj, int maxdims, int *out_contains_na,
+PyArray_DTypeFromObject(PyObject *obj, int maxdims,
                         PyArray_Descr **out_dtype);
 
 NPY_NO_EXPORT int
-PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims, int *out_contains_na,
+PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                               PyArray_Descr **out_dtype, int string_status);
 
 /*

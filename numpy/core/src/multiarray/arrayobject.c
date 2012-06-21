@@ -49,8 +49,6 @@ maintainer email:  oliphant.travis@ieee.org
 #include "getset.h"
 #include "sequence.h"
 #include "buffer.h"
-#include "na_object.h"
-#include "na_mask.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -147,8 +145,7 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
     /*
      * Don't allow chains of views, always set the base
      * to the owner of the data. That is, either the first object
-     * which isn't an array, the first object with an NA mask
-     * which owns that NA mask, or the first object which owns
+     * which isn't an array, or the first object which owns
      * its own data.
      */
     while (PyArray_Check(obj) && (PyObject *)arr != obj) {
@@ -162,14 +159,6 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
 
         /* If this array owns its own data, stop collapsing */
         if (PyArray_CHKFLAGS(obj_arr, NPY_ARRAY_OWNDATA)) {
-            break;
-        }
-        /*
-         * If 'arr' doesn't own its NA mask, then if
-         * 'obj' is NA masked and owns the mask, stop collapsing
-         */
-        if (!PyArray_CHKFLAGS(arr, NPY_ARRAY_OWNMASKNA) &&
-                        PyArray_CHKFLAGS(obj_arr, NPY_ARRAY_OWNMASKNA)) {
             break;
         }
         /* If there's no base, stop collapsing */
@@ -201,7 +190,7 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
 NPY_NO_EXPORT int
 PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 {
-    int ret, contains_na = 0;
+    int ret = 0;
     PyArrayObject *src;
     PyArray_Descr *dtype = NULL;
     int ndim = 0;
@@ -236,17 +225,8 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
      * Get either an array object we can copy from, or its parameters
      * if there isn't a convenient array available.
      */
-    if (PyArray_GetArrayParamsFromObjectEx(src_object, PyArray_DESCR(dest),
-                0, &dtype, &ndim, dims, &contains_na, &src, NULL) < 0) {
-        Py_DECREF(src_object);
-        return -1;
-    }
-
-    if (contains_na && !(PyArray_HasNASupport(dest) ||
-                         PyArray_DESCR(dest)->type_num == NPY_OBJECT)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot set NumPy array values to NA values without first "
-                "enabling NA support in the array");
+    if (PyArray_GetArrayParamsFromObject(src_object, PyArray_DESCR(dest),
+                0, &dtype, &ndim, dims, &src, NULL) < 0) {
         Py_DECREF(src_object);
         return -1;
     }
@@ -255,13 +235,6 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
     if (src == NULL) {
         /* If the input is scalar */
         if (ndim == 0) {
-            NpyNA *na = NULL;
-
-            /* Get an NpyNA if src is NA, but don't raise an error */
-            if (PyArray_HasNASupport(dest)) {
-                na = NpyNA_FromObject(src_object, 1);
-            }
-
             /* If there's one dest element and src is a Python scalar */
             if (PyArray_IsScalar(src_object, Generic)) {
                 char *value;
@@ -276,23 +249,10 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
 
                 /* TODO: switch to SAME_KIND casting */
                 retcode = PyArray_AssignRawScalar(dest, dtype, value,
-                                        NULL, NPY_UNSAFE_CASTING, 0, NULL);
+                                        NULL, NPY_UNSAFE_CASTING);
                 Py_DECREF(dtype);
                 Py_DECREF(src_object);
                 return retcode;
-            }
-            /* Assigning NA affects the mask if it exists */
-            else if (na != NULL) {
-                if (PyArray_AssignNA(dest, na, NULL, 0, NULL) < 0) {
-                    Py_DECREF(dtype);
-                    Py_DECREF(na);
-                    Py_DECREF(src_object);
-                    return -1;
-                }
-
-                Py_DECREF(na);
-                Py_DECREF(src_object);
-                return 0;
             }
             /* Otherwise use the dtype's setitem function */
             else {
@@ -301,10 +261,6 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
                     Py_DECREF(src_object);
                     ret = PyArray_DESCR(dest)->f->setitem(src_object,
                                                 PyArray_DATA(dest), dest);
-                    /* Unmask the value if necessary */
-                    if (ret == 0 && PyArray_HASMASKNA(dest)) {
-                        PyArray_MASKNA_DATA(dest)[0] = 1;
-                    }
                     return ret;
                 }
                 else {
@@ -343,12 +299,6 @@ PyArray_CopyObject(PyArrayObject *dest, PyObject *src_object)
             if (src == NULL) {
                 Py_DECREF(src_object);
                 return -1;
-            }
-            if (PyArray_HASMASKNA(dest)) {
-                if (PyArray_AllocateMaskNA(dest, 1, 0, 1) < 0) {
-                    Py_DECREF(src_object);
-                    return -1;
-                }
             }
             if (PyArray_AssignFromSequence(src, src_object) < 0) {
                 Py_DECREF(src);
@@ -455,14 +405,6 @@ array_dealloc(PyArrayObject *self)
              */
         }
         PyDataMem_FREE(fa->data);
-    }
-
-    /* If the array has an NA mask, free its associated data */
-    if (fa->flags & NPY_ARRAY_MASKNA) {
-        Py_XDECREF(fa->maskna_dtype);
-        if (fa->flags & NPY_ARRAY_OWNMASKNA) {
-            PyDataMem_FREE(fa->maskna_data);
-        }
     }
 
     PyDimMem_FREE(fa->dimensions);
@@ -579,23 +521,7 @@ PyArray_DebugPrint(PyArrayObject *obj)
         printf(" NPY_WRITEABLE");
     if (fobj->flags & NPY_ARRAY_UPDATEIFCOPY)
         printf(" NPY_UPDATEIFCOPY");
-    if (fobj->flags & NPY_ARRAY_MASKNA)
-        printf(" MASKNA");
-    if (fobj->flags & NPY_ARRAY_OWNMASKNA)
-        printf(" OWNMASKNA");
     printf("\n");
-
-    if (fobj->flags & NPY_ARRAY_MASKNA) {
-        printf(" maskna dtype  : ");
-        PyObject_Print((PyObject *)fobj->maskna_dtype, stdout, 0);
-        printf("\n");
-        printf(" maskna data   : %p\n", fobj->maskna_data);
-        printf(" maskna strides:");
-        for (i = 0; i < fobj->nd; ++i) {
-            printf(" %d", (int)fobj->maskna_strides[i]);
-        }
-        printf("\n");
-    }
 
     if (fobj->base != NULL && PyArray_Check(fobj->base)) {
         printf("<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n");
@@ -1348,8 +1274,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             dtype = PyArray_DTYPE(self);
             Py_INCREF(dtype);
         }
-        array_other = (PyArrayObject *)PyArray_FromAny(other, dtype, 0, 0,
-                                                    NPY_ARRAY_ALLOWNA, NULL);
+        array_other = (PyArrayObject *)PyArray_FromAny(other, dtype, 0, 0, 0,
+                                                    NULL);
         /*
          * If not successful, indicate that the items cannot be compared
          * this way.
@@ -1405,8 +1331,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             dtype = PyArray_DTYPE(self);
             Py_INCREF(dtype);
         }
-        array_other = (PyArrayObject *)PyArray_FromAny(other, dtype, 0, 0,
-                                                    NPY_ARRAY_ALLOWNA, NULL);
+        array_other = (PyArrayObject *)PyArray_FromAny(other, dtype, 0, 0, 0,
+                                                    NULL);
         /*
          * If not successful, indicate that the items cannot be compared
          * this way.
