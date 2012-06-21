@@ -30,7 +30,9 @@ typedef void (PyUFunc_StridedInnerLoopFunc)(
 
 /*
  * The most generic one-dimensional inner loop for
- * a masked standard element-wise ufunc.
+ * a masked standard element-wise ufunc. "Masked" here means that it skips
+ * doing calculations on any items for which the maskptr array has a true
+ * value.
  */
 typedef void (PyUFunc_MaskedStridedInnerLoopFunc)(
                 char **dataptrs, npy_intp *strides,

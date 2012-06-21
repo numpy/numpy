@@ -19,15 +19,14 @@
 
 static int
 _check_ones(PyArrayObject *self, int newnd,
-                npy_intp* newdims, npy_intp *strides, npy_intp *masknastrides);
+                npy_intp* newdims, npy_intp *strides);
 
 static int
 _fix_unknown_dimension(PyArray_Dims *newshape, npy_intp s_original);
 
 static int
 _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
-                        npy_intp *newstrides, npy_intp *newmasknastrides,
-                        int is_f_order);
+                        npy_intp *newstrides, int is_f_order);
 
 static void
 _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype);
@@ -150,7 +149,6 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         }
         ((PyArrayObject_fields *)self)->dimensions = dimptr;
         ((PyArrayObject_fields *)self)->strides = dimptr + new_nd;
-        ((PyArrayObject_fields *)self)->maskna_strides = dimptr + 2*new_nd;
     }
 
     /* make new_strides variable */
@@ -184,8 +182,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     npy_bool same, incref = NPY_TRUE;
     npy_intp *strides = NULL;
     npy_intp newstrides[NPY_MAXDIMS];
-    npy_intp newmasknastrides[NPY_MAXDIMS];
-    int flags, build_maskna_strides = 0;
+    int flags;
 
     if (order == NPY_ANYORDER) {
         order = PyArray_ISFORTRAN(self);
@@ -213,12 +210,11 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
      * In this case we don't need to do anything but update strides and
      * dimensions.  So, we can handle non single-segment cases.
      */
-    i = _check_ones(self, ndim, dimensions, newstrides, newmasknastrides);
+    i = _check_ones(self, ndim, dimensions, newstrides);
     if (i == 0) {
         strides = newstrides;
     }
-    flags = PyArray_FLAGS(self) & ~(NPY_ARRAY_OWNMASKNA |
-                                    NPY_ARRAY_MASKNA);
+    flags = PyArray_FLAGS(self);
 
     if (strides == NULL) {
         /*
@@ -241,7 +237,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                   order == NPY_CORDER)) && (PyArray_NDIM(self) > 1))) {
             int success = 0;
             success = _attempt_nocopy_reshape(self, ndim, dimensions,
-                                          newstrides, newmasknastrides, order);
+                                              newstrides, order);
             if (success) {
                 /* no need to copy the array after all */
                 strides = newstrides;
@@ -254,13 +250,7 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
                 }
                 incref = NPY_FALSE;
                 self = (PyArrayObject *)newcopy;
-                build_maskna_strides = 1;
             }
-            flags = PyArray_FLAGS(self) & ~(NPY_ARRAY_OWNMASKNA |
-                                            NPY_ARRAY_MASKNA);
-        }
-        else {
-            build_maskna_strides = 1;
         }
 
         /* We always have to interpret the contiguous buffer correctly */
@@ -324,34 +314,6 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
         return NULL;
     }
 
-    /* If there's an NA mask, make sure to view it too */
-    if (PyArray_HASMASKNA(self)) {
-        PyArrayObject_fields *fa = (PyArrayObject_fields *)ret;
-        fa->maskna_dtype = PyArray_MASKNA_DTYPE(self);
-        Py_INCREF(fa->maskna_dtype);
-        fa->maskna_data = PyArray_MASKNA_DATA(self);
-        if (build_maskna_strides) {
-            npy_intp stride = 1;
-            if (order == NPY_FORTRANORDER) {
-                for (i = 0; i < ndim; ++i) {
-                    fa->maskna_strides[i] = stride;
-                    stride *= fa->dimensions[i];
-                }
-            }
-            else {
-                for (i = ndim-1; i >= 0; --i) {
-                    fa->maskna_strides[i] = stride;
-                    stride *= fa->dimensions[i];
-                }
-            }
-        }
-        else {
-            memcpy(fa->maskna_strides, newmasknastrides,
-                                fa->nd * sizeof(npy_intp));
-        }
-        fa->flags |= NPY_ARRAY_MASKNA;
-    }
-
     PyArray_UpdateFlags(ret, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
     return (PyObject *)ret;
 
@@ -386,13 +348,12 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
 /* inserts 0 for strides where dimension will be 1 */
 static int
 _check_ones(PyArrayObject *self, int newnd,
-                npy_intp* newdims, npy_intp *strides, npy_intp *masknastrides)
+                npy_intp* newdims, npy_intp *strides)
 {
     int nd;
     npy_intp *dims;
     npy_bool done=NPY_FALSE;
     int j, k;
-    int has_maskna = PyArray_HASMASKNA(self);
 
     nd = PyArray_NDIM(self);
     dims = PyArray_DIMS(self);
@@ -400,17 +361,11 @@ _check_ones(PyArrayObject *self, int newnd,
     for (k = 0, j = 0; !done && (j < nd || k < newnd);) {
         if ((j<nd) && (k<newnd) && (newdims[k] == dims[j])) {
             strides[k] = PyArray_STRIDES(self)[j];
-            if (has_maskna) {
-                masknastrides[k] = PyArray_MASKNA_STRIDES(self)[j];
-            }
             j++;
             k++;
         }
         else if ((k < newnd) && (newdims[k] == 1)) {
             strides[k] = 0;
-            if (has_maskna) {
-                masknastrides[k] = 0;
-            }
             k++;
         }
         else if ((j<nd) && (dims[j] == 1)) {
@@ -475,24 +430,19 @@ _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
  */
 static int
 _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
-                        npy_intp *newstrides, npy_intp *newmasknastrides,
-                        int is_f_order)
+                        npy_intp *newstrides, int is_f_order)
 {
     int oldnd;
     npy_intp olddims[NPY_MAXDIMS];
-    npy_intp oldstrides[NPY_MAXDIMS], oldmasknastrides[NPY_MAXDIMS];
+    npy_intp oldstrides[NPY_MAXDIMS];
     int oi, oj, ok, ni, nj, nk;
     int np, op;
-    int has_maskna = PyArray_HASMASKNA(self);
 
     oldnd = 0;
     for (oi = 0; oi < PyArray_NDIM(self); oi++) {
         if (PyArray_DIMS(self)[oi]!= 1) {
             olddims[oldnd] = PyArray_DIMS(self)[oi];
             oldstrides[oldnd] = PyArray_STRIDES(self)[oi];
-            if (has_maskna) {
-                oldmasknastrides[oldnd] = PyArray_MASKNA_STRIDES(self)[oi];
-            }
             oldnd++;
         }
     }
@@ -543,18 +493,14 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
 
         for (ok = oi; ok < oj - 1; ok++) {
             if (is_f_order) {
-                if (oldstrides[ok+1] != olddims[ok]*oldstrides[ok] ||
-                       (has_maskna && oldmasknastrides[ok+1] !=
-                                        olddims[ok]*oldmasknastrides[ok])) {
+                if (oldstrides[ok+1] != olddims[ok]*oldstrides[ok]) {
                      /* not contiguous enough */
                     return 0;
                 }
             }
             else {
                 /* C order */
-                if (oldstrides[ok] != olddims[ok+1]*oldstrides[ok+1] ||
-                        (has_maskna && oldmasknastrides[ok] !=
-                                    olddims[ok+1]*oldmasknastrides[ok+1])) {
+                if (oldstrides[ok] != olddims[ok+1]*oldstrides[ok+1]) {
                     /* not contiguous enough */
                     return 0;
                 }
@@ -566,26 +512,12 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
             for (nk = ni + 1; nk < nj; nk++) {
                 newstrides[nk] = newstrides[nk - 1]*newdims[nk - 1];
             }
-            if (has_maskna) {
-                newmasknastrides[ni] = oldmasknastrides[oi];
-                for (nk = ni + 1; nk < nj; nk++) {
-                    newmasknastrides[nk] =
-                                    newmasknastrides[nk - 1]*newdims[nk - 1];
-                }
-            }
         }
         else {
             /* C order */
             newstrides[nj - 1] = oldstrides[oj - 1];
             for (nk = nj - 1; nk > ni; nk--) {
                 newstrides[nk - 1] = newstrides[nk]*newdims[nk];
-            }
-            if (has_maskna) {
-                newmasknastrides[nj - 1] = oldmasknastrides[oj - 1];
-                for (nk = nj - 1; nk > ni; nk--) {
-                    newmasknastrides[nk - 1] =
-                                    newmasknastrides[nk]*newdims[nk];
-                }
             }
         }
         ni = nj++;
@@ -879,7 +811,7 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
                              PyArray_DESCR(ap),
                              n, PyArray_DIMS(ap),
                              NULL, PyArray_DATA(ap),
-                             flags & ~(NPY_ARRAY_MASKNA | NPY_ARRAY_OWNMASKNA),
+                             flags,
                              (PyObject *)ap);
     if (ret == NULL) {
         return NULL;
@@ -889,21 +821,6 @@ PyArray_Transpose(PyArrayObject *ap, PyArray_Dims *permute)
     if (PyArray_SetBaseObject(ret, (PyObject *)ap) < 0) {
         Py_DECREF(ret);
         return NULL;
-    }
-
-    /* Take a view of the NA mask as well if necessary */
-    if (flags & NPY_ARRAY_MASKNA) {
-        PyArrayObject_fields *fa = (PyArrayObject_fields *)ret;
-
-        fa->maskna_dtype = PyArray_MASKNA_DTYPE(ap);
-        Py_INCREF(fa->maskna_dtype);
-        fa->maskna_data = PyArray_MASKNA_DATA(ap);
-
-        for (i = 0; i < n; i++) {
-            fa->maskna_strides[i] =
-                        PyArray_MASKNA_STRIDES(ap)[permutation[i]];
-        }
-        fa->flags |= NPY_ARRAY_MASKNA;
     }
 
     /* fix the dimensions and strides of the return-array */
@@ -1134,31 +1051,10 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
                                1, val,
                                &stride,
                                PyArray_BYTES(arr),
-                PyArray_FLAGS(arr) & ~(NPY_ARRAY_OWNMASKNA | NPY_ARRAY_MASKNA),
+                               PyArray_FLAGS(arr),
                                (PyObject *)arr);
             if (ret == NULL) {
                 return NULL;
-            }
-
-            /* Take a view of the NA mask as well if necessary */
-            if (PyArray_HASMASKNA(arr)) {
-                PyArrayObject_fields *fa =
-                                    (PyArrayObject_fields *)ret;
-
-                fa->maskna_dtype = PyArray_MASKNA_DTYPE(arr);
-                Py_INCREF(fa->maskna_dtype);
-                fa->maskna_data = PyArray_MASKNA_DATA(arr);
-
-                /*
-                 * Because the strides of the NA mask always match up
-                 * layout-wise with the strides of the data, we don't
-                 * have to also check them the same way. This is due
-                 * to the fact that PyArray_AllocateMaskNA is the only
-                 * mechanism ever used to create an NA mask.
-                 */
-                fa->maskna_strides[0] =
-                        PyArray_MASKNA_STRIDES(arr)[strideperm[ndim-1].perm];
-                fa->flags |= NPY_ARRAY_MASKNA;
             }
 
             PyArray_UpdateFlags(ret,
@@ -1199,13 +1095,6 @@ PyArray_Flatten(PyArrayObject *a, NPY_ORDER order)
                                0, (PyObject *)a);
     if (ret == NULL) {
         return NULL;
-    }
-
-    if (PyArray_HASMASKNA(a)) {
-        if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
-            Py_DECREF(ret);
-            return NULL;
-        }
     }
 
     if (PyArray_CopyAsFlat(ret, a, order) < 0) {
@@ -1292,18 +1181,6 @@ PyArray_RemoveAxesInPlace(PyArrayObject *arr, npy_bool *flags)
             shape[idim_out] = shape[idim];
             strides[idim_out] = strides[idim];
             ++idim_out;
-        }
-    }
-
-    /* Compress the mask strides if the result has an NA mask */
-    if (PyArray_HASMASKNA(arr)) {
-        strides = fa->maskna_strides;
-        idim_out = 0;
-        for (idim = 0; idim < ndim; ++idim) {
-            if (!flags[idim]) {
-                strides[idim_out] = strides[idim];
-                ++idim_out;
-            }
         }
     }
 

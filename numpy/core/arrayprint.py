@@ -15,7 +15,7 @@ __docformat__ = 'restructuredtext'
 import sys
 import numerictypes as _nt
 from umath import maximum, minimum, absolute, not_equal, isnan, isinf
-from multiarray import format_longfloat, datetime_as_string, datetime_data, isna
+from multiarray import format_longfloat, datetime_as_string, datetime_data
 from fromnumeric import ravel
 
 
@@ -29,7 +29,6 @@ _float_output_suppress_small = False
 _line_width = 75
 _nan_str = 'nan'
 _inf_str = 'inf'
-_na_str = 'NA'
 _formatter = None  # formatting function for array elements
 
 if sys.version_info[0] >= 3:
@@ -37,7 +36,7 @@ if sys.version_info[0] >= 3:
 
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None,
-                     nanstr=None, infstr=None, nastr=None,
+                     nanstr=None, infstr=None,
                      formatter=None):
     """
     Set printing options.
@@ -65,8 +64,6 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         String representation of floating point not-a-number (default nan).
     infstr : str, optional
         String representation of floating point infinity (default inf).
-    nastr : str, optional
-        String representation of NA missing value (default NA).
     formatter : dict of callables, optional
         If not None, the keys should indicate the type(s) that the respective
         formatting function applies to.  Callables should return a string.
@@ -144,7 +141,7 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
 
     global _summaryThreshold, _summaryEdgeItems, _float_output_precision, \
            _line_width, _float_output_suppress_small, _nan_str, _inf_str, \
-           _na_str, _formatter
+           _formatter
     if linewidth is not None:
         _line_width = linewidth
     if threshold is not None:
@@ -159,8 +156,6 @@ def set_printoptions(precision=None, threshold=None, edgeitems=None,
         _nan_str = nanstr
     if infstr is not None:
         _inf_str = infstr
-    if nastr is not None:
-        _na_str = nastr
     _formatter = formatter
 
 def get_printoptions():
@@ -195,7 +190,6 @@ def get_printoptions():
              suppress=_float_output_suppress_small,
              nanstr=_nan_str,
              infstr=_inf_str,
-             nastr=_na_str,
              formatter=_formatter)
     return d
 
@@ -219,19 +213,14 @@ def _leading_trailing(a):
     return b
 
 def _boolFormatter(x):
-    if isna(x):
-        return str(x).replace('NA', _na_str, 1)
-    elif x:
+    if x:
         return ' True'
     else:
         return 'False'
 
 
 def repr_format(x):
-    if isna(x):
-        return str(x).replace('NA', _na_str, 1)
-    else:
-        return repr(x)
+    return repr(x)
 
 def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   prefix="", formatter=None):
@@ -437,20 +426,17 @@ def array2string(a, max_line_width=None, precision=None,
 
     if a.shape == ():
         x = a.item()
-        if isna(x):
-            lst = str(x).replace('NA', _na_str, 1)
-        else:
-            try:
-                lst = a._format(x)
-                msg = "The `_format` attribute is deprecated in Numpy " \
-                      "2.0 and will be removed in 2.1. Use the " \
-                      "`formatter` kw instead."
-                import warnings
-                warnings.warn(msg, DeprecationWarning)
-            except AttributeError:
-                if isinstance(x, tuple):
-                    x = _convert_arrays(x)
-                lst = style(x)
+        try:
+            lst = a._format(x)
+            msg = "The `_format` attribute is deprecated in Numpy " \
+                  "2.0 and will be removed in 2.1. Use the " \
+                  "`formatter` kw instead."
+            import warnings
+            warnings.warn(msg, DeprecationWarning)
+        except AttributeError:
+            if isinstance(x, tuple):
+                x = _convert_arrays(x)
+            lst = style(x)
     elif reduce(product, a.shape) == 0:
         # treat as a null array if any of shape elements == 0
         lst = "[]"
@@ -553,17 +539,15 @@ class FloatFormat(object):
         import numeric as _nc
         errstate = _nc.seterr(all='ignore')
         try:
-            special = isnan(data) | isinf(data) | isna(data)
-            special[isna(data)] = False
+            special = isnan(data) | isinf(data)
             valid = not_equal(data, 0) & ~special
-            valid[isna(data)] = False
             non_zero = absolute(data.compress(valid))
             if len(non_zero) == 0:
                 max_val = 0.
                 min_val = 0.
             else:
-                max_val = maximum.reduce(non_zero, skipna=True)
-                min_val = minimum.reduce(non_zero, skipna=True)
+                max_val = maximum.reduce(non_zero)
+                min_val = minimum.reduce(non_zero)
                 if max_val >= 1.e8:
                     self.exp_format = True
                 if not self.suppress_small and (min_val < 0.0001
@@ -594,8 +578,7 @@ class FloatFormat(object):
             if _nc.any(special):
                 self.max_str_len = max(self.max_str_len,
                                        len(_nan_str),
-                                       len(_inf_str)+1,
-                                       len(_na_str))
+                                       len(_inf_str)+1)
             if self.sign:
                 format = '%#+'
             else:
@@ -609,9 +592,7 @@ class FloatFormat(object):
         import numeric as _nc
         err = _nc.seterr(invalid='ignore')
         try:
-            if isna(x):
-                return self.special_fmt % (str(x).replace('NA', _na_str, 1),)
-            elif isnan(x):
+            if isnan(x):
                 if self.sign:
                     return self.special_fmt % ('+' + _nan_str,)
                 else:
@@ -654,8 +635,8 @@ _MININT = -sys.maxint-1
 class IntegerFormat(object):
     def __init__(self, data):
         try:
-            max_str_len = max(len(str(maximum.reduce(data, skipna=True))),
-                              len(str(minimum.reduce(data, skipna=True))))
+            max_str_len = max(len(str(maximum.reduce(data))),
+                              len(str(minimum.reduce(data))))
             self.format = '%' + str(max_str_len) + 'd'
         except (TypeError, NotImplementedError):
             # if reduce(data) fails, this instance will not be called, just
@@ -666,9 +647,7 @@ class IntegerFormat(object):
             pass
 
     def __call__(self, x):
-        if isna(x):
-            return str(x).replace('NA', _na_str, 1)
-        elif _MININT < x < _MAXINT:
+        if _MININT < x < _MAXINT:
             return self.format % x
         else:
             return "%s" % x
@@ -681,9 +660,7 @@ class LongFloatFormat(object):
         self.sign = sign
 
     def __call__(self, x):
-        if isna(x):
-            return str(x).replace('NA', _na_str, 1)
-        elif isnan(x):
+        if isnan(x):
             if self.sign:
                 return '+' + _nan_str
             else:
@@ -711,12 +688,9 @@ class LongComplexFormat(object):
         self.imag_format = LongFloatFormat(precision, sign=True)
 
     def __call__(self, x):
-        if isna(x):
-            return str(x).replace('NA', _na_str, 1)
-        else:
-            r = self.real_format(x.real)
-            i = self.imag_format(x.imag)
-            return r + i + 'j'
+        r = self.real_format(x.real)
+        i = self.imag_format(x.imag)
+        return r + i + 'j'
 
 
 class ComplexFormat(object):
@@ -726,17 +700,14 @@ class ComplexFormat(object):
                                        sign=True)
 
     def __call__(self, x):
-        if isna(x):
-            return str(x).replace('NA', _na_str, 1)
+        r = self.real_format(x.real, strip_zeros=False)
+        i = self.imag_format(x.imag, strip_zeros=False)
+        if not self.imag_format.exp_format:
+            z = i.rstrip('0')
+            i = z + 'j' + ' '*(len(i)-len(z))
         else:
-            r = self.real_format(x.real, strip_zeros=False)
-            i = self.imag_format(x.imag, strip_zeros=False)
-            if not self.imag_format.exp_format:
-                z = i.rstrip('0')
-                i = z + 'j' + ' '*(len(i)-len(z))
-            else:
-                i = i + 'j'
-            return r + i
+            i = i + 'j'
+        return r + i
 
 class DatetimeFormat(object):
     def __init__(self, x, unit=None,
@@ -761,13 +732,10 @@ class DatetimeFormat(object):
         self.casting = casting
 
     def __call__(self, x):
-        if isna(x):
-            return str(x).replace('NA', _na_str, 1)
-        else:
-            return "'%s'" % datetime_as_string(x,
-                                        unit=self.unit,
-                                        timezone=self.timezone,
-                                        casting=self.casting)
+        return "'%s'" % datetime_as_string(x,
+                                    unit=self.unit,
+                                    timezone=self.timezone,
+                                    casting=self.casting)
 
 class TimedeltaFormat(object):
     def __init__(self, data):
@@ -778,8 +746,5 @@ class TimedeltaFormat(object):
             self.format = '%' + str(max_str_len) + 'd'
 
     def __call__(self, x):
-        if isna(x):
-            return str(x).replace('NA', _na_str, 1)
-        else:
-            return self.format % x.astype('i8')
+        return self.format % x.astype('i8')
 

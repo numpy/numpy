@@ -92,40 +92,6 @@ sub-types).
     A synonym for PyArray_DESCR, named to be consistent with the
     'dtype' usage within Python.
 
-.. cfunction:: npy_bool PyArray_HASMASKNA(PyArrayObject* arr)
-
-    .. versionadded:: 1.7
-
-    Returns true if the array has an NA-mask, false otherwise.
-
-.. cfunction:: PyArray_Descr *PyArray_MASKNA_DTYPE(PyArrayObject* arr)
-
-    .. versionadded:: 1.7
-
-    Returns a borrowed reference to the dtype property for the NA mask
-    of the array, or NULL if the array has no NA mask. This function does
-    not raise an exception when it returns NULL, it is simply returning
-    the appropriate field.
-
-.. cfunction:: char *PyArray_MASKNA_DATA(PyArrayObject* arr)
-
-    .. versionadded:: 1.7
-
-    Returns a pointer to the raw data for the NA mask of the array,
-    or NULL if the array has no NA mask. This function does
-    not raise an exception when it returns NULL, it is simply returning
-    the appropriate field.
-
-.. cfunction:: npy_intp *PyArray_MASKNA_STRIDES(PyArrayObject* arr)
-
-    .. versionadded:: 1.7
-
-    Returns a pointer to strides of the NA mask of the array, If the
-    array has no NA mask, the values contained in the array will be
-    invalid. The shape of the NA mask is identical to the shape of the
-    array itself, so the number of strides is always the same as the
-    number of array dimensions.
-
 .. cfunction:: void PyArray_ENABLEFLAGS(PyArrayObject* arr, int flags)
 
     .. versionadded:: 1.7
@@ -254,11 +220,6 @@ From scratch
     provided *dims* and *strides* are copied into newly allocated
     dimension and strides arrays for the new array object.
 
-    Because the flags are ignored when *data* is NULL, you cannot
-    create a new array from scratch with an NA mask. If one is desired,
-    call the function :cfunc:`PyArray_AllocateMaskNA` after the array
-    is created.
-
 .. cfunction:: PyObject* PyArray_NewLikeArray(PyArrayObject* prototype, NPY_ORDER order, PyArray_Descr* descr, int subok)
 
     .. versionadded:: 1.6
@@ -280,11 +241,6 @@ From scratch
     If *subok* is 1, the newly created array will use the sub-type of
     *prototype* to create the new array, otherwise it will create a
     base-class array.
-
-    The newly allocated array does not have an NA mask even if the
-    *prototype* provided does. If an NA mask is desired in the array,
-    call the function :cfunc:`PyArray_AllocateMaskNA` after the array
-    is created.
 
 .. cfunction:: PyObject* PyArray_New(PyTypeObject* subtype, int nd, npy_intp* dims, int type_num, npy_intp* strides, void* data, int itemsize, int flags, PyObject* obj)
 
@@ -474,31 +430,6 @@ From other objects
         will be made writeable again. If *op* is not writeable to begin
         with, then an error is raised. If *op* is not already an array,
         then this flag has no effect.
-
-    .. cvar:: NPY_ARRAY_MASKNA
-
-        .. versionadded:: 1.7
-
-        Make sure the array has an NA mask associated with its data.
-
-    .. cvar:: NPY_ARRAY_OWNMASKNA
-
-        .. versionadded:: 1.7
-
-        Make sure the array has an NA mask which it owns
-        associated with its data.
-
-    .. cvar:: NPY_ARRAY_ALLOWNA
-
-        .. versionadded:: 1.7
-
-        To prevent simple errors from slipping in, arrays with NA
-        masks are not permitted to pass through by default. Instead
-        an exception is raised indicating the operation doesn't support
-        NA masks yet. In order to enable NA mask support, this flag
-        must be passed in to allow the NA mask through, signalling that
-        the later code is written appropriately to handle NA mask
-        semantics.
 
     .. cvar:: NPY_ARRAY_BEHAVED
 
@@ -1414,24 +1345,6 @@ or :cdata:`NPY_ARRAY_F_CONTIGUOUS` can be determined by the ``strides``,
     :cdata:`NPY_ARRAY_WRITEABLE` to begin with then :cfunc:`PyArray_FromAny`
     would have returned an error because :cdata:`NPY_ARRAY_UPDATEIFCOPY`
     would not have been possible.
-
-.. cvar:: NPY_ARRAY_MASKNA
-
-    If this flag is enabled, the array has an NA mask associated with
-    the data. C code which interacts with the NA mask must follow
-    specific semantic rules about when to overwrite data and when not
-    to. The mask can be accessed through the functions
-    :cfunc:`PyArray_MASKNA_DTYPE`, :cfunc:`PyArray_MASKNA_DATA`, and
-    :cfunc:`PyArray_MASKNA_STRIDES`.
-
-.. cvar:: NPY_ARRAY_OWNMASKNA
-
-    If this flag is enabled, the array owns its own NA mask. If it is not
-    enabled, the NA mask is a view into a different array's NA mask.
-
-    In order to ensure that an array owns its own NA mask, you can
-    call :cfunc:`PyArray_AllocateMaskNA` with the parameter *ownmaskna*
-    set to 1.
 
 :cfunc:`PyArray_UpdateFlags` (obj, flags) will update the ``obj->flags``
 for ``flags`` which can be any of :cdata:`NPY_ARRAY_C_CONTIGUOUS`,
@@ -2541,9 +2454,6 @@ Array Scalars
     if so, returns the appropriate array scalar. It should be used
     whenever 0-dimensional arrays could be returned to Python.
 
-    If *arr* is a 0-dimensional NA-masked array with its value hidden,
-    an instance of :ctype:`NpyNA *` is returned.
-
 .. cfunction:: PyObject* PyArray_Scalar(void* data, PyArray_Descr* dtype, PyObject* itemsize)
 
     Return an array scalar object of the given enumerated *typenum*
@@ -2756,19 +2666,6 @@ to.
     . No matter what is returned, you must DECREF the object returned
     by this routine in *address* when you are done with it.
 
-    If the input is an array with NA support, this will either raise
-    an error if it contains any NAs, or will make a copy of the array
-    without NA support if it does not contain any NAs. Use the function
-    :cfunc:`PyArray_AllowNAConverter` to support NA-arrays directly
-    and more efficiently.
-
-.. cfunction:: int PyArray_AllowConverter(PyObject* obj, PyObject** address)
-
-    This is the same as :cfunc:`PyArray_Converter`, but allows arrays
-    with NA support to pass through untouched. This function was created
-    so that the existing converter could raise errors appropriately
-    for functions which have not been updated with NA support
-
 .. cfunction:: int PyArray_OutputConverter(PyObject* obj, PyArrayObject** address)
 
     This is a default converter for output arrays given to
@@ -2776,17 +2673,6 @@ to.
     will be ``NULL`` but the call will succeed. If :cfunc:`PyArray_Check` (
     *obj*) is TRUE then it is returned in *\*address* without
     incrementing its reference count.
-
-    If the output is an array with NA support, this will raise an error.
-    Use the function :cfunc:`PyArray_OutputAllowNAConverter` to support
-    NA-arrays directly.
-
-.. cfunction:: int PyArray_OutputAllowNAConverter(PyObject* obj, PyArrayObject** address)
-
-    This is the same as :cfunc:`PyArray_OutputConverter`, but allows arrays
-    with NA support to pass through. This function was created
-    so that the existing output converter could raise errors appropriately
-    for functions which have not been updated with NA support
 
 .. cfunction:: int PyArray_IntpConverter(PyObject* obj, PyArray_Dims* seq)
 

@@ -778,7 +778,7 @@ def select(condlist, choicelist, default=0):
             S = S*ones(asarray(pfac).shape, S.dtype)
     return choose(S, tuple(choicelist))
 
-def copy(a, order='C', maskna=None):
+def copy(a, order='C'):
     """
     Return an array copy of the given object.
 
@@ -791,10 +791,6 @@ def copy(a, order='C', maskna=None):
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
         as possible.
-    maskna : bool, optional
-        If specifies, forces the copy to have or to not have an
-        NA mask. This is a way to remove an NA mask from an array
-        while making a copy.
 
     Returns
     -------
@@ -824,7 +820,7 @@ def copy(a, order='C', maskna=None):
     False
 
     """
-    return array(a, order=order, copy=True, maskna=maskna)
+    return array(a, order=order, copy=True)
 
 # Basic operations
 
@@ -3377,7 +3373,6 @@ def delete(arr, obj, axis=None):
                     "invalid entry")
         newshape[axis]-=1;
         new = empty(newshape, arr.dtype, arr.flags.fnc)
-        new.flags.maskna = arr.flags.maskna
         slobj[axis] = slice(None, obj)
         new[slobj] = arr[slobj]
         slobj[axis] = slice(obj,None)
@@ -3394,7 +3389,6 @@ def delete(arr, obj, axis=None):
                 return arr.copy()
         newshape[axis] -= numtodel
         new = empty(newshape, arr.dtype, arr.flags.fnc)
-        new.flags.maskna = arr.flags.maskna
         # copy initial chunk
         if start == 0:
             pass
@@ -3526,7 +3520,6 @@ def insert(arr, obj, values, axis=None):
                     "in dimension %d" % (obj, N, axis))
         newshape[axis] += 1;
         new = empty(newshape, arr.dtype, arr.flags.fnc)
-        new.flags.maskna = arr.flags.maskna
         slobj[axis] = slice(None, obj)
         new[slobj] = arr[slobj]
         slobj[axis] = obj
@@ -3553,7 +3546,6 @@ def insert(arr, obj, values, axis=None):
     index2 = setdiff1d(arange(numnew+N),index1)
     newshape[axis] += numnew
     new = empty(newshape, arr.dtype, arr.flags.fnc)
-    new.flags.maskna = arr.flags.maskna
     slobj2 = [slice(None)]*ndim
     slobj[axis] = index1
     slobj2[axis] = index2

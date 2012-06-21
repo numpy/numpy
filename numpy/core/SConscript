@@ -469,7 +469,6 @@ if ENABLE_SEPARATE_COMPILATION:
         pjoin('src', 'multiarray', 'item_selection.c'),
         pjoin('src', 'multiarray', 'calculation.c'),
         pjoin('src', 'multiarray', 'common.c'),
-        pjoin('src', 'multiarray', 'reduction.c'),
         pjoin('src', 'multiarray', 'refcount.c'),
         pjoin('src', 'multiarray', 'conversion_utils.c'),
         pjoin('src', 'multiarray', 'usertypes.c'),
@@ -498,6 +497,7 @@ env.DistutilsPythonExtension('multiarray_tests', source=multiarray_tests_src)
 if ENABLE_SEPARATE_COMPILATION:
     umathmodule_src.extend([pjoin('src', 'umath', 'ufunc_object.c')])
     umathmodule_src.extend([pjoin('src', 'umath', 'ufunc_type_resolution.c')])
+    umathmodule_src.extend([pjoin('src', 'multiarray', 'reduction.c')]),
     umathmodule_src.extend(umath_loops_src)
 else:
     umathmodule_src = [pjoin('src', 'umath', 'umathmodule_onefile.c')]

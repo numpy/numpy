@@ -1329,8 +1329,7 @@ unmasked_ufunc_loop_as_masked(
     do {
         /* Skip masked values */
         subloopsize = 0;
-        while (subloopsize < loopsize &&
-                        !NpyMaskValue_IsExposed(*(npy_mask *)mask)) {
+        while (subloopsize < loopsize && !*mask) {
             ++subloopsize;
             mask += mask_stride;
         }
@@ -1343,8 +1342,7 @@ unmasked_ufunc_loop_as_masked(
          * mess with the 'args' pointer values)
          */
         subloopsize = 0;
-        while (subloopsize < loopsize &&
-                        NpyMaskValue_IsExposed(*(npy_mask *)mask)) {
+        while (subloopsize < loopsize && *mask) {
             ++subloopsize;
             mask += mask_stride;
         }
