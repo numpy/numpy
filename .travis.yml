@@ -19,10 +19,16 @@ env:
   # use it.
   #
   - TEST_PY24=""
+  - NPY_SEPARATE_COMPILATION=0
 matrix:
   include:
     - python: 2.5
       env: TEST_PY24="true"
+  include:
+    - python: 2.7
+      env: NPY_SEPARATE_COMPILATION=1
+    - python: 3.2
+      env: NPY_SEPARATE_COMPILATION=1
 before_install:
   - mkdir builds
   - pushd builds
