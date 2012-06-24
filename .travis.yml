@@ -19,7 +19,6 @@ env:
   # use it.
   #
   - TEST_PY24=""
-  - NPY_SEPARATE_COMPILATION=0
 matrix:
   include:
     - python: 2.5
