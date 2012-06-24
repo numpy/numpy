@@ -6,12 +6,18 @@
  *
  * See LICENSE.txt for the license.
  */
+#define _UMATHMODULE
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
 #define PY_SSIZE_T_CLEAN
 #include <Python.h>
 
-#define NPY_NO_DEPRECATED_API NPY_API_VERSION
-#define _MULTIARRAYMODULE
+#include "npy_config.h"
+#ifdef ENABLE_SEPARATE_COMPILATION
+#define PY_ARRAY_UNIQUE_SYMBOL _npy_umathmodule_ARRAY_API
+#define NO_IMPORT_ARRAY
+#endif
+
 #include <numpy/arrayobject.h>
 
 #include "npy_config.h"
