@@ -23,7 +23,6 @@ matrix:
   include:
     - python: 2.5
       env: TEST_PY24="true"
-  include:
     - python: 2.7
       env: NPY_SEPARATE_COMPILATION=1
     - python: 3.2
