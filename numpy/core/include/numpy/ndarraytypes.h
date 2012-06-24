@@ -1250,7 +1250,7 @@ typedef struct {
         PyArrayIterObject    **iters;                 /* iterators */
 } PyArrayMultiIterObject;
 
-void multiter_allociters(PyArrayMultiIterObject *multi, int n);
+int multiter_allociters(PyArrayMultiIterObject *multi, int n);
 
 
 #define _PyMIT(m) ((PyArrayMultiIterObject *)(m))

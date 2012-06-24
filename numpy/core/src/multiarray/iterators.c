@@ -1503,7 +1503,7 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
     return 0;
 }
 
-void
+int
 multiter_allociters(PyArrayMultiIterObject *multi, int n)
 {
     int i;
@@ -1512,14 +1512,20 @@ multiter_allociters(PyArrayMultiIterObject *multi, int n)
 
     if (n <= 0) {
         multi->iters = NULL;
-        return;
+        return 0;
     }
 
     multi->iters = PyArray_malloc(n * sizeof(PyArrayIterObject *));
+    if (multi->iters == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
 
     for (i = 0; i < n; i++) {
         multi->iters[i] = NULL;
     }
+
+    return 0;
 }
 
 /*NUMPY_API
@@ -1553,7 +1559,10 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
     }
     PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
-    multiter_allociters(multi, ntot);
+    if (multiter_allociters(multi, ntot) < 0) {
+        /* error already set */
+        return NULL;
+    }
 
     multi->index = 0;
 
@@ -1616,7 +1625,10 @@ PyArray_MultiIterNew(int n, ...)
     }
     PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
-    multiter_allociters(multi, n);
+    if (multiter_allociters(multi, n) < 0) {
+        /* error already set */
+        return NULL;
+    }
 
     multi->index = 0;
 
@@ -1676,7 +1688,10 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
     }
     PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
-    multiter_allociters(multi, n);
+    if (multiter_allociters(multi, n) < 0) {
+        /* error already set */
+        return NULL;
+    }
 
     multi->index = 0;
 
