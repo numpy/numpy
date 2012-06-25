@@ -59,4 +59,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *, PyArrayObject *);
 NPY_NO_EXPORT PyObject*
 PyArray_MapIterNew(PyObject *, int, int);
 
+static PyObject *
+index_increment(PyObject *dummy, PyObject *args);
+
 #endif
