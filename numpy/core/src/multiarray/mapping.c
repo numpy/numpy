@@ -2120,11 +2120,7 @@ index_increment(PyObject *dummy, PyObject *args)
     //endbody
 	
 	Py_DECREF(mit);
-
-    Py_DECREF(a);
-    
-    Py_INCREF(Py_None);
-    return Py_None;
+    return a;
 
  fail:
  	Py_XDECREF(mit);
