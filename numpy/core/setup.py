@@ -13,8 +13,8 @@ from setup_common import *
 
 # Set to True to enable multiple file compilations (experimental)
 try:
-    os.environ['NPY_SEPARATE_COMPILATION']
-    ENABLE_SEPARATE_COMPILATION = True
+    val = os.environ['NPY_SEPARATE_COMPILATION']
+    ENABLE_SEPARATE_COMPILATION = (val != "0")
 except KeyError:
     ENABLE_SEPARATE_COMPILATION = False
 
