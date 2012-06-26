@@ -2053,8 +2053,8 @@ map_increment(PyArrayMapIterObject *mit, PyObject *op)
 
     if ((it = (PyArrayIterObject *)\
          PyArray_BroadcastToShape(arr, mit->dimensions, mit->nd))==NULL) {
-		 printf("got here");
-        Py_DECREF(arr);
+		Py_DECREF(arr);
+		
         return -1;
     }
 
@@ -2086,8 +2086,9 @@ index_increment(PyObject *dummy, PyObject *args)
 	PyArrayObject *a;
 	
     if (!PyArg_ParseTuple(args, "OOO", &arg_a, &index,
-        &inc)) return NULL;
-	
+        &inc)) { 
+		return NULL;
+	}
 	if (!(PyArray_Check(arg_a) &&  (PyArray_TYPE((PyArrayObject *)arg_a) == NPY_FLOAT64))){
 	
 			PyErr_SetString(PyExc_ValueError, "a must be a float64 array");
@@ -2111,14 +2112,11 @@ index_increment(PyObject *dummy, PyObject *args)
 	PyArrayMapIterObject * mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, 0, 1);
     if (mit == NULL) 
 	{
-		PyErr_SetString(PyExc_RuntimeError, 
-						"error in advanced indexing");
 		goto fail;
 	}
     PyArray_MapIterBind(mit, a);
-	if (!map_increment(mit, inc))
+	if (map_increment(mit, inc) != 0)
     {
-    	PyErr_SetString(PyExc_RuntimeError, "error during mapping");
     	goto fail;
     }
     
@@ -2131,7 +2129,6 @@ index_increment(PyObject *dummy, PyObject *args)
 
  fail:
  	Py_XDECREF(mit);
-    Py_XDECREF(a);
 
     return NULL;
 }
