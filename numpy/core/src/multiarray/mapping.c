@@ -2040,13 +2040,13 @@ map_increment(PyArrayMapIterObject *mit, PyObject *op)
     arr = (PyArrayObject *)PyArray_FromAny(op, descr,
                                 0, 0, NPY_ARRAY_FORCECAST, NULL);
     if (arr == NULL) {
-        return -2;
+        return -1;
     }
     if ((mit->subspace != NULL) && (mit->consec)) {
         if (mit->iteraxes[0] > 0) {  
             _swap_axes(mit, (PyArrayObject **)&arr, 0);
             if (arr == NULL) {
-                return -3;
+                return -1;
             }
         }
     }
@@ -2054,19 +2054,19 @@ map_increment(PyArrayMapIterObject *mit, PyObject *op)
     if ((it = (PyArrayIterObject *)\
          PyArray_BroadcastToShape(arr, mit->dimensions, mit->nd))==NULL) {
         Py_DECREF(arr);
-        return -4;
+        return -1;
     }
 
     index = mit->size;
 
     PyArray_MapIterReset(mit);
 
-	double * mit_dataptr ;
-	double * it_dataptr;
+	npy_float64 * mit_dataptr ;
+	npy_float64 * it_dataptr;
 	
     while(index--) {
-			mit_dataptr = (double*)(mit->dataptr);
-			it_dataptr = (double*)(it->dataptr);
+			mit_dataptr = (npy_float64*)(mit->dataptr);
+			it_dataptr = (npy_float64*)(it->dataptr);
 			mit_dataptr[0] = mit_dataptr[0] + it_dataptr[0];
         	
         PyArray_MapIterNext(mit);
@@ -2086,9 +2086,13 @@ index_increment(PyObject *dummy, PyObject *args)
 	
     if (!PyArg_ParseTuple(args, "OOO", &arg_a, &index,
         &inc)) return NULL;
-
-    a = PyArray_FROM_OTF(arg_a, NPY_DOUBLE, NPY_ARRAY_INOUT_ARRAY);
-    if (a == NULL) return NULL;
+	
+	if (!(PyArray_Check(arg_a) &&  (PyArray_TYPE((PyArrayObject *)arg_a) == NPY_FLOAT64))){
+	
+			PyErr_SetString(PyExc_ValueError, "a must be a float64 array");
+			return NULL;	
+	}
+	a = (PyArrayObject *) arg_a;
     
     if (PyArray_NDIM(a) == 0) {
         PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed.");
@@ -2104,23 +2108,25 @@ index_increment(PyObject *dummy, PyObject *args)
 	
 	//body
 	PyArrayMapIterObject * mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, 0, 1);
-    if (mit == NULL) goto fail;
-
+    if (mit == NULL) 
+	{
+		PyErr_SetString(PyExc_RuntimeError, 
+						"error in advanced indexing");
+		goto fail;
+	}
     PyArray_MapIterBind(mit, a);
-    int err = map_increment(mit, inc);
-	char errmsg[80];
-	if (err != 0)
+	if (map_increment(mit, inc) != 0)
     {
-	
-		snprintf(errmsg, 80, "error during mapping %i", err) ;
-    	PyErr_SetString(PyExc_RuntimeError, err);
+    	PyErr_SetString(PyExc_RuntimeError, "error during mapping");
     	goto fail;
     }
     
     //endbody
 	
 	Py_DECREF(mit);
-    return a;
+	
+	Py_INCREF(Py_None);
+    return Py_None;
 
  fail:
  	Py_XDECREF(mit);
