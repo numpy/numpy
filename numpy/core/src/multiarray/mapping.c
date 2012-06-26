@@ -2053,6 +2053,7 @@ map_increment(PyArrayMapIterObject *mit, PyObject *op)
 
     if ((it = (PyArrayIterObject *)\
          PyArray_BroadcastToShape(arr, mit->dimensions, mit->nd))==NULL) {
+		 printf("got here");
         Py_DECREF(arr);
         return -1;
     }
@@ -2081,7 +2082,7 @@ map_increment(PyArrayMapIterObject *mit, PyObject *op)
 static PyObject *
 index_increment(PyObject *dummy, PyObject *args)
 {
-    PyObject *arg_a, *index=NULL, *inc=NULL;
+    PyObject *arg_a = NULL, *index=NULL, *inc=NULL;
 	PyArrayObject *a;
 	
     if (!PyArg_ParseTuple(args, "OOO", &arg_a, &index,
@@ -2115,7 +2116,7 @@ index_increment(PyObject *dummy, PyObject *args)
 		goto fail;
 	}
     PyArray_MapIterBind(mit, a);
-	if (map_increment(mit, inc) != 0)
+	if (!map_increment(mit, inc))
     {
     	PyErr_SetString(PyExc_RuntimeError, "error during mapping");
     	goto fail;
