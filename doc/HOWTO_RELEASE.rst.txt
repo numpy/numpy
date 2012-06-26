@@ -38,14 +38,14 @@ Python 2.4-2.7 and >=3.1 are the currently supported versions on all platforms.
 
 OS X
 ----
-OS X 10.4 (Tiger), 10.5 (Leopard) and 10.6 (Snow Leopard) are supported. 
-Note that only the Python from `python.org <http://python.org>`_ is
-supported. Binaries do *not* support Apple Python.
+OS X versions 10.4 - 10.7 are supported.  Note that there are currently still
+issues with compiling on 10.7, due to Apple moving to gcc-llvm.
+Only the Python from `python.org <http://python.org>`_ is supported. Binaries
+do *not* support Apple Python.
 
 Windows
 -------
-Windows XP and Windows Vista are supported by the 1.3.0 release, the 1.4.x
-releases also support Windows 7.
+Windows XP, Vista and 7 are supported.
 
 Linux
 -----
@@ -66,10 +66,15 @@ Compilers
 The same gcc version is used as the one with which Python itself is built on
 each platform. At the moment this means:
 
-* OS X uses gcc-4.0 (since that is what Python itself is built with).
-* Windows build uses the latest released version from MinGW.  Note that NumPy
-  releases until 1.6.x and SciPy releases until 0.10.x were made with GCC
-  3.4.5.  For NumPy 1.7.x ad later GCC 4.x is required.
+* OS X uses gcc-4.0 (since that is what Python itself is built with) up to
+  Python 2.6. Python 2.7 comes in two flavors; the 32-bit version is built with
+  gcc-4.0 and the 64-bit version with gcc-4.2.  The "release.sh" script
+  sets environment variables to pick the right compiler.
+  All binaries should be built on OS X 10.5, with the exception of the 64-bit
+  Python 2.7 one which should be built on 10.6.
+* Windows builds use MinGW 3.4.5.  Updating this to a more recent MinGW with
+  GCC 4.x is desired, but there are still practical difficulties in building
+  the binary installers.
 
 Cython is not needed for building the binaries, because generated C files from
 Cython sources are checked in at the moment. It is worth keeping an eye on what
@@ -85,7 +90,8 @@ Python
 * Python(s) from `python.org <http://python.org>`_
 * virtualenv
 * paver
-* bdist_mpkg
+* bdist_mpkg from https://github.com/rgommers/bdist_mpkg (has a necessary
+  patch, don't use the unsupported version on PyPi).
 
 Python itself should be installed multiple times - each version a binary is
 built for should be installed. The other dependencies only have to be installed
@@ -150,10 +156,7 @@ add adding a PATH variable in HKEY_CURRENT_USER/Environment.
 Virtualenv
 ----------
 Virtualenv is a very useful tool to keep several versions of packages around.
-It is also used in the Paver script to build the docs. The use of the 
-``--no-site-packages`` option in the Paver script is probably not necessary, 
-and may prevent successful building of the docs. If doc building fails because
-Matplotlib can not be found, remove this option.
+It is also used in the Paver script to build the docs. 
 
 
 What is released
@@ -186,6 +189,15 @@ Release process
 Check the buildbot
 ------------------
 The buildbot is located at `<http://buildbot.scipy.org/>`_.
+
+Agree on a release schedule
+---------------------------
+A typical release schedule is one beta, two release candidates and a final
+release.  It's best to discuss the timing on the mailing list first, in order
+for people to get their commits in on time, get doc wiki edits merged, etc.
+After a date is set, create a new maintenance/x.y.z branch, add new empty
+release notes for the next version in the master branch and update the Trac
+Milestones.
 
 Handle test warnings
 --------------------
@@ -230,7 +242,7 @@ Check deprecations
 ------------------
 Before the release branch is made, it should be checked that all deprecated
 code that should be removed is actually removed, and all new deprecations say
-in the dostring or deprecation warning at what version the code will be
+in the docstring or deprecation warning at what version the code will be
 removed.
 
 Check the C API version number
@@ -247,11 +259,12 @@ Check the release notes
 -----------------------
 Check that the release notes are up-to-date, and mention at least the
 following:
-- major new features
-- deprecated and removed features
-- supported Python versions
-- for SciPy, supported NumPy version(s)
-- outlook for the near future
+
+  - major new features
+  - deprecated and removed features
+  - supported Python versions
+  - for SciPy, supported NumPy version(s)
+  - outlook for the near future
 
 Also make sure that as soon as the branch is made, there is a new release notes
 file in trunk for the next release.
