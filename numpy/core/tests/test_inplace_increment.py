@@ -1,6 +1,3 @@
-import sys
-from decimal import Decimal
-
 import numpy as np
 from numpy.testing import *
 from numpy.testing.utils import WarningManager
@@ -34,17 +31,16 @@ class TestInplaceIncrement(TestCase):
 		assert_array_almost_equal(a, np.array([[   0,    1,    2,   3],
 											[ 54,    55,    36,  23],
 											[   8,    9,   10,   11]]).astype(float))
-	
-	@dec.knownfailureif( True, "not sure what's wrong here")										
+										
 	def test_boolean(self):
 		a = np.arange(12).reshape((3,4)).astype(float)
-		index = (1, [ False, True, False, True])
-		inc = [50, 30,16, -30]
+		index = (1, np.array([ False, True, False, True], dtype = bool))
+		inc = [30,16]
 		
 		np.inplace_increment(a, index, inc)
 		
 		assert_array_almost_equal(a, np.array([[   0,    1,    2,   3],
-											[   4,   55,   36,  23],
+											[   4,   35,    6,  23],
 											[   8,    9,   10,   11]]).astype(float))
 
 		
