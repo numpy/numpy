@@ -239,7 +239,7 @@ _strided_to_strided(char *dst, npy_intp dst_stride,
                         NpyAuxData *NPY_UNUSED(data))
 {
     while (N > 0) {
-        memcpy(dst, src, src_itemsize);
+        memmove(dst, src, src_itemsize);
         dst += dst_stride;
         src += src_stride;
         --N;
@@ -312,7 +312,7 @@ _contig_to_contig(char *dst, npy_intp NPY_UNUSED(dst_stride),
                         npy_intp N, npy_intp src_itemsize,
                         NpyAuxData *NPY_UNUSED(data))
 {
-    memcpy(dst, src, src_itemsize*N);
+    memmove(dst, src, src_itemsize*N);
 }
 
 
