@@ -2024,8 +2024,42 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
 }
 
 
+typedef void (*inplace_binop)(char *, char *);
+
+
+//is something like this already defined somewhere? where?
+/**begin repeat
+ * #type  = npy_float32, npy_float64, npy_int16, npy_int32, npy_int64, npy_uint16, npy_uint32, npy_uint64#
+ * #typen = NPY_FLOAT32, NPY_FLOAT64, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT16, NPY_UINT32, NPY_UINT64#
+ */
+ static void @type@_inplace_add(char * l_op, char* r_op)
+ {
+	((@type@*)l_op)[0] = ((@type@*)l_op)[0] + ((@type@ *)r_op)[0];
+ }
+ /**end repeat**/
+ 
+ inplace_binop addition_funcs[] = {
+/**begin repeat
+ * #type  = npy_float32, npy_float64, npy_int16, npy_int32, npy_int64, npy_uint16, npy_uint32, npy_uint64#
+ * #typen = NPY_FLOAT32, NPY_FLOAT64, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT16, NPY_UINT32, NPY_UINT64#
+ */
+@type@_inplace_add,
+ 
+ /**end repeat**/
+NULL}; 
+
+ int type_numbers[] = {
+/**begin repeat
+ * #type  = npy_float32, npy_float64, npy_int16, npy_int32, npy_int64, npy_uint16, npy_uint32, npy_uint64#
+ * #typen = NPY_FLOAT32, NPY_FLOAT64, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT16, NPY_UINT32, NPY_UINT64#
+ */
+@typen@,
+ 
+ /**end repeat**/
+-1000}; 
+ 
 static int
-map_increment(PyArrayMapIterObject *mit, PyObject *op)
+map_increment(PyArrayMapIterObject *mit, PyObject *op, inplace_binop add_inplace)
 {
     PyObject *arr = NULL;
     PyArrayIterObject *it;
@@ -2042,6 +2076,7 @@ map_increment(PyArrayMapIterObject *mit, PyObject *op)
     if (arr == NULL) {
         return -1;
     }
+	
     if ((mit->subspace != NULL) && (mit->consec)) {
         if (mit->iteraxes[0] > 0) {  
             _swap_axes(mit, (PyArrayObject **)&arr, 0);
@@ -2061,14 +2096,11 @@ map_increment(PyArrayMapIterObject *mit, PyObject *op)
     index = mit->size;
 
     PyArray_MapIterReset(mit);
-
-	npy_float64 * mit_dataptr ;
-	npy_float64 * it_dataptr;
-	
     while(index--) {
-			mit_dataptr = (npy_float64*)(mit->dataptr);
+			(*add_inplace)(mit->dataptr, it->dataptr);
+			/*mit_dataptr = (npy_float64*)(mit->dataptr);
 			it_dataptr = (npy_float64*)(it->dataptr);
-			mit_dataptr[0] = mit_dataptr[0] + it_dataptr[0];
+			mit_dataptr[0] = mit_dataptr[0] + it_dataptr[0];*/
         	
         PyArray_MapIterNext(mit);
         PyArray_ITER_NEXT(it);
@@ -2077,6 +2109,10 @@ map_increment(PyArrayMapIterObject *mit, PyObject *op)
     Py_DECREF(it);
     return 0;
 }
+
+
+
+
 
 
 static PyObject *
@@ -2089,11 +2125,7 @@ index_increment(PyObject *dummy, PyObject *args)
         &inc)) { 
 		return NULL;
 	}
-	if (!(PyArray_Check(arg_a) &&  (PyArray_TYPE((PyArrayObject *)arg_a) == NPY_FLOAT64))){
-	
-			PyErr_SetString(PyExc_ValueError, "a must be a float64 array");
-			return NULL;	
-	}
+
 	a = (PyArrayObject *) arg_a;
     
     if (PyArray_NDIM(a) == 0) {
@@ -2107,6 +2139,24 @@ index_increment(PyObject *dummy, PyObject *args)
         goto fail;
     }
 
+	inplace_binop add_inplace = NULL; 
+	int type_number = PyArray_TYPE(a);
+	int i =0;
+	while  (type_numbers[i] >= 0 && addition_funcs[i] != NULL)
+	{
+		if (type_number == type_numbers[i])
+		{
+			add_inplace = addition_funcs[i];
+			break;
+		}
+		i++ ;
+	}
+	if (add_inplace == NULL)
+	{
+		PyErr_SetString(PyExc_TypeError, "unsupported type for a"); 
+		goto fail;
+	}
+	
 	
 	//body
 	PyArrayMapIterObject * mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, 0, 1);
@@ -2115,7 +2165,7 @@ index_increment(PyObject *dummy, PyObject *args)
 		goto fail;
 	}
     PyArray_MapIterBind(mit, a);
-	if (map_increment(mit, inc) != 0)
+	if (map_increment(mit, inc, add_inplace) != 0)
     {
     	goto fail;
     }
