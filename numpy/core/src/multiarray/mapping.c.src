@@ -2029,8 +2029,8 @@ typedef void (*inplace_binop)(char *, char *);
 
 //is something like this already defined somewhere? where?
 /**begin repeat
- * #type  = npy_float32, npy_float64, npy_int16, npy_int32, npy_int64, npy_uint16, npy_uint32, npy_uint64#
- * #typen = NPY_FLOAT32, NPY_FLOAT64, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT16, NPY_UINT32, NPY_UINT64#
+ * #type  = npy_int8, npy_int16, npy_int32, npy_int64, npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_float16, npy_float32, npy_float64#
+ * #typen = NPY_INT8, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT8, NPY_UINT16, NPY_UINT32, NPY_UINT64, NPY_FLOAT16, NPY_FLOAT32, NPY_FLOAT64#
  */
  static void @type@_inplace_add(char * l_op, char* r_op)
  {
@@ -2038,10 +2038,21 @@ typedef void (*inplace_binop)(char *, char *);
  }
  /**end repeat**/
  
+ /**begin repeat
+ * #type  = npy_complex64, npy_complex128#
+ * #typen = NPY_COMPLEX64, NPY_COMPLEX128#
+ */
+ static void @type@_inplace_add(char * l_op, char* r_op)
+ {
+	((@type@*)l_op)[0].real = ((@type@*)l_op)[0].real + ((@type@ *)r_op)[0].real;
+	((@type@*)l_op)[0].imag = ((@type@*)l_op)[0].imag + ((@type@ *)r_op)[0].imag;
+ }
+ /**end repeat**/
+ 
  inplace_binop addition_funcs[] = {
 /**begin repeat
- * #type  = npy_float32, npy_float64, npy_int16, npy_int32, npy_int64, npy_uint16, npy_uint32, npy_uint64#
- * #typen = NPY_FLOAT32, NPY_FLOAT64, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT16, NPY_UINT32, NPY_UINT64#
+ * #type  = npy_int8, npy_int16, npy_int32, npy_int64, npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_float16, npy_float32, npy_float64, npy_complex64, npy_complex128#
+ * #typen = NPY_INT8, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT8, NPY_UINT16, NPY_UINT32, NPY_UINT64, NPY_FLOAT16, NPY_FLOAT32, NPY_FLOAT64, NPY_COMPLEX64, NPY_COMPLEX128#
  */
 @type@_inplace_add,
  
@@ -2050,8 +2061,8 @@ NULL};
 
  int type_numbers[] = {
 /**begin repeat
- * #type  = npy_float32, npy_float64, npy_int16, npy_int32, npy_int64, npy_uint16, npy_uint32, npy_uint64#
- * #typen = NPY_FLOAT32, NPY_FLOAT64, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT16, NPY_UINT32, NPY_UINT64#
+ * #type  = npy_int8, npy_int16, npy_int32, npy_int64, npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_float16, npy_float32, npy_float64, npy_complex64, npy_complex128#
+ * #typen = NPY_INT8, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT8, NPY_UINT16, NPY_UINT32, NPY_UINT64, NPY_FLOAT16, NPY_FLOAT32, NPY_FLOAT64, NPY_COMPLEX64, NPY_COMPLEX128#
  */
 @typen@,
  
