@@ -2130,20 +2130,20 @@ index_increment(PyObject *dummy, PyObject *args)
     
     if (PyArray_NDIM(a) == 0) {
         PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed.");
-        goto fail; 
+        return NULL; 
     }
     
     if (!PyArray_ISWRITEABLE(a)) {
         PyErr_SetString(PyExc_RuntimeError,
                         "array is not writeable");
-        goto fail;
+        return NULL;
     }
 
 	inplace_binop add_inplace = NULL; 
 	int type_number = PyArray_TYPE(a);
 	int i =0;
 	while  (type_numbers[i] >= 0 && addition_funcs[i] != NULL)
-	{
+	{	
 		if (type_number == type_numbers[i])
 		{
 			add_inplace = addition_funcs[i];
@@ -2151,10 +2151,11 @@ index_increment(PyObject *dummy, PyObject *args)
 		}
 		i++ ;
 	}
+	
 	if (add_inplace == NULL)
 	{
 		PyErr_SetString(PyExc_TypeError, "unsupported type for a"); 
-		goto fail;
+		return NULL;
 	}
 	
 	
