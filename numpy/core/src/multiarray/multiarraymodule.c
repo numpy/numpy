@@ -3570,8 +3570,8 @@ static struct PyMethodDef array_module_methods[] = {
     {"test_interrupt",
         (PyCFunction)test_interrupt,
         METH_VARARGS, NULL},
-	{"index_increment",
-        (PyCFunction)index_increment,
+	{"inplace_increment",
+        (PyCFunction)inplace_increment,
         METH_VARARGS, NULL},	
     {NULL, NULL, 0, NULL}                /* sentinel */
 };

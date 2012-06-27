@@ -2219,9 +2219,9 @@ add_newdoc('numpy.core', 'vdot',
 
     """)
 	
-add_newdoc('numpy.core.multiarray', 'index_increment',
+add_newdoc('numpy.core.multiarray', 'inplace_increment',
     """
-    index_increment(a, index, inc)
+    inplace_increment(a, index, inc)
 
     Increments `a` inplace by `inc` in the locations specified by the index tuple
 	`index`. Supports advanced indexing.

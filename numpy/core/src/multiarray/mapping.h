@@ -60,6 +60,6 @@ NPY_NO_EXPORT PyObject*
 PyArray_MapIterNew(PyObject *, int, int);
 
 static PyObject *
-index_increment(PyObject *dummy, PyObject *args);
+inplace_increment(PyObject *dummy, PyObject *args);
 
 #endif

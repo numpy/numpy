@@ -2116,7 +2116,7 @@ map_increment(PyArrayMapIterObject *mit, PyObject *op, inplace_binop add_inplace
 
 
 static PyObject *
-index_increment(PyObject *dummy, PyObject *args)
+inplace_increment(PyObject *dummy, PyObject *args)
 {
     PyObject *arg_a = NULL, *index=NULL, *inc=NULL;
 	PyArrayObject *a;
