@@ -1,11 +1,18 @@
 =========================
-NumPy 2.0.0 Release Notes
+NumPy 1.7.0 Release Notes
 =========================
 
-[Possibly 1.7.0 release notes, as ABI compatibility is still being maintained]
+This release includes several new features as well as numerous bug fixes and
+refactorings. It supports Python 2.4 - 2.7 and 3.1 - 3.2.
 
 Highlights
 ==========
+
+* ``where=`` parameter to ufuncs (allows the use of boolean arrays to choose
+  where a computation should be done)
+* ``vectorize`` improvements (added 'excluded' and 'cache' keyword, general
+  cleanup and bug fixes)
+* ``numpy.random.choice`` (random sample generating function)
 
 
 Compatibility notes
@@ -108,6 +115,8 @@ Differences with R:
       This may have a practical advantage in spite of violating the
       NA theoretical model, so NumPy could adopt the behavior if necessary
 
+For more information, see `doc/neps/missing-data.rst <https://github.com/numpy/numpy/blob/maintenance/1.7.x/doc/neps/missing-data.rst>`_.
+
 Reduction UFuncs Generalize axis= Parameter
 -------------------------------------------
 
@@ -131,11 +140,26 @@ Datetime support
 .. note:: The datetime API is *experimental* in 1.7.0, and may undergo changes
    in future versions of NumPy.
 
-TODO: describe changes in datetime
+There have been a lot of fixes and enhancements to datetime64 compared
+to NumPy 1.6:
 
+* the parser is quite strict about only accepting ISO 8601 dates, with a few
+  convenience extensions
+* converts between units correctly
+* datetime arithmetic works correctly
+* business day functionality (allows the datetime to be used in contexts where
+  only certain days of the week are valid)
+
+The notes in `doc/source/reference/arrays.datetime.rst <https://github.com/numpy/numpy/blob/maintenance/1.7.x/doc/source/reference/arrays.datetime.rst>`_
+(also available in the online docs at `arrays.datetime.html
+<http://docs.scipy.org/doc/numpy/reference/arrays.datetime.html>`_) should be
+consulted for more details.
 
 Custom formatter for printing arrays
 ------------------------------------
+
+See the new ``formatter`` parameter of the ``numpy.set_printoptions``
+function.
 
 New function numpy.random.choice
 ---------------------------------
@@ -171,12 +195,13 @@ Ability to pad rank-n arrays
 
 A pad module containing functions for padding n-dimensional arrays has
 been added. The various private padding functions are exposed as options to
-a public 'pad' function.  Example:
+a public 'pad' function.  Example::
 
-pad(a, 5, mode='mean')
+    pad(a, 5, mode='mean')
 
-Current modes are 'constant', 'edge', 'linear_ramp', 'maximum', 'mean',
-'median', 'minimum', 'reflect', 'symmetric', 'wrap', and <function>
+Current modes are ``constant``, ``edge``, ``linear_ramp``, ``maximum``,
+``mean``, ``median``, ``minimum``, ``reflect``, ``symmetric``, ``wrap``, and
+``<function>``.
 
 
 New argument to searchsorted
@@ -192,6 +217,8 @@ New function ``PyArray_RequireWriteable`` provides a consistent
 interface for checking array writeability -- any C code which works
 with arrays whose WRITEABLE flag is not known to be True a priori,
 should make sure to call this function before writing.
+
+NumPy C Style Guide added (``doc/C_STYLE_GUIDE.rst.txt``).
 
 Changes
 =======
@@ -221,13 +248,6 @@ The following macros now require trailing semicolons::
     NPY_ALLOW_C_API
     NPY_ALLOW_C_API_DEF
     NPY_DISABLE_C_API
-
-DATETIME
---------
-
-There have been a lot of fixes and enhancements to datetime64. The notes
-in doc/source/reference/arrays.datetime.rst or in the generated
-documentation should be consulted for the details.
 
 
 Deprecations
