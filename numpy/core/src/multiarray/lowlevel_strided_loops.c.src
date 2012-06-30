@@ -151,7 +151,7 @@ static void
 #else
 
         /* unaligned copy and swap */
-        memcpy(dst, src, @elsize@);
+        memmove(dst, src, @elsize@);
 #  if @is_swap@ == 1
         @swap@@elsize@(dst);
 #  elif @is_swap@ == 2
@@ -255,7 +255,7 @@ _swap_strided_to_strided(char *dst, npy_intp dst_stride,
     char *a, *b, c;
 
     while (N > 0) {
-        memcpy(dst, src, src_itemsize);
+        memmove(dst, src, src_itemsize);
         /* general in-place swap */
         a = dst;
         b = dst + src_itemsize - 1;
@@ -281,7 +281,7 @@ _swap_pair_strided_to_strided(char *dst, npy_intp dst_stride,
     npy_intp itemsize_half = src_itemsize / 2;
 
     while (N > 0) {
-        memcpy(dst, src, src_itemsize);
+        memmove(dst, src, src_itemsize);
         /* general in-place swap */
         a = dst;
         b = dst + itemsize_half - 1;
@@ -802,7 +802,7 @@ static void
         src_value = *((_TYPE1 *)src);
 #  endif
 #else
-        memcpy(&src_value, src, sizeof(src_value));
+        memmove(&src_value, src, sizeof(src_value));
 #endif
 
 /* Do the cast */
@@ -838,7 +838,7 @@ static void
         *((_TYPE2 *)dst) = dst_value;
 #  endif
 #else
-        memcpy(dst, &dst_value, sizeof(dst_value));
+        memmove(dst, &dst_value, sizeof(dst_value));
 #endif
 
 #if @contig@
