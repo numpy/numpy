@@ -66,8 +66,6 @@ def _check_assignment(srcidx, dstidx):
     assert np.all(arr == cpy), 'assigning arr[%s] = arr[%s]' % (dstidx, srcidx)
 
 
-# nose doesn't expect methods to be generators but functions can be,
-# so we use a function not a Test class here.
 def test_overlapping_assignments():
     """Test automatically generated assignments which overlap in memory."""
 
