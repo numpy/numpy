@@ -2,9 +2,6 @@ __all__ = ['savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
            'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
            'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']
 
-# Price to pay for overloading standard keywords
-import __builtin__
-
 import numpy as np
 import format
 import sys
@@ -25,12 +22,19 @@ from _iotools import LineSplitter, NameValidator, StringConverter, \
                      _is_string_like, has_nested_fields, flatten_dtype, \
                      easy_dtype, _bytes_to_name
 
-from numpy.compat import asbytes, asstr, asbytes_nested, bytes
+from numpy.compat import asbytes, asstr, asbytes_nested, bytes, isfileobj
 
 if sys.version_info[0] >= 3:
     from io import BytesIO
 else:
     from cStringIO import StringIO as BytesIO
+
+if sys.version_info[:2] >= (2, 7):
+    def _isgzipclosed(f):
+        return f.closed
+else:
+    def _isgzipclosed(f):
+        return getattr(f, 'myfileobj', None) is not None
 
 _string_like = _is_string_like
 
@@ -362,9 +366,9 @@ def load(file, mmap_mode=None):
     elif isinstance(file, gzip.GzipFile):
         # we were provided an existing handle which we should close
         # only if it was closed already
-        own_fid = file.closed
+        own_fid = _isgzipclosed(file)
         fid = seek_gzip_factory(file)
-    elif isinstance(file, __builtin__.file):
+    elif isfileobj(file):
         own_fid = file.closed
         fid = file
     else:
