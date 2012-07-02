@@ -2,6 +2,9 @@ __all__ = ['savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
            'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
            'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']
 
+# Price to pay for overloading standard keywords
+import __builtin__
+
 import numpy as np
 import format
 import sys
@@ -353,14 +356,19 @@ def load(file, mmap_mode=None):
     """
     import gzip
 
-    own_fid = False
     if isinstance(file, basestring):
+        own_fid = True
         fid = open(file, "rb")
-        own_fid = True
     elif isinstance(file, gzip.GzipFile):
+        # we were provided an existing handle which we should close
+        # only if it was closed already
+        own_fid = file.closed
         fid = seek_gzip_factory(file)
-        own_fid = True
+    elif isinstance(file, __builtin__.file):
+        own_fid = file.closed
+        fid = file
     else:
+        own_fid = False
         fid = file
 
     try:
@@ -371,7 +379,7 @@ def load(file, mmap_mode=None):
         fid.seek(-N, 1) # back-up
         if magic.startswith(_ZIP_PREFIX):  # zip-file (assume .npz)
             own_fid = False
-            return NpzFile(fid, own_fid=True)
+            return NpzFile(fid, own_fid=own_fid)
         elif magic == format.MAGIC_PREFIX: # .npy file
             if mmap_mode:
                 return format.open_memmap(file, mode=mmap_mode)
