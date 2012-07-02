@@ -167,6 +167,27 @@ class TestSavezLoad(RoundtripTest, TestCase):
         if errors:
             raise AssertionError(errors)
 
+    def test_not_closing_opened_fid(self):
+        # Test that issue #2178 is fixed:
+        # verify could seek on 'loaded' file
+
+        fd, tmp = mkstemp(suffix='.npz')
+        os.close(fd)
+        try:
+            fp = open(tmp, 'w')
+            np.savez(fp, data='LOVELY LOAD')
+            fp.close()
+
+            fp = open(tmp, 'r', 10000)
+            fp.seek(0)
+            assert_(not fp.closed)
+            _ = np.load(fp)['data']
+            assert_(not fp.closed)        # must not get closed by .load(opened fp)
+            fp.seek(0)
+            assert_(not fp.closed)
+        finally:
+            os.remove(tmp)
+
 class TestSaveTxt(TestCase):
     def test_array(self):
         a = np.array([[1, 2], [3, 4]], float)
