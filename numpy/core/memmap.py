@@ -4,7 +4,7 @@ import warnings
 from numeric import uint8, ndarray, dtype
 import sys
 
-from numpy.compat import asbytes
+import numpy as np
 
 dtypedescr = dtype
 valid_filemodes = ["r", "c", "r+", "w+"]
@@ -219,7 +219,7 @@ class memmap(ndarray):
 
         if mode == 'w+' or (mode == 'r+' and flen < bytes):
             fid.seek(bytes - 1, 0)
-            fid.write(asbytes('\0'))
+            fid.write(np.compat.asbytes('\0'))
             fid.flush()
 
         if mode == 'c':
@@ -252,13 +252,16 @@ class memmap(ndarray):
         return self
 
     def __array_finalize__(self, obj):
-        if hasattr(obj, '_mmap'):
+        if hasattr(obj, '_mmap') and np.may_share_memory(self, obj):
             self._mmap = obj._mmap
             self.filename = obj.filename
             self.offset = obj.offset
             self.mode = obj.mode
         else:
             self._mmap = None
+            self.filename = None
+            self.offset = None
+            self.mode = None
 
     def flush(self):
         """
@@ -291,7 +294,7 @@ class memmap(ndarray):
         # We first check if we are the owner of the mmap, rather than
         # a view, so deleting a view does not call _close
         # on the parent mmap
-        if self._mmap is self.base:
+        if self._mmap is not None and self._mmap is self.base:
             try:
                 # First run tell() to see whether file is open
                 self._mmap.tell()
