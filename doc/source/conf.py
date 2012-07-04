@@ -200,6 +200,18 @@ latex_use_modindex = False
 
 
 # -----------------------------------------------------------------------------
+# Texinfo output
+# -----------------------------------------------------------------------------
+
+texinfo_documents = [
+  ("contents", 'numpy', 'Numpy Documentation', _stdauthor, 'Numpy',
+   "NumPy: array processing for numbers, strings, records, and objects.",
+   'Programming',
+   1),
+]
+
+
+# -----------------------------------------------------------------------------
 # Intersphinx configuration
 # -----------------------------------------------------------------------------
 intersphinx_mapping = {'http://docs.python.org/dev': None}
