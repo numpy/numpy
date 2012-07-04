@@ -166,3 +166,16 @@ linkcheck: generate
 	@echo
 	@echo "Link check complete; look for any errors in the above output " \
 	      "or in build/linkcheck/output.txt."
+
+texinfo:
+	$(SPHINXBUILD) -b texinfo $(ALLSPHINXOPTS) build/texinfo
+	@echo
+	@echo "Build finished. The Texinfo files are in build/texinfo."
+	@echo "Run \`make' in that directory to run these through makeinfo" \
+	      "(use \`make info' here to do that automatically)."
+
+info:
+	$(SPHINXBUILD) -b texinfo $(ALLSPHINXOPTS) build/texinfo
+	@echo "Running Texinfo files through makeinfo..."
+	make -C build/texinfo info
+	@echo "makeinfo finished; the Info files are in build/texinfo."
