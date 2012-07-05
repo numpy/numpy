@@ -369,6 +369,7 @@ def load(file, mmap_mode=None):
         magic = fid.read(N)
         fid.seek(-N, 1) # back-up
         if magic.startswith(_ZIP_PREFIX):  # zip-file (assume .npz)
+            own_fid = False
             return NpzFile(fid, own_fid=own_fid)
         elif magic == format.MAGIC_PREFIX: # .npy file
             if mmap_mode:
