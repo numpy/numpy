@@ -22,19 +22,12 @@ from _iotools import LineSplitter, NameValidator, StringConverter, \
                      _is_string_like, has_nested_fields, flatten_dtype, \
                      easy_dtype, _bytes_to_name
 
-from numpy.compat import asbytes, asstr, asbytes_nested, bytes, isfileobj
+from numpy.compat import asbytes, asstr, asbytes_nested, bytes
 
 if sys.version_info[0] >= 3:
     from io import BytesIO
 else:
     from cStringIO import StringIO as BytesIO
-
-if sys.version_info[:2] >= (2, 7):
-    def _isgzipclosed(f):
-        return f.closed
-else:
-    def _isgzipclosed(f):
-        return getattr(f, 'myfileobj', None) is not None
 
 _string_like = _is_string_like
 
@@ -360,19 +353,13 @@ def load(file, mmap_mode=None):
     """
     import gzip
 
+    own_fid = False
     if isinstance(file, basestring):
-        own_fid = True
         fid = open(file, "rb")
+        own_fid = True
     elif isinstance(file, gzip.GzipFile):
-        # we were provided an existing handle which we should close
-        # only if it was closed already
-        own_fid = _isgzipclosed(file)
         fid = seek_gzip_factory(file)
-    elif isfileobj(file):
-        own_fid = file.closed
-        fid = file
     else:
-        own_fid = False
         fid = file
 
     try:
@@ -382,7 +369,6 @@ def load(file, mmap_mode=None):
         magic = fid.read(N)
         fid.seek(-N, 1) # back-up
         if magic.startswith(_ZIP_PREFIX):  # zip-file (assume .npz)
-            own_fid = False
             return NpzFile(fid, own_fid=own_fid)
         elif magic == format.MAGIC_PREFIX: # .npy file
             if mmap_mode:
