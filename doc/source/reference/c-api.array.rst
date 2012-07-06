@@ -289,6 +289,7 @@ From scratch
 
     Fill the array pointed to by *obj* ---which must be a (subclass
     of) bigndarray---with the contents of *val* (evaluated as a byte).
+    This is a macro that call memset, so obj must be contiguous in memory.
 
 .. cfunction:: PyObject* PyArray_Zeros(int nd, npy_intp* dims, PyArray_Descr* dtype, int fortran)
 
