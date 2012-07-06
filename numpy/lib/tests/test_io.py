@@ -174,11 +174,11 @@ class TestSavezLoad(RoundtripTest, TestCase):
         fd, tmp = mkstemp(suffix='.npz')
         os.close(fd)
         try:
-            fp = open(tmp, 'w')
+            fp = open(tmp, 'wb')
             np.savez(fp, data='LOVELY LOAD')
             fp.close()
 
-            fp = open(tmp, 'r', 10000)
+            fp = open(tmp, 'rb', 10000)
             fp.seek(0)
             assert_(not fp.closed)
             _ = np.load(fp)['data']
@@ -199,7 +199,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
         os.close(fd)
 
         try:
-            fp = open(tmp, 'w')
+            fp = open(tmp, 'wb')
             np.savez(fp, data='LOVELY LOAD')
             fp.close()
 
