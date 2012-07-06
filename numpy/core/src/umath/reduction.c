@@ -245,11 +245,12 @@ check_nonreorderable_axes(int ndim, npy_bool *axis_flags, const char *funcname)
  * it sees along the reduction axes to result, then return a view of
  * the operand which excludes that element.
  *
- * If a reduction has an identity, such as 0 or 1, the result should
- * be initialized by calling PyArray_AssignZero(result, NULL, NULL)
- * or PyArray_AssignOne(result, NULL, NULL), because this
- * function raises an exception when there are no elements to reduce.
- *
+ * If a reduction has an identity, such as 0 or 1, the result should be
+ * initialized by calling PyArray_AssignZero(result, NULL, NULL) or
+ * PyArray_AssignOne(result, NULL, NULL), because this function raises an
+ * exception when there are no elements to reduce (which appropriate iff the
+ * reduction operation has no identity).
+ * 
  * This means it copies the subarray indexed at zero along each reduction axis
  * into 'result', then returns a view into 'operand' excluding those copied
  * elements.
@@ -299,14 +300,6 @@ PyArray_InitializeReduceResult(
         return NULL;
     }
 
-    if (PyArray_SIZE(operand) == 0) {
-        PyErr_Format(PyExc_ValueError,
-                "zero-size array to reduction operation %s "
-                "which has no identity",
-                funcname);
-        return NULL;
-    }
-
     /* Take a view into 'operand' which we can modify. */
     op_view = (PyArrayObject *)PyArray_View(operand, NULL, &PyArray_Type);
     if (op_view == NULL) {
@@ -326,6 +319,14 @@ PyArray_InitializeReduceResult(
     memcpy(shape_orig, shape, ndim * sizeof(npy_intp));
     for (idim = 0; idim < ndim; ++idim) {
         if (axis_flags[idim]) {
+            if (shape[idim] == 0) {
+                PyErr_Format(PyExc_ValueError,
+                             "zero-size array to reduction operation %s "
+                             "which has no identity",
+                             funcname);
+                Py_DECREF(op_view);
+                return NULL;
+            }
             shape[idim] = 1;
             ++nreduce_axes;
         }
