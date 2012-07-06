@@ -30,7 +30,11 @@ from setup_common \
         C99_FUNCS_SINGLE, C99_COMPLEX_TYPES, C99_COMPLEX_FUNCS, \
         MANDATORY_FUNCS, C_ABI_VERSION, C_API_VERSION
 
-ENABLE_SEPARATE_COMPILATION = False
+try:
+    val = os.environ['NPY_SEPARATE_COMPILATION']
+    ENABLE_SEPARATE_COMPILATION = (val != "0")
+except KeyError:
+    ENABLE_SEPARATE_COMPILATION = False
 
 NUMPYCONFIG_SYM = []
 
@@ -424,13 +428,11 @@ def pre_build(context):
                 "src/multiarray/arraytypes.c.src",
                 "src/multiarray/nditer_templ.c.src",
                 "src/multiarray/lowlevel_strided_loops.c.src",
-                "src/multiarray/einsum.c.src",
-                "src/multiarray/boolean_ops.c.src"]
+                "src/multiarray/einsum.c.src"]
         bld(target="multiarray_templates", source=multiarray_templates)
         if ENABLE_SEPARATE_COMPILATION:
             sources = [pjoin('src', 'multiarray', 'arrayobject.c'),
                 pjoin('src', 'multiarray', 'arraytypes.c.src'),
-                pjoin('src', 'multiarray', 'boolean_ops.c.src'),
                 pjoin('src', 'multiarray', 'buffer.c'),
                 pjoin('src', 'multiarray', 'calculation.c'),
                 pjoin('src', 'multiarray', 'common.c'),

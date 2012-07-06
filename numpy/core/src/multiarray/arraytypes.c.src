@@ -17,7 +17,6 @@
 #include "ctors.h"
 #include "usertypes.h"
 #include "_datetime.h"
-#include "na_object.h"
 #include "arrayobject.h"
 
 #include "numpyos.h"
@@ -154,11 +153,6 @@ static int
     if (PyArray_IsScalar(op, @kind@)) {
         temp = ((Py@kind@ScalarObject *)op)->obval;
     }
-    else if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
-        PyErr_SetString(PyExc_ValueError,
-                    "Cannot assign NA to an array which does not support NAs");
-        return -1;
-    }
     else {
         temp = (@type@)@func2@(op);
     }
@@ -226,11 +220,6 @@ static int
     if (PyArray_IsScalar(op, @kind@)){
         temp = ((Py@kind@ScalarObject *)op)->obval;
     }
-    else if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot assign NA to an array which does not support NAs");
-        return -1;
-    }
     else {
         if (PyArray_Check(op) && (PyArray_NDIM((PyArrayObject *)op) == 0)) {
             op2 = PyArray_DESCR((PyArrayObject *)op)->f->getitem(
@@ -285,11 +274,6 @@ LONGDOUBLE_setitem(PyObject *op, char *ov, PyArrayObject *ap) {
     if (PyArray_IsScalar(op, LongDouble)) {
         temp = ((PyLongDoubleScalarObject *)op)->obval;
     }
-    else if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot assign NA to an array which does not support NAs");
-        return -1;
-    }
     else {
         temp = (npy_longdouble) MyPyFloat_AsDouble(op);
     }
@@ -337,11 +321,6 @@ UNICODE_setitem(PyObject *op, char *ov, PyArrayObject *ap)
             PySequence_Check(op) && PySequence_Size(op) > 0) {
         PyErr_SetString(PyExc_ValueError,
                 "setting an array element with a sequence");
-        return -1;
-    }
-    if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot assign NA to an array which does not support NAs");
         return -1;
     }
     /* Sequence_Size might have returned an error */
@@ -446,12 +425,6 @@ STRING_setitem(PyObject *op, char *ov, PyArrayObject *ap)
             && PySequence_Check(op) && PySequence_Size(op) != 0) {
         PyErr_SetString(PyExc_ValueError,
                 "cannot set an array element with a sequence");
-        return -1;
-    }
-    if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
-        PyErr_SetString(PyExc_ValueError,
-                    "Cannot assign NA to an array which "
-                    "does not support NAs");
         return -1;
     }
 #if defined(NPY_PY3K)
@@ -753,12 +726,6 @@ VOID_setitem(PyObject *op, char *ip, PyArrayObject *ap)
         res = PyArray_CopyObject(ret, op);
         Py_DECREF(ret);
         return res;
-    }
-
-    if (NpyNA_Check(op) || NpyNA_IsZeroDimArrayNA(op)) {
-        PyErr_SetString(PyExc_ValueError,
-                "Cannot assign NA to an array which does not support NAs");
-        return -1;
     }
 
     /* Default is to use buffer interface to set item */
@@ -3531,14 +3498,9 @@ static int
         for (i = 0; i < n_outer; i++) {
             for (j = 0; j < m_middle; j++) {
                 tmp = indarray[j];
-                if (tmp < 0) {
-                    tmp = tmp + nindarray;
-                }
-                if ((tmp < 0) || (tmp >= nindarray)) {
-                    PyErr_SetString(PyExc_IndexError,
-                            "index out of range for array");
+                /* We don't know what axis we're operating on, so don't report it in case of an error. */
+                if (check_and_adjust_index(&tmp, nindarray, -1) < 0)
                     return 1;
-                }
                 if (nelem == 1) {
                     *dest++ = *(src + tmp);
                 }

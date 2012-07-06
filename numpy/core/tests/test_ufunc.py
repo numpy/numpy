@@ -681,5 +681,66 @@ class TestUfunc(TestCase):
 
         assert_raises(ValueError, np.divide.reduce, a, axis=(0,1))
 
+    def test_reduce_zero_axis(self):
+        # If we have a n x m array and do a reduction with axis=1, then we are
+        # doing n reductions, and each reduction takes an m-element array. For
+        # a reduction operation without an identity, then:
+        #   n > 0, m > 0: fine
+        #   n = 0, m > 0: fine, doing 0 reductions of m-element arrays
+        #   n > 0, m = 0: can't reduce a 0-element array, ValueError
+        #   n = 0, m = 0: can't reduce a 0-element array, ValueError (for
+        #     consistency with the above case)
+        # This test doesn't actually look at return values, it just checks to
+        # make sure that error we get an error in exactly those cases where we
+        # expect one, and assumes the calculations themselves are done
+        # correctly.
+        def ok(f, *args, **kwargs):
+            f(*args, **kwargs)
+        def err(f, *args, **kwargs):
+            assert_raises(ValueError, f, *args, **kwargs)
+        def t(expect, func, n, m):
+            expect(func, np.zeros((n, m)), axis=1)
+            expect(func, np.zeros((m, n)), axis=0)
+            expect(func, np.zeros((n // 2, n // 2, m)), axis=2)
+            expect(func, np.zeros((n // 2, m, n // 2)), axis=1)
+            expect(func, np.zeros((n, m // 2, m // 2)), axis=(1, 2))
+            expect(func, np.zeros((m // 2, n, m // 2)), axis=(0, 2))
+            expect(func, np.zeros((m // 3, m // 3, m // 3,
+                                  n // 2, n //2)),
+                                 axis=(0, 1, 2))
+            # Check what happens if the inner (resp. outer) dimensions are a
+            # mix of zero and non-zero:
+            expect(func, np.zeros((10, m, n)), axis=(0, 1))
+            expect(func, np.zeros((10, n, m)), axis=(0, 2))
+            expect(func, np.zeros((m, 10, n)), axis=0)
+            expect(func, np.zeros((10, m, n)), axis=1)
+            expect(func, np.zeros((10, n, m)), axis=2)
+        # np.maximum is just an arbitrary ufunc with no reduction identity
+        assert_equal(np.maximum.identity, None)
+        t(ok, np.maximum.reduce, 30, 30)
+        t(ok, np.maximum.reduce, 0, 30)
+        t(err, np.maximum.reduce, 30, 0)
+        t(err, np.maximum.reduce, 0, 0)
+        err(np.maximum.reduce, [])
+        np.maximum.reduce(np.zeros((0, 0)), axis=())
+
+        # all of the combinations are fine for a reduction that has an
+        # identity
+        t(ok, np.add.reduce, 30, 30)
+        t(ok, np.add.reduce, 0, 30)
+        t(ok, np.add.reduce, 30, 0)
+        t(ok, np.add.reduce, 0, 0)
+        np.add.reduce([])
+        np.add.reduce(np.zeros((0, 0)), axis=())
+
+        # OTOH, accumulate always makes sense for any combination of n and m,
+        # because it maps an m-element array to an m-element array. These
+        # tests are simpler because accumulate doesn't accept multiple axes.
+        for uf in (np.maximum, np.add):
+            uf.accumulate(np.zeros((30, 0)), axis=0)
+            uf.accumulate(np.zeros((0, 30)), axis=0)
+            uf.accumulate(np.zeros((30, 30)), axis=0)
+            uf.accumulate(np.zeros((0, 0)), axis=0)
+
 if __name__ == "__main__":
     run_module_suite()

@@ -13,8 +13,8 @@ from setup_common import *
 
 # Set to True to enable multiple file compilations (experimental)
 try:
-    os.environ['NPY_SEPARATE_COMPILATION']
-    ENABLE_SEPARATE_COMPILATION = True
+    val = os.environ['NPY_SEPARATE_COMPILATION']
+    ENABLE_SEPARATE_COMPILATION = (val != "0")
 except KeyError:
     ENABLE_SEPARATE_COMPILATION = False
 
@@ -688,7 +688,6 @@ def configuration(parent_package='',top_path=None):
                    join(local_dir, subpath, 'arraytypes.c.src'),
                    join(local_dir, subpath, 'nditer_templ.c.src'),
                    join(local_dir, subpath, 'lowlevel_strided_loops.c.src'),
-                   join(local_dir, subpath, 'boolean_ops.c.src'),
                    join(local_dir, subpath, 'einsum.c.src')]
 
         # numpy.distutils generate .c from .c.src in weird directories, we have
@@ -720,15 +719,12 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'numpymemoryview.h'),
             join('src', 'multiarray', 'number.h'),
             join('src', 'multiarray', 'numpyos.h'),
-            join('src', 'multiarray', 'reduction.h'),
             join('src', 'multiarray', 'refcount.h'),
             join('src', 'multiarray', 'scalartypes.h'),
             join('src', 'multiarray', 'sequence.h'),
             join('src', 'multiarray', 'shape.h'),
             join('src', 'multiarray', 'ucsnarrow.h'),
             join('src', 'multiarray', 'usertypes.h'),
-            join('src', 'multiarray', 'na_mask.h'),
-            join('src', 'multiarray', 'na_object.h'),
             join('src', 'private', 'lowlevel_strided_loops.h'),
             join('include', 'numpy', 'arrayobject.h'),
             join('include', 'numpy', '_neighborhood_iterator_imp.h'),
@@ -757,7 +753,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'array_assign.c'),
             join('src', 'multiarray', 'array_assign_scalar.c'),
             join('src', 'multiarray', 'array_assign_array.c'),
-            join('src', 'multiarray', 'boolean_ops.c.src'),
             join('src', 'multiarray', 'buffer.c'),
             join('src', 'multiarray', 'calculation.c'),
             join('src', 'multiarray', 'common.c'),
@@ -781,8 +776,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'mapping.c'),
             join('src', 'multiarray', 'methods.c'),
             join('src', 'multiarray', 'multiarraymodule.c'),
-            join('src', 'multiarray', 'na_mask.c'),
-            join('src', 'multiarray', 'na_object.c'),
             join('src', 'multiarray', 'nditer_templ.c.src'),
             join('src', 'multiarray', 'nditer_api.c'),
             join('src', 'multiarray', 'nditer_constr.c'),
@@ -790,7 +783,6 @@ def configuration(parent_package='',top_path=None):
             join('src', 'multiarray', 'number.c'),
             join('src', 'multiarray', 'numpymemoryview.c'),
             join('src', 'multiarray', 'numpyos.c'),
-            join('src', 'multiarray', 'reduction.c'),
             join('src', 'multiarray', 'refcount.c'),
             join('src', 'multiarray', 'sequence.c'),
             join('src', 'multiarray', 'shape.c'),
@@ -853,6 +845,7 @@ def configuration(parent_package='',top_path=None):
 
     umath_src = [
             join('src', 'umath', 'umathmodule.c'),
+            join('src', 'umath', 'reduction.c'),
             join('src', 'umath', 'funcs.inc.src'),
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'ufunc_object.c'),

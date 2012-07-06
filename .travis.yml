@@ -1,0 +1,62 @@
+# After changing this file, check it on:
+#   http://lint.travis-ci.org/
+language: python
+python:
+  - 2.5
+  - 2.6
+  - 2.7
+  - 3.1
+  - 3.2
+env:
+  # Hack: 
+  #
+  # We want to test from Python 2.4 to Python 3.2
+  # but Travis doesn't support python 2.4, and never will:
+  #   https://github.com/travis-ci/travis-ci/issues/485
+  #
+  # So what we do is add TEST_PY24=true to the build matrix, and then for that one
+  # version we don't actually use the system python, but instead build 2.4 and
+  # use it.
+  #
+  - TEST_PY24=""
+matrix:
+  include:
+    - python: 2.5
+      env: TEST_PY24="true"
+    - python: 2.7
+      env: NPY_SEPARATE_COMPILATION=1
+    - python: 3.2
+      env: NPY_SEPARATE_COMPILATION=1
+before_install:
+  - mkdir builds
+  - pushd builds
+  # This has to be on a single "virtual line" because of how Travis
+  # munges each line before executing it to print out the exit status.
+  # It's okay for it to be on multiple physical lines, so long as you remember:
+  # - There can't be any leading "-"s
+  # - All newlines will be removed, so use ";"s
+  - if [ "${TEST_PY24}" == "true" ]; then
+      deactivate; 
+      ../.travis-make-py24-virtualenv.sh $PWD/py24-ve;
+      source $PWD/py24-ve/bin/activate;
+      fi
+  - pip install nose
+  # pip install coverage
+  - python -V
+  - popd
+install:
+  - python setup.py install
+script:
+  # We change directories to make sure that python won't find the copy
+  # of numpy in the source directory.
+  - mkdir empty
+  - cd empty
+  - INSTALLDIR=$(python -c "import os; import numpy; print(os.path.dirname(numpy.__file__))")
+  - export PYTHONWARNINGS=default
+  - python ../tools/test-installed-numpy.py
+  # - coverage run --source=$INSTALLDIR --rcfile=../.coveragerc $(which python) ../tools/test-installed-numpy.py
+  # - coverage report --rcfile=../.coveragerc --show-missing
+notifications:
+  # Perhaps we should have status emails sent to the mailing list, but
+  # let's wait to see what people think before turning that on.
+  email: false

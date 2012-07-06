@@ -709,11 +709,7 @@ PyArray_CanCastArrayTo(PyArrayObject *arr, PyArray_Descr *to,
 
     /* If it's a scalar, check the value */
     if (PyArray_NDIM(arr) == 0 && !PyArray_HASFIELDS(arr)) {
-        /* Only check the value if it's not masked */
-        if (!PyArray_HASMASKNA(arr) ||
-                NpyMaskValue_IsExposed((npy_mask)*PyArray_MASKNA_DATA(arr))) {
-            return can_cast_scalar_to(from, PyArray_DATA(arr), to, casting);
-        }
+        return can_cast_scalar_to(from, PyArray_DATA(arr), to, casting);
     }
 
     /* Otherwise, use the standard rules */
@@ -1332,12 +1328,9 @@ PyArray_MinScalarType(PyArrayObject *arr)
 {
     PyArray_Descr *dtype = PyArray_DESCR(arr);
     /*
-     * If the array isn't a numeric scalar or is a scalar but with
-     * its value masked out, just return the array's dtype.
+     * If the array isn't a numeric scalar, just return the array's dtype.
      */
-    if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(dtype->type_num) ||
-                    (PyArray_HASMASKNA(arr) && !NpyMaskValue_IsExposed(
-                                    (npy_mask)*PyArray_MASKNA_DATA(arr)))) {
+    if (PyArray_NDIM(arr) > 0 || !PyTypeNum_ISNUMBER(dtype->type_num)) {
         Py_INCREF(dtype);
         return dtype;
     }
@@ -1739,7 +1732,7 @@ NPY_NO_EXPORT int
 PyArray_ObjectType(PyObject *op, int minimum_type)
 {
     PyArray_Descr *dtype = NULL;
-    int ret, contains_na = 0;
+    int ret;
 
     if (minimum_type != NPY_NOTYPE && minimum_type >= 0) {
         dtype = PyArray_DescrFromType(minimum_type);
@@ -1748,14 +1741,11 @@ PyArray_ObjectType(PyObject *op, int minimum_type)
         }
     }
 
-    if (PyArray_DTypeFromObject(op, NPY_MAXDIMS, &contains_na, &dtype) < 0) {
+    if (PyArray_DTypeFromObject(op, NPY_MAXDIMS, &dtype) < 0) {
         return NPY_NOTYPE;
     }
 
-    if (contains_na) {
-        ret = NPY_OBJECT;
-    }
-    else if (dtype == NULL) {
+    if (dtype == NULL) {
         ret = NPY_DEFAULT_TYPE;
     }
     else {
@@ -1869,7 +1859,7 @@ PyArray_ConvertToCommonType(PyObject *op, int *retn)
 
     /* Make sure all arrays are actual array objects. */
     for (i = 0; i < n; i++) {
-        int flags = NPY_ARRAY_CARRAY | NPY_ARRAY_ALLOWNA;
+        int flags = NPY_ARRAY_CARRAY;
 
         if ((otmp = PySequence_GetItem(op, i)) == NULL) {
             goto fail;

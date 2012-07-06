@@ -316,41 +316,6 @@ struct NpyAuxData_tag {
 #define NPY_AUXDATA_CLONE(auxdata) \
     ((auxdata)->clone(auxdata))
 
-/*********************************************************************
- * NumPy functions for dealing with masks, such as in masked iteration
- *********************************************************************/
-
-typedef npy_uint8 npy_mask;
-#define NPY_MASK NPY_UINT8
-
-/*
- * Bit 0 of the mask indicates whether a value is exposed
- * or hidden. This is compatible with a 'where=' boolean
- * mask, because NumPy booleans are 1 byte, and contain
- * either the value 0 or 1.
- */
-static NPY_INLINE npy_bool
-NpyMaskValue_IsExposed(npy_mask mask)
-{
-    return (mask & 0x01) != 0;
-}
-
-/*
- * Bits 1 through 7 of the mask contain the payload.
- */
-static NPY_INLINE npy_uint8
-NpyMaskValue_GetPayload(npy_mask mask)
-{
-    return ((npy_uint8)mask) >> 1;
-}
-
-static NPY_INLINE npy_mask
-NpyMaskValue_Create(npy_bool exposed, npy_uint8 payload)
-{
-    return (npy_mask)(exposed != 0) | (npy_mask)(payload << 1);
-}
-
-
 #define NPY_ERR(str) fprintf(stderr, #str); fflush(stderr);
 #define NPY_ERR2(str) fprintf(stderr, str); fflush(stderr);
 
@@ -704,28 +669,6 @@ typedef struct tagPyArrayObject_fields {
     int flags;
     /* For weak references */
     PyObject *weakreflist;
-
-    /* New fields added as of NumPy 1.7 */
-
-    /*
-     * Descriptor for the mask dtype.
-     *   If no mask: NULL
-     *   If mask   : bool/uint8/structured dtype of mask dtypes
-     */
-    PyArray_Descr *maskna_dtype;
-    /*
-     * Raw data buffer for mask. If the array has the flag
-     * NPY_ARRAY_OWNMASKNA enabled, it owns this memory and
-     * must call PyArray_free on it when destroyed.
-     */
-    char *maskna_data;
-    /*
-     * Just like dimensions and strides point into the same memory
-     * buffer, we now just make that buffer 3x the nd instead of 2x
-     * and use the same buffer. This is always allocated, regardless
-     * of whether there is an NA mask or not.
-     */
-    npy_intp *maskna_strides;
 } PyArrayObject_fields;
 
 /*
@@ -892,34 +835,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_UPDATEIFCOPY    0x1000
 
 /*
- * If this flag is set, then the array has an NA mask corresponding
- * to the array data. If the flag NPY_ARRAY_OWNMASKNA is requested
- * in a constructor, this flag is also implied even if it is not set.
- *
- * This flag may be requested in constructor functions.
- * This flag may be tested for in PyArray_FLAGS(arr).
- */
-#define NPY_ARRAY_MASKNA          0x2000
-
-/*
- * If this flag is set, then the array owns the memory for the
- * missing values NA mask.
- *
- * This flag may be requested in constructor functions.
- * This flag may be tested for in PyArray_FLAGS(arr).
- */
-#define NPY_ARRAY_OWNMASKNA       0x4000
-
-/*
- * If this flag is set, then arrays which have an NA mask, or arrays
- * which have an NA dtype are permitted to pass through. If not,
- * an array with NA support causes an error to be thrown.
- *
- * This flag may be requested in constructor functions.
- */
-#define NPY_ARRAY_ALLOWNA         0x8000
-
-/*
  * NOTE: there are also internal flags defined in multiarray/arrayobject.h,
  * which start at bit 31 and work down.
  */
@@ -1024,17 +939,6 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_DISABLE_C_API
 #endif
 
-/*****************************
- * NA object, added in 1.7
- *****************************/
-
-/* Direct access to the fields of the NA object is just internal to NumPy. */
-typedef struct tagNpyNA {
-        PyObject_HEAD
-} NpyNA;
-
-#define NpyNA_Check(op) PyObject_TypeCheck(op, &NpyNA_Type)
-
 /**********************************
  * The nditer object, added in 1.6
  **********************************/
@@ -1106,10 +1010,6 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_WRITEMASKED                0x10000000
 /* This array is the mask for all WRITEMASKED operands */
 #define NPY_ITER_ARRAYMASK                  0x20000000
-/* Split this operand up into data and an NA mask */
-#define NPY_ITER_USE_MASKNA                 0x40000000
-/* Iterate over the data, even if it has an NA mask and without USE_MASKNA */
-#define NPY_ITER_IGNORE_MASKNA              0x80000000
 
 #define NPY_ITER_GLOBAL_FLAGS               0x0000ffff
 #define NPY_ITER_PER_OP_FLAGS               0xffff0000
@@ -1630,34 +1530,6 @@ PyArray_CLEARFLAGS(PyArrayObject *arr, int flags)
     ((PyArrayObject_fields *)arr)->flags &= ~flags;
 }
 
-/* Access to the missing values NA mask, added in 1.7 */
-
-static NPY_INLINE PyArray_Descr *
-PyArray_MASKNA_DTYPE(PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->maskna_dtype;
-}
-
-static NPY_INLINE char *
-PyArray_MASKNA_DATA(PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->maskna_data;
-}
-
-/* For the corresponding DIMS, use PyArray_DIMS(arr) */
-static NPY_INLINE npy_intp *
-PyArray_MASKNA_STRIDES(PyArrayObject *arr)
-{
-    return ((PyArrayObject_fields *)arr)->maskna_strides;
-}
-
-static NPY_INLINE npy_bool
-PyArray_HASMASKNA(PyArrayObject *arr)
-{
-    return (((PyArrayObject_fields *)arr)->flags & NPY_ARRAY_MASKNA) != 0;
-}
-
-
 #define PyTypeNum_ISBOOL(type) ((type) == NPY_BOOL)
 
 #define PyTypeNum_ISUNSIGNED(type) (((type) == NPY_UBYTE) ||   \
@@ -1793,140 +1665,6 @@ PyArray_HASMASKNA(PyArrayObject *arr)
 typedef struct {
     npy_intp perm, stride;
 } npy_stride_sort_item;
-
-/************************************************************
- * Typedefs used by PyArray_ReduceWrapper, new in 1.7.
- ************************************************************/
-
-/*
- * This is a function for assigning a reduction identity to the result,
- * before doing the reduction computation. If 'preservena' is True,
- * any masked NA values in 'result' should not be overwritten. The
- * value in 'data' is passed through from PyArray_ReduceWrapper.
- *
- * This function could, for example, simply be a call like
- *      return PyArray_AssignZero(result, NULL, preservena, NULL);
- *
- * It should return -1 on failure, or 0 on success.
- */
-typedef int (PyArray_AssignReduceIdentityFunc)(PyArrayObject *result,
-                                            int preservena, void *data);
-
-/*
- * This is a function for the reduce loop. Both the unmasked and
- * masked variants have the same prototype, but should behave differently.
- *
- * The needs_api parameter indicates whether it's ok to release the GIL during
- * the loop, such as when the iternext() function never calls
- * a function which could raise a Python exception.
- *
- * Ths skip_first_count parameter indicates how many elements need to be
- * skipped based on NpyIter_IsFirstVisit checks. This can only be positive
- * when the 'assign_identity' parameter was NULL when calling
- * PyArray_ReduceWrapper.
- *
- * The unmasked loop gets two data pointers and two strides, and should
- * look roughly like this:
- *  {
- *      NPY_BEGIN_THREADS_DEF;
- *      if (!needs_api) {
- *          NPY_BEGIN_THREADS;
- *      }
- *      // This first-visit loop can be skipped if 'assign_identity' was non-NULL
- *      if (skip_first_count > 0) {
- *          do {
- *              char *data0 = dataptr[0], *data1 = dataptr[1];
- *              npy_intp stride0 = strideptr[0], stride1 = strideptr[1];
- *              npy_intp count = *countptr;
- *
- *              // Skip any first-visit elements
- *              if (NpyIter_IsFirstVisit(iter, 0)) {
- *                  if (stride0 == 0) {
- *                      --count;
- *                      --skip_first_count;
- *                      data1 += stride1;
- *                      //data2 += stride2; // In masked loop
- *                  }
- *                  else {
- *                      skip_first_count -= count;
- *                      count = 0;
- *                  }
- *              }
- *
- *              while (count--) {
- *                  *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
- *                                                    *(operand_t *)data1);
- *                  data0 += stride0;
- *                  data1 += stride1;
- *              }
- *
- *              // Jump to the faster loop when skipping is done
- *              if (skip_first_count == 0) {
- *                  if (iternext(iter)) {
- *                      break;
- *                  }
- *                  else {
- *                      goto finish_loop;
- *                  }
- *              }
- *          } while (iternext(iter));
- *      }
- *      do {
- *          char *data0 = dataptr[0], *data1 = dataptr[1];
- *          npy_intp stride0 = strideptr[0], stride1 = strideptr[1];
- *          npy_intp count = *countptr;
- *
- *          while (count--) {
- *              *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
- *                                                *(operand_t *)data1);
- *              data0 += stride0;
- *              data1 += stride1;
- *          }
- *      } while (iternext(iter));
- *  finish_loop:
- *      if (!needs_api) {
- *          NPY_END_THREADS;
- *      }
- *      return (needs_api && PyErr_Occurred()) ? -1 : 0;
- *  }
- *
- * The masked loop gets three data pointers and three strides, and
- * looks identical except for the iteration loops which should be
- * like this:
- *      do {
- *          char *data0 = dataptr[0], *data1 = dataptr[1], *data2 = dataptr[2];
- *          npy_intp stride0 = strideptr[0], stride1 = strideptr[1],
- *                      stride2 = strideptr[2];
- *          npy_intp count = *countptr;
- *
- *          // Skipping first visits would go here
- *
- *          while (count--) {
- *              if (NpyMaskValue_IsExposed((npy_mask)*data2)) {
- *                  *(result_t *)data0 = my_reduce_op(*(result_t *)data0,
- *                                                    *(operand_t *)data1);
- *              }
- *              data0 += stride0;
- *              data1 += stride1;
- *              data2 += stride2;
- *          }
- *
- *          // Jumping to the faster loop would go here
- *
- *      } while (iternext(iter));
- *
- * If needs_api is True, this function should call PyErr_Occurred()
- * to check if an error occurred during processing, and return -1 for
- * error, 0 for success.
- */
-typedef int (PyArray_ReduceLoopFunc)(NpyIter *iter,
-                                            char **dataptr,
-                                            npy_intp *strideptr,
-                                            npy_intp *countptr,
-                                            NpyIter_IterNextFunc *iternext,
-                                            int needs_api,
-                                            npy_intp skip_first_count,
-                                            void *data);
 
 /************************************************************
  * This is the form of the struct that's returned pointed by the

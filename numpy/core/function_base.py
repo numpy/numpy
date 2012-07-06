@@ -3,7 +3,7 @@ __all__ = ['logspace', 'linspace']
 import numeric as _nx
 from numeric import array
 
-def linspace(start, stop, num=50, endpoint=True, retstep=False, maskna=False):
+def linspace(start, stop, num=50, endpoint=True, retstep=False):
     """
     Return evenly spaced numbers over a specified interval.
 
@@ -29,8 +29,6 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, maskna=False):
     retstep : bool, optional
         If True, return (`samples`, `step`), where `step` is the spacing
         between samples.
-    maskna : boolean
-        If this is true, the returned array will have an NA mask.
 
     Returns
     -------
@@ -44,7 +42,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, maskna=False):
 
     See Also
     --------
-    arange : Similiar to `linspace`, but uses a step size (instead of the
+    arange : Similar to `linspace`, but uses a step size (instead of the
              number of samples).
     logspace : Samples uniformly distributed in log space.
 
@@ -75,22 +73,22 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, maskna=False):
     """
     num = int(num)
     if num <= 0:
-        return array([], float, maskna=maskna)
+        return array([], float)
     if endpoint:
         if num == 1:
-            return array([float(start)], maskna=maskna)
+            return array([float(start)])
         step = (stop-start)/float((num-1))
-        y = _nx.arange(0, num, maskna=maskna) * step + start
+        y = _nx.arange(0, num) * step + start
         y[-1] = stop
     else:
         step = (stop-start)/float(num)
-        y = _nx.arange(0, num, maskna=maskna) * step + start
+        y = _nx.arange(0, num) * step + start
     if retstep:
         return y, step
     else:
         return y
 
-def logspace(start,stop,num=50,endpoint=True,base=10.0, maskna=False):
+def logspace(start,stop,num=50,endpoint=True,base=10.0):
     """
     Return numbers spaced evenly on a log scale.
 
@@ -116,8 +114,6 @@ def logspace(start,stop,num=50,endpoint=True,base=10.0, maskna=False):
         The base of the log space. The step size between the elements in
         ``ln(samples) / ln(base)`` (or ``log_base(samples)``) is uniform.
         Default is 10.0.
-    maskna : boolean
-        If this is true, the returned array will have an NA mask.
 
     Returns
     -------
@@ -126,7 +122,7 @@ def logspace(start,stop,num=50,endpoint=True,base=10.0, maskna=False):
 
     See Also
     --------
-    arange : Similiar to linspace, with the step size specified instead of the
+    arange : Similar to linspace, with the step size specified instead of the
              number of samples. Note that, when used with a float endpoint, the
              endpoint may or may not be included.
     linspace : Similar to logspace, but with the samples uniformly distributed
@@ -166,6 +162,6 @@ def logspace(start,stop,num=50,endpoint=True,base=10.0, maskna=False):
     >>> plt.show()
 
     """
-    y = linspace(start,stop,num=num,endpoint=endpoint,maskna=maskna)
+    y = linspace(start,stop,num=num,endpoint=endpoint)
     return _nx.power(base,y)
 

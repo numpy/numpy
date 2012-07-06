@@ -24,12 +24,9 @@ The default casting rule for UFunc out= parameters has been changed from
 rule are likely bugs, so this change may expose previously undetected
 errors in projects that depend on NumPy.
 
-Full-array boolean indexing used to allow boolean arrays with a size
-non-broadcastable to the array size. Now it forces this to be broadcastable.
-Since this affects some legacy code, this change will require discussion
-during alpha or early beta testing, and a decision to either keep the
-stricter behavior, or add in a hack to allow the previous behavior to
-work.
+Full-array boolean indexing has been optimized to use a different,
+optimized code path.   This code path should produce the same results,
+but any feedback about changes to your code would be appreciated. 
 
 Attempting to write to a read-only array (one with
 ``arr.flags.writeable`` set to ``False``) used to raise either a
@@ -42,6 +39,11 @@ performance. Because of the nature of floating-point arithmetic, this
 may subtly change some results, just as linking NumPy to a different
 BLAS implementations such as MKL can.
 
+If upgrading from 1.5, then generally in 1.6 and 1.7 there have been
+substantial code added and some code paths altered, particularly in
+the areas of type resolution and buffered iteration over universal
+functions.   This might have an impact on your code particularly if
+you relied on accidental behavior in the past. 
 
 New features
 ============

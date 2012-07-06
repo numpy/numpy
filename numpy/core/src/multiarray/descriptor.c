@@ -3395,6 +3395,7 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
         PyObject *name;
         int size = PyTuple_GET_SIZE(self->names);
         int value = PyArray_PyIntAsInt(op);
+        int orig_value = value;
 
         if (PyErr_Occurred()) {
             return NULL;
@@ -3404,7 +3405,7 @@ descr_subscript(PyArray_Descr *self, PyObject *op)
         }
         if (value < 0 || value >= size) {
             PyErr_Format(PyExc_IndexError,
-                    "Field index out of range.");
+                         "Field index %d out of range.", orig_value);
             return NULL;
         }
         name = PyTuple_GET_ITEM(self->names, value);

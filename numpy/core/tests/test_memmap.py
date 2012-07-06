@@ -85,5 +85,24 @@ class TestMemmap(TestCase):
         fp_base[0] = 6
         assert_equal(fp_base[0], 6)
 
+    def test_arithmetic_drops_references(self):
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
+                    shape=self.shape)
+        tmp = (fp + 10)
+        if isinstance(tmp, memmap):
+            assert tmp._mmap is not fp._mmap
+
+    def test_indexing_drops_references(self):
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
+                    shape=self.shape)
+        tmp = fp[[(1, 2), (2, 3)]]
+        if isinstance(tmp, memmap):
+            assert tmp._mmap is not fp._mmap
+
+    def test_slicing_keeps_references(self):
+        fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
+                    shape=self.shape)
+        assert fp[:2, :2]._mmap is fp._mmap
+
 if __name__ == "__main__":
     run_module_suite()

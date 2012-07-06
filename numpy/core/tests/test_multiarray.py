@@ -966,24 +966,6 @@ class TestMethods(TestCase):
         assert_equal(a.ravel(order='K'), [2,3,0,1])
         assert_(a.ravel(order='K').flags.owndata)
 
-    def test_setasflat(self):
-        # In this case, setasflat can treat a as a flat array,
-        # and must treat b in chunks of 3
-        a = np.arange(3*3*4).reshape(3,3,4)
-        b = np.arange(3*4*3, dtype='f4').reshape(3,4,3).T
-
-        assert_(not np.all(a.ravel() == b.ravel()))
-        a.setasflat(b)
-        assert_equal(a.ravel(), b.ravel())
-
-        # A case where the strides of neither a nor b can be collapsed
-        a = np.arange(3*2*4).reshape(3,2,4)[:,:,:-1]
-        b = np.arange(3*3*3, dtype='f4').reshape(3,3,3).T[:,:,:-1]
-
-        assert_(not np.all(a.ravel() == b.ravel()))
-        a.setasflat(b)
-        assert_equal(a.ravel(), b.ravel())
-
 class TestSubscripting(TestCase):
     def test_test_zero_rank(self):
         x = array([1,2,3])
@@ -1077,6 +1059,41 @@ class TestFancyIndexing(TestCase):
         x[:,:,(0,)] = 2.0
         assert_array_equal(x, array([[[2.0]]]))
 
+    def test_mask(self):
+        x = array([1,2,3,4])
+        m = array([0,1],bool)
+        assert_array_equal(x[m], array([2]))
+
+    def test_mask2(self):
+        x = array([[1,2,3,4],[5,6,7,8]])
+        m = array([0,1],bool)
+        m2 = array([[0,1],[1,0]], bool)
+        m3 = array([[0,1]], bool)
+        assert_array_equal(x[m], array([[5,6,7,8]]))
+        assert_array_equal(x[m2], array([2,5]))
+        assert_array_equal(x[m3], array([2]))
+
+    def test_assign_mask(self):
+        x = array([1,2,3,4])
+        m = array([0,1],bool)
+        x[m] = 5
+        assert_array_equal(x, array([1,5,3,4]))
+
+    def test_assign_mask(self):
+        xorig = array([[1,2,3,4],[5,6,7,8]])
+        m = array([0,1],bool)
+        m2 = array([[0,1],[1,0]],bool)
+        m3 = array([[0,1]], bool)
+        x = xorig.copy()
+        x[m] = 10
+        assert_array_equal(x, array([[1,2,3,4],[10,10,10,10]]))
+        x = xorig.copy()
+        x[m2] = 10
+        assert_array_equal(x, array([[1,10,3,4],[10,6,7,8]]))
+        x = xorig.copy()
+        x[m3] = 10
+        assert_array_equal(x, array([[1,10,3,4],[5,6,7,8]]))
+                           
 
 class TestStringCompare(TestCase):
     def test_string(self):
@@ -2609,8 +2626,7 @@ if sys.version_info >= (2, 6):
 
         def test_multiarray_flags_writable_attribute_deletion(self):
             a = np.ones(2).flags
-            attr = ['updateifcopy', 'aligned', 'writeable', 'maskna',
-                    'ownmaskna']
+            attr = ['updateifcopy', 'aligned', 'writeable']
             for s in attr:
                 assert_raises(AttributeError, delattr, a, s)
 

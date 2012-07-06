@@ -15,6 +15,7 @@
 #include "mapping.h"
 #include "lowlevel_strided_loops.h"
 #include "scalartypes.h"
+#include "array_assign.h"
 
 #include "convert.h"
 
@@ -404,7 +405,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     if (value != NULL) {
         /* TODO: switch to SAME_KIND casting */
         retcode = PyArray_AssignRawScalar(arr, dtype, value,
-                                NULL, NPY_UNSAFE_CASTING, 0, NULL);
+                                NULL, NPY_UNSAFE_CASTING);
         Py_DECREF(dtype);
         return retcode;
     }
@@ -412,8 +413,7 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     else {
         PyArrayObject *src_arr;
 
-        src_arr = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0,
-                                            NPY_ARRAY_ALLOWNA, NULL);
+        src_arr = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
         if (src_arr == NULL) {
             return -1;
         }
@@ -432,24 +432,17 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     }
 }
 
-/*NUMPY_API
- *
+/*
  * Fills an array with zeros.
  *
  * dst: The destination array.
  * wheremask: If non-NULL, a boolean mask specifying where to set the values.
- * preservena: If 0, overwrites everything in 'dst', if 1, it
- *              preserves elements in 'dst' which are NA.
- * preservewhichna: Must be NULL. When multi-NA support is implemented,
- *                   this will be an array of flags for 'preservena=True',
- *                   indicating which NA payload values to preserve.
  *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
 PyArray_AssignZero(PyArrayObject *dst,
-                    PyArrayObject *wheremask,
-                    npy_bool preservena, npy_bool *preservewhichna)
+                   PyArrayObject *wheremask)
 {
     npy_bool value;
     PyArray_Descr *bool_dtype;
@@ -463,31 +456,23 @@ PyArray_AssignZero(PyArrayObject *dst,
     value = 0;
 
     retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
-                                wheremask, NPY_SAFE_CASTING,
-                                preservena, preservewhichna);
+                                      wheremask, NPY_SAFE_CASTING);
 
     Py_DECREF(bool_dtype);
     return retcode;
 }
 
-/*NUMPY_API
- *
+/*
  * Fills an array with ones.
  *
  * dst: The destination array.
  * wheremask: If non-NULL, a boolean mask specifying where to set the values.
- * preservena: If 0, overwrites everything in 'dst', if 1, it
- *              preserves elements in 'dst' which are NA.
- * preservewhichna: Must be NULL. When multi-NA support is implemented,
- *                   this will be an array of flags for 'preservena=True',
- *                   indicating which NA payload values to preserve.
  *
  * Returns 0 on success, -1 on failure.
  */
 NPY_NO_EXPORT int
 PyArray_AssignOne(PyArrayObject *dst,
-                    PyArrayObject *wheremask,
-                    npy_bool preservena, npy_bool *preservewhichna)
+                  PyArrayObject *wheremask)
 {
     npy_bool value;
     PyArray_Descr *bool_dtype;
@@ -501,8 +486,7 @@ PyArray_AssignOne(PyArrayObject *dst,
     value = 1;
 
     retcode = PyArray_AssignRawScalar(dst, bool_dtype, (char *)&value,
-                                wheremask, NPY_SAFE_CASTING,
-                                preservena, preservewhichna);
+                                      wheremask, NPY_SAFE_CASTING);
 
     Py_DECREF(bool_dtype);
     return retcode;
@@ -521,14 +505,7 @@ PyArray_NewCopy(PyArrayObject *obj, NPY_ORDER order)
         return NULL;
     }
 
-    if (PyArray_HASMASKNA(obj)) {
-        if (PyArray_AllocateMaskNA(ret, 1, 0, 1) < 0) {
-            Py_DECREF(ret);
-            return NULL;
-        }
-    }
-
-    if (PyArray_AssignArray(ret, obj, NULL, NPY_UNSAFE_CASTING, 0, NULL) < 0) {
+    if (PyArray_AssignArray(ret, obj, NULL, NPY_UNSAFE_CASTING) < 0) {
         Py_DECREF(ret);
         return NULL;
     }
@@ -556,7 +533,6 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
     }
 
     flags = PyArray_FLAGS(self);
-    flags &= ~(NPY_ARRAY_MASKNA|NPY_ARRAY_OWNMASKNA);
 
     dtype = PyArray_DESCR(self);
     Py_INCREF(dtype);
@@ -569,28 +545,6 @@ PyArray_View(PyArrayObject *self, PyArray_Descr *type, PyTypeObject *pytype)
                                (PyObject *)self);
     if (ret == NULL) {
         return NULL;
-    }
-
-    /* Take a view of the mask if it exists */
-    if (PyArray_HASMASKNA(self)) {
-        PyArrayObject_fields *fa = (PyArrayObject_fields *)ret;
-
-        if (PyArray_HASFIELDS(self)) {
-            PyErr_SetString(PyExc_RuntimeError,
-                    "NA masks with fields are not supported yet");
-            Py_DECREF(ret);
-            Py_DECREF(type);
-            return NULL;
-        }
-
-        fa->maskna_dtype = PyArray_MASKNA_DTYPE(self);
-        Py_INCREF(fa->maskna_dtype);
-        fa->maskna_data = PyArray_MASKNA_DATA(self);
-        if (fa->nd > 0) {
-            memcpy(fa->maskna_strides, PyArray_MASKNA_STRIDES(self),
-                                            fa->nd * sizeof(npy_intp));
-        }
-        fa->flags |= NPY_ARRAY_MASKNA;
     }
 
     /* Set the base object */
