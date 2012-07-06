@@ -1,27 +1,35 @@
 """
 Template for the Chebyshev and Polynomial classes.
 
+This is an internal module and should not be imported.
+
 This module houses a Python string module Template object (see, e.g.,
-http://docs.python.org/library/string.html#template-strings) used by
-the `polynomial` and `chebyshev` modules to implement their respective
-`Polynomial` and `Chebyshev` classes.  It provides a mechanism for easily
-creating additional specific polynomial classes (e.g., Legendre, Jacobi,
-etc.) in the future, such that all these classes will have a common API.
+http://docs.python.org/library/string.html#template-strings) used to
+generate the code for the `polynomial`, `chebyshev`, `hermite`,
+`hermite_e`, `laguerre`, and `lengendre` modules, to implement their
+respective `Polynomial`, `Chebyshev`, `Hermite`, `HermiteE`,
+`Laguerre`, and `Lengendre` classes.
 
 """
 import string
 import sys
 
-if sys.version_info[0] >= 3:
-    rel_import = "from . import"
-else:
-    rel_import = "import"
+# After you change the template, run:
+#
+#   python polytemplate.py
+#
+# to rebuild all of the files which are dependent on the template.
+# You can also specify specific files via the command-line, as:
+#
+#   python polytemplate.py laguerre.py
+#
+
 
 polytemplate = string.Template('''
-from __future__ import division
+if 1/2 == 0:
+   raise ImportError("missing required 'from __future__ import division'")
 import numpy as np
-import warnings
-REL_IMPORT polyutils as pu
+from numpy.polynomial import polyutils as pu
 
 class $name(pu.PolyBase) :
     """A $name series class.
@@ -916,4 +924,45 @@ class $name(pu.PolyBase) :
         """
         return series.convert(domain, $name, window)
 
-'''.replace('REL_IMPORT', rel_import))
+''')
+if __name__ == "__main__":
+    import sys
+    import re
+    
+    replace_pattern = re.compile(r"""
+(?P<start>^\#REPLACE\sPOLYTEMPLATE\s(?P<argstr>[^\n]*)\n)  # block-start marker
+(?P<whatever>.*\n)*                # ignore any lines in the middle
+(?P<end>^\#END\sREPLACE\s*\n)      # block-end marker
+""", re.MULTILINE | re.VERBOSE)
+
+    filenames = sys.argv[1:]
+    if not filenames:
+        # Default filenames, if not given on the command-line
+        filenames = ["chebyshev.py", "hermite.py", "hermite_e.py", "laguerre.py",
+                     "legendre.py", "polynomial.py"]
+    
+    for filename in filenames:
+        print("Processing %s" % (filename,))
+        program = open(filename).read()
+
+        # Find the markers
+        match = replace_pattern.search(program)
+        if match is None:
+            raise AssertionError(
+                "Could not find 'REPLACE POLYTEMPLATE / END REPLACE' in %r" % (filename,))
+
+        # Get the arguments to pass to the string template
+        argstr = match.group("argstr")
+        try:
+            kwargs = eval("dict(%s)" % (argstr,))
+        except Exception:
+            raise AssertionError(
+                "Could not parse template parameters %r in %r" % (argstr, filename))
+        for arg in ("name", "nick", "domain"):
+            if arg not in kwargs:
+                raise AssertionError("Missing parameter %r in %r" % (arg, filename))
+
+        # Apply the template, insert the new code, and save.
+        result = polytemplate.substitute(**kwargs)
+        new_program = program[:match.end("start")] + result + program[match.start("end"):]
+        open(filename, "w").write(new_program)
