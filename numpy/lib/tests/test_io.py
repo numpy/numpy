@@ -167,6 +167,51 @@ class TestSavezLoad(RoundtripTest, TestCase):
         if errors:
             raise AssertionError(errors)
 
+    def test_not_closing_opened_fid(self):
+        # Test that issue #2178 is fixed:
+        # verify could seek on 'loaded' file
+
+        fd, tmp = mkstemp(suffix='.npz')
+        os.close(fd)
+        try:
+            fp = open(tmp, 'wb')
+            np.savez(fp, data='LOVELY LOAD')
+            fp.close()
+
+            fp = open(tmp, 'rb', 10000)
+            fp.seek(0)
+            assert_(not fp.closed)
+            _ = np.load(fp)['data']
+            assert_(not fp.closed)        # must not get closed by .load(opened fp)
+            fp.seek(0)
+            assert_(not fp.closed)
+
+        finally:
+            os.remove(tmp)
+
+    def test_closing_fid(self):
+        # Test that issue #1517 (too many opened files) remains closed
+        # It might be a "week" test since failed to get triggered on
+        # e.g. Debian sid of 2012 Jul 05 but was reported to
+        # trigger the failure on Ubuntu 10.04:
+        # http://projects.scipy.org/numpy/ticket/1517#comment:2
+        fd, tmp = mkstemp(suffix='.npz')
+        os.close(fd)
+
+        try:
+            fp = open(tmp, 'wb')
+            np.savez(fp, data='LOVELY LOAD')
+            fp.close()
+
+            for i in range(1, 1025):
+                try:
+                    np.load(tmp)["data"]
+                except Exception, e:
+                    raise AssertionError("Failed to load data from a file: %s" % e)
+        finally:
+            os.remove(tmp)
+
+
 class TestSaveTxt(TestCase):
     def test_array(self):
         a = np.array([[1, 2], [3, 4]], float)
