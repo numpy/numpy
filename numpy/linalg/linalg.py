@@ -250,15 +250,15 @@ def solve(a, b):
 
     Parameters
     ----------
-    a : array_like, shape (M, M)
+    a : (M, M) array_like
         Coefficient matrix.
-    b : array_like, shape (M,) or (M, N)
+    b : {(M,), (M, N)}, array_like
         Ordinate or "dependent variable" values.
 
     Returns
     -------
-    x : ndarray, shape (M,) or (M, N) depending on b
-        Solution to the system a x = b
+    x : {(M,), (M, N)} ndarray
+        Solution to the system a x = b.  Returned shape is identical to `b`.
 
     Raises
     ------
@@ -410,12 +410,12 @@ def inv(a):
 
     Parameters
     ----------
-    a : array_like, shape (M, M)
+    a : (M, M) array_like
         Matrix to be inverted.
 
     Returns
     -------
-    ainv : ndarray or matrix, shape (M, M)
+    ainv : (M, M) ndarray or matrix
         (Multiplicative) inverse of the matrix `a`.
 
     Raises
@@ -459,14 +459,15 @@ def cholesky(a):
 
     Parameters
     ----------
-    a : array_like, shape (M, M)
+    a : (M, M) array_like
         Hermitian (symmetric if all elements are real), positive-definite
         input matrix.
 
     Returns
     -------
-    L : ndarray, or matrix object if `a` is, shape (M, M)
-        Lower-triangular Cholesky factor of a.
+    L : {(M, M) ndarray, (M, M) matrix}
+        Lower-triangular Cholesky factor of `a`.  Returns a matrix object
+        if `a` is a matrix object.
 
     Raises
     ------
@@ -709,12 +710,12 @@ def eigvals(a):
 
     Parameters
     ----------
-    a : array_like, shape (M, M)
+    a : (M, M) array_like
         A complex- or real-valued matrix whose eigenvalues will be computed.
 
     Returns
     -------
-    w : ndarray, shape (M,)
+    w : (M,) ndarray
         The eigenvalues, each repeated according to its multiplicity.
         They are not necessarily ordered, nor are they necessarily
         real for real matrices.
@@ -815,7 +816,7 @@ def eigvalsh(a, UPLO='L'):
 
     Parameters
     ----------
-    a : array_like, shape (M, M)
+    a : (M, M) array_like
         A complex- or real-valued matrix whose eigenvalues are to be
         computed.
     UPLO : {'L', 'U'}, optional
@@ -824,7 +825,7 @@ def eigvalsh(a, UPLO='L'):
 
     Returns
     -------
-    w : ndarray, shape (M,)
+    w : (M,) ndarray
         The eigenvalues, not necessarily ordered, each repeated according to
         its multiplicity.
 
@@ -910,18 +911,17 @@ def eig(a):
 
     Parameters
     ----------
-    a : array_like, shape (M, M)
+    a : (M, M) array_like
         A square array of real or complex elements.
 
     Returns
     -------
-    w : ndarray, shape (M,)
+    w : (M,) ndarray
         The eigenvalues, each repeated according to its multiplicity.
         The eigenvalues are not necessarily ordered, nor are they
         necessarily real for real arrays (though for real arrays
         complex-valued eigenvalues should occur in conjugate pairs).
-
-    v : ndarray, shape (M, M)
+    v : (M, M) ndarray
         The normalized (unit "length") eigenvectors, such that the
         column ``v[:,i]`` is the eigenvector corresponding to the
         eigenvalue ``w[i]``.
@@ -1077,7 +1077,7 @@ def eigh(a, UPLO='L'):
 
     Parameters
     ----------
-    a : array_like, shape (M, M)
+    a : (M, M) array_like
         A complex Hermitian or real symmetric matrix.
     UPLO : {'L', 'U'}, optional
         Specifies whether the calculation is done with the lower triangular
@@ -1085,11 +1085,12 @@ def eigh(a, UPLO='L'):
 
     Returns
     -------
-    w : ndarray, shape (M,)
+    w : (M,) ndarray
         The eigenvalues, not necessarily ordered.
-    v : ndarray, or matrix object if `a` is, shape (M, M)
+    v : {(M, M) ndarray, (M, M) matrix}
         The column ``v[:, i]`` is the normalized eigenvector corresponding
-        to the eigenvalue ``w[i]``.
+        to the eigenvalue ``w[i]``.  Will return a matrix object if `a` is
+        a matrix object.
 
     Raises
     ------
@@ -1338,7 +1339,7 @@ def cond(x, p=None):
 
     Parameters
     ----------
-    x : array_like, shape (M, N)
+    x : (M, N) array_like
         The matrix whose condition number is sought.
     p : {None, 1, -1, 2, -2, inf, -inf, 'fro'}, optional
         Order of the norm:
@@ -1424,9 +1425,9 @@ def matrix_rank(M, tol=None):
 
     Parameters
     ----------
-    M : array_like
+    M : {(M,), (M, N)} array_like
         array of <=2 dimensions
-    tol : {None, float}
+    tol : {None, float}, optional
        threshold below which SVD values are considered zero. If `tol` is
        None, and ``S`` is an array with singular values for `M`, and
        ``eps`` is the epsilon value for datatype of ``S``, then `tol` is
@@ -1489,7 +1490,7 @@ def pinv(a, rcond=1e-15 ):
 
     Parameters
     ----------
-    a : array_like, shape (M, N)
+    a : (M, N) array_like
       Matrix to be pseudo-inverted.
     rcond : float
       Cutoff for small singular values.
@@ -1499,7 +1500,7 @@ def pinv(a, rcond=1e-15 ):
 
     Returns
     -------
-    B : ndarray, shape (N, M)
+    B : (N, M) ndarray
       The pseudo-inverse of `a`. If `a` is a `matrix` instance, then so
       is `B`.
 
@@ -1647,13 +1648,18 @@ def det(a):
 
     Parameters
     ----------
-    a : array_like, shape (M, M)
+    a : (M, M) array_like
         Input array.
 
     Returns
     -------
-    det : ndarray
+    det : float
         Determinant of `a`.
+
+    See Also
+    --------
+    slogdet : Another way to representing the determinant, more suitable
+      for large matrices where underflow/overflow may occur.
 
     Notes
     -----
@@ -1667,11 +1673,6 @@ def det(a):
     >>> a = np.array([[1, 2], [3, 4]])
     >>> np.linalg.det(a)
     -2.0
-
-    See Also
-    --------
-    slogdet : Another way to representing the determinant, more suitable
-      for large matrices where underflow/overflow may occur.
 
     """
     sign, logdet = slogdet(a)
@@ -1693,9 +1694,9 @@ def lstsq(a, b, rcond=-1):
 
     Parameters
     ----------
-    a : array_like, shape (M, N)
+    a : (M, N) array_like
         "Coefficient" matrix.
-    b : array_like, shape (M,) or (M, K)
+    b : {(M,), (M, K)} array_like
         Ordinate or "dependent variable" values. If `b` is two-dimensional,
         the least-squares solution is calculated for each of the `K` columns
         of `b`.
@@ -1706,18 +1707,18 @@ def lstsq(a, b, rcond=-1):
 
     Returns
     -------
-    x : ndarray, shape (N,) or (N, K)
+    x : {(M,), (M, K)} ndarray
         Least-squares solution.  The shape of `x` depends on the shape of
         `b`.
-    residues : ndarray, shape (), (1,), or (K,)
-        Sums of residues; squared Euclidean 2-norm for each column in
+    residuals : {(), (1,), (K,)} ndarray
+        Sums of residuals; squared Euclidean 2-norm for each column in
         ``b - a*x``.
         If the rank of `a` is < N or > M, this is an empty array.
         If `b` is 1-dimensional, this is a (1,) shape array.
         Otherwise the shape is (K,).
     rank : int
         Rank of matrix `a`.
-    s : ndarray, shape (min(M,N),)
+    s : (min(M, N),) ndarray
         Singular values of `a`.
 
     Raises
@@ -1849,7 +1850,7 @@ def norm(x, ord=None):
 
     Parameters
     ----------
-    x : array_like, shape (M,) or (M, N)
+    x : {(M,), (M, N)} array_like
         Input array.
     ord : {non-zero int, inf, -inf, 'fro'}, optional
         Order of the norm (see table under ``Notes``). inf means numpy's
