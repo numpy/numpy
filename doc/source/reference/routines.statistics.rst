@@ -12,8 +12,8 @@ Extremal values
 
    amin
    amax
-   nanmax
    nanmin
+   nanmax
    ptp
 
 Averages and variances

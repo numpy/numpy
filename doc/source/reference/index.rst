@@ -20,7 +20,7 @@ For learning how to use NumPy, see also :ref:`user`.
    arrays
    ufuncs
    routines
-   ctypes
+   ctypeslib
    distutils
    c-api
    internals
