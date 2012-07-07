@@ -37,7 +37,7 @@ Distributions
    beta
    binomial
    chisquare
-   mtrand.dirichlet
+   dirichlet
    exponential
    f
    gamma
@@ -75,7 +75,7 @@ Random generator
 .. autosummary::
    :toctree: generated/
 
-   mtrand.RandomState
+   RandomState
    seed
    get_state
    set_state

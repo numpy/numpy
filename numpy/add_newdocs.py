@@ -1822,10 +1822,21 @@ add_newdoc('numpy.core.multiarray', 'result_type',
 
     """)
 
-add_newdoc('numpy.core.multiarray','newbuffer',
-    """newbuffer(size)
+add_newdoc('numpy.core.multiarray', 'newbuffer',
+    """
+    newbuffer(size)
 
-    Return a new uninitialized buffer object of size bytes
+    Return a new uninitialized buffer object.
+
+    Parameters
+    ----------
+    size : int
+        Size in bytes of returned buffer object.
+
+    Returns
+    -------
+    newbuffer : buffer object
+        Returned, uninitialized buffer object of `size` bytes.
 
     """)
 
@@ -3717,8 +3728,9 @@ add_newdoc('numpy.core.multiarray', 'copyto',
     """
     copyto(dst, src, casting='same_kind', where=None, preservena=False)
 
-    Copies values from `src` into `dst`, broadcasting as necessary.
-    Raises a TypeError if the casting rule is violated, and if
+    Copies values from one array to another, broadcasting as necessary.
+
+    Raises a TypeError if the `casting` rule is violated, and if
     `where` is provided, it selects which elements to copy.
 
     .. versionadded:: 1.7.0

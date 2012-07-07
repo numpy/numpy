@@ -233,11 +233,10 @@ def isreal(x):
 
 def iscomplexobj(x):
     """
-    Return True if x is a complex type or an array of complex numbers.
+    Check for a complex type or an array of complex numbers.
 
-    The type of the input is checked, not the value. So even if the input
-    has an imaginary part equal to zero, `iscomplexobj` evaluates to True
-    if the data type is complex.
+    The type of the input is checked, not the value. Even if the input
+    has an imaginary part equal to zero, `iscomplexobj` evaluates to True.
 
     Parameters
     ----------
@@ -246,8 +245,9 @@ def iscomplexobj(x):
 
     Returns
     -------
-    y : bool
-        The return value, True if `x` is of a complex type.
+    iscomplexobj : bool
+        The return value, True if `x` is of a complex type or has at least
+        one complex element.
 
     See Also
     --------
