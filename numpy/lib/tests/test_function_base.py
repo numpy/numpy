@@ -1179,49 +1179,150 @@ class TestMeshgrid(TestCase):
 
 
 class TestPiecewise(TestCase):
+    def test_0d(self):
+        # Input: scalar
+        x = 5
+
+        # Condition: scalar bool
+        y = piecewise(x, x < 7, [1])
+        assert(y.ndim == 0)
+        assert(y == 1)
+
+        # Condition: singleton list of scalar bool
+        y = piecewise(x, [x < 7], [1])
+        assert(y == 1)
+
+        # Condition: 0-d array of bool
+        y = piecewise(x, np.array(x < 7), [1])
+        assert(y == 1)
+
+        # Condition: 1-d array of bool
+        y = piecewise(x, np.array([x < 7]), [1])
+        assert(y == 1)
+
+        # Condition: singleton list of 0-d array of bool
+        y = piecewise(x, [np.array(x < 7)], [1])
+        assert(y == 1)
+
+        # Condition: singleton list of 1-d array of bool
+        y = piecewise(x, [np.array([x < 7])], [1])
+        assert(y == 1)
+
+        # Condition: scalar int
+        y = piecewise(x, 1, [1])
+        assert(y == 1)
+
+        # Condition: singleton list of int
+        y = piecewise(x, [1], [1])
+        assert(y == 1)
+
+        # Condition: 1-d list of bools
+        y = piecewise(x, [x < 7, x >= 7], [1, 2])
+        assert(y == 1)
+
+        # Condition: 1-d list of bools (test alternative)
+        y = piecewise(x, [x >= 7, x < 7], [1, 2])
+        assert(y == 2)
+
+        # Condition: 1-d list of 0-d arrays of bools
+        y = piecewise(x, [np.array(x < 7), np.array(x >= 7)], [1, 2])
+        assert(y == 1)
+
+        # Input: 0-d array
+        x = np.array(5)
+
+        y = piecewise(x, x < 7, [1])
+        assert(y.ndim == 0)
+        assert(y == 1)
+
     def test_simple(self):
-        # Condition is single bool list
-        x = piecewise([0, 0], [True, False], [1])
-        assert_array_equal(x, [1, 0])
+        # Input: 1-d array
+        x = np.array([3,5])
 
-        # List of conditions: single bool list
-        x = piecewise([0, 0], [[True, False]], [1])
-        assert_array_equal(x, [1, 0])
+        # Condition: bare array of bool
+        y = piecewise(x, x < 7, [1])
+        assert_array_equal(y, [1, 1])
 
-        # Conditions is single bool array
-        x = piecewise([0, 0], np.array([True, False]), [1])
-        assert_array_equal(x, [1, 0])
+        # Make sure callables are called
+        y = piecewise(x, x < 7, [(lambda x: -x)])
+        assert_array_equal(y, [-3, -5])
 
-        # Condition is single int array
-        x = piecewise([0, 0], np.array([1, 0]), [1])
-        assert_array_equal(x, [1, 0])
+        # Condition: singleton list of array of bool
+        y = piecewise(x, [x < 7], [1])
+        assert_array_equal(y, [1, 1])
 
-        # List of conditions: int array
-        x = piecewise([0, 0], [np.array([1, 0])], [1])
-        assert_array_equal(x, [1, 0])
+        # Condition: (1,2) array of bool
+        y = piecewise(x, np.array([x < 7]), [1])
+        assert_array_equal(y, [1, 1])
 
+        # Condition: list of array of bool
+        y = piecewise(x, [x >= 4, x < 4], [1, 2])
+        assert_array_equal(y, [2, 1])
 
-        x = piecewise([0, 0], [[False, True]], [lambda x:-1])
-        assert_array_equal(x, [0, -1])
+        y = piecewise(x, [x > 7, x <= 7], [1, 2])
+        assert_array_equal(y, [2, 2])
 
-        x = piecewise([1, 2], [[True, False], [False, True]], [3, 4])
-        assert_array_equal(x, [3, 4])
+        y = piecewise(x, [x < 4, x >= 4], [1, 2])
+        assert_array_equal(y, [1, 2])
+
+        y = piecewise(x, np.array([x < 4, x >= 4]), [1, 2])
+        assert_array_equal(y, [1, 2])
 
     def test_default(self):
-        # No value specified for x[1], should be 0
-        x = piecewise([1, 2], [True, False], [2])
-        assert_array_equal(x, [2, 0])
+        # Input: scalar
+        x = 5
 
-        # Should set x[1] to 3
-        x = piecewise([1, 2], [True, False], [2, 3])
-        assert_array_equal(x, [2, 3])
+        # built-in no-match: 0
 
-    def test_0d(self):
-        x = np.array(3)
-        y = piecewise(x, x > 3, [4, 0])
-        assert_(y.ndim == 0)
-        assert_(y == 0)
+        # Condition: scalar bool
+        y = piecewise(x, x > 7, [1])
+        assert_array_equal(y, 0)
 
+        # Condition: scalar int
+        y = piecewise(x, 0, [1])
+        assert_array_equal(y, 0)
+
+        # custom no-match
+
+        y = piecewise(x, x < 7, [1, 2])
+        assert_array_equal(y, [1])
+
+        y = piecewise(x, x > 7, [1, 2])
+        assert_array_equal(y, [2])
+
+        # Condition: scalar int
+        y = piecewise(x, 0, [1, 2])
+        assert_array_equal(y, [2])
+
+        # Input: 1-d array
+        x = np.array([3,5])
+
+        # built-in no-match: 0
+
+        y = piecewise(x, x > 7, [1])
+        assert_array_equal(y, [0,0])
+
+        y = piecewise(x, x < 4, [1])
+        assert_array_equal(y, [1, 0])
+
+        # custom no-match
+
+        y = piecewise(x, x < 7, [1, 2])
+        assert_array_equal(y, [1, 1])
+
+        y = piecewise(x, x > 7, [1, 2])
+        assert_array_equal(y, [2, 2])
+
+        y = piecewise(x, x < 4, [1, 2])
+        assert_array_equal(y, [1, 2])
+
+        # Condition: list of array of bool
+        y = piecewise(x, [x < 4], [1, 2])
+        assert_array_equal(y, [1, 2])
+
+        # Condition: (1,2) array of bool
+        y = piecewise(x, np.array([x < 4]), [1, 2])
+        assert_array_equal(y, [1, 2])
 
 class TestBincount(TestCase):
     def test_simple(self):
