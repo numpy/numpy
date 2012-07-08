@@ -551,7 +551,31 @@ class TestMethods(TestCase):
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-        # todo, check object array sorts.
+        # test object array sort.
+        a = np.empty((100,), dtype=np.object)
+        a[:] = range(100)
+        b = a[::-1]
+        for kind in ['q'] :
+            msg = "object sort, kind=%s" % kind
+            c = a.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+        # test record array sort.
+        dt = np.dtype([('f',float),('i',int)])
+        a = array([(i,i) for i in range(100)], dtype = dt)
+        b = a[::-1]
+        for kind in ['q'] :
+            msg = "object sort, kind=%s" % kind
+            c = a.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
 
         # check axis handling. This should be the same for all type
         # specific sorts, so we only check it for one type and one kind
@@ -639,8 +663,8 @@ class TestMethods(TestCase):
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(100)])
         b = a[::-1].copy()
-        r = arange(100)
-        rr = r[::-1].copy()
+        r = np.arange(100)
+        rr = r[::-1]
         for kind in ['q', 'm', 'h'] :
             msg = "string argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
@@ -649,15 +673,35 @@ class TestMethods(TestCase):
         # test unicode argsorts.
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(100)], dtype=np.unicode)
-        b = a[::-1].copy()
-        r = arange(100)
-        rr = r[::-1].copy()
+        b = a[::-1]
+        r = np.arange(100)
+        rr = r[::-1]
         for kind in ['q', 'm', 'h'] :
             msg = "unicode argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
 
-        # todo, check object array argsorts.
+        # test object array argsort.
+        a = np.empty((100,), dtype=np.object)
+        a[:] = range(100)
+        b = a[::-1]
+        r = np.arange(100)
+        rr = r[::-1]
+        for kind in ['q'] :
+            msg = "object argsort, kind=%s" % kind
+            assert_equal(a.copy().argsort(kind=kind), r, msg)
+            assert_equal(b.copy().argsort(kind=kind), rr, msg)
+
+        # test structured array sort.
+        dt = np.dtype([('f',float),('i',int)])
+        a = array([(i,i) for i in range(100)], dtype = dt)
+        b = a[::-1]
+        r = np.arange(100)
+        rr = r[::-1]
+        for kind in ['q'] :
+            msg = "structured array argsort, kind=%s" % kind
+            assert_equal(a.copy().argsort(kind=kind), r, msg)
+            assert_equal(b.copy().argsort(kind=kind), rr, msg)
 
         # check axis handling. This should be the same for all type
         # specific argsorts, so we only check it for one type and one kind
@@ -933,7 +977,7 @@ class TestMethods(TestCase):
         ro_diag.flags.writeable = False
         assert_equal(collect_warning_types(getattr, ro_diag,
                                            "__array_struct__"), [])
-        
+
 
     def test_ravel(self):
         a = np.array([[0,1],[2,3]])
@@ -1093,7 +1137,7 @@ class TestFancyIndexing(TestCase):
         x = xorig.copy()
         x[m3] = 10
         assert_array_equal(x, array([[1,10,3,4],[5,6,7,8]]))
-                           
+
 
 class TestStringCompare(TestCase):
     def test_string(self):
@@ -1701,7 +1745,7 @@ class TestFlat(TestCase):
         self.b = a[::2,::2]
         self.a0 = a0
         self.b0 = a0[::2,::2]
-        
+
     def test_contiguous(self):
         testpassed = False
         try:
@@ -1735,7 +1779,7 @@ class TestFlat(TestCase):
         assert d.flags.updateifcopy is False
         assert e.flags.updateifcopy is False
         assert f.flags.updateifcopy is True
-        assert f.base is self.b0    
+        assert f.base is self.b0
 
 class TestResize(TestCase):
     def test_basic(self):
