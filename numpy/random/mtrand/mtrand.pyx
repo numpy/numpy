@@ -4391,35 +4391,33 @@ cdef class RandomState:
                [0, 1, 2]])
 
         """
-        cdef npy_intp i, j
+        cdef npy_intp i, ilen, jlen ,icopy ,jcopy , j
         cdef int copy
-
+        cdef int single
         i = len(x) - 1
-        try:
-            j = len(x[0])
-        except:
-            j = 0
-
-        if (j == 0):
-            # adaptation of random.shuffle()
-            while i > 0:
-                j = rk_interval(i, self.internal_state)
+        while(i > 0):
+            j = rk_interval(i, self.internal_state)
+            
+            ilen = hasattr(x[i], 'len')
+            jlen = hasattr(x[j], 'len')
+            icopy = hasattr(x[i], 'copy')
+            jcopy = hasattr(x[j], 'copy')
+            
+            if icopy and jcopy:
+                x[i], x[j] = x[j].copy(), x[i].copy()
+            elif (not ilen) and (not jlen):
                 x[i], x[j] = x[j], x[i]
-                i = i - 1
-        else:
-            # make copies
-            copy = hasattr(x[0], 'copy')
-            if copy:
-                while(i > 0):
-                    j = rk_interval(i, self.internal_state)
-                    x[i], x[j] = x[j].copy(), x[i].copy()
-                    i = i - 1
+            elif icopy and (not jlen):
+                x[i], x[j] = x[j], x[i].copy()
+            elif jcopy and (not ilen):
+                x[i], x[j] = x[j].copy(), x[i]
+            elif jcopy and (not icopy):
+                x[i], x[j] = x[j][:], x[i].copy()
+            elif icopy and (not jcopy):
+                x[i], x[j] = x[j].copy(), x[i][:]
             else:
-                while(i > 0):
-                    j = rk_interval(i, self.internal_state)
-                    x[i], x[j] = x[j][:], x[i][:]
-                    i = i - 1
-
+                x[i], x[j] = x[j][:], x[i][:]
+            i = i - 1
     def permutation(self, object x):
         """
         permutation(x)
