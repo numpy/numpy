@@ -2291,6 +2291,14 @@ class TestWarnings(object):
         finally:
             warn_ctx.__exit__()
 
+class TestMinScalarType(object):
+    def test_usigned_long(self):
+        dt = np.min_scalar_type(2**63-1)
+        wanted = np.dtype('uint64')
+        assert_equal(wanted, dt,
+                err_msg="Wrong dtype for 2**63-1")
+        
+
 if sys.version_info >= (2, 6):
 
     if sys.version_info[:2] == (2, 6):
