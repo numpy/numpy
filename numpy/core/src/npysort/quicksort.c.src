@@ -63,10 +63,12 @@
 int
 quicksort_@suff@(@type@ *start, npy_intp num, void *NOT_USED)
 {
+    @type@ vp;
     @type@ *pl = start;
     @type@ *pr = start + num - 1;
-    @type@ vp;
-    @type@ *stack[PYA_QS_STACK], **sptr = stack, *pm, *pi, *pj, *pk;
+    @type@ *stack[PYA_QS_STACK];
+    @type@ **sptr = stack;
+    @type@ *pm, *pi, *pj, *pk;
 
     for (;;) {
         while ((pr - pl) > SMALL_QUICKSORT) {
@@ -127,30 +129,30 @@ int
 aquicksort_@suff@(@type@ *v, npy_intp* tosort, npy_intp num, void *NOT_USED)
 {
     @type@ vp;
-    npy_intp *pl, *pr;
-    npy_intp *stack[PYA_QS_STACK], **sptr=stack, *pm, *pi, *pj, *pk, vi;
-
-    pl = tosort;
-    pr = tosort + num - 1;
+    npy_intp *pl = tosort;
+    npy_intp *pr = tosort + num - 1;
+    npy_intp *stack[PYA_QS_STACK];
+    npy_intp **sptr = stack;
+    npy_intp *pm, *pi, *pj, *pk, vi;
 
     for (;;) {
         while ((pr - pl) > SMALL_QUICKSORT) {
             /* quicksort partition */
             pm = pl + ((pr - pl) >> 1);
-            if (@TYPE@_LT(v[*pm],v[*pl])) INTP_SWAP(*pm,*pl);
-            if (@TYPE@_LT(v[*pr],v[*pm])) INTP_SWAP(*pr,*pm);
-            if (@TYPE@_LT(v[*pm],v[*pl])) INTP_SWAP(*pm,*pl);
+            if (@TYPE@_LT(v[*pm],v[*pl])) INTP_SWAP(*pm, *pl);
+            if (@TYPE@_LT(v[*pr],v[*pm])) INTP_SWAP(*pr, *pm);
+            if (@TYPE@_LT(v[*pm],v[*pl])) INTP_SWAP(*pm, *pl);
             vp = v[*pm];
             pi = pl;
             pj = pr - 1;
-            INTP_SWAP(*pm,*pj);
+            INTP_SWAP(*pm, *pj);
             for (;;) {
-                do ++pi; while (@TYPE@_LT(v[*pi],vp));
-                do --pj; while (@TYPE@_LT(vp,v[*pj]));
+                do ++pi; while (@TYPE@_LT(v[*pi], vp));
+                do --pj; while (@TYPE@_LT(vp, v[*pj]));
                 if (pi >= pj) {
                     break;
                 }
-                INTP_SWAP(*pi,*pj);
+                INTP_SWAP(*pi, *pj);
             }
             pk = pr - 1;
             INTP_SWAP(*pi,*pk);
@@ -339,3 +341,23 @@ aquicksort_@suff@(@type@ *v, npy_intp* tosort, npy_intp num, PyArrayObject *arr)
 }
 
 /**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                             GENERIC SORT                                **
+ *****************************************************************************
+ */
+
+
+/*
+ * This sort has almost the same signature as libc qsort and is intended to
+ * supply an error return for compatibility with the other generic sort
+ * kinds.
+ */
+int
+npy_quicksort(void *base, size_t num, size_t size, npy_comparator cmp)
+{
+    qsort(base, num, size, cmp);
+    return 0;
+}

@@ -340,3 +340,88 @@ amergesort_@suff@(@type@ *v, npy_intp *tosort, npy_intp num, PyArrayObject *arr)
 }
 
 /**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                             GENERIC SORT                                **
+ *****************************************************************************
+ */
+
+
+static void
+npy_mergesort0(char *pl, char *pr, char *pw, char *vp, size_t size, npy_comparator cmp)
+{
+    char *pi, *pj, *pk, *pm;
+
+    if ((size_t)(pr - pl) > SMALL_MERGESORT*size) {
+        /* merge sort */
+        pm = pl + (((pr - pl)/size) >> 1)*size;
+        npy_mergesort0(pl, pm, pw, vp, size, cmp);
+        npy_mergesort0(pm, pr, pw, vp, size, cmp);
+        GENERIC_COPY(pw, pl, pm - pl);
+        pi = pw + (pm - pl);
+        pj = pw;
+        pk = pl;
+        while (pj < pi && pm < pr) {
+            if (GENERIC_LT(pm, pj, cmp)) {
+                GENERIC_COPY(pk, pm, size);
+                pm += size;
+            }
+            else {
+                GENERIC_COPY(pk, pj, size);
+                pj += size;
+            }
+            pk += size;
+        }
+        GENERIC_COPY(pk, pj, pi - pj);
+    }
+    else {
+        /* insertion sort */
+        for (pi = pl + size; pi < pr; pi += size) {
+            GENERIC_COPY(vp, pi, size);
+            pj = pi;
+            pk = pi - size;
+            while (pj > pl && GENERIC_LT(vp, pk, cmp)) {
+                GENERIC_COPY(pj, pk, size);
+                pj -= size;
+                pk -= size;
+            }
+            GENERIC_COPY(pj, vp, size);
+        }
+    }
+}
+
+
+/*
+ * This sort has almost the same signature as libc qsort and is intended to
+ * provide a mergesort for array types that don't have type specific sorts.
+ * The difference in the signature is an error return, as it might be the
+ * case that a memory allocation fails.
+ */
+int
+npy_mergesort(void *base, size_t num, size_t size, npy_comparator cmp)
+{
+    char *pl, *pr, *pw, *vp;
+    int err = 0;
+
+    pl = (char *)base;
+    pr = pl + num*size;
+    pw = (char *) PyDataMem_NEW((num/2)*size);
+    if (pw == NULL) {
+        err = -NPY_ENOMEM;
+        goto fail_0;
+    }
+    vp = (char *) PyDataMem_NEW(size);
+    if (vp == NULL) {
+        err = -NPY_ENOMEM;
+        goto fail_1;
+    }
+    npy_mergesort0(pl, pr, pw, vp, size, cmp);
+
+    PyDataMem_FREE(vp);
+fail_1:
+    PyDataMem_FREE(pw);
+fail_0:
+    return err;
+}

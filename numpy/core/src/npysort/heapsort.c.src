@@ -182,7 +182,7 @@ heapsort_@suff@(@type@ *start, npy_intp n, PyArrayObject *arr)
     size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
     @type@ *tmp = malloc(PyArray_ITEMSIZE(arr));
     @type@ *a = start - len;
-    npy_intp i,j,l;
+    npy_intp i, j, l;
 
     for (l = n>>1; l > 0; --l) {
         @TYPE@_COPY(tmp, a + l*len, len);
@@ -274,3 +274,68 @@ aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
 }
 
 /**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                             GENERIC SORT                                **
+ *****************************************************************************
+ */
+
+
+/*
+ * This sort has almost the same signature as libc qsort and is intended to
+ * provide a heapsort for array types that don't have type specific sorts.
+ * The difference in the signature is an error return, as it might be the
+ * case that a memory allocation fails.
+ */
+int
+npy_heapsort(void *base, size_t num, size_t size, npy_comparator cmp)
+{
+    char *tmp = (char *) malloc(size);
+    char *a = (char *) base - size;
+    size_t i, j, l;
+
+    if (tmp == NULL) {
+        return -NPY_ENOMEM;
+    }
+
+    for (l = num >> 1; l > 0; --l) {
+        GENERIC_COPY(tmp, a + l*size, size);
+        for (i = l, j = l << 1; j <= num;) {
+            if (j < num && GENERIC_LT(a + j*size, a + (j+1)*size, cmp))
+                j += 1;
+            if (GENERIC_LT(tmp, a + j*size, cmp)) {
+                GENERIC_COPY(a + i*size, a + j*size, size);
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        GENERIC_COPY(a + i*size, tmp, size);
+    }
+
+    for (; num > 1;) {
+        GENERIC_COPY(tmp, a + num*size, size);
+        GENERIC_COPY(a + num*size, a + size, size);
+        num -= 1;
+        for (i = 1, j = 2; j <= num;) {
+            if (j < num && GENERIC_LT(a + j*size, a + (j+1)*size, cmp))
+                j++;
+            if (GENERIC_LT(tmp, a + j*size, cmp)) {
+                GENERIC_COPY(a + i*size, a + j*size, size);
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        GENERIC_COPY(a + i*size, tmp, size);
+    }
+
+    free(tmp);
+    return 0;
+}

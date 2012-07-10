@@ -890,7 +890,7 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 static PyArrayObject *global_obj;
 
 static int
-qsortCompare (const void *a, const void *b)
+sortCompare (const void *a, const void *b)
 {
     return PyArray_DESCR(global_obj)->f->compare(a,b,global_obj);
 }
@@ -954,7 +954,9 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArrayObject *ap = NULL, *store_arr = NULL;
     char *ip;
     int i, n, m, elsize, orign;
-    int axis_orig=axis;
+    int res = 0;
+    int axis_orig = axis;
+    int (*sort)(void *, size_t, size_t, npy_comparator);
 
     n = PyArray_NDIM(op);
     if ((n == 0) || (PyArray_SIZE(op) == 1)) {
@@ -975,12 +977,29 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     if (PyArray_DESCR(op)->f->sort[which] != NULL) {
         return _new_sort(op, axis, which);
     }
-    if ((which != NPY_QUICKSORT)
-        || PyArray_DESCR(op)->f->compare == NULL) {
+
+    if (PyArray_DESCR(op)->f->compare == NULL) {
         PyErr_SetString(PyExc_TypeError,
-                        "desired sort not supported for this type");
+                "type does not have compare function");
         return -1;
     }
+
+    switch (which) {
+        case NPY_QUICKSORT :
+            sort = npy_quicksort;
+            break;
+        case NPY_HEAPSORT :
+            sort = npy_heapsort;
+            break;
+        case NPY_MERGESORT :
+            sort = npy_mergesort;
+            break;
+        default:
+            PyErr_SetString(PyExc_TypeError,
+                    "requested sort kind is not supported");
+            goto fail;
+    }
+
 
     SWAPAXES2(op);
 
@@ -1001,13 +1020,26 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     store_arr = global_obj;
     global_obj = ap;
     for (ip = PyArray_DATA(ap), i = 0; i < n; i++, ip += elsize*m) {
-        qsort(ip, m, elsize, qsortCompare);
+        res = sort(ip, m, elsize, sortCompare);
+        if (res < 0) {
+            break;
+        }
     }
     global_obj = store_arr;
 
     if (PyErr_Occurred()) {
         goto fail;
     }
+    else if (res == -NPY_ENOMEM) {
+        PyErr_NoMemory();
+        goto fail;
+    }
+    else if (res == -NPY_ECOMP) {
+        PyErr_SetString(PyExc_TypeError,
+                "sort comparison failed");
+        goto fail;
+    }
+
 
  finish:
     Py_DECREF(ap);  /* Should update op if needed */
@@ -1045,6 +1077,8 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     npy_intp i, j, n, m, orign;
     int argsort_elsize;
     char *store_ptr;
+    int res = 0;
+    int (*sort)(void *, size_t, size_t, npy_comparator);
 
     n = PyArray_NDIM(op);
     if ((n == 0) || (PyArray_SIZE(op) == 1)) {
@@ -1071,12 +1105,30 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         return (PyObject *)ret;
     }
 
-    if ((which != NPY_QUICKSORT) || PyArray_DESCR(op2)->f->compare == NULL) {
+    if (PyArray_DESCR(op2)->f->compare == NULL) {
         PyErr_SetString(PyExc_TypeError,
-                        "requested sort not available for type");
+                "type does not have compare function");
         Py_DECREF(op2);
         op = NULL;
         goto fail;
+    }
+
+    switch (which) {
+        case NPY_QUICKSORT :
+            sort = npy_quicksort;
+            break;
+        case NPY_HEAPSORT :
+            sort = npy_heapsort;
+            break;
+        case NPY_MERGESORT :
+            sort = npy_mergesort;
+            break;
+        default:
+            PyErr_SetString(PyExc_TypeError,
+                    "requested sort kind is not supported");
+            Py_DECREF(op2);
+            op = NULL;
+            goto fail;
     }
 
     /* ap will contain the reference to op2 */
@@ -1109,10 +1161,26 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         for (j = 0; j < m; j++) {
             ip[j] = j;
         }
-        qsort((char *)ip, m, sizeof(npy_intp), argsort_static_compare);
+        res = sort((char *)ip, m, sizeof(npy_intp), argsort_static_compare);
+        if (res < 0) {
+            break;
+        }
     }
     global_data = store_ptr;
     global_obj = store;
+
+    if (PyErr_Occurred()) {
+        goto fail;
+    }
+    else if (res == -NPY_ENOMEM) {
+        PyErr_NoMemory();
+        goto fail;
+    }
+    else if (res == -NPY_ECOMP) {
+        PyErr_SetString(PyExc_TypeError,
+                "sort comparison failed");
+        goto fail;
+    }
 
  finish:
     Py_DECREF(op);
@@ -1123,7 +1191,6 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     Py_XDECREF(op);
     Py_XDECREF(ret);
     return NULL;
-
 }
 
 

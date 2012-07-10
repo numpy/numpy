@@ -538,7 +538,7 @@ class TestMethods(TestCase):
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-        # test unicode sort.
+        # test unicode sorts.
         s = 'aaaaaaaa'
         a = np.array([s + chr(i) for i in range(100)], dtype=np.unicode)
         b = a[::-1].copy()
@@ -551,11 +551,11 @@ class TestMethods(TestCase):
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-        # test object array sort.
+        # test object array sorts.
         a = np.empty((100,), dtype=np.object)
         a[:] = range(100)
         b = a[::-1]
-        for kind in ['q'] :
+        for kind in ['q', 'h', 'm'] :
             msg = "object sort, kind=%s" % kind
             c = a.copy();
             c.sort(kind=kind)
@@ -564,12 +564,36 @@ class TestMethods(TestCase):
             c.sort(kind=kind)
             assert_equal(c, a, msg)
 
-        # test record array sort.
+        # test record array sorts.
         dt = np.dtype([('f',float),('i',int)])
         a = array([(i,i) for i in range(100)], dtype = dt)
         b = a[::-1]
-        for kind in ['q'] :
+        for kind in ['q', 'h', 'm'] :
             msg = "object sort, kind=%s" % kind
+            c = a.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+        # test datetime64 sorts.
+        a = np.arange(0, 100, dtype='datetime64[D]')
+        b = a[::-1]
+        for kind in ['q', 'h', 'm'] :
+            msg = "datetime64 sort, kind=%s" % kind
+            c = a.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+            c = b.copy();
+            c.sort(kind=kind)
+            assert_equal(c, a, msg)
+
+        # test timedelta64 sorts.
+        a = np.arange(0, 100, dtype='timedelta64[D]')
+        b = a[::-1]
+        for kind in ['q', 'h', 'm'] :
+            msg = "timedelta64 sort, kind=%s" % kind
             c = a.copy();
             c.sort(kind=kind)
             assert_equal(c, a, msg)
@@ -591,10 +615,6 @@ class TestMethods(TestCase):
         d = a.copy()
         d.sort()
         assert_equal(d, c, "test sort with default axis")
-        # using None is known fail at this point
-        # d = a.copy()
-        # d.sort(axis=None)
-        #assert_equal(d, c, "test sort with axis=None")
 
 
     def test_sort_order(self):
@@ -681,27 +701,48 @@ class TestMethods(TestCase):
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
 
-        # test object array argsort.
+        # test object array argsorts.
         a = np.empty((100,), dtype=np.object)
         a[:] = range(100)
         b = a[::-1]
         r = np.arange(100)
         rr = r[::-1]
-        for kind in ['q'] :
+        for kind in ['q', 'm', 'h'] :
             msg = "object argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
 
-        # test structured array sort.
+        # test structured array argsorts.
         dt = np.dtype([('f',float),('i',int)])
         a = array([(i,i) for i in range(100)], dtype = dt)
         b = a[::-1]
         r = np.arange(100)
         rr = r[::-1]
-        for kind in ['q'] :
+        for kind in ['q', 'm', 'h'] :
             msg = "structured array argsort, kind=%s" % kind
             assert_equal(a.copy().argsort(kind=kind), r, msg)
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
+
+        # test datetime64 argsorts.
+        a = np.arange(0, 100, dtype='datetime64[D]')
+        b = a[::-1]
+        r = np.arange(100)
+        rr = r[::-1]
+        for kind in ['q', 'h', 'm'] :
+            msg = "datetime64 argsort, kind=%s" % kind
+            assert_equal(a.copy().argsort(kind=kind), r, msg)
+            assert_equal(b.copy().argsort(kind=kind), rr, msg)
+
+        # test timedelta64 argsorts.
+        a = np.arange(0, 100, dtype='timedelta64[D]')
+        b = a[::-1]
+        r = np.arange(100)
+        rr = r[::-1]
+        for kind in ['q', 'h', 'm'] :
+            msg = "timedelta64 argsort, kind=%s" % kind
+            assert_equal(a.copy().argsort(kind=kind), r, msg)
+            assert_equal(b.copy().argsort(kind=kind), rr, msg)
+
 
         # check axis handling. This should be the same for all type
         # specific argsorts, so we only check it for one type and one kind
