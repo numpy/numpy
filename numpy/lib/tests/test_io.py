@@ -1426,8 +1426,6 @@ M   33  21.99
                              usecols=("A", "C", "E"), names=True)
         assert_equal(test.dtype.names, ctrl_names)
 
-
-
     def test_fixed_width_names(self):
         "Test fix-width w/ names"
         data = "    A    B   C\n    0    1 2.3\n   45   67   9."
@@ -1451,6 +1449,11 @@ M   33  21.99
         test = np.ndfromtxt(StringIO(data), **kwargs)
         assert_equal(test, ctrl)
 
+    def test_comments_is_none(self):
+        # Github issue 329 (None was previously being converted to 'None').
+        test = np.genfromtxt(StringIO("test1,testNonetherestofthedata"),
+                             dtype=None, comments=None, delimiter=',')
+        assert_equal(test[1], asbytes('testNonetherestofthedata'))
 
     def test_recfromtxt(self):
         #
@@ -1470,7 +1473,6 @@ M   33  21.99
         assert_equal(test, control)
         assert_equal(test.mask, control.mask)
         assert_equal(test.A, [0, 2])
-
 
     def test_recfromcsv(self):
         #
