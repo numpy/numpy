@@ -491,7 +491,7 @@ class TestMethods(TestCase):
         # of sorted items must be greater than ~50 to check the actual
         # algorithm because quick and merge sort fall over to insertion
         # sort for small arrays.
-        a = np.arange(100)
+        a = np.arange(101)
         b = a[::-1].copy()
         for kind in ['q','m','h'] :
             msg = "scalar sort, kind=%s" % kind
@@ -527,7 +527,7 @@ class TestMethods(TestCase):
 
         # test string sorts.
         s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(100)])
+        a = np.array([s + chr(i) for i in range(101)])
         b = a[::-1].copy()
         for kind in ['q', 'm', 'h'] :
             msg = "string sort, kind=%s" % kind
@@ -540,7 +540,7 @@ class TestMethods(TestCase):
 
         # test unicode sorts.
         s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(100)], dtype=np.unicode)
+        a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode)
         b = a[::-1].copy()
         for kind in ['q', 'm', 'h'] :
             msg = "unicode sort, kind=%s" % kind
@@ -552,8 +552,8 @@ class TestMethods(TestCase):
             assert_equal(c, a, msg)
 
         # test object array sorts.
-        a = np.empty((100,), dtype=np.object)
-        a[:] = range(100)
+        a = np.empty((101,), dtype=np.object)
+        a[:] = range(101)
         b = a[::-1]
         for kind in ['q', 'h', 'm'] :
             msg = "object sort, kind=%s" % kind
@@ -566,7 +566,7 @@ class TestMethods(TestCase):
 
         # test record array sorts.
         dt = np.dtype([('f',float),('i',int)])
-        a = array([(i,i) for i in range(100)], dtype = dt)
+        a = array([(i,i) for i in range(101)], dtype = dt)
         b = a[::-1]
         for kind in ['q', 'h', 'm'] :
             msg = "object sort, kind=%s" % kind
@@ -578,7 +578,7 @@ class TestMethods(TestCase):
             assert_equal(c, a, msg)
 
         # test datetime64 sorts.
-        a = np.arange(0, 100, dtype='datetime64[D]')
+        a = np.arange(0, 101, dtype='datetime64[D]')
         b = a[::-1]
         for kind in ['q', 'h', 'm'] :
             msg = "datetime64 sort, kind=%s" % kind
@@ -590,7 +590,7 @@ class TestMethods(TestCase):
             assert_equal(c, a, msg)
 
         # test timedelta64 sorts.
-        a = np.arange(0, 100, dtype='timedelta64[D]')
+        a = np.arange(0, 101, dtype='timedelta64[D]')
         b = a[::-1]
         for kind in ['q', 'h', 'm'] :
             msg = "timedelta64 sort, kind=%s" % kind
@@ -657,7 +657,7 @@ class TestMethods(TestCase):
         # of sorted items must be greater than ~50 to check the actual
         # algorithm because quick and merge sort fall over to insertion
         # sort for small arrays.
-        a = np.arange(100)
+        a = np.arange(101)
         b = a[::-1].copy()
         for kind in ['q','m','h'] :
             msg = "scalar argsort, kind=%s" % kind
@@ -681,9 +681,9 @@ class TestMethods(TestCase):
 
         # test string argsorts.
         s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(100)])
+        a = np.array([s + chr(i) for i in range(101)])
         b = a[::-1].copy()
-        r = np.arange(100)
+        r = np.arange(101)
         rr = r[::-1]
         for kind in ['q', 'm', 'h'] :
             msg = "string argsort, kind=%s" % kind
@@ -692,9 +692,9 @@ class TestMethods(TestCase):
 
         # test unicode argsorts.
         s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(100)], dtype=np.unicode)
+        a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode)
         b = a[::-1]
-        r = np.arange(100)
+        r = np.arange(101)
         rr = r[::-1]
         for kind in ['q', 'm', 'h'] :
             msg = "unicode argsort, kind=%s" % kind
@@ -702,10 +702,10 @@ class TestMethods(TestCase):
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
 
         # test object array argsorts.
-        a = np.empty((100,), dtype=np.object)
-        a[:] = range(100)
+        a = np.empty((101,), dtype=np.object)
+        a[:] = range(101)
         b = a[::-1]
-        r = np.arange(100)
+        r = np.arange(101)
         rr = r[::-1]
         for kind in ['q', 'm', 'h'] :
             msg = "object argsort, kind=%s" % kind
@@ -714,9 +714,9 @@ class TestMethods(TestCase):
 
         # test structured array argsorts.
         dt = np.dtype([('f',float),('i',int)])
-        a = array([(i,i) for i in range(100)], dtype = dt)
+        a = array([(i,i) for i in range(101)], dtype = dt)
         b = a[::-1]
-        r = np.arange(100)
+        r = np.arange(101)
         rr = r[::-1]
         for kind in ['q', 'm', 'h'] :
             msg = "structured array argsort, kind=%s" % kind
@@ -724,9 +724,9 @@ class TestMethods(TestCase):
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
 
         # test datetime64 argsorts.
-        a = np.arange(0, 100, dtype='datetime64[D]')
+        a = np.arange(0, 101, dtype='datetime64[D]')
         b = a[::-1]
-        r = np.arange(100)
+        r = np.arange(101)
         rr = r[::-1]
         for kind in ['q', 'h', 'm'] :
             msg = "datetime64 argsort, kind=%s" % kind
@@ -734,9 +734,9 @@ class TestMethods(TestCase):
             assert_equal(b.copy().argsort(kind=kind), rr, msg)
 
         # test timedelta64 argsorts.
-        a = np.arange(0, 100, dtype='timedelta64[D]')
+        a = np.arange(0, 101, dtype='timedelta64[D]')
         b = a[::-1]
-        r = np.arange(100)
+        r = np.arange(101)
         rr = r[::-1]
         for kind in ['q', 'h', 'm'] :
             msg = "timedelta64 argsort, kind=%s" % kind
