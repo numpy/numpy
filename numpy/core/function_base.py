@@ -164,4 +164,3 @@ def logspace(start,stop,num=50,endpoint=True,base=10.0):
     """
     y = linspace(start,stop,num=num,endpoint=endpoint)
     return _nx.power(base,y)
-

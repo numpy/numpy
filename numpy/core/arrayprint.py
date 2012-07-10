@@ -747,4 +747,3 @@ class TimedeltaFormat(object):
 
     def __call__(self, x):
         return self.format % x.astype('i8')
-

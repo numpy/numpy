@@ -220,12 +220,12 @@ spam : parrot
 
 Raises
 ------
-RuntimeError : 
+RuntimeError :
     Some error
 
 Warns
 -----
-RuntimeWarning : 
+RuntimeWarning :
     Some warning
 
 Warnings
@@ -324,7 +324,7 @@ of the one-dimensional normal distribution to higher dimensions.
         The drawn samples, arranged according to `shape`.  If the
         shape given is (m,n,...), then the shape of `out` is is
         (m,n,...,N).
-        
+
         In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
         value drawn from the distribution.
 
@@ -333,16 +333,16 @@ of the one-dimensional normal distribution to higher dimensions.
     **spam** : parrot
 
         A parrot off its mortal coil.
- 
+
 :Raises:
 
-    **RuntimeError** : 
+    **RuntimeError** :
 
         Some error
 
 :Warns:
 
-    **RuntimeWarning** : 
+    **RuntimeWarning** :
 
         Some warning
 
@@ -351,12 +351,12 @@ of the one-dimensional normal distribution to higher dimensions.
     Certain warnings apply.
 
 .. seealso::
-    
+
     :obj:`some`, :obj:`other`, :obj:`funcs`
-    
+
     :obj:`otherfunc`
         relationship
-    
+
 .. rubric:: Notes
 
 Instead of specifying the full covariance matrix, popular
@@ -403,7 +403,7 @@ standard deviation:
 [True, True]
 """)
 
-       
+
 doc2 = NumpyDocString("""
     Returns array of indices of the maximum values of along the given axis.
 
@@ -574,7 +574,7 @@ def test_plot_examples():
     Examples
     --------
     .. plot::
-    
+
        import matplotlib.pyplot as plt
        plt.plot([1,2,3],[4,5,6])
        plt.show()
@@ -612,4 +612,3 @@ def test_class_members():
 if __name__ == "__main__":
     import nose
     nose.run()
-

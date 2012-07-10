@@ -493,7 +493,7 @@ class TestVectorize(TestCase):
         res2a = f2(np.arange(3))
         assert_equal(res1a, res2a)
         assert_equal(res1b, res2b)
-        
+
     def test_string_ticket_1892(self):
         """Test vectorization over strings: issue 1892."""
         f = np.vectorize(lambda x:x)

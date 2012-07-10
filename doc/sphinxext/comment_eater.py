@@ -95,7 +95,7 @@ class CommentBlocker(object):
 
     def new_comment(self, string, start, end, line):
         """ Possibly add a new comment.
-        
+
         Only adds a new comment if this comment is the only thing on the line.
         Otherwise, it extends the noncomment block.
         """
@@ -155,4 +155,3 @@ def get_class_traits(klass):
             rhs = unparse(node.expr).strip()
             doc = strip_comment_marker(cb.search_for_comment(node.lineno, default=''))
             yield name, rhs, doc
-

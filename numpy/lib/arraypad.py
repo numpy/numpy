@@ -778,4 +778,3 @@ def pad(array, pad_width, mode=None, **kwargs):
                             iaxis,
                             kwargs)
     return newmat
-

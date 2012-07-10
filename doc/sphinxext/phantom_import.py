@@ -46,7 +46,7 @@ def import_phantom_module(xml_file):
     ----------
     xml_file : str
         Name of an XML file to read
-    
+
     """
     import lxml.etree as etree
 
@@ -59,7 +59,7 @@ def import_phantom_module(xml_file):
     # - Base classes come before classes inherited from them
     # - Modules come before their contents
     all_nodes = dict([(n.attrib['id'], n) for n in root])
-    
+
     def _get_bases(node, recurse=False):
         bases = [x.attrib['ref'] for x in node.findall('base')]
         if recurse:
@@ -74,7 +74,7 @@ def import_phantom_module(xml_file):
         return bases
 
     type_index = ['module', 'class', 'callable', 'object']
-    
+
     def base_cmp(a, b):
         x = cmp(type_index.index(a.tag), type_index.index(b.tag))
         if x != 0: return x
@@ -86,7 +86,7 @@ def import_phantom_module(xml_file):
             if x != 0: return x
             if a.attrib['id'] in b_bases: return -1
             if b.attrib['id'] in a_bases: return 1
-        
+
         return cmp(a.attrib['id'].count('.'), b.attrib['id'].count('.'))
 
     nodes = root.getchildren()

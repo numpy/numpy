@@ -928,7 +928,7 @@ class $name(pu.PolyBase) :
 if __name__ == "__main__":
     import sys
     import re
-    
+
     replace_pattern = re.compile(r"""
 (?P<start>^\#REPLACE\sPOLYTEMPLATE\s(?P<argstr>[^\n]*)\n)  # block-start marker
 (?P<whatever>.*\n)*                # ignore any lines in the middle
@@ -940,7 +940,7 @@ if __name__ == "__main__":
         # Default filenames, if not given on the command-line
         filenames = ["chebyshev.py", "hermite.py", "hermite_e.py", "laguerre.py",
                      "legendre.py", "polynomial.py"]
-    
+
     for filename in filenames:
         print("Processing %s" % (filename,))
         program = open(filename).read()

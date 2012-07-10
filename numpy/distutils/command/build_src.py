@@ -673,14 +673,14 @@ class build_src(build_ext.build_ext):
                     if typ is None:
                         typ = get_swig_target(source)
                         is_cpp = typ=='c++'
-                        if is_cpp: 
+                        if is_cpp:
                             target_ext = '.cpp'
                     else:
                         typ2 = get_swig_target(source)
                         if typ2 is None:
                             log.warn('source %r does not define swig target, assuming %s swig target' \
                                      % (source, typ))
-                            if is_cpp: 
+                            if is_cpp:
                                 target_ext = '.cpp'
                         elif typ!=typ2:
                             log.warn('expected %r but source %r defines %r swig target' \
