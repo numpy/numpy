@@ -3519,24 +3519,18 @@ def insert(arr, obj, values, axis=None):
     N = arr.shape[axis]
     newshape = list(arr.shape)
     if isinstance(obj, (int, long, integer)):
+
         if (obj < 0): obj += N
         if obj < 0 or obj > N:
             raise ValueError(
                     "index (%d) out of range (0<=index<=%d) "\
                     "in dimension %d" % (obj, N, axis))
-        newshape[axis] += 1;
-        new = empty(newshape, arr.dtype, arr.flags.fnc)
-        slobj[axis] = slice(None, obj)
-        new[slobj] = arr[slobj]
-        slobj[axis] = obj
-        new[slobj] = values
-        slobj[axis] = slice(obj+1,None)
-        slobj2 = [slice(None)]*ndim
-        slobj2[axis] = slice(obj,None)
-        new[slobj] = arr[slobj2]
-        if wrap:
-            return wrap(new)
-        return new
+          
+        if isinstance(values, (int, long, integer)):            
+            obj = [obj]           
+        else:
+            obj = [obj] * len(values) 
+
 
     elif isinstance(obj, slice):
         # turn it into a range object
