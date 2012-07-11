@@ -19,6 +19,7 @@
 #include "lowlevel_strided_loops.h"
 
 #include "item_selection.h"
+#include "npy_sort.h"
 
 /*NUMPY_API
  * Take
