@@ -586,3 +586,4 @@ the output it."""
 
             if post_hook:
                 post_hook(**{'pkg_name': pkg_name, 'scons_cmd' : self})
+

@@ -932,7 +932,7 @@ class TestMethods(TestCase):
         ro_diag.flags.writeable = False
         assert_equal(collect_warning_types(getattr, ro_diag,
                                            "__array_struct__"), [])
-
+        
 
     def test_ravel(self):
         a = np.array([[0,1],[2,3]])
@@ -1092,7 +1092,7 @@ class TestFancyIndexing(TestCase):
         x = xorig.copy()
         x[m3] = 10
         assert_array_equal(x, array([[1,10,3,4],[5,6,7,8]]))
-
+                           
 
 class TestStringCompare(TestCase):
     def test_string(self):
@@ -1700,7 +1700,7 @@ class TestFlat(TestCase):
         self.b = a[::2,::2]
         self.a0 = a0
         self.b0 = a0[::2,::2]
-
+        
     def test_contiguous(self):
         testpassed = False
         try:
@@ -1734,7 +1734,7 @@ class TestFlat(TestCase):
         assert d.flags.updateifcopy is False
         assert e.flags.updateifcopy is False
         assert f.flags.updateifcopy is True
-        assert f.base is self.b0
+        assert f.base is self.b0    
 
 class TestResize(TestCase):
     def test_basic(self):

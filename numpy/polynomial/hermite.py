@@ -922,7 +922,7 @@ def hermval(x, c, tensor=True):
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,)*x.ndim)
+       c = c.reshape(c.shape + (1,)*x.ndim)
 
     x2 = x*2
     if len(c) == 1 :
@@ -1744,7 +1744,7 @@ def hermweight(x):
 #REPLACE POLYTEMPLATE name='Hermite', nick='herm', domain='[-1,1]'
 
 if 1/2 == 0:
-    raise ImportError("missing required 'from __future__ import division'")
+   raise ImportError("missing required 'from __future__ import division'")
 import numpy as np
 from numpy.polynomial import polyutils as pu
 

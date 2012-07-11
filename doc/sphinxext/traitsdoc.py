@@ -137,3 +137,4 @@ def get_doc_object(obj, what=None, config=None):
 def setup(app):
     # init numpydoc
     numpydoc.setup(app, get_doc_object)
+

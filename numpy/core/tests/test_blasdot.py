@@ -87,3 +87,5 @@ def test_dot_3args_errors():
 
     r = np.empty((1024, 32), dtype=int)
     assert_raises(ValueError, np.dot, f, v, r)
+
+

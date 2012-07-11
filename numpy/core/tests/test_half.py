@@ -1,7 +1,7 @@
 import warnings
 import numpy as np
 from numpy import uint16, float16, float32, float64
-from numpy.testing import TestCase, run_module_suite, assert_, assert_equal
+from numpy.testing import TestCase, run_module_suite, assert_, assert_equal 
 
 
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):

@@ -1762,7 +1762,7 @@ def legweight(x):
 #REPLACE POLYTEMPLATE name='Legendre', nick='leg', domain='[-1,1]'
 
 if 1/2 == 0:
-    raise ImportError("missing required 'from __future__ import division'")
+   raise ImportError("missing required 'from __future__ import division'")
 import numpy as np
 from numpy.polynomial import polyutils as pu
 

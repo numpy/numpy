@@ -1730,9 +1730,9 @@ class vectorize(object):
         Set of strings or integers representing the positional or keyword
         arguments for which the function will not be vectorized.  These will be
         passed directly to `pyfunc` unmodified.
-
+        
         .. versionadded:: 1.7.0
-
+    
     cache : bool, optional
        If `True`, then cache the first function call that determines the number
        of outputs if `otypes` is not provided.
@@ -1859,7 +1859,7 @@ class vectorize(object):
             the_args = list(args)
             def func(*vargs):
                 for _n, _i in enumerate(inds):
-                    the_args[_i] = vargs[_n]
+                    the_args[_i] = vargs[_n] 
                 kwargs.update(zip(names, vargs[len(inds):]))
                 return self.pyfunc(*the_args, **kwargs)
 
@@ -1920,7 +1920,7 @@ class vectorize(object):
             ufunc = frompyfunc(_func, len(args), nout)
 
         return ufunc, otypes
-
+        
     def _vectorize_call(self, func, args):
         """Vectorized call to `func` over positional `args`."""
         if not args:
@@ -1929,8 +1929,8 @@ class vectorize(object):
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
 
             # Convert args to object arrays first
-            inputs = [array(_a, copy=False, subok=True, dtype=object)
-                      for _a in args]
+            inputs = [array(_a, copy=False, subok=True, dtype=object) 
+                      for _a in args]            
 
             outputs = ufunc(*inputs)
 
