@@ -1454,6 +1454,9 @@ M   33  21.99
         test = np.genfromtxt(StringIO("test1,testNonetherestofthedata"),
                              dtype=None, comments=None, delimiter=',')
         assert_equal(test[1], asbytes('testNonetherestofthedata'))
+        test = np.genfromtxt(StringIO("test1, testNonetherestofthedata"),
+                             dtype=None, comments=None, delimiter=',')
+        assert_equal(test[1], asbytes(' testNonetherestofthedata'))
 
     def test_recfromtxt(self):
         #
