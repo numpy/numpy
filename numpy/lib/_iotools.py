@@ -203,13 +203,17 @@ class LineSplitter(object):
             self._handyman = _handyman
     #
     def _delimited_splitter(self, line):
-        line = line.split(self.comments)[0].strip(asbytes(" \r\n"))
+        if self.comments is not None:
+            line = line.split(self.comments)[0]
+        line = line.strip(asbytes(" \r\n"))
         if not line:
             return []
         return line.split(self.delimiter)
     #
     def _fixedwidth_splitter(self, line):
-        line = line.split(self.comments)[0].strip(asbytes("\r\n"))
+        if self.comments is not None:
+            line = line.split(self.comments)[0]
+        line = line.strip(asbytes("\r\n"))
         if not line:
             return []
         fixed = self.delimiter
@@ -217,7 +221,8 @@ class LineSplitter(object):
         return [line[s] for s in slices]
     #
     def _variablewidth_splitter(self, line):
-        line = line.split(self.comments)[0]
+        if self.comments is not None:
+            line = line.split(self.comments)[0]
         if not line:
             return []
         slices = self.delimiter
