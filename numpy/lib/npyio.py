@@ -1291,7 +1291,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     """
     # Py3 data conversions to bytes, for convenience
-    comments = asbytes(comments)
+    if comments is not None:
+        comments = asbytes(comments)
     if isinstance(delimiter, unicode):
         delimiter = asbytes(delimiter)
     if isinstance(missing, unicode):
