@@ -73,16 +73,16 @@ mergesort0_@suff@(@type@ *pl, @type@ *pr, @type@ *pw)
         for (pi = pw, pj = pl; pj < pm;) {
             *pi++ = *pj++;
         }
+        pi = pw + (pm - pl);
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
             if (@TYPE@_LT(*pm, *pj)) {
-                *pk = *pm++;
+                *pk++ = *pm++;
             }
             else {
-                *pk = *pj++;
+                *pk++ = *pj++;
             }
-            pk++;
         }
         while(pj < pi) {
             *pk++ = *pj++;
@@ -93,7 +93,7 @@ mergesort0_@suff@(@type@ *pl, @type@ *pr, @type@ *pw)
         for (pi = pl + 1; pi < pr; ++pi) {
             vp = *pi;
             pj = pi;
-            pk = pi -1;
+            pk = pi - 1;
             while (pj > pl && @TYPE@_LT(vp, *pk)) {
                 *pj-- = *pk--;
             }
@@ -110,10 +110,10 @@ mergesort_@suff@(@type@ *start, npy_intp num, void *NOT_USED)
 
     pl = start;
     pr = pl + num;
-    pw = (@type@ *) PyDataMem_NEW((num/2)*sizeof(@type@));
-    if (!pw) {
+    pw = (@type@ *) PyDataMem_NEW((num/2) * sizeof(@type@));
+    if (pw == NULL) {
         PyErr_NoMemory();
-        return -1;
+        return -NPY_ENOMEM;
     }
     mergesort0_@suff@(pl, pr, pw);
 
@@ -130,33 +130,36 @@ amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw)
 
     if (pr - pl > SMALL_MERGESORT) {
         /* merge sort */
-        pm = pl + ((pr - pl + 1)>>1);
-        amergesort0_@suff@(pl, pm-1, v, pw);
+        pm = pl + ((pr - pl) >> 1);
+        amergesort0_@suff@(pl, pm, v, pw);
         amergesort0_@suff@(pm, pr, v, pw);
-        for (pi = pw, pj = pl; pj < pm; ++pi, ++pj) {
-            *pi = *pj;
+        for (pi = pw, pj = pl; pj < pm;) {
+            *pi++ = *pj++;
         }
-        for (pk = pw, pm = pl; pk < pi && pj <= pr; ++pm) {
-            if (@TYPE@_LT(v[*pj], v[*pk])) {
-                *pm = *pj;
-                ++pj;
+        pi = pw + (pm - pl);
+        pj = pw;
+        pk = pl;
+        while (pj < pi && pm < pr) {
+            if (@TYPE@_LT(v[*pm], v[*pj])) {
+                *pk++ = *pm++;
             }
             else {
-                *pm = *pk;
-                ++pk;
+                *pk++ = *pj++;
             }
         }
-        for (; pk < pi; ++pm, ++pk) {
-            *pm = *pk;
+        while(pj < pi) {
+            *pk++ = *pj++;
         }
     }
     else {
         /* insertion sort */
-        for (pi = pl + 1; pi <= pr; ++pi) {
+        for (pi = pl + 1; pi < pr; ++pi) {
             vi = *pi;
             vp = v[vi];
-            for (pj = pi, pk = pi - 1; pj > pl && @TYPE@_LT(vp, v[*pk]); --pj, --pk) {
-                *pj = *pk;
+            pj = pi;
+            pk = pi - 1;
+            while (pj > pl && @TYPE@_LT(vp, v[*pk])) {
+                *pj-- = *pk--;
             }
             *pj = vi;
         }
@@ -169,16 +172,15 @@ amergesort_@suff@(@type@ *v, npy_intp *tosort, npy_intp num, void *NOT_USED)
 {
     npy_intp *pl, *pr, *pw;
 
-    pl = tosort; pr = pl + num - 1;
-    pw = PyDimMem_NEW((1+num/2));
-
-    if (!pw) {
+    pl = tosort;
+    pr = pl + num;
+    pw = (npy_intp *) PyDataMem_NEW((num/2) * sizeof(npy_intp));
+    if (pw == NULL) {
         PyErr_NoMemory();
-        return -1;
+        return -NPY_ENOMEM;
     }
-
     amergesort0_@suff@(pl, pr, v, pw);
-    PyDimMem_FREE(pw);
+    PyDataMem_FREE(pw);
 
     return 0;
 }
@@ -218,12 +220,13 @@ mergesort0_@suff@(@type@ *pl, @type@ *pr, @type@ *pw, @type@ *vp, size_t len)
             if (@TYPE@_LT(pm, pj, len)) {
                 @TYPE@_COPY(pk, pm, len);
                 pm += len;
+                pk += len;
             }
             else {
                 @TYPE@_COPY(pk, pj, len);
                 pj += len;
+                pk += len;
             }
-            pk += len;
         }
         @TYPE@_COPY(pk, pj, pi - pj);
     }
@@ -247,23 +250,23 @@ mergesort0_@suff@(@type@ *pl, @type@ *pr, @type@ *pw, @type@ *vp, size_t len)
 int
 mergesort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
 {
-    const size_t elsize = PyArray_ITEMSIZE(arr);
-    const size_t len = elsize / sizeof(@type@);
+    size_t elsize = PyArray_ITEMSIZE(arr);
+    size_t len = elsize / sizeof(@type@);
     @type@ *pl, *pr, *pw, *vp;
     int err = 0;
 
     pl = start;
     pr = pl + num*len;
-    pw = (@type@ *) PyDataMem_NEW((num/2)*elsize);
-    if (!pw) {
+    pw = (@type@ *) PyDataMem_NEW((num/2) * elsize);
+    if (pw == NULL) {
         PyErr_NoMemory();
-        err = -1;
+        err = -NPY_ENOMEM;
         goto fail_0;
     }
     vp = (@type@ *) PyDataMem_NEW(elsize);
-    if (!vp) {
+    if (vp == NULL) {
         PyErr_NoMemory();
-        err = -1;
+        err = -NPY_ENOMEM;
         goto fail_1;
     }
     mergesort0_@suff@(pl, pr, pw, vp, len);
@@ -277,7 +280,7 @@ fail_0:
 
 
 static void
-amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw, int len)
+amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw, size_t len)
 {
     @type@ *vp;
     npy_intp vi, *pi, *pj, *pk, *pm;
@@ -290,26 +293,28 @@ amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw, int len)
         for (pi = pw, pj = pl; pj < pm;) {
             *pi++ = *pj++;
         }
+        pi = pw + (pm - pl);
         pj = pw;
         pk = pl;
         while (pj < pi && pm < pr) {
             if (@TYPE@_LT(v + (*pm)*len, v + (*pj)*len, len)) {
-                *pk = *pm++;
-            } else {
-                *pk = *pj++;
+                *pk++ = *pm++;
             }
-            pk++;
+            else {
+                *pk++ = *pj++;
+            }
         }
         while (pj < pi) {
             *pk++ = *pj++;
         }
-    } else {
+    }
+    else {
         /* insertion sort */
         for (pi = pl + 1; pi < pr; ++pi) {
             vi = *pi;
             vp = v + vi*len;
             pj = pi;
-            pk = pi -1;
+            pk = pi - 1;
             while (pj > pl && @TYPE@_LT(vp, v + (*pk)*len, len)) {
                 *pj-- = *pk--;
             }
@@ -322,20 +327,20 @@ amergesort0_@suff@(npy_intp *pl, npy_intp *pr, @type@ *v, npy_intp *pw, int len)
 int
 amergesort_@suff@(@type@ *v, npy_intp *tosort, npy_intp num, PyArrayObject *arr)
 {
-    const size_t elsize = PyArray_ITEMSIZE(arr);
-    const size_t len = elsize / sizeof(@type@);
+    size_t elsize = PyArray_ITEMSIZE(arr);
+    size_t len = elsize / sizeof(@type@);
     npy_intp *pl, *pr, *pw;
 
     pl = tosort;
     pr = pl + num;
-    pw = PyDimMem_NEW(num/2);
-    if (!pw) {
+    pw = (npy_intp *) PyDataMem_NEW((num/2) * sizeof(npy_intp));
+    if (pw == NULL) {
         PyErr_NoMemory();
-        return -1;
+        return -NPY_ENOMEM;
     }
     amergesort0_@suff@(pl, pr, v, pw, len);
+    PyDataMem_FREE(pw);
 
-    PyDimMem_FREE(pw);
     return 0;
 }
 
@@ -367,12 +372,13 @@ npy_mergesort0(char *pl, char *pr, char *pw, char *vp, size_t size, npy_comparat
             if (GENERIC_LT(pm, pj, cmp)) {
                 GENERIC_COPY(pk, pm, size);
                 pm += size;
+                pk += size;
             }
             else {
                 GENERIC_COPY(pk, pj, size);
                 pj += size;
+                pk += size;
             }
-            pk += size;
         }
         GENERIC_COPY(pk, pj, pi - pj);
     }
@@ -407,7 +413,7 @@ npy_mergesort(void *base, size_t num, size_t size, npy_comparator cmp)
 
     pl = (char *)base;
     pr = pl + num*size;
-    pw = (char *) PyDataMem_NEW((num/2)*size);
+    pw = (char *) PyDataMem_NEW((num/2) * size);
     if (pw == NULL) {
         err = -NPY_ENOMEM;
         goto fail_0;
