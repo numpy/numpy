@@ -1,14 +1,8 @@
 #ifndef __NPY_SORT_COMMON_H__
 #define __NPY_SORT_COMMON_H__
 
-/*
-#include "Python.h"
-#include "numpy/npy_common.h"
-#include "numpy/npy_math.h"
-#include "npy_config.h"
-*/
+#include <stdlib.h>
 #include <numpy/ndarraytypes.h>
-
 
 /*
  *****************************************************************************
@@ -155,14 +149,17 @@ npy_half_lt_nonan(npy_half h1, npy_half h2)
     if (h1&0x8000u) {
         if (h2&0x8000u) {
             return (h1&0x7fffu) > (h2&0x7fffu);
-        } else {
+        }
+        else {
             /* Signed zeros are equal, have to check for it */
             return (h1 != 0x8000u) || (h2 != 0x0000u);
         }
-    } else {
+    }
+    else {
         if (h2&0x8000u) {
             return 0;
-        } else {
+        }
+        else {
             return (h1&0x7fffu) < (h2&0x7fffu);
         }
     }
@@ -176,7 +173,8 @@ HALF_LT(npy_half a, npy_half b)
 
     if (npy_half_isnan(b)) {
         ret = !npy_half_isnan(a);
-    } else {
+    }
+    else {
         ret = !npy_half_isnan(a) && npy_half_lt_nonan(a, b);
     }
 
@@ -254,14 +252,6 @@ CLONGDOUBLE_LT(npy_clongdouble a, npy_clongdouble b)
 }
 
 
-/* The PyObject functions are stubs for later use */
-NPY_INLINE static int
-PyObject_LT(PyObject *pa, PyObject *pb)
-{
-    return 0;
-}
-
-
 NPY_INLINE static void
 STRING_COPY(char *s1, char *s2, size_t len)
 {
@@ -331,6 +321,31 @@ UNICODE_LT(npy_ucs4 *s1, npy_ucs4 *s2, size_t len)
         }
     }
     return ret;
+}
+
+
+NPY_INLINE static void
+GENERIC_COPY(char *a, char *b, size_t len)
+{
+    memcpy(a, b, len);
+}
+
+
+NPY_INLINE static void
+GENERIC_SWAP(char *a, char *b, size_t len)
+{
+    while(len--) {
+        const char t = *a;
+        *a++ = *b;
+        *b++ = t;
+    }
+}
+
+
+NPY_INLINE static int
+GENERIC_LT(char *a, char *b, int (*cmp)(const void *, const void *))
+{
+    return cmp(a, b) < 0;
 }
 
 #endif

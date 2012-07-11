@@ -1,0 +1,341 @@
+/* -*- c -*- */
+
+/*
+ * The purpose of this module is to add faster sort functions
+ * that are type-specific.  This is done by altering the
+ * function table for the builtin descriptors.
+ *
+ * These sorting functions are copied almost directly from numarray
+ * with a few modifications (complex comparisons compare the imaginary
+ * part if the real parts are equal, for example), and the names
+ * are changed.
+ *
+ * The original sorting code is due to Charles R. Harris who wrote
+ * it for numarray.
+ */
+
+/*
+ * Quick sort is usually the fastest, but the worst case scenario can
+ * be slower than the merge and heap sorts.  The merge sort requires
+ * extra memory and so for large arrays may not be useful.
+ *
+ * The merge sort is *stable*, meaning that equal components
+ * are unmoved from their entry versions, so it can be used to
+ * implement lexigraphic sorting on multiple keys.
+ *
+ * The heap sort is included for completeness.
+ */
+
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include <stdlib.h>
+#include "npy_sort.h"
+#include "npysort_common.h"
+
+#define NOT_USED NPY_UNUSED(unused)
+#define PYA_QS_STACK 100
+#define SMALL_QUICKSORT 15
+#define SMALL_MERGESORT 20
+#define SMALL_STRING 16
+
+
+/*
+ *****************************************************************************
+ **                            NUMERIC SORTS                                **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ *
+ * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong, half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble#
+ * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
+ *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ *         npy_ushort, npy_float, npy_double, npy_longdouble, npy_cfloat,
+ *         npy_cdouble, npy_clongdouble#
+ */
+
+int
+heapsort_@suff@(@type@ *start, npy_intp n, void *NOT_USED)
+{
+    @type@ tmp, *a;
+    npy_intp i,j,l;
+
+    /* The array needs to be offset by one for heapsort indexing */
+    a = start - 1;
+
+    for (l = n>>1; l > 0; --l) {
+        tmp = a[l];
+        for (i = l, j = l<<1; j <= n;) {
+            if (j < n && @TYPE@_LT(a[j], a[j+1])) {
+                j += 1;
+            }
+            if (@TYPE@_LT(tmp, a[j])) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    for (; n > 1;) {
+        tmp = a[n];
+        a[n] = a[1];
+        n -= 1;
+        for (i = 1, j = 2; j <= n;) {
+            if (j < n && @TYPE@_LT(a[j], a[j+1])) {
+                j++;
+            }
+            if (@TYPE@_LT(tmp, a[j])) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    return 0;
+}
+
+
+int
+aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, void *NOT_USED)
+{
+    npy_intp *a, i,j,l, tmp;
+    /* The arrays need to be offset by one for heapsort indexing */
+    a = tosort - 1;
+
+    for (l = n>>1; l > 0; --l) {
+        tmp = a[l];
+        for (i = l, j = l<<1; j <= n;) {
+            if (j < n && @TYPE@_LT(v[a[j]], v[a[j+1]])) {
+                j += 1;
+            }
+            if (@TYPE@_LT(v[tmp], v[a[j]])) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    for (; n > 1;) {
+        tmp = a[n];
+        a[n] = a[1];
+        n -= 1;
+        for (i = 1, j = 2; j <= n;) {
+            if (j < n && @TYPE@_LT(v[a[j]], v[a[j+1]])) {
+                j++;
+            }
+            if (@TYPE@_LT(v[tmp], v[a[j]])) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    return 0;
+}
+
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                             STRING SORTS                                **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ *
+ * #TYPE = STRING, UNICODE#
+ * #suff = string, unicode#
+ * #type = npy_char, npy_ucs4#
+ */
+
+int
+heapsort_@suff@(@type@ *start, npy_intp n, PyArrayObject *arr)
+{
+    size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
+    @type@ *tmp = malloc(PyArray_ITEMSIZE(arr));
+    @type@ *a = start - len;
+    npy_intp i, j, l;
+
+    for (l = n>>1; l > 0; --l) {
+        @TYPE@_COPY(tmp, a + l*len, len);
+        for (i = l, j = l<<1; j <= n;) {
+            if (j < n && @TYPE@_LT(a + j*len, a + (j+1)*len, len))
+                j += 1;
+            if (@TYPE@_LT(tmp, a + j*len, len)) {
+                @TYPE@_COPY(a + i*len, a + j*len, len);
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        @TYPE@_COPY(a + i*len, tmp, len);
+    }
+
+    for (; n > 1;) {
+        @TYPE@_COPY(tmp, a + n*len, len);
+        @TYPE@_COPY(a + n*len, a + len, len);
+        n -= 1;
+        for (i = 1, j = 2; j <= n;) {
+            if (j < n && @TYPE@_LT(a + j*len, a + (j+1)*len, len))
+                j++;
+            if (@TYPE@_LT(tmp, a + j*len, len)) {
+                @TYPE@_COPY(a + i*len, a + j*len, len);
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        @TYPE@_COPY(a + i*len, tmp, len);
+    }
+
+    free(tmp);
+    return 0;
+}
+
+
+int
+aheapsort_@suff@(@type@ *v, npy_intp *tosort, npy_intp n, PyArrayObject *arr)
+{
+    size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
+    npy_intp *a, i,j,l, tmp;
+
+    /* The array needs to be offset by one for heapsort indexing */
+    a = tosort - 1;
+
+    for (l = n>>1; l > 0; --l) {
+        tmp = a[l];
+        for (i = l, j = l<<1; j <= n;) {
+            if (j < n && @TYPE@_LT(v + a[j]*len, v + a[j+1]*len, len))
+                j += 1;
+            if (@TYPE@_LT(v + tmp*len, v + a[j]*len, len)) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    for (; n > 1;) {
+        tmp = a[n];
+        a[n] = a[1];
+        n -= 1;
+        for (i = 1, j = 2; j <= n;) {
+            if (j < n && @TYPE@_LT(v + a[j]*len, v + a[j+1]*len, len))
+                j++;
+            if (@TYPE@_LT(v + tmp*len, v + a[j]*len, len)) {
+                a[i] = a[j];
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        a[i] = tmp;
+    }
+
+    return 0;
+}
+
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                             GENERIC SORT                                **
+ *****************************************************************************
+ */
+
+
+/*
+ * This sort has almost the same signature as libc qsort and is intended to
+ * provide a heapsort for array types that don't have type specific sorts.
+ * The difference in the signature is an error return, as it might be the
+ * case that a memory allocation fails.
+ */
+int
+npy_heapsort(void *base, size_t num, size_t size, npy_comparator cmp)
+{
+    char *tmp = (char *) malloc(size);
+    char *a = (char *) base - size;
+    size_t i, j, l;
+
+    if (tmp == NULL) {
+        return -NPY_ENOMEM;
+    }
+
+    for (l = num >> 1; l > 0; --l) {
+        GENERIC_COPY(tmp, a + l*size, size);
+        for (i = l, j = l << 1; j <= num;) {
+            if (j < num && GENERIC_LT(a + j*size, a + (j+1)*size, cmp))
+                j += 1;
+            if (GENERIC_LT(tmp, a + j*size, cmp)) {
+                GENERIC_COPY(a + i*size, a + j*size, size);
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        GENERIC_COPY(a + i*size, tmp, size);
+    }
+
+    for (; num > 1;) {
+        GENERIC_COPY(tmp, a + num*size, size);
+        GENERIC_COPY(a + num*size, a + size, size);
+        num -= 1;
+        for (i = 1, j = 2; j <= num;) {
+            if (j < num && GENERIC_LT(a + j*size, a + (j+1)*size, cmp))
+                j++;
+            if (GENERIC_LT(tmp, a + j*size, cmp)) {
+                GENERIC_COPY(a + i*size, a + j*size, size);
+                i = j;
+                j += j;
+            }
+            else {
+                break;
+            }
+        }
+        GENERIC_COPY(a + i*size, tmp, size);
+    }
+
+    free(tmp);
+    return 0;
+}
