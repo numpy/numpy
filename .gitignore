@@ -13,6 +13,8 @@
 .*.sw[nop]
 .sw[nop]
 *.tmp
+*.vim
+tags
 
 # Compiled source #
 ###################
@@ -115,3 +117,4 @@ numpy/core/src/umath/funcs.inc
 numpy/core/src/umath/loops.c
 numpy/core/src/umath/umath_tests.c
 numpy/distutils/__config__.py
+doc/source/reference/generated
