@@ -8,67 +8,61 @@ from numpy.lib.arraysetops import *
 
 import warnings
 
-class TestAso(TestCase):
+class TestSetOps(TestCase):
 
 
     def test_unique( self ):
 
-        def check_values(a, b, msg):
+        def check_all(a, b, i1, i2, dt):
+            msg = "check values failed for type '%s'" % dt
             v = unique(a)
             assert_array_equal(v, b, msg)
 
-        def check_indexes(a, b, i1, i2, msg):
+            msg = "check indexes failed for type '%s'" % dt
+            v, j = unique(a, 1, 0)
+            assert_array_equal(v, b, msg)
+            assert_array_equal(j, i1, msg)
+
+            msg = "check reverse indexes failed for type '%s'" % dt
+            v, j = unique(a, 0, 1)
+            assert_array_equal(v, b, msg)
+            assert_array_equal(j, i2, msg)
+
+            msg = "check with all indexes failed for type '%s'" % dt
             v, j1, j2 = unique(a, 1, 1)
             assert_array_equal(v, b, msg)
             assert_array_equal(j1, i1, msg)
             assert_array_equal(j2, i2, msg)
 
-        fmt = "Failed for type '%s'"
-        a = [5, 7, 1, 2, 1, 5, 7]
+        a = [5, 7, 1, 2, 1, 5, 7]*10
         b = [1, 2, 5, 7]
         i1 = [2, 3, 0, 1]
-        i2 = [2, 3, 0, 1, 0, 2, 3]
-
-
-        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        i2 = [2, 3, 0, 1, 0, 2, 3]*10
 
         # test for numeric arrays
+        types = []
+        types.extend(np.typecodes['AllInteger'])
+        types.extend(np.typecodes['AllFloat'])
+        types.append('datetime64[D]')
+        types.append('timedelta64[D]')
         for dt in types:
-            msg = fmt % dt
             aa = np.array(a, dt)
             bb = np.array(b, dt)
-            check_values(aa, bb, msg)
-            check_indexes(aa, bb, i1, i2, msg)
+            check_all(aa, bb, i1, i2, dt)
 
-        # test for  object arrays
-        msg = fmt % 'O'
-        aa = np.empty(len(a), 'O')
+        # test for object arrays
+        dt = 'O'
+        aa = np.empty(len(a), dt)
         aa[:] = a
-        bb = np.empty(len(b), 'O')
+        bb = np.empty(len(b), dt)
         bb[:] = b
-        check_values(aa, bb, msg)
-        check_indexes(aa, bb, i1, i2, msg)
+        check_all(aa, bb, i1, i2, dt)
 
         # test for structured arrays
-        msg = fmt % 'V'
-        aa = np.array(zip(a,a), [('', 'i'), ('', 'i')])
-        bb = np.array(zip(b,b), [('', 'i'), ('', 'i')])
-        check_values(aa, bb, msg)
-        check_indexes(aa, bb, i1, i2, msg)
-
-        # test for datetime64 arrays
-        msg = fmt % 'M'
-        aa = np.array(a, 'datetime64[D]')
-        bb = np.array(b, 'datetime64[D]')
-        check_values(aa, bb, msg)
-        check_indexes(aa, bb, i1, i2, msg)
-
-        # test for timedelta64 arrays
-        msg = fmt % 'm'
-        aa = np.array(a, 'timedelta64[D]')
-        bb = np.array(b, 'timedelta64[D]')
-        check_values(aa, bb, msg)
-        check_indexes(aa, bb, i1, i2, msg)
+        dt = [('', 'i'), ('', 'i')]
+        aa = np.array(zip(a,a), dt)
+        bb = np.array(zip(b,b), dt)
+        check_all(aa, bb, i1, i2, dt)
 
 
     def test_intersect1d( self ):
