@@ -10,7 +10,8 @@ from numpy.testing.utils import WarningManager
 from numpy.compat import asbytes, getexception, strchar
 from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
-        test_neighborhood_iterator, test_neighborhood_iterator_oob
+        test_neighborhood_iterator, test_neighborhood_iterator_oob,
+        test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
         )
 from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises,
@@ -2648,6 +2649,16 @@ def test_flat_element_deletion():
         pass
     except:
         raise AssertionError
+
+class TestMemEventHook(TestCase):
+    def test_mem_seteventhook(self):
+        # The actual tests are within the C code in
+        # multiarray/multiarray_tests.c.src
+        test_pydatamem_seteventhook_start()
+        # force an allocation and free of a numpy array
+        a = np.zeros(10)
+        del a
+        test_pydatamem_seteventhook_end()
 
 
 if __name__ == "__main__":

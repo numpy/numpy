@@ -327,10 +327,7 @@ struct NpyAuxData_tag {
    * allocated.
    */
 
-  /* Data buffer */
-#define PyDataMem_NEW(size) ((char *)malloc(size))
-#define PyDataMem_FREE(ptr)  free(ptr)
-#define PyDataMem_RENEW(ptr,size) ((char *)realloc(ptr,size))
+  /* Data buffer - PyDataMem_NEW/FREE/RENEW are in multiarraymodule.c */
 
 #define NPY_USE_PYMEM 1
 
@@ -1713,6 +1710,13 @@ typedef struct {
                            * does not have ARR_HAS_DESCR flag set)
                            */
 } PyArrayInterface;
+
+/*
+ * This is a function for hooking into the PyDataMem_NEW/FREE/RENEW functions.
+ * See the documentation for PyDataMem_SetEventHook.
+ */
+typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
+                                       void *user_data);
 
 #if !(defined(NPY_NO_DEPRECATED_API) && (NPY_API_VERSION <= NPY_NO_DEPRECATED_API))
 #include "npy_deprecated_api.h"
