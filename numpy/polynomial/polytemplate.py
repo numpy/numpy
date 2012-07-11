@@ -12,25 +12,8 @@ respective `Polynomial`, `Chebyshev`, `Hermite`, `HermiteE`,
 
 """
 import string
-import sys
-
-# After you change the template, run:
-#
-#   python polytemplate.py
-#
-# to rebuild all of the files which are dependent on the template.
-# You can also specify specific files via the command-line, as:
-#
-#   python polytemplate.py laguerre.py
-#
-
 
 polytemplate = string.Template('''
-if 1/2 == 0:
-   raise ImportError("missing required 'from __future__ import division'")
-import numpy as np
-from numpy.polynomial import polyutils as pu
-
 class $name(pu.PolyBase) :
     """A $name series class.
 
@@ -925,44 +908,3 @@ class $name(pu.PolyBase) :
         return series.convert(domain, $name, window)
 
 ''')
-if __name__ == "__main__":
-    import sys
-    import re
-    
-    replace_pattern = re.compile(r"""
-(?P<start>^\#REPLACE\sPOLYTEMPLATE\s(?P<argstr>[^\n]*)\n)  # block-start marker
-(?P<whatever>.*\n)*                # ignore any lines in the middle
-(?P<end>^\#END\sREPLACE\s*\n)      # block-end marker
-""", re.MULTILINE | re.VERBOSE)
-
-    filenames = sys.argv[1:]
-    if not filenames:
-        # Default filenames, if not given on the command-line
-        filenames = ["chebyshev.py", "hermite.py", "hermite_e.py", "laguerre.py",
-                     "legendre.py", "polynomial.py"]
-    
-    for filename in filenames:
-        print("Processing %s" % (filename,))
-        program = open(filename).read()
-
-        # Find the markers
-        match = replace_pattern.search(program)
-        if match is None:
-            raise AssertionError(
-                "Could not find 'REPLACE POLYTEMPLATE / END REPLACE' in %r" % (filename,))
-
-        # Get the arguments to pass to the string template
-        argstr = match.group("argstr")
-        try:
-            kwargs = eval("dict(%s)" % (argstr,))
-        except Exception:
-            raise AssertionError(
-                "Could not parse template parameters %r in %r" % (argstr, filename))
-        for arg in ("name", "nick", "domain"):
-            if arg not in kwargs:
-                raise AssertionError("Missing parameter %r in %r" % (arg, filename))
-
-        # Apply the template, insert the new code, and save.
-        result = polytemplate.substitute(**kwargs)
-        new_program = program[:match.end("start")] + result + program[match.start("end"):]
-        open(filename, "w").write(new_program)
