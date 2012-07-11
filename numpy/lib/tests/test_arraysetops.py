@@ -9,30 +9,67 @@ from numpy.lib.arraysetops import *
 import warnings
 
 class TestAso(TestCase):
+
+
     def test_unique( self ):
-        a = np.array( [5, 7, 1, 2, 1, 5, 7] )
 
-        ec = np.array( [1, 2, 5, 7] )
-        c = unique( a )
-        assert_array_equal( c, ec )
+        def check_values(a, b, msg):
+            v = unique(a)
+            assert_array_equal(v, b, msg)
 
-        vals, indices = unique( a, return_index=True )
+        def check_indexes(a, b, i1, i2, msg):
+            v, j1, j2 = unique(a, 1, 1)
+            assert_array_equal(v, b, msg)
+            assert_array_equal(j1, i1, msg)
+            assert_array_equal(j2, i2, msg)
+
+        fmt = "Failed for type '%s'"
+        a = [5, 7, 1, 2, 1, 5, 7]
+        b = [1, 2, 5, 7]
+        i1 = [2, 3, 0, 1]
+        i2 = [2, 3, 0, 1, 0, 2, 3]
 
 
-        ed = np.array( [2, 3, 0, 1] )
-        assert_array_equal(vals, ec)
-        assert_array_equal(indices, ed)
+        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
 
-        vals, ind0, ind1 = unique( a, return_index=True,
-                                     return_inverse=True )
+        # test for numeric arrays
+        for dt in types:
+            msg = fmt % dt
+            aa = np.array(a, dt)
+            bb = np.array(b, dt)
+            check_values(aa, bb, msg)
+            check_indexes(aa, bb, i1, i2, msg)
 
+        # test for  object arrays
+        msg = fmt % 'O'
+        aa = np.empty(len(a), 'O')
+        aa[:] = a
+        bb = np.empty(len(b), 'O')
+        bb[:] = b
+        check_values(aa, bb, msg)
+        check_indexes(aa, bb, i1, i2, msg)
 
-        ee = np.array( [2, 3, 0, 1, 0, 2, 3] )
-        assert_array_equal(vals, ec)
-        assert_array_equal(ind0, ed)
-        assert_array_equal(ind1, ee)
+        # test for structured arrays
+        msg = fmt % 'V'
+        aa = np.array(zip(a,a), [('', 'i'), ('', 'i')])
+        bb = np.array(zip(b,b), [('', 'i'), ('', 'i')])
+        check_values(aa, bb, msg)
+        check_indexes(aa, bb, i1, i2, msg)
 
-        assert_array_equal([], unique([]))
+        # test for datetime64 arrays
+        msg = fmt % 'M'
+        aa = np.array(a, 'datetime64[D]')
+        bb = np.array(b, 'datetime64[D]')
+        check_values(aa, bb, msg)
+        check_indexes(aa, bb, i1, i2, msg)
+
+        # test for timedelta64 arrays
+        msg = fmt % 'm'
+        aa = np.array(a, 'timedelta64[D]')
+        bb = np.array(b, 'timedelta64[D]')
+        check_values(aa, bb, msg)
+        check_indexes(aa, bb, i1, i2, msg)
+
 
     def test_intersect1d( self ):
         # unique inputs
