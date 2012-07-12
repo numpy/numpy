@@ -210,7 +210,7 @@ def knownfailureif(fail_condition, msg=None):
         from noseclasses import KnownFailureTest
         def knownfailer(*args, **kwargs):
             if fail_val():
-                raise KnownFailureTest, msg
+                raise KnownFailureTest(msg)
             else:
                 return f(*args, **kwargs)
         return nose.tools.make_decorator(f)(knownfailer)
