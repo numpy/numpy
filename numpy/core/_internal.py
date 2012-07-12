@@ -286,7 +286,6 @@ def _newnames(datatype, order):
 # construct a new array with just those fields copied over
 def _index_fields(ary, fields):
     from multiarray import empty, dtype
-    from numpy import copy
     dt = ary.dtype
 
     names = [name for name in fields if name in dt.names]
@@ -296,7 +295,7 @@ def _index_fields(ary, fields):
     view_dtype = {'names':names, 'formats':formats, 'offsets':offsets, 'itemsize':dt.itemsize}
     view = ary.view(dtype=view_dtype)
 
-    return copy(view)
+    return view.copy()
 
 # Given a string containing a PEP 3118 format specifier,
 # construct a Numpy dtype
