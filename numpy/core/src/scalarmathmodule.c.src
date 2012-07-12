@@ -494,16 +494,25 @@ half_ctype_remainder(npy_half a, npy_half b, npy_half *out) {
 /**end repeat**/
 
 /**begin repeat
- * #name = half, float, double, longdouble#
- * #type = npy_half, npy_float, npy_double, npy_longdouble#
+ * #name = float, double, longdouble#
+ * #type = npy_float, npy_double, npy_longdouble#
  */
 static npy_@name@ (*_basic_@name@_pow)(@type@ a, @type@ b);
 
+//called when ** is used (not performing properly)
 static void
 @name@_ctype_power(@type@ a, @type@ b, @type@ *out) {
-    *out = _basic_@name@_pow(a, b);
+  *out = _basic_@name@_pow(a, b);
 }
 /**end repeat**/
+static void
+half_ctype_power(npy_half a,npy_half b, npy_half *out)
+{
+  const npy_float af = npy_half_to_float(a);
+  const npy_float bf = npy_half_to_float(b);
+  const npy_float of = _basic_float_pow(af,bf);
+  *out = npy_float_to_half(of);
+}
 
 /**begin repeat
  * #name = byte, ubyte, short, ushort, int, uint,
@@ -970,7 +979,7 @@ static PyObject *
     int retstatus;
     int first;
     @type@ out = {@zero@, @zero@};
-
+    
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
@@ -1130,7 +1139,6 @@ static PyObject *
     int first;
 
     @type@ out = @zero@;
-
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
@@ -1724,7 +1732,6 @@ get_functions(void)
         i += 3;
         j++;
     }
-    _basic_half_pow = funcdata[j - 1];
     _basic_float_pow = funcdata[j];
     _basic_double_pow = funcdata[j + 1];
     _basic_longdouble_pow = funcdata[j + 2];
