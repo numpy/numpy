@@ -1237,9 +1237,6 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     -----
     * When spaces are used as delimiters, or when no delimiter has been given
       as input, there should not be any missing data between two fields.
-    * When the variables are named (either by a flexible dtype or with `names`,
-      there must not be any header in the file (else a ValueError
-      exception is raised).
     * Individual values are not stripped of spaces by default.
       When using a custom converter, make sure the function does remove spaces.
 
@@ -1347,7 +1344,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             first_line = fhd.next()
             if names is True:
                 if comments in first_line:
-                    first_line = asbytes('').join(first_line.split(comments)[1:])
+                    first_line = first_line.split(comments)[0]
             first_values = split_line(first_line)
     except StopIteration:
         # return an empty array if the datafile is empty
