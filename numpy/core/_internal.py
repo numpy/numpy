@@ -298,6 +298,13 @@ def _index_fields(ary, fields):
     for name in fields:
         newarray[name] = ary[name]
 
+    names = [name for name in fields if name in dt.names]
+    formats = dt.fields[name][0] for name in fields if name in dt.names]
+    offsets = [dt.fields[name][1] for name in fields if name in dt.names]
+
+    view_dtype = {'names':names, 'formats':formats, 'offsets':offsets}
+    view = ary.view(dtype=view_dtype)
+
     return newarray
 
 # Given a string containing a PEP 3118 format specifier,

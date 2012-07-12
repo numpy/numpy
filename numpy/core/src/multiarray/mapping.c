@@ -975,6 +975,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
             }
             obj = PyObject_CallMethod(_numpy_internal,
                     "_index_fields", "OO", self, op);
+            PyArray_ENABLEFLAGS((PyArrayObject*)obj, NPY_ARRAY_WARN_ON_WRITE);
             Py_DECREF(_numpy_internal);
             return obj;
         }
