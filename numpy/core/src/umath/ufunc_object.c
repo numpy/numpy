@@ -1195,8 +1195,8 @@ iterator_loop(PyUFuncObject *ufunc,
          * then clear default READONLY flag
          */ 
         op_flags[i] |= ufunc->op_flags[i];
-        if (op_flags[i] & NPY_ITER_READWRITE) {
-            op_flags[i] ^= NPY_ITER_READONLY;
+        if (op_flags[i] & (NPY_ITER_READWRITE | NPY_ITER_WRITEONLY)) {
+            op_flags[i] &= ~NPY_ITER_READONLY;
         }
     }
     for (i = nin; i < nop; ++i) {
@@ -1207,8 +1207,8 @@ iterator_loop(PyUFuncObject *ufunc,
                       NPY_ITER_NO_SUBTYPE;
 
         if (ufunc->op_flags[i] > 0) {
-            PyErr_SetString(PyExc_ValueError, "manually setting operand flags " \
-                "for output operand is not supported at this time");
+            PyErr_SetString(PyExc_ValueError, "manually setting ufunc operand " \
+                "flags for output operand is not supported at this time");
             return -1;
         }
     }
@@ -1507,8 +1507,8 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
          * then clear default READONLY flag
          */       
         op_flags[i] |= ufunc->op_flags[i];
-        if (op_flags[i] & NPY_ITER_READWRITE) {
-            op_flags[i] ^= NPY_ITER_READONLY;
+        if (op_flags[i] & (NPY_ITER_READWRITE | NPY_ITER_WRITEONLY)) {
+            op_flags[i] &= ~NPY_ITER_READONLY;
         }
     }
     for (i = nin; i < nop; ++i) {
@@ -1520,8 +1520,8 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                       NPY_ITER_NO_SUBTYPE;
         
         if (ufunc->op_flags[i] > 0) {
-            PyErr_SetString(PyExc_ValueError, "manually setting operand flags " \
-                "for output operand is not supported at this time");
+            PyErr_SetString(PyExc_ValueError, "manually setting ufunc operand " \
+                "flags for output operand is not supported at this time");
             return -1;
         }
     }
@@ -2012,8 +2012,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
          * then clear default READONLY flag
          */ 
         op_flags[i] |= ufunc->op_flags[i];
-        if (op_flags[i] & NPY_ITER_READWRITE) {
-            op_flags[i] ^= NPY_ITER_READONLY;
+        if (op_flags[i] & (NPY_ITER_READWRITE | NPY_ITER_WRITEONLY)) {
+            op_flags[i] &= ~NPY_ITER_READONLY;
         }
     }
     for (i = nin; i < nop; ++i) {
@@ -2024,8 +2024,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                       NPY_ITER_NO_BROADCAST;
 
         if (ufunc->op_flags[i] > 0) {
-            PyErr_SetString(PyExc_ValueError, "manually setting operand flags " \
-                "for output operand is not supported at this time");
+            PyErr_SetString(PyExc_ValueError, "manually setting ufunc operand " \
+                "flags for output operand is not supported at this time");
             return -1;
         }
     }
@@ -4311,7 +4311,9 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     }
     ufunc->doc = doc;
 
-    ufunc->op_flags = calloc(ufunc->nargs, sizeof(npy_uint32));
+    ufunc->op_flags = PyArray_malloc(sizeof(npy_uint32)*ufunc->nargs);
+    memset(ufunc->op_flags, 0, sizeof(npy_uint32)*ufunc->nargs);
+
     ufunc->iter_flags = 0;
 
     /* generalized ufunc */
@@ -4562,6 +4564,9 @@ ufunc_dealloc(PyUFuncObject *ufunc)
     }
     if (ufunc->ptr) {
         PyArray_free(ufunc->ptr);
+    }
+    if (ufunc->op_flags) {
+        PyArray_free(ufunc->op_flags);
     }
     Py_XDECREF(ufunc->userloops);
     Py_XDECREF(ufunc->obj);
