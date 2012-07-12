@@ -1481,4 +1481,8 @@ def polyroots(c):
 #
 # polynomial class
 #
+# Code below this point is generated at build time from the template
+# in polytemplate.py and combined with _polynomial.py (see setup.py in
+# this directory).
+#
 

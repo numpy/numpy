@@ -1731,4 +1731,8 @@ def lagweight(x):
 #
 # Laguerre series class
 #
+# Code below this point is generated at build time from the template
+# in polytemplate.py and combined with _laguerre.py (see setup.py in
+# this directory).
+#
 

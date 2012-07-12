@@ -2004,4 +2004,8 @@ def chebpts2(npts):
 #
 # Chebyshev series class
 #
+# Code below this point is generated at build time from the template
+# in polytemplate.py and combined with _chebyshev.py (see setup.py in
+# this directory).
+#
 

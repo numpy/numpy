@@ -1735,4 +1735,8 @@ def hermeweight(x):
 #
 # HermiteE series class
 #
+# Code below this point is generated at build time from the template
+# in polytemplate.py and combined with _hermite_e.py (see setup.py in
+# this directory).
+#
 
