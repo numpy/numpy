@@ -3,19 +3,17 @@ import os
 from polytemplate import polytemplate
 
 def generate_from_template(base_file, name, nick, domain):
-    """Generate polynomial class from a template."""
+    """Generate polynomial class from the template."""
     base_path = os.path.join('numpy', 'polynomial')
 
     fp = open(os.path.join(base_path, base_file))
-    lines = fp.readlines()
+    lines = fp.read()
     fp.close()
 
-    lines.append(polytemplate.substitute(name=name,
-                                         nick=nick, domain=domain))
-
     fp = open(os.path.join(base_path, base_file[1:]), 'w')
-    for line in lines:
-        fp.write(line)
+    fp.write(lines)
+    fp.write(polytemplate.substitute(name=name,
+                                     nick=nick, domain=domain))
     fp.close()
 
 def configuration(parent_package='',top_path=None):
