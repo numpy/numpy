@@ -3000,41 +3000,21 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
 
     if (num < 0) {
         int fail = 0;
-
-#if defined(_MSC_VER) && defined(_WIN64) && (_MSC_VER > 1400)
-        /* Workaround Win64 fwrite() bug. Ticket #1660 */
-        start = (npy_intp )_ftelli64(fp);
+        start = (npy_intp) npy_ftell(fp);
         if (start < 0) {
             fail = 1;
         }
-        if (_fseeki64(fp, 0, SEEK_END) < 0) {
+        if (npy_fseek(fp, 0, SEEK_END) < 0) {
             fail = 1;
         }
-        numbytes = (npy_intp) _ftelli64(fp);
+        numbytes = (npy_intp) npy_ftell(fp);
         if (numbytes < 0) {
             fail = 1;
         }
         numbytes -= start;
-        if (_fseeki64(fp, start, SEEK_SET) < 0) {
+        if (npy_fseek(fp, start, SEEK_SET) < 0) {
             fail = 1;
         }
-#else
-        start = (npy_intp)ftell(fp);
-        if (start < 0) {
-            fail = 1;
-        }
-        if (fseek(fp, 0, SEEK_END) < 0) {
-            fail = 1;
-        }
-        numbytes = (npy_intp) ftell(fp);
-        if (numbytes < 0) {
-            fail = 1;
-        }
-        numbytes -= start;
-        if (fseek(fp, start, SEEK_SET) < 0) {
-            fail = 1;
-        }
-#endif
         if (fail) {
             PyErr_SetString(PyExc_IOError,
                             "could not seek in file");

@@ -204,7 +204,7 @@ npy_PyFile_Dup(PyObject *file, char *mode)
         fclose(handle);
         return NULL;
     }
-    fseek(handle, pos, SEEK_SET);
+    npy_fseek(handle, pos, SEEK_SET);
     return handle;
 }
 
@@ -215,11 +215,11 @@ static NPY_INLINE int
 npy_PyFile_DupClose(PyObject *file, FILE* handle)
 {
     PyObject *ret;
-    long position;
-    position = ftell(handle);
+    Py_ssize_t position;
+    position = npy_ftell(handle);
     fclose(handle);
 
-    ret = PyObject_CallMethod(file, "seek", "li", position, 0);
+    ret = PyObject_CallMethod(file, "seek", NPY_SSIZE_T_PYFMT "i", position, 0);
     if (ret == NULL) {
         return -1;
     }
