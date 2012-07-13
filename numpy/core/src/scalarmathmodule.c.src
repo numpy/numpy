@@ -499,19 +499,19 @@ half_ctype_remainder(npy_half a, npy_half b, npy_half *out) {
  */
 static npy_@name@ (*_basic_@name@_pow)(@type@ a, @type@ b);
 
-//called when ** is used (not performing properly)
 static void
-@name@_ctype_power(@type@ a, @type@ b, @type@ *out) {
-  *out = _basic_@name@_pow(a, b);
+@name@_ctype_power(@type@ a, @type@ b, @type@ *out) 
+{
+    *out = _basic_@name@_pow(a, b);
 }
 /**end repeat**/
 static void
-half_ctype_power(npy_half a,npy_half b, npy_half *out)
+half_ctype_power(npy_half a, npy_half b, npy_half *out)
 {
-  const npy_float af = npy_half_to_float(a);
-  const npy_float bf = npy_half_to_float(b);
-  const npy_float of = _basic_float_pow(af,bf);
-  *out = npy_float_to_half(of);
+    const npy_float af = npy_half_to_float(a);
+    const npy_float bf = npy_half_to_float(b);
+    const npy_float outf = _basic_float_pow(af,bf);
+    *out = npy_float_to_half(outf);
 }
 
 /**begin repeat
