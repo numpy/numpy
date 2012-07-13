@@ -16,6 +16,15 @@
         #define NPY_INLINE
 #endif
 
+/* Enable 64 bit file position support on win-amd64. Ticket #1660 */
+#if defined(_MSC_VER) && defined(_WIN64) && (_MSC_VER > 1400)
+    #define npy_fseek _fseeki64
+    #define npy_ftell _ftelli64
+#else
+    #define npy_fseek fseek
+    #define npy_ftell ftell
+#endif
+
 /* enums for detected endianness */
 enum {
         NPY_CPU_UNKNOWN_ENDIAN,
