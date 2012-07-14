@@ -19,7 +19,7 @@
 #define NO_IMPORT_ARRAY
 #endif
 
-#include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 
 #include "numpy/ufuncobject.h"
 #include "ufunc_type_resolution.h"
