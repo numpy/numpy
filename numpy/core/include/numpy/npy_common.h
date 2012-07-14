@@ -57,9 +57,7 @@ typedef Py_uintptr_t npy_uintp;
     #define PY_SSIZE_T_MIN INT_MIN
   #endif
 #define NPY_SSIZE_T_PYFMT "i"
-#undef PyIndex_Check
 #define constchar const char
-#define PyIndex_Check(op) 0
 #else
 #define NPY_SSIZE_T_PYFMT "n"
 #define constchar char

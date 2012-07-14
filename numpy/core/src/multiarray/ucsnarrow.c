@@ -12,7 +12,7 @@
 
 #include "npy_config.h"
 
-#include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 
 /*
  * Functions only needed on narrow builds of Python for converting back and
