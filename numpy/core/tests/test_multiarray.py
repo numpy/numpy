@@ -2377,6 +2377,29 @@ class TestWarnings(object):
         finally:
             warn_ctx.__exit__()
 
+class TestMinScalarType(object):
+    def test_usigned_shortshort(self):
+        dt = np.min_scalar_type(2**8-1)
+        wanted = np.dtype('uint8')
+        assert_equal(wanted, dt)
+    def test_usigned_short(self):
+        dt = np.min_scalar_type(2**16-1)
+        wanted = np.dtype('uint16')
+        assert_equal(wanted, dt)    
+    def test_usigned_int(self):
+        dt = np.min_scalar_type(2**32-1)
+        wanted = np.dtype('uint32')
+        assert_equal(wanted, dt)    
+    def test_usigned_longlong(self):
+        dt = np.min_scalar_type(2**63-1)
+        wanted = np.dtype('uint64')
+        assert_equal(wanted, dt)    
+    def test_object(self):
+        dt = np.min_scalar_type(2**64)
+        wanted = np.dtype('O')
+        assert_equal(wanted, dt)
+        
+
 if sys.version_info >= (2, 6):
 
     if sys.version_info[:2] == (2, 6):
