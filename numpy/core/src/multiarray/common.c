@@ -37,13 +37,15 @@ _array_find_python_scalar_type(PyObject *op)
         if ((PyLong_AsLongLong(op) == -1) && PyErr_Occurred()) {
             PyErr_Clear();
 	    if((PyLong_AsUnsignedLongLong(op) == -1) && PyErr_Occurred()){
-	      PyErr_Clear();
-	    } else {
-	      return PyArray_DescrFromType(NPY_ULONGLONG);
+	        PyErr_Clear();
+	    } 
+	    else {
+	        return PyArray_DescrFromType(NPY_ULONGLONG);
 	    }
             return PyArray_DescrFromType(NPY_OBJECT);
-        } else {
-	  return PyArray_DescrFromType(NPY_LONGLONG);
+        } 	
+        else {
+	    return PyArray_DescrFromType(NPY_LONGLONG);
 	}
     }
     return NULL;
