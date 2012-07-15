@@ -36,8 +36,9 @@ _array_find_python_scalar_type(PyObject *op)
         /* if integer can fit into a longlong then return that*/
         if ((PyLong_AsLongLong(op) == -1) && PyErr_Occurred()) {
             PyErr_Clear();
-        if((PyLong_AsUnsignedLongLong(op) == -1) && PyErr_Occurred()){
-            PyErr_Clear();
+            if ((PyLong_AsUnsignedLongLong(op) == (unsigned long long) -1) 
+                    && PyErr_Occurred()){
+                PyErr_Clear();
         } 
         else {
             return PyArray_DescrFromType(NPY_ULONGLONG);
