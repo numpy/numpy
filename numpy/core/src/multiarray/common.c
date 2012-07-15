@@ -45,7 +45,7 @@ _array_find_python_scalar_type(PyObject *op)
             return PyArray_DescrFromType(NPY_OBJECT);
         } 	
         else {
-	    return PyArray_DescrFromType(NPY_LONGLONG);
+            return PyArray_DescrFromType(NPY_LONGLONG);
 	}
     }
     return NULL;
