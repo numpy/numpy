@@ -198,6 +198,15 @@ Note that 'check_even' is not itself a test (no 'test' in the name),
 but 'test_evens' is a generator that returns a series of tests, using
 'check_even', across a range of inputs.
 
+A problem with generator tests can be that if a test is failing, it's
+hard to see for which parameters.  To avoid this problem, ensure that:
+
+  - No computation related to the features tested is done in the 
+    ``test_*`` generator function, but delegated to a corresponding
+    ``check_*`` function (can be inside the generator, to share namespace).
+  - The generators are used *solely* for loops over parameters.
+  - These parameters are *not* arrays.
+
 .. warning::
 
    Parametric tests cannot be implemented on classes derived from
