@@ -3,7 +3,9 @@
 import sys
 
 import numpy as np
-from numpy.testing import *
+from numpy.testing import (TestCase, assert_, assert_equal, assert_raises,
+                           assert_array_equal, assert_almost_equal,
+                           run_module_suite)
 from numpy import array, single, double, csingle, cdouble, dot, identity
 from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
@@ -449,6 +451,19 @@ class TestMatrixRank(object):
         yield assert_raises, TypeError, matrix_rank, np.zeros((2,2,2))
         # works on scalar
         yield assert_equal, matrix_rank(1), 1
+
+
+def test_reduced_rank():
+    # Test matrices with reduced rank
+    rng = np.random.RandomState(20120714)
+    for i in range(100):
+        # Make a rank deficient matrix
+        X = rng.normal(size=(40, 10))
+        X[:, 0] = X[:, 1] + X[:, 2]
+        # Assert that matrix_rank detected deficiency
+        assert_equal(matrix_rank(X), 9)
+        X[:, 3] = X[:, 4] + X[:, 5]
+        assert_equal(matrix_rank(X), 8)
 
 
 class TestQR(TestCase):
