@@ -1189,11 +1189,15 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         Which columns to read, with 0 being the first.  For example,
         ``usecols = (1, 4, 5)`` will extract the 2nd, 5th and 6th columns.
     names : {None, True, str, sequence}, optional
-        If `names` is True, the field names are read from the first valid line
-        after the first `skip_header` lines.
-        If `names` is a sequence or a single-string of comma-separated names,
-        the names will be used to define the field names in a structured dtype.
-        If `names` is None, the names of the dtype fields will be used, if any.
+        Field names for structured dtype output. May be one of:
+
+          - True: field names are read from the first line after the initial
+            `skip_header` lines. If that line is commented and `skip_header` is
+            not -1, the portion *after* `comments` is used.
+          - None: field names from the `dtype` argument are used, if any.
+          - A sequence: field names are taken from the sequence.
+          - A string: comma-separated substrings are used as field names.
+
     excludelist : sequence, optional
         A list of names to exclude. This list is appended to the default list
         ['return','file','print']. Excluded names are appended an underscore:
@@ -1342,9 +1346,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     try:
         while not first_values:
             first_line = fhd.next()
-            if names is True:
-                if comments in first_line:
+            if names is True and comments in first_line:
+                if skip_header == -1:
                     first_line = first_line.split(comments)[0]
+                else:
+                    first_line = asbytes('').join(first_line.split(comments)[1:])
             first_values = split_line(first_line)
     except StopIteration:
         # return an empty array if the datafile is empty
