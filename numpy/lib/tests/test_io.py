@@ -187,6 +187,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
             assert_(not fp.closed)
 
         finally:
+            fp.close()
             os.remove(tmp)
 
     def test_closing_fid(self):
