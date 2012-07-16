@@ -190,7 +190,7 @@ def leg2poly(c) :
 
 
     """
-    from polynomial import polyadd, polysub, polymulx
+    from numpy.polynomial.polynomial import polyadd, polysub, polymulx
 
     [c] = pu.as_series([c])
     n = len(c)
