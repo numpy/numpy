@@ -1,6 +1,16 @@
 import os
+import sys
+from distutils import util
 
 from polytemplate import polytemplate
+
+def get_build_dir():
+    """Determine build directory."""
+    plat = util.get_platform()
+    py_ver = '%s.%s' % (sys.version_info[0], sys.version_info[1])
+
+    return os.path.join('build',
+                        'lib.%s-%s' % (plat, py_ver), 'numpy', 'polynomial')
 
 def generate_from_template(base_file, name, nick, domain):
     """Generate polynomial class from the template."""
@@ -10,7 +20,13 @@ def generate_from_template(base_file, name, nick, domain):
     lines = fp.read()
     fp.close()
 
-    fp = open(os.path.join(base_path, base_file[1:]), 'w')
+    build_path = get_build_dir()
+    if not os.path.isdir(build_path):
+        # Distutils doesn't create the build directory until after
+        # this code has been executed.
+        os.makedirs(build_path)
+
+    fp = open(os.path.join(build_path, base_file[1:]), 'w')
     fp.write(lines)
     fp.write(polytemplate.substitute(name=name,
                                      nick=nick, domain=domain))
