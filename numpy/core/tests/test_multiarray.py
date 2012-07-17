@@ -913,19 +913,19 @@ class TestMethods(TestCase):
         # All the different functions raise a warning, but not an error, and
         # 'a' is not modified:
         assert_equal(collect_warning_types(a.diagonal().__setitem__, 0, 10),
-                     [DeprecationWarning])
+                     [FutureWarning])
         assert_equal(a, np.arange(9).reshape(3, 3))
         assert_equal(collect_warning_types(np.diagonal(a).__setitem__, 0, 10),
-                     [DeprecationWarning])
+                     [FutureWarning])
         assert_equal(a, np.arange(9).reshape(3, 3))
         assert_equal(collect_warning_types(np.diag(a).__setitem__, 0, 10),
-                     [DeprecationWarning])
+                     [FutureWarning])
         assert_equal(a, np.arange(9).reshape(3, 3))
         # Views also warn
         d = np.diagonal(a)
         d_view = d.view()
         assert_equal(collect_warning_types(d_view.__setitem__, 0, 10),
-                     [DeprecationWarning])
+                     [FutureWarning])
         # But the write goes through:
         assert_equal(d[0], 10)
         # Only one warning per call to diagonal, though (even if there are
@@ -947,21 +947,21 @@ class TestMethods(TestCase):
                 buf_or_memoryview[0] = "x"
         assert_equal(collect_warning_types(get_data_and_write,
                                            lambda d: d.data),
-                     [DeprecationWarning])
+                     [FutureWarning])
         if hasattr(np, "getbuffer"):
             assert_equal(collect_warning_types(get_data_and_write,
                                                np.getbuffer),
-                         [DeprecationWarning])
+                         [FutureWarning])
         # PEP 3118:
         if have_memoryview:
             assert_equal(collect_warning_types(get_data_and_write, memoryview),
-                         [DeprecationWarning])
+                         [FutureWarning])
         # Void dtypes can give us a read-write buffer, but only in Python 2:
         import sys
         if sys.version_info[0] < 3:
             aV = np.empty((3, 3), dtype="V10")
             assert_equal(collect_warning_types(aV.diagonal().item, 0),
-                         [DeprecationWarning])
+                         [FutureWarning])
             # XX it seems that direct indexing of a void object returns a void
             # scalar, which ignores not just WARN_ON_WRITE but even WRITEABLE.
             # i.e. in this:
@@ -973,7 +973,7 @@ class TestMethods(TestCase):
         # __array_interface also lets a data pointer get away from us
         log = collect_warning_types(getattr, a.diagonal(),
                                     "__array_interface__")
-        assert_equal(log, [DeprecationWarning])
+        assert_equal(log, [FutureWarning])
         # ctypeslib goes via __array_interface__:
         try:
             # may not exist in python 2.4:
@@ -982,10 +982,10 @@ class TestMethods(TestCase):
             pass
         else:
             log = collect_warning_types(np.ctypeslib.as_ctypes, a.diagonal())
-            assert_equal(log, [DeprecationWarning])
+            assert_equal(log, [FutureWarning])
         # __array_struct__
         log = collect_warning_types(getattr, a.diagonal(), "__array_struct__")
-        assert_equal(log, [DeprecationWarning])
+        assert_equal(log, [FutureWarning])
 
         # Make sure that our recommendation to silence the warning by copying
         # the array actually works:

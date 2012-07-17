@@ -23,8 +23,8 @@ the diagonal method of ndarrays will return a view onto the original
 array, instead of producing a copy as they do now. This makes a
 difference if you write to the array returned by any of these
 functions. To facilitate this transition, numpy 1.7 produces a
-DeprecationWarning if it detects that you may be attempting to write
-to such an array. See the documentation for np.diagonal for details.
+FutureWarning if it detects that you may be attempting to write to
+such an array. See the documentation for np.diagonal for details.
 
 The default casting rule for UFunc out= parameters has been changed from
 'unsafe' to 'same_kind'.  Most usages which violate the 'same_kind'
