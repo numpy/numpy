@@ -13,20 +13,17 @@ desire to make it easy for users to move to NumPy from Numeric and
 Numarray.   The core API originated with Numeric in 1995 and there are
 patterns such as the heavy use of macros written to mimic Python's
 C-API as well as account for compiler technology of the late 90's.
-There is only a small group of volunteers who have had very little
+There is also only a small group of volunteers who have had very little
 time to spend on improving this API.    
 
-Despite these constraints, there is an ongoing effort to improve the
-API to do things like remove 
-stray macros (e.g. a "fortran" macro) and ensure that the NPY_ prefixes
-don't prepend names that collide with
-names from the PyArray_ prefixes.  It is important in this effort
+There is an ongoing effort to improve the API.
+It is important in this effort
 to ensure that code that compiles for NumPy 1.X continues to
-compile for NumPy 1.X.  At the same time certain API's will be marked
+compile for NumPy 1.X.  At the same time, certain API's will be marked
 as deprecated so that future-looking code can avoid these API's and
 follow better practices. 
 
-Another important role played by deprecations in the C API is to move
+Another important role played by deprecation markings in the C API is to move
 towards hiding internal details of the NumPy implementation. For those
 needing direct, easy, access to the data of ndarrays, this will not
 remove this ability. Rather, there are many potential performance
