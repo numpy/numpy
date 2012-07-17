@@ -16,11 +16,13 @@ C-API as well as account for compiler technology of the late 90's.
 There is only a small group of volunteers who have had very little
 time to spend on improving this API.    
 
-There is an ongoing effort to improve the API to do things like remove
-a "fortran" macro and ensure that the NPY_ prefixes don't collide with
-names from the PyArray_ prefixes.  It is important in this effort,
-however, to ensure that code that compiles for NumPy 1.X continues to
-compile for NumPy 1.X.  At the same, time certain API's will be marked
+Despite these constraints, there is an ongoing effort to improve the
+API to do things like remove 
+stray macros (e.g. a "fortran" macro) and ensure that the NPY_ prefixes
+don't prepend names that collide with
+names from the PyArray_ prefixes.  It is important in this effort
+to ensure that code that compiles for NumPy 1.X continues to
+compile for NumPy 1.X.  At the same time certain API's will be marked
 as deprecated so that future-looking code can avoid these API's and
 follow better practices. 
 
