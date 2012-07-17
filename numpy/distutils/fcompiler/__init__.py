@@ -709,11 +709,11 @@ _default_compilers = (
     ('linux.*', ('gnu95','intel','lahey','pg','absoft','nag','vast','compaq',
                 'intele','intelem','gnu','g95','pathf95')),
     ('darwin.*', ('gnu95', 'nag', 'absoft', 'ibm', 'intel', 'gnu', 'g95', 'pg')),
-    ('sunos.*', ('sun','gnu95','gnu','g95')),
-    ('irix.*', ('mips','gnu95','gnu',)),
-    ('aix.*', ('ibm','gnu95','gnu',)),
+    ('sunos.*', ('sun','gnu','gnu95','g95')),
+    ('irix.*', ('mips','gnu','gnu95',)),
+    ('aix.*', ('ibm','gnu','gnu95',)),
     # os.name mappings
-    ('posix', ('gnu95','gnu',)),
+    ('posix', ('gnu','gnu95',)),
     ('nt', ('gnu','gnu95',)),
     ('mac', ('gnu95','gnu','pg')),
     )
