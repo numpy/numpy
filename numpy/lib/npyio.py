@@ -609,7 +609,7 @@ def _getconv(dtype):
 
 def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters=None, skiprows=0, usecols=None, unpack=False,
-            ndmin=0):
+            ndmin=0, prescan=False):
     """
     Load data from a text file.
 
@@ -654,6 +654,12 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         Otherwise mono-dimensional axes will be squeezed.
         Legal values: 0 (default), 1 or 2.
         .. versionadded:: 1.6.0
+    prescan : bool, optional
+        If true, read in the entire file in a first pass to determine the
+        size of the returned array and allocate it ahead of reading in the
+        actual data.  This saves considerable memory otherwise used for
+        intermediate data lists, at the expense of typical increases in
+        loading time of 10-40%.  Default is False.
 
     Returns
     -------
@@ -717,7 +723,6 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             fh = iter(fname)
     except TypeError:
         raise ValueError('fname must be a string, file handle, or generator')
-    X = []
 
     def flatten_dtype(dt):
         """Unpack a structured data-type, and produce re-packing info."""
@@ -784,14 +789,18 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         # Read until we find a line with some values, and use
         # it to estimate the number of columns, N.
         first_vals = None
+        first_lno = skiprows
+        n_valid = 1
         try:
             while not first_vals:
                 first_line = fh.next()
                 first_vals = split_line(first_line)
+                first_lno += 1
         except StopIteration:
             # End of lines reached
             first_line = ''
             first_vals = []
+            n_valid = 0
             warnings.warn('loadtxt: Empty input file: "%s"' % fname)
         N = len(usecols or first_vals)
 
@@ -800,9 +809,11 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             # We're dealing with a structured array, each field of
             # the dtype matches a column
             converters = [_getconv(dt) for dt in dtype_types]
+            shape_r = 1
         else:
             # All fields have the same dtype
             converters = [defconv for i in xrange(N)]
+            shape_r = N
             if N > 1:
                 packing = [(N, tuple)]
 
@@ -816,23 +827,64 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                     continue
             converters[i] = conv
 
-        # Parse each line, including the first
-        for i, line in enumerate(itertools.chain([first_line], fh)):
-            vals = split_line(line)
-            if len(vals) == 0:
-                continue
-            if usecols:
-                vals = [vals[i] for i in usecols]
-            # Convert each value according to its column and store
-            items = [conv(val) for (conv, val) in zip(converters, vals)]
-            # Then pack it according to the dtype's nesting
-            items = pack_items(items, packing)
-            X.append(items)
+        if prescan:
+            # Parse remaining file to count data lines:
+            for line in fh:
+                if len(split_line(line)) > 0:
+                    n_valid += 1
+
+            X = np.empty((n_valid, shape_r), dtype)
+            fh.seek(0)
+            for i in xrange(first_lno):
+                fh.next()
+
+            l = 0
+            try:
+                # Parse each line, including the first
+                for line in itertools.chain([first_line], fh):
+                    vals = split_line(line)
+                    if len(vals) == 0:
+                        continue
+                    if usecols:
+                        vals = [vals[i] for i in usecols]
+                    # Convert each value according to its column and store
+                    items = [conv(val) for (conv, val) in zip(converters, vals)]
+                    # Then pack it according to the dtype's nesting
+                    items = pack_items(items, packing)
+                    X[l] = np.array(items, dtype)
+                    l += 1
+                if l < n_valid:
+                    # Perhaps better negative values for missing data, but
+                    # that's not feasible with structured or char arrays
+                    X[l:] = np.zeros((n_valid-l, shape_r), dtype)
+                    raise IndexError('could only fill %d of %d lines' %
+                                     (l, n_valid))
+
+            except (IndexError), err:
+                # miscounted? what to do?
+                warnings.warn('loadtxt: error parsing %d lines of data: %s' %
+                              (n_valid, err))
+
+        else:
+            X = []
+            # Parse each line, including the first
+            for i, line in enumerate(itertools.chain([first_line], fh)):
+                vals = split_line(line)
+                if len(vals) == 0:
+                    continue
+                if usecols:
+                    vals = [vals[i] for i in usecols]
+                # Convert each value according to its column and store
+                items = [conv(val) for (conv, val) in zip(converters, vals)]
+                # Then pack it according to the dtype's nesting
+                items = pack_items(items, packing)
+                X.append(items)
+            X = np.array(X, dtype)
+            
     finally:
         if fown:
             fh.close()
 
-    X = np.array(X, dtype)
     # Multicolumn data are returned with shape (1, N, M), i.e.
     # (1, 1, M) for a single row - remove the singleton dimension there
     if X.ndim == 3 and X.shape[:2] == (1, 1):

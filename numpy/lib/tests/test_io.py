@@ -393,6 +393,9 @@ class TestLoadTxt(TestCase):
                       ('F', 25.0, 60.0)], dtype=mydescriptor)
         y = np.loadtxt(d, dtype=mydescriptor)
         assert_array_equal(y, b)
+        d.seek(0)
+        y = np.loadtxt(d, dtype=mydescriptor, prescan=True)
+        assert_array_equal(y, b)
 
     def test_array(self):
         c = StringIO()
@@ -441,6 +444,11 @@ class TestLoadTxt(TestCase):
             usecols=(1, 3,))
         a = np.array([[2, -999], [7, 9]], int)
         assert_array_equal(x, a)
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',', \
+            converters={3:lambda s: int(s or - 999)}, \
+            usecols=(1, 3,), prescan=True)
+        assert_array_equal(x, a)
 
     def test_comments(self):
         c = StringIO()
@@ -458,6 +466,10 @@ class TestLoadTxt(TestCase):
         x = np.loadtxt(c, dtype=int, delimiter=',', \
             skiprows=1)
         a = np.array([1, 2, 3, 5], int)
+        assert_array_equal(x, a)
+        c.seek(0)
+        x = np.loadtxt(c, dtype=int, delimiter=',', \
+            skiprows=1, prescan=True)
         assert_array_equal(x, a)
 
         c = StringIO()
@@ -498,6 +510,11 @@ class TestLoadTxt(TestCase):
         arr = np.loadtxt(c, usecols=(0, 2), dtype=zip(names, dtypes))
         assert_equal(arr['stid'], asbytes_nested(["JOE", "BOB"]))
         assert_equal(arr['temp'], [25.3, 27.9])
+        c.seek(0)
+        arr = np.loadtxt(c, usecols=(0, 2), dtype=zip(names, dtypes),
+                         prescan=True)
+        assert_equal(arr['stid'], asbytes_nested(["JOE", "BOB"]))
+        assert_equal(arr['temp'], [25.3, 27.9])
 
     def test_fancy_dtype(self):
         c = StringIO()
@@ -516,6 +533,9 @@ class TestLoadTxt(TestCase):
         a = np.array([('aaaa', 1.0, 8.0, [[1, 2, 3], [4, 5, 6]])],
                      dtype=dt)
         assert_array_equal(x, a)
+        c.seek(0)
+        x = np.loadtxt(c, dtype=dt, prescan=True)
+        assert_array_equal(x, a)
 
     def test_3d_shaped_dtype(self):
         c = StringIO("aaaa  1.0  8.0  1 2 3 4 5 6 7 8 9 10 11 12")
@@ -524,6 +544,9 @@ class TestLoadTxt(TestCase):
         x = np.loadtxt(c, dtype=dt)
         a = np.array([('aaaa', 1.0, 8.0, [[[1, 2, 3], [4, 5, 6]],[[7, 8, 9], [10, 11, 12]]])],
                      dtype=dt)
+        assert_array_equal(x, a)
+        c.seek(0)
+        x = np.loadtxt(c, dtype=dt, prescan=True)
         assert_array_equal(x, a)
 
     def test_empty_file(self):
@@ -568,6 +591,9 @@ class TestLoadTxt(TestCase):
                              converters=converters)
         control = np.array([(1, datetime(2001, 1, 1)), (2, datetime(2002, 1, 31))],
                            dtype=ndtype)
+        assert_equal(test, control)
+        test = np.loadtxt(StringIO(data), delimiter=";", dtype=ndtype,
+                             converters=converters, prescan=True)
         assert_equal(test, control)
 
     def test_uint64_type(self):
@@ -663,6 +689,16 @@ class TestLoadTxt(TestCase):
             assert_(np.loadtxt(f, ndmin=1).shape == (0,))
         finally:
             warn_ctx.__exit__()
+
+    def test_prescan(self):
+        c = StringIO()
+        c.write(asbytes('# Header\n# \n 1 2 3\n    \n\n4  5 6'))
+        c.seek(0)
+        a = np.loadtxt(c)
+        c.seek(0)
+        b = np.loadtxt(c, prescan=True)
+        assert_array_equal(a, b)
+        assert_array_equal(b, np.arange(1,7).reshape((2,3)))
 
     def test_generator_source(self):
         def count():
