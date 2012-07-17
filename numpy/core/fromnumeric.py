@@ -937,7 +937,7 @@ def diagonal(a, offset=0, axis1=0, axis2=1):
 
     In NumPy 1.7, it continues to return a copy of the diagonal, but depending
     on this fact is deprecated. Writing to the resulting array continues to
-    work as it used to, but a DeprecationWarning will be issued.
+    work as it used to, but a FutureWarning will be issued.
 
     In NumPy 1.8, it will switch to returning a read-only view on the original
     array. Attempting to write to the resulting array will produce an error.
