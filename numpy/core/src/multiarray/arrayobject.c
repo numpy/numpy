@@ -698,7 +698,7 @@ array_might_be_written(PyArrayObject *obj)
         "release -- see numpy.diagonal docs for details. The quick fix is\n"
         "to make an explicit copy (e.g., do arr.diagonal().copy()).";
     if (PyArray_FLAGS(obj) & NPY_ARRAY_WARN_ON_WRITE) {
-        if (DEPRECATE(msg) < 0) {
+        if (DEPRECATE_FUTUREWARNING(msg) < 0) {
             return -1;
         }
         /* Only warn once per array */
