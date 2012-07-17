@@ -369,11 +369,14 @@ class TestAssertAllclose(unittest.TestCase):
 
 
 class TestArrayAlmostEqualNulp(unittest.TestCase):
+    @dec.knownfailureif(True, "Github issue #347")
     def test_simple(self):
-        dev = np.random.randn(10)
-        x = np.ones(10)
-        y = x + dev * np.finfo(np.float64).eps
-        assert_array_almost_equal_nulp(x, y, nulp=2 * np.max(dev))
+        np.random.seed(12345)
+        for i in xrange(100):
+            dev = np.random.randn(10)
+            x = np.ones(10)
+            y = x + dev * np.finfo(np.float64).eps
+            assert_array_almost_equal_nulp(x, y, nulp=2 * np.max(dev))
 
     def test_simple2(self):
         x = np.random.randn(10)

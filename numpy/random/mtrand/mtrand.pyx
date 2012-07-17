@@ -4392,33 +4392,29 @@ cdef class RandomState:
 
         """
         cdef npy_intp i, j
-        cdef int copy
 
         i = len(x) - 1
-        try:
-            j = len(x[0])
-        except:
-            j = 0
 
-        if (j == 0):
-            # adaptation of random.shuffle()
+        # Logic adapted from random.shuffle()
+        if isinstance(x, np.ndarray) and x.ndim > 1:
+            # For a multi-dimensional ndarray, indexing returns a view onto
+            # each row. So we can't just use ordinary assignment to swap the
+            # rows; we need a bounce buffer.
+            buf = np.empty(x.shape[1:], dtype=x.dtype)
+            while i > 0:
+                j = rk_interval(i, self.internal_state)
+                buf[...] = x[j]
+                x[j] = x[i]
+                x[i] = buf
+                i = i - 1
+        else:
+            # For single-dimensional arrays, lists, and any other Python
+            # sequence types, indexing returns a real object that's
+            # independent of the array contents, so we can just swap directly.
             while i > 0:
                 j = rk_interval(i, self.internal_state)
                 x[i], x[j] = x[j], x[i]
                 i = i - 1
-        else:
-            # make copies
-            copy = hasattr(x[0], 'copy')
-            if copy:
-                while(i > 0):
-                    j = rk_interval(i, self.internal_state)
-                    x[i], x[j] = x[j].copy(), x[i].copy()
-                    i = i - 1
-            else:
-                while(i > 0):
-                    j = rk_interval(i, self.internal_state)
-                    x[i], x[j] = x[j][:], x[i][:]
-                    i = i - 1
 
     def permutation(self, object x):
         """

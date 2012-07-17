@@ -168,12 +168,17 @@ class TestRandomDist(TestCase):
         np.testing.assert_equal(actual, desired)
 
     def test_shuffle(self):
-        np.random.seed(self.seed)
-        alist = [1,2,3,4,5,6,7,8,9,0]
-        np.random.shuffle(alist)
-        actual = alist
-        desired = [0, 1, 9, 6, 2, 4, 5, 8, 7, 3]
-        np.testing.assert_array_equal(actual, desired)
+        # Test lists, arrays, and multidimensional versions of both:
+        for conv in [lambda x: x,
+                     np.asarray,
+                     lambda x: [(i, i) for i in x],
+                     lambda x: np.asarray([(i, i) for i in x])]:
+            np.random.seed(self.seed)
+            alist = conv([1,2,3,4,5,6,7,8,9,0])
+            np.random.shuffle(alist)
+            actual = alist
+            desired = conv([0, 1, 9, 6, 2, 4, 5, 8, 7, 3])
+            np.testing.assert_array_equal(actual, desired)
 
     def test_beta(self):
         np.random.seed(self.seed)
