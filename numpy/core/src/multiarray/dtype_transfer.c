@@ -19,7 +19,7 @@
 #include <numpy/arrayobject.h>
 #include <numpy/npy_cpu.h>
 
-#include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 
 #include "convert_datatype.h"
 #include "_datetime.h"

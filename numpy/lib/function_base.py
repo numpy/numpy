@@ -843,7 +843,7 @@ def gradient(f, *varargs):
 
     Returns
     -------
-    g : ndarray
+    gradient : ndarray
       N arrays of the same shape as `f` giving the derivative of `f` with
       respect to each dimension.
 
@@ -948,7 +948,7 @@ def diff(a, n=1, axis=-1):
 
     Returns
     -------
-    out : ndarray
+    diff : ndarray
         The `n` order differences. The shape of the output is the same as `a`
         except along `axis` where the dimension is smaller by `n`.
 
@@ -1284,6 +1284,11 @@ def extract(condition, arr):
     arr : array_like
         Input array of the same size as `condition`.
 
+    Returns
+    -------
+    extract : ndarray
+        Rank 1 array of values from `arr` where `condition` is True.
+
     See Also
     --------
     take, put, copyto, compress
@@ -1316,9 +1321,10 @@ def place(arr, mask, vals):
     """
     Change elements of an array based on conditional and input values.
 
-    Similar to ``np.copyto(arr, vals, where=mask)``, the difference is that `place`
-    uses the first N elements of `vals`, where N is the number of True values
-    in `mask`, while `copyto` uses the elements where `mask` is True.
+    Similar to ``np.copyto(arr, vals, where=mask)``, the difference is that
+    `place` uses the first N elements of `vals`, where N is the number of
+    True values in `mask`, while `copyto` uses the elements where `mask`
+    is True.
 
     Note that `extract` does the exact opposite of `place`.
 
@@ -2713,7 +2719,7 @@ def kaiser(M,beta):
 
     A beta value of 14 is probably a good starting point. Note that as beta
     gets large, the window narrows, and so the number of samples needs to be
-    large enough to sample the increasingly narrow spike, otherwise nans will
+    large enough to sample the increasingly narrow spike, otherwise NaNs will
     get returned.
 
     Most references to the Kaiser window come from the signal processing

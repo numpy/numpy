@@ -1,0 +1,363 @@
+/* -*- c -*- */
+
+/*
+ * The purpose of this module is to add faster sort functions
+ * that are type-specific.  This is done by altering the
+ * function table for the builtin descriptors.
+ *
+ * These sorting functions are copied almost directly from numarray
+ * with a few modifications (complex comparisons compare the imaginary
+ * part if the real parts are equal, for example), and the names
+ * are changed.
+ *
+ * The original sorting code is due to Charles R. Harris who wrote
+ * it for numarray.
+ */
+
+/*
+ * Quick sort is usually the fastest, but the worst case scenario can
+ * be slower than the merge and heap sorts.  The merge sort requires
+ * extra memory and so for large arrays may not be useful.
+ *
+ * The merge sort is *stable*, meaning that equal components
+ * are unmoved from their entry versions, so it can be used to
+ * implement lexigraphic sorting on multiple keys.
+ *
+ * The heap sort is included for completeness.
+ */
+
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include <stdlib.h>
+#include "npy_sort.h"
+#include "npysort_common.h"
+
+#define NOT_USED NPY_UNUSED(unused)
+#define PYA_QS_STACK 100
+#define SMALL_QUICKSORT 15
+#define SMALL_MERGESORT 20
+#define SMALL_STRING 16
+
+
+/*
+ *****************************************************************************
+ **                            NUMERIC SORTS                                **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ *
+ * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong, half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble#
+ * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
+ *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ *         npy_ushort, npy_float, npy_double, npy_longdouble, npy_cfloat,
+ *         npy_cdouble, npy_clongdouble#
+ */
+
+int
+quicksort_@suff@(@type@ *start, npy_intp num, void *NOT_USED)
+{
+    @type@ vp;
+    @type@ *pl = start;
+    @type@ *pr = start + num - 1;
+    @type@ *stack[PYA_QS_STACK];
+    @type@ **sptr = stack;
+    @type@ *pm, *pi, *pj, *pk;
+
+    for (;;) {
+        while ((pr - pl) > SMALL_QUICKSORT) {
+            /* quicksort partition */
+            pm = pl + ((pr - pl) >> 1);
+            if (@TYPE@_LT(*pm, *pl)) @TYPE@_SWAP(*pm, *pl);
+            if (@TYPE@_LT(*pr, *pm)) @TYPE@_SWAP(*pr, *pm);
+            if (@TYPE@_LT(*pm, *pl)) @TYPE@_SWAP(*pm, *pl);
+            vp = *pm;
+            pi = pl;
+            pj = pr - 1;
+            @TYPE@_SWAP(*pm, *pj);
+            for (;;) {
+                do ++pi; while (@TYPE@_LT(*pi, vp));
+                do --pj; while (@TYPE@_LT(vp, *pj));
+                if (pi >= pj) {
+                    break;
+                }
+                @TYPE@_SWAP(*pi,*pj);
+            }
+            pk = pr - 1;
+            @TYPE@_SWAP(*pi, *pk);
+            /* push largest partition on stack */
+            if (pi - pl < pr - pi) {
+                *sptr++ = pi + 1;
+                *sptr++ = pr;
+                pr = pi - 1;
+            }
+            else {
+                *sptr++ = pl;
+                *sptr++ = pi - 1;
+                pl = pi + 1;
+            }
+        }
+
+        /* insertion sort */
+        for (pi = pl + 1; pi <= pr; ++pi) {
+            vp = *pi;
+            pj = pi;
+            pk = pi - 1;
+            while (pj > pl && @TYPE@_LT(vp, *pk)) {
+                *pj-- = *pk--;
+            }
+            *pj = vp;
+        }
+        if (sptr == stack) {
+            break;
+        }
+        pr = *(--sptr);
+        pl = *(--sptr);
+    }
+
+    return 0;
+}
+
+
+int
+aquicksort_@suff@(@type@ *v, npy_intp* tosort, npy_intp num, void *NOT_USED)
+{
+    @type@ vp;
+    npy_intp *pl = tosort;
+    npy_intp *pr = tosort + num - 1;
+    npy_intp *stack[PYA_QS_STACK];
+    npy_intp **sptr = stack;
+    npy_intp *pm, *pi, *pj, *pk, vi;
+
+    for (;;) {
+        while ((pr - pl) > SMALL_QUICKSORT) {
+            /* quicksort partition */
+            pm = pl + ((pr - pl) >> 1);
+            if (@TYPE@_LT(v[*pm],v[*pl])) INTP_SWAP(*pm, *pl);
+            if (@TYPE@_LT(v[*pr],v[*pm])) INTP_SWAP(*pr, *pm);
+            if (@TYPE@_LT(v[*pm],v[*pl])) INTP_SWAP(*pm, *pl);
+            vp = v[*pm];
+            pi = pl;
+            pj = pr - 1;
+            INTP_SWAP(*pm, *pj);
+            for (;;) {
+                do ++pi; while (@TYPE@_LT(v[*pi], vp));
+                do --pj; while (@TYPE@_LT(vp, v[*pj]));
+                if (pi >= pj) {
+                    break;
+                }
+                INTP_SWAP(*pi, *pj);
+            }
+            pk = pr - 1;
+            INTP_SWAP(*pi,*pk);
+            /* push largest partition on stack */
+            if (pi - pl < pr - pi) {
+                *sptr++ = pi + 1;
+                *sptr++ = pr;
+                pr = pi - 1;
+            }
+            else {
+                *sptr++ = pl;
+                *sptr++ = pi - 1;
+                pl = pi + 1;
+            }
+        }
+
+        /* insertion sort */
+        for (pi = pl + 1; pi <= pr; ++pi) {
+            vi = *pi;
+            vp = v[vi];
+            pj = pi;
+            pk = pi - 1;
+            while (pj > pl && @TYPE@_LT(vp, v[*pk])) {
+                *pj-- = *pk--;
+            }
+            *pj = vi;
+        }
+        if (sptr == stack) {
+            break;
+        }
+        pr = *(--sptr);
+        pl = *(--sptr);
+    }
+
+    return 0;
+}
+
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                             STRING SORTS                                **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ *
+ * #TYPE = STRING, UNICODE#
+ * #suff = string, unicode#
+ * #type = npy_char, npy_ucs4#
+ */
+
+int
+quicksort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
+{
+    const size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
+    @type@ *vp = malloc(PyArray_ITEMSIZE(arr));
+    @type@ *pl = start;
+    @type@ *pr = start + (num - 1)*len;
+    @type@ *stack[PYA_QS_STACK], **sptr = stack, *pm, *pi, *pj, *pk;
+
+    for (;;) {
+        while ((size_t)(pr - pl) > SMALL_QUICKSORT*len) {
+            /* quicksort partition */
+            pm = pl + (((pr - pl)/len) >> 1)*len;
+            if (@TYPE@_LT(pm, pl, len)) @TYPE@_SWAP(pm, pl, len);
+            if (@TYPE@_LT(pr, pm, len)) @TYPE@_SWAP(pr, pm, len);
+            if (@TYPE@_LT(pm, pl, len)) @TYPE@_SWAP(pm, pl, len);
+            @TYPE@_COPY(vp, pm, len);
+            pi = pl;
+            pj = pr - len;
+            @TYPE@_SWAP(pm, pj, len);
+            for (;;) {
+                do pi += len; while (@TYPE@_LT(pi, vp, len));
+                do pj -= len; while (@TYPE@_LT(vp, pj, len));
+                if (pi >= pj) {
+                    break;
+                }
+                @TYPE@_SWAP(pi, pj, len);
+            }
+            pk = pr - len;
+            @TYPE@_SWAP(pi, pk, len);
+            /* push largest partition on stack */
+            if (pi - pl < pr - pi) {
+                *sptr++ = pi + len;
+                *sptr++ = pr;
+                pr = pi - len;
+            }
+            else {
+                *sptr++ = pl;
+                *sptr++ = pi - len;
+                pl = pi + len;
+            }
+        }
+
+        /* insertion sort */
+        for (pi = pl + len; pi <= pr; pi += len) {
+            @TYPE@_COPY(vp, pi, len);
+            pj = pi;
+            pk = pi - len;
+            while (pj > pl && @TYPE@_LT(vp, pk, len)) {
+                @TYPE@_COPY(pj, pk, len);
+                pj -= len;
+                pk -= len;
+            }
+            @TYPE@_COPY(pj, vp, len);
+        }
+        if (sptr == stack) {
+            break;
+        }
+        pr = *(--sptr);
+        pl = *(--sptr);
+    }
+
+    free(vp);
+    return 0;
+}
+
+
+int
+aquicksort_@suff@(@type@ *v, npy_intp* tosort, npy_intp num, PyArrayObject *arr)
+{
+    size_t len = PyArray_ITEMSIZE(arr)/sizeof(@type@);
+    @type@ *vp;
+    npy_intp *pl = tosort;
+    npy_intp *pr = tosort + num - 1;
+    npy_intp *stack[PYA_QS_STACK];
+    npy_intp **sptr=stack;
+    npy_intp *pm, *pi, *pj, *pk, vi;
+
+    for (;;) {
+        while ((pr - pl) > SMALL_QUICKSORT) {
+            /* quicksort partition */
+            pm = pl + ((pr - pl) >> 1);
+            if (@TYPE@_LT(v + (*pm)*len, v + (*pl)*len, len)) INTP_SWAP(*pm, *pl);
+            if (@TYPE@_LT(v + (*pr)*len, v + (*pm)*len, len)) INTP_SWAP(*pr, *pm);
+            if (@TYPE@_LT(v + (*pm)*len, v + (*pl)*len, len)) INTP_SWAP(*pm, *pl);
+            vp = v + (*pm)*len;
+            pi = pl;
+            pj = pr - 1;
+            INTP_SWAP(*pm,*pj);
+            for (;;) {
+                do ++pi; while (@TYPE@_LT(v + (*pi)*len, vp, len));
+                do --pj; while (@TYPE@_LT(vp, v + (*pj)*len, len));
+                if (pi >= pj) {
+                    break;
+                }
+                INTP_SWAP(*pi,*pj);
+            }
+            pk = pr - 1;
+            INTP_SWAP(*pi,*pk);
+            /* push largest partition on stack */
+            if (pi - pl < pr - pi) {
+                *sptr++ = pi + 1;
+                *sptr++ = pr;
+                pr = pi - 1;
+            }
+            else {
+                *sptr++ = pl;
+                *sptr++ = pi - 1;
+                pl = pi + 1;
+            }
+        }
+
+        /* insertion sort */
+        for (pi = pl + 1; pi <= pr; ++pi) {
+            vi = *pi;
+            vp = v + vi*len;
+            pj = pi;
+            pk = pi - 1;
+            while (pj > pl && @TYPE@_LT(vp, v + (*pk)*len, len)) {
+                *pj-- = *pk--;
+            }
+            *pj = vi;
+        }
+        if (sptr == stack) {
+            break;
+        }
+        pr = *(--sptr);
+        pl = *(--sptr);
+    }
+
+    return 0;
+}
+
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                             GENERIC SORT                                **
+ *****************************************************************************
+ */
+
+
+/*
+ * This sort has almost the same signature as libc qsort and is intended to
+ * supply an error return for compatibility with the other generic sort
+ * kinds.
+ */
+int
+npy_quicksort(void *base, size_t num, size_t size, npy_comparator cmp)
+{
+    qsort(base, num, size, cmp);
+    return 0;
+}

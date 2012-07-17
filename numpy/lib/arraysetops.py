@@ -44,7 +44,7 @@ def ediff1d(ary, to_end=None, to_begin=None):
 
     Returns
     -------
-    ed : ndarray
+    ediff1d : ndarray
         The differences. Loosely, this is ``ary.flat[1:] - ary.flat[:-1]``.
 
     See Also
@@ -212,7 +212,7 @@ def intersect1d(ar1, ar2, assume_unique=False):
 
     Returns
     -------
-    out : ndarray
+    intersect1d : ndarray
         Sorted 1D array of common and unique elements.
 
     See Also
@@ -251,7 +251,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
 
     Returns
     -------
-    xor : ndarray
+    setxor1d : ndarray
         Sorted 1D array of unique values that are in only one of the input
         arrays.
 
@@ -287,7 +287,7 @@ def in1d(ar1, ar2, assume_unique=False):
 
     Parameters
     ----------
-    ar1 : array_like, shape (M,)
+    ar1 : (M,) array_like
         Input array.
     ar2 : array_like
         The values against which to test each value of `ar1`.
@@ -297,8 +297,8 @@ def in1d(ar1, ar2, assume_unique=False):
 
     Returns
     -------
-    mask : ndarray of bools, shape(M,)
-        The values `ar1[mask]` are in `ar2`.
+    in1d : (M,) ndarray, bool
+        The values `ar1[in1d]` are in `ar2`.
 
     See Also
     --------
@@ -365,7 +365,7 @@ def union1d(ar1, ar2):
 
     Returns
     -------
-    union : ndarray
+    union1d : ndarray
         Unique, sorted union of the input arrays.
 
     See Also
@@ -399,7 +399,7 @@ def setdiff1d(ar1, ar2, assume_unique=False):
 
     Returns
     -------
-    difference : ndarray
+    setdiff1d : ndarray
         Sorted 1D array of values in `ar1` that are not in `ar2`.
 
     See Also

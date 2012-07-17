@@ -7,6 +7,7 @@ NumPy Reference
 :Release: |version|
 :Date: |today|
 
+
 .. module:: numpy
 
 This reference manual details functions, modules, and objects
@@ -20,7 +21,7 @@ For learning how to use NumPy, see also :ref:`user`.
    arrays
    ufuncs
    routines
-   ctypes
+   ctypeslib
    distutils
    c-api
    internals

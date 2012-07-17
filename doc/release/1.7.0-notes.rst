@@ -1,0 +1,279 @@
+=========================
+NumPy 1.7.0 Release Notes
+=========================
+
+This release includes several new features as well as numerous bug fixes and
+refactorings. It supports Python 2.4 - 2.7 and 3.1 - 3.2.
+
+Highlights
+==========
+
+* ``where=`` parameter to ufuncs (allows the use of boolean arrays to choose
+  where a computation should be done)
+* ``vectorize`` improvements (added 'excluded' and 'cache' keyword, general
+  cleanup and bug fixes)
+* ``numpy.random.choice`` (random sample generating function)
+
+
+Compatibility notes
+===================
+
+In a future version of numpy, the functions np.diag, np.diagonal, and
+the diagonal method of ndarrays will return a view onto the original
+array, instead of producing a copy as they do now. This makes a
+difference if you write to the array returned by any of these
+functions. To facilitate this transition, numpy 1.7 produces a
+FutureWarning if it detects that you may be attempting to write to
+such an array. See the documentation for np.diagonal for details.
+
+The default casting rule for UFunc out= parameters has been changed from
+'unsafe' to 'same_kind'.  Most usages which violate the 'same_kind'
+rule are likely bugs, so this change may expose previously undetected
+errors in projects that depend on NumPy.
+
+Full-array boolean indexing has been optimized to use a different,
+optimized code path.   This code path should produce the same results,
+but any feedback about changes to your code would be appreciated. 
+
+Attempting to write to a read-only array (one with
+``arr.flags.writeable`` set to ``False``) used to raise either a
+RuntimeError, ValueError, or TypeError inconsistently, depending on
+which code path was taken. It now consistently raises a ValueError.
+
+The <ufunc>.reduce functions evaluate some reductions in a different
+order than in previous versions of NumPy, generally providing higher
+performance. Because of the nature of floating-point arithmetic, this
+may subtly change some results, just as linking NumPy to a different
+BLAS implementations such as MKL can.
+
+If upgrading from 1.5, then generally in 1.6 and 1.7 there have been
+substantial code added and some code paths altered, particularly in
+the areas of type resolution and buffered iteration over universal
+functions.   This might have an impact on your code particularly if
+you relied on accidental behavior in the past. 
+
+New features
+============
+
+Mask-based NA missing values
+----------------------------
+
+Preliminary support for NA missing values similar to those in R has
+been implemented.  This was done by adding optional NA masks to the core
+array object.
+
+.. note:: The NA API is *experimental*, and may undergo changes in future
+   versions of NumPy.  The current implementation based on masks will likely be
+   supplemented by a second one based on bit-patterns, and it is possible that
+   a difference will be made between missing and ignored data.
+
+While a significant amount of the NumPy functionality has been extended to
+support NA masks, not everything is yet supported. Here is an (incomplete)
+list of things that do and do not work with NA values:
+
+What works with NA:
+    * Basic indexing and slicing, as well as full boolean mask indexing.
+    * All element-wise ufuncs.
+    * All UFunc.reduce methods, with a new skipna parameter.
+    * np.all and np.any satisfy the rules NA | True == True and
+      NA & False == False
+    * The nditer object.
+    * Array methods:
+       + ndarray.clip, ndarray.min, ndarray.max, ndarray.sum, ndarray.prod,
+         ndarray.conjugate, ndarray.diagonal, ndarray.flatten
+       + numpy.concatenate, numpy.column_stack, numpy.hstack,
+         numpy.vstack, numpy.dstack, numpy.squeeze, numpy.mean, numpy.std,
+         numpy.var
+
+What doesn't work with NA:
+    * Fancy indexing, such as with lists and partial boolean masks.
+    * ndarray.flat and any other methods that use the old iterator
+      mechanism instead of the newer nditer.
+    * Struct dtypes, which will have corresponding struct masks with
+      one mask value per primitive field of the struct dtype.
+    * UFunc.accumulate, UFunc.reduceat.
+    * Ufunc calls with both NA masks and a where= mask at the same time.
+    * File I/O has not been extended to support NA-masks.
+    * np.logical_and and np.logical_or don't satisfy the
+      rules NA | True == True and NA & False == False yet.
+    * Array methods:
+       + ndarray.argmax, ndarray.argmin,
+       + numpy.repeat, numpy.delete (relies on fancy indexing),
+         numpy.append, numpy.insert (relies on fancy indexing),
+         numpy.where,
+
+Differences with R:
+    * R's parameter rm.na=T is spelled skipna=True in NumPy.
+    * np.isna(nan) is False, but R's is.na(nan) is TRUE. This is because
+      NumPy's NA is treated independently of the underlying data type.
+    * Boolean indexing, where the result is compressed to just
+      the elements with true in the mask, raises if the boolean mask
+      has an NA value in it. This is because that value could be either
+      True or False, meaning the count of the output array is actually
+      NA. R treats this case in a manner inconsistent with the NA model,
+      returning NA values in the spots where the boolean index has NA.
+      This may have a practical advantage in spite of violating the
+      NA theoretical model, so NumPy could adopt the behavior if necessary
+
+For more information, see `doc/neps/missing-data.rst <https://github.com/numpy/numpy/blob/maintenance/1.7.x/doc/neps/missing-data.rst>`_.
+
+Reduction UFuncs Generalize axis= Parameter
+-------------------------------------------
+
+Any ufunc.reduce function call, as well as other reductions like
+sum, prod, any, all, max and min support the ability to choose
+a subset of the axes to reduce over. Previously, one could say
+axis=None to mean all the axes or axis=# to pick a single axis.
+Now, one can also say axis=(#,#) to pick a list of axes for reduction.
+
+Reduction UFuncs New keepdims= Parameter
+----------------------------------------
+
+There is a new keepdims= parameter, which if set to True, doesn't
+throw away the reduction axes but instead sets them to have size one.
+When this option is set, the reduction result will broadcast correctly
+to the original operand which was reduced.
+
+Datetime support
+----------------
+
+.. note:: The datetime API is *experimental* in 1.7.0, and may undergo changes
+   in future versions of NumPy.
+
+There have been a lot of fixes and enhancements to datetime64 compared
+to NumPy 1.6:
+
+* the parser is quite strict about only accepting ISO 8601 dates, with a few
+  convenience extensions
+* converts between units correctly
+* datetime arithmetic works correctly
+* business day functionality (allows the datetime to be used in contexts where
+  only certain days of the week are valid)
+
+The notes in `doc/source/reference/arrays.datetime.rst <https://github.com/numpy/numpy/blob/maintenance/1.7.x/doc/source/reference/arrays.datetime.rst>`_
+(also available in the online docs at `arrays.datetime.html
+<http://docs.scipy.org/doc/numpy/reference/arrays.datetime.html>`_) should be
+consulted for more details.
+
+Custom formatter for printing arrays
+------------------------------------
+
+See the new ``formatter`` parameter of the ``numpy.set_printoptions``
+function.
+
+New function numpy.random.choice
+---------------------------------
+
+A generic sampling function has been added which will generate samples from
+a given array-like. The samples can be with or without replacement, and
+with uniform or given non-uniform probabilities.
+
+New function isclose
+--------------------
+
+Returns a boolean array where two arrays are element-wise equal within a
+tolerance. Both relative and absolute tolerance can be specified. The
+function is NA aware.
+
+Preliminary multi-dimensional support in the polynomial package
+---------------------------------------------------------------
+
+Axis keywords have been added to the integration and differentiation
+functions and a tensor keyword was added to the evaluation functions.
+These additions allow multi-dimensional coefficient arrays to be used in
+those functions. New functions for evaluating 2-D and 3-D coefficient
+arrays on grids or sets of points were added together with 2-D and 3-D
+pseudo-Vandermonde matrices that can be used for fitting.
+
+Support for mask-based NA values in the polynomial package fits
+---------------------------------------------------------------
+
+The fitting functions recognize and remove masked data from the fit.
+
+Ability to pad rank-n arrays
+----------------------------
+
+A pad module containing functions for padding n-dimensional arrays has
+been added. The various private padding functions are exposed as options to
+a public 'pad' function.  Example::
+
+    pad(a, 5, mode='mean')
+
+Current modes are ``constant``, ``edge``, ``linear_ramp``, ``maximum``,
+``mean``, ``median``, ``minimum``, ``reflect``, ``symmetric``, ``wrap``, and
+``<function>``.
+
+
+New argument to searchsorted
+----------------------------
+
+The function searchsorted now accepts a 'sorter' argument that is a
+permuation array that sorts the array to search.
+
+C API
+-----
+
+New function ``PyArray_RequireWriteable`` provides a consistent
+interface for checking array writeability -- any C code which works
+with arrays whose WRITEABLE flag is not known to be True a priori,
+should make sure to call this function before writing.
+
+NumPy C Style Guide added (``doc/C_STYLE_GUIDE.rst.txt``).
+
+Changes
+=======
+
+General
+-------
+
+The function np.concatenate tries to match the layout of its input
+arrays. Previously, the layout did not follow any particular reason,
+and depended in an undesirable way on the particular axis chosen for
+concatenation. A bug was also fixed which silently allowed out of bounds
+axis arguments.
+
+The ufuncs logical_or, logical_and, and logical_not now follow Python's
+behavior with object arrays, instead of trying to call methods on the
+objects. For example the expression (3 and 'test') produces the string
+'test', and now np.logical_and(np.array(3, 'O'), np.array('test', 'O'))
+produces 'test' as well.
+
+C-API
+-----
+
+The following macros now require trailing semicolons::
+
+    NPY_BEGIN_THREADS_DEF
+    NPY_BEGIN_THREADS
+    NPY_ALLOW_C_API
+    NPY_ALLOW_C_API_DEF
+    NPY_DISABLE_C_API
+
+
+Deprecations
+============
+
+General
+-------
+
+Specifying a custom string formatter with a `_format` array attribute is
+deprecated. The new `formatter` keyword in ``numpy.set_printoptions`` or
+``numpy.array2string`` can be used instead.
+
+The deprecated imports in the polynomial package have been removed.
+
+C-API
+-----
+
+Direct access to the fields of PyArrayObject* has been deprecated. Direct
+access has been recommended against for many releases. Expect similar
+deprecations for PyArray_Descr* and other core objects in the future as
+preparation for NumPy 2.0.
+
+The macros in old_defines.h are deprecated and will be removed in the next
+minor release (>= 1.8). The sed script tools/replace_old_macros.sed can
+be used to replace these macros with the newer versions.
+
+You can test your code against the deprecated C API by #defining
+NPY_NO_DEPRECATED_API to the target version number, for example
+NPY_1_7_API_VERSION, before including any NumPy headers.

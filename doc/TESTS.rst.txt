@@ -107,6 +107,11 @@ whether a certain assumption is valid. If the assertion fails, the test fails.
 Note that the Python builtin ``assert`` should not be used, because it is
 stripped during compilation with ``-O``.
 
+Note that ``test_`` functions or methods should not have a docstring, because
+that makes it hard to identify the test from the output of running the test
+suite with ``verbose=2`` (or similar verbosity setting).  Use plain comments
+(``#``) if necessary.
+
 Sometimes it is convenient to run ``test_yyy.py`` by itself, so we add
 
 ::
@@ -174,7 +179,7 @@ nose decorators::
 
   @nose.with_setup(setup_func, teardown_func)
   def test_with_extras():
-      """This test uses the setup/teardown functions."""
+      # This test uses the setup/teardown functions.
       global helpful_variable
       print "  In test_with_extras"
       print "  Helpful is %s" % helpful_variable
@@ -197,6 +202,15 @@ with test generators::
 Note that 'check_even' is not itself a test (no 'test' in the name),
 but 'test_evens' is a generator that returns a series of tests, using
 'check_even', across a range of inputs.
+
+A problem with generator tests can be that if a test is failing, it's
+hard to see for which parameters.  To avoid this problem, ensure that:
+
+  - No computation related to the features tested is done in the 
+    ``test_*`` generator function, but delegated to a corresponding
+    ``check_*`` function (can be inside the generator, to share namespace).
+  - The generators are used *solely* for loops over parameters.
+  - Those parameters are *not* arrays.
 
 .. warning::
 
