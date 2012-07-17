@@ -339,7 +339,7 @@ Indexing into a record array can also be done with a list of field names,
 *e.g.* ``x[['field-name1','field-name2']]``. Currently this returns a new
 array containing a copy of the values in the fields specified in the list.
 As of NumPy 1.7, returning a copy is being deprecated in favor of returning
-a view. A copy will continue to be returned for now, but a DeprecationWarning
+a view. A copy will continue to be returned for now, but a FutureWarning
 will be issued when writing to the copy. If you depend on the current
 behavior, then we suggest copying the returned array explicitly, i.e. use
 x[['field-name1','field-name2']].copy(). This will work with both past and

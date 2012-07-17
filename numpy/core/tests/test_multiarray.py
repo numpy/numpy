@@ -1983,13 +1983,13 @@ class TestRecord(TestCase):
         # All the different functions raise a warning, but not an error, and
         # 'a' is not modified:
         assert_equal(collect_warning_types(a[['f1','f2']].__setitem__, 0, (10,20)),
-                     [DeprecationWarning])
+                     [FutureWarning])
         assert_equal(a, b)
         # Views also warn
         subset = a[['f1','f2']]
         subset_view = subset.view()
         assert_equal(collect_warning_types(subset_view['f1'].__setitem__, 0, 10),
-                     [DeprecationWarning])
+                     [FutureWarning])
         # But the write goes through:
         assert_equal(subset['f1'][0], 10)
         # Only one warning per multiple field indexing, though (even if there are
