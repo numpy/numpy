@@ -6,38 +6,45 @@ Background
 
 The API exposed by NumPy for third-party extensions has grown over
 years of releases, and has allowed programmers to directly access
-NumPy functionality from C. This API was not originally designed to
-take into account best practices for C APIs, and was maintained by
-a small group of people with very little time to expend on improving
-it.
+NumPy functionality from C. This API can be best described as
+"organic".   It has emerged from multiple competing desires and from
+multiple points of view over the years, strongly influenced by the
+desire to make it easy for users to move to NumPy from Numeric and
+Numarray.   The core API originated with Numeric in 1995 and there are
+patterns such as the heavy use of macros written to mimic Python's
+C-API as well as account for compiler technology of the late 90's.
+There is also only a small group of volunteers who have had very little
+time to spend on improving this API.    
 
-Starting with NumPy 1.7, we are attempting to make a concerted effort to
-clean up the API. This includes fixing some grave sins, like removing
-the macro *fortran* (which was defined to *fortran_*) as well as
-clarifying some confusing choices caused by designing separate
-subsystems without noticing how they interacted. For example,
-NPY_DEFAULT was a flag controlling ndarray construction, while
-PyArray_DEFAULT was the default dtype enumeration value.
+There is an ongoing effort to improve the API.
+It is important in this effort
+to ensure that code that compiles for NumPy 1.X continues to
+compile for NumPy 1.X.  At the same time, certain API's will be marked
+as deprecated so that future-looking code can avoid these API's and
+follow better practices. 
 
-Another important role played by deprecations in the C API is to move
+Another important role played by deprecation markings in the C API is to move
 towards hiding internal details of the NumPy implementation. For those
 needing direct, easy, access to the data of ndarrays, this will not
 remove this ability. Rather, there are many potential performance
 optimizations which require changing the implementation details, and
 NumPy developers have been unable to try them because of the high
-value of preserving ABI compatibility. By deprecating this direct access
-over the course of several releases, we will in the future be able to
-improve NumPy's performance in ways we cannot presently.
+value of preserving ABI compatibility. By deprecating this direct
+access, we will in the future be able to improve NumPy's performance
+in ways we cannot presently.
 
 Deprecation Mechanism NPY_NO_DEPRECATED_API
 -------------------------------------------
 
 In C, there is no equivalent to the deprecation warnings that Python
-supports. One way to do deprecations is to flag them in the documentation
-and release notes, then remove or change the deprecated features in the
-next version. We intend to do this, but also have created a mechanism to help
-third-party developers test that their code does not use any of the
-deprecated features.
+supports. One way to do deprecations is to flag them in the
+documentation and release notes, then remove or change the deprecated
+features in a future major version (NumPy 2.0 and beyond).  Minor
+versions of NumPy should not have major C-API changes, however, that
+prevent code that worked on a previous minor release.  For example, we
+will do our best to ensure that code that compiled and worked on NumPy
+1.4 should continue to work on NumPy 1.7 (but perhaps with compiler
+warnings). 
 
 To use the NPY_NO_DEPRECATED_API mechanism, you need to #define it to
 the target API version of NumPy before #including any NumPy headers.
