@@ -52,10 +52,10 @@ DOWNLOAD_URL        = "http://sourceforge.net/project/showfiles.php?group_id=136
 LICENSE             = 'BSD'
 CLASSIFIERS         = filter(None, CLASSIFIERS.split('\n'))
 AUTHOR              = "Travis E. Oliphant, et.al."
-AUTHOR_EMAIL        = "oliphant@enthought.com"
+AUTHOR_EMAIL        = "numpy-discussion@scipy.org"
 PLATFORMS           = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"]
 MAJOR               = 1 
-MINOR               = 8 
+MINOR               = 7 
 MICRO               = 0
 ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
