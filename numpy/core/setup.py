@@ -688,7 +688,7 @@ def configuration(parent_package='',top_path=None):
                    join(local_dir, subpath, 'arraytypes.c.src'),
                    join(local_dir, subpath, 'nditer_templ.c.src'),
                    join(local_dir, subpath, 'lowlevel_strided_loops.c.src'),
-				   join(local_dir, subpath, 'mapping.c.src'),
+                   join(local_dir, subpath, 'mapping.c.src'),
                    join(local_dir, subpath, 'einsum.c.src')]
 
         # numpy.distutils generate .c from .c.src in weird directories, we have
