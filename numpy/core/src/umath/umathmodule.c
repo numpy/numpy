@@ -123,7 +123,9 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
     self->core_dim_ixs = NULL;
     self->core_offsets = NULL;
     self->core_signature = NULL;
-    self->op_flags = NULL;
+    self->op_flags = PyArray_malloc(sizeof(npy_uint32)*self->nargs);
+    memset(self->op_flags, 0, sizeof(npy_uint32)*self->nargs);
+    self->iter_flags = 0;
 
     self->type_resolver = &object_ufunc_type_resolver;
     self->legacy_inner_loop_selector = &object_ufunc_loop_selector;
