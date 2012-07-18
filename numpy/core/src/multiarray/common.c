@@ -33,21 +33,24 @@ _array_find_python_scalar_type(PyObject *op)
         }
     }
     else if (PyLong_Check(op)) {
-        /* if integer can fit into a longlong then return that*/
+        /* check to see if integer can fit into a longlong or ulonglong 
+           and return that --- otherwise return object */
         if ((PyLong_AsLongLong(op) == -1) && PyErr_Occurred()) {
             PyErr_Clear();
-            if ((PyLong_AsUnsignedLongLong(op) == (unsigned long long) -1) 
-                    && PyErr_Occurred()){
-                PyErr_Clear();
-        } 
-        else {
-            return PyArray_DescrFromType(NPY_ULONGLONG);
-        }
-            return PyArray_DescrFromType(NPY_OBJECT);
         }
         else {
             return PyArray_DescrFromType(NPY_LONGLONG);
         }
+
+        if ((PyLong_AsUnsignedLongLong(op) == (unsigned long long) -1) 
+            && PyErr_Occurred()){
+            PyErr_Clear();
+        } 
+        else {
+            return PyArray_DescrFromType(NPY_ULONGLONG);
+        } 
+        
+        return PyArray_DescrFromType(NPY_OBJECT);
     }
     return NULL;
 }
