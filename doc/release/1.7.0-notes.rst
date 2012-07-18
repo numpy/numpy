@@ -26,6 +26,13 @@ functions. To facilitate this transition, numpy 1.7 produces a
 FutureWarning if it detects that you may be attempting to write to
 such an array. See the documentation for np.diagonal for details.
 
+Similar to np.diagonal above, in a future version of numpy, indexing
+a record array by a list of field names will return a view onto the
+original array, instead of producing a copy as they do now. As with
+np.diagonal, numpy 1.7 produces a FutureWarning if it detects
+that you may be attemping to write to such an array. See the documentation
+for array indexing for details.
+
 The default casting rule for UFunc out= parameters has been changed from
 'unsafe' to 'same_kind'.  Most usages which violate the 'same_kind'
 rule are likely bugs, so this change may expose previously undetected

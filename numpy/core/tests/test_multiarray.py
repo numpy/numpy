@@ -1909,7 +1909,8 @@ class TestRecord(TestCase):
     def test_field_names(self):
         # Test unicode and 8-bit / byte strings can be used
         a = np.zeros((1,), dtype=[('f1', 'i4'),
-                                  ('f2', [('sf1', 'i4')])])
+                                  ('f2', 'i4'),
+                                  ('f3', [('sf1', 'i4')])])
         is_py3 = sys.version_info[0] >= 3
         if is_py3:
             funcs = (str,)
@@ -1934,12 +1935,18 @@ class TestRecord(TestCase):
             assert_raises(IndexError, b[0].__setitem__, fnn, 1)
             assert_raises(IndexError, b[0].__getitem__, fnn)
             # Subfield
-            fn2 = func('f2')
+            fn3 = func('f3')
             sfn1 = func('sf1')
-            b[fn2][sfn1] = 1
-            assert_equal(b[fn2][sfn1], 1)
-            assert_raises(ValueError, b[fn2].__setitem__, fnn, 1)
-            assert_raises(ValueError, b[fn2].__getitem__, fnn)
+            b[fn3][sfn1] = 1
+            assert_equal(b[fn3][sfn1], 1)
+            assert_raises(ValueError, b[fn3].__setitem__, fnn, 1)
+            assert_raises(ValueError, b[fn3].__getitem__, fnn)
+            # multiple Subfields
+            fn2 = func('f2')
+            b[fn2] = 3
+            assert_equal(b[['f1','f2']][0].tolist(), (2, 3))
+            assert_equal(b[['f2','f1']][0].tolist(), (3, 2))
+            assert_equal(b[['f1','f3']][0].tolist(), (2, (1,)))
         # non-ascii unicode field indexing is well behaved
         if not is_py3:
             raise SkipTest('non ascii unicode field indexing skipped; '
@@ -1948,6 +1955,47 @@ class TestRecord(TestCase):
             assert_raises(ValueError, a.__setitem__, u'\u03e0', 1)
             assert_raises(ValueError, a.__getitem__, u'\u03e0')
 
+    def test_field_names_deprecation(self):
+        import warnings
+        from numpy.testing.utils import WarningManager
+        def collect_warning_types(f, *args, **kwargs):
+            ctx = WarningManager(record=True)
+            warning_log = ctx.__enter__()
+            warnings.simplefilter("always")
+            try:
+                f(*args, **kwargs)
+            finally:
+                ctx.__exit__()
+            return [w.category for w in warning_log]
+        a = np.zeros((1,), dtype=[('f1', 'i4'),
+                                  ('f2', 'i4'),
+                                  ('f3', [('sf1', 'i4')])])
+        a['f1'][0] = 1
+        a['f2'][0] = 2
+        a['f3'][0] = (3,)
+        b = np.zeros((1,), dtype=[('f1', 'i4'),
+                                  ('f2', 'i4'),
+                                  ('f3', [('sf1', 'i4')])])
+        b['f1'][0] = 1
+        b['f2'][0] = 2
+        b['f3'][0] = (3,)
+
+        # All the different functions raise a warning, but not an error, and
+        # 'a' is not modified:
+        assert_equal(collect_warning_types(a[['f1','f2']].__setitem__, 0, (10,20)),
+                     [FutureWarning])
+        assert_equal(a, b)
+        # Views also warn
+        subset = a[['f1','f2']]
+        subset_view = subset.view()
+        assert_equal(collect_warning_types(subset_view['f1'].__setitem__, 0, 10),
+                     [FutureWarning])
+        # But the write goes through:
+        assert_equal(subset['f1'][0], 10)
+        # Only one warning per multiple field indexing, though (even if there are
+        # multiple views involved):
+        assert_equal(collect_warning_types(subset['f1'].__setitem__, 0, 10),
+                     [])
 
 class TestView(TestCase):
     def test_basic(self):
