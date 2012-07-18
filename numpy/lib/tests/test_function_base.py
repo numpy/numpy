@@ -1185,12 +1185,12 @@ class TestMeshgrid(TestCase):
         x = [1, 2, 3]
         y = [4, 5, 6, 7]
         [X, Y] = meshgrid(x, y, indexing='ij')
-        assert_(all(X == array([[1, 1, 1, 1],
-                               [2, 2, 2, 2],
-                               [3, 3, 3, 3]])))
-        assert_(all(Y == array([[4, 5, 6, 7],
-                               [4, 5, 6, 7],
-                               [4, 5, 6, 7]])))
+        assert_(np.all(X == np.array([[1, 1, 1, 1],
+                                      [2, 2, 2, 2],
+                                      [3, 3, 3, 3]])))
+        assert_(np.all(Y == np.array([[4, 5, 6, 7],
+                                      [4, 5, 6, 7],
+                                      [4, 5, 6, 7]])))
 
         # Test expected shapes:
         z = [8, 9]
@@ -1203,8 +1203,8 @@ class TestMeshgrid(TestCase):
 
     def test_sparse(self):
         [X, Y] = meshgrid([1, 2, 3], [4, 5, 6, 7], sparse=True)
-        assert_(all(X == array([[1, 2, 3]])))
-        assert_(all(Y == array([[4], [5], [6], [7]])))
+        assert_(np.all(X == np.array([[1, 2, 3]])))
+        assert_(np.all(Y == np.array([[4], [5], [6], [7]])))
 
 
 class TestPiecewise(TestCase):
