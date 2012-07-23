@@ -2027,7 +2027,7 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
 typedef void (*inplace_binop)(char *, char *);
 
 
-//is something like this already defined somewhere? where?
+/*is something like this already defined somewhere? where?*/
 /**begin repeat
 * #type  = npy_int8, npy_int16, npy_int32, npy_int64, npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_float16, npy_float32, npy_float64#
 * #typen = NPY_INT8, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT8, NPY_UINT16, NPY_UINT32, NPY_UINT64, NPY_FLOAT16, NPY_FLOAT32, NPY_FLOAT64#
@@ -2098,7 +2098,7 @@ map_increment(PyArrayMapIterObject *mit, PyObject *op, inplace_binop add_inplace
     }
 
     if ((it = (PyArrayIterObject *)\
-        PyArray_BroadcastToShape(arr, mit->dimensions, mit->nd))==NULL) {
+            PyArray_BroadcastToShape(arr, mit->dimensions, mit->nd)) == NULL) {
         Py_DECREF(arr);
         
         return -1;
@@ -2107,11 +2107,8 @@ map_increment(PyArrayMapIterObject *mit, PyObject *op, inplace_binop add_inplace
     index = mit->size;
 
     PyArray_MapIterReset(mit);
-    while(index--) {
+    while (index--) {
             (*add_inplace)(mit->dataptr, it->dataptr);
-            /*mit_dataptr = (npy_float64*)(mit->dataptr);
-            it_dataptr = (npy_float64*)(it->dataptr);
-            mit_dataptr[0] = mit_dataptr[0] + it_dataptr[0];*/
             
         PyArray_MapIterNext(mit);
         PyArray_ITER_NEXT(it);
@@ -2127,9 +2124,13 @@ inplace_increment(PyObject *dummy, PyObject *args)
 {
     PyObject *arg_a = NULL, *index=NULL, *inc=NULL;
     PyArrayObject *a;
+    inplace_binop add_inplace = NULL; 
+    int type_number = PyArray_TYPE(a);
+    int i =0;
+    PyArrayMapIterObject * mit
     
     if (!PyArg_ParseTuple(args, "OOO", &arg_a, &index,
-        &inc)) { 
+            &inc)) { 
         return NULL;
     }
 
@@ -2146,33 +2147,27 @@ inplace_increment(PyObject *dummy, PyObject *args)
         return NULL;
     }
 
-    inplace_binop add_inplace = NULL; 
-    int type_number = PyArray_TYPE(a);
-    int i =0;
-    while  (type_numbers[i] >= 0 && addition_funcs[i] != NULL)
+
+    while (type_numbers[i] >= 0 && addition_funcs[i] != NULL)
     {    
-        if (type_number == type_numbers[i])
-        {
+        if (type_number == type_numbers[i]) {
             add_inplace = addition_funcs[i];
             break;
         }
         i++ ;
     }
     
-    if (add_inplace == NULL)
-    {
+    if (add_inplace == NULL) {
         PyErr_SetString(PyExc_TypeError, "unsupported type for a"); 
         return NULL;
     }
     
-    PyArrayMapIterObject * mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, 0, 1);
-    if (mit == NULL) 
-    {
+    mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, 0, 1);
+    if (mit == NULL) {
         goto fail;
     }
     PyArray_MapIterBind(mit, a);
-    if (map_increment(mit, inc, add_inplace) != 0)
-    {
+    if (map_increment(mit, inc, add_inplace) != 0) {
         goto fail;
     }
     
