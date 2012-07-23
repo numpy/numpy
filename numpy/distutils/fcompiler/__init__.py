@@ -706,16 +706,16 @@ _default_compilers = (
     ('win32', ('gnu','intelv','absoft','compaqv','intelev','gnu95','g95',
                'intelvem', 'intelem')),
     ('cygwin.*', ('gnu','intelv','absoft','compaqv','intelev','gnu95','g95')),
-    ('linux.*', ('gnu','intel','lahey','pg','absoft','nag','vast','compaq',
-                'intele','intelem','gnu95','g95','pathf95')),
-    ('darwin.*', ('nag', 'absoft', 'ibm', 'intel', 'gnu', 'gnu95', 'g95', 'pg')),
+    ('linux.*', ('gnu95','intel','lahey','pg','absoft','nag','vast','compaq',
+                'intele','intelem','gnu','g95','pathf95')),
+    ('darwin.*', ('gnu95', 'nag', 'absoft', 'ibm', 'intel', 'gnu', 'g95', 'pg')),
     ('sunos.*', ('sun','gnu','gnu95','g95')),
     ('irix.*', ('mips','gnu','gnu95',)),
     ('aix.*', ('ibm','gnu','gnu95',)),
     # os.name mappings
     ('posix', ('gnu','gnu95',)),
     ('nt', ('gnu','gnu95',)),
-    ('mac', ('gnu','gnu95','pg')),
+    ('mac', ('gnu95','gnu','pg')),
     )
 
 fcompiler_class = None

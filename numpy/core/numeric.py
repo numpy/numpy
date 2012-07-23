@@ -697,9 +697,10 @@ def correlate(a, v, mode='valid', old_behavior=False):
         Refer to the `convolve` docstring.  Note that the default
         is `valid`, unlike `convolve`, which uses `full`.
     old_behavior : bool
-        If True, uses the old behavior from Numeric, (correlate(a,v) == correlate(v,
-        a), and the conjugate is not taken for complex arrays). If False, uses
-        the conventional signal processing definition (see note).
+        If True, uses the old behavior from Numeric,
+        (correlate(a,v) == correlate(v,a), and the conjugate is not taken
+        for complex arrays). If False, uses the conventional signal
+        processing definition.
 
     See Also
     --------
@@ -2345,7 +2346,14 @@ def setbufsize(size):
     return old
 
 def getbufsize():
-    """Return the size of the buffer used in ufuncs.
+    """
+    Return the size of the buffer used in ufuncs.
+
+    Returns
+    -------
+    getbufsize : int
+        Size of ufunc buffer in bytes.
+
     """
     return umath.geterrobj()[0]
 

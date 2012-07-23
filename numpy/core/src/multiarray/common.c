@@ -6,7 +6,7 @@
 #include "numpy/arrayobject.h"
 
 #include "npy_config.h"
-#include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 
 #include "usertypes.h"
 
@@ -33,12 +33,24 @@ _array_find_python_scalar_type(PyObject *op)
         }
     }
     else if (PyLong_Check(op)) {
-        /* if integer can fit into a longlong then return that*/
+        /* check to see if integer can fit into a longlong or ulonglong 
+           and return that --- otherwise return object */
         if ((PyLong_AsLongLong(op) == -1) && PyErr_Occurred()) {
             PyErr_Clear();
-            return PyArray_DescrFromType(NPY_OBJECT);
         }
-        return PyArray_DescrFromType(NPY_LONGLONG);
+        else {
+            return PyArray_DescrFromType(NPY_LONGLONG);
+        }
+
+        if ((PyLong_AsUnsignedLongLong(op) == (unsigned long long) -1) 
+            && PyErr_Occurred()){
+            PyErr_Clear();
+        } 
+        else {
+            return PyArray_DescrFromType(NPY_ULONGLONG);
+        } 
+        
+        return PyArray_DescrFromType(NPY_OBJECT);
     }
     return NULL;
 }

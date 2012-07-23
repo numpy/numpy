@@ -2178,13 +2178,13 @@ cdef class RandomState:
 
         References
         ----------
-        ..[1] NIST/SEMATECH e-Handbook of Statistical Methods, "Cauchy
+        .. [1] NIST/SEMATECH e-Handbook of Statistical Methods, "Cauchy
               Distribution",
               http://www.itl.nist.gov/div898/handbook/eda/section3/eda3663.htm
-        ..[2] Weisstein, Eric W. "Cauchy Distribution." From MathWorld--A
+        .. [2] Weisstein, Eric W. "Cauchy Distribution." From MathWorld--A
               Wolfram Web Resource.
               http://mathworld.wolfram.com/CauchyDistribution.html
-        ..[3] Wikipedia, "Cauchy distribution"
+        .. [3] Wikipedia, "Cauchy distribution"
               http://en.wikipedia.org/wiki/Cauchy_distribution
 
         Examples
@@ -2516,10 +2516,10 @@ cdef class RandomState:
 
         See Also
         --------
-        scipy.stats.distributions.weibull : probability density function,
-            distribution or cumulative density function, etc.
-
-        gumbel, scipy.stats.distributions.genextreme
+        scipy.stats.distributions.weibull_max
+        scipy.stats.distributions.weibull_min
+        scipy.stats.distributions.genextreme
+        gumbel
 
         Notes
         -----
@@ -3159,9 +3159,9 @@ cdef class RandomState:
 
         References
         ----------
-        ..[1] Brighton Webs Ltd., Rayleigh Distribution,
+        .. [1] Brighton Webs Ltd., Rayleigh Distribution,
               http://www.brighton-webs.co.uk/distributions/rayleigh.asp
-        ..[2] Wikipedia, "Rayleigh distribution"
+        .. [2] Wikipedia, "Rayleigh distribution"
               http://en.wikipedia.org/wiki/Rayleigh_distribution
 
         Examples
@@ -3247,12 +3247,12 @@ cdef class RandomState:
 
         References
         ----------
-        ..[1] Brighton Webs Ltd., Wald Distribution,
+        .. [1] Brighton Webs Ltd., Wald Distribution,
               http://www.brighton-webs.co.uk/distributions/wald.asp
-        ..[2] Chhikara, Raj S., and Folks, J. Leroy, "The Inverse Gaussian
+        .. [2] Chhikara, Raj S., and Folks, J. Leroy, "The Inverse Gaussian
               Distribution: Theory : Methodology, and Applications", CRC Press,
               1988.
-        ..[3] Wikipedia, "Wald distribution"
+        .. [3] Wikipedia, "Wald distribution"
               http://en.wikipedia.org/wiki/Wald_distribution
 
         Examples
@@ -3331,7 +3331,7 @@ cdef class RandomState:
 
         References
         ----------
-        ..[1] Wikipedia, "Triangular distribution"
+        .. [1] Wikipedia, "Triangular distribution"
               http://en.wikipedia.org/wiki/Triangular_distribution
 
         Examples
@@ -4392,33 +4392,29 @@ cdef class RandomState:
 
         """
         cdef npy_intp i, j
-        cdef int copy
 
         i = len(x) - 1
-        try:
-            j = len(x[0])
-        except:
-            j = 0
 
-        if (j == 0):
-            # adaptation of random.shuffle()
+        # Logic adapted from random.shuffle()
+        if isinstance(x, np.ndarray) and x.ndim > 1:
+            # For a multi-dimensional ndarray, indexing returns a view onto
+            # each row. So we can't just use ordinary assignment to swap the
+            # rows; we need a bounce buffer.
+            buf = np.empty(x.shape[1:], dtype=x.dtype)
+            while i > 0:
+                j = rk_interval(i, self.internal_state)
+                buf[...] = x[j]
+                x[j] = x[i]
+                x[i] = buf
+                i = i - 1
+        else:
+            # For single-dimensional arrays, lists, and any other Python
+            # sequence types, indexing returns a real object that's
+            # independent of the array contents, so we can just swap directly.
             while i > 0:
                 j = rk_interval(i, self.internal_state)
                 x[i], x[j] = x[j], x[i]
                 i = i - 1
-        else:
-            # make copies
-            copy = hasattr(x[0], 'copy')
-            if copy:
-                while(i > 0):
-                    j = rk_interval(i, self.internal_state)
-                    x[i], x[j] = x[j].copy(), x[i].copy()
-                    i = i - 1
-            else:
-                while(i > 0):
-                    j = rk_interval(i, self.internal_state)
-                    x[i], x[j] = x[j][:], x[i][:]
-                    i = i - 1
 
     def permutation(self, object x):
         """

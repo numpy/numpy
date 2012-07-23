@@ -257,8 +257,8 @@ typedef struct _tagPyUFuncObject {
         (UFUNC_ERR_WARN << UFUNC_SHIFT_INVALID)
 
 #if NPY_ALLOW_THREADS
-#define NPY_LOOP_BEGIN_THREADS do {if (!(loop->obj & UFUNC_OBJ_NEEDS_API)) _save = PyEval_SaveThread();} while (0)
-#define NPY_LOOP_END_THREADS   do {if (!(loop->obj & UFUNC_OBJ_NEEDS_API)) PyEval_RestoreThread(_save);} while (0)
+#define NPY_LOOP_BEGIN_THREADS do {if (!(loop->obj & UFUNC_OBJ_NEEDS_API)) _save = PyEval_SaveThread();} while (0);
+#define NPY_LOOP_END_THREADS   do {if (!(loop->obj & UFUNC_OBJ_NEEDS_API)) PyEval_RestoreThread(_save);} while (0);
 #else
 #define NPY_LOOP_BEGIN_THREADS
 #define NPY_LOOP_END_THREADS

@@ -359,7 +359,6 @@ def load(file, mmap_mode=None):
         own_fid = True
     elif isinstance(file, gzip.GzipFile):
         fid = seek_gzip_factory(file)
-        own_fid = True
     else:
         fid = file
 
@@ -371,7 +370,7 @@ def load(file, mmap_mode=None):
         fid.seek(-N, 1) # back-up
         if magic.startswith(_ZIP_PREFIX):  # zip-file (assume .npz)
             own_fid = False
-            return NpzFile(fid, own_fid=True)
+            return NpzFile(fid, own_fid=own_fid)
         elif magic == format.MAGIC_PREFIX: # .npy file
             if mmap_mode:
                 return format.open_memmap(file, mode=mmap_mode)
@@ -471,8 +470,7 @@ def savez(file, *args, **kwds):
     --------
     save : Save a single array to a binary file in NumPy format.
     savetxt : Save an array to a file as plain text.
-    numpy.savez_compressed : Save several arrays into a compressed .npz file
-    format
+    savez_compressed : Save several arrays into a compressed .npz file format
 
     Notes
     -----
@@ -1293,7 +1291,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     """
     # Py3 data conversions to bytes, for convenience
-    comments = asbytes(comments)
+    if comments is not None:
+        comments = asbytes(comments)
     if isinstance(delimiter, unicode):
         delimiter = asbytes(delimiter)
     if isinstance(missing, unicode):

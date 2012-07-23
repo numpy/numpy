@@ -671,7 +671,10 @@ def configuration(parent_package='',top_path=None):
 
     # This library is created for the build but it is not installed
     config.add_library('npysort',
-            sources = [join('src', 'npysort', 'sort.c.src')])
+            sources = [join('src', 'npysort', 'quicksort.c.src'),
+                       join('src', 'npysort', 'mergesort.c.src'),
+                       join('src', 'npysort', 'heapsort.c.src')])
+
 
     #######################################################################
     #                        multiarray module                            #

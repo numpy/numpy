@@ -324,6 +324,10 @@ multiarray_funcs_api = {
     'PyArray_DebugPrint':                   285,
     'PyArray_FailUnlessWriteable':          286,
     'PyArray_SetUpdateIfCopyBase':          287,
+    'PyDataMem_NEW':                        288,
+    'PyDataMem_FREE':                       289,
+    'PyDataMem_RENEW':                      290,
+    'PyDataMem_SetEventHook':               291,
 }
 
 ufunc_types_api = {

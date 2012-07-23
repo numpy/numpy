@@ -10,7 +10,9 @@ Library:
             src/npymath/halffloat.c
     CompiledLibrary: npysort
         Sources:
-            src/npysort/sort.c.src
+            src/npysort/quicksort.c.src,
+            src/npysort/mergesort.c.src,
+            src/npysort/heapsort.c.src
     Extension: multiarray
         Sources:
             src/multiarray/multiarraymodule_onefile.c

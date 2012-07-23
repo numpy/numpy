@@ -38,8 +38,8 @@ Create your own forked copy of NumPy_
 
    .. image:: forking_button.png
 
-   Now, after a short pause and some 'Hardcore forking action', you
-   should find yourself at the home page for your own forked copy of NumPy_.
+   After a short pause, you should find yourself at the home page for
+   your own forked copy of NumPy_.
 
 .. include:: git_links.inc
 
@@ -49,7 +49,7 @@ Create your own forked copy of NumPy_
 Set up your fork
 ################
 
-First you follow the instructions for :ref:`forking`. 
+First you follow the instructions for :ref:`forking`.
 
 Overview
 ========
@@ -110,4 +110,3 @@ Just for your own satisfaction, show yourself that you now have a new
    origin	git@github.com:your-user-name/numpy.git (push)
 
 .. include:: git_links.inc
-

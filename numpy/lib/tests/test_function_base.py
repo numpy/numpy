@@ -145,7 +145,8 @@ class TestInsert(TestCase):
         assert_equal(insert(a, 0, 1), [1, 1, 2, 3])
         assert_equal(insert(a, 3, 1), [1, 2, 3, 1])
         assert_equal(insert(a, [1, 1, 1], [1, 2, 3]), [1, 1, 2, 3, 2, 3])
-
+        assert_equal(insert(a, 1,[1,2,3]), [1, 1, 2, 3, 2, 3])
+        assert_equal(insert(a,[1,2,3],9),[1,9,2,9,3,9])
 
 class TestAmax(TestCase):
     def test_basic(self):
@@ -1176,6 +1177,34 @@ class TestMeshgrid(TestCase):
                                [5, 5, 5],
                                [6, 6, 6],
                                [7, 7, 7]])))
+
+    def test_single_input(self):
+        assert_raises(ValueError, meshgrid, np.arange(5))
+
+    def test_indexing(self):
+        x = [1, 2, 3]
+        y = [4, 5, 6, 7]
+        [X, Y] = meshgrid(x, y, indexing='ij')
+        assert_(np.all(X == np.array([[1, 1, 1, 1],
+                                      [2, 2, 2, 2],
+                                      [3, 3, 3, 3]])))
+        assert_(np.all(Y == np.array([[4, 5, 6, 7],
+                                      [4, 5, 6, 7],
+                                      [4, 5, 6, 7]])))
+
+        # Test expected shapes:
+        z = [8, 9]
+        assert_(meshgrid(x, y)[0].shape == (4, 3))
+        assert_(meshgrid(x, y, indexing='ij')[0].shape == (3, 4))
+        assert_(meshgrid(x, y, z)[0].shape == (4, 3, 2))
+        assert_(meshgrid(x, y, z, indexing='ij')[0].shape == (3, 4, 2))
+
+        assert_raises(ValueError, meshgrid, x, y, indexing='notvalid')
+
+    def test_sparse(self):
+        [X, Y] = meshgrid([1, 2, 3], [4, 5, 6, 7], sparse=True)
+        assert_(np.all(X == np.array([[1, 2, 3]])))
+        assert_(np.all(Y == np.array([[4], [5], [6], [7]])))
 
 
 class TestPiecewise(TestCase):

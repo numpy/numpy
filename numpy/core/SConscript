@@ -429,7 +429,9 @@ env.Install('$distutils_installdir/lib/npy-pkg-config', mlib_ini)
 env.Install('$distutils_installdir/lib/npy-pkg-config', npymath_ini)
 
 # npysort core lib
-npysort_src = [env.GenerateFromTemplate(pjoin('src', 'npysort', 'sort.c.src'))]
+npysort_src = [env.GenerateFromTemplate(pjoin('src', 'npysort', 'quicksort.c.src')),
+               env.GenerateFromTemplate(pjoin('src', 'npysort', 'mergesort.c.src')),
+               env.GenerateFromTemplate(pjoin('src', 'npysort', 'heapsort.c.src'))]
 env.StaticExtLibrary("npysort", npysort_src)
 env.Prepend(LIBS=["npysort"])
 env.Prepend(LIBPATH=["."])

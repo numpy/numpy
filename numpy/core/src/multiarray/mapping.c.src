@@ -9,7 +9,7 @@
 
 #include "npy_config.h"
 
-#include "numpy/npy_3kcompat.h"
+#include "npy_pycompat.h"
 
 #include "common.h"
 #include "iterators.h"
@@ -976,6 +976,10 @@ array_subscript(PyArrayObject *self, PyObject *op)
             obj = PyObject_CallMethod(_numpy_internal,
                     "_index_fields", "OO", self, op);
             Py_DECREF(_numpy_internal);
+            if (obj == NULL) {
+                return NULL;
+            }
+            PyArray_ENABLEFLAGS((PyArrayObject*)obj, NPY_ARRAY_WARN_ON_WRITE);
             return obj;
         }
     }
@@ -2188,7 +2192,7 @@ inplace_increment(PyObject *dummy, PyObject *args)
     PyObject *arg_a = NULL, *index=NULL, *inc=NULL;
     PyArrayObject *a;
     inplace_binop add_inplace = NULL; 
-    int type_number = PyArray_TYPE(a);
+    int type_number = -1;
     int i =0;
     PyArrayMapIterObject * mit;
     
@@ -2203,6 +2207,7 @@ inplace_increment(PyObject *dummy, PyObject *args)
         PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed.");
         return NULL; 
     }
+    type_number = PyArray_TYPE(a);
     
     if (!PyArray_ISWRITEABLE(a)) {
         PyErr_SetString(PyExc_RuntimeError,

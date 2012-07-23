@@ -119,11 +119,12 @@ class NoseTester(object):
 
     Notes
     -----
-    The default for `raise_warnings` is ``(DeprecationWarning, RuntimeWarning)``
-    for the master branch of NumPy, and ``()`` for maintenance branches and
-    released versions.  The purpose of this switching behavior is to catch as
-    many warnings as possible during development, but not give problems for
-    packaging of released versions.
+    The default for `raise_warnings` is
+    ``(DeprecationWarning, RuntimeWarning)`` for the master branch of NumPy,
+    and ``()`` for maintenance branches and released versions.  The purpose
+    of this switching behavior is to catch as many warnings as possible
+    during development, but not give problems for packaging of released
+    versions.
 
     """
     # Stuff to exclude from tests. These are from numpy.distutils

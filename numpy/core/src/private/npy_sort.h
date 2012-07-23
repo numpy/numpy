@@ -6,6 +6,10 @@
 #include <numpy/npy_common.h>
 #include <numpy/ndarraytypes.h>
 
+#define NPY_ENOMEM 1
+#define NPY_ECOMP 2
+
+typedef int (*npy_comparator)(const void *, const void *);
 
 int quicksort_bool(npy_bool *vec, npy_intp cnt, void *null);
 int heapsort_bool(npy_bool *vec, npy_intp cnt, void *null);
@@ -165,5 +169,10 @@ int mergesort_unicode(npy_ucs4 *vec, npy_intp cnt, PyArrayObject *arr);
 int aquicksort_unicode(npy_ucs4 *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
 int aheapsort_unicode(npy_ucs4 *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
 int amergesort_unicode(npy_ucs4 *vec, npy_intp *ind, npy_intp cnt, PyArrayObject *arr);
+
+
+int npy_quicksort(void *base, size_t num, size_t size, npy_comparator cmp);
+int npy_heapsort(void *base, size_t num, size_t size, npy_comparator cmp);
+int npy_mergesort(void *base, size_t num, size_t size, npy_comparator cmp);
 
 #endif

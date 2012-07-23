@@ -327,10 +327,7 @@ struct NpyAuxData_tag {
    * allocated.
    */
 
-  /* Data buffer */
-#define PyDataMem_NEW(size) ((char *)malloc(size))
-#define PyDataMem_FREE(ptr)  free(ptr)
-#define PyDataMem_RENEW(ptr,size) ((char *)realloc(ptr,size))
+  /* Data buffer - PyDataMem_NEW/FREE/RENEW are in multiarraymodule.c */
 
 #define NPY_USE_PYMEM 1
 
@@ -914,21 +911,21 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #if NPY_ALLOW_THREADS
 #define NPY_BEGIN_ALLOW_THREADS Py_BEGIN_ALLOW_THREADS
 #define NPY_END_ALLOW_THREADS Py_END_ALLOW_THREADS
-#define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL
-#define NPY_BEGIN_THREADS do {_save = PyEval_SaveThread();} while (0)
-#define NPY_END_THREADS   do {if (_save) PyEval_RestoreThread(_save);} while (0)
+#define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL;
+#define NPY_BEGIN_THREADS do {_save = PyEval_SaveThread();} while (0);
+#define NPY_END_THREADS   do {if (_save) PyEval_RestoreThread(_save);} while (0);
 
 #define NPY_BEGIN_THREADS_DESCR(dtype) \
         do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI))) \
-                NPY_BEGIN_THREADS;} while (0)
+                NPY_BEGIN_THREADS;} while (0);
 
 #define NPY_END_THREADS_DESCR(dtype) \
         do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI))) \
-                NPY_END_THREADS; } while (0)
+                NPY_END_THREADS; } while (0);
 
-#define NPY_ALLOW_C_API_DEF  PyGILState_STATE __save__
-#define NPY_ALLOW_C_API      do {__save__ = PyGILState_Ensure();} while (0)
-#define NPY_DISABLE_C_API    do {PyGILState_Release(__save__);} while (0)
+#define NPY_ALLOW_C_API_DEF  PyGILState_STATE __save__;
+#define NPY_ALLOW_C_API      do {__save__ = PyGILState_Ensure();} while (0);
+#define NPY_DISABLE_C_API    do {PyGILState_Release(__save__);} while (0);
 #else
 #define NPY_BEGIN_ALLOW_THREADS
 #define NPY_END_ALLOW_THREADS
@@ -1713,6 +1710,13 @@ typedef struct {
                            * does not have ARR_HAS_DESCR flag set)
                            */
 } PyArrayInterface;
+
+/*
+ * This is a function for hooking into the PyDataMem_NEW/FREE/RENEW functions.
+ * See the documentation for PyDataMem_SetEventHook.
+ */
+typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
+                                       void *user_data);
 
 #if !(defined(NPY_NO_DEPRECATED_API) && (NPY_API_VERSION <= NPY_NO_DEPRECATED_API))
 #include "npy_deprecated_api.h"

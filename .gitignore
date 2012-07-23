@@ -13,6 +13,8 @@
 .*.sw[nop]
 .sw[nop]
 *.tmp
+*.vim
+tags
 
 # Compiled source #
 ###################
@@ -90,3 +92,29 @@ numpy/core/include/numpy/_numpyconfig.h
 numpy/version.py
 site.cfg
 .tox
+numpy/core/include/numpy/__multiarray_api.c
+numpy/core/include/numpy/__ufunc_api.c
+numpy/core/include/numpy/__umath_generated.c
+numpy/core/include/numpy/config.h
+numpy/core/include/numpy/multiarray_api.txt
+numpy/core/include/numpy/ufunc_api.txt
+numpy/core/lib/
+numpy/core/src/multiarray/arraytypes.c
+numpy/core/src/multiarray/einsum.c
+numpy/core/src/multiarray/lowlevel_strided_loops.c
+numpy/core/src/multiarray/multiarray_tests.c
+numpy/core/src/multiarray/nditer_templ.c
+numpy/core/src/multiarray/scalartypes.c
+numpy/core/src/npymath/ieee754.c
+numpy/core/src/npymath/npy_math.c
+numpy/core/src/npymath/npy_math_complex.c
+numpy/core/src/npysort/heapsort.c
+numpy/core/src/npysort/mergesort.c
+numpy/core/src/npysort/quicksort.c
+numpy/core/src/npysort/sort.c
+numpy/core/src/scalarmathmodule.c
+numpy/core/src/umath/funcs.inc
+numpy/core/src/umath/loops.c
+numpy/core/src/umath/umath_tests.c
+numpy/distutils/__config__.py
+doc/source/reference/generated
