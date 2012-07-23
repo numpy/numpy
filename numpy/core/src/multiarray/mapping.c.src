@@ -2131,7 +2131,7 @@ inplace_increment(PyObject *dummy, PyObject *args)
     inplace_binop add_inplace = NULL; 
     int type_number = -1;
     int i =0;
-    PyArrayMapIterObject * mit
+    PyArrayMapIterObject * mit;
     
     if (!PyArg_ParseTuple(args, "OOO", &arg_a, &index,
             &inc)) { 
