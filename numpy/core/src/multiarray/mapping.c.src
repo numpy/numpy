@@ -2157,20 +2157,25 @@ inplace_increment(PyObject *dummy, PyObject *args)
             &inc)) { 
         return NULL;
     }
-
-    a = (PyArrayObject *) arg_a;
-    
-    if (PyArray_NDIM(a) == 0) {
-        PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed.");
-        return NULL; 
+    if (arg_a->ob_type != &PyArray_Type){
+         PyErr_SetString(PyExc_ValueError, "needs an ndarray as first argument");
+         return NULL;
     }
-    type_number = PyArray_TYPE(a);
+    a = (PyArrayObject *) arg_a;
     
     if (!PyArray_ISWRITEABLE(a)) {
         PyErr_SetString(PyExc_RuntimeError,
                         "array is not writeable");
         return NULL;
     }
+
+    if (PyArray_NDIM(a) == 0) {
+        PyErr_SetString(PyExc_IndexError, "0-d arrays can't be indexed.");
+        return NULL; 
+    }
+    type_number = PyArray_TYPE(a);
+    
+
 
 
     while (type_numbers[i] >= 0 && addition_funcs[i] != NULL){    
