@@ -2032,108 +2032,45 @@ typedef void (*inplace_binop)(char *, char *);
 
 
 /*is something like this already defined somewhere? where?*/
-
 /**begin repeat
-* #bits = 8, 16, 32, 64, 128, 256#
+* #type  = npy_int8, npy_int16, npy_int32, npy_int64, npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_float16, npy_float32, npy_float64#
+* #typen = NPY_INT8, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT8, NPY_UINT16, NPY_UINT32, NPY_UINT64, NPY_FLOAT16, NPY_FLOAT32, NPY_FLOAT64#
 */
-/**begin repeat1
-* #type = int, uint#
-* #typen = INT, UINT#
-*/
-#if defined(NPY_@typen@@bits@)
-static void npy_@type@@bits@_inplace_add(char * l_op, char* r_op)
+static void @type@_inplace_add(char * l_op, char* r_op)
 {
-    ((npy_@type@@bits@*)l_op)[0] = ((npy_@type@@bits@*)l_op)[0] + ((npy_@type@@bits@ *)r_op)[0];
+    ((@type@*)l_op)[0] = ((@type@*)l_op)[0] + ((@type@ *)r_op)[0];
 }
-#endif
-/**end repeat1**/
 /**end repeat**/
 
 /**begin repeat
-* #bits = 16, 32 , 64, 80, 96, 128, 256#
+* #type  = npy_complex64, npy_complex128#
+* #typen = NPY_COMPLEX64, NPY_COMPLEX128#
 */
-#if defined(NPY_FLOAT@bits@)
-static void npy_float@bits@_inplace_add(char * l_op, char* r_op)
+static void @type@_inplace_add(char * l_op, char* r_op)
 {
-    ((npy_float@bits@*)l_op)[0] = ((npy_float@bits@*)l_op)[0] + ((npy_float@bits@ *)r_op)[0];
+    ((@type@*)l_op)[0].real = ((@type@*)l_op)[0].real + ((@type@ *)r_op)[0].real;
+    ((@type@*)l_op)[0].imag = ((@type@*)l_op)[0].imag + ((@type@ *)r_op)[0].imag;
 }
-#endif
-/**end repeat**/
-
-
-/**begin repeat
-* #bits = 32, 64, 128, 160, 192, 512#
-*/
-#if defined(NPY_COMPLEX@bits@)
-static void npy_complex@bits@_inplace_add(char * l_op, char* r_op)
-{
-    ((npy_complex@bits@*)l_op)[0].real = ((npy_complex@bits@*)l_op)[0].real + ((npy_complex@bits@ *)r_op)[0].real;
-    ((npy_complex@bits@*)l_op)[0].imag = ((npy_complex@bits@*)l_op)[0].imag + ((npy_complex@bits@ *)r_op)[0].imag;
-}
-#endif
 /**end repeat**/
 
 inplace_binop addition_funcs[] = {
 /**begin repeat
-* #bits = 8, 16, 32, 64, 128, 256#
+* #type  = npy_int8, npy_int16, npy_int32, npy_int64, npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_float16, npy_float32, npy_float64, npy_complex64, npy_complex128#
+* #typen = NPY_INT8, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT8, NPY_UINT16, NPY_UINT32, NPY_UINT64, NPY_FLOAT16, NPY_FLOAT32, NPY_FLOAT64, NPY_COMPLEX64, NPY_COMPLEX128#
 */
-/**begin repeat1
-* #type = int, uint#
-* #typen = INT, UINT#
-*/
-#if defined(NPY_@typen@@bits@)
-npy_@type@@bits@_inplace_add,
-#endif
-/**end repeat1**/
-/**end repeat**/
+@type@_inplace_add,
 
-/**begin repeat
-* #bits = 16, 32 , 64, 80, 96, 128, 256#
-*/
-#if defined(NPY_FLOAT@bits@)
-npy_float@bits@_inplace_add,
-#endif
 /**end repeat**/
-
-/**begin repeat
-* #bits = 32, 64, 128, 160, 192, 512#
-*/
-#if defined(NPY_COMPLEX@bits@)
-npy_complex@bits@_inplace_add,
-#endif
-/**end repeat**/
-
 NULL}; 
 
 int type_numbers[] = {
 /**begin repeat
-* #bits = 8, 16, 32, 64, 128, 256#
+* #type  = npy_int8, npy_int16, npy_int32, npy_int64, npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_float16, npy_float32, npy_float64, npy_complex64, npy_complex128#
+* #typen = NPY_INT8, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT8, NPY_UINT16, NPY_UINT32, NPY_UINT64, NPY_FLOAT16, NPY_FLOAT32, NPY_FLOAT64, NPY_COMPLEX64, NPY_COMPLEX128#
 */
-/**begin repeat1
-* #typen = INT, UINT#
-*/
-#if defined(NPY_@typen@@bits@)
-NPY_@typen@@bits@,
-#endif
-/**end repeat1**/
-/**end repeat**/
+@typen@,
 
-/**begin repeat
-* #bits = 16, 32 , 64, 80, 96, 128, 256#
-*/
-#if defined(NPY_FLOAT@bits@)
-NPY_FLOAT@bits@,
-#endif
 /**end repeat**/
-
-/**begin repeat
-* #bits = 32, 64, 128, 160, 192, 512#
-*/
-#if defined(NPY_COMPLEX@bits@)
-NPY_COMPLEX@bits@,
-#endif
-/**end repeat**/
-
 -1000}; 
 
 static int
@@ -2194,7 +2131,7 @@ inplace_increment(PyObject *dummy, PyObject *args)
     inplace_binop add_inplace = NULL; 
     int type_number = -1;
     int i =0;
-    PyArrayMapIterObject * mit;
+    PyArrayMapIterObject * mit
     
     if (!PyArg_ParseTuple(args, "OOO", &arg_a, &index,
             &inc)) { 
