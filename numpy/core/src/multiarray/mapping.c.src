@@ -2033,43 +2033,63 @@ typedef void (*inplace_binop)(char *, char *);
 
 /*is something like this already defined somewhere? where?*/
 /**begin repeat
-* #type  = npy_int8, npy_int16, npy_int32, npy_int64, npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_float16, npy_float32, npy_float64#
-* #typen = NPY_INT8, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT8, NPY_UINT16, NPY_UINT32, NPY_UINT64, NPY_FLOAT16, NPY_FLOAT32, NPY_FLOAT64#
+* #type  = npy_int8, npy_int16, npy_int32, npy_int64, npy_int128, npy_int256,
+           npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_uint128, npy_uint256, 
+           npy_float16, npy_float32, npy_float64, npy_float80, npy_float96, npy_float128, npy_float256#
+
+* #typen = NPY_INT8, NPY_INT16, NPY_INT32, NPY_INT64, NPY_INT128, NPY_INT256,
+           NPY_UINT8, NPY_UINT16, NPY_UINT32, NPY_UINT64, NPY_UINT128, NPY_UINT256, 
+           NPY_FLOAT16, NPY_FLOAT32, NPY_FLOAT64, NPY_FLOAT80, NPY_FLOAT96, NPY_FLOAT128, NPY_FLOAT256#
 */
+#if defined(@typen@)
 static void @type@_inplace_add(char * l_op, char* r_op)
 {
     ((@type@*)l_op)[0] = ((@type@*)l_op)[0] + ((@type@ *)r_op)[0];
 }
+#endif
 /**end repeat**/
 
 /**begin repeat
-* #type  = npy_complex64, npy_complex128#
-* #typen = NPY_COMPLEX64, NPY_COMPLEX128#
+* #type  = npy_complex32, npy_complex64, npy_complex128, npy_complex160, npy_complex192, npy_complex512#
+* #typen = NPY_COMPLEX32, NPY_COMPLEX64, NPY_COMPLEX128, NPY_COMPLEX160, NPY_COMPLEX192, NPY_COMPLEX512#
 */
+#if defined(@typen@)
 static void @type@_inplace_add(char * l_op, char* r_op)
 {
     ((@type@*)l_op)[0].real = ((@type@*)l_op)[0].real + ((@type@ *)r_op)[0].real;
     ((@type@*)l_op)[0].imag = ((@type@*)l_op)[0].imag + ((@type@ *)r_op)[0].imag;
 }
+#endif
 /**end repeat**/
 
 inplace_binop addition_funcs[] = {
 /**begin repeat
-* #type  = npy_int8, npy_int16, npy_int32, npy_int64, npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_float16, npy_float32, npy_float64, npy_complex64, npy_complex128#
-* #typen = NPY_INT8, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT8, NPY_UINT16, NPY_UINT32, NPY_UINT64, NPY_FLOAT16, NPY_FLOAT32, NPY_FLOAT64, NPY_COMPLEX64, NPY_COMPLEX128#
-*/
-@type@_inplace_add,
+* #type  = npy_int8, npy_int16, npy_int32, npy_int64, npy_int128, npy_int256,
+           npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_uint128, npy_uint256, 
+           npy_float16, npy_float32, npy_float64, npy_float80, npy_float96, npy_float128, npy_float256,
+           npy_complex32, npy_complex64, npy_complex128, npy_complex160, npy_complex192, npy_complex512#
 
+* #typen = NPY_INT8, NPY_INT16, NPY_INT32, NPY_INT64, NPY_INT128, NPY_INT256,
+           NPY_UINT8, NPY_UINT16, NPY_UINT32, NPY_UINT64, NPY_UINT128, NPY_UINT256, 
+           NPY_FLOAT16, NPY_FLOAT32, NPY_FLOAT64, NPY_FLOAT80, NPY_FLOAT96, NPY_FLOAT128, NPY_FLOAT256,
+           NPY_COMPLEX32, NPY_COMPLEX64, NPY_COMPLEX128, NPY_COMPLEX160, NPY_COMPLEX192, NPY_COMPLEX512#
+*/
+#if defined(@typen@)
+@type@_inplace_add,
+#endif
 /**end repeat**/
 NULL}; 
 
 int type_numbers[] = {
 /**begin repeat
-* #type  = npy_int8, npy_int16, npy_int32, npy_int64, npy_uint8, npy_uint16, npy_uint32, npy_uint64, npy_float16, npy_float32, npy_float64, npy_complex64, npy_complex128#
-* #typen = NPY_INT8, NPY_INT16, NPY_INT32, NPY_INT64, NPY_UINT8, NPY_UINT16, NPY_UINT32, NPY_UINT64, NPY_FLOAT16, NPY_FLOAT32, NPY_FLOAT64, NPY_COMPLEX64, NPY_COMPLEX128#
+* #typen = NPY_INT8, NPY_INT16, NPY_INT32, NPY_INT64, NPY_INT128, NPY_INT256,
+           NPY_UINT8, NPY_UINT16, NPY_UINT32, NPY_UINT64, NPY_UINT128, NPY_UINT256, 
+           NPY_FLOAT16, NPY_FLOAT32, NPY_FLOAT64, NPY_FLOAT80, NPY_FLOAT96, NPY_FLOAT128, NPY_FLOAT256,
+           NPY_COMPLEX32, NPY_COMPLEX64, NPY_COMPLEX128, NPY_COMPLEX160, NPY_COMPLEX192, NPY_COMPLEX512#
 */
+#if defined(@typen@)
 @typen@,
-
+#endif
 /**end repeat**/
 -1000}; 
 
@@ -2153,8 +2173,7 @@ inplace_increment(PyObject *dummy, PyObject *args)
     }
 
 
-    while (type_numbers[i] >= 0 && addition_funcs[i] != NULL)
-    {    
+    while (type_numbers[i] >= 0 && addition_funcs[i] != NULL){    
         if (type_number == type_numbers[i]) {
             add_inplace = addition_funcs[i];
             break;
