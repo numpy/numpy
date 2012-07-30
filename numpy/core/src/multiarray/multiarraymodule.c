@@ -602,6 +602,7 @@ PyArray_Concatenate(PyObject *op, int axis)
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
         Py_DECREF(arrays[iarrays]);
     }
+    PyArray_free(arrays);
 
     return (PyObject *)ret;
 
@@ -610,6 +611,7 @@ fail:
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
         Py_DECREF(arrays[iarrays]);
     }
+    PyArray_free(arrays);
 
     return NULL;
 }
