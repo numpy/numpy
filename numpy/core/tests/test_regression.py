@@ -1601,6 +1601,14 @@ class TestRegression(TestCase):
         s = re.sub("a(.)", "\x01\\1", "a_")
         assert_equal(s[0], "\x01")
 
+    def test_pickle_bytes_overwrite(self):
+        if sys.version_info[0] >= 3:
+            data = np.array([1], dtype='b')
+            data = pickle.loads(pickle.dumps(data))
+            data[0] = 0xdd
+            bytestring = "\x01  ".encode('ascii')
+            assert_equal(bytestring[0:1], '\x01'.encode('ascii'))
+
     def test_structured_type_to_object(self):
         a_rec = np.array([(0,1), (3,2)], dtype='i4,i8')
         a_obj = np.empty((2,), dtype=object)
