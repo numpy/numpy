@@ -644,25 +644,18 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 #if PY_VERSION_HEX >= 0x03030000
     if (type_num == NPY_UNICODE) {
         PyObject *u, *args;
-        char *buffer;
+        int byteorder;
 
-        if (swap) {
-            buffer = malloc(itemsize);
-            if (buffer == NULL) {
-                PyErr_NoMemory();
-                return NULL;
-            }
-            memcpy(buffer, data, itemsize);
-            byte_swap_vector(buffer, itemsize >> 2, 4);
-        }
-        else {
-            buffer = data;
-        }
-        u = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, buffer,
-                itemsize >> 2);
-        if (swap) {
-            free(buffer);
-        }
+#if NPY_BYTE_ORDER == NPY_LITTLE_ENDIAN
+        byteorder = -1;
+#elif NPY_BYTE_ORDER == NPY_BIG_ENDIAN
+        byteorder = +1;
+#else
+        #error Endianness undefined ?
+#endif
+        if (swap) byteorder *= -1;
+
+        u = PyUnicode_DecodeUTF32(data, itemsize, NULL, &byteorder);
         if (u == NULL) {
             return NULL;
         }
