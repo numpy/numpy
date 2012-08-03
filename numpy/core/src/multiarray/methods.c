@@ -1587,8 +1587,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
         /* Check that the string is not interned */
         if (!_IsAligned(self) || swap || PyString_CHECK_INTERNED(rawdata)) {
 #else
-        /* Bytes must always be considered immutable */
-        if (1) {
+        /* Bytes should always be considered immutable, but we just grab the
+         * pointer if they are large, to save memory. */
+        if (!_IsAligned(self) || swap || (len <= 1000)) {
 #endif
             npy_intp num = PyArray_NBYTES(self);
             fa->data = PyDataMem_NEW(num);
