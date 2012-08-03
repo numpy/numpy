@@ -645,6 +645,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
     if (type_num == NPY_UNICODE) {
         PyObject *u, *args;
         char *buffer;
+
         if (swap) {
             buffer = malloc(itemsize);
             if (buffer == NULL) {
@@ -653,7 +654,8 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             }
             memcpy(buffer, data, itemsize);
             byte_swap_vector(buffer, itemsize >> 2, 4);
-        } else {
+        }
+        else {
             buffer = data;
         }
         u = PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, buffer,
@@ -778,7 +780,7 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
 #endif
             return obj;
         }
-#endif // PY_VERSION_HEX < 0x03030000
+#endif /* PY_VERSION_HEX < 0x03030000 */
         else {
             PyVoidScalarObject *vobj = (PyVoidScalarObject *)obj;
             vobj->base = NULL;
