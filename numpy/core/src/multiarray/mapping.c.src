@@ -165,7 +165,10 @@ array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v)
 
 /* -------------------------------------------------------------- */
 
-static void
+/*NUMPY_API
+ * Swap axes.
+ */
+NPY_NO_EXPORT void
 _swap_axes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
 {
     PyObject *new;
@@ -1582,8 +1585,9 @@ _convert_obj(PyObject *obj, PyArrayIterObject **iter)
     }
     return 1;
 }
-
-/* Reset the map iterator to the beginning */
+/*
+Reset the map iterator to the beginning
+*/
 NPY_NO_EXPORT void
 PyArray_MapIterReset(PyArrayMapIterObject *mit)
 {
@@ -1627,7 +1631,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
     return;
 }
 
-/*
+/*NUMPY_API
  * This function needs to update the state of the map iterator
  * and point mit->dataptr to the memory-location of the next object
  */
@@ -1851,7 +1855,6 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     return;
 }
 
-
 NPY_NO_EXPORT PyObject *
 PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
 {
@@ -2027,6 +2030,19 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
     return NULL;
 }
 
+/*NUMPY_API
+*/
+NPY_NO_EXPORT PyObject *
+PyArray_MapIterArray(PyArrayObject * a, PyObject * index, int oned, int fancy)
+{
+    PyArrayMapIterObject * mit;
+    mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, oned, fancy);
+    if (mit != NULL) {
+        PyArray_MapIterBind(mit, a);
+    }
+    return mit;
+}
+    
 
 typedef void (*inplace_map_binop)(PyArrayMapIterObject *, PyArrayIterObject *);
 
@@ -2195,11 +2211,11 @@ inplace_increment(PyObject *dummy, PyObject *args)
         return NULL;
     }
     
-    mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, 0, 1);
+    mit = (PyArrayMapIterObject *) PyArray_MapIterArray(a, index, 0, 1);
     if (mit == NULL) {
         goto fail;
     }
-    PyArray_MapIterBind(mit, a);
+
     if (map_increment(mit, inc, add_inplace) != 0) {
         goto fail;
     }
