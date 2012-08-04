@@ -2592,7 +2592,11 @@ finish:
     *((npy_@name@ *)dest) = *((npy_@name@ *)src);
 #elif @default@ == 1 /* unicode and strings */
     if (itemsize == 0) { /* unicode */
+#if PY_VERSION_HEX >= 0x03030000
+        itemsize = PyUnicode_GetLength(robj) * PyUnicode_KIND(robj);
+#else
         itemsize = ((PyUnicodeObject *)robj)->length * sizeof(Py_UNICODE);
+#endif
     }
     memcpy(dest, src, itemsize);
     /* @default@ == 2 won't get here */
