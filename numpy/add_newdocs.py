@@ -2229,60 +2229,6 @@ add_newdoc('numpy.core', 'vdot',
     30
 
     """)
-	
-add_newdoc('numpy.core.multiarray', 'inplace_increment',
-    """
-    inplace_increment(a, index, inc)
-
-    Increments `a` inplace by `inc` in the locations specified by the index tuple
-	`index`. Supports advanced indexing. Repeated indexes are repeatedly
-	incremented.
-
-    Parameters
-    ----------
-    a : ndarray
-		Array to increment.
-    index : tuple of indexes
-		Supports advanced indexing.
-	inc : array_like
-		How much to increment `a`.
-
-    Returns
-    -------
-    output : None
-
-    Examples
-    --------
-	>>> a = arange(12).reshape((3,4)).astype(float64)
-	>>> index = ([1,1,2,0], [0,0,2,3])
-	>>> vals = [50,50, 30,16]
-	>>> a
-	array([[  0.,   1.,   2.,   3.],
-		   [  4.,   5.,   6.,   7.],
-		   [  8.,   9.,  10.,  11.]])
-	>>> inplace_increment(a, index, vals)
-	>>> a
-	array([[   0.,    1.,    2.,   19.],
-		   [ 104.,    5.,    6.,    7.],
-		   [   8.,    9.,   40.,   11.]])
-	
-	>>> x = zeros((3,3))	   
-	>>> x
-	array([[ 0.,  0.,  0.],
-		   [ 0.,  0.,  0.],
-		   [ 0.,  0.,  0.]])
-	>>> y = arange(3*3).reshape((3,3))
-	>>> y
-	array([[0, 1, 2],
-		   [3, 4, 5],
-		   [6, 7, 8]])
-	>>> inplace_increment(x, [0,1,1], y)
-	>>> x
-	array([[  0.,   1.,   2.],
-		   [  9.,  11.,  13.],
-		   [  0.,   0.,   0.]])
-    """)
-
 
 ##############################################################################
 #
