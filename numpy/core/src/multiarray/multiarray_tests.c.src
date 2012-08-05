@@ -461,7 +461,7 @@ static struct PyModuleDef moduledef = {
 
 #if defined(NPY_PY3K)
 #define RETVAL m
-PyObject *PyInit_multiarray_tests(void)
+PyMODINIT_FUNC PyInit_multiarray_tests(void)
 #else
 #define RETVAL
 PyMODINIT_FUNC
