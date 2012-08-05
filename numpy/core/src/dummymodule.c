@@ -1,4 +1,3 @@
-
 /* -*- c -*- */
 
 /*
@@ -32,7 +31,7 @@ static struct PyModuleDef moduledef = {
 
 /* Initialization function for the module */
 #if defined(NPY_PY3K)
-PyObject *PyInit__dummy(void) {
+PyMODINIT_FUNC PyInit__dummy(void) {
     PyObject *m;
     m = PyModule_Create(&moduledef);
     if (!m) {
