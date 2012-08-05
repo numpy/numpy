@@ -132,7 +132,7 @@ static struct PyModuleDef moduledef = {
 
 #if PY_VERSION_HEX >= 0x03000000
 #define RETVAL m
-PyObject *PyInit_test_array_from_pyobj_ext(void) {
+PyMODINIT_FUNC PyInit_test_array_from_pyobj_ext(void) {
 #else
 #define RETVAL
 PyMODINIT_FUNC inittest_array_from_pyobj_ext(void) {

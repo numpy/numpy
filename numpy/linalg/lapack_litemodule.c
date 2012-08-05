@@ -848,7 +848,7 @@ static struct PyModuleDef moduledef = {
 /* Initialization function for the module */
 #if PY_MAJOR_VERSION >= 3
 #define RETVAL m
-PyObject *PyInit_lapack_lite(void)
+PyMODINIT_FUNC PyInit_lapack_lite(void)
 #else
 #define RETVAL
 PyMODINIT_FUNC
