@@ -3394,7 +3394,7 @@ static struct PyModuleDef moduledef = {
         NULL
 };
 
-PyObject *PyInit__capi(void)
+PyMODINIT_FUNC PyInit__capi(void)
 #else
 
 #define RETVAL
