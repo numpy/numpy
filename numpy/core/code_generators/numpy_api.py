@@ -71,7 +71,7 @@ multiarray_types_api = {
     'PyHalfArrType_Type':               217,
     'NpyIter_Type':                     218,
     # End 1.6 API
-    'PyArrayMapIter_Type':                  295,
+    'PyArrayMapIter_Type':              295,
 }
 
 #define NPY_NUMUSERTYPES (*(int *)PyArray_API[6])
@@ -331,7 +331,7 @@ multiarray_funcs_api = {
     'PyDataMem_FREE':                       289,
     'PyDataMem_RENEW':                      290,
     'PyDataMem_SetEventHook':               291,
-    '_swap_axes':                           292,
+    'PyArray_MapIterSwapAxes':              292,
     'PyArray_MapIterArray':                 293,
     'PyArray_MapIterNext':                  294,
 }

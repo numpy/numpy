@@ -170,7 +170,7 @@ array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v)
  *
 */
 NPY_NO_EXPORT void
-_swap_axes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
+PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
 {
     PyObject *new;
     int n1, n2, n3, val, bnd;
@@ -300,7 +300,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
     /* check for consecutive axes */
     if ((mit->subspace != NULL) && (mit->consec)) {
         if (mit->iteraxes[0] > 0) {  /* then we need to swap */
-            _swap_axes(mit, &ret, 1);
+            PyArray_MapIterSwapAxes(mit, &ret, 1);
         }
     }
     return (PyObject *)ret;
@@ -329,7 +329,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
     }
     if ((mit->subspace != NULL) && (mit->consec)) {
         if (mit->iteraxes[0] > 0) {  /* then we need to swap */
-            _swap_axes(mit, &arr, 0);
+            PyArray_MapIterSwapAxes(mit, &arr, 0);
             if (arr == NULL) {
                 return -1;
             }
