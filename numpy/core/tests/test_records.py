@@ -1,3 +1,4 @@
+import sys
 from os import path
 import numpy as np
 from numpy.testing import *
@@ -110,6 +111,13 @@ class TestFromrecords(TestCase):
         assert_equal(a[0].a, 1)
         assert_equal(a.b, ['a', 'bbb'])
         assert_equal(a[-1].b, 'bbb')
+
+    @dec.skipif(sys.version_info[0] > 2)
+    def test_recarray_from_long_formats(self):
+        # Pull request #376
+        a = [[1]]
+        ra = np.rec.array(a, shape=1, formats='(1L, 1L)i4')
+        assert_equal(a, ra.f0[0])
 
 
 class TestRecord(TestCase):
