@@ -166,7 +166,10 @@ array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v)
 
 /* -------------------------------------------------------------- */
 
-static void
+/*NUMPY_API
+ *
+*/
+NPY_NO_EXPORT void
 _swap_axes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
 {
     PyObject *new;
@@ -1628,7 +1631,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
     return;
 }
 
-/*
+/*NUMPY_API
  * This function needs to update the state of the map iterator
  * and point mit->dataptr to the memory-location of the next object
  */
@@ -2027,6 +2030,21 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
     Py_DECREF(mit);
     return NULL;
 }
+
+/*NUMPY_API
+*/
+NPY_NO_EXPORT PyObject *
+PyArray_MapIterArray(PyArrayObject * a, PyObject * index, int oned, int fancy)
+{
+    PyArrayMapIterObject * mit;
+    mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, oned, fancy);
+    if (mit != NULL) {
+        PyArray_MapIterBind(mit, a);
+        PyArray_MapIterReset(mit);
+    }
+    return mit;
+}
+
 
 
 static void
