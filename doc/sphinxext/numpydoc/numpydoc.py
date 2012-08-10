@@ -150,6 +150,7 @@ class NumpyPythonDomain(ManglingDomainBase, PythonDomain):
         'staticmethod': 'function',
         'attribute': 'attribute',
     }
+    indices = []
 
 class NumpyCDomain(ManglingDomainBase, CDomain):
     name = 'np-c'
