@@ -501,7 +501,7 @@ def pre_build(context):
                                        use="npymath")
     context.register_builder("umath", build_ufunc)
 
-    context.tweak_extension("scalarmath", use="npymath")
+    context.tweak_extension("scalarmath", use="npymath", includes=["src/private"])
     context.tweak_extension("multiarray_tests", use="npymath", includes=["src/private"])
     context.tweak_extension("umath_tests", use="npymath", includes=["src/private"])
 
