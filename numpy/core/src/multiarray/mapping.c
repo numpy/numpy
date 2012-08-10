@@ -2038,10 +2038,12 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index, int oned, int fancy)
 {
     PyArrayMapIterObject * mit;
     mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, oned, fancy);
-    if (mit != NULL) {
-        PyArray_MapIterBind(mit, a);
-        PyArray_MapIterReset(mit);
+    if (mit == NULL) {
+        return NULL;
     }
+
+    PyArray_MapIterBind(mit, a);
+    PyArray_MapIterReset(mit);
     return mit;
 }
 
