@@ -2837,6 +2837,21 @@ class TestMemEventHook(TestCase):
         del a
         test_pydatamem_seteventhook_end()
 
+class TestMapIter(TestCase):
+    def test_mapiter(self):
+        # The actual tests are within the C code in
+        # multiarray/multiarray_tests.c.src
+
+        a = arange(12).reshape((3,4)).astype(float)
+	index = ([1,1,2,0], [0,0,2,3])
+	vals = [50,50, 30,16]
+
+	inplace_increment(a, index, vals)
+	assert_equal(a, [[   0. ,   1.,    2.,   19.,],
+			 [ 104.,    5.,    6.,    7.,],
+			 [   8.,    9.,   40.,   11.,]])
+
+
 
 if __name__ == "__main__":
     run_module_suite()
