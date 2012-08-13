@@ -1902,11 +1902,6 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
         mit->indexobj = indexobj;
     }
 
-#undef SOBJ_NOTFANCY
-#undef SOBJ_ISFANCY
-#undef SOBJ_BADARRAY
-#undef SOBJ_TOOMANY
-#undef SOBJ_LISTTUP
 
     if (oned) {
         return (PyObject *)mit;
@@ -2034,9 +2029,16 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
 /*NUMPY_API
 */
 NPY_NO_EXPORT PyObject *
-PyArray_MapIterArray(PyArrayObject * a, PyObject * index, int oned, int fancy)
+PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 {
     PyArrayMapIterObject * mit;
+    int fancy = fancy_indexing_check(index);
+    int oned = 0;
+    if (fancy != SOBJ_NOTFANCY) {
+
+        oned = ((PyArray_NDIM(a) == 1) &&
+                !(PyTuple_Check(index) && PyTuple_GET_SIZE(index) > 1));
+    }
     mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, oned, fancy);
     if (mit == NULL) {
         return NULL;
@@ -2048,6 +2050,11 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index, int oned, int fancy)
 }
 
 
+#undef SOBJ_NOTFANCY
+#undef SOBJ_ISFANCY
+#undef SOBJ_BADARRAY
+#undef SOBJ_TOOMANY
+#undef SOBJ_LISTTUP
 
 static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
