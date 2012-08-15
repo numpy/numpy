@@ -422,6 +422,15 @@ gentype_format(PyObject *self, PyObject *args)
         obj = PyComplex_FromDoubles(val[0], val[1]);
         Py_DECREF(dtype);
     }
+    else if (PyArray_IsScalar(self, Void)) {
+	    PyObject *arr = NULL;
+	
+	    arr = PyArray_FromScalar(self, NULL);
+	    if (arr != NULL) {
+	        obj = PyObject_Str((PyObject *)arr);
+	        Py_DECREF(arr);
+	    }
+    }
     else {
         obj = self;
         Py_INCREF(obj);
