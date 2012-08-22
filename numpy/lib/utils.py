@@ -1136,11 +1136,21 @@ def safe_eval(source):
     SyntaxError: Unsupported source construct: compiler.ast.CallFunc
 
     """
-    # Local import to speed up numpy's import time.
+    # Local imports to speed up numpy's import time.
+    import warnings
+    from numpy.testing.utils import WarningManager
+    warn_ctx = WarningManager()
+    warn_ctx.__enter__()
     try:
-        import compiler
-    except ImportError:
-        import ast as compiler
+        # compiler package is deprecated for 3.x, which is already solved here
+        warnings.simplefilter('ignore', DeprecationWarning)
+        try:
+            import compiler
+        except ImportError:
+            import ast as compiler
+    finally:
+        warn_ctx.__exit__()
+
     walker = SafeEval()
     try:
         ast = compiler.parse(source, mode="eval")
