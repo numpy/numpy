@@ -28,3 +28,6 @@ Library:
     Extension: scalarmath
         Sources:
             src/scalarmathmodule.c.src
+    Extension: _dotblas
+        Sources:
+            blasdot/_dotblas.c
