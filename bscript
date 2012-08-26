@@ -12,9 +12,6 @@ Caveats:
 import os
 import sys
 import subprocess
-import string
-
-import os.path as op
 
 # Ugly but necessary hack: import numpy here so that wscript in sub directories
 # will see this numpy and not an already installed one
