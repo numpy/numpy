@@ -507,5 +507,5 @@ def pre_build(context):
 
     def build_dotblas(extension):
         if bld.env.HAS_CBLAS:
-            return context.default_builder(extension, use="CBLAS")
+            return context.default_builder(extension, use="CBLAS", includes=["src/private"])
     context.register_builder("_dotblas", build_dotblas)
