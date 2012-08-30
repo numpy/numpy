@@ -169,6 +169,34 @@ class TestRegression(TestCase):
         assert_(np.all(a[ya] > 0.5))
         assert_(np.all(b[yb] > 0.5))
 
+    def test_endian_where(self,level=rlevel):
+        """GitHuB issue #369"""
+        net = np.zeros(3, dtype='>f4')
+        net[1] = 0.00458849
+        net[2] = 0.605202
+        max_net = net.max()
+        test = np.where(net <= 0., max_net, net)
+        correct = np.array([ 0.60520202,  0.00458849,  0.60520202])
+        assert_array_almost_equal(test, correct)
+
+    def test_endian_recarray(self,level=rlevel):
+        """Ticket #2185"""
+        dt = np.dtype([
+               ('head', '>u4'),
+               ('data', '>u4', 2),
+            ])
+        buf = np.recarray(1, dtype=dt)
+        buf[0]['head'] = 1
+        buf[0]['data'][:] = [1,1]
+
+        h = buf[0]['head']
+        d = buf[0]['data'][0]
+        buf[0]['head'] = h
+        buf[0]['data'][0] = d
+        print buf[0]['head']
+        assert_(buf[0]['head'] == 1)
+
+
     def test_mem_dot(self,level=rlevel):
         """Ticket #106"""
         x = np.random.randn(0,1)
