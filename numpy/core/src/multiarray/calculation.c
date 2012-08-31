@@ -895,7 +895,7 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     PyArrayObject *maxa = NULL;
     PyArrayObject *mina = NULL;
     PyArrayObject *newout = NULL, *newin = NULL;
-    PyArray_Descr *indescr, *newdescr;
+    PyArray_Descr *indescr = NULL, *newdescr = NULL;
     char *max_data, *min_data;
     PyObject *zero;
 
@@ -922,23 +922,24 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     /* Use the fast scalar clip function */
 
     /* First we need to figure out the correct type */
-    indescr = NULL;
     if (min != NULL) {
         indescr = PyArray_DescrFromObject(min, NULL);
         if (indescr == NULL) {
-            return NULL;
+            goto fail;
         }
     }
     if (max != NULL) {
         newdescr = PyArray_DescrFromObject(max, indescr);
         Py_XDECREF(indescr);
+        indescr = NULL;
         if (newdescr == NULL) {
-            return NULL;
+            goto fail;
         }
     }
     else {
         /* Steal the reference */
         newdescr = indescr;
+        indescr = NULL;
     }
 
 
@@ -950,8 +951,12 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     if (PyArray_ScalarKind(newdescr->type_num, NULL) >
         PyArray_ScalarKind(PyArray_DESCR(self)->type_num, NULL)) {
         indescr = PyArray_PromoteTypes(newdescr, PyArray_DESCR(self));
+        if (indescr == NULL) {
+            goto fail;
+        }
         func = indescr->f->fastclip;
         if (func == NULL) {
+            Py_DECREF(indescr);
             return _slow_array_clip(self, min, max, out);
         }
     }
@@ -960,11 +965,13 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
         Py_INCREF(indescr);
     }
     Py_DECREF(newdescr);
+    newdescr = NULL;
 
     if (!PyDataType_ISNOTSWAPPED(indescr)) {
         PyArray_Descr *descr2;
         descr2 = PyArray_DescrNewByteorder(indescr, '=');
         Py_DECREF(indescr);
+        indescr = NULL;
         if (descr2 == NULL) {
             goto fail;
         }
@@ -973,15 +980,12 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
 
     /* Convert max to an array */
     if (max != NULL) {
+        Py_INCREF(indescr);
         maxa = (PyArrayObject *)PyArray_FromAny(max, indescr, 0, 0,
                                  NPY_ARRAY_DEFAULT, NULL);
         if (maxa == NULL) {
-            return NULL;
+            goto fail;
         }
-    }
-    else {
-        /* Side-effect of PyArray_FromAny */
-        Py_DECREF(indescr);
     }
 
     /*
@@ -1147,6 +1151,8 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     func(PyArray_DATA(newin), PyArray_SIZE(newin), min_data, max_data, PyArray_DATA(newout));
 
     /* Clean up temporary variables */
+    Py_XDECREF(indescr);
+    Py_XDECREF(newdescr);
     Py_XDECREF(mina);
     Py_XDECREF(maxa);
     Py_DECREF(newin);
@@ -1155,6 +1161,8 @@ PyArray_Clip(PyArrayObject *self, PyObject *min, PyObject *max, PyArrayObject *o
     return (PyObject *)out;
 
  fail:
+    Py_XDECREF(indescr);
+    Py_XDECREF(newdescr);
     Py_XDECREF(maxa);
     Py_XDECREF(mina);
     Py_XDECREF(newin);
