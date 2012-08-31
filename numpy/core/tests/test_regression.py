@@ -1728,5 +1728,14 @@ class TestRegression(TestCase):
         a = np.array(['abc'], dtype=np.unicode)[0]
         del a
 
+    def test_refcount_error_in_clip(self):
+        # Ticket #1588
+        a = np.zeros((2,), dtype='>i2').clip(min=0)
+        x = a + a
+        # This used to segfault:
+        y = str(x)
+        # Check the final string:
+        assert_(y == "[0 0]")
+
 if __name__ == "__main__":
     run_module_suite()
