@@ -285,7 +285,7 @@ def _newnames(datatype, order):
 # Given an array with fields and a sequence of field names
 # construct a new array with just those fields copied over
 def _index_fields(ary, fields):
-    from multiarray import empty, dtype
+    from multiarray import empty, dtype, array
     dt = ary.dtype
 
     names = [name for name in fields if name in dt.names]
@@ -298,7 +298,6 @@ def _index_fields(ary, fields):
     # Return a copy for now until behavior is fully deprecated
     # in favor of returning view
     copy_dtype = {'names':view_dtype['names'], 'formats':view_dtype['formats']}
-    from numpy import array
     return array(view, dtype=copy_dtype, copy=True)
 
 # Given a string containing a PEP 3118 format specifier,
