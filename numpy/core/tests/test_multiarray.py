@@ -1956,6 +1956,11 @@ class TestRecord(TestCase):
             assert_equal(b[['f1','f2']][0].tolist(), (2, 3))
             assert_equal(b[['f2','f1']][0].tolist(), (3, 2))
             assert_equal(b[['f1','f3']][0].tolist(), (2, (1,)))
+            # view of subfield view/copy
+            assert_equal(b[['f1','f2']][0].view(('i4',2)).tolist(), (2, 3))
+            assert_equal(b[['f2','f1']][0].view(('i4',2)).tolist(), (3, 2))
+            view_dtype=[('f1', 'i4'),('f3', [('', 'i4')])]
+            assert_equal(b[['f1','f3']][0].view(view_dtype).tolist(), (2, (1,)))
         # non-ascii unicode field indexing is well behaved
         if not is_py3:
             raise SkipTest('non ascii unicode field indexing skipped; '
