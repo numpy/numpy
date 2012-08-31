@@ -295,7 +295,11 @@ def _index_fields(ary, fields):
     view_dtype = {'names':names, 'formats':formats, 'offsets':offsets, 'itemsize':dt.itemsize}
     view = ary.view(dtype=view_dtype)
 
-    return view.copy()
+    # Return a copy for now until behavior is fully deprecated
+    # in favor of returning view
+    copy_dtype = {'names':view_dtype['names'], 'formats':view_dtype['formats']}
+    from numpy import array
+    return array(view, dtype=copy_dtype, copy=True)
 
 # Given a string containing a PEP 3118 format specifier,
 # construct a Numpy dtype
