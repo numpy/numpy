@@ -534,10 +534,18 @@ class ndindex(object):
     """
     def __init__(self, *shape):
         x = as_strided(_nx.zeros(1), shape=shape, strides=_nx.zeros_like(shape))
-        self._it = _nx.nditer(x, flags=['multi_index'])
+        self._it = _nx.nditer(x, flags=['multi_index'], order='C')
 
     def __iter__(self):
         return self
+
+    def ndincr(self):
+        """
+        Increment the multi-dimensional index by one.
+
+        This method is for backward compatibility only: do not use.
+        """
+        self.next()
 
     def next(self):
         """
