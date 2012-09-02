@@ -2,7 +2,7 @@ from numpy.testing import *
 import numpy as np
 from numpy import ( array, ones, r_, mgrid, unravel_index, zeros, where,
                     ndenumerate, fill_diagonal, diag_indices,
-                    diag_indices_from, s_, index_exp )
+                    diag_indices_from, s_, index_exp, ndindex )
 
 class TestRavelUnravelIndex(TestCase):
     def test_basic(self):
@@ -235,6 +235,12 @@ def test_diag_indices_from():
     r, c = diag_indices_from(x)
     assert_array_equal(r, np.arange(4))
     assert_array_equal(c, np.arange(4))
+
+
+def test_ndindex():
+    x = list(np.ndindex(1, 2, 3))
+    expected = [ix for ix, e in np.ndenumerate(np.zeros((1, 2, 3)))]
+    assert_array_equal(x, expected)
 
 
 if __name__ == "__main__":
