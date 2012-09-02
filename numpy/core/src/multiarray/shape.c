@@ -267,32 +267,6 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
             }
         }
     }
-    else if (ndim > 0) {
-        /*
-         * replace any 0-valued strides with
-         * appropriate value to preserve contiguousness
-         */
-        if (order == NPY_FORTRANORDER) {
-            if (strides[0] == 0) {
-                strides[0] = PyArray_DESCR(self)->elsize;
-            }
-            for (i = 1; i < ndim; i++) {
-                if (strides[i] == 0) {
-                    strides[i] = strides[i-1] * dimensions[i-1];
-                }
-            }
-        }
-        else {
-            if (strides[ndim-1] == 0) {
-                strides[ndim-1] = PyArray_DESCR(self)->elsize;
-            }
-            for (i = ndim - 2; i > -1; i--) {
-                if (strides[i] == 0) {
-                    strides[i] = strides[i+1] * dimensions[i+1];
-                }
-            }
-        }
-    }
 
     Py_INCREF(PyArray_DESCR(self));
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),

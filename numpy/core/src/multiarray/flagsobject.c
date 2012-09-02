@@ -66,7 +66,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
     if (flagmask & NPY_ARRAY_F_CONTIGUOUS) {
         if (_IsFortranContiguous(ret)) {
             PyArray_ENABLEFLAGS(ret, NPY_ARRAY_F_CONTIGUOUS);
-            if (PyArray_NDIM(ret) > 1) {
+            if (!_IsContiguous(ret)) {
                 PyArray_CLEARFLAGS(ret, NPY_ARRAY_C_CONTIGUOUS);
             }
         }
@@ -77,7 +77,7 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
     if (flagmask & NPY_ARRAY_C_CONTIGUOUS) {
         if (_IsContiguous(ret)) {
             PyArray_ENABLEFLAGS(ret, NPY_ARRAY_C_CONTIGUOUS);
-            if (PyArray_NDIM(ret) > 1) {
+            if (!_IsFortranContiguous(ret)) {
                 PyArray_CLEARFLAGS(ret, NPY_ARRAY_F_CONTIGUOUS);
             }
         }
@@ -134,10 +134,13 @@ _IsContiguous(PyArrayObject *ap)
         if (dim == 0) {
             return 1;
         }
-        if (PyArray_STRIDES(ap)[i] != sd) {
-            return 0;
+        /* Dimensions of size 1 have no influence on memory layout */
+        if (dim != 1) {
+            if (PyArray_STRIDES(ap)[i] != sd) {
+                return 0;
+            }
+            sd *= dim;
         }
-        sd *= dim;
     }
     return 1;
 }
@@ -164,10 +167,13 @@ _IsFortranContiguous(PyArrayObject *ap)
         if (dim == 0) {
             return 1;
         }
-        if (PyArray_STRIDES(ap)[i] != sd) {
-            return 0;
+        /* Dimensions of size 1 have no influence on memory layout */
+        if (dim != 1) {
+            if (PyArray_STRIDES(ap)[i] != sd) {
+                return 0;
+            }
+            sd *= dim;
         }
-        sd *= dim;
     }
     return 1;
 }
