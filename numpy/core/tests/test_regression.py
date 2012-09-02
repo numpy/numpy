@@ -1737,5 +1737,15 @@ class TestRegression(TestCase):
         # Check the final string:
         assert_(y == "[0 0]")
 
+    def test_searchsorted_wrong_dtype(self):
+        # Ticket #2189, it used to segfault, so we check that it raises the
+        # proper exception.
+        a = np.array([('a', 1)], dtype='S1, int')
+        assert_raises(TypeError, np.searchsorted, a, 1.2)
+        # Ticket #2066, similar problem:
+        dtype = np.format_parser(['i4', 'i4'], [], [])
+        a = np.recarray((2, ), dtype)
+        assert_raises(TypeError, np.searchsorted, a, 1)
+
 if __name__ == "__main__":
     run_module_suite()
