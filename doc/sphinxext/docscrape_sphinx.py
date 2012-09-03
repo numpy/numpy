@@ -79,7 +79,7 @@ class SphinxDocString(NumpyDocString):
 
             if autosum:
                 out += ['.. autosummary::', '   :toctree:', '']
-                out += autosum
+                out += autosum + ['']
 
             if others:
                 maxlen_0 = max([len(x[0]) for x in others])
