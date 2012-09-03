@@ -411,8 +411,7 @@ def pre_build(context):
     numpyconfig_h = context.local_node.declare(os.path.join("include", "numpy", "_numpyconfig.h"))
     context.register_outputs("numpy_gen_headers", "numpyconfig", [numpyconfig_h])
 
-    context.tweak_library("npymath",
-                          includes=["src/private", "src/npymath", "include"])
+    context.tweak_library("lib/npymath", includes=["src/private", "src/npymath", "include"])
 
     context.tweak_library("npysort",
                           includes=[".", "src/private", "src/npysort"],

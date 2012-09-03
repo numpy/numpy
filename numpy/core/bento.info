@@ -1,7 +1,7 @@
 HookFile: bscript
 
 Library:
-    CompiledLibrary: npymath
+    CompiledLibrary: lib/npymath
         Sources:
             src/npymath/_signbit.c,
             src/npymath/ieee754.c.src,
