@@ -17,13 +17,7 @@
 NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op)
 {
-    if (PyFloat_Check(op)) {
-        return PyArray_DescrFromType(NPY_DOUBLE);
-    }
-    else if (PyComplex_Check(op)) {
-        return PyArray_DescrFromType(NPY_CDOUBLE);
-    }
-    else if (PyInt_Check(op)) {
+    if (PyInt_Check(op)) {
         /* bools are a subclass of int */
         if (PyBool_Check(op)) {
             return PyArray_DescrFromType(NPY_BOOL);
@@ -51,6 +45,12 @@ _array_find_python_scalar_type(PyObject *op)
         } 
         
         return PyArray_DescrFromType(NPY_OBJECT);
+    }
+    else if (PyFloat_Check(op)) {
+        return PyArray_DescrFromType(NPY_DOUBLE);
+    }
+    else if (PyComplex_Check(op)) {
+        return PyArray_DescrFromType(NPY_CDOUBLE);
     }
     return NULL;
 }
@@ -131,9 +131,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     int i, size;
     PyArray_Descr *dtype = NULL;
     PyObject *ip;
-#if PY_VERSION_HEX >= 0x02060000
-    Py_buffer buffer_view;
-#endif
 
     /* Check if it's an ndarray */
     if (PyArray_Check(obj)) {
@@ -192,47 +189,49 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* Check if it's a Python scalar */
-    dtype = _array_find_python_scalar_type(obj);
-    if (dtype != NULL) {
-        if (string_type) {
-            int itemsize;
-            PyObject *temp;
+    if (PyNumber_Check(obj)) {
+        dtype = _array_find_python_scalar_type(obj);
+        if (dtype != NULL) {
+            if (string_type) {
+                int itemsize;
+                PyObject *temp;
 
-            if (string_type == NPY_STRING) {
-                if ((temp = PyObject_Str(obj)) == NULL) {
-                    return -1;
+                if (string_type == NPY_STRING) {
+                    if ((temp = PyObject_Str(obj)) == NULL) {
+                        return -1;
+                    }
+                    itemsize = PyString_GET_SIZE(temp);
                 }
-                itemsize = PyString_GET_SIZE(temp);
-            }
-            else if (string_type == NPY_UNICODE) {
+                else if (string_type == NPY_UNICODE) {
 #if defined(NPY_PY3K)
-                if ((temp = PyObject_Str(obj)) == NULL) {
+                    if ((temp = PyObject_Str(obj)) == NULL) {
 #else
-                if ((temp = PyObject_Unicode(obj)) == NULL) {
+                    if ((temp = PyObject_Unicode(obj)) == NULL) {
 #endif
-                    return -1;
-                }
-                itemsize = PyUnicode_GET_DATA_SIZE(temp);
+                        return -1;
+                    }
+                    itemsize = PyUnicode_GET_DATA_SIZE(temp);
 #ifndef Py_UNICODE_WIDE
-                itemsize <<= 1;
+                    itemsize <<= 1;
 #endif
+                }
+                else {
+                    goto fail;
+                }
+                Py_DECREF(temp);
+                if (*out_dtype != NULL &&
+                        (*out_dtype)->type_num == string_type &&
+                        (*out_dtype)->elsize >= itemsize) {
+                    return 0;
+                }
+                dtype = PyArray_DescrNewFromType(string_type);
+                if (dtype == NULL) {
+                    goto fail;
+                }
+                dtype->elsize = itemsize;
             }
-            else {
-                goto fail;
-            }
-            Py_DECREF(temp);
-            if (*out_dtype != NULL &&
-                    (*out_dtype)->type_num == string_type &&
-                    (*out_dtype)->elsize >= itemsize) {
-                return 0;
-            }
-            dtype = PyArray_DescrNewFromType(string_type);
-            if (dtype == NULL) {
-                goto fail;
-            }
-            dtype->elsize = itemsize;
+            goto promote_types;
         }
-        goto promote_types;
     }
 
     /* Check if it's an ASCII string */
@@ -279,28 +278,31 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
 #if PY_VERSION_HEX >= 0x02060000
     /* PEP 3118 buffer interface */
-    memset(&buffer_view, 0, sizeof(Py_buffer));
-    if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
-        PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT) == 0) {
+    if (PyObject_CheckBuffer(obj)) {
+        Py_buffer buffer_view;
+        memset(&buffer_view, 0, sizeof(Py_buffer));
+        if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
+            PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT) == 0) {
 
-        PyErr_Clear();
-        dtype = _descriptor_from_pep3118_format(buffer_view.format);
-        PyBuffer_Release(&buffer_view);
-        if (dtype) {
+            PyErr_Clear();
+            dtype = _descriptor_from_pep3118_format(buffer_view.format);
+            PyBuffer_Release(&buffer_view);
+            if (dtype) {
+                goto promote_types;
+            }
+        }
+        else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
+                 PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
+
+            PyErr_Clear();
+            dtype = PyArray_DescrNewFromType(NPY_VOID);
+            dtype->elsize = buffer_view.itemsize;
+            PyBuffer_Release(&buffer_view);
             goto promote_types;
         }
-    }
-    else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
-             PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
-
-        PyErr_Clear();
-        dtype = PyArray_DescrNewFromType(NPY_VOID);
-        dtype->elsize = buffer_view.itemsize;
-        PyBuffer_Release(&buffer_view);
-        goto promote_types;
-    }
-    else {
-        PyErr_Clear();
+        else {
+            PyErr_Clear();
+        }
     }
 #endif
 
