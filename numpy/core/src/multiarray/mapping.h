@@ -11,10 +11,10 @@ NPY_NO_EXPORT Py_ssize_t
 array_length(PyArrayObject *self);
 
 NPY_NO_EXPORT PyObject *
-array_item_asarray(PyArrayObject *self, intp i);
+array_item_asarray(PyArrayObject *self, npy_intp i);
 
 NPY_NO_EXPORT PyObject *
-array_item_asscalar(PyArrayObject *self, intp i);
+array_item_asscalar(PyArrayObject *self, npy_intp i);
 
 NPY_NO_EXPORT PyObject *
 array_item(PyArrayObject *self, Py_ssize_t i);
