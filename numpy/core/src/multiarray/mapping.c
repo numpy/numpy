@@ -1222,7 +1222,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
     }
 
     /* Boolean indexing special case */
-    /* The SIZE check might be overly cautious */
+    /* The SIZE check is to ensure old behaviour for non-matching arrays. */
     else if (PyArray_ISBOOL((PyArrayObject *)op)
                 && (PyArray_NDIM(self) == PyArray_NDIM((PyArrayObject *)op))
                 && (PyArray_SIZE((PyArrayObject *)op) == PyArray_SIZE(self))) {
