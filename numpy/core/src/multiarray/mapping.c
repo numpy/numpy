@@ -109,7 +109,7 @@ array_item_asarray(PyArrayObject *self, npy_intp i)
 
 /* Get array item at given index */
 NPY_NO_EXPORT PyObject *
-array_item(PyArrayObject *self, Py_ssize_t i)
+array_item(PyArrayObject *self, Py_ssize_t _i)
 {
     /* Workaround Python 2.4: Py_ssize_t not the same as npyint_p */
     npy_intp i = _i;
@@ -982,13 +982,13 @@ static npy_bool
 _check_ellipses(PyObject *op)
 {
     if ((op == Py_Ellipsis) || PyString_Check(op) || PyUnicode_Check(op)) {
-        return TRUE;
+        return NPY_TRUE;
     }
     else if (PyBool_Check(op) || PyArray_IsScalar(op, Bool) ||
              (PyArray_Check(op) &&
                 (PyArray_DIMS((PyArrayObject *)op)==0) &&
                  PyArray_ISBOOL((PyArrayObject *)op))) {
-        return TRUE;
+        return NPY_TRUE;
     }
     else if (PySequence_Check(op)) {
         Py_ssize_t n, i;
@@ -1000,13 +1000,13 @@ _check_ellipses(PyObject *op)
             temp = PySequence_GetItem(op, i);
             if (temp == Py_Ellipsis) {
                 Py_DECREF(temp);
-                return TRUE;
+                return NPY_TRUE;
             }
             Py_DECREF(temp);
             i++;
         }
     }
-    return FALSE;
+    return NPY_FALSE;
 }
 
 NPY_NO_EXPORT PyObject *
