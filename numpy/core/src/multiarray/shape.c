@@ -1186,4 +1186,7 @@ PyArray_RemoveAxesInPlace(PyArrayObject *arr, npy_bool *flags)
 
     /* The final number of dimensions */
     fa->nd = idim_out;
+    
+    /* Update contiguous flags */
+    PyArray_UpdateFlags(arr, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
 }
