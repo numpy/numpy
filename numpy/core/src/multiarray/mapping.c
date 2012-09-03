@@ -142,7 +142,7 @@ array_ass_item_object(PyArrayObject *self, npy_intp i, PyObject *v)
 
     if (PyArray_NDIM(self) == 0) {
         PyErr_SetString(PyExc_IndexError,
-                        "0-d arrays can't be indexed.");
+                        "0-d arrays can't be indexed");
         return -1;
     }
 
@@ -566,14 +566,6 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
 
 
     if (!(PyArray_Check(op) && (PyArray_SIZE((PyArrayObject*)op) > 1))) {
-        /*
-         * PyNumber_Index was introduced in Python 2.5 because of NumPy.
-         * http://www.python.org/dev/peps/pep-0357/
-         * Let's use it for indexing!
-         *
-         * Unfortunately, SciPy and possibly other code seems to rely
-         * on the lenient coercion. :(
-         */
 #if 0 /*PY_VERSION_HEX >= 0x02050000*/
         PyObject *ind = PyNumber_Index(op);
         if (ind != NULL) {
@@ -1228,6 +1220,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
     if (!PyArray_Check(op)) {
         ret = array_subscript_fromobject(self, op);
     }
+
     /* Boolean indexing special case */
     /* The SIZE check might be overly cautious */
     else if (PyArray_ISBOOL((PyArrayObject *)op)
@@ -1313,7 +1306,7 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *ind, PyObject *op)
         }
         if (!PyArray_Check(tmp0)) {
             PyErr_SetString(PyExc_RuntimeError,
-                            "Getitem not returning array.");
+                            "Getitem not returning array");
             Py_DECREF(tmp0);
             return -1;
         }
@@ -1409,11 +1402,11 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         }
 #if defined(NPY_PY3K)
         PyErr_Format(PyExc_ValueError,
-                     "field named %S not found.",
+                     "field named %S not found",
                      ind);
 #else
         PyErr_Format(PyExc_ValueError,
-                     "field named %s not found.",
+                     "field named %s not found",
                      PyString_AsString(ind));
 #endif
         return -1;
@@ -1462,7 +1455,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
             }
         }
         PyErr_SetString(PyExc_IndexError,
-                        "0-dimensional arrays can't be indexed.");
+                        "0-dimensional arrays can't be indexed");
         return -1;
     }
 
