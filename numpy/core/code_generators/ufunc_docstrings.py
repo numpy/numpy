@@ -46,7 +46,7 @@ add_newdoc('numpy.core.umath', 'absolute',
 
     >>> import matplotlib.pyplot as plt
 
-    >>> x = np.linspace(-10, 10, 10)
+    >>> x = np.linspace(start=-10, stop=10, num=101)
     >>> plt.plot(x, np.absolute(x))
     >>> plt.show()
 
