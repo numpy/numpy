@@ -147,6 +147,8 @@ class TestInsert(TestCase):
         assert_equal(insert(a, [1, 1, 1], [1, 2, 3]), [1, 1, 2, 3, 2, 3])
         assert_equal(insert(a, 1,[1,2,3]), [1, 1, 2, 3, 2, 3])
         assert_equal(insert(a,[1,2,3],9),[1,9,2,9,3,9])
+        b = np.array([0, 1], dtype=np.float64)
+        assert_equal(insert(b, 0, b[0]), [0., 0., 1.])
     def test_multidim(self):
         a = [[1, 1, 1]]
         r = [[2, 2, 2],
