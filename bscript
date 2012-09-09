@@ -22,8 +22,12 @@ from bento.commands import hooks
 from bento.utils.utils \
     import \
         cmd_is_runnable
+from bento.backends.waf_backend \
+    import \
+        WAF_TOOLDIR
 
 import waflib
+from waflib import Options
 
 sys.path.insert(0, os.getcwd())
 try:
@@ -112,6 +116,15 @@ def post_configure(context):
     conf = context.waf_context
     if conf.env["CC_NAME"] == "gcc":
         conf.env.CFLAGS_PYEXT.append("-Wfatal-errors")
+
+    conf.load("arch", tooldir=[WAF_TOOLDIR])
+    if sys.platform == "darwin":
+        conf.env["MACOSX_DEPLOYMENT_TARGET"] = "10.4"
+        conf.check_cc_default_arch()
+        archs = [conf.env.DEFAULT_CC_ARCH]
+        conf.env.ARCH = archs
+
+    conf.env.LIBPATH = ["/Users/cournape/src/numeric/OpenBLAS-git"]
     check_blas_lapack(conf)
 
 @hooks.pre_build
