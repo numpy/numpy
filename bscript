@@ -35,55 +35,75 @@ try:
 finally:
     sys.path.pop(0)
 
-def check_blas_lapack(conf):
-    conf.env.HAS_CBLAS = False
-    if sys.platform == "win32":
-        mkl_libs = "mkl_lapack95,mkl_blas95,mkl_intel_c,mkl_intel_thread,mkl_core,libiomp5md".split(",")
-        mkl_base = r"C:\Program Files\Intel\Compiler\11.1\051"
-        conf.env.INCLUDES.append("%s\mkl\include" % mkl_base)
-        conf.env.LIBPATH.extend(["%s\mkl\ia32\lib" % mkl_base,
-                                 "%s\lib\ia32" % mkl_base])
+import collections
+_PLATFORM_TO_DEFAULT = collections.defaultdict(lambda: "atlas")
+_PLATFORM_TO_DEFAULT.update({
+        "win32": "mkl",
+        "darwin": "accelerate",
+})
 
-        try:
-            conf.check_cc(lib=mkl_libs, msg="Checking for MKL (CBLAS)",
-                          uselib_store="CBLAS")
-            conf.env.HAS_CBLAS = True
-        except waflib.Errors.ConfigurationError:
-            conf.env.HAS_LAPACK = False
+_OPTIMIZED_CBLAS_TO_KWARGS = {
+        "mkl": {"lib": "mkl_intel_c,mkl_intel_thread,mkl_core,libiomp5md".split(",")},
+        "atlas": {"lib": ["cblas", "atlas"]},
+        "accelerate": {"framework": ["Accelerate"]},
+        "openblas": {"lib": ["openblas"]},
+}
 
-        try:
-            conf.check_cc(lib=mkl_libs, msg="Checking for MKL (LAPACK)",
-                          uselib_store="LAPACK")
-            conf.env.HAS_LAPACK = True
-        except waflib.Errors.ConfigurationError:
-            conf.env.HAS_LAPACK = False
+_OPTIMIZED_LAPACK_TO_KWARGS = {
+        "mkl": {"lib": "mkl_lapack95,mkl_blas95,mkl_intel_c,mkl_intel_thread,mkl_core,libiomp5md".split(",")},
+        "atlas": {"lib": ["lapack", "f77blas", "cblas", "atlas"]},
+        "accelerate": {"framework": ["Accelerate"]},
+        "openblas": {"lib": ["openblas"]},
+}
 
-
-    elif sys.platform == "darwin":
-        try:
-            conf.check(framework="Accelerate", msg="Checking for framework Accelerate (CBLAS)", uselib_store="CBLAS")
-            conf.env.HAS_CBLAS = True
-        except waflib.Errors.ConfigurationError:
-            conf.env.HAS_CBLAS = False
-
-        try:
-            conf.check(framework="Accelerate", msg="Checking for framework Accelerate (LAPACK)", uselib_store="LAPACK")
-            conf.env.HAS_LAPACK = True
-        except waflib.Errors.ConfigurationError:
-            conf.env.HAS_LAPACK = False
+def get_optimized_name(context):
+    o, a = context.options_context.parser.parse_args(context.command_argv)
+    if o.blas_lapack_type == "default" or o.blas_lapack_type is None:
+        optimized = _PLATFORM_TO_DEFAULT[sys.platform]
     else:
-        try:
-            conf.check_cc(lib=["cblas", "atlas"], uselib_store="CBLAS")
-            conf.env.HAS_CBLAS = True
-        except waflib.Errors.ConfigurationError:
-            conf.env.HAS_CBLAS = False
+        optimized = o.blas_lapack_type
 
-        try:
-            conf.check_cc(lib=["lapack", "f77blas", "cblas", "atlas"],
-                          uselib_store="LAPACK")
-            conf.env.HAS_LAPACK = True
-        except waflib.Errors.ConfigurationError:
-            conf.env.HAS_LAPACK = False
+    return optimized
+
+def check_cblas(context, optimized):
+    conf = context.waf_context
+
+    msg = "Checking for %s (CBLAS)" % optimized.upper()
+
+    kwargs = _OPTIMIZED_CBLAS_TO_KWARGS[optimized]
+    kwargs.update({"msg": msg, "uselib_store": "CBLAS"})
+
+    try:
+        conf.check_cc(**kwargs)
+        conf.env.HAS_CBLAS = True
+    except waflib.Errors.ConfigurationError:
+        conf.env.HAS_CBLAS = False
+
+def check_lapack(context, optimized):
+    conf = context.waf_context
+
+    msg = "Checking for %s (LAPACK)" % optimized.upper()
+    if optimized in ["openblas", "atlas"]:
+        check_fortran(context)
+
+    kwargs = _OPTIMIZED_LAPACK_TO_KWARGS[optimized]
+    kwargs.update({"msg": msg, "uselib_store": "LAPACK"})
+
+    try:
+        conf.check_cc(**kwargs)
+        conf.env.HAS_LAPACK = True
+    except waflib.Errors.ConfigurationError:
+        conf.env.HAS_LAPACK = False
+
+def check_blas_lapack(context):
+    optimized = get_optimized_name(context)
+
+    o, a = context.options_context.parser.parse_args(context.command_argv)
+    if o.blas_lapack_libdir:
+        context.waf_context.env.append_value("LIBPATH", o.blas_lapack_libdir)
+
+    check_cblas(context, optimized)
+    check_lapack(context, optimized)
 
     # You can manually set up blas/lapack as follows:
     #conf.env.HAS_CBLAS = True
@@ -111,6 +131,19 @@ def _register_metadata(context):
     context.register_metadata("is_released", _SETUP_PY.ISRELEASED)
     context.register_metadata("full_version", full_version)
 
+def check_fortran(context):
+    opts = context.waf_options_context
+    conf = context.waf_context
+
+    opts.load("compiler_fc")
+    Options.options.check_fc = "gfortran"
+
+    conf.load("compiler_fc")
+    conf.load("ordered_c", tooldir=[WAF_TOOLDIR])
+
+    conf.check_fortran_verbose_flag()
+    conf.check_fortran_clib()
+
 @hooks.post_configure
 def post_configure(context):
     conf = context.waf_context
@@ -124,8 +157,7 @@ def post_configure(context):
         archs = [conf.env.DEFAULT_CC_ARCH]
         conf.env.ARCH = archs
 
-    conf.env.LIBPATH = ["/Users/cournape/src/numeric/OpenBLAS-git"]
-    check_blas_lapack(conf)
+    check_blas_lapack(context)
 
 @hooks.pre_build
 def pre_build(context):
@@ -134,3 +166,19 @@ def pre_build(context):
 @hooks.pre_sdist
 def pre_sdist(context):
     _register_metadata(context)
+
+@hooks.options
+def options(global_context):
+    from bento.commands.options import Option
+
+    global_context.add_option_group("configure", "blas_lapack", "blas/lapack")
+
+    available_optimized = ",".join(_OPTIMIZED_LAPACK_TO_KWARGS.keys())
+    global_context.add_option("configure",
+            Option("--blas-lapack-type", help="Which blas lapack to use (%s)" % available_optimized),
+            "blas_lapack")
+
+    global_context.add_option("configure",
+            Option("--with-blas-lapack-libdir", dest="blas_lapack_libdir",
+                   help="Where to look for BLAS/LAPACK dir"),
+            "blas_lapack")
