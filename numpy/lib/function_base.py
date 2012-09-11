@@ -3591,19 +3591,21 @@ def insert(arr, obj, values, axis=None):
     slobj = [slice(None)]*ndim
     N = arr.shape[axis]
     newshape = list(arr.shape)
-    if isinstance(obj, (int, long, integer)):
 
+    if isinstance(obj, (int, long, integer)):
         if (obj < 0): obj += N
         if obj < 0 or obj > N:
             raise ValueError(
                     "index (%d) out of range (0<=index<=%d) "\
                     "in dimension %d" % (obj, N, axis))
-          
-        if isinstance(values, (int, long, integer)):            
-            obj = [obj]           
+        if isscalar(values):
+            obj = [obj]
         else:
-            obj = [obj] * len(values) 
-
+            values = asarray(values)
+            if ndim > values.ndim:
+                obj = [obj]
+            else:
+                obj = [obj] * len(values)
 
     elif isinstance(obj, slice):
         # turn it into a range object
