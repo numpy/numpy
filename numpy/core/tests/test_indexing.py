@@ -107,7 +107,7 @@ class TestIndexing(TestCase):
                       [False,  True, False],
                       [ True, False,  True]])
         assert_equal(a[b], [1, 3, 5, 7, 9])
-        assert_equal(a[b[1], [4, 5, 6])
+        assert_equal(a[b[1]], [[4, 5, 6]])
         assert_equal(a[b[0]], a[b[2]])
 
         # boolean assignment
