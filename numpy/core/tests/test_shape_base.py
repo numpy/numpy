@@ -218,6 +218,14 @@ def test_concatenate_sloppy0():
         assert_array_equal(concatenate((r4, r3), 10), r4 + r3)
     finally:
         warnings.filters.pop(0)
+    # Confurm DepractionWarning raised
+    warnings.simplefilter('always', DeprecationWarning)
+    warnings.simplefilter('error', DeprecationWarning)
+    try:
+        assert_raises(DeprecationWarning, concatenate, (r4, r3), 10)
+    finally:
+        warnings.filters.pop(0)
+        warnings.filters.pop(0)
 
 
 if __name__ == "__main__":
