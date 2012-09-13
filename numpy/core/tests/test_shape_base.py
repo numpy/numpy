@@ -212,7 +212,7 @@ def test_concatenate_sloppy0():
     r4 = list(range(4))
     r3 = list(range(3))
     assert_array_equal(concatenate((r4, r3), 0), r4 + r3)
-    warnings.simplefilter('ignore', FutureWarning)
+    warnings.simplefilter('ignore', DeprecationWarning)
     try:
         assert_array_equal(concatenate((r4, r3), -10), r4 + r3)
         assert_array_equal(concatenate((r4, r3), 10), r4 + r3)

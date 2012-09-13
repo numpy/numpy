@@ -339,9 +339,11 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
     }
 
     if (ndim == 1 & axis != 0) {
-        PyErr_WarnEx(PyExc_FutureWarning,
-                     "axis not 0 for ndim == 0; this will raise an error "
-                     "in future versions of numpy", 2);
+        char msg[] = "axis != 0 for ndim == 1; this will raise an error in "
+                     "future versions of numpy";
+        if (DEPRECATE(msg) < 0) {
+            return NULL;
+        }
         axis = 0;
     }
 
