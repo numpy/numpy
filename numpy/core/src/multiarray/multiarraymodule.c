@@ -337,6 +337,14 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
     if (axis < 0) {
         axis += ndim;
     }
+
+    if (ndim == 1 & axis != 0) {
+        PyErr_WarnEx(PyExc_FutureWarning,
+                     "axis not 0 for ndim == 0; this will raise an error "
+                     "in future versions of numpy", 2);
+        axis = 0;
+    }
+
     if (axis < 0 || axis >= ndim) {
         PyErr_Format(PyExc_IndexError,
                      "axis %d out of bounds [0, %d)", orig_axis, ndim);
