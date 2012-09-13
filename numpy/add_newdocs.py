@@ -3067,6 +3067,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
         requirements are satisfied, the input array is returned instead
         of a copy.
 
+    Returns
+    -------
+    arr_t : ndarray
+        Unless `copy` is False and the other conditions for returning the input
+        array are satisfied (see description for `copy` input paramter), `arr_t`
+        is a new array of the same shape as the input array, with dtype, order
+        given by `dtype`, `order`.
+
     Raises
     ------
     ComplexWarning :
