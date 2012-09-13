@@ -28,10 +28,12 @@ class TestIndexing(TestCase):
         assert_equal(a[()], a)
         assert_(a[()].base is a)
 
-    def _test_empty_list_index(self):
-        # Empty list index (is buggy!)
+    def test_empty_list_index(self):
+        # Empty list index creates an empty array
+        # with the same dtype (but with weird shape)
         a = np.array([1, 2, 3])
-        assert_equal(a[[]], a)
+        assert_equal(a[[]], [])
+        assert_equal(a[[]].dtype, a.dtype)
 
     def test_empty_array_index(self):
         # Empty array index is illegal
@@ -71,27 +73,48 @@ class TestIndexing(TestCase):
         # Index overflow produces ValueError
         assert_raises(ValueError, a.__getitem__, 1<<64)
 
-    def _test_single_bool_index(self):
-        # Single boolean index (is buggy?)
+    def test_single_bool_index(self):
+        # Single boolean index
         a = np.array([[1, 2, 3],
                       [4 ,5, 6],
                       [7, 8, 9]])
 
-        # Python boolean converts to integer (invalid?)
+        # Python boolean converts to integer
         assert_equal(a[True], a[1])
+        assert_equal(a[False], a[0])
 
-        # NumPy zero-dimensional boolean array (*crashes*)
-        assert_equal(a[np.array(True)], a) # what should be the behaviour?
-        assert_equal(a[np.array(False)], []) # what should be the behaviour?
+        # Same with NumPy boolean scalar
+        assert_equal(a[np.array(True)], a[1])
+        assert_equal(a[np.array(False)], a[0])
 
-    def test_boolean_indexing(self):
-        # Indexing a 2-dimensional array with a length-1 array of 'True'
+    def test_boolean_indexing_onedim(self):
+        # Indexing a 2-dimensional array with 
+        # boolean array of length one
         a = np.array([[ 0.,  0.,  0.]])
         b = np.array([ True], dtype=bool)
         assert_equal(a[b], a)
-
+        # boolean assignment
         a[b] = 1.
         assert_equal(a, [[1., 1., 1.]])
+
+    def test_boolean_indexing_twodim(self):
+        # Indexing a 2-dimensional array with 
+        # 2-dimensional boolean array
+        a = np.array([[1, 2, 3],
+                      [4 ,5, 6],
+                      [7, 8, 9]])
+        b = np.array([[ True, False,  True],
+                      [False,  True, False],
+                      [ True, False,  True]])
+        assert_equal(a[b], [1, 3, 5, 7, 9])
+        assert_equal(a[b[1], [4, 5, 6])
+        assert_equal(a[b[0]], a[b[2]])
+
+        # boolean assignment
+        a[b] = 0
+        assert_equal(a, [[0, 2, 0],
+                         [4, 0, 6],
+                         [0, 8, 0]])
 
 if __name__ == "__main__":
     run_module_suite()

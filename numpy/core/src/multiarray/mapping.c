@@ -1058,9 +1058,8 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
     npy_intp vals[NPY_MAXDIMS];
     
     /* Integer index */
-    if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) ||
-        PyLong_Check(op) || (PyIndex_Check(op) &&
-                             !PySequence_Check(op))) {
+    if (PyArray_IsIntegerScalar(op) || (PyIndex_Check(op) &&
+                                    !PySequence_Check(op))) {
         npy_intp value = PyArray_PyIntAsIntp(op);
         if (value == -1 && PyErr_Occurred()) {
             /* fail on error */
@@ -1375,9 +1374,8 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     }
 
     /* Integer index */
-    if (PyInt_Check(ind) || PyArray_IsScalar(ind, Integer) ||
-        PyLong_Check(ind) || (PyIndex_Check(ind) &&
-                                !PySequence_Check(ind))) {
+    if (PyArray_IsIntegerScalar(ind) || (PyIndex_Check(ind) &&
+                                     !PySequence_Check(ind))) {
         npy_intp value = PyArray_PyIntAsIntp(ind);
         if (value == -1 && PyErr_Occurred()) {
             /* fail on error */
@@ -1970,20 +1968,14 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
     }
 
     mit = (PyArrayMapIterObject *)PyArray_malloc(sizeof(PyArrayMapIterObject));
+    /* set all attributes of mapiter to zero */
+    memset(mit, 0, sizeof(PyArrayMapIterObject));
     PyObject_Init((PyObject *)mit, &PyArrayMapIter_Type);
     if (mit == NULL) {
         return NULL;
     }
-    for (i = 0; i < NPY_MAXDIMS; i++) {
-        mit->iters[i] = NULL;
-    }
-    mit->index = 0;
-    mit->ait = NULL;
-    mit->subspace = NULL;
-    mit->numiter = 0;
+    /* initialize mapiter attributes */
     mit->consec = 1;
-    Py_INCREF(indexobj);
-    mit->indexobj = indexobj;
 
     if (fancy == SOBJ_LISTTUP) {
         PyObject *newobj;
@@ -1991,8 +1983,11 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
         if (newobj == NULL) {
             goto fail;
         }
-        Py_DECREF(indexobj);
         indexobj = newobj;
+        mit->indexobj = indexobj;
+    }
+    else {
+        Py_INCREF(indexobj);
         mit->indexobj = indexobj;
     }
 
@@ -2007,8 +2002,8 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
      */
 
     /* convert all inputs to iterators */
-    if (PyArray_Check(indexobj) &&
-                    (PyArray_TYPE((PyArrayObject *)indexobj) == NPY_BOOL)) {
+    if (PyArray_Check(indexobj) && PyArray_ISBOOL(indexobj) 
+                                && !PyArray_IsZeroDim(indexobj)) {
         mit->numiter = _nonzero_indices(indexobj, mit->iters);
         if (mit->numiter < 0) {
             goto fail;
