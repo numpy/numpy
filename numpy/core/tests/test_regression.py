@@ -169,6 +169,34 @@ class TestRegression(TestCase):
         assert_(np.all(a[ya] > 0.5))
         assert_(np.all(b[yb] > 0.5))
 
+    def test_endian_where(self,level=rlevel):
+        """GitHuB issue #369"""
+        net = np.zeros(3, dtype='>f4')
+        net[1] = 0.00458849
+        net[2] = 0.605202
+        max_net = net.max()
+        test = np.where(net <= 0., max_net, net)
+        correct = np.array([ 0.60520202,  0.00458849,  0.60520202])
+        assert_array_almost_equal(test, correct)
+
+    def test_endian_recarray(self,level=rlevel):
+        """Ticket #2185"""
+        dt = np.dtype([
+               ('head', '>u4'),
+               ('data', '>u4', 2),
+            ])
+        buf = np.recarray(1, dtype=dt)
+        buf[0]['head'] = 1
+        buf[0]['data'][:] = [1,1]
+
+        h = buf[0]['head']
+        d = buf[0]['data'][0]
+        buf[0]['head'] = h
+        buf[0]['data'][0] = d
+        print buf[0]['head']
+        assert_(buf[0]['head'] == 1)
+
+
     def test_mem_dot(self,level=rlevel):
         """Ticket #106"""
         x = np.random.randn(0,1)
@@ -1601,6 +1629,14 @@ class TestRegression(TestCase):
         s = re.sub("a(.)", "\x01\\1", "a_")
         assert_equal(s[0], "\x01")
 
+    def test_pickle_bytes_overwrite(self):
+        if sys.version_info[0] >= 3:
+            data = np.array([1], dtype='b')
+            data = pickle.loads(pickle.dumps(data))
+            data[0] = 0xdd
+            bytestring = "\x01  ".encode('ascii')
+            assert_equal(bytestring[0:1], '\x01'.encode('ascii'))
+
     def test_structured_type_to_object(self):
         a_rec = np.array([(0,1), (3,2)], dtype='i4,i8')
         a_obj = np.empty((2,), dtype=object)
@@ -1691,6 +1727,25 @@ class TestRegression(TestCase):
         # a core dump and error message.
         a = np.array(['abc'], dtype=np.unicode)[0]
         del a
+
+    def test_refcount_error_in_clip(self):
+        # Ticket #1588
+        a = np.zeros((2,), dtype='>i2').clip(min=0)
+        x = a + a
+        # This used to segfault:
+        y = str(x)
+        # Check the final string:
+        assert_(y == "[0 0]")
+
+    def test_searchsorted_wrong_dtype(self):
+        # Ticket #2189, it used to segfault, so we check that it raises the
+        # proper exception.
+        a = np.array([('a', 1)], dtype='S1, int')
+        assert_raises(TypeError, np.searchsorted, a, 1.2)
+        # Ticket #2066, similar problem:
+        dtype = np.format_parser(['i4', 'i4'], [], [])
+        a = np.recarray((2, ), dtype)
+        assert_raises(TypeError, np.searchsorted, a, 1)
 
 if __name__ == "__main__":
     run_module_suite()

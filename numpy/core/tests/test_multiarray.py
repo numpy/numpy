@@ -23,6 +23,15 @@ from numpy.testing import (
 from datetime import timedelta
 
 
+if sys.version_info[:2] > (3, 2):
+    # In Python 3.3 the representation of empty shape, strides and suboffsets
+    # is an empty tuple instead of None.
+    # http://docs.python.org/dev/whatsnew/3.3.html#api-changes
+    EMPTY = ()
+else:    
+    EMPTY = None
+
+
 class TestFlags(TestCase):
     def setUp(self):
         self.a = arange(10)
@@ -1947,6 +1956,11 @@ class TestRecord(TestCase):
             assert_equal(b[['f1','f2']][0].tolist(), (2, 3))
             assert_equal(b[['f2','f1']][0].tolist(), (3, 2))
             assert_equal(b[['f1','f3']][0].tolist(), (2, (1,)))
+            # view of subfield view/copy
+            assert_equal(b[['f1','f2']][0].view(('i4',2)).tolist(), (2, 3))
+            assert_equal(b[['f2','f1']][0].view(('i4',2)).tolist(), (3, 2))
+            view_dtype=[('f1', 'i4'),('f3', [('', 'i4')])]
+            assert_equal(b[['f1','f3']][0].view(view_dtype).tolist(), (2, (1,)))
         # non-ascii unicode field indexing is well behaved
         if not is_py3:
             raise SkipTest('non ascii unicode field indexing skipped; '
@@ -2640,7 +2654,7 @@ if sys.version_info >= (2, 6):
             assert_equal(y.shape, (5,))
             assert_equal(y.ndim, 1)
             assert_equal(y.strides, (4,))
-            assert_equal(y.suboffsets, None)
+            assert_equal(y.suboffsets, EMPTY)
             assert_equal(y.itemsize, 4)
 
         def test_export_simple_nd(self):
@@ -2650,7 +2664,7 @@ if sys.version_info >= (2, 6):
             assert_equal(y.shape, (2, 2))
             assert_equal(y.ndim, 2)
             assert_equal(y.strides, (16, 8))
-            assert_equal(y.suboffsets, None)
+            assert_equal(y.suboffsets, EMPTY)
             assert_equal(y.itemsize, 8)
 
         def test_export_discontiguous(self):
@@ -2660,7 +2674,7 @@ if sys.version_info >= (2, 6):
             assert_equal(y.shape, (3, 3))
             assert_equal(y.ndim, 2)
             assert_equal(y.strides, (36, 4))
-            assert_equal(y.suboffsets, None)
+            assert_equal(y.suboffsets, EMPTY)
             assert_equal(y.itemsize, 4)
 
         def test_export_record(self):
@@ -2693,7 +2707,7 @@ if sys.version_info >= (2, 6):
             y = memoryview(x)
             assert_equal(y.shape, (1,))
             assert_equal(y.ndim, 1)
-            assert_equal(y.suboffsets, None)
+            assert_equal(y.suboffsets, EMPTY)
 
             sz = sum([dtype(b).itemsize for a, b in dt])
             if dtype('l').itemsize == 4:
@@ -2707,10 +2721,10 @@ if sys.version_info >= (2, 6):
             x = np.array(([[1,2],[3,4]],), dtype=[('a', ('i', (2,2)))])
             y = memoryview(x)
             assert_equal(y.format, 'T{(2,2)i:a:}')
-            assert_equal(y.shape, None)
+            assert_equal(y.shape, EMPTY)
             assert_equal(y.ndim, 0)
-            assert_equal(y.strides, None)
-            assert_equal(y.suboffsets, None)
+            assert_equal(y.strides, EMPTY)
+            assert_equal(y.suboffsets, EMPTY)
             assert_equal(y.itemsize, 16)
 
         def test_export_endian(self):

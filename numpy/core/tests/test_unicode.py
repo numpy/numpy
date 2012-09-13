@@ -26,10 +26,12 @@ else:
             return len(arr.data)
         return len(buffer(arr))
 
+# In both cases below we need to make sure that the byte swapped value (as
+# UCS4) is still a valid unicode:
 # Value that can be represented in UCS2 interpreters
-ucs2_value = u'\uFFFF'
+ucs2_value = u'\u0900'
 # Value that cannot be represented in UCS2 interpreters (but can in UCS4)
-ucs4_value = u'\U0010FFFF'
+ucs4_value = u'\U00100900'
 
 
 ############################################################
