@@ -1576,6 +1576,14 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
         return -1;
     }
     nd = PyArray_NDIM(ba);
+
+    if (nd == 0) {
+        PyErr_SetString(PyExc_ValueError,
+                        "cannot construct index objects "
+                        "for zero-dimensional array");
+        goto fail;
+    }
+
     for (j = 0; j < nd; j++) {
         iters[j] = NULL;
     }
@@ -1614,6 +1622,7 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
     }
 
     /*
+
      * Loop through the Boolean array  and copy coordinates
      * for non-zero entries
      */
