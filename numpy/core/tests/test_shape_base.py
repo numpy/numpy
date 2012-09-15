@@ -1,6 +1,9 @@
-from numpy.testing import *
-from numpy.core import array, atleast_1d, atleast_2d, atleast_3d, vstack, \
-        hstack, newaxis
+import warnings
+import numpy as np
+from numpy.testing import (TestCase, assert_, assert_raises, assert_equal,
+                           assert_array_equal, run_module_suite)
+from numpy.core import (array, arange, atleast_1d, atleast_2d, atleast_3d,
+                        vstack, hstack, newaxis, concatenate)
 
 class TestAtleast1d(TestCase):
     def test_0D_array(self):
@@ -140,6 +143,21 @@ class TestVstack(TestCase):
         res=vstack([a,b])
         desired = array([[1,2],[1,2]])
         assert_array_equal(res,desired)
+
+def test_concatenate_axis_None():
+    a = np.arange(4, dtype=np.float64).reshape((2,2))
+    b = range(3)
+    c = ['x']
+    r = np.concatenate((a, a), axis=None)
+    assert_equal(r.dtype, a.dtype)
+    assert_equal(r.ndim, 1)
+    r = np.concatenate((a, b), axis=None)
+    assert_equal(r.size, a.size + len(b))
+    assert_equal(r.dtype, a.dtype)
+    r = np.concatenate((a, b, c), axis=None)
+    d = array(['0', '1', '2', '3', 
+               '0', '1', '2', 'x'])
+    assert_array_equal(r,d)
 
 if __name__ == "__main__":
     run_module_suite()
