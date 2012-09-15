@@ -1,7 +1,7 @@
 import warnings
 from numpy.testing import *
 from numpy.core import array, atleast_1d, atleast_2d, atleast_3d, vstack, \
-        hstack, newaxis, concatenate, arange
+        hstack, newaxis, concatenate, arange, float64
 
 class TestAtleast1d(TestCase):
     def test_0D_array(self):
@@ -209,6 +209,20 @@ def test_concatenate_sloppy0():
         warnings.filters.pop(0)
         warnings.filters.pop(0)
 
+def test_concatenate_axis_None():
+    a = arange(4, dtype=float64).reshape((2,2))
+    b = range(3)
+    c = ['x']
+    r = concatenate((a, a), axis=None)
+    assert_equal(r.dtype, a.dtype)
+    assert_equal(r.ndim, 1)
+    r = concatenate((a, b), axis=None)
+    assert_equal(r.size, a.size + len(b))
+    assert_equal(r.dtype, a.dtype)
+    r = concatenate((a, b, c), axis=None)
+    d = array(['0', '1', '2', '3', 
+               '0', '1', '2', 'x'])
+    assert_array_equal(r,d)
 
 if __name__ == "__main__":
     run_module_suite()
