@@ -459,7 +459,8 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
     PyTypeObject *subtype = &PyArray_Type;
     double priority = NPY_PRIORITY;
     int iarrays;
-    npy_intp shape[2], strides[2];
+    npy_intp stride, sizes[NPY_MAXDIMS];
+    npy_intp shape = 0;
     PyArray_Descr *dtype = NULL;
     PyArrayObject *ret = NULL;
     PyArrayObject_fields *sliding_view = NULL;
@@ -470,19 +471,17 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         return NULL;
     }
 
-    /* All the arrays must have the same total number of elements */
-    shape[0] = narrays;
-    shape[1] = PyArray_SIZE(arrays[0]);
-
     /*
      * Figure out the final concatenated shape starting from the first
      * array's shape.
      */
-    for (iarrays = 1; iarrays < narrays; ++iarrays) {
-        if (PyArray_SIZE(arrays[iarrays]) != shape[1]) {
+    for (iarrays = 0; iarrays < narrays; ++iarrays) {
+        shape += sizes[iarrays] = PyArray_SIZE(arrays[iarrays]);
+        /* Check for overflow */
+        if (shape < 0) { 
             PyErr_SetString(PyExc_ValueError,
-                            "all the input arrays must have same "
-                            "number of elements");
+                            "total number of elements "
+                            "too large to concatenate");
             return NULL;
         }
     }
@@ -504,15 +503,14 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         return NULL;
     }
 
-    strides[1] = dtype->elsize;
-    strides[0] = strides[1] * shape[1];
+    stride = dtype->elsize;
 
     /* Allocate the array for the result. This steals the 'dtype' reference. */
     ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
                                                     dtype,
-                                                    2,
-                                                    shape,
-                                                    strides,
+                                                    1,
+                                                    &shape,
+                                                    &stride,
                                                     NULL,
                                                     0,
                                                     NULL);
@@ -530,9 +528,10 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         Py_DECREF(ret);
         return NULL;
     }
-    /* Each array gets flattened into one slot along 'axis' */
-    sliding_view->dimensions[0] = 1;
+
     for (iarrays = 0; iarrays < narrays; ++iarrays) {
+        /* Adjust the window dimensions for this array */
+        sliding_view->dimensions[0] = sizes[iarrays];
 
         /* Copy the data for this array */
         if (PyArray_CopyAsFlat((PyArrayObject *)sliding_view, arrays[iarrays],
@@ -543,7 +542,7 @@ PyArray_ConcatenateFlattenedArrays(int narrays, PyArrayObject **arrays,
         }
 
         /* Slide to the start of the next window */
-        sliding_view->data += sliding_view->strides[0];
+        sliding_view->data += sliding_view->strides[0] * sizes[iarrays];
     }
 
     Py_DECREF(sliding_view);
