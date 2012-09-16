@@ -2075,6 +2075,11 @@ PyArray_FromInterface(PyObject *origin)
     /* Case for data access through pointer */
     else if (attr && PyTuple_Check(attr)) {
         PyObject *dataptr;
+        if (n == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "__array_interface__ shape must be at least size 1");
+            goto fail;
+        }
         if (PyTuple_GET_SIZE(attr) != 2) {
             PyErr_SetString(PyExc_TypeError,
                     "__array_interface__ data must be a 2-tuple with "
@@ -2108,6 +2113,11 @@ PyArray_FromInterface(PyObject *origin)
 
     /* Case for data access through buffer */
     else {
+        if (n == 0) {
+            PyErr_SetString(PyExc_ValueError,
+                    "__array_interface__ shape must be at least size 1");
+            goto fail;
+        }
         if (attr && (attr != Py_None)) {
             base = attr;
         }
