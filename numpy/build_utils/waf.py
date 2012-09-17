@@ -123,9 +123,9 @@ int main()
 def check_type(self, type_name, **kw):
     code = r"""
 int main() {
-	if ((%(type_name)s *) 0)
+    if ((%(type_name)s *) 0)
         return 0;
-	if (sizeof (%(type_name)s))
+    if (sizeof (%(type_name)s))
         return 0;
 }
 """ % {"type_name": type_name}
