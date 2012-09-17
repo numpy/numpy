@@ -2827,7 +2827,7 @@ def sinc(x):
 
     Examples
     --------
-    >>> x = np.arange(-20., 21.)/5.
+    >>> x = np.linspace(-4, 4, 41)
     >>> np.sinc(x)
     array([ -3.89804309e-17,  -4.92362781e-02,  -8.40918587e-02,
             -8.90384387e-02,  -5.84680802e-02,   3.89804309e-17,
@@ -2856,7 +2856,7 @@ def sinc(x):
 
     It works in 2-D as well:
 
-    >>> x = np.arange(-200., 201.)/50.
+    >>> x = np.linspace(-4, 4, 401)
     >>> xx = np.outer(x, x)
     >>> plt.imshow(np.sinc(xx))
     <matplotlib.image.AxesImage object at 0x...>
