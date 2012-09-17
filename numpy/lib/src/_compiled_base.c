@@ -1708,7 +1708,7 @@ static struct PyModuleDef moduledef = {
 
 #if defined(NPY_PY3K)
 #define RETVAL m
-PyObject *PyInit__compiled_base(void)
+PyMODINIT_FUNC PyInit__compiled_base(void)
 #else
 #define RETVAL
 PyMODINIT_FUNC
