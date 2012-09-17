@@ -323,7 +323,7 @@ static struct PyModuleDef moduledef = {
 
 #if defined(NPY_PY3K)
 #define RETVAL m
-PyObject *PyInit_umath(void)
+PyMODINIT_FUNC PyInit_umath(void)
 #else
 #define RETVAL
 PyMODINIT_FUNC initumath(void)

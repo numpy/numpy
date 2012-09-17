@@ -150,7 +150,7 @@ the module.
             NULL
         };
 
-        PyObject *PyInit_spam(void)
+        PyMODINIT_FUNC PyInit_spam(void)
         {
             PyObject *m;
             m = PyModule_Create(&moduledef);
@@ -335,7 +335,7 @@ the primary thing that must be changed to create your own ufunc.
             NULL
         };
 
-        PyObject *PyInit_npufunc(void)
+        PyMODINIT_FUNC PyInit_npufunc(void)
         {
             PyObject *m, *logit, *d;
             m = PyModule_Create(&moduledef);
@@ -614,7 +614,7 @@ the primary thing that must be changed to create your own ufunc.
             NULL
         };
 
-        PyObject *PyInit_npufunc(void)
+        PyMODINIT_FUNC PyInit_npufunc(void)
         {
             PyObject *m, *logit, *d;
             m = PyModule_Create(&moduledef);
@@ -837,7 +837,7 @@ as well as all other properties of a ufunc.
             NULL
         };
 
-        PyObject *PyInit_npufunc(void)
+        PyMODINIT_FUNC PyInit_npufunc(void)
         {
             PyObject *m, *logit, *d;
             m = PyModule_Create(&moduledef);
