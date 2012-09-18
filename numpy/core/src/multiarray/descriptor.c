@@ -2538,6 +2538,7 @@ arraydescr_setstate(PyArray_Descr *self, PyObject *args)
             errmsg = PyUString_FromString("Invalid datetime dtype (metadata, c_metadata): ");
             PyUString_ConcatAndDel(&errmsg, PyObject_Repr(metadata));
             PyErr_SetObject(PyExc_ValueError, errmsg);
+            Py_DECREF(errmsg);
             return NULL;
         }
 

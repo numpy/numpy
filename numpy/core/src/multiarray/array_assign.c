@@ -73,6 +73,7 @@ broadcast_error: {
         PyUString_ConcatAndDel(&errmsg,
                 build_shape_string(ndim, shape));
         PyErr_SetObject(PyExc_ValueError, errmsg);
+        Py_DECREF(errmsg);
 
         return -1;
    }
