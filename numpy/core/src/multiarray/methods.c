@@ -858,6 +858,7 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 PyUString_FromFormat(" according to the rule %s",
                         npy_casting_to_string(casting)));
         PyErr_SetObject(PyExc_TypeError, errmsg);
+        Py_DECREF(errmsg);
         Py_DECREF(dtype);
         return NULL;
     }
