@@ -1812,7 +1812,6 @@ static PyObject *npyiter_has_delayed_bufalloc_get(NewNpyArrayIterObject *self)
                 "Iterator is invalid");
         return NULL;
     }
-
     if (NpyIter_HasDelayedBufAlloc(self->iter)) {
         Py_RETURN_TRUE;
     }
@@ -1970,7 +1969,6 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
                 "Iterator is past the end");
         return NULL;
     }
-
 
     if (NpyIter_HasDelayedBufAlloc(self->iter)) {
         PyErr_SetString(PyExc_ValueError,
