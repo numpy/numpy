@@ -1979,7 +1979,7 @@ PyArray_FromStructInterface(PyObject *input)
 NPY_NO_EXPORT PyObject *
 PyArray_FromInterface(PyObject *origin)
 {
-    PyObject *tmp;
+    PyObject *tmp = NULL;
     PyObject *iface = NULL;
     PyObject *attr = NULL;
     PyObject *base = NULL;

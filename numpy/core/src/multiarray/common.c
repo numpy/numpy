@@ -309,9 +309,24 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     if (ip != NULL) {
         if (PyDict_Check(ip)) {
             PyObject *typestr;
+#if defined(NPY_PY3K)
+            PyObject *tmp = NULL;
+#endif
             typestr = PyDict_GetItemString(ip, "typestr");
-            if (typestr && PyString_Check(typestr)) {
-                dtype =_array_typedescr_fromstr(PyString_AS_STRING(typestr));
+#if defined(NPY_PY3K)
+            /* Allow unicode type strings */
+            if (PyUnicode_Check(typestr)) {
+                tmp = PyUnicode_AsASCIIString(typestr);
+                typestr = tmp;
+            }
+#endif
+            if (typestr && PyBytes_Check(typestr)) {
+                dtype =_array_typedescr_fromstr(PyBytes_AS_STRING(typestr));
+#if defined(NPY_PY3K)
+                if (tmp == typestr) {
+                    Py_DECREF(tmp);
+                }
+#endif
                 Py_DECREF(ip);
                 if (dtype == NULL) {
                     goto fail;
