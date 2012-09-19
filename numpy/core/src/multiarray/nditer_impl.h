@@ -101,6 +101,8 @@
 #define NPY_ITFLAG_REDUCE       0x1000
 /* Reduce iteration doesn't need to recalculate reduce loops next time */
 #define NPY_ITFLAG_REUSE_REDUCE_LOOPS 0x2000
+/* The iterator output is scalar */
+#define NPY_ITFLAG_SCALAR       0x4000
 
 /* Internal iterator per-operand iterator flags */
 
@@ -215,6 +217,7 @@ typedef npy_int16 npyiter_opitflags;
         &(iter)->iter_flexdata + NIT_RESETDATAPTR_OFFSET(itflags, ndim, nop)))
 #define NIT_BASEOFFSETS(iter) ((npy_intp *)( \
         &(iter)->iter_flexdata + NIT_BASEOFFSETS_OFFSET(itflags, ndim, nop)))
+
 #define NIT_OPERANDS(iter) ((PyArrayObject **)( \
         &(iter)->iter_flexdata + NIT_OPERANDS_OFFSET(itflags, ndim, nop)))
 #define NIT_OPITFLAGS(iter) ((npyiter_opitflags *)( \

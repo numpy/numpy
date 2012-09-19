@@ -328,6 +328,7 @@ multiarray_funcs_api = {
     'PyDataMem_FREE':                       289,
     'PyDataMem_RENEW':                      290,
     'PyDataMem_SetEventHook':               291,
+    'NpyIter_IsScalar':                     292,
 }
 
 ufunc_types_api = {

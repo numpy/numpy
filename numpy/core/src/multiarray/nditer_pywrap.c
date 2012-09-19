@@ -1542,6 +1542,9 @@ static PyObject *npyiter_multi_index_get(NewNpyArrayIterObject *self)
     }
 
     if (self->get_multi_index != NULL) {
+        if (NpyIter_IsScalar(self->iter)) {
+            return PyTuple_New(0);
+        }
         ndim = NpyIter_GetNDim(self->iter);
         self->get_multi_index(self->iter, multi_index);
         ret = PyTuple_New(ndim);
@@ -1967,6 +1970,7 @@ npyiter_seq_item(NewNpyArrayIterObject *self, Py_ssize_t i)
                 "Iterator is past the end");
         return NULL;
     }
+
 
     if (NpyIter_HasDelayedBufAlloc(self->iter)) {
         PyErr_SetString(PyExc_ValueError,

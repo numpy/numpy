@@ -533,6 +533,9 @@ class ndindex(object):
 
     """
     def __init__(self, *shape):
+        # Accept shapes in the form f(x, y, ..) as well as f((x ,y, ..))
+        if len(shape) == 1 and isinstance(shape[0], tuple):
+            shape = shape[0]
         x = as_strided(_nx.zeros(1), shape=shape, strides=_nx.zeros_like(shape))
         self._it = _nx.nditer(x, flags=['multi_index'], order='C')
 
