@@ -743,9 +743,9 @@ class TestUfunc(TestCase):
             uf.accumulate(np.zeros((0, 0)), axis=0)
 
     def test_safe_casting(self):
-        # In old numpy's, unsafe casting was allowed for in-place
-        # operations. In future numpy's, only same_kind casting will be
-        # allowed by default.
+        # In old versions of numpy, in-place operations used the 'unsafe'
+        # casting rules. In some future version, 'same_kind' will become the
+        # default.
         a = np.array([1, 2, 3], dtype=int)
         # Non-in-place addition is fine
         assert_array_equal(assert_no_warnings(np.add, a, 1.1),
