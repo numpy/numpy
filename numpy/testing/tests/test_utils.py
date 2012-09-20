@@ -317,10 +317,14 @@ class TestWarns(unittest.TestCase):
     def test_warn(self):
         def f():
             warnings.warn("yo")
+            return 3
 
         before_filters = sys.modules['warnings'].filters[:]
-        assert_warns(UserWarning, f)
+        assert_equal(assert_warns(UserWarning, f), 3)
         after_filters = sys.modules['warnings'].filters
+
+        assert_raises(AssertionError, assert_no_warnings, f)
+        assert_equal(assert_no_warnings(lambda x: x, 1), 1)
 
         # Check that the warnings state is unchanged
         assert_equal(before_filters, after_filters,
