@@ -330,7 +330,6 @@ multiarray_funcs_api = {
     'PyDataMem_FREE':                       289,
     'PyDataMem_RENEW':                      290,
     'PyDataMem_SetEventHook':               291,
-    'NpyIter_IsScalar':                     292,
     'PyArray_MapIterSwapAxes':              293,
     'PyArray_MapIterArray':                 294,
     'PyArray_MapIterNext':                  295,
