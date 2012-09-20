@@ -844,7 +844,7 @@ NpyIter_IsGrowInner(NpyIter *iter)
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_GROWINNER) != 0;
 }
 
-/*NUMPY_API
+/*
  * Whether the iterator output is scalar
  */
 NPY_NO_EXPORT npy_bool
