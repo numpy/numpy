@@ -13,12 +13,14 @@
 #include "common.h"
 #include "buffer.h"
 
-/* The casting to use for implicit assignment operations resulting from
+/*
+ * The casting to use for implicit assignment operations resulting from
  * in-place operations (like +=) and out= arguments. (Notice that this
  * variable is misnamed, but it's part of the public API so I'm not sure we
  * can just change it. Maybe someone should try and see if anyone notices.
  */
-/* In numpy 1.6 and earlier, this was NPY_UNSAFE_CASTING. In a future
+/*
+ * In numpy 1.6 and earlier, this was NPY_UNSAFE_CASTING. In a future
  * release, it will become NPY_SAME_KIND_CASTING.  Right now, during the
  * transitional period, we continue to follow the NPY_UNSAFE_CASTING rules (to
  * avoid breaking people's code), but we also check for whether the cast would

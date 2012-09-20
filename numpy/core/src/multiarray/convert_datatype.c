@@ -503,7 +503,8 @@ type_num_unsigned_to_signed(int type_num)
     }
 }
 
-/* NOTE: once the UNSAFE_CASTING -> SAME_KIND_CASTING transition is over,
+/*
+ * NOTE: once the UNSAFE_CASTING -> SAME_KIND_CASTING transition is over,
  * we should remove NPY_INTERNAL_UNSAFE_CASTING_BUT_WARN_UNLESS_SAME_KIND
  * and PyArray_CanCastTypeTo_impl should be renamed back to
  * PyArray_CanCastTypeTo.
@@ -527,11 +528,12 @@ PyArray_CanCastTypeTo(PyArray_Descr *from, PyArray_Descr *to,
                                                   NPY_SAME_KIND_CASTING);
         if (unsafe_ok && !same_kind_ok) {
             DEPRECATE("Implicitly casting between incompatible kinds. In "
-                      "a future numpy release, this will become an error. "
+                      "a future numpy release, this will raise an error. "
                       "Use casting=\"unsafe\" if this is intentional.");
         }
         return unsafe_ok;
-    } else {
+    }
+    else {
         return PyArray_CanCastTypeTo_impl(from, to, casting);
     }
 }
