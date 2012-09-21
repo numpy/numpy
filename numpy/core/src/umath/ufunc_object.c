@@ -725,7 +725,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
     PyObject *str_key_obj = NULL;
     char *ufunc_name;
 
-    int any_flexible = 0, any_object = 0;
+    int any_flexible = 0, any_object = 0, any_flexible_userloops = 0;
 
     ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
@@ -764,23 +764,56 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
         if (out_op[i] == NULL) {
             return -1;
         }
+
+        int type_num = PyArray_DESCR(out_op[i])->type_num;
         if (!any_flexible &&
-                PyTypeNum_ISFLEXIBLE(PyArray_DESCR(out_op[i])->type_num)) {
+                PyTypeNum_ISFLEXIBLE(type_num)) {
             any_flexible = 1;
         }
         if (!any_object &&
-                PyTypeNum_ISOBJECT(PyArray_DESCR(out_op[i])->type_num)) {
+                PyTypeNum_ISOBJECT(type_num)) {
             any_object = 1;
+        }
+
+        /*
+         * If any operand is a flexible dtype, check to see if any
+         * struct dtype ufuncs are registered. A ufunc has been registered
+         * for a struct dtype if ufunc's arg_dtypes array is not NULL.
+         */
+        if (PyTypeNum_ISFLEXIBLE(type_num) &&
+            !any_flexible_userloops &&
+            ufunc->userloops != NULL) {
+            PyUFunc_Loop1d *funcdata;
+            PyObject *key, *obj;
+            key = PyInt_FromLong(type_num);
+            if (key == NULL) {
+                continue;
+            }
+            obj = PyDict_GetItem(ufunc->userloops, key);
+            Py_DECREF(key);
+            if (obj == NULL) {
+                continue;
+            }
+            funcdata = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(obj);
+            while (funcdata != NULL) {
+                if (funcdata->arg_dtypes != NULL) {
+                    any_flexible_userloops = 1;
+                    break;
+                }
+
+                funcdata = funcdata->next;
+            }
         }
     }
 
     /*
      * Indicate not implemented if there are flexible objects (structured
-     * type or string) but no object types.
+     * type or string) but no object types and no registered struct
+     * dtype ufuncs.
      *
      * Not sure - adding this increased to 246 errors, 150 failures.
      */
-    if (any_flexible && !any_object) {
+    if (any_flexible && !any_flexible_userloops && !any_object) {
         return -2;
 
     }
@@ -4356,9 +4389,19 @@ cmp_arg_types(int *arg1, int *arg2, int n)
 static NPY_INLINE void
 _free_loop1d_list(PyUFunc_Loop1d *data)
 {
+    int i;
+
     while (data != NULL) {
         PyUFunc_Loop1d *next = data->next;
         PyArray_free(data->arg_types);
+
+        if (data->arg_dtypes != NULL) {
+            for (i = 0; i < data->nargs; i++) {
+                Py_DECREF(data->arg_dtypes[i]);
+            }
+            PyArray_free(data->arg_dtypes);
+        }
+
         PyArray_free(data);
         data = next;
     }
@@ -4383,6 +4426,90 @@ _loop1d_list_free(void *ptr)
 
 /*UFUNC_API*/
 NPY_NO_EXPORT int
+PyUFunc_RegisterLoopForStructType(PyUFuncObject *ufunc,
+                            PyArray_Descr *user_dtype,
+                            PyUFuncGenericFunction function,
+                            PyArray_Descr **arg_dtypes,
+                            void *data)
+{
+    int i;
+    int result = 0;
+    int *arg_typenums;
+    PyObject *key, *cobj;
+
+    if (user_dtype == NULL) {
+        PyErr_SetString(PyExc_TypeError, "unknown user defined struct dtype");
+        return -1;
+    }
+
+    key = PyInt_FromLong((long) user_dtype->type_num);
+    if (key == NULL) {
+        return -1;
+    }
+
+    arg_typenums = PyArray_malloc(ufunc->nargs * sizeof(int));
+    if (arg_dtypes != NULL) {
+        for (i = 0; i < ufunc->nargs; i++) {
+            arg_typenums[i] = arg_dtypes[i]->type_num;
+        }
+    }
+    else {
+        for (i = 0; i < ufunc->nargs; i++) {
+            arg_typenums[i] = user_dtype->type_num;
+        }
+    }
+    
+    result = PyUFunc_RegisterLoopForType(ufunc, user_dtype->type_num, function, arg_typenums, data);
+
+    if (result == 0) {
+        cobj = PyDict_GetItem(ufunc->userloops, key);
+        if (cobj == NULL) {
+            PyErr_SetString(PyExc_KeyError, "userloop for user dtype not found");
+            result = -1;
+        }
+        else {
+            PyUFunc_Loop1d *current, *prev = NULL;
+            int cmp = 1;
+            current = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(cobj);
+            while (current != NULL) {
+                cmp = cmp_arg_types(current->arg_types, arg_typenums, ufunc->nargs);
+                if (cmp >= 0 && current->arg_dtypes == NULL) {
+                    break;
+                }
+                prev = current;
+                current = current->next;
+            }
+            if (cmp == 0 && current->arg_dtypes == NULL) {
+                current->arg_dtypes = PyArray_malloc(ufunc->nargs * sizeof(PyArray_Descr*));
+                if (arg_dtypes != NULL) {
+                    for (i = 0; i < ufunc->nargs; i++) {
+                        current->arg_dtypes[i] = arg_dtypes[i];
+                        Py_INCREF(current->arg_dtypes[i]);
+                    }
+                }
+                else {
+                    for (i = 0; i < ufunc->nargs; i++) {
+                        current->arg_dtypes[i] = user_dtype;
+                        Py_INCREF(current->arg_dtypes[i]);
+                    }
+                }
+                current->nargs = ufunc->nargs;
+            }
+            else {
+                result = -1;
+            }
+        }
+    }
+
+    free(arg_typenums);
+
+    Py_DECREF(key);
+
+    return result;
+}
+
+/*UFUNC_API*/
+NPY_NO_EXPORT int
 PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
                             int usertype,
                             PyUFuncGenericFunction function,
@@ -4396,7 +4523,7 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     int *newtypes=NULL;
 
     descr=PyArray_DescrFromType(usertype);
-    if ((usertype < NPY_USERDEF) || (descr==NULL)) {
+    if ((usertype < NPY_USERDEF && usertype != NPY_VOID) || (descr==NULL)) {
         PyErr_SetString(PyExc_TypeError, "unknown user-defined type");
         return -1;
     }
@@ -4432,6 +4559,8 @@ PyUFunc_RegisterLoopForType(PyUFuncObject *ufunc,
     funcdata->arg_types = newtypes;
     funcdata->data = data;
     funcdata->next = NULL;
+    funcdata->arg_dtypes = NULL;
+    funcdata->nargs = 0;
 
     /* Get entry for this user-defined type*/
     cobj = PyDict_GetItem(ufunc->userloops, key);
