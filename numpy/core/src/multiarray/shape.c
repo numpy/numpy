@@ -273,21 +273,21 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
          * appropriate value to preserve contiguousness
          */
         if (order == NPY_FORTRANORDER) {
-            if (strides[0] == 0) {
+            if (dimensions[0] == 1) {
                 strides[0] = PyArray_DESCR(self)->elsize;
             }
             for (i = 1; i < ndim; i++) {
-                if (strides[i] == 0) {
+                if (dimensions[i] == 1) {
                     strides[i] = strides[i-1] * dimensions[i-1];
                 }
             }
         }
         else {
-            if (strides[ndim-1] == 0) {
+            if (dimensions[ndim-1] == 1) {
                 strides[ndim-1] = PyArray_DESCR(self)->elsize;
             }
             for (i = ndim - 2; i > -1; i--) {
-                if (strides[i] == 0) {
+                if (dimensions[i] == 1) {
                     strides[i] = strides[i+1] * dimensions[i+1];
                 }
             }
