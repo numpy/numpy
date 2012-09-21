@@ -4425,6 +4425,16 @@ _loop1d_list_free(void *ptr)
 
 
 /*UFUNC_API*/
+/*
+ * This function allows the user to register a 1-d loop for structured arrays
+ * with an already created ufunc. The ufunc is called whenever any of it's input
+ * arguments match the user_dtype argument.
+ * ufunc - ufunc object created from call to PyUFunc_FromFuncAndData
+ * user_dtype - struct dtype that ufunc will be registered with
+ * function - 1-d loop function pointer
+ * arg_dtypes - array of struct dtype objects describing the ufunc operands
+ * data - arbitrary data pointer passed in to loop function
+ */
 NPY_NO_EXPORT int
 PyUFunc_RegisterLoopForStructType(PyUFuncObject *ufunc,
                             PyArray_Descr *user_dtype,
