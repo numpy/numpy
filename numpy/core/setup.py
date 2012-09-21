@@ -930,7 +930,9 @@ def configuration(parent_package='',top_path=None):
     #######################################################################
 
     config.add_extension('umath_linalg',
-                    sources = [join('src','umath', 'umath_linalg.c.src')])
+                         sources = [join('src','umath', 'umath_linalg.c.src')],
+                         extra_info = blas_info
+                         )
 
     #######################################################################
     #                     multiarray_tests module                         #

@@ -15,6 +15,14 @@
 
 #include "npy_config.h"
 
+#ifndef CBLAS_HEADER
+#define CBLAS_HEADER "cblas.h"
+#endif
+
+#include CBLAS_HEADER
+
+#include <stdio.h>
+
 static const char* umath_linalg_module_name =  "umath_linalg";
 
 /*
@@ -55,20 +63,36 @@ static const char* umath_linalg_module_name =  "umath_linalg";
  *****************************************************************************
  */
 
-char *inner1d_signature = "(i),(i)->()";
-
 /**begin repeat
 
-   #TYPE=LONG,DOUBLE#
-   #typ=npy_long, npy_double#
+   #TYPE=FLOAT,DOUBLE#
+   #typ=npy_float, npy_double#
+   #cblas_dot=cblas_sdot, cblas_ddot# 
+
 */
 
 /*
  *  This implements the function
  *        out[n] = sum_i { in1[n, i] * in2[n, i] }.
  */
-static void
-@TYPE@_inner1d(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+
+static inline void 
+@TYPE@_inner1d_blas(char **args, npy_intp* dimensions, npy_intp * steps)
+{
+    INIT_OUTER_LOOP_3
+    const size_t sot = sizeof(@typ@);
+
+    int dim = (int) dimensions[0];
+    int is1 = (int)(steps[0]/sot), is2 = (int)(steps[1]/sot);
+
+    BEGIN_OUTER_LOOP_3
+        @typ@ * ip1 = (@typ@*)args[0], *ip2 = (@typ@*)args[1];
+        *(@typ@*)(args[2]) = @cblas_dot@(dim, ip1, is1, ip2, is2);
+    END_OUTER_LOOP
+}
+
+static inline void 
+@TYPE@_inner1d_std(char **args, npy_intp* dimensions, npy_intp * steps)
 {
     INIT_OUTER_LOOP_3
     npy_intp di = dimensions[0];
@@ -76,7 +100,7 @@ static void
     npy_intp is1=steps[0], is2=steps[1];
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
-        @typ@ sum = 0;
+    @typ@ sum = 0;
         for (i = 0; i < di; i++) {
             sum += (*(@typ@ *)ip1) * (*(@typ@ *)ip2);
             ip1 += is1;
@@ -86,16 +110,34 @@ static void
     END_OUTER_LOOP
 }
 
-/**end repeat**/
+static void
+@TYPE@_inner1d(char **args, npy_intp *dimensions, npy_intp *steps,
+               void *NPY_UNUSED(func))
+{
+    const size_t sot = sizeof(@typ@);
+    /* 
+     * use blas if the stride is a multiple of datatype size in the inputs
+     * it should be the common case 
+     */
 
-char *innerwt_signature = "(i),(i),(i)->()";
+    if ((0 == (steps[3] % sot)) &&
+        (0 == (steps[4] % sot))) {
+        /* use blas */
+        @TYPE@_inner1d_blas(args, dimensions, steps);
+    } else {
+        /* use standard version */
+        @TYPE@_inner1d_std(args, dimensions, steps);
+    }
+}
+
+/**end repeat**/
 
 /**begin repeat
 
-   #TYPE=LONG,DOUBLE#
-   #typ=npy_long, npy_double#
-*/
+   #TYPE=FLOAT,DOUBLE#
+   #typ=npy_float, npy_double# 
 
+*/
 
 /*
  *  This implements the function
@@ -124,12 +166,115 @@ static void
 
 /**end repeat**/
 
-char *matrix_multiply_signature = "(m,n),(n,p)->(m,p)";
+static const float s_one = 1.0f;
+static const float s_zero = 0.0f;
+static const double d_one = 1.0;
+static const double d_zero = 0.0;
+static const float c_one[2] = { 1.0f, 0.0f };
+static const float c_zero[2] = { 0.0f, 0.0f };
+static const double z_one[2] = { 1.0, 0.0 };
+static const double z_zero[2] = { 0.0, 0.0 };
+
+/* this struct contains information about how to linearize in a local buffer
+   a matrix so that it can be used by blas functions.
+   All strides are specified in number of elements (similar to what blas expects)
+
+   dst_row_strides: number of elements between different row. Matrix is considered
+                    row-major
+   dst_column_strides: number of elements between differnt columns in the
+                    destination buffer
+   rows: number of rows of the matrix
+   columns: number of columns of the matrix
+   src_row_strides: strides needed to access the next row in the source matrix
+   src_column_strides: strides needed to access the next column in the source
+                       matrix
+ */
+typedef struct
+{
+  int   rows;
+  int   columns;
+  int   buff_row_strides;
+  int   array_row_strides;
+  int   array_column_strides;
+} LINEARIZE_DATA_t;
+
+typedef struct
+{
+    int   trans[2]; // use transpose
+    int   m,n,k; // note there is a relationship between this and lin_dara rows
+                 // & columns but the actual relationship is dependent on trans.
+    void *buff[3];  // memory buff for the operand to use for blas call
+    LINEARIZE_DATA_t lin_data[3];
+} GEMM_PARAMS_t;
+
+#if 0
+static void
+dump_linearize_data_params(const char* name, const LINEARIZE_DATA_t* params)
+{
+    printf("\n\t%s rows: %d columns: %d"
+	   "\n\t\tarray row_strides: %d column_strides: %d"
+	   "\n\t\tbuff  row_strides: %d"
+	   "\n", name, params->rows, params->columns,
+	   params->array_row_strides, params->array_column_strides,
+	   params->buff_row_strides);
+}
+
+static void
+dump_gemm_params(const GEMM_PARAMS_t* params)
+{
+    printf("\n\ngemm_params: src1: %s transposed src2: %s transposed"
+	   "\n\tM: %d N: %d K: %d",
+	   params->trans[0] == CblasNoTrans? "NOT" : "",
+	   params->trans[1] == CblasNoTrans? "NOT" : "",
+	   params->m, params->n, params->k);
+    dump_linearize_data_params("src1", &params->lin_data[0]);
+    dump_linearize_data_params("src2", &params->lin_data[1]);
+    dump_linearize_data_params("dst", &params->lin_data[2]);
+}
+#endif
+
+/* -------------------------------------------------------------------------- */
+/* rearranging of 2D matrices using blas */
 
 /**begin repeat
 
-   #TYPE=FLOAT,DOUBLE,LONG#
-   #typ=npy_float, npy_double,npy_long#
+    #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+    #typ=npy_float,npy_double,npy_cfloat,npy_cdouble# 
+    #cblas_type=s,d,c,z#
+ */
+static inline void
+linearize_@TYPE@_matrix(@typ@ *dst, const @typ@ *src,const LINEARIZE_DATA_t* data)
+{
+    int i;
+    for (i=0; i< data->rows; i++) {
+        cblas_@cblas_type@copy(data->columns,
+                               src, data->array_column_strides,
+                               dst, 1);
+        src += data->array_row_strides;
+        dst += data->buff_row_strides;
+    }
+}
+
+static inline void
+delinearize_@TYPE@_matrix(@typ@ *dst, const @typ@ *src,const LINEARIZE_DATA_t* data)
+{
+    int i;
+    for (i=0; i< data->rows; i++) {
+        cblas_@cblas_type@copy(data->columns,
+			       src, 1,
+                               dst, data->array_column_strides);
+        src += data->buff_row_strides;
+        dst += data->array_row_strides;
+    }
+}
+
+/**end repeat**/
+
+/**begin repeat
+
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
+   #cblas_type=s,d,c,z#
 */
 
 /*
@@ -137,44 +282,115 @@ char *matrix_multiply_signature = "(m,n),(n,p)->(m,p)";
  *        out[k, m, p] = sum_n { in1[k, m, n] * in2[k, n, p] }.
  */
 
+static inline void
+@TYPE@_matrix_multiply_blas_straight(char **args,
+                                     npy_intp *dimensions,
+                                     npy_intp *steps,
+                                     GEMM_PARAMS_t* params)
+
+{
+    /* 
+     * everything is setup in a way that makes things work. BLAS gemm can be
+     * be called without rearranging nor using weird stuff, as matrices are
+     * in the expected way in memory.
+     * This is just a loop calling blas.
+     */
+    INIT_OUTER_LOOP_3
+
+    BEGIN_OUTER_LOOP_3
+        /* just call the appropriate multiply and update pointers */
+        @typ@ *src1, *src2, *dst;
+
+        if (params->buff[0]) {
+            linearize_@TYPE@_matrix((@typ@ *)params->buff[0], (const @typ@ *)args[0], &params->lin_data[0]);
+            src1 = params->buff[0];
+        } else {
+            src1 = (@typ@ *)args[0];
+        }
+
+        if (params->buff[1]) {
+            linearize_@TYPE@_matrix((@typ@ *)params->buff[1], (const @typ@ *)args[1], &params->lin_data[1]);
+            src2 = params->buff[1];
+        } else {
+            src2 = (@typ@ *)args[1];
+        }
+
+        if (params->buff[2]) {
+            dst = params->buff[2];
+        } else {
+            dst = (@typ@ *)args[2];
+        }
+
+        /* linearize source operands if needed */
+        cblas_@cblas_type@gemm(CblasRowMajor, params->trans[0], params->trans[1],
+                              params->m, params->n, params->k, 
+                              @cblas_type@_one, // alpha
+                              src1, params->lin_data[0].buff_row_strides,
+                              src2, params->lin_data[1].buff_row_strides,
+                              @cblas_type@_zero, // beta
+                              dst, params->lin_data[2].buff_row_strides 
+                              );
+
+        if (params->buff[2]) {
+            delinearize_@TYPE@_matrix((@typ@ *)args[2], (const @typ@ *)params->buff[2], &params->lin_data[2]);
+        }
+    END_OUTER_LOOP
+}
+
 
 static void
 @TYPE@_matrix_multiply(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    /* no BLAS is available */
-    INIT_OUTER_LOOP_3
-    npy_intp dm = dimensions[0];
-    npy_intp dn = dimensions[1];
-    npy_intp dp = dimensions[2];
-    npy_intp m,n,p;
-    npy_intp is1_m=steps[0], is1_n=steps[1], is2_n=steps[2], is2_p=steps[3],
-         os_m=steps[4], os_p=steps[5];
-    npy_intp ib1_n = is1_n*dn;
-    npy_intp ib2_n = is2_n*dn;
-    npy_intp ib2_p = is2_p*dp;
-    npy_intp ob_p  = os_p *dp;
-    BEGIN_OUTER_LOOP_3
-        char *ip1=args[0], *ip2=args[1], *op=args[2];
-        for (m = 0; m < dm; m++) {
-            for (n = 0; n < dn; n++) {
-                @typ@ val1 = (*(@typ@ *)ip1);
-                for (p = 0; p < dp; p++) {
-                    if (n == 0) *(@typ@ *)op = 0;
-                    *(@typ@ *)op += val1 * (*(@typ@ *)ip2);
-                    ip2 += is2_p;
-                    op  +=  os_p;
-                }
-                ip2 -= ib2_p;
-                op  -=  ob_p;
-                ip1 += is1_n;
-                ip2 += is2_n;
-            }
-            ip1 -= ib1_n;
-            ip2 -= ib2_n;
-            ip1 += is1_m;
-            op  +=  os_m;
+    GEMM_PARAMS_t gemm_params;
+    int i;
+    size_t sot = sizeof(@typ@);
+    uint8_t* mem_buffer = NULL;
+    size_t buff_size[3], total_buff_size, offset;
+    gemm_params.m = (int)dimensions[1];
+    gemm_params.k = (int)dimensions[2];
+    gemm_params.n = (int)dimensions[3];
+
+    int dims[3][2] = { { gemm_params.m, gemm_params.k }, 
+		       { gemm_params.k, gemm_params.n }, 
+		       { gemm_params.m, gemm_params.n } };
+    for (i = 0; i < 3; i++) {
+        gemm_params.lin_data[i].rows = (int)dims[i][0];
+        gemm_params.lin_data[i].columns = (int)dims[i][1];
+        gemm_params.lin_data[i].buff_row_strides = (int)dims[i][1];
+        gemm_params.lin_data[i].array_row_strides = (int)(steps[3 + i*2] / sot);
+        gemm_params.lin_data[i].array_column_strides = (int)(steps[3 + i*2 + 1] / sot);
+    }
+    
+    gemm_params.trans[0] = CblasNoTrans;
+    gemm_params.trans[1] = CblasNoTrans;
+
+    for (i = 0; i < 3; i++) {
+        if (gemm_params.lin_data[i].array_column_strides == 1) {
+            buff_size[i] = 0;
+        } else {
+            buff_size[i] = gemm_params.lin_data[i].rows * gemm_params.lin_data[i].columns * sot;
         }
-    END_OUTER_LOOP
+    }
+
+    total_buff_size = buff_size[0] + buff_size[1] + buff_size[2];
+    if (total_buff_size) {
+        mem_buffer = (uint8_t*)malloc(total_buff_size);
+    }
+
+    for (i=0; i<3; i++) {
+        if (buff_size[i] == 0) {
+            /* inplace */ 
+            gemm_params.buff[i] = NULL;
+        } else {
+            /* intermediate copy will be needed */
+            gemm_params.buff[i] = (void*)(mem_buffer + offset);
+            offset += buff_size[i];
+        }
+    }
+
+    @TYPE@_matrix_multiply_blas_straight(args, dimensions, steps, &gemm_params);
+
+    free(mem_buffer);
 }
 
 /**end repeat**/
@@ -200,15 +416,55 @@ defdict = {
 
 */
 
-static PyUFuncGenericFunction inner1d_functions[] = { LONG_inner1d, DOUBLE_inner1d };
-static void * inner1d_data[] = { (void *)NULL, (void *)NULL };
-static char inner1d_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
-static PyUFuncGenericFunction innerwt_functions[] = { LONG_innerwt, DOUBLE_innerwt };
-static void * innerwt_data[] = { (void *)NULL, (void *)NULL };
-static char innerwt_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG, NPY_LONG, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
-static PyUFuncGenericFunction matrix_multiply_functions[] = { LONG_matrix_multiply, FLOAT_matrix_multiply, DOUBLE_matrix_multiply };
-static void *matrix_multiply_data[] = { (void *)NULL, (void *)NULL, (void *)NULL };
-static char matrix_multiply_signatures[] = { NPY_LONG, NPY_LONG, NPY_LONG,  NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,  NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE };
+char *inner1d_signature = "(i),(i)->()";
+static PyUFuncGenericFunction inner1d_functions[] = { 
+    FLOAT_inner1d, 
+    DOUBLE_inner1d
+ };
+static void * inner1d_data[] = { 
+    (void *)NULL, 
+    (void *) NULL
+};
+static char inner1d_signatures[] = { 
+    NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, 
+    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE
+};
+
+char *innerwt_signature = "(i),(i),(i)->()";
+static PyUFuncGenericFunction innerwt_functions[] = { 
+    FLOAT_innerwt, 
+    DOUBLE_innerwt 
+};
+static void * innerwt_data[] = { 
+    (void *)NULL, 
+    (void *)NULL 
+};
+static char innerwt_signatures[] = {
+    NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
+    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE
+ };
+
+
+/* note: using blas gemm nomenclature for m, k and n */
+char *matrix_multiply_signature = "(m,k),(k,n)->(m,n)";
+static PyUFuncGenericFunction matrix_multiply_functions[] = { 
+    FLOAT_matrix_multiply, 
+    DOUBLE_matrix_multiply,
+    CFLOAT_matrix_multiply,
+    CDOUBLE_matrix_multiply
+};
+static void *matrix_multiply_data[] = {
+    (void *)NULL, 
+    (void *)NULL, 
+    (void *)NULL,
+    (void *)NULL,
+};
+static char matrix_multiply_signatures[] = { 
+    NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
+    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
+    NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT,
+    NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE
+};
 
 static void
 addUfuncs(PyObject *dictionary) {
@@ -241,8 +497,6 @@ addUfuncs(PyObject *dictionary) {
 /*
     End of auto-generated code.
 */
-
-
 
 static PyObject *
 UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
