@@ -150,6 +150,34 @@ In more detail
 #. To push the changes up to your forked repo on github_, do a ``git
    push`` (see `git push`). 
 
+Writing the commit message
+--------------------------
+
+Commit messages should be clear and follow a few basic rules.  Example::
+
+   ENH: add functionality X to numpy.<submodule>.
+
+   The first line of the commit message starts with a capitalized acronym
+   (options listed below) indicating what type of commit this is.  Then a blank
+   line, then more text if needed.  Lines shouldn't be longer than 80
+   characters.  If the commit is related to a ticket, indicate that with
+   "See #3456", "See ticket 3456", "Closes #3456" or similar.
+
+Standard acronyms to start the commit message with are::
+
+   API: an (incompatible) API change
+   BLD: change related to building numpy
+   BUG: bug fix
+   DEP: deprecate something, or remove a deprecated object
+   DEV: development tool or utility
+   DOC: documentation
+   ENH: enhancement
+   MAINT: maintenance commit (refactoring, typos, etc.)
+   REV: revert an earlier commit
+   STY: style fix (whitespace, PEP8)
+   TST: addition or modification of tests
+   REL: related to releasing numpy
+
 
 .. _rebasing-on-master:
 
