@@ -16,7 +16,8 @@ Basic workflow
 
 In short:
 
-1. Start a new *feature branch* for each set of edits that you do.
+1. Update your ``master`` branch if it's not up to date. 
+   Then start a new *feature branch* for each set of edits that you do.
    See :ref:`below <making-a-new-feature-branch>`.
 
    Avoid putting new commits in your ``master`` branch.
@@ -77,6 +78,11 @@ as clear as possible.
 
 Making a new feature branch
 ===========================
+
+To update your master branch, use::
+
+   git fetch upstream
+   git merge upstream/master --ff-only
 
 To create a new branch and check it out, use::
 
