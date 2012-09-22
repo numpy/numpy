@@ -54,6 +54,10 @@ In short:
 
      See :ref:`below <pushing-to-main>`.
 
+.. note:: It's usually a good idea to use the ``-n`` flag to ``git push``
+          to check first that you're about to push the changes you want to
+          the place you want.
+
 This way of working helps to keep work well organized and the history
 as clear as possible.
 
@@ -74,16 +78,11 @@ as clear as possible.
 Making a new feature branch
 ===========================
 
-::
-
-   git branch my-new-feature
-   git checkout my-new-feature
-
-or just::
+To create a new branch and check it out, use::
 
    git checkout -b my-new-feature upstream/master
 
-Generally, you will want to keep this also on your public github_ fork
+Generally, you will want to keep this branch also on your public github_ fork
 of NumPy_.  To do this, you `git push`_ this new branch up to your github_
 repo.  Generally (if you followed the instructions in these pages, and
 by default), git will have a link to your github_ repo, called
@@ -143,9 +142,11 @@ In more detail
 #. To commit all modified files into the local copy of your repo,, do
    ``git commit -am 'A commit message'``.  Note the ``-am`` options to
    ``commit``. The ``m`` flag just signals that you're going to type a
-   message on the command line.  The ``a`` flag - you can just take on
-   faith - or see `why the -a flag?`_ - and the helpful use-case description in
-   the `tangled working copy problem`_. The `git commit`_ manual
+   message on the command line.   If you leave it out, an editor will open in
+   which you can compose your commit message.  For non-trivial commits this is
+   often the better choice.  The ``a`` flag - you can just take on faith - or
+   see `why the -a flag?`_ - and the helpful use-case description in the
+   `tangled working copy problem`_. The `git commit`_ manual
    page might also be useful.
 #. To push the changes up to your forked repo on github_, do a ``git
    push`` (see `git push`). 
@@ -209,9 +210,9 @@ Then, the feature branch::
    git rebase master
 
 If you have made changes to files that have changed also upstream,
-this may generate merge conflicts that you need to resolve.::
+this may generate merge conflicts that you need to resolve.
+Finally, remove the backup branch once the rebase succeeded::
 
-   # delete backup branch
    git branch -D tmp
 
 .. _recovering-from-mess-up:
