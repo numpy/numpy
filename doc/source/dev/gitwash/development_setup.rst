@@ -2,6 +2,10 @@
 Getting started with Git development
 ====================================
 
+This section and the next describe in detail how to set up git for working
+with the NumPy source code.  If you have git already set up, skip to
+:ref:`development-workflow`.
+
 Basic Git setup
 ###############
 
