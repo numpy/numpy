@@ -152,10 +152,13 @@ In more detail
    which you can compose your commit message.  For non-trivial commits this is
    often the better choice.  The ``a`` flag - you can just take on faith - or
    see `why the -a flag?`_ - and the helpful use-case description in the
-   `tangled working copy problem`_. The `git commit`_ manual
-   page might also be useful.
+   `tangled working copy problem`_. The section on
+   :ref:`commit messages <writing-the-commit-message>` below might also be useful.
 #. To push the changes up to your forked repo on github_, do a ``git
    push`` (see `git push`). 
+
+
+.. _writing-the-commit-message:
 
 Writing the commit message
 --------------------------
@@ -169,6 +172,12 @@ Commit messages should be clear and follow a few basic rules.  Example::
    line, then more text if needed.  Lines shouldn't be longer than 80
    characters.  If the commit is related to a ticket, indicate that with
    "See #3456", "See ticket 3456", "Closes #3456" or similar.
+
+Describing the motivation for a change, the nature of a bug for bug fixes or
+some details on what an enhancement does are also good to include in a commit
+message.  Messages should be understandable without looking at the code
+changes.  A commit message like ``MAINT: fixed another one`` is an example of
+what not to do; the reader has to go look for context elsewhere.
 
 Standard acronyms to start the commit message with are::
 
@@ -250,6 +259,11 @@ If you forgot to make a backup branch::
 
    # reset the branch to where it was before the botched rebase
    git reset --hard my-feature-branch@{2}
+
+If you didn't actually mess up but there are merge conflicts, you need to
+resolve those.  This can be one of the trickier things to get right.  For a
+good description of how to do this, see
+http://git-scm.com/book/en/Git-Branching-Basic-Branching-and-Merging#Basic-Merge-Conflicts
 
 
 .. _asking-for-merging:
