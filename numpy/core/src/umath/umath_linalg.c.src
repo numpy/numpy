@@ -21,9 +21,120 @@
 
 #include CBLAS_HEADER
 
+#include <stddef.h>
 #include <stdio.h>
 
+/*
+ *****************************************************************************
+ **                      Some handy constants                               **
+ *****************************************************************************
+ */
+
 static const char* umath_linalg_module_name =  "umath_linalg";
+
+static const float s_one = 1.0f;
+static const float s_zero = 0.0f;
+static const double d_one = 1.0;
+static const double d_zero = 0.0;
+static const float c_one[2] = { 1.0f, 0.0f };
+static const float c_zero[2] = { 0.0f, 0.0f };
+static const double z_one[2] = { 1.0, 0.0 };
+static const double z_zero[2] = { 0.0, 0.0 };
+
+
+/*
+ *****************************************************************************
+ **               Structs used for data rearrangement                       **
+ *****************************************************************************
+ */
+
+
+/* this struct contains information about how to linearize in a local buffer
+   a matrix so that it can be used by blas functions.
+   All strides are specified in number of elements (similar to what blas expects)
+
+   dst_row_strides: number of elements between different row. Matrix is considered
+                    row-major
+   dst_column_strides: number of elements between differnt columns in the
+                    destination buffer
+   rows: number of rows of the matrix
+   columns: number of columns of the matrix
+   src_row_strides: strides needed to access the next row in the source matrix
+   src_column_strides: strides needed to access the next column in the source
+                       matrix
+ */
+typedef struct linearize_data_struct
+{
+  size_t     rows;
+  size_t     columns;
+  ptrdiff_t  row_strides;
+  ptrdiff_t  column_strides;
+} LINEARIZE_DATA_t;
+
+typedef struct gemm_params_struct
+{
+    int   trans[2]; // use transpose
+    int   m,n,k; // note there is a relationship between this and lin_data rows
+                 // & columns but the actual relationship is dependent on trans.
+    int   strides[3]; // strides to use in gemm call
+    void *buff[3];  // memory buff for the operand to use in blas call
+    LINEARIZE_DATA_t lin_data[3];
+} GEMM_PARAMS_t;
+
+static inline void
+init_gemm_params(GEMM_PARAMS_t *params, size_t m, size_t n, size_t k)
+{
+    int i;
+    for (i = 0; i < sizeof(params->trans)/sizeof(params->trans[0]); i++)
+        params->trans[i] = CblasNoTrans;
+
+    params->m = (int) m;
+    params->n = (int) n;
+    params->k = (int) k;
+
+    // this should be initialized later when it is known whether we are doing it
+    // in-place or in a tmp buffer.
+    for (i = 0 ; i < sizeof(params->strides)/sizeof(params->strides[0]); i++)
+       params->strides[i] = 0;
+}
+
+static inline void
+init_linearize_data(LINEARIZE_DATA_t *lin_data, 
+                    int rows, 
+                    int columns, 
+                    ptrdiff_t row_strides, 
+                    ptrdiff_t column_strides)
+{
+    lin_data->rows = rows;
+    lin_data->columns = columns;
+    lin_data->row_strides = row_strides;
+    lin_data->column_strides = column_strides;
+}
+
+#if 0
+static void
+dump_linearize_data_params(const char* name, const LINEARIZE_DATA_t* params)
+{
+    printf("\n\t%s rows: %d columns: %d"
+           "\n\t\trow_strides: %d column_strides: %d"
+           "\n", name, params->rows, params->columns,
+           params->row_strides, params->column_strides);
+}
+
+static void
+dump_gemm_params(const GEMM_PARAMS_t* params)
+{
+    printf("\n\ngemm_params: src1: %s transposed src2: %s transposed"
+           "\n\tM: %d N: %d K: %d",
+           params->trans[0] == CblasNoTrans? "NOT" : "",
+           params->trans[1] == CblasNoTrans? "NOT" : "",
+           params->m, params->n, params->k);
+    dump_linearize_data_params("src1", &params->lin_data[0]);
+    dump_linearize_data_params("src2", &params->lin_data[1]);
+    dump_linearize_data_params("dst", &params->lin_data[2]);
+}
+#endif
+
 
 /*
  *****************************************************************************
@@ -166,72 +277,6 @@ static void
 
 /**end repeat**/
 
-static const float s_one = 1.0f;
-static const float s_zero = 0.0f;
-static const double d_one = 1.0;
-static const double d_zero = 0.0;
-static const float c_one[2] = { 1.0f, 0.0f };
-static const float c_zero[2] = { 0.0f, 0.0f };
-static const double z_one[2] = { 1.0, 0.0 };
-static const double z_zero[2] = { 0.0, 0.0 };
-
-/* this struct contains information about how to linearize in a local buffer
-   a matrix so that it can be used by blas functions.
-   All strides are specified in number of elements (similar to what blas expects)
-
-   dst_row_strides: number of elements between different row. Matrix is considered
-                    row-major
-   dst_column_strides: number of elements between differnt columns in the
-                    destination buffer
-   rows: number of rows of the matrix
-   columns: number of columns of the matrix
-   src_row_strides: strides needed to access the next row in the source matrix
-   src_column_strides: strides needed to access the next column in the source
-                       matrix
- */
-typedef struct
-{
-  int   rows;
-  int   columns;
-  int   buff_row_strides;
-  int   array_row_strides;
-  int   array_column_strides;
-} LINEARIZE_DATA_t;
-
-typedef struct
-{
-    int   trans[2]; // use transpose
-    int   m,n,k; // note there is a relationship between this and lin_dara rows
-                 // & columns but the actual relationship is dependent on trans.
-    void *buff[3];  // memory buff for the operand to use for blas call
-    LINEARIZE_DATA_t lin_data[3];
-} GEMM_PARAMS_t;
-
-#if 0
-static void
-dump_linearize_data_params(const char* name, const LINEARIZE_DATA_t* params)
-{
-    printf("\n\t%s rows: %d columns: %d"
-	   "\n\t\tarray row_strides: %d column_strides: %d"
-	   "\n\t\tbuff  row_strides: %d"
-	   "\n", name, params->rows, params->columns,
-	   params->array_row_strides, params->array_column_strides,
-	   params->buff_row_strides);
-}
-
-static void
-dump_gemm_params(const GEMM_PARAMS_t* params)
-{
-    printf("\n\ngemm_params: src1: %s transposed src2: %s transposed"
-	   "\n\tM: %d N: %d K: %d",
-	   params->trans[0] == CblasNoTrans? "NOT" : "",
-	   params->trans[1] == CblasNoTrans? "NOT" : "",
-	   params->m, params->n, params->k);
-    dump_linearize_data_params("src1", &params->lin_data[0]);
-    dump_linearize_data_params("src2", &params->lin_data[1]);
-    dump_linearize_data_params("dst", &params->lin_data[2]);
-}
-#endif
 
 /* -------------------------------------------------------------------------- */
 /* rearranging of 2D matrices using blas */
@@ -242,29 +287,42 @@ dump_gemm_params(const GEMM_PARAMS_t* params)
     #typ=npy_float,npy_double,npy_cfloat,npy_cdouble# 
     #cblas_type=s,d,c,z#
  */
-static inline void
-linearize_@TYPE@_matrix(@typ@ *dst, const @typ@ *src,const LINEARIZE_DATA_t* data)
+static inline @typ@ *
+linearize_@TYPE@_matrix(@typ@ *dst, @typ@ *src,const LINEARIZE_DATA_t* data)
 {
-    int i;
-    for (i=0; i< data->rows; i++) {
-        cblas_@cblas_type@copy(data->columns,
-                               src, data->array_column_strides,
-                               dst, 1);
-        src += data->array_row_strides;
-        dst += data->buff_row_strides;
+    if (dst) {
+        int i;
+        @typ@* rv = dst;
+        for (i=0; i< data->rows; i++) {
+            cblas_@cblas_type@copy(data->columns,
+                                   src, data->column_strides/sizeof(@typ@),
+                                   dst, 1);
+            src += data->row_strides/sizeof(@typ@);
+            dst += data->columns;
+        } 
+        return rv;
+    } else {
+        return src;
     }
 }
 
-static inline void
-delinearize_@TYPE@_matrix(@typ@ *dst, const @typ@ *src,const LINEARIZE_DATA_t* data)
+static inline @typ@ *
+delinearize_@TYPE@_matrix(@typ@ *dst, @typ@ *src,const LINEARIZE_DATA_t* data)
 {
-    int i;
-    for (i=0; i< data->rows; i++) {
-        cblas_@cblas_type@copy(data->columns,
-			       src, 1,
-                               dst, data->array_column_strides);
-        src += data->buff_row_strides;
-        dst += data->array_row_strides;
+    if (src) {
+        int i;
+        @typ@ *rv = src;
+        for (i=0; i < data->rows; i++) {
+            cblas_@cblas_type@copy(data->columns,
+                                   src, 1,
+                                   dst, data->column_strides/sizeof(@typ@));
+            src += data->columns;
+            dst += data->row_strides/sizeof(@typ@);
+        }
+
+        return rv;
+    } else {
+        return src;
     }
 }
 
@@ -299,41 +357,21 @@ static inline void
 
     BEGIN_OUTER_LOOP_3
         /* just call the appropriate multiply and update pointers */
-        @typ@ *src1, *src2, *dst;
-
-        if (params->buff[0]) {
-            linearize_@TYPE@_matrix((@typ@ *)params->buff[0], (const @typ@ *)args[0], &params->lin_data[0]);
-            src1 = params->buff[0];
-        } else {
-            src1 = (@typ@ *)args[0];
-        }
-
-        if (params->buff[1]) {
-            linearize_@TYPE@_matrix((@typ@ *)params->buff[1], (const @typ@ *)args[1], &params->lin_data[1]);
-            src2 = params->buff[1];
-        } else {
-            src2 = (@typ@ *)args[1];
-        }
-
-        if (params->buff[2]) {
-            dst = params->buff[2];
-        } else {
-            dst = (@typ@ *)args[2];
-        }
+        @typ@ *src1 = linearize_@TYPE@_matrix((@typ@ *) params->buff[0], (@typ@ *) args[0], &params->lin_data[0]);
+        @typ@ *src2 = linearize_@TYPE@_matrix((@typ@ *) params->buff[1], (@typ@ *) args[1], &params->lin_data[1]);
+        @typ@ *dst = params->buff[2] ? params->buff[2] : (@typ@ *) args[2];
 
         /* linearize source operands if needed */
         cblas_@cblas_type@gemm(CblasRowMajor, params->trans[0], params->trans[1],
-                              params->m, params->n, params->k, 
-                              @cblas_type@_one, // alpha
-                              src1, params->lin_data[0].buff_row_strides,
-                              src2, params->lin_data[1].buff_row_strides,
-                              @cblas_type@_zero, // beta
-                              dst, params->lin_data[2].buff_row_strides 
+                               params->m, params->n, params->k, 
+                               @cblas_type@_one, // alpha
+                               src1, params->strides[0],
+                               src2, params->strides[1],
+                               @cblas_type@_zero, // beta
+                               dst, params->strides[2]
                               );
-
-        if (params->buff[2]) {
-            delinearize_@TYPE@_matrix((@typ@ *)args[2], (const @typ@ *)params->buff[2], &params->lin_data[2]);
-        }
+        
+	delinearize_@TYPE@_matrix((@typ@ *)args[2], (@typ@ *)params->buff[2], &params->lin_data[2]);
     END_OUTER_LOOP
 }
 
@@ -346,29 +384,25 @@ static void
     size_t sot = sizeof(@typ@);
     uint8_t* mem_buffer = NULL;
     size_t buff_size[3], total_buff_size, offset;
-    gemm_params.m = (int)dimensions[1];
-    gemm_params.k = (int)dimensions[2];
-    gemm_params.n = (int)dimensions[3];
 
-    int dims[3][2] = { { gemm_params.m, gemm_params.k }, 
-		       { gemm_params.k, gemm_params.n }, 
-		       { gemm_params.m, gemm_params.n } };
-    for (i = 0; i < 3; i++) {
-        gemm_params.lin_data[i].rows = (int)dims[i][0];
-        gemm_params.lin_data[i].columns = (int)dims[i][1];
-        gemm_params.lin_data[i].buff_row_strides = (int)dims[i][1];
-        gemm_params.lin_data[i].array_row_strides = (int)(steps[3 + i*2] / sot);
-        gemm_params.lin_data[i].array_column_strides = (int)(steps[3 + i*2 + 1] / sot);
-    }
+    size_t m, k, n;
+    m = (size_t) dimensions[1];
+    k = (size_t) dimensions[2];
+    n = (size_t) dimensions[3];
+
+    init_gemm_params(&gemm_params, m, n, k);
+    init_linearize_data(&gemm_params.lin_data[0], m, k, steps[3], steps[4]);
+    init_linearize_data(&gemm_params.lin_data[1], k, n, steps[5], steps[6]);
+    init_linearize_data(&gemm_params.lin_data[2], m, n, steps[7], steps[8]);
     
-    gemm_params.trans[0] = CblasNoTrans;
-    gemm_params.trans[1] = CblasNoTrans;
-
+    /* compute size and reserve if needed local buffers */
     for (i = 0; i < 3; i++) {
-        if (gemm_params.lin_data[i].array_column_strides == 1) {
+        if (gemm_params.lin_data[i].column_strides == sot) {
             buff_size[i] = 0;
+            gemm_params.strides[i] = steps[3+i*2] / sot;
         } else {
             buff_size[i] = gemm_params.lin_data[i].rows * gemm_params.lin_data[i].columns * sot;
+            gemm_params.strides[i] = gemm_params.lin_data[i].columns;
         }
     }
 
@@ -377,12 +411,13 @@ static void
         mem_buffer = (uint8_t*)malloc(total_buff_size);
     }
 
+    offset = 0;
     for (i=0; i<3; i++) {
         if (buff_size[i] == 0) {
             /* inplace */ 
             gemm_params.buff[i] = NULL;
         } else {
-            /* intermediate copy will be needed */
+            /* an intermediate copy will be needed */
             gemm_params.buff[i] = (void*)(mem_buffer + offset);
             offset += buff_size[i];
         }
