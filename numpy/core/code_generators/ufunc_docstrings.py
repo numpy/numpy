@@ -2800,7 +2800,7 @@ add_newdoc('numpy.core.umath', 'signbit',
 
     Parameters
     ----------
-    x: array_like
+    x : array_like
         The input value(s).
     out : ndarray, optional
         Array into which the output is placed. Its type is preserved
@@ -2831,9 +2831,9 @@ add_newdoc('numpy.core.umath', 'copysign',
 
     Parameters
     ----------
-    x1: array_like
+    x1 : array_like
         Values to change the sign of.
-    x2: array_like
+    x2 : array_like
         The sign of `x2` is copied to `x1`.
     out : ndarray, optional
         Array into which the output is placed. Its type is preserved and it
@@ -2896,7 +2896,7 @@ add_newdoc('numpy.core.umath', 'spacing',
 
     Parameters
     ----------
-    x1: array_like
+    x1 : array_like
         Values to find the spacing of.
 
     Returns

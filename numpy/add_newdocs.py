@@ -211,7 +211,7 @@ add_newdoc('numpy.core', 'nditer',
     op_dtypes : dtype or tuple of dtype(s), optional
         The required data type(s) of the operands. If copying or buffering
         is enabled, the data will be converted to/from their original types.
-    order : {'C', 'F', 'A', or 'K'}, optional
+    order : {'C', 'F', 'A', 'K'}, optional
         Controls the iteration order. 'C' means C order, 'F' means
         Fortran order, 'A' means 'F' order if all the arrays are Fortran
         contiguous, 'C' order otherwise, and 'K' means as close to the
@@ -1503,7 +1503,7 @@ add_newdoc('numpy.core.multiarray', 'lexsort',
 
     Parameters
     ----------
-    keys : (k,N) array or tuple containing k (N,)-shaped sequences
+    keys : (k, N) array or tuple containing k (N,)-shaped sequences
         The `k` different "columns" to be sorted.  The last column (or row if
         `keys` is a 2D array) is the primary sort key.
     axis : int, optional
@@ -1598,7 +1598,6 @@ add_newdoc('numpy.core.multiarray', 'can_cast',
 
     Examples
     --------
-
     Basic examples
 
     >>> np.can_cast(np.int32, np.int64)
@@ -1978,7 +1977,7 @@ add_newdoc('numpy.core', 'einsum',
         If provided, forces the calculation to use the data type specified.
         Note that you may have to also give a more liberal `casting`
         parameter to allow the conversions.
-    order : {'C', 'F', 'A', or 'K'}, optional
+    order : {'C', 'F', 'A', 'K'}, optional
         Controls the memory layout of the output. 'C' means it should
         be C contiguous. 'F' means it should be Fortran contiguous,
         'A' means it should be 'F' if the inputs are all 'F', 'C' otherwise.
@@ -3047,7 +3046,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
     ----------
     dtype : str or dtype
         Typecode or data-type to which the array is cast.
-    order : {'C', 'F', 'A', or 'K'}, optional
+    order : {'C', 'F', 'A', 'K'}, optional
         Controls the memory layout order of the result.
         'C' means C order, 'F' means Fortran order, 'A'
         means 'F' order if all the arrays are Fortran contiguous,
@@ -3083,7 +3082,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
 
     Raises
     ------
-    ComplexWarning :
+    ComplexWarning
         When casting from complex to float or int. To avoid this,
         one should use ``a.real.astype(t)``.
 
@@ -3110,12 +3109,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('byteswap',
 
     Parameters
     ----------
-    inplace: bool, optional
+    inplace : bool, optional
         If ``True``, swap bytes in-place, default is ``False``.
 
     Returns
     -------
-    out: ndarray
+    out : ndarray
         The byteswapped array. If `inplace` is ``True``, this is
         a view to self.
 
@@ -5058,7 +5057,6 @@ add_newdoc('numpy.lib._compiled_base', 'add_newdoc_ufunc',
 
     Notes
     -----
-
     This method allocates memory for new_docstring on
     the heap. Technically this creates a mempory leak, since this
     memory will not be reclaimed until the end of the program
@@ -5900,7 +5898,6 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('fields',
 
     Examples
     --------
-
     >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
     >>> print dt.fields
     {'grades': (dtype(('float64',(2,))), 16), 'name': (dtype('|S16'), 0)}
@@ -6008,7 +6005,6 @@ add_newdoc('numpy.core.multiarray', 'dtype', ('names',
 
     Examples
     --------
-
     >>> dt = np.dtype([('name', np.str_, 16), ('grades', np.float64, (2,))])
     >>> dt.names
     ('name', 'grades')

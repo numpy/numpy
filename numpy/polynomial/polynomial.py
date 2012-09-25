@@ -485,7 +485,7 @@ def polyder(c, m=1, scl=1, axis=0):
 
     Parameters
     ----------
-    c: array_like
+    c : array_like
         Array of polynomial coefficients. If c is multidimensional the
         different axis correspond to different variables with the degree
         in each axis given by the corresponding index.

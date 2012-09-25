@@ -513,10 +513,13 @@ def manifest_rc(name, type='dll'):
     'exe').
 
     Parameters
-    ---------- name: str
+    ----------
+    name : str
             name of the manifest file to embed
-        type: str ('dll', 'exe')
-            type of the binary which will embed the manifest"""
+    type : str {'dll', 'exe'}
+            type of the binary which will embed the manifest
+
+    """
     if type == 'dll':
         rctype = 2
     elif type == 'exe':
