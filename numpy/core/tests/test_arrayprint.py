@@ -147,6 +147,10 @@ class TestPrintOptions:
         np.set_printoptions(formatter={'float_kind':None})
         assert_equal(repr(x), "array([ 0.,  1.,  2.])")
 
+def test_unicode_object_array():
+    x = np.array([u'\xe9'], dtype=object)
+    assert_equal(repr(x), "array([u'\\xe9'], dtype=object)")
+
 
 
 if __name__ == "__main__":
