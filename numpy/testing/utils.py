@@ -1296,7 +1296,7 @@ def nulp_diff(x, y, dtype=None):
 
     Returns
     -------
-    nulp: array_like
+    nulp : array_like
         number of representable floating point numbers between each item in x
         and y.
 

@@ -833,7 +833,7 @@ def _lookfor_generate_cache(module, import_modules, regenerate):
         Module for which to generate docstring cache
     import_modules : bool
         Whether to import sub-modules in packages.
-    regenerate: bool
+    regenerate : bool
         Re-generate the docstring cache
 
     Returns

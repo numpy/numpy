@@ -921,14 +921,14 @@ class Configuration(object):
 
         Parameters
         ----------
-        subpackage_name: str,None
+        subpackage_name : str or None
             Name of the subpackage to get the configuration. '*' in
             subpackage_name is handled as a wildcard.
-        subpackage_path: str
+        subpackage_path : str
             If None, then the path is assumed to be the local path plus the
             subpackage_name. If a setup.py file is not found in the
             subpackage_path, then a default configuration is used.
-        parent_name: str
+        parent_name : str
             Parent name.
         """
         if subpackage_name is None:
@@ -984,13 +984,13 @@ class Configuration(object):
 
         Parameters
         ----------
-        subpackage_name: str
+        subpackage_name : str
             name of the subpackage
-        subpackage_path: str
+        subpackage_path : str
             if given, the subpackage path such as the subpackage is in
             subpackage_path / subpackage_name. If None,the subpackage is
             assumed to be located in the local path / subpackage_name.
-        standalone: bool
+        standalone : bool
         """
 
         if standalone:
@@ -1028,10 +1028,10 @@ class Configuration(object):
 
         Parameters
         ----------
-        data_path: seq,str
+        data_path : seq or str
             Argument can be either
 
-                * 2-sequence (<datadir suffix>,<path to data directory>)
+                * 2-sequence (<datadir suffix>, <path to data directory>)
                 * path to data directory where python datadir suffix defaults
                   to package dir.
 
@@ -1150,7 +1150,7 @@ class Configuration(object):
 
         Parameters
         ----------
-        files: sequence
+        files : sequence
             Argument(s) can be either
 
                 * 2-sequence (<datadir prefix>,<path to data file(s)>)
@@ -1329,7 +1329,7 @@ class Configuration(object):
 
         Parameters
         ----------
-        files: str, seq
+        files : str or seq
             Argument(s) can be either:
 
                 * 2-sequence (<includedir suffix>,<path to header file(s)>)
@@ -1384,9 +1384,9 @@ class Configuration(object):
 
         Parameters
         ----------
-        name: str
+        name : str
             name of the extension
-        sources: seq
+        sources : seq
             list of the sources. The list of sources may contain functions
             (called source generators) which must take an extension instance
             and a build directory as inputs and return a source file or list of
@@ -1394,28 +1394,28 @@ class Configuration(object):
             generated. If the Extension instance has no sources after
             processing all source generators, then no extension module is
             built.
-        include_dirs:
-        define_macros:
-        undef_macros:
-        library_dirs:
-        libraries:
-        runtime_library_dirs:
-        extra_objects:
-        extra_compile_args:
-        extra_link_args:
-        extra_f77_compile_args:
-        extra_f90_compile_args:
-        export_symbols:
-        swig_opts:
-        depends:
+        include_dirs :
+        define_macros :
+        undef_macros :
+        library_dirs :
+        libraries :
+        runtime_library_dirs :
+        extra_objects :
+        extra_compile_args :
+        extra_link_args :
+        extra_f77_compile_args :
+        extra_f90_compile_args :
+        export_symbols :
+        swig_opts :
+        depends :
             The depends list contains paths to files or directories that the
             sources of the extension module depend on. If any path in the
             depends list is newer than the extension module, then the module
             will be rebuilt.
-        language:
-        f2py_options:
-        module_dirs:
-        extra_info: dict,list
+        language :
+        f2py_options :
+        module_dirs :
+        extra_info : dict or list
             dict or list of dict of keywords to be appended to keywords.
 
         Notes

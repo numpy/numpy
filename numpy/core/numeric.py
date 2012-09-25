@@ -76,7 +76,7 @@ def zeros_like(a, dtype=None, order='K', subok=True):
         the returned array.
     dtype : data-type, optional
         Overrides the data type of the result.
-    order : {'C', 'F', 'A', or 'K'}, optional
+    order : {'C', 'F', 'A', 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
@@ -162,7 +162,7 @@ def ones_like(a, dtype=None, order='K', subok=True):
         the returned array.
     dtype : data-type, optional
         Overrides the data type of the result.
-    order : {'C', 'F', 'A', or 'K'}, optional
+    order : {'C', 'F', 'A', 'K'}, optional
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely

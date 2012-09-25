@@ -2910,7 +2910,7 @@ def median(a, axis=None, out=None, overwrite_input=False):
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
         but the type (of the output) will be cast if necessary.
-    overwrite_input : bool optional
+    overwrite_input : bool, optional
        If True, then allow use of memory of input array (a) for
        calculations. The input array will be modified by the call to
        median. This will save memory when you do not need to preserve

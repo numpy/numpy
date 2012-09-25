@@ -586,9 +586,9 @@ class matrix(N.ndarray):
 
         Parameters
         ----------
-        axis: int, optional
+        axis : int, optional
             Axis along which logical OR is performed
-        out: ndarray, optional
+        out : ndarray, optional
             Output to existing array instead of creating new one, must have
             same shape as expected output
 

@@ -1808,7 +1808,6 @@ cdef class RandomState:
 
         Notes
         -----
-
         The F statistic is used to compare in-group variances to between-group
         variances. Calculating the distribution depends on the sampling, and
         so it is a function of the respective degrees of freedom in the

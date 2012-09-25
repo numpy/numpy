@@ -94,12 +94,11 @@ class Ufunc(object):
 
     Attributes
     ----------
-
-    nin: number of input arguments
-    nout: number of output arguments
-    identity: identity element for a two-argument function
-    docstring: docstring for the ufunc
-    type_descriptions: list of TypeDescription objects
+    nin : number of input arguments
+    nout : number of output arguments
+    identity : identity element for a two-argument function
+    docstring : docstring for the ufunc
+    type_descriptions : list of TypeDescription objects
     """
     def __init__(self, nin, nout, identity, docstring, typereso,
                  *type_descriptions):

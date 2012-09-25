@@ -617,10 +617,10 @@ def pad(array, pad_width, mode=None, **kwargs):
 
     where
 
-        vector: ndarray
+        vector : ndarray
             A rank 1 array already padded with zeros.  Padded values are
             vector[:pad_tuple[0]] and vector[-pad_tuple[1]:].
-        iaxis_pad_width: tuple
+        iaxis_pad_width : tuple
             A 2-tuple of ints, iaxis_pad_width[0] represents the number of
             values padded at the beginning of vector where
             iaxis_pad_width[1] represents the number of values padded at

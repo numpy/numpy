@@ -25,7 +25,7 @@ doc_txt = '''\
 
          (1+2+3)/3
 
-  cov : (N,N) ndarray
+  cov : (N, N) ndarray
       Covariance matrix of the distribution.
   shape : tuple of ints
       Given a shape of, for example, (m,n,k), m*n*k samples are
@@ -63,7 +63,6 @@ doc_txt = '''\
 
   Notes
   -----
-
   Instead of specifying the full covariance matrix, popular
   approximations include:
 
@@ -196,7 +195,7 @@ mean : (N,) ndarray
 
        (1+2+3)/3
 
-cov : (N,N) ndarray
+cov : (N, N) ndarray
     Covariance matrix of the distribution.
 shape : tuple of ints
     Given a shape of, for example, (m,n,k), m*n*k samples are

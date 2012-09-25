@@ -644,7 +644,7 @@ def lagder(c, m=1, scl=1, axis=0) :
 
     Parameters
     ----------
-    c: array_like
+    c : array_like
         Array of Laguerre series coefficients. If `c` is multidimensional
         the different axis correspond to different variables with the
         degree in each axis given by the corresponding index.
@@ -1201,7 +1201,7 @@ def lagvander(x, deg) :
 
     Returns
     -------
-    vander: ndarray
+    vander : ndarray
         The pseudo-Vandermonde matrix. The shape of the returned matrix is
         ``x.shape + (deg + 1,)``, where The last index is the degree of the
         corresponding Laguerre polynomial.  The dtype will be the same as
