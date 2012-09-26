@@ -1885,6 +1885,7 @@ PyArray_Diagonal(PyArrayObject *self, int offset, int axis1, int axis2)
 
     /* For backwards compatibility, during the deprecation period: */
     copy = PyArray_NewCopy(ret, NPY_KEEPORDER);
+    Py_DECREF(ret);
     if (!copy) {
         return NULL;
     }
