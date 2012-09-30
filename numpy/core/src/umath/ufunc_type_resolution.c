@@ -77,6 +77,7 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
                         PyUString_FromFormat(" with casting rule %s",
                                         npy_casting_to_string(casting)));
                 PyErr_SetObject(PyExc_TypeError, errmsg);
+                Py_DECREF(errmsg);
                 return -1;
             }
         } else if (operands[i] != NULL) {
@@ -95,6 +96,7 @@ PyUFunc_ValidateCasting(PyUFuncObject *ufunc,
                         PyUString_FromFormat(" with casting rule %s",
                                         npy_casting_to_string(casting)));
                 PyErr_SetObject(PyExc_TypeError, errmsg);
+                Py_DECREF(errmsg);
                 return -1;
             }
         }
@@ -725,6 +727,7 @@ type_reso_error: {
         PyUString_ConcatAndDel(&errmsg,
                 PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
         PyErr_SetObject(PyExc_TypeError, errmsg);
+        Py_DECREF(errmsg);
         return -1;
     }
 }
@@ -895,6 +898,7 @@ type_reso_error: {
         PyUString_ConcatAndDel(&errmsg,
                 PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
         PyErr_SetObject(PyExc_TypeError, errmsg);
+        Py_DECREF(errmsg);
         return -1;
     }
 }
@@ -1038,6 +1042,7 @@ type_reso_error: {
         PyUString_ConcatAndDel(&errmsg,
                 PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
         PyErr_SetObject(PyExc_TypeError, errmsg);
+        Py_DECREF(errmsg);
         return -1;
     }
 }
@@ -1157,6 +1162,7 @@ type_reso_error: {
         PyUString_ConcatAndDel(&errmsg,
                 PyObject_Repr((PyObject *)PyArray_DESCR(operands[1])));
         PyErr_SetObject(PyExc_TypeError, errmsg);
+        Py_DECREF(errmsg);
         return -1;
     }
 }
@@ -1273,6 +1279,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         }
     }
     PyErr_SetObject(PyExc_TypeError, errmsg);
+    Py_DECREF(errmsg);
 
     return -1;
 }

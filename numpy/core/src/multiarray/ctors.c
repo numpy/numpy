@@ -1818,6 +1818,7 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
                 PyUString_FromFormat(" according to the rule %s",
                         npy_casting_to_string(casting)));
         PyErr_SetObject(PyExc_TypeError, errmsg);
+        Py_DECREF(errmsg);
 
         Py_DECREF(newtype);
         return NULL;
