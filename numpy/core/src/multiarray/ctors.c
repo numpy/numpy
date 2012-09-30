@@ -2150,6 +2150,7 @@ PyArray_FromInterface(PyObject *origin)
             data += num;
         }
     }
+
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type, dtype,
                                                 n, dims,
                                                 NULL, data,
@@ -2158,6 +2159,12 @@ PyArray_FromInterface(PyObject *origin)
         goto fail;
     }
     if (data == NULL) {
+        if (PyArray_SIZE(ret) > 1) {
+            PyErr_SetString(PyExc_ValueError,
+                    "cannot coerce scalar to array with size > 1");
+            Py_DECREF(ret);
+            goto fail;
+        }
         if (PyArray_SETITEM(ret, PyArray_DATA(ret), origin) < 0) {
             Py_DECREF(ret);
             goto fail;
