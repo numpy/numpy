@@ -2066,9 +2066,9 @@ PyArray_FromInterface(PyObject *origin)
     attr = PyDict_GetItemString(iface, "data");
 
     /* Special case for scalars that do not specify data */
-    if ((attr == NULL) && ((n == 0) || ((n == 1) && (dims[0] <= 1)))) {
+    if ((attr == NULL) && ((n == 0))) {
         /* Pointers to data and base should already be NULL! */
-        n = dims[0] = 1;
+        n = dims[0] = 0;
     }
 
     /* Case for data access through pointer */
