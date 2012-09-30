@@ -2810,19 +2810,30 @@ if sys.version_info >= (2, 6):
                 assert_raises(AttributeError, delattr, a, s)
 
 def test_array_interface():
+    # Test scalar coercion within the array interface
     class Foo(object):
         def __init__(self, value):
             self.value = value
+            self.iface = {'typestr' : '=f8'}
         def __float__(self):
             return float(self.value)
         @property
         def __array_interface__(self):
-            return {'typestr' : '=f8',
-                    'shape' : ()}
+            return self.iface
     f = Foo(0.5)
-    assert_equal(np.array(f), [0.5])
+    assert_equal(np.array(f), 0.5)
+    assert_equal(np.array([f]), [0.5])
     assert_equal(np.array([f, f]), [0.5, 0.5])
     assert_equal(np.array(f).dtype, np.dtype('=f8'))
+    # Test various shape definitions
+    f.iface['shape'] = ()
+    assert_equal(np.array(f), 0.5)
+    f.iface['shape'] = None
+    assert_raises(TypeError, np.array, f)
+    f.iface['shape'] = (1,1)
+    assert_equal(np.array(f), [[0.5]])
+    f.iface['shape'] = (2,)
+    assert_raises(ValueError, np.array, f)
 
 def test_flat_element_deletion():
     it = np.ones(3).flat
