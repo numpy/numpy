@@ -2042,37 +2042,42 @@ PyArray_FromInterface(PyObject *origin)
     /* Get shape tuple from interface specification */
     attr = PyDict_GetItemString(iface, "shape");
     if (attr == NULL) {
-        Py_DECREF(iface);
-        PyErr_SetString(PyExc_ValueError,
-                "Missing __array_interface__ shape");
-        return NULL;
+        /* Shape must be specified when 'data' is specified */
+        if (PyDict_GetItemString(iface, "data") != NULL) {
+            Py_DECREF(iface);
+            PyErr_SetString(PyExc_ValueError,
+                    "Missing __array_interface__ shape");
+            return NULL;
+        }
+        /* Assume shape as scalar otherwise */
+        else {
+            /* NOTE: pointers to data and base should be NULL */
+            n = dims[0] = 0;
+        }
     }
-    if (!PyTuple_Check(attr)) {
+    /* Make sure 'shape' is a tuple */
+    else if (!PyTuple_Check(attr)) {
         PyErr_SetString(PyExc_TypeError,
                 "shape must be a tuple");
         goto fail;
     }
     /* Get dimensions from shape tuple */
-    n = PyTuple_GET_SIZE(attr);
-    for (i = 0; i < n; i++) {
-        tmp = PyTuple_GET_ITEM(attr, i);
-        dims[i] = PyArray_PyIntAsIntp(tmp);
-        if (error_converting(dims[i])) {
-            goto fail;
+    else {
+        n = PyTuple_GET_SIZE(attr);
+        for (i = 0; i < n; i++) {
+            tmp = PyTuple_GET_ITEM(attr, i);
+            dims[i] = PyArray_PyIntAsIntp(tmp);
+            if (error_converting(dims[i])) {
+                goto fail;
+            }
         }
     }
 
     /* Get data buffer from interface specification */
     attr = PyDict_GetItemString(iface, "data");
 
-    /* Special case for scalars that do not specify data */
-    if ((attr == NULL) && ((n == 0))) {
-        /* Pointers to data and base should already be NULL! */
-        n = dims[0] = 0;
-    }
-
     /* Case for data access through pointer */
-    else if (attr && PyTuple_Check(attr)) {
+    if (attr && PyTuple_Check(attr)) {
         PyObject *dataptr;
         if (n == 0) {
             PyErr_SetString(PyExc_ValueError,
@@ -2111,7 +2116,7 @@ PyArray_FromInterface(PyObject *origin)
     }
 
     /* Case for data access through buffer */
-    else {
+    else if (attr) {
         if (n == 0) {
             PyErr_SetString(PyExc_ValueError,
                     "__array_interface__ shape must be at least size 1");
