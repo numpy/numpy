@@ -130,8 +130,8 @@ else:
                 except OSError, exc:
                     ## defective lib file
                     raise exc
-            else:
-	            raise OSError("no file with expected extension")
+        ## if no successful return in the libname_ext loop:
+        raise OSError("no file with expected extension")
 
     ctypes_load_library = deprecate(load_library, 'ctypes_load_library',
                                     'load_library')
