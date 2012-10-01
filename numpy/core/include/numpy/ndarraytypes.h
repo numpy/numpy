@@ -199,11 +199,14 @@ typedef enum {
         /* Allow safe casts or casts within the same kind */
         NPY_SAME_KIND_CASTING=3,
         /* Allow any casts */
-        NPY_UNSAFE_CASTING=4
-} NPY_CASTING;
+        NPY_UNSAFE_CASTING=4,
 
-/* The default casting to use for typical assignment operations */
-#define NPY_DEFAULT_ASSIGN_CASTING NPY_SAME_KIND_CASTING
+        /*
+         * Temporary internal definition only, will be removed in upcoming
+         * release, see below
+         * */
+        NPY_INTERNAL_UNSAFE_CASTING_BUT_WARN_UNLESS_SAME_KIND = 100,
+} NPY_CASTING;
 
 typedef enum {
         NPY_CLIP=0,
