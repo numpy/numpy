@@ -778,7 +778,7 @@ def select(condlist, choicelist, default=0):
             S = S*ones(asarray(pfac).shape, S.dtype)
     return choose(S, tuple(choicelist))
 
-def copy(a, order='C'):
+def copy(a, order='K'):
     """
     Return an array copy of the given object.
 
@@ -790,7 +790,9 @@ def copy(a, order='C'):
         Controls the memory layout of the copy. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
-        as possible.
+        as possible. (Note that this function and :meth:ndarray.copy are very
+        similar, but have different default values for their order=
+        arguments.)
 
     Returns
     -------
