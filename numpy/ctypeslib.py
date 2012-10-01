@@ -127,7 +127,8 @@ else:
                 libpath = os.path.join(libdir, ln)
                 return ctypes.cdll[libpath]
             except OSError, e:
-                exc = e
+                if exc is None:
+                    exc = e
         raise exc
 
     ctypes_load_library = deprecate(load_library, 'ctypes_load_library',
