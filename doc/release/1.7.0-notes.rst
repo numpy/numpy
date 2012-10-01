@@ -196,6 +196,10 @@ deprecated. The new `formatter` keyword in ``numpy.set_printoptions`` or
 
 The deprecated imports in the polynomial package have been removed.
 
+``concatenate`` now raises DepractionWarning for 1D arrays if ``axis != 0``.
+Versions of numpy < 1.7.0 ignored axis argument value for 1D arrays. We allow
+this for now, but in due course we will raise an error.
+
 C-API
 -----
 
