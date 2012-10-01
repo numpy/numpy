@@ -218,7 +218,7 @@ def test_concatenate_sloppy0():
         assert_array_equal(concatenate((r4, r3), 10), r4 + r3)
     finally:
         warnings.filters.pop(0)
-    # Confurm DepractionWarning raised
+    # Confirm DepractionWarning raised
     warnings.simplefilter('always', DeprecationWarning)
     warnings.simplefilter('error', DeprecationWarning)
     try:
