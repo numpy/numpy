@@ -33,10 +33,14 @@ np.diagonal, numpy 1.7 produces a FutureWarning if it detects
 that you may be attemping to write to such an array. See the documentation
 for array indexing for details.
 
-The default casting rule for UFunc out= parameters has been changed from
-'unsafe' to 'same_kind'.  Most usages which violate the 'same_kind'
-rule are likely bugs, so this change may expose previously undetected
-errors in projects that depend on NumPy.
+In a future version of numpy, the default casting rule for UFunc out=
+parameters will be changed from 'unsafe' to 'same_kind'. (This also
+applies to in-place operations like a += b, which is equivalent to
+np.add(a, b, out=a).) Most usages which violate the 'same_kind' rule
+are likely bugs, so this change may expose previously undetected
+errors in projects that depend on NumPy. In this version of numpy,
+such usages will continue to succeed, but will raise a
+DeprecationWarning.
 
 Full-array boolean indexing has been optimized to use a different,
 optimized code path.   This code path should produce the same results,

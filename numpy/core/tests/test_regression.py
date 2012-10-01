@@ -1528,6 +1528,22 @@ class TestRegression(TestCase):
         assert_(np.array(np.float32(1.0)).flags.c_contiguous)
         assert_(np.array(np.float32(1.0)).flags.f_contiguous)
 
+    def test_squeeze_contiguous(self):
+        """Similar to GitHub issue #387"""
+        a = np.zeros((1,2)).squeeze()
+        b = np.zeros((2,2,2), order='F')[:,:,::2].squeeze()
+        assert_(a.flags.c_contiguous)
+        assert_(a.flags.f_contiguous)
+        assert_(b.flags.f_contiguous)
+
+    def test_reduce_contiguous(self):
+        """GitHub issue #387"""
+        a = np.add.reduce(np.zeros((2,1,2)), (0,1))
+        b = np.add.reduce(np.zeros((2,1,2)), 1)
+        assert_(a.flags.c_contiguous)
+        assert_(a.flags.f_contiguous)
+        assert_(b.flags.c_contiguous)
+
     def test_object_array_self_reference(self):
         # Object arrays with references to themselves can cause problems
         a = np.array(0, dtype=object)
