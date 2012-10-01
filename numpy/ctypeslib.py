@@ -123,13 +123,15 @@ else:
         # Need to save exception when using Python 3k, see PEP 3110.
         exc = None
         for ln in libname_ext:
-            try:
-                libpath = os.path.join(libdir, ln)
-                return ctypes.cdll[libpath]
-            except OSError, e:
-                if exc is None:
-                    exc = e
-        raise exc
+            libpath = os.path.join(libdir, ln)
+            if os.path.exists(libpath):
+                try:
+                    return ctypes.cdll[libpath]
+                except OSError, exc:
+                    ## defective lib file
+                    raise exc
+            else:
+	            raise OSError("no file with expected extension")
 
     ctypes_load_library = deprecate(load_library, 'ctypes_load_library',
                                     'load_library')
