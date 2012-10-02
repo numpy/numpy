@@ -19,10 +19,37 @@
 #define CBLAS_HEADER "cblas.h"
 #endif
 
+#ifndef CLAPACK_HEADER
+#define CLAPACK_HEADER "clapack.h"
+#endif
+
 #include CBLAS_HEADER
+#include CLAPACK_HEADER
 
 #include <stddef.h>
 #include <stdio.h>
+#include <assert.h>
+
+
+#define TRACE do { printf ("%s:%d:%s\n", __FILE__, __LINE__, __FUNCTION__); } while (0)
+
+/*
+ *****************************************************************************
+ *                    BLAS/LAPACK calling macros                             *
+ *****************************************************************************
+ */
+#define CBLAS(FUNC) cblas_ ## FUNC
+#define LAPACK_T(FUNC) printf("Calling LAPACK ( " # FUNC " )\n"); FUNC ## _
+#define LAPACK(FUNC) FUNC ## _
+
+/* TODO: Fix this properly */
+typedef __CLPK_integer clapack_int;
+
+#if 1
+#  define INTERNAL
+#else
+#  define INTERNAL static
+#endif
 
 /*
  *****************************************************************************
@@ -32,14 +59,22 @@
 
 static const char* umath_linalg_module_name =  "umath_linalg";
 
-static const float s_one = 1.0f;
-static const float s_zero = 0.0f;
-static const double d_one = 1.0;
-static const double d_zero = 0.0;
-static const float c_one[2] = { 1.0f, 0.0f };
-static const float c_zero[2] = { 0.0f, 0.0f };
-static const double z_one[2] = { 1.0, 0.0 };
-static const double z_zero[2] = { 0.0, 0.0 };
+static const float  s_one          =  1.0f;
+static const float  s_zero         =  0.0f;
+static const float  s_minus_one    = -1.0f;
+static const float  s_ninf         = -1.0f/0.0f; 
+static const double d_one          =  1.0;
+static const double d_zero         =  0.0;
+static const double d_minus_one    = -1.0;
+static const double d_ninf         = -1.0/0.0;
+static const float  c_one[2]       = {  1.0f, 0.0f };
+static const float  c_zero[2]      = {  0.0f, 0.0f };
+static const float  c_minus_one[2] = { -1.0f, 0.0f };
+static const float  c_ninf[2]      = { -1.0f/0.0f, 0.0f };
+static const double z_one[2]       = {  1.0,  0.0 };
+static const double z_zero[2]      = {  0.0,  0.0 };
+static const double z_minus_one[2] = { -1.0,  0.0 };
+static const double z_ninf[2]      = { -1.0/0.0, 0.0 };
 
 
 /*
@@ -71,33 +106,6 @@ typedef struct linearize_data_struct
   ptrdiff_t  column_strides;
 } LINEARIZE_DATA_t;
 
-typedef struct gemm_params_struct
-{
-    int   trans[2]; // use transpose
-    int   m,n,k; // note there is a relationship between this and lin_data rows
-                 // & columns but the actual relationship is dependent on trans.
-    int   strides[3]; // strides to use in gemm call
-    void *buff[3];  // memory buff for the operand to use in blas call
-    LINEARIZE_DATA_t lin_data[3];
-} GEMM_PARAMS_t;
-
-static inline void
-init_gemm_params(GEMM_PARAMS_t *params, size_t m, size_t n, size_t k)
-{
-    int i;
-    for (i = 0; i < sizeof(params->trans)/sizeof(params->trans[0]); i++)
-        params->trans[i] = CblasNoTrans;
-
-    params->m = (int) m;
-    params->n = (int) n;
-    params->k = (int) k;
-
-    // this should be initialized later when it is known whether we are doing it
-    // in-place or in a tmp buffer.
-    for (i = 0 ; i < sizeof(params->strides)/sizeof(params->strides[0]); i++)
-       params->strides[i] = 0;
-}
-
 static inline void
 init_linearize_data(LINEARIZE_DATA_t *lin_data, 
                     int rows, 
@@ -111,16 +119,44 @@ init_linearize_data(LINEARIZE_DATA_t *lin_data,
     lin_data->column_strides = column_strides;
 }
 
-#if 0
+#if 1
 static void
-dump_linearize_data_params(const char* name, const LINEARIZE_DATA_t* params)
+dump_ufunc_object(PyUFuncObject* ufunc)
 {
-    printf("\n\t%s rows: %d columns: %d"
-           "\n\t\trow_strides: %d column_strides: %d"
+    printf("\n\n%s '%s' (%d input(s), %d output(s), %d specialization(s).\n",
+           ufunc->core_enabled? "generalized ufunc" : "scalar ufunc",
+           ufunc->name, ufunc->nin, ufunc->nout, ufunc->ntypes);
+    if (ufunc->core_enabled) {
+        int arg;
+        int dim;
+        printf("\t%s (%d dimension(s) detected).\n",
+               ufunc->core_signature, ufunc->core_num_dim_ix);
+
+        for (arg = 0; arg < ufunc->nargs; arg++){
+            int * arg_dim_ix = ufunc->core_dim_ixs + ufunc->core_offsets[arg];
+            printf("\t\targ %d (%s) has %d dimension(s): (",
+                   arg, arg < ufunc->nin? "INPUT" : "OUTPUT", ufunc->core_num_dims[arg]);
+            for (dim = 0; dim < ufunc->core_num_dims[arg]; dim ++) {
+                printf(" %d", arg_dim_ix[dim]);
+            }
+            printf(" )\n");
+        }
+    }
+}
+#endif
+
+#if 1
+static void
+dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
+{
+    printf("\n\t%s rows: %zd columns: %zd"
+           "\n\t\trow_strides: %zd column_strides: %zd"
            "\n", name, params->rows, params->columns,
            params->row_strides, params->column_strides);
 }
+#endif
 
+#if 0
 static void
 dump_gemm_params(const GEMM_PARAMS_t* params)
 {
@@ -129,10 +165,34 @@ dump_gemm_params(const GEMM_PARAMS_t* params)
            params->trans[0] == CblasNoTrans? "NOT" : "",
            params->trans[1] == CblasNoTrans? "NOT" : "",
            params->m, params->n, params->k);
-    dump_linearize_data_params("src1", &params->lin_data[0]);
-    dump_linearize_data_params("src2", &params->lin_data[1]);
-    dump_linearize_data_params("dst", &params->lin_data[2]);
+    dump_linearize_data("src1", &params->lin_data[0]);
+    dump_linearize_data("src2", &params->lin_data[1]);
+    dump_linearize_data("dst", &params->lin_data[2]);
 }
+#endif
+
+#if 0
+/**begin repeat
+   #type=npy_float,npy_double,npy_cfloat,npy_cdouble#
+   #format=%8.4f,%10.6f,%8.4f,%10.6f#
+ */
+static void
+dump_@type@_matrix(size_t rows, size_t columns, const @type@* ptr)
+{
+    size_t i,j;
+
+    for (i=0; i<rows; i++)
+    {
+        printf("(");
+        for (j=0; j<columns; j++)
+        {
+            printf(" @format@", *ptr++);
+        }
+        printf(" )\n");
+    }
+}
+/**end repeat**/
+
 #endif
 
 
@@ -159,6 +219,9 @@ dump_gemm_params(const GEMM_PARAMS_t* params)
     INIT_OUTER_LOOP_3           \
     npy_intp s3 = *steps++;
 
+#define BEGIN_OUTER_LOOP_2      \
+    for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1) {
+
 #define BEGIN_OUTER_LOOP_3      \
     for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2) {
 
@@ -166,6 +229,68 @@ dump_gemm_params(const GEMM_PARAMS_t* params)
     for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2, args[3] += s3) {
 
 #define END_OUTER_LOOP  }
+
+
+/*
+ *****************************************************************************
+ **                             HELPER FUNCS                                **
+ *****************************************************************************
+ */
+
+/* rearranging of 2D matrices using blas */
+
+/**begin repeat
+
+    #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+    #typ=npy_float,npy_double,npy_cfloat,npy_cdouble# 
+    #cblas_type=s,d,c,z#
+ */
+static inline void *
+linearize_@TYPE@_matrix(void *dst_in, void *src_in,const LINEARIZE_DATA_t* data)
+{
+    @typ@ *src = (@typ@ *) src_in;
+    @typ@ *dst = (@typ@ *) dst_in;
+
+    if (dst) {
+        int i;
+        @typ@* rv = dst;
+        for (i=0; i< data->rows; i++) {
+            CBLAS(@cblas_type@copy)(data->columns,
+                                    src, data->column_strides/sizeof(@typ@),
+                                    dst, 1);
+            src += data->row_strides/sizeof(@typ@);
+            dst += data->columns;
+        } 
+        return rv;
+    } else {
+        return src;
+    }
+}
+
+static inline void *
+delinearize_@TYPE@_matrix(void *dst_in, void *src_in,const LINEARIZE_DATA_t* data)
+{
+    @typ@ *src = (@typ@ *) src_in;
+    @typ@ *dst = (@typ@ *) dst_in;
+
+    if (src) {
+        int i;
+        @typ@ *rv = src;
+        for (i=0; i < data->rows; i++) {
+            CBLAS(@cblas_type@copy)(data->columns,
+                                    src, 1,
+                                    dst, data->column_strides/sizeof(@typ@));
+            src += data->columns;
+            dst += data->row_strides/sizeof(@typ@);
+        }
+
+        return rv;
+    } else {
+        return src;
+    }
+}
+
+/**end repeat**/
 
 
 /*
@@ -181,11 +306,6 @@ dump_gemm_params(const GEMM_PARAMS_t* params)
    #cblas_dot=cblas_sdot, cblas_ddot# 
 
 */
-
-/*
- *  This implements the function
- *        out[n] = sum_i { in1[n, i] * in2[n, i] }.
- */
 
 static inline void 
 @TYPE@_inner1d_blas(char **args, npy_intp* dimensions, npy_intp * steps)
@@ -221,7 +341,7 @@ static inline void
     END_OUTER_LOOP
 }
 
-static void
+INTERNAL void
 @TYPE@_inner1d(char **args, npy_intp *dimensions, npy_intp *steps,
                void *NPY_UNUSED(func))
 {
@@ -243,6 +363,9 @@ static void
 
 /**end repeat**/
 
+
+/* -------------------------------------------------------------------------- */
+
 /**begin repeat
 
    #TYPE=FLOAT,DOUBLE#
@@ -255,7 +378,7 @@ static void
  *        out[n] = sum_i { in1[n, i] * in2[n, i] * in3[n, i] }.
  */
 
-static void
+INTERNAL void
 @TYPE@_innerwt(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     INIT_OUTER_LOOP_4
@@ -279,54 +402,97 @@ static void
 
 
 /* -------------------------------------------------------------------------- */
-/* rearranging of 2D matrices using blas */
+                        /* Matrix Multiply */
 
-/**begin repeat
-
-    #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-    #typ=npy_float,npy_double,npy_cfloat,npy_cdouble# 
-    #cblas_type=s,d,c,z#
- */
-static inline @typ@ *
-linearize_@TYPE@_matrix(@typ@ *dst, @typ@ *src,const LINEARIZE_DATA_t* data)
+typedef struct gemm_params_struct
 {
-    if (dst) {
-        int i;
-        @typ@* rv = dst;
-        for (i=0; i< data->rows; i++) {
-            cblas_@cblas_type@copy(data->columns,
-                                   src, data->column_strides/sizeof(@typ@),
-                                   dst, 1);
-            src += data->row_strides/sizeof(@typ@);
-            dst += data->columns;
-        } 
-        return rv;
-    } else {
-        return src;
-    }
-}
+    int   trans[2]; // use transpose
+    int   m,n,k; // note there is a relationship between this and lin_data rows
+                 // & columns but the actual relationship is dependent on trans.
+    int   strides[3]; // strides to use in gemm call
+    void *buff[3];  // memory buff for the operand to use in blas call
+    LINEARIZE_DATA_t lin_data[3];
+    void *allocated_data;
+} GEMM_PARAMS_t;
 
-static inline @typ@ *
-delinearize_@TYPE@_matrix(@typ@ *dst, @typ@ *src,const LINEARIZE_DATA_t* data)
+static inline void
+init_gemm_params(GEMM_PARAMS_t *params,
+                 char** args,
+                 npy_intp *dimensions,
+                 npy_intp* steps,
+                 size_t size_of_type)
 {
-    if (src) {
-        int i;
-        @typ@ *rv = src;
-        for (i=0; i < data->rows; i++) {
-            cblas_@cblas_type@copy(data->columns,
-                                   src, 1,
-                                   dst, data->column_strides/sizeof(@typ@));
-            src += data->columns;
-            dst += data->row_strides/sizeof(@typ@);
+    int i, m, n, k;
+
+    m = (int) dimensions[0];
+    k = (int) dimensions[1];
+    n = (int) dimensions[2];
+
+    for (i = 0; i < sizeof(params->trans)/sizeof(params->trans[0]); i++)
+        params->trans[i] = CblasNoTrans;
+
+    params->m = m;
+    params->n = n;
+    params->k = k;
+
+    // this should be initialized later when it is known whether we are doing it
+    // in-place or in a tmp buffer.
+    for (i = 0 ; i < sizeof(params->strides)/sizeof(params->strides[0]); i++)
+       params->strides[i] = 0;
+
+    init_linearize_data(&params->lin_data[0], m, k, steps[0], steps[1]);
+    init_linearize_data(&params->lin_data[1], k, n, steps[2], steps[3]);
+    init_linearize_data(&params->lin_data[2], m, n, steps[4], steps[5]);
+
+    /* compute size and reserve if needed local buffers */
+    {
+        size_t buff_size[3];
+        size_t total_buff_size, offset;
+
+        for (i = 0; i < 3; i++) {
+            if (params->lin_data[i].column_strides == size_of_type) {
+                /* do it *in-place* */
+                buff_size[i] = 0;
+                params->strides[i] = steps[i*2] / size_of_type;
+            } else {
+                /* buffer needed to linearize */
+                int rows = params->lin_data[i].rows;
+                int columns = params->lin_data[i].columns;
+                buff_size[i] = rows * columns * size_of_type;
+                params->strides[i] = columns;
+            }
+        }
+        
+        total_buff_size = buff_size[0] + buff_size[1] + buff_size[2];
+        if (total_buff_size) {
+            params->allocated_data = (uint8_t*)malloc(total_buff_size);
+        } else {
+            params->allocated_data = NULL;
+        }
+        
+        offset = 0;
+        for (i=0; i<3; i++) {
+            if (buff_size[i] == 0) {
+                /* inplace */ 
+                params->buff[i] = NULL;
+            } else {
+                /* an intermediate copy will be needed */
+                params->buff[i] = (void*)(params->allocated_data + offset);
+                offset += buff_size[i];
+            }
         }
 
-        return rv;
-    } else {
-        return src;
+        assert(total_buff_size == offset);
     }
 }
 
-/**end repeat**/
+static inline void
+release_gemm_params(GEMM_PARAMS_t * params)
+{
+    free(params->allocated_data);
+    params->allocated_data = NULL;
+}
+
 
 /**begin repeat
 
@@ -335,17 +501,12 @@ delinearize_@TYPE@_matrix(@typ@ *dst, @typ@ *src,const LINEARIZE_DATA_t* data)
    #cblas_type=s,d,c,z#
 */
 
-/*
- *  This implements the function
- *        out[k, m, p] = sum_n { in1[k, m, n] * in2[k, n, p] }.
- */
 
-static inline void
-@TYPE@_matrix_multiply_blas_straight(char **args,
-                                     npy_intp *dimensions,
-                                     npy_intp *steps,
-                                     GEMM_PARAMS_t* params)
-
+INTERNAL void
+@TYPE@_matrix_multiply(char **args, 
+                       npy_intp *dimensions, 
+                       npy_intp *steps, 
+                       void *NPY_UNUSED(func))
 {
     /* 
      * everything is setup in a way that makes things work. BLAS gemm can be
@@ -353,180 +514,466 @@ static inline void
      * in the expected way in memory.
      * This is just a loop calling blas.
      */
+    GEMM_PARAMS_t params;
     INIT_OUTER_LOOP_3
+
+    init_gemm_params(&params, args, dimensions, steps, sizeof(@typ@));
 
     BEGIN_OUTER_LOOP_3
         /* just call the appropriate multiply and update pointers */
-        @typ@ *src1 = linearize_@TYPE@_matrix((@typ@ *) params->buff[0], (@typ@ *) args[0], &params->lin_data[0]);
-        @typ@ *src2 = linearize_@TYPE@_matrix((@typ@ *) params->buff[1], (@typ@ *) args[1], &params->lin_data[1]);
-        @typ@ *dst = params->buff[2] ? params->buff[2] : (@typ@ *) args[2];
+        @typ@ *src1 = linearize_@TYPE@_matrix(params.buff[0],
+                                              args[0],
+                                              &params.lin_data[0]);
+        @typ@ *src2 = linearize_@TYPE@_matrix(params.buff[1],
+                                              args[1],
+                                              &params.lin_data[1]);
+        @typ@ *dst = params.buff[2] ? params.buff[2] : (@typ@ *) args[2];
 
         /* linearize source operands if needed */
-        cblas_@cblas_type@gemm(CblasRowMajor, params->trans[0], params->trans[1],
-                               params->m, params->n, params->k, 
-                               @cblas_type@_one, // alpha
-                               src1, params->strides[0],
-                               src2, params->strides[1],
-                               @cblas_type@_zero, // beta
-                               dst, params->strides[2]
-                              );
+        CBLAS(@cblas_type@gemm)(CblasRowMajor,
+                                params.trans[0], params.trans[1],
+                                params.m, params.n, params.k, 
+                                @cblas_type@_one, // alpha
+                                src1, params.strides[0],
+                                src2, params.strides[1],
+                                @cblas_type@_zero, // beta
+                                dst, params.strides[2]);
         
-	delinearize_@TYPE@_matrix((@typ@ *)args[2], (@typ@ *)params->buff[2], &params->lin_data[2]);
+        delinearize_@TYPE@_matrix(args[2],
+                                  params.buff[2],
+                                  &params.lin_data[2]);
     END_OUTER_LOOP
+
+    release_gemm_params(&params);
+}
+/**end repeat**/
+
+
+/* -------------------------------------------------------------------------- */
+                          /* Determinants */
+
+/**begin repeat
+
+   #TYPE=FLOAT,DOUBLE#
+   #typ=npy_float, npy_double#
+   #log_func=npy_logf,npy_log#
+   #exp_func=npy_expf,npy_exp#
+   #zero=0.0f,0.0#
+*/
+static inline @typ@
+@TYPE@_mult(@typ@ op1, @typ@ op2)
+{
+    return op1 * op2;
 }
 
-
-static void
-@TYPE@_matrix_multiply(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+static inline void
+@TYPE@_slogdet_from_factored_diagonal(@typ@* src,
+                                      clapack_int m,
+                                      @typ@ *sign,
+                                      @typ@ *logdet)
 {
-    GEMM_PARAMS_t gemm_params;
+    @typ@ acc_sign = *sign;
+    @typ@ acc_logdet = @zero@;
     int i;
-    size_t sot = sizeof(@typ@);
-    uint8_t* mem_buffer = NULL;
-    size_t buff_size[3], total_buff_size, offset;
-
-    size_t m, k, n;
-    m = (size_t) dimensions[1];
-    k = (size_t) dimensions[2];
-    n = (size_t) dimensions[3];
-
-    init_gemm_params(&gemm_params, m, n, k);
-    init_linearize_data(&gemm_params.lin_data[0], m, k, steps[3], steps[4]);
-    init_linearize_data(&gemm_params.lin_data[1], k, n, steps[5], steps[6]);
-    init_linearize_data(&gemm_params.lin_data[2], m, n, steps[7], steps[8]);
-    
-    /* compute size and reserve if needed local buffers */
-    for (i = 0; i < 3; i++) {
-        if (gemm_params.lin_data[i].column_strides == sot) {
-            buff_size[i] = 0;
-            gemm_params.strides[i] = steps[3+i*2] / sot;
-        } else {
-            buff_size[i] = gemm_params.lin_data[i].rows * gemm_params.lin_data[i].columns * sot;
-            gemm_params.strides[i] = gemm_params.lin_data[i].columns;
+    for (i = 0; i < m; i++) {
+        @typ@ abs_element = *src;
+        if (abs_element < @zero@) {
+            acc_sign = -acc_sign;
+            abs_element = -abs_element;
         }
+
+        acc_logdet += @log_func@(abs_element);
+        src += m+1;
     }
 
-    total_buff_size = buff_size[0] + buff_size[1] + buff_size[2];
-    if (total_buff_size) {
-        mem_buffer = (uint8_t*)malloc(total_buff_size);
-    }
+    *sign = acc_sign;
+    *logdet = acc_logdet;
+}
 
-    offset = 0;
-    for (i=0; i<3; i++) {
-        if (buff_size[i] == 0) {
-            /* inplace */ 
-            gemm_params.buff[i] = NULL;
-        } else {
-            /* an intermediate copy will be needed */
-            gemm_params.buff[i] = (void*)(mem_buffer + offset);
-            offset += buff_size[i];
-        }
-    }
-
-    @TYPE@_matrix_multiply_blas_straight(args, dimensions, steps, &gemm_params);
-
-    free(mem_buffer);
+static inline @typ@
+@TYPE@_det_from_slogdet(@typ@ sign, @typ@ logdet)
+{
+    @typ@ result = sign * @exp_func@(logdet);
+    return result;
 }
 
 /**end repeat**/
 
-/*  The following lines were generated using a slightly modified
-    version of code_generators/generate_umath.py and adding these
-    lines to defdict:
+/**begin repeat
 
-defdict = {
-'inner1d' :
-    Ufunc(2, 1, None_,
-        r'''inner on the last dimension and broadcast on the rest \n"
-        "     \"(i),(i)->()\" \n''',
-          TD('ld'),
-          ),
-'innerwt' :
-    Ufunc(3, 1, None_,
-          r'''inner1d with a weight argument \n"
-          "     \"(i),(i),(i)->()\" \n''',
-          TD('ld'),
-          ),
+   #TYPE=CFLOAT,CDOUBLE#
+   #typ=npy_cfloat, npy_cdouble#
+   #basetyp=npy_float, npy_double#
+   #abs_func=npy_cabsf, npy_cabs#
+   #log_func=npy_logf, npy_log#
+   #exp_func=npy_expf, npy_exp#
+   #zero=0.0f,0.0#
+*/
+#define RE(COMPLEX) (((@basetyp@*)(&COMPLEX))[0])
+#define IM(COMPLEX) (((@basetyp@*)(&COMPLEX))[1])
+
+static inline @typ@
+@TYPE@_mult(@typ@ op1, @typ@ op2)
+{
+    @typ@ rv;
+
+    RE(rv) = RE(op1)*RE(op2) - IM(op1)*IM(op2);
+    IM(rv) = RE(op1)*IM(op2) - IM(op1)*RE(op2);
+
+    return rv;
 }
 
+
+static inline void
+@TYPE@_slogdet_from_factored_diagonal(@typ@* src,
+                                      clapack_int m,
+                                      @typ@ *sign, 
+                                      @basetyp@ *logdet)
+{
+    int i;
+    @typ@ sign_acc = *sign;
+    @basetyp@ logdet_acc = @zero@;
+
+    for (i = 0; i < m; i++)
+    {
+        @basetyp@ abs_element = @abs_func@(*src);
+        @typ@ sign_element;
+        RE(sign_element) = RE(*src) / abs_element;
+        IM(sign_element) = IM(*src) / abs_element;
+
+        sign_acc = @TYPE@_mult(sign_acc, sign_element);
+        logdet_acc += @log_func@(abs_element);
+        src += m + 1;
+    }
+
+    *sign = sign_acc;
+    *logdet = logdet_acc;
+}
+
+static inline @typ@
+@TYPE@_det_from_slogdet(@typ@ sign, @basetyp@ logdet)
+{
+    @typ@ tmp;
+    RE(tmp) = @exp_func@(logdet);
+    IM(tmp) = @zero@;
+    return @TYPE@_mult(sign, tmp);
+}
+#undef RE
+#undef IM
+
+/**end repeat**/
+
+/* As in the linalg package, the determinant is computed via LU factorization
+ * using LAPACK.
+ * slogdet computes sign + log(determinant).
+ * det computes sign * exp(slogdet).
+ */ 
+/**begin repeat
+
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
+   #basetyp=npy_float,npy_double,npy_float,npy_double#
+   #cblas_type=s,d,c,z#
 */
 
-char *inner1d_signature = "(i),(i)->()";
-static PyUFuncGenericFunction inner1d_functions[] = { 
-    FLOAT_inner1d, 
-    DOUBLE_inner1d
- };
-static void * inner1d_data[] = { 
-    (void *)NULL, 
-    (void *) NULL
-};
-static char inner1d_signatures[] = { 
-    NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, 
-    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE
-};
+static inline void
+@TYPE@_slogdet_single_element(clapack_int m, 
+                              void* src, 
+                              clapack_int* pivots, 
+                              @typ@ *sign, 
+                              @basetyp@ *logdet)
+{
+    clapack_int info = 0;
+    int i;
+    /* note: done in place */
+    LAPACK(@cblas_type@getrf)(&m, &m, (void *)src, &m, pivots, &info);
+    
+    if (info == 0)
+    {
+        int change_sign = 0;
+        /* note: fortran uses 1 based indexing */
+        for (i=0; i < m; i++)
+        {
+            change_sign += (pivots[i] != (i+1));
+        }
+    
+        memcpy(sign, (change_sign % 2)? &@cblas_type@_minus_one : &@cblas_type@_one, sizeof(*sign));
+        @TYPE@_slogdet_from_factored_diagonal(src, m, sign, logdet);
+    } else {
+        memcpy(sign, &@cblas_type@_zero, sizeof(*sign));
+        memcpy(logdet, &@cblas_type@_ninf, sizeof(*logdet));
+    }
+    
+}
 
-char *innerwt_signature = "(i),(i),(i)->()";
-static PyUFuncGenericFunction innerwt_functions[] = { 
-    FLOAT_innerwt, 
-    DOUBLE_innerwt 
-};
-static void * innerwt_data[] = { 
-    (void *)NULL, 
-    (void *)NULL 
-};
-static char innerwt_signatures[] = {
-    NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
-    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE
- };
+INTERNAL void
+@TYPE@_slogdet(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    clapack_int m;
+    uint8_t* tmp_buff;
+    size_t matrix_size;
+    size_t pivot_size;
+    /* notes:
+     *   matrix will need to be copied always, as factorization in lapack is made inplace
+     *   matrix will need to be in column-major order, as expected by lapack code (fortran)
+     *   always a square matrix
+     *   need to allocate memory for both, matrix_buffer and pivot buffer
+     */
+    INIT_OUTER_LOOP_3
+    m = (clapack_int) dimensions[0];
+    matrix_size = m*m*sizeof(@typ@);
+    pivot_size = m*sizeof(clapack_int); 
+    tmp_buff = (uint8_t *)malloc(matrix_size + pivot_size); 
+
+    if (tmp_buff)
+    {
+        LINEARIZE_DATA_t lin_data;
+        /* swapped steps to get matrix in FORTRAN order */
+        init_linearize_data(&lin_data, m, m, (ptrdiff_t)steps[1], (ptrdiff_t)steps[0]);
+        BEGIN_OUTER_LOOP_3
+            linearize_@TYPE@_matrix(tmp_buff, args[0], &lin_data);
+            @TYPE@_slogdet_single_element(m,
+                                          (void*)tmp_buff,
+                                          (clapack_int*)(tmp_buff+matrix_size),
+                                          (@typ@*)args[1],
+                                          (@basetyp@*)args[2]); 
+        END_OUTER_LOOP
+
+        free(tmp_buff);
+    }
+}
+
+INTERNAL void
+@TYPE@_det(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    clapack_int m;
+    uint8_t* tmp_buff;
+    size_t matrix_size;
+    size_t pivot_size;
+    /* notes:
+     *   matrix will need to be copied always, as factorization in lapack is made inplace
+     *   matrix will need to be in column-major order, as expected by lapack code (fortran)
+     *   always a square matrix
+     *   need to allocate memory for both, matrix_buffer and pivot buffer
+     */
+    INIT_OUTER_LOOP_2
+    m = (clapack_int) dimensions[0];
+    matrix_size = m*m*sizeof(@typ@);
+    pivot_size = m*sizeof(clapack_int); 
+    tmp_buff = (uint8_t *)malloc(matrix_size + pivot_size); 
+
+    if (tmp_buff)
+    {
+        LINEARIZE_DATA_t lin_data;
+        @typ@ sign;
+        @basetyp@ logdet;
+        /* swapped steps to get matrix in FORTRAN order */
+        init_linearize_data(&lin_data, m, m, (ptrdiff_t)steps[1], (ptrdiff_t)steps[0]);
+
+        BEGIN_OUTER_LOOP_2
+            linearize_@TYPE@_matrix(tmp_buff, args[0], &lin_data);
+            @TYPE@_slogdet_single_element(m,
+                                          (void*)tmp_buff,
+                                          (clapack_int*)(tmp_buff+matrix_size),
+                                          &sign,
+                                          &logdet);
+            *(@typ@ *)args[1] = @TYPE@_det_from_slogdet(sign, logdet);
+        END_OUTER_LOOP
+
+        free(tmp_buff);
+    }
+}
+/**end repeat**/
+
+/**begin repeat
+
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
+   #cblas_type=s,d,c,z#
+*/
+/**end repeat**/
 
 
-/* note: using blas gemm nomenclature for m, k and n */
-char *matrix_multiply_signature = "(m,k),(k,n)->(m,n)";
-static PyUFuncGenericFunction matrix_multiply_functions[] = { 
-    FLOAT_matrix_multiply, 
-    DOUBLE_matrix_multiply,
-    CFLOAT_matrix_multiply,
-    CDOUBLE_matrix_multiply
-};
-static void *matrix_multiply_data[] = {
-    (void *)NULL, 
-    (void *)NULL, 
+static void *array_of_nulls[] = {
     (void *)NULL,
     (void *)NULL,
+    (void *)NULL,
+    (void *)NULL,
+
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL,
+
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL,
+
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL,
+    (void *)NULL
 };
-static char matrix_multiply_signatures[] = { 
+
+#define ARRAY_NAME(NAME) NAME ## _funcs
+#define FUNCS_REAL(NAME) FLOAT_ ## NAME, DOUBLE_ ## NAME
+#define FUNCS_REAL_COMPLEX(NAME) FUNCS_REAL(NAME), CFLOAT_ ## NAME, CDOUBLE_ ## NAME
+#define GUFUNC_FUNC_ARRAY_REAL(NAME) static PyUFuncGenericFunction \
+    ARRAY_NAME(NAME)[] = { FUNCS_REAL(NAME) }
+#define GUFUNC_FUNC_ARRAY_REAL_COMPLEX(NAME) static PyUFuncGenericFunction \
+    ARRAY_NAME(NAME)[] = { FUNCS_REAL_COMPLEX(NAME) }
+
+
+GUFUNC_FUNC_ARRAY_REAL(inner1d);
+GUFUNC_FUNC_ARRAY_REAL(innerwt);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(matrix_multiply);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(slogdet);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(det);
+
+static char equal_2_types[] = {
+    NPY_FLOAT, NPY_FLOAT,
+    NPY_DOUBLE, NPY_DOUBLE,
+    NPY_CFLOAT, NPY_CFLOAT,
+    NPY_CDOUBLE, NPY_CDOUBLE
+};
+
+static char equal_3_types[] = {
     NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
     NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT,
-    NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE
+    NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE 
+};
+
+/* second result is logdet, that will always be a REAL */
+static char slogdet_types[] = {
+    NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
+    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
+    NPY_CFLOAT, NPY_CFLOAT, NPY_FLOAT,
+    NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE 
+};
+
+typedef struct gufunc_descriptor_struct {
+    char *name;
+    char *signature;
+    char *doc;
+    int ntypes;
+    int nin;
+    int nout;
+    PyUFuncGenericFunction *funcs;
+    char *types;
+} GUFUNC_DESCRIPTOR_t;
+
+GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
+    {
+        "inner1d",
+        "(i),(i)->()",
+        "inner on the last dimension and broadcast on the rest \n"\
+        "    \"(i),(i)->()\" \n",
+        2, 2, 1,
+        inner1d_funcs,
+        equal_2_types
+    },
+
+    {
+        "matrix_multiply",
+        "(m,p),(p,n)->(m,n)",
+        "dot on the last two dimensions and broadcast on the rest \n"\
+        "    \"(m,p),(p,n)->(m,n)\" \n",
+        4, 2, 1,
+        matrix_multiply_funcs,
+        equal_3_types
+    },
+
+    {
+        "slogdet",
+        "(m,n)->(),()", /* should be (m,m)->(),() ... but the gufunc harness needs fixing */
+        "slogdet on the last two dimensions and broadcast on the rest. \n"\
+        "Results in two arrays, one with sign and the other with log of the determinants. \n"\
+        "    \"(m,n)->(),()\" \n",
+        4, 1, 2,
+        slogdet_funcs,
+        slogdet_types
+    },
+
+    {
+        "det",
+        "(m,n)->()", /* should be (m,m)->(),() ... but the gufunc harness needs fixing */
+        "det of the last two dimensions and broadcast on the rest. \n"\
+        "    \"(m,n)->()\" \n",
+        4, 1, 1,
+        det_funcs,
+        equal_2_types
+    }
+/*
+ *  Unimplemented yet
+ */
+#if 0
+    {
+        "eigh",
+        "(m,m)->(m),(m,m)",
+        "eigh on the last two dimension and broadcast to the rest. \n"\
+        "Results in a vector of eigenvalues and a matrix with the eigenvectors. \n"\
+        "    \"(m,m)->(m),(m,m)\" \n",
+        4, 1, 2,
+        eigh_funcs,
+        equal_3_types
+    },
+    {
+        "eig",
+        "(m,m)->(m),(m,m)",
+        "eig on the last two dimension and broadcast to the rest. \n"\
+        "Results in a vector of eigenvalues and a matrix with the eigenvectors. \n"\
+        "    \"(m,m)->(m),(m,m)\" \n",
+        4, 1, 2,
+        eig_funcs,
+        equal_3_types
+    },
+    {
+        "eigvalsh",
+        "(m,m)->(m)",
+        "eigvalsh on the last two dimension and broadcast to the rest. \n"\
+        "Results in a vector of eigenvalues. \n"\
+        "    \"(m,m)->(m),(m,m)\" \n",
+        4, 1, 1,
+        eigvalsh_funcs,
+        equal_2_types
+    },
+    {
+        "eigvals",
+        "(m,m)->(m)",
+        "eigvals on the last two dimension and broadcast to the rest. \n"\
+        "Results in a vector of eigenvalues. \n"\
+        "    \"(m,m)->(m),(m,m)\" \n",
+        4, 1, 1,
+        eigvals_funcs,
+        equal_2_types
+    },
+#endif
 };
 
 static void
 addUfuncs(PyObject *dictionary) {
     PyObject *f;
+    int i;
+    const int gufunc_count = sizeof(gufunc_descriptors)/sizeof(gufunc_descriptors[0]);
 
-    f = PyUFunc_FromFuncAndDataAndSignature(inner1d_functions, inner1d_data, inner1d_signatures, 2,
-                                    2, 1, PyUFunc_None, "inner1d",
-                                    "inner on the last dimension and broadcast on the rest \n"\
-                                    "     \"(i),(i)->()\" \n",
-                                    0, inner1d_signature);
-    PyDict_SetItemString(dictionary, "inner1d", f);
-    Py_DECREF(f);
-    f = PyUFunc_FromFuncAndDataAndSignature(innerwt_functions, innerwt_data, innerwt_signatures, 2,
-                                    3, 1, PyUFunc_None, "innerwt",
-                                    "inner1d with a weight argument \n"\
-                                    "     \"(i),(i),(i)->()\" \n",
-                                    0, innerwt_signature);
-    PyDict_SetItemString(dictionary, "innerwt", f);
-    Py_DECREF(f);
-    f = PyUFunc_FromFuncAndDataAndSignature(matrix_multiply_functions,
-                                    matrix_multiply_data, matrix_multiply_signatures,
-                                    3, 2, 1, PyUFunc_None, "matrix_multiply",
-                                    "matrix multiplication on last two dimensions \n"\
-                                    "     \"(m,n),(n,p)->(m,p)\" \n",
-                                    0, matrix_multiply_signature);
-    PyDict_SetItemString(dictionary, "matrix_multiply", f);
-    Py_DECREF(f);
+    for (i=0; i < gufunc_count; i++) {
+        GUFUNC_DESCRIPTOR_t* d = &gufunc_descriptors[i];
+        f = PyUFunc_FromFuncAndDataAndSignature(d->funcs, 
+                                                array_of_nulls,
+                                                d->types,
+                                                d->ntypes,
+                                                d->nin,
+                                                d->nout,
+                                                PyUFunc_None,
+                                                d->name,
+                                                d->doc,
+                                                0,
+                                                d->signature);
+        PyDict_SetItemString(dictionary, d->name, f);
+        Py_DECREF(f);                                               
+    }
 }
 
 /*
@@ -566,7 +1013,7 @@ UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
     return Py_BuildValue("i", core_enabled);
 }
 
-static PyMethodDef UMath_TestsMethods[] = {
+static PyMethodDef UMath_LinAlgMethods[] = {
     {"test_signature",  UMath_Tests_test_signature, METH_VARARGS,
      "Test signature parsing of ufunc. \n"
      "Arguments: nin nout signature \n"
@@ -606,7 +1053,7 @@ initumath_linalg(void)
 #if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
 #else
-    m = Py_InitModule(umath_linalg_module_name, UMath_TestsMethods);
+    m = Py_InitModule(umath_linalg_module_name, UMath_LinAlgMethods);
 #endif
     if (m == NULL)
         return RETVAL;
@@ -622,7 +1069,7 @@ initumath_linalg(void)
 
     /* Load the ufunc operators into the module's namespace */
     addUfuncs(d);
-
+    
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load umath_tests module.");
