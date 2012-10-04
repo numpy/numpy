@@ -4852,48 +4852,122 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 static PyObject *
 ufunc_select(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
-    printf("JNB: select()\n");
-    static char *kwlist[] = {"op1", "op2", "idx"};
-    PyObject *op1, *op2, *idx;
-    PyArrayObject *op1_array, *op2_array;
-    PyArrayMapIterObject *iter, *iter2;
+    static char *kwlist[] = {"op1", "idx", "op2"};
+    PyObject *op1 = NULL;
+    PyObject *idx = NULL;
+    PyObject *op2 = NULL;
+    PyArrayObject *op1_array = NULL;
+    PyArrayObject *op2_array = NULL;
+    PyArrayMapIterObject *iter = NULL;
+    PyArrayMapIterObject *iter2 = NULL;
+    PyArray_Descr *dtypes[3];
+    int needs_api;
+    npy_intp first_item[1];
     PyUFuncGenericFunction innerloop;
     void *innerloopdata;
     char *dataptr[3];
     npy_intp count[1], stride[1];
     int i;
 
-    PyArg_ParseTupleAndKeywords(args, kwds, "OOO", kwlist,
-                                &op1, &op2, &idx);
+    PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist,
+                                &op1, &idx, &op2);
+
+    if (ufunc->nin == 2 && op2 == NULL) {
+        PyErr_SetString(PyExc_ValueError,
+                        "second operand needed for ufunc");
+        return NULL;
+    }
+
+    if (!PyArray_Check(op1)) {
+        PyErr_SetString(PyExc_TypeError,
+                        "first operand must be array");
+        return NULL;
+    }
 
     op1_array = (PyArrayObject *)PyArray_FromAny(op1, NULL, 0, 0, 0, NULL);
-    op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL, 0, 0, 0, NULL);
-
+    if (op1_array == NULL) {
+        return NULL;
+    }
 
     iter = (PyArrayMapIterObject*)PyArray_MapIterNew(idx, 0, 1);
-    iter2 = (PyArrayMapIterObject*)PyArray_MapIterNew(idx, 0, 1);
-    PyArray_MapIterBind(iter, op1_array);
-    PyArray_MapIterBind(iter2, op2_array);
+    if (iter == NULL) {
+        return NULL;
+    }
 
-    get_binary_op_function(ufunc, &PyArray_DESCR(op1_array)->type_num,
-                           &innerloop, &innerloopdata);
+    PyArray_MapIterBind(iter, op1_array);
+    PyArray_MapIterReset(iter);
+
+    if (op2 != NULL && PyArray_Check(op2)) {
+        op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL, 0, 0, 0, NULL);
+        if (op2_array == NULL) {
+            return NULL;
+        }
+
+        iter2 = (PyArrayMapIterObject*)PyArray_MapIterNew(idx, 0, 1);
+        if (iter2 == NULL) {
+
+        }
+
+        PyArray_MapIterBind(iter2, op2_array);
+        PyArray_MapIterReset(iter2);
+    }
+    else if (op2 != NULL && PyArray_IsAnyScalar(op2)) {
+        op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL, 0, 0, 0, NULL);
+        if (op2_array == NULL) {
+            return NULL;
+        }
+
+        iter2 = NULL;
+        first_item[0] = 0;
+    }
+    else if (op2 != NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                        "second operand must be "
+                        "array or scalar");
+        return NULL;
+    }
+
+    dtypes[0] = PyArray_DESCR(op1_array);
+    if (op2_array != NULL) {
+        dtypes[1] = PyArray_DESCR(op2_array);
+        dtypes[2] = dtypes[0];
+    }
+    else {
+        dtypes[1] = dtypes[0];
+        dtypes[2] = NULL;
+    }
+
+    if (ufunc->legacy_inner_loop_selector(ufunc, dtypes,
+        &innerloop, &innerloopdata, &needs_api) < 0) {
+        return NULL;
+    }
+
     count[0] = 1;
     stride[0] = 1;
  
-    PyArray_MapIterReset(iter);
-    PyArray_MapIterReset(iter2);
     i = iter->size;
     while (i > 0)
     {
-        printf("JNB: %x\n", iter->dataptr[0]);
         dataptr[0] = iter->dataptr;
-        dataptr[1] = iter2->dataptr;
-        dataptr[2] = iter->dataptr;
+
+        if (iter2 != NULL) {
+            dataptr[1] = iter2->dataptr;
+            dataptr[2] = iter->dataptr;
+        }
+        else if (op2_array != NULL) {
+            dataptr[1] = PyArray_GetPtr(op2_array, first_item);
+            dataptr[2] = iter->dataptr;
+        }
+        else {
+            dataptr[1] = iter->dataptr;
+            dataptr[2] = NULL;
+        }
 
         innerloop(dataptr, count, stride, innerloopdata);
 
         PyArray_MapIterNext(iter);
-        PyArray_MapIterNext(iter2);
+        if (iter2 != NULL)
+            PyArray_MapIterNext(iter2);
         i--;
     }
 
