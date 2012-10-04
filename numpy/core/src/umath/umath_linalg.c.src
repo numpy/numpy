@@ -43,7 +43,11 @@
 #define LAPACK(FUNC) FUNC ## _
 
 /* TODO: Fix this properly */
-typedef __CLPK_integer clapack_int;
+typedef __CLPK_integer fortran_int;
+typedef __CLPK_real    fortran_real;
+typedef __CLPK_doublereal fortran_doublereal;
+typedef __CLPK_complex fortran_complex;
+typedef __CLPK_doublecomplex fortran_doublecomplex;
 
 #if 1
 #  define INTERNAL
@@ -119,8 +123,7 @@ init_linearize_data(LINEARIZE_DATA_t *lin_data,
     lin_data->column_strides = column_strides;
 }
 
-#if 1
-static void
+static inline void
 dump_ufunc_object(PyUFuncObject* ufunc)
 {
     printf("\n\n%s '%s' (%d input(s), %d output(s), %d specialization(s).\n",
@@ -143,57 +146,60 @@ dump_ufunc_object(PyUFuncObject* ufunc)
         }
     }
 }
-#endif
 
-#if 1
-static void
+static inline void
 dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
 {
     printf("\n\t%s rows: %zd columns: %zd"
-           "\n\t\trow_strides: %zd column_strides: %zd"
+           "\n\t\trow_strides: %td column_strides: %td"
            "\n", name, params->rows, params->columns,
            params->row_strides, params->column_strides);
 }
-#endif
 
-#if 0
-static void
-dump_gemm_params(const GEMM_PARAMS_t* params)
+static inline void
+print_npy_float(npy_float s)
 {
-    printf("\n\ngemm_params: src1: %s transposed src2: %s transposed"
-           "\n\tM: %d N: %d K: %d",
-           params->trans[0] == CblasNoTrans? "NOT" : "",
-           params->trans[1] == CblasNoTrans? "NOT" : "",
-           params->m, params->n, params->k);
-    dump_linearize_data("src1", &params->lin_data[0]);
-    dump_linearize_data("src2", &params->lin_data[1]);
-    dump_linearize_data("dst", &params->lin_data[2]);
+    printf(" %8.4f", s);
 }
-#endif
+static inline void
+print_npy_double(npy_double d)
+{
+    printf(" %10.6f", d);
+}
+static inline void
+print_npy_cfloat(npy_cfloat c)
+{
+    float* c_parts = (float*)&c;
+    printf(" %8.4f + %8.4fj", c_parts[0], c_parts[1]);
+}
+static inline void
+print_npy_cdouble(npy_cdouble z)
+{
+    double* z_parts = (double*)&z;
+    printf(" %8.4f + %8.4fj", z_parts[0], z_parts[1]);
+}
 
-#if 0
 /**begin repeat
    #type=npy_float,npy_double,npy_cfloat,npy_cdouble#
    #format=%8.4f,%10.6f,%8.4f,%10.6f#
  */
-static void
-dump_@type@_matrix(size_t rows, size_t columns, const @type@* ptr)
+static inline void
+dump_@type@_matrix(const char* name, size_t rows, size_t columns, const @type@* ptr)
 {
     size_t i,j;
 
+    printf("\n%s (%zd, %zd)\n", name, rows, columns);
     for (i=0; i<rows; i++)
     {
         printf("(");
         for (j=0; j<columns; j++)
         {
-            printf(" @format@", *ptr++);
+            print_@type@(*ptr++);
         }
         printf(" )\n");
     }
 }
 /**end repeat**/
-
-#endif
 
 
 /*
@@ -230,6 +236,14 @@ dump_@type@_matrix(size_t rows, size_t columns, const @type@* ptr)
 
 #define END_OUTER_LOOP  }
 
+static void inline
+update_pointers(uint8_t** bases, ptrdiff_t* offsets, size_t count)
+{
+    size_t i;
+    for (i=0; i < count; ++i) {
+        bases[i] += offsets[i];
+    }
+}
 
 /*
  *****************************************************************************
@@ -255,9 +269,9 @@ linearize_@TYPE@_matrix(void *dst_in, void *src_in,const LINEARIZE_DATA_t* data)
         int i;
         @typ@* rv = dst;
         for (i=0; i< data->rows; i++) {
-            CBLAS(@cblas_type@copy)(data->columns,
-                                    src, data->column_strides/sizeof(@typ@),
-                                    dst, 1);
+            CBLAS(@cblas_type@copy)((fortran_int)data->columns,
+                                    src, (fortran_int)(data->column_strides/sizeof(@typ@)),
+                                    dst, (fortran_int)1);
             src += data->row_strides/sizeof(@typ@);
             dst += data->columns;
         } 
@@ -277,9 +291,9 @@ delinearize_@TYPE@_matrix(void *dst_in, void *src_in,const LINEARIZE_DATA_t* dat
         int i;
         @typ@ *rv = src;
         for (i=0; i < data->rows; i++) {
-            CBLAS(@cblas_type@copy)(data->columns,
-                                    src, 1,
-                                    dst, data->column_strides/sizeof(@typ@));
+            CBLAS(@cblas_type@copy)((fortran_int)data->columns,
+                                    src, (fortran_int)1,
+                                    dst, (fortran_int)(data->column_strides/sizeof(@typ@)));
             src += data->columns;
             dst += data->row_strides/sizeof(@typ@);
         }
@@ -406,14 +420,27 @@ INTERNAL void
 
 typedef struct gemm_params_struct
 {
-    int   trans[2]; // use transpose
-    int   m,n,k; // note there is a relationship between this and lin_data rows
+    fortran_int m,n,k; // note there is a relationship between this and lin_data rows
                  // & columns but the actual relationship is dependent on trans.
-    int   strides[3]; // strides to use in gemm call
+    fortran_int strides[3]; // strides to use in gemm call
     void *buff[3];  // memory buff for the operand to use in blas call
     LINEARIZE_DATA_t lin_data[3];
     void *allocated_data;
+    int   trans[2]; // use transpose
 } GEMM_PARAMS_t;
+
+static inline void
+dump_gemm_params(const GEMM_PARAMS_t* params)
+{
+    printf("\n\ngemm_params: src1: %s transposed src2: %s transposed"
+           "\n\tM: %d N: %d K: %d",
+           params->trans[0] == CblasNoTrans? "NOT" : "",
+           params->trans[1] == CblasNoTrans? "NOT" : "",
+           (int)params->m, (int)params->n, (int)params->k);
+    dump_linearize_data("src1", &params->lin_data[0]);
+    dump_linearize_data("src2", &params->lin_data[1]);
+    dump_linearize_data("dst", &params->lin_data[2]);
+}
 
 static inline void
 init_gemm_params(GEMM_PARAMS_t *params,
@@ -453,11 +480,11 @@ init_gemm_params(GEMM_PARAMS_t *params,
             if (params->lin_data[i].column_strides == size_of_type) {
                 /* do it *in-place* */
                 buff_size[i] = 0;
-                params->strides[i] = steps[i*2] / size_of_type;
+                params->strides[i] = (fortran_int)(steps[i*2] / size_of_type);
             } else {
                 /* buffer needed to linearize */
-                int rows = params->lin_data[i].rows;
-                int columns = params->lin_data[i].columns;
+                int rows = (int)params->lin_data[i].rows;
+                int columns = (int)params->lin_data[i].columns;
                 buff_size[i] = rows * columns * size_of_type;
                 params->strides[i] = columns;
             }
@@ -568,7 +595,7 @@ static inline @typ@
 
 static inline void
 @TYPE@_slogdet_from_factored_diagonal(@typ@* src,
-                                      clapack_int m,
+                                      fortran_int m,
                                       @typ@ *sign,
                                       @typ@ *logdet)
 {
@@ -626,7 +653,7 @@ static inline @typ@
 
 static inline void
 @TYPE@_slogdet_from_factored_diagonal(@typ@* src,
-                                      clapack_int m,
+                                      fortran_int m,
                                       @typ@ *sign, 
                                       @basetyp@ *logdet)
 {
@@ -677,13 +704,13 @@ static inline @typ@
 */
 
 static inline void
-@TYPE@_slogdet_single_element(clapack_int m, 
+@TYPE@_slogdet_single_element(fortran_int m, 
                               void* src, 
-                              clapack_int* pivots, 
+                              fortran_int* pivots, 
                               @typ@ *sign, 
                               @basetyp@ *logdet)
 {
-    clapack_int info = 0;
+    fortran_int info = 0;
     int i;
     /* note: done in place */
     LAPACK(@cblas_type@getrf)(&m, &m, (void *)src, &m, pivots, &info);
@@ -709,8 +736,8 @@ static inline void
 INTERNAL void
 @TYPE@_slogdet(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    clapack_int m;
-    uint8_t* tmp_buff;
+    fortran_int m;
+    uint8_t* tmp_buff = NULL;
     size_t matrix_size;
     size_t pivot_size;
     /* notes:
@@ -720,9 +747,9 @@ INTERNAL void
      *   need to allocate memory for both, matrix_buffer and pivot buffer
      */
     INIT_OUTER_LOOP_3
-    m = (clapack_int) dimensions[0];
+    m = (fortran_int) dimensions[0];
     matrix_size = m*m*sizeof(@typ@);
-    pivot_size = m*sizeof(clapack_int); 
+    pivot_size = m*sizeof(fortran_int); 
     tmp_buff = (uint8_t *)malloc(matrix_size + pivot_size); 
 
     if (tmp_buff)
@@ -734,7 +761,7 @@ INTERNAL void
             linearize_@TYPE@_matrix(tmp_buff, args[0], &lin_data);
             @TYPE@_slogdet_single_element(m,
                                           (void*)tmp_buff,
-                                          (clapack_int*)(tmp_buff+matrix_size),
+                                          (fortran_int*)(tmp_buff+matrix_size),
                                           (@typ@*)args[1],
                                           (@basetyp@*)args[2]); 
         END_OUTER_LOOP
@@ -746,7 +773,7 @@ INTERNAL void
 INTERNAL void
 @TYPE@_det(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    clapack_int m;
+    fortran_int m;
     uint8_t* tmp_buff;
     size_t matrix_size;
     size_t pivot_size;
@@ -757,9 +784,9 @@ INTERNAL void
      *   need to allocate memory for both, matrix_buffer and pivot buffer
      */
     INIT_OUTER_LOOP_2
-    m = (clapack_int) dimensions[0];
+    m = (fortran_int) dimensions[0];
     matrix_size = m*m*sizeof(@typ@);
-    pivot_size = m*sizeof(clapack_int); 
+    pivot_size = m*sizeof(fortran_int); 
     tmp_buff = (uint8_t *)malloc(matrix_size + pivot_size); 
 
     if (tmp_buff)
@@ -774,7 +801,7 @@ INTERNAL void
             linearize_@TYPE@_matrix(tmp_buff, args[0], &lin_data);
             @TYPE@_slogdet_single_element(m,
                                           (void*)tmp_buff,
-                                          (clapack_int*)(tmp_buff+matrix_size),
+                                          (fortran_int*)(tmp_buff+matrix_size),
                                           &sign,
                                           &logdet);
             *(@typ@ *)args[1] = @TYPE@_det_from_slogdet(sign, logdet);
@@ -785,12 +812,303 @@ INTERNAL void
 }
 /**end repeat**/
 
+/* -------------------------------------------------------------------------- */
+                          /* Eigh family */
+
+typedef struct eigh_params_struct {
+    void *A;     /* matrix */
+    void *W;     /* eigenvalue vector */
+    void *WORK;  /* main work buffer */
+    void *RWORK; /* secondary work buffer (for complex versions) */
+    void *IWORK; 
+    fortran_int N;
+    fortran_int LWORK;
+    fortran_int LRWORK;
+    fortran_int LIWORK;
+    char JOBZ;
+    char UPLO;
+} EIGH_PARAMS_t;
+
 /**begin repeat
 
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
-   #cblas_type=s,d,c,z#
+   #TYPE=FLOAT,DOUBLE#
+   #typ=npy_float,npy_double#
+   #ftyp=fortran_real,fortran_doublereal#
+   #lapack_func=ssyevd,dsyevd#
 */
+
+/*
+ * Initialize the parameters to use in for the lapack function _syevd
+ * Handles buffer allocation
+ */
+static inline int
+init_@lapack_func@(char JOBZ, char UPLO,
+                   fortran_int N, EIGH_PARAMS_t *params)
+{
+    uint8_t *mem_buff = NULL;
+    uint8_t *mem_buff2 = NULL;
+    @typ@ query_work_size;
+    fortran_int query_iwork_size;
+    fortran_int lwork  = -1;
+    fortran_int liwork = -1;
+    fortran_int info;
+    uint8_t *a, *w, *work, *iwork;
+    size_t alloc_size = N*(N+1)*sizeof(@typ@);
+
+    mem_buff = malloc(alloc_size);
+  
+    if (!mem_buff)
+        goto error;
+    a = mem_buff;
+    w = mem_buff + N*N*sizeof(@typ@);
+    LAPACK(@lapack_func@)(&JOBZ, &UPLO, &N, 
+                          (@ftyp@*)a, &N, (@ftyp@*)w,
+                          &query_work_size, &lwork,
+                          &query_iwork_size, &liwork,
+                          &info);
+
+    if (info != 0)
+        goto error;
+
+    lwork = (fortran_int)query_work_size;
+    liwork = query_iwork_size;
+    mem_buff2 = malloc(lwork*sizeof(@typ@) + liwork*sizeof(fortran_int));
+    if (!mem_buff2)
+        goto error;
+
+    work = mem_buff2;
+    iwork = mem_buff2 + lwork*sizeof(@typ@);
+
+    params->A = a;
+    params->W = w;
+    params->WORK = mem_buff2;
+    params->RWORK = NULL; /* unused */
+    params->IWORK = iwork;
+    params->N = N;
+    params->LWORK = lwork;
+    params->LRWORK = 0; /* unused */
+    params->LIWORK = liwork;
+    params->JOBZ = JOBZ;
+    params->UPLO = UPLO;
+    
+    return 1;
+
+ error:
+    /* something failed */
+    memset(params, 0, sizeof(*params));
+    free(mem_buff2);
+    free(mem_buff);
+
+    return 0;
+}
+
+static inline void
+release_@lapack_func@(EIGH_PARAMS_t *params)
+{
+    /* allocated memory in A and WORK */
+    free(params->A);
+    free(params->WORK);
+    memset(params, 0, sizeof(*params));
+}
+
+static inline fortran_int
+lapack_@lapack_func@(EIGH_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->JOBZ, &params->UPLO, &params->N,
+                          params->A, &params->N, params->W, 
+                          params->WORK, &params->LWORK,
+                          params->IWORK, &params->LIWORK,
+                          &rv);
+    return rv;
+}
+/**end repeat**/
+
+/**begin repeat
+
+   #TYPE=CFLOAT,CDOUBLE#
+   #typ=npy_cfloat,npy_cdouble#
+   #basetyp=npy_float,npy_double#
+   #ftyp=fortran_complex,fortran_doublecomplex#
+   #fbasetyp=fortran_real,fortran_doublereal#
+   #lapack_func=cheevd,zheevd#
+*/
+/*
+ * Initialize the parameters to use in for the lapack function _heev
+ * Handles buffer allocation
+ */
+static inline int
+init_@lapack_func@(char JOBZ, char UPLO,
+                   fortran_int N, EIGH_PARAMS_t *params)
+{
+    uint8_t *mem_buff = NULL;
+    uint8_t *mem_buff2 = NULL;
+    @ftyp@ query_work_size;
+    @fbasetyp@ query_rwork_size;
+    fortran_int query_iwork_size;
+    fortran_int lwork = -1;
+    fortran_int lrwork = -1;
+    fortran_int liwork = -1;
+    uint8_t *a, *w, *work, *rwork, *iwork;
+    fortran_int info;
+
+    mem_buff = malloc(N*N*sizeof(@typ@)+N*sizeof(@basetyp@));
+    if (!mem_buff) 
+        goto error;
+    a = mem_buff;
+    w = mem_buff+N*N*sizeof(@typ@);
+    
+    LAPACK(@lapack_func@)(&JOBZ, &UPLO, &N, 
+                          (@ftyp@*)a, &N, (@fbasetyp@*)w,
+                          &query_work_size, &lwork,
+                          &query_rwork_size, &lrwork,
+                          &query_iwork_size, &liwork,
+                          &info);
+    if (info != 0)
+        goto error;
+
+    lwork = (fortran_int)*(@fbasetyp@*)&query_work_size;
+    lrwork = (fortran_int)query_rwork_size;
+    liwork = query_iwork_size;
+
+    mem_buff2 = malloc(lwork*sizeof(@typ@) + lrwork*sizeof(@basetyp@) + liwork*sizeof(fortran_int));
+    if (!mem_buff2)
+        goto error;
+    work = mem_buff2;
+    rwork = work + lwork*sizeof(@typ@);
+    iwork = rwork + lrwork*sizeof(@basetyp@);
+
+    params->A = a;
+    params->W = w;
+    params->WORK = work;
+    params->RWORK = rwork;
+    params->IWORK = iwork;
+    params->N = N;
+    params->LWORK = lwork;
+    params->LRWORK = lrwork;
+    params->LIWORK = liwork;
+    params->JOBZ = JOBZ;
+    params->UPLO = UPLO;
+    
+    return 1;
+
+    /* something failed */
+error:
+    memset(params, 0, sizeof(*params));
+    free(mem_buff2);
+    free(mem_buff);
+
+    return 0;
+}
+
+static inline void
+release_@lapack_func@(EIGH_PARAMS_t *params)
+{
+    /* allocated memory in A and WORK */
+    free(params->A);
+    free(params->WORK);
+    memset(params, 0, sizeof(*params));
+}
+
+static inline fortran_int
+lapack_@lapack_func@(EIGH_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->JOBZ, &params->UPLO, &params->N,
+                          params->A, &params->N, params->W, 
+                          params->WORK, &params->LWORK,
+                          params->RWORK, &params->LRWORK,
+                          params->IWORK, &params->LIWORK,
+                          &rv);
+    return rv;
+}
+/**end repeat**/
+
+/**begin repeat
+   
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #BASETYPE=FLOAT,DOUBLE,FLOAT,DOUBLE#
+   #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
+   #basetyp=npy_float,npy_double,npy_float,npy_double#
+   #lapack_func=ssyevd,dsyevd,cheevd,zheevd#
+  **/ 
+/*
+ * (M,M)->(M,)(M,M)
+ * dimensions[1] -> M
+ * args[0] -> A[in]
+ * args[1] -> W
+ * args[2] -> A[out]
+ */
+static inline void
+@TYPE@_eigh_wrapper(char JOBZ, char UPLO, char**args, npy_intp* dimensions, npy_intp* steps)
+{
+    ptrdiff_t outer_steps[3];
+    size_t iter;
+    size_t outer_dim = *dimensions++;
+    size_t op_count = (JOBZ=='N')?2:3;
+    EIGH_PARAMS_t eigh_params;
+
+    for (iter=0; iter < op_count; ++iter) {
+        outer_steps[iter] = (ptrdiff_t) steps[iter];
+    }
+    steps += op_count;
+
+    if (init_@lapack_func@(JOBZ, UPLO, (fortran_int)dimensions[0], &eigh_params)) {
+        LINEARIZE_DATA_t matrix_in_ld;
+        LINEARIZE_DATA_t eigenvectors_out_ld;
+        LINEARIZE_DATA_t eigenvalues_out_ld;
+
+        init_linearize_data(&matrix_in_ld,
+                            eigh_params.N, eigh_params.N,
+                            steps[1], steps[0]);
+        init_linearize_data(&eigenvalues_out_ld,
+                            1, eigh_params.N,
+                            0, steps[2]);
+        if ('V' == eigh_params.JOBZ) {
+            init_linearize_data(&eigenvectors_out_ld, 
+                                eigh_params.N, eigh_params.N,
+                                steps[4], steps[3]);
+        }
+
+        for (iter = 0; iter < outer_dim; ++iter) {
+            /* copy the matrix in */
+            linearize_@TYPE@_matrix(eigh_params.A, args[0], &matrix_in_ld);
+            lapack_@lapack_func@(&eigh_params);
+            delinearize_@BASETYPE@_matrix(args[1], eigh_params.W, &eigenvalues_out_ld);
+            
+            if ('V' == eigh_params.JOBZ) {
+                delinearize_@TYPE@_matrix(args[2], eigh_params.A, &eigenvectors_out_ld);
+            }
+            update_pointers((uint8_t**)args, outer_steps, op_count);
+        }
+
+        release_@lapack_func@(&eigh_params);
+    }
+}
+/** end repeat **/
+static void
+@TYPE@_eighlo(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    @TYPE@_eigh_wrapper('V', 'L', args, dimensions, steps);
+}
+
+static void
+@TYPE@_eighup(char **args, npy_intp *dimensions, npy_intp *steps, void* NPY_UNUSED(func))
+{
+    @TYPE@_eigh_wrapper('V', 'U', args, dimensions, steps);
+}
+
+static void
+@TYPE@_eigvalshlo(char **args, npy_intp *dimensions, npy_intp *steps, void* NPY_UNUSED(func))
+{
+    @TYPE@_eigh_wrapper('N', 'L', args, dimensions, steps);
+}
+
+static void
+@TYPE@_eigvalshup(char **args, npy_intp *dimensions, npy_intp *steps, void* NPY_UNUSED(func))
+{
+    @TYPE@_eigh_wrapper('N', 'U', args, dimensions, steps);
+}
 /**end repeat**/
 
 
@@ -830,6 +1148,10 @@ GUFUNC_FUNC_ARRAY_REAL(innerwt);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(matrix_multiply);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(slogdet);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(det);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eighlo);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eighup);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eigvalshlo);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eigvalshup);
 
 static char equal_2_types[] = {
     NPY_FLOAT, NPY_FLOAT,
@@ -853,6 +1175,20 @@ static char slogdet_types[] = {
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE 
 };
 
+static char eig_types[] = {
+    NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
+    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
+    NPY_CFLOAT, NPY_FLOAT, NPY_CFLOAT,
+    NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE 
+};
+
+static char eigvals_types[] = {
+    NPY_FLOAT, NPY_FLOAT,
+    NPY_DOUBLE, NPY_DOUBLE,
+    NPY_CFLOAT, NPY_FLOAT,
+    NPY_CDOUBLE, NPY_DOUBLE
+};
+
 typedef struct gufunc_descriptor_struct {
     char *name;
     char *signature;
@@ -873,6 +1209,16 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         2, 2, 1,
         inner1d_funcs,
         equal_2_types
+    },
+
+    {
+        "innerwt",
+        "(i),(i),(i)->()",
+        "inner on the last dimension using 3 operands and broadcast on the rest \n"\
+        "    \"(i),(i),(i)->()\" \n",
+        2, 3, 1,
+        innerwt_funcs,
+        equal_3_types
     },
 
     {
@@ -904,21 +1250,48 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         4, 1, 1,
         det_funcs,
         equal_2_types
-    }
-/*
- *  Unimplemented yet
- */
-#if 0
+    },
     {
-        "eigh",
-        "(m,m)->(m),(m,m)",
-        "eigh on the last two dimension and broadcast to the rest. \n"\
+        "eigh_lo",
+        "(m,n)->(m),(m,n)", /* should be (m,m)->(m),(m,m) ... but the gufunc harness needs fixing */
+        "eigh on the last two dimension and broadcast to the rest, usine lower triangle \n"\
         "Results in a vector of eigenvalues and a matrix with the eigenvectors. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 2,
-        eigh_funcs,
-        equal_3_types
+        eighlo_funcs,
+        eig_types
     },
+    {
+        "eigh_up",
+        "(m,n)->(m),(m,n)", /* should be (m,m)->(m),(m,m) ... but the gufunc harness needs fixing */
+        "eigh on the last two dimension and broadcast to the rest, using upper triangle. \n"\
+        "Results in a vector of eigenvalues and a matrix with the eigenvectors. \n"\
+        "    \"(m,m)->(m),(m,m)\" \n",
+        4, 1, 2,
+        eighup_funcs,
+        eig_types
+    },
+    {
+        "eigvalsh_lo",
+        "(m,n)->(m)", /* should be (m,m)->(m), ... but the gufunc harness needs fixing */
+        "eigh on the last two dimension and broadcast to the rest, using lower triangle. \n"\
+        "Results in a vector of eigenvalues and a matrix with the eigenvectors. \n"\
+        "    \"(m,m)->(m)\" \n",
+        4, 1, 1,
+        eigvalshlo_funcs,
+        eigvals_types
+    },
+    {
+        "eigvalsh_up",
+        "(m,n)->(m)", /* should be (m,m)->(m) ... but the gufunc harness needs fixing */
+        "eigvalsh on the last two dimension and broadcast to the rest, using upper triangle. \n"\
+        "Results in a vector of eigenvalues and a matrix with the eigenvectors. \n"\
+        "    \"(m,m)->(m)\" \n",
+        4, 1, 1,
+        eigvalshup_funcs,
+        eigvals_types
+    }
+#if 0
     {
         "eig",
         "(m,m)->(m),(m,m)",
@@ -947,7 +1320,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 1,
         eigvals_funcs,
-        equal_2_types
+        eigvals_types
     },
 #endif
 };
@@ -972,6 +1345,7 @@ addUfuncs(PyObject *dictionary) {
                                                 0,
                                                 d->signature);
         PyDict_SetItemString(dictionary, d->name, f);
+        /* dump_ufunc_object((PyUFuncObject*) f); */
         Py_DECREF(f);                                               
     }
 }
