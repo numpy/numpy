@@ -4849,6 +4849,7 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     return PyUFunc_GenericReduction(ufunc, args, kwds, UFUNC_REDUCEAT);
 }
 
+/* Call ufunc only on selected array items and store result in first operand */
 static PyObject *
 ufunc_select(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
@@ -4897,6 +4898,7 @@ ufunc_select(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyArray_MapIterBind(iter, op1_array);
     PyArray_MapIterReset(iter);
 
+    /* If second operand is an array, create MapIter object for it */
     if (op2 != NULL && PyArray_Check(op2)) {
         op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL, 0, 0, 0, NULL);
         if (op2_array == NULL) {
@@ -4911,6 +4913,7 @@ ufunc_select(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         PyArray_MapIterBind(iter2, op2_array);
         PyArray_MapIterReset(iter2);
     }
+    /* If second operand is a scalar, create 0 dim array from it */
     else if (op2 != NULL && PyArray_IsAnyScalar(op2)) {
         op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL, 0, 0, 0, NULL);
         if (op2_array == NULL) {
@@ -4927,6 +4930,8 @@ ufunc_select(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         return NULL;
     }
 
+    /* Create dtypes array for either one or two input operands.
+     * The output operand is set to the first input operand */
     dtypes[0] = PyArray_DESCR(op1_array);
     if (op2_array != NULL) {
         dtypes[1] = PyArray_DESCR(op2_array);
@@ -4945,11 +4950,13 @@ ufunc_select(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     count[0] = 1;
     stride[0] = 1;
  
+    /* Loop through all indices and call ufunc for each index */
     i = iter->size;
     while (i > 0)
     {
+        /* Set up data pointers for either one or two input operands.
+         * The output data pointer points to the first operand data */
         dataptr[0] = iter->dataptr;
-
         if (iter2 != NULL) {
             dataptr[1] = iter2->dataptr;
             dataptr[2] = iter->dataptr;
