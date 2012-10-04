@@ -4849,6 +4849,57 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     return PyUFunc_GenericReduction(ufunc, args, kwds, UFUNC_REDUCEAT);
 }
 
+static PyObject *
+ufunc_select(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
+{
+    printf("JNB: select()\n");
+    static char *kwlist[] = {"op1", "op2", "idx"};
+    PyObject *op1, *op2, *idx;
+    PyArrayObject *op1_array, *op2_array;
+    PyArrayMapIterObject *iter, *iter2;
+    PyUFuncGenericFunction innerloop;
+    void *innerloopdata;
+    char *dataptr[3];
+    npy_intp count[1], stride[1];
+    int i;
+
+    PyArg_ParseTupleAndKeywords(args, kwds, "OOO", kwlist,
+                                &op1, &op2, &idx);
+
+    op1_array = (PyArrayObject *)PyArray_FromAny(op1, NULL, 0, 0, 0, NULL);
+    op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL, 0, 0, 0, NULL);
+
+
+    iter = (PyArrayMapIterObject*)PyArray_MapIterNew(idx, 0, 1);
+    iter2 = (PyArrayMapIterObject*)PyArray_MapIterNew(idx, 0, 1);
+    PyArray_MapIterBind(iter, op1_array);
+    PyArray_MapIterBind(iter2, op2_array);
+
+    get_binary_op_function(ufunc, &PyArray_DESCR(op1_array)->type_num,
+                           &innerloop, &innerloopdata);
+    count[0] = 1;
+    stride[0] = 1;
+ 
+    PyArray_MapIterReset(iter);
+    PyArray_MapIterReset(iter2);
+    i = iter->size;
+    while (i > 0)
+    {
+        printf("JNB: %x\n", iter->dataptr[0]);
+        dataptr[0] = iter->dataptr;
+        dataptr[1] = iter2->dataptr;
+        dataptr[2] = iter->dataptr;
+
+        innerloop(dataptr, count, stride, innerloopdata);
+
+        PyArray_MapIterNext(iter);
+        PyArray_MapIterNext(iter2);
+        i--;
+    }
+
+    return op1;
+}
+
 
 static struct PyMethodDef ufunc_methods[] = {
     {"reduce",
@@ -4862,6 +4913,9 @@ static struct PyMethodDef ufunc_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL },
     {"outer",
         (PyCFunction)ufunc_outer,
+        METH_VARARGS | METH_KEYWORDS, NULL},
+    {"select",
+        (PyCFunction)ufunc_select,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
