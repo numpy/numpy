@@ -33,6 +33,8 @@
 
 #define TRACE do { printf ("%s:%d:%s\n", __FILE__, __LINE__, __FUNCTION__); } while (0)
 
+
+const char* umath_linalg_version_string = "0.1.0";
 /*
  *****************************************************************************
  *                    BLAS/LAPACK calling macros                             *
@@ -1085,7 +1087,11 @@ static inline void
         release_@lapack_func@(&eigh_params);
     }
 }
-/** end repeat **/
+/**end repeat**/
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+ */
 static void
 @TYPE@_eighlo(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
@@ -1110,7 +1116,119 @@ static void
     @TYPE@_eigh_wrapper('N', 'U', args, dimensions, steps);
 }
 /**end repeat**/
+/* -------------------------------------------------------------------------- */
+                          /* Solve family */
 
+typedef struct gesv_params_struct 
+{
+    void *A; /* A is (N,N) of base type */
+    void *B; /* B is (N,NRHS) of base type */
+    fortran_int * IPIV; /* IPIV is (N) */
+    
+    fortran_int N;
+    fortran_int NRHS;
+    fortran_int LDA;
+    fortran_int LDB;
+} GESV_PARAMS_t;
+/**begin repeat
+
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
+   #ftyp=fortran_real,fortran_doublereal,fortran_complex,fortran_doublecomplex#
+   #lapack_func=sgesv,dgesv,cgesv,zgesv#
+
+*/
+/*
+ * Initialize the parameters to use in for the lapack function _heev
+ * Handles buffer allocation
+ */
+static inline int
+init_@lapack_func@(GESV_PARAMS_t *params, fortran_int N, fortran_int NRHS) 
+{
+    void *mem_buff = NULL;
+    void *a, *b, *ipiv;
+    mem_buff = malloc(N*N*sizeof(@ftyp@) + N*NRHS*sizeof(@ftyp@) + N*sizeof(fortran_int));
+    if (!mem_buff)
+        goto error;
+    a = mem_buff;
+    b = a + N*N*sizeof(@ftyp@); 
+    ipiv = b + N*NRHS*sizeof(@ftyp@);
+
+    params->A = a;
+    params->B = b;
+    params->IPIV = ipiv;
+    params->N = N;
+    params->NRHS = NRHS;
+    params->LDA = N;
+    params->LDB = N;
+
+    return 1;
+ error:
+    free(mem_buff);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+static inline void
+release_@lapack_func@(GESV_PARAMS_t *params)
+{
+    /* memory block base is in A */
+    free(params->A);
+    memset(params, 0, sizeof(*params));
+}
+
+static inline fortran_int
+lapack_@lapack_func@(GESV_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->N, &params->NRHS,
+                          params->A, &params->LDA,
+                          params->IPIV,
+                          params->B, &params->LDB,
+                          &rv);
+    return rv;
+}
+
+static void
+@TYPE@_solve(char **args, npy_intp *dimensions, npy_intp *steps,
+             void* NPY_UNUSED(func))
+{
+    GESV_PARAMS_t params;
+    fortran_int n, nrhs;
+    INIT_OUTER_LOOP_3
+
+    n = (fortran_int)dimensions[0];
+    nrhs = (fortran_int)dimensions[2];
+    printf("%d, %d, %d, %d\n", (int)dimensions[0],
+           (int)dimensions[1],
+           (int)dimensions[2], 
+           (int)dimensions[3]);
+    if (init_@lapack_func@(&params, n, nrhs)) {
+        LINEARIZE_DATA_t a_in;
+        LINEARIZE_DATA_t b_in;
+        LINEARIZE_DATA_t r_out;
+
+        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
+        init_linearize_data(&b_in, nrhs, n, steps[3], steps[2]);
+        init_linearize_data(&r_out, nrhs, n, steps[5], steps[4]);
+
+        BEGIN_OUTER_LOOP_3
+            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
+            linearize_@TYPE@_matrix(params.B, args[1], &b_in);
+            lapack_@lapack_func@(&params);
+            delinearize_@TYPE@_matrix(args[2], params.B, &r_out);
+        END_OUTER_LOOP
+
+        release_@lapack_func@(&params);
+    }
+}
+
+/**end repeat**/
+
+
+/* -------------------------------------------------------------------------- */
+                      /* ufunc registration  */
 
 static void *array_of_nulls[] = {
     (void *)NULL,
@@ -1152,6 +1270,7 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eighlo);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eighup);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eigvalshlo);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eigvalshup);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(solve);
 
 static char equal_2_types[] = {
     NPY_FLOAT, NPY_FLOAT,
@@ -1290,13 +1409,22 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         4, 1, 1,
         eigvalshup_funcs,
         eigvals_types
+    },
+    {
+        "solve",
+        "(m,n),(m,p)->(m,p)",
+        "solve the system a x = b, on the last two dimensions, broadcast to the rest. \n"\
+        "Results in a matrix with the results",
+        4, 2, 1,
+        solve_funcs,
+        equal_3_types,
     }
 #if 0
     {
         "eig",
         "(m,m)->(m),(m,m)",
         "eig on the last two dimension and broadcast to the rest. \n"\
-        "Results in a vector of eigenvalues and a matrix with the eigenvectors. \n"\
+        "Results in a vector with the  eigenvalues and a matrix with the eigenvectors. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 2,
         eig_funcs,
@@ -1345,55 +1473,17 @@ addUfuncs(PyObject *dictionary) {
                                                 0,
                                                 d->signature);
         PyDict_SetItemString(dictionary, d->name, f);
-        /* dump_ufunc_object((PyUFuncObject*) f); */
+        dump_ufunc_object((PyUFuncObject*) f);
         Py_DECREF(f);                                               
     }
 }
 
-/*
-    End of auto-generated code.
-*/
-
-static PyObject *
-UMath_Tests_test_signature(PyObject *NPY_UNUSED(dummy), PyObject *args)
-{
-    int nin, nout;
-    PyObject *signature, *sig_str;
-    PyObject *f;
-    int core_enabled;
-
-    if (!PyArg_ParseTuple(args, "iiO", &nin, &nout, &signature)) return NULL;
 
 
-    if (PyString_Check(signature)) {
-        sig_str = signature;
-    } else if (PyUnicode_Check(signature)) {
-        sig_str = PyUnicode_AsUTF8String(signature);
-    } else {
-        PyErr_SetString(PyExc_ValueError, "signature should be a string");
-        return NULL;
-    }
-
-    f = PyUFunc_FromFuncAndDataAndSignature(NULL, NULL, NULL,
-        0, nin, nout, PyUFunc_None, "no name",
-        "doc:none",
-        1, PyString_AS_STRING(sig_str));
-    if (sig_str != signature) {
-        Py_DECREF(sig_str);
-    }
-    if (f == NULL) return NULL;
-    core_enabled = ((PyUFuncObject*)f)->core_enabled;
-    Py_DECREF(f);
-    return Py_BuildValue("i", core_enabled);
-}
+/* -------------------------------------------------------------------------- */
+                  /* Module initialization stuff  */
 
 static PyMethodDef UMath_LinAlgMethods[] = {
-    {"test_signature",  UMath_Tests_test_signature, METH_VARARGS,
-     "Test signature parsing of ufunc. \n"
-     "Arguments: nin nout signature \n"
-     "If fails, it returns NULL. Otherwise it will returns 0 for scalar ufunc "
-     "and 1 for generalized ufunc. \n",
-     },
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 
@@ -1437,7 +1527,7 @@ initumath_linalg(void)
 
     d = PyModule_GetDict(m);
 
-    version = PyString_FromString("0.1");
+    version = PyString_FromString(umath_linalg_version_string);
     PyDict_SetItemString(d, "__version__", version);
     Py_DECREF(version);
 
@@ -1446,7 +1536,7 @@ initumath_linalg(void)
     
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load umath_tests module.");
+                        "cannot load umath_linalg module.");
     }
 
     return RETVAL;
