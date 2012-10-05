@@ -253,7 +253,7 @@ update_pointers(uint8_t** bases, ptrdiff_t* offsets, size_t count)
  *****************************************************************************
  */
 
-/* rearranging of 2D matrices using blas */
+             /* rearranging of 2D matrices using blas */
 
 /**begin repeat
 
@@ -305,9 +305,24 @@ delinearize_@TYPE@_matrix(void *dst_in, void *src_in,const LINEARIZE_DATA_t* dat
         return src;
     }
 }
-
 /**end repeat**/
 
+          /* identity square matrix generation using blas */
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #ftyp=fortran_real,fortran_doublereal,fortran_complex,fortran_doublecomplex#
+   #cblas_type=s,d,c,z#
+ */
+static inline void
+identity_@TYPE@_matrix(void *ptr, fortran_int n)
+{
+    memset(ptr, 0, n*n*sizeof(@ftyp@)); /* all zeros 0.0 is stored as all 0 */
+    CBLAS(@cblas_type@copy)(n,
+                            &@cblas_type@_one, (fortran_int)0,
+                            ptr, n + 1);
+
+}
+/**end repeat**/
 
 /*
  *****************************************************************************
@@ -1192,7 +1207,7 @@ lapack_@lapack_func@(GESV_PARAMS_t *params)
 
 static void
 @TYPE@_solve(char **args, npy_intp *dimensions, npy_intp *steps,
-             void* NPY_UNUSED(func))
+             void *NPY_UNUSED(func))
 {
     GESV_PARAMS_t params;
     fortran_int n, nrhs;
@@ -1200,10 +1215,6 @@ static void
 
     n = (fortran_int)dimensions[0];
     nrhs = (fortran_int)dimensions[2];
-    printf("%d, %d, %d, %d\n", (int)dimensions[0],
-           (int)dimensions[1],
-           (int)dimensions[2], 
-           (int)dimensions[3]);
     if (init_@lapack_func@(&params, n, nrhs)) {
         LINEARIZE_DATA_t a_in;
         LINEARIZE_DATA_t b_in;
@@ -1224,6 +1235,60 @@ static void
     }
 }
 
+static void
+@TYPE@_solve1(char **args, npy_intp *dimensions, npy_intp *steps,
+              void *NPY_UNUSED(func))
+{
+    GESV_PARAMS_t params;
+    fortran_int n;
+    INIT_OUTER_LOOP_3
+
+    n = (fortran_int)dimensions[0];
+    if (init_@lapack_func@(&params, n, 1)) {
+        LINEARIZE_DATA_t a_in;
+        LINEARIZE_DATA_t b_in;
+        LINEARIZE_DATA_t r_out;
+
+        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
+        init_linearize_data(&b_in, 1, n, 1, steps[2]);
+        init_linearize_data(&r_out, 1, n, 1, steps[3]);
+
+        BEGIN_OUTER_LOOP_3
+            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
+            linearize_@TYPE@_matrix(params.B, args[1], &b_in);
+            lapack_@lapack_func@(&params);
+            delinearize_@TYPE@_matrix(args[2], params.B, &r_out);
+        END_OUTER_LOOP
+
+        release_@lapack_func@(&params);
+    }
+}
+
+static void
+@TYPE@_inv(char **args, npy_intp *dimensions, npy_intp *steps,
+           void *NPY_UNUSED(func))
+{
+    GESV_PARAMS_t params;
+    fortran_int n;
+    INIT_OUTER_LOOP_2
+
+    n = (fortran_int)dimensions[0];
+    if (init_@lapack_func@(&params, n, n)) {
+        LINEARIZE_DATA_t a_in;
+        LINEARIZE_DATA_t r_out;
+        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
+        init_linearize_data(&r_out, n, n, steps[3], steps[2]);
+
+        BEGIN_OUTER_LOOP_2
+            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
+            identity_@TYPE@_matrix(params.B, n);
+            lapack_@lapack_func@(&params);
+            delinearize_@TYPE@_matrix(args[1], params.B, &r_out);
+        END_OUTER_LOOP
+
+        release_@lapack_func@(&params);
+    }  
+}
 /**end repeat**/
 
 
@@ -1271,6 +1336,8 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eighup);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eigvalshlo);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eigvalshup);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(solve);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(solve1);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(inv);
 
 static char equal_2_types[] = {
     NPY_FLOAT, NPY_FLOAT,
@@ -1414,10 +1481,31 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "solve",
         "(m,n),(m,p)->(m,p)",
         "solve the system a x = b, on the last two dimensions, broadcast to the rest. \n"\
-        "Results in a matrix with the results",
+        "Results in a matrices with the solutions. \n"\
+        "    \"(m,m),(m,n)->(m,n)\" \n",
         4, 2, 1,
         solve_funcs,
-        equal_3_types,
+        equal_3_types
+    },
+    {
+        "solve1",
+        "(m,n),(m)->(m)",
+        "solve the system a x = b, for b being a vector, broadcast in the outer dimensions. \n"\
+        "Results in vectors with the solutions. \n"\
+        "    \"(m,m),(m)->(m)\" \n",
+        4,2,1,
+        solve1_funcs,
+        equal_3_types
+    },
+    {
+        "inv",
+        "(m,n)->(m,n)",
+        "compute the inverse of the last two dimensions and broadcast to the rest. \n"\
+        "Results in the inverse matrices. \n"\
+        "    \"(m,m)->(m,m)\" \n",
+        4,1,1,
+        inv_funcs,
+        equal_2_types
     }
 #if 0
     {
