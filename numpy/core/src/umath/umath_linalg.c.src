@@ -65,22 +65,34 @@ typedef __CLPK_doublecomplex fortran_doublecomplex;
 
 static const char* umath_linalg_module_name =  "umath_linalg";
 
-static const float  s_one          =  1.0f;
-static const float  s_zero         =  0.0f;
-static const float  s_minus_one    = -1.0f;
-static const float  s_ninf         = -1.0f/0.0f; 
-static const double d_one          =  1.0;
-static const double d_zero         =  0.0;
-static const double d_minus_one    = -1.0;
-static const double d_ninf         = -1.0/0.0;
-static const float  c_one[2]       = {  1.0f, 0.0f };
-static const float  c_zero[2]      = {  0.0f, 0.0f };
-static const float  c_minus_one[2] = { -1.0f, 0.0f };
-static const float  c_ninf[2]      = { -1.0f/0.0f, 0.0f };
-static const double z_one[2]       = {  1.0,  0.0 };
-static const double z_zero[2]      = {  0.0,  0.0 };
-static const double z_minus_one[2] = { -1.0,  0.0 };
-static const double z_ninf[2]      = { -1.0/0.0, 0.0 };
+typedef union {
+    fortran_complex f;
+    npy_cfloat npy;
+    float array[2];
+} COMPLEX_t;
+
+typedef union {
+    fortran_doublecomplex f;
+    npy_cdouble npy;
+    double array[2];
+} DOUBLECOMPLEX_t;
+
+static const float s_one       =  1.0f;
+static const float s_zero      =  0.0f;
+static const float s_minus_one = -1.0f;
+static const float s_ninf      = -1.0f/0.0f; 
+static const double d_one       =  1.0;
+static const double d_zero      =  0.0;
+static const double d_minus_one = -1.0;
+static const double d_ninf      = -1.0/0.0;
+static const COMPLEX_t c_one       = { {  1.0f, 0.0f } };
+static const COMPLEX_t c_zero      = { {  0.0f, 0.0f } };
+static const COMPLEX_t c_minus_one = { { -1.0f, 0.0f } };
+static const COMPLEX_t c_ninf      = { { -1.0f/0.0f, 0.0f } };
+static const DOUBLECOMPLEX_t z_one       = {{  1.0,  0.0 }};
+static const DOUBLECOMPLEX_t z_zero      = {{  0.0,  0.0 }};
+static const DOUBLECOMPLEX_t z_minus_one = {{ -1.0,  0.0 }};
+static const DOUBLECOMPLEX_t z_ninf      = {{ -1.0/0.0, 0.0 }};
 
 
 /*
@@ -159,44 +171,44 @@ dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
 }
 
 static inline void
-print_npy_float(npy_float s)
+print_FLOAT(npy_float s)
 {
     printf(" %8.4f", s);
 }
 static inline void
-print_npy_double(npy_double d)
+print_DOUBLE(npy_double d)
 {
     printf(" %10.6f", d);
 }
 static inline void
-print_npy_cfloat(npy_cfloat c)
+print_CFLOAT(npy_cfloat c)
 {
     float* c_parts = (float*)&c;
     printf(" %8.4f + %8.4fj", c_parts[0], c_parts[1]);
 }
 static inline void
-print_npy_cdouble(npy_cdouble z)
+print_CDOUBLE(npy_cdouble z)
 {
     double* z_parts = (double*)&z;
     printf(" %8.4f + %8.4fj", z_parts[0], z_parts[1]);
 }
 
 /**begin repeat
-   #type=npy_float,npy_double,npy_cfloat,npy_cdouble#
-   #format=%8.4f,%10.6f,%8.4f,%10.6f#
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
  */
 static inline void
-dump_@type@_matrix(const char* name, size_t rows, size_t columns, const @type@* ptr)
+dump_@TYPE@_matrix(const char* name, size_t rows, size_t columns, const @typ@* ptr)
 {
     size_t i,j;
 
-    printf("\n%s (%zd, %zd)\n", name, rows, columns);
+    printf("\n%s %p (%zd, %zd)\n", name, ptr, rows, columns);
     for (i=0; i<rows; i++)
     {
         printf("(");
         for (j=0; j<columns; j++)
         {
-            print_@type@(*ptr++);
+            print_@TYPE@(*ptr++);
         }
         printf(" )\n");
     }
@@ -307,23 +319,62 @@ delinearize_@TYPE@_matrix(void *dst_in, void *src_in,const LINEARIZE_DATA_t* dat
 }
 /**end repeat**/
 
-          /* identity square matrix generation using blas */
+               /* identity square matrix generation */
 /**begin repeat
    #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-   #ftyp=fortran_real,fortran_doublereal,fortran_complex,fortran_doublecomplex#
+   #typ=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
    #cblas_type=s,d,c,z#
  */
 static inline void
-identity_@TYPE@_matrix(void *ptr, fortran_int n)
+identity_@TYPE@_matrix(void *ptr, size_t n)
 {
-    memset(ptr, 0, n*n*sizeof(@ftyp@)); /* all zeros 0.0 is stored as all 0 */
-    CBLAS(@cblas_type@copy)(n,
-                            &@cblas_type@_one, (fortran_int)0,
-                            ptr, n + 1);
+    size_t i;
+    @typ@ *matrix = (@typ@*) ptr;
+    memset(matrix, 0, n*n*sizeof(@typ@)); /* all zeros 0.0 is stored as all 0 */
 
+    for (i = 0; i < n; ++i)
+    {
+        *matrix = @cblas_type@_one;
+        matrix += n+1;
+    }
 }
 /**end repeat**/
 
+         /* lower/upper triangular matrix using blas (in place) */
+/**begin repeat
+
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #typ=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
+   #cblas_type=s,d,c,z#
+ */
+static inline void
+tril_@TYPE@_matrix(void *ptr, size_t n)
+{
+    size_t i,j;
+    @typ@ *matrix = (@typ@*)ptr;
+    matrix++;
+    for (i = n-1; i > 0; --i) {
+        for (j = 0; j < i; ++j) {
+            *matrix = @cblas_type@_zero;
+        }
+        matrix += n + 1;
+    }
+}
+
+static inline void
+triu_@TYPE@_matrix(void *ptr, size_t n)
+{
+    size_t i,j;
+    @typ@ *matrix = (@typ@*)ptr;
+    matrix += n;
+    for (i=1; i < n; ++i) {
+        for (j=0; j<i; ++j) {
+            matrix[j] = @cblas_type@_zero;
+        }
+        matrix += n;
+    }
+}
+/**end repeat**/
 /*
  *****************************************************************************
  **                             UFUNC LOOPS                                 **
@@ -542,9 +593,10 @@ release_gemm_params(GEMM_PARAMS_t * params)
 
    #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
    #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
+   #one=1.0f,1.0,c_one.array,z_one.array#
+   #zero=0.0f,0.0,c_zero.array,z_one.array#
    #cblas_type=s,d,c,z#
 */
-
 
 INTERNAL void
 @TYPE@_matrix_multiply(char **args, 
@@ -577,10 +629,10 @@ INTERNAL void
         CBLAS(@cblas_type@gemm)(CblasRowMajor,
                                 params.trans[0], params.trans[1],
                                 params.m, params.n, params.k, 
-                                @cblas_type@_one, // alpha
+                                @one@, // alpha
                                 src1, params.strides[0],
                                 src2, params.strides[1],
-                                @cblas_type@_zero, // beta
+                                @zero@, // beta
                                 dst, params.strides[2]);
         
         delinearize_@TYPE@_matrix(args[2],
@@ -1131,8 +1183,9 @@ static void
     @TYPE@_eigh_wrapper('N', 'U', args, dimensions, steps);
 }
 /**end repeat**/
+
 /* -------------------------------------------------------------------------- */
-                          /* Solve family */
+                  /* Solve family (includes inv) */
 
 typedef struct gesv_params_struct 
 {
@@ -1160,8 +1213,8 @@ typedef struct gesv_params_struct
 static inline int
 init_@lapack_func@(GESV_PARAMS_t *params, fortran_int N, fortran_int NRHS) 
 {
-    void *mem_buff = NULL;
-    void *a, *b, *ipiv;
+    uint8_t *mem_buff = NULL;
+    uint8_t *a, *b, *ipiv;
     mem_buff = malloc(N*N*sizeof(@ftyp@) + N*NRHS*sizeof(@ftyp@) + N*sizeof(fortran_int));
     if (!mem_buff)
         goto error;
@@ -1171,7 +1224,7 @@ init_@lapack_func@(GESV_PARAMS_t *params, fortran_int N, fortran_int NRHS)
 
     params->A = a;
     params->B = b;
-    params->IPIV = ipiv;
+    params->IPIV = (fortran_int*)ipiv;
     params->N = N;
     params->NRHS = NRHS;
     params->LDA = N;
@@ -1216,9 +1269,7 @@ static void
     n = (fortran_int)dimensions[0];
     nrhs = (fortran_int)dimensions[2];
     if (init_@lapack_func@(&params, n, nrhs)) {
-        LINEARIZE_DATA_t a_in;
-        LINEARIZE_DATA_t b_in;
-        LINEARIZE_DATA_t r_out;
+        LINEARIZE_DATA_t a_in, b_in, r_out;
 
         init_linearize_data(&a_in, n, n, steps[1], steps[0]);
         init_linearize_data(&b_in, nrhs, n, steps[3], steps[2]);
@@ -1245,10 +1296,7 @@ static void
 
     n = (fortran_int)dimensions[0];
     if (init_@lapack_func@(&params, n, 1)) {
-        LINEARIZE_DATA_t a_in;
-        LINEARIZE_DATA_t b_in;
-        LINEARIZE_DATA_t r_out;
-
+        LINEARIZE_DATA_t a_in, b_in, r_out;
         init_linearize_data(&a_in, n, n, steps[1], steps[0]);
         init_linearize_data(&b_in, 1, n, 1, steps[2]);
         init_linearize_data(&r_out, 1, n, 1, steps[3]);
@@ -1274,8 +1322,7 @@ static void
 
     n = (fortran_int)dimensions[0];
     if (init_@lapack_func@(&params, n, n)) {
-        LINEARIZE_DATA_t a_in;
-        LINEARIZE_DATA_t r_out;
+        LINEARIZE_DATA_t a_in, r_out;
         init_linearize_data(&a_in, n, n, steps[1], steps[0]);
         init_linearize_data(&r_out, n, n, steps[3], steps[2]);
 
@@ -1291,6 +1338,98 @@ static void
 }
 /**end repeat**/
 
+
+/* -------------------------------------------------------------------------- */
+                     /* Cholesky decomposition */
+
+typedef struct potr_params_struct
+{
+    void *A;
+    fortran_int N;
+    fortran_int LDA;
+    char UPLO;
+} POTR_PARAMS_t;
+
+/**begin repeat
+
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #ftyp=fortran_real, fortran_doublereal, fortran_complex, fortran_doublecomplex#
+   #lapack_func=spotrf,dpotrf,cpotrf,zpotrf#
+ */
+
+static inline int
+init_@lapack_func@(POTR_PARAMS_t *params, fortran_int N)
+{
+    uint8_t* mem_buff = NULL;
+    uint8_t* a;
+
+    mem_buff = malloc(N*N*sizeof(@ftyp@));
+    if (!mem_buff)
+        goto error;
+
+    a = mem_buff;
+
+    params->A = a;
+    params->N = N;
+    params->LDA = N;
+    params->UPLO = 'L';
+
+    return 1;
+ error:
+    free(mem_buff);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+static inline void
+release_@lapack_func@(POTR_PARAMS_t *params)
+{
+    /* memory block base in A */
+    free(params->A);
+    memset(params, 0, sizeof(*params));
+}
+
+static inline fortran_int
+lapack_@lapack_func@(POTR_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->UPLO, 
+                          &params->N, params->A, &params->LDA,
+                          &rv);
+    return rv;
+}
+
+static void
+@TYPE@_cholesky(char **args, npy_intp *dimensions, npy_intp *steps,
+                void *NPY_UNUSED(func))
+{
+    POTR_PARAMS_t params;
+    fortran_int n;
+    INIT_OUTER_LOOP_2
+
+    n = (fortran_int)dimensions[0];
+    if (init_@lapack_func@(&params, n))
+    {
+        LINEARIZE_DATA_t a_in, r_out;
+        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
+        init_linearize_data(&r_out, n, n, steps[3], steps[2]);
+        printf("matrix at: %p (%d, %d)", params.A, params.N, params.N);
+        BEGIN_OUTER_LOOP_2
+            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
+            lapack_@lapack_func@(&params);
+            dump_@TYPE@_matrix("before tril", params.N, params.N, params.A);
+            triu_@TYPE@_matrix(params.A, params.N); /* tril(A).T == triu(A.T) */
+            dump_@TYPE@_matrix("after tril", params.N, params.N, params.A);
+            delinearize_@TYPE@_matrix(args[1], params.A, &r_out);
+        END_OUTER_LOOP
+        release_@lapack_func@(&params);
+    }
+}
+
+
+
+/**end repeat**/
 
 /* -------------------------------------------------------------------------- */
                       /* ufunc registration  */
@@ -1338,6 +1477,7 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eigvalshup);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(solve);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(solve1);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(inv);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(cholesky);
 
 static char equal_2_types[] = {
     NPY_FLOAT, NPY_FLOAT,
@@ -1506,6 +1646,16 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         4,1,1,
         inv_funcs,
         equal_2_types
+    },
+    {
+        "cholesky",
+        "(m,n)->(m,n)",
+        "cholesky decomposition of hermitian positive-definite matrices. \n"\
+        "Broadcast to all outer dimensions. \n"\
+        "    \"(m,m)->(m,m)\" \n",
+        4, 1, 1,
+        cholesky_funcs,
+        equal_2_types
     }
 #if 0
     {
@@ -1546,7 +1696,6 @@ addUfuncs(PyObject *dictionary) {
     PyObject *f;
     int i;
     const int gufunc_count = sizeof(gufunc_descriptors)/sizeof(gufunc_descriptors[0]);
-
     for (i=0; i < gufunc_count; i++) {
         GUFUNC_DESCRIPTOR_t* d = &gufunc_descriptors[i];
         f = PyUFunc_FromFuncAndDataAndSignature(d->funcs, 
