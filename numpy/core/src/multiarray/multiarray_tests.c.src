@@ -572,7 +572,7 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_pydatamem_seteventhook_end",
         test_pydatamem_seteventhook_end,
         METH_NOARGS, NULL},
-    {"test_increment_inplace",
+    {"test_inplace_increment",
         inplace_increment,
         METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}        /* Sentinel */
