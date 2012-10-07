@@ -308,7 +308,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         elif issubclass(dtypeobj, _nt.datetime64):
             format_function = formatdict['datetime']
         else:
-            format_function = formatdict['str']
+            format_function = formatdict['numpystr']
 
     # skip over "["
     next_line_prefix = " "

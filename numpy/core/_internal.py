@@ -133,7 +133,7 @@ def _reconstruct(subtype, shape, dtype):
 
 format_re = re.compile(asbytes(
                            r'(?P<order1>[<>|=]?)'
-                           r'(?P<repeats> *[(]?[ ,0-9]*[)]? *)'
+                           r'(?P<repeats> *[(]?[ ,0-9L]*[)]? *)'
                            r'(?P<order2>[<>|=]?)'
                            r'(?P<dtype>[A-Za-z0-9.]*(?:\[[a-zA-Z0-9,.]+\])?)'))
 sep_re = re.compile(asbytes(r'\s*,\s*'))
@@ -285,7 +285,7 @@ def _newnames(datatype, order):
 # Given an array with fields and a sequence of field names
 # construct a new array with just those fields copied over
 def _index_fields(ary, fields):
-    from multiarray import empty, dtype
+    from multiarray import empty, dtype, array
     dt = ary.dtype
 
     names = [name for name in fields if name in dt.names]
@@ -295,7 +295,10 @@ def _index_fields(ary, fields):
     view_dtype = {'names':names, 'formats':formats, 'offsets':offsets, 'itemsize':dt.itemsize}
     view = ary.view(dtype=view_dtype)
 
-    return view.copy()
+    # Return a copy for now until behavior is fully deprecated
+    # in favor of returning view
+    copy_dtype = {'names':view_dtype['names'], 'formats':view_dtype['formats']}
+    return array(view, dtype=copy_dtype, copy=True)
 
 # Given a string containing a PEP 3118 format specifier,
 # construct a Numpy dtype

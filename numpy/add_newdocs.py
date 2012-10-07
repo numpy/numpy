@@ -779,8 +779,10 @@ add_newdoc('numpy.core.multiarray', 'empty_like',
         The shape and data-type of `a` define these same attributes of the
         returned array.
     dtype : data-type, optional
+        .. versionadded:: 1.6.0
         Overrides the data type of the result.
     order : {'C', 'F', 'A', or 'K'}, optional
+        .. versionadded:: 1.6.0
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if ``a`` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of ``a`` as closely
@@ -3066,6 +3068,14 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
         is set to false, and the `dtype`, `order`, and `subok`
         requirements are satisfied, the input array is returned instead
         of a copy.
+
+    Returns
+    -------
+    arr_t : ndarray
+        Unless `copy` is False and the other conditions for returning the input
+        array are satisfied (see description for `copy` input paramter), `arr_t`
+        is a new array of the same shape as the input array, with dtype, order
+        given by `dtype`, `order`.
 
     Raises
     ------

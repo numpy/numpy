@@ -169,6 +169,34 @@ class TestRegression(TestCase):
         assert_(np.all(a[ya] > 0.5))
         assert_(np.all(b[yb] > 0.5))
 
+    def test_endian_where(self,level=rlevel):
+        """GitHuB issue #369"""
+        net = np.zeros(3, dtype='>f4')
+        net[1] = 0.00458849
+        net[2] = 0.605202
+        max_net = net.max()
+        test = np.where(net <= 0., max_net, net)
+        correct = np.array([ 0.60520202,  0.00458849,  0.60520202])
+        assert_array_almost_equal(test, correct)
+
+    def test_endian_recarray(self,level=rlevel):
+        """Ticket #2185"""
+        dt = np.dtype([
+               ('head', '>u4'),
+               ('data', '>u4', 2),
+            ])
+        buf = np.recarray(1, dtype=dt)
+        buf[0]['head'] = 1
+        buf[0]['data'][:] = [1,1]
+
+        h = buf[0]['head']
+        d = buf[0]['data'][0]
+        buf[0]['head'] = h
+        buf[0]['data'][0] = d
+        print buf[0]['head']
+        assert_(buf[0]['head'] == 1)
+
+
     def test_mem_dot(self,level=rlevel):
         """Ticket #106"""
         x = np.random.randn(0,1)
@@ -1431,6 +1459,14 @@ class TestRegression(TestCase):
             x = tp(1+2j)
             assert_equal(complex(x), 1+2j)
 
+    def test_complex_boolean_cast(self):
+        """Ticket #2218"""
+        for tp in [np.csingle, np.cdouble, np.clongdouble]:
+            x = np.array([0, 0+0.5j, 0.5+0j], dtype=tp)
+            assert_equal(x.astype(bool), np.array([0, 1, 1], dtype=bool))
+            assert_(np.any(x))
+            assert_(np.all(x[1:]))
+
     def test_uint_int_conversion(self):
         x = 2**64 - 1
         assert_equal(int(np.uint64(x)), x)
@@ -1499,6 +1535,22 @@ class TestRegression(TestCase):
         assert_(np.array(1.0).flags.f_contiguous)
         assert_(np.array(np.float32(1.0)).flags.c_contiguous)
         assert_(np.array(np.float32(1.0)).flags.f_contiguous)
+
+    def test_squeeze_contiguous(self):
+        """Similar to GitHub issue #387"""
+        a = np.zeros((1,2)).squeeze()
+        b = np.zeros((2,2,2), order='F')[:,:,::2].squeeze()
+        assert_(a.flags.c_contiguous)
+        assert_(a.flags.f_contiguous)
+        assert_(b.flags.f_contiguous)
+
+    def test_reduce_contiguous(self):
+        """GitHub issue #387"""
+        a = np.add.reduce(np.zeros((2,1,2)), (0,1))
+        b = np.add.reduce(np.zeros((2,1,2)), 1)
+        assert_(a.flags.c_contiguous)
+        assert_(a.flags.f_contiguous)
+        assert_(b.flags.c_contiguous)
 
     def test_object_array_self_reference(self):
         # Object arrays with references to themselves can cause problems
@@ -1699,6 +1751,25 @@ class TestRegression(TestCase):
         # a core dump and error message.
         a = np.array(['abc'], dtype=np.unicode)[0]
         del a
+
+    def test_refcount_error_in_clip(self):
+        # Ticket #1588
+        a = np.zeros((2,), dtype='>i2').clip(min=0)
+        x = a + a
+        # This used to segfault:
+        y = str(x)
+        # Check the final string:
+        assert_(y == "[0 0]")
+
+    def test_searchsorted_wrong_dtype(self):
+        # Ticket #2189, it used to segfault, so we check that it raises the
+        # proper exception.
+        a = np.array([('a', 1)], dtype='S1, int')
+        assert_raises(TypeError, np.searchsorted, a, 1.2)
+        # Ticket #2066, similar problem:
+        dtype = np.format_parser(['i4', 'i4'], [], [])
+        a = np.recarray((2, ), dtype)
+        assert_raises(TypeError, np.searchsorted, a, 1)
 
 if __name__ == "__main__":
     run_module_suite()

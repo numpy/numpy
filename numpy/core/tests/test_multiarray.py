@@ -1028,6 +1028,13 @@ class TestMethods(TestCase):
         assert_equal(collect_warning_types(getattr, ro_diag,
                                            "__array_struct__"), [])
 
+    def test_diagonal_memleak(self):
+        # Regression test for a bug that crept in at one point
+        a = np.zeros((100, 100))
+        assert_(sys.getrefcount(a) < 50)
+        for i in xrange(100):
+            a.diagonal()
+        assert_(sys.getrefcount(a) < 50)
 
     def test_ravel(self):
         a = np.array([[0,1],[2,3]])
@@ -1956,6 +1963,11 @@ class TestRecord(TestCase):
             assert_equal(b[['f1','f2']][0].tolist(), (2, 3))
             assert_equal(b[['f2','f1']][0].tolist(), (3, 2))
             assert_equal(b[['f1','f3']][0].tolist(), (2, (1,)))
+            # view of subfield view/copy
+            assert_equal(b[['f1','f2']][0].view(('i4',2)).tolist(), (2, 3))
+            assert_equal(b[['f2','f1']][0].view(('i4',2)).tolist(), (3, 2))
+            view_dtype=[('f1', 'i4'),('f3', [('', 'i4')])]
+            assert_equal(b[['f1','f3']][0].view(view_dtype).tolist(), (2, (1,)))
         # non-ascii unicode field indexing is well behaved
         if not is_py3:
             raise SkipTest('non ascii unicode field indexing skipped; '

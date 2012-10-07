@@ -334,7 +334,7 @@ finish:
     if (outcode == NULL) {
         return (PyObject *)r;
     }
-    if (outcode->type_num == typecode->type_num) {
+    if (PyArray_EquivTypes(outcode, typecode)) {
         if (!PyTypeNum_ISEXTENDED(typecode->type_num)
                 || (outcode->elsize == typecode->elsize)) {
             Py_DECREF(outcode);

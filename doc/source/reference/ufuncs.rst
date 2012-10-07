@@ -309,6 +309,12 @@ advanced usage and will not typically be used.
     'equiv', 'safe', 'same_kind', or 'unsafe'. See :func:`can_cast` for
     explanations of the parameter values.
 
+    In a future version of numpy, this argument will default to
+    'same_kind'. As part of this transition, starting in version 1.7,
+    ufuncs will produce a DeprecationWarning for calls which are
+    allowed under the 'unsafe' rules, but not under the 'same_kind'
+    rules.
+
 *order*
 
     .. versionadded:: 1.6

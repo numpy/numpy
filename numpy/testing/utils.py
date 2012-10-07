@@ -16,7 +16,8 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
            'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
            'assert_', 'assert_array_almost_equal_nulp',
-           'assert_array_max_ulp', 'assert_warns', 'assert_allclose']
+           'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
+           'assert_allclose']
 
 verbose = 0
 
@@ -1464,7 +1465,7 @@ def assert_warns(warning_class, func, *args, **kw):
 
     Returns
     -------
-    None
+    The value returned by `func`.
 
     """
 
@@ -1474,7 +1475,7 @@ def assert_warns(warning_class, func, *args, **kw):
     l = ctx.__enter__()
     warnings.simplefilter('always')
     try:
-        func(*args, **kw)
+        result = func(*args, **kw)
         if not len(l) > 0:
             raise AssertionError("No warning raised when calling %s"
                     % func.__name__)
@@ -1483,3 +1484,36 @@ def assert_warns(warning_class, func, *args, **kw):
                     "%s( is %s)" % (func.__name__, warning_class, l[0]))
     finally:
         ctx.__exit__()
+    return result
+
+def assert_no_warnings(func, *args, **kw):
+    """
+    Fail if the given callable produces any warnings.
+
+    Parameters
+    ----------
+    func : callable
+        The callable to test.
+    \\*args : Arguments
+        Arguments passed to `func`.
+    \\*\\*kwargs : Kwargs
+        Keyword arguments passed to `func`.
+    
+    Returns
+    -------
+    The value returned by `func`.
+
+    """
+    # XXX: once we may depend on python >= 2.6, this can be replaced by the
+    # warnings module context manager.
+    ctx = WarningManager(record=True)
+    l = ctx.__enter__()
+    warnings.simplefilter('always')
+    try:
+        result = func(*args, **kw)
+        if len(l) > 0:
+            raise AssertionError("Got warnings when calling %s: %s"
+                    % (func.__name__, l))
+    finally:
+        ctx.__exit__()
+    return result
