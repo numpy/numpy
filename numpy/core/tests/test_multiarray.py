@@ -12,6 +12,7 @@ from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
         test_neighborhood_iterator, test_neighborhood_iterator_oob,
         test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
+        test_inplace_increment
         )
 from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises,
@@ -2847,7 +2848,7 @@ class TestMapIter(TestCase):
                  [0,0,2,3])
         vals = [50,50, 30,16]
 
-        inplace_increment(a, index, vals)
+        test_inplace_increment(a, index, vals)
         assert_equal(a, [[   0. ,   1.,    2.,   19.,],
                          [ 104.,    5.,    6.,    7.,],
                          [   8.,    9.,   40.,   11.,]])
