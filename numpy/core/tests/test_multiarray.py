@@ -12,6 +12,7 @@ from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
         test_neighborhood_iterator, test_neighborhood_iterator_oob,
         test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
+        test_inplace_increment
         )
 from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises,
@@ -2836,6 +2837,22 @@ class TestMemEventHook(TestCase):
         a = np.zeros(10)
         del a
         test_pydatamem_seteventhook_end()
+
+class TestMapIter(TestCase):
+    def test_mapiter(self):
+        # The actual tests are within the C code in
+        # multiarray/multiarray_tests.c.src
+
+        a = arange(12).reshape((3,4)).astype(float)
+        index = ([1,1,2,0],
+                 [0,0,2,3])
+        vals = [50,50, 30,16]
+
+        test_inplace_increment(a, index, vals)
+        assert_equal(a, [[   0. ,   1.,    2.,   19.,],
+                         [ 104.,    5.,    6.,    7.,],
+                         [   8.,    9.,   40.,   11.,]])
+
 
 
 if __name__ == "__main__":

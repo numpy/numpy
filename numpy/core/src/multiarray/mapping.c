@@ -166,8 +166,11 @@ array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v)
 
 /* -------------------------------------------------------------- */
 
-static void
-_swap_axes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
+/*NUMPY_API
+ *
+*/
+NPY_NO_EXPORT void
+PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getmap)
 {
     PyObject *new;
     int n1, n2, n3, val, bnd;
@@ -297,7 +300,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
     /* check for consecutive axes */
     if ((mit->subspace != NULL) && (mit->consec)) {
         if (mit->iteraxes[0] > 0) {  /* then we need to swap */
-            _swap_axes(mit, &ret, 1);
+            PyArray_MapIterSwapAxes(mit, &ret, 1);
         }
     }
     return (PyObject *)ret;
@@ -326,7 +329,7 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
     }
     if ((mit->subspace != NULL) && (mit->consec)) {
         if (mit->iteraxes[0] > 0) {  /* then we need to swap */
-            _swap_axes(mit, &arr, 0);
+            PyArray_MapIterSwapAxes(mit, &arr, 0);
             if (arr == NULL) {
                 return -1;
             }
@@ -1628,7 +1631,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
     return;
 }
 
-/*
+/*NUMPY_API
  * This function needs to update the state of the map iterator
  * and point mit->dataptr to the memory-location of the next object
  */
@@ -1899,11 +1902,6 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
         mit->indexobj = indexobj;
     }
 
-#undef SOBJ_NOTFANCY
-#undef SOBJ_ISFANCY
-#undef SOBJ_BADARRAY
-#undef SOBJ_TOOMANY
-#undef SOBJ_LISTTUP
 
     if (oned) {
         return (PyObject *)mit;
@@ -2028,6 +2026,35 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
     return NULL;
 }
 
+/*NUMPY_API
+*/
+NPY_NO_EXPORT PyObject *
+PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
+{
+    PyArrayMapIterObject * mit;
+    int fancy = fancy_indexing_check(index);
+    int oned = 0;
+    if (fancy != SOBJ_NOTFANCY) {
+
+        oned = ((PyArray_NDIM(a) == 1) &&
+                !(PyTuple_Check(index) && PyTuple_GET_SIZE(index) > 1));
+    }
+    mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, oned, fancy);
+    if (mit == NULL) {
+        return NULL;
+    }
+
+    PyArray_MapIterBind(mit, a);
+    PyArray_MapIterReset(mit);
+    return mit;
+}
+
+
+#undef SOBJ_NOTFANCY
+#undef SOBJ_ISFANCY
+#undef SOBJ_BADARRAY
+#undef SOBJ_TOOMANY
+#undef SOBJ_LISTTUP
 
 static void
 arraymapiter_dealloc(PyArrayMapIterObject *mit)
