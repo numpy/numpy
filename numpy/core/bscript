@@ -91,7 +91,7 @@ def write_numpy_config(conf):
     for k, v in subst_dict.items():
         cnt = cnt.replace(k, v)
     assert node is not None
-    onode = conf.bldnode.find_or_declare(node.path_from(conf.srcnode)).change_ext("")
+    onode = conf.bldnode.make_node(node.path_from(conf.srcnode)).change_ext("")
     onode.write(cnt)
 
 def type_checks(conf):
