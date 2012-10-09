@@ -971,17 +971,8 @@ init_@lapack_func@(char JOBZ, char UPLO,
     return 0;
 }
 
-static inline void
-release_@lapack_func@(EIGH_PARAMS_t *params)
-{
-    /* allocated memory in A and WORK */
-    free(params->A);
-    free(params->WORK);
-    memset(params, 0, sizeof(*params));
-}
-
 static inline fortran_int
-lapack_@lapack_func@(EIGH_PARAMS_t *params)
+call_@lapack_func@(EIGH_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->JOBZ, &params->UPLO, &params->N,
@@ -1070,17 +1061,8 @@ error:
     return 0;
 }
 
-static inline void
-release_@lapack_func@(EIGH_PARAMS_t *params)
-{
-    /* allocated memory in A and WORK */
-    free(params->A);
-    free(params->WORK);
-    memset(params, 0, sizeof(*params));
-}
-
 static inline fortran_int
-lapack_@lapack_func@(EIGH_PARAMS_t *params)
+call_@lapack_func@(EIGH_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->JOBZ, &params->UPLO, &params->N,
@@ -1108,6 +1090,17 @@ lapack_@lapack_func@(EIGH_PARAMS_t *params)
  * args[1] -> W
  * args[2] -> A[out]
  */
+
+static inline void
+release_@lapack_func@(EIGH_PARAMS_t *params)
+{
+    /* allocated memory in A and WORK */
+    free(params->A);
+    free(params->WORK);
+    memset(params, 0, sizeof(*params));
+}
+
+
 static inline void
 @TYPE@_eigh_wrapper(char JOBZ, char UPLO, char**args, npy_intp* dimensions, npy_intp* steps)
 {
@@ -1142,7 +1135,7 @@ static inline void
         for (iter = 0; iter < outer_dim; ++iter) {
             /* copy the matrix in */
             linearize_@TYPE@_matrix(eigh_params.A, args[0], &matrix_in_ld);
-            lapack_@lapack_func@(&eigh_params);
+            call_@lapack_func@(&eigh_params);
             delinearize_@BASETYPE@_matrix(args[1], eigh_params.W, &eigenvalues_out_ld);
             
             if ('V' == eigh_params.JOBZ) {
@@ -1247,7 +1240,7 @@ release_@lapack_func@(GESV_PARAMS_t *params)
 }
 
 static inline fortran_int
-lapack_@lapack_func@(GESV_PARAMS_t *params)
+call_@lapack_func@(GESV_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->N, &params->NRHS,
@@ -1278,7 +1271,7 @@ static void
         BEGIN_OUTER_LOOP_3
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
             linearize_@TYPE@_matrix(params.B, args[1], &b_in);
-            lapack_@lapack_func@(&params);
+            call_@lapack_func@(&params);
             delinearize_@TYPE@_matrix(args[2], params.B, &r_out);
         END_OUTER_LOOP
 
@@ -1304,7 +1297,7 @@ static void
         BEGIN_OUTER_LOOP_3
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
             linearize_@TYPE@_matrix(params.B, args[1], &b_in);
-            lapack_@lapack_func@(&params);
+            call_@lapack_func@(&params);
             delinearize_@TYPE@_matrix(args[2], params.B, &r_out);
         END_OUTER_LOOP
 
@@ -1329,7 +1322,7 @@ static void
         BEGIN_OUTER_LOOP_2
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
             identity_@TYPE@_matrix(params.B, n);
-            lapack_@lapack_func@(&params);
+            call_@lapack_func@(&params);
             delinearize_@TYPE@_matrix(args[1], params.B, &r_out);
         END_OUTER_LOOP
 
@@ -1391,7 +1384,7 @@ release_@lapack_func@(POTR_PARAMS_t *params)
 }
 
 static inline fortran_int
-lapack_@lapack_func@(POTR_PARAMS_t *params)
+call_@lapack_func@(POTR_PARAMS_t *params)
 {
     fortran_int rv;
     LAPACK(@lapack_func@)(&params->UPLO, 
@@ -1414,13 +1407,10 @@ static void
         LINEARIZE_DATA_t a_in, r_out;
         init_linearize_data(&a_in, n, n, steps[1], steps[0]);
         init_linearize_data(&r_out, n, n, steps[3], steps[2]);
-        printf("matrix at: %p (%d, %d)", params.A, params.N, params.N);
         BEGIN_OUTER_LOOP_2
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
-            lapack_@lapack_func@(&params);
-            dump_@TYPE@_matrix("before tril", params.N, params.N, params.A);
-            triu_@TYPE@_matrix(params.A, params.N); /* tril(A).T == triu(A.T) */
-            dump_@TYPE@_matrix("after tril", params.N, params.N, params.A);
+            call_@lapack_func@(&params);
+            triu_@TYPE@_matrix(params.A, params.N);
             delinearize_@TYPE@_matrix(args[1], params.A, &r_out);
         END_OUTER_LOOP
         release_@lapack_func@(&params);
@@ -1428,6 +1418,431 @@ static void
 }
 
 
+
+/**end repeat**/
+
+/* -------------------------------------------------------------------------- */
+                          /* eig family  */
+
+typedef struct geev_params_struct {
+    void *A;
+    void *WR; /* RWORK in complex versions, REAL W buffer for _geev where _ is s, d */
+    void *WI;
+    void *VLR; /* REAL VL buffers for _geev where _ is s, d */
+    void *VRR; /* REAL VR buffers for _geev hwere _ is s, d */
+    void *WORK;
+    void *W;  /* final w */
+    void *VL; /* final vl */
+    void *VR; /* final vr */
+
+    fortran_int N;
+    fortran_int LDA;
+    fortran_int LDVL;
+    fortran_int LDVR;
+    fortran_int LWORK;
+
+    char JOBVL;
+    char JOBVR;
+} GEEV_PARAMS_t;
+
+static inline void
+dump_geev_params(const char *name, GEEV_PARAMS_t* params)
+{
+    printf ("\n%s\n"
+            "\t%10s: %p\n" "\t%10s: %p\n" "\t%10s: %p\n" "\t%10s: %p\n"
+            "\t%10s: %p\n" "\t%10s: %p\n" "\t%10s: %p\n" "\t%10s: %p\n"
+            "\t%10s: %p\n"
+            "\t%10s: %d\n" "\t%10s: %d\n" "\t%10s: %d\n" "\t%10s: %d\n"
+            "\t%10s: %d\n"
+            "\t%10s: %c\n" "\t%10s: %c\n",
+            name,
+            "A", params->A, "WR", params->WR, "WI", params->WI, "VLR", params->VLR,
+            "VRR", params->VRR, "WORK", params->WORK, "W", params->W, "VL", params->VL,
+            "VR", params->VR,
+            "N", (int)params->N, "LDA", (int)params->LDA, "LDVL", (int)params->LDVL, "LDVR", (int)params->LDVR,
+            "LWORK", (int)params->LWORK,
+            "JOBVL", params->JOBVL, "JOBVR", params->JOBVR);
+}
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE#
+   #typ=float,double#
+   #complextyp=COMPLEX_t,DOUBLECOMPLEX_t#
+   #lapack_func=sgeev,dgeev#
+   #zero=0.0f,0.0#
+*/
+static inline int
+init_@lapack_func@(GEEV_PARAMS_t *params, char jobvl, char jobvr, fortran_int n)
+{
+    uint8_t *mem_buff=NULL;
+    uint8_t *mem_buff2=NULL;
+    uint8_t *a, *wr, *wi, *vlr, *vrr, *work, *w, *vl, *vr;
+    size_t a_size = n*n*sizeof(@typ@);
+    size_t wr_size = n*sizeof(@typ@);
+    size_t wi_size = n*sizeof(@typ@);
+    size_t vlr_size = jobvl=='V' ? n*n*sizeof(@typ@) : 0;
+    size_t vrr_size = jobvr=='V' ? n*n*sizeof(@typ@) : 0;
+    size_t w_size = wr_size*2;
+    size_t vl_size = vlr_size*2;
+    size_t vr_size = vrr_size*2;
+    size_t work_count = 0;
+    @typ@ work_size_query;
+    fortran_int do_size_query = -1;
+    fortran_int rv;
+
+    /* allocate data for known sizes (all but work) */
+    mem_buff = malloc(a_size + wr_size + wi_size + 
+                      vlr_size + vrr_size +
+                      w_size + vl_size + vr_size);
+    if (!mem_buff)
+        goto error;
+
+    a = mem_buff;
+    wr = a + a_size;
+    wi = wr + wr_size;
+    vlr = wi + wi_size;
+    vrr = vlr + vlr_size;
+    w = vrr + vrr_size;
+    vl = w + w_size;
+    vr = vl + vl_size;
+    LAPACK(@lapack_func@)(&jobvl, &jobvr, &n, 
+                          (void *)a, &n, (void *)wr, (void *)wi, 
+                          (void *)vl, &n, (void *)vr, &n, 
+                          &work_size_query, &do_size_query,
+                          &rv);
+
+    if (0 != rv)
+        goto error;
+
+    work_count = (size_t)work_size_query;
+    mem_buff2 = malloc(work_count*sizeof(@typ@));
+    if (!mem_buff2)
+        goto error;
+    work = mem_buff2;
+
+    params->A = a;
+    params->WR = wr;
+    params->WI = wi;
+    params->VLR = vlr;
+    params->VRR = vrr;
+    params->WORK = work;
+    params->W = w;
+    params->VL = vl;
+    params->VR = vr;
+    params->N = n;
+    params->LDA = n;
+    params->LDVL = n;
+    params->LDVR = n;
+    params->LWORK = (fortran_int)work_count; 
+    params->JOBVL = jobvl;
+    params->JOBVR = jobvr;
+
+    return 1;
+ error:
+    free(mem_buff2);
+    free(mem_buff);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+static inline fortran_int
+call_@lapack_func@(GEEV_PARAMS_t* params)
+{
+    fortran_int rv;
+    dump_@TYPE@_matrix("A", params->N, params->N, params->A);
+    LAPACK(@lapack_func@)(&params->JOBVL, &params->JOBVR, 
+                          &params->N, params->A, &params->LDA,
+                          params->WR, params->WI,
+                          params->VLR, &params->LDVL,
+                          params->VRR, &params->LDVR,
+                          params->WORK, &params->LWORK,
+                          &rv);
+    dump_@TYPE@_matrix("WR", 1, params->N, params->WR);
+    dump_@TYPE@_matrix("WI", 1, params->N, params->WI);
+    if ('V'== params->JOBVR)
+         dump_@TYPE@_matrix("VLR", params->N, params->N, params->VRR);
+    return rv;
+}
+
+
+static inline void
+mk_@TYPE@_complex_array_from_real(@complextyp@ *c, const @typ@ *re, size_t n)
+{
+    size_t iter;
+    for (iter = 0; iter < n; ++iter) {
+        c[iter].array[0] = re[iter];
+        c[iter].array[1] = @zero@;
+    }
+}
+
+static inline void
+mk_@TYPE@_complex_array(@complextyp@ *c, const @typ@ *re, const @typ@ *im, size_t n)
+{
+    size_t iter;
+    for (iter = 0; iter < n; ++iter) {
+        c[iter].array[0] = re[iter];
+        c[iter].array[1] = im[iter];
+    }
+}
+
+static inline void
+mk_@TYPE@_complex_array_conjugate_pair(@complextyp@ *c, const @typ@ *r, size_t n)
+{
+    size_t iter;
+    for (iter = 0; iter < n; ++iter) {
+        @typ@ re = r[iter];
+        @typ@ im = r[iter+n];
+        c[iter].array[0] = re;
+        c[iter].array[1] = im;
+        c[iter+n].array[0] = re;
+        c[iter+n].array[1] = -im;
+    }
+}
+
+/*
+ * make the complex eigenvectors from the real array produced by sgeev/zgeev.
+ * c is the array where the results will be left.
+ * r is the source array of reals produced by sgeev/zgeev
+ * i is the eigenvalue imaginary part produced by sgeev/zgeev
+ * n is so that the order of the matrix is n by n
+ */
+static inline void
+mk_@lapack_func@_complex_eigenvectors(@complextyp@ *c, const @typ@ *r, const @typ@ *i, size_t n)
+{
+    size_t iter = 0;
+    while (iter < n)
+    {
+        if (i[iter] ==  @zero@) {
+            /* eigenvalue was real, eigenvectors as well...  */
+            mk_@TYPE@_complex_array_from_real(c, r, n);
+            c += n;
+            r += n;
+            iter ++;
+        } else {
+            /* eigenvalue was complex, generate a pair of eigenvectors */
+            mk_@TYPE@_complex_array_conjugate_pair(c, r, n);
+            c += 2*n;
+            r += 2*n;
+            iter += 2;
+        }
+    }
+}
+
+static inline void
+process_@lapack_func@_results(GEEV_PARAMS_t *params)
+{
+    /* REAL versions of geev need the results to be translated
+     * into complex versions. This is the way to deal with imaginary
+     * results. In our gufuncs we will always return complex arrays!
+     */
+    mk_@TYPE@_complex_array(params->W, params->WR, params->WI, params->N);
+
+    /* handle the eigenvectors */
+    if ('V' == params->JOBVL) {
+        mk_@lapack_func@_complex_eigenvectors(params->VL, params->VLR,
+                                              params->WI, params->N);
+    }
+    if ('V' == params->JOBVR) {
+        mk_@lapack_func@_complex_eigenvectors(params->VR, params->VRR,
+                                              params->WI, params->N);
+    }
+}
+
+/**end repeat**/
+/**begin repeat
+   #TYPE=CFLOAT,CDOUBLE#
+   #typ=COMPLEX_t,DOUBLECOMPLEX_t#
+   #ftyp=fortran_complex,fortran_doublecomplex#
+   #realtyp=float,double#
+   #lapack_func=cgeev,zgeev#
+ */
+static inline int
+init_@lapack_func@(GEEV_PARAMS_t* params, char jobvl, char jobvr, fortran_int n)
+{
+    uint8_t *mem_buff = NULL;
+    uint8_t *mem_buff2 = NULL;
+    uint8_t *a, *w, *vl, *vr, *work, *rwork;
+    size_t a_size = n*n*sizeof(@typ@);
+    size_t w_size = n*sizeof(@typ@);
+    size_t vl_size = jobvl=='V'? n*sizeof(@typ@) : 0;
+    size_t vr_size = jobvr=='V'? n*sizeof(@typ@) : 0;
+    size_t rwork_size = 2*n*sizeof(@realtyp@);
+    size_t work_count = 0;
+    @typ@ work_size_query;
+    fortran_int do_size_query = -1;
+    fortran_int rv;
+
+    mem_buff = malloc(a_size + w_size + vl_size + vr_size + rwork_size);
+    if (!mem_buff)
+        goto error;
+
+    a = mem_buff;
+    w = a + a_size;
+    vl = w + w_size;
+    vr = vl + vl_size;
+    rwork = vr + vr_size;
+
+    LAPACK(@lapack_func@)(&jobvl, &jobvr, &n,
+                          (void *)a, &n, (void *)w, 
+                          (void *)vl, &n, (void *)vr, &n, 
+                          (void *)&work_size_query, &do_size_query,
+                          (void *)rwork,
+                          &rv);
+    if (0 != rv)
+        goto error;
+
+    work_count = (size_t) work_size_query.array[0];
+    mem_buff2 = malloc(work_count*sizeof(@typ@));
+    if (!mem_buff2)
+        goto error;
+    work = mem_buff2;
+   
+    params->A = a;
+    params->WR = rwork;
+    params->WI = NULL;
+    params->VLR = NULL;
+    params->VRR = NULL;
+    params->VL = vl;
+    params->VR = vr;
+    params->WORK = work;
+    params->N = n;
+    params->LDA = n;
+    params->LDVL = n;
+    params->LDVR = n;
+    params->LWORK = (fortran_int)work_count; 
+    params->JOBVL = jobvl;
+    params->JOBVR = jobvr;
+    
+    return 1;
+ error:
+    free(mem_buff2);
+    free(mem_buff);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+static inline fortran_int
+call_@lapack_func@(GEEV_PARAMS_t* params)
+{
+    fortran_int rv;
+
+    LAPACK(@lapack_func@)(&params->JOBVL, &params->JOBVR, 
+                          &params->N, params->A, &params->LDA,
+                          params->W,
+                          params->VL, &params->LDVL,
+                          params->VR, &params->LDVR,
+                          params->WORK, &params->LWORK,
+                          params->WR, /* actually RWORK */
+                          &rv);
+
+    return rv;
+}
+
+static inline void
+process_@lapack_func@_results(GEEV_PARAMS_t *NPY_UNUSED(params))
+{
+    /* nothing to do here, complex versions are ready to copy out */
+}
+/**end repeat**/
+
+
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #COMPLEXTYPE=CFLOAT,CDOUBLE,CFLOAT,CDOUBLE#
+   #ftype=fortran_real,fortran_doublereal,fortran_complex,fortran_doublecomplex#
+   #lapack_func=sgeev,dgeev,cgeev,zgeev#
+ */
+
+static inline void
+release_@lapack_func@(GEEV_PARAMS_t *params)
+{
+    free(params->WORK);
+    free(params->A);
+    memset(params, 0, sizeof(*params));
+}
+
+static inline void
+@TYPE@_eig_wrapper(char JOBVL, char JOBVR, char**args, npy_intp* dimensions, npy_intp* steps)
+{
+    ptrdiff_t outer_steps[4];
+    size_t iter;
+    size_t outer_dim = *dimensions++;
+    size_t op_count = 2;
+    GEEV_PARAMS_t geev_params;
+
+    op_count += 'V'==JOBVL?1:0;
+    op_count += 'V'==JOBVR?1:0;
+
+    for (iter=0; iter < op_count; ++iter) {
+        outer_steps[iter] = (ptrdiff_t) steps[iter];
+    }
+    steps += op_count;
+
+    if (init_@lapack_func@(&geev_params, JOBVL, JOBVR, (fortran_int)dimensions[0])) {
+        LINEARIZE_DATA_t a_in;
+        LINEARIZE_DATA_t w_out;
+        LINEARIZE_DATA_t vl_out;
+        LINEARIZE_DATA_t vr_out;
+
+
+        init_linearize_data(&a_in,
+                            geev_params.N, geev_params.N,
+                            steps[1], steps[0]);
+        steps += 2;
+        init_linearize_data(&w_out,
+                            1, geev_params.N,
+                            0, steps[0]);
+        steps += 1;
+        if ('V' == geev_params.JOBVL) {
+            init_linearize_data(&vl_out, 
+                                geev_params.N, geev_params.N,
+                                steps[1], steps[0]);
+            steps += 2;
+        }
+
+        if ('V' == geev_params.JOBVR) {
+            init_linearize_data(&vr_out,
+                                geev_params.N, geev_params.N,
+                                steps[1], steps[0]);
+        }
+        
+        for (iter = 0; iter < outer_dim; ++iter) {
+            char **arg_iter = args;
+            /* copy the matrix in */
+            linearize_@TYPE@_matrix(geev_params.A, *arg_iter++, &a_in);
+
+            call_@lapack_func@(&geev_params);
+            process_@lapack_func@_results(&geev_params);
+
+            delinearize_@COMPLEXTYPE@_matrix(*arg_iter++, geev_params.W, &w_out);
+            if ('V' == geev_params.JOBVL)
+                delinearize_@COMPLEXTYPE@_matrix(*arg_iter++, geev_params.VL, &vl_out);
+            if ('V' == geev_params.JOBVR)
+                delinearize_@COMPLEXTYPE@_matrix(*arg_iter++, geev_params.VR, &vr_out);
+
+            update_pointers((uint8_t**)args, outer_steps, op_count);
+        }
+
+        release_@lapack_func@(&geev_params);
+    }
+}
+
+static void
+@TYPE@_eig(char **args, npy_intp *dimensions, npy_intp *steps,
+           void *NPY_UNUSED(func))
+{
+    @TYPE@_eig_wrapper('N', 'V', args, dimensions, steps);
+}
+
+static void
+@TYPE@_eigvals(char **args, npy_intp *dimensions, npy_intp *steps,
+           void *NPY_UNUSED(func))
+{
+    @TYPE@_eig_wrapper('N', 'N', args, dimensions, steps);
+}
 
 /**end repeat**/
 
@@ -1478,6 +1893,8 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(solve);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(solve1);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(inv);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(cholesky);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eig);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eigvals);
 
 static char equal_2_types[] = {
     NPY_FLOAT, NPY_FLOAT,
@@ -1501,18 +1918,32 @@ static char slogdet_types[] = {
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE 
 };
 
-static char eig_types[] = {
+static char eigh_types[] = {
     NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
     NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT, NPY_FLOAT, NPY_CFLOAT,
     NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE 
 };
 
-static char eigvals_types[] = {
+static char eighvals_types[] = {
     NPY_FLOAT, NPY_FLOAT,
     NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT, NPY_FLOAT,
     NPY_CDOUBLE, NPY_DOUBLE
+};
+
+static char eig_types[] = {
+    NPY_FLOAT, NPY_CFLOAT, NPY_CFLOAT,
+    NPY_DOUBLE, NPY_CDOUBLE, NPY_CDOUBLE,
+    NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT,
+    NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE
+};
+
+static char eigvals_types[] = {
+    NPY_FLOAT, NPY_CFLOAT,
+    NPY_DOUBLE, NPY_CDOUBLE,
+    NPY_CFLOAT, NPY_CFLOAT,
+    NPY_CDOUBLE, NPY_CDOUBLE
 };
 
 typedef struct gufunc_descriptor_struct {
@@ -1585,7 +2016,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 2,
         eighlo_funcs,
-        eig_types
+        eigh_types
     },
     {
         "eigh_up",
@@ -1595,7 +2026,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 2,
         eighup_funcs,
-        eig_types
+        eigh_types
     },
     {
         "eigvalsh_lo",
@@ -1605,7 +2036,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(m)\" \n",
         4, 1, 1,
         eigvalshlo_funcs,
-        eigvals_types
+        eighvals_types
     },
     {
         "eigvalsh_up",
@@ -1615,7 +2046,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(m,m)->(m)\" \n",
         4, 1, 1,
         eigvalshup_funcs,
-        eigvals_types
+        eighvals_types
     },
     {
         "solve",
@@ -1656,39 +2087,27 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         4, 1, 1,
         cholesky_funcs,
         equal_2_types
-    }
-#if 0
+    },
     {
         "eig",
-        "(m,m)->(m),(m,m)",
+        "(m,n)->(m),(m,n)",
         "eig on the last two dimension and broadcast to the rest. \n"\
         "Results in a vector with the  eigenvalues and a matrix with the eigenvectors. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 2,
         eig_funcs,
-        equal_3_types
-    },
-    {
-        "eigvalsh",
-        "(m,m)->(m)",
-        "eigvalsh on the last two dimension and broadcast to the rest. \n"\
-        "Results in a vector of eigenvalues. \n"\
-        "    \"(m,m)->(m),(m,m)\" \n",
-        4, 1, 1,
-        eigvalsh_funcs,
-        equal_2_types
+        eig_types
     },
     {
         "eigvals",
-        "(m,m)->(m)",
+        "(m,n)->(m)",
         "eigvals on the last two dimension and broadcast to the rest. \n"\
         "Results in a vector of eigenvalues. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 1,
         eigvals_funcs,
         eigvals_types
-    },
-#endif
+    }
 };
 
 static void
