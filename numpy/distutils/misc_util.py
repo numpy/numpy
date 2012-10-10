@@ -249,11 +249,9 @@ def gpaths(paths, local_path='', include_non_existing=True):
 
 _temporary_directory = None
 def clean_up_temporary_directory():
-    from numpy.distutils import log
     global _temporary_directory
     if not _temporary_directory:
         return
-    log.debug('removing %s', _temporary_directory)
     try:
         shutil.rmtree(_temporary_directory)
     except OSError:
