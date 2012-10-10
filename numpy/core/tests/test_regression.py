@@ -498,6 +498,12 @@ class TestRegression(TestCase):
         b = a[:,1]
         assert_equal(b.reshape(2,2,order='F'), [[2,6],[4,8]])
 
+    def test_reshape_zero_strides(self, level=rlevel):
+        """Issue #380, test reshaping of zero strided arrays"""
+        a = np.ones(1)
+        a = np.lib.stride_tricks.as_strided(a, shape=(5,), strides=(0,))
+        assert_(a.reshape(5,1).strides[0] == 0)
+
     def test_repeat_discont(self, level=rlevel):
         """Ticket #352"""
         a = np.arange(12).reshape(4,3)[:,2]
