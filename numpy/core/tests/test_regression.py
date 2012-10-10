@@ -458,6 +458,13 @@ class TestRegression(TestCase):
         assert_equal(np.array(x,dtype=np.float32,ndmin=2).ndim,2)
         assert_equal(np.array(x,dtype=np.float64,ndmin=2).ndim,2)
 
+    def test_ndmin_order(self, level=rlevel):
+        """Issue #465 and related checks"""
+        assert_(np.array([1,2], order='C', ndmin=3).flags.c_contiguous)
+        assert_(np.array([1,2], order='F', ndmin=3).flags.f_contiguous)
+        assert_(np.array(np.ones((2,2), order='F'), ndmin=3).flags.f_contiguous)
+        assert_(np.array(np.ones((2,2), order='C'), ndmin=3).flags.c_contiguous)
+
     def test_mem_axis_minimization(self, level=rlevel):
         """Ticket #327"""
         data = np.arange(5)
