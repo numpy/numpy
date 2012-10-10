@@ -42,6 +42,32 @@ class TestAll(TestCase):
         assert_array_equal(np.alltrue(y1, axis=1), [0, 0, 1])
 
 
+class TestCopy(TestCase):
+    def test_basic(self):
+        a = np.array([[1, 2], [3, 4]])
+        a_copy = np.copy(a)
+        assert_array_equal(a, a_copy)
+        a_copy[0, 0] = 10
+        assert_equal(a[0, 0], 1)
+        assert_equal(a_copy[0, 0], 10)
+
+    def test_order(self):
+        # It turns out that people rely on np.copy() preserving order by
+        # default; changing this broke scikit-learn:
+        #   https://github.com/scikit-learn/scikit-learn/commit/7842748cf777412c506a8c0ed28090711d3a3783
+        a = np.array([[1, 2], [3, 4]])
+        assert_(a.flags.c_contiguous)
+        assert_(not a.flags.f_contiguous)
+        a_fort = np.array([[1, 2], [3, 4]], order="F")
+        assert_(not a_fort.flags.c_contiguous)
+        assert_(a_fort.flags.f_contiguous)
+        a_copy = np.copy(a)
+        assert_(a_copy.flags.c_contiguous)
+        assert_(not a_copy.flags.f_contiguous)
+        a_fort_copy = np.copy(a_fort)
+        assert_(not a_fort_copy.flags.c_contiguous)
+        assert_(a_fort_copy.flags.f_contiguous)
+
 class TestAverage(TestCase):
     def test_basic(self):
         y1 = np.array([1, 2, 3])

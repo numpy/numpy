@@ -3222,10 +3222,13 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('copy',
         Controls the memory layout of the copy. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
-        as possible.
+        as possible. (Note that this function and :func:numpy.copy are very
+        similar, but have different default values for their order=
+        arguments.)
 
     See also
     --------
+    numpy.copy
     numpy.copyto
 
     Examples
