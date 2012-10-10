@@ -562,9 +562,6 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
 {
     PyObject *e;
     int r, n, i;
-#if PY_VERSION_HEX >= 0x02060000
-    Py_buffer buffer_view;
-#endif
 
     if (*maxndim == 0) {
         return 0;
@@ -629,27 +626,30 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     /* obj is a PEP 3118 buffer */
 #if PY_VERSION_HEX >= 0x02060000
     /* PEP 3118 buffer interface */
-    memset(&buffer_view, 0, sizeof(Py_buffer));
-    if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
-        PyObject_GetBuffer(obj, &buffer_view, PyBUF_ND) == 0) {
-        int nd = buffer_view.ndim;
-        if (nd < *maxndim) {
-            *maxndim = nd;
+    if (PyObject_CheckBuffer(obj)) {
+        Py_buffer buffer_view;
+        memset(&buffer_view, 0, sizeof(Py_buffer));
+        if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
+            PyObject_GetBuffer(obj, &buffer_view, PyBUF_ND) == 0) {
+            int nd = buffer_view.ndim;
+            if (nd < *maxndim) {
+                *maxndim = nd;
+            }
+            for (i=0; i<*maxndim; i++) {
+                d[i] = buffer_view.shape[i];
+            }
+            PyBuffer_Release(&buffer_view);
+            return 0;
         }
-        for (i=0; i<*maxndim; i++) {
-            d[i] = buffer_view.shape[i];
+        else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
+            d[0] = buffer_view.len;
+            *maxndim = 1;
+            PyBuffer_Release(&buffer_view);
+            return 0;
         }
-        PyBuffer_Release(&buffer_view);
-        return 0;
-    }
-    else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
-        d[0] = buffer_view.len;
-        *maxndim = 1;
-        PyBuffer_Release(&buffer_view);
-        return 0;
-    }
-    else {
-        PyErr_Clear();
+        else {
+            PyErr_Clear();
+        }
     }
 #endif
 
