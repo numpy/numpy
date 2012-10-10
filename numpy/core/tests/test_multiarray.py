@@ -2019,6 +2019,13 @@ class TestRecord(TestCase):
         assert_equal(collect_warning_types(subset['f1'].__setitem__, 0, 10),
                      [])
 
+    def test_record_hash(self):
+        a = np.array([(1,2),(1,2)], dtype='i1,i2')
+        b = np.array([(1,2),(3,4)], dtype=[('num1', 'i1'), ('num2', 'i2')])
+        self.assertTrue(hash(a[0]) == hash(a[1]))
+        self.assertTrue(hash(a[0]) == hash(b[0]))
+        self.assertTrue(hash(a[0]) != hash(b[1]))
+
 class TestView(TestCase):
     def test_basic(self):
         x = np.array([(1,2,3,4),(5,6,7,8)],dtype=[('r',np.int8),('g',np.int8),

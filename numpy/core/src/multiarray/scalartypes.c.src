@@ -3070,11 +3070,33 @@ object_arrtype_hash(PyObject *obj)
     return PyObject_Hash(((PyObjectScalarObject *)obj)->obval);
 }
 
-/* just hash the pointer */
+/* we used to just hash the pointer */
+/* now use tuplehash algorithm using voidtype_item to get the object
+*/
 static long
 void_arrtype_hash(PyObject *obj)
 {
-    return _Py_HashPointer((void *)(((PyVoidScalarObject *)obj)->obval));
+    register long x, y;
+    register Py_ssize_t len, n;
+    register PyVoidScalarObject *p;
+    register PyObject *element;
+    long mult = 1000003L;
+    x = 0x345678L;
+    p = (PyVoidScalarObject *)obj;
+    len = voidtype_length(p);
+    for (n=0; n < len; n++) {
+        element = voidtype_item(p, n);
+        y = PyObject_Hash(element);
+        Py_DECREF(element);
+        if (y == -1)
+           return -1;
+        x = (x ^ y) * mult;
+        mult += (long)(82520L + len + len);
+    }
+    x += 97531L;
+    if (x == -1)
+        x = -2;
+    return x;
 }
 
 /*object arrtype getattro and setattro */
