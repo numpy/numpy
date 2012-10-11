@@ -5,7 +5,7 @@ import numpy as np
 from numpy.testing import (
         run_module_suite, TestCase, assert_, assert_equal,
         assert_array_equal, assert_almost_equal, assert_array_almost_equal,
-        assert_raises, assert_allclose, assert_array_max_ulp
+        assert_raises, assert_allclose, assert_array_max_ulp, assert_warns
         )
 from numpy.random import rand
 from numpy.lib import *
@@ -174,9 +174,14 @@ class TestInsert(TestCase):
         assert_equal(insert(a, 3, 1), [1, 2, 3, 1])
         assert_equal(insert(a, [1, 1, 1], [1, 2, 3]), [1, 1, 2, 3, 2, 3])
         assert_equal(insert(a, 1,[1,2,3]), [1, 1, 2, 3, 2, 3])
-        assert_equal(insert(a,[1,2,3],9),[1,9,2,9,3,9])
+        assert_equal(insert(a,[1,-1,3],9),[1,9,2,9,3,9])
+        assert_equal(insert(a,slice(-1,None,-1), 9),[9,1,9,2,9,3])
+        assert_warns(FutureWarning, insert, a, np.array([True]*4), 9)
+        #assert_equal(insert(a, np.array([True]*4), 9), [9,1,9,2,9,3,9])
+        assert_equal(insert(a,[-1,1,3], [7,8,9]),[1,8,2,7,3,9])
         b = np.array([0, 1], dtype=np.float64)
         assert_equal(insert(b, 0, b[0]), [0., 0., 1.])
+
     def test_multidim(self):
         a = [[1, 1, 1]]
         r = [[2, 2, 2],
@@ -184,6 +189,17 @@ class TestInsert(TestCase):
         assert_equal(insert(a, 0, [2, 2, 2], axis=0), r)
         assert_equal(insert(a, 0, 2, axis=0), r)
         assert_equal(insert(a, 2, 2, axis=1), [[1, 1, 2, 1]])
+
+        a = np.array([[1, 1], [2, 2], [3, 3]])
+        b = np.arange(1,4).repeat(3).reshape(3,3)
+        c = np.concatenate((a[:,0:1], np.arange(1,4).repeat(3).reshape(3,3).T,
+                            a[:,1:2]), axis=1)
+        assert_equal(insert(a, [1], [[1],[2],[3]], axis=1), b)
+        assert_equal(insert(a, [1], [1, 2, 3], axis=1), c)
+        # scalars behave differently, in this case exactly opposite:
+        assert_equal(insert(a, 1, [1, 2, 3], axis=1), b)
+        assert_equal(insert(a, 1, [[1],[2],[3]], axis=1), c)
+
 
 class TestAmax(TestCase):
     def test_basic(self):
@@ -300,6 +316,39 @@ class TestDiff(TestCase):
         assert_array_equal(diff(x, n=2), out2)
         assert_array_equal(diff(x, axis=0), out3)
         assert_array_equal(diff(x, n=2, axis=0), out4)
+
+
+class TestDelete(TestCase):
+    def setUp(self):
+        self.a = np.arange(5)
+        self.nd_a = np.arange(5).repeat(2).reshape(1,5,2)
+
+    def _check_inverse_of_slicing(self, indices):
+        a_del = delete(self.a, indices)
+        assert_array_equal(setxor1d(a_del, self.a[indices,]), self.a)
+        nd_a_del = delete(self.nd_a, indices, axis=1)
+        xor = setxor1d(nd_a_del[0,:,0], self.nd_a[0,indices,0])
+        assert_array_equal(xor, self.nd_a[0,:,0])
+        
+    def test_slices(self):
+        lims = [-6, -2, 0, 1, 2, 4, 5]
+        steps = [-3, -1, 1, 3]
+        for start in lims:
+            for stop in lims:
+                for step in steps:
+                    s = slice(start, stop, step)
+                    self._check_inverse_of_slicing(s)
+
+    def test_fancy(self):
+        self._check_inverse_of_slicing([0, -1, 2, 2])
+        a = np.array([True, False, False], dtype=bool)
+        assert_warns(FutureWarning, delete, self.a, a)
+        #self._check_inverse_of_slicing(a)
+        self._check_inverse_of_slicing(np.array([[0,1],[2,1]]))
+
+    def test_single(self):
+        self._check_inverse_of_slicing(0)
+        self._check_inverse_of_slicing(-4)
 
 
 class TestGradient(TestCase):

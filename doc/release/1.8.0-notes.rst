@@ -85,6 +85,14 @@ The function np.take now allows 0-d arrays as indices.
 
 The separate compilation mode is now enabled by default.
 
+The functions np.insert and np.delete now handle out of bound indices like
+normal indexing instead of ignoring them, this strongly affects negative ones.
+FutureWarnings will be raised for boolean indices which will change behaviour.
+Insert allows multiple insertions at single scalar since numpy 1.7. and now
+further allows this for a one item sequence. There are subtle differences
+because the scalar expects N arrays, while the sequence expects size N along
+the axis.
+
 C-API
 ~~~~~
 
