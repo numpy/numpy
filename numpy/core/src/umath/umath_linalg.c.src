@@ -911,8 +911,8 @@ typedef struct eigh_params_struct {
  * Handles buffer allocation
  */
 static inline int
-init_@lapack_func@(char JOBZ, char UPLO,
-                   fortran_int N, EIGH_PARAMS_t *params)
+init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
+                   fortran_int N)
 {
     uint8_t *mem_buff = NULL;
     uint8_t *mem_buff2 = NULL;
@@ -998,8 +998,8 @@ call_@lapack_func@(EIGH_PARAMS_t *params)
  * Handles buffer allocation
  */
 static inline int
-init_@lapack_func@(char JOBZ, char UPLO,
-                   fortran_int N, EIGH_PARAMS_t *params)
+init_@lapack_func@(EIGH_PARAMS_t *params, char JOBZ, char UPLO,
+                   fortran_int N)
 {
     uint8_t *mem_buff = NULL;
     uint8_t *mem_buff2 = NULL;
@@ -1115,7 +1115,7 @@ static inline void
     }
     steps += op_count;
 
-    if (init_@lapack_func@(JOBZ, UPLO, (fortran_int)dimensions[0], &eigh_params)) {
+    if (init_@lapack_func@(&eigh_params, JOBZ, UPLO, (fortran_int)dimensions[0])) {
         LINEARIZE_DATA_t matrix_in_ld;
         LINEARIZE_DATA_t eigenvectors_out_ld;
         LINEARIZE_DATA_t eigenvalues_out_ld;
@@ -1550,7 +1550,6 @@ static inline fortran_int
 call_@lapack_func@(GEEV_PARAMS_t* params)
 {
     fortran_int rv;
-    dump_@TYPE@_matrix("A", params->N, params->N, params->A);
     LAPACK(@lapack_func@)(&params->JOBVL, &params->JOBVR, 
                           &params->N, params->A, &params->LDA,
                           params->WR, params->WI,
@@ -1558,10 +1557,6 @@ call_@lapack_func@(GEEV_PARAMS_t* params)
                           params->VRR, &params->LDVR,
                           params->WORK, &params->LWORK,
                           &rv);
-    dump_@TYPE@_matrix("WR", 1, params->N, params->WR);
-    dump_@TYPE@_matrix("WI", 1, params->N, params->WI);
-    if ('V'== params->JOBVR)
-         dump_@TYPE@_matrix("VLR", params->N, params->N, params->VRR);
     return rv;
 }
 
@@ -1846,6 +1841,390 @@ static void
 
 /**end repeat**/
 
+
+/* -------------------------------------------------------------------------- */
+                 /* singular value decomposition  */
+
+typedef struct gesdd_params_struct
+{
+    void *A;
+    void *S;
+    void *U;
+    void *VT;
+    void *WORK;
+    void *RWORK;
+    void *IWORK;
+
+    fortran_int M;
+    fortran_int N;
+    fortran_int LDA;
+    fortran_int LDU;
+    fortran_int LDVT;
+    fortran_int LWORK; 
+    char JOBZ;
+} GESDD_PARAMS_t;
+
+
+static inline void
+dump_gesdd_params(const char *name, GESDD_PARAMS_t *params)
+{
+    printf("\n%s:\n"
+           "%14s: %18p\n" "%14s: %18p\n" "%14s: %18p\n" "%14s: %18p\n"
+           "%14s: %18p\n" "%14s: %18p\n" "%14s: %18p\n"
+           "%14s: %18d\n" "%14s: %18d\n" "%14s: %18d\n" "%14s: %18d\n"
+           "%14s: %18d\n" "%14s: %18d\n"
+           "%14s: %15c'%c'\n",
+           name,
+           "A", params->A, "S", params->S, "U", params->U, "VT", params->VT,
+           "WORK", params->WORK, "RWORK", params->RWORK, "IWORK", params->IWORK,
+           "M", (int)params->M, "N", (int)params->N, "LDA", (int)params->LDA, "LDU", (int)params->LDU,
+           "LDVT", (int)params->LDVT, "LWORK", (int)params->LWORK, "JOBZ", ' ',params->JOBZ);
+
+}
+
+static inline int 
+compute_urows_vtcolumns(char jobz,
+                        fortran_int m, fortran_int n,
+                        fortran_int *urows, fortran_int *vtcolumns)
+{
+    fortran_int min_m_n = m<n?m:n;
+    switch(jobz)
+    {
+    case 'N':
+        *urows = 0;
+        *vtcolumns = 0;
+        break;
+    case 'A':
+        *urows = m;
+        *vtcolumns = n;
+        break;
+    case 'S':
+        {
+            *urows = min_m_n;
+            *vtcolumns = min_m_n;
+        }
+        break;
+    default:
+        return 0;
+    }
+
+    return 1;
+}
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE#
+   #lapack_func=sgesdd,dgesdd#
+   #ftyp=fortran_real,fortran_doublereal#
+ */
+
+static inline int
+init_@lapack_func@(GESDD_PARAMS_t *params, char jobz, fortran_int m, fortran_int n)
+{
+    uint8_t *mem_buff = NULL;
+    uint8_t *mem_buff2 = NULL;
+    uint8_t *a, *s, *u, *vt, *work, *iwork;
+    size_t a_size = (size_t)m*(size_t)n*sizeof(@ftyp@);
+    fortran_int min_m_n = m<n?m:n;
+    size_t s_size = ((size_t)min_m_n)*sizeof(@ftyp@);
+    fortran_int  u_row_count, vt_column_count;
+    size_t u_size, vt_size;
+    fortran_int work_count;
+    size_t work_size;
+    size_t iwork_size = 8*((size_t)min_m_n)*sizeof(fortran_int);
+
+    if (!compute_urows_vtcolumns(jobz, m, n, &u_row_count, &vt_column_count))
+        goto error;
+
+    u_size = ((size_t)u_row_count)*m*sizeof(@ftyp@);
+    vt_size = n*((size_t)vt_column_count)*sizeof(@ftyp@);
+
+    mem_buff = malloc(a_size + s_size + u_size + vt_size + iwork_size);
+
+    if (!mem_buff)
+        goto error;
+
+    a = mem_buff;
+    s = a + a_size;
+    u = s + s_size;
+    vt = u + u_size;
+    iwork = vt + vt_size;
+
+    /* fix vt_column_count so that it is a valid lapack parameter (0 is not) */
+    vt_column_count = vt_column_count < 1? 1 : 0;
+    {
+        /* compute optimal work size */
+        @ftyp@ work_size_query;
+        fortran_int do_query = -1;
+        fortran_int rv;
+        LAPACK(@lapack_func@)(&jobz, &m, &n, 
+                              (void*)a, &m, (void*)s, (void*)u, &m, 
+                              (void*)vt, &vt_column_count,
+                              &work_size_query, &do_query,
+                              (void*)iwork, &rv);
+        if (0!=rv)
+            goto error;
+        work_count = (fortran_int)work_size_query;
+        work_size = (size_t)work_count * sizeof(@ftyp@);
+    }
+
+    mem_buff2 = malloc(work_size);
+    if (!mem_buff2)
+        goto error;
+
+    work = mem_buff2;
+
+    params->M = m;
+    params->N = n;
+    params->A = a;
+    params->S = s;
+    params->U = u;
+    params->VT = vt;
+    params->WORK = work;
+    params->RWORK = NULL;
+    params->IWORK = iwork;
+    params->M = m;
+    params->N = n;
+    params->LDA = m;
+    params->LDU = m;
+    params->LDVT = vt_column_count;
+    params->LWORK = work_count;
+    params->JOBZ = jobz;
+
+    return 1;
+ error:
+    free(mem_buff2);
+    free(mem_buff2);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+static inline fortran_int
+call_@lapack_func@(GESDD_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->JOBZ, &params->M, &params->N,
+                          params->A, &params->LDA, 
+                          params->S,
+                          params->U, &params->LDU,
+                          params->VT, &params->LDVT,
+                          params->WORK, &params->LWORK,
+                          params->IWORK,
+                          &rv);
+    return rv;
+}
+
+/**end repeat**/
+
+/**begin repeat
+   #TYPE=CFLOAT,CDOUBLE#
+   #ftyp=fortran_complex,fortran_doublecomplex#
+   #frealtyp=fortran_real,fortran_doublereal#
+   #typ=COMPLEX_t,DOUBLECOMPLEX_t#
+   #lapack_func=cgesdd,zgesdd#
+ */
+
+static inline int
+init_@lapack_func@(GESDD_PARAMS_t *params, char jobz, fortran_int m, fortran_int n)
+{
+    uint8_t *mem_buff = NULL, *mem_buff2 = NULL;
+    uint8_t *a,*s, *u, *vt, *work, *rwork, *iwork;
+    size_t a_size, s_size, u_size, vt_size, work_size, rwork_size, iwork_size;
+    fortran_int u_row_count, vt_column_count, work_count;
+    fortran_int min_m_n = m<n?m:n;
+
+    if (!compute_urows_vtcolumns(jobz, m, n, &u_row_count, &vt_column_count))
+        goto error;
+    
+    a_size = ((size_t)m)*((size_t)n)*sizeof(@ftyp@);
+    s_size = ((size_t)min_m_n)*sizeof(@frealtyp@);
+    u_size = ((size_t)u_row_count)*m*sizeof(@ftyp@);
+    vt_size = n*((size_t)vt_column_count)*sizeof(@ftyp@);
+    rwork_size = 'N'==jobz? 
+        7*((size_t)min_m_n) : 
+        (5*(size_t)min_m_n*(size_t)min_m_n + 5*(size_t)min_m_n);
+    rwork_size *= sizeof(@ftyp@);
+    iwork_size = 8*((size_t)min_m_n)*sizeof(fortran_int);
+
+    mem_buff = malloc(a_size + s_size + u_size + vt_size + rwork_size + iwork_size);
+    if (!mem_buff)
+        goto error;
+
+    a = mem_buff;
+    s = a + a_size;
+    u = s + s_size;
+    vt = u + u_size;
+    rwork = vt + vt_size;
+    iwork = rwork + rwork_size;                      
+
+    /* fix vt_column_count so that it is a valid lapack parameter (0 is not) */
+    vt_column_count = vt_column_count < 1? 1 : 0;
+    {
+        /* compute optimal work size */
+        @ftyp@ work_size_query;
+        fortran_int do_query = -1;
+        fortran_int rv;
+        LAPACK(@lapack_func@)(&jobz, &m, &n, 
+                              (void*)a, &m, (void*)s, (void*)u, &m, 
+                              (void*)vt, &vt_column_count,
+                              &work_size_query, &do_query,
+                              (void*)rwork,
+                              (void*)iwork, &rv);
+        if (0!=rv)
+            goto error;
+        work_count = (fortran_int)((@typ@*)&work_size_query)->array[0];
+        work_size = (size_t)work_count * sizeof(@ftyp@);
+    }
+
+    mem_buff2 = malloc(work_size);
+    if (!mem_buff2)
+        goto error;
+
+    work = mem_buff2;
+
+    params->A = a;
+    params->S = s;
+    params->U = u;
+    params->VT = vt;
+    params->WORK = work;
+    params->RWORK = rwork;
+    params->IWORK = iwork;
+    params->M = m;
+    params->N = n;
+    params->LDA = m;
+    params->LDU = m;
+    params->LDVT = vt_column_count;
+    params->LWORK = work_count;
+    params->JOBZ = jobz;
+
+    return 1;
+ error:
+    free(mem_buff2);
+    free(mem_buff);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+static inline fortran_int
+call_@lapack_func@(GESDD_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->JOBZ, &params->M, &params->N,
+                          params->A, &params->LDA,
+                          params->S,
+                          params->U, &params->LDU,
+                          params->VT, &params->LDVT,
+                          params->WORK, &params->LWORK,
+                          params->RWORK,
+                          params->IWORK,
+                          &rv);
+    return rv;
+}
+/**end repeat**/
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #REALTYPE=FLOAT,DOUBLE,FLOAT,DOUBLE#
+   #lapack_func=sgesdd,dgesdd,cgesdd,zgesdd#
+ */
+static inline void
+release_@lapack_func@(GESDD_PARAMS_t* params)
+{
+    /* A and WORK contain allocated blocks */
+    free(params->A);
+    free(params->WORK);
+    memset(params, 0, sizeof(*params));
+}
+
+
+static inline void
+@TYPE@_svd_wrapper(char JOBZ, char **args, npy_intp* dimensions, npy_intp* steps)
+{
+    ptrdiff_t outer_steps[3];
+    size_t iter;
+    size_t outer_dim = *dimensions++;
+    size_t op_count = (JOBZ=='N')?2:4;
+    GESDD_PARAMS_t params;
+
+    for (iter=0; iter < op_count; ++iter) {
+        outer_steps[iter] = (ptrdiff_t) steps[iter];
+    }
+    steps += op_count;
+
+    if (init_@lapack_func@(&params, JOBZ, (fortran_int)dimensions[0], (fortran_int)dimensions[1])) {
+        LINEARIZE_DATA_t a_in, u_out, s_out, v_out;
+
+        init_linearize_data(&a_in, params.N, params.M, steps[1], steps[0]);
+        if ('N' == params.JOBZ) {
+            /* only the singular values are wanted */
+            fortran_int min_m_n = params.M < params.N? params.M : params.N;
+            init_linearize_data(&s_out, 1, min_m_n, 0, steps[2]);
+        } else {
+            fortran_int u_columns, v_rows;
+            fortran_int min_m_n = params.M < params.N? params.M : params.N;
+            if ('S' == params.JOBZ) {
+                u_columns = min_m_n;
+                v_rows = min_m_n;
+            } else {
+                u_columns = params.M;
+                v_rows = params.N;
+            }
+            init_linearize_data(&u_out,
+                                u_columns, params.M,
+                                steps[3], steps[2]);
+            init_linearize_data(&s_out,
+                                1, min_m_n,
+                                0, steps[4]);
+            init_linearize_data(&v_out, 
+                                params.N, v_rows,
+                                steps[6], steps[5]);
+        }
+
+        for (iter = 0; iter < outer_dim; ++iter) {
+            /* copy the matrix in */
+            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
+            call_@lapack_func@(&params);
+
+            if ('N' == params.JOBZ) {
+                delinearize_@REALTYPE@_matrix(args[1], params.S, &s_out);
+            } else {
+                delinearize_@TYPE@_matrix(args[1], params.U, &u_out);
+                delinearize_@REALTYPE@_matrix(args[2], params.S, &s_out);
+                delinearize_@TYPE@_matrix(args[3], params.VT, &v_out);
+            }
+            update_pointers((uint8_t**)args, outer_steps, op_count);
+        }
+
+        release_@lapack_func@(&params);
+    }
+}
+/**end repeat*/
+
+/* svd gufunc entry points */
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+ */
+static void
+@TYPE@_svd_N(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    @TYPE@_svd_wrapper('N', args, dimensions, steps);
+}
+
+static void
+@TYPE@_svd_S(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    @TYPE@_svd_wrapper('S', args, dimensions, steps);
+}
+
+static void
+@TYPE@_svd_A(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+{
+    @TYPE@_svd_wrapper('A', args, dimensions, steps);
+}
+
+/**end repeat**/
+
 /* -------------------------------------------------------------------------- */
                       /* ufunc registration  */
 
@@ -1893,6 +2272,9 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(solve);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(solve1);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(inv);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(cholesky);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_N);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_S);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_A);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eig);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eigvals);
 
@@ -1944,6 +2326,20 @@ static char eigvals_types[] = {
     NPY_DOUBLE, NPY_CDOUBLE,
     NPY_CFLOAT, NPY_CFLOAT,
     NPY_CDOUBLE, NPY_CDOUBLE
+};
+
+static char svd_1_1_types[] = {
+    NPY_FLOAT, NPY_FLOAT,
+    NPY_DOUBLE, NPY_DOUBLE,
+    NPY_CFLOAT, NPY_FLOAT,
+    NPY_CDOUBLE, NPY_DOUBLE
+};
+
+static char svd_1_3_types[] = {
+    NPY_FLOAT,   NPY_FLOAT,   NPY_FLOAT,  NPY_FLOAT,
+    NPY_DOUBLE,  NPY_DOUBLE,  NPY_DOUBLE, NPY_DOUBLE,
+    NPY_CFLOAT,  NPY_CFLOAT,  NPY_FLOAT,  NPY_CFLOAT,
+    NPY_CDOUBLE, NPY_CDOUBLE, NPY_DOUBLE, NPY_CDOUBLE
 };
 
 typedef struct gufunc_descriptor_struct {
@@ -2089,6 +2485,54 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         equal_2_types
     },
     {
+        "svd_m",
+        "(m,n)->(m)",
+        "svd when n>=m. ",
+        4, 1, 1,
+        svd_N_funcs,
+        equal_2_types
+    },
+    {
+        "svd_n",
+        "(m,n)->(n)",
+        "svd when n<=m",
+        4, 1, 1,
+        svd_N_funcs,
+        svd_1_1_types
+    },
+    {
+        "svd_m_s",
+        "(m,n)->(m,m),(m),(m,n)",
+        "svd when m>=n",
+        4, 1, 3,
+        svd_S_funcs,
+        svd_1_3_types
+    },
+    {
+        "svd_n_s",
+        "(m,n)->(m,n),(n),(n,n)",
+        "svd when m>=n",
+        4, 1, 3,
+        svd_S_funcs,
+        svd_1_3_types
+    },
+    {
+        "svd_m_f",
+        "(m,n)->(m,m),(m),(n,n)",
+        "svd when m>=n",
+        4, 1, 3,
+        svd_A_funcs,
+        svd_1_3_types
+    },
+    {
+        "svd_n_f",
+        "(m,n)->(m,m),(n),(n,n)",
+        "svd when m>=n",
+        4, 1, 3,
+        svd_A_funcs,
+        svd_1_3_types
+    },
+    {
         "eig",
         "(m,n)->(m),(m,n)",
         "eig on the last two dimension and broadcast to the rest. \n"\
@@ -2129,7 +2573,9 @@ addUfuncs(PyObject *dictionary) {
                                                 0,
                                                 d->signature);
         PyDict_SetItemString(dictionary, d->name, f);
+#if 0
         dump_ufunc_object((PyUFuncObject*) f);
+#endif
         Py_DECREF(f);                                               
     }
 }
