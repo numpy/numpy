@@ -626,7 +626,7 @@ class TestMaskedArray(TestCase):
         a = masked_array([(1, 2,), (3, 4)], mask=[(0, 0), (1, 0)], dtype=ndtype)
         # w/o mask
         f = a[0]
-        self.assertTrue(isinstance(f, np.void))
+        self.assertTrue(isinstance(f, mvoid))
         assert_equal((f[0], f['a']), (1, 1))
         assert_equal(f['b'], 2)
         # w/ mask
@@ -3443,7 +3443,7 @@ class TestMaskedFields(TestCase):
                               [1, 0, 0, 0, 0, 0, 0, 0, 1, 0]),
                           dtype=[('a', bool), ('b', bool)])
         # No mask
-        self.assertTrue(isinstance(a[1], np.void))
+        self.assertTrue(isinstance(a[1], MaskedArray))
         # One element masked
         self.assertTrue(isinstance(a[0], MaskedArray))
         assert_equal_records(a[0]._data, a._data[0])
@@ -3503,7 +3503,7 @@ class TestMaskedView(TestCase):
         assert_equal(test['B'], a['b'][0])
         #
         test = a[-1].view([('A', float), ('B', float)])
-        self.assertTrue(not isinstance(test, MaskedArray))
+        self.assertTrue(isinstance(test, MaskedArray))
         assert_equal(test.dtype.names, ('A', 'B'))
         assert_equal(test['A'], a['a'][-1])
         assert_equal(test['B'], a['b'][-1])
@@ -3523,7 +3523,7 @@ class TestMaskedView(TestCase):
         assert_equal(test.mask, (1, 0))
         # View on 1 unmasked element
         test = a[-1].view((float, 2))
-        self.assertTrue(not isinstance(test, MaskedArray))
+        self.assertTrue(isinstance(test, MaskedArray))
         assert_equal(test, data[-1])
     #
     def test_view_to_dtype_and_type(self):
