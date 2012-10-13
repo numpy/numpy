@@ -1186,14 +1186,12 @@ def roll(a, shift, axis=None):
         reshape = False
     if n == 0:
         return a
-    else:
-        shift %= n
-        indexes = concatenate((arange(n-shift,n),arange(n-shift)))
-        res = a.take(indexes, axis)
-        if reshape:
-            return res.reshape(a.shape)
-        else:
-            return res
+    shift %= n
+    indexes = concatenate((arange(n - shift, n), arange(n - shift)))
+    res = a.take(indexes, axis)
+    if reshape:
+        res = res.reshape(a.shape)
+    return res
 
 def rollaxis(a, axis, start=0):
     """
