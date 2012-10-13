@@ -3083,6 +3083,11 @@ void_arrtype_hash(PyObject *obj)
     long mult = 1000003L;
     x = 0x345678L;
     p = (PyVoidScalarObject *)obj;
+    /* Cannot hash mutable void scalars */
+    if (p->flags & NPY_ARRAY_WRITEABLE) {
+       PyErr_SetString(PyExc_TypeError, "unhashable type: 'writeable void-scalar'");
+       return -1; 
+    }
     len = voidtype_length(p);
     for (n=0; n < len; n++) {
         element = voidtype_item(p, n);

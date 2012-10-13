@@ -2021,12 +2021,19 @@ class TestRecord(TestCase):
 
     def test_record_hash(self):
         a = np.array([(1,2),(1,2)], dtype='i1,i2')
+        a.flags.writeable = False
         b = np.array([(1,2),(3,4)], dtype=[('num1', 'i1'), ('num2', 'i2')])
+        b.flags.writeable = False
         c = np.array([(1,2),(3,4)], dtype='i1,i2')
+        c.flags.writeable = False
         self.assertTrue(hash(a[0]) == hash(a[1]))
         self.assertTrue(hash(a[0]) == hash(b[0]))
         self.assertTrue(hash(a[0]) != hash(b[1]))
         self.assertTrue(hash(c[0]) == hash(a[0]) and c[0] == a[0])
+
+    def test_record_no_hash(self):
+        a = np.array([(1,2),(1,2)], dtype='i1,i2')
+        self.assertRaises(TypeError, hash, a[0])
 
 class TestView(TestCase):
     def test_basic(self):
