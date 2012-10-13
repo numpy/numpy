@@ -271,7 +271,8 @@ def rfft(a, n=None, axis=-1):
     out : complex ndarray
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
-        The length of the transformed axis is ``n/2+1``.
+        If `n` is even, the length of the transformed axis is ``(n/2)+1``.  
+        If `n` is odd, the length is ``(n+1)/2``.
 
     Raises
     ------
@@ -293,7 +294,7 @@ def rfft(a, n=None, axis=-1):
     conjugates of the corresponding positive-frequency terms, and the
     negative-frequency terms are therefore redundant.  This function does not
     compute the negative frequency terms, and the length of the transformed
-    axis of the output is therefore ``n/2+1``.
+    axis of the output is therefore ``n//2+1``.
 
     When ``A = rfft(a)``, ``A[0]`` contains the zero-frequency term, which
     must be purely real due to the Hermite symmetry.
@@ -343,7 +344,7 @@ def irfft(a, n=None, axis=-1):
         The input array.
     n : int, optional
         Length of the transformed axis of the output.
-        For `n` output points, ``n/2+1`` input points are necessary.  If the
+        For `n` output points, ``n//2+1`` input points are necessary.  If the
         input is longer than this, it is cropped.  If it is shorter than this,
         it is padded with zeros.  If `n` is not given, it is determined from
         the length of the input (along the axis specified by `axis`).
