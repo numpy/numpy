@@ -929,9 +929,31 @@ def configuration(parent_package='',top_path=None):
     #                        umath_linalg module                          #
     #######################################################################
 
+    lapack_info = get_info('lapack_opt', 0)
+    def get_lapack_lite_sources(ext, build_dir):
+        if not lapack_info:
+            print("### Warning:  Using unoptimized lapack ###")
+            return ext.depends[:-1]
+        else:
+            if sys.platform=='win32':
+                print("### Warning:  python_xerbla.c is disabled ###")
+                return ext.depends[:1]
+            return ext.depends[:2]
+
+    npymath_info = get_info('npymath')
     config.add_extension('umath_linalg',
-                         sources = [join('src','umath', 'umath_linalg.c.src')],
-                         extra_info = blas_info
+                         sources = [get_lapack_lite_sources],
+                         depends = [join('src', 'umath', 'umath_linalg.c.src'),
+                                    join('src', 'umath', 'lapack_lite', 'python_xerbla.c'),
+                                    join('src', 'umath', 'lapack_lite', 'zlapack_lite.c'),
+                                    join('src', 'umath', 'lapack_lite', 'dlapack_lite.c'),
+                                    join('src', 'umath', 'lapack_lite', 'blas_lite.c'),
+                                    join('src', 'umath', 'lapack_lite', 'dlamch.c'),
+                                    join('src', 'umath', 'lapack_lite', 'f2c_lite.c'),
+                                    join('src', 'umath', 'lapack_lite', 'f2c.h'),
+                                    ],
+                         extra_info = lapack_info,
+                         libraries = ['npymath'],
                          )
 
     #######################################################################
