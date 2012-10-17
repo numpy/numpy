@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-
 #define TRACE do { printf ("%s:%d:%s\n", __FILE__, __LINE__, __FUNCTION__); } while (0)
 
 
