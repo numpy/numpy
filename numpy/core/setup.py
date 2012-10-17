@@ -940,7 +940,6 @@ def configuration(parent_package='',top_path=None):
                 return ext.depends[:1]
             return ext.depends[:2]
 
-    npymath_info = get_info('npymath')
     config.add_extension('umath_linalg',
                          sources = [get_lapack_lite_sources],
                          depends = [join('src', 'umath', 'umath_linalg.c.src'),
