@@ -138,9 +138,9 @@ def test_copyto():
     assert_raises(TypeError, np.copyto, [1,2,3], [2,3,4])
 
 def test_copy_order():
-    a = np.arange(24).reshape(2,3,4)
+    a = np.arange(24).reshape(2,1,3,4)
     b = a.copy(order='F')
-    c = np.arange(24).reshape(2,4,3).swapaxes(1,2)
+    c = np.arange(24).reshape(2,1,4,3).swapaxes(2,3)
 
     def check_copy_result(x, y, ccontig, fcontig, strides=False):
         assert_(not (x is y))

@@ -823,7 +823,7 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
         bstride = -bstride;
     }
 
-    if (astride == bstride || astride == 0 || bstride == 0) {
+    if (astride == bstride) {
         /*
          * Make the qsort stable by next comparing the perm order.
          * (Note that two perm entries will never be equal)
@@ -835,9 +835,7 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
     if (astride > bstride) {
         return -1;
     }
-    else {
-        return 1;
-    }
+    return 1;
 }
 
 /*NUMPY_API
@@ -848,8 +846,7 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
  * [(2, 12), (0, 4), (1, -2)].
  */
 NPY_NO_EXPORT void
-PyArray_CreateSortedStridePerm(int ndim, npy_intp *shape,
-                        npy_intp *strides,
+PyArray_CreateSortedStridePerm(int ndim, npy_intp *strides,
                         npy_stride_sort_item *out_strideperm)
 {
     int i;
@@ -857,12 +854,7 @@ PyArray_CreateSortedStridePerm(int ndim, npy_intp *shape,
     /* Set up the strideperm values */
     for (i = 0; i < ndim; ++i) {
         out_strideperm[i].perm = i;
-        if (shape[i] == 1) {
-            out_strideperm[i].stride = 0;
-        }
-        else {
-            out_strideperm[i].stride = strides[i];
-        }
+        out_strideperm[i].stride = strides[i];
     }
 
     /* Sort them */
@@ -1001,7 +993,7 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
         npy_intp stride;
         int i, ndim = PyArray_NDIM(arr);
 
-        PyArray_CreateSortedStridePerm(PyArray_NDIM(arr), PyArray_SHAPE(arr),
+        PyArray_CreateSortedStridePerm(PyArray_NDIM(arr),
                                 PyArray_STRIDES(arr), strideperm);
 
         stride = strideperm[ndim-1].stride;
