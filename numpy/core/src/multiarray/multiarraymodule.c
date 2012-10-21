@@ -1566,8 +1566,8 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
 #define STRIDING_OK(op, order) \
                 ((order) == NPY_ANYORDER || \
                  (order) == NPY_KEEPORDER || \
-                 ((order) == NPY_CORDER && PyArray_ISCONTIGUOUS(op)) || \
-                 ((order) == NPY_FORTRANORDER && PyArray_ISFORTRAN(op)))
+                 ((order) == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(op)) || \
+                 ((order) == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(op)))
 
 static PyObject *
 _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)

@@ -1015,10 +1015,10 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
         }
     }
 
-    if (order == NPY_CORDER && PyArray_ISCONTIGUOUS(arr)) {
+    if (order == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(arr)) {
         return PyArray_Newshape(arr, &newdim, NPY_CORDER);
     }
-    else if (order == NPY_FORTRANORDER && PyArray_ISFORTRAN(arr)) {
+    else if (order == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(arr)) {
         return PyArray_Newshape(arr, &newdim, NPY_FORTRANORDER);
     }
     /* For KEEPORDER, check if we can make a flattened view */
