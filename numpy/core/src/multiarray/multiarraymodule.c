@@ -1517,26 +1517,18 @@ PyArray_EquivTypenums(int typenum1, int typenum2)
 /*** END C-API FUNCTIONS **/
 
 static PyObject *
-_prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
+_prepend_ones(PyArrayObject *arr, int nd, int ndmin)
 {
     npy_intp newdims[NPY_MAXDIMS];
     npy_intp newstrides[NPY_MAXDIMS];
-    npy_intp newstride;
     int i, k, num;
     PyArrayObject *ret;
     PyArray_Descr *dtype;
 
-    if (order == NPY_FORTRANORDER || PyArray_ISFORTRAN(arr) || PyArray_NDIM(arr) == 0) {
-        newstride = PyArray_DESCR(arr)->elsize;
-    }
-    else {
-        newstride = PyArray_STRIDES(arr)[0] * PyArray_DIMS(arr)[0];
-    }
-
     num = ndmin - nd;
     for (i = 0; i < num; i++) {
         newdims[i] = 1;
-        newstrides[i] = newstride;
+        newstrides[i] = PyArray_DESCR(arr)->elsize;
     }
     for (i = num; i < ndmin; i++) {
         k = i - num;
@@ -1677,7 +1669,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
      * create a new array from the same data with ones in the shape
      * steals a reference to ret
      */
-    return _prepend_ones(ret, nd, ndmin, order);
+    return _prepend_ones(ret, nd, ndmin);
 
 clean_type:
     Py_XDECREF(type);
