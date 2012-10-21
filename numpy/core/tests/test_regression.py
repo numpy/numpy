@@ -61,6 +61,16 @@ class TestRegression(TestCase):
         np.zeros([3], order='C')
         np.zeros([3], int, order='C')
 
+    def test_asarray_with_order(self,level=rlevel):
+        """Check that nothing is done when order='F' and array C/F-contiguous"""
+        a = np.ones(2)
+        assert_(a is np.asarray(a, order='F'))
+
+    def test_ravel_with_order(self,level=rlevel):
+        """Check that ravel works when order='F' and array C/F-contiguous"""
+        a = np.ones(2)
+        assert_(not a.ravel('F').flags.owndata)
+
     def test_sort_bigendian(self,level=rlevel):
         """Ticket #47"""
         a = np.linspace(0, 10, 11)
