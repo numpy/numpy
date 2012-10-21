@@ -1825,9 +1825,6 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     }
 
     arrflags = PyArray_FLAGS(arr);
-    if (PyArray_NDIM(arr) <= 1 && (flags & NPY_ARRAY_F_CONTIGUOUS)) {
-        flags |= NPY_ARRAY_C_CONTIGUOUS;
-    }
            /* If a guaranteed copy was requested */
     copy = (flags & NPY_ARRAY_ENSURECOPY) ||
            /* If C contiguous was requested, and arr is not */
@@ -1837,9 +1834,8 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
            ((flags & NPY_ARRAY_ALIGNED) &&
                    (!(arrflags & NPY_ARRAY_ALIGNED))) ||
            /* If a Fortran contiguous array was requested, and arr is not */
-           (PyArray_NDIM(arr) > 1 &&
-                   ((flags & NPY_ARRAY_F_CONTIGUOUS) &&
-                   (!(arrflags & NPY_ARRAY_F_CONTIGUOUS)))) ||
+           ((flags & NPY_ARRAY_F_CONTIGUOUS) &&
+                   (!(arrflags & NPY_ARRAY_F_CONTIGUOUS))) ||
            /* If a writeable array was requested, and arr is not */
            ((flags & NPY_ARRAY_WRITEABLE) &&
                    (!(arrflags & NPY_ARRAY_WRITEABLE))) ||
@@ -3570,14 +3566,33 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
                     int inflag, int *objflags)
 {
     int i;
+    npy_bool not_cf_contig = 0;
+    npy_bool nod = 0; /* A dim != 1 was found */
+
+    /* Check if new array is both F- and C-contiguous */
+    for (i = 0; i < nd; i++) {
+        if (dims[i] != 1) {
+            if (nod) {
+                not_cf_contig = 1;
+                break;
+            }
+            nod = 1;
+        }
+    }
+
     /* Only make Fortran strides if not contiguous as well */
     if ((inflag & (NPY_ARRAY_F_CONTIGUOUS|NPY_ARRAY_C_CONTIGUOUS)) ==
                                             NPY_ARRAY_F_CONTIGUOUS) {
         for (i = 0; i < nd; i++) {
             strides[i] = itemsize;
-            itemsize *= dims[i] ? dims[i] : 1;
+            if (dims[i]) {
+                itemsize *= dims[i];
+            }
+            else {
+                not_cf_contig = 0;
+            }
         }
-        if (nd > 1) {
+        if (not_cf_contig) {
             *objflags = ((*objflags)|NPY_ARRAY_F_CONTIGUOUS) &
                                             ~NPY_ARRAY_C_CONTIGUOUS;
         }
@@ -3588,9 +3603,14 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
     else {
         for (i = nd - 1; i >= 0; i--) {
             strides[i] = itemsize;
-            itemsize *= dims[i] ? dims[i] : 1;
+            if (dims[i]) {
+                itemsize *= dims[i];
+            }
+            else {
+                not_cf_contig = 0;
+            }
         }
-        if (nd > 1) {
+        if (not_cf_contig) {
             *objflags = ((*objflags)|NPY_ARRAY_C_CONTIGUOUS) &
                                             ~NPY_ARRAY_F_CONTIGUOUS;
         }
