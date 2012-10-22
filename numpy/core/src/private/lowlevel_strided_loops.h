@@ -554,7 +554,7 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
                     stride = ((PyArray_NDIM(arr) == 0) ? 0 : \
                                     ((PyArray_NDIM(arr) == 1) ? \
                                             PyArray_STRIDE(arr, 0) : \
-                                            PyArray_DESCR(arr)->elsize)) \
+                                            PyArray_ITEMSIZE(arr))) \
 
 
 #define PyArray_TRIVIALLY_ITERABLE_PAIR(arr1, arr2) (\
@@ -577,10 +577,10 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
                     data2 = PyArray_BYTES(arr2); \
                     stride1 = (size1 == 1 ? 0 : ((PyArray_NDIM(arr1) == 1) ? \
                                                 PyArray_STRIDE(arr1, 0) : \
-                                                PyArray_DESCR(arr1)->elsize)); \
+                                                PyArray_ITEMSIZE(arr1))); \
                     stride2 = (size2 == 1 ? 0 : ((PyArray_NDIM(arr2) == 1) ? \
                                                 PyArray_STRIDE(arr2, 0) : \
-                                                PyArray_DESCR(arr2)->elsize)); \
+                                                PyArray_ITEMSIZE(arr2))); \
                 }
 
 #define PyArray_TRIVIALLY_ITERABLE_TRIPLE(arr1, arr2, arr3) (\
@@ -618,13 +618,13 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
                     data3 = PyArray_BYTES(arr3); \
                     stride1 = (size1 == 1 ? 0 : ((PyArray_NDIM(arr1) == 1) ? \
                                                 PyArray_STRIDE(arr1, 0) : \
-                                                PyArray_DESCR(arr1)->elsize)); \
+                                                PyArray_ITEMSIZE(arr1))); \
                     stride2 = (size2 == 1 ? 0 : ((PyArray_NDIM(arr2) == 1) ? \
                                                 PyArray_STRIDE(arr2, 0) : \
-                                                PyArray_DESCR(arr2)->elsize)); \
+                                                PyArray_ITEMSIZE(arr2))); \
                     stride3 = (size3 == 1 ? 0 : ((PyArray_NDIM(arr3) == 1) ? \
                                                 PyArray_STRIDE(arr3, 0) : \
-                                                PyArray_DESCR(arr3)->elsize)); \
+                                                PyArray_ITEMSIZE(arr3))); \
                 }
 
 #endif

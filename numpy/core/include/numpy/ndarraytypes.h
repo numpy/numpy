@@ -757,7 +757,7 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 
 /*
  * Note: all 0-d arrays are C_CONTIGUOUS and F_CONTIGUOUS. An N-d
- * array that is C_CONTIGUOUS may also be F_CONTIGUOUS if only
+ * array that is C_CONTIGUOUS is also F_CONTIGUOUS if only
  * one axis has a dimension different from one (ie. a 1x3x1 array).
  */
 

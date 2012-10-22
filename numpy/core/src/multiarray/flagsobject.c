@@ -88,9 +88,10 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
 
 /*
  * Check whether the given array is stored contiguously
- * in memory. And update the passed in ap apropriately.
+ * in memory. And update the passed in ap flags apropriately.
  *
- * 0-strided arrays are not contiguous. A dimension == 1 is always ok.
+ * A dimension == 1 stride is ignored for contiguous flags and a 0-sized array
+ * is always both C- and F-Contiguous. 0-strided arrays are not contiguous.
  */
 static void
 _UpdateContiguousFlags(PyArrayObject *ap)
