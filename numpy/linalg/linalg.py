@@ -299,8 +299,8 @@ def solve(a, b):
 
     Check that the solution is correct:
 
-    >>> (np.dot(a, x) - b).sum()
-    0.0
+    >>> np.allclose((np.dot(a, x), b))
+    True
 
     """
     a, _ = _makearray(a)
