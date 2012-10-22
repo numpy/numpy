@@ -299,7 +299,7 @@ def solve(a, b):
 
     Check that the solution is correct:
 
-    >>> np.allclose((np.dot(a, x), b))
+    >>> np.allclose(np.dot(a, x), b)
     True
 
     """
