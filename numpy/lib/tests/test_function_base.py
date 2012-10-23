@@ -155,7 +155,9 @@ class TestInsert(TestCase):
              [1, 1, 1]]
         assert_equal(insert(a, 0, [2, 2, 2], axis=0), r)
         assert_equal(insert(a, 0, 2, axis=0), r)
-        assert_equal(insert(a, 2, 2, axis=1), [[1, 1, 2, 1]])
+        a = np.arange(4).reshape(2,2)
+        assert_equal(insert(a[:,:1], 1, a[:,1], axis=1), a)
+        assert_equal(insert(a[:1,:], 1, a[1,:], axis=0), a)
 
 class TestAmax(TestCase):
     def test_basic(self):
