@@ -1,0 +1,135 @@
+			 umath_linalg module
+
+This module provides gufuncs for several functions that were already present in
+numpy.linalg. There are some extra functions thrown in.
+
+Having them as gufuncs allows broadcasting of calls, which can be useful when 
+there are various problems to solve.
+
+The functions are members of a module currently at numpy.core.umath_linalg
+
+			       Contents
+The following functions are already implemented:
+
+- inner1d: (n),(n) -> ()
+  dot product of the vectors in the inner dimension. Uses BLAS.
+- inner2d: (n),(n),(n) -> ()
+  u,v,w being the inputs: sum(u[i]*v[i]*w[i]) for all i in n. Copied for 
+  convenience from umath_tests
+- matrix_multiply: (m,k),(k,n) -> (m,n)
+  matrix multiplication. Uses BLAS.
+- slogdet: (m,m)->(),()
+  sign and logarithm of the determinant of the input. Uses LAPACK.
+- det: (m,m)->()
+  determinant of the input, computed using slogdet and thus, uses LAPACK.
+- eigh_lo: (m,n)->(m)(m,n)
+  eigenvalues and eigenvectors of symmetric/hermitian matrices, encoded in the
+  lower diagonal. Uses LAPACK.
+- eigh_up: (m,m)->(m)(m,m)
+  eigenvalues and eigenvectors of symmetric/hermitian matrices, encoded in the
+  upper diagonal. Uses LAPACK.
+- eigvalsh_lo: (m,m)->(m)
+  eigenvalues of symmetric/hermitian matrices, encoded in the lower triangular
+  part. Uses LAPACK.
+- eigvalsh_up: (m,m)->(m)
+  eigenvalues of symmetric/hermitian matrices, encoded in the upper triangular
+  part. Uses LAPACK.
+- solve: (m,m),(m,n)->(m,n)
+  Solve X for a system AX=B, X and B being matrices. Uses LAPACK.
+- solve1: (m,m),(m)->(m)
+  Solve x for a system Ax=b, x and b being vectors. Uses LAPACK.
+- inv: (m,m)->(m,m)
+  Compute the inverse of a matrix. Implemented using solve. Uses LAPACK.
+- cholesky: (m,m)->(m,m)
+  Perform cholesky decomposition of hermitian positive-definite matrices.
+  The lower diagonal of the input matrix is used. Uses LAPACK.
+- svd_m: (m,n)->(m)
+  singular value decomposition of the input matrix. Use this function when
+  m<=n and only the singular values are needed. Uses LAPACK.
+- svd_n: (m,n)->(n)
+  singular value decomposition of the input matrix. Use this function when
+  m>=n and only the singular values are needed. Uses LAPACK.
+- svd_m_s, svd_m_f, svd_n_s, svd_n_f *
+  singular value decomposition resulting in U s V. See note on svd.
+- eig: (m,m)->(m),(m,m)
+  eigenvalues and eigenvectors of general matrices. Uses LAPACK.
+- eigvals; (m,m)->(m)
+  eigenvalues of general matrices. Uses LAPACK.
+- quadratic_form: (m),(m,n),(n)->()
+  computes the quadratic form uQv. Uses BLAS.
+- add3: (),(),()->()
+  3-way element-wise addition.
+- multiply3: (),(),()->()
+  3-way element-wise product.
+- multiply3_add: (),(),(),()->()
+  3-way element-wise product plus addition.
+- multply_add: (),(),()->()
+  element-wise multiply add.
+- multiply_add2: (),(),(),()->()
+  element-wise product with 2 additions.
+- multiply4: (),(),(),()->()
+  4-way element-wise product.
+- multiply4_add: (),(),(),(),()->()
+  4-way element-wise product plus addition.
+
+		    Note on uniform parameters
+There are some configuration parameters in some of the functions in the linalg
+module that configure how some computation is to be done. Examples are eigh and
+eigvalsh, that take an optional keywork parameter that allows to specify 
+whether to use the upper or the lower triangular part (UPLO). That parameter is
+considered uniform for all broadcast operations. As in the gufunc interface
+there is no way to specify uniform parameters, it has been encoded in the gufunc
+name, so for eigh we have the functions eigh_lo and eigh_up (for 'L' and 'U').
+
+Similar techniques have been applied in other places.
+
+			     Note on svd
+svd uses uniform parameters to specify the result types it will be producing
+(full_matrices and compute_uv in numpy.linalg).
+svd is also special in the sense that the signature of the function depends on
+the size of the parameters, as for a matrix m by n, the result is a vector with
+min(m,n) values. This is not supported by the gufunc harness, so specialized
+versions of the gufunc are provided that encode whether m<n or m>n, so they
+can specify the signature accordingly. This is also encoded in the gufunc name.
+
+The function to use, in pseudocode, would be:
+
+func = 'svd'
+if (m < n):
+   func += '_m'
+else:
+   func += '_n'
+
+if compute_uv:
+   if full_matrices:
+      func += '_f'
+   else:
+      func += '_s'
+
+Due to a bug in the gufunc harness, only svd_m and svd_n are functional ATM.
+
+			Bug on gufunc harness
+There is a bug in the gufunc harness when handling gufuncs with signatures that
+reuse one "letter" when specifying dimensions in the same matrix. That's the
+natural way to describe a square matrix. So, if in the gufunc definition a
+signature like (m,m)->() is passed, the functions will be called with incorrect
+stride information and won't work.
+
+This has been worked around in functions where the square matrix was an input,
+by just by using different letters for the different dimensions. Correct code
+will work, the only problem is that the underlying system will accept calls with
+non-square matrices in the inner dimension, resulting in undefined behavior in
+the gufunc code.
+
+For example, the det gufunc should have a (m,m)->() signature, but due to this
+bug it is defined as (m,n)->(). However, it will only work properly with 
+matrices that are (m,m)->().
+
+The same problem in the output parameters becomes unsolvable, as we can not add
+a dummy dimension that is not in the input parameters, as the system won't know
+the size of the result. This bugs prevent having functional svd gufuncs beyond
+the one that only returns the singular values, as the others generate square
+matrices in the output.
+
+We are looking into fixing this bug.
+
