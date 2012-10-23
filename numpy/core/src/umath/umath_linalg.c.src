@@ -161,20 +161,42 @@ extern int FNAME(zungqr)(int *m, int *n, int *k, f2c_doublecomplex a[],
 
 extern int 
 FNAME(scopy)(int *n, float *sx, int *incx, float *sy, int *incy);
+
 extern int 
-FNAME(dcopy)(int *n, double *sx, int *incx, double *sy, int *incy);
+FNAME(dcopy)(int *n,
+	     double *sx, int *incx,
+	     double *sy, int *incy);
+
 extern int 
-FNAME(ccopy)(int *n, f2c_complex *sx, int *incx, f2c_complex *sy, int *incy);
+FNAME(ccopy)(int *n,
+	     f2c_complex *sx, int *incx,
+	     f2c_complex *sy, int *incy);
+
 extern int 
-FNAME(zcopy)(int *n, f2c_doublecomplex *sx, int *incx, f2c_doublecomplex *sy, int *incy);
+FNAME(zcopy)(int *n,
+	     f2c_doublecomplex *sx, int *incx,
+	     f2c_doublecomplex *sy, int *incy);
+
 extern float 
-FNAME(sdot)(int *n, float *sx, int *incx, float *sy, int *incy);
+FNAME(sdot)(int *n,
+	    float *sx, int *incx,
+	    float *sy, int *incy);
+
 extern double 
-FNAME(ddot)(int *n, double *sx, int *incx, double *sy, int *incy);
+FNAME(ddot)(int *n,
+	    double *sx, int *incx,
+	    double *sy, int *incy);
+
 extern f2c_complex 
-FNAME(cdot)(int *n, f2c_complex *sx, int *incx, f2c_complex *sy, int *incy);
+FNAME(cdotu)(int *n,
+	     f2c_complex *sx, int *incx,
+	     f2c_complex *sy, int *incy);
+
 extern f2c_doublecomplex 
-FNAME(zdot)(int *n, f2c_doublecomplex *sx, int *incx, f2c_doublecomplex *sy, int *incy);
+FNAME(zdotu)(int *n,
+	     f2c_doublecomplex *sx, int *incx,
+	     f2c_doublecomplex *sy, int *incy);
+
 extern int 
 FNAME(sgemm)(char *transa, char *transb, 
              int *m, int *n, int *k, 
@@ -212,12 +234,23 @@ FNAME(zgemm)(char *transa, char *transb,
 #define LAPACK_T(FUNC) printf("Calling LAPACK ( " # FUNC " )\n"); FNAME(FUNC)
 #define LAPACK(FUNC) FNAME(FUNC)
 
-/* TODO: Fix this properly */
-typedef int fortran_int;
+typedef int               fortran_int;
 typedef float             fortran_real;
 typedef double            fortran_doublereal;
 typedef f2c_complex       fortran_complex;
 typedef f2c_doublecomplex fortran_doublecomplex;
+
+/*
+ *****************************************************************************
+ **                      Some handy functions                               **
+ *****************************************************************************
+ */
+
+static inline void *
+offset_ptr(void* ptr, ptrdiff_t offset)
+{
+    return (void*)((uint8_t*)ptr + offset);
+}
 
 /*
  *****************************************************************************
@@ -332,6 +365,71 @@ dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
            params->row_strides, params->column_strides);
 }
 
+
+static inline float
+FLOAT_add(float op1, float op2)
+{
+    return op1 + op2;
+}
+
+static inline double
+DOUBLE_add(double op1, double op2)
+{
+    return op1 + op2;
+}
+
+static inline COMPLEX_t
+CFLOAT_add(COMPLEX_t op1, COMPLEX_t op2)
+{
+    COMPLEX_t result;
+    result.array[0] = op1.array[0] + op2.array[0];
+    result.array[1] = op1.array[1] + op2.array[1];
+
+    return result;
+}
+
+static inline DOUBLECOMPLEX_t
+CDOUBLE_add(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
+{
+    DOUBLECOMPLEX_t result;
+    result.array[0] = op1.array[0] + op2.array[0];
+    result.array[1] = op1.array[1] + op2.array[1];
+
+    return result;
+}
+
+static inline float
+FLOAT_mul(float op1, float op2)
+{
+    return op1*op2;
+}
+
+static inline double
+DOUBLE_mul(double op1, double op2)
+{
+    return op1*op2;
+}
+
+static inline COMPLEX_t
+CFLOAT_mul(COMPLEX_t op1, COMPLEX_t op2)
+{
+    COMPLEX_t result;
+    result.array[0] = op1.array[0]*op2.array[0] - op1.array[1]*op2.array[1];
+    result.array[1] = op1.array[1]*op2.array[0] + op1.array[0]*op2.array[1];
+
+    return result;
+}
+
+static inline DOUBLECOMPLEX_t
+CDOUBLE_mul(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
+{
+    DOUBLECOMPLEX_t result;
+    result.array[0] = op1.array[0]*op2.array[0] - op1.array[1]*op2.array[1];
+    result.array[1] = op1.array[1]*op2.array[0] + op1.array[0]*op2.array[1];
+
+    return result;
+}
+
 static inline void
 print_FLOAT(npy_float s)
 {
@@ -401,6 +499,14 @@ dump_@TYPE@_matrix(const char* name, size_t rows, size_t columns, const @typ@* p
     INIT_OUTER_LOOP_3           \
     npy_intp s3 = *steps++;
 
+#define INIT_OUTER_LOOP_5       \
+    INIT_OUTER_LOOP_4           \
+    npy_intp s4 = *steps++;
+
+#define INIT_OUTER_LOOP_6       \
+    INIT_OUTER_LOOP_5           \
+    npy_intp s5 = *steps++;
+
 #define BEGIN_OUTER_LOOP_2      \
     for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1) {
 
@@ -409,6 +515,21 @@ dump_@TYPE@_matrix(const char* name, size_t rows, size_t columns, const @typ@* p
 
 #define BEGIN_OUTER_LOOP_4      \
     for (N_ = 0; N_ < dN; N_++, args[0] += s0, args[1] += s1, args[2] += s2, args[3] += s3) {
+
+#define BEGIN_OUTER_LOOP_5      \
+    for (N_ = 0; N_ < dN; N_++, args[0] += s0, \
+	                        args[1] += s1, \
+	                        args[2] += s2, \
+                                args[3] += s3, \
+	                        args[4] += s4) {
+
+#define BEGIN_OUTER_LOOP_6      \
+    for (N_ = 0; N_ < dN; N_++, args[0] += s0, \
+	                        args[1] += s1, \
+                                args[2] += s2, \
+                                args[3] += s3, \
+                                args[4] += s4, \
+                                args[5] += s5) {
 
 #define END_OUTER_LOOP  }
 
@@ -420,6 +541,8 @@ update_pointers(uint8_t** bases, ptrdiff_t* offsets, size_t count)
         bases[i] += offsets[i];
     }
 }
+
+
 
 /*
  *****************************************************************************
@@ -581,7 +704,7 @@ static inline void
     npy_intp is1=steps[0], is2=steps[1];
     BEGIN_OUTER_LOOP_3
         char *ip1=args[0], *ip2=args[1], *op=args[2];
-    @typ@ sum = 0;
+        @typ@ sum = 0;
         for (i = 0; i < di; i++) {
             sum += (*(@typ@ *)ip1) * (*(@typ@ *)ip2);
             ip1 += is1;
@@ -835,11 +958,6 @@ static void
    #exp_func=npy_expf,npy_exp#
    #zero=0.0f,0.0#
 */
-static inline @typ@
-@TYPE@_mult(@typ@ op1, @typ@ op2)
-{
-    return op1 * op2;
-}
 
 static inline void
 @TYPE@_slogdet_from_factored_diagonal(@typ@* src,
@@ -982,15 +1100,20 @@ static inline void
 }
 
 static void
-@TYPE@_slogdet(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+@TYPE@_slogdet(char **args,
+	       npy_intp *dimensions,
+	       npy_intp *steps,
+	       void *NPY_UNUSED(func))
 {
     fortran_int m;
     uint8_t* tmp_buff = NULL;
     size_t matrix_size;
     size_t pivot_size;
     /* notes:
-     *   matrix will need to be copied always, as factorization in lapack is made inplace
-     *   matrix will need to be in column-major order, as expected by lapack code (fortran)
+     *   matrix will need to be copied always, as factorization in lapack is 
+     *          made inplace
+     *   matrix will need to be in column-major order, as expected by lapack 
+     *          code (fortran)
      *   always a square matrix
      *   need to allocate memory for both, matrix_buffer and pivot buffer
      */
@@ -1118,6 +1241,7 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
     if (info != 0)
         goto error;
 
+    work = mem_buff;
     lwork = (fortran_int)query_work_size;
     liwork = query_iwork_size;
     mem_buff2 = malloc(lwork*sizeof(@typ@) + liwork*sizeof(fortran_int));
@@ -1129,7 +1253,7 @@ init_@lapack_func@(EIGH_PARAMS_t* params, char JOBZ, char UPLO,
 
     params->A = a;
     params->W = w;
-    params->WORK = mem_buff2;
+    params->WORK = work;
     params->RWORK = NULL; /* unused */
     params->IWORK = iwork;
     params->N = N;
@@ -1210,7 +1334,9 @@ init_@lapack_func@(EIGH_PARAMS_t *params, char JOBZ, char UPLO,
     lrwork = (fortran_int)query_rwork_size;
     liwork = query_iwork_size;
 
-    mem_buff2 = malloc(lwork*sizeof(@typ@) + lrwork*sizeof(@basetyp@) + liwork*sizeof(fortran_int));
+    mem_buff2 = malloc(lwork*sizeof(@typ@) + 
+		       lrwork*sizeof(@basetyp@) + 
+		       liwork*sizeof(fortran_int));
     if (!mem_buff2)
         goto error;
     work = mem_buff2;
@@ -1370,6 +1496,7 @@ typedef struct gesv_params_struct
     fortran_int LDA;
     fortran_int LDB;
 } GESV_PARAMS_t;
+
 /**begin repeat
 
    #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
@@ -2385,19 +2512,28 @@ static inline void
    #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
  */
 static void
-@TYPE@_svd_N(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+@TYPE@_svd_N(char **args,
+	     npy_intp *dimensions,
+	     npy_intp *steps,
+	     void *NPY_UNUSED(func))
 {
     @TYPE@_svd_wrapper('N', args, dimensions, steps);
 }
 
 static void
-@TYPE@_svd_S(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+@TYPE@_svd_S(char **args,
+	     npy_intp *dimensions,
+	     npy_intp *steps,
+	     void *NPY_UNUSED(func))
 {
     @TYPE@_svd_wrapper('S', args, dimensions, steps);
 }
 
 static void
-@TYPE@_svd_A(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
+@TYPE@_svd_A(char **args,
+	     npy_intp *dimensions,
+	     npy_intp *steps,
+	     void *NPY_UNUSED(func))
 {
     @TYPE@_svd_wrapper('A', args, dimensions, steps);
 }
@@ -2405,7 +2541,276 @@ static void
 /**end repeat**/
 
 /* -------------------------------------------------------------------------- */
-                      /* ufunc registration  */
+		       /* some basic ufuncs */
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #typ=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
+ */
+
+static void
+@TYPE@_add3(char **args,
+	    npy_intp *dimensions,
+	    npy_intp* steps,
+	    void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_4
+    BEGIN_OUTER_LOOP_4
+        @typ@ *op1p = (@typ@ *) args[0];
+        @typ@ *op2p = (@typ@ *) args[1];
+	@typ@ *op3p = (@typ@ *) args[2];
+	@typ@ *op4p = (@typ@ *) args[3];
+	@typ@ tmp;
+	tmp   = @TYPE@_add(*op1p, *op2p);
+	*op4p = @TYPE@_add(tmp, *op3p); 
+    END_OUTER_LOOP
+} 
+
+static void
+@TYPE@_multiply3(char **args,
+		 npy_intp *dimensions,
+		 npy_intp* steps,
+		 void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_4
+    BEGIN_OUTER_LOOP_4
+        @typ@ *op1p = (@typ@ *) args[0];
+        @typ@ *op2p = (@typ@ *) args[1];
+	@typ@ *op3p = (@typ@ *) args[2];
+	@typ@ *op4p = (@typ@ *) args[3];
+	@typ@ tmp;
+	tmp   = @TYPE@_mul(*op1p, *op2p);
+	*op4p = @TYPE@_mul(tmp, *op3p); 
+    END_OUTER_LOOP
+} 
+
+static void
+@TYPE@_multiply3_add(char **args,
+		     npy_intp *dimensions,
+		     npy_intp* steps,
+		     void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_5
+    BEGIN_OUTER_LOOP_5
+        @typ@ *op1p = (@typ@ *) args[0];
+        @typ@ *op2p = (@typ@ *) args[1];
+	@typ@ *op3p = (@typ@ *) args[2];
+	@typ@ *op4p = (@typ@ *) args[3];
+	@typ@ *op5p = (@typ@ *) args[4];
+	@typ@ tmp, tmp2;
+
+	tmp   = @TYPE@_mul(*op1p, *op2p);
+	tmp2  = @TYPE@_mul(tmp, *op3p);
+	*op5p = @TYPE@_add(tmp2, *op4p);
+    END_OUTER_LOOP
+} 
+
+static void
+@TYPE@_multiply_add(char **args,
+		    npy_intp *dimensions,
+		    npy_intp* steps,
+		    void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_4
+    BEGIN_OUTER_LOOP_4
+        @typ@ *op1p = (@typ@ *) args[0];
+        @typ@ *op2p = (@typ@ *) args[1];
+	@typ@ *op3p = (@typ@ *) args[2];
+	@typ@ *op4p = (@typ@ *) args[3];
+	@typ@ tmp;
+	tmp   = @TYPE@_mul(*op1p, *op2p);
+	*op4p = @TYPE@_add(tmp, *op3p); 
+    END_OUTER_LOOP
+} 
+
+static void
+@TYPE@_multiply_add2(char **args,
+		     npy_intp *dimensions,
+		     npy_intp* steps,
+		     void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_5
+    BEGIN_OUTER_LOOP_5
+        @typ@ *op1p = (@typ@ *) args[0];
+        @typ@ *op2p = (@typ@ *) args[1];
+	@typ@ *op3p = (@typ@ *) args[2];
+	@typ@ *op4p = (@typ@ *) args[3];
+	@typ@ *op5p = (@typ@ *) args[4];
+	@typ@ tmp, tmp2;
+	tmp   = @TYPE@_mul(*op1p, *op2p);
+	tmp2  = @TYPE@_add(*op3p, *op4p);
+	*op5p = @TYPE@_add(tmp, tmp2);
+    END_OUTER_LOOP
+} 
+
+static void
+@TYPE@_multiply4(char **args,
+		 npy_intp *dimensions,
+		 npy_intp* steps,
+		 void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_5
+    BEGIN_OUTER_LOOP_5
+        @typ@ *op1p = (@typ@ *) args[0];
+        @typ@ *op2p = (@typ@ *) args[1];
+	@typ@ *op3p = (@typ@ *) args[2];
+	@typ@ *op4p = (@typ@ *) args[3];
+	@typ@ *op5p = (@typ@ *) args[4];
+	@typ@ tmp, tmp2;
+	tmp   = @TYPE@_mul(*op1p, *op2p);
+	tmp2  = @TYPE@_mul(*op3p, *op4p);
+	*op5p = @TYPE@_mul(tmp, tmp2);
+    END_OUTER_LOOP
+} 
+
+static void
+@TYPE@_multiply4_add(char **args,
+		     npy_intp *dimensions,
+		     npy_intp* steps,
+		     void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_6
+    BEGIN_OUTER_LOOP_6
+        @typ@ *op1p = (@typ@ *) args[0];
+        @typ@ *op2p = (@typ@ *) args[1];
+	@typ@ *op3p = (@typ@ *) args[2];
+	@typ@ *op4p = (@typ@ *) args[3];
+	@typ@ *op5p = (@typ@ *) args[4];
+	@typ@ *op6p = (@typ@ *) args[5];
+	@typ@ tmp, tmp2, tmp3;
+	tmp   = @TYPE@_mul(*op1p, *op2p);
+	tmp2  = @TYPE@_mul(*op3p, *op4p);
+	tmp3  = @TYPE@_mul(tmp, tmp2);
+	*op6p = @TYPE@_add(tmp3, *op5p);
+    END_OUTER_LOOP
+} 
+
+/**end repeat**/
+
+/* -------------------------------------------------------------------------- */
+			 /* quadratic form */
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #typ=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
+   #ftyp=fortran_real,fortran_doublereal,fortran_complex,fortran_doublecomplex#
+   #zero=0.0f,0.0,c_zero,z_zero#
+   #blas_dot=FNAME(sdot),FNAME(ddot),FNAME(cdotu),FNAME(zdotu)#
+ */
+
+static inline @typ@
+@TYPE@_dot_blas(size_t count,
+	        void *X, intptr_t X_byte_step,
+		void *Y, intptr_t Y_byte_step)
+{
+    @ftyp@ result;
+    fortran_int N = (fortran_int) count;
+    fortran_int INCX = X_byte_step/sizeof(@ftyp@);
+    fortran_int INCY = Y_byte_step/sizeof(@ftyp@);
+
+    result = @blas_dot@(&N, X, &INCX, Y, &INCY);
+    return (@typ@) result;
+} 
+
+static inline @typ@
+@TYPE@_dot_std(size_t count,
+	       void *X, intptr_t X_byte_step,
+	       void *Y, intptr_t Y_byte_step)
+{
+    size_t i;
+    @typ@ acc, *x_ptr, *y_ptr;
+    x_ptr = (@typ@ *)x_ptr;
+    y_ptr = (@typ@ *)y_ptr;
+
+    acc = @TYPE@_mul(*x_ptr, *y_ptr);    
+    x_ptr = offset_ptr(x_ptr, X_byte_step);
+    y_ptr = offset_ptr(y_ptr, Y_byte_step);
+    
+    for (i = 1; i < count; i++) {
+        @typ@ tmp;
+
+	tmp = @TYPE@_mul(*x_ptr, *y_ptr);
+	acc = @TYPE@_add(acc, tmp);
+
+	x_ptr = offset_ptr(x_ptr, X_byte_step);
+	y_ptr = offset_ptr(y_ptr, Y_byte_step);
+    }
+
+    return acc;
+}
+
+/* uQv, where u and v are vectors and Q is a matrix */
+static void
+@TYPE@_quadratic_form(char **args,
+		      npy_intp *dimensions,
+		      npy_intp* steps,
+		      void *NPY_UNUSED(func))
+{
+    INIT_OUTER_LOOP_4
+    size_t m = (size_t)dimensions[0];
+    size_t n = (size_t)dimensions[1];
+    ptrdiff_t u_step = (ptrdiff_t)steps[0];
+    ptrdiff_t Q_row_step = (ptrdiff_t)steps[1];
+    ptrdiff_t Q_column_step = (ptrdiff_t)steps[2];
+    ptrdiff_t v_step = (ptrdiff_t)steps[3];
+
+    if ((0 == (Q_row_step % sizeof(@ftyp@))) &&
+	(0 == (u_step % sizeof(@ftyp@)))) {
+        /* use blas loops for dot */
+        BEGIN_OUTER_LOOP_4
+            size_t column;
+            uint8_t *u, *Q, *v;
+	    @typ@ *r;
+	    @typ@ accum = @zero@;
+
+	    u = (uint8_t *)args[0]; /* u (m)   [in] */
+	    Q = (uint8_t *)args[1]; /* Q (m,n) [in] */
+	    v = (uint8_t *)args[2]; /* v (n)   [in] */
+	    r = (@typ@ *)args[3];   /* result  [out] */
+	    /* sum (compute u * Q[i] * v[i]) for all i. Q[i] are the different columns on Q */
+	    
+	    for (column = 0; column < n; ++column) {
+		@typ@ tmp, tmp2;
+		tmp = @TYPE@_dot_blas(m,
+				      Q, Q_row_step,
+				      u, u_step);
+		tmp2  = @TYPE@_mul(tmp, *(@typ@*)v);
+		accum = @TYPE@_add(accum, tmp2);
+		Q += Q_column_step;
+		v += v_step;
+	    }
+	    
+	    *r = accum;
+	END_OUTER_LOOP
+    } else {
+        BEGIN_OUTER_LOOP_4
+	    size_t column;
+            uint8_t *u, *Q, *v;
+	    @typ@ *r;
+	    @typ@ accum = @zero@;
+	    u = (uint8_t *)args[0]; /* u (m)   [in] */
+	    Q = (uint8_t *)args[1]; /* Q (m,n) [in] */
+	    v = (uint8_t *)args[2]; /* v (n)   [in] */
+	    r = (@typ@ *)args[3];   /* result  [out] */
+	    /* sum (compute u * Q[i] * v[i]) for all i. Q[i] are the different columns on Q */
+
+	    for (column = 0; column < n; ++column) {
+		@typ@ tmp, tmp2;
+		tmp = @TYPE@_dot_std(m, Q, Q_row_step, u, u_step);
+		tmp2 = @TYPE@_mul(tmp, *(@typ@*)v);
+		accum = @TYPE@_add(accum, tmp2);
+		Q += Q_column_step;
+		v += v_step;
+	    }
+	    
+	    *r = accum;
+	END_OUTER_LOOP
+    }
+}
+/**end repeat**/
+
+/* -------------------------------------------------------------------------- */
+		      /* gufunc registration  */
 
 static void *array_of_nulls[] = {
     (void *)NULL,
@@ -2456,6 +2861,15 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_S);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_A);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eig);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eigvals);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(quadratic_form);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(add3);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply3);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply3_add);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply_add);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply_add2);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply4);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply4_add);
+
 
 static char equal_2_types[] = {
     NPY_FLOAT, NPY_FLOAT,
@@ -2469,6 +2883,27 @@ static char equal_3_types[] = {
     NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
     NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT,
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE 
+};
+
+static char equal_4_types[] = {
+    NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
+    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
+    NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT,
+    NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE
+};
+
+static char equal_5_types[] = {
+    NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
+    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
+    NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT,
+    NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE
+};
+
+static char equal_6_types[] = {
+    NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT, NPY_FLOAT,
+    NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE, NPY_DOUBLE,
+    NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT,
+    NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE
 };
 
 /* second result is logdet, that will always be a REAL */
@@ -2542,7 +2977,6 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         inner1d_funcs,
         equal_2_types
     },
-
     {
         "innerwt",
         "(i),(i),(i)->()",
@@ -2552,7 +2986,6 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         innerwt_funcs,
         equal_3_types
     },
-
     {
         "matrix_multiply",
         "(m,k),(k,n)->(m,n)",
@@ -2562,7 +2995,6 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         matrix_multiply_funcs,
         equal_3_types
     },
-
     {
         "slogdet",
         "(m,n)->(),()", /* should be (m,m)->(),() ... but the gufunc harness needs fixing */
@@ -2573,7 +3005,6 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         slogdet_funcs,
         slogdet_types
     },
-
     {
         "det",
         "(m,n)->()", /* should be (m,m)->(),() ... but the gufunc harness needs fixing */
@@ -2730,7 +3161,74 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         4, 1, 1,
         eigvals_funcs,
         eigvals_types
+    },
+    {
+        "quadratic_form",
+	"(m),(m,n),(n)->()",
+	"computes the quadratic form uQv in the inner dimensions, broadcast to the rest \n" \
+	"Results in the result of uQv for each element of the broadcasted dimensions. \n" \
+	"    \"(m),(m,n),(n)->()",
+	4,3,1,
+	quadratic_form_funcs,
+	equal_4_types
+    },
+    {
+        "add3",
+	"(),(),()->()",
+	"3-way element-wise addition. a,b,c -> a+b+c for all elements. \n",
+	4,3,1,
+	add3_funcs,
+	equal_4_types
+    },
+    {
+        "multiply3",
+	"(),(),()->()",
+	"3-way element-wise product. a,b,c -> a*b*c for all elements. \n",
+	4,3,1,
+	multiply3_funcs,
+	equal_4_types
+    },
+    {
+        "multiply3_add",
+	"(),(),(),()->()",
+	"3-way element-wise product plus addition. a,b,c,d -> a*b*c+d for all elements. \n",
+	4,4,1,
+	multiply3_add_funcs,
+	equal_5_types
+    },
+    {
+        "multiply_add",
+	"(),(),()->()",
+	"element-wise multiply-add. a,b,c -> a*b+c for all elements. \n",
+	4,3,1,
+	multiply_add_funcs,
+	equal_4_types
+    },
+    {
+        "multiply_add2",
+	"(),(),(),()->()",
+	"element-wise product with 2 additions. a,b,c,d -> a*b+c+d for all elements. \n",
+	4,4,1,
+	multiply_add2_funcs,
+	equal_5_types
+    },
+    {
+        "multiply4",
+	"(),(),(),()->()",
+	"4-way element-wise product. a,b,c,d -> a*b*c*d for all elements. \n",
+	4,4,1,
+	multiply4_funcs,
+	equal_5_types
+    },
+    {
+        "multiply4_add",
+	"(),(),(),(),()->()",
+	"4-way element-wise product and addition. a,b,c,d,e -> a*b*c*d+e. \n",
+	4,5,1,
+	multiply4_add_funcs,
+	equal_6_types
     }
+
 };
 
 static void
