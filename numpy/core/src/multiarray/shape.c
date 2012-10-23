@@ -267,32 +267,6 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
             }
         }
     }
-    else if (ndim > 0) {
-        /*
-         * replace any 0-valued strides with
-         * appropriate value to preserve contiguousness
-         */
-        if (order == NPY_FORTRANORDER) {
-            if (dimensions[0] == 1) {
-                strides[0] = PyArray_DESCR(self)->elsize;
-            }
-            for (i = 1; i < ndim; i++) {
-                if (dimensions[i] == 1) {
-                    strides[i] = strides[i-1] * dimensions[i-1];
-                }
-            }
-        }
-        else {
-            if (dimensions[ndim-1] == 1) {
-                strides[ndim-1] = PyArray_DESCR(self)->elsize;
-            }
-            for (i = ndim - 2; i > -1; i--) {
-                if (dimensions[i] == 1) {
-                    strides[i] = strides[i+1] * dimensions[i+1];
-                }
-            }
-        }
-    }
 
     Py_INCREF(PyArray_DESCR(self));
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
@@ -849,7 +823,7 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
         bstride = -bstride;
     }
 
-    if (astride == bstride || astride == 0 || bstride == 0) {
+    if (astride == bstride) {
         /*
          * Make the qsort stable by next comparing the perm order.
          * (Note that two perm entries will never be equal)
@@ -861,9 +835,7 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
     if (astride > bstride) {
         return -1;
     }
-    else {
-        return 1;
-    }
+    return 1;
 }
 
 /*NUMPY_API
@@ -874,8 +846,7 @@ int _npy_stride_sort_item_comparator(const void *a, const void *b)
  * [(2, 12), (0, 4), (1, -2)].
  */
 NPY_NO_EXPORT void
-PyArray_CreateSortedStridePerm(int ndim, npy_intp *shape,
-                        npy_intp *strides,
+PyArray_CreateSortedStridePerm(int ndim, npy_intp *strides,
                         npy_stride_sort_item *out_strideperm)
 {
     int i;
@@ -883,12 +854,7 @@ PyArray_CreateSortedStridePerm(int ndim, npy_intp *shape,
     /* Set up the strideperm values */
     for (i = 0; i < ndim; ++i) {
         out_strideperm[i].perm = i;
-        if (shape[i] == 1) {
-            out_strideperm[i].stride = 0;
-        }
-        else {
-            out_strideperm[i].stride = strides[i];
-        }
+        out_strideperm[i].stride = strides[i];
     }
 
     /* Sort them */
@@ -1015,10 +981,10 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
         }
     }
 
-    if (order == NPY_CORDER && PyArray_ISCONTIGUOUS(arr)) {
+    if (order == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(arr)) {
         return PyArray_Newshape(arr, &newdim, NPY_CORDER);
     }
-    else if (order == NPY_FORTRANORDER && PyArray_ISFORTRAN(arr)) {
+    else if (order == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(arr)) {
         return PyArray_Newshape(arr, &newdim, NPY_FORTRANORDER);
     }
     /* For KEEPORDER, check if we can make a flattened view */
@@ -1027,7 +993,7 @@ PyArray_Ravel(PyArrayObject *arr, NPY_ORDER order)
         npy_intp stride;
         int i, ndim = PyArray_NDIM(arr);
 
-        PyArray_CreateSortedStridePerm(PyArray_NDIM(arr), PyArray_SHAPE(arr),
+        PyArray_CreateSortedStridePerm(PyArray_NDIM(arr),
                                 PyArray_STRIDES(arr), strideperm);
 
         stride = strideperm[ndim-1].stride;
@@ -1164,6 +1130,8 @@ build_shape_string(npy_intp n, npy_intp *vals)
  * WARNING: If an axis flagged for removal has a shape equal to zero,
  *          the array will point to invalid memory. The caller must
  *          validate this!
+ *          If an axis flagged for removal has a shape larger then one,
+ *          the arrays contiguous flags may require updating.
  *
  * For example, this can be used to remove the reduction axes
  * from a reduction result once its computation is complete.
@@ -1186,7 +1154,4 @@ PyArray_RemoveAxesInPlace(PyArrayObject *arr, npy_bool *flags)
 
     /* The final number of dimensions */
     fa->nd = idim_out;
-    
-    /* Update contiguous flags */
-    PyArray_UpdateFlags(arr, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
 }
