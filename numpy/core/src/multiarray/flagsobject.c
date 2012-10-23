@@ -101,23 +101,7 @@ _UpdateContiguousFlags(PyArrayObject *ap)
     int i;
     npy_bool is_c_contig = 1;
 
-    if (PyArray_NDIM(ap) == 0) {
-        PyArray_ENABLEFLAGS(ap, NPY_ARRAY_C_CONTIGUOUS);
-        PyArray_ENABLEFLAGS(ap, NPY_ARRAY_F_CONTIGUOUS);
-        return;
-    }
     sd = PyArray_DESCR(ap)->elsize;
-    if (PyArray_NDIM(ap) == 1) {
-        if (PyArray_DIMS(ap)[0] == 1 || sd == PyArray_STRIDES(ap)[0]) {
-            PyArray_ENABLEFLAGS(ap, NPY_ARRAY_C_CONTIGUOUS);
-            PyArray_ENABLEFLAGS(ap, NPY_ARRAY_F_CONTIGUOUS);
-            return;
-        }
-        PyArray_CLEARFLAGS(ap, NPY_ARRAY_C_CONTIGUOUS);
-        PyArray_CLEARFLAGS(ap, NPY_ARRAY_F_CONTIGUOUS);
-        return;
-    }
-
     for (i = PyArray_NDIM(ap) - 1; i >= 0; --i) {
         dim = PyArray_DIMS(ap)[i];
         /* contiguous by definition */
