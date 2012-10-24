@@ -1566,7 +1566,7 @@ static void
     INIT_OUTER_LOOP_3
 
     n = (fortran_int)dimensions[0];
-    nrhs = (fortran_int)dimensions[2];
+    nrhs = (fortran_int)dimensions[1];
     if (init_@lapack_func@(&params, n, nrhs)) {
         LINEARIZE_DATA_t a_in, b_in, r_out;
 
@@ -2997,26 +2997,26 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     },
     {
         "slogdet",
-        "(m,n)->(),()", /* should be (m,m)->(),() ... but the gufunc harness needs fixing */
+        "(m,m)->(),()", 
         "slogdet on the last two dimensions and broadcast on the rest. \n"\
         "Results in two arrays, one with sign and the other with log of the determinants. \n"\
-        "    \"(m,n)->(),()\" \n",
+        "    \"(m,m)->(),()\" \n",
         4, 1, 2,
         slogdet_funcs,
         slogdet_types
     },
     {
         "det",
-        "(m,n)->()", /* should be (m,m)->(),() ... but the gufunc harness needs fixing */
+        "(m,m)->()",
         "det of the last two dimensions and broadcast on the rest. \n"\
-        "    \"(m,n)->()\" \n",
+        "    \"(m,m)->()\" \n",
         4, 1, 1,
         det_funcs,
         equal_2_types
     },
     {
         "eigh_lo",
-        "(m,n)->(m),(m,n)", /* should be (m,m)->(m),(m,m) ... but the gufunc harness needs fixing */
+        "(m,m)->(m),(m,m)",
         "eigh on the last two dimension and broadcast to the rest, usine lower triangle \n"\
         "Results in a vector of eigenvalues and a matrix with the eigenvectors. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
@@ -3026,7 +3026,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     },
     {
         "eigh_up",
-        "(m,n)->(m),(m,n)", /* should be (m,m)->(m),(m,m) ... but the gufunc harness needs fixing */
+        "(m,m)->(m),(m,m)",
         "eigh on the last two dimension and broadcast to the rest, using upper triangle. \n"\
         "Results in a vector of eigenvalues and a matrix with the eigenvectors. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
@@ -3036,7 +3036,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     },
     {
         "eigvalsh_lo",
-        "(m,n)->(m)", /* should be (m,m)->(m), ... but the gufunc harness needs fixing */
+        "(m,m)->(m)",
         "eigh on the last two dimension and broadcast to the rest, using lower triangle. \n"\
         "Results in a vector of eigenvalues and a matrix with the eigenvectors. \n"\
         "    \"(m,m)->(m)\" \n",
@@ -3046,7 +3046,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     },
     {
         "eigvalsh_up",
-        "(m,n)->(m)", /* should be (m,m)->(m) ... but the gufunc harness needs fixing */
+        "(m,m)->(m)",
         "eigvalsh on the last two dimension and broadcast to the rest, using upper triangle. \n"\
         "Results in a vector of eigenvalues and a matrix with the eigenvectors. \n"\
         "    \"(m,m)->(m)\" \n",
@@ -3056,7 +3056,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     },
     {
         "solve",
-        "(m,n),(m,p)->(m,p)",
+        "(m,m),(m,n)->(m,n)",
         "solve the system a x = b, on the last two dimensions, broadcast to the rest. \n"\
         "Results in a matrices with the solutions. \n"\
         "    \"(m,m),(m,n)->(m,n)\" \n",
@@ -3066,7 +3066,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     },
     {
         "solve1",
-        "(m,n),(m)->(m)",
+        "(m,m),(m)->(m)",
         "solve the system a x = b, for b being a vector, broadcast in the outer dimensions. \n"\
         "Results in vectors with the solutions. \n"\
         "    \"(m,m),(m)->(m)\" \n",
@@ -3076,7 +3076,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     },
     {
         "inv",
-        "(m,n)->(m,n)",
+        "(m,m)->(m,m)",
         "compute the inverse of the last two dimensions and broadcast to the rest. \n"\
         "Results in the inverse matrices. \n"\
         "    \"(m,m)->(m,m)\" \n",
@@ -3086,7 +3086,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     },
     {
         "cholesky",
-        "(m,n)->(m,n)",
+        "(m,m)->(m,m)",
         "cholesky decomposition of hermitian positive-definite matrices. \n"\
         "Broadcast to all outer dimensions. \n"\
         "    \"(m,m)->(m,m)\" \n",
@@ -3144,7 +3144,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     },
     {
         "eig",
-        "(m,n)->(m),(m,n)",
+        "(m,m)->(m),(m,m)",
         "eig on the last two dimension and broadcast to the rest. \n"\
         "Results in a vector with the  eigenvalues and a matrix with the eigenvectors. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
@@ -3154,7 +3154,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     },
     {
         "eigvals",
-        "(m,n)->(m)",
+        "(m,m)->(m)",
         "eigvals on the last two dimension and broadcast to the rest. \n"\
         "Results in a vector of eigenvalues. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
