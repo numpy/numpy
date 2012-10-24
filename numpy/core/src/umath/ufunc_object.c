@@ -4851,7 +4851,7 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 
 /* Call ufunc only on selected array items and store result in first operand */
 static PyObject *
-ufunc_select(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
+ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
     static char *kwlist[] = {"op1", "idx", "op2"};
     PyObject *op1 = NULL;
@@ -4995,8 +4995,8 @@ static struct PyMethodDef ufunc_methods[] = {
     {"outer",
         (PyCFunction)ufunc_outer,
         METH_VARARGS | METH_KEYWORDS, NULL},
-    {"select",
-        (PyCFunction)ufunc_select,
+    {"at",
+        (PyCFunction)ufunc_at,
         METH_VARARGS | METH_KEYWORDS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
