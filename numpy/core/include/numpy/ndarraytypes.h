@@ -756,8 +756,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_F_CONTIGUOUS    0x0002
 
 /*
- * Note: all 0-d arrays are C_CONTIGUOUS and F_CONTIGUOUS. If a
- * 1-d array is C_CONTIGUOUS it is also F_CONTIGUOUS
+ * Note: all 0-d arrays are C_CONTIGUOUS and F_CONTIGUOUS. An N-d
+ * array that is C_CONTIGUOUS is also F_CONTIGUOUS if only
+ * one axis has a dimension different from one (ie. a 1x3x1 array).
  */
 
 /*
@@ -1370,7 +1371,7 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
                              PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS))
 
 #define PyArray_ISFORTRAN(m) (PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) && \
-                             (PyArray_NDIM(m) > 1))
+                             (!PyArray_CHKFLAGS(m, NPY_ARRAY_C_CONTIGUOUS)))
 
 #define PyArray_FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) ? \
                                NPY_ARRAY_F_CONTIGUOUS : 0))

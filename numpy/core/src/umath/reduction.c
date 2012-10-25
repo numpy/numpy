@@ -51,7 +51,7 @@ allocate_reduce_result(PyArrayObject *arr, npy_bool *axis_flags,
         Py_INCREF(dtype);
     }
 
-    PyArray_CreateSortedStridePerm(PyArray_NDIM(arr), PyArray_SHAPE(arr),
+    PyArray_CreateSortedStridePerm(PyArray_NDIM(arr),
                                     PyArray_STRIDES(arr), strideperm);
 
     /* Build the new strides and shape */
