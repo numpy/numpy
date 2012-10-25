@@ -1026,6 +1026,16 @@ array_copy(PyArrayObject *self, PyObject *args, PyObject *kwds)
     return PyArray_NewCopy(self, order);
 }
 
+/* Separate from array_copy to make __copy__ preserve Fortran contiguity. */
+static PyObject *
+array_copy_keeporder(PyArrayObject *self, PyObject *args, PyObject *kwds)
+{
+    if (!PyArg_ParseTuple(args, "")) {
+        return NULL;
+    }
+    return PyArray_NewCopy(self, NPY_KEEPORDER);
+}
+
 #include <stdio.h>
 static PyObject *
 array_resize(PyArrayObject *self, PyObject *args, PyObject *kwds)
@@ -1290,7 +1300,7 @@ array_deepcopy(PyArrayObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "O", &visit)) {
         return NULL;
     }
-    ret = (PyArrayObject *)PyArray_Copy(self);
+    ret = (PyArrayObject *)PyArray_NewCopy(self, NPY_KEEPORDER);
     if (PyDataType_REFCHK(PyArray_DESCR(self))) {
         copy = PyImport_ImportModule("copy");
         if (copy == NULL) {
@@ -2151,8 +2161,8 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
 
     /* for the copy module */
     {"__copy__",
-        (PyCFunction)array_copy,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        (PyCFunction)array_copy_keeporder,
+        METH_VARARGS, NULL},
     {"__deepcopy__",
         (PyCFunction)array_deepcopy,
         METH_VARARGS, NULL},

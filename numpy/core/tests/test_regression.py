@@ -1794,5 +1794,15 @@ class TestRegression(TestCase):
         a = np.recarray((2, ), dtype)
         assert_raises(TypeError, np.searchsorted, a, 1)
 
+    def test_copymodule_preserves_f_contiguity(self):
+        a = np.empty((2, 2), order='F')
+        b = copy.copy(a)
+        c = copy.deepcopy(a)
+        assert_(b.flags.fortran)
+        assert_(b.flags.f_contiguous)
+        assert_(c.flags.fortran)
+        assert_(c.flags.f_contiguous)
+
+
 if __name__ == "__main__":
     run_module_suite()
