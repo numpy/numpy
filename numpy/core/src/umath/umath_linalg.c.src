@@ -22,7 +22,7 @@
 #define TRACE do { printf ("%s:%d:%s\n", __FILE__, __LINE__, __FUNCTION__); } while (0)
 
 
-const char* umath_linalg_version_string = "0.1.0";
+const char* umath_linalg_version_string = "0.1.1";
 /*
  *****************************************************************************
  *                    BLAS/LAPACK calling macros                             *
@@ -39,112 +39,211 @@ typedef struct { float r, i; } f2c_complex;
 typedef struct { double r, i; } f2c_doublecomplex;
 /* typedef long int (*L_fp)(); */
 
-extern int FNAME(sgeev)(char *jobvl, char *jobvr, int *n,
-                         float a[], int *lda, float wr[], float wi[],
-                         float vl[], int *ldvl, float vr[], int *ldvr,
-                         float work[], int lwork[], int *info);
-extern int FNAME(dgeev)(char *jobvl, char *jobvr, int *n,
-                         double a[], int *lda, double wr[], double wi[],
-                         double vl[], int *ldvl, double vr[], int *ldvr,
-                         double work[], int lwork[], int *info);
-extern int FNAME(cgeev)(char *jobvl, char *jobvr, int *n,
-                         f2c_doublecomplex a[], int *lda,
-                         f2c_doublecomplex w[],
-                         f2c_doublecomplex vl[], int *ldvl,
-                         f2c_doublecomplex vr[], int *ldvr,
-                         f2c_doublecomplex work[], int *lwork,
-                         double rwork[], int *info);
-extern int FNAME(zgeev)(char *jobvl, char *jobvr, int *n,
-                         f2c_doublecomplex a[], int *lda,
-                         f2c_doublecomplex w[],
-                         f2c_doublecomplex vl[], int *ldvl,
-                         f2c_doublecomplex vr[], int *ldvr,
-                         f2c_doublecomplex work[], int *lwork,
-                         double rwork[], int *info);
+extern int 
+FNAME(sgeev)(char *jobvl, char *jobvr, int *n,
+	     float a[], int *lda, float wr[], float wi[],
+	     float vl[], int *ldvl, float vr[], int *ldvr,
+	     float work[], int lwork[], 
+	     int *info);
+extern int
+FNAME(dgeev)(char *jobvl, char *jobvr, int *n,
+	     double a[], int *lda, double wr[], double wi[],
+	     double vl[], int *ldvl, double vr[], int *ldvr,
+	     double work[], int lwork[], 
+	     int *info);
+extern int 
+FNAME(cgeev)(char *jobvl, char *jobvr, int *n,
+	     f2c_doublecomplex a[], int *lda,
+	     f2c_doublecomplex w[],
+	     f2c_doublecomplex vl[], int *ldvl,
+	     f2c_doublecomplex vr[], int *ldvr,
+	     f2c_doublecomplex work[], int *lwork,
+	     double rwork[], 
+	     int *info);
+extern int 
+FNAME(zgeev)(char *jobvl, char *jobvr, int *n,
+	     f2c_doublecomplex a[], int *lda,
+	     f2c_doublecomplex w[],
+	     f2c_doublecomplex vl[], int *ldvl,
+	     f2c_doublecomplex vr[], int *ldvr,
+	     f2c_doublecomplex work[], int *lwork,
+	     double rwork[],
+	     int *info);
 
-extern int FNAME(ssyevd)(char *jobz, char *uplo, int *n,
-                          float a[], int *lda, float w[], float work[],
-                          int *lwork, int iwork[], int *liwork, int *info);
-extern int FNAME(dsyevd)(char *jobz, char *uplo, int *n,
-                          double a[], int *lda, double w[], double work[],
-                          int *lwork, int iwork[], int *liwork, int *info);
-extern int FNAME(cheevd)(char *jobz, char *uplo, int *n,
-                          f2c_complex a[], int *lda,
-                          float w[], f2c_complex work[],
-                          int *lwork, float rwork[], int *lrwork, int iwork[],
-                          int *liwork, int *info);
-extern int FNAME(zheevd)(char *jobz, char *uplo, int *n,
-                          f2c_doublecomplex a[], int *lda,
-                          double w[], f2c_doublecomplex work[],
-                          int *lwork, double rwork[], int *lrwork, int iwork[],
-                          int *liwork, int *info);
+extern int
+FNAME(ssyevd)(char *jobz, char *uplo, int *n,
+	      float a[], int *lda, float w[], float work[],
+	      int *lwork, int iwork[], int *liwork,
+	      int *info);
+extern int 
+FNAME(dsyevd)(char *jobz, char *uplo, int *n,
+	      double a[], int *lda, double w[], double work[],
+	      int *lwork, int iwork[], int *liwork,
+	      int *info);
+extern int 
+FNAME(cheevd)(char *jobz, char *uplo, int *n,
+	      f2c_complex a[], int *lda,
+	      float w[], f2c_complex work[],
+	      int *lwork, float rwork[], int *lrwork, int iwork[],
+	      int *liwork, 
+	      int *info);
+extern int 
+FNAME(zheevd)(char *jobz, char *uplo, int *n,
+	      f2c_doublecomplex a[], int *lda,
+	      double w[], f2c_doublecomplex work[],
+	      int *lwork, double rwork[], int *lrwork, int iwork[],
+	      int *liwork, 
+	      int *info);
 
-extern int FNAME(dgelsd)(int *m, int *n, int *nrhs,
-                          double a[], int *lda, double b[], int *ldb,
-                          double s[], double *rcond, int *rank,
-                          double work[], int *lwork, int iwork[], int *info);
-extern int FNAME(zgelsd)(int *m, int *n, int *nrhs,
-                          f2c_doublecomplex a[], int *lda,
-                          f2c_doublecomplex b[], int *ldb,
-                          double s[], double *rcond, int *rank,
-                          f2c_doublecomplex work[], int *lwork,
-                          double rwork[], int iwork[], int *info);
+extern int 
+FNAME(dgelsd)(int *m, int *n, int *nrhs,
+	      double a[], int *lda, double b[], int *ldb,
+	      double s[], double *rcond, int *rank,
+	      double work[], int *lwork, int iwork[],
+	      int *info);
+extern int 
+FNAME(zgelsd)(int *m, int *n, int *nrhs,
+	      f2c_doublecomplex a[], int *lda,
+	      f2c_doublecomplex b[], int *ldb,
+	      double s[], double *rcond, int *rank,
+	      f2c_doublecomplex work[], int *lwork,
+	      double rwork[], int iwork[], 
+	      int *info);
 
-extern int FNAME(sgesv)(int *n, int *nrhs,
-                         float a[], int *lda, int ipiv[],
-                         float b[], int *ldb, int *info);
-extern int FNAME(dgesv)(int *n, int *nrhs,
-                         double a[], int *lda, int ipiv[],
-                         double b[], int *ldb, int *info);
-extern int FNAME(cgesv)(int *n, int *nrhs,
-                         f2c_complex a[], int *lda, int ipiv[],
-                         f2c_complex b[], int *ldb, int *info);
-extern int FNAME(zgesv)(int *n, int *nrhs,
-                         f2c_doublecomplex a[], int *lda, int ipiv[],
-                         f2c_doublecomplex b[], int *ldb, int *info);
+extern int 
+FNAME(sgesv)(int *n, int *nrhs,
+	     float a[], int *lda, 
+	     int ipiv[],
+	     float b[], int *ldb, 
+	     int *info);
+extern int 
+FNAME(dgesv)(int *n, int *nrhs,
+	     double a[], int *lda, 
+	     int ipiv[],
+	     double b[], int *ldb, 
+	     int *info);
+extern int 
+FNAME(cgesv)(int *n, int *nrhs,
+	     f2c_complex a[], int *lda, 
+	     int ipiv[],
+	     f2c_complex b[], int *ldb, 
+	     int *info);
+extern int 
+FNAME(zgesv)(int *n, int *nrhs,
+	     f2c_doublecomplex a[], int *lda,
+	     int ipiv[],
+	     f2c_doublecomplex b[], int *ldb,
+	     int *info);
 
-extern int FNAME(sgetrf)(int *m, int *n,
-                          float a[], int *lda, int ipiv[], int *info);
-extern int FNAME(dgetrf)(int *m, int *n,
-                          double a[], int *lda, int ipiv[], int *info);
-extern int FNAME(cgetrf)(int *m, int *n,
-                          f2c_complex a[], int *lda, int ipiv[],
-                          int *info);
-extern int FNAME(zgetrf)(int *m, int *n,
-                          f2c_doublecomplex a[], int *lda, int ipiv[],
-                          int *info);
+extern int 
+FNAME(sgetrf)(int *m, int *n,
+	      float a[], int *lda,
+	      int ipiv[],
+	      int *info);
+extern int 
+FNAME(dgetrf)(int *m, int *n,
+	      double a[], int *lda,
+	      int ipiv[],
+	      int *info);
+extern int
+FNAME(cgetrf)(int *m, int *n,
+	       f2c_complex a[], int *lda,
+	       int ipiv[],
+	       int *info);
+extern int 
+FNAME(zgetrf)(int *m, int *n,
+	      f2c_doublecomplex a[], int *lda,
+	      int ipiv[],
+	      int *info);
 
-extern int FNAME(spotrf)(char *uplo, int *n, float a[], int *lda, int *info);
-extern int FNAME(dpotrf)(char *uplo, int *n, double a[], int *lda, int *info);
-extern int FNAME(cpotrf)(char *uplo, int *n,
-                          f2c_complex a[], int *lda, int *info);
-extern int FNAME(zpotrf)(char *uplo, int *n,
-                          f2c_doublecomplex a[], int *lda, int *info);
 
-extern int FNAME(sgesdd)(char *jobz, int *m, int *n,
-                          float a[], int *lda, float s[], float u[],
-                          int *ldu, float vt[], int *ldvt, float work[],
-                          int *lwork, int iwork[], int *info);
-extern int FNAME(dgesdd)(char *jobz, int *m, int *n,
-                          double a[], int *lda, double s[], double u[],
-                          int *ldu, double vt[], int *ldvt, double work[],
-                          int *lwork, int iwork[], int *info);
-extern int FNAME(cgesdd)(char *jobz, int *m, int *n,
-                          f2c_complex a[], int *lda,
-                          float s[], f2c_complex u[], int *ldu,
-                          f2c_complex vt[], int *ldvt,
-                          f2c_complex work[], int *lwork,
-                          float rwork[], int iwork[], int *info);
-extern int FNAME(zgesdd)(char *jobz, int *m, int *n,
-                          f2c_doublecomplex a[], int *lda,
-                          double s[], f2c_doublecomplex u[], int *ldu,
-                          f2c_doublecomplex vt[], int *ldvt,
-                          f2c_doublecomplex work[], int *lwork,
-                          double rwork[], int iwork[], int *info);
+extern int 
+FNAME(spotrf)(char *uplo, int *n, 
+	      float a[], int *lda,
+	      int *info);
+extern int 
+FNAME(dpotrf)(char *uplo, int *n, 
+	      double a[], int *lda, 
+	      int *info);
+extern int 
+FNAME(cpotrf)(char *uplo, int *n,
+	      f2c_complex a[], int *lda,
+	      int *info);
+extern int 
+FNAME(zpotrf)(char *uplo, int *n,
+	      f2c_doublecomplex a[], int *lda,
+	      int *info);
 
-extern int FNAME(dgeqrf)(int *m, int *n, double a[], int *lda,
-                          double tau[], double work[],
-                          int *lwork, int *info);
+extern int 
+FNAME(sgesdd)(char *jobz, int *m, int *n,
+	      float a[], int *lda, float s[], float u[],
+	      int *ldu, float vt[], int *ldvt, float work[],
+	      int *lwork, int iwork[], int *info);
+extern int 
+FNAME(dgesdd)(char *jobz, int *m, int *n,
+	      double a[], int *lda, double s[], double u[],
+	      int *ldu, double vt[], int *ldvt, double work[],
+	      int *lwork, int iwork[], int *info);
+extern int 
+FNAME(cgesdd)(char *jobz, int *m, int *n,
+	      f2c_complex a[], int *lda,
+	      float s[], f2c_complex u[], int *ldu,
+	      f2c_complex vt[], int *ldvt,
+	      f2c_complex work[], int *lwork,
+	      float rwork[], int iwork[], int *info);
+extern int
+FNAME(zgesdd)(char *jobz, int *m, int *n,
+	      f2c_doublecomplex a[], int *lda,
+	      double s[], f2c_doublecomplex u[], int *ldu,
+	      f2c_doublecomplex vt[], int *ldvt,
+	      f2c_doublecomplex work[], int *lwork,
+	      double rwork[], int iwork[], int *info);
+
+extern int 
+FNAME(spotrs)(char *uplo, int *n, int *nrhs,
+	      float a[], int *lda, 
+	      float b[], int *ldb,
+	      int *info);
+extern int 
+FNAME(dpotrs)(char *uplo, int *n, int *nrhs,
+	      double a[], int *lda,
+	      double b[], int *ldb,
+	      int *info);
+extern int 
+FNAME(cpotrs)(char *uplo, int *n, int *nrhs,
+              f2c_complex a[], int *lda,
+	      f2c_complex b[], int *ldb,
+	      int *info);
+extern int 
+FNAME(zpotrs)(char *uplo, int *n, int *nrhs,
+              f2c_doublecomplex a[], int *lda,
+	      f2c_doublecomplex b[], int *ldb,
+	      int *info);
+
+extern int 
+FNAME(spotri)(char *uplo, int *n,
+	      float a[], int *lda, 
+	      int *info);
+extern int 
+FNAME(dpotri)(char *uplo, int *n,
+	      double a[], int *lda,
+	      int *info);
+extern int 
+FNAME(cpotri)(char *uplo, int *n,
+              f2c_complex a[], int *lda,
+	      int *info);
+extern int 
+FNAME(zpotri)(char *uplo, int *n,
+              f2c_doublecomplex a[], int *lda,
+	      int *info);
+
+	     /*
+extern int 
+FNAME(dgeqrf)(int *m, int *n,
+	      double a[], int *lda,
+	      double tau[], double work[],
+	      int *lwork,
+	      int *info);
 
 extern int FNAME(zgeqrf)(int *m, int *n, f2c_doublecomplex a[], int *lda,
                           f2c_doublecomplex tau[], f2c_doublecomplex work[],
@@ -157,7 +256,7 @@ extern int FNAME(dorgqr)(int *m, int *n, int *k, double a[], int *lda,
 extern int FNAME(zungqr)(int *m, int *n, int *k, f2c_doublecomplex a[],
                           int *lda, f2c_doublecomplex tau[],
                           f2c_doublecomplex work[], int *lwork, int *info);
-
+	     */
 
 extern int 
 FNAME(scopy)(int *n, float *sx, int *incx, float *sy, int *incy);
@@ -543,6 +642,12 @@ update_pointers(uint8_t** bases, ptrdiff_t* offsets, size_t count)
 }
 
 
+
+/* disable -Wmaybe-uninitialized as there is some code that generates false 
+   positives with this warning
+*/
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
 /*
  *****************************************************************************
@@ -2719,8 +2824,8 @@ static inline @typ@
 {
     size_t i;
     @typ@ acc, *x_ptr, *y_ptr;
-    x_ptr = (@typ@ *)x_ptr;
-    y_ptr = (@typ@ *)y_ptr;
+    x_ptr = (@typ@ *)X;
+    y_ptr = (@typ@ *)Y;
 
     acc = @TYPE@_mul(*x_ptr, *y_ptr);    
     x_ptr = offset_ptr(x_ptr, X_byte_step);
@@ -2810,6 +2915,276 @@ static void
 /**end repeat**/
 
 /* -------------------------------------------------------------------------- */
+		     /* chosolve (using potrs) */
+
+typedef struct potrs_params_struct {
+    void *A;
+    void *B;
+    fortran_int N;
+    fortran_int NRHS;
+    fortran_int LDA;
+    fortran_int LDB;
+    char UPLO;
+} POTRS_PARAMS_t;
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #ftyp=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
+   #lapack_func=spotrs,dpotrs,cpotrs,zpotrs#
+ */
+
+
+static inline int
+init_@lapack_func@(POTRS_PARAMS_t *params, 
+		   char UPLO,
+		   fortran_int N,
+		   fortran_int NRHS)
+{
+    uint8_t *mem_buff = NULL;
+    uint8_t *a, *b;
+    size_t a_size, b_size;
+
+    a_size = N*N*sizeof(@ftyp@);
+    b_size = N*NRHS*sizeof(@ftyp@);
+    mem_buff = malloc(a_size + b_size);
+    if (!mem_buff)
+      goto error;
+
+    a = mem_buff;
+    b = a + a_size;
+
+    params->A = (void*)a;
+    params->B = (void*)b;
+    params->N = N;
+    params->NRHS = NRHS;
+    params->LDA = N;
+    params->LDB = N;
+    params->UPLO = UPLO;
+
+    return 1;
+
+ error:
+    free(mem_buff);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+static inline void
+release_@lapack_func@(POTRS_PARAMS_t *params)
+{
+    free(params->A);
+    memset(params,0,sizeof(*params));
+    return;
+}
+
+static inline int
+call_@lapack_func@(POTRS_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->UPLO,
+			  &params->N, &params->NRHS,
+			  params->A, &params->LDA,
+			  params->B, &params->LDB,
+                          &rv);
+    return rv;
+}
+
+
+/* uplo: either 'U' or 'L'
+   ndim: use 1 to get nrhs from dimensions (matrix), 0 to use 1 (vector)
+ */
+static void
+@TYPE@_chosolve(char uplo, char ndim,
+		char **args,
+		npy_intp *dimensions,
+		npy_intp* steps
+		)
+{
+    POTRS_PARAMS_t params;
+    fortran_int n, nrhs;
+    INIT_OUTER_LOOP_3
+
+    n = (fortran_int)dimensions[0];
+    nrhs = ndim?(fortran_int)dimensions[1]:1;
+    if (init_@lapack_func@(&params, uplo, n, nrhs)) {
+        LINEARIZE_DATA_t a_in, b_in, r_out;
+
+        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
+	if (ndim) {
+            init_linearize_data(&b_in,  nrhs, n, steps[3], steps[2]);
+	    init_linearize_data(&r_out, nrhs, n, steps[5], steps[4]);
+	} else {
+            init_linearize_data(&b_in,  1, n, 0, steps[2]);
+            init_linearize_data(&r_out, 1, n, 0, steps[3]);
+	}
+
+        BEGIN_OUTER_LOOP_3
+            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
+            linearize_@TYPE@_matrix(params.B, args[1], &b_in);
+            call_@lapack_func@(&params);
+            delinearize_@TYPE@_matrix(args[2], params.B, &r_out);
+        END_OUTER_LOOP
+
+        release_@lapack_func@(&params);
+    }
+}
+
+static void
+@TYPE@_chosolve_up(char **args,
+		      npy_intp *dimensions,
+		      npy_intp* steps,
+		      void *NPY_UNUSED(func))
+{
+    @TYPE@_chosolve('U', 1, args, dimensions, steps);
+}
+
+static void
+@TYPE@_chosolve_lo(char **args,
+		      npy_intp *dimensions,
+		      npy_intp* steps,
+		      void *NPY_UNUSED(func))
+{
+    @TYPE@_chosolve('L', 1, args, dimensions, steps);
+}
+
+static void
+@TYPE@_chosolve1_up(char **args,
+		      npy_intp *dimensions,
+		      npy_intp* steps,
+		      void *NPY_UNUSED(func))
+{
+    @TYPE@_chosolve('U', 0, args, dimensions, steps);
+}
+
+static void
+@TYPE@_chosolve1_lo(char **args,
+		      npy_intp *dimensions,
+		      npy_intp* steps,
+		      void *NPY_UNUSED(func))
+{
+    @TYPE@_chosolve('L', 0, args, dimensions, steps);
+}
+
+/**end repeat**/
+
+/* -------------------------------------------------------------------------- */
+			     /* poinv  */
+
+typedef struct potri_params_struct {
+    void *A;
+    fortran_int N;
+    fortran_int LDA;
+    char UPLO;
+} POTRI_PARAMS_t;
+
+
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+   #ftyp=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
+   #lapack_func=spotri,dpotri,cpotri,zpotri#
+ */
+static inline int
+init_@lapack_func@(POTRI_PARAMS_t *params, 
+		   char UPLO,
+		   fortran_int N)
+{
+    uint8_t *mem_buff = NULL;
+    uint8_t *a;
+    size_t a_size;
+
+    a_size = N*N*sizeof(@ftyp@);
+    mem_buff = malloc(a_size);
+    if (!mem_buff)
+      goto error;
+
+    a = mem_buff;
+
+    params->A = (void*)a;
+    params->N = N;
+    params->LDA = N;
+    params->UPLO = UPLO;
+
+    return 1;
+
+ error:
+    free(mem_buff);
+    memset(params, 0, sizeof(*params));
+
+    return 0;
+}
+
+static inline void
+release_@lapack_func@(POTRI_PARAMS_t *params)
+{
+    free(params->A);
+    memset(params,0,sizeof(*params));
+    return;
+}
+
+static inline int
+call_@lapack_func@(POTRI_PARAMS_t *params)
+{
+    fortran_int rv;
+    LAPACK(@lapack_func@)(&params->UPLO,
+			  &params->N,
+			  params->A, &params->LDA,
+                          &rv);
+    return rv;
+}
+
+
+static inline void
+@TYPE@_poinv(char uplo,
+	     char **args,
+	     npy_intp *dimensions,
+	     npy_intp *steps)
+{
+    POTRI_PARAMS_t params;
+    fortran_int n;
+    INIT_OUTER_LOOP_3
+
+    n = (fortran_int)dimensions[0];
+    if (init_@lapack_func@(&params, uplo, n)) {
+        LINEARIZE_DATA_t a_in, r_out;
+
+        init_linearize_data(&a_in, n, n, steps[1], steps[0]);
+        init_linearize_data(&r_out, n, n, steps[3], steps[2]);
+
+        BEGIN_OUTER_LOOP_3
+            linearize_@TYPE@_matrix(params.A, args[0], &a_in);
+            call_@lapack_func@(&params);
+            delinearize_@TYPE@_matrix(args[1], params.A, &r_out);
+        END_OUTER_LOOP
+
+        release_@lapack_func@(&params);
+    }
+}
+
+static void
+@TYPE@_poinv_up(char **args,
+		npy_intp *dimensions,
+		npy_intp *steps,
+		void *NPY_UNUSED(func))
+{
+    @TYPE@_poinv('U', args, dimensions, steps);
+}
+
+static void
+@TYPE@_poinv_lo(char **args,
+		npy_intp *dimensions,
+		npy_intp *steps,
+		void *NPY_UNUSED(func))
+{
+    @TYPE@_poinv('L', args, dimensions, steps);
+}
+
+/**end repeat**/
+
+
+#pragma GCC diagnostic pop
+
+/* -------------------------------------------------------------------------- */
 		      /* gufunc registration  */
 
 static void *array_of_nulls[] = {
@@ -2869,6 +3244,12 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply_add);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply_add2);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply4);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply4_add);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(chosolve_up);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(chosolve_lo);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(chosolve1_up);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(chosolve1_lo);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(poinv_up);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(poinv_lo);
 
 
 static char equal_2_types[] = {
@@ -3227,8 +3608,55 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
 	4,5,1,
 	multiply4_add_funcs,
 	equal_6_types
+    },
+    {  /* solve using choleske decomposition (lapack potrs) */
+        "chosolve_up",
+	"(m,m),(m,n)->(m,n)",
+	"solve for symmetric/hermitian matrices using cholesky factorization. \n",
+	4,2,1,
+	chosolve_up_funcs,
+	equal_3_types
+    },
+    {  /* solve using choleske decomposition (lapack potrs) */
+        "chosolve_lo",
+	"(m,m),(m,n)->(m,n)",
+	"solve for symmetric/hermitian matrices using cholesky factorization. \n",
+	4,2,1,
+	chosolve_lo_funcs,
+	equal_3_types
+    },
+    {   /* solve using cholesky decomposition (lapack potrs) */
+        "chosolve1_up",
+	"(m,m),(m)->(m)",
+	"solve a system using cholesky decomposition. \n",
+	4,2,1,
+        chosolve1_up_funcs,
+	equal_3_types
+    },
+    {   /* solve using cholesky decomposition (lapack potrs) */
+        "chosolve1_lo",
+	"(m,m),(m)->(m)",
+	"solve a system using cholesky decomposition. \n",
+	4,2,1,
+	chosolve1_lo_funcs,
+	equal_3_types
+    },
+    {   /* inverse using cholesky decomposition (lapack potri) */
+        "poinv_up",
+	"(m,m)->(m,m)",
+	"inverse using cholesky decomposition for symmetric/hermitian matrices. \n",
+	4,1,1,
+	poinv_up_funcs,
+	equal_2_types
+    },
+    {   /* inverse using cholesky decomposition (lapack potri) */
+        "poinv_lo",
+	"(m,m)->(m,m)",
+	"inverse using cholesky decomposition for symmetric/hermitian matrices. \n",
+	4,1,1,
+	poinv_lo_funcs,
+	equal_2_types
     }
-
 };
 
 static void
