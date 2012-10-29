@@ -78,7 +78,7 @@ temp = real*sqrt(1.0 + temp*temp);  /*overflow!!*/
 return(temp);
 }
 
-
+ VOID
 #ifdef KR_headers
 r_cnjg(r, z) complex *r, *z;
 #else
