@@ -1275,7 +1275,8 @@ typedef struct {
         npy_intp              bscoord[NPY_MAXDIMS];
 
         PyObject              *indexobj;               /* creating obj */
-        int                   consec;
+        int                   consec;                  /* axes to swap if index
+                                                        * arrays are consecutive */
         char                  *dataptr;
 
 } PyArrayMapIterObject;
