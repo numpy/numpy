@@ -1809,7 +1809,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 {
     int subnd;
     PyObject *sub, *obj = NULL;
-    int i, j, n, curraxis, ellipexp, noellip, subdim, newaxes;
+    int i, j, n, curraxis, ellipexp, noellip, newaxes;
     PyArrayIterObject *it;
     npy_intp dimsize;
     npy_intp *indptr;
@@ -1824,14 +1824,6 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     mit->ait = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
     if (mit->ait == NULL) {
         goto fail;
-    }
-    /* no subspace iteration needed.  Finish up and Return */
-    if (subnd == 0) {
-        n = PyArray_NDIM(arr);
-        for (i = 0; i < n; i++) {
-            mit->iteraxes[i] = i;
-        }
-        goto finish;
     }
 
     /*
@@ -1859,26 +1851,36 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     if (sub == NULL) {
         goto fail;
     }
+
+    subnd = PyArray_NDIM(sub);
+    /* no subspace iteration needed.  Finish up and Return */
+    if (subnd == 0) {
+        n = PyArray_NDIM(arr);
+        for (i = 0; i < n; i++) {
+            mit->iteraxes[i] = i;
+        }
+        goto finish;
+    }
+
     mit->subspace = (PyArrayIterObject *)PyArray_IterNew(sub);
     Py_DECREF(sub);
     if (mit->subspace == NULL) {
         goto fail;
     }
 
-    subdim = PyArray_NDIM(mit->subspace->ao);
-    if (mit->nd + subdim > NPY_MAXDIMS) {
+    if (mit->nd + subnd > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
                      "number of dimensions must be within [0, %d], "
                      "indexed array has %d",
-                     NPY_MAXDIMS, mit->nd + subdim);
+                     NPY_MAXDIMS, mit->nd + subnd);
         goto fail;
     }
 
     /* Expand dimensions of result */
-    for (i = 0; i < subdim; i++) {
+    for (i = 0; i < subnd; i++) {
         mit->dimensions[mit->nd+i] = PyArray_DIMS(mit->subspace->ao)[i];
     }
-    mit->nd += subdim;
+    mit->nd += subnd;
 
     /*
      * Now, we still need to interpret the ellipsis, slice and None
@@ -1887,7 +1889,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
      */
     n = PyTuple_GET_SIZE(mit->indexobj);
     /* The number of dimensions an ellipsis takes up */
-    newaxes = subdim - (PyArray_NDIM(arr) - mit->numiter);
+    newaxes = subnd - (PyArray_NDIM(arr) - mit->numiter);
     ellipexp = PyArray_NDIM(arr) + newaxes - n + 1;
     /*
      * Now fill in iteraxes -- remember indexing arrays have been
