@@ -1864,8 +1864,17 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     if (mit->subspace == NULL) {
         goto fail;
     }
-    /* Expand dimensions of result */
+
     subdim = PyArray_NDIM(mit->subspace->ao);
+    if (mit->nd + subdim > NPY_MAXDIMS) {
+        PyErr_Format(PyExc_ValueError,
+                     "number of dimensions must be within [0, %d], "
+                     "indexed array has %d",
+                     NPY_MAXDIMS, mit->nd + subdim);
+        goto fail;
+    }
+
+    /* Expand dimensions of result */
     for (i = 0; i < subdim; i++) {
         mit->dimensions[mit->nd+i] = PyArray_DIMS(mit->subspace->ao)[i];
     }
