@@ -25,7 +25,7 @@
 #define SOBJ_LISTTUP 4
 
 static PyObject *
-array_subscript_simple(PyArrayObject *self, PyObject *op);
+array_subscript_simple(PyArrayObject *self, PyObject *op, int check_index);
 
 /******************************************************************************
  ***                    IMPLEMENT MAPPING PROTOCOL                          ***
@@ -556,7 +556,7 @@ fancy_indexing_check(PyObject *args)
  */
 
 NPY_NO_EXPORT PyObject *
-array_subscript_simple(PyArrayObject *self, PyObject *op)
+array_subscript_simple(PyArrayObject *self, PyObject *op, int check_index)
 {
     npy_intp dimensions[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     npy_intp offset;
@@ -601,7 +601,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
 
     /* Standard (view-based) Indexing */
     nd = parse_index(self, op, dimensions,
-                     strides, &offset);
+                     strides, &offset, check_index);
     if (nd == -1) {
         return NULL;
     }
@@ -1222,7 +1222,7 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
         return array_subscript_fancy(self, op, fancy);
     }
     else {
-        return array_subscript_simple(self, op);
+        return array_subscript_simple(self, op, 1);
     }
 }
 
@@ -1256,9 +1256,10 @@ array_subscript(PyArrayObject *self, PyObject *op)
             ret = array_subscript_fancy(self, op, fancy);
         }
         else {
-            ret = array_subscript_simple(self, op);
+            ret = array_subscript_simple(self, op, 1);
         }
     }
+
     if (ret == NULL) {
         return NULL;
     }
@@ -1301,7 +1302,7 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *ind, PyObject *op)
 
     /* Rest of standard (view-based) indexing */
     if (PyArray_CheckExact(self)) {
-        tmp = (PyArrayObject *)array_subscript_simple(self, ind);
+        tmp = (PyArrayObject *)array_subscript_simple(self, ind, 1);
         if (tmp == NULL) {
             return -1;
         }
@@ -1839,12 +1840,13 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     /*
      * all indexing arrays have been converted to 0
      * therefore we can extract the subspace with a simple
-     * getitem call which will use view semantics
+     * getitem call which will use view semantics, but
+     * without index checking.
      *
      * But, be sure to do it with a true array.
      */
     if (PyArray_CheckExact(arr)) {
-        sub = array_subscript_simple(arr, mit->indexobj);
+        sub = array_subscript_simple(arr, mit->indexobj, 0);
     }
     else {
         Py_INCREF(arr);
@@ -1852,7 +1854,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
         if (obj == NULL) {
             goto fail;
         }
-        sub = array_subscript_simple((PyArrayObject *)obj, mit->indexobj);
+        sub = array_subscript_simple((PyArrayObject *)obj, mit->indexobj, 0);
         Py_DECREF(obj);
     }
 
