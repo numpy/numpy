@@ -865,5 +865,19 @@ class TestUfunc(TestCase):
         assert_(MyThing.rmul_count == 1, MyThing.rmul_count)
         assert_(MyThing.getitem_count <= 2, MyThing.getitem_count)
 
+    def test_inplace_fancy_indexing(self):
+        a = np.array([1, 2, 3])
+        np.negative.at(a, [0, 0, 1, 2])
+        assert_equal(a, [1, -2, -3])
+
+        a = np.array([1, 2, 3])
+        np.add.at(a, [0, 1, 1, 2], 1)
+        assert_equal(a, [2, 4, 4])
+
+        a = np.array([1, 2, 3])
+        np.add.at(a, [0, 1, 2, 2], np.array([1, 2, 3]))
+        assert_equal(a, [2, 4, 9])
+
+        
 if __name__ == "__main__":
     run_module_suite()
