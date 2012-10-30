@@ -4896,6 +4896,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     }
 
     PyArray_MapIterBind(iter, op1_array);
+    if (iter->ait == NULL) {
+        return NULL;
+    }
     PyArray_MapIterReset(iter);
 
     /* If second operand is an array, create MapIter object for it */
@@ -4911,12 +4914,17 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         }
 
         PyArray_MapIterBind(iter2, op2_array);
+        if (iter->ait == NULL) {
+            return NULL;
+        }
         PyArray_MapIterReset(iter2);
     }
     /* If second operand is a scalar, create 0 dim array from it */
     else if (op2 != NULL && PyArray_IsAnyScalar(op2)) {
         op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL, 0, 0, 0, NULL);
         if (op2_array == NULL) {
+            PyErr_SetString(PyExc_TypeError,
+                "could not convert scalar to array");
             return NULL;
         }
 
