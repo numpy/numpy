@@ -71,6 +71,24 @@ The following functions are already implemented:
   4-way element-wise product.
 - multiply4_add: (),(),(),(),()->()
   4-way element-wise product plus addition.
+- chosolve_lo
+  solve a system AX=B where A is symmetric/hermitian (using lapack potrf, potrs on the
+  lower triangle)
+- chosolve_up
+  solve a system AX=B where A is symmetric/hermitian (using lapack potrf, potrs on the
+  upper triangle)
+- chosolve1_lo
+  solve a system Ax=b where A is symmetric/hermitian (using lapack potrf, potrs on the
+  lower triangle)
+- chosolve1_up
+  solve a system Ax=b where A is symmetric/hermitian (using lapack potrf, potrs on the
+  upper triangle)
+- poinv_lo
+  compute the inverse of a positive definite symmetric/hermitian matrix (using lapack 
+  ptorf, potri on the lower triangle)
+- poinv_up
+  compute the inverse of a positive definite symmetric/hermitian matrix (using lapack 
+  ptorf, potri on the upper triangle)
 
 		    Note on uniform parameters
 There are some configuration parameters in some of the functions in the linalg
@@ -106,30 +124,14 @@ if compute_uv:
    else:
       func += '_s'
 
-Due to a bug in the gufunc harness, only svd_m and svd_n are functional ATM.
+		     Bug in numpy gufunc harness
+The bug in the gufunc harness that was preventing using a dimension name more than
+once in a single operand has been fixed. This bug was preventing some versions of
+svd to be functional. It also meant that some other gufuncs that required square
+matrices where implemented with signatures that did not enforce the matrices to be
+square, resulting in undefined behavior if the kernel was applied in non-square
+kernels.
 
-			Bug on gufunc harness
-There is a bug in the gufunc harness when handling gufuncs with signatures that
-reuse one "letter" when specifying dimensions in the same matrix. That's the
-natural way to describe a square matrix. So, if in the gufunc definition a
-signature like (m,m)->() is passed, the functions will be called with incorrect
-stride information and won't work.
-
-This has been worked around in functions where the square matrix was an input,
-by just by using different letters for the different dimensions. Correct code
-will work, the only problem is that the underlying system will accept calls with
-non-square matrices in the inner dimension, resulting in undefined behavior in
-the gufunc code.
-
-For example, the det gufunc should have a (m,m)->() signature, but due to this
-bug it is defined as (m,n)->(). However, it will only work properly with 
-matrices that are (m,m)->().
-
-The same problem in the output parameters becomes unsolvable, as we can not add
-a dummy dimension that is not in the input parameters, as the system won't know
-the size of the result. This bugs prevent having functional svd gufuncs beyond
-the one that only returns the singular values, as the others generate square
-matrices in the output.
-
-We are looking into fixing this bug.
+The signatures of gufuncs that expect square matrices have been updated so that the
+harness enforces the squareness of the arguments.
 
