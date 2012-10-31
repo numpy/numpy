@@ -2882,7 +2882,10 @@ class MaskedArray(ndarray):
                 pass
         # Make sure to reset the _fill_value if needed
         if getattr(output, '_fill_value', None) is not None:
-            output._fill_value = None
+            if dtype is None:
+                pass # leave _fill_value as is
+            else:
+                output._fill_value = None
         return output
     view.__doc__ = ndarray.view.__doc__
 
