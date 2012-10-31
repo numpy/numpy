@@ -2948,12 +2948,10 @@ class MaskedArray(ndarray):
             # A record ................
             if isinstance(dout, np.void):
                 mask = _mask[indx]
-# If we can make mvoid a subclass of np.void, that'd be what we'd need
-#                return mvoid(dout, mask=mask)
-                if flatten_mask(mask).any():
-                    dout = mvoid(dout, mask=mask)
-                else:
-                    return dout
+                # We should always re-cast to mvoid, otherwise users can
+                # change masks on rows that already have masked values, but not
+                # on rows that have no masked values, which is inconsistent.
+                dout = mvoid(dout, mask=mask)
             # Just a scalar............
             elif _mask is not nomask and _mask[indx]:
                 return masked
