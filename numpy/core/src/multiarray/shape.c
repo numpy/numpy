@@ -18,10 +18,6 @@
 #include "shape.h"
 
 static int
-_check_ones(PyArrayObject *self, int newnd,
-                npy_intp* newdims, npy_intp *strides);
-
-static int
 _fix_unknown_dimension(PyArray_Dims *newshape, npy_intp s_original);
 
 static int
@@ -208,65 +204,48 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     }
 
     /*
-     * Returns a pointer to an appropriate strides array
-     * if all we are doing is inserting ones into the shape,
-     * or removing ones from the shape
-     * or doing a combination of the two
-     * In this case we don't need to do anything but update strides and
-     * dimensions.  So, we can handle non single-segment cases.
+     * fix any -1 dimensions and check new-dimensions against old size
      */
-    i = _check_ones(self, ndim, dimensions, newstrides);
-    if (i == 0) {
-        strides = newstrides;
+    if (_fix_unknown_dimension(newdims, PyArray_SIZE(self)) < 0) {
+        return NULL;
     }
+    /*
+     * sometimes we have to create a new copy of the array
+     * in order to get the right orientation and
+     * because we can't just re-use the buffer with the
+     * data in the order it is in.
+     */
+    if ((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(self)) ||
+        (order == NPY_FORTRANORDER && !PyArray_IS_F_CONTIGUOUS(self))) {
+        int success = 0;
+        success = _attempt_nocopy_reshape(self, ndim, dimensions,
+                                          newstrides, order);
+        if (success) {
+            /* no need to copy the array after all */
+            strides = newstrides;
+        }
+        else {
+            PyObject *newcopy;
+            newcopy = PyArray_NewCopy(self, order);
+            if (newcopy == NULL) {
+                return NULL;
+            }
+            incref = NPY_FALSE;
+            self = (PyArrayObject *)newcopy;
+        }
+    }
+    /* We always have to interpret the contiguous buffer correctly */
+
+    /* Make sure the flags argument is set. */
     flags = PyArray_FLAGS(self);
-
-    if (strides == NULL) {
-        /*
-         * we are really re-shaping not just adding ones to the shape somewhere
-         * fix any -1 dimensions and check new-dimensions against old size
-         */
-        if (_fix_unknown_dimension(newdims, PyArray_SIZE(self)) < 0) {
-            return NULL;
+    if (ndim > 1) {
+        if (order == NPY_FORTRANORDER) {
+            flags &= ~NPY_ARRAY_C_CONTIGUOUS;
+            flags |= NPY_ARRAY_F_CONTIGUOUS;
         }
-        /*
-         * sometimes we have to create a new copy of the array
-         * in order to get the right orientation and
-         * because we can't just re-use the buffer with the
-         * data in the order it is in.
-         */
-        if ((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(self)) ||
-            (order == NPY_FORTRANORDER && !PyArray_IS_F_CONTIGUOUS(self))) {
-            int success = 0;
-            success = _attempt_nocopy_reshape(self, ndim, dimensions,
-                                              newstrides, order);
-            if (success) {
-                /* no need to copy the array after all */
-                strides = newstrides;
-            }
-            else {
-                PyObject *newcopy;
-                newcopy = PyArray_NewCopy(self, order);
-                if (newcopy == NULL) {
-                    return NULL;
-                }
-                incref = NPY_FALSE;
-                self = (PyArrayObject *)newcopy;
-            }
-        }
-
-        /* We always have to interpret the contiguous buffer correctly */
-
-        /* Make sure the flags argument is set. */
-        if (ndim > 1) {
-            if (order == NPY_FORTRANORDER) {
-                flags &= ~NPY_ARRAY_C_CONTIGUOUS;
-                flags |= NPY_ARRAY_F_CONTIGUOUS;
-            }
-            else {
-                flags &= ~NPY_ARRAY_F_CONTIGUOUS;
-                flags |= NPY_ARRAY_C_CONTIGUOUS;
-            }
+        else {
+            flags &= ~NPY_ARRAY_F_CONTIGUOUS;
+            flags |= NPY_ARRAY_C_CONTIGUOUS;
         }
     }
 
@@ -321,41 +300,6 @@ PyArray_Reshape(PyArrayObject *self, PyObject *shape)
     return ret;
 }
 
-/* inserts 0 for strides where dimension will be 1 */
-static int
-_check_ones(PyArrayObject *self, int newnd,
-                npy_intp* newdims, npy_intp *strides)
-{
-    int nd;
-    npy_intp *dims;
-    npy_bool done=NPY_FALSE;
-    int j, k;
-
-    nd = PyArray_NDIM(self);
-    dims = PyArray_DIMS(self);
-
-    for (k = 0, j = 0; !done && (j < nd || k < newnd);) {
-        if ((j<nd) && (k<newnd) && (newdims[k] == dims[j])) {
-            strides[k] = PyArray_STRIDES(self)[j];
-            j++;
-            k++;
-        }
-        else if ((k < newnd) && (newdims[k] == 1)) {
-            strides[k] = 0;
-            k++;
-        }
-        else if ((j<nd) && (dims[j] == 1)) {
-            j++;
-        }
-        else {
-            done = NPY_TRUE;
-        }
-    }
-    if (done) {
-        return -1;
-    }
-    return 0;
-}
 
 static void
 _putzero(char *optr, PyObject *zero, PyArray_Descr *dtype)
