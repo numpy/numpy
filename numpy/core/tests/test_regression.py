@@ -521,6 +521,11 @@ class TestRegression(TestCase):
         a = np.lib.stride_tricks.as_strided(a, shape=(5,), strides=(0,))
         assert_(a.reshape(5,1).strides[0] == 0)
 
+    def test_reshape_zero_size(self, level=rlevel):
+        """Github Issue #2700, setting shape failed for 0-sized arrays"""
+        a = np.ones((0,2))
+        a.shape = (-1,2)
+
     def test_repeat_discont(self, level=rlevel):
         """Ticket #352"""
         a = np.arange(12).reshape(4,3)[:,2]
