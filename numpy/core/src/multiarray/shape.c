@@ -187,6 +187,11 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
     if (order == NPY_ANYORDER) {
         order = PyArray_ISFORTRAN(self);
     }
+    else if (order == NPY_KEEPORDER) {
+        PyErr_SetString(PyExc_ValueError,
+                "order 'K' is not permitted for reshaping");
+        return NULL;
+    }
     /*  Quick check to make sure anything actually needs to be done */
     if (ndim == PyArray_NDIM(self)) {
         same = NPY_TRUE;
@@ -230,11 +235,8 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
          * because we can't just re-use the buffer with the
          * data in the order it is in.
          */
-        if (!(PyArray_ISONESEGMENT(self)) ||
-            (((PyArray_CHKFLAGS(self, NPY_ARRAY_C_CONTIGUOUS) &&
-               order == NPY_FORTRANORDER) ||
-              (PyArray_CHKFLAGS(self, NPY_ARRAY_F_CONTIGUOUS) &&
-                  order == NPY_CORDER)) && (PyArray_NDIM(self) > 1))) {
+        if ((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(self)) ||
+            (order == NPY_FORTRANORDER && !PyArray_IS_F_CONTIGUOUS(self))) {
             int success = 0;
             success = _attempt_nocopy_reshape(self, ndim, dimensions,
                                               newstrides, order);
