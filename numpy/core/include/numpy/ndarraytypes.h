@@ -1275,8 +1275,11 @@ typedef struct {
         npy_intp              bscoord[NPY_MAXDIMS];
 
         PyObject              *indexobj;               /* creating obj */
-        int                   consec;                  /* axes to swap if index
-                                                        * arrays are consecutive */
+        /*
+         * consec is first used to indicate wether fancy indices are
+         * consecutive and then denotes at which axis they are inserted
+         */
+        int                   consec;
         char                  *dataptr;
 
 } PyArrayMapIterObject;

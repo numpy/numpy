@@ -226,8 +226,7 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
      * (n2,...,n1+n2-1,0,...,n2-1,n1+n2,...n3-1)
      */
     n1 = mit->iters[0]->nd_m1 + 1;
-    /* We have to normalize for newaxes */
-    n2 = mit->consec;
+    n2 = mit->consec; /* axes to insert at */
     n3 = mit->nd;
 
     /* use n1 as the boundary if getting but n2 if setting */
@@ -1899,7 +1898,9 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     j = 0;
     /* Only expand the first ellipsis */
     noellip = 1;
-    memset(mit->bscoord, 0, sizeof(npy_intp)*(PyArray_NDIM(arr)));
+    /* count newaxes before iter axes */
+    newaxes = 0;
+    memset(mit->bscoord, 0, sizeof(npy_intp)*PyArray_NDIM(arr));
     for (i = 0; i < n; i++) {
         /*
          * We need to fill in the starting coordinates for
@@ -1914,8 +1915,8 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
             noellip = 0;
         }
         else if (obj == Py_None) {
-            if (j == 0 && mit->consec) {
-                mit->consec += 1; /* count newaxes before iter axes */
+            if (j == 0) {
+                newaxes += 1;
             }
         }
         else {
@@ -1943,8 +1944,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
         }
     }
     if (mit->consec) {
-        /* if set, it was 1 + newaxes before first iter axis */
-        mit->consec += mit->iteraxes[0] - 1;
+        mit->consec = mit->iteraxes[0] + newaxes;
     }
 
  finish:
