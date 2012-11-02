@@ -3231,6 +3231,26 @@ static void
 
 /**end repeat**/
 
+/**begin repeat
+   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
+ */
+static inline void
+@TYPE@_convolve_same_m(char **args,
+                       npy_intp *dimensions,
+                       npy_intp *steps,
+                       void *NPY_UNUSED(func))
+{
+
+}
+
+static inline void
+@TYPE@_convolve_same_n(char **args,
+                       npy_intp *dimensions,
+                       npy_intp *steps,
+                       void *NPY_UNUSED(func))
+{
+}
+/**end repeat**/
 
 #pragma GCC diagnostic pop
 
@@ -3300,7 +3320,8 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(chosolve1_up);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(chosolve1_lo);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(poinv_up);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(poinv_lo);
-
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(convolve_same_m);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(convolve_same_n);
 
 static char equal_2_types[] = {
     NPY_FLOAT, NPY_FLOAT,
@@ -3706,6 +3727,22 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
 	4,1,1,
 	poinv_lo_funcs,
 	equal_2_types
+    },
+    {
+        "convolve_same_m",
+	"(m),(n)->(m)",
+	"convolve equivalent to mode='same' when m>=n. \n",
+	4,2,1,
+	convolve_same_m_funcs,
+	equal_3_types
+    },
+    {
+        "convolve_same_n",
+	"(m),(n)->(n)",
+	"convolve equivalent to mode='same' when m<=n. \n",
+	4,2,1,
+	convolve_same_m_funcs,
+	equal_3_types
     }
 };
 
