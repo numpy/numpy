@@ -943,6 +943,7 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('umath_linalg',
                          sources = [get_lapack_lite_sources],
                          depends = [join('src', 'umath', 'umath_linalg.c.src'),
+                                    join('src', 'umath', 'gufuncs_linalg.py'),
                                     join('src', 'umath', 'lapack_lite', 'python_xerbla.c'),
                                     join('src', 'umath', 'lapack_lite', 'zlapack_lite.c'),
                                     join('src', 'umath', 'lapack_lite', 'dlapack_lite.c'),
