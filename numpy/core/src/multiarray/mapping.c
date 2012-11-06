@@ -2038,6 +2038,9 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 
         oned = ((PyArray_NDIM(a) == 1) &&
                 !(PyTuple_Check(index) && PyTuple_GET_SIZE(index) > 1));
+        oned = 0; /*for now one d mapiteration the efficient way does 
+                    not work (the assignment/getting functions are 
+                    specially written)*/
     }
     mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, oned, fancy);
     if (mit == NULL) {
@@ -2045,6 +2048,9 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
     }
 
     PyArray_MapIterBind(mit, a);
+    if (mit->ait == NULL) { /*bind failed*/ 
+        return NULL;
+    }
     PyArray_MapIterReset(mit);
     return mit;
 }
