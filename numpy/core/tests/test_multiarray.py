@@ -2894,6 +2894,12 @@ class TestMapIter(TestCase):
                          [ 104.,    5.,    6.,    7.,],
                          [   8.,    9.,   40.,   11.,]])
 
+	b = arange(6).astype(float)
+ 	index = (array([1,2,0]),)
+ 	vals = [50,4,100.1]
+	test_inplace_increment(b, index, vals)
+	assert_equal(b, [ 100.1,  51.,   6.,   3.,   4.,   5. ])
+
 
 
 if __name__ == "__main__":
