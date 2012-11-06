@@ -10,7 +10,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'alterdot', 'restoredot', 'roll', 'rollaxis', 'cross', 'tensordot',
            'array2string', 'get_printoptions', 'set_printoptions',
            'array_repr', 'array_str', 'set_string_function',
-           'little_endian', 'require',
+           'little_endian', 'require', 'inplace_increment',
            'fromiter', 'array_equal', 'array_equiv',
            'indices', 'fromfunction', 'isclose',
            'load', 'loads', 'isscalar', 'binary_repr', 'base_repr',
@@ -252,6 +252,7 @@ lexsort = multiarray.lexsort
 compare_chararrays = multiarray.compare_chararrays
 putmask = multiarray.putmask
 einsum = multiarray.einsum
+inplace_increment = multiarray.inplace_increment
 
 def asarray(a, dtype=None, order=None):
     """
