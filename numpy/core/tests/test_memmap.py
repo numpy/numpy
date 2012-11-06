@@ -104,5 +104,12 @@ class TestMemmap(TestCase):
                     shape=self.shape)
         assert fp[:2, :2]._mmap is fp._mmap
 
+    def test_view(self):
+        fp = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
+        new1 = fp.view()
+        new2 = new1.view()
+        assert(new1.base is fp)
+        assert(new2.base is fp)
+
 if __name__ == "__main__":
     run_module_suite()
