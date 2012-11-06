@@ -12,9 +12,6 @@ Caveats:
 import os
 import sys
 import subprocess
-import string
-
-import os.path as op
 
 # Ugly but necessary hack: import numpy here so that wscript in sub directories
 # will see this numpy and not an already installed one
@@ -25,70 +22,18 @@ from bento.commands import hooks
 from bento.utils.utils \
     import \
         cmd_is_runnable
-
-import waflib
+from bento.backends.waf_backend \
+    import \
+        WAF_TOOLDIR
+from bento.backends.waf_tools \
+    import \
+        blas_lapack
 
 sys.path.insert(0, os.getcwd())
 try:
     _SETUP_PY = __import__("setup")
 finally:
     sys.path.pop(0)
-
-def check_blas_lapack(conf):
-    conf.env.HAS_CBLAS = False
-    if sys.platform == "win32":
-        mkl_libs = "mkl_lapack95,mkl_blas95,mkl_intel_c,mkl_intel_thread,mkl_core,libiomp5md".split(",")
-        mkl_base = r"C:\Program Files\Intel\Compiler\11.1\051"
-        conf.env.INCLUDES.append("%s\mkl\include" % mkl_base)
-        conf.env.LIBPATH.extend(["%s\mkl\ia32\lib" % mkl_base,
-                                 "%s\lib\ia32" % mkl_base])
-
-        try:
-            conf.check_cc(lib=mkl_libs, msg="Checking for MKL (CBLAS)",
-                          uselib_store="CBLAS")
-            conf.env.HAS_CBLAS = True
-        except waflib.Errors.ConfigurationError:
-            conf.env.HAS_LAPACK = False
-
-        try:
-            conf.check_cc(lib=mkl_libs, msg="Checking for MKL (LAPACK)",
-                          uselib_store="LAPACK")
-            conf.env.HAS_LAPACK = True
-        except waflib.Errors.ConfigurationError:
-            conf.env.HAS_LAPACK = False
-
-
-    elif sys.platform == "darwin":
-        try:
-            conf.check(framework="Accelerate", msg="Checking for framework Accelerate (CBLAS)", uselib_store="CBLAS")
-            conf.env.HAS_CBLAS = True
-        except waflib.Errors.ConfigurationError:
-            conf.env.HAS_CBLAS = False
-
-        try:
-            conf.check(framework="Accelerate", msg="Checking for framework Accelerate (LAPACK)", uselib_store="LAPACK")
-            conf.env.HAS_LAPACK = True
-        except waflib.Errors.ConfigurationError:
-            conf.env.HAS_LAPACK = False
-    else:
-        try:
-            conf.check_cc(lib=["cblas", "atlas"], uselib_store="CBLAS")
-            conf.env.HAS_CBLAS = True
-        except waflib.Errors.ConfigurationError:
-            conf.env.HAS_CBLAS = False
-
-        try:
-            conf.check_cc(lib=["lapack", "f77blas", "cblas", "atlas"],
-                          uselib_store="LAPACK")
-            conf.env.HAS_LAPACK = True
-        except waflib.Errors.ConfigurationError:
-            conf.env.HAS_LAPACK = False
-
-    # You can manually set up blas/lapack as follows:
-    #conf.env.HAS_CBLAS = True
-    #conf.env.LIB_CBLAS = ["cblas", "atlas"]
-    #conf.env.HAS_LAPACK = True
-    #conf.env.LIB_LAPACK = ["lapack", "f77blas", "cblas", "atlas"]
 
 def compute_git_revision(top_node):
     git_repo_node = top_node.find_node(".git")
@@ -115,7 +60,15 @@ def post_configure(context):
     conf = context.waf_context
     if conf.env["CC_NAME"] == "gcc":
         conf.env.CFLAGS_PYEXT.append("-Wfatal-errors")
-    check_blas_lapack(conf)
+
+    conf.load("arch", tooldir=[WAF_TOOLDIR])
+    if sys.platform == "darwin":
+        conf.env["MACOSX_DEPLOYMENT_TARGET"] = "10.4"
+        conf.check_cc_default_arch()
+        archs = [conf.env.DEFAULT_CC_ARCH]
+        conf.env.ARCH = archs
+
+    blas_lapack.check_blas_lapack(context)
 
 @hooks.pre_build
 def pre_build(context):
@@ -124,3 +77,7 @@ def pre_build(context):
 @hooks.pre_sdist
 def pre_sdist(context):
     _register_metadata(context)
+
+@hooks.options
+def options(global_context):
+    blas_lapack.add_options(global_context)

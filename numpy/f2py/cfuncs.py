@@ -260,7 +260,7 @@ cppmacros['len..']="""\
 """
 needs['f2py_size']=['stdarg.h']
 cfuncs['f2py_size']="""\
-int f2py_size(PyArrayObject* var, ...)
+static int f2py_size(PyArrayObject* var, ...)
 {
   npy_int sz = 0;
   npy_int dim;

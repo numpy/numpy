@@ -858,6 +858,7 @@ array_astype(PyArrayObject *self, PyObject *args, PyObject *kwds)
                 PyUString_FromFormat(" according to the rule %s",
                         npy_casting_to_string(casting)));
         PyErr_SetObject(PyExc_TypeError, errmsg);
+        Py_DECREF(errmsg);
         Py_DECREF(dtype);
         return NULL;
     }
@@ -1587,8 +1588,9 @@ array_setstate(PyArrayObject *self, PyObject *args)
         /* Check that the string is not interned */
         if (!_IsAligned(self) || swap || PyString_CHECK_INTERNED(rawdata)) {
 #else
-        /* Bytes are never interned */
-        if (!_IsAligned(self) || swap) {
+        /* Bytes should always be considered immutable, but we just grab the
+         * pointer if they are large, to save memory. */
+        if (!_IsAligned(self) || swap || (len <= 1000)) {
 #endif
             npy_intp num = PyArray_NBYTES(self);
             fa->data = PyDataMem_NEW(num);

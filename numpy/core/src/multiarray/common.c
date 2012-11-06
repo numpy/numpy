@@ -13,6 +13,22 @@
 #include "common.h"
 #include "buffer.h"
 
+/*
+ * The casting to use for implicit assignment operations resulting from
+ * in-place operations (like +=) and out= arguments. (Notice that this
+ * variable is misnamed, but it's part of the public API so I'm not sure we
+ * can just change it. Maybe someone should try and see if anyone notices.
+ */
+/*
+ * In numpy 1.6 and earlier, this was NPY_UNSAFE_CASTING. In a future
+ * release, it will become NPY_SAME_KIND_CASTING.  Right now, during the
+ * transitional period, we continue to follow the NPY_UNSAFE_CASTING rules (to
+ * avoid breaking people's code), but we also check for whether the cast would
+ * be allowed under the NPY_SAME_KIND_CASTING rules, and if not we issue a
+ * warning (that people's code will be broken in a future release.)
+ */
+NPY_NO_EXPORT NPY_CASTING NPY_DEFAULT_ASSIGN_CASTING = NPY_INTERNAL_UNSAFE_CASTING_BUT_WARN_UNLESS_SAME_KIND;
+
 
 NPY_NO_EXPORT PyArray_Descr *
 _array_find_python_scalar_type(PyObject *op)
@@ -309,9 +325,24 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     if (ip != NULL) {
         if (PyDict_Check(ip)) {
             PyObject *typestr;
+#if defined(NPY_PY3K)
+            PyObject *tmp = NULL;
+#endif
             typestr = PyDict_GetItemString(ip, "typestr");
-            if (typestr && PyString_Check(typestr)) {
-                dtype =_array_typedescr_fromstr(PyString_AS_STRING(typestr));
+#if defined(NPY_PY3K)
+            /* Allow unicode type strings */
+            if (PyUnicode_Check(typestr)) {
+                tmp = PyUnicode_AsASCIIString(typestr);
+                typestr = tmp;
+            }
+#endif
+            if (typestr && PyBytes_Check(typestr)) {
+                dtype =_array_typedescr_fromstr(PyBytes_AS_STRING(typestr));
+#if defined(NPY_PY3K)
+                if (tmp == typestr) {
+                    Py_DECREF(tmp);
+                }
+#endif
                 Py_DECREF(ip);
                 if (dtype == NULL) {
                     goto fail;

@@ -16,7 +16,8 @@ Basic workflow
 
 In short:
 
-1. Start a new *feature branch* for each set of edits that you do.
+1. Update your ``master`` branch if it's not up to date. 
+   Then start a new *feature branch* for each set of edits that you do.
    See :ref:`below <making-a-new-feature-branch>`.
 
    Avoid putting new commits in your ``master`` branch.
@@ -54,6 +55,10 @@ In short:
 
      See :ref:`below <pushing-to-main>`.
 
+.. note:: It's usually a good idea to use the ``-n`` flag to ``git push``
+          to check first that you're about to push the changes you want to
+          the place you want.
+
 This way of working helps to keep work well organized and the history
 as clear as possible.
 
@@ -74,16 +79,16 @@ as clear as possible.
 Making a new feature branch
 ===========================
 
-::
+To update your master branch, use::
 
-   git branch my-new-feature
-   git checkout my-new-feature
+   git fetch upstream
+   git merge upstream/master --ff-only
 
-or just::
+To create a new branch and check it out, use::
 
    git checkout -b my-new-feature upstream/master
 
-Generally, you will want to keep this also on your public github_ fork
+Generally, you will want to keep this branch also on your public github_ fork
 of NumPy_.  To do this, you `git push`_ this new branch up to your github_
 repo.  Generally (if you followed the instructions in these pages, and
 by default), git will have a link to your github_ repo, called
@@ -143,12 +148,51 @@ In more detail
 #. To commit all modified files into the local copy of your repo,, do
    ``git commit -am 'A commit message'``.  Note the ``-am`` options to
    ``commit``. The ``m`` flag just signals that you're going to type a
-   message on the command line.  The ``a`` flag - you can just take on
-   faith - or see `why the -a flag?`_ - and the helpful use-case description in
-   the `tangled working copy problem`_. The `git commit`_ manual
-   page might also be useful.
+   message on the command line.   If you leave it out, an editor will open in
+   which you can compose your commit message.  For non-trivial commits this is
+   often the better choice.  The ``a`` flag - you can just take on faith - or
+   see `why the -a flag?`_ - and the helpful use-case description in the
+   `tangled working copy problem`_. The section on
+   :ref:`commit messages <writing-the-commit-message>` below might also be useful.
 #. To push the changes up to your forked repo on github_, do a ``git
    push`` (see `git push`). 
+
+
+.. _writing-the-commit-message:
+
+Writing the commit message
+--------------------------
+
+Commit messages should be clear and follow a few basic rules.  Example::
+
+   ENH: add functionality X to numpy.<submodule>.
+
+   The first line of the commit message starts with a capitalized acronym
+   (options listed below) indicating what type of commit this is.  Then a blank
+   line, then more text if needed.  Lines shouldn't be longer than 80
+   characters.  If the commit is related to a ticket, indicate that with
+   "See #3456", "See ticket 3456", "Closes #3456" or similar.
+
+Describing the motivation for a change, the nature of a bug for bug fixes or
+some details on what an enhancement does are also good to include in a commit
+message.  Messages should be understandable without looking at the code
+changes.  A commit message like ``MAINT: fixed another one`` is an example of
+what not to do; the reader has to go look for context elsewhere.
+
+Standard acronyms to start the commit message with are::
+
+   API: an (incompatible) API change
+   BLD: change related to building numpy
+   BUG: bug fix
+   DEP: deprecate something, or remove a deprecated object
+   DEV: development tool or utility
+   DOC: documentation
+   ENH: enhancement
+   MAINT: maintenance commit (refactoring, typos, etc.)
+   REV: revert an earlier commit
+   STY: style fix (whitespace, PEP8)
+   TST: addition or modification of tests
+   REL: related to releasing numpy
 
 
 .. _rebasing-on-master:
@@ -181,9 +225,9 @@ Then, the feature branch::
    git rebase master
 
 If you have made changes to files that have changed also upstream,
-this may generate merge conflicts that you need to resolve.::
+this may generate merge conflicts that you need to resolve.
+Finally, remove the backup branch once the rebase succeeded::
 
-   # delete backup branch
    git branch -D tmp
 
 .. _recovering-from-mess-up:
@@ -215,6 +259,11 @@ If you forgot to make a backup branch::
 
    # reset the branch to where it was before the botched rebase
    git reset --hard my-feature-branch@{2}
+
+If you didn't actually mess up but there are merge conflicts, you need to
+resolve those.  This can be one of the trickier things to get right.  For a
+good description of how to do this, see
+http://git-scm.com/book/en/Git-Branching-Basic-Branching-and-Merging#Basic-Merge-Conflicts
 
 
 .. _asking-for-merging:

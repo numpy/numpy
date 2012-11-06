@@ -1230,7 +1230,7 @@ static struct PyModuleDef moduledef = {
 /* Initialization function for the module */
 #if defined(NPY_PY3K)
 #define RETVAL m
-PyObject *PyInit__dotblas(void)
+PyMODINIT_FUNC PyInit__dotblas(void)
 #else
 #define RETVAL
 PyMODINIT_FUNC init_dotblas(void)

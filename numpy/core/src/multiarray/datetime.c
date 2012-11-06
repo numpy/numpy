@@ -1489,6 +1489,7 @@ raise_if_datetime64_metadata_cast_error(char *object_type,
                 PyUString_FromFormat(" according to the rule %s",
                         npy_casting_to_string(casting)));
         PyErr_SetObject(PyExc_TypeError, errmsg);
+        Py_DECREF(errmsg);
         return -1;
     }
 }
@@ -1520,6 +1521,7 @@ raise_if_timedelta64_metadata_cast_error(char *object_type,
                 PyUString_FromFormat(" according to the rule %s",
                         npy_casting_to_string(casting)));
         PyErr_SetObject(PyExc_TypeError, errmsg);
+        Py_DECREF(errmsg);
         return -1;
     }
 }
@@ -1654,6 +1656,7 @@ incompatible_units: {
                 PyUString_FromString(" because they have "
                     "incompatible nonlinear base time units"));
         PyErr_SetObject(PyExc_TypeError, errmsg);
+        Py_DECREF(errmsg);
         return -1;
     }
 units_overflow: {
@@ -1666,6 +1669,7 @@ units_overflow: {
                 PyUString_FromString(" and "));
         errmsg = append_metastr_to_string(meta2, 0, errmsg);
         PyErr_SetObject(PyExc_OverflowError, errmsg);
+        Py_DECREF(errmsg);
         return -1;
     }
 }
@@ -1813,6 +1817,7 @@ convert_datetime_metadata_tuple_to_datetime_metadata(PyObject *tuple,
                                       "datetime metadata conversion, not ");
         PyUString_ConcatAndDel(&errmsg, PyObject_Repr(tuple));
         PyErr_SetObject(PyExc_TypeError, errmsg);
+        Py_DECREF(errmsg);
         return -1;
     }
 

@@ -360,7 +360,13 @@ class TestRandomDist(TestCase):
         desired = np.array([[  2.46852460439034849e+03,   1.41286880810518346e+03],
                          [  5.28287797029485181e+07,   6.57720981047328785e+07],
                          [  1.40840323350391515e+02,   1.98390255135251704e+05]])
-        np.testing.assert_array_almost_equal(actual, desired, decimal=15)
+        # For some reason on 32-bit x86 Ubuntu 12.10 the [1, 0] entry in this
+        # matrix differs by 24 nulps. Discussion:
+        #   http://mail.scipy.org/pipermail/numpy-discussion/2012-September/063801.html
+        # Consensus is that this is probably some gcc quirk that affects
+        # rounding but not in any important way, so we just use a looser
+        # tolerance on this test:
+        np.testing.assert_array_almost_equal_nulp(actual, desired, nulp=30)
 
     def test_poisson(self):
         np.random.seed(self.seed)

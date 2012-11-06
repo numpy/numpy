@@ -15,6 +15,12 @@ a view onto the original array, instead of producing a copy.
 
 selecting multiple fields out of an array also produces a view.
 
+The hash function of numpy.void scalars has been changed.  
+Previously the pointer to the data was hashed as an integer.
+Now, the hash function uses the tuple-hash algorithm to combine
+the hash functions of the elements of the scalar, but only if 
+the scalar is read-only.
+
 New features
 ============
 
@@ -25,9 +31,10 @@ Preliminary support for NA missing values similar to those in R has
 been implemented.  This was done by adding an NA mask to an array sub-type
 
 .. note:: The NA API is *experimental*, and may undergo changes in future
-   versions of NumPy.  The current implementation based on masks will likely be
-   supplemented by a second one based on bit-patterns, and it is possible that
-   a difference will be made between missing and ignored data.
+   versions of NumPy.  The current implementation based on masks will 
+   likely be supplemented by a second one based on bit-patterns, and it 
+   is possible that a difference will be made between missing and 
+   ignored data.
 
 While a significant amount of the NumPy functionality has been extended to
 support NA masks, not everything is yet supported. Here is an (incomplete)

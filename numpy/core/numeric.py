@@ -75,8 +75,10 @@ def zeros_like(a, dtype=None, order='K', subok=True):
         The shape and data-type of `a` define these same attributes of
         the returned array.
     dtype : data-type, optional
+        .. versionadded:: 1.6.0
         Overrides the data type of the result.
     order : {'C', 'F', 'A', or 'K'}, optional
+        .. versionadded:: 1.6.0
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
@@ -161,8 +163,10 @@ def ones_like(a, dtype=None, order='K', subok=True):
         The shape and data-type of `a` define these same attributes of
         the returned array.
     dtype : data-type, optional
+        .. versionadded:: 1.6.0
         Overrides the data type of the result.
     order : {'C', 'F', 'A', or 'K'}, optional
+        .. versionadded:: 1.6.0
         Overrides the memory layout of the result. 'C' means C-order,
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
@@ -535,7 +539,7 @@ def require(a, dtype=None, requirements=None):
 def isfortran(a):
     """
     Returns True if array is arranged in Fortran-order in memory
-    and dimension > 1.
+    and not C-order.
 
     Parameters
     ----------
@@ -581,7 +585,7 @@ def isfortran(a):
     >>> np.isfortran(b)
     True
 
-    1-D arrays always evaluate as False.
+    C-ordered arrays evaluate as False even if they are also FORTRAN-ordered.
 
     >>> np.isfortran(np.array([1, 2], order='FORTRAN'))
     False

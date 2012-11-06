@@ -265,8 +265,8 @@ PyArray_ToString(PyArrayObject *self, NPY_ORDER order)
     */
 
     numbytes = PyArray_NBYTES(self);
-    if ((PyArray_ISCONTIGUOUS(self) && (order == NPY_CORDER))
-        || (PyArray_ISFORTRAN(self) && (order == NPY_FORTRANORDER))) {
+    if ((PyArray_IS_C_CONTIGUOUS(self) && (order == NPY_CORDER))
+        || (PyArray_IS_F_CONTIGUOUS(self) && (order == NPY_FORTRANORDER))) {
         ret = PyBytes_FromStringAndSize(PyArray_DATA(self), (Py_ssize_t) numbytes);
     }
     else {

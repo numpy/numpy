@@ -1337,6 +1337,7 @@ npyiter_check_casting(int nop, PyArrayObject **op,
                         PyUString_FromFormat(" according to the rule %s",
                                 npyiter_casting_to_string(casting)));
                 PyErr_SetObject(PyExc_TypeError, errmsg);
+                Py_DECREF(errmsg);
                 return 0;
             }
             /* Check write (temp -> op) casting */
@@ -1359,6 +1360,7 @@ npyiter_check_casting(int nop, PyArrayObject **op,
                                 (int)iop,
                                 npyiter_casting_to_string(casting)));
                 PyErr_SetObject(PyExc_TypeError, errmsg);
+                Py_DECREF(errmsg);
                 return 0;
             }
 
@@ -1738,6 +1740,7 @@ broadcast_error: {
 
             }
             PyErr_SetObject(PyExc_ValueError, errmsg);
+            Py_DECREF(errmsg);
         }
         else {
             errmsg = PyUString_FromString("operands could not be broadcast "
@@ -1804,6 +1807,7 @@ broadcast_error: {
 
             }
             PyErr_SetObject(PyExc_ValueError, errmsg);
+            Py_DECREF(errmsg);
         }
 
         return 0;
@@ -1890,6 +1894,7 @@ operand_different_than_broadcast: {
         }
 
         PyErr_SetObject(PyExc_ValueError, errmsg);
+        Py_DECREF(errmsg);
 
         return 0;
     }
