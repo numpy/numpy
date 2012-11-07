@@ -1970,14 +1970,25 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                       NPY_ITER_NO_BROADCAST;
     }
 
+    /*
+     * If there are no iteration dimensions, create a fake one
+     * so that the scalar edge case works right.
+     */
+    if (iter_ndim == 0) {
+        iter_ndim = 1;
+        iter_shape[0] = 1;
+        for (i = 0; i < nop; ++i) {
+            op_axes[i][0] = -1;
+        }
+    }
+
     /* Create the iterator */
     iter = NpyIter_AdvancedNew(nop, op, NPY_ITER_MULTI_INDEX|
                                       NPY_ITER_REFS_OK|
                                       NPY_ITER_REDUCE_OK,
                            order, NPY_UNSAFE_CASTING, op_flags,
                            dtypes, iter_ndim,
-                           iter_ndim ? op_axes : NULL,
-                           iter_ndim ? iter_shape : NULL, 0);
+                           op_axes, iter_shape, 0);
     if (iter == NULL) {
         retval = -1;
         goto fail;
