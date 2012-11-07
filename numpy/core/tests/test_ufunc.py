@@ -314,6 +314,8 @@ class TestUfunc(TestCase):
     def test_inner1d(self):
         a = np.arange(6).reshape((2,3))
         assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1))
+        a = np.arange(6)
+        assert_array_equal(umt.inner1d(a,a), np.sum(a*a))
 
     def test_broadcast(self):
         msg = "broadcast"
