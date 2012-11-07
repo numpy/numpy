@@ -4876,36 +4876,49 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     if (ufunc->nin == 2 && op2 == NULL) {
         PyErr_SetString(PyExc_ValueError,
                         "second operand needed for ufunc");
-        return NULL;
+        goto fail;
     }
 
     if (!PyArray_Check(op1)) {
         PyErr_SetString(PyExc_TypeError,
                         "first operand must be array");
-        return NULL;
+        goto fail;
     }
 
     op1_array = (PyArrayObject *)PyArray_FromAny(op1, NULL, 0, 0, 0, NULL);
     if (op1_array == NULL) {
-        return NULL;
+        goto fail;
     }
 
     iter = (PyArrayMapIterObject*)PyArray_MapIterNew(idx, 0, 1);
     if (iter == NULL) {
-        return NULL;
+        goto fail;
     }
 
     PyArray_MapIterBind(iter, op1_array);
     if (iter->ait == NULL) {
-        return NULL;
+        goto fail;
     }
     PyArray_MapIterReset(iter);
 
-    /* If second operand is an array, create MapIter object for it */
-    if (op2 != NULL && PyArray_Check(op2)) {
+    /* If second operand is a scalar, create 0 dim array from it */
+    if (op2 != NULL && PyArray_IsAnyScalar(op2)) {
         op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL, 0, 0, 0, NULL);
         if (op2_array == NULL) {
-            return NULL;
+            PyErr_SetString(PyExc_TypeError,
+                "could not convert scalar to array");
+            goto fail;
+        }
+
+        iter2 = NULL;
+        first_item[0] = 0;
+    }
+    /* If second operand is an array like object,
+       create MapIter object for it */
+    else {
+        op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL, 0, 0, 0, NULL);
+        if (op2_array == NULL) {
+            goto fail;
         }
 
         iter2 = (PyArrayMapIterObject*)PyArray_MapIterNew(idx, 0, 1);
@@ -4914,28 +4927,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         }
 
         PyArray_MapIterBind(iter2, op2_array);
-        if (iter->ait == NULL) {
-            return NULL;
+        if (iter2->ait == NULL) {
+            goto fail;
         }
         PyArray_MapIterReset(iter2);
-    }
-    /* If second operand is a scalar, create 0 dim array from it */
-    else if (op2 != NULL && PyArray_IsAnyScalar(op2)) {
-        op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL, 0, 0, 0, NULL);
-        if (op2_array == NULL) {
-            PyErr_SetString(PyExc_TypeError,
-                "could not convert scalar to array");
-            return NULL;
-        }
-
-        iter2 = NULL;
-        first_item[0] = 0;
-    }
-    else if (op2 != NULL) {
-        PyErr_SetString(PyExc_TypeError,
-                        "second operand must be "
-                        "array or scalar");
-        return NULL;
     }
 
     /* Create dtypes array for either one or two input operands.
@@ -4952,7 +4947,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 
     if (ufunc->legacy_inner_loop_selector(ufunc, dtypes,
         &innerloop, &innerloopdata, &needs_api) < 0) {
-        return NULL;
+        goto fail;
     }
 
     count[0] = 1;
@@ -4987,6 +4982,18 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     }
 
     return op1;
+
+fail:
+    
+    if (op1_array != NULL)
+        Py_DECREF(op1_array);
+    if (op2_array != NULL)
+        Py_DECREF(op2_array);
+    if (iter != NULL)
+        Py_DECREF(iter);
+    if (iter2 != NULL)
+        Py_DECREF(iter2);
+    return NULL;
 }
 
 
