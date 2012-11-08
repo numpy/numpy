@@ -4849,7 +4849,13 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     return PyUFunc_GenericReduction(ufunc, args, kwds, UFUNC_REDUCEAT);
 }
 
-/* Call ufunc only on selected array items and store result in first operand */
+/* Call ufunc only on selected array items and store result in first operand.
+ * For add ufunc, method call is equivalent to op1[idx] += op2
+ * Arguments:
+ * op1 - first operand to ufunc
+ * idx - indices that are applied to first operand. Equivalent to op1[idx].
+ * op2 - second operand to ufunc (if needed). Can be scalar or array.
+*/
 static PyObject *
 ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
@@ -4860,7 +4866,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     PyArrayObject *op1_array = NULL;
     PyArrayObject *op2_array = NULL;
     PyArrayMapIterObject *iter = NULL;
-    PyArrayMapIterObject *iter2 = NULL;
+    PyArrayIterObject *iter2 = NULL;
     PyArray_Descr *dtypes[3];
     int needs_api;
     npy_intp first_item[1];
@@ -4868,10 +4874,12 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     void *innerloopdata;
     char *dataptr[3];
     npy_intp count[1], stride[1];
-    int i;
+    int i, j;
 
-    PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist,
-                                &op1, &idx, &op2);
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist,
+                                &op1, &idx, &op2)) {
+        goto fail;
+    }
 
     if (ufunc->nin == 2 && op2 == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -4915,22 +4923,20 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     }
     /* If second operand is an array like object,
        create MapIter object for it */
-    else {
+    else if (op2 != NULL) {
         op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL, 0, 0, 0, NULL);
         if (op2_array == NULL) {
             goto fail;
         }
 
-        iter2 = (PyArrayMapIterObject*)PyArray_MapIterNew(idx, 0, 1);
+        int ndims = PyArray_NDIM(op1_array);
+        npy_intp *dims = PyArray_DIMS(op1_array);
+        iter2 = PyArray_BroadcastToShape(op2_array, iter->dimensions, iter->nd);
         if (iter2 == NULL) {
-
-        }
-
-        PyArray_MapIterBind(iter2, op2_array);
-        if (iter2->ait == NULL) {
             goto fail;
         }
-        PyArray_MapIterReset(iter2);
+
+        PyArray_ITER_RESET(iter2);
     }
 
     /* Create dtypes array for either one or two input operands.
@@ -4961,7 +4967,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
          * The output data pointer points to the first operand data */
         dataptr[0] = iter->dataptr;
         if (iter2 != NULL) {
-            dataptr[1] = iter2->dataptr;
+            dataptr[1] = PyArray_ITER_DATA(iter2);
             dataptr[2] = iter->dataptr;
         }
         else if (op2_array != NULL) {
@@ -4976,15 +4982,17 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         innerloop(dataptr, count, stride, innerloopdata);
 
         PyArray_MapIterNext(iter);
-        if (iter2 != NULL)
-            PyArray_MapIterNext(iter2);
+        if (iter2 != NULL) {
+            PyArray_ITER_NEXT(iter2);
+        }
+
         i--;
     }
 
     return op1;
 
 fail:
-    
+
     if (op1_array != NULL)
         Py_DECREF(op1_array);
     if (op2_array != NULL)
