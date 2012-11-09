@@ -60,7 +60,7 @@ How to check the ABI of blas/lapack/atlas
 
 One relatively simple and reliable way to check for the compiler used to build
 a library is to use ldd on the library. If libg2c.so is a dependency, this
-means that g77 has been used. If libgfortran.so is a a dependency, gfortran has
+means that g77 has been used. If libgfortran.so is a dependency, gfortran has
 been used. If both are dependencies, this means both have been used, which is
 almost always a very bad idea.
 
@@ -74,8 +74,8 @@ You can install the necessary packages for optimized ATLAS with this command:
 
     sudo apt-get install libatlas-base-dev
 
-If you have a recent CPU with SIMD suppport (SSE, SSE2, etc...), you should
-also install the corresponding package for optimal performances. For example,
+If you have a recent CPU with SIMD support (SSE, SSE2, etc...), you should
+also install the corresponding package for optimal performance. For example,
 for SSE2:
 
     sudo apt-get install libatlas3gf-sse2
@@ -91,8 +91,8 @@ You can install the necessary packages for optimized ATLAS with this command:
 
     sudo apt-get install atlas3-base-dev
 
-If you have a recent CPU with SIMD suppport (SSE, SSE2, etc...), you should
-also install the corresponding package for optimal performances. For example,
+If you have a recent CPU with SIMD support (SSE, SSE2, etc...), you should
+also install the corresponding package for optimal performance. For example,
 for SSE2:
 
     sudo apt-get install atlas3-sse2
@@ -111,7 +111,7 @@ http://mingw-w64.sourceforge.net/
 To use the free compilers (mingw-w64), you need to build your own toolchain, as
 the mingw project only distribute cross-compilers (cross-compilation is not
 supported by numpy). Since this toolchain is still being worked on, serious
-compilers bugs can be expected.  binutil 2.19 + gcc 4.3.3 + mingw-w64 runtime
+compiler bugs can be expected.  binutil 2.19 + gcc 4.3.3 + mingw-w64 runtime
 gives you a working C compiler (but the C++ is broken). gcc 4.4 will hopefully
 be able to run natively.
 
@@ -127,7 +127,7 @@ fragile, and often segfault on invalid C code). The main drawback is that no
 fortran compiler + MS compiler combination has been tested - mingw-w64 gfortran
 + MS compiler does not work at all (it is unclear whether it ever will).
 
-For python 2.5, you need VS 2005 (MS compiler version 14) targetting
+For python 2.5, you need VS 2005 (MS compiler version 14) targeting
 AMD64 bits, or the Platform SDK v6.0 or below (which gives command
 line versions of 64 bits target compilers). The PSDK is free.
 
