@@ -867,7 +867,6 @@ static void
      * use blas if the stride is a multiple of datatype size in the inputs
      * it should be the common case 
      */
-
     if ((0 == (steps[3] % sot)) &&
         (0 == (steps[4] % sot))) {
         /* use blas */
@@ -2151,6 +2150,7 @@ init_@lapack_func@(GEEV_PARAMS_t* params, char jobvl, char jobvr, fortran_int n)
     params->VL = vl;
     params->VR = vr;
     params->WORK = work;
+    params->W = w;
     params->N = n;
     params->LDA = n;
     params->LDVL = n;
@@ -2247,7 +2247,6 @@ static inline void
                                 steps[1], steps[0]);
             steps += 2;
         }
-
         if ('V' == geev_params.JOBVR) {
             init_linearize_data(&vr_out,
                                 geev_params.N, geev_params.N,
@@ -2261,7 +2260,6 @@ static inline void
 
             call_@lapack_func@(&geev_params);
             process_@lapack_func@_results(&geev_params);
-
             delinearize_@COMPLEXTYPE@_matrix(*arg_iter++, geev_params.W, &w_out);
             if ('V' == geev_params.JOBVL)
                 delinearize_@COMPLEXTYPE@_matrix(*arg_iter++, geev_params.VL, &vl_out);
@@ -2400,7 +2398,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params, char jobz, fortran_int m, fortran_int
     iwork = vt + vt_size;
 
     /* fix vt_column_count so that it is a valid lapack parameter (0 is not) */
-    vt_column_count = vt_column_count < 1? 1 : 0;
+    vt_column_count = vt_column_count < 1? 1 : vt_column_count;
     {
         /* compute optimal work size */
         @ftyp@ work_size_query;
@@ -2442,6 +2440,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params, char jobz, fortran_int m, fortran_int
 
     return 1;
  error:
+    printf("%s failed init\n", __FUNCTION__);
     free(mem_buff2);
     free(mem_buff2);
     memset(params, 0, sizeof(*params));
@@ -2508,7 +2507,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params, char jobz, fortran_int m, fortran_int
     iwork = rwork + rwork_size;                      
 
     /* fix vt_column_count so that it is a valid lapack parameter (0 is not) */
-    vt_column_count = vt_column_count < 1? 1 : 0;
+    vt_column_count = vt_column_count < 1? 1 : vt_column_count;
     {
         /* compute optimal work size */
         @ftyp@ work_size_query;
@@ -2549,6 +2548,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params, char jobz, fortran_int m, fortran_int
 
     return 1;
  error:
+    printf("%s failed init\n", __FUNCTION__);
     free(mem_buff2);
     free(mem_buff);
     memset(params, 0, sizeof(*params));
@@ -2605,6 +2605,7 @@ static inline void
     if (init_@lapack_func@(&params, JOBZ, (fortran_int)dimensions[0], (fortran_int)dimensions[1])) {
         LINEARIZE_DATA_t a_in, u_out, s_out, v_out;
 
+	dump_gesdd_params("gesdd params", &params);
         init_linearize_data(&a_in, params.N, params.M, steps[1], steps[0]);
         if ('N' == params.JOBZ) {
             /* only the singular values are wanted */
@@ -3427,7 +3428,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(i),(i)->()\" \n",
         2, 2, 1,
         inner1d_funcs,
-        equal_2_types
+        equal_3_types
     },
     {
         "innerwt",
@@ -3436,7 +3437,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "    \"(i),(i),(i)->()\" \n",
         2, 3, 1,
         innerwt_funcs,
-        equal_3_types
+        equal_4_types
     },
     {
         "matrix_multiply",

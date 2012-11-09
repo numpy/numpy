@@ -48,7 +48,7 @@ def solve(A,B,**kw_args):
     """
     Solves the systems of equations AX=B or Ax=b in the inner dimensions of A/B
     """
-    if (len(B.shape) == (len(A.shape) - 1)):
+    if len(B.shape) == (len(A.shape) - 1):
         gufunc = _impl.solve1
     else:
         gufunc = _impl.solve
@@ -57,6 +57,8 @@ def solve(A,B,**kw_args):
 
 
 def svd(a, full_matrices=1, compute_uv=1 ,**kw_args):
+    m = a.shape[-2]
+    n = a.shape[-1]
     if 1 == compute_uv:
         if 1 == full_matrices:
             if m < n:
@@ -77,24 +79,24 @@ def svd(a, full_matrices=1, compute_uv=1 ,**kw_args):
 
 
 def chosolve(A, B, UPLO='L', **kw_args):
-    if len(B.shape) == len(A.shape) + 1:
+    if len(B.shape) == (len(A.shape) - 1):
         if 'L' == UPLO:
-            gufunc = chosolve1_lo
+            gufunc = _impl.chosolve1_lo
         else:
-            gufunc = chosolve1_up
+            gufunc = _impl.chosolve1_up
     else:
         if 'L' == UPLO:
-            gufunc = chosolve1_lo
+            gufunc = _impl.chosolve_lo
         else:
-            gufunc = chosolve1_up
+            gufunc = _impl.chosolve_up
 
     return gufunc(A, B, **kw_args)
 
 
 def poinv(A, UPLO='L', **kw_args):
     if 'L' == UPLO:
-        gufunc = poinv_lo
+        gufunc = _impl.poinv_lo
     else:
-        gufunc = poinv_up
+        gufunc = _impl.poinv_up
 
     return gufunc(A, **kw_args);
