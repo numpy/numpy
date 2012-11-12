@@ -533,7 +533,10 @@ def check_embedded_msvcr_match_linked(msver):
     # embedding
     msvcv = msvc_runtime_library()
     if msvcv:
-        maj = int(msvcv[5:6])
+        assert msvcv.startswith("msvcr"), msvcv
+        # Dealing with something like "mscvr90" or "mscvr100", the last
+        # last digit is the minor release, want int("9") or int("10"):
+        maj = int(msvcv[5:-1])
         if not maj == int(msver):
             raise ValueError(
                   "Discrepancy between linked msvcr " \
