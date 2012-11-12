@@ -769,8 +769,8 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwa
          * We may be able to handle single-segment arrays here
          * using appropriate values of Order, Trans1, and Trans2.
          */
-
-        if (!PyArray_ISCONTIGUOUS(ap2)) {
+        if (!PyArray_IS_C_CONTIGUOUS(ap2) && !PyArray_IS_F_CONTIGUOUS(ap2)) {
+            printf("AA");
             PyObject *new = PyArray_Copy(ap2);
 
             Py_DECREF(ap2);
@@ -779,7 +779,7 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwa
                 goto fail;
             }
         }
-        if (!PyArray_ISCONTIGUOUS(ap1)) {
+        if (!PyArray_IS_C_CONTIGUOUS(ap1) && !PyArray_IS_F_CONTIGUOUS(ap1)) {
             PyObject *new = PyArray_Copy(ap1);
 
             Py_DECREF(ap1);
@@ -800,6 +800,18 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwa
         lda = (PyArray_DIM(ap1, 1) > 1 ? PyArray_DIM(ap1, 1) : 1);
         ldb = (PyArray_DIM(ap2, 1) > 1 ? PyArray_DIM(ap2, 1) : 1);
         ldc = (PyArray_DIM(ret, 1) > 1 ? PyArray_DIM(ret, 1) : 1);
+
+        /*
+         * Avoid temporary copies for arrays in Fortran order
+         */
+        if (PyArray_IS_F_CONTIGUOUS(ap1)) {
+            Trans1 = CblasTrans;
+            lda = (PyArray_DIM(ap1, 0) > 1 ? PyArray_DIM(ap1, 0) : 1);
+        }
+        if (PyArray_IS_F_CONTIGUOUS(ap2)) {
+            Trans2 = CblasTrans;
+            ldb = (PyArray_DIM(ap2, 0) > 1 ? PyArray_DIM(ap2, 0) : 1);
+        }
         if (typenum == NPY_DOUBLE) {
             cblas_dgemm(Order, Trans1, Trans2,
                         L, N, M,
