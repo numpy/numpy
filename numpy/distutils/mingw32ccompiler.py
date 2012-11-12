@@ -461,13 +461,16 @@ _MSVCRVER_TO_FULLVER = {}
 if sys.platform == 'win32':
     try:
         import msvcrt
-        if hasattr(msvcrt, "CRT_ASSEMBLY_VERSION"):
-            _MSVCRVER_TO_FULLVER['90'] = msvcrt.CRT_ASSEMBLY_VERSION
-        else:
-            _MSVCRVER_TO_FULLVER['90'] = "9.0.21022.8"
         # I took one version in my SxS directory: no idea if it is the good
         # one, and we can't retrieve it from python
         _MSVCRVER_TO_FULLVER['80'] = "8.0.50727.42"
+        _MSVCRVER_TO_FULLVER['90'] = "9.0.21022.8"
+        # Value from msvcrt.CRT_ASSEMBLY_VERSION under Python 3.3.0 on Windows XP:
+        _MSVCRVER_TO_FULLVER['100'] = "10.0.30319.460"
+        if hasattr(msvcrt, "CRT_ASSEMBLY_VERSION"):
+            major, minor, rest = msvcrt.CRT_ASSEMBLY_VERSION.split(".",2)
+            _MSVCRVER_TO_FULLVER[major + minor] = msvcrt.CRT_ASSEMBLY_VERSION
+            del major, minor, rest
     except ImportError:
         # If we are here, means python was not built with MSVC. Not sure what to do
         # in that case: manifest building will fail, but it should not be used in
