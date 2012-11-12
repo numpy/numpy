@@ -3598,14 +3598,9 @@ def insert(arr, obj, values, axis=None):
             raise ValueError(
                     "index (%d) out of range (0<=index<=%d) "\
                     "in dimension %d" % (obj, N, axis))
-        if isscalar(values):
-            obj = [obj]
-        else:
-            values = asarray(values)
-            if ndim > values.ndim:
-                obj = [obj]
-            else:
-                obj = [obj] * len(values)
+        values = array(values, copy=False, ndmin=arr.ndim)
+        values = np.rollaxis(values, 0, axis+1)
+        obj = [obj] * values.shape[axis]
 
     elif isinstance(obj, slice):
         # turn it into a range object
