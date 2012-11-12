@@ -37,6 +37,7 @@ Changes
 General
 -------
 
+The function np.take now allows 0-d arrays as indices.
 
 Deprecations
 ============
