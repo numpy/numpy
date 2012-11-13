@@ -916,7 +916,7 @@ cdef class RandomState:
         return bytestring
 
 
-    def choice(self, a, size=1, replace=True, p=None):
+    def choice(self, a, size=None, replace=True, p=None):
         """
         choice(a, size=1, replace=True, p=None)
 
@@ -929,8 +929,9 @@ cdef class RandomState:
         a : 1-D array-like or int
             If an ndarray, a random sample is generated from its elements.
             If an int, the random sample is generated as if a was np.arange(n)
-        size : int
-            Positive integer, the size of the sample.
+        size : int or tuple of ints, optional
+            Output shape. Default is None, in which case a single value is
+            returned.
         replace : boolean, optional
             Whether the sample is with or without replacement
         p : 1-D array-like, optional
@@ -1017,26 +1018,30 @@ cdef class RandomState:
             if not np.allclose(p.sum(), 1):
                 raise ValueError("probabilities do not sum to 1")
 
+        shape = size if size is not None else tuple()
+        size = np.prod(shape, dtype=np.intp)
+
         # Actual sampling
         if replace:
             if None != p:
                 cdf = p.cumsum()
                 cdf /= cdf[-1]
-                uniform_samples = np.random.random(size)
+                uniform_samples = np.random.random(shape)
                 idx = cdf.searchsorted(uniform_samples, side='right')
             else:
-                idx = self.randint(0, pop_size, size=size)
+                idx = self.randint(0, pop_size, size=shape)
         else:
             if size > pop_size:
-                raise ValueError(''.join(["Cannot take a larger sample than ",
-                                          "population when 'replace=False'"]))
+                raise ValueError("Cannot take a larger sample than "
+                                 "population when 'replace=False'")
 
             if None != p:
                 if np.sum(p > 0) < size:
                     raise ValueError("Fewer non-zero entries in p than size")
                 n_uniq = 0
                 p = p.copy()
-                found = np.zeros(size, dtype=np.int)
+                found = np.zeros(shape, dtype=np.int)
+                flat_found = found.ravel()
                 while n_uniq < size:
                     x = self.rand(size - n_uniq)
                     if n_uniq > 0:
@@ -1045,17 +1050,18 @@ cdef class RandomState:
                     cdf /= cdf[-1]
                     new = cdf.searchsorted(x, side='right')
                     new = np.unique(new)
-                    found[n_uniq:n_uniq + new.size] = new
+                    flat_found[n_uniq:n_uniq + new.size] = new
                     n_uniq += new.size
                 idx = found
             else:
                 idx = self.permutation(pop_size)[:size]
+                idx.shape = shape
 
         #Use samples as indices for a if a is array-like
         if isinstance(a, int):
             return idx
         else:
-            return a.take(idx)
+            return a[idx]
 
 
     def uniform(self, low=0.0, high=1.0, size=None):
