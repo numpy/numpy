@@ -1,3 +1,15 @@
+			   *** Changes ***
+2012-11-13 Added mention to gufuncs_linalg wrapper module.
+	   Added a nose test module for gufuncs_linalg. Implemented several test.
+               Tests are now work in progress.
+	   Fixed bugs in the harness of gufuncs (related to the signature fix)
+	   Fixed several other small bugs found by the new tests. Mostly in the
+               complex versions of the functions.
+	   Known problems in (working in fixing them:
+               Matrix Multiply when the parameter types are cdouble
+               EigVals is causing problems when the parameter types are csingle
+			   ***************
+
 			 umath_linalg module
 
 This module provides gufuncs for several functions that were already present in
@@ -7,6 +19,15 @@ Having them as gufuncs allows broadcasting of calls, which can be useful when
 there are various problems to solve.
 
 The functions are members of a module currently at numpy.core.umath_linalg
+
+A wrapper module is provides that works around some limitations on the handling
+of keyword parameters in gufuncs by adding a very thin python layer around the
+actual gufuncs. For example, chosolve is implemented as a wrapper that takes a
+keyword parameter "UPLO". Depending on its value the appropriate gufunc will be
+called (chosolve_up or chosolve_lo). The wrapper module is 
+numpy.core.gufuncs_linalg and should be preferred to direct umath_linalg calls.
+Note that this wrapper module is written in python and its contents should be
+easy to inspect.
 
 			       Contents
 The following functions are already implemented:
@@ -101,6 +122,8 @@ name, so for eigh we have the functions eigh_lo and eigh_up (for 'L' and 'U').
 
 Similar techniques have been applied in other places.
 
+Note that this is hidden when using the gufuncs_linalg wrapper module.
+
 			     Note on svd
 svd uses uniform parameters to specify the result types it will be producing
 (full_matrices and compute_uv in numpy.linalg).
@@ -123,6 +146,8 @@ if compute_uv:
       func += '_f'
    else:
       func += '_s'
+
+This should be transparent when using the gufuncs_linalg module.
 
 		     Bug in numpy gufunc harness
 The bug in the gufunc harness that was preventing using a dimension name more than
