@@ -174,7 +174,15 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                 if ((temp = PyObject_Str(obj)) == NULL) {
                     return -1;
                 }
+#if defined(NPY_PY3K)
+    #if PY_VERSION_HEX >= 0x03030000
+                itemsize = PyUnicode_GetLength(temp);
+    #else
+                itemsize = PyUnicode_GET_SIZE(temp);
+    #endif
+#else
                 itemsize = PyString_GET_SIZE(temp);
+#endif
             }
             else if (string_type == NPY_UNICODE) {
 #if defined(NPY_PY3K)
@@ -218,7 +226,15 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                 if ((temp = PyObject_Str(obj)) == NULL) {
                     return -1;
                 }
+#if defined(NPY_PY3K)
+    #if PY_VERSION_HEX >= 0x03030000
+                itemsize = PyUnicode_GetLength(temp);
+    #else
+                itemsize = PyUnicode_GET_SIZE(temp);
+    #endif
+#else
                 itemsize = PyString_GET_SIZE(temp);
+#endif
             }
             else if (string_type == NPY_UNICODE) {
 #if defined(NPY_PY3K)
