@@ -90,8 +90,13 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
  * Check whether the given array is stored contiguously
  * in memory. And update the passed in ap flags apropriately.
  *
- * A dimension == 1 stride is ignored for contiguous flags and a 0-sized array
- * is always both C- and F-Contiguous. 0-strided arrays are not contiguous.
+ * 0-strided arrays are not contiguous. 0-sized arrays are considered
+ * contiguous if their strides are ok up to and including the dimension
+ * that is 0. This means 0-sized arrays can be both C- and F-Contiguous.
+ * Arrays with ndim<2 are either both C- and F-Contiguous or neither.
+ * For contiguous flags to be set the strides must match even if they are
+ * unused because the corresponding dimension is 1. This is because of 3rd
+ * party code relying ie. on strides[-1] == itemsize (for C-Contiguous).
  */
 static void
 _UpdateContiguousFlags(PyArrayObject *ap)
@@ -104,18 +109,15 @@ _UpdateContiguousFlags(PyArrayObject *ap)
     sd = PyArray_DESCR(ap)->elsize;
     for (i = PyArray_NDIM(ap) - 1; i >= 0; --i) {
         dim = PyArray_DIMS(ap)[i];
-        /* contiguous by definition */
+        if (PyArray_STRIDES(ap)[i] != sd) {
+            is_c_contig = 0;
+            break;
+        }
+        /* contiguous, if it got this far */
         if (dim == 0) {
-            PyArray_ENABLEFLAGS(ap, NPY_ARRAY_C_CONTIGUOUS);
-            PyArray_ENABLEFLAGS(ap, NPY_ARRAY_F_CONTIGUOUS);
-            return;
+            break;
         }
-        if (dim != 1) {
-            if (PyArray_STRIDES(ap)[i] != sd) {
-                is_c_contig = 0;
-            }
-            sd *= dim;
-        }
+        sd *= dim;
     }
     if (is_c_contig) {
         PyArray_ENABLEFLAGS(ap, NPY_ARRAY_C_CONTIGUOUS);
@@ -128,13 +130,14 @@ _UpdateContiguousFlags(PyArrayObject *ap)
     sd = PyArray_DESCR(ap)->elsize;
     for (i = 0; i < PyArray_NDIM(ap); ++i) {
         dim = PyArray_DIMS(ap)[i];
-        if (dim != 1) {
-            if (PyArray_STRIDES(ap)[i] != sd) {
-                PyArray_CLEARFLAGS(ap, NPY_ARRAY_F_CONTIGUOUS);
-                return;
-            }
-            sd *= dim;
+        if (PyArray_STRIDES(ap)[i] != sd) {
+            PyArray_CLEARFLAGS(ap, NPY_ARRAY_F_CONTIGUOUS);
+            return;
         }
+        if (dim == 0) {
+            break;
+        }
+        sd *= dim;
     }
     PyArray_ENABLEFLAGS(ap, NPY_ARRAY_F_CONTIGUOUS);
     return;
