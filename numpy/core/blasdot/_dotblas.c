@@ -770,7 +770,6 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwa
          * using appropriate values of Order, Trans1, and Trans2.
          */
         if (!PyArray_IS_C_CONTIGUOUS(ap2) && !PyArray_IS_F_CONTIGUOUS(ap2)) {
-            printf("AA");
             PyObject *new = PyArray_Copy(ap2);
 
             Py_DECREF(ap2);
