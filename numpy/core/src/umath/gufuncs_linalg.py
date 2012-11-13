@@ -4,9 +4,9 @@ import numpy.core.umath_linalg as _impl
 
 # usable "as is"
 inner1d = _impl.inner1d
-matrix_multiply = _impl.matrix_multiply
-det = _impl.det
-slogdet = _impl.slogdet
+matrix_multiply = _impl.matrix_dot
+#det = _impl.det
+#slogdet = _impl.slogdet
 inv = _impl.inv
 cholesky = _impl.cholesky
 quadratic_form = _impl.quadratic_form
@@ -18,6 +18,20 @@ multiply_add2 = _impl.multiply_add2
 multiply4_add = _impl.multiply4_add
 eig = _impl.eig
 eigvals = _impl.eigvals
+
+# wrappers that are actually workarounds of strange behavior in the harness
+def slogdet(A, **kw_args):
+    if 2 == len(A.shape):
+        s, d = _impl.slogdet(A.reshape(1, A.shape[0], A.shape[1]), **kw_args)
+        return s[0], d[0]
+    else:
+        return _impl.slogdet(A, **kw_args)
+
+def det(A, **kw_args):
+    if (len(A.shape) == 2):
+        return _impl.det(A.reshape(1, A.shape[0], A.shape[1]), **kw_args)[0]
+    else:
+        return _impl.det(A, **kw_args)
 
 # wrappers
 def eigh(A, UPLO='L', **kw_args):

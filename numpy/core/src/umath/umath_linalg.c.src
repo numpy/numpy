@@ -18,6 +18,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <assert.h>
+#include <math.h>
 
 #define TRACE do { printf ("%s:%d:%s\n", __FILE__, __LINE__, __FUNCTION__); } while (0)
 
@@ -237,27 +238,6 @@ FNAME(zpotri)(char *uplo, int *n,
               f2c_doublecomplex a[], int *lda,
 	      int *info);
 
-	     /*
-extern int 
-FNAME(dgeqrf)(int *m, int *n,
-	      double a[], int *lda,
-	      double tau[], double work[],
-	      int *lwork,
-	      int *info);
-
-extern int FNAME(zgeqrf)(int *m, int *n, f2c_doublecomplex a[], int *lda,
-                          f2c_doublecomplex tau[], f2c_doublecomplex work[],
-                          int *lwork, int *info);
-
-extern int FNAME(dorgqr)(int *m, int *n, int *k, double a[], int *lda,
-                          double tau[], double work[],
-                          int *lwork, int *info);
-
-extern int FNAME(zungqr)(int *m, int *n, int *k, f2c_doublecomplex a[],
-                          int *lda, f2c_doublecomplex tau[],
-                          f2c_doublecomplex work[], int *lwork, int *info);
-	     */
-
 extern int 
 FNAME(scopy)(int *n, float *sx, int *incx, float *sy, int *incy);
 
@@ -374,19 +354,23 @@ typedef union {
 static const float s_one       =  1.0f;
 static const float s_zero      =  0.0f;
 static const float s_minus_one = -1.0f;
-static const float s_ninf      = -1.0f/0.0f; 
+static const float s_ninf      = -INFINITY;
+static const float s_nan       =  NAN;
 static const double d_one       =  1.0;
 static const double d_zero      =  0.0;
 static const double d_minus_one = -1.0;
-static const double d_ninf      = -1.0/0.0;
+static const double d_ninf      = -INFINITY;
+static const double d_nan       = NAN;
 static const COMPLEX_t c_one       = { {  1.0f, 0.0f } };
 static const COMPLEX_t c_zero      = { {  0.0f, 0.0f } };
 static const COMPLEX_t c_minus_one = { { -1.0f, 0.0f } };
-static const COMPLEX_t c_ninf      = { { -1.0f/0.0f, 0.0f } };
-static const DOUBLECOMPLEX_t z_one       = {{  1.0,  0.0 }};
-static const DOUBLECOMPLEX_t z_zero      = {{  0.0,  0.0 }};
-static const DOUBLECOMPLEX_t z_minus_one = {{ -1.0,  0.0 }};
-static const DOUBLECOMPLEX_t z_ninf      = {{ -1.0/0.0, 0.0 }};
+static const COMPLEX_t c_ninf      = { { -INFINITY, 0.0f } };
+static const COMPLEX_t c_nan       = { { NAN, NAN } };
+static const DOUBLECOMPLEX_t z_one       = { {  1.0,  0.0 } };
+static const DOUBLECOMPLEX_t z_zero      = { {  0.0,  0.0 } };
+static const DOUBLECOMPLEX_t z_minus_one = { { -1.0,  0.0 } };
+static const DOUBLECOMPLEX_t z_ninf      = { { -INFINITY, 0.0 } };
+static const DOUBLECOMPLEX_t z_nan       = { { NAN, NAN } };
 
 
 /*
@@ -660,8 +644,9 @@ update_pointers(uint8_t** bases, ptrdiff_t* offsets, size_t count)
 /**begin repeat
 
     #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
-    #typ=npy_float,npy_double,npy_cfloat,npy_cdouble# 
+    #typ=float,double,COMPLEX_t,DOUBLECOMPLEX_t# 
     #copy=scopy,dcopy,ccopy,zcopy#
+    #nan=s_nan, d_nan, c_nan, z_nan#
  */
 static inline void *
 linearize_@TYPE@_matrix(void *dst_in, void *src_in,const LINEARIZE_DATA_t* data)
@@ -711,6 +696,23 @@ delinearize_@TYPE@_matrix(void *dst_in, void *src_in,const LINEARIZE_DATA_t* dat
         return rv;
     } else {
         return src;
+    }
+}
+
+static inline void
+nan_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
+{
+    @typ@ *dst = (@typ@ *) dst_in;
+
+    int i,j;
+    for (i=0; i < data->rows; i++) {
+        @typ@ *cp = dst;
+	ptrdiff_t cs = data->column_strides/sizeof(@typ@);
+	for (j=0; j< data->columns; ++j) {
+	    *cp = @nan@;
+	    cp += cs;
+	}
+	dst += data->row_strides/sizeof(@typ@);
     }
 }
 
@@ -982,11 +984,25 @@ init_gemm_params(GEMM_PARAMS_t *params,
             goto error;
 
         current = mem_buff;
-        a = needs_a ? current : NULL;
-        current += a_size;
-        b = needs_b ? current : NULL;
-        current += b_size;
-        c = needs_c ? current : NULL;
+	if (needs_a) {
+	    a = current;
+	    current += a_size;
+	} else {
+	    a = NULL;
+	}
+
+	if (needs_b) {
+	    b = current;
+	    current += b_size;
+	} else { 
+	    b = NULL;
+	}
+
+	if (needs_c) {
+	    c = current;
+	} else {
+	    c = NULL;
+	}
     }
 
     params->A = a;
@@ -1052,7 +1068,6 @@ static void
     {
         LINEARIZE_DATA_t a_in, b_in, c_out;
 
-        dump_gemm_params("gemm", &params);
         if (params.A)
             init_linearize_data(&a_in, k, m, steps[1], steps[0]);
         if (params.B)
@@ -1154,7 +1169,7 @@ static inline @typ@
     @typ@ rv;
 
     RE(rv) = RE(op1)*RE(op2) - IM(op1)*IM(op2);
-    IM(rv) = RE(op1)*IM(op2) - IM(op1)*RE(op2);
+    IM(rv) = RE(op1)*IM(op2) + IM(op1)*RE(op2);
 
     return rv;
 }
@@ -2293,7 +2308,7 @@ static void
 /* -------------------------------------------------------------------------- */
                  /* singular value decomposition  */
 
-typedef struct gesdd_params_struct
+typedef struct gessd_params_struct
 {
     void *A;
     void *S;
@@ -2605,7 +2620,6 @@ static inline void
     if (init_@lapack_func@(&params, JOBZ, (fortran_int)dimensions[0], (fortran_int)dimensions[1])) {
         LINEARIZE_DATA_t a_in, u_out, s_out, v_out;
 
-	dump_gesdd_params("gesdd params", &params);
         init_linearize_data(&a_in, params.N, params.M, steps[1], steps[0]);
         if ('N' == params.JOBZ) {
             /* only the singular values are wanted */
@@ -3176,10 +3190,14 @@ call_@potri@(POTRI_PARAMS_t *params)
 		    &params->N,
 		    params->A, &params->LDA,
 		    &rv);
+    if (0!= rv) {
+      return rv;
+    }
+
     LAPACK(@potri@)(&params->UPLO,
-			  &params->N,
-			  params->A, &params->LDA,
-                          &rv);
+		    &params->N,
+		    params->A, &params->LDA,
+		    &rv);
     return rv;
 }
 
@@ -3202,10 +3220,15 @@ static inline void
         init_linearize_data(&r_out, n, n, steps[3], steps[2]);
 
         BEGIN_OUTER_LOOP_2
+	    int not_ok;
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
-            call_@potri@(&params);
-	    make_symmetric_@TYPE@_matrix(params.UPLO, params.N, params.A);
-            delinearize_@TYPE@_matrix(args[1], params.A, &r_out);
+            not_ok = call_@potri@(&params);
+	    if (!not_ok) {
+	        make_symmetric_@TYPE@_matrix(params.UPLO, params.N, params.A);
+	        delinearize_@TYPE@_matrix(args[1], params.A, &r_out);
+	    } else {
+	        nan_@TYPE@_matrix(args[1], &r_out);
+	    }
         END_OUTER_LOOP
 
         release_@potri@(&params);
@@ -3440,7 +3463,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         equal_4_types
     },
     {
-        "matrix_multiply",
+        "matrix_dot",
         "(m,k),(k,n)->(m,n)",
         "dot on the last two dimensions and broadcast on the rest \n"\
         "    \"(m,k),(k,n)->(m,n)\" \n",
