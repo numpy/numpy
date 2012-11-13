@@ -1049,8 +1049,9 @@ cdef class RandomState:
                     cdf = np.cumsum(p)
                     cdf /= cdf[-1]
                     new = cdf.searchsorted(x, side='right')
-                    new = np.unique(new)
-                    flat_found[n_uniq:n_uniq + new.size] = new
+                    _, unique_indices = np.unique(new, return_index=True)
+                    unique_indices.sort()
+                    flat_found[n_uniq:n_uniq + new.size] = new[unique_indices]
                     n_uniq += new.size
                 idx = found
             else:
