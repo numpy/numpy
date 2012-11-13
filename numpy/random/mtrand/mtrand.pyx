@@ -1018,8 +1018,8 @@ cdef class RandomState:
             if not np.allclose(p.sum(), 1):
                 raise ValueError("probabilities do not sum to 1")
 
-        shape = size if size is not None else tuple()
-        size = np.prod(shape, dtype=np.intp)
+        shape = size
+        size = 1 if shape is None else np.prod(shape, dtype=np.intp)
 
         # Actual sampling
         if replace:
@@ -1028,6 +1028,7 @@ cdef class RandomState:
                 cdf /= cdf[-1]
                 uniform_samples = np.random.random(shape)
                 idx = cdf.searchsorted(uniform_samples, side='right')
+                idx = np.array(idx, copy=False) # searchsorted returns a scalar
             else:
                 idx = self.randint(0, pop_size, size=shape)
         else:
@@ -1045,25 +1046,32 @@ cdef class RandomState:
                 while n_uniq < size:
                     x = self.rand(size - n_uniq)
                     if n_uniq > 0:
-                        p[found[0:n_uniq]] = 0
+                        p[flat_found[0:n_uniq]] = 0
                     cdf = np.cumsum(p)
                     cdf /= cdf[-1]
                     new = cdf.searchsorted(x, side='right')
                     _, unique_indices = np.unique(new, return_index=True)
                     unique_indices.sort()
-                    flat_found[n_uniq:n_uniq + new.size] = new[unique_indices]
+                    new = new.take(unique_indices)
+                    flat_found[n_uniq:n_uniq + new.size] = new
                     n_uniq += new.size
                 idx = found
             else:
                 idx = self.permutation(pop_size)[:size]
-                idx.shape = shape
-
+                if shape is not None:
+                    idx.shape = shape
+        if shape is None and isinstance(idx, np.ndarray):
+            # In most cases a scalar will have been made an array
+            idx = idx.item(0)
         #Use samples as indices for a if a is array-like
         if isinstance(a, int):
             return idx
-        else:
-            return a[idx]
-
+        res = a[idx]
+        # Note when introducing an axis argument a copy should be ensured.
+        if res.ndim == 0 and shape is not None:
+            # the result here is not a scalar but an array.
+            return np.array(res)
+        return res
 
     def uniform(self, low=0.0, high=1.0, size=None):
         """
