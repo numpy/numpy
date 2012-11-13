@@ -866,18 +866,41 @@ class TestUfunc(TestCase):
         assert_(MyThing.getitem_count <= 2, MyThing.getitem_count)
 
     def test_inplace_fancy_indexing(self):
-        a = np.array([1, 2, 3])
-        np.negative.at(a, [0, 0, 1, 2])
-        assert_equal(a, [1, -2, -3])
+        # 'at' method is equivalent to a[:,idx] += b
 
-        a = np.array([1, 2, 3])
-        np.add.at(a, [0, 1, 1, 2], 1)
-        assert_equal(a, [2, 4, 4])
+        a = np.arange(10)
+        indices = np.array([2,5,2])
+        np.add.at(a, indices, 1)
+        assert_equal(a, [0, 1, 4, 3, 4, 6, 6, 7, 8, 9])
 
-        a = np.array([1, 2, 3])
-        np.add.at(a, [0, 1, 2, 2], np.array([1, 2, 3]))
-        assert_equal(a, [2, 4, 9])
+        a = np.arange(10)
+        b = np.array([100,100,100])
+        indices = np.array([2,5,2])
+        np.add.at(a, indices, b)
+        assert_equal(a, [0, 1, 202, 3, 4, 105, 6, 7, 8, 9])
 
-        
+        a = np.arange(9)
+        a.shape = (3,3)
+        b = np.array([[100,100,100],[200,200,200],[300,300,300]])
+        indices = np.array([1,2,1])
+        np.add.at(a, indices, b)
+        assert_equal(a, [[0,401,202], [3,404,205], [6,407,208]])
+
+        a = np.arange(27)
+        a.shape = (3,3,3)
+        b = np.array([100,200,300])
+        indices = np.array([1,2,1])
+        np.add.at(a, indices, b)
+        assert_equal(a,
+            [[[0,201,102], [3,404,205], [6,607,308]],
+            [[9,210,111], [12,413,214], [15,616,317]],
+            [[18,219,120], [21,422,223], [24,625,326]]])
+
+        a = np.arange(10)
+        indices = np.array([2,5,2])
+        np.negative.at(a, indices)
+        assert_equal(a, [0, 1, 2, 3, 4, -5, 6, 7, 8, 9])
+
+
 if __name__ == "__main__":
     run_module_suite()
