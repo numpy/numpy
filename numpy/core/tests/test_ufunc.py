@@ -868,36 +868,79 @@ class TestUfunc(TestCase):
     def test_inplace_fancy_indexing(self):
 
         a = np.arange(10)
-        indices = np.array([2,5,2])
-        np.add.at(a, indices, 1)
+        np.add.at(a, [2,5,2], 1)
         assert_equal(a, [0, 1, 4, 3, 4, 6, 6, 7, 8, 9])
 
         a = np.arange(10)
         b = np.array([100,100,100])
-        indices = np.array([2,5,2])
-        np.add.at(a, indices, b)
+        np.add.at(a, [2,5,2], b)
         assert_equal(a, [0, 1, 202, 3, 4, 105, 6, 7, 8, 9])
 
-        a = np.arange(9)
-        a.shape = (3,3)
+        a = np.arange(9).reshape(3,3)
         b = np.array([[100,100,100],[200,200,200],[300,300,300]])
-        indices = np.array([1,2,1])
-        np.add.at(a, indices, b)
-        assert_equal(a, [[0,401,202], [3,404,205], [6,407,208]])
+        np.add.at(a, (slice(None), [1,2,1]), b)
+        assert_equal(a, [[0,201,102], [3,404,205], [6,607,308]])
 
-        a = np.arange(27)
-        a.shape = (3,3,3)
+        a = np.arange(27).reshape(3,3,3)
         b = np.array([100,200,300])
-        indices = np.array([1,2,1])
-        np.add.at(a, indices, b)
+        np.add.at(a, (slice(None), slice(None), [1,2,1]), b)
         assert_equal(a,
-            [[[0,201,102], [3,404,205], [6,607,308]],
-            [[9,210,111], [12,413,214], [15,616,317]],
-            [[18,219,120], [21,422,223], [24,625,326]]])
+            [[[0,401,202], 
+              [3,404,205], 
+              [6,407,208]],
+              
+             [[9, 410,211],  
+              [12,413,214], 
+              [15,416,217]],
+
+             [[18,419,220],
+              [21,422,223],
+              [24,425,226]]])
+
+        a = np.arange(9).reshape(3,3)
+        b = np.array([[100,100,100],[200,200,200],[300,300,300]])
+        np.add.at(a, ([1,2,1], slice(None)), b)
+        assert_equal(a, [[0,1,2], [403,404,405], [206,207,208]])
+
+        a = np.arange(27).reshape(3,3,3)
+        b = np.array([100,200,300])
+        np.add.at(a, (slice(None), [1,2,1], slice(None)), b)
+        assert_equal(a,
+            [[[0,  1,  2  ], 
+              [203,404,605], 
+              [106,207,308]],
+              
+             [[9,  10, 11 ],  
+              [212,413,614], 
+              [115,216,317]],
+
+             [[18, 19, 20 ],
+              [221,422,623],
+              [124,225,326]]])
+
+        a = np.arange(9).reshape(3,3)
+        b = np.array([100,200,300])
+        np.add.at(a, (0, [1,2,1]), b)
+        assert_equal(a, [[0,401,202], [3,4,5], [6,7,8]])
+
+        a = np.arange(27).reshape(3,3,3)
+        b = np.array([100,200,300])
+        np.add.at(a, ([1,2,1], 0, slice(None)), b)
+        assert_equal(a,
+            [[[0,  1,  2], 
+              [3,  4,  5], 
+              [6,  7,  8]],
+              
+             [[209,410,611],  
+              [12,  13, 14], 
+              [15,  16, 17]],
+
+             [[118,219,320],
+              [21,  22, 23],
+              [24,  25, 26]]])
 
         a = np.arange(10)
-        indices = np.array([2,5,2])
-        np.negative.at(a, indices)
+        np.negative.at(a, [2,5,2])
         assert_equal(a, [0, 1, 2, 3, 4, -5, 6, 7, 8, 9])
 
 
