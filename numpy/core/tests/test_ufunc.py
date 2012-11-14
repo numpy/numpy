@@ -866,7 +866,6 @@ class TestUfunc(TestCase):
         assert_(MyThing.getitem_count <= 2, MyThing.getitem_count)
 
     def test_inplace_fancy_indexing(self):
-        # 'at' method is equivalent to a[:,idx] += b
 
         a = np.arange(10)
         indices = np.array([2,5,2])
