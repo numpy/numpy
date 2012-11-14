@@ -4875,6 +4875,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     char *dataptr[3];
     npy_intp count[1], stride[1];
     int i, j;
+    int ndim;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist,
                                 &op1, &idx, &op2)) {
@@ -4895,6 +4896,20 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 
     op1_array = (PyArrayObject *)PyArray_FromAny(op1, NULL, 0, 0, 0, NULL);
     if (op1_array == NULL) {
+        goto fail;
+    }
+
+    ndim = PyArray_NDIM(op1_array);
+    if (PyTuple_Check(idx)) {
+        if (PyTuple_GET_SIZE(idx) != ndim) {
+            PyErr_SetString(PyExc_ValueError,
+                "number of dimensions in index must match number of dimensions in first operand");
+            goto fail;
+        }
+    }
+    else if (ndim > 1) {
+        PyErr_SetString(PyExc_ValueError,
+            "number of dimensions in index must match number of dimensions in first operand");
         goto fail;
     }
 
