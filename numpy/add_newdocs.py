@@ -5815,6 +5815,47 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
 
     """))
 
+add_newdoc('numpy.core', 'ufunc', ('at',
+    """
+    at(a, indices, b=None)
+
+    Performs operation in place on array for items specified by indices.
+    Items can be listed more than once and operation will be performed
+    on result of operation on previous item.
+
+    Equivalent to a[indices] += b for addition ufunc, except that results
+    are accumulated for indices listed more than once.
+
+    Parameters
+    ----------
+    a : array_like
+        The array to act on.
+    indices : array_like
+        Paired indices, comma separated (not colon), specifying slices to
+        reduce.
+    b : array_like or scalar
+        Second operation for ufuncs requiring two operands.
+
+    Examples
+    --------
+    Set items 0 and 1 to their negative values:
+
+    np.negative.at(a, [0, 1])
+
+    ::
+
+    Increment items 0 and 1, and increment item 2 twice:
+
+    np.add.at(a, [0, 1, 2, 2], 1)
+
+    ::
+
+    Add items 0 and 1 in first array to second array,
+    and store results in first array:
+
+    np.add.at(a, [0, 1], b)
+
+    """))
 
 ##############################################################################
 #
