@@ -2728,11 +2728,23 @@ class TestMaskedArrayMathMethods(TestCase):
             self.assertTrue(method(0) is masked)
             self.assertTrue(method(-1) is masked)
             # Using a masked array as explicit output
-            _ = method(out=mout)
+            warn_ctx = WarningManager()
+            warn_ctx.__enter__()
+            try:
+                warnings.simplefilter('ignore')
+                _ = method(out=mout)
+            finally:
+                warn_ctx.__exit__()
             self.assertTrue(mout is not masked)
             assert_equal(mout.mask, True)
             # Using a ndarray as explicit output
-            _ = method(out=nout)
+            warn_ctx = WarningManager()
+            warn_ctx.__enter__()
+            try:
+                warnings.simplefilter('ignore')
+                _ = method(out=nout)
+            finally:
+                warn_ctx.__exit__()
             self.assertTrue(np.isnan(nout))
         #
         x = array(arange(10), mask=True)
