@@ -3572,8 +3572,7 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             strides[i] = itemsize;
             itemsize *= dims[i] ? dims[i] : 1;
         }
-        if ((nd != 0) && (strides[0] != strides[nd-1])) {
-            /* Unless all strides are itemsize its not both */
+        if ((nd > 1) && ((strides[0] != strides[nd-1]) || (dims[0] > 2))) {
             *objflags = ((*objflags)|NPY_ARRAY_F_CONTIGUOUS) &
                                             ~NPY_ARRAY_C_CONTIGUOUS;
         }
@@ -3586,7 +3585,7 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             strides[i] = itemsize;
             itemsize *= dims[i] ? dims[i] : 1;
         }
-        if ((nd != 0) && (strides[0] != strides[nd-1])) {
+        if ((nd > 1) && ((strides[0] != strides[nd-1]) || (dims[nd-1] > 2))) {
             *objflags = ((*objflags)|NPY_ARRAY_C_CONTIGUOUS) &
                                             ~NPY_ARRAY_F_CONTIGUOUS;
         }
