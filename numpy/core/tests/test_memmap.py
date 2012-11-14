@@ -1,3 +1,4 @@
+import sys
 from tempfile import NamedTemporaryFile, mktemp
 import os
 
@@ -64,6 +65,7 @@ class TestMemmap(TestCase):
                     shape=self.shape)
         self.assertEqual(fp.filename, self.tmpfp.name)
 
+    @dec.knownfailureif(sys.platform=='gnu0', "This test is known to fail on hurd")
     def test_flush(self):
         fp = memmap(self.tmpfp, dtype=self.dtype, mode='w+',
                     shape=self.shape)
