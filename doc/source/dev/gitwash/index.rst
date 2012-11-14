@@ -10,7 +10,6 @@ Contents:
 
    git_intro
    following_latest
-   patching
    git_development
    git_resources
 
