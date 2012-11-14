@@ -6,6 +6,11 @@ import numpy.core.umath as ncu
 import numpy as np
 
 
+def on_powerpc():
+    """ True if we are running on a Power PC platform."""
+    return platform.processor() == 'powerpc' or \
+           platform.machine().startswith('ppc')
+
 class TestDivision(TestCase):
     def test_division_int(self):
         # int division should follow Python
@@ -1112,9 +1117,8 @@ def test_nextafter():
 def test_nextafterf():
     return _test_nextafter(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32' or
-                    ("powerpc" in platform.processor()),
-                    "Long double support buggy on win32 and PPC.")
+@dec.knownfailureif(sys.platform == 'win32' or on_powerpc(),
+            "Long double support buggy on win32 and PPC, ticket 1664.")
 def test_nextafterl():
     return _test_nextafter(np.longdouble)
 
@@ -1139,9 +1143,8 @@ def test_spacing():
 def test_spacingf():
     return _test_spacing(np.float32)
 
-@dec.knownfailureif(sys.platform == 'win32' or
-                    ("powerpc" in platform.processor()),
-                    "Long double support buggy on win32 and PPC.")
+@dec.knownfailureif(sys.platform == 'win32' or on_powerpc(),
+            "Long double support buggy on win32 and PPC, ticket 1664.")
 def test_spacingl():
     return _test_spacing(np.longdouble)
 
