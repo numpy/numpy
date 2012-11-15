@@ -15,8 +15,8 @@ privately
 Usage of gufuncs_linalg over direct use of umath_linalg is recommended. It uses
 the kernels in umath_linalg and the speed difference should be minimal.
 
-Testing will be done at the gufuncs_linalg level, and the thin layer may implement
-workarounds around known issues.
+Testing will be done at the gufuncs_linalg level, and the thin layer may 
+implement workarounds around known issues.
 
 
 			     umath_linalg
@@ -141,7 +141,8 @@ if compute_uv:
 
 			   *** Changes ***
 2012-11-15
-    Fixed the bug with matrix_multiply
+    Fixed the bug in matrix_multiply
+    Fixed the bug in eig 
 2012-11-13
     Created gufuncs_linalg module. This module is a wrapper for the gufuncs to
         make the interface easier to use.

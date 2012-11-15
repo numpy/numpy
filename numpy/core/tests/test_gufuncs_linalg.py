@@ -6,8 +6,7 @@ Heavily inspired (ripped in part) test_linalg
 
 """
 TODO:
-    Fix Bug in EigVals with csingle and remove Skipped Test accordingly.
-        Implement also proper tests for Eig
+    Implement proper tests for Eig
 """
 
 ################################################################################
@@ -285,9 +284,6 @@ class TestEigh(HermitianTestCase, TestCase):
 
 class TestEigVals(GeneralTestCase, TestCase):
     def do(self, a, b):
-        """ there is a bug that needs to be fixed on EigVals on csingle values """
-        if csingle == a.dtype:
-            raise SkipTest
         ev = gula.eigvals(a)
         evalues, evectors = gula.eig(a)
         assert_almost_equal(ev, evalues)

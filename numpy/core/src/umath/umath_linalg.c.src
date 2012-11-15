@@ -2140,10 +2140,10 @@ init_@lapack_func@(GEEV_PARAMS_t* params, char jobvl, char jobvr, fortran_int n)
     uint8_t *mem_buff = NULL;
     uint8_t *mem_buff2 = NULL;
     uint8_t *a, *w, *vl, *vr, *work, *rwork;
-    size_t a_size = n*n*sizeof(@typ@);
-    size_t w_size = n*sizeof(@typ@);
-    size_t vl_size = jobvl=='V'? n*sizeof(@typ@) : 0;
-    size_t vr_size = jobvr=='V'? n*sizeof(@typ@) : 0;
+    size_t a_size = n*n*sizeof(@ftyp@);
+    size_t w_size = n*sizeof(@ftyp@);
+    size_t vl_size = jobvl=='V'? n*sizeof(@ftyp@) : 0;
+    size_t vr_size = jobvr=='V'? n*sizeof(@ftyp@) : 0;
     size_t rwork_size = 2*n*sizeof(@realtyp@);
     size_t work_count = 0;
     @typ@ work_size_query;
@@ -2159,7 +2159,6 @@ init_@lapack_func@(GEEV_PARAMS_t* params, char jobvl, char jobvr, fortran_int n)
     vl = w + w_size;
     vr = vl + vl_size;
     rwork = vr + vr_size;
-
     LAPACK(@lapack_func@)(&jobvl, &jobvr, &n,
                           (void *)a, &n, (void *)w, 
                           (void *)vl, &n, (void *)vr, &n, 
@@ -2170,9 +2169,10 @@ init_@lapack_func@(GEEV_PARAMS_t* params, char jobvl, char jobvr, fortran_int n)
         goto error;
 
     work_count = (size_t) work_size_query.array[0];
-    mem_buff2 = malloc(work_count*sizeof(@typ@));
+    mem_buff2 = malloc(work_count*sizeof(@ftyp@));
     if (!mem_buff2)
         goto error;
+
     work = mem_buff2;
    
     params->A = a;
@@ -2287,18 +2287,28 @@ static inline void
         }
         
         for (iter = 0; iter < outer_dim; ++iter) {
+            int not_ok;
             char **arg_iter = args;
             /* copy the matrix in */
             linearize_@TYPE@_matrix(geev_params.A, *arg_iter++, &a_in);
+            not_ok = call_@lapack_func@(&geev_params);
 
-            call_@lapack_func@(&geev_params);
-            process_@lapack_func@_results(&geev_params);
-            delinearize_@COMPLEXTYPE@_matrix(*arg_iter++, geev_params.W, &w_out);
-            if ('V' == geev_params.JOBVL)
-                delinearize_@COMPLEXTYPE@_matrix(*arg_iter++, geev_params.VL, &vl_out);
-            if ('V' == geev_params.JOBVR)
-                delinearize_@COMPLEXTYPE@_matrix(*arg_iter++, geev_params.VR, &vr_out);
+            if (!not_ok) {
+                process_@lapack_func@_results(&geev_params);
+                delinearize_@COMPLEXTYPE@_matrix(*arg_iter++, geev_params.W, &w_out);
 
+                if ('V' == geev_params.JOBVL)
+                    delinearize_@COMPLEXTYPE@_matrix(*arg_iter++, geev_params.VL, &vl_out);
+                if ('V' == geev_params.JOBVR)
+                    delinearize_@COMPLEXTYPE@_matrix(*arg_iter++, geev_params.VR, &vr_out);
+            } else {
+                /* geev failed */
+                nan_@COMPLEXTYPE@_matrix(*arg_iter++, &w_out);
+                if ('V' == geev_params.JOBVL)
+                    nan_@COMPLEXTYPE@_matrix(*arg_iter++, &vl_out);
+                if ('V' == geev_params.JOBVR)
+                    nan_@COMPLEXTYPE@_matrix(*arg_iter++, &vr_out);
+            }
             update_pointers((uint8_t**)args, outer_steps, op_count);
         }
 
@@ -2870,7 +2880,7 @@ static void
    #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
    #typ=float,double,COMPLEX_t,DOUBLECOMPLEX_t#
    #ftyp=fortran_real,fortran_doublereal,fortran_complex,fortran_doublecomplex#
-   #zero=0.0f,0.0,c_zero,z_zero#
+   #zero=s_zero,d_zero,c_zero,z_zero#
    #blas_dot=FNAME(sdot),FNAME(ddot),FNAME(cdotu),FNAME(zdotu)#
  */
 
