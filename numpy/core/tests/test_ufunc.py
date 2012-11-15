@@ -943,6 +943,12 @@ class TestUfunc(TestCase):
         np.negative.at(a, [2,5,2])
         assert_equal(a, [0, 1, 2, 3, 4, -5, 6, 7, 8, 9])
 
+        # test exception when indices dimensions < first operand dimensions
+        a = np.arange(27).reshape(3,3,3)
+        b = np.array([100,200,300])
+        assert_raises(ValueError, np.add.at, a, [1,2,1], b)
+        assert_raises(ValueError, np.add.at, a, ([1,2,1],), b)
+
 
 if __name__ == "__main__":
     run_module_suite()

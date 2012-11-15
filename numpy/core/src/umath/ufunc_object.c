@@ -5001,8 +5001,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 
 fail:
 
-    if (op1_array != NULL)
-        Py_DECREF(op1_array);
     if (op2_array != NULL)
         Py_DECREF(op2_array);
     if (iter != NULL)
