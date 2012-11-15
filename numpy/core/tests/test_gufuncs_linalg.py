@@ -6,10 +6,11 @@ Heavily inspired (ripped in part) test_linalg
 
 """
 TODO:
-    Fix MatrixMultiply bug and remove Skipped Test accordingly
     Fix Bug in EigVals with csingle and remove Skipped Test accordingly.
         Implement also proper tests for Eig
 """
+
+################################################################################
 # The following functions are implemented in the module "gufuncs_linalg"
 #
 # category "linalg"
@@ -214,13 +215,6 @@ class HermitianTestCase(MatrixGenerator):
 
 class TestMatrixMultiply(GeneralTestCase):
     def do(self, a, b):
-        """
-        due to a bug in matrix multiply on cdoubles, the test is not reliable on
-        cdoubles
-        """
-        if cdouble == a.dtype:
-            raise SkipTest
-
         res = gula.matrix_multiply(a,b)
         if a.ndim == 2:
             assert_almost_equal(res, np.dot(a,b))
@@ -229,13 +223,6 @@ class TestMatrixMultiply(GeneralTestCase):
 
 class TestInv(GeneralTestCase, TestCase):
     def do(self, a, b):
-        """
-        due to a bug in matrix multiply on cdoubles, the test is not reliable on
-        cdoubles
-        """
-        if cdouble == a.dtype:
-            raise SkipTest
-
         a_inv = gula.inv(a)
         ident = identity(a.shape[-1])
         if 3 == len(a.shape):
@@ -245,13 +232,6 @@ class TestInv(GeneralTestCase, TestCase):
 
 class TestPoinv(HermitianTestCase, TestCase):
     def do(self, a, b):
-        """
-        due to a bug in matrix multiply on cdoubles, the test is not reliable on
-        cdoubles
-        """
-        if cdouble == a.dtype:
-            raise SkipTest
-
         a_inv = gula.poinv(a)
         ident = identity(a.shape[-1])
         if 3 == len(a.shape):
@@ -325,13 +305,6 @@ class TestEigvalsh(HermitianTestCase, TestCase):
 
 class TestSolve(GeneralTestCase,TestCase):
     def do(self, a, b):
-        """
-        due to a bug in matrix multiply on cdoubles, the test is not reliable on
-        cdoubles
-        """
-        if cdouble == a.dtype:
-            raise SkipTest
-
         x = gula.solve(a,b)
         assert_almost_equal(b,gula.matrix_multiply(a,x))
 

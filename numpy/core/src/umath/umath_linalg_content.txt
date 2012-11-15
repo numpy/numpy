@@ -140,6 +140,8 @@ if compute_uv:
 
 
 			   *** Changes ***
+2012-11-15
+    Fixed the bug with matrix_multiply
 2012-11-13
     Created gufuncs_linalg module. This module is a wrapper for the gufuncs to
         make the interface easier to use.
