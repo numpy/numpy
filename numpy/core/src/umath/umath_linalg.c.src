@@ -20,10 +20,35 @@
 #include <assert.h>
 #include <math.h>
 
-#define TRACE do { printf ("%s:%d:%s\n", __FILE__, __LINE__, __FUNCTION__); } while (0)
 
+const char* umath_linalg_version_string = "0.1.2";
 
-const char* umath_linalg_version_string = "0.1.1";
+/*
+ ****************************************************************************
+ *                        Debugging support                                 *
+ ****************************************************************************
+ */
+
+#define TRACE_TXT(...) do { fprintf (stderr, __VA_ARGS__); } while (0)
+#define STACK_TRACE do {} while (0)
+#define TRACE do { fprintf (stderr, "%s:%d:%s\n", __FILE__, __LINE__, __FUNCTION__); STACK_TRACE; } while (0)
+
+#if 0
+#include <execinfo.h>
+void
+dbg_stack_trace()
+{
+    void *trace[32];
+    size_t size;
+
+    size = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
+    backtrace_symbols_fd(trace, size, 2);
+}
+
+#undef STACK_TRACE
+#define STACK_TRACE do { dbg_stack_trace(); } while (0)
+#endif
+
 /*
  *****************************************************************************
  *                    BLAS/LAPACK calling macros                             *
@@ -310,7 +335,7 @@ FNAME(zgemm)(char *transa, char *transb,
              f2c_doublecomplex *c, int *ldc);
 
 
-#define LAPACK_T(FUNC) printf("Calling LAPACK ( " # FUNC " )\n"); FNAME(FUNC)
+#define LAPACK_T(FUNC) TRACE_TXT("Calling LAPACK ( " # FUNC " )\n"); FNAME(FUNC)
 #define LAPACK(FUNC) FNAME(FUNC)
 
 typedef int               fortran_int;
@@ -418,23 +443,23 @@ init_linearize_data(LINEARIZE_DATA_t *lin_data,
 static inline void
 dump_ufunc_object(PyUFuncObject* ufunc)
 {
-    printf("\n\n%s '%s' (%d input(s), %d output(s), %d specialization(s).\n",
-           ufunc->core_enabled? "generalized ufunc" : "scalar ufunc",
-           ufunc->name, ufunc->nin, ufunc->nout, ufunc->ntypes);
+    TRACE_TXT("\n\n%s '%s' (%d input(s), %d output(s), %d specialization(s).\n",
+              ufunc->core_enabled? "generalized ufunc" : "scalar ufunc",
+              ufunc->name, ufunc->nin, ufunc->nout, ufunc->ntypes);
     if (ufunc->core_enabled) {
         int arg;
         int dim;
-        printf("\t%s (%d dimension(s) detected).\n",
-               ufunc->core_signature, ufunc->core_num_dim_ix);
+        TRACE_TXT("\t%s (%d dimension(s) detected).\n",
+                  ufunc->core_signature, ufunc->core_num_dim_ix);
 
         for (arg = 0; arg < ufunc->nargs; arg++){
             int * arg_dim_ix = ufunc->core_dim_ixs + ufunc->core_offsets[arg];
-            printf("\t\targ %d (%s) has %d dimension(s): (",
-                   arg, arg < ufunc->nin? "INPUT" : "OUTPUT", ufunc->core_num_dims[arg]);
+            TRACE_TXT("\t\targ %d (%s) has %d dimension(s): (",
+                      arg, arg < ufunc->nin? "INPUT" : "OUTPUT", ufunc->core_num_dims[arg]);
             for (dim = 0; dim < ufunc->core_num_dims[arg]; dim ++) {
-                printf(" %d", arg_dim_ix[dim]);
+                TRACE_TXT(" %d", arg_dim_ix[dim]);
             }
-            printf(" )\n");
+            TRACE_TXT(" )\n");
         }
     }
 }
@@ -442,10 +467,10 @@ dump_ufunc_object(PyUFuncObject* ufunc)
 static inline void
 dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
 {
-    printf("\n\t%s rows: %zd columns: %zd"
-           "\n\t\trow_strides: %td column_strides: %td"
-           "\n", name, params->rows, params->columns,
-           params->row_strides, params->column_strides);
+    TRACE_TXT("\n\t%s rows: %zd columns: %zd"
+              "\n\t\trow_strides: %td column_strides: %td"
+              "\n", name, params->rows, params->columns,
+              params->row_strides, params->column_strides);
 }
 
 
@@ -516,24 +541,24 @@ CDOUBLE_mul(DOUBLECOMPLEX_t op1, DOUBLECOMPLEX_t op2)
 static inline void
 print_FLOAT(npy_float s)
 {
-    printf(" %8.4f", s);
+    TRACE_TXT(" %8.4f", s);
 }
 static inline void
 print_DOUBLE(npy_double d)
 {
-    printf(" %10.6f", d);
+    TRACE_TXT(" %10.6f", d);
 }
 static inline void
 print_CFLOAT(npy_cfloat c)
 {
     float* c_parts = (float*)&c;
-    printf(" %8.4f + %8.4fj", c_parts[0], c_parts[1]);
+    TRACE_TXT(" %8.4f + %8.4fj", c_parts[0], c_parts[1]);
 }
 static inline void
 print_CDOUBLE(npy_cdouble z)
 {
     double* z_parts = (double*)&z;
-    printf(" %8.4f + %8.4fj", z_parts[0], z_parts[1]);
+    TRACE_TXT(" %8.4f + %8.4fj", z_parts[0], z_parts[1]);
 }
 
 /**begin repeat
@@ -545,15 +570,15 @@ dump_@TYPE@_matrix(const char* name, size_t rows, size_t columns, const @typ@* p
 {
     size_t i,j;
 
-    printf("\n%s %p (%zd, %zd)\n", name, ptr, rows, columns);
+    TRACE_TXT("\n%s %p (%zd, %zd)\n", name, ptr, rows, columns);
     for (i=0; i<rows; i++)
     {
-        printf("(");
+        TRACE_TXT("(");
         for (j=0; j<columns; j++)
         {
             print_@TYPE@(*ptr++);
         }
-        printf(" )\n");
+        TRACE_TXT(" )\n");
     }
 }
 /**end repeat**/
@@ -942,16 +967,16 @@ typedef struct gemm_params_struct
 static inline void
 dump_gemm_params(const char* name, const GEMM_PARAMS_t* params)
 {
-    printf("\n%s\n"
-           "%14s: %18p\n" "%14s: %18p\n" "%14s: %18p\n"
-           "%14s: %18d\n" "%14s: %18d\n" "%14s: %18d\n"
-           "%14s: %18d\n" "%14s: %18d\n" "%14s: %18d\n"
-           "%14s: %15c'%c'\n" "%14s: %15c'%c'\n",
-           name,
-           "A", params->A, "B", params->B, "C", params->C,
-           "LDA", params->LDA, "LDB", params->LDB, "LDC", params->LDC,
-           "M", params->M, "K", params->K, "N", params->N,
-           "TRANSA", ' ', params->TRANSA, "TRANSB", ' ', params->TRANSB);
+    TRACE_TXT("\n%s\n"
+              "%14s: %18p\n" "%14s: %18p\n" "%14s: %18p\n"
+              "%14s: %18d\n" "%14s: %18d\n" "%14s: %18d\n"
+              "%14s: %18d\n" "%14s: %18d\n" "%14s: %18d\n"
+              "%14s: %15c'%c'\n" "%14s: %15c'%c'\n",
+              name,
+              "A", params->A, "B", params->B, "C", params->C,
+              "LDA", params->LDA, "LDB", params->LDB, "LDC", params->LDC,
+              "M", params->M, "K", params->K, "N", params->N,
+              "TRANSA", ' ', params->TRANSA, "TRANSB", ' ', params->TRANSB);
 }
 
 static inline int
@@ -984,25 +1009,25 @@ init_gemm_params(GEMM_PARAMS_t *params,
             goto error;
 
         current = mem_buff;
-	if (needs_a) {
-	    a = current;
-	    current += a_size;
-	} else {
-	    a = NULL;
-	}
-
-	if (needs_b) {
-	    b = current;
-	    current += b_size;
-	} else { 
-	    b = NULL;
-	}
-
-	if (needs_c) {
-	    c = current;
-	} else {
-	    c = NULL;
-	}
+        if (needs_a) {
+            a = current;
+            current += a_size;
+        } else {
+            a = NULL;
+        }
+        
+        if (needs_b) {
+            b = current;
+            current += b_size;
+        } else { 
+            b = NULL;
+        }
+        
+        if (needs_c) {
+            c = current;
+        } else {
+            c = NULL;
+        }
     }
 
     params->A = a;
@@ -1039,8 +1064,8 @@ release_gemm_params(GEMM_PARAMS_t * params)
    #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
    #typ=npy_float,npy_double,npy_cfloat,npy_cdouble#
    #one=s_one,d_one,c_one.array,z_one.array#
-   #zero=s_zero,d_zero,c_zero.array,z_one.array#
-   #cblas_type=s,d,c,z#
+   #zero=s_zero,d_zero,c_zero.array,z_zero.array#
+   #GEMM=sgemm,dgemm,cgemm,zgemm#
 */
 
 static void
@@ -1057,12 +1082,12 @@ static void
      */
     GEMM_PARAMS_t params;
     fortran_int m, k, n;
+
     INIT_OUTER_LOOP_3
     
     m = (fortran_int) dimensions[0];
     k = (fortran_int) dimensions[1];
     n = (fortran_int) dimensions[2];
-
 
     if (init_gemm_params(&params, m, k, n, steps, sizeof(@typ@)))
     {
@@ -1077,26 +1102,19 @@ static void
     
         BEGIN_OUTER_LOOP_3
             /* just call the appropriate multiply and update pointers */
-            @typ@ *A = linearize_@TYPE@_matrix(params.A,
-                                                args[0],
-                                                &a_in);
-            @typ@ *B = linearize_@TYPE@_matrix(params.B,
-                                               args[1],
-                                               &b_in);
+            @typ@ *A = linearize_@TYPE@_matrix(params.A, args[0], &a_in);
+            @typ@ *B = linearize_@TYPE@_matrix(params.B, args[1], &b_in);
             @typ@ *C = params.C ? (@typ@*)params.C : (@typ@ *) args[2];
 
             /* linearize source operands if needed */
-            FNAME(@cblas_type@gemm)(&params.TRANSA, &params.TRANSB,
-                                    &params.M, &params.N, &params.K, 
-                                    (void*)&@one@, // alpha
-                                    (void*)A, &params.LDA,
-                                    (void*)B, &params.LDB,
-                                    (void*)&@zero@, // beta
-                                    (void*)C, &params.LDC);
-            
-            delinearize_@TYPE@_matrix(args[2],
-                                      params.C,
-                                      &c_out);
+            FNAME(@GEMM@)(&params.TRANSA, &params.TRANSB,
+                          &params.M, &params.N, &params.K, 
+                          (void*)&@one@, // alpha
+                          (void*)A, &params.LDA,
+                          (void*)B, &params.LDB,
+                          (void*)&@zero@, // beta
+                          (void*)C, &params.LDC);
+            delinearize_@TYPE@_matrix(args[2], params.C, &c_out);
         END_OUTER_LOOP
 
         release_gemm_params(&params);
@@ -1912,20 +1930,20 @@ typedef struct geev_params_struct {
 static inline void
 dump_geev_params(const char *name, GEEV_PARAMS_t* params)
 {
-    printf ("\n%s\n"
-            "\t%10s: %p\n" "\t%10s: %p\n" "\t%10s: %p\n" "\t%10s: %p\n"
-            "\t%10s: %p\n" "\t%10s: %p\n" "\t%10s: %p\n" "\t%10s: %p\n"
-            "\t%10s: %p\n"
-            "\t%10s: %d\n" "\t%10s: %d\n" "\t%10s: %d\n" "\t%10s: %d\n"
-            "\t%10s: %d\n"
-            "\t%10s: %c\n" "\t%10s: %c\n",
-            name,
-            "A", params->A, "WR", params->WR, "WI", params->WI, "VLR", params->VLR,
-            "VRR", params->VRR, "WORK", params->WORK, "W", params->W, "VL", params->VL,
-            "VR", params->VR,
-            "N", (int)params->N, "LDA", (int)params->LDA, "LDVL", (int)params->LDVL, "LDVR", (int)params->LDVR,
-            "LWORK", (int)params->LWORK,
-            "JOBVL", params->JOBVL, "JOBVR", params->JOBVR);
+    TRACE_TXT("\n%s\n"
+              "\t%10s: %p\n" "\t%10s: %p\n" "\t%10s: %p\n" "\t%10s: %p\n"
+              "\t%10s: %p\n" "\t%10s: %p\n" "\t%10s: %p\n" "\t%10s: %p\n"
+              "\t%10s: %p\n"
+              "\t%10s: %d\n" "\t%10s: %d\n" "\t%10s: %d\n" "\t%10s: %d\n"
+              "\t%10s: %d\n"
+              "\t%10s: %c\n" "\t%10s: %c\n",
+              name,
+              "A", params->A, "WR", params->WR, "WI", params->WI, "VLR", params->VLR,
+              "VRR", params->VRR, "WORK", params->WORK, "W", params->W, "VL", params->VL,
+              "VR", params->VR,
+              "N", (int)params->N, "LDA", (int)params->LDA, "LDVL", (int)params->LDVL, "LDVR", (int)params->LDVR,
+              "LWORK", (int)params->LWORK,
+              "JOBVL", params->JOBVL, "JOBVR", params->JOBVR);
 }
 
 /**begin repeat
@@ -2331,18 +2349,17 @@ typedef struct gessd_params_struct
 static inline void
 dump_gesdd_params(const char *name, GESDD_PARAMS_t *params)
 {
-    printf("\n%s:\n"
-           "%14s: %18p\n" "%14s: %18p\n" "%14s: %18p\n" "%14s: %18p\n"
-           "%14s: %18p\n" "%14s: %18p\n" "%14s: %18p\n"
-           "%14s: %18d\n" "%14s: %18d\n" "%14s: %18d\n" "%14s: %18d\n"
-           "%14s: %18d\n" "%14s: %18d\n"
-           "%14s: %15c'%c'\n",
-           name,
-           "A", params->A, "S", params->S, "U", params->U, "VT", params->VT,
-           "WORK", params->WORK, "RWORK", params->RWORK, "IWORK", params->IWORK,
-           "M", (int)params->M, "N", (int)params->N, "LDA", (int)params->LDA, "LDU", (int)params->LDU,
-           "LDVT", (int)params->LDVT, "LWORK", (int)params->LWORK, "JOBZ", ' ',params->JOBZ);
-
+    TRACE_TXT("\n%s:\n"
+              "%14s: %18p\n" "%14s: %18p\n" "%14s: %18p\n" "%14s: %18p\n"
+              "%14s: %18p\n" "%14s: %18p\n" "%14s: %18p\n"
+              "%14s: %18d\n" "%14s: %18d\n" "%14s: %18d\n" "%14s: %18d\n"
+              "%14s: %18d\n" "%14s: %18d\n"
+              "%14s: %15c'%c'\n",
+              name,
+              "A", params->A, "S", params->S, "U", params->U, "VT", params->VT,
+              "WORK", params->WORK, "RWORK", params->RWORK, "IWORK", params->IWORK,
+              "M", (int)params->M, "N", (int)params->N, "LDA", (int)params->LDA, "LDU", (int)params->LDU,
+              "LDVT", (int)params->LDVT, "LWORK", (int)params->LWORK, "JOBZ", ' ',params->JOBZ);
 }
 
 static inline int 
@@ -2455,7 +2472,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params, char jobz, fortran_int m, fortran_int
 
     return 1;
  error:
-    printf("%s failed init\n", __FUNCTION__);
+    TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff2);
     free(mem_buff2);
     memset(params, 0, sizeof(*params));
@@ -2563,7 +2580,7 @@ init_@lapack_func@(GESDD_PARAMS_t *params, char jobz, fortran_int m, fortran_int
 
     return 1;
  error:
-    printf("%s failed init\n", __FUNCTION__);
+    TRACE_TXT("%s failed init\n", __FUNCTION__);
     free(mem_buff2);
     free(mem_buff);
     memset(params, 0, sizeof(*params));
