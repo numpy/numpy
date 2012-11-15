@@ -168,8 +168,8 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
         if (tmp == NULL) {
             break;
         }
-        /* Stop the collapse new base would not be of the same type (i.e.
-	 * different subclass).
+        /* Stop the collapse new base when the would not be of the same 
+	 * type (i.e. different subclass).
          */
         if (Py_TYPE(tmp) != Py_TYPE(arr)) {
             break;
