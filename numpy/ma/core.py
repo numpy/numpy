@@ -5509,8 +5509,7 @@ class mvoid(MaskedArray):
     #
     def __new__(self, data, mask=nomask, dtype=None, fill_value=None):
         dtype = dtype or data.dtype
-        _data = ndarray((), dtype=dtype)
-        _data[()] = data
+        _data = np.array(data, dtype=dtype)
         _data = _data.view(self)
         if mask is not nomask:
             if isinstance(mask, np.void):
