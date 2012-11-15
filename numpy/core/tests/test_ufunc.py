@@ -939,6 +939,22 @@ class TestUfunc(TestCase):
               [21,  22, 23],
               [24,  25, 26]]])
 
+        a = np.arange(27).reshape(3,3,3)
+        b = np.array([100,200,300])
+        np.add.at(a, (slice(None), slice(None), slice(None)), b)
+        assert_equal(a,
+            [[[100,201,302], 
+              [103,204,305], 
+              [106,207,308]],
+              
+             [[109,210,311],  
+              [112,213,314], 
+              [115,216,317]],
+
+             [[118,219,320],
+              [121,222,323],
+              [124,225,326]]])
+
         a = np.arange(10)
         np.negative.at(a, [2,5,2])
         assert_equal(a, [0, 1, 2, 3, 4, -5, 6, 7, 8, 9])
