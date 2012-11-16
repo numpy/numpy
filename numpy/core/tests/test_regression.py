@@ -1459,6 +1459,14 @@ class TestRegression(TestCase):
             x = tp(1+2j)
             assert_equal(complex(x), 1+2j)
 
+    def test_complex_boolean_cast(self):
+        """Ticket #2218"""
+        for tp in [np.csingle, np.cdouble, np.clongdouble]:
+            x = np.array([0, 0+0.5j, 0.5+0j], dtype=tp)
+            assert_equal(x.astype(bool), np.array([0, 1, 1], dtype=bool))
+            assert_(np.any(x))
+            assert_(np.all(x[1:]))
+
     def test_uint_int_conversion(self):
         x = 2**64 - 1
         assert_equal(int(np.uint64(x)), x)

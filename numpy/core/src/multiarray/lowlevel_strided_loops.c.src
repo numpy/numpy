@@ -811,9 +811,17 @@ static void
     dst_value[0] = _CONVERT_FN(src_value[0]);
     dst_value[1] = _CONVERT_FN(src_value[1]);
 #  elif !@aligned@
-    dst_value = _CONVERT_FN(src_value[0]);
+#    if @is_bool2@
+       dst_value = _CONVERT_FN(src_value[0]) || _CONVERT_FN(src_value[1]);
+#    else
+       dst_value = _CONVERT_FN(src_value[0]);
+#    endif
 #  else
-    *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]);
+#    if @is_bool2@
+       *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]) || _CONVERT_FN(src_value[1]);
+#    else
+       *(_TYPE2 *)dst = _CONVERT_FN(src_value[0]);
+#    endif
 #  endif
 #else
 #  if @is_complex2@
