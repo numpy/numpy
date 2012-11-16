@@ -2302,6 +2302,7 @@ static inline void
                 if ('V' == geev_params.JOBVR)
                     delinearize_@COMPLEXTYPE@_matrix(*arg_iter++, geev_params.VR, &vr_out);
             } else {
+                TRACE_TXT("geev failed with error code %d\n", not_ok);
                 /* geev failed */
                 nan_@COMPLEXTYPE@_matrix(*arg_iter++, &w_out);
                 if ('V' == geev_params.JOBVL)

@@ -70,9 +70,9 @@ old_assert_almost_equal = assert_almost_equal
 
 def assert_almost_equal(a, b, **kw):
     if a.dtype.type in (single, csingle):
-        decimal = 6
+        decimal = 5
     else:
-        decimal = 12
+        decimal = 10
     old_assert_almost_equal(a, b, decimal = decimal, **kw)
 
 
@@ -245,9 +245,9 @@ class TestDet(GeneralTestCase, TestCase):
         d = gula.det(a)
         s, ld = gula.slogdet(a)
         assert_almost_equal(s * np.exp(ld), d)
-#        ev = gula.eigvals(a)
-#        assert_almost_equal(d, multiply.reduce(ev, axis=(ev.ndim-1)))
-#        assert_almost_equal(s * np.exp(ld), multiply.reduce(ev, axis=(ev.ndim-1)))
+        ev = gula.eigvals(a)
+        assert_almost_equal(d, multiply.reduce(ev, axis=(ev.ndim-1)))
+        assert_almost_equal(s * np.exp(ld), multiply.reduce(ev, axis=(ev.ndim-1)))
         if s != 0:
             assert_almost_equal(np.abs(s), 1)
         else:
