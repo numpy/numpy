@@ -126,9 +126,9 @@ fortran_doc (FortranDataDef def) {
         size += strlen(def.doc);
     p = (char*)malloc (size);
     p[0] = '\0'; /* make sure that the buffer has zero length */
-    if (sprintf(p,"%s - ",def.name)==0) goto fail;
     if (def.rank==-1) {
         if (def.doc==NULL) {
+            if (sprintf(p,"%s - ",def.name)==0) goto fail;
             if (sprintf(p+strlen(p),"no docs available")==0)
                 goto fail;
         } else {
