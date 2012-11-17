@@ -38,6 +38,31 @@ cf2py  intent(out) a
         for name in "t,t2".split(","):
             self.check_function(name)
 
+    @dec.slow
+    def test_docstring(self):
+        assert_equal(self.module.t.__doc__,
+                     "a = t(fun,[fun_extra_args])\n"
+                     "\n"
+                     "Parameters\n"
+                     "----------\n"
+                     "fun : call-back function\n"
+                     "\n"
+                     "Other Parameters\n"
+                     "----------------\n"
+                     "fun_extra_args : input tuple, optional\n"
+                     "    Default: ()\n"
+                     "\n"
+                     "Returns\n-------\n"
+                     "a : int\n"
+                     "\n"
+                     "Notes\n"
+                     "-----\n"
+                     "Call-back functions::\n"
+                     "\n"
+                     "  def fun(): return a\n"
+                     "  Return objects:\n"
+                     "    a : int\n")
+
     def check_function(self, name):
         t = getattr(self.module, name)
         r = t(lambda : 4)

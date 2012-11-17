@@ -20,6 +20,11 @@ class TestMixed(util.F2PyTest):
         assert_( self.module.foo_fixed.bar12() == 12)
         assert_( self.module.foo_free.bar13() == 13)
 
+    @dec.slow
+    def test_docstring(self):
+        assert_equal(self.module.bar11.__doc__,
+                     "a = bar11()\n\nReturns\n-------\na : int\n")
+
 if __name__ == "__main__":
     import nose
     nose.runmodule()
