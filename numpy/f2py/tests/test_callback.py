@@ -43,6 +43,8 @@ cf2py  intent(out) a
         assert_equal(self.module.t.__doc__,
                      "a = t(fun,[fun_extra_args])\n"
                      "\n"
+                     "Wrapper for ``t``.\n"
+                     "\n"
                      "Parameters\n"
                      "----------\n"
                      "fun : call-back function\n"

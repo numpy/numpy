@@ -23,7 +23,7 @@ class TestMixed(util.F2PyTest):
     @dec.slow
     def test_docstring(self):
         assert_equal(self.module.bar11.__doc__,
-                     "a = bar11()\n\nReturns\n-------\na : int\n")
+                     "a = bar11()\n\nWrapper for ``bar11``.\n\nReturns\n-------\na : int\n")
 
 if __name__ == "__main__":
     import nose

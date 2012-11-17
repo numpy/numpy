@@ -259,7 +259,7 @@ routine_rules={
     'separatorsfor':sepdict,
     'body':"""
 #begintitle#
-static char doc_#apiname#[] = \"\\\n#docreturn##name#(#docsignatureshort#)\\\n\\\n\\n#docstrsigns#\";
+static char doc_#apiname#[] = \"\\\n#docreturn##name#(#docsignatureshort#)\\n\\nWrapper for ``#name#``.\\\n\\n#docstrsigns#\";
 /* #declfortranroutine# */
 static PyObject *#apiname#(const PyObject *capi_self,
                            PyObject *capi_args,
