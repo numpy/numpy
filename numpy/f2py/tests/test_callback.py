@@ -2,6 +2,7 @@ from numpy.testing import *
 from numpy import array
 import math
 import util
+import textwrap
 
 class TestF77Callback(util.F2PyTest):
     code = """
@@ -40,30 +41,33 @@ cf2py  intent(out) a
 
     @dec.slow
     def test_docstring(self):
-        assert_equal(self.module.t.__doc__,
-                     "a = t(fun,[fun_extra_args])\n"
-                     "\n"
-                     "Wrapper for ``t``.\n"
-                     "\n"
-                     "Parameters\n"
-                     "----------\n"
-                     "fun : call-back function\n"
-                     "\n"
-                     "Other Parameters\n"
-                     "----------------\n"
-                     "fun_extra_args : input tuple, optional\n"
-                     "    Default: ()\n"
-                     "\n"
-                     "Returns\n-------\n"
-                     "a : int\n"
-                     "\n"
-                     "Notes\n"
-                     "-----\n"
-                     "Call-back functions::\n"
-                     "\n"
-                     "  def fun(): return a\n"
-                     "  Return objects:\n"
-                     "    a : int\n")
+        expected = """
+        a = t(fun,[fun_extra_args])
+
+        Wrapper for ``t``.
+
+        Parameters
+        ----------
+        fun : call-back function
+
+        Other Parameters
+        ----------------
+        fun_extra_args : input tuple, optional
+            Default: ()
+
+        Returns
+        -------
+        a : int
+
+        Notes
+        -----
+        Call-back functions::
+
+          def fun(): return a
+          Return objects:
+            a : int
+        """
+        assert_equal(self.module.t.__doc__, textwrap.dedent(expected).lstrip())
 
     def check_function(self, name):
         t = getattr(self.module, name)

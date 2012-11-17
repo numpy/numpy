@@ -5,6 +5,7 @@ from numpy.testing import *
 from numpy import array
 
 import util
+import textwrap
 
 def _path(*a):
     return os.path.join(*((os.path.dirname(__file__),) + a))
@@ -22,8 +23,16 @@ class TestMixed(util.F2PyTest):
 
     @dec.slow
     def test_docstring(self):
-        assert_equal(self.module.bar11.__doc__,
-                     "a = bar11()\n\nWrapper for ``bar11``.\n\nReturns\n-------\na : int\n")
+        expected = """
+        a = bar11()
+
+        Wrapper for ``bar11``.
+
+        Returns
+        -------
+        a : int
+        """
+        assert_equal(self.module.bar11.__doc__, textwrap.dedent(expected).lstrip())
 
 if __name__ == "__main__":
     import nose
