@@ -1340,9 +1340,15 @@ Make sure that -lgfortran is used for C++ extensions.
 
 class lapack_opt_info(system_info):
 
+    section = 'lapack_opt'
     notfounderror = LapackNotFoundError
 
     def calc_info(self):
+
+        info = self.calc_libraries_info()
+        if info:
+            self.set_info(**info)
+            return
 
         if sys.platform == 'darwin' and not os.environ.get('ATLAS', None):
             args = []
@@ -1429,9 +1435,15 @@ class lapack_opt_info(system_info):
 
 class blas_opt_info(system_info):
 
+    section = 'blas_opt'
     notfounderror = BlasNotFoundError
 
     def calc_info(self):
+
+        info = self.calc_libraries_info()
+        if info:
+            self.set_info(**info)
+            return
 
         if sys.platform == 'darwin' and not os.environ.get('ATLAS', None):
             args = []
