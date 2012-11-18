@@ -151,7 +151,8 @@ def fftfreq(n, d=1.0):
     array([ 0.  ,  1.25,  2.5 ,  3.75, -5.  , -3.75, -2.5 , -1.25])
 
     """
-    assert isinstance(n,types.IntType) or isinstance(n, integer)
+    if not (isinstance(n,types.IntType) or isinstance(n, integer)):
+        raise ValueError("n should be an integer")
     val = 1.0 / (n * d)
     results = empty(n, int)
     N = (n-1)//2 + 1
@@ -204,7 +205,8 @@ def rfftfreq(n, d=1.0):
     array([  0.,  10.,  20.,  30.,  40.,  50.])
 
     """
-    assert isinstance(n,types.IntType) or isinstance(n, integer)
+    if not (isinstance(n,types.IntType) or isinstance(n, integer)):
+        raise ValueError("n should be an integer")
     val = 1.0/(n*d)
     N = n//2 + 1
     results = arange(0, N, dtype=int)
