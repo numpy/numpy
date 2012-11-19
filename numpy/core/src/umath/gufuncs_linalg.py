@@ -15,6 +15,7 @@ multiply3 = _impl.multiply3
 multiply3_add = _impl.multiply3_add
 multiply_add = _impl.multiply_add
 multiply_add2 = _impl.multiply_add2
+multiply4 = _impl.multiply4
 multiply4_add = _impl.multiply4_add
 eig = _impl.eig
 eigvals = _impl.eigvals

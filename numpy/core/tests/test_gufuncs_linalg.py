@@ -334,5 +334,87 @@ class TestCholesky(HermitianTestCase, TestCase):
         pass
 """
 
+################################################################################
+# ufuncs inspired by pdl
+# - add3
+# - multiply3
+# - multiply3_add
+# - multiply_add
+# - multiply_add2
+# - multiply4
+# - multiply4_add
+
+class UfuncTestCase(object):
+    parameter = range(0,10)
+
+    def _check_for_type(self, typ):
+        a = np.array(self.__class__.parameter, dtype=typ)
+        self.do(a)
+
+    def _check_for_type_vector(self, typ):
+        parameter = self.__class__.parameter
+        a = np.array([parameter, parameter], dtype=typ)
+        self.do(a)
+ 
+    def test_single(self):
+        self._check_for_type(single)
+
+    def test_double(self):
+        self._check_for_type(double)
+
+    def test_csingle(self):
+        self._check_for_type(csingle)
+
+    def test_cdouble(self):
+        self._check_for_type(cdouble)
+
+    def test_single_vector(self):
+        self._check_for_type_vector(single)
+
+    def test_double_vector(self):
+        self._check_for_type_vector(double)
+
+    def test_csingle_vector(self):
+        self._check_for_type_vector(csingle)
+
+    def test_cdouble_vector(self):
+        self._check_for_type_vector(cdouble)
+
+
+class TestAdd3(UfuncTestCase, TestCase):
+    def do(self, a):
+        r = gula.add3(a,a,a)
+        assert_almost_equal(r, a+a+a)
+
+class TestMultiply3(UfuncTestCase, TestCase):
+    def do(self, a):
+        r = gula.multiply3(a,a,a)
+        assert_almost_equal(r, a*a*a)
+
+class TestMultiply3Add(UfuncTestCase, TestCase):
+    def do(self, a):
+        r = gula.multiply3_add(a,a,a,a)
+        assert_almost_equal(r, a*a*a+a)
+
+class TestMultiplyAdd(UfuncTestCase, TestCase):
+    def do(self, a):
+        r = gula.multiply_add(a,a,a)
+        assert_almost_equal(r, a*a+a)
+
+class TestMultiplyAdd2(UfuncTestCase, TestCase):
+    def do(self, a):
+        r = gula.multiply_add2(a,a,a,a)
+        assert_almost_equal(r, a*a+a+a)
+
+class TestMultiply4(UfuncTestCase, TestCase):
+    def do(self, a):
+        r = gula.multiply4(a,a,a,a)
+        assert_almost_equal(r, a*a*a*a)
+
+class TestMultiply4_add(UfuncTestCase, TestCase):
+    def do(self, a):
+        r = gula.multiply4_add(a,a,a,a,a)
+        assert_almost_equal(r, a*a*a*a+a)
+
 if __name__ == "__main__":
     run_module_suite()
