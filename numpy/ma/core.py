@@ -2897,7 +2897,7 @@ class MaskedArray(ndarray):
                 else:
                     output._fill_value = None
             else:
-                output._fill_value = fill_value
+                output.fill_value = fill_value
         return output
     view.__doc__ = ndarray.view.__doc__
 

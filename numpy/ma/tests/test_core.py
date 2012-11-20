@@ -1554,6 +1554,38 @@ class TestFillingValues(TestCase):
         a = identity(3, fill_value=0., dtype=complex)
         assert_equal(a.fill_value, 0.)
 
+    def test_fillvalue_in_view(self):
+        "Test the behavior of fill_value in view"
+
+        # Create initial masked array
+        x = array([1,2,3], fill_value=1, dtype=np.int64)
+
+        # Check that fill_value is preserved by default
+        y = x.view()
+        assert_(y.fill_value==1)
+
+        # Check that fill_value is preserved if dtype is specified and the
+        # dtype has a _fill_value attribute
+        y = x.view(MaskedArray)
+        assert_(y.fill_value==1)
+        print y.fill_value
+
+        # Check that code does not crash if passed a dtype that does not have
+        # a _fill_value attribute
+        y = x.view(np.ndarray)
+
+        # Check that fill_value can be overriden with view
+        y = x.view(MaskedArray, fill_value=2)
+        assert_(y.fill_value==2)
+
+        # Check that fill_value gets reset if passed a dtype but not a
+        # fill_value. This is because even though in some cases one can safely
+        # cast the fill_value, e.g. if taking an int64 view of an int32 array,
+        # in other cases, this cannot be done (e.g. int32 view of an int64
+        # array with a large fill_value).
+        y = x.view(np.int32)
+        assert_(y.fill_value == 999999)
+
 #------------------------------------------------------------------------------
 
 class TestUfuncs(TestCase):
