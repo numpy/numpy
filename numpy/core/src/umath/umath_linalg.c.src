@@ -3491,7 +3491,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         equal_4_types
     },
     {
-        "matrix_dot",
+        "matrix_multiply",
         "(m,k),(k,n)->(m,n)",
         "dot on the last two dimensions and broadcast on the rest \n"\
         "    \"(m,k),(k,n)->(m,n)\" \n",

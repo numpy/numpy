@@ -4,7 +4,7 @@ import numpy.core.umath_linalg as _impl
 
 # usable "as is"
 inner1d = _impl.inner1d
-matrix_multiply = _impl.matrix_dot
+matrix_multiply = _impl.matrix_multiply
 det = _impl.det
 slogdet = _impl.slogdet
 inv = _impl.inv
