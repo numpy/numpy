@@ -40,13 +40,13 @@ TODO:
 # category "inspired by pdl"
 # - quadratic_form
 # - matrix_multiply3
-# - add3
-# - multiply3
-# - multiply3_add
-# - multiply_add
-# - multiply_add2
-# - multiply4
-# - multiply4_add
+# - add3 (TestAdd3)
+# - multiply3 (TestMultiply3)
+# - multiply3_add (TestMultiply3Add)
+# - multiply_add (TestMultiplyAdd)
+# - multiply_add2 (TestMultiplyAdd2)
+# - multiply4 (TestMultiply4)
+# - multiply4_add (TestMultiply4Add)
 #
 # category "others"
 # - convolve
@@ -258,11 +258,22 @@ class TestDet(GeneralTestCase, TestCase):
         assert_equal(gula.det(array([[0.0]], dtype=double)), 0.0)
         assert_equal(gula.det(array([[0.0]], dtype=csingle)), 0.0)
         assert_equal(gula.det(array([[0.0]], dtype=cdouble)), 0.0)
+
         assert_equal(gula.slogdet(array([[0.0]], dtype=single)), (0.0, -inf))
         assert_equal(gula.slogdet(array([[0.0]], dtype=double)), (0.0, -inf))
         assert_equal(gula.slogdet(array([[0.0]], dtype=csingle)), (0.0, -inf))
         assert_equal(gula.slogdet(array([[0.0]], dtype=cdouble)), (0.0, -inf))
 
+    def test_types(self):
+        for typ in [(single, single), 
+                    (double, double), 
+                    (csingle, single),
+                    (cdouble, double)]:
+            for x in [ [0], [[0]], [[[0]]] ]:
+                assert_equal(gula.det(array(x, dtype=typ[0])).dtype, typ[0])
+                assert_equal(gula.slogdet(array(x, dtype=typ[0]))[0].dtype, typ[0])
+                assert_equal(gula.slogdet(array(x, dtype=typ[0]))[1].dtype, typ[1])
+        
 
 class TestEig(GeneralTestCase, TestCase):
     def do(self, a, b):
