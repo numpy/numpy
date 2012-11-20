@@ -2852,7 +2852,16 @@ class MaskedArray(ndarray):
         return result
 
 
-    def view(self, dtype=None, type=None):
+    def view(self, dtype=None, type=None, fill_value=None):
+        """
+        Return a view of the MaskedArray
+
+        If `fill_value` is not specified, but `dtype` is specified, the
+        `fill_value` of the MaskedArray will be reset. If neither `fill_value`
+        nor `dtype` are specified, then the fill value is preserved. Finally,
+        if `fill_value` is specified, but `dtype` is not, the fill value is
+        set to the specified value.
+        """
         if dtype is None:
             if type is None:
                 output = ndarray.view(self)
@@ -2882,10 +2891,13 @@ class MaskedArray(ndarray):
                 pass
         # Make sure to reset the _fill_value if needed
         if getattr(output, '_fill_value', None) is not None:
-            if dtype is None:
-                pass # leave _fill_value as is
+            if fill_value is None:
+                if dtype is None:
+                    pass # leave _fill_value as is
+                else:
+                    output._fill_value = None
             else:
-                output._fill_value = None
+                output._fill_value = fill_value
         return output
     view.__doc__ = ndarray.view.__doc__
 
