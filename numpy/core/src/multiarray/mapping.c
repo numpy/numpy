@@ -1064,7 +1064,7 @@ array_subscript(PyArrayObject *self, PyObject *op)
             Py_DECREF(mit);
             return rval;
         }
-        if (!PyArray_MapIterBind(mit, self)) { 
+        if (PyArray_MapIterBind(mit, self) != 0) { 
             return NULL;
         }
         other = (PyArrayObject *)PyArray_GetMap(mit);
@@ -1330,7 +1330,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
             Py_DECREF(mit);
             return rval;
         }
-        if (!PyArray_MapIterBind(mit, self)) {
+        if (PyArray_MapIterBind(mit, self) != 0) {
             return -1;
         }
         ret = PyArray_SetMap(mit, op);
@@ -1720,7 +1720,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 
     mit->ait = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
     if (mit->ait == NULL) {
-        return 0;
+        return 1;
     }
     /* no subspace iteration needed.  Finish up and Return */
     if (subnd == 0) {
@@ -2051,7 +2051,7 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
         return NULL;
     }
 
-    if (!PyArray_MapIterBind(mit, a)) {
+    if (PyArray_MapIterBind(mit, a) != 0) {
         return NULL;
     }
     PyArray_MapIterReset(mit);
