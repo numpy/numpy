@@ -355,8 +355,8 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
     int oldnd;
     npy_intp olddims[NPY_MAXDIMS];
     npy_intp oldstrides[NPY_MAXDIMS];
+    npy_intp np, op;
     int oi, oj, ok, ni, nj, nk;
-    int np, op;
 
     oldnd = 0;
     for (oi = 0; oi < PyArray_NDIM(self); oi++) {
