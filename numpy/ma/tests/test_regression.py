@@ -44,6 +44,11 @@ class TestRegression(TestCase):
         assert_(a.mask.ndim == 1)
         assert_(b.mask.ndim == 2)
 
+    def test_set_fill_value_unicode_py3(self):
+        """Ticket #2733"""
+        a = np.ma.masked_array(['a', 'b', 'c'], mask=[1, 0, 0])
+        a.fill_value = 'X'
+        assert_(a.fill_value == 'X')
 
 if __name__ == "__main__":
     run_module_suite()
