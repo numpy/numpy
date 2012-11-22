@@ -1565,17 +1565,27 @@ class TestFillingValues(TestCase):
         assert_(y.fill_value==1)
 
         # Check that fill_value is preserved if dtype is specified and the
-        # dtype has a _fill_value attribute
+        # dtype is an ndarray sub-class and has a _fill_value attribute
         y = x.view(MaskedArray)
         assert_(y.fill_value==1)
-        print y.fill_value
 
-        # Check that code does not crash if passed a dtype that does not have
-        # a _fill_value attribute
+        # Check that fill_value is preserved if type is specified and the
+        # dtype is an ndarray sub-class and has a _fill_value attribute (by
+        # default, the first argument is dtype, not type)
+        y = x.view(type=MaskedArray)
+        assert_(y.fill_value==1)
+
+        # Check that code does not crash if passed an ndarray sub-class that
+        # does not have a _fill_value attribute
         y = x.view(np.ndarray)
+        y = x.view(type=np.ndarray)
 
         # Check that fill_value can be overriden with view
         y = x.view(MaskedArray, fill_value=2)
+        assert_(y.fill_value==2)
+
+        # Check that fill_value can be overriden with view (using type=)
+        y = x.view(type=MaskedArray, fill_value=2)
         assert_(y.fill_value==2)
 
         # Check that fill_value gets reset if passed a dtype but not a
