@@ -1593,7 +1593,7 @@ class TestFillingValues(TestCase):
         # cast the fill_value, e.g. if taking an int64 view of an int32 array,
         # in other cases, this cannot be done (e.g. int32 view of an int64
         # array with a large fill_value).
-        y = x.view(np.int32)
+        y = x.view(dtype=np.int32)
         assert_(y.fill_value == 999999)
 
 #------------------------------------------------------------------------------
