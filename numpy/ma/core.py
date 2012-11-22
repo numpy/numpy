@@ -2862,8 +2862,9 @@ class MaskedArray(ndarray):
             Data-type descriptor of the returned view, e.g., float32 or int16.
             The default, None, results in the view having the same data-type
             as `a`. As with ``ndarray.view``, dtype can also be specified as
-            an ndarray sub-class, which becomes the type of the returned
-            object (this is equivalent to setting the ``type`` parameter).
+            an ndarray sub-class, which then specifies the type of the
+            returned object (this is equivalent to setting the ``type``
+            parameter).
         type : Python type, optional
             Type of the returned view, e.g., ndarray or matrix.  Again, the
             default None results in type preservation.
