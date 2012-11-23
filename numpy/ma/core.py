@@ -4749,6 +4749,7 @@ class MaskedArray(ndarray):
             dvar = masked
             if out is not None:
                 if isinstance(out, MaskedArray):
+                    out.flat = 0
                     out.__setmask__(True)
                 elif out.dtype.kind in 'biu':
                     errmsg = "Masked data information would be lost in one or "\
