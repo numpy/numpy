@@ -194,7 +194,7 @@ def exec_command( command,
         # _exec_command_posix uses os.system and is faster
         # but not on all platforms os.system will return
         # a correct status.
-        if _with_python and (0 or sys.__stdout__.fileno()==-1):
+        if _with_python and sys.stdout.fileno() == -1:
             st = _exec_command_python(command,
                                       exec_command_dir = exec_dir,
                                       **env)
@@ -348,12 +348,10 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
                 argv = [os.environ['COMSPEC'],'/C'] + argv
                 using_command = 1
 
-    # sys.__std*__ is used instead of sys.std* because environments
-    # like IDLE, PyCrust, etc overwrite sys.std* commands.
-    so_fileno = sys.__stdout__.fileno()
-    se_fileno = sys.__stderr__.fileno()
-    so_flush = sys.__stdout__.flush
-    se_flush = sys.__stderr__.flush
+    so_fileno = sys.stdout.fileno()
+    se_fileno = sys.stderr.fileno()
+    so_flush = sys.stdout.flush
+    se_flush = sys.stderr.flush
     so_dup = os.dup(so_fileno)
     se_dup = os.dup(se_fileno)
 
