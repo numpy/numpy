@@ -194,7 +194,7 @@ def exec_command( command,
         # _exec_command_posix uses os.system and is faster
         # but not on all platforms os.system will return
         # a correct status.
-        if _with_python and (0 or sys.stdout.fileno()==-1):
+        if _with_python and sys.stdout.fileno() == -1:
             st = _exec_command_python(command,
                                       exec_command_dir = exec_dir,
                                       **env)
