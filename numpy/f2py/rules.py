@@ -259,7 +259,7 @@ routine_rules={
     'separatorsfor':sepdict,
     'body':"""
 #begintitle#
-static char doc_#apiname#[] = \"\\\nFunction signature:\\n\\\n\t#docreturn##name#(#docsignatureshort#)\\n\\\n#docstrsigns#\";
+static char doc_#apiname#[] = \"\\\n#docreturn##name#(#docsignatureshort#)\\n\\nWrapper for ``#name#``.\\\n\\n#docstrsigns#\";
 /* #declfortranroutine# */
 static PyObject *#apiname#(const PyObject *capi_self,
                            PyObject *capi_args,
@@ -351,10 +351,10 @@ rout_rules=[
     'freemem':'/*freemem*/',
     'docsignshort':'','docsignoptshort':'',
     'docstrsigns':'','latexdocstrsigns':'',
-    'docstrreq':'Required arguments:',
-    'docstropt':'Optional arguments:',
-    'docstrout':'Return objects:',
-    'docstrcbs':'Call-back functions:',
+    'docstrreq':'\\nParameters\\n----------',
+    'docstropt':'\\nOther Parameters\\n----------------',
+    'docstrout':'\\nReturns\\n-------',
+    'docstrcbs':'\\nNotes\\n-----\\nCall-back functions::\\n',
     'latexdocstrreq':'\\noindent Required arguments:',
     'latexdocstropt':'\\noindent Optional arguments:',
     'latexdocstrout':'\\noindent Return objects:',
@@ -482,7 +482,7 @@ rout_rules=[
     },{ # Function
     'functype':'#ctype#',
     'docreturn':{l_not(isintent_hide):'#rname#,'},
-    'docstrout':'\t#pydocsignout#',
+    'docstrout':'#pydocsignout#',
     'latexdocstrout':['\\item[]{{}\\verb@#pydocsignout#@{}}',
                       {hasresultnote:'--- #resultnote#'}],
     'callfortranroutine':[{l_and(debugcapi,isstringfunction):"""\
@@ -618,7 +618,7 @@ aux_rules=[
     },
     {
     'return':',#varname#',
-    'docstrout':'\t#pydocsignout#',
+    'docstrout':'#pydocsignout#',
     'docreturn':'#outvarname#,',
     'returnformat':'#varrformat#',
     '_check':l_and(isscalar,l_not(iscomplex),isintent_out),
@@ -698,9 +698,9 @@ arg_rules=[
     },
 # Doc signatures
     {
-    'docstropt':{l_and(isoptional,isintent_nothide):'\t#pydocsign#'},
-    'docstrreq':{l_and(isrequired,isintent_nothide):'\t#pydocsign#'},
-    'docstrout':{isintent_out:'\t#pydocsignout#'},
+    'docstropt':{l_and(isoptional,isintent_nothide):'#pydocsign#'},
+    'docstrreq':{l_and(isrequired,isintent_nothide):'#pydocsign#'},
+    'docstrout':{isintent_out:'#pydocsignout#'},
     'latexdocstropt':{l_and(isoptional,isintent_nothide):['\\item[]{{}\\verb@#pydocsign#@{}}',
                                                           {hasnote:'--- #note#'}]},
     'latexdocstrreq':{l_and(isrequired,isintent_nothide):['\\item[]{{}\\verb@#pydocsign#@{}}',
@@ -732,7 +732,7 @@ arg_rules=[
     { # Common
     'docsignxa':{isintent_nothide:'#varname#_extra_args=(),'},
     'docsignxashort':{isintent_nothide:'#varname#_extra_args,'},
-    'docstropt':{isintent_nothide:'\t#varname#_extra_args := () input tuple'},
+    'docstropt':{isintent_nothide:'#varname#_extra_args : input tuple, optional\\n    Default: ()'},
     'docstrcbs':'#cbdocstr#',
     'latexdocstrcbs':'\\item[] #cblatexdocstr#',
     'latexdocstropt':{isintent_nothide:'\\item[]{{}\\verb@#varname#_extra_args := () input tuple@{}} --- Extra arguments for call-back function {{}\\verb@#varname#@{}}.'},
@@ -990,7 +990,7 @@ if (#varname#_capi==Py_None) {
     'keys_xa':',&capi_overwrite_#varname#',
     'docsignxa':'overwrite_#varname#=1,',
     'docsignxashort':'overwrite_#varname#,',
-    'docstropt':'\toverwrite_#varname# := 1 input int',
+    'docstropt':'overwrite_#varname# : input int, optional\\n    Default: 1',
     '_check':l_and(isarray,isintent_overwrite),
     },{
     'frompyobj':'\tcapi_#varname#_intent |= (capi_overwrite_#varname#?0:F2PY_INTENT_COPY);',
@@ -1004,7 +1004,7 @@ if (#varname#_capi==Py_None) {
      'keys_xa':',&capi_overwrite_#varname#',
      'docsignxa':'overwrite_#varname#=0,',
      'docsignxashort':'overwrite_#varname#,',
-     'docstropt':'\toverwrite_#varname# := 0 input int',
+     'docstropt':'overwrite_#varname# : input int, optional\\n    Default: 0',
      '_check':l_and(isarray,isintent_copy),
      },{
      'frompyobj':'\tcapi_#varname#_intent |= (capi_overwrite_#varname#?0:F2PY_INTENT_COPY);',
@@ -1322,6 +1322,7 @@ def buildmodule(m,um):
 ################## Build C/API function #############
 
 stnd={1:'st',2:'nd',3:'rd',4:'th',5:'th',6:'th',7:'th',8:'th',9:'th',0:'th'}
+
 def buildapi(rout):
     rout,wrap = func2subr.assubr(rout)
     args,depargs=getargs2(rout)

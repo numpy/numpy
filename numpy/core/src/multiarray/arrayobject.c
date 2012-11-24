@@ -143,11 +143,12 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
     }
 
     /*
-     * Don't allow chains of views, always set the base
-     * to the owner of the data. That is, either the first object
-     * which isn't an array, or the first object which owns
-     * its own data.
+     * Don't allow infinite chains of views, always set the base
+     * to the first owner of the data.  
+     * That is, either the first object which isn't an array, 
+     * or the first object which owns its own data.
      */
+
     while (PyArray_Check(obj) && (PyObject *)arr != obj) {
         PyArrayObject *obj_arr = (PyArrayObject *)obj;
         PyObject *tmp;
@@ -155,17 +156,25 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
         /* Propagate WARN_ON_WRITE through views. */
         if (PyArray_FLAGS(obj_arr) & NPY_ARRAY_WARN_ON_WRITE) {
             PyArray_ENABLEFLAGS(arr, NPY_ARRAY_WARN_ON_WRITE);
-        }
+        }   
 
         /* If this array owns its own data, stop collapsing */
         if (PyArray_CHKFLAGS(obj_arr, NPY_ARRAY_OWNDATA)) {
             break;
-        }
-        /* If there's no base, stop collapsing */
+        }   
+
         tmp = PyArray_BASE(obj_arr);
+        /* If there's no base, stop collapsing */
         if (tmp == NULL) {
             break;
         }
+        /* Stop the collapse for array sub-classes if new base
+         *   would not be of the same type. 
+         */
+        if (!(PyArray_CheckExact(arr)) & (Py_TYPE(tmp) != Py_TYPE(arr))) {
+            break;
+        }
+
 
         Py_INCREF(tmp);
         Py_DECREF(obj);

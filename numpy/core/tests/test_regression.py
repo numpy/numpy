@@ -1649,6 +1649,13 @@ class TestRegression(TestCase):
         assert_equal(r[0:3:2]['f1'][0][()], r[0:3:2][0]['f1'][()])
         assert_equal(r[0:3:2]['f1'][0].strides, r[0:3:2][0]['f1'].strides)
 
+    def test_alignment_update(self):
+        """Check that alignment flag is updated on stride setting"""
+        a = np.arange(10)
+        assert_(a.flags.aligned)
+        a.strides = 3
+        assert_(not a.flags.aligned)
+
     def test_ticket_1770(self):
         "Should not segfault on python 3k"
         import numpy as np

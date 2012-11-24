@@ -149,7 +149,8 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
         goto fail;
     }
     memcpy(PyArray_STRIDES(self), newstrides.ptr, sizeof(npy_intp)*newstrides.len);
-    PyArray_UpdateFlags(self, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
+    PyArray_UpdateFlags(self, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS |
+                              NPY_ARRAY_ALIGNED);
     PyDimMem_FREE(newstrides.ptr);
     return 0;
 

@@ -367,26 +367,26 @@ def getpydocsign(a,var):
 
     if hasinitvalue(var):
         init,showinit=getinit(a,var)
-        init='= %s'%(showinit)
+        init = ', optional\\n    Default: %s' % showinit
     if isscalar(var):
         if isintent_inout(var):
-            sig='%s :%s %s rank-0 array(%s,\'%s\')'%(a,init,opt,c2py_map[ctype],
-                              c2pycode_map[ctype],)
+            sig='%s : %s rank-0 array(%s,\'%s\')%s'%(a,opt,c2py_map[ctype],
+                              c2pycode_map[ctype], init)
         else:
-            sig='%s :%s %s %s'%(a,init,opt,c2py_map[ctype])
+            sig='%s : %s %s%s'%(a,opt,c2py_map[ctype],init)
         sigout='%s : %s'%(out_a,c2py_map[ctype])
     elif isstring(var):
         if isintent_inout(var):
-            sig='%s :%s %s rank-0 array(string(len=%s),\'c\')'%(a,init,opt,getstrlength(var))
+            sig='%s : %s rank-0 array(string(len=%s),\'c\')%s'%(a,opt,getstrlength(var),init)
         else:
-            sig='%s :%s %s string(len=%s)'%(a,init,opt,getstrlength(var))
+            sig='%s : %s string(len=%s)%s'%(a,opt,getstrlength(var),init)
         sigout='%s : string(len=%s)'%(out_a,getstrlength(var))
     elif isarray(var):
         dim=var['dimension']
         rank=`len(dim)`
-        sig='%s :%s %s rank-%s array(\'%s\') with bounds (%s)'%(a,init,opt,rank,
+        sig='%s : %s rank-%s array(\'%s\') with bounds (%s)%s'%(a,opt,rank,
                                              c2pycode_map[ctype],
-                                             ','.join(dim))
+                                             ','.join(dim), init)
         if a==out_a:
             sigout='%s : rank-%s array(\'%s\') with bounds (%s)'\
                     %(a,rank,c2pycode_map[ctype],','.join(dim))

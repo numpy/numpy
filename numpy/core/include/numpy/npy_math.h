@@ -1,6 +1,10 @@
 #ifndef __NPY_MATH_C99_H_
 #define __NPY_MATH_C99_H_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <math.h>
 #include <numpy/npy_common.h>
 
@@ -431,5 +435,9 @@ void npy_set_floatstatus_divbyzero(void);
 void npy_set_floatstatus_overflow(void);
 void npy_set_floatstatus_underflow(void);
 void npy_set_floatstatus_invalid(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
