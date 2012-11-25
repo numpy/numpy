@@ -189,7 +189,7 @@ def rfftfreq(n, d=1.0):
     Returns
     -------
     out : ndarray
-        The array of length `n`, containing the sample frequencies.
+        The array of length `n//2+1`, containing the sample frequencies.
 
     Examples
     --------
