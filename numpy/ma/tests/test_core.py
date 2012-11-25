@@ -2718,8 +2718,8 @@ class TestMaskedArrayMathMethods(TestCase):
 
     def test_varstd_specialcases(self):
         "Test a special case for var"
-        nout = np.empty(1, dtype=float)
-        mout = empty(1, dtype=float)
+        nout = np.array(-1, dtype=float)
+        mout = array(-1, dtype=float)
         #
         x = array(arange(10), mask=True)
         for methodname in ('var', 'std'):

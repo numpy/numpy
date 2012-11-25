@@ -4749,6 +4749,7 @@ class MaskedArray(ndarray):
             dvar = masked
             if out is not None:
                 if isinstance(out, MaskedArray):
+                    out.flat = 0
                     out.__setmask__(True)
                 elif out.dtype.kind in 'biu':
                     errmsg = "Masked data information would be lost in one or "\
@@ -4773,10 +4774,10 @@ class MaskedArray(ndarray):
         ""
         dvar = self.var(axis=axis, dtype=dtype, out=out, ddof=ddof)
         if dvar is not masked:
-            dvar = sqrt(dvar)
             if out is not None:
                 np.power(out, 0.5, out=out, casting='unsafe')
                 return out
+            dvar = sqrt(dvar)
         return dvar
     std.__doc__ = np.std.__doc__
 

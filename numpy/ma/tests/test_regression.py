@@ -1,5 +1,6 @@
 from numpy.testing import *
 import numpy as np
+import numpy.ma as ma
 
 rlevel = 1
 
@@ -49,6 +50,14 @@ class TestRegression(TestCase):
         a = np.ma.masked_array(['a', 'b', 'c'], mask=[1, 0, 0])
         a.fill_value = 'X'
         assert_(a.fill_value == 'X')
+
+    def test_var_sets_maskedarray_scalar(self):
+        """Issue gh-2757"""
+        a = np.ma.array(np.arange(5), mask=True)
+        mout = np.ma.array(-1, dtype=float)
+        a.var(out=mout)
+        assert_(mout._data == 0)
+
 
 if __name__ == "__main__":
     run_module_suite()
