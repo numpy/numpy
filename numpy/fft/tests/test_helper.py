@@ -49,6 +49,17 @@ class TestFFTFreq(TestCase):
         assert_array_almost_equal(10*pi*fft.fftfreq(10, pi), x)
 
 
+class TestRFFTFreq(TestCase):
+
+    def test_definition(self):
+        x = [0, 1, 2, 3, 4]
+        assert_array_almost_equal(9*fft.rfftfreq(9), x)
+        assert_array_almost_equal(9*pi*fft.rfftfreq(9, pi), x)
+        x = [0, 1, 2, 3, 4, 5]
+        assert_array_almost_equal(10*fft.rfftfreq(10), x)
+        assert_array_almost_equal(10*pi*fft.rfftfreq(10, pi), x)
+
+
 class TestIRFFTN(TestCase):
 
     def test_not_last_axis_success(self):
