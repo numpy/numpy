@@ -46,6 +46,7 @@ Helper routines
    :toctree: generated/
 
    fftfreq   Discrete Fourier Transform sample frequencies.
+   rfftfreq  DFT sample frequencies (for usage with rfft, irfft).
    fftshift  Shift zero-frequency component to center of spectrum.
    ifftshift Inverse of fftshift.
 
