@@ -297,8 +297,7 @@ def rfft(a, n=None, axis=-1):
     axis of the output is therefore ``n//2+1``.
 
     When ``A = rfft(a)`` and fs is the sampling frequency, ``A[0]`` contains 
-    the zero-frequency term 0*fs, which must be purely real due to the Hermite 
-    symmetry.
+    the zero-frequency term 0*fs, which is real due to Hermitian symmetry.
 
     If `n` is even, ``A[-1]`` contains the term representing both positive 
     and negative Nyquist frequency (+fs/2 and -fs/2), and must also be purely 

@@ -121,9 +121,11 @@ def fftfreq(n, d=1.0):
     """
     Return the Discrete Fourier Transform sample frequencies.
 
-    The returned float array contains the frequency bins in
-    cycles/unit (with zero at the start) given a window length `n` and a
-    sample spacing `d`::
+    The returned float array `f` contains the frequency bin centers in cycles 
+    per unit of the sample spacing (with zero at the start).  For instance, if 
+    the sample spacing is in seconds, then the frequency unit is cycles/second.
+
+    Given a window length `n` and a sample spacing `d`::
 
       f = [0, 1, ...,   n/2-1,     -n/2, ..., -1] / (d*n)   if n is even
       f = [0, 1, ..., (n-1)/2, -(n-1)/2, ..., -1] / (d*n)   if n is odd
@@ -133,11 +135,11 @@ def fftfreq(n, d=1.0):
     n : int
         Window length.
     d : scalar, optional
-        Sample spacing. Default is 1.
-
+        Sample spacing (inverse of the sampling rate). Defaults to 1.
+        
     Returns
     -------
-    out : ndarray
+    f : ndarray
         The array of length `n`, containing the sample frequencies.
 
     Examples
@@ -169,9 +171,11 @@ def rfftfreq(n, d=1.0):
     Return the Discrete Fourier Transform sample frequencies 
     (for usage with rfft, irfft).
 
-    The returned float array contains the frequency bins in
-    cycles/unit (with zero at the start) given a window length `n` and a
-    sample spacing `d`::
+    The returned float array `f` contains the frequency bin centers in cycles 
+    per unit of the sample spacing (with zero at the start).  For instance, if 
+    the sample spacing is in seconds, then the frequency unit is cycles/second.
+
+    Given a window length `n` and a sample spacing `d`::
 
       f = [0, 1, ...,     n/2-1,     n/2] / (d*n)   if n is even
       f = [0, 1, ..., (n-1)/2-1, (n-1)/2] / (d*n)   if n is odd
@@ -184,11 +188,11 @@ def rfftfreq(n, d=1.0):
     n : int
         Window length.
     d : scalar, optional
-        Sample spacing. Default is 1.
+        Sample spacing (inverse of the sampling rate). Defaults to 1.
 
     Returns
     -------
-    out : ndarray
+    f : ndarray
         The array of length `n//2+1`, containing the sample frequencies.
 
     Examples
