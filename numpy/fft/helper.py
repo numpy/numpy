@@ -140,7 +140,7 @@ def fftfreq(n, d=1.0):
     Returns
     -------
     f : ndarray
-        The array of length `n`, containing the sample frequencies.
+        Array of length `n` containing the sample frequencies.
 
     Examples
     --------
@@ -193,7 +193,7 @@ def rfftfreq(n, d=1.0):
     Returns
     -------
     f : ndarray
-        The array of length `n//2+1`, containing the sample frequencies.
+        Array of length ``n//2 + 1`` containing the sample frequencies.
 
     Examples
     --------
