@@ -365,6 +365,8 @@ class NoseTester(object):
             warnings.filterwarnings('error', category=warningtype)
         # Filter out annoying import messages.
         warnings.filterwarnings('ignore', message='Not importing directory')
+        warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+        warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
         try:
             from noseclasses import NumpyTestProgram
