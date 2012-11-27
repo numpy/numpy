@@ -2852,7 +2852,45 @@ class MaskedArray(ndarray):
         return result
 
 
-    def view(self, dtype=None, type=None):
+    def view(self, dtype=None, type=None, fill_value=None):
+        """
+        Return a view of the MaskedArray data
+
+        Parameters
+        ----------
+        dtype : data-type or ndarray sub-class, optional
+            Data-type descriptor of the returned view, e.g., float32 or int16.
+            The default, None, results in the view having the same data-type
+            as `a`. As with ``ndarray.view``, dtype can also be specified as
+            an ndarray sub-class, which then specifies the type of the
+            returned object (this is equivalent to setting the ``type``
+            parameter).
+        type : Python type, optional
+            Type of the returned view, e.g., ndarray or matrix.  Again, the
+            default None results in type preservation.
+
+        Notes
+        -----
+
+        ``a.view()`` is used two different ways:
+
+        ``a.view(some_dtype)`` or ``a.view(dtype=some_dtype)`` constructs a view
+        of the array's memory with a different data-type.  This can cause a
+        reinterpretation of the bytes of memory.
+
+        ``a.view(ndarray_subclass)`` or ``a.view(type=ndarray_subclass)`` just
+        returns an instance of `ndarray_subclass` that looks at the same array
+        (same shape, dtype, etc.)  This does not cause a reinterpretation of the
+        memory.
+
+        If `fill_value` is not specified, but `dtype` is specified (and is not
+        an ndarray sub-class), the `fill_value` of the MaskedArray will be
+        reset. If neither `fill_value` nor `dtype` are specified (or if
+        `dtype` is an ndarray sub-class), then the fill value is preserved.
+        Finally, if `fill_value` is specified, but `dtype` is not, the fill
+        value is set to the specified value.
+        """
+
         if dtype is None:
             if type is None:
                 output = ndarray.view(self)
@@ -2882,7 +2920,13 @@ class MaskedArray(ndarray):
                 pass
         # Make sure to reset the _fill_value if needed
         if getattr(output, '_fill_value', None) is not None:
-            output._fill_value = None
+            if fill_value is None:
+                if dtype is None:
+                    pass # leave _fill_value as is
+                else:
+                    output._fill_value = None
+            else:
+                output.fill_value = fill_value
         return output
     view.__doc__ = ndarray.view.__doc__
 
