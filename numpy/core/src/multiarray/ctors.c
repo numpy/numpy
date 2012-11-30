@@ -917,10 +917,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     if (data == NULL) {
         fa->flags = NPY_ARRAY_DEFAULT;
         if (flags) {
-            fa->flags |= NPY_ARRAY_F_CONTIGUOUS;
-            if (nd > 1) {
-                fa->flags &= ~NPY_ARRAY_C_CONTIGUOUS;
-            }
+            /* Contiguous flags will be updated later */
             flags = NPY_ARRAY_F_CONTIGUOUS;
         }
     }
@@ -1881,19 +1878,55 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
     else {
         int needview = ((flags & NPY_ARRAY_ENSUREARRAY) &&
                         !PyArray_CheckExact(arr));
+        npy_intp strides[NPY_MAXDIMS];
+
+        /*
+         * Calculate new strides and find out if a view is necessary.
+         * This is the case if a contiguous array was requested but the
+         * current array, while contiguous, does not have clean strides.
+         */
+        if (flags & (NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS)) {
+            _array_fill_strides(strides, PyArray_DIMS(arr), PyArray_NDIM(arr),
+                    PyArray_ITEMSIZE(arr), flags, &arrflags);
+
+            if (!PyArray_CompareLists(strides, PyArray_STRIDES(arr),
+                                     PyArray_NDIM(arr))) {
+                needview = 1;
+            }
+        }
+        else if (needview) {
+            memcpy(strides, PyArray_STRIDES(arr), PyArray_NDIM(arr)*sizeof(npy_intp));
+        }
 
         Py_DECREF(newtype);
         if (needview) {
             PyArray_Descr *dtype = PyArray_DESCR(arr);
-            PyTypeObject *subtype = NULL;
+            PyTypeObject *subtype;
 
             if (flags & NPY_ARRAY_ENSUREARRAY) {
                 subtype = &PyArray_Type;
             }
+            else {
+                subtype = Py_TYPE(arr);
+            }
 
+            flags = PyArray_FLAGS(arr);
             Py_INCREF(dtype);
-            ret = (PyArrayObject *)PyArray_View(arr, NULL, subtype);
+            ret = (PyArrayObject *)PyArray_NewFromDescr(subtype,
+                               dtype,
+                               PyArray_NDIM(arr), PyArray_DIMS(arr),
+                               strides,
+                               PyArray_DATA(arr),
+                               arrflags,
+                               (PyObject *)arr);
             if (ret == NULL) {
+                return NULL;
+            }
+
+            /* Set the base object */
+            Py_INCREF(arr);
+            if (PyArray_SetBaseObject(ret, (PyObject *)arr) < 0) {
+                Py_DECREF(ret);
                 return NULL;
             }
         }
