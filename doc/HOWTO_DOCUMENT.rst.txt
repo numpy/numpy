@@ -147,7 +147,7 @@ The sections of the docstring are:
    * In what Numpy version the object was deprecated, and when it will be
      removed.
 
-   * Reason for deprecation  if this is useful information (e.g., object
+   * Reason for deprecation if this is useful information (e.g., object
      is superseded, duplicates functionality found elsewhere, etc.).
 
    * New recommended way of obtaining the same functionality. 
@@ -180,11 +180,12 @@ The sections of the docstring are:
      Parameters
      ----------
      x : type
-        Description of parameter `x`.
+         Description of parameter `x`.
 
-   Enclose variables in single backticks.  
+   Enclose variables in single backticks.  The colon must be preceded 
+   by a space, or omitted if the type is absent.
 
-   For the parameter types, be as preciese as possible.  Below are a
+   For the parameter types, be as precise as possible.  Below are a
    few examples of parameters and their types.
 
    ::
@@ -211,7 +212,7 @@ The sections of the docstring are:
      over all axes).
 
    When a parameter can only assume one of a fixed set of values,
-   those values can be listed in braces::
+   those values can be listed in braces, with the default appearing first::
 
      order : {'C', 'F', 'A'}
          Description of `order`.
@@ -579,10 +580,10 @@ Common reST concepts
 For paragraphs, indentation is significant and indicates indentation in the
 output. New paragraphs are marked with a blank line.
 
-Use *italics*, **bold**, and ``courier`` if needed in any explanations
+Use *italics*, **bold**, and ``monospace`` if needed in any explanations
 (but not for variable names and doctest code or multi-line code).
-Variable, module and class names should be written between single
-back-ticks (```numpy```).
+Variable, module, function, and class names should be written between 
+single back-ticks (```numpy```).
 
 A more extensive example of reST markup can be found in `this example
 document <http://docutils.sourceforge.net/docs/user/rst/demo.txt>`_;
