@@ -1512,18 +1512,30 @@ PyArray_EquivTypenums(int typenum1, int typenum2)
 /*** END C-API FUNCTIONS **/
 
 static PyObject *
-_prepend_ones(PyArrayObject *arr, int nd, int ndmin)
+_prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
 {
     npy_intp newdims[NPY_MAXDIMS];
     npy_intp newstrides[NPY_MAXDIMS];
+    npy_intp newstride;
     int i, k, num;
     PyArrayObject *ret;
     PyArray_Descr *dtype;
 
+    /*
+     * Set clean strides. This is necessary if the user requested a contiguous
+     * array, but simply clean up when it is reasonable.
+     */
+    if (order == NPY_FORTRANORDER || PyArray_ISFORTRAN(arr) || PyArray_NDIM(arr) == 0) {
+        newstride = PyArray_DESCR(arr)->elsize;	
+    }
+    else {
+        newstride = PyArray_STRIDES(arr)[0] * PyArray_DIMS(arr)[0];
+    }
+
     num = ndmin - nd;
     for (i = 0; i < num; i++) {
         newdims[i] = 1;
-        newstrides[i] = PyArray_DESCR(arr)->elsize;
+        newstrides[i] = newstride;
     }
     for (i = num; i < ndmin; i++) {
         k = i - num;
@@ -1549,12 +1561,9 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin)
     return (PyObject *)ret;
 }
 
-
 #define STRIDING_OK(op, order) \
                 ((order) == NPY_ANYORDER || \
-                 (order) == NPY_KEEPORDER || \
-                 ((order) == NPY_CORDER && PyArray_IS_C_CONTIGUOUS(op)) || \
-                 ((order) == NPY_FORTRANORDER && PyArray_IS_F_CONTIGUOUS(op)))
+                 (order) == NPY_KEEPORDER)
 
 static PyObject *
 _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
@@ -1593,9 +1602,14 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
                 "NPY_MAXDIMS (=%d)", NPY_MAXDIMS);
         goto clean_type;
     }
-    /* fast exit if simple call */
-    if ((subok && PyArray_Check(op)) ||
-        (!subok && PyArray_CheckExact(op))) {
+    /*
+     * Fast exit if it is a simple call. However ff a contiguous array was
+     * requested the strides may have to be cleaned up, so unfortunatly we
+     * cannot allow a simple shortcut here if order == NPY_(C|FORTRAN)ORDER.
+     */
+    if (((subok && PyArray_Check(op)) ||
+        (!subok && PyArray_CheckExact(op))) &&
+         !((order == NPY_CORDER) || (order == NPY_FORTRANORDER))) {
         oparr = (PyArrayObject *)op;
         if (type == NULL) {
             if (!copy && STRIDING_OK(oparr, order)) {
@@ -1664,7 +1678,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
      * create a new array from the same data with ones in the shape
      * steals a reference to ret
      */
-    return _prepend_ones(ret, nd, ndmin);
+    return _prepend_ones(ret, nd, ndmin, order);
 
 clean_type:
     Py_XDECREF(type);
