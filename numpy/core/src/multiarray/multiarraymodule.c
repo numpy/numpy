@@ -862,6 +862,11 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     if (ret == NULL) {
         goto fail;
     }
+    /* Ensure that multiarray.inner(<Nx0>,<Mx0>) -> zeros((N,M)) */
+    if (PyArray_SIZE(ap1) == 0 && PyArray_SIZE(ap2) == 0) {
+        memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
+    }
+
     dot = (PyArray_DESCR(ret)->f->dotfunc);
     if (dot == NULL) {
         PyErr_SetString(PyExc_ValueError,
@@ -876,16 +881,13 @@ PyArray_InnerProduct(PyObject *op1, PyObject *op2)
     axis = PyArray_NDIM(ap2) - 1;
     it2 = (PyArrayIterObject *) PyArray_IterAllButAxis((PyObject *)ap2, &axis);
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
-    while (1) {
+    while (it1->index < it1->size) {
         while (it2->index < it2->size) {
             dot(it1->dataptr, is1, it2->dataptr, is2, op, l, ret);
             op += os;
             PyArray_ITER_NEXT(it2);
         }
         PyArray_ITER_NEXT(it1);
-        if (it1->index >= it1->size) {
-            break;
-        }
         PyArray_ITER_RESET(it2);
     }
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
@@ -994,10 +996,6 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     if (PyArray_SIZE(ap1) == 0 && PyArray_SIZE(ap2) == 0) {
         memset(PyArray_DATA(ret), 0, PyArray_NBYTES(ret));
     }
-    else {
-        /* Ensure that multiarray.dot([],[]) -> 0 */
-        memset(PyArray_DATA(ret), 0, PyArray_ITEMSIZE(ret));
-    }
 
     dot = PyArray_DESCR(ret)->f->dotfunc;
     if (dot == NULL) {
@@ -1013,16 +1011,13 @@ PyArray_MatrixProduct2(PyObject *op1, PyObject *op2, PyArrayObject* out)
     it2 = (PyArrayIterObject *)
         PyArray_IterAllButAxis((PyObject *)ap2, &matchDim);
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(ap2));
-    while (1) {
+    while (it1->index < it1->size) {
         while (it2->index < it2->size) {
             dot(it1->dataptr, is1, it2->dataptr, is2, op, l, ret);
             op += os;
             PyArray_ITER_NEXT(it2);
         }
         PyArray_ITER_NEXT(it1);
-        if (it1->index >= it1->size) {
-            break;
-        }
         PyArray_ITER_RESET(it2);
     }
     NPY_END_THREADS_DESCR(PyArray_DESCR(ap2));
