@@ -248,7 +248,6 @@ def test_clean_strides():
         if order.lower() == 'c':
             strides = strides[::-1]
             shape = shape[::-1]
-        shape[shape == 0] = 1
         correct_strides = np.ones_like(strides)
         correct_strides[1:] = np.multiply.accumulate(shape[:-1])
         correct_strides *= a.itemsize
@@ -258,21 +257,23 @@ def test_clean_strides():
 
     a = np.ones((1,3,1))
     a = np.lib.stride_tricks.as_strided(a, a.shape, (0, a.itemsize, 0))
+    b = np.lib.stride_tricks.as_strided(a, (4,0,3), (0, a.itemsize, 0))
 
-    # Various methods for requesting a contiguous array:
-    check_clean(a.copy('F'), 'F')
-    check_clean(a.copy('C'), 'C')
-    check_clean(np.ascontiguousarray(a), 'C', True)
-    check_clean(np.array(a, copy=False, order='C'), 'C', True)
-    check_clean(np.array(a, copy=False, order='F'), 'F', True)
-    check_clean(np.array(a, copy=False, order='C', ndmin=4), 'C', True)
-    check_clean(np.array(a, copy=False, order='F', ndmin=4), 'F', True)
-    # Check that no view is created if a is already clean contiguous:
-    a = a.copy('C')
-    b = a.copy('F')
-    assert_(np.ascontiguousarray(a) is a)
-    assert_(np.array(a, copy=False, order='C') is a)
-    assert_(np.array(b, copy=False, order='F') is b)
+    for arr in [a, b]:
+        # Various methods for requesting a contiguous array:
+        check_clean(arr.copy('F'), 'F')
+        check_clean(arr.copy('C'), 'C')
+        check_clean(np.ascontiguousarray(a), 'C', True)
+        check_clean(np.array(arr, copy=False, order='C'), 'C', True)
+        check_clean(np.array(arr, copy=False, order='F'), 'F', True)
+        check_clean(np.array(arr, copy=False, order='C', ndmin=4), 'C', True)
+        check_clean(np.array(arr, copy=False, order='F', ndmin=4), 'F', True)
+        # Check that no view is created if a is already clean contiguous:
+        arrc = arr.copy('C')
+        arrf = arr.copy('F')
+        assert_(np.ascontiguousarray(arrc) is arrc)
+        assert_(np.array(arrc, copy=False, order='C') is arrc)
+        assert_(np.array(arrf, copy=False, order='F') is arrf)
     # Also check for ravel. This should not be necessary though:
     a = np.ones(1)
     a.strides = 0

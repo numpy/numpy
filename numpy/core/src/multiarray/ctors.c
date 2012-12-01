@@ -3617,14 +3617,9 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
                                             NPY_ARRAY_F_CONTIGUOUS) {
         for (i = 0; i < nd; i++) {
             strides[i] = itemsize;
-            if (dims[i]) {
-                itemsize *= dims[i];
-            }
-            else {
-                not_cf_contig = 0;
-            }
+            itemsize *= dims[i];
         }
-        if (not_cf_contig) {
+        if (not_cf_contig && itemsize) {
             *objflags = ((*objflags)|NPY_ARRAY_F_CONTIGUOUS) &
                                             ~NPY_ARRAY_C_CONTIGUOUS;
         }
@@ -3635,14 +3630,9 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
     else {
         for (i = nd - 1; i >= 0; i--) {
             strides[i] = itemsize;
-            if (dims[i]) {
-                itemsize *= dims[i];
-            }
-            else {
-                not_cf_contig = 0;
-            }
+            itemsize *= dims[i];
         }
-        if (not_cf_contig) {
+        if (not_cf_contig && itemsize) {
             *objflags = ((*objflags)|NPY_ARRAY_C_CONTIGUOUS) &
                                             ~NPY_ARRAY_F_CONTIGUOUS;
         }

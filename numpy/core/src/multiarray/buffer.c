@@ -480,14 +480,14 @@ _buffer_info_new(PyArrayObject *arr, int flags)
             for (k = PyArray_NDIM(arr) - 1; k >= 0; --k) {
                 info->shape[k] = PyArray_DIMS(arr)[k];
                 info->strides[k] = stride;
-                stride *= info->shape[k] ? info->shape[k] : 1;
+                stride *= info->shape[k];
             }
         }
         else if ((order & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS) {
             for (k = 0; k < PyArray_NDIM(arr); ++k) {
                 info->shape[k] = PyArray_DIMS(arr)[k];
                 info->strides[k] = stride;
-                stride *= info->shape[k] ? info->shape[k] : 1;
+                stride *= info->shape[k];
             }
         }
         else {
