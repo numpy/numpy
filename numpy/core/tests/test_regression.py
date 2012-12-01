@@ -209,7 +209,15 @@ class TestRegression(TestCase):
         """Ticket #106"""
         x = np.random.randn(0,1)
         y = np.random.randn(10,1)
-        z = np.dot(x, np.transpose(y))
+        # Dummy array to detect bad memory access:
+        _z = np.ones(10)
+        _dummy = np.empty((0, 10))
+        z = np.lib.stride_tricks.as_strided(_z, _dummy.shape, _dummy.strides)
+        np.dot(x, np.transpose(y), out=z)
+        assert_equal(_z, np.ones(10))
+        # Do the same for the built-in dot:
+        np.core.multiarray.dot(x, np.transpose(y), out=z)
+        assert_equal(_z, np.ones(10))
 
     def test_arange_endian(self,level=rlevel):
         """Ticket #111"""
