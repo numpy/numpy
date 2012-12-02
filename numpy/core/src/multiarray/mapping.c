@@ -2037,15 +2037,16 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 {
     PyArrayMapIterObject * mit;
     int fancy = fancy_indexing_check(index);
-    int oned = 0;
-    if (fancy != SOBJ_NOTFANCY) {
 
-        oned = ((PyArray_NDIM(a) == 1) &&
-                !(PyTuple_Check(index) && PyTuple_GET_SIZE(index) > 1));
-        oned = 0; /*for now one d mapiteration the efficient way does 
-                    not work (the assignment/getting functions are 
-                    specially written)*/
-    }
+    /*
+     * MapIterNew supports a special mode that allows more efficient 1-d iteration, 
+     * but clients that want to make use of this need to use a different API just 
+     * for the one-d cases. For the public interface this is confusing, so we
+     * unconditionally disable the 1-d optimized mode, and use the generic 
+     * implementation in all cases.
+     */
+    int oned = 0;
+
     mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, oned, fancy);
     if (mit == NULL) {
         return NULL;
