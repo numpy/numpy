@@ -1720,7 +1720,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 
     mit->ait = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
     if (mit->ait == NULL) {
-        return 1;
+        goto fail;
     }
     /* no subspace iteration needed.  Finish up and Return */
     if (subnd == 0) {
