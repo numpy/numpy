@@ -384,6 +384,8 @@ PyMODINIT_FUNC initumath(void)
     Py_DECREF(s);
     PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(exp(1.0)));
     Py_DECREF(s);
+    PyDict_SetItemString(d, "euler_gamma", s = PyFloat_FromDouble(NPY_EULER));
+    Py_DECREF(s);
 
 #define ADDCONST(str) PyModule_AddIntConstant(m, #str, UFUNC_##str)
 #define ADDSCONST(str) PyModule_AddStringConstant(m, "UFUNC_" #str, UFUNC_##str)
