@@ -1390,8 +1390,14 @@ PyArray_NDIM(const PyArrayObject *arr)
     return ((PyArrayObject_fields *)arr)->nd;
 }
 
-static NPY_INLINE char *
+static NPY_INLINE void *
 PyArray_DATA(PyArrayObject *arr)
+{
+    return ((PyArrayObject_fields *)arr)->data;
+}
+
+static NPY_INLINE char *
+PyArray_BYTES(PyArrayObject *arr)
 {
     return ((PyArrayObject_fields *)arr)->data;
 }
@@ -1470,15 +1476,12 @@ PyArray_SETITEM(PyArrayObject *arr, char *itemptr, PyObject *v)
                                                         v, itemptr, arr);
 }
 
-/* Same as PyArray_DATA */
-#define PyArray_BYTES(arr) PyArray_DATA(arr)
-
 #else
 
 /* These macros are deprecated as of NumPy 1.7. */
 #define PyArray_NDIM(obj) (((PyArrayObject_fields *)(obj))->nd)
 #define PyArray_BYTES(obj) (((PyArrayObject_fields *)(obj))->data)
-#define PyArray_DATA(obj) (((PyArrayObject_fields *)(obj))->data)
+#define PyArray_DATA(obj) ((void *)((PyArrayObject_fields *)(obj))->data)
 #define PyArray_DIMS(obj) (((PyArrayObject_fields *)(obj))->dimensions)
 #define PyArray_STRIDES(obj) (((PyArrayObject_fields *)(obj))->strides)
 #define PyArray_DIM(obj,n) (PyArray_DIMS(obj)[n])
