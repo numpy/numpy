@@ -1616,5 +1616,17 @@ class TestRegression(TestCase):
         x = np.arange(0, 4, dtype='datetime64[D]')
         assert_raises(TypeError, x.searchsorted, 1)
 
+    def test_unique_special_comparators(self):
+        # gh-2785
+        # np.unique should not raise an exception for dtypes with
+        # special comparators.
+
+        # Extract the unique rows of the matrix
+        A = np.array([[1, 2], [1, 3], [1, 2]], dtype='i')
+        B, I, J = np.unique(A.view([('', A.dtype)]*A.shape[1]), True, True)
+        B = B.view(A.dtype).reshape((-1, A.shape[1]))
+        assert_equal(A, B[J])
+        assert_equal(A[I], B)
+
 if __name__ == "__main__":
     run_module_suite()
