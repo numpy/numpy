@@ -131,7 +131,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
     if (PyArray_BASE(new) && PyObject_AsReadBuffer(PyArray_BASE(new),
                                            (const void **)&buf,
                                            &buf_len) >= 0) {
-        offset = PyArray_DATA(self) - buf;
+        offset = PyArray_BYTES(self) - buf;
         numbytes = buf_len + offset;
     }
     else {
