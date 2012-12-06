@@ -443,7 +443,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
             }
             else {
                 res = PyArray_DESCR(a)->f->setitem(o,
-                                        (PyArray_DATA(a) + offset), a);
+                                        (PyArray_BYTES(a) + offset), a);
             }
             if (res < 0) {
                 Py_DECREF(o);
@@ -465,7 +465,7 @@ setArrayFromSequence(PyArrayObject *a, PyObject *s,
             }
             else {
                 res = PyArray_DESCR(a)->f->setitem(o,
-                                 (PyArray_DATA(a) + offset), a);
+                                 (PyArray_BYTES(a) + offset), a);
             }
             Py_DECREF(o);
             if (res < 0) {

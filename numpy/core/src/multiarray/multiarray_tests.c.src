@@ -82,7 +82,7 @@ static int copy_object(PyArrayIterObject *itx, PyArrayNeighborhoodIterObject *ni
         }
 
         for (j = 0; j < niterx->size; ++j) {
-            copyswap(PyArray_DATA(aout) + j * itemsize, niterx->dataptr, 0, NULL);
+            copyswap(PyArray_BYTES(aout) + j * itemsize, niterx->dataptr, 0, NULL);
             PyArrayNeighborhoodIter_Next(niterx);
         }
 
