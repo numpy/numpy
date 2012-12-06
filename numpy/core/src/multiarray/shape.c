@@ -120,7 +120,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
         if (PyDataType_FLAGCHK(PyArray_DESCR(self), NPY_ITEM_REFCOUNT)) {
             PyObject *zero = PyInt_FromLong(0);
             char *optr;
-            optr = PyArray_DATA(self) + oldsize*elsize;
+            optr = PyArray_BYTES(self) + oldsize*elsize;
             n = newsize - oldsize;
             for (k = 0; k < n; k++) {
                 _putzero((char *)optr, zero, PyArray_DESCR(self));
@@ -129,7 +129,7 @@ PyArray_Resize(PyArrayObject *self, PyArray_Dims *newshape, int refcheck,
             Py_DECREF(zero);
         }
         else{
-            memset(PyArray_DATA(self)+oldsize*elsize, 0, (newsize-oldsize)*elsize);
+            memset(PyArray_BYTES(self)+oldsize*elsize, 0, (newsize-oldsize)*elsize);
         }
     }
 

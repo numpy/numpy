@@ -583,7 +583,7 @@ index2ptr(PyArrayObject *mp, npy_intp i)
     if (i == 0) {
         return PyArray_DATA(mp);
     }
-    return PyArray_DATA(mp)+i*PyArray_STRIDES(mp)[0];
+    return PyArray_BYTES(mp)+i*PyArray_STRIDES(mp)[0];
 }
 
 NPY_NO_EXPORT int

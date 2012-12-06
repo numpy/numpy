@@ -372,7 +372,7 @@ PyArray_GetField(PyArrayObject *self, PyArray_Descr *typed, int offset)
                                typed,
                                PyArray_NDIM(self), PyArray_DIMS(self),
                                PyArray_STRIDES(self),
-                               PyArray_DATA(self) + offset,
+                               PyArray_BYTES(self) + offset,
                                PyArray_FLAGS(self)&(~NPY_ARRAY_F_CONTIGUOUS),
                                (PyObject *)self);
     if (ret == NULL) {
@@ -427,7 +427,7 @@ PyArray_SetField(PyArrayObject *self, PyArray_Descr *dtype,
     }
     ret = PyArray_NewFromDescr(Py_TYPE(self),
                            dtype, PyArray_NDIM(self), PyArray_DIMS(self),
-                           PyArray_STRIDES(self), PyArray_DATA(self) + offset,
+                           PyArray_STRIDES(self), PyArray_BYTES(self) + offset,
                            PyArray_FLAGS(self), (PyObject *)self);
     if (ret == NULL) {
         return -1;

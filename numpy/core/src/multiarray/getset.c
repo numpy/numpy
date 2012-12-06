@@ -138,7 +138,7 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
         PyErr_Clear();
         numbytes = PyArray_MultiplyList(PyArray_DIMS(new),
                             PyArray_NDIM(new))*PyArray_DESCR(new)->elsize;
-        offset = PyArray_DATA(self) - PyArray_DATA(new);
+        offset = PyArray_BYTES(self) - PyArray_BYTES(new);
     }
 
     if (!PyArray_CheckStrides(PyArray_DESCR(self)->elsize, PyArray_NDIM(self), numbytes,
@@ -666,7 +666,7 @@ _get_part(PyArrayObject *self, int imag)
                              PyArray_NDIM(self),
                              PyArray_DIMS(self),
                              PyArray_STRIDES(self),
-                             PyArray_DATA(self) + offset,
+                             PyArray_BYTES(self) + offset,
                              PyArray_FLAGS(self), (PyObject *)self);
     if (ret == NULL) {
         return NULL;

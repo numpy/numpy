@@ -60,7 +60,7 @@ array_big_item(PyArrayObject *self, npy_intp i)
     if (check_and_adjust_index(&i, dim0, 0) < 0) {
         return NULL;
     }
-    item = PyArray_DATA(self) + i * PyArray_STRIDE(self, 0);
+    item = PyArray_BYTES(self) + i * PyArray_STRIDE(self, 0);
 
     /* Create the view array */
     Py_INCREF(PyArray_DESCR(self));
@@ -108,7 +108,7 @@ array_item_nice(PyArrayObject *self, Py_ssize_t _i)
         if (check_and_adjust_index(&i, dim0, 0) < 0) {
             return NULL;
         }
-        item = PyArray_DATA(self) + i * PyArray_STRIDE(self, 0);
+        item = PyArray_BYTES(self) + i * PyArray_STRIDE(self, 0);
 
         return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
     }
@@ -159,7 +159,7 @@ array_ass_big_item(PyArrayObject *self, npy_intp i, PyObject *v)
     if (check_and_adjust_index(&i, dim0, 0) < 0) {
         return -1;
     }
-    item = PyArray_DATA(self) + i * PyArray_STRIDE(self, 0);
+    item = PyArray_BYTES(self) + i * PyArray_STRIDE(self, 0);
 
     return PyArray_DESCR(self)->f->setitem(v, item, self);
 }
@@ -593,7 +593,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
     ret = (PyArrayObject *)PyArray_NewFromDescr(Py_TYPE(self),
                                 PyArray_DESCR(self),
                                 nd, dimensions,
-                                strides, PyArray_DATA(self) + offset,
+                                strides, PyArray_BYTES(self) + offset,
                                 PyArray_FLAGS(self),
                                 (PyObject *)self);
     if (ret == NULL) {
