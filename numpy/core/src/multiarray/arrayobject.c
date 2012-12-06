@@ -103,7 +103,7 @@ PyArray_SetUpdateIfCopyBase(PyArrayObject *arr, PyArrayObject *base)
     /*
      * Unlike PyArray_SetBaseObject, we do not compress the chain of base
      * references.
-    */
+     */
     ((PyArrayObject_fields *)arr)->base = (PyObject *)base;
     PyArray_ENABLEFLAGS(arr, NPY_ARRAY_UPDATEIFCOPY);
     PyArray_CLEARFLAGS(base, NPY_ARRAY_WRITEABLE);
@@ -168,10 +168,10 @@ PyArray_SetBaseObject(PyArrayObject *arr, PyObject *obj)
         if (tmp == NULL) {
             break;
         }
-        /* Stop the collapse for array sub-classes if new base
-         *   would not be of the same type. 
+        /* Stop the collapse new base when the would not be of the same 
+         * type (i.e. different subclass).
          */
-        if (!(PyArray_CheckExact(arr)) & (Py_TYPE(tmp) != Py_TYPE(arr))) {
+        if (Py_TYPE(tmp) != Py_TYPE(arr)) {
             break;
         }
 
