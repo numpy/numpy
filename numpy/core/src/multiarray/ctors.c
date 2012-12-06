@@ -1883,7 +1883,9 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
         /*
          * Calculate new strides and find out if a view is necessary.
          * This is the case if a contiguous array was requested but the
-         * current array, while contiguous, does not have clean strides.
+         * current array, while contiguous, does not have strides that
+         * start with itemsize and add up correctly with dimensions
+         * because of dimensions of size 1 having no effect on memory layout.
          */
         if (flags & (NPY_ARRAY_C_CONTIGUOUS|NPY_ARRAY_F_CONTIGUOUS)) {
             _array_fill_strides(strides, PyArray_DIMS(arr), PyArray_NDIM(arr),

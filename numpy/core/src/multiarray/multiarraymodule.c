@@ -1522,8 +1522,10 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
     PyArray_Descr *dtype;
 
     /*
-     * Set clean strides. This is necessary if the user requested a contiguous
-     * array, but simply clean up when it is reasonable.
+     * Set strides of new dimensions as they would be set in array creation.
+     * This should be ensured if the user requested a contiguous array, so that
+     * strides and dimensions add up correctly. Here it is done whenever it is
+     * reasonable.
      */
     if (order == NPY_FORTRANORDER || PyArray_ISFORTRAN(arr) || PyArray_NDIM(arr) == 0) {
         newstride = PyArray_DESCR(arr)->elsize;	
@@ -1561,9 +1563,6 @@ _prepend_ones(PyArrayObject *arr, int nd, int ndmin, NPY_ORDER order)
     return (PyObject *)ret;
 }
 
-#define STRIDING_OK(op, order) \
-                ((order) == NPY_ANYORDER || \
-                 (order) == NPY_KEEPORDER)
 
 static PyObject *
 _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
@@ -1603,7 +1602,7 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
         goto clean_type;
     }
     /*
-     * Fast exit if it is a simple call. However ff a contiguous array was
+     * Fast exit if it is a simple call. However if a contiguous array was
      * requested the strides may have to be cleaned up, so unfortunatly we
      * cannot allow a simple shortcut here if order == NPY_(C|FORTRAN)ORDER.
      */
@@ -1612,7 +1611,8 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
          !((order == NPY_CORDER) || (order == NPY_FORTRANORDER))) {
         oparr = (PyArrayObject *)op;
         if (type == NULL) {
-            if (!copy && STRIDING_OK(oparr, order)) {
+            if (!copy &&
+                ((order) == NPY_ANYORDER || (order) == NPY_KEEPORDER)) {
                 ret = oparr;
                 Py_INCREF(ret);
                 goto finish;
@@ -1625,7 +1625,8 @@ _array_fromobject(PyObject *NPY_UNUSED(ignored), PyObject *args, PyObject *kws)
         /* One more chance */
         oldtype = PyArray_DESCR(oparr);
         if (PyArray_EquivTypes(oldtype, type)) {
-            if (!copy && STRIDING_OK(oparr, order)) {
+            if (!copy &&
+                ((order) == NPY_ANYORDER || (order) == NPY_KEEPORDER)) {
                 Py_INCREF(op);
                 ret = oparr;
                 goto finish;

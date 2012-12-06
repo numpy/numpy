@@ -470,7 +470,10 @@ _buffer_info_new(PyArrayObject *arr, int flags)
                                           * PyArray_NDIM(arr) * 2 + 1);
         info->strides = info->shape + PyArray_NDIM(arr);
 
-        /* If a contiguous buffer was requested, guarantee clean strides */
+        /*
+         * If a contiguous buffer was requested, guarantee that strides
+         * start with itemsize and add up correctly with the dimensions.
+         */
         if ((order & PyBUF_ANY_CONTIGUOUS) == PyBUF_ANY_CONTIGUOUS) {
             /* default to C-Order */
             order = PyArray_IS_C_CONTIGUOUS(arr) ?
