@@ -1476,6 +1476,7 @@ get_cast_transfer_function(int aligned,
             dst_itemsize = dst_dtype->elsize;
 
     if (src_dtype->type_num == dst_dtype->type_num &&
+            src_dtype->type_num != NPY_OBJECT &&
             src_dtype->type_num != NPY_DATETIME &&
             src_dtype->type_num != NPY_TIMEDELTA) {
         PyErr_SetString(PyExc_ValueError,
