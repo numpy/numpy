@@ -76,4 +76,4 @@ def doctree_read(app, doctree):
 
 def setup(app):
     app.connect('doctree-read', doctree_read)
-    app.add_config_value('linkcode_resolve', None, 'env')
+    app.add_config_value('linkcode_resolve', None, '')
