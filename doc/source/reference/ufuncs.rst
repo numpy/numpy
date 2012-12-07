@@ -417,6 +417,11 @@ an integer (or Boolean) data-type and smaller than the size of the
 :class:`int_` data type, it will be internally upcast to the :class:`int_`
 (or :class:`uint`) data-type.
 
+Ufuncs also have a fifth method that allows in place operations to be
+performed using fancy indexing. No buffering is used, so the fancy index
+can list an item more than once and the operation will be performed on the
+result of the previous operation for that item.
+
 .. index::
    pair: ufunc; methods
 
@@ -427,6 +432,7 @@ an integer (or Boolean) data-type and smaller than the size of the
    ufunc.accumulate
    ufunc.reduceat
    ufunc.outer
+   ufunc.at
 
 
 .. warning::
