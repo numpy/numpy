@@ -954,6 +954,7 @@ NPY_NO_EXPORT int
 PyArray_TypestrConvert(int itemsize, int gentype)
 {
     int newtype = NPY_NOTYPE;
+    PyArray_Descr *temp;
 
     switch (gentype) {
         case NPY_GENBOOLLTR:
@@ -1105,7 +1106,28 @@ PyArray_TypestrConvert(int itemsize, int gentype)
                 newtype = NPY_TIMEDELTA;
             }
             break;
+        default:
+            temp = PyArray_DescrFromType(gentype);
+            if (temp != NULL) {
+                if (temp->elsize != itemsize) {
+
+                    const char *msg = "Specified size is invalid for this data type.\n"
+                        "Size will be ignored in NumPy 1.7 but may throw an exception in future versions.";
+                    if (DEPRECATE_FUTUREWARNING(msg) < 0) {
+                        return -1;
+                    }
+
+                    newtype = gentype;
+                }
+                else {
+                    newtype = gentype;
+                }
+
+                Py_DECREF(temp);
+            }
+            break;
     }
+    
     return newtype;
 }
 
