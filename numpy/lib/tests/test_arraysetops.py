@@ -124,8 +124,9 @@ class TestSetOps(TestCase):
         # we use two different sizes for the b array here to test the
         # two different paths in in1d().
         for mult in (1, 10):
-            a = np.array([5, 7, 1, 2])
-            b = np.array([2, 4, 3, 1, 5] * mult)
+            # One check without np.array, to make sure lists are handled correct
+            a = [5, 7, 1, 2]
+            b = [2, 4, 3, 1, 5] * mult
             ec = np.array([True, False, True, True])
             c = in1d(a, b, assume_unique=True)
             assert_array_equal(c, ec)
