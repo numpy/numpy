@@ -1812,5 +1812,22 @@ class TestRegression(TestCase):
         a = np.recarray((2, ), dtype)
         assert_raises(TypeError, np.searchsorted, a, 1)
 
+    def test_complex64_alignment(self):
+        # Issue gh-2668 (trac 2076), segfault on sparc due to misalignment
+        dtt = np.complex64
+        arr = np.arange(10, dtype=dtt)
+        # 2D array
+        arr2 = np.reshape(arr, (2, 5))
+        # Fortran write followed by (C or F) read caused bus error
+        data_str = arr2.tostring('F')
+        data_back = np.ndarray(arr2.shape,
+                              arr2.dtype,
+                              buffer=data_str,
+                              order='F')
+        assert_array_equal(arr2, data_back)
+
+
+
+
 if __name__ == "__main__":
     run_module_suite()
