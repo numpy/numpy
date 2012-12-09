@@ -609,6 +609,20 @@ def test_class_members():
         if cls is SphinxClassDoc:
             assert '.. autosummary::' in str(doc), str(doc)
 
+def test_duplicate_signature():
+    # Duplicate function signatures occur e.g. in ufuncs, when the
+    # automatic mechanism adds one, and a more detailed comes from the
+    # docstring itself.
+
+    doc = NumpyDocString(
+    """
+    z(x1, x2)
+
+    z(a, theta)
+    """)
+
+    assert doc['Signature'].strip() == 'z(a, theta)'
+
 if __name__ == "__main__":
     import nose
     nose.run()

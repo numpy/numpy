@@ -265,13 +265,17 @@ class NumpyDocString(object):
         if self._is_at_section():
             return
 
-        summary = self._doc.read_to_next_empty_line()
-        summary_str = " ".join([s.strip() for s in summary]).strip()
-        if re.compile('^([\w., ]+=)?\s*[\w\.]+\(.*\)$').match(summary_str):
-            self['Signature'] = summary_str
-            if not self._is_at_section():
-                self['Summary'] = self._doc.read_to_next_empty_line()
-        else:
+        # If several signatures present, take the last one
+        while True:
+            summary = self._doc.read_to_next_empty_line()
+            summary_str = " ".join([s.strip() for s in summary]).strip()
+            if re.compile('^([\w., ]+=)?\s*[\w\.]+\(.*\)$').match(summary_str):
+                self['Signature'] = summary_str
+                if not self._is_at_section():
+                    continue
+            break
+
+        if summary is not None:
             self['Summary'] = summary
 
         if not self._is_at_section():
