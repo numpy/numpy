@@ -502,7 +502,7 @@ PyArray_FieldNames(PyObject *fields)
     if (_numpy_internal == NULL) {
         return NULL;
     }
-    tup = PyObject_CallMethod(_numpy_internal, "_makenames_list", "O", fields);
+    tup = PyObject_CallMethod(_numpy_internal, "_makenames_list", "OO", fields, Py_False);
     Py_DECREF(_numpy_internal);
     if (tup == NULL) {
         return NULL;
@@ -561,16 +561,15 @@ PyArray_DescrFromScalar(PyObject *sc)
 #endif
         }
         else {
-            descr->elsize = Py_SIZE((PyVoidScalarObject *)sc);
-            descr->fields = PyObject_GetAttrString(sc, "fields");
-            if (!descr->fields
-                    || !PyDict_Check(descr->fields)
-                    || (descr->fields == Py_None)) {
-                Py_XDECREF(descr->fields);
-                descr->fields = NULL;
-            }
-            if (descr->fields) {
-                descr->names = PyArray_FieldNames(descr->fields);
+            PyArray_Descr *dtype;
+            dtype = (PyArray_Descr *)PyObject_GetAttrString(sc, "dtype");
+            if (dtype != NULL) {
+                descr->elsize = dtype->elsize;
+                descr->fields = dtype->fields;
+                Py_XINCREF(dtype->fields);
+                descr->names = dtype->names;
+                Py_XINCREF(dtype->names);
+                Py_DECREF(dtype);
             }
             PyErr_Clear();
         }
