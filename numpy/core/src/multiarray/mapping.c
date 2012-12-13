@@ -1699,7 +1699,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
     return;
 }
 
-/*NUMPY_API
+/*
  * This function needs to update the state of the map iterator
  * and point mit->dataptr to the memory-location of the next object
  */
