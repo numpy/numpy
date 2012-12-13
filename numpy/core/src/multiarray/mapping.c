@@ -1150,8 +1150,7 @@ _tuple_of_integers(PyObject *seq, npy_intp *vals, int maxvals)
         if (error_converting(temp)) {
             return -1;
         }
-        if (!PyIndex_Check_Or_Unsupported(obj))
-        {
+        if (!PyIndex_Check_Or_Unsupported(obj)) {
             DEPRECATE("non-integer scalar index. In a future numpy "
                       "release, this will raise an error.");
         }
@@ -1393,8 +1392,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
     }
     PyErr_Clear();
     if ((PyNumber_Check(op) || PyArray_IsScalar(op, Number)) &&
-        !PyIndex_Check_Or_Unsupported(op))
-    {
+            !PyIndex_Check_Or_Unsupported(op)) {
         DEPRECATE("non-integer scalar index. In a future numpy "
                   "release, this will raise an error.");
     }
