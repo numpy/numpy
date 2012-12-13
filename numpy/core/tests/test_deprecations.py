@@ -54,16 +54,19 @@ class TestFloatIndexDeprecation(object):
         yield check_for_warning, lambda: a[:, 0.0], DeprecationWarning
         yield check_for_warning, lambda: a[:, 0.0, :], DeprecationWarning
         yield check_for_warning, lambda: a[0.0, :, :], DeprecationWarning
-        # XXX: These do issue DeprecationWarnings but for some reason the
-        # warning filter does not turn them into exceptions. I thought
-        # there was an overzealous PyExc_Clear to blame, but after redefining
-        # it with a macro and making it print, there seems to be none taking
-        # place after that warning state is set. The relevant code is in
-        # _tuple_of_integers in numpy/core/src/multiarray/mapping.c.
-
-        # yield check_for_warning, lambda: a[0, 0, 0.0], DeprecationWarning
-        # yield check_for_warning, lambda: a[0.0, 0, 0], DeprecationWarning
-        # yield check_for_warning, lambda: a[0, 0.0, 0], DeprecationWarning
+        yield check_for_warning, lambda: a[0, 0, 0.0], DeprecationWarning
+        yield check_for_warning, lambda: a[0.0, 0, 0], DeprecationWarning
+        yield check_for_warning, lambda: a[0, 0.0, 0], DeprecationWarning
+        yield check_for_warning, lambda: a[-1.4], DeprecationWarning
+        yield check_for_warning, lambda: a[0, -1.4], DeprecationWarning
+        yield check_for_warning, lambda: a[-1.4, 0], DeprecationWarning
+        yield check_for_warning, lambda: a[-1.4, :], DeprecationWarning
+        yield check_for_warning, lambda: a[:, -1.4], DeprecationWarning
+        yield check_for_warning, lambda: a[:, -1.4, :], DeprecationWarning
+        yield check_for_warning, lambda: a[-1.4, :, :], DeprecationWarning
+        yield check_for_warning, lambda: a[0, 0, -1.4], DeprecationWarning
+        yield check_for_warning, lambda: a[-1.4, 0, 0], DeprecationWarning
+        yield check_for_warning, lambda: a[0, -1.4, 0], DeprecationWarning
 
     def test_valid_not_deprecated(self):
         a = np.array([[[5]]])
