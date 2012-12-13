@@ -1130,11 +1130,12 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *ind, PyObject *op)
 }
 
 
-/* Returns 0 if tuple-object seq is not a tuple of integers.
-   If the return value is positive, vals will be filled with the elements
-   from the tuple.
-   Returns -1 on error.
-*/
+/*
+ * Returns 0 if tuple-object seq is not a tuple of integers.
+ * If the return value is positive, vals will be filled with the elements
+ * from the tuple.
+ * Returns -1 on error.
+ */
 static int
 _tuple_of_integers(PyObject *seq, npy_intp *vals, int maxvals)
 {
