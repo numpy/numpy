@@ -1129,6 +1129,12 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *ind, PyObject *op)
     return ret;
 }
 
+/* Check if ind is a tuple and if it has as many elements as arr has axes. */
+static int
+_is_full_index(PyObject *ind, PyArrayObject *arr)
+{
+    return PyTuple_Check(ind) && (PyTuple_GET_SIZE(ind) == PyArray_NDIM(arr));
+}
 
 /*
  * Returns 0 if tuple-object seq is not a tuple of integers.
@@ -1266,8 +1272,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     }
 
     /* Integer-tuple */
-    if (PyTuple_Check(ind) &&
-                (PyTuple_GET_SIZE(ind) == PyArray_NDIM(self)) &&
+    if (_is_full_index(ind, self) &&
                 (ret = _tuple_of_integers(ind, vals, PyArray_NDIM(self)))) {
         int idim, ndim = PyArray_NDIM(self);
         npy_intp *shape = PyArray_DIMS(self);
@@ -1380,9 +1385,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
      * Optimization for a tuple of integers that is the same size as the
      * array's dimension.
      */
-    if (PyArray_NDIM(self) > 1 &&
-                PyTuple_Check(op) &&
-                (PyTuple_GET_SIZE(op) == PyArray_NDIM(self)) &&
+    if (PyArray_NDIM(self) > 1 && _is_full_index(op,  self) &&
                 (ret = _tuple_of_integers(op, vals, PyArray_NDIM(self)))) {
         int idim, ndim = PyArray_NDIM(self);
         npy_intp *shape = PyArray_DIMS(self);
