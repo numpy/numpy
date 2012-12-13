@@ -1130,7 +1130,7 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *ind, PyObject *op)
 }
 
 /* Check if ind is a tuple and if it has as many elements as arr has axes. */
-static int
+static NPY_INLINE int
 _is_full_index(PyObject *ind, PyArrayObject *arr)
 {
     return PyTuple_Check(ind) && (PyTuple_GET_SIZE(ind) == PyArray_NDIM(arr));
