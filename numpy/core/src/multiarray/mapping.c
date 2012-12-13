@@ -1369,7 +1369,10 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
             return array_item_nice(self, (Py_ssize_t) value);
         }
     }
-    /* optimization for a tuple of integers */
+    /*
+     * Optimization for a tuple of integers that is the same size as the
+     * array's dimension.
+     */
     if (PyArray_NDIM(self) > 1 &&
                 PyTuple_Check(op) &&
                 (PyTuple_GET_SIZE(op) == PyArray_NDIM(self)) &&
