@@ -1393,8 +1393,10 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
     PyErr_Clear();
     if ((PyNumber_Check(op) || PyArray_IsScalar(op, Number)) &&
             !PyIndex_Check_Or_Unsupported(op)) {
-        DEPRECATE("non-integer scalar index. In a future numpy "
-                  "release, this will raise an error.");
+        if (DEPRECATE("non-integer scalar index. In a future numpy "
+                      "release, this will raise an error.") < 0) {
+            return NULL;
+        }
     }
     mp = (PyArrayObject *)array_subscript(self, op);
     /*

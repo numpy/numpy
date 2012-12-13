@@ -71,8 +71,10 @@ parse_index_entry(PyObject *op, npy_intp *step_size,
         *n_steps = SINGLE_INDEX;
         *step_size = 0;
         if (!PyIndex_Check_Or_Unsupported(op)) {
-            DEPRECATE("non-integer scalar index. In a future numpy "
-                      "release, this will raise an error.");
+            if (DEPRECATE("non-integer scalar index. In a future numpy "
+                          "release, this will raise an error.") < 0) {
+                goto fail;
+            }
         }
         if (check_index) {
             if (check_and_adjust_index(&i, max, axis) < 0) {
