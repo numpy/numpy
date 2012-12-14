@@ -229,8 +229,32 @@ slice_coerce_index(PyObject *o, npy_intp *v)
     return 1;
 }
 
-/* This is basically PySlice_GetIndicesEx, but with our coercion
- * of indices to integers (plus, that function is new in Python 2.3) */
+/*
+ * Issue a DeprecationWarning for slice parameters that do not pass a
+ * PyIndex_Check, returning -1 if an error occurs.
+ *
+ * N.B. This function, like slice_GetIndices, will be obsolete once
+ * non-integer slice parameters becomes an error rather than a warning.
+ */
+static NPY_INLINE int
+_validate_slice_parameter(PyObject *o)
+{
+    if (!PyIndex_Check_Or_Unsupported(o)) {
+        if (DEPRECATE("non-integer slice parameter. In a future numpy "
+                      "release, this will raise an error.") < 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+/*
+ * This is basically PySlice_GetIndicesEx, but with our coercion
+ * of indices to integers (plus, that function is new in Python 2.3)
+ *
+ * N.B. The coercion to integers is deprecated; once the DeprecationWarning
+ * is changed to an error, it would seem that this is obsolete.
+ */
 NPY_NO_EXPORT int
 slice_GetIndices(PySliceObject *r, npy_intp length,
                  npy_intp *start, npy_intp *stop, npy_intp *step,
@@ -242,6 +266,9 @@ slice_GetIndices(PySliceObject *r, npy_intp length,
         *step = 1;
     }
     else {
+        if (_validate_slice_parameter(r->step) < 0) {
+            return -1;
+        }
         if (!slice_coerce_index(r->step, step)) {
             return -1;
         }
@@ -257,6 +284,9 @@ slice_GetIndices(PySliceObject *r, npy_intp length,
         *start = *step < 0 ? length-1 : 0;
     }
     else {
+        if (_validate_slice_parameter(r->start) < 0) {
+            return -1;
+        }
         if (!slice_coerce_index(r->start, start)) {
             return -1;
         }
@@ -275,6 +305,9 @@ slice_GetIndices(PySliceObject *r, npy_intp length,
         *stop = defstop;
     }
     else {
+        if (_validate_slice_parameter(r->stop) < 0) {
+            return -1;
+        }
         if (!slice_coerce_index(r->stop, stop)) {
             return -1;
         }
