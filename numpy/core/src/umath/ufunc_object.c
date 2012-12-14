@@ -4849,13 +4849,16 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     return PyUFunc_GenericReduction(ufunc, args, kwds, UFUNC_REDUCEAT);
 }
 
-/* Call ufunc only on selected array items and store result in first operand.
- * For add ufunc, method call is equivalent to op1[idx] += op2
+/*
+ * Call ufunc only on selected array items and store result in first operand.
+ * For add ufunc, method call is equivalent to op1[idx] += op2 with no
+ * buffering of the first operand.
  * Arguments:
- * op1 - first operand to ufunc
- * idx - indices that are applied to first operand. Equivalent to op1[idx].
- * op2 - second operand to ufunc (if needed). Can be scalar or array.
-*/
+ * op1 - First operand to ufunc
+ * idx - Indices that are applied to first operand. Equivalent to op1[idx].
+ * op2 - Second operand to ufunc (if needed). Must be able to broadcast
+ *       over first operand.
+ */
 static PyObject *
 ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 {
@@ -4921,10 +4924,12 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     }
     PyArray_MapIterReset(iter);
 
-    /* If second operand exists, we need to broadcast it to 
-       the shape of the indices applied to the first operand.
-       This will produce an iterator that will match up with
-       the iterator for the first operand. */
+    /*
+     * If second operand exists, we need to broadcast it to 
+     * the shape of the indices applied to the first operand.
+     * This will produce an iterator that will match up with
+     * the iterator for the first operand.
+     */
     if (op2 != NULL) {
         iter_descr = PyArray_DESCR(iter->ait->ao);
         op2_array = (PyArrayObject *)PyArray_FromAny(op2, iter_descr,
@@ -4932,8 +4937,13 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         if (op2_array == NULL) {
             goto fail;
         }
+
+        /*
+         * May need to swap axes so that second operand is
+         * iterated over correctly
+         */
         if ((iter->subspace != NULL) && (iter->consec)) {
-            if (iter->iteraxes[0] > 0) {  /* then we need to swap */
+            if (iter->iteraxes[0] > 0) {
                 PyArray_MapIterSwapAxes(iter, &op2_array, 0);
                 if (op2_array == NULL) {
                     goto fail;
@@ -4941,8 +4951,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
             }
         }
 
-        /* Be sure values array is "broadcastable"
-           to shape of mit->dimensions, mit->nd */
+        /*
+         * Be sure values array is "broadcastable"
+         * to shape of mit->dimensions, mit->nd
+         */
         if ((iter2 = (PyArrayIterObject *)\
              PyArray_BroadcastToShape((PyObject *)op2_array,
                                         iter->dimensions, iter->nd))==NULL) {
@@ -4950,8 +4962,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         }
     }
 
-    /* Create dtypes array for either one or two input operands.
-     * The output operand is set to the first input operand */
+    /*
+     * Create dtypes array for either one or two input operands.
+     * The output operand is set to the first input operand
+     */
     dtypes[0] = PyArray_DESCR(op1_array);
     if (op2_array != NULL) {
         dtypes[1] = PyArray_DESCR(op2_array);
@@ -4970,13 +4984,17 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     count[0] = 1;
     stride[0] = 1;
  
-    /* Iterate over first and second operands and call ufunc
-       for each pair of inputs */
+    /*
+     * Iterate over first and second operands and call ufunc
+     * for each pair of inputs
+     */
     i = iter->size;
     while (i > 0)
     {
-        /* Set up data pointers for either one or two input operands.
-         * The output data pointer points to the first operand data */
+        /*
+         * Set up data pointers for either one or two input operands.
+         * The output data pointer points to the first operand data.
+         */
         dataptr[0] = iter->dataptr;
         if (iter2 != NULL) {
             dataptr[1] = PyArray_ITER_DATA(iter2);
