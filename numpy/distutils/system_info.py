@@ -214,6 +214,19 @@ else:
             default_x11_include_dirs.extend(['/usr/lib/X11/include',
                                              '/usr/include/X11'])
 
+    import subprocess as sp
+    try:
+        p = sp.Popen(["gcc", "-print-multiarch"], stdout=sp.PIPE,
+                stderr=open(os.devnull, 'w'))
+    except OSError:
+        pass # gcc is not installed
+    else:
+        triplet = str(p.communicate()[0].decode().strip())
+        if p.returncode == 0:
+            # gcc supports the "-print-multiarch" option
+            default_x11_lib_dirs += [os.path.join("/usr/lib/", triplet)]
+            default_lib_dirs += [os.path.join("/usr/lib/", triplet)]
+
 if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_lib_dirs.insert(0, os.path.join(sys.prefix, 'lib'))
     default_include_dirs.append(os.path.join(sys.prefix, 'include'))
