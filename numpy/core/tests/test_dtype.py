@@ -51,10 +51,25 @@ class TestBuiltin(TestCase):
         # For now, display a deprecation warning for invalid 
         # type sizes. In the future this should be changed 
         # to an exception.
-        for typestr in ['O3', 'O5', 'O7', 'b3', 'h4', 'I5', 'l4',
-                        'L4', 'q16', 'Q16', 'e3', 'f5', 'g12']:
+
+        for typestr in ['O3', 'O5', 'O7', 'b3', 'h4', 'I5',
+                        'e3', 'f5', 'g12']:
             #print typestr
             assert_warns(DeprecationWarning, np.dtype, typestr)
+
+        if np.dtype('l').itemsize == 8:
+            assert_warns(DeprecationWarning, np.dtype, 'l4')
+            assert_warns(DeprecationWarning, np.dtype, 'L4')
+        else:
+            assert_warns(DeprecationWarning, np.dtype, 'l8')
+            assert_warns(DeprecationWarning, np.dtype, 'L8')
+
+        if np.dtype('q').itemsize == 8:
+            assert_warns(DeprecationWarning, np.dtype, 'q4')
+            assert_warns(DeprecationWarning, np.dtype, 'Q4')
+        else:
+            assert_warns(DeprecationWarning, np.dtype, 'q8')
+            assert_warns(DeprecationWarning, np.dtype, 'Q8')
 
         assert_raises(TypeError, np.dtype, 't8', 'NA[u4,0xffffffff]')
 
