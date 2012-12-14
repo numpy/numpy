@@ -1272,23 +1272,26 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     }
 
     /* Integer-tuple */
-    if (_is_full_index(ind, self) &&
-                (ret = _tuple_of_integers(ind, vals, PyArray_NDIM(self)))) {
-        int idim, ndim = PyArray_NDIM(self);
-        npy_intp *shape = PyArray_DIMS(self);
-        npy_intp *strides = PyArray_STRIDES(self);
-        char *item = PyArray_DATA(self);
+    if (_is_full_index(ind, self)) {
+        ret = _tuple_of_integers(ind, vals, PyArray_NDIM(self));
+        /* In case an exception occurred (e.g. in PyErr_WarnEx) */
         if (ret < 0) {
             return -1;
         }
-        for (idim = 0; idim < ndim; idim++) {
-            npy_intp v = vals[idim];
-            if (check_and_adjust_index(&v, shape[idim], idim) < 0) {
-              return -1;
+        else if (ret > 0) {
+            int idim, ndim = PyArray_NDIM(self);
+            npy_intp *shape = PyArray_DIMS(self);
+            npy_intp *strides = PyArray_STRIDES(self);
+            char *item = PyArray_DATA(self);
+            for (idim = 0; idim < ndim; idim++) {
+                npy_intp v = vals[idim];
+                if (check_and_adjust_index(&v, shape[idim], idim) < 0) {
+                  return -1;
+                }
+                item += v * strides[idim];
             }
-            item += v * strides[idim];
+            return PyArray_DESCR(self)->f->setitem(op, item, self);
         }
-        return PyArray_DESCR(self)->f->setitem(op, item, self);
     }
     PyErr_Clear();
 
@@ -1385,23 +1388,26 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
      * Optimization for a tuple of integers that is the same size as the
      * array's dimension.
      */
-    if (PyArray_NDIM(self) > 1 && _is_full_index(op,  self) &&
-                (ret = _tuple_of_integers(op, vals, PyArray_NDIM(self)))) {
-        int idim, ndim = PyArray_NDIM(self);
-        npy_intp *shape = PyArray_DIMS(self);
-        npy_intp *strides = PyArray_STRIDES(self);
-        char *item = PyArray_DATA(self);
+    if (PyArray_NDIM(self) > 1 && _is_full_index(op,  self)) {
+        ret = _tuple_of_integers(op, vals, PyArray_NDIM(self));
+        /* In case an exception occurred (e.g. in PyErr_WarnEx) */
         if (ret < 0) {
             return NULL;
         }
-        for (idim = 0; idim < ndim; idim++) {
-            npy_intp v = vals[idim];
-            if (check_and_adjust_index(&v, shape[idim], idim) < 0) { 
-              return NULL;
+        else if (ret > 0) {
+            int idim, ndim = PyArray_NDIM(self);
+            npy_intp *shape = PyArray_DIMS(self);
+            npy_intp *strides = PyArray_STRIDES(self);
+            char *item = PyArray_DATA(self);
+            for (idim = 0; idim < ndim; idim++) {
+                npy_intp v = vals[idim];
+                if (check_and_adjust_index(&v, shape[idim], idim) < 0) {
+                  return NULL;
+                }
+                item += v * strides[idim];
             }
-            item += v * strides[idim];
+            return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
         }
-        return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
     }
     PyErr_Clear();
     if ((PyNumber_Check(op) || PyArray_IsScalar(op, Number)) &&
