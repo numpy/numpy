@@ -2,8 +2,11 @@
 Tests related to deprecation warnings. Also a convenient place
 to document how deprecations should eventually be turned into errors.
 """
-import numpy as np
+import sys
 import warnings
+
+from nose.plugins.skip import SkipTest
+import numpy as np
 
 
 def check_for_warning(f, category):
@@ -47,6 +50,8 @@ class TestFloatIndexDeprecation(object):
 
     def test_deprecations(self):
         a = np.array([[[5]]])
+        if sys.version_info[:2] < (2, 5):
+            raise SkipTest()
         yield check_for_warning, lambda: a[0.0], DeprecationWarning
         yield check_for_warning, lambda: a[0, 0.0], DeprecationWarning
         yield check_for_warning, lambda: a[0.0, 0], DeprecationWarning
