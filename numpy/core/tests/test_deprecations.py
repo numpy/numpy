@@ -30,15 +30,17 @@ def check_does_not_raise(f, category):
 
 class TestFloatScalarIndexDeprecation(object):
     """
-    These test that DeprecationWarnings get raised when you
-    try to use scalar indices that are not integers e.g. a[0.0],
-    a[1.5, 0].
+    These test that `DeprecationWarning`s get raised when you
+    try to use scalar indices that are not integers e.g. `a[0.0]`,
+    `a[1.5, 0]`.
 
-    grep PyIndex_Check_Or_Unsupported numpy/core/src/multiarray/* for
-    all the calls to DEPRECATE().
+    grep "non-integer scalar" numpy/core/src/multiarray/* for
+    all the calls to `DEPRECATE()`, except the one inside
+    `_validate_slice_parameter` which handles slicing (but see also
+    `TestFloatSliceParameterDeprecation`).
 
-    When 2.4 support is dropped PyIndex_Check_Or_Unsupported should
-    be removed from npy_pycompat.h and changed to just PyIndex_Check.
+    When 2.4 support is dropped `PyIndex_Check_Or_Unsupported` should
+    be removed from npy_pycompat.h and changed to just `PyIndex_Check`.
     """
     def setUp(self):
         warnings.filterwarnings("error", message="non-integer scalar index",
@@ -92,6 +94,19 @@ class TestFloatScalarIndexDeprecation(object):
 
 
 class TestFloatSliceParameterDeprecation(object):
+    """
+    These test that `DeprecationWarning`s get raised when you
+    try to use  non-integers for slicing, e.g `a[0.0:5]`, `a[::1.5]`,
+    etc.
+
+    When this is changed to an error, `slice_GetIndices` and
+    `_validate_slice_parameter` should probably be removed. Calls to
+    `slice_GetIndices` should be replaced by the standard Python
+    API call `PySlice_GetIndicesEx`, since `slice_GetIndices`
+    implements the same thing but with a) int coercion and b) Python
+    < 2.3 backwards compatibility (which we have long since dropped
+    as of this writing).
+    """
     def setUp(self):
         warnings.filterwarnings("error", message="non-integer slice param",
                                 category=DeprecationWarning)
