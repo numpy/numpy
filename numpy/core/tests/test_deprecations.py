@@ -41,6 +41,14 @@ class TestFloatScalarIndexDeprecation(object):
 
     When 2.4 support is dropped `PyIndex_Check_Or_Unsupported` should
     be removed from npy_pycompat.h and changed to just `PyIndex_Check`.
+
+    As for the deprecation time-frame: via Ralf Gommers,
+
+    "Hard to put that as a version number, since we don't know if the
+    version after 1.8 will be 6 months or 2 years after. I'd say 2
+    years is reasonable."
+
+    I interpret this to mean 2 years after the 1.8 release.
     """
     def setUp(self):
         warnings.filterwarnings("error", message="non-integer scalar index",
@@ -106,6 +114,14 @@ class TestFloatSliceParameterDeprecation(object):
     implements the same thing but with a) int coercion and b) Python
     < 2.3 backwards compatibility (which we have long since dropped
     as of this writing).
+
+    As for the deprecation time-frame: via Ralf Gommers,
+
+    "Hard to put that as a version number, since we don't know if the
+    version after 1.8 will be 6 months or 2 years after. I'd say 2
+    years is reasonable."
+
+    I interpret this to mean 2 years after the 1.8 release.
     """
     def setUp(self):
         warnings.filterwarnings("error", message="non-integer slice param",
