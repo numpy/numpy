@@ -63,5 +63,15 @@ class TestRegression(TestCase):
             random.shuffle(shuffled)
             assert_array_equal(shuffled, [t[0], t[3], t[1], t[2]])
 
+    def test_call_within_randomstate(self):
+        # Check that custom RandomState does not call into global state
+        m = np.random.RandomState()
+        res = np.array([0, 8, 7, 2, 1, 9, 4, 7, 0, 3])
+        for i in range(3):
+            np.random.seed(i)
+            m.seed(4321)
+            # If m.state is not honored, the result will change
+            assert_array_equal(m.choice(10, size=10, p=np.ones(10.)/10), res)
+
 if __name__ == "__main__":
     run_module_suite()

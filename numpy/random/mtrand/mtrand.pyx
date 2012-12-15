@@ -1022,7 +1022,7 @@ cdef class RandomState:
             if None != p:
                 cdf = p.cumsum()
                 cdf /= cdf[-1]
-                uniform_samples = np.random.random(size)
+                uniform_samples = self.random_sample(size)
                 idx = cdf.searchsorted(uniform_samples, side='right')
             else:
                 idx = self.randint(0, pop_size, size=size)
