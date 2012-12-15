@@ -1587,6 +1587,57 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
     return -1;
 }
 
+/*
+ * Check if we can safely cast an index object to an npy_intp array
+ * with which to index.
+ */
+static int
+_verify_index(PyObject *indexobj)
+{
+    PyArrayObject *arr = NULL;
+    PyArray_Descr *dtype = NULL;
+    npy_intp dims[NPY_MAXDIMS];
+    int ndim = 0;
+    int ret;
+    /*
+     * TODO: This may allocate an array needlessly. There has got
+     * to be a better way.
+     */
+    ret = PyArray_GetArrayParamsFromObject(indexobj, NULL, 0, &dtype,
+                                           &ndim, dims, &arr, NULL);
+    if (ret) {
+        ret = -1;
+        goto end;
+    }
+
+    ret = 0;
+    if (dtype == NULL) {
+        /*
+         * This means PyArray_GetArrayParamsFromObject went and
+         * allocated us a (potentially large) array. Isn't there
+         * a way to just get a safe dtype?
+         */
+        dtype = PyArray_DESCR(arr);
+    }
+    if ((!PyTypeNum_ISINTEGER(dtype->type_num)) &&
+            (!PyTypeNum_ISBOOL(dtype->type_num))) {
+        if (DEPRECATE("non-integer, non-boolean in fancy index sequence. In a "
+                      "future numpy release, this will raise an error.") < 0) {
+            /*
+             * dtype is definitely non-NULL at this point, whereas arr may
+             * be NULL.
+             */
+            ret = -1;
+            goto end;
+        }
+    }
+end:
+    /* XXX: Is my refcounting sufficient? */
+    Py_XDECREF(dtype);
+    Py_XDECREF(arr);
+    return ret;
+}
+
 /* convert an indexing object to an INTP indexing array iterator
    if possible -- otherwise, it is a Slice or Ellipsis object
    and has to be interpreted on bind to a particular
@@ -1605,6 +1656,9 @@ _convert_obj(PyObject *obj, PyArrayIterObject **iter)
         return _nonzero_indices(obj, iter);
     }
     else {
+        if ((!PyArray_Check(obj)) && _verify_index(obj) < 0) {
+            return -1;
+        }
         indtype = PyArray_DescrFromType(NPY_INTP);
         arr = PyArray_FromAny(obj, indtype, 0, 0, NPY_ARRAY_FORCECAST, NULL);
         if (arr == NULL) {
@@ -1965,6 +2019,9 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
     else if (PyArray_Check(indexobj) || !PyTuple_Check(indexobj)) {
         mit->numiter = 1;
         indtype = PyArray_DescrFromType(NPY_INTP);
+        if ((!PyArray_Check(indexobj)) && _verify_index(indexobj) < 0) {
+            goto fail;
+        }
         arr = (PyArrayObject *)PyArray_FromAny(indexobj, indtype, 0, 0,
                                 NPY_ARRAY_FORCECAST, NULL);
         if (arr == NULL) {
