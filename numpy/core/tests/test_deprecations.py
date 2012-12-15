@@ -181,3 +181,67 @@ class TestFloatSliceParameterDeprecation(object):
                DeprecationWarning)
         yield (check_does_not_raise, lambda: a[1:2:2],
                DeprecationWarning)
+
+
+class TestFloatSequenceFancyIndexDeprecation(object):
+    """
+    These test that `DeprecationWarning`s get raised when you
+    try to use  non-integers for slicing, e.g `a[0.0:5]`, `a[::1.5]`,
+    etc.
+
+    When this is changed to an error, `slice_GetIndices` and
+    `_validate_slice_parameter` should probably be removed. Calls to
+    `slice_GetIndices` should be replaced by the standard Python
+    API call `PySlice_GetIndicesEx`, since `slice_GetIndices`
+    implements the same thing but with a) int coercion and b) Python
+    < 2.3 backwards compatibility (which we have long since dropped
+    as of this writing).
+
+    As for the deprecation time-frame: via Ralf Gommers,
+
+    "Hard to put that as a version number, since we don't know if the
+    version after 1.8 will be 6 months or 2 years after. I'd say 2
+    years is reasonable."
+
+    I interpret this to mean 2 years after the 1.8 release.
+    """
+    def setUp(self):
+        warnings.filterwarnings("error", message="non-integer",
+                                category=DeprecationWarning)
+
+    def tearDown(self):
+        warnings.filterwarnings("default", message="non-integer",
+                                category=DeprecationWarning)
+
+    def test_deprecations(self):
+        a = np.array([[[5]]])
+        if sys.version_info[:2] < (2, 5):
+            raise SkipTest()
+        # start as float.
+        yield check_for_warning, lambda: a[[0.0]], DeprecationWarning
+        yield check_for_warning, lambda: a[[0, 0.0]], DeprecationWarning
+        yield check_for_warning, lambda: a[:, [0.0]], DeprecationWarning
+        yield check_for_warning, lambda: a[:, [0.0], 0], DeprecationWarning
+        yield check_for_warning, lambda: a[[0], 0, [0.0]], DeprecationWarning
+
+    def test_valid_not_deprecated(self):
+        a = np.array([[[5, 6], [7, 8]], [[1, 2], [3, 4]]])
+        yield (check_does_not_raise, lambda: a[[1, 0, 1]],
+                DeprecationWarning)
+        yield (check_does_not_raise, lambda: a[:, [1, 0, 1]],
+                DeprecationWarning)
+        yield (check_does_not_raise, lambda: a[:, [1, 0, 1], :],
+                DeprecationWarning)
+        yield (check_does_not_raise, lambda: a[:, [0, 0, 1, 1], 1],
+                DeprecationWarning)
+        yield (check_does_not_raise, lambda: a[[0, 1, 0, 1], [0, 0, 1, 1], 1],
+                DeprecationWarning)
+        yield (check_does_not_raise, lambda: a[[True, False]],
+               DeprecationWarning)
+        yield (check_does_not_raise, lambda: a[[0, 0, 1, 1], [True, False,
+                                                              True, True]],
+               DeprecationWarning)
+        yield (check_does_not_raise, lambda: a[:, [True, False], [False, True]],
+               DeprecationWarning)
+        yield (check_does_not_raise, lambda: a[[0, 1], [1, 0], 1],
+               DeprecationWarning)
