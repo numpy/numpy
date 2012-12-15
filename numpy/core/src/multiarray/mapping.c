@@ -1656,7 +1656,7 @@ _convert_obj(PyObject *obj, PyArrayIterObject **iter)
         return _nonzero_indices(obj, iter);
     }
     else {
-        if (_verify_index(obj) < 0) {
+        if ((!PyArray_Check(obj)) && _verify_index(obj) < 0) {
             return -1;
         }
         indtype = PyArray_DescrFromType(NPY_INTP);
@@ -2019,10 +2019,8 @@ PyArray_MapIterNew(PyObject *indexobj, int oned, int fancy)
     else if (PyArray_Check(indexobj) || !PyTuple_Check(indexobj)) {
         mit->numiter = 1;
         indtype = PyArray_DescrFromType(NPY_INTP);
-        if (!PyArray_Check(indexobj)) {
-            if (_verify_index(indexobj) < 0) {
-                goto fail;
-            }
+        if ((!PyArray_Check(indexobj)) && _verify_index(indexobj) < 0) {
+            goto fail;
         }
         arr = (PyArrayObject *)PyArray_FromAny(indexobj, indtype, 0, 0,
                                 NPY_ARRAY_FORCECAST, NULL);
