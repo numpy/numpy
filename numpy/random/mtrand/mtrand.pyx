@@ -1026,7 +1026,7 @@ cdef class RandomState:
             if None != p:
                 cdf = p.cumsum()
                 cdf /= cdf[-1]
-                uniform_samples = np.random.random(shape)
+                uniform_samples = self.random_sample(shape)
                 idx = cdf.searchsorted(uniform_samples, side='right')
                 idx = np.array(idx, copy=False) # searchsorted returns a scalar
             else:
