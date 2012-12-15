@@ -1129,10 +1129,19 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *ind, PyObject *op)
     return ret;
 }
 
+/* Check if ind is a tuple and if it has as many elements as arr has axes. */
+static NPY_INLINE int
+_is_full_index(PyObject *ind, PyArrayObject *arr)
+{
+    return PyTuple_Check(ind) && (PyTuple_GET_SIZE(ind) == PyArray_NDIM(arr));
+}
 
-/* return -1 if tuple-object seq is not a tuple of integers.
-   otherwise fill vals with converted integers
-*/
+/*
+ * Returns 0 if tuple-object seq is not a tuple of integers.
+ * If the return value is positive, vals will be filled with the elements
+ * from the tuple.
+ * Returns -1 on error.
+ */
 static int
 _tuple_of_integers(PyObject *seq, npy_intp *vals, int maxvals)
 {
@@ -1144,15 +1153,21 @@ _tuple_of_integers(PyObject *seq, npy_intp *vals, int maxvals)
         obj = PyTuple_GET_ITEM(seq, i);
         if ((PyArray_Check(obj) && PyArray_NDIM((PyArrayObject *)obj) > 0)
                 || PyList_Check(obj)) {
-            return -1;
+            return 0;
         }
         temp = PyArray_PyIntAsIntp(obj);
         if (error_converting(temp)) {
-            return -1;
+            return 0;
+        }
+        if (!PyIndex_Check_Or_Unsupported(obj)) {
+            if (DEPRECATE("non-integer scalar index. In a future numpy "
+                          "release, this will raise an error.") < 0) {
+                return -1;
+            }
         }
         vals[i] = temp;
     }
-    return 0;
+    return 1;
 }
 
 
@@ -1257,22 +1272,26 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     }
 
     /* Integer-tuple */
-    if (PyTuple_Check(ind) &&
-                (PyTuple_GET_SIZE(ind) == PyArray_NDIM(self)) &&
-                (_tuple_of_integers(ind, vals, PyArray_NDIM(self)) >= 0)) {
-        int idim, ndim = PyArray_NDIM(self);
-        npy_intp *shape = PyArray_DIMS(self);
-        npy_intp *strides = PyArray_STRIDES(self);
-        char *item = PyArray_DATA(self);
-
-        for (idim = 0; idim < ndim; idim++) {
-            npy_intp v = vals[idim];
-            if (check_and_adjust_index(&v, shape[idim], idim) < 0) {
-              return -1;
-            }
-            item += v * strides[idim];
+    if (_is_full_index(ind, self)) {
+        ret = _tuple_of_integers(ind, vals, PyArray_NDIM(self));
+        /* In case an exception occurred (e.g. in PyErr_WarnEx) */
+        if (ret < 0) {
+            return -1;
         }
-        return PyArray_DESCR(self)->f->setitem(op, item, self);
+        else if (ret > 0) {
+            int idim, ndim = PyArray_NDIM(self);
+            npy_intp *shape = PyArray_DIMS(self);
+            npy_intp *strides = PyArray_STRIDES(self);
+            char *item = PyArray_DATA(self);
+            for (idim = 0; idim < ndim; idim++) {
+                npy_intp v = vals[idim];
+                if (check_and_adjust_index(&v, shape[idim], idim) < 0) {
+                  return -1;
+                }
+                item += v * strides[idim];
+            }
+            return PyArray_DESCR(self)->f->setitem(op, item, self);
+        }
     }
     PyErr_Clear();
 
@@ -1350,6 +1369,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
 {
 
     PyArrayObject *mp;
+    int ret;
     npy_intp vals[NPY_MAXDIMS];
 
     if (PyInt_Check(op) || PyArray_IsScalar(op, Integer) ||
@@ -1364,27 +1384,39 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
             return array_item_nice(self, (Py_ssize_t) value);
         }
     }
-    /* optimization for a tuple of integers */
-    if (PyArray_NDIM(self) > 1 &&
-                PyTuple_Check(op) &&
-                (PyTuple_GET_SIZE(op) == PyArray_NDIM(self)) &&
-                (_tuple_of_integers(op, vals, PyArray_NDIM(self)) >= 0)) {
-        int idim, ndim = PyArray_NDIM(self);
-        npy_intp *shape = PyArray_DIMS(self);
-        npy_intp *strides = PyArray_STRIDES(self);
-        char *item = PyArray_DATA(self);
-
-        for (idim = 0; idim < ndim; idim++) {
-            npy_intp v = vals[idim];
-            if (check_and_adjust_index(&v, shape[idim], idim) < 0) { 
-              return NULL;
-            }
-            item += v * strides[idim];
+    /*
+     * Optimization for a tuple of integers that is the same size as the
+     * array's dimension.
+     */
+    if (PyArray_NDIM(self) > 1 && _is_full_index(op,  self)) {
+        ret = _tuple_of_integers(op, vals, PyArray_NDIM(self));
+        /* In case an exception occurred (e.g. in PyErr_WarnEx) */
+        if (ret < 0) {
+            return NULL;
         }
-        return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
+        else if (ret > 0) {
+            int idim, ndim = PyArray_NDIM(self);
+            npy_intp *shape = PyArray_DIMS(self);
+            npy_intp *strides = PyArray_STRIDES(self);
+            char *item = PyArray_DATA(self);
+            for (idim = 0; idim < ndim; idim++) {
+                npy_intp v = vals[idim];
+                if (check_and_adjust_index(&v, shape[idim], idim) < 0) {
+                  return NULL;
+                }
+                item += v * strides[idim];
+            }
+            return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
+        }
     }
     PyErr_Clear();
-
+    if ((PyNumber_Check(op) || PyArray_IsScalar(op, Number)) &&
+            !PyIndex_Check_Or_Unsupported(op)) {
+        if (DEPRECATE("non-integer scalar index. In a future numpy "
+                      "release, this will raise an error.") < 0) {
+            return NULL;
+        }
+    }
     mp = (PyArrayObject *)array_subscript(self, op);
     /*
      * mp could be a scalar if op is not an Int, Scalar, Long or other Index

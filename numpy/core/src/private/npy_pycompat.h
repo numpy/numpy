@@ -19,6 +19,10 @@
 #if (PY_VERSION_HEX < 0x02050000)
 #undef PyIndex_Check
 #define PyIndex_Check(o)     0
+#undef PyIndex_Check_Or_Unsupported
+#define PyIndex_Check_Or_Unsupported(o) 1
+#else
+#define PyIndex_Check_Or_Unsupported(o) PyIndex_Check(o)
 #endif
 
 #endif /* _NPY_COMPAT_H_ */
