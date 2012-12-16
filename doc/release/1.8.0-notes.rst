@@ -27,6 +27,8 @@ the scalar, but only if the scalar is read-only.
 New features
 ============
 
+Euler's constant is now exposed in numpy as euler_gamma.
+
 
 
 Changes
