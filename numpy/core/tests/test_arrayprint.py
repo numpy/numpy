@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 import sys
 import numpy as np
 from numpy.testing import *
@@ -146,6 +148,15 @@ class TestPrintOptions:
         assert_equal(repr(x), "array([-1.0, 0.0, 1.0])")
         np.set_printoptions(formatter={'float_kind':None})
         assert_equal(repr(x), "array([ 0.,  1.,  2.])")
+
+def test_unicode_object_array():
+    import sys
+    if sys.version_info[0] >= 3:
+        expected = "array(['é'], dtype=object)"
+    else:
+        expected = "array([u'\\xe9'], dtype=object)"
+    x = np.array([u'\xe9'], dtype=object)
+    assert_equal(repr(x), expected)
 
 
 
