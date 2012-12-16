@@ -7,25 +7,24 @@ import warnings
 from nose.plugins.skip import SkipTest
 
 import numpy as np
-from numpy.testing import (dec, run_module_suite, assert_, assert_raises,
-        assert_no_warnings)
+from numpy.testing import dec, run_module_suite, assert_raises
 
 
 def assert_deprecated(f, *args, **kwargs):
     """Check if DeprecationWarning raised as error.
 
-    The warning enviroment is assumed to have been set up so that the
-    appropriate DeprecationWarning has been turned into an error. We do
-    not use ``assert_warns`` here as the desire is to check that an error
-    will be raised if the deprecation is changed to an error, and there
-    may be other errors that would override a warning. It is a fine point
-    as to which error should appear first.
+    The warning environment is assumed to have been set up so that the
+    appropriate DeprecationWarning has been turned into an error. We do not
+    use assert_warns here as the desire is to check that an error will be
+    raised if the deprecation is changed to an error and there may be other
+    errors that would override a warning. It is a fine point as to which
+    error should appear first.
 
     Parameters
     ----------
     f : callable
        A function that will exhibit the deprecation. It need not be
-       deprecated itself, but can be used to excute deprecated code.
+       deprecated itself, but can be used to execute deprecated code.
 
     """
     assert_raises(DeprecationWarning, f, *args, **kwargs)
@@ -34,14 +33,15 @@ def assert_deprecated(f, *args, **kwargs):
 def assert_not_deprecated(f, *args, **kwargs):
     """Check that DeprecationWarning not raised as error.
 
-    The warning enviroment is assumed to have been set up so that the
-    appropriate DeprecationWarning has been turned into an error.
+    The warning environment is assumed to have been set up so that the
+    appropriate DeprecationWarning has been turned into an error. This
+    function checks that no warning is raised when `f` is executed.
 
     Parameters
     ----------
     f : callable
-       A function that will exhibit the deprecation. It need not be
-       deprecated itself, but can be used to excute deprecated code.
+       A function that will exhibit no deprecation. It can be used to
+       execute code that should not raise DeprecationWarning.
 
     """
     try:
@@ -52,17 +52,16 @@ def assert_not_deprecated(f, *args, **kwargs):
 
 class TestFloatScalarIndexDeprecation(object):
     """
-    These test that `DeprecationWarning`s get raised when you
-    try to use scalar indices that are not integers e.g. `a[0.0]`,
-    `a[1.5, 0]`.
+    These test that ``DeprecationWarning`` gets raised when you try to use
+    scalar indices that are not integers e.g. ``a[0.0]``, ``a[1.5, 0]``.
 
-    grep "non-integer scalar" numpy/core/src/multiarray/* for
-    all the calls to `DEPRECATE()`, except the one inside
-    `_validate_slice_parameter` which handles slicing (but see also
+    grep "non-integer scalar" numpy/core/src/multiarray/* for all the calls
+    to ``DEPRECATE()``, except the one inside ``_validate_slice_parameter``
+    which handles slicing (but see also
     `TestFloatSliceParameterDeprecation`).
 
-    When 2.4 support is dropped `PyIndex_Check_Or_Unsupported` should
-    be removed from npy_pycompat.h and changed to just `PyIndex_Check`.
+    When 2.4 support is dropped ``PyIndex_Check_Or_Unsupported`` should be
+    removed from ``npy_pycompat.h`` and changed to just ``PyIndex_Check``.
 
     As for the deprecation time-frame: via Ralf Gommers,
 
@@ -71,6 +70,7 @@ class TestFloatScalarIndexDeprecation(object):
     years is reasonable."
 
     I interpret this to mean 2 years after the 1.8 release.
+
     """
 
     def setUp(self):
@@ -126,25 +126,24 @@ class TestFloatScalarIndexDeprecation(object):
 
 class TestFloatSliceParameterDeprecation(object):
     """
-    These test that `DeprecationWarning`s get raised when you
-    try to use  non-integers for slicing, e.g `a[0.0:5]`, `a[::1.5]`,
-    etc.
+    These test that ``DeprecationWarning`` gets raised when you try to use
+    non-integers for slicing, e.g. ``a[0.0:5]``, ``a[::1.5]``, etc.
 
-    When this is changed to an error, `slice_GetIndices` and
-    `_validate_slice_parameter` should probably be removed. Calls to
-    `slice_GetIndices` should be replaced by the standard Python
-    API call `PySlice_GetIndicesEx`, since `slice_GetIndices`
-    implements the same thing but with a) int coercion and b) Python
-    < 2.3 backwards compatibility (which we have long since dropped
-    as of this writing).
+    When this is changed to an error, ``slice_GetIndices`` and
+    ``_validate_slice_parameter`` should probably be removed. Calls to
+    ``slice_GetIndices`` should be replaced by the standard Python API call
+    ``PySlice_GetIndicesEx``, since ``slice_GetIndices`` implements the
+    same thing but with int coercion and Python < 2.3 backwards
+    compatibility (which we have long since dropped as of this writing).
 
     As for the deprecation time-frame: via Ralf Gommers,
 
     "Hard to put that as a version number, since we don't know if the
-    version after 1.8 will be 6 months or 2 years after. I'd say 2
-    years is reasonable."
+    version after 1.8 will be 6 months or 2 years after. I'd say 2 years is
+    reasonable."
 
     I interpret this to mean 2 years after the 1.8 release.
+
     """
 
     def setUp(self):
