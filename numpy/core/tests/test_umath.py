@@ -20,6 +20,19 @@ class _FilterInvalids(object):
         np.seterr(**self.olderr)
 
 
+class TestConstants(TestCase):
+    def test_pi(self):
+        assert_allclose(ncu.pi, 3.141592653589793, 1e-15)
+
+
+    def test_e(self):
+        assert_allclose(ncu.e, 2.718281828459045, 1e-15)
+
+
+    def test_euler_gamma(self):
+        assert_allclose(ncu.euler_gamma, 0.5772156649015329, 1e-15)
+
+
 class TestDivision(TestCase):
     def test_division_int(self):
         # int division should follow Python
