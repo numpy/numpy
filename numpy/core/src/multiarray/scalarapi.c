@@ -295,17 +295,20 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
         return (PyObject *)r;
     }
 
+    /* Need to INCREF typecode because PyArray_NewFromDescr steals a
+     * reference below and we still need to access typecode afterwards. */
+    Py_INCREF(typecode);
     r = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
             typecode,
             0, NULL,
             NULL, NULL, 0, NULL);
     if (r==NULL) {
-        Py_XDECREF(outcode);
+        Py_DECREF(typecode); Py_XDECREF(outcode);
         return NULL;
     }
     if (PyDataType_FLAGCHK(typecode, NPY_USE_SETITEM)) {
         if (typecode->f->setitem(scalar, PyArray_DATA(r), r) < 0) {
-            Py_XDECREF(outcode); Py_DECREF(r);
+            Py_DECREF(typecode); Py_XDECREF(outcode); Py_DECREF(r);
             return NULL;
         }
         goto finish;
@@ -332,19 +335,20 @@ PyArray_FromScalar(PyObject *scalar, PyArray_Descr *outcode)
 
 finish:
     if (outcode == NULL) {
+        Py_DECREF(typecode);
         return (PyObject *)r;
     }
     if (PyArray_EquivTypes(outcode, typecode)) {
         if (!PyTypeNum_ISEXTENDED(typecode->type_num)
                 || (outcode->elsize == typecode->elsize)) {
-            Py_DECREF(outcode);
+            Py_DECREF(typecode); Py_DECREF(outcode);
             return (PyObject *)r;
         }
     }
 
     /* cast if necessary to desired output typecode */
     ret = PyArray_CastToType((PyArrayObject *)r, outcode, 0);
-    Py_DECREF(r);
+    Py_DECREF(typecode); Py_DECREF(r);
     return ret;
 }
 
