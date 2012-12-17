@@ -47,15 +47,20 @@ class TestBuiltin(TestCase):
         self.assertTrue(hash(left) == hash(right))
 
     def test_invalid_types(self):
-        # Make sure invalid type strings raise exceptions.
+        # Make sure invalid type strings raise a warning.
         # For now, display a deprecation warning for invalid 
         # type sizes. In the future this should be changed 
         # to an exception.
 
-        for typestr in ['O3', 'O5', 'O7', 'b3', 'h4', 'I5',
-                        'e3', 'f5', 'g12']:
-            #print typestr
-            assert_warns(DeprecationWarning, np.dtype, typestr)
+        assert_warns(DeprecationWarning, np.dtype, 'O3')
+        assert_warns(DeprecationWarning, np.dtype, 'O5')
+        assert_warns(DeprecationWarning, np.dtype, 'O7')
+        assert_warns(DeprecationWarning, np.dtype, 'b3')
+        assert_warns(DeprecationWarning, np.dtype, 'h4')
+        assert_warns(DeprecationWarning, np.dtype, 'I5')
+        assert_warns(DeprecationWarning, np.dtype, 'e3')
+        assert_warns(DeprecationWarning, np.dtype, 'f5')
+        assert_warns(DeprecationWarning, np.dtype, 'g12')
 
         if np.dtype('l').itemsize == 8:
             assert_warns(DeprecationWarning, np.dtype, 'l4')
@@ -70,8 +75,6 @@ class TestBuiltin(TestCase):
         else:
             assert_warns(DeprecationWarning, np.dtype, 'q8')
             assert_warns(DeprecationWarning, np.dtype, 'Q8')
-
-        assert_raises(TypeError, np.dtype, 't8', 'NA[u4,0xffffffff]')
 
     def test_bad_param(self):
         # Can't give a size that's too small

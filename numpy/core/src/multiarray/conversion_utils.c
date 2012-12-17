@@ -1121,6 +1121,7 @@ PyArray_TypestrConvert(int itemsize, int gentype)
         if (temp != NULL) {
             if (temp->elsize != itemsize) {
                 if (DEPRECATE(msg) < 0) {
+                    Py_DECREF(temp);
                     return -1;
                 }
 
