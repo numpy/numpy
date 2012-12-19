@@ -4953,7 +4953,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
 
         /*
          * Be sure values array is "broadcastable"
-         * to shape of mit->dimensions, mit->nd
+         * to shape of iter->dimensions, iter->nd
          */
         if ((iter2 = (PyArrayIterObject *)\
              PyArray_BroadcastToShape((PyObject *)op2_array,

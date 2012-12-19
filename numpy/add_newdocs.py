@@ -5820,11 +5820,14 @@ add_newdoc('numpy.core', 'ufunc', ('at',
     at(a, indices, b=None)
 
     Performs operation in place on array for items specified by indices.
-    Items can be listed more than once and operation will be performed
-    on result of operation on previous item.
-
-    Equivalent to a[indices] += b for addition ufunc, except that results
-    are accumulated for indices listed more than once.
+    For addition ufunc, this method is equivalent to a[indices] += b,
+    except that results are accumulated for indices listed more than once.
+    This solves the problem with a[indices] += b where each time a duplicate
+    index is encounted, the increment is performed on the original element.
+    As a result, an element that appears three times in the fancy indexing
+    list will only be incremented once in the final result, whereas with the
+    new 'at' method the original element will be incremented by three in the
+    final result.
 
     Parameters
     ----------
