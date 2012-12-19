@@ -1,84 +1,60 @@
 """
-Legendre Series (:mod: `numpy.polynomial.legendre`)
-===================================================
-
-.. currentmodule:: numpy.polynomial.polynomial
+Objects for dealing with Hermite series.
 
 This module provides a number of objects (mostly functions) useful for
-dealing with Legendre series, including a `Legendre` class that
+dealing with Hermite series, including a `Hermite` class that
 encapsulates the usual arithmetic operations.  (General information
 on how this module represents and works with such polynomials is in the
 docstring for its "parent" sub-package, `numpy.polynomial`).
 
 Constants
 ---------
-
-.. autosummary::
-   :toctree: generated/
-
-   legdomain            Legendre series default domain, [-1,1].
-   legzero              Legendre series that evaluates identically to 0.
-   legone               Legendre series that evaluates identically to 1.
-   legx                 Legendre series for the identity map, ``f(x) = x``.
+- `hermdomain` -- Hermite series default domain, [-1,1].
+- `hermzero` -- Hermite series that evaluates identically to 0.
+- `hermone` -- Hermite series that evaluates identically to 1.
+- `hermx` -- Hermite series for the identity map, ``f(x) = x``.
 
 Arithmetic
 ----------
-
-.. autosummary::
-   :toctree: generated/
-
-   legmulx              multiply a Legendre series in P_i(x) by x.
-   legadd               add two Legendre series.
-   legsub               subtract one Legendre series from another.
-   legmul               multiply two Legendre series.
-   legdiv               divide one Legendre series by another.
-   legpow               raise a Legendre series to an positive integer power
-   legval               evaluate a Legendre series at given points.
-   legval2d             evaluate a 2D Legendre series at given points.
-   legval3d             evaluate a 3D Legendre series at given points.
-   leggrid2d            evaluate a 2D Legendre series on a Cartesian product.
-   leggrid3d            evaluate a 3D Legendre series on a Cartesian product.
+- `hermmulx` -- multiply a Hermite series in ``P_i(x)`` by ``x``.
+- `hermadd` -- add two Hermite series.
+- `hermsub` -- subtract one Hermite series from another.
+- `hermmul` -- multiply two Hermite series.
+- `hermdiv` -- divide one Hermite series by another.
+- `hermval` -- evaluate a Hermite series at given points.
+- `hermval2d` -- evaluate a 2D Hermite series at given points.
+- `hermval3d` -- evaluate a 3D Hermite series at given points.
+- `hermgrid2d` -- evaluate a 2D Hermite series on a Cartesian product.
+- `hermgrid3d` -- evaluate a 3D Hermite series on a Cartesian product.
 
 Calculus
 --------
-
-.. autosummary::
-   :toctree: generated/
-
-   legder               differentiate a Legendre series.
-   legint               integrate a Legendre series.
+- `hermder` -- differentiate a Hermite series.
+- `hermint` -- integrate a Hermite series.
 
 Misc Functions
 --------------
-
-.. autosummary::
-   :toctree: generated/
-
-   legfromroots          create a Legendre series with specified roots.
-   legroots              find the roots of a Legendre series.
-   legvander             Vandermonde-like matrix for Legendre polynomials.
-   legvander2d           Vandermonde-like matrix for 2D power series.
-   legvander3d           Vandermonde-like matrix for 3D power series.
-   leggauss              Gauss-Legendre quadrature, points and weights.
-   legweight             Legendre weight function.
-   legcompanion          symmetrized companion matrix in Legendre form.
-   legfit                least-squares fit returning a Legendre series.
-   legtrim               trim leading coefficients from a Legendre series.
-   legline               Legendre series representing given straight line.
-   leg2poly              convert a Legendre series to a polynomial.
-   poly2leg              convert a polynomial to a Legendre series.
+- `hermfromroots` -- create a Hermite series with specified roots.
+- `hermroots` -- find the roots of a Hermite series.
+- `hermvander` -- Vandermonde-like matrix for Hermite polynomials.
+- `hermvander2d` -- Vandermonde-like matrix for 2D power series.
+- `hermvander3d` -- Vandermonde-like matrix for 3D power series.
+- `hermgauss` -- Gauss-Hermite quadrature, points and weights.
+- `hermweight` -- Hermite weight function.
+- `hermcompanion` -- symmetrized companion matrix in Hermite form.
+- `hermfit` -- least-squares fit returning a Hermite series.
+- `hermtrim` -- trim leading coefficients from a Hermite series.
+- `hermline` -- Hermite series of given straight line.
+- `herm2poly` -- convert a Hermite series to a polynomial.
+- `poly2herm` -- convert a polynomial to a Hermite series.
 
 Classes
 -------
-    Legendre            A Legendre series class.
+- `Hermite` -- A Hermite series class.
 
 See also
 --------
-numpy.polynomial.polynomial
-numpy.polynomial.chebyshev
-numpy.polynomial.laguerre
-numpy.polynomial.hermite
-numpy.polynomial.hermite_e
+`numpy.polynomial`
 
 """
 from __future__ import division
@@ -87,25 +63,27 @@ import numpy as np
 import numpy.linalg as la
 import polyutils as pu
 import warnings
-from polytemplate import polytemplate
 
-__all__ = ['legzero', 'legone', 'legx', 'legdomain', 'legline',
-    'legadd', 'legsub', 'legmulx', 'legmul', 'legdiv', 'legpow', 'legval',
-    'legder', 'legint', 'leg2poly', 'poly2leg', 'legfromroots',
-    'legvander', 'legfit', 'legtrim', 'legroots', 'Legendre','legval2d',
-    'legval3d', 'leggrid2d', 'leggrid3d', 'legvander2d', 'legvander3d',
-    'legcompanion', 'leggauss', 'legweight']
+__all__ = ['hermzero', 'hermone', 'hermx', 'hermdomain', 'hermline',
+    'hermadd', 'hermsub', 'hermmulx', 'hermmul', 'hermdiv', 'hermpow',
+    'hermval', 'hermder', 'hermint', 'herm2poly', 'poly2herm',
+    'hermfromroots', 'hermvander', 'hermfit', 'hermtrim', 'hermroots',
+    'Hermite', 'hermval2d', 'hermval3d', 'hermgrid2d', 'hermgrid3d',
+    'hermvander2d', 'hermvander3d', 'hermcompanion', 'hermgauss',
+    'hermweight']
 
-legtrim = pu.trimcoef
+hermtrim = pu.trimcoef
 
 
-def poly2leg(pol) :
+def poly2herm(pol) :
     """
-    Convert a polynomial to a Legendre series.
+    poly2herm(pol)
+
+    Convert a polynomial to a Hermite series.
 
     Convert an array representing the coefficients of a polynomial (relative
     to the "standard" basis) ordered from lowest degree to highest, to an
-    array of the coefficients of the equivalent Legendre series, ordered
+    array of the coefficients of the equivalent Hermite series, ordered
     from lowest to highest degree.
 
     Parameters
@@ -116,12 +94,12 @@ def poly2leg(pol) :
     Returns
     -------
     c : ndarray
-        1-D array containing the coefficients of the equivalent Legendre
+        1-D array containing the coefficients of the equivalent Hermite
         series.
 
     See Also
     --------
-    leg2poly
+    herm2poly
 
     Notes
     -----
@@ -130,28 +108,24 @@ def poly2leg(pol) :
 
     Examples
     --------
-    >>> from numpy import polynomial as P
-    >>> p = P.Polynomial(np.arange(4))
-    >>> p
-    Polynomial([ 0.,  1.,  2.,  3.], [-1.,  1.])
-    >>> c = P.Legendre(P.poly2leg(p.coef))
-    >>> c
-    Legendre([ 1.  ,  3.25,  1.  ,  0.75], [-1.,  1.])
+    >>> from numpy.polynomial.hermite_e import poly2herme
+    >>> poly2herm(np.arange(4))
+    array([ 1.   ,  2.75 ,  0.5  ,  0.375])
 
     """
     [pol] = pu.as_series([pol])
     deg = len(pol) - 1
     res = 0
     for i in range(deg, -1, -1) :
-        res = legadd(legmulx(res), pol[i])
+        res = hermadd(hermmulx(res), pol[i])
     return res
 
 
-def leg2poly(c) :
+def herm2poly(c) :
     """
-    Convert a Legendre series to a polynomial.
+    Convert a Hermite series to a polynomial.
 
-    Convert an array representing the coefficients of a Legendre series,
+    Convert an array representing the coefficients of a Hermite series,
     ordered from lowest degree to highest, to an array of the coefficients
     of the equivalent polynomial (relative to the "standard" basis) ordered
     from lowest to highest degree.
@@ -159,7 +133,7 @@ def leg2poly(c) :
     Parameters
     ----------
     c : array_like
-        1-D array containing the Legendre series coefficients, ordered
+        1-D array containing the Hermite series coefficients, ordered
         from lowest order term to highest.
 
     Returns
@@ -171,7 +145,7 @@ def leg2poly(c) :
 
     See Also
     --------
-    poly2leg
+    poly2herm
 
     Notes
     -----
@@ -180,22 +154,19 @@ def leg2poly(c) :
 
     Examples
     --------
-    >>> c = P.Legendre(range(4))
-    >>> c
-    Legendre([ 0.,  1.,  2.,  3.], [-1.,  1.])
-    >>> p = c.convert(kind=P.Polynomial)
-    >>> p
-    Polynomial([-1. , -3.5,  3. ,  7.5], [-1.,  1.])
-    >>> P.leg2poly(range(4))
-    array([-1. , -3.5,  3. ,  7.5])
-
+    >>> from numpy.polynomial.hermite import herm2poly
+    >>> herm2poly([ 1.   ,  2.75 ,  0.5  ,  0.375])
+    array([ 0.,  1.,  2.,  3.])
 
     """
-    from polynomial import polyadd, polysub, polymulx
+    from numpy.polynomial.polynomial import polyadd, polysub, polymulx
 
     [c] = pu.as_series([c])
     n = len(c)
-    if n < 3:
+    if n == 1:
+        return c
+    if n == 2:
+        c[1] *= 2
         return c
     else:
         c0 = c[-2]
@@ -203,31 +174,31 @@ def leg2poly(c) :
         # i is the current degree of c1
         for i in range(n - 1, 1, -1) :
             tmp = c0
-            c0 = polysub(c[i - 2], (c1*(i - 1))/i)
-            c1 = polyadd(tmp, (polymulx(c1)*(2*i - 1))/i)
-        return polyadd(c0, polymulx(c1))
+            c0 = polysub(c[i - 2], c1*(2*(i - 1)))
+            c1 = polyadd(tmp, polymulx(c1)*2)
+        return polyadd(c0, polymulx(c1)*2)
 
 #
 # These are constant arrays are of integer type so as to be compatible
 # with the widest range of other types, such as Decimal.
 #
 
-# Legendre
-legdomain = np.array([-1,1])
+# Hermite
+hermdomain = np.array([-1,1])
 
-# Legendre coefficients representing zero.
-legzero = np.array([0])
+# Hermite coefficients representing zero.
+hermzero = np.array([0])
 
-# Legendre coefficients representing one.
-legone = np.array([1])
+# Hermite coefficients representing one.
+hermone = np.array([1])
 
-# Legendre coefficients representing the identity x.
-legx = np.array([0,1])
+# Hermite coefficients representing the identity x.
+hermx = np.array([0, 1/2])
 
 
-def legline(off, scl) :
+def hermline(off, scl) :
     """
-    Legendre series whose graph is a straight line.
+    Hermite series whose graph is a straight line.
 
 
 
@@ -239,7 +210,7 @@ def legline(off, scl) :
     Returns
     -------
     y : ndarray
-        This module's representation of the Legendre series for
+        This module's representation of the Hermite series for
         ``off + scl*x``.
 
     See Also
@@ -248,28 +219,28 @@ def legline(off, scl) :
 
     Examples
     --------
-    >>> import numpy.polynomial.legendre as L
-    >>> L.legline(3,2)
-    array([3, 2])
-    >>> L.legval(-3, L.legline(3,2)) # should be -3
-    -3.0
+    >>> from numpy.polynomial.hermite import hermline, hermval
+    >>> hermval(0,hermline(3, 2))
+    3.0
+    >>> hermval(1,hermline(3, 2))
+    5.0
 
     """
     if scl != 0 :
-        return np.array([off,scl])
+        return np.array([off,scl/2])
     else :
         return np.array([off])
 
 
-def legfromroots(roots) :
+def hermfromroots(roots) :
     """
-    Generate a Legendre series with given roots.
+    Generate a Hermite series with given roots.
 
     The function returns the coefficients of the polynomial
 
     .. math:: p(x) = (x - r_0) * (x - r_1) * ... * (x - r_n),
 
-    in Legendre form, where the `r_n` are the roots specified in `roots`.
+    in Hermite form, where the `r_n` are the roots specified in `roots`.
     If a zero has multiplicity n, then it must appear in `roots` n times.
     For instance, if 2 is a root of multiplicity three and 3 is a root of
     multiplicity 2, then `roots` looks something like [2, 2, 2, 3, 3]. The
@@ -277,10 +248,10 @@ def legfromroots(roots) :
 
     If the returned coefficients are `c`, then
 
-    .. math:: p(x) = c_0 + c_1 * L_1(x) + ... +  c_n * L_n(x)
+    .. math:: p(x) = c_0 + c_1 * H_1(x) + ... +  c_n * H_n(x)
 
     The coefficient of the last term is not generally 1 for monic
-    polynomials in Legendre form.
+    polynomials in Hermite form.
 
     Parameters
     ----------
@@ -297,17 +268,18 @@ def legfromroots(roots) :
 
     See Also
     --------
-    polyfromroots, chebfromroots, lagfromroots, hermfromroots,
+    polyfromroots, legfromroots, lagfromroots, chebfromroots,
     hermefromroots.
 
     Examples
     --------
-    >>> import numpy.polynomial.legendre as L
-    >>> L.legfromroots((-1,0,1)) # x^3 - x relative to the standard basis
-    array([ 0. , -0.4,  0. ,  0.4])
-    >>> j = complex(0,1)
-    >>> L.legfromroots((-j,j)) # x^2 + 1 relative to the standard basis
-    array([ 1.33333333+0.j,  0.00000000+0.j,  0.66666667+0.j])
+    >>> from numpy.polynomial.hermite import hermfromroots, hermval
+    >>> coef = hermfromroots((-1, 0, 1))
+    >>> hermval((-1, 0, 1), coef)
+    array([ 0.,  0.,  0.])
+    >>> coef = hermfromroots((-1j, 1j))
+    >>> hermval((-1j, 1j), coef)
+    array([ 0.+0.j,  0.+0.j])
 
     """
     if len(roots) == 0 :
@@ -315,55 +287,53 @@ def legfromroots(roots) :
     else :
         [roots] = pu.as_series([roots], trim=False)
         roots.sort()
-        p = [legline(-r, 1) for r in roots]
+        p = [hermline(-r, 1) for r in roots]
         n = len(p)
         while n > 1:
             m, r = divmod(n, 2)
-            tmp = [legmul(p[i], p[i+m]) for i in range(m)]
+            tmp = [hermmul(p[i], p[i+m]) for i in range(m)]
             if r:
-                tmp[0] = legmul(tmp[0], p[-1])
+                tmp[0] = hermmul(tmp[0], p[-1])
             p = tmp
             n = m
         return p[0]
 
 
-def legadd(c1, c2):
+def hermadd(c1, c2):
     """
-    Add one Legendre series to another.
+    Add one Hermite series to another.
 
-    Returns the sum of two Legendre series `c1` + `c2`.  The arguments
+    Returns the sum of two Hermite series `c1` + `c2`.  The arguments
     are sequences of coefficients ordered from lowest order term to
     highest, i.e., [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-D arrays of Legendre series coefficients ordered from low to
+        1-D arrays of Hermite series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Array representing the Legendre series of their sum.
+        Array representing the Hermite series of their sum.
 
     See Also
     --------
-    legsub, legmul, legdiv, legpow
+    hermsub, hermmul, hermdiv, hermpow
 
     Notes
     -----
-    Unlike multiplication, division, etc., the sum of two Legendre series
-    is a Legendre series (without having to "reproject" the result onto
+    Unlike multiplication, division, etc., the sum of two Hermite series
+    is a Hermite series (without having to "reproject" the result onto
     the basis set) so addition, just like that of "standard" polynomials,
     is simply "component-wise."
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> L.legadd(c1,c2)
-    array([ 4.,  4.,  4.])
+    >>> from numpy.polynomial.hermite import hermadd
+    >>> hermadd([1, 2, 3], [1, 2, 3, 4])
+    array([ 2.,  4.,  6.,  4.])
 
     """
     # c1, c2 are trimmed copies
@@ -377,45 +347,41 @@ def legadd(c1, c2):
     return pu.trimseq(ret)
 
 
-def legsub(c1, c2):
+def hermsub(c1, c2):
     """
-    Subtract one Legendre series from another.
+    Subtract one Hermite series from another.
 
-    Returns the difference of two Legendre series `c1` - `c2`.  The
+    Returns the difference of two Hermite series `c1` - `c2`.  The
     sequences of coefficients are from lowest order term to highest, i.e.,
     [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-D arrays of Legendre series coefficients ordered from low to
+        1-D arrays of Hermite series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Of Legendre series coefficients representing their difference.
+        Of Hermite series coefficients representing their difference.
 
     See Also
     --------
-    legadd, legmul, legdiv, legpow
+    hermadd, hermmul, hermdiv, hermpow
 
     Notes
     -----
-    Unlike multiplication, division, etc., the difference of two Legendre
-    series is a Legendre series (without having to "reproject" the result
+    Unlike multiplication, division, etc., the difference of two Hermite
+    series is a Hermite series (without having to "reproject" the result
     onto the basis set) so subtraction, just like that of "standard"
     polynomials, is simply "component-wise."
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> L.legsub(c1,c2)
-    array([-2.,  0.,  2.])
-    >>> L.legsub(c2,c1) # -C.legsub(c1,c2)
-    array([ 2.,  0., -2.])
+    >>> from numpy.polynomial.hermite import hermsub
+    >>> hermsub([1, 2, 3, 4], [1, 2, 3])
+    array([ 0.,  0.,  0.,  4.])
 
     """
     # c1, c2 are trimmed copies
@@ -430,17 +396,17 @@ def legsub(c1, c2):
     return pu.trimseq(ret)
 
 
-def legmulx(c):
-    """Multiply a Legendre series by x.
+def hermmulx(c):
+    """Multiply a Hermite series by x.
 
-    Multiply the Legendre series `c` by x, where x is the independent
+    Multiply the Hermite series `c` by x, where x is the independent
     variable.
 
 
     Parameters
     ----------
     c : array_like
-        1-D array of Legendre series coefficients ordered from low to
+        1-D array of Hermite series coefficients ordered from low to
         high.
 
     Returns
@@ -450,12 +416,18 @@ def legmulx(c):
 
     Notes
     -----
-    The multiplication uses the recursion relationship for Legendre
+    The multiplication uses the recursion relationship for Hermite
     polynomials in the form
 
     .. math::
 
-      xP_i(x) = ((i + 1)*P_{i + 1}(x) + i*P_{i - 1}(x))/(2i + 1)
+    xP_i(x) = (P_{i + 1}(x)/2 + i*P_{i - 1}(x))
+
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermmulx
+    >>> hermmulx([1, 2, 3])
+    array([ 2. ,  6.5,  1. ,  1.5])
 
     """
     # c is a trimmed copy
@@ -466,54 +438,49 @@ def legmulx(c):
 
     prd = np.empty(len(c) + 1, dtype=c.dtype)
     prd[0] = c[0]*0
-    prd[1] = c[0]
+    prd[1] = c[0]/2
     for i in range(1, len(c)):
-        j = i + 1
-        k = i - 1
-        s = i + j
-        prd[j] = (c[i]*j)/s
-        prd[k] += (c[i]*i)/s
+        prd[i + 1] = c[i]/2
+        prd[i - 1] += c[i]*i
     return prd
 
 
-def legmul(c1, c2):
+def hermmul(c1, c2):
     """
-    Multiply one Legendre series by another.
+    Multiply one Hermite series by another.
 
-    Returns the product of two Legendre series `c1` * `c2`.  The arguments
+    Returns the product of two Hermite series `c1` * `c2`.  The arguments
     are sequences of coefficients, from lowest order "term" to highest,
     e.g., [1,2,3] represents the series ``P_0 + 2*P_1 + 3*P_2``.
 
     Parameters
     ----------
     c1, c2 : array_like
-        1-D arrays of Legendre series coefficients ordered from low to
+        1-D arrays of Hermite series coefficients ordered from low to
         high.
 
     Returns
     -------
     out : ndarray
-        Of Legendre series coefficients representing their product.
+        Of Hermite series coefficients representing their product.
 
     See Also
     --------
-    legadd, legsub, legdiv, legpow
+    hermadd, hermsub, hermdiv, hermpow
 
     Notes
     -----
     In general, the (polynomial) product of two C-series results in terms
-    that are not in the Legendre polynomial basis set.  Thus, to express
-    the product as a Legendre series, it is necessary to "reproject" the
+    that are not in the Hermite polynomial basis set.  Thus, to express
+    the product as a Hermite series, it is necessary to "reproject" the
     product onto said basis set, which may produce "unintuitive" (but
     correct) results; see Examples section below.
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2)
-    >>> P.legmul(c1,c2) # multiplication requires "reprojection"
-    array([  4.33333333,  10.4       ,  11.66666667,   3.6       ])
+    >>> from numpy.polynomial.hermite import hermmul
+    >>> hermmul([1, 2, 3], [0, 1, 2])
+    array([ 52.,  29.,  52.,   7.,   6.])
 
     """
     # s1, s2 are trimmed copies
@@ -539,16 +506,16 @@ def legmul(c1, c2):
         for i in range(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
-            c0 = legsub(c[-i]*xs, (c1*(nd - 1))/nd)
-            c1 = legadd(tmp, (legmulx(c1)*(2*nd - 1))/nd)
-    return legadd(c0, legmulx(c1))
+            c0 = hermsub(c[-i]*xs, c1*(2*(nd - 1)))
+            c1 = hermadd(tmp, hermmulx(c1)*2)
+    return hermadd(c0, hermmulx(c1)*2)
 
 
-def legdiv(c1, c2):
+def hermdiv(c1, c2):
     """
-    Divide one Legendre series by another.
+    Divide one Hermite series by another.
 
-    Returns the quotient-with-remainder of two Legendre series
+    Returns the quotient-with-remainder of two Hermite series
     `c1` / `c2`.  The arguments are sequences of coefficients from lowest
     order "term" to highest, e.g., [1,2,3] represents the series
     ``P_0 + 2*P_1 + 3*P_2``.
@@ -556,38 +523,37 @@ def legdiv(c1, c2):
     Parameters
     ----------
     c1, c2 : array_like
-        1-D arrays of Legendre series coefficients ordered from low to
+        1-D arrays of Hermite series coefficients ordered from low to
         high.
 
     Returns
     -------
-    quo, rem : ndarrays
-        Of Legendre series coefficients representing the quotient and
+    [quo, rem] : ndarrays
+        Of Hermite series coefficients representing the quotient and
         remainder.
 
     See Also
     --------
-    legadd, legsub, legmul, legpow
+    hermadd, hermsub, hermmul, hermpow
 
     Notes
     -----
-    In general, the (polynomial) division of one Legendre series by another
-    results in quotient and remainder terms that are not in the Legendre
-    polynomial basis set.  Thus, to express these results as a Legendre
-    series, it is necessary to "reproject" the results onto the Legendre
+    In general, the (polynomial) division of one Hermite series by another
+    results in quotient and remainder terms that are not in the Hermite
+    polynomial basis set.  Thus, to express these results as a Hermite
+    series, it is necessary to "reproject" the results onto the Hermite
     basis set, which may produce "unintuitive" (but correct) results; see
     Examples section below.
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c1 = (1,2,3)
-    >>> c2 = (3,2,1)
-    >>> L.legdiv(c1,c2) # quotient "intuitive," remainder not
-    (array([ 3.]), array([-8., -4.]))
-    >>> c2 = (0,1,2,3)
-    >>> L.legdiv(c2,c1) # neither "intuitive"
-    (array([-0.07407407,  1.66666667]), array([-1.03703704, -2.51851852]))
+    >>> from numpy.polynomial.hermite import hermdiv
+    >>> hermdiv([ 52.,  29.,  52.,   7.,   6.], [0, 1, 2])
+    (array([ 1.,  2.,  3.]), array([ 0.]))
+    >>> hermdiv([ 54.,  31.,  52.,   7.,   6.], [0, 1, 2])
+    (array([ 1.,  2.,  3.]), array([ 2.,  2.]))
+    >>> hermdiv([ 53.,  30.,  52.,   7.,   6.], [0, 1, 2])
+    (array([ 1.,  2.,  3.]), array([ 1.,  1.]))
 
     """
     # c1, c2 are trimmed copies
@@ -605,24 +571,24 @@ def legdiv(c1, c2):
         quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
         rem = c1
         for i in range(lc1 - lc2, - 1, -1):
-            p = legmul([0]*i + [1], c2)
+            p = hermmul([0]*i + [1], c2)
             q = rem[-1]/p[-1]
             rem = rem[:-1] - q*p[:-1]
             quo[i] = q
         return quo, pu.trimseq(rem)
 
 
-def legpow(c, pow, maxpower=16) :
-    """Raise a Legendre series to a power.
+def hermpow(c, pow, maxpower=16) :
+    """Raise a Hermite series to a power.
 
-    Returns the Legendre series `c` raised to the power `pow`. The
-    arguement `c` is a sequence of coefficients ordered from low to high.
+    Returns the Hermite series `c` raised to the power `pow`. The
+    argument `c` is a sequence of coefficients ordered from low to high.
     i.e., [1,2,3] is the series  ``P_0 + 2*P_1 + 3*P_2.``
 
     Parameters
     ----------
     c : array_like
-        1-D array of Legendre series coefficients ordered from low to
+        1-D array of Hermite series coefficients ordered from low to
         high.
     pow : integer
         Power to which the series will be raised
@@ -633,14 +599,17 @@ def legpow(c, pow, maxpower=16) :
     Returns
     -------
     coef : ndarray
-        Legendre series of power.
+        Hermite series of power.
 
     See Also
     --------
-    legadd, legsub, legmul, legdiv
+    hermadd, hermsub, hermmul, hermdiv
 
     Examples
     --------
+    >>> from numpy.polynomial.hermite import hermpow
+    >>> hermpow([1, 2, 3], 2)
+    array([ 81.,  52.,  82.,  12.,   9.])
 
     """
     # c is a trimmed copy
@@ -659,27 +628,27 @@ def legpow(c, pow, maxpower=16) :
         # in the usual way.
         prd = c
         for i in range(2, power + 1) :
-            prd = legmul(prd, c)
+            prd = hermmul(prd, c)
         return prd
 
 
-def legder(c, m=1, scl=1, axis=0) :
+def hermder(c, m=1, scl=1, axis=0) :
     """
-    Differentiate a Legendre series.
+    Differentiate a Hermite series.
 
-    Returns the Legendre series coefficients `c` differentiated `m` times
+    Returns the Hermite series coefficients `c` differentiated `m` times
     along `axis`.  At each iteration the result is multiplied by `scl` (the
     scaling factor is for use in a linear change of variable). The argument
     `c` is an array of coefficients from low to high degree along each
-    axis, e.g., [1,2,3] represents the series ``1*L_0 + 2*L_1 + 3*L_2``
-    while [[1,2],[1,2]] represents ``1*L_0(x)*L_0(y) + 1*L_1(x)*L_0(y) +
-    2*L_0(x)*L_1(y) + 2*L_1(x)*L_1(y)`` if axis=0 is ``x`` and axis=1 is
+    axis, e.g., [1,2,3] represents the series ``1*H_0 + 2*H_1 + 3*H_2``
+    while [[1,2],[1,2]] represents ``1*H_0(x)*H_0(y) + 1*H_1(x)*H_0(y) +
+    2*H_0(x)*H_1(y) + 2*H_1(x)*H_1(y)`` if axis=0 is ``x`` and axis=1 is
     ``y``.
 
     Parameters
     ----------
     c : array_like
-        Array of Legendre series coefficients. If c is multidimensional the
+        Array of Hermite series coefficients. If `c` is multidimensional the
         different axis correspond to different variables with the degree in
         each axis given by the corresponding index.
     m : int, optional
@@ -696,31 +665,26 @@ def legder(c, m=1, scl=1, axis=0) :
     Returns
     -------
     der : ndarray
-        Legendre series of the derivative.
+        Hermite series of the derivative.
 
     See Also
     --------
-    legint
+    hermint
 
     Notes
     -----
-    In general, the result of differentiating a Legendre series does not
+    In general, the result of differentiating a Hermite series does not
     resemble the same operation on a power series. Thus the result of this
     function may be "unintuitive," albeit correct; see Examples section
     below.
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c = (1,2,3,4)
-    >>> L.legder(c)
-    array([  6.,   9.,  20.])
-    >>> L.legder(c, 3)
-    array([ 60.])
-    >>> L.legder(c, scl=-1)
-    array([ -6.,  -9., -20.])
-    >>> L.legder(c, 2,-1)
-    array([  9.,  60.])
+    >>> from numpy.polynomial.hermite import hermder
+    >>> hermder([ 1. ,  0.5,  0.5,  0.5])
+    array([ 1.,  2.,  3.])
+    >>> hermder([-0.5,  1./2.,  1./8.,  1./12.,  1./16.], m=2)
+    array([ 1.,  2.,  3.])
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -751,22 +715,18 @@ def legder(c, m=1, scl=1, axis=0) :
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
-            for j in range(n, 2, -1):
-                der[j - 1] = (2*j - 1)*c[j]
-                c[j - 2] += c[j]
-            if n > 1:
-                der[1] = 3*c[2]
-            der[0] = c[1]
+            for j in range(n, 0, -1):
+                der[j - 1] = (2*j)*c[j]
             c = der
     c = np.rollaxis(c, 0, iaxis + 1)
     return c
 
 
-def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
+def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     """
-    Integrate a Legendre series.
+    Integrate a Hermite series.
 
-    Returns the Legendre series coefficients `c` integrated `m` times from
+    Returns the Hermite series coefficients `c` integrated `m` times from
     `lbnd` along `axis`. At each iteration the resulting series is
     **multiplied** by `scl` and an integration constant, `k`, is added.
     The scaling factor is for use in a linear change of variable.  ("Buyer
@@ -774,14 +734,14 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     to be the reciprocal of what one might expect; for more information,
     see the Notes section below.)  The argument `c` is an array of
     coefficients from low to high degree along each axis, e.g., [1,2,3]
-    represents the series ``L_0 + 2*L_1 + 3*L_2`` while [[1,2],[1,2]]
-    represents ``1*L_0(x)*L_0(y) + 1*L_1(x)*L_0(y) + 2*L_0(x)*L_1(y) +
-    2*L_1(x)*L_1(y)`` if axis=0 is ``x`` and axis=1 is ``y``.
+    represents the series ``H_0 + 2*H_1 + 3*H_2`` while [[1,2],[1,2]]
+    represents ``1*H_0(x)*H_0(y) + 1*H_1(x)*H_0(y) + 2*H_0(x)*H_1(y) +
+    2*H_1(x)*H_1(y)`` if axis=0 is ``x`` and axis=1 is ``y``.
 
     Parameters
     ----------
     c : array_like
-        Array of Legendre series coefficients. If c is multidimensional the
+        Array of Hermite series coefficients. If c is multidimensional the
         different axis correspond to different variables with the degree in
         each axis given by the corresponding index.
     m : int, optional
@@ -805,7 +765,7 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
     Returns
     -------
     S : ndarray
-        Legendre series coefficient array of the integral.
+        Hermite series coefficients of the integral.
 
     Raises
     ------
@@ -815,7 +775,7 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     See Also
     --------
-    legder
+    hermder
 
     Notes
     -----
@@ -832,19 +792,17 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     Examples
     --------
-    >>> from numpy.polynomial import legendre as L
-    >>> c = (1,2,3)
-    >>> L.legint(c)
-    array([ 0.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.legint(c, 3)
-    array([  1.66666667e-02,  -1.78571429e-02,   4.76190476e-02,
-            -1.73472348e-18,   1.90476190e-02,   9.52380952e-03])
-    >>> L.legint(c, k=3)
-    array([ 3.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.legint(c, lbnd=-2)
-    array([ 7.33333333,  0.4       ,  0.66666667,  0.6       ])
-    >>> L.legint(c, scl=2)
-    array([ 0.66666667,  0.8       ,  1.33333333,  1.2       ])
+    >>> from numpy.polynomial.hermite import hermint
+    >>> hermint([1,2,3]) # integrate once, value 0 at 0.
+    array([ 1. ,  0.5,  0.5,  0.5])
+    >>> hermint([1,2,3], m=2) # integrate twice, value & deriv 0 at 0
+    array([-0.5       ,  0.5       ,  0.125     ,  0.08333333,  0.0625    ])
+    >>> hermint([1,2,3], k=1) # integrate once, value 1 at 0.
+    array([ 2. ,  0.5,  0.5,  0.5])
+    >>> hermint([1,2,3], lbnd=-1) # integrate once, value 0 at -1
+    array([-2. ,  0.5,  0.5,  0.5])
+    >>> hermint([1,2,3], m=2, k=[1,2], lbnd=-1)
+    array([ 1.66666667, -0.5       ,  0.125     ,  0.08333333,  0.0625    ])
 
     """
     c = np.array(c, ndmin=1, copy=1)
@@ -880,26 +838,22 @@ def legint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
         else:
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
             tmp[0] = c[0]*0
-            tmp[1] = c[0]
-            if n > 1:
-                tmp[2] = c[1]/3
-            for j in range(2, n):
-                t = c[j]/(2*j + 1)
-                tmp[j + 1] = t
-                tmp[j - 1] -= t
-            tmp[0] += k[i] - legval(lbnd, tmp)
+            tmp[1] = c[0]/2
+            for j in range(1, n):
+                tmp[j + 1] = c[j]/(2*(j + 1))
+            tmp[0] += k[i] - hermval(lbnd, tmp)
             c = tmp
     c = np.rollaxis(c, 0, iaxis + 1)
     return c
 
 
-def legval(x, c, tensor=True):
+def hermval(x, c, tensor=True):
     """
-    Evaluate a Legendre series at points x.
+    Evaluate an Hermite series at points x.
 
     If `c` is of length `n + 1`, this function returns the value:
 
-    .. math:: p(x) = c_0 * L_0(x) + c_1 * L_1(x) + ... + c_n * L_n(x)
+    .. math:: p(x) = c_0 * H_0(x) + c_1 * H_1(x) + ... + c_n * H_n(x)
 
     The parameter `x` is converted to an array only if it is a tuple or a
     list, otherwise it is treated as a scalar. In either case, either `x`
@@ -945,7 +899,7 @@ def legval(x, c, tensor=True):
 
     See Also
     --------
-    legval2d, leggrid2d, legval3d, leggrid3d
+    hermval2d, hermgrid2d, hermval3d, hermgrid3d
 
     Notes
     -----
@@ -953,6 +907,13 @@ def legval(x, c, tensor=True):
 
     Examples
     --------
+    >>> from numpy.polynomial.hermite import hermval
+    >>> coef = [1,2,3]
+    >>> hermval(1, coef)
+    11.0
+    >>> hermval([[1,2],[3,4]], coef)
+    array([[  11.,   51.],
+           [ 115.,  203.]])
 
     """
     c = np.array(c, ndmin=1, copy=0)
@@ -961,8 +922,9 @@ def legval(x, c, tensor=True):
     if isinstance(x, (tuple, list)):
         x = np.asarray(x)
     if isinstance(x, np.ndarray) and tensor:
-        c = c.reshape(c.shape + (1,)*x.ndim)
+       c = c.reshape(c.shape + (1,)*x.ndim)
 
+    x2 = x*2
     if len(c) == 1 :
         c0 = c[0]
         c1 = 0
@@ -976,18 +938,18 @@ def legval(x, c, tensor=True):
         for i in range(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
-            c0 = c[-i] - (c1*(nd - 1))/nd
-            c1 = tmp + (c1*x*(2*nd - 1))/nd
-    return c0 + c1*x
+            c0 = c[-i] - c1*(2*(nd - 1))
+            c1 = tmp + c1*x2
+    return c0 + c1*x2
 
 
-def legval2d(x, y, c):
+def hermval2d(x, y, c):
     """
-    Evaluate a 2-D Legendre series at points (x, y).
+    Evaluate a 2-D Hermite series at points (x, y).
 
     This function returns the values:
 
-    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * L_i(x) * L_j(y)
+    .. math:: p(x,y) = \\sum_{i,j} c_{i,j} * H_i(x) * H_j(y)
 
     The parameters `x` and `y` are converted to arrays only if they are
     tuples or a lists, otherwise they are treated as a scalars and they
@@ -1014,12 +976,12 @@ def legval2d(x, y, c):
     Returns
     -------
     values : ndarray, compatible object
-        The values of the two dimensional Legendre series at points formed
-        from pairs of corresponding values from `x` and `y`.
+        The values of the two dimensional polynomial at points formed with
+        pairs of corresponding values from `x` and `y`.
 
     See Also
     --------
-    legval, leggrid2d, legval3d, leggrid3d
+    hermval, hermgrid2d, hermval3d, hermgrid3d
 
     Notes
     -----
@@ -1032,18 +994,18 @@ def legval2d(x, y, c):
     except:
         raise ValueError('x, y are incompatible')
 
-    c = legval(x, c)
-    c = legval(y, c, tensor=False)
+    c = hermval(x, c)
+    c = hermval(y, c, tensor=False)
     return c
 
 
-def leggrid2d(x, y, c):
+def hermgrid2d(x, y, c):
     """
-    Evaluate a 2-D Legendre series on the Cartesian product of x and y.
+    Evaluate a 2-D Hermite series on the Cartesian product of x and y.
 
     This function returns the values:
 
-    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * L_i(a) * L_j(b)
+    .. math:: p(a,b) = \sum_{i,j} c_{i,j} * H_i(a) * H_j(b)
 
     where the points `(a, b)` consist of all pairs formed by taking
     `a` from `x` and `b` from `y`. The resulting points form a grid with
@@ -1056,7 +1018,7 @@ def leggrid2d(x, y, c):
 
     If `c` has fewer than two dimensions, ones are implicitly appended to
     its shape to make it 2-D. The shape of the result will be c.shape[2:] +
-    x.shape + y.shape.
+    x.shape.
 
     Parameters
     ----------
@@ -1066,20 +1028,20 @@ def leggrid2d(x, y, c):
         tuple, it is first converted to an ndarray, otherwise it is left
         unchanged and, if it isn't an ndarray, it is treated as a scalar.
     c : array_like
-        Array of coefficients ordered so that the coefficient of the term of
-        multi-degree i,j is contained in `c[i,j]`. If `c` has dimension
+        Array of coefficients ordered so that the coefficients for terms of
+        degree i,j are contained in ``c[i,j]``. If `c` has dimension
         greater than two the remaining indices enumerate multiple sets of
         coefficients.
 
     Returns
     -------
     values : ndarray, compatible object
-        The values of the two dimensional Chebyshev series at points in the
-        Cartesian product of `x` and `y`.
+        The values of the two dimensional polynomial at points in the Cartesian
+        product of `x` and `y`.
 
     See Also
     --------
-    legval, legval2d, legval3d, leggrid3d
+    hermval, hermval2d, hermval3d, hermgrid3d
 
     Notes
     -----
@@ -1087,18 +1049,18 @@ def leggrid2d(x, y, c):
     .. versionadded::1.7.0
 
     """
-    c = legval(x, c)
-    c = legval(y, c)
+    c = hermval(x, c)
+    c = hermval(y, c)
     return c
 
 
-def legval3d(x, y, z, c):
+def hermval3d(x, y, z, c):
     """
-    Evaluate a 3-D Legendre series at points (x, y, z).
+    Evaluate a 3-D Hermite series at points (x, y, z).
 
     This function returns the values:
 
-    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * L_i(x) * L_j(y) * L_k(z)
+    .. math:: p(x,y,z) = \\sum_{i,j,k} c_{i,j,k} * H_i(x) * H_j(y) * H_k(z)
 
     The parameters `x`, `y`, and `z` are converted to arrays only if
     they are tuples or a lists, otherwise they are treated as a scalars and
@@ -1132,7 +1094,7 @@ def legval3d(x, y, z, c):
 
     See Also
     --------
-    legval, legval2d, leggrid2d, leggrid3d
+    hermval, hermval2d, hermgrid2d, hermgrid3d
 
     Notes
     -----
@@ -1145,19 +1107,19 @@ def legval3d(x, y, z, c):
     except:
         raise ValueError('x, y, z are incompatible')
 
-    c = legval(x, c)
-    c = legval(y, c, tensor=False)
-    c = legval(z, c, tensor=False)
+    c = hermval(x, c)
+    c = hermval(y, c, tensor=False)
+    c = hermval(z, c, tensor=False)
     return c
 
 
-def leggrid3d(x, y, z, c):
+def hermgrid3d(x, y, z, c):
     """
-    Evaluate a 3-D Legendre series on the Cartesian product of x, y, and z.
+    Evaluate a 3-D Hermite series on the Cartesian product of x, y, and z.
 
     This function returns the values:
 
-    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * L_i(a) * L_j(b) * L_k(c)
+    .. math:: p(a,b,c) = \\sum_{i,j,k} c_{i,j,k} * H_i(a) * H_j(b) * H_k(c)
 
     where the points `(a, b, c)` consist of all triples formed by taking
     `a` from `x`, `b` from `y`, and `c` from `z`. The resulting points form
@@ -1196,7 +1158,7 @@ def leggrid3d(x, y, z, c):
 
     See Also
     --------
-    legval, legval2d, leggrid2d, legval3d
+    hermval, hermval2d, hermgrid2d, hermval3d
 
     Notes
     -----
@@ -1204,28 +1166,28 @@ def leggrid3d(x, y, z, c):
     .. versionadded::1.7.0
 
     """
-    c = legval(x, c)
-    c = legval(y, c)
-    c = legval(z, c)
+    c = hermval(x, c)
+    c = hermval(y, c)
+    c = hermval(z, c)
     return c
 
 
-def legvander(x, deg) :
+def hermvander(x, deg) :
     """Pseudo-Vandermonde matrix of given degree.
 
     Returns the pseudo-Vandermonde matrix of degree `deg` and sample points
     `x`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., i] = L_i(x)
+    .. math:: V[..., i] = H_i(x),
 
     where `0 <= i <= deg`. The leading indices of `V` index the elements of
-    `x` and the last index is the degree of the Legendre polynomial.
+    `x` and the last index is the degree of the Hermite polynomial.
 
     If `c` is a 1-D array of coefficients of length `n + 1` and `V` is the
-    array ``V = legvander(x, n)``, then ``np.dot(V, c)`` and
-    ``legval(x, c)`` are the same up to roundoff. This equivalence is
+    array ``V = hermvander(x, n)``, then ``np.dot(V, c)`` and
+    ``hermval(x, c)`` are the same up to roundoff. This equivalence is
     useful both for least squares fitting and for the evaluation of a large
-    number of Legendre series of the same degree and sample points.
+    number of Hermite series of the same degree and sample points.
 
     Parameters
     ----------
@@ -1241,8 +1203,17 @@ def legvander(x, deg) :
     vander: ndarray
         The pseudo-Vandermonde matrix. The shape of the returned matrix is
         ``x.shape + (deg + 1,)``, where The last index is the degree of the
-        corresponding Legendre polynomial.  The dtype will be the same as
+        corresponding Hermite polynomial.  The dtype will be the same as
         the converted `x`.
+
+    Examples
+    --------
+    >>> from numpy.polynomial.hermite import hermvander
+    >>> x = np.array([-1, 0, 1])
+    >>> hermvander(x, 3)
+    array([[ 1., -2.,  2.,  4.],
+           [ 1.,  0., -2., -0.],
+           [ 1.,  2.,  2., -4.]])
 
     """
     ideg = int(deg)
@@ -1255,37 +1226,36 @@ def legvander(x, deg) :
     dims = (ideg + 1,) + x.shape
     dtyp = x.dtype
     v = np.empty(dims, dtype=dtyp)
-    # Use forward recursion to generate the entries. This is not as accurate
-    # as reverse recursion in this application but it is more efficient.
     v[0] = x*0 + 1
     if ideg > 0 :
-        v[1] = x
+        x2 = x*2
+        v[1] = x2
         for i in range(2, ideg + 1) :
-            v[i] = (v[i-1]*x*(2*i - 1) - v[i-2]*(i - 1))/i
+            v[i] = (v[i-1]*x2 - v[i-2]*(2*(i - 1)))
     return np.rollaxis(v, 0, v.ndim)
 
 
-def legvander2d(x, y, deg) :
+def hermvander2d(x, y, deg) :
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y)`. The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., deg[1]*i + j] = L_i(x) * L_j(y),
+    .. math:: V[..., deg[1]*i + j] = H_i(x) * H_j(y),
 
     where `0 <= i <= deg[0]` and `0 <= j <= deg[1]`. The leading indices of
     `V` index the points `(x, y)` and the last index encodes the degrees of
-    the Legendre polynomials.
+    the Hermite polynomials.
 
-    If ``V = legvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
+    If ``V = hermvander2d(x, y, [xdeg, ydeg])``, then the columns of `V`
     correspond to the elements of a 2-D coefficient array `c` of shape
     (xdeg + 1, ydeg + 1) in the order
 
     .. math:: c_{00}, c_{01}, c_{02} ... , c_{10}, c_{11}, c_{12} ...
 
-    and ``np.dot(V, c.flat)`` and ``legval2d(x, y, c)`` will be the same
+    and ``np.dot(V, c.flat)`` and ``hermval2d(x, y, c)`` will be the same
     up to roundoff. This equivalence is useful both for least squares
-    fitting and for the evaluation of a large number of 2-D Legendre
+    fitting and for the evaluation of a large number of 2-D Hermite
     series of the same degrees and sample points.
 
     Parameters
@@ -1293,8 +1263,8 @@ def legvander2d(x, y, deg) :
     x, y : array_like
         Arrays of point coordinates, all of the same shape. The dtypes
         will be converted to either float64 or complex128 depending on
-        whether any of the elements are complex. Scalars are converted to
-        1-D arrays.
+        whether any of the elements are complex. Scalars are converted to 1-D
+        arrays.
     deg : list of ints
         List of maximum degrees of the form [x_deg, y_deg].
 
@@ -1307,7 +1277,7 @@ def legvander2d(x, y, deg) :
 
     See Also
     --------
-    legvander, legvander3d. legval2d, legval3d
+    hermvander, hermvander3d. hermval2d, hermval3d
 
     Notes
     -----
@@ -1322,34 +1292,34 @@ def legvander2d(x, y, deg) :
     degx, degy = ideg
     x, y = np.array((x, y), copy=0) + 0.0
 
-    vx = legvander(x, degx)
-    vy = legvander(y, degy)
+    vx = hermvander(x, degx)
+    vy = hermvander(y, degy)
     v = vx[..., None]*vy[..., None, :]
     return v.reshape(v.shape[:-2] + (-1,))
 
 
-def legvander3d(x, y, z, deg) :
+def hermvander3d(x, y, z, deg) :
     """Pseudo-Vandermonde matrix of given degrees.
 
     Returns the pseudo-Vandermonde matrix of degrees `deg` and sample
     points `(x, y, z)`. If `l, m, n` are the given degrees in `x, y, z`,
     then The pseudo-Vandermonde matrix is defined by
 
-    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = L_i(x)*L_j(y)*L_k(z),
+    .. math:: V[..., (m+1)(n+1)i + (n+1)j + k] = H_i(x)*H_j(y)*H_k(z),
 
     where `0 <= i <= l`, `0 <= j <= m`, and `0 <= j <= n`.  The leading
     indices of `V` index the points `(x, y, z)` and the last index encodes
-    the degrees of the Legendre polynomials.
+    the degrees of the Hermite polynomials.
 
-    If ``V = legvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
+    If ``V = hermvander3d(x, y, z, [xdeg, ydeg, zdeg])``, then the columns
     of `V` correspond to the elements of a 3-D coefficient array `c` of
     shape (xdeg + 1, ydeg + 1, zdeg + 1) in the order
 
     .. math:: c_{000}, c_{001}, c_{002},... , c_{010}, c_{011}, c_{012},...
 
-    and ``np.dot(V, c.flat)`` and ``legval3d(x, y, z, c)`` will be the
+    and  ``np.dot(V, c.flat)`` and ``hermval3d(x, y, z, c)`` will be the
     same up to roundoff. This equivalence is useful both for least squares
-    fitting and for the evaluation of a large number of 3-D Legendre
+    fitting and for the evaluation of a large number of 3-D Hermite
     series of the same degrees and sample points.
 
     Parameters
@@ -1371,7 +1341,7 @@ def legvander3d(x, y, z, deg) :
 
     See Also
     --------
-    legvander, legvander3d. legval2d, legval3d
+    hermvander, hermvander3d. hermval2d, hermval3d
 
     Notes
     -----
@@ -1386,29 +1356,29 @@ def legvander3d(x, y, z, deg) :
     degx, degy, degz = ideg
     x, y, z = np.array((x, y, z), copy=0) + 0.0
 
-    vx = legvander(x, degx)
-    vy = legvander(y, degy)
-    vz = legvander(z, degz)
+    vx = hermvander(x, degx)
+    vy = hermvander(y, degy)
+    vz = hermvander(z, degz)
     v = vx[..., None, None]*vy[..., None, :, None]*vz[..., None, None, :]
     return v.reshape(v.shape[:-3] + (-1,))
 
 
-def legfit(x, y, deg, rcond=None, full=False, w=None):
+def hermfit(x, y, deg, rcond=None, full=False, w=None):
     """
-    Least squares fit of Legendre series to data.
+    Least squares fit of Hermite series to data.
 
-    Return the coefficients of a Legendre series of degree `deg` that is the
+    Return the coefficients of a Hermite series of degree `deg` that is the
     least squares fit to the data values `y` given at points `x`. If `y` is
     1-D the returned coefficients will also be 1-D. If `y` is 2-D multiple
     fits are done, one for each column of `y`, and the resulting
     coefficients are stored in the corresponding columns of a 2-D return.
     The fitted polynomial(s) are in the form
 
-    .. math::  p(x) = c_0 + c_1 * L_1(x) + ... + c_n * L_n(x),
+    .. math::  p(x) = c_0 + c_1 * H_1(x) + ... + c_n * H_n(x),
 
     where `n` is `deg`.
 
-    Since numpy version 1.7.0, legfit also supports NA. If any of the
+    Since numpy version 1.7.0, hermfit also supports NA. If any of the
     elements of `x`, `y`, or `w` are NA, then the corresponding rows of the
     linear least squares problem (see Notes) are set to 0. If `y` is 2-D,
     then an NA in any row of `y` invalidates that whole row.
@@ -1438,12 +1408,10 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         weights are chosen so that the errors of the products ``w[i]*y[i]``
         all have the same variance.  The default value is None.
 
-        .. versionadded:: 1.5.0
-
     Returns
     -------
     coef : ndarray, shape (M,) or (M, K)
-        Legendre coefficients ordered from low to high. If `y` was 2-D,
+        Hermite coefficients ordered from low to high. If `y` was 2-D,
         the coefficients for the data in column k  of `y` are in column
         `k`.
 
@@ -1464,27 +1432,27 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
 
     See Also
     --------
-    chebfit, polyfit, lagfit, hermfit, hermefit
-    legval : Evaluates a Legendre series.
-    legvander : Vandermonde matrix of Legendre series.
-    legweight : Legendre weight function (= 1).
+    chebfit, legfit, lagfit, polyfit, hermefit
+    hermval : Evaluates a Hermite series.
+    hermvander : Vandermonde matrix of Hermite series.
+    hermweight : Hermite weight function
     linalg.lstsq : Computes a least-squares fit from the matrix.
     scipy.interpolate.UnivariateSpline : Computes spline fits.
 
     Notes
     -----
-    The solution is the coefficients of the Legendre series `p` that
+    The solution is the coefficients of the Hermite series `p` that
     minimizes the sum of the weighted squared errors
 
     .. math:: E = \\sum_j w_j^2 * |y_j - p(x_j)|^2,
 
-    where :math:`w_j` are the weights. This problem is solved by setting up
-    as the (typically) overdetermined matrix equation
+    where the :math:`w_j` are the weights. This problem is solved by
+    setting up the (typically) overdetermined matrix equation
 
     .. math:: V(x) * c = w * y,
 
     where `V` is the weighted pseudo Vandermonde matrix of `x`, `c` are the
-    coefficients to be solved for, `w` are the weights, and `y` are the
+    coefficients to be solved for, `w` are the weights, `y` are the
     observed values.  This equation is then solved using the singular value
     decomposition of `V`.
 
@@ -1495,10 +1463,11 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
     set to a value smaller than its default, but the resulting fit may be
     spurious and have large contributions from roundoff error.
 
-    Fits using Legendre series are usually better conditioned than fits
-    using power series, but much can depend on the distribution of the
-    sample points and the smoothness of the data. If the quality of the fit
-    is inadequate splines may be a good alternative.
+    Fits using Hermite series are probably most useful when the data can be
+    approximated by ``sqrt(w(x)) * p(x)``, where `w(x)` is the Hermite
+    weight. In that case the weight ``sqrt(w(x[i])`` should be used
+    together with data values ``y[i]/sqrt(w(x[i])``. The weight function is
+    available as `hermweight`.
 
     References
     ----------
@@ -1507,6 +1476,12 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
 
     Examples
     --------
+    >>> from numpy.polynomial.hermite import hermfit, hermval
+    >>> x = np.linspace(-10, 10)
+    >>> err = np.random.randn(len(x))/10
+    >>> y = hermval(x, [1, 2, 3]) + err
+    >>> hermfit(x, y, 2)
+    array([ 0.97902637,  1.99849131,  3.00006   ])
 
     """
     order = int(deg) + 1
@@ -1526,7 +1501,7 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         raise TypeError("expected x and y to have same length")
 
     # set up the least squares matrices in transposed form
-    lhs = legvander(x, deg).T
+    lhs = hermvander(x, deg).T
     rhs = y.T
     if w is not None:
         w = np.asarray(w) + 0.0
@@ -1559,11 +1534,11 @@ def legfit(x, y, deg, rcond=None, full=False, w=None):
         return c
 
 
-def legcompanion(c):
+def hermcompanion(c):
     """Return the scaled companion matrix of c.
 
     The basis polynomials are scaled so that the companion matrix is
-    symmetric when `c` is an Legendre basis polynomial. This provides
+    symmetric when `c` is an Hermite basis polynomial. This provides
     better eigenvalue estimates than the unscaled case and for basis
     polynomials the eigenvalues are guaranteed to be real if
     `numpy.linalg.eigvalsh` is used to obtain them.
@@ -1571,7 +1546,7 @@ def legcompanion(c):
     Parameters
     ----------
     c : array_like
-        1-D array of Legendre series coefficients ordered from low to high
+        1-D array of Hermite series coefficients ordered from low to high
         degree.
 
     Returns
@@ -1585,31 +1560,33 @@ def legcompanion(c):
     .. versionadded::1.7.0
 
     """
+    accprod = np.multiply.accumulate
     # c is a trimmed copy
     [c] = pu.as_series([c])
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array(-c[0]/c[1])
+        return np.array(-.5*c[0]/c[1])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
-    scl = 1./np.sqrt(2*np.arange(n) + 1)
+    scl = np.hstack((1., np.sqrt(2.*np.arange(1,n))))
+    scl = np.multiply.accumulate(scl)
     top = mat.reshape(-1)[1::n+1]
     bot = mat.reshape(-1)[n::n+1]
-    top[...] = np.arange(1, n)*scl[:n-1]*scl[1:n]
+    top[...] = np.sqrt(.5*np.arange(1,n))
     bot[...] = top
-    mat[:,-1] -= (c[:-1]/c[-1])*(scl/scl[-1])*(n/(2*n - 1))
+    mat[:,-1] -= (c[:-1]/c[-1])*(scl/scl[-1])*.5
     return mat
 
 
-def legroots(c):
+def hermroots(c):
     """
-    Compute the roots of a Legendre series.
+    Compute the roots of a Hermite series.
 
     Return the roots (a.k.a. "zeros") of the polynomial
 
-    .. math:: p(x) = \\sum_i c[i] * L_i(x).
+    .. math:: p(x) = \\sum_i c[i] * H_i(x).
 
     Parameters
     ----------
@@ -1624,7 +1601,7 @@ def legroots(c):
 
     See Also
     --------
-    polyroots, chebroots, lagroots, hermroots, hermeroots
+    polyroots, legroots, lagroots, chebroots, hermeroots
 
     Notes
     -----
@@ -1636,37 +1613,40 @@ def legroots(c):
     insensitive to errors in the roots. Isolated roots near the origin can
     be improved by a few iterations of Newton's method.
 
-    The Legendre series basis polynomials aren't powers of ``x`` so the
+    The Hermite series basis polynomials aren't powers of `x` so the
     results of this function may seem unintuitive.
 
     Examples
     --------
-    >>> import numpy.polynomial.legendre as leg
-    >>> leg.legroots((1, 2, 3, 4)) # 4L_3 + 3L_2 + 2L_1 + 1L_0 has only real roots
-    array([-0.85099543, -0.11407192,  0.51506735])
+    >>> from numpy.polynomial.hermite import hermroots, hermfromroots
+    >>> coef = hermfromroots([-1, 0, 1])
+    >>> coef
+    array([ 0.   ,  0.25 ,  0.   ,  0.125])
+    >>> hermroots(coef)
+    array([ -1.00000000e+00,  -1.38777878e-17,   1.00000000e+00])
 
     """
     # c is a trimmed copy
     [c] = pu.as_series([c])
-    if len(c) < 2:
+    if len(c) <= 1 :
         return np.array([], dtype=c.dtype)
-    if len(c) == 2:
-        return np.array([-c[0]/c[1]])
+    if len(c) == 2 :
+        return np.array([-.5*c[0]/c[1]])
 
-    m = legcompanion(c)
+    m = hermcompanion(c)
     r = la.eigvals(m)
     r.sort()
     return r
 
 
-def leggauss(deg):
+def hermgauss(deg):
     """
-    Gauss-Legendre quadrature.
+    Gauss-Hermite quadrature.
 
-    Computes the sample points and weights for Gauss-Legendre quadrature.
+    Computes the sample points and weights for Gauss-Hermite quadrature.
     These sample points and weights will correctly integrate polynomials of
-    degree :math:`2*deg - 1` or less over the interval :math:`[-1, 1]` with
-    the weight function :math:`f(x) = 1`.
+    degree :math:`2*deg - 1` or less over the interval :math:`[-\inf, \inf]`
+    with the weight function :math:`f(x) = \exp(-x^2)`.
 
     Parameters
     ----------
@@ -1688,10 +1668,10 @@ def leggauss(deg):
     The results have only been tested up to degree 100, higher degrees may
     be problematic. The weights are determined by using the fact that
 
-    .. math:: w_k = c / (L'_n(x_k) * L_{n-1}(x_k))
+    .. math:: w_k = c / (H'_n(x_k) * H_{n-1}(x_k))
 
     where :math:`c` is a constant independent of :math:`k` and :math:`x_k`
-    is the k'th root of :math:`L_n`, and then scaling the results to get
+    is the k'th root of :math:`H_n`, and then scaling the results to get
     the right value when integrating 1.
 
     """
@@ -1702,39 +1682,39 @@ def leggauss(deg):
     # first approximation of roots. We use the fact that the companion
     # matrix is symmetric in this case in order to obtain better zeros.
     c = np.array([0]*deg + [1])
-    m = legcompanion(c)
+    m = hermcompanion(c)
     x = la.eigvals(m)
     x.sort()
 
     # improve roots by one application of Newton
-    dy = legval(x, c)
-    df = legval(x, legder(c))
+    dy = hermval(x, c)
+    df = hermval(x, hermder(c))
     x -= dy/df
 
     # compute the weights. We scale the factor to avoid possible numerical
     # overflow.
-    fm = legval(x, c[1:])
+    fm = hermval(x, c[1:])
     fm /= np.abs(fm).max()
     df /= np.abs(df).max()
     w = 1/(fm * df)
 
-    # for Legendre we can also symmetrize
+    # for Hermite we can also symmetrize
     w = (w + w[::-1])/2
     x = (x - x[::-1])/2
 
     # scale w to get the right value
-    w *= 2. / w.sum()
+    w *= np.sqrt(np.pi) / w.sum()
 
     return x, w
 
 
-def legweight(x):
+def hermweight(x):
     """
-    Weight function of the Legendre polynomials.
+    Weight function of the Hermite polynomials.
 
-    The weight function is :math:`1` and the interval of integration is
-    :math:`[-1, 1]`. The Legendre polynomials are orthogonal, but not
-    normalized, with respect to this weight function.
+    The weight function is :math:`\exp(-x^2)` and the interval of
+    integration is :math:`[-\inf, \inf]`. the Hermite polynomials are
+    orthogonal, but not normalized, with respect to this weight function.
 
     Parameters
     ----------
@@ -1752,11 +1732,15 @@ def legweight(x):
     .. versionadded::1.7.0
 
     """
-    w = x*0.0 + 1.0
+    w = np.exp(-x**2)
     return w
 
+
 #
-# Legendre series class
+# Hermite series class
+#
+# Code below this point is generated at build time from the template
+# in polytemplate.py and combined with _hermite.py (see setup.py in
+# this directory).
 #
 
-exec polytemplate.substitute(name='Legendre', nick='leg', domain='[-1,1]')

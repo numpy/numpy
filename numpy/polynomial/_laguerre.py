@@ -63,7 +63,6 @@ import numpy as np
 import numpy.linalg as la
 import polyutils as pu
 import warnings
-from polytemplate import polytemplate
 
 __all__ = ['lagzero', 'lagone', 'lagx', 'lagdomain', 'lagline',
     'lagadd', 'lagsub', 'lagmulx', 'lagmul', 'lagdiv', 'lagpow',
@@ -159,7 +158,7 @@ def lag2poly(c) :
     array([ 0.,  1.,  2.,  3.])
 
     """
-    from polynomial import polyadd, polysub, polymulx
+    from numpy.polynomial.polynomial import polyadd, polysub, polymulx
 
     [c] = pu.as_series([c])
     n = len(c)
@@ -1732,5 +1731,8 @@ def lagweight(x):
 #
 # Laguerre series class
 #
+# Code below this point is generated at build time from the template
+# in polytemplate.py and combined with _laguerre.py (see setup.py in
+# this directory).
+#
 
-exec polytemplate.substitute(name='Laguerre', nick='lag', domain='[-1,1]')

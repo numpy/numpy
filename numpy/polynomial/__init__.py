@@ -15,12 +15,12 @@ information can be found in the docstring for the module of interest.
 """
 import warnings
 
-from polynomial import Polynomial
-from chebyshev import Chebyshev
-from legendre import Legendre
-from hermite import Hermite
-from hermite_e import HermiteE
-from laguerre import Laguerre
+from numpy.polynomial.polynomial import Polynomial
+from numpy.polynomial.chebyshev import Chebyshev
+from numpy.polynomial.legendre import Legendre
+from numpy.polynomial.hermite import Hermite
+from numpy.polynomial.hermite_e import HermiteE
+from numpy.polynomial.laguerre import Laguerre
 
 from numpy.testing import Tester
 test = Tester().test

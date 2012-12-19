@@ -63,7 +63,6 @@ import numpy as np
 import numpy.linalg as la
 import polyutils as pu
 import warnings
-from polytemplate import polytemplate
 
 __all__ = ['hermezero', 'hermeone', 'hermex', 'hermedomain', 'hermeline',
     'hermeadd', 'hermesub', 'hermemulx', 'hermemul', 'hermediv', 'hermpow',
@@ -160,7 +159,7 @@ def herme2poly(c) :
     array([ 0.,  1.,  2.,  3.])
 
     """
-    from polynomial import polyadd, polysub, polymulx
+    from numpy.polynomial.polynomial import polyadd, polysub, polymulx
 
     [c] = pu.as_series([c])
     n = len(c)
@@ -1736,5 +1735,8 @@ def hermeweight(x):
 #
 # HermiteE series class
 #
+# Code below this point is generated at build time from the template
+# in polytemplate.py and combined with _hermite_e.py (see setup.py in
+# this directory).
+#
 
-exec polytemplate.substitute(name='HermiteE', nick='herme', domain='[-1,1]')
