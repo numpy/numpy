@@ -1064,7 +1064,9 @@ array_subscript(PyArrayObject *self, PyObject *op)
             Py_DECREF(mit);
             return rval;
         }
-        PyArray_MapIterBind(mit, self);
+        if (PyArray_MapIterBind(mit, self) != 0) { 
+            return NULL;
+        }
         other = (PyArrayObject *)PyArray_GetMap(mit);
         Py_DECREF(mit);
         return (PyObject *)other;
@@ -1347,7 +1349,9 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
             Py_DECREF(mit);
             return rval;
         }
-        PyArray_MapIterBind(mit, self);
+        if (PyArray_MapIterBind(mit, self) != 0) {
+            return -1;
+        }
         ret = PyArray_SetMap(mit, op);
         Py_DECREF(mit);
         return ret;
@@ -1729,7 +1733,7 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
  * Let's do it at bind time and also convert all <0 values to >0 here
  * as well.
  */
-NPY_NO_EXPORT void
+NPY_NO_EXPORT int
 PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 {
     int subnd;
@@ -1743,12 +1747,12 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     if (subnd < 0) {
         PyErr_SetString(PyExc_IndexError,
                         "too many indices for array");
-        return;
+        goto fail;
     }
 
     mit->ait = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
     if (mit->ait == NULL) {
-        return;
+        goto fail;
     }
     /* no subspace iteration needed.  Finish up and Return */
     if (subnd == 0) {
@@ -1877,14 +1881,14 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
         }
         PyArray_ITER_RESET(it);
     }
-    return;
+    return 0;
 
  fail:
     Py_XDECREF(mit->subspace);
     Py_XDECREF(mit->ait);
     mit->subspace = NULL;
     mit->ait = NULL;
-    return;
+    return -1;
 }
 
 
@@ -2065,18 +2069,24 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
 {
     PyArrayMapIterObject * mit;
     int fancy = fancy_indexing_check(index);
-    int oned = 0;
-    if (fancy != SOBJ_NOTFANCY) {
 
-        oned = ((PyArray_NDIM(a) == 1) &&
-                !(PyTuple_Check(index) && PyTuple_GET_SIZE(index) > 1));
-    }
+    /*
+     * MapIterNew supports a special mode that allows more efficient 1-d iteration, 
+     * but clients that want to make use of this need to use a different API just 
+     * for the one-d cases. For the public interface this is confusing, so we
+     * unconditionally disable the 1-d optimized mode, and use the generic 
+     * implementation in all cases.
+     */
+    int oned = 0;
+
     mit = (PyArrayMapIterObject *) PyArray_MapIterNew(index, oned, fancy);
     if (mit == NULL) {
         return NULL;
     }
 
-    PyArray_MapIterBind(mit, a);
+    if (PyArray_MapIterBind(mit, a) != 0) {
+        return NULL;
+    }
     PyArray_MapIterReset(mit);
     return mit;
 }
