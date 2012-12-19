@@ -53,7 +53,7 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit);
 NPY_NO_EXPORT void
 PyArray_MapIterNext(PyArrayMapIterObject *mit);
 
-NPY_NO_EXPORT void
+NPY_NO_EXPORT int
 PyArray_MapIterBind(PyArrayMapIterObject *, PyArrayObject *);
 
 NPY_NO_EXPORT PyObject*
