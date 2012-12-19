@@ -922,6 +922,13 @@ def configuration(parent_package='',top_path=None):
                     sources = [join('src','umath', 'umath_tests.c.src')])
 
     #######################################################################
+    #                   custom rational dtype module                      #
+    #######################################################################
+
+    config.add_extension('rational',
+                    sources = [join('src','umath', 'rational.c.src')])
+
+    #######################################################################
     #                     multiarray_tests module                         #
     #######################################################################
 
