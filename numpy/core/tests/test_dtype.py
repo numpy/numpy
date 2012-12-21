@@ -60,7 +60,11 @@ class TestBuiltin(TestCase):
         assert_warns(DeprecationWarning, np.dtype, 'I5')
         assert_warns(DeprecationWarning, np.dtype, 'e3')
         assert_warns(DeprecationWarning, np.dtype, 'f5')
-        assert_warns(DeprecationWarning, np.dtype, 'g12')
+
+        if np.dtype('g').itemsize == 8 or np.dtype('g').itemsize == 16:
+            assert_warns(DeprecationWarning, np.dtype, 'g12')
+        elif np.dtype('g').itemsize == 12:
+            assert_warns(DeprecationWarning, np.dtype, 'g16')
 
         if np.dtype('l').itemsize == 8:
             assert_warns(DeprecationWarning, np.dtype, 'l4')

@@ -1116,19 +1116,9 @@ PyArray_TypestrConvert(int itemsize, int gentype)
      * This should eventually be changed to an error in
      * future NumPy versions.
      */
-    
-    if (newtype == NPY_NOTYPE)
-    {
-        printf("XXX: gentype=%c\n", gentype);
-    }
     if (newtype == NPY_NOTYPE) {
         temp = PyArray_DescrFromType(gentype);
-
-        if (gentype == 'g')
-            printf("XXX: temp=%x\n", temp);
         if (temp != NULL) {
-            if (gentype == 'g')
-                printf("XXX: elsize=%d itemsize=%d\n", temp->elsize, itemsize);
             if (temp->elsize != itemsize) {
                 if (DEPRECATE(msg) < 0) {
                     Py_DECREF(temp);
