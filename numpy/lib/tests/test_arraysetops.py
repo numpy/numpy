@@ -124,8 +124,9 @@ class TestSetOps(TestCase):
         # we use two different sizes for the b array here to test the
         # two different paths in in1d().
         for mult in (1, 10):
-            a = np.array([5, 7, 1, 2])
-            b = np.array([2, 4, 3, 1, 5] * mult)
+            # One check without np.array, to make sure lists are handled correct
+            a = [5, 7, 1, 2]
+            b = [2, 4, 3, 1, 5] * mult
             ec = np.array([True, False, True, True])
             c = in1d(a, b, assume_unique=True)
             assert_array_equal(c, ec)
@@ -187,6 +188,19 @@ class TestSetOps(TestCase):
         c = in1d(a, b)
 
         assert_array_equal(c, ec)
+
+    def test_in1d_ravel(self):
+        # Test that in1d ravels its input arrays. This is not documented
+        # behavior however. The test is to ensure consistentency.
+        a = np.arange(6).reshape(2,3)
+        b = np.arange(3,9).reshape(3,2)
+        long_b = np.arange(3, 63).reshape(30,2)
+        ec = np.array([False, False, False, True, True, True])
+
+        assert_array_equal(in1d(a, b, assume_unique=True), ec)
+        assert_array_equal(in1d(a, b, assume_unique=False), ec)
+        assert_array_equal(in1d(a, long_b, assume_unique=True), ec)
+        assert_array_equal(in1d(a, long_b, assume_unique=False), ec)
 
     def test_union1d( self ):
         a = np.array( [5, 4, 7, 1, 2] )
