@@ -47,13 +47,38 @@ class TestBuiltin(TestCase):
         self.assertTrue(hash(left) == hash(right))
 
     def test_invalid_types(self):
-        # Make sure invalid type strings raise exceptions
-        for typestr in ['O3', 'O5', 'O7', 'b3', 'h4', 'I5', 'l4', 'l8',
-                        'L4', 'L8', 'q8', 'q16', 'Q8', 'Q16', 'e3',
-                        'f5', 'd8', 't8', 'g12', 'g16',
-                        'NA[u4,0xffffffff]']:
-            #print typestr
-            assert_raises(TypeError, np.dtype, typestr)
+        # Make sure invalid type strings raise a warning.
+        # For now, display a deprecation warning for invalid 
+        # type sizes. In the future this should be changed 
+        # to an exception.
+
+        assert_warns(DeprecationWarning, np.dtype, 'O3')
+        assert_warns(DeprecationWarning, np.dtype, 'O5')
+        assert_warns(DeprecationWarning, np.dtype, 'O7')
+        assert_warns(DeprecationWarning, np.dtype, 'b3')
+        assert_warns(DeprecationWarning, np.dtype, 'h4')
+        assert_warns(DeprecationWarning, np.dtype, 'I5')
+        assert_warns(DeprecationWarning, np.dtype, 'e3')
+        assert_warns(DeprecationWarning, np.dtype, 'f5')
+
+        if np.dtype('g').itemsize == 8 or np.dtype('g').itemsize == 16:
+            assert_warns(DeprecationWarning, np.dtype, 'g12')
+        elif np.dtype('g').itemsize == 12:
+            assert_warns(DeprecationWarning, np.dtype, 'g16')
+
+        if np.dtype('l').itemsize == 8:
+            assert_warns(DeprecationWarning, np.dtype, 'l4')
+            assert_warns(DeprecationWarning, np.dtype, 'L4')
+        else:
+            assert_warns(DeprecationWarning, np.dtype, 'l8')
+            assert_warns(DeprecationWarning, np.dtype, 'L8')
+
+        if np.dtype('q').itemsize == 8:
+            assert_warns(DeprecationWarning, np.dtype, 'q4')
+            assert_warns(DeprecationWarning, np.dtype, 'Q4')
+        else:
+            assert_warns(DeprecationWarning, np.dtype, 'q8')
+            assert_warns(DeprecationWarning, np.dtype, 'Q8')
 
     def test_bad_param(self):
         # Can't give a size that's too small
