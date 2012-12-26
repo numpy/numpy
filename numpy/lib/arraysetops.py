@@ -324,6 +324,10 @@ def in1d(ar1, ar2, assume_unique=False):
     array([0, 2, 0])
 
     """
+    # Ravel both arrays, behavior for the first array could be different
+    ar1 = np.asarray(ar1).ravel()
+    ar2 = np.asarray(ar2).ravel()
+
     # This code is significantly faster when the condition is satisfied.
     if len(ar2) < 10 * len(ar1) ** 0.145:
         mask = np.zeros(len(ar1), dtype=np.bool)
