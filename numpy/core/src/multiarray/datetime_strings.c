@@ -24,7 +24,8 @@
 #include "_datetime.h"
 #include "datetime_strings.h"
 
-/* Platform-specific time_t typedef. Some platforms use 32 bit, some use 64 bit
+/*
+ * Platform-specific time_t typedef. Some platforms use 32 bit, some use 64 bit
  * and we just use the default with the exception of mingw, where we must use
  * 64 bit because MSVCRT version 9 does not have the (32 bit) localtime()
  * symbol, so we need to use the 64 bit version [1].
@@ -204,7 +205,8 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
     /* Make a copy of the input 'dts' to modify */
     *out_dts_local = *dts_utc;
 
-    /* For 32 bit NPY_TIME_T, the get_localtime() function does not work for
+    /*
+     * For 32 bit NPY_TIME_T, the get_localtime() function does not work for
      * years later than 2038, see the comments above get_localtime(). So if the
      * year >= 2038, we instead call get_localtime() for the year 2036 or 2037
      * (depending on the leap year) which must work and at the end we add the
@@ -274,7 +276,8 @@ convert_datetimestruct_local_to_utc(npy_datetimestruct *out_dts_utc,
     /* Make a copy of the input 'dts' to modify */
     *out_dts_utc = *dts_local;
 
-    /* For 32 bit NPY_TIME_T, the get_mktime()/get_gmtime() functions do not
+    /*
+     * For 32 bit NPY_TIME_T, the get_mktime()/get_gmtime() functions do not
      * work for years later than 2038. So if the year >= 2038, we instead call
      * get_mktime()/get_gmtime() for the year 2036 or 2037 (depending on the
      * leap year) which must work and at the end we add the 'year_correction'
