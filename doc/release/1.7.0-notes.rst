@@ -181,6 +181,33 @@ objects. For example the expression (3 and 'test') produces the string
 'test', and now np.logical_and(np.array(3, 'O'), np.array('test', 'O'))
 produces 'test' as well.
 
+The ``.base`` attribute on ndarrays, which is used on views to ensure that the
+underlying array owning the memory is not deallocated prematurely, now
+collapses out references when you have a view-of-a-view. For example::
+
+    a = np.arange(10)
+    b = a[1:]
+    c = b[1:]
+
+In numpy 1.6, ``c.base`` is ``b``, and ``c.base.base`` is ``a``. In numpy 1.7,
+``c.base`` is ``a``.
+
+To increase backwards compatibility for software which relies on the old
+behaviour of ``.base``, we only 'skip over' objects which have exactly the same
+type as the newly created view. This makes a difference if you use ``ndarray``
+subclasses. For example, if we have a mix of ``ndarray`` and ``matrix`` objects
+which are all views on the same original ``ndarray``::
+
+    a = np.arange(10)
+    b = np.asmatrix(a)
+    c = b[0, 1:]
+    d = c[0, 1:]
+
+then ``d.base`` will be ``b``. This is because ``d`` is a ``matrix`` object,
+and so the collapsing process only continues so long as it encounters other
+``matrix`` objects. It considers ``c``, ``b``, and ``a`` in that order, and
+``b`` is the last entry in that list which is a ``matrix`` object.
+
 
 Deprecations
 ============
