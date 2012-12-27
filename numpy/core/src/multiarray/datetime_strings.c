@@ -189,7 +189,7 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
      * we drop the seconds value from the npy_datetimestruct, everything
      * is ok for this operation.
      */
-    rawtime = (time_t)get_datetimestruct_days(out_dts_local) * 24 * 60 * 60;
+    rawtime = (NPY_TIME_T)get_datetimestruct_days(out_dts_local) * 24 * 60 * 60;
     rawtime += dts_utc->hour * 60 * 60;
     rawtime += dts_utc->min * 60;
 
@@ -207,7 +207,7 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
 
     /* Extract the timezone offset that was applied */
     rawtime /= 60;
-    localrawtime = (time_t)get_datetimestruct_days(out_dts_local) * 24 * 60;
+    localrawtime = (NPY_TIME_T)get_datetimestruct_days(out_dts_local) * 24 * 60;
     localrawtime += out_dts_local->hour * 60;
     localrawtime += out_dts_local->min;
 
