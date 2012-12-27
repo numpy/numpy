@@ -24,7 +24,14 @@
 #include "_datetime.h"
 #include "datetime_strings.h"
 
-/* Platform-specific time_t typedef */
+/*
+ * Platform-specific time_t typedef. Some platforms use 32 bit, some use 64 bit
+ * and we just use the default with the exception of mingw, where we must use
+ * 64 bit because MSVCRT version 9 does not have the (32 bit) localtime()
+ * symbol, so we need to use the 64 bit version [1].
+ *
+ * [1] http://thread.gmane.org/gmane.comp.gnu.mingw.user/27011
+ */
 #if defined(NPY_MINGW_USE_CUSTOM_MSVCR)
  typedef __time64_t NPY_TIME_T;
 #else
@@ -34,8 +41,35 @@
 /*
  * Wraps `localtime` functionality for multiple platforms. This
  * converts a time value to a time structure in the local timezone.
+ * If size(NPY_TIME_T) == 4, then years must be between 1970 and 2038. If
+ * size(NPY_TIME_T) == 8, then years must be later than 1970. If the years are
+ * not in this range, then get_localtime() will fail on some platforms.
  *
  * Returns 0 on success, -1 on failure.
+ *
+ * Notes:
+ * 1) If NPY_TIME_T is 32 bit (i.e. sizeof(NPY_TIME_T) == 4), then the
+ *    maximum year it can represent is 2038 (see [1] for more details). Trying
+ *    to use a higher date like 2041 in the 32 bit "ts" variable below will
+ *    typically result in "ts" being a negative number (corresponding roughly
+ *    to a year ~ 1905). If NPY_TIME_T is 64 bit, then there is no such
+ *    problem in practice.
+ * 2) If the "ts" argument to localtime() is negative, it represents
+ *    years < 1970 both for 32 and 64 bits (for 32 bits the earliest year it can
+ *    represent is 1901, while 64 bits can represent much earlier years).
+ * 3) On Linux, localtime() works for negative "ts". On Windows and in Wine,
+ *    localtime() as well as the localtime_s() and _localtime64_s() functions
+ *    will fail for any negative "ts" and return a nonzero exit number
+ *    (localtime_s, _localtime64_s) or NULL (localtime). This behavior is the
+ *    same for both 32 and 64 bits.
+ *
+ * From this it follows that get_localtime() is only guaranteed to work
+ * correctly on all platforms for years between 1970 and 2038 for 32bit
+ * NPY_TIME_T and years higher than 1970 for 64bit NPY_TIME_T. For
+ * multiplatform code, get_localtime() should never be used outside of this
+ * range.
+ *
+ * [1] http://en.wikipedia.org/wiki/Year_2038_problem
  */
 static int
 get_localtime(NPY_TIME_T *ts, struct tm *tms)
@@ -154,7 +188,9 @@ fail:
 
 /*
  * Converts a datetimestruct in UTC to a datetimestruct in local time,
- * also returning the timezone offset applied.
+ * also returning the timezone offset applied. This function works for any year
+ * > 1970 on all platforms and both 32 and 64 bits. If the year < 1970, then it
+ * will fail on some platforms.
  *
  * Returns 0 on success, -1 on failure.
  */
@@ -169,17 +205,23 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
     /* Make a copy of the input 'dts' to modify */
     *out_dts_local = *dts_utc;
 
-    /* HACK: Use a year < 2038 for later years for small time_t */
+    /*
+     * For 32 bit NPY_TIME_T, the get_localtime() function does not work for
+     * years later than 2038, see the comments above get_localtime(). So if the
+     * year >= 2038, we instead call get_localtime() for the year 2036 or 2037
+     * (depending on the leap year) which must work and at the end we add the
+     * 'year_correction' back.
+     */
     if (sizeof(NPY_TIME_T) == 4 && out_dts_local->year >= 2038) {
         if (is_leapyear(out_dts_local->year)) {
             /* 2036 is a leap year */
             year_correction = out_dts_local->year - 2036;
-            out_dts_local->year -= year_correction;
+            out_dts_local->year -= year_correction; /* = 2036 */
         }
         else {
             /* 2037 is not a leap year */
             year_correction = out_dts_local->year - 2037;
-            out_dts_local->year -= year_correction;
+            out_dts_local->year -= year_correction; /* = 2037 */
         }
     }
 
@@ -195,6 +237,7 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
 
     /* localtime converts a 'time_t' into a local 'struct tm' */
     if (get_localtime(&rawtime, &tm_) < 0) {
+        /* This should only fail if year < 1970 on some platforms. */
         return -1;
     }
 
@@ -213,7 +256,7 @@ convert_datetimestruct_utc_to_local(npy_datetimestruct *out_dts_local,
 
     *out_timezone_offset = localrawtime - rawtime;
 
-    /* Reapply the year 2038 year correction HACK */
+    /* Reapply the year 2038 year correction */
     out_dts_local->year += year_correction;
 
     return 0;
@@ -233,17 +276,23 @@ convert_datetimestruct_local_to_utc(npy_datetimestruct *out_dts_utc,
     /* Make a copy of the input 'dts' to modify */
     *out_dts_utc = *dts_local;
 
-    /* HACK: Use a year < 2038 for later years for small time_t */
+    /*
+     * For 32 bit NPY_TIME_T, the get_mktime()/get_gmtime() functions do not
+     * work for years later than 2038. So if the year >= 2038, we instead call
+     * get_mktime()/get_gmtime() for the year 2036 or 2037 (depending on the
+     * leap year) which must work and at the end we add the 'year_correction'
+     * back.
+     */
     if (sizeof(NPY_TIME_T) == 4 && out_dts_utc->year >= 2038) {
         if (is_leapyear(out_dts_utc->year)) {
             /* 2036 is a leap year */
             year_correction = out_dts_utc->year - 2036;
-            out_dts_utc->year -= year_correction;
+            out_dts_utc->year -= year_correction; /* = 2036 */
         }
         else {
             /* 2037 is not a leap year */
             year_correction = out_dts_utc->year - 2037;
-            out_dts_utc->year -= year_correction;
+            out_dts_utc->year -= year_correction; /* = 2037 */
         }
     }
 
@@ -286,7 +335,7 @@ convert_datetimestruct_local_to_utc(npy_datetimestruct *out_dts_utc,
         out_dts_utc->year = tm_.tm_year + 1900;
     }
 
-    /* Reapply the year 2038 year correction HACK */
+    /* Reapply the year 2038 year correction */
     out_dts_utc->year += year_correction;
 
     return 0;
@@ -1053,7 +1102,8 @@ make_iso_8601_datetime(npy_datetimestruct *dts, char *outstr, int outlen,
     /*
      * Only do local time within a reasonable year range. The years
      * earlier than 1970 are not made local, because the Windows API
-     * raises an error when they are attempted. For consistency, this
+     * raises an error when they are attempted (see the comments above the
+     * get_localtime() function). For consistency, this
      * restriction is applied to all platforms.
      *
      * Note that this only affects how the datetime becomes a string.
