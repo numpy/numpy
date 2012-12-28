@@ -443,6 +443,11 @@ class TestString(TestCase):
         # Pull request #376
         dt = np.dtype('(1L,)i4')
 
+    def test_base_dtype_with_object_type(self):
+        # Issue #2798
+        # ValueError: low level cast function is for unequal type numbers
+        a = np.array(['a'], dtype='O').astype(('O', [('name', 'O')]))
+
 
 class TestDtypeAttributeDeletion(object):
 
