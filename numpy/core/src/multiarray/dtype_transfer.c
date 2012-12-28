@@ -1475,14 +1475,6 @@ get_cast_transfer_function(int aligned,
     npy_intp src_itemsize = src_dtype->elsize,
             dst_itemsize = dst_dtype->elsize;
 
-    if (src_dtype->type_num == dst_dtype->type_num &&
-            src_dtype->type_num != NPY_DATETIME &&
-            src_dtype->type_num != NPY_TIMEDELTA) {
-        PyErr_SetString(PyExc_ValueError,
-                "low level cast function is for unequal type numbers");
-        return NPY_FAIL;
-    }
-
     if (get_nbo_cast_transfer_function(aligned,
                             src_stride, dst_stride,
                             src_dtype, dst_dtype,
