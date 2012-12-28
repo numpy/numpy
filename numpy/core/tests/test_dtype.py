@@ -443,6 +443,9 @@ class TestString(TestCase):
         # Pull request #376
         dt = np.dtype('(1L,)i4')
 
+    def test_base_dtype_with_object_type(self):
+        # Issue gh-2798
+        a = np.array(['a'], dtype="O").astype(("O", [("name", "O")]))
 
 class TestDtypeAttributeDeletion(object):
 
