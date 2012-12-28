@@ -10,4 +10,4 @@
 # PyArray_CountNonzero, PyArray_NewLikeArray and PyArray_MatrixProduct2.
 0x00000006 = e61d5dc51fa1c6459328266e215d6987
 # Version 7 (NumPy 1.7) improved datetime64, misc utilities.
-0x00000007 = e396ba3912dcf052eaee1b0b203a7724
+0x00000007 = 89a262ae563c2600955fb468ee4e02c7
