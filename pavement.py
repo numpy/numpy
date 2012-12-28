@@ -138,6 +138,7 @@ MPKG_PYTHON = {
         "2.7": ["/Library/Frameworks/Python.framework/Versions/2.7/bin/python"],
         "3.1": ["/Library/Frameworks/Python.framework/Versions/3.1/bin/python3"],
         "3.2": ["/Library/Frameworks/Python.framework/Versions/3.2/bin/python3"],
+        "3.3": ["/Library/Frameworks/Python.framework/Versions/3.3/bin/python3"],
 }
 
 SSE3_CFG = {'ATLAS': r'C:\local\lib\atlas\sse3'}
@@ -148,6 +149,7 @@ SITECFG = {"sse2" : SSE2_CFG, "sse3" : SSE3_CFG, "nosse" : NOSSE_CFG}
 
 if sys.platform =="darwin":
     WINDOWS_PYTHON = {
+        "3.3": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python33/python.exe"],
         "3.2": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python32/python.exe"],
         "3.1": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python31/python.exe"],
         "2.7": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python27/python.exe"],
@@ -159,6 +161,7 @@ if sys.platform =="darwin":
     MAKENSIS = ["wine", "makensis"]
 elif sys.platform == "win32":
     WINDOWS_PYTHON = {
+        "3.3": ["C:\Python33\python.exe"],
         "3.2": ["C:\Python32\python.exe"],
         "3.1": ["C:\Python31\python.exe"],
         "2.7": ["C:\Python27\python.exe"],
@@ -171,6 +174,7 @@ elif sys.platform == "win32":
     MAKENSIS = ["makensis"]
 else:
     WINDOWS_PYTHON = {
+        "3.3": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python33/python.exe"],
         "3.2": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python32/python.exe"],
         "3.1": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python31/python.exe"],
         "2.7": ["wine", os.environ['HOME'] + "/.wine/drive_c/Python27/python.exe"],
