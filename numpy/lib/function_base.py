@@ -3711,9 +3711,15 @@ def deg2dms(x, out=None):
     if out is None:
         out = np.empty(x.shape + (3, ), dtype=np.double)
 
-    out[..., 0] = np.floor(x)
-    out[..., 1] = np.floor((x - out[..., 0]) * 60)
-    out[..., 2] = ((x - out[..., 0]) * 60 - out[..., 1]) * 60
+    xabs = np.abs(x)
+    out[..., 0] = np.floor(xabs)
+    xabs = (xabs - out[..., 0]) * 60
+    out[..., 1] = np.floor(xabs)
+    out[..., 2] = (xabs - out[..., 1]) * 60
+
+    sign = np.sign(x)
+    for i in range(3):
+        out[..., i] *= sign
 
     return out
 
@@ -3739,8 +3745,11 @@ def dms2deg(x, out=None):
     x = np.asarray(x)
 
     if out is None:
-        out = np.empty(x.shape[:-1], dtype=np.double)
+        out = np.atleast_1d(np.empty(x.shape[:-1], dtype=np.double))
 
-    out[:] = x[..., 0] + x[..., 1] / 60 + x[..., 2] / 3600
+    out[:] = x[..., 0] + x[..., 1] / 60. + x[..., 2] / 3600.
+
+    if x.ndim == 1:
+        return out[0]
 
     return out
