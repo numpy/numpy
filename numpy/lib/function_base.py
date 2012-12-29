@@ -7,7 +7,7 @@ __all__ = ['select', 'piecewise', 'trim_zeros', 'copy', 'iterable',
            'corrcoef', 'msort', 'median', 'sinc', 'hamming', 'hanning',
            'bartlett', 'blackman', 'kaiser', 'trapz', 'i0', 'add_newdoc',
            'add_docstring', 'meshgrid', 'delete', 'insert', 'append', 'interp',
-           'add_newdoc_ufunc']
+           'add_newdoc_ufunc', 'deg2dms', 'dms2deg']
 
 import warnings
 import types
@@ -1732,9 +1732,9 @@ class vectorize(object):
         Set of strings or integers representing the positional or keyword
         arguments for which the function will not be vectorized.  These will be
         passed directly to `pyfunc` unmodified.
-        
+
         .. versionadded:: 1.7.0
-    
+
     cache : bool, optional
        If `True`, then cache the first function call that determines the number
        of outputs if `otypes` is not provided.
@@ -1861,7 +1861,7 @@ class vectorize(object):
             the_args = list(args)
             def func(*vargs):
                 for _n, _i in enumerate(inds):
-                    the_args[_i] = vargs[_n] 
+                    the_args[_i] = vargs[_n]
                 kwargs.update(zip(names, vargs[len(inds):]))
                 return self.pyfunc(*the_args, **kwargs)
 
@@ -1922,7 +1922,7 @@ class vectorize(object):
             ufunc = frompyfunc(_func, len(args), nout)
 
         return ufunc, otypes
-        
+
     def _vectorize_call(self, func, args):
         """Vectorized call to `func` over positional `args`."""
         if not args:
@@ -1931,8 +1931,8 @@ class vectorize(object):
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
 
             # Convert args to object arrays first
-            inputs = [array(_a, copy=False, subok=True, dtype=object) 
-                      for _a in args]            
+            inputs = [array(_a, copy=False, subok=True, dtype=object)
+                      for _a in args]
 
             outputs = ufunc(*inputs)
 
@@ -3686,3 +3686,61 @@ def append(arr, values, axis=None):
         values = ravel(values)
         axis = arr.ndim-1
     return concatenate((arr, values), axis=axis)
+
+def deg2dms(x, out=None):
+    """
+    Convert angles in degrees to degrees, minutes and seconds.
+
+    Parameters
+    ----------
+    x : array_like
+        Input array.
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and it
+        must be of the right shape to hold the output.
+
+    Returns
+    -------
+    out : (..., 3) ndarray
+        Angles as `(deg, min, sec)` as last dimension.
+
+    """
+
+    x = np.asarray(x)
+
+    if out is None:
+        out = np.empty(x.shape + (3, ), dtype=np.double)
+
+    out[..., 0] = np.floor(x)
+    out[..., 1] = np.floor((x - out[..., 0]) * 60)
+    out[..., 2] = ((x - out[..., 0]) * 60 - out[..., 1]) * 60
+
+    return out
+
+def dms2deg(x, out=None):
+    """
+    Convert angles in degrees, minutes and seconds to degrees.
+
+    Parameters
+    ----------
+    x : (..., 3) array_like
+        Input array as `(deg, min, sec)` as last dimension.
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and it
+        must be of the right shape to hold the output.
+
+    Returns
+    -------
+    out : ndarray
+        Angles as `(deg, min, sec)`.
+
+    """
+
+    x = np.asarray(x)
+
+    if out is None:
+        out = np.empty(x.shape[:-1], dtype=np.double)
+
+    out[:] = x[..., 0] + x[..., 1] / 60 + x[..., 2] / 3600
+
+    return out
