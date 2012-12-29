@@ -933,6 +933,7 @@ add_newdoc('numpy.core.umath', 'wrap_to_pi',
     See Also
     --------
     wrap_to_2pi : Wrap angles to interval `[0, 2*PI]`.
+    unwrap : Remove large jumps in angle by wrapping.
 
     Examples
     --------
@@ -961,6 +962,7 @@ add_newdoc('numpy.core.umath', 'wrap_to_2pi',
     See Also
     --------
     wrap_to_pi : Wrap angles to interval `[-PI, PI]`.
+    unwrap : Remove large jumps in angle by wrapping.
 
     Examples
     --------
