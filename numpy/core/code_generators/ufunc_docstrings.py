@@ -915,7 +915,7 @@ add_newdoc('numpy.core.umath', 'rad2deg',
 
 add_newdoc('numpy.core.umath', 'wrap_to_pi',
     """
-    Wrap angles to interval `[-PI, PI]`wrap_to_pi.
+    Wrap angles to interval `[-PI, PI]`.
 
     Parameters
     ----------
@@ -938,7 +938,7 @@ add_newdoc('numpy.core.umath', 'wrap_to_pi',
     Examples
     --------
     >>> np.wrap_to_pi(np.pi + 1)
-    1
+    -2.1415926535897931
 
     """)
 
@@ -967,7 +967,7 @@ add_newdoc('numpy.core.umath', 'wrap_to_2pi',
     Examples
     --------
     >>> np.wrap_to_2pi(2 * np.pi + 1)
-    1
+    1.0
 
     """)
 
