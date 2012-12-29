@@ -928,7 +928,7 @@ add_newdoc('numpy.core.umath', 'wrap_to_pi',
     Returns
     -------
     y : ndarray
-        The wrapped angle
+        The wrapped angle.
 
     See Also
     --------
@@ -943,7 +943,7 @@ add_newdoc('numpy.core.umath', 'wrap_to_pi',
 
 add_newdoc('numpy.core.umath', 'wrap_to_2pi',
     """
-    Wrap angles to interval `[0, 2*PI]`wrap_to_pi.
+    Wrap angles to interval `[0, 2*PI]`.
 
     Parameters
     ----------
@@ -956,7 +956,7 @@ add_newdoc('numpy.core.umath', 'wrap_to_2pi',
     Returns
     -------
     y : ndarray
-        The wrapped angle
+        The wrapped angle.
 
     See Also
     --------
