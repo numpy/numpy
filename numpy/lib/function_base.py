@@ -3709,6 +3709,15 @@ def deg2dms(x, out=None):
     deg2rad : Convert angles from degrees to radians.
     rad2deg : Convert angles from radians to degrees.
 
+    Examples
+    --------
+    >>> np.deg2dms(48.5)
+    array([ 48.,  30.,   0.])
+    >>> np.deg2dms(-48.5)
+    array([-48., -30.,  -0.])
+    >>> np.dms2deg(np.deg2dms(-48.5))
+    -48.5
+
     """
 
     x = np.asarray(x)
@@ -3749,6 +3758,15 @@ def dms2deg(x, out=None):
     --------
     deg2rad : Convert angles from degrees to radians.
     rad2deg : Convert angles from radians to degrees.
+
+    Examples
+    --------
+    >>> np.dms2deg([48, 30, 0])
+    48.5
+    >>> np.dms2deg([-48, -30, 0])
+    -48.5
+    >>> np.deg2dms(np.dms2deg([-48, -30, 0]))
+    array([-48., -30.,  -0.])
 
     """
 
