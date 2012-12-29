@@ -529,7 +529,7 @@ class TestVectorize(TestCase):
         res2a = f2(np.arange(3))
         assert_equal(res1a, res2a)
         assert_equal(res1b, res2b)
-        
+
     def test_string_ticket_1892(self):
         """Test vectorization over strings: issue 1892."""
         f = np.vectorize(lambda x:x)
@@ -1426,6 +1426,18 @@ class TestAdd_newdoc_ufunc(TestCase):
         assert_raises(TypeError, add_newdoc_ufunc, np.add, 3)
 
 
+def test_deg2dms():
+    assert_almost_equal(deg2dms(12 + 30 / 60.), [12, 30, 0])
+    assert_almost_equal(deg2dms(12 + 30 / 60.  + 30 / 3600.), [12, 30, 30])
+    assert_almost_equal(deg2dms(-12 - 30 / 60.  - 30 / 3600.), [-12, -30, -30])
+    assert_almost_equal(dms2deg(deg2dms(12.123)), 12.123)
+
+
+def test_dms2deg():
+    assert_almost_equal(dms2deg([12, 30, 0]), 12 + 30 / 60.)
+    assert_almost_equal(dms2deg([12, 30, 30]), 12 + 30 / 60.  + 30 / 3600.)
+    assert_almost_equal(dms2deg([-12, -30, -30]), -12 - 30 / 60.  - 30 / 3600.)
+    assert_almost_equal(deg2dms(dms2deg([12, 1, 2])), [12, 1, 2])
 
 
 if __name__ == "__main__":
