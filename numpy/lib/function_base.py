@@ -3699,15 +3699,15 @@ def deg2dms(x, out=None):
         Array into which the output is placed. Its type is preserved and it
         must be of the right shape to hold the output.
 
-    See also
-    --------
-    deg2rad : Convert angles from degrees to radians.
-    rad2deg : Convert angles from radians to degrees.
-
     Returns
     -------
     out : (..., 3) ndarray
         Angles as `(deg, min, sec)` as last dimension.
+
+    See also
+    --------
+    deg2rad : Convert angles from degrees to radians.
+    rad2deg : Convert angles from radians to degrees.
 
     """
 
@@ -3740,15 +3740,15 @@ def dms2deg(x, out=None):
         Array into which the output is placed. Its type is preserved and it
         must be of the right shape to hold the output.
 
-    See also
-    --------
-    deg2rad : Convert angles from degrees to radians.
-    rad2deg : Convert angles from radians to degrees.
-
     Returns
     -------
     out : ndarray
         Angles as `(deg, min, sec)`.
+
+    See also
+    --------
+    deg2rad : Convert angles from degrees to radians.
+    rad2deg : Convert angles from radians to degrees.
 
     """
 
