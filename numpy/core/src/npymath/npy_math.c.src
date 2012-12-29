@@ -454,10 +454,11 @@ double npy_log2(double x)
 @type@ npy_wrap_to_2pi@c@(@type@ x)
 {
     char positive = x > 0;
-    int n = (int)(x / NPY_2PI);
-    x -= n * NPY_2PI;
+    x = fmod(x, NPY_2PI);
     if (positive && x == 0)
         return NPY_2PI;
+    else if (x < 0)
+        return x + NPY_2PI;
     else
         return x;
 }
