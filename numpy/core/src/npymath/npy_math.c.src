@@ -427,6 +427,7 @@ double npy_log2(double x)
  * #C = F, ,L#
  */
 
+#define NPY_2PI  (2.0@c@*NPY_PI@c@)
 #define LOGE2    NPY_LOGE2@c@
 #define LOG2E    NPY_LOG2E@c@
 #define RAD2DEG  (180.0@c@/NPY_PI@c@)
@@ -440,6 +441,25 @@ double npy_log2(double x)
 @type@ npy_deg2rad@c@(@type@ x)
 {
     return x*DEG2RAD;
+}
+
+@type@ npy_wrap_to_pi@c@(@type@ x)
+{
+    if (x < -NPY_PI || x > NPY_PI)
+        return npy_wrap_to_2pi(x + NPY_PI) - NPY_PI;
+    else
+        return x;
+}
+
+@type@ npy_wrap_to_2pi@c@(@type@ x)
+{
+    char positive = x > 0;
+    int n = (int)(x / NPY_2PI);
+    x -= n * NPY_2PI;
+    if (positive && x == 0)
+        return NPY_2PI;
+    else
+        return x;
 }
 
 @type@ npy_log2_1p@c@(@type@ x)
@@ -482,6 +502,7 @@ double npy_log2(double x)
     }
 }
 
+#undef NPY_2PI
 #undef LOGE2
 #undef LOG2E
 #undef RAD2DEG

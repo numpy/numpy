@@ -527,6 +527,8 @@ The ratio of degrees to radians is :math:`180^{\circ}/\pi.`
     arctanh
     deg2rad
     rad2deg
+    wrap_to_pi
+    wrap_to_2pi
 
 Bit-twiddling functions
 -----------------------

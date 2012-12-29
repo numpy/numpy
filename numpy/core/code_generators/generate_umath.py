@@ -536,6 +536,18 @@ defdict = {
           None,
           TD(fltsP, f='rad2deg', astype={'e':'f'}),
           ),
+'wrap_to_pi' :
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath.wrap_to_pi'),
+          None,
+          TD(fltsP, f='wrap_to_pi', astype={'e':'f'}),
+          ),
+'wrap_to_2pi' :
+    Ufunc(1, 1, None,
+          docstrings.get('numpy.core.umath.wrap_to_2pi'),
+          None,
+          TD(fltsP, f='wrap_to_2pi', astype={'e':'f'}),
+          ),
 'radians' :
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.radians'),

@@ -21,6 +21,8 @@ Trigonometric functions
    unwrap
    deg2rad
    rad2deg
+   wrap_to_pi
+   wrap_to_2pi
 
 Hyperbolic functions
 --------------------

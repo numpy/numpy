@@ -913,6 +913,62 @@ add_newdoc('numpy.core.umath', 'rad2deg',
 
     """)
 
+add_newdoc('numpy.core.umath', 'wrap_to_pi',
+    """
+    Wrap angles to interval `[-PI, PI]`wrap_to_pi.
+
+    Parameters
+    ----------
+    x : array_like
+        Angle in radians.
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and it
+        must be of the right shape to hold the output. See doc.ufuncs.
+
+    Returns
+    -------
+    y : ndarray
+        The wrapped angle
+
+    See Also
+    --------
+    wrap_to_2pi : Wrap angles to interval `[0, 2*PI]`.
+
+    Examples
+    --------
+    >>> np.wrap_to_pi(np.pi + 1)
+    1
+
+    """)
+
+add_newdoc('numpy.core.umath', 'wrap_to_2pi',
+    """
+    Wrap angles to interval `[0, 2*PI]`wrap_to_pi.
+
+    Parameters
+    ----------
+    x : array_like
+        Angle in radians.
+    out : ndarray, optional
+        Array into which the output is placed. Its type is preserved and it
+        must be of the right shape to hold the output. See doc.ufuncs.
+
+    Returns
+    -------
+    y : ndarray
+        The wrapped angle
+
+    See Also
+    --------
+    wrap_to_pi : Wrap angles to interval `[-PI, PI]`.
+
+    Examples
+    --------
+    >>> np.wrap_to_2pi(2 * np.pi + 1)
+    1
+
+    """)
+
 add_newdoc('numpy.core.umath', 'divide',
     """
     Divide arguments element-wise.
