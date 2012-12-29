@@ -861,6 +861,8 @@ add_newdoc('numpy.core.umath', 'degrees',
     See Also
     --------
     rad2deg : equivalent function
+    deg2dms : Convert angles in degrees to degrees, minutes and seconds.
+    dms2deg : Convert angles in degrees, minutes and seconds to degrees.
 
     Examples
     --------
@@ -899,6 +901,8 @@ add_newdoc('numpy.core.umath', 'rad2deg',
     --------
     deg2rad : Convert angles from degrees to radians.
     unwrap : Remove large jumps in angle by wrapping.
+    deg2dms : Convert angles in degrees to degrees, minutes and seconds.
+    dms2deg : Convert angles in degrees, minutes and seconds to degrees.
 
     Notes
     -----
