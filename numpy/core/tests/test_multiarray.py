@@ -2407,6 +2407,21 @@ class TestIO(object):
         f.close()
         assert_array_equal(y, self.x.flat)
 
+    @np.testing.dec.slow
+    def test_roundtrip_filename_large_x(self):
+        '''
+        Test if roundtrip works for a large array
+        Issue #2806
+        '''
+        x = np.random.randn(300000000)
+
+        x.tofile(self.filename)
+        y = np.fromfile(self.filename)
+        assert_array_equal(y, x.flat)
+
+        os.unlink(self.filename)
+
+
     def test_roundtrip_filename(self):
         self.x.tofile(self.filename)
         y = np.fromfile(self.filename, dtype=self.dtype)
