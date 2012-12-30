@@ -18401,7 +18401,7 @@ name "dtype!construction!from list"
 (array description interface): This style is more fully described at 
 \begin_inset LatexCommand url
 name "this site"
-target "http://numpy.scipy.org/array_interface.html"
+target "http://docs.scipy.org/doc/numpy/reference/arrays.interface.html"
 
 \end_inset
 
