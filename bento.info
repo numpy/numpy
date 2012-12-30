@@ -1,7 +1,7 @@
 Name: numpy
 Version: 2.0.0
 Summary: NumPy: array processing for numbers, strings, records, and objects.
-Url: http://numpy.scipy.org
+Url: http://www.numpy.org
 DownloadUrl: http://sourceforge.net/project/showfiles.php?group_id=1369&package_id=175103
 Description:
     NumPy is a general-purpose array-processing package designed to

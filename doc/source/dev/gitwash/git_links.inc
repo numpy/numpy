@@ -80,6 +80,6 @@
 
 .. other stuff
 .. _python: http://www.python.org
-.. _NumPy: http://numpy.scipy.org
+.. _NumPy: http://www.numpy.org
 .. _`NumPy github`: http://github.com/numpy/numpy
 .. _`NumPy mailing list`: http://scipy.org/Mailing_Lists
