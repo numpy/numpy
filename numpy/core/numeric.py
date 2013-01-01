@@ -40,7 +40,9 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'Inf', 'inf', 'infty', 'Infinity',
            'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
            'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
-           'ComplexWarning', 'may_share_memory']
+           'ComplexWarning', 'may_share_memory',
+           'nans', 'nans_like', 'infs', 'infs_like']
+
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -221,6 +223,142 @@ def ones_like(a, dtype=None, order='K', subok=True):
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok)
     multiarray.copyto(res, 1, casting='unsafe')
+    return res
+
+def _check_dtype_nan(dtype):
+    if not issubdtype(dtype, 'float'):
+        raise ValueError('Invalid dtype because only floating point numbers '
+                         'can represent non-numbers as defined in '
+                         'IEEE 754-1985.')
+
+def nans(shape, dtype=None, order='C'):
+    """
+    Return a new array of given shape and type, filled with nans.
+
+    Please refer to the documentation for `zeros` for further details.
+
+    See Also
+    --------
+    zeros_like : Return an array of zeros with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    empty_like : Return an empty array with shape and type of input.
+    nans_like : Return an array of nans with shape and type of input.
+    zeros : Return a new array setting values to zero.
+    ones : Return a new array setting values to one.
+    empty : Return a new uninitialized array.
+
+    """
+
+    _check_dtype_nan(dtype)
+    a = empty(shape, dtype, order)
+    multiarray.copyto(a, nan, casting='unsafe')
+    return a
+
+def nans_like(a, dtype=None, order='K', subok=True):
+    """
+    Return an array of nans with the same shape and type as a given array.
+
+    With default parameters, is equivalent to ``a.copy().fill(np.nan)``.
+
+    Parameters
+    ----------
+    a : array_like
+        The shape and data-type of `a` define these same attributes of
+        the returned array.
+    dtype : data-type, optional
+        Overrides the data type of the result.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Overrides the memory layout of the result. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' means match the layout of `a` as closely
+        as possible.
+
+    Returns
+    -------
+    out : ndarray
+        Array of nans with the same shape and type as `a`.
+
+    See Also
+    --------
+    zeros_like : Return an array of zeros with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    empty_like : Return an empty array with shape and type of input.
+    zeros : Return a new array setting values to zero.
+    ones : Return a new array setting values to one.
+    empty : Return a new uninitialized array.
+    nans : Return a new array setting values to nan.
+
+    """
+
+    _check_dtype_nan(dtype)
+    res = empty_like(a, dtype=dtype, order=order, subok=subok)
+    multiarray.copyto(res, nan, casting='unsafe')
+    return res
+
+def infs(shape, dtype=None, order='C'):
+    """
+    Return a new array of given shape and type, filled with infs.
+
+    Please refer to the documentation for `zeros` for further details.
+
+    See Also
+    --------
+    zeros_like : Return an array of zeros with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    empty_like : Return an empty array with shape and type of input.
+    nans_like : Return an array of nans with shape and type of input.
+    infs_like : Return an array of infs with shape and type of input.
+    zeros : Return a new array setting values to zero.
+    ones : Return a new array setting values to one.
+    empty : Return a new uninitialized array.
+
+    """
+
+    _check_dtype_nan(dtype)
+    a = empty(shape, dtype, order)
+    multiarray.copyto(a, inf, casting='unsafe')
+    return a
+
+def infs_like(a, dtype=None, order='K', subok=True):
+    """
+    Return an array of infs with the same shape and type as a given array.
+
+    With default parameters, is equivalent to ``a.copy().fill(np.inf)``.
+
+    Parameters
+    ----------
+    a : array_like
+        The shape and data-type of `a` define these same attributes of
+        the returned array.
+    dtype : data-type, optional
+        Overrides the data type of the result.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Overrides the memory layout of the result. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' means match the layout of `a` as closely
+        as possible.
+
+    Returns
+    -------
+    out : ndarray
+        Array of infs with the same shape and type as `a`.
+
+    See Also
+    --------
+    zeros_like : Return an array of zeros with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    empty_like : Return an empty array with shape and type of input.
+    zeros : Return a new array setting values to zero.
+    ones : Return a new array setting values to one.
+    empty : Return a new uninitialized array.
+    nans : Return a new array setting values to nan.
+    infs : Return a new array setting values to infs.
+
+    """
+
+    _check_dtype_nan(dtype)
+    res = empty_like(a, dtype=dtype, order=order, subok=subok)
+    multiarray.copyto(res, inf, casting='unsafe')
     return res
 
 
