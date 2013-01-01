@@ -243,9 +243,11 @@ def nans(shape, dtype=None, order='C'):
     ones_like : Return an array of ones with shape and type of input.
     empty_like : Return an empty array with shape and type of input.
     nans_like : Return an array of nans with shape and type of input.
+    infs_like : Return an array of infs with shape and type of input.
     zeros : Return a new array setting values to zero.
     ones : Return a new array setting values to one.
     empty : Return a new uninitialized array.
+    infs : Return a new array setting values to inf.
 
     """
 
@@ -283,10 +285,12 @@ def nans_like(a, dtype=None, order='K', subok=True):
     zeros_like : Return an array of zeros with shape and type of input.
     ones_like : Return an array of ones with shape and type of input.
     empty_like : Return an empty array with shape and type of input.
+    infs_like : Return an array of infs with shape and type of input.
     zeros : Return a new array setting values to zero.
     ones : Return a new array setting values to one.
     empty : Return a new uninitialized array.
     nans : Return a new array setting values to nan.
+    infs : Return a new array setting values to inf.
 
     """
 
@@ -311,6 +315,7 @@ def infs(shape, dtype=None, order='C'):
     zeros : Return a new array setting values to zero.
     ones : Return a new array setting values to one.
     empty : Return a new uninitialized array.
+    nans : Return a new array setting values to nan.
 
     """
 
