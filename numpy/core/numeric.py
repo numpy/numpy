@@ -235,7 +235,7 @@ def nans(shape, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with nans.
 
-    Note that only floating point numbers can represent non-numers as defined
+    Note that only floating point numbers can represent non-numbers as defined
     in IEEE 754-1985.
 
     Please refer to the documentation for `zeros` for further details.
@@ -263,7 +263,7 @@ def nans_like(a, dtype=None, order='K', subok=True):
     """
     Return an array of nans with the same shape and type as a given array.
 
-    Note that only floating point numbers can represent non-numers as defined
+    Note that only floating point numbers can represent non-numbers as defined
     in IEEE 754-1985.
 
     With default parameters, is equivalent to ``a.copy().fill(np.nan)``.
@@ -309,7 +309,7 @@ def infs(shape, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with infs.
 
-    Note that only floating point numbers can represent non-numers as defined
+    Note that only floating point numbers can represent non-numbers as defined
     in IEEE 754-1985.
 
     Please refer to the documentation for `zeros` for further details.
@@ -337,7 +337,7 @@ def infs_like(a, dtype=None, order='K', subok=True):
     """
     Return an array of infs with the same shape and type as a given array.
 
-    Note that only floating point numbers can represent non-numers as defined
+    Note that only floating point numbers can represent non-numbers as defined
     in IEEE 754-1985.
 
     With default parameters, is equivalent to ``a.copy().fill(np.inf)``.
