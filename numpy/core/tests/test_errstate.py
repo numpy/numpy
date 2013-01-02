@@ -8,11 +8,15 @@ import sys
 if sys.version_info[:2] >= (2, 5):
     exec """
 from __future__ import with_statement
+import platform
+
 from numpy.core import *
 from numpy.random import rand, randint
 from numpy.testing import *
 
+
 class TestErrstate(TestCase):
+    @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
     def test_invalid(self):
         with errstate(all='raise', under='ignore'):
             a = -arange(3)
