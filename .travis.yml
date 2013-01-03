@@ -2,27 +2,12 @@
 #   http://lint.travis-ci.org/
 language: python
 python:
-  - 2.5
   - 2.6
   - 2.7
   - 3.2
   - 3.3
-env:
-  # Hack: 
-  #
-  # We want to test from Python 2.4 to Python 3.2
-  # but Travis doesn't support python 2.4, and never will:
-  #   https://github.com/travis-ci/travis-ci/issues/485
-  #
-  # So what we do is add TEST_PY24=true to the build matrix, and then for that one
-  # version we don't actually use the system python, but instead build 2.4 and
-  # use it.
-  #
-  - TEST_PY24=""
 matrix:
   include:
-    - python: 2.5
-      env: TEST_PY24="true"
     - python: 2.7
       env: NPY_SEPARATE_COMPILATION=1
     - python: 3.2
@@ -30,16 +15,6 @@ matrix:
 before_install:
   - mkdir builds
   - pushd builds
-  # This has to be on a single "virtual line" because of how Travis
-  # munges each line before executing it to print out the exit status.
-  # It's okay for it to be on multiple physical lines, so long as you remember:
-  # - There can't be any leading "-"s
-  # - All newlines will be removed, so use ";"s
-  - if [ "${TEST_PY24}" == "true" ]; then
-      deactivate; 
-      ../.travis-make-py24-virtualenv.sh $PWD/py24-ve;
-      source $PWD/py24-ve/bin/activate;
-      fi
   - pip install nose
   # pip install coverage
   - python -V
