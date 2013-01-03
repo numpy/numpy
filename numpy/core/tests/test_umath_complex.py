@@ -151,6 +151,7 @@ class TestClog(TestCase):
             assert_almost_equal(y[i], y_r[i])
 
     @platform_skip
+    @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
     def test_special_values(self):
         xl = []
         yl = []
@@ -477,7 +478,6 @@ class TestCabs(object):
             return np.abs(np.complex(a, b))
 
         xa = np.array(x, dtype=np.complex)
-        ya = np.array(x, dtype=np.complex)
         for i in range(len(xa)):
             ref = g(x[i], y[i])
             yield check_real_value, f, x[i], y[i], ref
