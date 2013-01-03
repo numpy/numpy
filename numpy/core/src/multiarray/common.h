@@ -57,6 +57,11 @@ _IsAligned(PyArrayObject *ap);
 NPY_NO_EXPORT npy_bool
 _IsWriteable(PyArrayObject *ap);
 
+NPY_NO_EXPORT void
+offset_bounds_from_strides(int itemsize, int nd, npy_intp *dims,
+                           npy_intp *strides, npy_intp *min_offset,
+                           npy_intp *max_offset);
+
 #include "ucsnarrow.h"
 
 #endif

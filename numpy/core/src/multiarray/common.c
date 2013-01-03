@@ -674,3 +674,33 @@ _IsWriteable(PyArrayObject *ap)
     }
     return NPY_TRUE;
 }
+
+
+NPY_NO_EXPORT void
+offset_bounds_from_strides(int itemsize, int nd, npy_intp *dims,
+                           npy_intp *strides, npy_intp *lower_offset,
+                           npy_intp *upper_offset) {
+    npy_intp max_axis_offset;
+    npy_intp lower = 0;
+    npy_intp upper = 0;
+    int i;
+
+    for (i = 0; i < nd; i++) {
+        if (dims[i] == 0) {
+            /* Empty array special case */
+            *lower_offset = 0;
+            *upper_offset = 0;
+            return;
+        }
+        max_axis_offset = strides[i] * (dims[i] - 1);
+        if (max_axis_offset > 0) {
+            upper += max_axis_offset;
+        }
+        else {
+            lower += max_axis_offset;
+        }
+    }
+    upper += itemsize;
+    *lower_offset = lower;
+    *upper_offset = upper;
+}

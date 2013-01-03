@@ -130,6 +130,14 @@ class TestAttributes(TestCase):
             arr.strides = strides
         self.assertRaises(ValueError, set_strides, x, (10*x.itemsize, x.itemsize))
 
+        # Test for offset calculations:
+        x = np.lib.stride_tricks.as_strided(np.arange(10, dtype=np.int8)[-1],
+                                                    shape=(10,), strides=(-1,))
+        self.assertRaises(ValueError, set_strides, x[::-1], -1)
+        a = x[::-1]
+        a.strides = 1
+        a[::2].strides = 2
+
     def test_fill(self):
         for t in "?bhilqpBHILQPfdgFDGO":
             x = empty((3,2,1), t)

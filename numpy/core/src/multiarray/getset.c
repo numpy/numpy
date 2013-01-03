@@ -102,11 +102,9 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
     PyArrayObject *new;
     npy_intp numbytes = 0;
     npy_intp offset = 0;
-    npy_intp max_axis_offset;
-    npy_intp min_offset = 0;
-    npy_intp max_offset = 0;
+    npy_intp lower_offset = 0;
+    npy_intp upper_offset = 0;
     Py_ssize_t buf_len;
-    int i;
     char *buf;
 
     if (obj == NULL) {
@@ -141,28 +139,17 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
     else {
         PyErr_Clear();
         /* Find the true extent of the base array, similar to CheckStrides */
-        for (i = 0; i < PyArray_NDIM(new); i++) {
-            if (PyArray_DIMS(new)[i] == 0) {
-                /* Since all arrays must be empty here, this works */
-                max_offset = 0;
-                min_offset = 0;
-                break;
-            }
-            max_axis_offset = PyArray_STRIDES(new)[i] * (PyArray_DIMS(new)[i] - 1);
-            if (max_axis_offset > 0) {
-                max_offset += max_axis_offset;
-            }
-            else {
-                min_offset += max_axis_offset;
-            }
-        }
+        offset_bounds_from_strides(PyArray_ITEMSIZE(new), PyArray_NDIM(new),
+                                   PyArray_DIMS(new), PyArray_STRIDES(new),
+                                   &lower_offset, &upper_offset);
 
-        offset = -min_offset + PyArray_BYTES(self) - PyArray_BYTES(new);
-        numbytes = max_offset - min_offset + PyArray_ITEMSIZE(new);
+        offset = PyArray_BYTES(self) - (PyArray_BYTES(new) + lower_offset);
+        numbytes = upper_offset - lower_offset;
     }
 
-    if (!PyArray_CheckStrides(PyArray_ITEMSIZE(self), PyArray_NDIM(self), numbytes,
-                              offset,
+    /* numbytes == 0 is special here, but the 0-size array case always works */
+    if (!PyArray_CheckStrides(PyArray_ITEMSIZE(self), PyArray_NDIM(self),
+                              numbytes, offset,
                               PyArray_DIMS(self), newstrides.ptr)) {
         PyErr_SetString(PyExc_ValueError, "strides is not "\
                         "compatible with available memory");

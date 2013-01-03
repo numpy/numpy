@@ -1466,31 +1466,20 @@ PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
     int i;
     npy_intp max_axis_offset;
     npy_intp begin, end;
-    npy_intp min_offset = 0;
-    npy_intp max_offset = 0;
+    npy_intp lower_offset;
+    npy_intp upper_offset;
 
     if (numbytes == 0) {
         numbytes = PyArray_MultiplyList(dims, nd) * elsize;
     }
 
     begin = -offset;
-    end = numbytes - offset - elsize;
-    for (i = 0; i < nd; i++) {
-        if (dims[i] == 0) {
-            /* Empty array. Validate offset in any case */
-            max_offset = 0;
-            min_offset = 0;
-            break;
-        }
-        max_axis_offset = newstrides[i] * (dims[i] - 1);
-        if (max_axis_offset > 0) {
-            max_offset += max_axis_offset;
-        }
-        else {
-            min_offset += max_axis_offset;
-        }
-    }
-    if ((max_offset > end) || (min_offset < begin)) {
+    end = numbytes - offset;
+
+    offset_bounds_from_strides(elsize, nd, dims, newstrides,
+                                        &lower_offset, &upper_offset);
+    
+    if ((upper_offset > end) || (lower_offset < begin)) {
         return NPY_FALSE;
     }
     return NPY_TRUE;
