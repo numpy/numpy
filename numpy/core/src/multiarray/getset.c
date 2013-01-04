@@ -138,7 +138,6 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
     }
     else {
         PyErr_Clear();
-        /* Find the true extent of the base array, similar to CheckStrides */
         offset_bounds_from_strides(PyArray_ITEMSIZE(new), PyArray_NDIM(new),
                                    PyArray_DIMS(new), PyArray_STRIDES(new),
                                    &lower_offset, &upper_offset);
