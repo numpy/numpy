@@ -3778,7 +3778,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(Bool, Generic);
     SINGLE_INHERIT(Byte, SignedInteger);
     SINGLE_INHERIT(Short, SignedInteger);
-#if SIZEOF_INT == SIZEOF_LONG && !defined(NPY_PY3K)
+#if NPY_SIZEOF_INT == NPY_SIZEOF_LONG && !defined(NPY_PY3K)
     DUAL_INHERIT(Int, Int, SignedInteger);
 #else
     SINGLE_INHERIT(Int, SignedInteger);
@@ -3788,7 +3788,7 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
 #else
     SINGLE_INHERIT(Long, SignedInteger);
 #endif
-#if NPY_SIZEOF_LONGLONG == SIZEOF_LONG && !defined(NPY_PY3K)
+#if NPY_SIZEOF_LONGLONG == NPY_SIZEOF_LONG && !defined(NPY_PY3K)
     DUAL_INHERIT(LongLong, Int, SignedInteger);
 #else
     SINGLE_INHERIT(LongLong, SignedInteger);
