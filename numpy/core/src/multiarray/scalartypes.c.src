@@ -2939,7 +2939,7 @@ int_arrtype_hash(PyObject *obj)
  * #ext = && (x >= LONG_MIN),#
  */
 #if NPY_SIZEOF_LONG != NPY_SIZEOF_LONGLONG
-/* we assume SIZEOF_LONGLONG=2*SIZEOF_LONG */
+/* we assume NPY_SIZEOF_LONGLONG=2*NPY_SIZEOF_LONG */
 static long
 @char@longlong_arrtype_hash(PyObject *obj)
 {
