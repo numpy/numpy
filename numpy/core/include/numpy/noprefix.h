@@ -64,10 +64,28 @@
 #define datetime    npy_datetime
 #define timedelta   npy_timedelta
 
-#define SIZEOF_INTP NPY_SIZEOF_INTP
-#define SIZEOF_UINTP NPY_SIZEOF_UINTP
-#define SIZEOF_DATETIME NPY_SIZEOF_DATETIME
-#define SIZEOF_TIMEDELTA NPY_SIZEOF_TIMEDELTA
+/*
+ * This list of NPY_SIZEOF_* macros may define some unprefixed macros that
+ * were not previously defined. They are included here just in case, and as
+ * these will be deprecated at some point that should not cause problems.
+ */
+#define SIZEOF_CHAR             NPY_SIZEOF_CHAR
+#define SIZEOF_BYTE             NPY_SIZEOF_BYTE
+#define SIZEOF_SHORT            NPY_SIZEOF_SHORT
+#define SIZEOF_INT              NPY_SIZEOF_INT
+#define SIZEOF_LONG             NPY_SIZEOF_LONG
+#define SIZEOF_LONGLONG         NPY_SIZEOF_LONGLONG
+#define SIZEOF_INTP             NPY_SIZEOF_INTP
+#define SIZEOF_UINTP            NPY_SIZEOF_UINTP
+#define SIZEOF_HALF             NPY_SIZEOF_HALF
+#define SIZEOF_FLOAT            NPY_SIZEOF_FLOAT
+#define SIZEOF_DOUBLE           NPY_SIZEOF_DOUBLE
+#define SIZEOF_LONGDOUBLE       NPY_SIZEOF_LONGDOUBLE
+#define SIZEOF_CFLOAT           NPY_SIZEOF_CFLOAT
+#define SIZEOF_CDOUBLE          NPY_SIZEOF_CDOUBLE
+#define SIZEOF_CLONGDOUBLE      NPY_SIZEOF_CLONGDOUBLE
+#define SIZEOF_DATETIME         NPY_SIZEOF_DATETIME
+#define SIZEOF_TIMEDELTA        NPY_SIZEOF_TIMEDELTA
 
 #define LONGLONG_FMT NPY_LONGLONG_FMT
 #define ULONGLONG_FMT NPY_ULONGLONG_FMT
@@ -113,9 +131,6 @@
 #define MIN_TIMEDELTA NPY_MIN_TIMEDELTA
 #define MAX_TIMEDELTA NPY_MAX_TIMEDELTA
 
-#define SIZEOF_LONGDOUBLE NPY_SIZEOF_LONGDOUBLE
-#define SIZEOF_LONGLONG   NPY_SIZEOF_LONGLONG
-#define SIZEOF_HALF       NPY_SIZEOF_HALF
 #define BITSOF_BOOL       NPY_BITSOF_BOOL
 #define BITSOF_CHAR       NPY_BITSOF_CHAR
 #define BITSOF_SHORT      NPY_BITSOF_SHORT
