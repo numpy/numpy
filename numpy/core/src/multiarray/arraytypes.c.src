@@ -946,9 +946,9 @@ HALF_to_@TYPE@(npy_half *ip, @type@ *op, npy_intp n,
 }
 
 /**end repeat**/
-#if SIZEOF_SHORT == 2
+#if NPY_SIZEOF_SHORT == 2
 #define HALF_to_HALF SHORT_to_SHORT
-#elif SIZEOF_INT == 2
+#elif NPY_SIZEOF_INT == 2
 #define HALF_to_HALF INT_to_INT
 #endif
 
@@ -1612,27 +1612,27 @@ static void
         char *a, *b, c;
 
         a = (char *)dst;
-#if SIZEOF_@fsize@ == 2
+#if NPY_SIZEOF_@fsize@ == 2
         b = a + 1;
         c = *a; *a++ = *b; *b = c;
-#elif SIZEOF_@fsize@ == 4
+#elif NPY_SIZEOF_@fsize@ == 4
         b = a + 3;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b   = c;
-#elif SIZEOF_@fsize@ == 8
+#elif NPY_SIZEOF_@fsize@ == 8
         b = a + 7;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b   = c;
-#elif SIZEOF_@fsize@ == 10
+#elif NPY_SIZEOF_@fsize@ == 10
         b = a + 9;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b   = c;
-#elif SIZEOF_@fsize@ == 12
+#elif NPY_SIZEOF_@fsize@ == 12
         b = a + 11;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
@@ -1640,7 +1640,7 @@ static void
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b   = c;
-#elif SIZEOF_@fsize@ == 16
+#elif NPY_SIZEOF_@fsize@ == 16
         b = a + 15;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
@@ -1744,7 +1744,7 @@ static void
     if (swap) {
         char *a, *b, c;
         a = (char *)dst;
-#if SIZEOF_@fsize@ == 4
+#if NPY_SIZEOF_@fsize@ == 4
         b = a + 3;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b   = c;
@@ -1752,7 +1752,7 @@ static void
         b = a + 3;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b   = c;
-#elif SIZEOF_@fsize@ == 8
+#elif NPY_SIZEOF_@fsize@ == 8
         b = a + 7;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
@@ -1764,7 +1764,7 @@ static void
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b   = c;
-#elif SIZEOF_@fsize@ == 10
+#elif NPY_SIZEOF_@fsize@ == 10
         b = a + 9;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
@@ -1778,7 +1778,7 @@ static void
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b   = c;
-#elif SIZEOF_@fsize@ == 12
+#elif NPY_SIZEOF_@fsize@ == 12
         b = a + 11;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
@@ -1794,7 +1794,7 @@ static void
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b   = c;
-#elif SIZEOF_@fsize@ == 16
+#elif NPY_SIZEOF_@fsize@ == 16
         b = a + 15;
         c = *a; *a++ = *b; *b-- = c;
         c = *a; *a++ = *b; *b-- = c;
@@ -1825,9 +1825,8 @@ static void
                 *a++ = *b;
                 *b-- = c;
             }
-            a += nn / 2;
+            a += nn;
             b = a + (NPY_SIZEOF_@fsize@ - 1);
-            nn = NPY_SIZEOF_@fsize@ / 2;
             for (i = 0; i < nn; i++) {
                 c = *a;
                 *a++ = *b;
