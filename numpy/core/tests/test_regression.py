@@ -1296,16 +1296,20 @@ class TestRegression(TestCase):
         np.dot(a['f0'], b['f0'])
 
     def test_byteswap_complex_scalar(self):
-        """Ticket #1259"""
-        z = np.array([-1j], '<c8')
-        x = z[0] # always native-endian
-        y = x.byteswap()
-        if x.dtype.byteorder == z.dtype.byteorder:
-            # little-endian machine
-            assert_equal(x, np.fromstring(y.tostring(), dtype='>c8'))
-        else:
-            # big-endian machine
-            assert_equal(x, np.fromstring(y.tostring(), dtype='<c8'))
+        """Ticket #1259 and gh-441"""
+        for dtype in [np.dtype('<'+t) for t in np.typecodes['Complex']]:
+            z = np.array([2.2-1.1j], dtype)
+            x = z[0] # always native-endian
+            y = x.byteswap()
+            if x.dtype.byteorder == z.dtype.byteorder:
+                # little-endian machine
+                assert_equal(x, np.fromstring(y.tostring(), dtype=dtype.newbyteorder()))
+            else:
+                # big-endian machine
+                assert_equal(x, np.fromstring(y.tostring(), dtype=dtype))
+            # double check real and imaginary parts:
+            assert_equal(x.real, y.real.byteswap())
+            assert_equal(x.imag, y.imag.byteswap())
 
     def test_structured_arrays_with_objects1(self):
         """Ticket #1299"""
