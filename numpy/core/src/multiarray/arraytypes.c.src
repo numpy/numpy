@@ -4088,8 +4088,6 @@ set_typeinfo(PyObject *dict)
     infodict = PyDict_New();
     if (infodict == NULL) return -1;
 
-#define BITSOF_INTP CHAR_BIT*SIZEOF_PY_INTPTR_T
-#define BITSOF_BYTE CHAR_BIT
 
     /**begin repeat
      *
@@ -4219,7 +4217,7 @@ set_typeinfo(PyObject *dict)
             s = Py_BuildValue("ciiiNNO", NPY_DATETIMELTR,
 #endif
                 NPY_DATETIME,
-                sizeof(npy_datetime) * CHAR_BIT,
+                NPY_BITSOF_DATETIME,
                 _ALIGN(npy_datetime),
                 MyPyLong_FromInt64(NPY_MAX_DATETIME),
                 MyPyLong_FromInt64(NPY_MIN_DATETIME),
@@ -4232,7 +4230,7 @@ set_typeinfo(PyObject *dict)
             s = Py_BuildValue("ciiiNNO",NPY_TIMEDELTALTR,
 #endif
                 NPY_TIMEDELTA,
-                sizeof(npy_timedelta) * CHAR_BIT,
+                NPY_BITSOF_TIMEDELTA,
                 _ALIGN(npy_timedelta),
                 MyPyLong_FromInt64(NPY_MAX_TIMEDELTA),
                 MyPyLong_FromInt64(NPY_MIN_TIMEDELTA),

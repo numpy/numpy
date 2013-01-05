@@ -12,7 +12,7 @@ _npy_signbit_d(double x)
 
     u.d = x;
 
-#if SIZEOF_INT == 4
+#if NPY_SIZEOF_INT == 4
 
 #ifdef WORDS_BIGENDIAN /* defined in pyconfig.h */
     return u.i[0] < 0;
@@ -20,7 +20,7 @@ _npy_signbit_d(double x)
     return u.i[1] < 0;
 #endif
 
-#else  /* SIZEOF_INT != 4 */
+#else  /* NPY_SIZEOF_INT != 4 */
 
 #ifdef WORDS_BIGENDIAN
     return u.s[0] < 0;
@@ -28,5 +28,5 @@ _npy_signbit_d(double x)
     return u.s[3] < 0;
 #endif
 
-#endif  /* SIZEOF_INT */
+#endif  /* NPY_SIZEOF_INT */
 }
