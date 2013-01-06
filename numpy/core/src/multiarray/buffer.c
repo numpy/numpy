@@ -440,11 +440,13 @@ static PyObject *_buffer_info_cache = NULL;
 
 /* Fill in the info structure */
 static _buffer_info_t*
-_buffer_info_new(PyArrayObject *arr)
+_buffer_info_new(PyArrayObject *arr, int flags)
 {
     _buffer_info_t *info;
     _tmp_string_t fmt = {0,0,0};
     int k;
+    int order = flags;
+    Py_ssize_t stride = PyArray_ITEMSIZE(arr);
 
     info = (_buffer_info_t*)malloc(sizeof(_buffer_info_t));
 
@@ -467,9 +469,35 @@ _buffer_info_new(PyArrayObject *arr)
         info->shape = (Py_ssize_t*)malloc(sizeof(Py_ssize_t)
                                           * PyArray_NDIM(arr) * 2 + 1);
         info->strides = info->shape + PyArray_NDIM(arr);
-        for (k = 0; k < PyArray_NDIM(arr); ++k) {
-            info->shape[k] = PyArray_DIMS(arr)[k];
-            info->strides[k] = PyArray_STRIDES(arr)[k];
+
+        /*
+         * If a contiguous buffer was requested, guarantee that strides
+         * start with itemsize and add up correctly with the dimensions.
+         */
+        if ((order & PyBUF_ANY_CONTIGUOUS) == PyBUF_ANY_CONTIGUOUS) {
+            /* default to C-Order */
+            order = PyArray_IS_C_CONTIGUOUS(arr) ?
+                     PyBUF_C_CONTIGUOUS : PyBUF_F_CONTIGUOUS;
+        }
+        if ((order & PyBUF_C_CONTIGUOUS) == PyBUF_C_CONTIGUOUS) {
+            for (k = PyArray_NDIM(arr) - 1; k >= 0; --k) {
+                info->shape[k] = PyArray_DIMS(arr)[k];
+                info->strides[k] = stride;
+                stride *= info->shape[k];
+            }
+        }
+        else if ((order & PyBUF_F_CONTIGUOUS) == PyBUF_F_CONTIGUOUS) {
+            for (k = 0; k < PyArray_NDIM(arr); ++k) {
+                info->shape[k] = PyArray_DIMS(arr)[k];
+                info->strides[k] = stride;
+                stride *= info->shape[k];
+            }
+        }
+        else {
+            for (k = 0; k < PyArray_NDIM(arr); ++k) {
+                info->shape[k] = PyArray_DIMS(arr)[k];
+                info->strides[k] = PyArray_STRIDES(arr)[k];
+            }
         }
     }
 
@@ -513,7 +541,7 @@ _buffer_info_free(_buffer_info_t *info)
 
 /* Get buffer info from the global dictionary */
 static _buffer_info_t*
-_buffer_get_info(PyObject *arr)
+_buffer_get_info(PyObject *arr, int flags)
 {
     PyObject *key, *item_list, *item;
     _buffer_info_t *info = NULL, *old_info = NULL;
@@ -526,7 +554,7 @@ _buffer_get_info(PyObject *arr)
     }
 
     /* Compute information */
-    info = _buffer_info_new((PyArrayObject*)arr);
+    info = _buffer_info_new((PyArrayObject*)arr, flags);
     if (info == NULL) {
         return NULL;
     }
@@ -648,7 +676,7 @@ array_getbuffer(PyObject *obj, Py_buffer *view, int flags)
     }
 
     /* Fill in information */
-    info = _buffer_get_info(obj);
+    info = _buffer_get_info(obj, flags);
     if (info == NULL) {
         goto fail;
     }
