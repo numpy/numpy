@@ -33,15 +33,22 @@ enum {
 };
 
 /*
- * This is to typedef npy_intp to the appropriate pointer size for
- * this platform.  Py_intptr_t, Py_uintptr_t are defined in pyport.h.
+ * This is to typedef npy_intp to the appropriate pointer size for this
+ * platform.  Py_intptr_t, Py_uintptr_t are defined in pyport.h.
  */
 typedef Py_intptr_t npy_intp;
 typedef Py_uintptr_t npy_uintp;
+
+/*
+ * Define sizes that were not defined in numpyconfig.h.
+ */
 #define NPY_SIZEOF_CHAR 1
 #define NPY_SIZEOF_BYTE 1
+#define NPY_SIZEOF_DATETIME 8
+#define NPY_SIZEOF_TIMEDELTA 8
 #define NPY_SIZEOF_INTP NPY_SIZEOF_PY_INTPTR_T
 #define NPY_SIZEOF_UINTP NPY_SIZEOF_PY_INTPTR_T
+#define NPY_SIZEOF_HALF 2
 #define NPY_SIZEOF_CFLOAT NPY_SIZEOF_COMPLEX_FLOAT
 #define NPY_SIZEOF_CDOUBLE NPY_SIZEOF_COMPLEX_DOUBLE
 #define NPY_SIZEOF_CLONGDOUBLE NPY_SIZEOF_COMPLEX_LONGDOUBLE
@@ -304,10 +311,6 @@ typedef struct { npy_longdouble real, imag; } npy_clongdouble;
 #define NPY_MAX_LONG  LONG_MAX
 #define NPY_MIN_LONG  LONG_MIN
 #define NPY_MAX_ULONG  ULONG_MAX
-
-#define NPY_SIZEOF_HALF 2
-#define NPY_SIZEOF_DATETIME 8
-#define NPY_SIZEOF_TIMEDELTA 8
 
 #define NPY_BITSOF_BOOL (sizeof(npy_bool) * CHAR_BIT)
 #define NPY_BITSOF_CHAR CHAR_BIT
