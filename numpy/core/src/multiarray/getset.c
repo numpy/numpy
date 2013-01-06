@@ -102,6 +102,8 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
     PyArrayObject *new;
     npy_intp numbytes = 0;
     npy_intp offset = 0;
+    npy_intp lower_offset = 0;
+    npy_intp upper_offset = 0;
     Py_ssize_t buf_len;
     char *buf;
 
@@ -136,13 +138,17 @@ array_strides_set(PyArrayObject *self, PyObject *obj)
     }
     else {
         PyErr_Clear();
-        numbytes = PyArray_MultiplyList(PyArray_DIMS(new),
-                            PyArray_NDIM(new))*PyArray_DESCR(new)->elsize;
-        offset = PyArray_BYTES(self) - PyArray_BYTES(new);
+        offset_bounds_from_strides(PyArray_ITEMSIZE(new), PyArray_NDIM(new),
+                                   PyArray_DIMS(new), PyArray_STRIDES(new),
+                                   &lower_offset, &upper_offset);
+
+        offset = PyArray_BYTES(self) - (PyArray_BYTES(new) + lower_offset);
+        numbytes = upper_offset - lower_offset;
     }
 
-    if (!PyArray_CheckStrides(PyArray_DESCR(self)->elsize, PyArray_NDIM(self), numbytes,
-                              offset,
+    /* numbytes == 0 is special here, but the 0-size array case always works */
+    if (!PyArray_CheckStrides(PyArray_ITEMSIZE(self), PyArray_NDIM(self),
+                              numbytes, offset,
                               PyArray_DIMS(self), newstrides.ptr)) {
         PyErr_SetString(PyExc_ValueError, "strides is not "\
                         "compatible with available memory");

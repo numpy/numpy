@@ -97,16 +97,17 @@ class TestAttributes(TestCase):
     def test_stridesattr(self):
         x = self.one
         def make_array(size, offset, strides):
-            return ndarray([size], buffer=x, dtype=int,
+            return ndarray(size, buffer=x, dtype=int,
                            offset=offset*x.itemsize,
                            strides=strides*x.itemsize)
         assert_equal(make_array(4, 4, -1), array([4, 3, 2, 1]))
         self.assertRaises(ValueError, make_array, 4, 4, -2)
         self.assertRaises(ValueError, make_array, 4, 2, -1)
         self.assertRaises(ValueError, make_array, 8, 3, 1)
-        #self.assertRaises(ValueError, make_array, 8, 3, 0)
-        #self.assertRaises(ValueError, lambda: ndarray([1], strides=4))
-
+        assert_equal(make_array(8, 3, 0), np.array([3]*8))
+        # Check behavior reported in gh-2503:
+        self.assertRaises(ValueError, make_array, (2, 3), 5, array([-2, -3]))
+        make_array(0, 0, 10)
 
     def test_set_stridesattr(self):
         x = self.one
@@ -122,7 +123,20 @@ class TestAttributes(TestCase):
         self.assertRaises(ValueError, make_array, 4, 4, -2)
         self.assertRaises(ValueError, make_array, 4, 2, -1)
         self.assertRaises(RuntimeError, make_array, 8, 3, 1)
-        #self.assertRaises(ValueError, make_array, 8, 3, 0)
+        # Check that the true extent of the array is used.
+        # Test relies on as_strided base not exposing a buffer.
+        x = np.lib.stride_tricks.as_strided(arange(1), (10,10), (0,0))
+        def set_strides(arr, strides):
+            arr.strides = strides
+        self.assertRaises(ValueError, set_strides, x, (10*x.itemsize, x.itemsize))
+
+        # Test for offset calculations:
+        x = np.lib.stride_tricks.as_strided(np.arange(10, dtype=np.int8)[-1],
+                                                    shape=(10,), strides=(-1,))
+        self.assertRaises(ValueError, set_strides, x[::-1], -1)
+        a = x[::-1]
+        a.strides = 1
+        a[::2].strides = 2
 
     def test_fill(self):
         for t in "?bhilqpBHILQPfdgFDGO":
