@@ -3337,10 +3337,22 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
     op[1] = arr;
     op[2] = ind;
 
-    /* Likewise with accumulate, must do UPDATEIFCOPY */
     if (out != NULL || ndim > 1 || !PyArray_ISALIGNED(arr) ||
             !PyArray_EquivTypes(op_dtypes[0], PyArray_DESCR(arr))) {
         need_outer_iterator = 1;
+    }
+
+    /* Special case when the index array's size is zero */
+    if (ind_size == 0) {
+        need_outer_iterator = 0;
+        if (out != NULL) {
+            if (PyArray_NDIM(out) != 1 || PyArray_DIM(out, 0) != 0) {
+                PyErr_SetString(PyExc_ValueError,
+                        "output operand shape for reduceat is "
+                        "incompatible with index array of shape (0,)");
+                goto fail;
+            }
+        }
     }
 
     if (need_outer_iterator) {
@@ -3350,7 +3362,8 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
         /*
          * The way reduceat is set up, we can't do buffering,
-         * so make a copy instead when necessary.
+         * so make a copy instead when necessary using
+         * the UPDATEIFCOPY flag
          */
 
         /* The per-operand flags for the outer loop */
