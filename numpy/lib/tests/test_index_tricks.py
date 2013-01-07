@@ -241,6 +241,12 @@ def test_ndindex():
     x = list(np.ndindex(1, 2, 3))
     expected = [ix for ix, e in np.ndenumerate(np.zeros((1, 2, 3)))]
     assert_array_equal(x, expected)
+    # Packed as well as unpacked tuple are acceptable
+    y = list(np.ndindex((1, 2, 3)))
+    assert_array_equal(x, y)
+    # Empty shape gives empty index
+    z = list(np.ndindex(()))
+    assert_equal(z, [()])
 
 
 if __name__ == "__main__":

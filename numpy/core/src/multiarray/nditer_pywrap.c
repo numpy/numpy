@@ -1542,6 +1542,9 @@ static PyObject *npyiter_multi_index_get(NewNpyArrayIterObject *self)
     }
 
     if (self->get_multi_index != NULL) {
+        if (NpyIter_IsScalar(self->iter)) {
+            return PyTuple_New(0);
+        }
         ndim = NpyIter_GetNDim(self->iter);
         self->get_multi_index(self->iter, multi_index);
         ret = PyTuple_New(ndim);
@@ -1809,7 +1812,6 @@ static PyObject *npyiter_has_delayed_bufalloc_get(NewNpyArrayIterObject *self)
                 "Iterator is invalid");
         return NULL;
     }
-
     if (NpyIter_HasDelayedBufAlloc(self->iter)) {
         Py_RETURN_TRUE;
     }
