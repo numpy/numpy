@@ -554,26 +554,8 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
     PyArrayObject *ret;
     npy_intp value;
 
-    /*
-     * PyNumber_Index was introduced in Python 2.5 because of NumPy.
-     * http://www.python.org/dev/peps/pep-0357/
-     * Let's use it for indexing!
-     *
-     * Unfortunately, SciPy and possibly other code seems to rely
-     * on the lenient coercion. :(
-     */
-#if 0 /*PY_VERSION_HEX >= 0x02050000*/
-    PyObject *ind = PyNumber_Index(op);
-    if (ind != NULL) {
-        value = PyArray_PyIntAsIntp(ind);
-        Py_DECREF(ind);
-    }
-    else {
-        value = -1;
-    }
-#else
     value = PyArray_PyIntAsIntp(op);
-#endif
+
     if (value == -1 && PyErr_Occurred()) {
         PyErr_Clear();
     }
@@ -1153,6 +1135,7 @@ _tuple_of_integers(PyObject *seq, npy_intp *vals, int maxvals)
 
     for(i=0; i<maxvals; i++) {
         obj = PyTuple_GET_ITEM(seq, i);
+        /* After deprecation, this array check becomes obsolete */
         if ((PyArray_Check(obj) && PyArray_NDIM((PyArrayObject *)obj) > 0)
                 || PyList_Check(obj)) {
             return 0;
@@ -1160,12 +1143,6 @@ _tuple_of_integers(PyObject *seq, npy_intp *vals, int maxvals)
         temp = PyArray_PyIntAsIntp(obj);
         if (error_converting(temp)) {
             return 0;
-        }
-        if (!PyIndex_Check_Or_Unsupported(obj)) {
-            if (DEPRECATE("non-integer scalar index. In a future numpy "
-                          "release, this will raise an error.") < 0) {
-                return -1;
-            }
         }
         vals[i] = temp;
     }
@@ -1276,11 +1253,8 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
     /* Integer-tuple */
     if (_is_full_index(ind, self)) {
         ret = _tuple_of_integers(ind, vals, PyArray_NDIM(self));
-        /* In case an exception occurred (e.g. in PyErr_WarnEx) */
-        if (ret < 0) {
-            return -1;
-        }
-        else if (ret > 0) {
+
+        if (ret > 0) {
             int idim, ndim = PyArray_NDIM(self);
             npy_intp *shape = PyArray_DIMS(self);
             npy_intp *strides = PyArray_STRIDES(self);
@@ -1394,11 +1368,8 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
      */
     if (PyArray_NDIM(self) > 1 && _is_full_index(op,  self)) {
         ret = _tuple_of_integers(op, vals, PyArray_NDIM(self));
-        /* In case an exception occurred (e.g. in PyErr_WarnEx) */
-        if (ret < 0) {
-            return NULL;
-        }
-        else if (ret > 0) {
+
+         if (ret > 0) {
             int idim, ndim = PyArray_NDIM(self);
             npy_intp *shape = PyArray_DIMS(self);
             npy_intp *strides = PyArray_STRIDES(self);
@@ -1414,13 +1385,7 @@ array_subscript_nice(PyArrayObject *self, PyObject *op)
         }
     }
     PyErr_Clear();
-    if ((PyNumber_Check(op) || PyArray_IsScalar(op, Number)) &&
-            !PyIndex_Check_Or_Unsupported(op)) {
-        if (DEPRECATE("non-integer scalar index. In a future numpy "
-                      "release, this will raise an error.") < 0) {
-            return NULL;
-        }
-    }
+
     mp = (PyArrayObject *)array_subscript(self, op);
     /*
      * mp could be a scalar if op is not an Int, Scalar, Long or other Index

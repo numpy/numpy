@@ -3,54 +3,111 @@ Tests related to deprecation warnings. Also a convenient place
 to document how deprecations should eventually be turned into errors.
 """
 import sys
+
 import warnings
 from nose.plugins.skip import SkipTest
 
 import numpy as np
 from numpy.testing import dec, run_module_suite, assert_raises
+from numpy.testing.utils import WarningManager
 
 
-def assert_deprecated(f, *args, **kwargs):
-    """Check if DeprecationWarning raised as error.
+class _DeprecationTestCase(object):
+    # Just as warning: warnings uses re.match, so the start of this message
+    # must match.
+    message = ''
 
-    The warning environment is assumed to have been set up so that the
-    appropriate DeprecationWarning has been turned into an error. We do not
-    use assert_warns here as the desire is to check that an error will be
-    raised if the deprecation is changed to an error and there may be other
-    errors that would override a warning. It is a fine point as to which
-    error should appear first.
+    def setUp(self):
+        self.warn_ctx = WarningManager(record=True)
+        self.log = self.warn_ctx.__enter__()
 
-    Parameters
-    ----------
-    f : callable
-       A function that will exhibit the deprecation. It need not be
-       deprecated itself, but can be used to execute deprecated code.
-
-    """
-    assert_raises(DeprecationWarning, f, *args, **kwargs)
+        # make sure we are ignoring other types of DeprecationWarnings
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        warnings.filterwarnings("always", message=self.message,
+                                    category=DeprecationWarning)
 
 
-def assert_not_deprecated(f, *args, **kwargs):
-    """Check that DeprecationWarning not raised as error.
-
-    The warning environment is assumed to have been set up so that the
-    appropriate DeprecationWarning has been turned into an error. This
-    function checks that no warning is raised when `f` is executed.
-
-    Parameters
-    ----------
-    f : callable
-       A function that will exhibit no deprecation. It can be used to
-       execute code that should not raise DeprecationWarning.
-
-    """
-    try:
-        f(*args, **kwargs)
-    except DeprecationWarning:
-        raise AssertionError()
+    def tearDown(self):
+        self.warn_ctx.__exit__()
 
 
-class TestFloatScalarIndexDeprecation(object):
+    def assert_deprecated(self, function, num=1, ignore_others=False,
+                        function_fails=False,
+                        exceptions=(DeprecationWarning,), args=(), kwargs={}):
+        """Test if DeprecationWarnings are given and raised.
+        
+        This first checks if the function when called gives `num`
+        DeprecationWarnings, after that it tries to raise these
+        DeprecationWarnings and compares them with `exceptions`.
+        The exceptions can be different for cases where this code path
+        is simply not anticipated and the exception is replaced.
+        
+        Parameters
+        ----------
+        f : callable
+            The function to test
+        num : int
+            Number of DeprecationWarnings to expect. This should normally be 1.
+        ignore_other : bool
+            Whether warnings of the wrong type should be ignored (note that
+            the message is not checked)
+        function_fails : bool
+            If the function would normally fail, setting this will check for
+            warnings inside a try/except block.
+        exceptions : Exception or tuple of Exceptions
+            Exception to expect when turning the warnings into an error.
+            The default checks for DeprecationWarnings. If exceptions is
+            empty the function is expected to run successfull.
+        args : tuple
+            Arguments for `f`
+        kwargs : dict
+            Keyword arguments for `f`
+        """
+        try:
+            function(*args, **kwargs)
+        except (Exception if function_fails else tuple()):
+            pass
+        # just in case, clear the registry
+        num_found = 0
+        for warning in self.log:
+            if warning.category is DeprecationWarning:
+                num_found += 1
+            elif not ignore_others:
+                raise AssertionError("expected DeprecationWarning but %s given"
+                                                            % warning.category)
+        # reset the log
+        if num_found != num:
+            raise AssertionError("%i warnings found but %i expected"
+                                                        % (len(self.log), num))
+        self.log[:] = []
+
+        warnings.filterwarnings("error", message=self.message,
+                                    category=DeprecationWarning)
+
+        try:
+            function(*args, **kwargs)
+            if exceptions != tuple():
+                raise AssertionError("No error raised during function call")
+        except exceptions:
+            if exceptions == tuple():
+                raise AssertionError("Error raised during function call")
+        finally:
+            warnings.filters.pop(0)
+
+
+    def assert_not_deprecated(self, function, args=(), kwargs={}):
+        """Test if DeprecationWarnings are given and raised.
+        
+        This is just a shorthand for:
+
+        self.assert_deprecated(function, num=0, ignore_others=True,
+                        exceptions=tuple(), args=args, kwargs=kwargs)
+        """
+        self.assert_deprecated(function, num=0, ignore_others=True,
+                        exceptions=tuple(), args=args, kwargs=kwargs)
+
+
+class TestFloatScalarIndexDeprecation(_DeprecationTestCase):
     """
     These test that ``DeprecationWarning`` gets raised when you try to use
     scalar indices that are not integers e.g. ``a[0.0]``, ``a[1.5, 0]``.
@@ -72,29 +129,20 @@ class TestFloatScalarIndexDeprecation(object):
     I interpret this to mean 2 years after the 1.8 release.
 
     """
+    message = "using a non-integer number instead of an integer will result in an error in the future"
 
-    def setUp(self):
-        warnings.filterwarnings("error", message="non-integer scalar index",
-                                category=DeprecationWarning)
-
-
-    def tearDown(self):
-        warnings.filterwarnings("default", message="non-integer scalar index",
-                                category=DeprecationWarning)
-
-
-    @dec.skipif(sys.version_info[:2] < (2, 5))
     def test_deprecations(self):
         a = np.array([[[5]]])
+        def assert_deprecated(*args, **kwargs):
+            self.assert_deprecated(*args, exceptions=(IndexError,), **kwargs)
 
-        assert_deprecated(lambda: a[0.0])
         assert_deprecated(lambda: a[0.0])
         assert_deprecated(lambda: a[0, 0.0])
         assert_deprecated(lambda: a[0.0, 0])
         assert_deprecated(lambda: a[0.0, :])
         assert_deprecated(lambda: a[:, 0.0])
         assert_deprecated(lambda: a[:, 0.0, :])
-        assert_deprecated(lambda: a[0.0, :, :])
+        assert_deprecated(lambda: a[0.0, :, :], num=2) # [1]
         assert_deprecated(lambda: a[0, 0, 0.0])
         assert_deprecated(lambda: a[0.0, 0, 0])
         assert_deprecated(lambda: a[0, 0.0, 0])
@@ -104,18 +152,21 @@ class TestFloatScalarIndexDeprecation(object):
         assert_deprecated(lambda: a[-1.4, :])
         assert_deprecated(lambda: a[:, -1.4])
         assert_deprecated(lambda: a[:, -1.4, :])
-        assert_deprecated(lambda: a[-1.4, :, :])
+        assert_deprecated(lambda: a[-1.4, :, :], num=2) # [1]
         assert_deprecated(lambda: a[0, 0, -1.4])
         assert_deprecated(lambda: a[-1.4, 0, 0])
         assert_deprecated(lambda: a[0, -1.4, 0])
+        # [1] These are duplicate because of the _tuple_of_integers quick check
+
         # Test that the slice parameter deprecation warning doesn't mask
         # the scalar index warning.
-        assert_deprecated(lambda: a[0.0:, 0.0])
-        assert_deprecated(lambda: a[0.0:, 0.0, :])
+        assert_deprecated(lambda: a[0.0:, 0.0], num=2)
+        assert_deprecated(lambda: a[0.0:, 0.0, :], num=2)
 
 
     def test_valid_not_deprecated(self):
         a = np.array([[[5]]])
+        assert_not_deprecated = self.assert_not_deprecated
 
         assert_not_deprecated(lambda: a[np.array([0])])
         assert_not_deprecated(lambda: a[[0, 0]])
@@ -124,7 +175,7 @@ class TestFloatScalarIndexDeprecation(object):
         assert_not_deprecated(lambda: a[:, :, :])
 
 
-class TestFloatSliceParameterDeprecation(object):
+class TestFloatSliceParameterDeprecation(_DeprecationTestCase):
     """
     These test that ``DeprecationWarning`` gets raised when you try to use
     non-integers for slicing, e.g. ``a[0.0:5]``, ``a[::1.5]``, etc.
@@ -145,20 +196,12 @@ class TestFloatSliceParameterDeprecation(object):
     I interpret this to mean 2 years after the 1.8 release.
 
     """
+    message = "using a non-integer number instead of an integer will result in an error in the future"
 
-    def setUp(self):
-        warnings.filterwarnings("error", message="non-integer slice param",
-                                category=DeprecationWarning)
-
-
-    def tearDown(self):
-        warnings.filterwarnings("default", message="non-integer slice param",
-                                category=DeprecationWarning)
-
-
-    @dec.skipif(sys.version_info[:2] < (2, 5))
     def test_deprecations(self):
         a = np.array([[5]])
+        def assert_deprecated(*args, **kwargs):
+            self.assert_deprecated(*args, exceptions=(IndexError,), **kwargs)
 
         # start as float.
         assert_deprecated(lambda: a[0.0:])
@@ -179,18 +222,19 @@ class TestFloatSliceParameterDeprecation(object):
         assert_deprecated(lambda: a[::5.0, :])
         assert_deprecated(lambda: a[:, 0:4:2.0])
         # mixed.
-        assert_deprecated(lambda: a[1.0:2:2.0])
-        assert_deprecated(lambda: a[1.0::2.0])
-        assert_deprecated(lambda: a[0:, :2.0:2.0])
-        assert_deprecated(lambda: a[1.0:1:4.0, :0])
-        assert_deprecated(lambda: a[1.0:5.0:5.0, :])
-        assert_deprecated(lambda: a[:, 0.4:4.0:2.0])
+        assert_deprecated(lambda: a[1.0:2:2.0], num=2)
+        assert_deprecated(lambda: a[1.0::2.0], num=2)
+        assert_deprecated(lambda: a[0:, :2.0:2.0], num=2)
+        assert_deprecated(lambda: a[1.0:1:4.0, :0], num=2)
+        assert_deprecated(lambda: a[1.0:5.0:5.0, :], num=3)
+        assert_deprecated(lambda: a[:, 0.4:4.0:2.0], num=3)
         # should still get the DeprecationWarning if step = 0.
-        assert_deprecated(lambda: a[::0.0])
+        assert_deprecated(lambda: a[::0.0], function_fails=True)
 
 
     def test_valid_not_deprecated(self):
         a = np.array([[[5]]])
+        assert_not_deprecated = self.assert_not_deprecated
 
         assert_not_deprecated(lambda: a[::])
         assert_not_deprecated(lambda: a[0:])
