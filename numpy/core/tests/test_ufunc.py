@@ -425,6 +425,13 @@ class TestUfunc(TestCase):
         w = np.arange(300,324).reshape((2,3,4))
         assert_array_equal(umt.innerwt(a,b,w), np.sum(a*b*w,axis=-1))
 
+    def test_innerwt_empty(self):
+        """Test generalized ufunc with zero-sized operands"""
+        a = np.array([], dtype='f8')
+        b = np.array([], dtype='f8')
+        w = np.array([], dtype='f8')
+        assert_array_equal(umt.innerwt(a,b,w), np.sum(a*b*w,axis=-1))
+
     def test_matrix_multiply(self):
         self.compare_matrix_multiply_results(np.long)
         self.compare_matrix_multiply_results(np.double)
