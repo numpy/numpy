@@ -844,6 +844,15 @@ NpyIter_IsGrowInner(NpyIter *iter)
     return (NIT_ITFLAGS(iter)&NPY_ITFLAG_GROWINNER) != 0;
 }
 
+/*
+ * Whether the iterator output is scalar
+ */
+NPY_NO_EXPORT npy_bool
+NpyIter_IsScalar(NpyIter *iter)
+{
+    return (NIT_ITFLAGS(iter)&NPY_ITFLAG_SCALAR) != 0;
+}
+
 /*NUMPY_API
  * Gets the size of the buffer, or 0 if buffering is not enabled
  */

@@ -54,8 +54,7 @@ static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
                     char **op_dataptr,
                     npy_uint32 *op_flags, int **op_axes,
-                    npy_intp *itershape,
-                    int output_scalars);
+                    npy_intp *itershape);
 static void
 npyiter_replace_axisdata(NpyIter *iter, int iop,
                       PyArrayObject *op,
@@ -74,8 +73,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter);
 static PyArray_Descr *
 npyiter_get_common_dtype(int nop, PyArrayObject **op,
                         npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
-                        PyArray_Descr **op_request_dtypes,
-                        int only_inputs, int output_scalars);
+                        PyArray_Descr **op_request_dtypes, int only_inputs);
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 npy_uint32 flags, npyiter_opitflags *op_itflags,
@@ -86,7 +84,7 @@ npyiter_allocate_arrays(NpyIter *iter,
                         npy_uint32 flags,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
                         npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
-                        int **op_axes, int output_scalars);
+                        int **op_axes);
 static void
 npyiter_get_priority_subtype(int nop, PyArrayObject **op,
                             npyiter_opitflags *op_itflags,
@@ -123,7 +121,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
     npy_int8 *perm;
     NpyIter_BufferData *bufferdata = NULL;
     int any_allocate = 0, any_missing_dtypes = 0,
-            output_scalars = 0, need_subtype = 0;
+            need_subtype = 0;
 
     /* The subtype for automatically allocated outputs */
     double subtype_priority = NPY_PRIORITY;
@@ -177,7 +175,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 
     /* If 'ndim' is zero, any outputs should be scalars */
     if (ndim == 0) {
-        output_scalars = 1;
+        itflags |= NPY_ITFLAG_SCALAR;
         ndim = 1;
     }
 
@@ -231,8 +229,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 
     /* Fill in the AXISDATA arrays and set the ITERSIZE field */
     if (!npyiter_fill_axisdata(iter, flags, op_itflags, op_dataptr,
-                                        op_flags, op_axes, itershape,
-                                        output_scalars)) {
+                                        op_flags, op_axes, itershape)) {
         NpyIter_Deallocate(iter);
         return NULL;
     }
@@ -338,8 +335,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
         dtype = npyiter_get_common_dtype(nop, op,
                                     op_itflags, op_dtype,
                                     op_request_dtypes,
-                                    only_inputs,
-                                    output_scalars);
+                                    only_inputs);
         if (dtype == NULL) {
             NpyIter_Deallocate(iter);
             return NULL;
@@ -389,7 +385,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      * done now using a memory layout matching the iterator.
      */
     if (!npyiter_allocate_arrays(iter, flags, op_dtype, subtype, op_flags,
-                            op_itflags, op_axes, output_scalars)) {
+                                                  op_itflags, op_axes)) {
         NpyIter_Deallocate(iter);
         return NULL;
     }
@@ -1439,8 +1435,7 @@ static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
                     char **op_dataptr,
                     npy_uint32 *op_flags, int **op_axes,
-                    npy_intp *itershape,
-                    int output_scalars)
+                    npy_intp *itershape)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
@@ -1560,7 +1555,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                     ondim = PyArray_NDIM(op_cur);
                     if (bshape == 1) {
                         strides[iop] = 0;
-                        if (idim >= ondim && !output_scalars &&
+                        if (idim >= ondim && !(itflags & NPY_ITFLAG_SCALAR) &&
                                     (op_flags[iop] & NPY_ITER_NO_BROADCAST)) {
                             goto operand_different_than_broadcast;
                         }
@@ -2398,8 +2393,7 @@ npyiter_find_best_axis_ordering(NpyIter *iter)
 static PyArray_Descr *
 npyiter_get_common_dtype(int nop, PyArrayObject **op,
                         npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
-                        PyArray_Descr **op_request_dtypes,
-                        int only_inputs, int output_scalars)
+                        PyArray_Descr **op_request_dtypes, int only_inputs)
 {
     int iop;
     npy_intp narrs = 0, ndtypes = 0;
@@ -2698,7 +2692,7 @@ npyiter_allocate_arrays(NpyIter *iter,
                         npy_uint32 flags,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
                         npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
-                        int **op_axes, int output_scalars)
+                        int **op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
@@ -2729,7 +2723,7 @@ npyiter_allocate_arrays(NpyIter *iter,
         if (op[iop] == NULL) {
             PyArrayObject *out;
             PyTypeObject *op_subtype;
-            int ondim = output_scalars ? 0 : ndim;
+            int ondim = (itflags & NPY_ITFLAG_SCALAR) ? 0 : ndim;
 
             /* Check whether the subtype was disabled */
             op_subtype = (op_flags[iop] & NPY_ITER_NO_SUBTYPE) ?

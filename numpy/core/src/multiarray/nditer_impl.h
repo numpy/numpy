@@ -101,6 +101,8 @@
 #define NPY_ITFLAG_REDUCE       0x1000
 /* Reduce iteration doesn't need to recalculate reduce loops next time */
 #define NPY_ITFLAG_REUSE_REDUCE_LOOPS 0x2000
+/* The iterator output is scalar */
+#define NPY_ITFLAG_SCALAR       0x4000
 
 /* Internal iterator per-operand iterator flags */
 
