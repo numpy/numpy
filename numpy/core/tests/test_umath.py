@@ -1263,6 +1263,13 @@ def test_reduceat():
     np.setbufsize(np.UFUNC_BUFSIZE_DEFAULT)
     assert_array_almost_equal(h1, h2)
 
+def test_reduceat_empty():
+    """Reduceat should work with empty arrays"""
+    indices = np.array([], 'i8')
+    x = np.array([], 'f8')
+    result = np.add.reduceat(x, indices)
+    assert_equal(result.dtype, x.dtype)
+    assert_equal(result.shape, (0,))
 
 def test_complex_nan_comparisons():
     nans = [complex(np.nan, 0), complex(0, np.nan), complex(np.nan, np.nan)]
