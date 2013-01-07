@@ -164,9 +164,17 @@ class TestAttributes(TestCase):
             y[...] = 1
             assert_equal(x,y)
 
+    def test_fill_struct_array(self):
+        # Filling from a scalar
         x = array([(0,0.0), (1,1.0)], dtype='i4,f8')
         x.fill(x[0])
         assert_equal(x['f1'][1], x['f1'][0])
+        # Filling from a tuple that can be converted
+        # to a scalar
+        x = np.zeros(2, dtype=[('a', 'f8'), ('b', 'i4')])
+        x.fill((3.5, -2))
+        assert_array_equal(x['a'], [3.5, 3.5])
+        assert_array_equal(x['b'], [-2, -2])
 
 class TestAssignment(TestCase):
     def test_assignment_broadcasting(self):
