@@ -24,7 +24,7 @@
  * types of the same rank to have the same width.
  */
 
-#if SIZEOF_LONGLONG == 64
+#if NPY_SIZEOF_LONGLONG == 64
 
 static int
 ulonglong_overflow(npy_ulonglong a, npy_ulonglong b)
@@ -72,7 +72,7 @@ slonglong_overflow(npy_longlong a0, npy_longlong b0)
         (((x & mask) + (y & mask) + (w >> 32)) >> 31);
 }
 
-#elif SIZEOF_LONGLONG == 128
+#elif NPY_SIZEOF_LONGLONG == 128
 
 static int
 ulonglong_overflow(npy_ulonglong a, npy_ulonglong b)
@@ -203,8 +203,8 @@ static void
 }
 /**end repeat**/
 
-#ifndef SIZEOF_BYTE
-#define SIZEOF_BYTE 1
+#ifndef NPY_SIZEOF_BYTE
+#define NPY_SIZEOF_BYTE 1
 #endif
 
 /**begin repeat
