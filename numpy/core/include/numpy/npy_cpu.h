@@ -66,6 +66,8 @@
     #define NPY_CPU_MIPSEL
 #elif defined(__MIPSEB__)
     #define NPY_CPU_MIPSEB
+#elif defined(__aarch64__)
+    #define NPY_CPU_AARCH64
 #else
     #error Unknown CPU, please report this to numpy maintainers with \
     information about your platform (OS, CPU and compiler)
