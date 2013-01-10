@@ -244,7 +244,7 @@ def test_ndindex():
 
     # Make sure size argument is optional
     x = list(np.ndindex())
-    assert_equal(x, [(0,)])
+    assert_equal(x, [()])
 
 
 if __name__ == "__main__":
