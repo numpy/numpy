@@ -242,9 +242,15 @@ def test_ndindex():
     expected = [ix for ix, e in np.ndenumerate(np.zeros((1, 2, 3)))]
     assert_array_equal(x, expected)
 
+    x = list(np.ndindex((1, 2, 3)))
+    assert_array_equal(x, expected)
+
     # Make sure size argument is optional
     x = list(np.ndindex())
     assert_equal(x, [()])
+
+    x = list(np.ndindex(()))
+    assert_equal(x, [()])    
 
 
 if __name__ == "__main__":
