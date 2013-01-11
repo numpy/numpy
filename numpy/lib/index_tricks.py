@@ -542,7 +542,7 @@ class ndindex(object):
                 def __iter__(self):
                     return self
                 def ndincr(self):
-                    return self.next()
+                    self.next()
                 def next(self):
                     if self._N > 0:
                         self._N -= 1
