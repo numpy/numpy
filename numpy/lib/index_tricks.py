@@ -539,7 +539,7 @@ class ndindex(object):
                 yield ()
             return zerodim_gen()
         else:
-            return object.__new__(cls, *shape)
+            return super(ndindex, cls).__new__(cls)
             
     def __init__(self, *shape):
         x = as_strided(_nx.zeros(1), shape=shape, strides=_nx.zeros_like(shape))
