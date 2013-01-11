@@ -1099,7 +1099,7 @@ add_newdoc('numpy.core.umath', 'exp2',
 
     See Also
     --------
-    exp : calculate x**p.
+    power
 
     Notes
     -----
