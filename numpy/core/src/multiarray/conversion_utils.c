@@ -697,7 +697,7 @@ PyArray_PyIntAsIntp(PyObject *o)
 
     /* Be a bit stricter and not allow bools */
     if (PyBool_Check(o)) {
-        if (DEPRECATE("using a non-integer number instead of an integer"
+        if (DEPRECATE("using a boolean instead of an integer"
                       " will result in an error in the future") < 0) {
             return -1;
         }

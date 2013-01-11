@@ -9,7 +9,6 @@ from nose.plugins.skip import SkipTest
 
 import numpy as np
 from numpy.testing import dec, run_module_suite, assert_raises
-from numpy.testing.utils import WarningManager
 
 
 class _DeprecationTestCase(object):
@@ -18,7 +17,7 @@ class _DeprecationTestCase(object):
     message = ''
 
     def setUp(self):
-        self.warn_ctx = WarningManager(record=True)
+        self.warn_ctx = warnings.catch_warnings(record=True)
         self.log = self.warn_ctx.__enter__()
 
         # make sure we are ignoring other types of DeprecationWarnings
@@ -129,7 +128,8 @@ class TestFloatScalarIndexDeprecation(_DeprecationTestCase):
     I interpret this to mean 2 years after the 1.8 release.
 
     """
-    message = "using a non-integer number instead of an integer will result in an error in the future"
+    message = "using a (non-integer number|boolean) instead of an integer "
+              "will result in an error in the future"
 
     def test_deprecations(self):
         a = np.array([[[5]]])
@@ -196,7 +196,8 @@ class TestFloatSliceParameterDeprecation(_DeprecationTestCase):
     I interpret this to mean 2 years after the 1.8 release.
 
     """
-    message = "using a non-integer number instead of an integer will result in an error in the future"
+    message = "using a (non-integer number|boolean) instead of an integer "
+              "will result in an error in the future"
 
     def test_deprecations(self):
         a = np.array([[5]])
