@@ -1253,7 +1253,7 @@ def svd(a, full_matrices=1, compute_uv=1):
 
     >>> U, s, V = np.linalg.svd(a, full_matrices=True)
     >>> U.shape, V.shape, s.shape
-    ((9, 6), (6, 6), (6,))
+    ((9, 9), (6, 6), (6,))
     >>> S = np.zeros((9, 6), dtype=complex)
     >>> S[:6, :6] = np.diag(s)
     >>> np.allclose(a, np.dot(U, np.dot(S, V)))
