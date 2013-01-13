@@ -259,9 +259,7 @@ def filled(shape, val, dtype=None, order='C'):
 
 def filled_like(a, val, dtype=None, order='K', subok=True):
     """
-    Return an array of nans with the same shape and type as a given array.
-
-    With default parameters, is equivalent to ``a.copy().fill(np.nan)``.
+    Return a filled array with the same shape and type as a given array.
 
     Parameters
     ----------
