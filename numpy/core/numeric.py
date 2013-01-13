@@ -223,12 +223,6 @@ def ones_like(a, dtype=None, order='K', subok=True):
     multiarray.copyto(res, 1, casting='unsafe')
     return res
 
-def _check_dtype_nan(dtype):
-    if not issubdtype(dtype, 'float'):
-        raise ValueError('Invalid dtype because only floating point numbers '
-                         'can represent non-numbers as defined in '
-                         'IEEE 754-1985.')
-
 def filled(shape, val, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with `val`.
@@ -251,8 +245,6 @@ def filled(shape, val, dtype=None, order='C'):
     empty : Return a new uninitialized array.
 
     """
-
-    _check_dtype_nan(dtype)
     a = empty(shape, dtype, order)
     multiarray.copyto(a, val, casting='unsafe')
     return a
@@ -292,8 +284,6 @@ def filled_like(a, val, dtype=None, order='K', subok=True):
     filled : Fill a new array.
 
     """
-
-    _check_dtype_nan(dtype)
     res = empty_like(a, dtype=dtype, order=order, subok=subok)
     multiarray.copyto(res, val, casting='unsafe')
     return res
