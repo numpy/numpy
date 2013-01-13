@@ -1329,7 +1329,7 @@ class TestStdVarComplex(TestCase):
 
 
 class TestLikeFuncs(TestCase):
-    '''Test ones_like, zeros_like, and empty_like'''
+    '''Test ones_like, zeros_like, empty_like and filled_like'''
 
     def setUp(self):
         self.data = [
