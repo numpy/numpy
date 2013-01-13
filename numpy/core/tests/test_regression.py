@@ -304,6 +304,19 @@ class TestRegression(TestCase):
         self.assertRaises(ValueError, bfa)
         self.assertRaises(ValueError, bfb)
 
+    def test_nonarray_assignment(self):
+        # See also Issue gh-2870, test for nonarray assignment
+        # and equivalent unsafe casted array assignment
+        a = np.arange(10)
+        b = np.ones(10, dtype=bool)
+        r = np.arange(10)
+        def assign(a, b, c):
+            a[b] = c
+        assert_raises(ValueError, assign, a, b, np.nan)
+        a[b] = np.array(np.nan) # but not this.
+        assert_raises(ValueError, assign, a, r, np.nan)
+        a[r] = np.array(np.nan)
+
     def test_unpickle_dtype_with_object(self,level=rlevel):
         """Implemented in r2840"""
         dt = np.dtype([('x',int),('y',np.object_),('z','O')])

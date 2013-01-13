@@ -1306,9 +1306,17 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         PyArrayObject *op_arr;
         PyArray_Descr *dtype = NULL;
 
-        op_arr = (PyArrayObject *)PyArray_FromAny(op, dtype, 0, 0, 0, NULL);
-        if (op_arr == NULL) {
-            return -1;
+        if (!PyArray_Check(op)) {
+            dtype = PyArray_DTYPE(self);
+            Py_INCREF(dtype);
+            op_arr = (PyArrayObject *)PyArray_FromAny(op, dtype, 0, 0, 0, NULL);
+            if (op_arr == NULL) {
+                return -1;
+            }
+        }
+        else {
+            op_arr = op;
+            Py_INCREF(op_arr);
         }
 
         if (PyArray_NDIM(op_arr) < 2) {
