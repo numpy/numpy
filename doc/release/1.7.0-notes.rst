@@ -157,7 +157,7 @@ permutation array that sorts the array to search.
 Build system
 ------------
 
-Added (experimental) support for the AArch64 architecture.
+Added experimental support for the AArch64 architecture.
 
 C API
 -----
