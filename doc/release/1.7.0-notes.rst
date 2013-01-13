@@ -57,10 +57,6 @@ Because of the nature of floating-point arithmetic, this may subtly change
 some results, just as linking NumPy to a different BLAS implementations
 such as MKL can.
 
-Support for AArch64 architecture has been added in the pull request #2901
-as an experimental feature. It might get removed or altered in future versions
-if it causes problems.
-
 If upgrading from 1.5, then generally in 1.6 and 1.7 there have been
 substantial code added and some code paths altered, particularly in the
 areas of type resolution and buffered iteration over universal functions.
@@ -157,6 +153,11 @@ New argument to searchsorted
 
 The function searchsorted now accepts a 'sorter' argument that is a
 permutation array that sorts the array to search.
+
+Build system
+------------
+
+Added (experimental) support for the AArch64 architecture.
 
 C API
 -----
