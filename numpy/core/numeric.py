@@ -67,8 +67,6 @@ def zeros_like(a, dtype=None, order='K', subok=True):
     """
     Return an array of zeros with the same shape and type as a given array.
 
-    With default parameters, is equivalent to ``a.copy().fill(0)``.
-
     Parameters
     ----------
     a : array_like
@@ -154,8 +152,6 @@ def ones(shape, dtype=None, order='C'):
 def ones_like(a, dtype=None, order='K', subok=True):
     """
     Return an array of ones with the same shape and type as a given array.
-
-    With default parameters, is equivalent to ``a.copy().fill(1)``.
 
     Parameters
     ----------
