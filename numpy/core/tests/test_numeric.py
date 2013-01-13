@@ -1356,6 +1356,18 @@ class TestLikeFuncs(TestCase):
                 (arange(24).reshape(4,3,2).swapaxes(0,1), '?'),
                      ]
 
+    def compare_array_value(self, dz, value, fill_value):
+        if not value is None:
+            if fill_value:
+                try:
+                    z = dz.dtype.type(value)
+                except OverflowError:
+                    pass
+                else:
+                    assert_(all(dz == z))
+            else:
+                assert_(all(dz == value))
+
     def check_like_function(self, like_function, value, fill_value=False):
         if fill_value:
             fill_kwarg = {'val': value}
@@ -1373,16 +1385,7 @@ class TestLikeFuncs(TestCase):
                 assert_equal(dz.dtype, d.dtype)
             else:
                 assert_equal(dz.dtype, np.dtype(dtype))
-            if not value is None:
-                if fill_value:
-                    try:
-                        z = dz.dtype.type(value)
-                    except OverflowError:
-                        pass
-                    else:
-                        assert_(all(dz == z))
-                else:
-                    assert_(all(dz == value))
+            self.compare_array_value(dz, value, fill_value)
 
             # C order, default dtype
             dz = like_function(d, order='C', dtype=dtype, **fill_kwarg)
@@ -1392,16 +1395,7 @@ class TestLikeFuncs(TestCase):
                 assert_equal(dz.dtype, d.dtype)
             else:
                 assert_equal(dz.dtype, np.dtype(dtype))
-            if not value is None:
-                if fill_value:
-                    try:
-                        z = dz.dtype.type(value)
-                    except OverflowError:
-                        pass
-                    else:
-                        assert_(all(dz == z))
-                else:
-                    assert_(all(dz == value))
+            self.compare_array_value(dz, value, fill_value)
 
             # F order, default dtype
             dz = like_function(d, order='F', dtype=dtype, **fill_kwarg)
@@ -1411,16 +1405,7 @@ class TestLikeFuncs(TestCase):
                 assert_equal(dz.dtype, d.dtype)
             else:
                 assert_equal(dz.dtype, np.dtype(dtype))
-            if not value is None:
-                if fill_value:
-                    try:
-                        z = dz.dtype.type(value)
-                    except OverflowError:
-                        pass
-                    else:
-                        assert_(all(dz == z))
-                else:
-                    assert_(all(dz == value))
+            self.compare_array_value(dz, value, fill_value)
 
             # A order
             dz = like_function(d, order='A', dtype=dtype, **fill_kwarg)
@@ -1433,16 +1418,7 @@ class TestLikeFuncs(TestCase):
                 assert_equal(dz.dtype, d.dtype)
             else:
                 assert_equal(dz.dtype, np.dtype(dtype))
-            if not value is None:
-                if fill_value:
-                    try:
-                        z = dz.dtype.type(value)
-                    except OverflowError:
-                        pass
-                    else:
-                        assert_(all(dz == z))
-                else:
-                    assert_(all(dz == value))
+            self.compare_array_value(dz, value, fill_value)
 
         # Test the 'subok' parameter
         a = np.matrix([[1,2],[3,4]])
