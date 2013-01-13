@@ -1357,7 +1357,7 @@ class TestLikeFuncs(TestCase):
                      ]
 
     def compare_array_value(self, dz, value, fill_value):
-        if not value is None:
+        if value is not None:
             if fill_value:
                 try:
                     z = dz.dtype.type(value)
