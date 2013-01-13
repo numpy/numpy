@@ -1328,6 +1328,51 @@ class TestStdVarComplex(TestCase):
         assert_almost_equal(std(A)**2,real_var)
 
 
+class TestCreationFuncs(TestCase):
+
+    def setUp(self):
+        self.dtypes = ('b', 'i', 'u', 'f', 'c', 'S', 'a', 'U', 'V')
+        self.orders = {'C': 'c_contiguous', 'F': 'f_contiguous'}
+        self.ndims = 10
+
+    def check_function(self, func, fill_value=None):
+        fill_kwarg = {}
+        if fill_value is not None:
+            fill_kwarg = {'val': fill_value}
+        for size in (0, 1, 2):
+            for ndims in range(self.ndims):
+                shape = ndims * [size]
+                for order in self.orders:
+                    for type in self.dtypes:
+                        for bytes in 2**np.arange(9):
+                            try:
+                                dtype = np.dtype('%s%d' % (type, bytes))
+                            except TypeError:
+                                continue
+                            else:
+                                if fill_value is not None and type == 'V':
+                                    continue
+                                arr = func(shape, order=order, dtype=dtype,
+                                           **fill_kwarg)
+                                assert arr.dtype == dtype
+                                assert getattr(arr.flags, self.orders[order])
+                                if fill_value is not None:
+                                    assert_equal(arr, dtype.type(fill_value))
+
+    def test_zeros(self):
+        self.check_function(np.zeros)
+
+    def test_ones(self):
+        self.check_function(np.zeros)
+
+    def test_empty(self):
+        self.check_function(np.empty)
+
+    def test_filled(self):
+        self.check_function(np.filled, 0)
+        self.check_function(np.filled, 1)
+
+
 class TestLikeFuncs(TestCase):
     '''Test ones_like, zeros_like, empty_like and filled_like'''
 
