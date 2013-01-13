@@ -1339,23 +1339,27 @@ class TestCreationFuncs(TestCase):
         fill_kwarg = {}
         if fill_value is not None:
             fill_kwarg = {'val': fill_value}
-        for size in (0, 1, 2):
-            for ndims in range(self.ndims):
+        for size in (0, 1, 2): # size in one dimension
+            for ndims in range(self.ndims): # [], [size], [size, size] etc.
                 shape = ndims * [size]
-                for order in self.orders:
-                    for type in self.dtypes:
-                        for bytes in 2**np.arange(9):
+                for order in self.orders: # C, F
+                    for type in self.dtypes: # bool, int, float etc.
+                        for bytes in 2**np.arange(9): # byte size for type
                             try:
                                 dtype = np.dtype('%s%d' % (type, bytes))
-                            except TypeError:
+                            except TypeError: # dtype combination does not exist
                                 continue
                             else:
+                                # do not fill void type
                                 if fill_value is not None and type == 'V':
                                     continue
+
                                 arr = func(shape, order=order, dtype=dtype,
                                            **fill_kwarg)
+
                                 assert arr.dtype == dtype
                                 assert getattr(arr.flags, self.orders[order])
+
                                 if fill_value is not None:
                                     assert_equal(arr, dtype.type(fill_value))
 
