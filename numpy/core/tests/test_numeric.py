@@ -1330,6 +1330,8 @@ class TestStdVarComplex(TestCase):
 
 class TestCreationFuncs(TestCase):
 
+    '''Test ones, zeros, empty and filled'''
+
     def setUp(self):
         self.dtypes = ('b', 'i', 'u', 'f', 'c', 'S', 'a', 'U', 'V')
         self.orders = {'C': 'c_contiguous', 'F': 'f_contiguous'}
