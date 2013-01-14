@@ -1,5 +1,11 @@
 from distutils.core import setup
 
+# Use 2to3 if using Python 3
+try:
+   from distutils.command.build_py import build_py_2to3 as build_py
+except ImportError:
+   from distutils.command.build_py import build_py
+
 version = "0.4"
 
 setup(
@@ -20,4 +26,5 @@ setup(
     license="BSD",
     requires=["sphinx (>= 1.0.1)"],
     package_data={'numpydoc': ['tests/test_*.py']},
+    cmdclass={'build_py': build_py},
 )
