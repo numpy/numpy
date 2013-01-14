@@ -1082,7 +1082,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
 
  skip:
     Py_INCREF(type);
-    arrval = (PyArrayObject *)PyArray_FromAny(val, type, 0, 0, 0, NULL);
+    arrval = (PyArrayObject *)PyArray_FromAny(val, type, 0, 0,
+                                              NPY_ARRAY_FORCECAST, NULL);
     if (arrval == NULL) {
         return -1;
     }
