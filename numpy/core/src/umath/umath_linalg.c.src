@@ -1833,7 +1833,7 @@ typedef struct potr_params_struct
  */
 
 static inline int
-init_@lapack_func@(POTR_PARAMS_t *params, fortran_int N)
+init_@lapack_func@(POTR_PARAMS_t *params, char UPLO, fortran_int N)
 {
     uint8_t* mem_buff = NULL;
     uint8_t* a;
@@ -1847,7 +1847,7 @@ init_@lapack_func@(POTR_PARAMS_t *params, fortran_int N)
     params->A = a;
     params->N = N;
     params->LDA = N;
-    params->UPLO = 'L';
+    params->UPLO = UPLO;
 
     return 1;
  error:
@@ -1876,15 +1876,14 @@ call_@lapack_func@(POTR_PARAMS_t *params)
 }
 
 static void
-@TYPE@_cholesky(char **args, npy_intp *dimensions, npy_intp *steps,
-                void *NPY_UNUSED(func))
+@TYPE@_cholesky(char uplo, char **args, npy_intp *dimensions, npy_intp *steps)
 {
     POTR_PARAMS_t params;
     fortran_int n;
     INIT_OUTER_LOOP_2
 
     n = (fortran_int)dimensions[0];
-    if (init_@lapack_func@(&params, n))
+    if (init_@lapack_func@(&params, uplo, n))
     {
         LINEARIZE_DATA_t a_in, r_out;
         init_linearize_data(&a_in, n, n, steps[1], steps[0]);
@@ -1897,6 +1896,20 @@ static void
         END_OUTER_LOOP
         release_@lapack_func@(&params);
     }
+}
+
+static void
+@TYPE@_cholesky_up(char **args, npy_intp *dimensions, npy_intp *steps,
+                void *NPY_UNUSED(func))
+{
+    @TYPE@_cholesky('U', args, dimensions, steps);
+}
+
+static void
+@TYPE@_cholesky_lo(char **args, npy_intp *dimensions, npy_intp *steps,
+                void *NPY_UNUSED(func))
+{
+    @TYPE@_cholesky('L', args, dimensions, steps);
 }
 
 
@@ -1948,6 +1961,7 @@ dump_geev_params(const char *name, GEEV_PARAMS_t* params)
 
 /**begin repeat
    #TYPE=FLOAT,DOUBLE#
+   #CTYPE=CFLOAT,CDOUBLE#
    #typ=float,double#
    #complextyp=COMPLEX_t,DOUBLECOMPLEX_t#
    #lapack_func=sgeev,dgeev#
@@ -2205,7 +2219,9 @@ static inline fortran_int
 call_@lapack_func@(GEEV_PARAMS_t* params)
 {
     fortran_int rv;
+    /* dump_geev_params("GEEV", params); */
 
+    /* dump_@TYPE@_matrix("A", params->N, params->N, params->A); */
     LAPACK(@lapack_func@)(&params->JOBVL, &params->JOBVR, 
                           &params->N, params->A, &params->LDA,
                           params->W,
@@ -2214,6 +2230,8 @@ call_@lapack_func@(GEEV_PARAMS_t* params)
                           params->WORK, &params->LWORK,
                           params->WR, /* actually RWORK */
                           &rv);
+    /* dump_@TYPE@_matrix("W", params->N, 1, params->W); */
+    /* dump_@TYPE@_matrix("VR", params->N, params->N, params->VR); */
 
     return rv;
 }
@@ -2264,7 +2282,7 @@ static inline void
         LINEARIZE_DATA_t w_out;
         LINEARIZE_DATA_t vl_out;
         LINEARIZE_DATA_t vr_out;
-
+        /* TRACE_TXT("%s : JOBVL: %c JOBVR: %c\n", __FUNCTION__, geev_params.JOBVL, geev_params.JOBVR); */
 
         init_linearize_data(&a_in,
                             geev_params.N, geev_params.N,
@@ -2302,7 +2320,6 @@ static inline void
                 if ('V' == geev_params.JOBVR)
                     delinearize_@COMPLEXTYPE@_matrix(*arg_iter++, geev_params.VR, &vr_out);
             } else {
-                TRACE_TXT("geev failed with error code %d\n", not_ok);
                 /* geev failed */
                 nan_@COMPLEXTYPE@_matrix(*arg_iter++, &w_out);
                 if ('V' == geev_params.JOBVL)
@@ -3352,7 +3369,8 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eigvalshup);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(solve);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(solve1);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(inv);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(cholesky);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(cholesky_up);
+GUFUNC_FUNC_ARRAY_REAL_COMPLEX(cholesky_lo);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_N);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_S);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_A);
@@ -3589,13 +3607,23 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         equal_2_types
     },
     {
-        "cholesky",
+        "cholesky_up",
         "(m,m)->(m,m)",
         "cholesky decomposition of hermitian positive-definite matrices. \n"\
         "Broadcast to all outer dimensions. \n"\
         "    \"(m,m)->(m,m)\" \n",
         4, 1, 1,
-        cholesky_funcs,
+        cholesky_up_funcs,
+        equal_2_types
+    },
+    {
+        "cholesky_lo",
+        "(m,m)->(m,m)",
+        "cholesky decomposition of hermitian positive-definite matrices. \n"\
+        "Broadcast to all outer dimensions. \n"\
+        "    \"(m,m)->(m,m)\" \n",
+        4, 1, 1,
+        cholesky_lo_funcs,
         equal_2_types
     },
     {
@@ -3668,133 +3696,133 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     },
     {
         "quadratic_form",
-	"(m),(m,n),(n)->()",
-	"computes the quadratic form uQv in the inner dimensions, broadcast to the rest \n" \
-	"Results in the result of uQv for each element of the broadcasted dimensions. \n" \
-	"    \"(m),(m,n),(n)->()",
-	4,3,1,
-	quadratic_form_funcs,
-	equal_4_types
+        "(m),(m,n),(n)->()",
+        "computes the quadratic form uQv in the inner dimensions, broadcast to the rest \n" \
+        "Results in the result of uQv for each element of the broadcasted dimensions. \n" \
+        "    \"(m),(m,n),(n)->()",
+        4,3,1,
+        quadratic_form_funcs,
+        equal_4_types
     },
     {
         "add3",
-	"(),(),()->()",
-	"3-way element-wise addition. a,b,c -> a+b+c for all elements. \n",
-	4,3,1,
-	add3_funcs,
-	equal_4_types
+        "(),(),()->()",
+        "3-way element-wise addition. a,b,c -> a+b+c for all elements. \n",
+        4,3,1,
+        add3_funcs,
+        equal_4_types
     },
     {
         "multiply3",
-	"(),(),()->()",
-	"3-way element-wise product. a,b,c -> a*b*c for all elements. \n",
-	4,3,1,
-	multiply3_funcs,
-	equal_4_types
+        "(),(),()->()",
+        "3-way element-wise product. a,b,c -> a*b*c for all elements. \n",
+        4,3,1,
+        multiply3_funcs,
+        equal_4_types
     },
     {
         "multiply3_add",
-	"(),(),(),()->()",
-	"3-way element-wise product plus addition. a,b,c,d -> a*b*c+d for all elements. \n",
-	4,4,1,
-	multiply3_add_funcs,
-	equal_5_types
+        "(),(),(),()->()",
+        "3-way element-wise product plus addition. a,b,c,d -> a*b*c+d for all elements. \n",
+        4,4,1,
+        multiply3_add_funcs,
+        equal_5_types
     },
     {
         "multiply_add",
-	"(),(),()->()",
-	"element-wise multiply-add. a,b,c -> a*b+c for all elements. \n",
-	4,3,1,
-	multiply_add_funcs,
-	equal_4_types
+        "(),(),()->()",
+        "element-wise multiply-add. a,b,c -> a*b+c for all elements. \n",
+        4,3,1,
+        multiply_add_funcs,
+        equal_4_types
     },
     {
         "multiply_add2",
-	"(),(),(),()->()",
-	"element-wise product with 2 additions. a,b,c,d -> a*b+c+d for all elements. \n",
-	4,4,1,
-	multiply_add2_funcs,
-	equal_5_types
+        "(),(),(),()->()",
+        "element-wise product with 2 additions. a,b,c,d -> a*b+c+d for all elements. \n",
+        4,4,1,
+        multiply_add2_funcs,
+        equal_5_types
     },
     {
         "multiply4",
-	"(),(),(),()->()",
-	"4-way element-wise product. a,b,c,d -> a*b*c*d for all elements. \n",
-	4,4,1,
-	multiply4_funcs,
-	equal_5_types
+        "(),(),(),()->()",
+        "4-way element-wise product. a,b,c,d -> a*b*c*d for all elements. \n",
+        4,4,1,
+        multiply4_funcs,
+        equal_5_types
     },
     {
         "multiply4_add",
-	"(),(),(),(),()->()",
-	"4-way element-wise product and addition. a,b,c,d,e -> a*b*c*d+e. \n",
-	4,5,1,
-	multiply4_add_funcs,
-	equal_6_types
+        "(),(),(),(),()->()",
+        "4-way element-wise product and addition. a,b,c,d,e -> a*b*c*d+e. \n",
+        4,5,1,
+        multiply4_add_funcs,
+        equal_6_types
     },
     {  /* solve using choleske decomposition (lapack potrs) */
         "chosolve_up",
-	"(m,m),(m,n)->(m,n)",
-	"solve for symmetric/hermitian matrices using cholesky factorization. \n",
-	4,2,1,
-	chosolve_up_funcs,
-	equal_3_types
+        "(m,m),(m,n)->(m,n)",
+        "solve for symmetric/hermitian matrices using cholesky factorization. \n",
+        4,2,1,
+        chosolve_up_funcs,
+        equal_3_types
     },
     {  /* solve using choleske decomposition (lapack potrs) */
         "chosolve_lo",
-	"(m,m),(m,n)->(m,n)",
-	"solve for symmetric/hermitian matrices using cholesky factorization. \n",
-	4,2,1,
-	chosolve_lo_funcs,
-	equal_3_types
+        "(m,m),(m,n)->(m,n)",
+        "solve for symmetric/hermitian matrices using cholesky factorization. \n",
+        4,2,1,
+        chosolve_lo_funcs,
+        equal_3_types
     },
     {   /* solve using cholesky decomposition (lapack potrs) */
         "chosolve1_up",
-	"(m,m),(m)->(m)",
-	"solve a system using cholesky decomposition. \n",
-	4,2,1,
+        "(m,m),(m)->(m)",
+        "solve a system using cholesky decomposition. \n",
+        4,2,1,
         chosolve1_up_funcs,
 	equal_3_types
     },
     {   /* solve using cholesky decomposition (lapack potrs) */
         "chosolve1_lo",
-	"(m,m),(m)->(m)",
-	"solve a system using cholesky decomposition. \n",
-	4,2,1,
-	chosolve1_lo_funcs,
-	equal_3_types
+        "(m,m),(m)->(m)",
+        "solve a system using cholesky decomposition. \n",
+        4,2,1,
+        chosolve1_lo_funcs,
+        equal_3_types
     },
     {   /* inverse using cholesky decomposition (lapack potri) */
         "poinv_up",
-	"(m,m)->(m,m)",
-	"inverse using cholesky decomposition for symmetric/hermitian matrices. \n",
-	4,1,1,
-	poinv_up_funcs,
-	equal_2_types
+        "(m,m)->(m,m)",
+        "inverse using cholesky decomposition for symmetric/hermitian matrices. \n",
+        4,1,1,
+        poinv_up_funcs,
+        equal_2_types
     },
     {   /* inverse using cholesky decomposition (lapack potri) */
         "poinv_lo",
-	"(m,m)->(m,m)",
-	"inverse using cholesky decomposition for symmetric/hermitian matrices. \n",
-	4,1,1,
-	poinv_lo_funcs,
-	equal_2_types
+        "(m,m)->(m,m)",
+        "inverse using cholesky decomposition for symmetric/hermitian matrices. \n",
+        4,1,1,
+        poinv_lo_funcs,
+        equal_2_types
     },
     {
         "convolve_same_m",
-	"(m),(n)->(m)",
-	"convolve equivalent to mode='same' when m>=n. \n",
-	4,2,1,
-	convolve_same_m_funcs,
-	equal_3_types
+        "(m),(n)->(m)",
+        "convolve equivalent to mode='same' when m>=n. \n",
+        4,2,1,
+        convolve_same_m_funcs,
+        equal_3_types
     },
     {
         "convolve_same_n",
-	"(m),(n)->(n)",
-	"convolve equivalent to mode='same' when m<=n. \n",
-	4,2,1,
-	convolve_same_m_funcs,
-	equal_3_types
+        "(m),(n)->(n)",
+        "convolve equivalent to mode='same' when m<=n. \n",
+        4,2,1,
+        convolve_same_m_funcs,
+        equal_3_types
     }
 };
 
