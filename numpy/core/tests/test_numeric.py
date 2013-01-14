@@ -1353,7 +1353,7 @@ class TestCreationFuncs(TestCase):
                                 continue
                             else:
                                 # do not fill void type
-                                if fill_value is not None and type == 'V':
+                                if fill_value is not None and type in 'VSUa':
                                     continue
 
                                 arr = func(shape, order=order, dtype=dtype,
