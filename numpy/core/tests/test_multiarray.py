@@ -2873,6 +2873,13 @@ def test_array_interface():
     f.iface['shape'] = (2,)
     assert_raises(ValueError, np.array, f)
 
+    # test scalar with no shape
+    class ArrayLike(object):
+        array = np.array(1)
+        __array_interface__ = array.__array_interface__
+    assert_equal(np.array(ArrayLike()), 1)
+
+
 def test_flat_element_deletion():
     it = np.ones(3).flat
     try:

@@ -502,7 +502,6 @@ class ndenumerate(object):
     def __iter__(self):
         return self
 
-
 class ndindex(object):
     """
     An N-dimensional iterator object to index arrays.
@@ -532,13 +531,36 @@ class ndindex(object):
     (2, 1, 0)
 
     """
+    # This is a hack to handle 0-d arrays correctly.
+    # Fixing nditer would be more work but should be done eventually,
+    #  and then this entire __new__ method can be removed.
+    def __new__(cls, *shape):
+        if len(shape) == 0 or (len(shape) == 1 and len(shape[0]) == 0):
+            class zero_dim_iter(object):
+                def __init__(self):
+                    self._N = 1
+                def __iter__(self):
+                    return self
+                def ndincr(self):
+                    self.next()
+                def next(self):
+                    if self._N > 0:
+                        self._N -= 1
+                        return ()
+                    raise StopIteration
+            return zero_dim_iter()
+        else:
+            return super(ndindex, cls).__new__(cls)
+            
     def __init__(self, *shape):
+        if len(shape) == 1 and isinstance(shape[0], tuple):
+            shape = shape[0]
         x = as_strided(_nx.zeros(1), shape=shape, strides=_nx.zeros_like(shape))
         self._it = _nx.nditer(x, flags=['multi_index'], order='C')
 
     def __iter__(self):
         return self
-
+        
     def ndincr(self):
         """
         Increment the multi-dimensional index by one.
