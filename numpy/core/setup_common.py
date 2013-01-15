@@ -1,4 +1,4 @@
-# Code shared by distutils and scons builds
+# Code common to build tools
 import sys
 from os.path import join
 import warnings

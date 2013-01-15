@@ -28,7 +28,6 @@ fi
 # bootstrap needed to ensure we build the docs from the right scipy version
 paver bootstrap
 source bootstrap/bin/activate
-python setupsconsegg.py install
 
 # build pdf docs
 paver pdf

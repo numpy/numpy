@@ -645,56 +645,13 @@ def get_frame(level=0):
             frame = frame.f_back
         return frame
 
-class SconsInfo(object):
-    """
-    Container object holding build info for building a package with scons.
-
-    Parameters
-    ----------
-    scons_path : str or None
-        Path to scons script, relative to the directory of setup.py.
-        If None, no scons script is specified. This can be useful to add only
-        pre- and post-hooks to a configuration.
-    parent_name : str or None
-        Name of the parent package (for example "numpy").
-    pre_hook : sequence of callables or None
-        Callables that are executed before scons is invoked.
-        Each callable should be defined as ``callable(*args, **kw)``.
-    post_hook : sequence of callables or None
-        Callables that are executed after scons is invoked.
-        Each callable should be defined as ``callable(*args, **kw)``.
-    source_files : list of str or None
-        List of paths to source files, relative to the directory of setup.py.
-    pkg_path : str or None
-        Path to the package for which the `SconsInfo` instance holds the
-        build info, relative to the directory of setup.py.
-
-    Notes
-    -----
-    All parameters are available as attributes of a `SconsInfo` instance.
-
-    """
-    def __init__(self, scons_path, parent_name, pre_hook,
-            post_hook, source_files, pkg_path):
-        self.scons_path = scons_path
-        self.parent_name = parent_name
-        self.pre_hook = pre_hook
-        self.post_hook = post_hook
-        self.source_files = source_files
-        if pkg_path:
-            self.pkg_path = pkg_path
-        else:
-            if scons_path:
-                self.pkg_path = os.path.dirname(scons_path)
-            else:
-                self.pkg_path = ''
 
 ######################
 
 class Configuration(object):
 
     _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
-                  'libraries', 'headers', 'scripts', 'py_modules', 'scons_data',
+                  'libraries', 'headers', 'scripts', 'py_modules',
                   'installed_libraries']
     _dict_keys = ['package_dir', 'installed_pkg_config']
     _extra_keys = ['name', 'version']
@@ -1651,65 +1608,6 @@ class Configuration(object):
             self.installed_pkg_config[self.name] = [(template, install_dir,
                 subst_dict)]
 
-    def add_scons_installed_library(self, name, install_dir):
-        """
-        Add a scons-built installable library to distutils.
-
-        Parameters
-        ----------
-        name : str
-            The name of the library.
-        install_dir : str
-            Path to install the library, relative to the current sub-package.
-
-        """
-        install_dir = os.path.join(self.package_path, install_dir)
-        self.installed_libraries.append(InstallableLib(name, {}, install_dir))
-
-    def add_sconscript(self, sconscript, subpackage_path=None,
-                       standalone = False, pre_hook = None,
-                       post_hook = None, source_files = None, package_path=None):
-        """Add a sconscript to configuration.
-
-        pre_hook and post hook should be sequences of callable, which will be
-        use before and after executing scons. The callable should be defined as
-        callable(*args, **kw). It is ugly, but well, hooks are ugly anyway...
-
-        sconscript can be None, which can be useful to add only post/pre
-        hooks."""
-        if standalone:
-            parent_name = None
-        else:
-            parent_name = self.name
-
-        dist = self.get_distribution()
-        # Convert the sconscript name to a relative filename (relative from top
-        # setup.py's directory)
-        fullsconsname = self.paths(sconscript)[0]
-
-        # XXX: Think about a way to automatically register source files from
-        # scons...
-        full_source_files = []
-        if source_files:
-            full_source_files.extend([self.paths(i)[0] for i in source_files])
-
-        scons_info = SconsInfo(fullsconsname, parent_name,
-                               pre_hook, post_hook,
-                               full_source_files, package_path)
-        if dist is not None:
-            if dist.scons_data is None:
-                dist.scons_data = []
-            dist.scons_data.append(scons_info)
-            self.warn('distutils distribution has been initialized,'\
-                      ' it may be too late to add a subpackage '+ subpackage_name)
-            # XXX: we add a fake extension, to correctly initialize some
-            # options in distutils command.
-            dist.add_extension('', sources = [])
-        else:
-            self.scons_data.append(scons_info)
-            # XXX: we add a fake extension, to correctly initialize some
-            # options in distutils command.
-            self.add_extension('', sources = [])
 
     def add_scripts(self,*files):
         """Add scripts to configuration.
@@ -2084,11 +1982,6 @@ class Configuration(object):
         """
         self.py_modules.append((self.name,name,generate_config_py))
 
-    def scons_make_config_py(self, name = '__config__'):
-        """Generate package __config__.py file containing system_info
-        information used during building the package.
-        """
-        self.py_modules.append((self.name, name, scons_generate_config_py))
 
     def get_info(self,*names):
         """Get resources information.
@@ -2239,49 +2132,6 @@ def is_bootstrapping():
         return False
         __NUMPY_SETUP__ = False
 
-def scons_generate_config_py(target):
-    """generate config.py file containing system_info information
-    used during building the package.
-
-    usage:
-        config['py_modules'].append((packagename, '__config__',generate_config_py))
-    """
-    from distutils.dir_util import mkpath
-    from numscons import get_scons_configres_dir, get_scons_configres_filename
-    d = {}
-    mkpath(os.path.dirname(target))
-    f = open(target, 'w')
-    f.write('# this file is generated by %s\n' % (os.path.abspath(sys.argv[0])))
-    f.write('# it contains system_info results at the time of building this package.\n')
-    f.write('__all__ = ["show"]\n\n')
-    confdir = get_scons_configres_dir()
-    confilename = get_scons_configres_filename()
-    for root, dirs, files in os.walk(confdir):
-        if files:
-            file = os.path.join(root, confilename)
-            assert root.startswith(confdir)
-            pkg_name = '.'.join(root[len(confdir)+1:].split(os.sep))
-            fid = open(file, 'r')
-            try:
-                cnt = fid.read()
-                d[pkg_name] = eval(cnt)
-            finally:
-                fid.close()
-    # d is a dictionary whose keys are package names, and values the
-    # corresponding configuration. Each configuration is itself a dictionary
-    # (lib : libinfo)
-    f.write('_config = %s\n' % d)
-    f.write(r'''
-def show():
-    for pkg, config in _config.items():
-        print("package %s configuration:" % pkg)
-        for lib, libc in config.items():
-            print('    %s' % lib)
-            for line in libc.split('\n'):
-                print('\t%s' % line)
-    ''')
-    f.close()
-    return target
 
 #########################
 

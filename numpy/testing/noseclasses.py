@@ -165,8 +165,6 @@ class NumpyDoctest(npd.Doctest):
 
     # files that should be ignored for doctests
     doctest_ignore = ['generate_numpy_api.py',
-                      'scons_support.py',
-                      'setupscons.py',
                       'setup.py']
 
     # Custom classes; class variables to allow subclassing
