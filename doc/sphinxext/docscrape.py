@@ -9,6 +9,14 @@ import pydoc
 from StringIO import StringIO
 from warnings import warn
 
+try:
+    # This works for Python 3
+    from inspect import getfullargspec as inspect_getargspec
+except:
+    # This works for Python 2
+    from inspect import getargspec as inspect_getargspec
+
+
 class Reader(object):
     """A line-based string reader.
 
@@ -424,7 +432,8 @@ class FunctionDoc(NumpyDocString):
             func, func_name = self.get_func()
             try:
                 # try to read signature
-                argspec = inspect.getargspec(func)
+                # Note: inspect_getargspec is different for Python 2 and 3
+                argspec = inspect_getargspec(func)
                 argspec = inspect.formatargspec(*argspec)
                 argspec = argspec.replace('*','\*')
                 signature = '%s%s' % (func_name, argspec)
