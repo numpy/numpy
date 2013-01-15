@@ -31,7 +31,7 @@ int0 object0 unicode0 uint0 string_ string0 void0
 
 flagsobj
 
-setup setupscons PackageLoader
+setup PackageLoader
 
 lib.scimath.arccos lib.scimath.arcsin lib.scimath.arccosh lib.scimath.arcsinh
 lib.scimath.arctanh lib.scimath.log lib.scimath.log2 lib.scimath.log10
