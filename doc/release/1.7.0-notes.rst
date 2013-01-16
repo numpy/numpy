@@ -154,6 +154,11 @@ New argument to searchsorted
 The function searchsorted now accepts a 'sorter' argument that is a
 permutation array that sorts the array to search.
 
+Build system
+------------
+
+Added experimental support for the AArch64 architecture.
+
 C API
 -----
 
