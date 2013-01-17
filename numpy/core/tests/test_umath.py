@@ -1265,7 +1265,7 @@ def test_reduceat():
 
 def test_reduceat_empty():
     """Reduceat should work with empty arrays"""
-    indices = np.array([], 'i8')
+    indices = np.array([], 'i4')
     x = np.array([], 'f8')
     result = np.add.reduceat(x, indices)
     assert_equal(result.dtype, x.dtype)
