@@ -485,9 +485,11 @@ promote_types:
     /* Set 'out_dtype' if it's NULL */
     if (*out_dtype == NULL) {
         if (!string_type && dtype->type_num == NPY_STRING) {
+            Py_DECREF(dtype);
             return RETRY_WITH_STRING;
         }
         if (!string_type && dtype->type_num == NPY_UNICODE) {
+            Py_DECREF(dtype);
             return RETRY_WITH_UNICODE;
         }
         *out_dtype = dtype;
@@ -500,17 +502,19 @@ promote_types:
         if (res_dtype == NULL) {
             return -1;
         }
-        Py_DECREF(*out_dtype);
         if (!string_type &&
                 res_dtype->type_num == NPY_UNICODE &&
                 (*out_dtype)->type_num != NPY_UNICODE) {
+            Py_DECREF(res_dtype);
             return RETRY_WITH_UNICODE;
         }
         if (!string_type &&
                 res_dtype->type_num == NPY_STRING &&
                 (*out_dtype)->type_num != NPY_STRING) {
+            Py_DECREF(res_dtype);
             return RETRY_WITH_STRING;
         }
+        Py_DECREF(*out_dtype);
         *out_dtype = res_dtype;
         return 0;
     }
