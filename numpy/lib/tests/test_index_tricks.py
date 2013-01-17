@@ -236,6 +236,16 @@ def test_diag_indices_from():
     assert_array_equal(r, np.arange(4))
     assert_array_equal(c, np.arange(4))
 
+    x = list(np.ndindex((1, 2, 3)))
+    assert_array_equal(x, expected)
+
+    # Make sure size argument is optional
+    x = list(np.ndindex())
+    assert_equal(x, [()])
+
+    x = list(np.ndindex(()))
+    assert_equal(x, [()])    
+
 
 if __name__ == "__main__":
     run_module_suite()
