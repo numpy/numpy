@@ -3,7 +3,7 @@ from tempfile import NamedTemporaryFile, mktemp
 import os
 
 from numpy import memmap
-from numpy import arange, allclose, asarray
+from numpy import arange, allclose, asarray, add
 from numpy.testing import *
 
 class TestMemmap(TestCase):
@@ -114,6 +114,21 @@ class TestMemmap(TestCase):
         assert(new2.base is fp)
         new_array = asarray(fp)
         assert(new_array.base is fp)
+
+    def test_to_array_conversions(self):
+        class MMSubclass(memmap):
+            pass
+        m = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
+        r = m + 1
+        assert_(not isinstance(r, memmap))
+        add(m, 1, out=m)
+        assert_(isinstance(m, memmap))
+        assert_(not isinstance(m[:,[0,1]], memmap))
+        # But for subclasses, preserve in case someone tagged on functions:
+        m = MMSubclass(self.tmpfp, dtype=self.dtype, shape=self.shape)
+        r = m + 1
+        assert_(isinstance(r, MMSubclass))
+        assert_(isinstance(m[:,[0,1]], MMSubclass))
 
 if __name__ == "__main__":
     run_module_suite()

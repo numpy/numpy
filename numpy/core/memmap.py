@@ -282,6 +282,27 @@ class memmap(ndarray):
             self.offset = None
             self.mode = None
 
+    def __array_wrap__(self, arr, context=None):
+        # If the type is not memmap, then a user subclass may have some special
+        # functions that should be preserved to avoid a regression
+        if type(self) is not memmap:
+            return arr.view(type=type(self))
+        return arr
+
+    def __array_prepare__(self, arr, context=None):
+        if type(self) is not memmap:
+            return arr.view(type=type(self))
+        # There is no use in making an array a memmap, since it does not own
+        # its memory.
+        return arr
+
+    def __getitem__(self, index):
+        # return an array if the result does not point to self's memory
+        res = super(memmap, self).__getitem__(index)
+        if type(res) is memmap and res._mmap is None:
+            return res.view(ndarray)
+        return res
+
     def flush(self):
         """
         Write any changes in the array to the file on disk.
