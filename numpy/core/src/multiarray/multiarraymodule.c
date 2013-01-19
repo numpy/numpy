@@ -2875,7 +2875,7 @@ array_result_type(PyObject *NPY_UNUSED(dummy), PyObject *args)
                                 "too many arguments");
                 goto finish;
             }
-            if (!PyArray_DescrConverter2(obj, &dtypes[ndtypes])) {
+            if (!PyArray_DescrConverter(obj, &dtypes[ndtypes])) {
                 goto finish;
             }
             ++ndtypes;
