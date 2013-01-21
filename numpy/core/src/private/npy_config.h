@@ -2,7 +2,7 @@
 #define _NPY_NPY_CONFIG_H_
 
 #include "config.h"
-#include "_numpyconfig.h"
+#include "numpy/numpyconfig.h"
 
 /* Disable broken MS math functions */
 #if defined(_MSC_VER) || defined(__MINGW32_VERSION)
