@@ -29,6 +29,14 @@ pointer to the data was hashed as an integer.  Now, the hash function uses
 the tuple-hash algorithm to combine the hash functions of the elements of
 the scalar, but only if the scalar is read-only.
 
+Numpy has switched its build system to using 'separate compilation' by
+default.  In previous releases this was supported, but not default. This
+should produce the same results as the old system, but if you're trying to
+do something complicated like link numpy statically or using an unusual
+compiler, then it's possible you will encounter problems. If so, please
+file a bug and as a temporary workaround you can re-enable the old build
+system by exporting the shell variable NPY_SEPARATE_COMPILATION=0.
+
 New features
 ============
 
@@ -43,6 +51,9 @@ General
 -------
 
 The function np.take now allows 0-d arrays as indices.
+
+The separate compilation mode is now enabled by default.
+
 
 Deprecations
 ============
