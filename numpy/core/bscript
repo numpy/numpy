@@ -432,6 +432,9 @@ def pre_build(context):
         if ENABLE_SEPARATE_COMPILATION:
             sources = [pjoin('src', 'multiarray', 'arrayobject.c'),
                 pjoin('src', 'multiarray', 'arraytypes.c.src'),
+                pjoin('src', 'multiarray', 'array_assign.c'),
+                pjoin('src', 'multiarray', 'array_assign_array.c'),
+                pjoin('src', 'multiarray', 'array_assign_scalar.c'),
                 pjoin('src', 'multiarray', 'buffer.c'),
                 pjoin('src', 'multiarray', 'calculation.c'),
                 pjoin('src', 'multiarray', 'common.c'),
@@ -440,6 +443,9 @@ def pre_build(context):
                 pjoin('src', 'multiarray', 'convert_datatype.c'),
                 pjoin('src', 'multiarray', 'ctors.c'),
                 pjoin('src', 'multiarray', 'datetime.c'),
+                pjoin('src', 'multiarray', 'datetime_busday.c'),
+                pjoin('src', 'multiarray', 'datetime_busdaycal.c'),
+                pjoin('src', 'multiarray', 'datetime_strings.c'),
                 pjoin('src', 'multiarray', 'descriptor.c'),
                 pjoin('src', 'multiarray', 'dtype_transfer.c'),
                 pjoin('src', 'multiarray', 'einsum.c.src'),
@@ -452,8 +458,10 @@ def pre_build(context):
                 pjoin('src', 'multiarray', 'mapping.c'),
                 pjoin('src', 'multiarray', 'methods.c'),
                 pjoin('src', 'multiarray', 'multiarraymodule.c'),
-                pjoin('src', 'multiarray', 'nditer_pywrap.c'),
                 pjoin('src', 'multiarray', 'nditer_templ.c.src'),
+                pjoin('src', 'multiarray', 'nditer_api.c'),
+                pjoin('src', 'multiarray', 'nditer_constr.c'),
+                pjoin('src', 'multiarray', 'nditer_pywrap.c'),
                 pjoin('src', 'multiarray', 'number.c'),
                 pjoin('src', 'multiarray', 'numpymemoryview.c'),
                 pjoin('src', 'multiarray', 'numpyos.c'),
@@ -489,9 +497,13 @@ def pre_build(context):
 
         includes = ["src/umath", "src/private"]
         if ENABLE_SEPARATE_COMPILATION:
-            sources = [pjoin("src", "umath", "umathmodule.c"),
-                    pjoin("src", "umath", "ufunc_object.c"),
-                    pjoin("src", "umath", "loops.c.src")]
+            sources = [
+                    pjoin("src", "umath", "loops.c.src"),
+                    pjoin('src', 'umath', 'reduction.c'),
+                    pjoin('src', 'umath', 'ufunc_object.c'),
+                    pjoin('src', 'umath', 'ufunc_type_resolution.c'),
+                    pjoin("src", "umath", "umathmodule.c"),
+            ]
         else:
             sources = extension.sources
         return context.default_builder(extension,
