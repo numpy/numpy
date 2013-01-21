@@ -1,33 +1,26 @@
-			   *** Changes ***
-2012-11-13 Added mention to gufuncs_linalg wrapper module.
-	   Added a nose test module for gufuncs_linalg. Implemented several test.
-               Tests are now work in progress.
-	   Fixed bugs in the harness of gufuncs (related to the signature fix)
-	   Fixed several other small bugs found by the new tests. Mostly in the
-               complex versions of the functions.
-	   Known problems in (working in fixing them:
-               Matrix Multiply when the parameter types are cdouble
-               EigVals is causing problems when the parameter types are csingle
-			   ***************
+		 gufuncs_linalg, umath_linalg modules
+		 ------------------------------------
 
-			 umath_linalg module
+umath_linalg implements a series of gufuncs that implement several functions
+already present in numpy.linalg as generalized universal functions. There are
+some extra gufuncs thrown in. This allows broadcasting of calls over full 
+vector/matrices of data.
 
-This module provides gufuncs for several functions that were already present in
-numpy.linalg. There are some extra functions thrown in.
+gufuncs_linalg provides a very thin wrapper around umath_linalg so that the
+interface resembles more the linalg module. The wrappers are mostly used to
+provide keyword parameters that wouldn't be supported using a plain gufunc.
+Note that this module is written in Python, importing the umath_linalg 
+privately
 
-Having them as gufuncs allows broadcasting of calls, which can be useful when 
-there are various problems to solve.
+Usage of gufuncs_linalg over direct use of umath_linalg is recommended. It uses
+the kernels in umath_linalg and the speed difference should be minimal.
 
-The functions are members of a module currently at numpy.core.umath_linalg
+Testing will be done at the gufuncs_linalg level, and the thin layer may implement
+workarounds around known issues.
 
-A wrapper module is provides that works around some limitations on the handling
-of keyword parameters in gufuncs by adding a very thin python layer around the
-actual gufuncs. For example, chosolve is implemented as a wrapper that takes a
-keyword parameter "UPLO". Depending on its value the appropriate gufunc will be
-called (chosolve_up or chosolve_lo). The wrapper module is 
-numpy.core.gufuncs_linalg and should be preferred to direct umath_linalg calls.
-Note that this wrapper module is written in python and its contents should be
-easy to inspect.
+
+			     umath_linalg
+			     ------------
 
 			       Contents
 The following functions are already implemented:
@@ -122,8 +115,6 @@ name, so for eigh we have the functions eigh_lo and eigh_up (for 'L' and 'U').
 
 Similar techniques have been applied in other places.
 
-Note that this is hidden when using the gufuncs_linalg wrapper module.
-
 			     Note on svd
 svd uses uniform parameters to specify the result types it will be producing
 (full_matrices and compute_uv in numpy.linalg).
@@ -147,16 +138,24 @@ if compute_uv:
    else:
       func += '_s'
 
-This should be transparent when using the gufuncs_linalg module.
 
-		     Bug in numpy gufunc harness
-The bug in the gufunc harness that was preventing using a dimension name more than
-once in a single operand has been fixed. This bug was preventing some versions of
-svd to be functional. It also meant that some other gufuncs that required square
-matrices where implemented with signatures that did not enforce the matrices to be
-square, resulting in undefined behavior if the kernel was applied in non-square
-kernels.
-
-The signatures of gufuncs that expect square matrices have been updated so that the
-harness enforces the squareness of the arguments.
+			   *** Changes ***
+2012-11-13
+    Created gufuncs_linalg module. This module is a wrapper for the gufuncs to
+        make the interface easier to use.
+    Added a test module. It test ate the level of gufuncs_linalg interface.
+        Several tests added, but still work in progress
+    Fixed problem in inner1d and innerwt when the parameter had only one
+        dimension
+    Fixed several small bugs found while tests were written. Mostly related to
+        complex versions of the functions.
+    There are some known bugs (working on them):
+        matrix_multiply seems not to always work properly with dtype cdouble.
+        eigvals not working properly with dtype csingle.
+<before 2012-11-13>
+    There was a bug in nympy gufunc harness when dealing with signatures with
+        repeated names for dimensions in a given matrix (for example (n,n)). 
+	This has been fixed.
+    Created the umath_linalg module
+			   ***************
 
