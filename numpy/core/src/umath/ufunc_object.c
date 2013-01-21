@@ -71,6 +71,12 @@
 static int
 _does_loop_use_arrays(void *data);
 
+static int
+assign_reduce_identity_zero(PyArrayObject *result);
+
+static int
+assign_reduce_identity_one(PyArrayObject *result);
+
 /*
  * fpstatus is the ufunc_formatted hardware status
  * errmask is the handling mask specified by the user.
@@ -2567,13 +2573,13 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
 }
 
 static int
-assign_reduce_identity_zero(PyArrayObject *result, void *data)
+assign_reduce_identity_zero(PyArrayObject *result)
 {
     return PyArray_FillWithScalar(result, PyArrayScalar_False);
 }
 
 static int
-assign_reduce_identity_one(PyArrayObject *result, void *data)
+assign_reduce_identity_one(PyArrayObject *result)
 {
     return PyArray_FillWithScalar(result, PyArrayScalar_True);
 }
