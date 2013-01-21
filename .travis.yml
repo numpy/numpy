@@ -9,9 +9,9 @@ python:
 matrix:
   include:
     - python: 2.7
-      env: NPY_SEPARATE_COMPILATION=1
+      env: NPY_SEPARATE_COMPILATION=0
     - python: 3.2
-      env: NPY_SEPARATE_COMPILATION=1
+      env: NPY_SEPARATE_COMPILATION=0
 before_install:
   - mkdir builds
   - pushd builds
