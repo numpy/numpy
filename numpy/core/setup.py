@@ -926,6 +926,13 @@ def configuration(parent_package='',top_path=None):
                     sources = [join('src','umath', 'umath_tests.c.src')])
 
     #######################################################################
+    #                        umath_linalg module                          #
+    #######################################################################
+
+    config.add_extension('umath_linalg',
+                    sources = [join('src','umath', 'umath_linalg.c.src')])
+
+    #######################################################################
     #                     multiarray_tests module                         #
     #######################################################################
 
