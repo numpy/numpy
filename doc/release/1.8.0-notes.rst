@@ -29,6 +29,9 @@ pointer to the data was hashed as an integer.  Now, the hash function uses
 the tuple-hash algorithm to combine the hash functions of the elements of
 the scalar, but only if the scalar is read-only.
 
+Forcing the old, one file per extension build may be enabled by exporting the
+shell variable NPY_SEPARATE_COMPILATION=0.
+
 New features
 ============
 
@@ -42,6 +45,7 @@ Changes
 General
 -------
 
+The so-called separate compilation mode is now enabled by default.
 
 Deprecations
 ============
