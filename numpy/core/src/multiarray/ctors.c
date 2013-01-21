@@ -630,89 +630,99 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
 #if PY_VERSION_HEX >= 0x02060000
     /* PEP 3118 buffer interface */
     memset(&buffer_view, 0, sizeof(Py_buffer));
-    if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
-        PyObject_GetBuffer(obj, &buffer_view, PyBUF_ND) == 0) {
-        int nd = buffer_view.ndim;
-        if (nd < *maxndim) {
-            *maxndim = nd;
-        }
-        for (i=0; i<*maxndim; i++) {
-            d[i] = buffer_view.shape[i];
-        }
-        PyBuffer_Release(&buffer_view);
-        return 0;
+    if ( NEVERSUPPORTS_BUFFER_PROTOCOL(obj) ){
+        
     }
-    else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
-        d[0] = buffer_view.len;
-        *maxndim = 1;
-        PyBuffer_Release(&buffer_view);
-        return 0;
-    }
-    else {
-        PyErr_Clear();
+    else{
+       if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
+           PyObject_GetBuffer(obj, &buffer_view, PyBUF_ND) == 0) {
+           int nd = buffer_view.ndim;
+           if (nd < *maxndim) {
+               *maxndim = nd;
+           }
+           for (i=0; i<*maxndim; i++) {
+               d[i] = buffer_view.shape[i];
+           }
+           PyBuffer_Release(&buffer_view);
+           return 0;
+       }
+       else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
+           d[0] = buffer_view.len;
+           *maxndim = 1;
+           PyBuffer_Release(&buffer_view);
+           return 0;
+       }
+       else {
+           PyErr_Clear();
+       }
     }
 #endif
 
     /* obj has the __array_struct__ interface */
-    if ((e = PyObject_GetAttrString(obj, "__array_struct__")) != NULL) {
-        int nd = -1;
-        if (NpyCapsule_Check(e)) {
-            PyArrayInterface *inter;
-            inter = (PyArrayInterface *)NpyCapsule_AsVoidPtr(e);
-            if (inter->two == 2) {
-                nd = inter->nd;
-                if (nd >= 0) {
-                    if (nd < *maxndim) {
-                        *maxndim = nd;
-                    }
-                    for (i=0; i<*maxndim; i++) {
-                        d[i] = inter->shape[i];
-                    }
-                }
-            }
-        }
-        Py_DECREF(e);
-        if (nd >= 0) {
-            return 0;
-        }
+    if (ISEXACT_NATIVE_PYTYPE(obj)){
+        e = NULL;
     }
-    else {
-        PyErr_Clear();
-    }
-
-    /* obj has the __array_interface__ interface */
-    if ((e = PyObject_GetAttrString(obj, "__array_interface__")) != NULL) {
-        int nd = -1;
-        if (PyDict_Check(e)) {
-            PyObject *new;
-            new = PyDict_GetItemString(e, "shape");
-            if (new && PyTuple_Check(new)) {
-                nd = PyTuple_GET_SIZE(new);
-                if (nd < *maxndim) {
-                    *maxndim = nd;
-                }
-                for (i=0; i<*maxndim; i++) {
-#if (PY_VERSION_HEX >= 0x02050000)
-                    d[i] = PyInt_AsSsize_t(PyTuple_GET_ITEM(new, i));
-#else
-                    d[i] = PyInt_AsLong(PyTuple_GET_ITEM(new, i));
-#endif
-                    if (d[i] < 0) {
-                        PyErr_SetString(PyExc_RuntimeError,
-                                "Invalid shape in __array_interface__");
-                        Py_DECREF(e);
-                        return -1;
-                    }
-                }
-            }
-        }
-        Py_DECREF(e);
-        if (nd >= 0) {
-            return 0;
-        }
-    }
-    else {
-        PyErr_Clear();
+    else{
+       if ((e = PyObject_GetAttrString(obj, "__array_struct__")) != NULL) {
+           int nd = -1;
+           if (NpyCapsule_Check(e)) {
+               PyArrayInterface *inter;
+               inter = (PyArrayInterface *)NpyCapsule_AsVoidPtr(e);
+               if (inter->two == 2) {
+                   nd = inter->nd;
+                   if (nd >= 0) {
+                       if (nd < *maxndim) {
+                           *maxndim = nd;
+                       }
+                       for (i=0; i<*maxndim; i++) {
+                           d[i] = inter->shape[i];
+                       }
+                   }
+               }
+           }
+           Py_DECREF(e);
+           if (nd >= 0) {
+               return 0;
+           }
+       }
+       else {
+           PyErr_Clear();
+       }
+    
+       /* obj has the __array_interface__ interface */
+       if ((e = PyObject_GetAttrString(obj, "__array_interface__")) != NULL) {
+           int nd = -1;
+           if (PyDict_Check(e)) {
+               PyObject *new;
+               new = PyDict_GetItemString(e, "shape");
+               if (new && PyTuple_Check(new)) {
+                   nd = PyTuple_GET_SIZE(new);
+                   if (nd < *maxndim) {
+                       *maxndim = nd;
+                   }
+                   for (i=0; i<*maxndim; i++) {
+   #if (PY_VERSION_HEX >= 0x02050000)
+                       d[i] = PyInt_AsSsize_t(PyTuple_GET_ITEM(new, i));
+   #else
+                       d[i] = PyInt_AsLong(PyTuple_GET_ITEM(new, i));
+   #endif
+                       if (d[i] < 0) {
+                           PyErr_SetString(PyExc_RuntimeError,
+                                   "Invalid shape in __array_interface__");
+                           Py_DECREF(e);
+                           return -1;
+                       }
+                   }
+               }
+           }
+           Py_DECREF(e);
+           if (nd >= 0) {
+               return 0;
+           }
+       }
+       else {
+           PyErr_Clear();
+       }
     }
 
     n = PySequence_Size(obj);
@@ -1917,11 +1927,18 @@ PyArray_FromStructInterface(PyObject *input)
     PyArrayObject *ret;
     char endian = NPY_NATBYTE;
 
-    attr = PyObject_GetAttrString(input, "__array_struct__");
-    if (attr == NULL) {
-        PyErr_Clear();
+    if (ISEXACT_NATIVE_PYTYPE(input)){
+        attr = NULL;
         return Py_NotImplemented;
     }
+    else{
+       attr = PyObject_GetAttrString(input, "__array_struct__");
+       if (attr == NULL) {
+           PyErr_Clear();
+           return Py_NotImplemented;
+       }
+    }
+
     if (!NpyCapsule_Check(attr)) {
         goto fail;
     }
@@ -1991,12 +2008,18 @@ PyArray_FromInterface(PyObject *origin)
     /* Get the shape */
     /* Get the memory from __array_data__ and __array_offset__ */
     /* Get the strides */
-
-    iface = PyObject_GetAttrString(origin, "__array_interface__");
-    if (iface == NULL) {
-        PyErr_Clear();
+    if (ISEXACT_NATIVE_PYTYPE(origin)){
+        iface = NULL;
         return Py_NotImplemented;
     }
+    else{
+       iface = PyObject_GetAttrString(origin, "__array_interface__");
+       if (iface == NULL) {
+           PyErr_Clear();
+           return Py_NotImplemented;
+       }
+    }
+
     if (!PyDict_Check(iface)) {
         Py_DECREF(iface);
         PyErr_SetString(PyExc_ValueError,
@@ -2209,11 +2232,18 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
     PyObject *new;
     PyObject *array_meth;
 
-    array_meth = PyObject_GetAttrString(op, "__array__");
-    if (array_meth == NULL) {
-        PyErr_Clear();
+    if (ISEXACT_NATIVE_PYTYPE(op)){
+        array_meth = NULL;
         return Py_NotImplemented;
     }
+    else{
+       array_meth = PyObject_GetAttrString(op, "__array__");
+       if (array_meth == NULL) {
+           PyErr_Clear();
+           return Py_NotImplemented;
+       }
+    }
+
     if (context == NULL) {
         if (typecode == NULL) {
             new = PyObject_CallFunction(array_meth, NULL);
