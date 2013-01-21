@@ -12,11 +12,7 @@ import re
 from setup_common import *
 
 # Set to True to enable multiple file compilations (experimental)
-try:
-    val = os.environ['NPY_SEPARATE_COMPILATION']
-    ENABLE_SEPARATE_COMPILATION = (val != "0")
-except KeyError:
-    ENABLE_SEPARATE_COMPILATION = False
+ENABLE_SEPARATE_COMPILATION = (os.environ.get('NPY_SEPARATE_COMPILATION', "0") != "0")
 
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
