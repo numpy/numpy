@@ -94,6 +94,19 @@ def write_numpy_config(conf):
     onode = conf.bldnode.make_node(node.path_from(conf.srcnode)).change_ext("")
     onode.write(cnt)
 
+def write_numpy_inifiles(conf):
+    subst_dict = dict([("@sep@", os.path.sep), ("@pkgname@", "numpy.core")])
+    for inifile in ["mlib.ini.in", "npymath.ini.in"]:
+        node = conf.path.find_node(inifile)
+        cnt = node.read()
+        for k, v in subst_dict.items():
+            cnt = cnt.replace(k, v)
+        assert node is not None
+        outfile = os.path.join("lib", "npy-pkg-config", inifile)
+        onode = conf.bldnode.make_node(node.path_from(conf.srcnode).replace(
+                    inifile, outfile)).change_ext("")
+        onode.write(cnt)
+
 def type_checks(conf):
     header_name = "Python.h"
     features = "c pyext"
@@ -302,6 +315,8 @@ def post_configure(context):
 
     write_numpy_config(conf)
 
+    write_numpy_inifiles(conf)
+
     conf.env.INCLUDES = [".", "include", "include/numpy"]
 
     # FIXME: Should be handled in bento context
@@ -361,6 +376,7 @@ def process_multiarray_api_generator(self):
     self.bld.register_outputs("numpy_gen_headers", "multiarray",
                               [output for output in tsk.outputs if output.suffix() == ".h"],
                               target_dir="$sitedir/numpy/core/include/numpy")
+
     return tsk
 
 @waflib.TaskGen.feature("ufunc_api_gen")
@@ -405,6 +421,14 @@ from os.path import join as pjoin
 @hooks.pre_build
 def pre_build(context):
     bld = context.waf_context
+
+    context.register_category("numpy_gen_inifiles")
+    inifile_mlib = context.local_node.declare(os.path.join(
+                               "lib", "npy-pkg-config", "mlib.ini"))
+    inifile_npymath = context.local_node.declare(os.path.join(
+                               "lib", "npy-pkg-config", "npymath.ini"))
+    context.register_outputs("numpy_gen_inifiles", "numpyconfig", 
+                             [inifile_mlib, inifile_npymath])
 
     context.register_category("numpy_gen_headers")
 
