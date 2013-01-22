@@ -727,10 +727,10 @@ _@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
 {
     PyObject *temp;
 
-	if (@PYCHECKEXACT@(a)){
-		*arg1 = @PYEXTRACTCTYPE@(a);
-		return 0;
-	}
+    if (@PYCHECKEXACT@(a)){
+        *arg1 = @PYEXTRACTCTYPE@(a);
+        return 0;
+    }
 
     if (PyArray_IsScalar(a, @Name@)) {
         *arg1 = PyArrayScalar_VAL(a, @Name@);
