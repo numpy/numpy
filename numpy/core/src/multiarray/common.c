@@ -316,96 +316,96 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         
     }
     else{
-       if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
-           PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT) == 0) {
+        if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
+            PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT) == 0) {
 
-           PyErr_Clear();
-           dtype = _descriptor_from_pep3118_format(buffer_view.format);
-           PyBuffer_Release(&buffer_view);
-           if (dtype) {
-               goto promote_types;
-           }
-       }
-       else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
+            PyErr_Clear();
+            dtype = _descriptor_from_pep3118_format(buffer_view.format);
+            PyBuffer_Release(&buffer_view);
+            if (dtype) {
+                goto promote_types;
+            }
+        }
+        else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
                 PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
 
-           PyErr_Clear();
-           dtype = PyArray_DescrNewFromType(NPY_VOID);
-           dtype->elsize = buffer_view.itemsize;
-           PyBuffer_Release(&buffer_view);
-           goto promote_types;
-       }
-       else {
-           PyErr_Clear();
-       }
+            PyErr_Clear();
+            dtype = PyArray_DescrNewFromType(NPY_VOID);
+            dtype->elsize = buffer_view.itemsize;
+            PyBuffer_Release(&buffer_view);
+            goto promote_types;
+        }
+        else {
+            PyErr_Clear();
+        }
     }
 #endif
 
     if (ISEXACT_NATIVE_PYTYPE(obj)){
-       /* Avoid expensive call to PyObject_GetAttrString*/
-       ip = NULL;
+        /* Avoid expensive call to PyObject_GetAttrString */
+        ip = NULL;
     }
     else{
-       /* The array interface */
-       ip = PyObject_GetAttrString(obj, "__array_interface__");
-       if (ip != NULL) {
-           if (PyDict_Check(ip)) {
-               PyObject *typestr;
-   #if defined(NPY_PY3K)
-               PyObject *tmp = NULL;
-   #endif
-               typestr = PyDict_GetItemString(ip, "typestr");
-   #if defined(NPY_PY3K)
-               /* Allow unicode type strings */
-               if (PyUnicode_Check(typestr)) {
-                   tmp = PyUnicode_AsASCIIString(typestr);
-                   typestr = tmp;
-               }
-   #endif
-               if (typestr && PyBytes_Check(typestr)) {
-                   dtype =_array_typedescr_fromstr(PyBytes_AS_STRING(typestr));
-   #if defined(NPY_PY3K)
-                   if (tmp == typestr) {
-                       Py_DECREF(tmp);
-                   }
-   #endif
-                   Py_DECREF(ip);
-                   if (dtype == NULL) {
-                       goto fail;
-                   }
-                   goto promote_types;
-               }
-           }
-           Py_DECREF(ip);
-       }
-       else {
-           PyErr_Clear();
-       }
+        /* The array interface */
+        ip = PyObject_GetAttrString(obj, "__array_interface__");
+        if (ip != NULL) {
+            if (PyDict_Check(ip)) {
+                PyObject *typestr;
+#if defined(NPY_PY3K)
+                PyObject *tmp = NULL;
+#endif
+                typestr = PyDict_GetItemString(ip, "typestr");
+#if defined(NPY_PY3K)
+                /* Allow unicode type strings */
+                if (PyUnicode_Check(typestr)) {
+                    tmp = PyUnicode_AsASCIIString(typestr);
+                    typestr = tmp;
+                }
+#endif
+                if (typestr && PyBytes_Check(typestr)) {
+                    dtype =_array_typedescr_fromstr(PyBytes_AS_STRING(typestr));
+#if defined(NPY_PY3K)
+                    if (tmp == typestr) {
+                        Py_DECREF(tmp);
+                    }
+#endif
+                    Py_DECREF(ip);
+                    if (dtype == NULL) {
+                        goto fail;
+                    }
+                    goto promote_types;
+                }
+            }
+            Py_DECREF(ip);
+        }
+        else {
+            PyErr_Clear();
+        }
 
-       /* The array struct interface */
-       ip = PyObject_GetAttrString(obj, "__array_struct__");
-       if (ip != NULL) {
-           PyArrayInterface *inter;
-           char buf[40];
+        /* The array struct interface */
+        ip = PyObject_GetAttrString(obj, "__array_struct__");
+        if (ip != NULL) {
+            PyArrayInterface *inter;
+            char buf[40];
 
-           if (NpyCapsule_Check(ip)) {
-               inter = (PyArrayInterface *)NpyCapsule_AsVoidPtr(ip);
-               if (inter->two == 2) {
-                   PyOS_snprintf(buf, sizeof(buf),
-                           "|%c%d", inter->typekind, inter->itemsize);
-                   dtype = _array_typedescr_fromstr(buf);
-                   Py_DECREF(ip);
-                   if (dtype == NULL) {
-                       goto fail;
-                   }
-                   goto promote_types;
-               }
-           }
-           Py_DECREF(ip);
-       }
-       else {
-           PyErr_Clear();
-       }
+            if (NpyCapsule_Check(ip)) {
+                inter = (PyArrayInterface *)NpyCapsule_AsVoidPtr(ip);
+                if (inter->two == 2) {
+                    PyOS_snprintf(buf, sizeof(buf),
+                            "|%c%d", inter->typekind, inter->itemsize);
+                    dtype = _array_typedescr_fromstr(buf);
+                    Py_DECREF(ip);
+                    if (dtype == NULL) {
+                        goto fail;
+                    }
+                    goto promote_types;
+                }
+            }
+            Py_DECREF(ip);
+        }
+        else {
+            PyErr_Clear();
+        }
 
     }
 
@@ -423,23 +423,23 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #endif
 
     if (ISEXACT_NATIVE_PYTYPE(obj)){
-       /* Avoid expensive call to PyObject_HasAttrString*/
+        /* Avoid expensive call to PyObject_HasAttrString */
     }
     else{
-       /* The __array__ attribute */
-       if (PyObject_HasAttrString(obj, "__array__")) {
-           ip = PyObject_CallMethod(obj, "__array__", NULL);
-           if(ip && PyArray_Check(ip)) {
-               dtype = PyArray_DESCR((PyArrayObject *)ip);
-               Py_INCREF(dtype);
-               Py_DECREF(ip);
-               goto promote_types;
-           }
-           Py_XDECREF(ip);
-           if (PyErr_Occurred()) {
-               goto fail;
-           }
-       }
+        /* The __array__ attribute */
+        if (PyObject_HasAttrString(obj, "__array__")) {
+            ip = PyObject_CallMethod(obj, "__array__", NULL);
+            if(ip && PyArray_Check(ip)) {
+                dtype = PyArray_DESCR((PyArrayObject *)ip);
+                Py_INCREF(dtype);
+                Py_DECREF(ip);
+                goto promote_types;
+            }
+            Py_XDECREF(ip);
+            if (PyErr_Occurred()) {
+                goto fail;
+            }
+        }
     }
 
     /* Not exactly sure what this is about... */

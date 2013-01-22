@@ -70,10 +70,10 @@ PyArray_GetPriority(PyObject *obj, double default_)
         ret = NULL;
     }
     else{
-       ret = PyObject_GetAttrString(obj, "__array_priority__");
-       if (ret != NULL) {
-           priority = PyFloat_AsDouble(ret);
-       }
+        ret = PyObject_GetAttrString(obj, "__array_priority__");
+        if (ret != NULL) {
+            priority = PyFloat_AsDouble(ret);
+        }
     }
     if (PyErr_Occurred()) {
         PyErr_Clear();
