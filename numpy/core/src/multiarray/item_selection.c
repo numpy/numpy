@@ -44,12 +44,10 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     }
     indices = (PyArrayObject *)PyArray_ContiguousFromAny(indices0,
                                                          NPY_INTP,
-                                                         1, 0);
+                                                         0, 0);
     if (indices == NULL) {
         goto fail;
     }
-
-
 
     n = m = chunk = 1;
     nd = PyArray_NDIM(self) + PyArray_NDIM(indices) - 1;

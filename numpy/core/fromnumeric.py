@@ -57,6 +57,10 @@ def take(a, indices, axis=None, out=None, mode='raise'):
         The source array.
     indices : array_like
         The indices of the values to extract.
+        
+        .. versionadded:: 1.8.0
+        
+        Also allow scalars for indices.
     axis : int, optional
         The axis over which to select values. By default, the flattened
         input array is used.
@@ -96,6 +100,11 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     >>> a[indices]
     array([4, 3, 6])
 
+    If `indices` is not one dimensional, the output also has these dimensions.
+    
+    >>> np.take(a, [[0, 1], [2, 3]])
+    array([[4, 3],
+           [5, 7]])
     """
     try:
         take = a.take
