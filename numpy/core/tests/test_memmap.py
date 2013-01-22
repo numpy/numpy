@@ -116,7 +116,11 @@ class TestMemmap(TestCase):
         assert(new_array.base is fp)
 
     def test_to_array_conversions(self):
-        class MMSubclass(memmap):
+        class DummyInerhitance(np.ndarray):
+            def __array_wrap__(self, arr):
+                arr = super(DummyInerhitance, self).__array_wrap__(arr)
+                arr.info = 'set'
+        class MMSubclass(memmap, DummyInerhitance):
             pass
         m = memmap(self.tmpfp, dtype=self.dtype, shape=self.shape)
         r = m + 1
@@ -128,6 +132,7 @@ class TestMemmap(TestCase):
         m = MMSubclass(self.tmpfp, dtype=self.dtype, shape=self.shape)
         r = m + 1
         assert_(isinstance(r, MMSubclass))
+        assert_(hasattr(r, 'info'))
         assert_(isinstance(m[:,[0,1]], MMSubclass))
 
 if __name__ == "__main__":

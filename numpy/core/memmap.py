@@ -283,24 +283,30 @@ class memmap(ndarray):
             self.mode = None
 
     def __array_wrap__(self, arr, context=None):
-        # If the type is not memmap, then a user subclass may have some special
-        # functions that should be preserved to avoid a regression
-        if type(self) is not memmap:
-            return arr.view(type=type(self))
-        return arr
+        # If the type is not memmap, then a user subclass may do some more
+        # things that need to be preserved. Otherwise, return a base array
+        # since it should not p
+        if type(self) is memmap and not np.may_share_memory(self, arr):
+            return arr
+        try:
+            return super(memmap, self).__array_wrap__(arr, context=context)
+        except TypeError:
+            return super(memmap, self).__array_wrap__(arr)
 
     def __array_prepare__(self, arr, context=None):
-        if type(self) is not memmap:
-            return arr.view(type=type(self))
-        # There is no use in making an array a memmap, since it does not own
-        # its memory.
-        return arr
+        # There is no need to make an array a memmap, but we still have to do
+        # it in case this is not of memmap type.
+        if type(self) is memmap and not np.may_share_memory(self, arr):
+            return arr
+        try:
+            return super(memmap, self).__array_prepare__(arr, context=context)
+        except TypeError:
+            return super(memmap, self).__array_prepare__(arr)
 
     def __getitem__(self, index):
-        # return an array if the result does not point to self's memory
         res = super(memmap, self).__getitem__(index)
         if type(res) is memmap and res._mmap is None:
-            return res.view(ndarray)
+            return res.view(type=ndarray)
         return res
 
     def flush(self):
