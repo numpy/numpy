@@ -73,10 +73,12 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
     """
     num = int(num)
     if num <= 0:
-        return array([], float)
+        dtype = _nx.result_type(start, stop, 1.)
+        return array([], dtype)
     if endpoint:
         if num == 1:
-            return array([float(start)])
+            dtype = _nx.result_type(start, stop, 1.)
+            return array([start], dtype)
         step = (stop-start)/float((num-1))
         y = _nx.arange(0, num) * step + start
         y[-1] = stop
