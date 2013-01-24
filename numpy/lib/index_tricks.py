@@ -535,7 +535,9 @@ class ndindex(object):
     # Fixing nditer would be more work but should be done eventually,
     #  and then this entire __new__ method can be removed.
     def __new__(cls, *shape):
-        if len(shape) == 0 or (len(shape) == 1 and len(shape[0]) == 0):
+        if len(shape) == 1 and isinstance(shape[0], tuple):
+           shape = shape[0]
+        if len(shape) == 0:
             class zero_dim_iter(object):
                 def __init__(self):
                     self._N = 1
