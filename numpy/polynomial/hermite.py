@@ -1520,7 +1520,7 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
         rcond = len(x)*np.finfo(x.dtype).eps
 
     # Determine the norms of the design matrix columns.
-    if lhs.dtype.char in np.typecodes['Complex']:
+    if issubclass(lhs.dtype.type, np.complexfloating):
         scl = np.sqrt((np.square(lhs.real) + np.square(lhs.imag)).sum(1))
     else:
         scl = np.sqrt(np.square(lhs).sum(1))
