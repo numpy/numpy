@@ -245,6 +245,10 @@ def test_ndindex():
     x = list(np.ndindex((1, 2, 3)))
     assert_array_equal(x, expected)
 
+    # Test use of scalars and tuples
+    x = list(np.ndindex((3,)))
+    assert_array_equal(x, list(np.ndindex(3)))
+
     # Make sure size argument is optional
     x = list(np.ndindex())
     assert_equal(x, [()])
