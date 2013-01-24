@@ -545,6 +545,15 @@ class TestRegression(TestCase):
         a = np.ones((0,2))
         a.shape = (-1,2)
 
+    def test_reshape_trailing_ones_strides(self):
+        # Github issue gh-2949, bad strides for trailing ones of new shape
+        a = np.zeros(12, dtype=np.int32)[::2] # not contiguous
+        strides_c = (16, 8, 8, 8)
+        strides_f = (8, 24, 48, 48)
+        assert_equal(a.reshape(3, 2, 1, 1).strides, strides_c)
+        assert_equal(a.reshape(3, 2, 1, 1, order='F').strides, strides_f)
+        assert_equal(np.array(0, dtype=np.int32).reshape(1,1).strides, (4,4))
+
     def test_repeat_discont(self, level=rlevel):
         """Ticket #352"""
         a = np.arange(12).reshape(4,3)[:,2]
