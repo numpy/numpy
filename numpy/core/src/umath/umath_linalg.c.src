@@ -31,7 +31,15 @@ const char* umath_linalg_version_string = "0.1.2";
 
 #define TRACE_TXT(...) do { fprintf (stderr, __VA_ARGS__); } while (0)
 #define STACK_TRACE do {} while (0)
-#define TRACE do { fprintf (stderr, "%s:%d:%s\n", __FILE__, __LINE__, __FUNCTION__); STACK_TRACE; } while (0)
+#define TRACE\
+    do {                                        \
+        fprintf (stderr,                        \
+                 "%s:%d:%s\n",                  \
+                 __FILE__,                      \
+                 __LINE__,                      \
+                 __FUNCTION__);                 \
+        STACK_TRACE;                            \
+    } while (0)
 
 #if 0
 #include <execinfo.h>
@@ -247,9 +255,9 @@ FNAME(zpotrs)(char *uplo, int *n, int *nrhs,
 
 extern int
 FNAME(spotri)(char *uplo, int *n,
-              float a[], int *lda, 
+              float a[], int *lda,
               int *info);
-extern int 
+extern int
 FNAME(dpotri)(char *uplo, int *n,
               double a[], int *lda,
               int *info);
@@ -330,15 +338,18 @@ FNAME(zgemm)(char *transa, char *transb,
              f2c_doublecomplex *c, int *ldc);
 
 
-#define LAPACK_T(FUNC) TRACE_TXT("Calling LAPACK ( " # FUNC " )\n"); FNAME(FUNC)
-#define LAPACK(FUNC) FNAME(FUNC)
+#define LAPACK_T(FUNC)                                          \
+    TRACE_TXT("Calling LAPACK ( " # FUNC " )\n");               \
+    FNAME(FUNC)
+
+#define LAPACK(FUNC)                            \
+    FNAME(FUNC)
 
 typedef int               fortran_int;
 typedef float             fortran_real;
 typedef double            fortran_doublereal;
 typedef f2c_complex       fortran_complex;
 typedef f2c_doublecomplex fortran_doublecomplex;
-
 
 
 /*
@@ -507,8 +518,8 @@ dump_ufunc_object(PyUFuncObject* ufunc)
 static inline void
 dump_linearize_data(const char* name, const LINEARIZE_DATA_t* params)
 {
-    TRACE_TXT("\n\t%s rows: %zd columns: %zd"
-              "\n\t\trow_strides: %td column_strides: %td"
+    TRACE_TXT("\n\t%s rows: %zd columns: %zd"\
+              "\n\t\trow_strides: %td column_strides: %td"\
               "\n", name, params->rows, params->columns,
               params->row_strides, params->column_strides);
 }
@@ -808,10 +819,10 @@ make_symmetric_@TYPE@_matrix(char UPLO,
                              fortran_int n,
                              void *matrix)
 {
-    /* 
+    /*
        note: optimized assuming that sequential write is better than
        sequential read
-    */ 
+    */
     fortran_int i;
     fortran_int one = 1;
 
@@ -1694,7 +1705,7 @@ static inline void
                             1, eigh_params.N,
                             0, steps[2]);
         if ('V' == eigh_params.JOBZ) {
-            init_linearize_data(&eigenvectors_out_ld, 
+            init_linearize_data(&eigenvectors_out_ld,
                                 eigh_params.N, eigh_params.N,
                                 steps[4], steps[3]);
         }
@@ -2050,23 +2061,23 @@ dump_geev_params(const char *name, GEEV_PARAMS_t* params)
 {
     TRACE_TXT("\n%s\n"
 
-              "\t%10s: %p\n"
-              "\t%10s: %p\n"
-              "\t%10s: %p\n"
-              "\t%10s: %p\n"
-              "\t%10s: %p\n"
-              "\t%10s: %p\n"
-              "\t%10s: %p\n"
-              "\t%10s: %p\n"
-              "\t%10s: %p\n"
+              "\t%10s: %p\n"\
+              "\t%10s: %p\n"\
+              "\t%10s: %p\n"\
+              "\t%10s: %p\n"\
+              "\t%10s: %p\n"\
+              "\t%10s: %p\n"\
+              "\t%10s: %p\n"\
+              "\t%10s: %p\n"\
+              "\t%10s: %p\n"\
 
-              "\t%10s: %d\n"
-              "\t%10s: %d\n"
-              "\t%10s: %d\n"
-              "\t%10s: %d\n"
-              "\t%10s: %d\n"
+              "\t%10s: %d\n"\
+              "\t%10s: %d\n"\
+              "\t%10s: %d\n"\
+              "\t%10s: %d\n"\
+              "\t%10s: %d\n"\
 
-              "\t%10s: %c\n"
+              "\t%10s: %c\n"\
               "\t%10s: %c\n",
 
               name,
@@ -2524,7 +2535,7 @@ typedef struct gessd_params_struct
     fortran_int LDA;
     fortran_int LDU;
     fortran_int LDVT;
-    fortran_int LWORK; 
+    fortran_int LWORK;
     char JOBZ;
 } GESDD_PARAMS_t;
 
@@ -2533,22 +2544,22 @@ static inline void
 dump_gesdd_params(const char *name,
                   GESDD_PARAMS_t *params)
 {
-    TRACE_TXT("\n%s:\n"
+    TRACE_TXT("\n%s:\n"\
 
-              "%14s: %18p\n"
-              "%14s: %18p\n"
-              "%14s: %18p\n"
-              "%14s: %18p\n"
-              "%14s: %18p\n"
-              "%14s: %18p\n"
-              "%14s: %18p\n"
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
+              "%14s: %18p\n"\
 
-              "%14s: %18d\n"
-              "%14s: %18d\n"
-              "%14s: %18d\n"
-              "%14s: %18d\n"
-              "%14s: %18d\n"
-              "%14s: %18d\n"
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
+              "%14s: %18d\n"\
 
               "%14s: %15c'%c'\n",
 
@@ -3698,7 +3709,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "inner1d",
         "(i),(i)->()",
-        "inner on the last dimension and broadcast on the rest \n"
+        "inner on the last dimension and broadcast on the rest \n"\
         "    \"(i),(i)->()\" \n",
         2, 2, 1,
         inner1d_funcs,
@@ -3707,8 +3718,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "innerwt",
         "(i),(i),(i)->()",
-        "inner on the last dimension using 3 operands and broadcast on the"
-        " rest \n"
+        "inner on the last dimension using 3 operands and broadcast on the"\
+        " rest \n"\
         "    \"(i),(i),(i)->()\" \n",
         2, 3, 1,
         innerwt_funcs,
@@ -3717,7 +3728,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "matrix_multiply",
         "(m,k),(k,n)->(m,n)",
-        "dot on the last two dimensions and broadcast on the rest \n"
+        "dot on the last two dimensions and broadcast on the rest \n"\
         "    \"(m,k),(k,n)->(m,n)\" \n",
         4, 2, 1,
         matrix_multiply_funcs,
@@ -3726,9 +3737,9 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "slogdet",
         "(m,m)->(),()", 
-        "slogdet on the last two dimensions and broadcast on the rest. \n"
-        "Results in two arrays, one with sign and the other with log of the"
-        " determinants. \n"
+        "slogdet on the last two dimensions and broadcast on the rest. \n"\
+        "Results in two arrays, one with sign and the other with log of the"\
+        " determinants. \n"\
         "    \"(m,m)->(),()\" \n",
         4, 1, 2,
         slogdet_funcs,
@@ -3737,7 +3748,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "det",
         "(m,m)->()",
-        "det of the last two dimensions and broadcast on the rest. \n"
+        "det of the last two dimensions and broadcast on the rest. \n"\
         "    \"(m,m)->()\" \n",
         4, 1, 1,
         det_funcs,
@@ -3746,10 +3757,10 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "eigh_lo",
         "(m,m)->(m),(m,m)",
-        "eigh on the last two dimension and broadcast to the rest, using"
-        " lower triangle \n"
-        "Results in a vector of eigenvalues and a matrix with the"
-        "eigenvectors. \n"
+        "eigh on the last two dimension and broadcast to the rest, using"\
+        " lower triangle \n"\
+        "Results in a vector of eigenvalues and a matrix with the"\
+        "eigenvectors. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 2,
         eighlo_funcs,
@@ -3758,10 +3769,10 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "eigh_up",
         "(m,m)->(m),(m,m)",
-        "eigh on the last two dimension and broadcast to the rest, using upper"
-        " triangle. \n"
-        "Results in a vector of eigenvalues and a matrix with the eigenvectors."
-        "\n"
+        "eigh on the last two dimension and broadcast to the rest, using"\
+        " upper triangle. \n"\
+        "Results in a vector of eigenvalues and a matrix with the"\
+        " eigenvectors. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 2,
         eighup_funcs,
@@ -3770,10 +3781,10 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "eigvalsh_lo",
         "(m,m)->(m)",
-        "eigh on the last two dimension and broadcast to the rest, using lower"
-        " triangle. \n"
-        "Results in a vector of eigenvalues and a matrix with the eigenvectors."
-        " \n"
+        "eigh on the last two dimension and broadcast to the rest, using"\
+        " lower triangle. \n"\
+        "Results in a vector of eigenvalues and a matrix with the"\
+        "eigenvectors. \n"\
         "    \"(m,m)->(m)\" \n",
         4, 1, 1,
         eigvalshlo_funcs,
@@ -3782,10 +3793,10 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "eigvalsh_up",
         "(m,m)->(m)",
-        "eigvalsh on the last two dimension and broadcast to the rest,"
-        " using upper triangle. \n"
-        "Results in a vector of eigenvalues and a matrix with the"
-        "eigenvectors.\n"
+        "eigvalsh on the last two dimension and broadcast to the rest,"\
+        " using upper triangle. \n"\
+        "Results in a vector of eigenvalues and a matrix with the"\
+        "eigenvectors.\n"\
         "    \"(m,m)->(m)\" \n",
         4, 1, 1,
         eigvalshup_funcs,
@@ -3794,9 +3805,9 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "solve",
         "(m,m),(m,n)->(m,n)",
-        "solve the system a x = b, on the last two dimensions, broadcast"
-        "to the rest. \n"
-        "Results in a matrices with the solutions. \n"
+        "solve the system a x = b, on the last two dimensions, broadcast"\
+        " to the rest. \n"\
+        "Results in a matrices with the solutions. \n"\
         "    \"(m,m),(m,n)->(m,n)\" \n",
         4, 2, 1,
         solve_funcs,
@@ -3805,9 +3816,9 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "solve1",
         "(m,m),(m)->(m)",
-        "solve the system a x = b, for b being a vector, broadcast in the"
-        " outer dimensions. \n"
-        "Results in vectors with the solutions. \n"
+        "solve the system a x = b, for b being a vector, broadcast in"\
+        " the outer dimensions. \n"\
+        "Results in vectors with the solutions. \n"\
         "    \"(m,m),(m)->(m)\" \n",
         4,2,1,
         solve1_funcs,
@@ -3816,9 +3827,9 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "inv",
         "(m,m)->(m,m)",
-        "compute the inverse of the last two dimensions and broadcast to the"
-        "rest. \n"
-        "Results in the inverse matrices. \n"
+        "compute the inverse of the last two dimensions and broadcast"\
+        " to the rest. \n"\
+        "Results in the inverse matrices. \n"\
         "    \"(m,m)->(m,m)\" \n",
         4,1,1,
         inv_funcs,
@@ -3827,8 +3838,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "cholesky_up",
         "(m,m)->(m,m)",
-        "cholesky decomposition of hermitian positive-definite matrices. \n"
-        "Broadcast to all outer dimensions. \n"
+        "cholesky decomposition of hermitian positive-definite matrices. \n"\
+        "Broadcast to all outer dimensions. \n"\
         "    \"(m,m)->(m,m)\" \n",
         4, 1, 1,
         cholesky_up_funcs,
@@ -3837,8 +3848,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "cholesky_lo",
         "(m,m)->(m,m)",
-        "cholesky decomposition of hermitian positive-definite matrices. \n"
-        "Broadcast to all outer dimensions. \n"
+        "cholesky decomposition of hermitian positive-definite matrices. \n"\
+        "Broadcast to all outer dimensions. \n"\
         "    \"(m,m)->(m,m)\" \n",
         4, 1, 1,
         cholesky_lo_funcs,
@@ -3896,8 +3907,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "eig",
         "(m,m)->(m),(m,m)",
         "eig on the last two dimension and broadcast to the rest. \n"\
-        "Results in a vector with the  eigenvalues and a matrix with the"
-        " eigenvectors. \n"
+        "Results in a vector with the  eigenvalues and a matrix with the"\
+        " eigenvectors. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 2,
         eig_funcs,
@@ -3916,10 +3927,10 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "quadratic_form",
         "(m),(m,n),(n)->()",
-        "computes the quadratic form uQv in the inner dimensions, broadcast"
-        "to the rest \n"
-        "Results in the result of uQv for each element of the broadcasted"
-        "dimensions. \n"
+        "computes the quadratic form uQv in the inner dimensions, broadcast"\
+        "to the rest \n"\
+        "Results in the result of uQv for each element of the broadcasted"\
+        "dimensions. \n"\
         "    \"(m),(m,n),(n)->()",
         4,3,1,
         quadratic_form_funcs,
@@ -3944,7 +3955,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "multiply3_add",
         "(),(),(),()->()",
-        "3-way element-wise product plus addition. a,b,c,d -> a*b*c+d"
+        "3-way element-wise product plus addition. a,b,c,d -> a*b*c+d"\
         " for all elements. \n",
         4,4,1,
         multiply3_add_funcs,
@@ -3961,8 +3972,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {
         "multiply_add2",
         "(),(),(),()->()",
-        "element-wise product with 2 additions. a,b,c,d -> a*b+c+d for all"
-        " elements. \n",
+        "element-wise product with 2 additions. a,b,c,d -> a*b+c+d for"\
+        " all elements. \n",
         4,4,1,
         multiply_add2_funcs,
         equal_5_types
@@ -3983,10 +3994,10 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         multiply4_add_funcs,
         equal_6_types
     },
-    {  /* solve using choleske decomposition (lapack potrs) */
+    {  /* solve using cholesky decomposition (lapack potrs) */
         "chosolve_up",
         "(m,m),(m,n)->(m,n)",
-        "solve for symmetric/hermitian matrices using cholesky"
+        "solve for symmetric/hermitian matrices using cholesky"\
         " factorization. \n",
         4,2,1,
         chosolve_up_funcs,
@@ -3995,7 +4006,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {  /* solve using choleske decomposition (lapack potrs) */
         "chosolve_lo",
         "(m,m),(m,n)->(m,n)",
-        "solve for symmetric/hermitian matrices using cholesky"
+        "solve for symmetric/hermitian matrices using cholesky"\
         " factorization. \n",
         4,2,1,
         chosolve_lo_funcs,
@@ -4020,7 +4031,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {   /* inverse using cholesky decomposition (lapack potri) */
         "poinv_up",
         "(m,m)->(m,m)",
-        "inverse using cholesky decomposition for symmetric/hermitian"
+        "inverse using cholesky decomposition for symmetric/hermitian"\
         " matrices. \n",
         4,1,1,
         poinv_up_funcs,
@@ -4029,7 +4040,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
     {   /* inverse using cholesky decomposition (lapack potri) */
         "poinv_lo",
         "(m,m)->(m,m)",
-        "inverse using cholesky decomposition for symmetric/hermitian"
+        "inverse using cholesky decomposition for symmetric/hermitian"\
         " matrices. \n",
         4,1,1,
         poinv_lo_funcs,
