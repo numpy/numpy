@@ -795,10 +795,10 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     PyArrayIterObject *it = NULL;
     PyArrayIterObject *rit = NULL;
     PyArrayObject *ret;
-    int needcopy = 0, i;
-    npy_intp N, size;
-    int elsize, swap;
+    npy_intp N, size, i;
     npy_intp astride, rstride, *iptr;
+    int elsize;
+    int needcopy = 0, swap;
     PyArray_ArgSortFunc *argsort;
     NPY_BEGIN_THREADS_DEF;
 
@@ -952,7 +952,8 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 {
     PyArrayObject *ap = NULL, *store_arr = NULL;
     char *ip;
-    int i, n, m, elsize, orign;
+    npy_intp i, n, m;
+    int elsize, orign;
     int res = 0;
     int axis_orig = axis;
     int (*sort)(void *, size_t, size_t, npy_comparator);
@@ -1208,13 +1209,12 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
     PyArrayIterObject **its;
     PyArrayObject *ret = NULL;
     PyArrayIterObject *rit = NULL;
-    int n;
+    npy_intp n, N, size, i, j;
+    npy_intp astride, rstride, *iptr;
     int nd;
-    int needcopy = 0, i,j;
-    npy_intp N, size;
+    int needcopy = 0;
     int elsize;
     int maxelsize;
-    npy_intp astride, rstride, *iptr;
     int object = 0;
     PyArray_ArgSortFunc *argsort;
     NPY_BEGIN_THREADS_DEF;
