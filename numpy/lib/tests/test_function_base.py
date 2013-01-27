@@ -176,16 +176,22 @@ class TestInsert(TestCase):
         assert_equal(insert(a, 1,[1,2,3]), [1, 1, 2, 3, 2, 3])
         assert_equal(insert(a,[1,-1,3],9),[1,9,2,9,3,9])
         assert_equal(insert(a,slice(-1,None,-1), 9),[9,1,9,2,9,3])
-        assert_warns(FutureWarning, insert, a, np.array([True]*4), 9)
-        #assert_equal(insert(a, np.array([True]*4), 9), [9,1,9,2,9,3,9])
         assert_equal(insert(a,[-1,1,3], [7,8,9]),[1,8,2,7,3,9])
         b = np.array([0, 1], dtype=np.float64)
         assert_equal(insert(b, 0, b[0]), [0., 0., 1.])
+        assert_equal(insert(b, [], []), b)
+        # Bools will be treated differently in the future:
+        #assert_equal(insert(a, np.array([True]*4), 9), [9,1,9,2,9,3,9])
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', FutureWarning)
+            assert_equal(insert(a, np.array([True]*4), 9), [1,9,9,9,9,2,3])
+            assert_(w[0].category is FutureWarning)
 
     def test_multidim(self):
         a = [[1, 1, 1]]
         r = [[2, 2, 2],
              [1, 1, 1]]
+        assert_equal(insert(a, 0, [1]), [1,1,1,1])
         assert_equal(insert(a, 0, [2, 2, 2], axis=0), r)
         assert_equal(insert(a, 0, 2, axis=0), r)
         assert_equal(insert(a, 2, 2, axis=1), [[1, 1, 2, 1]])
@@ -199,6 +205,31 @@ class TestInsert(TestCase):
         # scalars behave differently, in this case exactly opposite:
         assert_equal(insert(a, 1, [1, 2, 3], axis=1), b)
         assert_equal(insert(a, 1, [[1],[2],[3]], axis=1), c)
+
+        a = np.arange(4).reshape(2,2)
+        assert_equal(insert(a[:,:1], 1, a[:,1], axis=1), a)
+        assert_equal(insert(a[:1,:], 1, a[1,:], axis=0), a)
+
+    def test_0d(self):
+        # This is an error in the future
+        a = np.array(1)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', FutureWarning)
+            assert_equal(insert(a, [], 2, axis=0), np.array(2))
+            assert_(w[0].category is FutureWarning)
+
+    def test_subclass(self):
+        class SubClass(np.ndarray):
+            pass
+        a = np.arange(10).view(SubClass)
+        assert_(isinstance(np.insert(a, 0, [0]), SubClass))
+        assert_(isinstance(np.insert(a, [], []), SubClass))
+        assert_(isinstance(np.insert(a, [0,1], [1,2]), SubClass))
+        assert_(isinstance(np.insert(a, slice(1,2), [1,2]), SubClass))
+        assert_(isinstance(np.insert(a, slice(1,-2), []), SubClass))
+        # This is an error in the future:
+        a = np.array(1).view(SubClass)
+        assert_(isinstance(np.insert(a, 0, [0]), SubClass))
 
 
 class TestAmax(TestCase):
@@ -325,11 +356,16 @@ class TestDelete(TestCase):
 
     def _check_inverse_of_slicing(self, indices):
         a_del = delete(self.a, indices)
-        assert_array_equal(setxor1d(a_del, self.a[indices,]), self.a)
         nd_a_del = delete(self.nd_a, indices, axis=1)
+        # NOTE: The cast should be removed after warning phase for bools
+        if not isinstance(indices, slice):
+            indices = np.asarray(indices, dtype=np.intp)
+        assert_array_equal(setxor1d(a_del, self.a[indices,]), self.a,
+                           err_msg='Delete failed for obj: %r' % indices)
         xor = setxor1d(nd_a_del[0,:,0], self.nd_a[0,indices,0])
-        assert_array_equal(xor, self.nd_a[0,:,0])
-        
+        assert_array_equal(xor, self.nd_a[0,:,0],
+                           err_msg='Delete failed for obj: %r' % indices)
+
     def test_slices(self):
         lims = [-6, -2, 0, 1, 2, 4, 5]
         steps = [-3, -1, 1, 3]
@@ -341,15 +377,35 @@ class TestDelete(TestCase):
 
     def test_fancy(self):
         self._check_inverse_of_slicing([0, -1, 2, 2])
-        a = np.array([True, False, False], dtype=bool)
-        assert_warns(FutureWarning, delete, self.a, a)
-        #self._check_inverse_of_slicing(a)
         self._check_inverse_of_slicing(np.array([[0,1],[2,1]]))
+        assert_raises(IndexError, delete, self.a, [100])
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', FutureWarning)
+            obj = np.array([True, False, False], dtype=bool)
+            self._check_inverse_of_slicing(obj)
+            assert_(w[0].category is FutureWarning)
+            assert_(w[1].category is FutureWarning)
 
     def test_single(self):
         self._check_inverse_of_slicing(0)
         self._check_inverse_of_slicing(-4)
 
+    def test_0d(self):
+        a = np.array(1)
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', FutureWarning)
+            assert_equal(delete(a, [], axis=0), a)
+            assert_(w[0].category is FutureWarning)
+
+    def test_subclass(self):
+        class SubClass(np.ndarray):
+            pass
+        a = self.a.view(SubClass)
+        assert_(isinstance(delete(a, 0), SubClass))
+        assert_(isinstance(delete(a, []), SubClass))
+        assert_(isinstance(delete(a, [0,1]), SubClass))
+        assert_(isinstance(delete(a, slice(1,2)), SubClass))
+        assert_(isinstance(delete(a, slice(1,-2)), SubClass))
 
 class TestGradient(TestCase):
     def test_basic(self):
@@ -580,7 +636,7 @@ class TestVectorize(TestCase):
         res2a = f2(np.arange(3))
         assert_equal(res1a, res2a)
         assert_equal(res1b, res2b)
-        
+
     def test_string_ticket_1892(self):
         """Test vectorization over strings: issue 1892."""
         f = np.vectorize(lambda x:x)
