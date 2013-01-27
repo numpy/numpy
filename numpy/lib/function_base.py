@@ -1736,9 +1736,9 @@ class vectorize(object):
         Set of strings or integers representing the positional or keyword
         arguments for which the function will not be vectorized.  These will be
         passed directly to `pyfunc` unmodified.
-        
+
         .. versionadded:: 1.7.0
-    
+
     cache : bool, optional
        If `True`, then cache the first function call that determines the number
        of outputs if `otypes` is not provided.
@@ -1865,7 +1865,7 @@ class vectorize(object):
             the_args = list(args)
             def func(*vargs):
                 for _n, _i in enumerate(inds):
-                    the_args[_i] = vargs[_n] 
+                    the_args[_i] = vargs[_n]
                 kwargs.update(zip(names, vargs[len(inds):]))
                 return self.pyfunc(*the_args, **kwargs)
 
@@ -1926,7 +1926,7 @@ class vectorize(object):
             ufunc = frompyfunc(_func, len(args), nout)
 
         return ufunc, otypes
-        
+
     def _vectorize_call(self, func, args):
         """Vectorized call to `func` over positional `args`."""
         if not args:
@@ -1935,8 +1935,8 @@ class vectorize(object):
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
 
             # Convert args to object arrays first
-            inputs = [array(_a, copy=False, subok=True, dtype=object) 
-                      for _a in args]            
+            inputs = [array(_a, copy=False, subok=True, dtype=object)
+                      for _a in args]
 
             outputs = ufunc(*inputs)
 
@@ -3472,7 +3472,7 @@ def delete(arr, obj, axis=None):
 
         if numtodel <= 0:
             if wrap:
-                return wrap(new)
+                return wrap(arr.copy())
             else:
                 return arr.copy()
 
@@ -3515,13 +3515,16 @@ def delete(arr, obj, axis=None):
         else:
             return new
 
+    _obj = obj
     obj = np.asarray(obj)
+    # After removing the special handling of booleans, the size == 1 check
+    # can be just replaced with something else (like integer check)
+    # and there need not be any conversion to an array at all.
     if obj.dtype == bool:
         warnings.warn("in the future insert will treat boolean arrays "
                       "and array-likes as boolean index instead "
                       "of casting it to integer", FutureWarning)
-        obj = obj.astype(np.intp)
-        # After deprecation, obj can be used directly for keep below.
+        obj = obj.astype(intp)
     if obj.size == 1:
         obj = obj.item()
         if (obj < -N or obj >=N):
@@ -3537,8 +3540,16 @@ def delete(arr, obj, axis=None):
         slobj2[axis] = slice(obj+1,None)
         new[slobj] = arr[slobj2]
     else:
+        if obj.size == 0 and not isinstance(_obj, np.ndarray):
+            obj = obj.astype(intp)
+        if not np.can_cast(obj, intp, 'same_kind'):
+            # obj.size = 1 special case always failed and would just
+            # give superfluous warnings.
+            warnings.warn("using a non-integer array as obj in delete "
+                "will result in an error in the future", DeprecationWarning)
+            obj = obj.astype(intp)
         keep = ones(N, dtype=bool)
-        keep[obj] = False
+        keep[obj,] = False
         slobj[axis] = keep
         new = arr[slobj]
 
@@ -3559,14 +3570,14 @@ def insert(arr, obj, values, axis=None):
     obj : int, slice or sequence of ints
         Object that defines the index or indices before which `values` is
         inserted.
-        
+
         .. versionadded:: 1.8.0
-        
+
         Support for multiple insertions when `obj` is a single scalar or a
         sequence with one element (similar to calling insert multiple times).
     values : array_like
         Values to insert into `arr`. If the type of `values` is different
-        from that of `arr`, `values` is converted to the type of `arr`. 
+        from that of `arr`, `values` is converted to the type of `arr`.
         `values` should be shaped so that ``arr[...,obj,...] = values``
         is legal.
     axis : int, optional
@@ -3666,23 +3677,21 @@ def insert(arr, obj, values, axis=None):
         # turn it into a range object
         indices = arange(*obj.indices(N),**{'dtype':intp})
     else:
-        obj = np.asarray(obj)
-        if obj.dtype == bool:
+        indices = np.asarray(obj)
+        if indices.dtype == bool:
+            # See also delete
             warnings.warn("in the future insert will treat boolean arrays "
-                          "and array-likes as boolean index instead "
+                          "and array-likes as a boolean index instead "
                           "of casting it to integer", FutureWarning)
-            indices = obj.astype(np.intp)
+            indices = indices.astype(intp)
             # Code after warning period:
             #if obj.ndim != 1:
-            #    raise ValueError('insertion boolean array must '
-            #                     'be one dimensional')
+            #    raise ValueError('boolean array argument obj to insert '
+            #                     'must be one dimensional')
             #indices = np.flatnonzero(obj)
-        else:
-            indices = array(obj, dtype=intp)
-            if indices.ndim > 1:
-                raise ValueError("`obj` index array to insert must be "
-                                 "one dimensional or scalar")
-
+        elif indices.ndim > 1:
+            raise ValueError("index array argument obj to insert must "
+                             "be one dimensional or scalar")
     if indices.size == 1:
         index = indices.item()
         if index < -N or index > N:
@@ -3710,6 +3719,15 @@ def insert(arr, obj, values, axis=None):
         if wrap:
             return wrap(new)
         return new
+    elif indices.size == 0 and not isinstance(obj, np.ndarray):
+        # Can safely cast the empty list to intp
+        indices = indices.astype(intp)
+
+    if not np.can_cast(indices, intp, 'same_kind'):
+        warnings.warn("using a non-integer array as obj in insert "
+                      "will result in an error in the future",
+                      DeprecationWarning)
+        indices = indices.astype(intp)
 
     indices[indices < 0] += N
 
