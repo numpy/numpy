@@ -67,6 +67,12 @@ import numpy.core.gufuncs_linalg as gula
 
 old_assert_almost_equal = assert_almost_equal
 
+_highp = {
+    single: double,
+    double: double,
+    csingle: cdouble,
+    cdouble: cdouble
+}
 
 def assert_almost_equal(a, b, **kw):
     if a.dtype.type in (single, csingle):
@@ -245,7 +251,9 @@ class TestDet(GeneralTestCase, TestCase):
         d = gula.det(a)
         s, ld = gula.slogdet(a)
         assert_almost_equal(s * np.exp(ld), d)
-        ev = gula.eigvals(a)
+        # use eigvals in high-precision. This way problems in the complex single
+        # test is avoided as eigvals fails in there.
+        ev = gula.eigvals(a.astype(_highp[a.dtype.type])).astype(a.dtype.type)
         assert_almost_equal(d, multiply.reduce(ev, axis=(ev.ndim-1)))
         assert_almost_equal(s * np.exp(ld), multiply.reduce(ev, axis=(ev.ndim-1)))
         if s != 0:
