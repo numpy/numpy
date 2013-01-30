@@ -2,16 +2,23 @@
 
 Notes
 -----
-This modules contains functionality that could be found in the linalg module,
+This module contains functionality that could be found in the linalg module,
 but in a gufunc-like way. This allows the use of vectorization and broadcasting
 on the operands.
+
+This module itself provides wrappers to kernels written as numpy
+generalized-ufuncs that perform the heavy-lifting of computation. The wrappers
+exist in order to provide a sane interface, like providing keyword arguments in
+line with the ones used by linalg, or just to automatically select the
+appropriate kernel depending on the parameters. All wrappers forward the keyword
+parameters to the underlying generalized ufunc (the kernel).
 
 Additional functions some fused arithmetic, useful for efficient operation over
 """
 
-__all__ = ['inner1d', 'innerwt', 'matrix_multiply', 'det', 'slogdet', 'inv', 
-           'cholesky', 'quadratic_form', 'add3', 'multiply3', 'multiply3_add', 
-           'multiply_add', 'multiply_add2', 'multiply4', 'multiply4_add', 'eig', 
+__all__ = ['inner1d', 'innerwt', 'matrix_multiply', 'det', 'slogdet', 'inv',
+           'cholesky', 'quadratic_form', 'add3', 'multiply3', 'multiply3_add',
+           'multiply_add', 'multiply_add2', 'multiply4', 'multiply4_add', 'eig',
            'eigvals', 'eigh', 'eigvalsh', 'solve', 'svd', 'chosolve', 'poinv']
 
 
@@ -98,7 +105,7 @@ def innerwt(a, b, c, **kwargs):
 def matrix_multiply(a,b,**kwargs):
     """
     Compute matrix multiplication, with broadcasting
-    
+
     Parameters
     ----------
     a : (<NDIMS>, M, N) array
@@ -135,14 +142,14 @@ def matrix_multiply(a,b,**kwargs):
            [[  750.,   792.,   834.],
             [ 1030.,  1088.,  1146.]]])
     """
-    
+
     return _impl.matrix_multiply(a,b,**kwargs)
 
 
 def det(a, **kwargs):
     """
     Compute the determinant of arrays, with broadcasting.
-    
+
     Parameters
     ----------
     a : (NDIMS, M, M) array
@@ -192,7 +199,7 @@ def slogdet(a, **kwargs):
     `det` may overflow or underflow. This routine is more robust against such
     issues, because it computes the logarithm of the determinant rather than
     the determinant itself
-    
+
     Parameters
     ----------
     a : (<NDIMS>, M, M) array
@@ -301,7 +308,7 @@ def cholesky(a, UPLO='L', **kwargs):
     A = LL*
 
     where L* is the positive-definite matrix.
-    
+
     Parameters
     ----------
     a : (<NDIMS>, M, M) array
@@ -348,8 +355,8 @@ def cholesky(a, UPLO='L', **kwargs):
 
 def eig(a, **kwargs):
     """
-    Compute the eigenvalues and right eigenvectors of square arrays, 
-    with broadcasting 
+    Compute the eigenvalues and right eigenvectors of square arrays,
+    with broadcasting
 
     Parameters
     ----------
@@ -361,13 +368,13 @@ def eig(a, **kwargs):
     -------
     w : (<NDIMS>, M) array
         The eigenvalues, each repeated according to its multiplicity.
-        The eigenvalues are not necessarily ordered. The resulting 
-        array will be always be of complex type. When `a` is real 
-        the resulting eigenvalues will be real (0 imaginary part) or 
+        The eigenvalues are not necessarily ordered. The resulting
+        array will be always be of complex type. When `a` is real
+        the resulting eigenvalues will be real (0 imaginary part) or
         occur in conjugate pairs
 
     v : (<NDIMS>, M, M) array
-        The normalized (unit "length") eigenvectors, such that the 
+        The normalized (unit "length") eigenvectors, such that the
         column ``v[:,i]`` is the eigenvector corresponding to the
         eigenvalue ``w[i]``.
 
@@ -382,7 +389,7 @@ def eig(a, **kwargs):
     -----
     Numpy broadcasting rules apply.
 
-    Implemented for types single, double, csingle and cdouble. Numpy 
+    Implemented for types single, double, csingle and cdouble. Numpy
     conversion rules apply.
 
     Eigenvalues and eigenvectors for single and double versions will
@@ -412,7 +419,7 @@ def eig(a, **kwargs):
     >>> w; v
     array([ 1. + 1.j,  1. - 1.j])
     array([[ 0.70710678+0.j        ,  0.70710678+0.j        ],
-           [ 0.00000000-0.70710678j,  0.00000000+0.70710678j]])    
+           [ 0.00000000-0.70710678j,  0.00000000+0.70710678j]])
 
     Complex-valued matrix with real e-values (but complex-valued e-vectors);
     note that a.conj().T = a, i.e., a is Hermitian.
@@ -443,9 +450,9 @@ def eigvals(a, **kwargs):
     -------
     w : (<NDIMS>, M) array
         The eigenvalues, each repeated according to its multiplicity.
-        The eigenvalues are not necessarily ordered. The resulting 
-        array will be always be of complex type. When `a` is real 
-        the resulting eigenvalues will be real (0 imaginary part) or 
+        The eigenvalues are not necessarily ordered. The resulting
+        array will be always be of complex type. When `a` is real
+        the resulting eigenvalues will be real (0 imaginary part) or
         occur in conjugate pairs
 
     See Also
@@ -459,10 +466,10 @@ def eigvals(a, **kwargs):
     -----
     Numpy broadcasting rules apply.
 
-    Implemented for types single, double, csingle and cdouble. Numpy 
+    Implemented for types single, double, csingle and cdouble. Numpy
     conversion rules apply.
 
-    Eigenvalues for single and double versions will always be typed 
+    Eigenvalues for single and double versions will always be typed
     csingle and cdouble, even if all the results are real (imaginary
     part will be 0).
 
@@ -495,7 +502,7 @@ def eigvals(a, **kwargs):
 def quadratic_form(u,Q,v, **kwargs):
     """
     Compute the quadratic form uQv, with broadcasting
-    
+
     Parameters
     ----------
     u : (<NDIMS>, M) array
@@ -506,7 +513,7 @@ def quadratic_form(u,Q,v, **kwargs):
 
     v : (<NDIMS>, N) array
         The v vectors of the quadratic form uQv
-        
+
     Returns
     -------
     qf : (<NDIMS>) array
@@ -516,7 +523,7 @@ def quadratic_form(u,Q,v, **kwargs):
     -----
     Numpy broadcasting rules apply.
 
-    Implemented for types single, double, csingle and cdouble. Numpy 
+    Implemented for types single, double, csingle and cdouble. Numpy
     conversion rules apply.
 
     This is similar to PDL inner2
@@ -544,7 +551,7 @@ def quadratic_form(u,Q,v, **kwargs):
 def add3(a, b, c, **kwargs):
     """
     Element-wise addition of 3 arrays: a + b + c.
-    
+
     Parameters
     ----------
     a, b, c : (<NDIMS>) array
@@ -559,7 +566,7 @@ def add3(a, b, c, **kwargs):
     -----
     Numpy broadcasting rules apply.
 
-    Implemented for types single, double, csingle and cdouble. Numpy 
+    Implemented for types single, double, csingle and cdouble. Numpy
     conversion rules apply.
 
     See Also
@@ -580,7 +587,7 @@ def add3(a, b, c, **kwargs):
 def multiply3(a, b, c, **kwargs):
     """
     Element-wise multiplication of 3 arrays: a*b*c.
-    
+
     Parameters
     ----------
     a, b, c : (<NDIMS>) array
@@ -595,7 +602,7 @@ def multiply3(a, b, c, **kwargs):
     -----
     Numpy broadcasting rules apply.
 
-    Implemented for types single, double, csingle and cdouble. Numpy 
+    Implemented for types single, double, csingle and cdouble. Numpy
     conversion rules apply.
 
     See Also
@@ -617,7 +624,7 @@ def multiply3_add(a, b, c, d, **kwargs):
     """
     Element-wise multiplication of 3 arrays adding an element
     of the a 4th array to the result: a*b*c + d
-    
+
     Parameters
     ----------
     a, b, c : (<NDIMS>) array
@@ -635,7 +642,7 @@ def multiply3_add(a, b, c, d, **kwargs):
     -----
     Numpy broadcasting rules apply.
 
-    Implemented for types single, double, csingle and cdouble. Numpy 
+    Implemented for types single, double, csingle and cdouble. Numpy
     conversion rules apply.
 
     See Also
@@ -657,7 +664,7 @@ def multiply3_add(a, b, c, d, **kwargs):
 def multiply_add(a, b, c, **kwargs):
     """
     Element-wise addition of 3 arrays
-    
+
     Parameters
     ----------
     a, b, c : (<NDIMS>) array
@@ -672,7 +679,7 @@ def multiply_add(a, b, c, **kwargs):
     -----
     Numpy broadcasting rules apply.
 
-    Implemented for types single, double, csingle and cdouble. Numpy 
+    Implemented for types single, double, csingle and cdouble. Numpy
     conversion rules apply.
 
     See Also
@@ -694,7 +701,7 @@ def multiply_add(a, b, c, **kwargs):
 def multiply_add2(a, b, c, d, **kwargs):
     """
     Element-wise addition of 3 arrays
-    
+
     Parameters
     ----------
     a, b, c : (<NDIMS>) array
@@ -709,7 +716,7 @@ def multiply_add2(a, b, c, d, **kwargs):
     -----
     Numpy broadcasting rules apply.
 
-    Implemented for types single, double, csingle and cdouble. Numpy 
+    Implemented for types single, double, csingle and cdouble. Numpy
     conversion rules apply.
 
     See Also
@@ -731,7 +738,7 @@ def multiply_add2(a, b, c, d, **kwargs):
 def multiply4(a, b, c, d, **kwargs):
     """
     Element-wise addition of 3 arrays
-    
+
     Parameters
     ----------
     a, b, c : (<NDIMS>) array
@@ -746,7 +753,7 @@ def multiply4(a, b, c, d, **kwargs):
     -----
     Numpy broadcasting rules apply.
 
-    Implemented for types single, double, csingle and cdouble. Numpy 
+    Implemented for types single, double, csingle and cdouble. Numpy
     conversion rules apply.
 
     See Also
@@ -768,7 +775,7 @@ def multiply4(a, b, c, d, **kwargs):
 def multiply4_add(a, b, c, d, e, **kwargs):
     """
     Element-wise addition of 3 arrays
-    
+
     Parameters
     ----------
     a, b, c : (<NDIMS>) array
@@ -783,7 +790,7 @@ def multiply4_add(a, b, c, d, e, **kwargs):
     -----
     Numpy broadcasting rules apply.
 
-    Implemented for types single, double, csingle and cdouble. Numpy 
+    Implemented for types single, double, csingle and cdouble. Numpy
     conversion rules apply.
 
     See Also
@@ -904,7 +911,7 @@ def eigvalsh(A, UPLO='L', **kw_args):
 
 def solve(A,B,**kw_args):
     """
-    Solve the linear matrix equations in the inner dimensions.
+    Solve the linear matrix equations on the inner dimensions.
 
     Computes the "exact" solution, `x`. of the well-determined,
     i.e., full rank, linear matrix equations `ax = b`.
@@ -925,7 +932,7 @@ def solve(A,B,**kw_args):
     -----
     Numpy broadcasting rules apply.
 
-    The solutions  are computed using LAPACK routine _gesv
+    The solutions are computed using LAPACK routine _gesv
 
     Implemented for single, double, csingle and cdouble. Numpy conversion
     rules apply.
@@ -948,6 +955,49 @@ def solve(A,B,**kw_args):
 
 
 def svd(a, full_matrices=1, compute_uv=1 ,**kw_args):
+    """
+    Singular Value Decomposition on the inner dimensions.
+
+    Factors the matrices in `a` as ``u * np.diag(s) * v``, where `u`
+    and `v` are unitary and `s` is a 1-d array of `a`'s singular
+    values.
+
+    Parameters
+    ----------
+    a : (<NDIMS>, M, N) array
+        The array of matrices to decompose.
+    full_matrices : bool, optional
+        If True (default), `u` and `v` have the shapes (`M`, `M`) and
+        (`N`, `N`), respectively. Otherwise, the shapes are (`M`, `K`)
+        and (`K`, `N`), respectively, where `K` = min(`M`, `N`).
+    compute_uv : bool, optional
+        Whether or not to compute `u` and `v` in addition to `s`. True
+        by default.
+
+    Returns
+    -------
+    u : { (<NDIMS>, M, M), (<NDIMS>, M, K) } array
+        Unitary matrices. The actual shape depends on the value of
+        ``full_matrices``. Only returned when ``compute_uv`` is True.
+    s : (<NDIMS>, K) array
+        The singular values for every matrix, sorted in descending order.
+    v : { (<NDIMS>, N, N), (<NDIMS>, K, N) } array
+        Unitary matrices. The actual shape depends on the value of
+        ``full_matrices``. Only returned when ``compute_uv`` is True.
+
+    Notes
+    -----
+    Numpy broadcasting rules apply.
+
+    Singular Value Decomposition is performed using LAPACK routine _gesdd
+
+    Implemented for types single, double, csingle and cdouble. Numpy conversion
+    rules apply.
+
+    Examples
+    --------
+    <Some example in doctest format>
+    """
     m = a.shape[-2]
     n = a.shape[-1]
     if 1 == compute_uv:
