@@ -1082,6 +1082,41 @@ def chosolve(A, B, UPLO='L', **kw_args):
 
 
 def poinv(A, UPLO='L', **kw_args):
+    """
+    Compute the (multiplicative) inverse of symmetric/hermitian matrices,
+    with broadcasting.
+
+    Given a square symmetic/hermitian matrix `a`, return the matrix `ainv`
+    satisfying ``matrix_multiply(a, ainv) = matrix_multiply(ainv, a) =
+    Identity matrix``-
+
+    Parameters
+    ----------
+    a : (<NDIMS>, M, M) array
+        Symmetric/hermitian matrices to be inverted
+
+    Returns
+    -------
+    ainv : (<NDIMS>, M, M) array
+        (Multiplicative) inverse of the `a` matrices.
+
+    Notes
+    -----
+    Numpy broadcasting rules apply.
+
+    The inverse is computed using LAPACK routines _potrf, _potri
+
+    Implemented for types single, double, csingle and cdouble. Numpy conversion
+    rules apply.
+
+    See Also
+    --------
+    inv : compute the multiplicative inverse of general matrices.
+
+    Examples
+    --------
+    <Some example in doctest format>
+    """
     if 'L' == UPLO:
         gufunc = _impl.poinv_lo
     else:
