@@ -1940,10 +1940,15 @@ static void
         init_linearize_data(&r_out, n, n, steps[3], steps[2]);
 
         BEGIN_OUTER_LOOP_2
+            int not_ok;
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
             identity_@TYPE@_matrix(params.B, n);
-            call_@lapack_func@(&params);
-            delinearize_@TYPE@_matrix(args[1], params.B, &r_out);
+            not_ok = call_@lapack_func@(&params);
+            if (!not_ok) {
+                delinearize_@TYPE@_matrix(args[1], params.B, &r_out);
+            } else {
+                nan_@TYPE@_matrix(args[1], &r_out);
+            }
         END_OUTER_LOOP
 
         release_@lapack_func@(&params);
