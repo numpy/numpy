@@ -904,7 +904,40 @@ def eigvalsh(A, UPLO='L', **kw_args):
 
 def solve(A,B,**kw_args):
     """
-    Solves the systems of equations AX=B or Ax=b in the inner dimensions of A/B
+    Solve the linear matrix equations in the inner dimensions.
+
+    Computes the "exact" solution, `x`. of the well-determined,
+    i.e., full rank, linear matrix equations `ax = b`.
+
+    Parameters
+    ----------
+    A : (<NDIMS>, M, M) array
+        Coefficient matrices.
+    B : (<NDIMS>, M, N) array
+        Ordinate or "dependent variable" values.
+
+    Returns
+    -------
+    X : (<NDIMS>, M, N) array
+        Solutions to the system A X = B for all elements in <NDIMS>
+
+    Notes
+    -----
+    Numpy broadcasting rules apply.
+
+    The solutions  are computed using LAPACK routine _gesv
+
+    Implemented for single, double, csingle and cdouble. Numpy conversion
+    rules apply.
+
+    See Also
+    --------
+    chosolve : solve a system using cholesky decomposition (for equations
+               having symmetric/hermitian coefficient matrices)
+
+    Examples
+    --------
+    <Some example in doctest format>
     """
     if len(B.shape) == (len(A.shape) - 1):
         gufunc = _impl.solve1
@@ -963,7 +996,7 @@ def poinv(A, UPLO='L', **kw_args):
 """ doc template (23 lines)"""
 """
     <Description>
-    
+
     Parameters
     ----------
     <insert parameters + explanations>
