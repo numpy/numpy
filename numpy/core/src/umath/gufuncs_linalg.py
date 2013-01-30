@@ -804,7 +804,7 @@ def multiply4_add(a, b, c, d, e, **kwargs):
 
 def eigh(A, UPLO='L', **kw_args):
     """
-    Computes the eigen values and eigenvectors for the square matrices
+    Computes the eigenvalues and eigenvectors for the square matrices
     in the inner dimensions of A, being those matrices
     symmetric/hermitian.
 
@@ -857,7 +857,42 @@ def eigh(A, UPLO='L', **kw_args):
 
 def eigvalsh(A, UPLO='L', **kw_args):
     """
-    Computes the eigen values and eigenvectors for the square matrices in the inner dimensions of A, being those matrices symmetric/hermitian
+    Computes the eigenvalues for the square matrices in the inner
+    dimensions of A, being those matrices symmetric/hermitian.
+
+    Parameters
+    ----------
+    A : (<NDIMS>, M, M) array
+         Hermitian/Symmetric matrices whose eigenvalues and
+         eigenvectors are to be computed.
+    UPLO : {'L', 'U'}, optional
+         Specifies whether the calculation is done with the lower
+         triangular part of the elements in `A` ('L', default) or
+         the upper triangular part ('U').
+
+    Returns
+    -------
+    w : (<NDIMS>, M) array
+        The eigenvalues, not necessarily ordered.
+
+    Notes
+    -----
+    Numpy broadcasting rules apply.
+
+    The eigenvalues are computed using LAPACK routines _ssyevd, _heevd
+
+    Implemented for single, double, csingle and cdouble. Numpy conversion
+    rules apply.
+
+    See Also
+    --------
+    eigh : eigenvalues of symmetric/hermitian arrays.
+    eig : eigenvalues and right eigenvectors for general matrices.
+    eigvals : eigenvalues for general matrices.
+
+    Examples
+    --------
+    <Some example in doctest format>
     """
     if ('L' == UPLO):
         gufunc = _impl.eigvalsh_lo
