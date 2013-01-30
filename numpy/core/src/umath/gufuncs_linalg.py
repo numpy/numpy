@@ -13,6 +13,11 @@ line with the ones used by linalg, or just to automatically select the
 appropriate kernel depending on the parameters. All wrappers forward the keyword
 parameters to the underlying generalized ufunc (the kernel).
 
+The functions are intended to be used on arrays of functions. For those
+functions where a result may not be possible to obtain (like the inverse of
+a matrix that is not invertible) no exception is raised, but the results for
+the elements involved are set to NaN.
+
 Additional functions some fused arithmetic, useful for efficient operation over
 """
 
@@ -283,7 +288,7 @@ def inv(a, **kwargs):
     Implemented for types single, double, csingle and cdouble. Numpy conversion
     rules apply.
 
-    Singular matrices and thus, not invertible, result in an array of NANs.
+    Singular matrices and thus, not invertible, result in an array of NaNs.
 
     See Also
     --------
@@ -328,6 +333,7 @@ def cholesky(a, UPLO='L', **kwargs):
     See Also
     --------
     chosolve : solve a system using cholesky decomposition
+    poinv : compute the inverse of a matrix using cholesky decomposition
 
     Notes
     -----
@@ -335,6 +341,10 @@ def cholesky(a, UPLO='L', **kwargs):
 
     Implemented for types single, double, csingle and cdouble. Numpy conversion
     rules apply.
+
+    Decomposition is performed using LAPACK routine _potrf.
+
+    For elements where the LAPACK routine fails, the result will be set to NaNs.
 
     If an element of the source array is not a positive-definite matrix the
     result for that element is undefined.
@@ -403,6 +413,9 @@ def eig(a, **kwargs):
 
     This is implemented using the _geev LAPACK routines which compute
     the eigenvalues and eigenvectors of general square arrays.
+
+    For elements where the LAPACK routine fails, the result will be set
+    to NaNs.
 
     Examples
     --------
@@ -480,6 +493,9 @@ def eigvals(a, **kwargs):
 
     This is implemented using the _geev LAPACK routines which compute
     the eigenvalues and eigenvectors of general square arrays.
+
+    For elements where the LAPACK routine fails, the result will be set
+    to NaNs.
 
     Examples
     --------
@@ -846,6 +862,9 @@ def eigh(A, UPLO='L', **kw_args):
     The eigenvalues/eigenvectors are computed using LAPACK routines _ssyevd,
     _heevd
 
+    For elements where the LAPACK routine fails, the result will be set
+    to NaNs.
+
     Implemented for single, double, csingle and cdouble. Numpy conversion
     rules apply.
 
@@ -893,6 +912,9 @@ def eigvalsh(A, UPLO='L', **kw_args):
 
     The eigenvalues are computed using LAPACK routines _ssyevd, _heevd
 
+    For elements where the LAPACK routine fails, the result will be set
+    to NaNs.
+
     Implemented for single, double, csingle and cdouble. Numpy conversion
     rules apply.
 
@@ -938,6 +960,9 @@ def solve(A,B,**kw_args):
     Numpy broadcasting rules apply.
 
     The solutions are computed using LAPACK routine _gesv
+
+    For elements where the LAPACK routine fails, the result will be set
+    to NaNs.
 
     Implemented for single, double, csingle and cdouble. Numpy conversion
     rules apply.
@@ -995,6 +1020,9 @@ def svd(a, full_matrices=1, compute_uv=1 ,**kw_args):
     Numpy broadcasting rules apply.
 
     Singular Value Decomposition is performed using LAPACK routine _gesdd
+
+    For elements where the LAPACK routine fails, the result will be set
+    to NaNs.
 
     Implemented for types single, double, csingle and cdouble. Numpy conversion
     rules apply.
@@ -1055,6 +1083,9 @@ def chosolve(A, B, UPLO='L', **kw_args):
 
     The solutions are computed using LAPACK routines _potrf, _potrs
 
+    For elements where the LAPACK routine fails, the result will be set
+    to NaNs.
+
     Implemented for single, double, csingle and cdouble. Numpy conversion
     rules apply.
 
@@ -1105,6 +1136,9 @@ def poinv(A, UPLO='L', **kw_args):
     Numpy broadcasting rules apply.
 
     The inverse is computed using LAPACK routines _potrf, _potri
+
+    For elements where the LAPACK routine fails, the result will be set
+    to NaNs.
 
     Implemented for types single, double, csingle and cdouble. Numpy conversion
     rules apply.
