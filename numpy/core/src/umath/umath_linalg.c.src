@@ -3344,6 +3344,9 @@ call_@lapack_func@(POTRS_PARAMS_t *params)
                             &params->N,
                             params->A, &params->LDA,
                             &rv);
+    if (0 != rv)
+        return rv;
+
     LAPACK(@lapack_func@)(&params->UPLO,
                           &params->N, &params->NRHS,
                           params->A, &params->LDA,
@@ -3382,10 +3385,15 @@ static void
         }
 
         BEGIN_OUTER_LOOP_3
+            int not_ok;
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
             linearize_@TYPE@_matrix(params.B, args[1], &b_in);
-            call_@lapack_func@(&params);
-            delinearize_@TYPE@_matrix(args[2], params.B, &r_out);
+            not_ok = call_@lapack_func@(&params);
+            if (!not_ok) {
+                delinearize_@TYPE@_matrix(args[2], params.B, &r_out);
+            } else {
+                nan_@TYPE@_matrix(args[2], &r_out);
+            }
         END_OUTER_LOOP
 
         release_@lapack_func@(&params);
