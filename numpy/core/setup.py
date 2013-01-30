@@ -940,17 +940,18 @@ def configuration(parent_package='',top_path=None):
                 return ext.depends[:1]
             return ext.depends[:2]
 
-    config.add_extension('umath_linalg',
-                         sources = [get_lapack_lite_sources],
-                         depends = [join('src', 'umath', 'umath_linalg.c.src'),
-                                    join('src', 'umath', 'gufuncs_linalg.py'),
+    config.add_extension('_umath_linalg',
+                         sources = [get_lapack_lite_sources,
+                                    join('src', 'umath', 'umath_linalg.c.src'),
                                     join('src', 'umath', 'lapack_lite', 'python_xerbla.c'),
                                     join('src', 'umath', 'lapack_lite', 'zlapack_lite.c'),
                                     join('src', 'umath', 'lapack_lite', 'dlapack_lite.c'),
                                     join('src', 'umath', 'lapack_lite', 'blas_lite.c'),
                                     join('src', 'umath', 'lapack_lite', 'dlamch.c'),
-                                    join('src', 'umath', 'lapack_lite', 'f2c_lite.c'),
-                                    join('src', 'umath', 'lapack_lite', 'f2c.h'),
+                                    join('src', 'umath', 'lapack_lite', 'f2c_lite.c')
+                                    ],
+                         depends =  [join('src', 'umath', 'gufuncs_linalg.py'),
+                                     join('src', 'umath', 'lapack_lite', 'f2c.h'),
                                     ],
                          extra_info = lapack_info,
                          libraries = ['npymath'],
