@@ -27,7 +27,7 @@ __all__ = ['inner1d', 'innerwt', 'matrix_multiply', 'det', 'slogdet', 'inv',
            'eigvals', 'eigh', 'eigvalsh', 'solve', 'svd', 'chosolve', 'poinv']
 
 
-import numpy.core.umath_linalg as _impl
+import numpy.core._umath_linalg as _impl
 import numpy as np
 
 def inner1d(a, b, **kwargs):

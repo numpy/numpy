@@ -370,7 +370,7 @@ offset_ptr(void* ptr, ptrdiff_t offset)
  *****************************************************************************
  */
 
-static const char* umath_linalg_module_name =  "umath_linalg";
+static const char* umath_linalg_module_name =  "_umath_linalg";
 
 typedef union {
     fortran_complex f;
@@ -4167,11 +4167,11 @@ static struct PyModuleDef moduledef = {
 
 #if defined(NPY_PY3K)
 #define RETVAL m
-PyObject *PyInit_umath_linalg(void)
+PyObject *PyInit__umath_linalg(void)
 #else
 #define RETVAL
 PyMODINIT_FUNC
-initumath_linalg(void)
+init_umath_linalg(void)
 #endif
 {
     PyObject *m;
@@ -4201,7 +4201,7 @@ initumath_linalg(void)
 
     if (PyErr_Occurred()) {
         PyErr_SetString(PyExc_RuntimeError,
-                        "cannot load umath_linalg module.");
+                        "cannot load _umath_linalg module.");
     }
 
     return RETVAL;
