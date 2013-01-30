@@ -2936,16 +2936,26 @@ static inline void
         }
 
         for (iter = 0; iter < outer_dim; ++iter) {
+            int not_ok;
             /* copy the matrix in */
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
-            call_@lapack_func@(&params);
-
-            if ('N' == params.JOBZ) {
-                delinearize_@REALTYPE@_matrix(args[1], params.S, &s_out);
+            not_ok = call_@lapack_func@(&params);
+            if (!not_ok) {
+                if ('N' == params.JOBZ) {
+                    delinearize_@REALTYPE@_matrix(args[1], params.S, &s_out);
+                } else {
+                    delinearize_@TYPE@_matrix(args[1], params.U, &u_out);
+                    delinearize_@REALTYPE@_matrix(args[2], params.S, &s_out);
+                    delinearize_@TYPE@_matrix(args[3], params.VT, &v_out);
+                }
             } else {
-                delinearize_@TYPE@_matrix(args[1], params.U, &u_out);
-                delinearize_@REALTYPE@_matrix(args[2], params.S, &s_out);
-                delinearize_@TYPE@_matrix(args[3], params.VT, &v_out);
+                if ('N' == params.JOBZ) {
+                    nan_@REALTYPE@_matrix(args[1], &s_out);
+                } else {
+                    nan_@TYPE@_matrix(args[1], &u_out);
+                    nan_@REALTYPE@_matrix(args[2], &s_out);
+                    nan_@TYPE@_matrix(args[3], &v_out);
+                }
             }
             update_pointers((npy_uint8**)args, outer_steps, op_count);
         }
