@@ -1714,17 +1714,27 @@ static inline void
         }
 
         for (iter = 0; iter < outer_dim; ++iter) {
+            int not_ok;
             /* copy the matrix in */
             linearize_@TYPE@_matrix(eigh_params.A, args[0], &matrix_in_ld);
-            call_@lapack_func@(&eigh_params);
-            delinearize_@BASETYPE@_matrix(args[1],
-                                          eigh_params.W,
-                                          &eigenvalues_out_ld);
+            not_ok = call_@lapack_func@(&eigh_params);
+            if (!not_ok) {
+                /* lapack ok, copy result out */
+                delinearize_@BASETYPE@_matrix(args[1],
+                                              eigh_params.W,
+                                              &eigenvalues_out_ld);
 
-            if ('V' == eigh_params.JOBZ) {
-                delinearize_@TYPE@_matrix(args[2],
-                                          eigh_params.A,
-                                          &eigenvectors_out_ld);
+                if ('V' == eigh_params.JOBZ) {
+                    delinearize_@TYPE@_matrix(args[2],
+                                              eigh_params.A,
+                                              &eigenvectors_out_ld);
+                }
+            } else {
+                /* lapack fail, set result to nan */
+                nan_@BASETYPE@_matrix(args[1], &eigenvalues_out_ld);
+                if ('V' == eigh_params.JOBZ) {
+                    nan_@TYPE@_matrix(args[2], &eigenvectors_out_ld);
+                }
             }
             update_pointers((npy_uint8**)args, outer_steps, op_count);
         }
