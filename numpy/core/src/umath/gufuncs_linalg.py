@@ -1,4 +1,4 @@
-"""Gufunc'ed versions of linalg.
+"""Linear Algebra functions implemented as gufuncs, so they can be broadcast.
 
 Notes
 -----
@@ -6,7 +6,7 @@ This modules contains functionality that could be found in the linalg module,
 but in a gufunc-like way. This allows the use of vectorization and broadcasting
 on the operands.
 
-There are also some extra useful ufuncs.
+Additional functions some fused arithmetic, useful for efficient operation over
 """
 
 __all__ = ['inner1d', 'innerwt', 'matrix_multiply', 'det', 'slogdet', 'inv', 
@@ -18,29 +18,6 @@ __all__ = ['inner1d', 'innerwt', 'matrix_multiply', 'det', 'slogdet', 'inv',
 import numpy.core.umath_linalg as _impl
 import numpy as np
 
-"""
-    <Description>
-    
-    Parameters
-    ----------
-    <insert parameters + explanations>
-
-    Returns
-    -------
-    <insert return values>
-
-    Notes
-    -----
-    <insert any notes that may be interesting, optional>
-
-    See Also
-    --------
-    <reference related functions>
-
-    Examples
-    --------
-    <Some example in doctest format>
-"""
 def inner1d(a, b, **kwargs):
     """
     Compute the inner product, with broadcasting
@@ -827,7 +804,48 @@ def multiply4_add(a, b, c, d, e, **kwargs):
 
 def eigh(A, UPLO='L', **kw_args):
     """
-    Computes the eigen values and eigenvectors for the square matrices in the inner dimensions of A, being those matrices symmetric/hermitian
+    Computes the eigen values and eigenvectors for the square matrices
+    in the inner dimensions of A, being those matrices
+    symmetric/hermitian.
+
+    Parameters
+    ----------
+    A : (<NDIMS>, M, M) array
+         Hermitian/Symmetric matrices whose eigenvalues and
+         eigenvectors are to be computed.
+    UPLO : {'L', 'U'}, optional
+         Specifies whether the calculation is done with the lower
+         triangular part of the elements in `A` ('L', default) or
+         the upper triangular part ('U').
+
+    Returns
+    -------
+    w : (<NDIMS>, M) array
+        The eigenvalues, not necessarily ordered.
+    v : (<NDIMS>, M, M) array
+        The inner dimensions contain matrices with the normalized
+        eigenvectors as columns. The column-numbers are coherent with
+        the associated eigenvalue.
+
+    Notes
+    -----
+    Numpy broadcasting rules apply.
+
+    The eigenvalues/eigenvectors are computed using LAPACK routines _ssyevd,
+    _heevd
+
+    Implemented for single, double, csingle and cdouble. Numpy conversion
+    rules apply.
+
+    See Also
+    --------
+    eigvalsh : eigenvalues of symmetric/hermitian arrays.
+    eig : eigenvalues and right eigenvectors for general matrices.
+    eigvals : eigenvalues for general matrices.
+
+    Examples
+    --------
+    <Some example in doctest format>
     """
     if 'L' == UPLO:
         gufunc = _impl.eigh_lo
@@ -905,3 +923,29 @@ def poinv(A, UPLO='L', **kw_args):
         gufunc = _impl.poinv_up
 
     return gufunc(A, **kw_args);
+
+
+""" doc template (23 lines)"""
+"""
+    <Description>
+    
+    Parameters
+    ----------
+    <insert parameters + explanations>
+
+    Returns
+    -------
+    <insert return values>
+
+    Notes
+    -----
+    <insert any notes that may be interesting, optional>
+
+    See Also
+    --------
+    <reference related functions>
+
+    Examples
+    --------
+    <Some example in doctest format>
+"""
