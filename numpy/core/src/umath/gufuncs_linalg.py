@@ -285,6 +285,11 @@ def inv(a, **kwargs):
 
     Singular matrices and thus, not invertible, result in an array of NANs.
 
+    See Also
+    --------
+    poinv : compute the multiplicative inverse of hermitian/symmetric matrices,
+            using cholesky decomposition.
+
     Examples
     --------
     >>> a = np.array([[1, 2], [3, 4]])
@@ -1020,6 +1025,48 @@ def svd(a, full_matrices=1, compute_uv=1 ,**kw_args):
 
 
 def chosolve(A, B, UPLO='L', **kw_args):
+    """
+    Solve the linear matrix equations on the inner dimensions, using
+    cholesky decomposition.
+
+    Computes the "exact" solution, `x`. of the well-determined,
+    i.e., full rank, linear matrix equations `ax = b`, where a is
+    a symmetric/hermitian matrix.
+
+    Parameters
+    ----------
+    A : (<NDIMS>, M, M) array
+        Coefficient symmetric/hermitian matrices.
+    B : (<NDIMS>, M, N) array
+        Ordinate or "dependent variable" values.
+    UPLO : {'L', 'U'}, optional
+         Specifies whether the calculation is done with the lower
+         triangular part of the elements in `A` ('L', default) or
+         the upper triangular part ('U').
+
+    Returns
+    -------
+    X : (<NDIMS>, M, N) array
+        Solutions to the system A X = B for all elements in <NDIMS>
+
+    Notes
+    -----
+    Numpy broadcasting rules apply.
+
+    The solutions are computed using LAPACK routines _potrf, _potrs
+
+    Implemented for single, double, csingle and cdouble. Numpy conversion
+    rules apply.
+
+    See Also
+    --------
+    solve : solve a system using cholesky decomposition (for equations
+            having symmetric/hermitian coefficient matrices)
+
+    Examples
+    --------
+    <Some example in doctest format>
+    """
     if len(B.shape) == (len(A.shape) - 1):
         if 'L' == UPLO:
             gufunc = _impl.chosolve1_lo
