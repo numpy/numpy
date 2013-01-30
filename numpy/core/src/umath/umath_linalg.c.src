@@ -720,7 +720,7 @@ update_pointers(npy_uint8** bases, ptrdiff_t* offsets, size_t count)
 }
 
 
-/* disable -Wmaybe-uninitialized as there is some code that generates false
+/* disable -Wmaybe-uninitialized as there is some code that generate false
    positives with this warning
 */
 #pragma GCC diagnostic push
@@ -1349,6 +1349,9 @@ static inline void
                , sizeof(*sign));
         @TYPE@_slogdet_from_factored_diagonal(src, m, sign, logdet);
     } else {
+        /*
+          if getrf fails, use 0 as sign and -inf as logdet
+        */
         memcpy(sign, &@cblas_type@_zero, sizeof(*sign));
         memcpy(logdet, &@cblas_type@_ninf, sizeof(*logdet));
     }
@@ -2005,10 +2008,15 @@ static void
         init_linearize_data(&a_in, n, n, steps[1], steps[0]);
         init_linearize_data(&r_out, n, n, steps[3], steps[2]);
         BEGIN_OUTER_LOOP_2
+            int not_ok;
             linearize_@TYPE@_matrix(params.A, args[0], &a_in);
-            call_@lapack_func@(&params);
-            triu_@TYPE@_matrix(params.A, params.N);
-            delinearize_@TYPE@_matrix(args[1], params.A, &r_out);
+            not_ok = call_@lapack_func@(&params);
+            if (!not_ok) {
+                triu_@TYPE@_matrix(params.A, params.N);
+                delinearize_@TYPE@_matrix(args[1], params.A, &r_out);
+            } else {
+                nan_@TYPE@_matrix(args[1], &r_out);
+            }
         END_OUTER_LOOP
         release_@lapack_func@(&params);
     }
