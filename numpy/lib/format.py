@@ -148,6 +148,7 @@ else:
 
 MAGIC_PREFIX = asbytes('\x93NUMPY')
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
+BUFFER_SIZE = 2 ** 18 #size of buffer for reading npz files in bytes
 
 def magic(major, minor):
     """ Return the magic string for the given file format version.
@@ -457,20 +458,22 @@ def read_array(fp):
         else:
             # This is not a real file. We have to read it the memory-intensive
             # way.
-            # crc32 module fails on reads greater than 2 ** 32 bytes, breaking large reads from gzip streams
-            # Chunk reads to 256mb to avoid issue and reduce memory overhead of the read.
-            # In non-chunked case count < max_read_count, so only one read is performed.
+            # crc32 module fails on reads greater than 2 ** 32 bytes, breaking
+            # large reads from gzip streams. Chunk reads to BUFFER_SIZE bytes to
+            # avoid issue and reduce memory overhead of the read. In
+            # non-chunked case count < max_read_count, so only one read is
+            # performed.
 
-            max_buffer_size = 2 ** 28
-            max_read_count = max_buffer_size / dtype.itemsize
+            max_read_count = BUFFER_SIZE // dtype.itemsize
 
             array = numpy.empty(count, dtype=dtype)
 
-            for i in xrange(0, count, max_read_count):
-                read_count = max_read_count if i + max_read_count < count else count - i
+            for i in range(0, count, max_read_count):
+                read_count = min(max_read_count, count - i)
 
                 data = fp.read(int(read_count * dtype.itemsize))
-                array[i:i+read_count] = numpy.frombuffer(data, dtype=dtype, count=read_count)
+                array[i:i+read_count] = numpy.frombuffer(data, dtype=dtype,
+                                                         count=read_count)
 
         if fortran_order:
             array.shape = shape[::-1]

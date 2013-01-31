@@ -25,8 +25,6 @@ from numpy.compat import (
         asbytes, asstr, asbytes_nested, bytes, basestring, unicode
         )
 
-from io import BytesIO
-
 if sys.version_info[0] >= 3:
     import pickle
 else:
