@@ -457,9 +457,20 @@ def read_array(fp):
         else:
             # This is not a real file. We have to read it the memory-intensive
             # way.
-            # XXX: we can probably chunk this to avoid the memory hit.
-            data = fp.read(int(count * dtype.itemsize))
-            array = numpy.fromstring(data, dtype=dtype, count=count)
+            # crc32 module fails on reads greater than 2 ** 32 bytes, breaking large reads from gzip streams
+            # Chunk reads to 256mb to avoid issue and reduce memory overhead of the read.
+            # In non-chunked case count < max_read_count, so only one read is performed.
+
+            max_buffer_size = 2 ** 28
+            max_read_count = max_buffer_size / dtype.itemsize
+
+            array = numpy.empty(count, dtype=dtype)
+
+            for i in xrange(0, count, max_read_count):
+                read_count = max_read_count if i + max_read_count < count else count - i
+
+                data = fp.read(int(read_count * dtype.itemsize))
+                array[i:i+read_count] = numpy.frombuffer(data, dtype=dtype, count=read_count)
 
         if fortran_order:
             array.shape = shape[::-1]
