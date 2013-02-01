@@ -40,8 +40,8 @@ in-place.  For example::
 
 We wrap it using:
 
->>> lib.foo_func.restype = None                 #doctest: +SKIP
->>> lib.foo.argtypes = [array_1d_double, c_int] #doctest: +SKIP
+>>> _lib.foo_func.restype = None                      #doctest: +SKIP
+>>> _lib.foo_func.argtypes = [array_1d_double, c_int] #doctest: +SKIP
 
 Then, we're ready to call ``foo_func``:
 
