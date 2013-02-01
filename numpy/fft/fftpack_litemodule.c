@@ -45,10 +45,12 @@ fftpack_cfftf(PyObject *NPY_UNUSED(self), PyObject *args)
     nrepeats = PyArray_SIZE(data)/npts;
     dptr = (double *)PyArray_DATA(data);
     NPY_SIGINT_ON;
+    Py_BEGIN_ALLOW_THREADS;
     for (i = 0; i < nrepeats; i++) {
         cfftf(npts, dptr, wsave);
         dptr += npts*2;
     }
+    Py_END_ALLOW_THREADS;
     NPY_SIGINT_OFF;
     PyArray_Free(op2, (char *)wsave);
     return (PyObject *)data;
@@ -96,10 +98,12 @@ fftpack_cfftb(PyObject *NPY_UNUSED(self), PyObject *args)
     nrepeats = PyArray_SIZE(data)/npts;
     dptr = (double *)PyArray_DATA(data);
     NPY_SIGINT_ON;
+    Py_BEGIN_ALLOW_THREADS;
     for (i = 0; i < nrepeats; i++) {
         cfftb(npts, dptr, wsave);
         dptr += npts*2;
     }
+    Py_END_ALLOW_THREADS;
     NPY_SIGINT_OFF;
     PyArray_Free(op2, (char *)wsave);
     return (PyObject *)data;
@@ -131,7 +135,9 @@ fftpack_cffti(PyObject *NPY_UNUSED(self), PyObject *args)
     }
 
     NPY_SIGINT_ON;
+    Py_BEGIN_ALLOW_THREADS;
     cffti(n, (double *)PyArray_DATA((PyArrayObject*)op));
+    Py_END_ALLOW_THREADS;
     NPY_SIGINT_OFF;
 
     return (PyObject *)op;
@@ -183,6 +189,7 @@ fftpack_rfftf(PyObject *NPY_UNUSED(self), PyObject *args)
 
 
     NPY_SIGINT_ON;
+    Py_BEGIN_ALLOW_THREADS;
     for (i = 0; i < nrepeats; i++) {
         memcpy((char *)(rptr+1), dptr, npts*sizeof(double));
         rfftf(npts, rptr+1, wsave);
@@ -191,6 +198,7 @@ fftpack_rfftf(PyObject *NPY_UNUSED(self), PyObject *args)
         rptr += rstep;
         dptr += npts;
     }
+    Py_END_ALLOW_THREADS;
     NPY_SIGINT_OFF;
     PyArray_Free(op2, (char *)wsave);
     Py_DECREF(data);
@@ -245,6 +253,7 @@ fftpack_rfftb(PyObject *NPY_UNUSED(self), PyObject *args)
     dptr = (double *)PyArray_DATA(data);
 
     NPY_SIGINT_ON;
+    Py_BEGIN_ALLOW_THREADS;
     for (i = 0; i < nrepeats; i++) {
         memcpy((char *)(rptr + 1), (dptr + 2), (npts - 1)*sizeof(double));
         rptr[0] = dptr[0];
@@ -252,6 +261,7 @@ fftpack_rfftb(PyObject *NPY_UNUSED(self), PyObject *args)
         rptr += npts;
         dptr += npts*2;
     }
+    Py_END_ALLOW_THREADS;
     NPY_SIGINT_OFF;
     PyArray_Free(op2, (char *)wsave);
     Py_DECREF(data);
@@ -285,7 +295,9 @@ fftpack_rffti(PyObject *NPY_UNUSED(self), PyObject *args)
       return NULL;
   }
   NPY_SIGINT_ON;
+  Py_BEGIN_ALLOW_THREADS;
   rffti(n, (double *)PyArray_DATA((PyArrayObject*)op));
+  Py_END_ALLOW_THREADS;
   NPY_SIGINT_OFF;
 
   return (PyObject *)op;
