@@ -226,7 +226,11 @@ NA-related work. In particular for combinations of scalar+scalar:
 * the `timedelta64` type (`m`) can now be mixed with any integer type (`b h i l
   q p B H I L Q P`), previously it raised `TypeError`.
 
-For array + scalar, the above rules just broadcast.
+For array + scalar, the above rules just broadcast except the case when
+``uint8`` array + ``int16`` scalar gets converted to ``unit16`` array, e.g.::
+
+    >>> (np.zeros((2,), dtype=np.uint8) + np.int16(257)).dtype
+    dtype('uint16')
 
 In NumPy 1.7 the `datetime64` type (`M`) must be constructed by explicitly
 specifying the type as the second argument (e.g. ``np.datetime64(2000, 'Y')``).
