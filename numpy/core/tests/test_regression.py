@@ -288,6 +288,8 @@ class TestRegression(TestCase):
         self.assertRaises(ValueError, bfa)
         self.assertRaises(ValueError, bfb)
 
+    @dec.knownfailureif(sys.version_info < (2, 6),
+                        "See #2920 why this fails")
     def test_nonarray_assignment(self):
         # See also Issue gh-2870, test for nonarray assignment
         # and equivalent unsafe casted array assignment
