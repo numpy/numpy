@@ -547,7 +547,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
         An array of values ``w_i`` weighing each sample ``(x_i, y_i)``. Weights
         are normalized to 1 if `normed` is True. If `normed` is False, the
         values of the returned histogram are equal to the sum of the weights
-        belonging to the samples falling into each bin.
+l        belonging to the samples falling into each bin.
 
     Returns
     -------
@@ -584,12 +584,14 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
 
     Examples
     --------
+    2D-Histogram with fixed bin width:
+
     >>> x, y = np.random.randn(2, 100)
     >>> H, xedges, yedges = np.histogram2d(x, y, bins=(5, 8))
     >>> H.shape, xedges.shape, yedges.shape
     ((5, 8), (6,), (9,))
 
-    We can now use the Matplotlib to visualize this 2-dimensional histogram:
+    We can use imshow from Matplotlib to visualize this 2D-histogram:
 
     >>> extent = [yedges[0], yedges[-1], xedges[-1], xedges[0]]
     >>> import matplotlib.pyplot as plt
@@ -599,6 +601,23 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     <matplotlib.colorbar.Colorbar instance at ...>
     >>> plt.show()
 
+
+    2D-Histogram with variable bin size:
+
+    >>>import numpy as np, matplotlib.pyplot as plt
+    x = np.random.normal(3, 2, 1000)
+    y = np.random.normal(3, 1, 1000)
+    yedges=xedges=[0,2,3,4,6]
+    H, yedges, xedges = np.histogram2d(y,x, bins=(yedges,xedges))
+    extent = [xedges[0], xedges[-1], yedges[-1], yedges[0]]
+    X,Y = np.meshgrid(xedges, yedges)
+    plt.pcolormesh(X, Y,H)
+    plt.colorbar()
+    plt.show()
+
+    
+    For interpolated visulization matplotlib provides the NonUniformImage. See
+    http://matplotlib.org/examples/pylab_examples/image_nonuniform.html
     """
     from numpy import histogramdd
 
