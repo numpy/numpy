@@ -584,7 +584,7 @@ l        belonging to the samples falling into each bin.
 
     Examples
     --------
-    2D-Histogram with fixed bin width:
+    2D-histogram with fixed bin width:
 
     >>> x, y = np.random.randn(2, 100)
     >>> H, xedges, yedges = np.histogram2d(x, y, bins=(5, 8))
@@ -602,7 +602,7 @@ l        belonging to the samples falling into each bin.
     >>> plt.show()
 
 
-    2D-Histogram with variable bin size:
+    2D-histogram with variable bin size:
 
     >>>import numpy as np, matplotlib.pyplot as plt
     x = np.random.normal(3, 2, 1000)
