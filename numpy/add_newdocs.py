@@ -4460,6 +4460,12 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     (same shape, dtype, etc.)  This does not cause a reinterpretation of the
     memory.
 
+    In cases when ``a.view(some_dtype)`` causes a reinterpretation of the
+    bytes of memory, its behavior cannot necessarily be predicted just from
+    the superficial appearance of ``a`` (shown by ``print(a)``). If ``a`` is
+    C-ordered versus fortran-ordered, versus defined as a transpose, versus
+    defined as a slice, etc., the view may give different results.
+
 
     Examples
     --------
