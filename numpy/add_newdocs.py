@@ -4510,6 +4510,22 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('view',
     >>> z[0]
     (9, 10)
 
+    Views that change the dtype size (bytes per entry) should normally be
+    avoided on arrays defined by slices, transposes, fortran-ordering, etc.:
+
+    >>> x = np.array([[1,2,3],[4,5,6]], dtype=np.int16)
+    >>> y = x[:, 0:2]
+    >>> y
+    array([[1, 2],
+           [4, 5]], dtype=int16)
+    >>> y.view(dtype=[('width', np.int16), ('length', np.int16)])
+    Traceback (most recent call last):
+      File "<stdin>", line 1, in <module>
+    ValueError: new type not compatible with array.
+    >>> z = y.copy()
+    >>> z.view(dtype=[('width', np.int16), ('length', np.int16)])
+    array([[(1, 2)],
+           [(4, 5)]], dtype=[('width', '<i2'), ('length', '<i2')])
     """))
 
 
