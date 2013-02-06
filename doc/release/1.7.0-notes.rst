@@ -154,6 +154,11 @@ New argument to searchsorted
 The function searchsorted now accepts a 'sorter' argument that is a
 permutation array that sorts the array to search.
 
+Build system
+------------
+
+Added experimental support for the AArch64 architecture.
+
 C API
 -----
 
@@ -207,6 +212,44 @@ then ``d.base`` will be ``b``. This is because ``d`` is a ``matrix`` object,
 and so the collapsing process only continues so long as it encounters other
 ``matrix`` objects. It considers ``c``, ``b``, and ``a`` in that order, and
 ``b`` is the last entry in that list which is a ``matrix`` object.
+
+Casting Rules
+-------------
+
+Casting rules have undergone some changes in corner cases, due to the
+NA-related work. In particular for combinations of scalar+scalar:
+
+* the `longlong` type (`q`) now stays `longlong` for operations with any other
+  number (`? b h i l q p B H I`), previously it was cast as `int_` (`l`). The
+  `ulonglong` type (`Q`) now stays as `ulonglong` instead of `uint` (`L`).
+
+* the `timedelta64` type (`m`) can now be mixed with any integer type (`b h i l
+  q p B H I L Q P`), previously it raised `TypeError`.
+
+For array + scalar, the above rules just broadcast except the case when
+the array and scalars are unsigned/signed integers, then the result gets
+converted to the array type (of possibly larger size) as illustrated by the
+following examples::
+
+    >>> (np.zeros((2,), dtype=np.uint8) + np.int16(257)).dtype
+    dtype('uint16')
+    >>> (np.zeros((2,), dtype=np.int8) + np.uint16(257)).dtype
+    dtype('int16')
+    >>> (np.zeros((2,), dtype=np.int16) + np.uint32(2**17)).dtype
+    dtype('int32')
+
+Whether the size gets increased depends on the size of the scalar, for
+example::
+
+    >>> (np.zeros((2,), dtype=np.uint8) + np.int16(255)).dtype
+    dtype('uint8')
+    >>> (np.zeros((2,), dtype=np.uint8) + np.int16(256)).dtype
+    dtype('uint16')
+
+Also a ``complex128`` scalar + ``float32`` array is cast to ``complex64``.
+
+In NumPy 1.7 the `datetime64` type (`M`) must be constructed by explicitly
+specifying the type as the second argument (e.g. ``np.datetime64(2000, 'Y')``).
 
 
 Deprecations
