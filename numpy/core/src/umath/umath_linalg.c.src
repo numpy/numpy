@@ -812,6 +812,10 @@ nan_@TYPE@_matrix(void *dst_in, const LINEARIZE_DATA_t* data)
         }
         dst += data->row_strides/sizeof(@typ@);
     }
+
+    /* if this function gets called, the module generates nans */
+    /* set the fpe status to invalid to notify that nans were generated */
+    npy_set_floatstatus_invalid();
 }
 
 static inline void
