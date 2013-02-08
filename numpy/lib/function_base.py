@@ -2995,7 +2995,7 @@ def median(a, axis=None, out=None, overwrite_input=False):
     return mean(sorted[indexer], axis=axis, out=out)
 
 
-def percentile(a, q, limit=(), interpolation_method='fraction', axis=None,
+def percentile(a, q, limit=None, interpolation='linear', axis=None,
                out=None, overwrite_input=False):
     """
     Compute the qth percentile of the data along the specified axis.
@@ -3010,11 +3010,12 @@ def percentile(a, q, limit=(), interpolation_method='fraction', axis=None,
         Percentile to compute which must be between 0 and 100 inclusive.
     limit : tuple, optional
         Tuple of two scalars, the lower and upper limits within which to
-        compute the percentile.
-    interpolation : {'fraction', 'lower', 'higher'}, optional
+        compute the percentile.  Values outside of this range are ommitted from
+        the percentile calculation. None includes all values in calculation.  
+    interpolation : {'linear', 'lower', 'higher'}, optional
         This optional parameter specifies the interpolation method to use,
         when the desired quantile lies between two data points `i` and `j`:
-        - fraction: `i + (j - i)*fraction`, where `fraction` is the
+        - linear: `i + (j - i) * fraction`, where `fraction` is the
                     fractional part of the index surrounded by `i` and `j`.
         - lower: `i`.
         - higher: `j`.
@@ -3106,14 +3107,14 @@ def percentile(a, q, limit=(), interpolation_method='fraction', axis=None,
     if axis is None:
         axis = 0
 
-    return _compute_qth_percentile(sorted, q, interpolation_method, axis, out)
+    return _compute_qth_percentile(sorted, q, interpolation, axis, out)
 
 
 # handle sequence of q's without calling sort multiple times
-def _compute_qth_percentile(sorted, q, interpolation_method, axis, out):
+def _compute_qth_percentile(sorted, q, interpolation, axis, out):
     if not isscalar(q):
         p = [_compute_qth_percentile(
-             sorted, qi, interpolation_method, axis, None) for qi in q]
+             sorted, qi, interpolation, axis, None) for qi in q]
 
         if out is not None:
             out.flat = p
@@ -3130,14 +3131,14 @@ def _compute_qth_percentile(sorted, q, interpolation_method, axis, out):
 
     if int(index) != index:
         # round fractional indices according to interpolation method
-        if interpolation_method == 'lower':
+        if interpolation == 'lower':
             index = np.floor(index)
-        elif interpolation_method == 'higher':
+        elif interpolation == 'higher':
             index = np.ceil(index)
-        elif interpolation_method == 'fraction':
+        elif interpolation == 'linear':
             pass  # keep index as fraction and interpolate
         else:
-            raise ValueError("interpolation_method can only be 'fraction', "
+            raise ValueError("interpolation_method can only be 'linear', "
                              "'lower' or 'higher'")
 
     i = int(index)
