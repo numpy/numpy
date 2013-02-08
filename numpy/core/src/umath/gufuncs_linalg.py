@@ -30,6 +30,7 @@ __all__ = ['inner1d', 'innerwt', 'matrix_multiply', 'det', 'slogdet', 'inv',
 import numpy.core._umath_linalg as _impl
 import numpy as np
 
+
 def inner1d(a, b, **kwargs):
     """
     Compute the inner product, with broadcasting
@@ -65,6 +66,7 @@ def inner1d(a, b, **kwargs):
     (2,)
     >>> print res
     [  7.  43.]
+
     """
     return _impl.inner1d(a, b, **kwargs)
 
@@ -103,6 +105,7 @@ def innerwt(a, b, c, **kwargs):
     (2,)
     >>> res
     array([  3.25,  39.25])
+
     """
     return _impl.innerwt(a, b, c, **kwargs)
 
@@ -146,8 +149,8 @@ def matrix_multiply(a,b,**kwargs):
     <BLANKLINE>
            [[  750.,   792.,   834.],
             [ 1030.,  1088.,  1146.]]])
-    """
 
+    """
     return _impl.matrix_multiply(a,b,**kwargs)
 
 
@@ -191,6 +194,7 @@ def det(a, **kwargs):
     >>> a = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]] ])
     >>> np.allclose(-2.0, det(a))
     True
+
     """
     return _impl.det(a, **kwargs)
 
@@ -260,6 +264,7 @@ def slogdet(a, **kwargs):
     (2,)
     >>> np.allclose(-2.0, sign * np.exp(logdet))
     True
+
     """
     return _impl.slogdet(a, **kwargs)
 
@@ -303,6 +308,7 @@ def inv(a, **kwargs):
     True
     >>> np.allclose(matrix_multiply(ainv, a), np.eye(2))
     True
+
     """
     return _impl.inv(a, **kwargs)
 
@@ -359,6 +365,7 @@ def cholesky(a, UPLO='L', **kwargs):
     >>> L
     array([[ 1.+0.j,  0.+0.j],
            [ 0.+2.j,  1.+0.j]])
+
     """
     if 'L' == UPLO:
         gufunc = _impl.cholesky_lo
@@ -452,6 +459,7 @@ def eig(a, **kwargs):
     """
     return _impl.eig(a, **kwargs)
 
+
 def eigvals(a, **kwargs):
     """
     Compute the eigenvalues of general matrices, with broadcasting.
@@ -520,6 +528,7 @@ def eigvals(a, **kwargs):
     """
     return _impl.eigvals(a, **kwargs)
 
+
 def quadratic_form(u,Q,v, **kwargs):
     """
     Compute the quadratic form uQv, with broadcasting
@@ -566,8 +575,10 @@ def quadratic_form(u,Q,v, **kwargs):
 
     >>> np.dot(u, np.dot(Q,v))
     12.0
+
     """
     return _impl.quadratic_form(u, Q, v, **kwargs)
+
 
 def add3(a, b, c, **kwargs):
     """
@@ -602,8 +613,10 @@ def add3(a, b, c, **kwargs):
     Examples
     --------
     <Some example in doctest format>
+
     """
     return _impl.add3(a, b, c, **kwargs)
+
 
 def multiply3(a, b, c, **kwargs):
     """
@@ -638,8 +651,10 @@ def multiply3(a, b, c, **kwargs):
     Examples
     --------
     <Some example in doctest format>
+
     """
     return _impl.multiply3(a, b, c, **kwargs)
+
 
 def multiply3_add(a, b, c, d, **kwargs):
     """
@@ -679,8 +694,10 @@ def multiply3_add(a, b, c, d, **kwargs):
     Examples
     --------
     <Some example in doctest format>
+
     """
     return _impl.multiply3_add(a, b, c, d, **kwargs)
+
 
 def multiply_add(a, b, c, **kwargs):
     """
@@ -716,8 +733,10 @@ def multiply_add(a, b, c, **kwargs):
     Examples
     --------
     <Some example in doctest format>
+
     """
     return _impl.multiply_add(a, b, c, **kwargs)
+
 
 def multiply_add2(a, b, c, d, **kwargs):
     """
@@ -753,8 +772,10 @@ def multiply_add2(a, b, c, d, **kwargs):
     Examples
     --------
     <Some example in doctest format>
+
     """
     return _impl.multiply_add2(a, b, c, d, **kwargs)
+
 
 def multiply4(a, b, c, d, **kwargs):
     """
@@ -790,8 +811,10 @@ def multiply4(a, b, c, d, **kwargs):
     Examples
     --------
     <Some example in doctest format>
+
     """
     return _impl.multiply4(a, b, c, d, **kwargs)
+
 
 def multiply4_add(a, b, c, d, e, **kwargs):
     """
@@ -827,8 +850,10 @@ def multiply4_add(a, b, c, d, e, **kwargs):
     Examples
     --------
     <Some example in doctest format>
+
     """
     return _impl.multiply4_add(a, b, c, d, e,**kwargs)
+
 
 def eigh(A, UPLO='L', **kw_args):
     """
@@ -877,6 +902,7 @@ def eigh(A, UPLO='L', **kw_args):
     Examples
     --------
     <Some example in doctest format>
+
     """
     if 'L' == UPLO:
         gufunc = _impl.eigh_lo
@@ -927,6 +953,7 @@ def eigvalsh(A, UPLO='L', **kw_args):
     Examples
     --------
     <Some example in doctest format>
+
     """
     if ('L' == UPLO):
         gufunc = _impl.eigvalsh_lo
@@ -975,6 +1002,7 @@ def solve(A,B,**kw_args):
     Examples
     --------
     <Some example in doctest format>
+
     """
     if len(B.shape) == (len(A.shape) - 1):
         gufunc = _impl.solve1
@@ -1030,6 +1058,7 @@ def svd(a, full_matrices=1, compute_uv=1 ,**kw_args):
     Examples
     --------
     <Some example in doctest format>
+
     """
     m = a.shape[-2]
     n = a.shape[-1]
@@ -1097,6 +1126,7 @@ def chosolve(A, B, UPLO='L', **kw_args):
     Examples
     --------
     <Some example in doctest format>
+
     """
     if len(B.shape) == (len(A.shape) - 1):
         if 'L' == UPLO:
@@ -1150,6 +1180,7 @@ def poinv(A, UPLO='L', **kw_args):
     Examples
     --------
     <Some example in doctest format>
+
     """
     if 'L' == UPLO:
         gufunc = _impl.poinv_lo
@@ -1157,29 +1188,3 @@ def poinv(A, UPLO='L', **kw_args):
         gufunc = _impl.poinv_up
 
     return gufunc(A, **kw_args);
-
-
-""" doc template (23 lines)"""
-"""
-    <Description>
-
-    Parameters
-    ----------
-    <insert parameters + explanations>
-
-    Returns
-    -------
-    <insert return values>
-
-    Notes
-    -----
-    <insert any notes that may be interesting, optional>
-
-    See Also
-    --------
-    <reference related functions>
-
-    Examples
-    --------
-    <Some example in doctest format>
-"""
