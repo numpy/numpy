@@ -13,7 +13,7 @@ line with the ones used by linalg, or just to automatically select the
 appropriate kernel depending on the parameters. All wrappers forward the keyword
 parameters to the underlying generalized ufunc (the kernel).
 
-The functions are intended to be used on arrays of functions. For those
+The functions are intended to be used on arrays of matrices. For those
 functions where a result may not be possible to obtain (like the inverse of
 a matrix that is not invertible) no exception is raised, but the results for
 the elements involved are set to NaN.
