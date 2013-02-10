@@ -750,6 +750,9 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
                 (astride != (npy_intp) elsize) || swap;
     if (needcopy) {
         char *buffer = PyDataMem_NEW(N*elsize);
+        if (buffer == NULL) {
+            goto fail;
+        }
 
         while (size--) {
             _unaligned_strided_byte_copy(buffer, (npy_intp) elsize, it->dataptr,
@@ -783,9 +786,11 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     return 0;
 
  fail:
+    /* Out of memory during sorting or buffer creation */
     NPY_END_THREADS;
+    PyErr_NoMemory();
     Py_DECREF(it);
-    return 0;
+    return -1;
 }
 
 static PyObject*
@@ -832,7 +837,14 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         char *valbuffer, *indbuffer;
 
         valbuffer = PyDataMem_NEW(N*elsize);
+        if (valbuffer == NULL) {
+            goto fail;
+        }
         indbuffer = PyDataMem_NEW(N*sizeof(npy_intp));
+        if (indbuffer == NULL) {
+            PyDataMem_FREE(valbuffer);
+            goto fail;
+        }
         while (size--) {
             _unaligned_strided_byte_copy(valbuffer, (npy_intp) elsize, it->dataptr,
                                          astride, N, elsize);
@@ -878,6 +890,10 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 
  fail:
     NPY_END_THREADS;
+    if (!PyErr_Occurred()) {
+        /* Out of memory during sorting or buffer creation */
+        PyErr_NoMemory();
+    }
     Py_DECREF(ret);
     Py_XDECREF(it);
     Py_XDECREF(rit);
@@ -1331,7 +1347,14 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         int *swaps;
 
         valbuffer = PyDataMem_NEW(N*maxelsize);
+        if (valbuffer == NULL) {
+            goto fail;
+        }
         indbuffer = PyDataMem_NEW(N*sizeof(npy_intp));
+        if (indbuffer == NULL) {
+            PyDataMem_FREE(indbuffer);
+            goto fail;
+        }
         swaps = malloc(n*sizeof(int));
         for (j = 0; j < n; j++) {
             swaps[j] = PyArray_ISBYTESWAPPED(mps[j]);
@@ -1400,6 +1423,10 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
 
  fail:
     NPY_END_THREADS;
+    if (!PyErr_Occurred()) {
+        /* Out of memory during sorting or buffer creation */
+        PyErr_NoMemory();
+    }
     Py_XDECREF(rit);
     Py_XDECREF(ret);
     for (i = 0; i < n; i++) {
