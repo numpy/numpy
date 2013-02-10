@@ -193,7 +193,6 @@ class TestRegression(TestCase):
         d = buf[0]['data'][0]
         buf[0]['head'] = h
         buf[0]['data'][0] = d
-        print buf[0]['head']
         assert_(buf[0]['head'] == 1)
 
 
