@@ -6,7 +6,7 @@
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-
+#include "numpy/npy_os.h"
 #include "npy_config.h"
 
 #include "npy_pycompat.h"
@@ -98,32 +98,10 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             size = PyArray_SIZE(self);
             NPY_BEGIN_ALLOW_THREADS;
 
-#if defined (_MSC_VER) && defined(_WIN64)
-            /* Workaround Win64 fwrite() bug. Ticket #1660 */
-            {
-                npy_intp maxsize = 2147483648 / PyArray_DESCR(self)->elsize;
-                npy_intp chunksize;
-
-                n = 0;
-                while (size > 0) {
-                    chunksize = (size > maxsize) ? maxsize : size;
-                    n2 = fwrite((const void *)
-                             ((char *)PyArray_DATA(self) + (n * PyArray_DESCR(self)->elsize)),
-                             (size_t) PyArray_DESCR(self)->elsize,
-                             (size_t) chunksize, fp);
-                    if (n2 < chunksize) {
-                        break;
-                    }
-                    n += n2;
-                    size -= chunksize;
-                }
-                size = PyArray_SIZE(self);
-            }
-#else
-            n = fwrite((const void *)PyArray_DATA(self),
+            n = NumPyOS_fwrite((const void *)PyArray_DATA(self),
                     (size_t) PyArray_DESCR(self)->elsize,
                     (size_t) size, fp);
-#endif
+
             NPY_END_ALLOW_THREADS;
             if (n < size) {
                 PyErr_Format(PyExc_ValueError,
@@ -138,7 +116,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             it = (PyArrayIterObject *) PyArray_IterNew((PyObject *)self);
             NPY_BEGIN_THREADS;
             while (it->index < it->size) {
-                if (fwrite((const void *)it->dataptr,
+                if (NumPyOS_fwrite((const void *)it->dataptr,
                             (size_t) PyArray_DESCR(self)->elsize,
                             1, fp) < 1) {
                     NPY_END_THREADS;
@@ -211,7 +189,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
 #endif
             NPY_BEGIN_ALLOW_THREADS;
             n2 = PyBytes_GET_SIZE(byteobj);
-            n = fwrite(PyBytes_AS_STRING(byteobj), 1, n2, fp);
+            n = NumPyOS_fwrite(PyBytes_AS_STRING(byteobj), 1, n2, fp);
             NPY_END_ALLOW_THREADS;
 #if defined(NPY_PY3K)
             Py_DECREF(byteobj);
@@ -226,7 +204,7 @@ PyArray_ToFile(PyArrayObject *self, FILE *fp, char *sep, char *format)
             }
             /* write separator for all but last one */
             if (it->index != it->size-1) {
-                if (fwrite(sep, 1, n3, fp) < n3) {
+                if (NumPyOS_fwrite(sep, 1, n3, fp) < n3) {
                     PyErr_Format(PyExc_IOError,
                             "problem writing "\
                             "separator to file");

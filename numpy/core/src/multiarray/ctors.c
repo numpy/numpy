@@ -8,6 +8,7 @@
 #include "numpy/arrayscalars.h"
 
 #include "numpy/npy_math.h"
+#include "numpy/npy_os.h"
 
 #include "npy_config.h"
 
@@ -3171,32 +3172,7 @@ array_fromfile_binary(FILE *fp, PyArray_Descr *dtype, npy_intp num, size_t *nrea
         return NULL;
     }
     NPY_BEGIN_ALLOW_THREADS;
-#if defined(__APPLE__)
-            /* Workaround for read failures on OS X. Issue #2806 */
-            {
-                npy_intp maxsize = 2147483647 / dtype->elsize;
-                npy_intp chunksize;
-
-                size_t n = 0;
-                size_t n2;
-
-                while (num > 0) {
-                    chunksize = (num > maxsize) ? maxsize : num;
-                    n2 = fread((const void *)
-                             ((char *)PyArray_DATA(r) + (n * dtype->elsize)),
-                             dtype->elsize,
-                             (size_t) chunksize, fp);
-                    if (n2 < chunksize) {
-                        break;
-                    }
-                    n += n2;
-                    num -= chunksize;
-                }
-                *nread = n;
-            }
-#else
-    *nread = fread(PyArray_DATA(r), dtype->elsize, num, fp);
-#endif
+    *nread = NumPyOS_fread(PyArray_DATA(r), dtype->elsize, num, fp);
     NPY_END_ALLOW_THREADS;
     return r;
 }

@@ -1,3 +1,5 @@
+#include <numpy/npy_common.h>
+
 #ifndef _NPY_OS_H_
 #define _NPY_OS_H_
 
@@ -28,3 +30,50 @@
 #endif
 
 #endif
+
+// A general workaround of OS issues with fread/fwrite, see issue #2806
+static NPY_INLINE size_t NumPyOS_fread( void * ptr, size_t size, size_t count, FILE * stream )
+{
+     npy_intp maxsize = 2147483647 / size;
+     npy_intp chunksize;
+
+     size_t n = 0;
+     size_t n2;
+
+     while (count > 0) {
+         chunksize = (count > maxsize) ? maxsize : count;
+         n2 = fread((const void *)
+                  ((char *)ptr + (n * size)),
+                  size,
+                  (size_t) chunksize, stream);
+         if (n2 < chunksize) {
+             break;
+         }
+         n += n2;
+         count -= chunksize;
+     }
+     return n;
+}
+
+static NPY_INLINE size_t NumPyOS_fwrite( const void * ptr, size_t size, size_t count, FILE * stream )
+{
+    /* Originally for ticket #1660 */
+    npy_intp maxsize = 2147483648 / size;
+    npy_intp chunksize;
+
+    size_t n = 0;
+    size_t n2;
+    while (count > 0) {
+        chunksize = (count > maxsize) ? maxsize : count;
+        n2 = fwrite((const void *)
+                 ((char *)ptr + (n * size)),
+                 size,
+                 (size_t) chunksize, stream);
+        if (n2 < chunksize) {
+            break;
+        }
+        n += n2;
+        count -= chunksize;
+    }
+    return n;
+}
