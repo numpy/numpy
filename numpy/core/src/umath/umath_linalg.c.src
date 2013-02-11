@@ -4161,7 +4161,7 @@ static struct PyModuleDef moduledef = {
         UMATH_LINALG_MODULE_NAME,
         NULL,
         -1,
-        UMath_TestsMethods,
+        UMath_LinAlgMethods,
         NULL,
         NULL,
         NULL,
