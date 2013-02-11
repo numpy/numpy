@@ -21,7 +21,7 @@
 #include <math.h>
 
 
-const char* umath_linalg_version_string = "0.1.2";
+const char* umath_linalg_version_string = "0.1.3";
 
 /*
  ****************************************************************************
@@ -370,7 +370,7 @@ offset_ptr(void* ptr, ptrdiff_t offset)
  *****************************************************************************
  */
 
-static const char* umath_linalg_module_name =  "_umath_linalg";
+#define UMATH_LINALG_MODULE_NAME "_umath_linalg"
 
 typedef union {
     fortran_complex f;
@@ -4158,7 +4158,7 @@ static PyMethodDef UMath_LinAlgMethods[] = {
 #if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
         PyModuleDef_HEAD_INIT,
-        umath_linalg_module_name,
+        UMATH_LINALG_MODULE_NAME,
         NULL,
         -1,
         UMath_TestsMethods,
@@ -4186,7 +4186,7 @@ init_umath_linalg(void)
 #if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
 #else
-    m = Py_InitModule(umath_linalg_module_name, UMath_LinAlgMethods);
+    m = Py_InitModule(UMATH_LINALG_MODULE_NAME, UMath_LinAlgMethods);
 #endif
     if (m == NULL)
         return RETVAL;
