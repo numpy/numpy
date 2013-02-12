@@ -1381,8 +1381,10 @@ def _nanop(op, fill, a, axis=None):
     y = array(a, subok=True)
 
     # We only need to take care of NaN's in floating point arrays
-    if np.issubdtype(y.dtype, np.integer):
+    dt = y.dtype
+    if np.issubdtype(dt, np.integer) or np.issubdtype(dt, np.bool_):
         return op(y, axis=axis)
+
     mask = isnan(a)
     # y[mask] = fill
     # We can't use fancy indexing here as it'll mess w/ MaskedArrays

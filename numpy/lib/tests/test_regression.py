@@ -218,5 +218,14 @@ class TestRegression(TestCase):
         data = [((((0,1), (2,3), (4,5)), ((6,7), (8,9), (10,11))),)]
         assert_equal(x, np.array(data, dtype=dt))
 
+    def test_nansum_with_boolean(self):
+        # gh-2978
+        a = np.zeros(2, dtype=np.bool)
+        try:
+            np.nansum(a)
+        except:
+            raise AssertionError()
+
+
 if __name__ == "__main__":
     run_module_suite()
