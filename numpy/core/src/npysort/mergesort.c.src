@@ -112,7 +112,6 @@ mergesort_@suff@(@type@ *start, npy_intp num, void *NOT_USED)
     pr = pl + num;
     pw = (@type@ *) malloc((num/2) * sizeof(@type@));
     if (pw == NULL) {
-        PyErr_NoMemory();
         return -NPY_ENOMEM;
     }
     mergesort0_@suff@(pl, pr, pw);
@@ -176,7 +175,6 @@ amergesort_@suff@(@type@ *v, npy_intp *tosort, npy_intp num, void *NOT_USED)
     pr = pl + num;
     pw = (npy_intp *) malloc((num/2) * sizeof(npy_intp));
     if (pw == NULL) {
-        PyErr_NoMemory();
         return -NPY_ENOMEM;
     }
     amergesort0_@suff@(pl, pr, v, pw);
@@ -259,13 +257,11 @@ mergesort_@suff@(@type@ *start, npy_intp num, PyArrayObject *arr)
     pr = pl + num*len;
     pw = (@type@ *) malloc((num/2) * elsize);
     if (pw == NULL) {
-        PyErr_NoMemory();
         err = -NPY_ENOMEM;
         goto fail_0;
     }
     vp = (@type@ *) malloc(elsize);
     if (vp == NULL) {
-        PyErr_NoMemory();
         err = -NPY_ENOMEM;
         goto fail_1;
     }
@@ -335,7 +331,6 @@ amergesort_@suff@(@type@ *v, npy_intp *tosort, npy_intp num, PyArrayObject *arr)
     pr = pl + num;
     pw = (npy_intp *) malloc((num/2) * sizeof(npy_intp));
     if (pw == NULL) {
-        PyErr_NoMemory();
         return -NPY_ENOMEM;
     }
     amergesort0_@suff@(pl, pr, v, pw, len);
