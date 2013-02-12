@@ -1028,6 +1028,13 @@ class TestMethods(TestCase):
         assert_equal(collect_warning_types(getattr, ro_diag,
                                            "__array_struct__"), [])
 
+    def test_diagonal_memleak(self):
+        # Regression test for a bug that crept in at one point
+        a = np.zeros((100, 100))
+        assert_(sys.getrefcount(a) < 50)
+        for i in xrange(100):
+            a.diagonal()
+        assert_(sys.getrefcount(a) < 50)
 
     def test_ravel(self):
         a = np.array([[0,1],[2,3]])
