@@ -8,13 +8,13 @@
 #include "numpy/arrayscalars.h"
 
 #include "numpy/npy_math.h"
-#include "numpy/npy_os.h"
 
 #include "npy_config.h"
 
 #include "npy_pycompat.h"
 
 #include "common.h"
+#include "numpyos.h"
 #include "ctors.h"
 #include "convert_datatype.h"
 #include "shape.h"

@@ -6,12 +6,12 @@
 #define _MULTIARRAYMODULE
 #include "numpy/arrayobject.h"
 #include "numpy/arrayscalars.h"
-#include "numpy/npy_os.h"
 #include "npy_config.h"
 
 #include "npy_pycompat.h"
 
 #include "arrayobject.h"
+#include "numpyos.h"
 #include "mapping.h"
 #include "lowlevel_strided_loops.h"
 #include "scalartypes.h"
