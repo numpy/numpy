@@ -914,6 +914,10 @@ def eigh(A, UPLO='L', **kw_args):
     Implemented for single, double, csingle and cdouble. Numpy conversion
     rules apply.
 
+    Unlike eig, the results for single and double will always be single
+    and doubles. It is not possible for symmetrical real matrices to result
+    in complex eigenvalues/eigenvectors
+
     See Also
     --------
     eigvalsh : eigenvalues of symmetric/hermitian arrays.
@@ -922,7 +926,27 @@ def eigh(A, UPLO='L', **kw_args):
 
     Examples
     --------
-    <Some example in doctest format>
+    A simple example that computes eigenvectors and eigenvalues of
+    a hermitian matrix and checks that A*v = v*w for both pairs of
+    eignvalues(w) and eigenvectors(v)
+
+    >>> a = np.array([[1, -2j], [2j, 5]])
+    >>> a
+    array([[ 1.+0.j,  0.-2.j],
+           [ 0.+2.j,  5.+0.j]])
+    >>> w, v = eigh(a)
+    >>> np.allclose(np.dot(a, v[:,0]), w[0]*v[:,0])
+    True
+    >>> np.allclose(np.dot(a, v[:,1]), w[1]*v[:,1])
+    True
+
+    For an hermitian matrix eig should also be usable, however eigh
+    is more efficient.
+    >>> w2, v2 = eig(a)
+    >>> np.allclose(w,w2)
+    True
+    >>> np.allclose(v,v2)
+    True
 
     """
     if 'L' == UPLO:
@@ -965,6 +989,10 @@ def eigvalsh(A, UPLO='L', **kw_args):
     Implemented for single, double, csingle and cdouble. Numpy conversion
     rules apply.
 
+    Unlike eigvals, the results for single and double will always be single
+    and doubles. It is not possible for symmetrical real matrices to result
+    in complex eigenvalues.
+
     See Also
     --------
     eigh : eigenvalues of symmetric/hermitian arrays.
@@ -973,7 +1001,16 @@ def eigvalsh(A, UPLO='L', **kw_args):
 
     Examples
     --------
-    <Some example in doctest format>
+    eigvalsh results should be the same as the eigenvalues returned by eigh
+
+    >>> a = np.array([[1, -2j], [2j, 5]])
+    >>> w, v = eigh(a)
+    >>> np.allclose(w, eigvalsh(a))
+    True
+
+    eigvalsh on an identity matrix is all ones
+    >>> eigvalsh(np.eye(6))
+    array([ 1.,  1.,  1.,  1.,  1.,  1.])
 
     """
     if ('L' == UPLO):
@@ -1022,7 +1059,18 @@ def solve(A,B,**kw_args):
 
     Examples
     --------
-    <Some example in doctest format>
+    Solve the system of equations ``3 * x0 + x1 = 9`` and ``x0 + 2 * x1 = 8``:
+
+    >>> a = np.array([[3,1], [1,2]])
+    >>> b = np.array([9,8])
+    >>> x = solve(a, b)
+    >>> x
+    array([ 2.,  3.])
+
+    Check that the solution is correct:
+
+    >>> np.allclose(np.dot(a, x), b)
+    True
 
     """
     if len(B.shape) == (len(A.shape) - 1):
@@ -1078,7 +1126,26 @@ def svd(a, full_matrices=1, compute_uv=1 ,**kw_args):
 
     Examples
     --------
-    <Some example in doctest format>
+    >>> a = np.random.randn(9, 6) + 1j*np.random.randn(9, 6)
+
+    Reconstruction based on full SVD:
+
+    >>> U, s, V = svd(a, full_matrices=True)
+    >>> U.shape, V.shape, s.shape
+    ((9, 9), (6, 6), (6,))
+    >>> S = np.zeros((9, 6), dtype=complex)
+    >>> S[:6, :6] = np.diag(s)
+    >>> np.allclose(a, np.dot(U, np.dot(S, V)))
+    True
+
+    Reconstruction based on reduced SVD:
+
+    >>> U, s, V = svd(a, full_matrices=False)
+    >>> U.shape, V.shape, s.shape
+    ((9, 6), (6, 6), (6,))
+    >>> S = np.diag(s)
+    >>> np.allclose(a, np.dot(U, np.dot(S, V)))
+    True
 
     """
     m = a.shape[-2]
@@ -1146,7 +1213,19 @@ def chosolve(A, B, UPLO='L', **kw_args):
 
     Examples
     --------
-    <Some example in doctest format>
+    Solve the system of equations ``3 * x0 + x1 = 9`` and ``x0 + 2 * x1 = 8``:
+    (note the matrix is symmetric in this system)
+
+    >>> a = np.array([[3,1], [1,2]])
+    >>> b = np.array([9,8])
+    >>> x = solve(a, b)
+    >>> x
+    array([ 2.,  3.])
+
+    Check that the solution is correct:
+
+    >>> np.allclose(np.dot(a, x), b)
+    True
 
     """
     if len(B.shape) == (len(A.shape) - 1):
@@ -1200,7 +1279,12 @@ def poinv(A, UPLO='L', **kw_args):
 
     Examples
     --------
-    <Some example in doctest format>
+    >>> a = np.array([[1, 2], [2, -1]])
+    >>> ainv = poinv(a)
+    >>> np.allclose(matrix_multiply(a, ainv), np.eye(2))
+    True
+    >>> np.allclose(matrix_multiply(ainv, a), np.eye(2))
+    True
 
     """
     if 'L' == UPLO:
