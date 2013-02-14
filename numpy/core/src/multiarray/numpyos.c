@@ -682,14 +682,14 @@ buffer_filled:
 #undef MATCH_ZERO_OR_MORE
 
 /* Set the thresholds to 2**25 so they are far away
-   from the magic limits.
-   The magic limits seem to be:
-   2147483647 for fread on Mac OS X (Issue #2806)
-   2147483648 for fwrite on Windows (Issue #1660)
-   */
+ * from the magic limits.
+ * The magic limits seem to be:
+ * 2147483647 for fread on Mac OS X (Issue #2806)
+ * 2147483648 for fwrite on Windows (Issue #1660)
+ */
 #define NUMPYOS_FREAD_THRESHOLD 33554432
 #define NUMPYOS_FWRITE_THRESHOLD 33554432
-// A general workaround of OS issues with fread/fwrite, see issue #2806
+/* A general workaround of OS issues with fread/fwrite, see issue #2806 */
 NPY_NO_EXPORT size_t NumPyOS_fread( void * ptr, size_t size, size_t count, FILE * stream )
 {
      npy_intp maxsize = NUMPYOS_FREAD_THRESHOLD / size;
@@ -704,10 +704,10 @@ NPY_NO_EXPORT size_t NumPyOS_fread( void * ptr, size_t size, size_t count, FILE 
                   ((char *)ptr + (n * size)),
                   size,
                   (size_t) chunksize, stream);
+         n += n2;
          if (n2 < chunksize) {
              break;
          }
-         n += n2;
          count -= chunksize;
      }
      return n;
@@ -727,10 +727,10 @@ NPY_NO_EXPORT size_t NumPyOS_fwrite( const void * ptr, size_t size, size_t count
                  ((char *)ptr + (n * size)),
                  size,
                  (size_t) chunksize, stream);
+        n += n2;
         if (n2 < chunksize) {
             break;
         }
-        n += n2;
         count -= chunksize;
     }
     return n;
