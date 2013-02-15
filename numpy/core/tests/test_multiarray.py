@@ -902,6 +902,14 @@ class TestMethods(TestCase):
         assert_equal(np.dot(a, b), a.dot(b))
         assert_equal(np.dot(np.dot(a, b), c), a.dot(b).dot(c))
 
+        # test changes from gh-2687 (trac 2096)
+        c = np.zeros_like(a)
+        a.dot(b,c)
+        assert_equal(c, np.dot(a,b))
+        c = np.zeros_like(a)
+        a.dot(b=b,out=c)
+        assert_equal(c, np.dot(a,b))
+
     def test_diagonal(self):
         a = np.arange(12).reshape((3, 4))
         assert_equal(a.diagonal(), [0, 5, 10])

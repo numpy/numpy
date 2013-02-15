@@ -1847,10 +1847,11 @@ array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *b;
+    PyObject *b, *out = NULL;
     static PyObject *numpycore = NULL;
+    char * kwords[] = {"b", "out", NULL };
 
-    if (!PyArg_ParseTuple(args, "O", &b)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|O", kwords, &b, &out)) { 
         return NULL;
     }
 
@@ -1862,8 +1863,10 @@ array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
             return NULL;
         }
     }
-
-    return PyObject_CallMethod(numpycore, "dot", "OO", self, b);
+    if (out == NULL) {
+        return PyObject_CallMethod(numpycore, "dot", "OO", self, b);
+    }
+    return PyObject_CallMethod(numpycore, "dot", "OOO", self, b, out);
 }
 
 
@@ -2222,7 +2225,7 @@ NPY_NO_EXPORT PyMethodDef array_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"dot",
         (PyCFunction)array_dot,
-        METH_VARARGS, NULL},
+        METH_VARARGS | METH_KEYWORDS, NULL},
     {"fill",
         (PyCFunction)array_fill,
         METH_VARARGS, NULL},
