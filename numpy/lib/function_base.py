@@ -3015,10 +3015,11 @@ def percentile(a, q, limit=None, interpolation='linear', axis=None,
     interpolation : {'linear', 'lower', 'higher'}, optional
         This optional parameter specifies the interpolation method to use,
         when the desired quantile lies between two data points `i` and `j`:
-        - linear: `i + (j - i) * fraction`, where `fraction` is the
-                    fractional part of the index surrounded by `i` and `j`.
-        - lower: `i`.
-        - higher: `j`.
+        
+          * linear: `i + (j - i) * fraction`, where `fraction` is the
+            fractional part of the index surrounded by `i` and `j`.
+          * lower: `i`.
+          * higher: `j`.
     axis : int, optional
         Axis along which the percentiles are computed. The default (None)
         is to compute the median along a flattened version of the array.
@@ -3138,8 +3139,8 @@ def _compute_qth_percentile(sorted, q, interpolation, axis, out):
         elif interpolation == 'linear':
             pass  # keep index as fraction and interpolate
         else:
-            raise ValueError("interpolation_method can only be 'linear', "
-                             "'lower' or 'higher'")
+            raise ValueError("interpolation can only be 'linear', 'lower'"
+                             "or 'higher'")
 
     i = int(index)
     if i == index:
