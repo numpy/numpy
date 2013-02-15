@@ -1455,6 +1455,10 @@ class TestScoreatpercentile(TestCase):
         assert_equal(np.percentile(np.array([1, 10, 100]), 50, limit=(1, 10),
                                    interpolation='higher'), 10)
 
+    def test_midpoint(self):
+        assert_equal(np.percentile(range(10), 51, interpolation='midpoint'),
+                     4.5)
+
     def test_sequence(self):
         x = np.arange(8) * 0.5
         assert_equal(np.percentile(x, [0, 100, 50]), [0, 3.5, 1.75])
