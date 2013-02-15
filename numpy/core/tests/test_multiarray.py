@@ -902,10 +902,12 @@ class TestMethods(TestCase):
         assert_equal(np.dot(a, b), a.dot(b))
         assert_equal(np.dot(np.dot(a, b), c), a.dot(b).dot(c))
 
-        # test changes from gh-2687 (trac 2096)
+        # test passing in an output array 
         c = np.zeros_like(a)
         a.dot(b,c)
         assert_equal(c, np.dot(a,b))
+        
+        # test keyword args
         c = np.zeros_like(a)
         a.dot(b=b,out=c)
         assert_equal(c, np.dot(a,b))

@@ -1847,7 +1847,7 @@ array_cumprod(PyArrayObject *self, PyObject *args, PyObject *kwds)
 static PyObject *
 array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
 {
-    PyObject *b, *out = NULL;
+    PyObject *fname, *ret, *b, *out = NULL;
     static PyObject *numpycore = NULL;
     char * kwords[] = {"b", "out", NULL };
 
@@ -1863,10 +1863,13 @@ array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
             return NULL;
         }
     }
+    fname = PyString_FromString("dot");
     if (out == NULL) {
-        return PyObject_CallMethod(numpycore, "dot", "OO", self, b);
+        ret = PyObject_CallMethodObjArgs(numpycore, fname, self, b, NULL);
     }
-    return PyObject_CallMethod(numpycore, "dot", "OOO", self, b, out);
+    ret = PyObject_CallMethodObjArgs(numpycore, fname, self, b, out, NULL);
+    Py_DECREF(fname);
+    return ret;
 }
 
 
