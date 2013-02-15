@@ -1863,7 +1863,7 @@ array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
             return NULL;
         }
     }
-    fname = PyString_FromString("dot");
+    fname = PyUnicode_FromString("dot");
     if (out == NULL) {
         ret = PyObject_CallMethodObjArgs(numpycore, fname, self, b, NULL);
     }
