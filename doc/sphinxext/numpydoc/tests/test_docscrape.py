@@ -603,6 +603,10 @@ def test_class_members():
             """Spammity index"""
             return 0.95
 
+        class Ignorable(object):
+            """local class, to be ignored"""
+            pass
+
     for cls in (ClassDoc, SphinxClassDoc):
         doc = cls(Dummy, config=dict(show_class_members=False))
         assert 'Methods' not in str(doc), (cls, str(doc))

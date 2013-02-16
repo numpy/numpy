@@ -511,7 +511,7 @@ class ClassDoc(NumpyDocString):
         return [name for name,func in inspect.getmembers(self._cls)
                 if ((not name.startswith('_')
                      or name in self.extra_public_methods)
-                    and callable(func))]
+                    and callable(func) and not isinstance(func, type))]
 
     @property
     def properties(self):
