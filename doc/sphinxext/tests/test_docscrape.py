@@ -165,7 +165,7 @@ def test_examples():
 
 def test_index():
     assert_equal(doc['index']['default'], 'random')
-    print doc['index']
+    print(doc['index'])
     assert_equal(len(doc['index']), 2)
     assert_equal(len(doc['index']['refguide']), 2)
 
@@ -556,7 +556,13 @@ def test_unicode():
         äää
 
     """)
-    assert doc['Summary'][0] == u'öäöäöäöäöåååå'.encode('utf-8')
+    if sys.version_info[0] >= 3:
+        # This is for Python 3
+        assert doc['Summary'][0].encode('utf-8') == 'öäöäöäöäöåååå'.encode('utf-8')
+    else:
+        # This is for Python 2
+        # The result of u'öäöäöäöäöåååå'.encode('utf-8') is '\xc3\xb6...'
+        assert doc['Summary'][0] == '\xc3\xb6\xc3\xa4\xc3\xb6\xc3\xa4\xc3\xb6\xc3\xa4\xc3\xb6\xc3\xa4\xc3\xb6\xc3\xa5\xc3\xa5\xc3\xa5\xc3\xa5'
 
 def test_plot_examples():
     cfg = dict(use_plots=True)
