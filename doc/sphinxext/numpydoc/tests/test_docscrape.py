@@ -1,10 +1,9 @@
 # -*- encoding:utf-8 -*-
 
 import sys, os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from docscrape import NumpyDocString, FunctionDoc, ClassDoc
-from docscrape_sphinx import SphinxDocString, SphinxClassDoc
+from numpydoc.docscrape import NumpyDocString, FunctionDoc, ClassDoc
+from numpydoc.docscrape_sphinx import SphinxDocString, SphinxClassDoc
 from nose.tools import *
 
 doc_txt = '''\
@@ -165,7 +164,7 @@ def test_examples():
 
 def test_index():
     assert_equal(doc['index']['default'], 'random')
-    print doc['index']
+    print(doc['index'])
     assert_equal(len(doc['index']), 2)
     assert_equal(len(doc['index']['refguide']), 2)
 
@@ -556,7 +555,11 @@ def test_unicode():
         äää
 
     """)
-    assert doc['Summary'][0] == u'öäöäöäöäöåååå'.encode('utf-8')
+    assert isinstance(doc['Summary'][0], str)
+    if sys.version_info[0] >= 3:
+        assert doc['Summary'][0] == u'öäöäöäöäöåååå'
+    else:
+        assert doc['Summary'][0] == u'öäöäöäöäöåååå'.encode('utf-8')
 
 def test_plot_examples():
     cfg = dict(use_plots=True)

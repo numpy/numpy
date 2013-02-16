@@ -1,11 +1,16 @@
+import setuptools
 from distutils.core import setup
 
-version = "0.4"
+import sys
+if sys.version_info[0] >= 3 and sys.version_info[1] < 3 or \
+        sys.version_info[0] <= 2 and sys.version_info[1] < 6:
+    raise RuntimeError("Python version 2.6, 2.7 or >= 3.3 required.")
+
+version = "0.4.dev"
 
 setup(
     name="numpydoc",
     packages=["numpydoc"],
-    package_dir={"numpydoc": "."},
     version=version,
     description="Sphinx extension to support docstrings in Numpy format",
     # classifiers from http://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -20,4 +25,5 @@ setup(
     license="BSD",
     requires=["sphinx (>= 1.0.1)"],
     package_data={'numpydoc': ['tests/test_*.py']},
+    test_suite = 'nose.collector',
 )
