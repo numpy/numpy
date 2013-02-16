@@ -8,10 +8,13 @@ No-frill version:
 
 		cd bento-git && python bootstrap.py
 
-	* Download waf from svn (svn >= r11575 is required)
+	* Download waf >= 1.6.5 from a release (or from git)::
+
+		git clone https://code.google.com/p/waf/
+
 	* Build numpy with bento:
 
-		export WAFDIR=ROOT_OF_WAF_SVN_TRUNK # WAFDIR should be such as $WAFDIR/waflib exists
+		export WAFDIR=ROOT_OF_WAF_CHECKOUT # WAFDIR should be such as $WAFDIR/waflib exists
 		$BENTO_ROOT/bentomaker build -j 4 # 4 threads in parallel
 		# or with progress bar
 		$BENTO_ROOT/bentomaker build -p
