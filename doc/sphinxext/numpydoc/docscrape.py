@@ -490,12 +490,19 @@ class ClassDoc(NumpyDocString):
         NumpyDocString.__init__(self, doc)
 
         if config.get('show_class_members', True):
-            if not self['Methods']:
-                self['Methods'] = [(name, '', '')
-                                   for name in sorted(self.methods)]
-            if not self['Attributes']:
-                self['Attributes'] = [(name, '', '')
-                                      for name in sorted(self.properties)]
+            def splitlines_x(s):
+                if not s:
+                    return []
+                else:
+                    return s.splitlines()
+
+            for field, items in [('Methods', self.methods),
+                                 ('Attributes', self.properties)]:
+                if not self[field]:
+                    self[field] = [
+                        (name, '',
+                         splitlines_x(pydoc.getdoc(getattr(self._cls, name))))
+                        for name in sorted(items)]
 
     @property
     def methods(self):
@@ -511,4 +518,6 @@ class ClassDoc(NumpyDocString):
         if self._cls is None:
             return []
         return [name for name,func in inspect.getmembers(self._cls)
-                if not name.startswith('_') and func is None]
+                if not name.startswith('_') and
+                (func is None or isinstance(func, property) or
+                 inspect.isgetsetdescriptor(func))]

@@ -72,7 +72,16 @@ class SphinxDocString(NumpyDocString):
             others = []
             for param, param_type, desc in self[name]:
                 param = param.strip()
-                if not self._obj or hasattr(self._obj, param):
+
+                # Check if the referenced member can have a docstring or not
+                param_obj = getattr(self._obj, param, None)
+                if not (callable(param_obj)
+                        or isinstance(param_obj, property)
+                        or inspect.isgetsetdescriptor(param_obj)):
+                    param_obj = None
+
+                if param_obj and (pydoc.getdoc(param_obj) or not desc):
+                    # Referenced object has a docstring
                     autosum += ["   %s%s" % (prefix, param)]
                 else:
                     others.append((param, param_type, desc))
@@ -82,15 +91,15 @@ class SphinxDocString(NumpyDocString):
                 out += autosum
 
             if others:
-                maxlen_0 = max([len(x[0]) for x in others])
-                maxlen_1 = max([len(x[1]) for x in others])
-                hdr = "="*maxlen_0 + "  " + "="*maxlen_1 + "  " + "="*10
-                fmt = '%%%ds  %%%ds  ' % (maxlen_0, maxlen_1)
-                n_indent = maxlen_0 + maxlen_1 + 4
-                out += [hdr]
+                maxlen_0 = max(3, max([len(x[0]) for x in others]))
+                hdr = u"="*maxlen_0 + u"  " + u"="*10
+                fmt = u'%%%ds  %%s  ' % (maxlen_0,)
+                out += ['', hdr]
                 for param, param_type, desc in others:
-                    out += [fmt % (param.strip(), param_type)]
-                    out += self._str_indent(desc, n_indent)
+                    desc = u" ".join(x.strip() for x in desc).strip()
+                    if param_type:
+                        desc = "(%s) %s" % (param_type, desc)
+                    out += [fmt % (param.strip(), desc)]
                 out += [hdr]
             out += ['']
         return out
