@@ -20,24 +20,8 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.pngmath', 'numpydoc',
               'sphinx.ext.intersphinx', 'sphinx.ext.coverage',
-              'sphinx.ext.doctest', 'sphinx.ext.autosummary']
-
-# Determine if the matplotlib has a recent enough version of the
-# plot_directive, otherwise use the local fork.
-try:
-    from matplotlib.sphinxext import plot_directive
-except ImportError:
-    use_matplotlib_plot_directive = False
-else:
-    try:
-        use_matplotlib_plot_directive = (plot_directive.__version__ >= 2)
-    except AttributeError:
-        use_matplotlib_plot_directive = False
-
-if use_matplotlib_plot_directive:
-    extensions.append('matplotlib.sphinxext.plot_directive')
-else:
-    extensions.append('plot_directive')
+              'sphinx.ext.doctest', 'sphinx.ext.autosummary',
+              'matplotlib.sphinxext.plot_directive']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -283,9 +267,6 @@ plot_rcparams = {
     'text.usetex': False,
 }
 
-if not use_matplotlib_plot_directive:
-    import matplotlib
-    matplotlib.rcParams.update(plot_rcparams)
 
 # -----------------------------------------------------------------------------
 # Source code links
@@ -294,7 +275,7 @@ if not use_matplotlib_plot_directive:
 import inspect
 from os.path import relpath, dirname
 
-for name in ['sphinx.ext.linkcode', 'linkcode', 'numpydoc.linkcode']:
+for name in ['sphinx.ext.linkcode', 'numpydoc.linkcode']:
     try:
         __import__(name)
         extensions.append(name)
