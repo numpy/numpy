@@ -3053,7 +3053,7 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
            [ 3,  2,  1]])
     >>> np.percentile(a, 50)
     3.5
-    >>> np.percentile(a, 0.5, axis=0)
+    >>> np.percentile(a, 50, axis=0)
     array([ 6.5,  4.5,  2.5])
     >>> np.percentile(a, 50, axis=1)
     array([ 7.,  2.])
