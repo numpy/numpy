@@ -3,7 +3,7 @@ __all__ = ['logspace', 'linspace']
 import numeric as _nx
 from numeric import array
 
-def linspace(start, stop, num=50, endpoint=True, retstep=False):
+def linspace(start, stop, num=50, endpoint=True, retstep=False, step=None):
     """
     Return evenly spaced numbers over a specified interval.
 
@@ -30,6 +30,14 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
         If True, return (`samples`, `step`), where `step` is the spacing
         between samples.
 
+        .. versionadded:: 1.8.0
+
+    step : float
+        Desired step size. The step size is used to calculate `num` and an
+        error will be raised if `num` cannot be safely determined.
+        `step` is purely for convenience and should only be used for exact
+        input. The returned `step` can differ from the given one.
+
     Returns
     -------
     samples : ndarray
@@ -54,6 +62,8 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
         array([ 2. ,  2.2,  2.4,  2.6,  2.8])
     >>> np.linspace(2.0, 3.0, num=5, retstep=True)
         (array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ]), 0.25)
+    >>> np.linspace(2.0, 3.0, step=0.25)
+        array([ 2.  ,  2.25,  2.5 ,  2.75,  3.  ])
 
     Graphical illustration:
 
@@ -71,7 +81,37 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False):
     >>> plt.show()
 
     """
-    num = int(num)
+    if step is not None:
+        # start, stop and step will normally be floats with numerical
+        # inaccuracies. To see if the given ones match an integer `num`,
+        # first find next the smaller/larger number for each of the inputs:
+        inf = _nx.float16(_nx.inf) # support less then double precision
+        start_smaller = _nx.nextafter(start, -inf)
+        start_larger = _nx.nextafter(start, inf)
+        stop_smaller = _nx.nextafter(stop, -inf)
+        stop_larger = _nx.nextafter(stop, inf)
+        step_smaller = _nx.nextafter(step, -inf)
+        step_larger = _nx.nextafter(step, inf)
+
+        if step < 0:
+            step_larger, step_smaller = step_smaller, step_larger
+
+        # Calculate largest/smallest possible `num` allowing the inaccuracies
+        # above. These are certainly larger/smaller then the actual integer
+        # `num`. Then round to integer in the opposite direction.
+        num_up = int(_nx.floor((stop_larger-start_smaller)/step_smaller))
+        num_low = int(_nx.ceil((stop_smaller-start_larger)/step_larger))
+
+        # If both estimations agree, there is a single integer `num` that
+        # fits to the input up to machine precision of the user input.
+        # This is as strict as possible, and does not get into trouble
+        # for very large `num` (it will just reject them)
+        if num_up != num_low:
+            raise ValueError("could not determine exact number of "
+                             "samples for given step")
+        num = num_low + 1
+    else:
+        num = int(num)
     if num <= 0:
         dtype = _nx.result_type(start, stop, 1.)
         return array([], dtype)

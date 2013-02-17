@@ -39,3 +39,11 @@ class TestLinspace(TestCase):
         assert_equal(t1, t2)
         assert_equal(t2, t3)
 
+    def test_step(self):
+        assert_array_equal(linspace(0, 1, 11), linspace(0, 1, step=0.1))
+        assert_array_equal(linspace(1, 0, 11), linspace(1, 0, step=-0.1))
+        assert_raises(ValueError, linspace, 0, 1, step=0.10001)
+        assert_raises(ValueError, linspace, 0, 1, step=0.99999)
+        assert_raises(ValueError, linspace, 1, 0, step=-0.10001)
+        assert_raises(ValueError, linspace, 1, 0, step=-0.99999)
+        assert_raises(ValueError, linspace, 0, 1, step=-0.1)
