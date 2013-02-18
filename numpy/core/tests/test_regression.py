@@ -626,6 +626,17 @@ class TestRegression(TestCase):
         np.take(x,[0,2],axis=1,out=b)
         assert_array_equal(a,b)
 
+    def test_take_object_fail(self):
+        # Issue gh-3001
+        d = 123.
+        a = np.array([d, 1], dtype=object)
+        ref_d = sys.getrefcount(d)
+        try:
+            a.take([0, 100])
+        except IndexError:
+            pass
+        assert_(ref_d == sys.getrefcount(d))
+
     def test_array_str_64bit(self, level=rlevel):
         """Ticket #501"""
         s = np.array([1, np.nan],dtype=np.float64)

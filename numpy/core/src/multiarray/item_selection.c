@@ -31,10 +31,11 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     PyArray_Descr *dtype;
     PyArray_FastTakeFunc *func;
     PyArrayObject *obj = NULL, *self, *indices;
-    npy_intp nd, i, j, n, m, max_item, tmp, chunk, nelem;
+    npy_intp nd, i, j, n, m, k, max_item, tmp, chunk, itemsize, nelem;
     npy_intp shape[NPY_MAXDIMS];
-    char *src, *dest;
+    char *src, *dest, *tmp_src;
     int err;
+    npy_bool needs_refcounting;
 
     indices = NULL;
     self = (PyArrayObject *)PyArray_CheckAxis(self0, &axis,
@@ -110,9 +111,11 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
 
     max_item = PyArray_DIMS(self)[axis];
     nelem = chunk;
-    chunk = chunk * PyArray_DESCR(obj)->elsize;
+    itemsize = PyArray_ITEMSIZE(obj);
+    chunk = chunk * itemsize;
     src = PyArray_DATA(self);
     dest = PyArray_DATA(obj);
+    needs_refcounting = PyDataType_REFCHK(PyArray_DESCR(self));
 
     func = PyArray_DESCR(self)->f->fasttake;
     if (func == NULL) {
@@ -124,8 +127,20 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                     if (check_and_adjust_index(&tmp, max_item, axis) < 0) {
                         goto fail;
                     }
-                    memmove(dest, src + tmp*chunk, chunk);
-                    dest += chunk;
+                    tmp_src = src + tmp * chunk;
+                    if (needs_refcounting) {
+                        for (k=0; k < nelem; k++) {
+                            PyArray_Item_INCREF(tmp_src, PyArray_DESCR(self));
+                            PyArray_Item_XDECREF(dest, PyArray_DESCR(self));
+                            memmove(dest, tmp_src, itemsize);
+                            dest += itemsize;
+                            tmp_src += itemsize;
+                        }
+                    }
+                    else {
+                        memmove(dest, tmp_src, chunk);
+                        dest += chunk;
+                    }
                 }
                 src += chunk*max_item;
             }
@@ -144,8 +159,20 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                             tmp -= max_item;
                         }
                     }
-                    memmove(dest, src + tmp*chunk, chunk);
-                    dest += chunk;
+                    tmp_src = src + tmp * chunk;
+                    if (needs_refcounting) {
+                        for (k=0; k < nelem; k++) {
+                            PyArray_Item_INCREF(tmp_src, PyArray_DESCR(self));
+                            PyArray_Item_XDECREF(dest, PyArray_DESCR(self));
+                            memmove(dest, tmp_src, itemsize);
+                            dest += itemsize;
+                            tmp_src += itemsize;
+                        }
+                    }
+                    else {
+                        memmove(dest, tmp_src, chunk);
+                        dest += chunk;
+                    }
                 }
                 src += chunk*max_item;
             }
@@ -160,8 +187,20 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
                     else if (tmp >= max_item) {
                         tmp = max_item - 1;
                     }
-                    memmove(dest, src+tmp*chunk, chunk);
-                    dest += chunk;
+                    tmp_src = src + tmp * chunk;
+                    if (needs_refcounting) {
+                        for (k=0; k < nelem; k++) {
+                            PyArray_Item_INCREF(tmp_src, PyArray_DESCR(self));
+                            PyArray_Item_XDECREF(dest, PyArray_DESCR(self));
+                            memmove(dest, tmp_src, itemsize);
+                            dest += itemsize;
+                            tmp_src += itemsize;
+                        }
+                    }
+                    else {
+                        memmove(dest, tmp_src, chunk);
+                        dest += chunk;
+                    }
                 }
                 src += chunk*max_item;
             }
@@ -176,7 +215,6 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
         }
     }
 
-    PyArray_INCREF(obj);
     Py_XDECREF(indices);
     Py_XDECREF(self);
     if (out != NULL && out != obj) {
