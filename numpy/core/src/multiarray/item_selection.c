@@ -117,6 +117,13 @@ PyArray_TakeFrom(PyArrayObject *self0, PyObject *indices0, int axis,
     dest = PyArray_DATA(obj);
     needs_refcounting = PyDataType_REFCHK(PyArray_DESCR(self));
 
+    if ((max_item == 0) && (PyArray_SIZE(obj) != 0)) {
+        /* Index error, since that is the usual error for raise mode */
+        PyErr_SetString(PyExc_IndexError,
+                    "cannot do a non-empty take from an empty axes.");
+        goto fail;
+    }
+
     func = PyArray_DESCR(self)->f->fasttake;
     if (func == NULL) {
         switch(clipmode) {
