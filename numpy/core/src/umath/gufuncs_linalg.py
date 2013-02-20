@@ -427,35 +427,40 @@ def eig(a, **kwargs):
 
     Examples
     --------
+    First, a utility function to check if eigvals/eigvectors are correct.
+    This checks the definition of eigenvectors. For each eigenvector v
+    with associated eigenvalue w of a matrix M the following equality must
+    hold: Mv == wv
+
+    >>> def check_eigen(M, w, v):
+    ...     '''vectorial check of Mv==wv'''
+    ...     lhs = matrix_multiply(M, v)
+    ...     rhs = w*v
+    ...     return np.allclose(lhs, rhs)
 
     (Almost) Trivial example with real e-values and e-vectors. Note
     the complex types of the results
 
-    >>> w, v = eig(np.diag((1,2,3)))
-    >>> w; v
-    array([ 1.+0.j,  2.+0.j,  3.+0.j])
-    array([[ 1.+0.j,  0.+0.j,  0.+0.j],
-           [ 0.+0.j,  1.+0.j,  0.+0.j],
-           [ 0.+0.j,  0.+0.j,  1.+0.j]])
+    >>> M = np.diag((1,2,3)).astype(float)
+    >>> w, v = eig(M)
+    >>> check_eigen(M, w, v)
+    True
 
     Real matrix possessing complex e-values and e-vectors; note that the
     e-values are complex conjugates of each other.
 
-    >>> w, v = eig(np.array([[1, -1], [1, 1]]))
-    >>> w; v
-    array([ 1.+1.j,  1.-1.j])
-    array([[ 0.70710678+0.j        ,  0.70710678+0.j        ],
-           [ 0.00000000-0.70710678j,  0.00000000+0.70710678j]])
+    >>> M = np.array([[1, -1], [1, 1]])
+    >>> w, v = eig(M)
+    >>> check_eigen(M, w, v)
+    True
 
     Complex-valued matrix with real e-values (but complex-valued e-vectors);
     note that a.conj().T = a, i.e., a is Hermitian.
 
-    >>> a = np.array([[1, 1j], [-1j, 1]])
-    >>> w, v = eig(a)
-    >>> w; v
-    array([  2.+0.j,   0.+0.j])
-    array([[ 0.00000000+0.70710678j,  0.70710678+0.j        ],
-           [ 0.70710678+0.j        ,  0.00000000+0.70710678j]])
+    >>> M = np.array([[1, 1j], [-1j, 1]])
+    >>> w, v = eig(M)
+    >>> check_eigen(M, w, v)
+    True
 
     """
     return _impl.eig(a, **kwargs)
@@ -926,26 +931,24 @@ def eigh(A, UPLO='L', **kw_args):
 
     Examples
     --------
+    First, a utility function to check if eigvals/eigvectors are correct.
+    This checks the definition of eigenvectors. For each eigenvector v
+    with associated eigenvalue w of a matrix M the following equality must
+    hold: Mv == wv
+
+    >>> def check_eigen(M, w, v):
+    ...     '''vectorial check of Mv==wv'''
+    ...     lhs = matrix_multiply(M, v)
+    ...     rhs = w*v
+    ...     return np.allclose(lhs, rhs)
+
     A simple example that computes eigenvectors and eigenvalues of
     a hermitian matrix and checks that A*v = v*w for both pairs of
     eignvalues(w) and eigenvectors(v)
 
-    >>> a = np.array([[1, -2j], [2j, 5]])
-    >>> a
-    array([[ 1.+0.j,  0.-2.j],
-           [ 0.+2.j,  5.+0.j]])
-    >>> w, v = eigh(a)
-    >>> np.allclose(np.dot(a, v[:,0]), w[0]*v[:,0])
-    True
-    >>> np.allclose(np.dot(a, v[:,1]), w[1]*v[:,1])
-    True
-
-    For an hermitian matrix eig should also be usable, however eigh
-    is more efficient.
-    >>> w2, v2 = eig(a)
-    >>> np.allclose(w,w2)
-    True
-    >>> np.allclose(v,v2)
+    >>> M = np.array([[1, -2j], [2j, 1]])
+    >>> w, v = eigh(M)
+    >>> check_eigen(M, w, v)
     True
 
     """
