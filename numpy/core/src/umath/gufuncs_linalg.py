@@ -1179,12 +1179,12 @@ def chosolve(A, B, UPLO='L', **kw_args):
 
     Computes the "exact" solution, `x`. of the well-determined,
     i.e., full rank, linear matrix equations `ax = b`, where a is
-    a symmetric/hermitian matrix.
+    a symmetric/hermitian positive-definite matrix.
 
     Parameters
     ----------
     A : (<NDIMS>, M, M) array
-        Coefficient symmetric/hermitian matrices.
+        Coefficient symmetric/hermitian positive-definite matrices.
     B : (<NDIMS>, M, N) array
         Ordinate or "dependent variable" values.
     UPLO : {'L', 'U'}, optional
@@ -1247,17 +1247,17 @@ def chosolve(A, B, UPLO='L', **kw_args):
 
 def poinv(A, UPLO='L', **kw_args):
     """
-    Compute the (multiplicative) inverse of symmetric/hermitian matrices,
-    with broadcasting.
+    Compute the (multiplicative) inverse of symmetric/hermitian positive 
+    definite matrices, with broadcasting.
 
-    Given a square symmetic/hermitian matrix `a`, return the matrix `ainv`
-    satisfying ``matrix_multiply(a, ainv) = matrix_multiply(ainv, a) =
-    Identity matrix``-
+    Given a square symmetic/hermitian positive-definite matrix `a`, return 
+    the matrix `ainv` satisfying ``matrix_multiply(a, ainv) = 
+    matrix_multiply(ainv, a) = Identity matrix``.
 
     Parameters
     ----------
     a : (<NDIMS>, M, M) array
-        Symmetric/hermitian matrices to be inverted
+        Symmetric/hermitian postive definite matrices to be inverted.
 
     Returns
     -------
@@ -1282,7 +1282,7 @@ def poinv(A, UPLO='L', **kw_args):
 
     Examples
     --------
-    >>> a = np.array([[1, 2], [2, -1]])
+    >>> a = np.array([[5, 3], [3, 5]])
     >>> ainv = poinv(a)
     >>> np.allclose(matrix_multiply(a, ainv), np.eye(2))
     True
