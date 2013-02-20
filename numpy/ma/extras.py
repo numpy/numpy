@@ -1121,7 +1121,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
     flag2 = (flag[1:] == flag[:-1])
     return aux[flag2]
 
-def in1d(ar1, ar2, assume_unique=False):
+def in1d(ar1, ar2, assume_unique=False, invert=False):
     """
     Test whether each element of an array is also present in a second
     array.
@@ -1147,8 +1147,11 @@ def in1d(ar1, ar2, assume_unique=False):
     # the values from the second array.
     order = ar.argsort(kind='mergesort')
     sar = ar[order]
-    equal_adj = (sar[1:] == sar[:-1])
-    flag = ma.concatenate((equal_adj, [False]))
+    if invert:
+        bool_ar = (sar[1:] != sar[:-1])
+    else:
+        bool_ar = (sar[1:] == sar[:-1])
+    flag = ma.concatenate((bool_ar, [invert]))
     indx = order.argsort(kind='mergesort')[:len(ar1)]
 
     if assume_unique:

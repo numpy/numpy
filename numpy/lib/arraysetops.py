@@ -281,7 +281,7 @@ def setxor1d(ar1, ar2, assume_unique=False):
     flag2 = flag[1:] == flag[:-1]
     return aux[flag2]
 
-def in1d(ar1, ar2, assume_unique=False):
+def in1d(ar1, ar2, assume_unique=False, invert=False):
     """
     Test whether each element of a 1-D array is also present in a second array.
 
@@ -297,6 +297,13 @@ def in1d(ar1, ar2, assume_unique=False):
     assume_unique : bool, optional
         If True, the input arrays are both assumed to be unique, which
         can speed up the calculation.  Default is False.
+    invert : bool, optional
+        If True, the values in the returned array are inverted (that is,
+        False where an element of `ar1` is in `ar2` and True otherwise).
+        Default is False. ``np.in1d(a, b, invert=True)`` is equivalent
+        to (but is faster than) ``np.invert(in1d(a, b))``.
+
+        .. versionadded:: 1.8.0
 
     Returns
     -------
@@ -325,7 +332,11 @@ def in1d(ar1, ar2, assume_unique=False):
     array([ True, False,  True, False,  True], dtype=bool)
     >>> test[mask]
     array([0, 2, 0])
-
+    >>> mask = np.in1d(test, states, invert=True)
+    >>> mask
+    array([False,  True, False,  True, False], dtype=bool)
+    >>> test[mask]
+    array([1, 5])
     """
     # Ravel both arrays, behavior for the first array could be different
     ar1 = np.asarray(ar1).ravel()
@@ -333,9 +344,14 @@ def in1d(ar1, ar2, assume_unique=False):
 
     # This code is significantly faster when the condition is satisfied.
     if len(ar2) < 10 * len(ar1) ** 0.145:
-        mask = np.zeros(len(ar1), dtype=np.bool)
-        for a in ar2:
-            mask |= (ar1 == a)
+        if invert:
+            mask = np.ones(len(ar1), dtype=np.bool)
+            for a in ar2:
+                mask &= (ar1 != a)
+        else:
+            mask = np.zeros(len(ar1), dtype=np.bool)
+            for a in ar2:
+                mask |= (ar1 == a)
         return mask
 
     # Otherwise use sorting
@@ -349,8 +365,11 @@ def in1d(ar1, ar2, assume_unique=False):
     # the values from the second array.
     order = ar.argsort(kind='mergesort')
     sar = ar[order]
-    equal_adj = (sar[1:] == sar[:-1])
-    flag = np.concatenate( (equal_adj, [False] ) )
+    if invert:
+        bool_ar = (sar[1:] != sar[:-1])
+    else:
+        bool_ar = (sar[1:] == sar[:-1])
+    flag = np.concatenate( (bool_ar, [invert]) )
     indx = order.argsort(kind='mergesort')[:len( ar1 )]
 
     if assume_unique:
