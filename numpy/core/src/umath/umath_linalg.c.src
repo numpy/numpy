@@ -2349,8 +2349,8 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
     npy_uint8 *a, *w, *vl, *vr, *work, *rwork;
     size_t a_size = n*n*sizeof(@ftyp@);
     size_t w_size = n*sizeof(@ftyp@);
-    size_t vl_size = jobvl=='V'? n*sizeof(@ftyp@) : 0;
-    size_t vr_size = jobvr=='V'? n*sizeof(@ftyp@) : 0;
+    size_t vl_size = jobvl=='V'? n*n*sizeof(@ftyp@) : 0;
+    size_t vr_size = jobvr=='V'? n*n*sizeof(@ftyp@) : 0;
     size_t rwork_size = 2*n*sizeof(@realtyp@);
     size_t work_count = 0;
     @typ@ work_size_query;
