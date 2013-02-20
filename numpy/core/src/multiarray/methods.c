@@ -633,6 +633,7 @@ array_toscalar(PyArrayObject *self, PyObject *args)
         else {
             PyErr_SetString(PyExc_ValueError,
                     "can only convert an array of size 1 to a Python scalar");
+            return NULL;
         }
     }
     /* Special case of C-order flat indexing... :| */
