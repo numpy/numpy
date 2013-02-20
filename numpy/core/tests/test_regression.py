@@ -1068,6 +1068,11 @@ class TestRegression(TestCase):
         assert_( a[0].tolist() == b[0])
         assert_( a[1].tolist() == b[1])
 
+    def test_nonscalar_item_method(self):
+        # Make sure that .item() fails graciously when it should
+        a = np.arange(5)
+        assert_raises(ValueError, a.item)
+
     def test_char_array_creation(self, level=rlevel):
         a = np.array('123', dtype='c')
         b = np.array(asbytes_nested(['1','2','3']))
