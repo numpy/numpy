@@ -671,42 +671,14 @@ nc_sinh@c@(@ctype@ *x, @ctype@ *r)
 static void
 nc_tan@c@(@ctype@ *x, @ctype@ *r)
 {
-    @ftype@ sr,cr,shi,chi;
-    @ftype@ rs,is,rc,ic;
-    @ftype@ d;
-    @ftype@ xr=x->real, xi=x->imag;
-    sr = npy_sin@c@(xr);
-    cr = npy_cos@c@(xr);
-    shi = npy_sinh@c@(xi);
-    chi = npy_cosh@c@(xi);
-    rs = sr*chi;
-    is = cr*shi;
-    rc = cr*chi;
-    ic = -sr*shi;
-    d = rc*rc + ic*ic;
-    r->real = (rs*rc+is*ic)/d;
-    r->imag = (is*rc-rs*ic)/d;
-    return;
+   *r = npy_ctan@c@(*x);
+   return;
 }
 
 static void
 nc_tanh@c@(@ctype@ *x, @ctype@ *r)
 {
-    @ftype@ si,ci,shr,chr;
-    @ftype@ rs,is,rc,ic;
-    @ftype@ d;
-    @ftype@ xr=x->real, xi=x->imag;
-    si = npy_sin@c@(xi);
-    ci = npy_cos@c@(xi);
-    shr = npy_sinh@c@(xr);
-    chr = npy_cosh@c@(xr);
-    rs = ci*shr;
-    is = si*chr;
-    rc = ci*chr;
-    ic = si*shr;
-    d = rc*rc + ic*ic;
-    r->real = (rs*rc+is*ic)/d;
-    r->imag = (is*rc-rs*ic)/d;
+    *r = npy_ctanh@c@(*x);
     return;
 }
 

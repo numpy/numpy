@@ -4,7 +4,7 @@
  * Most of the code is taken from the msun library in FreeBSD (HEAD @ 30th June
  * 2009), under the following license:
  *
- * Copyright (c) 2007 David Schultz <das@FreeBSD.ORG>
+ * Copyright (c) 2007, 2011 David Schultz <das@FreeBSD.ORG>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -227,6 +227,123 @@
     return npy_cpack@c@(npy_sin@c@(x) * npy_cosh@c@(y), npy_cos@c@(x) * npy_sinh@c@(y));
 }
 #endif
+
+#ifndef HAVE_CTAN@C@
+@ctype@ npy_ctan@c@(@ctype@ z)
+{
+	/* ctan(z) = -I * ctanh(I * z) */
+	z = npy_ctanh@c@(npy_cpack@c@(-npy_cimag@c@(z), npy_creal@c@(z)));
+	return (npy_cpack@c@(npy_cimag@c@(z), -npy_creal@c@(z)));
+}   
+#endif
+
+#ifndef HAVE_CTANH@C@
+/*
+ * Taken from the msun library in FreeBSD, rev 226600.
+ *
+ * Hyperbolic tangent of a complex argument z = x + i y.
+ *
+ * The algorithm is from:
+ *
+ *   W. Kahan.  Branch Cuts for Complex Elementary Functions or Much
+ *   Ado About Nothing's Sign Bit.  In The State of the Art in
+ *   Numerical Analysis, pp. 165 ff.  Iserles and Powell, eds., 1987.
+ *
+ * Method:
+ *
+ *   Let t    = tan(x)
+ *       beta = 1/cos^2(y)
+ *       s    = sinh(x)
+ *       rho  = cosh(x)
+ *
+ *   We have:
+ *
+ *   tanh(z) = sinh(z) / cosh(z)
+ *
+ *             sinh(x) cos(y) + i cosh(x) sin(y)
+ *           = ---------------------------------
+ *             cosh(x) cos(y) + i sinh(x) sin(y)
+ *
+ *             cosh(x) sinh(x) / cos^2(y) + i tan(y)
+ *           = -------------------------------------
+ *                    1 + sinh^2(x) / cos^2(y)
+ *
+ *             beta rho s + i t
+ *           = ----------------
+ *               1 + beta s^2
+ *
+ * Modifications:
+ *
+ *   I omitted the original algorithm's handling of overflow in tan(x) after
+ *   verifying with nearpi.c that this can't happen in IEEE single or double
+ *   precision.  I also handle large x differently.
+ */
+
+#define TANH_HUGE 22.0
+#define TANHF_HUGE 11.0F
+#define TANHL_HUGE 42.0L
+
+@ctype@ npy_ctanh@c@(@ctype@ z)
+{
+	@type@ x, y;
+	@type@ t, beta, s, rho, denom;
+
+	x = npy_creal@c@(z);
+	y = npy_cimag@c@(z);
+
+	/*
+	 * ctanh(NaN + i 0) = NaN + i 0
+	 *
+	 * ctanh(NaN + i y) = NaN + i NaN		for y != 0
+	 *
+	 * The imaginary part has the sign of x*sin(2*y), but there's no
+	 * special effort to get this right.
+	 *
+	 * ctanh(+-Inf +- i Inf) = +-1 +- 0
+	 *
+	 * ctanh(+-Inf + i y) = +-1 + 0 sin(2y)		for y finite
+	 *
+	 * The imaginary part of the sign is unspecified.  This special
+	 * case is only needed to avoid a spurious invalid exception when
+	 * y is infinite.
+	 */
+        if (!npy_isfinite(x)) {
+            if (npy_isnan(x))
+                return npy_cpack@c@(x, (y == 0 ? y : x * y));
+            return npy_cpack@c@(npy_copysign@c@(1,x),
+                npy_copysign@c@(0, npy_isinf(y) ? y : npy_sin@c@(y) * npy_cos@c@(y)));
+        }
+
+	/*
+	 * ctanh(x + i NAN) = NaN + i NaN
+	 * ctanh(x +- i Inf) = NaN + i NaN
+	 */
+	if (!npy_isfinite(y))
+		return (npy_cpack@c@(y - y, y - y));
+
+	/*
+	 * ctanh(+-huge + i +-y) ~= +-1 +- i 2sin(2y)/exp(2x), using the
+	 * approximation sinh^2(huge) ~= exp(2*huge) / 4.
+	 * We use a modified formula to avoid spurious overflow.
+	 */
+	if (x >= TANH@C@_HUGE) {
+		@type@ exp_mx = npy_exp@c@(-npy_fabs@c@(x));
+		return (npy_cpack@c@(npy_copysign@c@(1, x),
+		    4 * npy_sin@c@(y) * npy_cos@c@(y) * exp_mx * exp_mx));
+	}
+
+	/* Kahan's algorithm */
+	t = npy_tan@c@(y);
+	beta = 1.0 + t * t;	/* = 1 / cos^2(y) */
+	s = npy_sinh@c@(x);
+	rho = npy_sqrt@c@(1 + s * s);	/* = cosh(x) */
+	denom = 1 + beta * s * s;
+	return (npy_cpack@c@((beta * rho * s) / denom, t / denom));
+}
+#undef TANH_HUGE
+#undef TANHF_HUGE
+#undef TANHL_HUGE
+#endif
 /**end repeat**/
 
 /*==========================================================
@@ -254,8 +371,8 @@
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = cexp,clog,csqrt,ccos,csin#
- * #KIND = CEXP,CLOG,CSQRT,CCOS,CSIN#
+ * #kind = cexp,clog,csqrt,ccos,csin,ctan,ctanh#
+ * #KIND = CEXP,CLOG,CSQRT,CCOS,CSIN,CTAN,CTANH#
  */
 #ifdef HAVE_@KIND@@C@
 @ctype@ npy_@kind@@c@(@ctype@ z)

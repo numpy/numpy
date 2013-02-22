@@ -144,7 +144,7 @@ C99_FUNCS_EXTENDED = [f + 'l' for f in C99_FUNCS]
 C99_COMPLEX_TYPES = ['complex double', 'complex float', 'complex long double']
 
 C99_COMPLEX_FUNCS = ['creal', 'cimag', 'cabs', 'carg', 'cexp', 'csqrt', 'clog',
-                  'ccos', 'csin', 'cpow']
+                  'ccos', 'csin', 'cpow', 'ctan', 'ctanh']
 
 def fname2def(name):
     return "HAVE_%s" % name.upper()

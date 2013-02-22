@@ -420,6 +420,9 @@ npy_cdouble npy_csqrt(npy_cdouble z);
 
 npy_cdouble npy_ccos(npy_cdouble z);
 npy_cdouble npy_csin(npy_cdouble z);
+npy_cdouble npy_ctan(npy_cdouble z);
+
+npy_cdouble npy_ctanh(npy_cdouble z);
 
 /*
  * Single precision complex functions
@@ -435,6 +438,9 @@ npy_cfloat npy_csqrtf(npy_cfloat z);
 
 npy_cfloat npy_ccosf(npy_cfloat z);
 npy_cfloat npy_csinf(npy_cfloat z);
+npy_cfloat npy_ctanf(npy_cfloat z);
+
+npy_cfloat npy_ctanhf(npy_cfloat z);
 
 /*
  * Extended precision complex functions
@@ -450,6 +456,9 @@ npy_clongdouble npy_csqrtl(npy_clongdouble z);
 
 npy_clongdouble npy_ccosl(npy_clongdouble z);
 npy_clongdouble npy_csinl(npy_clongdouble z);
+npy_clongdouble npy_ctanl(npy_clongdouble z);
+
+npy_clongdouble npy_ctanhl(npy_clongdouble z);
 
 /*
  * Functions that set the floating point error
