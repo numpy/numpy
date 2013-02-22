@@ -209,6 +209,32 @@ def check_complex(config, mathlibs):
             else:
                 priv.extend([(fname2def(f), 1) for f in flist])
 
+            flist = [f + prec for f in C99_COMPLEX_FUNCS_CHECKED]
+            decl = dict([(f, True) for f in flist])
+            exists = []
+            if not config.check_funcs_once(flist, call=decl, decl=decl,
+                                           libraries=mathlibs):
+                for f in C99_COMPLEX_FUNCS_CHECKED:
+                    if config.check_func(f + prec, call=True, decl=True,
+                                         libraries=mathlibs):
+                        exists.append(f)
+            else:
+                exists.extend(C99_COMPLEX_FUNCS_CHECKED)
+
+            if len(exists) > 0:
+                fp = open(join('.', 'numpy', 'core', 'src', 'npymath',
+                              'test_c99complex.c'), 'r')
+                obody = fp.read()
+                fp.close()
+                precname = {'f':'FLOAT', '':'DOUBLE', 'l':'LONGDOUBLE'}[prec]
+            for f in exists:
+                body = obody.replace('PYTESTPRECISION', precname) \
+                            .replace('PYTESTFUNC', f.upper())
+                inc_dir = join('.', 'numpy', 'core', 'src', 'npymath')
+                if config.try_run(body, libraries=mathlibs,
+                                  include_dirs=[inc_dir]):
+                    priv.append((fname2def(f + prec), 1))
+
         check_prec('')
         check_prec('f')
         check_prec('l')
@@ -683,7 +709,8 @@ def configuration(parent_package='',top_path=None):
     npymath_sources = [join('src', 'npymath', 'npy_math.c.src'),
                        join('src', 'npymath', 'ieee754.c.src'),
                        join('src', 'npymath', 'npy_math_complex.c.src'),
-                       join('src', 'npymath', 'halffloat.c')]
+                       join('src', 'npymath', 'halffloat.c'),
+                       join('src', 'npymath', 'fpstatus.c')]
     config.add_installed_library('npymath',
             sources=npymath_sources + [get_mathlib_info],
             install_dir='lib')
@@ -972,6 +999,16 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('operand_flag_tests',
                     sources = [join('src', 'umath', 'operand_flag_tests.c.src')])
+
+    #######################################################################
+    #                        npymath_tests module                         #
+    #######################################################################
+
+    config.add_extension('npymath_tests',
+                    sources = [join('src', 'npymath', 'npymath_tests.c')],
+                    depends = ['test_c99complex.c'],
+                    libraries = ['npymath']
+                    )
 
     config.add_data_dir('tests')
     config.add_data_dir('tests/data')
