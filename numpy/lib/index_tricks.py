@@ -532,30 +532,7 @@ class ndindex(object):
     (2, 0, 0)
     (2, 1, 0)
 
-    """
-    # This is a hack to handle 0-d arrays correctly.
-    # Fixing nditer would be more work but should be done eventually,
-    #  and then this entire __new__ method can be removed.
-    def __new__(cls, *shape):
-        if len(shape) == 1 and isinstance(shape[0], tuple):
-           shape = shape[0]
-        if len(shape) == 0:
-            class zero_dim_iter(object):
-                def __init__(self):
-                    self._N = 1
-                def __iter__(self):
-                    return self
-                def ndincr(self):
-                    self.next()
-                def next(self):
-                    if self._N > 0:
-                        self._N -= 1
-                        return ()
-                    raise StopIteration
-            return zero_dim_iter()
-        else:
-            return super(ndindex, cls).__new__(cls)
-            
+    """     
     def __init__(self, *shape):
         if len(shape) == 1 and isinstance(shape[0], tuple):
             shape = shape[0]
