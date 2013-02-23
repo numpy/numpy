@@ -967,6 +967,11 @@ PyArray_TransferNDimToStrided(npy_intp ndim,
 {
     npy_intp i, M, N, coord0, shape0, src_stride0, coord1, shape1, src_stride1;
 
+    if (ndim == 0) {
+        stransfer(dst, 0, src, src_itemsize, 1, src_itemsize, data);
+        return 1;
+    }
+
     /* Finish off dimension 0 */
     coord0 = coords[0];
     shape0 = shape[0];
@@ -1085,6 +1090,11 @@ PyArray_TransferStridedToNDim(npy_intp ndim,
                 NpyAuxData *data)
 {
     npy_intp i, M, N, coord0, shape0, dst_stride0, coord1, shape1, dst_stride1;
+
+    if (ndim == 0) {
+        stransfer(dst, 0, src, src_itemsize, 1, src_itemsize, data);
+        return 1;
+    }
 
     /* Finish off dimension 0 */
     coord0 = coords[0];
