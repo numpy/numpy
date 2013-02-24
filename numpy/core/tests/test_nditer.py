@@ -598,6 +598,8 @@ def test_iter_itershape():
                             [['readonly'], ['writeonly','allocate']],
                             op_axes=[[0,1,None], None],
                             itershape=(-1,1,4))
+    # Test bug that for no op_axes but itershape, they are NULLed correctly
+    i = np.nditer([np.ones(2), None, None], itershape=(2,))
 
 def test_iter_broadcasting_errors():
     # Check that errors are thrown for bad broadcasting shapes
