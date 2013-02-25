@@ -9,7 +9,7 @@ extern "C" {
 #ifdef FORTRANOBJECT_C
 #define NO_IMPORT_ARRAY
 #endif
-#define PY_ARRAY_UNIQUE_SYMBOL PyArray_API
+#define PY_ARRAY_UNIQUE_SYMBOL _npy_f2py_ARRAY_API
 #include "numpy/arrayobject.h"
 
 /*
