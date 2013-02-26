@@ -156,6 +156,11 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
         return NULL;
     }
 
+    /* Fix oa_ndim if it is 0 and NPY_ITER_USE_ZERO_OA_NDIM is not passed */
+    if ((oa_ndim == 0) && !(flags & NPY_ITER_USE_ZERO_OA_NDIM)) {
+        oa_ndim = -1;
+    }
+
     /* Error check 'oa_ndim' and 'op_axes', which must be used together */
     if (!npyiter_check_op_axes(nop, oa_ndim, op_axes, itershape)) {
         return NULL;
@@ -748,13 +753,17 @@ npyiter_check_op_axes(int nop, int oa_ndim, int **op_axes,
     char axes_dupcheck[NPY_MAXDIMS];
     int iop, idim;
 
-    if (oa_ndim <= 0) {
+    if (oa_ndim < 0) {
         if (op_axes != NULL || itershape != NULL) {
             PyErr_Format(PyExc_ValueError,
                     "If 'op_axes' or 'itershape' is not NULL in the iterator "
-                    "constructor, 'oa_ndim' must be greater than zero");
+                    "constructor, 'oa_ndim' must be zero or greater");
             return 0;
         }
+        return 1;
+    }
+    else if (oa_ndim == 0) {
+        /* itershape/op_axes are never read, so they can be NULL */
         return 1;
     }
     else if (oa_ndim > NPY_MAXDIMS) {
@@ -810,7 +819,7 @@ npyiter_calculate_ndim(int nop, PyArrayObject **op_in,
                        int oa_ndim)
 {
     /* If 'op_axes' is being used, force 'ndim' */
-    if (oa_ndim > 0 ) {
+    if (oa_ndim >= 0 ) {
         return oa_ndim;
     }
     /* Otherwise it's the maximum 'ndim' from the operands */

@@ -980,6 +980,8 @@ typedef void (NpyIter_GetMultiIndexFunc)(NpyIter *iter,
 #define NPY_ITER_DELAY_BUFALLOC             0x00000800
 /* When NPY_KEEPORDER is specified, disable reversing negative-stride axes */
 #define NPY_ITER_DONT_NEGATE_STRIDES        0x00001000
+/* Use oa_ndim == 0 for scalar iteration and oa_ndim == -1 for unspecified */
+#define NPY_ITER_USE_ZERO_OA_NDIM           0x00002000
 
 /*** Per-operand flags that may be passed to the iterator constructors ***/
 
