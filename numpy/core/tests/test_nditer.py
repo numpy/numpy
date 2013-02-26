@@ -598,8 +598,6 @@ def test_iter_itershape():
                             [['readonly'], ['writeonly','allocate']],
                             op_axes=[[0,1,None], None],
                             itershape=(-1,1,4))
-    # Test bug that for no op_axes but itershape, they are NULLed correctly
-    i = np.nditer([np.ones(2), None, None], itershape=(2,))
 
 def test_iter_broadcasting_errors():
     # Check that errors are thrown for bad broadcasting shapes
@@ -2469,6 +2467,32 @@ def test_iter_allocated_array_dtypes():
         c[1,0] = a * b
         c[1,1] = a / b
     assert_equal(it.operands[2], [[8, 12], [20, 5]])
+
+
+def test_0d_iter():
+    # Basic test for iteration of 0-d arrays:
+    i = nditer([2, 3], ['multi_index'], [['readonly']]*2)
+    assert_(i.ndim == 0)
+    assert_(i.next() == (2, 3))
+    assert_(i.multi_index == ())
+    assert_(i.iterindex == 0)
+    assert_raises(StopIteration, i.next)
+    # test reset:
+    i.reset()
+    assert_(i.next() == (2, 3))
+    assert_raises(StopIteration, i.next)
+
+    # Test a more complex buffered casting case (same as another test above)
+    sdt = [('a', 'f4'), ('b', 'i8'), ('c', 'c8', (2,3)), ('d', 'O')]
+    a = np.array(0.5, dtype='f4')
+    i = nditer(a, ['buffered','refs_ok'], ['readonly'],
+                    casting='unsafe', op_dtypes=sdt)
+    vals = i.next()
+    assert_equal(vals['a'], 0.5)
+    assert_equal(vals['b'], 0)
+    assert_equal(vals['c'], [[(0.5)]*3]*2)
+    assert_equal(vals['d'], 0.5)
+
 
 if __name__ == "__main__":
     run_module_suite()
