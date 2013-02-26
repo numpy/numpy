@@ -2482,6 +2482,12 @@ def test_0d_iter():
     assert_(i.next() == (2, 3))
     assert_raises(StopIteration, i.next)
 
+    # test forcing to 0-d
+    i = nditer(np.arange(5), ['multi_index'], [['readonly']]*2, op_axes=[()])
+    assert_(i.ndim == 0)
+    assert_(len(i) == 1)
+    # note that itershape=(), still behaves like None due to the conversions
+
     # Test a more complex buffered casting case (same as another test above)
     sdt = [('a', 'f4'), ('b', 'i8'), ('c', 'c8', (2,3)), ('d', 'O')]
     a = np.array(0.5, dtype='f4')
