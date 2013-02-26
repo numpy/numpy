@@ -420,6 +420,10 @@ class TestFitting(TestCase):
         #
         wcoef2d = lag.lagfit(x, np.array([yw,yw]).T, 3, w=w)
         assert_almost_equal(wcoef2d, np.array([coef3,coef3]).T)
+        # test scaling with complex values x points whose square
+        # is zero when summed.
+        x = [1, 1j, -1, -1j]
+        assert_almost_equal(lag.lagfit(x, x, 1), [1, -1])
 
 class TestGauss(TestCase):
 

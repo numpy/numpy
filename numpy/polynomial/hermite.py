@@ -1519,8 +1519,14 @@ def hermfit(x, y, deg, rcond=None, full=False, w=None):
     if rcond is None :
         rcond = len(x)*np.finfo(x.dtype).eps
 
-    # scale the design matrix and solve the least squares equation
-    scl = np.sqrt((lhs*lhs).sum(1))
+    # Determine the norms of the design matrix columns.
+    if issubclass(lhs.dtype.type, np.complexfloating):
+        scl = np.sqrt((np.square(lhs.real) + np.square(lhs.imag)).sum(1))
+    else:
+        scl = np.sqrt(np.square(lhs).sum(1))
+    scl[scl == 0] = 1
+
+    # Solve the least squares problem.
     c, resids, rank, s = la.lstsq(lhs.T/scl, rhs.T, rcond)
     c = (c.T/scl).T
 
