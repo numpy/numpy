@@ -21,7 +21,7 @@ class TestMachAr(TestCase):
         try:
             try:
                 self._run_machar_highprec()
-            except FloatingPointError, e:
+            except FloatingPointError as e:
                 self.fail("Caught %s exception, should not have been raised." % e)
         finally:
             seterr(**serrstate)

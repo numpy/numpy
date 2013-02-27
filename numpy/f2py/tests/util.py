@@ -71,7 +71,7 @@ def _memoize(func):
         if key not in memo:
             try:
                 memo[key] = func(*a, **kw)
-            except Exception, e:
+            except Exception as e:
                 memo[key] = e
                 raise
         ret = memo[key]

@@ -334,7 +334,7 @@ def read_array_header_1_0(fp):
     #   "descr" : dtype.descr
     try:
         d = safe_eval(header)
-    except SyntaxError, e:
+    except SyntaxError as e:
         msg = "Cannot parse header: %r\nException: %r"
         raise ValueError(msg % (header, e))
     if not isinstance(d, dict):
@@ -356,7 +356,7 @@ def read_array_header_1_0(fp):
         raise ValueError(msg % (d['fortran_order'],))
     try:
         dtype = numpy.dtype(d['descr'])
-    except TypeError, e:
+    except TypeError as e:
         msg = "descr is not a valid dtype descriptor: %r"
         raise ValueError(msg % (d['descr'],))
 

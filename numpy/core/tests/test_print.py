@@ -225,7 +225,7 @@ def test_scalar_format():
         try:
             assert_equal(fmat.format(val), fmat.format(valtype(val)),
                     "failed with val %s, type %s" % (val, valtype))
-        except ValueError, e:
+        except ValueError as e:
             assert_(False,
                "format raised exception (fmt='%s', val=%s, type=%s, exc='%s')" %
                             (fmat, repr(val), repr(valtype), str(e)))

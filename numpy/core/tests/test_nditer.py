@@ -632,7 +632,7 @@ def test_iter_broadcasting_errors():
                     [],
                     [['readonly'], ['readonly'], ['writeonly','no_broadcast']])
         assert_(False, 'Should have raised a broadcast error')
-    except ValueError, e:
+    except ValueError as e:
         msg = str(e)
         # The message should contain the shape of the 3rd operand
         assert_(msg.find('(2,3)') >= 0,
@@ -647,7 +647,7 @@ def test_iter_broadcasting_errors():
                     op_axes=[[0,1], [0,np.newaxis]],
                     itershape=(4,3))
         assert_(False, 'Should have raised a broadcast error')
-    except ValueError, e:
+    except ValueError as e:
         msg = str(e)
         # The message should contain "shape->remappedshape" for each operand
         assert_(msg.find('(2,3)->(2,3)') >= 0,
@@ -664,7 +664,7 @@ def test_iter_broadcasting_errors():
                     [],
                     [['writeonly','no_broadcast'], ['readonly']])
         assert_(False, 'Should have raised a broadcast error')
-    except ValueError, e:
+    except ValueError as e:
         msg = str(e)
         # The message should contain the shape of the bad operand
         assert_(msg.find('(2,1,1)') >= 0,

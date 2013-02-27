@@ -110,7 +110,7 @@ def get_object_signature(obj):
     """
     try:
         sig = formatargspec(*getargspec(obj))
-    except TypeError, errmsg:
+    except TypeError as errmsg:
         sig = ''
 #        msg = "Unable to retrieve the signature of %s '%s'\n"\
 #              "(Initial error message: %s)"

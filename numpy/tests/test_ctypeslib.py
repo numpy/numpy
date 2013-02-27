@@ -18,7 +18,7 @@ class TestLoadLibrary(TestCase):
         try:
             cdll = load_library('multiarray',
                                 np.core.multiarray.__file__)
-        except ImportError, e:
+        except ImportError as e:
             msg = "ctypes is not available on this python: skipping the test" \
                   " (import error was: %s)" % str(e)
             print msg
@@ -35,7 +35,7 @@ class TestLoadLibrary(TestCase):
                                     np.core.multiarray.__file__)
             except ImportError:
                 print "No distutils available, skipping test."
-        except ImportError, e:
+        except ImportError as e:
             msg = "ctypes is not available on this python: skipping the test" \
                   " (import error was: %s)" % str(e)
             print msg
