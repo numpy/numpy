@@ -1,4 +1,6 @@
-# hash below were defined from numpy_api_order.txt and ufunc_api_order.txt
+# Hash below were defined from numpy_api_order.txt and ufunc_api_order.txt
+# When adding a new version here for a new minor release, also add the same
+# version as NPY_x_y_API_VERSION in numpyconfig.h
 0x00000001 = 603580d224763e58c5e7147f804dc0f5
 0x00000002 = 8ecb29306758515ae69749c803a75da1
 0x00000003 = bf22c0d05b31625d2a7015988d61ce5a
