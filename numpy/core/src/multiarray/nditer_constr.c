@@ -762,10 +762,6 @@ npyiter_check_op_axes(int nop, int oa_ndim, int **op_axes,
         }
         return 1;
     }
-    else if (oa_ndim == 0) {
-        /* itershape/op_axes are never read, so they can be NULL */
-        return 1;
-    }
     else if (oa_ndim > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
                 "Cannot construct an iterator with more than %d dimensions "
@@ -775,7 +771,7 @@ npyiter_check_op_axes(int nop, int oa_ndim, int **op_axes,
     }
     else if (op_axes == NULL) {
         PyErr_Format(PyExc_ValueError,
-                "If 'oa_ndim' is greater than zero in the iterator "
+                "If 'oa_ndim' is zero or greater in the iterator "
                 "constructor, then op_axes cannot be NULL");
         return 0;
     }
