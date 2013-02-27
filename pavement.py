@@ -316,7 +316,7 @@ def bootstrap(options):
     """create virtualenv in ./bootstrap"""
     try:
         import virtualenv
-    except ImportError, e:
+    except ImportError as e:
         raise RuntimeError("virtualenv is needed for bootstrap")
 
     bdir = options.bootstrap_dir

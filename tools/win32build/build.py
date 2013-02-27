@@ -63,7 +63,7 @@ def build(arch, pyver):
             subprocess.check_call(cmd, shell = True, stderr = subprocess.STDOUT, stdout = f)
         finally:
             f.close()
-    except subprocess.CalledProcessError, e:
+    except subprocess.CalledProcessError as e:
         msg = """
 There was an error while executing the following command:
 
