@@ -269,7 +269,7 @@ class TestFloatExceptions(TestCase):
             flop(x, y)
             assert_(False,
                     "Type %s did not raise fpe error '%s'." % (ftype, fpeerr))
-        except FloatingPointError, exc:
+        except FloatingPointError as exc:
             assert_(str(exc).find(fpeerr) >= 0,
                     "Type %s raised wrong fpe error '%s'." % (ftype, exc))
 

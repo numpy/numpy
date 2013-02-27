@@ -1154,11 +1154,11 @@ def safe_eval(source):
     walker = SafeEval()
     try:
         ast = compiler.parse(source, mode="eval")
-    except SyntaxError, err:
+    except SyntaxError as err:
         raise
     try:
         return walker.visit(ast)
-    except SyntaxError, err:
+    except SyntaxError as err:
         raise
 
 #-----------------------------------------------------------------------------

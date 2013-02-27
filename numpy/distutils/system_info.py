@@ -1667,7 +1667,7 @@ class _numpy_info(system_info):
 ##                 (self.modulename.upper()+'_VERSION_HEX',
 ##                  hex(vstr2hex(module.__version__))),
 ##                 )
-##         except Exception,msg:
+##         except Exception as msg:
 ##             print msg
         dict_append(info, define_macros=macros)
         include_dirs = self.get_include_dirs()

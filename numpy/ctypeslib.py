@@ -126,7 +126,7 @@ else:
             try:
                 libpath = os.path.join(libdir, ln)
                 return ctypes.cdll[libpath]
-            except OSError, e:
+            except OSError as e:
                 exc = e
         raise exc
 

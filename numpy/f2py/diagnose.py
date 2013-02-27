@@ -54,7 +54,7 @@ def run():
         try:
             print 'Found new numpy version %r in %s' % \
                   (numpy.__version__, numpy.__file__)
-        except Exception,msg:
+        except Exception as msg:
             print 'error:', msg
             print '------'
 
@@ -62,7 +62,7 @@ def run():
         try:
             print 'Found f2py2e version %r in %s' % \
                   (f2py2e.__version__.version,f2py2e.__file__)
-        except Exception,msg:
+        except Exception as msg:
             print 'error:',msg
             print '------'
 
@@ -77,7 +77,7 @@ def run():
             numpy_distutils.numpy_distutils_version.numpy_distutils_version,
             numpy_distutils.__file__)
             print '------'
-        except Exception,msg:
+        except Exception as msg:
             print 'error:',msg
             print '------'
         try:
@@ -91,10 +91,10 @@ def run():
                     for compiler_class in build_flib.all_compilers:
                         compiler_class(verbose=1).is_available()
                         print '------'
-                except Exception,msg:
+                except Exception as msg:
                     print 'error:',msg
                     print '------'
-        except Exception,msg:
+        except Exception as msg:
             print 'error:',msg,'(ignore it, build_flib is obsolute for numpy.distutils 0.2.2 and up)'
             print '------'
         try:
@@ -110,10 +110,10 @@ def run():
                 print 'Checking availability of supported Fortran compilers:'
                 fcompiler.show_fcompilers()
                 print '------'
-            except Exception,msg:
+            except Exception as msg:
                 print 'error:',msg
                 print '------'
-        except Exception,msg:
+        except Exception as msg:
             print 'error:',msg
             print '------'
         try:
@@ -128,7 +128,7 @@ def run():
                     from numpy_distutils.command.cpuinfo import cpuinfo
                     print 'ok'
                     print '------'
-                except Exception,msg:
+                except Exception as msg:
                     print 'error:',msg,'(ignore it)'
                     print 'Importing numpy_distutils.cpuinfo ...',
                     from numpy_distutils.cpuinfo import cpuinfo
@@ -140,7 +140,7 @@ def run():
                 if name[0]=='_' and name[1]!='_' and getattr(cpu,name[1:])():
                     print name[1:],
             print '------'
-        except Exception,msg:
+        except Exception as msg:
             print 'error:',msg
             print '------'
     os.chdir(_path)

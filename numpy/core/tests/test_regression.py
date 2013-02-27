@@ -1196,10 +1196,10 @@ class TestRegression(TestCase):
         good = 'Maximum allowed dimension exceeded'
         try:
             np.empty(sz)
-        except ValueError, e:
+        except ValueError as e:
             if not str(e) == good:
                 self.fail("Got msg '%s', expected '%s'" % (e, good))
-        except Exception, e:
+        except Exception as e:
             self.fail("Got exception of type %s instead of ValueError" % type(e))
 
     def test_huge_arange(self):
@@ -1210,10 +1210,10 @@ class TestRegression(TestCase):
         try:
             a = np.arange(sz)
             self.assertTrue(np.size == sz)
-        except ValueError, e:
+        except ValueError as e:
             if not str(e) == good:
                 self.fail("Got msg '%s', expected '%s'" % (e, good))
-        except Exception, e:
+        except Exception as e:
             self.fail("Got exception of type %s instead of ValueError" % type(e))
 
     def test_fromiter_bytes(self):
@@ -1423,7 +1423,7 @@ class TestRegression(TestCase):
                 c = a.astype(y)
                 try:
                     np.dot(b, c)
-                except TypeError, e:
+                except TypeError as e:
                     failures.append((x, y))
         if failures:
             raise AssertionError("Failures: %r" % failures)

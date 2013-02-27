@@ -297,7 +297,7 @@ class _test_shared_memory:
 
         try:
             a = self.array([2],intent.in_.inout,self.num2seq)
-        except TypeError,msg:
+        except TypeError as msg:
             if not str(msg).startswith('failed to initialize intent(inout|inplace|cache) array'):
                 raise
         else:
@@ -313,7 +313,7 @@ class _test_shared_memory:
         shape = (len(self.num23seq),len(self.num23seq[0]))
         try:
             a = self.array(shape,intent.in_.inout,obj)
-        except ValueError,msg:
+        except ValueError as msg:
             if not str(msg).startswith('failed to initialize intent(inout) array'):
                 raise
         else:
@@ -398,7 +398,7 @@ class _test_shared_memory:
 
             try:
                 a = self.array(shape,intent.in_.cache,obj[::-1])
-            except ValueError,msg:
+            except ValueError as msg:
                 if not str(msg).startswith('failed to initialize intent(cache) array'):
                     raise
             else:
@@ -411,7 +411,7 @@ class _test_shared_memory:
             shape = (len(self.num2seq),)
             try:
                 a = self.array(shape,intent.in_.cache,obj)
-            except ValueError,msg:
+            except ValueError as msg:
                 if not str(msg).startswith('failed to initialize intent(cache) array'):
                     raise
             else:
@@ -429,7 +429,7 @@ class _test_shared_memory:
         shape = (-1,3)
         try:
             a = self.array(shape,intent.cache.hide,None)
-        except ValueError,msg:
+        except ValueError as msg:
             if not str(msg).startswith('failed to create intent(cache|hide)|optional array'):
                 raise
         else:
@@ -456,7 +456,7 @@ class _test_shared_memory:
         shape = (-1,3)
         try:
             a = self.array(shape,intent.hide,None)
-        except ValueError,msg:
+        except ValueError as msg:
             if not str(msg).startswith('failed to create intent(cache|hide)|optional array'):
                 raise
         else:
