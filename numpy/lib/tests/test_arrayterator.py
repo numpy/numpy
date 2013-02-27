@@ -14,7 +14,7 @@ def test():
 
     # Create a random array
     ndims = randint(5)+1
-    shape = tuple(randint(10)+1 for dim in range(ndims))
+    shape = tuple(randint(10)+1 for dim in xrange(ndims))
     els = reduce(mul, shape)
     a = np.arange(els)
     a.shape = shape

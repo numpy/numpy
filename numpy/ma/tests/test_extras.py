@@ -442,7 +442,7 @@ class TestMedian(TestCase):
         z = masked_array(np.empty((n, p), dtype=float))
         z[:, 0] = x[:]
         idx = np.arange(len(x))
-        for i in range(1, p):
+        for i in xrange(1, p):
             np.random.shuffle(idx)
             z[:, i] = x[idx]
         assert_equal(median(z[:, 0]), 0)

@@ -74,9 +74,9 @@ def test_iter_best_order():
     for shape in [(5,), (3,4), (2,3,4), (2,3,4,3), (2,3,2,2,3)]:
         a = arange(np.prod(shape))
         # Test each combination of positive and negative strides
-        for dirs in range(2**len(shape)):
+        for dirs in xrange(2**len(shape)):
             dirs_index = [slice(None)]*len(shape)
-            for bit in range(len(shape)):
+            for bit in xrange(len(shape)):
                 if ((2**bit)&dirs):
                     dirs_index[bit] = slice(None,None,-1)
             dirs_index = tuple(dirs_index)
@@ -100,9 +100,9 @@ def test_iter_c_order():
     for shape in [(5,), (3,4), (2,3,4), (2,3,4,3), (2,3,2,2,3)]:
         a = arange(np.prod(shape))
         # Test each combination of positive and negative strides
-        for dirs in range(2**len(shape)):
+        for dirs in xrange(2**len(shape)):
             dirs_index = [slice(None)]*len(shape)
-            for bit in range(len(shape)):
+            for bit in xrange(len(shape)):
                 if ((2**bit)&dirs):
                     dirs_index[bit] = slice(None,None,-1)
             dirs_index = tuple(dirs_index)
@@ -127,9 +127,9 @@ def test_iter_f_order():
     for shape in [(5,), (3,4), (2,3,4), (2,3,4,3), (2,3,2,2,3)]:
         a = arange(np.prod(shape))
         # Test each combination of positive and negative strides
-        for dirs in range(2**len(shape)):
+        for dirs in xrange(2**len(shape)):
             dirs_index = [slice(None)]*len(shape)
-            for bit in range(len(shape)):
+            for bit in xrange(len(shape)):
                 if ((2**bit)&dirs):
                     dirs_index[bit] = slice(None,None,-1)
             dirs_index = tuple(dirs_index)
@@ -154,9 +154,9 @@ def test_iter_c_or_f_order():
     for shape in [(5,), (3,4), (2,3,4), (2,3,4,3), (2,3,2,2,3)]:
         a = arange(np.prod(shape))
         # Test each combination of positive and negative strides
-        for dirs in range(2**len(shape)):
+        for dirs in xrange(2**len(shape)):
             dirs_index = [slice(None)]*len(shape)
-            for bit in range(len(shape)):
+            for bit in xrange(len(shape)):
                 if ((2**bit)&dirs):
                     dirs_index[bit] = slice(None,None,-1)
             dirs_index = tuple(dirs_index)
@@ -417,9 +417,9 @@ def test_iter_no_inner_full_coalesce():
         size = np.prod(shape)
         a = arange(size)
         # Test each combination of forward and backwards indexing
-        for dirs in range(2**len(shape)):
+        for dirs in xrange(2**len(shape)):
             dirs_index = [slice(None)]*len(shape)
-            for bit in range(len(shape)):
+            for bit in xrange(len(shape)):
                 if ((2**bit)&dirs):
                     dirs_index[bit] = slice(None,None,-1)
             dirs_index = tuple(dirs_index)
@@ -1568,7 +1568,7 @@ def test_iter_buffering_delayed_alloc():
     assert_equal(i[0], 0)
     i[1] = 1
     assert_equal(i[0:2], [0,1])
-    assert_equal([[x[0][()],x[1][()]] for x in i], zip(range(6), [1]*6))
+    assert_equal([[x[0][()],x[1][()]] for x in i], zip(list(range(6)), [1]*6))
 
 def test_iter_buffered_cast_simple():
     # Test that buffering can handle a simple cast
@@ -1800,7 +1800,7 @@ def test_iter_buffered_cast_subarray():
                     casting='unsafe',
                     op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
-    for x, count in zip(i, range(6)):
+    for x, count in zip(i, xrange(6)):
         assert_(np.all(x['a'] == count))
 
     # one element -> many -> back (copies it to all)

@@ -423,13 +423,13 @@ class TestStructured(TestCase):
         b[1].b = 'c'
         assert_equal(a==b, [True,False])
         assert_equal(a!=b, [False,True])
-        for i in range(3):
+        for i in xrange(3):
             b[0].a = a[0].a
             b[0].a[i] = 5
             assert_equal(a==b, [False,False])
             assert_equal(a!=b, [True,True])
-        for i in range(2):
-            for j in range(2):
+        for i in xrange(2):
+            for j in xrange(2):
                 b = a.copy()
                 b[0].c[i,j] = 10
                 assert_equal(a==b, [False,True])
@@ -551,7 +551,7 @@ class TestMethods(TestCase):
 
         # test string sorts.
         s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(101)])
+        a = np.array([s + chr(i) for i in xrange(101)])
         b = a[::-1].copy()
         for kind in ['q', 'm', 'h'] :
             msg = "string sort, kind=%s" % kind
@@ -564,7 +564,7 @@ class TestMethods(TestCase):
 
         # test unicode sorts.
         s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode)
+        a = np.array([s + chr(i) for i in xrange(101)], dtype=np.unicode)
         b = a[::-1].copy()
         for kind in ['q', 'm', 'h'] :
             msg = "unicode sort, kind=%s" % kind
@@ -590,7 +590,7 @@ class TestMethods(TestCase):
 
         # test record array sorts.
         dt = np.dtype([('f',float),('i',int)])
-        a = array([(i,i) for i in range(101)], dtype = dt)
+        a = array([(i,i) for i in xrange(101)], dtype = dt)
         b = a[::-1]
         for kind in ['q', 'h', 'm'] :
             msg = "object sort, kind=%s" % kind
@@ -705,7 +705,7 @@ class TestMethods(TestCase):
 
         # test string argsorts.
         s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(101)])
+        a = np.array([s + chr(i) for i in xrange(101)])
         b = a[::-1].copy()
         r = np.arange(101)
         rr = r[::-1]
@@ -716,7 +716,7 @@ class TestMethods(TestCase):
 
         # test unicode argsorts.
         s = 'aaaaaaaa'
-        a = np.array([s + chr(i) for i in range(101)], dtype=np.unicode)
+        a = np.array([s + chr(i) for i in xrange(101)], dtype=np.unicode)
         b = a[::-1]
         r = np.arange(101)
         rr = r[::-1]
@@ -738,7 +738,7 @@ class TestMethods(TestCase):
 
         # test structured array argsorts.
         dt = np.dtype([('f',float),('i',int)])
-        a = array([(i,i) for i in range(101)], dtype = dt)
+        a = array([(i,i) for i in xrange(101)], dtype = dt)
         b = a[::-1]
         r = np.arange(101)
         rr = r[::-1]
@@ -788,10 +788,10 @@ class TestMethods(TestCase):
         a = np.zeros(100, dtype=np.complex)
         assert_equal(a.argsort(kind='m'), r)
         # string
-        a = np.array(['aaaaaaaaa' for i in range(100)])
+        a = np.array(['aaaaaaaaa' for i in xrange(100)])
         assert_equal(a.argsort(kind='m'), r)
         # unicode
-        a = np.array(['aaaaaaaaa' for i in range(100)], dtype=np.unicode)
+        a = np.array(['aaaaaaaaa' for i in xrange(100)], dtype=np.unicode)
         assert_equal(a.argsort(kind='m'), r)
 
     def test_searchsorted(self):

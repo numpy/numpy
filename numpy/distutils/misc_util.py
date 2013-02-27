@@ -62,7 +62,7 @@ def quote_args(args):
     # don't used _nt_quote_args as it does not check if
     # args items already have quotes or not.
     args = list(args)
-    for i in range(len(args)):
+    for i in xrange(len(args)):
         a = args[i]
         if ' ' in a and a[0] not in '"\'':
             args[i] = '"%s"' % (a)
@@ -641,7 +641,7 @@ def get_frame(level=0):
         return sys._getframe(level+1)
     except AttributeError:
         frame = sys.exc_info()[2].tb_frame
-        for _ in range(level+1):
+        for _ in xrange(level+1):
             frame = frame.f_back
         return frame
 
@@ -739,7 +739,7 @@ class Configuration(object):
             )
 
         caller_instance = None
-        for i in range(1,3):
+        for i in xrange(1,3):
             try:
                 f = get_frame(i)
             except ValueError:

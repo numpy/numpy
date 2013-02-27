@@ -20,7 +20,7 @@ if sys.version_info[0] >= 3:
         return eval(astr.translate(_table))
 else:
     _table = [None]*256
-    for k in range(256):
+    for k in xrange(256):
         _table[k] = chr(k)
     _table = ''.join(_table)
 
@@ -173,7 +173,7 @@ def matrix_power(M,n):
 
     result = M
     if n <= 3:
-        for _ in range(n-1):
+        for _ in xrange(n-1):
             result=N.dot(result,M)
         return result
 
@@ -185,7 +185,7 @@ def matrix_power(M,n):
         Z = N.dot(Z,Z)
         q += 1
     result = Z
-    for k in range(q+1,t):
+    for k in xrange(q+1,t):
         Z = N.dot(Z,Z)
         if beta[t-k-1] == '1':
             result = N.dot(result,Z)
@@ -354,7 +354,7 @@ class matrix(N.ndarray):
         # now, 'matrix' has 6 letters, and 'array' 5, so the columns don't
         # line up anymore. We need to add a space.
         l = s.splitlines()
-        for i in range(1, len(l)):
+        for i in xrange(1, len(l)):
             if l[i]:
                 l[i] = ' ' + l[i]
         return '\n'.join(l)

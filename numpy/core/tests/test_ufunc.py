@@ -142,7 +142,7 @@ class TestUfunc(TestCase):
         # check unary PyUFunc_O_O_method
         msg = "PyUFunc_O_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
-        for i in range(len(x)) :
+        for i in xrange(len(x)) :
             x[i] = foo()
         assert_(np.all(np.conjugate(x) == True), msg)
 
@@ -153,7 +153,7 @@ class TestUfunc(TestCase):
         # check binary PyUFunc_OO_O_method
         msg = "PyUFunc_OO_O_method"
         x = np.zeros(10, dtype=np.object)[0::2]
-        for i in range(len(x)) :
+        for i in xrange(len(x)) :
             x[i] = foo()
         assert_(np.all(np.logical_xor(x,x)), msg)
 

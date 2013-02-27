@@ -44,8 +44,8 @@ class TestConstants(TestCase) :
 class TestArithmetic(TestCase) :
 
     def test_polyadd(self) :
-        for i in range(5) :
-            for j in range(5) :
+        for i in xrange(5) :
+            for j in xrange(5) :
                 msg = "At i=%d, j=%d" % (i,j)
                 tgt = np.zeros(max(i,j) + 1)
                 tgt[i] += 1
@@ -54,8 +54,8 @@ class TestArithmetic(TestCase) :
                 assert_equal(trim(res), trim(tgt), err_msg=msg)
 
     def test_polysub(self) :
-        for i in range(5) :
-            for j in range(5) :
+        for i in xrange(5) :
+            for j in xrange(5) :
                 msg = "At i=%d, j=%d" % (i,j)
                 tgt = np.zeros(max(i,j) + 1)
                 tgt[i] += 1
@@ -66,14 +66,14 @@ class TestArithmetic(TestCase) :
     def test_polymulx(self):
         assert_equal(poly.polymulx([0]), [0])
         assert_equal(poly.polymulx([1]), [0, 1])
-        for i in range(1, 5):
+        for i in xrange(1, 5):
             ser = [0]*i + [1]
             tgt = [0]*(i + 1) + [1]
             assert_equal(poly.polymulx(ser), tgt)
 
     def test_polymul(self) :
-        for i in range(5) :
-            for j in range(5) :
+        for i in xrange(5) :
+            for j in xrange(5) :
                 msg = "At i=%d, j=%d" % (i,j)
                 tgt = np.zeros(i + j + 1)
                 tgt[i + j] += 1
@@ -91,8 +91,8 @@ class TestArithmetic(TestCase) :
         assert_equal((quo, rem), ((1,1), 0))
 
         # check rest.
-        for i in range(5) :
-            for j in range(5) :
+        for i in xrange(5) :
+            for j in xrange(5) :
                 msg = "At i=%d, j=%d" % (i,j)
                 ci = [0]*i + [1,2]
                 cj = [0]*j + [1,2]
@@ -119,8 +119,8 @@ class TestEvaluation(TestCase):
 
         #check normal input)
         x = np.linspace(-1,1)
-        y = [x**i for i in range(5)]
-        for i in range(5) :
+        y = [x**i for i in xrange(5)]
+        for i in xrange(5) :
             tgt = y[i]
             res = poly.polyval(x, [0]*i + [1])
             assert_almost_equal(res, tgt)
@@ -129,7 +129,7 @@ class TestEvaluation(TestCase):
         assert_almost_equal(res, tgt)
 
         #check that shape is preserved
-        for i in range(3) :
+        for i in xrange(3) :
             dims = [2]*i
             x = np.zeros(dims)
             assert_equal(poly.polyval(x, [1]).shape, dims)
@@ -208,13 +208,13 @@ class TestIntegral(TestCase):
         assert_raises(ValueError, poly.polyint, [0], 1, [0,0])
 
         # test integration of zero polynomial
-        for i in range(2, 5):
+        for i in xrange(2, 5):
             k = [0]*(i - 2) + [1]
             res = poly.polyint([0], m=i, k=k)
             assert_almost_equal(res, [0, 1])
 
         # check single integration with integration constant
-        for i in range(5) :
+        for i in xrange(5) :
             scl = i + 1
             pol = [0]*i + [1]
             tgt = [i] + [0]*i + [1/scl]
@@ -222,14 +222,14 @@ class TestIntegral(TestCase):
             assert_almost_equal(trim(res), trim(tgt))
 
         # check single integration with integration constant and lbnd
-        for i in range(5) :
+        for i in xrange(5) :
             scl = i + 1
             pol = [0]*i + [1]
             res = poly.polyint(pol, m=1, k=[i], lbnd=-1)
             assert_almost_equal(poly.polyval(-1, res), i)
 
         # check single integration with integration constant and scaling
-        for i in range(5) :
+        for i in xrange(5) :
             scl = i + 1
             pol = [0]*i + [1]
             tgt = [i] + [0]*i + [2/scl]
@@ -237,41 +237,41 @@ class TestIntegral(TestCase):
             assert_almost_equal(trim(res), trim(tgt))
 
         # check multiple integrations with default k
-        for i in range(5) :
-            for j in range(2,5) :
+        for i in xrange(5) :
+            for j in xrange(2,5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
-                for k in range(j) :
+                for k in xrange(j) :
                     tgt = poly.polyint(tgt, m=1)
                 res = poly.polyint(pol, m=j)
                 assert_almost_equal(trim(res), trim(tgt))
 
         # check multiple integrations with defined k
-        for i in range(5) :
-            for j in range(2,5) :
+        for i in xrange(5) :
+            for j in xrange(2,5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
-                for k in range(j) :
+                for k in xrange(j) :
                     tgt = poly.polyint(tgt, m=1, k=[k])
                 res = poly.polyint(pol, m=j, k=range(j))
                 assert_almost_equal(trim(res), trim(tgt))
 
         # check multiple integrations with lbnd
-        for i in range(5) :
-            for j in range(2,5) :
+        for i in xrange(5) :
+            for j in xrange(2,5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
-                for k in range(j) :
+                for k in xrange(j) :
                     tgt = poly.polyint(tgt, m=1, k=[k], lbnd=-1)
                 res = poly.polyint(pol, m=j, k=range(j), lbnd=-1)
                 assert_almost_equal(trim(res), trim(tgt))
 
         # check multiple integrations with scaling
-        for i in range(5) :
-            for j in range(2,5) :
+        for i in xrange(5) :
+            for j in xrange(2,5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
-                for k in range(j) :
+                for k in xrange(j) :
                     tgt = poly.polyint(tgt, m=1, k=[k], scl=2)
                 res = poly.polyint(pol, m=j, k=range(j), scl=2)
                 assert_almost_equal(trim(res), trim(tgt))
@@ -301,21 +301,21 @@ class TestDerivative(TestCase) :
         assert_raises(ValueError, poly.polyder, [0], -1)
 
         # check that zeroth deriviative does nothing
-        for i in range(5) :
+        for i in xrange(5) :
             tgt = [0]*i + [1]
             res = poly.polyder(tgt, m=0)
             assert_equal(trim(res), trim(tgt))
 
         # check that derivation is the inverse of integration
-        for i in range(5) :
-            for j in range(2,5) :
+        for i in xrange(5) :
+            for j in xrange(2,5) :
                 tgt = [0]*i + [1]
                 res = poly.polyder(poly.polyint(tgt, m=j), m=j)
                 assert_almost_equal(trim(res), trim(tgt))
 
         # check derivation with scaling
-        for i in range(5) :
-            for j in range(2,5) :
+        for i in xrange(5) :
+            for j in xrange(2,5) :
                 tgt = [0]*i + [1]
                 res = poly.polyder(poly.polyint(tgt, m=j, scl=2), m=j, scl=.5)
                 assert_almost_equal(trim(res), trim(tgt))
@@ -343,7 +343,7 @@ class TestVander(TestCase):
         x = np.arange(3)
         v = poly.polyvander(x, 3)
         assert_(v.shape == (3, 4))
-        for i in range(4) :
+        for i in xrange(4) :
             coef = [0]*i + [1]
             assert_almost_equal(v[..., i], poly.polyval(x, coef))
 
@@ -351,7 +351,7 @@ class TestVander(TestCase):
         x = np.array([[1, 2], [3, 4], [5, 6]])
         v = poly.polyvander(x, 3)
         assert_(v.shape == (3, 2, 4))
-        for i in range(4) :
+        for i in xrange(4) :
             coef = [0]*i + [1]
             assert_almost_equal(v[..., i], poly.polyval(x, coef))
 
@@ -388,7 +388,7 @@ class TestMisc(TestCase) :
     def test_polyfromroots(self) :
         res = poly.polyfromroots([])
         assert_almost_equal(trim(res), [1])
-        for i in range(1,5) :
+        for i in xrange(1,5) :
             roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
             tgt = Tlist[i]
             res = poly.polyfromroots(roots)*2**(i-1)
@@ -397,7 +397,7 @@ class TestMisc(TestCase) :
     def test_polyroots(self) :
         assert_almost_equal(poly.polyroots([1]), [])
         assert_almost_equal(poly.polyroots([1, 2]), [-.5])
-        for i in range(2,5) :
+        for i in xrange(2,5) :
             tgt = np.linspace(-1, 1, i)
             res = poly.polyroots(poly.polyfromroots(tgt))
             assert_almost_equal(trim(res), trim(tgt))

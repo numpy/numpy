@@ -451,14 +451,14 @@ class throw_error:
 
 def l_and(*f):
     l,l2='lambda v',[]
-    for i in range(len(f)):
+    for i in xrange(len(f)):
         l='%s,f%d=f[%d]'%(l,i,i)
         l2.append('f%d(v)'%(i))
     return eval('%s:%s'%(l,' and '.join(l2)))
 
 def l_or(*f):
     l,l2='lambda v',[]
-    for i in range(len(f)):
+    for i in xrange(len(f)):
         l='%s,f%d=f[%d]'%(l,i,i)
         l2.append('f%d(v)'%(i))
     return eval('%s:%s'%(l,' or '.join(l2)))

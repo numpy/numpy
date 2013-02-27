@@ -204,7 +204,7 @@ def parse_loop_header(loophead) :
     dlist = []
     if nsub is None :
         raise ValueError("No substitution variables found")
-    for i in range(nsub) :
+    for i in xrange(nsub) :
         tmp = {}
         for name,vals in names :
             tmp[name] = vals[i]

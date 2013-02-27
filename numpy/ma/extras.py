@@ -1395,14 +1395,14 @@ def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
         _denom = diagflat(diag)
         n = x.shape[1 - rowvar]
         if rowvar:
-            for i in range(n - 1):
-                for j in range(i + 1, n):
+            for i in xrange(n - 1):
+                for j in xrange(i + 1, n):
                     _x = mask_cols(vstack((x[i], x[j]))).var(axis=1,
                                                              ddof=1 - bias)
                     _denom[i, j] = _denom[j, i] = ma.sqrt(ma.multiply.reduce(_x))
         else:
-            for i in range(n - 1):
-                for j in range(i + 1, n):
+            for i in xrange(n - 1):
+                for j in xrange(i + 1, n):
                     _x = mask_cols(vstack((x[:, i], x[:, j]))).var(axis=1,
                                                                  ddof=1 - bias)
                     _denom[i, j] = _denom[j, i] = ma.sqrt(ma.multiply.reduce(_x))
@@ -1435,7 +1435,7 @@ class MAxisConcatenator(AxisConcatenator):
         objs = []
         scalars = []
         final_dtypedescr = None
-        for k in range(len(key)):
+        for k in xrange(len(key)):
             scalar = False
             if type(key[k]) is slice:
                 step = key[k].step
@@ -1605,8 +1605,8 @@ def notmasked_edges(a, axis=None):
         return flatnotmasked_edges(a)
     m = getmaskarray(a)
     idx = array(np.indices(a.shape), mask=np.asarray([m] * a.ndim))
-    return [tuple([idx[i].min(axis).compressed() for i in range(a.ndim)]),
-            tuple([idx[i].max(axis).compressed() for i in range(a.ndim)]), ]
+    return [tuple([idx[i].min(axis).compressed() for i in xrange(a.ndim)]),
+            tuple([idx[i].max(axis).compressed() for i in xrange(a.ndim)]), ]
 
 
 def flatnotmasked_contiguous(a):
@@ -1716,7 +1716,7 @@ def notmasked_contiguous(a, axis=None):
     idx = [0, 0]
     idx[axis] = slice(None, None)
     #
-    for i in range(a.shape[other]):
+    for i in xrange(a.shape[other]):
         idx[other] = i
         result.append(flatnotmasked_contiguous(a[idx]) or None)
     return result

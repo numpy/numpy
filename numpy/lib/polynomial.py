@@ -131,7 +131,7 @@ def poly(seq_of_zeros):
         return 1.0
 
     a = [1]
-    for k in range(len(seq_of_zeros)):
+    for k in xrange(len(seq_of_zeros)):
         a = NX.convolve(a, [1, -seq_of_zeros[k]], mode='full')
 
     if issubclass(a.dtype.type, NX.complexfloating):
@@ -667,7 +667,7 @@ def polyval(p, x):
     else:
         x = NX.asarray(x)
         y = NX.zeros_like(x)
-    for i in range(len(p)):
+    for i in xrange(len(p)):
         y = x * y + p[i]
     return y
 
@@ -887,7 +887,7 @@ def polydiv(u, v):
     scale = 1. / v[0]
     q = NX.zeros((max(m - n + 1, 1),), w.dtype)
     r = u.copy()
-    for k in range(0, m-n+1):
+    for k in xrange(0, m-n+1):
         d = scale * r[k]
         q[k] = d
         r[k:k+n+1] -= d*v
@@ -1077,7 +1077,7 @@ class poly1d(object):
                 s = s[:-5]
             return s
 
-        for k in range(len(coeffs)):
+        for k in xrange(len(coeffs)):
             if not iscomplex(coeffs[k]):
                 coefstr = fmt_float(real(coeffs[k]))
             elif real(coeffs[k]) == 0:
@@ -1156,7 +1156,7 @@ class poly1d(object):
         if not isscalar(val) or int(val) != val or val < 0:
             raise ValueError("Power to non-negative integers only.")
         res = [1]
-        for _ in range(val):
+        for _ in xrange(val):
             res = polymul(self.coeffs, res)
         return poly1d(res)
 

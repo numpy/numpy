@@ -10,7 +10,7 @@ from numpy.testing import *
 class TestMisc(TestCase) :
 
     def test_trimseq(self) :
-        for i in range(5) :
+        for i in xrange(5) :
             tgt = [1]
             res = pu.trimseq([1] + [0]*5)
             assert_equal(res, tgt)
@@ -22,8 +22,8 @@ class TestMisc(TestCase) :
         assert_raises(ValueError, pu.as_series, [[1],['a']])
         # check common types
         types = ['i', 'd', 'O']
-        for i in range(len(types))  :
-            for j in range(i) :
+        for i in xrange(len(types))  :
+            for j in xrange(i) :
                 ci = np.ones(1, types[i])
                 cj = np.ones(1, types[j])
                 [resi, resj] = pu.as_series([ci, cj])

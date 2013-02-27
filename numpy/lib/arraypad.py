@@ -344,12 +344,12 @@ def _linear_ramp(vector, pad_tuple, iaxis, kwargs):
 
     before_vector = np.ones((pad_tuple[0], )) * end_values[0]
     before_vector = before_vector.astype(vector.dtype)
-    for i in range(len(before_vector)):
+    for i in xrange(len(before_vector)):
         before_vector[i] = before_vector[i] + i * before_delta
 
     after_vector = np.ones((pad_tuple[1], )) * end_values[1]
     after_vector = after_vector.astype(vector.dtype)
-    for i in range(len(after_vector)):
+    for i in xrange(len(after_vector)):
         after_vector[i] = after_vector[i] + i * after_delta
     after_vector = after_vector[::-1]
 

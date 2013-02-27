@@ -52,7 +52,7 @@ def seek_gzip_factory(f):
                 # for negative seek, rewind and do positive seek
                 self.rewind()
                 count = offset - self.offset
-                for i in range(count // 1024):
+                for i in xrange(count // 1024):
                     self.read(1024)
                 self.read(count % 1024)
 
@@ -1413,7 +1413,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     user_missing_values = missing_values or ()
 
     # Define the list of missing_values (one column: one list)
-    missing_values = [list([asbytes('')]) for _ in range(nbcols)]
+    missing_values = [list([asbytes('')]) for _ in xrange(nbcols)]
 
     # We have a dictionary: process it field by field
     if isinstance(user_missing_values, dict):

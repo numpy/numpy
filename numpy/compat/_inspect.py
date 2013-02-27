@@ -73,7 +73,7 @@ def getargs(co):
     step = 0
 
     # The following acrobatics are for anonymous (tuple) arguments.
-    for i in range(nargs):
+    for i in xrange(nargs):
         if args[i][:1] in ['', '.']:
             stack, remain, count = [], [], []
             while step < len(code):
@@ -169,7 +169,7 @@ def formatargspec(args, varargs=None, varkw=None, defaults=None,
     specs = []
     if defaults:
         firstdefault = len(args) - len(defaults)
-    for i in range(len(args)):
+    for i in xrange(len(args)):
         spec = strseq(args[i], formatarg, join)
         if defaults and i >= firstdefault:
             spec = spec + formatvalue(defaults[i - firstdefault])
@@ -196,7 +196,7 @@ def formatargvalues(args, varargs, varkw, locals,
                 formatarg=formatarg, formatvalue=formatvalue):
         return formatarg(name) + formatvalue(locals[name])
     specs = []
-    for i in range(len(args)):
+    for i in xrange(len(args)):
         specs.append(strseq(args[i], convert, join))
     if varargs:
         specs.append(formatvarargs(varargs) + formatvalue(locals[varargs]))

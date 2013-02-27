@@ -68,7 +68,7 @@ def ix_(*args):
     out = []
     nd = len(args)
     baseshape = [1]*nd
-    for k in range(nd):
+    for k in xrange(nd):
         new = _nx.asarray(args[k])
         if (new.ndim != 1):
             raise ValueError("Cross index must be 1 dimensional")
@@ -146,7 +146,7 @@ class nd_grid(object):
         try:
             size = []
             typ = int
-            for k in range(len(key)):
+            for k in xrange(len(key)):
                 step = key[k].step
                 start = key[k].start
                 if start is None: start=0
@@ -165,7 +165,7 @@ class nd_grid(object):
                                      (typ,)*len(size))
             else:
                 nn = _nx.indices(size, typ)
-            for k in range(len(size)):
+            for k in xrange(len(size)):
                 step = key[k].step
                 start = key[k].start
                 if start is None: start=0
@@ -177,7 +177,7 @@ class nd_grid(object):
                 nn[k] = (nn[k]*step+start)
             if self.sparse:
                 slobj = [_nx.newaxis]*len(size)
-                for k in range(len(size)):
+                for k in xrange(len(size)):
                     slobj[k] = slice(None,None)
                     nn[k] = nn[k][slobj]
                     slobj[k] = _nx.newaxis
@@ -248,7 +248,7 @@ class AxisConcatenator(object):
         scalars = []
         arraytypes = []
         scalartypes = []
-        for k in range(len(key)):
+        for k in xrange(len(key)):
             scalar = False
             if type(key[k]) is slice:
                 step = key[k].step

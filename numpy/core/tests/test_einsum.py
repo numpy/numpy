@@ -106,11 +106,11 @@ class TestEinSum(TestCase):
 
         b = np.einsum("ii->i", a)
         assert_(b.base is a)
-        assert_equal(b, [a[i,i] for i in range(3)])
+        assert_equal(b, [a[i,i] for i in xrange(3)])
 
         b = np.einsum(a, [0,0], [0])
         assert_(b.base is a)
-        assert_equal(b, [a[i,i] for i in range(3)])
+        assert_equal(b, [a[i,i] for i in xrange(3)])
 
         # diagonal with various ways of broadcasting an additional dimension
         a = np.arange(27)
@@ -118,62 +118,62 @@ class TestEinSum(TestCase):
 
         b = np.einsum("...ii->...i", a)
         assert_(b.base is a)
-        assert_equal(b, [[x[i,i] for i in range(3)] for x in a])
+        assert_equal(b, [[x[i,i] for i in xrange(3)] for x in a])
 
         b = np.einsum(a, [Ellipsis,0,0], [Ellipsis,0])
         assert_(b.base is a)
-        assert_equal(b, [[x[i,i] for i in range(3)] for x in a])
+        assert_equal(b, [[x[i,i] for i in xrange(3)] for x in a])
 
         b = np.einsum("ii...->...i", a)
         assert_(b.base is a)
-        assert_equal(b, [[x[i,i] for i in range(3)]
+        assert_equal(b, [[x[i,i] for i in xrange(3)]
                          for x in a.transpose(2,0,1)])
 
         b = np.einsum(a, [0,0,Ellipsis], [Ellipsis,0])
         assert_(b.base is a)
-        assert_equal(b, [[x[i,i] for i in range(3)]
+        assert_equal(b, [[x[i,i] for i in xrange(3)]
                          for x in a.transpose(2,0,1)])
 
         b = np.einsum("...ii->i...", a)
         assert_(b.base is a)
-        assert_equal(b, [a[:,i,i] for i in range(3)])
+        assert_equal(b, [a[:,i,i] for i in xrange(3)])
 
         b = np.einsum(a, [Ellipsis,0,0], [0,Ellipsis])
         assert_(b.base is a)
-        assert_equal(b, [a[:,i,i] for i in range(3)])
+        assert_equal(b, [a[:,i,i] for i in xrange(3)])
 
         b = np.einsum("jii->ij", a)
         assert_(b.base is a)
-        assert_equal(b, [a[:,i,i] for i in range(3)])
+        assert_equal(b, [a[:,i,i] for i in xrange(3)])
 
         b = np.einsum(a, [1,0,0], [0,1])
         assert_(b.base is a)
-        assert_equal(b, [a[:,i,i] for i in range(3)])
+        assert_equal(b, [a[:,i,i] for i in xrange(3)])
 
         b = np.einsum("ii...->i...", a)
         assert_(b.base is a)
-        assert_equal(b, [a.transpose(2,0,1)[:,i,i] for i in range(3)])
+        assert_equal(b, [a.transpose(2,0,1)[:,i,i] for i in xrange(3)])
 
         b = np.einsum(a, [0,0,Ellipsis], [0,Ellipsis])
         assert_(b.base is a)
-        assert_equal(b, [a.transpose(2,0,1)[:,i,i] for i in range(3)])
+        assert_equal(b, [a.transpose(2,0,1)[:,i,i] for i in xrange(3)])
 
         b = np.einsum("i...i->i...", a)
         assert_(b.base is a)
-        assert_equal(b, [a.transpose(1,0,2)[:,i,i] for i in range(3)])
+        assert_equal(b, [a.transpose(1,0,2)[:,i,i] for i in xrange(3)])
 
         b = np.einsum(a, [0,Ellipsis,0], [0,Ellipsis])
         assert_(b.base is a)
-        assert_equal(b, [a.transpose(1,0,2)[:,i,i] for i in range(3)])
+        assert_equal(b, [a.transpose(1,0,2)[:,i,i] for i in xrange(3)])
 
         b = np.einsum("i...i->...i", a)
         assert_(b.base is a)
-        assert_equal(b, [[x[i,i] for i in range(3)]
+        assert_equal(b, [[x[i,i] for i in xrange(3)]
                          for x in a.transpose(1,0,2)])
 
         b = np.einsum(a, [0,Ellipsis,0], [Ellipsis,0])
         assert_(b.base is a)
-        assert_equal(b, [[x[i,i] for i in range(3)]
+        assert_equal(b, [[x[i,i] for i in xrange(3)]
                          for x in a.transpose(1,0,2)])
 
         # triple diagonal
@@ -182,11 +182,11 @@ class TestEinSum(TestCase):
 
         b = np.einsum("iii->i", a)
         assert_(b.base is a)
-        assert_equal(b, [a[i,i,i] for i in range(3)])
+        assert_equal(b, [a[i,i,i] for i in xrange(3)])
 
         b = np.einsum(a, [0,0,0], [0])
         assert_(b.base is a)
-        assert_equal(b, [a[i,i,i] for i in range(3)])
+        assert_equal(b, [a[i,i,i] for i in xrange(3)])
 
         # swap axes
         a = np.arange(24)
@@ -204,13 +204,13 @@ class TestEinSum(TestCase):
         # Check various sums.  Does many sizes to exercise unrolled loops.
 
         # sum(a, axis=-1)
-        for n in range(1,17):
+        for n in xrange(1,17):
             a = np.arange(n, dtype=dtype)
             assert_equal(np.einsum("i->", a), np.sum(a, axis=-1).astype(dtype))
             assert_equal(np.einsum(a, [0], []),
                          np.sum(a, axis=-1).astype(dtype))
 
-        for n in range(1,17):
+        for n in xrange(1,17):
             a = np.arange(2*3*n, dtype=dtype).reshape(2,3,n)
             assert_equal(np.einsum("...i->...", a),
                          np.sum(a, axis=-1).astype(dtype))
@@ -218,14 +218,14 @@ class TestEinSum(TestCase):
                          np.sum(a, axis=-1).astype(dtype))
 
         # sum(a, axis=0)
-        for n in range(1,17):
+        for n in xrange(1,17):
             a = np.arange(2*n, dtype=dtype).reshape(2,n)
             assert_equal(np.einsum("i...->...", a),
                          np.sum(a, axis=0).astype(dtype))
             assert_equal(np.einsum(a, [0,Ellipsis], [Ellipsis]),
                          np.sum(a, axis=0).astype(dtype))
 
-        for n in range(1,17):
+        for n in xrange(1,17):
             a = np.arange(2*3*n, dtype=dtype).reshape(2,3,n)
             assert_equal(np.einsum("i...->...", a),
                          np.sum(a, axis=0).astype(dtype))
@@ -233,13 +233,13 @@ class TestEinSum(TestCase):
                          np.sum(a, axis=0).astype(dtype))
 
         # trace(a)
-        for n in range(1,17):
+        for n in xrange(1,17):
             a = np.arange(n*n, dtype=dtype).reshape(n,n)
             assert_equal(np.einsum("ii", a), np.trace(a).astype(dtype))
             assert_equal(np.einsum(a, [0,0]), np.trace(a).astype(dtype))
 
         # multiply(a, b)
-        for n in range(1,17):
+        for n in xrange(1,17):
             a = np.arange(3*n, dtype=dtype).reshape(3,n)
             b = np.arange(2*3*n, dtype=dtype).reshape(2,3,n)
             assert_equal(np.einsum("..., ...", a, b), np.multiply(a, b))
@@ -247,14 +247,14 @@ class TestEinSum(TestCase):
                          np.multiply(a, b))
 
         # inner(a,b)
-        for n in range(1,17):
+        for n in xrange(1,17):
             a = np.arange(2*3*n, dtype=dtype).reshape(2,3,n)
             b = np.arange(n, dtype=dtype)
             assert_equal(np.einsum("...i, ...i", a, b), np.inner(a, b))
             assert_equal(np.einsum(a, [Ellipsis,0], b, [Ellipsis,0]),
                          np.inner(a, b))
 
-        for n in range(1,11):
+        for n in xrange(1,11):
             a = np.arange(n*3*2, dtype=dtype).reshape(n,3,2)
             b = np.arange(n, dtype=dtype)
             assert_equal(np.einsum("i..., i...", a, b), np.inner(a.T, b.T).T)
@@ -262,7 +262,7 @@ class TestEinSum(TestCase):
                          np.inner(a.T, b.T).T)
 
         # outer(a,b)
-        for n in range(1,17):
+        for n in xrange(1,17):
             a = np.arange(3, dtype=dtype)+1
             b = np.arange(n, dtype=dtype)+1
             assert_equal(np.einsum("i,j", a, b), np.outer(a, b))
@@ -275,7 +275,7 @@ class TestEinSum(TestCase):
             warnings.simplefilter('ignore', np.ComplexWarning)
 
             # matvec(a,b) / a.dot(b) where a is matrix, b is vector
-            for n in range(1,17):
+            for n in xrange(1,17):
                 a = np.arange(4*n, dtype=dtype).reshape(4,n)
                 b = np.arange(n, dtype=dtype)
                 assert_equal(np.einsum("ij, j", a, b), np.dot(a, b))
@@ -294,7 +294,7 @@ class TestEinSum(TestCase):
                             np.dot(a.astype('f8'),
                                    b.astype('f8')).astype(dtype))
 
-            for n in range(1,17):
+            for n in xrange(1,17):
                 a = np.arange(4*n, dtype=dtype).reshape(4,n)
                 b = np.arange(n, dtype=dtype)
                 assert_equal(np.einsum("ji,j", a.T, b.T), np.dot(b.T, a.T))
@@ -313,14 +313,14 @@ class TestEinSum(TestCase):
                                a.T.astype('f8')).astype(dtype))
 
             # matmat(a,b) / a.dot(b) where a is matrix, b is matrix
-            for n in range(1,17):
+            for n in xrange(1,17):
                 if n < 8 or dtype != 'f2':
                     a = np.arange(4*n, dtype=dtype).reshape(4,n)
                     b = np.arange(n*6, dtype=dtype).reshape(n,6)
                     assert_equal(np.einsum("ij,jk", a, b), np.dot(a, b))
                     assert_equal(np.einsum(a, [0,1], b, [1,2]), np.dot(a, b))
 
-            for n in range(1,17):
+            for n in xrange(1,17):
                 a = np.arange(4*n, dtype=dtype).reshape(4,n)
                 b = np.arange(n*6, dtype=dtype).reshape(n,6)
                 c = np.arange(24, dtype=dtype).reshape(4,6)
@@ -397,7 +397,7 @@ class TestEinSum(TestCase):
         assert_equal(np.einsum(a, [0], 3, [], []), 3*np.sum(a))
 
         # Various stride0, contiguous, and SSE aligned variants
-        for n in range(1,25):
+        for n in xrange(1,25):
             a = np.arange(n, dtype=dtype)
             if np.dtype(dtype).itemsize > 1:
                 assert_equal(np.einsum("...,...",a,a), np.multiply(a,a))

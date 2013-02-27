@@ -217,7 +217,7 @@ class LineSplitter(object):
         if not line:
             return []
         fixed = self.delimiter
-        slices = [slice(i, i + fixed) for i in range(0, len(line), fixed)]
+        slices = [slice(i, i + fixed) for i in xrange(0, len(line), fixed)]
         return [line[s] for s in slices]
     #
     def _variablewidth_splitter(self, line):
@@ -854,7 +854,7 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
         elif (nbtypes > 0):
             validate = NameValidator(**validationargs)
             # Default initial names : should we change the format ?
-            if (ndtype.names == tuple("f%i" % i for i in range(nbtypes))) and \
+            if (ndtype.names == tuple("f%i" % i for i in xrange(nbtypes))) and \
                (defaultfmt != "f%i"):
                 ndtype.names = validate([''] * nbtypes, defaultfmt=defaultfmt)
             # Explicit initial names : just validate

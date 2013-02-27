@@ -166,7 +166,7 @@ def _loadmodule(module):
     if module not in sys.modules:
         modules = module.split(".")
         s = ""
-        for i in range(len(modules)):
+        for i in xrange(len(modules)):
             s = ".".join(modules[:i+1])
             exec "import " + s
     return sys.modules[module]

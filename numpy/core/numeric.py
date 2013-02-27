@@ -975,10 +975,10 @@ def tensordot(a, b, axes=2):
            [ 4928.,  5306.]])
     >>> # A slower but equivalent way of computing the same...
     >>> d = np.zeros((5,2))
-    >>> for i in range(5):
-    ...   for j in range(2):
-    ...     for k in range(3):
-    ...       for n in range(4):
+    >>> for i in xrange(5):
+    ...   for j in xrange(2):
+    ...     for k in xrange(3):
+    ...       for n in xrange(4):
     ...         d[i,j] += a[k,n,i] * b[n,k,j]
     >>> c == d
     array([[ True,  True],
@@ -1075,7 +1075,7 @@ def tensordot(a, b, axes=2):
 
     # Move the axes to sum over to the end of "a"
     # and to the front of "b"
-    notin = [k for k in range(nda) if k not in axes_a]
+    notin = [k for k in xrange(nda) if k not in axes_a]
     newaxes_a = notin + axes_a
     N2 = 1
     for axis in axes_a:
@@ -1083,7 +1083,7 @@ def tensordot(a, b, axes=2):
     newshape_a = (-1, N2)
     olda = [as_[axis] for axis in notin]
 
-    notin = [k for k in range(ndb) if k not in axes_b]
+    notin = [k for k in xrange(ndb) if k not in axes_b]
     newaxes_b = axes_b + notin
     N2 = 1
     for axis in axes_b:

@@ -274,14 +274,14 @@ def generate_def(dll, dfile):
 
     The .def file will be overwritten"""
     dump = dump_table(dll)
-    for i in range(len(dump)):
+    for i in xrange(len(dump)):
         if _START.match(dump[i].decode()):
             break
     else:
         raise ValueError("Symbol table not found")
 
     syms = []
-    for j in range(i+1, len(dump)):
+    for j in xrange(i+1, len(dump)):
         m = _TABLE.match(dump[j].decode())
         if m:
             syms.append((int(m.group(1).strip()), m.group(2)))

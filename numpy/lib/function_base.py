@@ -681,7 +681,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
     n = len(condlist)
     if n == n2-1:  # compute the "otherwise" condition.
         totlist = condlist[0]
-        for k in range(1, n):
+        for k in xrange(1, n):
             totlist |= condlist[k]
         condlist.append(~totlist)
         n += 1
@@ -696,7 +696,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
         x = x[None]
         zerod = True
         newcondlist = []
-        for k in range(n):
+        for k in xrange(n):
             if condlist[k].ndim == 0:
                 condition = condlist[k][None]
             else:
@@ -705,7 +705,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
         condlist = newcondlist
 
     y = zeros(x.shape, x.dtype)
-    for k in range(n):
+    for k in xrange(n):
         item = funclist[k]
         if not callable(item):
             y[condlist[k]] = item
@@ -762,7 +762,7 @@ def select(condlist, choicelist, default=0):
     choicelist = [default] + choicelist
     S = 0
     pfac = 1
-    for k in range(1, n+1):
+    for k in xrange(1, n+1):
         S += k * pfac * asarray(condlist[k-1])
         if k < n:
             pfac *= (1-asarray(condlist[k-1]))
@@ -770,7 +770,7 @@ def select(condlist, choicelist, default=0):
     #  a multi-element choice
     if type(S) in ScalarType or max(asarray(S).shape)==1:
         pfac = asarray(1)
-        for k in range(n2+1):
+        for k in xrange(n2+1):
             pfac = pfac + asarray(choicelist[k])
         if type(S) in ScalarType:
             S = S*ones(asarray(pfac).shape, type(S))
@@ -898,7 +898,7 @@ def gradient(f, *varargs):
         # Needs to keep the specific units, can't be a general unit
         otype = f.dtype
 
-    for axis in range(N):
+    for axis in xrange(N):
         # select out appropriate parts for this dimension
         out = np.empty_like(f, dtype=otype)
         slice1[axis] = slice(1, -1)
@@ -1859,7 +1859,7 @@ class vectorize(object):
             nargs = len(args)
 
             names = [_n for _n in kwargs if _n not in excluded]
-            inds = [_i for _i in range(nargs) if _i not in excluded]
+            inds = [_i for _i in xrange(nargs) if _i not in excluded]
             the_args = list(args)
             def func(*vargs):
                 for _n, _i in enumerate(inds):
@@ -1916,7 +1916,7 @@ class vectorize(object):
                 outputs = (outputs,)
 
             otypes = ''.join([asarray(outputs[_k]).dtype.char
-                              for _k in range(nout)])
+                              for _k in xrange(nout)])
 
             # Performance note: profiling indicates that creating the ufunc is
             # not a significant cost compared with wrapping so it seems not
@@ -3299,13 +3299,13 @@ def meshgrid(*xi, **kwargs):
     code snippet::
 
         xv, yv = meshgrid(x, y, sparse=False, indexing='ij')
-        for i in range(nx):
-            for j in range(ny):
+        for i in xrange(nx):
+            for j in xrange(ny):
                 # treat xv[i,j], yv[i,j]
 
         xv, yv = meshgrid(x, y, sparse=False, indexing='xy')
-        for i in range(nx):
-            for j in range(ny):
+        for i in xrange(nx):
+            for j in xrange(ny):
                 # treat xv[j,i], yv[j,i]
 
     See Also

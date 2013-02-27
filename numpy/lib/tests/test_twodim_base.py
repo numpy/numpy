@@ -76,12 +76,12 @@ class TestDiag(TestCase):
     def test_vector(self):
         vals = (100 * arange(5)).astype('l')
         b = zeros((5, 5))
-        for k in range(5):
+        for k in xrange(5):
             b[k, k] = vals[k]
         assert_equal(diag(vals), b)
         b = zeros((7, 7))
         c = b.copy()
-        for k in range(5):
+        for k in xrange(5):
             b[k, k + 2] = vals[k]
             c[k + 2, k] = vals[k]
         assert_equal(diag(vals, k=2), b)
@@ -91,14 +91,14 @@ class TestDiag(TestCase):
         if vals is None:
             vals = (100 * get_mat(5) + 1).astype('l')
         b = zeros((5,))
-        for k in range(5):
+        for k in xrange(5):
             b[k] = vals[k,k]
         assert_equal(diag(vals), b)
         b = b * 0
-        for k in range(3):
+        for k in xrange(3):
             b[k] = vals[k, k + 2]
         assert_equal(diag(vals, 2), b[:3])
-        for k in range(3):
+        for k in xrange(3):
             b[k] = vals[k + 2, k]
         assert_equal(diag(vals, -2), b[:3])
 
@@ -158,13 +158,13 @@ class TestRot90(TestCase):
         b4 = [[0,1,2],
               [3,4,5]]
 
-        for k in range(-3,13,4):
+        for k in xrange(-3,13,4):
             assert_equal(rot90(a,k=k),b1)
-        for k in range(-2,13,4):
+        for k in xrange(-2,13,4):
             assert_equal(rot90(a,k=k),b2)
-        for k in range(-1,13,4):
+        for k in xrange(-1,13,4):
             assert_equal(rot90(a,k=k),b3)
-        for k in range(0,13,4):
+        for k in xrange(0,13,4):
             assert_equal(rot90(a,k=k),b4)
 
     def test_axes(self):
