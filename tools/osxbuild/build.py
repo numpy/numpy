@@ -74,7 +74,7 @@ def shellcmd(cmd, verbose=True):
         print cmd
     try:
         subprocess.check_call(cmd, shell=True)
-    except subprocess.CalledProcessError, err:
+    except subprocess.CalledProcessError as err:
         msg = """
         Error while executing a shell command.
         %s

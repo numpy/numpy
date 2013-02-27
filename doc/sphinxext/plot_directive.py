@@ -291,7 +291,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         results = makefig(code, source_file_name, build_dir, output_base,
                           config)
         errors = []
-    except PlotError, err:
+    except PlotError as err:
         reporter = state.memo.reporter
         sm = reporter.system_message(
             2, "Exception occurred in plotting %s: %s" % (output_base, err),
@@ -458,7 +458,7 @@ def run_code(code, code_path, ns=None):
             if not ns:
                 exec setup.config.plot_pre_code in ns
             exec code in ns
-        except (Exception, SystemExit), err:
+        except (Exception, SystemExit) as err:
             raise PlotError(traceback.format_exc())
     finally:
         os.chdir(pwd)
@@ -565,7 +565,7 @@ def makefig(code, code_path, output_dir, output_base, config):
             for format, dpi in formats:
                 try:
                     figman.canvas.figure.savefig(img.filename(format), dpi=dpi)
-                except exceptions.BaseException, err:
+                except exceptions.BaseException as err:
                     raise PlotError(traceback.format_exc())
                 img.formats.append(format)
 

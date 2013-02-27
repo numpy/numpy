@@ -18,7 +18,7 @@ def build_sdist():
         os.chdir('../..')
         cmd = ["python", "setup.py", "sdist", "--format=zip"]
         subprocess.call(cmd)
-    except Exception, e:
+    except Exception as e:
         raise RuntimeError("Error while executing cmd (%s)" % e)
     finally:
         os.chdir(cwd)

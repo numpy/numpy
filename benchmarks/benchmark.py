@@ -35,7 +35,7 @@ class Benchmark(dict):
             try:
                 print "%s: %s" % (modname, \
                     self.module_test[mod].repeat(self.runs,self.reps))
-            except Exception, e:
+            except Exception as e:
                 print "%s: Failed to benchmark (%s)." % (modname,e)
 
         print '-'*79
