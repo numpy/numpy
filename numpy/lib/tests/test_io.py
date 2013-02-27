@@ -151,7 +151,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
                 arr = np.random.randn(500, 500)
                 try:
                     np.savez(tmp, arr=arr)
-                except OSError, err:
+                except OSError as err:
                     error_list.append(err)
             finally:
                 os.remove(tmp)
@@ -207,7 +207,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
             for i in range(1, 1025):
                 try:
                     np.load(tmp)["data"]
-                except Exception, e:
+                except Exception as e:
                     raise AssertionError("Failed to load data from a file: %s" % e)
         finally:
             os.remove(tmp)

@@ -68,7 +68,7 @@ class PackageLoader(object):
                     try:
                         exec 'import %s.info as info' % (package_name)
                         info_modules[package_name] = info
-                    except ImportError, msg:
+                    except ImportError as msg:
                         self.warn('No scipy-style subpackage %r found in %s. '\
                                   'Ignoring: %s'\
                                   % (package_name,':'.join(self.parent_path), msg))
@@ -87,7 +87,7 @@ class PackageLoader(object):
                                               open(info_file,filedescriptor[1]),
                                               info_file,
                                               filedescriptor)
-            except Exception,msg:
+            except Exception as msg:
                 self.error(msg)
                 info_module = None
 
@@ -241,7 +241,7 @@ class PackageLoader(object):
         frame = self.parent_frame
         try:
             exec (cmdstr, frame.f_globals,frame.f_locals)
-        except Exception,msg:
+        except Exception as msg:
             self.error('%s -> failed: %s' % (cmdstr,msg))
             return True
         else:

@@ -993,7 +993,7 @@ def analyzeline(m,case,line):
                                replace(',','+1j*(')
             try:
                 v = eval(initexpr,{},params)
-            except (SyntaxError,NameError,TypeError),msg:
+            except (SyntaxError,NameError,TypeError) as msg:
                 errmess('analyzeline: Failed to evaluate %r. Ignoring: %s\n'\
                         % (initexpr, msg))
                 continue
@@ -2034,7 +2034,7 @@ def get_parameters(vars, global_params={}):
                     l = markoutercomma(v[1:-1]).split('@,@')
             try:
                 params[n] = eval(v,g_params,params)
-            except Exception,msg:
+            except Exception as msg:
                 params[n] = v
                 #print params
                 outmess('get_parameters: got "%s" on %s\n' % (msg,`v`))
@@ -2062,7 +2062,7 @@ def _eval_scalar(value,params):
         value = str(eval(value,{},params))
     except (NameError, SyntaxError):
         return value
-    except Exception,msg:
+    except Exception as msg:
         errmess('"%s" in evaluating %r '\
                 '(available names: %s)\n' \
                 % (msg,value,params.keys()))
@@ -2805,7 +2805,7 @@ if __name__ == "__main__":
             try:
                 open(l).close()
                 files.append(l)
-            except IOError,detail:
+            except IOError as detail:
                 errmess('IOError: %s\n'%str(detail))
         else:
             funcs.append(l)

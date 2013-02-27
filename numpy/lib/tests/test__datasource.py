@@ -92,7 +92,7 @@ class TestDataSourceOpen(TestCase):
         self.assertRaises(IOError, self.ds.open, url)
         try:
             self.ds.open(url)
-        except IOError, e:
+        except IOError as e:
             # Regression test for bug fixed in r4342.
             assert_(e.errno is None)
 

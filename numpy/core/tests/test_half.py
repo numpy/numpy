@@ -9,7 +9,7 @@ from numpy.testing import TestCase, run_module_suite, assert_, assert_equal, \
 def assert_raises_fpe(strmatch, callable, *args, **kwargs):
     try:
         callable(*args, **kwargs)
-    except FloatingPointError, exc:
+    except FloatingPointError as exc:
         assert_(str(exc).find(strmatch) >= 0,
                 "Did not raise floating point %s error" % strmatch)
     else:

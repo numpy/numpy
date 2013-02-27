@@ -63,7 +63,7 @@ class LinalgTestCase(object):
         try:
             self.do(a, b)
             raise AssertionError("%s should fail with empty matrices", self.__name__[5:])
-        except linalg.LinAlgError, e:
+        except linalg.LinAlgError as e:
             pass
 
     def test_nonarray(self):

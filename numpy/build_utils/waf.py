@@ -166,7 +166,7 @@ int main ()
 
     try:
         conf.run_c_code(**kw)
-    except conf.errors.ConfigurationError, e:
+    except conf.errors.ConfigurationError as e:
         conf.end_msg("failed !")
         if waflib.Logs.verbose > 1:
             raise

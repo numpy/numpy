@@ -87,7 +87,7 @@ def interactive_sys_argv(argv):
                 import atexit
                 atexit.register(readline.write_history_file, histfile)
             except AttributeError: pass
-    except Exception, msg:
+    except Exception as msg:
         print msg
 
     task_dict = {'i':show_information,
@@ -178,7 +178,7 @@ def interactive_sys_argv(argv):
             print '-'*68
             try:
                 task_func(argv,readline)
-            except Exception,msg:
+            except Exception as msg:
                 print 'Failed running task %s: %s' % (task,msg)
                 break
             print '-'*68

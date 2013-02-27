@@ -643,7 +643,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
                                 names=('x', 'y'))
             if not cond :
                 raise AssertionError(msg)
-    except ValueError, e:
+    except ValueError as e:
         import traceback
         efmt = traceback.format_exc()
         header = 'error during assertion:\n\n%s\n\n%s' % (efmt, header)

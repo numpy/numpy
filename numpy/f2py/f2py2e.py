@@ -235,7 +235,7 @@ def scaninputline(inputline):
             try:
                 open(l).close()
                 files.append(l)
-            except IOError,detail:
+            except IOError as detail:
                 errmess('IOError: %s. Skipping file "%s".\n'%(str(detail),l))
         elif f==-1: skipfuncs.append(l)
         elif f==0: onlyfuncs.append(l)
