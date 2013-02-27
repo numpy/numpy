@@ -3001,6 +3001,7 @@ PyArray_EinsteinSum(char *subscripts, npy_intp nop,
     /* Allocate the iterator */
     iter = NpyIter_AdvancedNew(nop+1, op, NPY_ITER_EXTERNAL_LOOP|
                 ((dtype != NULL) ? 0 : NPY_ITER_COMMON_DTYPE)|
+                                       NPY_ITER_USE_ZERO_OA_NDIM|
                                        NPY_ITER_BUFFERED|
                                        NPY_ITER_DELAY_BUFALLOC|
                                        NPY_ITER_GROWINNER|

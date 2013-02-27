@@ -239,6 +239,7 @@ class TestEinSum(TestCase):
             assert_equal(np.einsum(a, [0,0]), np.trace(a).astype(dtype))
 
         # multiply(a, b)
+        assert_equal(np.einsum("..., ...", 3, 4), 12) # check scalars
         for n in range(1,17):
             a = np.arange(3*n, dtype=dtype).reshape(3,n)
             b = np.arange(2*3*n, dtype=dtype).reshape(2,3,n)
