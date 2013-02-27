@@ -1751,6 +1751,8 @@ npyiter_goto_iterindex(NpyIter *iter, npy_intp iterindex)
 
     NIT_ITERINDEX(iter) = iterindex;
 
+    ndim = ndim ? ndim : 1;
+
     if (iterindex == 0) {
         dataptr = NIT_RESETDATAPTR(iter);
 
