@@ -853,7 +853,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
 
     int iop, nop = 0, inest, nnest = 0;
     PyArrayObject *op[NPY_MAXARGS];
-    npy_uint32 flags = 0, flags_inner = 0;
+    npy_uint32 flags = NPY_ITER_USE_ZERO_OA_NDIM, flags_inner;
     NPY_ORDER order = NPY_KEEPORDER;
     NPY_CASTING casting = NPY_SAFE_CASTING;
     npy_uint32 op_flags[NPY_MAXARGS], op_flags_inner[NPY_MAXARGS];
