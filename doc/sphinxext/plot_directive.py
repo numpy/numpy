@@ -36,7 +36,7 @@ The ``plot`` directive supports the options
 
     include-source : bool
         Whether to display the source code. Default can be changed in conf.py
-    
+
 and the ``image`` directive options ``alt``, ``height``, ``width``,
 ``scale``, ``align``, ``class``.
 
@@ -257,7 +257,7 @@ def run(arguments, content, options, state_machine, state, lineno):
 
     # is it in doctest format?
     is_doctest = contains_doctest(code)
-    if options.has_key('format'):
+    if 'format' in options:
         if options['format'] == 'python':
             is_doctest = False
         else:
