@@ -72,6 +72,7 @@ Saved modules are re-imported at load time but any "state" in the module
 which is not restored by a simple import is lost.
 
 """
+from __future__ import division
 
 __all__ = ['load', 'save']
 

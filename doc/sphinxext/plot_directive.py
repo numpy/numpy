@@ -36,7 +36,7 @@ The ``plot`` directive supports the options
 
     include-source : bool
         Whether to display the source code. Default can be changed in conf.py
-    
+
 and the ``image`` directive options ``alt``, ``height``, ``width``,
 ``scale``, ``align``, ``class``.
 
@@ -74,6 +74,7 @@ TODO
   to make them appear side-by-side, or in floats.
 
 """
+from __future__ import division
 
 import sys, os, glob, shutil, imp, warnings, cStringIO, re, textwrap, traceback
 import sphinx
@@ -94,7 +95,7 @@ def setup(app):
     setup.app = app
     setup.config = app.config
     setup.confdir = app.confdir
-    
+
     app.add_config_value('plot_pre_code', '', True)
     app.add_config_value('plot_include_source', False, True)
     app.add_config_value('plot_formats', ['png', 'hires.png', 'pdf'], True)

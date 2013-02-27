@@ -1,3 +1,4 @@
+from __future__ import division
 
 __all__ = ['ArgumentError', 'F', 'beta', 'binomial', 'chi_square',
            'exponential', 'gamma', 'get_seed', 'multinomial',

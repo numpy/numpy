@@ -1,7 +1,10 @@
 """Array printing function
 
 $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
+
 """
+from __future__ import division
+
 __all__ = ["array2string", "set_printoptions", "get_printoptions"]
 __docformat__ = 'restructuredtext'
 

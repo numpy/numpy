@@ -52,6 +52,8 @@ Makes the following changes:
    - .setimaginary() --> .imag
 
 """
+from __future__ import division
+
 __all__ = ['convertfile', 'convertall', 'converttree', 'convertsrc']
 
 import sys

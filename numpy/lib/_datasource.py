@@ -31,6 +31,7 @@ Example::
     >>> fp.close()
 
 """
+from __future__ import division
 
 __docformat__ = "restructuredtext en"
 

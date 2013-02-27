@@ -1,11 +1,13 @@
-''' Null tester to signal nose tests disabled
+""" Null tester to signal nose tests disabled
 
 Merely returns error reporting lack of nose package or version number
 below requirements.
 
 See pkgtester, nosetester modules
 
-'''
+"""
+from __future__ import division
+
 
 class NullTester(object):
     def test(self, labels=None, *args, **kwargs):

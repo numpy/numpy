@@ -5,6 +5,7 @@ Utility functions for
 - detecting if compilers are present
 
 """
+from __future__ import division
 
 import os
 import sys

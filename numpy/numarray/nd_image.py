@@ -1,3 +1,5 @@
+from __future__ import division
+
 try:
     from ndimage import *
 except ImportError:

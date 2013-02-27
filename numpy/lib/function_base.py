@@ -1,3 +1,5 @@
+from __future__ import division
+
 __docformat__ = "restructuredtext en"
 __all__ = ['select', 'piecewise', 'trim_zeros', 'copy', 'iterable',
            'percentile', 'diff', 'gradient', 'angle', 'unwrap', 'sort_complex',

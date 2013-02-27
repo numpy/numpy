@@ -1,3 +1,5 @@
+from __future__ import division
+
 __all__ = ['savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
            'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
            'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']

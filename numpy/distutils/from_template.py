@@ -45,6 +45,7 @@ process_file(filename)
   <ctypereal=float,double,\\0,\\1>
 
 """
+from __future__ import division
 
 __all__ = ['process_str','process_file']
 

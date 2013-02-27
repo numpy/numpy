@@ -13,6 +13,7 @@ for Traits is required.
 .. [2] http://code.enthought.com/projects/traits/
 
 """
+from __future__ import division
 
 import inspect
 import os

@@ -1,3 +1,5 @@
+from __future__ import division
+
 from util import *
 from numerictypes import *
 from functions import *

@@ -14,6 +14,8 @@ without needing to rebuild the documented module.
 .. [1] http://code.google.com/p/pydocweb
 
 """
+from __future__ import division
+
 import imp, sys, compiler, types, os, inspect, re
 
 def setup(app):

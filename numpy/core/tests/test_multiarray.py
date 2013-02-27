@@ -1,3 +1,5 @@
+from __future__ import division
+
 import tempfile
 import sys
 import os

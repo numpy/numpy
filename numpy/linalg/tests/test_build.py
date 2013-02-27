@@ -1,3 +1,5 @@
+from __future__ import division
+
 from subprocess import call, PIPE, Popen
 import sys
 import re

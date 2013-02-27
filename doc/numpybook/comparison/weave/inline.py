@@ -1,3 +1,5 @@
+from __future__ import division
+
 from scipy import weave
 from numpy import rand, zeros_like
 

@@ -1,6 +1,9 @@
 """
 Discrete Fourier Transforms - helper.py
+
 """
+from __future__ import division
+
 # Created by Pearu Peterson, September 2002
 
 __all__ = ['fftshift', 'ifftshift', 'fftfreq', 'rfftfreq']

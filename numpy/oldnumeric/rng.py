@@ -1,8 +1,10 @@
-# This module re-creates the RNG interface from Numeric
-# Replace import RNG with import numpy.oldnumeric.rng as RNG
-#
-# It is for backwards compatibility only.
+"""Re-create the RNG interface from Numeric.
 
+Replace import RNG with import numpy.oldnumeric.rng as RNG.
+It is for backwards compatibility only.
+
+"""
+from __future__ import division
 
 __all__ = ['CreateGenerator','ExponentialDistribution','LogNormalDistribution',
            'NormalDistribution', 'UniformDistribution', 'error', 'ranf',

@@ -1,3 +1,5 @@
+from __future__ import division
+
 from numpy.testing import *
 import numpy.lib.utils as utils
 from numpy.lib import deprecate

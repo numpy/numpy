@@ -1,3 +1,5 @@
+from __future__ import division
+
 from numpy.testing import *
 from numpy.lib import *
 from numpy.core import *

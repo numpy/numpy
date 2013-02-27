@@ -86,6 +86,8 @@ set_state            Set state of generator.
 ==================== =========================================================
 
 """
+from __future__ import division
+
 # To get sub-modules
 from info import __doc__, __all__
 

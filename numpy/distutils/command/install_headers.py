@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os
 from distutils.command.install_headers import install_headers as old_install_headers
 

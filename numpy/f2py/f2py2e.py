@@ -12,7 +12,9 @@ terms of the NumPy License.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 $Date: 2005/05/06 08:31:19 $
 Pearu Peterson
+
 """
+from __future__ import division
 
 import __version__
 f2py_version = __version__.version

@@ -7,6 +7,7 @@ Support code for building Python extensions on Windows.
     # 3. Force windows to use g77
 
 """
+from __future__ import division
 
 import os
 import subprocess

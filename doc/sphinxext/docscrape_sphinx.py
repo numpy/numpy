@@ -1,3 +1,5 @@
+from __future__ import division
+
 import re, inspect, textwrap, pydoc
 import sphinx
 from docscrape import NumpyDocString, FunctionDoc, ClassDoc

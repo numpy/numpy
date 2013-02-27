@@ -6,7 +6,10 @@ Note that :class:`numpy.ma.MaskedArray` already supports structured datatypes
 and the masking of individual fields.
 
 :author: Pierre Gerard-Marchant
+
 """
+from __future__ import division
+
 #!!!: * We should make sure that no field is called '_mask','mask','_fieldmask',
 #!!!:   or whatever restricted keywords.
 #!!!:   An idea would be to no bother in the first place, and then rename the

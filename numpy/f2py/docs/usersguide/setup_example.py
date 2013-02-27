@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import division
+
 # File: setup_example.py
 
 from numpy_distutils.core import Extension

@@ -1,3 +1,5 @@
+from __future__ import division
+
 from numpy.testing import assert_equal, TestCase
 from numpy.core import ones
 from numpy import matrix

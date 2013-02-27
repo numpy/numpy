@@ -1,6 +1,8 @@
 """
 unixccompiler - can handle very long argument lists for ar.
+
 """
+from __future__ import division
 
 import os
 

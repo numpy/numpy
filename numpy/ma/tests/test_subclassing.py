@@ -4,7 +4,10 @@
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
 :version: $Id: test_subclassing.py 3473 2007-10-29 15:18:13Z jarrod.millman $
+
 """
+from __future__ import division
+
 __author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
 __version__ = '1.0'
 __revision__ = "$Revision: 3473 $"

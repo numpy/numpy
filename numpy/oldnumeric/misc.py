@@ -1,5 +1,7 @@
-# Functions that already have the correct syntax or miscellaneous functions
+"""Functions that already have the correct syntax or miscellaneous functions
 
+"""
+from __future__ import division
 
 __all__ = ['sort', 'copy_reg', 'clip', 'rank',
            'sign', 'shape', 'types', 'allclose', 'size',

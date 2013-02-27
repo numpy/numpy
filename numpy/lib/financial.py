@@ -1,10 +1,15 @@
-# Some simple financial calculations
-#  patterned after spreadsheet computations.
+"""Some simple financial calculations
 
-# There is some complexity in each function
-#  so that the functions behave like ufuncs with
-#  broadcasting and being able to be called with scalars
-#  or arrays (or other sequences).
+patterned after spreadsheet computations.
+
+There is some complexity in each function
+so that the functions behave like ufuncs with
+broadcasting and being able to be called with scalars
+or arrays (or other sequences).
+
+"""
+from __future__ import division
+
 import numpy as np
 
 __all__ = ['fv', 'pmt', 'nper', 'ipmt', 'ppmt', 'pv', 'rate',

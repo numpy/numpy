@@ -1,3 +1,4 @@
+from __future__ import division
 
 from numpy.testing import *
 from numpy import logspace, linspace

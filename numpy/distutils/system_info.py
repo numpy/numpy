@@ -108,7 +108,9 @@ terms of the NumPy (BSD style) license.  See LICENSE.txt that came with
 this distribution for specifics.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
+
 """
+from __future__ import division
 
 import sys
 import os

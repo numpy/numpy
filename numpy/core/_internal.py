@@ -1,5 +1,10 @@
-#A place for code to be called from C-code
-#  that implements more complicated stuff.
+"""
+A place for code to be called from core C-code.
+
+Some things are more easily handled Python.
+
+"""
+from __future__ import division
 
 import re
 import sys

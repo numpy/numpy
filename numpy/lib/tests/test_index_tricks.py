@@ -1,3 +1,5 @@
+from __future__ import division
+
 from numpy.testing import *
 import numpy as np
 from numpy import ( array, ones, r_, mgrid, unravel_index, zeros, where,

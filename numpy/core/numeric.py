@@ -1,3 +1,5 @@
+from __future__ import division
+
 __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'arange', 'array', 'zeros', 'count_nonzero',
            'empty', 'broadcast', 'dtype', 'fromstring', 'fromfile',

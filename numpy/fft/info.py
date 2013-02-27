@@ -174,5 +174,6 @@ Examples
 For examples, see the various functions.
 
 """
+from __future__ import division
 
 depends = ['core']

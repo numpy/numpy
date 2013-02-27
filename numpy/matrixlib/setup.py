@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import division
+
 import os
 
 def configuration(parent_package='', top_path=None):
