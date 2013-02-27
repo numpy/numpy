@@ -45,7 +45,7 @@ version = re.sub(r'(\d+\.\d+)\.\d+(.*)', r'\1\2', numpy.__version__)
 version = re.sub(r'(\.dev\d+).*?$', r'\1', version)
 # The full version, including alpha/beta/rc tags.
 release = numpy.__version__
-print version, release
+print("%s %s" % (version, release))
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
@@ -283,7 +283,7 @@ for name in ['sphinx.ext.linkcode', 'numpydoc.linkcode']:
     except ImportError:
         pass
 else:
-    print "NOTE: linkcode extension not found -- no links to source generated"
+    print("NOTE: linkcode extension not found -- no links to source generated")
 
 def linkcode_resolve(domain, info):
     """
