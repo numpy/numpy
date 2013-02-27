@@ -499,7 +499,7 @@ NpyIter_MultiNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 {
     return NpyIter_AdvancedNew(nop, op_in, flags, order, casting,
                             op_flags, op_request_dtypes,
-                            0, NULL, NULL, 0);
+                            -1, NULL, NULL, 0);
 }
 
 /*NUMPY_API
@@ -516,7 +516,7 @@ NpyIter_New(PyArrayObject *op, npy_uint32 flags,
 
     return NpyIter_AdvancedNew(1, &op, flags, order, casting,
                             &op_flags, &dtype,
-                            0, NULL, NULL, 0);
+                            -1, NULL, NULL, 0);
 }
 
 /*NUMPY_API
