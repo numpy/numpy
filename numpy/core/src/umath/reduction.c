@@ -513,7 +513,7 @@ PyUFunc_ReduceWrapper(PyArrayObject *operand, PyArrayObject *out,
                                NPY_KEEPORDER, casting,
                                op_flags,
                                op_dtypes,
-                               0, NULL, NULL, buffersize);
+                               -1, NULL, NULL, buffersize);
     if (iter == NULL) {
         goto fail;
     }
