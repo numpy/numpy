@@ -1,2 +1,2 @@
-recursive-include tests *.py
+recursive-include numpydoc/tests *.py
 include *.txt
