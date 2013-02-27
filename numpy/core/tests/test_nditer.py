@@ -2483,7 +2483,7 @@ def test_0d_iter():
     assert_raises(StopIteration, i.next)
 
     # test forcing to 0-d
-    i = nditer(np.arange(5), ['multi_index'], [['readonly']]*2, op_axes=[()])
+    i = nditer(np.arange(5), ['multi_index'], [['readonly']], op_axes=[()])
     assert_(i.ndim == 0)
     assert_(len(i) == 1)
     # note that itershape=(), still behaves like None due to the conversions
@@ -2498,6 +2498,28 @@ def test_0d_iter():
     assert_equal(vals['b'], 0)
     assert_equal(vals['c'], [[(0.5)]*3]*2)
     assert_equal(vals['d'], 0.5)
+
+
+def test_0d_nested_iter():
+    a = np.arange(12).reshape(2,3,2)
+    i, j = np.nested_iters(a, [[],[1,0,2]])
+    vals = []
+    for x in i:
+        vals.append([y for y in j])
+    assert_equal(vals, [[0,1,2,3,4,5,6,7,8,9,10,11]])
+
+    i, j = np.nested_iters(a, [[1,0,2],[]])
+    vals = []
+    for x in i:
+        vals.append([y for y in j])
+    assert_equal(vals, [[0],[1],[2],[3],[4],[5],[6],[7],[8],[9],[10],[11]])
+
+    i, j, k = np.nested_iters(a, [[2,0], [] ,[1]])
+    vals = []
+    for x in i:
+        for y in j:
+            vals.append([z for z in k])
+    assert_equal(vals, [[0,2,4],[1,3,5],[6,8,10],[7,9,11]])
 
 
 if __name__ == "__main__":
