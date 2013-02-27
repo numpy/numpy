@@ -1,6 +1,7 @@
-'''
-Tests for the pad functions.
-'''
+"""Tests for the pad functions.
+
+"""
+from __future__ import division
 
 from numpy.testing import TestCase, run_module_suite, assert_array_equal
 from numpy.testing import assert_raises, assert_array_almost_equal

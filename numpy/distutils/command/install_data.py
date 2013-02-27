@@ -1,3 +1,5 @@
+from __future__ import division
+
 import sys
 have_setuptools = ('setuptools' in sys.modules)
 

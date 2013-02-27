@@ -19,6 +19,8 @@ Makes the following changes:
    oldnumeric.random_array, and oldnumeric.fft
 
 """
+from __future__ import division
+
 #__all__ = ['convertfile', 'convertall', 'converttree']
 __all__ = []
 

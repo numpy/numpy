@@ -1,4 +1,6 @@
 # XXX: Handle setuptools ?
+from __future__ import division
+
 from distutils.core import Distribution
 
 # This class is used because we add new files (sconscripts, and so on) with the

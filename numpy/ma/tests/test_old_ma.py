@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy
 import types
 from numpy.ma import *

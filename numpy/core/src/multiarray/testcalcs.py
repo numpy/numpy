@@ -1,3 +1,5 @@
+from __future__ import division
+
 from scipy import weave
 
 class YMD(object):

@@ -1,10 +1,12 @@
 """Backward compatible with LinearAlgebra from Numeric
-"""
-# This module is a lite version of the linalg.py module in SciPy which contains
-# high-level Python interface to the LAPACK library.  The lite version
-# only accesses the following LAPACK functions: dgesv, zgesv, dgeev,
-# zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf, dpotrf.
 
+This module is a lite version of the linalg.py module in SciPy which contains
+high-level Python interface to the LAPACK library.  The lite version
+only accesses the following LAPACK functions: dgesv, zgesv, dgeev,
+zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf, dpotrf.
+
+"""
+from __future__ import division
 
 __all__ = ['LinAlgError', 'solve_linear_equations',
            'inverse', 'cholesky_decomposition', 'eigenvalues',

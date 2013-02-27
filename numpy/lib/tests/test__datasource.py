@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os
 from tempfile import mkdtemp, mkstemp, NamedTemporaryFile
 from shutil import rmtree

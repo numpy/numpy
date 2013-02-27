@@ -1,4 +1,4 @@
-__doc__ = """Defines a multi-dimensional array and useful procedures for Numerical computation.
+"""Defines a multi-dimensional array and useful procedures for Numerical computation.
 
 Functions
 
@@ -81,6 +81,7 @@ More Functions:
        arccosh                arcsinh                arctanh
 
 """
+from __future__ import division
 
 depends = ['testing']
 global_symbols = ['*']

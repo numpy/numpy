@@ -1,3 +1,4 @@
+from __future__ import division
 
 # Run svn log -l <some number>
 

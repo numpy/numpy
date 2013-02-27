@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os
 
 from numpy.distutils.fcompiler.gnu import GnuFCompiler

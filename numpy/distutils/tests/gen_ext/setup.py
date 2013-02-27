@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import division
 
 fib3_f = '''
 C FILE: FIB3.F

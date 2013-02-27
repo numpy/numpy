@@ -11,7 +11,9 @@ terms of the NumPy License.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 $Date: 2005/07/20 11:27:58 $
 Pearu Peterson
+
 """
+from __future__ import division
 
 __version__ = "$Revision: 1.53 $"[10:-1]
 

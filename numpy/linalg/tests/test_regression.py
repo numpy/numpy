@@ -1,5 +1,7 @@
 """ Test functions for linalg module
 """
+from __future__ import division
+
 
 from numpy.testing import *
 import numpy as np

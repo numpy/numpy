@@ -1,6 +1,7 @@
-""" Test functions for matrix module
+"""Test functions for matrix module
 
 """
+from __future__ import division
 
 from numpy.testing import *
 

@@ -7,7 +7,9 @@
 
     :copyright: Copyright 2007-2011 by the Sphinx team, see AUTHORS.
     :license: BSD, see LICENSE for details.
+
 """
+from __future__ import division
 
 import warnings
 import collections

@@ -1,4 +1,8 @@
-# Module containing non-deprecated functions borrowed from Numeric.
+"""Module containing non-deprecated functions borrowed from Numeric.
+
+"""
+from __future__ import division
+
 __docformat__ = "restructuredtext en"
 
 # functions that are now methods

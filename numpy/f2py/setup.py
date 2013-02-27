@@ -14,7 +14,9 @@ NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 $Revision: 1.32 $
 $Date: 2005/01/30 17:22:14 $
 Pearu Peterson
+
 """
+from __future__ import division
 
 __version__ = "$Id: setup.py,v 1.32 2005/01/30 17:22:14 pearu Exp $"
 

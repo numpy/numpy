@@ -6,6 +6,8 @@ Interpret C comments as ReStructuredText, and replace them by the HTML output.
 Also, add Doxygen /** and /**< syntax automatically where appropriate.
 
 """
+from __future__ import division
+
 import sys
 import re
 import os

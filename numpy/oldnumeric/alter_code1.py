@@ -27,7 +27,10 @@ Makes the following changes:
 
  * Converts uses of type(...) is <type>
    isinstance(..., <type>)
+
 """
+from __future__ import division
+
 __all__ = ['convertfile', 'convertall', 'converttree', 'convertsrc']
 
 import sys

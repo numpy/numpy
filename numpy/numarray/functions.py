@@ -1,18 +1,6 @@
+from __future__ import division
+
 # missing Numarray defined names (in from numarray import *)
-##__all__ = ['ClassicUnpickler', 'Complex32_fromtype',
-##           'Complex64_fromtype', 'ComplexArray', 'Error',
-##           'MAX_ALIGN', 'MAX_INT_SIZE', 'MAX_LINE_WIDTH',
-##           'NDArray', 'NewArray', 'NumArray',
-##           'NumError', 'PRECISION', 'Py2NumType',
-##           'PyINT_TYPES', 'PyLevel2Type', 'PyNUMERIC_TYPES', 'PyREAL_TYPES',
-##           'SUPPRESS_SMALL',
-##           'SuitableBuffer', 'USING_BLAS',
-##           'UsesOpPriority',
-##           'codegenerator', 'generic', 'libnumarray', 'libnumeric',
-##           'make_ufuncs', 'memory',
-##           'numarrayall', 'numarraycore', 'numinclude', 'safethread',
-##           'typecode', 'typecodes', 'typeconv', 'ufunc', 'ufuncFactory',
-##           'ieeemask']
 
 __all__ = ['asarray', 'ones', 'zeros', 'array', 'where']
 __all__ += ['vdot', 'dot', 'matrixmultiply', 'ravel', 'indices',

@@ -1,3 +1,5 @@
+from __future__ import division
+
 from os.path import join
 
 def configuration(parent_package='',top_path=None):

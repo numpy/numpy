@@ -1,7 +1,12 @@
-# Lifted from Precision.py.  This is for compatibility only.
-#
-#  The character strings are still for "new" NumPy
-#   which is the only Incompatibility with Numeric
+"""
+
+Lifted from Precision.py.  This is for compatibility only.
+
+The character strings are still for "new" NumPy
+which is the only Incompatibility with Numeric
+
+"""
+from __future__ import division
 
 __all__ = ['Character', 'Complex', 'Float',
            'PrecisionError', 'PyObject', 'Int', 'UInt',

@@ -3,7 +3,10 @@
 
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
+
 """
+from __future__ import division
+
 __author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
 __revision__ = "$Revision: 3473 $"
 __date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'

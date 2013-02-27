@@ -1,3 +1,5 @@
+from __future__ import division
+
 major = 0
 minor = 4
 micro = 0

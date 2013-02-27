@@ -1,3 +1,5 @@
+from __future__ import division
+
 import sys
 from numpy.testing import *
 from f2py_f90_ext import foo

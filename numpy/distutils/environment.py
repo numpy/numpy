@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os
 from distutils.dist import Distribution
 

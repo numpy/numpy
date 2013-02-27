@@ -1,4 +1,7 @@
-# Functions that should behave the same as Numeric and need changing
+"""Functions that should behave the same as Numeric and need changing
+
+"""
+from __future__ import division
 
 import numpy as np
 import numpy.core.multiarray as mu
