@@ -355,10 +355,14 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
     int oldnd;
     npy_intp olddims[NPY_MAXDIMS];
     npy_intp oldstrides[NPY_MAXDIMS];
-    npy_intp np, op;
+    npy_intp np, op, last_stride;
     int oi, oj, ok, ni, nj, nk;
 
     oldnd = 0;
+    /* 
+     * Remove axes with dimension 1 from the old array. They have no effect
+     * but would need special cases since their strides do not matter.
+     */
     for (oi = 0; oi < PyArray_NDIM(self); oi++) {
         if (PyArray_DIMS(self)[oi]!= 1) {
             olddims[oldnd] = PyArray_DIMS(self)[oi];
@@ -390,27 +394,31 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
         /* different total sizes; no hope */
         return 0;
     }
-    /* the current code does not handle 0-sized arrays, so give up */
+
     if (np == 0) {
+        /* the current code does not handle 0-sized arrays, so give up */
         return 0;
     }
 
+    /* oi to oj and ni to nj give the axis ranges currently worked with */
     oi = 0;
     oj = 1;
     ni = 0;
     nj = 1;
-    while(ni < newnd && oi < oldnd) {
+    while (ni < newnd && oi < oldnd) {
         np = newdims[ni];
         op = olddims[oi];
 
         while (np != op) {
             if (np < op) {
+                /* Misses trailing 1s, these are handled later */
                 np *= newdims[nj++];
             } else {
                 op *= olddims[oj++];
             }
         }
 
+        /* Check whether the original axes can be combined */
         for (ok = oi; ok < oj - 1; ok++) {
             if (is_f_order) {
                 if (oldstrides[ok+1] != olddims[ok]*oldstrides[ok]) {
@@ -427,6 +435,7 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
             }
         }
 
+        /* Calculate new strides for all axes currently worked with */
         if (is_f_order) {
             newstrides[ni] = oldstrides[oi];
             for (nk = ni + 1; nk < nj; nk++) {
@@ -442,6 +451,22 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
         }
         ni = nj++;
         oi = oj++;
+    }
+
+    /*
+     * Set strides corresponding to trailing 1s of the new shape.
+     */
+    if (ni >= 1) {
+        last_stride = newstrides[ni - 1];
+    }
+    else {
+        last_stride = PyArray_ITEMSIZE(self);
+    }
+    if (is_f_order) {
+        last_stride *= newdims[ni - 1];
+    }
+    for (nk = ni; nk < newnd; nk++) {
+        newstrides[nk] = last_stride;
     }
 
     /*
