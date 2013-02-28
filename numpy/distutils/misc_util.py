@@ -850,7 +850,7 @@ class Configuration(object):
                 pn = dot_join(*([parent_name] + subpackage_name.split('.')[:-1]))
                 args = (pn,)
                 def fix_args_py2(args):
-                    if setup_module.configuration.func_code.co_argcount > 1:
+                    if setup_module.configuration.__code__.co_argcount > 1:
                         args = args + (self.top_path,)
                     return args
                 def fix_args_py3(args):
