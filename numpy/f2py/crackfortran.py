@@ -1,5 +1,17 @@
 #!/usr/bin/env python
 """
+crackfortran --- read fortran (77,90) code and extract declaration information.
+
+Copyright 1999-2004 Pearu Peterson all rights reserved,
+Pearu Peterson <pearu@ioc.ee>
+Permission to use, modify, and distribute this software is given under the
+terms of the NumPy License.
+
+NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
+$Date: 2005/09/27 07:13:49 $
+Pearu Peterson
+
+
 Usage of crackfortran:
 ======================
 Command line keys: -quiet,-verbose,-fix,-f77,-f90,-show,-h <pyffilename>
@@ -124,19 +136,6 @@ TODO:
     * Apply 'parameter' attribute (e.g. 'integer parameter :: i=2' 'real x(i)'
                                    -> 'real x(2)')
     The above may be solved by creating appropriate preprocessor program, for example.
-
-crackfortran --- read fortran (77,90) code and extract declaration information.
-    Usage is explained in the comment block below.
-
-
-Copyright 1999-2004 Pearu Peterson all rights reserved,
-Pearu Peterson <pearu@ioc.ee>
-Permission to use, modify, and distribute this software is given under the
-terms of the NumPy License.
-
-NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
-$Date: 2005/09/27 07:13:49 $
-Pearu Peterson
 
 """
 from __future__ import division
