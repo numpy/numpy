@@ -1598,7 +1598,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Upgrade the converters (if needed)
     if dtype is None:
         for (i, converter) in enumerate(converters):
-            current_column = map(itemgetter(i), rows)
+            current_column = list(map(itemgetter(i), rows))
             try:
                 converter.iterupgrade(current_column)
             except ConverterLockError:
@@ -1657,10 +1657,10 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 #        rows[i] = tuple([convert(val)
 #                         for (convert, val) in zip(conversionfuncs, vals)])
     if loose:
-        rows = zip(*[map(converter._loose_call, map(itemgetter(i), rows))
+        rows = zip(*[list(map(converter._loose_call, list(map(itemgetter(i), rows))))
                      for (i, converter) in enumerate(converters)])
     else:
-        rows = zip(*[map(converter._strict_call, map(itemgetter(i), rows))
+        rows = zip(*[list(map(converter._strict_call, list(map(itemgetter(i), rows))))
                      for (i, converter) in enumerate(converters)])
     # Reset the dtype
     data = rows

@@ -190,7 +190,7 @@ def read_magic(fp):
         msg = "the magic string is not correct; expected %r, got %r"
         raise ValueError(msg % (MAGIC_PREFIX, magic_str[:-2]))
     if sys.version_info[0] < 3:
-        major, minor = map(ord, magic_str[-2:])
+        major, minor = list(map(ord, magic_str[-2:]))
     else:
         major, minor = magic_str[-2:]
     return major, minor

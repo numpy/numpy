@@ -8,26 +8,26 @@ from numpy.core import (array, arange, atleast_1d, atleast_2d, atleast_3d,
 class TestAtleast1d(TestCase):
     def test_0D_array(self):
         a = array(1); b = array(2);
-        res=map(atleast_1d,[a,b])
+        res=list(map(atleast_1d,[a,b]))
         desired = [array([1]),array([2])]
         assert_array_equal(res,desired)
 
     def test_1D_array(self):
         a = array([1,2]); b = array([2,3]);
-        res=map(atleast_1d,[a,b])
+        res=list(map(atleast_1d,[a,b]))
         desired = [array([1,2]),array([2,3])]
         assert_array_equal(res,desired)
 
     def test_2D_array(self):
         a = array([[1,2],[1,2]]); b = array([[2,3],[2,3]]);
-        res=map(atleast_1d,[a,b])
+        res=list(map(atleast_1d,[a,b]))
         desired = [a,b]
         assert_array_equal(res,desired)
 
     def test_3D_array(self):
         a = array([[1,2],[1,2]]); b = array([[2,3],[2,3]]);
         a = array([a,a]);b = array([b,b]);
-        res=map(atleast_1d,[a,b])
+        res=list(map(atleast_1d,[a,b]))
         desired = [a,b]
         assert_array_equal(res,desired)
 
@@ -44,26 +44,26 @@ class TestAtleast1d(TestCase):
 class TestAtleast2d(TestCase):
     def test_0D_array(self):
         a = array(1); b = array(2);
-        res=map(atleast_2d,[a,b])
+        res=list(map(atleast_2d,[a,b]))
         desired = [array([[1]]),array([[2]])]
         assert_array_equal(res,desired)
 
     def test_1D_array(self):
         a = array([1,2]); b = array([2,3]);
-        res=map(atleast_2d,[a,b])
+        res=list(map(atleast_2d,[a,b]))
         desired = [array([[1,2]]),array([[2,3]])]
         assert_array_equal(res,desired)
 
     def test_2D_array(self):
         a = array([[1,2],[1,2]]); b = array([[2,3],[2,3]]);
-        res=map(atleast_2d,[a,b])
+        res=list(map(atleast_2d,[a,b]))
         desired = [a,b]
         assert_array_equal(res,desired)
 
     def test_3D_array(self):
         a = array([[1,2],[1,2]]); b = array([[2,3],[2,3]]);
         a = array([a,a]);b = array([b,b]);
-        res=map(atleast_2d,[a,b])
+        res=list(map(atleast_2d,[a,b]))
         desired = [a,b]
         assert_array_equal(res,desired)
 
@@ -78,26 +78,26 @@ class TestAtleast2d(TestCase):
 class TestAtleast3d(TestCase):
     def test_0D_array(self):
         a = array(1); b = array(2);
-        res=map(atleast_3d,[a,b])
+        res=list(map(atleast_3d,[a,b]))
         desired = [array([[[1]]]),array([[[2]]])]
         assert_array_equal(res,desired)
 
     def test_1D_array(self):
         a = array([1,2]); b = array([2,3]);
-        res=map(atleast_3d,[a,b])
+        res=list(map(atleast_3d,[a,b]))
         desired = [array([[[1],[2]]]),array([[[2],[3]]])]
         assert_array_equal(res,desired)
 
     def test_2D_array(self):
         a = array([[1,2],[1,2]]); b = array([[2,3],[2,3]]);
-        res=map(atleast_3d,[a,b])
+        res=list(map(atleast_3d,[a,b]))
         desired = [a[:,:,newaxis],b[:,:,newaxis]]
         assert_array_equal(res,desired)
 
     def test_3D_array(self):
         a = array([[1,2],[1,2]]); b = array([[2,3],[2,3]]);
         a = array([a,a]);b = array([b,b]);
-        res=map(atleast_3d,[a,b])
+        res=list(map(atleast_3d,[a,b]))
         desired = [a,b]
         assert_array_equal(res,desired)
 
