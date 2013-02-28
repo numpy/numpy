@@ -18,6 +18,7 @@ import sys
 
 from numpy.testing.utils import \
         WarningManager, WarningMessage
+import collections
 
 def slow(t):
     """
@@ -122,7 +123,7 @@ def skipif(skip_condition, msg=None):
         import nose
 
         # Allow for both boolean or callable skip conditions.
-        if callable(skip_condition):
+        if isinstance(skip_condition, collections.Callable):
             skip_val = lambda : skip_condition()
         else:
             skip_val = lambda : skip_condition
@@ -198,7 +199,7 @@ def knownfailureif(fail_condition, msg=None):
         msg = 'Test skipped due to known failure'
 
     # Allow for both boolean or callable known failure conditions.
-    if callable(fail_condition):
+    if isinstance(fail_condition, collections.Callable):
         fail_val = lambda : fail_condition()
     else:
         fail_val = lambda : fail_condition
@@ -264,7 +265,7 @@ def deprecated(conditional=True):
             finally:
                 ctx.__exit__()
 
-        if callable(conditional):
+        if isinstance(conditional, collections.Callable):
             cond = conditional()
         else:
             cond = conditional
