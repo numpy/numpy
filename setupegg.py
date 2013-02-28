@@ -21,4 +21,4 @@ if sys.version_info[0] >= 3:
     setupfile = imp.load_source('setupfile', 'setup.py')
     setupfile.setup_package()
 else:
-    execfile('setup.py')
+    exec(compile(open('setup.py').read(), 'setup.py', 'exec'))
