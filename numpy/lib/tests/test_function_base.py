@@ -1062,10 +1062,6 @@ class TestNaNFuncts(TestCase):
                                    [ 0.91084584, 0.84386844, 0.37068164]]))
         assert_(np.isnan(nanmax([np.nan, np.nan])))
 
-    def test_nanmin_allnan_on_axis(self):
-        assert_array_equal(np.isnan(nanmin([[np.nan] * 2] * 3, axis=1)),
-                     [True, True, True])
-
     def test_nanmin_masked(self):
         a = np.ma.fix_invalid([[2, 1, 3, np.nan], [5, 2, 3, np.nan]])
         ctrl_mask = a._mask.copy()
@@ -1073,6 +1069,22 @@ class TestNaNFuncts(TestCase):
         assert_equal(test, [1, 2])
         assert_equal(a._mask, ctrl_mask)
         assert_equal(np.isinf(a), np.zeros((2, 4), dtype=bool))
+
+    def test_all_nan_along_axis(self):
+        # test that nanargmax/nanargmin raise ValueErrors
+        # but others give a nan result.
+        a = self.A.copy()
+        a[0,0,:] = np.nan
+        where_nan = np.zeros(a.shape[:2], dtype=bool)
+        where_nan[0,0] = True
+        assert_raises(ValueError, nanargmin, a, axis=-1)
+        assert_raises(ValueError, nanargmax, a, axis=-1)
+        assert_array_equal(np.isnan(nanmin(a, axis=-1)), where_nan)
+        assert_array_equal(np.isnan(nanmax(a, axis=-1)), where_nan)
+        assert_array_equal(np.isnan(nansum(a, axis=-1)), where_nan)
+        # These could plausibly raise a ValueError as well:
+        assert_(np.isnan(nanargmin(a[0,0])))
+        assert_(np.isnan(nanargmax(a[0,0])))
 
 
 class TestNanFunctsIntTypes(TestCase):

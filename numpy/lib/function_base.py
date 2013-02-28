@@ -1399,6 +1399,9 @@ def _nanop(op, fill, a, axis=None):
         if np.isscalar(res):
             res = np.nan
         else:
+            if not np.issubdtype(res.dtype, np.floating):
+                raise ValueError("all values along the specified axis are "
+                                 "NaN (not a number)")
             res[mask_all_along_axis] = np.nan
 
     return res
