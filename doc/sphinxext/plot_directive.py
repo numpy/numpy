@@ -456,8 +456,8 @@ def run_code(code, code_path, ns=None):
             if ns is None:
                 ns = {}
             if not ns:
-                exec setup.config.plot_pre_code in ns
-            exec code in ns
+                exec(setup.config.plot_pre_code, ns)
+            exec(code, ns)
         except (Exception, SystemExit) as err:
             raise PlotError(traceback.format_exc())
     finally:

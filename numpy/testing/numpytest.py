@@ -42,7 +42,7 @@ def importall(package):
             continue
         name = package_name+'.'+subpackage_name
         try:
-            exec 'import %s as m' % (name)
+            exec('import %s as m' % (name))
         except Exception as msg:
             print 'Failed importing %s: %s' %(name, msg)
             continue
