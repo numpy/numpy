@@ -10,6 +10,7 @@
 """
 
 import warnings
+import collections
 warnings.warn("This extension has been submitted to Sphinx upstream. "
               "Use the version from there if it is accepted "
               "https://bitbucket.org/birkenfeld/sphinx/pull-request/47/sphinxextlinkcode",
@@ -29,7 +30,7 @@ def doctree_read(app, doctree):
     env = app.builder.env
 
     resolve_target = getattr(env.config, 'linkcode_resolve', None)
-    if not callable(env.config.linkcode_resolve):
+    if not isinstance(env.config.linkcode_resolve, collections.Callable):
         raise LinkcodeError(
             "Function `linkcode_resolve` is not given in conf.py")
 

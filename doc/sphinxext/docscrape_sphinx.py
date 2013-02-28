@@ -1,6 +1,7 @@
 import re, inspect, textwrap, pydoc
 import sphinx
 from docscrape import NumpyDocString, FunctionDoc, ClassDoc
+import collections
 
 class SphinxDocString(NumpyDocString):
     def __init__(self, docstring, config={}):
@@ -212,7 +213,7 @@ def get_doc_object(obj, what=None, doc=None, config={}):
             what = 'class'
         elif inspect.ismodule(obj):
             what = 'module'
-        elif callable(obj):
+        elif isinstance(obj, collections.Callable):
             what = 'function'
         else:
             what = 'object'
