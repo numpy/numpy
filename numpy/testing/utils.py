@@ -1050,7 +1050,7 @@ def decorate_methods(cls, decorator, testmatch=None):
     # delayed import to reduce startup time
     from inspect import isfunction
 
-    methods = filter(isfunction, cls_attr.values())
+    methods = list(filter(isfunction, cls_attr.values()))
     for function in methods:
         try:
             if hasattr(function, 'compat_func_name'):
