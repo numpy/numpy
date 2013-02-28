@@ -168,7 +168,7 @@ def _loadmodule(module):
         s = ""
         for i in range(len(modules)):
             s = ".".join(modules[:i+1])
-            exec "import " + s
+            exec("import " + s)
     return sys.modules[module]
 
 class _ObjectProxy(object):
