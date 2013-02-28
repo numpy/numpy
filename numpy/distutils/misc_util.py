@@ -555,7 +555,7 @@ def general_source_directories_files(top_path):
 def get_ext_source_files(ext):
     # Get sources and any include files in the same directory.
     filenames = []
-    sources = list(filter(is_string, ext.sources))
+    sources = [_m for _m in ext.sources if is_string(_m)]
     filenames.extend(sources)
     filenames.extend(get_dependencies(sources))
     for d in ext.depends:
@@ -566,13 +566,13 @@ def get_ext_source_files(ext):
     return filenames
 
 def get_script_files(scripts):
-    scripts = list(filter(is_string, scripts))
+    scripts = [_m for _m in scripts if is_string(_m)]
     return scripts
 
 def get_lib_source_files(lib):
     filenames = []
     sources = lib[1].get('sources',[])
-    sources = list(filter(is_string, sources))
+    sources = [_m for _m in sources if is_string(_m)]
     filenames.extend(sources)
     filenames.extend(get_dependencies(sources))
     depends = lib[1].get('depends',[])
@@ -808,7 +808,7 @@ class Configuration(object):
                                  caller_level = 1):
         l = subpackage_name.split('.')
         subpackage_path = njoin([self.local_path]+l)
-        dirs = list(filter(os.path.isdir,glob.glob(subpackage_path)))
+        dirs = [_m for _m in glob.glob(subpackage_path) if os.path.isdir(_m)]
         config_list = []
         for d in dirs:
             if not os.path.isfile(njoin(d,'__init__.py')):

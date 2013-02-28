@@ -232,9 +232,9 @@ if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_include_dirs.append(os.path.join(sys.prefix, 'include'))
     default_src_dirs.append(os.path.join(sys.prefix, 'src'))
 
-default_lib_dirs = list(filter(os.path.isdir, default_lib_dirs))
-default_include_dirs = list(filter(os.path.isdir, default_include_dirs))
-default_src_dirs = list(filter(os.path.isdir, default_src_dirs))
+default_lib_dirs = [_m for _m in default_lib_dirs if os.path.isdir(_m)]
+default_include_dirs = [_m for _m in default_include_dirs if os.path.isdir(_m)]
+default_src_dirs = [_m for _m in default_src_dirs if os.path.isdir(_m)]
 
 so_ext = get_shared_lib_extension()
 
