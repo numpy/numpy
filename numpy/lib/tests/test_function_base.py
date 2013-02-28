@@ -147,7 +147,7 @@ class TestAverage(TestCase):
 class TestSelect(TestCase):
     def _select(self, cond, values, default=0):
         output = []
-        for m in range(len(cond)):
+        for m in xrange(len(cond)):
             output += [V[m] for V, C in zip(values, cond) if C[m]] or [default]
         return output
 
@@ -1379,7 +1379,7 @@ class TestInterp(TestCase):
 
 
 def compare_results(res, desired):
-    for i in range(len(desired)):
+    for i in xrange(len(desired)):
         assert_array_equal(res[i], desired[i])
 
 

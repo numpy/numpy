@@ -790,9 +790,9 @@ class TestArrayMethods(TestCase):
         self.assertEqual(mx.ptp(), mx.compressed().ptp())
         rows = numpy.zeros(n, numpy.float_)
         cols = numpy.zeros(m, numpy.float_)
-        for k in range(m):
+        for k in xrange(m):
             cols[k] = mX[:, k].compressed().ptp()
-        for k in range(n):
+        for k in xrange(n):
             rows[k] = mX[k].compressed().ptp()
         self.assertTrue(eq(mX.ptp(0), cols))
         self.assertTrue(eq(mX.ptp(1), rows))
@@ -826,7 +826,7 @@ class TestArrayMethods(TestCase):
         self.assertTrue(eq(mXX.var(axis=3).shape, XX.var(axis=3).shape))
         self.assertTrue(eq(mX.var().shape, X.var().shape))
         (mXvar0, mXvar1) = (mX.var(axis=0), mX.var(axis=1))
-        for k in range(6):
+        for k in xrange(6):
             self.assertTrue(eq(mXvar1[k], mX[k].compressed().var()))
             self.assertTrue(eq(mXvar0[k], mX[:, k].compressed().var()))
             self.assertTrue(eq(numpy.sqrt(mXvar0[k]),
@@ -874,7 +874,7 @@ def eqmask(m1, m2):
 #    return time.time() - tn0
 
 #def testf(x):
-#    for i in range(25):
+#    for i in xrange(25):
 #        y = x **2 +  2.0 * x - 1.0
 #        w = x **2 +  1.0
 #        z = (y / w) ** 2
@@ -882,7 +882,7 @@ def eqmask(m1, m2):
 #testf.test_name = 'Simple arithmetic'
 
 #def testinplace(x):
-#    for i in range(25):
+#    for i in xrange(25):
 #        y = x**2
 #        y += 2.0*x
 #        y -= 1.0

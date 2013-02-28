@@ -102,7 +102,7 @@ def rand(*args):
     from numpy.core import zeros, float64
     results = zeros(args, float64)
     f = results.flat
-    for i in range(len(f)):
+    for i in xrange(len(f)):
         f[i] = random.random()
     return results
 
@@ -248,7 +248,7 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         return
     if isinstance(desired, (list,tuple)) and isinstance(actual, (list,tuple)):
         assert_equal(len(actual),len(desired),err_msg,verbose)
-        for k in range(len(desired)):
+        for k in xrange(len(desired)):
             assert_equal(actual[k], desired[k], 'item=%r\n%s' % (k,err_msg), verbose)
         return
     from numpy.core import ndarray, isscalar, signbit
@@ -1092,7 +1092,7 @@ def measure(code_str,times=1,label=None):
 
     Examples
     --------
-    >>> etime = np.testing.measure('for i in range(1000): np.sqrt(i**2)',
+    >>> etime = np.testing.measure('for i in xrange(1000): np.sqrt(i**2)',
     ...                            times=times)
     >>> print "Time for a single execution : ", etime / times, "s"
     Time for a single execution :  0.005 s
@@ -1125,7 +1125,7 @@ def _assert_valid_refcount(op):
     i = 1
 
     rc = sys.getrefcount(i)
-    for j in range(15):
+    for j in xrange(15):
         d = op(b,c)
 
     assert_(sys.getrefcount(i) >= rc)

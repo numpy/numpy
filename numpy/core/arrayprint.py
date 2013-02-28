@@ -203,12 +203,12 @@ def _leading_trailing(a):
             b = a
     else:
         if len(a) > 2*_summaryEdgeItems:
-            l = [_leading_trailing(a[i]) for i in range(
+            l = [_leading_trailing(a[i]) for i in xrange(
                 min(len(a), _summaryEdgeItems))]
-            l.extend([_leading_trailing(a[-i]) for i in range(
+            l.extend([_leading_trailing(a[-i]) for i in xrange(
                 min(len(a), _summaryEdgeItems),0,-1)])
         else:
-            l = [_leading_trailing(a[i]) for i in range(0, len(a))]
+            l = [_leading_trailing(a[i]) for i in xrange(0, len(a))]
         b = _nc.concatenate(tuple(l))
     return b
 

@@ -1009,7 +1009,7 @@ add_newdoc('numpy.core.multiarray', 'fromiter',
 
     Examples
     --------
-    >>> iterable = (x*x for x in range(5))
+    >>> iterable = (x*x for x in xrange(5))
     >>> np.fromiter(iterable, np.float)
     array([  0.,   1.,   4.,   9.,  16.])
 
@@ -4813,7 +4813,7 @@ add_newdoc('numpy.lib._compiled_base', 'digitize',
     >>> inds = np.digitize(x, bins)
     >>> inds
     array([1, 4, 3, 2])
-    >>> for n in range(x.size):
+    >>> for n in xrange(x.size):
     ...   print bins[inds[n]-1], "<=", x[n], "<", bins[inds[n]]
     ...
     0.0 <= 0.2 < 1.0

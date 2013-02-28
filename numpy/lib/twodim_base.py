@@ -484,7 +484,7 @@ def vander(x, N=None):
            [ 9,  3,  1],
            [25,  5,  1]])
 
-    >>> np.column_stack([x**(N-1-i) for i in range(N)])
+    >>> np.column_stack([x**(N-1-i) for i in xrange(N)])
     array([[ 1,  1,  1],
            [ 4,  2,  1],
            [ 9,  3,  1],
@@ -510,7 +510,7 @@ def vander(x, N=None):
     if N is None:
         N=len(x)
     X = ones( (len(x),N), x.dtype)
-    for i in range(N - 1):
+    for i in xrange(N - 1):
         X[:,i] = x**(N - i - 1)
     return X
 

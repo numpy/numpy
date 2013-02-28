@@ -459,7 +459,7 @@ def check_pow(Poly) :
     w = Poly.window + random((2,))*.25
     tgt = Poly([1], domain=d, window=d)
     tst = Poly([1, 2, 3], domain=d, window=d)
-    for i in range(5) :
+    for i in xrange(5) :
         assert_poly_almost_equal(tst**i, tgt)
         tgt = tgt * tst
     assert_raises(ValueError, tgt.__pow__, 1.5)

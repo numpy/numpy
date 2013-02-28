@@ -191,7 +191,7 @@ def polyfromroots(roots) :
         n = len(p)
         while n > 1:
             m, r = divmod(n, 2)
-            tmp = [polymul(p[i], p[i+m]) for i in range(m)]
+            tmp = [polymul(p[i], p[i+m]) for i in xrange(m)]
             if r:
                 tmp[0] = polymul(tmp[0], p[-1])
             p = tmp
@@ -466,7 +466,7 @@ def polypow(c, pow, maxpower=None) :
         # This can be made more efficient by using powers of two
         # in the usual way.
         prd = c
-        for i in range(2, power + 1) :
+        for i in xrange(2, power + 1) :
             prd = np.convolve(prd, c)
         return prd
 
@@ -549,11 +549,11 @@ def polyder(c, m=1, scl=1, axis=0):
     if cnt >= n:
         c = c[:1]*0
     else :
-        for i in range(cnt):
+        for i in xrange(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=cdt)
-            for j in range(n, 0, -1):
+            for j in xrange(n, 0, -1):
                 der[j - 1] = j*c[j]
             c = der
     c = np.rollaxis(c, 0, iaxis + 1)
@@ -665,7 +665,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     k = list(k) + [0]*(cnt - len(k))
     c = np.rollaxis(c, iaxis)
-    for i in range(cnt):
+    for i in xrange(cnt):
         n = len(c)
         c *= scl
         if n == 1 and np.all(c[0] == 0):
@@ -674,7 +674,7 @@ def polyint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=cdt)
             tmp[0] = c[0]*0
             tmp[1] = c[0]
-            for j in range(1, n):
+            for j in xrange(1, n):
                 tmp[j + 1] = c[j]/(j + 1)
             tmp[0] += k[i] - polyval(lbnd, tmp)
             c = tmp
@@ -773,7 +773,7 @@ def polyval(x, c, tensor=True):
         c = c.reshape(c.shape + (1,)*x.ndim)
 
     c0 = c[-1] + x*0
-    for i in range(2, len(c) + 1) :
+    for i in xrange(2, len(c) + 1) :
         c0 = c[-i] + c0*x
     return c0
 
@@ -1059,7 +1059,7 @@ def polyvander(x, deg) :
     v[0] = x*0 + 1
     if ideg > 0 :
         v[1] = x
-        for i in range(2, ideg + 1) :
+        for i in xrange(2, ideg + 1) :
             v[i] = v[i-1]*x
     return np.rollaxis(v, 0, v.ndim)
 

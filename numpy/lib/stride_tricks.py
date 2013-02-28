@@ -77,7 +77,7 @@ def broadcast_arrays(*args):
     biggest = max(nds)
     # Go through each array and prepend dimensions of length 1 to each of the
     # shapes in order to make the number of dimensions equal.
-    for i in range(len(args)):
+    for i in xrange(len(args)):
         diff = biggest - nds[i]
         if diff > 0:
             shapes[i] = [1] * diff + shapes[i]
@@ -85,7 +85,7 @@ def broadcast_arrays(*args):
     # Chech each dimension for compatibility. A dimension length of 1 is
     # accepted as compatible with any other length.
     common_shape = []
-    for axis in range(biggest):
+    for axis in xrange(biggest):
         lengths = [s[axis] for s in shapes]
         unique = set(lengths + [1])
         if len(unique) > 2:
@@ -100,7 +100,7 @@ def broadcast_arrays(*args):
             common_shape.append(new_length)
             # For each array, if this axis is being broadcasted from a length of
             # 1, then set its stride to 0 so that it repeats its data.
-            for i in range(len(args)):
+            for i in xrange(len(args)):
                 if shapes[i][axis] == 1:
                     shapes[i][axis] = new_length
                     strides[i][axis] = 0

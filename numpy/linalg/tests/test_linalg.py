@@ -456,7 +456,7 @@ class TestMatrixRank(object):
 def test_reduced_rank():
     # Test matrices with reduced rank
     rng = np.random.RandomState(20120714)
-    for i in range(100):
+    for i in xrange(100):
         # Make a rank deficient matrix
         X = rng.normal(size=(40, 10))
         X[:, 0] = X[:, 1] + X[:, 2]

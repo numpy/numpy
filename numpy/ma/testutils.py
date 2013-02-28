@@ -62,7 +62,7 @@ are considered unequal.
 def _assert_equal_on_sequences(actual, desired, err_msg=''):
     "Asserts the equality of two non-array sequences."
     assert_equal(len(actual), len(desired), err_msg)
-    for k in range(len(desired)):
+    for k in xrange(len(desired)):
         assert_equal(actual[k], desired[k], 'item=%r\n%s' % (k, err_msg))
     return
 
@@ -134,7 +134,7 @@ def fail_if_equal(actual, desired, err_msg='',):
         return
     if isinstance(desired, (list, tuple)) and isinstance(actual, (list, tuple)):
         fail_if_equal(len(actual), len(desired), err_msg)
-        for k in range(len(desired)):
+        for k in xrange(len(desired)):
             fail_if_equal(actual[k], desired[k], 'item=%r\n%s' % (k, err_msg))
         return
     if isinstance(actual, np.ndarray) or isinstance(desired, np.ndarray):

@@ -116,7 +116,7 @@ def poly2lag(pol) :
     [pol] = pu.as_series([pol])
     deg = len(pol) - 1
     res = 0
-    for i in range(deg, -1, -1) :
+    for i in xrange(deg, -1, -1) :
         res = lagadd(lagmulx(res), pol[i])
     return res
 
@@ -169,7 +169,7 @@ def lag2poly(c) :
         c0 = c[-2]
         c1 = c[-1]
         # i is the current degree of c1
-        for i in range(n - 1, 1, -1):
+        for i in xrange(n - 1, 1, -1):
             tmp = c0
             c0 = polysub(c[i - 2], (c1*(i - 1))/i)
             c1 = polyadd(tmp, polysub((2*i - 1)*c1, polymulx(c1))/i)
@@ -288,7 +288,7 @@ def lagfromroots(roots) :
         n = len(p)
         while n > 1:
             m, r = divmod(n, 2)
-            tmp = [lagmul(p[i], p[i+m]) for i in range(m)]
+            tmp = [lagmul(p[i], p[i+m]) for i in xrange(m)]
             if r:
                 tmp[0] = lagmul(tmp[0], p[-1])
             p = tmp
@@ -437,7 +437,7 @@ def lagmulx(c):
     prd = np.empty(len(c) + 1, dtype=c.dtype)
     prd[0] = c[0]
     prd[1] = -c[0]
-    for i in range(1, len(c)):
+    for i in xrange(1, len(c)):
         prd[i + 1] = -c[i]*(i + 1)
         prd[i] += c[i]*(2*i + 1)
         prd[i - 1] -= c[i]*i
@@ -502,7 +502,7 @@ def lagmul(c1, c2):
         nd = len(c)
         c0 = c[-2]*xs
         c1 = c[-1]*xs
-        for i in range(3, len(c) + 1) :
+        for i in xrange(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
             c0 = lagsub(c[-i]*xs, (c1*(nd - 1))/nd)
@@ -567,7 +567,7 @@ def lagdiv(c1, c2):
     else :
         quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
         rem = c1
-        for i in range(lc1 - lc2, - 1, -1):
+        for i in xrange(lc1 - lc2, - 1, -1):
             p = lagmul([0]*i + [1], c2)
             q = rem[-1]/p[-1]
             rem = rem[:-1] - q*p[:-1]
@@ -624,7 +624,7 @@ def lagpow(c, pow, maxpower=16) :
         # This can be made more efficient by using powers of two
         # in the usual way.
         prd = c
-        for i in range(2, power + 1) :
+        for i in xrange(2, power + 1) :
             prd = lagmul(prd, c)
         return prd
 
@@ -708,11 +708,11 @@ def lagder(c, m=1, scl=1, axis=0) :
     if cnt >= n:
         c = c[:1]*0
     else :
-        for i in range(cnt):
+        for i in xrange(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
-            for j in range(n, 1, -1):
+            for j in xrange(n, 1, -1):
                 der[j - 1] = -c[j]
                 c[j - 1] += c[j]
             der[0] = -c[1]
@@ -830,7 +830,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     c = np.rollaxis(c, iaxis)
     k = list(k) + [0]*(cnt - len(k))
-    for i in range(cnt) :
+    for i in xrange(cnt) :
         n = len(c)
         c *= scl
         if n == 1 and np.all(c[0] == 0):
@@ -839,7 +839,7 @@ def lagint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
             tmp[0] = c[0]
             tmp[1] = -c[0]
-            for j in range(1, n):
+            for j in xrange(1, n):
                 tmp[j] += c[j]
                 tmp[j + 1] = -c[j]
             tmp[0] += k[i] - lagval(lbnd, tmp)
@@ -936,7 +936,7 @@ def lagval(x, c, tensor=True):
         nd = len(c)
         c0 = c[-2]
         c1 = c[-1]
-        for i in range(3, len(c) + 1) :
+        for i in xrange(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
             c0 = c[-i] - (c1*(nd - 1))/nd
@@ -1230,7 +1230,7 @@ def lagvander(x, deg) :
     v[0] = x*0 + 1
     if ideg > 0 :
         v[1] = 1 - x
-        for i in range(2, ideg + 1) :
+        for i in xrange(2, ideg + 1) :
             v[i] = (v[i-1]*(2*i - 1 - x) - v[i-2]*(i - 1))/i
     return np.rollaxis(v, 0, v.ndim)
 

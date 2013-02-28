@@ -308,7 +308,7 @@ def buildmodules(lst):
     cfuncs.buildcfuncs()
     outmess('Building modules...\n')
     modules,mnames,isusedby=[],[],{}
-    for i in range(len(lst)):
+    for i in xrange(len(lst)):
         if '__user__' in lst[i]['name']:
             cb_rules.buildcallbacks(lst[i])
         else:
@@ -320,7 +320,7 @@ def buildmodules(lst):
             modules.append(lst[i])
             mnames.append(lst[i]['name'])
     ret = {}
-    for i in range(len(mnames)):
+    for i in xrange(len(mnames)):
         if mnames[i] in isusedby:
             outmess('\tSkipping module "%s" which is used by %s.\n'%(mnames[i],','.join(map(lambda s:'"%s"'%s,isusedby[mnames[i]]))))
         else:
@@ -360,13 +360,13 @@ def run_main(comline_list):
     auxfuncs.options=options
     postlist=callcrackfortran(files,options)
     isusedby={}
-    for i in range(len(postlist)):
+    for i in xrange(len(postlist)):
         if 'use' in postlist[i]:
             for u in postlist[i]['use'].keys():
                 if u not in isusedby:
                     isusedby[u]=[]
                 isusedby[u].append(postlist[i]['name'])
-    for i in range(len(postlist)):
+    for i in xrange(len(postlist)):
         if postlist[i]['block']=='python module' and '__user__' in postlist[i]['name']:
             if postlist[i]['name'] in isusedby:
                 #if not quiet:
@@ -376,7 +376,7 @@ def run_main(comline_list):
             outmess('Stopping. Edit the signature file and then run f2py on the signature file: ')
             outmess('%s %s\n'%(os.path.basename(sys.argv[0]),options['signsfile']))
         return
-    for i in range(len(postlist)):
+    for i in xrange(len(postlist)):
         if postlist[i]['block']!='python module':
             if 'python module' not in options:
                 errmess('Tip: If your original code is Fortran source then you must use -m option.\n')
@@ -518,7 +518,7 @@ def run_compile():
     define_macros, sources = filter_files('-D','',sources,remove_prefix=1)
     using_numarray = 0
     using_numeric = 0
-    for i in range(len(define_macros)):
+    for i in xrange(len(define_macros)):
         name_value = define_macros[i].split('=',1)
         if len(name_value)==1:
             name_value.append(None)

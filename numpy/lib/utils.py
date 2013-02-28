@@ -375,7 +375,7 @@ def who(vardict=None):
     maxshape = 0
     maxbyte = 0
     totalbytes = 0
-    for k in range(len(sta)):
+    for k in xrange(len(sta)):
         val = sta[k]
         if maxname < len(val[0]):
             maxname = len(val[0])
@@ -393,7 +393,7 @@ def who(vardict=None):
         prval = "Name %s Shape %s Bytes %s Type" % (sp1*' ', sp2*' ', sp3*' ')
         print prval + "\n" + "="*(len(prval)+5) + "\n"
 
-    for k in range(len(sta)):
+    for k in xrange(len(sta)):
         val = sta[k]
         print "%s %s %s %s %s %s %s" % (val[0], ' '*(sp1-len(val[0])+4),
                                         val[1], ' '*(sp2-len(val[1])+5),

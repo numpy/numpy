@@ -177,7 +177,7 @@ class MachAr(object):
         negep = it + 3
         betain = one / beta
         a = one
-        for i in range(negep):
+        for i in xrange(negep):
             a = a * betain
         b = a
         for _ in xrange(max_iterN):
@@ -285,7 +285,7 @@ class MachAr(object):
             xmax = one - beta*epsneg
         xmax = xmax / (xmin*beta*beta*beta)
         i = maxexp + minexp + 3
-        for j in range(i):
+        for j in xrange(i):
             if ibeta==2:
                 xmax = xmax + xmax
             else:

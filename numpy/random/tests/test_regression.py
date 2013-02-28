@@ -67,7 +67,7 @@ class TestRegression(TestCase):
         # Check that custom RandomState does not call into global state
         m = np.random.RandomState()
         res = np.array([0, 8, 7, 2, 1, 9, 4, 7, 0, 3])
-        for i in range(3):
+        for i in xrange(3):
             np.random.seed(i)
             m.seed(4321)
             # If m.state is not honored, the result will change

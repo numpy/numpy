@@ -243,7 +243,7 @@ class TestRegression(TestCase):
 
     def test_mem_divmod(self,level=rlevel):
         """Ticket #126"""
-        for i in range(10):
+        for i in xrange(10):
             divmod(np.array([i])[0],10)
 
 
@@ -1091,7 +1091,7 @@ class TestRegression(TestCase):
 
     def test_unaligned_unicode_access(self, level=rlevel) :
         """Ticket #825"""
-        for i in range(1,9) :
+        for i in xrange(1,9) :
             msg = 'unicode offset: %d chars'%i
             t = np.dtype([('a','S%d'%i),('b','U2')])
             x = np.array([(asbytes('a'),u'b')], dtype=t)
@@ -1675,7 +1675,7 @@ class TestRegression(TestCase):
         """Ticket #1756 """
         s = asbytes('0123456789abcdef')
         a = np.array([s]*5)
-        for i in range(1,17):
+        for i in xrange(1,17):
             a1 = np.array(a, "|S%d"%i)
             a2 = np.array([s[:i]]*5)
             assert_equal(a1, a2)
@@ -1769,7 +1769,7 @@ class TestRegression(TestCase):
 
     def test_memoryleak(self):
         # Ticket #1917 - ensure that array data doesn't leak
-        for i in range(1000):
+        for i in xrange(1000):
             # 100MB times 1000 would give 100GB of memory usage if it leaks
             a = np.empty((100000000,), dtype='i1')
             del a

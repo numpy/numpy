@@ -346,7 +346,7 @@ def dstack(tup):
     return _nx.concatenate(map(atleast_3d,tup),2)
 
 def _replace_zero_by_x_arrays(sub_arys):
-    for i in range(len(sub_arys)):
+    for i in xrange(len(sub_arys)):
         if len(_nx.shape(sub_arys[i])) == 0:
             sub_arys[i] = _nx.array([])
         elif _nx.sometrue(_nx.equal(_nx.shape(sub_arys[i]),0)):
@@ -392,7 +392,7 @@ def array_split(ary,indices_or_sections,axis = 0):
 
     sub_arys = []
     sary = _nx.swapaxes(ary,axis,0)
-    for i in range(Nsections):
+    for i in xrange(Nsections):
         st = div_points[i]; end = div_points[i+1]
         sub_arys.append(_nx.swapaxes(sary[st:end],axis,0))
 

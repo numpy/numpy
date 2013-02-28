@@ -959,7 +959,7 @@ def rfftn(a, s=None, axes=None):
     a = asarray(a).astype(float)
     s, axes = _cook_nd_args(a, s, axes)
     a = rfft(a, s[-1], axes[-1])
-    for ii in range(len(axes)-1):
+    for ii in xrange(len(axes)-1):
         a = fft(a, s[ii], axes[ii])
     return a
 
@@ -1079,7 +1079,7 @@ def irfftn(a, s=None, axes=None):
 
     a = asarray(a).astype(complex)
     s, axes = _cook_nd_args(a, s, axes, invreal=1)
-    for ii in range(len(axes)-1):
+    for ii in xrange(len(axes)-1):
         a = ifft(a, s[ii], axes[ii])
     a = irfft(a, s[-1], axes[-1])
     return a

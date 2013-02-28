@@ -307,7 +307,7 @@ def getarrdims(a,var,verbose=0):
         ret['dims']=','.join(dim)
         ret['rank']=`len(dim)`
         ret['rank*[-1]']=`len(dim)*[-1]`[1:-1]
-        for i in range(len(dim)): # solve dim for dependecies
+        for i in xrange(len(dim)): # solve dim for dependecies
             v=[]
             if dim[i] in depargs: v=[dim[i]]
             else:
@@ -514,7 +514,7 @@ def sign2map(a,var):
             #ismutable,'mutable',l_not(ismutable),'immutable',
             ]
         rl=[]
-        for i in range(0,len(il),2):
+        for i in xrange(0,len(il),2):
             if il[i](var): rl.append(il[i+1])
         if isstring(var):
             rl.append('slen(%s)=%s'%(a,ret['length']))

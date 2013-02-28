@@ -204,7 +204,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
             np.savez(fp, data='LOVELY LOAD')
             fp.close()
 
-            for i in range(1, 1025):
+            for i in xrange(1, 1025):
                 try:
                     np.load(tmp)["data"]
                 except Exception as e:
@@ -666,7 +666,7 @@ class TestLoadTxt(TestCase):
 
     def test_generator_source(self):
         def count():
-            for i in range(10):
+            for i in xrange(10):
                 yield asbytes("%d" % i)
 
         res = np.loadtxt(count())
@@ -778,13 +778,13 @@ class TestFromTxt(TestCase):
         assert_equal(test, control)
 
     def test_skip_footer(self):
-        data = ["# %i" % i for i in range(1, 6)]
+        data = ["# %i" % i for i in xrange(1, 6)]
         data.append("A, B, C")
-        data.extend(["%i,%3.1f,%03s" % (i, i, i) for i in range(51)])
+        data.extend(["%i,%3.1f,%03s" % (i, i, i) for i in xrange(51)])
         data[-1] = "99,99"
         kwargs = dict(delimiter=",", names=True, skip_header=5, skip_footer=10)
         test = np.genfromtxt(StringIO(asbytes("\n".join(data))), **kwargs)
-        ctrl = np.array([("%f" % i, "%f" % i, "%f" % i) for i in range(41)],
+        ctrl = np.array([("%f" % i, "%f" % i, "%f" % i) for i in xrange(41)],
                         dtype=[(_, float) for _ in "ABC"])
         assert_equal(test, ctrl)
 
@@ -1246,7 +1246,7 @@ M   33  21.99
     def test_invalid_raise(self):
         "Test invalid raise"
         data = ["1, 1, 1, 1, 1"] * 50
-        for i in range(5):
+        for i in xrange(5):
             data[10 * i] = "2, 2, 2, 2 2"
         data.insert(0, "a, b, c, d, e")
         mdata = StringIO("\n".join(data))
@@ -1269,7 +1269,7 @@ M   33  21.99
     def test_invalid_raise_with_usecols(self):
         "Test invalid_raise with usecols"
         data = ["1, 1, 1, 1, 1"] * 50
-        for i in range(5):
+        for i in xrange(5):
             data[10 * i] = "2, 2, 2, 2 2"
         data.insert(0, "a, b, c, d, e")
         mdata = StringIO("\n".join(data))
@@ -1289,7 +1289,7 @@ M   33  21.99
         mtest = np.ndfromtxt(mdata, usecols=(0, 1), **kwargs)
         assert_equal(len(mtest), 50)
         control = np.ones(50, dtype=[(_, int) for _ in 'ab'])
-        control[[10 * _ for _ in range(5)]] = (2, 2)
+        control[[10 * _ for _ in xrange(5)]] = (2, 2)
         assert_equal(mtest, control)
 
 
@@ -1527,7 +1527,7 @@ M   33  21.99
 
     def test_gft_using_generator(self):
         def count():
-            for i in range(10):
+            for i in xrange(10):
                 yield asbytes("%d" % i)
 
         res = np.genfromtxt(count())

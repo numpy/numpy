@@ -74,7 +74,7 @@ _typestr = nt._typestr
 def find_duplicate(list):
     """Find duplication in a list, return a list of duplicated elements"""
     dup = []
-    for i in range(len(list)):
+    for i in xrange(len(list)):
         if (list[i] in list[i + 1:]):
             if (list[i] not in dup):
                 dup.append(list[i])
@@ -184,7 +184,7 @@ class format_parser:
         #  "f0, f1, f2,..."
         # if not enough names are specified, they will be assigned as "f[n],
         # f[n+1],..." etc. where n is the number of specified names..."
-        self._names += ['f%d' % i for i in range(len(self._names),
+        self._names += ['f%d' % i for i in xrange(len(self._names),
                                                  self._nfields)]
         # check for redundant names
         _dup = find_duplicate(self._names)
@@ -562,7 +562,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
     _array = recarray(shape, descr)
 
     # populate the record array (makes a copy)
-    for i in range(len(arrayList)):
+    for i in xrange(len(arrayList)):
         _array[_names[i]] = arrayList[i]
 
     return _array

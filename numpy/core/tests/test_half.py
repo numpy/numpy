@@ -248,7 +248,7 @@ class TestHalf(TestCase):
 
         # getitem
         a = np.arange(10, dtype=float16)
-        for i in range(10):
+        for i in xrange(10):
             assert_equal(a.item(i),i)
 
     def test_spacing_nextafter(self):

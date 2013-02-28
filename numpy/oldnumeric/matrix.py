@@ -12,7 +12,7 @@ from numpy import matrix as Matrix, squeeze
 # Hidden names that will be the same.
 
 _table = [None]*256
-for k in range(256):
+for k in xrange(256):
     _table[k] = chr(k)
 _table = ''.join(_table)
 

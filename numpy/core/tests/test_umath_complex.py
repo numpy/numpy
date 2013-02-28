@@ -147,7 +147,7 @@ class TestClog(TestCase):
         x = np.array([1+0j, 1+2j])
         y_r = np.log(np.abs(x)) + 1j * np.angle(x)
         y = np.log(x)
-        for i in range(len(x)):
+        for i in xrange(len(x)):
             assert_almost_equal(y[i], y_r[i])
 
     @platform_skip
@@ -296,7 +296,7 @@ class TestClog(TestCase):
         ya = np.array(yl, dtype=np.complex)
         err = np.seterr(divide='ignore')
         try:
-            for i in range(len(xa)):
+            for i in xrange(len(xa)):
                 assert_almost_equal(np.log(np.conj(xa[i])), np.conj(np.log(xa[i])))
         finally:
             np.seterr(**err)
@@ -392,7 +392,7 @@ class TestCpow(TestCase):
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
         y_r = x ** 2
         y = np.power(x, 2)
-        for i in range(len(x)):
+        for i in xrange(len(x)):
             assert_almost_equal(y[i], y_r[i])
 
     def test_scalar(self):
@@ -432,7 +432,7 @@ class TestCabs(object):
         x = np.array([1+1j, 0+2j, 1+2j, np.inf, np.nan])
         y_r = np.array([np.sqrt(2.), 2, np.sqrt(5), np.inf, np.nan])
         y = np.abs(x)
-        for i in range(len(x)):
+        for i in xrange(len(x)):
             assert_almost_equal(y[i], y_r[i])
 
     def test_fabs(self):
@@ -478,7 +478,7 @@ class TestCabs(object):
             return np.abs(np.complex(a, b))
 
         xa = np.array(x, dtype=np.complex)
-        for i in range(len(xa)):
+        for i in xrange(len(xa)):
             ref = g(x[i], y[i])
             yield check_real_value, f, x[i], y[i], ref
 

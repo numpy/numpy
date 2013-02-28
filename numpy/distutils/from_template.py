@@ -101,7 +101,7 @@ item_re = re.compile(r"\A\\(?P<index>\d+)\Z")
 def conv(astr):
     b = astr.split(',')
     l = [x.strip() for x in b]
-    for i in range(len(l)):
+    for i in xrange(len(l)):
         m = item_re.match(l[i])
         if m:
             j = int(m.group('index'))
@@ -177,7 +177,7 @@ def expand_sub(substr,names):
         return rules.get(name,(k+1)*[name])[k]
 
     newstr = ''
-    for k in range(numsubs):
+    for k in xrange(numsubs):
         newstr += template_re.sub(namerepl, substr) + '\n\n'
 
     newstr = newstr.replace('@rightarrow@','>')

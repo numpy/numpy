@@ -1039,7 +1039,7 @@ def analyzeline(m,case,line):
                     else: begc=endc=r.strip()
                     if not len(begc)==len(endc)==1:
                         outmess('analyzeline: expected "<char>-<char>" instead of "%s" in range list of implicit statement (2)\n'%r);continue
-                    for o in range(ord(begc),ord(endc)+1):
+                    for o in xrange(ord(begc),ord(endc)+1):
                         impl[chr(o)]=decl
             groupcache[groupcounter]['implicit']=impl
     elif case=='data':
@@ -1222,7 +1222,7 @@ def removespaces(expr):
     expr=expr.strip()
     if len(expr)<=1: return expr
     expr2=expr[0]
-    for i in range(1,len(expr)-1):
+    for i in xrange(1,len(expr)-1):
         if expr[i]==' ' and \
            ((expr[i+1] in "()[]{}=+-/* ") or (expr[i-1] in "()[]{}=+-/* ")): continue
         expr2=expr2+expr[i]

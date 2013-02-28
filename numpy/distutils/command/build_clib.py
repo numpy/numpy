@@ -16,7 +16,7 @@ from numpy.distutils.misc_util import filter_sources, has_f_sources,\
 
 # Fix Python distutils bug sf #1718574:
 _l = old_build_clib.user_options
-for _i in range(len(_l)):
+for _i in xrange(len(_l)):
     if _l[_i][0] in ['build-clib', 'build-temp']:
         _l[_i] = (_l[_i][0]+'=',)+_l[_i][1:]
 #

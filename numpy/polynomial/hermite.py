@@ -117,7 +117,7 @@ def poly2herm(pol) :
     [pol] = pu.as_series([pol])
     deg = len(pol) - 1
     res = 0
-    for i in range(deg, -1, -1) :
+    for i in xrange(deg, -1, -1) :
         res = hermadd(hermmulx(res), pol[i])
     return res
 
@@ -173,7 +173,7 @@ def herm2poly(c) :
         c0 = c[-2]
         c1 = c[-1]
         # i is the current degree of c1
-        for i in range(n - 1, 1, -1) :
+        for i in xrange(n - 1, 1, -1) :
             tmp = c0
             c0 = polysub(c[i - 2], c1*(2*(i - 1)))
             c1 = polyadd(tmp, polymulx(c1)*2)
@@ -292,7 +292,7 @@ def hermfromroots(roots) :
         n = len(p)
         while n > 1:
             m, r = divmod(n, 2)
-            tmp = [hermmul(p[i], p[i+m]) for i in range(m)]
+            tmp = [hermmul(p[i], p[i+m]) for i in xrange(m)]
             if r:
                 tmp[0] = hermmul(tmp[0], p[-1])
             p = tmp
@@ -440,7 +440,7 @@ def hermmulx(c):
     prd = np.empty(len(c) + 1, dtype=c.dtype)
     prd[0] = c[0]*0
     prd[1] = c[0]/2
-    for i in range(1, len(c)):
+    for i in xrange(1, len(c)):
         prd[i + 1] = c[i]/2
         prd[i - 1] += c[i]*i
     return prd
@@ -504,7 +504,7 @@ def hermmul(c1, c2):
         nd = len(c)
         c0 = c[-2]*xs
         c1 = c[-1]*xs
-        for i in range(3, len(c) + 1) :
+        for i in xrange(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
             c0 = hermsub(c[-i]*xs, c1*(2*(nd - 1)))
@@ -571,7 +571,7 @@ def hermdiv(c1, c2):
     else :
         quo = np.empty(lc1 - lc2 + 1, dtype=c1.dtype)
         rem = c1
-        for i in range(lc1 - lc2, - 1, -1):
+        for i in xrange(lc1 - lc2, - 1, -1):
             p = hermmul([0]*i + [1], c2)
             q = rem[-1]/p[-1]
             rem = rem[:-1] - q*p[:-1]
@@ -628,7 +628,7 @@ def hermpow(c, pow, maxpower=16) :
         # This can be made more efficient by using powers of two
         # in the usual way.
         prd = c
-        for i in range(2, power + 1) :
+        for i in xrange(2, power + 1) :
             prd = hermmul(prd, c)
         return prd
 
@@ -712,11 +712,11 @@ def hermder(c, m=1, scl=1, axis=0) :
     if cnt >= n:
         c = c[:1]*0
     else :
-        for i in range(cnt):
+        for i in xrange(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
-            for j in range(n, 0, -1):
+            for j in xrange(n, 0, -1):
                 der[j - 1] = (2*j)*c[j]
             c = der
     c = np.rollaxis(c, 0, iaxis + 1)
@@ -831,7 +831,7 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     c = np.rollaxis(c, iaxis)
     k = list(k) + [0]*(cnt - len(k))
-    for i in range(cnt) :
+    for i in xrange(cnt) :
         n = len(c)
         c *= scl
         if n == 1 and np.all(c[0] == 0):
@@ -840,7 +840,7 @@ def hermint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             tmp = np.empty((n + 1,) + c.shape[1:], dtype=c.dtype)
             tmp[0] = c[0]*0
             tmp[1] = c[0]/2
-            for j in range(1, n):
+            for j in xrange(1, n):
                 tmp[j + 1] = c[j]/(2*(j + 1))
             tmp[0] += k[i] - hermval(lbnd, tmp)
             c = tmp
@@ -936,7 +936,7 @@ def hermval(x, c, tensor=True):
         nd = len(c)
         c0 = c[-2]
         c1 = c[-1]
-        for i in range(3, len(c) + 1) :
+        for i in xrange(3, len(c) + 1) :
             tmp = c0
             nd =  nd - 1
             c0 = c[-i] - c1*(2*(nd - 1))
@@ -1231,7 +1231,7 @@ def hermvander(x, deg) :
     if ideg > 0 :
         x2 = x*2
         v[1] = x2
-        for i in range(2, ideg + 1) :
+        for i in xrange(2, ideg + 1) :
             v[i] = (v[i-1]*x2 - v[i-2]*(2*(i - 1)))
     return np.rollaxis(v, 0, v.ndim)
 

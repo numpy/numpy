@@ -195,7 +195,7 @@ class Arrayterator(object):
             # running dimension (ie, the dimension along which
             # the blocks will be built from)
             rundim = 0
-            for i in range(ndims-1, -1, -1):
+            for i in xrange(ndims-1, -1, -1):
                 # if count is zero we ran out of elements to read
                 # along higher dimensions, so we read only a single position
                 if count == 0:
@@ -216,7 +216,7 @@ class Arrayterator(object):
             # Update start position, taking care of overflow to
             # other dimensions
             start[rundim] = stop[rundim]  # start where we stopped
-            for i in range(ndims-1, 0, -1):
+            for i in xrange(ndims-1, 0, -1):
                 if start[i] >= self.stop[i]:
                     start[i] = self.start[i]
                     start[i-1] += self.step[i-1]

@@ -20,7 +20,7 @@ class TestRegression(TestCase):
 
     def test_mem_digitize(self,level=rlevel):
         """Ticket #95"""
-        for i in range(100):
+        for i in xrange(100):
             np.digitize([1,2,3,4],[1,3])
             np.digitize([0,1,2,3,4],[1,3])
 

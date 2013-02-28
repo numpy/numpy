@@ -62,7 +62,7 @@ reserved keywords. If this is the case, a default 'f%i' is substituted.
 If the argument `names` is not None, updates the field names to valid names.
     """
     ndescr = len(descr)
-    default_names = ['f%i' % i for i in range(ndescr)]
+    default_names = ['f%i' % i for i in xrange(ndescr)]
     if names is None:
         new_names = default_names
     else:

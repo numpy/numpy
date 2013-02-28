@@ -367,7 +367,7 @@ def poly2cheb(pol) :
     [pol] = pu.as_series([pol])
     deg = len(pol) - 1
     res = 0
-    for i in range(deg, -1, -1) :
+    for i in xrange(deg, -1, -1) :
         res = chebadd(chebmulx(res), pol[i])
     return res
 
@@ -426,7 +426,7 @@ def cheb2poly(c) :
         c0 = c[-2]
         c1 = c[-1]
         # i is the current degree of c1
-        for i in range(n - 1, 1, -1) :
+        for i in xrange(n - 1, 1, -1) :
             tmp = c0
             c0 = polysub(c[i - 2], c1)
             c1 = polyadd(tmp, polymulx(c1)*2)
@@ -545,7 +545,7 @@ def chebfromroots(roots) :
         n = len(p)
         while n > 1:
             m, r = divmod(n, 2)
-            tmp = [chebmul(p[i], p[i+m]) for i in range(m)]
+            tmp = [chebmul(p[i], p[i+m]) for i in xrange(m)]
             if r:
                 tmp[0] = chebmul(tmp[0], p[-1])
             p = tmp
@@ -858,7 +858,7 @@ def chebpow(c, pow, maxpower=16) :
         # in the usual way.
         zs = _cseries_to_zseries(c)
         prd = zs
-        for i in range(2, power + 1) :
+        for i in xrange(2, power + 1) :
             prd = np.convolve(prd, zs)
         return _zseries_to_cseries(prd)
 
@@ -947,11 +947,11 @@ def chebder(c, m=1, scl=1, axis=0) :
     if cnt >= n:
         c = c[:1]*0
     else:
-        for i in range(cnt):
+        for i in xrange(cnt):
             n = n - 1
             c *= scl
             der = np.empty((n,) + c.shape[1:], dtype=c.dtype)
-            for j in range(n, 2, -1):
+            for j in xrange(n, 2, -1):
                 der[j - 1] = (2*j)*c[j]
                 c[j - 2] += (j*c[j])/(j - 2)
             if n > 1:
@@ -1072,7 +1072,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
 
     c = np.rollaxis(c, iaxis)
     k = list(k) + [0]*(cnt - len(k))
-    for i in range(cnt) :
+    for i in xrange(cnt) :
         n = len(c)
         c *= scl
         if n == 1 and np.all(c[0] == 0):
@@ -1083,7 +1083,7 @@ def chebint(c, m=1, k=[], lbnd=0, scl=1, axis=0):
             tmp[1] = c[0]
             if n > 1:
                 tmp[2] = c[1]/4
-            for j in range(2, n):
+            for j in xrange(2, n):
                 t = c[j]/(2*j + 1)
                 tmp[j + 1] = c[j]/(2*(j + 1))
                 tmp[j - 1] -= c[j]/(2*(j - 1))
@@ -1173,7 +1173,7 @@ def chebval(x, c, tensor=True):
         x2 = 2*x
         c0 = c[-2]
         c1 = c[-1]
-        for i in range(3, len(c) + 1) :
+        for i in xrange(3, len(c) + 1) :
             tmp = c0
             c0 = c[-i] - c1
             c1 = tmp + c1*x2
@@ -1459,7 +1459,7 @@ def chebvander(x, deg) :
     if ideg > 0 :
         x2 = 2*x
         v[1] = x
-        for i in range(2, ideg + 1) :
+        for i in xrange(2, ideg + 1) :
             v[i] = v[i-1]*x2 - v[i-2]
     return np.rollaxis(v, 0, v.ndim)
 
@@ -1943,7 +1943,7 @@ def chebpts1(npts):
     Chebyshev points of the first kind.
 
     The Chebyshev points of the first kind are the points ``cos(x)``,
-    where ``x = [pi*(k + .5)/npts for k in range(npts)]``.
+    where ``x = [pi*(k + .5)/npts for k in xrange(npts)]``.
 
     Parameters
     ----------
@@ -1980,7 +1980,7 @@ def chebpts2(npts):
     Chebyshev points of the second kind.
 
     The Chebyshev points of the second kind are the points ``cos(x)``,
-    where ``x = [pi*k/(npts - 1) for k in range(npts)]``.
+    where ``x = [pi*k/(npts - 1) for k in xrange(npts)]``.
 
     Parameters
     ----------

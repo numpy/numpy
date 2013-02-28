@@ -50,11 +50,11 @@ class TestFromrecords(TestCase):
         a = np.zeros(count, dtype='O')
         b = np.zeros(count, dtype='f8')
         c = np.zeros(count, dtype='f8')
-        for i in range(len(a)):
+        for i in xrange(len(a)):
             a[i] = range(1, 10)
 
         mine = np.rec.fromarrays([a, b, c], names='date,data1,data2')
-        for i in range(len(a)):
+        for i in xrange(len(a)):
             assert_((mine.date[i] == range(1, 10)))
             assert_((mine.data1[i] == 0.0))
             assert_((mine.data2[i] == 0.0))

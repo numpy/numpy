@@ -2700,9 +2700,9 @@ class TestMaskedArrayMathMethods(TestCase):
         assert_equal(mx.ptp(), mx.compressed().ptp())
         rows = np.zeros(n, np.float)
         cols = np.zeros(m, np.float)
-        for k in range(m):
+        for k in xrange(m):
             cols[k] = mX[:, k].compressed().ptp()
-        for k in range(n):
+        for k in xrange(n):
             rows[k] = mX[k].compressed().ptp()
         assert_equal(mX.ptp(0), cols)
         assert_equal(mX.ptp(1), rows)
@@ -2752,7 +2752,7 @@ class TestMaskedArrayMathMethods(TestCase):
         (mXvar0, mXvar1) = (mX.var(axis=0), mX.var(axis=1))
         assert_almost_equal(mX.var(axis=None, ddof=2), mX.compressed().var(ddof=2))
         assert_almost_equal(mX.std(axis=None, ddof=2), mX.compressed().std(ddof=2))
-        for k in range(6):
+        for k in xrange(6):
             assert_almost_equal(mXvar1[k], mX[k].compressed().var())
             assert_almost_equal(mXvar0[k], mX[:, k].compressed().var())
             assert_almost_equal(np.sqrt(mXvar0[k]), mX[:, k].compressed().std())
@@ -2900,7 +2900,7 @@ class TestMaskedArrayMathMethodsComplex(TestCase):
         (mXvar0, mXvar1) = (mX.var(axis=0), mX.var(axis=1))
         assert_almost_equal(mX.var(axis=None, ddof=2), mX.compressed().var(ddof=2))
         assert_almost_equal(mX.std(axis=None, ddof=2), mX.compressed().std(ddof=2))
-        for k in range(6):
+        for k in xrange(6):
             assert_almost_equal(mXvar1[k], mX[k].compressed().var())
             assert_almost_equal(mXvar0[k], mX[:, k].compressed().var())
             assert_almost_equal(np.sqrt(mXvar0[k]), mX[:, k].compressed().std())

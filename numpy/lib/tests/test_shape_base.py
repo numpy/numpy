@@ -315,7 +315,7 @@ class TestTile(TestCase):
 
 # Utility
 def compare_results(res,desired):
-    for i in range(len(desired)):
+    for i in xrange(len(desired)):
         assert_array_equal(res[i],desired[i])
 
 
