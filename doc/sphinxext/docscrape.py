@@ -8,6 +8,7 @@ import re
 import pydoc
 from StringIO import StringIO
 from warnings import warn
+import collections
 
 class Reader(object):
     """A line-based string reader.
@@ -495,7 +496,7 @@ class ClassDoc(NumpyDocString):
         return [name for name,func in inspect.getmembers(self._cls)
                 if ((not name.startswith('_')
                      or name in self.extra_public_methods)
-                    and callable(func))]
+                    and isinstance(func, collections.Callable))]
 
     @property
     def properties(self):
