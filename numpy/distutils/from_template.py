@@ -110,7 +110,7 @@ def conv(astr):
 
 def unique_key(adict):
     """ Obtain a unique key given a dictionary."""
-    allkeys = adict.keys()
+    allkeys = list(adict.keys())
     done = False
     n = 1
     while not done:
@@ -134,7 +134,7 @@ def expand_sub(substr,names):
         if template_name_re.match(thelist):
             return "<%s>" % (thelist)
         name = None
-        for key in lnames.keys():    # see if list is already in dictionary
+        for key in list(lnames.keys()):    # see if list is already in dictionary
             if lnames[key] == thelist:
                 name = key
         if name is None:      # this list is not in the dictionary yet

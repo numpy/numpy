@@ -140,7 +140,7 @@ class LibraryInfo(object):
             The list of section headers.
 
         """
-        return self._sections.keys()
+        return list(self._sections.keys())
 
     def cflags(self, section="default"):
         val = self.vars.interpolate(self._sections[section]['cflags'])
@@ -175,7 +175,7 @@ class VariableSet(object):
 
     """
     def __init__(self, d):
-        self._raw_data = dict([(k, v) for k, v in d.items()])
+        self._raw_data = dict([(k, v) for k, v in list(d.items())])
 
         self._re = {}
         self._re_sub = {}
@@ -183,7 +183,7 @@ class VariableSet(object):
         self._init_parse()
 
     def _init_parse(self):
-        for k, v in self._raw_data.items():
+        for k, v in list(self._raw_data.items()):
             self._init_parse_var(k, v)
 
     def _init_parse_var(self, name, value):
@@ -194,7 +194,7 @@ class VariableSet(object):
         # Brute force: we keep interpolating until there is no '${var}' anymore
         # or until interpolated string is equal to input string
         def _interpolate(value):
-            for k in self._re.keys():
+            for k in list(self._re.keys()):
                 value = self._re[k].sub(self._re_sub[k], value)
             return value
         while _VAR.search(value):
@@ -219,7 +219,7 @@ class VariableSet(object):
             The names of all variables in the `VariableSet` instance.
 
         """
-        return self._raw_data.keys()
+        return list(self._raw_data.keys())
 
     # Emulate a dict to set/get variables values
     def __getitem__(self, name):
@@ -308,16 +308,16 @@ def _read_config_imp(filenames, dirs=None):
     def _read_config(f):
         meta, vars, sections, reqs = parse_config(f, dirs)
         # recursively add sections and variables of required libraries
-        for rname, rvalue in reqs.items():
+        for rname, rvalue in list(reqs.items()):
             nmeta, nvars, nsections, nreqs = _read_config(pkg_to_filename(rvalue))
 
             # Update var dict for variables not in 'top' config file
-            for k, v in nvars.items():
+            for k, v in list(nvars.items()):
                 if not k in vars:
                     vars[k] = v
 
             # Update sec dict
-            for oname, ovalue in nsections[rname].items():
+            for oname, ovalue in list(nsections[rname].items()):
                 if ovalue:
                     sections[rname][oname] += ' %s' % ovalue
 

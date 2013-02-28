@@ -1116,7 +1116,7 @@ capi_fail:
 
 def buildcfuncs():
     from capi_maps import c2capi_map
-    for k in c2capi_map.keys():
+    for k in list(c2capi_map.keys()):
         m='pyarr_from_p_%s1'%k
         cppmacros[m]='#define %s(v) (PyArray_SimpleNewFromData(0,NULL,%s,(char *)v))'%(m,c2capi_map[k])
     k='string'
@@ -1161,12 +1161,12 @@ def append_needs(need,flag=1):
                 for nn in needs[need]:
                     t=append_needs(nn,0)
                     if type(t)==types.DictType:
-                        for nnn in t.keys():
+                        for nnn in list(t.keys()):
                             if nnn in tmp:
                                 tmp[nnn]=tmp[nnn]+t[nnn]
                             else:
                                 tmp[nnn]=t[nnn]
-            for nn in tmp.keys():
+            for nn in list(tmp.keys()):
                 for nnn in tmp[nn]:
                     if nnn not in outneeds[nn]:
                         outneeds[nn]=[nnn]+outneeds[nn]
@@ -1177,7 +1177,7 @@ def append_needs(need,flag=1):
                 for nn in needs[need]:
                     t=append_needs(nn,flag)
                     if type(t)==types.DictType:
-                        for nnn in t.keys():
+                        for nnn in list(t.keys()):
                             if nnn in tmp:
                                 tmp[nnn]=t[nnn]+tmp[nnn]
                             else:
@@ -1192,7 +1192,7 @@ def append_needs(need,flag=1):
 def get_needs():
     global outneeds,needs
     res={}
-    for n in outneeds.keys():
+    for n in list(outneeds.keys()):
         out=[]
         saveout=copy.copy(outneeds[n])
         while len(outneeds[n])>0:

@@ -19,7 +19,7 @@ def _get_precisions(typecodes):
     return lst
 
 def _fill_table(typecodes, table={}):
-    for key, value in typecodes.items():
+    for key, value in list(typecodes.items()):
         table[key] = _get_precisions(value)
     return table
 

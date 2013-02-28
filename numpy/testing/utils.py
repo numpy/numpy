@@ -241,7 +241,7 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         if not isinstance(actual, dict) :
             raise AssertionError(repr(type(actual)))
         assert_equal(len(actual),len(desired),err_msg,verbose)
-        for k,i in desired.items():
+        for k,i in list(desired.items()):
             if k not in actual :
                 raise AssertionError(repr(k))
             assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k,err_msg), verbose)
@@ -1050,7 +1050,7 @@ def decorate_methods(cls, decorator, testmatch=None):
     # delayed import to reduce startup time
     from inspect import isfunction
 
-    methods = filter(isfunction, cls_attr.values())
+    methods = filter(isfunction, list(cls_attr.values()))
     for function in methods:
         try:
             if hasattr(function, 'compat_func_name'):

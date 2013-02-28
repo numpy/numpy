@@ -519,7 +519,7 @@ def buildcallback(rout,um):
         ar['need']=[ar['need']]
 
     if 'need' in rd:
-        for t in cfuncs.typedefs.keys():
+        for t in list(cfuncs.typedefs.keys()):
             if t in rd['need']:
                 ar['need'].append(t)
 

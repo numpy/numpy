@@ -126,7 +126,7 @@ def has_ppro(seq):
 
 def cntset(seq):
     cnt = 0
-    for i in seq.values():
+    for i in list(seq.values()):
         cnt += i
     return cnt
 

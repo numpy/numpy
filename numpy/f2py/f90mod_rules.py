@@ -99,7 +99,7 @@ def buildhooks(pymod):
         mfargs = []
         if hasbody(m):
             for b in m['body']: notvars.append(b['name'])
-        for n in m['vars'].keys():
+        for n in list(m['vars'].keys()):
             var = m['vars'][n]
             if (n not in notvars) and (not l_or(isintent_hide,isprivate)(var)):
                 onlyvars.append(n)

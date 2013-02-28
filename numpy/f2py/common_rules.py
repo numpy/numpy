@@ -33,7 +33,7 @@ from crackfortran import rmbadname
 def findcommonblocks(block,top=1):
     ret = []
     if hascommon(block):
-        for n in block['common'].keys():
+        for n in list(block['common'].keys()):
             vars={}
             for v in block['common'][n]:
                 vars[v]=block['vars'][v]

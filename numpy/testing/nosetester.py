@@ -348,7 +348,7 @@ class NoseTester(object):
 
         _warn_opts = dict(develop=(DeprecationWarning, RuntimeWarning),
                           release=())
-        if raise_warnings in _warn_opts.keys():
+        if raise_warnings in list(_warn_opts.keys()):
             raise_warnings = _warn_opts[raise_warnings]
 
         # Preserve the state of the warning filters

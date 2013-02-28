@@ -14,7 +14,7 @@ def show_information(*args):
         print 'system,node,release,version,machine = ',os.uname()
 
 def show_environ(*args):
-    for k,i in os.environ.items():
+    for k,i in list(os.environ.items()):
         print '  %s = %s' % (k, i)
 
 def show_fortran_compilers(*args):

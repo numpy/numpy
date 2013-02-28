@@ -65,5 +65,5 @@ def restore_func(name):
         sys._getframe(0).f_globals[name] = val
 
 def restore_all():
-    for name in _restore_dict.keys():
+    for name in list(_restore_dict.keys()):
         restore_func(name)

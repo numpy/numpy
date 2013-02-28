@@ -95,20 +95,20 @@ class SourceFiles:
         return re.sub("[^A-Za-z0-9\.]", '_', path)
 
     def write_text(self, root):
-        for path, source in self.files.items():
+        for path, source in list(self.files.items()):
             fd = open(os.path.join(root, self.clean_path(path)), "w")
             source.write_text(fd)
             fd.close()
 
     def write_html(self, root):
-        for path, source in self.files.items():
+        for path, source in list(self.files.items()):
             fd = open(os.path.join(root, self.clean_path(path) + ".html"), "w")
             source.write_html(fd)
             fd.close()
 
         fd = open(os.path.join(root, 'index.html'), 'w')
         fd.write("<html>")
-        paths = self.files.keys()
+        paths = list(self.files.keys())
         paths.sort()
         for path in paths:
             fd.write('<p><a href="%s.html">%s</a></p>' %

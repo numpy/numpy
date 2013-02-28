@@ -128,7 +128,7 @@ class SphinxDocString(NumpyDocString):
             return out
 
         out += ['.. index:: %s' % idx.get('default','')]
-        for section, references in idx.iteritems():
+        for section, references in idx.items():
             if section == 'default':
                 continue
             elif section == 'refguide':

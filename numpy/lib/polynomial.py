@@ -1030,7 +1030,7 @@ class poly1d(object):
     variable = None
     def __init__(self, c_or_r, r=0, variable=None):
         if isinstance(c_or_r, poly1d):
-            for key in c_or_r.__dict__.keys():
+            for key in list(c_or_r.__dict__.keys()):
                 self.__dict__[key] = c_or_r.__dict__[key]
             if variable is not None:
                 self.__dict__['variable'] = variable

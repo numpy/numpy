@@ -83,7 +83,7 @@ def assert_equal(actual, desired, err_msg=''):
         if not isinstance(actual, dict):
             raise AssertionError(repr(type(actual)))
         assert_equal(len(actual), len(desired), err_msg)
-        for k, i in desired.items():
+        for k, i in list(desired.items()):
             if not k in actual:
                 raise AssertionError("%s not in %s" % (k, actual))
             assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k, err_msg))
@@ -127,7 +127,7 @@ def fail_if_equal(actual, desired, err_msg='',):
         if not isinstance(actual, dict):
             raise AssertionError(repr(type(actual)))
         fail_if_equal(len(actual), len(desired), err_msg)
-        for k, i in desired.items():
+        for k, i in list(desired.items()):
             if not k in actual:
                 raise AssertionError(repr(k))
             fail_if_equal(actual[k], desired[k], 'key=%r\n%s' % (k, err_msg))

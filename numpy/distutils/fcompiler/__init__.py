@@ -265,7 +265,7 @@ class FCompiler(CCompiler):
         self.set_command(key, value)
 
     def set_commands(self, **kw):
-        for k, v in kw.items():
+        for k, v in list(kw.items()):
             self.set_command(k, v)
 
     def set_command(self, key, value):
@@ -540,7 +540,7 @@ class FCompiler(CCompiler):
     def dump_properties(self):
         """Print out the attributes of a compiler instance."""
         props = []
-        for key in self.executables.keys() + \
+        for key in list(self.executables.keys()) + \
                 ['version','libraries','library_dirs',
                  'object_switch','compile_switch']:
             if hasattr(self,key):
@@ -846,7 +846,7 @@ def new_fcompiler(plat=None,
         if compiler is not None:
             msg = msg + " with '%s' compiler." % compiler
             msg = msg + " Supported compilers are: %s)" \
-                  % (','.join(fcompiler_class.keys()))
+                  % (','.join(list(fcompiler_class.keys())))
         log.warn(msg)
         failed_fcompiler = True
         return None

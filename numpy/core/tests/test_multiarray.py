@@ -1490,7 +1490,7 @@ class TestPutmask(object):
         mask = x < 40
 
         for val in [-100,0,15]:
-            for types in np.sctypes.itervalues():
+            for types in np.sctypes.values():
                 for T in types:
                     if T not in unchecked_types:
                         yield self.tst_basic,x.copy().astype(T),T,mask,val
@@ -1537,7 +1537,7 @@ class TestTake(object):
 
         x = np.random.random(24)*100
         x.shape = 2,3,4
-        for types in np.sctypes.itervalues():
+        for types in np.sctypes.values():
             for T in types:
                 if T not in unchecked_types:
                     yield self.tst_basic,x.copy().astype(T)

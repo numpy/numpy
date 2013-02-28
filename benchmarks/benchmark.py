@@ -12,7 +12,7 @@ class Benchmark(dict):
     def __setitem__(self,module,(test_str,setup_str)):
         """Set the test code for modules."""
         if module == 'all':
-            modules = self.module_test.keys()
+            modules = list(self.module_test.keys())
         else:
             modules = [module]
 

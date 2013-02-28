@@ -355,11 +355,11 @@ def who(vardict=None):
         vardict = frame.f_globals
     sta = []
     cache = {}
-    for name in vardict.keys():
+    for name in list(vardict.keys()):
         if isinstance(vardict[name],ndarray):
             var = vardict[name]
             idv = id(var)
-            if idv in cache.keys():
+            if idv in list(cache.keys()):
                 namestr = name + " (%s)" % cache[idv]
                 original=0
             else:
@@ -444,7 +444,7 @@ def _makenamedict(module='numpy'):
         if len(totraverse) == 0:
             break
         thisdict = totraverse.pop(0)
-        for x in thisdict.keys():
+        for x in list(thisdict.keys()):
             if isinstance(thisdict[x],types.ModuleType):
                 modname = thisdict[x].__name__
                 if modname not in dictlist:
@@ -753,7 +753,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
     whats = str(what).lower().split()
     if not whats: return
 
-    for name, (docstring, kind, index) in cache.iteritems():
+    for name, (docstring, kind, index) in cache.items():
         if kind in ('module', 'object'):
             # don't show modules or objects
             continue

@@ -211,7 +211,7 @@ class build_src(build_ext.build_ext):
         import shutil
         template, install_dir, subst_dict = info
         template_dir = os.path.dirname(template)
-        for k, v in gd.items():
+        for k, v in list(gd.items()):
             subst_dict[k] = v
 
         if self.inplace == 1:
@@ -252,7 +252,7 @@ class build_src(build_ext.build_ext):
             build_npkg = True
 
         if build_npkg:
-            for pkg, infos in self.distribution.installed_pkg_config.items():
+            for pkg, infos in list(self.distribution.installed_pkg_config.items()):
                 pkg_path = self.distribution.package_dir[pkg]
                 prefix = os.path.join(os.path.abspath(top_prefix), pkg_path)
                 d = {'prefix': prefix}

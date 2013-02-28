@@ -210,14 +210,14 @@ def do_generate_api(targets, sources):
         multiarray_api_dict[f.name] = FunctionApi(f.name, index, f.return_type,
                                                   f.args, api_name)
 
-    for name, index in global_vars.items():
+    for name, index in list(global_vars.items()):
         type = global_vars_types[name]
         multiarray_api_dict[name] = GlobalVarApi(name, index, type, api_name)
 
-    for name, index in scalar_bool_values.items():
+    for name, index in list(scalar_bool_values.items()):
         multiarray_api_dict[name] = BoolValuesApi(name, index, api_name)
 
-    for name, index in types_api.items():
+    for name, index in list(types_api.items()):
         multiarray_api_dict[name] = TypeApi(name, index, 'PyTypeObject', api_name)
 
     if len(multiarray_api_dict) != len(multiarray_api_index):

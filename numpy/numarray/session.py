@@ -118,7 +118,7 @@ def _callers_modules():
     global namespace."""
     g = _callers_globals()
     mods = []
-    for k,v in g.items():
+    for k,v in list(g.items()):
         if type(v) == type(sys):
             mods.append(getattr(v,"__name__"))
     return mods
@@ -233,7 +233,7 @@ def _locate(modules, object):
     for mname in modules:
         m = sys.modules[mname]
         if m:
-            for k,v in m.__dict__.items():
+            for k,v in list(m.__dict__.items()):
                 if v is object:
                     return m.__name__, k
     else:
@@ -267,11 +267,11 @@ def save(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
         dictionary = _callers_globals()
 
     if variables is None:
-        keys = dictionary.keys()
+        keys = list(dictionary.keys())
     else:
         keys = variables.split(",")
 
-    source_modules = _callers_modules() + sys.modules.keys()
+    source_modules = _callers_modules() + list(sys.modules.keys())
 
     p = pickle.Pickler(file, protocol=2)
 
@@ -331,7 +331,7 @@ def load(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
             session = dict(zip(o.keys, values))
             _verbose("updating dictionary with session variables.")
             if variables is None:
-                keys = session.keys()
+                keys = list(session.keys())
             else:
                 keys = variables.split(",")
             for k in keys:

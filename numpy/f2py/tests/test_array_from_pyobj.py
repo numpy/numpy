@@ -115,7 +115,7 @@ class Type(object):
         if isinstance(name,dtype):
             dtype0 = name
             name = None
-            for n,i in typeinfo.items():
+            for n,i in list(typeinfo.items()):
                 if isinstance(i,tuple) and dtype0.type is i[-1]:
                     name = n
                     break

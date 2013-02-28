@@ -220,7 +220,7 @@ def extend_all(module):
     try:
         mall = getattr(module, '__all__')
     except AttributeError:
-        mall = [k for k in module.__dict__.keys() if not k.startswith('_')]
+        mall = [k for k in list(module.__dict__.keys()) if not k.startswith('_')]
     for a in mall:
         if a not in adict:
             __all__.append(a)
@@ -2180,7 +2180,7 @@ _errdict = {"ignore":ERR_IGNORE,
             "log":ERR_LOG}
 
 _errdict_rev = {}
-for key in _errdict.keys():
+for key in list(_errdict.keys()):
     _errdict_rev[_errdict[key]] = key
 del key
 

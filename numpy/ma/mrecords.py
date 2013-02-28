@@ -710,7 +710,7 @@ set to 'fi', where `i` is the number of existing fields.
     newdata = recarray(_data.shape, newdtype)
     # Add the exisintg field
     [newdata.setfield(_data.getfield(*f), *f)
-         for f in _data.dtype.fields.values()]
+         for f in list(_data.dtype.fields.values())]
     # Add the new field
     newdata.setfield(newfield._data, *newdata.dtype.fields[newfieldname])
     newdata = newdata.view(MaskedRecords)
@@ -720,7 +720,7 @@ set to 'fi', where `i` is the number of existing fields.
     newmask = recarray(_data.shape, newmdtype)
     # Add the old masks
     [newmask.setfield(_mask.getfield(*f), *f)
-         for f in _mask.dtype.fields.values()]
+         for f in list(_mask.dtype.fields.values())]
     # Add the mask of the new field
     newmask.setfield(getmaskarray(newfield),
                      *newmask.dtype.fields[newfieldname])

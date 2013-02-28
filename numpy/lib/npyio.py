@@ -553,7 +553,7 @@ def _savez(file, args, kwds, compress):
     namedict = kwds
     for i, val in enumerate(args):
         key = 'arr_%d' % i
-        if key in namedict.keys():
+        if key in list(namedict.keys()):
             raise ValueError("Cannot use un-named variables and keyword %s" % key)
         namedict[key] = val
 
@@ -568,7 +568,7 @@ def _savez(file, args, kwds, compress):
     fd, tmpfile = tempfile.mkstemp(suffix='-numpy.npy')
     os.close(fd)
     try:
-        for key, val in namedict.iteritems():
+        for key, val in namedict.items():
             fname = key + '.npy'
             fid = open(tmpfile, 'wb')
             try:
@@ -807,7 +807,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 packing = [(N, tuple)]
 
         # By preference, use the converters specified by the user
-        for i, conv in (user_converters or {}).iteritems():
+        for i, conv in (user_converters or {}).items():
             if usecols:
                 try:
                     i = usecols.index(i)
@@ -1418,7 +1418,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # We have a dictionary: process it field by field
     if isinstance(user_missing_values, dict):
         # Loop on the items
-        for (key, val) in user_missing_values.items():
+        for (key, val) in list(user_missing_values.items()):
             # Is the key a string ?
             if _is_string_like(key):
                 try:
@@ -1478,7 +1478,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     filling_values = [None] * nbcols
     # We have a dictionary : update each entry individually
     if isinstance(user_filling_values, dict):
-        for (key, val) in user_filling_values.items():
+        for (key, val) in list(user_filling_values.items()):
             if _is_string_like(key):
                 try:
                     # Transform it into an integer
@@ -1528,7 +1528,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                           for (miss, fill) in zipit]
     # Update the converters to use the user-defined ones
     uc_update = []
-    for (i, conv) in user_converters.items():
+    for (i, conv) in list(user_converters.items()):
         # If the converter is specified by column names, use the index instead
         if _is_string_like(i):
             try:

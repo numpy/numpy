@@ -73,7 +73,7 @@ def main():
 
     # report
     in_sections = {}
-    for name, locations in documented.iteritems():
+    for name, locations in documented.items():
         for (filename, section, keyword, toctree) in locations:
             in_sections.setdefault((filename, section, keyword), []).append(name)
 
@@ -104,7 +104,7 @@ def check_numpy():
         undocumented.update(get_undocumented(documented, mod, skip=SKIP_LIST))
 
     for d in (documented, undocumented):
-        for k in d.keys():
+        for k in list(d.keys()):
             if k.startswith('numpy.'):
                 d[k[6:]] = d[k]
                 del d[k]

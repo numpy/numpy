@@ -174,7 +174,7 @@ def do_generate_api(targets, sources):
         ufunc_api_dict[name] = FunctionApi(f.name, index, f.return_type,
                                            f.args, api_name)
 
-    for name, index in numpy_api.ufunc_types_api.items():
+    for name, index in list(numpy_api.ufunc_types_api.items()):
         ufunc_api_dict[name] = TypeApi(name, index, 'PyTypeObject', api_name)
 
     # set up object API

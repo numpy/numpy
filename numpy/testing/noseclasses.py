@@ -81,7 +81,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
 
         # Look for tests in a module's contained objects.
         if ismodule(obj) and self._recurse:
-            for valname, val in obj.__dict__.items():
+            for valname, val in list(obj.__dict__.items()):
                 valname1 = '%s.%s' % (name, valname)
                 if ( (isroutine(val) or isclass(val))
                      and self._from_module(module, val) ):
@@ -93,7 +93,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
         # Look for tests in a class's contained objects.
         if isclass(obj) and self._recurse:
             #print 'RECURSE into class:',obj  # dbg
-            for valname, val in obj.__dict__.items():
+            for valname, val in list(obj.__dict__.items()):
                 #valname1 = '%s.%s' % (name, valname)  # dbg
                 #print 'N',name,'VN:',valname,'val:',str(val)[:77] # dbg
                 # Special handling for staticmethod/classmethod.

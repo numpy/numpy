@@ -313,7 +313,7 @@ def buildmodules(lst):
             cb_rules.buildcallbacks(lst[i])
         else:
             if 'use' in lst[i]:
-                for u in lst[i]['use'].keys():
+                for u in list(lst[i]['use'].keys()):
                     if u not in isusedby:
                         isusedby[u]=[]
                     isusedby[u].append(lst[i]['name'])
@@ -326,7 +326,7 @@ def buildmodules(lst):
         else:
             um=[]
             if 'use' in modules[i]:
-                for u in modules[i]['use'].keys():
+                for u in list(modules[i]['use'].keys()):
                     if u in isusedby and u in mnames:
                         um.append(modules[mnames.index(u)])
                     else:
@@ -336,7 +336,7 @@ def buildmodules(lst):
     return ret
 
 def dict_append(d_out,d_in):
-    for (k,v) in d_in.items():
+    for (k,v) in list(d_in.items()):
         if k not in d_out:
             d_out[k] = []
         if type(v) is types.ListType:
@@ -362,7 +362,7 @@ def run_main(comline_list):
     isusedby={}
     for i in range(len(postlist)):
         if 'use' in postlist[i]:
-            for u in postlist[i]['use'].keys():
+            for u in list(postlist[i]['use'].keys()):
                 if u not in isusedby:
                     isusedby[u]=[]
                 isusedby[u].append(postlist[i]['name'])
@@ -387,7 +387,7 @@ def run_main(comline_list):
 
     ret=buildmodules(postlist)
 
-    for mn in ret.keys():
+    for mn in list(ret.keys()):
         dict_append(ret[mn],{'csrc':fobjcsrc,'h':fobjhsrc})
     return ret
 
@@ -464,14 +464,14 @@ def run_compile():
             if s[:len(v)]==v:
                 from numpy.distutils import fcompiler
                 fcompiler.load_all_fcompiler_classes()
-                allowed_keys = fcompiler.fcompiler_class.keys()
+                allowed_keys = list(fcompiler.fcompiler_class.keys())
                 nv = ov = s[len(v):].lower()
                 if ov not in allowed_keys:
                     vmap = {} # XXX
                     try:
                         nv = vmap[ov]
                     except KeyError:
-                        if ov not in vmap.values():
+                        if ov not in list(vmap.values()):
                             print 'Unknown vendor: "%s"' % (s[len(v):])
                     nv = ov
                 i = flib_flags.index(s)

@@ -176,21 +176,21 @@ if os.path.isfile('.f2py_f2cmap'):
         f = open('.f2py_f2cmap','r')
         d = eval(f.read(),{},{})
         f.close()
-        for k,d1 in d.items():
-            for k1 in d1.keys():
+        for k,d1 in list(d.items()):
+            for k1 in list(d1.keys()):
                 d1[k1.lower()] = d1[k1]
             d[k.lower()] = d[k]
-        for k in d.keys():
+        for k in list(d.keys()):
             if k not in f2cmap_all:
                 f2cmap_all[k]={}
-            for k1 in d[k].keys():
+            for k1 in list(d[k].keys()):
                 if d[k][k1] in c2py_map:
                     if k1 in f2cmap_all[k]:
                         outmess("\tWarning: redefinition of {'%s':{'%s':'%s'->'%s'}}\n"%(k,k1,f2cmap_all[k][k1],d[k][k1]))
                     f2cmap_all[k][k1] = d[k][k1]
                     outmess('\tMapping "%s(kind=%s)" to "%s"\n' % (k,k1,d[k][k1]))
                 else:
-                    errmess("\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"%(k,k1,d[k][k1],d[k][k1],c2py_map.keys()))
+                    errmess("\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"%(k,k1,d[k][k1],d[k][k1],list(c2py_map.keys())))
         outmess('Succesfully applied user defined changes from .f2py_f2cmap\n')
     except Exception as msg:
         errmess('Failed to apply user defined changes from .f2py_f2cmap: %s. Skipping.\n' % (msg))
@@ -465,7 +465,7 @@ def sign2map(a,var):
     ret={'varname':a,'outvarname':out_a}
     ret['ctype']=getctype(var)
     intent_flags = []
-    for f,s in isintent_dict.items():
+    for f,s in list(isintent_dict.items()):
         if f(var): intent_flags.append('F2PY_%s'%s)
     if intent_flags:
         #XXX: Evaluate intent_flags here.
@@ -489,7 +489,7 @@ def sign2map(a,var):
             ret['cblatexdocstr']=lcb2_map[lcb_map[a]]['latexdocstr']
         else:
             ret['cbname']=a
-            errmess('sign2map: Confused: external %s is not in lcb_map%s.\n'%(a,lcb_map.keys()))
+            errmess('sign2map: Confused: external %s is not in lcb_map%s.\n'%(a,list(lcb_map.keys())))
     if isstring(var):
         ret['length']=getstrlength(var)
     if isarray(var):
@@ -577,12 +577,12 @@ def routsign2map(rout):
         ret['F_WRAPPEDFUNC'] = 'F_WRAPPEDFUNC'
     lcb_map={}
     if 'use' in rout:
-        for u in rout['use'].keys():
+        for u in list(rout['use'].keys()):
             if u in cb_rules.cb_map:
                 for un in cb_rules.cb_map[u]:
                     ln=un[0]
                     if 'map' in rout['use'][u]:
-                        for k in rout['use'][u]['map'].keys():
+                        for k in list(rout['use'][u]['map'].keys()):
                             if rout['use'][u]['map'][k]==un[0]: ln=k;break
                     lcb_map[ln]=un[1]
             #else:

@@ -572,7 +572,7 @@ def getargs(rout):
 
 def getargs2(rout):
     sortargs,args=[],rout.get('args',[])
-    auxvars = [a for a in rout['vars'].keys() if isintent_aux(rout['vars'][a])\
+    auxvars = [a for a in list(rout['vars'].keys()) if isintent_aux(rout['vars'][a])\
                and a not in args]
     args = auxvars + args
     if 'sortvars' in rout:
@@ -610,7 +610,7 @@ def replace(str,d,defaultsep=''):
         return map(lambda d,f=replace,sep=defaultsep,s=str:f(s,d,sep),d)
     if type(str)==types.ListType:
         return map(lambda s,f=replace,sep=defaultsep,d=d:f(s,d,sep),str)
-    for k in 2*d.keys():
+    for k in 2*list(d.keys()):
         if k=='separatorsfor':
             continue
         if 'separatorsfor' in d and k in d['separatorsfor']:
@@ -628,7 +628,7 @@ def dictappend(rd,ar):
         for a in ar:
             rd=dictappend(rd,a)
         return rd
-    for k in ar.keys():
+    for k in list(ar.keys()):
         if k[0]=='_':
             continue
         if k in rd:
@@ -642,7 +642,7 @@ def dictappend(rd,ar):
             elif type(rd[k])==types.DictType:
                 if type(ar[k])==types.DictType:
                     if k=='separatorsfor':
-                        for k1 in ar[k].keys():
+                        for k1 in list(ar[k].keys()):
                             if k1 not in rd[k]:
                                 rd[k][k1]=ar[k][k1]
                     else:
@@ -667,7 +667,7 @@ def applyrules(rules,d,var={}):
         if 'needs' in res:
             cfuncs.append_needs(res['needs'])
 
-    for k in rules.keys():
+    for k in list(rules.keys()):
         if k=='separatorsfor':
             ret[k]=rules[k]; continue
         if type(rules[k])==str:
@@ -682,7 +682,7 @@ def applyrules(rules,d,var={}):
             continue
         elif type(rules[k])==types.DictType:
             ret[k]=[]
-            for k1 in rules[k].keys():
+            for k1 in list(rules[k].keys()):
                 if type(k1)==types.FunctionType and k1(var):
                     if type(rules[k][k1])==types.ListType:
                         for i in rules[k][k1]:
