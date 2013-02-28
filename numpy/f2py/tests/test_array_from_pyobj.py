@@ -136,10 +136,10 @@ class Type(object):
         self.dtypechar = typeinfo[self.NAME][0]
 
     def cast_types(self):
-        return map(self.__class__,self._cast_dict[self.NAME])
+        return list(map(self.__class__,self._cast_dict[self.NAME]))
 
     def all_types(self):
-        return map(self.__class__,self._type_names)
+        return list(map(self.__class__,self._type_names))
 
     def smaller_types(self):
         bits = typeinfo[self.NAME][3]

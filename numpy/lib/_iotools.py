@@ -712,7 +712,7 @@ class StringConverter(object):
             value = (value,)
         _strict_call = self._strict_call
         try:
-            map(_strict_call, value)
+            list(map(_strict_call, value))
         except ValueError:
             # Raise an exception if we locked the converter...
             if self._locked:

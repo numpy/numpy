@@ -2070,7 +2070,7 @@ def combine_paths(*args, **kws):
     if not args:
         return []
     if len(args) == 1:
-        result = reduce(lambda a, b: a + b, map(glob, args[0]), [])
+        result = reduce(lambda a, b: a + b, list(map(glob, args[0])), [])
     elif len(args) == 2:
         result = []
         for a0 in args[0]:

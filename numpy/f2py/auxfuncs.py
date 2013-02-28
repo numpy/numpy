@@ -607,9 +607,9 @@ def stripcomma(s):
 
 def replace(str,d,defaultsep=''):
     if type(d)==types.ListType:
-        return map(lambda d,f=replace,sep=defaultsep,s=str:f(s,d,sep),d)
+        return list(map(lambda d,f=replace,sep=defaultsep,s=str:f(s,d,sep),d))
     if type(str)==types.ListType:
-        return map(lambda s,f=replace,sep=defaultsep,d=d:f(s,d,sep),str)
+        return list(map(lambda s,f=replace,sep=defaultsep,d=d:f(s,d,sep),str))
     for k in 2*d.keys():
         if k=='separatorsfor':
             continue

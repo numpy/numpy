@@ -147,8 +147,8 @@ def format_in_columns(lst, max_columns):
     Format a list containing strings to a string containing the items
     in columns.
     """
-    lst = map(str, lst)
-    col_len = max(map(len, lst)) + 2
+    lst = list(map(str, lst))
+    col_len = max(list(map(len, lst))) + 2
     ncols = 80//col_len
     if ncols > max_columns:
         ncols = max_columns

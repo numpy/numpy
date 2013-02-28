@@ -66,7 +66,7 @@ def broadcast_arrays(*args):
            [3, 3, 3]])]
 
     """
-    args = map(np.asarray, args)
+    args = list(map(np.asarray, args))
     shapes = [x.shape for x in args]
     if len(set(shapes)) == 1:
         # Common case where nothing needs to be broadcasted.

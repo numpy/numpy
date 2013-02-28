@@ -37,7 +37,7 @@ def _convert_from_string(data):
         newrow = []
         for col in trow:
             temp = col.split()
-            newrow.extend(map(_eval,temp))
+            newrow.extend(list(map(_eval,temp)))
         if count == 0:
             Ncols = len(newrow)
         elif len(newrow) != Ncols:

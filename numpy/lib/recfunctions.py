@@ -401,7 +401,7 @@ def merge_arrays(seqarrays,
             seqarrays = (seqarrays,)
     else:
         # Make sure we have arrays in the input sequence
-        seqarrays = map(np.asanyarray, seqarrays)
+        seqarrays = list(map(np.asanyarray, seqarrays))
     # Find the sizes of the inputs and their maximum
     sizes = tuple(a.size for a in seqarrays)
     maxlength = max(sizes)
