@@ -32,6 +32,7 @@ from arraysetops import setdiff1d
 from utils import deprecate
 from _compiled_base import add_newdoc_ufunc
 import numpy as np
+import collections
 
 
 def iterable(y):
@@ -709,7 +710,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
     y = zeros(x.shape, x.dtype)
     for k in range(n):
         item = funclist[k]
-        if not callable(item):
+        if not isinstance(item, collections.Callable):
             y[condlist[k]] = item
         else:
             vals = x[condlist[k]]
