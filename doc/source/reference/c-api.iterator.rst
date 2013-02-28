@@ -658,15 +658,29 @@ Construction and Destruction
             without simultaneously iterating over the mask, and this
             flag allows that to be done.
 
+        .. cvar:: NPY_ITER_USE_ZERO_OA_NDIM
+
+            .. versionadded:: 1.8
+
+            If this flag is set ``oa_ndim == 0`` is used to signal a scalar
+            iteration. If it is not set zero would mean that ``op_axes``
+            and ``itershape`` are not used. This flag should be used and
+            will become default so -1 should be used to signal that the
+            feature is not used even when the flag is not set.
+
+            When using ``oa_ndim == 0`` you may need to be careful to not
+            pass NULL in ``op_axes`` or for ``itershape``, because for
+            example ``malloc(0)`` may be NULL, but NULL signals unused.
+
 .. cfunction:: NpyIter* NpyIter_AdvancedNew(npy_intp nop, PyArrayObject** op, npy_uint32 flags, NPY_ORDER order, NPY_CASTING casting, npy_uint32* op_flags, PyArray_Descr** op_dtypes, int oa_ndim, int** op_axes, npy_intp* itershape, npy_intp buffersize)
 
     Extends :cfunc:`NpyIter_MultiNew` with several advanced options providing
     more control over broadcasting and buffering.
 
-    If 0/NULL values are passed to ``oa_ndim``, ``op_axes``, ``itershape``,
+    If -1/NULL values are passed to ``oa_ndim``, ``op_axes``, ``itershape``,
     and ``buffersize``, it is equivalent to :cfunc:`NpyIter_MultiNew`.
 
-    The parameter ``oa_ndim``, when non-zero, specifies the number of
+    The parameter ``oa_ndim``, when not -1, specifies the number of
     dimensions that will be iterated with customized broadcasting.
     If it is provided, ``op_axes`` and/or ``itershape`` must also be provided.
     The ``op_axes`` parameter let you control in detail how the
@@ -701,6 +715,14 @@ Construction and Destruction
 
     Returns NULL if there is an error, otherwise returns the allocated
     iterator.
+    
+    .. note::
+        ``NPY_ITER_USE_ZERO_OA_NDIM`` should be used to allow ``oa_ndim == 0``
+        to signal a scalar iteration. Before NumPy 1.8. ``oa_ndim == 0`` was
+        used to signal that no ``op_axes`` or ``itershape`` were given.
+        If the flag is not set and ``oa_ndim`` is 0 it is interpreted as -1
+        instead for compatibility. Using the flag will make iterations using
+        ``oa_ndim`` work with scalars easier.
 
 .. cfunction:: NpyIter* NpyIter_Copy(NpyIter* iter)
 
