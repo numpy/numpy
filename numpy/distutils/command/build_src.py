@@ -189,7 +189,7 @@ class build_src(build_ext.build_ext):
                 funcs = [f for f in files if hasattr(f, '__call__')]
                 files = [f for f in files if not hasattr(f, '__call__')]
                 for f in funcs:
-                    if f.func_code.co_argcount==1:
+                    if f.__code__.co_argcount==1:
                         s = f(build_dir)
                     else:
                         s = f()

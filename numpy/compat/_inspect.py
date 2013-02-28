@@ -128,8 +128,8 @@ def getargspec(func):
         func = func.im_func
     if not isfunction(func):
         raise TypeError('arg is not a Python function')
-    args, varargs, varkw = getargs(func.func_code)
-    return args, varargs, varkw, func.func_defaults
+    args, varargs, varkw = getargs(func.__code__)
+    return args, varargs, varkw, func.__defaults__
 
 def getargvalues(frame):
     """Get information about arguments passed into a particular frame.
@@ -209,8 +209,8 @@ if __name__ == '__main__':
     def foo(x, y, z=None):
         return None
 
-    print inspect.getargs(foo.func_code)
-    print getargs(foo.func_code)
+    print inspect.getargs(foo.__code__)
+    print getargs(foo.__code__)
 
     print inspect.getargspec(foo)
     print getargspec(foo)
