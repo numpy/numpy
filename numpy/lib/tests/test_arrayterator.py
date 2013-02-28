@@ -1,3 +1,5 @@
+from __future__ import division
+
 from operator import mul
 
 import numpy as np

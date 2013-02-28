@@ -1,3 +1,5 @@
+from __future__ import division
+
 import timeit
 # This is to show that NumPy is a poorer choice than nested Python lists
 #   if you are writing nested for loops.

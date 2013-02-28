@@ -1,5 +1,7 @@
 """ Functions for converting from DOS to UNIX line endings
+
 """
+from __future__ import division
 
 import sys, re, os
 

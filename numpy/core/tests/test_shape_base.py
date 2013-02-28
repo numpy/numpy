@@ -1,3 +1,5 @@
+from __future__ import division
+
 import warnings
 import numpy as np
 from numpy.testing import (TestCase, assert_, assert_raises, assert_array_equal,

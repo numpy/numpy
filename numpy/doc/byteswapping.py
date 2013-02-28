@@ -1,4 +1,4 @@
-'''
+"""
 
 =============================
  Byteswapping and byte order
@@ -134,4 +134,6 @@ the previous operations:
 >>> swapped_end_arr.tostring() == big_end_str
 False
 
-'''
+"""
+from __future__ import division
+

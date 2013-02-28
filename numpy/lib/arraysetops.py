@@ -22,7 +22,10 @@ thus calls to argsort().
 To do: Optionally return indices analogously to unique for all functions.
 
 :Author: Robert Cimrman
+
 """
+from __future__ import division
+
 __all__ = ['ediff1d', 'intersect1d', 'setxor1d', 'union1d', 'setdiff1d',
            'unique', 'in1d']
 

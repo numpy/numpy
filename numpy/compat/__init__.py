@@ -8,6 +8,8 @@ extensions, which may be included for the following reasons:
   * we may only need a small subset of the copied library/module
 
 """
+from __future__ import division
+
 import _inspect
 import py3k
 from _inspect import getargspec, formatargspec

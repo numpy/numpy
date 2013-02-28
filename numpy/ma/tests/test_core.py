@@ -4,6 +4,8 @@
 :author: Pierre Gerard-Marchant
 :contact: pierregm_at_uga_dot_edu
 """
+from __future__ import division
+
 __author__ = "Pierre GF Gerard-Marchant"
 
 import types

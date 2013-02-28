@@ -42,6 +42,8 @@ LinAlgError     Indicates a failed linear algebra operation
 =============== ==========================================================
 
 """
+from __future__ import division
+
 # To get sub-modules
 from info import __doc__
 

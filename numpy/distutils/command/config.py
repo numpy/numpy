@@ -2,6 +2,7 @@
 # try_compile call. try_run works but is untested for most of Fortran
 # compilers (they must define linker_exe first).
 # Pearu Peterson
+from __future__ import division
 
 import os, signal
 import warnings

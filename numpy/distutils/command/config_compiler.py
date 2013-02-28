@@ -1,3 +1,5 @@
+from __future__ import division
+
 from distutils.core import Command
 from numpy.distutils import log
 

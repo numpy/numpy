@@ -10,7 +10,9 @@ this distribution for specifics.
 
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 Pearu Peterson
+
 """
+from __future__ import division
 
 __all__ = ['cpu']
 

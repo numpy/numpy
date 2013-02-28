@@ -3,7 +3,9 @@
 
 Note: Cython is the successor project to Pyrex.  For more information, see
 http://cython.org.
+
 """
+from __future__ import division
 
 from distutils.core import setup
 from distutils.extension import Extension

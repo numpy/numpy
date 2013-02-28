@@ -4,6 +4,7 @@
 # Because this module imports nose directly, it should not
 # be used except by nosetester.py to avoid a general NumPy
 # dependency on nose.
+from __future__ import division
 
 import os
 import doctest

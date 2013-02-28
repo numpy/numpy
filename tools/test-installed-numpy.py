@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import division
 
 # A simple script to test the installed version of numpy by calling
 # 'numpy.test()'. Key features:

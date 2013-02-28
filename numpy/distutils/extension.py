@@ -4,7 +4,9 @@ Provides the Extension class, used to describe C/C++ extension
 modules in setup scripts.
 
 Overridden to support f2py.
+
 """
+from __future__ import division
 
 __revision__ = "$Id: extension.py,v 1.1 2005/04/09 19:29:34 pearu Exp $"
 

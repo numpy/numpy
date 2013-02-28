@@ -30,6 +30,8 @@ The underlying code for these functions is an f2c-translated and modified
 version of the FFTPACK routines.
 
 """
+from __future__ import division
+
 __all__ = ['fft','ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 

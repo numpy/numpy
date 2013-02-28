@@ -1,4 +1,7 @@
-# Compatibility module containing deprecated names
+"""Compatibility module containing deprecated names.
+
+"""
+from __future__ import division
 
 __all__ = ['NewAxis',
            'UFuncType', 'UfuncType', 'ArrayType', 'arraytype',

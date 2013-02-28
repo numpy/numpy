@@ -4,7 +4,10 @@ Get API information encoded in C files.
 See ``find_function`` for how functions should be formatted, and
 ``read_order`` for how the order of the functions should be
 specified.
+
 """
+from __future__ import division
+
 import sys, os, re
 try:
     import hashlib

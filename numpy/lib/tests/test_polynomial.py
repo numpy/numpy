@@ -1,4 +1,6 @@
-"""
+from __future__ import division
+
+'''
 >>> p = np.poly1d([1.,2,3])
 >>> p
 poly1d([ 1.,  2.,  3.])
@@ -74,8 +76,8 @@ poly1d([ 2.])
 
 >>> np.polydiv(np.poly1d([1,0,-1]), np.poly1d([1,1]))
 (poly1d([ 1., -1.]), poly1d([ 0.]))
-"""
 
+'''
 from numpy.testing import *
 import numpy as np
 

@@ -9,6 +9,8 @@ creating additional specific polynomial classes (e.g., Legendre, Jacobi,
 etc.) in the future, such that all these classes will have a common API.
 
 """
+from __future__ import division
+
 import string
 import sys
 

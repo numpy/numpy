@@ -13,6 +13,7 @@ for Traits is required.
 .. [2] http://code.enthought.com/projects/traits/
 
 """
+from __future__ import division
 
 import inspect
 import os
@@ -25,6 +26,7 @@ from docscrape_sphinx import SphinxClassDoc, SphinxFunctionDoc, SphinxDocString
 import numpydoc
 
 import comment_eater
+import collections
 
 class SphinxTraitsDoc(SphinxClassDoc):
     def __init__(self, cls, modulename='', func_doc=SphinxFunctionDoc):
@@ -117,7 +119,7 @@ def get_doc_object(obj, what=None, config=None):
             what = 'class'
         elif inspect.ismodule(obj):
             what = 'module'
-        elif callable(obj):
+        elif isinstance(obj, collections.Callable):
             what = 'function'
         else:
             what = 'object'

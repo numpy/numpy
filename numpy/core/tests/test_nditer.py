@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 from numpy import array, arange, nditer, all
 from numpy.compat import asbytes

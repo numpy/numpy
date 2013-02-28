@@ -1,5 +1,7 @@
-"""Backward compatible with arrayfns from Numeric
+"""Backward compatible with arrayfns from Numeric.
+
 """
+from __future__ import division
 
 __all__ = ['array_set', 'construct3', 'digitize', 'error', 'find_mask',
            'histogram', 'index_sort', 'interp', 'nz', 'reverse', 'span',

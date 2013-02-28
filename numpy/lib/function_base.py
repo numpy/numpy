@@ -1,3 +1,5 @@
+from __future__ import division
+
 __docformat__ = "restructuredtext en"
 __all__ = ['select', 'piecewise', 'trim_zeros', 'copy', 'iterable',
            'percentile', 'diff', 'gradient', 'angle', 'unwrap', 'sort_complex',
@@ -30,6 +32,7 @@ from arraysetops import setdiff1d
 from utils import deprecate
 from _compiled_base import add_newdoc_ufunc
 import numpy as np
+import collections
 
 
 def iterable(y):
@@ -707,7 +710,7 @@ def piecewise(x, condlist, funclist, *args, **kw):
     y = zeros(x.shape, x.dtype)
     for k in range(n):
         item = funclist[k]
-        if not callable(item):
+        if not isinstance(item, collections.Callable):
             y[condlist[k]] = item
         else:
             vals = x[condlist[k]]

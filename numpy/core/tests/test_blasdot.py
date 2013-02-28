@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 import sys
 from numpy.core import zeros, float64

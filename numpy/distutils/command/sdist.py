@@ -1,3 +1,5 @@
+from __future__ import division
+
 import sys
 if 'setuptools' in sys.modules:
     from setuptools.command.sdist import sdist as old_sdist

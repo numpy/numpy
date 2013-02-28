@@ -1,3 +1,5 @@
+from __future__ import division
+
 import imp
 import os
 import sys

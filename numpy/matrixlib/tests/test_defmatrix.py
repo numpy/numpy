@@ -1,9 +1,12 @@
+from __future__ import division
+
 from numpy.testing import *
 from numpy.core import *
 from numpy import matrix, asmatrix, bmat
 from numpy.matrixlib.defmatrix import matrix_power
 from numpy.matrixlib import mat
 import numpy as np
+import collections
 
 class TestCtor(TestCase):
     def test_basic(self):
@@ -285,7 +288,7 @@ class TestMatrixReturn(TestCase):
             if attrib.startswith('_') or attrib in excluded_methods:
                 continue
             f = getattr(a, attrib)
-            if callable(f):
+            if isinstance(f, collections.Callable):
                 # reset contents of a
                 a.astype('f8')
                 a.fill(1.0)

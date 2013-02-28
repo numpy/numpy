@@ -1,4 +1,8 @@
-# Don't add these to the __all__ variable though
+"""Don't add these to the __all__ variable though
+
+"""
+from __future__ import division
+
 from numpy import *
 
 def _move_axis_to_0(a, axis):

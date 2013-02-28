@@ -1,3 +1,5 @@
+from __future__ import division
+
 from distutils.core import setup
 
 version = "0.4"

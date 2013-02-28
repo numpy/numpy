@@ -1,3 +1,5 @@
+from __future__ import division
+
 from timeit import Timer
 
 class Benchmark(dict):

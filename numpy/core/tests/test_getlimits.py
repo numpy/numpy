@@ -1,5 +1,7 @@
 """ Test functions for limits module.
+
 """
+from __future__ import division
 
 from numpy.testing import *
 

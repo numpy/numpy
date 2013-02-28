@@ -1,3 +1,5 @@
+from __future__ import division
+
 major = 2
 
 try:

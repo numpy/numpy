@@ -1,3 +1,5 @@
+from __future__ import division
+
 from benchmark import Benchmark
 
 modules = ['numpy','Numeric','numarray']

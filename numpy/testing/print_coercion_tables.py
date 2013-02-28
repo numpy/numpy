@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-"""Prints type-coercion tables for the built-in NumPy types"""
+"""Prints type-coercion tables for the built-in NumPy types
+
+"""
+from __future__ import division
 
 import numpy as np
 

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import division
 
 __all__ = ['run_main','compile','f2py_testing']
 

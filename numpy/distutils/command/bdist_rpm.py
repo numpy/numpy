@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os
 import sys
 if 'setuptools' in sys.modules:
