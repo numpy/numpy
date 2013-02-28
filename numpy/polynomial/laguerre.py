@@ -1739,4 +1739,4 @@ def lagweight(x):
 # Laguerre series class
 #
 
-exec polytemplate.substitute(name='Laguerre', nick='lag', domain='[-1,1]')
+exec(polytemplate.substitute(name='Laguerre', nick='lag', domain='[-1,1]'))

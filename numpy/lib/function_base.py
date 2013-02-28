@@ -3240,7 +3240,7 @@ def add_newdoc(place, obj, doc):
        """
     try:
         new = {}
-        exec 'from %s import %s' % (place, obj) in new
+        exec('from %s import %s' % (place, obj), new)
         if isinstance(doc, str):
             add_docstring(new[obj], doc.strip())
         elif isinstance(doc, tuple):

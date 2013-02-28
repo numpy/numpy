@@ -2012,4 +2012,4 @@ def chebpts2(npts):
 # Chebyshev series class
 #
 
-exec polytemplate.substitute(name='Chebyshev', nick='cheb', domain='[-1,1]')
+exec(polytemplate.substitute(name='Chebyshev', nick='cheb', domain='[-1,1]'))

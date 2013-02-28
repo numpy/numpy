@@ -1765,4 +1765,4 @@ def legweight(x):
 # Legendre series class
 #
 
-exec polytemplate.substitute(name='Legendre', nick='leg', domain='[-1,1]')
+exec(polytemplate.substitute(name='Legendre', nick='leg', domain='[-1,1]'))

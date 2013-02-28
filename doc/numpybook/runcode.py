@@ -33,7 +33,7 @@ def getoutput(tstr, dic):
     except SyntaxError:
         try:
             res = None
-            exec code in dic
+            exec(code, dic)
         finally:
             sys.stdout = sys.__stdout__
     if res is None:
@@ -94,8 +94,8 @@ def runpycode(lyxstr, name='MyCode'):
     del indx[0]
     indx.append(len(lyxstr))
     edic = {}
-    exec 'from numpy import *' in edic
-    exec 'set_printoptions(linewidth=65)' in edic
+    exec('from numpy import *', edic)
+    exec('set_printoptions(linewidth=65)', edic)
     # indx now contains [st0,en0, ..., stN,enN]
     #  where stX is the start of code segment X
     #  and enX is the start of \layout MyCode for
@@ -109,8 +109,8 @@ def runpycode(lyxstr, name='MyCode'):
             # if PYNEW found, then start a new namespace
             if mat:
                 edic = {}
-                exec 'from numpy import *' in edic
-                exec 'set_printoptions(linewidth=65)' in edic
+                exec('from numpy import *', edic)
+                exec('set_printoptions(linewidth=65)', edic)
         # now find the code in the code segment
         # endoutput will contain the index just past any output
         #  already present in the lyx string.

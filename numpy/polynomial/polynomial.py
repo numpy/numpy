@@ -1489,4 +1489,4 @@ def polyroots(c):
 # polynomial class
 #
 
-exec polytemplate.substitute(name='Polynomial', nick='poly', domain='[-1,1]')
+exec(polytemplate.substitute(name='Polynomial', nick='poly', domain='[-1,1]'))

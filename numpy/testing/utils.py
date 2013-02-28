@@ -881,7 +881,7 @@ def assert_array_less(x, y, err_msg='', verbose=True):
                          header='Arrays are not less-ordered')
 
 def runstring(astr, dict):
-    exec astr in dict
+    exec(astr, dict)
 
 def assert_string_equal(actual, desired):
     """
@@ -1108,7 +1108,7 @@ def measure(code_str,times=1,label=None):
     elapsed = jiffies()
     while i < times:
         i += 1
-        exec code in globs,locs
+        exec(code, globs,locs)
     elapsed = jiffies() - elapsed
     return 0.01*elapsed
 
