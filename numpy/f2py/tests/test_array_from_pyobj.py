@@ -115,7 +115,7 @@ class Type(object):
         if isinstance(name,dtype):
             dtype0 = name
             name = None
-            for n,i in typeinfo.items():
+            for n,i in list(typeinfo.items()):
                 if isinstance(i,tuple) and dtype0.type is i[-1]:
                     name = n
                     break
@@ -530,14 +530,14 @@ class _test_shared_memory:
 
 
 for t in Type._type_names:
-    exec '''\
+    exec('''\
 class test_%s_gen(unittest.TestCase,
               _test_shared_memory
               ):
     def setUp(self):
         self.type = Type(%r)
     array = lambda self,dims,intent,obj: Array(Type(%r),dims,intent,obj)
-''' % (t,t,t)
+''' % (t,t,t))
 
 if __name__ == "__main__":
     setup()

@@ -58,14 +58,14 @@ for name in _meth1:
     _astr = r"""(.%s\s*[(][^'"]*?['"])b(['"][^)]*?[)])"""%name
     func_re[name] = re.compile(_astr, re.DOTALL)
 
-for char in _chars.keys():
+for char in list(_chars.keys()):
     _astr = r"""(.astype\s*[(][^'"]*?['"])%s(['"][^)]*?[)])"""%char
     meth_re[char] = re.compile(_astr, re.DOTALL)
 
 def fixtypechars(fstr):
     for name in _func2 + _func4 + _meth1:
         fstr = func_re[name].sub('\\1B\\2',fstr)
-    for char in _chars.keys():
+    for char in list(_chars.keys()):
         fstr = meth_re[char].sub('\\1%s\\2'%_chars[char], fstr)
     return fstr
 

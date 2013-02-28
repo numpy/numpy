@@ -54,7 +54,7 @@ if have_setuptools:
     numpy_cmdclass['egg_info'] = egg_info.egg_info
 
 def _dict_append(d, **kws):
-    for k,v in kws.items():
+    for k,v in list(kws.items()):
         if k not in d:
             d[k] = v
             continue

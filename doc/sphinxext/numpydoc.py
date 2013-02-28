@@ -17,6 +17,7 @@ It will:
 """
 
 import sphinx
+import collections
 
 if sphinx.__version__ < '1.0.1':
     raise RuntimeError("Sphinx 1.0.1 or newer is required")
@@ -82,7 +83,7 @@ def mangle_signature(app, what, name, obj, options, sig, retann):
         'initializes x; see ' in pydoc.getdoc(obj.__init__))):
         return '', ''
 
-    if not (callable(obj) or hasattr(obj, '__argspec_is_invalid_')): return
+    if not (isinstance(obj, collections.Callable) or hasattr(obj, '__argspec_is_invalid_')): return
     if not hasattr(obj, '__doc__'): return
 
     doc = SphinxDocString(pydoc.getdoc(obj))
@@ -120,7 +121,7 @@ class ManglingDomainBase(object):
         self.wrap_mangling_directives()
 
     def wrap_mangling_directives(self):
-        for name, objtype in self.directive_mangling_map.items():
+        for name, objtype in list(self.directive_mangling_map.items()):
             self.directives[name] = wrap_mangling_directive(
                 self.directives[name], objtype)
 

@@ -102,7 +102,7 @@ class _FileOpeners(object):
 
         """
         self._load()
-        return self._file_openers.keys()
+        return list(self._file_openers.keys())
     def __getitem__(self, key):
         self._load()
         return self._file_openers[key]
@@ -213,7 +213,7 @@ class DataSource (object):
         """Test if the filename is a zip file by looking at the file extension.
         """
         fname, ext = os.path.splitext(filename)
-        return ext in _file_openers.keys()
+        return ext in list(_file_openers.keys())
 
     def _iswritemode(self, mode):
         """Test if the given mode will open a file for writing."""
@@ -242,7 +242,7 @@ class DataSource (object):
         """Return a tuple containing compressed filename variations."""
         names = [filename]
         if not self._iszip(filename):
-            for zipext in _file_openers.keys():
+            for zipext in list(_file_openers.keys()):
                 if zipext:
                     names.append(filename+zipext)
         return names

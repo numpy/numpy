@@ -66,7 +66,7 @@ class PackageLoader(object):
                         break
                 else:
                     try:
-                        exec 'import %s.info as info' % (package_name)
+                        exec('import %s.info as info' % (package_name))
                         info_modules[package_name] = info
                     except ImportError as msg:
                         self.warn('No scipy-style subpackage %r found in %s. '\
@@ -105,17 +105,17 @@ class PackageLoader(object):
         """
 
         depend_dict = {}
-        for name,info_module in self.info_modules.items():
+        for name,info_module in list(self.info_modules.items()):
             depend_dict[name] = getattr(info_module,'depends',[])
         package_names = []
 
-        for name in depend_dict.keys():
+        for name in list(depend_dict.keys()):
             if not depend_dict[name]:
                 package_names.append(name)
                 del depend_dict[name]
 
         while depend_dict:
-            for name, lst in depend_dict.items():
+            for name, lst in list(depend_dict.items()):
                 new_lst = [n for n in lst if n in depend_dict]
                 if not new_lst:
                     package_names.append(name)
@@ -207,7 +207,7 @@ class PackageLoader(object):
                     if symbols is None:
                         symbols = eval('dir(%s)' % (package_name),
                                        frame.f_globals,frame.f_locals)
-                        symbols = filter(lambda s:not s.startswith('_'),symbols)
+                        symbols = [s for s in symbols if not s.startswith('_')]
                 else:
                     symbols = [symbol]
 
@@ -222,7 +222,7 @@ class PackageLoader(object):
                     continue
 
                 if verbose!=-1:
-                    for s,old_object in old_objects.items():
+                    for s,old_object in list(old_objects.items()):
                         new_object = frame.f_locals[s]
                         if new_object is not old_object:
                             self.warn('Overwriting %s=%s (was %s)' \
@@ -310,7 +310,7 @@ class PackageLoader(object):
 
         titles = []
         symbols = []
-        for package_name, info_module in self.info_modules.items():
+        for package_name, info_module in list(self.info_modules.items()):
             global_symbols = getattr(info_module,'global_symbols',[])
             fullname = self.parent_name +'.'+ package_name
             note = ''

@@ -1421,7 +1421,7 @@ class TestRegression(TestCase):
         np.fromstring(asbytes('aa, aa, 1.0'), sep=',')
 
     def test_ticket_1539(self):
-        dtypes = [x for x in np.typeDict.values()
+        dtypes = [x for x in list(np.typeDict.values())
                   if (issubclass(x, np.number)
                       and not issubclass(x, np.timedelta64))]
         a = np.array([], dtypes[0])

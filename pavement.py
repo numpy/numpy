@@ -302,7 +302,7 @@ def bdist_wininst_simple():
 def _bdist_wininst(pyver, cfg_env=None):
     cmd = WINDOWS_PYTHON[pyver] + ['setup.py', 'build', '-c', 'mingw32', 'bdist_wininst']
     if cfg_env:
-        for k, v in WINDOWS_ENV.items():
+        for k, v in list(WINDOWS_ENV.items()):
             cfg_env[k] = v
     else:
         cfg_env = WINDOWS_ENV

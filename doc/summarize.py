@@ -7,6 +7,7 @@ Show a summary about which Numpy functions are documented and which are not.
 """
 
 import os, glob, re, sys, inspect, optparse
+import collections
 sys.path.append(os.path.join(os.path.dirname(__file__), 'sphinxext'))
 from sphinxext.phantom_import import import_phantom_module
 
@@ -72,7 +73,7 @@ def main():
 
     # report
     in_sections = {}
-    for name, locations in documented.iteritems():
+    for name, locations in documented.items():
         for (filename, section, keyword, toctree) in locations:
             in_sections.setdefault((filename, section, keyword), []).append(name)
 
@@ -103,7 +104,7 @@ def check_numpy():
         undocumented.update(get_undocumented(documented, mod, skip=SKIP_LIST))
 
     for d in (documented, undocumented):
-        for k in d.keys():
+        for k in list(d.keys()):
             if k.startswith('numpy.'):
                 d[k[6:]] = d[k]
                 del d[k]
@@ -134,7 +135,7 @@ def get_undocumented(documented, module, module_name=None, skip=[]):
 
         if full_name in skip: continue
         if full_name.startswith('numpy.') and full_name[6:] in skip: continue
-        if not (inspect.ismodule(obj) or callable(obj) or inspect.isclass(obj)):
+        if not (inspect.ismodule(obj) or isinstance(obj, collections.Callable) or inspect.isclass(obj)):
             continue
 
         if full_name not in documented:

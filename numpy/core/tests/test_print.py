@@ -126,7 +126,7 @@ def test_complex_inf_nan():
             complex(1, -np.nan): "(1+nanj)",
         }
     for tp in [np.complex64, np.cdouble, np.clongdouble]:
-        for c, s in TESTS.items():
+        for c, s in list(TESTS.items()):
             yield _check_complex_inf_nan, c, s, tp
 
 def _check_complex_inf_nan(c, s, dtype):

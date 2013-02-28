@@ -257,9 +257,9 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
                   'str' : str}
 
     if formatter is not None:
-        fkeys = [k for k in formatter.keys() if formatter[k] is not None]
+        fkeys = [k for k in list(formatter.keys()) if formatter[k] is not None]
         if 'all' in fkeys:
-            for key in formatdict.keys():
+            for key in list(formatdict.keys()):
                 formatdict[key] = formatter['all']
         if 'int_kind' in fkeys:
             for key in ['int']:
@@ -273,7 +273,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
         if 'str_kind' in fkeys:
             for key in ['numpystr', 'str']:
                 formatdict[key] = formatter['str_kind']
-        for key in formatdict.keys():
+        for key in list(formatdict.keys()):
             if key in fkeys:
                 formatdict[key] = formatter[key]
 

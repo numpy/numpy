@@ -1181,7 +1181,7 @@ def buildmodule(m,um):
             continue
         nb_list = [nb]
         if 'entry' in nb:
-            for k,a in nb['entry'].items():
+            for k,a in list(nb['entry'].items()):
                 nb1 = copy.deepcopy(nb)
                 del nb1['entry']
                 nb1['name'] = k
@@ -1217,7 +1217,7 @@ def buildmodule(m,um):
 
     needs=cfuncs.get_needs()
     code={}
-    for n in needs.keys():
+    for n in list(needs.keys()):
         code[n]=[]
         for k in needs[n]:
             c=''
@@ -1328,7 +1328,7 @@ def buildapi(rout):
     args,depargs=getargs2(rout)
     capi_maps.depargs=depargs
     var=rout['vars']
-    auxvars = [a for a in var.keys() if isintent_aux(var[a])]
+    auxvars = [a for a in list(var.keys()) if isintent_aux(var[a])]
 
     if ismoduleroutine(rout):
         outmess('\t\t\tConstructing wrapper function "%s.%s"...\n'%(rout['modulename'],rout['name']))

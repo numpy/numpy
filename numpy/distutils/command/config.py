@@ -358,7 +358,7 @@ int main ()
         self._check_compiler()
         body = []
         if decl:
-            for f, v in decl.items():
+            for f, v in list(decl.items()):
                 if v:
                     body.append("int %s (void);" % f)
 

@@ -313,7 +313,7 @@ def buildmodules(lst):
             cb_rules.buildcallbacks(lst[i])
         else:
             if 'use' in lst[i]:
-                for u in lst[i]['use'].keys():
+                for u in list(lst[i]['use'].keys()):
                     if u not in isusedby:
                         isusedby[u]=[]
                     isusedby[u].append(lst[i]['name'])
@@ -326,7 +326,7 @@ def buildmodules(lst):
         else:
             um=[]
             if 'use' in modules[i]:
-                for u in modules[i]['use'].keys():
+                for u in list(modules[i]['use'].keys()):
                     if u in isusedby and u in mnames:
                         um.append(modules[mnames.index(u)])
                     else:
@@ -336,7 +336,7 @@ def buildmodules(lst):
     return ret
 
 def dict_append(d_out,d_in):
-    for (k,v) in d_in.items():
+    for (k,v) in list(d_in.items()):
         if k not in d_out:
             d_out[k] = []
         if type(v) is types.ListType:
@@ -362,7 +362,7 @@ def run_main(comline_list):
     isusedby={}
     for i in range(len(postlist)):
         if 'use' in postlist[i]:
-            for u in postlist[i]['use'].keys():
+            for u in list(postlist[i]['use'].keys()):
                 if u not in isusedby:
                     isusedby[u]=[]
                 isusedby[u].append(postlist[i]['name'])
@@ -387,7 +387,7 @@ def run_main(comline_list):
 
     ret=buildmodules(postlist)
 
-    for mn in ret.keys():
+    for mn in list(ret.keys()):
         dict_append(ret[mn],{'csrc':fobjcsrc,'h':fobjhsrc})
     return ret
 
@@ -430,13 +430,13 @@ def run_compile():
         remove_build_dir = 1
         build_dir = os.path.join(tempfile.mktemp())
 
-    sysinfo_flags = filter(re.compile(r'[-][-]link[-]').match,sys.argv[1:])
-    sys.argv = filter(lambda a,flags=sysinfo_flags:a not in flags,sys.argv)
+    sysinfo_flags = list(filter(re.compile(r'[-][-]link[-]').match,sys.argv[1:]))
+    sys.argv = list(filter(lambda a,flags=sysinfo_flags:a not in flags,sys.argv))
     if sysinfo_flags:
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
-    f2py_flags = filter(re.compile(r'[-][-]((no[-]|)(wrap[-]functions|lower)|debug[-]capi|quiet)|[-]include').match,sys.argv[1:])
-    sys.argv = filter(lambda a,flags=f2py_flags:a not in flags,sys.argv)
+    f2py_flags = list(filter(re.compile(r'[-][-]((no[-]|)(wrap[-]functions|lower)|debug[-]capi|quiet)|[-]include').match,sys.argv[1:]))
+    sys.argv = list(filter(lambda a,flags=f2py_flags:a not in flags,sys.argv))
     f2py_flags2 = []
     fl = 0
     for a in sys.argv[1:]:
@@ -450,12 +450,12 @@ def run_compile():
         f2py_flags2.append(':')
     f2py_flags.extend(f2py_flags2)
 
-    sys.argv = filter(lambda a,flags=f2py_flags2:a not in flags,sys.argv)
+    sys.argv = list(filter(lambda a,flags=f2py_flags2:a not in flags,sys.argv))
 
-    flib_flags = filter(re.compile(r'[-][-]((f(90)?compiler([-]exec|)|compiler)=|help[-]compiler)').match,sys.argv[1:])
-    sys.argv = filter(lambda a,flags=flib_flags:a not in flags,sys.argv)
-    fc_flags = filter(re.compile(r'[-][-]((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help[-]fcompiler))').match,sys.argv[1:])
-    sys.argv = filter(lambda a,flags=fc_flags:a not in flags,sys.argv)
+    flib_flags = list(filter(re.compile(r'[-][-]((f(90)?compiler([-]exec|)|compiler)=|help[-]compiler)').match,sys.argv[1:]))
+    sys.argv = list(filter(lambda a,flags=flib_flags:a not in flags,sys.argv))
+    fc_flags = list(filter(re.compile(r'[-][-]((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help[-]fcompiler))').match,sys.argv[1:]))
+    sys.argv = list(filter(lambda a,flags=fc_flags:a not in flags,sys.argv))
 
     if 1:
         del_list = []
@@ -464,14 +464,14 @@ def run_compile():
             if s[:len(v)]==v:
                 from numpy.distutils import fcompiler
                 fcompiler.load_all_fcompiler_classes()
-                allowed_keys = fcompiler.fcompiler_class.keys()
+                allowed_keys = list(fcompiler.fcompiler_class.keys())
                 nv = ov = s[len(v):].lower()
                 if ov not in allowed_keys:
                     vmap = {} # XXX
                     try:
                         nv = vmap[ov]
                     except KeyError:
-                        if ov not in vmap.values():
+                        if ov not in list(vmap.values()):
                             print 'Unknown vendor: "%s"' % (s[len(v):])
                     nv = ov
                 i = flib_flags.index(s)
@@ -481,8 +481,8 @@ def run_compile():
             i = flib_flags.index(s)
             del flib_flags[i]
         assert len(flib_flags)<=2,`flib_flags`
-    setup_flags = filter(re.compile(r'[-][-](verbose)').match,sys.argv[1:])
-    sys.argv = filter(lambda a,flags=setup_flags:a not in flags,sys.argv)
+    setup_flags = list(filter(re.compile(r'[-][-](verbose)').match,sys.argv[1:]))
+    sys.argv = list(filter(lambda a,flags=setup_flags:a not in flags,sys.argv))
     if '--quiet' in f2py_flags:
         setup_flags.append('--quiet')
 

@@ -284,7 +284,7 @@ def bitname(obj):
 
 
 def _add_types():
-    for a in typeinfo.keys():
+    for a in list(typeinfo.keys()):
         name = english_lower(a)
         if isinstance(typeinfo[a], tuple):
             typeobj = typeinfo[a][-1]
@@ -300,7 +300,7 @@ def _add_types():
 _add_types()
 
 def _add_aliases():
-    for a in typeinfo.keys():
+    for a in list(typeinfo.keys()):
         name = english_lower(a)
         if not isinstance(typeinfo[a], tuple):
             continue
@@ -311,7 +311,7 @@ def _add_aliases():
         if base != '':
             myname = "%s%d" % (base, bit)
             if (name != 'longdouble' and name != 'clongdouble') or \
-                   myname not in allTypes.keys():
+                   myname not in list(allTypes.keys()):
                 allTypes[myname] = typeobj
                 sctypeDict[myname] = typeobj
                 if base == 'complex':
@@ -353,7 +353,7 @@ def _add_integer_aliases():
         uval = typeinfo['U'+ctype]
         typeobj = val[-1]
         utypeobj = uval[-1]
-        if intname not in allTypes.keys():
+        if intname not in list(allTypes.keys()):
             uintname = 'uint%d' % bits
             allTypes[intname] = typeobj
             allTypes[uintname] = utypeobj
@@ -431,7 +431,7 @@ _set_up_aliases()
 # Now, construct dictionary to lookup character codes from types
 _sctype2char_dict = {}
 def _construct_char_code_lookup():
-    for name in typeinfo.keys():
+    for name in list(typeinfo.keys()):
         tup = typeinfo[name]
         if isinstance(tup, tuple):
             if tup[0] not in ['p','P']:
@@ -783,7 +783,7 @@ _alignment = _typedict()
 _maxvals = _typedict()
 _minvals = _typedict()
 def _construct_lookups():
-    for name, val in typeinfo.iteritems():
+    for name, val in typeinfo.items():
         if not isinstance(val, tuple):
             continue
         obj = val[-1]
@@ -858,21 +858,21 @@ except AttributeError:
     # Py3K
     ScalarType = [int, float, complex, long, bool, bytes, str, memoryview]
 
-ScalarType.extend(_sctype2char_dict.keys())
+ScalarType.extend(list(_sctype2char_dict.keys()))
 ScalarType = tuple(ScalarType)
-for key in _sctype2char_dict.keys():
+for key in list(_sctype2char_dict.keys()):
     cast[key] = lambda x, k=key : array(x, copy=False).astype(k)
 
 # Create the typestring lookup dictionary
 _typestr = _typedict()
-for key in _sctype2char_dict.keys():
+for key in list(_sctype2char_dict.keys()):
     if issubclass(key, allTypes['flexible']):
         _typestr[key] = _sctype2char_dict[key]
     else:
         _typestr[key] = empty((1,),key).dtype.str[1:]
 
 # Make sure all typestrings are in sctypeDict
-for key, val in _typestr.items():
+for key, val in list(_typestr.items()):
     if val not in sctypeDict:
         sctypeDict[val] = key
 

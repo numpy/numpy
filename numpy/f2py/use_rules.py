@@ -57,13 +57,13 @@ def buildusevars(m,r):
     varsmap={}
     revmap={}
     if 'map' in r:
-        for k in r['map'].keys():
+        for k in list(r['map'].keys()):
             if r['map'][k] in revmap:
                 outmess('\t\t\tVariable "%s<=%s" is already mapped by "%s". Skipping.\n'%(r['map'][k],k,revmap[r['map'][k]]))
             else:
                 revmap[r['map'][k]]=k
     if 'only' in r and r['only']:
-        for v in r['map'].keys():
+        for v in list(r['map'].keys()):
             if r['map'][v] in m['vars']:
 
                 if revmap[r['map'][v]]==v:
@@ -73,12 +73,12 @@ def buildusevars(m,r):
             else:
                 outmess('\t\t\tNo definition for variable "%s=>%s". Skipping.\n'%(v,r['map'][v]))
     else:
-        for v in m['vars'].keys():
+        for v in list(m['vars'].keys()):
             if v in revmap:
                 varsmap[v]=revmap[v]
             else:
                 varsmap[v]=v
-    for v in varsmap.keys():
+    for v in list(varsmap.keys()):
         ret=dictappend(ret,buildusevar(v,varsmap[v],m['vars'],m['name']))
     return ret
 def buildusevar(name,realname,vars,usemodulename):
@@ -96,7 +96,7 @@ def buildusevar(name,realname,vars,usemodulename):
          }
     nummap={0:'Ro',1:'Ri',2:'Rii',3:'Riii',4:'Riv',5:'Rv',6:'Rvi',7:'Rvii',8:'Rviii',9:'Rix'}
     vrd['texnamename']=name
-    for i in nummap.keys():
+    for i in list(nummap.keys()):
         vrd['texnamename']=vrd['texnamename'].replace(`i`,nummap[i])
     if hasnote(vars[realname]): vrd['note']=vars[realname]['note']
     rd=dictappend({},vrd)

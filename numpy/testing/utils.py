@@ -241,7 +241,7 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
         if not isinstance(actual, dict) :
             raise AssertionError(repr(type(actual)))
         assert_equal(len(actual),len(desired),err_msg,verbose)
-        for k,i in desired.items():
+        for k,i in list(desired.items()):
             if k not in actual :
                 raise AssertionError(repr(k))
             assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k,err_msg), verbose)
@@ -881,7 +881,7 @@ def assert_array_less(x, y, err_msg='', verbose=True):
                          header='Arrays are not less-ordered')
 
 def runstring(astr, dict):
-    exec astr in dict
+    exec(astr, dict)
 
 def assert_string_equal(actual, desired):
     """
@@ -1050,7 +1050,7 @@ def decorate_methods(cls, decorator, testmatch=None):
     # delayed import to reduce startup time
     from inspect import isfunction
 
-    methods = filter(isfunction, cls_attr.values())
+    methods = list(filter(isfunction, list(cls_attr.values())))
     for function in methods:
         try:
             if hasattr(function, 'compat_func_name'):
@@ -1108,7 +1108,7 @@ def measure(code_str,times=1,label=None):
     elapsed = jiffies()
     while i < times:
         i += 1
-        exec code in globs,locs
+        exec(code, globs,locs)
     elapsed = jiffies() - elapsed
     return 0.01*elapsed
 

@@ -202,7 +202,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
         if sys.version_info[0] >= 3:
             func(*args[:func.__code__.co_argcount])
         else:
-            func(*args[:func.im_func.func_code.co_argcount])
+            func(*args[:func.im_func.__code__.co_argcount])
         return
 
     def object_filenames (self,

@@ -232,9 +232,9 @@ if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_include_dirs.append(os.path.join(sys.prefix, 'include'))
     default_src_dirs.append(os.path.join(sys.prefix, 'src'))
 
-default_lib_dirs = filter(os.path.isdir, default_lib_dirs)
-default_include_dirs = filter(os.path.isdir, default_include_dirs)
-default_src_dirs = filter(os.path.isdir, default_src_dirs)
+default_lib_dirs = list(filter(os.path.isdir, default_lib_dirs))
+default_include_dirs = list(filter(os.path.isdir, default_include_dirs))
+default_src_dirs = list(filter(os.path.isdir, default_src_dirs))
 
 so_ext = get_shared_lib_extension()
 
@@ -506,7 +506,7 @@ class system_info:
 
         res = self.saved_results.get(self.__class__.__name__)
         if self.verbosity > 0 and flag:
-            for k, v in res.items():
+            for k, v in list(res.items()):
                 v = str(v)
                 if k in ['sources', 'libraries'] and len(v) > 270:
                     v = v[:120] + '...\n...\n...' + v[-120:]
@@ -2088,7 +2088,7 @@ inv_language_map = {0: 'c', 1: 'c++', 2: 'f77', 3: 'f90'}
 
 def dict_append(d, **kws):
     languages = []
-    for k, v in kws.items():
+    for k, v in list(kws.items()):
         if k == 'language':
             languages.append(v)
             continue
@@ -2132,7 +2132,7 @@ def show_all(argv=None):
         show_only.append(n)
     show_all = not show_only
     _gdict_ = globals().copy()
-    for name, c in _gdict_.iteritems():
+    for name, c in _gdict_.items():
         if not inspect.isclass(c):
             continue
         if not issubclass(c, system_info) or c is system_info:

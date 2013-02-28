@@ -314,7 +314,7 @@ def run(arguments, content, options, state_machine, state, lineno):
         else:
             source_code = ""
 
-        opts = [':%s: %s' % (key, val) for key, val in options.items()
+        opts = [':%s: %s' % (key, val) for key, val in list(options.items())
                 if key in ('alt', 'height', 'width', 'scale', 'align', 'class')]
 
         only_html = ".. only:: html"

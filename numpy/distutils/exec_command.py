@@ -137,7 +137,7 @@ def _preserve_environment( names ):
 
 def _update_environment( **env ):
     log.debug('_update_environment(...)')
-    for name,value in env.items():
+    for name,value in list(env.items()):
         os.environ[name] = value or ''
 
 def exec_command( command,
@@ -157,7 +157,7 @@ def exec_command( command,
     Wild cards will not work for non-posix systems or when use_shell=0.
     """
     log.debug('exec_command(%r,%s)' % (command,\
-         ','.join(['%s=%r'%kv for kv in env.items()])))
+         ','.join(['%s=%r'%kv for kv in list(env.items())])))
 
     if use_tee is None:
         use_tee = os.name=='posix'
@@ -181,7 +181,7 @@ def exec_command( command,
     else:
         log.debug('Retaining cwd: %s' % oldcwd)
 
-    oldenv = _preserve_environment( env.keys() )
+    oldenv = _preserve_environment( list(env.keys()) )
     _update_environment( **env )
 
     try:

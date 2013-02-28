@@ -32,7 +32,7 @@ class FindDependenciesLdd(object):
         rdeps = dict([(dep, re.compile(dep)) for dep in deps])
         founds = []
         for l in stdout.splitlines():
-            for k, v in rdeps.items():
+            for k, v in list(rdeps.items()):
                 if v.search(l):
                     founds.append(k)
 

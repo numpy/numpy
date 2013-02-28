@@ -130,7 +130,7 @@ if __name__ == '__main__':
         BUILD_MSI = True
 
     if not arch:
-        for arch in SITECFG.keys():
+        for arch in list(SITECFG.keys()):
             build(arch, pyver)
     else:
         build(arch, pyver)

@@ -74,7 +74,7 @@ def main():
         'version.py': 'version = "1.4.0.dev"'
     }
 
-    for fn, content in dummy_files.items():
+    for fn, content in list(dummy_files.items()):
         fn = os.path.join(TEMP, 'numpy', fn)
         if not os.path.isfile(fn):
             try:
@@ -250,7 +250,7 @@ def sync_2to3(src, dst, patchfile=None, clean=False):
     flag_sets = {}
     for fn, dst_fn in to_convert:
         flag = ''
-        for pat, opt in EXTRA_2TO3_FLAGS.items():
+        for pat, opt in list(EXTRA_2TO3_FLAGS.items()):
             if fnmatch.fnmatch(fn, pat):
                 flag = opt
                 break
@@ -261,7 +261,7 @@ def sync_2to3(src, dst, patchfile=None, clean=False):
     else:
         p = open(os.devnull, 'wb')
 
-    for flags, filenames in flag_sets.items():
+    for flags, filenames in list(flag_sets.items()):
         if flags == 'skip':
             continue
 

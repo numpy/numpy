@@ -10,7 +10,7 @@ _typedict = {'zadd' : complex,
              'sadd' : N.single,
              'cadd' : N.csingle,
              'dadd' : float}
-for name in _typedict.keys():
+for name in list(_typedict.keys()):
     val = getattr(lib, name)
     val.restype = None
     _type = _typedict[name]

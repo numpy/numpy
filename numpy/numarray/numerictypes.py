@@ -524,7 +524,7 @@ _scipy_dtypechar = {
     }
 
 _scipy_dtypechar_inverse = {}
-for key,value in _scipy_dtypechar.items():
+for key,value in list(_scipy_dtypechar.items()):
     _scipy_dtypechar_inverse[value] = key
 
 _val = numpy.int_(0).itemsize
