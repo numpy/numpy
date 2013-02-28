@@ -10,6 +10,8 @@ class TestIndexErrors(TestCase):
         x = np.empty((2, 3, 0, 4))
         assert_raises(IndexError, x.take, [0], axis=2)
         assert_raises(IndexError, x.take, [1], axis=2)
+        assert_raises(IndexError, x.take, [0], axis=2, mode='wrap')
+        assert_raises(IndexError, x.take, [0], axis=2, mode='clip')
 
     def test_take_from_object(self):
         # Check exception taking from object array
@@ -21,6 +23,8 @@ class TestIndexErrors(TestCase):
         assert_raises(IndexError, d.take, [1], axis=1)
         assert_raises(IndexError, d.take, [0], axis=1)
         assert_raises(IndexError, d.take, [0])
+        assert_raises(IndexError, d.take, [0], mode='wrap')
+        assert_raises(IndexError, d.take, [0], mode='clip')
 
     def test_multiindex_exceptions(self):
         a = np.empty(5, dtype=object)
