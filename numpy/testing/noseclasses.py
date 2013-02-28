@@ -35,7 +35,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
             return True
         elif inspect.isfunction(object):
             #print '_fm C2'  # dbg
-            return module.__dict__ is object.func_globals
+            return module.__dict__ is object.__globals__
         elif inspect.isbuiltin(object):
             #print '_fm C2-1'  # dbg
             return module.__name__ == object.__module__
