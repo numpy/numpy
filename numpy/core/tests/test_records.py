@@ -4,6 +4,7 @@ from numpy.testing import *
 from numpy.compat import asbytes, asunicode
 
 import warnings
+import collections
 
 
 class TestFromrecords(TestCase):
@@ -94,7 +95,7 @@ class TestFromrecords(TestCase):
         assert_array_equal(ra['shape'], [['A', 'B', 'C']])
         ra.field = 5
         assert_array_equal(ra['field'], [[5, 5, 5]])
-        assert_(callable(ra.field))
+        assert_(isinstance(ra.field, collections.Callable))
 
     def test_fromrecords_with_explicit_dtype(self):
         a = np.rec.fromrecords([(1, 'a'), (2, 'bbb')],

@@ -29,6 +29,7 @@ import umath
 from umath import *
 import numerictypes
 from numerictypes import *
+import collections
 
 
 if sys.version_info[0] < 3:
@@ -2445,8 +2446,8 @@ def seterrcall(func):
     {'over': 'log', 'divide': 'log', 'invalid': 'log', 'under': 'log'}
 
     """
-    if func is not None and not callable(func):
-        if not hasattr(func, 'write') or not callable(func.write):
+    if func is not None and not isinstance(func, collections.Callable):
+        if not hasattr(func, 'write') or not isinstance(func.write, collections.Callable):
             raise ValueError("Only callable can be used as callback")
     pyvals = umath.geterrobj()
     old = geterrcall()
