@@ -66,7 +66,7 @@ class PackageLoader(object):
                         break
                 else:
                     try:
-                        exec 'import %s.info as info' % (package_name)
+                        exec('import %s.info as info' % (package_name))
                         info_modules[package_name] = info
                     except ImportError as msg:
                         self.warn('No scipy-style subpackage %r found in %s. '\

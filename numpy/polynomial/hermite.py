@@ -1747,4 +1747,4 @@ def hermweight(x):
 # Hermite series class
 #
 
-exec polytemplate.substitute(name='Hermite', nick='herm', domain='[-1,1]')
+exec(polytemplate.substitute(name='Hermite', nick='herm', domain='[-1,1]'))
