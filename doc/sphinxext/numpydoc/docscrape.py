@@ -1,6 +1,7 @@
 """Extract reference documentation from the NumPy source tree.
 
 """
+from __future__ import division
 
 import sys
 import inspect

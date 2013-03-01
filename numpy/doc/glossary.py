@@ -415,3 +415,5 @@ Glossary
        and f2py (which wraps Fortran).
 
 """
+from __future__ import division
+

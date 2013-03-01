@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 from numpy.testing import *
 from numpy.lib.stride_tricks import broadcast_arrays

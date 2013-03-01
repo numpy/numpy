@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import division
 
 from distutils.core import setup
 from distutils.extension import Extension

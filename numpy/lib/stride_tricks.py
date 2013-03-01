@@ -5,6 +5,8 @@ An explanation of strides can be found in the "ndarray.rst" file in the
 NumPy reference guide.
 
 """
+from __future__ import division
+
 import numpy as np
 
 __all__ = ['broadcast_arrays']

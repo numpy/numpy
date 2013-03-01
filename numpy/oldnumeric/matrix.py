@@ -1,4 +1,7 @@
-# This module is for compatibility only.
+"""This module is for compatibility only.
+
+"""
+from __future__ import division
 
 __all__ = ['UserArray', 'squeeze', 'Matrix', 'asarray', 'dot', 'k', 'Numeric', 'LinearAlgebra', 'identity', 'multiply', 'types', 'string']
 

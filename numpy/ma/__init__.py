@@ -36,6 +36,8 @@ may now proceed to calculate the mean of the other values:
        invalid operation.
 
 """
+from __future__ import division
+
 __author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
 __version__ = '1.0'
 __revision__ = "$Revision: 3473 $"

@@ -104,6 +104,7 @@ available as array methods, i.e. ``x = np.array([1,2,3]); x.sort()``.
 Exceptions to this rule are documented.
 
 """
+from __future__ import division
 
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.

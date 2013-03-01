@@ -12,7 +12,10 @@ terms of the NumPy (BSD style) LICENSE.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 $Date: 2005/07/24 19:01:55 $
 Pearu Peterson
+
 """
+from __future__ import division
+
 __version__ = "$Revision: 1.65 $"[10:-1]
 
 import __version__

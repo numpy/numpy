@@ -1,3 +1,5 @@
+from __future__ import division
+
 __all__ = ['logspace', 'linspace']
 
 import numeric as _nx

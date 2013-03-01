@@ -1,3 +1,4 @@
+from __future__ import division
 
 __all__ = ['fft', 'fft2d', 'fftnd', 'hermite_fft', 'inverse_fft',
            'inverse_fft2d', 'inverse_fftnd',

@@ -1,3 +1,5 @@
+from __future__ import division
+
 from distutils.unixccompiler import UnixCCompiler
 
 class PathScaleCCompiler(UnixCCompiler):

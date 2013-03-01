@@ -1,3 +1,5 @@
+from __future__ import division
+
 from numpy.distutils.ccompiler import simple_version_match
 from numpy.distutils.fcompiler import FCompiler
 

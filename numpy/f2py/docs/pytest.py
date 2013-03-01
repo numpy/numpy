@@ -1,3 +1,5 @@
+from __future__ import division
+
 #File: pytest.py
 import Numeric
 def foo(a):

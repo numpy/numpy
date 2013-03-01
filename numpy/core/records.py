@@ -34,6 +34,8 @@ Record arrays allow us to access fields as properties::
   array([ 2.,  2.])
 
 """
+from __future__ import division
+
 # All of the functions allow formats to be a dtype
 __all__ = ['record', 'recarray', 'format_parser']
 

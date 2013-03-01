@@ -3,7 +3,9 @@
 This single module should provide all the common functionality for numpy tests
 in a single location, so that test scripts can just import it and work right
 away.
+
 """
+from __future__ import division
 
 from unittest import TestCase
 

@@ -44,6 +44,7 @@ Known bugs:
 - Tests, that send messages to stderr, fail when executed from MSYS prompt
   because the messages are lost at some point.
 """
+from __future__ import division
 
 __all__ = ['exec_command','find_executable']
 

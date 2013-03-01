@@ -1,3 +1,4 @@
+from __future__ import division
 
 __all__ = ['abs', 'absolute', 'add', 'arccos', 'arccosh', 'arcsin', 'arcsinh',
            'arctan', 'arctan2', 'arctanh', 'bitwise_and', 'bitwise_not',

@@ -32,7 +32,10 @@ cumprod
 prod
 std
 mean
+
 """
+from __future__ import division
+
 __all__ = ['convertfile', 'convertall', 'converttree']
 
 import sys

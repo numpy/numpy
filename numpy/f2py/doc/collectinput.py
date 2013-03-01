@@ -17,7 +17,9 @@ Usage:
     collectinput <infile> <outfile>
     collectinput <infile>           # <outfile>=inputless_<infile>
     collectinput                    # in and out are stdin and stdout
+
 """
+from __future__ import division
 
 __version__ = "0.0"
 

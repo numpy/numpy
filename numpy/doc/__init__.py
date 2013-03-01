@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os
 
 ref_dir = os.path.join(os.path.dirname(__file__))

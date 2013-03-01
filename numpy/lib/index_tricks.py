@@ -1,3 +1,5 @@
+from __future__ import division
+
 __all__ = ['ravel_multi_index',
            'unravel_index',
            'mgrid',

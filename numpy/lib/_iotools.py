@@ -1,4 +1,8 @@
-"""A collection of functions designed to help I/O with ascii files."""
+"""A collection of functions designed to help I/O with ascii files.
+
+"""
+from __future__ import division
+
 __docformat__ = "restructuredtext en"
 
 import sys

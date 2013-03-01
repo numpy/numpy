@@ -1,3 +1,5 @@
+from __future__ import division
+
 __all__ = ['matrix', 'bmat', 'mat', 'asmatrix']
 
 import sys
