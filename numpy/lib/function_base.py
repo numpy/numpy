@@ -675,7 +675,8 @@ def piecewise(x, condlist, funclist, *args, **kw):
     n2 = len(funclist)
     if isscalar(condlist) or \
             (isinstance(condlist, np.ndarray) and condlist.ndim == 0) or \
-            (x.ndim > 0 and condlist[0].ndim == 0):
+            (x.ndim > 0 and (isscalar(condlist[0]) or \
+                (isinstance(condlist, np.ndarray) and condlist[0].ndim == 0))):
         condlist = [condlist]
     condlist = [asarray(c, dtype=bool) for c in condlist]
     n = len(condlist)
