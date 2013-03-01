@@ -557,7 +557,7 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
         arguments = "()"
         try:
             if hasattr(object, '__init__'):
-                arguments = inspect.formatargspec(*inspect.getargspec(object.__init__.im_func))
+                arguments = inspect.formatargspec(*inspect.getargspec(object.__init__.__func__))
                 arglist = arguments.split(', ')
                 if len(arglist) > 1:
                     arglist[1] = "("+arglist[1]
@@ -593,7 +593,7 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
         print >> output, "Instance of class: ", object.__class__.__name__
         print >> output
         if hasattr(object, '__call__'):
-            arguments = inspect.formatargspec(*inspect.getargspec(object.__call__.im_func))
+            arguments = inspect.formatargspec(*inspect.getargspec(object.__call__.__func__))
             arglist = arguments.split(', ')
             if len(arglist) > 1:
                 arglist[1] = "("+arglist[1]
@@ -621,7 +621,7 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
 
     elif inspect.ismethod(object):
         name = object.__name__
-        arguments = inspect.formatargspec(*inspect.getargspec(object.im_func))
+        arguments = inspect.formatargspec(*inspect.getargspec(object.__func__))
         arglist = arguments.split(', ')
         if len(arglist) > 1:
             arglist[1] = "("+arglist[1]
