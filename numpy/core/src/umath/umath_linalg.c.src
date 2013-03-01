@@ -21,14 +21,13 @@
 #include <math.h>
 
 
-const char* umath_linalg_version_string = "0.1.3";
+static const char* umath_linalg_version_string = "0.1.4";
 
 /*
  ****************************************************************************
  *                        Debugging support                                 *
  ****************************************************************************
  */
-
 #define TRACE_TXT(...) do { fprintf (stderr, __VA_ARGS__); } while (0)
 #define STACK_TRACE do {} while (0)
 #define TRACE\
@@ -50,7 +49,7 @@ dbg_stack_trace()
     size_t size;
 
     size = backtrace(trace, sizeof(trace)/sizeof(trace[0]));
-    backtrace_symbols_fd(trace, size, 2);
+    backtrace_symbols_fd(trace, size, 1);
 }
 
 #undef STACK_TRACE
@@ -603,13 +602,13 @@ static inline void
 print_CFLOAT(npy_cfloat c)
 {
     float* c_parts = (float*)&c;
-    TRACE_TXT(" %8.4f + %8.4fj", c_parts[0], c_parts[1]);
+    TRACE_TXT("(%8.4f, %8.4fj)", c_parts[0], c_parts[1]);
 }
 static inline void
 print_CDOUBLE(npy_cdouble z)
 {
     double* z_parts = (double*)&z;
-    TRACE_TXT(" %8.4f + %8.4fj", z_parts[0], z_parts[1]);
+    TRACE_TXT("(%8.4f, %8.4fj)", z_parts[0], z_parts[1]);
 }
 
 /**begin repeat
@@ -626,12 +625,13 @@ dump_@TYPE@_matrix(const char* name,
     TRACE_TXT("\n%s %p (%zd, %zd)\n", name, ptr, rows, columns);
     for (i=0; i<rows; i++)
     {
-        TRACE_TXT("(");
+        TRACE_TXT("| ");
         for (j=0; j<columns; j++)
         {
-            print_@TYPE@(*ptr++);
+            print_@TYPE@(ptr[j*rows + i]);
+            TRACE_TXT(", ");
         }
-        TRACE_TXT(" )\n");
+        TRACE_TXT(" |\n");
     }
 }
 /**end repeat**/
@@ -2308,6 +2308,7 @@ mk_@lapack_func@_complex_eigenvectors(@complextyp@ *c,
     }
 }
 
+
 static inline void
 process_@lapack_func@_results(GEEV_PARAMS_t *params)
 {
@@ -2338,6 +2339,7 @@ process_@lapack_func@_results(GEEV_PARAMS_t *params)
    #realtyp=float,double#
    #lapack_func=cgeev,zgeev#
  */
+
 static inline int
 init_@lapack_func@(GEEV_PARAMS_t* params,
                    char jobvl,
@@ -2356,8 +2358,9 @@ init_@lapack_func@(GEEV_PARAMS_t* params,
     @typ@ work_size_query;
     fortran_int do_size_query = -1;
     fortran_int rv;
+    size_t total_size = a_size + w_size + vl_size + vr_size + rwork_size; 
 
-    mem_buff = malloc(a_size + w_size + vl_size + vr_size + rwork_size);
+    mem_buff = malloc(total_size);
     if (!mem_buff)
         goto error;
 
@@ -2421,9 +2424,9 @@ call_@lapack_func@(GEEV_PARAMS_t* params)
                           params->WORK, &params->LWORK,
                           params->WR, /* actually RWORK */
                           &rv);
-
     return rv;
 }
+
 
 static inline void
 process_@lapack_func@_results(GEEV_PARAMS_t *NPY_UNUSED(params))
@@ -2461,6 +2464,7 @@ static inline void
     size_t op_count = 2;
     GEEV_PARAMS_t geev_params;
 
+    STACK_TRACE;
     op_count += 'V'==JOBVL?1:0;
     op_count += 'V'==JOBVR?1:0;
 
@@ -3570,27 +3574,6 @@ static void
 
 /**end repeat**/
 
-/**begin repeat
-   #TYPE=FLOAT,DOUBLE,CFLOAT,CDOUBLE#
- */
-static inline void
-@TYPE@_convolve_same_m(char **args,
-                       npy_intp *dimensions,
-                       npy_intp *steps,
-                       void *NPY_UNUSED(func))
-{
-
-}
-
-static inline void
-@TYPE@_convolve_same_n(char **args,
-                       npy_intp *dimensions,
-                       npy_intp *steps,
-                       void *NPY_UNUSED(func))
-{
-}
-/**end repeat**/
-
 #pragma GCC diagnostic pop
 
 /* -------------------------------------------------------------------------- */
@@ -3618,14 +3601,34 @@ static void *array_of_nulls[] = {
     (void *)NULL
 };
 
-#define ARRAY_NAME(NAME) NAME ## _funcs
-#define FUNCS_REAL(NAME) FLOAT_ ## NAME, DOUBLE_ ## NAME
-#define FUNCS_REAL_COMPLEX(NAME) FUNCS_REAL(NAME), \
-                                 CFLOAT_ ## NAME, CDOUBLE_ ## NAME
-#define GUFUNC_FUNC_ARRAY_REAL(NAME) static PyUFuncGenericFunction \
-    ARRAY_NAME(NAME)[] = { FUNCS_REAL(NAME) }
-#define GUFUNC_FUNC_ARRAY_REAL_COMPLEX(NAME) static PyUFuncGenericFunction \
-    ARRAY_NAME(NAME)[] = { FUNCS_REAL_COMPLEX(NAME) }
+#define FUNC_ARRAY_NAME(NAME) NAME ## _funcs
+
+#define GUFUNC_FUNC_ARRAY_REAL(NAME)                    \
+    static PyUFuncGenericFunction                       \
+    FUNC_ARRAY_NAME(NAME)[] = {                         \
+        FLOAT_ ## NAME,                                 \
+        DOUBLE_ ## NAME                                 \
+    }
+
+#define GUFUNC_FUNC_ARRAY_REAL_COMPLEX(NAME)            \
+    static PyUFuncGenericFunction                       \
+    FUNC_ARRAY_NAME(NAME)[] = {                         \
+        FLOAT_ ## NAME,                                 \
+        DOUBLE_ ## NAME,                                \
+        CFLOAT_ ## NAME,                                \
+        CDOUBLE_ ## NAME                                \
+    }
+
+/* There are problems with eig in complex single precision.
+ * That kernel is disabled
+ */
+#define GUFUNC_FUNC_ARRAY_EIG(NAME)                     \
+    static PyUFuncGenericFunction                       \
+    FUNC_ARRAY_NAME(NAME)[] = {                         \
+        FLOAT_ ## NAME,                                 \
+        DOUBLE_ ## NAME,                                \
+        CDOUBLE_ ## NAME                                \
+    }
 
 
 GUFUNC_FUNC_ARRAY_REAL(inner1d);
@@ -3645,8 +3648,8 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(cholesky_lo);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_N);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_S);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(svd_A);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eig);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(eigvals);
+GUFUNC_FUNC_ARRAY_EIG(eig);
+GUFUNC_FUNC_ARRAY_EIG(eigvals);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(quadratic_form);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(add3);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(multiply3);
@@ -3661,8 +3664,6 @@ GUFUNC_FUNC_ARRAY_REAL_COMPLEX(chosolve1_up);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(chosolve1_lo);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(poinv_up);
 GUFUNC_FUNC_ARRAY_REAL_COMPLEX(poinv_lo);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(convolve_same_m);
-GUFUNC_FUNC_ARRAY_REAL_COMPLEX(convolve_same_n);
 
 static char equal_2_types[] = {
     NPY_FLOAT, NPY_FLOAT,
@@ -3717,21 +3718,19 @@ static char eigh_types[] = {
 static char eighvals_types[] = {
     NPY_FLOAT, NPY_FLOAT,
     NPY_DOUBLE, NPY_DOUBLE,
-    NPY_CFLOAT, NPY_FLOAT,
+    NPY_CFLOAT, NPY_FLOAT, 
     NPY_CDOUBLE, NPY_DOUBLE
 };
 
 static char eig_types[] = {
     NPY_FLOAT, NPY_CFLOAT, NPY_CFLOAT,
     NPY_DOUBLE, NPY_CDOUBLE, NPY_CDOUBLE,
-    NPY_CFLOAT, NPY_CFLOAT, NPY_CFLOAT,
     NPY_CDOUBLE, NPY_CDOUBLE, NPY_CDOUBLE
 };
 
 static char eigvals_types[] = {
     NPY_FLOAT, NPY_CFLOAT,
     NPY_DOUBLE, NPY_CDOUBLE,
-    NPY_CFLOAT, NPY_CFLOAT,
     NPY_CDOUBLE, NPY_CDOUBLE
 };
 
@@ -3767,7 +3766,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "inner on the last dimension and broadcast on the rest \n"\
         "    \"(i),(i)->()\" \n",
         2, 2, 1,
-        inner1d_funcs,
+        FUNC_ARRAY_NAME(inner1d),
         equal_3_types
     },
     {
@@ -3777,7 +3776,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         " rest \n"\
         "    \"(i),(i),(i)->()\" \n",
         2, 3, 1,
-        innerwt_funcs,
+        FUNC_ARRAY_NAME(innerwt),
         equal_4_types
     },
     {
@@ -3786,7 +3785,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "dot on the last two dimensions and broadcast on the rest \n"\
         "    \"(m,k),(k,n)->(m,n)\" \n",
         4, 2, 1,
-        matrix_multiply_funcs,
+        FUNC_ARRAY_NAME(matrix_multiply),
         equal_3_types
     },
     {
@@ -3797,7 +3796,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         " determinants. \n"\
         "    \"(m,m)->(),()\" \n",
         4, 1, 2,
-        slogdet_funcs,
+        FUNC_ARRAY_NAME(slogdet),
         slogdet_types
     },
     {
@@ -3806,7 +3805,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "det of the last two dimensions and broadcast on the rest. \n"\
         "    \"(m,m)->()\" \n",
         4, 1, 1,
-        det_funcs,
+        FUNC_ARRAY_NAME(det),
         equal_2_types
     },
     {
@@ -3818,7 +3817,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "eigenvectors. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 2,
-        eighlo_funcs,
+        FUNC_ARRAY_NAME(eighlo),
         eigh_types
     },
     {
@@ -3830,7 +3829,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         " eigenvectors. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
         4, 1, 2,
-        eighup_funcs,
+        FUNC_ARRAY_NAME(eighup),
         eigh_types
     },
     {
@@ -3842,7 +3841,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "eigenvectors. \n"\
         "    \"(m,m)->(m)\" \n",
         4, 1, 1,
-        eigvalshlo_funcs,
+        FUNC_ARRAY_NAME(eigvalshlo),
         eighvals_types
     },
     {
@@ -3854,7 +3853,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "eigenvectors.\n"\
         "    \"(m,m)->(m)\" \n",
         4, 1, 1,
-        eigvalshup_funcs,
+        FUNC_ARRAY_NAME(eigvalshup),
         eighvals_types
     },
     {
@@ -3865,7 +3864,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "Results in a matrices with the solutions. \n"\
         "    \"(m,m),(m,n)->(m,n)\" \n",
         4, 2, 1,
-        solve_funcs,
+        FUNC_ARRAY_NAME(solve),
         equal_3_types
     },
     {
@@ -3876,7 +3875,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "Results in vectors with the solutions. \n"\
         "    \"(m,m),(m)->(m)\" \n",
         4,2,1,
-        solve1_funcs,
+        FUNC_ARRAY_NAME(solve1),
         equal_3_types
     },
     {
@@ -3887,7 +3886,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "Results in the inverse matrices. \n"\
         "    \"(m,m)->(m,m)\" \n",
         4,1,1,
-        inv_funcs,
+        FUNC_ARRAY_NAME(inv),
         equal_2_types
     },
     {
@@ -3897,7 +3896,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "Broadcast to all outer dimensions. \n"\
         "    \"(m,m)->(m,m)\" \n",
         4, 1, 1,
-        cholesky_up_funcs,
+        FUNC_ARRAY_NAME(cholesky_up),
         equal_2_types
     },
     {
@@ -3907,7 +3906,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "Broadcast to all outer dimensions. \n"\
         "    \"(m,m)->(m,m)\" \n",
         4, 1, 1,
-        cholesky_lo_funcs,
+        FUNC_ARRAY_NAME(cholesky_lo),
         equal_2_types
     },
     {
@@ -3915,7 +3914,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(m,n)->(m)",
         "svd when n>=m. ",
         4, 1, 1,
-        svd_N_funcs,
+        FUNC_ARRAY_NAME(svd_N),
         equal_2_types
     },
     {
@@ -3923,7 +3922,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(m,n)->(n)",
         "svd when n<=m",
         4, 1, 1,
-        svd_N_funcs,
+        FUNC_ARRAY_NAME(svd_N),
         svd_1_1_types
     },
     {
@@ -3931,7 +3930,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(m,n)->(m,m),(m),(m,n)",
         "svd when m>=n",
         4, 1, 3,
-        svd_S_funcs,
+        FUNC_ARRAY_NAME(svd_S),
         svd_1_3_types
     },
     {
@@ -3939,7 +3938,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(m,n)->(m,n),(n),(n,n)",
         "svd when m>=n",
         4, 1, 3,
-        svd_S_funcs,
+        FUNC_ARRAY_NAME(svd_S),
         svd_1_3_types
     },
     {
@@ -3947,7 +3946,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(m,n)->(m,m),(m),(n,n)",
         "svd when m>=n",
         4, 1, 3,
-        svd_A_funcs,
+        FUNC_ARRAY_NAME(svd_A),
         svd_1_3_types
     },
     {
@@ -3955,7 +3954,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(m,n)->(m,m),(n),(n,n)",
         "svd when m>=n",
         4, 1, 3,
-        svd_A_funcs,
+        FUNC_ARRAY_NAME(svd_A),
         svd_1_3_types
     },
     {
@@ -3965,8 +3964,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "Results in a vector with the  eigenvalues and a matrix with the"\
         " eigenvectors. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
-        4, 1, 2,
-        eig_funcs,
+        3, 1, 2,
+        FUNC_ARRAY_NAME(eig),
         eig_types
     },
     {
@@ -3975,8 +3974,8 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "eigvals on the last two dimension and broadcast to the rest. \n"\
         "Results in a vector of eigenvalues. \n"\
         "    \"(m,m)->(m),(m,m)\" \n",
-        4, 1, 1,
-        eigvals_funcs,
+        3, 1, 1,
+        FUNC_ARRAY_NAME(eigvals),
         eigvals_types
     },
     {
@@ -3988,7 +3987,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "dimensions. \n"\
         "    \"(m),(m,n),(n)->()",
         4,3,1,
-        quadratic_form_funcs,
+        FUNC_ARRAY_NAME(quadratic_form),
         equal_4_types
     },
     {
@@ -3996,7 +3995,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(),(),()->()",
         "3-way element-wise addition. a,b,c -> a+b+c for all elements. \n",
         4,3,1,
-        add3_funcs,
+        FUNC_ARRAY_NAME(add3),
         equal_4_types
     },
     {
@@ -4004,7 +4003,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(),(),()->()",
         "3-way element-wise product. a,b,c -> a*b*c for all elements. \n",
         4,3,1,
-        multiply3_funcs,
+        FUNC_ARRAY_NAME(multiply3),
         equal_4_types
     },
     {
@@ -4013,7 +4012,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "3-way element-wise product plus addition. a,b,c,d -> a*b*c+d"\
         " for all elements. \n",
         4,4,1,
-        multiply3_add_funcs,
+        FUNC_ARRAY_NAME(multiply3_add),
         equal_5_types
     },
     {
@@ -4021,7 +4020,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(),(),()->()",
         "element-wise multiply-add. a,b,c -> a*b+c for all elements. \n",
         4,3,1,
-        multiply_add_funcs,
+        FUNC_ARRAY_NAME(multiply_add),
         equal_4_types
     },
     {
@@ -4030,7 +4029,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "element-wise product with 2 additions. a,b,c,d -> a*b+c+d for"\
         " all elements. \n",
         4,4,1,
-        multiply_add2_funcs,
+        FUNC_ARRAY_NAME(multiply_add2),
         equal_5_types
     },
     {
@@ -4038,7 +4037,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(),(),(),()->()",
         "4-way element-wise product. a,b,c,d -> a*b*c*d for all elements. \n",
         4,4,1,
-        multiply4_funcs,
+        FUNC_ARRAY_NAME(multiply4),
         equal_5_types
     },
     {
@@ -4046,7 +4045,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(),(),(),(),()->()",
         "4-way element-wise product and addition. a,b,c,d,e -> a*b*c*d+e. \n",
         4,5,1,
-        multiply4_add_funcs,
+        FUNC_ARRAY_NAME(multiply4_add),
         equal_6_types
     },
     {  /* solve using cholesky decomposition (lapack potrs) */
@@ -4055,7 +4054,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "solve for symmetric/hermitian matrices using cholesky"\
         " factorization. \n",
         4,2,1,
-        chosolve_up_funcs,
+        FUNC_ARRAY_NAME(chosolve_up),
         equal_3_types
     },
     {  /* solve using choleske decomposition (lapack potrs) */
@@ -4064,7 +4063,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "solve for symmetric/hermitian matrices using cholesky"\
         " factorization. \n",
         4,2,1,
-        chosolve_lo_funcs,
+        FUNC_ARRAY_NAME(chosolve_lo),
         equal_3_types
     },
     {   /* solve using cholesky decomposition (lapack potrs) */
@@ -4072,7 +4071,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(m,m),(m)->(m)",
         "solve a system using cholesky decomposition. \n",
         4,2,1,
-        chosolve1_up_funcs,
+        FUNC_ARRAY_NAME(chosolve1_up),
         equal_3_types
     },
     {   /* solve using cholesky decomposition (lapack potrs) */
@@ -4080,7 +4079,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "(m,m),(m)->(m)",
         "solve a system using cholesky decomposition. \n",
         4,2,1,
-        chosolve1_lo_funcs,
+        FUNC_ARRAY_NAME(chosolve1_lo),
         equal_3_types
     },
     {   /* inverse using cholesky decomposition (lapack potri) */
@@ -4089,7 +4088,7 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "inverse using cholesky decomposition for symmetric/hermitian"\
         " matrices. \n",
         4,1,1,
-        poinv_up_funcs,
+        FUNC_ARRAY_NAME(poinv_up),
         equal_2_types
     },
     {   /* inverse using cholesky decomposition (lapack potri) */
@@ -4098,25 +4097,9 @@ GUFUNC_DESCRIPTOR_t gufunc_descriptors [] = {
         "inverse using cholesky decomposition for symmetric/hermitian"\
         " matrices. \n",
         4,1,1,
-        poinv_lo_funcs,
+        FUNC_ARRAY_NAME(poinv_lo),
         equal_2_types
     },
-    {
-        "convolve_same_m",
-        "(m),(n)->(m)",
-        "convolve equivalent to mode='same' when m>=n. \n",
-        4,2,1,
-        convolve_same_m_funcs,
-        equal_3_types
-    },
-    {
-        "convolve_same_n",
-        "(m),(n)->(n)",
-        "convolve equivalent to mode='same' when m<=n. \n",
-        4,2,1,
-        convolve_same_m_funcs,
-        equal_3_types
-    }
 };
 
 static void

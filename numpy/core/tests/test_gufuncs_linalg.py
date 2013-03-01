@@ -4,11 +4,6 @@ Heavily inspired (ripped in part) test_linalg
 """
 
 
-"""
-TODO:
-    Implement proper tests for Eig
-"""
-
 ################################################################################
 # The following functions are implemented in the module "gufuncs_linalg"
 #
@@ -75,6 +70,61 @@ def assert_almost_equal(a, b, **kw):
     old_assert_almost_equal(a, b, decimal = decimal, **kw)
 
 
+def assert_valid_eigen_no_broadcast(M, w, v, **kw):
+    lhs = gula.matrix_multiply(M,v)
+    rhs = w*v
+    assert_almost_equal(lhs, rhs, **kw)
+
+
+def assert_valid_eigen_recurse(M, w, v, **kw):
+    """check that w and v are valid eigenvalues/eigenvectors for matrix M
+    broadcast"""
+    if len(M.shape) > 2:
+        for i in range(M.shape[0]):
+            assert_valid_eigen_recurse(M[i], w[i], v[i], **kw)
+    else:
+        if len(M.shape) == 2:
+            assert_valid_eigen_no_broadcast(M, w, v, **kw)
+        else:
+            raise AssertionError('Not enough dimensions')
+
+
+def assert_valid_eigen(M, w, v, **kw):
+    if np.any(np.isnan(M)):
+        raise AssertionError('nan found in matrix')
+    if np.any(np.isnan(w)):
+        raise AssertionError('nan found in eigenvalues')
+    if np.any(np.isnan(v)):
+        raise AssertionError('nan found in eigenvectors')
+
+    assert_valid_eigen_recurse(M, w, v, **kw)
+
+
+def assert_valid_eigenvals_no_broadcast(M, w, **kw):
+    ident = np.eye(M.shape[0], dtype=M.dtype)
+    for i in range(w.shape[0]):
+        assert_almost_equal(gula.det(M - w[i]*ident), 0.0, **kw)
+
+
+def assert_valid_eigenvals_recurse(M, w, **kw):
+    if len(M.shape) > 2:
+        for i in range(M.shape[0]):
+            assert_valid_eigenvals_recurse(M[i], w[i], **kw)
+    else:
+        if len(M.shape) == 2:
+            assert_valid_eigenvals_no_broadcast(M, w, **kw)
+        else:
+            raise AssertionError('Not enough dimensions')
+
+
+def assert_valid_eigenvals(M, w, **kw):
+    if np.any(np.isnan(M)):
+        raise AssertionError('nan found in matrix')
+    if np.any(np.isnan(w)):
+        raise AssertionError('nan found in eigenvalues')
+    assert_valid_eigenvals_recurse(M, w, **kw)
+
+
 class MatrixGenerator(object):
     def real_matrices(self):
         a = [[1,2],
@@ -127,6 +177,7 @@ class MatrixGenerator(object):
     def complex_hermitian_matrices_vector(self):
         a, b = self.complex_hermitian_matrices()
         return [a], [b]
+
 
 class GeneralTestCase(MatrixGenerator):
     def test_single(self):
@@ -211,6 +262,7 @@ class HermitianTestCase(MatrixGenerator):
         self.do(array(a, dtype=cdouble),
                 array(b, dtype=cdouble))
 
+
 class TestMatrixMultiply(GeneralTestCase):
     def do(self, a, b):
         res = gula.matrix_multiply(a,b)
@@ -218,6 +270,7 @@ class TestMatrixMultiply(GeneralTestCase):
             assert_almost_equal(res, np.dot(a,b))
         else:
             assert_almost_equal(res[0], np.dot(a[0],b[0]))
+
 
 class TestInv(GeneralTestCase, TestCase):
     def do(self, a, b):
@@ -244,15 +297,13 @@ class TestDet(GeneralTestCase, TestCase):
         d = gula.det(a)
         s, ld = gula.slogdet(a)
         assert_almost_equal(s * np.exp(ld), d)
-        # use eigvals in high-precision. This way problems in the complex single
-        # test is avoided as eigvals fails in there.
-        # also note that in gufuncs_linalg eigvals for reals return complex
+
         if np.csingle == a.dtype.type or np.single == a.dtype.type:
             cmp_type=np.csingle
         else:
             cmp_type=np.cdouble
 
-        ev = gula.eigvals(a.astype(np.cdouble))
+        ev = gula.eigvals(a.astype(cmp_type))
         assert_almost_equal(d.astype(cmp_type),
                             multiply.reduce(ev.astype(cmp_type),
                                             axis=(ev.ndim-1)))
@@ -286,42 +337,38 @@ class TestDet(GeneralTestCase, TestCase):
 class TestEig(GeneralTestCase, TestCase):
     def do(self, a, b):
         evalues, evectors = gula.eig(a)
+        assert_valid_eigenvals(a, evalues)
+        assert_valid_eigen(a, evalues, evectors)
         ev = gula.eigvals(a)
-
-class TestEigh(HermitianTestCase, TestCase):
-    def do(self, a, b):
-        """ still work in progress """
-        raise SkipTest
-        evalues_lo, evectors_lo = gula.eigh(a, UPLO='L')
-        evalues_up, evectors_up = gula.eigh(a, UPLO='U')
-
-        assert_almost_equal(dot(a, evectors_lo), multiply(evectors_lo, evalues_lo))
-        assert_almost_equal(dot(a, evectors_up), multiply(evectors_up, evalues_up))
-        assert_almost_equal(evalues_lo, evalues_up)
-        assert_almost_equal(evectors_lo, evectors_up)
-
-
-class TestEigVals(GeneralTestCase, TestCase):
-    def do(self, a, b):
-        ev = gula.eigvals(a)
-        evalues, evectors = gula.eig(a)
+        assert_valid_eigenvals(a, evalues)
         assert_almost_equal(ev, evalues)
 
 
-class TestEigvalsh(HermitianTestCase, TestCase):
+class TestEigh(HermitianTestCase, TestCase):
     def do(self, a, b):
-        ev_lo = gula.eigvalsh(a, UPLO='L')
-        ev_up = gula.eigvalsh(a, UPLO='U')
         evalues_lo, evectors_lo = gula.eigh(a, UPLO='L')
         evalues_up, evectors_up = gula.eigh(a, UPLO='U')
-        assert_equal(ev_lo, evalues_lo)
-        assert_equal(ev_up, evalues_up)
+
+        assert_valid_eigenvals(a, evalues_lo)
+        assert_valid_eigenvals(a, evalues_up)
+        assert_valid_eigen(a, evalues_lo, evectors_lo)
+        assert_valid_eigen(a, evalues_up, evectors_up)
+        assert_almost_equal(evalues_lo, evalues_up)
+        assert_almost_equal(evectors_lo, evectors_up)
+
+        ev_lo = gula.eigvalsh(a, UPLO='L')
+        ev_up = gula.eigvalsh(a, UPLO='U')
+        assert_valid_eigenvals(a, ev_lo)
+        assert_valid_eigenvals(a, ev_up)
+        assert_almost_equal(ev_lo, evalues_lo)
+        assert_almost_equal(ev_up, evalues_up)
 
 
 class TestSolve(GeneralTestCase,TestCase):
     def do(self, a, b):
         x = gula.solve(a,b)
-        assert_almost_equal(b,gula.matrix_multiply(a,x))
+        assert_almost_equal(b, gula.matrix_multiply(a,x))
+
 
 class TestChosolve(HermitianTestCase, TestCase):
     def do(self, a, b):
@@ -339,6 +386,7 @@ class TestChosolve(HermitianTestCase, TestCase):
         # todo: implement alternative test
         assert_almost_equal(b, gula.matrix_multiply(a,x_lo))
         assert_almost_equal(b, gula.matrix_multiply(a,x_up))
+
 
 class TestSVD(GeneralTestCase, TestCase):
     def do(self, a, b):
@@ -405,35 +453,43 @@ class TestAdd3(UfuncTestCase, TestCase):
         r = gula.add3(a,a,a)
         assert_almost_equal(r, a+a+a)
 
+
 class TestMultiply3(UfuncTestCase, TestCase):
     def do(self, a):
         r = gula.multiply3(a,a,a)
         assert_almost_equal(r, a*a*a)
+
 
 class TestMultiply3Add(UfuncTestCase, TestCase):
     def do(self, a):
         r = gula.multiply3_add(a,a,a,a)
         assert_almost_equal(r, a*a*a+a)
 
+
 class TestMultiplyAdd(UfuncTestCase, TestCase):
     def do(self, a):
         r = gula.multiply_add(a,a,a)
         assert_almost_equal(r, a*a+a)
+
 
 class TestMultiplyAdd2(UfuncTestCase, TestCase):
     def do(self, a):
         r = gula.multiply_add2(a,a,a,a)
         assert_almost_equal(r, a*a+a+a)
 
+
 class TestMultiply4(UfuncTestCase, TestCase):
     def do(self, a):
         r = gula.multiply4(a,a,a,a)
         assert_almost_equal(r, a*a*a*a)
+
 
 class TestMultiply4_add(UfuncTestCase, TestCase):
     def do(self, a):
         r = gula.multiply4_add(a,a,a,a,a)
         assert_almost_equal(r, a*a*a*a+a)
 
+
 if __name__ == "__main__":
+    print 'testing gufuncs_linalg; gufuncs version: %s' % gula._impl.__version__
     run_module_suite()
