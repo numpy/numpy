@@ -430,13 +430,15 @@ def run_compile():
         remove_build_dir = 1
         build_dir = os.path.join(tempfile.mktemp())
 
-    sysinfo_flags = filter(re.compile(r'[-][-]link[-]').match,sys.argv[1:])
-    sys.argv = filter(lambda a,flags=sysinfo_flags:a not in flags,sys.argv)
+    _reg1 = re.compile(r'[-][-]link[-]')
+    sysinfo_flags = [_m for _m in sys.argv[1:] if _reg1.match(_m)]
+    sys.argv = [_m for _m in sys.argv if _m not in sysinfo_flags]
     if sysinfo_flags:
         sysinfo_flags = [f[7:] for f in sysinfo_flags]
 
-    f2py_flags = filter(re.compile(r'[-][-]((no[-]|)(wrap[-]functions|lower)|debug[-]capi|quiet)|[-]include').match,sys.argv[1:])
-    sys.argv = filter(lambda a,flags=f2py_flags:a not in flags,sys.argv)
+    _reg2 = re.compile(r'[-][-]((no[-]|)(wrap[-]functions|lower)|debug[-]capi|quiet)|[-]include')
+    f2py_flags = [_m for _m in sys.argv[1:] if _reg2.match(_m)]
+    sys.argv = [_m for _m in sys.argv if _m not in f2py_flags]
     f2py_flags2 = []
     fl = 0
     for a in sys.argv[1:]:
@@ -450,12 +452,13 @@ def run_compile():
         f2py_flags2.append(':')
     f2py_flags.extend(f2py_flags2)
 
-    sys.argv = filter(lambda a,flags=f2py_flags2:a not in flags,sys.argv)
-
-    flib_flags = filter(re.compile(r'[-][-]((f(90)?compiler([-]exec|)|compiler)=|help[-]compiler)').match,sys.argv[1:])
-    sys.argv = filter(lambda a,flags=flib_flags:a not in flags,sys.argv)
-    fc_flags = filter(re.compile(r'[-][-]((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help[-]fcompiler))').match,sys.argv[1:])
-    sys.argv = filter(lambda a,flags=fc_flags:a not in flags,sys.argv)
+    sys.argv = [_m for _m in sys.argv if _m not in f2py_flags2]
+    _reg3 = re.compile(r'[-][-]((f(90)?compiler([-]exec|)|compiler)=|help[-]compiler)')
+    flib_flags = [_m for _m in sys.argv[1:] if _reg3.match(_m)]
+    sys.argv = [_m for _m in sys.argv if _m not in flib_flags]
+    _reg4 = re.compile(r'[-][-]((f(77|90)(flags|exec)|opt|arch)=|(debug|noopt|noarch|help[-]fcompiler))')
+    fc_flags = [_m for _m in sys.argv[1:] if _reg4.match(_m)]
+    sys.argv = [_m for _m in sys.argv if _m not in fc_flags]
 
     if 1:
         del_list = []
@@ -481,8 +484,11 @@ def run_compile():
             i = flib_flags.index(s)
             del flib_flags[i]
         assert len(flib_flags)<=2,`flib_flags`
-    setup_flags = filter(re.compile(r'[-][-](verbose)').match,sys.argv[1:])
-    sys.argv = filter(lambda a,flags=setup_flags:a not in flags,sys.argv)
+
+    _reg5 = re.compile(r'[-][-](verbose)')
+    setup_flags = [_m for _m in sys.argv[1:] if _reg5.match(_m)]
+    sys.argv = [_m for _m in sys.argv if _m not in setup_flags]
+
     if '--quiet' in f2py_flags:
         setup_flags.append('--quiet')
 

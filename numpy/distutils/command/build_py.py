@@ -21,7 +21,7 @@ class build_py(old_build_py):
 
     def find_modules(self):
         old_py_modules = self.py_modules[:]
-        new_py_modules = filter(is_string, self.py_modules)
+        new_py_modules = [_m for _m in self.py_modules if is_string(_m)]
         self.py_modules[:] = new_py_modules
         modules = old_build_py.find_modules(self)
         self.py_modules[:] = old_py_modules
