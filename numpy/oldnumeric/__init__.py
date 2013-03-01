@@ -26,6 +26,8 @@ import precision
 import functions
 import misc
 import ufuncs
+import warnings
+import sys
 
 import numpy
 __version__ = numpy.__version__
@@ -43,6 +45,12 @@ del functions
 del precision
 del ufuncs
 del misc
+
+if sys.version_info[0] > 2:
+    raise ImportError("oldnumeric is not supported in Python 3.x")
+
+_msg = "oldnumeric will be dropped in numpy 1.8"
+warnings.warn(_msg, DeprecationWarning)
 
 from numpy.testing import Tester
 test = Tester().test
