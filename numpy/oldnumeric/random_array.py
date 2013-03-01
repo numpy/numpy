@@ -201,20 +201,20 @@ def test():
     mt.set_state(obj)
     obj2 = mt.get_state()
     if (obj2[1] - obj[1]).any():
-        raise SystemExit, "Failed seed test."
+        raise SystemExit("Failed seed test.")
     print "First random number is", random()
     print "Average of 10000 random numbers is", np.sum(random(10000),axis=0)/10000.
     x = random([10,1000])
     if len(x.shape) != 2 or x.shape[0] != 10 or x.shape[1] != 1000:
-        raise SystemExit, "random returned wrong shape"
+        raise SystemExit("random returned wrong shape")
     x.shape = (10000,)
     print "Average of 100 by 100 random numbers is", np.sum(x,axis=0)/10000.
     y = uniform(0.5,0.6, (1000,10))
     if len(y.shape) !=2 or y.shape[0] != 1000 or y.shape[1] != 10:
-        raise SystemExit, "uniform returned wrong shape"
+        raise SystemExit("uniform returned wrong shape")
     y.shape = (10000,)
     if np.minimum.reduce(y) <= 0.5 or np.maximum.reduce(y) >= 0.6:
-        raise SystemExit, "uniform returned out of desired range"
+        raise SystemExit("uniform returned out of desired range")
     print "randint(1, 10, shape=[50])"
     print randint(1, 10, shape=[50])
     print "permutation(10)", permutation(10)
@@ -224,18 +224,18 @@ def test():
     s = 3.0
     x = normal(2.0, s, [10, 1000])
     if len(x.shape) != 2 or x.shape[0] != 10 or x.shape[1] != 1000:
-        raise SystemExit, "standard_normal returned wrong shape"
+        raise SystemExit("standard_normal returned wrong shape")
     x.shape = (10000,)
     mean_var_test(x, "normally distributed numbers with mean 2 and variance %f"%(s**2,), 2, s**2, 0)
     x = exponential(3, 10000)
     mean_var_test(x, "random numbers exponentially distributed with mean %f"%(s,), s, s**2, 2)
     x = multivariate_normal(np.array([10,20]), np.array(([1,2],[2,4])))
     print "\nA multivariate normal", x
-    if x.shape != (2,): raise SystemExit, "multivariate_normal returned wrong shape"
+    if x.shape != (2,): raise SystemExit("multivariate_normal returned wrong shape")
     x = multivariate_normal(np.array([10,20]), np.array([[1,2],[2,4]]), [4,3])
     print "A 4x3x2 array containing multivariate normals"
     print x
-    if x.shape != (4,3,2): raise SystemExit, "multivariate_normal returned wrong shape"
+    if x.shape != (4,3,2): raise SystemExit("multivariate_normal returned wrong shape")
     x = multivariate_normal(np.array([-100,0,100]), np.array([[3,2,1],[2,2,1],[1,1,1]]), 10000)
     x_mean = np.sum(x,axis=0)/10000.
     print "Average of 10000 multivariate normals with mean [-100,0,100]"
