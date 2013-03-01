@@ -125,7 +125,7 @@ def getargspec(func):
     """
 
     if ismethod(func):
-        func = func.im_func
+        func = func.__func__
     if not isfunction(func):
         raise TypeError('arg is not a Python function')
     args, varargs, varkw = getargs(func.__code__)

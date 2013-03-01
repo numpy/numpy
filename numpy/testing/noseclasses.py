@@ -48,7 +48,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
             # to make by extension code writers, having this safety in place
             # isn't such a bad idea
             #print '_fm C3-1'  # dbg
-            return module.__name__ == object.im_class.__module__
+            return module.__name__ == object.__self__.__class__.__module__
         elif inspect.getmodule(object) is not None:
             #print '_fm C4'  # dbg
             #print 'C4 mod',module,'obj',object # dbg
@@ -100,7 +100,7 @@ class NumpyDocTestFinder(doctest.DocTestFinder):
                 if isinstance(val, staticmethod):
                     val = getattr(obj, valname)
                 if isinstance(val, classmethod):
-                    val = getattr(obj, valname).im_func
+                    val = getattr(obj, valname).__func__
 
                 # Recurse to methods, properties, and nested classes.
                 if ((isfunction(val) or isclass(val) or
