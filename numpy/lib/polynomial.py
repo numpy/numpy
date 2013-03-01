@@ -564,9 +564,9 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     if w is not None:
         w = NX.asarray(w) + 0.0
         if w.ndim != 1:
-            raise TypeError, "expected a 1-d array for weights"
+            raise TypeError("expected a 1-d array for weights")
         if w.shape[0] != y.shape[0] :
-            raise TypeError, "expected w and y to have the same length"
+            raise TypeError("expected w and y to have the same length")
         lhs *= w[:, NX.newaxis]
         if rhs.ndim == 2:
             rhs *= w[:, NX.newaxis]
