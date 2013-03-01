@@ -447,7 +447,7 @@ class throw_error:
         self.mess = mess
     def __call__(self,var):
         mess = '\n\n  var = %s\n  Message: %s\n' % (var,self.mess)
-        raise F2PYError,mess
+        raise F2PYError(mess)
 
 def l_and(*f):
     l,l2='lambda v',[]
