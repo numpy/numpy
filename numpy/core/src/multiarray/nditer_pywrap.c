@@ -786,7 +786,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     if (itershape.len > 0) {
         if (oa_ndim == 0) {
             oa_ndim = itershape.len;
-            memset(op_axes, 0, sizeof(op_axes[0])*oa_ndim);
+            memset(op_axes, 0, sizeof(op_axes[0]) * nop);
         }
         else if (oa_ndim != itershape.len) {
             PyErr_SetString(PyExc_ValueError,
