@@ -1869,7 +1869,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
  * All arrays are assumed contiguous on entry and both arr and key must be of
  * the same comparable type.
  *
- * @param arr contiguous sorted array to be searched.
+ * @param arr 1d, strided, sorted array to be searched.
  * @param key contiguous array of keys.
  * @param ret contiguous array of intp for returned indices.
  * @return void
@@ -1883,7 +1883,8 @@ local_search_left(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
     char *parr = PyArray_DATA(arr);
     char *pkey = PyArray_DATA(key);
     npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
-    int elsize = PyArray_DESCR(arr)->elsize;
+    int elsize = PyArray_DESCR(key)->elsize;
+    npy_intp arrstride = *PyArray_STRIDES(arr);
     npy_intp i;
 
     for (i = 0; i < nkeys; ++i) {
@@ -1891,7 +1892,7 @@ local_search_left(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
         npy_intp imax = nelts;
         while (imin < imax) {
             npy_intp imid = imin + ((imax - imin) >> 1);
-            if (compare(parr + elsize*imid, pkey, key) < 0) {
+            if (compare(parr + arrstride*imid, pkey, key) < 0) {
                 imin = imid + 1;
             }
             else {
@@ -1912,7 +1913,7 @@ local_search_left(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
  * All arrays are assumed contiguous on entry and both arr and key must be of
  * the same comparable type.
  *
- * @param arr contiguous sorted array to be searched.
+ * @param arr 1d, strided, sorted array to be searched.
  * @param key contiguous array of keys.
  * @param ret contiguous array of intp for returned indices.
  * @return void
@@ -1926,7 +1927,8 @@ local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
     char *parr = PyArray_DATA(arr);
     char *pkey = PyArray_DATA(key);
     npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
-    int elsize = PyArray_DESCR(arr)->elsize;
+    int elsize = PyArray_DESCR(key)->elsize;
+    npy_intp arrstride = *PyArray_STRIDES(arr);
     npy_intp i;
 
     for(i = 0; i < nkeys; ++i) {
@@ -1934,7 +1936,7 @@ local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
         npy_intp imax = nelts;
         while (imin < imax) {
             npy_intp imid = imin + ((imax - imin) >> 1);
-            if (compare(parr + elsize*imid, pkey, key) <= 0) {
+            if (compare(parr + arrstride*imid, pkey, key) <= 0) {
                 imin = imid + 1;
             }
             else {
@@ -1954,8 +1956,9 @@ local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
  * All arrays are assumed contiguous on entry and both arr and key must be of
  * the same comparable type.
  *
- * @param arr contiguous sorted array to be searched.
+ * @param arr 1d, strided array to be searched.
  * @param key contiguous array of keys.
+ * @param sorter 1d, strided array of intp that sorts arr.
  * @param ret contiguous array of intp for returned indices.
  * @return int
  */
@@ -1968,9 +1971,11 @@ local_argsearch_left(PyArrayObject *arr, PyArrayObject *key,
     npy_intp nkeys = PyArray_SIZE(key);
     char *parr = PyArray_DATA(arr);
     char *pkey = PyArray_DATA(key);
-    npy_intp *psorter = (npy_intp *)PyArray_DATA(sorter);
+    char *psorter = PyArray_DATA(sorter);
     npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
-    int elsize = PyArray_DESCR(arr)->elsize;
+    int elsize = PyArray_DESCR(key)->elsize;
+    npy_intp arrstride = *PyArray_STRIDES(arr);
+    npy_intp sorterstride = *PyArray_STRIDES(sorter);
     npy_intp i;
 
     for (i = 0; i < nkeys; ++i) {
@@ -1978,12 +1983,12 @@ local_argsearch_left(PyArrayObject *arr, PyArrayObject *key,
         npy_intp imax = nelts;
         while (imin < imax) {
             npy_intp imid = imin + ((imax - imin) >> 1);
-            npy_intp indx = psorter[imid];
+            npy_intp indx = *(psorter + sorterstride*imid);
 
             if (indx < 0 || indx >= nelts) {
                 return -1;
             }
-            if (compare(parr + elsize*indx, pkey, key) < 0) {
+            if (compare(parr + arrstride*indx, pkey, key) < 0) {
                 imin = imid + 1;
             }
             else {
@@ -2005,8 +2010,9 @@ local_argsearch_left(PyArrayObject *arr, PyArrayObject *key,
  * All arrays are assumed contiguous on entry and both arr and key must be of
  * the same comparable type.
  *
- * @param arr contiguous sorted array to be searched.
+ * @param arr 1d, strided array to be searched.
  * @param key contiguous array of keys.
+ * @param sorter 1d, strided array of intp that sorts arr.
  * @param ret contiguous array of intp for returned indices.
  * @return int
  */
@@ -2019,9 +2025,11 @@ local_argsearch_right(PyArrayObject *arr, PyArrayObject *key,
     npy_intp nkeys = PyArray_SIZE(key);
     char *parr = PyArray_DATA(arr);
     char *pkey = PyArray_DATA(key);
-    npy_intp *psorter = (npy_intp *)PyArray_DATA(sorter);
+    char *psorter = PyArray_DATA(sorter);
     npy_intp *pret = (npy_intp *)PyArray_DATA(ret);
-    int elsize = PyArray_DESCR(arr)->elsize;
+    int elsize = PyArray_DESCR(key)->elsize;
+    npy_intp arrstride = *PyArray_STRIDES(arr);
+    npy_intp sorterstride = *PyArray_STRIDES(sorter);
     npy_intp i;
 
     for(i = 0; i < nkeys; ++i) {
@@ -2029,12 +2037,12 @@ local_argsearch_right(PyArrayObject *arr, PyArrayObject *key,
         npy_intp imax = nelts;
         while (imin < imax) {
             npy_intp imid = imin + ((imax - imin) >> 1);
-            npy_intp indx = psorter[imid];
+            npy_intp indx = *(psorter + sorterstride*imid);
 
             if (indx < 0 || indx >= nelts) {
                 return -1;
             }
-            if (compare(parr + elsize*indx, pkey, key) <= 0) {
+            if (compare(parr + arrstride*indx, pkey, key) <= 0) {
                 imin = imid + 1;
             }
             else {
@@ -2099,7 +2107,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     Py_INCREF(dtype);
     ap1 = (PyArrayObject *)PyArray_CheckFromAny((PyObject *)op1, dtype,
                                 1, 1,
-                                NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED,
+                                NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED,
                                 NULL);
     if (ap1 == NULL) {
         Py_DECREF(dtype);
@@ -2125,7 +2133,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         /* need ap3 as contiguous array and of right type */
         ap3 = (PyArrayObject *)PyArray_CheckFromAny(perm, NULL,
                                     1, 1,
-                                    NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED,
+                                    NPY_ARRAY_ALIGNED | NPY_ARRAY_NOTSWAPPED,
                                     NULL);
         if (ap3 == NULL) {
             PyErr_SetString(PyExc_TypeError,
