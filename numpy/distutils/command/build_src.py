@@ -186,8 +186,8 @@ class build_src(build_ext.build_ext):
                     build_dir = self.get_package_dir('.'.join(d.split(os.sep)))
                 else:
                     build_dir = os.path.join(self.build_src,d)
-                funcs = filter(lambda f:hasattr(f, '__call__'), files)
-                files = filter(lambda f:not hasattr(f, '__call__'), files)
+                funcs = [f for f in files if hasattr(f, '__call__')]
+                files = [f for f in files if not hasattr(f, '__call__')]
                 for f in funcs:
                     if f.__code__.co_argcount==1:
                         s = f(build_dir)

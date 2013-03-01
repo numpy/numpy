@@ -207,7 +207,7 @@ class PackageLoader(object):
                     if symbols is None:
                         symbols = eval('dir(%s)' % (package_name),
                                        frame.f_globals,frame.f_locals)
-                        symbols = filter(lambda s:not s.startswith('_'),symbols)
+                        symbols = [s for s in symbols if not s.startswith('_')]
                 else:
                     symbols = [symbol]
 
