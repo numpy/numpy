@@ -516,7 +516,7 @@ class Win32CPUInfo(CPUInfoBase):
                                     info[-1]["Model"]=int(srch.group("MDL"))
                                     info[-1]["Stepping"]=int(srch.group("STP"))
         except:
-            print(sys.exc_value,'(ignoring)')
+            print(sys.exc_info()[1],'(ignoring)')
         self.__class__.info = info
 
     def _not_impl(self): pass
