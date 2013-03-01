@@ -11,8 +11,9 @@
 
 import warnings
 import collections
-warnings.warn("This extension has been submitted to Sphinx upstream. "
-              "Use the version from there if it is accepted "
+
+warnings.warn("This extension has been accepted to Sphinx upstream. "
+              "Use the version from there (Sphinx >= 1.2) "
               "https://bitbucket.org/birkenfeld/sphinx/pull-request/47/sphinxextlinkcode",
               FutureWarning, stacklevel=1)
 
@@ -77,4 +78,4 @@ def doctree_read(app, doctree):
 
 def setup(app):
     app.connect('doctree-read', doctree_read)
-    app.add_config_value('linkcode_resolve', None, 'env')
+    app.add_config_value('linkcode_resolve', None, '')

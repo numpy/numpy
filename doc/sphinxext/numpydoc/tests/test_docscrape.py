@@ -1,10 +1,9 @@
 # -*- encoding:utf-8 -*-
 
-import sys, os
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+import sys, textwrap
 
-from docscrape import NumpyDocString, FunctionDoc, ClassDoc
-from docscrape_sphinx import SphinxDocString, SphinxClassDoc
+from numpydoc.docscrape import NumpyDocString, FunctionDoc, ClassDoc
+from numpydoc.docscrape_sphinx import SphinxDocString, SphinxClassDoc
 from nose.tools import *
 
 doc_txt = '''\
@@ -165,11 +164,12 @@ def test_examples():
 
 def test_index():
     assert_equal(doc['index']['default'], 'random')
-    print doc['index']
     assert_equal(len(doc['index']), 2)
     assert_equal(len(doc['index']['refguide']), 2)
 
 def non_blank_line_by_line_compare(a,b):
+    a = textwrap.dedent(a)
+    b = textwrap.dedent(b)
     a = [l for l in a.split('\n') if l.strip()]
     b = [l for l in b.split('\n') if l.strip()]
     for n,line in enumerate(a):
@@ -556,7 +556,11 @@ def test_unicode():
         äää
 
     """)
-    assert doc['Summary'][0] == u'öäöäöäöäöåååå'.encode('utf-8')
+    assert isinstance(doc['Summary'][0], str)
+    if sys.version_info[0] >= 3:
+        assert doc['Summary'][0] == u'öäöäöäöäöåååå'
+    else:
+        assert doc['Summary'][0] == u'öäöäöäöäöåååå'.encode('utf-8')
 
 def test_plot_examples():
     cfg = dict(use_plots=True)
@@ -594,20 +598,149 @@ def test_class_members():
         def ham(self, c, d):
             """Cheese\n\nNo cheese."""
             pass
+        @property
+        def spammity(self):
+            """Spammity index"""
+            return 0.95
+
+        class Ignorable(object):
+            """local class, to be ignored"""
+            pass
 
     for cls in (ClassDoc, SphinxClassDoc):
         doc = cls(Dummy, config=dict(show_class_members=False))
         assert 'Methods' not in str(doc), (cls, str(doc))
         assert 'spam' not in str(doc), (cls, str(doc))
         assert 'ham' not in str(doc), (cls, str(doc))
+        assert 'spammity' not in str(doc), (cls, str(doc))
+        assert 'Spammity index' not in str(doc), (cls, str(doc))
 
         doc = cls(Dummy, config=dict(show_class_members=True))
         assert 'Methods' in str(doc), (cls, str(doc))
         assert 'spam' in str(doc), (cls, str(doc))
         assert 'ham' in str(doc), (cls, str(doc))
+        assert 'spammity' in str(doc), (cls, str(doc))
 
         if cls is SphinxClassDoc:
             assert '.. autosummary::' in str(doc), str(doc)
+        else:
+            assert 'Spammity index' in str(doc), str(doc)
+
+def test_duplicate_signature():
+    # Duplicate function signatures occur e.g. in ufuncs, when the
+    # automatic mechanism adds one, and a more detailed comes from the
+    # docstring itself.
+
+    doc = NumpyDocString(
+    """
+    z(x1, x2)
+
+    z(a, theta)
+    """)
+
+    assert doc['Signature'].strip() == 'z(a, theta)'
+
+
+class_doc_txt = """
+    Foo
+
+    Parameters
+    ----------
+    f : callable ``f(t, y, *f_args)``
+        Aaa.
+    jac : callable ``jac(t, y, *jac_args)``
+        Bbb.
+
+    Attributes
+    ----------
+    t : float
+        Current time.
+    y : ndarray
+        Current variable values.
+
+    Methods
+    -------
+    a
+    b
+    c
+
+    Examples
+    --------
+    For usage examples, see `ode`.
+"""
+
+def test_class_members_doc():
+    doc = ClassDoc(None, class_doc_txt)
+    non_blank_line_by_line_compare(str(doc),
+    """
+    Foo
+
+    Parameters
+    ----------
+    f : callable ``f(t, y, *f_args)``
+        Aaa.
+    jac : callable ``jac(t, y, *jac_args)``
+        Bbb.
+
+    Examples
+    --------
+    For usage examples, see `ode`.
+
+    Attributes
+    ----------
+    t : float
+        Current time.
+    y : ndarray
+        Current variable values.
+
+    Methods
+    -------
+    a : 
+
+    b : 
+
+    c : 
+
+    .. index:: 
+
+    """)
+
+def test_class_members_doc_sphinx():
+    doc = SphinxClassDoc(None, class_doc_txt)
+    non_blank_line_by_line_compare(str(doc),
+    """
+    Foo
+
+    :Parameters:
+
+        **f** : callable ``f(t, y, *f_args)``
+
+            Aaa.
+
+        **jac** : callable ``jac(t, y, *jac_args)``
+
+            Bbb.
+
+    .. rubric:: Examples
+
+    For usage examples, see `ode`.
+
+    .. rubric:: Attributes
+
+    ===  ==========
+      t  (float) Current time.  
+      y  (ndarray) Current variable values.  
+    ===  ==========
+
+    .. rubric:: Methods
+
+    ===  ==========
+      a    
+      b    
+      c    
+    ===  ==========
+
+    """)
 
 if __name__ == "__main__":
     import nose
