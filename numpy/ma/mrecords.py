@@ -252,7 +252,7 @@ class MaskedRecords(MaskedArray, object):
             optinfo = ndarray.__getattribute__(self, '_optinfo') or {}
             if not (attr in fielddict or attr in optinfo):
                 exctype, value = sys.exc_info()[:2]
-                raise exctype, value
+                raise exctype(value)
         else:
             # Get the list of names ......
             fielddict = ndarray.__getattribute__(self, 'dtype').fields or {}

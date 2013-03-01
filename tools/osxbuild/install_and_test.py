@@ -25,7 +25,7 @@ for fn in filelist:
         pkg = fn
         break
 if pkg is None:
-    raise IOError, 'Package is not found in directory %s' % distdir
+    raise IOError('Package is not found in directory %s' % distdir)
 
 pkgpath = os.path.abspath(os.path.join(SRC_DIR, DIST_DIR, pkg))
 color_print('Installing package: %s' % pkgpath)
