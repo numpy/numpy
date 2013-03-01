@@ -10,6 +10,7 @@
     fixme: We may want to move to using _ast trees because the compiler for
            them is about 6 times faster than compiler.compile.
 """
+from __future__ import division
 
 import sys
 from compiler.ast import Const, Name, Tuple, Div, Mul, Sub, Add

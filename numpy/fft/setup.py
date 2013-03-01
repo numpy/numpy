@@ -1,3 +1,4 @@
+from __future__ import division
 
 
 def configuration(parent_package='',top_path=None):

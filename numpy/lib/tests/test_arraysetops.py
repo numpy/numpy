@@ -1,6 +1,7 @@
-""" Test functions for 1D array set operations.
+"""Test functions for 1D array set operations.
 
 """
+from __future__ import division
 
 from numpy.testing import *
 import numpy as np

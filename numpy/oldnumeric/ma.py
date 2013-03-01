@@ -1,4 +1,5 @@
 """MA: a facility for dealing with missing observations
+
 MA is generally used as a numpy.array look-alike.
 by Paul F. Dubois.
 
@@ -8,6 +9,8 @@ Adapted for numpy_core 2005 by Travis Oliphant and
 (mainly) Paul Dubois.
 
 """
+from __future__ import division
+
 import types, sys
 
 import numpy.core.umath as umath

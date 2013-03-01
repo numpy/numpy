@@ -1,3 +1,5 @@
+from __future__ import division
+
 from os import path
 import numpy as np
 from numpy.testing import *

@@ -1,3 +1,5 @@
+from __future__ import division
+
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack']
 
 import numeric as _nx

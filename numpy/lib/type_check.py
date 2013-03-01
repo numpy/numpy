@@ -1,4 +1,7 @@
-## Automatically adapted for numpy Sep 19, 2005 by convertcode.py
+"""Automatically adapted for numpy Sep 19, 2005 by convertcode.py
+
+"""
+from __future__ import division
 
 __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
            'isreal','nan_to_num','real','real_if_close',

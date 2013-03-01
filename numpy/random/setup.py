@@ -1,3 +1,5 @@
+from __future__ import division
+
 from os.path import join, split, dirname
 import os
 import sys

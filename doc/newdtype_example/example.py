@@ -1,3 +1,5 @@
+from __future__ import division
+
 import floatint.floatint as ff
 import numpy as np
 

@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os
 from distutils.core import Command
 from distutils.ccompiler import new_compiler

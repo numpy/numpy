@@ -1,13 +1,15 @@
-# Docstrings for generated ufuncs
-#
-# The syntax is designed to look like the function add_newdoc is being
-# called from numpy.lib, but in this file  add_newdoc puts the docstrings
-# in a dictionary. This dictionary is used in
-# numpy/core/code_generators/generate_umath.py to generate the docstrings
-# for the ufuncs in numpy.core at the C level when the ufuncs are created
-# at compile time.
+"""
+Docstrings for generated ufuncs
 
+The syntax is designed to look like the function add_newdoc is being
+called from numpy.lib, but in this file  add_newdoc puts the docstrings
+in a dictionary. This dictionary is used in
+numpy/core/code_generators/generate_umath.py to generate the docstrings
+for the ufuncs in numpy.core at the C level when the ufuncs are created
+at compile time.
 
+"""
+from __future__ import division
 
 docdict = {}
 

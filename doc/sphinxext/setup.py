@@ -1,3 +1,5 @@
+from __future__ import division
+
 import setuptools
 from distutils.core import setup
 

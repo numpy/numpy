@@ -1,3 +1,5 @@
+from __future__ import division
+
 r''' Test the .npy file format.
 
 Set up:

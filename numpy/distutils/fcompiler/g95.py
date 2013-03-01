@@ -1,4 +1,5 @@
 # http://g95.sourceforge.net/
+from __future__ import division
 
 from numpy.distutils.fcompiler import FCompiler
 

@@ -5,7 +5,8 @@ with numpy
 FIXME:  finish this.
 
 """
-#__all__ = ['convertfile', 'convertall', 'converttree']
+from __future__ import division
+
 __all__ = []
 
 import warnings

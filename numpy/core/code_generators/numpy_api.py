@@ -10,7 +10,9 @@ needs to be updated.
 When adding a function, make sure to use the next integer not used as an index
 (in case you use an existing index or jump, the build will stop and raise an
 exception, so it should hopefully not get unnoticed).
+
 """
+from __future__ import division
 
 multiarray_global_vars = {
     'NPY_NUMUSERTYPES':             7,

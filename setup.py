@@ -11,7 +11,9 @@ interfacing with general-purpose data-base applications.
 
 There are also basic facilities for discrete fourier transform,
 basic linear algebra and random number generation.
+
 """
+from __future__ import division
 
 DOCLINES = __doc__.split("\n")
 

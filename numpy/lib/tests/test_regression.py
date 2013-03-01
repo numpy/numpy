@@ -1,3 +1,5 @@
+from __future__ import division
+
 from numpy.testing import *
 from numpy.testing.utils import _assert_valid_refcount
 import numpy as np

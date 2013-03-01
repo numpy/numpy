@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 from numpy.testing import TestCase, run_module_suite, assert_raises, assert_equal, assert_
 import sys

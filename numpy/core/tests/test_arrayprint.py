@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import division
+
 import sys
 import numpy as np
 from numpy.testing import *

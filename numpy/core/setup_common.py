@@ -1,3 +1,5 @@
+from __future__ import division
+
 # Code common to build tools
 import sys
 from os.path import join

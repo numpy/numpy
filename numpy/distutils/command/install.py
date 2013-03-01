@@ -1,3 +1,5 @@
+from __future__ import division
+
 import sys
 if 'setuptools' in sys.modules:
     import setuptools.command.install as old_install_mod

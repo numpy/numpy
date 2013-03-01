@@ -3,7 +3,9 @@
 We use this instead of upstream because upstream inspect is slow to import, and
 significanly contributes to numpy import times. Importing this copy has almost
 no overhead.
+
 """
+from __future__ import division
 
 import types
 

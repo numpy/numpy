@@ -1,6 +1,8 @@
 #!/usr/bin/env python
-# Copied from fftpack.helper by Pearu Peterson, October 2005
-""" Test functions for fftpack.helper module
+"""Test functions for fftpack.helper module
+
+Copied from fftpack.helper by Pearu Peterson, October 2005
+
 """
 from __future__ import division
 

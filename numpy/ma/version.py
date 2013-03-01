@@ -1,4 +1,7 @@
-"""Version number"""
+"""Version number
+
+"""
+from __future__ import division
 
 version = '1.00'
 release = False

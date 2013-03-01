@@ -20,6 +20,8 @@ Released for unlimited redistribution.
 
 """
 # pylint: disable-msg=E1002
+from __future__ import division
+
 
 __author__ = "Pierre GF Gerard-Marchant"
 __docformat__ = "restructuredtext en"

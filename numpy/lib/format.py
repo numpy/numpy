@@ -134,6 +134,7 @@ The ``.npy`` format, including reasons for creating it and a comparison of
 alternatives, is described fully in the "npy-format" NEP.
 
 """
+from __future__ import division
 
 import cPickle
 

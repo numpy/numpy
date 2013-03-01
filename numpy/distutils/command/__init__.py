@@ -1,7 +1,17 @@
 """distutils.command
 
 Package containing implementation of all the standard Distutils
-commands."""
+commands.
+
+"""
+from __future__ import division
+
+def test_na_writable_attributes_deletion():
+    a = np.NA(2)
+    attr =  ['payload', 'dtype']
+    for s in attr:
+        assert_raises(AttributeError, delattr, a, s)
+
 
 __revision__ = "$Id: __init__.py,v 1.3 2005/05/16 11:08:49 pearu Exp $"
 

@@ -18,6 +18,8 @@ When running py3tool again, only changed files are re-processed, which
 makes the test-bugfix cycle faster.
 
 """
+from __future__ import division
+
 from optparse import OptionParser
 import shutil
 import os

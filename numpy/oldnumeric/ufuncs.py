@@ -1,3 +1,5 @@
+from __future__ import division
+
 __all__ = ['less', 'cosh', 'arcsinh', 'add', 'ceil', 'arctan2', 'floor_divide',
            'fmod', 'hypot', 'logical_and', 'power', 'sinh', 'remainder', 'cos',
            'equal', 'arccos', 'less_equal', 'divide', 'bitwise_or',

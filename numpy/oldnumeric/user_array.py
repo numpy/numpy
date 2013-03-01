@@ -1,4 +1,4 @@
-
+from __future__ import division
 
 from numpy.oldnumeric import *
 from numpy.lib.user_array import container as UserArray

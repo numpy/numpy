@@ -4,8 +4,8 @@ Collection of utilities to manipulate structured arrays.
 Most of these functions were initially implemented by John Hunter for matplotlib.
 They have been rewritten and extended for convenience.
 
-
 """
+from __future__ import division
 
 import sys
 import itertools

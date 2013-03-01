@@ -1,4 +1,5 @@
 # -*- encoding:utf-8 -*-
+from __future__ import division
 
 import sys, textwrap
 
