@@ -71,6 +71,12 @@
 static int
 _does_loop_use_arrays(void *data);
 
+static int
+assign_reduce_identity_zero(PyArrayObject *result);
+
+static int
+assign_reduce_identity_one(PyArrayObject *result);
+
 /*
  * fpstatus is the ufunc_formatted hardware status
  * errmask is the handling mask specified by the user.
@@ -1643,7 +1649,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                         PyArrayObject **op)
 {
     int nin, nout;
-    int i, idim, nop;
+    int i, j, idim, nop;
     char *ufunc_name;
     int retval = -1, subok = 1;
     int needs_api = 0;
@@ -1651,11 +1657,12 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     PyArray_Descr *dtypes[NPY_MAXARGS];
 
     /* Use remapped axes for generalized ufunc */
-    int broadcast_ndim, op_ndim;
+    int broadcast_ndim, iter_ndim;
     int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
     int *op_axes[NPY_MAXARGS];
 
     npy_uint32 op_flags[NPY_MAXARGS];
+    npy_intp iter_shape[NPY_MAXARGS];
 
     NpyIter *iter = NULL;
 
@@ -1673,7 +1680,9 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     npy_intp *inner_strides = NULL;
 
     npy_intp *inner_strides_tmp, *ax_strides_tmp[NPY_MAXDIMS];
-    int core_dim_ixs_size, *core_dim_ixs;
+    /* The sizes of the core dimensions (# entries is ufunc->core_num_dim_ix) */
+    npy_intp *core_dim_sizes = inner_dimensions + 1;
+    int core_dim_ixs_size;
 
     /* The __array_prepare__ function to call for each output */
     PyObject *arr_prep[NPY_MAXARGS];
@@ -1719,7 +1728,11 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         goto fail;
     }
 
-    /* Figure out the number of dimensions needed by the iterator */
+    /*
+     * Figure out the number of iteration dimensions, which
+     * is the broadcast result of all the input non-core
+     * dimensions.
+     */
     broadcast_ndim = 0;
     for (i = 0; i < nin; ++i) {
         int n = PyArray_NDIM(op[i]) - ufunc->core_num_dims[i];
@@ -1727,8 +1740,18 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
             broadcast_ndim = n;
         }
     }
-    op_ndim = broadcast_ndim + ufunc->core_num_dim_ix;
-    if (op_ndim > NPY_MAXDIMS) {
+
+    /*
+     * Figure out the number of iterator creation dimensions,
+     * which is the broadcast dimensions + all the core dimensions of
+     * the outputs, so that the iterator can allocate those output
+     * dimensions following the rules of order='F', for example.
+     */
+    iter_ndim = broadcast_ndim;
+    for (i = nin; i < nop; ++i) {
+        iter_ndim += ufunc->core_num_dims[i];
+    }
+    if (iter_ndim > NPY_MAXDIMS) {
         PyErr_Format(PyExc_ValueError,
                     "too many dimensions for generalized ufunc %s",
                     ufunc_name);
@@ -1736,9 +1759,76 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         goto fail;
     }
 
+    /*
+     * Validate the core dimensions of all the operands,
+     * and collect all of the labeled core dimension sizes
+     * into the array 'core_dim_sizes'. Initialize them to
+     * 1, for example in the case where the operand broadcasts
+     * to a core dimension, it won't be visited.
+     */
+    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
+        core_dim_sizes[i] = 1;
+    }
+    for (i = 0; i < nop; ++i) {
+        if (op[i] != NULL) {
+            int dim_offset = ufunc->core_offsets[i];
+            int num_dims = ufunc->core_num_dims[i];
+            int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
+            /* Make sure any output operand has enough dimensions */
+            if (i >= nin && core_start_dim < 0) {
+                PyErr_Format(PyExc_ValueError,
+                        "%s: Output operand %d does not have enough dimensions "
+                        "(has %d, gufunc core with signature %s "
+                        "requires %d)",
+                        ufunc_name, i - nin, PyArray_NDIM(op[i]),
+                        ufunc->core_signature, num_dims);
+                retval = -1;
+                goto fail;
+            }
+
+            /*
+             * Make sure each core dimension matches all other core
+             * dimensions with the same label
+             *
+             * NOTE: For input operands, core_start_dim may be negative.
+             *       In that case, the operand is being broadcast onto
+             *       core dimensions. For example, a scalar will broadcast
+             *       to fit any core signature.
+             */
+            if (core_start_dim >= 0) {
+                idim = 0;
+            } else {
+                idim = -core_start_dim;
+            }
+            for (; idim < num_dims; ++idim) {
+                int core_dim_index = ufunc->core_dim_ixs[dim_offset + idim];
+                npy_intp op_dim_size =
+                        PyArray_SHAPE(op[i])[core_start_dim + idim];
+                if (core_dim_sizes[core_dim_index] == 1) {
+                    core_dim_sizes[core_dim_index] = op_dim_size;
+                } else if ((i >= nin || op_dim_size != 1) &&
+                            core_dim_sizes[core_dim_index] != op_dim_size) {
+                    PyErr_Format(PyExc_ValueError,
+                            "%s: Operand %d has a mismatch in its core "
+                            "dimension %d, with gufunc signature %s "
+                            "(size %d is different from %d)",
+                            ufunc_name, i, idim, ufunc->core_signature,
+                            op_dim_size, core_dim_sizes[core_dim_index]);
+                    retval = -1;
+                    goto fail;
+                }
+            }
+        }
+    }
+
+    /* Fill in the initial part of 'iter_shape' */
+    for (idim = 0; idim < broadcast_ndim; ++idim) {
+        iter_shape[idim] = -1;
+    }
+
     /* Fill in op_axes for all the operands */
+    j = broadcast_ndim;
     core_dim_ixs_size = 0;
-    core_dim_ixs = ufunc->core_dim_ixs;
     for (i = 0; i < nop; ++i) {
         int n;
         if (op[i]) {
@@ -1760,22 +1850,27 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                 op_axes_arrays[i][idim] = -1;
             }
         }
-        /* Use the signature information for the rest */
-        for (idim = broadcast_ndim; idim < op_ndim; ++idim) {
+
+        /* Any output core dimensions shape should be ignored */
+        for (idim = broadcast_ndim; idim < iter_ndim; ++idim) {
             op_axes_arrays[i][idim] = -1;
         }
-        for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
-            if (n + idim >= 0) {
-                op_axes_arrays[i][broadcast_ndim + core_dim_ixs[idim]] =
-                                                                    n + idim;
-            }
-            else {
-                op_axes_arrays[i][broadcast_ndim + core_dim_ixs[idim]] = -1;
+
+        /* Except for when it belongs to this output */
+        if (i >= nin) {
+            int dim_offset = ufunc->core_offsets[i];
+            int num_dims = ufunc->core_num_dims[i];
+            /* Fill in 'iter_shape' and 'op_axes' for this output */
+            for (idim = 0; idim < num_dims; ++idim) {
+                iter_shape[j] = core_dim_sizes[
+                                        ufunc->core_dim_ixs[dim_offset + idim]];
+                op_axes_arrays[i][j] = n + idim;
+                ++j;
             }
         }
-        core_dim_ixs_size += ufunc->core_num_dims[i];
-        core_dim_ixs += ufunc->core_num_dims[i];
+
         op_axes[i] = op_axes_arrays[i];
+        core_dim_ixs_size += ufunc->core_num_dims[i];
     }
 
     /* Get the buffersize, errormask, and error object globals */
@@ -1881,12 +1976,26 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                       NPY_ITER_NO_BROADCAST;
     }
 
+    /*
+     * If there are no iteration dimensions, create a fake one
+     * so that the scalar edge case works right.
+     */
+    if (iter_ndim == 0) {
+        iter_ndim = 1;
+        iter_shape[0] = 1;
+        for (i = 0; i < nop; ++i) {
+            op_axes[i][0] = -1;
+        }
+    }
+
     /* Create the iterator */
     iter = NpyIter_AdvancedNew(nop, op, NPY_ITER_MULTI_INDEX|
                                       NPY_ITER_REFS_OK|
-                                      NPY_ITER_REDUCE_OK,
+                                      NPY_ITER_REDUCE_OK|
+                                      NPY_ITER_ZEROSIZE_OK,
                            order, NPY_UNSAFE_CASTING, op_flags,
-                           dtypes, op_ndim, op_axes, NULL, 0);
+                           dtypes, iter_ndim,
+                           op_axes, iter_shape, 0);
     if (iter == NULL) {
         retval = -1;
         goto fail;
@@ -1906,37 +2015,38 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      */
     inner_strides = (npy_intp *)PyArray_malloc(
                         NPY_SIZEOF_INTP * (nop+core_dim_ixs_size));
-    /* The strides after the first nop match core_dim_ixs */
-    core_dim_ixs = ufunc->core_dim_ixs;
-    inner_strides_tmp = inner_strides + nop;
-    for (idim = 0; idim < ufunc->core_num_dim_ix; ++idim) {
-        ax_strides_tmp[idim] = NpyIter_GetAxisStrideArray(iter,
-                                                broadcast_ndim+idim);
-        if (ax_strides_tmp[idim] == NULL) {
-            retval = -1;
-            goto fail;
-        }
-    }
+    /* Copy the strides after the first nop */
+    idim = nop;
     for (i = 0; i < nop; ++i) {
-        for (idim = 0; idim < ufunc->core_num_dims[i]; ++idim) {
-            inner_strides_tmp[idim] = ax_strides_tmp[core_dim_ixs[idim]][i];
+        int dim_offset = ufunc->core_offsets[i];
+        int num_dims = ufunc->core_num_dims[i];
+        int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
+        /*
+         * Need to use the arrays in the iterator, not op, because
+         * a copy with a different-sized type may have been made.
+         */
+        PyArrayObject *arr = NpyIter_GetOperandArray(iter)[i];
+        npy_intp *shape = PyArray_SHAPE(arr);
+        npy_intp *strides = PyArray_STRIDES(arr);
+        for (j = 0; j < num_dims; ++j) {
+            if (core_start_dim + j >= 0) {
+                /*
+                 * Force the stride to zero when the shape is 1, sot
+                 * that the broadcasting works right.
+                 */
+                if (shape[core_start_dim + j] != 1) {
+                    inner_strides[idim++] = strides[core_start_dim + j];
+                } else {
+                    inner_strides[idim++] = 0;
+                }
+            } else {
+                inner_strides[idim++] = 0;
+            }
         }
-
-        core_dim_ixs += ufunc->core_num_dims[i];
-        inner_strides_tmp += ufunc->core_num_dims[i];
     }
 
-    /* Set up the inner dimensions array */
-    if (NpyIter_GetShape(iter, inner_dimensions) != NPY_SUCCEED) {
-        retval = -1;
-        goto fail;
-    }
-    /* Move the core dimensions to start at the second element */
-    memmove(&inner_dimensions[1], &inner_dimensions[broadcast_ndim],
-                        NPY_SIZEOF_INTP * ufunc->core_num_dim_ix);
-
-    /* Remove all the core dimensions from the iterator */
-    for (i = 0; i < ufunc->core_num_dim_ix; ++i) {
+    /* Remove all the core output dimensions from the iterator */
+    for (i = broadcast_ndim; i < iter_ndim; ++i) {
         if (NpyIter_RemoveAxis(iter, broadcast_ndim) != NPY_SUCCEED) {
             retval = -1;
             goto fail;
@@ -1971,8 +2081,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     NPY_UF_DBG_PRINT("Executing inner loop\n");
 
-    /* Do the ufunc loop */
     if (NpyIter_GetIterSize(iter) != 0) {
+        /* Do the ufunc loop */
         NpyIter_IterNextFunc *iternext;
         char **dataptr;
         npy_intp *count_ptr;
@@ -1991,6 +2101,36 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
             inner_dimensions[0] = *count_ptr;
             innerloop(dataptr, inner_dimensions, inner_strides, innerloopdata);
         } while (iternext(iter));
+    } else {
+        /**
+         * For each output operand, check if it has non-zero size,
+         * and assign the identity if it does. For example, a dot
+         * product of two zero-length arrays will be a scalar,
+         * which has size one.
+         */
+        for (i = nin; i < nop; ++i) {
+            if (PyArray_SIZE(op[i]) != 0) {
+                switch (ufunc->identity) {
+                    case PyUFunc_Zero:
+                        assign_reduce_identity_zero(op[i]);
+                        break;
+                    case PyUFunc_One:
+                        assign_reduce_identity_one(op[i]);
+                        break;
+                    case PyUFunc_None:
+                    case PyUFunc_ReorderableNone:
+                        PyErr_Format(PyExc_ValueError,
+                                "ufunc %s ",
+                                ufunc_name);
+                        goto fail;
+                    default:
+                        PyErr_Format(PyExc_ValueError,
+                                "ufunc %s has an invalid identity for reduction",
+                                ufunc_name);
+                        goto fail;
+                }
+            }
+        }
     }
 
     /* Check whether any errors occurred during the loop */
@@ -2433,13 +2573,13 @@ reduce_type_resolver(PyUFuncObject *ufunc, PyArrayObject *arr,
 }
 
 static int
-assign_reduce_identity_zero(PyArrayObject *result, void *data)
+assign_reduce_identity_zero(PyArrayObject *result)
 {
     return PyArray_FillWithScalar(result, PyArrayScalar_False);
 }
 
 static int
-assign_reduce_identity_one(PyArrayObject *result, void *data)
+assign_reduce_identity_one(PyArrayObject *result)
 {
     return PyArray_FillWithScalar(result, PyArrayScalar_True);
 }

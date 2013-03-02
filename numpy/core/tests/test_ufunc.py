@@ -316,6 +316,8 @@ class TestUfunc(TestCase):
     def test_inner1d(self):
         a = np.arange(6).reshape((2,3))
         assert_array_equal(umt.inner1d(a,a), np.sum(a*a,axis=-1))
+        a = np.arange(6)
+        assert_array_equal(umt.inner1d(a,a), np.sum(a*a))
 
     def test_broadcast(self):
         msg = "broadcast"
@@ -423,6 +425,13 @@ class TestUfunc(TestCase):
         a = np.arange(100,124).reshape((2,3,4))
         b = np.arange(200,224).reshape((2,3,4))
         w = np.arange(300,324).reshape((2,3,4))
+        assert_array_equal(umt.innerwt(a,b,w), np.sum(a*b*w,axis=-1))
+
+    def test_innerwt_empty(self):
+        """Test generalized ufunc with zero-sized operands"""
+        a = np.array([], dtype='f8')
+        b = np.array([], dtype='f8')
+        w = np.array([], dtype='f8')
         assert_array_equal(umt.innerwt(a,b,w), np.sum(a*b*w,axis=-1))
 
     def test_matrix_multiply(self):
