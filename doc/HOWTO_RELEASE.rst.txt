@@ -284,10 +284,13 @@ Now, set ``release=True`` in setup.py, then
     git tag <version>
     git push origin <version>
 
-Update the version of the trunk
--------------------------------
+Update the version of the master branch
+---------------------------------------
 Increment the release number in setup.py. Release candidates should have "rc1"
 (or "rc2", "rcN") appended to the X.Y.Z format.
+
+Also create a new version hash in cversions.txt and a corresponding version
+define NPY_x_y_API_VERSION in numpyconfig.h
 
 Make the release
 ----------------
