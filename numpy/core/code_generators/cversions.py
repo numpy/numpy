@@ -5,10 +5,11 @@ The API has is defined by numpy_api_order and ufunc_api_order.
 """
 from __future__ import division
 
-from os.path import join, dirname
+from os.path import dirname
 
 from genapi import fullapi_hash
 import numpy_api
+
 
 if __name__ == '__main__':
     curdir = dirname(__file__)
