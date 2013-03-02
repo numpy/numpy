@@ -13,6 +13,10 @@ matrix:
     - python: 3.2
       env: NPY_SEPARATE_COMPILATION=0
 before_install:
+  - uname -a
+  - free -m
+  - df -h
+  - ulimit -a
   - mkdir builds
   - pushd builds
   - pip install nose
