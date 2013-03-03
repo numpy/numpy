@@ -205,12 +205,21 @@ class TestSavezLoad(RoundtripTest, TestCase):
             fp = open(tmp, 'wb')
             np.savez(fp, data='LOVELY LOAD')
             fp.close()
-
-            for i in range(1, 1025):
-                try:
-                    np.load(tmp)["data"]
-                except Exception as e:
-                    raise AssertionError("Failed to load data from a file: %s" % e)
+            # We need to check if the garbage collector can properly close
+            # numpy npz file returned by np.load when their reference count
+            # goes to zero.  Python 3 running in debug mode raises a
+            # ResourceWarning when file closing is left to the garbage
+            # collector, so we catch the warnings.  Because ResourceWarning
+            # is unknown in Python < 3.x, we take the easy way out and
+            # catch all warnings.
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                for i in range(1, 1025):
+                    try:
+                        np.load(tmp)["data"]
+                    except Exception as e:
+                        msg = "Failed to load data from a file: %s" % e
+                        raise AssertionError(msg)
         finally:
             os.remove(tmp)
 
