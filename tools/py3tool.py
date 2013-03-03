@@ -55,6 +55,36 @@ EXTRA_2TO3_FLAGS = {
     'numpy/oldnumeric/ma.py': '-x reduce',
 }
 
+# Names of fixers to skip when running 2to3
+FIXES_TO_SKIP = [
+    'tuple_params',
+    'throw',
+    'sys_exc',
+    'standarderror',
+    'reduce',
+    'raise',
+    'paren',
+    'operator',
+    'ne',
+    'methodattrs',
+    'metaclass',
+    'intern',
+    'has_key',
+    'getcwdu',
+    'filter',
+    'exitfunc',
+    'execfile',
+    'exec',
+    'callable',
+    'apply'
+]
+
+skip_fixes= []
+for _t in FIXES_TO_SKIP:
+    skip_fixes.append('-x')
+    skip_fixes.append(_t)
+
+
 def main():
     p = OptionParser(usage=__doc__.strip())
     p.add_option("--clean", "-c", action="store_true",
@@ -270,7 +300,12 @@ def sync_2to3(src, dst, patchfile=None, clean=False):
         _old_stdout = sys.stdout
         try:
             sys.stdout = StringIO()
-            lib2to3.main.main("lib2to3.fixes", ['-w', '-n'] + flags.split()+filenames)
+            opt = []
+            opt.extend(['-w', '-n'])
+            opt.extend(skip_fixes)
+            opt.extend(flags.split())
+            opt.extend(filenames)
+            lib2to3.main.main("lib2to3.fixes", opt)
         finally:
             sys.stdout = _old_stdout
 
