@@ -218,8 +218,11 @@ else:
 
     import subprocess as sp
     try:
+        # Explicitly open/close file to avoid ResourceWarning when
+        # tests are run in debug mode Python 3.
+        tmp = open(os.devnull, 'w')
         p = sp.Popen(["gcc", "-print-multiarch"], stdout=sp.PIPE,
-                stderr=open(os.devnull, 'w'))
+                stderr=tmp)
     except OSError:
         pass # gcc is not installed
     else:
@@ -228,6 +231,8 @@ else:
             # gcc supports the "-print-multiarch" option
             default_x11_lib_dirs += [os.path.join("/usr/lib/", triplet)]
             default_lib_dirs += [os.path.join("/usr/lib/", triplet)]
+    finally:
+        tmp.close()
 
 if os.path.join(sys.prefix, 'lib') not in default_lib_dirs:
     default_lib_dirs.insert(0, os.path.join(sys.prefix, 'lib'))
