@@ -151,7 +151,8 @@ class TestRandomDist(TestCase):
 
     def test_choice_exceptions(self):
         sample = np.random.choice
-        assert_raises(ValueError, sample, -1,3)
+        assert_raises(ValueError, sample, -1, 3)
+        assert_raises(ValueError, sample, 3., 3)
         assert_raises(ValueError, sample, [[1,2],[3,4]], 3)
         assert_raises(ValueError, sample, [], 3)
         assert_raises(ValueError, sample, [1,2,3,4], 3,
@@ -171,6 +172,11 @@ class TestRandomDist(TestCase):
         assert_(np.isscalar(np.random.choice(2, replace=True, p=p)))
         assert_(np.isscalar(np.random.choice(2, replace=False, p=p)))
         assert_(np.isscalar(np.random.choice([1,2], replace=True)))
+        assert_(np.random.choice([None], replace=True) is None)
+        a = np.array([1, 2])
+        arr = np.empty(1, dtype=object)
+        arr[0] = a
+        assert_(np.random.choice(arr, replace=True) is a)
 
         # Check 0-d array
         s = tuple()
@@ -179,6 +185,11 @@ class TestRandomDist(TestCase):
         assert_(not np.isscalar(np.random.choice(2, s, replace=True, p=p)))
         assert_(not np.isscalar(np.random.choice(2, s, replace=False, p=p)))
         assert_(not np.isscalar(np.random.choice([1,2], s, replace=True)))
+        assert_(np.random.choice([None], s, replace=True).ndim == 0)
+        a = np.array([1, 2])
+        arr = np.empty(1, dtype=object)
+        arr[0] = a
+        assert_(np.random.choice(arr, s, replace=True).item() is a)
 
         # Check multi dimensional array
         s = (2,3)
