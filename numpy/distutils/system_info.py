@@ -904,7 +904,7 @@ class mkl_info(system_info):
         paths = os.environ.get('LD_LIBRARY_PATH', '').split(os.pathsep)
         ld_so_conf = '/etc/ld.so.conf'
         if os.path.isfile(ld_so_conf):
-            for d in open(ld_so_conf, 'r').readlines():
+            for d in open(ld_so_conf, 'r'):
                 d = d.strip()
                 if d:
                     paths.append(d)

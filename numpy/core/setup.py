@@ -484,7 +484,7 @@ def configuration(parent_package='',top_path=None):
         else:
             mathlibs = []
             target_f = open(target)
-            for line in target_f.readlines():
+            for line in target_f:
                 s = '#define MATHLIB'
                 if line.startswith(s):
                     value = line[len(s):].strip()
