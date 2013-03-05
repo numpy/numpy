@@ -100,7 +100,7 @@ def disassemble(filename):
         else:
             inst = line3[0]
         return inst
-    inst = [floupi(i) for i in o.readlines()]
+    inst = [floupi(i) for i in o]
     return inst
 
 def has_set(seq, asm_set):

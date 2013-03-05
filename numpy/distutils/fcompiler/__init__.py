@@ -971,7 +971,7 @@ def get_f77flags(src):
     flags = {}
     f = open_latin1(src,'r')
     i = 0
-    for line in f.readlines():
+    for line in f:
         i += 1
         if i>20: break
         m = _f77flags_re.match(line)

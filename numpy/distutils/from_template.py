@@ -209,7 +209,7 @@ def resolve_includes(source):
     d = os.path.dirname(source)
     fid = open(source)
     lines = []
-    for line in fid.readlines():
+    for line in fid:
         m = include_src_re.match(line)
         if m:
             fn = m.group('name')
