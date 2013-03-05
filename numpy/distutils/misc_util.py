@@ -167,7 +167,7 @@ def get_mathlibs(path=None):
     fid = open(config_file)
     mathlibs = []
     s = '#define MATHLIB'
-    for line in fid.readlines():
+    for line in fid:
         if line.startswith(s):
             value = line[len(s):].strip()
             if value:
@@ -394,8 +394,7 @@ def _get_f90_modules(source):
         return []
     modules = []
     f = open(source,'r')
-    f_readlines = getattr(f,'xreadlines',f.readlines)
-    for line in f_readlines():
+    for line in f:
         m = f90_module_name_match(line)
         if m:
             name = m.group('name')

@@ -76,7 +76,7 @@ class IBMFCompiler(FCompiler):
             log.info('Creating '+new_cfg)
             fi = open(xlf_cfg,'r')
             crt1_match = re.compile(r'\s*crt\s*[=]\s*(?P<path>.*)/crt1.o').match
-            for line in fi.readlines():
+            for line in fi:
                 m = crt1_match(line)
                 if m:
                     fo.write('crt = %s/bundle1.o\n' % (m.group('path')))

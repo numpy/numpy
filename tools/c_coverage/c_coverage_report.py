@@ -58,7 +58,7 @@ class SourceFile:
 
     def write_text(self, fd):
         source = open(self.path, "r")
-        for i, line in enumerate(source.readlines()):
+        for i, line in enumerate(source):
             if i + 1 in self.lines:
                 fd.write("> ")
             else:
@@ -128,7 +128,7 @@ def collect_stats(files, fd, pattern):
 
     current_file = None
     current_function = None
-    for i, line in enumerate(fd.readlines()):
+    for i, line in enumerate(fd):
         if re.match("f[lie]=.+", line):
             path = line.split('=', 2)[1].strip()
             if os.path.exists(path) and re.search(pattern, path):

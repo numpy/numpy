@@ -64,7 +64,7 @@ class install(old_install):
             f = open(self.record,'r')
             lines = []
             need_rewrite = False
-            for l in f.readlines():
+            for l in f:
                 l = l.rstrip()
                 if ' ' in l:
                     need_rewrite = True

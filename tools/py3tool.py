@@ -78,7 +78,8 @@ FIXES_TO_SKIP = [
     'callable',
     'apply',
     'input',
-    'raw_input'
+    'raw_input',
+    'xreadlines'
 ]
 
 skip_fixes= []
