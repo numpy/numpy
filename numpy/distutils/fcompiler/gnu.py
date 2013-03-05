@@ -372,10 +372,11 @@ def _can_target(cmd, arch):
 if __name__ == '__main__':
     from distutils import log
     log.set_verbosity(2)
+
     compiler = GnuFCompiler()
     compiler.customize()
     print(compiler.get_version())
-    raw_input('Press ENTER to continue...')
+
     try:
         compiler = Gnu95FCompiler()
         compiler.customize()
@@ -383,4 +384,3 @@ if __name__ == '__main__':
     except Exception:
         msg = get_exception()
         print(msg)
-    raw_input('Press ENTER to continue...')

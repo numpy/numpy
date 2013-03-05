@@ -76,7 +76,9 @@ FIXES_TO_SKIP = [
     'execfile',
     'exec',
     'callable',
-    'apply'
+    'apply',
+    'input',
+    'raw_input'
 ]
 
 skip_fixes= []
