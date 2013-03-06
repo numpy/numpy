@@ -195,7 +195,8 @@ def exec_command( command,
         # _exec_command_posix uses os.system and is faster
         # but not on all platforms os.system will return
         # a correct status.
-        if _with_python and sys.stdout.fileno() == -1:
+        if _with_python and hasattr(sys.stdout, 'fileno') and \
+                            sys.stdout.fileno() == -1:
             st = _exec_command_python(command,
                                       exec_command_dir = exec_dir,
                                       **env)
@@ -349,12 +350,17 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
                 argv = [os.environ['COMSPEC'],'/C'] + argv
                 using_command = 1
 
-    so_fileno = sys.stdout.fileno()
-    se_fileno = sys.stderr.fileno()
-    so_flush = sys.stdout.flush
-    se_flush = sys.stderr.flush
-    so_dup = os.dup(so_fileno)
-    se_dup = os.dup(se_fileno)
+    _has_fileno = hasattr(sys.stdout, 'fileno')
+    if _has_fileno:
+        so_fileno = sys.stdout.fileno()
+        se_fileno = sys.stderr.fileno()
+        so_flush = sys.stdout.flush
+        se_flush = sys.stderr.flush
+        so_dup = os.dup(so_fileno)
+        se_dup = os.dup(se_fileno)
+    else:
+        so_flush = sys.stdout.flush
+        se_flush = sys.stderr.flush
 
     outfile = temp_file_name()
     fout = open(outfile,'w')
@@ -371,13 +377,16 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
 
     so_flush()
     se_flush()
-    os.dup2(fout.fileno(),so_fileno)
-    if using_command:
-        #XXX: disabled for now as it does not work from cmd under win32.
-        #     Tests fail on msys
-        os.dup2(ferr.fileno(),se_fileno)
-    else:
-        os.dup2(fout.fileno(),se_fileno)
+    if _has_fileno:
+        os.dup2(fout.fileno(),so_fileno)
+
+    if _has_fileno:
+        if using_command:
+            #XXX: disabled for now as it does not work from cmd under win32.
+            #     Tests fail on msys
+            os.dup2(ferr.fileno(),se_fileno)
+        else:
+            os.dup2(fout.fileno(),se_fileno)
     try:
         status = spawn_command(os.P_WAIT,argv0,argv,os.environ)
     except OSError:
@@ -387,8 +396,9 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
 
     so_flush()
     se_flush()
-    os.dup2(so_dup,so_fileno)
-    os.dup2(se_dup,se_fileno)
+    if _has_fileno:
+        os.dup2(so_dup,so_fileno)
+        os.dup2(se_dup,se_fileno)
 
     fout.close()
     fout = open_latin1(outfile,'r')
