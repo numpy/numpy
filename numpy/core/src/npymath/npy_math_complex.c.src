@@ -31,17 +31,87 @@
 #include "npy_math_common.h"
 #include "npy_math_private.h"
 
-/*==========================================================
- * Custom implementation of missing complex C99 functions
- *=========================================================*/
-
 /**begin repeat
  * #type = npy_float, npy_double, npy_longdouble#
  * #ctype = npy_cfloat,npy_cdouble,npy_clongdouble#
  * #c = f, , l#
  * #C = F, , L#
  * #TMAX = FLT_MAX, DBL_MAX, LDBL_MAX#
+ * #precision = 1, 2, 3#
  */
+
+/*==========================================================
+ * Constants
+ *=========================================================*/
+static const @ctype@ c_1@c@ = {1.0@C@, 0.0};
+static const @ctype@ c_half@c@ = {0.5@C@, 0.0};
+static const @ctype@ c_i@c@ = {0.0, 1.0@C@};
+static const @ctype@ c_ihalf@c@ = {0.0, 0.5@C@};
+
+/*==========================================================
+ * Helper functions
+ * 
+ * These are necessary because we do not count on using a 
+ * C99 compiler.
+ *=========================================================*/
+static NPY_INLINE @ctype@ cadd@c@(@ctype@ a, @ctype@ b)
+{
+    return npy_cpack@c@(npy_creal@c@(a) + npy_creal@c@(b),
+                        npy_cimag@c@(a) + npy_cimag@c@(b));
+}
+
+static NPY_INLINE @ctype@ csub@c@(@ctype@ a, @ctype@ b)
+{
+    return npy_cpack@c@(npy_creal@c@(a) - npy_creal@c@(b),
+                        npy_cimag@c@(a) - npy_cimag@c@(b));
+}
+
+static NPY_INLINE @ctype@ cmul@c@(@ctype@ a, @ctype@ b)
+{
+    @type@ ar, ai, br, bi;
+    ar = npy_creal@c@(a);
+    ai = npy_cimag@c@(a);
+    br = npy_creal@c@(b);
+    bi = npy_cimag@c@(b);
+    return npy_cpack@c@(ar*br - ai*bi, ar*bi + ai*br);
+}
+
+static NPY_INLINE @ctype@ cdiv@c@(@ctype@ a, @ctype@ b)
+{
+    @type@ ar, ai, br, bi, d;
+    ar = npy_creal@c@(a);
+    ai = npy_cimag@c@(a);
+    br = npy_creal@c@(b);
+    bi = npy_cimag@c@(b);
+    d = br*br + bi*bi;
+    return npy_cpack@c@((ar*br +ai*bi)/d, (ai*br-ar*bi)/d);
+}
+    
+static NPY_INLINE @ctype@ cneg@c@(@ctype@ a)
+{
+    return npy_cpack@c@(-npy_creal@c@(a), -npy_cimag@c@(a));
+}
+
+static NPY_INLINE @ctype@ cmuli@c@(@ctype@ a)
+{
+    return npy_cpack@c@(-npy_cimag@c@(a), npy_creal@c@(a));
+}
+
+/*
+ * Perform the operation result := 1 + coef * x * result,
+ * with real coefficient `coef`.
+ */
+#define SERIES_HORNER_TERM@C@(r, x, c)                          \
+    do {                                                        \
+        r = cmul@c@(r, x);                                      \
+        r = npy_cpack@c@(c*npy_creal@c@(r), c*npy_cimag@c@(r)); \
+        r = cadd@c@(c_1@c@, r);                                 \
+    } while(0)
+
+/*==========================================================
+ * Custom implementation of missing complex C99 functions
+ *=========================================================*/
+
 #ifndef HAVE_CABS@C@
 @type@ npy_cabs@c@(@ctype@ z)
 {
@@ -193,18 +263,75 @@
 #endif
 
 #ifndef HAVE_CPOW@C@
-@ctype@ npy_cpow@c@ (@ctype@ x, @ctype@ y)
+@ctype@ npy_cpow@c@ (@ctype@ a, @ctype@ b)
 {
-    @ctype@ b;
-    @type@ br, bi, yr, yi;
+    npy_intp n;
+    @type@ ar = npy_creal@c@(a);
+    @type@ br = npy_creal@c@(b);
+    @type@ ai = npy_cimag@c@(a);
+    @type@ bi = npy_cimag@c@(b);
+    @ctype@ loga, r;
 
-    yr = npy_creal@c@(y);
-    yi = npy_cimag@c@(y);
-    b = npy_clog@c@(x);
-    br = npy_creal@c@(b);
-    bi = npy_cimag@c@(b);
+    if (br == 0. && bi == 0.) {
+        return npy_cpack@c@(1., 0.);
+    }
+    if (ar == 0. && ai == 0.) {
+        if (br > 0 && bi == 0) {
+            return npy_cpack@c@(0., 0.);
+        }
+        else {
+            volatile @type@ tmp = NPY_INFINITY;
+            /* NB: there are four complex zeros; c0 = (+-0, +-0), so that unlike
+             *     for reals, c0**p, with `p` negative is in general
+             *     ill-defined.
+             *
+             *     c0**z with z complex is also ill-defined.
+             */
+            r = npy_cpack@c@(NPY_NAN, NPY_NAN);
 
-    return npy_cexp@c@(npy_cpack@c@(br * yr - bi * yi, br * yi + bi * yr));
+            /* Raise invalid */
+            tmp -= NPY_INFINITY;
+            ar = tmp;
+            return r;
+        }
+    }
+    if (bi == 0 && (n=(npy_intp)br) == br) {
+        if (n == 1) {
+            /* unroll: handle inf better */
+            return npy_cpack@c@(ar, ai);
+        }
+        else if (n == 2) {
+            /* unroll: handle inf better */
+            return cmul@c@(a, a);
+        }
+        else if (n == 3) {
+            /* unroll: handle inf better */
+            return cmul@c@(a, cmul@c@(a, a));
+        }
+        else if (n > -100 && n < 100) {
+            @ctype@ p, aa;
+            npy_intp mask = 1;
+            if (n < 0) n = -n;
+            aa = c_1@c@;
+            p = npy_cpack@c@(ar, ai);
+            while (1) {
+                if (n & mask)
+                    aa = cmul@c@(aa,p);
+                mask <<= 1;
+                if (n < mask || mask <= 0) break;
+                p = cmul@c@(p,p);
+            }
+            r = npy_cpack@c@(npy_creal@c@(aa), npy_cimag@c@(aa));
+            if (br < 0) r = cdiv@c@(c_1@c@, r);
+            return r;
+        }
+    }
+
+    loga = npy_clog@c@(a);
+    ar = npy_creal@c@(loga);
+    ai = npy_cimag@c@(loga);
+
+    return npy_cexp@c@(npy_cpack@c@(ar * br - ai * bi, ar * bi + ai * br));
 }
 #endif
 
@@ -235,6 +362,26 @@
     z = npy_ctanh@c@(npy_cpack@c@(-npy_cimag@c@(z), npy_creal@c@(z)));
     return (npy_cpack@c@(npy_cimag@c@(z), -npy_creal@c@(z)));
 }   
+#endif
+
+#ifndef HAVE_CCOSH@C@
+@ctype@ npy_ccosh@c@(@ctype@ z)
+{
+    @type@ x, y;
+    x = npy_creal@c@(z);
+    y = npy_cimag@c@(z);
+    return npy_cpack@c@(npy_cos@c@(y)*npy_cosh@c@(x), npy_sin@c@(y)*npy_sinh@c@(x));
+}
+#endif
+
+#ifndef HAVE_CSINH@C@
+@ctype@ npy_csinh@c@(@ctype@ z)
+{
+    @type@ x, y;
+    x = npy_creal@c@(z);
+    y = npy_cimag@c@(z);
+    return npy_cpack@c@(npy_cos@c@(y)*npy_sinh@c@(x), npy_sin@c@(y)*npy_cosh@c@(x));
+}
 #endif
 
 #ifndef HAVE_CTANH@C@
@@ -345,6 +492,188 @@
 #undef TANHF_HUGE
 #undef TANHL_HUGE
 #endif
+
+#ifndef HAVE_CACOS@C@
+@ctype@ npy_cacos@c@(@ctype@ z)
+{
+    @ctype@ r;
+    r = cmul@c@(z,z);
+    r = csub@c@(c_1@c@, r);
+    r = npy_csqrt@c@(r);
+    r = cmuli@c@(r);
+    r = cadd@c@(z, r);
+    r = npy_clog@c@(r);
+    r = cmuli@c@(r);
+    r = cneg@c@(r);
+    return r;
+}
+#endif
+
+#ifndef HAVE_CASIN@C@
+@ctype@ npy_casin@c@(@ctype@ z)
+{
+    @type@ x, y;
+    x = npy_creal@c@(z);
+    y = npy_cimag@c@(z);
+
+    if (npy_fabs(x) > 1e-3 || npy_fabs(y) > 1e-3) {
+        /* casin(z) = -i * log( i*z + sqrt(1-z**2)) */
+        @ctype@ m1, iz, r;
+        m1 = npy_csqrt@c@(csub@c@(c_1@c@, cmul@c@(z,z)));
+        iz = cmuli@c@(z);
+        r = npy_clog@c@(cadd@c@(iz, m1));
+        r = cmuli@c@(r);
+        return cneg@c@(r);
+    }
+    else {
+        /*
+         * Small arguments: series expansion, to avoid loss of precision
+         * asin(x) = x [1 + (1/6) x^2 [1 + (9/20) x^2 [1 + ...]]]
+         *
+         * |x| < 1e-3 => |rel. error| < 1e-18 (f), 1e-24, 1e-36 (l)
+         */
+        @ctype@ z2, r;
+        z2 = cmul@c@(z, z);
+        r = c_1@c@;
+#if @precision@ >= 3
+        SERIES_HORNER_TERM@C@(r, z2, 81.0@C@/110);
+        SERIES_HORNER_TERM@C@(r, z2, 49.0@C@/72);
+#endif
+#if @precision@ >= 2
+        SERIES_HORNER_TERM@C@(r, z2, 25.0@C@/42);
+#endif
+        SERIES_HORNER_TERM@C@(r, z2, 9.0@C@/20);
+        SERIES_HORNER_TERM@C@(r, z2, 1.0@C@/6);
+        return cmul@c@(r, z);
+    }
+}
+#endif
+
+#ifndef HAVE_CATAN@C@
+@ctype@ npy_catan@c@(@ctype@ z)
+{
+    @type@ x, y;
+    x = npy_creal@c@(z);
+    y = npy_cimag@c@(z);
+
+    if (npy_fabs(x) > 1e-3 || npy_fabs(y) > 1e-3) {
+        /* catan(z) = 0.5*i * log((i+z)/(i-z)) */
+        @ctype@ ip, im;
+        ip = cadd@c@(c_i@c@, z);
+        im = csub@c@(c_i@c@, z);
+        return cmul@c@(c_ihalf@c@, npy_clog@c@(cdiv@c@(ip, im)));
+    }
+    else {
+        /*
+         * Small arguments: series expansion, to avoid loss of precision
+         * atan(x) = x [1 - (1/3) x^2 [1 - (3/5) x^2 [1 - ...]]]
+         *
+         * |x| < 1e-3 => |rel. error| < 1e-18 (f), 1e-24, 1e-36 (l)
+         */
+        @ctype@ z2, r;
+        z2 = cmul@c@(z, z);
+        r = c_1@c@;
+#if @precision@ >= 3
+        SERIES_HORNER_TERM@C@(r, z2, -9.0@C@/11);
+        SERIES_HORNER_TERM@C@(r, z2, -7.0@C@/9);
+#endif
+#if @precision@ >= 2
+        SERIES_HORNER_TERM@C@(r, z2, -5.0@C@/7);
+#endif
+        SERIES_HORNER_TERM@C@(r, z2, -3.0@C@/5);
+        SERIES_HORNER_TERM@C@(r, z2, -1.0@C@/3);
+        return cmul@c@(r, z);
+     }
+}
+#endif
+
+#ifndef HAVE_CACOSH@C@
+@ctype@ npy_cacosh@c@(@ctype@ z)
+{
+    /* cacosh(z) = log( z + sqrt(z+1)*sqrt(z-1)) */
+    @ctype@ p1, m1;
+    p1 = npy_csqrt@c@(cadd@c@(z, c_1@c@));
+    m1 = npy_csqrt@c@(csub@c@(z, c_1@c@));
+    return npy_clog@c@(cadd@c@(z, cmul@c@(p1,m1)));
+}
+#endif
+
+#ifndef HAVE_CASINH@C@
+@ctype@ npy_casinh@c@(@ctype@ z)
+{
+    @type@ x, y;
+
+    x = npy_creal@c@(z);
+    y = npy_cimag@c@(z);
+
+    if (npy_fabs(x) > 1e-3 || npy_fabs(y) > 1e-3) {
+        /* casinh(z) = log( z + sqrt(1 + z**2)) */
+        @ctype@ p1;
+        p1 = npy_csqrt@c@(cadd@c@(c_1@c@, cmul@c@(z, z)));
+        return npy_clog@c@(cadd@c@(p1, z));
+    }
+    else {
+        /*
+         * Small arguments: series expansion, to avoid loss of precision
+         * asinh(x) = x [1 - (1/6) x^2 [1 - (9/20) x^2 [1 - ...]]]
+         *
+         * |x| < 1e-3 => |rel. error| < 1e-18 (f), 1e-24, 1e-36 (l)
+         */
+        @ctype@ z2, r;
+        z2 = cmul@c@(z, z);
+        r = c_1@c@;
+#if @precision@ >= 3
+        SERIES_HORNER_TERM@C@(r, z2, -81.0@C@/110);
+        SERIES_HORNER_TERM@C@(r, z2, -49.0@C@/72);
+#endif
+#if @precision@ >= 2
+        SERIES_HORNER_TERM@C@(r, z2, -25.0@C@/42);
+#endif
+        SERIES_HORNER_TERM@C@(r, z2, -9.0@C@/20);
+        SERIES_HORNER_TERM@C@(r, z2, -1.0@C@/6);
+        return cmul@c@(z, r);
+    }
+}
+#endif
+
+#ifndef HAVE_CATANH@C@
+@ctype@ npy_catanh@c@(@ctype@ z)
+{
+    @type@ x, y;
+
+    x = npy_creal@c@(z);
+    y = npy_cimag@c@(z);
+
+    if (npy_fabs(x) > 1e-3 || npy_fabs(y) > 1e-3) {
+        /* catanh(z) = 0.5 * log((1+z)/(1-z)) */
+        @ctype@ p1, m1;
+        p1 = cadd@c@(c_1@c@, z);
+        m1 = csub@c@(c_1@c@, z);
+        return cmul@c@(c_half@c@, npy_clog@c@(cdiv@c@(p1, m1)));
+    }
+    else {
+        /*
+         * Small arguments: series expansion, to avoid loss of precision
+         * atan(x) = x [1 + (1/3) x^2 [1 + (3/5) x^2 [1 + ...]]]
+         *
+         * |x| < 1e-3 => |rel. error| < 1e-18 (f), 1e-24, 1e-36 (l)
+         */
+        @ctype@ z2, r;
+        z2 = cmul@c@(z, z);
+        r = c_1@c@;
+#if @precision@ >= 3
+        SERIES_HORNER_TERM@C@(r, z2, 9.0@C@/11);
+        SERIES_HORNER_TERM@C@(r, z2, 7.0@C@/9);
+#endif
+#if @precision@ >= 2
+        SERIES_HORNER_TERM@C@(r, z2, 5.0@C@/7);
+#endif
+        SERIES_HORNER_TERM@C@(r, z2, 3.0@C@/5);
+        SERIES_HORNER_TERM@C@(r, z2, 1.0@C@/3);
+        return cmul@c@(z, r);
+     }
+}
+#endif
 /**end repeat**/
 
 /*==========================================================
@@ -372,8 +701,8 @@
 /**end repeat1**/
 
 /**begin repeat1
- * #kind = cexp,clog,csqrt,ccos,csin,ctan,ctanh#
- * #KIND = CEXP,CLOG,CSQRT,CCOS,CSIN,CTAN,CTANH#
+ * #kind = cexp,clog,csqrt,ccos,csin,ctan,ccosh,csinh,ctanh,cacos,casin,catan,cacosh,casinh,catanh#
+ * #KIND = CEXP,CLOG,CSQRT,CCOS,CSIN,CTAN,CCOSH,CSINH,CTANH,CACOS,CASIN,CATAN,CACOSH,CASINH,CATANH#
  */
 #ifdef HAVE_@KIND@@C@
 @ctype@ npy_@kind@@c@(@ctype@ z)
