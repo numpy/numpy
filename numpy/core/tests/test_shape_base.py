@@ -151,7 +151,7 @@ class TestVstack(TestCase):
 
 def test_concatenate_axis_None():
     a = np.arange(4, dtype=np.float64).reshape((2,2))
-    b = range(3)
+    b = list(range(3))
     c = ['x']
     r = np.concatenate((a, a), axis=None)
     assert_equal(r.dtype, a.dtype)

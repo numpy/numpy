@@ -11,7 +11,7 @@ def _move_axis_to_0(a, axis):
     n = len(a.shape)
     if axis < 0:
         axis += n
-    axes = range(1, axis+1) + [0,] + range(axis+1, n)
+    axes = list(range(1, axis+1)) + [0,] + list(range(axis+1, n))
     return transpose(a, axes)
 
 # Add these

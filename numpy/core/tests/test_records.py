@@ -54,11 +54,11 @@ class TestFromrecords(TestCase):
         b = np.zeros(count, dtype='f8')
         c = np.zeros(count, dtype='f8')
         for i in range(len(a)):
-            a[i] = range(1, 10)
+            a[i] = list(range(1, 10))
 
         mine = np.rec.fromarrays([a, b, c], names='date,data1,data2')
         for i in range(len(a)):
-            assert_((mine.date[i] == range(1, 10)))
+            assert_((mine.date[i] == list(range(1, 10))))
             assert_((mine.data1[i] == 0.0))
             assert_((mine.data2[i] == 0.0))
 
@@ -81,7 +81,7 @@ class TestFromrecords(TestCase):
                        names='c1, c2, c3, c4')
         assert_(ra.dtype == pa.dtype)
         assert_(ra.shape == pa.shape)
-        for k in xrange(len(ra)):
+        for k in range(len(ra)):
             assert_(ra[k].item() == pa[k].item())
 
     def test_recarray_conflict_fields(self):

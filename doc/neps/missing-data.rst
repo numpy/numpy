@@ -320,7 +320,7 @@ A manual loop through a masked array like::
     >>> a[3] = np.NA
     >>> a
     array([ 0.,  1.,  2., NA,  4.], maskna=True)
-    >>> for i in xrange(len(a)):
+    >>> for i in range(len(a)):
     ...     a[i] = np.log(a[i])
     ...
     __main__:2: RuntimeWarning: divide by zero encountered in log

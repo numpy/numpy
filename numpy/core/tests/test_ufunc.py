@@ -449,7 +449,7 @@ class TestUfunc(TestCase):
             ret = ()
             base = permute_n(n-1)
             for perm in base:
-                for i in xrange(n):
+                for i in range(n):
                     new = perm + [n-1]
                     new[n-1] = new[i]
                     new[i] = n-1

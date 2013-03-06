@@ -520,7 +520,7 @@ class TestTypes(TestCase):
 
 class TestFromiter(TestCase):
     def makegen(self):
-        for x in xrange(24):
+        for x in range(24):
             yield x**2
 
     def test_types(self):

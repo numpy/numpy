@@ -5405,7 +5405,7 @@ add_newdoc('numpy.core', 'ufunc', ('reduce',
     ::
 
      r = op.identity # op = ufunc
-     for i in xrange(len(A)):
+     for i in range(len(A)):
        r = op(r, A[i])
      return r
 
@@ -5486,7 +5486,7 @@ add_newdoc('numpy.core', 'ufunc', ('accumulate',
 
       r = np.empty(len(A))
       t = op.identity        # op = the ufunc being applied to A's  elements
-      for i in xrange(len(A)):
+      for i in range(len(A)):
           t = op(t, A[i])
           r[i] = t
       return r
@@ -5666,8 +5666,8 @@ add_newdoc('numpy.core', 'ufunc', ('outer',
     For `A` and `B` one-dimensional, this is equivalent to::
 
       r = empty(len(A),len(B))
-      for i in xrange(len(A)):
-          for j in xrange(len(B)):
+      for i in range(len(A)):
+          for j in range(len(B)):
               r[i,j] = op(A[i], B[j]) # op = ufunc in question
 
     Parameters

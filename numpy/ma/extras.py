@@ -337,7 +337,7 @@ def apply_along_axis(func1d, axis, arr, *args, **kwargs):
             % (axis, nd))
     ind = [0] * (nd - 1)
     i = np.zeros(nd, 'O')
-    indlist = range(nd)
+    indlist = list(range(nd))
     indlist.remove(axis)
     i[axis] = slice(None, None)
     outshape = np.asarray(arr.shape).take(indlist)
@@ -729,7 +729,7 @@ def compress_rowcols(x, axis=None):
     if m.all():
         return nxarray([])
     # Builds a list of rows/columns indices
-    (idxr, idxc) = (range(len(x)), range(x.shape[1]))
+    (idxr, idxc) = (list(range(len(x))), list(range(x.shape[1])))
     masked = m.nonzero()
     if not axis:
         for i in np.unique(masked[0]):

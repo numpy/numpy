@@ -160,7 +160,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
 
         errors = []
         threads = [threading.Thread(target=writer, args=(errors,))
-                   for j in xrange(3)]
+                   for j in range(3)]
         for t in threads:
             t.start()
         for t in threads:
