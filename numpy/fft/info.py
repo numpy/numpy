@@ -113,7 +113,7 @@ The inverse DFT is defined as
 
 .. math::
    a_m = \\frac{1}{n}\\sum_{k=0}^{n-1}A_k\\exp\\left\\{2\\pi i{mk\\over n}\\right\\}
-   \\qquad n = 0,\\ldots,n-1.
+   \\qquad m = 0,\\ldots,n-1.
 
 It differs from the forward transform by the sign of the exponential
 argument and the normalization by :math:`1/n`.
