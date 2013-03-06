@@ -150,7 +150,10 @@ class TestRandomDist(TestCase):
     def test_choice_exceptions(self):
         sample = np.random.choice
         assert_raises(ValueError, sample, -1, 3)
-        assert_raises(ValueError, sample, 3., 3)
+        if hasattr(3., '__index__'):
+            assert_raises(ValueError, sample, 3., 3)
+        else:
+            assert_raises(ValueError, sample, object(), 3)
         assert_raises(ValueError, sample, [[1,2],[3,4]], 3)
         assert_raises(ValueError, sample, [], 3)
         assert_raises(ValueError, sample, [1,2,3,4], 3,

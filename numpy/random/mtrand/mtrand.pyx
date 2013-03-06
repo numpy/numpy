@@ -998,9 +998,12 @@ cdef class RandomState:
         a = np.array(a, copy=False)
         if a.ndim == 0:
             try:
-                # __index__ must return an integer by python rules.
-                pop_size = operator.index(a.item())
-            except TypeError:
+                if hasattr(operator, "index"): # python 2.5+
+                    # __index__ must return an integer by python rules.
+                    pop_size = operator.index(a.item())
+                else:
+                     pop_size = int(a.item())
+            except (TypeError, ValueError):
                 raise ValueError("a must be 1-dimensional or an integer")
             if pop_size <= 0:
                 raise ValueError("a must be greater than 0")
