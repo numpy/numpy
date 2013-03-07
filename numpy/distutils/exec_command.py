@@ -141,6 +141,19 @@ def _update_environment( **env ):
     for name,value in env.items():
         os.environ[name] = value or ''
 
+def _supports_fileno(stream):
+    """
+    Returns True if 'stream' supports the file descriptor and allows fileno().
+    """
+    if hasattr(stream, 'fileno'):
+        try:
+            r = stream.fileno()
+            return True
+        except IOError:
+            return False
+    else:
+        return False
+
 def exec_command( command,
                   execute_in='', use_shell=None, use_tee = None,
                   _with_python = 1,
@@ -195,7 +208,7 @@ def exec_command( command,
         # _exec_command_posix uses os.system and is faster
         # but not on all platforms os.system will return
         # a correct status.
-        if _with_python and hasattr(sys.stdout, 'fileno') and \
+        if _with_python and _supports_fileno(sys.stdout) and \
                             sys.stdout.fileno() == -1:
             st = _exec_command_python(command,
                                       exec_command_dir = exec_dir,
@@ -350,7 +363,7 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
                 argv = [os.environ['COMSPEC'],'/C'] + argv
                 using_command = 1
 
-    _has_fileno = hasattr(sys.stdout, 'fileno')
+    _has_fileno = _supports_fileno(sys.stdout)
     if _has_fileno:
         so_fileno = sys.stdout.fileno()
         se_fileno = sys.stderr.fileno()
