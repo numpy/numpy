@@ -3386,7 +3386,7 @@ def meshgrid(*xi, **kwargs):
 def delete(arr, obj, axis=None):
     """
     Return a new array with sub-arrays along an axis deleted. For a one
-    dimensional array, this returns those entries not returned by `arr[obj,]`.
+    dimensional array, this returns those entries not returned by `arr[obj]`.
 
     Parameters
     ----------
@@ -3453,9 +3453,9 @@ def delete(arr, obj, axis=None):
         ndim = arr.ndim;
         axis = ndim-1;
     if ndim == 0:
-        warnings.warn("in the future the special handleing of scalars "
+        warnings.warn("in the future the special handling of scalars "
                       "will be removed from delete and raise an error",
-                      FutureWarning)
+                      DeprecationWarning)
         if wrap:
             return wrap(arr)
         else:
@@ -3517,15 +3517,15 @@ def delete(arr, obj, axis=None):
 
     _obj = obj
     obj = np.asarray(obj)
-    # After removing the special handling of booleans, the size == 1 check
-    # can be just replaced with something else (like integer check)
-    # and there need not be any conversion to an array at all.
+    # After removing the special handling of booleans and out of
+    # bounds values, the conversion to the array can be removed.
     if obj.dtype == bool:
         warnings.warn("in the future insert will treat boolean arrays "
                       "and array-likes as boolean index instead "
                       "of casting it to integer", FutureWarning)
         obj = obj.astype(intp)
-    if obj.size == 1:
+    if isinstance(_obj, (int, long, integer)):
+        # optimization for a single value
         obj = obj.item()
         if (obj < -N or obj >=N):
             raise IndexError("index %i is out of bounds for axis "
@@ -3549,6 +3549,20 @@ def delete(arr, obj, axis=None):
                 "will result in an error in the future", DeprecationWarning)
             obj = obj.astype(intp)
         keep = ones(N, dtype=bool)
+
+        # Test if there are out of bound indices, this is deprecated
+        inside_bounds = (obj < N) & (obj >= -N)
+        if not inside_bounds.all():
+            warnings.warn("in the future out of bounds indices will raise an "
+                          "error instead of being ignored by `numpy.delete`.",
+                          DeprecationWarning)
+            obj = obj[inside_bounds]
+        positive_indices = obj >= 0
+        if not positive_indices.all():
+            warnings.warn("in the future negative indices will not be ignored "
+                          "by `numpy.delete`.", FutureWarning)
+            obj = obj[positive_indices]
+
         keep[obj,] = False
         slobj[axis] = keep
         new = arr[slobj]
@@ -3660,9 +3674,9 @@ def insert(arr, obj, values, axis=None):
         ndim = arr.ndim
         axis = ndim-1
     if (ndim == 0):
-        warnings.warn("in the future the special handleing of scalars "
+        warnings.warn("in the future the special handling of scalars "
                       "will be removed from insert and raise an error",
-                      FutureWarning)
+                      DeprecationWarning)
         arr = arr.copy()
         arr[...] = values
         if wrap:

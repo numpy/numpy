@@ -214,9 +214,9 @@ class TestInsert(TestCase):
         # This is an error in the future
         a = np.array(1)
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', FutureWarning)
+            warnings.filterwarnings('always', '', DeprecationWarning)
             assert_equal(insert(a, [], 2, axis=0), np.array(2))
-            assert_(w[0].category is FutureWarning)
+            assert_(w[0].category is DeprecationWarning)
 
     def test_subclass(self):
         class SubClass(np.ndarray):
@@ -357,14 +357,15 @@ class TestDelete(TestCase):
     def _check_inverse_of_slicing(self, indices):
         a_del = delete(self.a, indices)
         nd_a_del = delete(self.nd_a, indices, axis=1)
+        msg = 'Delete failed for obj: %r' % indices
         # NOTE: The cast should be removed after warning phase for bools
-        if not isinstance(indices, slice):
+        if not isinstance(indices, (slice, int, long, np.integer)):
             indices = np.asarray(indices, dtype=np.intp)
+            indices = indices[(indices >= 0) & (indices < 5)]
         assert_array_equal(setxor1d(a_del, self.a[indices,]), self.a,
-                           err_msg='Delete failed for obj: %r' % indices)
+                           err_msg=msg)
         xor = setxor1d(nd_a_del[0,:,0], self.nd_a[0,indices,0])
-        assert_array_equal(xor, self.nd_a[0,:,0],
-                           err_msg='Delete failed for obj: %r' % indices)
+        assert_array_equal(xor, self.nd_a[0,:,0], err_msg=msg)
 
     def test_slices(self):
         lims = [-6, -2, 0, 1, 2, 4, 5]
@@ -376,11 +377,13 @@ class TestDelete(TestCase):
                     self._check_inverse_of_slicing(s)
 
     def test_fancy(self):
-        self._check_inverse_of_slicing([0, -1, 2, 2])
+        # Deprecation/FutureWarning tests should be kept after change.
         self._check_inverse_of_slicing(np.array([[0,1],[2,1]]))
-        assert_raises(IndexError, delete, self.a, [100])
+        assert_raises(DeprecationWarning, delete, self.a, [100])
+        assert_raises(DeprecationWarning, delete, self.a, [-100])
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', FutureWarning)
+            self._check_inverse_of_slicing([0, -1, 2, 2])
             obj = np.array([True, False, False], dtype=bool)
             self._check_inverse_of_slicing(obj)
             assert_(w[0].category is FutureWarning)
@@ -393,9 +396,9 @@ class TestDelete(TestCase):
     def test_0d(self):
         a = np.array(1)
         with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', FutureWarning)
+            warnings.filterwarnings('always', '', DeprecationWarning)
             assert_equal(delete(a, [], axis=0), a)
-            assert_(w[0].category is FutureWarning)
+            assert_(w[0].category is DeprecationWarning)
 
     def test_subclass(self):
         class SubClass(np.ndarray):
