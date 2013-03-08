@@ -78,13 +78,30 @@ static NPY_INLINE @ctype@ cmul@c@(@ctype@ a, @ctype@ b)
 
 static NPY_INLINE @ctype@ cdiv@c@(@ctype@ a, @ctype@ b)
 {
-    @type@ ar, ai, br, bi, d;
+    @type@ ar, ai, br, bi, abs_br, abs_bi;
     ar = npy_creal@c@(a);
     ai = npy_cimag@c@(a);
     br = npy_creal@c@(b);
     bi = npy_cimag@c@(b);
-    d = br*br + bi*bi;
-    return npy_cpack@c@((ar*br +ai*bi)/d, (ai*br-ar*bi)/d);
+    abs_br = npy_fabs@c@(br);
+    abs_bi = npy_fabs@c@(bi);
+
+    if (abs_br >= abs_bi) {
+        if (abs_br == 0 && abs_bi == 0) {
+            /* divide by zeros should yield a complex inf or nan */
+            return npy_cpack@c@(ar/abs_br, ai/abs_bi);
+        }
+        else {
+            @type@ rat = bi/br;
+            @type@ scl = 1.0@C@/(br+bi*rat);
+            return npy_cpack@c@((ar + ai*rat)*scl, (ai - ar*rat)*scl);
+        }
+    }
+    else {
+        @type@ rat = br/bi;
+        @type@ scl = 1.0@C@/(bi + br*rat);
+        return npy_cpack@c@((ar*rat + ai)*scl, (ai*rat - ar)*scl);
+    }
 }
     
 static NPY_INLINE @ctype@ cneg@c@(@ctype@ a)
