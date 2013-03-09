@@ -335,10 +335,12 @@ From scratch
 
     .. versionadded:: 1.7
 
+    This function **steals a reference** to ``obj`` and sets it as the
+    base property of ``arr``.
+
     If you construct an array by passing in your own memory buffer as
     a parameter, you need to set the array's `base` property to ensure
-    the lifetime of the memory buffer is appropriate. This function
-    accomplishes the task.
+    the lifetime of the memory buffer is appropriate.
 
     The return value is 0 on success, -1 on failure.
 
