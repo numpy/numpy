@@ -363,17 +363,16 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
                 argv = [os.environ['COMSPEC'],'/C'] + argv
                 using_command = 1
 
-    _has_fileno = _supports_fileno(sys.stdout)
-    if _has_fileno:
+    _so_has_fileno = _supports_fileno(sys.stdout)
+    _se_has_fileno = _supports_fileno(sys.stderr)
+    so_flush = sys.stdout.flush
+    se_flush = sys.stderr.flush
+    if _so_has_fileno:
         so_fileno = sys.stdout.fileno()
-        se_fileno = sys.stderr.fileno()
-        so_flush = sys.stdout.flush
-        se_flush = sys.stderr.flush
         so_dup = os.dup(so_fileno)
+    if _se_has_fileno:
+        se_fileno = sys.stderr.fileno()
         se_dup = os.dup(se_fileno)
-    else:
-        so_flush = sys.stdout.flush
-        se_flush = sys.stderr.flush
 
     outfile = temp_file_name()
     fout = open(outfile,'w')
@@ -390,10 +389,10 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
 
     so_flush()
     se_flush()
-    if _has_fileno:
+    if _so_has_fileno:
         os.dup2(fout.fileno(),so_fileno)
 
-    if _has_fileno:
+    if _se_has_fileno:
         if using_command:
             #XXX: disabled for now as it does not work from cmd under win32.
             #     Tests fail on msys
@@ -409,8 +408,9 @@ def _exec_command( command, use_shell=None, use_tee = None, **env ):
 
     so_flush()
     se_flush()
-    if _has_fileno:
+    if _so_has_fileno:
         os.dup2(so_dup,so_fileno)
+    if _se_has_fileno:
         os.dup2(se_dup,se_fileno)
 
     fout.close()

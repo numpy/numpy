@@ -66,7 +66,6 @@ def test_exec_command_stderr():
         exec_command.exec_command("cd '.'")
 
     # Test non-posix version:
-    # Note: this test reveals a failure
-    #with emulate_nonposix():
-    #    with redirect_stderr(StringIO.StringIO()):
-    #        exec_command.exec_command("cd '.'")
+    with emulate_nonposix():
+        with redirect_stderr(StringIO.StringIO()):
+            exec_command.exec_command("cd '.'")
