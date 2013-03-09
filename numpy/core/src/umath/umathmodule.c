@@ -201,99 +201,6 @@ ufunc_frompyfunc(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject *NPY_UNUS
  **                            SETUP UFUNCS                                 **
  *****************************************************************************
  */
-
-/* Less automated additions to the ufuncs */
-
-static PyUFuncGenericFunction frexp_functions[] = {
-#ifdef HAVE_FREXPF
-    HALF_frexp,
-    FLOAT_frexp,
-#endif
-    DOUBLE_frexp
-#ifdef HAVE_FREXPL
-    ,LONGDOUBLE_frexp
-#endif
-};
-
-static void * blank3_data[] = { (void *)NULL, (void *)NULL, (void *)NULL};
-static void * blank6_data[] = { (void *)NULL, (void *)NULL, (void *)NULL,
-                                (void *)NULL, (void *)NULL, (void *)NULL};
-static char frexp_signatures[] = {
-#ifdef HAVE_FREXPF
-    NPY_HALF, NPY_HALF, NPY_INT,
-    NPY_FLOAT, NPY_FLOAT, NPY_INT,
-#endif
-    NPY_DOUBLE, NPY_DOUBLE, NPY_INT
-#ifdef HAVE_FREXPL
-    ,NPY_LONGDOUBLE, NPY_LONGDOUBLE, NPY_INT
-#endif
-};
-
-#if NPY_SIZEOF_LONG == NPY_SIZEOF_INT
-#define LDEXP_LONG(typ) typ##_ldexp
-#else
-#define LDEXP_LONG(typ) typ##_ldexp_long
-#endif
-
-static PyUFuncGenericFunction ldexp_functions[] = {
-#ifdef HAVE_LDEXPF
-    HALF_ldexp,
-    FLOAT_ldexp,
-    LDEXP_LONG(HALF),
-    LDEXP_LONG(FLOAT),
-#endif
-    DOUBLE_ldexp,
-    LDEXP_LONG(DOUBLE)
-#ifdef HAVE_LDEXPL
-    ,
-    LONGDOUBLE_ldexp,
-    LDEXP_LONG(LONGDOUBLE)
-#endif
-};
-
-static char ldexp_signatures[] = {
-#ifdef HAVE_LDEXPF
-    NPY_HALF, NPY_INT, NPY_HALF,
-    NPY_FLOAT, NPY_INT, NPY_FLOAT,
-    NPY_HALF, NPY_LONG, NPY_HALF,
-    NPY_FLOAT, NPY_LONG, NPY_FLOAT,
-#endif
-    NPY_DOUBLE, NPY_INT, NPY_DOUBLE,
-    NPY_DOUBLE, NPY_LONG, NPY_DOUBLE
-#ifdef HAVE_LDEXPL
-    ,NPY_LONGDOUBLE, NPY_INT, NPY_LONGDOUBLE
-    ,NPY_LONGDOUBLE, NPY_LONG, NPY_LONGDOUBLE
-#endif
-};
-
-static void
-InitOtherOperators(PyObject *dictionary) {
-    PyObject *f;
-    int num;
-
-    num = sizeof(frexp_functions) / sizeof(frexp_functions[0]);
-    f = PyUFunc_FromFuncAndData(frexp_functions, blank3_data,
-                                frexp_signatures, num,
-                                1, 2, PyUFunc_None, "frexp",
-                                "Split the number, x, into a normalized"\
-                                " fraction (y1) and exponent (y2)",0);
-    PyDict_SetItemString(dictionary, "frexp", f);
-    Py_DECREF(f);
-
-    num = sizeof(ldexp_functions) / sizeof(ldexp_functions[0]);
-    f = PyUFunc_FromFuncAndData(ldexp_functions, blank6_data, ldexp_signatures, num,
-                                2, 1, PyUFunc_None, "ldexp",
-                                "Compute y = x1 * 2**x2.",0);
-    PyDict_SetItemString(dictionary, "ldexp", f);
-    Py_DECREF(f);
-
-#if defined(NPY_PY3K)
-    f = PyDict_GetItemString(dictionary, "true_divide");
-    PyDict_SetItemString(dictionary, "divide", f);
-#endif
-    return;
-}
-
 NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_out = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_subok = NULL;
 NPY_VISIBILITY_HIDDEN PyObject * npy_um_str_array_prepare = NULL;
@@ -409,14 +316,17 @@ PyMODINIT_FUNC initumath(void)
     /* Load the ufunc operators into the array module's namespace */
     InitOperators(d);
 
-    InitOtherOperators(d);
-
     PyDict_SetItemString(d, "pi", s = PyFloat_FromDouble(NPY_PI));
     Py_DECREF(s);
     PyDict_SetItemString(d, "e", s = PyFloat_FromDouble(NPY_E));
     Py_DECREF(s);
     PyDict_SetItemString(d, "euler_gamma", s = PyFloat_FromDouble(NPY_EULER));
     Py_DECREF(s);
+
+#if defined(NPY_PY3K)
+    s = PyDict_GetItemString(d, "true_divide");
+    PyDict_SetItemString(d, "divide", s);
+#endif
 
 #define ADDCONST(str) PyModule_AddIntConstant(m, #str, UFUNC_##str)
 #define ADDSCONST(str) PyModule_AddStringConstant(m, "UFUNC_" #str, UFUNC_##str)
