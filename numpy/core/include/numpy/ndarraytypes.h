@@ -753,9 +753,9 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_F_CONTIGUOUS    0x0002
 
 /*
- * Note: all 0-d arrays are C_CONTIGUOUS and F_CONTIGUOUS. An N-d
- * array that is C_CONTIGUOUS is also F_CONTIGUOUS if only
- * one axis has a dimension different from one (ie. a 1x3x1 array).
+ * Note: all 0-d arrays are C_CONTIGUOUS and F_CONTIGUOUS. If a
+ * 1-d array is C_CONTIGUOUS it is also F_CONTIGUOUS. Higher
+ * dimensional arrays can be both if they have a size of 0 or 1.
  */
 
 /*
