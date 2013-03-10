@@ -1,4 +1,6 @@
 /*
+ * vim: syntax=c
+ *
  * Implement some C99-compatible complex math functions
  *
  * Most of the code is taken from the msun library in FreeBSD (HEAD @ 30th June
@@ -37,6 +39,8 @@
  * #c = f, , l#
  * #C = F, , L#
  * #TMAX = FLT_MAX, DBL_MAX, LDBL_MAX#
+ * #TMIN = FLT_MIN, DBL_MIN, LDBL_MIN#
+ * #TMANT_DIG = FLT_MANT_DIG, DBL_MANT_DIG, LDBL_MANT_DIG#
  * #precision = 1, 2, 3#
  */
 
@@ -205,9 +209,70 @@ static NPY_INLINE @ctype@ cmuli@c@(@ctype@ a)
 #endif
 
 #ifndef HAVE_CLOG@C@
+/* algorithm from cpython, rev. d86f5686cef9
+ *
+ * The usual formula for the real part is log(hypot(z.real, z.imag)).
+ * There are four situations where this formula is potentially
+ * problematic:
+ * 
+ * (1) the absolute value of z is subnormal.  Then hypot is subnormal,
+ * so has fewer than the usual number of bits of accuracy, hence may
+ * have large relative error.  This then gives a large absolute error
+ * in the log.  This can be solved by rescaling z by a suitable power
+ * of 2.
+ * 
+ * (2) the absolute value of z is greater than DBL_MAX (e.g. when both
+ * z.real and z.imag are within a factor of 1/sqrt(2) of DBL_MAX)
+ * Again, rescaling solves this.
+ * 
+ * (3) the absolute value of z is close to 1.  In this case it's
+ * difficult to achieve good accuracy, at least in part because a
+ * change of 1ulp in the real or imaginary part of z can result in a
+ * change of billions of ulps in the correctly rounded answer.
+ * 
+ * (4) z = 0.  The simplest thing to do here is to call the
+ * floating-point log with an argument of 0, and let its behaviour
+ * (returning -infinity, signaling a floating-point exception, setting
+ * errno, or whatever) determine that of c_log.  So the usual formula
+ * is fine here.
+*/
 @ctype@ npy_clog@c@(@ctype@ z)
 {
-    return npy_cpack@c@(npy_log@c@ (npy_cabs@c@ (z)), npy_carg@c@ (z));
+    @type@ ax = npy_fabs@c@(npy_creal@c@(z));
+    @type@ ay = npy_fabs@c@(npy_cimag@c@(z));
+    @type@ rr, ri;
+    
+    if (ax > @TMAX@/4 || ay > @TMAX@/4) {
+        rr = npy_log@c@(npy_hypot@c@(ax/2, ay/2)) + NPY_LOGE2@c@;
+    }
+    else if (ax < @TMIN@ && ay < @TMIN@) {
+        if (ax > 0  || ay > 0) {
+            /* catch cases where hypot(ax, ay) is subnormal */
+            rr = npy_log@c@(npy_hypot@c@(npy_ldexp@c@(ax, @TMANT_DIG@),
+                 npy_ldexp@c@(ay, @TMANT_DIG@))) - @TMANT_DIG@*NPY_LOGE2@c@;
+        }
+        else {
+            /* log(+/-0 +/- 0i) */
+            /* raise divide-by-zero floating point exception */
+            rr = -1.0@c@ / npy_creal@c@(z);
+            rr = npy_copysign@c@(rr, -1);
+            ri = npy_carg@c@(z);
+            return npy_cpack@c@(rr, ri);
+        }
+    }
+    else {
+        @type@ h = npy_hypot@c@(ax, ay);
+        if (0.71 <= h && h <= 1.73) {
+            @type@ am = ax > ay ? ax : ay; /* max(ax, ay) */
+            @type@ an = ax > ay ? ay : ax; /* min(ax, ay) */
+            rr = npy_log1p@c@((am-1)*(am+1)+an*an)/2;
+        }
+        else {
+            rr = npy_log@c@(h);
+        }
+    }
+    ri = npy_carg@c@(z);
+    return npy_cpack@c@(rr, ri);
 }
 #endif
 
