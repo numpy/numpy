@@ -52,16 +52,20 @@ def test_exec_command_stdout():
     # method.  This is tested here, with a do-nothing command that fails if the
     # presence of fileno() is assumed in exec_command.
 
+    # The code has a special case for posix systems, so if we are on posix test
+    # both that the special case works and that the generic code works.
+
     # Test posix version:
     with redirect_stdout(StringIO.StringIO()):
         with redirect_stderr(TemporaryFile()):
             exec_command.exec_command("cd '.'")
 
-    # Test non-posix version:
-    with emulate_nonposix():
-        with redirect_stdout(StringIO.StringIO()):
-            with redirect_stderr(TemporaryFile()):
-                exec_command.exec_command("cd '.'")
+    if os.name == 'posix':
+        # Test general (non-posix) version:
+        with emulate_nonposix():
+            with redirect_stdout(StringIO.StringIO()):
+                with redirect_stderr(TemporaryFile()):
+                    exec_command.exec_command("cd '.'")
 
 def test_exec_command_stderr():
     # Test posix version:
@@ -69,8 +73,9 @@ def test_exec_command_stderr():
         with redirect_stderr(StringIO.StringIO()):
             exec_command.exec_command("cd '.'")
 
-    # Test non-posix version:
-    with emulate_nonposix():
-        with redirect_stdout(TemporaryFile()):
-            with redirect_stderr(StringIO.StringIO()):
-                exec_command.exec_command("cd '.'")
+    if os.name == 'posix':
+        # Test general (non-posix) version:
+        with emulate_nonposix():
+            with redirect_stdout(TemporaryFile()):
+                with redirect_stderr(StringIO.StringIO()):
+                    exec_command.exec_command("cd '.'")
