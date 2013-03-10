@@ -6,6 +6,13 @@ from tempfile import TemporaryFile
 from numpy.distutils import exec_command
 
 
+def fake_with(context, f, *args, **kwargs):
+    context.__enter__()
+    try:
+        f(*args, **kwargs)
+    finally:
+        context.__exit__(None, None, None)
+
 class redirect_stdout(object):
     """Context manager to redirect stdout for exec_command test."""
     def __init__(self, stdout=None):
@@ -56,26 +63,26 @@ def test_exec_command_stdout():
     # both that the special case works and that the generic code works.
 
     # Test posix version:
-    with redirect_stdout(StringIO.StringIO()):
-        with redirect_stderr(TemporaryFile()):
-            exec_command.exec_command("cd '.'")
+    fake_with(redirect_stdout(StringIO.StringIO()),
+        fake_with, redirect_stderr(TemporaryFile()),
+            exec_command.exec_command, "cd '.'")
 
     if os.name == 'posix':
         # Test general (non-posix) version:
-        with emulate_nonposix():
-            with redirect_stdout(StringIO.StringIO()):
-                with redirect_stderr(TemporaryFile()):
-                    exec_command.exec_command("cd '.'")
+        fake_with(emulate_nonposix(),
+            fake_with, redirect_stdout(StringIO.StringIO()),
+                fake_with, redirect_stderr(TemporaryFile()),
+                    exec_command.exec_command, "cd '.'")
 
 def test_exec_command_stderr():
     # Test posix version:
-    with redirect_stdout(TemporaryFile()):
-        with redirect_stderr(StringIO.StringIO()):
-            exec_command.exec_command("cd '.'")
+    fake_with(redirect_stdout(TemporaryFile()),
+        fake_with, redirect_stderr(StringIO.StringIO()),
+            exec_command.exec_command, "cd '.'")
 
     if os.name == 'posix':
         # Test general (non-posix) version:
-        with emulate_nonposix():
-            with redirect_stdout(TemporaryFile()):
-                with redirect_stderr(StringIO.StringIO()):
-                    exec_command.exec_command("cd '.'")
+        fake_with(emulate_nonposix(),
+            fake_with, redirect_stdout(TemporaryFile()),
+                fake_with, redirect_stderr(StringIO.StringIO()),
+                    exec_command.exec_command, "cd '.'")
