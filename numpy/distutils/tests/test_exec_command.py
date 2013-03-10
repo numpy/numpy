@@ -1,6 +1,7 @@
 import os
 import sys
 import StringIO
+from tempfile import TemporaryFile
 
 from numpy.distutils import exec_command
 
@@ -53,19 +54,23 @@ def test_exec_command_stdout():
 
     # Test posix version:
     with redirect_stdout(StringIO.StringIO()):
-        exec_command.exec_command("cd '.'")
+        with redirect_stderr(TemporaryFile()):
+            exec_command.exec_command("cd '.'")
 
     # Test non-posix version:
     with emulate_nonposix():
         with redirect_stdout(StringIO.StringIO()):
-            exec_command.exec_command("cd '.'")
+            with redirect_stderr(TemporaryFile()):
+                exec_command.exec_command("cd '.'")
 
 def test_exec_command_stderr():
     # Test posix version:
-    with redirect_stderr(StringIO.StringIO()):
-        exec_command.exec_command("cd '.'")
+    with redirect_stdout(TemporaryFile()):
+        with redirect_stderr(StringIO.StringIO()):
+            exec_command.exec_command("cd '.'")
 
     # Test non-posix version:
     with emulate_nonposix():
-        with redirect_stderr(StringIO.StringIO()):
-            exec_command.exec_command("cd '.'")
+        with redirect_stdout(TemporaryFile()):
+            with redirect_stderr(StringIO.StringIO()):
+                exec_command.exec_command("cd '.'")
