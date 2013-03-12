@@ -1738,7 +1738,7 @@
  */
 %typemap(in,numinputs=0)
   (DATA_TYPE** ARGOUTVIEW_ARRAY1, DIM_TYPE* DIM1    )
-  (DATA_TYPE*  data_temp        , DIM_TYPE  dim_temp)
+  (DATA_TYPE*  data_temp = NULL , DIM_TYPE  dim_temp)
 {
   $1 = &data_temp;
   $2 = &dim_temp;
@@ -1757,7 +1757,7 @@
  */
 %typemap(in,numinputs=0)
   (DIM_TYPE* DIM1    , DATA_TYPE** ARGOUTVIEW_ARRAY1)
-  (DIM_TYPE  dim_temp, DATA_TYPE*  data_temp        )
+  (DIM_TYPE  dim_temp, DATA_TYPE*  data_temp = NULL )
 {
   $1 = &dim_temp;
   $2 = &data_temp;
@@ -1776,7 +1776,7 @@
  */
 %typemap(in,numinputs=0)
   (DATA_TYPE** ARGOUTVIEW_ARRAY2, DIM_TYPE* DIM1     , DIM_TYPE* DIM2     )
-  (DATA_TYPE*  data_temp        , DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp)
+  (DATA_TYPE*  data_temp = NULL , DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp)
 {
   $1 = &data_temp;
   $2 = &dim1_temp;
@@ -1796,7 +1796,7 @@
  */
 %typemap(in,numinputs=0)
   (DIM_TYPE* DIM1     , DIM_TYPE* DIM2     , DATA_TYPE** ARGOUTVIEW_ARRAY2)
-  (DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp, DATA_TYPE*  data_temp        )
+  (DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp, DATA_TYPE*  data_temp = NULL )
 {
   $1 = &dim1_temp;
   $2 = &dim2_temp;
@@ -1816,7 +1816,7 @@
  */
 %typemap(in,numinputs=0)
   (DATA_TYPE** ARGOUTVIEW_FARRAY2, DIM_TYPE* DIM1     , DIM_TYPE* DIM2     )
-  (DATA_TYPE*  data_temp        , DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp)
+  (DATA_TYPE*  data_temp = NULL  , DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp)
 {
   $1 = &data_temp;
   $2 = &dim1_temp;
@@ -1837,7 +1837,7 @@
  */
 %typemap(in,numinputs=0)
   (DIM_TYPE* DIM1     , DIM_TYPE* DIM2     , DATA_TYPE** ARGOUTVIEW_FARRAY2)
-  (DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp, DATA_TYPE*  data_temp        )
+  (DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp, DATA_TYPE*  data_temp = NULL  )
 {
   $1 = &dim1_temp;
   $2 = &dim2_temp;
@@ -1858,8 +1858,8 @@
                       DIM_TYPE* DIM3)
  */
 %typemap(in,numinputs=0)
-  (DATA_TYPE** ARGOUTVIEW_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
-  (DATA_TYPE* data_temp, DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp)
+  (DATA_TYPE** ARGOUTVIEW_ARRAY3, DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    )
+  (DATA_TYPE* data_temp = NULL  , DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp)
 {
   $1 = &data_temp;
   $2 = &dim1_temp;
@@ -1881,7 +1881,7 @@
  */
 %typemap(in,numinputs=0)
   (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_ARRAY3)
-  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DATA_TYPE* data_temp)
+  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DATA_TYPE* data_temp = NULL)
 {
   $1 = &dim1_temp;
   $2 = &dim2_temp;
@@ -1902,8 +1902,8 @@
                       DIM_TYPE* DIM3)
  */
 %typemap(in,numinputs=0)
-  (DATA_TYPE** ARGOUTVIEW_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
-  (DATA_TYPE* data_temp, DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp)
+  (DATA_TYPE** ARGOUTVIEW_FARRAY3, DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    )
+  (DATA_TYPE* data_temp = NULL   , DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp)
 {
   $1 = &data_temp;
   $2 = &dim1_temp;
@@ -1925,8 +1925,8 @@
                       DATA_TYPE** ARGOUTVIEW_FARRAY3)
  */
 %typemap(in,numinputs=0)
-  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_FARRAY3)
-  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DATA_TYPE* data_temp)
+  (DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DATA_TYPE** ARGOUTVIEW_FARRAY3)
+  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DATA_TYPE* data_temp = NULL   )
 {
   $1 = &dim1_temp;
   $2 = &dim2_temp;
@@ -1948,8 +1948,8 @@
                       DIM_TYPE* DIM3, DIM_TYPE* DIM4)
  */
 %typemap(in,numinputs=0)
-  (DATA_TYPE** ARGOUTVIEW_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)
-  (DATA_TYPE* data_temp, DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp)
+  (DATA_TYPE** ARGOUTVIEW_ARRAY4, DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DIM_TYPE* DIM4    )
+  (DATA_TYPE* data_temp = NULL  , DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp)
 {
   data_temp = NULL;
   $1 = &data_temp;
@@ -1972,8 +1972,8 @@
                       DATA_TYPE** ARGOUTVIEW_ARRAY4)
  */
 %typemap(in,numinputs=0)
-  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEW_ARRAY4)
-  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp, DATA_TYPE* data_temp)
+  (DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DIM_TYPE* DIM4    , DATA_TYPE** ARGOUTVIEW_ARRAY4)
+  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp, DATA_TYPE* data_temp = NULL  )
 {
   data_temp = NULL;
   $1 = &dim1_temp;
@@ -1996,8 +1996,8 @@
                       DIM_TYPE* DIM3, DIM_TYPE* DIM4)
  */
 %typemap(in,numinputs=0)
-  (DATA_TYPE** ARGOUTVIEW_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)
-  (DATA_TYPE* data_temp, DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp)
+  (DATA_TYPE** ARGOUTVIEW_FARRAY4, DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DIM_TYPE* DIM4    )
+  (DATA_TYPE* data_temp = NULL   , DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp)
 {
   data_temp = NULL;
   $1 = &data_temp;
@@ -2021,8 +2021,8 @@
                       DATA_TYPE** ARGOUTVIEW_FARRAY4)
  */
 %typemap(in,numinputs=0)
-  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEW_FARRAY4)
-  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp, DATA_TYPE* data_temp)
+  (DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DIM_TYPE* DIM4    , DATA_TYPE** ARGOUTVIEW_FARRAY4)
+  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp, DATA_TYPE* data_temp = NULL   )
 {
   data_temp = NULL;
   $1 = &dim1_temp;
@@ -2050,7 +2050,7 @@
  */
 %typemap(in,numinputs=0)
   (DATA_TYPE** ARGOUTVIEWM_ARRAY1, DIM_TYPE* DIM1    )
-  (DATA_TYPE*  data_temp        , DIM_TYPE  dim_temp)
+  (DATA_TYPE*  data_temp = NULL  , DIM_TYPE  dim_temp)
 {
   data_temp = NULL;
   $1 = &data_temp;
@@ -2074,7 +2074,7 @@
  */
 %typemap(in,numinputs=0)
   (DIM_TYPE* DIM1    , DATA_TYPE** ARGOUTVIEWM_ARRAY1)
-  (DIM_TYPE  dim_temp, DATA_TYPE*  data_temp        )
+  (DIM_TYPE  dim_temp, DATA_TYPE*  data_temp = NULL  )
 {
   data_temp = NULL;
   $1 = &dim_temp;
@@ -2098,7 +2098,7 @@
  */
 %typemap(in,numinputs=0)
   (DATA_TYPE** ARGOUTVIEWM_ARRAY2, DIM_TYPE* DIM1     , DIM_TYPE* DIM2     )
-  (DATA_TYPE*  data_temp        , DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp)
+  (DATA_TYPE*  data_temp = NULL  , DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp)
 {
   data_temp = NULL;
   $1 = &data_temp;
@@ -2123,7 +2123,7 @@
  */
 %typemap(in,numinputs=0)
   (DIM_TYPE* DIM1     , DIM_TYPE* DIM2     , DATA_TYPE** ARGOUTVIEWM_ARRAY2)
-  (DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp, DATA_TYPE*  data_temp        )
+  (DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp, DATA_TYPE*  data_temp = NULL  )
 {
   data_temp = NULL;
   $1 = &dim1_temp;
@@ -2148,7 +2148,7 @@
  */
 %typemap(in,numinputs=0)
   (DATA_TYPE** ARGOUTVIEWM_FARRAY2, DIM_TYPE* DIM1     , DIM_TYPE* DIM2     )
-  (DATA_TYPE*  data_temp        , DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp)
+  (DATA_TYPE*  data_temp = NULL   , DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp)
 {
   data_temp = NULL;
   $1 = &data_temp;
@@ -2174,7 +2174,7 @@
  */
 %typemap(in,numinputs=0)
   (DIM_TYPE* DIM1     , DIM_TYPE* DIM2     , DATA_TYPE** ARGOUTVIEWM_FARRAY2)
-  (DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp, DATA_TYPE*  data_temp        )
+  (DIM_TYPE  dim1_temp, DIM_TYPE  dim2_temp, DATA_TYPE*  data_temp = NULL   )
 {
   data_temp = NULL;
   $1 = &dim1_temp;
@@ -2200,8 +2200,8 @@
                       DIM_TYPE* DIM3)
  */
 %typemap(in,numinputs=0)
-  (DATA_TYPE** ARGOUTVIEWM_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
-  (DATA_TYPE* data_temp, DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp)
+  (DATA_TYPE** ARGOUTVIEWM_ARRAY3, DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    )
+  (DATA_TYPE* data_temp = NULL   , DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp)
 {
   data_temp = NULL;
   $1 = &data_temp;
@@ -2227,8 +2227,8 @@
                       DATA_TYPE** ARGOUTVIEWM_ARRAY3)
  */
 %typemap(in,numinputs=0)
-  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_ARRAY3)
-  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DATA_TYPE* data_temp)
+  (DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DATA_TYPE** ARGOUTVIEWM_ARRAY3)
+  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DATA_TYPE* data_temp = NULL   )
 {
   data_temp = NULL;
   $1 = &dim1_temp;
@@ -2254,8 +2254,8 @@
                       DIM_TYPE* DIM3)
  */
 %typemap(in,numinputs=0)
-  (DATA_TYPE** ARGOUTVIEWM_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
-  (DATA_TYPE* data_temp, DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp)
+  (DATA_TYPE** ARGOUTVIEWM_FARRAY3, DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    )
+  (DATA_TYPE* data_temp = NULL    , DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp)
 {
   data_temp = NULL;
   $1 = &data_temp;
@@ -2282,8 +2282,8 @@
                       DATA_TYPE** ARGOUTVIEWM_FARRAY3)
  */
 %typemap(in,numinputs=0)
-  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_FARRAY3)
-  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DATA_TYPE* data_temp)
+  (DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DATA_TYPE** ARGOUTVIEWM_FARRAY3)
+  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DATA_TYPE* data_temp = NULL    )
 {
   data_temp = NULL;
   $1 = &dim1_temp;
@@ -2310,8 +2310,8 @@
                       DIM_TYPE* DIM3, DIM_TYPE* DIM4)
  */
 %typemap(in,numinputs=0)
-  (DATA_TYPE** ARGOUTVIEWM_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)
-  (DATA_TYPE* data_temp, DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp)
+  (DATA_TYPE** ARGOUTVIEWM_ARRAY4, DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DIM_TYPE* DIM4    )
+  (DATA_TYPE* data_temp = NULL   , DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp)
 {
   data_temp = NULL;
   $1 = &data_temp;
@@ -2338,8 +2338,8 @@
                       DATA_TYPE** ARGOUTVIEWM_ARRAY4)
  */
 %typemap(in,numinputs=0)
-  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_ARRAY4)
-  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp, DATA_TYPE* data_temp)
+  (DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DIM_TYPE* DIM4    , DATA_TYPE** ARGOUTVIEWM_ARRAY4)
+  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp, DATA_TYPE* data_temp = NULL   )
 {
   data_temp = NULL;
   $1 = &dim1_temp;
@@ -2366,8 +2366,8 @@
                       DIM_TYPE* DIM3, DIM_TYPE* DIM4)
  */
 %typemap(in,numinputs=0)
-  (DATA_TYPE** ARGOUTVIEWM_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)
-  (DATA_TYPE* data_temp, DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp)
+  (DATA_TYPE** ARGOUTVIEWM_FARRAY4, DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DIM_TYPE* DIM4    )
+  (DATA_TYPE* data_temp = NULL    , DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp)
 {
   data_temp = NULL;
   $1 = &data_temp;
@@ -2395,8 +2395,8 @@
                       DATA_TYPE** ARGOUTVIEWM_FARRAY4)
  */
 %typemap(in,numinputs=0)
-  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_FARRAY4)
-  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp, DATA_TYPE* data_temp)
+  (DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DIM_TYPE* DIM4    , DATA_TYPE** ARGOUTVIEWM_FARRAY4)
+  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp, DATA_TYPE* data_temp = NULL    )
 {
   data_temp = NULL;
   $1 = &dim1_temp;
@@ -2421,11 +2421,11 @@
 }
 
 /* Typemap suite for (DATA_TYPE** ARGOUTVIEWM_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2,
-                      DIM_TYPE* DIM3)
+                      DIM_TYPE* DIM3, DIM_TYPE* DIM4)
  */
 %typemap(in,numinputs=0)
-  (DATA_TYPE** ARGOUTVIEWM_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)
-  (DATA_TYPE* data_temp, DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp)
+  (DATA_TYPE** ARGOUTVIEWM_ARRAY4, DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DIM_TYPE* DIM4    )
+  (DATA_TYPE* data_temp = NULL   , DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp)
 {
   data_temp = NULL;
   $1 = &data_temp;
@@ -2448,12 +2448,12 @@
   $result = SWIG_Python_AppendOutput($result,array);
 }
 
-/* Typemap suite for (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3,
+/* Typemap suite for (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4,
                       DATA_TYPE** ARGOUTVIEWM_ARRAY4)
  */
 %typemap(in,numinputs=0)
-  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_ARRAY4)
-  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp, DATA_TYPE* data_temp)
+  (DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DIM_TYPE* DIM4    , DATA_TYPE** ARGOUTVIEWM_ARRAY4)
+  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp, DATA_TYPE* data_temp = NULL   )
 {
   data_temp = NULL;
   $1 = &dim1_temp;
@@ -2480,8 +2480,8 @@
                       DIM_TYPE* DIM3, DIM_TYPE* DIM4)
  */
 %typemap(in,numinputs=0)
-  (DATA_TYPE** ARGOUTVIEWM_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)
-  (DATA_TYPE* data_temp, DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp)
+  (DATA_TYPE** ARGOUTVIEWM_FARRAY4, DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DIM_TYPE* DIM4    )
+  (DATA_TYPE* data_temp = NULL    , DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp)
 {
   data_temp = NULL;
   $1 = &data_temp;
@@ -2509,8 +2509,8 @@
                       DATA_TYPE** ARGOUTVIEWM_FARRAY4)
  */
 %typemap(in,numinputs=0)
-  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_FARRAY4)
-  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp, DATA_TYPE* data_temp)
+  (DIM_TYPE* DIM1    , DIM_TYPE* DIM2    , DIM_TYPE* DIM3    , DIM_TYPE* DIM4    , DATA_TYPE** ARGOUTVIEWM_FARRAY4)
+  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DIM_TYPE dim4_temp, DATA_TYPE* data_temp = NULL    )
 {
   data_temp = NULL;
   $1 = &dim1_temp;
