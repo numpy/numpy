@@ -2196,6 +2196,116 @@
   $result = SWIG_Python_AppendOutput($result,obj);
 }
 
+/* Typemap suite for (DATA_TYPE** ARGOUTVIEWM_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2,
+                      DIM_TYPE* DIM3)
+ */
+%typemap(in,numinputs=0)
+  (DATA_TYPE** ARGOUTVIEWM_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
+  (DATA_TYPE* data_temp, DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp)
+{
+  data_temp = NULL;
+  $1 = &data_temp;
+  $2 = &dim1_temp;
+  $3 = &dim2_temp;
+  $4 = &dim3_temp;
+}
+%typemap(argout,
+         fragment="NumPy_Backward_Compatibility")
+  (DATA_TYPE** ARGOUTVIEWM_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
+{
+  npy_intp dims[3] = { *$2, *$3, *$4 };
+  PyObject * array = PyArray_SimpleNewFromData(3, dims, DATA_TYPECODE, (void*)(*$1));
+
+  if (!array) SWIG_fail;
+
+  PyArray_BASE(array) = PyCObject_FromVoidPtr((void*)(*$1), free);
+
+  $result = SWIG_Python_AppendOutput($result,array);
+}
+
+/* Typemap suite for (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3,
+                      DATA_TYPE** ARGOUTVIEWM_ARRAY3)
+ */
+%typemap(in,numinputs=0)
+  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_ARRAY3)
+  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DATA_TYPE* data_temp)
+{
+  data_temp = NULL;
+  $1 = &dim1_temp;
+  $2 = &dim2_temp;
+  $3 = &dim3_temp;
+  $4 = &data_temp;
+}
+%typemap(argout,
+         fragment="NumPy_Backward_Compatibility")
+  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_ARRAY3)
+{
+  npy_intp dims[3] = { *$1, *$2, *$3 };
+  PyObject * array = PyArray_SimpleNewFromData(3, dims, DATA_TYPECODE, (void*)(*$4));
+
+  if (!array) SWIG_fail;
+
+  PyArray_BASE(array) = PyCObject_FromVoidPtr((void*)(*$1), free);
+
+  $result = SWIG_Python_AppendOutput($result,array);
+}
+
+/* Typemap suite for (DATA_TYPE** ARGOUTVIEWM_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2,
+                      DIM_TYPE* DIM3)
+ */
+%typemap(in,numinputs=0)
+  (DATA_TYPE** ARGOUTVIEWM_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
+  (DATA_TYPE* data_temp, DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp)
+{
+  data_temp = NULL;
+  $1 = &data_temp;
+  $2 = &dim1_temp;
+  $3 = &dim2_temp;
+  $4 = &dim3_temp;
+}
+%typemap(argout,
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+  (DATA_TYPE** ARGOUTVIEWM_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)
+{
+  npy_intp dims[3] = { *$2, *$3, *$4 };
+  PyObject * obj = PyArray_SimpleNewFromData(3, dims, DATA_TYPECODE, (void*)(*$1));
+  PyArrayObject * array = (PyArrayObject*) obj;
+
+  if (!array || require_fortran(array)) SWIG_fail;
+
+  PyArray_BASE(obj) = PyCObject_FromVoidPtr((void*)(*$1), free);
+
+  $result = SWIG_Python_AppendOutput($result,obj);
+}
+
+/* Typemap suite for (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3,
+                      DATA_TYPE** ARGOUTVIEWM_FARRAY3)
+ */
+%typemap(in,numinputs=0)
+  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_FARRAY3)
+  (DIM_TYPE dim1_temp, DIM_TYPE dim2_temp, DIM_TYPE dim3_temp, DATA_TYPE* data_temp)
+{
+  data_temp = NULL;
+  $1 = &dim1_temp;
+  $2 = &dim2_temp;
+  $3 = &dim3_temp;
+  $4 = &data_temp;
+}
+%typemap(argout,
+         fragment="NumPy_Backward_Compatibility,NumPy_Array_Requirements")
+  (DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_FARRAY3)
+{
+  npy_intp dims[3] = { *$1, *$2, *$3 };
+  PyObject * obj = PyArray_SimpleNewFromData(3, dims, DATA_TYPECODE, (void*)(*$4));
+
+  PyArrayObject * array = (PyArrayObject*) obj;
+  if (!array || require_fortran(array)) SWIG_fail;
+
+  PyArray_BASE(obj) = PyCObject_FromVoidPtr((void*)(*$1), free);
+
+  $result = SWIG_Python_AppendOutput($result,obj);
+}
+
 /* Typemap suite for (DATA_TYPE** ARGOUTVIEWM_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2,
                       DIM_TYPE* DIM3, DIM_TYPE* DIM4)
  */
