@@ -4253,6 +4253,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
         ufunc->name = name;
     }
     ufunc->doc = doc;
+    ufunc->autogen_docstring_sig = 1;
 
     /* generalized ufunc */
     ufunc->core_enabled = 0;
@@ -4705,40 +4706,52 @@ ufunc_get_doc(PyUFuncObject *ufunc)
      * construct name(x1, x2, ...,[ out1, out2, ...]) __doc__
      */
     PyObject *outargs, *inargs, *doc;
-    outargs = _makeargs(ufunc->nout, "out", 1);
-    inargs = _makeargs(ufunc->nin, "x", 0);
 
-    if (ufunc->doc == NULL) {
-        if (outargs == NULL) {
-            doc = PyUString_FromFormat("%s(%s)\n\n",
-                                        ufunc->name,
-                                        PyString_AS_STRING(inargs));
+    if (ufunc->autogen_docstring_sig == 0) {
+        /* Don't include "name(x[,out])" in __doc__ */
+        if (ufunc->doc == NULL) {
+            doc = PyUString_FromString("");
         }
         else {
-            doc = PyUString_FromFormat("%s(%s[, %s])\n\n",
-                                        ufunc->name,
-                                        PyString_AS_STRING(inargs),
-                                        PyString_AS_STRING(outargs));
-            Py_DECREF(outargs);
+            doc = PyUString_FromString(ufunc->doc);
         }
     }
     else {
-        if (outargs == NULL) {
-            doc = PyUString_FromFormat("%s(%s)\n\n%s",
-                                       ufunc->name,
-                                       PyString_AS_STRING(inargs),
-                                       ufunc->doc);
+        outargs = _makeargs(ufunc->nout, "out", 1);
+        inargs = _makeargs(ufunc->nin, "x", 0);
+
+        if (ufunc->doc == NULL) {
+            if (outargs == NULL) {
+                doc = PyUString_FromFormat("%s(%s)\n\n",
+                                            ufunc->name,
+                                            PyString_AS_STRING(inargs));
+            }
+            else {
+                doc = PyUString_FromFormat("%s(%s[, %s])\n\n",
+                                            ufunc->name,
+                                            PyString_AS_STRING(inargs),
+                                            PyString_AS_STRING(outargs));
+                Py_DECREF(outargs);
+            }
         }
         else {
-            doc = PyUString_FromFormat("%s(%s[, %s])\n\n%s",
-                                       ufunc->name,
-                                       PyString_AS_STRING(inargs),
-                                       PyString_AS_STRING(outargs),
-                                       ufunc->doc);
-            Py_DECREF(outargs);
+            if (outargs == NULL) {
+                doc = PyUString_FromFormat("%s(%s)\n\n%s",
+                                           ufunc->name,
+                                           PyString_AS_STRING(inargs),
+                                           ufunc->doc);
+            }
+            else {
+                doc = PyUString_FromFormat("%s(%s[, %s])\n\n%s",
+                                           ufunc->name,
+                                           PyString_AS_STRING(inargs),
+                                           PyString_AS_STRING(outargs),
+                                           ufunc->doc);
+                Py_DECREF(outargs);
+            }
         }
+        Py_DECREF(inargs);
     }
-    Py_DECREF(inargs);
     return doc;
 }
 
@@ -4827,6 +4840,31 @@ ufunc_get_signature(PyUFuncObject *ufunc)
     return PyUString_FromString(ufunc->core_signature);
 }
 
+static PyObject *
+ufunc_get_autogen_docstring_sig(PyUFuncObject *ufunc)
+{
+    if (ufunc->autogen_docstring_sig == 1) {
+        Py_INCREF(Py_True);
+        return Py_True;
+    }
+    else {
+        Py_INCREF(Py_False);
+        return Py_False;
+    }
+}
+
+static int
+ufunc_set_autogen_docstring_sig(PyUFuncObject *ufunc, PyObject *value)
+{
+    if (PyObject_IsTrue(value)) {
+        ufunc->autogen_docstring_sig = 1;
+    }
+    else {
+        ufunc->autogen_docstring_sig = 0;
+    }
+    return 0;
+}
+
 #undef _typecharfromnum
 
 /*
@@ -4861,6 +4899,10 @@ static PyGetSetDef ufunc_getset[] = {
     {"signature",
         (getter)ufunc_get_signature,
         NULL, NULL, NULL},
+    {"autogen_docstring_sig",
+        (getter)ufunc_get_autogen_docstring_sig,
+        (setter)ufunc_set_autogen_docstring_sig,
+        NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL},  /* Sentinel */
 };
 

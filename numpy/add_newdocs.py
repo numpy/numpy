@@ -5384,6 +5384,25 @@ add_newdoc('numpy.core', 'ufunc', ('types',
 
     """))
 
+add_newdoc('numpy.core', 'ufunc', ('autogen_docstring_sig',
+    r"""
+    Flag to enable autogeneration of the function signature in the docstring.
+
+    This boolean property enables the automatic generation of the function
+    signature in the docstring.
+
+    Examples
+    --------
+    >>> np.sin.autogen_docstring_sig
+    True
+    >>> np.sin.__doc__[:28]
+    'sin(x[, out])\n\nTrigonometric'
+    >>> np.sin.autogen_docstring_sig = False
+    >>> np.sin.__doc__[:28]
+    'Trigonometric sine, element-'
+
+    """))
+
 
 ##############################################################################
 #
