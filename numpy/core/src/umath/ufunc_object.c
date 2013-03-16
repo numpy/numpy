@@ -1205,12 +1205,6 @@ iterator_loop(PyUFuncObject *ufunc,
                       NPY_ITER_ALLOCATE|
                       NPY_ITER_NO_BROADCAST|
                       NPY_ITER_NO_SUBTYPE;
-
-        if (ufunc->op_flags[i] > 0) {
-            PyErr_SetString(PyExc_ValueError, "manually setting ufunc operand " \
-                "flags for output operand is not supported at this time");
-            return -1;
-        }
     }
 
     iter_flags = ufunc->iter_flags|
@@ -1518,12 +1512,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                       NPY_ITER_ALLOCATE |
                       NPY_ITER_NO_BROADCAST |
                       NPY_ITER_NO_SUBTYPE;
-        
-        if (ufunc->op_flags[i] > 0) {
-            PyErr_SetString(PyExc_ValueError, "manually setting ufunc operand " \
-                "flags for output operand is not supported at this time");
-            return -1;
-        }
     }
     if (wheremask != NULL) {
         op_flags[nop] = NPY_ITER_READONLY | NPY_ITER_ARRAYMASK;
@@ -2022,12 +2010,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                       NPY_ITER_ALIGNED|
                       NPY_ITER_ALLOCATE|
                       NPY_ITER_NO_BROADCAST;
-
-        if (ufunc->op_flags[i] > 0) {
-            PyErr_SetString(PyExc_ValueError, "manually setting ufunc operand " \
-                "flags for output operand is not supported at this time");
-            return -1;
-        }
     }
 
     /*
