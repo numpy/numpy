@@ -2073,7 +2073,7 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
         /*
          * Try to do make the outersize as big as possible. This allows
          * it to shrink when processing the last bit of the outer reduce loop,
-         * then grow again at the beginnning of the next outer reduce loop.
+         * then grow again at the beginning of the next outer reduce loop.
          */
         NBF_REDUCE_OUTERSIZE(bufferdata) = (NAD_SHAPE(reduce_outeraxisdata)-
                                             NAD_INDEX(reduce_outeraxisdata));
@@ -2661,8 +2661,20 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
         return count;
     }
 
-    /* In this case, we can reuse the reduce loops */
-    NIT_ITFLAGS(iter) |= NPY_ITFLAG_REUSE_REDUCE_LOOPS;
+    coord = NAD_INDEX(axisdata);
+    if (coord == 0) {
+        /* In this case, we can reuse the reduce loops */
+        NIT_ITFLAGS(iter) |= NPY_ITFLAG_REUSE_REDUCE_LOOPS;
+    }
+    else {
+        /*
+         * If coord != 0 and loops were allowed to be reused, it is possible
+         * that next coord is smaller then the current. Since the data pointer
+         * might be the same for both, the buffer filled here may be
+         * incompatible because it fills less along the dimension.
+         */
+        NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_REUSE_REDUCE_LOOPS;
+    }
 
     *reduce_innersize = reducespace;
     count /= reducespace;
@@ -2687,9 +2699,7 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
                         "the outer loop? %d\n", iop, (int)stride0op[iop]);
     }
     shape = NAD_SHAPE(axisdata);
-    coord = NAD_INDEX(axisdata);
     reducespace += (shape-coord-1) * factor;
-    factor *= shape;
     NIT_ADVANCE_AXISDATA(axisdata, 1);
     ++idim;
 
@@ -2715,28 +2725,31 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
                 /*
                  * This terminates the outer level of our double loop.
                  */
-                if (count <= reducespace) {
-                    return count * (*reduce_innersize);
+                if (count < reducespace) {
+                    /* Remove as much as necessary from current shape */
+                    count = reducespace - count;
+                    count = (count + factor - 1) / factor;
+                    count *= factor;
+                    reducespace -= count;
                 }
-                else {
-                    return reducespace * (*reduce_innersize);
-                }
+                return reducespace * (*reduce_innersize);
             }
         }
 
+        factor *= shape;
         shape = NAD_SHAPE(axisdata);
         coord = NAD_INDEX(axisdata);
-        if (coord != 0) {
-            nonzerocoord = 1;
-        }
-        reducespace += (shape-coord-1) * factor;
-        factor *= shape;
-    }
 
-    if (reducespace < count) {
-        count = reducespace;
+        reducespace += (shape-coord-1) * factor;
     }
-    return count * (*reduce_innersize);
+    if (count < reducespace) {
+        /* Remove as much as necessary from current shape */
+        count = reducespace - count;
+        count = (count + factor - 1) / factor;
+        count *= factor;
+        reducespace -= count;
+    }
+    return reducespace * (*reduce_innersize);
 }
 
 #undef NPY_ITERATOR_IMPLEMENTATION_CODE
