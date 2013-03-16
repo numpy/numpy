@@ -32,7 +32,7 @@ public:
   int ncols() const;
 
   // Resize array
-  void resize(int ncols, int nrows, long* data=0);
+  void resize(int nrows, int ncols, long* data=0);
 
   // Set item accessor
   Array1 & operator[](int i);
