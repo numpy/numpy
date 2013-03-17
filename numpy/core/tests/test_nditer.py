@@ -2017,6 +2017,56 @@ def test_iter_buffering_growinner():
     # Should end up with just one inner loop here
     assert_equal(i[0].size, a.size)
 
+
+@dec.slow
+def test_iter_buffered_reduce_reuse():
+    # large enough array for all views, including negative strides.
+    a = np.arange(2*3**5)[3**5:3**5+1]
+    flags = ['buffered', 'delay_bufalloc', 'multi_index', 'reduce_ok', 'refs_ok']
+    op_flags = [('readonly',), ('readwrite','allocate')]
+    op_axes = [(0,1,2), (0,1,-1)]
+    # wrong dtype to force buffering
+    op_dtypes = [np.float, a.dtype]
+
+    def get_params():
+        for xs in xrange(-3**2, 3**2 + 1):
+            for ys in xrange(xs, 3**2 + 1):
+                # last stride is reduced and because of that not
+                # important for this test, as it is the inner stride.
+                strides = (xs * a.itemsize, ys * a.itemsize, a.itemsize)
+                arr = np.lib.stride_tricks.as_strided(a, (3,3,3), strides)
+
+                for bufsize in xrange(0, 3**3):
+                    for skip in [0, 1]:
+                        yield arr, bufsize, skip
+            
+    for arr, bufsize, skip in get_params():
+        nditer1 = np.nditer([arr, None],
+                            op_axes=op_axes, flags=flags, op_flags=op_flags,
+                            buffersize=bufsize, op_dtypes=op_dtypes)
+        nditer1.operands[-1][...] = 0
+        nditer1.reset()
+        nditer1.iterindex = skip
+        
+        for (a1_in, b1_in) in nditer1:
+            b1_in += a1_in.astype(np.int_)
+
+        nditer2 = np.nditer([arr.copy(), None],
+                            op_axes=op_axes, flags=flags, op_flags=op_flags,
+                            op_dtypes=op_dtypes)
+        nditer2.operands[-1][...] = 0
+        nditer2.reset()
+        nditer2.iterindex = skip    
+
+        for (a2_in, b2_in) in nditer2:
+            b2_in += a2_in.astype(np.int_)
+
+        res = nditer1.operands[-1]
+        comp_res = nditer2.operands[-1]
+
+        assert_array_equal(res, comp_res)
+
+
 def test_iter_no_broadcast():
     # Test that the no_broadcast flag works
     a = np.arange(24).reshape(2,3,4)
