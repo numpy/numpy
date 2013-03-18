@@ -2192,6 +2192,11 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                 break;
             /* Just a copy */
             case 0:
+                /* Do not reuse buffer if it did not exist */
+                if (!(op_itflags[iop] & NPY_OP_ITFLAG_USINGBUFFER) &&
+                                                (prev_dataptrs != NULL)) {
+                    prev_dataptrs[iop] = NULL;
+                }
                 /*
                  * No copyswap or cast was requested, so all we're
                  * doing is copying the data to fill the buffer and
@@ -2235,6 +2240,11 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                 break;
             /* Just a copy, but with a reduction */
             case NPY_OP_ITFLAG_REDUCE:
+                /* Do not reuse buffer if it did not exist */
+                if (!(op_itflags[iop] & NPY_OP_ITFLAG_USINGBUFFER) &&
+                                                (prev_dataptrs != NULL)) {
+                    prev_dataptrs[iop] = NULL;
+                }
                 if (ad_strides[iop] == 0) {
                     strides[iop] = 0;
                     /* It's all in one stride in the inner loop dimension */
