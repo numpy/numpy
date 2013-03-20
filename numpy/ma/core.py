@@ -1530,7 +1530,7 @@ def make_mask_none(newshape, dtype=None):
     ----------
     newshape : tuple
         A tuple indicating the shape of the mask.
-    dtype: {None, dtype}, optional
+    dtype : {None, dtype}, optional
         If None, use a MaskType instance. Otherwise, use a new datatype with
         the same fields as `dtype`, converted to boolean types.
 
@@ -5650,7 +5650,7 @@ class mvoid(MaskedArray):
 
         Returns
         -------
-        filled_void:
+        filled_void
             A `np.void` object
 
         See Also

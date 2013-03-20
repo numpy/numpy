@@ -169,7 +169,7 @@ def roots(p):
 
     Raises
     ------
-    ValueError :
+    ValueError
         When `p` cannot be converted to a rank-1 array.
 
     See also

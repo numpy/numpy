@@ -283,7 +283,7 @@ def load(file, mmap_mode=None):
     file : file-like object or string
         The file to read.  It must support ``seek()`` and ``read()`` methods.
         If the filename extension is ``.gz``, the file is first decompressed.
-    mmap_mode: {None, 'r+', 'r', 'w+', 'c'}, optional
+    mmap_mode : {None, 'r+', 'r', 'w+', 'c'}, optional
         If not None, then memory-map the file, using the given mode
         (see `numpy.memmap` for a detailed description of the modes).
         A memory-mapped array is kept on disk. However, it can be accessed

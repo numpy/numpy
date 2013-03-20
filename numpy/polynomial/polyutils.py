@@ -138,7 +138,7 @@ def as_series(alist, trim=True) :
 
     Raises
     ------
-    ValueError :
+    ValueError
         Raised when `as_series` cannot convert its input to 1-d arrays, or at
         least one of the resulting arrays is empty.
 

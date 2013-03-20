@@ -399,7 +399,8 @@ def array2string(a, max_line_width=None, precision=None,
 
     Raises
     ------
-    TypeError : if a callable in `formatter` does not return a string.
+    TypeError
+        if a callable in `formatter` does not return a string.
 
     See Also
     --------

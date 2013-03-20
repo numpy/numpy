@@ -87,7 +87,8 @@ def has_nested_fields(ndtype):
 
     Raises
     ------
-    AttributeError : If `ndtype` does not have a `names` attribute.
+    AttributeError
+        If `ndtype` does not have a `names` attribute.
 
     Examples
     --------
@@ -267,7 +268,7 @@ class NameValidator(object):
         * If 'lower', field names are converted to lower case.
 
         The default value is True.
-    replace_space: '_', optional
+    replace_space : '_', optional
         Character(s) used in replacement of white spaces.
 
     Notes
