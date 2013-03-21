@@ -1,7 +1,7 @@
 from __future__ import division
 
 from numpy.testing import *
-from numpy import logspace, linspace
+from numpy import logspace, linspace, complex_
 
 class TestLogspace(TestCase):
     def test_basic(self):
@@ -28,6 +28,10 @@ class TestLinspace(TestCase):
         assert_(y == [0.0], y)
         y = list(linspace(0,1,2.5))
         assert_(y == [0.0, 1.0])
+        # preserve complex type for complex corner cases:
+        c = complex_(1j)
+        assert_(linspace(c, 1, 0).dtype.type == complex_)
+        assert_(linspace(0, c, 1).dtype.type == complex_)
 
     def test_type(self):
         t1 = linspace(0,1,0).dtype
@@ -36,3 +40,11 @@ class TestLinspace(TestCase):
         assert_equal(t1, t2)
         assert_equal(t2, t3)
 
+    def test_step(self):
+        assert_array_equal(linspace(0, 1, 11), linspace(0, 1, step=0.1))
+        assert_array_equal(linspace(1, 0, 11), linspace(1, 0, step=-0.1))
+        assert_raises(ValueError, linspace, 0, 1, step=0.10001)
+        assert_raises(ValueError, linspace, 0, 1, step=0.99999)
+        assert_raises(ValueError, linspace, 1, 0, step=-0.10001)
+        assert_raises(ValueError, linspace, 1, 0, step=-0.99999)
+        assert_raises(ValueError, linspace, 0, 1, step=-0.1)
