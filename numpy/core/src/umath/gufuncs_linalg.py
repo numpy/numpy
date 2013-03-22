@@ -1,7 +1,8 @@
-"""Linear Algebra functions implemented as gufuncs, so they can be broadcast.
+"""Linear Algebra functions implemented as gufuncs, so they broadcast.
 
 Notes
 -----
+
 This module contains functionality that could be found in the linalg module,
 but in a gufunc-like way. This allows the use of vectorization and broadcasting
 on the operands.
@@ -10,22 +11,23 @@ This module itself provides wrappers to kernels written as numpy
 generalized-ufuncs that perform the heavy-lifting of computation. The wrappers
 exist in order to provide a sane interface, like providing keyword arguments in
 line with the ones used by linalg, or just to automatically select the
-appropriate kernel depending on the parameters. All wrappers forward the keyword
-parameters to the underlying generalized ufunc (the kernel).
+appropriate kernel depending on the parameters. All wrappers forward the
+keyword parameters to the underlying generalized ufunc (the kernel).
 
 The functions are intended to be used on arrays of matrices. Functions that in
 numpy.LinAlg would generate a LinAlgError (for example, inv on a non-invertible
 matrix) will just generate NaNs as result. When this happens, invalid floating
-point status will be set. Error handling can be configured for this cases
-using np.seterr.
+point status will be set. Error handling can be configured for this cases using
+np.seterr.
 
 Additional functions some fused arithmetic, useful for efficient operation over
 """
 
-__all__ = ['inner1d', 'innerwt', 'matrix_multiply', 'det', 'slogdet', 'inv',
-           'cholesky', 'quadratic_form', 'add3', 'multiply3', 'multiply3_add',
-           'multiply_add', 'multiply_add2', 'multiply4', 'multiply4_add', 'eig',
-           'eigvals', 'eigh', 'eigvalsh', 'solve', 'svd', 'chosolve', 'poinv']
+__all__ = ['inner1d', 'dotc1d', 'innerwt', 'matrix_multiply', 'det', 'slogdet',
+           'inv', 'cholesky', 'quadratic_form', 'add3', 'multiply3', 
+           'multiply3_add', 'multiply_add', 'multiply_add2', 'multiply4', 
+           'multiply4_add', 'eig', 'eigvals', 'eigh', 'eigvalsh', 'solve', 
+           'svd', 'chosolve', 'poinv']
 
 
 import numpy.core._umath_linalg as _impl
@@ -34,7 +36,8 @@ import numpy as np
 
 def inner1d(a, b, **kwargs):
     """
-    Compute the inner product, with broadcasting
+    Compute the dot product of vectors over the inner dimension, with
+    broadcasting.
 
     Parameters
     ----------
@@ -46,16 +49,22 @@ def inner1d(a, b, **kwargs):
     Returns
     -------
     inner : (<NDIM>) array
-        Inner product over the inner dimension.
+        dot product over the inner dimension.
 
     Notes
     -----
     Numpy broadcasting rules apply when matching dimensions.
 
-    Implemented for types single and double. Numpy conversion rules apply.
+    Implemented for types single, double, csingle and cdouble. Numpy
+    conversion rules apply.
+
+    For single and double types this is equivalent to dotc1d.
+
+    Maps to Blas functions sdot, ddot, cdotu and zdotu.
 
     See Also
     --------
+    dotc1d : dot product conjugating first vector.
     innerwt : weighted (i.e. triple) inner product.
 
     Examples
@@ -72,9 +81,58 @@ def inner1d(a, b, **kwargs):
     return _impl.inner1d(a, b, **kwargs)
 
 
+def dotc1d(a, b, **kwargs):
+    """
+    Compute the dot product of vectors over the inner dimension, conjugating
+    the first vector, with broadcasting
+
+    Parameters
+    ----------
+    a : (<NDIMS>, N) array
+        Input array
+    b : (<NDIMS>, N) array
+        Input array
+
+    Returns
+    -------
+    dotc : (<NDIM>) array
+        dot product conjugating the first vector over the inner
+        dimension.
+
+    Notes
+    -----
+    Numpy broadcasting rules apply when matching dimensions.
+
+    Implemented for types single, double, csingle and cdouble. Numpy
+    conversion rules apply.
+
+    For single and double types this is equivalent to inner1d.
+
+    Maps to Blas functions sdot, ddot, cdotc and zdotc.
+
+    See Also
+    --------
+    inner1d : dot product
+    innerwt : weighted (i.e. triple) inner product.
+
+    Examples
+    --------
+    >>> a = np.arange(1,5).reshape(2,2)
+    >>> b = np.arange(1,8,2).reshape(2,2)
+    >>> res = inner1d(a,b)
+    >>> res.shape
+    (2,)
+    >>> print res
+    [  7.  43.]
+
+    """
+    return _impl.dotc1d(a, b, **kwargs)
+
+
 def innerwt(a, b, c, **kwargs):
     """
-    Compute the weighted (i.e. triple) inner product, with broadcasting.
+    Compute the weighted (i.e. triple) inner product, with
+    broadcasting.
 
     Parameters
     ----------
@@ -90,11 +148,13 @@ def innerwt(a, b, c, **kwargs):
     -----
     Numpy broadcasting rules apply.
 
-    Implemented for types single and double. Numpy conversion rules apply.
+    Implemented for types single, double, csingle and cdouble. Numpy
+    conversion rules apply.
 
     See Also
     --------
     inner1d : inner product.
+    dotc1d : dot product conjugating first vector.
 
     Examples
     --------
@@ -1300,4 +1360,5 @@ def poinv(A, UPLO='L', **kw_args):
 
 if __name__ == "__main__":
     import doctest
+    print "Running doctests..."
     doctest.testmod()
