@@ -271,6 +271,11 @@ class TestMatrixMultiply(GeneralTestCase):
         else:
             assert_almost_equal(res[0], np.dot(a[0],b[0]))
 
+    def test_column_matrix(self):
+        A = np.arange(2*2).reshape((2,2))
+        B = np.arange(2*1).reshape((2,1))
+        res = gula.matrix_multiply(A,B)
+        assert_almost_equal(res, np.dot(A,B))
 
 class TestInv(GeneralTestCase, TestCase):
     def do(self, a, b):
