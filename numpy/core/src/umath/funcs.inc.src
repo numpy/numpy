@@ -360,8 +360,7 @@ nc_pow@c@(@ctype@ *a, @ctype@ *b, @ctype@ *r)
             *r = npy_cpack@c@(NPY_NAN, NPY_NAN);
 
             /* Raise invalid */
-            ar = NPY_INFINITY;
-            ar = ar - ar;
+	    npy_set_floatstatus_invalid();
         }
         return;
     }
