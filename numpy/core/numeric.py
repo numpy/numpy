@@ -1981,6 +1981,11 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
     x = array(a, copy=False, ndmin=1)
     y = array(b, copy=False, ndmin=1)
 
+    xnan = isnan(x)
+    ynan = isnan(y)
+    if any(xnan) or any(ynan):
+	return False
+
     xinf = isinf(x)
     yinf = isinf(y)
     if any(xinf) or any(yinf):
