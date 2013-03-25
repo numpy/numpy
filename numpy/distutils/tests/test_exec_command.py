@@ -69,7 +69,7 @@ def test_exec_command_stdout():
 
 def test_exec_command_stderr():
     # Test posix version:
-    with redirect_stdout(TemporaryFile()):
+    with redirect_stdout(TemporaryFile(mode='w+')):
         with redirect_stderr(StringIO.StringIO()):
             exec_command.exec_command("cd '.'")
 
