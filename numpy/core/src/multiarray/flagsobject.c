@@ -90,8 +90,33 @@ PyArray_UpdateFlags(PyArrayObject *ret, int flagmask)
  * Check whether the given array is stored contiguously
  * in memory. And update the passed in ap flags apropriately.
  *
- * A dimension == 1 stride is ignored for contiguous flags and a 0-sized array
- * is always both C- and F-Contiguous. 0-strided arrays are not contiguous.
+ * The traditional rule is that for an array to be flagged as C contiguous,
+ * the following must hold:
+ *
+ * strides[-1] == itemsize
+ * strides[i] == shape[i+1] * strides[i + 1]
+ *
+ * And for an array to be flagged as F contiguous, the obvious reversal:
+ *
+ * strides[0] == itemsize
+ * strides[i] == shape[i - 1] * strides[i - 1]
+ * 
+ * According to these rules, a 0- or 1-dimensional array is either both
+ * C- and F-contiguous, or neither; and an array with 2+ dimensions
+ * can be C- or F- contiguous, or neither, but not both. Though there
+ * there are exceptions for arrays with zero or one item, in the first
+ * case the check is relaxed up to and including the first dimension
+ * with shape[i] == 0. In the second case `strides == itemsize` will
+ * can be true for all dimensions and both flags are set.
+ *
+ * When NPY_RELAXED_STRIDES_CHECKING is set, we use a more accurate
+ * definition of C- and F-contiguity, in which all 0-sized arrays are
+ * contiguous (regardless of dimensionality), and if shape[i] == 1
+ * then we ignore strides[i] (since it has no affect on memory layout).
+ * With these new rules, it is possible for e.g. a 10x1 array to be both
+ * C- and F-contiguous -- but, they break downstream code which assumes
+ * that for contiguous arrays strides[-1] (resp. strides[0]) always
+ * contains the itemsize.
  */
 static void
 _UpdateContiguousFlags(PyArrayObject *ap)
@@ -101,9 +126,10 @@ _UpdateContiguousFlags(PyArrayObject *ap)
     int i;
     npy_bool is_c_contig = 1;
 
-    sd = PyArray_DESCR(ap)->elsize;
+    sd = PyArray_ITEMSIZE(ap);
     for (i = PyArray_NDIM(ap) - 1; i >= 0; --i) {
         dim = PyArray_DIMS(ap)[i];
+#if NPY_RELAXED_STRIDES_CHECKING
         /* contiguous by definition */
         if (dim == 0) {
             PyArray_ENABLEFLAGS(ap, NPY_ARRAY_C_CONTIGUOUS);
@@ -116,6 +142,17 @@ _UpdateContiguousFlags(PyArrayObject *ap)
             }
             sd *= dim;
         }
+#else /* not NPY_RELAXED_STRIDES_CHECKING */
+        if (PyArray_STRIDES(ap)[i] != sd) {
+            is_c_contig = 0;
+            break;
+         }
+        /* contiguous, if it got this far */
+        if (dim == 0) {
+            break;
+        }
+        sd *= dim;
+#endif /* not NPY_RELAXED_STRIDES_CHECKING */
     }
     if (is_c_contig) {
         PyArray_ENABLEFLAGS(ap, NPY_ARRAY_C_CONTIGUOUS);
@@ -125,9 +162,10 @@ _UpdateContiguousFlags(PyArrayObject *ap)
     }
 
     /* check if fortran contiguous */
-    sd = PyArray_DESCR(ap)->elsize;
+    sd = PyArray_ITEMSIZE(ap);
     for (i = 0; i < PyArray_NDIM(ap); ++i) {
         dim = PyArray_DIMS(ap)[i];
+#if NPY_RELAXED_STRIDES_CHECKING
         if (dim != 1) {
             if (PyArray_STRIDES(ap)[i] != sd) {
                 PyArray_CLEARFLAGS(ap, NPY_ARRAY_F_CONTIGUOUS);
@@ -135,6 +173,16 @@ _UpdateContiguousFlags(PyArrayObject *ap)
             }
             sd *= dim;
         }
+#else /* not NPY_RELAXED_STRIDES_CHECKING */
+        if (PyArray_STRIDES(ap)[i] != sd) {
+            PyArray_CLEARFLAGS(ap, NPY_ARRAY_F_CONTIGUOUS);
+            return;
+        }
+        if (dim == 0) {
+            break;
+        }
+        sd *= dim;
+#endif /* not NPY_RELAXED_STRIDES_CHECKING */
     }
     PyArray_ENABLEFLAGS(ap, NPY_ARRAY_F_CONTIGUOUS);
     return;
