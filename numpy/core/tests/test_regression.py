@@ -1870,6 +1870,14 @@ class TestRegression(TestCase):
                               order='F')
         assert_array_equal(arr2, data_back)
 
+    def test_consistant_str_dtype(self):
+        # Issue gh-3159: always produce the same dtype despite how a str
+        # array is created.
+        a = np.array(range(12), dtype=str)
+        b = np.array(np.arange(12), dtype=str)
+        c = np.arange(12).astype(str)
+        assert_(a.dtype == b.dtype)
+        assert_(a.dtype == c.dtype)
 
 
 
