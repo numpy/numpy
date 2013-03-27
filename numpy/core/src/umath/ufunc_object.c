@@ -4897,20 +4897,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     op1_array = op1;
     
-    ndim = PyArray_NDIM(op1_array);
-    if (PyTuple_Check(idx)) {
-        if (PyTuple_GET_SIZE(idx) != ndim) {
-            PyErr_SetString(PyExc_ValueError,
-                "number of dimensions in index must match number of dimensions in first operand");
-            goto fail;
-        }
-    }
-    else if (ndim > 1) {
-        PyErr_SetString(PyExc_ValueError,
-            "number of dimensions in index must match number of dimensions in first operand");
-        goto fail;
-    }
-
     iter = PyArray_MapIterArray(op1_array, idx);
     if (iter == NULL) {
         goto fail;
