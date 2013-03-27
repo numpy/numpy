@@ -4913,16 +4913,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
         goto fail;
     }
 
-    iter = (PyArrayMapIterObject*)PyArray_MapIterNew(idx, 0, 1);
+    iter = PyArray_MapIterArray(op1_array, idx);
     if (iter == NULL) {
         goto fail;
     }
-
-    PyArray_MapIterBind(iter, op1_array);
-    if (iter->ait == NULL) {
-        goto fail;
-    }
-    PyArray_MapIterReset(iter);
 
     /*
      * If second operand exists, we need to broadcast it to 
