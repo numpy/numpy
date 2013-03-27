@@ -4860,9 +4860,8 @@ ufunc_reduceat(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
  *       over first operand.
  */
 static PyObject *
-ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
+ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 {
-    static char *kwlist[] = {"op1", "idx", "op2"};
     PyObject *op1 = NULL;
     PyObject *idx = NULL;
     PyObject *op2 = NULL;
@@ -4880,8 +4879,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args, PyObject *kwds)
     int ndim;
     int i;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|O", kwlist,
-                                &op1, &idx, &op2)) {
+    if (!PyArg_ParseTuple(args, "OO|O", &op1, &idx, &op2)) {
         return NULL;
     }
 
@@ -5038,7 +5036,7 @@ static struct PyMethodDef ufunc_methods[] = {
         METH_VARARGS | METH_KEYWORDS, NULL},
     {"at",
         (PyCFunction)ufunc_at,
-        METH_VARARGS | METH_KEYWORDS, NULL},
+        METH_VARARGS, NULL},
     {NULL, NULL, 0, NULL}           /* sentinel */
 };
 
