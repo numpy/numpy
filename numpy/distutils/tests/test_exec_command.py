@@ -25,6 +25,8 @@ class redirect_stdout(object):
     def __exit__(self, exc_type, exc_value, traceback):
         self._stdout.flush()
         sys.stdout = self.old_stdout
+        # note: closing sys.stdout won't close it.
+        self._stdout.close()
 
 class redirect_stderr(object):
     """Context manager to redirect stderr for exec_command test."""
@@ -38,6 +40,8 @@ class redirect_stderr(object):
     def __exit__(self, exc_type, exc_value, traceback):
         self._stderr.flush()
         sys.stderr = self.old_stderr
+        # note: closing sys.stderr won't close it.
+        self._stderr.close()
 
 class emulate_nonposix(object):
     """Context manager to emulate os.name != 'posix' """
