@@ -6,11 +6,11 @@ Introduction
 
 Writing tests for the ``numpy.i`` `SWIG <http://www.swig.org>`_
 interface file is a combinatorial headache.  At present, 12 different
-data types are supported, each with 23 different argument signatures,
-for a total of 276 typemaps supported "out of the box".  Each of these
+data types are supported, each with 70 different argument signatures,
+for a total of 840 typemaps supported "out of the box".  Each of these
 typemaps, in turn, might require several unit tests in order to verify
 expected behavior for both proper and improper inputs.  Currently,
-this results in 1,020 individual unit tests that are performed when
+this results in 1,102 individual unit tests that are performed when
 ``make test`` is run in the ``numpy/docs/swig`` subdirectory.
 
 To facilitate this many similar unit tests, some high-level
