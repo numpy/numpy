@@ -1,9 +1,5 @@
 from __future__ import division, absolute_import
 
-__all__ = ['savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
-           'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
-           'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']
-
 import numpy as np
 from . import format
 import sys
@@ -15,7 +11,6 @@ import warnings
 import weakref
 from operator import itemgetter
 
-from cPickle import load as _cload, loads
 from ._datasource import DataSource
 from ._compiled_base import packbits, unpackbits
 
@@ -25,11 +20,18 @@ from ._iotools import LineSplitter, NameValidator, StringConverter, \
                      easy_dtype, _bytes_to_name
 
 from numpy.compat import asbytes, asstr, asbytes_nested, bytes
+from io import BytesIO
 
 if sys.version_info[0] >= 3:
-    from io import BytesIO
+    import pickle
 else:
-    from cStringIO import StringIO as BytesIO
+    import cPickle as pickle
+
+loads = pickle.loads
+
+__all__ = ['savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
+           'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
+           'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']
 
 _string_like = _is_string_like
 
@@ -380,7 +382,7 @@ def load(file, mmap_mode=None):
                 return format.read_array(fid)
         else:  # Try a pickle
             try:
-                return _cload(fid)
+                return pickle.load(fid)
             except:
                 raise IOError(
                     "Failed to interpret file %s as a pickle" % repr(file))

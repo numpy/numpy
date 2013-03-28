@@ -4,12 +4,14 @@ import imp
 import os
 import sys
 import shutil
+import pickle
+import copy
+import warnings
+import re
 from os.path import join
 from numpy.distutils import log
 from distutils.dep_util import newer
 from distutils.sysconfig import get_config_var
-import warnings
-import re
 
 from setup_common import *
 
@@ -22,11 +24,9 @@ ENABLE_SEPARATE_COMPILATION = (os.environ.get('NPY_SEPARATE_COMPILATION', "1") !
 # configuration informations between extensions is not easy.
 # Using a pickled-based memoize does not work because config_cmd is an instance
 # method, which cPickle does not like.
-try:
-    import cPickle as _pik
-except ImportError:
-    import pickle as _pik
-import copy
+#
+# Use pickle in all cases, as cPickle is gone in python3 and the difference
+# in time is only in build. -- Charles Harris, 2013-03-30
 
 class CallOnceOnly(object):
     def __init__(self):
@@ -37,25 +37,25 @@ class CallOnceOnly(object):
     def check_types(self, *a, **kw):
         if self._check_types is None:
             out = check_types(*a, **kw)
-            self._check_types = _pik.dumps(out)
+            self._check_types = pickle.dumps(out)
         else:
-            out = copy.deepcopy(_pik.loads(self._check_types))
+            out = copy.deepcopy(pickle.loads(self._check_types))
         return out
 
     def check_ieee_macros(self, *a, **kw):
         if self._check_ieee_macros is None:
             out = check_ieee_macros(*a, **kw)
-            self._check_ieee_macros = _pik.dumps(out)
+            self._check_ieee_macros = pickle.dumps(out)
         else:
-            out = copy.deepcopy(_pik.loads(self._check_ieee_macros))
+            out = copy.deepcopy(pickle.loads(self._check_ieee_macros))
         return out
 
     def check_complex(self, *a, **kw):
         if self._check_complex is None:
             out = check_complex(*a, **kw)
-            self._check_complex = _pik.dumps(out)
+            self._check_complex = pickle.dumps(out)
         else:
-            out = copy.deepcopy(_pik.loads(self._check_complex))
+            out = copy.deepcopy(pickle.loads(self._check_complex))
         return out
 
 PYTHON_HAS_UNICODE_WIDE = True

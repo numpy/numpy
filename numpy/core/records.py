@@ -595,8 +595,8 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     >>> r.col2
     chararray(['dbe', 'de'],
           dtype='|S3')
-    >>> import cPickle
-    >>> print cPickle.loads(cPickle.dumps(r))
+    >>> import pickle
+    >>> print pickle.loads(pickle.dumps(r))
     [(456, 'dbe', 1.2) (2, 'de', 1.3)]
     """
 

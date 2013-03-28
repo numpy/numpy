@@ -1,5 +1,6 @@
 from __future__ import division, absolute_import
 
+import sys
 from numpy.testing import *
 from numpy.testing.utils import _assert_valid_refcount
 import numpy as np
@@ -202,7 +203,11 @@ class TestRegression(TestCase):
 
     def test_loadtxt_fields_subarrays(self):
         # For ticket #1936
-        from StringIO import StringIO
+        if sys.version_info[0] >= 3:
+            from io import StringIO
+        else:
+            from StringIO import StringIO
+
         dt = [("a", 'u1', 2), ("b", 'u1', 2)]
         x = np.loadtxt(StringIO("0 1 2 3"), dtype=dt)
         assert_equal(x, np.array([((0, 1), (2, 3))], dtype=dt))

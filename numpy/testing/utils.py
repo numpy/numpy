@@ -12,6 +12,11 @@ import types
 import warnings
 from .nosetester import import_nose
 
+if sys.version_info[0] >= 3:
+    from io import StringIO
+else:
+    from StringIO import StringIO
+
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_equal', 'assert_array_less', 'assert_string_equal',
            'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
@@ -346,8 +351,7 @@ def print_assert_equal(test_string,actual,desired):
     import pprint
 
     if not (actual == desired):
-        import cStringIO
-        msg = cStringIO.StringIO()
+        msg = StringIO()
         msg.write(test_string)
         msg.write(' failed\nACTUAL: \n')
         pprint.pprint(actual,msg)

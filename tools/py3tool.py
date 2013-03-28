@@ -77,7 +77,8 @@ FIXES_TO_SKIP = [
     'raw_input',
     'xreadlines',
     'xrange',
-    'import'
+    'import',
+    'imports'
 ]
 
 skip_fixes= []

@@ -14,18 +14,17 @@ __all__ = ['sort', 'copy_reg', 'clip', 'rank',
            'dot', 'outerproduct', 'innerproduct', 'insert']
 
 import types
-import StringIO
 import pickle
 import math
 import copy
-import copy_reg
-
 import sys
+
 if sys.version_info[0] >= 3:
-    import copyreg
-    import io
-    StringIO = io.BytesIO
-    copy_reg = copyreg
+    import copyreg as copy_reg
+    from io import BytesIO as StringIO
+else:
+    import copy_reg
+    from StringIO import StringIO
 
 from numpy import sort, clip, rank, sign, shape, putmask, allclose, size,\
      choose, swapaxes, array_str, array_repr, e, pi, put, \

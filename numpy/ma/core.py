@@ -22,6 +22,23 @@ Released for unlimited redistribution.
 # pylint: disable-msg=E1002
 from __future__ import division, absolute_import
 
+import sys
+import warnings
+
+import numpy as np
+import numpy.core.umath as umath
+import numpy.core.numerictypes as ntypes
+from numpy import ndarray, amax, amin, iscomplexobj, bool_
+from numpy import array as narray
+from numpy.lib.function_base import angle
+from numpy.compat import getargspec, formatargspec
+from numpy import expand_dims as n_expand_dims
+
+if sys.version_info[0] >= 3:
+    from functools import reduce
+    import pickle
+else:
+    import cPickle as pickle
 
 __author__ = "Pierre GF Gerard-Marchant"
 __docformat__ = "restructuredtext en"
@@ -68,23 +85,6 @@ __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'take', 'tan', 'tanh', 'trace', 'transpose', 'true_divide',
            'var', 'where',
            'zeros']
-
-import cPickle
-
-import numpy as np
-from numpy import ndarray, amax, amin, iscomplexobj, bool_
-from numpy import array as narray
-
-import numpy.core.umath as umath
-from numpy.lib.function_base import angle
-import numpy.core.numerictypes as ntypes
-from numpy.compat import getargspec, formatargspec
-from numpy import expand_dims as n_expand_dims
-import warnings
-
-import sys
-if sys.version_info[0] >= 3:
-    from functools import reduce
 
 MaskType = np.bool_
 nomask = MaskType(0)
@@ -7040,7 +7040,7 @@ def dump(a, F):
     """
     if not hasattr(F, 'readline'):
         F = open(F, 'w')
-    return cPickle.dump(a, F)
+    return pickle.dump(a, F)
 
 def dumps(a):
     """
@@ -7055,7 +7055,7 @@ def dumps(a):
         returned.
 
     """
-    return cPickle.dumps(a)
+    return pickle.dumps(a)
 
 def load(F):
     """
@@ -7079,7 +7079,7 @@ def load(F):
     """
     if not hasattr(F, 'readline'):
         F = open(F, 'r')
-    return cPickle.load(F)
+    return pickle.load(F)
 
 def loads(strg):
     """
@@ -7097,7 +7097,7 @@ def loads(strg):
     dumps : Return a string corresponding to the pickling of a masked array.
 
     """
-    return cPickle.loads(strg)
+    return pickle.loads(strg)
 
 ################################################################################
 def fromfile(file, dtype=float, count= -1, sep=''):

@@ -82,7 +82,7 @@ import sphinx
 if sys.version_info[0] >= 3:
     from io import StringIO
 else:
-    from cStringIO import StringIO
+    from io import StringIO
 
 import warnings
 warnings.warn("A plot_directive module is also available under "

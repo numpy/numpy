@@ -23,10 +23,10 @@ import sys
 import re
 import subprocess
 
-if sys.version_info[0] < 3:
-    import __builtin__ as builtins
-else:
+if sys.version_info[0] >= 3:
     import builtins
+else:
+    import __builtin__ as builtins
 
 CLASSIFIERS = """\
 Development Status :: 5 - Production/Stable

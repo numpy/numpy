@@ -106,6 +106,8 @@ Exceptions to this rule are documented.
 """
 from __future__ import division, absolute_import
 
+import sys
+
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
 try:
@@ -160,8 +162,11 @@ else:
 
     # Make these accessible from numpy name-space
     #  but not imported in from numpy import *
-    from __builtin__ import bool, int, long, float, complex, \
-         object, unicode, str
+    if sys.version_info[0] >= 3:
+        from builtins import bool, int, long, float, complex, object, unicode, str
+    else:
+        from __builtin__ import bool, int, long, float, complex, object, unicode, str
+
     from .core import round, abs, max, min
 
     __all__.extend(['__version__', 'pkgload', 'PackageLoader',

@@ -5,10 +5,7 @@ r''' Test the .npy file format.
 Set up:
 
     >>> import sys
-    >>> if sys.version_info[0] >= 3:
-    ...     from io import BytesIO as StringIO
-    ... else:
-    ...     from cStringIO import StringIO
+    >>> from io import BytesIO
     >>> from numpy.lib import format
     >>>
     >>> scalars = [
@@ -101,19 +98,19 @@ Test the magic string writing.
 
 Test the magic string reading.
 
-    >>> format.read_magic(StringIO(format.magic(1, 0)))
+    >>> format.read_magic(BytesIO(format.magic(1, 0)))
     (1, 0)
-    >>> format.read_magic(StringIO(format.magic(0, 0)))
+    >>> format.read_magic(BytesIO(format.magic(0, 0)))
     (0, 0)
-    >>> format.read_magic(StringIO(format.magic(255, 255)))
+    >>> format.read_magic(BytesIO(format.magic(255, 255)))
     (255, 255)
-    >>> format.read_magic(StringIO(format.magic(2, 5)))
+    >>> format.read_magic(BytesIO(format.magic(2, 5)))
     (2, 5)
 
 Test the header writing.
 
     >>> for arr in basic_arrays + record_arrays:
-    ...     f = StringIO()
+    ...     f = BytesIO()
     ...     format.write_array_header_1_0(f, arr)   # XXX: arr is not a dict, items gets called on it
     ...     print repr(f.getvalue())
     ...
@@ -279,22 +276,15 @@ Test the header writing.
     "\x16\x02{'descr': [('x', '>i4', (2,)),\n           ('Info',\n            [('value', '>c16'),\n             ('y2', '>f8'),\n             ('Info2',\n              [('name', '|S2'),\n               ('value', '>c16', (2,)),\n               ('y3', '>f8', (2,)),\n               ('z3', '>u4', (2,))]),\n             ('name', '|S2'),\n             ('z2', '|b1')]),\n           ('color', '|S2'),\n           ('info', [('Name', '>U8'), ('Value', '>c16')]),\n           ('y', '>f8', (2, 2)),\n           ('z', '|u1')],\n 'fortran_order': False,\n 'shape': (2,)}      \n"
 '''
 
-
 import sys
 import os
 import shutil
 import tempfile
-
-if sys.version_info[0] >= 3:
-    from io import BytesIO as StringIO
-else:
-    from cStringIO import StringIO
+from io import BytesIO
 
 import numpy as np
 from numpy.testing import *
-
 from numpy.lib import format
-
 from numpy.compat import asbytes, asbytes_nested
 
 
@@ -416,9 +406,9 @@ record_arrays = [
 ]
 
 def roundtrip(arr):
-    f = StringIO()
+    f = BytesIO()
     format.write_array(f, arr)
-    f2 = StringIO(f.getvalue())
+    f2 = BytesIO(f.getvalue())
     arr2 = format.read_array(f2)
     return arr2
 
@@ -469,7 +459,7 @@ def test_memmap_roundtrip():
 
 
 def test_write_version_1_0():
-    f = StringIO()
+    f = BytesIO()
     arr = np.arange(1)
     # These should pass.
     format.write_array(f, arr, version=(1, 0))
@@ -513,12 +503,12 @@ malformed_magic = asbytes_nested([
 
 def test_read_magic_bad_magic():
     for magic in malformed_magic:
-        f = StringIO(magic)
+        f = BytesIO(magic)
         yield raises(ValueError)(format.read_magic), f
 
 def test_read_version_1_0_bad_magic():
     for magic in bad_version_magic + malformed_magic:
-        f = StringIO(magic)
+        f = BytesIO(magic)
         yield raises(ValueError)(format.read_array), f
 
 def test_bad_magic_args():
@@ -528,29 +518,29 @@ def test_bad_magic_args():
     assert_raises(ValueError, format.magic, 1, 256)
 
 def test_large_header():
-    s = StringIO()
+    s = BytesIO()
     d = {'a':1,'b':2}
     format.write_array_header_1_0(s,d)
 
-    s = StringIO()
+    s = BytesIO()
     d = {'a':1,'b':2,'c':'x'*256*256}
     assert_raises(ValueError, format.write_array_header_1_0, s, d)
 
 def test_bad_header():
     # header of length less than 2 should fail
-    s = StringIO()
+    s = BytesIO()
     assert_raises(ValueError, format.read_array_header_1_0, s)
-    s = StringIO(asbytes('1'))
+    s = BytesIO(asbytes('1'))
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # header shorter than indicated size should fail
-    s = StringIO(asbytes('\x01\x00'))
+    s = BytesIO(asbytes('\x01\x00'))
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
     # headers without the exact keys required should fail
     d = {"shape":(1,2),
          "descr":"x"}
-    s = StringIO()
+    s = BytesIO()
     format.write_array_header_1_0(s,d)
     assert_raises(ValueError, format.read_array_header_1_0, s)
 
@@ -558,7 +548,7 @@ def test_bad_header():
          "fortran_order":False,
          "descr":"x",
          "extrakey":-1}
-    s = StringIO()
+    s = BytesIO()
     format.write_array_header_1_0(s,d)
     assert_raises(ValueError, format.read_array_header_1_0, s)
 

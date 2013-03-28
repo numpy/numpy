@@ -1,10 +1,14 @@
 from __future__ import division, absolute_import
 
+import sys
 from numpy.testing import *
 import numpy.lib.utils as utils
 from numpy.lib import deprecate
 
-from StringIO import StringIO
+if sys.version_info[0] >= 3:
+    from io import StringIO
+else:
+    from StringIO import StringIO
 
 def test_lookfor():
     out = StringIO()

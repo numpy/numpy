@@ -88,8 +88,12 @@ def move_binary(arch, pyver):
             os.path.join("binaries", get_binary_name(arch)))
 
 def get_numpy_version():
-    import __builtin__
-    __builtin__.__NUMPY_SETUP__ = True
+    if sys.version_info[0] >= 3:
+        import builtins
+    else:
+        import __builtin__ as builtins
+
+    builtins.__NUMPY_SETUP__ = True
     from numpy.version import version
     return version
 

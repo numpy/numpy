@@ -13,7 +13,11 @@ import re
 import os
 import textwrap
 import optparse
-import cPickle as pickle
+
+if sys.version_info[0] >= 3:
+    import pickle
+else:
+    import cPickle as pickle.
 
 CACHE_FILE = 'build/rst-cache.pck'
 
