@@ -79,7 +79,7 @@ FIXES_TO_SKIP = [
     'apply',
     'input',
     'raw_input',
-    'xreadlines'
+    'xreadlines',
     'xrange'
 ]
 
