@@ -88,7 +88,7 @@ def test_skip_functions_callable():
 def test_skip_generators_hardcoded():
     @dec.knownfailureif(True, "This test is known to fail")
     def g1(x):
-        for i in xrange(x):
+        for i in range(x):
             yield i
 
     try:
@@ -102,7 +102,7 @@ def test_skip_generators_hardcoded():
 
     @dec.knownfailureif(False, "This test is NOT known to fail")
     def g2(x):
-        for i in xrange(x):
+        for i in range(x):
             yield i
         raise DidntSkipException('FAIL')
 
@@ -121,7 +121,7 @@ def test_skip_generators_callable():
 
     @dec.knownfailureif(skip_tester, "This test is known to fail")
     def g1(x):
-        for i in xrange(x):
+        for i in range(x):
             yield i
 
     try:
@@ -136,7 +136,7 @@ def test_skip_generators_callable():
 
     @dec.knownfailureif(skip_tester, "This test is NOT known to fail")
     def g2(x):
-        for i in xrange(x):
+        for i in range(x):
             yield i
         raise DidntSkipException('FAIL')
 

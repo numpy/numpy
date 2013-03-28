@@ -579,7 +579,7 @@ class TestMethods(TestCase):
 
         # test object array sorts.
         a = np.empty((101,), dtype=np.object)
-        a[:] = range(101)
+        a[:] = list(range(101))
         b = a[::-1]
         for kind in ['q', 'h', 'm'] :
             msg = "object sort, kind=%s" % kind
@@ -729,7 +729,7 @@ class TestMethods(TestCase):
 
         # test object array argsorts.
         a = np.empty((101,), dtype=np.object)
-        a[:] = range(101)
+        a[:] = list(range(101))
         b = a[::-1]
         r = np.arange(101)
         rr = r[::-1]
@@ -1059,7 +1059,7 @@ class TestMethods(TestCase):
         # Regression test for a bug that crept in at one point
         a = np.zeros((100, 100))
         assert_(sys.getrefcount(a) < 50)
-        for i in xrange(100):
+        for i in range(100):
             a.diagonal()
         assert_(sys.getrefcount(a) < 50)
 
@@ -1311,10 +1311,10 @@ class TestArgmax(TestCase):
 
     def test_all(self):
         a = np.random.normal(0,1,(4,5,6,7,8))
-        for i in xrange(a.ndim):
+        for i in range(a.ndim):
             amax = a.max(i)
             aargmax = a.argmax(i)
-            axes = range(a.ndim)
+            axes = list(range(a.ndim))
             axes.remove(i)
             assert_(all(amax == aargmax.choose(*a.transpose(i,*axes))))
 
@@ -1379,10 +1379,10 @@ class TestArgmin(TestCase):
 
     def test_all(self):
         a = np.random.normal(0,1,(4,5,6,7,8))
-        for i in xrange(a.ndim):
+        for i in range(a.ndim):
             amin = a.min(i)
             aargmin = a.argmin(i)
-            axes = range(a.ndim)
+            axes = list(range(a.ndim))
             axes.remove(i)
             assert_(all(amin == aargmin.choose(*a.transpose(i,*axes))))
 
@@ -1541,7 +1541,7 @@ class TestPutmask(object):
 
 class TestTake(object):
     def tst_basic(self,x):
-        ind = range(x.shape[0])
+        ind = list(range(x.shape[0]))
         assert_array_equal(x.take(ind, axis=0), x)
 
     def test_ip_types(self):
@@ -2109,7 +2109,7 @@ class TestDot(TestCase):
         v = np.random.random_sample((16, 32))
 
         r = np.empty((1024, 32))
-        for i in xrange(12):
+        for i in range(12):
             dot(f,v,r)
         assert_equal(sys.getrefcount(r), 2)
         r2 = dot(f,v,out=None)
@@ -2532,7 +2532,7 @@ if sys.version_info >= (2, 6):
 
         def test_native_padding(self):
             align = np.dtype('i').alignment
-            for j in xrange(8):
+            for j in range(8):
                 if j == 0:
                     s = 'bi'
                 else:
@@ -2793,7 +2793,7 @@ if sys.version_info >= (2, 6):
                 assert_equal(y.format, '<i')
 
         def test_padding(self):
-            for j in xrange(8):
+            for j in range(8):
                 x = np.array([(1,),(2,)], dtype={'f0': (int, j)})
                 self._check_roundtrip(x)
 

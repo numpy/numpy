@@ -414,7 +414,7 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
         itemsize = 1
         if spec[0].isdigit():
             j = 1
-            for j in xrange(1, len(spec)):
+            for j in range(1, len(spec)):
                 if not spec[j].isdigit():
                     break
             itemsize = int(spec[:j])

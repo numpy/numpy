@@ -123,7 +123,7 @@ class MachAr(object):
         # Do we really need to do this?  Aren't they 2 and 2.0?
         # Determine ibeta and beta
         a = one
-        for _ in xrange(max_iterN):
+        for _ in range(max_iterN):
             a = a + a
             temp = a + one
             temp1 = temp - a
@@ -132,7 +132,7 @@ class MachAr(object):
         else:
             raise RuntimeError(msg % (_, one.dtype))
         b = one
-        for _ in xrange(max_iterN):
+        for _ in range(max_iterN):
             b = b + b
             temp = a + b
             itemp = int_conv(temp-a)
@@ -146,7 +146,7 @@ class MachAr(object):
         # Determine it and irnd
         it = -1
         b = one
-        for _ in xrange(max_iterN):
+        for _ in range(max_iterN):
             it = it + 1
             b = b * beta
             temp = b + one
@@ -158,7 +158,7 @@ class MachAr(object):
 
         betah = beta / two
         a = one
-        for _ in xrange(max_iterN):
+        for _ in range(max_iterN):
             a = a + a
             temp = a + one
             temp1 = temp - a
@@ -182,7 +182,7 @@ class MachAr(object):
         for i in range(negep):
             a = a * betain
         b = a
-        for _ in xrange(max_iterN):
+        for _ in range(max_iterN):
             temp = one - a
             if any(temp-one != zero):
                 break
@@ -201,7 +201,7 @@ class MachAr(object):
         machep = - it - 3
         a = b
 
-        for _ in xrange(max_iterN):
+        for _ in range(max_iterN):
             temp = one + a
             if any(temp-one != zero):
                 break
@@ -223,7 +223,7 @@ class MachAr(object):
         z = betain
         t = one + eps
         nxres = 0
-        for _ in xrange(max_iterN):
+        for _ in range(max_iterN):
             y = z
             z = y*y
             a = z*one # Check here for underflow
@@ -249,7 +249,7 @@ class MachAr(object):
             mx = iz + iz - 1
 
         # Determine minexp and xmin
-        for _ in xrange(max_iterN):
+        for _ in range(max_iterN):
             xmin = y
             y = y * betain
             a = y * one

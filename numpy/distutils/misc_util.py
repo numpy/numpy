@@ -1047,7 +1047,7 @@ class Configuration(object):
                 pattern_list = allpath(d).split(os.sep)
                 pattern_list.reverse()
                 # /a/*//b/ -> /a/*/b
-                rl = range(len(pattern_list)-1); rl.reverse()
+                rl = list(range(len(pattern_list)-1)); rl.reverse()
                 for i in rl:
                     if not pattern_list[i]:
                         del pattern_list[i]

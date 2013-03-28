@@ -250,7 +250,7 @@ class TestIntegral(TestCase) :
                 tgt = pol[:]
                 for k in range(j) :
                     tgt = lag.lagint(tgt, m=1, k=[k])
-                res = lag.lagint(pol, m=j, k=range(j))
+                res = lag.lagint(pol, m=j, k=list(range(j)))
                 assert_almost_equal(trim(res), trim(tgt))
 
         # check multiple integrations with lbnd
@@ -260,7 +260,7 @@ class TestIntegral(TestCase) :
                 tgt = pol[:]
                 for k in range(j) :
                     tgt = lag.lagint(tgt, m=1, k=[k], lbnd=-1)
-                res = lag.lagint(pol, m=j, k=range(j), lbnd=-1)
+                res = lag.lagint(pol, m=j, k=list(range(j)), lbnd=-1)
                 assert_almost_equal(trim(res), trim(tgt))
 
         # check multiple integrations with scaling
@@ -270,7 +270,7 @@ class TestIntegral(TestCase) :
                 tgt = pol[:]
                 for k in range(j) :
                     tgt = lag.lagint(tgt, m=1, k=[k], scl=2)
-                res = lag.lagint(pol, m=j, k=range(j), scl=2)
+                res = lag.lagint(pol, m=j, k=list(range(j)), scl=2)
                 assert_almost_equal(trim(res), trim(tgt))
 
     def test_lagint_axis(self):

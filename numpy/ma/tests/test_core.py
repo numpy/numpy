@@ -381,7 +381,7 @@ class TestMaskedArray(TestCase):
     def test_pickling_subbaseclass(self):
         "Test pickling w/ a subclass of ndarray"
         import cPickle
-        a = array(np.matrix(range(10)), mask=[1, 0, 1, 0, 0] * 2)
+        a = array(np.matrix(list(range(10))), mask=[1, 0, 1, 0, 0] * 2)
         a_pickled = cPickle.loads(a.dumps())
         assert_equal(a_pickled._mask, a._mask)
         assert_equal(a_pickled, a)
@@ -2983,11 +2983,11 @@ class TestMaskedArrayFunctions(TestCase):
 
 
     def test_masked_otherfunctions(self):
-        assert_equal(masked_inside(range(5), 1, 3), [0, 199, 199, 199, 4])
-        assert_equal(masked_outside(range(5), 1, 3), [199, 1, 2, 3, 199])
-        assert_equal(masked_inside(array(range(5), mask=[1, 0, 0, 0, 0]), 1, 3).mask, [1, 1, 1, 1, 0])
-        assert_equal(masked_outside(array(range(5), mask=[0, 1, 0, 0, 0]), 1, 3).mask, [1, 1, 0, 0, 1])
-        assert_equal(masked_equal(array(range(5), mask=[1, 0, 0, 0, 0]), 2).mask, [1, 0, 1, 0, 0])
+        assert_equal(masked_inside(list(range(5)), 1, 3), [0, 199, 199, 199, 4])
+        assert_equal(masked_outside(list(range(5)), 1, 3), [199, 1, 2, 3, 199])
+        assert_equal(masked_inside(array(list(range(5)), mask=[1, 0, 0, 0, 0]), 1, 3).mask, [1, 1, 1, 1, 0])
+        assert_equal(masked_outside(array(list(range(5)), mask=[0, 1, 0, 0, 0]), 1, 3).mask, [1, 1, 0, 0, 1])
+        assert_equal(masked_equal(array(list(range(5)), mask=[1, 0, 0, 0, 0]), 2).mask, [1, 0, 1, 0, 0])
         assert_equal(masked_not_equal(array([2, 2, 1, 2, 1], mask=[1, 0, 0, 0, 0]), 2).mask, [1, 0, 1, 0, 1])
 
 

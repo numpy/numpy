@@ -74,7 +74,7 @@ def apply_along_axis(func1d,axis,arr,*args):
             % (axis,nd))
     ind = [0]*(nd-1)
     i = zeros(nd,'O')
-    indlist = range(nd)
+    indlist = list(range(nd))
     indlist.remove(axis)
     i[axis] = slice(None,None)
     outshape = asarray(arr.shape).take(indlist)
@@ -754,7 +754,7 @@ def kron(a,b):
             nd = nda
     result = outer(a,b).reshape(as_+bs)
     axis = nd-1
-    for _ in xrange(nd):
+    for _ in range(nd):
         result = concatenate(result, axis=axis)
     wrapper = get_array_prepare(a, b)
     if wrapper is not None:

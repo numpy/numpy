@@ -49,7 +49,7 @@ def test_dot_3args():
     v = np.random.random_sample((16, 32))
 
     r = np.empty((1024, 32))
-    for i in xrange(12):
+    for i in range(12):
         np.dot(f,v,r)
     assert_equal(sys.getrefcount(r), 2)
     r2 = np.dot(f,v,out=None)

@@ -124,15 +124,15 @@ class TestFinancial(TestCase):
         assert_almost_equal(np.nper(0.075,-2000,0,100000.,[0,1]),
                             [ 21.5449442 ,  20.76156441], 4)
 
-        assert_almost_equal(np.ipmt(0.1/12,range(5), 24, 2000),
+        assert_almost_equal(np.ipmt(0.1/12,list(range(5)), 24, 2000),
                             [-17.29165168, -16.66666667, -16.03647345,
                                 -15.40102862, -14.76028842], 4)
 
-        assert_almost_equal(np.ppmt(0.1/12,range(5), 24, 2000),
+        assert_almost_equal(np.ppmt(0.1/12,list(range(5)), 24, 2000),
                             [-74.998201  , -75.62318601, -76.25337923,
                                 -76.88882405, -77.52956425], 4)
 
-        assert_almost_equal(np.ppmt(0.1/12,range(5), 24, 2000, 0,
+        assert_almost_equal(np.ppmt(0.1/12,list(range(5)), 24, 2000, 0,
             [0,0,1,'end','begin']),
                             [-74.998201  , -75.62318601, -75.62318601,
                                 -76.88882405, -76.88882405], 4)

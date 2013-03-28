@@ -155,7 +155,7 @@ class FileSeekWarning(Warning):
     pass
 
 
-STRICT, SLOPPY, WARN = range(3)
+STRICT, SLOPPY, WARN = list(range(3))
 
 _BLOCKSIZE=1024
 
@@ -418,7 +418,7 @@ def put(array, indices, values, axis=0, clipmode=RAISE):
         work[indices] = values
         work = work.swapaxes(0, axis)
     else:
-        def_axes = range(work.ndim)
+        def_axes = list(range(work.ndim))
         for x in axis:
             def_axes.remove(x)
         axis = list(axis)+def_axes
@@ -454,7 +454,7 @@ def take(array, indices, axis=0, outarr=None, clipmode=RAISE):
             return res
         return
     else:
-        def_axes = range(array.ndim)
+        def_axes = list(range(array.ndim))
         for x in axis:
             def_axes.remove(x)
         axis = list(axis) + def_axes
