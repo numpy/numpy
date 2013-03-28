@@ -340,7 +340,7 @@ The default iterator of an ndarray object is the default Python
 iterator of a sequence type. Thus, when the array object itself is
 used as an iterator. The default behavior is equivalent to::
 
-    for i in xrange(arr.shape[0]):
+    for i in range(arr.shape[0]):
         val = arr[i]
 
 This default iterator selects a sub-array of dimension :math:`N-1`

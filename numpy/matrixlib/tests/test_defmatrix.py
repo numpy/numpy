@@ -211,13 +211,13 @@ class TestAlgebra(TestCase):
         mA = matrix(A)
 
         B = identity(2)
-        for i in xrange(6):
+        for i in range(6):
             assert_(allclose((mA ** i).A, B))
             B = dot(B, A)
 
         Ainv = linalg.inv(A)
         B = identity(2)
-        for i in xrange(6):
+        for i in range(6):
             assert_(allclose((mA ** -i).A, B))
             B = dot(B, Ainv)
 

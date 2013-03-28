@@ -240,7 +240,7 @@ class TestRegression(TestCase):
     def test_argmax(self,level=rlevel):
         """Ticket #119"""
         a = np.random.normal(0,1,(4,5,6,7,8))
-        for i in xrange(a.ndim):
+        for i in range(a.ndim):
             aargmax = a.argmax(i)
 
     def test_mem_divmod(self,level=rlevel):
@@ -675,7 +675,7 @@ class TestRegression(TestCase):
     def test_arr_transpose(self, level=rlevel):
         """Ticket #516"""
         x = np.random.rand(*(2,)*16)
-        y = x.transpose(range(16))
+        y = x.transpose(list(range(16)))
 
     def test_string_mergesort(self, level=rlevel):
         """Ticket #540"""
@@ -1188,7 +1188,7 @@ class TestRegression(TestCase):
         """Ticket #950"""
         for m in [0, 1, 2]:
             for n in [0, 1, 2]:
-                for k in xrange(3):
+                for k in range(3):
                     # Try to ensure that x->data contains non-zero floats
                     x = np.array([123456789e199], dtype=np.float64)
                     x.resize((m, 0))
@@ -1229,8 +1229,8 @@ class TestRegression(TestCase):
 
     def test_fromiter_bytes(self):
         """Ticket #1058"""
-        a = np.fromiter(range(10), dtype='b')
-        b = np.fromiter(range(10), dtype='B')
+        a = np.fromiter(list(range(10)), dtype='b')
+        b = np.fromiter(list(range(10)), dtype='B')
         assert_(np.alltrue(a == np.array([0,1,2,3,4,5,6,7,8,9])))
         assert_(np.alltrue(b == np.array([0,1,2,3,4,5,6,7,8,9])))
 
@@ -1413,8 +1413,8 @@ class TestRegression(TestCase):
         assert_(np.isfinite(np.log1p(np.exp2(-53))))
 
     def test_fromiter_comparison(self, level=rlevel):
-        a = np.fromiter(range(10), dtype='b')
-        b = np.fromiter(range(10), dtype='B')
+        a = np.fromiter(list(range(10)), dtype='b')
+        b = np.fromiter(list(range(10)), dtype='B')
         assert_(np.alltrue(a == np.array([0,1,2,3,4,5,6,7,8,9])))
         assert_(np.alltrue(b == np.array([0,1,2,3,4,5,6,7,8,9])))
 
@@ -1550,7 +1550,7 @@ class TestRegression(TestCase):
         assert_equal(int(np.uint64(x)), x)
 
     def test_duplicate_field_names_assign(self):
-        ra = np.fromiter(((i*3, i*2) for i in xrange(10)), dtype='i8,f8')
+        ra = np.fromiter(((i*3, i*2) for i in range(10)), dtype='i8,f8')
         ra.dtype.names = ('f1', 'f2')
         rep = repr(ra) # should not cause a segmentation fault
         assert_raises(ValueError, setattr, ra.dtype, 'names', ('f1', 'f1'))

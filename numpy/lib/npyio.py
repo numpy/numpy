@@ -780,7 +780,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
         defconv = _getconv(dtype)
 
         # Skip the first `skiprows` lines
-        for i in xrange(skiprows):
+        for i in range(skiprows):
             fh.next()
 
         # Read until we find a line with some values, and use
@@ -804,7 +804,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
             converters = [_getconv(dt) for dt in dtype_types]
         else:
             # All fields have the same dtype
-            converters = [defconv for i in xrange(N)]
+            converters = [defconv for i in range(N)]
             if N > 1:
                 packing = [(N, tuple)]
 
@@ -1339,7 +1339,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
             DeprecationWarning)
         skip_header = skiprows
     # Skip the first `skip_header` rows
-    for i in xrange(skip_header):
+    for i in range(skip_header):
         fhd.next()
 
     # Keep on until we find the first valid values

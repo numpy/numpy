@@ -47,7 +47,7 @@ class TestTake(TestCase):
 
 
     def test_refcounting(self):
-        objects = [object() for i in xrange(10)]
+        objects = [object() for i in range(10)]
         for mode in ('raise', 'clip', 'wrap'):
             a = np.array(objects)
             b = np.array([2, 2, 4, 5, 3, 5])

@@ -292,7 +292,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
     mline_mark = re.compile(r".*?'''")
     if istop: dowithline('',-1)
     ll,l1='',''
-    spacedigits=[' ']+map(str,range(10))
+    spacedigits=[' ']+map(str,list(range(10)))
     filepositiontext=''
     fin=fileinput.FileInput(ffile)
     while 1:

@@ -388,13 +388,13 @@ class TestMa(TestCase):
         assert_(eq(masked_where(not_equal(x, 2), x), masked_not_equal(x, 2)))
         assert_(eq(masked_where(equal(x, 2), x), masked_equal(x, 2)))
         assert_(eq(masked_where(not_equal(x, 2), x), masked_not_equal(x, 2)))
-        assert_(eq(masked_inside(range(5), 1, 3), [0, 199, 199, 199, 4]))
-        assert_(eq(masked_outside(range(5), 1, 3), [199, 1, 2, 3, 199]))
-        assert_(eq(masked_inside(array(range(5), mask=[1, 0, 0, 0, 0]), 1, 3).mask,
+        assert_(eq(masked_inside(list(range(5)), 1, 3), [0, 199, 199, 199, 4]))
+        assert_(eq(masked_outside(list(range(5)), 1, 3), [199, 1, 2, 3, 199]))
+        assert_(eq(masked_inside(array(list(range(5)), mask=[1, 0, 0, 0, 0]), 1, 3).mask,
                   [1, 1, 1, 1, 0]))
-        assert_(eq(masked_outside(array(range(5), mask=[0, 1, 0, 0, 0]), 1, 3).mask,
+        assert_(eq(masked_outside(array(list(range(5)), mask=[0, 1, 0, 0, 0]), 1, 3).mask,
                   [1, 1, 0, 0, 1]))
-        assert_(eq(masked_equal(array(range(5), mask=[1, 0, 0, 0, 0]), 2).mask,
+        assert_(eq(masked_equal(array(list(range(5)), mask=[1, 0, 0, 0, 0]), 2).mask,
                   [1, 0, 1, 0, 0]))
         assert_(eq(masked_not_equal(array([2, 2, 1, 2, 1], mask=[1, 0, 0, 0, 0]), 2).mask,
                   [1, 0, 1, 0, 1]))

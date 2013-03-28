@@ -203,7 +203,7 @@ def find_functions(filename, tag='API'):
     function_name = None
     function_args = []
     doclist = []
-    SCANNING, STATE_DOC, STATE_RETTYPE, STATE_NAME, STATE_ARGS = range(5)
+    SCANNING, STATE_DOC, STATE_RETTYPE, STATE_NAME, STATE_ARGS = list(range(5))
     state = SCANNING
     tagcomment = '/*' + tag
     for lineno, line in enumerate(fo):

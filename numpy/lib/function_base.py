@@ -2589,7 +2589,7 @@ def _chbevl(x, vals):
     b0 = vals[0]
     b1 = 0.0
 
-    for i in xrange(1,len(vals)):
+    for i in range(1,len(vals)):
         b2 = b1
         b1 = b0
         b0 = x*b1 - b2 + vals[i]
@@ -3467,7 +3467,7 @@ def delete(arr, obj, axis=None):
         new[slobj] = arr[slobj2]
     elif isinstance(obj, slice):
         start, stop, step = obj.indices(N)
-        numtodel = len(xrange(start, stop, step))
+        numtodel = len(list(range(start, stop, step)))
         if numtodel <= 0:
             if wrap:
                 return wrap(new)

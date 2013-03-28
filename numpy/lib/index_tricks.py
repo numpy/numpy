@@ -307,7 +307,7 @@ class AxisConcatenator(object):
                         k2 = ndmin-tempobj.ndim
                         if (trans1d < 0):
                             trans1d += k2 + 1
-                        defaxes = range(ndmin)
+                        defaxes = list(range(ndmin))
                         k1 = trans1d
                         axes = defaxes[:k1] + defaxes[k2:] + \
                                defaxes[k1:k2]

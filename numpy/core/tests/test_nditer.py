@@ -1435,32 +1435,32 @@ def test_iter_iterindex():
     a = arange(24).reshape(4,3,2)
     for flags in ([], ['buffered']):
         i = nditer(a, flags, buffersize=buffersize)
-        assert_equal(iter_iterindices(i), range(24))
+        assert_equal(iter_iterindices(i), list(range(24)))
         i.iterindex = 2
-        assert_equal(iter_iterindices(i), range(2,24))
+        assert_equal(iter_iterindices(i), list(range(2,24)))
 
         i = nditer(a, flags, order='F', buffersize=buffersize)
-        assert_equal(iter_iterindices(i), range(24))
+        assert_equal(iter_iterindices(i), list(range(24)))
         i.iterindex = 5
-        assert_equal(iter_iterindices(i), range(5,24))
+        assert_equal(iter_iterindices(i), list(range(5,24)))
 
         i = nditer(a[::-1], flags, order='F', buffersize=buffersize)
-        assert_equal(iter_iterindices(i), range(24))
+        assert_equal(iter_iterindices(i), list(range(24)))
         i.iterindex = 9
-        assert_equal(iter_iterindices(i), range(9,24))
+        assert_equal(iter_iterindices(i), list(range(9,24)))
 
         i = nditer(a[::-1,::-1], flags, order='C', buffersize=buffersize)
-        assert_equal(iter_iterindices(i), range(24))
+        assert_equal(iter_iterindices(i), list(range(24)))
         i.iterindex = 13
-        assert_equal(iter_iterindices(i), range(13,24))
+        assert_equal(iter_iterindices(i), list(range(13,24)))
 
         i = nditer(a[::1,::-1], flags, buffersize=buffersize)
-        assert_equal(iter_iterindices(i), range(24))
+        assert_equal(iter_iterindices(i), list(range(24)))
         i.iterindex = 23
-        assert_equal(iter_iterindices(i), range(23,24))
+        assert_equal(iter_iterindices(i), list(range(23,24)))
         i.reset()
         i.iterindex = 2
-        assert_equal(iter_iterindices(i), range(2,24))
+        assert_equal(iter_iterindices(i), list(range(2,24)))
 
 def test_iter_iterrange():
     # Make sure getting and resetting the iterrange works
@@ -1572,7 +1572,7 @@ def test_iter_buffering_delayed_alloc():
     assert_equal(i[0], 0)
     i[1] = 1
     assert_equal(i[0:2], [0,1])
-    assert_equal([[x[0][()],x[1][()]] for x in i], zip(range(6), [1]*6))
+    assert_equal([[x[0][()],x[1][()]] for x in i], zip(list(range(6)), [1]*6))
 
 def test_iter_buffered_cast_simple():
     # Test that buffering can handle a simple cast
@@ -1804,7 +1804,7 @@ def test_iter_buffered_cast_subarray():
                     casting='unsafe',
                     op_dtypes=sdt2)
     assert_equal(i[0].dtype, np.dtype(sdt2))
-    for x, count in zip(i, range(6)):
+    for x, count in zip(i, list(range(6))):
         assert_(np.all(x['a'] == count))
 
     # one element -> many -> back (copies it to all)

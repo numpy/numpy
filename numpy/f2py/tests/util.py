@@ -58,7 +58,7 @@ def get_module_dir():
 def get_temp_module_name():
     # Assume single-threaded, and the module dir usable only by this thread
     d = get_module_dir()
-    for j in xrange(5403, 9999999):
+    for j in range(5403, 9999999):
         name = "_test_ext_module_%d" % j
         fn = os.path.join(d, name)
         if name not in sys.modules and not os.path.isfile(fn+'.py'):

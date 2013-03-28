@@ -603,7 +603,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
     nfields = len(recList[0])
     if formats is None and dtype is None:  # slower
         obj = sb.array(recList, dtype=object)
-        arrlist = [sb.array(obj[..., i].tolist()) for i in xrange(nfields)]
+        arrlist = [sb.array(obj[..., i].tolist()) for i in range(nfields)]
         return fromarrays(arrlist, formats=formats, shape=shape, names=names,
                           titles=titles, aligned=aligned, byteorder=byteorder)
 
@@ -622,7 +622,7 @@ def fromrecords(recList, dtype=None, shape=None, formats=None, names=None,
         if len(shape) > 1:
             raise ValueError("Can only deal with 1-d array.")
         _array = recarray(shape, descr)
-        for k in xrange(_array.size):
+        for k in range(_array.size):
             _array[k] = tuple(recList[k])
         return _array
     else:
