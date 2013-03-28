@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.4
-from __future__ import division
+from __future__ import division, absolute_import
 
 import sys, os
 from cStringIO import StringIO

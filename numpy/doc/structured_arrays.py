@@ -221,5 +221,5 @@ You can find some more information on recarrays and structured  arrays
 <http://www.scipy.org/Cookbook/Recarray>`_.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 

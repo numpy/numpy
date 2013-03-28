@@ -78,7 +78,7 @@ Example:
         3, 3, jim
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 
 __all__ = ['process_str', 'process_file']

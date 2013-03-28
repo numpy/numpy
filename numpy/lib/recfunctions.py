@@ -5,7 +5,7 @@ Most of these functions were initially implemented by John Hunter for matplotlib
 They have been rewritten and extended for convenience.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import sys
 import itertools

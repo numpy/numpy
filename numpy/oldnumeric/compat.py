@@ -1,7 +1,7 @@
 """Compatibility module containing deprecated names.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['NewAxis',
            'UFuncType', 'UfuncType', 'ArrayType', 'arraytype',
@@ -16,7 +16,7 @@ __all__ = ['NewAxis',
 import numpy.core.multiarray as multiarray
 import numpy.core.umath as um
 from numpy.core.numeric import array
-import functions
+from . import functions
 import sys
 
 from cPickle import dump, dumps
@@ -78,7 +78,7 @@ def load(fp):
     return loads(fp.read())
 
 def _LoadArray(fp):
-    import typeconv
+    from . import typeconv
     ln = fp.readline().split()
     if ln[0][0] == 'A': ln[0] = ln[0][1:]
     typecode = ln[0][0]

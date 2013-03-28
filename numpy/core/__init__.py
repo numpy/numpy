@@ -1,36 +1,36 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
-from info import __doc__
+from .info import __doc__
 from numpy.version import version as __version__
 
-import multiarray
-import umath
-import _internal # for freeze programs
-import numerictypes as nt
+from . import multiarray
+from . import umath
+from . import _internal # for freeze programs
+from . import numerictypes as nt
 multiarray.set_typeDict(nt.sctypeDict)
-import numeric
-from numeric import *
-import fromnumeric
-from fromnumeric import *
-import defchararray as char
-import records as rec
-from records import *
-from memmap import *
-from defchararray import chararray
-import scalarmath
-import function_base
-from function_base import *
-import machar
-from machar import *
-import getlimits
-from getlimits import *
-import shape_base
-from shape_base import *
+from . import numeric
+from .numeric import *
+from . import fromnumeric
+from .fromnumeric import *
+from . import defchararray as char
+from . import records as rec
+from .records import *
+from .memmap import *
+from .defchararray import chararray
+from . import scalarmath
+from . import function_base
+from .function_base import *
+from . import machar
+from .machar import *
+from . import getlimits
+from .getlimits import *
+from . import shape_base
+from .shape_base import *
 del nt
 
-from fromnumeric import amax as max, amin as min, \
+from .fromnumeric import amax as max, amin as min, \
      round_ as round
-from numeric import absolute as abs
+from .numeric import absolute as abs
 
 __all__ = ['char','rec','memmap']
 __all__ += numeric.__all__

@@ -10,7 +10,7 @@ Numpy.
 .. _Scipy : http://www.scipy.org
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 # This module should be used for functions both in numpy and scipy if
 #  you want to use the numpy version if available but the scipy version

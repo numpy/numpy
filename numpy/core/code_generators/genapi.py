@@ -6,7 +6,7 @@ See ``find_function`` for how functions should be formatted, and
 specified.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import sys, os, re
 try:

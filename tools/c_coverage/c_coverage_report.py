@@ -4,7 +4,7 @@ A script to create C code-coverage reports based on the output of
 valgrind's callgrind tool.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import optparse
 import os

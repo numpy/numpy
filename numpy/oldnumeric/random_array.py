@@ -1,7 +1,7 @@
 """Backward compatible module for RandomArray
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['ArgumentError','F','beta','binomial','chi_square', 'exponential',
            'gamma', 'get_seed', 'mean_var_test', 'multinomial',

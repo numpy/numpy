@@ -1,7 +1,7 @@
 """This module is for compatibility only.  All functions are defined elsewhere.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['rand', 'tril', 'trapz', 'hanning', 'rot90', 'triu', 'diff', 'angle',
            'roots', 'ptp', 'kaiser', 'randn', 'cumprod', 'diag', 'msort',
@@ -21,7 +21,7 @@ from numpy.linalg import eig, svd
 from numpy.random import rand, randn
 import numpy as np
 
-from typeconv import convtypecode
+from .typeconv import convtypecode
 
 def eye(N, M=None, k=0, typecode=None, dtype=None):
     """ eye returns a N-by-M 2-d array where the  k-th diagonal is all ones,
@@ -98,17 +98,17 @@ def corrcoef(x, y=None):
     d = diag(c)
     return c/sqrt(multiply.outer(d,d))
 
-from compat import *
-from functions import *
-from precision import *
-from ufuncs import *
-from misc import *
+from .compat import *
+from .functions import *
+from .precision import *
+from .ufuncs import *
+from .misc import *
 
-import compat
-import precision
-import functions
-import misc
-import ufuncs
+from . import compat
+from . import precision
+from . import functions
+from . import misc
+from . import ufuncs
 
 import numpy
 __version__ = numpy.__version__

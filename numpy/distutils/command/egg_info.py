@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 from setuptools.command.egg_info import egg_info as _egg_info
 

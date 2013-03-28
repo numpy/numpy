@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 from numpy.testing import *
 from numpy.testing.utils import _assert_valid_refcount

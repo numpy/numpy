@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 from distutils.core import Command
 from numpy.distutils import log

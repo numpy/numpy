@@ -1,12 +1,12 @@
 """Functions that should behave the same as Numeric and need changing
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import numpy as np
 import numpy.core.multiarray as mu
 import numpy.core.numeric as nn
-from typeconv import convtypecode, convtypecode2
+from .typeconv import convtypecode, convtypecode2
 
 __all__ = ['take', 'repeat', 'sum', 'product', 'sometrue', 'alltrue',
            'cumsum', 'cumproduct', 'compress', 'fromfunction',

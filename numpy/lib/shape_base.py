@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['column_stack','row_stack', 'dstack','array_split','split','hsplit',
            'vsplit','dsplit','apply_over_axes','expand_dims',

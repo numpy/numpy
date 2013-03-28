@@ -141,5 +141,5 @@ random values, and some utility functions to generate special matrices (e.g.
 diagonal).
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 

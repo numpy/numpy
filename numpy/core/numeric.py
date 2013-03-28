@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'arange', 'array', 'zeros', 'count_nonzero',
@@ -26,11 +26,11 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
 
 import sys
 import warnings
-import multiarray
-import umath
-from umath import *
-import numerictypes
-from numerictypes import *
+from . import multiarray
+from . import umath
+from .umath import *
+from . import numerictypes
+from .numerictypes import *
 import collections
 
 
@@ -911,7 +911,7 @@ def outer(a,b):
 try:
     # importing this changes the dot function for basic 4 types
     # to blas-optimized versions.
-    from _dotblas import dot, vdot, inner, alterdot, restoredot
+    from ._dotblas import dot, vdot, inner, alterdot, restoredot
 except ImportError:
     # docstrings are in add_newdocs.py
     inner = multiarray.inner
@@ -1364,7 +1364,7 @@ def cross(a, b, axisa=-1, axisb=-1, axisc=-1, axis=None):
 
 
 #Use numarray's printing function
-from arrayprint import array2string, get_printoptions, set_printoptions
+from .arrayprint import array2string, get_printoptions, set_printoptions
 
 _typelessdata = [int_, float_, complex_]
 if issubclass(intc, int):
@@ -2591,6 +2591,6 @@ nan = NaN = NAN
 False_ = bool_(False)
 True_ = bool_(True)
 
-import fromnumeric
-from fromnumeric import *
+from . import fromnumeric
+from .fromnumeric import *
 extend_all(fromnumeric)

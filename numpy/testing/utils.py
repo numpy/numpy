@@ -2,7 +2,7 @@
 Utility function to facilitate testing.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import os
 import sys
@@ -10,7 +10,7 @@ import re
 import operator
 import types
 import warnings
-from nosetester import import_nose
+from .nosetester import import_nose
 
 __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_equal', 'assert_array_less', 'assert_string_equal',

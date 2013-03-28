@@ -9,21 +9,16 @@ creating additional specific polynomial classes (e.g., Legendre, Jacobi,
 etc.) in the future, such that all these classes will have a common API.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import string
 import sys
 
-if sys.version_info[0] >= 3:
-    rel_import = "from . import"
-else:
-    rel_import = "import"
-
 polytemplate = string.Template('''
-from __future__ import division
+from __future__ import division, absolute_import
 import numpy as np
 import warnings
-REL_IMPORT polyutils as pu
+from . import polyutils as pu
 
 class $name(pu.PolyBase) :
     """A $name series class.
@@ -918,4 +913,4 @@ class $name(pu.PolyBase) :
         """
         return series.convert(domain, $name, window)
 
-'''.replace('REL_IMPORT', rel_import))
+''')

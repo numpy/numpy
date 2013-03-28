@@ -2,7 +2,7 @@
 """ Test printing of scalar types.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import numpy as np
 from numpy.testing import TestCase, assert_, run_module_suite

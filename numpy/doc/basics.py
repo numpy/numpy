@@ -136,5 +136,5 @@ value is inside an array or not.  NumPy scalars also have many of the same
 methods arrays do.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 

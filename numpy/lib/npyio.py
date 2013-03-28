@@ -1,11 +1,11 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['savetxt', 'loadtxt', 'genfromtxt', 'ndfromtxt', 'mafromtxt',
            'recfromtxt', 'recfromcsv', 'load', 'loads', 'save', 'savez',
            'savez_compressed', 'packbits', 'unpackbits', 'fromregex', 'DataSource']
 
 import numpy as np
-import format
+from . import format
 import sys
 import os
 import re
@@ -16,10 +16,10 @@ import weakref
 from operator import itemgetter
 
 from cPickle import load as _cload, loads
-from _datasource import DataSource
-from _compiled_base import packbits, unpackbits
+from ._datasource import DataSource
+from ._compiled_base import packbits, unpackbits
 
-from _iotools import LineSplitter, NameValidator, StringConverter, \
+from ._iotools import LineSplitter, NameValidator, StringConverter, \
                      ConverterError, ConverterLockError, ConversionWarning, \
                      _is_string_like, has_nested_fields, flatten_dtype, \
                      easy_dtype, _bytes_to_name

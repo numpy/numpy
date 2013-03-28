@@ -8,7 +8,7 @@ broadcasting and being able to be called with scalars
 or arrays (or other sequences).
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import numpy as np
 

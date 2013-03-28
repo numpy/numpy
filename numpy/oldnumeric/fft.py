@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['fft', 'fft2d', 'fftnd', 'hermite_fft', 'inverse_fft',
            'inverse_fft2d', 'inverse_fftnd',

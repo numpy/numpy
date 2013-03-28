@@ -14,17 +14,17 @@ $Date: 2005/07/24 19:01:55 $
 Pearu Peterson
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __version__ = "$Revision: 1.65 $"[10:-1]
 
-import __version__
+from . import __version__
 f2py_version = __version__.version
 
 import pprint
 import sys
 import types
-import cfuncs
+from . import cfuncs
 
 
 errmess=sys.stderr.write
@@ -522,7 +522,7 @@ def getcallprotoargument(rout,cb_map={}):
     if hascallstatement(rout):
         outmess('warning: callstatement is defined without callprotoargument\n')
         return
-    from capi_maps import getctype
+    from .capi_maps import getctype
     arg_types,arg_types2 = [],[]
     if l_and(isstringfunction,l_not(isfunction_wrap))(rout):
         arg_types.extend(['char*','size_t'])

@@ -14,9 +14,9 @@ $Date: 2005/05/06 08:31:19 $
 Pearu Peterson
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
-import __version__
+from . import __version__
 f2py_version = __version__.version
 
 import sys
@@ -28,12 +28,12 @@ errmess=sys.stderr.write
 #outmess=sys.stdout.write
 show=pprint.pprint
 
-import crackfortran
-import rules
-import cb_rules
-import auxfuncs
-import cfuncs
-import f90mod_rules
+from . import crackfortran
+from . import rules
+from . import cb_rules
+from . import auxfuncs
+from . import cfuncs
+from . import f90mod_rules
 
 outmess = auxfuncs.outmess
 

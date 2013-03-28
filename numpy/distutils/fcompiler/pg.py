@@ -1,5 +1,5 @@
 # http://www.pgroup.com
-from __future__ import division
+from __future__ import division, absolute_import
 
 from numpy.distutils.fcompiler import FCompiler
 from sys import platform

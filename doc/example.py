@@ -8,7 +8,7 @@ extend over multiple lines, the closing three quotation marks must be on
 a line by itself, preferably preceeded by a blank line.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import os # standard library imports first
 

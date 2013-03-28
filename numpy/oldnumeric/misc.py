@@ -1,7 +1,7 @@
 """Functions that already have the correct syntax or miscellaneous functions
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['sort', 'copy_reg', 'clip', 'rank',
            'sign', 'shape', 'types', 'allclose', 'size',
@@ -35,4 +35,4 @@ from numpy import sort, clip, rank, sign, shape, putmask, allclose, size,\
      correlate as cross_correlate, \
      place as insert
 
-from array_printer import array2string
+from .array_printer import array2string

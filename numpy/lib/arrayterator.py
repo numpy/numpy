@@ -7,7 +7,7 @@ an array object, and when iterated it will return sub-arrays with at most
 a user-specified number of elements.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 from operator import mul
 

@@ -110,7 +110,7 @@ this distribution for specifics.
 NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import sys
 import os
@@ -929,7 +929,7 @@ class mkl_info(system_info):
         if mklroot is None:
             system_info.__init__(self)
         else:
-            from cpuinfo import cpu
+            from .cpuinfo import cpu
             l = 'mkl'  # use shared library
             if cpu.is_Itanium():
                 plt = '64'

@@ -13,11 +13,11 @@ $Date: 2005/07/20 11:27:58 $
 Pearu Peterson
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __version__ = "$Revision: 1.53 $"[10:-1]
 
-import __version__
+from . import __version__
 f2py_version = __version__.version
 
 
@@ -28,8 +28,8 @@ errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint
 
-from auxfuncs import *
-import cfuncs
+from .auxfuncs import *
+from . import cfuncs
 
 ################## Rules for callback function ##############
 
@@ -416,7 +416,7 @@ def buildcallbacks(m):
 
 def buildcallback(rout,um):
     global cb_map
-    import capi_maps
+    from . import capi_maps
 
     outmess('\tConstructing call-back function "cb_%s_in_%s"\n'%(rout['name'],um))
     args,depargs=getargs(rout)

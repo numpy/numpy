@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 import re
 import os
@@ -165,7 +165,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
         return []
     # FIXME:RELATIVE_IMPORT
     if sys.version_info[0] < 3:
-        from fcompiler import FCompiler
+        from .fcompiler import FCompiler
     else:
         from numpy.distutils.fcompiler import FCompiler
     if isinstance(self, FCompiler):

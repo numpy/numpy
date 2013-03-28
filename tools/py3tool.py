@@ -18,7 +18,7 @@ When running py3tool again, only changed files are re-processed, which
 makes the test-bugfix cycle faster.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 from optparse import OptionParser
 import shutil
@@ -37,10 +37,6 @@ TEMP = os.path.normpath(os.path.join(BASE, '_py3k'))
 SCRIPT_2TO3 = os.path.join(BASE, 'tools', '2to3.py')
 
 EXTRA_2TO3_FLAGS = {
-    '*/setup.py': '-x import',
-    'numpy/core/code_generators/generate_umath.py': '-x import',
-    'numpy/core/code_generators/generate_numpy_api.py': '-x import',
-    'numpy/core/code_generators/generate_ufunc_api.py': '-x import',
     'numpy/core/defchararray.py': '-x unicode',
     'numpy/compat/py3k.py': '-x unicode',
     'numpy/ma/timer_comparison.py': 'skip',
@@ -80,7 +76,8 @@ FIXES_TO_SKIP = [
     'input',
     'raw_input',
     'xreadlines',
-    'xrange'
+    'xrange',
+    'import'
 ]
 
 skip_fixes= []
@@ -172,38 +169,6 @@ except:
         # Run nosetests
         subprocess.call(['nosetests3', '-v', d], cwd=TEMP)
 
-def custom_mangling(filename):
-    import_mangling = [
-        os.path.join('core', '__init__.py'),
-        os.path.join('core', 'numeric.py'),
-        os.path.join('core', '_internal.py'),
-        os.path.join('core', 'arrayprint.py'),
-        os.path.join('core', 'fromnumeric.py'),
-        os.path.join('numpy', '__init__.py'),
-        os.path.join('lib', 'npyio.py'),
-        os.path.join('lib', 'function_base.py'),
-        os.path.join('fft', 'fftpack.py'),
-        os.path.join('random', '__init__.py'),
-    ]
-
-    if any(filename.endswith(x) for x in import_mangling):
-        f = open(filename, 'r')
-        text = f.read()
-        f.close()
-        for mod in ['multiarray', 'scalarmath', 'umath', '_sort',
-                    '_compiled_base', 'core', 'lib', 'testing', 'fft',
-                    'polynomial', 'random', 'ma', 'linalg', 'compat',
-                    'mtrand', '_dotblas', 'version']:
-            text = re.sub(r'^(\s*)import %s' % mod,
-                          r'\1from . import %s' % mod,
-                          text, flags=re.M)
-            text = re.sub(r'^(\s*)from %s import' % mod,
-                          r'\1from .%s import' % mod,
-                          text, flags=re.M)
-        text = text.replace('from matrixlib', 'from .matrixlib')
-        f = open(filename, 'w')
-        f.write(text)
-        f.close()
 
 def walk_sync(dir1, dir2, _seen=None):
     if _seen is None:
@@ -312,10 +277,6 @@ def sync_2to3(src, dst, patchfile=None, clean=False):
             lib2to3.main.main("lib2to3.fixes", opt)
         finally:
             sys.stdout = _old_stdout
-
-    for fn, dst_fn in to_convert:
-        # perform custom mangling
-        custom_mangling(dst_fn)
 
     p.close()
 

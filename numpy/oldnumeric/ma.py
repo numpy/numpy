@@ -9,7 +9,7 @@ Adapted for numpy_core 2005 by Travis Oliphant and
 (mainly) Paul Dubois.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import types, sys
 

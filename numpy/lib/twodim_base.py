@@ -1,7 +1,7 @@
 """ Basic functions for manipulating 2d arrays
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['diag','diagflat','eye','fliplr','flipud','rot90','tri','triu',
            'tril','vander','histogram2d','mask_indices',

@@ -1,7 +1,7 @@
 """ Modified version of build_ext that handles fortran source files.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import os
 import sys

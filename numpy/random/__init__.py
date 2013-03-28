@@ -86,10 +86,10 @@ set_state            Set state of generator.
 ==================== =========================================================
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 # To get sub-modules
-from info import __doc__, __all__
+from .info import __doc__, __all__
 
 import warnings
 from numpy.testing.utils import WarningManager
@@ -98,7 +98,7 @@ warn_ctx = WarningManager()
 warn_ctx.__enter__()
 try:
     warnings.filterwarnings("ignore", message="numpy.ndarray size changed")
-    from mtrand import *
+    from .mtrand import *
 finally:
     warn_ctx.__exit__()
 

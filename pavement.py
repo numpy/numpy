@@ -55,7 +55,7 @@ TODO
     - fix bdist_mpkg: we build the same source twice -> how to make sure we use
       the same underlying python for egg install in venv and for bdist_mpkg
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 # What need to be installed to build everything on mac os x:
 #   - wine: python 2.6 and 2.5 + makensis + cpuid plugin + mingw, all in the PATH

@@ -20,7 +20,7 @@ Released for unlimited redistribution.
 
 """
 # pylint: disable-msg=E1002
-from __future__ import division
+from __future__ import division, absolute_import
 
 
 __author__ = "Pierre GF Gerard-Marchant"

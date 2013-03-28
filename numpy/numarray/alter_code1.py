@@ -52,7 +52,7 @@ Makes the following changes:
    - .setimaginary() --> .imag
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['convertfile', 'convertall', 'converttree', 'convertsrc']
 

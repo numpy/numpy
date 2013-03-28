@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 r''' Test the .npy file format.
 
