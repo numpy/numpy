@@ -204,8 +204,8 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
     ##file whose size may be determined before allocation, should be
     ##quick -- only one allocation will be needed.
 
-    recsize = dtype.itemsize * np.product([i for i in shape if i != -1])
-    blocksize = max(_BLOCKSIZE/recsize, 1)*recsize
+    recsize = int(dtype.itemsize * np.product([i for i in shape if i != -1]))
+    blocksize = max(_BLOCKSIZE//recsize, 1)*recsize
 
     ##try to estimate file size
     try:
@@ -216,7 +216,7 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
     except (AttributeError, IOError):
         initsize=blocksize
     else:
-        initsize=max(1,(endpos-curpos)/recsize)*recsize
+        initsize=max(1,(endpos-curpos)//recsize)*recsize
 
     buf = np.newbuffer(initsize)
 
@@ -247,19 +247,32 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
         except IOError:
             _warnings.warn("Could not rewind (IOError in seek)",
                            FileSeekWarning)
-    datasize = (len(data)/recsize) * recsize
+    datasize = (len(data)//recsize) * recsize
     if len(buf) != bytesread+datasize:
         buf=_resizebuf(buf,bytesread+datasize)
     buf[bytesread:bytesread+datasize]=data[:datasize]
     ##deduce shape from len(buf)
     shape = list(shape)
     uidx = shape.index(-1)
-    shape[uidx]=len(buf) / recsize
+    shape[uidx]=len(buf) // recsize
 
     a = np.ndarray(shape=shape, dtype=type, buffer=buf)
     if a.dtype.char == '?':
         np.not_equal(a, 0, a)
     return a
+
+
+# this function is referenced in the code above but not defined.  adding
+# it back. - phensley
+def _resizebuf(buf,newsize):
+    "Return a copy of BUF of size NEWSIZE."
+    newbuf = np.newbuffer(newsize)
+    if newsize > len(buf):
+        newbuf[:len(buf)]=buf
+    else:
+        newbuf[:]=buf[:len(newbuf)]
+    return newbuf
+
 
 def fromstring(datastring, type=None, shape=None, typecode=None, dtype=None):
     dtype = type2dtype(typecode, type, dtype, True)
