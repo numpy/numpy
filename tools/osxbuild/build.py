@@ -10,6 +10,7 @@ built using sudo so file permissions are correct when installed on
 user system.  Script will prompt for sudo pwd.
 
 """
+from __future__ import division
 
 import os
 import shutil

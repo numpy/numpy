@@ -1,5 +1,8 @@
 #!/usr/bin/env python
-"""Install the built package and run the tests."""
+"""Install the built package and run the tests.
+
+"""
+from __future__ import division
 
 import os
 
