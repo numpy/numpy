@@ -4929,9 +4929,13 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             }
         }
 
-        /*
-         * Be sure values array is "broadcastable"
-         * to shape of iter->dimensions, iter->nd
+        /* 
+         * Create array iter object for second operand that
+         * "matches" the map iter object for the first operand.
+         * Then we can just iterate over the first and second
+         * operands at the same time and not have to worry about
+         * picking the correct elements from each operand to apply
+         * the ufunc to.
          */
         if ((iter2 = (PyArrayIterObject *)\
              PyArray_BroadcastToShape((PyObject *)op2_array,
