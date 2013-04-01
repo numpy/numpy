@@ -54,8 +54,7 @@ static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
                     char **op_dataptr,
                     npy_uint32 *op_flags, int **op_axes,
-                    npy_intp *itershape,
-                    int output_scalars);
+                    npy_intp *itershape);
 static void
 npyiter_replace_axisdata(NpyIter *iter, int iop,
                       PyArrayObject *op,
@@ -75,7 +74,7 @@ static PyArray_Descr *
 npyiter_get_common_dtype(int nop, PyArrayObject **op,
                         npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
                         PyArray_Descr **op_request_dtypes,
-                        int only_inputs, int output_scalars);
+                        int only_inputs);
 static PyArrayObject *
 npyiter_new_temp_array(NpyIter *iter, PyTypeObject *subtype,
                 npy_uint32 flags, npyiter_opitflags *op_itflags,
@@ -86,7 +85,7 @@ npyiter_allocate_arrays(NpyIter *iter,
                         npy_uint32 flags,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
                         npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
-                        int **op_axes, int output_scalars);
+                        int **op_axes);
 static void
 npyiter_get_priority_subtype(int nop, PyArrayObject **op,
                             npyiter_opitflags *op_itflags,
@@ -122,8 +121,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 
     npy_int8 *perm;
     NpyIter_BufferData *bufferdata = NULL;
-    int any_allocate = 0, any_missing_dtypes = 0,
-            output_scalars = 0, need_subtype = 0;
+    int any_allocate = 0, any_missing_dtypes = 0, need_subtype = 0;
 
     /* The subtype for automatically allocated outputs */
     double subtype_priority = NPY_PRIORITY;
@@ -158,6 +156,22 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
         return NULL;
     }
 
+    /*
+     * Before 1.8, if `oa_ndim == 0`, this meant `op_axes != NULL` was an error.
+     * With 1.8, `oa_ndim == -1` takes this role, while op_axes in that case
+     * enforces a 0-d iterator. Using `oa_ndim == 0` with `op_axes == NULL`
+     * is thus deprecated with version 1.8.
+     */
+    if ((oa_ndim == 0) && (op_axes == NULL)) {
+        char* mesg = "using `oa_ndim == 0` when `op_axes` is NULL is "
+                     "deprecated. Use `oa_ndim == -1` or the MultiNew "
+                     "iterator for NumPy <1.8 compatibility";
+        if (DEPRECATE(mesg) < 0) {
+            return NULL;
+        }
+        oa_ndim = -1;
+    }
+
     /* Error check 'oa_ndim' and 'op_axes', which must be used together */
     if (!npyiter_check_op_axes(nop, oa_ndim, op_axes, itershape)) {
         return NULL;
@@ -174,12 +188,6 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 
     /* Calculate how many dimensions the iterator should have */
     ndim = npyiter_calculate_ndim(nop, op_in, oa_ndim);
-
-    /* If 'ndim' is zero, any outputs should be scalars */
-    if (ndim == 0) {
-        output_scalars = 1;
-        ndim = 1;
-    }
 
     NPY_IT_TIME_POINT(c_calculate_ndim);
 
@@ -231,8 +239,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 
     /* Fill in the AXISDATA arrays and set the ITERSIZE field */
     if (!npyiter_fill_axisdata(iter, flags, op_itflags, op_dataptr,
-                                        op_flags, op_axes, itershape,
-                                        output_scalars)) {
+                                        op_flags, op_axes, itershape)) {
         NpyIter_Deallocate(iter);
         return NULL;
     }
@@ -338,8 +345,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
         dtype = npyiter_get_common_dtype(nop, op,
                                     op_itflags, op_dtype,
                                     op_request_dtypes,
-                                    only_inputs,
-                                    output_scalars);
+                                    only_inputs);
         if (dtype == NULL) {
             NpyIter_Deallocate(iter);
             return NULL;
@@ -389,7 +395,7 @@ NpyIter_AdvancedNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
      * done now using a memory layout matching the iterator.
      */
     if (!npyiter_allocate_arrays(iter, flags, op_dtype, subtype, op_flags,
-                            op_itflags, op_axes, output_scalars)) {
+                            op_itflags, op_axes)) {
         NpyIter_Deallocate(iter);
         return NULL;
     }
@@ -504,7 +510,7 @@ NpyIter_MultiNew(int nop, PyArrayObject **op_in, npy_uint32 flags,
 {
     return NpyIter_AdvancedNew(nop, op_in, flags, order, casting,
                             op_flags, op_request_dtypes,
-                            0, NULL, NULL, 0);
+                            -1, NULL, NULL, 0);
 }
 
 /*NUMPY_API
@@ -521,7 +527,7 @@ NpyIter_New(PyArrayObject *op, npy_uint32 flags,
 
     return NpyIter_AdvancedNew(1, &op, flags, order, casting,
                             &op_flags, &dtype,
-                            0, NULL, NULL, 0);
+                            -1, NULL, NULL, 0);
 }
 
 /*NUMPY_API
@@ -758,53 +764,60 @@ npyiter_check_op_axes(int nop, int oa_ndim, int **op_axes,
     char axes_dupcheck[NPY_MAXDIMS];
     int iop, idim;
 
-    if (oa_ndim == 0 && (op_axes != NULL || itershape != NULL)) {
-        PyErr_Format(PyExc_ValueError,
-                "If 'op_axes' or 'itershape' is not NULL in the"
-                "iterator constructor, 'oa_ndim' must be greater than zero");
-        return 0;
-    }
-    else if (oa_ndim > 0) {
-        if (oa_ndim > NPY_MAXDIMS) {
+    if (oa_ndim < 0) {
+        /*
+         * If `oa_ndim < 0`, `op_axes` and `itershape` are signalled to
+         * be unused and should be NULL. (Before NumPy 1.8 this was
+         * signalled by `oa_ndim == 0`.)
+         */
+        if (op_axes != NULL || itershape != NULL) {
             PyErr_Format(PyExc_ValueError,
+                    "If 'op_axes' or 'itershape' is not NULL in the iterator "
+                    "constructor, 'oa_ndim' must be zero or greater");
+            return 0;
+        }
+        return 1;
+    }
+    if (oa_ndim > NPY_MAXDIMS) {
+        PyErr_Format(PyExc_ValueError,
                 "Cannot construct an iterator with more than %d dimensions "
                 "(%d were requested for op_axes)",
                 (int)NPY_MAXDIMS, oa_ndim);
-            return 0;
-        }
-        else if (op_axes == NULL) {
-            PyErr_Format(PyExc_ValueError,
-                    "If 'oa_ndim' is greater than zero in the iterator "
-                    "constructor, then op_axes cannot be NULL");
-            return 0;
-        }
+        return 0;
+    }
+    if (op_axes == NULL) {
+        PyErr_Format(PyExc_ValueError,
+                "If 'oa_ndim' is zero or greater in the iterator "
+                "constructor, then op_axes cannot be NULL");
+        return 0;
+    }
 
-        /* Check that there are no duplicates in op_axes */
-        for (iop = 0; iop < nop; ++iop) {
-            int *axes = op_axes[iop];
-            if (axes != NULL) {
-                memset(axes_dupcheck, 0, NPY_MAXDIMS);
-                for (idim = 0; idim < oa_ndim; ++idim) {
-                    npy_intp i = axes[idim];
-                    if (i >= 0) {
-                        if (i >= NPY_MAXDIMS) {
-                            PyErr_Format(PyExc_ValueError,
-                                    "The 'op_axes' provided to the iterator "
-                                    "constructor for operand %d "
-                                    "contained invalid "
-                                    "values %d", (int)iop, (int)i);
-                            return 0;
-                        } else if(axes_dupcheck[i] == 1) {
-                            PyErr_Format(PyExc_ValueError,
-                                    "The 'op_axes' provided to the iterator "
-                                    "constructor for operand %d "
-                                    "contained duplicate "
-                                    "value %d", (int)iop, (int)i);
-                            return 0;
-                        }
-                        else {
-                            axes_dupcheck[i] = 1;
-                        }
+    /* Check that there are no duplicates in op_axes */
+    for (iop = 0; iop < nop; ++iop) {
+        int *axes = op_axes[iop];
+        if (axes != NULL) {
+            memset(axes_dupcheck, 0, NPY_MAXDIMS);
+            for (idim = 0; idim < oa_ndim; ++idim) {
+                npy_intp i = axes[idim];
+                if (i >= 0) {
+                    if (i >= NPY_MAXDIMS) {
+                        PyErr_Format(PyExc_ValueError,
+                                "The 'op_axes' provided to the iterator "
+                                "constructor for operand %d "
+                                "contained invalid "
+                                "values %d", (int)iop, (int)i);
+                        return 0;
+                    }
+                    else if (axes_dupcheck[i] == 1) {
+                        PyErr_Format(PyExc_ValueError,
+                                "The 'op_axes' provided to the iterator "
+                                "constructor for operand %d "
+                                "contained duplicate "
+                                "value %d", (int)iop, (int)i);
+                        return 0;
+                    }
+                    else {
+                        axes_dupcheck[i] = 1;
                     }
                 }
             }
@@ -819,7 +832,7 @@ npyiter_calculate_ndim(int nop, PyArrayObject **op_in,
                        int oa_ndim)
 {
     /* If 'op_axes' is being used, force 'ndim' */
-    if (oa_ndim > 0 ) {
+    if (oa_ndim >= 0 ) {
         return oa_ndim;
     }
     /* Otherwise it's the maximum 'ndim' from the operands */
@@ -1439,8 +1452,7 @@ static int
 npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itflags,
                     char **op_dataptr,
                     npy_uint32 *op_flags, int **op_axes,
-                    npy_intp *itershape,
-                    int output_scalars)
+                    npy_intp *itershape)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
@@ -1540,6 +1552,13 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
     axisdata = NIT_AXISDATA(iter);
     sizeof_axisdata = NIT_AXISDATA_SIZEOF(itflags, ndim, nop);
 
+    if (ndim == 0) {
+        /* Need to fill the first axisdata, even if the iterator is 0-d */
+        NAD_SHAPE(axisdata) = 1;
+        NAD_INDEX(axisdata) = 0;
+        memcpy(NAD_PTRS(axisdata), op_dataptr, NPY_SIZEOF_INTP*nop);
+    }
+
     /* Now process the operands, filling in the axisdata */
     for (idim = 0; idim < ndim; ++idim) {
         npy_intp bshape = broadcast_shape[ndim-idim-1];
@@ -1560,7 +1579,7 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
                     ondim = PyArray_NDIM(op_cur);
                     if (bshape == 1) {
                         strides[iop] = 0;
-                        if (idim >= ondim && !output_scalars &&
+                        if (idim >= ondim &&
                                     (op_flags[iop] & NPY_ITER_NO_BROADCAST)) {
                             goto operand_different_than_broadcast;
                         }
@@ -1681,8 +1700,8 @@ npyiter_fill_axisdata(NpyIter *iter, npy_uint32 flags, npyiter_opitflags *op_itf
     }
 
     /* Now fill in the ITERSIZE member */
-    NIT_ITERSIZE(iter) = broadcast_shape[0];
-    for (idim = 1; idim < ndim; ++idim) {
+    NIT_ITERSIZE(iter) = 1;
+    for (idim = 0; idim < ndim; ++idim) {
         NIT_ITERSIZE(iter) *= broadcast_shape[idim];
     }
     /* The range defaults to everything */
@@ -2003,7 +2022,10 @@ npyiter_replace_axisdata(NpyIter *iter, int iop,
     NIT_RESETDATAPTR(iter)[iop] = op_dataptr;
     NIT_BASEOFFSETS(iter)[iop] = baseoffset;
     axisdata = axisdata0;
-    for (idim = 0; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
+    /* Fill at least one axisdata, for the 0-d case */
+    NAD_PTRS(axisdata)[iop] = op_dataptr;
+    NIT_ADVANCE_AXISDATA(axisdata, 1);
+    for (idim = 1; idim < ndim; ++idim, NIT_ADVANCE_AXISDATA(axisdata, 1)) {
         NAD_PTRS(axisdata)[iop] = op_dataptr;
     }
 }
@@ -2029,7 +2051,7 @@ npyiter_compute_index_strides(NpyIter *iter, npy_uint32 flags)
     /*
      * If there is only one element being iterated, we just have
      * to touch the first AXISDATA because nothing will ever be
-     * incremented.
+     * incremented. This also initializes the data for the 0-d case.
      */
     if (NIT_ITERSIZE(iter) == 1) {
         if (itflags & NPY_ITFLAG_HASINDEX) {
@@ -2399,7 +2421,7 @@ static PyArray_Descr *
 npyiter_get_common_dtype(int nop, PyArrayObject **op,
                         npyiter_opitflags *op_itflags, PyArray_Descr **op_dtype,
                         PyArray_Descr **op_request_dtypes,
-                        int only_inputs, int output_scalars)
+                        int only_inputs)
 {
     int iop;
     npy_intp narrs = 0, ndtypes = 0;
@@ -2698,7 +2720,7 @@ npyiter_allocate_arrays(NpyIter *iter,
                         npy_uint32 flags,
                         PyArray_Descr **op_dtype, PyTypeObject *subtype,
                         npy_uint32 *op_flags, npyiter_opitflags *op_itflags,
-                        int **op_axes, int output_scalars)
+                        int **op_axes)
 {
     npy_uint32 itflags = NIT_ITFLAGS(iter);
     int idim, ndim = NIT_NDIM(iter);
@@ -2729,7 +2751,7 @@ npyiter_allocate_arrays(NpyIter *iter,
         if (op[iop] == NULL) {
             PyArrayObject *out;
             PyTypeObject *op_subtype;
-            int ondim = output_scalars ? 0 : ndim;
+            int ondim = ndim;
 
             /* Check whether the subtype was disabled */
             op_subtype = (op_flags[iop] & NPY_ITER_NO_SUBTYPE) ?
@@ -2902,7 +2924,7 @@ npyiter_allocate_arrays(NpyIter *iter,
         if ((itflags & NPY_ITFLAG_BUFFER) &&
                                 !(op_itflags[iop] & NPY_OP_ITFLAG_CAST)) {
             NpyIter_AxisData *axisdata = NIT_AXISDATA(iter);
-            if (ndim == 1) {
+            if (ndim <= 1) {
                 op_itflags[iop] |= NPY_OP_ITFLAG_BUFNEVER;
                 NBF_STRIDES(bufferdata)[iop] = NAD_STRIDES(axisdata)[iop];
             }

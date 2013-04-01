@@ -634,12 +634,12 @@ Construction and Destruction
     Extends :cfunc:`NpyIter_MultiNew` with several advanced options providing
     more control over broadcasting and buffering.
 
-    If 0/NULL values are passed to ``oa_ndim``, ``op_axes``, ``itershape``,
+    If -1/NULL values are passed to ``oa_ndim``, ``op_axes``, ``itershape``,
     and ``buffersize``, it is equivalent to :cfunc:`NpyIter_MultiNew`.
 
-    The parameter ``oa_ndim``, when non-zero, specifies the number of
+    The parameter ``oa_ndim``, when not zero or -1, specifies the number of
     dimensions that will be iterated with customized broadcasting.
-    If it is provided, ``op_axes`` and/or ``itershape`` must also be provided.
+    If it is provided, ``op_axes`` must and ``itershape`` can also be provided.
     The ``op_axes`` parameter let you control in detail how the
     axes of the operand arrays get matched together and iterated.
     In ``op_axes``, you must provide an array of ``nop`` pointers
@@ -649,6 +649,11 @@ Construction and Destruction
     -1 which means ``newaxis``.  Within each ``op_axes[j]`` array, axes
     may not be repeated.  The following example is how normal broadcasting
     applies to a 3-D array, a 2-D array, a 1-D array and a scalar.
+    
+    **Note**: Before NumPy 1.8 ``oa_ndim == 0` was used for signalling that
+    that ``op_axes`` and ``itershape`` are unused. This is deprecated and
+    should be replaced with -1. Better backward compatibility may be
+    achieved by using :cfunc:`NpyIter_MultiNew` for this case.
 
     .. code-block:: c
 
