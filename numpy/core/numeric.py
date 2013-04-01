@@ -1153,15 +1153,19 @@ def roll(a, shift, axis=None):
         n = a.size
         reshape = True
     else:
-        n = a.shape[axis]
+        try:
+            n = a.shape[axis]
+        except IndexError:
+            raise ValueError('axis must be >= 0 and < %d' % a.ndim)
         reshape = False
+    if n == 0:
+        return a
     shift %= n
-    indexes = concatenate((arange(n-shift,n),arange(n-shift)))
+    indexes = concatenate((arange(n - shift, n), arange(n - shift)))
     res = a.take(indexes, axis)
     if reshape:
-        return res.reshape(a.shape)
-    else:
-        return res
+        res = res.reshape(a.shape)
+    return res
 
 def rollaxis(a, axis, start=0):
     """
