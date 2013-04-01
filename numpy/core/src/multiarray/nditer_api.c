@@ -2065,8 +2065,9 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
 
     /* If last time around, the reduce loop structure was full, we reuse it */
     if (reuse_reduce_loops) {
-        npy_intp full_transfersize;
+        npy_intp full_transfersize, prev_reduce_outersize;
 
+        prev_reduce_outersize = NBF_REDUCE_OUTERSIZE(bufferdata);
         reduce_outerstrides = NBF_REDUCE_OUTERSTRIDES(bufferdata);
         reduce_outerptrs = NBF_REDUCE_OUTERPTRS(bufferdata);
         reduce_outerdim = NBF_REDUCE_OUTERDIM(bufferdata);
@@ -2088,6 +2089,13 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
         }
         else {
             transfersize = full_transfersize;
+        }
+        if (prev_reduce_outersize < NBF_REDUCE_OUTERSIZE(bufferdata)) {
+            /*
+             * If the previous time around less data was copied it may not
+             * be safe to reuse the buffers even if the pointers match.
+             */
+            reuse_reduce_loops = 0;
         }
         NBF_BUFITEREND(bufferdata) = iterindex + reduce_innersize;
 
@@ -2187,6 +2195,11 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                 break;
             /* Just a copy */
             case 0:
+                /* Do not reuse buffer if it did not exist */
+                if (!(op_itflags[iop] & NPY_OP_ITFLAG_USINGBUFFER) &&
+                                                (prev_dataptrs != NULL)) {
+                    prev_dataptrs[iop] = NULL;
+                }
                 /*
                  * No copyswap or cast was requested, so all we're
                  * doing is copying the data to fill the buffer and
@@ -2230,6 +2243,11 @@ npyiter_copy_to_buffers(NpyIter *iter, char **prev_dataptrs)
                 break;
             /* Just a copy, but with a reduction */
             case NPY_OP_ITFLAG_REDUCE:
+                /* Do not reuse buffer if it did not exist */
+                if (!(op_itflags[iop] & NPY_OP_ITFLAG_USINGBUFFER) &&
+                                                (prev_dataptrs != NULL)) {
+                    prev_dataptrs[iop] = NULL;
+                }
                 if (ad_strides[iop] == 0) {
                     strides[iop] = 0;
                     /* It's all in one stride in the inner loop dimension */
@@ -2618,6 +2636,7 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
                  */
                 if (count <= reducespace) {
                     *reduce_innersize = count;
+                    NIT_ITFLAGS(iter) |= NPY_ITFLAG_REUSE_REDUCE_LOOPS;
                     return count;
                 }
                 else if (nonzerocoord) {
@@ -2625,6 +2644,8 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
                         count = reducespace;
                     }
                     *reduce_innersize = count;
+                    /* NOTE: This is similar to the (coord != 0) case below. */
+                    NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_REUSE_REDUCE_LOOPS;
                     return count;
                 }
                 else {
@@ -2664,8 +2685,20 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
         return count;
     }
 
-    /* In this case, we can reuse the reduce loops */
-    NIT_ITFLAGS(iter) |= NPY_ITFLAG_REUSE_REDUCE_LOOPS;
+    coord = NAD_INDEX(axisdata);
+    if (coord != 0) {
+        /*
+         * In this case, it is only safe to reuse the buffer if the amount
+         * of data copied is not more then the current axes, as is the
+         * case when reuse_reduce_loops was active already.
+         * It should be in principle OK when the idim loop returns immidiatly.
+         */
+        NIT_ITFLAGS(iter) &= ~NPY_ITFLAG_REUSE_REDUCE_LOOPS;
+    }
+    else {
+        /* In this case, we can reuse the reduce loops */
+        NIT_ITFLAGS(iter) |= NPY_ITFLAG_REUSE_REDUCE_LOOPS;
+    }
 
     *reduce_innersize = reducespace;
     count /= reducespace;
@@ -2690,7 +2723,6 @@ npyiter_checkreducesize(NpyIter *iter, npy_intp count,
                         "the outer loop? %d\n", iop, (int)stride0op[iop]);
     }
     shape = NAD_SHAPE(axisdata);
-    coord = NAD_INDEX(axisdata);
     reducespace += (shape-coord-1) * factor;
     factor *= shape;
     NIT_ADVANCE_AXISDATA(axisdata, 1);
