@@ -37,6 +37,13 @@ compiler, then it's possible you will encounter problems. If so, please
 file a bug and as a temporary workaround you can re-enable the old build
 system by exporting the shell variable NPY_SEPARATE_COMPILATION=0.
 
+For the AdvancedNew iterator the ``oa_ndim`` flag should now be -1 to indicate
+that no ``op_axes`` and ``itershape`` are passed in. The ``oa_ndim == 0``
+case, now indicates a 0-D iteration and ``op_axes`` being NULL and the old 
+usage is deprecated. This does not effect the ``NpyIter_New`` or
+``NpyIter_MultiNew`` functions.
+
+
 New features
 ============
 

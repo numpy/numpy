@@ -294,7 +294,7 @@ struct NpyIter_AD {
 #define NIT_SIZEOF_ITERATOR(itflags, ndim, nop) ( \
         sizeof(struct NpyIter_InternalOnly) + \
         NIT_AXISDATA_OFFSET(itflags, ndim, nop) + \
-        NIT_AXISDATA_SIZEOF(itflags, ndim, nop)*(ndim))
+        NIT_AXISDATA_SIZEOF(itflags, ndim, nop)*(ndim ? ndim : 1))
 
 /* Internal helper functions shared between implementation files */
 NPY_NO_EXPORT void

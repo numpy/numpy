@@ -256,6 +256,7 @@ PyArray_CastRawArrays(npy_intp count,
  * 'stransfer' with the provided dst_stride/src_stride and
  * dst_strides[0]/src_strides[0], so the caller can use those values to
  * specialize the function.
+ * Note that even if ndim == 0, everything needs to be set as if ndim == 1.
  *
  * The return value is the number of elements it couldn't copy.  A return value
  * of 0 means all elements were copied, a larger value means the end of

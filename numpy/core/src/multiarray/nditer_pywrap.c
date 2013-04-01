@@ -95,7 +95,6 @@ NpyIter_GlobalFlagsConverter(PyObject *flags_in, npy_uint32 *flags)
     npy_uint32 flag;
 
     if (flags_in == NULL || flags_in == Py_None) {
-        *flags = 0;
         return 1;
     }
 
@@ -526,7 +525,7 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp nop,
         return 0;
     }
 
-    *oa_ndim = 0;
+    *oa_ndim = -1;
 
     /* Copy the tuples into op_axes */
     for (iop = 0; iop < nop; ++iop) {
@@ -545,13 +544,8 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp nop,
                 Py_DECREF(a);
                 return 0;
             }
-            if (*oa_ndim == 0) {
+            if (*oa_ndim == -1) {
                 *oa_ndim = PySequence_Size(a);
-                if (*oa_ndim == 0) {
-                    PyErr_SetString(PyExc_ValueError,
-                            "op_axes must have at least one dimension");
-                    return 0;
-                }
                 if (*oa_ndim > NPY_MAXDIMS) {
                     PyErr_SetString(PyExc_ValueError,
                             "Too many dimensions in op_axes");
@@ -575,7 +569,7 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp nop,
                     op_axes[iop][idim] = -1;
                 }
                 else {
-                    op_axes[iop][idim] = PyInt_AsLong(v);
+                    op_axes[iop][idim] = PyArray_PyIntAsInt(v);
                     if (op_axes[iop][idim]==-1 &&
                                                 PyErr_Occurred()) {
                         Py_DECREF(a);
@@ -589,7 +583,7 @@ npyiter_convert_op_axes(PyObject *op_axes_in, npy_intp nop,
         }
     }
 
-    if (*oa_ndim == 0) {
+    if (*oa_ndim == -1) {
         PyErr_SetString(PyExc_ValueError,
                 "If op_axes is provided, at least one list of axes "
                 "must be contained within it");
@@ -726,7 +720,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     NPY_CASTING casting = NPY_SAFE_CASTING;
     npy_uint32 op_flags[NPY_MAXARGS];
     PyArray_Descr *op_request_dtypes[NPY_MAXARGS];
-    int oa_ndim = 0;
+    int oa_ndim = -1;
     int op_axes_arrays[NPY_MAXARGS][NPY_MAXDIMS];
     int *op_axes[NPY_MAXARGS];
     PyArray_Dims itershape = {NULL, 0};
@@ -784,7 +778,7 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
     }
 
     if (itershape.len > 0) {
-        if (oa_ndim == 0) {
+        if (oa_ndim == -1) {
             oa_ndim = itershape.len;
             memset(op_axes, 0, sizeof(op_axes[0]) * nop);
         }
@@ -800,10 +794,9 @@ npyiter_init(NewNpyArrayIterObject *self, PyObject *args, PyObject *kwds)
         itershape.ptr = NULL;
     }
 
-
     self->iter = NpyIter_AdvancedNew(nop, op, flags, order, casting, op_flags,
                                   op_request_dtypes,
-                                  oa_ndim, oa_ndim > 0 ? op_axes : NULL,
+                                  oa_ndim, oa_ndim >= 0 ? op_axes : NULL,
                                   itershape.ptr,
                                   buffersize);
 
@@ -860,7 +853,7 @@ NpyIter_NestedIters(PyObject *NPY_UNUSED(self),
 
     int iop, nop = 0, inest, nnest = 0;
     PyArrayObject *op[NPY_MAXARGS];
-    npy_uint32 flags = 0, flags_inner = 0;
+    npy_uint32 flags = 0, flags_inner;
     NPY_ORDER order = NPY_KEEPORDER;
     NPY_CASTING casting = NPY_SAFE_CASTING;
     npy_uint32 op_flags[NPY_MAXARGS], op_flags_inner[NPY_MAXARGS];

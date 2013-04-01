@@ -1211,7 +1211,7 @@ iterator_loop(PyUFuncObject *ufunc,
                         NPY_ITER_DELAY_BUFALLOC,
                         order, NPY_UNSAFE_CASTING,
                         op_flags, dtype,
-                        0, NULL, NULL, buffersize);
+                        -1, NULL, NULL, buffersize);
     if (iter == NULL) {
         return -1;
     }
@@ -1509,7 +1509,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
                         NPY_ITER_GROWINNER,
                         order, NPY_UNSAFE_CASTING,
                         op_flags, dtypes,
-                        0, NULL, NULL, buffersize);
+                        -1, NULL, NULL, buffersize);
     if (iter == NULL) {
         return -1;
     }
@@ -1974,18 +1974,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                       NPY_ITER_ALIGNED|
                       NPY_ITER_ALLOCATE|
                       NPY_ITER_NO_BROADCAST;
-    }
-
-    /*
-     * If there are no iteration dimensions, create a fake one
-     * so that the scalar edge case works right.
-     */
-    if (iter_ndim == 0) {
-        iter_ndim = 1;
-        iter_shape[0] = 1;
-        for (i = 0; i < nop; ++i) {
-            op_axes[i][0] = -1;
-        }
     }
 
     /* Create the iterator */
