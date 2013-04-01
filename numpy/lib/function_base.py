@@ -33,6 +33,9 @@ from ._compiled_base import add_newdoc_ufunc
 import numpy as np
 import collections
 
+# Force range to be a generator, for np.delete's usage.
+if sys.version_info[0] < 3:
+    range = xrange
 
 def iterable(y):
     """
@@ -3467,7 +3470,7 @@ def delete(arr, obj, axis=None):
 
     if isinstance(obj, slice):
         start, stop, step = obj.indices(N)
-        xr = xrange(start, stop, step)
+        xr = range(start, stop, step)
         numtodel = len(xr)
 
         if numtodel <= 0:
