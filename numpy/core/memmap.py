@@ -284,6 +284,33 @@ class memmap(ndarray):
             self.offset = None
             self.mode = None
 
+    def __array_wrap__(self, arr, context=None):
+        # If the type is not memmap, then a user subclass may do some more
+        # things that need to be preserved. Otherwise, return a base array
+        # since it should not p
+        if type(self) is memmap and not np.may_share_memory(self, arr):
+            return arr
+        try:
+            return super(memmap, self).__array_wrap__(arr, context=context)
+        except TypeError:
+            return super(memmap, self).__array_wrap__(arr)
+
+    def __array_prepare__(self, arr, context=None):
+        # There is no need to make an array a memmap, but we still have to do
+        # it in case this is not of memmap type.
+        if type(self) is memmap and not np.may_share_memory(self, arr):
+            return arr
+        try:
+            return super(memmap, self).__array_prepare__(arr, context=context)
+        except TypeError:
+            return super(memmap, self).__array_prepare__(arr)
+
+    def __getitem__(self, index):
+        res = super(memmap, self).__getitem__(index)
+        if type(res) is memmap and res._mmap is None:
+            return res.view(type=ndarray)
+        return res
+
     def flush(self):
         """
         Write any changes in the array to the file on disk.
