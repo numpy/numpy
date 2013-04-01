@@ -4902,16 +4902,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         goto fail;
     }
 
-    /*
-     * If second operand exists, we need to broadcast it to 
-     * the shape of the indices applied to the first operand.
-     * This will produce an iterator that will match up with
-     * the iterator for the first operand.
-     */
+    /* Create second operand from number array if needed. */
     if (op2 != NULL) {
-        iter_descr = PyArray_DESCR(iter->ait->ao);
-        op2_array = (PyArrayObject *)PyArray_FromAny(op2, iter_descr,
-                                0, 0, NPY_ARRAY_FORCECAST, NULL);
+        op2_array = (PyArrayObject *)PyArray_FromAny(op2, NULL,
+                                0, 0, 0, NULL);
         if (op2_array == NULL) {
             goto fail;
         }
