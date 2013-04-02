@@ -522,10 +522,27 @@ discover_itemsize(PyObject *s, int nd, int *itemsize)
 #endif
         PyUnicode_Check(s)) {
 
-        /* If an object has no length, leave it be */
         n = PyObject_Length(s);
         if (n == -1) {
             PyErr_Clear();
+            if (PyBool_Check(s)) {
+                *itemsize = PyArray_MAX(*itemsize, 8);
+            }
+            else if (PyInt_Check(s)) {
+                *itemsize = PyArray_MAX(*itemsize, 24);
+            }
+            else if (PyLong_Check(s)) {
+                *itemsize = PyArray_MAX(*itemsize, 32);
+            }
+            else if (PyFloat_Check(s)) {
+                *itemsize = PyArray_MAX(*itemsize, 32);
+            }
+            else if (PyComplex_Check(s)) {
+                *itemsize = PyArray_MAX(*itemsize, 64);
+            }
+            else {
+                *itemsize = PyArray_MAX(*itemsize, 64);
+            }
         }
         else {
             *itemsize = PyArray_MAX(*itemsize, n);

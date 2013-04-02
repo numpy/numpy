@@ -16,7 +16,7 @@ class TestBasic(TestCase):
         A = np.array([['abc', 2],
                       ['long   ', '0123456789']], dtype='O')
         B = np.char.array(A)
-        assert_equal(B.dtype.itemsize, 10)
+        assert_equal(B.dtype.itemsize, 24)
         assert_array_equal(B, asbytes_nested([['abc', '2'],
                                               ['long', '0123456789']]))
 
