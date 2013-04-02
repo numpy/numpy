@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 import os
 from distutils.command.install_headers import install_headers as old_install_headers

@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 from numpy.testing import TestCase, run_module_suite, assert_,\
         assert_array_equal

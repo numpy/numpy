@@ -175,5 +175,5 @@ See `this article <http://www.scipy.org/EricsBroadcastingDoc>`_
 for illustrations of broadcasting concepts.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 

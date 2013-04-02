@@ -104,7 +104,7 @@ available as array methods, i.e. ``x = np.array([1,2,3]); x.sort()``.
 Exceptions to this rule are documented.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
@@ -126,43 +126,43 @@ else:
         its source directory; please exit the numpy source tree, and relaunch
         your python intepreter from there."""
         raise ImportError(msg)
-    from version import git_revision as __git_revision__
-    from version import version as __version__
+    from .version import git_revision as __git_revision__
+    from .version import version as __version__
 
-    from _import_tools import PackageLoader
+    from ._import_tools import PackageLoader
 
     def pkgload(*packages, **options):
         loader = PackageLoader(infunc=True)
         return loader(*packages, **options)
 
-    import add_newdocs
+    from . import add_newdocs
     __all__ = ['add_newdocs']
 
     pkgload.__doc__ = PackageLoader.__call__.__doc__
 
-    from testing import Tester
+    from .testing import Tester
     test = Tester().test
     bench = Tester().bench
 
-    import core
-    from core import *
-    import compat
-    import lib
-    from lib import *
-    import linalg
-    import fft
-    import polynomial
-    import random
-    import ctypeslib
-    import ma
-    import matrixlib as _mat
-    from matrixlib import *
+    from . import core
+    from .core import *
+    from . import compat
+    from . import lib
+    from .lib import *
+    from . import linalg
+    from . import fft
+    from . import polynomial
+    from . import random
+    from . import ctypeslib
+    from . import ma
+    from . import matrixlib as _mat
+    from .matrixlib import *
 
     # Make these accessible from numpy name-space
     #  but not imported in from numpy import *
     from __builtin__ import bool, int, long, float, complex, \
          object, unicode, str
-    from core import round, abs, max, min
+    from .core import round, abs, max, min
 
     __all__.extend(['__version__', 'pkgload', 'PackageLoader',
                'show_config'])

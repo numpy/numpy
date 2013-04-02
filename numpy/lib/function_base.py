@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 __docformat__ = "restructuredtext en"
 __all__ = ['select', 'piecewise', 'trim_zeros', 'copy', 'iterable',
@@ -26,11 +26,11 @@ from numpy.core.fromnumeric import ravel, nonzero, choose, sort, mean
 from numpy.core.numerictypes import typecodes, number
 from numpy.core import atleast_1d, atleast_2d
 from numpy.lib.twodim_base import diag
-from _compiled_base import _insert, add_docstring
-from _compiled_base import digitize, bincount, interp as compiled_interp
-from arraysetops import setdiff1d
-from utils import deprecate
-from _compiled_base import add_newdoc_ufunc
+from ._compiled_base import _insert, add_docstring
+from ._compiled_base import digitize, bincount, interp as compiled_interp
+from .arraysetops import setdiff1d
+from .utils import deprecate
+from ._compiled_base import add_newdoc_ufunc
 import numpy as np
 import collections
 

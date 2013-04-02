@@ -5,7 +5,7 @@ significanly contributes to numpy import times. Importing this copy has almost
 no overhead.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import types
 

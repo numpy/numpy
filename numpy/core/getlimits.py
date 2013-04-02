@@ -1,14 +1,14 @@
 """Machine limits for Float32 and Float64 and (long double) if available...
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['finfo','iinfo']
 
-from machar import MachAr
-import numeric
-import numerictypes as ntypes
-from numeric import array
+from .machar import MachAr
+from . import numeric
+from . import numerictypes as ntypes
+from .numeric import array
 
 def _frz(a):
     """fix rank-0 --> rank-1"""

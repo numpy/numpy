@@ -13,7 +13,7 @@ function name, setup and teardown functions and so on - see
 ``nose.tools`` for more information.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import warnings
 import sys
@@ -210,7 +210,7 @@ def knownfailureif(fail_condition, msg=None):
         # Local import to avoid a hard nose dependency and only incur the
         # import time overhead at actual test-time.
         import nose
-        from noseclasses import KnownFailureTest
+        from .noseclasses import KnownFailureTest
         def knownfailer(*args, **kwargs):
             if fail_val():
                 raise KnownFailureTest(msg)
@@ -249,7 +249,7 @@ def deprecated(conditional=True):
         # Local import to avoid a hard nose dependency and only incur the
         # import time overhead at actual test-time.
         import nose
-        from noseclasses import KnownFailureTest
+        from .noseclasses import KnownFailureTest
 
         def _deprecated_imp(*args, **kwargs):
             # Poor man's replacement for the with statement

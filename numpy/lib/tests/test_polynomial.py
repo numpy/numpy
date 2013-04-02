@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 '''
 >>> p = np.poly1d([1.,2,3])

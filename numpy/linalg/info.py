@@ -32,6 +32,6 @@ Exceptions:
 - LinAlgError     Indicates a failed linear algebra operation
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 depends = ['core']

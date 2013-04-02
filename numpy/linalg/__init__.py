@@ -42,12 +42,12 @@ LinAlgError     Indicates a failed linear algebra operation
 =============== ==========================================================
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 # To get sub-modules
-from info import __doc__
+from .info import __doc__
 
-from linalg import *
+from .linalg import *
 
 from numpy.testing import Tester
 test = Tester().test

@@ -1,7 +1,7 @@
 """A collection of functions designed to help I/O with ascii files.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __docformat__ = "restructuredtext en"
 

@@ -7,5 +7,5 @@ Methods vs. Functions
 Placeholder for Methods vs. Functions documentation.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 

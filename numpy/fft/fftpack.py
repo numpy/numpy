@@ -30,14 +30,14 @@ The underlying code for these functions is an f2c-translated and modified
 version of the FFTPACK routines.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['fft','ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
 from numpy.core import asarray, zeros, swapaxes, shape, conjugate, \
      take
-import fftpack_lite as fftpack
+from . import fftpack_lite as fftpack
 
 _fft_cache = {}
 _real_fft_cache = {}

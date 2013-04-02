@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['ravel_multi_index',
            'unravel_index',
@@ -16,9 +16,9 @@ from numpy.core.numeric import ( asarray, ScalarType, array, alltrue, cumprod,
 from numpy.core.numerictypes import find_common_type
 import math
 
-import function_base
+from . import function_base
 import numpy.matrixlib as matrix
-from function_base import diff
+from .function_base import diff
 from numpy.lib._compiled_base import ravel_multi_index, unravel_index
 from numpy.lib.stride_tricks import as_strided
 makemat = matrix.matrix

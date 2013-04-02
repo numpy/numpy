@@ -5,6 +5,7 @@
 # checking the assembly for instructions specific to sse, etc... Obviously,
 # this won't work all the times (for example, if some instructions are used
 # only after proper detection of the running CPU, this will give false alarm).
+from __future__ import division
 
 import sys
 import re
@@ -57,7 +58,7 @@ SSE2_SET = ["addpd", "addsd", "andnpd", "andpd", "clflush", "cmppd", "cmpsd",
         "sqrtsd", "subpd", "subsd", "ucomisd", "unpckhpd", "unpcklpd", "xorpd"]
 
 SSE3_SET = [ "addsubpd", "addsubps", "haddpd", "haddps", "hsubpd", "hsubps",
-        "lddqu", "movddup", "movshdup", "movsldup", "fisttp"] 
+        "lddqu", "movddup", "movshdup", "movsldup", "fisttp"]
 
 def get_vendor_string():
     """Return the vendor string reading cpuinfo."""

@@ -6,7 +6,7 @@ below requirements.
 See pkgtester, nosetester modules
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 
 class NullTester(object):

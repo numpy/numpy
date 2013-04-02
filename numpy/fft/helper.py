@@ -2,7 +2,7 @@
 Discrete Fourier Transforms - helper.py
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 # Created by Pearu Peterson, September 2002
 

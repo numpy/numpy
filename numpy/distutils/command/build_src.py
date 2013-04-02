@@ -1,6 +1,6 @@
 """ Build swig, f2py, pyrex sources.
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import os
 import re

@@ -11,20 +11,20 @@ $Date: 2005/05/06 10:57:33 $
 Pearu Peterson
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __version__ = "$Revision: 1.60 $"[10:-1]
 
-import __version__
+from . import __version__
 f2py_version = __version__.version
 
 import copy
 import re
 import os
 import sys
-from auxfuncs import *
-from crackfortran import markoutercomma
-import cb_rules
+from .auxfuncs import *
+from .crackfortran import markoutercomma
+from . import cb_rules
 
 # Numarray and Numeric users should set this False
 using_newcore = True

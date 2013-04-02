@@ -50,11 +50,11 @@ $Date: 2005/08/30 08:58:42 $
 Pearu Peterson
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __version__ = "$Revision: 1.129 $"[10:-1]
 
-import __version__
+from . import __version__
 f2py_version = __version__.version
 
 import pprint
@@ -66,14 +66,14 @@ errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint
 
-from auxfuncs import *
-import capi_maps
-from capi_maps import *
-import cfuncs
-import common_rules
-import use_rules
-import f90mod_rules
-import func2subr
+from .auxfuncs import *
+from . import capi_maps
+from .capi_maps import *
+from . import cfuncs
+from . import common_rules
+from . import use_rules
+from . import f90mod_rules
+from . import func2subr
 options={}
 
 sepdict={}

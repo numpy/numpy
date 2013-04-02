@@ -1,9 +1,9 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['atleast_1d','atleast_2d','atleast_3d','vstack','hstack']
 
-import numeric as _nx
-from numeric import array, asanyarray, newaxis
+from . import numeric as _nx
+from .numeric import array, asanyarray, newaxis
 
 def atleast_1d(*arys):
     """

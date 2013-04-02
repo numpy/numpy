@@ -1,16 +1,16 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 import sys
 
 if sys.version_info[0] < 3:
-    from __version__ import version as __version__
+    from .__version__ import version as __version__
     # Must import local ccompiler ASAP in order to get
     # customized CCompiler.spawn effective.
-    import ccompiler
-    import unixccompiler
+    from . import ccompiler
+    from . import unixccompiler
 
-    from info import __doc__
-    from npy_pkg_config import *
+    from .info import __doc__
+    from .npy_pkg_config import *
 
     try:
         import __config__

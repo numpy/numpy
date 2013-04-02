@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 # missing Numarray defined names (in from numarray import *)
 
@@ -40,7 +40,7 @@ from numpy import dot as matrixmultiply, dot, vdot, ravel, concatenate, all,\
      resize, searchsorted, shape, size, sort, swapaxes, trace, transpose
 import numpy as np
 
-from numerictypes import typefrom
+from .numerictypes import typefrom
 
 if sys.version_info[0] >= 3:
     import copyreg as copy_reg

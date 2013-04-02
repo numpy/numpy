@@ -1,12 +1,12 @@
 """This module is for compatibility only.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['UserArray', 'squeeze', 'Matrix', 'asarray', 'dot', 'k', 'Numeric', 'LinearAlgebra', 'identity', 'multiply', 'types', 'string']
 
 import types
-from user_array import UserArray, asarray
+from .user_array import UserArray, asarray
 import numpy.oldnumeric as Numeric
 from numpy.oldnumeric import dot, identity, multiply
 import numpy.oldnumeric.linear_algebra as LinearAlgebra

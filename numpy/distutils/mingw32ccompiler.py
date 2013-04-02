@@ -7,7 +7,7 @@ Support code for building Python extensions on Windows.
     # 3. Force windows to use g77
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import os
 import subprocess
@@ -19,7 +19,7 @@ import re
 import numpy.distutils.ccompiler
 
 if sys.version_info[0] < 3:
-    import log
+    from . import log
 else:
     from numpy.distutils import log
 # NT stuff

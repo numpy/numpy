@@ -14,11 +14,11 @@ $Date: 2005/05/06 11:42:34 $
 Pearu Peterson
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __version__ = "$Revision: 1.75 $"[10:-1]
 
-import __version__
+from . import __version__
 f2py_version = __version__.version
 
 import types
@@ -1117,7 +1117,7 @@ capi_fail:
 """
 
 def buildcfuncs():
-    from capi_maps import c2capi_map
+    from .capi_maps import c2capi_map
     for k in c2capi_map.keys():
         m='pyarr_from_p_%s1'%k
         cppmacros[m]='#define %s(v) (PyArray_SimpleNewFromData(0,NULL,%s,(char *)v))'%(m,c2capi_map[k])

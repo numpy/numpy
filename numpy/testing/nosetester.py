@@ -4,7 +4,7 @@ Nose test running.
 This module implements ``test()`` and ``bench()`` functions for NumPy modules.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import os
 import sys
@@ -216,7 +216,7 @@ class NoseTester(object):
 
         A return value of None means use the nose builtin doctest plugin
         """
-        from noseclasses import NumpyDoctest
+        from .noseclasses import NumpyDoctest
         return NumpyDoctest()
 
     def prepare_test_args(self, label='fast', verbose=1, extra_argv=None,
@@ -245,7 +245,7 @@ class NoseTester(object):
                    '--cover-tests', '--cover-erase']
         # construct list of plugins
         import nose.plugins.builtin
-        from noseclasses import KnownFailure, Unplugger
+        from .noseclasses import KnownFailure, Unplugger
         plugins = [KnownFailure()]
         plugins += [p() for p in nose.plugins.builtin.plugins]
         # add doctesting if required
@@ -331,7 +331,7 @@ class NoseTester(object):
         # cap verbosity at 3 because nose becomes *very* verbose beyond that
         verbose = min(verbose, 3)
 
-        import utils
+        from . import utils
         utils.verbose = verbose
 
         if doctests:
@@ -371,7 +371,7 @@ class NoseTester(object):
         warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 
         try:
-            from noseclasses import NumpyTestProgram
+            from .noseclasses import NumpyTestProgram
 
             argv, plugins = self.prepare_test_args(label,
                     verbose, extra_argv, doctests, coverage)
@@ -447,7 +447,7 @@ class NoseTester(object):
         nose = import_nose()
 
         # get plugin to disable doctests
-        from noseclasses import Unplugger
+        from .noseclasses import Unplugger
         add_plugins = [Unplugger('doctest')]
 
         return nose.run(argv=argv, addplugins=add_plugins)

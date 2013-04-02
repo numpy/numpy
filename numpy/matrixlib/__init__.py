@@ -1,9 +1,9 @@
 """Sub-package containing the matrix class and related functions.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
-from defmatrix import *
+from .defmatrix import *
 
 __all__ = defmatrix.__all__
 

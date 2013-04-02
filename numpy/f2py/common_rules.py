@@ -13,11 +13,11 @@ $Date: 2005/05/06 10:57:33 $
 Pearu Peterson
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __version__ = "$Revision: 1.19 $"[10:-1]
 
-import __version__
+from . import __version__
 f2py_version = __version__.version
 
 import pprint
@@ -26,10 +26,10 @@ errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint
 
-from auxfuncs import *
-import capi_maps
-import func2subr
-from crackfortran import rmbadname
+from .auxfuncs import *
+from . import capi_maps
+from . import func2subr
+from .crackfortran import rmbadname
 ##############
 
 def findcommonblocks(block,top=1):

@@ -1,7 +1,7 @@
 """Tests for legendre module.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import numpy as np
 import numpy.polynomial.legendre as leg

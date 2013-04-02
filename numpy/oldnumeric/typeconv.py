@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['oldtype2dtype', 'convtypecode', 'convtypecode2', 'oldtypecodes']
 

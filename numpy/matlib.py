@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 import numpy as np
 from numpy.matrixlib.defmatrix import matrix, asmatrix

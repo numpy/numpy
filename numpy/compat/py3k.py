@@ -2,7 +2,7 @@
 Python 3 compatibility tools.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',

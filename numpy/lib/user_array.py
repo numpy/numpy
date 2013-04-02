@@ -4,7 +4,7 @@ Try to inherit from the ndarray instead of using this class as this is not
 complete.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 from numpy.core import array, asarray, absolute, add, subtract, multiply, \
      divide, remainder, power, left_shift, right_shift, bitwise_and, \
