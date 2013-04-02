@@ -979,7 +979,7 @@ static PyObject *
     int retstatus;
     int first;
     @type@ out = {@zero@, @zero@};
-    
+
     switch(_@name@_convert2_to_ctypes(a, &arg1, b, &arg2)) {
         case 0:
             break;
