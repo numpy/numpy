@@ -16,6 +16,8 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
            'svd', 'eig', 'eigh','lstsq', 'norm', 'qr', 'cond', 'matrix_rank',
            'LinAlgError']
 
+import warnings
+
 from numpy.core import array, asarray, zeros, empty, transpose, \
         intc, single, double, csingle, cdouble, inexact, complexfloating, \
         newaxis, ravel, all, Inf, dot, add, multiply, identity, sqrt, \
@@ -539,7 +541,7 @@ def cholesky(a):
 
 # QR decompostion
 
-def qr(a, mode='full'):
+def qr(a, mode='reduced'):
     """
     Compute the qr factorization of a matrix.
 
@@ -548,24 +550,42 @@ def qr(a, mode='full'):
 
     Parameters
     ----------
-    a : array_like
-        Matrix to be factored, of shape (M, N).
-    mode : {'full', 'r', 'economic'}, optional
-        Specifies the values to be returned. 'full' is the default.
-        Economic mode is slightly faster then 'r' mode if only `r` is needed.
+    a : array_like, shape (M, N)
+        Matrix to be factored.
+    mode : {'reduced', 'complete', 'r', 'raw', 'full', 'economic'}, optional
+        If K = min(M, N), then
+
+        'reduced'  : returns q, r with dimensions (M, K), (K, N) (default)
+        'complete' : returns q, r with dimensions (M, M), (M, N)
+        'r'        : returns r only with dimensions (K, N)
+        'raw'      : returns h, tau with dimensions (N, M), (K,)
+        'full'     : alias of 'reduced', deprecated
+        'economic' : returns h from 'raw', deprecated.
+
+        The options 'reduced', 'complete, and 'raw' are new in numpy 1.8,
+        see the notes for more information. The default is 'reduced' and to
+        maintain backward compatibility with earlier versions of numpy both
+        it and the old default 'full' can be omitted. Note that array h
+        returned in 'raw' mode is transposed for calling Fortran. The
+        'economic' mode is deprecated.  The modes 'full' and 'economic' may
+        be passed using only the first letter for backwards compatibility,
+        but all others must be spelled out. See the Notes for more
+        explanation.
+
 
     Returns
     -------
     q : ndarray of float or complex, optional
-        The orthonormal matrix, of shape (M, K). Only returned if
-        ``mode='full'``.
+        A matrix with orthonormal columns. When mode = 'complete' the
+        result is an orthogonal/unitary matrix depending on whether or not
+        a is real/complex. The determinant may be either +/- 1 in that
+        case.
     r : ndarray of float or complex, optional
-        The upper-triangular matrix, of shape (K, N) with K = min(M, N).
-        Only returned when ``mode='full'`` or ``mode='r'``.
-    a2 : ndarray of float or complex, optional
-        Array of shape (M, N), only returned when ``mode='economic``'.
-        The  diagonal and the upper triangle of `a2` contains `r`, while
-        the rest of the matrix is undefined.
+        The upper-triangular matrix.
+    (h, tau) : ndarrays of np.double or np.cdouble, optional
+        The array h contains the Householder reflectors that generate q
+        along with r. The tau array contains scaling factors for the
+        reflectors. In the deprecated  'economic' mode only h is returned.
 
     Raises
     ------
@@ -580,8 +600,20 @@ def qr(a, mode='full'):
     For more information on the qr factorization, see for example:
     http://en.wikipedia.org/wiki/QR_factorization
 
-    Subclasses of `ndarray` are preserved, so if `a` is of type `matrix`,
-    all the return values will be matrices too.
+    Subclasses of `ndarray` are preserved except for the 'raw' mode. So if
+    `a` is of type `matrix`, all the return values will be matrices too.
+
+    New 'reduced', 'complete', and 'raw' options for mode were added in
+    Numpy 1.8 and the old option 'full' was made an alias of 'reduced'.  In
+    addition the options 'full' and 'economic' were deprecated.  Because
+    'full' was the previous default and 'reduced' is the new default,
+    backward compatibility can be maintained by letting `mode` default.
+    The 'raw' option was added so that LAPACK routines that can multiply
+    arrays by q using the Householder reflectors can be used. Note that in
+    this case the returned arrays are of type np.double or np.cdouble and
+    the h array is transposed to be FORTRAN compatible.  No routines using
+    the 'raw' return are currently exposed by numpy, but some are available
+    in lapack_lite and just await the necessary work.
 
     Examples
     --------
@@ -626,6 +658,20 @@ def qr(a, mode='full'):
     array([  1.1e-16,   1.0e+00])
 
     """
+    if mode not in ('reduced', 'complete', 'r', 'raw'):
+        if mode in ('f', 'full'):
+            msg = "".join((
+                    "The 'full' option is deprecated in favor of 'reduced'.\n",
+                    "For backward compatibility let mode default."))
+            warnings.warn(msg, DeprecationWarning)
+            mode = 'reduced'
+        elif mode in ('e', 'economic'):
+            msg = "The 'economic' option is deprecated.",
+            warnings.warn(msg, DeprecationWarning)
+            mode = 'economic'
+        else:
+            raise ValueError("Unrecognized mode '%s'" % mode)
+
     a, wrap = _makearray(a)
     _assertRank2(a)
     _assertNonEmpty(a)
@@ -653,26 +699,30 @@ def qr(a, mode='full'):
     lwork = int(abs(work[0]))
     work = zeros((lwork,), t)
     results = lapack_routine(m, n, a, m, tau, work, lwork, 0)
-
     if results['info'] != 0:
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
-    #  economic mode. Isn't actually economic.
-    if mode[0] == 'e':
+    # handle modes that don't return q
+    if mode == 'r':
+        r = _fastCopyAndTranspose(result_t, a[:,:mn])
+        return wrap(triu(r))
+
+    if mode == 'raw':
+        return a, tau
+
+    if mode == 'economic':
         if t != result_t :
             a = a.astype(result_t)
-        return a.T
+        return wrap(a.T)
 
-    #  generate r
-    r = _fastCopyAndTranspose(result_t, a[:,:mn])
-    for i in range(mn):
-        r[i,:i].fill(0.0)
-
-    #  'r'-mode, that is, calculate only r
-    if mode[0] == 'r':
-        return r
-
-    #  from here on: build orthonormal matrix q from a
+    #  generate q from a
+    if mode == 'complete' and m > n:
+        mc = m
+        q = empty((m, m), t)
+    else:
+        mc = mn
+        q = empty((n, m), t)
+    q[:n] = a
 
     if isComplexType(t):
         lapack_routine = lapack_lite.zungqr
@@ -684,20 +734,21 @@ def qr(a, mode='full'):
     # determine optimal lwork
     lwork = 1
     work = zeros((lwork,), t)
-    results = lapack_routine(m, mn, mn, a, m, tau, work, -1, 0)
+    results = lapack_routine(m, mc, mn, q, m, tau, work, -1, 0)
     if results['info'] != 0:
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
     # compute q
     lwork = int(abs(work[0]))
     work = zeros((lwork,), t)
-    results = lapack_routine(m, mn, mn, a, m, tau, work, lwork, 0)
+    results = lapack_routine(m, mc, mn, q, m, tau, work, lwork, 0)
     if results['info'] != 0:
         raise LinAlgError('%s returns %d' % (routine_name, results['info']))
 
-    q = _fastCopyAndTranspose(result_t, a[:mn,:])
+    q = _fastCopyAndTranspose(result_t, q[:mc])
+    r = _fastCopyAndTranspose(result_t, a[:,:mc])
 
-    return wrap(q), wrap(r)
+    return wrap(q), wrap(triu(r))
 
 
 # Eigenvalues
