@@ -3146,7 +3146,7 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
                             op_axes_arrays[2]};
     npy_uint32 op_flags[3];
     int i, idim, ndim, otype_final;
-    int needs_api, need_outer_iterator;
+    int needs_api, need_outer_iterator = 0;
 
     NpyIter *iter = NULL;
 

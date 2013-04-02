@@ -296,6 +296,7 @@ def get_info(name, notfound_action=0):
           'lapack_atlas': lapack_atlas_info,  # use lapack_opt instead
           'lapack_atlas_threads': lapack_atlas_threads_info,  # ditto
           'mkl': mkl_info,
+          'openblas': openblas_info,          # use blas_opt instead
           'lapack_mkl': lapack_mkl_info,      # use lapack_opt instead
           'blas_mkl': blas_mkl_info,          # use blas_opt instead
           'x11': x11_info,
@@ -1431,7 +1432,7 @@ class lapack_opt_info(system_info):
                 dict_append(info, libraries=[('flapack_src', lapack_src_info)])
 
         if need_blas:
-            blas_info = get_info('blas')
+            blas_info = get_info('blas_opt')
             #blas_info = {} ## uncomment for testing
             if blas_info:
                 dict_append(info, **blas_info)
@@ -1490,6 +1491,11 @@ class blas_opt_info(system_info):
             self.set_info(**blas_mkl_info)
             return
 
+        openblas_info = get_info('openblas')
+        if openblas_info:
+            self.set_info(**openblas_info)
+            return
+
         atlas_info = get_info('atlas_blas_threads')
         if not atlas_info:
             atlas_info = get_info('atlas_blas')
@@ -1529,6 +1535,23 @@ class blas_info(system_info):
 
         blas_libs = self.get_libs('blas_libs', self._lib_names)
         info = self.check_libs(lib_dirs, blas_libs, [])
+        if info is None:
+            return
+        info['language'] = 'f77'  # XXX: is it generally true?
+        self.set_info(**info)
+
+
+class openblas_info(blas_info):
+    section = 'openblas'
+    dir_env_var = 'OPENBLAS'
+    _lib_names = ['openblas']
+    notfounderror = BlasNotFoundError
+
+    def calc_info(self):
+        lib_dirs = self.get_lib_dirs()
+
+        openblas_libs = self.get_libs('openblas_libs', self._lib_names)
+        info = self.check_libs(lib_dirs, openblas_libs, [])
         if info is None:
             return
         info['language'] = 'f77'  # XXX: is it generally true?
