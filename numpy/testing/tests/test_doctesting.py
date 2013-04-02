@@ -1,7 +1,7 @@
 """ Doctests for NumPy-specific nose/doctest modifications
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 # try the #random directive on the output line
 def check_random_directive():

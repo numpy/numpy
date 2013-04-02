@@ -6,7 +6,7 @@
 :version: $Id: test_subclassing.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
 __version__ = '1.0'

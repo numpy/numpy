@@ -57,13 +57,13 @@ See also
 `numpy.polynomial`
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import numpy as np
 import numpy.linalg as la
-import polyutils as pu
+from . import polyutils as pu
 import warnings
-from polytemplate import polytemplate
+from .polytemplate import polytemplate
 
 __all__ = ['hermezero', 'hermeone', 'hermex', 'hermedomain', 'hermeline',
     'hermeadd', 'hermesub', 'hermemulx', 'hermemul', 'hermediv', 'hermpow',
@@ -160,7 +160,7 @@ def herme2poly(c) :
     array([ 0.,  1.,  2.,  3.])
 
     """
-    from polynomial import polyadd, polysub, polymulx
+    from .polynomial import polyadd, polysub, polymulx
 
     [c] = pu.as_series([c])
     n = len(c)

@@ -13,16 +13,16 @@ implemented as operations on the coefficients.  Additional (module-specific)
 information can be found in the docstring for the module of interest.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import warnings
 
-from polynomial import Polynomial
-from chebyshev import Chebyshev
-from legendre import Legendre
-from hermite import Hermite
-from hermite_e import HermiteE
-from laguerre import Laguerre
+from .polynomial import Polynomial
+from .chebyshev import Chebyshev
+from .legendre import Legendre
+from .hermite import Hermite
+from .hermite_e import HermiteE
+from .laguerre import Laguerre
 
 from numpy.testing import Tester
 test = Tester().test

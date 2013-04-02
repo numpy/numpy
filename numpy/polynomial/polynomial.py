@@ -52,7 +52,7 @@ See also
 `numpy.polynomial`
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['polyzero', 'polyone', 'polyx', 'polydomain', 'polyline',
     'polyadd', 'polysub', 'polymulx', 'polymul', 'polydiv', 'polypow',
@@ -62,9 +62,9 @@ __all__ = ['polyzero', 'polyone', 'polyx', 'polydomain', 'polyline',
 
 import numpy as np
 import numpy.linalg as la
-import polyutils as pu
+from . import polyutils as pu
 import warnings
-from polytemplate import polytemplate
+from .polytemplate import polytemplate
 
 polytrim = pu.trimcoef
 

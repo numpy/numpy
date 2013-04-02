@@ -1,26 +1,26 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
-from info import __doc__
+from .info import __doc__
 from numpy.version import version as __version__
 
-from type_check import *
-from index_tricks import *
-from function_base import *
-from shape_base import *
-from stride_tricks import *
-from twodim_base import *
-from ufunclike import *
+from .type_check import *
+from .index_tricks import *
+from .function_base import *
+from .shape_base import *
+from .stride_tricks import *
+from .twodim_base import *
+from .ufunclike import *
 
-import scimath as emath
-from polynomial import *
+from . import scimath as emath
+from .polynomial import *
 #import convertcode
-from utils import *
-from arraysetops import *
-from npyio import *
-from financial import *
+from .utils import *
+from .arraysetops import *
+from .npyio import *
+from .financial import *
 import math
-from arrayterator import *
-from arraypad import *
+from .arrayterator import *
+from .arraypad import *
 
 __all__ = ['emath','math']
 __all__ += type_check.__all__

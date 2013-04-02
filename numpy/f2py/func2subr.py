@@ -13,7 +13,7 @@ $Date: 2004/11/26 11:13:06 $
 Pearu Peterson
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __version__ = "$Revision: 1.16 $"[10:-1]
 
@@ -26,7 +26,7 @@ errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint
 
-from auxfuncs import *
+from .auxfuncs import *
 def var2fixfortran(vars,a,fa=None,f90mode=None):
     if fa is None:
         fa = a

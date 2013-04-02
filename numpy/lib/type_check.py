@@ -1,7 +1,7 @@
 """Automatically adapted for numpy Sep 19, 2005 by convertcode.py
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
            'isreal','nan_to_num','real','real_if_close',
@@ -11,7 +11,7 @@ __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
 import numpy.core.numeric as _nx
 from numpy.core.numeric import asarray, asanyarray, array, isnan, \
                 obj2sctype, zeros
-from ufunclike import isneginf, isposinf
+from .ufunclike import isneginf, isposinf
 
 _typecodes_by_elsize = 'GDFgdfQqLlIiHhBb?'
 

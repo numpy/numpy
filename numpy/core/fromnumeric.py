@@ -1,7 +1,7 @@
 """Module containing non-deprecated functions borrowed from Numeric.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __docformat__ = "restructuredtext en"
 
@@ -16,11 +16,11 @@ __all__ = ['take', 'reshape', 'choose', 'repeat', 'put',
            'amax', 'amin',
           ]
 
-import multiarray as mu
-import umath as um
-import numerictypes as nt
-from numeric import asarray, array, asanyarray, concatenate
-import _methods
+from . import multiarray as mu
+from . import umath as um
+from . import numerictypes as nt
+from .numeric import asarray, array, asanyarray, concatenate
+from . import _methods
 _dt_ = nt.sctype2char
 
 import types

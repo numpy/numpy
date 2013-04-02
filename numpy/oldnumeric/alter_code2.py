@@ -19,7 +19,7 @@ Makes the following changes:
    oldnumeric.random_array, and oldnumeric.fft
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 #__all__ = ['convertfile', 'convertall', 'converttree']
 __all__ = []

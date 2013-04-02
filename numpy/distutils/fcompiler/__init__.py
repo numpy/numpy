@@ -13,7 +13,7 @@ should be a list.
 But note that FCompiler.executables is actually a dictionary of commands.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['FCompiler','new_fcompiler','show_fcompilers',
            'dummy_fortran_file']

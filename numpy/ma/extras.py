@@ -8,7 +8,7 @@ A collection of utilities for `numpy.ma`.
 :version: $Id: extras.py 3473 2007-10-29 15:18:13Z jarrod.millman $
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
 __version__ = '1.0'
@@ -38,8 +38,8 @@ __all__ = ['apply_along_axis', 'apply_over_axes', 'atleast_1d', 'atleast_2d',
 import itertools
 import warnings
 
-import core as ma
-from core import MaskedArray, MAError, add, array, asarray, concatenate, count, \
+from . import core as ma
+from .core import MaskedArray, MAError, add, array, asarray, concatenate, count, \
     filled, getmask, getmaskarray, make_mask_descr, masked, masked_array, \
     mask_or, nomask, ones, sort, zeros
 #from core import *

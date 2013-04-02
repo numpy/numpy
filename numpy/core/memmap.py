@@ -1,9 +1,9 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['memmap']
 
 import warnings
-from numeric import uint8, ndarray, dtype
+from .numeric import uint8, ndarray, dtype
 import sys
 
 import numpy as np

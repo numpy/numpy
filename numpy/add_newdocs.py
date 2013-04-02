@@ -8,7 +8,7 @@ NOTE: Many of the methods of ndarray have corresponding functions.
       core/fromnumeric.py, core/defmatrix.py up-to-date.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 from numpy.lib import add_newdoc
 

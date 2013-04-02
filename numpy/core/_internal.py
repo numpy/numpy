@@ -4,7 +4,7 @@ A place for code to be called from core C-code.
 Some things are more easily handled Python.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import re
 import sys
@@ -18,7 +18,7 @@ else:
     _nbo = asbytes('>')
 
 def _makenames_list(adict, align):
-    from multiarray import dtype
+    from .multiarray import dtype
     allfields = []
     fnames = adict.keys()
     for fname in fnames:
@@ -52,7 +52,7 @@ def _makenames_list(adict, align):
 #  a dictionary without "names" and "formats"
 #  fields is used as a data-type descriptor.
 def _usefields(adict, align):
-    from multiarray import dtype
+    from .multiarray import dtype
     try:
         names = adict[-1]
     except KeyError:
@@ -130,7 +130,7 @@ def _array_descr(descriptor):
 # so don't remove the name here, or you'll
 # break backward compatibilty.
 def _reconstruct(subtype, shape, dtype):
-    from multiarray import ndarray
+    from .multiarray import ndarray
     return ndarray.__new__(subtype, shape, dtype)
 
 
@@ -194,7 +194,7 @@ def _commastring(astr):
     return result
 
 def _getintp_ctype():
-    from multiarray import dtype
+    from .multiarray import dtype
     val = _getintp_ctype.cache
     if val is not None:
         return val
@@ -290,7 +290,7 @@ def _newnames(datatype, order):
 # Given an array with fields and a sequence of field names
 # construct a new array with just those fields copied over
 def _index_fields(ary, fields):
-    from multiarray import empty, dtype, array
+    from .multiarray import empty, dtype, array
     dt = ary.dtype
 
     names = [name for name in fields if name in dt.names]

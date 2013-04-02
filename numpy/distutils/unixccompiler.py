@@ -2,7 +2,7 @@
 unixccompiler - can handle very long argument lists for ar.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import os
 
@@ -12,7 +12,7 @@ from numpy.distutils.ccompiler import replace_method
 from numpy.distutils.compat import get_exception
 
 if sys.version_info[0] < 3:
-    import log
+    from . import log
 else:
     from numpy.distutils import log
 

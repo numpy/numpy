@@ -2,7 +2,7 @@
 """Prints type-coercion tables for the built-in NumPy types
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import numpy as np
 

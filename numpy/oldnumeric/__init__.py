@@ -1,7 +1,7 @@
 """Don't add these to the __all__ variable though
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 from numpy import *
 
@@ -15,17 +15,17 @@ def _move_axis_to_0(a, axis):
     return transpose(a, axes)
 
 # Add these
-from compat import *
-from functions import *
-from precision import *
-from ufuncs import *
-from misc import *
+from .compat import *
+from .functions import *
+from .precision import *
+from .ufuncs import *
+from .misc import *
 
-import compat
-import precision
-import functions
-import misc
-import ufuncs
+from . import compat
+from . import precision
+from . import functions
+from . import misc
+from . import ufuncs
 
 import numpy
 __version__ = numpy.__version__

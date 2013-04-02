@@ -85,13 +85,13 @@ References
   (preprint: http://www.math.hmc.edu/~benjamin/papers/CombTrig.pdf, pg. 4)
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import numpy as np
 import numpy.linalg as la
-import polyutils as pu
+from . import polyutils as pu
 import warnings
-from polytemplate import polytemplate
+from .polytemplate import polytemplate
 
 __all__ = ['chebzero', 'chebone', 'chebx', 'chebdomain', 'chebline',
     'chebadd', 'chebsub', 'chebmulx', 'chebmul', 'chebdiv', 'chebpow',
@@ -416,7 +416,7 @@ def cheb2poly(c) :
     array([ -2.,  -8.,   4.,  12.])
 
     """
-    from polynomial import polyadd, polysub, polymulx
+    from .polynomial import polyadd, polysub, polymulx
 
     [c] = pu.as_series([c])
     n = len(c)

@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 import os
 import re
@@ -1990,7 +1990,7 @@ class Configuration(object):
         Return information (from system_info.get_info) for all of the names in
         the argument list in a single dictionary.
         """
-        from system_info import get_info, dict_append
+        from .system_info import get_info, dict_append
         info_dict = {}
         for a in names:
             dict_append(info_dict,**get_info(a))

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from __future__ import division
+from __future__ import division, absolute_import
 
 import sys
 import numpy as np

@@ -15,7 +15,7 @@ Similarly, `sqrt`, other base logarithms, `power` and trig functions are
 correctly handled.  See their respective docstrings for specific examples.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['sqrt', 'log', 'log2', 'logn','log10', 'power', 'arccos',
            'arcsin', 'arctanh']

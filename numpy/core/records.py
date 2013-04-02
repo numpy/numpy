@@ -34,14 +34,14 @@ Record arrays allow us to access fields as properties::
   array([ 2.,  2.])
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 # All of the functions allow formats to be a dtype
 __all__ = ['record', 'recarray', 'format_parser']
 
-import numeric as sb
-from defchararray import chararray
-import numerictypes as nt
+from . import numeric as sb
+from .defchararray import chararray
+from . import numerictypes as nt
 import types
 import os
 import sys

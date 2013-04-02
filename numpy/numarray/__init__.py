@@ -1,18 +1,18 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
-from util import *
-from numerictypes import *
-from functions import *
-from ufuncs import *
-from compat import *
-from session import *
+from .util import *
+from .numerictypes import *
+from .functions import *
+from .ufuncs import *
+from .compat import *
+from .session import *
 
-import util
-import numerictypes
-import functions
-import ufuncs
-import compat
-import session
+from . import util
+from . import numerictypes
+from . import functions
+from . import ufuncs
+from . import compat
+from . import session
 
 __all__ = ['session', 'numerictypes']
 __all__ += util.__all__

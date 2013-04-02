@@ -5,13 +5,13 @@ in a single location, so that test scripts can just import it and work right
 away.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 from unittest import TestCase
 
-import decorators as dec
-from utils import *
-from numpytest import *
-from nosetester import NoseTester as Tester
-from nosetester import run_module_suite
+from . import decorators as dec
+from .utils import *
+from .numpytest import *
+from .nosetester import NoseTester as Tester
+from .nosetester import run_module_suite
 test = Tester().test

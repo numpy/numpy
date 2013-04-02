@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 from scipy import weave
 from numpy import rand, zeros_like

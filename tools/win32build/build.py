@@ -1,11 +1,15 @@
 """Python script to build windows binaries to be fed to the "superpack".
 
 The script is pretty dumb: it assumes python executables are installed the
-standard way, and the location for blas/lapack/atlas is harcoded."""
+standard way, and the location for blas/lapack/atlas is harcoded.
 
-# TODO:
-#  - integrate the x86analysis script to check built binaries
-#  - make the config configurable with a file
+TODO:
+    - integrate the x86analysis script to check built binaries
+    - make the config configurable with a file
+
+"""
+from __future__ import division
+
 import sys
 import subprocess
 import os

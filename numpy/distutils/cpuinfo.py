@@ -12,7 +12,7 @@ NO WARRANTY IS EXPRESSED OR IMPLIED.  USE AT YOUR OWN RISK.
 Pearu Peterson
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['cpu']
 

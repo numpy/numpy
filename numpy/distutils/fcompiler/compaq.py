@@ -1,6 +1,6 @@
 
 #http://www.compaq.com/fortran/docs/
-from __future__ import division
+from __future__ import division, absolute_import
 
 import os
 import sys

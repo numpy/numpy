@@ -15,12 +15,12 @@ available in your version of Python.
 The preferred alias for `defchararray` is `numpy.char`.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import sys
-from numerictypes import string_, unicode_, integer, object_, bool_, character
-from numeric import ndarray, compare_chararrays
-from numeric import array as narray
+from .numerictypes import string_, unicode_, integer, object_, bool_, character
+from .numeric import ndarray, compare_chararrays
+from .numeric import array as narray
 from numpy.core.multiarray import _vec_string
 from numpy.compat import asbytes
 import numpy

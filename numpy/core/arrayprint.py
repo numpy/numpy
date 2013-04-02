@@ -3,7 +3,7 @@
 $Id: arrayprint.py,v 1.9 2005/09/13 13:58:44 teoliphant Exp $
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ["array2string", "set_printoptions", "get_printoptions"]
 __docformat__ = 'restructuredtext'
@@ -16,10 +16,10 @@ __docformat__ = 'restructuredtext'
 # and by Travis Oliphant  2005-8-22 for numpy
 
 import sys
-import numerictypes as _nt
-from umath import maximum, minimum, absolute, not_equal, isnan, isinf
-from multiarray import format_longfloat, datetime_as_string, datetime_data
-from fromnumeric import ravel
+from . import numerictypes as _nt
+from .umath import maximum, minimum, absolute, not_equal, isnan, isinf
+from .multiarray import format_longfloat, datetime_as_string, datetime_data
+from .fromnumeric import ravel
 
 
 def product(x, y): return x*y
@@ -197,7 +197,7 @@ def get_printoptions():
     return d
 
 def _leading_trailing(a):
-    import numeric as _nc
+    from . import numeric as _nc
     if a.ndim == 1:
         if len(a) > 2*_summaryEdgeItems:
             b = _nc.concatenate((a[:_summaryEdgeItems],
@@ -324,7 +324,7 @@ def _array2string(a, max_line_width, precision, suppress_small, separator=' ',
     return lst
 
 def _convert_arrays(obj):
-    import numeric as _nc
+    from . import numeric as _nc
     newtup = []
     for k in obj:
         if isinstance(k, _nc.ndarray):
@@ -539,7 +539,7 @@ class FloatFormat(object):
             pass
 
     def fillFormat(self, data):
-        import numeric as _nc
+        from . import numeric as _nc
         errstate = _nc.seterr(all='ignore')
         try:
             special = isnan(data) | isinf(data)
@@ -592,7 +592,7 @@ class FloatFormat(object):
         self.format = format
 
     def __call__(self, x, strip_zeros=True):
-        import numeric as _nc
+        from . import numeric as _nc
         err = _nc.seterr(invalid='ignore')
         try:
             if isnan(x):

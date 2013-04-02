@@ -1,5 +1,5 @@
 # http://developer.intel.com/software/products/compilers/flin/
-from __future__ import division
+from __future__ import division, absolute_import
 
 import sys
 

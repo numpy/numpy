@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 import sys
 if sys.version_info[0] >= 3:

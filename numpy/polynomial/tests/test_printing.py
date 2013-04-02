@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 import numpy.polynomial as poly
 from numpy.testing import TestCase, run_module_suite, assert_

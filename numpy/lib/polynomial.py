@@ -2,7 +2,7 @@
 Functions to operate on polynomials.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['poly', 'roots', 'polyint', 'polyder', 'polyadd',
            'polysub', 'polymul', 'polydiv', 'polyval', 'poly1d',

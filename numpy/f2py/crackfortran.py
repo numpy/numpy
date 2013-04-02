@@ -138,11 +138,11 @@ TODO:
     The above may be solved by creating appropriate preprocessor program, for example.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __version__ = "$Revision: 1.177 $"[10:-1]
 import platform
-import __version__
+from . import __version__
 f2py_version = __version__.version
 
 #
@@ -153,7 +153,7 @@ import re
 import pprint
 import os
 import copy
-from auxfuncs import *
+from .auxfuncs import *
 
 # Global flags:
 strictf77=1          # Ignore `!' comments unless line[0]=='!'

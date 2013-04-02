@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['less', 'cosh', 'arcsinh', 'add', 'ceil', 'arctan2', 'floor_divide',
            'fmod', 'hypot', 'logical_and', 'power', 'sinh', 'remainder', 'cos',

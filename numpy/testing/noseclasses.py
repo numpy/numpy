@@ -4,7 +4,7 @@
 # Because this module imports nose directly, it should not
 # be used except by nosetester.py to avoid a general NumPy
 # dependency on nose.
-from __future__ import division
+from __future__ import division, absolute_import
 
 import os
 import doctest
@@ -15,7 +15,7 @@ from nose.plugins.errorclass import ErrorClass, ErrorClassPlugin
 from nose.plugins.base import Plugin
 from nose.util import src
 import numpy
-from nosetester import get_package_name
+from .nosetester import get_package_name
 import inspect
 
 # Some of the classes in this module begin with 'Numpy' to clearly distinguish

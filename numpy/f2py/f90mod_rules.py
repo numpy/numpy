@@ -13,7 +13,7 @@ $Date: 2005/02/03 19:30:23 $
 Pearu Peterson
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __version__ = "$Revision: 1.27 $"[10:-1]
 
@@ -25,11 +25,11 @@ errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint
 
-from auxfuncs import *
+from .auxfuncs import *
 import numpy as np
-import capi_maps
-import func2subr
-from crackfortran import undo_rmbadname, undo_rmbadname1
+from . import capi_maps
+from . import func2subr
+from .crackfortran import undo_rmbadname, undo_rmbadname1
 
 options={}
 
@@ -84,7 +84,7 @@ fgetdims2_sa="""\
 
 def buildhooks(pymod):
     global fgetdims1,fgetdims2
-    import rules
+    from . import rules
     ret = {'f90modhooks':[],'initf90modhooks':[],'body':[],
            'need':['F_FUNC','arrayobject.h'],
            'separatorsfor':{'includes0':'\n','includes':'\n'},

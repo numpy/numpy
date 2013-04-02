@@ -9,7 +9,7 @@
     :license: BSD, see LICENSE for details.
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 import warnings
 import collections

@@ -5,7 +5,7 @@ floating-point arithmetic system
 Author: Pearu Peterson, September 2003
 
 """
-from __future__ import division
+from __future__ import division, absolute_import
 
 __all__ = ['MachAr']
 
