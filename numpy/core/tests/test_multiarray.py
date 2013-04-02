@@ -2764,7 +2764,9 @@ if sys.version_info >= (2, 6):
                 assert_equal(y.format, 'T{b:a:=h:b:i:c:l:d:^q:dx:B:e:@H:f:=I:g:L:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
             else:
                 assert_equal(y.format, 'T{b:a:=h:b:i:c:q:d:^q:dx:B:e:@H:f:=I:g:Q:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
-            assert_equal(y.strides, (sz,))
+            # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides
+            if not (np.ones(1).strides[0] == np.iinfo(np.intp).max):
+                assert_equal(y.strides, (sz,))
             assert_equal(y.itemsize, sz)
 
         def test_export_subarray(self):

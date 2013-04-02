@@ -628,8 +628,20 @@ _IsAligned(PyArrayObject *ap)
     }
     ptr = (npy_intp) PyArray_DATA(ap);
     aligned = (ptr % alignment) == 0;
+
     for (i = 0; i < PyArray_NDIM(ap); i++) {
+#if NPY_RELAXED_STRIDES_CHECKING
+        if (PyArray_DIM(ap, i) > 1) {
+            /* if shape[i] == 1, the stride is never used */
+            aligned &= ((PyArray_STRIDES(ap)[i] % alignment) == 0);
+        }
+        else if (PyArray_DIM(ap, i) == 0) {
+            /* an array with zero elements is always aligned */
+            return 1;
+        }
+#else /* not NPY_RELAXED_STRIDES_CHECKING */
         aligned &= ((PyArray_STRIDES(ap)[i] % alignment) == 0);
+#endif /* not NPY_RELAXED_STRIDES_CHECKING */
     }
     return aligned != 0;
 }

@@ -214,9 +214,11 @@ PyArray_Newshape(PyArrayObject *self, PyArray_Dims *newdims,
      * in order to get the right orientation and
      * because we can't just re-use the buffer with the
      * data in the order it is in.
+     * NPY_RELAXED_STRIDES_CHECKING: size check is unnecessary when set.
      */
-    if ((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(self)) ||
-        (order == NPY_FORTRANORDER && !PyArray_IS_F_CONTIGUOUS(self))) {
+    if ((PyArray_SIZE(self) > 1) &&
+        ((order == NPY_CORDER && !PyArray_IS_C_CONTIGUOUS(self)) ||
+         (order == NPY_FORTRANORDER && !PyArray_IS_F_CONTIGUOUS(self)))) {
         int success = 0;
         success = _attempt_nocopy_reshape(self, ndim, dimensions,
                                           newstrides, order);
@@ -1102,7 +1104,9 @@ build_shape_string(npy_intp n, npy_intp *vals)
  *          the array will point to invalid memory. The caller must
  *          validate this!
  *          If an axis flagged for removal has a shape larger then one,
- *          the arrays contiguous flags may require updating.
+ *          the aligned flag (and in the future the contiguous flags),
+ *          may need explicite update.
+ *          (check also NPY_RELAXED_STRIDES_CHECKING)
  *
  * For example, this can be used to remove the reduction axes
  * from a reduction result once its computation is complete.
@@ -1125,4 +1129,7 @@ PyArray_RemoveAxesInPlace(PyArrayObject *arr, npy_bool *flags)
 
     /* The final number of dimensions */
     fa->nd = idim_out;
+
+    /* May not be necessary for NPY_RELAXED_STRIDES_CHECKING (see comment) */
+    PyArray_UpdateFlags(arr, NPY_ARRAY_C_CONTIGUOUS | NPY_ARRAY_F_CONTIGUOUS);
 }

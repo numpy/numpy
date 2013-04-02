@@ -753,9 +753,15 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_ARRAY_F_CONTIGUOUS    0x0002
 
 /*
- * Note: all 0-d arrays are C_CONTIGUOUS and F_CONTIGUOUS. An N-d
- * array that is C_CONTIGUOUS is also F_CONTIGUOUS if only
- * one axis has a dimension different from one (ie. a 1x3x1 array).
+ * Note: all 0-d arrays are C_CONTIGUOUS and F_CONTIGUOUS. If a
+ * 1-d array is C_CONTIGUOUS it is also F_CONTIGUOUS. Arrays with
+ * more then one dimension can be C_CONTIGUOUS and F_CONTIGUOUS
+ * at the same time if they have either zero or one element.
+ * If NPY_RELAXED_STRIDES_CHECKING is set, a higher dimensional
+ * array is always C_CONTIGUOUS and F_CONTIGUOUS if it has zero elements
+ * and the array is contiguous if ndarray.squeeze() is contiguous.
+ * I.e. dimensions for which `ndarray.shape[dimension] == 1` are
+ * ignored.
  */
 
 /*
