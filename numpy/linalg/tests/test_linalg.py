@@ -469,9 +469,113 @@ def test_reduced_rank():
 
 
 class TestQR(TestCase):
+
+
+    def check_qr(self, a):
+        # This test expects the argument `a` to be an ndarray or
+        # a subclass of an ndarray of inexact type.
+        a_type = type(a)
+        a_dtype = a.dtype
+        m, n = a.shape
+        k = min(m, n)
+
+        # mode == 'complete'
+        q, r = linalg.qr(a, mode='complete')
+        assert_(q.dtype == a_dtype)
+        assert_(r.dtype == a_dtype)
+        assert_(isinstance(q, a_type))
+        assert_(isinstance(r, a_type))
+        assert_(q.shape == (m, m))
+        assert_(r.shape == (m, n))
+        assert_almost_equal(dot(q, r), a)
+        assert_almost_equal(dot(q.T.conj(), q), np.eye(m))
+        assert_almost_equal(np.triu(r), r)
+
+
+        # mode == 'reduced'
+        q1, r1 = linalg.qr(a, mode='reduced')
+        assert_(q1.dtype == a_dtype)
+        assert_(r1.dtype == a_dtype)
+        assert_(isinstance(q1, a_type))
+        assert_(isinstance(r1, a_type))
+        assert_(q1.shape == (m, k))
+        assert_(r1.shape == (k, n))
+        assert_almost_equal(dot(q1, r1), a)
+        assert_almost_equal(dot(q1.T.conj(), q1), np.eye(k))
+        assert_almost_equal(np.triu(r1), r1)
+
+        # mode == 'r'
+        r2 = linalg.qr(a, mode='r')
+        assert_(r2.dtype == a_dtype)
+        assert_(isinstance(r2, a_type))
+        assert_almost_equal(r2, r1)
+
+
+
     def test_qr_empty(self):
         a = np.zeros((0,2))
         self.assertRaises(linalg.LinAlgError, linalg.qr, a)
+
+
+    def test_mode_raw(self):
+        a = array([[1, 2], [3, 4], [5, 6]], dtype=np.double)
+        b = a.astype(np.single)
+
+        # m > n
+        h1, tau1 = (
+                array([[-5.91607978,  0.43377175,  0.72295291],
+                      [-7.43735744,  0.82807867,  0.89262383]]),
+                array([ 1.16903085,  1.113104  ])
+                )
+        # m > n
+        h2, tau2 = (
+                array([[-2.23606798,  0.61803399],
+                       [-4.91934955, -0.89442719],
+                       [-7.60263112, -1.78885438]]),
+                array([ 1.4472136,  0.       ])
+                )
+
+        # Test double
+        h, tau = linalg.qr(a, mode='raw')
+        assert_(h.dtype == np.double)
+        assert_(tau.dtype == np.double)
+        old_assert_almost_equal(h, h1, decimal=8)
+        old_assert_almost_equal(tau, tau1, decimal=8)
+
+        h, tau = linalg.qr(a.T, mode='raw')
+        assert_(h.dtype == np.double)
+        assert_(tau.dtype == np.double)
+        old_assert_almost_equal(h, h2, decimal=8)
+        old_assert_almost_equal(tau, tau2, decimal=8)
+
+        # Test single
+        h, tau = linalg.qr(b, mode='raw')
+        assert_(h.dtype == np.double)
+        assert_(tau.dtype == np.double)
+        old_assert_almost_equal(h, h1, decimal=8)
+        old_assert_almost_equal(tau, tau1, decimal=8)
+
+
+    def test_mode_all_but_economic(self):
+        a = array([[1, 2], [3, 4]])
+        b = array([[1, 2], [3, 4], [5, 6]])
+        for dt in "fd":
+            m1 = a.astype(dt)
+            m2 = b.astype(dt)
+            self.check_qr(m1)
+            self.check_qr(m2)
+            self.check_qr(m2.T)
+            self.check_qr(matrix(m1))
+        for dt in "fd":
+            m1 = 1 + 1j * a.astype(dt)
+            m2 = 1 + 1j * b.astype(dt)
+            self.check_qr(m1)
+            self.check_qr(m2)
+            self.check_qr(m2.T)
+            self.check_qr(matrix(m1))
+
+
+
 
 
 def test_byteorder_check():
