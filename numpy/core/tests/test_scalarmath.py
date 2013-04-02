@@ -46,7 +46,7 @@ class TestTypes(TestCase):
 
 class TestPower(TestCase):
     def test_small_types(self):
-        for t in [np.int8, np.int16]:
+        for t in [np.int8, np.int16, np.float16]:
             a = t(3)
             b = a ** 4
             assert_(b == 81, "error with %r: got %r" % (t,b))
@@ -60,7 +60,21 @@ class TestPower(TestCase):
                 assert_(b == 6765201, msg)
             else:
                 assert_almost_equal(b, 6765201, err_msg=msg)
-
+    def test_mixed_types(self):
+        typelist = [np.int8,np.int16,np.float16,
+                    np.float32,np.float64,np.int8,
+                    np.int16,np.int32,np.int64]
+        for t1 in typelist:
+            for t2 in typelist:
+                a = t1(3)
+                b = t2(2)
+                result = a**b
+                msg = ("error with %r and %r:"
+                       "got %r, expected %r") % (t1, t2, result, 9)
+                if np.issubdtype(np.dtype(result), np.integer):
+                    assert_(result == 9, msg)
+                else:
+                    assert_almost_equal(result, 9, err_msg=msg)
 
 class TestComplexDivision(TestCase):
     def test_zero_division(self):
