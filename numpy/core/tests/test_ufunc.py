@@ -968,9 +968,9 @@ class TestUfunc(TestCase):
         assert_raises(IndexError, np.add.at, a, [], 1)
 
         # Test mixed dtypes
-        a = np.arange(10, dtype='u8')
+        a = np.arange(10)
         np.power.at(a, [1,2,3,2], 3.5)
-        assert_equal(a, np.array([0, 1, 4414, 46, 4, 5, 6, 7, 8, 9], dtype='u8'))
+        assert_equal(a, np.array([0, 1, 4414, 46, 4, 5, 6, 7, 8, 9]))
 
         # Test boolean indexing and boolean ufuncs
         a = np.arange(10)
