@@ -311,7 +311,7 @@ def read_array_header_1_0(fp):
 
     Raises
     ------
-    ValueError :
+    ValueError
         If the data is invalid.
 
     """

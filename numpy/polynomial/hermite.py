@@ -1201,7 +1201,7 @@ def hermvander(x, deg) :
 
     Returns
     -------
-    vander: ndarray
+    vander : ndarray
         The pseudo-Vandermonde matrix. The shape of the returned matrix is
         ``x.shape + (deg + 1,)``, where The last index is the degree of the
         corresponding Hermite polynomial.  The dtype will be the same as

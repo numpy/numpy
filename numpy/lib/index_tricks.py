@@ -652,7 +652,8 @@ def fill_diagonal(a, val, wrap=False):
       Value to be written on the diagonal, its type must be compatible with
       that of the array a.
 
-    wrap: bool For tall matrices in NumPy version up to 1.6.2, the
+    wrap : bool 
+      For tall matrices in NumPy version up to 1.6.2, the
       diagonal "wrapped" after N columns. You can have this behavior
       with this option. This affect only tall matrices.
 
