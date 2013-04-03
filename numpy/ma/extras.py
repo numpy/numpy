@@ -1296,7 +1296,7 @@ def cov(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
 
     Raises
     ------
-    ValueError:
+    ValueError
         Raised if some values are missing and `allow_masked` is False.
 
     See Also

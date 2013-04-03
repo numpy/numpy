@@ -149,7 +149,6 @@ def reshape(a, newshape, order='C'):
 
     Notes
     -----
-
     It is not always possible to change the shape of an array without
     copying the data. If you want an error to be raise if the data is copied,
     you should assign the new shape to the shape attribute of the array::

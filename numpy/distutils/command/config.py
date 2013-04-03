@@ -340,7 +340,7 @@ int main ()
 
         Arguments
         ---------
-        funcs: seq
+        funcs : seq
             list of functions to test
         include_dirs : seq
             list of header paths
