@@ -813,6 +813,15 @@ class TestUfunc(TestCase):
         assert_equal(a, 3)
         opflag_tests.inplace_add(a, [3, 4])
         assert_equal(a, 10)
+    
+    def test_struct_ufunc(self):
+        import numpy.core.struct_ufunc_test as struct_ufunc
+
+        a = np.array([(1,2,3)], dtype='u8,u8,u8')
+        b = np.array([(1,2,3)], dtype='u8,u8,u8')
+
+        result = struct_ufunc.add_triplet(a, b)
+        assert_equal(result, np.array([(2, 4, 6)], dtype='u8,u8,u8'))
 
 if __name__ == "__main__":
     run_module_suite()
