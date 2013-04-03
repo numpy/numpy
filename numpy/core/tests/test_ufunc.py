@@ -967,6 +967,11 @@ class TestUfunc(TestCase):
         assert_raises(IndexError, np.add.at, a, 0, 1)
         assert_raises(IndexError, np.add.at, a, [], 1)
 
+        # Test mixed dtypes
+        a = np.arange(10, dtype='u8')
+        np.power.at(a, [1,2,3,2], 3.5)
+        assert_equal(a, [0, 1, 4414, 46, 4, 5, 6, 7, 8, 9])
+
 
 if __name__ == "__main__":
     run_module_suite()
