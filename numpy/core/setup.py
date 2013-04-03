@@ -15,6 +15,9 @@ from setup_common import *
 
 # Set to True to enable multiple file compilations (experimental)
 ENABLE_SEPARATE_COMPILATION = (os.environ.get('NPY_SEPARATE_COMPILATION', "1") != "0")
+# Set to True to enable relaxed strides checking. This (mostly) means
+# that `strides[dim]` is ignored if `shape[dim] == 1` when setting flags.
+NPY_RELAXED_STRIDES_CHECKING = (os.environ.get('NPY_RELAXED_STRIDES_CHECKING', "0") != "0")
 
 # XXX: ugly, we use a class to avoid calling twice some expensive functions in
 # config.h/numpyconfig.h. I don't see a better way because distutils force
@@ -435,6 +438,9 @@ def configuration(parent_package='',top_path=None):
             if ENABLE_SEPARATE_COMPILATION:
                 moredefs.append(('ENABLE_SEPARATE_COMPILATION', 1))
 
+            if NPY_RELAXED_STRIDES_CHECKING:
+                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
+
             # Get long double representation
             if sys.platform != 'darwin':
                 rep = check_long_double_representation(config_cmd)
@@ -531,6 +537,9 @@ def configuration(parent_package='',top_path=None):
 
             if ENABLE_SEPARATE_COMPILATION:
                 moredefs.append(('NPY_ENABLE_SEPARATE_COMPILATION', 1))
+
+            if NPY_RELAXED_STRIDES_CHECKING:
+                moredefs.append(('NPY_RELAXED_STRIDES_CHECKING', 1))
 
             # Check wether we can use inttypes (C99) formats
             if config_cmd.check_decl('PRIdPTR', headers = ['inttypes.h']):

@@ -547,6 +547,9 @@ class TestRegression(TestCase):
         a = np.ones((0,2))
         a.shape = (-1,2)
 
+    # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides.
+    # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous.
+    @dec.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max)
     def test_reshape_trailing_ones_strides(self):
         # Github issue gh-2949, bad strides for trailing ones of new shape
         a = np.zeros(12, dtype=np.int32)[::2] # not contiguous
@@ -799,6 +802,10 @@ class TestRegression(TestCase):
         """Ticket #658"""
         np.indices((0,3,4)).T.reshape(-1,3)
 
+    # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides.
+    # With NPY_RELAXED_STRIDES_CHECKING the test becomes superfluous,
+    # 0-sized reshape itself is tested elsewhere.
+    @dec.skipif(np.ones(1).strides[0] == np.iinfo(np.intp).max)
     def test_copy_detection_corner_case2(self, level=rlevel):
         """Ticket #771: strides are not set correctly when reshaping 0-sized
         arrays"""

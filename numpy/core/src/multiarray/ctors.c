@@ -3560,6 +3560,7 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
                     int inflag, int *objflags)
 {
     int i;
+#if NPY_RELAXED_STRIDES_CHECKING
     npy_bool not_cf_contig = 0;
     npy_bool nod = 0; /* A dim != 1 was found */
 
@@ -3573,6 +3574,7 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             nod = 1;
         }
     }
+#endif /* NPY_RELAXED_STRIDES_CHECKING */
 
     /* Only make Fortran strides if not contiguous as well */
     if ((inflag & (NPY_ARRAY_F_CONTIGUOUS|NPY_ARRAY_C_CONTIGUOUS)) ==
@@ -3582,11 +3584,21 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             if (dims[i]) {
                 itemsize *= dims[i];
             }
+#if NPY_RELAXED_STRIDES_CHECKING
             else {
                 not_cf_contig = 0;
             }
+            if (dims[i] == 1) {
+                /* For testing purpose only */
+                strides[i] = NPY_MAX_INTP;
+            }
+#endif /* NPY_RELAXED_STRIDES_CHECKING */
         }
+#if NPY_RELAXED_STRIDES_CHECKING
         if (not_cf_contig) {
+#else /* not NPY_RELAXED_STRIDES_CHECKING */
+        if ((nd > 1) && ((strides[0] != strides[nd-1]) || (dims[nd-1] > 1))) {
+#endif /* not NPY_RELAXED_STRIDES_CHECKING */
             *objflags = ((*objflags)|NPY_ARRAY_F_CONTIGUOUS) &
                                             ~NPY_ARRAY_C_CONTIGUOUS;
         }
@@ -3600,11 +3612,21 @@ _array_fill_strides(npy_intp *strides, npy_intp *dims, int nd, size_t itemsize,
             if (dims[i]) {
                 itemsize *= dims[i];
             }
+#if NPY_RELAXED_STRIDES_CHECKING
             else {
                 not_cf_contig = 0;
             }
+            if (dims[i] == 1) {
+                /* For testing purpose only */
+                strides[i] = NPY_MAX_INTP;
+            }
+#endif /* NPY_RELAXED_STRIDES_CHECKING */
         }
+#if NPY_RELAXED_STRIDES_CHECKING
         if (not_cf_contig) {
+#else /* not NPY_RELAXED_STRIDES_CHECKING */
+        if ((nd > 1) && ((strides[0] != strides[nd-1]) || (dims[0] > 1))) {
+#endif /* not NPY_RELAXED_STRIDES_CHECKING */
             *objflags = ((*objflags)|NPY_ARRAY_C_CONTIGUOUS) &
                                             ~NPY_ARRAY_F_CONTIGUOUS;
         }
