@@ -1188,7 +1188,8 @@ find_userloop(PyUFuncObject *ufunc,
         }
 
         type_num = dtypes[i]->type_num;
-        if (type_num != last_userdef && (PyTypeNum_ISUSERDEF(type_num) || type_num == NPY_VOID)) {
+        if (type_num != last_userdef &&
+                (PyTypeNum_ISUSERDEF(type_num) || type_num == NPY_VOID)) {
             PyObject *key, *obj;
 
             last_userdef = type_num;
@@ -1554,7 +1555,8 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
          * Copy the dtype from 'op' if the type_num matches,
          * to preserve metadata.
          */
-        } else if (op[i] != NULL && PyArray_DESCR(op[i])->type_num == type_nums[i]) {
+        } else if (op[i] != NULL &&
+                PyArray_DESCR(op[i])->type_num == type_nums[i]) {
             out_dtypes[i] = ensure_dtype_nbo(PyArray_DESCR(op[i]));
             Py_XINCREF(out_dtypes[i]);
         }
@@ -1617,7 +1619,8 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
         }
 
         type_num = PyArray_DESCR(op[i])->type_num;
-        if (type_num != last_userdef && (PyTypeNum_ISUSERDEF(type_num) || type_num == NPY_VOID)) {
+        if (type_num != last_userdef &&
+                (PyTypeNum_ISUSERDEF(type_num) || type_num == NPY_VOID)) {
             PyObject *key, *obj;
 
             last_userdef = type_num;
@@ -1726,7 +1729,8 @@ type_tuple_userloop_type_resolver(PyUFuncObject *self,
                             &err_dst_typecode)) {
                     /* It works */
                     case 1:
-                        set_ufunc_loop_data_types(self, op, out_dtype, types, NULL);
+                        set_ufunc_loop_data_types(self, op,
+                            out_dtype, types, NULL);
                         return 1;
                     /* Didn't match */
                     case 0:

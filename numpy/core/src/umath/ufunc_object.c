@@ -724,6 +724,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
     PyObject *obj, *context;
     PyObject *str_key_obj = NULL;
     char *ufunc_name;
+    int type_num;
 
     int any_flexible = 0, any_object = 0, any_flexible_userloops = 0;
 
@@ -765,7 +766,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
             return -1;
         }
 
-        int type_num = PyArray_DESCR(out_op[i])->type_num;
+        type_num = PyArray_DESCR(out_op[i])->type_num;
         if (!any_flexible &&
                 PyTypeNum_ISFLEXIBLE(type_num)) {
             any_flexible = 1;
@@ -781,11 +782,11 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
          * for a struct dtype if ufunc's arg_dtypes array is not NULL.
          */
         if (PyTypeNum_ISFLEXIBLE(type_num) &&
-            !any_flexible_userloops &&
-            ufunc->userloops != NULL) {
-            PyUFunc_Loop1d *funcdata;
-            PyObject *key, *obj;
-            key = PyInt_FromLong(type_num);
+                !any_flexible_userloops &&
+                ufunc->userloops != NULL) {
+                PyUFunc_Loop1d *funcdata;
+                PyObject *key, *obj;
+                key = PyInt_FromLong(type_num);
             if (key == NULL) {
                 continue;
             }
