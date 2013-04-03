@@ -972,6 +972,11 @@ class TestUfunc(TestCase):
         np.power.at(a, [1,2,3,2], 3.5)
         assert_equal(a, [0, 1, 4414, 46, 4, 5, 6, 7, 8, 9])
 
+        # Test boolean indexing and boolean ufuncs
+        a = np.arange(10)
+        index = a % 2 == 0
+        np.equal.at(a, index, [0, 2, 4, 6, 8])
+        assert_equal(a, [1, 1, 1, 3, 1, 5, 1, 7, 1, 9])
 
 if __name__ == "__main__":
     run_module_suite()
