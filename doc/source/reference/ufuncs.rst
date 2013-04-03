@@ -374,8 +374,9 @@ possess. None of the attributes can be set.
 
 
 ============  =================================================================
-**__doc__**   A docstring for each ufunc. The first part of the docstring is
-              dynamically generated from the number of outputs, the name, and
+**__doc__**   A docstring for each ufunc.  If the attribute
+              *autogen_docstring_sig* is True, the first part of the docstring
+              is dynamically generated from the number of outputs, the name, and
               the number of inputs. The second part of the docstring is
               provided at creation time and stored with the ufunc.
 
@@ -391,6 +392,7 @@ possess. None of the attributes can be set.
    ufunc.ntypes
    ufunc.types
    ufunc.identity
+   ufunc.autogen_docstring_sig
 
 Methods
 -------

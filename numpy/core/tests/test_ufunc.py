@@ -771,5 +771,18 @@ class TestUfunc(TestCase):
         assert_no_warnings(np.add, a, 1.1, out=a, casting="unsafe")
         assert_array_equal(a, [4, 5, 6])
 
+    def test_autogen_docstring_sig(self):
+        # By default, autogen_docstring_sig should be True
+        assert_(np.sin.autogen_docstring_sig)
+        assert_(np.sin.__doc__.startswith('sin(x[, out])\n\n'))
+        np.sin.autogen_docstring_sig = False
+        assert_(not np.sin.autogen_docstring_sig)
+        assert_(np.sin.__doc__.startswith('Trigonometric sine'))
+        np.sin.autogen_docstring_sig = True
+        # Back to where we started?
+        assert_(np.sin.autogen_docstring_sig)
+        assert_(np.sin.__doc__.startswith('sin(x[, out])\n\n'))
+
+
 if __name__ == "__main__":
     run_module_suite()

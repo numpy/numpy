@@ -212,6 +212,13 @@ typedef struct _tagPyUFuncObject {
          * A function which returns a masked inner loop for the ufunc.
          */
         PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector;
+        /*
+         * 1 to autogenerate the function signature in the docstring
+         * (e.g. "funcname(x[, out])" or "funcname(x1,x2[,out])");
+         * 0 to not generate it, on the assumption that the user will
+         * include the signature in the user-added docstring.
+         */
+        int autogen_docstring_sig;
 } PyUFuncObject;
 
 #include "arrayobject.h"
