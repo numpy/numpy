@@ -2,7 +2,7 @@
 NumPy 1.8.0 Release Notes
 =========================
 
-This release supports  Python 2.6 -2.7 and 3.1 - 3.3.
+This release supports  Python 2.6 -2.7 and 3.2 - 3.3.
 
 
 Highlights
@@ -39,7 +39,7 @@ system by exporting the shell variable NPY_SEPARATE_COMPILATION=0.
 
 For the AdvancedNew iterator the ``oa_ndim`` flag should now be -1 to indicate
 that no ``op_axes`` and ``itershape`` are passed in. The ``oa_ndim == 0``
-case, now indicates a 0-D iteration and ``op_axes`` being NULL and the old 
+case, now indicates a 0-D iteration and ``op_axes`` being NULL and the old
 usage is deprecated. This does not effect the ``NpyIter_New`` or
 ``NpyIter_MultiNew`` functions.
 
@@ -47,7 +47,25 @@ usage is deprecated. This does not effect the ``NpyIter_New`` or
 New features
 ============
 
+new constant
+------------
 Euler's constant is now exposed in numpy as euler_gamma.
+
+new modes for qr
+----------------
+New modes 'complete', 'reduced', and 'raw' have been added to the qr
+factorization and the old 'full' and 'economic' modes are deprecated.
+The 'reduced' mode replaces the old 'full' mode and is the default as was
+the 'full' mode, so backward compatibility can be maintained by not
+specifying the mode.
+
+The 'complete' mode returns a full dimensional factorization, which can be
+useful for obtaining a basis for the orthogonal complement of the range
+space. The 'raw' mode returns arrays that contain the Householder
+reflectors and scaling factors that can be used in the future to apply q
+without needing to convert to a matrix. The 'economic' mode is simply
+deprecated, there isn't much use for it and it isn't any more efficient
+than the 'raw' mode.
 
 
 
@@ -64,6 +82,8 @@ The separate compilation mode is now enabled by default.
 
 Deprecations
 ============
+
+The 'full' and 'economic' modes of qr factorization are deprecated.
 
 General
 -------
