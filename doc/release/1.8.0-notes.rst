@@ -1,6 +1,5 @@
-=========================
 NumPy 1.8.0 Release Notes
-=========================
+*************************
 
 This release supports  Python 2.6 -2.7 and 3.2 - 3.3.
 
@@ -44,15 +43,15 @@ usage is deprecated. This does not effect the ``NpyIter_New`` or
 ``NpyIter_MultiNew`` functions.
 
 
-New features
+New Features
 ============
 
-new constant
-------------
+New constant
+~~~~~~~~~~~~
 Euler's constant is now exposed in numpy as euler_gamma.
 
-new modes for qr
-----------------
+New modes for qr
+~~~~~~~~~~~~~~~~
 New modes 'complete', 'reduced', and 'raw' have been added to the qr
 factorization and the old 'full' and 'economic' modes are deprecated.
 The 'reduced' mode replaces the old 'full' mode and is the default as was
@@ -68,17 +67,22 @@ deprecated, there isn't much use for it and it isn't any more efficient
 than the 'raw' mode.
 
 
+C-API
+~~~~~
+
 
 Changes
 =======
 
 General
--------
+~~~~~~~
 
 The function np.take now allows 0-d arrays as indices.
 
 The separate compilation mode is now enabled by default.
 
+C-API
+~~~~~
 
 Deprecations
 ============
@@ -86,11 +90,8 @@ Deprecations
 The 'full' and 'economic' modes of qr factorization are deprecated.
 
 General
--------
+~~~~~~~
 
 Use of non-integer indices has been deprecated. Previously float indices
 were truncated to integers without warning.
-
-C-API
------
 
