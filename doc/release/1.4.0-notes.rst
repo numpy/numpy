@@ -1,6 +1,5 @@
-=========================
 NumPy 1.4.0 Release Notes
-=========================
+*************************
 
 This minor includes numerous bug fixes, as well as a few new features. It
 is backward compatible with 1.3.0 release.

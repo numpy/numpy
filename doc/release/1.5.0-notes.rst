@@ -1,18 +1,17 @@
-=========================
 NumPy 1.5.0 Release Notes
-=========================
+*************************
 
 
 Highlights
 ==========
 
 Python 3 compatibility
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 This is the first NumPy release which is compatible with Python 3. Support for
 Python 3 and Python 2 is done from a single code base. Extensive notes on
 changes can be found at
-`<http://projects.scipy.org/numpy/browser/trunk/doc/Py3K.txt>`_. 
+`<http://projects.scipy.org/numpy/browser/trunk/doc/Py3K.txt>`_.
 
 Note that the Numpy testing framework relies on nose, which does not have a
 Python 3 compatible release yet. A working Python 3 branch of nose can be found
@@ -21,7 +20,7 @@ at `<http://bitbucket.org/jpellerin/nose3/>`_ however.
 Porting of SciPy to Python 3 is expected to be completed soon.
 
 :pep:`3118` compatibility
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The new buffer protocol described by PEP 3118 is fully supported in this
 version of Numpy. On Python versions >= 2.6 Numpy arrays expose the buffer
@@ -33,7 +32,7 @@ New features
 ============
 
 Warning on casting complex to real
-----------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Numpy now emits a `numpy.ComplexWarning` when a complex number is cast
 into a real number. For example:
@@ -50,7 +49,7 @@ turned off in the standard way:
     >>> warnings.simplefilter("ignore", np.ComplexWarning)
 
 Dot method for ndarrays
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Ndarrays now have the dot product also as a method, which allows writing
 chains of matrix products as
@@ -62,7 +61,7 @@ instead of the longer alternative
     >>> np.dot(a, np.dot(b, c))
 
 linalg.slogdet function
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 The slogdet function returns the sign and logarithm of the determinant
 of a matrix. Because the determinant may involve the product of many
@@ -70,7 +69,7 @@ small/large values, the result is often more accurate than that obtained
 by simple multiplication.
 
 new header
-----------
+~~~~~~~~~~
 
 The new header file ndarraytypes.h contains the symbols from
 ndarrayobject.h that do not depend on the PY_ARRAY_UNIQUE_SYMBOL and
@@ -85,7 +84,7 @@ Changes
 =======
 
 polynomial.polynomial
----------------------
+~~~~~~~~~~~~~~~~~~~~~
 
 * The polyint and polyder functions now check that the specified number
   integrations or derivations is a non-negative integer. The number 0 is
@@ -101,7 +100,7 @@ polynomial.polynomial
 * The polymulx function was added.
 
 polynomial.chebyshev
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 * The chebint and chebder functions now check that the specified number
   integrations or derivations is a non-negative integer. The number 0 is
@@ -119,13 +118,13 @@ polynomial.chebyshev
 
 
 histogram
----------
+~~~~~~~~~
 
 After a two years transition period, the old behavior of the histogram function
 has been phased out, and the "new" keyword has been removed.
 
 correlate
----------
+~~~~~~~~~
 
 The old behavior of correlate was deprecated in 1.4.0, the new behavior (the
 usual definition for cross-correlation) is now the default.
