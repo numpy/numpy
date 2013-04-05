@@ -1,14 +1,15 @@
-=========================
 NumPy 1.6.2 Release Notes
-=========================
+*************************
 
 This is a bugfix release in the 1.6.x series.  Due to the delay of the NumPy
 1.7.0 release, this release contains far more fixes than a regular NumPy bugfix
 release.  It also includes a number of documentation and build improvements.
 
+Issues fixed
+============
 
-``numpy.core`` issues fixed
----------------------------
+``numpy.core``
+~~~~~~~~~~~~~~
 
 #2063  make unique() return consistent index
 #1138  allow creating arrays from empty buffers or empty slices
@@ -29,8 +30,8 @@ release.  It also includes a number of documentation and build improvements.
 #2073  fix float16 __array_interface__ bug
 
 
-``numpy.lib`` issues fixed
---------------------------
+``numpy.lib``
+~~~~~~~~~~~~~
 
 #2048  break reference cycle in NpzFile
 #1573  savetxt() now handles complex arrays
@@ -42,33 +43,8 @@ release.  It also includes a number of documentation and build improvements.
 #1918  use Py_TYPE to access ob_type, so it works also on Py3
 
 
-``numpy.f2py`` changes
-----------------------
-
-ENH:   Introduce new options extra_f77_compiler_args and extra_f90_compiler_args
-BLD:   Improve reporting of fcompiler value
-BUG:   Fix f2py test_kind.py test
- 
-
-``numpy.poly`` changes
-----------------------
-
-ENH:   Add some tests for polynomial printing
-ENH:   Add companion matrix functions	
-DOC:   Rearrange the polynomial documents
-BUG:   Fix up links to classes
-DOC:   Add version added to some of the polynomial package modules 	
-DOC:   Document xxxfit functions in the polynomial package modules	
-BUG:   The polynomial convenience classes let different types interact
-DOC:   Document the use of the polynomial convenience classes
-DOC:   Improve numpy reference documentation of polynomial classes
-ENH:   Improve the computation of polynomials from roots 	
-STY:   Code cleanup in polynomial [*]fromroots functions	
-DOC:   Remove references to cast and NA, which were added in 1.7
-
-
-``numpy.distutils`` issues fixed
--------------------------------
+``numpy.distutils``
+~~~~~~~~~~~~~~~~~~~
 
 #1261  change compile flag on AIX from -O5 to -O3
 #1377  update HP compiler flags
@@ -78,13 +54,39 @@ BLD:   raise a clearer warning in case of building without cleaning up first
 BLD:   follow build_ext coding convention in build_clib
 BLD:   fix up detection of Intel CPU on OS X in system_info.py
 BLD:   add support for the new X11 directory structure on Ubuntu & co.
-BLD:   add ufsparse to the libraries search path. 	
-BLD:   add 'pgfortran' as a valid compiler in the Portland Group 	
+BLD:   add ufsparse to the libraries search path.
+BLD:   add 'pgfortran' as a valid compiler in the Portland Group
 BLD:   update version match regexp for IBM AIX Fortran compilers.
 
 
-``numpy.random`` issues fixed
------------------------------
+``numpy.random``
+~~~~~~~~~~~~~~~~
 
 BUG:  Use npy_intp instead of long in mtrand
 
+Changes
+=======
+
+``numpy.f2py``
+~~~~~~~~~~~~~~
+
+ENH:   Introduce new options extra_f77_compiler_args and extra_f90_compiler_args
+BLD:   Improve reporting of fcompiler value
+BUG:   Fix f2py test_kind.py test
+
+
+``numpy.poly``
+~~~~~~~~~~~~~~
+
+ENH:   Add some tests for polynomial printing
+ENH:   Add companion matrix functions
+DOC:   Rearrange the polynomial documents
+BUG:   Fix up links to classes
+DOC:   Add version added to some of the polynomial package modules
+DOC:   Document xxxfit functions in the polynomial package modules
+BUG:   The polynomial convenience classes let different types interact
+DOC:   Document the use of the polynomial convenience classes
+DOC:   Improve numpy reference documentation of polynomial classes
+ENH:   Improve the computation of polynomials from roots
+STY:   Code cleanup in polynomial [*]fromroots functions
+DOC:   Remove references to cast and NA, which were added in 1.7

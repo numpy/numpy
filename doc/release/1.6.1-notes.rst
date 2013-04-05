@@ -1,12 +1,11 @@
-=========================
 NumPy 1.6.1 Release Notes
-=========================
+*************************
 
 This is a bugfix only release in the 1.6.x series.
 
 
-Issues fixed
-------------
+Issues Fixed
+============
 
 #1834   einsum fails for specific shapes
 #1837   einsum throws nan or freezes python for specific array shapes
@@ -19,4 +18,3 @@ Issues fixed
 #1874   f2py: fix --include_paths bug
 #1749   Fix ctypes.load_library()
 #1895/1896  iter: writeonly operands weren't always being buffered correctly
-
