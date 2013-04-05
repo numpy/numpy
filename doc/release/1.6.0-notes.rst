@@ -1,6 +1,5 @@
-=========================
 NumPy 1.6.0 Release Notes
-=========================
+*************************
 
 This release includes several new features as well as numerous bug fixes and
 improved documentation.  It is backward compatible with the 1.5.0 release, and
@@ -21,7 +20,7 @@ New features
 ============
 
 New 16-bit floating point type
-------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This release adds support for the IEEE 754-2008 binary16 format, available as
 the data type ``numpy.half``.  Within Python, the type behaves similarly to
@@ -30,7 +29,7 @@ half-float API.
 
 
 New iterator
-------------
+~~~~~~~~~~~~
 
 A new iterator has been added, replacing the functionality of the
 existing iterator and multi-iterator with a single object and API.
@@ -43,7 +42,7 @@ iterator.
 
 
 Legendre, Laguerre, Hermite, HermiteE polynomials in ``numpy.polynomial``
--------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Extend the number of polynomials available in the polynomial package. In
 addition, a new ``window`` attribute has been added to the classes in
@@ -54,7 +53,7 @@ of values without playing unnatural tricks with the domain.
 
 
 Fortran assumed shape array and size function support in ``numpy.f2py``
------------------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 F2py now supports wrapping Fortran 90 routines that use assumed shape
 arrays.  Before such routines could be called from Python but the
@@ -68,7 +67,7 @@ that use two argument ``size`` function in dimension specifications.
 
 
 Other new functions
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 ``numpy.ravel_multi_index`` : Converts a multi-index tuple into
 an array of flat indices, applying boundary modes to the indices.
@@ -91,14 +90,14 @@ Changes
 =======
 
 ``default error handling``
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The default error handling has been change from ``print`` to ``warn`` for
 all except for ``underflow``, which remains as ``ignore``.
 
 
 ``numpy.distutils``
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 Several new compilers are supported for building Numpy: the Portland Group
 Fortran compiler on OS X, the PathScale compiler suite and the 64-bit Intel C
@@ -106,7 +105,7 @@ compiler on Linux.
 
 
 ``numpy.testing``
------------------
+~~~~~~~~~~~~~~~~~
 
 The testing framework gained ``numpy.testing.assert_allclose``, which provides
 a more convenient way to compare floating point arrays than
@@ -114,7 +113,7 @@ a more convenient way to compare floating point arrays than
 
 
 ``C API``
----------
+~~~~~~~~~
 
 In addition to the APIs for the new iterator and half data type, a number
 of other additions have been made to the C API. The type promotion
@@ -138,7 +137,7 @@ Removed features
 ================
 
 ``numpy.fft``
--------------
+~~~~~~~~~~~~~
 
 The functions `refft`, `refft2`, `refftn`, `irefft`, `irefft2`, `irefftn`,
 which were aliases for the same functions without the 'e' in the name, were
@@ -146,21 +145,21 @@ removed.
 
 
 ``numpy.memmap``
-----------------
+~~~~~~~~~~~~~~~~
 
 The `sync()` and `close()` methods of memmap were removed.  Use `flush()` and
 "del memmap" instead.
 
 
 ``numpy.lib``
--------------
+~~~~~~~~~~~~~
 
 The deprecated functions ``numpy.unique1d``, ``numpy.setmember1d``,
 ``numpy.intersect1d_nu`` and ``numpy.lib.ufunclike.log2`` were removed.
 
 
 ``numpy.ma``
-------------
+~~~~~~~~~~~~
 
 Several deprecated items were removed from the ``numpy.ma`` module::
 
@@ -171,7 +170,7 @@ Several deprecated items were removed from the ``numpy.ma`` module::
 
 
 ``numpy.distutils``
--------------------
+~~~~~~~~~~~~~~~~~~~
 
 The ``numpy.get_numpy_include`` function was removed, use ``numpy.get_include``
 instead.

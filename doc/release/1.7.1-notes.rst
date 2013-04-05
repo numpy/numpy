@@ -1,12 +1,11 @@
-=========================
 NumPy 1.7.1 Release Notes
-=========================
+*************************
 
 This is a bugfix only release in the 1.7.x series.
 
 
 Issues fixed
-------------
+============
 
 gh-2973   Fix `1` is printed during numpy.test()
 gh-2983   BUG: gh-2969: Backport memory leak fix 80b3a34.
