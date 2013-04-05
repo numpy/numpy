@@ -23,6 +23,9 @@ np.seterr.
 Additional functions some fused arithmetic, useful for efficient operation over
 """
 
+from __future__ import division, absolute_import
+
+
 __all__ = ['inner1d', 'dotc1d', 'innerwt', 'matrix_multiply', 'det', 'slogdet',
            'inv', 'cholesky', 'quadratic_form', 'add3', 'multiply3', 
            'multiply3_add', 'multiply_add', 'multiply_add2', 'multiply4', 
