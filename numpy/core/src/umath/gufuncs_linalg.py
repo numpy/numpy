@@ -41,14 +41,14 @@ def inner1d(a, b, **kwargs):
 
     Parameters
     ----------
-    a : (<NDIMS>, N) array
+    a : (..., N) array
         Input array
-    b : (<NDIMS>, N) array
+    b : (..., N) array
         Input array
 
     Returns
     -------
-    inner : (<NDIM>) array
+    inner : (...) array
         dot product over the inner dimension.
 
     Notes
@@ -88,14 +88,14 @@ def dotc1d(a, b, **kwargs):
 
     Parameters
     ----------
-    a : (<NDIMS>, N) array
+    a : (..., N) array
         Input array
-    b : (<NDIMS>, N) array
+    b : (..., N) array
         Input array
 
     Returns
     -------
-    dotc : (<NDIM>) array
+    dotc : (...) array
         dot product conjugating the first vector over the inner
         dimension.
 
@@ -136,12 +136,12 @@ def innerwt(a, b, c, **kwargs):
 
     Parameters
     ----------
-    a, b, c : (<NDIMS>, N) array
+    a, b, c : (..., N) array
         Input arrays
 
     Returns
     -------
-    inner : (<NDIMS>) array
+    inner : (...) array
         The weighted (i.e. triple) inner product.
 
     Notes
@@ -177,16 +177,15 @@ def matrix_multiply(a,b,**kwargs):
 
     Parameters
     ----------
-    a : (<NDIMS>, M, N) array
+    a : (..., M, N) array
         Input array.
-    b : (<NDIMS>, N, P) array
+    b : (..., N, P) array
         Input array.
 
     Returns
     -------
-    r : (<NDIMS>, M, P) array
-        matrix multiplication of a and b over <NDIMS>.
-        <NDIMS> can be any number of dimensions.
+    r : (..., M, P) array matrix multiplication of a and b over any number of
+        outer dimensions
 
     Notes
     -----
@@ -272,17 +271,17 @@ def slogdet(a, **kwargs):
 
     Parameters
     ----------
-    a : (<NDIMS>, M, M) array
+    a : (..., M, M) array
         Input array. Its inner dimensions must be those of a square 2-D array.
 
     Returns
     -------
-    sign : (<NDIMS>) array
+    sign : (...) array
         An array of numbers representing the sign of the determinants. For real
         matrices, this is 1, 0, or -1. For complex matrices, this is a complex 
         number with absolute value 1 (i.e., it is on the unit circle), or else
         0.
-    logdet : (<NDIMS>) array
+    logdet : (...) array
         The natural log of the absolute value of the determinant. This is always
         a real type.
 
@@ -339,12 +338,12 @@ def inv(a, **kwargs):
 
     Parameters
     ----------
-    a : (<NDIMS>, M, M) array
+    a : (..., M, M) array
         Matrices to be inverted
 
     Returns
     -------
-    ainv : (<NDIMS>, M, M) array
+    ainv : (..., M, M) array
         (Multiplicative) inverse of the `a` matrices.
 
     Notes
@@ -388,14 +387,15 @@ def cholesky(a, UPLO='L', **kwargs):
 
     Parameters
     ----------
-    a : (<NDIMS>, M, M) array
+    a : (..., M, M) array
         Matrices for which compute the cholesky decomposition
 
     Returns
     -------
-    l : (<NDIMS>, M, M) array
-        <NDIMS> matrices where each entry is the lower triangular matrix with
-        strictly positive diagonal entries such that a = ll* for all <NDIMS>.
+    l : (..., M, M) array
+        Matrices for each element where each entry is the lower triangular
+        matrix with strictly positive diagonal entries such that a = ll* for
+        all outer dimensions
 
     See Also
     --------
@@ -443,20 +443,20 @@ def eig(a, **kwargs):
 
     Parameters
     ----------
-    a : (<NDIMS>, M, M) array
+    a : (..., M, M) array
         Matrices for which the eigenvalues and right eigenvectors will
         be computed
 
     Returns
     -------
-    w : (<NDIMS>, M) array
+    w : (..., M) array
         The eigenvalues, each repeated according to its multiplicity.
         The eigenvalues are not necessarily ordered. The resulting
         array will be always be of complex type. When `a` is real
         the resulting eigenvalues will be real (0 imaginary part) or
         occur in conjugate pairs
 
-    v : (<NDIMS>, M, M) array
+    v : (..., M, M) array
         The normalized (unit "length") eigenvectors, such that the
         column ``v[:,i]`` is the eigenvector corresponding to the
         eigenvalue ``w[i]``.
@@ -535,12 +535,12 @@ def eigvals(a, **kwargs):
 
     Parameters
     ----------
-    a : (<NDIMS>, M, M) array
+    a : (..., M, M) array
         Matrices whose eigenvalues will be computed
 
     Returns
     -------
-    w : (<NDIMS>, M) array
+    w : (..., M) array
         The eigenvalues, each repeated according to its multiplicity.
         The eigenvalues are not necessarily ordered. The resulting
         array will be always be of complex type. When `a` is real
@@ -601,18 +601,18 @@ def quadratic_form(u,Q,v, **kwargs):
 
     Parameters
     ----------
-    u : (<NDIMS>, M) array
+    u : (..., M) array
         The u vectors of the quadratic form uQv
 
-    Q : (<NDIMS>, M, N) array
+    Q : (..., M, N) array
         The Q matrices of the quadratic form uQv
 
-    v : (<NDIMS>, N) array
+    v : (..., N) array
         The v vectors of the quadratic form uQv
 
     Returns
     -------
-    qf : (<NDIMS>) array
+    qf : (...) array
         The result of the quadratic forms
 
     Notes
@@ -652,12 +652,12 @@ def add3(a, b, c, **kwargs):
 
     Parameters
     ----------
-    a, b, c : (<NDIMS>) array
+    a, b, c : (...) array
         arrays with the addends
 
     Returns
     -------
-    add3 : (<NDIMS>) array
+    add3 : (...) array
         resulting element-wise addition.
 
     Notes
@@ -692,12 +692,12 @@ def multiply3(a, b, c, **kwargs):
 
     Parameters
     ----------
-    a, b, c : (<NDIMS>) array
+    a, b, c : (...) array
         arrays with the factors
 
     Returns
     -------
-    m3 : (<NDIMS>) array
+    m3 : (...) array
         resulting element-wise product
 
     Notes
@@ -734,15 +734,15 @@ def multiply3_add(a, b, c, d, **kwargs):
 
     Parameters
     ----------
-    a, b, c : (<NDIMS>) array
+    a, b, c : (...) array
         arrays with the factors
 
-    d : (<NDIMS>) array
+    d : (...) array
         array with the addend
 
     Returns
     -------
-    m3a : (<NDIMS>) array
+    m3a : (...) array
         resulting element-wise addition
 
     Notes
@@ -779,12 +779,12 @@ def multiply_add(a, b, c, **kwargs):
 
     Parameters
     ----------
-    a, b, c : (<NDIMS>) array
+    a, b, c : (...) array
         arrays with the addends
 
     Returns
     -------
-    add3 : (<NDIMS>) array
+    add3 : (...) array
         resulting element-wise addition
 
     Notes
@@ -821,12 +821,12 @@ def multiply_add2(a, b, c, d, **kwargs):
 
     Parameters
     ----------
-    a, b, c : (<NDIMS>) array
+    a, b, c : (...) array
         arrays with the addends
 
     Returns
     -------
-    add3 : (<NDIMS>) array
+    add3 : (...) array
         resulting element-wise addition
 
     Notes
@@ -863,12 +863,12 @@ def multiply4(a, b, c, d, **kwargs):
 
     Parameters
     ----------
-    a, b, c : (<NDIMS>) array
+    a, b, c : (...) array
         arrays with the addends
 
     Returns
     -------
-    add3 : (<NDIMS>) array
+    add3 : (...) array
         resulting element-wise addition
 
     Notes
@@ -905,12 +905,12 @@ def multiply4_add(a, b, c, d, e, **kwargs):
 
     Parameters
     ----------
-    a, b, c : (<NDIMS>) array
+    a, b, c : (...) array
         arrays with the addends
 
     Returns
     -------
-    add3 : (<NDIMS>) array
+    add3 : (...) array
         resulting element-wise addition
 
     Notes
@@ -949,7 +949,7 @@ def eigh(A, UPLO='L', **kw_args):
 
     Parameters
     ----------
-    A : (<NDIMS>, M, M) array
+    A : (..., M, M) array
          Hermitian/Symmetric matrices whose eigenvalues and
          eigenvectors are to be computed.
     UPLO : {'L', 'U'}, optional
@@ -959,9 +959,9 @@ def eigh(A, UPLO='L', **kw_args):
 
     Returns
     -------
-    w : (<NDIMS>, M) array
+    w : (..., M) array
         The eigenvalues, not necessarily ordered.
-    v : (<NDIMS>, M, M) array
+    v : (..., M, M) array
         The inner dimensions contain matrices with the normalized
         eigenvectors as columns. The column-numbers are coherent with
         the associated eigenvalue.
@@ -1027,7 +1027,7 @@ def eigvalsh(A, UPLO='L', **kw_args):
 
     Parameters
     ----------
-    A : (<NDIMS>, M, M) array
+    A : (..., M, M) array
          Hermitian/Symmetric matrices whose eigenvalues and
          eigenvectors are to be computed.
     UPLO : {'L', 'U'}, optional
@@ -1037,7 +1037,7 @@ def eigvalsh(A, UPLO='L', **kw_args):
 
     Returns
     -------
-    w : (<NDIMS>, M) array
+    w : (..., M) array
         The eigenvalues, not necessarily ordered.
 
     Notes
@@ -1093,15 +1093,15 @@ def solve(A,B,**kw_args):
 
     Parameters
     ----------
-    A : (<NDIMS>, M, M) array
+    A : (..., M, M) array
         Coefficient matrices.
-    B : (<NDIMS>, M, N) array
+    B : (..., M, N) array
         Ordinate or "dependent variable" values.
 
     Returns
     -------
-    X : (<NDIMS>, M, N) array
-        Solutions to the system A X = B for all elements in <NDIMS>
+    X : (..., M, N) array
+        Solutions to the system A X = B for all the outer dimensions
 
     Notes
     -----
@@ -1154,7 +1154,7 @@ def svd(a, full_matrices=1, compute_uv=1 ,**kw_args):
 
     Parameters
     ----------
-    a : (<NDIMS>, M, N) array
+    a : (..., M, N) array
         The array of matrices to decompose.
     full_matrices : bool, optional
         If True (default), `u` and `v` have the shapes (`M`, `M`) and
@@ -1166,12 +1166,12 @@ def svd(a, full_matrices=1, compute_uv=1 ,**kw_args):
 
     Returns
     -------
-    u : { (<NDIMS>, M, M), (<NDIMS>, M, K) } array
+    u : { (..., M, M), (..., M, K) } array
         Unitary matrices. The actual shape depends on the value of
         ``full_matrices``. Only returned when ``compute_uv`` is True.
-    s : (<NDIMS>, K) array
+    s : (..., K) array
         The singular values for every matrix, sorted in descending order.
-    v : { (<NDIMS>, N, N), (<NDIMS>, K, N) } array
+    v : { (..., N, N), (..., K, N) } array
         Unitary matrices. The actual shape depends on the value of
         ``full_matrices``. Only returned when ``compute_uv`` is True.
 
@@ -1243,9 +1243,9 @@ def chosolve(A, B, UPLO='L', **kw_args):
 
     Parameters
     ----------
-    A : (<NDIMS>, M, M) array
+    A : (..., M, M) array
         Coefficient symmetric/hermitian positive-definite matrices.
-    B : (<NDIMS>, M, N) array
+    B : (..., M, N) array
         Ordinate or "dependent variable" values.
     UPLO : {'L', 'U'}, optional
          Specifies whether the calculation is done with the lower
@@ -1254,8 +1254,9 @@ def chosolve(A, B, UPLO='L', **kw_args):
 
     Returns
     -------
-    X : (<NDIMS>, M, N) array
-        Solutions to the system A X = B for all elements in <NDIMS>
+    X : (..., M, N) array
+        Solutions to the system A X = B for all elements in the outer
+        dimensions
 
     Notes
     -----
@@ -1316,12 +1317,12 @@ def poinv(A, UPLO='L', **kw_args):
 
     Parameters
     ----------
-    a : (<NDIMS>, M, M) array
+    a : (..., M, M) array
         Symmetric/hermitian postive definite matrices to be inverted.
 
     Returns
     -------
-    ainv : (<NDIMS>, M, M) array
+    ainv : (..., M, M) array
         (Multiplicative) inverse of the `a` matrices.
 
     Notes
