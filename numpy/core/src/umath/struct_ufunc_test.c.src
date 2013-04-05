@@ -4,8 +4,19 @@
 #include "numpy/ufuncobject.h"
 #include "numpy/npy_3kcompat.h"
 
+
+/*
+ * struct_ufunc_test.c
+ * This is the C code for creating your own
+ * Numpy ufunc for a structured array dtype.
+ *
+ * Details explaining the Python-C API can be found under
+ * 'Extending and Embedding' and 'Python/C API' at
+ * docs.python.org .
+ */
+
 static PyMethodDef StructUfuncTestMethods[] = {
-    {0} /* sentinel */
+    {NULL, NULL, 0, NULL}
 };
 
 /* The loop definition must precede the PyMODINIT_FUNC. */
