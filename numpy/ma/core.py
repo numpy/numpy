@@ -2540,7 +2540,7 @@ class MaskedIterator(object):
         if self.maskiter is not None:
             self.maskiter[index] = getmaskarray(value)
 
-    def next(self):
+    def __next__(self):
         """
         Return the next value, or raise StopIteration.
 
@@ -2562,12 +2562,12 @@ class MaskedIterator(object):
         StopIteration
 
         """
-        d = self.dataiter.next()
-        if self.maskiter is not None and self.maskiter.next():
+        d = next(self.dataiter)
+        if self.maskiter is not None and next(self.maskiter):
             d = masked
         return d
 
-
+    next = __next__
 
 
 class MaskedArray(ndarray):

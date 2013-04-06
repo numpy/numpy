@@ -487,7 +487,7 @@ class ndenumerate(object):
     def __init__(self, arr):
         self.iter = asarray(arr).flat
 
-    def next(self):
+    def __next__(self):
         """
         Standard iterator method, returns the index tuple and array value.
 
@@ -499,10 +499,13 @@ class ndenumerate(object):
             The array element of the current iteration.
 
         """
-        return self.iter.coords, self.iter.next()
+        return self.iter.coords, next(self.iter)
 
     def __iter__(self):
         return self
+
+    next = __next__
+
 
 class ndindex(object):
     """
@@ -532,7 +535,7 @@ class ndindex(object):
     (2, 0, 0)
     (2, 1, 0)
 
-    """     
+    """
     def __init__(self, *shape):
         if len(shape) == 1 and isinstance(shape[0], tuple):
             shape = shape[0]
@@ -541,16 +544,16 @@ class ndindex(object):
 
     def __iter__(self):
         return self
-        
+
     def ndincr(self):
         """
         Increment the multi-dimensional index by one.
 
         This method is for backward compatibility only: do not use.
         """
-        self.next()
+        next(self)
 
-    def next(self):
+    def __next__(self):
         """
         Standard iterator method, updates the index and returns the index tuple.
 
@@ -560,8 +563,10 @@ class ndindex(object):
             Returns a tuple containing the indices of the current iteration.
 
         """
-        self._it.next()
+        next(self._it)
         return self._it.multi_index
+
+    next =  __next__
 
 
 # You can do all this with slice() plus a few special objects,

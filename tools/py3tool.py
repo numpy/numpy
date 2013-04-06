@@ -72,7 +72,7 @@ FIXES_TO_SKIP = [
     'metaclass',
     'methodattrs',
     'ne',
-#    'next',
+    'next',
     'nonzero',
     'numliterals',
     'operator',

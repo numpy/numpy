@@ -106,7 +106,7 @@ class CommentBlocker(object):
 
     def new_comment(self, string, start, end, line):
         """ Possibly add a new comment.
-        
+
         Only adds a new comment if this comment is the only thing on the line.
         Otherwise, it extends the noncomment block.
         """

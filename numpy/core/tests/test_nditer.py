@@ -1,12 +1,13 @@
 from __future__ import division, absolute_import, print_function
 
+import sys, warnings
+
 import numpy as np
 from numpy import array, arange, nditer, all
 from numpy.compat import asbytes
 from numpy.testing import *
-import sys, warnings
 
-import warnings
+
 
 def iter_multi_index(i):
     ret = []
@@ -1210,7 +1211,8 @@ def test_iter_copy():
     assert_equal([x[()] for x in i], [x[()] for x in j])
 
     i.iterrange = (2,18)
-    i.next(); i.next()
+    next(i)
+    next(i)
     j = i.copy()
     assert_equal([x[()] for x in i], [x[()] for x in j])
 
@@ -2528,14 +2530,14 @@ def test_0d_iter():
     # Basic test for iteration of 0-d arrays:
     i = nditer([2, 3], ['multi_index'], [['readonly']]*2)
     assert_equal(i.ndim, 0)
-    assert_equal(i.next(), (2, 3))
+    assert_equal(next(i), (2, 3))
     assert_equal(i.multi_index, ())
     assert_equal(i.iterindex, 0)
-    assert_raises(StopIteration, i.next)
+    assert_raises(StopIteration, next, i)
     # test reset:
     i.reset()
-    assert_equal(i.next(), (2, 3))
-    assert_raises(StopIteration, i.next)
+    assert_equal(next(i), (2, 3))
+    assert_raises(StopIteration, next, i)
 
     # test forcing to 0-d
     i = nditer(np.arange(5), ['multi_index'], [['readonly']], op_axes=[()])
@@ -2548,7 +2550,7 @@ def test_0d_iter():
     a = np.array(0.5, dtype='f4')
     i = nditer(a, ['buffered','refs_ok'], ['readonly'],
                     casting='unsafe', op_dtypes=sdt)
-    vals = i.next()
+    vals = next(i)
     assert_equal(vals['a'], 0.5)
     assert_equal(vals['b'], 0)
     assert_equal(vals['c'], [[(0.5)]*3]*2)
