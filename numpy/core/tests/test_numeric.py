@@ -267,13 +267,16 @@ class TestSeterr(TestCase):
 class TestFloatExceptions(TestCase):
     def assert_raises_fpe(self, fpeerr, flop, x, y):
         ftype = type(x)
+        if ftype == np.ndarray:
+            ftype = str(ftype) + str(x.dtype)
+
         try:
             flop(x, y)
             assert_(False,
                     "Type %s did not raise fpe error '%s'." % (ftype, fpeerr))
         except FloatingPointError as exc:
-            assert_(str(exc).find(fpeerr) >= 0,
-                    "Type %s raised wrong fpe error '%s'." % (ftype, exc))
+            assert_(str(exc).find(fpeerr) >= 0, "Type %s raised wrong fpe "
+                    "error '%s', not '%s'." % (ftype, exc, fpeerr))
 
     def assert_op_raises_fpe(self, fpeerr, flop, sc1, sc2):
         """Check that fpe exception is raised.
