@@ -1,9 +1,8 @@
 """Extract reference documentation from the NumPy source tree.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
-import sys
 import inspect
 import textwrap
 import re
@@ -11,10 +10,6 @@ import pydoc
 from warnings import warn
 import collections
 
-if sys.version_info[0] >= 3:
-    from io import StringIO
-else:
-    from io import StringIO
 
 class Reader(object):
     """A line-based string reader.

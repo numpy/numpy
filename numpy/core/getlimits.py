@@ -1,7 +1,7 @@
 """Machine limits for Float32 and Float64 and (long double) if available...
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __all__ = ['finfo','iinfo']
 
@@ -296,11 +296,11 @@ max = %(max)s
 
 if __name__ == '__main__':
     f = finfo(ntypes.single)
-    print 'single epsilon:',f.eps
-    print 'single tiny:',f.tiny
+    print('single epsilon:',f.eps)
+    print('single tiny:',f.tiny)
     f = finfo(ntypes.float)
-    print 'float epsilon:',f.eps
-    print 'float tiny:',f.tiny
+    print('float epsilon:',f.eps)
+    print('float tiny:',f.tiny)
     f = finfo(ntypes.longfloat)
-    print 'longfloat epsilon:',f.eps
-    print 'longfloat tiny:',f.tiny
+    print('longfloat epsilon:',f.eps)
+    print('longfloat tiny:',f.tiny)

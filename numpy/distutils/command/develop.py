@@ -3,7 +3,7 @@ generated files (from build_src or build_scripts) are properly converted to real
 files with filenames.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 from setuptools.command.develop import develop as old_develop
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import sys, os
 import fortran
@@ -156,9 +156,9 @@ class LapackLibrary(FortranLibrary):
         return [a[1] for a in routines]
 
 def printRoutineNames(desc, routines):
-    print desc
+    print(desc)
     for r in routines:
-        print '\t%s' % r.name
+        print('\t%s' % r.name)
 
 def getLapackRoutines(wrapped_routines, ignores, lapack_dir):
     blas_src_dir = os.path.join(lapack_dir, 'BLAS', 'SRC')
@@ -236,8 +236,8 @@ def scrubF2CSource(c_file):
 
 def main():
     if len(sys.argv) != 4:
-        print 'Usage: %s wrapped_routines_file lapack_dir output_dir' % \
-              (sys.argv[0],)
+        print('Usage: %s wrapped_routines_file lapack_dir output_dir' % \
+              (sys.argv[0],))
         return
     wrapped_routines_file = sys.argv[1]
     lapack_src_dir = sys.argv[2]
@@ -249,7 +249,7 @@ def main():
     dumpRoutineNames(library, output_dir)
 
     for typename in ['blas', 'dlapack', 'zlapack']:
-        print 'creating %s_lite.c ...'  % typename
+        print('creating %s_lite.c ...'  % typename)
         routines = library.allRoutinesByType(typename)
         fortran_file = os.path.join(output_dir, typename+'_lite.f')
         c_file = fortran_file[:-2] + '.c'
@@ -257,7 +257,7 @@ def main():
         try:
             runF2C(fortran_file, output_dir)
         except F2CError:
-            print 'f2c failed on %s' % fortran_file
+            print('f2c failed on %s' % fortran_file)
             break
         scrubF2CSource(c_file)
 

@@ -14,7 +14,7 @@ $Date: 2005/05/06 08:31:19 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 from . import __version__
 f2py_version = __version__.version
@@ -212,7 +212,7 @@ def scaninputline(inputline):
         elif l=='-h': f2=1
         elif l=='-m': f3=1
         elif l[:2]=='-v':
-            print f2py_version
+            print(f2py_version)
             sys.exit()
         elif l=='--show-compilers':
             f5=1
@@ -242,7 +242,7 @@ def scaninputline(inputline):
         elif f==-1: skipfuncs.append(l)
         elif f==0: onlyfuncs.append(l)
     if not f5 and not files and not modulename:
-        print __usage__
+        print(__usage__)
         sys.exit()
     if not os.path.isdir(buildpath):
         if not verbose:
@@ -477,7 +477,7 @@ def run_compile():
                         nv = vmap[ov]
                     except KeyError:
                         if ov not in vmap.values():
-                            print 'Unknown vendor: "%s"' % (s[len(v):])
+                            print('Unknown vendor: "%s"' % (s[len(v):]))
                     nv = ov
                 i = flib_flags.index(s)
                 flib_flags[i] = '--fcompiler=' + nv
@@ -533,7 +533,7 @@ def run_compile():
         if len(name_value)==2:
             define_macros[i] = tuple(name_value)
         else:
-            print 'Invalid use of -D:',name_value
+            print('Invalid use of -D:',name_value)
 
     from numpy.distutils.system_info import get_info
 

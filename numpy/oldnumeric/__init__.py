@@ -1,7 +1,7 @@
 """Don't add these to the __all__ variable though
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 from numpy import *
 

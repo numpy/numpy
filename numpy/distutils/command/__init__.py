@@ -4,7 +4,7 @@ Package containing implementation of all the standard Distutils
 commands.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 def test_na_writable_attributes_deletion():
     a = np.NA(2)

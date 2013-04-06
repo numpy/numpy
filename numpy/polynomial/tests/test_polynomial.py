@@ -1,7 +1,7 @@
 """Tests for polynomial module.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import numpy as np
 import numpy.polynomial.polynomial as poly

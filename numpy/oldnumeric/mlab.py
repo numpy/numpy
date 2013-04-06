@@ -1,7 +1,7 @@
 """This module is for compatibility only.  All functions are defined elsewhere.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __all__ = ['rand', 'tril', 'trapz', 'hanning', 'rot90', 'triu', 'diff', 'angle',
            'roots', 'ptp', 'kaiser', 'randn', 'cumprod', 'diag', 'msort',

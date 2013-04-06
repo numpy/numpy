@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 from numpy.testing import assert_equal, TestCase
 from numpy.core import ones

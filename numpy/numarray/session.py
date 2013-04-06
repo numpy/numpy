@@ -72,7 +72,7 @@ Saved modules are re-imported at load time but any "state" in the module
 which is not restored by a simple import is lost.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __all__ = ['load', 'save']
 
@@ -126,8 +126,8 @@ def _callers_modules():
 
 def _errout(*args):
     for a in args:
-        print >>sys.stderr, a,
-    print >>sys.stderr
+        print(a, end=' ', file=sys.stderr)
+    print(file=sys.stderr)
 
 def _verbose(*args):
     if VERBOSE:

@@ -31,7 +31,7 @@ Functions
 - `mapparms` -- parameters of the linear map between domains.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __all__ = ['RankWarning', 'PolyError', 'PolyDomainError', 'PolyBase',
            'as_series', 'trimseq', 'trimcoef', 'getdomain', 'mapdomain',

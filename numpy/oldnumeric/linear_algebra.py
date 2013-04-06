@@ -6,7 +6,7 @@ only accesses the following LAPACK functions: dgesv, zgesv, dgeev,
 zgeev, dgesdd, zgesdd, dgelsd, zgelsd, dsyevd, zheevd, dgetrf, dpotrf.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __all__ = ['LinAlgError', 'solve_linear_equations',
            'inverse', 'cholesky_decomposition', 'eigenvalues',

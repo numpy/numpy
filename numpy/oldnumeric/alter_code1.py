@@ -29,7 +29,7 @@ Makes the following changes:
    isinstance(..., <type>)
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __all__ = ['convertfile', 'convertall', 'converttree', 'convertsrc']
 

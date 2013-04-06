@@ -1,7 +1,7 @@
 """Functions that already have the correct syntax or miscellaneous functions
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __all__ = ['sort', 'copy_reg', 'clip', 'rank',
            'sign', 'shape', 'types', 'allclose', 'size',

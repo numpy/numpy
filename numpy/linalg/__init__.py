@@ -42,7 +42,7 @@ LinAlgError     Indicates a failed linear algebra operation
 =============== ==========================================================
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 # To get sub-modules
 from .info import __doc__

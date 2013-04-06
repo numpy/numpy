@@ -134,7 +134,7 @@ The ``.npy`` format, including reasons for creating it and a comparison of
 alternatives, is described fully in the "npy-format" NEP.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import numpy
 import sys

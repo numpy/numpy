@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import re
 import sys
@@ -48,8 +48,8 @@ libfile, deffile = parse_cmd()"""
         elif sys.argv[1][-4:] == '.def' and sys.argv[2][-4:] == '.lib':
             deffile, libfile = sys.argv[1:]
         else:
-            print "I'm assuming that your first argument is the library"
-            print "and the second is the DEF file."
+            print("I'm assuming that your first argument is the library")
+            print("and the second is the DEF file.")
     elif len(sys.argv) == 2:
         if sys.argv[1][-4:] == '.def':
             deffile = sys.argv[1]

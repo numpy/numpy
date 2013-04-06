@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 # missing Numarray defined names (in from numarray import *)
 
@@ -362,47 +362,47 @@ def info(obj, output=sys.stdout, numpy=0):
         nm = getattr(cls, '__name__', cls)
     else:
         nm = cls
-    print >> output, "class: ", nm
-    print >> output, "shape: ", obj.shape
+    print("class: ", nm, file=output)
+    print("shape: ", obj.shape, file=output)
     strides = obj.strides
-    print >> output, "strides: ", strides
+    print("strides: ", strides, file=output)
     if not numpy:
-        print >> output, "byteoffset: 0"
+        print("byteoffset: 0", file=output)
         if len(strides) > 0:
             bs = obj.strides[0]
         else:
             bs = obj.itemsize
-        print >> output, "bytestride: ", bs
-    print >> output, "itemsize: ", obj.itemsize
-    print >> output, "aligned: ", bp(obj.flags.aligned)
-    print >> output, "contiguous: ", bp(obj.flags.contiguous)
+        print("bytestride: ", bs, file=output)
+    print("itemsize: ", obj.itemsize, file=output)
+    print("aligned: ", bp(obj.flags.aligned), file=output)
+    print("contiguous: ", bp(obj.flags.contiguous), file=output)
     if numpy:
-        print >> output, "fortran: ", obj.flags.fortran
+        print("fortran: ", obj.flags.fortran, file=output)
     if not numpy:
-        print >> output, "buffer: ", repr(obj.data)
+        print("buffer: ", repr(obj.data), file=output)
     if not numpy:
         extra = " (DEBUG ONLY)"
         tic = "'"
     else:
         extra = ""
         tic = ""
-    print >> output, "data pointer: %s%s" % (hex(obj.ctypes._as_parameter_.value), extra)
-    print >> output, "byteorder: ",
+    print("data pointer: %s%s" % (hex(obj.ctypes._as_parameter_.value), extra), file=output)
+    print("byteorder: ", end=' ', file=output)
     endian = obj.dtype.byteorder
     if endian in ['|','=']:
-        print >> output, "%s%s%s" % (tic, sys.byteorder, tic)
+        print("%s%s%s" % (tic, sys.byteorder, tic), file=output)
         byteswap = False
     elif endian == '>':
-        print >> output, "%sbig%s" % (tic, tic)
+        print("%sbig%s" % (tic, tic), file=output)
         byteswap = sys.byteorder != "big"
     else:
-        print >> output, "%slittle%s" % (tic, tic)
+        print("%slittle%s" % (tic, tic), file=output)
         byteswap = sys.byteorder != "little"
-    print >> output, "byteswap: ", bp(byteswap)
+    print("byteswap: ", bp(byteswap), file=output)
     if not numpy:
-        print >> output, "type: ", typefrom(obj).name
+        print("type: ", typefrom(obj).name, file=output)
     else:
-        print >> output, "type: %s" % obj.dtype
+        print("type: %s" % obj.dtype, file=output)
 
 #clipmode is ignored if axis is not 0 and array is not 1d
 def put(array, indices, values, axis=0, clipmode=RAISE):

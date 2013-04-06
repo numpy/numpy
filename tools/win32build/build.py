@@ -8,7 +8,7 @@ TODO:
     - make the config configurable with a file
 
 """
-from __future__ import division
+from __future__ import division, print_function
 
 import sys
 import subprocess
@@ -51,7 +51,7 @@ def write_site_cfg(arch):
     f.close()
 
 def build(arch, pyver):
-    print "Building numpy binary for python %s, arch is %s" % (get_python_exec(pyver), arch)
+    print("Building numpy binary for python %s, arch is %s" % (get_python_exec(pyver), arch))
     get_clean()
     write_site_cfg(arch)
 

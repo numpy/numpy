@@ -18,7 +18,7 @@ When running py3tool again, only changed files are re-processed, which
 makes the test-bugfix cycle faster.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 from optparse import OptionParser
 import shutil
@@ -80,6 +80,7 @@ FIXES_TO_SKIP = [
     'import',
     'imports',
     'imports2',
+    'print',
 ]
 
 skip_fixes= []

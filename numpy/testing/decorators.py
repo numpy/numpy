@@ -13,7 +13,7 @@ function name, setup and teardown functions and so on - see
 ``nose.tools`` for more information.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import warnings
 import sys

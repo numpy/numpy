@@ -226,5 +226,5 @@ Interfacing to C++:
  5) SIP (used mainly in PyQT)
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 

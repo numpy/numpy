@@ -74,7 +74,7 @@ TODO
   to make them appear side-by-side, or in floats.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import sys, os, glob, shutil, imp, warnings, re, textwrap, traceback
 import sphinx

@@ -3,7 +3,7 @@
 This tests the convert and cast methods of all the polynomial classes.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.polynomial import (

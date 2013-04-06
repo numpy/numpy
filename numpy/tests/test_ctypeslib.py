@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import sys
 
@@ -23,7 +23,7 @@ class TestLoadLibrary(TestCase):
         except ImportError as e:
             msg = "ctypes is not available on this python: skipping the test" \
                   " (import error was: %s)" % str(e)
-            print msg
+            print(msg)
 
     @dec.skipif(not _HAS_CTYPE, "ctypes not available on this python installation")
     @dec.knownfailureif(sys.platform=='cygwin', "This test is known to fail on cygwin")
@@ -36,11 +36,11 @@ class TestLoadLibrary(TestCase):
                 cdll = load_library('multiarray%s' % so,
                                     np.core.multiarray.__file__)
             except ImportError:
-                print "No distutils available, skipping test."
+                print("No distutils available, skipping test.")
         except ImportError as e:
             msg = "ctypes is not available on this python: skipping the test" \
                   " (import error was: %s)" % str(e)
-            print msg
+            print(msg)
 
 class TestNdpointer(TestCase):
     def test_dtype(self):

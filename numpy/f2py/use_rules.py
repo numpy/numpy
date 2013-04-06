@@ -15,7 +15,7 @@ $Date: 2000/09/10 12:35:43 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __version__ = "$Revision: 1.3 $"[10:-1]
 
@@ -104,6 +104,6 @@ def buildusevar(name,realname,vars,usemodulename):
     rd=dictappend({},vrd)
     var=vars[realname]
 
-    print name,realname,vars[realname]
+    print(name,realname,vars[realname])
     ret=applyrules(usemodule_rules,rd)
     return ret

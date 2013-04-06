@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 
 from distutils.core import setup
 from distutils.extension import Extension

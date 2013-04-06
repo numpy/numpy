@@ -1,7 +1,7 @@
 """Version number
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 version = '1.00'
 release = False

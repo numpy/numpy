@@ -5,7 +5,7 @@ floating-point arithmetic system
 Author: Pearu Peterson, September 2003
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __all__ = ['MachAr']
 
@@ -338,4 +338,4 @@ maxexp=%(maxexp)s    xmax=%(_str_xmax)s ((1-epsneg)*beta**maxexp == huge)
 
 
 if __name__ == '__main__':
-    print MachAr()
+    print(MachAr())

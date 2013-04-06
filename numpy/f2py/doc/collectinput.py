@@ -19,7 +19,7 @@ Usage:
     collectinput                    # in and out are stdin and stdout
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __version__ = "0.0"
 
@@ -68,16 +68,16 @@ for l in fileinput.input(fi):
                 except: flag=0
             if flag==0:
                 sys.stderr.write('Could not open a file: '+fn+'\n')
-                print l+l1
+                print(l+l1)
                 continue
             elif flag==1:
                 sys.stderr.write(fn+'\n')
-                print '%%%%% Begin of '+fn
-                print getoutput(sys.argv[0]+' < '+fn)
-                print '%%%%% End of '+fn
+                print('%%%%% Begin of '+fn)
+                print(getoutput(sys.argv[0]+' < '+fn))
+                print('%%%%% End of '+fn)
         else:
             sys.stderr.write('Could not extract a file name from: '+l)
-            print l+l1
+            print(l+l1)
     else:
-        print l+l1
+        print(l+l1)
 sys.stdout.close()

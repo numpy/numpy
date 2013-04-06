@@ -1,6 +1,6 @@
 #! python
 # encoding: utf-8
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import timeit
 #import IPython.ipapi
@@ -42,7 +42,7 @@ nmzl = numpy.ma.array(zl, mask=maskx)
 def timer(s, v='', nloop=500, nrep=3):
     units = ["s", "ms", "µs", "ns"]
     scaling = [1, 1e3, 1e6, 1e9]
-    print "%s : %-50s : " % (v,s),
+    print("%s : %-50s : " % (v,s), end=' ')
     varnames = ["%ss,nm%ss,%sl,nm%sl" % tuple(x*4) for x in 'xyz']
     setup = 'from __main__ import numpy, ma, %s' % ','.join(varnames)
     Timer = timeit.Timer(stmt=s, setup=setup)
@@ -51,10 +51,10 @@ def timer(s, v='', nloop=500, nrep=3):
         order = min(-int(numpy.floor(numpy.log10(best)) // 3), 3)
     else:
         order = 3
-    print "%d loops, best of %d: %.*g %s per loop" % (nloop, nrep,
+    print("%d loops, best of %d: %.*g %s per loop" % (nloop, nrep,
                                                       3,
                                                       best * scaling[order],
-                                                      units[order])
+                                                      units[order]))
 #    ip.magic('timeit -n%i %s' % (nloop,s))
 
 
@@ -62,24 +62,24 @@ def timer(s, v='', nloop=500, nrep=3):
 def compare_functions_1v(func, nloop=500,
                        xs=xs, nmxs=nmxs, xl=xl, nmxl=nmxl):
     funcname = func.__name__
-    print "-"*50
-    print "%s on small arrays" % funcname
+    print("-"*50)
+    print("%s on small arrays" % funcname)
     module, data = "numpy.ma","nmxs"
     timer("%(module)s.%(funcname)s(%(data)s)" % locals(), v="%11s" % module, nloop=nloop)
     #
-    print "%s on large arrays" % funcname
+    print("%s on large arrays" % funcname)
     module, data = "numpy.ma","nmxl"
     timer("%(module)s.%(funcname)s(%(data)s)" % locals(), v="%11s" % module, nloop=nloop)
     return
 
 def compare_methods(methodname, args, vars='x', nloop=500, test=True,
                     xs=xs, nmxs=nmxs, xl=xl, nmxl=nmxl):
-    print "-"*50
-    print "%s on small arrays" % methodname
+    print("-"*50)
+    print("%s on small arrays" % methodname)
     data, ver = "nm%ss" % vars, 'numpy.ma'
     timer("%(data)s.%(methodname)s(%(args)s)" % locals(), v=ver, nloop=nloop)
     #
-    print "%s on large arrays" % methodname
+    print("%s on large arrays" % methodname)
     data, ver = "nm%sl" % vars, 'numpy.ma'
     timer("%(data)s.%(methodname)s(%(args)s)" % locals(), v=ver, nloop=nloop)
     return
@@ -90,12 +90,12 @@ def compare_functions_2v(func, nloop=500, test=True,
                        xl=xl, nmxl=nmxl,
                        yl=yl, nmyl=nmyl):
     funcname = func.__name__
-    print "-"*50
-    print "%s on small arrays" % funcname
+    print("-"*50)
+    print("%s on small arrays" % funcname)
     module, data = "numpy.ma","nmxs,nmys"
     timer("%(module)s.%(funcname)s(%(data)s)" % locals(), v="%11s" % module, nloop=nloop)
     #
-    print "%s on large arrays" % funcname
+    print("%s on large arrays" % funcname)
     module, data = "numpy.ma","nmxl,nmyl"
     timer("%(module)s.%(funcname)s(%(data)s)" % locals(), v="%11s" % module, nloop=nloop)
     return
@@ -149,18 +149,18 @@ if __name__ == '__main__':
     compare_methods('__setitem__','0, 17', nloop=1000, test=False)
     compare_methods('__setitem__','(0,0), 17', nloop=1000, test=False)
     #....................................................................
-    print "-"*50
-    print "__setitem__ on small arrays"
+    print("-"*50)
+    print("__setitem__ on small arrays")
     timer('nmxs.__setitem__((-1,0),numpy.ma.masked)', 'numpy.ma   ',nloop=10000)
 
-    print "-"*50
-    print "__setitem__ on large arrays"
+    print("-"*50)
+    print("__setitem__ on large arrays")
     timer('nmxl.__setitem__((-1,0),numpy.ma.masked)', 'numpy.ma   ',nloop=10000)
 
     #....................................................................
-    print "-"*50
-    print "where on small arrays"
+    print("-"*50)
+    print("where on small arrays")
     timer('numpy.ma.where(nmxs>2,nmxs,nmys)', 'numpy.ma   ',nloop=1000)
-    print "-"*50
-    print "where on large arrays"
+    print("-"*50)
+    print("where on large arrays")
     timer('numpy.ma.where(nmxl>2,nmxl,nmyl)', 'numpy.ma   ',nloop=100)

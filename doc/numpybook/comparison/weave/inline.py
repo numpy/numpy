@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 from scipy import weave
 from numpy import rand, zeros_like
@@ -40,8 +40,8 @@ def arr(a):
     return b
 
 a = [None]*10
-print example1(a)
-print a
+print(example1(a))
+print(a)
 
 a = rand(512,512)
 b = arr(a)

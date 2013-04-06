@@ -12,7 +12,7 @@ http://www.scipy.org/Cookbook/Pyrex_and_NumPy
 http://www.scipy.org/Cookbook/ArrayStruct_and_Pyrex
 
 """
-from __future__ import division
+from __future__ import division, print_function
 
 from distutils.core import setup
 from distutils.extension import Extension
