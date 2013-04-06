@@ -7,8 +7,9 @@ import gc
 import copy
 import warnings
 import tempfile
-from StringIO import StringIO
 from os import path
+from io import BytesIO
+
 import numpy as np
 from numpy.testing import (
         run_module_suite, TestCase, assert_, assert_equal,
@@ -17,10 +18,6 @@ from numpy.testing import (
         )
 from numpy.testing.utils import _assert_valid_refcount, WarningManager
 from numpy.compat import asbytes, asunicode, asbytes_nested
-
-if sys.version_info[0] >= 3:
-    import io
-    StringIO = io.BytesIO
 
 rlevel = 1
 
@@ -37,7 +34,7 @@ class TestRegression(TestCase):
     def test_pickle_transposed(self,level=rlevel):
         """Ticket #16"""
         a = np.transpose(np.array([[2,9],[7,0],[3,8]]))
-        f = StringIO()
+        f = BytesIO()
         pickle.dump(a,f)
         f.seek(0)
         b = pickle.load(f)
@@ -90,7 +87,7 @@ class TestRegression(TestCase):
 
     def test_char_dump(self,level=rlevel):
         """Ticket #50"""
-        f = StringIO()
+        f = BytesIO()
         ca = np.char.array(np.arange(1000,1010),itemsize=4)
         ca.dump(f)
         f.seek(0)
@@ -322,7 +319,7 @@ class TestRegression(TestCase):
     def test_unpickle_dtype_with_object(self,level=rlevel):
         """Implemented in r2840"""
         dt = np.dtype([('x',int),('y',np.object_),('z','O')])
-        f = StringIO()
+        f = BytesIO()
         pickle.dump(dt,f)
         f.seek(0)
         dt_ = pickle.load(f)
@@ -386,7 +383,6 @@ class TestRegression(TestCase):
 
     def test_pickle_dtype(self,level=rlevel):
         """Ticket #251"""
-        import pickle
         pickle.dumps(np.float)
 
     def test_swap_real(self, level=rlevel):
@@ -725,10 +721,9 @@ class TestRegression(TestCase):
 
     def test_unicode_scalar(self, level=rlevel):
         """Ticket #600"""
-        import cPickle
         x = np.array(["DROND", "DROND1"], dtype="U6")
         el = x[1]
-        new = cPickle.loads(cPickle.dumps(el))
+        new = pickle.loads(pickle.dumps(el))
         assert_equal(new, el)
 
     def test_arange_non_native_dtype(self, level=rlevel):

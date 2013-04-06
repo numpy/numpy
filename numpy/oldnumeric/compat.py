@@ -3,6 +3,17 @@
 """
 from __future__ import division, absolute_import
 
+import sys
+import copy
+import pickle
+from pickle import dump, dumps
+
+import numpy.core.multiarray as multiarray
+import numpy.core.umath as um
+from numpy.core.numeric import array
+from . import functions
+
+
 __all__ = ['NewAxis',
            'UFuncType', 'UfuncType', 'ArrayType', 'arraytype',
            'LittleEndian', 'arrayrange', 'matrixmultiply',
@@ -13,13 +24,6 @@ __all__ = ['NewAxis',
            'Unpickler', 'Pickler'
           ]
 
-import numpy.core.multiarray as multiarray
-import numpy.core.umath as um
-from numpy.core.numeric import array
-from . import functions
-import sys
-
-from cPickle import dump, dumps
 
 mu = multiarray
 
@@ -47,8 +51,7 @@ def DumpArray(m, fp):
     m.dump(fp)
 
 def LoadArray(fp):
-    import cPickle
-    return cPickle.load(fp)
+    return pickle.load(fp)
 
 def array_constructor(shape, typecode, thestr, Endian=LittleEndian):
     if typecode == "O":
@@ -70,8 +73,7 @@ def pickle_array(a):
                 (a.shape, a.dtype.char, a.tostring(), LittleEndian))
 
 def loads(astr):
-    import cPickle
-    arr = cPickle.loads(astr.replace('Numeric', 'numpy.oldnumeric'))
+    arr = pickle.loads(astr.replace('Numeric', 'numpy.oldnumeric'))
     return arr
 
 def load(fp):
@@ -97,7 +99,6 @@ def _LoadArray(fp):
     else:
         return m
 
-import pickle, copy
 if sys.version_info[0] >= 3:
     class Unpickler(pickle.Unpickler):
         # XXX: should we implement this? It's not completely straightforward

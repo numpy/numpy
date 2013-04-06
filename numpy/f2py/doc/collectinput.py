@@ -27,7 +27,11 @@ stdoutflag=0
 import sys
 import fileinput
 import re
-import commands
+
+if sys.version_info[0] >= 3:
+    from subprocess import getoutput
+else:
+    from commands import getoutput
 
 try: fn=sys.argv[2]
 except:
@@ -69,7 +73,7 @@ for l in fileinput.input(fi):
             elif flag==1:
                 sys.stderr.write(fn+'\n')
                 print '%%%%% Begin of '+fn
-                print commands.getoutput(sys.argv[0]+' < '+fn)
+                print getoutput(sys.argv[0]+' < '+fn)
                 print '%%%%% End of '+fn
         else:
             sys.stderr.write('Could not extract a file name from: '+l)

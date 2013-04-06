@@ -136,12 +136,15 @@ alternatives, is described fully in the "npy-format" NEP.
 """
 from __future__ import division, absolute_import
 
-import cPickle
-
 import numpy
 import sys
 from numpy.lib.utils import safe_eval
 from numpy.compat import asbytes, isfileobj
+
+if sys.version_info[0] >= 3:
+    import pickle
+else:
+    import cPickle as pickle
 
 MAGIC_PREFIX = asbytes('\x93NUMPY')
 MAGIC_LEN = len(MAGIC_PREFIX) + 2
@@ -399,7 +402,7 @@ def write_array(fp, array, version=(1,0)):
     if array.dtype.hasobject:
         # We contain Python objects so we cannot write out the data directly.
         # Instead, we will pickle it out with version 2 of the pickle protocol.
-        cPickle.dump(array, fp, protocol=2)
+        pickle.dump(array, fp, protocol=2)
     elif array.flags.f_contiguous and not array.flags.c_contiguous:
         if isfileobj(fp):
             array.T.tofile(fp)
@@ -447,7 +450,7 @@ def read_array(fp):
     # Now read the actual data.
     if dtype.hasobject:
         # The array contained Python objects. We need to unpickle the data.
-        array = cPickle.load(fp)
+        array = pickle.load(fp)
     else:
         if isfileobj(fp):
             # We can use the fast fromfile() function.

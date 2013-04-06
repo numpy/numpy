@@ -118,6 +118,7 @@ import re
 import copy
 import warnings
 from glob import glob
+
 if sys.version_info[0] < 3:
     from ConfigParser import NoOptionError, ConfigParser
 else:

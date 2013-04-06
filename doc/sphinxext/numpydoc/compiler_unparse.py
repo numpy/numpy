@@ -18,7 +18,7 @@ from compiler.ast import Const, Name, Tuple, Div, Mul, Sub, Add
 if sys.version_info[0] >= 3:
     from io import StringIO
 else:
-    from cStringIO import StringIO
+    from io import StringIO
 
 def unparse(ast, single_line_functions=False):
     s = StringIO()

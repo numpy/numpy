@@ -98,7 +98,11 @@ import sys
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
-from __builtin__ import bool, int, long, float, complex, object, unicode, str
+if sys.version_info[0] >= 3:
+    from builtins import bool, int, long, float, complex, object, unicode, str
+else:
+    from __builtin__ import bool, int, long, float, complex, object, unicode, str
+
 from numpy.compat import bytes
 
 if sys.version_info[0] >= 3:

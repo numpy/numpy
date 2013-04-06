@@ -5,7 +5,7 @@ __all__ = ['run_main','compile','f2py_testing']
 
 import os
 import sys
-import commands
+import subprocess
 
 from . import f2py2e
 from . import f2py_testing

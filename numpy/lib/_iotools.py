@@ -8,7 +8,11 @@ __docformat__ = "restructuredtext en"
 import sys
 import numpy as np
 import numpy.core.numeric as nx
-from __builtin__ import bool, int, long, float, complex, object, unicode, str
+
+if sys.version_info[0] >= 3:
+    from builtins import bool, int, long, float, complex, object, unicode, str
+else:
+    from __builtin__ import bool, int, long, float, complex, object, unicode, str
 
 from numpy.compat import asbytes, bytes, asbytes_nested
 

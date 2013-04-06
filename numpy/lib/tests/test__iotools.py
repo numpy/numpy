@@ -1,22 +1,13 @@
 from __future__ import division, absolute_import
 
 import sys
-
-if sys.version_info[0] >= 3:
-    from io import BytesIO
-    def StringIO(s=""):
-        return BytesIO(asbytes(s))
-else:
-    from StringIO import StringIO
-
-from datetime import date
 import time
+from datetime import date
 
 import numpy as np
 from numpy.lib._iotools import LineSplitter, NameValidator, StringConverter, \
                                has_nested_fields, easy_dtype, flatten_dtype
 from numpy.testing import *
-
 from numpy.compat import asbytes, asbytes_nested
 
 class TestLineSplitter(TestCase):

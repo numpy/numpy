@@ -14,7 +14,7 @@ import collections
 if sys.version_info[0] >= 3:
     from io import StringIO
 else:
-    from cStringIO import StringIO
+    from io import StringIO
 
 class Reader(object):
     """A line-based string reader.
