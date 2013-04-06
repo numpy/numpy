@@ -10,21 +10,20 @@ __author__ = "Pierre GF Gerard-Marchant"
 
 import types
 import warnings
+import sys
+import pickle
 
 import numpy as np
+import numpy.ma.core
 import numpy.core.fromnumeric  as fromnumeric
 from numpy import ndarray
 from numpy.ma.testutils import *
-
-import numpy.ma.core
 from numpy.ma.core import *
-
 from numpy.compat import asbytes, asbytes_nested
 from numpy.testing.utils import WarningManager
 
 pi = np.pi
 
-import sys
 if sys.version_info[0] >= 3:
     from functools import reduce
 
@@ -369,20 +368,18 @@ class TestMaskedArray(TestCase):
 
     def test_pickling(self):
         "Tests pickling"
-        import cPickle
         a = arange(10)
         a[::3] = masked
         a.fill_value = 999
-        a_pickled = cPickle.loads(a.dumps())
+        a_pickled = pickle.loads(a.dumps())
         assert_equal(a_pickled._mask, a._mask)
         assert_equal(a_pickled._data, a._data)
         assert_equal(a_pickled.fill_value, 999)
 
     def test_pickling_subbaseclass(self):
         "Test pickling w/ a subclass of ndarray"
-        import cPickle
         a = array(np.matrix(list(range(10))), mask=[1, 0, 1, 0, 0] * 2)
-        a_pickled = cPickle.loads(a.dumps())
+        a_pickled = pickle.loads(a.dumps())
         assert_equal(a_pickled._mask, a._mask)
         assert_equal(a_pickled, a)
         self.assertTrue(isinstance(a_pickled._data, np.matrix))
@@ -390,37 +387,28 @@ class TestMaskedArray(TestCase):
     def test_pickling_maskedconstant(self):
         "Test pickling MaskedConstant"
 
-        import cPickle
         mc = np.ma.masked
-        mc_pickled = cPickle.loads(mc.dumps())
+        mc_pickled = pickle.loads(mc.dumps())
         assert_equal(mc_pickled._baseclass, mc._baseclass)
         assert_equal(mc_pickled._mask, mc._mask)
         assert_equal(mc_pickled._data, mc._data)
 
     def test_pickling_wstructured(self):
         "Tests pickling w/ structured array"
-        import cPickle
         a = array([(1, 1.), (2, 2.)], mask=[(0, 0), (0, 1)],
                   dtype=[('a', int), ('b', float)])
-        a_pickled = cPickle.loads(a.dumps())
+        a_pickled = pickle.loads(a.dumps())
         assert_equal(a_pickled._mask, a._mask)
         assert_equal(a_pickled, a)
 
     def test_pickling_keepalignment(self):
         "Tests pickling w/ F_CONTIGUOUS arrays"
-        import cPickle
         a = arange(10)
         a.shape = (-1, 2)
         b = a.T
-        test = cPickle.loads(cPickle.dumps(b))
+        test = pickle.loads(pickle.dumps(b))
         assert_equal(test, b)
 
-#    def test_pickling_oddity(self):
-#        "Test some pickling oddity"
-#        import cPickle
-#        a = array([{'a':1}, {'b':2}, 3], dtype=object)
-#        test = cPickle.loads(cPickle.dumps(a))
-#        assert_equal(test, a)
 
     def test_single_element_subscript(self):
         "Tests single element subscripts of Maskedarrays."

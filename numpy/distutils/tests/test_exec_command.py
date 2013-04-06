@@ -2,11 +2,16 @@ from __future__ import division, absolute_import
 
 import os
 import sys
-import StringIO
 from tempfile import TemporaryFile
 
 from numpy.distutils import exec_command
 
+# In python 3 stdout, stderr are text (unicode compliant) devices, so to
+# emulate them import StringIO from the io module.
+if sys.version_info[0] >= 3:
+    from io import StringIO
+else:
+    from StringIO import StringIO
 
 class redirect_stdout(object):
     """Context manager to redirect stdout for exec_command test."""
@@ -62,26 +67,26 @@ def test_exec_command_stdout():
     # both that the special case works and that the generic code works.
 
     # Test posix version:
-    with redirect_stdout(StringIO.StringIO()):
+    with redirect_stdout(StringIO()):
         with redirect_stderr(TemporaryFile()):
             exec_command.exec_command("cd '.'")
 
     if os.name == 'posix':
         # Test general (non-posix) version:
         with emulate_nonposix():
-            with redirect_stdout(StringIO.StringIO()):
+            with redirect_stdout(StringIO()):
                 with redirect_stderr(TemporaryFile()):
                     exec_command.exec_command("cd '.'")
 
 def test_exec_command_stderr():
     # Test posix version:
     with redirect_stdout(TemporaryFile(mode='w+')):
-        with redirect_stderr(StringIO.StringIO()):
+        with redirect_stderr(StringIO()):
             exec_command.exec_command("cd '.'")
 
     if os.name == 'posix':
         # Test general (non-posix) version:
         with emulate_nonposix():
             with redirect_stdout(TemporaryFile()):
-                with redirect_stderr(StringIO.StringIO()):
+                with redirect_stderr(StringIO()):
                     exec_command.exec_command("cd '.'")

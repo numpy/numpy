@@ -13,7 +13,11 @@ import re
 import os
 import textwrap
 import optparse
-import cPickle as pickle
+
+if sys.version_info[0] >= 3:
+    import pickle
+else:
+    import cPickle as pickle
 
 CACHE_FILE = 'build/rst-cache.pck'
 
@@ -43,7 +47,7 @@ def filter_comment(text):
     if text.startswith('UFUNC_API'):
         text = text[9:].strip()
 
-    html = render_html(text)    
+    html = render_html(text)
     return html
 
 def process_match(m, cache=None):

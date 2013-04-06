@@ -25,7 +25,6 @@ __all__ += ['vdot', 'dot', 'matrixmultiply', 'ravel', 'indices',
             ]
 
 import copy
-import copy_reg
 import types
 import os
 import sys
@@ -44,6 +43,8 @@ from .numerictypes import typefrom
 
 if sys.version_info[0] >= 3:
     import copyreg as copy_reg
+else:
+    import copy_reg
 
 isBigEndian = sys.byteorder != 'little'
 value = tcode = 'f'

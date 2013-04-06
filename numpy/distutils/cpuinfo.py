@@ -18,10 +18,12 @@ __all__ = ['cpu']
 
 import sys, re, types
 import os
-if sys.version_info[0] < 3:
-    from commands import getstatusoutput
-else:
+
+if sys.version_info[0] >= 3:
     from subprocess import getstatusoutput
+else:
+    from commands import getstatusoutput
+
 import warnings
 import platform
 
@@ -488,25 +490,29 @@ class Win32CPUInfo(CPUInfoBase):
         info = []
         try:
             #XXX: Bad style to use so long `try:...except:...`. Fix it!
-            import _winreg
+            if sys.version_info[0] >= 3:
+                import winreg
+            else:
+                import _winreg as winreg
+
             prgx = re.compile(r"family\s+(?P<FML>\d+)\s+model\s+(?P<MDL>\d+)"\
                               "\s+stepping\s+(?P<STP>\d+)",re.IGNORECASE)
-            chnd=_winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, self.pkey)
+            chnd=winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, self.pkey)
             pnum=0
             while 1:
                 try:
-                    proc=_winreg.EnumKey(chnd,pnum)
-                except _winreg.error:
+                    proc=winreg.EnumKey(chnd,pnum)
+                except winreg.error:
                     break
                 else:
                     pnum+=1
                     info.append({"Processor":proc})
-                    phnd=_winreg.OpenKey(chnd,proc)
+                    phnd=winreg.OpenKey(chnd,proc)
                     pidx=0
                     while True:
                         try:
-                            name,value,vtpe=_winreg.EnumValue(phnd,pidx)
-                        except _winreg.error:
+                            name,value,vtpe=winreg.EnumValue(phnd,pidx)
+                        except winreg.error:
                             break
                         else:
                             pidx=pidx+1

@@ -1,13 +1,14 @@
 from __future__ import division, absolute_import
 
 import sys
+import re
+import os
+import shlex
+
 if sys.version_info[0] < 3:
     from ConfigParser import SafeConfigParser, NoOptionError
 else:
     from configparser import ConfigParser, SafeConfigParser, NoOptionError
-import re
-import os
-import shlex
 
 __all__ = ['FormatError', 'PkgNotFound', 'LibraryInfo', 'VariableSet',
         'read_config', 'parse_flags']

@@ -10,7 +10,6 @@ Support code for building Python extensions on Windows.
 from __future__ import division, absolute_import
 
 import os
-import subprocess
 import sys
 import subprocess
 import re

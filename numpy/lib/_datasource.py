@@ -36,6 +36,7 @@ from __future__ import division, absolute_import
 __docformat__ = "restructuredtext en"
 
 import os
+import sys
 from shutil import rmtree, copyfile, copyfileobj
 
 _open = open
@@ -252,7 +253,10 @@ class DataSource (object):
         """Test if path is a net location.  Tests the scheme and netloc."""
 
         # We do this here to reduce the 'import numpy' initial import time.
-        from urlparse import urlparse
+        if sys.version_info[0] >= 3:
+            from urllib.parse import urlparse
+        else:
+            from urlparse import urlparse
 
         # BUG : URLs require a scheme string ('http://') to be used.
         #       www.google.com will fail.
@@ -351,8 +355,10 @@ class DataSource (object):
 
         """
         # We do this here to reduce the 'import numpy' initial import time.
-        from urlparse import urlparse
-
+        if sys.version_info[0] >= 3:
+            from urllib.parse import urlparse
+        else:
+            from urlparse import urlparse
 
         # TODO:  This should be more robust.  Handles case where path includes
         #        the destpath, but not other sub-paths. Failing case:

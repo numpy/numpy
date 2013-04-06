@@ -18,7 +18,7 @@ from __future__ import division, absolute_import
 
 import sys
 import optparse
-import cStringIO
+import io
 import re
 import os
 
@@ -27,7 +27,7 @@ newre = re.compile(r"\\begin_inset Note.*PYNEW\s+\\end_inset", re.DOTALL)
 def getoutput(tstr, dic):
     print "\n\nRunning..."
     print tstr,
-    tempstr = cStringIO.StringIO()
+    tempstr = io.StringIO()
     sys.stdout = tempstr
     code = compile(tstr, '<input>', 'exec')
     try:
@@ -82,7 +82,7 @@ def getnewcodestr(substr, dic):
 
 def runpycode(lyxstr, name='MyCode'):
     schobj = re.compile(r"\\layout %s\s+>>> " % name)
-    outstr = cStringIO.StringIO()
+    outstr = io.StringIO()
     num = 0
     indx = []
     for it in schobj.finditer(lyxstr):

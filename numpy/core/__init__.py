@@ -62,10 +62,10 @@ def _ufunc_reduce(func):
 
 
 import sys
-if sys.version_info[0] < 3:
-    import copy_reg as copyreg
-else:
+if sys.version_info[0] >= 3:
     import copyreg
+else:
+    import copy_reg as copyreg
 
 copyreg.pickle(ufunc, _ufunc_reduce, _ufunc_reconstruct)
 # Unclutter namespace (must keep _ufunc_reconstruct for unpickling)

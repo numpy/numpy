@@ -1,17 +1,20 @@
 from __future__ import division, absolute_import
 
 import os
+import urllib2
+import sys
+import numpy.lib._datasource as datasource
 from tempfile import mkdtemp, mkstemp, NamedTemporaryFile
 from shutil import rmtree
-from urlparse import urlparse
 from urllib2 import URLError
-import urllib2
-
+from numpy.compat import asbytes
 from numpy.testing import *
 
-from numpy.compat import asbytes
 
-import numpy.lib._datasource as datasource
+if sys.version_info[0] >= 3:
+    from urllib.parse import urlparse
+else:
+    from urlparse import urlparse
 
 def urlopen_stub(url, data=None):
     '''Stub to replace urlopen for testing.'''

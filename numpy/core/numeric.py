@@ -1,5 +1,22 @@
 from __future__ import division, absolute_import
 
+import sys
+import warnings
+from . import multiarray
+from . import umath
+from .umath import *
+from . import numerictypes
+from .numerictypes import *
+import collections
+
+if sys.version_info[0] >= 3:
+    import pickle
+else:
+    import cPickle as pickle
+
+loads = pickle.loads
+
+
 __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'arange', 'array', 'zeros', 'count_nonzero',
            'empty', 'broadcast', 'dtype', 'fromstring', 'fromfile',
@@ -24,18 +41,9 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
            'ComplexWarning']
 
-import sys
-import warnings
-from . import multiarray
-from . import umath
-from .umath import *
-from . import numerictypes
-from .numerictypes import *
-import collections
-
-
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
+
 
 class ComplexWarning(RuntimeWarning):
     """
@@ -1861,9 +1869,6 @@ def base_repr(number, base=2, padding=0):
         res.append('-')
     return ''.join(reversed(res or '0'))
 
-from cPickle import load, loads
-_cload = load
-_file = open
 
 def load(file):
     """
@@ -1880,8 +1885,8 @@ def load(file):
 
     """
     if isinstance(file, type("")):
-        file = _file(file,"rb")
-    return _cload(file)
+        file = open(file, "rb")
+    return pickle.load(file)
 
 # These are all essentially abbreviations
 # These might wind up in a special abbreviations module

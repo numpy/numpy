@@ -7,29 +7,29 @@
 """
 from __future__ import division, absolute_import
 
-__author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
-__revision__ = "$Revision: 3473 $"
-__date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
-
 import sys
+import warnings
+import pickle
+
 import numpy as np
+import numpy.ma.testutils
+import numpy.ma as ma
 from numpy import recarray
 from numpy.core.records import fromrecords as recfromrecords, \
                                fromarrays as recfromarrays
 
 from numpy.compat import asbytes, asbytes_nested
-
-import numpy.ma.testutils
 from numpy.ma.testutils import *
-
-import numpy.ma as ma
 from numpy.ma import masked, nomask
-
-import warnings
 from numpy.testing.utils import WarningManager
-
 from numpy.ma.mrecords import MaskedRecords, mrecarray, fromarrays, \
                               fromtextfile, fromrecords, addfield
+
+
+__author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
+__revision__ = "$Revision: 3473 $"
+__date__     = '$Date: 2007-10-29 17:18:13 +0200 (Mon, 29 Oct 2007) $'
+
 
 #..............................................................................
 class TestMRecords(TestCase):
@@ -293,11 +293,10 @@ class TestMRecords(TestCase):
     #
     def test_pickling(self):
         "Test pickling"
-        import cPickle
         base = self.base.copy()
         mrec = base.view(mrecarray)
-        _ = cPickle.dumps(mrec)
-        mrec_ = cPickle.loads(_)
+        _ = pickle.dumps(mrec)
+        mrec_ = pickle.loads(_)
         assert_equal(mrec_.dtype, mrec.dtype)
         assert_equal_records(mrec_._data, mrec._data)
         assert_equal(mrec_._mask, mrec._mask)
