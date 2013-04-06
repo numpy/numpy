@@ -803,11 +803,13 @@ PyArray_Scalar(void *data, PyArray_Descr *descr, PyObject *base)
             }
             vobj->obval = destptr;
 
-            // No base available for copyswp. Copy item data directly dest.
-            if (!base)
-            {
-              memcpy(destptr, data, itemsize);
-              return obj;
+            /*
+             * No base available for copyswp and no swap required.
+             * Copy data directly into dest.
+             */
+            if (base == NULL) {
+                memcpy(destptr, data, itemsize);
+                return obj;
             }
         }
     }
