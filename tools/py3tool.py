@@ -79,7 +79,7 @@ FIXES_TO_SKIP = [
     'xrange',
     'import',
     'imports',
-    'imports2'
+    'imports2',
 ]
 
 skip_fixes= []
