@@ -1,15 +1,13 @@
 from __future__ import division, absolute_import
 
 from operator import mul
+from functools import reduce
 
 import numpy as np
 from numpy.random import randint
 from numpy.lib import Arrayterator
 from numpy.testing import assert_
 
-import sys
-if sys.version_info[0] >= 3:
-    from functools import reduce
 
 def test():
     np.random.seed(np.arange(10))

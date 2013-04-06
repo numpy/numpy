@@ -12,6 +12,7 @@ import types
 import warnings
 import sys
 import pickle
+from functools import reduce
 
 import numpy as np
 import numpy.ma.core
@@ -24,8 +25,6 @@ from numpy.testing.utils import WarningManager
 
 pi = np.pi
 
-if sys.version_info[0] >= 3:
-    from functools import reduce
 
 #..............................................................................
 class TestMaskedArray(TestCase):

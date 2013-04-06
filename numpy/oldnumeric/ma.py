@@ -20,9 +20,8 @@ from numpy.core.fromnumeric import amax, amin
 from numpy.core.numerictypes import bool_, typecodes
 import numpy.core.numeric as numeric
 import warnings
+from functools import reduce
 
-if sys.version_info[0] >= 3:
-    from functools import reduce
 
 # Ufunc domain lookup for __array_wrap__
 ufunc_domain = {}

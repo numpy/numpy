@@ -118,6 +118,7 @@ import re
 import copy
 import warnings
 from glob import glob
+from functools import reduce
 
 if sys.version_info[0] < 3:
     from ConfigParser import NoOptionError, ConfigParser
@@ -137,8 +138,6 @@ from numpy.distutils.misc_util import is_sequence, is_string, \
 from numpy.distutils.command.config import config as cmd_config
 from numpy.distutils.compat import get_exception
 
-if sys.version_info[0] >= 3:
-    from functools import reduce
 
 # Determine number of bits
 import platform

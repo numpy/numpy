@@ -16,6 +16,7 @@ __docformat__ = 'restructuredtext'
 # and by Travis Oliphant  2005-8-22 for numpy
 
 import sys
+from functools import reduce
 from . import numerictypes as _nt
 from .umath import maximum, minimum, absolute, not_equal, isnan, isinf
 from .multiarray import format_longfloat, datetime_as_string, datetime_data
@@ -34,8 +35,6 @@ _nan_str = 'nan'
 _inf_str = 'inf'
 _formatter = None  # formatting function for array elements
 
-if sys.version_info[0] >= 3:
-    from functools import reduce
 
 def set_printoptions(precision=None, threshold=None, edgeitems=None,
                      linewidth=None, suppress=None,

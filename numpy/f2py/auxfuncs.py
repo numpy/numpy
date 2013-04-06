@@ -24,6 +24,7 @@ f2py_version = __version__.version
 import pprint
 import sys
 import types
+from functools import reduce
 from . import cfuncs
 
 
@@ -35,8 +36,6 @@ options={}
 debugoptions=[]
 wrapfuncs = 1
 
-if sys.version_info[0] >= 3:
-    from functools import reduce
 
 def outmess(t):
     if options.get('verbose',1):
