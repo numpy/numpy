@@ -1,5 +1,5 @@
 # http://g95.sourceforge.net/
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 from numpy.distutils.fcompiler import FCompiler
 

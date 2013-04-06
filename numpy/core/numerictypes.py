@@ -80,7 +80,7 @@ Exported symbols include:
      \\-> object_ (not used much)                (kind=O)
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 # we add more at the bottom
 __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',

@@ -6,7 +6,7 @@ See ``find_function`` for how functions should be formatted, and
 specified.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import sys, os, re
 try:
@@ -254,7 +254,7 @@ def find_functions(filename, tag='API'):
                 else:
                     function_args.append(line)
         except:
-            print(filename, lineno+1)
+            print(filename, lineno + 1)
             raise
     fo.close()
     return functions
@@ -483,8 +483,8 @@ def main():
         print(func)
         ah = func.api_hash()
         m.update(ah)
-        print(hex(int(ah,16)))
-    print(hex(int(m.hexdigest()[:8],16)))
+        print(hex(int(ah, 16)))
+    print(hex(int(m.hexdigest()[:8], 16)))
 
 if __name__ == '__main__':
     main()

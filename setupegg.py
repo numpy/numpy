@@ -12,7 +12,7 @@ set wrong, with nose refusing to run any tests. To run the tests anyway, use::
   >>> np.test(extra_argv=['--exe'])
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import sys
 from setuptools import setup

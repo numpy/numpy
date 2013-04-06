@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import *
@@ -145,12 +145,12 @@ def _test_redirected_print(x, tp, ref=None):
     stdout = sys.stdout
     try:
         sys.stdout = file_tp
-        print tp(x)
+        print(tp(x))
         sys.stdout = file
         if ref:
-            print ref
+            print(ref)
         else:
-            print x
+            print(x)
     finally:
         sys.stdout = stdout
 

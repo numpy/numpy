@@ -9,13 +9,13 @@ creating additional specific polynomial classes (e.g., Legendre, Jacobi,
 etc.) in the future, such that all these classes will have a common API.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import string
 import sys
 
 polytemplate = string.Template('''
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 import numpy as np
 import warnings
 from . import polyutils as pu

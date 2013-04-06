@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 
 import imp
 import os
@@ -105,7 +105,7 @@ def win32_checks(deflist):
     a = get_build_architecture()
 
     # Distutils hack on AMD64 on windows
-    print('BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' % \
+    print('BUILD_ARCHITECTURE: %r, os.name=%r, sys.platform=%r' %
           (a, os.name, sys.platform))
     if a == 'AMD64':
         deflist.append('DISTUTILS_USE_SDK')

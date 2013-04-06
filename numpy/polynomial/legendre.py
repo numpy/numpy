@@ -81,7 +81,7 @@ numpy.polynomial.hermite
 numpy.polynomial.hermite_e
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import numpy as np
 import numpy.linalg as la

@@ -13,7 +13,7 @@ $Date: 2005/07/20 11:27:58 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __version__ = "$Revision: 1.53 $"[10:-1]
 

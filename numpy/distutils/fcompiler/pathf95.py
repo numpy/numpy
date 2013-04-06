@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 from numpy.distutils.fcompiler import FCompiler
 
@@ -35,4 +35,4 @@ if __name__ == '__main__':
     from numpy.distutils.fcompiler import new_fcompiler
     compiler = new_fcompiler(compiler='pathf95')
     compiler.customize()
-    print compiler.get_version()
+    print(compiler.get_version())

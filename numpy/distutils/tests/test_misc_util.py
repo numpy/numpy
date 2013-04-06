@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 from numpy.testing import *
 from numpy.distutils.misc_util import appendpath, minrelpath, gpaths, rel_path

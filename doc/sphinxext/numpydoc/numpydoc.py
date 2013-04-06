@@ -15,7 +15,7 @@ It will:
 .. [1] https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import sphinx
 import collections

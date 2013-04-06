@@ -27,7 +27,7 @@ Exported symbols include:
 $Id: numerictypes.py,v 1.55 2005/12/01 16:22:03 jaytmiller Exp $
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 
 __all__ = ['NumericType','HasUInt64','typeDict','IsType',

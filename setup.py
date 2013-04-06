@@ -13,7 +13,7 @@ There are also basic facilities for discrete fourier transform,
 basic linear algebra and random number generation.
 
 """
-from __future__ import division
+from __future__ import division, print_function
 
 DOCLINES = __doc__.split("\n")
 

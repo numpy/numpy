@@ -3,7 +3,7 @@ Array methods which are called by the both the C-code for the method
 and the Python code for the NumPy-namespace function
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 from numpy.core import multiarray as mu
 from numpy.core import umath as um

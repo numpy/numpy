@@ -14,7 +14,7 @@ $Date: 2005/05/06 11:42:34 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __version__ = "$Revision: 1.75 $"[10:-1]
 
@@ -1214,7 +1214,7 @@ def get_needs():
                     del outneeds[n][0]
             if saveout and (0 not in map(lambda x,y:x==y,saveout,outneeds[n])) \
                    and outneeds[n] != []:
-                print n,saveout
+                print(n,saveout)
                 errmess('get_needs: no progress in sorting needs, probably circular dependence, skipping.\n')
                 out=out+saveout
                 break

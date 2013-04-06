@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import os
 import sys
@@ -46,7 +46,7 @@ def importall(package):
         try:
             exec('import %s as m' % (name))
         except Exception as msg:
-            print 'Failed importing %s: %s' %(name, msg)
+            print('Failed importing %s: %s' %(name, msg))
             continue
         importall(m)
     return

@@ -104,7 +104,7 @@ available as array methods, i.e. ``x = np.array([1,2,3]); x.sort()``.
 Exceptions to this rule are documented.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import sys
 

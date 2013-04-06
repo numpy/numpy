@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import os
 import re
@@ -220,8 +220,8 @@ def _fix_paths(paths,local_path,include_non_existing):
                 else:
                     if include_non_existing:
                         new_paths.append(n)
-                    print('could not resolve pattern in %r: %r' \
-                              % (local_path,n))
+                    print('could not resolve pattern in %r: %r' %
+                            (local_path,n))
             else:
                 n2 = njoin(local_path,n)
                 if os.path.exists(n2):
@@ -232,8 +232,8 @@ def _fix_paths(paths,local_path,include_non_existing):
                     elif include_non_existing:
                         new_paths.append(n)
                     if not os.path.exists(n):
-                        print('non-existing path in %r: %r' \
-                              % (local_path,n))
+                        print('non-existing path in %r: %r' %
+                                (local_path,n))
 
         elif is_sequence(n):
             new_paths.extend(_fix_paths(n,local_path,include_non_existing))
@@ -627,7 +627,7 @@ def get_data_files(data):
             if os.path.isfile(s):
                 filenames.append(s)
             else:
-                print('Not existing data file:',s)
+                print('Not existing data file:', s)
         else:
             raise TypeError(repr(s))
     return filenames
@@ -1054,7 +1054,7 @@ class Configuration(object):
                 #
                 for path in paths:
                     if not os.path.isdir(path):
-                        print('Not a directory, skipping',path)
+                        print('Not a directory, skipping', path)
                         continue
                     rpath = rel_path(path, self.local_path)
                     path_list = rpath.split(os.sep)

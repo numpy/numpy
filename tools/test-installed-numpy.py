@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 # A simple script to test the installed version of numpy by calling
 # 'numpy.test()'. Key features:

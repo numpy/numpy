@@ -1,5 +1,5 @@
 #! /usr/bin/env python
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 # System imports
 from   distutils.util import get_platform
@@ -152,8 +152,8 @@ if __name__ == "__main__":
     suite.addTest(unittest.makeSuite(FarrayTestCase))
 
     # Execute the test suite
-    print "Testing Classes of Module Farray"
-    print "NumPy version", np.__version__
-    print
+    print("Testing Classes of Module Farray")
+    print("NumPy version", np.__version__)
+    print()
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     sys.exit(len(result.errors) + len(result.failures))

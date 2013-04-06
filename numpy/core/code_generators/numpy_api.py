@@ -12,7 +12,7 @@ When adding a function, make sure to use the next integer not used as an index
 exception, so it should hopefully not get unnoticed).
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 multiarray_global_vars = {
     'NPY_NUMUSERTYPES':             7,

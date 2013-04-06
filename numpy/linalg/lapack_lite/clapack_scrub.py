@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import sys, os
 from io import StringIO
@@ -252,7 +252,7 @@ def scrubSource(source, nsteps=None, verbose=False):
 
     for msg, step in steps:
         if verbose:
-            print msg
+            print(msg)
         source = step(source)
 
     return source

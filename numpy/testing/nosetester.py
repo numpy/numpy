@@ -4,7 +4,7 @@ Nose test running.
 This module implements ``test()`` and ``bench()`` functions for NumPy modules.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import os
 import sys
@@ -195,19 +195,19 @@ class NoseTester(object):
         nose = import_nose()
 
         import numpy
-        print "NumPy version %s" % numpy.__version__
+        print("NumPy version %s" % numpy.__version__)
         npdir = os.path.dirname(numpy.__file__)
-        print "NumPy is installed in %s" % npdir
+        print("NumPy is installed in %s" % npdir)
 
         if 'scipy' in self.package_name:
             import scipy
-            print "SciPy version %s" % scipy.__version__
+            print("SciPy version %s" % scipy.__version__)
             spdir = os.path.dirname(scipy.__file__)
-            print "SciPy is installed in %s" % spdir
+            print("SciPy is installed in %s" % spdir)
 
         pyversion = sys.version.replace('\n','')
-        print "Python version %s" % pyversion
-        print "nose version %d.%d.%d" % nose.__versioninfo__
+        print("Python version %s" % pyversion)
+        print("nose version %d.%d.%d" % nose.__versioninfo__)
 
     def _get_custom_doctester(self):
         """ Return instantiated plugin for doctests
@@ -335,9 +335,9 @@ class NoseTester(object):
         utils.verbose = verbose
 
         if doctests:
-            print "Running unit tests and doctests for %s" % self.package_name
+            print("Running unit tests and doctests for %s" % self.package_name)
         else:
-            print "Running unit tests for %s" % self.package_name
+            print("Running unit tests for %s" % self.package_name)
 
         self._show_system_info()
 
@@ -437,7 +437,7 @@ class NoseTester(object):
 
         """
 
-        print "Running benchmarks for %s" % self.package_name
+        print("Running benchmarks for %s" % self.package_name)
         self._show_system_info()
 
         argv = self._test_argv(label, verbose, extra_argv)

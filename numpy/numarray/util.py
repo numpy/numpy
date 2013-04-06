@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import os
 import numpy as np
@@ -23,22 +23,22 @@ def handleError(errorStatus, sourcemsg):
     modes = np.geterr()
     if errorStatus & np.FPE_INVALID:
         if modes['invalid'] == "warn":
-            print "Warning: Encountered invalid numeric result(s)", sourcemsg
+            print("Warning: Encountered invalid numeric result(s)", sourcemsg)
         if modes['invalid'] == "raise":
             raise MathDomainError(sourcemsg)
     if errorStatus & np.FPE_DIVIDEBYZERO:
         if modes['dividebyzero'] == "warn":
-            print "Warning: Encountered divide by zero(s)", sourcemsg
+            print("Warning: Encountered divide by zero(s)", sourcemsg)
         if modes['dividebyzero'] == "raise":
             raise ZeroDivisionError(sourcemsg)
     if errorStatus & np.FPE_OVERFLOW:
         if modes['overflow'] == "warn":
-            print "Warning: Encountered overflow(s)", sourcemsg
+            print("Warning: Encountered overflow(s)", sourcemsg)
         if modes['overflow'] == "raise":
             raise NumOverflowError(sourcemsg)
     if errorStatus & np.FPE_UNDERFLOW:
         if modes['underflow'] == "warn":
-            print "Warning: Encountered underflow(s)", sourcemsg
+            print("Warning: Encountered underflow(s)", sourcemsg)
         if modes['underflow'] == "raise":
             raise UnderflowError(sourcemsg)
 

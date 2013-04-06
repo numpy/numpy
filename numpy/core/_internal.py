@@ -4,7 +4,7 @@ A place for code to be called from core C-code.
 Some things are more easily handled Python.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import re
 import sys
