@@ -367,7 +367,7 @@ class TestFloatExceptions(TestCase):
         return errors
 
     def test_seterr_for_arrays_of_ints(self):
-        "Seterr should apply to arrays of integer types, see gh-493"
+        "Seterr should apply to arrays of integer types, see gh-593"
         err = seterr(all='raise')
         raised=[]
         try:
