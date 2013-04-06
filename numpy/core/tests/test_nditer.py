@@ -2029,38 +2029,38 @@ def test_iter_buffered_reduce_reuse():
     op_dtypes = [np.float, a.dtype]
 
     def get_params():
-        for xs in xrange(-3**2, 3**2 + 1):
-            for ys in xrange(xs, 3**2 + 1):
+        for xs in range(-3**2, 3**2 + 1):
+            for ys in range(xs, 3**2 + 1):
                 for op_axes in op_axes_list:
                     # last stride is reduced and because of that not
                     # important for this test, as it is the inner stride.
                     strides = (xs * a.itemsize, ys * a.itemsize, a.itemsize)
                     arr = np.lib.stride_tricks.as_strided(a, (3,3,3), strides)
- 
+
                     for skip in [0, 1]:
                         yield arr, op_axes, skip
-            
+
     for arr, op_axes, skip in get_params():
         nditer2 = np.nditer([arr.copy(), None],
                             op_axes=op_axes, flags=flags, op_flags=op_flags,
                             op_dtypes=op_dtypes)
         nditer2.operands[-1][...] = 0
         nditer2.reset()
-        nditer2.iterindex = skip    
+        nditer2.iterindex = skip
 
         for (a2_in, b2_in) in nditer2:
             b2_in += a2_in.astype(np.int_)
 
         comp_res = nditer2.operands[-1]
 
-        for bufsize in xrange(0, 3**3):
+        for bufsize in range(0, 3**3):
             nditer1 = np.nditer([arr, None],
                                 op_axes=op_axes, flags=flags, op_flags=op_flags,
                                 buffersize=bufsize, op_dtypes=op_dtypes)
             nditer1.operands[-1][...] = 0
             nditer1.reset()
             nditer1.iterindex = skip
-            
+
             for (a1_in, b1_in) in nditer1:
                 b1_in += a1_in.astype(np.int_)
 
