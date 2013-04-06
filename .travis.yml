@@ -45,7 +45,7 @@ script:
   - cd empty
   - INSTALLDIR=$(python -c "import os; import numpy; print(os.path.dirname(numpy.__file__))")
   - export PYTHONWARNINGS=default
-  - python ../tools/test-installed-numpy.py
+  - python ../tools/test-installed-numpy.py --mode=full
   # - coverage run --source=$INSTALLDIR --rcfile=../.coveragerc $(which python) ../tools/test-installed-numpy.py
   # - coverage report --rcfile=../.coveragerc --show-missing
 notifications:
