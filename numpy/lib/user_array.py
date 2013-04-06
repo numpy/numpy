@@ -4,7 +4,7 @@ Try to inherit from the ndarray instead of using this class as this is not
 complete.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 from numpy.core import array, asarray, absolute, add, subtract, multiply, \
      divide, remainder, power, left_shift, right_shift, bitwise_and, \
@@ -205,15 +205,15 @@ if __name__ == '__main__':
 
     ua=container(temp)
     # new object created begin test
-    print dir(ua)
-    print shape(ua),ua.shape # I have changed Numeric.py
+    print(dir(ua))
+    print(shape(ua),ua.shape) # I have changed Numeric.py
 
     ua_small=ua[:3,:5]
-    print ua_small
+    print(ua_small)
     ua_small[0,0]=10  # this did not change ua[0,0], which is not normal behavior
-    print ua_small[0,0],ua[0,0]
-    print sin(ua_small)/3.*6.+sqrt(ua_small**2)
-    print less(ua_small,103),type(less(ua_small,103))
-    print type(ua_small*reshape(arange(15),shape(ua_small)))
-    print reshape(ua_small,(5,3))
-    print transpose(ua_small)
+    print(ua_small[0,0],ua[0,0])
+    print(sin(ua_small)/3.*6.+sqrt(ua_small**2))
+    print(less(ua_small,103),type(less(ua_small,103)))
+    print(type(ua_small*reshape(arange(15),shape(ua_small))))
+    print(reshape(ua_small,(5,3)))
+    print(transpose(ua_small))

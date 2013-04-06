@@ -4,7 +4,7 @@ A script to create C code-coverage reports based on the output of
 valgrind's callgrind tool.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import optparse
 import os
@@ -21,7 +21,7 @@ try:
     from pygments.formatters import HtmlFormatter
     has_pygments = True
 except ImportError:
-    print "This script requires pygments 0.11 or greater to generate HTML"
+    print("This script requires pygments 0.11 or greater to generate HTML")
     has_pygments = False
 
 
@@ -179,6 +179,6 @@ if __name__ == '__main__':
         files.write_text(options.directory)
     if 'html' in formats:
         if not has_pygments:
-            print "Pygments 0.11 or later is required to generate HTML"
+            print("Pygments 0.11 or later is required to generate HTML")
             sys.exit(1)
         files.write_html(options.directory)

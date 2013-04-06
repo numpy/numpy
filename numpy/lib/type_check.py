@@ -1,7 +1,7 @@
 """Automatically adapted for numpy Sep 19, 2005 by convertcode.py
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __all__ = ['iscomplexobj','isrealobj','imag','iscomplex',
            'isreal','nan_to_num','real','real_if_close',

@@ -36,7 +36,7 @@ may now proceed to calculate the mean of the other values:
        invalid operation.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __author__ = "Pierre GF Gerard-Marchant ($Author: jarrod.millman $)"
 __version__ = '1.0'

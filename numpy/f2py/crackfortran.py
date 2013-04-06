@@ -138,7 +138,7 @@ TODO:
     The above may be solved by creating appropriate preprocessor program, for example.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __version__ = "$Revision: 1.177 $"[10:-1]
 import platform
@@ -922,7 +922,7 @@ def analyzeline(m,case,line):
             if not m1:
                 if case in ['public','private']: k=''
                 else:
-                    print m.groupdict()
+                    print(m.groupdict())
                     outmess('analyzeline: no name pattern found in %s statement for %s. Skipping.\n'%(case,`e`))
                     continue
             else:
@@ -1158,7 +1158,7 @@ def analyzeline(m,case,line):
             else:
                 pass
         else:
-            print m.groupdict()
+            print(m.groupdict())
             outmess('analyzeline: Could not crack the use statement.\n')
     elif case in ['f2pyenhancements']:
         if 'f2pyenhancements' not in groupcache[groupcounter]:
@@ -1182,7 +1182,7 @@ def analyzeline(m,case,line):
                         m.group('this'))
     else:
         if verbose>1:
-            print m.groupdict()
+            print(m.groupdict())
             outmess('analyzeline: No code implemented for line.\n')
 
 def appendmultiline(group, context_name,ml):
@@ -2046,7 +2046,7 @@ def get_parameters(vars, global_params={}):
             if nl!=n:
                 params[nl] = params[n]
         else:
-            print vars[n]
+            print(vars[n])
             outmess('get_parameters:parameter %s does not have value?!\n'%(`n`))
     return params
 

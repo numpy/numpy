@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import numpy
 import types
@@ -15,10 +15,10 @@ pi = numpy.pi
 def eq(v, w, msg=''):
     result = allclose(v, w)
     if not result:
-        print """Not eq:%s
+        print("""Not eq:%s
 %s
 ----
-%s""" % (msg, str(v), str(w))
+%s""" % (msg, str(v), str(w)))
     return result
 
 class TestMa(TestCase):

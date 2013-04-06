@@ -6,7 +6,7 @@ The character strings are still for "new" NumPy
 which is the only Incompatibility with Numeric
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __all__ = ['Character', 'Complex', 'Float',
            'PrecisionError', 'PyObject', 'Int', 'UInt',

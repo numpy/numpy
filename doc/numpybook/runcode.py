@@ -14,7 +14,7 @@ Options:
   -n name of code section  (default MyCode)
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import sys
 import optparse
@@ -25,8 +25,8 @@ import os
 newre = re.compile(r"\\begin_inset Note.*PYNEW\s+\\end_inset", re.DOTALL)
 
 def getoutput(tstr, dic):
-    print "\n\nRunning..."
-    print tstr,
+    print("\n\nRunning...")
+    print(tstr, end=' ')
     tempstr = io.StringIO()
     sys.stdout = tempstr
     code = compile(tstr, '<input>', 'exec')
@@ -44,8 +44,8 @@ def getoutput(tstr, dic):
     else:
         res = tempstr.getvalue() + '\n' + repr(res)
     if res != '':
-        print "\nOutput is"
-        print res,
+        print("\nOutput is")
+        print(res, end=' ')
     return res
 
 # now find the code in the code segment
@@ -90,7 +90,7 @@ def runpycode(lyxstr, name='MyCode'):
         num += 1
 
     if num == 0:
-        print "Nothing found for %s" % name
+        print("Nothing found for %s" % name)
         return lyxstr
 
     start = 0
@@ -141,7 +141,7 @@ def main(args):
     fid = file(args[0])
     str = fid.read()
     fid.close()
-    print "Processing %s" % options.name
+    print("Processing %s" % options.name)
     newstr = runpycode(str, options.name)
     fid = file(args[0],'w')
     fid.write(newstr)

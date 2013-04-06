@@ -85,7 +85,7 @@ References
   (preprint: http://www.math.hmc.edu/~benjamin/papers/CombTrig.pdf, pg. 4)
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import numpy as np
 import numpy.linalg as la

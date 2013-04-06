@@ -16,7 +16,7 @@ $Date: 2005/01/30 17:22:14 $
 Pearu Peterson
 
 """
-from __future__ import division
+from __future__ import division, print_function
 
 __version__ = "$Id: setup.py,v 1.32 2005/01/30 17:22:14 pearu Exp $"
 

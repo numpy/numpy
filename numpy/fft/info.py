@@ -174,6 +174,6 @@ Examples
 For examples, see the various functions.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 depends = ['core']

@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import os
 import sys
@@ -393,15 +393,15 @@ def who(vardict=None):
         sp2 = max(10,maxshape)
         sp3 = max(10,maxbyte)
         prval = "Name %s Shape %s Bytes %s Type" % (sp1*' ', sp2*' ', sp3*' ')
-        print prval + "\n" + "="*(len(prval)+5) + "\n"
+        print(prval + "\n" + "="*(len(prval)+5) + "\n")
 
     for k in range(len(sta)):
         val = sta[k]
-        print "%s %s %s %s %s %s %s" % (val[0], ' '*(sp1-len(val[0])+4),
+        print("%s %s %s %s %s %s %s" % (val[0], ' '*(sp1-len(val[0])+4),
                                         val[1], ' '*(sp2-len(val[1])+5),
                                         val[2], ' '*(sp3-len(val[2])+5),
-                                        val[3])
-    print "\nUpper bound on total bytes  =       %d" % totalbytes
+                                        val[3]))
+    print("\nUpper bound on total bytes  =       %d" % totalbytes)
     return
 
 #-----------------------------------------------------------------------------
@@ -528,19 +528,19 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
             try:
                 obj = _namedict[namestr][object]
                 if id(obj) in objlist:
-                    print >> output, "\n     *** Repeat reference found in %s *** " % namestr
+                    print("\n     *** Repeat reference found in %s *** " % namestr, file=output)
                 else:
                     objlist.append(id(obj))
-                    print >> output, "     *** Found in %s ***" % namestr
+                    print("     *** Found in %s ***" % namestr, file=output)
                     info(obj)
-                    print >> output, "-"*maxwidth
+                    print("-"*maxwidth, file=output)
                 numfound += 1
             except KeyError:
                 pass
         if numfound == 0:
-            print >> output, "Help for %s not found." % object
+            print("Help for %s not found." % object, file=output)
         else:
-            print >> output, "\n     *** Total of %d references found. ***" % numfound
+            print("\n     *** Total of %d references found. ***" % numfound, file=output)
 
     elif inspect.isfunction(object):
         name = object.__name__
@@ -551,8 +551,8 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
         else:
             argstr = name + arguments
 
-        print >> output, " " + argstr + "\n"
-        print >> output, inspect.getdoc(object)
+        print(" " + argstr + "\n", file=output)
+        print(inspect.getdoc(object), file=output)
 
     elif inspect.isclass(object):
         name = object.__name__
@@ -572,28 +572,28 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
         else:
             argstr = name + arguments
 
-        print >> output, " " + argstr + "\n"
+        print(" " + argstr + "\n", file=output)
         doc1 = inspect.getdoc(object)
         if doc1 is None:
             if hasattr(object,'__init__'):
-                print >> output, inspect.getdoc(object.__init__)
+                print(inspect.getdoc(object.__init__), file=output)
         else:
-            print >> output, inspect.getdoc(object)
+            print(inspect.getdoc(object), file=output)
 
         methods = pydoc.allmethods(object)
         if methods != []:
-            print >> output, "\n\nMethods:\n"
+            print("\n\nMethods:\n", file=output)
             for meth in methods:
                 if meth[0] == '_':
                     continue
                 thisobj = getattr(object, meth, None)
                 if thisobj is not None:
                     methstr, other = pydoc.splitdoc(inspect.getdoc(thisobj) or "None")
-                print >> output, "  %s  --  %s" % (meth, methstr)
+                print("  %s  --  %s" % (meth, methstr), file=output)
 
     elif type(object) is types.InstanceType: ## check for __call__ method
-        print >> output, "Instance of class: ", object.__class__.__name__
-        print >> output
+        print("Instance of class: ", object.__class__.__name__, file=output)
+        print(file=output)
         if hasattr(object, '__call__'):
             arguments = inspect.formatargspec(*inspect.getargspec(object.__call__.__func__))
             arglist = arguments.split(', ')
@@ -612,14 +612,14 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
             else:
                 argstr = name + arguments
 
-            print >> output, " " + argstr + "\n"
+            print(" " + argstr + "\n", file=output)
             doc = inspect.getdoc(object.__call__)
             if doc is not None:
-                print >> output, inspect.getdoc(object.__call__)
-            print >> output, inspect.getdoc(object)
+                print(inspect.getdoc(object.__call__), file=output)
+            print(inspect.getdoc(object), file=output)
 
         else:
-            print >> output, inspect.getdoc(object)
+            print(inspect.getdoc(object), file=output)
 
     elif inspect.ismethod(object):
         name = object.__name__
@@ -636,11 +636,11 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
         else:
             argstr = name + arguments
 
-        print >> output, " " + argstr + "\n"
-        print >> output, inspect.getdoc(object)
+        print(" " + argstr + "\n", file=output)
+        print(inspect.getdoc(object), file=output)
 
     elif hasattr(object, '__doc__'):
-        print >> output, inspect.getdoc(object)
+        print(inspect.getdoc(object), file=output)
 
 
 def source(object, output=sys.stdout):
@@ -684,10 +684,10 @@ def source(object, output=sys.stdout):
     # Local import to speed up numpy's import time.
     import inspect
     try:
-        print >> output,  "In file: %s\n" % inspect.getsourcefile(object)
-        print >> output,  inspect.getsource(object)
+        print("In file: %s\n" % inspect.getsourcefile(object), file=output)
+        print(inspect.getsource(object), file=output)
     except:
-        print >> output,  "Not available for this object."
+        print("Not available for this object.", file=output)
 
 
 # Cache for lookfor: {id(module): {name: (docstring, kind, index), ...}...}
@@ -823,7 +823,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
         pager = pydoc.getpager()
         pager("\n".join(help_text))
     else:
-        print "\n".join(help_text)
+        print("\n".join(help_text))
 
 def _lookfor_generate_cache(module, import_modules, regenerate):
     """

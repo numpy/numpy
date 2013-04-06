@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import os
 import sys
@@ -262,13 +262,13 @@ class PackageLoader(object):
 
     def log(self,mess):
         if self.verbose>1:
-            print >> sys.stderr, str(mess)
+            print(str(mess), file=sys.stderr)
     def warn(self,mess):
         if self.verbose>=0:
-            print >> sys.stderr, str(mess)
+            print(str(mess), file=sys.stderr)
     def error(self,mess):
         if self.verbose!=-1:
-            print >> sys.stderr, str(mess)
+            print(str(mess), file=sys.stderr)
 
     def _get_doc_title(self, info_module):
         """ Get the title from a package info.py file.
@@ -337,10 +337,10 @@ class PackageLoaderDebug(PackageLoader):
     def _execcmd(self,cmdstr):
         """ Execute command in parent_frame."""
         frame = self.parent_frame
-        print 'Executing',`cmdstr`,'...',
+        print('Executing',`cmdstr`,'...', end=' ')
         sys.stdout.flush()
         exec (cmdstr, frame.f_globals,frame.f_locals)
-        print 'ok'
+        print('ok')
         sys.stdout.flush()
         return
 

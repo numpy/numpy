@@ -24,7 +24,7 @@ combinations of the variables using (inside the comment portion of the inner loo
 
 This will exlude the pattern where var1 is value1 and var2 is value2 when
 the result is being generated.
-  
+
 
 In the main body each replace will use one entry from the list of named replacements
 
@@ -78,7 +78,7 @@ Example:
         3, 3, jim
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 
 __all__ = ['process_str', 'process_file']
@@ -278,7 +278,7 @@ def resolve_includes(source):
             if not os.path.isabs(fn):
                 fn = os.path.join(d,fn)
             if os.path.isfile(fn):
-                print ('Including file',fn)
+                print('Including file',fn)
                 lines.extend(resolve_includes(fn))
             else:
                 lines.append(line)

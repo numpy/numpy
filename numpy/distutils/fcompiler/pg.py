@@ -1,5 +1,5 @@
 # http://www.pgroup.com
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 from numpy.distutils.fcompiler import FCompiler
 from sys import platform
@@ -35,7 +35,7 @@ class PGroupFCompiler(FCompiler):
         }
         pic_flags = ['-fpic']
 
-    
+
     module_dir_switch = '-module '
     module_include_switch = '-I'
 
@@ -46,7 +46,7 @@ class PGroupFCompiler(FCompiler):
         return ['-fast']
     def get_flags_debug(self):
         return ['-g']
-    
+
     if platform == 'darwin':
         def get_flags_linker_so(self):
             return ["-dynamic", '-undefined', 'dynamic_lookup']

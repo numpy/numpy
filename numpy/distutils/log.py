@@ -1,5 +1,5 @@
 # Colored log, requires Python 2.3 or up.
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import sys
 from distutils.log import *

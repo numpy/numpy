@@ -5,7 +5,7 @@ summarize.py
 Show a summary about which Numpy functions are documented and which are not.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import os, glob, re, sys, inspect, optparse
 import collections
@@ -78,22 +78,22 @@ def main():
         for (filename, section, keyword, toctree) in locations:
             in_sections.setdefault((filename, section, keyword), []).append(name)
 
-    print "Documented"
-    print "==========\n"
+    print("Documented")
+    print("==========\n")
 
     last_filename = None
     for (filename, section, keyword), names in sorted(in_sections.items()):
         if filename != last_filename:
-            print "--- %s\n" % filename
+            print("--- %s\n" % filename)
         last_filename = filename
-        print " ** ", section
-        print format_in_columns(sorted(names), options.cols)
-        print "\n"
+        print(" ** ", section)
+        print(format_in_columns(sorted(names), options.cols))
+        print("\n")
 
-    print ""
-    print "Undocumented"
-    print "============\n"
-    print format_in_columns(sorted(undocumented.keys()), options.cols)
+    print("")
+    print("Undocumented")
+    print("============\n")
+    print(format_in_columns(sorted(undocumented.keys()), options.cols))
 
 def check_numpy():
     documented = get_documented(glob.glob(SOURCE_DIR + '/*.rst'))

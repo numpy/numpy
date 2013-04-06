@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import sys
 import re
@@ -33,9 +33,8 @@ if __name__ == '__main__':
             line = ''
         m = re.search(unused_funcs_str, line)
         if m:
-            print >>sys.stderr, \
-                "%s was declared unused, but is used at line %d" % (m.group(),
-                                                                    linenum+1)
+            print("%s was declared unused, but is used at line %d" % (m.group(),
+                                                                    linenum+1), file=sys.stderr)
         line = linepat.sub(r'/* "mtrand.pyx":', line)
         processed.write(line)
     mtrand_c.close()

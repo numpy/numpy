@@ -20,7 +20,7 @@ Released for unlimited redistribution.
 
 """
 # pylint: disable-msg=E1002
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import sys
 import warnings

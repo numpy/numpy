@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import numpy as np
 from numpy.testing import TestCase, run_module_suite, assert_array_almost_equal

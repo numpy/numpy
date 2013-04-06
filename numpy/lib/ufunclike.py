@@ -3,7 +3,7 @@ Module of functions that are like ufuncs in acting on arrays and optionally
 storing results in an output array.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __all__ = ['fix', 'isneginf', 'isposinf']
 

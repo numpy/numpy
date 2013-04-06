@@ -13,7 +13,7 @@ $Date: 2005/02/03 19:30:23 $
 Pearu Peterson
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __version__ = "$Revision: 1.27 $"[10:-1]
 
@@ -171,7 +171,7 @@ def buildhooks(pymod):
         if hasbody(m):
             for b in m['body']:
                 if not isroutine(b):
-                    print 'Skipping',b['block'],b['name']
+                    print('Skipping',b['block'],b['name'])
                     continue
                 modobjs.append('%s()'%(b['name']))
                 b['modulename'] = m['name']

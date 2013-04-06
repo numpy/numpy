@@ -4,7 +4,7 @@ Replace import RNG with import numpy.oldnumeric.rng as RNG.
 It is for backwards compatibility only.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 __all__ = ['CreateGenerator','ExponentialDistribution','LogNormalDistribution',
            'NormalDistribution', 'UniformDistribution', 'error', 'ranf',

@@ -1,4 +1,4 @@
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 from numpy.oldnumeric import *
 from numpy.lib.user_array import container as UserArray

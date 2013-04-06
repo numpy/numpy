@@ -7,7 +7,7 @@ Support code for building Python extensions on Windows.
     # 3. Force windows to use g77
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import os
 import sys
@@ -240,7 +240,7 @@ class Mingw32CCompiler(distutils.cygwinccompiler.CygwinCCompiler):
 def find_python_dll():
     maj, min, micro = [int(i) for i in sys.version_info[:3]]
     dllname = 'python%d%d.dll' % (maj, min)
-    print ("Looking for %s" % dllname)
+    print("Looking for %s" % dllname)
 
     # We can't do much here:
     # - find it in python main dir

@@ -5,7 +5,7 @@ significanly contributes to numpy import times. Importing this copy has almost
 no overhead.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import types
 
@@ -211,11 +211,11 @@ if __name__ == '__main__':
     def foo(x, y, z=None):
         return None
 
-    print inspect.getargs(foo.__code__)
-    print getargs(foo.__code__)
+    print(inspect.getargs(foo.__code__))
+    print(getargs(foo.__code__))
 
-    print inspect.getargspec(foo)
-    print getargspec(foo)
+    print(inspect.getargspec(foo))
+    print(getargspec(foo))
 
-    print inspect.formatargspec(*inspect.getargspec(foo))
-    print formatargspec(*getargspec(foo))
+    print(inspect.formatargspec(*inspect.getargspec(foo)))
+    print(formatargspec(*getargspec(foo)))

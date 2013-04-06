@@ -13,7 +13,7 @@ implemented as operations on the coefficients.  Additional (module-specific)
 information can be found in the docstring for the module of interest.
 
 """
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 import warnings
 
