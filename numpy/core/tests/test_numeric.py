@@ -346,6 +346,57 @@ class TestFloatExceptions(TestCase):
         finally:
             np.seterr(**oldsettings)
 
+    def grab_int_assertions(self, min, max, one):
+        'Utility function to test and collect assertion about integers'
+        underflow = 'underflow'
+        overflow = 'overflow'
+        zerodiv = 'divide by zero'
+        assertions = ((underflow, lambda a,b:a-b, min, one),
+                      (overflow,  lambda a,b:a+b, max, one),
+                      (zerodiv,   lambda a,b:a/b, max, one-one),
+                      (overflow,  lambda a,b:a*b, max, one+one))
+        errors = []
+        for x in assertions:
+            try:
+                self.assert_raises_fpe(*x)
+            except AssertionError as e:
+                errors.append(str(e))
+        return errors
+
+    def test_seterr_for_arrays_of_ints(self):
+        "Seterr should apply to arrays of integer types, see gh-493"
+        err = seterr(all='raise')
+        raised=[]
+        try:
+            for typecode in np.typecodes['AllInteger']:
+                itype = np.obj2sctype(typecode)
+                iinfo = np.iinfo(itype)
+                min = itype([iinfo.min])
+                max = itype([iinfo.max])
+                one = itype(1)
+                raised.extend(self.grab_int_assertions(min, max, one))
+            pretty_repr = "%d errors:\n  " % len(raised) + "\n  ".join(raised)
+            assert_(len(raised) == 0, pretty_repr)
+        finally:
+            seterr(**err)
+
+    def test_seterr_for_ints(self):
+        "Seterr should apply to integer types"
+        err = seterr(all='raise')
+        raised = []
+        try:
+            for typecode in np.typecodes['AllInteger']:
+                itype = np.obj2sctype(typecode)
+                iinfo = np.iinfo(itype)
+                min = itype(iinfo.min)
+                max = itype(iinfo.max)
+                one = itype(1)
+                raised.extend(self.grab_int_assertions(min, max, one))
+            pretty_repr = "%d errors:\n  " % len(raised) + "\n  ".join(raised)
+            assert_(len(raised) == 0, pretty_repr)
+        finally:
+            seterr(**err)
+
 class TestTypes(TestCase):
     def check_promotion_cases(self, promote_func):
         #Tests that the scalars get coerced correctly.
