@@ -1186,6 +1186,29 @@ class TestRegression(TestCase):
         assert_(arr[0][0] == 'john')
         assert_(arr[0][1] == 4)
 
+    def test_void_scalar_constructor(self):
+        #Issue #1550
+
+        #Create test string data, construct void scalar from data and assert
+        #that void scalar contains original data.
+        test_string = np.array("test")
+        test_string_void_scalar = np.core.multiarray.scalar(
+            np.dtype(("V",test_string.dtype.itemsize)), test_string.tostring())
+
+        assert_(test_string_void_scalar.view(test_string.dtype) == test_string)
+
+        #Create record scalar, construct from data and assert that
+        #reconstructed scalar is correct.
+        test_record = np.ones((), "i,i")
+        test_record_void_scalar = np.core.multiarray.scalar(
+            test_record.dtype, test_record.tostring())
+
+        assert_(test_record_void_scalar == test_record)
+
+        #Test pickle and unpickle of void and record scalars
+        assert_(pickle.loads(pickle.dumps(test_string)) == test_string)
+        assert_(pickle.loads(pickle.dumps(test_record)) == test_record)
+
     def test_blasdot_uninitialized_memory(self):
         """Ticket #950"""
         for m in [0, 1, 2]:
