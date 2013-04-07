@@ -317,7 +317,7 @@ def _fix_defaults(output, defaults=None):
     """
     names = output.dtype.names
     (data, mask, fill_value) = (output.data, output.mask, output.fill_value)
-    for (k, v) in (defaults or {}).iteritems():
+    for (k, v) in (defaults or {}).items():
         if k in names:
             fill_value[k] = v
             data[k][mask[k]] = v

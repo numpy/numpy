@@ -386,7 +386,7 @@ NPY_NO_EXPORT %s %s \\\n       (%s);""" % (self.return_type,
 
 def order_dict(d):
     """Order dict by its values."""
-    o = d.items()
+    o = list(d.items())
     def _key(x):
         return (x[1], x[0])
     return sorted(o, key=_key)
@@ -448,7 +448,7 @@ def fullapi_hash(api_dicts):
         def sorted_by_values(d):
             """Sort a dictionary by its values. Assume the dictionary items is of
             the form func_name -> order"""
-            return sorted(d.items(), key=lambda x_y: (x_y[1], x_y[0]))
+            return sorted(list(d.items()), key=lambda x_y: (x_y[1], x_y[0]))
         for name, index in sorted_by_values(d):
             a.extend(name)
             a.extend(str(index))

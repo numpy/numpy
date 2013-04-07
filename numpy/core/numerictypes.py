@@ -788,7 +788,7 @@ _alignment = _typedict()
 _maxvals = _typedict()
 _minvals = _typedict()
 def _construct_lookups():
-    for name, val in typeinfo.iteritems():
+    for name, val in typeinfo.items():
         if not isinstance(val, tuple):
             continue
         obj = val[-1]
@@ -863,7 +863,7 @@ except AttributeError:
     # Py3K
     ScalarType = [int, float, complex, long, bool, bytes, str, memoryview]
 
-ScalarType.extend(_sctype2char_dict.keys())
+ScalarType.extend(list(_sctype2char_dict.keys()))
 ScalarType = tuple(ScalarType)
 for key in _sctype2char_dict.keys():
     cast[key] = lambda x, k=key : array(x, copy=False).astype(k)

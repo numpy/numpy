@@ -192,7 +192,7 @@ def CCompiler_compile(self, sources, output_dir=None, macros=None,
     # build any sources in same order as they were originally specified
     #   especially important for fortran .f90 files using modules
     if isinstance(self, FCompiler):
-        objects_to_build = build.keys()
+        objects_to_build = list(build.keys())
         for obj in objects:
             if obj in objects_to_build:
                 src, ext = build[obj]
@@ -255,7 +255,7 @@ replace_method(CCompiler, 'customize_cmd', CCompiler_customize_cmd)
 def _compiler_to_string(compiler):
     props = []
     mx = 0
-    keys = compiler.executables.keys()
+    keys = list(compiler.executables.keys())
     for key in ['version','libraries','library_dirs',
                 'object_switch','compile_switch',
                 'include_dirs','define','undef','rpath','link_objects']:

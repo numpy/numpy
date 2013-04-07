@@ -195,7 +195,7 @@ def exec_command( command,
     else:
         log.debug('Retaining cwd: %s' % oldcwd)
 
-    oldenv = _preserve_environment( env.keys() )
+    oldenv = _preserve_environment( list(env.keys()) )
     _update_environment( **env )
 
     try:

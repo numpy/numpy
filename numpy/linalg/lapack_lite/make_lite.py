@@ -111,12 +111,12 @@ class FortranLibrary(object):
     def allRoutineNames(self):
         """Return the names of all the routines.
         """
-        return self.names_to_routines.keys()
+        return list(self.names_to_routines.keys())
 
     def allRoutines(self):
         """Return all the routines.
         """
-        return self.names_to_routines.values()
+        return list(self.names_to_routines.values())
 
     def resolveAllDependencies(self):
         """Try to add routines to the library to satisfy all the dependencies

@@ -469,7 +469,7 @@ def run_compile():
             if s[:len(v)]==v:
                 from numpy.distutils import fcompiler
                 fcompiler.load_all_fcompiler_classes()
-                allowed_keys = fcompiler.fcompiler_class.keys()
+                allowed_keys = list(fcompiler.fcompiler_class.keys())
                 nv = ov = s[len(v):].lower()
                 if ov not in allowed_keys:
                     vmap = {} # XXX

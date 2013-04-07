@@ -74,7 +74,7 @@ def main():
 
     # report
     in_sections = {}
-    for name, locations in documented.iteritems():
+    for name, locations in documented.items():
         for (filename, section, keyword, toctree) in locations:
             in_sections.setdefault((filename, section, keyword), []).append(name)
 

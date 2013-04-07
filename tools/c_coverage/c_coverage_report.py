@@ -110,7 +110,7 @@ class SourceFiles:
 
         fd = open(os.path.join(root, 'index.html'), 'w')
         fd.write("<html>")
-        paths = self.files.keys()
+        paths = list(self.files.keys())
         paths.sort()
         for path in paths:
             fd.write('<p><a href="%s.html">%s</a></p>' %

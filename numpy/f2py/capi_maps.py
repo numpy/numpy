@@ -192,7 +192,7 @@ if os.path.isfile('.f2py_f2cmap'):
                     f2cmap_all[k][k1] = d[k][k1]
                     outmess('\tMapping "%s(kind=%s)" to "%s"\n' % (k,k1,d[k][k1]))
                 else:
-                    errmess("\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"%(k,k1,d[k][k1],d[k][k1],c2py_map.keys()))
+                    errmess("\tIgnoring map {'%s':{'%s':'%s'}}: '%s' must be in %s\n"%(k,k1,d[k][k1],d[k][k1],list(c2py_map.keys())))
         outmess('Succesfully applied user defined changes from .f2py_f2cmap\n')
     except Exception as msg:
         errmess('Failed to apply user defined changes from .f2py_f2cmap: %s. Skipping.\n' % (msg))
@@ -491,7 +491,7 @@ def sign2map(a,var):
             ret['cblatexdocstr']=lcb2_map[lcb_map[a]]['latexdocstr']
         else:
             ret['cbname']=a
-            errmess('sign2map: Confused: external %s is not in lcb_map%s.\n'%(a,lcb_map.keys()))
+            errmess('sign2map: Confused: external %s is not in lcb_map%s.\n'%(a,list(lcb_map.keys())))
     if isstring(var):
         ret['length']=getstrlength(var)
     if isarray(var):
