@@ -612,7 +612,7 @@ def replace(str,d,defaultsep=''):
         return map(lambda d,f=replace,sep=defaultsep,s=str:f(s,d,sep),d)
     if type(str)==types.ListType:
         return map(lambda s,f=replace,sep=defaultsep,d=d:f(s,d,sep),str)
-    for k in 2*d.keys():
+    for k in 2*list(d.keys()):
         if k=='separatorsfor':
             continue
         if 'separatorsfor' in d and k in d['separatorsfor']:

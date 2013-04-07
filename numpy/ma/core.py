@@ -5536,7 +5536,7 @@ class MaskedArray(ndarray):
         if memo is None:
             memo = {}
         memo[id(self)] = copied
-        for (k, v) in self.__dict__.iteritems():
+        for (k, v) in self.__dict__.items():
             copied.__dict__[k] = deepcopy(v, memo)
         return copied
 

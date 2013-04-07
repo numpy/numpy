@@ -386,7 +386,7 @@ NPY_NO_EXPORT %s %s \\\n       (%s);""" % (self.return_type,
 
 def order_dict(d):
     """Order dict by its values."""
-    o = d.items()
+    o = list(d.items())
     def _key(x):
         return (x[1], x[0])
     return sorted(o, key=_key)

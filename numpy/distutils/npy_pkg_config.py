@@ -143,7 +143,7 @@ class LibraryInfo(object):
             The list of section headers.
 
         """
-        return self._sections.keys()
+        return list(self._sections.keys())
 
     def cflags(self, section="default"):
         val = self.vars.interpolate(self._sections[section]['cflags'])
@@ -222,7 +222,7 @@ class VariableSet(object):
             The names of all variables in the `VariableSet` instance.
 
         """
-        return self._raw_data.keys()
+        return list(self._raw_data.keys())
 
     # Emulate a dict to set/get variables values
     def __getitem__(self, name):

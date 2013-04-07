@@ -303,7 +303,7 @@ def unique_key(adict):
     # currently it works by appending together n of the letters of the
     #   current keys and increasing n until a unique key is found
     # -- not particularly quick
-    allkeys = adict.keys()
+    allkeys = list(adict.keys())
     done = False
     n = 1
     while not done:

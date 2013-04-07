@@ -20,7 +20,7 @@ else:
 def _makenames_list(adict, align):
     from .multiarray import dtype
     allfields = []
-    fnames = adict.keys()
+    fnames = list(adict.keys())
     for fname in fnames:
         obj = adict[fname]
         n = len(obj)
@@ -505,7 +505,7 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
         offset += extra_offset
 
     # Check if this was a simple 1-item type
-    if len(fields.keys()) == 1 and not explicit_name and fields['f0'][1] == 0 \
+    if len(fields) == 1 and not explicit_name and fields['f0'][1] == 0 \
            and not is_subdtype:
         ret = fields['f0'][0]
     else:
