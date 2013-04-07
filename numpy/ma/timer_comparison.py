@@ -1,8 +1,8 @@
 from __future__ import division, absolute_import, print_function
 
 import timeit
+from functools import reduce
 
-import sys
 import numpy as np
 from numpy import float_
 import np.core.fromnumeric as fromnumeric
@@ -13,8 +13,6 @@ np.seterr(all='ignore')
 
 pi = np.pi
 
-if sys.version_info[0] >= 3:
-    from functools import reduce
 
 class moduletester(object):
     def __init__(self, module):

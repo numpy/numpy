@@ -24,6 +24,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import warnings
+from functools import reduce
 
 import numpy as np
 import numpy.core.umath as umath
@@ -35,7 +36,6 @@ from numpy.compat import getargspec, formatargspec
 from numpy import expand_dims as n_expand_dims
 
 if sys.version_info[0] >= 3:
-    from functools import reduce
     import pickle
 else:
     import cPickle as pickle
