@@ -542,7 +542,7 @@ class FCompiler(CCompiler):
     def dump_properties(self):
         """Print out the attributes of a compiler instance."""
         props = []
-        for key in self.executables.keys() + \
+        for key in list(self.executables.keys()) + \
                 ['version','libraries','library_dirs',
                  'object_switch','compile_switch']:
             if hasattr(self,key):

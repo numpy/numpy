@@ -788,7 +788,7 @@ _alignment = _typedict()
 _maxvals = _typedict()
 _minvals = _typedict()
 def _construct_lookups():
-    for name, val in typeinfo.iteritems():
+    for name, val in typeinfo.items():
         if not isinstance(val, tuple):
             continue
         obj = val[-1]

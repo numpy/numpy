@@ -755,7 +755,7 @@ def lookfor(what, module=None, import_modules=True, regenerate=False,
     whats = str(what).lower().split()
     if not whats: return
 
-    for name, (docstring, kind, index) in cache.iteritems():
+    for name, (docstring, kind, index) in cache.items():
         if kind in ('module', 'object'):
             # don't show modules or objects
             continue

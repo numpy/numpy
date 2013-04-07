@@ -104,7 +104,7 @@ class _FileOpeners(object):
 
         """
         self._load()
-        return self._file_openers.keys()
+        return list(self._file_openers.keys())
     def __getitem__(self, key):
         self._load()
         return self._file_openers[key]

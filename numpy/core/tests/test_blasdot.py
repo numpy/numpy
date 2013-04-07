@@ -105,7 +105,7 @@ def test_dot_array_order():
     dtypes_prec = {np.float64: 7, np.float32: 5}
     np.random.seed(7)
 
-    for arr_type, prec in dtypes_prec.iteritems():
+    for arr_type, prec in dtypes_prec.items():
         for a_order in orders:
             a = np.asarray(np.random.randn(a_dim, a_dim),
                 dtype=arr_type, order=a_order)

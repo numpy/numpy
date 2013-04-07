@@ -268,11 +268,11 @@ def save(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
         dictionary = _callers_globals()
 
     if variables is None:
-        keys = dictionary.keys()
+        keys = list(dictionary.keys())
     else:
         keys = variables.split(",")
 
-    source_modules = _callers_modules() + sys.modules.keys()
+    source_modules = _callers_modules() + list(sys.modules.keys())
 
     p = pickle.Pickler(file, protocol=2)
 
@@ -332,7 +332,7 @@ def load(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
             session = dict(zip(o.keys, values))
             _verbose("updating dictionary with session variables.")
             if variables is None:
-                keys = session.keys()
+                keys = list(session.keys())
             else:
                 keys = variables.split(",")
             for k in keys:

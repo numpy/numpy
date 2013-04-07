@@ -1620,7 +1620,7 @@ def test_npzfile_dict():
     assert_('x' in z.keys())
     assert_('y' in z.keys())
 
-    for f, a in z.iteritems():
+    for f, a in z.items():
         assert_(f in ['x', 'y'])
         assert_equal(a.shape, (3, 3))
 
@@ -1629,7 +1629,7 @@ def test_npzfile_dict():
     for f in z:
         assert_(f in ['x', 'y'])
 
-    assert_('x' in list(z.iterkeys()))
+    assert_('x' in z.keys())
 
 def test_load_refcount():
     # Check that objects returned by np.load are directly freed based on

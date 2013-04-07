@@ -572,7 +572,7 @@ def _savez(file, args, kwds, compress):
     fd, tmpfile = tempfile.mkstemp(suffix='-numpy.npy')
     os.close(fd)
     try:
-        for key, val in namedict.iteritems():
+        for key, val in namedict.items():
             fname = key + '.npy'
             fid = open(tmpfile, 'wb')
             try:
@@ -811,7 +811,7 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
                 packing = [(N, tuple)]
 
         # By preference, use the converters specified by the user
-        for i, conv in (user_converters or {}).iteritems():
+        for i, conv in (user_converters or {}).items():
             if usecols:
                 try:
                     i = usecols.index(i)

@@ -754,7 +754,7 @@ def pad(array, pad_width, mode=None, **kwargs):
                 kwargs[i] = _normalize_shape(narray, kwargs[i])
     elif mode == None:
         raise ValueError('Keyword "mode" must be a function or one of %s.' %
-                          (modefunc.keys(),))
+                          (list(modefunc.keys()),))
     else:
         # User supplied function, I hope
         function = mode

@@ -2139,7 +2139,7 @@ def show_all(argv=None):
         show_only.append(n)
     show_all = not show_only
     _gdict_ = globals().copy()
-    for name, c in _gdict_.iteritems():
+    for name, c in _gdict_.items():
         if not inspect.isclass(c):
             continue
         if not issubclass(c, system_info) or c is system_info:
