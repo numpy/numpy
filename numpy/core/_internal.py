@@ -332,7 +332,7 @@ _pep3118_native_map = {
     'O': 'O',
     'x': 'V', # padding
 }
-_pep3118_native_typechars = ''.join(list(_pep3118_native_map.keys()))
+_pep3118_native_typechars = ''.join(_pep3118_native_map.keys())
 
 _pep3118_standard_map = {
     '?': '?',
@@ -356,7 +356,7 @@ _pep3118_standard_map = {
     'O': 'O',
     'x': 'V', # padding
 }
-_pep3118_standard_typechars = ''.join(list(_pep3118_standard_map.keys()))
+_pep3118_standard_typechars = ''.join(_pep3118_standard_map.keys())
 
 def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
     from numpy.core.multiarray import dtype
@@ -505,7 +505,7 @@ def _dtype_from_pep3118(spec, byteorder='@', is_subdtype=False):
         offset += extra_offset
 
     # Check if this was a simple 1-item type
-    if len(list(fields.keys())) == 1 and not explicit_name and fields['f0'][1] == 0 \
+    if len(fields) == 1 and not explicit_name and fields['f0'][1] == 0 \
            and not is_subdtype:
         ret = fields['f0'][0]
     else:
