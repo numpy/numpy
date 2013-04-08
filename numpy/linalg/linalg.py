@@ -1696,16 +1696,16 @@ def slogdet(a):
 
     Parameters
     ----------
-    a : array_like
+    a : (..., M, M) array_like
         Input array, has to be a square 2-D array.
 
     Returns
     -------
-    sign : float or complex
+    sign : (...) array_like
         A number representing the sign of the determinant. For a real matrix,
         this is 1, 0, or -1. For a complex matrix, this is a complex number
         with absolute value 1 (i.e., it is on the unit circle), or else 0.
-    logdet : float
+    logdet : (...) array_like
         The natural log of the absolute value of the determinant.
 
     If the determinant is zero, then `sign` will be 0 and `logdet` will be
@@ -1736,6 +1736,17 @@ def slogdet(a):
     >>> sign * np.exp(logdet)
     -2.0
 
+    Computing log-determinants for a stack of matrices:
+
+    >>> a = np.array([ [[1, 2], [3, 4]], [[1, 2], [2, 1]], [[1, 3], [3, 1]] ])
+    >>> a.shape
+    (3, 2, 2)
+    >>> sign, logdet = np.linalg.slogdet(a)
+    >>> (sign, logdet)
+    (array([-1., -1., -1.]), array([ 0.69314718,  1.09861229,  2.07944154]))
+    >>> sign * np.exp(logdet)
+    array([-2., -3., -8.])
+
     This routine succeeds where ordinary `det` does not:
 
     >>> np.linalg.det(np.eye(500) * 0.1)
@@ -1745,30 +1756,13 @@ def slogdet(a):
 
     """
     a = asarray(a)
-    _assertRank2(a)
-    _assertSquareness(a)
+    _assertNonEmpty(a)
+    _assertRankAtLeast2(a)
+    _assertNdSquareness(a)
     t, result_t = _commonType(a)
-    a = _fastCopyAndTranspose(t, a)
-    a = _to_native_byte_order(a)
-    n = a.shape[0]
-    if isComplexType(t):
-        lapack_routine = lapack_lite.zgetrf
-    else:
-        lapack_routine = lapack_lite.dgetrf
-    pivots = zeros((n,), fortran_int)
-    results = lapack_routine(n, n, a, n, pivots, 0)
-    info = results['info']
-    if (info < 0):
-        raise TypeError("Illegal input to Fortran routine")
-    elif (info > 0):
-        return (t(0.0), _realType(t)(-Inf))
-    sign = 1. - 2. * (add.reduce(pivots != arange(1, n + 1)) % 2)
-    d = diagonal(a)
-    absd = absolute(d)
-    sign *= multiply.reduce(d / absd)
-    log(absd, absd)
-    logdet = add.reduce(absd, axis=-1)
-    return sign, logdet
+    real_t = _realType(result_t)
+    sign, logdet = _umath_linalg.slogdet(a.astype(t))
+    return sign.astype(result_t), logdet.astype(real_t)
 
 def det(a):
     """
@@ -1791,6 +1785,9 @@ def det(a):
 
     Notes
     -----
+    Broadcasting rules apply, see the `numpy.linalg` documentation for
+    details.
+
     The determinant is computed via LU factorization using the LAPACK
     routine z/dgetrf.
 
