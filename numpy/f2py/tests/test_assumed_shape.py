@@ -21,16 +21,16 @@ class TestAssumedShapeSumExample(util.F2PyTest):
     @dec.slow
     def test_all(self):
         r = self.module.fsum([1,2])
-        assert_(r==3,`r`)
+        assert_(r==3,repr(r))
         r = self.module.sum([1,2])
-        assert_(r==3,`r`)
+        assert_(r==3,repr(r))
         r = self.module.sum_with_use([1,2])
-        assert_(r==3,`r`)
+        assert_(r==3,repr(r))
 
         r = self.module.mod.sum([1,2])
-        assert_(r==3,`r`)
+        assert_(r==3,repr(r))
         r = self.module.mod.fsum([1,2])
-        assert_(r==3,`r`)
+        assert_(r==3,repr(r))
 
 if __name__ == "__main__":
     import nose

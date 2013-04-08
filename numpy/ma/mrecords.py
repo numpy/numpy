@@ -55,7 +55,7 @@ def _getformats(data):
         obj = np.asarray(obj)
         formats += _typestr[obj.dtype.type]
         if issubclass(obj.dtype.type, ntypes.flexible):
-            formats += `obj.itemsize`
+            formats += repr(obj.itemsize)
         formats += ','
     return formats[:-1]
 
@@ -74,7 +74,7 @@ If the argument `names` is not None, updates the field names to valid names.
         elif isinstance(names, str):
             new_names = names.split(',')
         else:
-            raise NameError("illegal input names %s" % `names`)
+            raise NameError("illegal input names %s" % repr(names))
         nnames = len(new_names)
         if nnames < ndescr:
             new_names += default_names[nnames:]

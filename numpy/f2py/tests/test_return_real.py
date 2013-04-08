@@ -43,7 +43,7 @@ class TestReturnReal(util.F2PyTest):
 
         try:
             r = t(10l**400)
-            assert_( `r` in ['inf','Infinity'],`r`)
+            assert_( repr(r) in ['inf','Infinity'],repr(r))
         except OverflowError:
             pass
 

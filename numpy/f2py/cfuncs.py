@@ -1154,7 +1154,7 @@ def append_needs(need,flag=1):
         elif need in commonhooks:
             n = 'commonhooks'
         else:
-            errmess('append_needs: unknown need %s\n'%(`need`))
+            errmess('append_needs: unknown need %s\n'%(repr(need)))
             return
         if need in outneeds[n]: return
         if flag:
@@ -1189,7 +1189,7 @@ def append_needs(need,flag=1):
             tmp[n].append(need)
             return tmp
     else:
-        errmess('append_needs: expected list or string but got :%s\n'%(`need`))
+        errmess('append_needs: expected list or string but got :%s\n'%(repr(need)))
 
 def get_needs():
     global outneeds,needs
