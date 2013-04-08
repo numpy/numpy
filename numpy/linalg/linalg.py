@@ -28,7 +28,7 @@ from numpy.linalg import lapack_lite
 from numpy.matrixlib.defmatrix import matrix_power
 from numpy.compat import asbytes
 
-from numpy.core import _umath_linalg
+from numpy.core import _umath_linalg, errstate, geterrobj
 
 # For Python2/3 compatibility
 _N = asbytes('N')
@@ -461,24 +461,29 @@ def inv(a):
 
     Parameters
     ----------
-    a : (M, M) array_like
+    a : (..., M, M) array_like
         Matrix to be inverted.
 
     Returns
     -------
-    ainv : (M, M) ndarray or matrix
+    ainv : (..., M, M) ndarray or matrix
         (Multiplicative) inverse of the matrix `a`.
 
     Raises
     ------
     LinAlgError
-        If `a` is singular or not square.
+        If `a` is not square or inversion fails.
+
+    Notes
+    -----
+    Broadcasting rules apply, see the `numpy.linalg` documentation for
+    details.
 
     Examples
     --------
-    >>> from numpy import linalg as LA
+    >>> from numpy.linalg import inv
     >>> a = np.array([[1., 2.], [3., 4.]])
-    >>> ainv = LA.inv(a)
+    >>> ainv = inv(a)
     >>> np.allclose(np.dot(a, ainv), np.eye(2))
     True
     >>> np.allclose(np.dot(ainv, a), np.eye(2))
@@ -486,14 +491,29 @@ def inv(a):
 
     If a is a matrix object, then the return value is a matrix as well:
 
-    >>> ainv = LA.inv(np.matrix(a))
+    >>> ainv = inv(np.matrix(a))
     >>> ainv
     matrix([[-2. ,  1. ],
             [ 1.5, -0.5]])
 
+    Inverses of several matrices can be computed at once:
+
+    >>> a = np.array([[[1., 2.], [3., 4.]], [[1, 3], [3, 5]]])
+    >>> inv(a)
+    array([[[-2. ,  1. ],
+            [ 1.5, -0.5]],
+           [[-5. ,  2. ],
+            [ 3. , -1. ]]])
+
     """
     a, wrap = _makearray(a)
-    return wrap(solve(a, identity(a.shape[0], dtype=a.dtype)))
+    _assertNonEmpty(a)
+    _assertRankAtLeast2(a)
+    _assertNdSquareness(a)
+    t, result_t = _commonType(a)
+    extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
+    ainv = _umath_linalg.inv(a.astype(t), extobj=extobj)
+    return wrap(ainv.astype(result_t))
 
 
 # Cholesky decomposition
