@@ -99,7 +99,7 @@ def buildusevar(name,realname,vars,usemodulename):
     nummap={0:'Ro',1:'Ri',2:'Rii',3:'Riii',4:'Riv',5:'Rv',6:'Rvi',7:'Rvii',8:'Rviii',9:'Rix'}
     vrd['texnamename']=name
     for i in nummap.keys():
-        vrd['texnamename']=vrd['texnamename'].replace(`i`,nummap[i])
+        vrd['texnamename']=vrd['texnamename'].replace(repr(i),nummap[i])
     if hasnote(vars[realname]): vrd['note']=vars[realname]['note']
     rd=dictappend({},vrd)
     var=vars[realname]

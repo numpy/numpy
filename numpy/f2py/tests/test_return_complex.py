@@ -45,7 +45,7 @@ class TestReturnComplex(util.F2PyTest):
 
         try:
             r = t(10l**400)
-            assert_( `r` in ['(inf+0j)','(Infinity+0j)'],`r`)
+            assert_( repr(r) in ['(inf+0j)','(Infinity+0j)'],repr(r))
         except OverflowError:
             pass
 

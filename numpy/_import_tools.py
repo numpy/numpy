@@ -337,7 +337,7 @@ class PackageLoaderDebug(PackageLoader):
     def _execcmd(self,cmdstr):
         """ Execute command in parent_frame."""
         frame = self.parent_frame
-        print('Executing',`cmdstr`,'...', end=' ')
+        print('Executing',repr(cmdstr),'...', end=' ')
         sys.stdout.flush()
         exec (cmdstr, frame.f_globals,frame.f_locals)
         print('ok')

@@ -176,7 +176,7 @@ class format_parser:
             elif (type(names) == str):
                 names = names.split(',')
             else:
-                raise NameError("illegal input names %s" % `names`)
+                raise NameError("illegal input names %s" % repr(names))
 
             self._names = [n.strip() for n in names[:self._nfields]]
         else:
@@ -533,7 +533,7 @@ def fromarrays(arrayList, dtype=None, shape=None, formats=None,
                 raise ValueError("item in the array list must be an ndarray.")
             formats += _typestr[obj.dtype.type]
             if issubclass(obj.dtype.type, nt.flexible):
-                formats += `obj.itemsize`
+                formats += repr(obj.itemsize)
             formats += ','
         formats = formats[:-1]
 

@@ -499,12 +499,12 @@ def getmultilineblock(rout,blockname,comment=1,counter=0):
         r = r[counter]
     if r[:3]=="'''":
         if comment:
-            r = '\t/* start ' + blockname + ' multiline ('+`counter`+') */\n' + r[3:]
+            r = '\t/* start ' + blockname + ' multiline ('+repr(counter)+') */\n' + r[3:]
         else:
             r = r[3:]
         if r[-3:]=="'''":
             if comment:
-                r = r[:-3] + '\n\t/* end multiline ('+`counter`+')*/'
+                r = r[:-3] + '\n\t/* end multiline ('+repr(counter)+')*/'
             else:
                 r = r[:-3]
         else:
@@ -703,7 +703,7 @@ def applyrules(rules,d,var={}):
                             else: i=''
                         ret[k].append(replace(i,d))
         else:
-            errmess('applyrules: ignoring rule %s.\n'%`rules[k]`)
+            errmess('applyrules: ignoring rule %s.\n'%repr(rules[k]))
         if type(ret[k])==types.ListType:
             if len(ret[k])==1:
                 ret[k]=ret[k][0]

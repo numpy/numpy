@@ -225,7 +225,7 @@ def scaninputline(inputline):
         elif l[:15] in '--include-paths':
             f7=1
         elif l[0]=='-':
-            errmess('Unknown option %s\n'%`l`)
+            errmess('Unknown option %s\n'%repr(l))
             sys.exit()
         elif f2: f2=0;signsfile=l
         elif f3: f3=0;modulename=l
@@ -382,7 +382,7 @@ def run_main(comline_list):
         if postlist[i]['block']!='python module':
             if 'python module' not in options:
                 errmess('Tip: If your original code is Fortran source then you must use -m option.\n')
-            raise TypeError('All blocks must be python module blocks but got %s'%(`postlist[i]['block']`))
+            raise TypeError('All blocks must be python module blocks but got %s'%(repr(postlist[i]['block'])))
     auxfuncs.debugoptions=options['debug']
     f90mod_rules.options=options
     auxfuncs.wrapfuncs=options['wrapfuncs']
@@ -485,7 +485,7 @@ def run_compile():
         for s in del_list:
             i = flib_flags.index(s)
             del flib_flags[i]
-        assert len(flib_flags)<=2,`flib_flags`
+        assert len(flib_flags)<=2,repr(flib_flags)
 
     _reg5 = re.compile(r'[-][-](verbose)')
     setup_flags = [_m for _m in sys.argv[1:] if _reg5.match(_m)]
@@ -565,7 +565,7 @@ def run_compile():
             i = get_info(n)
             if not i:
                 outmess('No %s resources found in system'\
-                        ' (try `f2py --help-link`)\n' % (`n`))
+                        ' (try `f2py --help-link`)\n' % (repr(n)))
             dict_append(ext_args,**i)
 
     ext = Extension(**ext_args)
