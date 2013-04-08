@@ -1717,6 +1717,9 @@ def slogdet(a):
 
     Notes
     -----
+    Broadcasting rules apply, see the `numpy.linalg` documentation for
+    details.
+
     The determinant is computed via LU factorization using the LAPACK
     routine z/dgetrf.
 
@@ -1773,12 +1776,12 @@ def det(a):
 
     Parameters
     ----------
-    a : (M, M) array_like
-        Input array.
+    a : (..., M, M) array_like
+        Input array to compute determinants for.
 
     Returns
     -------
-    det : float
+    det : (...) array_like
         Determinant of `a`.
 
     See Also
@@ -1799,9 +1802,21 @@ def det(a):
     >>> np.linalg.det(a)
     -2.0
 
+    Computing determinants for a stack of matrices:
+
+    >>> a = np.array([ [[1, 2], [3, 4]], [[1, 2], [2, 1]], [[1, 3], [3, 1]] ])
+    >>> a.shape
+    (2, 2, 2
+    >>> np.linalg.det(a)
+    array([-2., -3., -8.])
+
     """
-    sign, logdet = slogdet(a)
-    return sign * exp(logdet)
+    a = asarray(a)
+    _assertNonEmpty(a)
+    _assertRankAtLeast2(a)
+    _assertNdSquareness(a)
+    t, result_t = _commonType(a)
+    return _umath_linalg.det(a.astype(t)).astype(result_t)
 
 # Linear Least Squares
 
