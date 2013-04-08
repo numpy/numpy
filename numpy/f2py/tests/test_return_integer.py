@@ -6,7 +6,7 @@ import util
 
 class TestReturnInteger(util.F2PyTest):
     def check_function(self, t):
-        assert_( t(123)==123,`t(123)`)
+        assert_( t(123)==123,repr(t(123)))
         assert_( t(123.6)==123)
         assert_( t(123l)==123)
         assert_( t('123')==123)

@@ -73,6 +73,7 @@ FIXES_TO_SKIP = [
     'imports2',
     'print',
     'dict',
+    'repr',
 ]
 
 skip_fixes= []

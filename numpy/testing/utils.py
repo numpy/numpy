@@ -919,9 +919,9 @@ def assert_string_equal(actual, desired):
     import difflib
 
     if not isinstance(actual, str) :
-        raise AssertionError(`type(actual)`)
+        raise AssertionError(repr(type(actual)))
     if not isinstance(desired, str):
-        raise AssertionError(`type(desired)`)
+        raise AssertionError(repr(type(desired)))
     if re.match(r'\A'+desired+r'\Z', actual, re.M): return
     diff = list(difflib.Differ().compare(actual.splitlines(1), desired.splitlines(1)))
     diff_list = []
@@ -936,7 +936,7 @@ def assert_string_equal(actual, desired):
                 l.append(d2)
                 d2 = diff.pop(0)
             if not d2.startswith('+ ') :
-                raise AssertionError(`d2`)
+                raise AssertionError(repr(d2))
             l.append(d2)
             d3 = diff.pop(0)
             if d3.startswith('? '):
@@ -947,7 +947,7 @@ def assert_string_equal(actual, desired):
                 continue
             diff_list.extend(l)
             continue
-        raise AssertionError(`d1`)
+        raise AssertionError(repr(d1))
     if not diff_list:
         return
     msg = 'Differences in strings:\n%s' % (''.join(diff_list)).rstrip()

@@ -6,8 +6,8 @@ import util
 
 class TestReturnLogical(util.F2PyTest):
     def check_function(self, t):
-        assert_( t(True)==1,`t(True)`)
-        assert_( t(False)==0,`t(False)`)
+        assert_( t(True)==1,repr(t(True)))
+        assert_( t(False)==0,repr(t(False)))
         assert_( t(0)==0)
         assert_( t(None)==0)
         assert_( t(0.0)==0)

@@ -1243,7 +1243,7 @@ def buildmodule(m,um):
             elif k in cfuncs.commonhooks:
                 c=cfuncs.commonhooks[k]
             else:
-                errmess('buildmodule: unknown need %s.\n'%(`k`));continue
+                errmess('buildmodule: unknown need %s.\n'%(repr(k)));continue
             code[n].append(c)
     mod_rules.append(code)
     for r in mod_rules:
@@ -1355,10 +1355,10 @@ def buildapi(rout):
             if not isintent_hide(var[a]):
                 if not isoptional(var[a]):
                     nth=nth+1
-                    vrd['nth']=`nth`+stnd[nth%10]+' argument'
+                    vrd['nth']=repr(nth)+stnd[nth%10]+' argument'
                 else:
                     nthk=nthk+1
-                    vrd['nth']=`nthk`+stnd[nthk%10]+' keyword'
+                    vrd['nth']=repr(nthk)+stnd[nthk%10]+' keyword'
             else: vrd['nth']='hidden'
         savevrd[a]=vrd
         for r in _rules:

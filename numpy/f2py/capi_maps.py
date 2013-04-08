@@ -273,7 +273,7 @@ def getstrlength(var):
         else:
             errmess('getstrlength: function %s has no return value?!\n'%a)
     if not isstring(var):
-        errmess('getstrlength: expected a signature of a string but got: %s\n'%(`var`))
+        errmess('getstrlength: expected a signature of a string but got: %s\n'%(repr(var)))
     len='1'
     if 'charselector' in var:
         a=var['charselector']
@@ -284,7 +284,7 @@ def getstrlength(var):
     if re.match(r'\(\s*([*]|[:])\s*\)',len) or re.match(r'([*]|[:])',len):
     #if len in ['(*)','*','(:)',':']:
         if isintent_hide(var):
-            errmess('getstrlength:intent(hide): expected a string with defined length but got: %s\n'%(`var`))
+            errmess('getstrlength:intent(hide): expected a string with defined length but got: %s\n'%(repr(var)))
         len='-1'
     return len
 
@@ -304,11 +304,11 @@ def getarrdims(a,var,verbose=0):
 #             var['dimension'].reverse()
         dim=copy.copy(var['dimension'])
         ret['size']='*'.join(dim)
-        try: ret['size']=`eval(ret['size'])`
+        try: ret['size']=repr(eval(ret['size']))
         except: pass
         ret['dims']=','.join(dim)
-        ret['rank']=`len(dim)`
-        ret['rank*[-1]']=`len(dim)*[-1]`[1:-1]
+        ret['rank']=repr(len(dim))
+        ret['rank*[-1]']=repr(len(dim)*[-1])[1:-1]
         for i in range(len(dim)): # solve dim for dependecies
             v=[]
             if dim[i] in depargs: v=[dim[i]]
@@ -336,7 +336,7 @@ def getarrdims(a,var,verbose=0):
                         % (d))
                 ret['cbsetdims']='%s#varname#_Dims[%d]=%s,'%(ret['cbsetdims'],i,0)
             elif verbose :
-                errmess('getarrdims: If in call-back function: array argument %s must have bounded dimensions: got %s\n'%(`a`,`d`))
+                errmess('getarrdims: If in call-back function: array argument %s must have bounded dimensions: got %s\n'%(repr(a),repr(d)))
         if ret['cbsetdims']: ret['cbsetdims']=ret['cbsetdims'][:-1]
 #         if not isintent_c(var):
 #             var['dimension'].reverse()
@@ -385,7 +385,7 @@ def getpydocsign(a,var):
         sigout='%s : string(len=%s)'%(out_a,getstrlength(var))
     elif isarray(var):
         dim=var['dimension']
-        rank=`len(dim)`
+        rank=repr(len(dim))
         sig='%s : %s rank-%s array(\'%s\') with bounds (%s)%s'%(a,opt,rank,
                                              c2pycode_map[ctype],
                                              ','.join(dim), init)
@@ -416,7 +416,7 @@ def getarrdocsign(a,var):
                                             c2pycode_map[ctype],)
     elif isarray(var):
         dim=var['dimension']
-        rank=`len(dim)`
+        rank=repr(len(dim))
         sig='%s : rank-%s array(\'%s\') with bounds (%s)'%(a,rank,
                                                            c2pycode_map[ctype],
                                                            ','.join(dim))
@@ -590,7 +590,7 @@ def routsign2map(rout):
             #else:
             #    errmess('routsign2map: cb_map does not contain module "%s" used in "use" statement.\n'%(u))
     elif 'externals' in rout and rout['externals']:
-        errmess('routsign2map: Confused: function %s has externals %s but no "use" statement.\n'%(ret['name'],`rout['externals']`))
+        errmess('routsign2map: Confused: function %s has externals %s but no "use" statement.\n'%(ret['name'],repr(rout['externals'])))
     ret['callprotoargument'] = getcallprotoargument(rout,lcb_map) or ''
     if isfunction(rout):
         if 'result' in rout:
@@ -607,7 +607,7 @@ def routsign2map(rout):
             ret['rformat']=c2buildvalue_map[ret['ctype']]
         else:
             ret['rformat']='O'
-            errmess('routsign2map: no c2buildvalue key for type %s\n'%(`ret['ctype']`))
+            errmess('routsign2map: no c2buildvalue key for type %s\n'%(repr(ret['ctype'])))
         if debugcapi(rout):
             if ret['ctype'] in cformat_map:
                 ret['routdebugshowvalue']='debug-capi:%s=%s'%(a,cformat_map[ret['ctype']])
@@ -616,7 +616,7 @@ def routsign2map(rout):
         if isstringfunction(rout):
             ret['rlength']=getstrlength(rout['vars'][a])
             if ret['rlength']=='-1':
-                errmess('routsign2map: expected explicit specification of the length of the string returned by the fortran function %s; taking 10.\n'%(`rout['name']`))
+                errmess('routsign2map: expected explicit specification of the length of the string returned by the fortran function %s; taking 10.\n'%(repr(rout['name'])))
                 ret['rlength']='10'
     if hasnote(rout):
         ret['note']=rout['note']
@@ -744,8 +744,8 @@ void
                 nofargs=nofargs+1
                 if isoptional(var):
                     nofoptargs=nofoptargs+1
-    ret['maxnofargs']=`nofargs`
-    ret['nofoptargs']=`nofoptargs`
+    ret['maxnofargs']=repr(nofargs)
+    ret['nofoptargs']=repr(nofoptargs)
     if hasnote(rout) and isfunction(rout) and 'result' in rout:
         ret['routnote']=rout['note']
         rout['note']=['See elsewhere.']
