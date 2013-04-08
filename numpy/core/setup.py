@@ -950,7 +950,7 @@ def configuration(parent_package='',top_path=None):
                                     join('src', 'umath', 'lapack_lite', 'dlamch.c'),
                                     join('src', 'umath', 'lapack_lite', 'f2c_lite.c')
                                     ],
-                         depends =  [join('src', 'umath', 'gufuncs_linalg.py'),
+                         depends =  [join('src', 'umath', '_gufuncs_linalg.py'),
                                      join('src', 'umath', 'lapack_lite', 'f2c.h'),
                                     ],
                          extra_info = lapack_info,

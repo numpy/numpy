@@ -3,6 +3,9 @@
 Notes
 -----
 
+.. warning:: This module is only for testing, the functionality will be
+   integrated into numpy.linalg proper.
+
 This module contains functionality that could be found in the linalg module,
 but in a gufunc-like way. This allows the use of vectorization and broadcasting
 on the operands.
