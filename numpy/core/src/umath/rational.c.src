@@ -1,11 +1,14 @@
 /* Fixed size rational numbers exposed to Python */
 
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
 #include <stdint.h>
 #include <math.h>
 #include <Python.h>
 #include <structmember.h>
 #include <numpy/arrayobject.h>
 #include <numpy/ufuncobject.h>
+#include "numpy/npy_3kcompat.h"
 
 /* Relevant arithmetic exceptions */
 
@@ -499,11 +502,11 @@ static PyObject*
 pyrational_repr(PyObject* self) {
     rational x = ((PyRational*)self)->r;
     if (d(x)!=1) {
-        return PyString_FromFormat(
+        return PyUString_FromFormat(
                 "rational(%ld,%ld)",(long)x.n,(long)d(x));
     }
     else {
-        return PyString_FromFormat(
+        return PyUString_FromFormat(
                 "rational(%ld)",(long)x.n);
     }
 }
@@ -637,8 +640,12 @@ static PyGetSetDef pyrational_getset[] = {
 };
 
 static PyTypeObject PyRational_Type = {
+#if defined(NPY_PY3K)
+    PyVarObject_HEAD_INIT(&PyType_Type, 0)
+#else
     PyObject_HEAD_INIT(&PyType_Type)
     0,                                        /* ob_size */
+#endif
     "rational",                               /* tp_name */
     sizeof(PyRational),                       /* tp_basicsize */
     0,                                        /* tp_itemsize */
@@ -646,7 +653,11 @@ static PyTypeObject PyRational_Type = {
     0,                                        /* tp_print */
     0,                                        /* tp_getattr */
     0,                                        /* tp_setattr */
-    0,                                        /* tp_compare */
+#if defined(NPY_PY3K)
+    0,                                          /* tp_reserved */
+#else
+    0,                                          /* tp_compare */
+#endif
     pyrational_repr,                          /* tp_repr */
     &pyrational_as_number,                    /* tp_as_number */
     0,                                        /* tp_as_sequence */
@@ -657,11 +668,7 @@ static PyTypeObject PyRational_Type = {
     0,                                        /* tp_getattro */
     0,                                        /* tp_setattro */
     0,                                        /* tp_as_buffer */
-#if PY_MAJOR_VERSION >= 3
     Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
-#else
-    Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_CHECKTYPES, /* tp_flags */
-#endif
     "Fixed precision rational numbers",       /* tp_doc */
     0,                                        /* tp_traverse */
     0,                                        /* tp_clear */
@@ -681,6 +688,16 @@ static PyTypeObject PyRational_Type = {
     0,                                        /* tp_alloc */
     pyrational_new,                           /* tp_new */
     0,                                        /* tp_free */
+    0,                                          /* tp_is_gc */
+    0,                                          /* tp_bases */
+    0,                                          /* tp_mro */
+    0,                                          /* tp_cache */
+    0,                                          /* tp_subclasses */
+    0,                                          /* tp_weaklist */
+    0,                                          /* tp_del */
+#if PY_VERSION_HEX >= 0x02060000
+    0,                                          /* tp_version_tag */
+#endif
 };
 
 /* Numpy support */
@@ -1038,25 +1055,44 @@ PyMethodDef module_methods[] = {
     {0} /* sentinel */
 };
 
-PyMODINIT_FUNC
-initrational(void) {
-    /* Initialize numpy */
+#if defined(NPY_PY3K)
+static struct PyModuleDef moduledef = {
+    PyModuleDef_HEAD_INIT,
+    "rational",
+    NULL,
+    -1,
+    module_methods,
+    NULL,
+    NULL,
+    NULL,
+    NULL
+};
+#endif
+
+#if defined(NPY_PY3K)
+PyMODINIT_FUNC PyInit_rational(void) {
+#else
+PyMODINIT_FUNC initrational(void) {
+#endif
+
+    PyObject *m;
+
     import_array();
     if (PyErr_Occurred()) {
-        return;
+        return NULL;
     }
     import_umath();
     if (PyErr_Occurred()) {
-        return;
+        return NULL;
     }
-    PyObject* numpy_str = PyString_FromString("numpy");
+    PyObject* numpy_str = PyUString_FromString("numpy");
     if (!numpy_str) {
-        return;
+        return NULL;
     }
     PyObject* numpy = PyImport_Import(numpy_str);
     Py_DECREF(numpy_str);
     if (!numpy) {
-        return;
+        return NULL;
     }
 
     /* Can't set this until we import numpy */
@@ -1064,7 +1100,7 @@ initrational(void) {
 
     /* Initialize rational type object */
     if (PyType_Ready(&PyRational_Type) < 0) {
-        return;
+        return NULL;
     }
 
     /* Initialize rational descriptor */
@@ -1081,26 +1117,25 @@ initrational(void) {
     npyrational_arrfuncs.fill = npyrational_fill;
     npyrational_arrfuncs.fillwithscalar = npyrational_fillwithscalar;
     /* Left undefined: scanfunc, fromstr, sort, argsort */
-    //npyrational_descr.ob_type = &PyArrayDescr_Type;
     Py_TYPE(&npyrational_descr) = &PyArrayDescr_Type;
     int npy_rational = PyArray_RegisterDataType(&npyrational_descr);
     if (npy_rational<0) {
-        return;
+        return NULL;
     }
 
     /* Support dtype(rational) syntax */
     if (PyDict_SetItemString(PyRational_Type.tp_dict,"dtype",(PyObject*)&npyrational_descr)<0) {
-        return;
+        return NULL;
     }
 
     /* Register casts to and from rational */
     #define REGISTER_CAST(From,To,from_descr,to_typenum,safe) \
         PyArray_Descr* from_descr_##From##_##To = (from_descr); \
         if (PyArray_RegisterCastFunc(from_descr_##From##_##To,(to_typenum),npycast_##From##_##To)<0) { \
-            return; \
+            return NULL; \
         } \
         if (safe && PyArray_RegisterCanCast(from_descr_##From##_##To,(to_typenum),NPY_NOSCALAR)<0) { \
-            return; \
+            return NULL; \
         }
     #define REGISTER_INT_CASTS(bits) \
         REGISTER_CAST(int##bits##_t,rational,PyArray_DescrFromType(NPY_INT##bits),npy_rational,1) \
@@ -1118,15 +1153,15 @@ initrational(void) {
     #define REGISTER_UFUNC(name,...) { \
         PyUFuncObject* ufunc = (PyUFuncObject*)PyObject_GetAttrString(numpy,#name); \
         if (!ufunc) { \
-            return; \
+            return NULL; \
         } \
         int _types[] = __VA_ARGS__; \
         if (sizeof(_types)/sizeof(int)!=ufunc->nargs) { \
             PyErr_Format(PyExc_AssertionError,"ufunc %s takes %d arguments, our loop takes %ld",#name,ufunc->nargs,sizeof(_types)/sizeof(int)); \
-            return; \
+            return NULL; \
         } \
         if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc,npy_rational,rational_ufunc_##name,_types,0)<0) { \
-            return; \
+            return NULL; \
         } \
     }
     #define REGISTER_UFUNC_BINARY_RATIONAL(name) REGISTER_UFUNC(name,{npy_rational,npy_rational,npy_rational})
@@ -1161,10 +1196,14 @@ initrational(void) {
     REGISTER_UFUNC_UNARY(sign)
 
     /* Create module */
-    PyObject* m = Py_InitModule3("rational", module_methods,
-        "Fixed precision rational numbers, including numpy support");
+#if defined(NPY_PY3K)
+    m = PyModule_Create(&moduledef);
+#else
+    m = Py_InitModule("rational", module_methods);
+#endif
+
     if (!m) {
-        return;
+        return NULL;
     }
 
     /* Add rational type */
@@ -1174,11 +1213,11 @@ initrational(void) {
     /* Create matrix multiply generalized ufunc */
     PyObject* gufunc = PyUFunc_FromFuncAndDataAndSignature(0,0,0,0,2,1,PyUFunc_None,(char*)"matrix_multiply",(char*)"return result of multiplying two matrices of rationals",0,"(m,n),(n,p)->(m,p)");
     if (!gufunc) {
-        return;
+        return NULL;
     }
     int types2[3] = {npy_rational,npy_rational,npy_rational};
     if (PyUFunc_RegisterLoopForType((PyUFuncObject*)gufunc,npy_rational,rational_gufunc_matrix_multiply,types2,0) < 0) {
-        return;
+        return NULL;
     }
     PyModule_AddObject(m,"matrix_multiply",(PyObject*)gufunc);
 
@@ -1197,11 +1236,11 @@ initrational(void) {
     #define NEW_UNARY_UFUNC(name,type,doc) { \
         PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,1,1,PyUFunc_None,(char*)#name,(char*)doc,0); \
         if (!ufunc) { \
-            return; \
+            return NULL; \
         } \
         int types[2] = {npy_rational,type}; \
         if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc,npy_rational,rational_ufunc_##name,types,0)<0) { \
-            return; \
+            return NULL; \
         } \
         PyModule_AddObject(m,#name,(PyObject*)ufunc); \
     }
@@ -1215,11 +1254,12 @@ initrational(void) {
         static void* data[1] = {0}; \
         PyObject* ufunc = PyUFunc_FromFuncAndData((PyUFuncGenericFunction*)func,data,(char*)types,1,2,1,PyUFunc_One,(char*)#name,(char*)doc,0); \
         if (!ufunc) { \
-            return; \
+            return NULL; \
         } \
         PyModule_AddObject(m,#name,(PyObject*)ufunc); \
     }
     GCD_LCM_UFUNC(gcd,NPY_INT64,"greatest common denominator of two integers");
     GCD_LCM_UFUNC(lcm,NPY_INT64,"least common multiple of two integers");
-}
 
+    return m;
+}
