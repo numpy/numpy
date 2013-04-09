@@ -3,7 +3,7 @@ Reporting bugs
 **************
 
 File bug reports or feature requests, and make contributions
-(e.g. code patches), by submitting a "ticket" on GitHub:
+(e.g. code patches), by opening a "new issue" on GitHub:
 
 - Numpy Issues: http://github.com/numpy/numpy/issues
 

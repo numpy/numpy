@@ -38,7 +38,7 @@ Our main means of communication are:
 
 - `Numpy Issues <https://github.com/numpy/numpy/issues>`__ (bug reports go here)
 
-- `Old Numpy Trac <http://projects.scipy.org/numpy>`__ (deprecated)
+- `Old Numpy Trac <http://projects.scipy.org/numpy>`__ (no longer used)
 
 More information about the development of Numpy can be found at
 http://scipy.org/Developer_Zone
