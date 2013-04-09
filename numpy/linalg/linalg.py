@@ -804,12 +804,12 @@ def eigvals(a):
 
     Parameters
     ----------
-    a : (M, M) array_like
+    a : (..., M, M) array_like
         A complex- or real-valued matrix whose eigenvalues will be computed.
 
     Returns
     -------
-    w : (M,) ndarray
+    w : (..., M,) ndarray
         The eigenvalues, each repeated according to its multiplicity.
         They are not necessarily ordered, nor are they necessarily
         real for real matrices.
@@ -827,9 +827,11 @@ def eigvals(a):
 
     Notes
     -----
-    This is a simple interface to the LAPACK routines dgeev and zgeev
-    that sets those routines' flags to return only the eigenvalues of
-    general real and complex arrays, respectively.
+    Broadcasting rules apply, see the `numpy.linalg` documentation for
+    details.
+
+    This is implemented using the _geev LAPACK routines which compute
+    the eigenvalues and eigenvectors of general square arrays.
 
     Examples
     --------
@@ -858,49 +860,25 @@ def eigvals(a):
 
     """
     a, wrap = _makearray(a)
-    _assertRank2(a)
-    _assertSquareness(a)
+    _assertNonEmpty(a)
+    _assertRankAtLeast2(a)
+    _assertNdSquareness(a)
     _assertFinite(a)
     t, result_t = _commonType(a)
-    real_t = _linalgRealType(t)
-    a = _fastCopyAndTranspose(t, a)
-    a = _to_native_byte_order(a)
-    n = a.shape[0]
-    dummy = zeros((1,), t)
-    if isComplexType(t):
-        lapack_routine = lapack_lite.zgeev
-        w = zeros((n,), t)
-        rwork = zeros((n,), real_t)
-        lwork = 1
-        work = zeros((lwork,), t)
-        results = lapack_routine(_N, _N, n, a, n, w,
-                                 dummy, 1, dummy, 1, work, -1, rwork, 0)
-        lwork = int(abs(work[0]))
-        work = zeros((lwork,), t)
-        results = lapack_routine(_N, _N, n, a, n, w,
-                                 dummy, 1, dummy, 1, work, lwork, rwork, 0)
-    else:
-        lapack_routine = lapack_lite.dgeev
-        wr = zeros((n,), t)
-        wi = zeros((n,), t)
-        lwork = 1
-        work = zeros((lwork,), t)
-        results = lapack_routine(_N, _N, n, a, n, wr, wi,
-                                 dummy, 1, dummy, 1, work, -1, 0)
-        lwork = int(work[0])
-        work = zeros((lwork,), t)
-        results = lapack_routine(_N, _N, n, a, n, wr, wi,
-                                 dummy, 1, dummy, 1, work, lwork, 0)
-        if all(wi == 0.):
-            w = wr
+
+    extobj = get_linalg_error_extobj(
+        _raise_linalgerror_eigenvalues_nonconvergence)
+
+    w = _umath_linalg.eigvals(a.astype(t), extobj=extobj)
+
+    if not isComplexType(t):
+        if all(w.imag == 0):
+            w = w.real
             result_t = _realType(result_t)
         else:
-            w = wr+1j*wi
             result_t = _complexType(result_t)
-    if results['info'] > 0:
-        raise LinAlgError('Eigenvalues did not converge')
-    return w.astype(result_t)
 
+    return w.astype(result_t)
 
 def eigvalsh(a, UPLO='L'):
     """
