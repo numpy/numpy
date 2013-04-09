@@ -66,10 +66,14 @@ without needing to convert to a matrix. The 'economic' mode is simply
 deprecated, there isn't much use for it and it isn't any more efficient
 than the 'raw' mode.
 
+New `invert` argument to `in1d`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The function `in1d` now accepts a `invert` argument which, when `True`,
+causes the returned array to be inverted.
 
 C-API
 ~~~~~
-
 
 Changes
 =======

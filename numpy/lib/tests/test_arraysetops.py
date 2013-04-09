@@ -190,6 +190,15 @@ class TestSetOps(TestCase):
 
         assert_array_equal(c, ec)
 
+    def test_in1d_invert(self):
+        "Test in1d's invert parameter"
+        # We use two different sizes for the b array here to test the
+        # two different paths in in1d().
+        for mult in (1, 10):
+            a = np.array([5, 4, 5, 3, 4, 4, 3, 4, 3, 5, 2, 1, 5, 5])
+            b = [2, 3, 4] * mult
+            assert_array_equal(np.invert(in1d(a, b)), in1d(a, b, invert=True))
+
     def test_in1d_ravel(self):
         # Test that in1d ravels its input arrays. This is not documented
         # behavior however. The test is to ensure consistentency.

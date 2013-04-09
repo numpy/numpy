@@ -810,6 +810,19 @@ class TestArraySetOps(TestCase):
         assert_array_equal([], in1d([], []))
 
 
+    def test_in1d_invert(self):
+        "Test in1d's invert parameter"
+        a = array([1, 2, 5, 7, -1], mask=[0, 0, 0, 0, 1])
+        b = array([1, 2, 3, 4, 5, -1], mask=[0, 0, 0, 0, 0, 1])
+        assert_equal(np.invert(in1d(a, b)), in1d(a, b, invert=True))
+
+        a = array([5, 5, 2, 1, -1], mask=[0, 0, 0, 0, 1])
+        b = array([1, 5, -1], mask=[0, 0, 1])
+        assert_equal(np.invert(in1d(a, b)), in1d(a, b, invert=True))
+
+        assert_array_equal([], in1d([], [], invert=True))
+
+
     def test_union1d(self):
         "Test union1d"
         a = array([1, 2, 5, 7, 5, -1], mask=[0, 0, 0, 0, 0, 1])
