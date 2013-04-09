@@ -301,14 +301,14 @@ def solve(a, b):
 
     Parameters
     ----------
-    a : (M, M) array_like
+    a : (..., M, M) array_like
         Coefficient matrix.
-    b : {(M,), (M, N)}, array_like
+    b : {(..., M,), (..., M, K)}, array_like
         Ordinate or "dependent variable" values.
 
     Returns
     -------
-    x : {(M,), (M, N)} ndarray
+    x : {(..., M,), (..., M, K)} ndarray
         Solution to the system a x = b.  Returned shape is identical to `b`.
 
     Raises
@@ -318,15 +318,10 @@ def solve(a, b):
 
     Notes
     -----
-    `solve` is a wrapper for the LAPACK routines `dgesv`_ and
-    `zgesv`_, the former being used if `a` is real-valued, the latter if
-    it is complex-valued.  The solution to the system of linear equations
-    is computed using an LU decomposition [1]_ with partial pivoting and
-    row interchanges.
+    Broadcasting rules apply, see the `numpy.linalg` documentation for
+    details.
 
-    .. _dgesv: http://www.netlib.org/lapack/double/dgesv.f
-
-    .. _zgesv: http://www.netlib.org/lapack/complex16/zgesv.f
+    The solutions are computed using LAPACK routine _gesv
 
     `a` must be square and of full-rank, i.e., all rows (or, equivalently,
     columns) must be linearly independent; if either is not true, use
@@ -355,32 +350,21 @@ def solve(a, b):
 
     """
     a, _ = _makearray(a)
+    _assertNonEmpty(a)
+    _assertRankAtLeast2(a)
+    _assertNdSquareness(a)
     b, wrap = _makearray(b)
-    one_eq = len(b.shape) == 1
-    if one_eq:
-        b = b[:, newaxis]
-    _assertRank2(a, b)
-    _assertSquareness(a)
-    n_eq = a.shape[0]
-    n_rhs = b.shape[1]
-    if n_eq != b.shape[0]:
-        raise LinAlgError('Incompatible dimensions')
     t, result_t = _commonType(a, b)
-#    lapack_routine = _findLapackRoutine('gesv', t)
-    if isComplexType(t):
-        lapack_routine = lapack_lite.zgesv
+
+    if len(b.shape) == len(a.shape) - 1:
+        gufunc = _umath_linalg.solve1
     else:
-        lapack_routine = lapack_lite.dgesv
-    a, b = _fastCopyAndTranspose(t, a, b)
-    a, b = _to_native_byte_order(a, b)
-    pivots = zeros(n_eq, fortran_int)
-    results = lapack_routine(n_eq, n_rhs, a, n_eq, pivots, b, n_eq, 0)
-    if results['info'] > 0:
-        raise LinAlgError('Singular matrix')
-    if one_eq:
-        return wrap(b.ravel().astype(result_t))
-    else:
-        return wrap(b.transpose().astype(result_t))
+        gufunc = _umath_linalg.solve
+
+    extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
+    r = gufunc(a.astype(t), b.astype(t), extobj=extobj)
+
+    return wrap(r.astype(result_t))
 
 
 def tensorinv(a, ind=2):
