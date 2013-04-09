@@ -374,6 +374,12 @@ offset_ptr(void* ptr, ptrdiff_t offset)
     return (void*)((npy_uint8*)ptr + offset);
 }
 
+static inline void
+clear_fp_errors()
+{
+    PyUFunc_getfperr();
+}
+
 /*
  *****************************************************************************
  **                      Some handy constants                               **
@@ -1780,6 +1786,7 @@ static inline void
     size_t outer_dim = *dimensions++;
     size_t op_count = (JOBZ=='N')?2:3;
     EIGH_PARAMS_t eigh_params;
+    int error_occurred = 0;
 
     for (iter=0; iter < op_count; ++iter) {
         outer_steps[iter] = (ptrdiff_t) steps[iter];
@@ -1824,6 +1831,7 @@ static inline void
                 }
             } else {
                 /* lapack fail, set result to nan */
+                error_occurred = 1;
                 nan_@BASETYPE@_matrix(args[1], &eigenvalues_out_ld);
                 if ('V' == eigh_params.JOBZ) {
                     nan_@TYPE@_matrix(args[2], &eigenvectors_out_ld);
@@ -1833,6 +1841,11 @@ static inline void
         }
 
         release_@lapack_func@(&eigh_params);
+    }
+
+    if (!error_occurred) {
+        /* lapack success, clear FP error status */
+        clear_fp_errors();
     }
 }
 /**end repeat**/
@@ -1960,6 +1973,7 @@ static void
 {
     GESV_PARAMS_t params;
     fortran_int n, nrhs;
+    int error_occurred = 0;
     INIT_OUTER_LOOP_3
 
     n = (fortran_int)dimensions[0];
@@ -1979,11 +1993,17 @@ static void
             if (!not_ok) {
                 delinearize_@TYPE@_matrix(args[2], params.B, &r_out);
             } else {
+                error_occurred = 1;
                 nan_@TYPE@_matrix(args[2], &r_out);
             }
         END_OUTER_LOOP
 
         release_@lapack_func@(&params);
+    }
+
+    if (!error_occurred) {
+        /* lapack success, clear FP error status */
+        clear_fp_errors();
     }
 }
 
@@ -1992,6 +2012,7 @@ static void
               void *NPY_UNUSED(func))
 {
     GESV_PARAMS_t params;
+    int error_occurred;
     fortran_int n;
     INIT_OUTER_LOOP_3
 
@@ -2010,11 +2031,17 @@ static void
             if (!not_ok) {
                 delinearize_@TYPE@_matrix(args[2], params.B, &r_out);
             } else {
+                error_occurred = 1;
                 nan_@TYPE@_matrix(args[2], &r_out);
             }
         END_OUTER_LOOP
 
         release_@lapack_func@(&params);
+    }
+
+    if (!error_occurred) {
+        /* lapack success, clear FP error status */
+        clear_fp_errors();
     }
 }
 
@@ -2024,6 +2051,7 @@ static void
 {
     GESV_PARAMS_t params;
     fortran_int n;
+    int error_occurred = 0;
     INIT_OUTER_LOOP_2
 
     n = (fortran_int)dimensions[0];
@@ -2040,11 +2068,17 @@ static void
             if (!not_ok) {
                 delinearize_@TYPE@_matrix(args[1], params.B, &r_out);
             } else {
+                error_occurred = 1;
                 nan_@TYPE@_matrix(args[1], &r_out);
             }
         END_OUTER_LOOP
 
         release_@lapack_func@(&params);
+    }
+
+    if (!error_occurred) {
+        /* lapack success, clear FP error status */
+        clear_fp_errors();
     }
 }
 /**end repeat**/
@@ -2116,6 +2150,7 @@ static void
 @TYPE@_cholesky(char uplo, char **args, npy_intp *dimensions, npy_intp *steps)
 {
     POTR_PARAMS_t params;
+    int error_occurred = 0;
     fortran_int n;
     INIT_OUTER_LOOP_2
 
@@ -2133,10 +2168,16 @@ static void
                 triu_@TYPE@_matrix(params.A, params.N);
                 delinearize_@TYPE@_matrix(args[1], params.A, &r_out);
             } else {
+                error_occurred = 1;
                 nan_@TYPE@_matrix(args[1], &r_out);
             }
         END_OUTER_LOOP
         release_@lapack_func@(&params);
+    }
+
+    if (!error_occurred) {
+        /* lapack success, clear FP error status */
+        clear_fp_errors();
     }
 }
 
@@ -2551,6 +2592,7 @@ static inline void
     size_t iter;
     size_t outer_dim = *dimensions++;
     size_t op_count = 2;
+    int error_occurred = 0;
     GEEV_PARAMS_t geev_params;
 
     STACK_TRACE;
@@ -2613,6 +2655,7 @@ static inline void
                                                      &vr_out);
             } else {
                 /* geev failed */
+                error_occurred = 1;
                 nan_@COMPLEXTYPE@_matrix(*arg_iter++, &w_out);
                 if ('V' == geev_params.JOBVL)
                     nan_@COMPLEXTYPE@_matrix(*arg_iter++, &vl_out);
@@ -2623,6 +2666,11 @@ static inline void
         }
 
         release_@lapack_func@(&geev_params);
+    }
+
+    if (!error_occurred) {
+        /* lapack success, clear FP error status */
+        clear_fp_errors();
     }
 }
 
@@ -2990,6 +3038,7 @@ static inline void
                    npy_intp* steps)
 {
     ptrdiff_t outer_steps[3];
+    int error_occurred = 0;
     size_t iter;
     size_t outer_dim = *dimensions++;
     size_t op_count = (JOBZ=='N')?2:4;
@@ -3046,6 +3095,7 @@ static inline void
                     delinearize_@TYPE@_matrix(args[3], params.VT, &v_out);
                 }
             } else {
+                error_occurred = 1;
                 if ('N' == params.JOBZ) {
                     nan_@REALTYPE@_matrix(args[1], &s_out);
                 } else {
@@ -3058,6 +3108,11 @@ static inline void
         }
 
         release_@lapack_func@(&params);
+    }
+
+    if (!error_occurred) {
+        /* lapack success, clear FP error status */
+        clear_fp_errors();
     }
 }
 /**end repeat*/
@@ -3464,6 +3519,7 @@ static void
                 )
 {
     POTRS_PARAMS_t params;
+    int error_occurred = 0;
     fortran_int n, nrhs;
     INIT_OUTER_LOOP_3
 
@@ -3489,11 +3545,17 @@ static void
             if (!not_ok) {
                 delinearize_@TYPE@_matrix(args[2], params.B, &r_out);
             } else {
+                error_occurred = 1;
                 nan_@TYPE@_matrix(args[2], &r_out);
             }
         END_OUTER_LOOP
 
         release_@lapack_func@(&params);
+    }
+
+    if (!error_occurred) {
+        /* lapack success, clear FP error status */
+        clear_fp_errors();
     }
 }
 
@@ -3617,6 +3679,7 @@ static inline void
              npy_intp *steps)
 {
     POTRI_PARAMS_t params;
+    int error_occurred = 0;
     fortran_int n;
     INIT_OUTER_LOOP_2
 
@@ -3635,11 +3698,17 @@ static inline void
                 make_symmetric_@TYPE@_matrix(params.UPLO, params.N, params.A);
                 delinearize_@TYPE@_matrix(args[1], params.A, &r_out);
             } else {
+                error_occurred = 1;
                 nan_@TYPE@_matrix(args[1], &r_out);
             }
         END_OUTER_LOOP
 
         release_@potri@(&params);
+    }
+
+    if (!error_occurred) {
+        /* lapack success, clear FP error status */
+        clear_fp_errors();
     }
 }
 
