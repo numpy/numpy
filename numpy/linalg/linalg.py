@@ -514,15 +514,15 @@ def cholesky(a):
 
     Parameters
     ----------
-    a : (M, M) array_like
+    a : (..., M, M) array_like
         Hermitian (symmetric if all elements are real), positive-definite
         input matrix.
 
     Returns
     -------
-    L : {(M, M) ndarray, (M, M) matrix}
-        Lower-triangular Cholesky factor of `a`.  Returns a matrix object
-        if `a` is a matrix object.
+    L : (..., M, M) array_like
+        Upper or lower-triangular Cholesky factor of `a`.  Returns a
+        matrix object if `a` is a matrix object.
 
     Raises
     ------
@@ -532,6 +532,9 @@ def cholesky(a):
 
     Notes
     -----
+    Broadcasting rules apply, see the `numpy.linalg` documentation for
+    details.
+
     The Cholesky decomposition is often used as a fast way of solving
 
     .. math:: A \\mathbf{x} = \\mathbf{b}
@@ -569,26 +572,13 @@ def cholesky(a):
             [ 0.+2.j,  1.+0.j]])
 
     """
+    extobj = get_linalg_error_extobj(_raise_linalgerror_nonposdef)
+    gufunc = _umath_linalg.cholesky_lo
     a, wrap = _makearray(a)
-    _assertRank2(a)
-    _assertSquareness(a)
+    _assertRankAtLeast2(a)
+    _assertNdSquareness(a)
     t, result_t = _commonType(a)
-    a = _fastCopyAndTranspose(t, a)
-    a = _to_native_byte_order(a)
-    m = a.shape[0]
-    n = a.shape[1]
-    if isComplexType(t):
-        lapack_routine = lapack_lite.zpotrf
-    else:
-        lapack_routine = lapack_lite.dpotrf
-    results = lapack_routine(_L, n, a, m, 0)
-    if results['info'] > 0:
-        raise LinAlgError('Matrix is not positive definite - '
-                'Cholesky decomposition cannot be computed')
-    s = triu(a, k=0).transpose()
-    if (s.dtype != result_t):
-        s = s.astype(result_t)
-    return wrap(s)
+    return wrap(gufunc(a.astype(t), extobj=extobj).astype(result_t))
 
 # QR decompostion
 
