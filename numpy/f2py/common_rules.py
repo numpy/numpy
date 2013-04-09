@@ -96,7 +96,7 @@ def buildhooks(m):
             cadd('\t{\"%s\",%s,{{%s}},%s},'%(n,dm['rank'],dms,at))
         cadd('\t{NULL}\n};')
         inames1 = rmbadname(inames)
-        inames1_tps = ','.join(map(lambda s:'char *'+s,inames1))
+        inames1_tps = ','.join(['char *'+s for s in inames1])
         cadd('static void f2py_setup_%s(%s) {'%(name,inames1_tps))
         cadd('\tint i_f2py=0;')
         for n in inames1:

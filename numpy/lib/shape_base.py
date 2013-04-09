@@ -345,7 +345,7 @@ def dstack(tup):
            [[3, 4]]])
 
     """
-    return _nx.concatenate(map(atleast_3d,tup),2)
+    return _nx.concatenate([atleast_3d(_m) for _m in tup], 2)
 
 def _replace_zero_by_x_arrays(sub_arys):
     for i in range(len(sub_arys)):
