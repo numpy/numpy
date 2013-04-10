@@ -110,7 +110,7 @@ min(m,n) == n. The wrapper code automatically selects the appropriate one.
 
 """
 
-from __future__ import division, absolute_import
+from __future__ import division, absolute_import, print_function
 
 
 __all__ = ['inner1d', 'dotc1d', 'innerwt', 'matrix_multiply', 'det', 'slogdet',
@@ -1451,5 +1451,4 @@ def poinv(A, UPLO='L', **kw_args):
 
 if __name__ == "__main__":
     import doctest
-    print "Running doctests..."
     doctest.testmod()

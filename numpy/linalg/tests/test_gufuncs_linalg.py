@@ -2,7 +2,7 @@
 Test functions for gufuncs_linalg module
 Heavily inspired (ripped in part) test_linalg
 """
-
+from __future__ import division, print_function
 
 ################################################################################
 # The following functions are implemented in the module "gufuncs_linalg"
@@ -496,5 +496,5 @@ class TestMultiply4_add(UfuncTestCase, TestCase):
 
 
 if __name__ == "__main__":
-    print 'testing gufuncs_linalg; gufuncs version: %s' % gula._impl.__version__
+    print('testing gufuncs_linalg; gufuncs version: %s' % gula._impl.__version__)
     run_module_suite()
