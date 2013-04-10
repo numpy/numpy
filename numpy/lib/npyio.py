@@ -1602,7 +1602,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     # Upgrade the converters (if needed)
     if dtype is None:
         for (i, converter) in enumerate(converters):
-            current_column = map(itemgetter(i), rows)
+            current_column = [itemgetter(i)(_m) for _m in rows]
             try:
                 converter.iterupgrade(current_column)
             except ConverterLockError:
@@ -1653,18 +1653,19 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
 
     # Convert each value according to the converter:
     # We want to modify the list in place to avoid creating a new one...
-#    if loose:
-#        conversionfuncs = [conv._loose_call for conv in converters]
-#    else:
-#        conversionfuncs = [conv._strict_call for conv in converters]
-#    for (i, vals) in enumerate(rows):
-#        rows[i] = tuple([convert(val)
-#                         for (convert, val) in zip(conversionfuncs, vals)])
+    #
+    #    if loose:
+    #        conversionfuncs = [conv._loose_call for conv in converters]
+    #    else:
+    #        conversionfuncs = [conv._strict_call for conv in converters]
+    #    for (i, vals) in enumerate(rows):
+    #        rows[i] = tuple([convert(val)
+    #                         for (convert, val) in zip(conversionfuncs, vals)])
     if loose:
-        rows = zip(*[map(converter._loose_call, map(itemgetter(i), rows))
+        rows = zip(*[[converter._loose_call(_r) for _r in map(itemgetter(i), rows)]
                      for (i, converter) in enumerate(converters)])
     else:
-        rows = zip(*[map(converter._strict_call, map(itemgetter(i), rows))
+        rows = zip(*[[converter._strict_call(_r) for _r in map(itemgetter(i), rows)]
                      for (i, converter) in enumerate(converters)])
     # Reset the dtype
     data = rows

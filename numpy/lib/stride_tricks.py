@@ -60,7 +60,7 @@ def broadcast_arrays(*args):
     Here is a useful idiom for getting contiguous copies instead of
     non-contiguous views.
 
-    >>> map(np.array, np.broadcast_arrays(x, y))
+    >>> [np.array(a) for a in np.broadcast_arrays(x, y)]
     [array([[1, 2, 3],
            [1, 2, 3],
            [1, 2, 3]]), array([[1, 1, 1],
@@ -68,7 +68,7 @@ def broadcast_arrays(*args):
            [3, 3, 3]])]
 
     """
-    args = map(np.asarray, args)
+    args = [np.asarray(_m) for _m in args]
     shapes = [x.shape for x in args]
     if len(set(shapes)) == 1:
         # Common case where nothing needs to be broadcasted.

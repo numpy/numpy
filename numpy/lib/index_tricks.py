@@ -163,8 +163,8 @@ class nd_grid(object):
                     isinstance(key[k].stop, float):
                     typ = float
             if self.sparse:
-                nn = map(lambda x,t: _nx.arange(x, dtype=t), size, \
-                                     (typ,)*len(size))
+                nn = [_nx.arange(_x, dtype=_t)
+                        for _x, _t in zip(size, (typ,)*len(size))]
             else:
                 nn = _nx.indices(size, typ)
             for k in range(len(size)):

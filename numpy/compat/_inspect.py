@@ -152,7 +152,7 @@ def joinseq(seq):
 def strseq(object, convert, join=joinseq):
     """Recursively walk a sequence, stringifying each element."""
     if type(object) in [types.ListType, types.TupleType]:
-        return join(map(lambda o, c=convert, j=join: strseq(o, c, j), object))
+        return join([strseq(_o, convert, join) for _o in object])
     else:
         return convert(object)
 

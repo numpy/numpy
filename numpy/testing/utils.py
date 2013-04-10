@@ -531,7 +531,8 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
 
     """
     import numpy as np
-    actual, desired = map(float, (actual, desired))
+
+    (actual, desired) = map(float, (actual, desired))
     if desired==actual:
         return
     # Normalized the numbers to be in range (-10.0,10.0)

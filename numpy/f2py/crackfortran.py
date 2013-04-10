@@ -216,12 +216,14 @@ for n in ['int','double','float','char','short','long','void','case','while',
           'type','default']:
     badnames[n]=n+'_bn'
     invbadnames[n+'_bn']=n
+
 def rmbadname1(name):
     if name in badnames:
         errmess('rmbadname1: Replacing "%s" with "%s".\n'%(name,badnames[name]))
         return badnames[name]
     return name
-def rmbadname(names): return map(rmbadname1,names)
+
+def rmbadname(names): return [rmbadname1(_m) for _m in names]
 
 def undo_rmbadname1(name):
     if name in invbadnames:
@@ -229,7 +231,8 @@ def undo_rmbadname1(name):
                 %(name,invbadnames[name]))
         return invbadnames[name]
     return name
-def undo_rmbadname(names): return map(undo_rmbadname1,names)
+
+def undo_rmbadname(names): return [undo_rmbadname1(_m) for _m in names]
 
 def getextension(name):
     i=name.rfind('.')
@@ -292,7 +295,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
     mline_mark = re.compile(r".*?'''")
     if istop: dowithline('',-1)
     ll,l1='',''
-    spacedigits=[' ']+map(str,list(range(10)))
+    spacedigits=[' '] + [str(_m) for _m in range(10)]
     filepositiontext=''
     fin=fileinput.FileInput(ffile)
     while 1:

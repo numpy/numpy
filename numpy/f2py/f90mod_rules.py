@@ -158,7 +158,7 @@ def buildhooks(pymod):
                 fadd('integer flag\n')
                 fhooks[0]=fhooks[0]+fgetdims1
                 dms = eval('range(1,%s+1)'%(dm['rank']))
-                fadd(' allocate(d(%s))\n'%(','.join(map(lambda i:'s(%s)'%i,dms))))
+                fadd(' allocate(d(%s))\n'%(','.join(['s(%s)'%i for i in dms])))
                 fhooks[0]=fhooks[0]+use_fgetdims2
                 fadd('end subroutine %s'%(fargs[-1]))
             else:
