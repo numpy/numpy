@@ -1491,6 +1491,31 @@ PyArray_Broadcast(PyArrayMultiIterObject *mit)
     return 0;
 }
 
+int
+multiter_allociters(PyArrayMultiIterObject *multi, int n)
+{
+    int i;
+
+    multi->numiter = n;
+
+    if (n <= 0) {
+        multi->iters = NULL;
+        return 0;
+    }
+
+    multi->iters = PyArray_malloc(n * sizeof(PyArrayIterObject *));
+    if (multi->iters == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    for (i = 0; i < n; i++) {
+        multi->iters[i] = NULL;
+    }
+
+    return 0;
+}
+
 /*NUMPY_API
  * Get MultiIterator from array of Python objects and any additional
  *
@@ -1511,10 +1536,9 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
     int i, ntot, err=0;
 
     ntot = n + nadd;
-    if (ntot < 2 || ntot > NPY_MAXARGS) {
+    if (ntot < 2) {
         PyErr_Format(PyExc_ValueError,
-                     "Need between 2 and (%d) "                 \
-                     "array objects (inclusive).", NPY_MAXARGS);
+                     "Need at least 2 array objects.");
         return NULL;
     }
     multi = PyArray_malloc(sizeof(PyArrayMultiIterObject));
@@ -1523,10 +1547,11 @@ PyArray_MultiIterFromObjects(PyObject **mps, int n, int nadd, ...)
     }
     PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
-    for (i = 0; i < ntot; i++) {
-        multi->iters[i] = NULL;
+    if (multiter_allociters(multi, ntot) < 0) {
+        /* error already set */
+        return NULL;
     }
-    multi->numiter = ntot;
+
     multi->index = 0;
 
     va_start(va, nadd);
@@ -1588,10 +1613,11 @@ PyArray_MultiIterNew(int n, ...)
     }
     PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
-    for (i = 0; i < n; i++) {
-        multi->iters[i] = NULL;
+    if (multiter_allociters(multi, n) < 0) {
+        /* error already set */
+        return NULL;
     }
-    multi->numiter = n;
+
     multi->index = 0;
 
     va_start(va, n);
@@ -1635,13 +1661,12 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
     }
 
     n = PyTuple_Size(args);
-    if (n < 2 || n > NPY_MAXARGS) {
+    if (n < 2) {
         if (PyErr_Occurred()) {
             return NULL;
         }
         PyErr_Format(PyExc_ValueError,
-                     "Need at least two and fewer than (%d) "   \
-                     "array objects.", NPY_MAXARGS);
+                     "Need at least two array objects.");
         return NULL;
     }
 
@@ -1651,11 +1676,13 @@ arraymultiter_new(PyTypeObject *NPY_UNUSED(subtype), PyObject *args, PyObject *k
     }
     PyObject_Init((PyObject *)multi, &PyArrayMultiIter_Type);
 
-    multi->numiter = n;
-    multi->index = 0;
-    for (i = 0; i < n; i++) {
-        multi->iters[i] = NULL;
+    if (multiter_allociters(multi, n) < 0) {
+        /* error already set */
+        return NULL;
     }
+
+    multi->index = 0;
+
     for (i = 0; i < n; i++) {
         arr = PyArray_FromAny(PyTuple_GET_ITEM(args, i), NULL, 0, 0, 0, NULL);
         if (arr == NULL) {
@@ -1711,6 +1738,9 @@ arraymultiter_dealloc(PyArrayMultiIterObject *multi)
     for (i = 0; i < multi->numiter; i++) {
         Py_XDECREF(multi->iters[i]);
     }
+
+    PyArray_free(multi->iters);
+
     Py_TYPE(multi)->tp_free((PyObject *)multi);
 }
 

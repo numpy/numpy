@@ -3197,6 +3197,16 @@ class TestMaskedArrayFunctions(TestCase):
         assert_equal(chosen.mask, [1, 0, 0, 1])
 
 
+    def test_choose_big(self):
+        "Test choose with large number of choices"
+        choices = [[0, 1, 2, 3], [10, 11, 12, 13],
+                   [20, 21, 22, 23], [30, 31, 32, 33]]
+        n = 100
+        morechoices = choices * n
+        chosen = choose([2, 3, 1, 0], morechoices)
+        assert_equal(chosen, array([20, 31, 12, 3]))
+
+
     def test_choose_with_out(self):
         "Test choose with an explicit out keyword"
         choices = [[0, 1, 2, 3], [10, 11, 12, 13],
