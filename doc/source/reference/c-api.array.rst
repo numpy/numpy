@@ -1310,11 +1310,21 @@ of the constant names is deprecated in 1.7.
     The data area is in Fortran-style contiguous order (first index varies
     the fastest).
 
-Notice that contiguous 1-d arrays are always both Fortran contiguous
-and C contiguous. Both of these flags can be checked and are convenience
-flags only as whether or not an array is :cdata:`NPY_ARRAY_C_CONTIGUOUS`
-or :cdata:`NPY_ARRAY_F_CONTIGUOUS` can be determined by the ``strides``,
-``dimensions``, and ``itemsize`` attributes.
+.. note::
+
+    Arrays can be both C-style and Fortran-style contiguous simultaneously. 
+    This is clear for 1-dimensional arrays, but can also be true for higher
+    dimensional arrays.
+
+    Even for contiguous arrays a stride for a given dimension
+    ``arr.strides[dim]`` may be *arbitrary* if ``arr.shape[dim] == 1``
+    or the array has no elements.
+    It does *not* generally hold that ``self.strides[-1] == self.itemsize``
+    for C-style contiguous arrays or ``self.strides[0] == self.itemsize`` for
+    Fortran-style contiguous arrays is true. The correct way to access the
+    ``itemsize`` of an array from the C API is ``PyArray_ITEMSIZE(arr)``.
+
+    .. seealso:: :ref:`Internal memory layout of an ndarray <arrays.ndarray>`
 
 .. cvar:: NPY_ARRAY_OWNDATA
 
@@ -1322,7 +1332,7 @@ or :cdata:`NPY_ARRAY_F_CONTIGUOUS` can be determined by the ``strides``,
 
 .. cvar:: NPY_ARRAY_ALIGNED
 
-    The data area is aligned appropriately (for all strides).
+    The data area and all array elements are aligned appropriately.
 
 .. cvar:: NPY_ARRAY_WRITEABLE
 
@@ -1432,13 +1442,19 @@ For all of these macros *arr* must be an instance of a (subclass of)
     :cdata:`NPY_ARRAY_OWNDATA`, :cdata:`NPY_ARRAY_ALIGNED`,
     :cdata:`NPY_ARRAY_WRITEABLE`, :cdata:`NPY_ARRAY_UPDATEIFCOPY`.
 
-.. cfunction:: PyArray_ISCONTIGUOUS(arr)
+.. cfunction:: PyArray_IS_C_CONTIGUOUS(arr)
 
     Evaluates true if *arr* is C-style contiguous.
 
-.. cfunction:: PyArray_ISFORTRAN(arr)
+.. cfunction:: PyArray_IS_F_CONTIGUOUS(arr)
 
     Evaluates true if *arr* is Fortran-style contiguous.
+
+.. cfunction:: PyArray_ISFORTRAN(arr)
+
+    Evaluates true if *arr* is Fortran-style contiguous and *not*
+    C-style contiguous. :cfunc:`PyArray_IS_F_CONTIGUOUS`
+    is the correct way to test for Fortran-style contiguity.
 
 .. cfunction:: PyArray_ISWRITEABLE(arr)
 

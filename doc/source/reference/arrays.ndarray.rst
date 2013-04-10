@@ -115,7 +115,7 @@ array. Here, :math:`s_k` are integers which specify the :obj:`strides
 <ndarray.strides>` of the array. The :term:`column-major` order (used,
 for example, in the Fortran language and in *Matlab*) and
 :term:`row-major` order (used in C) schemes are just specific kinds of
-strided scheme, and correspond to the strides:
+strided scheme, and correspond to memory that can be *addressed* by the strides:
 
 .. math::
 
@@ -124,11 +124,50 @@ strided scheme, and correspond to the strides:
 
 .. index:: single-segment, contiguous, non-contiguous
 
-where :math:`d_j` = `self.itemsize * self.shape[j]`.
+where :math:`d_j` `= self.itemsize * self.shape[j]`.
 
 Both the C and Fortran orders are :term:`contiguous`, *i.e.,*
 :term:`single-segment`, memory layouts, in which every part of the
 memory block can be accessed by some combination of the indices.
+
+While a C-style and Fortran-style contiguous array, which has the corresponding
+flags set, can be addressed with the above strides, the actual strides may be
+different. This can happen in two cases:
+  1. If ``self.shape[k] == 1`` then for any legal index ``index[k] == 0``.
+     This means that in the formula for the offset
+     :math:`n_k = 0` and thus :math:`s_k n_k = 0` and the value of
+     :math:`s_k` `= self.strides[k]` is arbitrary.
+  2. If an array has no elements (``self.size == 0``) there is no legal index
+     and the strides are never used. Any array with no elements may be
+     considered C-style and Fortran-style contiguous.
+
+Point 1. means that ``self``and ``self.squeeze()`` always have the same
+contiguity and :term:`aligned` flags value. This also means that even a high
+dimensional array could be C-style and Fortran-style contiguous at the same
+time.
+
+.. index:: aligned
+
+An array is considered aligned if the memory offsets for all elements and the
+base offset itself is a multiple of `self.itemsize`.
+
+.. note::
+
+    Points (1) and (2) are not yet applied by default. Beginning with
+    Numpy 1.8.0, they are applied consistently only if the environment
+    variable ``NPY_RELAXED_STRIDES_CHECKING=1`` was defined when NumPy
+    was built. Eventually this will become the default.
+
+    You can check whether this option was enabled when your NumPy was
+    built by looking at the value of ``np.ones((10,1),
+    order='C').flags.f_contiguous``. If this is ``True``, then your
+    NumPy has relaxed strides checking enabled.
+
+.. warning::
+
+    It does *not* generally hold that ``self.strides[-1] == self.itemsize``
+    for C-style contiguous arrays or ``self.strides[0] == self.itemsize`` for
+    Fortran-style contiguous arrays is true.
 
 Data in new :class:`ndarrays <ndarray>` is in the :term:`row-major`
 (C) order, unless otherwise specified, but, for example, :ref:`basic
@@ -143,7 +182,6 @@ in a different scheme.
    However, some algorithms require single-segment arrays. When an
    irregularly strided array is passed in to such algorithms, a copy
    is automatically made.
-
 
 .. _arrays.ndarray.attributes:
 

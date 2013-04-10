@@ -42,6 +42,39 @@ case, now indicates a 0-D iteration and ``op_axes`` being NULL and the old
 usage is deprecated. This does not effect the ``NpyIter_New`` or
 ``NpyIter_MultiNew`` functions.
 
+NPY_RELAXED_STRIDES_CHECKING
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+There is a new compile time environment variable
+``NPY_RELAXED_STRIDES_CHECKING``. If this variable is set to 1, then
+numpy will consider more arrays to be C- or F-contiguous -- for
+example, it becomes possible to have a column vector which is
+considered both C- and F-contiguous simultaneously. The new definition
+is more accurate, allows for faster code that makes fewer unnecessary
+copies, and simplifies numpy's code internally. However, it may also
+break third-party libraries that make too-strong assumptions about the
+stride values of C- and F-contiguous arrays. (It is also currently
+known that this breaks Cython code using memoryviews, which will be
+fixed in Cython.) THIS WILL BECOME THE DEFAULT IN A FUTURE RELEASE, SO
+PLEASE TEST YOUR CODE NOW AGAINST NUMPY BUILT WITH::
+
+  NPY_RELAXED_STRIDES_CHECKING=1 python setup.py install
+
+You can check whether NPY_RELAXED_STRIDES_CHECKING is in effect by
+running::
+
+  np.ones((10, 1), order="C").flags.f_contiguous
+
+This will be ``True`` if relaxed strides checking is enabled, and
+``False`` otherwise. The typical problem we've seen so far is C code
+that works with C-contiguous arrays, and assumes that the itemsize can
+be accessed by looking at the last element in the ``PyArray_STRIDES(arr)``
+array. When relaxed strides are in effect, this is not true (and in
+fact, it never was true in some corner cases). Instead, use
+``PyArray_ITEMSIZE(arr)``.
+
+For more information check the "Internal memory layout of an ndarray"
+section in the documentation.
+
 
 New Features
 ============
