@@ -1,5 +1,6 @@
 from __future__ import division, print_function
 
+import os
 import sys
 
 def configuration(parent_package='',top_path=None):
@@ -10,6 +11,18 @@ def configuration(parent_package='',top_path=None):
     config.add_data_dir('tests')
 
     # Configure lapack_lite
+
+    src_dir = 'lapack_lite'
+    lapack_lite_src = [
+        os.path.join(src_dir, 'python_xerbla.c'),
+        os.path.join(src_dir, 'zlapack_lite.c'), 
+        os.path.join(src_dir, 'dlapack_lite.c'),
+        os.path.join(src_dir, 'blas_lite.c'), 
+        os.path.join(src_dir, 'dlamch.c'),
+        os.path.join(src_dir, 'f2c_lite.c'),
+        os.path.join(src_dir, 'f2c.h'),
+    ]
+
     lapack_info = get_info('lapack_opt',0) # and {}
     def get_lapack_lite_sources(ext, build_dir):
         if not lapack_info:
@@ -23,12 +36,17 @@ def configuration(parent_package='',top_path=None):
 
     config.add_extension('lapack_lite',
                          sources = [get_lapack_lite_sources],
-                         depends=  ['lapack_litemodule.c',
-                                    'python_xerbla.c',
-                                    'zlapack_lite.c', 'dlapack_lite.c',
-                                    'blas_lite.c', 'dlamch.c',
-                                    'f2c_lite.c','f2c.h'],
+                         depends = ['lapack_litemodule.c'] + lapack_lite_src,
                          extra_info = lapack_info
+                         )
+
+    # umath_linalg module
+
+    config.add_extension('_umath_linalg',
+                         sources = [get_lapack_lite_sources],
+                         depends =  ['umath_linalg.c.src'] + lapack_lite_src,
+                         extra_info = lapack_info,
+                         libraries = ['npymath'],
                          )
 
     return config

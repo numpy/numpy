@@ -10,11 +10,12 @@ def pbuild(context):
 
     def build_lapack_lite(extension):
         kw = {}
+        kw["uselib"] = "npymath"
         if bld.env.HAS_LAPACK:
             for s in ['python_xerbla.c', 'zlapack_lite.c', 'dlapack_lite.c',
                       'blas_lite.c', 'dlamch.c', 'f2c_lite.c']:
                 extension.sources.pop(extension.sources.index(s))
-            kw["uselib"] = "LAPACK"
+            kw["uselib"] = "npymath LAPACK"
 
         includes = ["../core/include", "../core/include/numpy", "../core",
                     "../core/src/private"]
@@ -22,3 +23,5 @@ def pbuild(context):
                                        includes=includes,
                                        **kw)
     context.register_builder("lapack_lite", build_lapack_lite)
+    context.register_builder("umath_linalg", build_lapack_lite)
+

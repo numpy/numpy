@@ -542,7 +542,6 @@ def pre_build(context):
     context.tweak_extension("scalarmath", use="npymath", includes=["src/private"])
     context.tweak_extension("multiarray_tests", use="npymath", includes=["src/private"])
     context.tweak_extension("umath_tests", use="npymath", includes=["src/private"])
-    context.tweak_extension("umath_linalg", use="npymath", includes=["src/private"])
 
     def build_dotblas(extension):
         if bld.env.HAS_CBLAS:

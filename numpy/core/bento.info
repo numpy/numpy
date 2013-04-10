@@ -25,9 +25,6 @@ Library:
     Extension: umath_tests
         Sources:
             src/umath/umath_tests.c.src
-    Extension: umath_linalg
-        Sources:
-            src/umath/umath_linalg.c.src
     Extension: scalarmath
         Sources:
             src/scalarmathmodule.c.src

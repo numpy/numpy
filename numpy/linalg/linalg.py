@@ -24,11 +24,9 @@ from numpy.core import array, asarray, zeros, empty, transpose, \
         maximum, flatnonzero, diagonal, arange, fastCopyAndTranspose, sum, \
         isfinite, size, finfo, absolute, log, exp, errstate, geterrobj
 from numpy.lib import triu
-from numpy.linalg import lapack_lite
+from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
 from numpy.compat import asbytes
-
-from numpy.core import _umath_linalg, errstate, geterrobj
 
 # For Python2/3 compatibility
 _N = asbytes('N')

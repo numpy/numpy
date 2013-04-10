@@ -926,38 +926,6 @@ def configuration(parent_package='',top_path=None):
                     sources = [join('src','umath', 'umath_tests.c.src')])
 
     #######################################################################
-    #                        umath_linalg module                          #
-    #######################################################################
-
-    lapack_info = get_info('lapack_opt', 0)
-    def get_lapack_lite_sources(ext, build_dir):
-        if not lapack_info:
-            print("### Warning:  Using unoptimized lapack ###")
-            return ext.depends[:-1]
-        else:
-            if sys.platform=='win32':
-                print("### Warning:  python_xerbla.c is disabled ###")
-                return ext.depends[:1]
-            return ext.depends[:2]
-
-    config.add_extension('_umath_linalg',
-                         sources = [get_lapack_lite_sources,
-                                    join('src', 'umath', 'umath_linalg.c.src'),
-                                    join('src', 'umath', 'lapack_lite', 'python_xerbla.c'),
-                                    join('src', 'umath', 'lapack_lite', 'zlapack_lite.c'),
-                                    join('src', 'umath', 'lapack_lite', 'dlapack_lite.c'),
-                                    join('src', 'umath', 'lapack_lite', 'blas_lite.c'),
-                                    join('src', 'umath', 'lapack_lite', 'dlamch.c'),
-                                    join('src', 'umath', 'lapack_lite', 'f2c_lite.c')
-                                    ],
-                         depends =  [join('src', 'umath', '_gufuncs_linalg.py'),
-                                     join('src', 'umath', 'lapack_lite', 'f2c.h'),
-                                    ],
-                         extra_info = lapack_info,
-                         libraries = ['npymath'],
-                         )
-
-    #######################################################################
     #                     multiarray_tests module                         #
     #######################################################################
 

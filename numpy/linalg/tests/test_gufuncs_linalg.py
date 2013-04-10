@@ -58,7 +58,7 @@ from numpy.testing import (TestCase, assert_, assert_equal, assert_raises,
 
 from numpy import array, single, double, csingle, cdouble, dot, identity
 from numpy import multiply, inf
-import numpy.core._gufuncs_linalg as gula
+import numpy.linalg._gufuncs_linalg as gula
 
 old_assert_almost_equal = assert_almost_equal
 
