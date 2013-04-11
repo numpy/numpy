@@ -47,7 +47,7 @@ EXTRA_2TO3_FLAGS = {
 FIXES_TO_SKIP = [
     'apply',
 #    'basestring',
-#    'buffer',
+    'buffer',
     'callable',
     'dict',
     'exec',
