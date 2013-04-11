@@ -116,7 +116,7 @@ if sys.version_info[0] >= 3:
 # "import string" is costly to import!
 # Construct the translation tables directly
 #   "A" = chr(65), "a" = chr(97)
-_all_chars = map(chr, list(range(256)))
+_all_chars = [chr(_m) for _m in range(256)]
 _ascii_upper = _all_chars[65:65+26]
 _ascii_lower = _all_chars[97:97+26]
 LOWER_TABLE="".join(_all_chars[:65] + _ascii_lower + _all_chars[65+26:])

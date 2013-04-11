@@ -104,10 +104,10 @@ class TestConversion(TestCase):
         li = [10**6, 10**12, 10**18, -10**6, -10**12, -10**18]
         for T in [None, np.float64, np.int64]:
             a = np.array(l,dtype=T)
-            assert_equal(map(int,a), li)
+            assert_equal([int(_m) for _m in a], li)
 
         a = np.array(l[:3], dtype=np.uint64)
-        assert_equal(map(int,a), li[:3])
+        assert_equal([int(_m) for _m in a], li[:3])
 
 
 #class TestRepr(TestCase):

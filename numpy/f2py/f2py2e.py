@@ -324,7 +324,7 @@ def buildmodules(lst):
     ret = {}
     for i in range(len(mnames)):
         if mnames[i] in isusedby:
-            outmess('\tSkipping module "%s" which is used by %s.\n'%(mnames[i],','.join(map(lambda s:'"%s"'%s,isusedby[mnames[i]]))))
+            outmess('\tSkipping module "%s" which is used by %s.\n'%(mnames[i],','.join(['"%s"'%s for s in isusedby[mnames[i]]])))
         else:
             um=[]
             if 'use' in modules[i]:
@@ -372,7 +372,7 @@ def run_main(comline_list):
         if postlist[i]['block']=='python module' and '__user__' in postlist[i]['name']:
             if postlist[i]['name'] in isusedby:
                 #if not quiet:
-                outmess('Skipping Makefile build for module "%s" which is used by %s\n'%(postlist[i]['name'],','.join(map(lambda s:'"%s"'%s,isusedby[postlist[i]['name']]))))
+                outmess('Skipping Makefile build for module "%s" which is used by %s\n'%(postlist[i]['name'],','.join(['"%s"'%s for s in isusedby[postlist[i]['name']]])))
     if 'signsfile' in options:
         if options['verbose']>1:
             outmess('Stopping. Edit the signature file and then run f2py on the signature file: ')

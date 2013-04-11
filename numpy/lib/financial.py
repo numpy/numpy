@@ -115,7 +115,7 @@ def fv(rate, nper, pmt, pv, when='end'):
 
     """
     when = _convert_when(when)
-    rate, nper, pmt, pv, when = map(np.asarray, [rate, nper, pmt, pv, when])
+    (rate, nper, pmt, pv, when) = map(np.asarray, [rate, nper, pmt, pv, when])
     temp = (1+rate)**nper
     miter = np.broadcast(rate, nper, pmt, pv, when)
     zer = np.zeros(miter.shape)
@@ -206,7 +206,7 @@ def pmt(rate, nper, pv, fv=0, when='end'):
 
     """
     when = _convert_when(when)
-    rate, nper, pv, fv, when = map(np.asarray, [rate, nper, pv, fv, when])
+    (rate, nper, pv, fv, when) = map(np.asarray, [rate, nper, pv, fv, when])
     temp = (1+rate)**nper
     miter = np.broadcast(rate, nper, pv, fv, when)
     zer = np.zeros(miter.shape)
@@ -263,7 +263,7 @@ def nper(rate, pmt, pv, fv=0, when='end'):
 
     """
     when = _convert_when(when)
-    rate, pmt, pv, fv, when = map(np.asarray, [rate, pmt, pv, fv, when])
+    (rate, pmt, pv, fv, when) = map(np.asarray, [rate, pmt, pv, fv, when])
 
     use_zero_rate = False
     old_err = np.seterr(divide="raise")
@@ -502,7 +502,7 @@ def pv(rate, nper, pmt, fv=0.0, when='end'):
 
     """
     when = _convert_when(when)
-    rate, nper, pmt, fv, when = map(np.asarray, [rate, nper, pmt, fv, when])
+    (rate, nper, pmt, fv, when) = map(np.asarray, [rate, nper, pmt, fv, when])
     temp = (1+rate)**nper
     miter = np.broadcast(rate, nper, pmt, fv, when)
     zer = np.zeros(miter.shape)
@@ -568,7 +568,7 @@ def rate(nper, pmt, pv, fv, when='end', guess=0.10, tol=1e-6, maxiter=100):
 
     """
     when = _convert_when(when)
-    nper, pmt, pv, fv, when = map(np.asarray, [nper, pmt, pv, fv, when])
+    (nper, pmt, pv, fv, when) = map(np.asarray, [nper, pmt, pv, fv, when])
     rn = guess
     iter = 0
     close = False
