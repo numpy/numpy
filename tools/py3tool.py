@@ -55,7 +55,7 @@ FIXES_TO_SKIP = [
     'exitfunc',
     'filter',
 #    'funcattrs',
-#    'future',
+    'future',
     'getcwdu',
     'has_key',
 #    'idioms',
