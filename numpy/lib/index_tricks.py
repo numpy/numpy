@@ -157,7 +157,7 @@ class nd_grid(object):
                     size.append(int(abs(step)))
                     typ = float
                 else:
-                    size.append(math.ceil((key[k].stop - start)/(step*1.0)))
+                    size.append(int(math.ceil((key[k].stop - start)/(step*1.0))))
                 if isinstance(step, float) or \
                     isinstance(start, float) or \
                     isinstance(key[k].stop, float):
