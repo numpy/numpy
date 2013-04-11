@@ -28,12 +28,14 @@ from numpy.core import atleast_1d, atleast_2d
 from numpy.lib.twodim_base import diag
 from ._compiled_base import _insert, add_docstring
 from ._compiled_base import digitize, bincount, interp as compiled_interp
-from .arraysetops import setdiff1d
 from .utils import deprecate
 from ._compiled_base import add_newdoc_ufunc
 import numpy as np
 import collections
 
+# Force range to be a generator, for np.delete's usage.
+if sys.version_info[0] < 3:
+    range = xrange
 
 def iterable(y):
     """
@@ -1737,9 +1739,9 @@ class vectorize(object):
         Set of strings or integers representing the positional or keyword
         arguments for which the function will not be vectorized.  These will be
         passed directly to `pyfunc` unmodified.
-        
+
         .. versionadded:: 1.7.0
-    
+
     cache : bool, optional
        If `True`, then cache the first function call that determines the number
        of outputs if `otypes` is not provided.
@@ -1866,7 +1868,7 @@ class vectorize(object):
             the_args = list(args)
             def func(*vargs):
                 for _n, _i in enumerate(inds):
-                    the_args[_i] = vargs[_n] 
+                    the_args[_i] = vargs[_n]
                 kwargs.update(zip(names, vargs[len(inds):]))
                 return self.pyfunc(*the_args, **kwargs)
 
@@ -1927,7 +1929,7 @@ class vectorize(object):
             ufunc = frompyfunc(_func, len(args), nout)
 
         return ufunc, otypes
-        
+
     def _vectorize_call(self, func, args):
         """Vectorized call to `func` over positional `args`."""
         if not args:
@@ -1936,8 +1938,8 @@ class vectorize(object):
             ufunc, otypes = self._get_ufunc_and_otypes(func=func, args=args)
 
             # Convert args to object arrays first
-            inputs = [array(_a, copy=False, subok=True, dtype=object) 
-                      for _a in args]            
+            inputs = [array(_a, copy=False, subok=True, dtype=object)
+                      for _a in args]
 
             outputs = ufunc(*inputs)
 
@@ -3386,7 +3388,8 @@ def meshgrid(*xi, **kwargs):
 
 def delete(arr, obj, axis=None):
     """
-    Return a new array with sub-arrays along an axis deleted.
+    Return a new array with sub-arrays along an axis deleted. For a one
+    dimensional array, this returns those entries not returned by `arr[obj]`.
 
     Parameters
     ----------
@@ -3409,6 +3412,15 @@ def delete(arr, obj, axis=None):
     --------
     insert : Insert elements into an array.
     append : Append elements at the end of an array.
+
+    Notes
+    -----
+    Often it is preferable to use a boolean mask. For example:
+    >>> mask = np.ones(len(arr), dtype=bool)
+    >>> mask[[0,2,4]] = False
+    >>> result = arr[mask,...]
+    Is equivalent to `np.delete(arr, [0,2,4], axis=0)`, but allows further
+    use of `mask`.
 
     Examples
     --------
@@ -3436,7 +3448,6 @@ def delete(arr, obj, axis=None):
         except AttributeError:
             pass
 
-
     arr = asarray(arr)
     ndim = arr.ndim
     if axis is None:
@@ -3445,34 +3456,35 @@ def delete(arr, obj, axis=None):
         ndim = arr.ndim;
         axis = ndim-1;
     if ndim == 0:
+        warnings.warn("in the future the special handling of scalars "
+                      "will be removed from delete and raise an error",
+                      DeprecationWarning)
         if wrap:
             return wrap(arr)
         else:
             return arr.copy()
+
     slobj = [slice(None)]*ndim
     N = arr.shape[axis]
     newshape = list(arr.shape)
-    if isinstance(obj, (int, long, integer)):
-        if (obj < 0): obj += N
-        if (obj < 0 or obj >=N):
-            raise ValueError(
-                    "invalid entry")
-        newshape[axis]-=1;
-        new = empty(newshape, arr.dtype, arr.flags.fnc)
-        slobj[axis] = slice(None, obj)
-        new[slobj] = arr[slobj]
-        slobj[axis] = slice(obj,None)
-        slobj2 = [slice(None)]*ndim
-        slobj2[axis] = slice(obj+1,None)
-        new[slobj] = arr[slobj2]
-    elif isinstance(obj, slice):
+
+    if isinstance(obj, slice):
         start, stop, step = obj.indices(N)
-        numtodel = len(list(range(start, stop, step)))
+        xr = range(start, stop, step)
+        numtodel = len(xr)
+
         if numtodel <= 0:
             if wrap:
-                return wrap(new)
+                return wrap(arr.copy())
             else:
                 return arr.copy()
+
+        # Invert if step is negative:
+        if step < 0:
+            step = -step
+            start = xr[-1]
+            stop = xr[0] + 1
+
         newshape[axis] -= numtodel
         new = empty(newshape, arr.dtype, arr.flags.fnc)
         # copy initial chunk
@@ -3493,23 +3505,76 @@ def delete(arr, obj, axis=None):
         if step == 1:
             pass
         else:  # use array indexing.
-            obj = arange(start, stop, step, dtype=intp)
-            all = arange(start, stop, dtype=intp)
-            obj = setdiff1d(all, obj)
+            keep = ones(stop-start, dtype=bool)
+            keep[:stop-start:step] = False
             slobj[axis] = slice(start, stop-numtodel)
             slobj2 = [slice(None)]*ndim
-            slobj2[axis] = obj
+            slobj2[axis] = slice(start, stop)
+            arr = arr[slobj2]
+            slobj2[axis] = keep
             new[slobj] = arr[slobj2]
-    else: # default behavior
-        obj = array(obj, dtype=intp, copy=0, ndmin=1)
-        all = arange(N, dtype=intp)
-        obj = setdiff1d(all, obj)
-        slobj[axis] = obj
+        if wrap:
+            return wrap(new)
+        else:
+            return new
+
+    _obj = obj
+    obj = np.asarray(obj)
+    # After removing the special handling of booleans and out of
+    # bounds values, the conversion to the array can be removed.
+    if obj.dtype == bool:
+        warnings.warn("in the future insert will treat boolean arrays "
+                      "and array-likes as boolean index instead "
+                      "of casting it to integer", FutureWarning)
+        obj = obj.astype(intp)
+    if isinstance(_obj, (int, long, integer)):
+        # optimization for a single value
+        obj = obj.item()
+        if (obj < -N or obj >=N):
+            raise IndexError("index %i is out of bounds for axis "
+                             "%i with size %i" % (obj, axis, N))
+        if (obj < 0): obj += N
+        newshape[axis]-=1;
+        new = empty(newshape, arr.dtype, arr.flags.fnc)
+        slobj[axis] = slice(None, obj)
+        new[slobj] = arr[slobj]
+        slobj[axis] = slice(obj,None)
+        slobj2 = [slice(None)]*ndim
+        slobj2[axis] = slice(obj+1,None)
+        new[slobj] = arr[slobj2]
+    else:
+        if obj.size == 0 and not isinstance(_obj, np.ndarray):
+            obj = obj.astype(intp)
+        if not np.can_cast(obj, intp, 'same_kind'):
+            # obj.size = 1 special case always failed and would just
+            # give superfluous warnings.
+            warnings.warn("using a non-integer array as obj in delete "
+                "will result in an error in the future", DeprecationWarning)
+            obj = obj.astype(intp)
+        keep = ones(N, dtype=bool)
+
+        # Test if there are out of bound indices, this is deprecated
+        inside_bounds = (obj < N) & (obj >= -N)
+        if not inside_bounds.all():
+            warnings.warn("in the future out of bounds indices will raise an "
+                          "error instead of being ignored by `numpy.delete`.",
+                          DeprecationWarning)
+            obj = obj[inside_bounds]
+        positive_indices = obj >= 0
+        if not positive_indices.all():
+            warnings.warn("in the future negative indices will not be ignored "
+                          "by `numpy.delete`.", FutureWarning)
+            obj = obj[positive_indices]
+
+        keep[obj,] = False
+        slobj[axis] = keep
         new = arr[slobj]
+
     if wrap:
         return wrap(new)
     else:
         return new
+
 
 def insert(arr, obj, values, axis=None):
     """
@@ -3522,9 +3587,16 @@ def insert(arr, obj, values, axis=None):
     obj : int, slice or sequence of ints
         Object that defines the index or indices before which `values` is
         inserted.
+
+        .. versionadded:: 1.8.0
+
+        Support for multiple insertions when `obj` is a single scalar or a
+        sequence with one element (similar to calling insert multiple times).
     values : array_like
         Values to insert into `arr`. If the type of `values` is different
         from that of `arr`, `values` is converted to the type of `arr`.
+        `values` should be shaped so that ``arr[...,obj,...] = values``
+        is legal.
     axis : int, optional
         Axis along which to insert `values`.  If `axis` is None then `arr`
         is flattened first.
@@ -3539,7 +3611,14 @@ def insert(arr, obj, values, axis=None):
     See Also
     --------
     append : Append elements at the end of an array.
+    concatenate : Join a sequence of arrays together.
     delete : Delete elements from an array.
+
+    Notes
+    -----
+    Note that for higher dimensional inserts `obj=0` behaves very different
+    from `obj=[0]` just like `arr[:,0,:] = values` is different from
+    `arr[:,[0],:] = values`.
 
     Examples
     --------
@@ -3554,6 +3633,15 @@ def insert(arr, obj, values, axis=None):
     array([[1, 5, 1],
            [2, 5, 2],
            [3, 5, 3]])
+
+    Difference between sequence and scalars:
+    >>> np.insert(a, [1], [[1],[2],[3]], axis=1)
+    array([[1, 1, 1],
+           [2, 2, 2],
+           [3, 3, 3]])
+    >>> np.array_equal(np.insert(a, 1, [1, 2, 3], axis=1),
+    ...                np.insert(a, [1], [[1],[2],[3]], axis=1))
+    True
 
     >>> b = a.flatten()
     >>> b
@@ -3589,6 +3677,9 @@ def insert(arr, obj, values, axis=None):
         ndim = arr.ndim
         axis = ndim-1
     if (ndim == 0):
+        warnings.warn("in the future the special handling of scalars "
+                      "will be removed from insert and raise an error",
+                      DeprecationWarning)
         arr = arr.copy()
         arr[...] = values
         if wrap:
@@ -3599,38 +3690,76 @@ def insert(arr, obj, values, axis=None):
     N = arr.shape[axis]
     newshape = list(arr.shape)
 
-    if isinstance(obj, (int, long, integer)):
-        if (obj < 0): obj += N
-        if obj < 0 or obj > N:
-            raise ValueError(
-                    "index (%d) out of range (0<=index<=%d) "\
-                    "in dimension %d" % (obj, N, axis))
-        if isscalar(values):
-            obj = [obj]
-        else:
-            values = asarray(values)
-            if ndim > values.ndim:
-                obj = [obj]
-            else:
-                obj = [obj] * len(values)
-
-    elif isinstance(obj, slice):
+    if isinstance(obj, slice):
         # turn it into a range object
-        obj = arange(*obj.indices(N),**{'dtype':intp})
+        indices = arange(*obj.indices(N),**{'dtype':intp})
+    else:
+        indices = np.asarray(obj)
+        if indices.dtype == bool:
+            # See also delete
+            warnings.warn("in the future insert will treat boolean arrays "
+                          "and array-likes as a boolean index instead "
+                          "of casting it to integer", FutureWarning)
+            indices = indices.astype(intp)
+            # Code after warning period:
+            #if obj.ndim != 1:
+            #    raise ValueError('boolean array argument obj to insert '
+            #                     'must be one dimensional')
+            #indices = np.flatnonzero(obj)
+        elif indices.ndim > 1:
+            raise ValueError("index array argument obj to insert must "
+                             "be one dimensional or scalar")
+    if indices.size == 1:
+        index = indices.item()
+        if index < -N or index > N:
+            raise IndexError("index %i is out of bounds for axis "
+                             "%i with size %i" % (obj, axis, N))
+        if (index < 0): index += N
 
-    # get two sets of indices
-    #  one is the indices which will hold the new stuff
-    #  two is the indices where arr will be copied over
+        values = array(values, copy=False, ndmin=arr.ndim)
+        if indices.ndim == 0:
+            # broadcasting is very different here, since a[:,0,:] = ... behaves
+            # very different from a[:,[0],:] = ...! This changes values so that
+            # it works likes the second case. (here a[:,0:1,:])
+            values = np.rollaxis(values, 0, axis+1)
+        numnew = values.shape[axis]
+        newshape[axis] += numnew
+        new = empty(newshape, arr.dtype, arr.flags.fnc)
+        slobj[axis] = slice(None, index)
+        new[slobj] = arr[slobj]
+        slobj[axis] = slice(index, index+numnew)
+        new[slobj] = values
+        slobj[axis] = slice(index+numnew, None)
+        slobj2 = [slice(None)] * ndim
+        slobj2[axis] = slice(index, None)
+        new[slobj] = arr[slobj2]
+        if wrap:
+            return wrap(new)
+        return new
+    elif indices.size == 0 and not isinstance(obj, np.ndarray):
+        # Can safely cast the empty list to intp
+        indices = indices.astype(intp)
 
-    obj = asarray(obj, dtype=intp)
-    numnew = len(obj)
-    index1 = obj + arange(numnew)
-    index2 = setdiff1d(arange(numnew+N),index1)
+    if not np.can_cast(indices, intp, 'same_kind'):
+        warnings.warn("using a non-integer array as obj in insert "
+                      "will result in an error in the future",
+                      DeprecationWarning)
+        indices = indices.astype(intp)
+
+    indices[indices < 0] += N
+
+    numnew = len(indices)
+    order = indices.argsort(kind='mergesort') # stable sort
+    indices[order] += np.arange(numnew)
+
     newshape[axis] += numnew
+    old_mask = ones(newshape[axis], dtype=bool)
+    old_mask[indices] = False
+
     new = empty(newshape, arr.dtype, arr.flags.fnc)
     slobj2 = [slice(None)]*ndim
-    slobj[axis] = index1
-    slobj2[axis] = index2
+    slobj[axis] = indices
+    slobj2[axis] = old_mask
     new[slobj] = values
     new[slobj2] = arr
 

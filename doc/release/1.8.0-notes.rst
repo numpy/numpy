@@ -85,6 +85,20 @@ The function np.take now allows 0-d arrays as indices.
 
 The separate compilation mode is now enabled by default.
 
+Several changes to np.insert and np.delete:
+* Previously, negative indices and indices that pointed past the end of
+  the array were simply ignored. Now, this will raise a Future or Deprecation
+  Warning. In the future they will be treated like normal indexing treats
+  them -- negative indices will wrap around, and out-of-bound indices will
+  generate an error.
+* Previously, boolean indices were treated as if they were integers (always
+  referring to either the 0th or 1st item in the array). In the future, they
+  will be treated as masks. In this release, they raise a FutureWarning
+  warning of this coming change.
+* In Numpy 1.7. np.insert already allowed the syntax
+  `np.insert(arr, 3, [1,2,3])` to insert multiple items at a single position.
+  In Numpy 1.8. this is also possible for `np.insert(arr, [3], [1, 2, 3])`.
+
 C-API
 ~~~~~
 
