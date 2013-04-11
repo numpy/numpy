@@ -6,12 +6,14 @@ from __future__ import division, absolute_import, print_function
 
 __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
-           'asstr', 'open_latin1']
+           'asstr', 'open_latin1', 'long']
 
 import sys
 
 if sys.version_info[0] >= 3:
     import io
+    long = int
+    integer_types = (int,)
     bytes = bytes
     unicode = str
 
@@ -38,12 +40,16 @@ if sys.version_info[0] >= 3:
 
     strchar = 'U'
 
+
 else:
     bytes = str
     unicode = unicode
+    long = long
+    integer_types = (int, long)
     asbytes = str
     asstr = str
     strchar = 'S'
+
 
     def isfileobj(f):
         return isinstance(f, file)
@@ -55,6 +61,7 @@ else:
 
     def open_latin1(filename, mode='r'):
         return open(filename, mode=mode)
+
 
 def getexception():
     return sys.exc_info()[1]

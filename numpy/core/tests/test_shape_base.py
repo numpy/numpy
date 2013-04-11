@@ -6,6 +6,7 @@ from numpy.testing import (TestCase, assert_, assert_raises, assert_array_equal,
                            assert_equal, run_module_suite)
 from numpy.core import (array, arange, atleast_1d, atleast_2d, atleast_3d,
                         vstack, hstack, newaxis, concatenate)
+from numpy.compat import long
 
 class TestAtleast1d(TestCase):
     def test_0D_array(self):
@@ -43,7 +44,7 @@ class TestAtleast1d(TestCase):
         """
         assert_(atleast_1d(3).shape == (1,))
         assert_(atleast_1d(3j).shape == (1,))
-        assert_(atleast_1d(3L).shape == (1,))
+        assert_(atleast_1d(long(3)).shape == (1,))
         assert_(atleast_1d(3.0).shape == (1,))
         assert_(atleast_1d([[2,3],[4,5]]).shape == (2,2))
 

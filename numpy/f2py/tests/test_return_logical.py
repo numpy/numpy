@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 from numpy.testing import *
 from numpy import array
+from numpy.compat import long
 import util
 
 class TestReturnLogical(util.F2PyTest):
@@ -15,7 +16,7 @@ class TestReturnLogical(util.F2PyTest):
         assert_( t(1j)==1)
         assert_( t(234)==1)
         assert_( t(234.6)==1)
-        assert_( t(234l)==1)
+        assert_( t(long(234))==1)
         assert_( t(234.6+3j)==1)
         assert_( t('234')==1)
         assert_( t('aaa')==1)
@@ -25,7 +26,7 @@ class TestReturnLogical(util.F2PyTest):
         assert_( t({})==0)
         assert_( t(t)==1)
         assert_( t(-234)==1)
-        assert_( t(10l**100)==1)
+        assert_( t(10**100)==1)
         assert_( t([234])==1)
         assert_( t((234,))==1)
         assert_( t(array(234))==1)

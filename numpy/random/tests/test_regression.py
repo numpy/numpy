@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 from numpy.testing import TestCase, run_module_suite, assert_,\
         assert_array_equal
 from numpy import random
+from numpy.compat import long
 import numpy as np
 
 
@@ -42,7 +43,7 @@ class TestRegression(TestCase):
         np.random.seed(1234)
         a = np.random.permutation(12)
         np.random.seed(1234)
-        b = np.random.permutation(12L)
+        b = np.random.permutation(long(12))
         assert_array_equal(a, b)
 
     def test_hypergeometric_range(self) :

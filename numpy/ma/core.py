@@ -32,7 +32,7 @@ import numpy.core.numerictypes as ntypes
 from numpy import ndarray, amax, amin, iscomplexobj, bool_
 from numpy import array as narray
 from numpy.lib.function_base import angle
-from numpy.compat import getargspec, formatargspec
+from numpy.compat import getargspec, formatargspec, long
 from numpy import expand_dims as n_expand_dims
 
 if sys.version_info[0] >= 3:

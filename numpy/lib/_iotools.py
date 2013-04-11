@@ -10,11 +10,11 @@ import numpy as np
 import numpy.core.numeric as nx
 
 if sys.version_info[0] >= 3:
-    from builtins import bool, int, long, float, complex, object, unicode, str
+    from builtins import bool, int, float, complex, object, unicode, str
 else:
-    from __builtin__ import bool, int, long, float, complex, object, unicode, str
+    from __builtin__ import bool, int, float, complex, object, unicode, str
 
-from numpy.compat import asbytes, bytes, asbytes_nested
+from numpy.compat import asbytes, bytes, asbytes_nested, long
 
 if sys.version_info[0] >= 3:
     def _bytes_to_complex(s):
