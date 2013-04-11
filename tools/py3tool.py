@@ -54,7 +54,7 @@ FIXES_TO_SKIP = [
     'execfile',
     'exitfunc',
     'filter',
-#    'funcattrs',
+    'funcattrs',
     'future',
     'getcwdu',
     'has_key',
