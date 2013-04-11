@@ -1090,8 +1090,8 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
                 }
                 item += v * strides[idim];
             }
+            return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
         }
-        return PyArray_Scalar(item, PyArray_DESCR(self), (PyObject *)self);
     }
 
     /* Check for single field access */
@@ -1466,7 +1466,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
 
     /* Integer-tuple index */
     if (_is_full_index(ind, self)) {
-        ret = _tuple_of_integers(ind, vals, PyArray_NDIM(self));
+        int ret = _tuple_of_integers(ind, vals, PyArray_NDIM(self));
         /* In case an exception occurred (e.g. in PyErr_WarnEx) */
         if (ret < 0) {
             return -1;
