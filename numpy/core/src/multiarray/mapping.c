@@ -1094,6 +1094,14 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
         }
     }
 
+    if ((PyNumber_Check(op) || PyArray_IsScalar(op, Number)) &&
+            !PyIndex_Check_Or_Unsupported(op)) {
+        if (DEPRECATE("non-integer scalar index. In a future numpy "
+                      "release, this will raise an error.") < 0) {
+            return NULL;
+        }
+    }
+
     /* Check for single field access */
     if (PyString_Check(op) || PyUnicode_Check(op)) {
         PyObject *temp, *obj;
