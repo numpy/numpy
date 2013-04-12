@@ -1063,7 +1063,7 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
         npy_intp value = PyArray_PyIntAsIntp(op);
         if (value == -1 && PyErr_Occurred()) {
             /* fail on error */
-            PyErr_SetString(PyExc_ValueError,
+            PyErr_SetString(PyExc_IndexError,
                             "cannot convert index to integer");
             return NULL;
         }
@@ -1387,7 +1387,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
         npy_intp value = PyArray_PyIntAsIntp(ind);
         if (value == -1 && PyErr_Occurred()) {
             /* fail on error */
-            PyErr_SetString(PyExc_ValueError,
+            PyErr_SetString(PyExc_IndexError,
                             "cannot convert index to integer");
             return -1;
         }
@@ -1586,9 +1586,9 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
     nd = PyArray_NDIM(ba);
 
     if (nd == 0) {
-        PyErr_SetString(PyExc_ValueError,
-                        "cannot construct index objects "
-                        "for zero-dimensional array");
+        PyErr_SetString(PyExc_IndexError,
+                        "only scalars can be indexed by 0-dimensional "
+                        "boolean arrays");
         goto fail;
     }
 

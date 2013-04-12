@@ -70,8 +70,8 @@ class TestIndexing(TestCase):
 
         # Index out of bounds produces IndexError
         assert_raises(IndexError, a.__getitem__, 1<<30)
-        # Index overflow produces ValueError
-        assert_raises(ValueError, a.__getitem__, 1<<64)
+        # Index overflow produces IndexError
+        assert_raises(IndexError, a.__getitem__, 1<<64)
 
     def test_single_bool_index(self):
         # Single boolean index
