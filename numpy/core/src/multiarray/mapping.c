@@ -1082,7 +1082,7 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
             int idim, ndim = PyArray_NDIM(self);
             npy_intp *shape = PyArray_DIMS(self);
             npy_intp *strides = PyArray_STRIDES(self);
-            char *item = PyArray_DATA(self);
+            char *item = PyArray_BYTES(self);
             for (idim = 0; idim < ndim; idim++) {
                 npy_intp v = vals[idim];
                 if (check_and_adjust_index(&v, shape[idim], idim) < 0) {
@@ -1483,7 +1483,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
             int idim, ndim = PyArray_NDIM(self);
             npy_intp *shape = PyArray_DIMS(self);
             npy_intp *strides = PyArray_STRIDES(self);
-            char *item = PyArray_DATA(self);
+            char *item = PyArray_BYTES(self);
             for (idim = 0; idim < ndim; idim++) {
                 npy_intp v = vals[idim];
                 if (check_and_adjust_index(&v, shape[idim], idim) < 0) {
