@@ -1172,12 +1172,12 @@ _void_compare(PyArrayObject *self, PyArrayObject *other, int cmp_op)
             if NPY_TITLE_KEY(key, value) {
                 continue;
             }
-            a = PyArray_EnsureAnyArray(array_subscript(self, key));
+            a = array_subscript_asarray(self, key);
             if (a == NULL) {
                 Py_XDECREF(res);
                 return NULL;
             }
-            b = array_subscript(other, key);
+            b = array_subscript_asarray(other, key);
             if (b == NULL) {
                 Py_XDECREF(res);
                 Py_DECREF(a);
