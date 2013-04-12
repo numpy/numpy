@@ -72,6 +72,12 @@ New `invert` argument to `in1d`
 The function `in1d` now accepts a `invert` argument which, when `True`,
 causes the returned array to be inverted.
 
+Advanced indexing using `np.newaxis`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+It is now possible to use `np.newaxis`/`None` together with index
+arrays instead of only in simple indices. This means that
+``array[np.newaxis, [0, 1]]`` will now work as expected.
+
 C-API
 ~~~~~
 
