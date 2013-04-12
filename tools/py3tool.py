@@ -83,7 +83,7 @@ FIXES_TO_SKIP = [
     'reduce',
 #    'renames',
     'repr',
-#    'setliteral',
+    'setliteral',
     'standarderror',
     'sys_exc',
     'throw',
