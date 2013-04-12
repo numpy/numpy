@@ -27,6 +27,14 @@ def assert_almost_equal(a, b, **kw):
         decimal = 12
     old_assert_almost_equal(a, b, decimal=decimal, **kw)
 
+def get_real_dtype(dtype):
+    return {single: single, double: double,
+            csingle: single, cdouble: double}[dtype]
+
+def get_complex_dtype(dtype):
+    return {single: csingle, double: cdouble,
+            csingle: csingle, cdouble: cdouble}[dtype]
+
 
 class LinalgTestCase(object):
     def test_single(self):
@@ -84,6 +92,7 @@ class LinalgTestCase(object):
         a = matrix([[1.,2.], [3.,4.]])
         b = matrix([2., 1.]).T
         self.do(a, b)
+
 
 class LinalgNonsquareTestCase(object):
     def test_single_nsq_1(self):
@@ -187,6 +196,13 @@ class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
         assert_almost_equal(b, dot_generalized(a, x))
         assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
 
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            assert_equal(linalg.solve(x, x).dtype, dtype)
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
+
 
 class TestInv(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
     def do(self, a, b):
@@ -195,12 +211,28 @@ class TestInv(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
                             identity_like_generalized(a))
         assert_(imply(isinstance(a, matrix), isinstance(a_inv, matrix)))
 
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            assert_equal(linalg.inv(x).dtype, dtype)
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
+
 
 class TestEigvals(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
     def do(self, a, b):
         ev = linalg.eigvals(a)
         evalues, evectors = linalg.eig(a)
         assert_almost_equal(ev, evalues)
+
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            assert_equal(linalg.eigvals(x).dtype, dtype)
+            x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
+            assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
 
 
 class TestEig(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
@@ -212,6 +244,21 @@ class TestEig(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
             assert_almost_equal(dot(a, evectors), multiply(evectors, evalues))
         assert_(imply(isinstance(a, matrix), isinstance(evectors, matrix)))
 
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            w, v = np.linalg.eig(x)
+            assert_equal(w.dtype, dtype)
+            assert_equal(v.dtype, dtype)
+
+            x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
+            w, v = np.linalg.eig(x)
+            assert_equal(w.dtype, get_complex_dtype(dtype))
+            assert_equal(v.dtype, get_complex_dtype(dtype))
+
+        for dtype in [single, double, csingle, cdouble]:
+            yield dtype
+
 
 class TestSVD(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
     def do(self, a, b):
@@ -222,6 +269,19 @@ class TestSVD(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
             assert_almost_equal(a, dot(multiply(u, s), vt))
         assert_(imply(isinstance(a, matrix), isinstance(u, matrix)))
         assert_(imply(isinstance(a, matrix), isinstance(vt, matrix)))
+
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            u, s, vh = linalg.svd(x)
+            assert_equal(u.dtype, dtype)
+            assert_equal(s.dtype, get_real_dtype(dtype))
+            assert_equal(vh.dtype, dtype)
+            s = linalg.svd(x, compute_uv=False)
+            assert_equal(s.dtype, get_real_dtype(dtype))
+
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
 
 
 class TestCondSVD(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
@@ -281,6 +341,13 @@ class TestDet(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
         assert_equal(linalg.slogdet([[0.0j]]), (0.0j, -inf))
         assert_equal(type(linalg.slogdet([[0.0j]])[0]), cdouble)
         assert_equal(type(linalg.slogdet([[0.0j]])[1]), double)
+
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            assert_equal(np.linalg.det(x), get_real_dtype(dtype))
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
 
 
 class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase, TestCase):
@@ -418,6 +485,13 @@ class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase, TestCase):
         evalues.sort(axis=-1)
         assert_almost_equal(ev, evalues)
 
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            assert_equal(np.linalg.eigvalsh(x), get_real_dtype(dtype))
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
+
 
 class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase, TestCase):
     def do(self, a, b):
@@ -428,6 +502,15 @@ class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase, TestCase):
         ev.sort(axis=-1)
         evalues.sort(axis=-1)
         assert_almost_equal(ev, evalues)
+
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            w, v = np.linalg.eig(x)
+            assert_equal(w, get_real_dtype(dtype))
+            assert_equal(v, dtype)
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
 
 
 class _TestNorm(TestCase):
