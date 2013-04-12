@@ -28,16 +28,17 @@ class TestIndexing(TestCase):
         assert_equal(a[()], a)
         assert_(a[()].base is a)
 
-    def test_empty_list_index(self):
+    def test_empty_fancy_index(self):
         # Empty list index creates an empty array
         # with the same dtype (but with weird shape)
         a = np.array([1, 2, 3])
         assert_equal(a[[]], [])
         assert_equal(a[[]].dtype, a.dtype)
 
-    def test_empty_array_index(self):
-        # Empty array index is illegal
-        a = np.array([1, 2, 3])
+        b = np.array([], dtype=np.intp)
+        assert_equal(a[[]], [])
+        assert_equal(a[[]].dtype, a.dtype)
+
         b = np.array([])
         assert_raises(IndexError, a.__getitem__, b)
 
