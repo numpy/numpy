@@ -2611,7 +2611,7 @@ def true_intent_list(var):
     ret = []
     for intent in lst:
         try:
-            exec('c = isintent_%s(var)' % intent)
+            c = eval('isintent_%s(var)' % intent)
         except NameError:
             c = 0
         if c:
