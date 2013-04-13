@@ -26,12 +26,16 @@ int xerbla_(char *srname, integer *info)
                                  6 for name, 4 for param. num. */
 
         int len = 0; /* length of subroutine name*/
+        PyGILState_STATE save;
+
         while( len<6 && srname[len]!='\0' )
                 len++;
         while( len && srname[len-1]==' ' )
                 len--;
 
         snprintf(buf, sizeof(buf), format, len, srname, *info);
+        save = PyGILState_Ensure();
         PyErr_SetString(PyExc_ValueError, buf);
+        PyGILState_Release(save);
         return 0;
 }
