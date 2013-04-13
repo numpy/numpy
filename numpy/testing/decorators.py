@@ -135,9 +135,9 @@ def skipif(skip_condition, msg=None):
             if msg is None:
                 out = 'Test skipped due to test condition'
             else:
-                out = '\n'+msg
+                out = msg
 
-            return "Skipping test: %s%s" % (func.__name__,out)
+            return "Skipping test: %s: %s" % (func.__name__, out)
 
         # We need to define *two* skippers because Python doesn't allow both
         # return with value and yield inside the same function.
