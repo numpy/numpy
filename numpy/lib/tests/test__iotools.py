@@ -175,11 +175,11 @@ class TestStringConverter(TestCase):
         StringConverter.upgrade_mapper(dateparser, date(2000, 1, 1))
         convert = StringConverter(dateparser, date(2000, 1, 1))
         test = convert(asbytes('2001-01-01'))
-        assert_equal(test, date(2001, 01, 01))
+        assert_equal(test, date(2001, 1, 1))
         test = convert(asbytes('2009-01-01'))
-        assert_equal(test, date(2009, 01, 01))
+        assert_equal(test, date(2009, 1, 1))
         test = convert(asbytes(''))
-        assert_equal(test, date(2000, 01, 01))
+        assert_equal(test, date(2000, 1, 1))
     #
     def test_string_to_object(self):
         "Make sure that string-to-object functions are properly recognized"

@@ -3,7 +3,7 @@ from __future__ import division, absolute_import, print_function
 from numpy.testing import *
 from numpy.lib import *
 from numpy.core import *
-from numpy.compat import asbytes
+from numpy.compat import asbytes, long
 
 try:
     import ctypes
@@ -87,7 +87,7 @@ class TestIsscalar(TestCase):
         assert_(not isscalar([3]))
         assert_(not isscalar((3,)))
         assert_(isscalar(3j))
-        assert_(isscalar(10L))
+        assert_(isscalar(long(10)))
         assert_(isscalar(4.0))
 
 

@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 from numpy.testing import *
 from numpy import array
+from numpy.compat import long
 import math
 import util
 
@@ -13,7 +14,7 @@ class TestReturnReal(util.F2PyTest):
             err = 0.0
         assert_( abs(t(234)-234.0)<=err)
         assert_( abs(t(234.6)-234.6)<=err)
-        assert_( abs(t(234l)-234.0)<=err)
+        assert_( abs(t(long(234))-234.0)<=err)
         assert_( abs(t('234')-234)<=err)
         assert_( abs(t('234.6')-234.6)<=err)
         assert_( abs(t(-234)+234)<=err)
@@ -42,7 +43,7 @@ class TestReturnReal(util.F2PyTest):
         assert_raises(Exception, t, {})
 
         try:
-            r = t(10l**400)
+            r = t(10**400)
             assert_( repr(r) in ['inf','Infinity'],repr(r))
         except OverflowError:
             pass

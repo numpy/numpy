@@ -305,7 +305,7 @@ class TestRepositoryExists(TestCase):
         # would do.
         scheme, netloc, upath, pms, qry, frg = urlparse(localfile)
         local_path = os.path.join(self.repos._destpath, netloc)
-        os.mkdir(local_path, 0700)
+        os.mkdir(local_path, 0o0700)
         tmpfile = valid_textfile(local_path)
         assert_(self.repos.exists(tmpfile))
 

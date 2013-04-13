@@ -22,7 +22,7 @@ from .numerictypes import string_, unicode_, integer, object_, bool_, character
 from .numeric import ndarray, compare_chararrays
 from .numeric import array as narray
 from numpy.core.multiarray import _vec_string
-from numpy.compat import asbytes
+from numpy.compat import asbytes, long
 import numpy
 
 __all__ = ['chararray',

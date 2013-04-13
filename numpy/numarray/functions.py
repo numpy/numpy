@@ -31,14 +31,14 @@ import sys
 import math
 import operator
 
+import numpy as np
 from numpy import dot as matrixmultiply, dot, vdot, ravel, concatenate, all,\
      allclose, any, argsort, array_equal, array_equiv,\
      array_str, array_repr, CLIP, RAISE, WRAP, clip, concatenate, \
      diagonal, e, pi, inner as innerproduct, nonzero, \
      outer as outerproduct, kron as kroneckerproduct, lexsort, putmask, rank, \
      resize, searchsorted, shape, size, sort, swapaxes, trace, transpose
-import numpy as np
-
+from numpy.compat import long
 from .numerictypes import typefrom
 
 if sys.version_info[0] >= 3:
