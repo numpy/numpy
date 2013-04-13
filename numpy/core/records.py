@@ -36,17 +36,17 @@ Record arrays allow us to access fields as properties::
 """
 from __future__ import division, absolute_import, print_function
 
-# All of the functions allow formats to be a dtype
-__all__ = ['record', 'recarray', 'format_parser']
+import sys
+import os
 
 from . import numeric as sb
 from .defchararray import chararray
 from . import numerictypes as nt
-import types
-import os
-import sys
-
 from numpy.compat import isfileobj, bytes, long
+
+# All of the functions allow formats to be a dtype
+__all__ = ['record', 'recarray', 'format_parser']
+
 
 ndarray = sb.ndarray
 
@@ -171,7 +171,7 @@ class format_parser:
         attribute """
 
         if (names):
-            if (type(names) in [types.ListType, types.TupleType]):
+            if (type(names) in [list, tuple]):
                 pass
             elif (type(names) == str):
                 names = names.split(',')
