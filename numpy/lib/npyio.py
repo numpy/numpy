@@ -1664,11 +1664,11 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
     #        rows[i] = tuple([convert(val)
     #                         for (convert, val) in zip(conversionfuncs, vals)])
     if loose:
-        rows = zip(*[[converter._loose_call(_r) for _r in map(itemgetter(i), rows)]
-                     for (i, converter) in enumerate(converters)])
+        rows = list(zip(*[[converter._loose_call(_r) for _r in map(itemgetter(i), rows)]
+                     for (i, converter) in enumerate(converters)]))
     else:
-        rows = zip(*[[converter._strict_call(_r) for _r in map(itemgetter(i), rows)]
-                     for (i, converter) in enumerate(converters)])
+        rows = list(zip(*[[converter._strict_call(_r) for _r in map(itemgetter(i), rows)]
+                     for (i, converter) in enumerate(converters)]))
     # Reset the dtype
     data = rows
     if dtype is None:
@@ -1693,8 +1693,8 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                     mdtype = [(defaultfmt % i, np.bool)
                               for (i, dt) in enumerate(column_types)]
         else:
-            ddtype = zip(names, column_types)
-            mdtype = zip(names, [np.bool] * len(column_types))
+            ddtype = list(zip(names, column_types))
+            mdtype = list(zip(names, [np.bool] * len(column_types)))
         output = np.array(data, dtype=ddtype)
         if usemask:
             outputmask = np.array(masks, dtype=mdtype)

@@ -140,8 +140,8 @@ class TestMaskedArray(TestCase):
 
     def test_concatenate_flexible(self):
         "Tests the concatenation on flexible arrays."
-        data = masked_array(zip(np.random.rand(10),
-                                np.arange(10)),
+        data = masked_array(list(zip(np.random.rand(10),
+                                np.arange(10))),
                             dtype=[('a', float), ('b', int)])
         #
         test = concatenate([data[:5], data[5:]])
@@ -1500,7 +1500,7 @@ class TestFillingValues(TestCase):
         "Test setting fill_value on individual fields"
         ndtype = [('a', int), ('b', int)]
         # Explicit fill_value
-        a = array(zip([1, 2, 3], [4, 5, 6]),
+        a = array(list(zip([1, 2, 3], [4, 5, 6])),
                   fill_value=(-999, -999), dtype=ndtype)
         f = a._fill_value
         aa = a['a']
@@ -1510,7 +1510,7 @@ class TestFillingValues(TestCase):
         a.fill_value['b'] = -10
         assert_equal(tuple(a.fill_value), (10, -10))
         # Implicit fill_value
-        t = array(zip([1, 2, 3], [4, 5, 6]), dtype=[('a', int), ('b', int)])
+        t = array(list(zip([1, 2, 3], [4, 5, 6])), dtype=[('a', int), ('b', int)])
         tt = t['a']
         tt.set_fill_value(10)
         assert_equal(tt._fill_value, np.array(10))
@@ -2512,9 +2512,9 @@ class TestMaskedArrayMethods(TestCase):
         assert_equal(xlist[2], [8, 9, None, 11])
         assert_equal(xlist, ctrl)
         # ... on structured array w/ masked records
-        x = array(zip([1, 2, 3],
+        x = array(list(zip([1, 2, 3],
                       [1.1, 2.2, 3.3],
-                      ['one', 'two', 'thr']),
+                      ['one', 'two', 'thr'])),
                   dtype=[('a', int), ('b', float), ('c', '|S8')])
         x[-1] = masked
         assert_equal(x.tolist(),
@@ -3384,7 +3384,7 @@ class TestMaskedFields(TestCase):
         ddtype = [('a', int), ('b', float), ('c', '|S8')]
         mdtype = [('a', bool), ('b', bool), ('c', bool)]
         mask = [0, 1, 0, 0, 1]
-        base = array(zip(ilist, flist, slist), mask=mask, dtype=ddtype)
+        base = array(list(zip(ilist, flist, slist)), mask=mask, dtype=ddtype)
         self.data = dict(base=base, mask=mask, ddtype=ddtype, mdtype=mdtype)
 
     def test_set_records_masks(self):
@@ -3461,7 +3461,7 @@ class TestMaskedFields(TestCase):
     #
     def test_view(self):
         "Test view w/ flexible dtype"
-        iterator = zip(np.arange(10), np.random.rand(10))
+        iterator = list(zip(np.arange(10), np.random.rand(10)))
         data = np.array(iterator)
         a = array(iterator, dtype=[('a', float), ('b', float)])
         a.mask[0] = (1, 0)
@@ -3481,9 +3481,9 @@ class TestMaskedFields(TestCase):
     #
     def test_getitem(self):
         ndtype = [('a', float), ('b', float)]
-        a = array(zip(np.random.rand(10), np.arange(10)), dtype=ndtype)
-        a.mask = np.array(zip([0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
-                              [1, 0, 0, 0, 0, 0, 0, 0, 1, 0]),
+        a = array(list(zip(np.random.rand(10), np.arange(10))), dtype=ndtype)
+        a.mask = np.array(list(zip([0, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+                              [1, 0, 0, 0, 0, 0, 0, 0, 1, 0])),
                           dtype=[('a', bool), ('b', bool)])
         # No mask
         self.assertTrue(isinstance(a[1], MaskedArray))
@@ -3501,7 +3501,7 @@ class TestMaskedFields(TestCase):
 class TestMaskedView(TestCase):
     #
     def setUp(self):
-        iterator = zip(np.arange(10), np.random.rand(10))
+        iterator = list(zip(np.arange(10), np.random.rand(10)))
         data = np.array(iterator)
         a = array(iterator, dtype=[('a', float), ('b', float)])
         a.mask[0] = (1, 0)

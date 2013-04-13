@@ -18,7 +18,7 @@ from compiler.ast import Const, Name, Tuple, Div, Mul, Sub, Add
 if sys.version_info[0] >= 3:
     from io import StringIO
 else:
-    from io import StringIO
+    from StringIO import StringIO
 
 def unparse(ast, single_line_functions=False):
     s = StringIO()
@@ -106,13 +106,13 @@ class UnparseCompilerAst:
             if i != len(t.nodes)-1:
                 self._write(") and (")
         self._write(")")
-               
+
     def _AssAttr(self, t):
         """ Handle assigning an attribute of an object
         """
         self._dispatch(t.expr)
         self._write('.'+t.attrname)
- 
+
     def _Assign(self, t):
         """ Expression Assignment such as "a = 1".
 
@@ -150,36 +150,36 @@ class UnparseCompilerAst:
     def _AugAssign(self, t):
         """ +=,-=,*=,/=,**=, etc. operations
         """
-        
+
         self._fill()
         self._dispatch(t.node)
         self._write(' '+t.op+' ')
         self._dispatch(t.expr)
         if not self._do_indent:
             self._write(';')
-            
+
     def _Bitand(self, t):
         """ Bit and operation.
         """
-        
+
         for i, node in enumerate(t.nodes):
             self._write("(")
             self._dispatch(node)
             self._write(")")
             if i != len(t.nodes)-1:
                 self._write(" & ")
-                
+
     def _Bitor(self, t):
         """ Bit or operation
         """
-        
+
         for i, node in enumerate(t.nodes):
             self._write("(")
             self._dispatch(node)
             self._write(")")
             if i != len(t.nodes)-1:
                 self._write(" | ")
-                
+
     def _CallFunc(self, t):
         """ Function call.
         """
@@ -254,7 +254,7 @@ class UnparseCompilerAst:
             self._write(name)
             if asname is not None:
                 self._write(" as "+asname)
-                
+
     def _Function(self, t):
         """ Handle function definitions
         """

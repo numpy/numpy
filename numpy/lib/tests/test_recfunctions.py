@@ -543,11 +543,11 @@ class TestStackArrays(TestCase):
 
 class TestJoinBy(TestCase):
     def setUp(self):
-        self.a = np.array(zip(np.arange(10), np.arange(50, 60),
-                        np.arange(100, 110)),
+        self.a = np.array(list(zip(np.arange(10), np.arange(50, 60),
+                        np.arange(100, 110))),
                         dtype=[('a', int), ('b', int), ('c', int)])
-        self.b = np.array(zip(np.arange(5, 15), np.arange(65, 75),
-                        np.arange(100, 110)),
+        self.b = np.array(list(zip(np.arange(5, 15), np.arange(65, 75),
+                        np.arange(100, 110))),
                         dtype=[('a', int), ('b', int), ('d', int)])
     #
     def test_inner_join(self):
@@ -620,11 +620,11 @@ class TestJoinBy(TestCase):
 class TestJoinBy2(TestCase):
     @classmethod
     def setUp(cls):
-        cls.a = np.array(zip(np.arange(10), np.arange(50, 60),
-                        np.arange(100, 110)),
+        cls.a = np.array(list(zip(np.arange(10), np.arange(50, 60),
+                        np.arange(100, 110))),
                         dtype=[('a', int), ('b', int), ('c', int)])
-        cls.b = np.array(zip(np.arange(10), np.arange(65, 75),
-                        np.arange(100, 110)),
+        cls.b = np.array(list(zip(np.arange(10), np.arange(65, 75),
+                        np.arange(100, 110))),
                         dtype=[('a', int), ('b', int), ('d', int)])
 
     def test_no_r1postfix(self):
@@ -660,12 +660,12 @@ class TestJoinBy2(TestCase):
         assert_equal(test, control)
 
     def test_two_keys_two_vars(self):
-        a = np.array(zip(np.tile([10,11],5),np.repeat(np.arange(5),2),
-                        np.arange(50, 60), np.arange(10,20)),
+        a = np.array(list(zip(np.tile([10,11],5),np.repeat(np.arange(5),2),
+                        np.arange(50, 60), np.arange(10,20))),
                         dtype=[('k', int), ('a', int), ('b', int),('c',int)])
 
-        b = np.array(zip(np.tile([10,11],5),np.repeat(np.arange(5),2),
-                        np.arange(65, 75), np.arange(0,10)),
+        b = np.array(list(zip(np.tile([10,11],5),np.repeat(np.arange(5),2),
+                        np.arange(65, 75), np.arange(0,10))),
                         dtype=[('k', int), ('a', int), ('b', int), ('c',int)])
 
         control = np.array([(10, 0, 50, 65, 10, 0), (11, 0, 51, 66, 11, 1),
