@@ -16,6 +16,11 @@ from numpy.ma import MaskedArray
 from numpy.ma.mrecords import MaskedRecords
 from numpy.lib._iotools import _is_string_like
 
+if sys.version_info[0] >= 3:
+    izip = zip
+else:
+    izip = itertools.izip
+
 _check_fill_value = np.ma.core._check_fill_value
 
 __all__ = ['append_fields',
@@ -287,7 +292,7 @@ def izip_records(seqarrays, fill_value=None, flatten=True):
         zipfunc = _izip_fields
     #
     try:
-        for tup in itertools.izip(*iters):
+        for tup in izip(*iters):
             yield tuple(zipfunc(tup))
     except IndexError:
         pass
@@ -412,7 +417,7 @@ def merge_arrays(seqarrays,
     seqmask = []
     # If we expect some kind of MaskedArray, make a special loop.
     if usemask:
-        for (a, n) in itertools.izip(seqarrays, sizes):
+        for (a, n) in izip(seqarrays, sizes):
             nbmissing = (maxlength - n)
             # Get the data and mask
             data = a.ravel().__array__()
@@ -441,7 +446,7 @@ def merge_arrays(seqarrays,
             output = output.view(MaskedRecords)
     else:
         # Same as before, without the mask we don't need...
-        for (a, n) in itertools.izip(seqarrays, sizes):
+        for (a, n) in izip(seqarrays, sizes):
             nbmissing = (maxlength - n)
             data = a.ravel().__array__()
             if nbmissing:
