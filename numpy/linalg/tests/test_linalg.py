@@ -7,7 +7,7 @@ import sys
 import numpy as np
 from numpy.testing import (TestCase, assert_, assert_equal, assert_raises,
                            assert_array_equal, assert_almost_equal,
-                           run_module_suite)
+                           run_module_suite, dec)
 from numpy import array, single, double, csingle, cdouble, dot, identity
 from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
@@ -749,6 +749,24 @@ def test_generalized_raise_multiloop():
     x[0,0] = non_invertible
 
     assert_raises(np.linalg.LinAlgError, np.linalg.inv, x)
+
+
+@dec.skipif(sys.platform == "win32", "python_xerbla not enabled on Win32")
+def test_xerbla():
+    # Test that xerbla works (with GIL)
+    a = np.array([[1]])
+    try:
+        np.linalg.lapack_lite.dgetrf(
+            1, 1, a.astype(np.double),
+            0, # <- invalid value
+            a.astype(np.intc), 0)
+    except ValueError as e:
+        assert_("DGETRF parameter number 4" in str(e))
+    else:
+        assert_(False)
+
+    # Test that xerbla works (without GIL)
+    assert_raises(ValueError, np.linalg.lapack_lite.xerbla)
 
 if __name__ == "__main__":
     run_module_suite()

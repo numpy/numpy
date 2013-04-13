@@ -93,6 +93,8 @@ extern int FNAME(zungqr)(int *m, int *n, int *k, f2c_doublecomplex a[],
                           int *lda, f2c_doublecomplex tau[],
                           f2c_doublecomplex work[], int *lwork, int *info);
 
+extern int FNAME(xerbla)(char *srname, int *info);
+
 static PyObject *LapackError;
 
 #define TRY(E) if (!(E)) return NULL
@@ -857,6 +859,23 @@ lapack_lite_zungqr(PyObject *NPY_UNUSED(self), PyObject *args)
 }
 
 
+static PyObject *
+lapack_lite_xerbla(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    int info = -1;
+
+    NPY_BEGIN_THREADS_DEF;
+    NPY_BEGIN_THREADS;
+    FNAME(xerbla)("test", &info);
+    NPY_END_THREADS;
+
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+    Py_INCREF(Py_None);
+    return Py_None;
+}
+
 
 #define STR(x) #x
 #define lameth(name) {STR(name), lapack_lite_##name, METH_VARARGS, NULL}
@@ -879,6 +898,7 @@ static struct PyMethodDef lapack_lite_module_methods[] = {
     lameth(zpotrf),
     lameth(zgeqrf),
     lameth(zungqr),
+    lameth(xerbla),
     { NULL,NULL,0, NULL}
 };
 
