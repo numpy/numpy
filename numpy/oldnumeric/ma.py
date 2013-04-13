@@ -865,6 +865,18 @@ array(data = %(data)s,
         return bool(m is not nomask and m.any()
                     or d is not nomask and d.any())
 
+    def __bool__(self):
+        """returns true if any element is non-zero or masked
+
+        """
+        # XXX: This changes bool conversion logic from MA.
+        # XXX: In MA bool(a) == len(a) != 0, but in numpy
+        # XXX: scalars do not have len
+        m = self._mask
+        d = self._data
+        return bool(m is not nomask and m.any()
+                    or d is not nomask and d.any())
+
     def __len__ (self):
         """Return length of first dimension. This is weird but Python's
          slicing behavior depends on it."""
@@ -2134,10 +2146,13 @@ def asarray(data, dtype=None):
 # XXX: I is better to to change the masked_*_operation adaptors
 # XXX: to wrap ndarray methods directly to create ma.array methods.
 from types import MethodType
+
 def _m(f):
     return MethodType(f, None, array)
+
 def not_implemented(*args, **kwds):
     raise NotImplementedError("not yet implemented for numpy.ma arrays")
+
 array.all = _m(alltrue)
 array.any = _m(sometrue)
 array.argmax = _m(argmax)

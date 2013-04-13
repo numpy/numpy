@@ -73,7 +73,7 @@ FIXES_TO_SKIP = [
     'methodattrs',
     'ne',
 #    'next',
-#    'nonzero',
+    'nonzero',
     'numliterals',
     'operator',
     'paren',
