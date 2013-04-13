@@ -74,7 +74,7 @@ class TestRegression(TestCase):
             np.random.seed(i)
             m.seed(4321)
             # If m.state is not honored, the result will change
-            assert_array_equal(m.choice(10, size=10, p=np.ones(10.)/10), res)
+            assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10), res)
 
 if __name__ == "__main__":
     run_module_suite()
