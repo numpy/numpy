@@ -73,8 +73,9 @@ class TestIndexing(TestCase):
                       [7, 8, 9]])
 
         # Python boolean converts to integer
-        assert_equal(a[True], a[1])
-        assert_equal(a[False], a[0])
+        # These are being deprecated (and test in test_deprecations)
+        #assert_equal(a[True], a[1])
+        #assert_equal(a[False], a[0])
 
         # Same with NumPy boolean scalar
         assert_equal(a[np.array(True)], a[1])
