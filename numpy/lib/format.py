@@ -139,7 +139,7 @@ from __future__ import division, absolute_import, print_function
 import numpy
 import sys
 from numpy.lib.utils import safe_eval
-from numpy.compat import asbytes, isfileobj, long
+from numpy.compat import asbytes, isfileobj, long, basestring
 
 if sys.version_info[0] >= 3:
     import pickle

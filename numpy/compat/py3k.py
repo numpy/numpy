@@ -6,14 +6,16 @@ from __future__ import division, absolute_import, print_function
 
 __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
-           'asstr', 'open_latin1', 'long']
+           'asstr', 'open_latin1', 'long', 'basestring']
 
 import sys
 
 if sys.version_info[0] >= 3:
     import io
+
     long = int
     integer_types = (int,)
+    basestring = str
     bytes = bytes
     unicode = str
 
@@ -45,6 +47,7 @@ else:
     bytes = str
     unicode = unicode
     long = long
+    basestring = basestring
     integer_types = (int, long)
     asbytes = str
     asstr = str
