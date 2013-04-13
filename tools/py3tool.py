@@ -46,7 +46,7 @@ EXTRA_2TO3_FLAGS = {
 # available fixers, with fixers not currently skipped commented out.
 FIXES_TO_SKIP = [
     'apply',
-#    'basestring',
+    'basestring',
     'buffer',
     'callable',
     'dict',

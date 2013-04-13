@@ -15,6 +15,7 @@ from numpy import ndarray, recarray
 from numpy.ma import MaskedArray
 from numpy.ma.mrecords import MaskedRecords
 from numpy.lib._iotools import _is_string_like
+from numpy.compat import basestring
 
 if sys.version_info[0] >= 3:
     izip = zip

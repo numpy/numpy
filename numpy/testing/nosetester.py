@@ -10,6 +10,7 @@ import os
 import sys
 import warnings
 import numpy.testing.utils
+from numpy.compat import basestring
 
 def get_package_name(filepath):
     """
