@@ -9,12 +9,14 @@ a user-specified number of elements.
 """
 from __future__ import division, absolute_import, print_function
 
+import sys
 from operator import mul
+from functools import reduce
+
+from numpy.compat import long
 
 __all__ = ['Arrayterator']
 
-import sys
-from functools import reduce
 
 class Arrayterator(object):
     """

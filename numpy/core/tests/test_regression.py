@@ -17,7 +17,7 @@ from numpy.testing import (
         assert_raises, assert_warns, dec
         )
 from numpy.testing.utils import _assert_valid_refcount, WarningManager
-from numpy.compat import asbytes, asunicode, asbytes_nested
+from numpy.compat import asbytes, asunicode, asbytes_nested, long
 
 rlevel = 1
 

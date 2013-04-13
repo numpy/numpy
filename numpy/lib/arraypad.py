@@ -6,6 +6,7 @@ of an n-dimensional array.
 from __future__ import division, absolute_import, print_function
 
 import numpy as np
+from numpy.compat import long
 
 __all__ = ['pad']
 

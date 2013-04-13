@@ -159,13 +159,14 @@ else:
     from . import ma
     from . import matrixlib as _mat
     from .matrixlib import *
+    from .compat import long
 
     # Make these accessible from numpy name-space
     #  but not imported in from numpy import *
     if sys.version_info[0] >= 3:
-        from builtins import bool, int, long, float, complex, object, unicode, str
+        from builtins import bool, int, float, complex, object, unicode, str
     else:
-        from __builtin__ import bool, int, long, float, complex, object, unicode, str
+        from __builtin__ import bool, int, float, complex, object, unicode, str
 
     from .core import round, abs, max, min
 

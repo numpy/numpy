@@ -90,26 +90,22 @@ __all__ = ['sctypeDict', 'sctypeNA', 'typeDict', 'typeNA', 'sctypes',
            'busday_offset', 'busday_count', 'is_busday', 'busdaycalendar',
            ]
 
-from numpy.core.multiarray import typeinfo, ndarray, array, \
-                      empty, dtype, datetime_data, datetime_as_string, \
-                      busday_offset, busday_count, is_busday, busdaycalendar
+from numpy.core.multiarray import (
+        typeinfo, ndarray, array, empty, dtype, datetime_data,
+        datetime_as_string, busday_offset, busday_count, is_busday,
+        busdaycalendar
+        )
 import types as _types
 import sys
+from numpy.compat import bytes, long
 
 # we don't export these for import *, but we do want them accessible
 # as numerictypes.bool, etc.
 if sys.version_info[0] >= 3:
-    from builtins import bool, int, long, float, complex, object, unicode, str
+    from builtins import bool, int, float, complex, object, unicode, str
 else:
-    from __builtin__ import bool, int, long, float, complex, object, unicode, str
+    from __builtin__ import bool, int, float, complex, object, unicode, str
 
-from numpy.compat import bytes
-
-if sys.version_info[0] >= 3:
-    # Py3K
-    class long(int):
-        # Placeholder class -- this will not escape outside numerictypes.py
-        pass
 
 # String-handling utilities to avoid locale-dependence.
 
@@ -861,7 +857,7 @@ try:
                    _types.StringType, _types.UnicodeType, _types.BufferType]
 except AttributeError:
     # Py3K
-    ScalarType = [int, float, complex, long, bool, bytes, str, memoryview]
+    ScalarType = [int, float, complex, int, bool, bytes, str, memoryview]
 
 ScalarType.extend(_sctype2char_dict.keys())
 ScalarType = tuple(ScalarType)

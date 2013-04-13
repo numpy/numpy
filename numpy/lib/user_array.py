@@ -6,10 +6,13 @@ complete.
 """
 from __future__ import division, absolute_import, print_function
 
-from numpy.core import array, asarray, absolute, add, subtract, multiply, \
-     divide, remainder, power, left_shift, right_shift, bitwise_and, \
-     bitwise_or, bitwise_xor, invert, less, less_equal, not_equal, equal, \
-     greater, greater_equal, shape, reshape, arange, sin, sqrt, transpose
+from numpy.core import (
+        array, asarray, absolute, add, subtract, multiply, divide,
+        remainder, power, left_shift, right_shift, bitwise_and, bitwise_or,
+        bitwise_xor, invert, less, less_equal, not_equal, equal, greater,
+        greater_equal, shape, reshape, arange, sin, sqrt, transpose
+        )
+from numpy.compat import long 
 
 class container(object):
     def __init__(self, data, dtype=None, copy=True):

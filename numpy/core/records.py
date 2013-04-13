@@ -46,7 +46,7 @@ import types
 import os
 import sys
 
-from numpy.compat import isfileobj, bytes
+from numpy.compat import isfileobj, bytes, long
 
 ndarray = sb.ndarray
 

@@ -9,6 +9,7 @@ from numpy.testing import (
         )
 from numpy.random import rand
 from numpy.lib import *
+from numpy.compat import long
 
 
 class TestAny(TestCase):

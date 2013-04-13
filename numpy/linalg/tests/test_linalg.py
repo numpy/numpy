@@ -269,10 +269,10 @@ class TestMatrixPower(object):
     large[0,:] = t
 
     def test_large_power(self):
-        assert_equal(matrix_power(self.R90,2L**100+2**10+2**5+1),self.R90)
+        assert_equal(matrix_power(self.R90,2**100+2**10+2**5+1),self.R90)
 
     def test_large_power_trailing_zero(self):
-        assert_equal(matrix_power(self.R90,2L**100+2**10+2**5),identity(2))
+        assert_equal(matrix_power(self.R90,2**100+2**10+2**5),identity(2))
 
     def testip_zero(self):
         def tz(M):

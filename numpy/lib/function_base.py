@@ -32,6 +32,7 @@ from .utils import deprecate
 from ._compiled_base import add_newdoc_ufunc
 import numpy as np
 import collections
+from numpy.compat import long
 
 # Force range to be a generator, for np.delete's usage.
 if sys.version_info[0] < 3:
