@@ -1572,7 +1572,7 @@ def test_iter_buffering_delayed_alloc():
     assert_equal(i[0], 0)
     i[1] = 1
     assert_equal(i[0:2], [0,1])
-    assert_equal([[x[0][()],x[1][()]] for x in i], zip(list(range(6)), [1]*6))
+    assert_equal([[x[0][()],x[1][()]] for x in i], list(zip(range(6), [1]*6)))
 
 def test_iter_buffered_cast_simple():
     # Test that buffering can handle a simple cast

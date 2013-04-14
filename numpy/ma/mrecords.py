@@ -511,7 +511,7 @@ def fromarrays(arraylist, dtype=None, shape=None, formats=None,
                            dtype=dtype, shape=shape, formats=formats,
                            names=names, titles=titles, aligned=aligned,
                            byteorder=byteorder).view(mrecarray)
-    _array._mask.flat = zip(*masklist)
+    _array._mask.flat = list(zip(*masklist))
     if fill_value is not None:
         _array.fill_value = fill_value
     return _array

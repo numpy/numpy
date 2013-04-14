@@ -94,7 +94,7 @@ FIXES_TO_SKIP = [
 #    'ws_comma',
     'xrange',
     'xreadlines',
-#    'zip',
+    'zip',
 ]
 
 skip_fixes= []

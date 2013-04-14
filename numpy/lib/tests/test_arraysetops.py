@@ -61,8 +61,8 @@ class TestSetOps(TestCase):
 
         # test for structured arrays
         dt = [('', 'i'), ('', 'i')]
-        aa = np.array(zip(a,a), dt)
-        bb = np.array(zip(b,b), dt)
+        aa = np.array(list(zip(a,a)), dt)
+        bb = np.array(list(zip(b,b)), dt)
         check_all(aa, bb, i1, i2, dt)
 
 

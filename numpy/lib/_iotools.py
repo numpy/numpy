@@ -855,7 +855,7 @@ def easy_dtype(ndtype, names=None, defaultfmt="f%i", **validationargs):
             if nbtypes == 0:
                 formats = tuple([ndtype.type] * len(names))
                 names = validate(names, defaultfmt=defaultfmt)
-                ndtype = np.dtype(zip(names, formats))
+                ndtype = np.dtype(list(zip(names, formats)))
             # Structured dtype: just validate the names as needed
             else:
                 ndtype.names = validate(names, nbfields=nbtypes,

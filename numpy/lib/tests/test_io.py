@@ -517,7 +517,7 @@ class TestLoadTxt(TestCase):
         c = TextIO(data)
         names = ['stid', 'temp']
         dtypes = ['S4', 'f8']
-        arr = np.loadtxt(c, usecols=(0, 2), dtype=zip(names, dtypes))
+        arr = np.loadtxt(c, usecols=(0, 2), dtype=list(zip(names, dtypes)))
         assert_equal(arr['stid'], [b"JOE", b"BOB"])
         assert_equal(arr['temp'], [25.3, 27.9])
 
@@ -1119,7 +1119,7 @@ M   33  21.99
         data = TextIO("JOE 70.1 25.3\nBOB 60.5 27.9")
         names = ['stid', 'temp']
         dtypes = ['S4', 'f8']
-        test = np.ndfromtxt(data, usecols=(0, 2), dtype=zip(names, dtypes))
+        test = np.ndfromtxt(data, usecols=(0, 2), dtype=list(zip(names, dtypes)))
         assert_equal(test['stid'], [b"JOE", b"BOB"])
         assert_equal(test['temp'], [25.3, 27.9])
 
