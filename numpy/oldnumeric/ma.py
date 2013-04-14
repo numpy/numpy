@@ -11,7 +11,10 @@ Adapted for numpy_core 2005 by Travis Oliphant and
 """
 from __future__ import division, absolute_import, print_function
 
-import types, sys
+import sys
+import types
+import warnings
+from functools import reduce
 
 import numpy.core.umath as umath
 import numpy.core.fromnumeric as fromnumeric
@@ -19,8 +22,13 @@ from numpy.core.numeric import newaxis, ndarray, inf
 from numpy.core.fromnumeric import amax, amin
 from numpy.core.numerictypes import bool_, typecodes
 import numpy.core.numeric as numeric
-import warnings
-from functools import reduce
+
+if sys.version_info[0] >= 3:
+    _MAXINT = sys.maxsize
+    _MININT = -sys.maxsize - 1
+else:
+    _MAXINT = sys.maxint
+    _MININT = -sys.maxint - 1
 
 
 # Ufunc domain lookup for __array_wrap__
@@ -114,15 +122,15 @@ def minimum_fill_value (obj):
     if isinstance(obj, types.FloatType):
         return numeric.inf
     elif isinstance(obj, types.IntType) or isinstance(obj, types.LongType):
-        return sys.maxint
+        return _MAXINT
     elif isinstance(obj, MaskedArray) or isinstance(obj, ndarray):
         x = obj.dtype.char
         if x in typecodes['Float']:
             return numeric.inf
         if x in typecodes['Integer']:
-            return sys.maxint
+            return _MAXINT
         if x in typecodes['UnsignedInteger']:
-            return sys.maxint
+            return _MAXINT
     else:
         raise TypeError('Unsuitable type for calculating minimum.')
 
@@ -131,13 +139,13 @@ def maximum_fill_value (obj):
     if isinstance(obj, types.FloatType):
         return -inf
     elif isinstance(obj, types.IntType) or isinstance(obj, types.LongType):
-        return -sys.maxint
+        return -_MAXINT
     elif isinstance(obj, MaskedArray) or isinstance(obj, ndarray):
         x = obj.dtype.char
         if x in typecodes['Float']:
             return -inf
         if x in typecodes['Integer']:
-            return -sys.maxint
+            return -_MAXINT
         if x in typecodes['UnsignedInteger']:
             return 0
     else:

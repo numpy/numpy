@@ -22,6 +22,12 @@ from .umath import maximum, minimum, absolute, not_equal, isnan, isinf
 from .multiarray import format_longfloat, datetime_as_string, datetime_data
 from .fromnumeric import ravel
 
+if sys.version_info[0] >= 3:
+    _MAXINT = sys.maxsize
+    _MININT = -sys.maxsize - 1
+else:
+    _MAXINT = sys.maxint
+    _MININT = -sys.maxint - 1
 
 def product(x, y): return x*y
 
@@ -633,8 +639,6 @@ def _digits(x, precision, format):
     return precision - len(s) + len(z)
 
 
-_MAXINT = sys.maxint
-_MININT = -sys.maxint-1
 class IntegerFormat(object):
     def __init__(self, data):
         try:
