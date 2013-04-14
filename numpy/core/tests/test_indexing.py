@@ -315,6 +315,19 @@ class TestMultiIndexingAutomated(TestCase):
                     # Note that originally this is could be interpreted as
                     # integer in the full integer special case.
                     raise IndexError
+            else:
+                # If the index is a singleton, the bounds check is done
+                # before the broadcasting. This used to be different in <1.8
+                if indx.ndim == 0:
+                    if indx >= arr.shape[ax] or indx < -arr.shape[ax]:
+                        raise IndexError
+            if indx.ndim == 0:
+                # The index is a scalar. This used to be two fold, but if fancy
+                # indexing was active, the check was done later, possibly
+                # after broadcasting it away (1.7. or earlier). Now it is always
+                # done.
+                if indx >= arr.shape[ax] or indx < - arr.shape[ax]:
+                    raise IndexError
             if len(indices) > 0 and indices[-1][0] == 'f' and ax != ellipsis_pos:
                 # NOTE: There could still have been a 0-sized Ellipsis
                 # between them. Checked that with ellipsis_pos.

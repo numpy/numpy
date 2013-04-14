@@ -249,7 +249,7 @@ class TestInsert(TestCase):
         assert_(isinstance(np.insert(a, [], []), SubClass))
         assert_(isinstance(np.insert(a, [0, 1], [1, 2]), SubClass))
         assert_(isinstance(np.insert(a, slice(1, 2), [1, 2]), SubClass))
-        assert_(isinstance(np.insert(a, slice(1, -2), []), SubClass))
+        assert_(isinstance(np.insert(a, slice(1, -2, -1), []), SubClass))
         # This is an error in the future:
         a = np.array(1).view(SubClass)
         assert_(isinstance(np.insert(a, 0, [0]), SubClass))

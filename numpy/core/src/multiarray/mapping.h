@@ -45,9 +45,8 @@ NPY_NO_EXPORT void
 PyArray_MapIterNext(PyArrayMapIterObject *mit);
 
 NPY_NO_EXPORT int
-PyArray_MapIterBind(PyArrayMapIterObject *, PyArrayObject *);
+PyArray_MapIterBind(PyArrayMapIterObject *, PyArrayObject *subspace, PyArrayObject *, npy_index_info *indices, int index_num);
 
 NPY_NO_EXPORT PyObject*
-PyArray_MapIterNew(PyObject *, int, int);
-
+PyArray_MapIterNew(npy_index_info *indices , int index_num, int index_type);
 #endif

@@ -1255,8 +1255,25 @@ typedef struct {
 #define PyArray_MultiIter_NOTDONE(multi)                \
         (_PyMIT(multi)->index < _PyMIT(multi)->size)
 
-/* Store the information needed for fancy-indexing over an array */
 
+/*
+ * Struct into which indices are parsed.
+ * I.e. integer ones should only be parsed once, slices and arrays
+ * need to be validated later and for the ellipsis we need to find how
+ * many slices it represents.
+ */
+typedef struct {
+    /*
+     * Object of index: slice, array, or NULL. Owns a reference.
+     */
+    PyObject *object;
+    /* Value of an integer index or number of slices an Ellipsis is worth */
+    npy_intp value;
+    int type;       /* kind of index, see magic values in mapping.c */
+} npy_index_info;
+
+
+/* Store the information needed for fancy-indexing over an array */
 typedef struct {
         PyObject_HEAD
         /*
@@ -1271,29 +1288,30 @@ typedef struct {
         npy_intp              index;                   /* current index */
         int                   nd;                      /* number of dims */
         npy_intp              dimensions[NPY_MAXDIMS]; /* dimensions */
-        PyArrayIterObject     *iters[NPY_MAXDIMS];     /* index object
-                                                          iterators */
+        NpyIter               *outer;                  /* index objects
+                                                          iterator */
         PyArrayIterObject     *ait;                    /* flat Iterator for
                                                           underlying array */
 
         /* flat iterator for subspace (when numiter < nd) */
         PyArrayIterObject     *subspace;
+        char                  *baseoffset;
+
+        NpyIter_IterNextFunc  *iternext;
+        npy_intp              **outerptr;
+        int                   nd_fancy;
 
         /*
          * if subspace iteration, then this is the array of axes in
          * the underlying array represented by the index objects
          */
         int                   iteraxes[NPY_MAXDIMS];
-        /*
-         * if subspace iteration, the these are the coordinates to the
-         * start of the subspace.
-         */
-        npy_intp              bscoord[NPY_MAXDIMS];
+        npy_intp              outer_strides[NPY_MAXDIMS];
+        npy_intp              outer_dims[NPY_MAXDIMS];
 
-        PyObject              *indexobj;               /* creating obj */
         /*
-         * consec is first used to indicate wether fancy indices are
-         * consecutive and then denotes at which axis they are inserted
+         * after binding consec denotes at which axis the fancy axes
+         * are inserted.
          */
         int                   consec;
         char                  *dataptr;
