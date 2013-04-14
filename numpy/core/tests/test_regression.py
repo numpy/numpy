@@ -17,7 +17,9 @@ from numpy.testing import (
         assert_raises, assert_warns, dec
         )
 from numpy.testing.utils import _assert_valid_refcount, WarningManager
-from numpy.compat import asbytes, asunicode, asbytes_nested, long
+from numpy.compat import (
+        asbytes, asunicode, asbytes_nested, long, unicode
+        )
 
 rlevel = 1
 
@@ -138,7 +140,7 @@ class TestRegression(TestCase):
     def test_unicode_swapping(self,level=rlevel):
         """Ticket #79"""
         ulen = 1
-        ucs_value = u'\U0010FFFF'
+        ucs_value = unicode('\U0010FFFF')
         ua = np.array([[[ucs_value*ulen]*2]*3]*4, dtype='U%s' % ulen)
         ua2 = ua.newbyteorder()
 
@@ -1107,11 +1109,11 @@ class TestRegression(TestCase):
         for i in range(1,9) :
             msg = 'unicode offset: %d chars'%i
             t = np.dtype([('a','S%d'%i),('b','U2')])
-            x = np.array([(asbytes('a'),u'b')], dtype=t)
+            x = np.array([(asbytes('a'),unicode('b'))], dtype=t)
             if sys.version_info[0] >= 3:
                 assert_equal(str(x), "[(b'a', 'b')]", err_msg=msg)
             else:
-                assert_equal(str(x), "[('a', u'b')]", err_msg=msg)
+                assert_equal(str(x), "[('a', unicode('b'))]", err_msg=msg)
 
     def test_sign_for_complex_nan(self, level=rlevel):
         """Ticket 794."""
@@ -1314,21 +1316,21 @@ class TestRegression(TestCase):
 
     def test_unicode_to_string_cast(self):
         """Ticket #1240."""
-        a = np.array([[u'abc', u'\u03a3'], [u'asdf', u'erw']], dtype='U')
+        a = np.array([[unicode('abc'), unicode('\u03a3')], [unicode('asdf'), unicode('erw')]], dtype='U')
         def fail():
             b = np.array(a, 'S4')
         self.assertRaises(UnicodeEncodeError, fail)
 
     def test_mixed_string_unicode_array_creation(self):
-        a = np.array(['1234', u'123'])
+        a = np.array(['1234', unicode('123')])
         assert_(a.itemsize == 16)
-        a = np.array([u'123', '1234'])
+        a = np.array([unicode('123'), '1234'])
         assert_(a.itemsize == 16)
-        a = np.array(['1234', u'123', '12345'])
+        a = np.array(['1234', unicode('123'), '12345'])
         assert_(a.itemsize == 20)
-        a = np.array([u'123', '1234', u'12345'])
+        a = np.array([unicode('123'), '1234', unicode('12345')])
         assert_(a.itemsize == 20)
-        a = np.array([u'123', '1234', u'1234'])
+        a = np.array([unicode('123'), '1234', unicode('1234')])
         assert_(a.itemsize == 16)
 
     def test_misaligned_objects_segfault(self):
@@ -1844,7 +1846,7 @@ class TestRegression(TestCase):
         if sys.version_info[0] >= 3:
             a = np.array(['abcd'])
         else:
-            a = np.array([u'abcd'])
+            a = np.array([unicode('abcd')])
         assert_equal(a.dtype.itemsize, 16)
 
     def test_unique_stable(self):
