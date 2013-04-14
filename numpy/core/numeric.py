@@ -2,15 +2,16 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 import warnings
+import collections
 from . import multiarray
 from . import umath
 from .umath import *
 from . import numerictypes
 from .numerictypes import *
-import collections
 
 if sys.version_info[0] >= 3:
     import pickle
+    basestring = str
 else:
     import cPickle as pickle
 

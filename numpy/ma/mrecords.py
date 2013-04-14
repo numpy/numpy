@@ -20,13 +20,17 @@ from __future__ import division, absolute_import, print_function
 __author__ = "Pierre GF Gerard-Marchant"
 
 import sys
+import warnings
 
 import numpy as np
-from numpy import bool_, dtype, \
-    ndarray, recarray, array as narray
 import numpy.core.numerictypes as ntypes
-from numpy.core.records import fromarrays as recfromarrays, \
-                               fromrecords as recfromrecords
+from numpy.compat import basestring
+from numpy import (
+        bool_, dtype, ndarray, recarray, array as narray
+        )
+from numpy.core.records import (
+        fromarrays as recfromarrays, fromrecords as recfromrecords
+        )
 
 _byteorderconv = np.core.records._byteorderconv
 _typestr = ntypes._typestr
@@ -37,7 +41,6 @@ from numpy.ma import MAError, MaskedArray, masked, nomask, masked_array, \
 
 _check_fill_value = ma.core._check_fill_value
 
-import warnings
 
 __all__ = ['MaskedRecords', 'mrecarray',
            'fromarrays', 'fromrecords', 'fromtextfile', 'addfield',
