@@ -321,9 +321,9 @@ advanced usage and will not typically be used.
 
     Specifies the calculation iteration order/memory layout of the output array.
     Defaults to 'K'. 'C' means the output should be C-contiguous, 'F' means
-    F-contiguous, 'A' means F-contiguous if the inputs are F-contiguous, C-contiguous
-    otherwise, and 'K' means to match the element ordering of the inputs
-    as closely as possible.
+    F-contiguous, 'A' means F-contiguous if the inputs are F-contiguous and
+    not also not C-contiguous, C-contiguous otherwise, and 'K' means to match
+    the element ordering of the inputs as closely as possible.
 
 *dtype*
 
