@@ -64,7 +64,7 @@ FIXES_TO_SKIP = [
     'imports2',
     'input',
     'intern',
-#    'isinstance',
+    'isinstance',
     'itertools',
     'itertools_imports',
     'long',
