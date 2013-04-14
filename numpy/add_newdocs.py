@@ -2614,12 +2614,11 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
         created writeable view onto it.)  Attempting to change a non-writeable
         array raises a RuntimeError exception.
     ALIGNED (A)
-        The data and strides are aligned appropriately for the hardware.
+        The data and all elements are aligned appropriately for the hardware.
     UPDATEIFCOPY (U)
         This array is a copy of some other array. When this array is
         deallocated, the base array will be updated with the contents of
         this array.
-
     FNC
         F_CONTIGUOUS and not C_CONTIGUOUS.
     FORC
@@ -2649,6 +2648,16 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
       or the ultimate owner of the memory exposes a writeable buffer
       interface or is a string.
 
+    Arrays can be both C-style and Fortran-style contiguous simultaneously. 
+    This is clear for 1-dimensional arrays, but can also be true for higher
+    dimensional arrays.
+
+    Even for contiguous arrays a stride for a given dimension
+    ``arr.strides[dim]`` may be *arbitrary* if ``arr.shape[dim] == 1``
+    or the array has no elements.
+    It does *not* generally hold that ``self.strides[-1] == self.itemsize``
+    for C-style contiguous arrays or ``self.strides[0] == self.itemsize`` for
+    Fortran-style contiguous arrays is true.
     """))
 
 
