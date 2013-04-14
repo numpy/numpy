@@ -90,7 +90,7 @@ FIXES_TO_SKIP = [
     'tuple_params',
 #    'types',
 #    'unicode',
-#    'urllib',
+    'urllib',
 #    'ws_comma',
     'xrange',
     'xreadlines',

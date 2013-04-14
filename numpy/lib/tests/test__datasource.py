@@ -1,20 +1,21 @@
 from __future__ import division, absolute_import, print_function
 
 import os
-import urllib2
 import sys
 import numpy.lib._datasource as datasource
 from tempfile import mkdtemp, mkstemp, NamedTemporaryFile
 from shutil import rmtree
-from urllib2 import URLError
 from numpy.compat import asbytes
 from numpy.testing import *
 
-
 if sys.version_info[0] >= 3:
+    import urllib.request as urllib_request
     from urllib.parse import urlparse
+    from urllib.error import URLError
 else:
+    import urllib2 as urllib_request
     from urlparse import urlparse
+    from urllib2 import URLError
 
 def urlopen_stub(url, data=None):
     '''Stub to replace urlopen for testing.'''
@@ -24,14 +25,17 @@ def urlopen_stub(url, data=None):
     else:
         raise URLError('Name or service not known')
 
+# setup and teardown
 old_urlopen = None
+
 def setup():
     global old_urlopen
-    old_urlopen = urllib2.urlopen
-    urllib2.urlopen = urlopen_stub
+
+    old_urlopen = urllib_request.urlopen
+    urllib_request.urlopen = urlopen_stub
 
 def teardown():
-    urllib2.urlopen = old_urlopen
+    urllib_request.urlopen = old_urlopen
 
 # A valid website for more robust testing
 http_path = 'http://www.google.com/'
