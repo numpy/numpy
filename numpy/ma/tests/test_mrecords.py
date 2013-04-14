@@ -360,10 +360,10 @@ class TestView(TestCase):
     def setUp(self):
         (a, b) = (np.arange(10), np.random.rand(10))
         ndtype = [('a',np.float), ('b',np.float)]
-        arr = np.array(zip(a,b), dtype=ndtype)
+        arr = np.array(list(zip(a,b)), dtype=ndtype)
         rec = arr.view(np.recarray)
         #
-        marr = ma.array(zip(a,b), dtype=ndtype, fill_value=(-9., -99.))
+        marr = ma.array(list(zip(a,b)), dtype=ndtype, fill_value=(-9., -99.))
         mrec = fromarrays([a,b], dtype=ndtype, fill_value=(-9., -99.))
         mrec.mask[3] = (False, True)
         self.data = (mrec, a, b, arr)
@@ -380,7 +380,7 @@ class TestView(TestCase):
         ntype = (np.float, 2)
         test = mrec.view(ntype)
         self.assertTrue(isinstance(test, ma.MaskedArray))
-        assert_equal(test, np.array(zip(a,b), dtype=np.float))
+        assert_equal(test, np.array(list(zip(a,b)), dtype=np.float))
         self.assertTrue(test[3,1] is ma.masked)
     #
     def test_view_flexible_type(self):

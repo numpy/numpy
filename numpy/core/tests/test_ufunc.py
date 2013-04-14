@@ -20,7 +20,7 @@ class TestUfunc(TestCase):
     def test_reduceat_shifting_sum(self) :
         L = 6
         x = np.arange(L)
-        idx = np.array(zip(np.arange(L-2), np.arange(L-2)+2)).ravel()
+        idx = np.array(list(zip(np.arange(L - 2), np.arange(L - 2) + 2))).ravel()
         assert_array_equal(np.add.reduceat(x,idx)[::2], [1,3,5,7])
 
     def test_generic_loops(self) :

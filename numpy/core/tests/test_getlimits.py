@@ -43,10 +43,10 @@ class TestLongdouble(TestCase):
 
 class TestIinfo(TestCase):
     def test_basic(self):
-        dts = zip(['i1', 'i2', 'i4', 'i8',
+        dts = list(zip(['i1', 'i2', 'i4', 'i8',
                    'u1', 'u2', 'u4', 'u8'],
                   [np.int8, np.int16, np.int32, np.int64,
-                   np.uint8, np.uint16, np.uint32, np.uint64])
+                   np.uint8, np.uint16, np.uint32, np.uint64]))
         for dt1, dt2 in dts:
             assert_equal(iinfo(dt1).min, iinfo(dt2).min)
             assert_equal(iinfo(dt1).max, iinfo(dt2).max)
