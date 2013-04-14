@@ -81,7 +81,7 @@ FIXES_TO_SKIP = [
     'raise',
     'raw_input',
     'reduce',
-#    'renames',
+    'renames',
     'repr',
     'setliteral',
     'standarderror',
