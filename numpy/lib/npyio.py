@@ -785,14 +785,14 @@ def loadtxt(fname, dtype=float, comments='#', delimiter=None,
 
         # Skip the first `skiprows` lines
         for i in range(skiprows):
-            fh.next()
+            next(fh)
 
         # Read until we find a line with some values, and use
         # it to estimate the number of columns, N.
         first_vals = None
         try:
             while not first_vals:
-                first_line = fh.next()
+                first_line = next(fh)
                 first_vals = split_line(first_line)
         except StopIteration:
             # End of lines reached
@@ -1344,13 +1344,13 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
         skip_header = skiprows
     # Skip the first `skip_header` rows
     for i in range(skip_header):
-        fhd.next()
+        next(fhd)
 
     # Keep on until we find the first valid values
     first_values = None
     try:
         while not first_values:
-            first_line = fhd.next()
+            first_line = next(fhd)
             if names is True:
                 if comments in first_line:
                     first_line = asbytes('').join(first_line.split(comments)[1:])
