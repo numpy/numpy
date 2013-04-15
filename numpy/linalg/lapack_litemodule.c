@@ -93,6 +93,8 @@ extern int FNAME(zungqr)(int *m, int *n, int *k, f2c_doublecomplex a[],
                           int *lda, f2c_doublecomplex tau[],
                           f2c_doublecomplex work[], int *lwork, int *info);
 
+extern int FNAME(xerbla)(char *srname, int *info);
+
 static PyObject *LapackError;
 
 #define TRY(E) if (!(E)) return NULL
@@ -171,6 +173,9 @@ lapack_lite_dgeev(PyObject *NPY_UNUSED(self), PyObject *args)
             FNAME(dgeev)(&jobvl,&jobvr,&n,DDATA(a),&lda,DDATA(wr),DDATA(wi),
                          DDATA(vl),&ldvl,DDATA(vr),&ldvr,DDATA(work),&lwork,
                          &info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     return Py_BuildValue("{s:i,s:c,s:c,s:i,s:i,s:i,s:i,s:i,s:i}","dgeev_",
                          lapack_lite_status__,"jobvl",jobvl,"jobvr",jobvr,
@@ -254,6 +259,9 @@ lapack_lite_dsyevd(PyObject *NPY_UNUSED(self), PyObject *args)
     lapack_lite_status__ = \
             FNAME(dsyevd)(&jobz,&uplo,&n,DDATA(a),&lda,DDATA(w),DDATA(work),
                           &lwork,IDATA(iwork),&liwork,&info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     return Py_BuildValue("{s:i,s:c,s:c,s:i,s:i,s:i,s:i,s:i}","dsyevd_",
                          lapack_lite_status__,"jobz",jobz,"uplo",uplo,
@@ -341,6 +349,9 @@ lapack_lite_zheevd(PyObject *NPY_UNUSED(self), PyObject *args)
     lapack_lite_status__ = \
     FNAME(zheevd)(&jobz,&uplo,&n,ZDATA(a),&lda,DDATA(w),ZDATA(work),
                   &lwork,DDATA(rwork),&lrwork,IDATA(iwork),&liwork,&info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     return Py_BuildValue("{s:i,s:c,s:c,s:i,s:i,s:i,s:i,s:i,s:i}","zheevd_",
                          lapack_lite_status__,"jobz",jobz,"uplo",uplo,"n",n,
@@ -380,6 +391,9 @@ lapack_lite_dgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
             FNAME(dgelsd)(&m,&n,&nrhs,DDATA(a),&lda,DDATA(b),&ldb,
                           DDATA(s),&rcond,&rank,DDATA(work),&lwork,
                           IDATA(iwork),&info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i,s:d,s:i,s:i,s:i}","dgelsd_",
                          lapack_lite_status__,"m",m,"n",n,"nrhs",nrhs,
@@ -407,6 +421,9 @@ lapack_lite_dgesv(PyObject *NPY_UNUSED(self), PyObject *args)
 
     lapack_lite_status__ = \
     FNAME(dgesv)(&n,&nrhs,DDATA(a),&lda,IDATA(ipiv),DDATA(b),&ldb,&info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i}","dgesv_",
                          lapack_lite_status__,"n",n,"nrhs",nrhs,"lda",lda,
@@ -446,6 +463,9 @@ lapack_lite_dgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
             FNAME(dgesdd)(&jobz,&m,&n,DDATA(a),&lda,DDATA(s),DDATA(u),&ldu,
                           DDATA(vt),&ldvt,DDATA(work),&lwork,IDATA(iwork),
                           &info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     if (info == 0 && lwork == -1) {
             /* We need to check the result because
@@ -496,6 +516,9 @@ lapack_lite_dgetrf(PyObject *NPY_UNUSED(self), PyObject *args)
 
     lapack_lite_status__ = \
             FNAME(dgetrf)(&m,&n,DDATA(a),&lda,IDATA(ipiv),&info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i}","dgetrf_",lapack_lite_status__,
                          "m",m,"n",n,"lda",lda,"info",info);
@@ -516,6 +539,9 @@ lapack_lite_dpotrf(PyObject *NPY_UNUSED(self), PyObject *args)
 
     lapack_lite_status__ = \
             FNAME(dpotrf)(&uplo,&n,DDATA(a),&lda,&info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i}","dpotrf_",lapack_lite_status__,
                          "n",n,"lda",lda,"info",info);
@@ -540,6 +566,9 @@ lapack_lite_dgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
         lapack_lite_status__ = \
                 FNAME(dgeqrf)(&m, &n, DDATA(a), &lda, DDATA(tau),
                               DDATA(work), &lwork, &info);
+	if (PyErr_Occurred()) {
+            return NULL;
+	}
 
         return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i}","dgeqrf_",
                              lapack_lite_status__,"m",m,"n",n,"lda",lda,
@@ -562,6 +591,9 @@ lapack_lite_dorgqr(PyObject *NPY_UNUSED(self), PyObject *args)
         TRY(check_object(work,NPY_DOUBLE,"work","NPY_DOUBLE","dorgqr"));
         lapack_lite_status__ = \
         FNAME(dorgqr)(&m, &n, &k, DDATA(a), &lda, DDATA(tau), DDATA(work), &lwork, &info);
+	if (PyErr_Occurred()) {
+            return NULL;
+	}
 
         return Py_BuildValue("{s:i,s:i}","dorgqr_",lapack_lite_status__,
                              "info",info);
@@ -601,6 +633,9 @@ lapack_lite_zgeev(PyObject *NPY_UNUSED(self), PyObject *args)
             FNAME(zgeev)(&jobvl,&jobvr,&n,ZDATA(a),&lda,ZDATA(w),ZDATA(vl),
                          &ldvl,ZDATA(vr),&ldvr,ZDATA(work),&lwork,
                          DDATA(rwork),&info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     return Py_BuildValue("{s:i,s:c,s:c,s:i,s:i,s:i,s:i,s:i,s:i}","zgeev_",
                          lapack_lite_status__,"jobvl",jobvl,"jobvr",jobvr,
@@ -641,6 +676,9 @@ lapack_lite_zgelsd(PyObject *NPY_UNUSED(self), PyObject *args)
     lapack_lite_status__ = \
     FNAME(zgelsd)(&m,&n,&nrhs,ZDATA(a),&lda,ZDATA(b),&ldb,DDATA(s),&rcond,
                   &rank,ZDATA(work),&lwork,DDATA(rwork),IDATA(iwork),&info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i,s:i,s:i,s:i}","zgelsd_",
                          lapack_lite_status__,"m",m,"n",n,"nrhs",nrhs,"lda",lda,
@@ -667,6 +705,9 @@ lapack_lite_zgesv(PyObject *NPY_UNUSED(self), PyObject *args)
 
     lapack_lite_status__ = \
     FNAME(zgesv)(&n,&nrhs,ZDATA(a),&lda,IDATA(ipiv),ZDATA(b),&ldb,&info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i}","zgesv_",
                          lapack_lite_status__,"n",n,"nrhs",nrhs,"lda",lda,
@@ -708,6 +749,9 @@ lapack_lite_zgesdd(PyObject *NPY_UNUSED(self), PyObject *args)
     FNAME(zgesdd)(&jobz,&m,&n,ZDATA(a),&lda,DDATA(s),ZDATA(u),&ldu,
                   ZDATA(vt),&ldvt,ZDATA(work),&lwork,DDATA(rwork),
                   IDATA(iwork),&info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     return Py_BuildValue("{s:i,s:c,s:i,s:i,s:i,s:i,s:i,s:i,s:i}","zgesdd_",
                          lapack_lite_status__,"jobz",jobz,"m",m,"n",n,
@@ -732,6 +776,9 @@ lapack_lite_zgetrf(PyObject *NPY_UNUSED(self), PyObject *args)
 
     lapack_lite_status__ = \
     FNAME(zgetrf)(&m,&n,ZDATA(a),&lda,IDATA(ipiv),&info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i}","zgetrf_",
                          lapack_lite_status__,"m",m,"n",n,"lda",lda,"info",info);
@@ -751,6 +798,9 @@ lapack_lite_zpotrf(PyObject *NPY_UNUSED(self), PyObject *args)
     TRY(check_object(a,NPY_CDOUBLE,"a","NPY_CDOUBLE","zpotrf"));
     lapack_lite_status__ = \
     FNAME(zpotrf)(&uplo,&n,ZDATA(a),&lda,&info);
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
 
     return Py_BuildValue("{s:i,s:i,s:i,s:i}","zpotrf_",
                          lapack_lite_status__,"n",n,"lda",lda,"info",info);
@@ -774,6 +824,9 @@ lapack_lite_zgeqrf(PyObject *NPY_UNUSED(self), PyObject *args)
 
         lapack_lite_status__ = \
         FNAME(zgeqrf)(&m, &n, ZDATA(a), &lda, ZDATA(tau), ZDATA(work), &lwork, &info);
+	if (PyErr_Occurred()) {
+            return NULL;
+	}
 
         return Py_BuildValue("{s:i,s:i,s:i,s:i,s:i,s:i}","zgeqrf_",lapack_lite_status__,"m",m,"n",n,"lda",lda,"lwork",lwork,"info",info);
 }
@@ -797,11 +850,31 @@ lapack_lite_zungqr(PyObject *NPY_UNUSED(self), PyObject *args)
         lapack_lite_status__ = \
         FNAME(zungqr)(&m, &n, &k, ZDATA(a), &lda, ZDATA(tau), ZDATA(work),
                       &lwork, &info);
+	if (PyErr_Occurred()) {
+            return NULL;
+	}
 
         return Py_BuildValue("{s:i,s:i}","zungqr_",lapack_lite_status__,
                              "info",info);
 }
 
+
+static PyObject *
+lapack_lite_xerbla(PyObject *NPY_UNUSED(self), PyObject *args)
+{
+    int info = -1;
+
+    NPY_BEGIN_THREADS_DEF;
+    NPY_BEGIN_THREADS;
+    FNAME(xerbla)("test", &info);
+    NPY_END_THREADS;
+
+    if (PyErr_Occurred()) {
+        return NULL;
+    }
+    Py_INCREF(Py_None);
+    return Py_None;
+}
 
 
 #define STR(x) #x
@@ -825,6 +898,7 @@ static struct PyMethodDef lapack_lite_module_methods[] = {
     lameth(zpotrf),
     lameth(zgeqrf),
     lameth(zungqr),
+    lameth(xerbla),
     { NULL,NULL,0, NULL}
 };
 
