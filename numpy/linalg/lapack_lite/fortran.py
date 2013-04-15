@@ -36,13 +36,18 @@ class LineIterator(object):
         object.__init__(self)
         self.iterable = iter(iterable)
         self.lineno = 0
+
     def __iter__(self):
         return self
-    def next(self):
+
+    def __next__(self):
         self.lineno += 1
-        line = self.iterable.next()
+        line = next(self.iterable)
         line = line.rstrip()
         return line
+
+    next = __next__
+
 
 class PushbackIterator(object):
     """PushbackIterator(iterable)
@@ -59,14 +64,17 @@ class PushbackIterator(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         if self.buffer:
             return self.buffer.pop()
         else:
-            return self.iterable.next()
+            return next(self.iterable)
 
     def pushback(self, item):
         self.buffer.append(item)
+
+    next = __next__
+
 
 def fortranSourceLines(fo):
     """Return an iterator over statement lines of a Fortran source file.
