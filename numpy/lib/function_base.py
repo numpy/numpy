@@ -3138,7 +3138,7 @@ def percentile(a, q, limit=None, interpolation='linear', axis=None,
         weights[..., 0] *= -1
         weights.shape = weights.shape + (1,) * (sorted.ndim - 1)
         sumval = weights.sum(i.ndim-1) # numerical accuracy reasons?
-        i[np.where(i > (len(sorted) - 1))] = len(sorted) - 1
+        i[i > (len(sorted) - 1)] = len(sorted) - 1
  
     # Use add.reduce in both cases to coerce data type as well as
     # check and use out array.
