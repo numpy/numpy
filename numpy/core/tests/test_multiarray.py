@@ -7,9 +7,8 @@ import warnings
 import numpy as np
 from nose import SkipTest
 from numpy.core import *
-from numpy.compat import asbytes
 from numpy.testing.utils import WarningManager
-from numpy.compat import asbytes, getexception, strchar
+from numpy.compat import asbytes, getexception, strchar, unicode
 from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
         test_neighborhood_iterator, test_neighborhood_iterator_oob,
@@ -31,7 +30,7 @@ if sys.version_info[:2] > (3, 2):
     # is an empty tuple instead of None.
     # http://docs.python.org/dev/whatsnew/3.3.html#api-changes
     EMPTY = ()
-else:    
+else:
     EMPTY = None
 
 
@@ -1246,8 +1245,8 @@ class TestStringCompare(TestCase):
 
 
     def test_unicode(self):
-        g1 = array([u"This",u"is",u"example"])
-        g2 = array([u"This",u"was",u"example"])
+        g1 = array([unicode("This"),unicode("is"),unicode("example")])
+        g2 = array([unicode("This"),unicode("was"),unicode("example")])
         assert_array_equal(g1 == g2, [g1[i] == g2[i] for i in [0,1,2]])
         assert_array_equal(g1 != g2, [g1[i] != g2[i] for i in [0,1,2]])
         assert_array_equal(g1 <= g2, [g1[i] <= g2[i] for i in [0,1,2]])
@@ -2000,8 +1999,8 @@ class TestRecord(TestCase):
             raise SkipTest('non ascii unicode field indexing skipped; '
                            'raises segfault on python 2.x')
         else:
-            assert_raises(ValueError, a.__setitem__, u'\u03e0', 1)
-            assert_raises(ValueError, a.__getitem__, u'\u03e0')
+            assert_raises(ValueError, a.__setitem__, unicode('\u03e0'), 1)
+            assert_raises(ValueError, a.__getitem__, unicode('\u03e0'))
 
     def test_field_names_deprecation(self):
         import warnings

@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 from numpy.testing import *
+from numpy.compat import unicode
 import numpy as np
 import numpy.ma as ma
 
@@ -38,7 +39,7 @@ class TestRegression(TestCase):
 
     def test_masked_array_repr_unicode(self):
         """Ticket #1256"""
-        repr(np.ma.array(u"Unicode"))
+        repr(np.ma.array(unicode("Unicode")))
 
     def test_atleast_2d(self):
         """Ticket #1559"""

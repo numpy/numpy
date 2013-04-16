@@ -5,6 +5,8 @@ from __future__ import division, absolute_import, print_function
 import sys
 import numpy as np
 from numpy.testing import *
+from numpy.compat import unicode
+
 
 class TestArrayRepr(object):
     def test_nan_inf(self):
@@ -156,8 +158,8 @@ def test_unicode_object_array():
     if sys.version_info[0] >= 3:
         expected = "array(['é'], dtype=object)"
     else:
-        expected = "array([u'\\xe9'], dtype=object)"
-    x = np.array([u'\xe9'], dtype=object)
+        expected = "array([unicode('\\xe9')], dtype=object)"
+    x = np.array([unicode('\xe9')], dtype=object)
     assert_equal(repr(x), expected)
 
 

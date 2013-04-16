@@ -7,6 +7,10 @@ from numpydoc.docscrape import NumpyDocString, FunctionDoc, ClassDoc
 from numpydoc.docscrape_sphinx import SphinxDocString, SphinxClassDoc
 from nose.tools import *
 
+if sys.version_info[0] >= 3:
+    unicode = str
+
+
 doc_txt = '''\
   numpy.multivariate_normal(mean, cov, shape=None, spam=None)
 
@@ -558,9 +562,9 @@ def test_unicode():
     """)
     assert isinstance(doc['Summary'][0], str)
     if sys.version_info[0] >= 3:
-        assert doc['Summary'][0] == u'öäöäöäöäöåååå'
+        assert doc['Summary'][0] == unicode('öäöäöäöäöåååå')
     else:
-        assert doc['Summary'][0] == u'öäöäöäöäöåååå'.encode('utf-8')
+        assert doc['Summary'][0] == unicode('öäöäöäöäöåååå').encode('utf-8')
 
 def test_plot_examples():
     cfg = dict(use_plots=True)

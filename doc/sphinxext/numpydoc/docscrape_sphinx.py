@@ -1,9 +1,14 @@
 from __future__ import division, absolute_import, print_function
 
 import re, inspect, textwrap, pydoc
+import sys
 import sphinx
 import collections
 from .docscrape import NumpyDocString, FunctionDoc, ClassDoc
+
+if sys.version_info[0] >= 3:
+    unicode = str
+
 
 class SphinxDocString(NumpyDocString):
     def __init__(self, docstring, config={}):
@@ -95,11 +100,11 @@ class SphinxDocString(NumpyDocString):
 
             if others:
                 maxlen_0 = max(3, max([len(x[0]) for x in others]))
-                hdr = u"="*maxlen_0 + u"  " + u"="*10
-                fmt = u'%%%ds  %%s  ' % (maxlen_0,)
+                hdr = unicode("=")*maxlen_0 + unicode("  ") + unicode("=")*10
+                fmt = unicode('%%%ds  %%s  ') % (maxlen_0,)
                 out += ['', hdr]
                 for param, param_type, desc in others:
-                    desc = u" ".join(x.strip() for x in desc).strip()
+                    desc = unicode(" ").join(x.strip() for x in desc).strip()
                     if param_type:
                         desc = "(%s) %s" % (param_type, desc)
                     out += [fmt % (param.strip(), desc)]
