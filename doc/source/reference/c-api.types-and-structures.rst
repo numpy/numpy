@@ -652,6 +652,8 @@ PyUFunc_Type
           void *ptr;
           PyObject *obj;
           PyObject *userloops;
+          npy_uint32 *op_flags;
+          npy_uint32 *iter_flags;
       } PyUFuncObject;
 
    .. cmacro:: PyUFuncObject.PyObject_HEAD
@@ -754,6 +756,14 @@ PyUFunc_Type
        user-defined type. It is retrieved by type number. User defined type
        numbers are always larger than :cdata:`NPY_USERDEF`.
 
+
+   .. cmember:: npy_uint32 PyUFuncObject.op_flags
+
+       Override the default operand flags for each ufunc operand.
+
+   .. cmember:: npy_uint32 PyUFuncObject.iter_flags
+
+       Override the default nditer flags for the ufunc.
 
 PyArrayIter_Type
 ----------------
