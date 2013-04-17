@@ -1,8 +1,9 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
 import numpy as np
 import numpy.ma as ma
+from numpy.testing import *
+from numpy.compat import sixu
 
 rlevel = 1
 
@@ -38,7 +39,7 @@ class TestRegression(TestCase):
 
     def test_masked_array_repr_unicode(self):
         """Ticket #1256"""
-        repr(np.ma.array(u"Unicode"))
+        repr(np.ma.array(sixu("Unicode")))
 
     def test_atleast_2d(self):
         """Ticket #1559"""

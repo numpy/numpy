@@ -6,7 +6,7 @@ import numpy as np
 import sys
 from numpy.core.multiarray import _vec_string
 
-from numpy.compat import asbytes, asbytes_nested
+from numpy.compat import asbytes, asbytes_nested, sixu
 
 kw_unicode_true = {'unicode': True} # make 2to3 work properly
 kw_unicode_false = {'unicode': False}
@@ -21,12 +21,12 @@ class TestBasic(TestCase):
                                               ['long', '0123456789']]))
 
     def test_from_object_array_unicode(self):
-        A = np.array([['abc', u'Sigma \u03a3'],
+        A = np.array([['abc', sixu('Sigma \u03a3')],
                       ['long   ', '0123456789']], dtype='O')
         self.assertRaises(ValueError, np.char.array, (A,))
         B = np.char.array(A, **kw_unicode_true)
         assert_equal(B.dtype.itemsize, 10 * np.array('a', 'U').dtype.itemsize)
-        assert_array_equal(B, [['abc', u'Sigma \u03a3'],
+        assert_array_equal(B, [['abc', sixu('Sigma \u03a3')],
                                ['long', '0123456789']])
 
     def test_from_string_array(self):
@@ -47,7 +47,7 @@ class TestBasic(TestCase):
         assert_(C[0,0] == A[0,0])
 
     def test_from_unicode_array(self):
-        A = np.array([['abc', u'Sigma \u03a3'],
+        A = np.array([['abc', sixu('Sigma \u03a3')],
                       ['long   ', '0123456789']])
         assert_equal(A.dtype.type, np.unicode_)
         B = np.char.array(A)
@@ -64,7 +64,7 @@ class TestBasic(TestCase):
 
     def test_unicode_upconvert(self):
         A = np.char.array(['abc'])
-        B = np.char.array([u'\u03a3'])
+        B = np.char.array([sixu('\u03a3')])
         assert_(issubclass((A + B).dtype.type, np.unicode_))
 
     def test_from_string(self):
@@ -74,7 +74,7 @@ class TestBasic(TestCase):
         assert_(issubclass(A.dtype.type, np.string_))
 
     def test_from_unicode(self):
-        A = np.char.array(u'\u03a3')
+        A = np.char.array(sixu('\u03a3'))
         assert_equal(len(A), 1)
         assert_equal(len(A[0]), 1)
         assert_equal(A.itemsize, 4)
@@ -186,9 +186,9 @@ class TestInformation(TestCase):
         self.A = np.array([[' abc ', ''],
                            ['12345', 'MixedCase'],
                            ['123 \t 345 \0 ', 'UPPER']]).view(np.chararray)
-        self.B = np.array([[u' \u03a3 ', u''],
-                           [u'12345', u'MixedCase'],
-                           [u'123 \t 345 \0 ', u'UPPER']]).view(np.chararray)
+        self.B = np.array([[sixu(' \u03a3 '), sixu('')],
+                           [sixu('12345'), sixu('MixedCase')],
+                           [sixu('123 \t 345 \0 '), sixu('UPPER')]]).view(np.chararray)
 
     def test_len(self):
         assert_(issubclass(np.char.str_len(self.A).dtype.type, np.integer))
@@ -285,9 +285,9 @@ class TestMethods(TestCase):
                            ['12345', 'MixedCase'],
                            ['123 \t 345 \0 ', 'UPPER']],
                           dtype='S').view(np.chararray)
-        self.B = np.array([[u' \u03a3 ', u''],
-                           [u'12345', u'MixedCase'],
-                           [u'123 \t 345 \0 ', u'UPPER']]).view(np.chararray)
+        self.B = np.array([[sixu(' \u03a3 '), sixu('')],
+                           [sixu('12345'), sixu('MixedCase')],
+                           [sixu('123 \t 345 \0 '), sixu('UPPER')]]).view(np.chararray)
 
     def test_capitalize(self):
         assert_(issubclass(self.A.capitalize().dtype.type, np.string_))
@@ -297,7 +297,7 @@ class TestMethods(TestCase):
                 ['123 \t 345 \0 ', 'Upper']]))
         assert_(issubclass(self.B.capitalize().dtype.type, np.unicode_))
         assert_array_equal(self.B.capitalize(), [
-                [u' \u03c3 ', ''],
+                [sixu(' \u03c3 '), ''],
                 ['12345', 'Mixedcase'],
                 ['123 \t 345 \0 ', 'Upper']])
 
@@ -325,7 +325,7 @@ class TestMethods(TestCase):
 
     def test_encode(self):
         B = self.B.encode('unicode_escape')
-        assert_(B[0][0] == asbytes(r' \u03a3 '))
+        assert_(B[0][0] == str(' \\u03a3 ').encode('latin1'))
 
     def test_expandtabs(self):
         T = self.A.expandtabs()
@@ -373,9 +373,9 @@ class TestMethods(TestCase):
                 ['123 \t 345 \0 ', 'upper']]))
         assert_(issubclass(self.B.lower().dtype.type, np.unicode_))
         assert_array_equal(self.B.lower(), [
-                [u' \u03c3 ', u''],
-                [u'12345', u'mixedcase'],
-                [u'123 \t 345 \0 ', u'upper']])
+                [sixu(' \u03c3 '), sixu('')],
+                [sixu('12345'), sixu('mixedcase')],
+                [sixu('123 \t 345 \0 '), sixu('upper')]])
 
     def test_lstrip(self):
         assert_(issubclass(self.A.lstrip().dtype.type, np.string_))
@@ -390,7 +390,7 @@ class TestMethods(TestCase):
                 ['23 \t 345 \x00', 'UPPER']]))
         assert_(issubclass(self.B.lstrip().dtype.type, np.unicode_))
         assert_array_equal(self.B.lstrip(), [
-                [u'\u03a3 ', ''],
+                [sixu('\u03a3 '), ''],
                 ['12345', 'MixedCase'],
                 ['123 \t 345 \0 ', 'UPPER']])
 
@@ -414,11 +414,11 @@ class TestMethods(TestCase):
 
         if sys.version_info[0] < 3:
             # NOTE: b'abc'.replace(b'a', 'b') is not allowed on Py3
-            R = self.A.replace(asbytes('a'), u'\u03a3')
+            R = self.A.replace(asbytes('a'), sixu('\u03a3'))
             assert_(issubclass(R.dtype.type, np.unicode_))
             assert_array_equal(R, [
-                    [u' \u03a3bc ', ''],
-                    ['12345', u'MixedC\u03a3se'],
+                    [sixu(' \u03a3bc '), ''],
+                    ['12345', sixu('MixedC\u03a3se')],
                     ['123 \t 345 \x00', 'UPPER']])
 
     def test_rjust(self):
@@ -466,7 +466,7 @@ class TestMethods(TestCase):
                 ['123 \t 345 \x00', 'UPP']]))
         assert_(issubclass(self.B.rstrip().dtype.type, np.unicode_))
         assert_array_equal(self.B.rstrip(), [
-                [u' \u03a3', ''],
+                [sixu(' \u03a3'), ''],
                 ['12345', 'MixedCase'],
                 ['123 \t 345', 'UPPER']])
 
@@ -483,7 +483,7 @@ class TestMethods(TestCase):
                 ['23 \t 345 \x00', 'UPP']]))
         assert_(issubclass(self.B.strip().dtype.type, np.unicode_))
         assert_array_equal(self.B.strip(), [
-                [u'\u03a3', ''],
+                [sixu('\u03a3'), ''],
                 ['12345', 'MixedCase'],
                 ['123 \t 345', 'UPPER']])
 
@@ -509,9 +509,9 @@ class TestMethods(TestCase):
                 ['123 \t 345 \0 ', 'upper']]))
         assert_(issubclass(self.B.swapcase().dtype.type, np.unicode_))
         assert_array_equal(self.B.swapcase(), [
-                [u' \u03c3 ', u''],
-                [u'12345', u'mIXEDcASE'],
-                [u'123 \t 345 \0 ', u'upper']])
+                [sixu(' \u03c3 '), sixu('')],
+                [sixu('12345'), sixu('mIXEDcASE')],
+                [sixu('123 \t 345 \0 '), sixu('upper')]])
 
     def test_title(self):
         assert_(issubclass(self.A.title().dtype.type, np.string_))
@@ -521,9 +521,9 @@ class TestMethods(TestCase):
                 ['123 \t 345 \0 ', 'Upper']]))
         assert_(issubclass(self.B.title().dtype.type, np.unicode_))
         assert_array_equal(self.B.title(), [
-                [u' \u03a3 ', u''],
-                [u'12345', u'Mixedcase'],
-                [u'123 \t 345 \0 ', u'Upper']])
+                [sixu(' \u03a3 '), sixu('')],
+                [sixu('12345'), sixu('Mixedcase')],
+                [sixu('123 \t 345 \0 '), sixu('Upper')]])
 
     def test_upper(self):
         assert_(issubclass(self.A.upper().dtype.type, np.string_))
@@ -533,9 +533,9 @@ class TestMethods(TestCase):
                 ['123 \t 345 \0 ', 'UPPER']]))
         assert_(issubclass(self.B.upper().dtype.type, np.unicode_))
         assert_array_equal(self.B.upper(), [
-                [u' \u03a3 ', u''],
-                [u'12345', u'MIXEDCASE'],
-                [u'123 \t 345 \0 ', u'UPPER']])
+                [sixu(' \u03a3 '), sixu('')],
+                [sixu('12345'), sixu('MIXEDCASE')],
+                [sixu('123 \t 345 \0 '), sixu('UPPER')]])
 
     def test_isnumeric(self):
         def fail():
