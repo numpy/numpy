@@ -778,9 +778,13 @@ class TestUfunc(TestCase):
         a = np.array([0, 1, 2], dtype='i8')
         b = np.array([0, 1, 2], dtype='i8')
         c = np.empty(3, dtype=rational.rational)
+
         # output must be specified so numpy knows what ufunc signature to look for
         result = rational.test_add(a, b, c)
         assert_equal(result, np.array([0, 2, 4], dtype=rational.rational))
+
+        # no output type should raise TypeError
+        assert_raises(TypeError, rational.test_add, a, b)
 
 if __name__ == "__main__":
     run_module_suite()
