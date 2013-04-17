@@ -1,12 +1,21 @@
 HookFile: bscript
 
 Library:
+    Extension: umath_linalg
+        Sources:
+            umath_linalg.c.src,
+            lapack_lite/blas_lite.c,
+            lapack_lite/dlamch.c,
+            lapack_lite/dlapack_lite.c,
+            lapack_lite/f2c_lite.c,
+            lapack_lite/python_xerbla.c,
+            lapack_lite/zlapack_lite.c
     Extension: lapack_lite
         Sources:
-            blas_lite.c,
-            dlamch.c,
-            dlapack_lite.c,
-            f2c_lite.c,
+            lapack_lite/blas_lite.c,
+            lapack_lite/dlamch.c,
+            lapack_lite/dlapack_lite.c,
+            lapack_lite/f2c_lite.c,
             lapack_litemodule.c,
-            python_xerbla.c,
-            zlapack_lite.c
+            lapack_lite/python_xerbla.c,
+            lapack_lite/zlapack_lite.c

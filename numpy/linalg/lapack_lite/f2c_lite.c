@@ -21,6 +21,34 @@ s_rnge(char *var, int index, char *routine, int lineno)
     abort();
 }
 
+#ifdef KR_headers
+extern float sqrtf();
+double f__cabsf(real, imag) float real, imag;
+#else
+#undef abs
+
+double f__cabsf(float real, float imag)
+#endif
+{
+float temp;
+
+if(real < 0.0f)
+	real = -real;
+if(imag < 0.0f)
+	imag = -imag;
+if(imag > real){
+	temp = real;
+	real = imag;
+	imag = temp;
+}
+if((imag+real) == real)
+	return((float)real);
+
+temp = imag/real;
+temp = real*sqrtf(1.0 + temp*temp);  /*overflow!!*/
+return(temp);
+}
+
 
 #ifdef KR_headers
 extern double sqrt();
@@ -50,6 +78,16 @@ temp = real*sqrt(1.0 + temp*temp);  /*overflow!!*/
 return(temp);
 }
 
+ VOID
+#ifdef KR_headers
+r_cnjg(r, z) complex *r, *z;
+#else
+r_cnjg(complex *r, complex *z)
+#endif
+{
+r->r = z->r;
+r->i = - z->i;
+}
 
  VOID
 #ifdef KR_headers
@@ -64,6 +102,15 @@ r->i = - z->i;
 
 
 #ifdef KR_headers
+float r_imag(z) complex *z;
+#else
+float r_imag(complex *z)
+#endif
+{
+return(z->i);
+}
+
+#ifdef KR_headers
 double d_imag(z) doublecomplex *z;
 #else
 double d_imag(doublecomplex *z)
@@ -74,6 +121,18 @@ return(z->i);
 
 
 #define log10e 0.43429448190325182765
+
+#ifdef KR_headers
+float logf();
+float r_lg10(x) real *x;
+#else
+#undef abs
+
+float r_lg10(real *x)
+#endif
+{
+return( log10e * logf(*x) );
+}
 
 #ifdef KR_headers
 double log();
@@ -87,6 +146,16 @@ double d_lg10(doublereal *x)
 return( log10e * log(*x) );
 }
 
+#ifdef KR_headers
+double r_sign(a,b) real *a, *b;
+#else
+double r_sign(real *a, real *b)
+#endif
+{
+float x;
+x = (*a >= 0.0f ? *a : - *a);
+return( *b >= 0.0f ? x : -x);
+}
 
 #ifdef KR_headers
 double d_sign(a,b) doublereal *a, *b;
@@ -126,6 +195,40 @@ double pow_dd(doublereal *ap, doublereal *bp)
 return(pow(*ap, *bp) );
 }
 
+
+#ifdef KR_headers
+double pow_ri(ap, bp) real *ap; integer *bp;
+#else
+double pow_ri(real *ap, integer *bp)
+#endif
+{
+float pow, x;
+integer n;
+unsigned long u;
+
+pow = 1;
+x = *ap;
+n = *bp;
+
+if(n != 0)
+	{
+	if(n < 0)
+		{
+		n = -n;
+		x = 1.0f/x;
+		}
+	for(u = n; ; )
+		{
+		if(u & 01)
+			pow *= x;
+		if(u >>= 1)
+			x *= x;
+		else
+			break;
+		}
+	}
+return(pow);
+}
 
 #ifdef KR_headers
 double pow_di(ap, bp) doublereal *ap; integer *bp;
@@ -332,6 +435,17 @@ void s_copy(register char *a, register char *b, ftnlen la, ftnlen lb)
 
 
 #ifdef KR_headers
+double f__cabsf();
+double c_abs(z) complex *z;
+#else
+double f__cabsf(float, float);
+double c_abs(complex *z)
+#endif
+{
+return( f__cabsf( z->r, z->i ) );
+}
+
+#ifdef KR_headers
 double f__cabs();
 double z_abs(z) doublecomplex *z;
 #else
@@ -342,6 +456,42 @@ double z_abs(doublecomplex *z)
 return( f__cabs( z->r, z->i ) );
 }
 
+
+#ifdef KR_headers
+extern void sig_die();
+VOID c_div(c, a, b) complex *a, *b, *c;
+#else
+extern void sig_die(char*, int);
+void c_div(complex *c, complex *a, complex *b)
+#endif
+{
+float ratio, den;
+float abr, abi;
+
+if( (abr = b->r) < 0.f)
+	abr = - abr;
+if( (abi = b->i) < 0.f)
+	abi = - abi;
+if( abr <= abi )
+	{
+	  /*Let IEEE Infinties handle this ;( */
+	  /*if(abi == 0)
+		sig_die("complex division by zero", 1);*/
+	ratio = b->r / b->i ;
+	den = b->i * (1 + ratio*ratio);
+	c->r = (a->r*ratio + a->i) / den;
+	c->i = (a->i*ratio - a->r) / den;
+	}
+
+else
+	{
+	ratio = b->i / b->r ;
+	den = b->r * (1.f + ratio*ratio);
+	c->r = (a->r + a->i*ratio) / den;
+	c->i = (a->i - a->r*ratio) / den;
+	}
+
+}
 
 #ifdef KR_headers
 extern void sig_die();
@@ -377,6 +527,35 @@ else
 	c->i = (a->i - a->r*ratio) / den;
 	}
 
+}
+
+
+#ifdef KR_headers
+float sqrtf(), f__cabsf();
+VOID c_sqrt(r, z) complex *r, *z;
+#else
+#undef abs
+
+extern double f__cabsf(float, float);
+void c_sqrt(complex *r, complex *z)
+#endif
+{
+float mag;
+
+if( (mag = f__cabsf(z->r, z->i)) == 0.f)
+	r->r = r->i = 0.f;
+else if(z->r > 0.0f)
+	{
+	r->r = sqrtf(0.5f * (mag + z->r) );
+	r->i = z->i / r->r / 2.0f;
+	}
+else
+	{
+	r->i = sqrtf(0.5f * (mag - z->r) );
+	if(z->i < 0.0f)
+		r->i = - r->i;
+	r->r = z->i / r->i / 2.0f;
+	}
 }
 
 

@@ -7,7 +7,7 @@ import sys
 import numpy as np
 from numpy.testing import (TestCase, assert_, assert_equal, assert_raises,
                            assert_array_equal, assert_almost_equal,
-                           run_module_suite)
+                           run_module_suite, dec)
 from numpy import array, single, double, csingle, cdouble, dot, identity
 from numpy import multiply, atleast_2d, inf, asarray, matrix
 from numpy import linalg
@@ -26,6 +26,14 @@ def assert_almost_equal(a, b, **kw):
     else:
         decimal = 12
     old_assert_almost_equal(a, b, decimal=decimal, **kw)
+
+def get_real_dtype(dtype):
+    return {single: single, double: double,
+            csingle: single, cdouble: double}[dtype]
+
+def get_complex_dtype(dtype):
+    return {single: csingle, double: cdouble,
+            csingle: csingle, cdouble: cdouble}[dtype]
 
 
 class LinalgTestCase(object):
@@ -138,43 +146,145 @@ class LinalgNonsquareTestCase(object):
         self.do(a, b)
 
 
-class TestSolve(LinalgTestCase, TestCase):
+def _generalized_testcase(new_cls_name, old_cls):
+    def get_method(old_name, new_name):
+        def method(self):
+            base = old_cls()
+            def do(a, b):
+                a = np.array([a, a, a])
+                b = np.array([b, b, b])
+                self.do(a, b)
+            base.do = do
+            getattr(base, old_name)()
+        method.__name__ = new_name
+        return method
+
+    dct = dict()
+    for old_name in dir(old_cls):
+        if old_name.startswith('test_'):
+            new_name = old_name + '_generalized'
+            dct[new_name] = get_method(old_name, new_name)
+
+    return type(new_cls_name, (object,), dct)
+
+LinalgGeneralizedTestCase = _generalized_testcase(
+    'LinalgGeneralizedTestCase', LinalgTestCase)
+LinalgGeneralizedNonsquareTestCase = _generalized_testcase(
+    'LinalgGeneralizedNonsquareTestCase', LinalgNonsquareTestCase)
+
+
+def dot_generalized(a, b):
+    a = asarray(a)
+    if a.ndim == 3:
+        return np.array([dot(ax, bx) for ax, bx in zip(a, b)])
+    elif a.ndim > 3:
+        raise ValueError("Not implemented...")
+    return dot(a, b)
+
+def identity_like_generalized(a):
+    a = asarray(a)
+    if a.ndim == 3:
+        return np.array([identity(a.shape[-2]) for ax in a])
+    elif a.ndim > 3:
+        raise ValueError("Not implemented...")
+    return identity(a.shape[0])
+
+
+class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
     def do(self, a, b):
         x = linalg.solve(a, b)
-        assert_almost_equal(b, dot(a, x))
+        assert_almost_equal(b, dot_generalized(a, x))
         assert_(imply(isinstance(b, matrix), isinstance(x, matrix)))
 
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            assert_equal(linalg.solve(x, x).dtype, dtype)
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
 
-class TestInv(LinalgTestCase, TestCase):
+
+class TestInv(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
     def do(self, a, b):
         a_inv = linalg.inv(a)
-        assert_almost_equal(dot(a, a_inv), identity(asarray(a).shape[0]))
+        assert_almost_equal(dot_generalized(a, a_inv),
+                            identity_like_generalized(a))
         assert_(imply(isinstance(a, matrix), isinstance(a_inv, matrix)))
 
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            assert_equal(linalg.inv(x).dtype, dtype)
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
 
-class TestEigvals(LinalgTestCase, TestCase):
+
+class TestEigvals(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
     def do(self, a, b):
         ev = linalg.eigvals(a)
         evalues, evectors = linalg.eig(a)
         assert_almost_equal(ev, evalues)
 
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            assert_equal(linalg.eigvals(x).dtype, dtype)
+            x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
+            assert_equal(linalg.eigvals(x).dtype, get_complex_dtype(dtype))
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
 
-class TestEig(LinalgTestCase, TestCase):
+
+class TestEig(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
     def do(self, a, b):
         evalues, evectors = linalg.eig(a)
-        assert_almost_equal(dot(a, evectors), multiply(evectors, evalues))
+        if evectors.ndim == 3:
+            assert_almost_equal(dot_generalized(a, evectors), evectors * evalues[:,None,:])
+        else:
+            assert_almost_equal(dot(a, evectors), multiply(evectors, evalues))
         assert_(imply(isinstance(a, matrix), isinstance(evectors, matrix)))
 
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            w, v = np.linalg.eig(x)
+            assert_equal(w.dtype, dtype)
+            assert_equal(v.dtype, dtype)
 
-class TestSVD(LinalgTestCase, TestCase):
+            x = np.array([[1, 0.5], [-1, 1]], dtype=dtype)
+            w, v = np.linalg.eig(x)
+            assert_equal(w.dtype, get_complex_dtype(dtype))
+            assert_equal(v.dtype, get_complex_dtype(dtype))
+
+        for dtype in [single, double, csingle, cdouble]:
+            yield dtype
+
+
+class TestSVD(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
     def do(self, a, b):
         u, s, vt = linalg.svd(a, 0)
-        assert_almost_equal(a, dot(multiply(u, s), vt))
+        if u.ndim == 3:
+            assert_almost_equal(a, dot_generalized(u * s[:,None,:], vt))
+        else:
+            assert_almost_equal(a, dot(multiply(u, s), vt))
         assert_(imply(isinstance(a, matrix), isinstance(u, matrix)))
         assert_(imply(isinstance(a, matrix), isinstance(vt, matrix)))
 
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            u, s, vh = linalg.svd(x)
+            assert_equal(u.dtype, dtype)
+            assert_equal(s.dtype, get_real_dtype(dtype))
+            assert_equal(vh.dtype, dtype)
+            s = linalg.svd(x, compute_uv=False)
+            assert_equal(s.dtype, get_real_dtype(dtype))
 
-class TestCondSVD(LinalgTestCase, TestCase):
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
+
+
+class TestCondSVD(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
     def do(self, a, b):
         c = asarray(a) # a might be a matrix
         s = linalg.svd(c, compute_uv=False)
@@ -201,7 +311,7 @@ class TestPinv(LinalgTestCase, TestCase):
         assert_(imply(isinstance(a, matrix), isinstance(a_ginv, matrix)))
 
 
-class TestDet(LinalgTestCase, TestCase):
+class TestDet(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
     def do(self, a, b):
         d = linalg.det(a)
         (s, ld) = linalg.slogdet(a)
@@ -210,12 +320,14 @@ class TestDet(LinalgTestCase, TestCase):
         else:
             ad = asarray(a).astype(cdouble)
         ev = linalg.eigvals(ad)
-        assert_almost_equal(d, multiply.reduce(ev))
-        assert_almost_equal(s * np.exp(ld), multiply.reduce(ev))
-        if s != 0:
-            assert_almost_equal(np.abs(s), 1)
-        else:
-            assert_equal(ld, -inf)
+        assert_almost_equal(d, multiply.reduce(ev, axis=-1))
+        assert_almost_equal(s * np.exp(ld), multiply.reduce(ev, axis=-1))
+
+        s = np.atleast_1d(s)
+        ld = np.atleast_1d(ld)
+        m = (s != 0)
+        assert_almost_equal(np.abs(s[m]), 1)
+        assert_equal(ld[~m], -inf)
 
     def test_zero(self):
         assert_equal(linalg.det([[0.0]]), 0.0)
@@ -229,6 +341,13 @@ class TestDet(LinalgTestCase, TestCase):
         assert_equal(linalg.slogdet([[0.0j]]), (0.0j, -inf))
         assert_equal(type(linalg.slogdet([[0.0j]])[0]), cdouble)
         assert_equal(type(linalg.slogdet([[0.0j]])[1]), double)
+
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            assert_equal(np.linalg.det(x), get_real_dtype(dtype))
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
 
 
 class TestLstsq(LinalgTestCase, LinalgNonsquareTestCase, TestCase):
@@ -320,59 +439,78 @@ class TestBoolPower(TestCase):
 class HermitianTestCase(object):
     def test_single(self):
         a = array([[1.,2.], [2.,1.]], dtype=single)
-        self.do(a)
+        self.do(a, None)
 
     def test_double(self):
         a = array([[1.,2.], [2.,1.]], dtype=double)
-        self.do(a)
+        self.do(a, None)
 
     def test_csingle(self):
         a = array([[1.,2+3j], [2-3j,1]], dtype=csingle)
-        self.do(a)
+        self.do(a, None)
 
     def test_cdouble(self):
         a = array([[1.,2+3j], [2-3j,1]], dtype=cdouble)
-        self.do(a)
+        self.do(a, None)
 
     def test_empty(self):
         a = atleast_2d(array([], dtype = double))
-        assert_raises(linalg.LinAlgError, self.do, a)
+        assert_raises(linalg.LinAlgError, self.do, a, None)
 
     def test_nonarray(self):
         a = [[1,2], [2,1]]
-        self.do(a)
+        self.do(a, None)
 
     def test_matrix_b_only(self):
         """Check that matrix type is preserved."""
         a = array([[1.,2.], [2.,1.]])
-        self.do(a)
+        self.do(a, None)
 
     def test_matrix_a_and_b(self):
         """Check that matrix type is preserved."""
         a = matrix([[1.,2.], [2.,1.]])
-        self.do(a)
+        self.do(a, None)
 
 
-class TestEigvalsh(HermitianTestCase, TestCase):
-    def do(self, a):
+HermitianGeneralizedTestCase = _generalized_testcase(
+    'HermitianGeneralizedTestCase', HermitianTestCase)
+
+class TestEigvalsh(HermitianTestCase, HermitianGeneralizedTestCase, TestCase):
+    def do(self, a, b):
         # note that eigenvalue arrays must be sorted since
         # their order isn't guaranteed.
         ev = linalg.eigvalsh(a)
         evalues, evectors = linalg.eig(a)
-        ev.sort()
-        evalues.sort()
+        ev.sort(axis=-1)
+        evalues.sort(axis=-1)
         assert_almost_equal(ev, evalues)
 
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            assert_equal(np.linalg.eigvalsh(x), get_real_dtype(dtype))
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
 
-class TestEigh(HermitianTestCase, TestCase):
-    def do(self, a):
+
+class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase, TestCase):
+    def do(self, a, b):
         # note that eigenvalue arrays must be sorted since
         # their order isn't guaranteed.
         ev, evc = linalg.eigh(a)
         evalues, evectors = linalg.eig(a)
-        ev.sort()
-        evalues.sort()
+        ev.sort(axis=-1)
+        evalues.sort(axis=-1)
         assert_almost_equal(ev, evalues)
+
+    def test_types(self):
+        def check(dtype):
+            x = np.array([[1, 0.5], [0.5, 1]], dtype=dtype)
+            w, v = np.linalg.eig(x)
+            assert_equal(w, get_real_dtype(dtype))
+            assert_equal(v, dtype)
+        for dtype in [single, double, csingle, cdouble]:
+            yield check, dtype
 
 
 class _TestNorm(TestCase):
@@ -598,6 +736,37 @@ def test_byteorder_check():
             # Swapped
             assert_array_equal(res, routine(sw_arr))
 
+
+def test_generalized_raise_multiloop():
+    # It should raise an error even if the error doesn't occur in the
+    # last iteration of the ufunc inner loop
+
+    invertible = np.array([[1, 2], [3, 4]])
+    non_invertible = np.array([[1, 1], [1, 1]])
+
+    x = np.zeros([4, 4, 2, 2])[1::2]
+    x[...] = invertible
+    x[0,0] = non_invertible
+
+    assert_raises(np.linalg.LinAlgError, np.linalg.inv, x)
+
+
+@dec.skipif(sys.platform == "win32", "python_xerbla not enabled on Win32")
+def test_xerbla():
+    # Test that xerbla works (with GIL)
+    a = np.array([[1]])
+    try:
+        np.linalg.lapack_lite.dgetrf(
+            1, 1, a.astype(np.double),
+            0, # <- invalid value
+            a.astype(np.intc), 0)
+    except ValueError as e:
+        assert_("DGETRF parameter number 4" in str(e))
+    else:
+        assert_(False)
+
+    # Test that xerbla works (without GIL)
+    assert_raises(ValueError, np.linalg.lapack_lite.xerbla)
 
 if __name__ == "__main__":
     run_module_suite()
