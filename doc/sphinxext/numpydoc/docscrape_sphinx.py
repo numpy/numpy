@@ -1,6 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
-import re, inspect, textwrap, pydoc, aya
+import re, inspect, textwrap, pydoc
 import sphinx
 import collections
 from .docscrape import NumpyDocString, FunctionDoc, ClassDoc
