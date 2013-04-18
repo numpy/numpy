@@ -2201,6 +2201,7 @@ def iterdim(a, axis=0):
     out : ndarray, of diminsion n-1, where n = a.ndim
         
     """
+    a = np.asarray(a)
     msg = 'iterdim: %s (%d) must be >=0 and < %d'
     if not (0 <= axis < a.ndim):
         raise ValueError, msg % ('axis', axis, a.ndim)
