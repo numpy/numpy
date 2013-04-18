@@ -40,7 +40,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'Inf', 'inf', 'infty', 'Infinity',
            'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
            'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
-           'ComplexWarning']
+           'ComplexWarning','iterdim']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -2183,7 +2183,32 @@ def array_equiv(a1, a2):
     except ValueError:
         return False
 
+def iterdim(a, axis=0):
+    """
+    A generator to return slices of a multi-dimensional array over
+    the specified axis.
 
+    Parameters
+    ----------
+    a : array_like
+        Input data
+    axis : int, optional
+        The axis to iterate over.  By default, it is the first axis,
+        and thus identical to iterating over the original array.
+
+    Yields
+    -------
+    out : ndarray, of diminsion n-1, where n = a.ndim
+        
+    """
+    msg = 'iterdim: %s (%d) must be >=0 and < %d'
+    if not (0 <= axis < a.ndim):
+        raise ValueError, msg % ('axis', axis, a.ndim)
+
+    leading_indices = (slice(None),)*axis
+    for i in range(a.shape[axis]) :
+      yield a[leading_indices+(i,)]
+    
 _errdict = {"ignore":ERR_IGNORE,
             "warn":ERR_WARN,
             "raise":ERR_RAISE,
