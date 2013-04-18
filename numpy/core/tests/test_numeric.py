@@ -1530,34 +1530,36 @@ class TestIterdim(TestCase):
         a = np.arange(10)
         a_iter = np.iterdim(a)
         for i, a_slice in enumerate(a_iter):
-            assert_equal(a_slice, ())
+            assert_equal(a_slice.shape, ())
         assert_equal(i, 9)
     
     def test_iterdimNd(self):
         a = np.ones((100,10,3))
 
-        a_iter = np.iterdim(a, 1)
+        a_iter = np.iterdim(a, 0)
         for i, a_slice in enumerate(a_iter):
-            assert_equal(a_slice, (10,3))
+            assert_equal(a_slice.shape, (10,3))
         assert_equal(i, 99)
 
         a_iter = np.iterdim(a, 1)
-        for a_slice in enumerate(a_iter):
-            assert_equal(a_slice, (100,3))
+        for i, a_slice in enumerate(a_iter):
+            assert_equal(a_slice.shape, (100,3))
         assert_equal(i, 9)
 
         a_iter = np.iterdim(a, 2)
-        for a_slice in enumerate(a_iter):
-            assert_equal(a_slice, (100,10))
+        for i, a_slice in enumerate(a_iter):
+            assert_equal(a_slice.shape, (100,10))
         assert_equal(i, 2)
                            
     def test_axis_out_of_bounds_low(self):
         a = np.ones((100,10))
-        assert_raises(ValueError, np.iterdim(a, -1))
+        with self.assertRaises(ValueError):
+            np.iterdim(a, -1).next()
 
     def test_axis_out_of_bounds_high(self):
         a = np.ones((100,10))
-        assert_raises(ValueError, np.iterdim(a, 2))
+        with self.assertRaises(ValueError):
+            np.iterdim(a, 2).next()
 
 if __name__ == "__main__":
     run_module_suite()
