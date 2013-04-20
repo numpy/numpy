@@ -55,14 +55,11 @@ def apply_along_axis(func1d,axis,arr,*args):
     For a function that doesn't return a scalar, the number of dimensions in
     `outarr` is the same as `arr`.
 
-    >>> def new_func(a):
-    ...     \"\"\"Divide elements of a by 2.\"\"\"
-    ...     return a * 0.5
-    >>> b = np.array([[1,2,3], [4,5,6], [7,8,9]])
-    >>> np.apply_along_axis(new_func, 0, b)
-    array([[ 0.5,  1. ,  1.5],
-           [ 2. ,  2.5,  3. ],
-           [ 3.5,  4. ,  4.5]])
+    >>> b = np.array([[8,1,7], [4,3,9], [5,2,6]])
+    >>> np.apply_along_axis(sorted, 1, b)
+    array([[1, 7, 8],
+           [3, 4, 9],
+           [2, 5, 6]])
 
     """
     arr = asarray(arr)
