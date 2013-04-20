@@ -538,6 +538,15 @@ class TestMaskedArray(TestCase):
         assert_equal(test, control)
 
 
+    def test_filled_w_f_order(self):
+        "Test filled w/ F-contiguous array"
+        a = array(np.array([(0, 1, 2), (4, 5, 6)], order='F'),
+                  mask=np.array([(0, 0, 1), (1, 0, 0)], order='F'),
+                  order='F') # this is currently ignored
+        self.assertTrue(a.flags['F_CONTIGUOUS'])
+        self.assertTrue(a.filled(0).flags['F_CONTIGUOUS'])
+
+
     def test_optinfo_propagation(self):
         "Checks that _optinfo dictionary isn't back-propagated"
         x = array([1, 2, 3, ], dtype=float)
