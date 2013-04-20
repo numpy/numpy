@@ -841,8 +841,8 @@ array_index(PyArrayObject *v)
         return NULL;
     }
     if (PyArray_NDIM(v) != 0) {
-            if (DEPRECATE("converting an array with ndim > 0 to an index"
-                          " will result in an error in the future") < 0) {
+        if (DEPRECATE("converting an array with ndim > 0 to an index"
+                      " will result in an error in the future") < 0) {
             return NULL;
         }
     }

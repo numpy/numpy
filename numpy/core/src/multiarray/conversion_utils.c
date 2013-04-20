@@ -96,13 +96,16 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     if (len == -1) {
         /* Check to see if it is an integer number */
         if (PyNumber_Check(obj)) {
-            /* DEPRECATED: replace PyNumber_Check with PyIndex_Check */
+            /*
+             * After the deprecation the PyNumber_Check could be replaced
+             * by PyIndex_Check.
+             */
             len = 1;
         }
     }
     if (len < 0) {
         PyErr_SetString(PyExc_TypeError,
-                        "expected sequence object with len >= 0 or a single integer");
+                "expected sequence object with len >= 0 or a single integer");
         return NPY_FAIL;
     }
     if (len > NPY_MAXDIMS) {
