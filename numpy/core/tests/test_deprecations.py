@@ -86,7 +86,6 @@ class TestFloatScalarIndexDeprecation(object):
                                 category=DeprecationWarning)
 
 
-    @dec.skipif(sys.version_info[:2] < (2, 5))
     def test_deprecations(self):
         a = np.array([[[5]]])
 
@@ -159,7 +158,6 @@ class TestFloatSliceParameterDeprecation(object):
                                 category=DeprecationWarning)
 
 
-    @dec.skipif(sys.version_info[:2] < (2, 5))
     def test_deprecations(self):
         a = np.array([[5]])
 

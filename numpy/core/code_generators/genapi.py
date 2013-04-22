@@ -15,8 +15,7 @@ try:
 except ImportError:
     import md5
     md5new = md5.new
-if sys.version_info[:2] < (2, 6):
-    from sets import Set as set
+
 import textwrap
 
 from os.path import join

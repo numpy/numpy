@@ -447,9 +447,6 @@ class TestLdexp(TestCase):
         self._check_ldexp('i')
         self._check_ldexp('l')
 
-    @dec.knownfailureif(sys.platform == 'win32' and sys.version_info < (2, 6),
-                        "python.org < 2.6 binaries have broken ldexp in the "
-                        "C runtime")
     def test_ldexp_overflow(self):
         # silence warning emitted on overflow
         err = np.seterr(over="ignore")
@@ -916,12 +913,6 @@ class TestComplexFunctions(object):
     def test_against_cmath(self):
         import cmath, sys
 
-        # cmath.asinh is broken in some versions of Python, see
-        # http://bugs.python.org/issue1381
-        broken_cmath_asinh = False
-        if sys.version_info < (2,6):
-            broken_cmath_asinh = True
-
         points = [-1-1j, -1+1j, +1-1j, +1+1j]
         name_map = {'arcsin': 'asin', 'arccos': 'acos', 'arctan': 'atan',
                     'arcsinh': 'asinh', 'arccosh': 'acosh', 'arctanh': 'atanh'}
@@ -936,10 +927,6 @@ class TestComplexFunctions(object):
             for p in points:
                 a = complex(func(np.complex_(p)))
                 b = cfunc(p)
-
-                if cname == 'asinh' and broken_cmath_asinh:
-                    continue
-
                 assert_(abs(a - b) < atol, "%s %s: %s; cmath: %s"%(fname,p,a,b))
 
     def check_loss_of_precision(self, dtype):

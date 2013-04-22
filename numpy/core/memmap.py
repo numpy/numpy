@@ -248,14 +248,10 @@ class memmap(ndarray):
         else:
             acc = mmap.ACCESS_WRITE
 
-        if sys.version_info[:2] >= (2,6):
-            # The offset keyword in mmap.mmap needs Python >= 2.6
-            start = offset - offset % mmap.ALLOCATIONGRANULARITY
-            bytes -= start
-            offset -= start
-            mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=start)
-        else:
-            mm = mmap.mmap(fid.fileno(), bytes, access=acc)
+        start = offset - offset % mmap.ALLOCATIONGRANULARITY
+        bytes -= start
+        offset -= start
+        mm = mmap.mmap(fid.fileno(), bytes, access=acc, offset=start)
 
         self = ndarray.__new__(subtype, shape, dtype=descr, buffer=mm,
             offset=offset, order=order)

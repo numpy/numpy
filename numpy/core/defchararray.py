@@ -375,69 +375,42 @@ def capitalize(a):
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'capitalize')
 
-if sys.version_info >= (2, 4):
-    def center(a, width, fillchar=' '):
-        """
-        Return a copy of `a` with its elements centered in a string of
-        length `width`.
 
-        Calls `str.center` element-wise.
+def center(a, width, fillchar=' '):
+    """
+    Return a copy of `a` with its elements centered in a string of
+    length `width`.
 
-        Parameters
-        ----------
-        a : array_like of str or unicode
+    Calls `str.center` element-wise.
 
-        width : int
-            The length of the resulting strings
-        fillchar : str or unicode, optional
-            The padding character to use (default is space).
+    Parameters
+    ----------
+    a : array_like of str or unicode
 
-        Returns
-        -------
-        out : ndarray
-            Output array of str or unicode, depending on input
-            types
+    width : int
+        The length of the resulting strings
+    fillchar : str or unicode, optional
+        The padding character to use (default is space).
 
-        See also
-        --------
-        str.center
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input
+        types
 
-        """
-        a_arr = numpy.asarray(a)
-        width_arr = numpy.asarray(width)
-        size = long(numpy.max(width_arr.flat))
-        if numpy.issubdtype(a_arr.dtype, numpy.string_):
-            fillchar = asbytes(fillchar)
-        return _vec_string(
-            a_arr, (a_arr.dtype.type, size), 'center', (width_arr, fillchar))
-else:
-    def center(a, width):
-        """
-        Return an array with the elements of `a` centered in a string
-        of length width.
+    See also
+    --------
+    str.center
 
-        Calls `str.center` element-wise.
+    """
+    a_arr = numpy.asarray(a)
+    width_arr = numpy.asarray(width)
+    size = long(numpy.max(width_arr.flat))
+    if numpy.issubdtype(a_arr.dtype, numpy.string_):
+        fillchar = asbytes(fillchar)
+    return _vec_string(
+        a_arr, (a_arr.dtype.type, size), 'center', (width_arr, fillchar))
 
-        Parameters
-        ----------
-        a : array_like of str or unicode
-        width : int
-            The length of the resulting strings
-
-        Returns
-        -------
-        out : ndarray, str or unicode
-            Output array of str or unicode, depending on input types
-
-        See also
-        --------
-        str.center
-        """
-        a_arr = numpy.asarray(a)
-        width_arr = numpy.asarray(width)
-        size = long(numpy.max(width_arr.flat))
-        return _vec_string(
-            a_arr, (a_arr.dtype.type, size), 'center', (width_arr,))
 
 def count(a, sub, start=0, end=None):
     """
@@ -484,6 +457,7 @@ def count(a, sub, start=0, end=None):
     """
     return _vec_string(a, integer, 'count', [sub, start] + _clean_args(end))
 
+
 def decode(a, encoding=None, errors=None):
     """
     Calls `str.decode` element-wise.
@@ -529,6 +503,7 @@ def decode(a, encoding=None, errors=None):
     return _to_string_or_unicode_array(
         _vec_string(a, object_, 'decode', _clean_args(encoding, errors)))
 
+
 def encode(a, encoding=None, errors=None):
     """
     Calls `str.encode` element-wise.
@@ -562,6 +537,7 @@ def encode(a, encoding=None, errors=None):
     """
     return _to_string_or_unicode_array(
         _vec_string(a, object_, 'encode', _clean_args(encoding, errors)))
+
 
 def endswith(a, suffix, start=0, end=None):
     """
@@ -606,6 +582,7 @@ def endswith(a, suffix, start=0, end=None):
     return _vec_string(
         a, bool_, 'endswith', [suffix, start] + _clean_args(end))
 
+
 def expandtabs(a, tabsize=8):
     """
     Return a copy of each string element where all tab characters are
@@ -639,6 +616,7 @@ def expandtabs(a, tabsize=8):
     """
     return _to_string_or_unicode_array(
         _vec_string(a, object_, 'expandtabs', (tabsize,)))
+
 
 def find(a, sub, start=0, end=None):
     """
@@ -674,10 +652,6 @@ def find(a, sub, start=0, end=None):
     return _vec_string(
         a, integer, 'find', [sub, start] + _clean_args(end))
 
-# if sys.version_info >= (2.6):
-#     def format(a, *args, **kwargs):
-#         # _vec_string doesn't support kwargs at present
-#         raise NotImplementedError
 
 def index(a, sub, start=0, end=None):
     """
@@ -901,68 +875,41 @@ def join(sep, seq):
     return _to_string_or_unicode_array(
         _vec_string(sep, object_, 'join', (seq,)))
 
-if sys.version_info >= (2, 4):
-    def ljust(a, width, fillchar=' '):
-        """
-        Return an array with the elements of `a` left-justified in a
-        string of length `width`.
 
-        Calls `str.ljust` element-wise.
+def ljust(a, width, fillchar=' '):
+    """
+    Return an array with the elements of `a` left-justified in a
+    string of length `width`.
 
-        Parameters
-        ----------
-        a : array_like of str or unicode
+    Calls `str.ljust` element-wise.
 
-        width : int
-            The length of the resulting strings
-        fillchar : str or unicode, optional
-            The character to use for padding
+    Parameters
+    ----------
+    a : array_like of str or unicode
 
-        Returns
-        -------
-        out : ndarray
-            Output array of str or unicode, depending on input type
+    width : int
+        The length of the resulting strings
+    fillchar : str or unicode, optional
+        The character to use for padding
 
-        See also
-        --------
-        str.ljust
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
 
-        """
-        a_arr = numpy.asarray(a)
-        width_arr = numpy.asarray(width)
-        size = long(numpy.max(width_arr.flat))
-        if numpy.issubdtype(a_arr.dtype, numpy.string_):
-            fillchar = asbytes(fillchar)
-        return _vec_string(
-            a_arr, (a_arr.dtype.type, size), 'ljust', (width_arr, fillchar))
-else:
-    def ljust(a, width):
-        """
-        Return an array with the elements of `a` left-justified in a
-        string of length `width`.
+    See also
+    --------
+    str.ljust
 
-        Calls `str.ljust` element-wise.
+    """
+    a_arr = numpy.asarray(a)
+    width_arr = numpy.asarray(width)
+    size = long(numpy.max(width_arr.flat))
+    if numpy.issubdtype(a_arr.dtype, numpy.string_):
+        fillchar = asbytes(fillchar)
+    return _vec_string(
+        a_arr, (a_arr.dtype.type, size), 'ljust', (width_arr, fillchar))
 
-        Parameters
-        ----------
-        a : array_like of str or unicode
-        width : int
-            The length of the resulting strings
-
-        Returns
-        -------
-        out : ndarray
-            Output array of str or unicode, depending on input type
-
-        See also
-        --------
-        str.ljust
-        """
-        a_arr = numpy.asarray(a)
-        width_arr = numpy.asarray(width)
-        size = long(numpy.max(width_arr.flat))
-        return _vec_string(
-            a_arr, (a_arr.dtype.type, size), 'ljust', (width_arr,))
 
 def lower(a):
     """
@@ -998,6 +945,7 @@ def lower(a):
     """
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'lower')
+
 
 def lstrip(a, chars=None):
     """
@@ -1055,40 +1003,41 @@ def lstrip(a, chars=None):
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'lstrip', (chars,))
 
-if sys.version_info >= (2, 5):
-    def partition(a, sep):
-        """
-        Partition each element in `a` around `sep`.
 
-        Calls `str.partition` element-wise.
+def partition(a, sep):
+    """
+    Partition each element in `a` around `sep`.
 
-        For each element in `a`, split the element as the first
-        occurrence of `sep`, and return 3 strings containing the part
-        before the separator, the separator itself, and the part after
-        the separator. If the separator is not found, return 3 strings
-        containing the string itself, followed by two empty strings.
+    Calls `str.partition` element-wise.
 
-        Parameters
-        ----------
-        a : array_like, {str, unicode}
-            Input array
-        sep : {str, unicode}
-            Separator to split each string element in `a`.
+    For each element in `a`, split the element as the first
+    occurrence of `sep`, and return 3 strings containing the part
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, return 3 strings
+    containing the string itself, followed by two empty strings.
 
-        Returns
-        -------
-        out : ndarray, {str, unicode}
-            Output array of str or unicode, depending on input type.
-            The output array will have an extra dimension with 3
-            elements per input element.
+    Parameters
+    ----------
+    a : array_like, {str, unicode}
+        Input array
+    sep : {str, unicode}
+        Separator to split each string element in `a`.
 
-        See also
-        --------
-        str.partition
+    Returns
+    -------
+    out : ndarray, {str, unicode}
+        Output array of str or unicode, depending on input type.
+        The output array will have an extra dimension with 3
+        elements per input element.
 
-        """
-        return _to_string_or_unicode_array(
-            _vec_string(a, object_, 'partition', (sep,)))
+    See also
+    --------
+    str.partition
+
+    """
+    return _to_string_or_unicode_array(
+        _vec_string(a, object_, 'partition', (sep,)))
+
 
 def replace(a, old, new, count=None):
     """
@@ -1121,6 +1070,7 @@ def replace(a, old, new, count=None):
         _vec_string(
             a, object_, 'replace', [old, new] +_clean_args(count)))
 
+
 def rfind(a, sub, start=0, end=None):
     """
     For each element in `a`, return the highest index in the string
@@ -1152,6 +1102,7 @@ def rfind(a, sub, start=0, end=None):
     return _vec_string(
         a, integer, 'rfind', [sub, start] + _clean_args(end))
 
+
 def rindex(a, sub, start=0, end=None):
     """
     Like `rfind`, but raises `ValueError` when the substring `sub` is
@@ -1180,140 +1131,113 @@ def rindex(a, sub, start=0, end=None):
     return _vec_string(
         a, integer, 'rindex', [sub, start] + _clean_args(end))
 
-if sys.version_info >= (2, 4):
-    def rjust(a, width, fillchar=' '):
-        """
-        Return an array with the elements of `a` right-justified in a
-        string of length `width`.
 
-        Calls `str.rjust` element-wise.
+def rjust(a, width, fillchar=' '):
+    """
+    Return an array with the elements of `a` right-justified in a
+    string of length `width`.
 
-        Parameters
-        ----------
-        a : array_like of str or unicode
+    Calls `str.rjust` element-wise.
 
-        width : int
-            The length of the resulting strings
-        fillchar : str or unicode, optional
-            The character to use for padding
+    Parameters
+    ----------
+    a : array_like of str or unicode
 
-        Returns
-        -------
-        out : ndarray
-            Output array of str or unicode, depending on input type
+    width : int
+        The length of the resulting strings
+    fillchar : str or unicode, optional
+        The character to use for padding
 
-        See also
-        --------
-        str.rjust
+    Returns
+    -------
+    out : ndarray
+        Output array of str or unicode, depending on input type
 
-        """
-        a_arr = numpy.asarray(a)
-        width_arr = numpy.asarray(width)
-        size = long(numpy.max(width_arr.flat))
-        if numpy.issubdtype(a_arr.dtype, numpy.string_):
-            fillchar = asbytes(fillchar)
-        return _vec_string(
-            a_arr, (a_arr.dtype.type, size), 'rjust', (width_arr, fillchar))
-else:
-    def rjust(a, width):
-        """
-        Return an array with the elements of `a` right-justified in a
-        string of length `width`.
+    See also
+    --------
+    str.rjust
 
-        Calls `str.rjust` element-wise.
+    """
+    a_arr = numpy.asarray(a)
+    width_arr = numpy.asarray(width)
+    size = long(numpy.max(width_arr.flat))
+    if numpy.issubdtype(a_arr.dtype, numpy.string_):
+        fillchar = asbytes(fillchar)
+    return _vec_string(
+        a_arr, (a_arr.dtype.type, size), 'rjust', (width_arr, fillchar))
 
-        Parameters
-        ----------
-        a : array_like of str or unicode
-        width : int
-            The length of the resulting strings
 
-        Returns
-        -------
-        out : ndarray
-            Output array of str or unicode, depending on input type
+def rpartition(a, sep):
+    """
+    Partition (split) each element around the right-most separator.
 
-        See also
-        --------
-        str.rjust
-        """
-        a_arr = numpy.asarray(a)
-        width_arr = numpy.asarray(width)
-        size = long(numpy.max(width_arr.flat))
-        return _vec_string(
-            a_arr, (a_arr.dtype.type, size), 'rjust', (width,))
+    Calls `str.rpartition` element-wise.
 
-if sys.version_info >= (2, 5):
-    def rpartition(a, sep):
-        """
-        Partition (split) each element around the right-most separator.
+    For each element in `a`, split the element as the last
+    occurrence of `sep`, and return 3 strings containing the part
+    before the separator, the separator itself, and the part after
+    the separator. If the separator is not found, return 3 strings
+    containing the string itself, followed by two empty strings.
 
-        Calls `str.rpartition` element-wise.
+    Parameters
+    ----------
+    a : array_like of str or unicode
+        Input array
+    sep : str or unicode
+        Right-most separator to split each element in array.
 
-        For each element in `a`, split the element as the last
-        occurrence of `sep`, and return 3 strings containing the part
-        before the separator, the separator itself, and the part after
-        the separator. If the separator is not found, return 3 strings
-        containing the string itself, followed by two empty strings.
+    Returns
+    -------
+    out : ndarray
+        Output array of string or unicode, depending on input
+        type.  The output array will have an extra dimension with
+        3 elements per input element.
 
-        Parameters
-        ----------
-        a : array_like of str or unicode
-            Input array
-        sep : str or unicode
-            Right-most separator to split each element in array.
+    See also
+    --------
+    str.rpartition
 
-        Returns
-        -------
-        out : ndarray
-            Output array of string or unicode, depending on input
-            type.  The output array will have an extra dimension with
-            3 elements per input element.
+    """
+    return _to_string_or_unicode_array(
+        _vec_string(a, object_, 'rpartition', (sep,)))
 
-        See also
-        --------
-        str.rpartition
 
-        """
-        return _to_string_or_unicode_array(
-            _vec_string(a, object_, 'rpartition', (sep,)))
+def rsplit(a, sep=None, maxsplit=None):
+    """
+    For each element in `a`, return a list of the words in the
+    string, using `sep` as the delimiter string.
 
-if sys.version_info >= (2, 4):
-    def rsplit(a, sep=None, maxsplit=None):
-        """
-        For each element in `a`, return a list of the words in the
-        string, using `sep` as the delimiter string.
+    Calls `str.rsplit` element-wise.
 
-        Calls `str.rsplit` element-wise.
+    Except for splitting from the right, `rsplit`
+    behaves like `split`.
 
-        Except for splitting from the right, `rsplit`
-        behaves like `split`.
+    Parameters
+    ----------
+    a : array_like of str or unicode
 
-        Parameters
-        ----------
-        a : array_like of str or unicode
+    sep : str or unicode, optional
+        If `sep` is not specified or `None`, any whitespace string
+        is a separator.
+    maxsplit : int, optional
+        If `maxsplit` is given, at most `maxsplit` splits are done,
+        the rightmost ones.
 
-        sep : str or unicode, optional
-            If `sep` is not specified or `None`, any whitespace string
-            is a separator.
-        maxsplit : int, optional
-            If `maxsplit` is given, at most `maxsplit` splits are done,
-            the rightmost ones.
+    Returns
+    -------
+    out : ndarray
+       Array of list objects
 
-        Returns
-        -------
-        out : ndarray
-           Array of list objects
+    See also
+    --------
+    str.rsplit, split
 
-        See also
-        --------
-        str.rsplit, split
+    """
+    # This will return an array of lists of different sizes, so we
+    # leave it as an object array
+    return _vec_string(
+        a, object_, 'rsplit', [sep] + _clean_args(maxsplit))
 
-        """
-        # This will return an array of lists of different sizes, so we
-        # leave it as an object array
-        return _vec_string(
-            a, object_, 'rsplit', [sep] + _clean_args(maxsplit))
 
 def rstrip(a, chars=None):
     """
@@ -1358,6 +1282,7 @@ def rstrip(a, chars=None):
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'rstrip', (chars,))
 
+
 def split(a, sep=None, maxsplit=None):
     """
     For each element in `a`, return a list of the words in the
@@ -1391,6 +1316,7 @@ def split(a, sep=None, maxsplit=None):
     return _vec_string(
         a, object_, 'split', [sep] + _clean_args(maxsplit))
 
+
 def splitlines(a, keepends=None):
     """
     For each element in `a`, return a list of the lines in the
@@ -1418,6 +1344,7 @@ def splitlines(a, keepends=None):
     """
     return _vec_string(
         a, object_, 'splitlines', _clean_args(keepends))
+
 
 def startswith(a, prefix, start=0, end=None):
     """
@@ -1448,6 +1375,7 @@ def startswith(a, prefix, start=0, end=None):
     """
     return _vec_string(
         a, bool_, 'startswith', [prefix, start] + _clean_args(end))
+
 
 def strip(a, chars=None):
     """
@@ -1496,6 +1424,7 @@ def strip(a, chars=None):
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'strip', _clean_args(chars))
 
+
 def swapcase(a):
     """
     Return element-wise a copy of the string with
@@ -1531,6 +1460,7 @@ def swapcase(a):
     """
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'swapcase')
+
 
 def title(a):
     """
@@ -1570,6 +1500,7 @@ def title(a):
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'title')
 
+
 def translate(a, table, deletechars=None):
     """
     For each element in `a`, return a copy of the string where all
@@ -1604,6 +1535,7 @@ def translate(a, table, deletechars=None):
     else:
         return _vec_string(
             a_arr, a_arr.dtype, 'translate', [table] + _clean_args(deletechars))
+
 
 def upper(a):
     """
@@ -1640,6 +1572,7 @@ def upper(a):
     a_arr = numpy.asarray(a)
     return _vec_string(a_arr, a_arr.dtype, 'upper')
 
+
 def zfill(a, width):
     """
     Return the numeric string left-filled with zeros
@@ -1668,6 +1601,7 @@ def zfill(a, width):
     size = long(numpy.max(width_arr.flat))
     return _vec_string(
         a_arr, (a_arr.dtype.type, size), 'zfill', (width_arr,))
+
 
 def isnumeric(a):
     """
@@ -1698,6 +1632,7 @@ def isnumeric(a):
     if _use_unicode(a) != unicode_:
         raise TypeError("isnumeric is only available for Unicode strings and arrays")
     return _vec_string(a, bool_, 'isnumeric')
+
 
 def isdecimal(a):
     """
@@ -2079,28 +2014,16 @@ class chararray(ndarray):
         """
         return asarray(capitalize(self))
 
-    if sys.version_info >= (2, 4):
-        def center(self, width, fillchar=' '):
-            """
-            Return a copy of `self` with its elements centered in a
-            string of length `width`.
+    def center(self, width, fillchar=' '):
+        """
+        Return a copy of `self` with its elements centered in a
+        string of length `width`.
 
-            See also
-            --------
-            center
-            """
-            return asarray(center(self, width, fillchar))
-    else:
-        def center(self, width):
-            """
-            Return a copy of `self` with its elements centered in a
-            string of length `width`.
-
-            See also
-            --------
-            center
-            """
-            return asarray(center(self, width))
+        See also
+        --------
+        center
+        """
+        return asarray(center(self, width, fillchar))
 
     def count(self, sub, start=0, end=None):
         """
@@ -2285,29 +2208,17 @@ class chararray(ndarray):
         """
         return join(self, seq)
 
-    if sys.version_info >= (2, 4):
-        def ljust(self, width, fillchar=' '):
-            """
-            Return an array with the elements of `self` left-justified in a
-            string of length `width`.
+    def ljust(self, width, fillchar=' '):
+        """
+        Return an array with the elements of `self` left-justified in a
+        string of length `width`.
 
-            See also
-            --------
-            char.ljust
+        See also
+        --------
+        char.ljust
 
-            """
-            return asarray(ljust(self, width, fillchar))
-    else:
-        def ljust(self, width):
-            """
-            Return an array with the elements of `self` left-justified in a
-            string of length `width`.
-
-            See also
-            --------
-            ljust
-            """
-            return asarray(ljust(self, width))
+        """
+        return asarray(ljust(self, width, fillchar))
 
     def lower(self):
         """
@@ -2333,16 +2244,15 @@ class chararray(ndarray):
         """
         return asarray(lstrip(self, chars))
 
-    if sys.version_info >= (2, 5):
-        def partition(self, sep):
-            """
-            Partition each element in `self` around `sep`.
+    def partition(self, sep):
+        """
+        Partition each element in `self` around `sep`.
 
-            See also
-            --------
-            partition
-            """
-            return asarray(partition(self, sep))
+        See also
+        --------
+        partition
+        """
+        return asarray(partition(self, sep))
 
     def replace(self, old, new, count=None):
         """
@@ -2381,53 +2291,39 @@ class chararray(ndarray):
         """
         return rindex(self, sub, start, end)
 
-    if sys.version_info >= (2, 4):
-        def rjust(self, width, fillchar=' '):
-            """
-            Return an array with the elements of `self`
-            right-justified in a string of length `width`.
+    def rjust(self, width, fillchar=' '):
+        """
+        Return an array with the elements of `self`
+        right-justified in a string of length `width`.
 
-            See also
-            --------
-            char.rjust
+        See also
+        --------
+        char.rjust
 
-            """
-            return asarray(rjust(self, width, fillchar))
-    else:
-        def rjust(self, width):
-            """
-            Return an array with the elements of `self`
-            right-justified in a string of length `width`.
+        """
+        return asarray(rjust(self, width, fillchar))
 
-            See also
-            --------
-            rjust
-            """
-            return asarray(rjust(self, width))
+    def rpartition(self, sep):
+        """
+        Partition each element in `self` around `sep`.
 
-    if sys.version_info >= (2, 5):
-        def rpartition(self, sep):
-            """
-            Partition each element in `self` around `sep`.
+        See also
+        --------
+        rpartition
+        """
+        return asarray(rpartition(self, sep))
 
-            See also
-            --------
-            rpartition
-            """
-            return asarray(rpartition(self, sep))
+    def rsplit(self, sep=None, maxsplit=None):
+        """
+        For each element in `self`, return a list of the words in
+        the string, using `sep` as the delimiter string.
 
-    if sys.version_info >= (2, 4):
-        def rsplit(self, sep=None, maxsplit=None):
-            """
-            For each element in `self`, return a list of the words in
-            the string, using `sep` as the delimiter string.
+        See also
+        --------
+        char.rsplit
 
-            See also
-            --------
-            char.rsplit
-
-            """
-            return rsplit(self, sep, maxsplit)
+        """
+        return rsplit(self, sep, maxsplit)
 
     def rstrip(self, chars=None):
         """

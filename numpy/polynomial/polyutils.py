@@ -70,16 +70,6 @@ class PolyBase(object) :
     pass
 
 #
-# We need the any function for python < 2.5
-#
-if sys.version_info[:2] < (2,5) :
-    def any(iterable) :
-        for element in iterable:
-            if element :
-                return True
-        return False
-
-#
 # Helper functions to convert inputs to 1-D arrays
 #
 def trimseq(seq) :
