@@ -1,9 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+
+import numpy as np
 from numpy.testing import *
 from numpy.testing.utils import _assert_valid_refcount
-import numpy as np
+from numpy.compat import unicode
 
 rlevel = 1
 

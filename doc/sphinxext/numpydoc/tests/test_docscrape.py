@@ -7,6 +7,12 @@ from numpydoc.docscrape import NumpyDocString, FunctionDoc, ClassDoc
 from numpydoc.docscrape_sphinx import SphinxDocString, SphinxClassDoc
 from nose.tools import *
 
+if sys.version_info[0] >= 3:
+    sixu = lambda s: s
+else:
+    sixu = lambda s: unicode(s, 'unicode_escape')
+
+
 doc_txt = '''\
   numpy.multivariate_normal(mean, cov, shape=None, spam=None)
 
@@ -220,12 +226,12 @@ spam : parrot
 
 Raises
 ------
-RuntimeError : 
+RuntimeError :
     Some error
 
 Warns
 -----
-RuntimeWarning : 
+RuntimeWarning :
     Some warning
 
 Warnings
@@ -324,7 +330,7 @@ of the one-dimensional normal distribution to higher dimensions.
         The drawn samples, arranged according to `shape`.  If the
         shape given is (m,n,...), then the shape of `out` is is
         (m,n,...,N).
-        
+
         In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
         value drawn from the distribution.
 
@@ -333,16 +339,16 @@ of the one-dimensional normal distribution to higher dimensions.
     **spam** : parrot
 
         A parrot off its mortal coil.
- 
+
 :Raises:
 
-    **RuntimeError** : 
+    **RuntimeError** :
 
         Some error
 
 :Warns:
 
-    **RuntimeWarning** : 
+    **RuntimeWarning** :
 
         Some warning
 
@@ -351,12 +357,12 @@ of the one-dimensional normal distribution to higher dimensions.
     Certain warnings apply.
 
 .. seealso::
-    
+
     :obj:`some`, :obj:`other`, :obj:`funcs`
-    
+
     :obj:`otherfunc`
         relationship
-    
+
 .. rubric:: Notes
 
 Instead of specifying the full covariance matrix, popular
@@ -403,7 +409,7 @@ standard deviation:
 [True, True]
 """)
 
-       
+
 doc2 = NumpyDocString("""
     Returns array of indices of the maximum values of along the given axis.
 
@@ -558,9 +564,9 @@ def test_unicode():
     """)
     assert isinstance(doc['Summary'][0], str)
     if sys.version_info[0] >= 3:
-        assert doc['Summary'][0] == u'öäöäöäöäöåååå'
+        assert doc['Summary'][0] == sixu('öäöäöäöäöåååå')
     else:
-        assert doc['Summary'][0] == u'öäöäöäöäöåååå'.encode('utf-8')
+        assert doc['Summary'][0] == sixu('öäöäöäöäöåååå').encode('utf-8')
 
 def test_plot_examples():
     cfg = dict(use_plots=True)
@@ -578,7 +584,7 @@ def test_plot_examples():
     Examples
     --------
     .. plot::
-    
+
        import matplotlib.pyplot as plt
        plt.plot([1,2,3],[4,5,6])
        plt.show()
@@ -695,13 +701,13 @@ def test_class_members_doc():
 
     Methods
     -------
-    a : 
+    a :
 
-    b : 
+    b :
 
-    c : 
+    c :
 
-    .. index:: 
+    .. index::
 
     """)
 
@@ -728,16 +734,16 @@ def test_class_members_doc_sphinx():
     .. rubric:: Attributes
 
     ===  ==========
-      t  (float) Current time.  
-      y  (ndarray) Current variable values.  
+      t  (float) Current time.
+      y  (ndarray) Current variable values.
     ===  ==========
 
     .. rubric:: Methods
 
     ===  ==========
-      a    
-      b    
-      c    
+      a
+      b
+      c
     ===  ==========
 
     """)
@@ -745,4 +751,3 @@ def test_class_members_doc_sphinx():
 if __name__ == "__main__":
     import nose
     nose.run()
-
