@@ -6,7 +6,7 @@ from __future__ import division, absolute_import, print_function
 
 __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
-           'asstr', 'open_latin1', 'long', 'basestring']
+           'asstr', 'open_latin1', 'long', 'basestring', 'sixu']
 
 import sys
 
@@ -16,8 +16,8 @@ if sys.version_info[0] >= 3:
     long = int
     integer_types = (int,)
     basestring = str
-    bytes = bytes
     unicode = str
+    bytes = bytes
 
     def asunicode(s):
         if isinstance(s, bytes):
@@ -40,14 +40,17 @@ if sys.version_info[0] >= 3:
     def open_latin1(filename, mode='r'):
         return open(filename, mode=mode, encoding='iso-8859-1')
 
+    def sixu(s):
+        return s
+
     strchar = 'U'
 
 
 else:
     bytes = str
-    unicode = unicode
     long = long
     basestring = basestring
+    unicode = unicode
     integer_types = (int, long)
     asbytes = str
     asstr = str
@@ -64,6 +67,9 @@ else:
 
     def open_latin1(filename, mode='r'):
         return open(filename, mode=mode)
+
+    def sixu(s):
+        return unicode(s, 'unicode_escape')
 
 
 def getexception():

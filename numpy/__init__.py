@@ -164,7 +164,8 @@ else:
     # Make these accessible from numpy name-space
     #  but not imported in from numpy import *
     if sys.version_info[0] >= 3:
-        from builtins import bool, int, float, complex, object, unicode, str
+        from builtins import bool, int, float, complex, object, str
+        unicode = str
     else:
         from __builtin__ import bool, int, float, complex, object, unicode, str
 

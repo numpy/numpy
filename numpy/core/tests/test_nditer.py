@@ -4,7 +4,7 @@ import sys, warnings
 
 import numpy as np
 from numpy import array, arange, nditer, all
-from numpy.compat import asbytes
+from numpy.compat import asbytes, sixu
 from numpy.testing import *
 
 
@@ -2008,7 +2008,7 @@ def test_iter_buffering_string():
     assert_raises(TypeError,nditer,a,['buffered'],['readonly'],
                     op_dtypes='U2')
     i = nditer(a, ['buffered'], ['readonly'], op_dtypes='U6')
-    assert_equal(i[0], u'abc')
+    assert_equal(i[0], sixu('abc'))
     assert_equal(i[0].dtype, np.dtype('U6'))
 
 def test_iter_buffering_growinner():
