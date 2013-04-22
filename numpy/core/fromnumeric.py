@@ -3,7 +3,16 @@
 """
 from __future__ import division, absolute_import, print_function
 
-__docformat__ = "restructuredtext en"
+import types
+
+from . import multiarray as mu
+from . import umath as um
+from . import numerictypes as nt
+from .numeric import asarray, array, asanyarray, concatenate
+from . import _methods
+
+_dt_ = nt.sctype2char
+
 
 # functions that are now methods
 __all__ = ['take', 'reshape', 'choose', 'repeat', 'put',
@@ -16,19 +25,11 @@ __all__ = ['take', 'reshape', 'choose', 'repeat', 'put',
            'amax', 'amin',
           ]
 
-from . import multiarray as mu
-from . import umath as um
-from . import numerictypes as nt
-from .numeric import asarray, array, asanyarray, concatenate
-from . import _methods
-_dt_ = nt.sctype2char
-
-import types
 
 try:
     _gentype = types.GeneratorType
 except AttributeError:
-    _gentype = types.NoneType
+    _gentype = type(None)
 
 # save away Python sum
 _sum_ = sum

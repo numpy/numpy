@@ -140,12 +140,6 @@ TODO:
 """
 from __future__ import division, absolute_import, print_function
 
-__version__ = "$Revision: 1.177 $"[10:-1]
-import platform
-from . import __version__
-f2py_version = __version__.version
-
-#
 import sys
 import string
 import fileinput
@@ -153,7 +147,12 @@ import re
 import pprint
 import os
 import copy
+import platform
+
+from . import __version__
 from .auxfuncs import *
+
+f2py_version = __version__.version
 
 # Global flags:
 strictf77=1          # Ignore `!' comments unless line[0]=='!'
@@ -1523,7 +1522,7 @@ def postcrack2(block,tab='',param_map=None):
     global f90modulevars
     if not f90modulevars:
         return block
-    if type(block)==types.ListType:
+    if type(block)==list:
         ret = []
         for g in block:
             g = postcrack2(g,tab=tab+'\t',param_map=param_map)
@@ -1560,7 +1559,7 @@ def postcrack(block,args=None,tab=''):
           determine expression types if in argument list
     """
     global usermodules,onlyfunctions
-    if type(block)==types.ListType:
+    if type(block)==list:
         gret=[]
         uret=[]
         for g in block:
@@ -1572,7 +1571,7 @@ def postcrack(block,args=None,tab=''):
                 gret.append(g)
         return uret+gret
     setmesstext(block)
-    if (not type(block)==types.DictType) and 'block' not in block:
+    if (not type(block)==dict) and 'block' not in block:
         raise Exception('postcrack: Expected block dictionary instead of ' + \
                         str(block))
     if 'name' in block and not block['name']=='unknown_interface':

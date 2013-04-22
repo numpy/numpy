@@ -8,7 +8,6 @@ from __future__ import division, absolute_import, print_function
 
 __author__ = "Pierre GF Gerard-Marchant"
 
-import types
 import warnings
 import sys
 import pickle
@@ -836,7 +835,7 @@ class TestMaskedArrayArithmetic(TestCase):
         if sys.version_info[0] >= 3:
             assert_(isinstance(count(ott), np.integer))
         else:
-            assert_(isinstance(count(ott), types.IntType))
+            assert_(isinstance(count(ott), int))
         assert_equal(3, count(ott))
         assert_(getmask(count(ott, 0)) is nomask)
         assert_equal([1, 2], count(ott, 0))

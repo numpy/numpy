@@ -18,10 +18,12 @@ from functools import reduce
 
 import numpy.core.umath as umath
 import numpy.core.fromnumeric as fromnumeric
+import numpy.core.numeric as numeric
 from numpy.core.numeric import newaxis, ndarray, inf
 from numpy.core.fromnumeric import amax, amin
 from numpy.core.numerictypes import bool_, typecodes
 import numpy.core.numeric as numeric
+from numpy.compat import bytes, long
 
 if sys.version_info[0] >= 3:
     _MAXINT = sys.maxsize
@@ -93,13 +95,13 @@ default_object_fill_value = '?'
 
 def default_fill_value (obj):
     "Function to calculate default fill value for an object."
-    if isinstance(obj, types.FloatType):
+    if isinstance(obj, float):
         return default_real_fill_value
-    elif isinstance(obj, types.IntType) or isinstance(obj, types.LongType):
+    elif isinstance(obj, int) or isinstance(obj, long):
         return default_integer_fill_value
-    elif isinstance(obj, types.StringType):
+    elif isinstance(obj, bytes):
         return default_character_fill_value
-    elif isinstance(obj, types.ComplexType):
+    elif isinstance(obj, complex):
         return default_complex_fill_value
     elif isinstance(obj, MaskedArray) or isinstance(obj, ndarray):
         x = obj.dtype.char
@@ -119,9 +121,9 @@ def default_fill_value (obj):
 
 def minimum_fill_value (obj):
     "Function to calculate default fill value suitable for taking minima."
-    if isinstance(obj, types.FloatType):
+    if isinstance(obj, float):
         return numeric.inf
-    elif isinstance(obj, types.IntType) or isinstance(obj, types.LongType):
+    elif isinstance(obj, int) or isinstance(obj, long):
         return _MAXINT
     elif isinstance(obj, MaskedArray) or isinstance(obj, ndarray):
         x = obj.dtype.char
@@ -136,9 +138,9 @@ def minimum_fill_value (obj):
 
 def maximum_fill_value (obj):
     "Function to calculate default fill value suitable for taking maxima."
-    if isinstance(obj, types.FloatType):
+    if isinstance(obj, float):
         return -inf
-    elif isinstance(obj, types.IntType) or isinstance(obj, types.LongType):
+    elif isinstance(obj, int) or isinstance(obj, long):
         return -_MAXINT
     elif isinstance(obj, MaskedArray) or isinstance(obj, ndarray):
         x = obj.dtype.char
@@ -239,7 +241,7 @@ def filled (a, value = None):
         return a.filled(value)
     elif isinstance(a, ndarray) and a.flags['CONTIGUOUS']:
         return a
-    elif isinstance(a, types.DictType):
+    elif isinstance(a, dict):
         return numeric.array(a, 'O')
     else:
         return numeric.array(a)
@@ -1543,7 +1545,7 @@ def new_repeat(a, repeats, axis=None):
        telling how many times to repeat each element.
     """
     af = filled(a)
-    if isinstance(repeats, types.IntType):
+    if isinstance(repeats, int):
         if axis is None:
             num = af.size
         else:
@@ -2153,10 +2155,9 @@ def asarray(data, dtype=None):
 # Add methods to support ndarray interface
 # XXX: I is better to to change the masked_*_operation adaptors
 # XXX: to wrap ndarray methods directly to create ma.array methods.
-from types import MethodType
 
 def _m(f):
-    return MethodType(f, None, array)
+    return types.MethodType(f, None, array)
 
 def not_implemented(*args, **kwds):
     raise NotImplementedError("not yet implemented for numpy.ma arrays")
@@ -2280,7 +2281,7 @@ array.std = _m(_std)
 
 array.view =  _m(not_implemented)
 array.round = _m(around)
-del _m, MethodType, not_implemented
+del _m, not_implemented
 
 
 masked = MaskedArray(0, int, mask=1)

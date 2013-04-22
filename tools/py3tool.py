@@ -88,7 +88,7 @@ FIXES_TO_SKIP = [
     'sys_exc',
     'throw',
     'tuple_params',
-#    'types',
+    'types',
 #    'unicode',
     'urllib',
 #    'ws_comma',

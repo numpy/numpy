@@ -15,21 +15,19 @@ Pearu Peterson
 """
 from __future__ import division, absolute_import, print_function
 
-__version__ = "$Revision: 1.53 $"[10:-1]
-
-from . import __version__
-f2py_version = __version__.version
-
-
 import pprint
 import sys
-import types
+
+from . import __version__
+from .auxfuncs import *
+from . import cfuncs
+
+f2py_version = __version__.version
+
 errmess=sys.stderr.write
 outmess=sys.stdout.write
 show=pprint.pprint
 
-from .auxfuncs import *
-from . import cfuncs
 
 ################## Rules for callback function ##############
 
@@ -484,7 +482,7 @@ def buildcallback(rout,um):
 ,
 #endif
 """]
-    if type(rd['docreturn'])==types.ListType:
+    if type(rd['docreturn'])==list:
         rd['docreturn']=stripcomma(replace('#docreturn#',{'docreturn':rd['docreturn']}))
     optargs=stripcomma(replace('#docsignopt#',
                                 {'docsignopt':rd['docsignopt']}
@@ -501,10 +499,10 @@ def buildcallback(rout,um):
     rd['docstrsigns']=[]
     rd['latexdocstrsigns']=[]
     for k in ['docstrreq','docstropt','docstrout','docstrcbs']:
-        if k in rd and type(rd[k])==types.ListType:
+        if k in rd and type(rd[k])==list:
             rd['docstrsigns']=rd['docstrsigns']+rd[k]
         k='latex'+k
-        if k in rd and type(rd[k])==types.ListType:
+        if k in rd and type(rd[k])==list:
             rd['latexdocstrsigns']=rd['latexdocstrsigns']+rd[k][0:1]+\
                                     ['\\begin{description}']+rd[k][1:]+\
                                     ['\\end{description}']

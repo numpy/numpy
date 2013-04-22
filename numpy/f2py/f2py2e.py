@@ -16,17 +16,10 @@ Pearu Peterson
 """
 from __future__ import division, absolute_import, print_function
 
-from . import __version__
-f2py_version = __version__.version
-
 import sys
 import os
 import pprint
-import types
 import re
-errmess=sys.stderr.write
-#outmess=sys.stdout.write
-show=pprint.pprint
 
 from . import crackfortran
 from . import rules
@@ -34,7 +27,12 @@ from . import cb_rules
 from . import auxfuncs
 from . import cfuncs
 from . import f90mod_rules
+from . import __version__
 
+f2py_version = __version__.version
+errmess = sys.stderr.write
+#outmess=sys.stdout.write
+show = pprint.pprint
 outmess = auxfuncs.outmess
 
 try:
@@ -341,7 +339,7 @@ def dict_append(d_out,d_in):
     for (k,v) in d_in.items():
         if k not in d_out:
             d_out[k] = []
-        if type(v) is types.ListType:
+        if type(v) is list:
             d_out[k] = d_out[k] + v
         else:
             d_out[k].append(v)

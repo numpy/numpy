@@ -8,7 +8,6 @@ import os
 import sys
 import re
 import operator
-import types
 import warnings
 from .nosetester import import_nose
 
@@ -54,7 +53,7 @@ def gisnan(x):
     This should be removed once this problem is solved at the Ufunc level."""
     from numpy.core import isnan
     st = isnan(x)
-    if isinstance(st, types.NotImplementedType):
+    if isinstance(st, type(NotImplemented)):
         raise TypeError("isnan not supported for this type")
     return st
 
@@ -73,7 +72,7 @@ def gisfinite(x):
     err = seterr(invalid='ignore')
     try:
         st = isfinite(x)
-        if isinstance(st, types.NotImplementedType):
+        if isinstance(st, type(NotImplemented)):
             raise TypeError("isfinite not supported for this type")
     finally:
         seterr(**err)
@@ -94,7 +93,7 @@ def gisinf(x):
     err = seterr(invalid='ignore')
     try:
         st = isinf(x)
-        if isinstance(st, types.NotImplementedType):
+        if isinstance(st, type(NotImplemented)):
             raise TypeError("isinf not supported for this type")
     finally:
         seterr(**err)
