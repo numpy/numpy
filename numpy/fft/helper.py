@@ -4,14 +4,15 @@ Discrete Fourier Transforms - helper.py
 """
 from __future__ import division, absolute_import, print_function
 
+import numpy.core.numerictypes as nt
+from numpy.core import (
+        asarray, concatenate, arange, take, integer, empty
+        )
+
 # Created by Pearu Peterson, September 2002
 
 __all__ = ['fftshift', 'ifftshift', 'fftfreq', 'rfftfreq']
 
-from numpy.core import asarray, concatenate, arange, take, \
-    integer, empty
-import numpy.core.numerictypes as nt
-import types
 
 def fftshift(x, axes=None):
     """
@@ -156,7 +157,7 @@ def fftfreq(n, d=1.0):
     array([ 0.  ,  1.25,  2.5 ,  3.75, -5.  , -3.75, -2.5 , -1.25])
 
     """
-    if not (isinstance(n,types.IntType) or isinstance(n, integer)):
+    if not (isinstance(n,int) or isinstance(n, integer)):
         raise ValueError("n should be an integer")
     val = 1.0 / (n * d)
     results = empty(n, int)
@@ -212,7 +213,7 @@ def rfftfreq(n, d=1.0):
     array([  0.,  10.,  20.,  30.,  40.,  50.])
 
     """
-    if not (isinstance(n,types.IntType) or isinstance(n, integer)):
+    if not (isinstance(n,int) or isinstance(n, integer)):
         raise ValueError("n should be an integer")
     val = 1.0/(n*d)
     N = n//2 + 1

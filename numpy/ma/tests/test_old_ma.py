@@ -1,7 +1,6 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-import types
 from functools import reduce
 
 import numpy
@@ -166,7 +165,7 @@ class TestMa(TestCase):
         if sys.version_info[0] >= 3:
             self.assertTrue(isinstance(count(ott), numpy.integer))
         else:
-            self.assertTrue(isinstance(count(ott), types.IntType))
+            self.assertTrue(isinstance(count(ott), int))
         self.assertEqual(3, count(ott))
         self.assertEqual(1, count(1))
         self.assertTrue (eq(0, array(1, mask=[1])))
@@ -175,7 +174,7 @@ class TestMa(TestCase):
         if sys.version_info[0] >= 3:
             assert_(isinstance(count(ott), numpy.integer))
         else:
-            assert_(isinstance(count(ott), types.IntType))
+            assert_(isinstance(count(ott), int))
         self.assertTrue (eq(3, count(ott)))
         assert_(getmask(count(ott, 0)) is nomask)
         self.assertTrue (eq([1, 2], count(ott, 0)))

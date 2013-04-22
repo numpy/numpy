@@ -16,15 +16,13 @@ Pearu Peterson
 """
 from __future__ import division, absolute_import, print_function
 
-__version__ = "$Revision: 1.75 $"[10:-1]
-
-from . import __version__
-f2py_version = __version__.version
-
-import types
 import sys
 import copy
-errmess=sys.stderr.write
+
+from . import __version__
+
+f2py_version = __version__.version
+errmess = sys.stderr.write
 
 ##################### Definitions ##################
 
@@ -1130,7 +1128,7 @@ def buildcfuncs():
 
 def append_needs(need,flag=1):
     global outneeds,needs
-    if type(need)==types.ListType:
+    if type(need)==list:
         for n in need:
             append_needs(n,flag)
     elif type(need)==str:
@@ -1162,7 +1160,7 @@ def append_needs(need,flag=1):
             if need in needs:
                 for nn in needs[need]:
                     t=append_needs(nn,0)
-                    if type(t)==types.DictType:
+                    if type(t)==dict:
                         for nnn in t.keys():
                             if nnn in tmp:
                                 tmp[nnn]=tmp[nnn]+t[nnn]
@@ -1178,7 +1176,7 @@ def append_needs(need,flag=1):
             if need in needs:
                 for nn in needs[need]:
                     t=append_needs(nn,flag)
-                    if type(t)==types.DictType:
+                    if type(t)==dict:
                         for nnn in t.keys():
                             if nnn in tmp:
                                 tmp[nnn]=t[nnn]+tmp[nnn]

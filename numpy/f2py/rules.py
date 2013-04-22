@@ -60,11 +60,7 @@ f2py_version = __version__.version
 import pprint
 import sys
 import time
-import types
 import copy
-errmess=sys.stderr.write
-outmess=sys.stdout.write
-show=pprint.pprint
 
 from .auxfuncs import *
 from . import capi_maps
@@ -74,8 +70,12 @@ from . import common_rules
 from . import use_rules
 from . import f90mod_rules
 from . import func2subr
-options={}
 
+errmess = sys.stderr.write
+outmess = sys.stdout.write
+show = pprint.pprint
+
+options={}
 sepdict={}
 #for k in ['need_cfuncs']: sepdict[k]=','
 for k in ['decl',
@@ -1388,9 +1388,9 @@ def buildapi(rout):
                 vrd['check']=c
                 ar=applyrules(check_rules,vrd,var[a])
                 rd=dictappend(rd,ar)
-    if type(rd['cleanupfrompyobj']) is types.ListType:
+    if type(rd['cleanupfrompyobj']) is list:
         rd['cleanupfrompyobj'].reverse()
-    if type(rd['closepyobjfrom']) is types.ListType:
+    if type(rd['closepyobjfrom']) is list:
         rd['closepyobjfrom'].reverse()
     rd['docsignature']=stripcomma(replace('#docsign##docsignopt##docsignxa#',
                                           {'docsign':rd['docsign'],
@@ -1415,15 +1415,15 @@ def buildapi(rout):
     else:
         rd['callcompaqfortran']=cfs
     rd['callfortran']=cfs
-    if type(rd['docreturn'])==types.ListType:
+    if type(rd['docreturn'])==list:
         rd['docreturn']=stripcomma(replace('#docreturn#',{'docreturn':rd['docreturn']}))+' = '
     rd['docstrsigns']=[]
     rd['latexdocstrsigns']=[]
     for k in ['docstrreq','docstropt','docstrout','docstrcbs']:
-        if k in rd and type(rd[k])==types.ListType:
+        if k in rd and type(rd[k])==list:
             rd['docstrsigns']=rd['docstrsigns']+rd[k]
         k='latex'+k
-        if k in rd and type(rd[k])==types.ListType:
+        if k in rd and type(rd[k])==list:
             rd['latexdocstrsigns']=rd['latexdocstrsigns']+rd[k][0:1]+\
                                     ['\\begin{description}']+rd[k][1:]+\
                                     ['\\end{description}']
