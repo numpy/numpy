@@ -40,7 +40,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'Inf', 'inf', 'infty', 'Infinity',
            'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
            'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
-           'ComplexWarning','iterdim']
+           'ComplexWarning','iteraxis']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -2183,9 +2183,9 @@ def array_equiv(a1, a2):
     except ValueError:
         return False
 
-def iterdim(a, axis=0):
+def iteraxis(a, axis=0):
     """
-    A generator to return slices of a multi-dimensional array over
+    A iterator to return slices of a multi-dimensional array over
     the specified axis.
 
     Parameters
@@ -2198,17 +2198,16 @@ def iterdim(a, axis=0):
 
     Yields
     -------
-    out : ndarray, of diminsion n-1, where n = a.ndim
+    out : n ndarrays, of diminsion d-1, where n = a.shape[axis]
+          and d = a.ndim
         
     """
-    a = asarray(a)
-    msg = 'iterdim: %s (%d) must be >=0 and < %d'
+    msg = 'iteraxis: %s (%d) must be >=0 and < %d'
     if not (0 <= axis < a.ndim):
         raise ValueError, msg % ('axis', axis, a.ndim)
 
-    leading_indices = (slice(None),)*axis
-    for i in range(a.shape[axis]) :
-      yield a[leading_indices+(i,)]
+    a = asarray(a)
+    return iter(rollaxis(a, axis, 0))
     
 _errdict = {"ignore":ERR_IGNORE,
             "warn":ERR_WARN,

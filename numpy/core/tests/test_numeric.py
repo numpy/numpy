@@ -1525,28 +1525,28 @@ class TestRoll(TestCase):
         x = np.array([])
         assert_equal(np.roll(x, 1), np.array([]))
 
-class TestIterdim(TestCase):
-    def test_iterdim1d(self):
+class TestIteraxis(TestCase):
+    def test_iteraxis1d(self):
         a = np.arange(10)
-        a_iter = np.iterdim(a)
+        a_iter = np.iteraxis(a)
         for i, a_slice in enumerate(a_iter):
             assert_equal(a_slice.shape, ())
         assert_equal(i, 9)
     
-    def test_iterdimNd(self):
+    def test_iteraxisNd(self):
         a = np.ones((100,10,3))
 
-        a_iter = np.iterdim(a, 0)
+        a_iter = np.iteraxis(a, 0)
         for i, a_slice in enumerate(a_iter):
             assert_equal(a_slice.shape, (10,3))
         assert_equal(i, 99)
 
-        a_iter = np.iterdim(a, 1)
+        a_iter = np.iteraxis(a, 1)
         for i, a_slice in enumerate(a_iter):
             assert_equal(a_slice.shape, (100,3))
         assert_equal(i, 9)
 
-        a_iter = np.iterdim(a, 2)
+        a_iter = np.iteraxis(a, 2)
         for i, a_slice in enumerate(a_iter):
             assert_equal(a_slice.shape, (100,10))
         assert_equal(i, 2)
@@ -1554,12 +1554,12 @@ class TestIterdim(TestCase):
     def test_axis_out_of_bounds_low(self):
         a = np.ones((100,10))
         with self.assertRaises(ValueError):
-            np.iterdim(a, -1).next()
+            np.iteraxis(a, -1).next()
 
     def test_axis_out_of_bounds_high(self):
         a = np.ones((100,10))
         with self.assertRaises(ValueError):
-            np.iterdim(a, 2).next()
+            np.iteraxis(a, 2).next()
 
 if __name__ == "__main__":
     run_module_suite()
