@@ -15,7 +15,8 @@ PREREQUISITES
 
 Building NumPy requires the following software installed:
 
-1) Python__ 2.4.x or newer
+1) For Python 2, Python__ 2.6.x or newer.
+   For Python 3, Python__ 3.2.x or newer.
 
    On Debian and derivative (Ubuntu): python python-dev
 
@@ -39,10 +40,10 @@ Fortran ABI mismatch
 
 The two most popular open source fortran compilers are g77 and gfortran.
 Unfortunately, they are not ABI compatible, which means that concretely you
-should avoid mixing libraries built with one with another. In particular, if
-your blas/lapack/atlas is built with g77, you *must* use g77 when building
-numpy and scipy; on the contrary, if your atlas is built with gfortran, you
-*must* build numpy/scipy with gfortran.
+should avoid mixing libraries built with one with another. In particular,
+if your blas/lapack/atlas is built with g77, you *must* use g77 when
+building numpy and scipy; on the contrary, if your atlas is built with
+gfortran, you *must* build numpy/scipy with gfortran.
 
 Choosing the fortran compiler
 -----------------------------
@@ -58,11 +59,11 @@ To build with gfortran:
 How to check the ABI of blas/lapack/atlas
 -----------------------------------------
 
-One relatively simple and reliable way to check for the compiler used to build
-a library is to use ldd on the library. If libg2c.so is a dependency, this
-means that g77 has been used. If libgfortran.so is a dependency, gfortran has
-been used. If both are dependencies, this means both have been used, which is
-almost always a very bad idea.
+One relatively simple and reliable way to check for the compiler used to
+build a library is to use ldd on the library. If libg2c.so is a dependency,
+this means that g77 has been used. If libgfortran.so is a dependency,
+gfortran has been used. If both are dependencies, this means both have been
+used, which is almost always a very bad idea.
 
 Building with ATLAS support
 ===========================
@@ -70,70 +71,68 @@ Building with ATLAS support
 Ubuntu 8.10 (Intrepid)
 ----------------------
 
-You can install the necessary packages for optimized ATLAS with this command:
+You can install the necessary packages for optimized ATLAS with this
+command:
 
     sudo apt-get install libatlas-base-dev
 
 If you have a recent CPU with SIMD support (SSE, SSE2, etc...), you should
-also install the corresponding package for optimal performance. For example,
-for SSE2:
+also install the corresponding package for optimal performance. For
+example, for SSE2:
 
     sudo apt-get install libatlas3gf-sse2
 
 *NOTE*: if you build your own atlas, Intrepid changed its default fortran
-compiler to gfortran. So you should rebuild everything from scratch, including
-lapack, to use it on Intrepid.
+compiler to gfortran. So you should rebuild everything from scratch,
+including lapack, to use it on Intrepid.
 
 Ubuntu 8.04 and lower
 ---------------------
 
-You can install the necessary packages for optimized ATLAS with this command:
+You can install the necessary packages for optimized ATLAS with this
+command:
 
     sudo apt-get install atlas3-base-dev
 
 If you have a recent CPU with SIMD support (SSE, SSE2, etc...), you should
-also install the corresponding package for optimal performance. For example,
-for SSE2:
+also install the corresponding package for optimal performance. For
+example, for SSE2:
 
     sudo apt-get install atlas3-sse2
 
 Windows 64 bits notes
 =====================
 
-Note: only AMD64 is supported (IA64 is not) - AMD64 is the version most people
-want.
+Note: only AMD64 is supported (IA64 is not) - AMD64 is the version most
+people want.
 
 Free compilers (mingw-w64)
 --------------------------
 
 http://mingw-w64.sourceforge.net/
 
-To use the free compilers (mingw-w64), you need to build your own toolchain, as
-the mingw project only distribute cross-compilers (cross-compilation is not
-supported by numpy). Since this toolchain is still being worked on, serious
-compiler bugs can be expected.  binutil 2.19 + gcc 4.3.3 + mingw-w64 runtime
-gives you a working C compiler (but the C++ is broken). gcc 4.4 will hopefully
-be able to run natively.
+To use the free compilers (mingw-w64), you need to build your own
+toolchain, as the mingw project only distribute cross-compilers
+(cross-compilation is not supported by numpy). Since this toolchain is
+still being worked on, serious compiler bugs can be expected.  binutil 2.19
++ gcc 4.3.3 + mingw-w64 runtime gives you a working C compiler (but the C++
+is broken). gcc 4.4 will hopefully be able to run natively.
 
-This is the only tested way to get a numpy with a FULL blas/lapack (scipy does
-not work because of C++).
+This is the only tested way to get a numpy with a FULL blas/lapack (scipy
+does not work because of C++).
 
 MS compilers
 ------------
 
-If you are familiar with MS tools, that's obviously the easiest path, and the
-compilers are hopefully more mature (although in my experience, they are quite
-fragile, and often segfault on invalid C code). The main drawback is that no
-fortran compiler + MS compiler combination has been tested - mingw-w64 gfortran
-+ MS compiler does not work at all (it is unclear whether it ever will).
-
-For python 2.5, you need VS 2005 (MS compiler version 14) targeting
-AMD64 bits, or the Platform SDK v6.0 or below (which gives command
-line versions of 64 bits target compilers). The PSDK is free.
+If you are familiar with MS tools, that's obviously the easiest path, and
+the compilers are hopefully more mature (although in my experience, they
+are quite fragile, and often segfault on invalid C code). The main drawback
+is that no fortran compiler + MS compiler combination has been tested -
+mingw-w64 gfortran + MS compiler does not work at all (it is unclear
+whether it ever will).
 
 For python 2.6, you need VS 2008. The freely available version does not
 contains 64 bits compilers (you also need the PSDK, v6.1).
 
-It is *crucial* to use the right version: python 2.5 -> version 14, python 2.6,
-version 15. You can check the compiler version with cl.exe /?. Note also that
-for python 2.5, 64 bits and 32 bits versions use a different compiler version.
+It is crucial to use the right MS compiler version. For python 2.6, you
+must use version 15. You can check the compiler version with cl.exe /?.
