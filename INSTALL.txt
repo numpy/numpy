@@ -15,7 +15,8 @@ PREREQUISITES
 
 Building NumPy requires the following software installed:
 
-1) Python__ 2.4.x or newer
+1) For Python 2, Python__ 2.6.x or newer.
+   For Python 3, Python__ 3.2.x or newer.
 
    On Debian and derivative (Ubuntu): python python-dev
 
@@ -127,13 +128,8 @@ fragile, and often segfault on invalid C code). The main drawback is that no
 fortran compiler + MS compiler combination has been tested - mingw-w64 gfortran
 + MS compiler does not work at all (it is unclear whether it ever will).
 
-For python 2.5, you need VS 2005 (MS compiler version 14) targeting
-AMD64 bits, or the Platform SDK v6.0 or below (which gives command
-line versions of 64 bits target compilers). The PSDK is free.
-
 For python 2.6, you need VS 2008. The freely available version does not
 contains 64 bits compilers (you also need the PSDK, v6.1).
 
-It is *crucial* to use the right version: python 2.5 -> version 14, python 2.6,
-version 15. You can check the compiler version with cl.exe /?. Note also that
-for python 2.5, 64 bits and 32 bits versions use a different compiler version.
+It is *crucial* to use the right version: python 2.6 version 15. You can check
+the compiler version with cl.exe /?.
