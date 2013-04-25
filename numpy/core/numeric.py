@@ -2204,7 +2204,7 @@ def iteraxis(a, axis=0):
     """
     msg = 'iteraxis: %s (%d) must be >=0 and < %d'
     if not (0 <= axis < a.ndim):
-        raise ValueError, msg % ('axis', axis, a.ndim)
+        raise ValueError(msg % ('axis', axis, a.ndim))
 
     a = asarray(a)
     return iter(rollaxis(a, axis, 0))
