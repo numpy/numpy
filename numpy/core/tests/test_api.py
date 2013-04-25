@@ -101,6 +101,16 @@ def test_array_astype():
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('U100'))
 
+    # Same test as above but for strings shorter than 64 characters
+    a = np.array([b'a'*10], dtype='O')
+    b = a.astype('S')
+    assert_equal(a, b)
+    assert_equal(b.dtype, np.dtype('S10'))
+    a = np.array([sixu('a')*10], dtype='O')
+    b = a.astype('U')
+    assert_equal(a, b)
+    assert_equal(b.dtype, np.dtype('U10'))
+
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2,3)
 
