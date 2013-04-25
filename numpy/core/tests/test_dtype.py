@@ -440,7 +440,7 @@ class TestString(TestCase):
         assert_equal(repr(dt),
                     "dtype([('a', '<M8[D]'), ('b', '<m8[us]')])")
 
-    @dec.skipif(sys.version_info[0] > 2)
+    @dec.skipif(sys.version_info[0] >= 3)
     def test_dtype_str_with_long_in_shape(self):
         # Pull request #376
         dt = np.dtype('(1L,)i4')

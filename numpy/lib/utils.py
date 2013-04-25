@@ -84,17 +84,10 @@ def get_numarray_include(type=None):
         return include_dirs + [get_include()]
 
 
-if sys.version_info < (2, 4):
-    # Can't set __name__ in 2.3
-    import new
-    def _set_function_name(func, name):
-        func = new.function(func.__code__, func.__globals__,
-                            name, func.__defaults__, func.__closure__)
-        return func
-else:
-    def _set_function_name(func, name):
-        func.__name__ = name
-        return func
+def _set_function_name(func, name):
+    func.__name__ = name
+    return func
+
 
 class _Deprecate(object):
     """

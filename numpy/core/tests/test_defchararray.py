@@ -395,13 +395,12 @@ class TestMethods(TestCase):
                 ['123 \t 345 \0 ', 'UPPER']])
 
     def test_partition(self):
-        if sys.version_info >= (2, 5):
-            P = self.A.partition(asbytes_nested(['3', 'M']))
-            assert_(issubclass(P.dtype.type, np.string_))
-            assert_array_equal(P, asbytes_nested([
-                    [(' abc ', '', ''), ('', '', '')],
-                    [('12', '3', '45'), ('', 'M', 'ixedCase')],
-                    [('12', '3', ' \t 345 \0 '), ('UPPER', '', '')]]))
+        P = self.A.partition(asbytes_nested(['3', 'M']))
+        assert_(issubclass(P.dtype.type, np.string_))
+        assert_array_equal(P, asbytes_nested([
+                [(' abc ', '', ''), ('', '', '')],
+                [('12', '3', '45'), ('', 'M', 'ixedCase')],
+                [('12', '3', ' \t 345 \0 '), ('UPPER', '', '')]]))
 
     def test_replace(self):
         R = self.A.replace(asbytes_nested(['3', 'a']),
@@ -437,13 +436,12 @@ class TestMethods(TestCase):
                 ['            FOO', '     FOO']]))
 
     def test_rpartition(self):
-        if sys.version_info >= (2, 5):
-            P = self.A.rpartition(asbytes_nested(['3', 'M']))
-            assert_(issubclass(P.dtype.type, np.string_))
-            assert_array_equal(P, asbytes_nested([
-                    [('', '', ' abc '), ('', '', '')],
-                    [('12', '3', '45'), ('', 'M', 'ixedCase')],
-                    [('123 \t ', '3', '45 \0 '), ('', '', 'UPPER')]]))
+        P = self.A.rpartition(asbytes_nested(['3', 'M']))
+        assert_(issubclass(P.dtype.type, np.string_))
+        assert_array_equal(P, asbytes_nested([
+                [('', '', ' abc '), ('', '', '')],
+                [('12', '3', '45'), ('', 'M', 'ixedCase')],
+                [('123 \t ', '3', '45 \0 '), ('', '', 'UPPER')]]))
 
     def test_rsplit(self):
         A = self.A.rsplit(asbytes('3'))

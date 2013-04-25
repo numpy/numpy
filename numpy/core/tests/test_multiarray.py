@@ -2497,369 +2497,367 @@ class TestMinScalarType(object):
     def test_usigned_short(self):
         dt = np.min_scalar_type(2**16-1)
         wanted = np.dtype('uint16')
-        assert_equal(wanted, dt)    
+        assert_equal(wanted, dt)
     def test_usigned_int(self):
         dt = np.min_scalar_type(2**32-1)
         wanted = np.dtype('uint32')
-        assert_equal(wanted, dt)    
+        assert_equal(wanted, dt)
     def test_usigned_longlong(self):
         dt = np.min_scalar_type(2**63-1)
         wanted = np.dtype('uint64')
-        assert_equal(wanted, dt)    
+        assert_equal(wanted, dt)
     def test_object(self):
         dt = np.min_scalar_type(2**64)
         wanted = np.dtype('O')
         assert_equal(wanted, dt)
-        
 
-if sys.version_info >= (2, 6):
 
-    if sys.version_info[:2] == (2, 6):
-        from numpy.core.multiarray import memorysimpleview as memoryview
+if sys.version_info[:2] == (2, 6):
+    from numpy.core.multiarray import memorysimpleview as memoryview
 
-    from numpy.core._internal import _dtype_from_pep3118
+from numpy.core._internal import _dtype_from_pep3118
 
-    class TestPEP3118Dtype(object):
-        def _check(self, spec, wanted):
-            dt = np.dtype(wanted)
-            if isinstance(wanted, list) and isinstance(wanted[-1], tuple):
-                if wanted[-1][0] == '':
-                    names = list(dt.names)
-                    names[-1] = ''
-                    dt.names = tuple(names)
-            assert_equal(_dtype_from_pep3118(spec), dt,
-                         err_msg="spec %r != dtype %r" % (spec, wanted))
+class TestPEP3118Dtype(object):
+    def _check(self, spec, wanted):
+        dt = np.dtype(wanted)
+        if isinstance(wanted, list) and isinstance(wanted[-1], tuple):
+            if wanted[-1][0] == '':
+                names = list(dt.names)
+                names[-1] = ''
+                dt.names = tuple(names)
+        assert_equal(_dtype_from_pep3118(spec), dt,
+                     err_msg="spec %r != dtype %r" % (spec, wanted))
 
-        def test_native_padding(self):
-            align = np.dtype('i').alignment
-            for j in range(8):
-                if j == 0:
-                    s = 'bi'
-                else:
-                    s = 'b%dxi' % j
-                self._check('@'+s, {'f0': ('i1', 0),
-                                    'f1': ('i', align*(1 + j//align))})
-                self._check('='+s, {'f0': ('i1', 0),
-                                    'f1': ('i', 1+j)})
-
-        def test_native_padding_2(self):
-            # Native padding should work also for structs and sub-arrays
-            self._check('x3T{xi}', {'f0': (({'f0': ('i', 4)}, (3,)), 4)})
-            self._check('^x3T{xi}', {'f0': (({'f0': ('i', 1)}, (3,)), 1)})
-
-        def test_trailing_padding(self):
-            # Trailing padding should be included, *and*, the item size
-            # should match the alignment if in aligned mode
-            align = np.dtype('i').alignment
-            def VV(n):
-                return 'V%d' % (align*(1 + (n-1)//align))
-
-            self._check('ix', [('f0', 'i'), ('', VV(1))])
-            self._check('ixx', [('f0', 'i'), ('', VV(2))])
-            self._check('ixxx', [('f0', 'i'), ('', VV(3))])
-            self._check('ixxxx', [('f0', 'i'), ('', VV(4))])
-            self._check('i7x', [('f0', 'i'), ('', VV(7))])
-
-            self._check('^ix', [('f0', 'i'), ('', 'V1')])
-            self._check('^ixx', [('f0', 'i'), ('', 'V2')])
-            self._check('^ixxx', [('f0', 'i'), ('', 'V3')])
-            self._check('^ixxxx', [('f0', 'i'), ('', 'V4')])
-            self._check('^i7x', [('f0', 'i'), ('', 'V7')])
-
-        def test_native_padding_3(self):
-            dt = np.dtype(
-                    [('a', 'b'), ('b', 'i'),
-                        ('sub', np.dtype('b,i')), ('c', 'i')],
-                    align=True)
-            self._check("T{b:a:xxxi:b:T{b:f0:=i:f1:}:sub:xxxi:c:}", dt)
-
-            dt = np.dtype(
-                    [('a', 'b'), ('b', 'i'), ('c', 'b'), ('d', 'b'),
-                        ('e', 'b'), ('sub', np.dtype('b,i', align=True))])
-            self._check("T{b:a:=i:b:b:c:b:d:b:e:T{b:f0:xxxi:f1:}:sub:}", dt)
-
-        def test_padding_with_array_inside_struct(self):
-            dt = np.dtype(
-                    [('a', 'b'), ('b', 'i'), ('c', 'b', (3,)),
-                        ('d', 'i')],
-                    align=True)
-            self._check("T{b:a:xxxi:b:3b:c:xi:d:}", dt)
-
-        def test_byteorder_inside_struct(self):
-            # The byte order after @T{=i} should be '=', not '@'.
-            # Check this by noting the absence of native alignment.
-            self._check('@T{^i}xi', {'f0': ({'f0': ('i', 0)}, 0),
-                                     'f1': ('i', 5)})
-
-        def test_intra_padding(self):
-            # Natively aligned sub-arrays may require some internal padding
-            align = np.dtype('i').alignment
-            def VV(n):
-                return 'V%d' % (align*(1 + (n-1)//align))
-
-            self._check('(3)T{ix}', ({'f0': ('i', 0), '': (VV(1), 4)}, (3,)))
-
-    class TestNewBufferProtocol(object):
-        def _check_roundtrip(self, obj):
-            obj = np.asarray(obj)
-            x = memoryview(obj)
-            y = np.asarray(x)
-            y2 = np.array(x)
-            assert_(not y.flags.owndata)
-            assert_(y2.flags.owndata)
-            assert_equal(y.dtype, obj.dtype)
-            assert_array_equal(obj, y)
-            assert_equal(y2.dtype, obj.dtype)
-            assert_array_equal(obj, y2)
-
-        def test_roundtrip(self):
-            x = np.array([1,2,3,4,5], dtype='i4')
-            self._check_roundtrip(x)
-
-            x = np.array([[1,2],[3,4]], dtype=np.float64)
-            self._check_roundtrip(x)
-
-            x = np.zeros((3,3,3), dtype=np.float32)[:,0,:]
-            self._check_roundtrip(x)
-
-            dt = [('a', 'b'),
-                  ('b', 'h'),
-                  ('c', 'i'),
-                  ('d', 'l'),
-                  ('dx', 'q'),
-                  ('e', 'B'),
-                  ('f', 'H'),
-                  ('g', 'I'),
-                  ('h', 'L'),
-                  ('hx', 'Q'),
-                  ('i', np.single),
-                  ('j', np.double),
-                  ('k', np.longdouble),
-                  ('ix', np.csingle),
-                  ('jx', np.cdouble),
-                  ('kx', np.clongdouble),
-                  ('l', 'S4'),
-                  ('m', 'U4'),
-                  ('n', 'V3'),
-                  ('o', '?'),
-                  ('p', np.half),
-                 ]
-            x = np.array(
-                    [(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                        asbytes('aaaa'), 'bbbb', asbytes('xxx'), True, 1.0)],
-                    dtype=dt)
-            self._check_roundtrip(x)
-
-            x = np.array(([[1,2],[3,4]],), dtype=[('a', (int, (2,2)))])
-            self._check_roundtrip(x)
-
-            x = np.array([1,2,3], dtype='>i2')
-            self._check_roundtrip(x)
-
-            x = np.array([1,2,3], dtype='<i2')
-            self._check_roundtrip(x)
-
-            x = np.array([1,2,3], dtype='>i4')
-            self._check_roundtrip(x)
-
-            x = np.array([1,2,3], dtype='<i4')
-            self._check_roundtrip(x)
-
-            # Native-only data types can be passed through the buffer interface
-            # only in native byte order
-            if sys.byteorder == 'little':
-                x = np.array([1,2,3], dtype='>q')
-                assert_raises(ValueError, self._check_roundtrip, x)
-                x = np.array([1,2,3], dtype='<q')
-                self._check_roundtrip(x)
+    def test_native_padding(self):
+        align = np.dtype('i').alignment
+        for j in range(8):
+            if j == 0:
+                s = 'bi'
             else:
-                x = np.array([1,2,3], dtype='>q')
-                self._check_roundtrip(x)
-                x = np.array([1,2,3], dtype='<q')
-                assert_raises(ValueError, self._check_roundtrip, x)
+                s = 'b%dxi' % j
+            self._check('@'+s, {'f0': ('i1', 0),
+                                'f1': ('i', align*(1 + j//align))})
+            self._check('='+s, {'f0': ('i1', 0),
+                                'f1': ('i', 1+j)})
 
-        def test_roundtrip_half(self):
-            half_list = [
-                1.0,
-                -2.0,
-                6.5504 * 10**4, #  (max half precision)
-                2**-14, # ~= 6.10352 * 10**-5 (minimum positive normal)
-                2**-24, # ~= 5.96046 * 10**-8 (minimum strictly positive subnormal)
-                0.0,
-                -0.0,
-                float('+inf'),
-                float('-inf'),
-                0.333251953125, # ~= 1/3
-            ]
+    def test_native_padding_2(self):
+        # Native padding should work also for structs and sub-arrays
+        self._check('x3T{xi}', {'f0': (({'f0': ('i', 4)}, (3,)), 4)})
+        self._check('^x3T{xi}', {'f0': (({'f0': ('i', 1)}, (3,)), 1)})
 
-            x = np.array(half_list, dtype='>e')
+    def test_trailing_padding(self):
+        # Trailing padding should be included, *and*, the item size
+        # should match the alignment if in aligned mode
+        align = np.dtype('i').alignment
+        def VV(n):
+            return 'V%d' % (align*(1 + (n-1)//align))
+
+        self._check('ix', [('f0', 'i'), ('', VV(1))])
+        self._check('ixx', [('f0', 'i'), ('', VV(2))])
+        self._check('ixxx', [('f0', 'i'), ('', VV(3))])
+        self._check('ixxxx', [('f0', 'i'), ('', VV(4))])
+        self._check('i7x', [('f0', 'i'), ('', VV(7))])
+
+        self._check('^ix', [('f0', 'i'), ('', 'V1')])
+        self._check('^ixx', [('f0', 'i'), ('', 'V2')])
+        self._check('^ixxx', [('f0', 'i'), ('', 'V3')])
+        self._check('^ixxxx', [('f0', 'i'), ('', 'V4')])
+        self._check('^i7x', [('f0', 'i'), ('', 'V7')])
+
+    def test_native_padding_3(self):
+        dt = np.dtype(
+                [('a', 'b'), ('b', 'i'),
+                    ('sub', np.dtype('b,i')), ('c', 'i')],
+                align=True)
+        self._check("T{b:a:xxxi:b:T{b:f0:=i:f1:}:sub:xxxi:c:}", dt)
+
+        dt = np.dtype(
+                [('a', 'b'), ('b', 'i'), ('c', 'b'), ('d', 'b'),
+                    ('e', 'b'), ('sub', np.dtype('b,i', align=True))])
+        self._check("T{b:a:=i:b:b:c:b:d:b:e:T{b:f0:xxxi:f1:}:sub:}", dt)
+
+    def test_padding_with_array_inside_struct(self):
+        dt = np.dtype(
+                [('a', 'b'), ('b', 'i'), ('c', 'b', (3,)),
+                    ('d', 'i')],
+                align=True)
+        self._check("T{b:a:xxxi:b:3b:c:xi:d:}", dt)
+
+    def test_byteorder_inside_struct(self):
+        # The byte order after @T{=i} should be '=', not '@'.
+        # Check this by noting the absence of native alignment.
+        self._check('@T{^i}xi', {'f0': ({'f0': ('i', 0)}, 0),
+                                 'f1': ('i', 5)})
+
+    def test_intra_padding(self):
+        # Natively aligned sub-arrays may require some internal padding
+        align = np.dtype('i').alignment
+        def VV(n):
+            return 'V%d' % (align*(1 + (n-1)//align))
+
+        self._check('(3)T{ix}', ({'f0': ('i', 0), '': (VV(1), 4)}, (3,)))
+
+class TestNewBufferProtocol(object):
+    def _check_roundtrip(self, obj):
+        obj = np.asarray(obj)
+        x = memoryview(obj)
+        y = np.asarray(x)
+        y2 = np.array(x)
+        assert_(not y.flags.owndata)
+        assert_(y2.flags.owndata)
+        assert_equal(y.dtype, obj.dtype)
+        assert_array_equal(obj, y)
+        assert_equal(y2.dtype, obj.dtype)
+        assert_array_equal(obj, y2)
+
+    def test_roundtrip(self):
+        x = np.array([1,2,3,4,5], dtype='i4')
+        self._check_roundtrip(x)
+
+        x = np.array([[1,2],[3,4]], dtype=np.float64)
+        self._check_roundtrip(x)
+
+        x = np.zeros((3,3,3), dtype=np.float32)[:,0,:]
+        self._check_roundtrip(x)
+
+        dt = [('a', 'b'),
+              ('b', 'h'),
+              ('c', 'i'),
+              ('d', 'l'),
+              ('dx', 'q'),
+              ('e', 'B'),
+              ('f', 'H'),
+              ('g', 'I'),
+              ('h', 'L'),
+              ('hx', 'Q'),
+              ('i', np.single),
+              ('j', np.double),
+              ('k', np.longdouble),
+              ('ix', np.csingle),
+              ('jx', np.cdouble),
+              ('kx', np.clongdouble),
+              ('l', 'S4'),
+              ('m', 'U4'),
+              ('n', 'V3'),
+              ('o', '?'),
+              ('p', np.half),
+             ]
+        x = np.array(
+                [(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                    asbytes('aaaa'), 'bbbb', asbytes('xxx'), True, 1.0)],
+                dtype=dt)
+        self._check_roundtrip(x)
+
+        x = np.array(([[1,2],[3,4]],), dtype=[('a', (int, (2,2)))])
+        self._check_roundtrip(x)
+
+        x = np.array([1,2,3], dtype='>i2')
+        self._check_roundtrip(x)
+
+        x = np.array([1,2,3], dtype='<i2')
+        self._check_roundtrip(x)
+
+        x = np.array([1,2,3], dtype='>i4')
+        self._check_roundtrip(x)
+
+        x = np.array([1,2,3], dtype='<i4')
+        self._check_roundtrip(x)
+
+        # Native-only data types can be passed through the buffer interface
+        # only in native byte order
+        if sys.byteorder == 'little':
+            x = np.array([1,2,3], dtype='>q')
+            assert_raises(ValueError, self._check_roundtrip, x)
+            x = np.array([1,2,3], dtype='<q')
             self._check_roundtrip(x)
-            x = np.array(half_list, dtype='<e')
+        else:
+            x = np.array([1,2,3], dtype='>q')
             self._check_roundtrip(x)
+            x = np.array([1,2,3], dtype='<q')
+            assert_raises(ValueError, self._check_roundtrip, x)
 
-        def test_export_simple_1d(self):
-            x = np.array([1,2,3,4,5], dtype='i')
-            y = memoryview(x)
+    def test_roundtrip_half(self):
+        half_list = [
+            1.0,
+            -2.0,
+            6.5504 * 10**4, #  (max half precision)
+            2**-14, # ~= 6.10352 * 10**-5 (minimum positive normal)
+            2**-24, # ~= 5.96046 * 10**-8 (minimum strictly positive subnormal)
+            0.0,
+            -0.0,
+            float('+inf'),
+            float('-inf'),
+            0.333251953125, # ~= 1/3
+        ]
+
+        x = np.array(half_list, dtype='>e')
+        self._check_roundtrip(x)
+        x = np.array(half_list, dtype='<e')
+        self._check_roundtrip(x)
+
+    def test_export_simple_1d(self):
+        x = np.array([1,2,3,4,5], dtype='i')
+        y = memoryview(x)
+        assert_equal(y.format, 'i')
+        assert_equal(y.shape, (5,))
+        assert_equal(y.ndim, 1)
+        assert_equal(y.strides, (4,))
+        assert_equal(y.suboffsets, EMPTY)
+        assert_equal(y.itemsize, 4)
+
+    def test_export_simple_nd(self):
+        x = np.array([[1,2],[3,4]], dtype=np.float64)
+        y = memoryview(x)
+        assert_equal(y.format, 'd')
+        assert_equal(y.shape, (2, 2))
+        assert_equal(y.ndim, 2)
+        assert_equal(y.strides, (16, 8))
+        assert_equal(y.suboffsets, EMPTY)
+        assert_equal(y.itemsize, 8)
+
+    def test_export_discontiguous(self):
+        x = np.zeros((3,3,3), dtype=np.float32)[:,0,:]
+        y = memoryview(x)
+        assert_equal(y.format, 'f')
+        assert_equal(y.shape, (3, 3))
+        assert_equal(y.ndim, 2)
+        assert_equal(y.strides, (36, 4))
+        assert_equal(y.suboffsets, EMPTY)
+        assert_equal(y.itemsize, 4)
+
+    def test_export_record(self):
+        dt = [('a', 'b'),
+              ('b', 'h'),
+              ('c', 'i'),
+              ('d', 'l'),
+              ('dx', 'q'),
+              ('e', 'B'),
+              ('f', 'H'),
+              ('g', 'I'),
+              ('h', 'L'),
+              ('hx', 'Q'),
+              ('i', np.single),
+              ('j', np.double),
+              ('k', np.longdouble),
+              ('ix', np.csingle),
+              ('jx', np.cdouble),
+              ('kx', np.clongdouble),
+              ('l', 'S4'),
+              ('m', 'U4'),
+              ('n', 'V3'),
+              ('o', '?'),
+              ('p', np.half),
+             ]
+        x = np.array(
+                [(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                    asbytes('aaaa'), 'bbbb', asbytes('   '), True, 1.0)],
+                dtype=dt)
+        y = memoryview(x)
+        assert_equal(y.shape, (1,))
+        assert_equal(y.ndim, 1)
+        assert_equal(y.suboffsets, EMPTY)
+
+        sz = sum([dtype(b).itemsize for a, b in dt])
+        if dtype('l').itemsize == 4:
+            assert_equal(y.format, 'T{b:a:=h:b:i:c:l:d:^q:dx:B:e:@H:f:=I:g:L:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
+        else:
+            assert_equal(y.format, 'T{b:a:=h:b:i:c:q:d:^q:dx:B:e:@H:f:=I:g:Q:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
+        # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides
+        if not (np.ones(1).strides[0] == np.iinfo(np.intp).max):
+            assert_equal(y.strides, (sz,))
+        assert_equal(y.itemsize, sz)
+
+    def test_export_subarray(self):
+        x = np.array(([[1,2],[3,4]],), dtype=[('a', ('i', (2,2)))])
+        y = memoryview(x)
+        assert_equal(y.format, 'T{(2,2)i:a:}')
+        assert_equal(y.shape, EMPTY)
+        assert_equal(y.ndim, 0)
+        assert_equal(y.strides, EMPTY)
+        assert_equal(y.suboffsets, EMPTY)
+        assert_equal(y.itemsize, 16)
+
+    def test_export_endian(self):
+        x = np.array([1,2,3], dtype='>i')
+        y = memoryview(x)
+        if sys.byteorder == 'little':
+            assert_equal(y.format, '>i')
+        else:
             assert_equal(y.format, 'i')
-            assert_equal(y.shape, (5,))
-            assert_equal(y.ndim, 1)
-            assert_equal(y.strides, (4,))
-            assert_equal(y.suboffsets, EMPTY)
-            assert_equal(y.itemsize, 4)
 
-        def test_export_simple_nd(self):
-            x = np.array([[1,2],[3,4]], dtype=np.float64)
-            y = memoryview(x)
-            assert_equal(y.format, 'd')
-            assert_equal(y.shape, (2, 2))
-            assert_equal(y.ndim, 2)
-            assert_equal(y.strides, (16, 8))
-            assert_equal(y.suboffsets, EMPTY)
-            assert_equal(y.itemsize, 8)
+        x = np.array([1,2,3], dtype='<i')
+        y = memoryview(x)
+        if sys.byteorder == 'little':
+            assert_equal(y.format, 'i')
+        else:
+            assert_equal(y.format, '<i')
 
-        def test_export_discontiguous(self):
-            x = np.zeros((3,3,3), dtype=np.float32)[:,0,:]
-            y = memoryview(x)
-            assert_equal(y.format, 'f')
-            assert_equal(y.shape, (3, 3))
-            assert_equal(y.ndim, 2)
-            assert_equal(y.strides, (36, 4))
-            assert_equal(y.suboffsets, EMPTY)
-            assert_equal(y.itemsize, 4)
+    def test_padding(self):
+        for j in range(8):
+            x = np.array([(1,),(2,)], dtype={'f0': (int, j)})
+            self._check_roundtrip(x)
 
-        def test_export_record(self):
-            dt = [('a', 'b'),
-                  ('b', 'h'),
-                  ('c', 'i'),
-                  ('d', 'l'),
-                  ('dx', 'q'),
-                  ('e', 'B'),
-                  ('f', 'H'),
-                  ('g', 'I'),
-                  ('h', 'L'),
-                  ('hx', 'Q'),
-                  ('i', np.single),
-                  ('j', np.double),
-                  ('k', np.longdouble),
-                  ('ix', np.csingle),
-                  ('jx', np.cdouble),
-                  ('kx', np.clongdouble),
-                  ('l', 'S4'),
-                  ('m', 'U4'),
-                  ('n', 'V3'),
-                  ('o', '?'),
-                  ('p', np.half),
-                 ]
-            x = np.array(
-                    [(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-                        asbytes('aaaa'), 'bbbb', asbytes('   '), True, 1.0)],
-                    dtype=dt)
-            y = memoryview(x)
-            assert_equal(y.shape, (1,))
-            assert_equal(y.ndim, 1)
-            assert_equal(y.suboffsets, EMPTY)
+    def test_reference_leak(self):
+        count_1 = sys.getrefcount(np.core._internal)
+        a = np.zeros(4)
+        b = memoryview(a)
+        c = np.asarray(b)
+        count_2 = sys.getrefcount(np.core._internal)
+        assert_equal(count_1, count_2)
 
-            sz = sum([dtype(b).itemsize for a, b in dt])
-            if dtype('l').itemsize == 4:
-                assert_equal(y.format, 'T{b:a:=h:b:i:c:l:d:^q:dx:B:e:@H:f:=I:g:L:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
-            else:
-                assert_equal(y.format, 'T{b:a:=h:b:i:c:q:d:^q:dx:B:e:@H:f:=I:g:Q:h:^Q:hx:=f:i:d:j:^g:k:=Zf:ix:Zd:jx:^Zg:kx:4s:l:=4w:m:3x:n:?:o:@e:p:}')
-            # Cannot test if NPY_RELAXED_STRIDES_CHECKING changes the strides
-            if not (np.ones(1).strides[0] == np.iinfo(np.intp).max):
-                assert_equal(y.strides, (sz,))
-            assert_equal(y.itemsize, sz)
+    def test_padded_struct_array(self):
+        dt1 = np.dtype(
+                [('a', 'b'), ('b', 'i'), ('sub', np.dtype('b,i')), ('c', 'i')],
+                align=True)
+        x1 = np.arange(dt1.itemsize, dtype=np.int8).view(dt1)
+        self._check_roundtrip(x1)
 
-        def test_export_subarray(self):
-            x = np.array(([[1,2],[3,4]],), dtype=[('a', ('i', (2,2)))])
-            y = memoryview(x)
-            assert_equal(y.format, 'T{(2,2)i:a:}')
-            assert_equal(y.shape, EMPTY)
-            assert_equal(y.ndim, 0)
-            assert_equal(y.strides, EMPTY)
-            assert_equal(y.suboffsets, EMPTY)
-            assert_equal(y.itemsize, 16)
+        dt2 = np.dtype(
+                [('a', 'b'), ('b', 'i'), ('c', 'b', (3,)), ('d', 'i')],
+                align=True)
+        x2 = np.arange(dt2.itemsize, dtype=np.int8).view(dt2)
+        self._check_roundtrip(x2)
 
-        def test_export_endian(self):
-            x = np.array([1,2,3], dtype='>i')
-            y = memoryview(x)
-            if sys.byteorder == 'little':
-                assert_equal(y.format, '>i')
-            else:
-                assert_equal(y.format, 'i')
-
-            x = np.array([1,2,3], dtype='<i')
-            y = memoryview(x)
-            if sys.byteorder == 'little':
-                assert_equal(y.format, 'i')
-            else:
-                assert_equal(y.format, '<i')
-
-        def test_padding(self):
-            for j in range(8):
-                x = np.array([(1,),(2,)], dtype={'f0': (int, j)})
-                self._check_roundtrip(x)
-
-        def test_reference_leak(self):
-            count_1 = sys.getrefcount(np.core._internal)
-            a = np.zeros(4)
-            b = memoryview(a)
-            c = np.asarray(b)
-            count_2 = sys.getrefcount(np.core._internal)
-            assert_equal(count_1, count_2)
-
-        def test_padded_struct_array(self):
-            dt1 = np.dtype(
-                    [('a', 'b'), ('b', 'i'), ('sub', np.dtype('b,i')), ('c', 'i')],
-                    align=True)
-            x1 = np.arange(dt1.itemsize, dtype=np.int8).view(dt1)
-            self._check_roundtrip(x1)
-
-            dt2 = np.dtype(
-                    [('a', 'b'), ('b', 'i'), ('c', 'b', (3,)), ('d', 'i')],
-                    align=True)
-            x2 = np.arange(dt2.itemsize, dtype=np.int8).view(dt2)
-            self._check_roundtrip(x2)
-
-            dt3 = np.dtype(
-                    [('a', 'b'), ('b', 'i'), ('c', 'b'), ('d', 'b'),
-                        ('e', 'b'), ('sub', np.dtype('b,i', align=True))])
-            x3 = np.arange(dt3.itemsize, dtype=np.int8).view(dt3)
-            self._check_roundtrip(x3)
+        dt3 = np.dtype(
+                [('a', 'b'), ('b', 'i'), ('c', 'b'), ('d', 'b'),
+                    ('e', 'b'), ('sub', np.dtype('b,i', align=True))])
+        x3 = np.arange(dt3.itemsize, dtype=np.int8).view(dt3)
+        self._check_roundtrip(x3)
 
 
-    class TestArrayAttributeDeletion(object):
+class TestArrayAttributeDeletion(object):
 
-        def test_multiarray_writable_attributes_deletion(self):
-            """ticket #2046, should not seqfault, raise AttributeError"""
-            a = np.ones(2)
-            attr =  ['shape', 'strides', 'data', 'dtype', 'real', 'imag', 'flat']
-            for s in attr:
-                assert_raises(AttributeError, delattr, a, s)
-
-
-        def test_multiarray_not_writable_attributes_deletion(self):
-            a = np.ones(2)
-            attr = ["ndim", "flags", "itemsize", "size", "nbytes", "base",
-                    "ctypes", "T", "__array_interface__", "__array_struct__",
-                    "__array_priority__", "__array_finalize__"]
-            for s in attr:
-                assert_raises(AttributeError, delattr, a, s)
+    def test_multiarray_writable_attributes_deletion(self):
+        """ticket #2046, should not seqfault, raise AttributeError"""
+        a = np.ones(2)
+        attr =  ['shape', 'strides', 'data', 'dtype', 'real', 'imag', 'flat']
+        for s in attr:
+            assert_raises(AttributeError, delattr, a, s)
 
 
-        def test_multiarray_flags_writable_attribute_deletion(self):
-            a = np.ones(2).flags
-            attr = ['updateifcopy', 'aligned', 'writeable']
-            for s in attr:
-                assert_raises(AttributeError, delattr, a, s)
+    def test_multiarray_not_writable_attributes_deletion(self):
+        a = np.ones(2)
+        attr = ["ndim", "flags", "itemsize", "size", "nbytes", "base",
+                "ctypes", "T", "__array_interface__", "__array_struct__",
+                "__array_priority__", "__array_finalize__"]
+        for s in attr:
+            assert_raises(AttributeError, delattr, a, s)
 
 
-        def test_multiarray_flags_not_writable_attribute_deletion(self):
-            a = np.ones(2).flags
-            attr = ["contiguous", "c_contiguous", "f_contiguous", "fortran",
-                    "owndata", "fnc", "forc", "behaved", "carray", "farray",
-                    "num"]
-            for s in attr:
-                assert_raises(AttributeError, delattr, a, s)
+    def test_multiarray_flags_writable_attribute_deletion(self):
+        a = np.ones(2).flags
+        attr = ['updateifcopy', 'aligned', 'writeable']
+        for s in attr:
+            assert_raises(AttributeError, delattr, a, s)
+
+
+    def test_multiarray_flags_not_writable_attribute_deletion(self):
+        a = np.ones(2).flags
+        attr = ["contiguous", "c_contiguous", "f_contiguous", "fortran",
+                "owndata", "fnc", "forc", "behaved", "carray", "farray",
+                "num"]
+        for s in attr:
+            assert_raises(AttributeError, delattr, a, s)
 
 def test_array_interface():
     # Test scalar coercion within the array interface
