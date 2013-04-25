@@ -7,6 +7,11 @@ This release supports  Python 2.6 -2.7 and 3.2 - 3.3.
 Highlights
 ==========
 
+Python 2 and Python 3 are supported by the same code base. The
+2to3 fixer is no longer run.
+
+
+
 Dropped Support
 ===============
 

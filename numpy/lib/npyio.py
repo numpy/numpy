@@ -29,10 +29,9 @@ from io import BytesIO
 
 if sys.version_info[0] >= 3:
     import pickle
-    imap = map
 else:
     import cPickle as pickle
-    imap = itertools.imap
+    from future_builtins import map
 
 loads = pickle.loads
 
@@ -1614,7 +1613,7 @@ def genfromtxt(fname, dtype=float, comments='#', delimiter=None,
                 converter.iterupgrade(current_column)
             except ConverterLockError:
                 errmsg = "Converter #%i is locked and cannot be upgraded: " % i
-                current_column = imap(itemgetter(i), rows)
+                current_column = map(itemgetter(i), rows)
                 for (j, value) in enumerate(current_column):
                     try:
                         converter.upgrade(value)
