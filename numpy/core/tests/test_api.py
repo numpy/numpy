@@ -89,6 +89,13 @@ def test_array_astype():
     assert_(not (a is b))
     assert_(type(b) != np.matrix)
 
+    # Make sure converting from string object to fixed length string
+    # does not truncate.
+    a = np.array(['a'*100], dtype='O')
+    b = a.astype('S')
+    assert_equal(a, b)
+    assert_equal(b.dtype, np.dtype('S100'))
+
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2,3)
 
