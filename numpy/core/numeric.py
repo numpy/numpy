@@ -2202,8 +2202,8 @@ def iteraxis(a, axis=0):
           and d = a.ndim
         
     """
-    msg = 'iteraxis: %s (%d) must be >=0 and < %d'
     if not (0 <= axis < a.ndim):
+        msg = 'iteraxis: %s (%d) must be >=0 and < %d'
         raise ValueError(msg % ('axis', axis, a.ndim))
 
     a = asarray(a)
