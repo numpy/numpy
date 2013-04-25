@@ -226,22 +226,33 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                     break;
                 case NPY_OBJECT:
                     size = 64;
-                    /* If we're adapting a string dtype for an array of string
-                       objects, call GetArrayParamsFromObject to figure out
-                       maximum string size, and use that as new dtype size. */
-                    if (flex_type_num == NPY_STRING && data_obj != NULL) {
-                        /* Convert data array to list of objects since
-                           GetArrayParamsFromObject won't iterator through
-                           items in an array. */
+                    /* 
+                     * If we're adapting a string dtype for an array of string
+                     * objects, call GetArrayParamsFromObject to figure out
+                     * maximum string size, and use that as new dtype size.
+                     */
+                    if ((flex_type_num == NPY_STRING ||
+                            flex_type_num == NPY_UNICODE) &&
+                            data_obj != NULL) {
+                        /*
+                         * Convert data array to list of objects since
+                         * GetArrayParamsFromObject won't iterator through
+                         * items in an array.
+                         */
                         list = PyArray_ToList(data_obj);
                         if (list != NULL) {
                             result = PyArray_GetArrayParamsFromObject(
-                                list,
-                                flex_dtype,
-                                0, &dtype,
-                                &ndim, dims, &arr, NULL);
+                                    list,
+                                    flex_dtype,
+                                    0, &dtype,
+                                    &ndim, dims, &arr, NULL);
                             if (result == 0 && dtype != NULL) {
-                                size = dtype->elsize;
+                                if (flex_type_num == NPY_UNICODE) {
+                                    size = dtype->elsize / 4;
+                                }
+                                else {
+                                    size = dtype->elsize;
+                                }
                             }
                             Py_DECREF(list);
                         }

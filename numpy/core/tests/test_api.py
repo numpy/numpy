@@ -6,6 +6,7 @@ import numpy as np
 from numpy.testing import *
 from numpy.testing.utils import WarningManager
 import warnings
+from numpy.compat import sixu
 
 # Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
 NPY_RELAXED_STRIDES_CHECKING = np.ones((10,1), order='C').flags.f_contiguous
@@ -91,10 +92,14 @@ def test_array_astype():
 
     # Make sure converting from string object to fixed length string
     # does not truncate.
-    a = np.array(['a'*100], dtype='O')
+    a = np.array([b'a'*100], dtype='O')
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S100'))
+    a = np.array([sixu('a')*100], dtype='O')
+    b = a.astype('U')
+    assert_equal(a, b)
+    assert_equal(b.dtype, np.dtype('U100'))
 
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2,3)
