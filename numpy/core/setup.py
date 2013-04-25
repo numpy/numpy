@@ -154,11 +154,10 @@ def check_math_capabilities(config, moredefs, mathlibs):
     # config.h in the public namespace, so we have a clash for the common
     # functions we test. We remove every function tested by python's
     # autoconf, hoping their own test are correct
-    if sys.version_info[:2] >= (2, 5):
-        for f in OPTIONAL_STDFUNCS_MAYBE:
-            if config.check_decl(fname2def(f),
-                        headers=["Python.h", "math.h"]):
-                OPTIONAL_STDFUNCS.remove(f)
+    for f in OPTIONAL_STDFUNCS_MAYBE:
+        if config.check_decl(fname2def(f),
+                    headers=["Python.h", "math.h"]):
+            OPTIONAL_STDFUNCS.remove(f)
 
     check_funcs(OPTIONAL_STDFUNCS)
 
@@ -222,19 +221,16 @@ def check_ieee_macros(config):
     # functions we test. We remove every function tested by python's
     # autoconf, hoping their own test are correct
     _macros = ["isnan", "isinf", "signbit", "isfinite"]
-    if sys.version_info[:2] >= (2, 6):
-        for f in _macros:
-            py_symbol = fname2def("decl_%s" % f)
-            already_declared = config.check_decl(py_symbol,
-                    headers=["Python.h", "math.h"])
-            if already_declared:
-                if config.check_macro_true(py_symbol,
-                        headers=["Python.h", "math.h"]):
-                    pub.append('NPY_%s' % fname2def("decl_%s" % f))
-            else:
-                macros.append(f)
-    else:
-        macros = _macros[:]
+    for f in _macros:
+        py_symbol = fname2def("decl_%s" % f)
+        already_declared = config.check_decl(py_symbol,
+                headers=["Python.h", "math.h"])
+        if already_declared:
+            if config.check_macro_true(py_symbol,
+                    headers=["Python.h", "math.h"]):
+                pub.append('NPY_%s' % fname2def("decl_%s" % f))
+        else:
+            macros.append(f)
     # Normally, isnan and isinf are macro (C99), but some platforms only have
     # func, or both func and macro version. Check for macro only, and define
     # replacement ones if not found.

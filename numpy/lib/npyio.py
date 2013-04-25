@@ -129,8 +129,7 @@ class BagObj(object):
 
 def zipfile_factory(*args, **kwargs):
     import zipfile
-    if sys.version_info >= (2, 5):
-        kwargs['allowZip64'] = True
+    kwargs['allowZip64'] = True
     return zipfile.ZipFile(*args, **kwargs)
 
 class NpzFile(object):
