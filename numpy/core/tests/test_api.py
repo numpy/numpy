@@ -4,6 +4,7 @@ import numpy as np
 from numpy.testing import *
 from numpy.testing.utils import WarningManager
 import warnings
+from numpy.compat import asbytes
 
 def test_fastCopyAndTranspose():
     # 0D array
@@ -83,6 +84,27 @@ def test_array_astype():
     assert_equal(a, b)
     assert_(not (a is b))
     assert_(type(b) != np.matrix)
+
+    # Make sure converting from string object to fixed length string
+    # does not truncate.
+    a = np.array([asbytes('a')*100], dtype='O')
+    b = a.astype('S')
+    assert_equal(a, b)
+    assert_equal(b.dtype, np.dtype('S100'))
+    a = np.array([u'a'*100], dtype='O')
+    b = a.astype('U')
+    assert_equal(a, b)
+    assert_equal(b.dtype, np.dtype('U100'))
+
+    # Same test as above but for strings shorter than 64 characters
+    a = np.array([asbytes('a')*10], dtype='O')
+    b = a.astype('S')
+    assert_equal(a, b)
+    assert_equal(b.dtype, np.dtype('S10'))
+    a = np.array([u'a'*10], dtype='O')
+    b = a.astype('U')
+    assert_equal(a, b)
+    assert_equal(b.dtype, np.dtype('U10'))
 
 def test_copyto_fromscalar():
     a = np.arange(6, dtype='f4').reshape(2,3)
