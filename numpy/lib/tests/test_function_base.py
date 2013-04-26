@@ -231,6 +231,10 @@ class TestInsert(TestCase):
         a = np.array(1).view(SubClass)
         assert_(isinstance(np.insert(a, 0, [0]), SubClass))
 
+    def test_index_array_copied(self):
+        x = np.array([1, 1, 1])
+        np.insert([0, 1, 2], x, [3, 4, 5])
+        assert_equal(x, np.array([1, 1, 1]))
 
 class TestAmax(TestCase):
     def test_basic(self):
