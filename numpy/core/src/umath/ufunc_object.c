@@ -746,11 +746,16 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
     for (i = 0; i < nin; ++i) {
         obj = PyTuple_GET_ITEM(args, i);
         if (!PyArray_Check(obj) && !PyArray_IsScalar(obj, Generic)) {
+            NPY_UF_DBG_PRINT("(!PyArray_Check(obj) && !PyArray_IsScalar(obj, Generic)) is true\n");
+
             /*
              * TODO: There should be a comment here explaining what
              *       context does.
              */
+
+            //context will have object,object,integer
             context = Py_BuildValue("OOi", ufunc, args, i);
+
             if (context == NULL) {
                 return -1;
             }
@@ -758,6 +763,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
         else {
             context = NULL;
         }
+
         out_op[i] = (PyArrayObject *)PyArray_FromAny(obj,
                                     NULL, 0, 0, 0, context);
         Py_XDECREF(context);
@@ -782,7 +788,6 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
      */
     if (any_flexible && !any_object) {
         return -2;
-
     }
 
     /* Get positional output arguments */
