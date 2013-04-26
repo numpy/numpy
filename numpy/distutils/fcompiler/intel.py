@@ -3,7 +3,6 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 
-from numpy.distutils.cpuinfo import cpu
 from numpy.distutils.ccompiler import simple_version_match
 from numpy.distutils.fcompiler import FCompiler, dummy_fortran_file
 
@@ -163,21 +162,10 @@ class IntelVisualFCompiler(BaseIntelFCompiler):
         return ['/4Yb','/d2']
 
     def get_flags_opt(self):
-        return ['/O1']
+        return ['/O2']
 
     def get_flags_arch(self):
-        opt = []
-        if cpu.is_PentiumPro() or cpu.is_PentiumII():
-            opt.extend(['/G6','/Qaxi'])
-        elif cpu.is_PentiumIII():
-            opt.extend(['/G6','/QaxK'])
-        elif cpu.is_Pentium():
-            opt.append('/G5')
-        elif cpu.is_PentiumIV():
-            opt.extend(['/G7','/QaxW'])
-        if cpu.has_mmx():
-            opt.append('/QaxM')
-        return opt
+        return ["/arch:IA-32", "/QaxSSE3"]
 
 class IntelItaniumVisualFCompiler(IntelVisualFCompiler):
     compiler_type = 'intelev'
@@ -203,6 +191,9 @@ class IntelEM64VisualFCompiler(IntelVisualFCompiler):
     description = 'Intel Visual Fortran Compiler for 64-bit apps'
 
     version_match = simple_version_match(start='Intel\(R\).*?64,')
+
+    def get_flags_arch(self):
+        return ["/arch:SSE2"]
 
 
 if __name__ == '__main__':
