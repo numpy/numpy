@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import *
 import numpy.core.umath_tests as umt
 from numpy.compat import asbytes
-from numpy.core import rational
+from numpy.core.test_rational import *
 
 class TestUfunc(TestCase):
     def test_pickle(self):
@@ -777,14 +777,14 @@ class TestUfunc(TestCase):
 
         a = np.array([0, 1, 2], dtype='i8')
         b = np.array([0, 1, 2], dtype='i8')
-        c = np.empty(3, dtype=rational.rational)
+        c = np.empty(3, dtype=rational)
 
         # output must be specified so numpy knows what ufunc signature to look for
-        result = rational.test_add(a, b, c)
-        assert_equal(result, np.array([0, 2, 4], dtype=rational.rational))
+        result = test_add(a, b, c)
+        assert_equal(result, np.array([0, 2, 4], dtype=rational))
 
         # no output type should raise TypeError
-        assert_raises(TypeError, rational.test_add, a, b)
+        assert_raises(TypeError, test_add, a, b)
 
 if __name__ == "__main__":
     run_module_suite()

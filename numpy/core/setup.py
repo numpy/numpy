@@ -925,8 +925,8 @@ def configuration(parent_package='',top_path=None):
     #                   custom rational dtype module                      #
     #######################################################################
 
-    config.add_extension('rational',
-                    sources = [join('src','umath', 'rational.c.src')])
+    config.add_extension('test_rational',
+                    sources = [join('src','umath', 'test_rational.c.src')])
 
     #######################################################################
     #                     multiarray_tests module                         #

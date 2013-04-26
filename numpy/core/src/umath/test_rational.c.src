@@ -1058,7 +1058,7 @@ PyMethodDef module_methods[] = {
 #if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "rational",
+    "test_rational",
     NULL,
     -1,
     module_methods,
@@ -1070,9 +1070,9 @@ static struct PyModuleDef moduledef = {
 #endif
 
 #if defined(NPY_PY3K)
-PyMODINIT_FUNC PyInit_rational(void) {
+PyMODINIT_FUNC PyInit_test_rational(void) {
 #else
-PyMODINIT_FUNC initrational(void) {
+PyMODINIT_FUNC inittest_rational(void) {
 #endif
 
     PyObject *m;
@@ -1199,7 +1199,7 @@ PyMODINIT_FUNC initrational(void) {
 #if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
 #else
-    m = Py_InitModule("rational", module_methods);
+    m = Py_InitModule("test_rational", module_methods);
 #endif
 
     if (!m) {
