@@ -82,7 +82,7 @@ class CPUInfoBase(object):
         if not name.startswith('_'):
             if hasattr(self,'_'+name):
                 attr = getattr(self,'_'+name)
-                if type(attr) is types.MethodType:
+                if isinstance(attr, types.MethodType):
                     return lambda func=self._try_call,attr=attr : func(attr)
             else:
                 return lambda : None
@@ -499,7 +499,7 @@ class Win32CPUInfo(CPUInfoBase):
                               "\s+stepping\s+(?P<STP>\d+)",re.IGNORECASE)
             chnd=winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, self.pkey)
             pnum=0
-            while 1:
+            while True:
                 try:
                     proc=winreg.EnumKey(chnd,pnum)
                 except winreg.error:

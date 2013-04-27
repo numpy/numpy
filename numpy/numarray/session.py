@@ -120,7 +120,7 @@ def _callers_modules():
     g = _callers_globals()
     mods = []
     for k,v in g.items():
-        if type(v) == type(sys):
+        if isinstance(v, type(sys)):
             mods.append(getattr(v,"__name__"))
     return mods
 
@@ -326,7 +326,7 @@ def load(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
         dictionary = _callers_globals()
     values = []
     p = pickle.Unpickler(file)
-    while 1:
+    while True:
         o = p.load()
         if isinstance(o, _SaveSession):
             session = dict(zip(o.keys, values))

@@ -1552,7 +1552,7 @@ def sum(a, axis=None, dtype=None, out=None, keepdims=False):
             out[...] = res
             return out
         return res
-    elif not (type(a) is mu.ndarray):
+    elif type(a) is not mu.ndarray:
         try:
             sum = a.sum
         except AttributeError:
@@ -1953,7 +1953,7 @@ def amax(a, axis=None, out=None, keepdims=False):
     4.0
 
     """
-    if not (type(a) is mu.ndarray):
+    if type(a) is not mu.ndarray:
         try:
             amax = a.max
         except AttributeError:
@@ -2024,7 +2024,7 @@ def amin(a, axis=None, out=None, keepdims=False):
     0.0
 
     """
-    if not (type(a) is mu.ndarray):
+    if type(a) is not mu.ndarray:
         try:
             amin = a.min
         except AttributeError:
@@ -2154,7 +2154,7 @@ def prod(a, axis=None, dtype=None, out=None, keepdims=False):
     True
 
     """
-    if not (type(a) is mu.ndarray):
+    if type(a) is not mu.ndarray:
         try:
             prod = a.prod
         except AttributeError:
@@ -2527,7 +2527,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=False):
     0.55000000074505806
 
     """
-    if not (type(a) is mu.ndarray):
+    if type(a) is not mu.ndarray:
         try:
             mean = a.mean
             return mean(axis=axis, dtype=dtype, out=out)
@@ -2629,7 +2629,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     0.44999999925552653
 
     """
-    if not (type(a) is mu.ndarray):
+    if type(a) is not mu.ndarray:
         try:
             std = a.std
             return std(axis=axis, dtype=dtype, out=out, ddof=ddof)
@@ -2732,7 +2732,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
     0.20250000000000001
 
     """
-    if not (type(a) is mu.ndarray):
+    if type(a) is not mu.ndarray:
         try:
             var = a.var
             return var(axis=axis, dtype=dtype, out=out, ddof=ddof)

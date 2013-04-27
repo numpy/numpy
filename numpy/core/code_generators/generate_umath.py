@@ -836,8 +836,7 @@ def make_arrays(funcdict):
     #
     code1list = []
     code2list = []
-    names = list(funcdict.keys())
-    names.sort()
+    names = sorted(funcdict.keys())
     for name in names:
         uf = funcdict[name]
         funclist = []
@@ -902,8 +901,7 @@ def make_arrays(funcdict):
 
 def make_ufuncs(funcdict):
     code3list = []
-    names = list(funcdict.keys())
-    names.sort()
+    names = sorted(funcdict.keys())
     for name in names:
         uf = funcdict[name]
         mlist = []

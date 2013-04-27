@@ -403,7 +403,7 @@ def simple_version_match(pat=r'[-.\d]+', ignore='', start=''):
             if not m:
                 return None
             pos = m.end()
-        while 1:
+        while True:
             m = re.search(pat, version_string[pos:])
             if not m:
                 return None

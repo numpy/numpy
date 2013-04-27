@@ -435,7 +435,7 @@ def _makenamedict(module='numpy'):
     thedict = {module.__name__:module.__dict__}
     dictlist = [module.__name__]
     totraverse = [module.__dict__]
-    while 1:
+    while True:
         if len(totraverse) == 0:
             break
         thisdict = totraverse.pop(0)
@@ -584,7 +584,7 @@ def info(object=None,maxwidth=76,output=sys.stdout,toplevel='numpy'):
                     methstr, other = pydoc.splitdoc(inspect.getdoc(thisobj) or "None")
                 print("  %s  --  %s" % (meth, methstr), file=output)
 
-    elif type(object) is types.InstanceType: ## check for __call__ method
+    elif isinstance(object, types.InstanceType): ## check for __call__ method
         print("Instance of class: ", object.__class__.__name__, file=output)
         print(file=output)
         if hasattr(object, '__call__'):

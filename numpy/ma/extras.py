@@ -1435,14 +1435,14 @@ class MAxisConcatenator(AxisConcatenator):
     def __getitem__(self, key):
         if isinstance(key, str):
             raise MAError("Unavailable for masked array.")
-        if type(key) is not tuple:
+        if not isinstance(key, tuple):
             key = (key,)
         objs = []
         scalars = []
         final_dtypedescr = None
         for k in range(len(key)):
             scalar = False
-            if type(key[k]) is slice:
+            if isinstance(key[k], slice):
                 step = key[k].step
                 start = key[k].start
                 stop = key[k].stop
@@ -1450,12 +1450,12 @@ class MAxisConcatenator(AxisConcatenator):
                     start = 0
                 if step is None:
                     step = 1
-                if type(step) is type(1j):
+                if isinstance(step, complex):
                     size = int(abs(step))
                     newobj = np.linspace(start, stop, num=size)
                 else:
                     newobj = np.arange(start, stop, step)
-            elif type(key[k]) is str:
+            elif isinstance(key[k], str):
                 if (key[k] in 'rc'):
                     self.matrix = True
                     self.col = (key[k] == 'c')

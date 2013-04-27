@@ -1273,8 +1273,7 @@ def unique(x):
         idx = concatenate(([True],tmp[1:]!=tmp[:-1]))
         return tmp[idx]
     except AttributeError:
-        items = list(set(x))
-        items.sort()
+        items = sorted(set(x))
         return asarray(items)
 
 def extract(condition, arr):

@@ -222,7 +222,7 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
     buf = np.newbuffer(initsize)
 
     bytesread=0
-    while 1:
+    while True:
         data=infile.read(blocksize)
         if len(data) != blocksize: ##eof
             break

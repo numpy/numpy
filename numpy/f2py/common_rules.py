@@ -121,7 +121,7 @@ def buildhooks(m):
             dadd('\\item[]{{}\\verb@%s@{}}'%(capi_maps.getarrdocsign(n,vars[n])))
             if hasnote(vars[n]):
                 note = vars[n]['note']
-                if type(note) is type([]): note='\n'.join(note)
+                if isinstance(note, list): note='\n'.join(note)
                 dadd('--- %s'%(note))
         dadd('\\end{description}')
         ret['docs'].append('"\t/%s/ %s\\n"'%(name,','.join(map(lambda v,d:v+d,inames,idims))))

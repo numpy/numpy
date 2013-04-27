@@ -344,8 +344,7 @@ def read_array_header_1_0(fp):
     if not isinstance(d, dict):
         msg = "Header is not a dictionary: %r"
         raise ValueError(msg % d)
-    keys = list(d.keys())
-    keys.sort()
+    keys = sorted(d.keys())
     if keys != ['descr', 'fortran_order', 'shape']:
         msg = "Header does not contain the correct keys: %r"
         raise ValueError(msg % (keys,))

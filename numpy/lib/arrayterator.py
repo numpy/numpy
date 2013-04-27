@@ -188,7 +188,7 @@ class Arrayterator(object):
         step = self.step[:]
         ndims = len(self.var.shape)
 
-        while 1:
+        while True:
             count = self.buf_size or reduce(mul, self.shape)
 
             # iterate over each dimension, looking for the

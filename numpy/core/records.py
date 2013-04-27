@@ -173,7 +173,7 @@ class format_parser:
         if (names):
             if (type(names) in [list, tuple]):
                 pass
-            elif (type(names) == str):
+            elif isinstance(names, str):
                 names = names.split(',')
             else:
                 raise NameError("illegal input names %s" % repr(names))

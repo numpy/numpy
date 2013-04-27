@@ -491,9 +491,9 @@ def getmultilineblock(rout,blockname,comment=1,counter=0):
     except KeyError:
         return
     if not r: return
-    if counter>0 and type(r) is type(''):
+    if counter > 0 and isinstance(r, str):
         return
-    if type(r) is type([]):
+    if isinstance(r, list):
         if counter>=len(r): return
         r = r[counter]
     if r[:3]=="'''":
@@ -598,7 +598,7 @@ def gentitle(name):
     return '/*%s %s %s*/'%(l*'*',name,l*'*')
 
 def flatlist(l):
-    if type(l)==list:
+    if isinstance(l, list):
         return reduce(lambda x,y,f=flatlist:x+f(y),l,[])
     return [l]
 
@@ -607,9 +607,9 @@ def stripcomma(s):
     return s
 
 def replace(str,d,defaultsep=''):
-    if type(d)==list:
+    if isinstance(d, list):
         return [replace(str, _m, defaultsep) for _m in d]
-    if type(str)==list:
+    if isinstance(str, list):
         return [replace(_m, d, defaultsep) for _m in str]
     for k in 2*list(d.keys()):
         if k=='separatorsfor':
@@ -618,14 +618,14 @@ def replace(str,d,defaultsep=''):
             sep=d['separatorsfor'][k]
         else:
             sep=defaultsep
-        if type(d[k])==list:
+        if isinstance(d[k], list):
             str=str.replace('#%s#'%(k),sep.join(flatlist(d[k])))
         else:
             str=str.replace('#%s#'%(k),d[k])
     return str
 
 def dictappend(rd,ar):
-    if type(ar)==list:
+    if isinstance(ar, list):
         for a in ar:
             rd=dictappend(rd,a)
         return rd
@@ -633,15 +633,15 @@ def dictappend(rd,ar):
         if k[0]=='_':
             continue
         if k in rd:
-            if type(rd[k])==str:
+            if isinstance(rd[k], str):
                 rd[k]=[rd[k]]
-            if type(rd[k])==list:
-                if type(ar[k])==list:
+            if isinstance(rd[k], list):
+                if isinstance(ar[k], list):
                     rd[k]=rd[k]+ar[k]
                 else:
                     rd[k].append(ar[k])
-            elif type(rd[k])==dict:
-                if type(ar[k])==dict:
+            elif isinstance(rd[k], dict):
+                if isinstance(ar[k], dict):
                     if k=='separatorsfor':
                         for k1 in ar[k].keys():
                             if k1 not in rd[k]:
@@ -654,7 +654,7 @@ def dictappend(rd,ar):
 
 def applyrules(rules,d,var={}):
     ret={}
-    if type(rules)==list:
+    if isinstance(rules, list):
         for r in rules:
             rr=applyrules(r,d,var)
             ret=dictappend(ret,rr)
@@ -671,9 +671,9 @@ def applyrules(rules,d,var={}):
     for k in rules.keys():
         if k=='separatorsfor':
             ret[k]=rules[k]; continue
-        if type(rules[k])==str:
+        if isinstance(rules[k], str):
             ret[k]=replace(rules[k],d)
-        elif type(rules[k])==list:
+        elif isinstance(rules[k], list):
             ret[k]=[]
             for i in rules[k]:
                 ar=applyrules({k:i},d,var)
@@ -681,13 +681,13 @@ def applyrules(rules,d,var={}):
                     ret[k].append(ar[k])
         elif k[0]=='_':
             continue
-        elif type(rules[k])==dict:
+        elif isinstance(rules[k], dict):
             ret[k]=[]
             for k1 in rules[k].keys():
-                if type(k1)==types.FunctionType and k1(var):
-                    if type(rules[k][k1])==list:
+                if isinstance(k1, types.FunctionType) and k1(var):
+                    if isinstance(rules[k][k1], list):
                         for i in rules[k][k1]:
-                            if type(i)==dict:
+                            if isinstance(i, dict):
                                 res=applyrules({'supertext':i},d,var)
                                 if 'supertext' in res:
                                     i=res['supertext']
@@ -695,7 +695,7 @@ def applyrules(rules,d,var={}):
                             ret[k].append(replace(i,d))
                     else:
                         i=rules[k][k1]
-                        if type(i)==dict:
+                        if isinstance(i, dict):
                             res=applyrules({'supertext':i},d)
                             if 'supertext' in res:
                                 i=res['supertext']
@@ -703,7 +703,7 @@ def applyrules(rules,d,var={}):
                         ret[k].append(replace(i,d))
         else:
             errmess('applyrules: ignoring rule %s.\n'%repr(rules[k]))
-        if type(ret[k])==list:
+        if isinstance(ret[k], list):
             if len(ret[k])==1:
                 ret[k]=ret[k][0]
             if ret[k]==[]:

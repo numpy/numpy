@@ -244,7 +244,7 @@ class AxisConcatenator(object):
             frame = sys._getframe().f_back
             mymat = matrix.bmat(key,frame.f_globals,frame.f_locals)
             return mymat
-        if type(key) is not tuple:
+        if not isinstance(key, tuple):
             key = (key,)
         objs = []
         scalars = []
@@ -252,7 +252,7 @@ class AxisConcatenator(object):
         scalartypes = []
         for k in range(len(key)):
             scalar = False
-            if type(key[k]) is slice:
+            if isinstance(key[k], slice):
                 step = key[k].step
                 start = key[k].start
                 stop = key[k].stop
@@ -627,7 +627,7 @@ class IndexExpression(object):
         self.maketuple = maketuple
 
     def __getitem__(self, item):
-        if self.maketuple and type(item) != tuple:
+        if self.maketuple and not isinstance(item, tuple):
             return (item,)
         else:
             return item

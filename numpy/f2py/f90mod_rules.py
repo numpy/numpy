@@ -119,7 +119,7 @@ def buildhooks(pymod):
         dadd('\\subsection{Fortran 90/95 module \\texttt{%s}}\n'%(m['name']))
         if hasnote(m):
             note = m['note']
-            if type(note) is type([]): note='\n'.join(note)
+            if isinstance(note, list): note='\n'.join(note)
             dadd(note)
         if onlyvars:
             dadd('\\begin{description}')
@@ -145,7 +145,7 @@ def buildhooks(pymod):
             dadd('\\item[]{{}\\verb@%s@{}}'%(capi_maps.getarrdocsign(n,var)))
             if hasnote(var):
                 note = var['note']
-                if type(note) is type([]): note='\n'.join(note)
+                if isinstance(note, list): note='\n'.join(note)
                 dadd('--- %s'%(note))
             if isallocatable(var):
                 fargs.append('f2py_%s_getdims_%s'%(m['name'],n))

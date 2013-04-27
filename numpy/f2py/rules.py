@@ -1388,9 +1388,9 @@ def buildapi(rout):
                 vrd['check']=c
                 ar=applyrules(check_rules,vrd,var[a])
                 rd=dictappend(rd,ar)
-    if type(rd['cleanupfrompyobj']) is list:
+    if isinstance(rd['cleanupfrompyobj'], list):
         rd['cleanupfrompyobj'].reverse()
-    if type(rd['closepyobjfrom']) is list:
+    if isinstance(rd['closepyobjfrom'], list):
         rd['closepyobjfrom'].reverse()
     rd['docsignature']=stripcomma(replace('#docsign##docsignopt##docsignxa#',
                                           {'docsign':rd['docsign'],
@@ -1415,15 +1415,15 @@ def buildapi(rout):
     else:
         rd['callcompaqfortran']=cfs
     rd['callfortran']=cfs
-    if type(rd['docreturn'])==list:
+    if isinstance(rd['docreturn'], list):
         rd['docreturn']=stripcomma(replace('#docreturn#',{'docreturn':rd['docreturn']}))+' = '
     rd['docstrsigns']=[]
     rd['latexdocstrsigns']=[]
     for k in ['docstrreq','docstropt','docstrout','docstrcbs']:
-        if k in rd and type(rd[k])==list:
+        if k in rd and isinstance(rd[k], list):
             rd['docstrsigns']=rd['docstrsigns']+rd[k]
         k='latex'+k
-        if k in rd and type(rd[k])==list:
+        if k in rd and isinstance(rd[k], list):
             rd['latexdocstrsigns']=rd['latexdocstrsigns']+rd[k][0:1]+\
                                     ['\\begin{description}']+rd[k][1:]+\
                                     ['\\end{description}']
