@@ -3695,7 +3695,8 @@ def insert(arr, obj, values, axis=None):
         # turn it into a range object
         indices = arange(*obj.indices(N),**{'dtype':intp})
     else:
-        indices = np.asarray(obj)
+        # need to copy obj, because indices will be changed in-place
+        indices = np.array(obj)
         if indices.dtype == bool:
             # See also delete
             warnings.warn("in the future insert will treat boolean arrays "
