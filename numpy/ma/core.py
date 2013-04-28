@@ -3438,12 +3438,12 @@ class MaskedArray(ndarray):
             return np.asanyarray(fill_value)
         #
         if m.dtype.names:
-            result = self._data.copy()
+            result = self._data.copy('K')
             _recursive_filled(result, self._mask, fill_value)
         elif not m.any():
             return self._data
         else:
-            result = self._data.copy()
+            result = self._data.copy('K')
             try:
                 np.copyto(result, fill_value, where=m)
             except (TypeError, AttributeError):
