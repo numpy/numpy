@@ -10,7 +10,7 @@ It derives from the old Numeric code base and can be used as a replacement for N
 
 More information can be found at the website:
 
-http://scipy.org/NumPy
+http://www.numpy.org
 
 After installation, tests can be run with:
 
@@ -23,5 +23,3 @@ The most current development version is always available from our
 git repository:
 
 http://github.com/numpy/numpy
-
-
