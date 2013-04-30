@@ -782,8 +782,8 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
          * for a struct dtype if ufunc's arg_dtypes array is not NULL.
          */
         if (PyTypeNum_ISFLEXIBLE(type_num) &&
-                !any_flexible_userloops &&
-                ufunc->userloops != NULL) {
+                    !any_flexible_userloops &&
+                    ufunc->userloops != NULL) {
                 PyUFunc_Loop1d *funcdata;
                 PyObject *key, *obj;
                 key = PyInt_FromLong(type_num);
@@ -801,7 +801,6 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
                     any_flexible_userloops = 1;
                     break;
                 }
-
                 funcdata = funcdata->next;
             }
         }
@@ -4449,7 +4448,8 @@ PyUFunc_RegisterLoopForStructType(PyUFuncObject *ufunc,
     PyObject *key, *cobj;
 
     if (user_dtype == NULL) {
-        PyErr_SetString(PyExc_TypeError, "unknown user defined struct dtype");
+        PyErr_SetString(PyExc_TypeError,
+            "unknown user defined struct dtype");
         return -1;
     }
 
@@ -4470,12 +4470,14 @@ PyUFunc_RegisterLoopForStructType(PyUFuncObject *ufunc,
         }
     }
     
-    result = PyUFunc_RegisterLoopForType(ufunc, user_dtype->type_num, function, arg_typenums, data);
+    result = PyUFunc_RegisterLoopForType(ufunc, user_dtype->type_num,
+        function, arg_typenums, data);
 
     if (result == 0) {
         cobj = PyDict_GetItem(ufunc->userloops, key);
         if (cobj == NULL) {
-            PyErr_SetString(PyExc_KeyError, "userloop for user dtype not found");
+            PyErr_SetString(PyExc_KeyError,
+                "userloop for user dtype not found");
             result = -1;
         }
         else {
@@ -4483,7 +4485,8 @@ PyUFunc_RegisterLoopForStructType(PyUFuncObject *ufunc,
             int cmp = 1;
             current = (PyUFunc_Loop1d *)NpyCapsule_AsVoidPtr(cobj);
             while (current != NULL) {
-                cmp = cmp_arg_types(current->arg_types, arg_typenums, ufunc->nargs);
+                cmp = cmp_arg_types(current->arg_types,
+                    arg_typenums, ufunc->nargs);
                 if (cmp >= 0 && current->arg_dtypes == NULL) {
                     break;
                 }
@@ -4491,7 +4494,8 @@ PyUFunc_RegisterLoopForStructType(PyUFuncObject *ufunc,
                 current = current->next;
             }
             if (cmp == 0 && current->arg_dtypes == NULL) {
-                current->arg_dtypes = PyArray_malloc(ufunc->nargs * sizeof(PyArray_Descr*));
+                current->arg_dtypes = PyArray_malloc(ufunc->nargs *
+                    sizeof(PyArray_Descr*));
                 if (arg_dtypes != NULL) {
                     for (i = 0; i < ufunc->nargs; i++) {
                         current->arg_dtypes[i] = arg_dtypes[i];
@@ -4512,7 +4516,7 @@ PyUFunc_RegisterLoopForStructType(PyUFuncObject *ufunc,
         }
     }
 
-    free(arg_typenums);
+    PyArray_free(arg_typenums);
 
     Py_DECREF(key);
 
