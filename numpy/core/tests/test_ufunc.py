@@ -779,7 +779,8 @@ class TestUfunc(TestCase):
         b = np.array([0, 1, 2], dtype='i8')
         c = np.empty(3, dtype=rational)
 
-        # output must be specified so numpy knows what ufunc signature to look for
+        # Output must be specified so numpy knows what
+        # ufunc signature to look for
         result = test_add(a, b, c)
         assert_equal(result, np.array([0, 2, 4], dtype=rational))
 
