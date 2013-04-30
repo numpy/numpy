@@ -133,16 +133,23 @@ def reshape(a, newshape, order='C'):
         One shape dimension can be -1. In this case, the value is inferred
         from the length of the array and remaining dimensions.
     order : {'C', 'F', 'A'}, optional
-        Determines whether the array data should be viewed as in C
-        (row-major) order, FORTRAN (column-major) order, or the C/FORTRAN
-        order should be preserved.
+        Read the elements of `a` using this index order, and place the elements
+        into the reshaped array using this index order.  'C' means to
+        read / write the elements using C-like index order, with the last axis index
+        changing fastest, back to the first axis index changing slowest.  'F'
+        means to read / write the elements using Fortran-like index order, with
+        the first index changing fastest, and the last index changing slowest.
+        Note that the 'C' and 'F' options take no account of the memory layout
+        of the underlying array, and only refer to the order of indexing.  'A'
+        means to read / write the elements in Fortran-like index order if `a` is
+        Fortran *contiguous* in memory, C-like order otherwise.
 
     Returns
     -------
     reshaped_array : ndarray
         This will be a new view object if possible; otherwise, it will
-        be a copy.
-
+        be a copy.  Note there is no guarantee of the *memory layout* (C- or
+        Fortran- contiguous) of the returned array.
 
     See Also
     --------
@@ -157,12 +164,39 @@ def reshape(a, newshape, order='C'):
      >>> a = np.zeros((10, 2))
      # A transpose make the array non-contiguous
      >>> b = a.T
-     # Taking a view makes it possible to modify the shape without modiying the
+     # Taking a view makes it possible to modify the shape without modifying the
      # initial object.
      >>> c = b.view()
      >>> c.shape = (20)
      AttributeError: incompatible shape for a non-contiguous array
 
+    The `order` keyword gives the index ordering both for *fetching* the values
+    from `a`, and then *placing* the values into the output array.  For example,
+    let's say you have an array:
+
+    >>> a = np.arange(6).reshape((3, 2))
+    >>> a
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+
+    You can think of reshaping as first raveling the array (using the given
+    index order), then inserting the elements from the raveled array into the
+    new array using the same kind of index ordering as was used for the
+    raveling.
+
+    >>> np.reshape(a, (2, 3)) # C-like index ordering
+    array([[0, 1, 2],
+           [3, 4, 5]])
+    >>> np.reshape(np.ravel(a), (2, 3)) # equivalent to C ravel then C reshape
+    array([[0, 1, 2],
+           [3, 4, 5]])
+    >>> np.reshape(a, (2, 3), order='F') # Fortran-like index ordering
+    array([[0, 4, 3],
+           [2, 1, 5]])
+    >>> np.reshape(np.ravel(a, order='F'), (2, 3), order='F')
+    array([[0, 4, 3],
+           [2, 1, 5]])
 
     Examples
     --------
@@ -176,7 +210,6 @@ def reshape(a, newshape, order='C'):
     array([[1, 2],
            [3, 4],
            [5, 6]])
-
     """
     try:
         reshape = a.reshape
@@ -1107,16 +1140,20 @@ def ravel(a, order='C'):
     Parameters
     ----------
     a : array_like
-        Input array.  The elements in ``a`` are read in the order specified by
+        Input array.  The elements in `a` are read in the order specified by
         `order`, and packed as a 1-D array.
     order : {'C','F', 'A', 'K'}, optional
-        The elements of ``a`` are read in this order. 'C' means to view
-        the elements in C (row-major) order. 'F' means to view the elements
-        in Fortran (column-major) order. 'A' means to view the elements
-        in 'F' order if a is Fortran contiguous, 'C' order otherwise.
-        'K' means to view the elements in the order they occur in memory,
-        except for reversing the data when strides are negative.
-        By default, 'C' order is used.
+        The elements of `a` are read using this index order. 'C' means to
+        index the elements in C-like order, with the last axis index changing
+        fastest, back to the first axis index changing slowest.   'F' means to
+        index the elements in Fortran-like index order, with the first index
+        changing fastest, and the last index changing slowest. Note that the 'C'
+        and 'F' options take no account of the memory layout of the underlying
+        array, and only refer to the order of axis indexing.  'A' means to read
+        the elements in Fortran-like index order if `a` is Fortran *contiguous*
+        in memory, C-like order otherwise.  'K' means to read the elements in
+        the order they occur in memory, except for reversing the data when
+        strides are negative.  By default, 'C' index order is used.
 
     Returns
     -------
@@ -1131,11 +1168,11 @@ def ravel(a, order='C'):
 
     Notes
     -----
-    In row-major order, the row index varies the slowest, and the column
-    index the quickest.  This can be generalized to multiple dimensions,
-    where row-major order implies that the index along the first axis
-    varies slowest, and the index along the last quickest.  The opposite holds
-    for Fortran-, or column-major, mode.
+    In C-like (row-major) order, in two dimensions, the row index varies the
+    slowest, and the column index the quickest.  This can be generalized to
+    multiple dimensions, where row-major order implies that the index along the
+    first axis varies slowest, and the index along the last quickest.  The
+    opposite holds for Fortran-like, or column-major, index ordering.
 
     Examples
     --------
