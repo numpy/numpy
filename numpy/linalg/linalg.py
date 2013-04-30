@@ -349,10 +349,12 @@ def solve(a, b):
 
     """
     a, _ = _makearray(a)
-    _assertNonEmpty(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     b, wrap = _makearray(b)
+    if size(a) == 0:
+        # last two dimensions must be zero
+        return wrap(b.copy())
     t, result_t = _commonType(a, b)
 
     if len(b.shape) == len(a.shape) - 1:
@@ -491,9 +493,11 @@ def inv(a):
 
     """
     a, wrap = _makearray(a)
-    _assertNonEmpty(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
+    if size(a) == 0:
+        # last two dimensions must be zero
+        return wrap(a.copy())
     t, result_t = _commonType(a)
     signature = 'D->D' if isComplexType(t) else 'd->d'
     extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
