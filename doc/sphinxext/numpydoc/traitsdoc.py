@@ -18,6 +18,7 @@ from __future__ import division, absolute_import, print_function
 import inspect
 import os
 import pydoc
+import collections
 
 from . import docscrape
 from . import docscrape_sphinx
