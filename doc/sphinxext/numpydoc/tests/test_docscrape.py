@@ -136,7 +136,7 @@ def test_parameters():
     assert_equal([n for n,_,_ in doc['Parameters']], ['mean','cov','shape'])
 
     arg, arg_type, desc = doc['Parameters'][1]
-    assert_equal(arg_type, '(N,N) ndarray')
+    assert_equal(arg_type, '(N, N) ndarray')
     assert desc[0].startswith('Covariance matrix')
     assert doc['Parameters'][0][-1][-2] == '   (1+2+3)/3'
 
@@ -176,8 +176,8 @@ def test_index():
 def non_blank_line_by_line_compare(a,b):
     a = textwrap.dedent(a)
     b = textwrap.dedent(b)
-    a = [l for l in a.split('\n') if l.strip()]
-    b = [l for l in b.split('\n') if l.strip()]
+    a = [l.rstrip() for l in a.split('\n') if l.strip()]
+    b = [l.rstrip() for l in b.split('\n') if l.strip()]
     for n,line in enumerate(a):
         if not line == b[n]:
             raise AssertionError("Lines %s of a and b differ: "
@@ -313,7 +313,7 @@ of the one-dimensional normal distribution to higher dimensions.
 
            (1+2+3)/3
 
-    **cov** : (N,N) ndarray
+    **cov** : (N, N) ndarray
 
         Covariance matrix of the distribution.
 
@@ -563,10 +563,7 @@ def test_unicode():
 
     """)
     assert isinstance(doc['Summary'][0], str)
-    if sys.version_info[0] >= 3:
-        assert doc['Summary'][0] == sixu('öäöäöäöäöåååå')
-    else:
-        assert doc['Summary'][0] == sixu('öäöäöäöäöåååå').encode('utf-8')
+    assert doc['Summary'][0] == 'öäöäöäöäöåååå'
 
 def test_plot_examples():
     cfg = dict(use_plots=True)
