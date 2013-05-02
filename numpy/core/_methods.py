@@ -7,7 +7,7 @@ from __future__ import division, absolute_import, print_function
 
 from numpy.core import multiarray as mu
 from numpy.core import umath as um
-from numpy.core.numeric import asanyarray
+from numpy.core.numeric import array, asanyarray, isnan
 
 def _amax(a, axis=None, out=None, keepdims=False):
     return um.maximum.reduce(a, axis=axis,
@@ -61,6 +61,26 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
         ret = ret / float(rcount)
     return ret
 
+def _nanmean(a, axis=None, dtype=None, out=None, keepdims=False):
+    arr = array(a, subok=True)
+    mask = isnan(arr)
+
+    # Upgrade bool, unsigned int, and int to float64
+    if dtype is None and arr.dtype.kind in ['b','u','i']:
+        ret = um.add.reduce(arr, axis=axis, dtype='f8',
+                            out=out, keepdims=keepdims)
+    else:
+        mu.copyto(arr, 0.0, where=mask)
+        ret = um.add.reduce(arr, axis=axis, dtype=dtype,
+                            out=out, keepdims=keepdims)
+    rcount = (~mask).sum(axis=axis)
+    if isinstance(ret, mu.ndarray):
+        ret = um.true_divide(ret, rcount,
+                        out=ret, casting='unsafe', subok=False)
+    else:
+        ret = ret / float(rcount)
+    return ret
+
 def _var(a, axis=None, dtype=None, out=None, ddof=0,
                             keepdims=False):
     arr = asanyarray(a)
@@ -101,9 +121,66 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0,
 
     return ret
 
+def _nanvar(a, axis=None, dtype=None, out=None, ddof=0,
+                            keepdims=False):
+    arr = array(a, subok=True)
+    mask = isnan(arr)
+
+    # First compute the mean, saving 'rcount' for reuse later
+    if dtype is None and arr.dtype.kind in ['b','u','i']:
+        arrmean = um.add.reduce(arr, axis=axis, dtype='f8', keepdims=True)
+    else:
+        mu.copyto(arr, 0.0, where=mask)
+        arrmean = um.add.reduce(arr, axis=axis, dtype=dtype,
+                                keepdims=True)
+    rcount = (~mask).sum(axis=axis, keepdims=True)
+    if isinstance(arrmean, mu.ndarray):
+        arrmean = um.true_divide(arrmean, rcount,
+                            out=arrmean, casting='unsafe', subok=False)
+    else:
+        arrmean = arrmean / float(rcount)
+
+    # arr - arrmean
+    x = arr - arrmean
+    x[mask] = 0.0
+
+    # (arr - arrmean) ** 2
+    if arr.dtype.kind == 'c':
+        x = um.multiply(x, um.conjugate(x), out=x).real
+    else:
+        x = um.multiply(x, x, out=x)
+
+    # add.reduce((arr - arrmean) ** 2, axis)
+    ret = um.add.reduce(x, axis=axis, dtype=dtype, out=out,
+                        keepdims=keepdims)
+
+    # add.reduce((arr - arrmean) ** 2, axis) / (n - ddof)
+    if not keepdims and isinstance(rcount, mu.ndarray):
+        rcount = rcount.squeeze(axis=axis)
+    rcount -= ddof
+    if isinstance(ret, mu.ndarray):
+        ret = um.true_divide(ret, rcount,
+                        out=ret, casting='unsafe', subok=False)
+    else:
+        ret = ret / float(rcount)
+
+    return ret
+
+
 def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     ret = _var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                keepdims=keepdims)
+
+    if isinstance(ret, mu.ndarray):
+        ret = um.sqrt(ret, out=ret)
+    else:
+        ret = um.sqrt(ret)
+
+    return ret
+
+def _nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
+    ret = _nanvar(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+                  keepdims=keepdims)
 
     if isinstance(ret, mu.ndarray):
         ret = um.sqrt(ret, out=ret)

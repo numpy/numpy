@@ -22,7 +22,8 @@ __all__ = ['take', 'reshape', 'choose', 'repeat', 'put',
            'resize', 'diagonal', 'trace', 'ravel', 'nonzero', 'shape',
            'compress', 'clip', 'sum', 'product', 'prod', 'sometrue', 'alltrue',
            'any', 'all', 'cumsum', 'cumproduct', 'cumprod', 'ptp', 'ndim',
-           'rank', 'size', 'around', 'round_', 'mean', 'std', 'var', 'squeeze',
+           'rank', 'size', 'around', 'round_', 'mean', 'nanmean',
+           'std', 'nanstd', 'var', 'nanvar', 'squeeze',
            'amax', 'amin',
           ]
 
@@ -2665,6 +2666,8 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=False):
     See Also
     --------
     average : Weighted average
+    nanmean : Arithmetic mean while ignoring NaNs
+    var, nanvar
 
     Notes
     -----
@@ -2711,6 +2714,80 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=False):
     return _methods._mean(a, axis=axis, dtype=dtype,
                             out=out, keepdims=keepdims)
 
+def nanmean(a, axis=None, dtype=None, out=None, keepdims=False):
+    """
+    Compute the arithmetic mean along the specified axis, ignoring NaNs.
+
+    Returns the average of the array elements.  The average is taken over
+    the flattened array by default, otherwise over the specified axis.
+    `float64` intermediate and return values are used for integer inputs.
+
+    Parameters
+    ----------
+    a : array_like
+        Array containing numbers whose mean is desired. If `a` is not an
+        array, a conversion is attempted.
+    axis : int, optional
+        Axis along which the means are computed. The default is to compute
+        the mean of the flattened array.
+    dtype : data-type, optional
+        Type to use in computing the mean.  For integer inputs, the default
+        is `float64`; for floating point inputs, it is the same as the
+        input dtype.
+    out : ndarray, optional
+        Alternate output array in which to place the result.  The default
+        is ``None``; if provided, it must have the same shape as the
+        expected output, but the type will be cast if necessary.
+        See `doc.ufuncs` for details.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
+
+    Returns
+    -------
+    m : ndarray, see dtype parameter above
+        If `out=None`, returns a new array containing the mean values,
+        otherwise a reference to the output array is returned.
+
+    See Also
+    --------
+    average : Weighted average
+    mean : Arithmetic mean taken while not ignoring NaNs
+    var, nanvar
+
+    Notes
+    -----
+    The arithmetic mean is the sum of the non-nan elements along the axis
+    divided by the number of non-nan elements.
+
+    Note that for floating-point input, the mean is computed using the
+    same precision the input has.  Depending on the input data, this can
+    cause the results to be inaccurate, especially for `float32`.
+    Specifying a higher-precision accumulator using the `dtype` keyword
+    can alleviate this issue.
+
+    Examples
+    --------
+    >>> a = np.array([[1, np.nan], [3, 4]])
+    >>> np.nanmean(a)
+    2.6666666666666665
+    >>> np.nanmean(a, axis=0)
+    array([ 2.,  4.])
+    >>> np.nanmean(a, axis=1)
+    array([ 1.,  3.5])
+
+    """
+    if not (type(a) is mu.ndarray):
+        try:
+            mean = a.nanmean
+            return mean(axis=axis, dtype=dtype, out=out)
+        except AttributeError:
+            pass
+
+    return _methods._nanmean(a, axis=axis, dtype=dtype,
+                             out=out, keepdims=keepdims)
+
 
 def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     """
@@ -2753,6 +2830,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     See Also
     --------
     var, mean
+    nanmean, nanstd
     numpy.doc.ufuncs : Section "Output arguments"
 
     Notes
@@ -2811,6 +2889,97 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
             pass
 
     return _methods._std(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+                                keepdims=keepdims)
+
+def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
+    """
+    Compute the standard deviation along the specified axis, while
+    ignoring NaNs.
+
+    Returns the standard deviation, a measure of the spread of a distribution,
+    of the non-NaN array elements. The standard deviation is computed for the
+    flattened array by default, otherwise over the specified axis.
+
+    Parameters
+    ----------
+    a : array_like
+        Calculate the standard deviation of the non-NaN values.
+    axis : int, optional
+        Axis along which the standard deviation is computed. The default is
+        to compute the standard deviation of the flattened array.
+    dtype : dtype, optional
+        Type to use in computing the standard deviation. For arrays of
+        integer type the default is float64, for arrays of float types it is
+        the same as the array type.
+    out : ndarray, optional
+        Alternative output array in which to place the result. It must have
+        the same shape as the expected output but the type (of the calculated
+        values) will be cast if necessary.
+    ddof : int, optional
+        Means Delta Degrees of Freedom.  The divisor used in calculations
+        is ``N - ddof``, where ``N`` represents the number of elements.
+        By default `ddof` is zero.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
+
+    Returns
+    -------
+    standard_deviation : ndarray, see dtype parameter above.
+        If `out` is None, return a new array containing the standard deviation,
+        otherwise return a reference to the output array.
+
+    See Also
+    --------
+    var, mean, std
+    nanvar, nanmean
+    numpy.doc.ufuncs : Section "Output arguments"
+
+    Notes
+    -----
+    The standard deviation is the square root of the average of the squared
+    deviations from the mean, i.e., ``std = sqrt(mean(abs(x - x.mean())**2))``.
+
+    The average squared deviation is normally calculated as
+    ``x.sum() / N``, where ``N = len(x)``.  If, however, `ddof` is specified,
+    the divisor ``N - ddof`` is used instead. In standard statistical
+    practice, ``ddof=1`` provides an unbiased estimator of the variance
+    of the infinite population. ``ddof=0`` provides a maximum likelihood
+    estimate of the variance for normally distributed variables. The
+    standard deviation computed in this function is the square root of
+    the estimated variance, so even with ``ddof=1``, it will not be an
+    unbiased estimate of the standard deviation per se.
+
+    Note that, for complex numbers, `std` takes the absolute
+    value before squaring, so that the result is always real and nonnegative.
+
+    For floating-point input, the *std* is computed using the same
+    precision the input has. Depending on the input data, this can cause
+    the results to be inaccurate, especially for float32 (see example below).
+    Specifying a higher-accuracy accumulator using the `dtype` keyword can
+    alleviate this issue.
+
+    Examples
+    --------
+    >>> a = np.array([[1, np.nan], [3, 4]])
+    >>> np.nanstd(a)
+    1.247219128924647
+    >>> np.nanstd(a, axis=0)
+    array([ 1.,  0.])
+    >>> np.nanstd(a, axis=1)
+    array([ 0.,  0.5])
+
+    """
+
+    if not (type(a) is mu.ndarray):
+        try:
+            nanstd = a.nanstd
+            return nanstd(axis=axis, dtype=dtype, out=out, ddof=ddof)
+        except AttributeError:
+            pass
+
+    return _methods._nanstd(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                                 keepdims=keepdims)
 
 def var(a, axis=None, dtype=None, out=None, ddof=0,
@@ -2915,3 +3084,95 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                                 keepdims=keepdims)
+
+
+def nanvar(a, axis=None, dtype=None, out=None, ddof=0,
+                            keepdims=False):
+    """
+    Compute the variance along the specified axis, while ignoring NaNs.
+
+    Returns the variance of the array elements, a measure of the spread of a
+    distribution.  The variance is computed for the flattened array by
+    default, otherwise over the specified axis.
+
+    Parameters
+    ----------
+    a : array_like
+        Array containing numbers whose variance is desired.  If `a` is not an
+        array, a conversion is attempted.
+    axis : int, optional
+        Axis along which the variance is computed.  The default is to compute
+        the variance of the flattened array.
+    dtype : data-type, optional
+        Type to use in computing the variance.  For arrays of integer type
+        the default is `float32`; for arrays of float types it is the same as
+        the array type.
+    out : ndarray, optional
+        Alternate output array in which to place the result.  It must have
+        the same shape as the expected output, but the type is cast if
+        necessary.
+    ddof : int, optional
+        "Delta Degrees of Freedom": the divisor used in the calculation is
+        ``N - ddof``, where ``N`` represents the number of elements. By
+        default `ddof` is zero.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
+
+    Returns
+    -------
+    variance : ndarray, see dtype parameter above
+        If ``out=None``, returns a new array containing the variance;
+        otherwise, a reference to the output array is returned.
+
+    See Also
+    --------
+    std : Standard deviation
+    mean : Average
+    var : Variance while not ignoring NaNs
+    nanstd, nanmean
+    numpy.doc.ufuncs : Section "Output arguments"
+
+    Notes
+    -----
+    The variance is the average of the squared deviations from the mean,
+    i.e.,  ``var = mean(abs(x - x.mean())**2)``.
+
+    The mean is normally calculated as ``x.sum() / N``, where ``N = len(x)``.
+    If, however, `ddof` is specified, the divisor ``N - ddof`` is used
+    instead.  In standard statistical practice, ``ddof=1`` provides an
+    unbiased estimator of the variance of a hypothetical infinite population.
+    ``ddof=0`` provides a maximum likelihood estimate of the variance for
+    normally distributed variables.
+
+    Note that for complex numbers, the absolute value is taken before
+    squaring, so that the result is always real and nonnegative.
+
+    For floating-point input, the variance is computed using the same
+    precision the input has.  Depending on the input data, this can cause
+    the results to be inaccurate, especially for `float32` (see example
+    below).  Specifying a higher-accuracy accumulator using the ``dtype``
+    keyword can alleviate this issue.
+
+    Examples
+    --------
+    >>> a = np.array([[1, np.nan], [3, 4]])
+    >>> np.var(a)
+    1.5555555555555554
+    >>> np.nanvar(a, axis=0)
+    array([ 1.,  0.])
+    >>> np.nanvar(a, axis=1)
+    array([ 0.,  0.25])
+
+    """
+
+    if not (type(a) is mu.ndarray):
+        try:
+            nanvar = a.nanvar
+            return nanvar(axis=axis, dtype=dtype, out=out, ddof=ddof)
+        except AttributeError:
+            pass
+
+    return _methods._nanvar(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+                            keepdims=keepdims)
