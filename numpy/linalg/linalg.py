@@ -352,10 +352,10 @@ def solve(a, b):
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
     b, wrap = _makearray(b)
+    t, result_t = _commonType(a, b)
     if size(a) == 0:
         # last two dimensions must be zero
-        return wrap(b.copy())
-    t, result_t = _commonType(a, b)
+        return wrap(b.astype(result_t))
 
     if len(b.shape) == len(a.shape) - 1:
         gufunc = _umath_linalg.solve1
@@ -495,10 +495,10 @@ def inv(a):
     a, wrap = _makearray(a)
     _assertRankAtLeast2(a)
     _assertNdSquareness(a)
+    t, result_t = _commonType(a)
     if size(a) == 0:
         # last two dimensions must be zero
-        return wrap(a.copy())
-    t, result_t = _commonType(a)
+        return wrap(a.astype(result_t))
     signature = 'D->D' if isComplexType(t) else 'd->d'
     extobj = get_linalg_error_extobj(_raise_linalgerror_singular)
     ainv = _umath_linalg.inv(a, signature=signature, extobj=extobj)
