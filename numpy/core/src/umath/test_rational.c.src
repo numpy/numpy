@@ -1087,12 +1087,14 @@ static struct PyModuleDef moduledef = {
 #endif
 
 #if defined(NPY_PY3K)
+#define RETVAL m
 PyMODINIT_FUNC PyInit_test_rational(void) {
 #else
+#define RETVAL
 PyMODINIT_FUNC inittest_rational(void) {
 #endif
 
-    PyObject *m;
+    PyObject *m = NULL;
 
     import_array();
     if (PyErr_Occurred()) {
@@ -1303,17 +1305,12 @@ PyMODINIT_FUNC inittest_rational(void) {
     GCD_LCM_UFUNC(gcd,NPY_INT64,"greatest common denominator of two integers");
     GCD_LCM_UFUNC(lcm,NPY_INT64,"least common multiple of two integers");
 
-#if defined(NPY_PY3K)
-    return m;
-#else
-    return;
-#endif
+    return RETVAL;
 
 fail:
-
-#if defined(NPY_PY3K)
-    return NULL;
-#else
-    return;
-#endif
+    if (!PyErr_Occurred()) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "cannot load test_rational module.");
+    }
+    return RETVAL;
 }
