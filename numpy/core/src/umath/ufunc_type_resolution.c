@@ -24,6 +24,24 @@
 #include "numpy/ufuncobject.h"
 #include "ufunc_type_resolution.h"
 
+/********** PRINTF DEBUG TRACING **************/
+#define NPY_UF_DBG_TRACING 0
+
+#if NPY_UF_DBG_TRACING
+#define NPY_UF_DBG_PRINT(s) {fprintf(stdout, s);}
+#define NPY_UF_DBG_PRINT1(s, p1) {printf((s), (p1));fflush(stdout);}
+#define NPY_UF_DBG_PRINT2(s, p1, p2) {printf(s, p1, p2);fflush(stdout);}
+#define NPY_UF_DBG_PRINT3(s, p1, p2, p3) {printf(s, p1, p2, p3);fflush(stdout);}
+#else
+#define NPY_UF_DBG_PRINT(s)
+#define NPY_UF_DBG_PRINT1(s, p1)
+#define NPY_UF_DBG_PRINT2(s, p1, p2)
+#define NPY_UF_DBG_PRINT3(s, p1, p2, p3)
+#endif
+/**********************************************/
+
+    
+
 static const char *
 npy_casting_to_string(NPY_CASTING casting)
 {
@@ -405,6 +423,8 @@ PyUFunc_SimpleBinaryOperationTypeResolver(PyUFuncObject *ufunc,
 {
     int i, type_num1, type_num2;
     char *ufunc_name;
+
+    NPY_UF_DBG_PRINT("In - PyUFunc_SimpleBinaryOperationTypeResolver\n");
 
     ufunc_name = ufunc->name ? ufunc->name : "<unnamed ufunc>";
 
@@ -1226,6 +1246,37 @@ find_userloop(PyUFuncObject *ufunc,
     return 0;
 }
 
+/****
+    Following hash can be added to code generator
+*/
+#define repeat4(s) s, s, s, s
+#define repeat16(s) repeat4(repeat4(s))
+#define repeat64(s) repeat4(repeat16(s))
+#define repeat256(s) repeat4(repeat64(s))
+#define repeat1024(s) repeat4(repeat256(s))
+#define repeat4096(s) repeat4(repeat1024(s))
+
+int Sum_Hash[32768] =   { 
+                            repeat4096(-1),
+                            repeat1024(-1), repeat1024(-1), repeat1024(-1), //0 to 7167
+                            repeat64(-1),repeat64(-1),repeat64(-1), //7168 to 7360
+                            repeat16(-1),repeat16(-1), //7359 to 7391
+                                -1,-1,-1,-1,-1,-1,-1,7, //<<-- injecting Sum_Hash[7399] = 7
+                                -1,-1,-1,-1,-1,-1,-1,-1,
+                            repeat16(-1),
+                            repeat256(-1),repeat256(-1),repeat256(-1),
+                            repeat4096(-1),
+                            repeat256(-1),
+                            repeat64(-1),repeat64(-1),
+                                -1,-1,-1,-1,-1,-1,-1,-1,
+                                -1,-1,-1,-1,13,-1,-1,-1,    //<<-- injecting Sum_Hash[12684] = 13
+                            repeat16(-1),repeat16(-1),repeat16(-1),
+                            repeat64(-1),
+                            repeat256(-1),repeat256(-1),
+                            repeat1024(-1),repeat1024(-1),repeat1024(-1),
+                            repeat4096(-1),repeat4096(-1),repeat4096(-1),repeat4096(-1)
+                        };
+
 NPY_NO_EXPORT int
 PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
                                 PyArray_Descr **dtypes,
@@ -1239,6 +1290,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
     PyObject *errmsg;
     int i, j;
 
+    NPY_UF_DBG_PRINT("PyUFunc_DefaultLegacyInnerLoopSelector");
     ufunc_name = ufunc->name ? ufunc->name : "(unknown)";
 
     /*
@@ -1247,6 +1299,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
      *       like a hash table.
      */
     if (ufunc->userloops) {
+        NPY_UF_DBG_PRINT("Got user loops\n");
         switch (find_userloop(ufunc, dtypes,
                     out_innerloop, out_innerloopdata)) {
             /* Error */
@@ -1257,6 +1310,35 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
                 return 0;
         }
     }
+
+    /* Key generator for hashtable
+     * TODO: make code generator which can make hashtable are comiple time with suitable cases
+     */
+
+    int key = 0;
+    for (j = 0; j < nargs; ++j) {
+        key = (key<<5) + dtypes[j]->type_num;       
+    }
+
+    NPY_UF_DBG_PRINT1("key is %d\n",key); 
+    
+    if(strcmp(ufunc_name,"add")==0){
+        int rent = Sum_Hash[key];
+        NPY_UF_DBG_PRINT1("rent is %d\n",rent);
+        if(rent > 0){
+            *out_innerloop = ufunc->functions[rent];
+            *out_innerloopdata = ufunc->data[rent];
+            NPY_UF_DBG_PRINT1("type @ hashposition %d\n",rent);
+            return 0;
+        }
+    }   
+
+#if NPY_UF_DBG_TRACING
+    NPY_UF_DBG_PRINT1("function : %s",ufunc_name);
+    for (j = 0; j < nargs; ++j) {
+        NPY_UF_DBG_PRINT1("dtypes %d, ",dtypes[j]->type_num);
+    }
+#endif
 
     types = ufunc->types;
     for (i = 0; i < ufunc->ntypes; ++i) {
@@ -1269,6 +1351,7 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         if (j == nargs) {
             *out_innerloop = ufunc->functions[i];
             *out_innerloopdata = ufunc->data[i];
+            NPY_UF_DBG_PRINT1("type @ position %d, ",i);
             return 0;
         }
 

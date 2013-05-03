@@ -25,6 +25,24 @@
 #include "datetime_strings.h"
 #include "array_assign.h"
 
+
+/********** PRINTF DEBUG TRACING **************/
+#define NPY_UF_DBG_TRACING 1
+
+#if NPY_UF_DBG_TRACING
+#define NPY_UF_DBG_PRINT(s) {printf("%s", s);fflush(stdout);}
+#define NPY_UF_DBG_PRINT1(s, p1) {printf((s), (p1));fflush(stdout);}
+#define NPY_UF_DBG_PRINT2(s, p1, p2) {printf(s, p1, p2);fflush(stdout);}
+#define NPY_UF_DBG_PRINT3(s, p1, p2, p3) {printf(s, p1, p2, p3);fflush(stdout);}
+#else
+#define NPY_UF_DBG_PRINT(s)
+#define NPY_UF_DBG_PRINT1(s, p1)
+#define NPY_UF_DBG_PRINT2(s, p1, p2)
+#define NPY_UF_DBG_PRINT3(s, p1, p2, p3)
+#endif
+/**********************************************/
+
+
 /*
  * Reading from a file or a string.
  *
@@ -630,89 +648,100 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
 #if PY_VERSION_HEX >= 0x02060000
     /* PEP 3118 buffer interface */
     memset(&buffer_view, 0, sizeof(Py_buffer));
-    if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
-        PyObject_GetBuffer(obj, &buffer_view, PyBUF_ND) == 0) {
-        int nd = buffer_view.ndim;
-        if (nd < *maxndim) {
-            *maxndim = nd;
-        }
-        for (i=0; i<*maxndim; i++) {
-            d[i] = buffer_view.shape[i];
-        }
-        PyBuffer_Release(&buffer_view);
-        return 0;
+    if ( NEVERSUPPORTS_BUFFER_PROTOCOL(obj) ){
+        
     }
-    else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
-        d[0] = buffer_view.len;
-        *maxndim = 1;
-        PyBuffer_Release(&buffer_view);
-        return 0;
-    }
-    else {
-        PyErr_Clear();
+    else{    
+        if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
+            PyObject_GetBuffer(obj, &buffer_view, PyBUF_ND) == 0) {
+            int nd = buffer_view.ndim;
+            if (nd < *maxndim) {
+                *maxndim = nd;
+            }
+            for (i=0; i<*maxndim; i++) {
+                d[i] = buffer_view.shape[i];
+            }
+            PyBuffer_Release(&buffer_view);
+            return 0;
+        }
+        else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
+            d[0] = buffer_view.len;
+            *maxndim = 1;
+            PyBuffer_Release(&buffer_view);
+            return 0;
+        }
+        else {
+            PyErr_Clear();
+        }
     }
 #endif
 
     /* obj has the __array_struct__ interface */
-    if ((e = PyObject_GetAttrString(obj, "__array_struct__")) != NULL) {
-        int nd = -1;
-        if (NpyCapsule_Check(e)) {
-            PyArrayInterface *inter;
-            inter = (PyArrayInterface *)NpyCapsule_AsVoidPtr(e);
-            if (inter->two == 2) {
-                nd = inter->nd;
-                if (nd >= 0) {
+    if (ISEXACT_NATIVE_PYTYPE(obj)){
+        e = NULL;
+    }
+    else{    
+        if ((e = PyObject_GetAttrString(obj, "__array_struct__")) != NULL) {
+            int nd = -1;
+            if (NpyCapsule_Check(e)) {
+                PyArrayInterface *inter;
+                inter = (PyArrayInterface *)NpyCapsule_AsVoidPtr(e);
+                if (inter->two == 2) {
+                    nd = inter->nd;
+                    if (nd >= 0) {
+                        if (nd < *maxndim) {
+                            *maxndim = nd;
+                        }
+                        for (i=0; i<*maxndim; i++) {
+                            d[i] = inter->shape[i];
+                        }
+                    }
+                }
+            }
+            Py_DECREF(e);
+            if (nd >= 0) {
+                return 0;
+            }
+        }
+        else {
+            PyErr_Clear();
+        }
+
+        /* obj has the __array_interface__ interface */
+        if ((e = PyObject_GetAttrString(obj, "__array_interface__")) != NULL) {
+            int nd = -1;
+            if (PyDict_Check(e)) {
+                PyObject *new;
+                new = PyDict_GetItemString(e, "shape");
+                if (new && PyTuple_Check(new)) {
+                    nd = PyTuple_GET_SIZE(new);
                     if (nd < *maxndim) {
                         *maxndim = nd;
                     }
                     for (i=0; i<*maxndim; i++) {
-                        d[i] = inter->shape[i];
-                    }
-                }
-            }
-        }
-        Py_DECREF(e);
-        if (nd >= 0) {
-            return 0;
-        }
-    }
-    else {
-        PyErr_Clear();
-    }
-
-    /* obj has the __array_interface__ interface */
-    if ((e = PyObject_GetAttrString(obj, "__array_interface__")) != NULL) {
-        int nd = -1;
-        if (PyDict_Check(e)) {
-            PyObject *new;
-            new = PyDict_GetItemString(e, "shape");
-            if (new && PyTuple_Check(new)) {
-                nd = PyTuple_GET_SIZE(new);
-                if (nd < *maxndim) {
-                    *maxndim = nd;
-                }
-                for (i=0; i<*maxndim; i++) {
 #if (PY_VERSION_HEX >= 0x02050000)
-                    d[i] = PyInt_AsSsize_t(PyTuple_GET_ITEM(new, i));
+                        d[i] = PyInt_AsSsize_t(PyTuple_GET_ITEM(new, i));
 #else
-                    d[i] = PyInt_AsLong(PyTuple_GET_ITEM(new, i));
+                        d[i] = PyInt_AsLong(PyTuple_GET_ITEM(new, i));
 #endif
-                    if (d[i] < 0) {
-                        PyErr_SetString(PyExc_RuntimeError,
-                                "Invalid shape in __array_interface__");
-                        Py_DECREF(e);
-                        return -1;
+                        if (d[i] < 0) {
+                            PyErr_SetString(PyExc_RuntimeError,
+                                    "Invalid shape in __array_interface__");
+                            Py_DECREF(e);
+                            return -1;
+                        }
                     }
                 }
             }
+            Py_DECREF(e);
+            if (nd >= 0) {
+                return 0;
+            }
         }
-        Py_DECREF(e);
-        if (nd >= 0) {
-            return 0;
+        else {
+            PyErr_Clear();
         }
-    }
-    else {
-        PyErr_Clear();
+
     }
 
     n = PySequence_Size(obj);
@@ -849,6 +878,9 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         return NULL;
     }
 
+
+    
+
     /* Check dimensions */
     size = 1;
     sd = (size_t) descr->elsize;
@@ -869,6 +901,8 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
             sd = descr->elsize = sizeof(npy_ucs4);
         }
     }
+
+
 
     largest = NPY_MAX_INTP / sd;
     for (i = 0; i < nd; i++) {
@@ -906,6 +940,8 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         largest /= dim;
     }
 
+
+
     fa = (PyArrayObject_fields *) subtype->tp_alloc(subtype, 0);
     if (fa == NULL) {
         Py_DECREF(descr);
@@ -914,6 +950,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     fa->nd = nd;
     fa->dimensions = NULL;
     fa->data = NULL;
+
     if (data == NULL) {
         fa->flags = NPY_ARRAY_DEFAULT;
         if (flags) {
@@ -925,13 +962,17 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         }
     }
     else {
+
         fa->flags = (flags & ~NPY_ARRAY_UPDATEIFCOPY);
     }
+
+
     fa->descr = descr;
     fa->base = (PyObject *)NULL;
     fa->weakreflist = (PyObject *)NULL;
 
     if (nd > 0) {
+
         fa->dimensions = PyDimMem_NEW(3*nd);
         if (fa->dimensions == NULL) {
             PyErr_NoMemory();
@@ -942,6 +983,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         if (strides == NULL) { /* fill it in */
             sd = _array_fill_strides(fa->strides, dims, nd, sd,
                                      flags, &(fa->flags));
+
         }
         else {
             /*
@@ -991,6 +1033,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     }
     fa->data = data;
 
+
     /*
      * If the strides were provided to the function, need to
      * update the flags to get the right CONTIGUOUS, ALIGN properties
@@ -1004,6 +1047,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
      * method if a subtype.
      * If obj is NULL, then call method with Py_None
      */
+
     if ((subtype != &PyArray_Type)) {
         PyObject *res, *func, *args;
 
@@ -1917,10 +1961,16 @@ PyArray_FromStructInterface(PyObject *input)
     PyArrayObject *ret;
     char endian = NPY_NATBYTE;
 
-    attr = PyObject_GetAttrString(input, "__array_struct__");
-    if (attr == NULL) {
-        PyErr_Clear();
+    if (ISEXACT_NATIVE_PYTYPE(input)){
+        attr = NULL;
         return Py_NotImplemented;
+    }
+    else{
+        attr = PyObject_GetAttrString(input, "__array_struct__");
+        if (attr == NULL) {
+            PyErr_Clear();
+            return Py_NotImplemented;
+        }
     }
     if (!NpyCapsule_Check(attr)) {
         goto fail;
@@ -1991,12 +2041,18 @@ PyArray_FromInterface(PyObject *origin)
     /* Get the shape */
     /* Get the memory from __array_data__ and __array_offset__ */
     /* Get the strides */
-
-    iface = PyObject_GetAttrString(origin, "__array_interface__");
-    if (iface == NULL) {
-        PyErr_Clear();
+    if (ISEXACT_NATIVE_PYTYPE(origin)){
+        iface = NULL;
         return Py_NotImplemented;
     }
+    else{
+        iface = PyObject_GetAttrString(origin, "__array_interface__");
+        if (iface == NULL) {
+            PyErr_Clear();
+            return Py_NotImplemented;
+        }
+    }
+
     if (!PyDict_Check(iface)) {
         Py_DECREF(iface);
         PyErr_SetString(PyExc_ValueError,
@@ -2209,11 +2265,18 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
     PyObject *new;
     PyObject *array_meth;
 
-    array_meth = PyObject_GetAttrString(op, "__array__");
-    if (array_meth == NULL) {
-        PyErr_Clear();
+    if (ISEXACT_NATIVE_PYTYPE(op)){
+        array_meth = NULL;
         return Py_NotImplemented;
     }
+    else{
+        array_meth = PyObject_GetAttrString(op, "__array__");
+        if (array_meth == NULL) {
+            PyErr_Clear();
+            return Py_NotImplemented;
+        }
+    }
+
     if (context == NULL) {
         if (typecode == NULL) {
             new = PyObject_CallFunction(array_meth, NULL);
