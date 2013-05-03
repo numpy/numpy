@@ -147,9 +147,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     int i, size;
     PyArray_Descr *dtype = NULL;
     PyObject *ip;
-#if PY_VERSION_HEX >= 0x02060000
     Py_buffer buffer_view;
-#endif
 
     /* Check if it's an ndarray */
     if (PyArray_Check(obj)) {
@@ -309,7 +307,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         goto promote_types;
     }
 
-#if PY_VERSION_HEX >= 0x02060000
     /* PEP 3118 buffer interface */
     memset(&buffer_view, 0, sizeof(Py_buffer));
     if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
@@ -334,7 +331,6 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     else {
         PyErr_Clear();
     }
-#endif
 
     /* The array interface */
     ip = PyObject_GetAttrString(obj, "__array_interface__");
