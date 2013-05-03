@@ -1270,14 +1270,14 @@ class TestIsclose(object):
 
     def test_masked_arrays(self):
         x = np.ma.masked_where([True, True, False], np.arange(3))
-        assert_(type(x) == type(isclose(2, x)))
+        assert_(type(x) is type(isclose(2, x)))
 
         x = np.ma.masked_where([True, True, False], [nan, inf, nan])
-        assert_(type(x) == type(isclose(inf, x)))
+        assert_(type(x) is type(isclose(inf, x)))
 
         x = np.ma.masked_where([True, True, False], [nan, nan, nan])
         y = isclose(nan, x, equal_nan=True)
-        assert_(type(x) == type(y))
+        assert_(type(x) is type(y))
         # Ensure that the mask isn't modified...
         assert_array_equal([True, True, False], y.mask)
 
@@ -1409,7 +1409,7 @@ class TestLikeFuncs(TestCase):
         assert_(type(b) is np.matrix)
 
         b = like_function(a, subok=False)
-        assert_(not (type(b) is np.matrix))
+        assert_(type(b) is not np.matrix)
 
     def test_ones_like(self):
         self.check_like_function(np.ones_like, 1)

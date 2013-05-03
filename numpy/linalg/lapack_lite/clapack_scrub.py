@@ -32,7 +32,7 @@ def runScanner(data, scanner_class, lexicon=None):
         scanner = scanner_class(lexicon, info)
     else:
         scanner = scanner_class(info)
-    while 1:
+    while True:
         value, text = scanner.read()
         if value is None:
             break

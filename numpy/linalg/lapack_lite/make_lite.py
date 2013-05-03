@@ -126,7 +126,7 @@ class FortranLibrary(object):
         """
         done_this = set()
         last_todo = set()
-        while 1:
+        while True:
             todo = set(self.allRoutineNames()) - done_this
             if todo == last_todo:
                 break
@@ -151,8 +151,7 @@ class LapackLibrary(FortranLibrary):
         return routine
 
     def allRoutinesByType(self, typename):
-        routines = [(r.name,r) for r in self.allRoutines() if r.type == typename]
-        routines.sort()
+        routines = sorted((r.name,r) for r in self.allRoutines() if r.type == typename)
         return [a[1] for a in routines]
 
 def printRoutineNames(desc, routines):

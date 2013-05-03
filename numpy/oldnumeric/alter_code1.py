@@ -88,7 +88,7 @@ def changeimports(fstr, name, newname):
     ind = 0
     Nlen = len(fromstr)
     Nlen2 = len("from %s import " % newname)
-    while 1:
+    while True:
         found = fstr.find(fromstr,ind)
         if (found < 0):
             break

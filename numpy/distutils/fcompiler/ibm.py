@@ -45,8 +45,7 @@ class IBMFCompiler(FCompiler):
             # If the output of xlf does not contain version info
             # (that's the case with xlf 8.1, for instance) then
             # let's try another method:
-            l = os.listdir(xlf_dir)
-            l.sort()
+            l = sorted(os.listdir(xlf_dir))
             l.reverse()
             l = [d for d in l if os.path.isfile(os.path.join(xlf_dir,d,'xlf.cfg'))]
             if l:

@@ -120,7 +120,7 @@ def parse_structure(astr, level):
     ind = 0
     line = 0
     spanlist = []
-    while 1:
+    while True:
         start = astr.find(loopbeg, ind)
         if start == -1:
             break

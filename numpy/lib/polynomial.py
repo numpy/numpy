@@ -905,7 +905,7 @@ def _raise_power(astr, wrap=70):
     line1 = ''
     line2 = ''
     output = ' '
-    while 1:
+    while True:
         mat = _poly_mat.search(astr, n)
         if mat is None:
             break

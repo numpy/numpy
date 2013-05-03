@@ -297,7 +297,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
     spacedigits=[' '] + [str(_m) for _m in range(10)]
     filepositiontext=''
     fin=fileinput.FileInput(ffile)
-    while 1:
+    while True:
         l=fin.readline()
         if not l: break
         if fin.isfirstline():
@@ -381,7 +381,7 @@ def readfortrancode(ffile,dowithline=show,istop=1):
         elif sourcecodeform=='free':
             if not cont and ext=='.pyf' and mline_mark.match(l):
                 l = l + '\n'
-                while 1:
+                while True:
                     lc = fin.readline()
                     if not lc:
                         errmess('Unexpected end of file when reading multiline\n')
@@ -1167,7 +1167,7 @@ def analyzeline(m,case,line):
             groupcache[groupcounter]['f2pyenhancements'] = {}
         d = groupcache[groupcounter]['f2pyenhancements']
         if m.group('this')=='usercode' and 'usercode' in d:
-            if type(d['usercode']) is type(''):
+            if isinstance(d['usercode'], str):
                 d['usercode'] = [d['usercode']]
             d['usercode'].append(m.group('after'))
         else:
@@ -1522,7 +1522,7 @@ def postcrack2(block,tab='',param_map=None):
     global f90modulevars
     if not f90modulevars:
         return block
-    if type(block)==list:
+    if isinstance(block, list):
         ret = []
         for g in block:
             g = postcrack2(g,tab=tab+'\t',param_map=param_map)
@@ -1559,7 +1559,7 @@ def postcrack(block,args=None,tab=''):
           determine expression types if in argument list
     """
     global usermodules,onlyfunctions
-    if type(block)==list:
+    if isinstance(block, list):
         gret=[]
         uret=[]
         for g in block:
@@ -1571,7 +1571,7 @@ def postcrack(block,args=None,tab=''):
                 gret.append(g)
         return uret+gret
     setmesstext(block)
-    if (not type(block)==dict) and 'block' not in block:
+    if not isinstance(block, dict) and 'block' not in block:
         raise Exception('postcrack: Expected block dictionary instead of ' + \
                         str(block))
     if 'name' in block and not block['name']=='unknown_interface':
@@ -1819,12 +1819,12 @@ def getarrlen(dl,args,star='*'):
     except: edl.append(dl[0])
     try: edl.append(myeval(dl[1],{},{}))
     except: edl.append(dl[1])
-    if type(edl[0]) is type(0):
+    if isinstance(edl[0], int):
         p1 = 1-edl[0]
         if p1==0: d = str(dl[1])
         elif p1<0: d = '%s-%s'%(dl[1],-p1)
         else: d = '%s+%s'%(dl[1],p1)
-    elif type(edl[1]) is type(0):
+    elif isinstance(edl[1], int):
         p1 = 1+edl[1]
         if p1==0: d='-(%s)' % (dl[0])
         else: d='%s-(%s)' % (p1,dl[0])
@@ -2042,7 +2042,7 @@ def get_parameters(vars, global_params={}):
                 params[n] = v
                 #print params
                 outmess('get_parameters: got "%s" on %s\n' % (msg,repr(v)))
-            if isstring(vars[n]) and type(params[n]) is type(0):
+            if isstring(vars[n]) and isinstance(params[n], int):
                 params[n] = chr(params[n])
             nl = n.lower()
             if nl!=n:
@@ -2458,14 +2458,15 @@ determineexprtype_re_3 = re.compile(r'\A[+-]?[\d.]+[\d+-de.]*(_(P<name>[\w]+)|)\
 determineexprtype_re_4 = re.compile(r'\A\(.*\)\Z',re.I)
 determineexprtype_re_5 = re.compile(r'\A(?P<name>\w+)\s*\(.*?\)\s*\Z',re.I)
 def _ensure_exprdict(r):
-    if type(r) is type(0):
+    if isinstance(r, int):
         return {'typespec':'integer'}
-    if type(r) is type(0.0):
+    if isinstance(r, float):
         return {'typespec':'real'}
-    if type(r) is type(0j):
+    if isinstance(r, complex):
         return {'typespec':'complex'}
-    assert type(r) is type({}),repr(r)
-    return r
+    if isinstance(r, dict):
+        return r
+    raise AssertionError(repr(r))
 
 def determineexprtype(expr,vars,rules={}):
     if expr in vars:
