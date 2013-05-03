@@ -1312,5 +1312,11 @@ fail:
         PyErr_SetString(PyExc_RuntimeError,
                         "cannot load test_rational module.");
     }
+#if defined(NPY_PY3K)
+    if (m) {
+        Py_DECREF(m);
+        m = NULL;
+    }
+#endif
     return RETVAL;
 }
