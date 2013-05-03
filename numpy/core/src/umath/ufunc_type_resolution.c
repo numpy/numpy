@@ -1179,7 +1179,13 @@ find_userloop(PyUFuncObject *ufunc,
     /* Use this to try to avoid repeating the same userdef loop search */
     int last_userdef = -1;
 
-    for (i = 0; i < nin; ++i) {
+    for (i = 0; i < nargs; ++i) {
+
+        /* no more ufunc arguments to check */
+        if (dtypes[i] == NULL) {
+            break;
+        }
+
         int type_num = dtypes[i]->type_num;
         if (type_num != last_userdef && PyTypeNum_ISUSERDEF(type_num)) {
             PyObject *key, *obj;
@@ -1581,13 +1587,19 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
                         char *out_err_src_typecode,
                         char *out_err_dst_typecode)
 {
-    npy_intp i, nin = self->nin;
+    npy_intp i, nop = self->nin + self->nout;
     PyUFunc_Loop1d *funcdata;
 
     /* Use this to try to avoid repeating the same userdef loop search */
     int last_userdef = -1;
 
-    for (i = 0; i < nin; ++i) {
+    for (i = 0; i < nop; ++i) {
+        
+        /* no more ufunc arguments to check */
+        if (op[i] == NULL) {
+            break;
+        }
+
         int type_num = PyArray_DESCR(op[i])->type_num;
         if (type_num != last_userdef && PyTypeNum_ISUSERDEF(type_num)) {
             PyObject *key, *obj;

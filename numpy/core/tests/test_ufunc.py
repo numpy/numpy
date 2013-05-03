@@ -6,6 +6,7 @@ import numpy as np
 from numpy.testing import *
 import numpy.core.umath_tests as umt
 from numpy.compat import asbytes
+from numpy.core.test_rational import *
 
 class TestUfunc(TestCase):
     def test_pickle(self):
@@ -770,6 +771,21 @@ class TestUfunc(TestCase):
         # Make sure that explicitly overriding the warning is allowed:
         assert_no_warnings(np.add, a, 1.1, out=a, casting="unsafe")
         assert_array_equal(a, [4, 5, 6])
+
+    def test_ufunc_custom_out(self):
+        # Test ufunc with built in input types and custom output type
+
+        a = np.array([0, 1, 2], dtype='i8')
+        b = np.array([0, 1, 2], dtype='i8')
+        c = np.empty(3, dtype=rational)
+
+        # Output must be specified so numpy knows what
+        # ufunc signature to look for
+        result = test_add(a, b, c)
+        assert_equal(result, np.array([0, 2, 4], dtype=rational))
+
+        # no output type should raise TypeError
+        assert_raises(TypeError, test_add, a, b)
 
 if __name__ == "__main__":
     run_module_suite()
