@@ -65,13 +65,13 @@ def parse_structure(astr):
 
     spanlist = []
     ind = 0
-    while 1:
+    while True:
         m = routine_start_re.search(astr,ind)
         if m is None:
             break
         start = m.start()
         if function_start_re.match(astr,start,m.end()):
-            while 1:
+            while True:
                 i = astr.rfind('\n',ind,start)
                 if i==-1:
                     break

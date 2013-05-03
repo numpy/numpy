@@ -1128,10 +1128,10 @@ def buildcfuncs():
 
 def append_needs(need,flag=1):
     global outneeds,needs
-    if type(need)==list:
+    if isinstance(need, list):
         for n in need:
             append_needs(n,flag)
-    elif type(need)==str:
+    elif isinstance(need, str):
         if not need: return
         if need in includes0:
             n = 'includes0'
@@ -1160,7 +1160,7 @@ def append_needs(need,flag=1):
             if need in needs:
                 for nn in needs[need]:
                     t=append_needs(nn,0)
-                    if type(t)==dict:
+                    if isinstance(t, dict):
                         for nnn in t.keys():
                             if nnn in tmp:
                                 tmp[nnn]=tmp[nnn]+t[nnn]
@@ -1176,7 +1176,7 @@ def append_needs(need,flag=1):
             if need in needs:
                 for nn in needs[need]:
                     t=append_needs(nn,flag)
-                    if type(t)==dict:
+                    if isinstance(t, dict):
                         for nnn in t.keys():
                             if nnn in tmp:
                                 tmp[nnn]=t[nnn]+tmp[nnn]

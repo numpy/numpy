@@ -355,7 +355,7 @@ if ctypes is not None:
 
         shape = []
         ob = array_type
-        while type(ob) == _ARRAY_TYPE:
+        while type(ob) is _ARRAY_TYPE:
             shape.append(ob._length_)
             ob = ob._type_
         shape = tuple(shape)

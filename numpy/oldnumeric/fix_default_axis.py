@@ -185,7 +185,7 @@ def _import_change(fstr, names):
     ind = 0
     importstr = "from numpy import"
     N = len(importstr)
-    while 1:
+    while True:
         ind = fstr.find(importstr, ind)
         if (ind < 0):
             break

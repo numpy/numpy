@@ -466,7 +466,7 @@ def buildcallback(rout,um):
                 if '_break' in r:
                     break
     if 'args' in rd and 'optargs' in rd:
-        if type(rd['optargs'])==type([]):
+        if isinstance(rd['optargs'], list):
             rd['optargs']=rd['optargs']+["""
 #ifndef F2PY_CB_RETURNCOMPLEX
 ,
@@ -482,7 +482,7 @@ def buildcallback(rout,um):
 ,
 #endif
 """]
-    if type(rd['docreturn'])==list:
+    if isinstance(rd['docreturn'], list):
         rd['docreturn']=stripcomma(replace('#docreturn#',{'docreturn':rd['docreturn']}))
     optargs=stripcomma(replace('#docsignopt#',
                                 {'docsignopt':rd['docsignopt']}
@@ -499,10 +499,10 @@ def buildcallback(rout,um):
     rd['docstrsigns']=[]
     rd['latexdocstrsigns']=[]
     for k in ['docstrreq','docstropt','docstrout','docstrcbs']:
-        if k in rd and type(rd[k])==list:
+        if k in rd and isinstance(rd[k], list):
             rd['docstrsigns']=rd['docstrsigns']+rd[k]
         k='latex'+k
-        if k in rd and type(rd[k])==list:
+        if k in rd and isinstance(rd[k], list):
             rd['latexdocstrsigns']=rd['latexdocstrsigns']+rd[k][0:1]+\
                                     ['\\begin{description}']+rd[k][1:]+\
                                     ['\\end{description}']
@@ -515,7 +515,7 @@ def buildcallback(rout,um):
 
     ar=applyrules(cb_routine_rules,rd)
     cfuncs.callbacks[rd['name']]=ar['body']
-    if type(ar['need'])==str:
+    if isinstance(ar['need'], str):
         ar['need']=[ar['need']]
 
     if 'need' in rd:

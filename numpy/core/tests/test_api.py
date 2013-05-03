@@ -88,7 +88,7 @@ def test_array_astype():
     b = a.astype('f4', subok=False, copy=False)
     assert_equal(a, b)
     assert_(not (a is b))
-    assert_(type(b) != np.matrix)
+    assert_(type(b) is not np.matrix)
 
     # Make sure converting from string object to fixed length string
     # does not truncate.
