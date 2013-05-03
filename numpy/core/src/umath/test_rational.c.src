@@ -1087,29 +1087,31 @@ static struct PyModuleDef moduledef = {
 #endif
 
 #if defined(NPY_PY3K)
+#define RETVAL m
 PyMODINIT_FUNC PyInit_test_rational(void) {
 #else
+#define RETVAL
 PyMODINIT_FUNC inittest_rational(void) {
 #endif
 
-    PyObject *m;
+    PyObject *m = NULL;
 
     import_array();
     if (PyErr_Occurred()) {
-        return NULL;
+        goto fail;
     }
     import_umath();
     if (PyErr_Occurred()) {
-        return NULL;
+        goto fail;
     }
     PyObject* numpy_str = PyUString_FromString("numpy");
     if (!numpy_str) {
-        return NULL;
+        goto fail;
     }
     PyObject* numpy = PyImport_Import(numpy_str);
     Py_DECREF(numpy_str);
     if (!numpy) {
-        return NULL;
+        goto fail;
     }
 
     /* Can't set this until we import numpy */
@@ -1117,7 +1119,7 @@ PyMODINIT_FUNC inittest_rational(void) {
 
     /* Initialize rational type object */
     if (PyType_Ready(&PyRational_Type) < 0) {
-        return NULL;
+        goto fail;
     }
 
     /* Initialize rational descriptor */
@@ -1137,13 +1139,13 @@ PyMODINIT_FUNC inittest_rational(void) {
     Py_TYPE(&npyrational_descr) = &PyArrayDescr_Type;
     int npy_rational = PyArray_RegisterDataType(&npyrational_descr);
     if (npy_rational<0) {
-        return NULL;
+        goto fail;
     }
 
     /* Support dtype(rational) syntax */
     if (PyDict_SetItemString(PyRational_Type.tp_dict, "dtype",
                              (PyObject*)&npyrational_descr) < 0) {
-        return NULL;
+        goto fail;
     }
 
     /* Register casts to and from rational */
@@ -1151,12 +1153,12 @@ PyMODINIT_FUNC inittest_rational(void) {
         PyArray_Descr* from_descr_##From##_##To = (from_descr); \
         if (PyArray_RegisterCastFunc(from_descr_##From##_##To, (to_typenum), \
                                      npycast_##From##_##To) < 0) { \
-            return NULL; \
+            goto fail; \
         } \
         if (safe && PyArray_RegisterCanCast(from_descr_##From##_##To, \
                                             (to_typenum), \
                                             NPY_NOSCALAR) < 0) { \
-            return NULL; \
+            goto fail; \
         }
     #define REGISTER_INT_CASTS(bits) \
         REGISTER_CAST(int##bits##_t, rational, \
@@ -1178,18 +1180,18 @@ PyMODINIT_FUNC inittest_rational(void) {
         PyUFuncObject* ufunc = \
             (PyUFuncObject*)PyObject_GetAttrString(numpy, #name); \
         if (!ufunc) { \
-            return NULL; \
+            goto fail; \
         } \
         int _types[] = __VA_ARGS__; \
         if (sizeof(_types)/sizeof(int)!=ufunc->nargs) { \
             PyErr_Format(PyExc_AssertionError, \
                          "ufunc %s takes %d arguments, our loop takes %ld", \
                          #name, ufunc->nargs, sizeof(_types)/sizeof(int)); \
-            return NULL; \
+            goto fail; \
         } \
         if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc, npy_rational, \
                 rational_ufunc_##name, _types, 0) < 0) { \
-            return NULL; \
+            goto fail; \
         } \
     }
     #define REGISTER_UFUNC_BINARY_RATIONAL(name) \
@@ -1234,7 +1236,7 @@ PyMODINIT_FUNC inittest_rational(void) {
 #endif
 
     if (!m) {
-        return NULL;
+        goto fail;
     }
 
     /* Add rational type */
@@ -1247,12 +1249,12 @@ PyMODINIT_FUNC inittest_rational(void) {
         (char*)"return result of multiplying two matrices of rationals",
         0,"(m,n),(n,p)->(m,p)");
     if (!gufunc) {
-        return NULL;
+        goto fail;
     }
     int types2[3] = {npy_rational,npy_rational,npy_rational};
     if (PyUFunc_RegisterLoopForType((PyUFuncObject*)gufunc, npy_rational,
             rational_gufunc_matrix_multiply, types2, 0) < 0) {
-        return NULL;
+        goto fail;
     }
     PyModule_AddObject(m,"matrix_multiply",(PyObject*)gufunc);
 
@@ -1261,12 +1263,12 @@ PyMODINIT_FUNC inittest_rational(void) {
         PyUFunc_None,(char*)"test_add",
         (char*)"add two matrices of int64 and return rational matrix",0);
     if (!ufunc) {
-        return NULL;
+        goto fail;
     }
     int types3[3] = {NPY_INT64,NPY_INT64,npy_rational};
     if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc, npy_rational,
             rational_ufunc_test_add, types3, 0) < 0) {
-        return NULL;
+        goto fail;
     }
     PyModule_AddObject(m,"test_add",(PyObject*)ufunc);
 
@@ -1275,12 +1277,12 @@ PyMODINIT_FUNC inittest_rational(void) {
         PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,1,1, \
             PyUFunc_None,(char*)#name,(char*)doc,0); \
         if (!ufunc) { \
-            return NULL; \
+            goto fail; \
         } \
         int types[2] = {npy_rational,type}; \
         if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc, \
                 npy_rational,rational_ufunc_##name,types,0)<0) { \
-            return NULL; \
+            goto fail; \
         } \
         PyModule_AddObject(m,#name,(PyObject*)ufunc); \
     }
@@ -1296,12 +1298,25 @@ PyMODINIT_FUNC inittest_rational(void) {
             (PyUFuncGenericFunction*)func, data,(char*)types, \
             1,2,1,PyUFunc_One,(char*)#name,(char*)doc,0); \
         if (!ufunc) { \
-            return NULL; \
+            goto fail; \
         } \
         PyModule_AddObject(m,#name,(PyObject*)ufunc); \
     }
     GCD_LCM_UFUNC(gcd,NPY_INT64,"greatest common denominator of two integers");
     GCD_LCM_UFUNC(lcm,NPY_INT64,"least common multiple of two integers");
 
-    return m;
+    return RETVAL;
+
+fail:
+    if (!PyErr_Occurred()) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "cannot load test_rational module.");
+    }
+#if defined(NPY_PY3K)
+    if (m) {
+        Py_DECREF(m);
+        m = NULL;
+    }
+#endif
+    return RETVAL;
 }
