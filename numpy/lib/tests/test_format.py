@@ -458,6 +458,38 @@ def test_memmap_roundtrip():
             del ma
 
 
+def test_memmap_load_file_like():
+    fn = os.path.join(tempdir, "file.npy");
+    d = np.array([1, 2, 3])
+    np.save(fn, d)
+    x = np.load(fn, mmap_mode='r')
+    assert_array_equal(x, d)
+    with open(fn, 'rb') as f:
+        # should not close it
+        x = np.load(f, mmap_mode='r')
+        f.seek(0, 0)
+        x2 = np.load(f)
+        assert_array_equal(x, x2)
+    assert_array_equal(x, d)
+
+
+def test_memmap_load_file_like_write():
+    fn = os.path.join(tempdir, "file.npy");
+    d = np.array([1, 2, 3])
+    np.save(fn, d)
+    x = np.load(fn, mmap_mode='r+')
+    assert_array_equal(x, d)
+    with open(fn, 'r+b') as f:
+        x = np.load(f, mmap_mode='r+')
+        f.seek(0, 0)
+        # change the data in the file (and the reference)
+        x[1] = -1
+        d[1] = -1
+        del x  # sync it
+    loaded = np.load(fn)
+    assert_array_equal(loaded, d)
+
+
 def test_write_version_1_0():
     f = BytesIO()
     arr = np.arange(1)
