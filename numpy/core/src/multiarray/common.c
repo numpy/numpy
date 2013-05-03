@@ -147,9 +147,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     int i, size;
     PyArray_Descr *dtype = NULL;
     PyObject *ip;
-#if PY_VERSION_HEX >= 0x02060000
     Py_buffer buffer_view;
-#endif
 
     /* Check if it's an ndarray */
     if (PyArray_Check(obj)) {
