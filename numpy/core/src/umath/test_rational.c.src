@@ -1042,7 +1042,7 @@ rational_gufunc_matrix_multiply(char **args, npy_intp *dimensions,
     npy_intp s1 = steps[1];
     npy_intp s2 = steps[2];
 
-    /* 
+    /*
      * loop through outer dimensions, performing matrix multiply on
      * core dimensions for each loop
      */
@@ -1162,7 +1162,7 @@ PyMODINIT_FUNC inittest_rational(void) {
         REGISTER_CAST(int##bits##_t, rational, \
                       PyArray_DescrFromType(NPY_INT##bits), npy_rational, 1) \
         REGISTER_CAST(rational, int##bits##_t, &npyrational_descr, \
-                      NPY_INT##bits, 0) 
+                      NPY_INT##bits, 0)
     REGISTER_INT_CASTS(8)
     REGISTER_INT_CASTS(16)
     REGISTER_INT_CASTS(32)
@@ -1193,11 +1193,11 @@ PyMODINIT_FUNC inittest_rational(void) {
         } \
     }
     #define REGISTER_UFUNC_BINARY_RATIONAL(name) \
-        REGISTER_UFUNC(name,{npy_rational,npy_rational,npy_rational})
+        REGISTER_UFUNC(name, {npy_rational, npy_rational, npy_rational})
     #define REGISTER_UFUNC_BINARY_COMPARE(name) \
-        REGISTER_UFUNC(name,{npy_rational,npy_rational,NPY_BOOL})
+        REGISTER_UFUNC(name, {npy_rational, npy_rational, NPY_BOOL})
     #define REGISTER_UFUNC_UNARY(name) \
-        REGISTER_UFUNC(name,{npy_rational,npy_rational})
+        REGISTER_UFUNC(name, {npy_rational, npy_rational})
     /* Binary */
     REGISTER_UFUNC_BINARY_RATIONAL(add)
     REGISTER_UFUNC_BINARY_RATIONAL(subtract)
@@ -1261,12 +1261,12 @@ PyMODINIT_FUNC inittest_rational(void) {
         PyUFunc_None,(char*)"test_add",
         (char*)"add two matrices of int64 and return rational matrix",0);
     if (!ufunc) {
-        return;
+        return NULL;
     }
     int types3[3] = {NPY_INT64,NPY_INT64,npy_rational};
     if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc, npy_rational,
             rational_ufunc_test_add, types3, 0) < 0) {
-        return;
+        return NULL;
     }
     PyModule_AddObject(m,"test_add",(PyObject*)ufunc);
 
