@@ -1,7 +1,7 @@
 HookFile: bscript
 
 Library:
-    Extension: umath_linalg
+    Extension: _umath_linalg
         Sources:
             umath_linalg.c.src,
             lapack_lite/blas_lite.c,

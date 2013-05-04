@@ -18,6 +18,12 @@ import subprocess
 import __builtin__
 __builtin__.__NUMPY_SETUP__ = True
 
+import waflib
+
+from numpy.distutils.conv_template \
+    import \
+        process_str as process_c_str
+
 from bento.commands import hooks
 from bento.utils.utils \
     import \
@@ -81,3 +87,25 @@ def pre_sdist(context):
 @hooks.options
 def options(global_context):
     blas_lapack.add_options(global_context)
+
+
+class CTemplateTask(waflib.Task.Task):
+    color = 'BLUE'
+    before = ['c']
+    def run(self):
+        s = self.inputs[0]
+        cnt = s.read()
+        writestr = process_c_str(cnt)
+        o = self.outputs[0]
+        o.write(writestr)
+
+@waflib.TaskGen.extension(".src")
+def c_template(self, node):
+    outs = []
+    outs.append(node.change_ext(""))
+
+    tsk = self.create_task('CTemplateTask', node, outs)
+    if "c" in self.features:
+        self.source.append(outs[0])
+
+
