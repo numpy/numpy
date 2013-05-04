@@ -1348,12 +1348,12 @@ class TestCreationFuncs(TestCase):
                     for type in self.dtypes: # bool, int, float etc.
                         for bytes in 2**np.arange(9): # byte size for type
                             try:
-                                dtype = np.dtype('%s%d' % (type, bytes))
+                                dtype = np.dtype('{0}{1}'.format(type, bytes))
                             except TypeError: # dtype combination does not exist
                                 continue
                             else:
                                 # do not fill void type
-                                if fill_value is not None and type in 'VSUa':
+                                if fill_value is not None and type in 'V':
                                     continue
 
                                 arr = func(shape, order=order, dtype=dtype,
@@ -1363,7 +1363,11 @@ class TestCreationFuncs(TestCase):
                                 assert getattr(arr.flags, self.orders[order])
 
                                 if fill_value is not None:
-                                    assert_equal(arr, dtype.type(fill_value))
+                                    if dtype.str.startswith('|S'):
+                                        val = str(fill_value)
+                                    else:
+                                        val = fill_value
+                                    assert_equal(arr, dtype.type(val))
 
     def test_zeros(self):
         self.check_function(np.zeros)
