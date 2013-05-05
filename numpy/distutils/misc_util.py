@@ -605,11 +605,29 @@ def get_shared_lib_extension(is_python_ext=False):
     Linux, but not on OS X.
 
     """
-    so_ext = distutils.sysconfig.get_config_var('SO') or ''
-    # fix long extension for Python >=3.2, see PEP 3149.
-    if (not is_python_ext) and 'SOABI' in distutils.sysconfig.get_config_vars():
-        # Does nothing unless SOABI config var exists
-        so_ext = so_ext.replace('.' + distutils.sysconfig.get_config_var('SOABI'), '', 1)
+    confvars = distutils.sysconfig.get_config_vars()
+    # SO is deprecated in 3.3.1, use EXT_SUFFIX instead
+    so_ext = confvars.get('EXT_SUFFIX', None)
+    if so_ext is None:
+        so_ext = confvars.get('SO', '')
+
+    if not is_python_ext:
+        # hardcode known values, config vars (including SHLIB_SUFFIX) are
+        # unreliable (see #3182)
+        # darwin, windows and debug linux are wrong in 3.3.1 and older
+        if (sys.platform.startswith('linux') or
+            sys.platform.startswith('gnukfreebsd')):
+            so_ext = '.so'
+        elif sys.platform.startswith('darwin'):
+            so_ext = '.dylib'
+        elif sys.platform.startswith('win'):
+            so_ext = '.dll'
+        else:
+            # fall back to config vars for unknown platforms
+            # fix long extension for Python >=3.2, see PEP 3149.
+            if 'SOABI' in confvars:
+                # Does nothing unless SOABI config var exists
+                so_ext = so_ext.replace('.' + confvars.get('SOABI'), '', 1)
 
     return so_ext
 
