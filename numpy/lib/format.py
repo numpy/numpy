@@ -39,7 +39,7 @@ Capabilities
   read most ``.npy`` files that he has been given without much
   documentation.
 
-- Allows memory-mapping of the data. See `open_memmep`.
+- Allows memory-mapping of the data. See `open_memmap`.
 
 - Can be read from a filelike stream object instead of an actual file.
 
@@ -473,15 +473,15 @@ def read_array(fp):
 def open_memmap(filename, mode='r+', dtype=None, shape=None,
                 fortran_order=False, version=(1,0)):
     """
-    Open a .npy file as a memory-mapped array.
+    Open a uncompressed .npy file as a memory-mapped array.
 
     This may be used to read an existing file or create a new one.
 
     Parameters
     ----------
     filename : str
-        The name of the file on disk.  This may *not* be a file-like
-        object.
+        The name of the file on disk.  This may be a memory mappable
+        file-like object which is then seeked to the end of the data.
     mode : str, optional
         The mode in which to open the file; the default is 'r+'.  In
         addition to the standard file modes, 'c' is also accepted to
@@ -519,11 +519,11 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
     memmap
 
     """
-    if not isinstance(filename, basestring):
-        raise ValueError("Filename must be a string.  Memmap cannot use" \
-                         " existing file handles.")
 
     if 'w' in mode:
+        if not isinstance(filename, basestring):
+            raise ValueError("Filename must be a string.  Truncating memmap"
+                             " cannot use existing file handles.")
         # We are creating the file, not reading it.
         # Check if we ought to create the file.
         if version != (1, 0):
@@ -550,7 +550,11 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
             fp.close()
     else:
         # Read the header of the file first.
-        fp = open(filename, 'rb')
+        try:
+            fp = open(filename, 'rb')
+        except TypeError:
+            # assume its already a file-like
+            fp = filename
         try:
             version = read_magic(fp)
             if version != (1, 0):
@@ -562,7 +566,8 @@ def open_memmap(filename, mode='r+', dtype=None, shape=None,
                 raise ValueError(msg)
             offset = fp.tell()
         finally:
-            fp.close()
+            if fp != filename:
+                fp.close()
 
     if fortran_order:
         order = 'F'
