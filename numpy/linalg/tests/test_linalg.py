@@ -197,7 +197,8 @@ def identity_like_generalized(a):
     return identity(a.shape[0])
 
 
-class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase, LinalgZeroShapeTestCase, TestCase):
+class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase,
+        LinalgZeroShapeTestCase, TestCase):
     def do(self, a, b):
         x = linalg.solve(a, b)
         assert_almost_equal(b, dot_generalized(a, x))
@@ -211,7 +212,8 @@ class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase, LinalgZeroShapeTestCa
             yield check, dtype
 
 
-class TestInv(LinalgTestCase, LinalgGeneralizedTestCase, LinalgZeroShapeTestCase, TestCase):
+class TestInv(LinalgTestCase, LinalgGeneralizedTestCase,
+        LinalgZeroShapeTestCase, TestCase):
     def do(self, a, b):
         a_inv = linalg.inv(a)
         assert_almost_equal(dot_generalized(a, a_inv),
