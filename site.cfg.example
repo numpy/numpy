@@ -65,30 +65,67 @@
 
 # Optimized BLAS and LAPACK
 # -------------------------
-# Use the blas_opt and lapack_opt sections to give any settings that are
-# required to link against your chosen BLAS and LAPACK, including the regular
-# FORTRAN reference BLAS and also ATLAS. Some other sections still exist for
-# linking against certain optimized libraries (e.g. [atlas], [lapack_atlas]),
-# however, they are now deprecated and should not be used.
 #
+# NumPy tries to automatically detect and use optimized BLAS & LAPACK
+# libraries in the following order:
+# - Accelerate or vecLib Framework (Mac OS X only)
+# - Intel MKL
+# - ATLAS
+# - (non-optimized) BLAS / LAPACK
+#
+# The configuration settings for MKL, ATLAS, BLAS, and LAPACK are given
+# in the [mkl], [atlas], [blas], and [lapack] sections respectively.
+# The [blas_opt] and [lapack_opt] sections may be used to give additional
+# settings, but do not influence the autodetection routines.
+
+# MKL
+# ---
+# For recent (9.0.21, for example) mkl, you need to change the names of the
+# lapack library. Assuming you installed the mkl in /opt, for a 32 bits cpu:
+# [mkl]
+# library_dirs = /opt/intel/mkl/9.1.023/lib/32/
+# lapack_libs = mkl_lapack
+#
+# For 10.*, on 32 bits machines:
+# [mkl]
+# library_dirs = /opt/intel/mkl/10.0.1.014/lib/32/
+# lapack_libs = mkl_lapack
+# mkl_libs = mkl, guide
+
+# ATLAS
+# -----
 # These are typical configurations for ATLAS (assuming that the library and
 # include directories have already been set in [DEFAULT]; the include directory
 # is important for the BLAS C interface):
 #
-#[blas_opt]
-#libraries = f77blas, cblas, atlas
-#
-#[lapack_opt]
-#libraries = lapack, f77blas, cblas, atlas
+#[atlas]
+#atlas_libs = lapack, f77blas, cblas, atlas
 #
 # If your ATLAS was compiled with pthreads, the names of the libraries might be
 # different:
+#[atlas]
+#atlas_libs = lapack, ptf77blas, ptcblas, atlas
+
+# BLAS/LAPACK
+# -----------
+# The section may be used to specify reference, non-optimized, versions of
+# BLAS and LAPACK. It is assumed that CBLAS is _not_ available, and therefore
+# numpy.core._dotblas will _not_ be built.
 #
-#[blas_opt]
-#libraries = ptf77blas, ptcblas, atlas
+#[blas]
+#library_dirs = /usr/local/lib
+#blas_libs = blas
 #
-#[lapack_opt]
-#libraries = lapack, ptf77blas, ptcblas, atlas
+#[lapack]
+#library_dirs = /usr/local/lib
+#lapack_libs = lapack, blas
+#
+# If a system installed version of ATLAS is present it may be necessary
+# to explicitly unset that section to prevent detecting and using the
+# libraries, for example:
+#[atlas]
+#library_dirs =
+#atlas_libs =
 
 
 # UMFPACK
@@ -128,18 +165,3 @@
 #[djbfft]
 #include_dirs = /usr/local/djbfft/include
 #library_dirs = /usr/local/djbfft/lib
- 
- 
-# MKL
-#----
-# For recent (9.0.21, for example) mkl, you need to change the names of the
-# lapack library. Assuming you installed the mkl in /opt, for a 32 bits cpu:
-# [mkl]
-# library_dirs = /opt/intel/mkl/9.1.023/lib/32/
-# lapack_libs = mkl_lapack
-#
-# For 10.*, on 32 bits machines:
-# [mkl]
-# library_dirs = /opt/intel/mkl/10.0.1.014/lib/32/
-# lapack_libs = mkl_lapack
-# mkl_libs = mkl, guide
