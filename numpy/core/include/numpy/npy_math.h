@@ -148,33 +148,49 @@ double npy_spacing(double x);
 /*
  * IEEE 754 fpu handling. Those are guaranteed to be macros
  */
-#ifndef NPY_HAVE_DECL_ISNAN
-    #define npy_isnan(x) ((x) != (x))
+
+/* use a builtins to avoid function calls in tight loops
+ * documented only on 4.4, but available in at least 4.2 */
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)
+    #define npy_isnan(x) __builtin_isnan(x)
 #else
-    #ifdef _MSC_VER
-        #define npy_isnan(x) _isnan((x))
+    #ifndef NPY_HAVE_DECL_ISNAN
+        #define npy_isnan(x) ((x) != (x))
     #else
-        #define npy_isnan(x) isnan((x))
+        #ifdef _MSC_VER
+            #define npy_isnan(x) _isnan((x))
+        #else
+            #define npy_isnan(x) isnan(x)
+        #endif
     #endif
 #endif
 
-#ifndef NPY_HAVE_DECL_ISFINITE
-    #ifdef _MSC_VER
-        #define npy_isfinite(x) _finite((x))
-    #else
-        #define npy_isfinite(x) !npy_isnan((x) + (-x))
-    #endif
+
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)
+    #define npy_isfinite(x) __builtin_isfinite(x)
 #else
-    #define npy_isfinite(x) isfinite((x))
+    #ifndef NPY_HAVE_DECL_ISFINITE
+        #ifdef _MSC_VER
+            #define npy_isfinite(x) _finite((x))
+        #else
+            #define npy_isfinite(x) !npy_isnan((x) + (-x))
+        #endif
+    #else
+        #define npy_isfinite(x) isfinite((x))
+    #endif
 #endif
 
-#ifndef NPY_HAVE_DECL_ISINF
-    #define npy_isinf(x) (!npy_isfinite(x) && !npy_isnan(x))
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)
+    #define npy_isinf(x) __builtin_isinf(x)
 #else
-    #ifdef _MSC_VER
-        #define npy_isinf(x) (!_finite((x)) && !_isnan((x)))
+    #ifndef NPY_HAVE_DECL_ISINF
+        #define npy_isinf(x) (!npy_isfinite(x) && !npy_isnan(x))
     #else
-        #define npy_isinf(x) isinf((x))
+        #ifdef _MSC_VER
+            #define npy_isinf(x) (!_finite((x)) && !_isnan((x)))
+        #else
+            #define npy_isinf(x) isinf((x))
+        #endif
     #endif
 #endif
 
