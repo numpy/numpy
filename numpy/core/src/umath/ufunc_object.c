@@ -1181,14 +1181,13 @@ iterator_loop(PyUFuncObject *ufunc,
     npy_intp *count_ptr;
 
     PyArrayObject **op_it;
-
     npy_uint32 iter_flags;
 
     NPY_BEGIN_THREADS_DEF;
 
     /* Set up the flags */
     for (i = 0; i < nin; ++i) {
-        op_flags[i] = NPY_ITER_READONLY|
+        op_flags[i] = NPY_ITER_READONLY |
                       NPY_ITER_ALIGNED;
         /* 
          * If READWRITE flag has been set for this operand,
@@ -1200,19 +1199,19 @@ iterator_loop(PyUFuncObject *ufunc,
         }
     }
     for (i = nin; i < nop; ++i) {
-        op_flags[i] = NPY_ITER_WRITEONLY|
-                      NPY_ITER_ALIGNED|
-                      NPY_ITER_ALLOCATE|
-                      NPY_ITER_NO_BROADCAST|
+        op_flags[i] = NPY_ITER_WRITEONLY |
+                      NPY_ITER_ALIGNED |
+                      NPY_ITER_ALLOCATE |
+                      NPY_ITER_NO_BROADCAST |
                       NPY_ITER_NO_SUBTYPE;
     }
 
-    iter_flags = ufunc->iter_flags|
-                 NPY_ITER_EXTERNAL_LOOP|
-                 NPY_ITER_REFS_OK|
-                 NPY_ITER_ZEROSIZE_OK|
-                 NPY_ITER_BUFFERED|
-                 NPY_ITER_GROWINNER|
+    iter_flags = ufunc->iter_flags |
+                 NPY_ITER_EXTERNAL_LOOP |
+                 NPY_ITER_REFS_OK |
+                 NPY_ITER_ZEROSIZE_OK |
+                 NPY_ITER_BUFFERED |
+                 NPY_ITER_GROWINNER |
                  NPY_ITER_DELAY_BUFALLOC;
 
     /*
@@ -1475,7 +1474,6 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     npy_intp *countptr;
 
     PyArrayObject **op_it;
-
     npy_uint32 iter_flags;
 
     NPY_BEGIN_THREADS_DEF;
@@ -1519,11 +1517,11 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
 
     NPY_UF_DBG_PRINT("Making iterator\n");
 
-    iter_flags = ufunc->iter_flags|
-                 NPY_ITER_EXTERNAL_LOOP|
-                 NPY_ITER_REFS_OK|
-                 NPY_ITER_ZEROSIZE_OK|
-                 NPY_ITER_BUFFERED|
+    iter_flags = ufunc->iter_flags |
+                 NPY_ITER_EXTERNAL_LOOP |
+                 NPY_ITER_REFS_OK |
+                 NPY_ITER_ZEROSIZE_OK |
+                 NPY_ITER_BUFFERED |
                  NPY_ITER_GROWINNER;
 
     /*
@@ -1691,7 +1689,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     npy_intp iter_shape[NPY_MAXARGS];
 
     NpyIter *iter = NULL;
-    
     npy_uint32 iter_flags;
 
     /* These parameters come from extobj= or from a TLS global */
@@ -1992,8 +1989,8 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
      * can't do buffering, so must COPY or UPDATEIFCOPY.
      */
     for (i = 0; i < nin; ++i) {
-        op_flags[i] = NPY_ITER_READONLY|
-                      NPY_ITER_COPY|
+        op_flags[i] = NPY_ITER_READONLY |
+                      NPY_ITER_COPY |
                       NPY_ITER_ALIGNED;
         /* 
          * If READWRITE flag has been set for this operand,

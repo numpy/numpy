@@ -216,7 +216,7 @@ typedef struct _tagPyUFuncObject {
         /*
          * List of flags for each operand when ufunc is called by nditer object.
          * These flags will be used in addition to the default flags for each
-          * operand set by nditer object.
+         * operand set by nditer object.
          */
         npy_uint32 *op_flags;
 

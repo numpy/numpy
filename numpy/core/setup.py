@@ -936,7 +936,7 @@ def configuration(parent_package='',top_path=None):
                     sources = [join('src', 'multiarray', 'multiarray_tests.c.src')])
 
     #######################################################################
-    #                        operand_flag_tests module                           #
+    #                        operand_flag_tests module                    #
     #######################################################################
 
     config.add_extension('operand_flag_tests',
