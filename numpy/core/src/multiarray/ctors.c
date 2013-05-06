@@ -311,25 +311,38 @@ _strided_byte_swap(void *p, npy_intp stride, npy_intp n, int size)
     case 1: /* no byteswap necessary */
         break;
     case 4:
-        for (a = (char*)p; n > 0; n--, a += stride - 1) {
-            b = a + 3;
-            c = *a; *a++ = *b; *b-- = c;
-            c = *a; *a = *b; *b   = c;
+        for (a = (char*)p; n > 0; n--, a += stride) {
+            npy_uint32 * a_ = (npy_uint32 *)a;
+#ifdef HAVE___BUILTIN_BSWAP32
+            *a_ = __builtin_bswap32(*a_);
+#else
+            /* a decent compiler can convert this to bswap too */
+            *a_ = ((*a_ & 0xff000000u) >> 24) | ((*a_ & 0x00ff0000u) >>  8) |
+                  ((*a_ & 0x0000ff00u) <<  8) | ((*a_ & 0x000000ffu) << 24);
+#endif
         }
         break;
     case 8:
-        for (a = (char*)p; n > 0; n--, a += stride - 3) {
+        for (a = (char*)p; n > 0; n--) {
+#ifdef HAVE___BUILTIN_BSWAP64
+            npy_uint64 * a_ = (npy_uint64 *)a;
+            *a_ = __builtin_bswap64(*a_);
+            a += stride;
+#else
+            /* mask version would be faster but requires C99 */
             b = a + 7;
             c = *a; *a++ = *b; *b-- = c;
             c = *a; *a++ = *b; *b-- = c;
             c = *a; *a++ = *b; *b-- = c;
             c = *a; *a = *b; *b   = c;
+            a += stride - 3;
+#endif
         }
         break;
     case 2:
         for (a = (char*)p; n > 0; n--, a += stride) {
-            b = a + 1;
-            c = *a; *a = *b; *b = c;
+            npy_uint16 * a_ = (npy_uint16 *)a;
+            *a_ = (((*a_ >> 8) & 0xffu) | ((*a_ & 0xffu) << 8));
         }
         break;
     default:
