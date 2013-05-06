@@ -137,7 +137,21 @@ def ones(shape, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with ones.
 
-    Please refer to the documentation for `zeros` for further details.
+    Parameters
+    ----------
+    shape : int or sequence of ints
+        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
+    dtype : data-type, optional
+        The desired data-type for the array, e.g., `numpy.int8`.  Default is
+        `numpy.float64`.
+    order : {'C', 'F'}, optional
+        Whether to store multidimensional data in C- or Fortran-contiguous
+        (row- or column-wise) order in memory.
+
+    Returns
+    -------
+    out : ndarray
+        Array of ones with the given shape, dtype, and order.
 
     See Also
     --------
@@ -227,12 +241,23 @@ def filled(shape, val, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with `val`.
 
-    Please refer to the documentation for `zeros` for further details.
-
-    Other parameters
-    ----------------
+    Parameters
+    ----------
+    shape : int or sequence of ints
+        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
     val : scalar
         Fill value.
+    dtype : data-type, optional
+        The desired data-type for the array, e.g., `numpy.int8`.  Default is
+        `numpy.float64`.
+    order : {'C', 'F'}, optional
+        Whether to store multidimensional data in C- or Fortran-contiguous
+        (row- or column-wise) order in memory.
+
+    Returns
+    -------
+    out : ndarray
+        Array of `val` with the given shape, dtype, and order.
 
     See Also
     --------
@@ -267,11 +292,15 @@ def filled_like(a, val, dtype=None, order='K', subok=True):
         'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
         'C' otherwise. 'K' means match the layout of `a` as closely
         as possible.
+    subok : bool, optional.
+        If True, then the newly created array will use the sub-class
+        type of 'a', otherwise it will be a base-class array. Defaults
+        to True.
 
     Returns
     -------
     out : ndarray
-        Array of nans with the same shape and type as `a`.
+        Array of `val` with the same shape and type as `a`.
 
     See Also
     --------
