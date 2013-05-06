@@ -53,13 +53,16 @@ static struct PyModuleDef moduledef = {
     NULL
 };
 
-PyObject *PyInit_operand_flag_tests(void)
+#define RETVAL m
+PyMODINIT_FUNC PyInit_operand_flag_tests(void)
 {
 #else
+#define RETVAL
 PyMODINIT_FUNC initoperand_flag_tests(void)
 {
 #endif
-    PyObject *m, *ufunc;
+    PyObject *m = NULL;
+    PyObject *ufunc;
 
 #if defined(NPY_PY3K)
     m = PyModule_Create(&moduledef);
@@ -67,7 +70,7 @@ PyMODINIT_FUNC initoperand_flag_tests(void)
     m = Py_InitModule("operand_flag_tests", TestMethods);
 #endif
     if (m == NULL) {
-        return;
+        goto fail;
     }
 
     import_array();
@@ -77,11 +80,27 @@ PyMODINIT_FUNC initoperand_flag_tests(void)
                                     PyUFunc_None, "inplace_add",
                                     "inplace_add_docstring", 0);
 
-    /* Set flags to turn off buffering for first input operand,
-       so that result can be written back to input operand. */
+    /* 
+     * Set flags to turn off buffering for first input operand,
+     * so that result can be written back to input operand.
+     */
     ((PyUFuncObject*)ufunc)->op_flags[0] = NPY_ITER_READWRITE;
     ((PyUFuncObject*)ufunc)->iter_flags = NPY_ITER_REDUCE_OK;
     PyModule_AddObject(m, "inplace_add", (PyObject*)ufunc);
 
-    return m;
+    return RETVAL;
+
+fail:
+    if (!PyErr_Occurred()) {
+        PyErr_SetString(PyExc_RuntimeError,
+                        "cannot load operand_flag_tests module.");
+    }
+#if defined(NPY_PY3K)
+    if (m) {
+        Py_DECREF(m);
+        m = NULL;
+    }
+#endif
+    return RETVAL;
+
 }
