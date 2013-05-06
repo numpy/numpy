@@ -1340,7 +1340,7 @@ class TestCreationFuncs(TestCase):
     def check_function(self, func, fill_value=None):
         fill_kwarg = {}
         if fill_value is not None:
-            fill_kwarg = {'val': fill_value}
+            fill_kwarg = {'fill_value': fill_value}
         for size in (0, 1, 2): # size in one dimension
             for ndims in range(self.ndims): # [], [size], [size, size] etc.
                 shape = ndims * [size]
@@ -1425,7 +1425,7 @@ class TestLikeFuncs(TestCase):
 
     def check_like_function(self, like_function, value, fill_value=False):
         if fill_value:
-            fill_kwarg = {'val': value}
+            fill_kwarg = {'fill_value': value}
         else:
             fill_kwarg = {}
         for d, dtype in self.data:

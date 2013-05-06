@@ -237,15 +237,15 @@ def ones_like(a, dtype=None, order='K', subok=True):
     multiarray.copyto(res, 1, casting='unsafe')
     return res
 
-def filled(shape, val, dtype=None, order='C'):
+def filled(shape, fill_value, dtype=None, order='C'):
     """
-    Return a new array of given shape and type, filled with `val`.
+    Return a new array of given shape and type, filled with `fill_value`.
 
     Parameters
     ----------
     shape : int or sequence of ints
         Shape of the new array, e.g., ``(2, 3)`` or ``2``.
-    val : scalar
+    fill_value : scalar
         Fill value.
     dtype : data-type, optional
         The desired data-type for the array, e.g., `numpy.int8`.  Default is
@@ -257,7 +257,7 @@ def filled(shape, val, dtype=None, order='C'):
     Returns
     -------
     out : ndarray
-        Array of `val` with the given shape, dtype, and order.
+        Array of `fill_value` with the given shape, dtype, and order.
 
     See Also
     --------
@@ -280,10 +280,10 @@ def filled(shape, val, dtype=None, order='C'):
 
     """
     a = empty(shape, dtype, order)
-    multiarray.copyto(a, val, casting='unsafe')
+    multiarray.copyto(a, fill_value, casting='unsafe')
     return a
 
-def filled_like(a, val, dtype=None, order='K', subok=True):
+def filled_like(a, fill_value, dtype=None, order='K', subok=True):
     """
     Return a filled array with the same shape and type as a given array.
 
@@ -292,7 +292,7 @@ def filled_like(a, val, dtype=None, order='K', subok=True):
     a : array_like
         The shape and data-type of `a` define these same attributes of
         the returned array.
-    val : scalar
+    fill_value : scalar
         Fill value.
     dtype : data-type, optional
         Overrides the data type of the result.
@@ -309,7 +309,7 @@ def filled_like(a, val, dtype=None, order='K', subok=True):
     Returns
     -------
     out : ndarray
-        Array of `val` with the same shape and type as `a`.
+        Array of `fill_value` with the same shape and type as `a`.
 
     See Also
     --------
@@ -339,7 +339,7 @@ def filled_like(a, val, dtype=None, order='K', subok=True):
 
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok)
-    multiarray.copyto(res, val, casting='unsafe')
+    multiarray.copyto(res, fill_value, casting='unsafe')
     return res
 
 
