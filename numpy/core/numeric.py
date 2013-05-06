@@ -269,6 +269,15 @@ def filled(shape, val, dtype=None, order='C'):
     ones : Return a new array setting values to one.
     empty : Return a new uninitialized array.
 
+    Examples
+    --------
+    >>> np.filled((2, 2), np.inf)
+    array([[ inf,  inf],
+           [ inf,  inf]])
+    >>> np.filled((2, 2), 10, dtype=np.int)
+    array([[10, 10],
+           [10, 10]])
+
     """
     a = empty(shape, dtype, order)
     multiarray.copyto(a, val, casting='unsafe')
@@ -311,6 +320,22 @@ def filled_like(a, val, dtype=None, order='K', subok=True):
     ones : Return a new array setting values to one.
     empty : Return a new uninitialized array.
     filled : Fill a new array.
+
+    Examples
+    --------
+    >>> x = np.arange(6, dtype=np.int)
+    >>> np.filled_like(x, 1)
+    array([1, 1, 1, 1, 1, 1])
+    >>> np.filled_like(x, 0.1)
+    array([0, 0, 0, 0, 0, 0])
+    >>> np.filled_like(x, 0.1, dtype=np.double)
+    array([ 0.1,  0.1,  0.1,  0.1,  0.1,  0.1])
+    >>> np.filled_like(x, np.nan, dtype=np.double)
+    array([ nan,  nan,  nan,  nan,  nan,  nan])
+
+    >>> y = np.arange(6, dtype=np.double)
+    >>> np.filled_like(y, 0.1)
+    array([ 0.1,  0.1,  0.1,  0.1,  0.1,  0.1])
 
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok)
