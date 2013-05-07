@@ -6,6 +6,7 @@ extern "C" {
 #endif
 
 #include <math.h>
+#include <npy_config.h>
 #include <numpy/npy_common.h>
 
 /*
@@ -151,7 +152,7 @@ double npy_spacing(double x);
 
 /* use a builtins to avoid function calls in tight loops
  * documented only on 4.4, but available in at least 4.2 */
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)
+#if HAVE___BUILTIN_ISNAN
     #define npy_isnan(x) __builtin_isnan(x)
 #else
     #ifndef NPY_HAVE_DECL_ISNAN
@@ -166,7 +167,7 @@ double npy_spacing(double x);
 #endif
 
 
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)
+#if HAVE___BUILTIN_ISFINITE
     #define npy_isfinite(x) __builtin_isfinite(x)
 #else
     #ifndef NPY_HAVE_DECL_ISFINITE
@@ -180,7 +181,7 @@ double npy_spacing(double x);
     #endif
 #endif
 
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)
+#if HAVE___BUILTIN_ISINF
     #define npy_isinf(x) __builtin_isinf(x)
 #else
     #ifndef NPY_HAVE_DECL_ISINF

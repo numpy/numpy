@@ -97,6 +97,11 @@ OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
         "copysign", "nextafter"]
 
+# optional gcc compiler builtins and their call arguments
+OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
+                       ("__builtin_isinf", '5.'),
+                       ("__builtin_isfinite", '5.')]
+
 # Subset of OPTIONAL_STDFUNCS which may alreay have HAVE_* defined by Python.h
 OPTIONAL_STDFUNCS_MAYBE = ["expm1", "log1p", "acosh", "atanh", "asinh", "hypot",
         "copysign"]
