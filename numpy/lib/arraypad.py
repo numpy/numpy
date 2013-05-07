@@ -11,18 +11,18 @@ from numpy.compat import long
 __all__ = ['pad']
 
 
-################################################################################
+###############################################################################
 # Private utility functions.
 
 
 def _create_vector(vector, pad_tuple, before_val, after_val):
-    '''
+    """
     Private function which creates the padded vector.
 
     Parameters
     ----------
     vector : ndarray of rank 1, length N + pad_tuple[0] + pad_tuple[1]
-        Input vector including blank padded values.  `N` is the lenth of the
+        Input vector including blank padded values. `N` is the lenth of the
         original vector.
     pad_tuple : tuple
         This tuple represents the (before, after) width of the padding along
@@ -36,7 +36,8 @@ def _create_vector(vector, pad_tuple, before_val, after_val):
     -------
     _create_vector : ndarray
         Vector with before_val and after_val replacing the blank pad values.
-    '''
+
+    """
     vector[:pad_tuple[0]] = before_val
     if pad_tuple[1] > 0:
         vector[-pad_tuple[1]:] = after_val
@@ -44,7 +45,7 @@ def _create_vector(vector, pad_tuple, before_val, after_val):
 
 
 def _normalize_shape(narray, shape):
-    '''
+    """
     Private function which does some checks and normalizes the possibly
     much simpler representations of 'pad_width', 'stat_length',
     'constant_values', 'end_values'.
@@ -69,11 +70,12 @@ def _normalize_shape(narray, shape):
         int                               => ((int, int), (int, int), ...)
         [[int1, int2], [int3, int4], ...] => ((int1, int2), (int3, int4), ...)
         ((int1, int2), (int3, int4), ...) => no change
-        [[int1, int2], ]                  => ((int1, int2), (int1, int2), ...]
+        [[int1, int2], ]                  => ((int1, int2), (int1, int2), ...)
         ((int1, int2), )                  => ((int1, int2), (int1, int2), ...)
-        [[int ,     ), )                  => ((int, int), (int, int), ...)
+        [[int ,     ], ]                  => ((int, int), (int, int), ...)
         ((int ,     ), )                  => ((int, int), (int, int), ...)
-    '''
+
+    """
     normshp = None
     shapelen = len(np.shape(narray))
     if (isinstance(shape, int)):
@@ -94,14 +96,14 @@ def _normalize_shape(narray, shape):
             and isinstance(shape[0], (int, float, long))
             and len(shape) == 2):
         normshp = (shape, ) * shapelen
-    if normshp == None:
+    if normshp is None:
         fmt = "Unable to create correctly shaped tuple from %s"
         raise ValueError(fmt % (shape,))
     return normshp
 
 
 def _validate_lengths(narray, number_elements):
-    '''
+    """
     Private function which does some checks and reformats pad_width and
     stat_length using _normalize_shape.
 
@@ -125,22 +127,22 @@ def _validate_lengths(narray, number_elements):
         int                               => ((int, int), (int, int), ...)
         [[int1, int2], [int3, int4], ...] => ((int1, int2), (int3, int4), ...)
         ((int1, int2), (int3, int4), ...) => no change
-        [[int1, int2], ]                  => ((int1, int2), (int1, int2), ...]
+        [[int1, int2], ]                  => ((int1, int2), (int1, int2), ...)
         ((int1, int2), )                  => ((int1, int2), (int1, int2), ...)
-        [[int ,     ), )                  => ((int, int), (int, int), ...)
+        [[int ,     ], ]                  => ((int, int), (int, int), ...)
         ((int ,     ), )                  => ((int, int), (int, int), ...)
-    '''
-    shapelen = len(np.shape(narray))
+
+    """
     normshp = _normalize_shape(narray, number_elements)
     for i in normshp:
         if i[0] < 0 or i[1] < 0:
-            fmt ="%s cannot contain negative values."
+            fmt = "%s cannot contain negative values."
             raise ValueError(fmt % (number_elements,))
     return normshp
 
 
 def _create_stat_vectors(vector, pad_tuple, iaxis, kwargs):
-    '''
+    """
     Returns the portion of the vector required for any statistic.
 
     Parameters
@@ -153,7 +155,7 @@ def _create_stat_vectors(vector, pad_tuple, iaxis, kwargs):
     iaxis : int
         The axis currently being looped across.
     kwargs : keyword arguments
-        Keyword arguments.  Only 'stat_length' is used.  'stat_length'
+        Keyword arguments. Only 'stat_length' is used. 'stat_length'
         defaults to the entire vector if not supplied.
 
     Return
@@ -161,7 +163,8 @@ def _create_stat_vectors(vector, pad_tuple, iaxis, kwargs):
     _create_stat_vectors : ndarray
         The values from the original vector that will be used to calculate
         the statistic.
-    '''
+
+    """
 
     # Can't have 0 represent the end if a slice... a[1:0] doesnt' work
     pt1 = -pad_tuple[1]
@@ -186,7 +189,7 @@ def _create_stat_vectors(vector, pad_tuple, iaxis, kwargs):
 
 
 def _maximum(vector, pad_tuple, iaxis, kwargs):
-    '''
+    """
     Private function to calculate the before/after vectors for pad_maximum.
 
     Parameters
@@ -199,20 +202,21 @@ def _maximum(vector, pad_tuple, iaxis, kwargs):
     iaxis : int
         The axis currently being looped across.
     kwargs : keyword arguments
-        Keyword arguments.  Only 'stat_length' is used.  'stat_length'
+        Keyword arguments. Only 'stat_length' is used. 'stat_length'
         defaults to the entire vector if not supplied.
 
     Return
     ------
     _maximum : ndarray
         Padded vector
-    '''
+
+    """
     sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kwargs)
     return _create_vector(vector, pad_tuple, max(sbvec), max(savec))
 
 
 def _minimum(vector, pad_tuple, iaxis, kwargs):
-    '''
+    """
     Private function to calculate the before/after vectors for pad_minimum.
 
     Parameters
@@ -225,20 +229,21 @@ def _minimum(vector, pad_tuple, iaxis, kwargs):
     iaxis : int
         The axis currently being looped across.
     kwargs : keyword arguments
-        Keyword arguments.  Only 'stat_length' is used.  'stat_length'
+        Keyword arguments. Only 'stat_length' is used. 'stat_length'
         defaults to the entire vector if not supplied.
 
     Return
     ------
     _minimum : ndarray
         Padded vector
-    '''
+
+    """
     sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kwargs)
     return _create_vector(vector, pad_tuple, min(sbvec), min(savec))
 
 
 def _median(vector, pad_tuple, iaxis, kwargs):
-    '''
+    """
     Private function to calculate the before/after vectors for pad_median.
 
     Parameters
@@ -251,21 +256,22 @@ def _median(vector, pad_tuple, iaxis, kwargs):
     iaxis : int
         The axis currently being looped across.
     kwargs : keyword arguments
-        Keyword arguments.  Only 'stat_length' is used.  'stat_length'
+        Keyword arguments. Only 'stat_length' is used. 'stat_length'
         defaults to the entire vector if not supplied.
 
     Return
     ------
     _median : ndarray
         Padded vector
-    '''
+
+    """
     sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kwargs)
     return _create_vector(vector, pad_tuple, np.median(sbvec),
                           np.median(savec))
 
 
 def _mean(vector, pad_tuple, iaxis, kwargs):
-    '''
+    """
     Private function to calculate the before/after vectors for pad_mean.
 
     Parameters
@@ -278,21 +284,22 @@ def _mean(vector, pad_tuple, iaxis, kwargs):
     iaxis : int
         The axis currently being looped across.
     kwargs : keyword arguments
-        Keyword arguments.  Only 'stat_length' is used.  'stat_length'
+        Keyword arguments. Only 'stat_length' is used. 'stat_length'
         defaults to the entire vector if not supplied.
 
     Return
     ------
     _mean : ndarray
         Padded vector
-    '''
+
+    """
     sbvec, savec = _create_stat_vectors(vector, pad_tuple, iaxis, kwargs)
     return _create_vector(vector, pad_tuple, np.average(sbvec),
                           np.average(savec))
 
 
 def _constant(vector, pad_tuple, iaxis, kwargs):
-    '''
+    """
     Private function to calculate the before/after vectors for
     pad_constant.
 
@@ -306,19 +313,20 @@ def _constant(vector, pad_tuple, iaxis, kwargs):
     iaxis : int
         The axis currently being looped across.
     kwargs : keyword arguments
-        Keyword arguments.  Need 'constant_values' keyword argument.
+        Keyword arguments. Need 'constant_values' keyword argument.
 
     Return
     ------
     _constant : ndarray
         Padded vector
-    '''
+
+    """
     nconstant = kwargs['constant_values'][iaxis]
     return _create_vector(vector, pad_tuple, nconstant[0], nconstant[1])
 
 
 def _linear_ramp(vector, pad_tuple, iaxis, kwargs):
-    '''
+    """
     Private function to calculate the before/after vectors for
     pad_linear_ramp.
 
@@ -330,7 +338,7 @@ def _linear_ramp(vector, pad_tuple, iaxis, kwargs):
         This tuple represents the (before, after) width of the padding
         along this particular iaxis.
     iaxis : int
-        The axis currently being looped across.  Not used in _linear_ramp.
+        The axis currently being looped across. Not used in _linear_ramp.
     kwargs : keyword arguments
         Keyword arguments. Not used in _linear_ramp.
 
@@ -338,7 +346,8 @@ def _linear_ramp(vector, pad_tuple, iaxis, kwargs):
     ------
     _linear_ramp : ndarray
         Padded vector
-    '''
+
+    """
     end_values = kwargs['end_values'][iaxis]
     before_delta = ((vector[pad_tuple[0]] - end_values[0])
                     / float(pad_tuple[0]))
@@ -360,7 +369,7 @@ def _linear_ramp(vector, pad_tuple, iaxis, kwargs):
 
 
 def _reflect(vector, pad_tuple, iaxis, kwargs):
-    '''
+    """
     Private function to calculate the before/after vectors for pad_reflect.
 
     Parameters
@@ -371,7 +380,7 @@ def _reflect(vector, pad_tuple, iaxis, kwargs):
         This tuple represents the (before, after) width of the padding
         along this particular iaxis.
     iaxis : int
-        The axis currently being looped across.  Not used in _reflect.
+        The axis currently being looped across. Not used in _reflect.
     kwargs : keyword arguments
         Keyword arguments. Not used in _reflect.
 
@@ -379,7 +388,8 @@ def _reflect(vector, pad_tuple, iaxis, kwargs):
     ------
     _reflect : ndarray
         Padded vector
-    '''
+
+    """
     # Can't have pad_tuple[1] be used in the slice if == to 0.
     if pad_tuple[1] == 0:
         after_vector = vector[pad_tuple[0]:None]
@@ -389,11 +399,9 @@ def _reflect(vector, pad_tuple, iaxis, kwargs):
     reverse = after_vector[::-1]
 
     before_vector = np.resize(
-                        np.concatenate(
-                        (after_vector[1:-1], reverse)), pad_tuple[0])[::-1]
+        np.concatenate((after_vector[1:-1], reverse)), pad_tuple[0])[::-1]
     after_vector = np.resize(
-                       np.concatenate(
-                       (reverse[1:-1], after_vector)), pad_tuple[1])
+        np.concatenate((reverse[1:-1], after_vector)), pad_tuple[1])
 
     if kwargs['reflect_type'] == 'even':
         pass
@@ -402,12 +410,12 @@ def _reflect(vector, pad_tuple, iaxis, kwargs):
         after_vector = 2 * vector[-pad_tuple[-1] - 1] - after_vector
     else:
         raise ValueError("The keyword '%s' cannot have the value '%s'."
-                          % ('reflect_type', kwargs['reflect_type']))
+                         % ('reflect_type', kwargs['reflect_type']))
     return _create_vector(vector, pad_tuple, before_vector, after_vector)
 
 
 def _symmetric(vector, pad_tuple, iaxis, kwargs):
-    '''
+    """
     Private function to calculate the before/after vectors for
     pad_symmetric.
 
@@ -419,7 +427,7 @@ def _symmetric(vector, pad_tuple, iaxis, kwargs):
         This tuple represents the (before, after) width of the padding
         along this particular iaxis.
     iaxis : int
-        The axis currently being looped across.  Not used in _symmetric.
+        The axis currently being looped across. Not used in _symmetric.
     kwargs : keyword arguments
         Keyword arguments. Not used in _symmetric.
 
@@ -427,16 +435,19 @@ def _symmetric(vector, pad_tuple, iaxis, kwargs):
     ------
     _symmetric : ndarray
         Padded vector
-    '''
+
+    """
     if pad_tuple[1] == 0:
         after_vector = vector[pad_tuple[0]:None]
     else:
         after_vector = vector[pad_tuple[0]:-pad_tuple[1]]
 
-    before_vector = np.resize( np.concatenate( (after_vector,
-        after_vector[::-1])), pad_tuple[0])[::-1]
-    after_vector = np.resize( np.concatenate( (after_vector[::-1],
-        after_vector)), pad_tuple[1])
+    before_vector = np.resize(
+        np.concatenate((after_vector, after_vector[::-1])),
+        pad_tuple[0])[::-1]
+    after_vector = np.resize(
+        np.concatenate((after_vector[::-1], after_vector)),
+        pad_tuple[1])
 
     if kwargs['reflect_type'] == 'even':
         pass
@@ -445,12 +456,12 @@ def _symmetric(vector, pad_tuple, iaxis, kwargs):
         after_vector = 2 * vector[-pad_tuple[1] - 1] - after_vector
     else:
         raise ValueError("The keyword '%s' cannot have the value '%s'."
-                          % ('reflect_type', kwargs['reflect_type']))
+                         % ('reflect_type', kwargs['reflect_type']))
     return _create_vector(vector, pad_tuple, before_vector, after_vector)
 
 
 def _wrap(vector, pad_tuple, iaxis, kwargs):
-    '''
+    """
     Private function to calculate the before/after vectors for pad_wrap.
 
     Parameters
@@ -469,7 +480,8 @@ def _wrap(vector, pad_tuple, iaxis, kwargs):
     ------
     _wrap : ndarray
         Padded vector
-    '''
+
+    """
     if pad_tuple[1] == 0:
         after_vector = vector[pad_tuple[0]:None]
     else:
@@ -482,7 +494,7 @@ def _wrap(vector, pad_tuple, iaxis, kwargs):
 
 
 def _edge(vector, pad_tuple, iaxis, kwargs):
-    '''
+    """
     Private function to calculate the before/after vectors for pad_edge.
 
     Parameters
@@ -501,12 +513,13 @@ def _edge(vector, pad_tuple, iaxis, kwargs):
     ------
     _edge : ndarray
         Padded vector
-    '''
+
+    """
     return _create_vector(vector, pad_tuple, vector[pad_tuple[0]],
                           vector[-pad_tuple[1] - 1])
 
 
-################################################################################
+###############################################################################
 # Public functions
 
 
@@ -695,44 +708,44 @@ def pad(array, pad_width, mode=None, **kwargs):
            [10, 10,  3,  4,  5, 10, 10],
            [10, 10, 10, 10, 10, 10, 10],
            [10, 10, 10, 10, 10, 10, 10]])
-    """
 
+    """
 
     narray = np.array(array)
     pad_width = _validate_lengths(narray, pad_width)
 
     modefunc = {
-           'constant': _constant,
-           'edge': _edge,
-           'linear_ramp': _linear_ramp,
-           'maximum': _maximum,
-           'mean': _mean,
-           'median': _median,
-           'minimum': _minimum,
-           'reflect': _reflect,
-           'symmetric': _symmetric,
-           'wrap': _wrap,
-           }
+        'constant': _constant,
+        'edge': _edge,
+        'linear_ramp': _linear_ramp,
+        'maximum': _maximum,
+        'mean': _mean,
+        'median': _median,
+        'minimum': _minimum,
+        'reflect': _reflect,
+        'symmetric': _symmetric,
+        'wrap': _wrap,
+        }
 
     allowedkwargs = {
-           'constant': ['constant_values'],
-           'edge': [],
-           'linear_ramp': ['end_values'],
-           'maximum': ['stat_length'],
-           'mean': ['stat_length'],
-           'median': ['stat_length'],
-           'minimum': ['stat_length'],
-           'reflect': ['reflect_type'],
-           'symmetric': ['reflect_type'],
-           'wrap': [],
-            }
+        'constant': ['constant_values'],
+        'edge': [],
+        'linear_ramp': ['end_values'],
+        'maximum': ['stat_length'],
+        'mean': ['stat_length'],
+        'median': ['stat_length'],
+        'minimum': ['stat_length'],
+        'reflect': ['reflect_type'],
+        'symmetric': ['reflect_type'],
+        'wrap': [],
+        }
 
     kwdefaults = {
-            'stat_length': None,
-            'constant_values': 0,
-            'end_values': 0,
-            'reflect_type': 'even',
-            }
+        'stat_length': None,
+        'constant_values': 0,
+        'end_values': 0,
+        'reflect_type': 'even',
+        }
 
     if isinstance(mode, str):
         function = modefunc[mode]
@@ -741,7 +754,7 @@ def pad(array, pad_width, mode=None, **kwargs):
         for key in kwargs:
             if key not in allowedkwargs[mode]:
                 raise ValueError('%s keyword not in allowed keywords %s' %
-                                  (key, allowedkwargs[mode]))
+                                 (key, allowedkwargs[mode]))
 
         # Set kwarg defaults
         for kw in allowedkwargs[mode]:
@@ -753,9 +766,9 @@ def pad(array, pad_width, mode=None, **kwargs):
                 kwargs[i] = _validate_lengths(narray, kwargs[i])
             if i in ['end_values', 'constant_values']:
                 kwargs[i] = _normalize_shape(narray, kwargs[i])
-    elif mode == None:
+    elif mode is None:
         raise ValueError('Keyword "mode" must be a function or one of %s.' %
-                          (list(modefunc.keys()),))
+                         (list(modefunc.keys()),))
     else:
         # User supplied function, I hope
         function = mode
@@ -781,4 +794,3 @@ def pad(array, pad_width, mode=None, **kwargs):
                             iaxis,
                             kwargs)
     return newmat
-
