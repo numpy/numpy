@@ -1898,6 +1898,11 @@ class TestRegression(TestCase):
                               order='F')
         assert_array_equal(arr2, data_back)
 
+    def test_structured_count_nonzero(self):
+        arr = np.array([0, 1]).astype('i4, (2)i4')[:1]
+        count = np.count_nonzero(arr)
+        assert_equal(count, 0)
+
 
 
 
