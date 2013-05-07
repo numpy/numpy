@@ -2321,7 +2321,7 @@ VOID_nonzero (char *ip, PyArrayObject *ap)
              * TODO: temporarily modifying the array like this
              *       is bad coding style, should be changed.
              */
-            ((PyArrayObject_fields *)ap)->descr = descr;
+            ((PyArrayObject_fields *)ap)->descr = new;
             ((PyArrayObject_fields *)ap)->flags = savedflags;
             if ((new->alignment > 1) && !__ALIGNED(ip + offset,
                         new->alignment)) {
