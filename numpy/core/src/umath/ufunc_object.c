@@ -1477,7 +1477,7 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
     npy_uint32 iter_flags;
 
     NPY_BEGIN_THREADS_DEF;
-    
+
     if (wheremask != NULL) {
         if (nop + 1 > NPY_MAXARGS) {
             PyErr_SetString(PyExc_ValueError,
@@ -2021,10 +2021,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         }
     }
 
-    iter_flags = ufunc->iter_flags|
-                 NPY_ITER_MULTI_INDEX|
-                 NPY_ITER_REFS_OK|
-                 NPY_ITER_REDUCE_OK|
+    iter_flags = ufunc->iter_flags |
+                 NPY_ITER_MULTI_INDEX |
+                 NPY_ITER_REFS_OK |
+                 NPY_ITER_REDUCE_OK |
                  NPY_ITER_ZEROSIZE_OK;
 
     /* Create the iterator */
