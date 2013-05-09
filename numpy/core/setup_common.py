@@ -98,6 +98,7 @@ OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "copysign", "nextafter"]
 
 # optional gcc compiler builtins and their call arguments
+# call arguments are required as the compiler will do strict signature checking
 OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_isinf", '5.'),
                        ("__builtin_isfinite", '5.')]
