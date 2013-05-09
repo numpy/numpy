@@ -152,8 +152,8 @@ double npy_spacing(double x);
  * IEEE 754 fpu handling. Those are guaranteed to be macros
  */
 
-/* use a builtins to avoid function calls in tight loops
- * documented only on 4.4, but available in at least 4.2 */
+/* use builtins to avoid function calls in tight loops
+ * only available if npy_config.h is available (= numpys own build) */
 #if HAVE___BUILTIN_ISNAN
     #define npy_isnan(x) __builtin_isnan(x)
 #else
@@ -169,6 +169,7 @@ double npy_spacing(double x);
 #endif
 
 
+/* only available if npy_config.h is available (= numpys own build) */
 #if HAVE___BUILTIN_ISFINITE
     #define npy_isfinite(x) __builtin_isfinite(x)
 #else
@@ -183,6 +184,7 @@ double npy_spacing(double x);
     #endif
 #endif
 
+/* only available if npy_config.h is available (= numpys own build) */
 #if HAVE___BUILTIN_ISINF
     #define npy_isinf(x) __builtin_isinf(x)
 #else
