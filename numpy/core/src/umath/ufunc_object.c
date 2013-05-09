@@ -4291,6 +4291,9 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     ufunc->doc = doc;
 
     ufunc->op_flags = PyArray_malloc(sizeof(npy_uint32)*ufunc->nargs);
+    if (ufunc->op_flags == NULL) {
+        return PyErr_NoMemory();
+    }
     memset(ufunc->op_flags, 0, sizeof(npy_uint32)*ufunc->nargs);
 
     ufunc->iter_flags = 0;
