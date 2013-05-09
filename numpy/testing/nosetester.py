@@ -188,6 +188,14 @@ class NoseTester(object):
                 label = 'not slow'
             argv += ['-A', label]
         argv += ['--verbosity', str(verbose)]
+
+        # When installing with setuptools, and also in some other cases, the
+        # test_*.py files end up marked +x executable. Nose, by default, does
+        # not run files marked with +x as they might be scripts. However, in
+        # our case nose only looks for test_*.py files under the package
+        # directory, which should be safe.
+        argv += ['--exe']
+
         if extra_argv:
             argv += extra_argv
         return argv
