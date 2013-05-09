@@ -6,7 +6,9 @@ extern "C" {
 #endif
 
 #include <math.h>
+#ifdef NPY_HAVE_CONFIG_H
 #include <npy_config.h>
+#endif
 #include <numpy/npy_common.h>
 
 /*

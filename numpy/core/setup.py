@@ -606,6 +606,8 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join('src', 'umath'))
     config.add_include_dirs(join('src', 'npysort'))
 
+    config.add_define_macros([("HAVE_NPY_CONFIG_H", "1")])
+
     config.numpy_include_dirs.extend(config.paths('include'))
 
     deps = [join('src','npymath','_signbit.c'),
