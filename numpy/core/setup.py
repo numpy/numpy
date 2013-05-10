@@ -935,6 +935,13 @@ def configuration(parent_package='',top_path=None):
     config.add_extension('multiarray_tests',
                     sources = [join('src', 'multiarray', 'multiarray_tests.c.src')])
 
+    #######################################################################
+    #                        operand_flag_tests module                    #
+    #######################################################################
+
+    config.add_extension('operand_flag_tests',
+                    sources = [join('src','umath', 'operand_flag_tests.c.src')])
+
     config.add_data_dir('tests')
     config.add_data_dir('tests/data')
 

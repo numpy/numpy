@@ -5,6 +5,7 @@ import sys
 import numpy as np
 from numpy.testing import *
 import numpy.core.umath_tests as umt
+import numpy.core.operand_flag_tests as opflag_tests
 from numpy.compat import asbytes
 from numpy.core.test_rational import *
 
@@ -786,6 +787,13 @@ class TestUfunc(TestCase):
 
         # no output type should raise TypeError
         assert_raises(TypeError, test_add, a, b)
+    
+    def test_operand_flags(self):
+        a = np.arange(16, dtype='i8').reshape(4,4)
+        b = np.arange(9, dtype='i8').reshape(3,3)
+        opflag_tests.inplace_add(a[:-1,:-1], b)
+        assert_equal(a, np.array([[0,2,4,3],[7,9,11,7],
+            [14,16,18,11],[12,13,14,15]], dtype='i8'))
 
 if __name__ == "__main__":
     run_module_suite()
