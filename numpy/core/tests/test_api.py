@@ -276,5 +276,13 @@ def test_contiguous_flags():
     check_contig(a.ravel(), True, True)
     check_contig(np.ones((1,3,1)).squeeze(), True, True)
 
+def test_broadcast_arrays():
+    # Test user defined dtypes
+    a = np.array([(1,2,3)], dtype='u4,u4,u4')
+    b = np.array([(1,2,3),(4,5,6),(7,8,9)], dtype='u4,u4,u4')
+    result = np.broadcast_arrays(a, b)
+    assert_equal(result[0], np.array([(1,2,3),(1,2,3),(1,2,3)], dtype='u4,u4,u4'))
+    assert_equal(result[1], np.array([(1,2,3),(4,5,6),(7,8,9)], dtype='u4,u4,u4'))
+
 if __name__ == "__main__":
     run_module_suite()
