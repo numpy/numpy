@@ -4459,6 +4459,10 @@ PyUFunc_RegisterLoopForStructType(PyUFuncObject *ufunc,
     }
 
     arg_typenums = PyArray_malloc(ufunc->nargs * sizeof(int));
+    if (arg_typenums == NULL) {
+        PyErr_NoMemory();
+        return -1;
+    }
     if (arg_dtypes != NULL) {
         for (i = 0; i < ufunc->nargs; i++) {
             arg_typenums[i] = arg_dtypes[i]->type_num;
