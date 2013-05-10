@@ -27,7 +27,10 @@ def as_strided(x, shape=None, strides=None):
         interface['shape'] = tuple(shape)
     if strides is not None:
         interface['strides'] = tuple(strides)
-    return np.asarray(DummyArray(interface, base=x))
+    array = np.asarray(DummyArray(interface, base=x))
+    # Make sure dtype is correct in case of custom dtype
+    array.dtype = x.dtype
+    return array
 
 def broadcast_arrays(*args):
     """
