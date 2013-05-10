@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import os
 import math
+import subprocess
 
 from numpy.testing import *
 from numpy import array
@@ -27,7 +28,21 @@ class TestKind(util.F2PyTest):
             assert_(selectedintkind(i) in [selected_int_kind(i),-1],\
                     'selectedintkind(%s): expected %r but got %r' %  (i, selected_int_kind(i), selectedintkind(i)))
 
-        for i in range(20):
+        max_real_kind = 15
+        try:
+            subprocess.check_call(['gfortran', '--version'],
+                    stdout=subprocess.PIPE)
+            max_real_kind = 20
+        except OSError:
+            # gfortran does not exist, so it is not the compiler used.
+            # Other compilers behave differently for kind numbers > 8.
+            # This includes Intel, PGI, Cray, and Pathscale.
+            # NAG behaves completely different, using 1, 2, 3 as its "kind"s.
+            # Details:
+            # https://gist.github.com/2767436
+            pass
+
+        for i in range(max_real_kind):
             assert_(selectedrealkind(i) in [selected_real_kind(i),-1],\
                     'selectedrealkind(%s): expected %r but got %r' %  (i, selected_real_kind(i), selectedrealkind(i)))
 
