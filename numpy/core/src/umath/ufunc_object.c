@@ -1687,7 +1687,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
 
     npy_uint32 op_flags[NPY_MAXARGS];
     npy_intp iter_shape[NPY_MAXARGS];
-
     NpyIter *iter = NULL;
     npy_uint32 iter_flags;
 
