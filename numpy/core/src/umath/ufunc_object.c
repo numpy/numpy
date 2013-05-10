@@ -2008,18 +2008,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                       NPY_ITER_NO_BROADCAST;
     }
 
-    /*
-     * If there are no iteration dimensions, create a fake one
-     * so that the scalar edge case works right.
-     */
-    if (iter_ndim == 0) {
-        iter_ndim = 1;
-        iter_shape[0] = 1;
-        for (i = 0; i < nop; ++i) {
-            op_axes[i][0] = -1;
-        }
-    }
-
     iter_flags = ufunc->iter_flags |
                  NPY_ITER_MULTI_INDEX |
                  NPY_ITER_REFS_OK |

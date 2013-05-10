@@ -795,5 +795,11 @@ class TestUfunc(TestCase):
         assert_equal(a, np.array([[0,2,4,3],[7,9,11,7],
             [14,16,18,11],[12,13,14,15]], dtype='i8'))
 
+        a = np.array(0)
+        opflag_tests.inplace_add(a, 3)
+        assert_equal(a, 3)
+        opflag_tests.inplace_add(a, [3, 4])
+        assert_equal(a, 10)
+
 if __name__ == "__main__":
     run_module_suite()
