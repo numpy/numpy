@@ -1266,6 +1266,50 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
     PyObject *result = NULL;
     PyArray_Descr *dtype = NULL;
 
+    // If other is of different type and the type priority is higher
+    // use its comparison function.
+    if (Py_TYPE(other) != Py_TYPE(self)) {
+        double prior1, prior2;
+        prior2 = PyArray_GetPriority((PyObject *)other, 0.0);
+        prior1 = PyArray_GetPriority((PyObject *)self, 0.0);
+        if (prior2 > prior1) {
+            PyObject *attr;
+            char * str = NULL;
+            switch (cmp_op) {
+            case Py_LT:
+                str = "__gt__";
+                break;
+            case Py_LE:
+                str = "__ge__";
+                break;
+            case Py_EQ:
+                str = "__eq__";
+                break;
+            case Py_NE:
+                str = "__ne__";
+                break;
+            case Py_GT:
+                str = "__lt__";
+                break;
+            case Py_GE:
+                str = "__le__";
+                break;
+            }
+
+            if (str != NULL) {
+                attr = PyObject_GetAttrString(other, str);
+
+                if (attr != NULL && PyCallable_Check(attr)) {
+                    PyObject * ret;
+                    ret = PyObject_CallFunctionObjArgs(attr, (PyObject *)self, NULL);
+                    Py_DECREF(attr);
+                    return ret;
+                }
+                Py_XDECREF(attr);
+            }
+        }
+    }
+
     switch (cmp_op) {
     case Py_LT:
         result = PyArray_GenericBinaryFunction(self, other,
