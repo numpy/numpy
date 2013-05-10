@@ -51,14 +51,6 @@ static void add_uint64_triplet(char **args, npy_intp *dimensions,
     }
 }
 
-/* This a pointer to the above function */
-PyUFuncGenericFunction funcs[1] = {&add_uint64_triplet};
-
-/* These are the input and return dtypes of add_uint64_triplet. */
-static char types[3] = {NPY_UINT64, NPY_UINT64, NPY_UINT64};
-
-static void *data[1] = {NULL};
-
 #if defined(NPY_PY3K)
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
