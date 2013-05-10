@@ -565,11 +565,24 @@ class TestUfunc(TestCase):
         assert_equal(np.max(3, axis=0), 3)
         assert_equal(np.min(2.5, axis=0), 2.5)
 
+        # Check scalar behaviour for ufuncs without an identity
+        assert_equal(np.power.reduce(3), 3)
+
         # Make sure that scalars are coming out from this operation
         assert_(type(np.prod(np.float32(2.5), axis=0)) is np.float32)
         assert_(type(np.sum(np.float32(2.5), axis=0)) is np.float32)
         assert_(type(np.max(np.float32(2.5), axis=0)) is np.float32)
         assert_(type(np.min(np.float32(2.5), axis=0)) is np.float32)
+
+        # check if scalars/0-d arrays get cast
+        assert_(type(np.any(0, axis=0)) is np.bool_)
+
+        # assert that 0-d arrays get wrapped
+        class MyArray(np.ndarray):
+            pass
+        a = np.array(1).view(MyArray)
+        assert_(type(np.any(a)) is MyArray)
+
 
     def test_casting_out_param(self):
         # Test that it's possible to do casts on output

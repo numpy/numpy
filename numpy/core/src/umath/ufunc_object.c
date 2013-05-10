@@ -3719,31 +3719,16 @@ PyUFunc_GenericReduction(PyUFuncObject *ufunc, PyObject *args,
          * 'prod', et al, also allow a reduction where axis=0, even
          * though this is technically incorrect.
          */
-        if (operation == UFUNC_REDUCE &&
-                    (naxes == 0 || (naxes == 1 && axes[0] == 0))) {
+        naxes = 0;
+
+        if (!(operation == UFUNC_REDUCE &&
+                    (naxes == 0 || (naxes == 1 && axes[0] == 0)))) {
+            PyErr_Format(PyExc_TypeError, "cannot %s on a scalar",
+                         _reduce_type[operation]);
             Py_XDECREF(otype);
-            /* If there's an output parameter, copy the value */
-            if (out != NULL) {
-                if (PyArray_CopyInto(out, mp) < 0) {
-                    Py_DECREF(mp);
-                    return NULL;
-                }
-                else {
-                    Py_DECREF(mp);
-                    Py_INCREF(out);
-                    return (PyObject *)out;
-                }
-            }
-            /* Otherwise return the array unscathed */
-            else {
-                return PyArray_Return(mp);
-            }
+            Py_DECREF(mp);
+            return NULL;
         }
-        PyErr_Format(PyExc_TypeError, "cannot %s on a scalar",
-                     _reduce_type[operation]);
-        Py_XDECREF(otype);
-        Py_DECREF(mp);
-        return NULL;
     }
 
      /*
