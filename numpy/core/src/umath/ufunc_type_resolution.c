@@ -1555,8 +1555,9 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
          * Copy the dtype from 'op' if the type_num matches,
          * to preserve metadata.
          */
-        } else if (op[i] != NULL &&
-                PyArray_DESCR(op[i])->type_num == type_nums[i]) {
+        }
+        else if (op[i] != NULL &&
+                 PyArray_DESCR(op[i])->type_num == type_nums[i]) {
             out_dtypes[i] = ensure_dtype_nbo(PyArray_DESCR(op[i]));
             Py_XINCREF(out_dtypes[i]);
         }
