@@ -212,6 +212,20 @@ typedef struct _tagPyUFuncObject {
          * A function which returns a masked inner loop for the ufunc.
          */
         PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector;
+       
+        /*
+         * List of flags for each operand when ufunc is called by nditer object.
+         * These flags will be used in addition to the default flags for each
+         * operand set by nditer object.
+         */
+        npy_uint32 *op_flags;
+
+        /*
+         * List of global flags used when ufunc is called by nditer object.
+         * These flags will be used in addition to the default global flags
+         * set by nditer object.
+         */
+        npy_uint32 iter_flags;
 } PyUFuncObject;
 
 #include "arrayobject.h"

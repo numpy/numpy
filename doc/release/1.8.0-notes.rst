@@ -159,3 +159,21 @@ General
 Use of non-integer indices has been deprecated. Previously float indices
 were truncated to integers without warning.
 
+C-API
+~~~~~
+
+New Features
+============
+
+When creating a ufunc, the default ufunc operand flags can be overridden
+via the new op_flags attribute of the ufunc object. For example, to set
+the operand flag for the first input to read/write:
+
+PyObject \*ufunc = PyUFunc_FromFuncAndData(...);
+ufunc->op_flags[0] = NPY_ITER_READWRITE;
+
+This allows a ufunc to perform an operation in place. Also, global nditer flags
+can be overridden via the new iter_flags attribute of the ufunc object.
+For example, to set the reduce flag for a ufunc:
+
+ufunc->iter_flags = NPY_ITER_REDUCE_OK;
