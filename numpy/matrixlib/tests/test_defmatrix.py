@@ -224,6 +224,7 @@ class TestAlgebra(TestCase):
         assert_(allclose((mA * mA).A, dot(A, A)))
         assert_(allclose((mA + mA).A, (A + A)))
         assert_(allclose((3*mA).A, (3*A)))
+        assert_(allclose(mA.dot(mA).A, A.dot(A)))
 
         mA2 = matrix(A)
         mA2 *= 3

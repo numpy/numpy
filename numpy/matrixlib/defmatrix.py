@@ -385,6 +385,32 @@ class matrix(N.ndarray):
             return self[0,0]
         else:
             return self
+    
+    def dot(self, other):
+        '''
+        Return the dot product of two matrices.
+
+        See Also
+        --------
+        ndarray.dot
+        
+        Notes
+        -----
+        This is the same as `ndarray.dot`, except that where an `ndarray` would 
+        be returned, a `matrix` object is returned instead.	
+
+        Be careful when doing dot product between matrices and 1-D vectors like,
+        1-D array, list and tuple, which will be treated as 1-D row vectors.
+	
+        Examples
+        --------
+        >>> a = np.mat(np.eye(2))
+        >>> b = np.array([[1,2], [3,4]])
+        >>> a.dot(b)
+        matrix([[ 1.,  2.],
+                [ 3.,  4.]])
+        '''
+        return self.__mul__(other)
 
     # Necessary because base-class tolist expects dimension
     #  reduction by x[0]
@@ -444,6 +470,7 @@ class matrix(N.ndarray):
 
         """
         return N.ndarray.sum(self, axis, dtype, out, keepdims=True)._collapse(axis)
+
 
     def mean(self, axis=None, dtype=None, out=None):
         """
