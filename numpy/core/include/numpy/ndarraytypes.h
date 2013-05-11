@@ -1275,6 +1275,10 @@ typedef struct {
         npy_intp              bscoord[NPY_MAXDIMS];
 
         PyObject              *indexobj;               /* creating obj */
+        /*
+         * consec is first used to indicate wether fancy indices are
+         * consecutive and then denotes at which axis they are inserted
+         */
         int                   consec;
         char                  *dataptr;
 
