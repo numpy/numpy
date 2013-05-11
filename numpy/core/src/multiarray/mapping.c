@@ -25,7 +25,7 @@
 #define SOBJ_LISTTUP 4
 
 static PyObject *
-array_subscript_simple(PyArrayObject *self, PyObject *op);
+array_subscript_simple(PyArrayObject *self, PyObject *op, int check_index);
 
 /******************************************************************************
  ***                    IMPLEMENT MAPPING PROTOCOL                          ***
@@ -226,7 +226,7 @@ PyArray_MapIterSwapAxes(PyArrayMapIterObject *mit, PyArrayObject **ret, int getm
      * (n2,...,n1+n2-1,0,...,n2-1,n1+n2,...n3-1)
      */
     n1 = mit->iters[0]->nd_m1 + 1;
-    n2 = mit->iteraxes[0];
+    n2 = mit->consec; /* axes to insert at */
     n3 = mit->nd;
 
     /* use n1 as the boundary if getting but n2 if setting */
@@ -303,9 +303,7 @@ PyArray_GetMap(PyArrayMapIterObject *mit)
 
     /* check for consecutive axes */
     if ((mit->subspace != NULL) && (mit->consec)) {
-        if (mit->iteraxes[0] > 0) {  /* then we need to swap */
-            PyArray_MapIterSwapAxes(mit, &ret, 1);
-        }
+        PyArray_MapIterSwapAxes(mit, &ret, 1);
     }
     return (PyObject *)ret;
 }
@@ -338,11 +336,9 @@ PyArray_SetMap(PyArrayMapIterObject *mit, PyObject *op)
         return -1;
     }
     if ((mit->subspace != NULL) && (mit->consec)) {
-        if (mit->iteraxes[0] > 0) {  /* then we need to swap */
-            PyArray_MapIterSwapAxes(mit, &arr, 0);
-            if (arr == NULL) {
-                return -1;
-            }
+        PyArray_MapIterSwapAxes(mit, &arr, 0);
+        if (arr == NULL) {
+            return -1;
         }
     }
 
@@ -556,7 +552,7 @@ fancy_indexing_check(PyObject *args)
  */
 
 NPY_NO_EXPORT PyObject *
-array_subscript_simple(PyArrayObject *self, PyObject *op)
+array_subscript_simple(PyArrayObject *self, PyObject *op, int check_index)
 {
     npy_intp dimensions[NPY_MAXDIMS], strides[NPY_MAXDIMS];
     npy_intp offset;
@@ -601,7 +597,7 @@ array_subscript_simple(PyArrayObject *self, PyObject *op)
 
     /* Standard (view-based) Indexing */
     nd = parse_index(self, op, dimensions,
-                     strides, &offset);
+                     strides, &offset, check_index);
     if (nd == -1) {
         return NULL;
     }
@@ -1222,7 +1218,7 @@ array_subscript_fromobject(PyArrayObject *self, PyObject *op)
         return array_subscript_fancy(self, op, fancy);
     }
     else {
-        return array_subscript_simple(self, op);
+        return array_subscript_simple(self, op, 1);
     }
 }
 
@@ -1256,9 +1252,10 @@ array_subscript(PyArrayObject *self, PyObject *op)
             ret = array_subscript_fancy(self, op, fancy);
         }
         else {
-            ret = array_subscript_simple(self, op);
+            ret = array_subscript_simple(self, op, 1);
         }
     }
+
     if (ret == NULL) {
         return NULL;
     }
@@ -1301,7 +1298,7 @@ array_ass_sub_simple(PyArrayObject *self, PyObject *ind, PyObject *op)
 
     /* Rest of standard (view-based) indexing */
     if (PyArray_CheckExact(self)) {
-        tmp = (PyArrayObject *)array_subscript_simple(self, ind);
+        tmp = (PyArrayObject *)array_subscript_simple(self, ind, 1);
         if (tmp == NULL) {
             return -1;
         }
@@ -1665,7 +1662,7 @@ _nonzero_indices(PyObject *myBool, PyArrayIterObject **iters)
 }
 
 /* convert an indexing object to an INTP indexing array iterator
-   if possible -- otherwise, it is a Slice or Ellipsis object
+   if possible -- otherwise, it is a Slice, Ellipsis or None object
    and has to be interpreted on bind to a particular
    array so leave it NULL for now.
 */
@@ -1675,7 +1672,7 @@ _convert_obj(PyObject *obj, PyArrayIterObject **iter)
     PyArray_Descr *indtype;
     PyObject *arr;
 
-    if (PySlice_Check(obj) || (obj == Py_Ellipsis)) {
+    if (PySlice_Check(obj) || (obj == Py_Ellipsis) || (obj == Py_None)) {
         return 0;
     }
     else if (PyArray_Check(obj) && PyArray_ISBOOL((PyArrayObject *)obj)) {
@@ -1811,7 +1808,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
 {
     int subnd;
     PyObject *sub, *obj = NULL;
-    int i, j, n, curraxis, ellipexp, noellip;
+    int i, j, n, curraxis, ellipexp, noellip, newaxes;
     PyArrayIterObject *it;
     npy_intp dimsize;
     npy_intp *indptr;
@@ -1827,6 +1824,34 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     if (mit->ait == NULL) {
         goto fail;
     }
+
+    /*
+     * all indexing arrays have been converted to 0
+     * therefore we can extract the subspace with a simple
+     * getitem call which will use view semantics, but
+     * without index checking since all original normal
+     * indexes are checked later as fancy ones.
+     *
+     * But, be sure to do it with a true array.
+     */
+    if (PyArray_CheckExact(arr)) {
+        sub = array_subscript_simple(arr, mit->indexobj, 0);
+    }
+    else {
+        Py_INCREF(arr);
+        obj = PyArray_EnsureArray((PyObject *)arr);
+        if (obj == NULL) {
+            goto fail;
+        }
+        sub = array_subscript_simple((PyArrayObject *)obj, mit->indexobj, 0);
+        Py_DECREF(obj);
+    }
+
+    if (sub == NULL) {
+        goto fail;
+    }
+
+    subnd = PyArray_NDIM(sub);
     /* no subspace iteration needed.  Finish up and Return */
     if (subnd == 0) {
         n = PyArray_NDIM(arr);
@@ -1836,48 +1861,35 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
         goto finish;
     }
 
-    /*
-     * all indexing arrays have been converted to 0
-     * therefore we can extract the subspace with a simple
-     * getitem call which will use view semantics
-     *
-     * But, be sure to do it with a true array.
-     */
-    if (PyArray_CheckExact(arr)) {
-        sub = array_subscript_simple(arr, mit->indexobj);
-    }
-    else {
-        Py_INCREF(arr);
-        obj = PyArray_EnsureArray((PyObject *)arr);
-        if (obj == NULL) {
-            goto fail;
-        }
-        sub = array_subscript_simple((PyArrayObject *)obj, mit->indexobj);
-        Py_DECREF(obj);
-    }
-
-    if (sub == NULL) {
-        goto fail;
-    }
     mit->subspace = (PyArrayIterObject *)PyArray_IterNew(sub);
     Py_DECREF(sub);
     if (mit->subspace == NULL) {
         goto fail;
     }
+
+    if (mit->nd + subnd > NPY_MAXDIMS) {
+        PyErr_Format(PyExc_ValueError,
+                     "number of dimensions must be within [0, %d], "
+                     "indexed array has %d",
+                     NPY_MAXDIMS, mit->nd + subnd);
+        goto fail;
+    }
+
     /* Expand dimensions of result */
-    n = PyArray_NDIM(mit->subspace->ao);
-    for (i = 0; i < n; i++) {
+    for (i = 0; i < subnd; i++) {
         mit->dimensions[mit->nd+i] = PyArray_DIMS(mit->subspace->ao)[i];
     }
-    mit->nd += n;
+    mit->nd += subnd;
 
     /*
-     * Now, we still need to interpret the ellipsis and slice objects
-     * to determine which axes the indexing arrays are referring to
+     * Now, we still need to interpret the ellipsis, slice and None
+     * objects to determine which axes the indexing arrays are
+     * referring to
      */
     n = PyTuple_GET_SIZE(mit->indexobj);
     /* The number of dimensions an ellipsis takes up */
-    ellipexp = PyArray_NDIM(arr) - n + 1;
+    newaxes = subnd - (PyArray_NDIM(arr) - mit->numiter);
+    ellipexp = PyArray_NDIM(arr) + newaxes - n + 1;
     /*
      * Now fill in iteraxes -- remember indexing arrays have been
      * converted to 0's in mit->indexobj
@@ -1886,6 +1898,8 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     j = 0;
     /* Only expand the first ellipsis */
     noellip = 1;
+    /* count newaxes before iter axes */
+    newaxes = 0;
     memset(mit->bscoord, 0, sizeof(npy_intp)*PyArray_NDIM(arr));
     for (i = 0; i < n; i++) {
         /*
@@ -1899,6 +1913,11 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
         else if (noellip && obj == Py_Ellipsis) {
             curraxis += ellipexp;
             noellip = 0;
+        }
+        else if (obj == Py_None) {
+            if (j == 0) {
+                newaxes += 1;
+            }
         }
         else {
             npy_intp start = 0;
@@ -1923,6 +1942,9 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
             }
             curraxis += 1;
         }
+    }
+    if (mit->consec) {
+        mit->consec = mit->iteraxes[0] + newaxes;
     }
 
  finish:

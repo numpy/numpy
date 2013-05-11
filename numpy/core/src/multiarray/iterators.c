@@ -97,7 +97,8 @@ NPY_NO_EXPORT int
 parse_index(PyArrayObject *self, PyObject *op,
             npy_intp *out_dimensions,
             npy_intp *out_strides,
-            npy_intp *out_offset)
+            npy_intp *out_offset,
+            int check_index)
 {
     int i, j, n;
     int nd_old, nd_new, n_add, n_ellipsis;
@@ -136,7 +137,8 @@ parse_index(PyArrayObject *self, PyObject *op,
         start = parse_index_entry(op1, &step_size, &n_steps,
                                   nd_old < PyArray_NDIM(self) ?
                                   PyArray_DIMS(self)[nd_old] : 0,
-                                  nd_old, nd_old < PyArray_NDIM(self));
+                                  nd_old, check_index ?
+                                  nd_old < PyArray_NDIM(self) : 0);
         Py_DECREF(op1);
         if (start == -1) {
             break;

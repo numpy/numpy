@@ -9,7 +9,8 @@ NPY_NO_EXPORT int
 parse_index(PyArrayObject *self, PyObject *op,
             npy_intp *out_dimensions,
             npy_intp *out_strides,
-            npy_intp *out_offset);
+            npy_intp *out_offset,
+            int check_index);
 
 NPY_NO_EXPORT PyObject
 *iter_subscript(PyArrayIterObject *, PyObject *);
