@@ -126,6 +126,12 @@ loop signature matching logic wasn't looking at the output operand type.
 Now the correct ufunc loop is found, as long as the user provides an output
 argument with the correct output type.
 
+runtests.py
+~~~~~~~~~~~
+
+A simple test runner script ``runtests.py`` was added. It also builds Numpy via
+``setup.py build`` and can be used to run tests easily during development.
+
 
 Changes
 =======
