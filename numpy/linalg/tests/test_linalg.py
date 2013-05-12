@@ -2,6 +2,7 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import os
 import sys
 
 import numpy as np
@@ -750,8 +751,49 @@ def test_generalized_raise_multiloop():
 
     assert_raises(np.linalg.LinAlgError, np.linalg.inv, x)
 
+def _is_xerbla_safe():
+    """
+    Check that running the xerbla test is safe --- if python_xerbla
+    is not successfully linked in, the standard xerbla routine is called,
+    which aborts the process.
 
-@dec.skipif(sys.platform == "win32", "python_xerbla not enabled on Win32")
+    """
+
+    try:
+        pid = os.fork()
+    except (OSError, AttributeError):
+        # fork failed, or not running on POSIX
+        return False
+
+    if pid == 0:
+        # child; close i/o file handles
+        os.close(1)
+        os.close(0)
+        # avoid producing core files
+        import resource
+        resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+        # these calls may abort
+        try:
+            a = np.array([[1]])
+            np.linalg.lapack_lite.dgetrf(
+                1, 1, a.astype(np.double),
+                0, # <- invalid value
+                a.astype(np.intc), 0)
+        except:
+            pass
+        try:
+            np.linalg.lapack_lite.xerbla()
+        except:
+            pass
+        os._exit(111)
+    else:
+        # parent
+        pid, status = os.wait()
+        if os.WEXITSTATUS(status) == 111 and not os.WIFSIGNALED(status):
+            return True
+    return False
+
+@dec.skipif(not _is_xerbla_safe(), "python_xerbla not found")
 def test_xerbla():
     # Test that xerbla works (with GIL)
     a = np.array([[1]])
