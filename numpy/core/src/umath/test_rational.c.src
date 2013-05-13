@@ -2,13 +2,12 @@
 
 #define NPY_NO_DEPRECATED_API NPY_API_VERSION
 
-#include <stdint.h>
 #include <math.h>
 #include <Python.h>
 #include <structmember.h>
 #include <numpy/arrayobject.h>
 #include <numpy/ufuncobject.h>
-#include "numpy/npy_3kcompat.h"
+#include <numpy/npy_3kcompat.h>
 
 /* Relevant arithmetic exceptions */
 
@@ -47,63 +46,67 @@ set_zero_divide(void) {
 
 /* Integer arithmetic utilities */
 
-static NPY_INLINE int32_t
-safe_neg(int32_t x) {
-    if (x==(int32_t)1<<31) {
+static NPY_INLINE npy_int32
+safe_neg(npy_int32 x) {
+    if (x==(npy_int32)1<<31) {
         set_overflow();
     }
     return -x;
 }
 
-static NPY_INLINE int32_t
-safe_abs32(int32_t x) {
+static NPY_INLINE npy_int32
+safe_abs32(npy_int32 x) {
+    npy_int32 nx;
     if (x>=0) {
         return x;
     }
-    int32_t nx = -x;
+    nx = -x;
     if (nx<0) {
         set_overflow();
     }
     return nx;
 }
 
-static NPY_INLINE int64_t
-safe_abs64(int64_t x) {
+static NPY_INLINE npy_int64
+safe_abs64(npy_int64 x) {
+    npy_int64 nx;
     if (x>=0) {
         return x;
     }
-    int64_t nx = -x;
+    nx = -x;
     if (nx<0) {
         set_overflow();
     }
     return nx;
 }
 
-static NPY_INLINE int64_t
-gcd(int64_t x, int64_t y) {
+static NPY_INLINE npy_int64
+gcd(npy_int64 x, npy_int64 y) {
     x = safe_abs64(x);
     y = safe_abs64(y);
     if (x < y) {
-        int64_t t = x;
+        npy_int64 t = x;
         x = y;
         y = t;
     }
     while (y) {
+        npy_int64 t;
         x = x%y;
-        int64_t t = x;
+        t = x;
         x = y;
         y = t;
     }
     return x;
 }
 
-static NPY_INLINE int64_t
-lcm(int64_t x, int64_t y) {
+static NPY_INLINE npy_int64
+lcm(npy_int64 x, npy_int64 y) {
+    npy_int64 lcm;
     if (!x || !y) {
         return 0;
     }
     x /= gcd(x,y);
-    int64_t lcm = x*y;
+    lcm = x*y;
     if (lcm/y!=x) {
         set_overflow();
     }
@@ -114,17 +117,17 @@ lcm(int64_t x, int64_t y) {
 
 typedef struct {
     /* numerator */
-    int32_t n;
+    npy_int32 n;
     /*
      * denominator minus one: numpy.zeros() uses memset(0) for non-object
      * types, so need to ensure that rational(0) has all zero bytes
      */
-    int32_t dmm;
+    npy_int32 dmm;
 } rational;
 
 static NPY_INLINE rational
-make_rational_int(int64_t n) {
-    rational r = {n,0};
+make_rational_int(npy_int64 n) {
+    rational r = {(npy_int32)n,0};
     if (r.n != n) {
         set_overflow();
     }
@@ -132,17 +135,18 @@ make_rational_int(int64_t n) {
 }
 
 static rational
-make_rational_slow(int64_t n_, int64_t d_) {
+make_rational_slow(npy_int64 n_, npy_int64 d_) {
     rational r = {0};
     if (!d_) {
         set_zero_divide();
     }
     else {
-        int64_t g = gcd(n_,d_);
+        npy_int64 g = gcd(n_,d_);
+        npy_int32 d;
         n_ /= g;
         d_ /= g;
-        r.n = n_;
-        int32_t d = d_;
+        r.n = (npy_int32)n_;
+        d = (npy_int32)d_;
         if (r.n!=n_ || d!=d_) {
             set_overflow();
         }
@@ -157,20 +161,20 @@ make_rational_slow(int64_t n_, int64_t d_) {
     return r;
 }
 
-static NPY_INLINE int32_t
+static NPY_INLINE npy_int32
 d(rational r) {
     return r.dmm+1;
 }
 
 /* Assumes d_ > 0 */
 static rational
-make_rational_fast(int64_t n_, int64_t d_) {
-    int64_t g = gcd(n_,d_);
+make_rational_fast(npy_int64 n_, npy_int64 d_) {
+    npy_int64 g = gcd(n_,d_);
+    rational r;
     n_ /= g;
     d_ /= g;
-    rational r;
-    r.n = n_;
-    r.dmm = d_-1;
+    r.n = (npy_int32)n_;
+    r.dmm = (npy_int32)(d_-1);
     if (r.n!=n_ || r.dmm+1!=d_) {
         set_overflow();
     }
@@ -191,29 +195,29 @@ rational_add(rational x, rational y) {
      * Note that the numerator computation can never overflow int128_t,
      * since each term is strictly under 2**128/4 (since d > 0).
      */
-    return make_rational_fast((int64_t)x.n*d(y)+(int64_t)d(x)*y.n,
-        (int64_t)d(x)*d(y));
+    return make_rational_fast((npy_int64)x.n*d(y)+(npy_int64)d(x)*y.n,
+        (npy_int64)d(x)*d(y));
 }
 
 static NPY_INLINE rational
 rational_subtract(rational x, rational y) {
     /* We're safe from overflow as with + */
-    return make_rational_fast((int64_t)x.n*d(y)-(int64_t)d(x)*y.n,
-        (int64_t)d(x)*d(y));
+    return make_rational_fast((npy_int64)x.n*d(y)-(npy_int64)d(x)*y.n,
+        (npy_int64)d(x)*d(y));
 }
 
 static NPY_INLINE rational
 rational_multiply(rational x, rational y) {
     /* We're safe from overflow as with + */
-    return make_rational_fast((int64_t)x.n*y.n,(int64_t)d(x)*d(y));
+    return make_rational_fast((npy_int64)x.n*y.n,(npy_int64)d(x)*d(y));
 }
 
 static NPY_INLINE rational
 rational_divide(rational x, rational y) {
-    return make_rational_slow((int64_t)x.n*d(y),(int64_t)d(x)*y.n);
+    return make_rational_slow((npy_int64)x.n*d(y),(npy_int64)d(x)*y.n);
 }
 
-static NPY_INLINE int64_t
+static NPY_INLINE npy_int64
 rational_floor(rational x) {
     /* Always round down */
     if (x.n>=0) {
@@ -223,10 +227,10 @@ rational_floor(rational x) {
      * This can be done without casting up to 64 bits, but it requires
      * working out all the sign cases
      */
-    return -((-(int64_t)x.n+d(x)-1)/d(x));
+    return -((-(npy_int64)x.n+d(x)-1)/d(x));
 }
 
-static NPY_INLINE int64_t
+static NPY_INLINE npy_int64
 rational_ceil(rational x) {
     return -rational_floor(rational_negative(x));
 }
@@ -245,14 +249,14 @@ rational_abs(rational x) {
     return y;
 }
 
-static NPY_INLINE int64_t
+static NPY_INLINE npy_int64
 rational_rint(rational x) {
     /*
      * Round towards nearest integer, moving exact half integers towards
      * zero
      */
-    int32_t d_ = d(x);
-    return (2*(int64_t)x.n+(x.n<0?-d_:d_))/(2*(int64_t)d_);
+    npy_int32 d_ = d(x);
+    return (2*(npy_int64)x.n+(x.n<0?-d_:d_))/(2*(npy_int64)d_);
 }
 
 static NPY_INLINE int
@@ -267,13 +271,14 @@ rational_inverse(rational x) {
         set_zero_divide();
     }
     else {
+        npy_int32 d_;
         y.n = d(x);
-        int32_t d = x.n;
-        if (d <= 0) {
-            d = safe_neg(d);
+        d_ = x.n;
+        if (d_ <= 0) {
+            d_ = safe_neg(d_);
             y.n = -y.n;
         }
-        y.dmm = d-1;
+        y.dmm = d_-1;
     }
     return y;
 }
@@ -294,7 +299,7 @@ rational_ne(rational x, rational y) {
 
 static NPY_INLINE int
 rational_lt(rational x, rational y) {
-    return (int64_t)x.n*d(y) < (int64_t)y.n*d(x);
+    return (npy_int64)x.n*d(y) < (npy_int64)y.n*d(x);
 }
 
 static NPY_INLINE int
@@ -312,7 +317,7 @@ rational_ge(rational x, rational y) {
     return !rational_lt(x,y);
 }
 
-static NPY_INLINE int32_t
+static NPY_INLINE npy_int32
 rational_int(rational x) {
     return x.n/d(x);
 }
@@ -331,10 +336,11 @@ static int
 scan_rational(const char** s, rational* x) {
     long n,d;
     int offset;
+    const char* ss;
     if (sscanf(*s,"%ld%n",&n,&offset)<=0) {
         return 0;
     }
-    const char* ss = *s+offset;
+    ss = *s+offset;
     if (*ss!='/') {
         *s = ss;
         *x = make_rational_int(n);
@@ -352,7 +358,7 @@ scan_rational(const char** s, rational* x) {
 /* Expose rational to Python as a numpy scalar */
 
 typedef struct {
-    PyObject_HEAD;
+    PyObject_HEAD
     rational r;
 } PyRational;
 
@@ -374,18 +380,24 @@ PyRational_FromRational(rational x) {
 
 static PyObject*
 pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
+    Py_ssize_t size;
+    PyObject* x[2];
+    long n[2]={0,1};
+    int i;
+    rational r;
     if (kwds && PyDict_Size(kwds)) {
         PyErr_SetString(PyExc_TypeError,
                 "constructor takes no keyword arguments");
         return 0;
     }
-    Py_ssize_t size = PyTuple_GET_SIZE(args);
+    size = PyTuple_GET_SIZE(args);
     if (size>2) {
         PyErr_SetString(PyExc_TypeError,
                 "expected rational or numerator and optional denominator");
         return 0;
     }
-    PyObject* x[2] = {PyTuple_GET_ITEM(args,0),PyTuple_GET_ITEM(args,1)};
+    x[0] = PyTuple_GET_ITEM(args,0);
+    x[1] = PyTuple_GET_ITEM(args,1);
     if (size==1) {
         if (PyRational_Check(x[0])) {
             Py_INCREF(x[0]);
@@ -409,9 +421,9 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
             return 0;
         }
     }
-    long n[2]={0,1};
-    int i;
     for (i=0;i<size;i++) {
+        PyObject* y;
+        int eq;
         n[i] = PyInt_AsLong(x[i]);
         if (n[i]==-1 && PyErr_Occurred()) {
             if (PyErr_ExceptionMatches(PyExc_TypeError)) {
@@ -423,11 +435,11 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
             return 0;
         }
         /* Check that we had an exact integer */
-        PyObject* y = PyInt_FromLong(n[i]);
+        y = PyInt_FromLong(n[i]);
         if (!y) {
             return 0;
         }
-        int eq = PyObject_RichCompareBool(x[i],y,Py_EQ);
+        eq = PyObject_RichCompareBool(x[i],y,Py_EQ);
         Py_DECREF(y);
         if (eq<0) {
             return 0;
@@ -440,7 +452,7 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
             return 0;
         }
     }
-    rational r = make_rational_slow(n[0],n[1]);
+    r = make_rational_slow(n[0],n[1]);
     if (PyErr_Occurred()) {
         return 0;
     }
@@ -452,41 +464,46 @@ pyrational_new(PyTypeObject* type, PyObject* args, PyObject* kwds) {
  * overflow error for too long ints
  */
 #define AS_RATIONAL(dst,object) \
-    rational dst = {0}; \
-    if (PyRational_Check(object)) { \
-        dst = ((PyRational*)object)->r; \
-    } \
-    else { \
-        long n_ = PyInt_AsLong(object); \
-        if (n_==-1 && PyErr_Occurred()) { \
-            if (PyErr_ExceptionMatches(PyExc_TypeError)) { \
-                PyErr_Clear(); \
+    { \
+        dst.n = 0; \
+        if (PyRational_Check(object)) { \
+            dst = ((PyRational*)object)->r; \
+        } \
+        else { \
+            PyObject* y_; \
+            int eq_; \
+            long n_ = PyInt_AsLong(object); \
+            if (n_==-1 && PyErr_Occurred()) { \
+                if (PyErr_ExceptionMatches(PyExc_TypeError)) { \
+                    PyErr_Clear(); \
+                    Py_INCREF(Py_NotImplemented); \
+                    return Py_NotImplemented; \
+                } \
+                return 0; \
+            } \
+            y_ = PyInt_FromLong(n_); \
+            if (!y_) { \
+                return 0; \
+            } \
+            eq_ = PyObject_RichCompareBool(object,y_,Py_EQ); \
+            Py_DECREF(y_); \
+            if (eq_<0) { \
+                return 0; \
+            } \
+            if (!eq_) { \
                 Py_INCREF(Py_NotImplemented); \
                 return Py_NotImplemented; \
             } \
-            return 0; \
+            dst = make_rational_int(n_); \
         } \
-        PyObject* y_ = PyInt_FromLong(n_); \
-        if (!y_) { \
-            return 0; \
-        } \
-        int eq_ = PyObject_RichCompareBool(object,y_,Py_EQ); \
-        Py_DECREF(y_); \
-        if (eq_<0) { \
-            return 0; \
-        } \
-        if (!eq_) { \
-            Py_INCREF(Py_NotImplemented); \
-            return Py_NotImplemented; \
-        } \
-        dst = make_rational_int(n_); \
     }
 
 static PyObject*
 pyrational_richcompare(PyObject* a, PyObject* b, int op) {
+    rational x, y;
+    int result = 0;
     AS_RATIONAL(x,a);
     AS_RATIONAL(y,b);
-    int result = 0;
     #define OP(py,op) case py: result = rational_##op(x,y); break;
     switch (op) {
         OP(Py_LT,lt)
@@ -538,9 +555,10 @@ pyrational_hash(PyObject* self) {
 #define RATIONAL_BINOP_2(name,exp) \
     static PyObject* \
     pyrational_##name(PyObject* a, PyObject* b) { \
+        rational x, y, z; \
         AS_RATIONAL(x,a); \
         AS_RATIONAL(y,b); \
-        rational z = exp; \
+        z = exp; \
         if (PyErr_Occurred()) { \
             return 0; \
         } \
@@ -644,9 +662,9 @@ static PyGetSetDef pyrational_getset[] = {
 
 static PyTypeObject PyRational_Type = {
 #if defined(NPY_PY3K)
-    PyVarObject_HEAD_INIT(&PyType_Type, 0)
+    PyVarObject_HEAD_INIT(NULL, 0)
 #else
-    PyObject_HEAD_INIT(&PyType_Type)
+    PyObject_HEAD_INIT(NULL)
     0,                                        /* ob_size */
 #endif
     "rational",                               /* tp_name */
@@ -720,14 +738,16 @@ npyrational_setitem(PyObject* item, void* data, void* arr) {
     }
     else {
         long n = PyInt_AsLong(item);
+        PyObject* y;
+        int eq;
         if (n==-1 && PyErr_Occurred()) {
             return -1;
         }
-        PyObject* y = PyInt_FromLong(n);
+        y = PyInt_FromLong(n);
         if (!y) {
             return -1;
         }
-        int eq = PyObject_RichCompareBool(item,y,Py_EQ);
+        eq = PyObject_RichCompareBool(item,y,Py_EQ);
         Py_DECREF(y);
         if (eq<0) {
             return -1;
@@ -744,11 +764,11 @@ npyrational_setitem(PyObject* item, void* data, void* arr) {
 }
 
 static NPY_INLINE void
-byteswap(int32_t* x) {
+byteswap(npy_int32* x) {
     char* p = (char*)x;
     size_t i;
     for (i = 0; i < sizeof(*x)/2; i++) {
-        int j = sizeof(*x)-1-i;
+        size_t j = sizeof(*x)-1-i;
         char t = p[i];
         p[i] = p[j];
         p[j] = t;
@@ -759,10 +779,10 @@ static void
 npyrational_copyswapn(void* dst_, npy_intp dstride, void* src_,
         npy_intp sstride, npy_intp n, int swap, void* arr) {
     char *dst = (char*)dst_, *src = (char*)src_;
+    npy_intp i;
     if (!src) {
         return;
     }
-    npy_intp i;
     if (swap) {
         for (i = 0; i < n; i++) {
             rational* r = (rational*)(dst+dstride*i);
@@ -783,10 +803,11 @@ npyrational_copyswapn(void* dst_, npy_intp dstride, void* src_,
 
 static void
 npyrational_copyswap(void* dst, void* src, int swap, void* arr) {
+    rational* r;
     if (!src) {
         return;
     }
-    rational* r = (rational*)dst;
+    r = (rational*)dst;
     memcpy(r,src,sizeof(rational));
     if (swap) {
         byteswap(&r->n);
@@ -805,13 +826,17 @@ npyrational_compare(const void* d0, const void* d1, void* arr) {
     static int \
     npyrational_##name(void* data_, npy_intp n, \
             npy_intp* max_ind, void* arr) { \
+        const rational* data; \
+        npy_intp best_i; \
+        rational best_r; \
+        npy_intp i; \
         if (!n) { \
             return 0; \
         } \
-        const rational* data = (rational*)data_; \
-        npy_intp best_i = 0; \
-        rational best_r = data[0]; \
-        npy_intp i; \
+        data = (rational*)data_; \
+        best_i = 0; \
+        best_r = data[0]; \
+        i; \
         for (i = 1; i < n; i++) { \
             if (rational_##op(data[i],best_r)) { \
                 best_i = i; \
@@ -910,9 +935,9 @@ PyArray_Descr npyrational_descr = {
         } \
     }
 #define DEFINE_INT_CAST(bits) \
-    DEFINE_CAST(int##bits##_t,rational,rational y = make_rational_int(x);) \
-    DEFINE_CAST(rational,int##bits##_t,int32_t z = rational_int(x); \
-                int##bits##_t y = z; if (y != z) set_overflow();)
+    DEFINE_CAST(npy_int##bits,rational,rational y = make_rational_int(x);) \
+    DEFINE_CAST(rational,npy_int##bits,npy_int32 z = rational_int(x); \
+                npy_int##bits y = z; if (y != z) set_overflow();)
 DEFINE_INT_CAST(8)
 DEFINE_INT_CAST(16)
 DEFINE_INT_CAST(32)
@@ -955,8 +980,8 @@ RATIONAL_BINARY_UFUNC(greater,npy_bool,rational_gt(x,y))
 RATIONAL_BINARY_UFUNC(less_equal,npy_bool,rational_le(x,y))
 RATIONAL_BINARY_UFUNC(greater_equal,npy_bool,rational_ge(x,y))
 
-BINARY_UFUNC(gcd_ufunc,int64_t,int64_t,int64_t,gcd(x,y))
-BINARY_UFUNC(lcm_ufunc,int64_t,int64_t,int64_t,lcm(x,y))
+BINARY_UFUNC(gcd_ufunc,npy_int64,npy_int64,npy_int64,gcd(x,y))
+BINARY_UFUNC(lcm_ufunc,npy_int64,npy_int64,npy_int64,lcm(x,y))
 
 #define UNARY_UFUNC(name,type,exp) \
     void rational_ufunc_##name(char** args, npy_intp* dimensions, \
@@ -979,8 +1004,8 @@ UNARY_UFUNC(square,rational,rational_multiply(x,x))
 UNARY_UFUNC(rint,rational,make_rational_int(rational_rint(x)))
 UNARY_UFUNC(sign,rational,make_rational_int(rational_sign(x)))
 UNARY_UFUNC(reciprocal,rational,rational_inverse(x))
-UNARY_UFUNC(numerator,int64_t,x.n)
-UNARY_UFUNC(denominator,int64_t,d(x))
+UNARY_UFUNC(numerator,npy_int64,x.n)
+UNARY_UFUNC(denominator,npy_int64,d(x))
 
 static NPY_INLINE void
 rational_matrix_multiply(char **args, npy_intp *dimensions, npy_intp *steps)
@@ -1059,8 +1084,8 @@ rational_ufunc_test_add(char** args, npy_intp* dimensions,
     char *i0 = args[0], *i1 = args[1], *o = args[2];
     int k;
     for (k = 0; k < n; k++) {
-        int64_t x = *(int64_t*)i0;
-        int64_t y = *(int64_t*)i1;
+        npy_int64 x = *(npy_int64*)i0;
+        npy_int64 y = *(npy_int64*)i1;
         *(rational*)o = rational_add(make_rational_fast(x, 1),
                                      make_rational_fast(y, 1));
         i0 += is0; i1 += is1; o += os;
@@ -1095,6 +1120,10 @@ PyMODINIT_FUNC inittest_rational(void) {
 #endif
 
     PyObject *m = NULL;
+    PyObject* numpy_str;
+    PyObject* numpy;
+    int npy_rational;
+    PyObject* gufunc;
 
     import_array();
     if (PyErr_Occurred()) {
@@ -1104,11 +1133,11 @@ PyMODINIT_FUNC inittest_rational(void) {
     if (PyErr_Occurred()) {
         goto fail;
     }
-    PyObject* numpy_str = PyUString_FromString("numpy");
+    numpy_str = PyUString_FromString("numpy");
     if (!numpy_str) {
         goto fail;
     }
-    PyObject* numpy = PyImport_Import(numpy_str);
+    numpy = PyImport_Import(numpy_str);
     Py_DECREF(numpy_str);
     if (!numpy) {
         goto fail;
@@ -1137,7 +1166,7 @@ PyMODINIT_FUNC inittest_rational(void) {
     npyrational_arrfuncs.fillwithscalar = npyrational_fillwithscalar;
     /* Left undefined: scanfunc, fromstr, sort, argsort */
     Py_TYPE(&npyrational_descr) = &PyArrayDescr_Type;
-    int npy_rational = PyArray_RegisterDataType(&npyrational_descr);
+    npy_rational = PyArray_RegisterDataType(&npyrational_descr);
     if (npy_rational<0) {
         goto fail;
     }
@@ -1149,21 +1178,23 @@ PyMODINIT_FUNC inittest_rational(void) {
     }
 
     /* Register casts to and from rational */
-    #define REGISTER_CAST(From,To,from_descr,to_typenum,safe) \
-        PyArray_Descr* from_descr_##From##_##To = (from_descr); \
-        if (PyArray_RegisterCastFunc(from_descr_##From##_##To, (to_typenum), \
-                                     npycast_##From##_##To) < 0) { \
-            goto fail; \
-        } \
-        if (safe && PyArray_RegisterCanCast(from_descr_##From##_##To, \
-                                            (to_typenum), \
-                                            NPY_NOSCALAR) < 0) { \
-            goto fail; \
+    #define REGISTER_CAST(From,To,from_descr,to_typenum,safe) { \
+            PyArray_Descr* from_descr_##From##_##To = (from_descr); \
+            if (PyArray_RegisterCastFunc(from_descr_##From##_##To, \
+                                         (to_typenum), \
+                                         npycast_##From##_##To) < 0) { \
+                goto fail; \
+            } \
+            if (safe && PyArray_RegisterCanCast(from_descr_##From##_##To, \
+                                                (to_typenum), \
+                                                NPY_NOSCALAR) < 0) { \
+                goto fail; \
+            } \
         }
     #define REGISTER_INT_CASTS(bits) \
-        REGISTER_CAST(int##bits##_t, rational, \
+        REGISTER_CAST(npy_int##bits, rational, \
                       PyArray_DescrFromType(NPY_INT##bits), npy_rational, 1) \
-        REGISTER_CAST(rational, int##bits##_t, &npyrational_descr, \
+        REGISTER_CAST(rational, npy_int##bits, &npyrational_descr, \
                       NPY_INT##bits, 0)
     REGISTER_INT_CASTS(8)
     REGISTER_INT_CASTS(16)
@@ -1179,10 +1210,10 @@ PyMODINIT_FUNC inittest_rational(void) {
     #define REGISTER_UFUNC(name,...) { \
         PyUFuncObject* ufunc = \
             (PyUFuncObject*)PyObject_GetAttrString(numpy, #name); \
+        int _types[] = __VA_ARGS__; \
         if (!ufunc) { \
             goto fail; \
         } \
-        int _types[] = __VA_ARGS__; \
         if (sizeof(_types)/sizeof(int)!=ufunc->nargs) { \
             PyErr_Format(PyExc_AssertionError, \
                          "ufunc %s takes %d arguments, our loop takes %ld", \
@@ -1244,42 +1275,46 @@ PyMODINIT_FUNC inittest_rational(void) {
     PyModule_AddObject(m,"rational",(PyObject*)&PyRational_Type);
 
     /* Create matrix multiply generalized ufunc */
-    PyObject* gufunc = PyUFunc_FromFuncAndDataAndSignature(0,0,0,0,2,1,
-        PyUFunc_None,(char*)"matrix_multiply",
-        (char*)"return result of multiplying two matrices of rationals",
-        0,"(m,n),(n,p)->(m,p)");
-    if (!gufunc) {
-        goto fail;
+    {
+        int types2[3] = {npy_rational,npy_rational,npy_rational};
+        PyObject* gufunc = PyUFunc_FromFuncAndDataAndSignature(0,0,0,0,2,1,
+            PyUFunc_None,(char*)"matrix_multiply",
+            (char*)"return result of multiplying two matrices of rationals",
+            0,"(m,n),(n,p)->(m,p)");
+        if (!gufunc) {
+            goto fail;
+        }
+        if (PyUFunc_RegisterLoopForType((PyUFuncObject*)gufunc, npy_rational,
+                rational_gufunc_matrix_multiply, types2, 0) < 0) {
+            goto fail;
+        }
+        PyModule_AddObject(m,"matrix_multiply",(PyObject*)gufunc);
     }
-    int types2[3] = {npy_rational,npy_rational,npy_rational};
-    if (PyUFunc_RegisterLoopForType((PyUFuncObject*)gufunc, npy_rational,
-            rational_gufunc_matrix_multiply, types2, 0) < 0) {
-        goto fail;
-    }
-    PyModule_AddObject(m,"matrix_multiply",(PyObject*)gufunc);
 
     /* Create test ufunc with built in input types and rational output type */
-    PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,2,1,
-        PyUFunc_None,(char*)"test_add",
-        (char*)"add two matrices of int64 and return rational matrix",0);
-    if (!ufunc) {
-        goto fail;
+    {
+        int types3[3] = {NPY_INT64,NPY_INT64,npy_rational};
+        PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,2,1,
+            PyUFunc_None,(char*)"test_add",
+            (char*)"add two matrices of int64 and return rational matrix",0);
+        if (!ufunc) {
+            goto fail;
+        }
+        if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc, npy_rational,
+                rational_ufunc_test_add, types3, 0) < 0) {
+            goto fail;
+        }
+        PyModule_AddObject(m,"test_add",(PyObject*)ufunc);
     }
-    int types3[3] = {NPY_INT64,NPY_INT64,npy_rational};
-    if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc, npy_rational,
-            rational_ufunc_test_add, types3, 0) < 0) {
-        goto fail;
-    }
-    PyModule_AddObject(m,"test_add",(PyObject*)ufunc);
 
     /* Create numerator and denominator ufuncs */
     #define NEW_UNARY_UFUNC(name,type,doc) { \
+        int types[2] = {npy_rational,type}; \
         PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,1,1, \
             PyUFunc_None,(char*)#name,(char*)doc,0); \
         if (!ufunc) { \
             goto fail; \
         } \
-        int types[2] = {npy_rational,type}; \
         if (PyUFunc_RegisterLoopForType((PyUFuncObject*)ufunc, \
                 npy_rational,rational_ufunc_##name,types,0)<0) { \
             goto fail; \
