@@ -15,14 +15,15 @@ import sys
 import numpy.core.numeric as _nx
 from numpy.core import linspace
 from numpy.core.numeric import ones, zeros, arange, concatenate, array, \
-        asarray, asanyarray, empty, empty_like, ndarray, around
+        asarray, asanyarray, empty, empty_like, ndarray, around, floor, \
+        ceil, take
 from numpy.core.numeric import ScalarType, dot, where, newaxis, intp, \
         integer, isscalar
 from numpy.core.umath import pi, multiply, add, arctan2,  \
         frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp, log10
 from numpy.core.fromnumeric import ravel, nonzero, choose, sort, mean
-from numpy.core.numerictypes import typecodes, number
-from numpy.core import atleast_1d, atleast_2d, rollaxis
+from numpy.core.numerictypes import typecodes, number, intp
+from numpy.core import atleast_1d, atleast_2d
 from numpy.lib.twodim_base import diag
 from _compiled_base import _insert, add_docstring
 from _compiled_base import digitize, bincount, interp as compiled_interp
@@ -3011,18 +3012,18 @@ def percentile(a, q, limit=None, interpolation='linear', axis=None,
     limit : tuple, optional
         Tuple of two scalars, the lower and upper limits within which to
         compute the percentile.  Values outside of this range are ommitted from
-        the percentile calculation. None includes all values in calculation.  
+        the percentile calculation. None includes all values in calculation.
     interpolation : {'linear', 'lower', 'higher', 'midpoint'}, optional
         This optional parameter specifies the interpolation method to use,
         when the desired quantile lies between two data points `i` and `j`:
-        
+
           * linear: `i + (j - i) * fraction`, where `fraction` is the
             fractional part of the index surrounded by `i` and `j`.
           * lower: `i`.
           * higher: `j`.
     axis : int, optional
         Axis along which the percentiles are computed. The default (None)
-        is to compute the median along a flattened version of the array.
+        is to compute the percentiles along a flattened version of the array.
     out : ndarray, optional
         Alternative output array in which to place the result. It must
         have the same shape and buffer length as the expected output,
@@ -3064,11 +3065,12 @@ def percentile(a, q, limit=None, interpolation='linear', axis=None,
     array([[10,  7,  4],
            [ 3,  2,  1]])
     >>> np.percentile(a, 50)
-    3.5
-    >>> np.percentile(a, 0.5, axis=0)
+    array([3.5])
+    >>> np.percentile(a, 50, axis=0)
     array([ 6.5,  4.5,  2.5])
     >>> np.percentile(a, 50, axis=1)
-    array([ 7.,  2.])
+    array([[ 7.],
+           [2.]])
 
     >>> m = np.percentile(a, 50, axis=0)
     >>> out = np.zeros_like(m)
@@ -3079,18 +3081,20 @@ def percentile(a, q, limit=None, interpolation='linear', axis=None,
 
     >>> b = a.copy()
     >>> np.percentile(b, 50, axis=1, overwrite_input=True)
-    array([ 7.,  2.])
+    array([[ 7.,
+           [2.]])
     >>> assert not np.all(a==b)
     >>> b = a.copy()
     >>> np.percentile(b, 50, axis=None, overwrite_input=True)
-    3.5
+    array([3.5])
 
     """
     a = asarray(a)
-  
-    if limit:
+
+    if limit:  # filter a based on limits
         a = a[(limit[0] <= a) & (a <= limit[1])]
- 
+
+    # sort a
     if overwrite_input:
         if axis is None:
             sorted = a.ravel()
@@ -3102,49 +3106,47 @@ def percentile(a, q, limit=None, interpolation='linear', axis=None,
         sorted = sort(a, axis=axis)
     if axis is None:
         axis = 0
- 
-    # The new axes should be added at the front:
-    sorted = rollaxis(sorted, axis, 0)
- 
-    q = asarray(q)
-    q = q.reshape(q.shape + (1,))
+
+    q = atleast_1d(q)
     q = q / 100.0
     if (q < 0).any() or (q > 1).any():
         raise ValueError("percentile must be either in the range [0,100]")
- 
-    Nx = sorted.shape[0]
-    index = q * (Nx - 1)
- 
+
+    Nx = sorted.shape[axis]
+    indices = q * (Nx - 1)
+
     # round fractional indices according to interpolation method
     if interpolation == 'lower':
-        index = np.floor(index).astype(np.intp)
+        indices = floor(indices).astype(intp)
     elif interpolation == 'higher':
-        index = np.ceil(index).astype(np.intp)
+        indices = ceil(indices).astype(intp)
     elif interpolation == 'linear':
-        pass # keep index as fraction and interpolate
+        pass  # keep index as fraction and interpolate
     else:
         raise ValueError("interpolation can only be 'linear', 'lower' "
                          "or 'higher'")
- 
-    if index.dtype == np.intp:
-        i = index
-        indexer = (i, Ellipsis)
-        weights = array(1)
-        sumval = 1.0
-    else:
-        i = index.astype(np.intp) + arange(2)
-        indexer = (i, Ellipsis)
-        weights = index - i[...,::-1]
-        weights[..., 0] *= -1
-        weights.shape = weights.shape + (1,) * (sorted.ndim - 1)
-        sumval = weights.sum(i.ndim-1) # numerical accuracy reasons?
-        i[i > (len(sorted) - 1)] = len(sorted) - 1
- 
-    # Use add.reduce in both cases to coerce data type as well as
-    # check and use out array.
-    res = add.reduce(sorted[indexer] * weights, axis=i.ndim-1, out=out)
-    res /= sumval
-    return res
+
+    if indices.dtype == intp:  # take the points along axis
+        return take(sorted, indices, axis=axis, out=out)
+    else:  # weight the points above and below the indices
+        indices_below = floor(indices).astype(intp)
+        indices_above = indices_below + 1
+        indices_above[indices_above > Nx - 1] = Nx - 1
+
+        weights_above = indices - indices_below
+        weights_below = 1.0 - weights_above
+
+        weights_shape = [1, ] * sorted.ndim
+        weights_shape[axis] = len(indices)
+        weights_below.shape = weights_shape
+        weights_above.shape = weights_shape
+
+        x1 = take(sorted, indices_below, axis=axis) * weights_below
+        x2 = take(sorted, indices_above, axis=axis) * weights_above
+        if out is not None:
+            return add(x1, x2, out=out)
+        else:
+            return add(x1, x2)
 
 
 def trapz(y, x=None, dx=1.0, axis=-1):

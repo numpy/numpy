@@ -1397,10 +1397,10 @@ class TestScoreatpercentile(TestCase):
                      [4, 4, 3],
                      [1, 1, 1],
                      [1, 1, 1]])
-        assert_array_equal(np.percentile(x, 50), [1, 1, 1])
+        assert_array_equal(np.percentile(x, 50, axis=0), [[1, 1, 1]])
 
     def test_limit(self):
-        x  = np.arange(10)
+        x = np.arange(10)
         assert_equal(np.percentile(x, 50, limit=(2, 5)), 3.5)
         assert_equal(np.percentile([2, 3, 4, 5], 50), 3.5)
 
@@ -1467,7 +1467,7 @@ class TestScoreatpercentile(TestCase):
         r0 = [[2, 3, 4, 5], [4, 5, 6, 7], [8, 9, 10, 11]]
         assert_equal(np.percentile(x, (25, 50, 100), axis=0), r0)
 
-        r1 = [[0.75, 4.75, 8.75], [1.5, 5.5, 9.5], [3, 7, 11]]
+        r1 = [[0.75, 1.5, 3], [4.75, 5.5, 7], [8.75, 9.5, 11]]
         assert_equal(np.percentile(x, (25, 50, 100), axis=1), r1)
 
     def test_exception(self):
@@ -1493,7 +1493,7 @@ class TestScoreatpercentile(TestCase):
         np.percentile(x, p, axis=0, out=y)
         assert_equal(y, np.percentile(x, p, axis=0))
 
-        y = np.zeros((3, 2))
+        y = np.zeros((2, 3))
         np.percentile(x, p, axis=1, out=y)
         assert_equal(y, np.percentile(x, p, axis=1))
 
