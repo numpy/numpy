@@ -1180,13 +1180,14 @@ find_userloop(PyUFuncObject *ufunc,
     int last_userdef = -1;
 
     for (i = 0; i < nargs; ++i) {
+        int type_num;
 
         /* no more ufunc arguments to check */
         if (dtypes[i] == NULL) {
             break;
         }
 
-        int type_num = dtypes[i]->type_num;
+        type_num = dtypes[i]->type_num;
         if (type_num != last_userdef && PyTypeNum_ISUSERDEF(type_num)) {
             PyObject *key, *obj;
 
@@ -1594,13 +1595,14 @@ linear_search_userloop_type_resolver(PyUFuncObject *self,
     int last_userdef = -1;
 
     for (i = 0; i < nop; ++i) {
+        int type_num;
         
         /* no more ufunc arguments to check */
         if (op[i] == NULL) {
             break;
         }
 
-        int type_num = PyArray_DESCR(op[i])->type_num;
+        type_num = PyArray_DESCR(op[i])->type_num;
         if (type_num != last_userdef && PyTypeNum_ISUSERDEF(type_num)) {
             PyObject *key, *obj;
 

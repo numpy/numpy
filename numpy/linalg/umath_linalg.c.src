@@ -1196,11 +1196,11 @@ init_gemm_params(GEMM_PARAMS_t *params,
                  npy_intp* steps,
                  size_t sot)
 {
+    npy_uint8 *mem_buff = NULL;
     matrix_desc a, b, c;
     matrix_desc_init(&a, steps + 0, sot, m, k);
     matrix_desc_init(&b, steps + 2, sot, k, n);
     matrix_desc_init(&c, steps + 4, sot, m, n);
-    npy_uint8 *mem_buff = NULL;
 
     if (a.size + b.size + c.size)
     {
