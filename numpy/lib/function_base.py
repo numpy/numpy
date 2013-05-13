@@ -24,7 +24,7 @@ from numpy.core.umath import pi, multiply, add, arctan2,  \
         frompyfunc, isnan, cos, less_equal, sqrt, sin, mod, exp, log10
 from numpy.core.fromnumeric import ravel, nonzero, choose, sort, mean
 from numpy.core.numerictypes import typecodes, number
-from numpy.core import atleast_1d, atleast_2d
+from numpy.core import atleast_1d, atleast_2d, rollaxis
 from numpy.lib.twodim_base import diag
 from ._compiled_base import _insert, add_docstring
 from ._compiled_base import digitize, bincount, interp as compiled_interp
@@ -3001,7 +3001,9 @@ def median(a, axis=None, out=None, overwrite_input=False):
     # and check, use out array.
     return mean(sorted[indexer], axis=axis, out=out)
 
-def percentile(a, q, axis=None, out=None, overwrite_input=False):
+
+def percentile(a, q, limit=None, interpolation='linear', axis=None,
+               out=None, overwrite_input=False):
     """
     Compute the qth percentile of the data along the specified axis.
 
@@ -3013,6 +3015,18 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
         Input array or object that can be converted to an array.
     q : float in range of [0,100] (or sequence of floats)
         Percentile to compute which must be between 0 and 100 inclusive.
+    limit : tuple, optional
+        Tuple of two scalars, the lower and upper limits within which to
+        compute the percentile.  Values outside of this range are ommitted from
+        the percentile calculation. None includes all values in calculation.  
+    interpolation : {'linear', 'lower', 'higher', 'midpoint'}, optional
+        This optional parameter specifies the interpolation method to use,
+        when the desired quantile lies between two data points `i` and `j`:
+        
+          * linear: `i + (j - i) * fraction`, where `fraction` is the
+            fractional part of the index surrounded by `i` and `j`.
+          * lower: `i`.
+          * higher: `j`.
     axis : int, optional
         Axis along which the percentiles are computed. The default (None)
         is to compute the median along a flattened version of the array.
@@ -3031,7 +3045,7 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
 
     Returns
     -------
-    pcntile : ndarray
+    percentile : ndarray
         A new array holding the result (unless `out` is specified, in
         which case that array is returned instead).  If the input contains
         integers, or floats of smaller precision than 64, then the output
@@ -3079,13 +3093,11 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
     3.5
 
     """
-    a = np.asarray(a)
-
-    if q == 0:
-        return a.min(axis=axis, out=out)
-    elif q == 100:
-        return a.max(axis=axis, out=out)
-
+    a = asarray(a)
+  
+    if limit:
+        a = a[(limit[0] <= a) & (a <= limit[1])]
+ 
     if overwrite_input:
         if axis is None:
             sorted = a.ravel()
@@ -3097,44 +3109,50 @@ def percentile(a, q, axis=None, out=None, overwrite_input=False):
         sorted = sort(a, axis=axis)
     if axis is None:
         axis = 0
-
-    return _compute_qth_percentile(sorted, q, axis, out)
-
-# handle sequence of q's without calling sort multiple times
-def _compute_qth_percentile(sorted, q, axis, out):
-    if not isscalar(q):
-        p = [_compute_qth_percentile(sorted, qi, axis, None)
-             for qi in q]
-
-        if out is not None:
-            out.flat = p
-
-        return p
-
+ 
+    # The new axes should be added at the front:
+    sorted = rollaxis(sorted, axis, 0)
+ 
+    q = asarray(q)
+    q = q.reshape(q.shape + (1,))
     q = q / 100.0
-    if (q < 0) or (q > 1):
+    if (q < 0).any() or (q > 1).any():
         raise ValueError("percentile must be either in the range [0,100]")
-
-    indexer = [slice(None)] * sorted.ndim
-    Nx = sorted.shape[axis]
-    index = q*(Nx-1)
-    i = int(index)
-    if i == index:
-        indexer[axis] = slice(i, i+1)
+ 
+    Nx = sorted.shape[0]
+    index = q * (Nx - 1)
+ 
+    # round fractional indices according to interpolation method
+    if interpolation == 'lower':
+        index = np.floor(index).astype(np.intp)
+    elif interpolation == 'higher':
+        index = np.ceil(index).astype(np.intp)
+    elif interpolation == 'linear':
+        pass # keep index as fraction and interpolate
+    else:
+        raise ValueError("interpolation can only be 'linear', 'lower' "
+                         "or 'higher'")
+ 
+    if index.dtype == np.intp:
+        i = index
+        indexer = (i, Ellipsis)
         weights = array(1)
         sumval = 1.0
     else:
-        indexer[axis] = slice(i, i+2)
-        j = i + 1
-        weights = array([(j - index), (index - i)],float)
-        wshape = [1]*sorted.ndim
-        wshape[axis] = 2
-        weights.shape = wshape
-        sumval = weights.sum()
-
+        i = index.astype(np.intp) + arange(2)
+        indexer = (i, Ellipsis)
+        weights = index - i[...,::-1]
+        weights[..., 0] *= -1
+        weights.shape = weights.shape + (1,) * (sorted.ndim - 1)
+        sumval = weights.sum(i.ndim-1) # numerical accuracy reasons?
+        i[i > (len(sorted) - 1)] = len(sorted) - 1
+ 
     # Use add.reduce in both cases to coerce data type as well as
-    #   check and use out array.
-    return add.reduce(sorted[indexer]*weights, axis=axis, out=out)/sumval
+    # check and use out array.
+    res = add.reduce(sorted[indexer] * weights, axis=i.ndim-1, out=out)
+    res /= sumval
+    return res
+
 
 def trapz(y, x=None, dx=1.0, axis=-1):
     """
