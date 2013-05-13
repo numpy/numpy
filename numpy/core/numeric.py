@@ -2137,7 +2137,7 @@ def array_equal(a1, a2):
         return False
     if a1.shape != a2.shape:
         return False
-    return bool((a1 == a2).all())
+    return bool(asarray(a1 == a2).all())
 
 def array_equiv(a1, a2):
     """
