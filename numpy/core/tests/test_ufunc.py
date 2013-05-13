@@ -823,5 +823,16 @@ class TestUfunc(TestCase):
         result = struct_ufunc.add_triplet(a, b)
         assert_equal(result, np.array([(2, 4, 6)], dtype='u8,u8,u8'))
 
+    def test_custom_ufunc(self):
+        a = np.array([rational(1,2), rational(1,3), rational(1,4)],
+            dtype=rational);
+        b = np.array([rational(1,2), rational(1,3), rational(1,4)],
+            dtype=rational);
+
+        result = test_add_rationals(a, b)
+        expected = np.array([rational(1), rational(2,3), rational(1,2)],
+            dtype=rational);
+        assert_equal(result, expected);
+
 if __name__ == "__main__":
     run_module_suite()
