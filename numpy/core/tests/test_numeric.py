@@ -656,6 +656,12 @@ class TestArrayComparisons(TestCase):
         res = array_equal(array([1,2]), array([1,3]))
         assert_(not res)
         assert_(type(res) is bool)
+        res = array_equal(array(['a'], dtype='S1'), array(['a'], dtype='S1'))
+        assert_(res)
+        assert_(type(res) is bool)
+        res = array_equal(array([('a',1)], dtype='S1,u4'), array([('a',1)], dtype='S1,u4'))
+        assert_(res)
+        assert_(type(res) is bool)
 
     def test_array_equiv(self):
         res = array_equiv(array([1,2]), array([1,2]))
