@@ -3029,7 +3029,7 @@ static inline void
                    npy_intp* dimensions,
                    npy_intp* steps)
 {
-    ptrdiff_t outer_steps[3];
+    ptrdiff_t outer_steps[4];
     int error_occurred = get_fp_invalid_and_clear();
     size_t iter;
     size_t outer_dim = *dimensions++;
