@@ -1323,20 +1323,22 @@ PyMODINIT_FUNC inittest_rational(void) {
     }
 
     /* Create test ufunc with rational types using RegisterLoopByDescr */
-    PyObject* ufunc2 = PyUFunc_FromFuncAndData(0,0,0,0,2,1,
-        PyUFunc_None,(char*)"test_add_rationals",
-        (char*)"add two matrices of rationals and return rational matrix",0);
-    if (!ufunc) {
-        goto fail;
+    {
+        PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,2,1,
+            PyUFunc_None,(char*)"test_add_rationals",
+            (char*)"add two matrices of rationals and return rational matrix",0);
+        if (!ufunc) {
+            goto fail;
+        }
+        PyArray_Descr* types[3] = {&npyrational_descr,
+                                    &npyrational_descr,
+                                    &npyrational_descr};
+        if (PyUFunc_RegisterLoopByDescr((PyUFuncObject*)ufunc, &npyrational_descr,
+                rational_ufunc_test_add_rationals, types, 0) < 0) {
+            goto fail;
+        }
+        PyModule_AddObject(m,"test_add_rationals",(PyObject*)ufunc);
     }
-    PyArray_Descr* types4[3] = {&npyrational_descr,
-                                &npyrational_descr,
-                                &npyrational_descr};
-    if (PyUFunc_RegisterLoopByDescr((PyUFuncObject*)ufunc, &npyrational_descr,
-            rational_ufunc_test_add_rationals, types4, 0) < 0) {
-        goto fail;
-    }
-    PyModule_AddObject(m,"test_add_rationals",(PyObject*)ufunc);
 
     /* Create numerator and denominator ufuncs */
     #define NEW_UNARY_UFUNC(name,type,doc) { \
