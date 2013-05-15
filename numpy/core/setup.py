@@ -161,6 +161,10 @@ def check_math_capabilities(config, moredefs, mathlibs):
 
     check_funcs(OPTIONAL_STDFUNCS)
 
+    for f, args in OPTIONAL_INTRINSICS:
+        if config.check_func(f, decl=False, call=True, call_args=args):
+            moredefs.append((fname2def(f), 1))
+
     # C99 functions: float and long double versions
     check_funcs(C99_FUNCS_SINGLE)
     check_funcs(C99_FUNCS_EXTENDED)
@@ -601,6 +605,8 @@ def configuration(parent_package='',top_path=None):
     config.add_include_dirs(join('src', 'multiarray'))
     config.add_include_dirs(join('src', 'umath'))
     config.add_include_dirs(join('src', 'npysort'))
+
+    config.add_define_macros([("HAVE_NPY_CONFIG_H", "1")])
 
     config.numpy_include_dirs.extend(config.paths('include'))
 
