@@ -492,6 +492,13 @@ _has_reflected_op(PyObject *op, char *name)
     _GETATTR_(bitwise_and, rand);
     _GETATTR_(bitwise_xor, rxor);
     _GETATTR_(bitwise_or, ror);
+    /* Comparisons */
+    _GETATTR_(equal, eq);
+    _GETATTR_(not_equal, ne);
+    _GETATTR_(greater, lt);
+    _GETATTR_(less, gt);
+    _GETATTR_(greater_equal, le);
+    _GETATTR_(less_equal, ge);
     return 0;
 }
 

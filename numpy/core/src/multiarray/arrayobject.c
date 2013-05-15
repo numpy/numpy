@@ -1298,7 +1298,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
 
         result = PyArray_GenericBinaryFunction(self,
-                (PyObject *)array_other,
+                (PyObject *)other,
                 n_ops.equal);
         if ((result == Py_NotImplemented) &&
                 (PyArray_TYPE(self) == NPY_VOID)) {
@@ -1354,7 +1354,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return Py_NotImplemented;
         }
 
-        result = PyArray_GenericBinaryFunction(self, (PyObject *)array_other,
+        result = PyArray_GenericBinaryFunction(self, (PyObject *)other,
                 n_ops.not_equal);
         if ((result == Py_NotImplemented) &&
                 (PyArray_TYPE(self) == NPY_VOID)) {
