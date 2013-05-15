@@ -884,6 +884,171 @@ as well as all other properties of a ufunc.
         }
         #endif
 
+
+.. _`sec:Numpy-struct-dtype`:
+
+Example Numpy ufunc with structured array dtype arguments
+=========================================================
+
+This example shows how to create a ufunc for a structured array dtype.
+For the example we show a trivial ufunc for adding two arrays with dtype
+'u8,u8,u8'. The process is a bit different from the other examples since
+a call to PyUFunc_FromFuncAndData doesn't fully register ufuncs for
+custom dtypes and structured array dtypes. We need to also call
+PyUFunc_RegisterLoopForDescr to finish setting up the ufunc.
+
+We only give the C code as the setup.py file is exactly the same as
+the setup.py file in `Example Numpy ufunc for one dtype`_, except that
+the line
+
+    .. code-block:: python
+
+        config.add_extension('npufunc', ['single_type_logit.c'])
+
+is replaced with
+
+    .. code-block:: python
+
+        config.add_extension('npufunc', ['add_triplet.c'])
+
+The C file is given below.
+
+    .. code-block:: c
+
+        #include "Python.h"
+        #include "math.h"
+        #include "numpy/ndarraytypes.h"
+        #include "numpy/ufuncobject.h"
+        #include "numpy/npy_3kcompat.h"
+
+
+        /*
+         * add_triplet.c
+         * This is the C code for creating your own
+         * Numpy ufunc for a structured array dtype.
+         *
+         * Details explaining the Python-C API can be found under
+         * 'Extending and Embedding' and 'Python/C API' at
+         * docs.python.org .
+         */
+
+        static PyMethodDef StructUfuncTestMethods[] = {
+            {NULL, NULL, 0, NULL}
+        };
+
+        /* The loop definition must precede the PyMODINIT_FUNC. */
+
+        static void add_uint64_triplet(char **args, npy_intp *dimensions,
+                                    npy_intp* steps, void* data)
+        {
+            npy_intp i;
+            npy_intp is1=steps[0];
+            npy_intp is2=steps[1];
+            npy_intp os=steps[2];
+            npy_intp n=dimensions[0];
+            uint64_t *x, *y, *z;
+
+            char *i1=args[0];
+            char *i2=args[1];
+            char *op=args[2];
+
+            for (i = 0; i < n; i++) {
+
+                x = (uint64_t*)i1;
+                y = (uint64_t*)i2;
+                z = (uint64_t*)op;
+
+                z[0] = x[0] + y[0];
+                z[1] = x[1] + y[1];
+                z[2] = x[2] + y[2];
+
+                i1 += is1;
+                i2 += is2;
+                op += os;
+            }
+        }
+
+        /* This a pointer to the above function */
+        PyUFuncGenericFunction funcs[1] = {&add_uint64_triplet};
+
+        /* These are the input and return dtypes of add_uint64_triplet. */
+        static char types[3] = {NPY_UINT64, NPY_UINT64, NPY_UINT64};
+
+        static void *data[1] = {NULL};
+
+        #if defined(NPY_PY3K)
+        static struct PyModuleDef moduledef = {
+            PyModuleDef_HEAD_INIT,
+            "struct_ufunc_test",
+            NULL,
+            -1,
+            StructUfuncTestMethods,
+            NULL,
+            NULL,
+            NULL,
+            NULL
+        };
+        #endif
+
+        #if defined(NPY_PY3K)
+        PyMODINIT_FUNC PyInit_struct_ufunc_test(void)
+        #else
+        PyMODINIT_FUNC initstruct_ufunc_test(void)
+        #endif
+        {
+            PyObject *m, *add_triplet, *d;
+            PyObject *dtype_dict;
+            PyArray_Descr *dtype;
+            PyArray_Descr *dtypes[3];
+
+        #if defined(NPY_PY3K)
+            m = PyModule_Create(&moduledef);
+        #else
+            m = Py_InitModule("struct_ufunc_test", StructUfuncTestMethods);
+        #endif
+
+            if (m == NULL) {
+        #if defined(NPY_PY3K)
+                return NULL;
+        #else
+                return;
+        #endif
+            }
+
+            import_array();
+            import_umath();
+
+            /* Create a new ufunc object */
+            add_triplet = PyUFunc_FromFuncAndData(NULL, NULL, NULL, 0, 2, 1,
+                                            PyUFunc_None, "add_triplet",
+                                            "add_triplet_docstring", 0);
+
+            dtype_dict = Py_BuildValue("[(s, s), (s, s), (s, s)]",
+                "f0", "u8", "f1", "u8", "f2", "u8");
+            PyArray_DescrConverter(dtype_dict, &dtype);
+            Py_DECREF(dtype_dict);
+
+            dtypes[0] = dtype;
+            dtypes[1] = dtype;
+            dtypes[2] = dtype;
+
+            /* Register ufunc for structured dtype */
+            PyUFunc_RegisterLoopForDescr(add_triplet,
+                                        dtype,
+                                        &add_uint64_triplet,
+                                        dtypes,
+                                        NULL);
+
+            d = PyModule_GetDict(m);
+
+            PyDict_SetItemString(d, "add_triplet", add_triplet);
+            Py_DECREF(add_triplet);
+        #if defined(NPY_PY3K)
+            return m;
+        #endif
+        }
+
+
 .. _`sec:PyUFunc-spec`:
 
 PyUFunc_FromFuncAndData Specification

@@ -140,6 +140,16 @@ Functions
     in as *arg_types* which must be a pointer to memory at least as
     large as ufunc->nargs.
 
+.. cfunction:: int PyUFunc_RegisterLoopForDescr(PyUFuncObject* ufunc,
+   PyArray_Descr* userdtype, PyUFuncGenericFunction function,
+   PyArray_Descr** arg_dtypes, void* data)
+
+   This function behaves like PyUFunc_RegisterLoopForType above, except
+   that it allows the user to register a 1-d loop using PyArray_Descr
+   objects instead of dtype type num values. This allows a 1-d loop to be
+   registered for structured array data-dtypes and custom data-types
+   instead of scalar data-types.
+
 .. cfunction:: int PyUFunc_ReplaceLoopBySignature(PyUFuncObject* ufunc,
    PyUFuncGenericFunction newfunc, int* signature,
    PyUFuncGenericFunction* oldfunc)
