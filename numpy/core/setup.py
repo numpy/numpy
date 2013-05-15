@@ -929,6 +929,13 @@ def configuration(parent_package='',top_path=None):
                     sources = [join('src','umath', 'test_rational.c.src')])
 
     #######################################################################
+    #                        struct_ufunc_test module                     #
+    #######################################################################
+
+    config.add_extension('struct_ufunc_test',
+                    sources = [join('src','umath', 'struct_ufunc_test.c.src')])
+
+    #######################################################################
     #                     multiarray_tests module                         #
     #######################################################################
 
