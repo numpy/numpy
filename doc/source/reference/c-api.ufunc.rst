@@ -140,7 +140,7 @@ Functions
     in as *arg_types* which must be a pointer to memory at least as
     large as ufunc->nargs.
 
-.. cfunction:: int PyUFunc_RegisterLoopByDescr(PyUFuncObject* ufunc,
+.. cfunction:: int PyUFunc_RegisterLoopForDescr(PyUFuncObject* ufunc,
    PyArray_Descr* userdtype, PyUFuncGenericFunction function,
    PyArray_Descr** arg_dtypes, void* data)
 

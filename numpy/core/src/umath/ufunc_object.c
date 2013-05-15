@@ -4439,7 +4439,7 @@ _loop1d_list_free(void *ptr)
  */
 /*UFUNC_API*/
 NPY_NO_EXPORT int
-PyUFunc_RegisterLoopByDescr(PyUFuncObject *ufunc,
+PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
                             PyArray_Descr *user_dtype,
                             PyUFuncGenericFunction function,
                             PyArray_Descr **arg_dtypes,

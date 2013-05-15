@@ -384,7 +384,7 @@ ufunc_funcs_api = {
     # End 1.6 API
     'PyUFunc_DefaultTypeResolver':              39,
     'PyUFunc_ValidateCasting':                  40,
-    'PyUFunc_RegisterLoopByDescr':              41,
+    'PyUFunc_RegisterLoopForDescr':             41,
 }
 
 # List of all the dicts which define the C API

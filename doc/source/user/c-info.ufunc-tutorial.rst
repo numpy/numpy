@@ -895,7 +895,7 @@ For the example we show a trivial ufunc for adding two arrays with dtype
 'u8,u8,u8'. The process is a bit different from the other examples since
 a call to PyUFunc_FromFuncAndData doesn't fully register ufuncs for
 custom dtypes and structured array dtypes. We need to also call
-PyUFunc_RegisterLoopByDescr to finish setting up the ufunc.
+PyUFunc_RegisterLoopForDescr to finish setting up the ufunc.
 
 We only give the C code as the setup.py file is exactly the same as
 the setup.py file in `Example Numpy ufunc for one dtype`_, except that
@@ -1033,7 +1033,7 @@ The C file is given below.
             dtypes[2] = dtype;
 
             /* Register ufunc for structured dtype */
-            PyUFunc_RegisterLoopByDescr(add_triplet,
+            PyUFunc_RegisterLoopForDescr(add_triplet,
                                         dtype,
                                         &add_uint64_triplet,
                                         dtypes,

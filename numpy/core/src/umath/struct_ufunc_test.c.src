@@ -106,7 +106,7 @@ PyMODINIT_FUNC initstruct_ufunc_test(void)
     dtypes[1] = dtype;
     dtypes[2] = dtype;
 
-    PyUFunc_RegisterLoopByDescr(add_triplet,
+    PyUFunc_RegisterLoopForDescr(add_triplet,
                                 dtype,
                                 &add_uint64_triplet,
                                 dtypes,

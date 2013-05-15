@@ -1322,7 +1322,7 @@ PyMODINIT_FUNC inittest_rational(void) {
         PyModule_AddObject(m,"test_add",(PyObject*)ufunc);
     }
 
-    /* Create test ufunc with rational types using RegisterLoopByDescr */
+    /* Create test ufunc with rational types using RegisterLoopForDescr */
     {
         PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,2,1,
             PyUFunc_None,(char*)"test_add_rationals",
@@ -1333,7 +1333,7 @@ PyMODINIT_FUNC inittest_rational(void) {
         PyArray_Descr* types[3] = {&npyrational_descr,
                                     &npyrational_descr,
                                     &npyrational_descr};
-        if (PyUFunc_RegisterLoopByDescr((PyUFuncObject*)ufunc, &npyrational_descr,
+        if (PyUFunc_RegisterLoopForDescr((PyUFuncObject*)ufunc, &npyrational_descr,
                 rational_ufunc_test_add_rationals, types, 0) < 0) {
             goto fail;
         }
