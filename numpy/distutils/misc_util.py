@@ -671,7 +671,7 @@ class Configuration(object):
 
     _list_keys = ['packages', 'ext_modules', 'data_files', 'include_dirs',
                   'libraries', 'headers', 'scripts', 'py_modules',
-                  'installed_libraries']
+                  'installed_libraries', 'define_macros']
     _dict_keys = ['package_dir', 'installed_pkg_config']
     _extra_keys = ['name', 'version']
 
@@ -1273,6 +1273,22 @@ class Configuration(object):
 
     ### XXX Implement add_py_modules
 
+    def add_define_macros(self, macros):
+        """Add define macros to configuration
+
+        Add the given sequence of macro name and value duples to the beginning
+        of the define_macros list This list will be visible to all extension
+        modules of the current package.
+        """
+        dist = self.get_distribution()
+        if dist is not None:
+            if not hasattr(dist, 'define_macros'):
+                dist.define_macros = []
+            dist.define_macros.extend(macros)
+        else:
+            self.define_macros.extend(macros)
+
+
     def add_include_dirs(self,*paths):
         """Add paths to configuration include directories.
 
@@ -1440,6 +1456,8 @@ class Configuration(object):
             libnames.append(libname)
 
         ext_args['libraries'] = libnames + ext_args['libraries']
+        ext_args['define_macros'] = \
+            self.define_macros + ext_args.get('define_macros', [])
 
         from numpy.distutils.core import Extension
         ext = Extension(**ext_args)
