@@ -177,17 +177,35 @@ class TestNonarrayArgs(TestCase):
         assert_(all(mean(A,0) == array([2.5,3.5,4.5])))
         assert_(all(mean(A,1) == array([2.,5.])))
 
+    def test_nanmean(self):
+        A = [[1, nan, nan], [nan, 4, 5]]
+        assert_(nanmean(A) == (10.0 / 3))
+        assert_(all(nanmean(A,0) == array([1, 4, 5])))
+        assert_(all(nanmean(A,1) == array([1, 4.5])))
+
     def test_std(self):
         A = [[1,2,3],[4,5,6]]
         assert_almost_equal(std(A), 1.707825127659933)
         assert_almost_equal(std(A,0), array([1.5, 1.5, 1.5]))
         assert_almost_equal(std(A,1), array([0.81649658, 0.81649658]))
 
+    def test_nanstd(self):
+        A = [[1, nan, nan], [nan, 4, 5]]
+        assert_almost_equal(nanstd(A), 1.699673171197595)
+        assert_almost_equal(nanstd(A,0), array([0.0, 0.0, 0.0]))
+        assert_almost_equal(nanstd(A,1), array([0.0, 0.5]))
+
     def test_var(self):
         A = [[1,2,3],[4,5,6]]
         assert_almost_equal(var(A), 2.9166666666666665)
         assert_almost_equal(var(A,0), array([2.25, 2.25, 2.25]))
         assert_almost_equal(var(A,1), array([0.66666667, 0.66666667]))
+
+    def test_nanvar(self):
+        A = [[1, nan, nan], [nan, 4, 5]]
+        assert_almost_equal(nanvar(A), 2.88888888889)
+        assert_almost_equal(nanvar(A,0), array([0.0, 0.0, 0.0]))
+        assert_almost_equal(nanvar(A,1), array([0.0, 0.25]))
 
 
 class TestBoolScalar(TestCase):
@@ -1291,6 +1309,23 @@ class TestIsclose(object):
         assert_array_equal(x, array([inf, 1]))
         assert_array_equal(y, array([0, inf]))
 
+class TestNaNMean(TestCase):
+    def setUp(self):
+        self.A = array([1,nan,-1,nan,nan,1,-1])
+        self.B = array([nan, nan, nan, nan])
+        self.real_mean = 0
+
+    def test_basic(self):
+        assert_almost_equal(nanmean(self.A),self.real_mean)
+
+    def test_allnans(self):
+        assert_(isnan(nanmean(self.B)))
+
+    def test_empty(self):
+        assert_(isnan(nanmean(array([]))))
+
+
+
 
 class TestStdVar(TestCase):
     def setUp(self):
@@ -1312,6 +1347,36 @@ class TestStdVar(TestCase):
                             self.real_var*len(self.A)/float(len(self.A)-2))
         assert_almost_equal(std(self.A,ddof=2)**2,
                             self.real_var*len(self.A)/float(len(self.A)-2))
+
+class TestNaNStdVar(TestCase):
+    def setUp(self):
+        self.A = array([nan,1,-1,nan,1,nan,-1])
+        self.B = array([nan, nan, nan, nan])
+        self.real_var = 1
+
+    def test_basic(self):
+        assert_almost_equal(nanvar(self.A),self.real_var)
+        assert_almost_equal(nanstd(self.A)**2,self.real_var)
+
+    def test_ddof1(self):
+        assert_almost_equal(nanvar(self.A,ddof=1),
+                self.real_var*sum(~isnan(self.A))/float(sum(~isnan(self.A))-1))
+        assert_almost_equal(nanstd(self.A,ddof=1)**2,
+                self.real_var*sum(~isnan(self.A))/float(sum(~isnan(self.A))-1))
+
+    def test_ddof2(self):
+        assert_almost_equal(nanvar(self.A,ddof=2),
+                self.real_var*sum(~isnan(self.A))/float(sum(~isnan(self.A))-2))
+        assert_almost_equal(nanstd(self.A,ddof=2)**2,
+                self.real_var*sum(~isnan(self.A))/float(sum(~isnan(self.A))-2))
+
+    def test_allnans(self):
+        assert_(isnan(nanvar(self.B)))
+        assert_(isnan(nanstd(self.B)))
+
+    def test_empty(self):
+        assert_(isnan(nanvar(array([]))))
+        assert_(isnan(nanstd(array([]))))
 
 
 class TestStdVarComplex(TestCase):
