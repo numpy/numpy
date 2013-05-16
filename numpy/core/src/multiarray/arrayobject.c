@@ -1292,24 +1292,25 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
          * ufuncs cannot handle general structured arrays.
          */
 
-        /* Make sure 'other' is an array */
-        if (PyArray_TYPE(self) == NPY_OBJECT) {
-            dtype = PyArray_DTYPE(self);
-            Py_INCREF(dtype);
-        }
-        array_other = (PyArrayObject *)PyArray_FromAny(other, dtype, 0, 0, 0,
-                                                    NULL);
-        /*
-         * If not successful, indicate that the items cannot be compared
-         * this way.
-         */
-        if (array_other == NULL) {
-            PyErr_Clear();
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
-
         if (PyArray_TYPE(self) == NPY_VOID) {
+            /* Make sure 'other' is an array */
+            if (PyArray_TYPE(self) == NPY_OBJECT) {
+                dtype = PyArray_DTYPE(self);
+                Py_INCREF(dtype);
+            }
+
+            array_other = (PyArrayObject *)PyArray_FromAny(other, dtype, 0, 0, 0,
+                                                           NULL);
+            /*
+             * If not successful, indicate that the items cannot be compared
+             * this way.
+             */
+            if (array_other == NULL) {
+                PyErr_Clear();
+                Py_INCREF(Py_NotImplemented);
+                return Py_NotImplemented;
+            }
+
             int _res;
 
             _res = PyObject_RichCompareBool
@@ -1333,7 +1334,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
          * two array objects can not be compared together;
          * indicate that
          */
-        Py_DECREF(array_other);
         if (result == NULL) {
             PyErr_Clear();
             Py_INCREF(Py_NotImplemented);
@@ -1356,24 +1356,24 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
          * ufuncs cannot handle general structured arrays.
          */
 
-        /* Make sure 'other' is an array */
-        if (PyArray_TYPE(self) == NPY_OBJECT) {
-            dtype = PyArray_DTYPE(self);
-            Py_INCREF(dtype);
-        }
-        array_other = (PyArrayObject *)PyArray_FromAny(other, dtype, 0, 0, 0,
-                                                    NULL);
-        /*
-         * If not successful, indicate that the items cannot be compared
-         * this way.
-         */
-        if (array_other == NULL) {
-            PyErr_Clear();
-            Py_INCREF(Py_NotImplemented);
-            return Py_NotImplemented;
-        }
-
         if (PyArray_TYPE(self) == NPY_VOID) {
+            /* Make sure 'other' is an array */
+            if (PyArray_TYPE(self) == NPY_OBJECT) {
+                dtype = PyArray_DTYPE(self);
+                Py_INCREF(dtype);
+            }
+            array_other = (PyArrayObject *)PyArray_FromAny(other, dtype, 0, 0, 0,
+                                                           NULL);
+            /*
+             * If not successful, indicate that the items cannot be compared
+             * this way.
+            */
+            if (array_other == NULL) {
+                PyErr_Clear();
+                Py_INCREF(Py_NotImplemented);
+                return Py_NotImplemented;
+            }
+
             int _res;
 
             _res = PyObject_RichCompareBool(
@@ -1393,7 +1393,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return result;
         }
 
-        Py_DECREF(array_other);
         if (result == NULL) {
             PyErr_Clear();
             Py_INCREF(Py_NotImplemented);
