@@ -1286,9 +1286,11 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         if (result && result != Py_NotImplemented)
           break;
 
-        // I have been told that the rest of this case is probably an
-        // hack to support a few cases of structured arrays since
-        // ufuncs cannot handle general structured arrays.
+        /*
+         * I have been told that the rest of this case is probably an
+         * hack to support a few cases of structured arrays since
+         * ufuncs cannot handle general structured arrays.
+         */
 
         /* Make sure 'other' is an array */
         if (PyArray_TYPE(self) == NPY_OBJECT) {
@@ -1349,9 +1351,11 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         if (result && result != Py_NotImplemented)
           break;
 
-        // I have been told that the rest of this case is probably an
-        // hack to support a few cases of structured arrays since
-        // ufuncs cannot handle general structured arrays.
+        /*
+         * I have been told that the rest of this case is probably an
+         * hack to support a few cases of structured arrays since
+         * ufuncs cannot handle general structured arrays.
+         */
 
         /* Make sure 'other' is an array */
         if (PyArray_TYPE(self) == NPY_OBJECT) {
