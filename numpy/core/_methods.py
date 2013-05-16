@@ -7,7 +7,8 @@ from __future__ import division, absolute_import, print_function
 
 from numpy.core import multiarray as mu
 from numpy.core import umath as um
-from numpy.core.numeric import array, asanyarray, isnan
+from numpy.core.numeric import array, asanyarray, isnan, issubdtype
+from numpy.core import numerictypes as nt
 
 def _amax(a, axis=None, out=None, keepdims=False):
     return um.maximum.reduce(a, axis=axis,
@@ -46,8 +47,9 @@ def _count_reduce_items(arr, axis):
 def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
     arr = asanyarray(a)
 
-    # Upgrade bool, unsigned int, and int to float64
-    if dtype is None and arr.dtype.kind in ['b','u','i']:
+    # Cast bool, unsigned int, and int to float64
+    if dtype is None and (issubdtype(arr.dtype, nt.integer) or
+                          issubdtype(arr.dtype, nt.bool_)):
         ret = um.add.reduce(arr, axis=axis, dtype='f8',
                             out=out, keepdims=keepdims)
     else:
@@ -62,11 +64,14 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
     return ret
 
 def _nanmean(a, axis=None, dtype=None, out=None, keepdims=False):
+    # Using array() instead of asanyarray() because the former always
+    # makes a copy, which is important due to the copyto() action later
     arr = array(a, subok=True)
     mask = isnan(arr)
 
-    # Upgrade bool, unsigned int, and int to float64
-    if dtype is None and arr.dtype.kind in ['b','u','i']:
+    # Cast bool, unsigned int, and int to float64
+    if dtype is None and (issubdtype(arr.dtype, nt.integer) or
+                          issubdtype(arr.dtype, nt.bool_)):
         ret = um.add.reduce(arr, axis=axis, dtype='f8',
                             out=out, keepdims=keepdims)
     else:
@@ -86,7 +91,8 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0,
     arr = asanyarray(a)
 
     # First compute the mean, saving 'rcount' for reuse later
-    if dtype is None and arr.dtype.kind in ['b','u','i']:
+    if dtype is None and (issubdtype(arr.dtype, nt.integer) or
+                          issubdtype(arr.dtype, nt.bool_)):
         arrmean = um.add.reduce(arr, axis=axis, dtype='f8', keepdims=True)
     else:
         arrmean = um.add.reduce(arr, axis=axis, dtype=dtype, keepdims=True)
@@ -101,7 +107,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0,
     x = arr - arrmean
 
     # (arr - arrmean) ** 2
-    if arr.dtype.kind == 'c':
+    if issubdtype(arr.dtype, nt.complex_):
         x = um.multiply(x, um.conjugate(x), out=x).real
     else:
         x = um.multiply(x, x, out=x)
@@ -123,11 +129,14 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0,
 
 def _nanvar(a, axis=None, dtype=None, out=None, ddof=0,
                             keepdims=False):
+    # Using array() instead of asanyarray() because the former always
+    # makes a copy, which is important due to the copyto() action later
     arr = array(a, subok=True)
     mask = isnan(arr)
 
     # First compute the mean, saving 'rcount' for reuse later
-    if dtype is None and arr.dtype.kind in ['b','u','i']:
+    if dtype is None and (issubdtype(arr.dtype, nt.integer) or
+                          issubdtype(arr.dtype, nt.bool_)):
         arrmean = um.add.reduce(arr, axis=axis, dtype='f8', keepdims=True)
     else:
         mu.copyto(arr, 0.0, where=mask)
@@ -142,10 +151,10 @@ def _nanvar(a, axis=None, dtype=None, out=None, ddof=0,
 
     # arr - arrmean
     x = arr - arrmean
-    x[mask] = 0.0
+    mu.copyto(x, 0.0, where=mask)
 
     # (arr - arrmean) ** 2
-    if arr.dtype.kind == 'c':
+    if issubdtype(arr.dtype, nt.complex_):
         x = um.multiply(x, um.conjugate(x), out=x).real
     else:
         x = um.multiply(x, x, out=x)
