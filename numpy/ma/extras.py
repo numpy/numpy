@@ -1402,14 +1402,13 @@ def corrcoef(x, y=None, rowvar=True, bias=False, allow_masked=True, ddof=None):
         if rowvar:
             for i in range(n - 1):
                 for j in range(i + 1, n):
-                    _x = mask_cols(vstack((x[i], x[j]))).var(axis=1,
-                                                             ddof=1 - bias)
+                    _x = mask_cols(vstack((x[i], x[j]))).var(axis=1, ddof=ddof)
                     _denom[i, j] = _denom[j, i] = ma.sqrt(ma.multiply.reduce(_x))
         else:
             for i in range(n - 1):
                 for j in range(i + 1, n):
-                    _x = mask_cols(vstack((x[:, i], x[:, j]))).var(axis=1,
-                                                                 ddof=1 - bias)
+                    _x = mask_cols(
+                            vstack((x[:, i], x[:, j]))).var(axis=1, ddof=ddof)
                     _denom[i, j] = _denom[j, i] = ma.sqrt(ma.multiply.reduce(_x))
     return c / _denom
 
