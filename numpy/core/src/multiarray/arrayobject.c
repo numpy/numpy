@@ -1309,8 +1309,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return Py_NotImplemented;
         }
 
-        if ((result == Py_NotImplemented) &&
-                (PyArray_TYPE(self) == NPY_VOID)) {
+        if (PyArray_TYPE(self) == NPY_VOID) {
             int _res;
 
             _res = PyObject_RichCompareBool
@@ -1374,8 +1373,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return Py_NotImplemented;
         }
 
-        if ((result == Py_NotImplemented) &&
-                (PyArray_TYPE(self) == NPY_VOID)) {
+        if (PyArray_TYPE(self) == NPY_VOID) {
             int _res;
 
             _res = PyObject_RichCompareBool(
