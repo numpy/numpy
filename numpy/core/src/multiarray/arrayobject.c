@@ -1280,6 +1280,16 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             Py_INCREF(Py_False);
             return Py_False;
         }
+        result = PyArray_GenericBinaryFunction(self,
+                (PyObject *)other,
+                n_ops.equal);
+        if (result && result != Py_NotImplemented)
+          break;
+
+        // I have been told that the rest of this case is probably an
+        // hack to support a few cases of structured arrays since
+        // ufuncs cannot handle general structured arrays.
+
         /* Make sure 'other' is an array */
         if (PyArray_TYPE(self) == NPY_OBJECT) {
             dtype = PyArray_DTYPE(self);
@@ -1297,9 +1307,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return Py_NotImplemented;
         }
 
-        result = PyArray_GenericBinaryFunction(self,
-                (PyObject *)other,
-                n_ops.equal);
         if ((result == Py_NotImplemented) &&
                 (PyArray_TYPE(self) == NPY_VOID)) {
             int _res;
@@ -1337,6 +1344,15 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             Py_INCREF(Py_True);
             return Py_True;
         }
+        result = PyArray_GenericBinaryFunction(self, (PyObject *)other,
+                n_ops.not_equal);
+        if (result && result != Py_NotImplemented)
+          break;
+
+        // I have been told that the rest of this case is probably an
+        // hack to support a few cases of structured arrays since
+        // ufuncs cannot handle general structured arrays.
+
         /* Make sure 'other' is an array */
         if (PyArray_TYPE(self) == NPY_OBJECT) {
             dtype = PyArray_DTYPE(self);
@@ -1354,8 +1370,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
             return Py_NotImplemented;
         }
 
-        result = PyArray_GenericBinaryFunction(self, (PyObject *)other,
-                n_ops.not_equal);
         if ((result == Py_NotImplemented) &&
                 (PyArray_TYPE(self) == NPY_VOID)) {
             int _res;
