@@ -1478,20 +1478,23 @@ def nansum(a, axis=None):
 
 def nanmin(a, axis=None):
     """
-    Return the minimum of an array or minimum along an axis ignoring any NaNs.
+    Return the minimum of an array or minimum along an axis, ignoring any NaNs.
 
     Parameters
     ----------
     a : array_like
-        Array containing numbers whose minimum is desired.
+        Array containing numbers whose minimum is desired. If `a` is not
+        an array, a conversion is attempted.
     axis : int, optional
-        Axis along which the minimum is computed.The default is to compute
+        Axis along which the minimum is computed. The default is to compute
         the minimum of the flattened array.
 
     Returns
     -------
     nanmin : ndarray
-        A new array or a scalar array with the result.
+        An array with the same shape as `a`, with the specified axis removed.
+        If `a` is a 0-d array, or if axis is None, an ndarray scalar is
+        returned.  The same dtype as `a` is returned.
 
     See Also
     --------
@@ -1518,7 +1521,6 @@ def nanmin(a, axis=None):
     is treated as a very small (i.e. negative) number.
 
     If the input has a integer type the function is equivalent to np.min.
-
 
     Examples
     --------
@@ -1581,7 +1583,7 @@ def nanargmin(a, axis=None):
 
 def nanmax(a, axis=None):
     """
-    Return the maximum of an array or maximum along an axis ignoring any NaNs.
+    Return the maximum of an array or maximum along an axis, ignoring any NaNs.
 
     Parameters
     ----------
@@ -1596,8 +1598,8 @@ def nanmax(a, axis=None):
     -------
     nanmax : ndarray
         An array with the same shape as `a`, with the specified axis removed.
-        If `a` is a 0-d array, or if axis is None, a ndarray scalar is
-        returned.  The the same dtype as `a` is returned.
+        If `a` is a 0-d array, or if axis is None, an ndarray scalar is
+        returned.  The same dtype as `a` is returned.
 
     See Also
     --------
