@@ -1922,15 +1922,28 @@ def amax(a, axis=None, out=None, keepdims=False):
 
     See Also
     --------
-    nanmax : NaN values are ignored instead of being propagated.
-    fmax : same behavior as the C99 fmax function.
-    argmax : indices of the maximum values.
+    amin :
+        The minimum value of an array along a given axis, propagating any NaNs.
+    nanmax :
+        The maximum value of an array along a given axis, ignoring any NaNs.
+    maximum :
+        Element-wise maximum of two arrays, propagating any NaNs.
+    fmax :
+        Element-wise maximum of two arrays, ignoring any NaNs.
+    argmax : 
+        Return the indices of the maximum values.
+    
+    nanmin, minimum, fmin
 
     Notes
     -----
     NaN values are propagated, that is if at least one item is NaN, the
     corresponding max value will be NaN as well.  To ignore NaN values
     (MATLAB behavior), please use nanmax.
+    
+    Don't use `amax` for element-wise comparison of 2 arrays; when
+    ``a.shape[0]`` is 2, ``maximum(a[0], a[1])`` is faster than 
+    ``amax(a, axis=0)``.
 
     Examples
     --------
@@ -1991,17 +2004,28 @@ def amin(a, axis=None, out=None, keepdims=False):
 
     See Also
     --------
-    nanmin: nan values are ignored instead of being propagated
-    fmin: same behavior as the C99 fmin function
-    argmin: Return the indices of the minimum values.
+    amax :
+        The maximum value of an array along a given axis, propagating any NaNs.
+    nanmin :
+        The minimum value of an array along a given axis, ignoring any NaNs.
+    minimum :
+        Element-wise minimum of two arrays, propagating any NaNs.
+    fmin :
+        Element-wise minimum of two arrays, ignoring any NaNs.
+    argmin : 
+        Return the indices of the minimum values.
 
-    amax, nanmax, fmax
+    nanmax, maximum, fmax
 
     Notes
     -----
     NaN values are propagated, that is if at least one item is nan, the
     corresponding min value will be nan as well. To ignore NaN values (matlab
     behavior), please use nanmin.
+    
+    Don't use `amin` for element-wise comparison of 2 arrays; when 
+    ``a.shape[0]`` is 2, ``minimum(a[0], a[1])`` is faster than 
+    ``amin(a, axis=0)``.
 
     Examples
     --------

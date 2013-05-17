@@ -1495,11 +1495,20 @@ def nanmin(a, axis=None):
 
     See Also
     --------
-    numpy.amin : Minimum across array including any Not a Numbers.
-    numpy.nanmax : Maximum across array ignoring any Not a Numbers.
-    isnan : Shows which elements are Not a Number (NaN).
-    isfinite: Shows which elements are not: Not a Number, positive and
-             negative infinity
+    nanmax :
+        The maximum value of an array along a given axis, ignoring any NaNs.
+    amin :
+        The minimum value of an array along a given axis, propagating any NaNs.
+    fmin :
+        Element-wise minimum of two arrays, ignoring any NaNs.
+    minimum :
+        Element-wise minimum of two arrays, propagating any NaNs.
+    isnan :
+        Shows which elements are Not a Number (NaN).
+    isfinite:
+        Shows which elements are neither NaN nor infinity.
+        
+    amax, fmax, maximum
 
     Notes
     -----
@@ -1592,11 +1601,20 @@ def nanmax(a, axis=None):
 
     See Also
     --------
-    numpy.amax : Maximum across array including any Not a Numbers.
-    numpy.nanmin : Minimum across array ignoring any Not a Numbers.
-    isnan : Shows which elements are Not a Number (NaN).
-    isfinite: Shows which elements are not: Not a Number, positive and
-             negative infinity
+    nanmin :
+        The minimum value of an array along a given axis, ignoring any NaNs.
+    amax :
+        The maximum value of an array along a given axis, propagating any NaNs.
+    fmax :
+        Element-wise maximum of two arrays, ignoring any NaNs.
+    maximum :
+        Element-wise maximum of two arrays, propagating any NaNs.
+    isnan :
+        Shows which elements are Not a Number (NaN).
+    isfinite:
+        Shows which elements are neither NaN nor infinity.
+        
+    amin, fmin, minimum
 
     Notes
     -----
