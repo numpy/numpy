@@ -1287,9 +1287,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
           break;
 
         /*
-         * I have been told that the rest of this case is probably an
-         * hack to support a few cases of structured arrays since
-         * ufuncs cannot handle general structured arrays.
+         * The ufunc does not support void/structured types, so these
+         * need to be handled specifically. Only a few cases are supported.
          */
 
         if (PyArray_TYPE(self) == NPY_VOID) {
@@ -1351,9 +1350,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
           break;
 
         /*
-         * I have been told that the rest of this case is probably an
-         * hack to support a few cases of structured arrays since
-         * ufuncs cannot handle general structured arrays.
+         * The ufunc does not support void/structured types, so these
+         * need to be handled specifically. Only a few cases are supported.
          */
 
         if (PyArray_TYPE(self) == NPY_VOID) {
