@@ -61,6 +61,14 @@ class TestRegression(TestCase):
         a.var(out=mout)
         assert_(mout._data == 0)
 
+    def test_ddof_corrcoef(self):
+        # See gh-3336
+        x = np.ma.masked_equal([1,2,3,4,5], 4)
+        y = np.array([2,2.5,3.1,3,5])
+        r0 = np.ma.corrcoef(x, y, ddof=0)
+        r1 = np.ma.corrcoef(x, y, ddof=1)
+        # ddof should not have an effect (it gets cancelled out)
+        assert_allclose(r0.data, r1.data)
 
 if __name__ == "__main__":
     run_module_suite()
