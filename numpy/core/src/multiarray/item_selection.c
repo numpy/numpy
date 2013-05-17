@@ -1983,7 +1983,7 @@ local_argsearch_left(PyArrayObject *arr, PyArrayObject *key,
         npy_intp imax = nelts;
         while (imin < imax) {
             npy_intp imid = imin + ((imax - imin) >> 1);
-            npy_intp indx = *(psorter + sorterstride*imid);
+            npy_intp indx = *(npy_intp *)(psorter + sorterstride * imid);
 
             if (indx < 0 || indx >= nelts) {
                 return -1;
@@ -2037,7 +2037,7 @@ local_argsearch_right(PyArrayObject *arr, PyArrayObject *key,
         npy_intp imax = nelts;
         while (imin < imax) {
             npy_intp imid = imin + ((imax - imin) >> 1);
-            npy_intp indx = *(psorter + sorterstride*imid);
+            npy_intp indx = *(npy_intp *)(psorter + sorterstride * imid);
 
             if (indx < 0 || indx >= nelts) {
                 return -1;
@@ -2117,7 +2117,7 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
     /* need ap2 as contiguous array and of right type */
     ap2 = (PyArrayObject *)PyArray_CheckFromAny(op2, dtype,
                                 0, 0,
-                                NPY_ARRAY_DEFAULT | NPY_ARRAY_NOTSWAPPED,
+                                NPY_ARRAY_CARRAY_RO | NPY_ARRAY_NOTSWAPPED,
                                 NULL);
     if (ap2 == NULL) {
         goto fail;
