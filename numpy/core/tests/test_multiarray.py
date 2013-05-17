@@ -2918,13 +2918,13 @@ class TestArrayPriority(TestCase):
         res3 = lp < r
         res4 = lp < rp
 
-        assert np.allclose(res1, res2.array)
-        assert np.allclose(res1, res3.array)
-        assert np.allclose(res1, res4.array)
-        assert isinstance(res1, np.ndarray)
-        assert isinstance(res2, PriorityNdarray)
-        assert isinstance(res3, PriorityNdarray)
-        assert isinstance(res4, PriorityNdarray)
+        assert_array_equal(res1, res2.array)
+        assert_array_equal(res1, res3.array)
+        assert_array_equal(res1, res4.array)
+        assert_(isinstance(res1, np.ndarray))
+        assert_(isinstance(res2, PriorityNdarray))
+        assert_(isinstance(res3, PriorityNdarray))
+        assert_(isinstance(res4, PriorityNdarray))
 
     def test_gt(self):
         l = np.asarray([0., -1., 1.], dtype=dtype)
@@ -2936,13 +2936,13 @@ class TestArrayPriority(TestCase):
         res3 = lp > r
         res4 = lp > rp
 
-        assert np.allclose(res1, res2.array)
-        assert np.allclose(res1, res3.array)
-        assert np.allclose(res1, res4.array)
-        assert isinstance(res1, np.ndarray)
-        assert isinstance(res2, PriorityNdarray)
-        assert isinstance(res3, PriorityNdarray)
-        assert isinstance(res4, PriorityNdarray)
+        assert_array_equal(res1, res2.array)
+        assert_array_equal(res1, res3.array)
+        assert_array_equal(res1, res4.array)
+        assert_(isinstance(res1, np.ndarray))
+        assert_(isinstance(res2, PriorityNdarray))
+        assert_(isinstance(res3, PriorityNdarray))
+        assert_(isinstance(res4, PriorityNdarray))
 
     def test_le(self):
         l = np.asarray([0., -1., 1.], dtype=dtype)
@@ -2954,13 +2954,13 @@ class TestArrayPriority(TestCase):
         res3 = lp <= r
         res4 = lp <= rp
 
-        assert np.allclose(res1, res2.array)
-        assert np.allclose(res1, res3.array)
-        assert np.allclose(res1, res4.array)
-        assert isinstance(res1, np.ndarray)
-        assert isinstance(res2, PriorityNdarray)
-        assert isinstance(res3, PriorityNdarray)
-        assert isinstance(res4, PriorityNdarray)
+        assert_array_equal(res1, res2.array)
+        assert_array_equal(res1, res3.array)
+        assert_array_equal(res1, res4.array)
+        assert_(isinstance(res1, np.ndarray))
+        assert_(isinstance(res2, PriorityNdarray))
+        assert_(isinstance(res3, PriorityNdarray))
+        assert_(isinstance(res4, PriorityNdarray))
 
     def test_ge(self):
         l = np.asarray([0., -1., 1.], dtype=dtype)
@@ -2972,13 +2972,13 @@ class TestArrayPriority(TestCase):
         res3 = lp >= r
         res4 = lp >= rp
 
-        assert np.allclose(res1, res2.array)
-        assert np.allclose(res1, res3.array)
-        assert np.allclose(res1, res4.array)
-        assert isinstance(res1, np.ndarray)
-        assert isinstance(res2, PriorityNdarray)
-        assert isinstance(res3, PriorityNdarray)
-        assert isinstance(res4, PriorityNdarray)
+        assert_array_equal(res1, res2.array)
+        assert_array_equal(res1, res3.array)
+        assert_array_equal(res1, res4.array)
+        assert_(isinstance(res1, np.ndarray))
+        assert_(isinstance(res2, PriorityNdarray))
+        assert_(isinstance(res3, PriorityNdarray))
+        assert_(isinstance(res4, PriorityNdarray))
 
     def test_eq(self):
         l = np.asarray([0., -1., 1.], dtype=dtype)
@@ -2990,13 +2990,13 @@ class TestArrayPriority(TestCase):
         res3 = lp == r
         res4 = lp == rp
 
-        assert np.allclose(res1, res2.array)
-        assert np.allclose(res1, res3.array)
-        assert np.allclose(res1, res4.array)
-        assert isinstance(res1, np.ndarray)
-        assert isinstance(res2, PriorityNdarray)
-        assert isinstance(res3, PriorityNdarray)
-        assert isinstance(res4, PriorityNdarray)
+        assert_array_equal(res1, res2.array)
+        assert_array_equal(res1, res3.array)
+        assert_array_equal(res1, res4.array)
+        assert_(isinstance(res1, np.ndarray))
+        assert_(isinstance(res2, PriorityNdarray))
+        assert_(isinstance(res3, PriorityNdarray))
+        assert_(isinstance(res4, PriorityNdarray))
 
     def test_ne(self):
         l = np.asarray([0., -1., 1.], dtype=dtype)
@@ -3008,13 +3008,13 @@ class TestArrayPriority(TestCase):
         res3 = lp != r
         res4 = lp != rp
 
-        assert np.allclose(res1, res2.array)
-        assert np.allclose(res1, res3.array)
-        assert np.allclose(res1, res4.array)
-        assert isinstance(res1, np.ndarray)
-        assert isinstance(res2, PriorityNdarray)
-        assert isinstance(res3, PriorityNdarray)
-        assert isinstance(res4, PriorityNdarray)
+        assert_array_equal(res1, res2.array)
+        assert_array_equal(res1, res3.array)
+        assert_array_equal(res1, res4.array)
+        assert_(isinstance(res1, np.ndarray))
+        assert_(isinstance(res2, PriorityNdarray))
+        assert_(isinstance(res3, PriorityNdarray))
+        assert_(isinstance(res4, PriorityNdarray))
 
 
 if __name__ == "__main__":
