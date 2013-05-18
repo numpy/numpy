@@ -16,7 +16,8 @@ _dt_ = nt.sctype2char
 
 # functions that are now methods
 __all__ = ['take', 'reshape', 'choose', 'repeat', 'put',
-           'swapaxes', 'transpose', 'sort', 'argsort', 'argmax', 'argmin',
+           'swapaxes', 'transpose', 'sort', 'argsort', 'partition', 'argpartition',
+           'argmax', 'argmin',
            'searchsorted', 'alen',
            'resize', 'diagonal', 'trace', 'ravel', 'nonzero', 'shape',
            'compress', 'clip', 'sum', 'product', 'prod', 'sometrue', 'alltrue',
@@ -532,6 +533,150 @@ def transpose(a, axes=None):
     except AttributeError:
         return _wrapit(a, 'transpose', axes)
     return transpose(axes)
+
+
+def partition(a, kth, axis=-1, kind='introselect', order=None):
+    """
+    Return a partitioned copy of an array.
+
+    Creates a copy of the array with its elements rearranges in such a way that
+    the value of the element in kth position is in the position it would be in
+    a sorted array. All elements smaller than the kth element are moved before
+    this element and all equal or greater are moved behind it. The ordering of
+    the elements in the two partitions is undefined.
+
+    .. versionadded:: 1.8.0
+
+    Parameters
+    ----------
+    a : array_like
+        Array to be sorted.
+    kth : int or sequence of ints
+        Element index to partition by. The kth value of the element will be in
+        its final sorted position and all smaller elements will be moved before
+        it and all equal or greater elements behind it.
+        The order all elements in the partitions is undefined.
+        If provided with a sequence of kth it will partition all elements
+        indexed by kth  of them into their sorted position at once.
+    axis : int or None, optional
+        Axis along which to sort. If None, the array is flattened before
+        sorting. The default is -1, which sorts along the last axis.
+    kind : {'introselect'}, optional
+        Selection algorithm. Default is 'introselect'.
+    order : list, optional
+        When `a` is a structured array, this argument specifies which fields
+        to compare first, second, and so on.  This list does not need to
+        include all of the fields.
+
+    Returns
+    -------
+    partitioned_array : ndarray
+        Array of the same type and shape as `a`.
+
+    See Also
+    --------
+    ndarray.partition : Method to sort an array in-place.
+    argpartition : Indirect partition.
+
+    Notes
+    -----
+    The various selection algorithms are characterized by their average speed,
+    worst case performance, work space size, and whether they are stable. A
+    stable sort keeps items with the same key in the same relative order. The
+    three available algorithms have the following properties:
+
+    ================= ======= ============= ============ =======
+       kind            speed   worst case    work space  stable
+    ================= ======= ============= ============ =======
+    'introselect'        1        O(n)           0         no
+    ================= ======= ============= ============ =======
+
+    All the partition algorithms make temporary copies of the data when
+    partitioning along any but the last axis.  Consequently, partitioning
+    along the last axis is faster and uses less space than partitioning
+    along any other axis.
+
+    The sort order for complex numbers is lexicographic. If both the real
+    and imaginary parts are non-nan then the order is determined by the
+    real parts except when they are equal, in which case the order is
+    determined by the imaginary parts.
+
+    Examples
+    --------
+    >>> a = np.array([3, 4, 2, 1])
+    >>> np.partition(a, 3)
+    array([2, 1, 3, 4])
+
+    >>> np.partition(a, (1, 3))
+    array([1, 2, 3, 4])
+
+    """
+    if axis is None:
+        a = asanyarray(a).flatten()
+        axis = 0
+    else:
+        a = asanyarray(a).copy()
+    a.partition(kth, axis=axis, kind=kind, order=order)
+    return a
+
+
+def argpartition(a, kth, axis=-1, kind='introselect', order=None):
+    """
+    Perform an indirect partition along the given axis using the algorithm
+    specified by the `kind` keyword. It returns an array of indices of the
+    same shape as `a` that index data along the given axis in partitioned
+    order.
+
+    .. versionadded:: 1.8.0
+
+    Parameters
+    ----------
+    a : array_like
+        Array to sort.
+    kth : int or sequence of ints
+        Element index to partition by. The kth element will be in its final
+        sorted position and all smaller elements will be moved before it and
+        all larger elements behind it.
+        The order all elements in the partitions is undefined.
+        If provided with a sequence of kth it will partition all of them into
+        their sorted position at once.
+    axis : int or None, optional
+        Axis along which to sort.  The default is -1 (the last axis). If None,
+        the flattened array is used.
+    kind : {'introselect'}, optional
+        Selection algorithm. Default is 'introselect'
+    order : list, optional
+        When `a` is an array with fields defined, this argument specifies
+        which fields to compare first, second, etc.  Not all fields need be
+        specified.
+
+    Returns
+    -------
+    index_array : ndarray, int
+        Array of indices that partition`a` along the specified axis.
+        In other words, ``a[index_array]`` yields a sorted `a`.
+
+    See Also
+    --------
+    partition : Describes partition algorithms used.
+    ndarray.partition : Inplace partition.
+
+    Notes
+    -----
+    See `partition` for notes on the different selection algorithms.
+
+    Examples
+    --------
+    One dimensional array:
+
+    >>> x = np.array([3, 4, 2, 1])
+    >>> x[np.argpartition(x, 3)]
+    array([2, 1, 3, 4])
+    >>> x[np.argpartition(x, (1, 3))]
+    array([1, 2, 3, 4])
+
+    """
+    return a.argpartition(kth, axis, kind=kind, order=order)
 
 
 def sort(a, axis=-1, kind='quicksort', order=None):

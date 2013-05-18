@@ -141,6 +141,16 @@ New functions `full` and `full_like`
 New convenience functions to create arrays filled with a specific value;
 complementary to the existing `zeros` and `zeros_like` functions.
 
+New functions `partition` and `argpartition`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+New functions to partially sort arrays.
+Partial sorting moves the value of selected elements into their position if the
+array would be sorted via a selection algorithm. In the resulting array all
+elements smaller than the sorted elements will placed before the it and all
+equal or larger behind it.
+This has a time complexity of O(n) compared to O(n log(n)) of a full sort.
+
 C-API
 ~~~~~
 

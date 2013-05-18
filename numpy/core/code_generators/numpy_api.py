@@ -335,6 +335,10 @@ multiarray_funcs_api = {
     'PyArray_MapIterSwapAxes':              293,
     'PyArray_MapIterArray':                 294,
     'PyArray_MapIterNext':                  295,
+    # End 1.7 API
+    'PyArray_Partition':                    296,
+    'PyArray_ArgPartition':                 297,
+    'PyArray_SelectkindConverter':          298,
 }
 
 ufunc_types_api = {

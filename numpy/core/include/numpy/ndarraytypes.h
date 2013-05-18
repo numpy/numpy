@@ -156,6 +156,12 @@ typedef enum {
 
 
 typedef enum {
+        NPY_INTROSELECT=0,
+} NPY_SELECTKIND;
+#define NPY_NSELECTS (NPY_INTROSELECT + 1)
+
+
+typedef enum {
         NPY_SEARCHLEFT=0,
         NPY_SEARCHRIGHT=1
 } NPY_SEARCHSIDE;
@@ -391,6 +397,12 @@ typedef int (PyArray_FillFunc)(void *, npy_intp, void *);
 
 typedef int (PyArray_SortFunc)(void *, npy_intp, void *);
 typedef int (PyArray_ArgSortFunc)(void *, npy_intp *, npy_intp, void *);
+typedef int (PyArray_PartitionFunc)(void *, npy_intp, npy_intp,
+                                    npy_intp *, npy_intp *,
+                                    void *);
+typedef int (PyArray_ArgPartitionFunc)(void *, npy_intp *, npy_intp, npy_intp,
+                                       npy_intp *, npy_intp *,
+                                       void *);
 
 typedef int (PyArray_FillWithScalarFunc)(void *, npy_intp, void *, void *);
 
