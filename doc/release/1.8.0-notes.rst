@@ -133,6 +133,16 @@ A simple test runner script ``runtests.py`` was added. It also builds Numpy via
 ``setup.py build`` and can be used to run tests easily during development.
 
 
+Improvements
+============
+
+Performance improvements to `pad`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The `pad` function has a new implementation, greatly improving performance for
+all inputs except `mode=<function>` (retained for backwards compatibility).
+Scaling with dimensionality is dramatically improved for rank >= 4.
+
+
 Changes
 =======
 
@@ -156,6 +166,8 @@ Several changes to np.insert and np.delete:
 * In Numpy 1.7. np.insert already allowed the syntax
   `np.insert(arr, 3, [1,2,3])` to insert multiple items at a single position.
   In Numpy 1.8. this is also possible for `np.insert(arr, [3], [1, 2, 3])`.
+
+Padded regions from np.pad are now correctly rounded, not truncated.
 
 C-API
 ~~~~~
