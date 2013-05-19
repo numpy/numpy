@@ -10,7 +10,7 @@ SciPy structure
 
 Currently SciPy project consists of two packages:
 
-- NumPy (previously called SciPy core) --- it provides packages like:
+- NumPy --- it provides packages like:
 
   + numpy.distutils - extension to Python distutils
   + numpy.f2py - a tool to bind Fortran/C codes to Python
@@ -38,7 +38,6 @@ A SciPy package contains, in addition to its sources, the following
 files and directories:
 
   + ``setup.py`` --- building script
-  + ``info.py``  --- contains documentation and import flags
   + ``__init__.py`` --- package initializer
   + ``tests/`` --- directory of unittests
 
@@ -398,63 +397,31 @@ Useful functions in ``numpy.distutils.misc_util``
 + ``find_executable(exe, path=None)``
 + ``exec_command( command, execute_in='', use_shell=None, use_tee=None, **env )``
 
-The ``info.py`` file
-''''''''''''''''''''
-
-SciPy package import hooks assume that each package contains a
-``info.py`` file.  This file contains overall documentation about the package
-and variables defining the order of package imports, dependency
-relations between packages, etc.
-
-On import, the following information will be looked for in ``info.py``:
-
-__doc__
-  The documentation string of the package.
-
-__doc_title__
-  The title of the package. If not defined then the first non-empty 
-  line of ``__doc__`` will be used.
-
-__all__
-  List of symbols that package exports. Optional.
-
-global_symbols
-  List of names that should be imported to numpy name space. To import
-  all symbols to ``numpy`` namespace, define ``global_symbols=['*']``.
-
-depends
-  List of names that the package depends on. Prefix ``numpy.``
-  will be automatically added to package names. For example,
-  use ``testing`` to indicate dependence on ``numpy.testing``
-  package. Default value is ``[]``.
-
-postpone_import
-  Boolean variable indicating that importing the package should be
-  postponed until the first attempt of its usage. Default value is ``False``.
-  Depreciated.
-
 The ``__init__.py`` file
 ''''''''''''''''''''''''
 
-To speed up the import time and minimize memory usage, numpy
-uses ``ppimport`` hooks to transparently postpone importing large modules,
-which might not be used during the SciPy session. In order to
-have access to the documentation of all SciPy packages, including 
-postponed packages, the docstring from ``info.py`` is imported
-into ``__init__.py``.
+The header of a typical SciPy ``__init__.py`` is::
 
-The header of a typical ``__init__.py`` is::
+  """
+  Package docstring, typically with a brief description and function listing.
+  """
+  
+  # py3k related imports
+  from __future__ import division, print_function, absolute_import
 
-  #
-  # Package ... - ...
-  #
-
-  from info import __doc__
+  # import functions into module namespace
+  from .subpackage import *
   ...
 
+  __all__ = [s for s in dir() if not s.startswith('_')]
+  
   from numpy.testing import Tester
   test = Tester().test
   bench = Tester().bench
+
+Note that NumPy submodules still use a file named ``info.py`` in which the
+module docstring and ``__all__`` dict are defined.  These files will be removed
+at some point.
 
 Extra features in NumPy Distutils
 '''''''''''''''''''''''''''''''''
