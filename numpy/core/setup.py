@@ -161,6 +161,11 @@ def check_math_capabilities(config, moredefs, mathlibs):
 
     check_funcs(OPTIONAL_STDFUNCS)
 
+
+    for h in OPTIONAL_HEADERS:
+        if config.check_func("", decl=False, call=False, headers=[h]):
+            moredefs.append((fname2def(h).replace(".", "_"), 1))
+
     for f, args in OPTIONAL_INTRINSICS:
         if config.check_func(f, decl=False, call=True, call_args=args):
             moredefs.append((fname2def(f), 1))

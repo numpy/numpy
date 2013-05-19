@@ -207,6 +207,7 @@ cmplx = 'FDG'
 cmplxO = cmplx + O
 cmplxP = cmplx + P
 inexact = flts + cmplx
+inexactvec = 'fd'
 noint = inexact+O
 nointP = inexact+P
 allP = bints+times+flts+cmplxP
@@ -686,6 +687,7 @@ defdict = {
     Ufunc(1, 1, None,
           docstrings.get('numpy.core.umath.sqrt'),
           None,
+          TD(inexactvec),
           TD(inexact, f='sqrt', astype={'e':'f'}),
           TD(P, f='sqrt'),
           ),

@@ -396,6 +396,52 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
                             char **out_dataB, npy_intp *out_stridesB,
                             char **out_dataC, npy_intp *out_stridesC);
 
+
+/*
+ * Return number of elements that must be peeled from
+ * the start of 'addr' with 'nvals' elements of size 'esize'
+ * in order to reach 'alignment'.
+ * see npy_blocked_end for an example
+ */
+static NPY_INLINE npy_intp
+npy_aligned_block_offset(const void * addr, const npy_intp esize,
+                         const npy_intp alignment, const npy_intp nvals)
+{
+    const npy_intp offset = (npy_intp)addr & (alignment - 1);
+    npy_intp peel = offset ? (alignment - offset) / esize : 0;
+    peel = nvals < peel ? nvals : peel;
+    return peel;
+}
+
+/*
+ * Return upper loop bound for an array of 'nvals' elements
+ * of size 'esize' peeled by 'offset' elements and blocking to
+ * a vector size of 'vsz' in bytes
+ *
+ * example usage:
+ * npy_intp i;
+ * double v[101];
+ * npy_intp esize = sizeof(v[0]);
+ * npy_intp peel = npy_aligned_block_offset(v, esize, 16, n);
+ * // peel to alignment 16
+ * for (i = 0; i < peel; i++)
+ *   <scalar-op>
+ * // simd vectorized operation
+ * for (; i < npy_blocked_end(peel, esize, 16, n); i += 16 / esize)
+ *   <blocked-op>
+ * // handle scalar rest
+ * for(; i < n; i++)
+ *   <scalar-op>
+ */
+static NPY_INLINE npy_intp
+npy_blocked_end(const npy_intp offset, const npy_intp esize,
+                const npy_intp vsz, const npy_intp nvals)
+{
+    return nvals - offset - (nvals - offset) % (vsz / esize);
+}
+
+
+
 /* Start raw iteration */
 #define NPY_RAW_ITER_START(idim, ndim, coord, shape) \
         memset((coord), 0, (ndim) * sizeof(coord[0])); \

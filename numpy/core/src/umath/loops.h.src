@@ -181,6 +181,12 @@ U@TYPE@_remainder(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_
  *****************************************************************************
  */
 
+/**begin repeat
+ *  #TYPE = FLOAT, DOUBLE#
+ */
+NPY_NO_EXPORT void
+@TYPE@_sqrt(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func));
+/**end repeat**/
 
 /**begin repeat
  * Float types
