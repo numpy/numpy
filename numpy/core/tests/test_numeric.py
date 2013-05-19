@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import platform
 from decimal import Decimal
+import warnings
 
 import numpy as np
 from numpy.core import *
@@ -177,6 +178,11 @@ class TestNonarrayArgs(TestCase):
         assert_(all(mean(A,0) == array([2.5,3.5,4.5])))
         assert_(all(mean(A,1) == array([2.,5.])))
 
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_(isnan(mean([])))
+            assert_(w[0].category is RuntimeWarning)
+
     def test_nanmean(self):
         A = [[1, nan, nan], [nan, 4, 5]]
         assert_(nanmean(A) == (10.0 / 3))
@@ -189,6 +195,11 @@ class TestNonarrayArgs(TestCase):
         assert_almost_equal(std(A,0), array([1.5, 1.5, 1.5]))
         assert_almost_equal(std(A,1), array([0.81649658, 0.81649658]))
 
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_(isnan(std([])))
+            assert_(w[0].category is RuntimeWarning)
+
     def test_nanstd(self):
         A = [[1, nan, nan], [nan, 4, 5]]
         assert_almost_equal(nanstd(A), 1.699673171197595)
@@ -200,6 +211,11 @@ class TestNonarrayArgs(TestCase):
         assert_almost_equal(var(A), 2.9166666666666665)
         assert_almost_equal(var(A,0), array([2.25, 2.25, 2.25]))
         assert_almost_equal(var(A,1), array([0.66666667, 0.66666667]))
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_(isnan(mean([])))
+            assert_(w[0].category is RuntimeWarning)
 
     def test_nanvar(self):
         A = [[1, nan, nan], [nan, 4, 5]]
@@ -1319,13 +1335,16 @@ class TestNaNMean(TestCase):
         assert_almost_equal(nanmean(self.A),self.real_mean)
 
     def test_allnans(self):
-        assert_(isnan(nanmean(self.B)))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_(isnan(nanmean(self.B)))
+            assert_(w[0].category is RuntimeWarning)
 
     def test_empty(self):
-        assert_(isnan(nanmean(array([]))))
-
-
-
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_(isnan(nanmean(array([]))))
+            assert_(w[0].category is RuntimeWarning)
 
 class TestStdVar(TestCase):
     def setUp(self):
@@ -1371,13 +1390,18 @@ class TestNaNStdVar(TestCase):
                 self.real_var*sum(~isnan(self.A))/float(sum(~isnan(self.A))-2))
 
     def test_allnans(self):
-        assert_(isnan(nanvar(self.B)))
-        assert_(isnan(nanstd(self.B)))
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_(isnan(nanvar(self.B)))
+            assert_(isnan(nanstd(self.B)))
+            assert_(w[0].category is RuntimeWarning)
 
     def test_empty(self):
-        assert_(isnan(nanvar(array([]))))
-        assert_(isnan(nanstd(array([]))))
-
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_(isnan(nanvar(array([]))))
+            assert_(isnan(nanstd(array([]))))
+            assert_(w[0].category is RuntimeWarning)
 
 class TestStdVarComplex(TestCase):
     def test_basic(self):
