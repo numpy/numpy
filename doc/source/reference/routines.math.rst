@@ -143,6 +143,8 @@ Miscellaneous
    sign
    maximum
    minimum
+   fmax
+   fmin
 
    nan_to_num
    real_if_close
