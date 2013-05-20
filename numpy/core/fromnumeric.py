@@ -1903,11 +1903,11 @@ def amax(a, axis=None, out=None, keepdims=False):
     a : array_like
         Input data.
     axis : int, optional
-        Axis along which to operate.  By default flattened input is used.
+        Axis along which to operate.  By default, flattened input is used.
     out : ndarray, optional
-        Alternate output array in which to place the result.  Must be of
-        the same shape and buffer length as the expected output.  See
-        `doc.ufuncs` (Section "Output arguments") for more details.
+        Alternative output array in which to place the result.  Must
+        be of the same shape and buffer length as the expected output.
+        See `doc.ufuncs` (Section "Output arguments") for more details.
     keepdims : bool, optional
         If this is set to True, the axes which are reduced are left
         in the result as dimensions with size one. With this option,
@@ -1922,15 +1922,28 @@ def amax(a, axis=None, out=None, keepdims=False):
 
     See Also
     --------
-    nanmax : NaN values are ignored instead of being propagated.
-    fmax : same behavior as the C99 fmax function.
-    argmax : indices of the maximum values.
+    amin :
+        The minimum value of an array along a given axis, propagating any NaNs.
+    nanmax :
+        The maximum value of an array along a given axis, ignoring any NaNs.
+    maximum :
+        Element-wise maximum of two arrays, propagating any NaNs.
+    fmax :
+        Element-wise maximum of two arrays, ignoring any NaNs.
+    argmax : 
+        Return the indices of the maximum values.
+    
+    nanmin, minimum, fmin
 
     Notes
     -----
     NaN values are propagated, that is if at least one item is NaN, the
-    corresponding max value will be NaN as well.  To ignore NaN values
+    corresponding max value will be NaN as well. To ignore NaN values
     (MATLAB behavior), please use nanmax.
+    
+    Don't use `amax` for element-wise comparison of 2 arrays; when
+    ``a.shape[0]`` is 2, ``maximum(a[0], a[1])`` is faster than 
+    ``amax(a, axis=0)``.
 
     Examples
     --------
@@ -1938,11 +1951,11 @@ def amax(a, axis=None, out=None, keepdims=False):
     >>> a
     array([[0, 1],
            [2, 3]])
-    >>> np.amax(a)
+    >>> np.amax(a)           # Maximum of the flattened array
     3
-    >>> np.amax(a, axis=0)
+    >>> np.amax(a, axis=0)   # Maxima along the first axis
     array([2, 3])
-    >>> np.amax(a, axis=1)
+    >>> np.amax(a, axis=1)   # Maxima along the second axis
     array([1, 3])
 
     >>> b = np.arange(5, dtype=np.float)
@@ -1959,7 +1972,7 @@ def amax(a, axis=None, out=None, keepdims=False):
         except AttributeError:
             return _methods._amax(a, axis=axis,
                                 out=out, keepdims=keepdims)
-        # NOTE: Dropping and keepdims parameter
+        # NOTE: Dropping the keepdims parameter
         return amax(axis=axis, out=out)
     else:
         return _methods._amax(a, axis=axis,
@@ -1974,7 +1987,7 @@ def amin(a, axis=None, out=None, keepdims=False):
     a : array_like
         Input data.
     axis : int, optional
-        Axis along which to operate.  By default a flattened input is used.
+        Axis along which to operate.  By default, flattened input is used.
     out : ndarray, optional
         Alternative output array in which to place the result.  Must
         be of the same shape and buffer length as the expected output.
@@ -1986,22 +1999,35 @@ def amin(a, axis=None, out=None, keepdims=False):
 
     Returns
     -------
-    amin : ndarray
-        A new array or a scalar array with the result.
+    amin : ndarray or scalar
+        Minimum of `a`. If `axis` is None, the result is a scalar value.
+        If `axis` is given, the result is an array of dimension
+        ``a.ndim - 1``.
 
     See Also
     --------
-    nanmin: nan values are ignored instead of being propagated
-    fmin: same behavior as the C99 fmin function
-    argmin: Return the indices of the minimum values.
+    amax :
+        The maximum value of an array along a given axis, propagating any NaNs.
+    nanmin :
+        The minimum value of an array along a given axis, ignoring any NaNs.
+    minimum :
+        Element-wise minimum of two arrays, propagating any NaNs.
+    fmin :
+        Element-wise minimum of two arrays, ignoring any NaNs.
+    argmin : 
+        Return the indices of the minimum values.
 
-    amax, nanmax, fmax
+    nanmax, maximum, fmax
 
     Notes
     -----
-    NaN values are propagated, that is if at least one item is nan, the
-    corresponding min value will be nan as well. To ignore NaN values (matlab
-    behavior), please use nanmin.
+    NaN values are propagated, that is if at least one item is NaN, the
+    corresponding min value will be NaN as well. To ignore NaN values
+    (MATLAB behavior), please use nanmin.
+    
+    Don't use `amin` for element-wise comparison of 2 arrays; when 
+    ``a.shape[0]`` is 2, ``minimum(a[0], a[1])`` is faster than 
+    ``amin(a, axis=0)``.
 
     Examples
     --------
@@ -2011,9 +2037,9 @@ def amin(a, axis=None, out=None, keepdims=False):
            [2, 3]])
     >>> np.amin(a)           # Minimum of the flattened array
     0
-    >>> np.amin(a, axis=0)         # Minima along the first axis
+    >>> np.amin(a, axis=0)   # Minima along the first axis
     array([0, 1])
-    >>> np.amin(a, axis=1)         # Minima along the second axis
+    >>> np.amin(a, axis=1)   # Minima along the second axis
     array([0, 2])
 
     >>> b = np.arange(5, dtype=np.float)
