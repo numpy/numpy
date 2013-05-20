@@ -604,6 +604,10 @@ Comparison functions
     ``a > b`` and uses it to return either `a` or `b` (as a whole). A similar
     difference exists between ``minimum(a, b)`` and ``min(a, b)``.
 
+.. autosummary::
+
+    fmax
+    fmin
 
 Floating functions
 ------------------

@@ -2170,14 +2170,12 @@ add_newdoc('numpy.core.umath', 'maximum',
     """
     Element-wise maximum of array elements.
 
-    Compare two arrays and returns a new array containing
-    the element-wise maxima. If one of the elements being
-    compared is a nan, then that element is returned. If
-    both elements are nans then the first is returned. The
-    latter distinction is important for complex nans,
-    which are defined as at least one of the real or
-    imaginary parts being a nan. The net effect is that
-    nans are propagated.
+    Compare two arrays and returns a new array containing the element-wise
+    maxima. If one of the elements being compared is a nan, then that element
+    is returned. If both elements are nans then the first is returned. The
+    latter distinction is important for complex nans, which are defined as at
+    least one of the real or imaginary parts being a nan. The net effect is
+    that nans are propagated.
 
     Parameters
     ----------
@@ -2194,25 +2192,27 @@ add_newdoc('numpy.core.umath', 'maximum',
     See Also
     --------
     minimum :
-      element-wise minimum
-
+        Element-wise minimum of two arrays, propagating any NaNs.
     fmax :
-      element-wise maximum that ignores nans unless both inputs are nans.
-
-    fmin :
-      element-wise minimum that ignores nans unless both inputs are nans.
+        Element-wise maximum of two arrays, ignoring any NaNs.
+    amax :
+        The maximum value of an array along a given axis, propagating any NaNs.
+    nanmax :
+        The maximum value of an array along a given axis, ignoring any NaNs.
+    
+    fmin, amin, nanmin
 
     Notes
     -----
-    Equivalent to ``np.where(x1 > x2, x1, x2)`` but faster and does proper
-    broadcasting.
+    The maximum is equivalent to ``np.where(x1 >= x2, x1, x2)`` when neither
+    x1 nor x2 are nans, but it is faster and does proper broadcasting.
 
     Examples
     --------
     >>> np.maximum([2, 3, 4], [1, 5, 2])
     array([2, 5, 4])
 
-    >>> np.maximum(np.eye(2), [0.5, 2])
+    >>> np.maximum(np.eye(2), [0.5, 2]) # broadcasting
     array([[ 1. ,  2. ],
            [ 0.5,  2. ]])
 
@@ -2249,11 +2249,15 @@ add_newdoc('numpy.core.umath', 'minimum',
     See Also
     --------
     maximum :
-      element-wise minimum that propagates nans.
-    fmax :
-      element-wise maximum that ignores nans unless both inputs are nans.
+        Element-wise maximum of two arrays, propagating any NaNs.
     fmin :
-      element-wise minimum that ignores nans unless both inputs are nans.
+        Element-wise minimum of two arrays, ignoring any NaNs.
+    amin :
+        The minimum value of an array along a given axis, propagating any NaNs.
+    nanmin :
+        The minimum value of an array along a given axis, ignoring any NaNs.
+
+    fmax, amax, nanmax
 
     Notes
     -----
@@ -2271,6 +2275,8 @@ add_newdoc('numpy.core.umath', 'minimum',
 
     >>> np.minimum([np.nan, 0, np.nan],[0, np.nan, np.nan])
     array([ NaN,  NaN,  NaN])
+    >>> np.minimum(-np.Inf, 1)
+    -inf
 
     """)
 
@@ -2300,11 +2306,15 @@ add_newdoc('numpy.core.umath', 'fmax',
     See Also
     --------
     fmin :
-      element-wise minimum that ignores nans unless both inputs are nans.
+        Element-wise minimum of two arrays, ignoring any NaNs.
     maximum :
-      element-wise maximum that propagates nans.
-    minimum :
-      element-wise minimum that propagates nans.
+        Element-wise maximum of two arrays, propagating any NaNs.
+    amax :
+        The maximum value of an array along a given axis, propagating any NaNs.
+    nanmax :
+        The maximum value of an array along a given axis, ignoring any NaNs.
+
+    minimum, amin, nanmin
 
     Notes
     -----
@@ -2329,8 +2339,6 @@ add_newdoc('numpy.core.umath', 'fmax',
 
 add_newdoc('numpy.core.umath', 'fmin',
     """
-    fmin(x1, x2[, out])
-
     Element-wise minimum of array elements.
 
     Compare two arrays and returns a new array containing the element-wise
@@ -2355,11 +2363,15 @@ add_newdoc('numpy.core.umath', 'fmin',
     See Also
     --------
     fmax :
-      element-wise maximum that ignores nans unless both inputs are nans.
-    maximum :
-      element-wise maximum that propagates nans.
+        Element-wise maximum of two arrays, ignoring any NaNs.
     minimum :
-      element-wise minimum that propagates nans.
+        Element-wise minimum of two arrays, propagating any NaNs.
+    amin :
+        The minimum value of an array along a given axis, propagating any NaNs.
+    nanmin :
+        The minimum value of an array along a given axis, ignoring any NaNs.
+
+    maximum, amax, nanmax
 
     Notes
     -----
