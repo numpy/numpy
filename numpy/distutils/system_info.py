@@ -223,8 +223,10 @@ else:
         tmp = open(os.devnull, 'w')
         p = sp.Popen(["gcc", "-print-multiarch"], stdout=sp.PIPE,
                 stderr=tmp)
-    except OSError:
-        pass # gcc is not installed
+    except (OSError, DistutilsError):
+        # OSError if gcc is not installed, or SandboxViolation (DistutilsError
+        # subclass) if an old setuptools bug is triggered (see gh-3160).
+        pass
     else:
         triplet = str(p.communicate()[0].decode().strip())
         if p.returncode == 0:
