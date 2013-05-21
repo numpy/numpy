@@ -367,17 +367,6 @@ def msvc_runtime_library():
         lib = None
     return lib
 
-def msvc_on_amd64():
-    if not (sys.platform=='win32' or os.name=='nt'):
-        return
-    if get_build_architecture() != 'AMD64':
-        return
-    if 'DISTUTILS_USE_SDK' in os.environ:
-        return
-    # try to avoid _MSVCCompiler__root attribute error
-    print('Forcing DISTUTILS_USE_SDK=1')
-    os.environ['DISTUTILS_USE_SDK']='1'
-    return
 
 #########################
 
