@@ -675,7 +675,7 @@ def npv(rate, values):
     -----
     Returns the result of: [G]_
 
-    .. math :: \\sum_{t=0}^M{\\frac{values_t}{(1+rate)^{t}}}
+    .. math :: \\sum_{t=0}^{M-1}{\\frac{values_t}{(1+rate)^{t}}}
 
     References
     ----------
@@ -685,13 +685,13 @@ def npv(rate, values):
     Examples
     --------
     >>> np.npv(0.281,[-100, 39, 59, 55, 20])
-    -0.0066187288356340801
+    -0.0084785916384548798
 
     (Compare with the Example given for numpy.lib.financial.irr)
 
     """
     values = np.asarray(values)
-    return (values / (1+rate)**np.arange(1,len(values)+1)).sum(axis=0)
+    return (values / (1+rate)**np.arange(0,len(values))).sum(axis=0)
 
 def mirr(values, finance_rate, reinvest_rate):
     """
@@ -720,8 +720,8 @@ def mirr(values, finance_rate, reinvest_rate):
     neg = values < 0
     if not (pos.any() and neg.any()):
         return np.nan
-    numer = np.abs(npv(reinvest_rate, values*pos))*(1 + reinvest_rate)
-    denom = np.abs(npv(finance_rate, values*neg))*(1 + finance_rate)
+    numer = np.abs(npv(reinvest_rate, values*pos))
+    denom = np.abs(npv(finance_rate, values*neg))
     return (numer/denom)**(1.0/(n - 1))*(1 + reinvest_rate) - 1
 
 if __name__ == '__main__':
