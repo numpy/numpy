@@ -48,17 +48,17 @@ extern "C" {
  */
  
 /* Normal distribution with mean=loc and standard deviation=scale. */
-extern double rk_normal(rk_state *state, double loc, double scale);
+RK_EXTERN double rk_normal(rk_state *state, double loc, double scale);
 
 /* Standard exponential distribution (mean=1) computed by inversion of the 
  * CDF. */
-extern double rk_standard_exponential(rk_state *state);
+RK_EXTERN double rk_standard_exponential(rk_state *state);
 
 /* Exponential distribution with mean=scale. */
-extern double rk_exponential(rk_state *state, double scale);
+RK_EXTERN double rk_exponential(rk_state *state, double scale);
 
 /* Uniform distribution on interval [loc, loc+scale). */
-extern double rk_uniform(rk_state *state, double loc, double scale);
+RK_EXTERN double rk_uniform(rk_state *state, double loc, double scale);
 
 /* Standard gamma distribution with shape parameter. 
  * When shape < 1, the algorithm given by (Devroye p. 304) is used.
@@ -66,120 +66,119 @@ extern double rk_uniform(rk_state *state, double loc, double scale);
  * When shape > 1, the small and fast method of (Marsaglia and Tsang 2000) 
  * is used.
  */
-extern double rk_standard_gamma(rk_state *state, double shape);
+RK_EXTERN double rk_standard_gamma(rk_state *state, double shape);
 
 /* Gamma distribution with shape and scale. */
-extern double rk_gamma(rk_state *state, double shape, double scale);
+RK_EXTERN double rk_gamma(rk_state *state, double shape, double scale);
 
 /* Beta distribution computed by combining two gamma variates (Devroye p. 432).
  */
-extern double rk_beta(rk_state *state, double a, double b);
+RK_EXTERN double rk_beta(rk_state *state, double a, double b);
 
 /* Chi^2 distribution computed by transforming a gamma variate (it being a
  * special case Gamma(df/2, 2)). */
-extern double rk_chisquare(rk_state *state, double df);
+RK_EXTERN double rk_chisquare(rk_state *state, double df);
 
 /* Noncentral Chi^2 distribution computed by modifying a Chi^2 variate. */
-extern double rk_noncentral_chisquare(rk_state *state, double df, double nonc);
+RK_EXTERN double rk_noncentral_chisquare(rk_state *state, double df, double nonc);
 
 /* F distribution computed by taking the ratio of two Chi^2 variates. */
-extern double rk_f(rk_state *state, double dfnum, double dfden);
+RK_EXTERN double rk_f(rk_state *state, double dfnum, double dfden);
 
 /* Noncentral F distribution computed by taking the ratio of a noncentral Chi^2
  * and a Chi^2 variate. */
-extern double rk_noncentral_f(rk_state *state, double dfnum, double dfden, double nonc);
+RK_EXTERN double rk_noncentral_f(rk_state *state, double dfnum, double dfden, double nonc);
 
 /* Binomial distribution with n Bernoulli trials with success probability p.
  * When n*p <= 30, the "Second waiting time method" given by (Devroye p. 525) is
  * used. Otherwise, the BTPE algorithm of (Kachitvichyanukul and Schmeiser 1988)
  * is used. */
-extern long rk_binomial(rk_state *state, long n, double p);
+RK_EXTERN long rk_binomial(rk_state *state, long n, double p);
 
 /* Binomial distribution using BTPE. */
-extern long rk_binomial_btpe(rk_state *state, long n, double p);
+RK_EXTERN long rk_binomial_btpe(rk_state *state, long n, double p);
 
 /* Binomial distribution using inversion and chop-down */
-extern long rk_binomial_inversion(rk_state *state, long n, double p);
+RK_EXTERN long rk_binomial_inversion(rk_state *state, long n, double p);
 
 /* Negative binomial distribution computed by generating a Gamma(n, (1-p)/p)
  * variate Y and returning a Poisson(Y) variate (Devroye p. 543). */
-extern long rk_negative_binomial(rk_state *state, double n, double p);
+RK_EXTERN long rk_negative_binomial(rk_state *state, double n, double p);
 
 /* Poisson distribution with mean=lam.
  * When lam < 10, a basic algorithm using repeated multiplications of uniform
  * variates is used (Devroye p. 504).
  * When lam >= 10, algorithm PTRS from (Hoermann 1992) is used.
  */
-extern long rk_poisson(rk_state *state, double lam);
+RK_EXTERN long rk_poisson(rk_state *state, double lam);
 
 /* Poisson distribution computed by repeated multiplication of uniform variates.
  */
-extern long rk_poisson_mult(rk_state *state, double lam);
+RK_EXTERN long rk_poisson_mult(rk_state *state, double lam);
 
 /* Poisson distribution computer by the PTRS algorithm. */
-extern long rk_poisson_ptrs(rk_state *state, double lam);
+RK_EXTERN long rk_poisson_ptrs(rk_state *state, double lam);
 
 /* Standard Cauchy distribution computed by dividing standard gaussians 
  * (Devroye p. 451). */
-extern double rk_standard_cauchy(rk_state *state);
+RK_EXTERN double rk_standard_cauchy(rk_state *state);
 
 /* Standard t-distribution with df degrees of freedom (Devroye p. 445 as
  * corrected in the Errata). */
-extern double rk_standard_t(rk_state *state, double df);
+RK_EXTERN double rk_standard_t(rk_state *state, double df);
 
 /* von Mises circular distribution with center mu and shape kappa on [-pi,pi]
  * (Devroye p. 476 as corrected in the Errata). */
-extern double rk_vonmises(rk_state *state, double mu, double kappa);
+RK_EXTERN double rk_vonmises(rk_state *state, double mu, double kappa);
 
 /* Pareto distribution via inversion (Devroye p. 262) */
-extern double rk_pareto(rk_state *state, double a);
+RK_EXTERN double rk_pareto(rk_state *state, double a);
 
 /* Weibull distribution via inversion (Devroye p. 262) */
-extern double rk_weibull(rk_state *state, double a);
+RK_EXTERN double rk_weibull(rk_state *state, double a);
 
 /* Power distribution via inversion (Devroye p. 262) */
-extern double rk_power(rk_state *state, double a);
+RK_EXTERN double rk_power(rk_state *state, double a);
 
 /* Laplace distribution */
-extern double rk_laplace(rk_state *state, double loc, double scale);
+RK_EXTERN double rk_laplace(rk_state *state, double loc, double scale);
 
 /* Gumbel distribution */
-extern double rk_gumbel(rk_state *state, double loc, double scale);
+RK_EXTERN double rk_gumbel(rk_state *state, double loc, double scale);
 
 /* Logistic distribution */
-extern double rk_logistic(rk_state *state, double loc, double scale);
+RK_EXTERN double rk_logistic(rk_state *state, double loc, double scale);
 
 /* Log-normal distribution */
-extern double rk_lognormal(rk_state *state, double mean, double sigma);
+RK_EXTERN double rk_lognormal(rk_state *state, double mean, double sigma);
 
 /* Rayleigh distribution */
-extern double rk_rayleigh(rk_state *state, double mode);
+RK_EXTERN double rk_rayleigh(rk_state *state, double mode);
 
 /* Wald distribution */
-extern double rk_wald(rk_state *state, double mean, double scale);
+RK_EXTERN double rk_wald(rk_state *state, double mean, double scale);
 
 /* Zipf distribution */
-extern long rk_zipf(rk_state *state, double a);
+RK_EXTERN long rk_zipf(rk_state *state, double a);
 
 /* Geometric distribution */
-extern long rk_geometric(rk_state *state, double p);
-extern long rk_geometric_search(rk_state *state, double p);
-extern long rk_geometric_inversion(rk_state *state, double p);
+RK_EXTERN long rk_geometric(rk_state *state, double p);
+RK_EXTERN long rk_geometric_search(rk_state *state, double p);
+RK_EXTERN long rk_geometric_inversion(rk_state *state, double p);
 
 /* Hypergeometric distribution */
-extern long rk_hypergeometric(rk_state *state, long good, long bad, long sample);
-extern long rk_hypergeometric_hyp(rk_state *state, long good, long bad, long sample);
-extern long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sample);
+RK_EXTERN long rk_hypergeometric(rk_state *state, long good, long bad, long sample);
+RK_EXTERN long rk_hypergeometric_hyp(rk_state *state, long good, long bad, long sample);
+RK_EXTERN long rk_hypergeometric_hrua(rk_state *state, long good, long bad, long sample);
 
 /* Triangular distribution */
-extern double rk_triangular(rk_state *state, double left, double mode, double right);
+RK_EXTERN double rk_triangular(rk_state *state, double left, double mode, double right);
 
 /* Logarithmic series distribution */
-extern long rk_logseries(rk_state *state, double p);
+RK_EXTERN long rk_logseries(rk_state *state, double p);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif /* _RK_DISTR_ */
