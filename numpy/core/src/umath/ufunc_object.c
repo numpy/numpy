@@ -4870,7 +4870,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     PyArrayMapIterObject *iter = NULL;
     PyArrayIterObject *iter2 = NULL;
     PyArray_Descr *iter_descr = NULL;
-    PyArray_Descr *dtypes[3];
+    PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
+    PyArrayObject *operands[3] = {NULL, NULL, NULL};
     int needs_api;
     PyUFuncGenericFunction innerloop;
     void *innerloopdata;
@@ -4878,6 +4879,17 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     npy_intp count[1], stride[1];
     int ndim;
     int i;
+    int nop;
+
+    NpyIter *iter_buffer;
+    npy_uint32 op_flags[NPY_MAXARGS];
+    int buffersize;
+    int errormask = 0;
+    PyObject *errobj = NULL;    
+    npy_intp dims[1] = {1};    
+    
+    char **buffer_dataptr;
+    NpyIter_IterNextFunc *iternext;
 
     if (!PyArg_ParseTuple(args, "OO|O", &op1, &idx, &op2)) {
         return NULL;
@@ -4943,15 +4955,26 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
      * The output operand is set to the first input operand
      */
     dtypes[0] = PyArray_DESCR(op1_array);
+    operands[0] = op1_array;
     if (op2_array != NULL) {
         dtypes[1] = PyArray_DESCR(op2_array);
         dtypes[2] = dtypes[0];
+        operands[1] = op2_array;
+        operands[2] = op1_array;
+        nop = 3;
     }
     else {
         dtypes[1] = dtypes[0];
         dtypes[2] = NULL;
+        operands[1] = op1_array;
+        operands[2] = NULL;
+        nop = 2;
     }
 
+    if (ufunc->type_resolver(ufunc, NPY_DEFAULT_ASSIGN_CASTING,
+                            operands, NULL, dtypes) < 0) {
+        goto fail;
+    }
     if (ufunc->legacy_inner_loop_selector(ufunc, dtypes,
         &innerloop, &innerloopdata, &needs_api) < 0) {
         goto fail;
@@ -4959,7 +4982,70 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     count[0] = 1;
     stride[0] = 1;
- 
+
+    operands[0] = PyArray_NewFromDescr(&PyArray_Type,
+                                       PyArray_DESCR(op1_array),
+                                       1, dims, NULL, iter->dataptr,
+                                       NPY_ARRAY_WRITEABLE, NULL);
+    if (iter2 != NULL) {
+        operands[1] = PyArray_NewFromDescr(&PyArray_Type,
+                                           PyArray_DESCR(op2_array), 
+                                           1, dims, NULL,
+                                           PyArray_ITER_DATA(iter2),
+                                           NPY_ARRAY_WRITEABLE, NULL);
+        operands[2] = PyArray_NewFromDescr(&PyArray_Type,
+                                           PyArray_DESCR(op1_array),
+                                           1, dims, NULL,
+                                           iter->dataptr,
+                                           NPY_ARRAY_WRITEABLE, NULL);
+    }
+    else {
+        operands[1] = PyArray_NewFromDescr(&PyArray_Type,
+                                           PyArray_DESCR(op1_array),
+                                           1, dims, NULL,
+                                           iter->dataptr,
+                                           NPY_ARRAY_WRITEABLE, NULL);
+        operands[2] = NULL;
+    }
+
+    /* Set up the flags */
+    op_flags[0] = NPY_ITER_READONLY|
+                  NPY_ITER_ALIGNED;
+
+    if (iter2 != NULL) {
+        op_flags[1] = NPY_ITER_READONLY|
+                      NPY_ITER_ALIGNED;
+        op_flags[2] = NPY_ITER_WRITEONLY|
+                      NPY_ITER_ALIGNED|
+                      NPY_ITER_ALLOCATE|
+                      NPY_ITER_NO_BROADCAST|
+                      NPY_ITER_NO_SUBTYPE;
+    }
+    else {
+        op_flags[1] = NPY_ITER_WRITEONLY|
+                      NPY_ITER_ALIGNED|
+                      NPY_ITER_ALLOCATE|
+                      NPY_ITER_NO_BROADCAST|
+                      NPY_ITER_NO_SUBTYPE;
+    }
+
+    PyUFunc_GetPyValues(ufunc->name, &buffersize, &errormask, &errobj);
+
+    iter_buffer = NpyIter_AdvancedNew(nop, operands,
+                        NPY_ITER_EXTERNAL_LOOP|
+                        NPY_ITER_REFS_OK|
+                        NPY_ITER_ZEROSIZE_OK|
+                        NPY_ITER_BUFFERED|
+                        NPY_ITER_GROWINNER|
+                        NPY_ITER_DELAY_BUFALLOC,
+                        NPY_KEEPORDER, NPY_UNSAFE_CASTING,
+                        op_flags, dtypes,
+                        0, NULL, NULL, buffersize);
+
+    if (iter_buffer == NULL) {
+        goto fail;
+    }
+
     /*
      * Iterate over first and second operands and call ufunc
      * for each pair of inputs
@@ -4980,8 +5066,18 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             dataptr[1] = iter->dataptr;
             dataptr[2] = NULL;
         }
+        
+        iternext = NpyIter_GetIterNext(iter_buffer, NULL);
+        if (iternext == NULL) {
+            NpyIter_Deallocate(iter_buffer);
+            goto fail;
+        }
+        NpyIter_ResetBasePointers(iter_buffer, dataptr, NULL);
+        buffer_dataptr = NpyIter_GetDataPtrArray(iter_buffer);
 
-        innerloop(dataptr, count, stride, innerloopdata);
+        do {
+            innerloop(buffer_dataptr, count, stride, innerloopdata);
+        } while (iternext(iter_buffer));
 
         PyArray_MapIterNext(iter);
         if (iter2 != NULL) {
