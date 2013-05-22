@@ -16,9 +16,6 @@ After installation, tests can be run with:
 
 python -c 'import numpy; numpy.test()'
 
-Starting in NumPy 1.7, deprecation warnings have been set to 'raise' by
-default, so the -Wd command-line option is no longer necessary.
-
 The most current development version is always available from our
 git repository:
 
