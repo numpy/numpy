@@ -785,13 +785,13 @@ _descriptor_from_pep3118_format(char *s)
     Py_DECREF(_numpy_internal);
     if (descr == NULL) {
         PyErr_Format(PyExc_ValueError,
-                     "'%s' is not a valid PEP 3118 buffer format string", buf);
+                     "'%s' is not a valid PEP 3118 buffer format string", s);
         return NULL;
     }
     if (!PyArray_DescrCheck(descr)) {
         PyErr_Format(PyExc_RuntimeError,
                      "internal error: numpy.core._internal._dtype_from_pep3118 "
-                     "did not return a valid dtype, got %s", buf);
+                     "did not return a valid dtype, got %s", s);
         return NULL;
     }
     return (PyArray_Descr*)descr;
