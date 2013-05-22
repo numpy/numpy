@@ -16,7 +16,7 @@ from distutils.version import LooseVersion
 from numpy.distutils import log
 from numpy.distutils.exec_command import exec_command
 from numpy.distutils.misc_util import cyg2win32, is_sequence, mingw32, \
-                                      quote_args, msvc_on_amd64
+                                      quote_args
 from numpy.distutils.compat import get_exception
 
 
@@ -654,6 +654,3 @@ def split_quoted(s):
     return words
 ccompiler.split_quoted = split_quoted
 ##Fix distutils.util.split_quoted:
-
-# define DISTUTILS_USE_SDK when necessary to workaround distutils/msvccompiler.py bug
-msvc_on_amd64()
