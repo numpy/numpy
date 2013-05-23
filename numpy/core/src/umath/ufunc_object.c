@@ -4930,11 +4930,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
          * iterated over correctly
          */
         if ((iter->subspace != NULL) && (iter->consec)) {
-            if (iter->iteraxes[0] > 0) {
-                PyArray_MapIterSwapAxes(iter, &op2_array, 0);
-                if (op2_array == NULL) {
-                    goto fail;
-                }
+            PyArray_MapIterSwapAxes(iter, &op2_array, 0);
+            if (op2_array == NULL) {
+                goto fail;
             }
         }
 
