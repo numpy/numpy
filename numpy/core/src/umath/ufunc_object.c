@@ -4870,25 +4870,14 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     PyArrayMapIterObject *iter = NULL;
     PyArrayIterObject *iter2 = NULL;
     PyArray_Descr *iter_descr = NULL;
-    PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
-    PyArrayObject *operands[3] = {NULL, NULL, NULL};
+    PyArray_Descr *dtypes[3];
     int needs_api;
     PyUFuncGenericFunction innerloop;
     void *innerloopdata;
     char *dataptr[3];
     npy_intp count[1], stride[1];
-    npy_intp dims[1];
+    int ndim;
     int i;
-    int buffersize = 0;
-    int errormask = 0;
-    PyObject *errobj = NULL;
-    PyObject *arr_prep[NPY_MAXARGS];
-    PyObject *arr_prep_args;
-    
-    PyUFunc_GetPyValues(ufunc->name, &buffersize, &errormask, &errobj);
-    for (i = 0; i < ufunc->nin + ufunc->nout; ++i) {
-        arr_prep[i] = NULL;
-    } 
 
     if (!PyArg_ParseTuple(args, "OO|O", &op1, &idx, &op2)) {
         return NULL;
@@ -4949,24 +4938,20 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         }
     }
 
-    operands[0] = op1_array;
-    dtypes[0] = PyArray_DESCR(operands[0]);
+    /*
+     * Create dtypes array for either one or two input operands.
+     * The output operand is set to the first input operand
+     */
+    dtypes[0] = PyArray_DESCR(op1_array);
     if (op2_array != NULL) {
-        operands[1] = op2_array;
-        operands[2] = op1_array;
-        dtypes[1] = PyArray_DESCR(operands[1]);
-        dtypes[2] = PyArray_DESCR(operands[2]);
+        dtypes[1] = PyArray_DESCR(op2_array);
+        dtypes[2] = dtypes[0];
     }
     else {
-        operands[1] = op1_array;
-        dtypes[1] = PyArray_DESCR(operands[1]);
+        dtypes[1] = dtypes[0];
+        dtypes[2] = NULL;
     }
 
-    if (ufunc->type_resolver(ufunc, NPY_DEFAULT_ASSIGN_CASTING,
-                            operands, NULL, dtypes) < 0) {
-        goto fail;
-    }
-    
     if (ufunc->legacy_inner_loop_selector(ufunc, dtypes,
         &innerloop, &innerloopdata, &needs_api) < 0) {
         goto fail;
@@ -4980,41 +4965,23 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
      * for each pair of inputs
      */
     i = iter->size;
-    dims[0] = 1;
     while (i > 0)
     {
-        /* Set up operands for call to iterator_loop */
-        operands[0] = PyArray_NewFromDescr(&PyArray_Type,
-                                            PyArray_DESCR(op1_array),
-                                            1, dims, NULL, iter->dataptr,
-                                            NPY_ARRAY_WRITEABLE, NULL);
+        /*
+         * Set up data pointers for either one or two input operands.
+         * The output data pointer points to the first operand data.
+         */
+        dataptr[0] = iter->dataptr;
         if (iter2 != NULL) {
-            operands[1] = PyArray_NewFromDescr(&PyArray_Type,
-                                                PyArray_DESCR(op2_array), 
-                                                1, dims, NULL,
-                                                PyArray_ITER_DATA(iter2),
-                                                NPY_ARRAY_WRITEABLE, NULL);
-            operands[2] = PyArray_NewFromDescr(&PyArray_Type,
-                                                PyArray_DESCR(op1_array),
-                                                1, dims, NULL,
-                                                iter->dataptr,
-                                                NPY_ARRAY_WRITEABLE, NULL);
+            dataptr[1] = PyArray_ITER_DATA(iter2);
+            dataptr[2] = iter->dataptr;
         }
         else {
-            operands[1] = PyArray_NewFromDescr(&PyArray_Type,
-                                                PyArray_DESCR(op1_array),
-                                                1, dims, NULL,
-                                                iter->dataptr,
-                                                NPY_ARRAY_WRITEABLE, NULL);
-            operands[2] = NULL;
+            dataptr[1] = iter->dataptr;
+            dataptr[2] = NULL;
         }
 
-        /* Call iterator_loop which will call ufunc and handle any buffering */
-        if (iterator_loop(ufunc, operands, dtypes, NPY_KEEPORDER,
-                        buffersize, arr_prep, arr_prep_args,
-                        innerloop, innerloopdata) < 0) {
-            goto fail;
-        }
+        innerloop(dataptr, count, stride, innerloopdata);
 
         PyArray_MapIterNext(iter);
         if (iter2 != NULL) {
