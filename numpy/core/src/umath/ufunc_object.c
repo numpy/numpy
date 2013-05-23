@@ -4883,13 +4883,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     int nop;
     
     NpyIter *iter_buffer;
-    NpyIter_IterNextFunc *iternext;
     npy_uint32 op_flags[NPY_MAXARGS];
     int buffersize;
     int errormask = 0;
     PyObject *errobj = NULL;    
-    char *dataptr[3];
-    char **buffer_dataptr;
 
     if (ufunc->nin > 2) {
         PyErr_SetString(PyExc_ValueError,
@@ -5071,6 +5068,10 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     i = iter->size;
     while (i > 0)
     {
+        NpyIter_IterNextFunc *iternext;
+        char *dataptr[3];
+        char **buffer_dataptr;
+
         /*
          * Set up data pointers for either one or two input operands.
          * The output data pointer points to the first operand data.
