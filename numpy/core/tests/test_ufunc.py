@@ -978,5 +978,11 @@ class TestUfunc(TestCase):
         np.equal.at(a, index, [0, 2, 4, 6, 8])
         assert_equal(a, [1, 1, 1, 3, 1, 5, 1, 7, 1, 9])
 
+        # Test unary operator
+        a = np.arange(10, dtype='u4')
+        np.invert.at(a, [2, 5, 2])
+        assert_equal(a, [0, 1, 2, 3, 4, 5 ^ 0xffffffff, 6, 7, 8, 9])
+
+
 if __name__ == "__main__":
     run_module_suite()

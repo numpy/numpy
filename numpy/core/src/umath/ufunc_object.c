@@ -4869,27 +4869,33 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     PyArrayObject *op2_array = NULL;
     PyArrayMapIterObject *iter = NULL;
     PyArrayIterObject *iter2 = NULL;
-    PyArray_Descr *iter_descr = NULL;
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
     PyArrayObject *operands[3] = {NULL, NULL, NULL};
+    npy_intp dims[1] = {1};    
+
     int needs_api;
+    NPY_BEGIN_THREADS_DEF;
+
     PyUFuncGenericFunction innerloop;
     void *innerloopdata;
-    char *dataptr[3];
     npy_intp count[1], stride[1];
-    int ndim;
     int i;
     int nop;
-
+    
     NpyIter *iter_buffer;
+    NpyIter_IterNextFunc *iternext;
     npy_uint32 op_flags[NPY_MAXARGS];
     int buffersize;
     int errormask = 0;
     PyObject *errobj = NULL;    
-    npy_intp dims[1] = {1};    
-    
+    char *dataptr[3];
     char **buffer_dataptr;
-    NpyIter_IterNextFunc *iternext;
+
+    if (ufunc->nin > 2) {
+        PyErr_SetString(PyExc_ValueError,
+            "Only unary and binary ufuncs supported at this time");
+        return NULL;
+    }
 
     if (!PyArg_ParseTuple(args, "OO|O", &op1, &idx, &op2)) {
         return NULL;
@@ -5031,6 +5037,16 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
     PyUFunc_GetPyValues(ufunc->name, &buffersize, &errormask, &errobj);
 
+    /*
+     * Create NpyIter object to "iterate" over single element of each input
+     * operand. This is an easy way to reuse the NpyIter logic for dealing
+     * with certain cases like casting operands to correct dtype. On each
+     * iteration over the MapIterArray object created above, we'll take the
+     * current data pointers from that and reset this NpyIter object using
+     * those data pointers, and then trigger a buffer copy. The buffer data
+     * pointers from the NpyIter object will then be passed to the inner loop
+     * function.
+     */
     iter_buffer = NpyIter_AdvancedNew(nop, operands,
                         NPY_ITER_EXTERNAL_LOOP|
                         NPY_ITER_REFS_OK|
@@ -5045,6 +5061,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     if (iter_buffer == NULL) {
         goto fail;
     }
+    
+    needs_api = NpyIter_IterationNeedsAPI(iter_buffer);
 
     /*
      * Iterate over first and second operands and call ufunc
@@ -5072,12 +5090,27 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             NpyIter_Deallocate(iter_buffer);
             goto fail;
         }
+
+        /* Reset NpyIter data pointers which will trigger a buffer copy */
         NpyIter_ResetBasePointers(iter_buffer, dataptr, NULL);
         buffer_dataptr = NpyIter_GetDataPtrArray(iter_buffer);
 
+        if (!needs_api) {
+            NPY_BEGIN_THREADS;
+        }
+
+        /* 
+         * Even though we'll never loop more than once, call to iternext
+         * triggers copy from buffer back to output array after innerloop
+         * puts result in buffer.
+         */
         do {
             innerloop(buffer_dataptr, count, stride, innerloopdata);
         } while (iternext(iter_buffer));
+
+        if (!needs_api) {
+            NPY_END_THREADS;
+        }
 
         PyArray_MapIterNext(iter);
         if (iter2 != NULL) {
