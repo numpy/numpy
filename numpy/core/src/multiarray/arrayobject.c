@@ -1264,7 +1264,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
 {
     PyArrayObject *array_other;
     PyObject *result = NULL;
-    PyArray_Descr *dtype = NULL;
 
     switch (cmp_op) {
     case Py_LT:
@@ -1292,13 +1291,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
          */
 
         if (PyArray_TYPE(self) == NPY_VOID) {
-            /* Make sure 'other' is an array */
-            if (PyArray_TYPE(self) == NPY_OBJECT) {
-                dtype = PyArray_DTYPE(self);
-                Py_INCREF(dtype);
-            }
-
-            array_other = (PyArrayObject *)PyArray_FromAny(other, dtype, 0, 0, 0,
+            array_other = (PyArrayObject *)PyArray_FromAny(other, NULL, 0, 0, 0,
                                                            NULL);
             /*
              * If not successful, indicate that the items cannot be compared
@@ -1355,12 +1348,7 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
          */
 
         if (PyArray_TYPE(self) == NPY_VOID) {
-            /* Make sure 'other' is an array */
-            if (PyArray_TYPE(self) == NPY_OBJECT) {
-                dtype = PyArray_DTYPE(self);
-                Py_INCREF(dtype);
-            }
-            array_other = (PyArrayObject *)PyArray_FromAny(other, dtype, 0, 0, 0,
+            array_other = (PyArrayObject *)PyArray_FromAny(other, NULL, 0, 0, 0,
                                                            NULL);
             /*
              * If not successful, indicate that the items cannot be compared
