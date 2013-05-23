@@ -5051,7 +5051,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
                         NPY_ITER_DELAY_BUFALLOC,
                         NPY_KEEPORDER, NPY_UNSAFE_CASTING,
                         op_flags, dtypes,
-                        0, NULL, NULL, buffersize);
+                        -1, NULL, NULL, buffersize);
 
     if (iter_buffer == NULL) {
         goto fail;
