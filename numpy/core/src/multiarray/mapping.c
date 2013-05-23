@@ -1790,16 +1790,6 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
         goto fail;
     }
 
-    /* Set up default iteraxes array values */
-    n = PyArray_NDIM(arr);
-    for (i = 0; i < n; i++) {
-        mit->iteraxes[i] = i;
-    }
-    /* no subspace iteration needed.  Finish up and Return */
-    if (subnd == 0) {
-        goto finish;
-    }
-
     /*
      * all indexing arrays have been converted to 0
      * therefore we can extract the subspace with a simple
