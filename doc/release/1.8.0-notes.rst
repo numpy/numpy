@@ -98,6 +98,10 @@ a (potentially expensive) array conversion of ``<non-array-subclass>`` had been
 attempted. (`bug <https://github.com/numpy/numpy/issues/3375>`_, `pull request
 <https://github.com/numpy/numpy/pull/3501>`_)
 
+Function `median` used with `overwrite_input` only partially sorts array
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If `median` is used with `overwrite_input` option the input array will now only
+be partially sorted instead of fully sorted.
 
 New Features
 ============
@@ -214,6 +218,13 @@ In order to use the improved functions the SSE2 instruction set must be enabled
 at compile time. It is enabled by default on x86_64 systems. On x86_32 with a
 capable CPU it must be enabled by passing the appropriate flag to the CFLAGS
 build variable (-msse2 with gcc).
+
+Performance improvements to `median`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`median` is now implemented in terms of `partition` instead of `sort` which
+reduces its time complexity from O(n log(n)) to O(n).
+If used with the `overwrite_input` option the array will now only be partially
+sorted instead of fully sorted.
 
 Changes
 =======
