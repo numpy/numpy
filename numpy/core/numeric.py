@@ -249,7 +249,7 @@ def filled(shape, fill_value, dtype=None, order='C'):
         Fill value.
     dtype : data-type, optional
         The desired data-type for the array, e.g., `numpy.int8`.  Default is
-        `numpy.float64`.
+        is chosen as `np.array(fill_value).dtype`.
     order : {'C', 'F'}, optional
         Whether to store multidimensional data in C- or Fortran-contiguous
         (row- or column-wise) order in memory.
