@@ -10,7 +10,7 @@ NPY_NO_EXPORT int _days_per_month_table[2][12];
 #endif
 
 NPY_NO_EXPORT void
-numpy_pydatetime_import();
+numpy_pydatetime_import(void);
 
 /*
  * Returns 1 if the given year is a leap year, 0 otherwise.

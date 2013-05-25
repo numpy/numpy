@@ -51,6 +51,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "item_selection.h"
 #include "shape.h"
 #include "ctors.h"
+#include "array_assign.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -338,7 +339,7 @@ PyArray_ConcatenateArrays(int narrays, PyArrayObject **arrays, int axis)
         axis += ndim;
     }
 
-    if (ndim == 1 & axis != 0) {
+    if (ndim == 1 && axis != 0) {
         char msg[] = "axis != 0 for ndim == 1; this will raise an error in "
                      "future versions of numpy";
         if (DEPRECATE(msg) < 0) {

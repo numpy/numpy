@@ -141,7 +141,7 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
 {
     PyArray_DatetimeMetaData *meta;
     int flex_type_num;
-    PyArrayObject *arr = NULL, *ret;
+    PyArrayObject *arr = NULL;
     PyArray_Descr *dtype = NULL;
     int ndim = 0;
     npy_intp dims[NPY_MAXDIMS];
