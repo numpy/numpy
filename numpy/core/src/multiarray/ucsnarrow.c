@@ -13,6 +13,7 @@
 #include "npy_config.h"
 
 #include "npy_pycompat.h"
+#include "ctors.h"
 
 /*
  * Functions only needed on narrow builds of Python for converting back and

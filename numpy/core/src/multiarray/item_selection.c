@@ -1319,7 +1319,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
         }
         if (!PyArray_DESCR(mps[i])->f->argsort[NPY_MERGESORT]) {
             PyErr_Format(PyExc_TypeError,
-                         "merge sort not available for item %d", i);
+                         "merge sort not available for item %zd", i);
             goto fail;
         }
         if (!object

@@ -49,6 +49,7 @@ maintainer email:  oliphant.travis@ieee.org
 #include "getset.h"
 #include "sequence.h"
 #include "buffer.h"
+#include "array_assign.h"
 
 /*NUMPY_API
   Compute the size of an array (in number of items)
@@ -1464,8 +1465,6 @@ NPY_NO_EXPORT npy_bool
 PyArray_CheckStrides(int elsize, int nd, npy_intp numbytes, npy_intp offset,
                      npy_intp *dims, npy_intp *newstrides)
 {
-    int i;
-    npy_intp max_axis_offset;
     npy_intp begin, end;
     npy_intp lower_offset;
     npy_intp upper_offset;

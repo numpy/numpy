@@ -375,7 +375,7 @@ offset_ptr(void* ptr, ptrdiff_t offset)
 }
 
 static inline int
-get_fp_invalid_and_clear()
+get_fp_invalid_and_clear(void)
 {
     int status;
     status = PyUFunc_getfperr();
@@ -434,7 +434,7 @@ static DOUBLECOMPLEX_t z_minus_one;
 static DOUBLECOMPLEX_t z_ninf;
 static DOUBLECOMPLEX_t z_nan;
 
-static void init_constants()
+static void init_constants(void)
 {
     /*
        this is needed as NPY_INFINITY and NPY_NAN macros
@@ -1177,8 +1177,8 @@ matrix_desc_init(matrix_desc *mtxd,
     mtxd->buff = NULL;
 }
 
-static inline npy_int8 *
-matrix_desc_assign_buff(matrix_desc* mtxd, npy_int8 *p)
+static inline npy_uint8 *
+matrix_desc_assign_buff(matrix_desc* mtxd, npy_uint8 *p)
 {
     if (mtxd->need_buff) {
         mtxd->buff = p;

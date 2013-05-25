@@ -14,6 +14,7 @@
 #include "number.h"
 
 #include "calculation.h"
+#include "array_assign.h"
 
 static double
 power_of_ten(int n)

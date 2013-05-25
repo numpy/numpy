@@ -1381,7 +1381,7 @@ NONZERO_NAME(@name@_)(PyObject *a)
 
 
 static int
-emit_complexwarning()
+emit_complexwarning(void)
 {
     static PyObject *cls = NULL;
     if (cls == NULL) {

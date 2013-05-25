@@ -727,7 +727,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
                 int *out_subok,
                 PyArrayObject **out_wheremask)
 {
-    int i, nargs, nin = ufunc->nin, nout = ufunc->nout;
+    int i, nargs, nin = ufunc->nin;
     PyObject *obj, *context;
     PyObject *str_key_obj = NULL;
     char *ufunc_name;
@@ -1743,7 +1743,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     /* The strides which get passed to the inner loop */
     npy_intp *inner_strides = NULL;
 
-    npy_intp *inner_strides_tmp, *ax_strides_tmp[NPY_MAXDIMS];
     /* The sizes of the core dimensions (# entries is ufunc->core_num_dim_ix) */
     npy_intp *core_dim_sizes = inner_dimensions + 1;
     int core_dim_ixs_size;
@@ -1875,7 +1874,7 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
                     PyErr_Format(PyExc_ValueError,
                             "%s: Operand %d has a mismatch in its core "
                             "dimension %d, with gufunc signature %s "
-                            "(size %d is different from %d)",
+                            "(size %zd is different from %zd)",
                             ufunc_name, i, idim, ufunc->core_signature,
                             op_dim_size, core_dim_sizes[core_dim_index]);
                     retval = -1;
@@ -2081,7 +2080,6 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
     /* Copy the strides after the first nop */
     idim = nop;
     for (i = 0; i < nop; ++i) {
-        int dim_offset = ufunc->core_offsets[i];
         int num_dims = ufunc->core_num_dims[i];
         int core_start_dim = PyArray_NDIM(op[i]) - num_dims;
         /*
