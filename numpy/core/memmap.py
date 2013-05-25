@@ -261,8 +261,13 @@ class memmap(ndarray):
 
         if isinstance(filename, basestring):
             self.filename = os.path.abspath(filename)
-        elif hasattr(filename, "name"):
+        # py3 returns int for TemporaryFile().name
+        elif (hasattr(filename, "name") and
+              isinstance(filename.name, basestring)):
             self.filename = os.path.abspath(filename.name)
+        # same as memmap copies (e.g. memmap + 1)
+        else:
+            self.filename = None
 
         if own_file:
             fid.close()
