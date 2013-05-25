@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
-from tempfile import NamedTemporaryFile, mktemp
+from tempfile import NamedTemporaryFile, TemporaryFile, mktemp
 import os
 
 from numpy import memmap
@@ -39,6 +39,11 @@ class TestMemmap(TestCase):
         fp[:] = self.data[:]
         del fp
         os.unlink(tmpname)
+
+    def test_unnamed_file(self):
+        with TemporaryFile() as f:
+            fp = memmap(f, dtype=self.dtype, shape=self.shape)
+            del fp
 
     def test_attributes(self):
         offset = 1
