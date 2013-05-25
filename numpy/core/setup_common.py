@@ -97,6 +97,13 @@ OPTIONAL_STDFUNCS = ["expm1", "log1p", "acosh", "asinh", "atanh",
         "rint", "trunc", "exp2", "log2", "hypot", "atan2", "pow",
         "copysign", "nextafter"]
 
+
+OPTIONAL_HEADERS = [
+# sse headers only enabled automatically on amd64/x32 builds
+                "xmmintrin.h", # SSE
+                "emmintrin.h", # SSE2
+]
+
 # optional gcc compiler builtins and their call arguments
 # call arguments are required as the compiler will do strict signature checking
 OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),

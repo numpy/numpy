@@ -17,12 +17,13 @@
 #include <numpy/arrayobject.h>
 #include <numpy/halffloat.h>
 #include <npy_pycompat.h>
+#include <npy_config.h>
 
 #include <ctype.h>
 
 #include "convert.h"
 
-#ifdef __SSE__
+#ifdef HAVE_XMMINTRIN_H
 #define EINSUM_USE_SSE1 1
 #else
 #define EINSUM_USE_SSE1 0
@@ -31,7 +32,7 @@
 /*
  * TODO: Only some SSE2 for float64 is implemented.
  */
-#ifdef __SSE2__
+#ifdef HAVE_EMMINTRIN_H
 #define EINSUM_USE_SSE2 1
 #else
 #define EINSUM_USE_SSE2 0

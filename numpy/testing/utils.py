@@ -10,6 +10,7 @@ import re
 import operator
 import warnings
 from .nosetester import import_nose
+from numpy.core import float32, empty, arange
 
 if sys.version_info[0] >= 3:
     from io import StringIO
@@ -1523,3 +1524,69 @@ def assert_no_warnings(func, *args, **kw):
     finally:
         ctx.__exit__()
     return result
+
+
+def gen_alignment_data(dtype=float32, type='binary', max_size=24):
+    """
+    generator producing data with different alignment and offsets
+    to test simd vectorization
+
+    Parameters
+    ----------
+    dtype : dtype
+        data type to produce
+    type : string
+        'unary': create data for unary operations, creates one input
+                 and output array
+        'binary': create data for unary operations, creates two input
+                 and output array
+    max_size : integer
+        maximum size of data to produce
+
+    Returns
+    -------
+    if type is 'unary' yields one output, one input array and a message
+    containing information on the data
+    if type is 'binary' yields one output array, two input array and a message
+    containing information on the data
+
+    """
+    ufmt = 'unary offset=(%d, %d), size=%d, dtype=%r, %s'
+    bfmt = 'binary offset=(%d, %d, %d), size=%d, dtype=%r, %s'
+    for o in range(3):
+        for s in range(o + 2, max(o + 3, max_size)):
+            if type == 'unary':
+                inp = lambda : arange(s, dtype=dtype)[o:]
+                out = empty((s,), dtype=dtype)[o:]
+                yield out, inp(), ufmt % (o, o, s, dtype, 'out of place')
+                yield inp(), inp(), ufmt % (o, o, s, dtype, 'in place')
+                yield out[1:], inp()[:-1], ufmt % \
+                    (o + 1, o, s - 1, dtype, 'out of place')
+                yield out[:-1], inp()[1:], ufmt % \
+                    (o, o + 1, s - 1, dtype, 'out of place')
+                yield inp()[:-1], inp()[1:], ufmt % \
+                    (o, o + 1, s - 1, dtype, 'aliased')
+                yield inp()[1:], inp()[:-1], ufmt % \
+                    (o + 1, o, s - 1, dtype, 'aliased')
+            if type == 'binary':
+                inp1 = lambda :arange(s, dtype=dtype)[o:]
+                inp2 = lambda :arange(s, dtype=dtype)[o:]
+                out = empty((s,), dtype=dtype)[o:]
+                yield out, inp1(), inp2(),  bfmt % \
+                    (o, o, o, s, dtype, 'out of place')
+                yield inp1(), inp1(), inp2(), bfmt % \
+                    (o, o, o, s, dtype, 'in place1')
+                yield inp2(), inp1(), inp2(), bfmt % \
+                    (o, o, o, s, dtype, 'in place2')
+                yield out[1:], inp1()[:-1], inp2()[:-1], bfmt % \
+                    (o + 1, o, o, s - 1, dtype, 'out of place')
+                yield out[-1:], inp1()[1:], inp2()[:-1], bfmt % \
+                    (o, o + 1, o, s - 1, dtype, 'out of place')
+                yield out[-1:], inp1()[:-1], inp2()[1:], bfmt % \
+                    (o, o, o + 1, s - 1, dtype, 'out of place')
+                yield inp1()[1:], inp1()[:-1], inp2()[:-1], bfmt % \
+                    (o + 1, o, o, s - 1, dtype, 'aliased')
+                yield inp1()[-1:], inp1()[1:], inp2()[:-1], bfmt % \
+                    (o, o + 1, o, s - 1, dtype, 'aliased')
+                yield inp1()[-1:], inp1()[:-1], inp2()[1:], bfmt % \
+                    (o, o, o + 1, s - 1, dtype, 'aliased')

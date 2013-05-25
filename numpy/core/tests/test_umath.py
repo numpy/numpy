@@ -4,6 +4,7 @@ import sys
 import platform
 
 from numpy.testing import *
+from numpy.testing.utils import gen_alignment_data
 import numpy.core.umath as ncu
 import numpy as np
 
@@ -99,6 +100,21 @@ class TestPower(TestCase):
         assert_equal(y, [1., 4., 9.])
         assert_almost_equal(x**(-1), [1., 0.5, 1./3])
         assert_almost_equal(x**(0.5), [1., ncu.sqrt(2), ncu.sqrt(3)])
+
+        for out, inp, msg in gen_alignment_data(dtype=np.float32,
+                                                type='unary'):
+            exp = [ncu.sqrt(i) for i in inp]
+            assert_almost_equal(inp**(0.5), exp, err_msg=msg)
+            np.sqrt(inp, out=out)
+            assert_equal(out, exp, err_msg=msg)
+
+        for out, inp, msg in gen_alignment_data(dtype=np.float64,
+                                                type='unary'):
+            exp = [ncu.sqrt(i) for i in inp]
+            assert_almost_equal(inp**(0.5), exp, err_msg=msg)
+            np.sqrt(inp, out=out)
+            assert_equal(out, exp, err_msg=msg)
+
 
     def test_power_complex(self):
         x = np.array([1+2j, 2+3j, 3+4j])
