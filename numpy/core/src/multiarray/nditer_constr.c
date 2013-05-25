@@ -1027,7 +1027,6 @@ npyiter_prepare_one_operand(PyArrayObject **op,
 
 
     if (PyArray_Check(*op)) {
-        npy_uint32 tmp;
 
         if ((*op_itflags) & NPY_OP_ITFLAG_WRITE
             && PyArray_FailUnlessWriteable(*op, "operand array with iterator "

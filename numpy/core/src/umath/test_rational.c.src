@@ -1138,7 +1138,6 @@ PyMODINIT_FUNC inittest_rational(void) {
     PyObject* numpy_str;
     PyObject* numpy;
     int npy_rational;
-    PyObject* gufunc;
 
     import_array();
     if (PyErr_Occurred()) {
