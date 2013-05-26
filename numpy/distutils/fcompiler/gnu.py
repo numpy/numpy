@@ -41,7 +41,7 @@ class GnuFCompiler(FCompiler):
         m = re.match(r'GNU Fortran\s+95.*?([0-9-.]+)', version_string)
         if m:
             return ('gfortran', m.group(1))
-        m = re.match(r'GNU Fortran.*?([0-9-.]+)', version_string)
+        m = re.match(r'GNU Fortran.*?\-?([0-9-.]+)', version_string)
         if m:
             v = m.group(1)
             if v.startswith('0') or v.startswith('2') or v.startswith('3'):
