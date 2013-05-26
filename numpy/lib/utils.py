@@ -250,12 +250,11 @@ def byte_bounds(a):
     a_data = ai['data'][0]
     astrides = ai['strides']
     ashape = ai['shape']
-    nd_a = len(ashape)
     bytes_a = int(ai['typestr'][2:])
 
     a_low = a_high = a_data
     if astrides is None: # contiguous case
-        a_high += product(ashape, dtype=int)*bytes_a
+        a_high += a.size * bytes_a
     else:
         for shape, stride in zip(ashape, astrides):
             if stride < 0:
