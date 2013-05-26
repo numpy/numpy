@@ -315,6 +315,21 @@ class TestTile(TestCase):
                 assert_equal(large, klarge)
 
 
+class TestMayShareMemory(TestCase):
+    def test_basic(self):
+        d = ones((50, 60))
+        d2 = ones((30, 60, 6))
+        self.assertTrue(may_share_memory(d, d))
+        self.assertTrue(may_share_memory(d, d[::-1]))
+        self.assertTrue(may_share_memory(d, d[::2]))
+        self.assertTrue(may_share_memory(d, d[1:, ::-1]))
+
+        self.assertFalse(may_share_memory(d[::-1], d2))
+        self.assertFalse(may_share_memory(d[::2], d2))
+        self.assertFalse(may_share_memory(d[1:, ::-1], d2))
+        self.assertTrue(may_share_memory(d2[1:, ::-1], d2))
+
+
 # Utility
 def compare_results(res,desired):
     for i in range(len(desired)):
