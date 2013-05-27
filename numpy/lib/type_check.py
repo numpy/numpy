@@ -451,7 +451,8 @@ def asscalar(a):
     Returns
     -------
     out : scalar
-        Scalar representation of `a`. The input data type is preserved.
+        Scalar representation of `a`. The output data type is the same type
+        returned by the input's `item` method.
 
     Examples
     --------
