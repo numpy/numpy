@@ -47,7 +47,7 @@ class TestRegression(TestCase):
         assert_array_equal(a, b)
 
     def test_randint_range(self) :
-        """Test for ticket #1690"""
+        # Test for ticket #1690
         lmax = np.iinfo('l').max
         lmin = np.iinfo('l').min
         try:
