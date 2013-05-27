@@ -1,7 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import TestCase, run_module_suite, assert_,\
-        assert_array_equal
+from numpy.testing import (TestCase, run_module_suite, assert_,
+                           assert_array_equal)
 from numpy import random
 from numpy.compat import long
 import numpy as np
@@ -15,15 +15,15 @@ class TestRegression(TestCase):
         Regression test for ticket #986.
         """
         for mu in np.linspace(-7., 7., 5):
-            r = random.mtrand.vonmises(mu,1,50)
+            r = random.mtrand.vonmises(mu, 1, 50)
             assert_(np.all(r > -np.pi) and np.all(r <= np.pi))
 
-    def test_hypergeometric_range(self) :
+    def test_hypergeometric_range(self):
         """Test for ticket #921"""
         assert_(np.all(np.random.hypergeometric(3, 18, 11, size=10) < 4))
         assert_(np.all(np.random.hypergeometric(18, 3, 11, size=10) > 0))
 
-    def test_logseries_convergence(self) :
+    def test_logseries_convergence(self):
         """Test for ticket #923"""
         N = 1000
         np.random.seed(0)
@@ -75,6 +75,17 @@ class TestRegression(TestCase):
             m.seed(4321)
             # If m.state is not honored, the result will change
             assert_array_equal(m.choice(10, size=10, p=np.ones(10.)/10), res)
+
+    def test_multivariate_normal_size_types(self):
+        """Test for multivariate_normal issue with 'size' argument.
+
+        Check that the multivariate_normal size argument can be a
+        numpy integer.
+
+        """
+        np.random.multivariate_normal([0], [[0]], size=1)
+        np.random.multivariate_normal([0], [[0]], size=np.int_(1))
+        np.random.multivariate_normal([0], [[0]], size=np.int64(1))
 
 if __name__ == "__main__":
     run_module_suite()

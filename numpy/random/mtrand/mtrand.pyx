@@ -4067,7 +4067,7 @@ cdef class RandomState:
         cov : 2-D array_like, of shape (N, N)
             Covariance matrix of the distribution.  Must be symmetric and
             positive semi-definite for "physically meaningful" results.
-        size : tuple of ints, optional
+        size : int or tuple of ints, optional
             Given a shape of, for example, ``(m,n,k)``, ``m*n*k`` samples are
             generated, and packed in an `m`-by-`n`-by-`k` arrangement.  Because
             each sample is `N`-dimensional, the output shape is ``(m,n,k,N)``.
@@ -4152,7 +4152,7 @@ cdef class RandomState:
         if mean.shape[0] != cov.shape[0]:
                raise ValueError("mean and cov must have same length")
         # Compute shape of output
-        if isinstance(shape, int):
+        if isinstance(shape, (int, long, np.integer)):
             shape = [shape]
         final_shape = list(shape[:])
         final_shape.append(mean.shape[0])
