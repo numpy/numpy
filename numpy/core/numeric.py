@@ -40,7 +40,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'Inf', 'inf', 'infty', 'Infinity',
            'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
            'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
-           'ComplexWarning']
+           'ComplexWarning','iteraxis']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -2183,7 +2183,32 @@ def array_equiv(a1, a2):
     except ValueError:
         return False
 
+def iteraxis(a, axis=0):
+    """
+    A iterator to return slices of a multi-dimensional array over
+    the specified axis.
 
+    Parameters
+    ----------
+    a : array_like
+        Input data
+    axis : int, optional
+        The axis to iterate over.  By default, it is the first axis,
+        and thus identical to iterating over the original array.
+
+    Yields
+    -------
+    out : n ndarrays, of diminsion d-1, where n = a.shape[axis]
+          and d = a.ndim
+        
+    """
+    if not (0 <= axis < a.ndim):
+        msg = 'iteraxis: %s (%d) must be >=0 and < %d'
+        raise ValueError(msg % ('axis', axis, a.ndim))
+
+    a = asarray(a)
+    return iter(rollaxis(a, axis, 0))
+    
 _errdict = {"ignore":ERR_IGNORE,
             "warn":ERR_WARN,
             "raise":ERR_RAISE,
