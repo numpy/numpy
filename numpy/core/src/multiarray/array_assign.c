@@ -21,6 +21,7 @@
 #include "shape.h"
 
 #include "array_assign.h"
+#include "common.h"
 
 /* See array_assign.h for parameter documentation */
 NPY_NO_EXPORT int
@@ -102,36 +103,14 @@ raw_array_is_aligned(int ndim, char *data, npy_intp *strides, int alignment)
 /* Gets a half-open range [start, end) which contains the array data */
 NPY_NO_EXPORT void
 get_array_memory_extents(PyArrayObject *arr,
-                    npy_uintp *out_start, npy_uintp *out_end)
+                         npy_uintp *out_start, npy_uintp *out_end)
 {
-    npy_uintp start, end;
-    npy_intp idim, ndim = PyArray_NDIM(arr);
-    npy_intp *dimensions = PyArray_DIMS(arr),
-            *strides = PyArray_STRIDES(arr);
-
-    /* Calculate with a closed range [start, end] */
-    start = end = (npy_uintp)PyArray_DATA(arr);
-    for (idim = 0; idim < ndim; ++idim) {
-        npy_intp stride = strides[idim], dim = dimensions[idim];
-        /* If the array size is zero, return an empty range */
-        if (dim == 0) {
-            *out_start = *out_end = (npy_uintp)PyArray_DATA(arr);
-            return;
-        }
-        /* Expand either upwards or downwards depending on stride */
-        else {
-            if (stride > 0) {
-                end += stride*(dim-1);
-            }
-            else if (stride < 0) {
-                start += stride*(dim-1);
-            }
-        }
-    }
-
-    /* Return a half-open range */
-    *out_start = start;
-    *out_end = end + PyArray_DESCR(arr)->elsize;
+    npy_intp low, upper;
+    offset_bounds_from_strides(PyArray_ITEMSIZE(arr), PyArray_NDIM(arr),
+                               PyArray_DIMS(arr), PyArray_STRIDES(arr),
+                               &low, &upper);
+    *out_start = (npy_uintp)PyArray_DATA(arr) + (npy_uintp)low;
+    *out_end = (npy_uintp)PyArray_DATA(arr) + (npy_uintp)upper;
 }
 
 /* Returns 1 if the arrays have overlapping data, 0 otherwise */
