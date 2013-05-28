@@ -11,7 +11,7 @@ from numpy.core import product, ndarray, ufunc
 __all__ = ['issubclass_', 'issubsctype', 'issubdtype',
         'deprecate', 'deprecate_with_doc', 'get_numarray_include',
         'get_include', 'info', 'source', 'who', 'lookfor', 'byte_bounds',
-        'may_share_memory', 'safe_eval']
+        'safe_eval']
 
 def get_include():
     """
@@ -250,12 +250,11 @@ def byte_bounds(a):
     a_data = ai['data'][0]
     astrides = ai['strides']
     ashape = ai['shape']
-    nd_a = len(ashape)
     bytes_a = int(ai['typestr'][2:])
 
     a_low = a_high = a_data
     if astrides is None: # contiguous case
-        a_high += product(ashape, dtype=int)*bytes_a
+        a_high += a.size * bytes_a
     else:
         for shape, stride in zip(ashape, astrides):
             if stride < 0:
@@ -265,36 +264,6 @@ def byte_bounds(a):
         a_high += bytes_a
     return a_low, a_high
 
-
-def may_share_memory(a, b):
-    """
-    Determine if two arrays can share memory
-
-    The memory-bounds of a and b are computed.  If they overlap then
-    this function returns True.  Otherwise, it returns False.
-
-    A return of True does not necessarily mean that the two arrays
-    share any element.  It just means that they *might*.
-
-    Parameters
-    ----------
-    a, b : ndarray
-
-    Returns
-    -------
-    out : bool
-
-    Examples
-    --------
-    >>> np.may_share_memory(np.array([1,2]), np.array([5,8,9]))
-    False
-
-    """
-    a_low, a_high = byte_bounds(a)
-    b_low, b_high = byte_bounds(b)
-    if b_low >= a_high or a_low >= b_high:
-        return False
-    return True
 
 #-----------------------------------------------------------------------------
 # Function for output and information on the variables used.

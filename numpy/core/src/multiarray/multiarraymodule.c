@@ -3544,6 +3544,32 @@ PyDataMem_RENEW(void *ptr, size_t size)
     return (char *)result;
 }
 
+static PyObject *
+array_may_share_memory(PyObject *NPY_UNUSED(ignored), PyObject *args)
+{
+    PyArrayObject * self = NULL;
+    PyArrayObject * other = NULL;
+    int overlap;
+
+    if (!PyArg_ParseTuple(args, "O&O&", PyArray_Converter, &self,
+                          PyArray_Converter, &other)) {
+        return NULL;
+    }
+
+    overlap = arrays_overlap(self, other);
+    Py_XDECREF(self);
+    Py_XDECREF(other);
+
+    if (overlap) {
+        Py_RETURN_TRUE;
+    }
+    else {
+        Py_RETURN_FALSE;
+    }
+}
+
+
+
 static struct PyMethodDef array_module_methods[] = {
     {"_get_ndarray_c_version",
         (PyCFunction)array__get_ndarray_c_version,
@@ -3643,6 +3669,9 @@ static struct PyMethodDef array_module_methods[] = {
         METH_VARARGS, NULL},
     {"result_type",
         (PyCFunction)array_result_type,
+        METH_VARARGS, NULL},
+    {"may_share_memory",
+        (PyCFunction)array_may_share_memory,
         METH_VARARGS, NULL},
     /* Datetime-related functions */
     {"datetime_data",

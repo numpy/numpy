@@ -40,7 +40,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'Inf', 'inf', 'infty', 'Infinity',
            'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
            'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
-           'ComplexWarning']
+           'ComplexWarning', 'may_share_memory']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -252,6 +252,7 @@ fromstring = multiarray.fromstring
 fromiter = multiarray.fromiter
 fromfile = multiarray.fromfile
 frombuffer = multiarray.frombuffer
+may_share_memory = multiarray.may_share_memory
 if sys.version_info[0] < 3:
     newbuffer = multiarray.newbuffer
     getbuffer = multiarray.getbuffer
