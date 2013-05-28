@@ -36,27 +36,16 @@
 #define _NPY_NOP4(x) (x)
 #define _NPY_NOP8(x) (x)
 
-#define _NPY_SWAP2(x) (((((npy_uint16)x)&0xffu) << 8) | \
-                       (((npy_uint16)x) >> 8))
+#define _NPY_SWAP2(x) npy_bswap2(x)
 
-#define _NPY_SWAP4(x) (((((npy_uint32)x)&0xffu) << 24) | \
-                       ((((npy_uint32)x)&0xff00u) << 8) | \
-                       ((((npy_uint32)x)&0xff0000u) >> 8) | \
-                       (((npy_uint32)x) >> 24))
+#define _NPY_SWAP4(x) npy_bswap4(x)
 
 #define _NPY_SWAP_PAIR4(x) (((((npy_uint32)x)&0xffu) << 8) | \
                        ((((npy_uint32)x)&0xff00u) >> 8) | \
                        ((((npy_uint32)x)&0xff0000u) << 8) | \
                        ((((npy_uint32)x)&0xff000000u) >> 8))
 
-#define _NPY_SWAP8(x) (((((npy_uint64)x)&0xffULL) << 56) | \
-                       ((((npy_uint64)x)&0xff00ULL) << 40) | \
-                       ((((npy_uint64)x)&0xff0000ULL) << 24) | \
-                       ((((npy_uint64)x)&0xff000000ULL) << 8) | \
-                       ((((npy_uint64)x)&0xff00000000ULL) >> 8) | \
-                       ((((npy_uint64)x)&0xff0000000000ULL) >> 24) | \
-                       ((((npy_uint64)x)&0xff000000000000ULL) >> 40) | \
-                       (((npy_uint64)x) >> 56))
+#define _NPY_SWAP8(x) npy_bswap8(x)
 
 #define _NPY_SWAP_PAIR8(x) (((((npy_uint64)x)&0xffULL) << 24) | \
                        ((((npy_uint64)x)&0xff00ULL) << 8) | \
@@ -67,21 +56,11 @@
                        ((((npy_uint64)x)&0xff000000000000ULL) >> 8) | \
                        ((((npy_uint64)x)&0xff00000000000000ULL) >> 24))
 
-#define _NPY_SWAP_INPLACE2(x) { \
-        char a = (x)[0]; (x)[0] = (x)[1]; (x)[1] = a; \
-        }
+#define _NPY_SWAP_INPLACE2(x) npy_bswap2_unaligned(x)
 
-#define _NPY_SWAP_INPLACE4(x) { \
-        char a = (x)[0]; (x)[0] = (x)[3]; (x)[3] = a; \
-        a = (x)[1]; (x)[1] = (x)[2]; (x)[2] = a; \
-        }
+#define _NPY_SWAP_INPLACE4(x) npy_bswap4_unaligned(x)
 
-#define _NPY_SWAP_INPLACE8(x) { \
-        char a = (x)[0]; (x)[0] = (x)[7]; (x)[7] = a; \
-        a = (x)[1]; (x)[1] = (x)[6]; (x)[6] = a; \
-        a = (x)[2]; (x)[2] = (x)[5]; (x)[5] = a; \
-        a = (x)[3]; (x)[3] = (x)[4]; (x)[4] = a; \
-        }
+#define _NPY_SWAP_INPLACE8(x) npy_bswap8_unaligned(x)
 
 #define _NPY_SWAP_INPLACE16(x) { \
         char a = (x)[0]; (x)[0] = (x)[15]; (x)[15] = a; \
