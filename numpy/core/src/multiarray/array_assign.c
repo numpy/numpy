@@ -22,6 +22,7 @@
 
 #include "array_assign.h"
 #include "common.h"
+#include "lowlevel_strided_loops.h"
 
 /* See array_assign.h for parameter documentation */
 NPY_NO_EXPORT int
@@ -92,7 +93,7 @@ raw_array_is_aligned(int ndim, char *data, npy_intp *strides, int alignment)
             align_check |= strides[idim];
         }
 
-        return ((align_check & (alignment - 1)) == 0);
+        return npy_is_aligned((void *)align_check, alignment);
     }
     else {
         return 1;
