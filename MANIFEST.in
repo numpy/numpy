@@ -11,6 +11,8 @@ include setupsconsegg.py
 include setupegg.py
 include site.cfg.example
 include tools/py3tool.py
+include numpy/random/mtrand/generate_mtrand_c.py
+recursive-include numpy/random/mtrand *.pyx *.pxd
 # Adding scons build related files not found by distutils
 recursive-include numpy/core/code_generators *.py *.txt
 recursive-include numpy/core *.in *.h
