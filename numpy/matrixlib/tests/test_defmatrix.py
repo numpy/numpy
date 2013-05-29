@@ -31,6 +31,10 @@ class TestCtor(TestCase):
         mvec = matrix(vec)
         assert_(mvec.shape == (1,5))
 
+    def test_exceptions(self):
+        # Check for TypeError when called with invalid string data.
+        assert_raises(TypeError, matrix, "invalid")
+
     def test_bmat_nondefault_str(self):
         A = array([[1,2],[3,4]])
         B = array([[5,6],[7,8]])
