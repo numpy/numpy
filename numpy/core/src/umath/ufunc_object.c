@@ -1114,7 +1114,8 @@ set_ufunc_loop_data_types(PyUFuncObject *self, PyArrayObject **op,
 }
 
 /*
- * Does a search through the arguments and the loops
+ * Does a search through the arguments and the loops.
+ * Return -1 on error, 0 if no match found, and 1 for a match.
  */
 static int
 find_ufunc_matching_userloop(PyUFuncObject *self,
@@ -1178,7 +1179,7 @@ find_ufunc_matching_userloop(PyUFuncObject *self,
                         NPY_UF_DBG_PRINT("Returning userdef inner "
                                                 "loop successfully\n");
 
-                        return 0;
+                        return 1;
                 }
 
                 funcdata = funcdata->next;
