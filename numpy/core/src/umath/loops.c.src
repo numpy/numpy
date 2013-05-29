@@ -34,11 +34,6 @@
  */
 
 
-static NPY_INLINE int npy_is_aligned(const void * p, const npy_intp alignment)
-{
-    return ((npy_intp)(p) & ((alignment) - 1)) == 0;
-}
-
 #define IS_BINARY_REDUCE ((args[0] == args[2])\
         && (steps[0] == steps[2])\
         && (steps[0] == 0))
