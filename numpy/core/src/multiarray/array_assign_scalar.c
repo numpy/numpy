@@ -48,7 +48,7 @@ raw_array_assign_scalar(int ndim, npy_intp *shape,
     /* Check alignment */
     aligned = raw_array_is_aligned(ndim, dst_data, dst_strides,
                                     dst_dtype->alignment);
-    if (((npy_intp)src_data & (src_dtype->alignment - 1)) != 0) {
+    if (!npy_is_aligned(src_data, src_dtype->alignment)) {
         aligned = 0;
     }
 
@@ -119,7 +119,7 @@ raw_array_wheremasked_assign_scalar(int ndim, npy_intp *shape,
     /* Check alignment */
     aligned = raw_array_is_aligned(ndim, dst_data, dst_strides,
                                     dst_dtype->alignment);
-    if (((npy_intp)src_data & (src_dtype->alignment - 1)) != 0) {
+    if (!npy_is_aligned(src_data, src_dtype->alignment)) {
         aligned = 0;
     }
 
@@ -220,7 +220,7 @@ PyArray_AssignRawScalar(PyArrayObject *dst,
      * we also skip this if 'dst' has an object dtype.
      */
     if ((!PyArray_EquivTypes(PyArray_DESCR(dst), src_dtype) ||
-                ((npy_intp)src_data & (src_dtype->alignment - 1)) != 0) &&
+                !npy_is_aligned(src_data, src_dtype->alignment)) &&
                     PyArray_SIZE(dst) > 1 &&
                     !PyDataType_REFCHK(PyArray_DESCR(dst))) {
         char *tmp_src_data;
