@@ -688,6 +688,7 @@ _IsWriteable(PyArrayObject *ap)
 }
 
 
+/* Gets a half-open range [start, end) of offsets from the data pointer */
 NPY_NO_EXPORT void
 offset_bounds_from_strides(const int itemsize, const int nd,
                            const npy_intp *dims, const npy_intp *strides,
@@ -699,11 +700,12 @@ offset_bounds_from_strides(const int itemsize, const int nd,
 
     for (i = 0; i < nd; i++) {
         if (dims[i] == 0) {
-            /* Empty array special case */
+            /* If the array size is zero, return an empty range */
             *lower_offset = 0;
             *upper_offset = 0;
             return;
         }
+        /* Expand either upwards or downwards depending on stride */
         max_axis_offset = strides[i] * (dims[i] - 1);
         if (max_axis_offset > 0) {
             upper += max_axis_offset;
@@ -712,6 +714,7 @@ offset_bounds_from_strides(const int itemsize, const int nd,
             lower += max_axis_offset;
         }
     }
+    /* Return a half-open range */
     upper += itemsize;
     *lower_offset = lower;
     *upper_offset = upper;
