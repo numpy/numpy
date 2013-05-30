@@ -544,7 +544,7 @@ Other points to keep in mind
 ----------------------------
 * Equations : as discussed in the **Notes** section above, LaTeX formatting 
   should be kept to a minimum.  Often it's possible to show equations as 
-  Python code or pseudo-code instead, which is much better readable in a 
+  Python code or pseudo-code instead, which is much more readable in a 
   terminal.  For inline display use double backticks (like ``y = np.sin(x)``). 
   For display with blank lines above and below, use a double colon and indent 
   the code, like::
