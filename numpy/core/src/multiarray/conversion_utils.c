@@ -121,7 +121,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         }
     }
     seq->len = len;
-    nd = PyArray_IntpFromSequence(obj, (npy_intp *)seq->ptr, (int) len);
+    nd = PyArray_IntpFromIndexSequence(obj, (npy_intp *)seq->ptr, len);
     if (nd == -1 || nd != len) {
         PyDimMem_FREE(seq->ptr);
         seq->ptr = NULL;
@@ -828,15 +828,19 @@ PyArray_PyIntAsIntp(PyObject *o)
     return (npy_intp) long_value;
 }
 
-/*NUMPY_API
- * PyArray_IntpFromSequence
+
+/*
+ * PyArray_IntpFromIndexSequence
  * Returns the number of dimensions or -1 if an error occurred.
- * vals must be large enough to hold maxvals
+ * vals must be large enough to hold maxvals.
+ * Opposed to PyArray_IntpFromSequence it uses and returns npy_intp
+ * for the number of values.
  */
-NPY_NO_EXPORT int
-PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
+NPY_NO_EXPORT npy_intp
+PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
 {
-    int nd, i;
+    Py_ssize_t nd;
+    npy_intp i;
     PyObject *op, *err;
 
     /*
@@ -885,6 +889,18 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
     }
     return nd;
 }
+
+/*NUMPY_API
+ * PyArray_IntpFromSequence
+ * Returns the number of dimensions or -1 if an error occurred.
+ * vals must be large enough to hold maxvals
+ */
+NPY_NO_EXPORT int
+PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
+{
+    return (int)PyArray_IntpFromIndexSequence(seq, vals, (npy_intp)maxvals);
+}
+
 
 /**
  * WARNING: This flag is a bad idea, but was the only way to both
