@@ -126,7 +126,7 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
     in PyArray_PyIntAsIntp and possibly PyArray_IntpConverter.
     In iterators.c the function slice_GetIndices could be removed in favor
     of its python equivalent and in mapping.c the function _tuple_of_integers
-    can be simplified (iff ``np.array([1]).__index__()`` is also deprecated).
+    can be simplified (if ``np.array([1]).__index__()`` is also deprecated).
 
     As for the deprecation time-frame: via Ralf Gommers,
 

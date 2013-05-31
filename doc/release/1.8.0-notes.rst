@@ -168,8 +168,11 @@ The 'full' and 'economic' modes of qr factorization are deprecated.
 General
 ~~~~~~~
 
-Use of non-integer indices has been deprecated. Previously float indices
-were truncated to integers without warning.
+The use of non-integer for indices and most integer arguments has been
+deprecated. Previously float indices and function arguments such as axes or
+shapes were truncated to integers without warning. For example
+`arr.reshape(3., -1)` or `arr[0.]` will trigger a deprecation warning in
+NumPy 1.8., and in some future version of NumPy they will raise an error.
 
 C-API
 ~~~~~
