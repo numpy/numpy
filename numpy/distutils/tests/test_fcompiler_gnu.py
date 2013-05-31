@@ -19,6 +19,7 @@ gfortran_version_strings = [
     ('GNU Fortran 95 (GCC) 4.1.0', '4.1.0'),
     ('GNU Fortran 95 (GCC) 4.2.0 20060218 (experimental)', '4.2.0'),
     ('GNU Fortran (GCC) 4.3.0 20070316 (experimental)', '4.3.0'),
+    ('GNU Fortran (rubenvb-4.8.0) 4.8.0', '4.8.0'),
 ]
 
 class TestG77Versions(TestCase):

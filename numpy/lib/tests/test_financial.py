@@ -41,7 +41,7 @@ class TestFinancial(TestCase):
 
     def test_npv(self):
         assert_almost_equal(np.npv(0.05,[-15000,1500,2500,3500,4500,6000]),
-                            117.04, 2)
+                            122.89, 2)
 
     def test_mirr(self):
         val = [-4500,-800,800,800,600,600,800,800,700,3000]

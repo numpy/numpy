@@ -19,7 +19,12 @@ if sys.version_info[0] >= 3:
                 return None
     _table = _NumCharTable()
     def _eval(astr):
-        return eval(astr.translate(_table))
+        str_ = astr.translate(_table)
+        if not str_:
+            raise TypeError("Invalid data string supplied: " + astr)
+        else:
+            return eval(str_)
+
 else:
     _table = [None]*256
     for k in range(256):
@@ -34,7 +39,11 @@ else:
     del k
 
     def _eval(astr):
-        return eval(astr.translate(_table,_todelete))
+        str_ = astr.translate(_table,_todelete)
+        if not str_:
+            raise TypeError("Invalid data string supplied: " + astr)
+        else:
+            return eval(str_)
 
 def _convert_from_string(data):
     rows = data.split(';')

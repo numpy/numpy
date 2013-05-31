@@ -1,5 +1,6 @@
 #ifndef __LOWLEVEL_STRIDED_LOOPS_H
 #define __LOWLEVEL_STRIDED_LOOPS_H
+#include <npy_config.h>
 
 /*
  * NOTE: This API should remain private for the time being, to allow
@@ -396,6 +397,14 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
                             char **out_dataB, npy_intp *out_stridesB,
                             char **out_dataC, npy_intp *out_stridesC);
 
+/*
+ * return true if pointer is aligned to 'alignment'
+ */
+static NPY_INLINE int
+npy_is_aligned(const void * p, const npy_uintp alignment)
+{
+    return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
+}
 
 /*
  * Return number of elements that must be peeled from
@@ -440,6 +449,73 @@ npy_blocked_end(const npy_intp offset, const npy_intp esize,
     return nvals - offset - (nvals - offset) % (vsz / esize);
 }
 
+
+/* byte swapping functions */
+static NPY_INLINE npy_uint16
+npy_bswap2(npy_uint16 x)
+{
+    return ((x & 0xffu) << 8) | (x >> 8);
+}
+
+/*
+ * treat as int16 and byteswap unaligned memory,
+ * some cpus don't support unaligned access
+ */
+static NPY_INLINE void
+npy_bswap2_unaligned(char * x)
+{
+    char a = x[0];
+    x[0] = x[1];
+    x[1] = a;
+}
+
+static NPY_INLINE npy_uint32
+npy_bswap4(npy_uint32 x)
+{
+#ifdef HAVE___BUILTIN_BSWAP32
+    return __builtin_bswap32(x);
+#else
+    return ((x & 0xffu) << 24) | ((x & 0xff00u) << 8) |
+           ((x & 0xff0000u) >> 8) | (x >> 24);
+#endif
+}
+
+static NPY_INLINE void
+npy_bswap4_unaligned(char * x)
+{
+    char a = x[0];
+    x[0] = x[3];
+    x[3] = a;
+    a = x[1];
+    x[1] = x[2];
+    x[2] = a;
+}
+
+static NPY_INLINE npy_uint64
+npy_bswap8(npy_uint64 x)
+{
+#ifdef HAVE___BUILTIN_BSWAP64
+    return __builtin_bswap64(x);
+#else
+    return ((x & 0xffULL) << 56) |
+           ((x & 0xff00ULL) << 40) |
+           ((x & 0xff0000ULL) << 24) |
+           ((x & 0xff000000ULL) << 8) |
+           ((x & 0xff00000000ULL) >> 8) |
+           ((x & 0xff0000000000ULL) >> 24) |
+           ((x & 0xff000000000000ULL) >> 40) |
+           ( x >> 56);
+#endif
+}
+
+static NPY_INLINE void
+npy_bswap8_unaligned(char * x)
+{
+    char a = x[0]; x[0] = x[7]; x[7] = a;
+    a = x[1]; x[1] = x[6]; x[6] = a;
+    a = x[2]; x[2] = x[5]; x[5] = a;
+    a = x[3]; x[3] = x[4]; x[4] = a;
+}
 
 
 /* Start raw iteration */
