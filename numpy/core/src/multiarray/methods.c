@@ -1868,7 +1868,9 @@ array_dot(PyArrayObject *self, PyObject *args, PyObject *kwds)
     if (out == NULL) {
         ret = PyObject_CallMethodObjArgs(numpycore, fname, self, b, NULL);
     }
-    ret = PyObject_CallMethodObjArgs(numpycore, fname, self, b, out, NULL);
+    else {
+        ret = PyObject_CallMethodObjArgs(numpycore, fname, self, b, out, NULL);
+    }
     Py_DECREF(fname);
     return ret;
 }
