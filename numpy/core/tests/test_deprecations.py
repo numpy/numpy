@@ -90,18 +90,17 @@ class _DeprecationTestCase(object):
             raise AssertionError("%i warnings found but %i expected"
                                                         % (len(self.log), num))
 
-        warnings.filterwarnings("error", message=self.message,
-                                    category=DeprecationWarning)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", message=self.message,
+                                        category=DeprecationWarning)
 
-        try:
-            function(*args, **kwargs)
-            if exceptions != tuple():
-                raise AssertionError("No error raised during function call")
-        except exceptions:
-            if exceptions == tuple():
-                raise AssertionError("Error raised during function call")
-        finally:
-            warnings.filters.pop(0)
+            try:
+                function(*args, **kwargs)
+                if exceptions != tuple():
+                    raise AssertionError("No error raised during function call")
+            except exceptions:
+                if exceptions == tuple():
+                    raise AssertionError("Error raised during function call")
 
 
     def assert_not_deprecated(self, function, args=(), kwargs={}):
