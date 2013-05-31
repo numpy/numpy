@@ -1410,6 +1410,19 @@ class TestNaNMean(TestCase):
     def test_basic(self):
         assert_almost_equal(nanmean(self.A),self.real_mean)
 
+    def test_mutation(self):
+        # Because of the "messing around" we do to replace NaNs with zeros
+        # this is meant to ensure we don't actually replace the NaNs in the
+        # actual array.
+        a_copy = self.A.copy()
+        b_copy = self.B.copy()
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            a_ret = nanmean(self.A)
+            assert_equal(self.A, a_copy)
+            b_ret = nanmean(self.B)
+            assert_equal(self.B, b_copy)
+
     def test_allnans(self):
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', RuntimeWarning)
@@ -1452,6 +1465,19 @@ class TestNaNStdVar(TestCase):
     def test_basic(self):
         assert_almost_equal(nanvar(self.A),self.real_var)
         assert_almost_equal(nanstd(self.A)**2,self.real_var)
+
+    def test_mutation(self):
+        # Because of the "messing around" we do to replace NaNs with zeros
+        # this is meant to ensure we don't actually replace the NaNs in the
+        # actual array.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            a_copy = self.A.copy()
+            b_copy = self.B.copy()
+            a_ret = nanvar(self.A)
+            assert_equal(self.A, a_copy)
+            b_ret = nanstd(self.B)
+            assert_equal(self.B, b_copy)
 
     def test_ddof1(self):
         assert_almost_equal(nanvar(self.A,ddof=1),
