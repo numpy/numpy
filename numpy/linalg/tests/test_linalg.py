@@ -523,9 +523,9 @@ class _TestNorm(TestCase):
         assert_equal(norm(atleast_2d(array([], dtype=self.dt))), 0.0)
 
     def test_vector(self):
-        a = [1.0,2.0,3.0,4.0]
-        b = [-1.0,-2.0,-3.0,-4.0]
-        c = [-1.0, 2.0,-3.0, 4.0]
+        a = [1, 2, 3, 4]
+        b = [-1, -2, -3, -4]
+        c = [-1, 2, -3, 4]
 
         def _test(v):
             np.testing.assert_almost_equal(norm(v), 30**0.5, decimal=self.dec)
@@ -548,8 +548,7 @@ class _TestNorm(TestCase):
             _test(v)
 
     def test_matrix(self):
-        A = matrix([[1.,3.],[5.,7.]], dtype=self.dt)
-        A = matrix([[1.,3.],[5.,7.]], dtype=self.dt)
+        A = matrix([[1, 3], [5, 7]], dtype=self.dt)
         assert_almost_equal(norm(A), 84**0.5)
         assert_almost_equal(norm(A,'fro'), 84**0.5)
         assert_almost_equal(norm(A,inf), 12.0)
@@ -563,6 +562,21 @@ class _TestNorm(TestCase):
         self.assertRaises(ValueError, norm, A, -3)
         self.assertRaises(ValueError, norm, A, 0)
 
+    def test_axis(self):
+        # Compare the use of `axis` with computing the norm of each row
+        # or column separately.
+        A = array([[1, 2, 3], [4, 5, 6]], dtype=self.dt)
+        for order in [None, -1, 0, 1, 2, 3, np.Inf, -np.Inf]:
+            expected0 = [norm(A[:,k], ord=order) for k in range(A.shape[1])]
+            assert_almost_equal(norm(A, ord=order, axis=0), expected0)
+            expected1 = [norm(A[k,:], ord=order) for k in range(A.shape[0])]
+            assert_almost_equal(norm(A, ord=order, axis=1), expected1)
+
+        # Check bad case.  Using `axis` implies vector norms are being
+        # computed, so also using `ord='fro'` raises a ValueError
+        # (just like `norm([1,2,3], ord='fro')` does).
+        self.assertRaises(ValueError, norm, A, 'fro', 0)
+
 
 class TestNormDouble(_TestNorm):
     dt = np.double
@@ -572,6 +586,11 @@ class TestNormDouble(_TestNorm):
 class TestNormSingle(_TestNorm):
     dt = np.float32
     dec = 6
+
+
+class TestNormInt64(_TestNorm):
+    dt = np.int64
+    dec = 12
 
 
 class TestMatrixRank(object):

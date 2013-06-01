@@ -22,8 +22,9 @@ from numpy.core import array, asarray, zeros, empty, transpose, \
         intc, single, double, csingle, cdouble, inexact, complexfloating, \
         newaxis, ravel, all, Inf, dot, add, multiply, identity, sqrt, \
         maximum, flatnonzero, diagonal, arange, fastCopyAndTranspose, sum, \
-        isfinite, size, finfo, absolute, log, exp, errstate, geterrobj
-from numpy.lib import triu
+        isfinite, size, finfo, absolute, log, exp, errstate, geterrobj, \
+        float64, float128
+from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
 from numpy.compat import asbytes
@@ -1865,7 +1866,8 @@ def lstsq(a, b, rcond=-1):
     st = s[:min(n, m)].copy().astype(result_real_t)
     return wrap(x), wrap(resids), results['rank'], st
 
-def norm(x, ord=None):
+
+def norm(x, ord=None, axis=None):
     """
     Matrix or vector norm.
 
@@ -1880,11 +1882,14 @@ def norm(x, ord=None):
     ord : {non-zero int, inf, -inf, 'fro'}, optional
         Order of the norm (see table under ``Notes``). inf means numpy's
         `inf` object.
+    axis : int or None, optional
+        If `axis` is not None, it specifies the axis of `x` along which to
+        compute the vector norms.
 
     Returns
     -------
-    n : float
-        Norm of the matrix or vector.
+    n : float or ndarray
+        Norm of the matrix or vector(s).
 
     Notes
     -----
@@ -1967,29 +1972,52 @@ def norm(x, ord=None):
     >>> LA.norm(a, -3)
     nan
 
+    Using the `axis` argument:
+
+    >>> c = np.array([[ 1, 2, 3],
+    ...               [-1, 1, 4]])
+    >>> LA.norm(c, axis=0)
+    array([ 1.41421356,  2.23606798,  5.        ])
+    >>> LA.norm(c, axis=1)
+    array([ 3.74165739,  4.24264069])
+    >>>  LA.norm(c, ord=1, axis=1)
+    array([6, 6])
+
     """
     x = asarray(x)
-    if ord is None: # check the default case first and handle it immediately
+
+    # Check the default case first and handle it immediately.
+    if ord is None and axis is None:
+        s = (x.conj() * x).real
         return sqrt(add.reduce((x.conj() * x).ravel().real))
 
     nd = x.ndim
-    if nd == 1:
+    if nd == 1 or axis is not None:
         if ord == Inf:
-            return abs(x).max()
+            return abs(x).max(axis=axis)
         elif ord == -Inf:
-            return abs(x).min()
+            return abs(x).min(axis=axis)
         elif ord == 0:
-            return (x != 0).sum() # Zero norm
+            # Zero norm
+            return (x != 0).sum(axis=axis)
         elif ord == 1:
-            return abs(x).sum() # special case for speedup
-        elif ord == 2:
-            return sqrt(((x.conj()*x).real).sum()) # special case for speedup
+            # special case for speedup
+            return add.reduce(abs(x), axis=axis)
+        elif ord is None or ord == 2:
+            # special case for speedup
+            s = (x.conj() * x).real
+            return sqrt(add.reduce(s, axis=axis))
         else:
             try:
                 ord + 1
             except TypeError:
                 raise ValueError("Invalid norm order for vectors.")
-            return ((abs(x)**ord).sum())**(1.0/ord)
+            if x.dtype != float128:
+                # Convert to a float type, so integer arrays give
+                # float results.  Don't apply asfarray to float128 arrays,
+                # because it will downcast to float64.
+                absx = asfarray(abs(x))
+            return add.reduce(absx**ord, axis=axis)**(1.0/ord)
     elif nd == 2:
         if ord == 2:
             return svd(x, compute_uv=0).max()
