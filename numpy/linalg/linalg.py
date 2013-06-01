@@ -20,10 +20,9 @@ import warnings
 
 from numpy.core import array, asarray, zeros, empty, transpose, \
         intc, single, double, csingle, cdouble, inexact, complexfloating, \
-        newaxis, ravel, all, Inf, dot, add, multiply, identity, sqrt, \
-        maximum, flatnonzero, diagonal, arange, fastCopyAndTranspose, sum, \
-        isfinite, size, finfo, absolute, log, exp, errstate, geterrobj, \
-        float64, float128
+        newaxis, ravel, all, Inf, dot, add, multiply, sqrt, maximum, \
+        fastCopyAndTranspose, sum, isfinite, size, finfo, errstate, \
+        geterrobj, float128
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
@@ -1980,7 +1979,7 @@ def norm(x, ord=None, axis=None):
     array([ 1.41421356,  2.23606798,  5.        ])
     >>> LA.norm(c, axis=1)
     array([ 3.74165739,  4.24264069])
-    >>>  LA.norm(c, ord=1, axis=1)
+    >>> LA.norm(c, ord=1, axis=1)
     array([6, 6])
 
     """
