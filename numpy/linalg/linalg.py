@@ -1876,14 +1876,15 @@ def norm(x, ord=None, axis=None):
 
     Parameters
     ----------
-    x : {(M,), (M, N)} array_like
-        Input array.
+    x : array_like
+        Input array.  If `axis` is None, `x` must be 1-D or 2-D.
     ord : {non-zero int, inf, -inf, 'fro'}, optional
         Order of the norm (see table under ``Notes``). inf means numpy's
         `inf` object.
     axis : int or None, optional
         If `axis` is not None, it specifies the axis of `x` along which to
-        compute the vector norms.
+        compute the vector norms.  If `axis` is None, then either a vector
+        norm (when `x` is 1-D) or a matrix norm (when `x` is 2-D) is returned.
 
     Returns
     -------
