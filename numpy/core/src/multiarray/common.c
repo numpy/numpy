@@ -39,23 +39,28 @@
  *
  * Returns attribute value on success, 0 on failure.
  */
-PyObject *PyArray_GetAttrString_Lite(PyObject *v, char *name)
+PyObject *
+PyArray_GetAttrString_Lite(PyObject *v, char *name)
 {
-  PyTypeObject *tp = Py_TYPE(v);
-  if (tp==&PyList_Type || tp==&PyTuple_Type || v==Py_None)
-    return (PyObject *)NULL;
-  else if (tp->tp_getattr != NULL)
-    return (*tp->tp_getattr)(v, name);
-  else if (tp->tp_getattro != NULL) {
-    PyObject *w, *res;
-    w = PyString_InternFromString(name);
-    if (w == NULL)
-        return (PyObject *)NULL;
-    res = (*tp->tp_getattro)(v, w);
-    Py_XDECREF(w);
-    return res;
-  }
-  return (PyObject *)NULL;
+    PyTypeObject *tp = Py_TYPE(v);
+    if (tp==&PyList_Type || tp==&PyTuple_Type || v==Py_None) {
+	return (PyObject *)NULL;
+    }
+    else if (tp->tp_getattr != NULL) {
+	return (*tp->tp_getattr)(v, name);
+    }
+    else if (tp->tp_getattro != NULL) {
+	PyObject *w, *res;
+	w = PyString_InternFromString(name);
+	if (w == NULL)
+	    return (PyObject *)NULL;
+	res = (*tp->tp_getattro)(v, w);
+	Py_XDECREF(w);
+	return res;
+    }
+    else {
+	return (PyObject *)NULL;
+    }
 }
 
 
@@ -350,9 +355,10 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* PEP 3118 buffer interface */
-    if (PyObject_CheckBuffer(obj)==1) {
+    if (PyObject_CheckBuffer(obj) == 1) {
         memset(&buffer_view, 0, sizeof(Py_buffer));
-        if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
+        if (PyObject_GetBuffer(obj, &buffer_view,
+                               PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
             PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT) == 0) {
     
             PyErr_Clear();
