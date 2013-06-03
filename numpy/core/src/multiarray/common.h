@@ -25,6 +25,9 @@ NPY_NO_EXPORT int
 PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                               PyArray_Descr **out_dtype, int string_status);
 
+NPY_NO_EXPORT PyObject *
+PyArray_GetAttrString_Lite(PyObject *v, char *name);
+
 /*
  * Returns NULL without setting an exception if no scalar is matched, a
  * new dtype reference otherwise.
