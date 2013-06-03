@@ -44,22 +44,22 @@ PyArray_GetAttrString_Lite(PyObject *v, char *name)
 {
     PyTypeObject *tp = Py_TYPE(v);
     if (tp==&PyList_Type || tp==&PyTuple_Type || v==Py_None) {
-	return (PyObject *)NULL;
+        return (PyObject *)NULL;
     }
     else if (tp->tp_getattr != NULL) {
-	return (*tp->tp_getattr)(v, name);
+        return (*tp->tp_getattr)(v, name);
     }
     else if (tp->tp_getattro != NULL) {
-	PyObject *w, *res;
-	w = PyString_InternFromString(name);
-	if (w == NULL)
-	    return (PyObject *)NULL;
-	res = (*tp->tp_getattro)(v, w);
-	Py_XDECREF(w);
-	return res;
+        PyObject *w, *res;
+        w = PyString_InternFromString(name);
+        if (w == NULL)
+            return (PyObject *)NULL;
+        res = (*tp->tp_getattro)(v, w);
+        Py_XDECREF(w);
+        return res;
     }
     else {
-	return (PyObject *)NULL;
+        return (PyObject *)NULL;
     }
 }
 
@@ -196,12 +196,12 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
     /* See if it's a python None */
     if (obj==Py_None) {
-      dtype = PyArray_DescrFromType(NPY_OBJECT);
-      if (dtype == NULL) {
-	goto fail;
-      }
-      Py_INCREF(dtype);
-      goto promote_types;
+        dtype = PyArray_DescrFromType(NPY_OBJECT);
+        if (dtype == NULL) {
+            goto fail;
+        }
+        Py_INCREF(dtype);
+        goto promote_types;
     }
     /* Check if it's a NumPy scalar */
     else if (PyArray_IsScalar(obj, Generic)) {
@@ -457,7 +457,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #endif
 
     /* The __array__ attribute */
-    if (PyArray_GetAttrString_Lite(obj, "__array__")) {
+    ip = PyArray_GetAttrString_Lite(obj, "__array__");
+    if (ip) {
+        Py_DECREF(ip);
         ip = PyObject_CallMethod(obj, "__array__", NULL);
         if(ip && PyArray_Check(ip)) {
             dtype = PyArray_DESCR((PyArrayObject *)ip);
@@ -469,6 +471,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (PyErr_Occurred()) {
             goto fail;
         }
+    }
+    else {
+        PyErr_Clear();
     }
 
     /* Not exactly sure what this is about... */
