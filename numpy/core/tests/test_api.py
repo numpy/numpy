@@ -35,9 +35,11 @@ def test_array_array():
     assert_equal(ocnt, sys.getrefcount(np.float64))
 
     # test string
-    S2 = "|S2" if sys.version_info.major < 3 else "<U2"
-    S3 = "|S3" if sys.version_info.major < 3 else "<U3"
-    S5 = "|S5" if sys.version_info.major < 3 else "<U5"
+    has_str = sys.version[0] < 3
+    S2 = "|S2" if has_str else "<U2"
+    S3 = "|S3" if has_str else "<U3"
+    S5 = "|S5" if has_str else "<U5"
+
     assert_equal(np.array("1.0", dtype=np.float64), np.ones((), dtype=np.float64))
     assert_equal(np.array("1.0").dtype, np.dtype(S3))
     assert_equal(np.array("1.0", dtype=str).dtype, np.dtype(S3))
@@ -53,8 +55,8 @@ def test_array_array():
 
     # test buffer
     assert_equal(np.array(buffer("1.0"), dtype=np.float64), np.array(1.0, dtype=np.float64))
-    assert_equal(np.array(buffer("1.0")).dtype, np.uint8)
-    assert_equal(np.array(buffer("1.0"), dtype=np.uint8).dtype, np.uint8)
+    assert_equal(np.array(buffer("1.0")).dtype, np.dtype("object"))
+    assert_equal(np.array(buffer("1.0"), dtype=np.float64).dtype, np.dtype("float64"))
     assert_equal(np.array([buffer("1.0")], dtype=np.float64), np.array([1.0], dtype=np.float64))
 
     # test array interface
