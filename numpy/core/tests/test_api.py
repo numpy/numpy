@@ -85,7 +85,7 @@ def test_array_array():
 
     # test recursion
     nested = 1.5;
-    for i in xrange(np.MAXDIMS):
+    for i in range(np.MAXDIMS):
         nested = [ nested ]
 
     # no error
