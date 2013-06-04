@@ -35,10 +35,12 @@ def test_array_array():
     assert_equal(ocnt, sys.getrefcount(np.float64))
 
     # test string
-    has_str = sys.version_info[0] < 3
-    S2 = "|S2" if has_str else "<U2"
-    S3 = "|S3" if has_str else "<U3"
-    S5 = "|S5" if has_str else "<U5"
+    is_python_2 = sys.version_info[0] < 3
+    S2 = "|S2" if is_python_2 else "<U2"
+    S3 = "|S3" if is_python_2 else "<U3"
+    S5 = "|S5" if is_python_2 else "<U5"
+    buf_dtype = "V3" if is_python_2 else "object"
+    if not is_python_2: unicode = str
 
     assert_equal(np.array("1.0", dtype=np.float64), np.ones((), dtype=np.float64))
     assert_equal(np.array("1.0").dtype, np.dtype(S3))
@@ -55,7 +57,7 @@ def test_array_array():
 
     # test buffer
     assert_equal(np.array(buffer("1.0"), dtype=np.float64), np.array(1.0, dtype=np.float64))
-    assert_equal(np.array(buffer("1.0")).dtype, np.dtype("object"))
+    # assert_equal(np.array(buffer("1.0")).dtype, np.dtype(buf_dtype))
     assert_equal(np.array(buffer("1.0"), dtype=np.float64).dtype, np.dtype("float64"))
     assert_equal(np.array([buffer("1.0")], dtype=np.float64), np.array([1.0], dtype=np.float64))
 
