@@ -38,10 +38,9 @@ def test_array_array():
     S2 = np.dtype((str,2))
     S3 = np.dtype((str,3))
     S5 = np.dtype((str,5))
-    if sys.version_info[0] >= 3: unicode = str
-    U2 = np.dtype((unicode,2))
-    U3 = np.dtype((unicode,3))
-    U5 = np.dtype((unicode,5))
+    U2 = np.dtype((_unicode,2))
+    U3 = np.dtype((_unicode,3))
+    U5 = np.dtype((_unicode,5))
 
     assert_equal(np.array("1.0", dtype=np.float64), np.ones((), dtype=np.float64))
     assert_equal(np.array("1.0").dtype, S3)
@@ -50,17 +49,29 @@ def test_array_array():
     assert_equal(np.array("1", dtype=S5), np.ones((), dtype=S5))
 
     # test unicode
-    assert_equal(np.array(unicode("1.0"), dtype=np.float64), np.ones((), dtype=np.float64))
-    assert_equal(np.array(unicode("1.0")).dtype, U3)
-    assert_equal(np.array(unicode("1.0"), dtype=unicode).dtype, U3)
-    assert_equal(np.array(unicode("1.0"), dtype=U2), np.array(unicode("1.")))
-    assert_equal(np.array(unicode("1"), dtype=U5), np.ones((), dtype=U5))
+    if hasattr(__builtin__,"unicode"):
+        _unicode = getattr(__builtin__, "unicode")
+        assert_equal(np.array(_unicode("1.0"), dtype=np.float64), np.ones((), dtype=np.float64))
+        assert_equal(np.array(_unicode("1.0")).dtype, U3)
+        assert_equal(np.array(_unicode("1.0"), dtype=_unicode).dtype, U3)
+        assert_equal(np.array(_unicode("1.0"), dtype=U2), np.array(_unicode("1.")))
+        assert_equal(np.array(_unicode("1"), dtype=U5), np.ones((), dtype=U5))
 
     # test buffer
-    assert_equal(np.array(buffer("1.0"), dtype=np.float64), np.array(1.0, dtype=np.float64))
-    # assert_equal(np.array(buffer("1.0")).dtype, np.dtype(buf_dtype))
-    assert_equal(np.array(buffer("1.0"), dtype=np.float64).dtype, np.dtype("float64"))
-    assert_equal(np.array([buffer("1.0")], dtype=np.float64), np.array([1.0], dtype=np.float64))
+    if hasattr(__builtin__,"buffer"):
+        _buffer = getattr(__builtin__, "buffer")
+        assert_equal(np.array(_buffer("1.0"), dtype=np.float64), np.array(1.0, dtype=np.float64))
+        assert_equal(np.array(_buffer("1.0"), dtype=np.float64).dtype, np.dtype("float64"))
+        assert_equal(np.array([_buffer("1.0")], dtype=np.float64), np.array([1.0], dtype=np.float64))
+
+    # test memoryview, new version of buffer
+    if hasattr(__builtin__,"memoryview"):
+        _memoryview = getattr(__builtin__, "memoryview")
+        assert_equal(np.array(_memoryview(bytearray("1.0")), dtype=np.float64), np.array([49.0, 46.0, 48.0], dtype=np.float64))
+        assert_equal(np.array(_memoryview(bytearray("1.0")), dtype=np.float64).dtype, np.dtype("float64"))
+        assert_equal(np.array([_memoryview(bytearray("1.0"))], dtype=np.float64), np.array([1.0], dtype=np.float64))
+        # Following test seems inconsistant across python versions, so skip it
+        assert_equal(np.array(_memoryview(bytearray("1.0"))).dtype, np.dtype('uint8'))
 
     # test array interface
     ## Is there a way to mock one for unit test? Something like:
