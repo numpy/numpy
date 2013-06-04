@@ -63,12 +63,12 @@ def test_array_array():
     assert_equal(np.array([buffer("1.0")], dtype=np.float64), np.array([1.0], dtype=np.float64))
 
     # test array interface
-    ## I have no idea what this is
-    # o = type("o", (object,), dict(__array_interface__=dict(typestr=S3.str), __repr__=lambda x: "100"))()
-    # assert_equal(np.array(o, dtype=np.float64), np.array(100.0, np.float64))
+    ## Is there a way to mock one for unit test? Something like:
+    #   o = type("o", (object,), dict(__array_interface__=dict(typestr=S3.str), __repr__=lambda x: "100"))()
+    #   assert_equal(np.array(o, dtype=np.float64), np.array(100.0, np.float64))
 
     # test array_struct interface
-    ## I have no idea what this is
+    ## Is there a way to mock one for unit test?
 
     # test array
     o = type("o", (object,), dict(__array__=lambda *x: np.array( 100.0, dtype=np.float64 )))()
