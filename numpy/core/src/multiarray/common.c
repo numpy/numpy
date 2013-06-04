@@ -51,7 +51,11 @@ PyArray_GetAttrString_Lite(PyObject *v, char *name)
     }
     else if (tp->tp_getattro != NULL) {
         PyObject *w, *res;
+#if defined(NPY_PY3K)
+	w = PyUnicode_InternFromString(name);
+#else
         w = PyString_InternFromString(name);
+#endif
         if (w == NULL)
             return (PyObject *)NULL;
         res = (*tp->tp_getattro)(v, w);
