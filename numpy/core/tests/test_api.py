@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import *
 from numpy.testing.utils import WarningManager
 import warnings
-from numpy.compat import sixu
+#from numpy.compat import sixu
 
 # Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
 NPY_RELAXED_STRIDES_CHECKING = np.ones((10,1), order='C').flags.f_contiguous
@@ -38,10 +38,6 @@ def test_array_array():
     S2 = np.dtype((str,2))
     S3 = np.dtype((str,3))
     S5 = np.dtype((str,5))
-    U2 = np.dtype((_unicode,2))
-    U3 = np.dtype((_unicode,3))
-    U5 = np.dtype((_unicode,5))
-
     assert_equal(np.array("1.0", dtype=np.float64), np.ones((), dtype=np.float64))
     assert_equal(np.array("1.0").dtype, S3)
     assert_equal(np.array("1.0", dtype=str).dtype, S3)
@@ -49,8 +45,11 @@ def test_array_array():
     assert_equal(np.array("1", dtype=S5), np.ones((), dtype=S5))
 
     # test unicode
-    if hasattr(__builtin__,"unicode"):
-        _unicode = getattr(__builtin__, "unicode")
+    if hasattr(globals(),"unicode"):
+        _unicode = getattr(globals(), "unicode")
+        U2 = np.dtype((_unicode,2))
+        U3 = np.dtype((_unicode,3))
+        U5 = np.dtype((_unicode,5))
         assert_equal(np.array(_unicode("1.0"), dtype=np.float64), np.ones((), dtype=np.float64))
         assert_equal(np.array(_unicode("1.0")).dtype, U3)
         assert_equal(np.array(_unicode("1.0"), dtype=_unicode).dtype, U3)
@@ -58,19 +57,18 @@ def test_array_array():
         assert_equal(np.array(_unicode("1"), dtype=U5), np.ones((), dtype=U5))
 
     # test buffer
-    if hasattr(__builtin__,"buffer"):
-        _buffer = getattr(__builtin__, "buffer")
+    if hasattr(globals(),"buffer"):
+        _buffer = getattr(globals(), "buffer")
         assert_equal(np.array(_buffer("1.0"), dtype=np.float64), np.array(1.0, dtype=np.float64))
         assert_equal(np.array(_buffer("1.0"), dtype=np.float64).dtype, np.dtype("float64"))
         assert_equal(np.array([_buffer("1.0")], dtype=np.float64), np.array([1.0], dtype=np.float64))
 
     # test memoryview, new version of buffer
-    if hasattr(__builtin__,"memoryview"):
-        _memoryview = getattr(__builtin__, "memoryview")
+    if hasattr(globals(),"memoryview"):
+        _memoryview = getattr(globals(), "memoryview")
         assert_equal(np.array(_memoryview(bytearray("1.0")), dtype=np.float64), np.array([49.0, 46.0, 48.0], dtype=np.float64))
         assert_equal(np.array(_memoryview(bytearray("1.0")), dtype=np.float64).dtype, np.dtype("float64"))
         assert_equal(np.array([_memoryview(bytearray("1.0"))], dtype=np.float64), np.array([1.0], dtype=np.float64))
-        # Following test seems inconsistant across python versions, so skip it
         assert_equal(np.array(_memoryview(bytearray("1.0"))).dtype, np.dtype('uint8'))
 
     # test array interface
