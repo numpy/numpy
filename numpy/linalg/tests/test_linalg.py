@@ -563,6 +563,7 @@ class _TestNorm(TestCase):
         self.assertRaises(ValueError, norm, A, 0)
 
     def test_axis(self):
+        # Vector norms.
         # Compare the use of `axis` with computing the norm of each row
         # or column separately.
         A = array([[1, 2, 3], [4, 5, 6]], dtype=self.dt)
@@ -572,10 +573,55 @@ class _TestNorm(TestCase):
             expected1 = [norm(A[k,:], ord=order) for k in range(A.shape[0])]
             assert_almost_equal(norm(A, ord=order, axis=1), expected1)
 
-        # Check bad case.  Using `axis` implies vector norms are being
-        # computed, so also using `ord='fro'` raises a ValueError
-        # (just like `norm([1,2,3], ord='fro')` does).
+        # Matrix norms.
+        B = np.arange(1, 25, dtype=self.dt).reshape(2,3,4)
+
+        for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro']:
+            assert_almost_equal(norm(A, ord=order), norm(A, ord=order, axis=(0,1)))
+
+            n = norm(B, ord=order, axis=(1,2))
+            expected = [norm(B[k], ord=order) for k in range(B.shape[0])]
+            print("shape is %r, axis=(1,2)" % (B.shape,))
+            assert_almost_equal(n, expected)
+
+            n = norm(B, ord=order, axis=(2,1))
+            expected = [norm(B[k].T, ord=order) for k in range(B.shape[0])]
+            print("shape is %r, axis=(2,1)" % (B.shape,))
+            assert_almost_equal(n, expected)
+
+            n = norm(B, ord=order, axis=(0,2))
+            expected = [norm(B[:,k,:], ord=order) for k in range(B.shape[1])]
+            print("shape is %r, axis=(0,2)" % (B.shape,))
+            assert_almost_equal(n, expected)
+
+            n = norm(B, ord=order, axis=(0,1))
+            expected = [norm(B[:,:,k], ord=order) for k in range(B.shape[2])]
+            print("shape is %r, axis=(0,1)" % (B.shape,))
+            assert_almost_equal(n, expected)
+
+    def test_bad_args(self):
+        # Check that bad arguments raise the appropriate exceptions.
+
+        A = array([[1, 2, 3], [4, 5, 6]], dtype=self.dt)
+        B = np.arange(1, 25, dtype=self.dt).reshape(2,3,4)
+
+        # Using `axis=<integer>` or passing in a 1-D array implies vector
+        # norms are being computed, so also using `ord='fro'` raises a
+        # ValueError.
         self.assertRaises(ValueError, norm, A, 'fro', 0)
+        self.assertRaises(ValueError, norm, [3, 4], 'fro', None)
+
+        # Similarly, norm should raise an exception when ord is any finite
+        # number other than 1, 2, -1 or -2 when computing matrix norms.
+        for order in [0, 3]:
+            self.assertRaises(ValueError, norm, A, order, None)
+            self.assertRaises(ValueError, norm, A, order, (0,1))
+            self.assertRaises(ValueError, norm, B, order, (1,2))
+
+        # Invalid axis
+        self.assertRaises(ValueError, norm, B, None, 3)
+        self.assertRaises(ValueError, norm, B, None, (2,3))
+        self.assertRaises(ValueError, norm, B, None, (0,1,2))
 
 
 class TestNormDouble(_TestNorm):
