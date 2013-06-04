@@ -35,7 +35,7 @@ def test_array_array():
     assert_equal(ocnt, sys.getrefcount(np.float64))
 
     # test string
-    has_str = sys.version[0] < 3
+    has_str = sys.version_info[0] < 3
     S2 = "|S2" if has_str else "<U2"
     S3 = "|S3" if has_str else "<U3"
     S5 = "|S5" if has_str else "<U5"
