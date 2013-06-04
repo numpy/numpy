@@ -462,7 +462,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 
     /* The __array__ attribute */
     ip = PyArray_GetAttrString_Lite(obj, "__array__");
-    if (ip) {
+    if (ip != NULL) {
         Py_DECREF(ip);
         ip = PyObject_CallMethod(obj, "__array__", NULL);
         if(ip && PyArray_Check(ip)) {
