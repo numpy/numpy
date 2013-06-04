@@ -515,8 +515,10 @@ class TestEigh(HermitianTestCase, HermitianGeneralizedTestCase, TestCase):
 
 
 class _TestNorm(TestCase):
+
     dt = None
     dec = None
+
     def test_empty(self):
         assert_equal(norm([]), 0.0)
         assert_equal(norm(array([], dtype=self.dt)), 0.0)
@@ -528,17 +530,22 @@ class _TestNorm(TestCase):
         c = [-1, 2, -3, 4]
 
         def _test(v):
-            np.testing.assert_almost_equal(norm(v), 30**0.5, decimal=self.dec)
-            np.testing.assert_almost_equal(norm(v,inf), 4.0, decimal=self.dec)
-            np.testing.assert_almost_equal(norm(v,-inf), 1.0, decimal=self.dec)
-            np.testing.assert_almost_equal(norm(v,1), 10.0, decimal=self.dec)
-            np.testing.assert_almost_equal(norm(v,-1), 12.0/25,
-                    decimal=self.dec)
-            np.testing.assert_almost_equal(norm(v,2), 30**0.5,
-                    decimal=self.dec)
-            np.testing.assert_almost_equal(norm(v,-2), ((205./144)**-0.5),
-                    decimal=self.dec)
-            np.testing.assert_almost_equal(norm(v,0), 4, decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v), 30**0.5,
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v, inf), 4.0,
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v, -inf), 1.0,
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v, 1), 10.0,
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v, -1), 12.0/25,
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v, 2), 30**0.5,
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v, -2), ((205./144)**-0.5),
+                                           decimal=self.dec)
+            np.testing.assert_almost_equal(norm(v, 0), 4,
+                                           decimal=self.dec)
 
         for v in (a, b, c,):
             _test(v)
@@ -550,13 +557,13 @@ class _TestNorm(TestCase):
     def test_matrix(self):
         A = matrix([[1, 3], [5, 7]], dtype=self.dt)
         assert_almost_equal(norm(A), 84**0.5)
-        assert_almost_equal(norm(A,'fro'), 84**0.5)
-        assert_almost_equal(norm(A,inf), 12.0)
-        assert_almost_equal(norm(A,-inf), 4.0)
-        assert_almost_equal(norm(A,1), 10.0)
-        assert_almost_equal(norm(A,-1), 6.0)
-        assert_almost_equal(norm(A,2), 9.1231056256176615)
-        assert_almost_equal(norm(A,-2), 0.87689437438234041)
+        assert_almost_equal(norm(A, 'fro'), 84**0.5)
+        assert_almost_equal(norm(A, inf), 12.0)
+        assert_almost_equal(norm(A, -inf), 4.0)
+        assert_almost_equal(norm(A, 1), 10.0)
+        assert_almost_equal(norm(A, -1), 6.0)
+        assert_almost_equal(norm(A, 2), 9.1231056256176615)
+        assert_almost_equal(norm(A, -2), 0.87689437438234041)
 
         self.assertRaises(ValueError, norm, A, 'nofro')
         self.assertRaises(ValueError, norm, A, -3)
@@ -574,36 +581,33 @@ class _TestNorm(TestCase):
             assert_almost_equal(norm(A, ord=order, axis=1), expected1)
 
         # Matrix norms.
-        B = np.arange(1, 25, dtype=self.dt).reshape(2,3,4)
+        B = np.arange(1, 25, dtype=self.dt).reshape(2, 3, 4)
 
         for order in [None, -2, 2, -1, 1, np.Inf, -np.Inf, 'fro']:
-            assert_almost_equal(norm(A, ord=order), norm(A, ord=order, axis=(0,1)))
+            assert_almost_equal(norm(A, ord=order), norm(A, ord=order,
+                                                         axis=(0, 1)))
 
-            n = norm(B, ord=order, axis=(1,2))
+            n = norm(B, ord=order, axis=(1, 2))
             expected = [norm(B[k], ord=order) for k in range(B.shape[0])]
-            print("shape is %r, axis=(1,2)" % (B.shape,))
             assert_almost_equal(n, expected)
 
-            n = norm(B, ord=order, axis=(2,1))
+            n = norm(B, ord=order, axis=(2, 1))
             expected = [norm(B[k].T, ord=order) for k in range(B.shape[0])]
-            print("shape is %r, axis=(2,1)" % (B.shape,))
             assert_almost_equal(n, expected)
 
-            n = norm(B, ord=order, axis=(0,2))
+            n = norm(B, ord=order, axis=(0, 2))
             expected = [norm(B[:,k,:], ord=order) for k in range(B.shape[1])]
-            print("shape is %r, axis=(0,2)" % (B.shape,))
             assert_almost_equal(n, expected)
 
-            n = norm(B, ord=order, axis=(0,1))
+            n = norm(B, ord=order, axis=(0, 1))
             expected = [norm(B[:,:,k], ord=order) for k in range(B.shape[2])]
-            print("shape is %r, axis=(0,1)" % (B.shape,))
             assert_almost_equal(n, expected)
 
     def test_bad_args(self):
         # Check that bad arguments raise the appropriate exceptions.
 
         A = array([[1, 2, 3], [4, 5, 6]], dtype=self.dt)
-        B = np.arange(1, 25, dtype=self.dt).reshape(2,3,4)
+        B = np.arange(1, 25, dtype=self.dt).reshape(2, 3, 4)
 
         # Using `axis=<integer>` or passing in a 1-D array implies vector
         # norms are being computed, so also using `ord='fro'` raises a
@@ -615,18 +619,18 @@ class _TestNorm(TestCase):
         # number other than 1, 2, -1 or -2 when computing matrix norms.
         for order in [0, 3]:
             self.assertRaises(ValueError, norm, A, order, None)
-            self.assertRaises(ValueError, norm, A, order, (0,1))
-            self.assertRaises(ValueError, norm, B, order, (1,2))
+            self.assertRaises(ValueError, norm, A, order, (0, 1))
+            self.assertRaises(ValueError, norm, B, order, (1, 2))
 
         # Invalid axis
         self.assertRaises(ValueError, norm, B, None, 3)
-        self.assertRaises(ValueError, norm, B, None, (2,3))
-        self.assertRaises(ValueError, norm, B, None, (0,1,2))
+        self.assertRaises(ValueError, norm, B, None, (2, 3))
+        self.assertRaises(ValueError, norm, B, None, (0, 1, 2))
 
 
 class TestNormDouble(_TestNorm):
     dt = np.double
-    dec= 12
+    dec = 12
 
 
 class TestNormSingle(_TestNorm):

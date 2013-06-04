@@ -1896,12 +1896,12 @@ def _multi_svd_norm(x, row_axis, col_axis, op):
         z = y.reshape((-1,) + y.shape[-2:])
     else:
         z = y
-    if x.ndim  == 2:
+    if x.ndim == 2:
         result = op(svd(z, compute_uv=0))
     else:
         result = array([op(svd(m, compute_uv=0)) for m in z])
         result.shape = y.shape[:-2]
-    return result    
+    return result
 
 
 def norm(x, ord=None, axis=None):
