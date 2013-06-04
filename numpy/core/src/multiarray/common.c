@@ -43,7 +43,7 @@ PyObject *
 PyArray_GetAttrString_Lite(PyObject *v, char *name)
 {
     PyTypeObject *tp = Py_TYPE(v);
-    if (tp==&PyList_Type || tp==&PyTuple_Type || v==Py_None) {
+    if (tp == &PyList_Type || tp == &PyTuple_Type || v == Py_None) {
         return (PyObject *)NULL;
     }
     else if (tp->tp_getattr != NULL) {
