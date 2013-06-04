@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import *
 from numpy.testing.utils import WarningManager
 import warnings
-#from numpy.compat import sixu
+from numpy.compat import sixu
 
 # Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
 NPY_RELAXED_STRIDES_CHECKING = np.ones((10,1), order='C').flags.f_contiguous
@@ -84,12 +84,16 @@ def test_array_array():
     assert_equal(np.array(o, dtype=np.float64), np.array(100.0, np.float64))
 
     # test recursion
+    nested = 1.5;
+    for i in xrange(np.MAXDIMS):
+        nested = [ nested ]
+
     # no error
-    np.array(reduce(lambda x, y: [x], xrange(np.MAXDIMS), 1.5))
+    np.array(nested)
 
     # Exceeds recursion limit
     try: 
-        np.array(reduce(lambda x, y: [x], xrange(np.MAXDIMS+1), 1.5), dtype=np.float64)
+        np.array([nested], dtype=np.float64)
         assert_(False, "RuntimeError expected")
     except ValueError as ex: 
         pass
