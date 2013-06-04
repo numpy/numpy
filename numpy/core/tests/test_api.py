@@ -84,11 +84,10 @@ def test_array_array():
                      np.dtype('uint8'))
 
     # test array interface
-    ## Is there a way to mock one for unit test? Something like:
-    #   o = type("o", (object,),
-    #            dict(__array_interface__=dict(typestr=S3.str),
-    #                 __repr__=lambda x: "100"))()
-    #   assert_equal(np.array(o, dtype=np.float64), np.array(100.0, np.float64))
+    a = np.array(100.0, dtype=np.float64)
+    o = type("o", (object,),
+             dict(__array_interface__=a.__array_interface__))
+    assert_equal(np.array(o, dtype=np.float64), a)
 
     # test array_struct interface
     ## Is there a way to mock one for unit test?
