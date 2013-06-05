@@ -77,11 +77,11 @@ def test_array_array():
     # test memoryview, new version of buffer
     _memoryview = builtins.get("memoryview")
     if _memoryview:
-        assert_equal(np.array(_memoryview(bytearray("1.0")), dtype=np.float64),
+        assert_equal(np.array(_memoryview(bytearray(b'1.0')), dtype=np.float64),
                      np.array([49.0, 46.0, 48.0], dtype=np.float64))
-        assert_equal(np.array(_memoryview(bytearray("1.0")),
+        assert_equal(np.array(_memoryview(bytearray(b'1.0')),
                               dtype=np.float64).dtype, np.dtype("float64"))
-        assert_equal(np.array(_memoryview(bytearray("1.0"))).dtype,
+        assert_equal(np.array(_memoryview(bytearray(b'1.0'))).dtype,
                      np.dtype('uint8'))
 
     # test array interface
