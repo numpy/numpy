@@ -116,7 +116,7 @@ class TestSubclassing(TestCase):
         self.assertTrue(isinstance(hypot(mx,mx), mmatrix))
         self.assertTrue(isinstance(hypot(mx,x), mmatrix))
 
-    def test_masked_binary_operations(self):
+    def test_masked_binary_operations2(self):
         "Tests domained_masked_binary_operation"
         (x, mx) = self.data
         xmx = masked_array(mx.data.__array__(), mask=mx.mask)
