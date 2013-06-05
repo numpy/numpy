@@ -1867,7 +1867,7 @@ def lstsq(a, b, rcond=-1):
 
 
 def _multi_svd_norm(x, row_axis, col_axis, op):
-    """Compute the exteme singular values of the 2-D matrices in `x`.
+    """Compute the extreme singular values of the 2-D matrices in `x`.
 
     This is a private utility function used by numpy.linalg.norm().
 
