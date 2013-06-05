@@ -401,6 +401,18 @@ class TestSaveTxt(TestCase):
                 [b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n',
                  b'(3.142e+00+2.718e+00j) (3.142e+00+2.718e+00j)\n'])
 
+    def test_custom_writer(self):
+
+        class CustomWriter(list):
+            def write(self, text):
+                self.extend(text.split(b'\n'))
+
+        w = CustomWriter()
+        a = np.array([(1, 2), (3, 4)])
+        np.savetxt(w, a)
+        b = np.loadtxt(w)
+        assert_array_equal(a, b)
+
 
 def _assert_floatstr_lines_equal(actual_lines, expected_lines):
     """A string comparison function that also works on Windows + Python 2.5.
