@@ -47,8 +47,8 @@ def test_array_array():
     assert_equal(np.array("1", dtype=S5), np.ones((), dtype=S5))
 
     # test unicode
-    if hasattr(globals(),"unicode"):
-        _unicode = getattr(globals(), "unicode")
+    _unicode = globals().get("unicode")
+    if _unicode:
         U2 = np.dtype((_unicode,2))
         U3 = np.dtype((_unicode,3))
         U5 = np.dtype((_unicode,5))
@@ -62,7 +62,8 @@ def test_array_array():
                      np.ones((), dtype=U5))
 
     # test buffer
-    if hasattr(globals(),"buffer"):
+    _buffer = globals().get("buffer")
+    if _buffer:
         _buffer = getattr(globals(), "buffer")
         assert_equal(np.array(_buffer("1.0"), dtype=np.float64),
                      np.array(1.0, dtype=np.float64))
@@ -72,8 +73,8 @@ def test_array_array():
                      np.array([1.0], dtype=np.float64))
 
     # test memoryview, new version of buffer
-    if hasattr(globals(),"memoryview"):
-        _memoryview = getattr(globals(), "memoryview")
+    _memoryview = globals().get("memoryview")
+    if _memoryview:
         assert_equal(np.array(_memoryview(bytearray("1.0")), dtype=np.float64),
                      np.array([49.0, 46.0, 48.0], dtype=np.float64))
         assert_equal(np.array(_memoryview(bytearray("1.0")),
