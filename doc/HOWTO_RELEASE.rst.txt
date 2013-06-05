@@ -188,7 +188,10 @@ Release process
 
 Check the buildbot
 ------------------
-The buildbot is located at `<http://buildbot.scipy.org/>`_.
+For Numpy, check the buildbot located at `<http://buildbot.scipy.org/>`_.
+Also check that the benchmarks (which are not run as part of the test suite)
+work.  Note that at the moment this applies only to Scipy; Numpy doesn't have
+a benchmark suite.  So, run ``scipy.bench()``.
 
 Agree on a release schedule
 ---------------------------
