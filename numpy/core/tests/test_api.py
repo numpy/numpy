@@ -61,10 +61,12 @@ def test_array_array():
         assert_equal(np.array(_unicode("1"), dtype=U5),
                      np.ones((), dtype=U5))
 
+    builtins = getattr(__builtins__, '__dict__', __builtins__)
+    assert_(isinstance(builtins, dict))
+
     # test buffer
-    _buffer = globals().get("buffer")
+    _buffer = builtins.get("buffer")
     if _buffer:
-        _buffer = getattr(globals(), "buffer")
         assert_equal(np.array(_buffer("1.0"), dtype=np.float64),
                      np.array(1.0, dtype=np.float64))
         assert_equal(np.array(_buffer("1.0"), dtype=np.float64).dtype,
@@ -73,14 +75,12 @@ def test_array_array():
                      np.array([1.0], dtype=np.float64))
 
     # test memoryview, new version of buffer
-    _memoryview = globals().get("memoryview")
+    _memoryview = builtins.get("memoryview")
     if _memoryview:
         assert_equal(np.array(_memoryview(bytearray("1.0")), dtype=np.float64),
                      np.array([49.0, 46.0, 48.0], dtype=np.float64))
         assert_equal(np.array(_memoryview(bytearray("1.0")),
                               dtype=np.float64).dtype, np.dtype("float64"))
-        assert_equal(np.array([_memoryview(bytearray("1.0"))], type=np.float64),
-                     np.array([1.0], dtype=np.float64))
         assert_equal(np.array(_memoryview(bytearray("1.0"))).dtype,
                      np.dtype('uint8'))
 
@@ -91,7 +91,13 @@ def test_array_array():
     assert_equal(np.array(o, dtype=np.float64), a)
 
     # test array_struct interface
-    ## Is there a way to mock one for unit test?
+    a = np.array([(1,4.0,'Hello'), (2, 6.0, 'World')], 
+                 dtype=[('f0', int), ('f1', float), ('f2', str),])
+    o = type("o", (object,),
+             dict(__array_struct__=a.__array_struct__))
+    ## wasn't what I expected... is np.array(o) supposed to equal a ?
+    ## instead we get a array([...], dtype=">V18")
+    assert_equal(str(np.array(o).data), str(a.data))
 
     # test array
     o = type("o", (object,),
