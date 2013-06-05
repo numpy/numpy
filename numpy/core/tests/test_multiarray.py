@@ -1207,7 +1207,7 @@ class TestFancyIndexing(TestCase):
         x[m] = 5
         assert_array_equal(x, array([1,5,3,4]))
 
-    def test_assign_mask(self):
+    def test_assign_mask2(self):
         xorig = array([[1,2,3,4],[5,6,7,8]])
         m = array([0,1],bool)
         m2 = array([[0,1],[1,0]],bool)

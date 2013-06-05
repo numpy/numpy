@@ -348,7 +348,7 @@ class TestHypotSpecialValues(TestCase):
         assert_hypot_isnan(np.nan, np.nan)
         assert_hypot_isnan(np.nan, 1)
 
-    def test_nan_outputs(self):
+    def test_nan_outputs2(self):
         assert_hypot_isinf(np.nan, np.inf)
         assert_hypot_isinf(np.inf, np.nan)
         assert_hypot_isinf(np.inf, 0)
