@@ -830,5 +830,5 @@ def tile(A, reps):
         dim_in = shape[i]
         dim_out = dim_in*nrep
         shape[i] = dim_out
-        n //= max(dim_in,1)
+        n //= max(dim_in, 1)
     return c.reshape(shape)

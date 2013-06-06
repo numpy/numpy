@@ -6,13 +6,12 @@ to document how deprecations should eventually be turned into errors.
 from __future__ import division, absolute_import, print_function
 
 import sys
-
+import operator
 import warnings
 from nose.plugins.skip import SkipTest
 
 import numpy as np
 from numpy.testing import dec, run_module_suite, assert_raises
-import operator
 
 
 class _DeprecationTestCase(object):

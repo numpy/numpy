@@ -191,7 +191,7 @@ PyArray_AxisConverter(PyObject *obj, int *axis)
         *axis = NPY_MAXDIMS;
     }
     else {
-        *axis = (int) PyArray_PyIntAsInt(obj);
+        *axis = PyArray_PyIntAsInt(obj);
         if (PyErr_Occurred()) {
             return NPY_FAIL;
         }
@@ -812,7 +812,7 @@ PyArray_PyIntAsIntp(PyObject *o)
   #if (NPY_SIZEOF_LONGLONG > NPY_SIZEOF_INTP)
     if ((long_value < NPY_MIN_INTP) || (long_value > NPY_MAX_INTP)) {
         PyErr_SetString(PyExc_OverflowError,
-                        "Python int too large to convert to C numpy.intp");
+                "Python int too large to convert to C numpy.intp");
         return -1;
     }
   #endif
@@ -820,7 +820,7 @@ PyArray_PyIntAsIntp(PyObject *o)
   #if (NPY_SIZEOF_LONG > NPY_SIZEOF_INTP)
     if ((long_value < NPY_MIN_INTP) || (long_value > NPY_MAX_INTP)) {
         PyErr_SetString(PyExc_OverflowError,
-                        "Python int too large to convert to C numpy.intp");
+                "Python int too large to convert to C numpy.intp");
         return -1;
     }
   #endif
@@ -849,13 +849,15 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
      */
     nd = PySequence_Length(seq);
     if (nd == -1) {
-        if (PyErr_Occurred()) PyErr_Clear();
+        if (PyErr_Occurred()) {
+            PyErr_Clear();
+        }
 
         vals[0] = PyArray_PyIntAsIntp(seq);
         if(vals[0] == -1) {
             err = PyErr_Occurred();
-            if (err  &&
-                PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
+            if (err &&
+                    PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
                 PyErr_SetString(PyExc_ValueError,
                         "Maximum allowed dimension exceeded");
             }
@@ -876,8 +878,8 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
             vals[i] = PyArray_PyIntAsIntp(op);
             if(vals[i] == -1) {
                 err = PyErr_Occurred();
-                if (err  &&
-                    PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
+                if (err &&
+                        PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
                     PyErr_SetString(PyExc_ValueError,
                             "Maximum allowed dimension exceeded");
                 }
@@ -892,13 +894,13 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
 
 /*NUMPY_API
  * PyArray_IntpFromSequence
- * Returns the number of dimensions or -1 if an error occurred.
+ * Returns the number of integers converted or -1 if an error occurred.
  * vals must be large enough to hold maxvals
  */
 NPY_NO_EXPORT int
 PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
 {
-    return (int)PyArray_IntpFromIndexSequence(seq, vals, (npy_intp)maxvals);
+    return PyArray_IntpFromIndexSequence(seq, vals, (npy_intp)maxvals);
 }
 
 
