@@ -75,7 +75,7 @@ __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'maximum_fill_value', 'mean', 'min', 'minimum', 'minimum_fill_value',
            'mod', 'multiply', 'mvoid',
            'negative', 'nomask', 'nonzero', 'not_equal',
-           'ones', 'outer', 'outerproduct',
+           'ones', 'ones_like', 'outer', 'outerproduct',
            'power', 'prod', 'product', 'ptp', 'put', 'putmask',
            'rank', 'ravel', 'remainder', 'repeat', 'reshape', 'resize',
            'right_shift', 'round_', 'round',
@@ -84,7 +84,7 @@ __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'swapaxes',
            'take', 'tan', 'tanh', 'trace', 'transpose', 'true_divide',
            'var', 'where',
-           'zeros']
+           'zeros', 'zeros_like']
 
 MaskType = np.bool_
 nomask = MaskType(0)
