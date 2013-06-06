@@ -244,7 +244,6 @@ def test_array_astype():
     b = a.astype('S')
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S100'))
-
     a = np.array([sixu('a')*100], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)
