@@ -27,6 +27,48 @@
  * be allowed under the NPY_SAME_KIND_CASTING rules, and if not we issue a
  * warning (that people's code will be broken in a future release.)
  */
+
+/*
+ * Stripped down version of PyObject_GetAttrString,
+ * avoids lookups for None, tuple, and List objects,
+ * and doesn't create a PyErr since this code ignores it.
+ *
+ * 'v' is the object to search for attribute.
+ *
+ * 'name' is the attribute to search for.
+ *
+ * Returns attribute value on success, 0 on failure.
+ */
+PyObject *
+PyArray_GetAttrString_Lite(PyObject *v, char *name)
+{
+    PyTypeObject *tp = Py_TYPE(v);
+    if (tp == &PyList_Type || tp == &PyTuple_Type || v == Py_None) {
+        return (PyObject *)NULL;
+    }
+    else if (tp->tp_getattr != NULL) {
+        return (*tp->tp_getattr)(v, name);
+    }
+    else if (tp->tp_getattro != NULL) {
+        PyObject *w, *res;
+#if defined(NPY_PY3K)
+        w = PyUnicode_InternFromString(name);
+#else
+        w = PyString_InternFromString(name);
+#endif
+        if (w == NULL)
+            return (PyObject *)NULL;
+        res = (*tp->tp_getattro)(v, w);
+        Py_XDECREF(w);
+        return res;
+    }
+    else {
+        return (PyObject *)NULL;
+    }
+}
+
+
+
 NPY_NO_EXPORT NPY_CASTING NPY_DEFAULT_ASSIGN_CASTING = NPY_INTERNAL_UNSAFE_CASTING_BUT_WARN_UNLESS_SAME_KIND;
 
 
@@ -156,8 +198,17 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         goto promote_types;
     }
 
+    /* See if it's a python None */
+    if (obj == Py_None) {
+        dtype = PyArray_DescrFromType(NPY_OBJECT);
+        if (dtype == NULL) {
+            goto fail;
+        }
+        Py_INCREF(dtype);
+        goto promote_types;
+    }
     /* Check if it's a NumPy scalar */
-    if (PyArray_IsScalar(obj, Generic)) {
+    else if (PyArray_IsScalar(obj, Generic)) {
         if (!string_type) {
             dtype = PyArray_DescrFromScalar(obj);
             if (dtype == NULL) {
@@ -308,32 +359,36 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* PEP 3118 buffer interface */
-    memset(&buffer_view, 0, sizeof(Py_buffer));
-    if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
-        PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT) == 0) {
-
-        PyErr_Clear();
-        dtype = _descriptor_from_pep3118_format(buffer_view.format);
-        PyBuffer_Release(&buffer_view);
-        if (dtype) {
+    if (SUPPORTS_BUFFER_PROTOCOL(obj) &&
+	PyObject_CheckBuffer(obj) == 1) {
+        memset(&buffer_view, 0, sizeof(Py_buffer));
+        if (PyObject_GetBuffer(obj, &buffer_view,
+                               PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
+            PyObject_GetBuffer(obj, &buffer_view, PyBUF_FORMAT) == 0) {
+    
+            PyErr_Clear();
+            dtype = _descriptor_from_pep3118_format(buffer_view.format);
+            PyBuffer_Release(&buffer_view);
+            if (dtype) {
+                goto promote_types;
+            }
+        }
+        else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
+                 PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
+    
+            PyErr_Clear();
+            dtype = PyArray_DescrNewFromType(NPY_VOID);
+            dtype->elsize = buffer_view.itemsize;
+            PyBuffer_Release(&buffer_view);
             goto promote_types;
         }
-    }
-    else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
-             PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
-
-        PyErr_Clear();
-        dtype = PyArray_DescrNewFromType(NPY_VOID);
-        dtype->elsize = buffer_view.itemsize;
-        PyBuffer_Release(&buffer_view);
-        goto promote_types;
-    }
-    else {
-        PyErr_Clear();
+        else {
+            PyErr_Clear();
+        }
     }
 
     /* The array interface */
-    ip = PyObject_GetAttrString(obj, "__array_interface__");
+    ip = PyArray_GetAttrString_Lite(obj, "__array_interface__");
     if (ip != NULL) {
         if (PyDict_Check(ip)) {
             PyObject *typestr;
@@ -369,7 +424,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* The array struct interface */
-    ip = PyObject_GetAttrString(obj, "__array_struct__");
+    ip = PyArray_GetAttrString_Lite(obj, "__array_struct__");
     if (ip != NULL) {
         PyArrayInterface *inter;
         char buf[40];
@@ -407,7 +462,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
 #endif
 
     /* The __array__ attribute */
-    if (PyObject_HasAttrString(obj, "__array__")) {
+    ip = PyArray_GetAttrString_Lite(obj, "__array__");
+    if (ip != NULL) {
+        Py_DECREF(ip);
         ip = PyObject_CallMethod(obj, "__array__", NULL);
         if(ip && PyArray_Check(ip)) {
             dtype = PyArray_DESCR((PyArrayObject *)ip);
@@ -419,6 +476,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
         if (PyErr_Occurred()) {
             goto fail;
         }
+    }
+    else {
+        PyErr_Clear();
     }
 
     /* Not exactly sure what this is about... */

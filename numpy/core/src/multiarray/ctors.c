@@ -646,32 +646,35 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     /* obj is a PEP 3118 buffer */
 #if PY_VERSION_HEX >= 0x02060000
     /* PEP 3118 buffer interface */
-    memset(&buffer_view, 0, sizeof(Py_buffer));
-    if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
-        PyObject_GetBuffer(obj, &buffer_view, PyBUF_ND) == 0) {
-        int nd = buffer_view.ndim;
-        if (nd < *maxndim) {
-            *maxndim = nd;
+    if (SUPPORTS_BUFFER_PROTOCOL(obj) &&
+	PyObject_CheckBuffer(obj) == 1) {
+        memset(&buffer_view, 0, sizeof(Py_buffer));
+        if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
+            PyObject_GetBuffer(obj, &buffer_view, PyBUF_ND) == 0) {
+            int nd = buffer_view.ndim;
+            if (nd < *maxndim) {
+                *maxndim = nd;
+            }
+            for (i=0; i<*maxndim; i++) {
+                d[i] = buffer_view.shape[i];
+            }
+            PyBuffer_Release(&buffer_view);
+            return 0;
         }
-        for (i=0; i<*maxndim; i++) {
-            d[i] = buffer_view.shape[i];
+        else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
+            d[0] = buffer_view.len;
+            *maxndim = 1;
+            PyBuffer_Release(&buffer_view);
+            return 0;
         }
-        PyBuffer_Release(&buffer_view);
-        return 0;
-    }
-    else if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_SIMPLE) == 0) {
-        d[0] = buffer_view.len;
-        *maxndim = 1;
-        PyBuffer_Release(&buffer_view);
-        return 0;
-    }
-    else {
-        PyErr_Clear();
+        else {
+            PyErr_Clear();
+        }
     }
 #endif
 
     /* obj has the __array_struct__ interface */
-    if ((e = PyObject_GetAttrString(obj, "__array_struct__")) != NULL) {
+    if ((e = PyArray_GetAttrString_Lite(obj, "__array_struct__")) != NULL) {
         int nd = -1;
         if (NpyCapsule_Check(e)) {
             PyArrayInterface *inter;
@@ -698,7 +701,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     }
 
     /* obj has the __array_interface__ interface */
-    if ((e = PyObject_GetAttrString(obj, "__array_interface__")) != NULL) {
+    if ((e = PyArray_GetAttrString_Lite(obj, "__array_interface__")) != NULL) {
         int nd = -1;
         if (PyDict_Check(e)) {
             PyObject *new;
@@ -1024,7 +1027,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     if ((subtype != &PyArray_Type)) {
         PyObject *res, *func, *args;
 
-        func = PyObject_GetAttrString((PyObject *)fa, "__array_finalize__");
+        func = PyArray_GetAttrString_Lite((PyObject *)fa, "__array_finalize__");
         if (func && func != Py_None) {
             if (NpyCapsule_Check(func)) {
                 /* A C-function is stored here */
@@ -1934,7 +1937,7 @@ PyArray_FromStructInterface(PyObject *input)
     PyArrayObject *ret;
     char endian = NPY_NATBYTE;
 
-    attr = PyObject_GetAttrString(input, "__array_struct__");
+    attr = PyArray_GetAttrString_Lite(input, "__array_struct__");
     if (attr == NULL) {
         PyErr_Clear();
         return Py_NotImplemented;
@@ -2009,7 +2012,7 @@ PyArray_FromInterface(PyObject *origin)
     /* Get the memory from __array_data__ and __array_offset__ */
     /* Get the strides */
 
-    iface = PyObject_GetAttrString(origin, "__array_interface__");
+    iface = PyArray_GetAttrString_Lite(origin, "__array_interface__");
     if (iface == NULL) {
         PyErr_Clear();
         return Py_NotImplemented;
@@ -2226,7 +2229,7 @@ PyArray_FromArrayAttr(PyObject *op, PyArray_Descr *typecode, PyObject *context)
     PyObject *new;
     PyObject *array_meth;
 
-    array_meth = PyObject_GetAttrString(op, "__array__");
+    array_meth = PyArray_GetAttrString_Lite(op, "__array__");
     if (array_meth == NULL) {
         PyErr_Clear();
         return Py_NotImplemented;
@@ -3268,7 +3271,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 #endif
         ) {
         PyObject *newbuf;
-        newbuf = PyObject_GetAttrString(buf, "__buffer__");
+        newbuf = PyArray_GetAttrString_Lite(buf, "__buffer__");
         if (newbuf == NULL) {
             Py_DECREF(type);
             return NULL;
