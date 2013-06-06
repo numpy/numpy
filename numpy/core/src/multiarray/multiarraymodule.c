@@ -52,6 +52,7 @@ NPY_NO_EXPORT int NPY_NUMUSERTYPES = 0;
 #include "shape.h"
 #include "ctors.h"
 #include "array_assign.h"
+#include "common.h"
 
 /* Only here for API compatibility */
 NPY_NO_EXPORT PyTypeObject PyBigArray_Type;
@@ -68,7 +69,7 @@ PyArray_GetPriority(PyObject *obj, double default_)
     if (PyArray_CheckExact(obj))
         return priority;
 
-    ret = PyObject_GetAttrString(obj, "__array_priority__");
+    ret = PyArray_GetAttrString_SuppressException(obj, "__array_priority__");
     if (ret != NULL) {
         priority = PyFloat_AsDouble(ret);
     }
