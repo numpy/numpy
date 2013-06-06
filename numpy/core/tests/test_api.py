@@ -6,39 +6,41 @@ import numpy as np
 from numpy.testing import *
 from numpy.testing.utils import WarningManager
 import warnings
+from numpy.compat import sixu
 
 # Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.
-NPY_RELAXED_STRIDES_CHECKING = np.ones((10,1), order='C').flags.f_contiguous
+NPY_RELAXED_STRIDES_CHECKING = np.ones((10, 1), order='C').flags.f_contiguous
+
 
 def test_array_array():
     obj = object()
     tobj = type(object)
-    ones11 = np.ones((1,1), np.float64)
+    ones11 = np.ones((1, 1), np.float64)
     tndarray = type(ones11)
     # Test is_ndarary
     assert_equal(np.array(ones11, dtype=np.float64), ones11)
-    ocnt = sys.getrefcount(tndarray)
+    old_refcount = sys.getrefcount(tndarray)
     np.array(ones11)
-    assert_equal(ocnt, sys.getrefcount(tndarray))
+    assert_equal(old_refcount, sys.getrefcount(tndarray))
 
     # test None
     assert_equal(np.array(None, dtype=np.float64),
                  np.array(np.nan, dtype=np.float64))
-    ocnt = sys.getrefcount(tobj)
+    old_refcount = sys.getrefcount(tobj)
     np.array(None, dtype=np.float64)
-    assert_equal(ocnt, sys.getrefcount(tobj))
+    assert_equal(old_refcount, sys.getrefcount(tobj))
 
     # test scalar
     assert_equal(np.array(1.0, dtype=np.float64),
                  np.ones((), dtype=np.float64))
-    ocnt = sys.getrefcount(np.float64)
+    old_refcount = sys.getrefcount(np.float64)
     np.array(np.array(1.0, dtype=np.float64), dtype=np.float64)
-    assert_equal(ocnt, sys.getrefcount(np.float64))
+    assert_equal(old_refcount, sys.getrefcount(np.float64))
 
     # test string
-    S2 = np.dtype((str,2))
-    S3 = np.dtype((str,3))
-    S5 = np.dtype((str,5))
+    S2 = np.dtype((str, 2))
+    S3 = np.dtype((str, 3))
+    S5 = np.dtype((str, 5))
     assert_equal(np.array("1.0", dtype=np.float64),
                  np.ones((), dtype=np.float64))
     assert_equal(np.array("1.0").dtype, S3)
@@ -49,9 +51,9 @@ def test_array_array():
     # test unicode
     _unicode = globals().get("unicode")
     if _unicode:
-        U2 = np.dtype((_unicode,2))
-        U3 = np.dtype((_unicode,3))
-        U5 = np.dtype((_unicode,5))
+        U2 = np.dtype((_unicode, 2))
+        U3 = np.dtype((_unicode, 3))
+        U5 = np.dtype((_unicode, 5))
         assert_equal(np.array(_unicode("1.0"), dtype=np.float64),
                      np.ones((), dtype=np.float64))
         assert_equal(np.array(_unicode("1.0")).dtype, U3)
@@ -77,10 +79,13 @@ def test_array_array():
     # test memoryview, new version of buffer
     _memoryview = builtins.get("memoryview")
     if _memoryview:
-        assert_equal(np.array(_memoryview(bytearray(b'1.0')), dtype=np.float64),
-                     np.array([49.0, 46.0, 48.0], dtype=np.float64))
         assert_equal(np.array(_memoryview(bytearray(b'1.0')),
-                              dtype=np.float64).dtype, np.dtype("float64"))
+                              dtype=np.float64),
+                     np.array([49.0, 46.0, 48.0],
+                              dtype=np.float64))
+        assert_equal(np.array(_memoryview(bytearray(b'1.0')),
+                              dtype=np.float64).dtype,
+                     np.dtype("float64"))
         assert_equal(np.array(_memoryview(bytearray(b'1.0'))).dtype,
                      np.dtype('uint8'))
 
@@ -91,8 +96,8 @@ def test_array_array():
     assert_equal(np.array(o, dtype=np.float64), a)
 
     # test array_struct interface
-    a = np.array([(1,4.0,'Hello'), (2, 6.0, 'World')], 
-                 dtype=[('f0', int), ('f1', float), ('f2', str),])
+    a = np.array([(1, 4.0, 'Hello'), (2, 6.0, 'World')],
+                 dtype=[('f0', int), ('f1', float), ('f2', str)])
     o = type("o", (object,),
              dict(__array_struct__=a.__array_struct__))
     ## wasn't what I expected... is np.array(o) supposed to equal a ?
@@ -101,13 +106,13 @@ def test_array_array():
 
     # test array
     o = type("o", (object,),
-             dict(__array__=lambda *x: np.array( 100.0, dtype=np.float64 )))()
+             dict(__array__=lambda *x: np.array(100.0, dtype=np.float64)))()
     assert_equal(np.array(o, dtype=np.float64), np.array(100.0, np.float64))
 
     # test recursion
-    nested = 1.5;
+    nested = 1.5
     for i in range(np.MAXDIMS):
-        nested = [ nested ]
+        nested = [nested]
 
     # no error
     np.array(nested)
@@ -116,42 +121,43 @@ def test_array_array():
     assert_raises(ValueError, np.array, [nested], dtype=np.float64)
 
     # Try with lists...
-    assert_equal(np.array([None]*10, dtype=np.float64),
-                 np.empty((10,), dtype=np.float64)+np.nan)
-    assert_equal(np.array([[None]]*10, dtype=np.float64),
-                 np.empty((10,1), dtype=np.float64)+np.nan)
-    assert_equal(np.array([[None]*10], dtype=np.float64),
-                 np.empty((1,10), dtype=np.float64)+np.nan)
-    assert_equal(np.array([[None]*10]*10, dtype=np.float64),
-                 np.empty((10,10), dtype=np.float64)+np.nan)
+    assert_equal(np.array([None] * 10, dtype=np.float64),
+                 np.empty((10,), dtype=np.float64) + np.nan)
+    assert_equal(np.array([[None]] * 10, dtype=np.float64),
+                 np.empty((10, 1), dtype=np.float64) + np.nan)
+    assert_equal(np.array([[None] * 10], dtype=np.float64),
+                 np.empty((1, 10), dtype=np.float64) + np.nan)
+    assert_equal(np.array([[None] * 10] * 10, dtype=np.float64),
+                 np.empty((10, 10), dtype=np.float64) + np.nan)
 
-    assert_equal(np.array([1.0]*10, dtype=np.float64),
+    assert_equal(np.array([1.0] * 10, dtype=np.float64),
                  np.ones((10,), dtype=np.float64))
-    assert_equal(np.array([[1.0]]*10, dtype=np.float64),
-                 np.ones((10,1), dtype=np.float64))
-    assert_equal(np.array([[1.0]*10], dtype=np.float64),
-                 np.ones((1,10), dtype=np.float64))
-    assert_equal(np.array([[1.0]*10]*10, dtype=np.float64),
-                 np.ones((10,10), dtype=np.float64))
+    assert_equal(np.array([[1.0]] * 10, dtype=np.float64),
+                 np.ones((10, 1), dtype=np.float64))
+    assert_equal(np.array([[1.0] * 10], dtype=np.float64),
+                 np.ones((1, 10), dtype=np.float64))
+    assert_equal(np.array([[1.0] * 10] * 10, dtype=np.float64),
+                 np.ones((10, 10), dtype=np.float64))
 
     # Try with tuples
-    assert_equal(np.array((None,)*10, dtype=np.float64),
-                 np.empty((10,), dtype=np.float64)+np.nan)
-    assert_equal(np.array([(None,)]*10, dtype=np.float64),
-                 np.empty((10,1), dtype=np.float64)+np.nan)
-    assert_equal(np.array([(None,)*10], dtype=np.float64),
-                 np.empty((1,10), dtype=np.float64)+np.nan)
-    assert_equal(np.array([(None,)*10]*10, dtype=np.float64),
-                 np.empty((10,10), dtype=np.float64)+np.nan)
+    assert_equal(np.array((None,) * 10, dtype=np.float64),
+                 np.empty((10,), dtype=np.float64) + np.nan)
+    assert_equal(np.array([(None,)] * 10, dtype=np.float64),
+                 np.empty((10, 1), dtype=np.float64) + np.nan)
+    assert_equal(np.array([(None,) * 10], dtype=np.float64),
+                 np.empty((1, 10), dtype=np.float64) + np.nan)
+    assert_equal(np.array([(None,) * 10] * 10, dtype=np.float64),
+                 np.empty((10, 10), dtype=np.float64) + np.nan)
 
-    assert_equal(np.array((1.0,)*10, dtype=np.float64),
+    assert_equal(np.array((1.0,) * 10, dtype=np.float64),
                  np.ones((10,), dtype=np.float64))
-    assert_equal(np.array([(1.0,)]*10, dtype=np.float64),
-                 np.ones((10,1), dtype=np.float64))
-    assert_equal(np.array([(1.0,)*10], dtype=np.float64),
-                 np.ones((1,10), dtype=np.float64))
-    assert_equal(np.array([(1.0,)*10]*10, dtype=np.float64),
-                 np.ones((10,10), dtype=np.float64))
+    assert_equal(np.array([(1.0,)] * 10, dtype=np.float64),
+                 np.ones((10, 1), dtype=np.float64))
+    assert_equal(np.array([(1.0,) * 10], dtype=np.float64),
+                 np.ones((1, 10), dtype=np.float64))
+    assert_equal(np.array([(1.0,) * 10] * 10, dtype=np.float64),
+                 np.ones((10, 10), dtype=np.float64))
+
 
 def test_fastCopyAndTranspose():
     # 0D array
@@ -239,7 +245,6 @@ def test_array_astype():
     assert_equal(a, b)
     assert_equal(b.dtype, np.dtype('S100'))
 
-    from numpy.compat import sixu
     a = np.array([sixu('a')*100], dtype='O')
     b = a.astype('U')
     assert_equal(a, b)

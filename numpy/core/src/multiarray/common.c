@@ -199,7 +199,7 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* See if it's a python None */
-    if (obj==Py_None) {
+    if (obj == Py_None) {
         dtype = PyArray_DescrFromType(NPY_OBJECT);
         if (dtype == NULL) {
             goto fail;
