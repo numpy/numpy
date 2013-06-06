@@ -25,6 +25,8 @@ NPY_NO_EXPORT int
 PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
                               PyArray_Descr **out_dtype, int string_status);
 
+#define SUPPORTS_BUFFER_PROTOCOL(op) ( (Py_TYPE(op) != &PyList_Type) && (Py_None != op) || (Py_TYPE(op) != &PyTuple_Type) )
+
 NPY_NO_EXPORT PyObject *
 PyArray_GetAttrString_Lite(PyObject *v, char *name);
 

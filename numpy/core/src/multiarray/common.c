@@ -359,7 +359,8 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
     }
 
     /* PEP 3118 buffer interface */
-    if (PyObject_CheckBuffer(obj) == 1) {
+    if (SUPPORTS_BUFFER_PROTOCOL(obj) &&
+	PyObject_CheckBuffer(obj) == 1) {
         memset(&buffer_view, 0, sizeof(Py_buffer));
         if (PyObject_GetBuffer(obj, &buffer_view,
                                PyBUF_FORMAT|PyBUF_STRIDES) == 0 ||
