@@ -1022,7 +1022,7 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
     if ((subtype != &PyArray_Type)) {
         PyObject *res, *func, *args;
 
-        func = PyArray_GetAttrString_Lite((PyObject *)fa, "__array_finalize__");
+        func = PyObject_GetAttrString((PyObject *)fa, "__array_finalize__");
         if (func && func != Py_None) {
             if (NpyCapsule_Check(func)) {
                 /* A C-function is stored here */
@@ -3263,7 +3263,7 @@ PyArray_FromBuffer(PyObject *buf, PyArray_Descr *type,
 #endif
         ) {
         PyObject *newbuf;
-        newbuf = PyArray_GetAttrString_Lite(buf, "__buffer__");
+        newbuf = PyObject_GetAttrString(buf, "__buffer__");
         if (newbuf == NULL) {
             Py_DECREF(type);
             return NULL;
