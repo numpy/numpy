@@ -1303,7 +1303,6 @@ TIMEDELTA_mm_d_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *
  *  #vtype = __m128, __m128d#
  *  #vpre = _mm, _mm#
  *  #vsuf = ps, pd#
-*   #vtype = __m128, __m128d#
  */
 
 #ifdef HAVE_EMMINTRIN_H
