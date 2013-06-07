@@ -1580,13 +1580,13 @@ def gen_alignment_data(dtype=float32, type='binary', max_size=24):
                     (o, o, o, s, dtype, 'in place2')
                 yield out[1:], inp1()[:-1], inp2()[:-1], bfmt % \
                     (o + 1, o, o, s - 1, dtype, 'out of place')
-                yield out[-1:], inp1()[1:], inp2()[:-1], bfmt % \
+                yield out[:-1], inp1()[1:], inp2()[:-1], bfmt % \
                     (o, o + 1, o, s - 1, dtype, 'out of place')
-                yield out[-1:], inp1()[:-1], inp2()[1:], bfmt % \
+                yield out[:-1], inp1()[:-1], inp2()[1:], bfmt % \
                     (o, o, o + 1, s - 1, dtype, 'out of place')
                 yield inp1()[1:], inp1()[:-1], inp2()[:-1], bfmt % \
                     (o + 1, o, o, s - 1, dtype, 'aliased')
-                yield inp1()[-1:], inp1()[1:], inp2()[:-1], bfmt % \
+                yield inp1()[:-1], inp1()[1:], inp2()[:-1], bfmt % \
                     (o, o + 1, o, s - 1, dtype, 'aliased')
-                yield inp1()[-1:], inp1()[:-1], inp2()[1:], bfmt % \
+                yield inp1()[:-1], inp1()[:-1], inp2()[1:], bfmt % \
                     (o, o, o + 1, s - 1, dtype, 'aliased')
