@@ -712,12 +712,13 @@ PyArray_PyIntAsIntp(PyObject *o)
      */
 #if !defined(NPY_PY3K)
     if PyInt_CheckExact(o) {
-  #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
-        long_value = (npy_longlong) PyInt_AsLong(o);
+  #if (NPY_SIZEOF_LONG <= NPY_SIZEOF_INTP)
+        /* No overflow is possible, so we can just return */
+        return PyInt_AS_LONG(o);
   #else
-        long_value = PyInt_AsLong(o);
+        long_value = PyInt_AS_LONG(o);
+        goto overflow_check;
   #endif
-        goto finish;
     }
     else
 #endif
@@ -727,7 +728,7 @@ PyArray_PyIntAsIntp(PyObject *o)
 #else
         long_value = PyLong_AsLong(o);
 #endif
-        goto finish;
+        return (npy_intp)long_value;
     }
     /*
      * The most general case. PyNumber_Index(o) covers everything
@@ -797,17 +798,16 @@ PyArray_PyIntAsIntp(PyObject *o)
     }
 
  finish:
-    if (long_value == -1) {
+    if (error_converting(long_value)) {
         err = PyErr_Occurred();
         /* Only replace TypeError's here, which are the normal errors. */
-        if (err) {
-            if (PyErr_GivenExceptionMatches(err, PyExc_TypeError)) {
-                PyErr_SetString(PyExc_TypeError, msg);
-            }
-            return -1;
+        if (PyErr_GivenExceptionMatches(err, PyExc_TypeError)) {
+            PyErr_SetString(PyExc_TypeError, msg);
         }
+        return -1;
     }
 
+ overflow_check:
 #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
   #if (NPY_SIZEOF_LONGLONG > NPY_SIZEOF_INTP)
     if ((long_value < NPY_MIN_INTP) || (long_value > NPY_MAX_INTP)) {
@@ -825,7 +825,7 @@ PyArray_PyIntAsIntp(PyObject *o)
     }
   #endif
 #endif
-    return (npy_intp) long_value;
+    return long_value;
 }
 
 
