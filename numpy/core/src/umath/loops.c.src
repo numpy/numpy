@@ -1320,14 +1320,14 @@ sse2_sqrt_@TYPE@(@type@ * op, const @type@ * ip, const npy_intp n)
     assert(npy_is_aligned(&op[i], 16));
     if (npy_is_aligned(&ip[i], 16)) {
         UNARY_LOOP_BLOCKED(@type@, 16) {
-            @vtype@ d = _mm_load_@vsuf@(&ip[i]);
-            _mm_store_@vsuf@(&op[i], _mm_sqrt_@vsuf@(d));
+            @vtype@ d = @vpre@_load_@vsuf@(&ip[i]);
+            @vpre@_store_@vsuf@(&op[i], @vpre@_sqrt_@vsuf@(d));
         }
     }
     else {
         UNARY_LOOP_BLOCKED(@type@, 16) {
-            @vtype@ d = _mm_loadu_@vsuf@(&ip[i]);
-            _mm_store_@vsuf@(&op[i], _mm_sqrt_@vsuf@(d));
+            @vtype@ d = @vpre@_loadu_@vsuf@(&ip[i]);
+            @vpre@_store_@vsuf@(&op[i], @vpre@_sqrt_@vsuf@(d));
         }
     }
     UNARY_LOOP_BLOCKED_END {
