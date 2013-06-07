@@ -1,0 +1,173 @@
+/* -*- c -*- */
+
+/*
+ * This file is for the definitions of simd vectorized operations.
+ *
+ * Currently contains sse2 functions that are built on amd64, x32 or
+ * non-generic builds (CFLAGS=-march=...)
+ * In future it may contain other instruction sets like AVX or NEON detected
+ * at runtime in which case it needs to be included indirectly via a file
+ * compiled with special options (or use gcc target attributes) so the binary
+ * stays portable.
+ */
+
+
+#ifndef __NPY_SIMD_INC
+#define __NPY_SIMD_INC
+
+#include "lowlevel_strided_loops.h"
+#include "npy_config.h"
+#include <assert.h>
+#include <stdlib.h>
+
+/*
+ * stride is equal to element size and input and destination are equal or
+ * don't overlap within one register
+ */
+#define IS_BLOCKABLE_UNARY(esize, vsize) \
+    (steps[0] == (esize) && steps[0] == steps[1] && \
+     (npy_is_aligned(args[0], esize) && npy_is_aligned(args[1], esize)) && \
+     ((abs(args[1] - args[0]) >= (vsize)) || ((abs(args[1] - args[0]) == 0))))
+
+
+/* align var to alignment */
+#define UNARY_LOOP_BLOCK_ALIGN_VAR(var, type, alignment)\
+    npy_intp i, peel = npy_aligned_block_offset(var, sizeof(type),\
+                                                alignment, n);\
+    for(i = 0; i < peel; i++)
+
+#define UNARY_LOOP_BLOCKED(type, vsize)\
+    for(; i < npy_blocked_end(peel, sizeof(type), vsize, n);\
+            i += (vsize / sizeof(type)))
+
+#define UNARY_LOOP_BLOCKED_END\
+    for (; i < n; i++)
+
+
+/*
+ * Dispatcher functions
+ * decide whether the operation can be vectorized and run it
+ * if it was run returns true and false if nothing was done
+ */
+
+/**begin repeat
+ * Float types
+ *  #type = npy_float, npy_double, npy_longdouble#
+ *  #TYPE = FLOAT, DOUBLE, LONGDOUBLE#
+ *  #vector = 1, 1, 0#
+ */
+
+/**begin repeat1
+ * #func = sqrt, absolute#
+ */
+
+#if @vector@
+
+/* prototypes */
+static void
+sse2_@func@_@TYPE@(@type@ * op, const @type@ * ip, const npy_intp n);
+
+#endif
+
+static NPY_INLINE int
+run_unary_simd_@func@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+{
+#if @vector@ && defined HAVE_EMMINTRIN_H
+    if (IS_BLOCKABLE_UNARY(sizeof(@type@), 16)) {
+        sse2_@func@_@TYPE@((@type@*)args[1], (@type@*)args[0], dimensions[0]);
+        return 1;
+    }
+#endif
+    return 0;
+}
+/**end repeat1**/
+
+/**end repeat**/
+
+
+/*
+ * Vectorized operations
+ */
+
+/**begin repeat
+ *  #type = npy_float, npy_double#
+ *  #TYPE = FLOAT, DOUBLE#
+ *  #scalarf = npy_sqrtf, npy_sqrt#
+ *  #c = f, #
+ *  #vtype = __m128, __m128d#
+ *  #vpre = _mm, _mm#
+ *  #vsuf = ps, pd#
+ */
+
+#ifdef HAVE_EMMINTRIN_H
+#include <emmintrin.h>
+
+
+static void
+sse2_sqrt_@TYPE@(@type@ * op, const @type@ * ip, const npy_intp n)
+{
+    /* align output to 16 bytes */
+    UNARY_LOOP_BLOCK_ALIGN_VAR(op, @type@, 16) {
+        op[i] = @scalarf@(ip[i]);
+    }
+    assert(npy_is_aligned(&op[i], 16));
+    if (npy_is_aligned(&ip[i], 16)) {
+        UNARY_LOOP_BLOCKED(@type@, 16) {
+            @vtype@ d = @vpre@_load_@vsuf@(&ip[i]);
+            @vpre@_store_@vsuf@(&op[i], @vpre@_sqrt_@vsuf@(d));
+        }
+    }
+    else {
+        UNARY_LOOP_BLOCKED(@type@, 16) {
+            @vtype@ d = @vpre@_loadu_@vsuf@(&ip[i]);
+            @vpre@_store_@vsuf@(&op[i], @vpre@_sqrt_@vsuf@(d));
+        }
+    }
+    UNARY_LOOP_BLOCKED_END {
+        op[i] = @scalarf@(ip[i]);
+    }
+}
+
+
+static void
+sse2_absolute_@TYPE@(@type@ * op, const @type@ * ip, const npy_intp n)
+{
+    /*
+     * get 0x7FFFFFFF mask (everything but signbit set)
+     * float & ~mask will remove the sign
+     * this is equivalent to how the compiler implements fabs on amd64
+     */
+    const @vtype@ mask = @vpre@_set1_@vsuf@(-0.@c@);
+
+    /* align output to 16 bytes */
+    UNARY_LOOP_BLOCK_ALIGN_VAR(op, @type@, 16) {
+        const @type@ tmp = ip[i] > 0 ? ip[i]: -ip[i];
+        /* add 0 to clear -0.0 */
+        op[i] = tmp + 0;
+    }
+    assert(npy_is_aligned(&op[i], 16));
+    if (npy_is_aligned(&ip[i], 16)) {
+        UNARY_LOOP_BLOCKED(@type@, 16) {
+            @vtype@ a = @vpre@_load_@vsuf@(&ip[i]);
+            @vpre@_store_@vsuf@(&op[i], @vpre@_andnot_@vsuf@(mask, a));
+        }
+    }
+    else {
+        UNARY_LOOP_BLOCKED(@type@, 16) {
+            @vtype@ a = @vpre@_loadu_@vsuf@(&ip[i]);
+            @vpre@_store_@vsuf@(&op[i], @vpre@_andnot_@vsuf@(mask, a));
+        }
+    }
+    UNARY_LOOP_BLOCKED_END {
+        const @type@ tmp = ip[i] > 0 ? ip[i]: -ip[i];
+        /* add 0 to clear -0.0 */
+        op[i] = tmp + 0;
+    }
+}
+
+#endif
+
+
+/**end repeat**/
+
+#endif

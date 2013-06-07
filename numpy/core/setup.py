@@ -837,7 +837,9 @@ def configuration(parent_package='',top_path=None):
         subpath = join('src', 'umath')
         # NOTE: For manual template conversion of loops.h.src, read the note
         #       in that file.
-        sources = [join(local_dir, subpath, 'loops.c.src')]
+        sources = [
+            join(local_dir, subpath, 'loops.c.src'),
+            join(local_dir, subpath, 'simd.inc.src')]
 
         # numpy.distutils generate .c from .c.src in weird directories, we have
         # to add them there as they depend on the build_dir
@@ -864,12 +866,14 @@ def configuration(parent_package='',top_path=None):
             join('src', 'umath', 'umathmodule.c'),
             join('src', 'umath', 'reduction.c'),
             join('src', 'umath', 'funcs.inc.src'),
+            join('src', 'umath', 'simd.inc.src'),
             join('src', 'umath', 'loops.c.src'),
             join('src', 'umath', 'ufunc_object.c'),
             join('src', 'umath', 'ufunc_type_resolution.c')]
 
     umath_deps = [
             generate_umath_py,
+            join('src', 'umath', 'simd.inc.src'),
             join(codegen_dir,'generate_ufunc_api.py')]
 
     if not ENABLE_SEPARATE_COMPILATION:
@@ -877,6 +881,7 @@ def configuration(parent_package='',top_path=None):
         umath_src = [join('src', 'umath', 'umathmodule_onefile.c')]
         umath_src.append(generate_umath_templated_sources)
         umath_src.append(join('src', 'umath', 'funcs.inc.src'))
+        umath_src.append(join('src', 'umath', 'simd.inc.src'))
 
     config.add_extension('umath',
                          sources = umath_src +
