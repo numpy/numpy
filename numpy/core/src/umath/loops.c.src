@@ -1305,30 +1305,45 @@ TIMEDELTA_mm_d_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *
  *  #vtype = __m128, __m128d#
  *  #vsuf = ps, pd#
  */
+
+#ifdef HAVE_EMMINTRIN_H
+
+#define NPY_HAVE_SIMD_@TYPE@
+
+static void
+sse2_sqrt_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+{
+    UNARY_LOOP_BLOCK_ALIGN_OUT(@type@, 16) {
+        op1[i] = @scalarf@(ip1[i]);
+    }
+    assert(npy_is_aligned(&op1[i], 16));
+    if (npy_is_aligned(&ip1[i], 16)) {
+        UNARY_LOOP_BLOCKED(@type@, 16) {
+            @vtype@ d = _mm_load_@vsuf@(&ip1[i]);
+            _mm_store_@vsuf@(&op1[i], _mm_sqrt_@vsuf@(d));
+        }
+    }
+    else {
+        UNARY_LOOP_BLOCKED(@type@, 16) {
+            @vtype@ d = _mm_loadu_@vsuf@(&ip1[i]);
+            _mm_store_@vsuf@(&op1[i], _mm_sqrt_@vsuf@(d));
+        }
+    }
+    UNARY_LOOP_BLOCKED_END {
+        op1[i] = @scalarf@(ip1[i]);
+    }
+}
+
+
+#endif
+
+
 NPY_NO_EXPORT void
 @TYPE@_sqrt(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
 #ifdef HAVE_EMMINTRIN_H
     if (IS_BLOCKABLE_UNARY(sizeof(@type@), 16)) {
-        UNARY_LOOP_BLOCK_ALIGN_OUT(@type@, 16) {
-            op1[i] = @scalarf@(ip1[i]);
-        }
-        assert(npy_is_aligned(&op1[i], 16));
-        if (npy_is_aligned(&ip1[i], 16)) {
-            UNARY_LOOP_BLOCKED(@type@, 16) {
-                @vtype@ d = _mm_load_@vsuf@(&ip1[i]);
-                _mm_store_@vsuf@(&op1[i], _mm_sqrt_@vsuf@(d));
-            }
-        }
-        else {
-            UNARY_LOOP_BLOCKED(@type@, 16) {
-                @vtype@ d = _mm_loadu_@vsuf@(&ip1[i]);
-                _mm_store_@vsuf@(&op1[i], _mm_sqrt_@vsuf@(d));
-            }
-        }
-        UNARY_LOOP_BLOCKED_END {
-            op1[i] = @scalarf@(ip1[i]);
-        }
+        sse2_sqrt_@TYPE@(args, dimensions, steps);
     }
     else
 #endif
