@@ -1302,8 +1302,11 @@ TIMEDELTA_mm_d_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *
  *  #type = npy_float, npy_double#
  *  #TYPE = FLOAT, DOUBLE#
  *  #scalarf = npy_sqrtf, npy_sqrt#
+ *  #c = f, #
  *  #vtype = __m128, __m128d#
+ *  #vpre = _mm, _mm#
  *  #vsuf = ps, pd#
+*   #vtype = __m128, __m128d#
  */
 
 #ifdef HAVE_EMMINTRIN_H
@@ -1334,6 +1337,40 @@ sse2_sqrt_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
     }
 }
 
+
+static void
+sse2_absolute_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+{
+    /*
+     * get 0x7FFFFFFF mask (everything but signbit set)
+     * float & ~mask will remove the sign
+     * this is equivalent to how the compiler implements fabs on amd64
+     */
+    const @vtype@ mask = @vpre@_set1_@vsuf@(-0.@c@);
+
+    UNARY_LOOP_BLOCK_ALIGN_OUT(@type@, 16) {
+        const @type@ tmp = ip1[i] > 0 ? ip1[i]: -ip1[i];
+        /* add 0 to clear -0.0 */
+        op1[i] = tmp + 0;
+    }
+    if (npy_is_aligned(&ip1[i], 16)) {
+        UNARY_LOOP_BLOCKED(@type@, 16) {
+            @vtype@ a = @vpre@_load_@vsuf@(&ip1[i]);
+            @vpre@_store_@vsuf@(&op1[i], @vpre@_andnot_@vsuf@(mask, a));
+        }
+    }
+    else {
+        UNARY_LOOP_BLOCKED(@type@, 16) {
+            @vtype@ a = @vpre@_loadu_@vsuf@(&ip1[i]);
+            @vpre@_store_@vsuf@(&op1[i], @vpre@_andnot_@vsuf@(mask, a));
+        }
+    }
+    UNARY_LOOP_BLOCKED_END {
+        const @type@ tmp = ip1[i] > 0 ? ip1[i]: -ip1[i];
+        /* add 0 to clear -0.0 */
+        op1[i] = tmp + 0;
+    }
+}
 
 #endif
 
@@ -1582,11 +1619,19 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_absolute(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-    UNARY_LOOP {
-        const @type@ in1 = *(@type@ *)ip1;
-        const @type@ tmp = in1 > 0 ? in1 : -in1;
-        /* add 0 to clear -0.0 */
-        *((@type@ *)op1) = tmp + 0;
+#if defined HAVE_EMMINTRIN_H && defined NPY_HAVE_SIMD_@TYPE@
+    if (IS_BLOCKABLE_UNARY(sizeof(@type@), 16)) {
+        sse2_absolute_@TYPE@(args, dimensions, steps);
+    }
+    else
+#endif
+    {
+        UNARY_LOOP {
+            const @type@ in1 = *(@type@ *)ip1;
+            const @type@ tmp = in1 > 0 ? in1 : -in1;
+            /* add 0 to clear -0.0 */
+            *((@type@ *)op1) = tmp + 0;
+        }
     }
 }
 
