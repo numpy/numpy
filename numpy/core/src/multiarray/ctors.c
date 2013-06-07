@@ -646,7 +646,9 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     /* obj is a PEP 3118 buffer */
 #if PY_VERSION_HEX >= 0x02060000
     /* PEP 3118 buffer interface */
-    if (SUPPORTS_BUFFER_PROTOCOL(obj) &&
+    if (Py_None != obj &&
+        !PyList_CheckExact(obj) &&
+        !PyTuple_CheckExact(obj) &&
         PyObject_CheckBuffer(obj) == 1) {
         memset(&buffer_view, 0, sizeof(Py_buffer));
         if (PyObject_GetBuffer(obj, &buffer_view, PyBUF_STRIDES) == 0 ||
