@@ -68,7 +68,7 @@ PyArray_GetPriority(PyObject *obj, double default_)
     if (PyArray_CheckExact(obj))
         return priority;
 
-    ret = PyObject_GetAttrString(obj, "__array_priority__");
+    ret = PyArray_GetAttrString_IgnoreException(obj, "__array_priority__");
     if (ret != NULL) {
         priority = PyFloat_AsDouble(ret);
     }
