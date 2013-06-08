@@ -687,6 +687,32 @@ class TestSign(TestCase):
             np.seterr(**olderr)
 
 
+class TestAbsolute(TestCase):
+    def test_abs_blocked(self):
+        "simd tests on abs"
+        for dt in [np.float32, np.float64]:
+            for out, inp, msg in gen_alignment_data(dtype=dt, type='unary',
+                                                    max_size=17):
+                tgt = [ncu.absolute(i) for i in inp]
+                np.absolute(inp, out=out)
+                assert_equal(out, tgt, err_msg=msg)
+                self.assertTrue((out >= 0).all())
+
+                prev = np.geterr()
+                # will throw invalid flag depending on compiler optimizations
+                np.seterr(invalid='ignore')
+                for v in [np.nan, -np.inf, np.inf]:
+                    for i in range(inp.size):
+                        d = np.arange(inp.size, dtype=dt)
+                        inp[:] = -d
+                        inp[i] = v
+                        d[i] = -v if v == -np.inf else v
+                        assert_array_equal(np.abs(inp), d, err_msg=msg)
+                        np.abs(inp, out=out)
+                        assert_array_equal(out, d, err_msg=msg)
+                np.seterr(invalid=prev['invalid'])
+
+
 class TestSpecialMethods(TestCase):
     def test_wrap(self):
         class with_wrap(object):
