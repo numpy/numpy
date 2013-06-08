@@ -551,13 +551,11 @@ Other points to keep in mind
 
     end of previous sentence::
 
-      y = np.sin(x)
+        y = np.sin(x)
 
 * Notes and Warnings : If there are points in the docstring that deserve
   special emphasis, the reST directives for a note or warning can be used
-  in the vicinity of the context of the warning (inside a section). Syntax:
-
-  ::
+  in the vicinity of the context of the warning (inside a section). Syntax::
 
     .. warning:: Warning text.
 
