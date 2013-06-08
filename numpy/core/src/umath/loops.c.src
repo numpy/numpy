@@ -19,11 +19,15 @@
 #include "npy_pycompat.h"
 
 #include "ufunc_object.h"
-#include <assert.h>
 
-#ifdef HAVE_EMMINTRIN_H
-#include <emmintrin.h>
-#endif
+
+/*
+ * include vectorized functions and dispatchers
+ * this file is safe to include also for generic builds
+ * platform specific instructions are either masked via the proprocessor or
+ * runtime detected
+ */
+#include "simd.inc"
 
 
 /*
@@ -36,15 +40,6 @@
 #define IS_BINARY_REDUCE ((args[0] == args[2])\
         && (steps[0] == steps[2])\
         && (steps[0] == 0))
-
-/*
- * stride is equal to element size and input and destination are equal or
- * don't overlap within one register
- */
-#define IS_BLOCKABLE_UNARY(esize, vsize) \
-    (steps[0] == (esize) && steps[0] == steps[1] && \
-     (npy_is_aligned(args[0], esize) && npy_is_aligned(args[1], esize)) && \
-     ((abs(args[1] - args[0]) >= (vsize)) || ((abs(args[1] - args[0]) == 0))))
 
 #define OUTPUT_LOOP\
     char *op1 = args[1];\
@@ -66,22 +61,6 @@
     npy_intp n = dimensions[0];\
     npy_intp i;\
     for(i = 0; i < n; i++, ip1 += is1, op1 += os1, op2 += os2)
-
-/* align output to alignment
- * store alignment is usually more important than load alignment */
-#define UNARY_LOOP_BLOCK_ALIGN_OUT(type, alignment)\
-    type *ip1 = (type *)args[0], *op1 = (type *)args[1];\
-    npy_intp n = dimensions[0];\
-    npy_intp i, peel = npy_aligned_block_offset(op1, sizeof(type),\
-                                                alignment, n);\
-    for(i = 0; i < peel; i++)
-
-#define UNARY_LOOP_BLOCKED(type, vsize)\
-    for(; i < npy_blocked_end(peel, sizeof(type), vsize, n);\
-            i += (vsize / sizeof(type)))
-
-#define UNARY_LOOP_BLOCKED_END\
-    for (; i < n; i++)
 
 #define BINARY_LOOP\
     char *ip1 = args[0], *ip2 = args[1], *op1 = args[2];\
@@ -1297,48 +1276,25 @@ TIMEDELTA_mm_d_divide(char **args, npy_intp *dimensions, npy_intp *steps, void *
  *****************************************************************************
  */
 
-
 /**begin repeat
+ * Float types
  *  #type = npy_float, npy_double#
  *  #TYPE = FLOAT, DOUBLE#
  *  #scalarf = npy_sqrtf, npy_sqrt#
- *  #vtype = __m128, __m128d#
- *  #vsuf = ps, pd#
  */
+
 NPY_NO_EXPORT void
 @TYPE@_sqrt(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
-#ifdef HAVE_EMMINTRIN_H
-    if (IS_BLOCKABLE_UNARY(sizeof(@type@), 16)) {
-        UNARY_LOOP_BLOCK_ALIGN_OUT(@type@, 16) {
-            op1[i] = @scalarf@(ip1[i]);
-        }
-        assert(npy_is_aligned(&op1[i], 16));
-        if (npy_is_aligned(&ip1[i], 16)) {
-            UNARY_LOOP_BLOCKED(@type@, 16) {
-                @vtype@ d = _mm_load_@vsuf@(&ip1[i]);
-                _mm_store_@vsuf@(&op1[i], _mm_sqrt_@vsuf@(d));
-            }
-        }
-        else {
-            UNARY_LOOP_BLOCKED(@type@, 16) {
-                @vtype@ d = _mm_loadu_@vsuf@(&ip1[i]);
-                _mm_store_@vsuf@(&op1[i], _mm_sqrt_@vsuf@(d));
-            }
-        }
-        UNARY_LOOP_BLOCKED_END {
-            op1[i] = @scalarf@(ip1[i]);
-        }
+    if (run_unary_simd_sqrt_@TYPE@(args, dimensions, steps)) {
+        return;
     }
-    else
-#endif
-    {
-        UNARY_LOOP {
-            const @type@ in1 = *(@type@ *)ip1;
-            *(@type@ *)op1 = @scalarf@(in1);
-        }
+    UNARY_LOOP {
+        const @type@ in1 = *(@type@ *)ip1;
+        *(@type@ *)op1 = @scalarf@(in1);
     }
 }
+
 /**end repeat**/
 
 
@@ -1567,6 +1523,9 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_absolute(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
+    if (run_unary_simd_absolute_@TYPE@(args, dimensions, steps)) {
+        return;
+    }
     UNARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ tmp = in1 > 0 ? in1 : -in1;

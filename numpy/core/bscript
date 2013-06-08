@@ -492,8 +492,10 @@ def pre_build(context):
             pattern="ufunc_api",
             name="ufunc_api")
 
-        ufunc_templates = ["src/umath/loops.c.src",
-                "src/umath/funcs.inc.src"]
+        ufunc_templates = [
+            "src/umath/loops.c.src",
+            "src/umath/funcs.inc.src",
+            "src/umath/simd.inc.src"]
         bld(target="ufunc_templates", source=ufunc_templates)
 
         bld(features="umath_gen",
