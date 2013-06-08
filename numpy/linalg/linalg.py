@@ -22,7 +22,7 @@ from numpy.core import array, asarray, zeros, empty, transpose, \
         intc, single, double, csingle, cdouble, inexact, complexfloating, \
         newaxis, ravel, all, Inf, dot, add, multiply, sqrt, maximum, \
         fastCopyAndTranspose, sum, isfinite, size, finfo, errstate, \
-        geterrobj, float128, rollaxis, amin, amax
+        geterrobj, longdouble, rollaxis, amin, amax
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
@@ -2058,9 +2058,9 @@ def norm(x, ord=None, axis=None):
                 ord + 1
             except TypeError:
                 raise ValueError("Invalid norm order for vectors.")
-            if x.dtype != float128:
+            if x.dtype.type is not longdouble:
                 # Convert to a float type, so integer arrays give
-                # float results.  Don't apply asfarray to float128 arrays,
+                # float results.  Don't apply asfarray to longdouble arrays,
                 # because it will downcast to float64.
                 absx = asfarray(abs(x))
             return add.reduce(absx**ord, axis=axis)**(1.0/ord)
