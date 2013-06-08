@@ -1903,7 +1903,14 @@ class TestRegression(TestCase):
         count = np.count_nonzero(arr)
         assert_equal(count, 0)
 
-
+    def test_copymodule_preserves_f_contiguity(self):
+        a = np.empty((2, 2), order='F')
+        b = copy.copy(a)
+        c = copy.deepcopy(a)
+        assert_(b.flags.fortran)
+        assert_(b.flags.f_contiguous)
+        assert_(c.flags.fortran)
+        assert_(c.flags.f_contiguous)
 
 
 if __name__ == "__main__":

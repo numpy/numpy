@@ -642,6 +642,30 @@ class TestMethods(TestCase):
         d.sort()
         assert_equal(d, c, "test sort with default axis")
 
+    def test_copy(self):
+        def assert_fortran(arr):
+            assert_(arr.flags.fortran)
+            assert_(arr.flags.f_contiguous)
+            assert_(not arr.flags.c_contiguous)
+
+        def assert_c(arr):
+            assert_(not arr.flags.fortran)
+            assert_(not arr.flags.f_contiguous)
+            assert_(arr.flags.c_contiguous)
+
+        a = np.empty((2, 2), order='F')
+        # Test copying a Fortran array
+        assert_c(a.copy())
+        assert_c(a.copy('C'))
+        assert_fortran(a.copy('F'))
+        assert_fortran(a.copy('A'))
+
+        # Now test starting with a C array.
+        a = np.empty((2, 2), order='C')
+        assert_c(a.copy())
+        assert_c(a.copy('C'))
+        assert_fortran(a.copy('F'))
+        assert_c(a.copy('A'))
 
     def test_sort_order(self):
         # Test sorting an array with fields
