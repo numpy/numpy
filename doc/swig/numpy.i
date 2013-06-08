@@ -947,7 +947,6 @@
     { Py_DECREF(array$argnum); }
 }
 
-/****************************************************************************************************************************************************************/
 /* Typemap suite for (DATA_TYPE** IN_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2,
  *                    DIM_TYPE DIM3)
  */
@@ -1029,7 +1028,6 @@
     free(object_array$argnum);
   }
 }
-/****************************************************************************************************************************************************************/
 
 /* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3,
  *                    DATA_TYPE* IN_ARRAY3)
@@ -1183,7 +1181,7 @@
   if (is_new_object$argnum && array$argnum)
     { Py_DECREF(array$argnum); }
 }
-/****************************************************************************************************************************************************************/
+
 /* Typemap suite for (DATA_TYPE** IN_ARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2,
  *                    DIM_TYPE DIM3, DIM_TYPE DIM4)
  */
@@ -1267,7 +1265,6 @@
     free(object_array$argnum);
   }
 }
-/****************************************************************************************************************************************************************/
 
 /* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4,
  *                    DATA_TYPE* IN_ARRAY4)
@@ -1588,7 +1585,6 @@
   $4 = (DIM_TYPE) array_size(array,2);
 }
 
-/****************************************************************************************************************************************************************/
 /* Typemap suite for (DATA_TYPE** INPLACE_ARRAY3, DIM_TYPE DIM1, DIM_TYPE DIM2,
  *                    DIM_TYPE DIM3)
  */
@@ -1654,7 +1650,6 @@
   if (array$argnum!=NULL) free(array$argnum);
   if (object_array$argnum!=NULL) free(object_array$argnum);
 }
-/****************************************************************************************************************************************************************/
 
 /* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3,
  *                    DATA_TYPE* INPLACE_ARRAY3)
@@ -1774,7 +1769,6 @@
   $5 = (DIM_TYPE) array_size(array,3);
 }
 
-/****************************************************************************************************************************************************************/
 /* Typemap suite for (DATA_TYPE** INPLACE_ARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2,
  *                    DIM_TYPE DIM3, DIM_TYPE DIM4)
  */
@@ -1842,7 +1836,6 @@
   if (array$argnum!=NULL) free(array$argnum);
   if (object_array$argnum!=NULL) free(object_array$argnum);
 }
-/****************************************************************************************************************************************************************/
 
 /* Typemap suite for (DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4,
  *                    DATA_TYPE* INPLACE_ARRAY4)
