@@ -5937,7 +5937,7 @@ def min(obj, axis=None, out=None, fill_value=None):
     try:
         return obj.min(axis=axis, fill_value=fill_value, out=out)
     except (AttributeError, TypeError):
-        # If obj doesn't have a max method,
+        # If obj doesn't have a min method,
         # ...or if the method doesn't accept a fill_value argument
         return asanyarray(obj).min(axis=axis, fill_value=fill_value, out=out)
 min.__doc__ = MaskedArray.min.__doc__
@@ -5956,7 +5956,7 @@ def ptp(obj, axis=None, out=None, fill_value=None):
     try:
         return obj.ptp(axis, out=out, fill_value=fill_value)
     except (AttributeError, TypeError):
-        # If obj doesn't have a max method,
+        # If obj doesn't have a ptp method,
         # ...or if the method doesn't accept a fill_value argument
         return asanyarray(obj).ptp(axis=axis, fill_value=fill_value, out=out)
 ptp.__doc__ = MaskedArray.ptp.__doc__
