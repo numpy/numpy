@@ -9,11 +9,15 @@ Array types and conversions between types
 Numpy supports a much greater variety of numerical types than Python does.
 This section shows which are available, and how to modify an array's data-type.
 
-==========  =========================================================
+==========  ==========================================================
 Data type   Description
-==========  =========================================================
-bool        Boolean (True or False) stored as a byte
-int         Platform integer (normally either ``int32`` or ``int64``)
+==========  ==========================================================
+bool_       Boolean (True or False) stored as a byte
+int_        Default integer type (same as C ``long``; normally either
+            ``int64`` or ``int32``)
+intc        Identical to C ``int`` (normally ``int32`` or ``int64``)
+intp        Integer used for indexing (same as C ``ssize_t``; normally
+            either ``int32`` or ``int64``)
 int8        Byte (-128 to 127)
 int16       Integer (-32768 to 32767)
 int32       Integer (-2147483648 to 2147483647)
@@ -22,19 +26,22 @@ uint8       Unsigned integer (0 to 255)
 uint16      Unsigned integer (0 to 65535)
 uint32      Unsigned integer (0 to 4294967295)
 uint64      Unsigned integer (0 to 18446744073709551615)
-float       Shorthand for ``float64``.
+float_      Shorthand for ``float64``.
 float16     Half precision float: sign bit, 5 bits exponent,
             10 bits mantissa
 float32     Single precision float: sign bit, 8 bits exponent,
             23 bits mantissa
 float64     Double precision float: sign bit, 11 bits exponent,
             52 bits mantissa
-complex     Shorthand for ``complex128``.
+complex_    Shorthand for ``complex128``.
 complex64   Complex number, represented by two 32-bit floats (real
             and imaginary components)
 complex128  Complex number, represented by two 64-bit floats (real
             and imaginary components)
-==========  =========================================================
+==========  ==========================================================
+
+Additionally to ``intc`` the platform dependent C integer types ``short``,
+``long``, ``longlong`` and their unsigned versions are defined.
 
 Numpy numerical types are instances of ``dtype`` (data-type) objects, each
 having unique characteristics.  Once you have imported NumPy using
@@ -43,7 +50,7 @@ having unique characteristics.  Once you have imported NumPy using
 
     >>> import numpy as np
 
-the dtypes are available as ``np.bool``, ``np.float32``, etc.
+the dtypes are available as ``np.bool_``, ``np.float32``, etc.
 
 Advanced types, not listed in the table above, are explored in
 section :ref:`structured_arrays`.
@@ -90,9 +97,9 @@ the type itself as a function. For example: ::
     array([0, 1, 2], dtype=int8)
 
 Note that, above, we use the *Python* float object as a dtype.  NumPy knows
-that ``int`` refers to ``np.int``, ``bool`` means ``np.bool`` and
-that ``float`` is ``np.float``.  The other data-types do not have Python
-equivalents.
+that ``int`` refers to ``np.int_``, ``bool`` means ``np.bool_``,
+that ``float`` is ``np.float_`` and ``complex`` is ``np.complex_``.
+The other data-types do not have Python equivalents.
 
 To determine the type of an array, look at the dtype attribute::
 
