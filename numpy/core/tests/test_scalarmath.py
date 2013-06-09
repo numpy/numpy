@@ -2,6 +2,7 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 from numpy.testing import *
+from numpy.testing.utils import gen_alignment_data
 import numpy as np
 
 types = [np.bool_, np.byte, np.ubyte, np.short, np.ushort, np.intc, np.uintc,
@@ -42,6 +43,37 @@ class TestTypes(TestCase):
             a = np.array([1,2,3],atype)
             b = atype([1,2,3])
             assert_equal(a,b)
+
+
+class TestBaseMath(TestCase):
+    def test_blocked(self):
+        #test alignments offsets for simd instructions
+        for dt in [np.float32, np.float64]:
+            for out, inp1, inp2, msg in gen_alignment_data(dtype=dt,
+                                                           type='binary',
+                                                           max_size=12):
+                exp1 = np.ones_like(inp1)
+                inp1[...] = np.ones_like(inp1)
+                inp2[...] = np.zeros_like(inp2)
+                assert_almost_equal(np.add(inp1, inp2), exp1, err_msg=msg)
+                assert_almost_equal(np.add(inp1, 1), exp1 + 1, err_msg=msg)
+                assert_almost_equal(np.add(1, inp2), exp1, err_msg=msg)
+
+                np.add(inp1, inp2, out=out)
+                assert_almost_equal(out, exp1, err_msg=msg)
+
+                inp2[...] += np.arange(inp2.size, dtype=dt) + 1
+                assert_almost_equal(np.square(inp2),
+                                    np.multiply(inp2, inp2),  err_msg=msg)
+                assert_almost_equal(np.reciprocal(inp2),
+                                    np.divide(1, inp2),  err_msg=msg)
+
+                inp1[...] = np.ones_like(inp1)
+                inp2[...] = np.zeros_like(inp2)
+                np.add(inp1, 1, out=out)
+                assert_almost_equal(out, exp1 + 1, err_msg=msg)
+                np.add(1, inp2, out=out)
+                assert_almost_equal(out, exp1, err_msg=msg)
 
 
 class TestPower(TestCase):
