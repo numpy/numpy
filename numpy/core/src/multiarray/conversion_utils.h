@@ -25,6 +25,9 @@ PyArray_PyIntAsInt(PyObject *o);
 NPY_NO_EXPORT npy_intp
 PyArray_PyIntAsIntp(PyObject *o);
 
+NPY_NO_EXPORT npy_intp
+PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals);
+
 NPY_NO_EXPORT int
 PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals);
 

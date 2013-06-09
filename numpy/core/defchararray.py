@@ -90,7 +90,7 @@ def _get_num_chars(a):
     for a unicode array this is itemsize / 4.
     """
     if issubclass(a.dtype.type, unicode_):
-        return a.itemsize / 4
+        return a.itemsize // 4
     return a.itemsize
 
 
@@ -2593,7 +2593,7 @@ def array(obj, itemsize=None, copy=True, unicode=None, order=None):
             # to divide by the size of a single Unicode character,
             # which for Numpy is always 4
             if issubclass(obj.dtype.type, unicode_):
-                itemsize /= 4
+                itemsize //= 4
 
         if unicode is None:
             if issubclass(obj.dtype.type, unicode_):
