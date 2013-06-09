@@ -159,11 +159,28 @@ class TestMultiIndexingAutomated(TestCase):
 
 
     def _get_multi_index(self, arr, indices):
-        """Mimic multi dimensional indexing. Returns the indexed array and a
-        flag no_copy. If no_copy is True, np.may_share_memory(arr, arr[indicies])
-        should be True (though this may be wrong for 0-d arrays sometimes.
-        If this function raises an error it should most of the time match the
-        real error as long as there is exactly one error in the index.
+        """Mimic multi dimensional indexing.
+        
+        Parameters
+        ----------
+        arr : ndarray
+            Array to be indexed.
+        indices : tuple of index objects
+
+        Returns
+        -------
+        out : ndarray
+            An array equivalent to the indexing operation (but always a copy).
+            `arr[indices]` should be identical.
+        no_copy : bool
+            Whether the indexing operation requires a copy. If this is `True`,
+            `np.may_share_memory(arr, arr[indicies])` should be `True` (with
+            some exceptions for scalars and possibly 0-d arrays).
+
+        Notes
+        -----
+        While the function may mostly match the errors of normal indexing this
+        is generally not the case.
         """
         in_indices = list(indices)
         indices = []
@@ -365,9 +382,14 @@ class TestMultiIndexingAutomated(TestCase):
 
 
     def _check_multi_index(self, arr, index):
-        """Check mult index getting and simple setting. Input array
-        must be a reshaped arange for __setitem__ check for non-view
-        arrays to work. It then relies on .flat to work.
+        """Check a multi index item getting and simple setting.
+
+        Parameters
+        ----------
+        arr : ndarray
+            Array to be indexed, must be a reshaped arange.
+        index : tuple of indexing objects
+            Index being tested.
         """
         # Test item getting
         try:
@@ -381,8 +403,15 @@ class TestMultiIndexingAutomated(TestCase):
 
 
     def _check_single_index(self, arr, index):
-        """Check a single index. Identical to _check_multi_index, but uses
-        a non-tuple index for the tested (not the fake) indexing.
+        """Check a single index item getting and simple setting.
+
+        Parameters
+        ----------
+        arr : ndarray
+            Array to be indexed, must be an arange.
+        index : indexing object
+            Index being tested. Must be a single index and not a tuple
+            of indexing objects (see also `_check_multi_index`).
         """
         try:
             mimic_get, no_copy = self._get_multi_index(arr, (index,))
@@ -395,7 +424,7 @@ class TestMultiIndexingAutomated(TestCase):
 
 
     def _compare_index_result(self, arr, index, mimic_get, no_copy):
-        """Compare mimic to result to real indexing result.
+        """Compare mimicked result to indexing result.
         """
         arr = arr.copy()
         indexed_arr = arr[index]
