@@ -72,7 +72,7 @@ class TestRegression(TestCase):
             np.random.seed(i)
             m.seed(4321)
             # If m.state is not honored, the result will change
-            assert_array_equal(m.choice(10, size=10, p=np.ones(10.)/10), res)
+            assert_array_equal(m.choice(10, size=10, p=np.ones(10)/10.), res)
 
     def test_multivariate_normal_size_types(self):
         # Test for multivariate_normal issue with 'size' argument.

@@ -84,7 +84,7 @@ PyArray_OutputConverter(PyObject *object, PyArrayObject **address)
 NPY_NO_EXPORT int
 PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
 {
-    int len;
+    Py_ssize_t len;
     int nd;
 
     seq->ptr = NULL;
@@ -94,14 +94,18 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
     }
     len = PySequence_Size(obj);
     if (len == -1) {
-        /* Check to see if it is a number */
+        /* Check to see if it is an integer number */
         if (PyNumber_Check(obj)) {
+            /*
+             * After the deprecation the PyNumber_Check could be replaced
+             * by PyIndex_Check.
+             */
             len = 1;
         }
     }
     if (len < 0) {
         PyErr_SetString(PyExc_TypeError,
-                        "expected sequence object with len >= 0");
+                "expected sequence object with len >= 0 or a single integer");
         return NPY_FAIL;
     }
     if (len > NPY_MAXDIMS) {
@@ -117,7 +121,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
         }
     }
     seq->len = len;
-    nd = PyArray_IntpFromSequence(obj, (npy_intp *)seq->ptr, len);
+    nd = PyArray_IntpFromIndexSequence(obj, (npy_intp *)seq->ptr, len);
     if (nd == -1 || nd != len) {
         PyDimMem_FREE(seq->ptr);
         seq->ptr = NULL;
@@ -187,7 +191,7 @@ PyArray_AxisConverter(PyObject *obj, int *axis)
         *axis = NPY_MAXDIMS;
     }
     else {
-        *axis = (int) PyInt_AsLong(obj);
+        *axis = PyArray_PyIntAsInt(obj);
         if (PyErr_Occurred()) {
             return NPY_FAIL;
         }
@@ -223,9 +227,9 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
         }
         for (i = 0; i < naxes; ++i) {
             PyObject *tmp = PyTuple_GET_ITEM(axis_in, i);
-            long axis = PyInt_AsLong(tmp);
-            long axis_orig = axis;
-            if (axis == -1 && PyErr_Occurred()) {
+            int axis = PyArray_PyIntAsInt(tmp);
+            int axis_orig = axis;
+            if (error_converting(axis)) {
                 return NPY_FAIL;
             }
             if (axis < 0) {
@@ -233,7 +237,7 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
             }
             if (axis < 0 || axis >= ndim) {
                 PyErr_Format(PyExc_ValueError,
-                        "'axis' entry %ld is out of bounds [-%d, %d)",
+                        "'axis' entry %d is out of bounds [-%d, %d)",
                         axis_orig, ndim, ndim);
                 return NPY_FAIL;
             }
@@ -249,14 +253,14 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
     }
     /* Try to interpret axis as an integer */
     else {
-        long axis, axis_orig;
+        int axis, axis_orig;
 
         memset(out_axis_flags, 0, ndim);
 
-        axis = PyInt_AsLong(axis_in);
+        axis = PyArray_PyIntAsInt(axis_in);
         axis_orig = axis;
-        /* TODO: PyNumber_Index would be good to use here */
-        if (axis == -1 && PyErr_Occurred()) {
+
+        if (error_converting(axis)) {
             return NPY_FAIL;
         }
         if (axis < 0) {
@@ -272,7 +276,7 @@ PyArray_ConvertMultiAxis(PyObject *axis_in, int ndim, npy_bool *out_axis_flags)
 
         if (axis < 0 || axis >= ndim) {
             PyErr_Format(PyExc_ValueError,
-                    "'axis' entry %ld is out of bounds [-%d, %d)",
+                    "'axis' entry %d is out of bounds [-%d, %d)",
                     axis_orig, ndim, ndim);
             return NPY_FAIL;
         }
@@ -529,8 +533,8 @@ PyArray_ClipmodeConverter(PyObject *object, NPY_CLIPMODE *val)
         return ret;
     }
     else {
-        int number = PyInt_AsLong(object);
-        if (number == -1 && PyErr_Occurred()) {
+        int number = PyArray_PyIntAsInt(object);
+        if (error_converting(number)) {
             goto fail;
         }
         if (number <= (int) NPY_RAISE
@@ -664,85 +668,11 @@ PyArray_CastingConverter(PyObject *obj, NPY_CASTING *casting)
 NPY_NO_EXPORT int
 PyArray_PyIntAsInt(PyObject *o)
 {
-    long long_value = -1;
-    PyObject *obj;
-    static char *msg = "an integer is required";
-    PyArrayObject *arr;
-    PyArray_Descr *descr;
-    int ret;
+    npy_intp long_value;
+    /* This assumes that NPY_SIZEOF_INTP >= NPY_SIZEOF_INT */
+    long_value = PyArray_PyIntAsIntp(o);
 
-
-    if (!o) {
-        PyErr_SetString(PyExc_TypeError, msg);
-        return -1;
-    }
-    if (PyInt_Check(o)) {
-        long_value = (long) PyInt_AS_LONG(o);
-        goto finish;
-    } else if (PyLong_Check(o)) {
-        long_value = (long) PyLong_AsLong(o);
-        goto finish;
-    }
-
-    descr = &INT_Descr;
-    arr = NULL;
-    if (PyArray_Check(o)) {
-        if (PyArray_SIZE((PyArrayObject *)o)!=1 ||
-                                !PyArray_ISINTEGER((PyArrayObject *)o)) {
-            PyErr_SetString(PyExc_TypeError, msg);
-            return -1;
-        }
-        Py_INCREF(descr);
-        arr = (PyArrayObject *)PyArray_CastToType((PyArrayObject *)o,
-                                                    descr, 0);
-    }
-    if (PyArray_IsScalar(o, Integer)) {
-        Py_INCREF(descr);
-        arr = (PyArrayObject *)PyArray_FromScalar(o, descr);
-    }
-    if (arr != NULL) {
-        ret = *((int *)PyArray_DATA(arr));
-        Py_DECREF(arr);
-        return ret;
-    }
-#if (PY_VERSION_HEX >= 0x02050000)
-    if (PyIndex_Check(o)) {
-        PyObject* value = PyNumber_Index(o);
-        long_value = (npy_longlong) PyInt_AsSsize_t(value);
-        goto finish;
-    }
-#endif
-    if (Py_TYPE(o)->tp_as_number != NULL &&
-        Py_TYPE(o)->tp_as_number->nb_int != NULL) {
-        obj = Py_TYPE(o)->tp_as_number->nb_int(o);
-        if (obj == NULL) {
-            return -1;
-        }
-        long_value = (long) PyLong_AsLong(obj);
-        Py_DECREF(obj);
-    }
-#if !defined(NPY_PY3K)
-    else if (Py_TYPE(o)->tp_as_number != NULL &&
-             Py_TYPE(o)->tp_as_number->nb_long != NULL) {
-        obj = Py_TYPE(o)->tp_as_number->nb_long(o);
-        if (obj == NULL) {
-            return -1;
-        }
-        long_value = (long) PyLong_AsLong(obj);
-        Py_DECREF(obj);
-    }
-#endif
-    else {
-        PyErr_SetString(PyExc_NotImplementedError,"");
-    }
-
- finish:
-    if error_converting(long_value) {
-            PyErr_SetString(PyExc_TypeError, msg);
-            return -1;
-        }
-
-#if (NPY_SIZEOF_LONG > NPY_SIZEOF_INT)
+#if (NPY_SIZEOF_INTP > NPY_SIZEOF_INT)
     if ((long_value < INT_MIN) || (long_value > INT_MAX)) {
         PyErr_SetString(PyExc_ValueError, "integer won't fit into a C int");
         return -1;
@@ -755,145 +685,188 @@ PyArray_PyIntAsInt(PyObject *o)
 NPY_NO_EXPORT npy_intp
 PyArray_PyIntAsIntp(PyObject *o)
 {
+#if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
+    npy_long long_value = -1;
+#else
     npy_longlong long_value = -1;
-    PyObject *obj;
+#endif
+    PyObject *obj, *err;
     static char *msg = "an integer is required";
-    PyArrayObject *arr;
-    PyArray_Descr *descr;
-    npy_intp ret;
 
     if (!o) {
         PyErr_SetString(PyExc_TypeError, msg);
         return -1;
     }
-    if (PyInt_Check(o)) {
-        long_value = (npy_longlong) PyInt_AS_LONG(o);
-        goto finish;
-    } else if (PyLong_Check(o)) {
-        long_value = (npy_longlong) PyLong_AsLongLong(o);
-        goto finish;
-    }
 
-#if NPY_SIZEOF_INTP == NPY_SIZEOF_LONG
-    descr = &LONG_Descr;
-#elif NPY_SIZEOF_INTP == NPY_SIZEOF_INT
-    descr = &INT_Descr;
-#else
-    descr = &LONGLONG_Descr;
-#endif
-    arr = NULL;
-
-    if (PyArray_Check(o)) {
-        if (PyArray_SIZE((PyArrayObject *)o)!=1 ||
-                                !PyArray_ISINTEGER((PyArrayObject *)o)) {
-            PyErr_SetString(PyExc_TypeError, msg);
+    /* Be a bit stricter and not allow bools, np.bool_ is handled later */
+    if (PyBool_Check(o)) {
+        if (DEPRECATE("using a boolean instead of an integer"
+                      " will result in an error in the future") < 0) {
             return -1;
         }
-        Py_INCREF(descr);
-        arr = (PyArrayObject *)PyArray_CastToType((PyArrayObject *)o,
-                                                                descr, 0);
-    }
-    else if (PyArray_IsScalar(o, Integer)) {
-        Py_INCREF(descr);
-        arr = (PyArrayObject *)PyArray_FromScalar(o, descr);
-    }
-    if (arr != NULL) {
-        ret = *((npy_intp *)PyArray_DATA(arr));
-        Py_DECREF(arr);
-        return ret;
     }
 
-#if (PY_VERSION_HEX >= 0x02050000)
-    if (PyIndex_Check(o)) {
-        PyObject* value = PyNumber_Index(o);
-        if (value == NULL) {
-            return -1;
-        }
-        long_value = (npy_longlong) PyInt_AsSsize_t(value);
-        goto finish;
-    }
-#endif
+    /*
+     * Since it is the usual case, first check if o is an integer. This is
+     * an exact check, since otherwise __index__ is used.
+     */
 #if !defined(NPY_PY3K)
-    if (Py_TYPE(o)->tp_as_number != NULL &&                 \
-        Py_TYPE(o)->tp_as_number->nb_long != NULL) {
-        obj = Py_TYPE(o)->tp_as_number->nb_long(o);
-        if (obj != NULL) {
-            long_value = (npy_longlong) PyLong_AsLongLong(obj);
-            Py_DECREF(obj);
-        }
+    if PyInt_CheckExact(o) {
+  #if (NPY_SIZEOF_LONG <= NPY_SIZEOF_INTP)
+        /* No overflow is possible, so we can just return */
+        return PyInt_AS_LONG(o);
+  #else
+        long_value = PyInt_AS_LONG(o);
+        goto overflow_check;
+  #endif
     }
     else
 #endif
-    if (Py_TYPE(o)->tp_as_number != NULL &&                 \
-             Py_TYPE(o)->tp_as_number->nb_int != NULL) {
-        obj = Py_TYPE(o)->tp_as_number->nb_int(o);
-        if (obj != NULL) {
-            long_value = (npy_longlong) PyLong_AsLongLong(obj);
-            Py_DECREF(obj);
+    if PyLong_CheckExact(o) {
+#if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
+        long_value = PyLong_AsLongLong(o);
+#else
+        long_value = PyLong_AsLong(o);
+#endif
+        return (npy_intp)long_value;
+    }
+
+    /* Disallow numpy.bool_. Boolean arrays do not currently support index. */
+    if (PyArray_IsScalar(o, Bool)) {
+        if (DEPRECATE("using a boolean instead of an integer"
+                      " will result in an error in the future") < 0) {
+            return -1;
         }
     }
+
+    /*
+     * The most general case. PyNumber_Index(o) covers everything
+     * including arrays. In principle it may be possible to replace
+     * the whole function by PyIndex_AsSSize_t after deprecation.
+     */
+    obj = PyNumber_Index(o);
+    if (obj) {
+#if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
+        long_value = PyLong_AsLongLong(obj);
+#else
+        long_value = PyLong_AsLong(obj);
+#endif
+        Py_DECREF(obj);
+        goto finish;
+    }
     else {
-        PyErr_SetString(PyExc_NotImplementedError,"");
+        /*
+         * Set the TypeError like PyNumber_Index(o) would after trying
+         * the general case.
+         */
+        PyErr_Clear();
+    }
+
+    /*    
+     * For backward compatibility check the number C-Api number protcol
+     * This should be removed up the finish label after deprecation.
+     */
+    if (Py_TYPE(o)->tp_as_number != NULL &&
+        Py_TYPE(o)->tp_as_number->nb_int != NULL) {
+        obj = Py_TYPE(o)->tp_as_number->nb_int(o);
+        if (obj == NULL) {
+            return -1;
+        }
+ #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
+        long_value = PyLong_AsLongLong(obj);
+ #else
+        long_value = PyLong_AsLong(obj);
+ #endif
+        Py_DECREF(obj);
+    }
+#if !defined(NPY_PY3K)
+    else if (Py_TYPE(o)->tp_as_number != NULL &&
+             Py_TYPE(o)->tp_as_number->nb_long != NULL) {
+        obj = Py_TYPE(o)->tp_as_number->nb_long(o);
+        if (obj == NULL) {
+            return -1;
+        }
+  #if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
+        long_value = PyLong_AsLongLong(obj);
+  #else
+        long_value = PyLong_AsLong(obj);
+  #endif
+        Py_DECREF(obj);
+    }
+#endif
+    else {
+        PyErr_SetString(PyExc_TypeError, msg);
+        return -1;
+    }
+    /* Give a deprecation warning, unless there was already an error */
+    if (!error_converting(long_value)) {
+        if (DEPRECATE("using a non-integer number instead of an integer"
+                      " will result in an error in the future") < 0) {
+            return -1;
+        }
     }
 
  finish:
-    if error_converting(long_value) {
+    if (error_converting(long_value)) {
+        err = PyErr_Occurred();
+        /* Only replace TypeError's here, which are the normal errors. */
+        if (PyErr_GivenExceptionMatches(err, PyExc_TypeError)) {
             PyErr_SetString(PyExc_TypeError, msg);
-            return -1;
         }
-
-#if (NPY_SIZEOF_LONGLONG > NPY_SIZEOF_INTP)
-    if ((long_value < NPY_MIN_INTP) || (long_value > NPY_MAX_INTP)) {
-        PyErr_SetString(PyExc_ValueError,
-                        "integer won't fit into a C intp");
         return -1;
     }
+
+ overflow_check:
+#if (NPY_SIZEOF_LONG < NPY_SIZEOF_INTP)
+  #if (NPY_SIZEOF_LONGLONG > NPY_SIZEOF_INTP)
+    if ((long_value < NPY_MIN_INTP) || (long_value > NPY_MAX_INTP)) {
+        PyErr_SetString(PyExc_OverflowError,
+                "Python int too large to convert to C numpy.intp");
+        return -1;
+    }
+  #endif
+#else
+  #if (NPY_SIZEOF_LONG > NPY_SIZEOF_INTP)
+    if ((long_value < NPY_MIN_INTP) || (long_value > NPY_MAX_INTP)) {
+        PyErr_SetString(PyExc_OverflowError,
+                "Python int too large to convert to C numpy.intp");
+        return -1;
+    }
+  #endif
 #endif
-    return (npy_intp) long_value;
+    return long_value;
 }
 
-/*NUMPY_API
- * PyArray_IntpFromSequence
+
+/*
+ * PyArray_IntpFromIndexSequence
  * Returns the number of dimensions or -1 if an error occurred.
- * vals must be large enough to hold maxvals
+ * vals must be large enough to hold maxvals.
+ * Opposed to PyArray_IntpFromSequence it uses and returns npy_intp
+ * for the number of values.
  */
-NPY_NO_EXPORT int
-PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
+NPY_NO_EXPORT npy_intp
+PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
 {
-    int nd, i;
+    Py_ssize_t nd;
+    npy_intp i;
     PyObject *op, *err;
 
     /*
      * Check to see if sequence is a single integer first.
      * or, can be made into one
      */
-    if ((nd=PySequence_Length(seq)) == -1) {
-        if (PyErr_Occurred()) PyErr_Clear();
-#if NPY_SIZEOF_LONG >= NPY_SIZEOF_INTP && !defined(NPY_PY3K)
-        if (!(op = PyNumber_Int(seq))) {
-            return -1;
+    nd = PySequence_Length(seq);
+    if (nd == -1) {
+        if (PyErr_Occurred()) {
+            PyErr_Clear();
         }
-#else
-        if (!(op = PyNumber_Long(seq))) {
-            return -1;
-        }
-#endif
-        nd = 1;
-#if NPY_SIZEOF_LONG >= NPY_SIZEOF_INTP
-        vals[0] = (npy_intp ) PyInt_AsLong(op);
-#else
-        vals[0] = (npy_intp ) PyLong_AsLongLong(op);
-#endif
-        Py_DECREF(op);
 
-        /*
-         * Check wether there was an error - if the error was an overflow, raise
-         * a ValueError instead to be more helpful
-         */
+        vals[0] = PyArray_PyIntAsIntp(seq);
         if(vals[0] == -1) {
             err = PyErr_Occurred();
-            if (err  &&
-                PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
+            if (err &&
+                    PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
                 PyErr_SetString(PyExc_ValueError,
                         "Maximum allowed dimension exceeded");
             }
@@ -901,6 +874,7 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
                 return -1;
             }
         }
+        nd = 1;
     }
     else {
         for (i = 0; i < PyArray_MIN(nd,maxvals); i++) {
@@ -908,21 +882,13 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
             if (op == NULL) {
                 return -1;
             }
-#if NPY_SIZEOF_LONG >= NPY_SIZEOF_INTP
-            vals[i]=(npy_intp )PyInt_AsLong(op);
-#else
-            vals[i]=(npy_intp )PyLong_AsLongLong(op);
-#endif
-            Py_DECREF(op);
 
-            /*
-             * Check wether there was an error - if the error was an overflow,
-             * raise a ValueError instead to be more helpful
-             */
-            if(vals[0] == -1) {
+
+            vals[i] = PyArray_PyIntAsIntp(op);
+            if(vals[i] == -1) {
                 err = PyErr_Occurred();
-                if (err  &&
-                    PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
+                if (err &&
+                        PyErr_GivenExceptionMatches(err, PyExc_OverflowError)) {
                     PyErr_SetString(PyExc_ValueError,
                             "Maximum allowed dimension exceeded");
                 }
@@ -934,6 +900,18 @@ PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
     }
     return nd;
 }
+
+/*NUMPY_API
+ * PyArray_IntpFromSequence
+ * Returns the number of integers converted or -1 if an error occurred.
+ * vals must be large enough to hold maxvals
+ */
+NPY_NO_EXPORT int
+PyArray_IntpFromSequence(PyObject *seq, npy_intp *vals, int maxvals)
+{
+    return PyArray_IntpFromIndexSequence(seq, vals, (npy_intp)maxvals);
+}
+
 
 /**
  * WARNING: This flag is a bad idea, but was the only way to both
