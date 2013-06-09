@@ -33,7 +33,7 @@ int xerbla_(char *srname, integer *info)
         while( len && srname[len-1]==' ' )
                 len--;
 
-        snprintf(buf, sizeof(buf), format, len, srname, *info);
+        PyOS_snprintf(buf, sizeof(buf), format, len, srname, *info);
         save = PyGILState_Ensure();
         PyErr_SetString(PyExc_ValueError, buf);
         PyGILState_Release(save);
