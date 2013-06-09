@@ -255,6 +255,10 @@ class TestBooleanArgumentDeprecation(_DeprecationTestCase):
         a = np.array([[[1]]])
 
         self.assert_deprecated(np.reshape, args=(a, (True, -1)))
+        self.assert_deprecated(np.reshape, args=(a, (np.bool_(True), -1)))
+        # Note that operator.index(np.array(True)) does not work, a boolean
+        # array is thus also deprecated, but not with the same message:
+        assert_raises(TypeError, operator.index, np.array(True))
         self.assert_deprecated(np.take, args=(a, [0], False))
         self.assert_deprecated(lambda: a[False:True:True], exceptions=IndexError, num=3)
         self.assert_deprecated(lambda: a[False,0], exceptions=IndexError)

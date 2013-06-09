@@ -698,7 +698,7 @@ PyArray_PyIntAsIntp(PyObject *o)
         return -1;
     }
 
-    /* Be a bit stricter and not allow bools */
+    /* Be a bit stricter and not allow bools, np.bool_ is handled later */
     if (PyBool_Check(o)) {
         if (DEPRECATE("using a boolean instead of an integer"
                       " will result in an error in the future") < 0) {
@@ -730,6 +730,15 @@ PyArray_PyIntAsIntp(PyObject *o)
 #endif
         return (npy_intp)long_value;
     }
+
+    /* Disallow numpy.bool_. Boolean arrays do not currently support index. */
+    if (PyArray_IsScalar(o, Bool)) {
+        if (DEPRECATE("using a boolean instead of an integer"
+                      " will result in an error in the future") < 0) {
+            return -1;
+        }
+    }
+
     /*
      * The most general case. PyNumber_Index(o) covers everything
      * including arrays. In principle it may be possible to replace
