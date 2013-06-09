@@ -1418,6 +1418,9 @@ NPY_NO_EXPORT void
 {
     /*  */
     if (IS_BINARY_REDUCE) {
+        if (run_unary_reduce_simd_@kind@_@TYPE@(args, dimensions, steps)) {
+            return;
+        }
         BINARY_REDUCE_LOOP(@type@) {
             const @type@ in2 = *(@type@ *)ip2;
             io1 = (io1 @OP@ in2 || npy_isnan(io1)) ? io1 : in2;
