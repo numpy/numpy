@@ -45,17 +45,22 @@
  * Returns attribute value on success, 0 on failure.
  */
 PyObject *
-PyArray_GetAttrString_SuppressException(PyObject *v, char *name)
+PyArray_GetAttrString_SuppressException(PyObject *obj, char *name)
 {
-    PyTypeObject *tp = Py_TYPE(v);
+    PyTypeObject *tp = Py_TYPE(obj);
     PyObject *res = (PyObject *)NULL;
-    if (tp != &PyList_Type && tp != &PyTuple_Type && v != Py_None) {
+    if (// Is not trivial type
+	obj != Py_None &&
+        !PyList_CheckExact(obj) &&
+        !PyTuple_CheckExact(obj)) {
+	// Attribute referenced by (char *)name
         if (tp->tp_getattr != NULL) {
-            res = (*tp->tp_getattr)(v, name);
+            res = (*tp->tp_getattr)(obj, name);
             if (res == NULL) {
                 PyErr_Clear();
             }
         }
+	// Attribute referenced by (PyObject *)name
         else if (tp->tp_getattro != NULL) {
 #if defined(NPY_PY3K)
             PyObject *w = PyUnicode_InternFromString(name);
@@ -64,8 +69,8 @@ PyArray_GetAttrString_SuppressException(PyObject *v, char *name)
 #endif
             if (w == NULL)
                 return (PyObject *)NULL;
-            Py_XDECREF(w);
-            res = (*tp->tp_getattro)(v, w);
+            Py_DECREF(w);
+            res = (*tp->tp_getattro)(obj, w);
             if (res == NULL) {
                 PyErr_Clear();
             }
