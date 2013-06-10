@@ -49,18 +49,18 @@ PyArray_GetAttrString_SuppressException(PyObject *obj, char *name)
 {
     PyTypeObject *tp = Py_TYPE(obj);
     PyObject *res = (PyObject *)NULL;
-    if (// Is not trivial type
+    if (/* Is not trivial type */
         obj != Py_None &&
         !PyList_CheckExact(obj) &&
         !PyTuple_CheckExact(obj)) {
-        // Attribute referenced by (char *)name
+        /* Attribute referenced by (char *)name */
         if (tp->tp_getattr != NULL) {
             res = (*tp->tp_getattr)(obj, name);
             if (res == NULL) {
                 PyErr_Clear();
             }
         }
-        // Attribute referenced by (PyObject *)name
+        /* Attribute referenced by (PyObject *)name */
         else if (tp->tp_getattro != NULL) {
 #if defined(NPY_PY3K)
             PyObject *w = PyUnicode_InternFromString(name);
