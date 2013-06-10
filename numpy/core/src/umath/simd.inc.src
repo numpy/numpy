@@ -88,7 +88,7 @@ void PyUFunc_clearfperr(void);
  * #name = unary, unary, unary_reduce, unary_reduce#
  */
 
-#if @vector@
+#if @vector@ && defined HAVE_EMMINTRIN_H
 
 /* prototypes */
 static void
@@ -116,7 +116,7 @@ run_@name@_simd_@func@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps
  * # OP = +, -, *, /#
  */
 
-#if @vector@
+#if @vector@ && defined HAVE_EMMINTRIN_H
 
 /* prototypes */
 static void
