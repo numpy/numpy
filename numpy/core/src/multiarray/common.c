@@ -477,6 +477,9 @@ PyArray_DTypeFromObjectHelper(PyObject *obj, int maxdims,
             goto fail;
         }
     }
+    else {
+        PyErr_Clear();
+    }
 
     /* Not exactly sure what this is about... */
 #if !defined(NPY_PY3K)
