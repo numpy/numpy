@@ -3574,13 +3574,6 @@ PyArray_GetDTypeTransferFunction(int aligned,
                     PyArray_ISNBO(dst_dtype->byteorder)) {
 
         if (PyArray_EquivTypenums(src_type_num, dst_type_num)) {
-            /*
-             * For complex numbers, the alignment is smaller than the
-             * type size, so we turn off the aligned flag then.
-             */
-            if (src_dtype->kind == 'c' || dst_dtype->kind == 'c') {
-                aligned = 0;
-            }
             *out_stransfer = PyArray_GetStridedCopyFn(aligned,
                                         src_stride, dst_stride,
                                         src_itemsize);
@@ -3677,13 +3670,6 @@ PyArray_GetDTypeTransferFunction(int aligned,
         /* This is a straight copy */
         if (src_itemsize == 1 || PyArray_ISNBO(src_dtype->byteorder) ==
                                  PyArray_ISNBO(dst_dtype->byteorder)) {
-            /*
-             * For complex numbers, the alignment is smaller than the
-             * type size, so we turn off the aligned flag then.
-             */
-            if (src_dtype->kind == 'c' || dst_dtype->kind == 'c') {
-                aligned = 0;
-            }
             *out_stransfer = PyArray_GetStridedCopyFn(aligned,
                                         src_stride, dst_stride,
                                         src_itemsize);
