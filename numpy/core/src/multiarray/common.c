@@ -38,7 +38,7 @@
  * This can be much faster then PyObject_GetAttrString where
  * exceptions are not used by caller.
  *
- * 'v' is the object to search for attribute.
+ * 'obj' is the object to search for attribute.
  *
  * 'name' is the attribute to search for.
  *
