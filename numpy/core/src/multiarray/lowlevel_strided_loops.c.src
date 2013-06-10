@@ -99,7 +99,15 @@
 
 
 #if @is_swap@ || @src_contig@ == 0 || @dst_contig@ == 0
+/*
+ * unrolling gains about 20-50% if the copy can be done in one mov instruction
+ * if not it can decrease performance
+ * tested to improve performance on intel xeon 5x/7x, core2duo, amd phenom x4
+ */
 static void
+#if @is_aligned@ && @is_swap@ == 0 && @elsize@ <= NPY_SIZEOF_INTP
+    NPY_GCC_UNROLL_LOOPS
+#endif
 @prefix@_@oper@_size@elsize@(char *dst, npy_intp dst_stride,
                         char *src, npy_intp src_stride,
                         npy_intp N, npy_intp NPY_UNUSED(src_itemsize),
@@ -156,7 +164,11 @@ static void
 #endif
 
 
-/* specialized copy and swap for source stride 0 */
+/*
+ * specialized copy and swap for source stride 0,
+ * interestingly unrolling here is like above is only marginally profitable for
+ * small types and detrimental for >= 8byte moves on x86
+ */
 #if (@src_contig@ == 0) && @is_aligned@
 static void
 @prefix@_@oper@_size@elsize@_srcstride0(char *dst,

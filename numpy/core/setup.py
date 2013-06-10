@@ -161,7 +161,6 @@ def check_math_capabilities(config, moredefs, mathlibs):
 
     check_funcs(OPTIONAL_STDFUNCS)
 
-
     for h in OPTIONAL_HEADERS:
         if config.check_func("", decl=False, call=False, headers=[h]):
             moredefs.append((fname2def(h).replace(".", "_"), 1))
@@ -169,6 +168,12 @@ def check_math_capabilities(config, moredefs, mathlibs):
     for f, args in OPTIONAL_INTRINSICS:
         if config.check_func(f, decl=False, call=True, call_args=args):
             moredefs.append((fname2def(f), 1))
+
+    for dec, fn in OPTIONAL_GCC_ATTRIBUTES:
+        if config.check_funcs_once([fn],
+                                   decl=dict((('%s %s' % (dec, fn), True),)),
+                                   call=False):
+            moredefs.append((fname2def(fn), 1))
 
     # C99 functions: float and long double versions
     check_funcs(C99_FUNCS_SINGLE)
