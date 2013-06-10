@@ -19,6 +19,8 @@ class TestIndexing(TestCase):
         a = np.array([1, 2, 3])
         assert_equal(a[()], a)
         assert_(a[()].base is a)
+        a = np.array(0)
+        assert_(isinstance(a[()], np.int_))
 
     def test_empty_fancy_index(self):
         # Empty list index creates an empty array
@@ -153,15 +155,32 @@ class TestMultiIndexingAutomated(TestCase):
         # Some simpler indices that still cover a bit more
         self.simple_indices = [Ellipsis, None, -1, [1], np.array([True]), 'skip']
         # Very simple ones to fill the rest:
-        self.fill_indices = [slice(None,None), 'skip']
+        self.fill_indices = [slice(None,None), 0]
 
 
     def _get_multi_index(self, arr, indices):
-        """Mimic multi dimensional indexing. Returns the indexed array and a
-        flag no_copy. If no_copy is True, np.may_share_memory(arr, arr[indicies])
-        should be True (though this may be wrong for 0-d arrays sometimes.
-        If this function raises an error it should most of the time match the
-        real error as long as there is exactly one error in the index.
+        """Mimic multi dimensional indexing.
+        
+        Parameters
+        ----------
+        arr : ndarray
+            Array to be indexed.
+        indices : tuple of index objects
+
+        Returns
+        -------
+        out : ndarray
+            An array equivalent to the indexing operation (but always a copy).
+            `arr[indices]` should be identical.
+        no_copy : bool
+            Whether the indexing operation requires a copy. If this is `True`,
+            `np.may_share_memory(arr, arr[indicies])` should be `True` (with
+            some exceptions for scalars and possibly 0-d arrays).
+
+        Notes
+        -----
+        While the function may mostly match the errors of normal indexing this
+        is generally not the case.
         """
         in_indices = list(indices)
         indices = []
@@ -264,6 +283,10 @@ class TestMultiIndexingAutomated(TestCase):
                                   + arr.shape[ax+indx.ndim:]))
                     indx = flat_indx
                 else:
+                    # This could be changed, a 0-d boolean index can
+                    # make sense (even outide the 0-d indexed array case)
+                    # Note that originally this is could be interpreted as
+                    # integer in the full integer special case.
                     raise IndexError
             if len(indices) > 0 and indices[-1][0] == 'f' and ax != ellipsis_pos:
                 # NOTE: There could still have been a 0-sized Ellipsis
@@ -359,9 +382,14 @@ class TestMultiIndexingAutomated(TestCase):
 
 
     def _check_multi_index(self, arr, index):
-        """Check mult index getting and simple setting. Input array
-        must be a reshaped arange for __setitem__ check for non-view
-        arrays to work. It then relies on .flat to work.
+        """Check a multi index item getting and simple setting.
+
+        Parameters
+        ----------
+        arr : ndarray
+            Array to be indexed, must be a reshaped arange.
+        index : tuple of indexing objects
+            Index being tested.
         """
         # Test item getting
         try:
@@ -371,6 +399,33 @@ class TestMultiIndexingAutomated(TestCase):
             assert_raises(Exception, arr.__setitem__, index, 0)
             return
 
+        self._compare_index_result(arr, index, mimic_get, no_copy)
+
+
+    def _check_single_index(self, arr, index):
+        """Check a single index item getting and simple setting.
+
+        Parameters
+        ----------
+        arr : ndarray
+            Array to be indexed, must be an arange.
+        index : indexing object
+            Index being tested. Must be a single index and not a tuple
+            of indexing objects (see also `_check_multi_index`).
+        """
+        try:
+            mimic_get, no_copy = self._get_multi_index(arr, (index,))
+        except Exception as e:
+            assert_raises(Exception, arr.__getitem__, index)
+            assert_raises(Exception, arr.__setitem__, index, 0)
+            return
+
+        self._compare_index_result(arr, index, mimic_get, no_copy)
+
+
+    def _compare_index_result(self, arr, index, mimic_get, no_copy):
+        """Compare mimicked result to indexing result.
+        """
         arr = arr.copy()
         indexed_arr = arr[index]
         assert_array_equal(indexed_arr, mimic_get)
@@ -378,8 +433,13 @@ class TestMultiIndexingAutomated(TestCase):
         # (then its not a view, and that does not matter)
         if indexed_arr.size != 0 and indexed_arr.ndim != 0:
             assert_(np.may_share_memory(indexed_arr, arr) == no_copy)
+            # Check reference count of the original array
+            if no_copy:
+                # refcount increases by one:
+                assert_equal(sys.getrefcount(arr), 3)
+            else:
+                assert_equal(sys.getrefcount(arr), 2)
 
-        sys.stdout.flush()
         # Test non-broadcast setitem:
         b = arr.copy()
         b[index] = mimic_get + 1000
@@ -411,16 +471,20 @@ class TestMultiIndexingAutomated(TestCase):
 
 
     def test_multidim(self):
-        # Check all combinations of all inner 3x3 arrays. Since test None
-        # we also test the Ellipsis OK.
-        tocheck = [self.simple_indices, self.complex_indices] + [self.simple_indices]*2
-        for simple_pos in [0,2,3]:
-            tocheck = [self.fill_indices, self.complex_indices, self.fill_indices, self.fill_indices]
-            tocheck[simple_pos] = self.simple_indices
-            for index in product(*tocheck):
-                index = tuple(i for i in index if i != 'skip')
-                self._check_multi_index(self.a, index)
-                self._check_multi_index(self.b, index)
+        # Automatically test combinations with complex indexes on 2nd (or 1st)
+        # spot and the simple ones in one other spot.
+        with warnings.catch_warnings():
+            # This is so that np.array(True) is not accepted in a full integer
+            # index, when running the file seperatly.
+            warnings.filterwarnings('error', '', DeprecationWarning)
+            for simple_pos in [0,2,3]:
+                tocheck = [self.fill_indices, self.complex_indices,
+                           self.fill_indices, self.fill_indices]
+                tocheck[simple_pos] = self.simple_indices
+                for index in product(*tocheck):
+                    index = tuple(i for i in index if i != 'skip')
+                    self._check_multi_index(self.a, index)
+                    self._check_multi_index(self.b, index)
         # Check very simple item getting:
         self._check_multi_index(self.a, (0,0,0,0))
         self._check_multi_index(self.b, (0,0,0,0)) 
@@ -429,6 +493,14 @@ class TestMultiIndexingAutomated(TestCase):
         assert_raises(IndexError, self.a.__setitem__, (0,0,0,0,0), 0)
         assert_raises(IndexError, self.a.__getitem__, (0,0,[1],0,0))
         assert_raises(IndexError, self.a.__setitem__, (0,0,[1],0,0), 0)
+
+
+    def test_1d(self):
+        a = np.arange(10)
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error', '', DeprecationWarning)
+            for index in self.complex_indices:
+                self._check_single_index(a, index)
 
 
 if __name__ == "__main__":

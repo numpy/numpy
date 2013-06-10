@@ -1821,6 +1821,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
         for (i = 0; i < n; i++) {
             mit->iteraxes[i] = i;
         }
+        Py_DECREF(sub);
         goto finish;
     }
 
