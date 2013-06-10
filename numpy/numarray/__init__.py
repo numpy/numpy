@@ -1,5 +1,8 @@
 from __future__ import division, absolute_import, print_function
 
+import warnings
+from numpy import ModuleDeprecationWarning
+
 from .util import *
 from .numerictypes import *
 from .functions import *
@@ -13,6 +16,9 @@ from . import functions
 from . import ufuncs
 from . import compat
 from . import session
+
+_msg = "The numarray module will be dropped in Numpy 1.9"
+warnings.warn(_msg, ModuleDeprecationWarning)
 
 __all__ = ['session', 'numerictypes']
 __all__ += util.__all__
