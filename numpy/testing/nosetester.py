@@ -11,6 +11,7 @@ import sys
 import warnings
 import numpy.testing.utils
 from numpy.compat import basestring
+from numpy import ModuleDeprecationWarning
 
 def get_package_name(filepath):
     """
@@ -378,6 +379,7 @@ class NoseTester(object):
         warnings.filterwarnings('ignore', message='Not importing directory')
         warnings.filterwarnings("ignore", message="numpy.dtype size changed")
         warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
+        warnings.filterwarnings("ignore", category=ModuleDeprecationWarning)
 
         try:
             from .noseclasses import NumpyTestProgram

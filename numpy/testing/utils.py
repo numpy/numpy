@@ -26,7 +26,9 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
            'assert_allclose']
 
+
 verbose = 0
+
 
 def assert_(val, msg='') :
     """
