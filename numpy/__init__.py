@@ -108,6 +108,19 @@ from __future__ import division, absolute_import, print_function
 
 import sys
 
+
+class ModuleDeprecationWarning(DeprecationWarning):
+    """Module deprecation warning.
+
+    The nose tester turns ordinary Deprecation warnings into test failures.
+    That makes it hard to deprecate whole modules, because they get
+    imported by default. So this is a special Deprecation warning that the
+    nose tester will let pass without making tests fail.
+
+    """
+    pass
+
+
 # We first need to detect if we're being called as part of the numpy setup
 # procedure itself in a reliable manner.
 try:
@@ -138,7 +151,7 @@ else:
         return loader(*packages, **options)
 
     from . import add_newdocs
-    __all__ = ['add_newdocs']
+    __all__ = ['add_newdocs', 'ModuleDeprecationWarning']
 
     pkgload.__doc__ = PackageLoader.__call__.__doc__
 

@@ -3,7 +3,13 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
+
 from numpy import *
+
+_msg = "The oldnumeric module will be dropped in Numpy 1.9"
+warnings.warn(_msg, ModuleDeprecationWarning)
+
 
 def _move_axis_to_0(a, axis):
     if axis == 0:
