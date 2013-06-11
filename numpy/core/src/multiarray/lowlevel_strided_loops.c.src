@@ -21,12 +21,10 @@
 #include "lowlevel_strided_loops.h"
 
 /*
- * x86 platform may work with unaligned access, except when the
- * compiler uses aligned SSE instructions, which gcc does in some
- * cases.  This is disabled for the time being.
+ * x86 platform works with unaligned access
  */
 #if (defined(NPY_CPU_X86) || defined(NPY_CPU_AMD64))
-#  define NPY_USE_UNALIGNED_ACCESS 0
+#  define NPY_USE_UNALIGNED_ACCESS 1
 #else
 #  define NPY_USE_UNALIGNED_ACCESS 0
 #endif
@@ -534,7 +532,7 @@ NPY_NO_EXPORT PyArray_StridedUnaryOp *
 /**end repeat1**/
                 }
 
-                return &_strided_to_strided;
+                return  &_swap@tag@_strided_to_strided;
             }
             else {
                 switch (itemsize) {
@@ -582,7 +580,7 @@ NPY_NO_EXPORT PyArray_StridedUnaryOp *
                 }
             }
 
-            return &_strided_to_strided;
+            return  &_swap@tag@_strided_to_strided;
         }
         /* general dst */
         else {
@@ -599,7 +597,7 @@ NPY_NO_EXPORT PyArray_StridedUnaryOp *
 /**end repeat1**/
                 }
 
-                return &_strided_to_strided;
+                return  &_swap@tag@_strided_to_strided;
             }
             /* general src */
             else {

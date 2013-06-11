@@ -3817,9 +3817,9 @@ NPY_NO_EXPORT PyArray_Descr @from@_Descr = {
     /* type_num */
     NPY_@from@,
     /* elsize */
-    @num@*sizeof(@fromtype@),
+    @num@ * sizeof(@fromtype@),
     /* alignment */
-    _ALIGN(@fromtype@),
+    @num@ * _ALIGN(@fromtype@),
     /* subarray */
     NULL,
     /* fields */
@@ -4150,6 +4150,7 @@ set_typeinfo(PyObject *dict)
      *         CFLOAT, CDOUBLE, CLONGDOUBLE#
      * #Name = Half, Float, Double, LongDouble,
      *         CFloat, CDouble, CLongDouble#
+     * #num  = 1, 1, 1, 1, 2, 2, 2#
      */
 
     PyDict_SetItemString(infodict, "@name@",
@@ -4160,7 +4161,7 @@ set_typeinfo(PyObject *dict)
 #endif
                 NPY_@name@,
                 NPY_BITSOF_@name@,
-                _ALIGN(@type@),
+                @num@ * _ALIGN(@type@),
                 (PyObject *) &Py@Name@ArrType_Type));
     Py_DECREF(s);
 
