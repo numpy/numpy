@@ -408,7 +408,7 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
         /* load the first elements */
         @vtype@ c = @vpre@_load_@vsuf@((@type@*)&ip[i]);
 #ifdef NO_FLOATING_POINT_SUPPORT
-        @vtype@ cnan = @vpre@_or_@vsuf@(@vpre@_cmpneq_@vsuf@(c, c), cnan);
+        @vtype@ cnan = @vpre@_cmpneq_@vsuf@(c, c);
 #else
         /* minps/minpd will set invalid flag if nan is encountered */
         PyUFunc_clearfperr();
