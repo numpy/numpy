@@ -687,6 +687,27 @@ class TestSign(TestCase):
             np.seterr(**olderr)
 
 
+class TestMinMax(TestCase):
+    def test_minmax_blocked(self):
+        "simd tests on max/min"
+        for dt in [np.float32, np.float64]:
+            for out, inp, msg in gen_alignment_data(dtype=dt, type='unary',
+                                                    max_size=17):
+                for i in range(inp.size):
+                    inp[:] = np.arange(inp.size, dtype=dt)
+                    inp[i] = np.nan
+                    self.assertTrue(np.isnan(inp.max()),
+                                    msg=repr(inp) + '\n' + msg)
+                    self.assertTrue(np.isnan(inp.min()),
+                                    msg=repr(inp) + '\n' + msg)
+
+                    inp[i] = 1e10
+                    assert_equal(inp.max(), 1e10, err_msg=msg)
+                    inp[i] = -1e10
+                    assert_equal(inp.min(), -1e10, err_msg=msg)
+
+
+
 class TestAbsolute(TestCase):
     def test_abs_blocked(self):
         "simd tests on abs"

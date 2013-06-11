@@ -149,17 +149,18 @@ advantage of compiler builtins to avoid expensive calls to libc.
 This improves performance of these operations by about a factor of two on gnu
 libc systems.
 
-Performance improvements to `sqrt` and `abs`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-The `sqrt` and `abs` functions for unit stride elementary operations have been
+Performance improvements to base math, `sqrt`, `absolute` and `minimum/maximum`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The base math (add, subtract, divide, multiply), `sqrt`, `absolute` and
+`minimum/maximum` functions for unit stride elementary operations have been
 improved to make use of SSE2 CPU SIMD instructions.
 This improves performance of these operations up to 4x/2x for float32/float64
 depending on the location of the data in the CPU caches. The performance gain
 is greatest for in-place operations.
 In order to use the improved functions the SSE2 instruction set must be enabled
 at compile time. It is enabled by default on x86_64 systems. On x86_32 with a
-capable CPU it must be enabled by passing the appropriate flag to CFLAGS build
-variable (-msse2 with gcc).
+capable CPU it must be enabled by passing the appropriate flag to the CFLAGS
+build variable (-msse2 with gcc).
 
 Changes
 =======
