@@ -532,7 +532,7 @@ NPY_NO_EXPORT PyArray_StridedUnaryOp *
 /**end repeat1**/
                 }
 
-                return &_strided_to_strided;
+                return  &_swap@tag@_strided_to_strided;
             }
             else {
                 switch (itemsize) {
@@ -580,7 +580,7 @@ NPY_NO_EXPORT PyArray_StridedUnaryOp *
                 }
             }
 
-            return &_strided_to_strided;
+            return  &_swap@tag@_strided_to_strided;
         }
         /* general dst */
         else {
@@ -597,7 +597,7 @@ NPY_NO_EXPORT PyArray_StridedUnaryOp *
 /**end repeat1**/
                 }
 
-                return &_strided_to_strided;
+                return  &_swap@tag@_strided_to_strided;
             }
             /* general src */
             else {
