@@ -25,8 +25,6 @@ from numpy.compat import (
         asbytes, asstr, asbytes_nested, bytes, basestring, unicode
         )
 
-from io import BytesIO
-
 if sys.version_info[0] >= 3:
     import pickle
 else:
@@ -244,12 +242,14 @@ class NpzFile(object):
             member = 1
             key += '.npy'
         if member:
-            bytes = self.zip.read(key)
-            if bytes.startswith(format.MAGIC_PREFIX):
-                value = BytesIO(bytes)
-                return format.read_array(value)
+            bytes = self.zip.open(key)
+            magic = bytes.read(len(format.MAGIC_PREFIX))
+            bytes.close()
+            if magic == format.MAGIC_PREFIX:
+                bytes = self.zip.open(key)
+                return format.read_array(bytes)
             else:
-                return bytes
+                return self.zip.read(key)
         else:
             raise KeyError("%s is not a file in the archive" % key)
 
