@@ -80,6 +80,11 @@ fact, it never was true in some corner cases). Instead, use
 For more information check the "Internal memory layout of an ndarray"
 section in the documentation.
 
+IO compatibility with large files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Large NPZ files >2GB can be loaded on 64-bit systems.
+
 
 New Features
 ============
@@ -135,6 +140,11 @@ A simple test runner script ``runtests.py`` was added. It also builds Numpy via
 
 Improvements
 ============
+
+IO performance improvements
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Performance in reading large files was improved by chunking (see also IO compatibility).
 
 Performance improvements to `pad`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
