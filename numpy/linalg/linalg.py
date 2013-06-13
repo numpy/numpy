@@ -1733,8 +1733,7 @@ def lstsq(a, b, rcond=-1):
     Returns
     -------
     x : {(N,), (N, K)} ndarray
-        Least-squares solution.  The shape of `x` depends on the shape of
-        `a`.
+        Least-squares solution.
     residuals : {(), (1,), (K,)} ndarray
         Sums of residuals; squared Euclidean 2-norm for each column in
         ``b - a*x``.
