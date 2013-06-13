@@ -303,6 +303,24 @@ class TestRandomDist(TestCase):
                          [ 9,  9]])
         np.testing.assert_array_equal(actual, desired)
 
+        # Test nbad = 0
+        actual = np.random.hypergeometric(5, 0, 3, size=4)
+        desired = np.array([3, 3, 3, 3])
+        np.testing.assert_array_equal(actual, desired)
+
+        actual = np.random.hypergeometric(15, 0, 12, size=4)
+        desired = np.array([12, 12, 12, 12])
+        np.testing.assert_array_equal(actual, desired)
+
+        # Test ngood = 0
+        actual = np.random.hypergeometric(0, 5, 3, size=4)
+        desired = np.array([0, 0, 0, 0])
+        np.testing.assert_array_equal(actual, desired)
+
+        actual = np.random.hypergeometric(0, 15, 12, size=4)
+        desired = np.array([0, 0, 0, 0])
+        np.testing.assert_array_equal(actual, desired)
+
     def test_laplace(self):
         np.random.seed(self.seed)
         actual = np.random.laplace(loc=.123456789, scale=2.0, size=(3, 2))

@@ -3846,20 +3846,21 @@ cdef class RandomState:
 
         Parameters
         ----------
-        ngood : float (but truncated to an integer)
-                parameter, > 0.
-        nbad  : float
-                parameter, >= 0.
-        nsample  : float
-                   parameter, > 0 and <= ngood+nbad
-        size : {tuple, int}
+        ngood : int or array_like
+            Number of ways to make a good selection.  Must be nonnegative.
+        nbad : int or array_like
+            Number of ways to make a bad selection.  Must be nonnegative.
+        nsample : int or array_like
+            Number of items sampled.  Must be at least 1 and at most
+            ``ngood + nbad``.
+        size : int or tuple of int
             Output shape.  If the given shape is, e.g., ``(m, n, k)``, then
             ``m * n * k`` samples are drawn.
 
         Returns
         -------
-        samples : {ndarray, scalar}
-                  where the values are all integers in  [0, n].
+        samples : ndarray or scalar
+            The values are all integers in  [0, n].
 
         See Also
         --------
@@ -3924,27 +3925,26 @@ cdef class RandomState:
         lnbad = PyInt_AsLong(nbad)
         lnsample = PyInt_AsLong(nsample)
         if not PyErr_Occurred():
-            if ngood < 1:
-                raise ValueError("ngood < 1")
-            if nbad < 1:
-                raise ValueError("nbad < 1")
-            if nsample < 1:
+            if lngood < 0:
+                raise ValueError("ngood < 0")
+            if lnbad < 0:
+                raise ValueError("nbad < 0")
+            if lnsample < 1:
                 raise ValueError("nsample < 1")
-            if ngood + nbad < nsample:
+            if lngood + lnbad < lnsample:
                 raise ValueError("ngood + nbad < nsample")
             return discnmN_array_sc(self.internal_state, rk_hypergeometric, size,
                                     lngood, lnbad, lnsample)
-
 
         PyErr_Clear()
 
         ongood = <ndarray>PyArray_FROM_OTF(ngood, NPY_LONG, NPY_ARRAY_ALIGNED)
         onbad = <ndarray>PyArray_FROM_OTF(nbad, NPY_LONG, NPY_ARRAY_ALIGNED)
         onsample = <ndarray>PyArray_FROM_OTF(nsample, NPY_LONG, NPY_ARRAY_ALIGNED)
-        if np.any(np.less(ongood, 1)):
-            raise ValueError("ngood < 1")
-        if np.any(np.less(onbad, 1)):
-            raise ValueError("nbad < 1")
+        if np.any(np.less(ongood, 0)):
+            raise ValueError("ngood < 0")
+        if np.any(np.less(onbad, 0)):
+            raise ValueError("nbad < 0")
         if np.any(np.less(onsample, 1)):
             raise ValueError("nsample < 1")
         if np.any(np.less(np.add(ongood, onbad),onsample)):
