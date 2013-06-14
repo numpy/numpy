@@ -19,6 +19,9 @@
 #include "npy_config.h"
 /* for NO_FLOATING_POINT_SUPPORT */
 #include "numpy/ufuncobject.h"
+#ifdef HAVE_EMMINTRIN_H
+#include <emmintrin.h>
+#endif
 #include <assert.h>
 #include <stdlib.h>
 
@@ -73,6 +76,12 @@ void PyUFunc_clearfperr(void);
  * Dispatcher functions
  * decide whether the operation can be vectorized and run it
  * if it was run returns true and false if nothing was done
+ */
+
+/*
+ *****************************************************************************
+ **                           FLOAT DISPATCHERS
+ *****************************************************************************
  */
 
 /**begin repeat
@@ -161,13 +170,66 @@ run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps
 
 /**end repeat**/
 
+/*
+ *****************************************************************************
+ **                           BOOL DISPATCHERS
+ *****************************************************************************
+ */
+
+/**begin repeat
+ * # kind = logical_or, logical_and#
+ */
+
+static void
+sse2_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2,
+                        npy_intp n);
+
+static NPY_INLINE int
+run_binary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
+{
+#if defined HAVE_EMMINTRIN_H
+    if (sizeof(npy_bool) == 1 && IS_BLOCKABLE_BINARY(sizeof(npy_bool), 16)) {
+        sse2_binary_@kind@_BOOL((npy_bool*)args[2], (npy_bool*)args[0],
+                               (npy_bool*)args[1], dimensions[0]);
+        return 1;
+    }
+#endif
+    return 0;
+}
+
+/**end repeat**/
+
+/**begin repeat
+ * # kind = absolute, logical_not#
+ */
+
+static void
+sse2_@kind@_BOOL(npy_bool *, npy_bool *, const npy_intp n);
+
+static NPY_INLINE int
+run_unary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
+{
+#if defined HAVE_EMMINTRIN_H
+    if (sizeof(npy_bool) == 1 && IS_BLOCKABLE_UNARY(sizeof(npy_bool), 16)) {
+        sse2_@kind@_BOOL((npy_bool*)args[1], (npy_bool*)args[0], dimensions[0]);
+        return 1;
+    }
+#endif
+    return 0;
+}
+
+/**end repeat**/
+
+#ifdef HAVE_EMMINTRIN_H
 
 /*
  * Vectorized operations
  */
-
-#ifdef HAVE_EMMINTRIN_H
-#include <emmintrin.h>
+/*
+ *****************************************************************************
+ **                           FLOAT LOOPS
+ *****************************************************************************
+ */
 
 /**begin repeat
 * horizontal reductions on a vector
@@ -443,6 +505,107 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
     }
 }
 /**end repeat1**/
+
+/**end repeat**/
+
+/*
+ *****************************************************************************
+ **                           BOOL LOOPS
+ *****************************************************************************
+ */
+
+/**begin repeat
+ * # kind = logical_or, logical_and#
+ * # and = 0, 1#
+ * # op = ||, &&#
+ * # vop = or, and#
+ * # vpre = _mm*2#
+ * # vsuf = si128*2#
+ * # vtype = __m128i*2#
+ * # type = npy_bool*2#
+ * # vloadu = _mm_loadu_si128*2#
+ * # vstore = _mm_store_si128*2#
+ */
+
+/*
+ * convert any bit set to boolean true so vectorized and normal operations are
+ * consistent, should not be required if bool is used correctly everywhere but
+ * you never know
+ */
+#if !@and@
+static NPY_INLINE @vtype@ byte_to_true(@vtype@ v)
+{
+    const @vtype@ zero = @vpre@_setzero_@vsuf@();
+    const @vtype@ truemask = @vpre@_set1_epi8(1 == 1);
+    /* get 0xFF for zeros */
+    @vtype@ tmp = @vpre@_cmpeq_epi8(v, zero);
+    /* filled with 0xFF/0x00, negate and mask to boolean true */
+    return @vpre@_andnot_@vsuf@(tmp, truemask);
+}
+#endif
+
+static void
+sse2_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2, npy_intp n)
+{
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, 16)
+        op[i] = ip1[i] @op@ ip2[i];
+    LOOP_BLOCKED(@type@, 16) {
+        @vtype@ a = @vloadu@((__m128i*)&ip1[i]);
+        @vtype@ b = @vloadu@((__m128i*)&ip2[i]);
+#if @and@
+        const @vtype@ zero = @vpre@_setzero_@vsuf@();
+        /* get 0xFF for non zeros*/
+        @vtype@ tmp = @vpre@_cmpeq_epi8(a, zero);
+        /* andnot -> 0x00 for zeros xFF for non zeros, & with ip2 */
+        tmp = @vpre@_andnot_@vsuf@(tmp, b);
+#else
+        @vtype@ tmp = @vpre@_or_@vsuf@(a, b);
+#endif
+
+        @vstore@((__m128i*)&op[i], byte_to_true(tmp));
+    }
+    LOOP_BLOCKED_END {
+        op[i] = (ip1[i] @op@ ip2[i]);
+    }
+}
+
+/**end repeat**/
+
+/**begin repeat
+ * # kind = absolute, logical_not#
+ * # op = !=, ==#
+ * # not = 0, 1#
+ * # vpre = _mm*2#
+ * # vsuf = si128*2#
+ * # vtype = __m128i*2#
+ * # type = npy_bool*2#
+ * # vloadu = _mm_loadu_si128*2#
+ * # vstore = _mm_store_si128*2#
+ */
+
+static void
+sse2_@kind@_BOOL(@type@ * op, @type@ * ip, const npy_intp n)
+{
+    LOOP_BLOCK_ALIGN_VAR(op, @type@, 16)
+        op[i] = (ip[i] @op@ 0);
+    LOOP_BLOCKED(@type@, 16) {
+        @vtype@ a = @vloadu@((__m128i*)&ip[i]);
+#if @not@
+        const @vtype@ zero = @vpre@_setzero_@vsuf@();
+        const @vtype@ truemask = @vpre@_set1_epi8(1 == 1);
+        /* equivalent to byte_to_true but can skip the negation */
+        a = @vpre@_cmpeq_epi8(a, zero);
+        a = @vpre@_and_@vsuf@(a, truemask);
+#else
+        /* abs is kind of pointless but maybe its used for byte_to_true */
+        a = byte_to_true(a);
+#endif
+        @vstore@((__m128i*)&op[i], a);
+    }
+    LOOP_BLOCKED_END {
+        op[i] = (ip[i] @op@ 0);
+    }
+}
 
 /**end repeat**/
 
