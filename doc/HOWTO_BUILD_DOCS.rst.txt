@@ -85,9 +85,8 @@ The following extensions are available:
     changes or be eventually deprecated.
 
   - ``numpydoc.autosummary``: (DEPRECATED) An ``autosummary::`` directive.
-    Available in Sphinx 0.6.2 and (to-be) 1.0 as ``sphinx.ext.autosummary``,
-    and it the Sphinx 1.0 version is recommended over that included in
-    Numpydoc.
+    Available since Sphinx 0.6 as ``sphinx.ext.autosummary``,
+    recommended over that included in Numpydoc since Sphinx 1.0.
 
   - ``numpydoc.traitsdoc``: For gathering documentation about Traits attributes.
 
