@@ -453,7 +453,8 @@ def average(a, axis=None, weights=None, returned=False):
         The weights array can either be 1-D (in which case its length must be
         the size of `a` along the given axis) or of the same shape as `a`.
         If ``weights=None``, then all data in `a` are assumed to have a
-        weight equal to one.
+        weight equal to one.   If `weights` is complex, the imaginary parts
+        are ignored.
     returned : bool, optional
         Flag indicating whether a tuple ``(result, sum of weights)``
         should be returned as output (True), or just the result (False).
@@ -513,7 +514,7 @@ def average(a, axis=None, weights=None, returned=False):
         if mask is nomask:
             if weights is None:
                 d = ash[axis] * 1.0
-                n = add.reduce(a._data, axis, dtype=float)
+                n = add.reduce(a._data, axis)
             else:
                 w = filled(weights, 0.0)
                 wsh = w.shape
@@ -529,14 +530,14 @@ def average(a, axis=None, weights=None, returned=False):
                     r = [None] * len(ash)
                     r[axis] = slice(None, None, 1)
                     w = eval ("w[" + repr(tuple(r)) + "] * ones(ash, float)")
-                    n = add.reduce(a * w, axis, dtype=float)
+                    n = add.reduce(a * w, axis)
                     d = add.reduce(w, axis, dtype=float)
                     del w, r
                 else:
                     raise ValueError('average: weights wrong shape.')
         else:
             if weights is None:
-                n = add.reduce(a, axis, dtype=float)
+                n = add.reduce(a, axis)
                 d = umath.add.reduce((-mask), axis=axis, dtype=float)
             else:
                 w = filled(weights, 0.0)
@@ -545,7 +546,7 @@ def average(a, axis=None, weights=None, returned=False):
                     wsh = (1,)
                 if wsh == ash:
                     w = array(w, dtype=float, mask=mask, copy=0)
-                    n = add.reduce(a * w, axis, dtype=float)
+                    n = add.reduce(a * w, axis)
                     d = add.reduce(w, axis, dtype=float)
                 elif wsh == (ash[axis],):
                     ni = ash[axis]
@@ -553,7 +554,7 @@ def average(a, axis=None, weights=None, returned=False):
                     r[axis] = slice(None, None, 1)
                     w = eval ("w[" + repr(tuple(r)) + \
                               "] * masked_array(ones(ash, float), mask)")
-                    n = add.reduce(a * w, axis, dtype=float)
+                    n = add.reduce(a * w, axis)
                     d = add.reduce(w, axis, dtype=float)
                 else:
                     raise ValueError('average: weights wrong shape.')
@@ -576,7 +577,6 @@ def average(a, axis=None, weights=None, returned=False):
         return result, d
     else:
         return result
-
 
 
 def median(a, axis=None, out=None, overwrite_input=False):
