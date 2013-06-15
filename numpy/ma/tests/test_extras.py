@@ -27,8 +27,7 @@ from numpy.ma.extras import (atleast_2d, mr_, dot, polyfit,
     compress_rowcols, mask_rowcols,
     clump_masked, clump_unmasked,
     flatnotmasked_contiguous, notmasked_contiguous, notmasked_edges,
-    masked_all, masked_all_like,
-    )
+    masked_all, masked_all_like)
 
 
 class TestGeneric(TestCase):
@@ -201,6 +200,50 @@ class TestAverage(TestCase):
         assert_equal(a, 1.5)
         a = average(array([1, 2, 3, 4], mask=[False, False, True, True]))
         assert_equal(a, 1.5)
+
+    def test_complex(self):
+        # Test with complex data.
+        # (Regression test for https://github.com/numpy/numpy/issues/2684)
+        mask = np.array([[0, 0, 0, 1, 0],
+                         [0, 1, 0, 0, 0]], dtype=bool)
+        a = masked_array([[0,  1+2j, 3+4j, 5+6j, 7+8j],
+                          [9j, 0+1j, 2+3j, 4+5j, 7+7j]],
+                         mask=mask)
+
+        av = average(a)
+        expected = np.average(a.compressed())
+        assert_almost_equal(av.real, expected.real)
+        assert_almost_equal(av.imag, expected.imag)
+
+        av0 = average(a, axis=0)
+        expected0 = average(a.real, axis=0) + average(a.imag, axis=0)*1j
+        assert_almost_equal(av0.real, expected0.real)
+        assert_almost_equal(av0.imag, expected0.imag)
+
+        av1 = average(a, axis=1)
+        expected1 = average(a.real, axis=1) + average(a.imag, axis=1)*1j
+        assert_almost_equal(av1.real, expected1.real)
+        assert_almost_equal(av1.imag, expected1.imag)
+
+        # Test with the 'weights' argument.
+        wts = np.array([[0.5, 1.0, 2.0, 1.0, 0.5],
+                        [1.0, 1.0, 1.0, 1.0, 1.0]])
+        wav = average(a, weights=wts)
+        expected = np.average(a.compressed(), weights=wts[~mask])
+        assert_almost_equal(wav.real, expected.real)
+        assert_almost_equal(wav.imag, expected.imag)
+
+        wav0 = average(a, weights=wts, axis=0)
+        expected0 = (average(a.real, weights=wts, axis=0) +
+                     average(a.imag, weights=wts, axis=0)*1j)
+        assert_almost_equal(wav0.real, expected0.real)
+        assert_almost_equal(wav0.imag, expected0.imag)
+
+        wav1 = average(a, weights=wts, axis=1)
+        expected1 = (average(a.real, weights=wts, axis=1) +
+                     average(a.imag, weights=wts, axis=1)*1j)
+        assert_almost_equal(wav1.real, expected1.real)
+        assert_almost_equal(wav1.imag, expected1.imag)
 
 
 class TestConcatenator(TestCase):
