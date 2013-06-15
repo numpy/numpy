@@ -379,7 +379,7 @@ class TestSaveTxt(TestCase):
         
         class CustomWriter(list):
             def write(self, text):
-                self.extend(text.split('\n'))
+                self.extend(text.split(b'\n'))
             def seek(self):pass
         
         w=CustomWriter()
