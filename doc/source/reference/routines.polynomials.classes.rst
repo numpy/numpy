@@ -30,10 +30,10 @@ and more generally
 
 .. math:: p(x) = \sum_{i=0}^n c_i T_i(x)
 
-where in this case the :math:`T_n` are the Chebyshev functions of degree
-`n`, but could just as easily be the basis functions of any of the other
-classes. The convention for all the classes is that the coefficient
-c[i] goes with the basis function of degree i.
+where in this case the :math:`T_n` are the Chebyshev functions of
+degree :math:`n`, but could just as easily be the basis functions of
+any of the other classes. The convention for all the classes is that
+the coefficient :math:`c[i]` goes with the basis function of degree i.
 
 All of the classes have the same methods, and especially they implement the
 Python numeric operators +, -, \*, //, %, divmod, \*\*, ==,
@@ -47,7 +47,7 @@ Basics
 First we need a polynomial class and a polynomial instance to play with.
 The classes can be imported directly from the polynomial package or from
 the module of the relevant type. Here we import from the package and use
-the conventional Polynomial class because of its familiarity.::
+the conventional Polynomial class because of its familiarity::
 
    >>> from numpy.polynomial import Polynomial as P
    >>> p = P([1,2,3])
@@ -93,7 +93,7 @@ Powers::
 
 Division:
 
-Floor_division, '//', is the division operator for the polynomial classes,
+Floor division, '//', is the division operator for the polynomial classes,
 polynomials are treated like integers in this regard. For Python versions <
 3.x the '/' operator maps to '//', as it does for Python, for later
 versions the '/' will only work for division by scalars. At some point it
@@ -182,7 +182,7 @@ and window casting::
     >>> p(T([0, 1]))
     Chebyshev([ 2.5,  2. ,  1.5], [-1.,  1.], [-1.,  1.])
 
-Which gives the polynomial 'p' in Chebyshev form. This works because
+Which gives the polynomial `p` in Chebyshev form. This works because
 :math:`T_1(x) = x` and substituting :math:`x` for :math:`x` doesn't change
 the original polynomial. However, all the multiplications and divisions
 will be done using Chebyshev series, hence the type of the result.
@@ -199,7 +199,7 @@ Polynomial instances can be integrated and differentiated.::
     >>> p.integ(2)
     Polynomial([ 0.,  0.,  1.,  1.], [-1.,  1.], [-1.,  1.])
 
-The first example integrates 'p' once, the second example integrates it
+The first example integrates `p` once, the second example integrates it
 twice. By default, the lower bound of the integration and the integration
 constant are 0, but both can be specified.::
 
@@ -227,7 +227,7 @@ Constructing polynomials by specifying coefficients is just one way of
 obtaining a polynomial instance, they may also be created by specifying
 their roots, by conversion from other polynomial types, and by least
 squares fits. Fitting is discussed in its own section, the other methods
-are demonstrated below.::
+are demonstrated below::
 
     >>> from numpy.polynomial import Polynomial as P
     >>> from numpy.polynomial import Chebyshev as T
@@ -244,9 +244,9 @@ The convert method can also convert domain and window::
     >>> p.convert(kind=P, domain=[0, 1])
     Polynomial([-1.875,  2.875, -1.125,  0.125], [ 0.,  1.], [-1.,  1.])
 
-In numpy versions >= 1.7.0 the 'basis' and 'cast' class methods are also
+In numpy versions >= 1.7.0 the `basis` and `cast` class methods are also
 available. The cast method works like the convert method while the basis
-method returns the basis polynomial of given degree.::
+method returns the basis polynomial of given degree::
 
     >>> P.basis(3)
     Polynomial([ 0.,  0.,  0.,  1.], [-1.,  1.], [-1.,  1.])
@@ -276,8 +276,8 @@ polynomials up to degree 5 are plotted below.
     <matplotlib.legend.Legend object at 0x3b3ee10>
     >>> plt.show()
 
-In the range -1 <= x <= 1 they are nice, equiripple functions lying between +/- 1.
-The same plots over the range -2 <= x <= 2 look very different:
+In the range -1 <= `x` <= 1 they are nice, equiripple functions lying between +/- 1.
+The same plots over the range -2 <= `x` <= 2 look very different:
 
 .. plot::
 
@@ -291,17 +291,17 @@ The same plots over the range -2 <= x <= 2 look very different:
     >>> plt.show()
 
 As can be seen, the "good" parts have shrunk to insignificance. In using
-Chebyshev polynomials for fitting we want to use the region where x is
-between -1 and 1 and that is what the 'window' specifies. However, it is
+Chebyshev polynomials for fitting we want to use the region where `x` is
+between -1 and 1 and that is what the `window` specifies. However, it is
 unlikely that the data to be fit has all its data points in that interval,
-so we use 'domain' to specify the interval where the data points lie. When
+so we use `domain` to specify the interval where the data points lie. When
 the fit is done, the domain is first mapped to the window by a linear
 transformation and the usual least squares fit is done using the mapped
 data points. The window and domain of the fit are part of the returned series
 and are automatically used when computing values, derivatives, and such. If
 they aren't specified in the call the fitting routine will use the default
 window and the smallest domain that holds all the data points. This is
-illustrated below for a fit to a noisy sin curve.
+illustrated below for a fit to a noisy sine curve.
 
 .. plot::
 
