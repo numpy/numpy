@@ -5975,9 +5975,10 @@ class _frommethod:
         Name of the method to transform.
 
     """
-    def __init__(self, methodname):
+    def __init__(self, methodname, reversed=False):
         self.__name__ = methodname
         self.__doc__ = self.getdoc()
+        self.reversed = reversed
     #
     def getdoc(self):
         "Return the doc of the function (from the doc of the method)."
@@ -5989,6 +5990,11 @@ class _frommethod:
             return doc
     #
     def __call__(self, a, *args, **params):
+        if self.reversed:
+            args = list(args)
+            arr = args[0]
+            args[0] = a
+            a = arr
         # Get the method from the array (if possible)
         method_name = self.__name__
         method = getattr(a, method_name, None)
@@ -6005,7 +6011,7 @@ class _frommethod:
 all = _frommethod('all')
 anomalies = anom = _frommethod('anom')
 any = _frommethod('any')
-compress = _frommethod('compress')
+compress = _frommethod('compress', reversed=True)
 cumprod = _frommethod('cumprod')
 cumsum = _frommethod('cumsum')
 copy = _frommethod('copy')

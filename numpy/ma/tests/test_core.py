@@ -3381,6 +3381,19 @@ class TestMaskedArrayFunctions(TestCase):
         test = reshape(a, (2, 2))
         assert_equal(test, m.reshape(2, 2))
 
+    def test_compress(self):
+        # Test compress function on ndarray and masked array
+        # Address Github #2495.
+        arr = np.arange(8)
+        arr.shape = 4,2
+        cond = np.array([True, False, True, True])
+        control = arr[[0, 2, 3]]
+        test = np.ma.compress(cond, arr, axis=0)
+        assert_equal(test, control)
+        marr = np.ma.array(arr)
+        test = np.ma.compress(cond, marr, axis=0)
+        assert_equal(test, control)
+
 #------------------------------------------------------------------------------
 
 class TestMaskedFields(TestCase):
