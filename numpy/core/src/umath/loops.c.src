@@ -571,6 +571,9 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
         *((npy_bool *)iop1) = io1;
     }
     else {
+        if (run_binary_simd_@kind@_BOOL(args, dimensions, steps)) {
+            return;
+        }
         BINARY_LOOP {
             const npy_bool in1 = *(npy_bool *)ip1;
             const npy_bool in2 = *(npy_bool *)ip2;
@@ -613,6 +616,9 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
 NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
+    if (run_unary_simd_@kind@_BOOL(args, dimensions, steps)) {
+        return;
+    }
     UNARY_LOOP {
         npy_bool in1 = *(npy_bool *)ip1;
         *((npy_bool *)op1) = in1 @OP@ 0;
