@@ -5643,6 +5643,9 @@ class mvoid(MaskedArray):
                 else:
                     yield d
 
+    def __len__(self):
+        return self._data.__len__()
+
     def filled(self, fill_value=None):
         """
         Return a copy with masked fields filled with a given value.

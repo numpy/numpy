@@ -3527,6 +3527,10 @@ class TestMaskedFields(TestCase):
         a[0]['a'] = 2
         assert_equal(a.mask, control)
 
+    def test_element_len(self):
+        # check that len() works for mvoid (Github issue #576)
+        for rec in self.data['base']:
+            assert_equal(len(rec), len(self.data['ddtype']))
 
 #------------------------------------------------------------------------------
 
