@@ -3504,6 +3504,30 @@ class TestMaskedFields(TestCase):
         assert_equal_records(a[-2]._data, a._data[-2])
         assert_equal_records(a[-2]._mask, a._mask[-2])
 
+    def test_setitem(self):
+        # Issue 2403
+        ndtype = np.dtype([('a', float), ('b', int)])
+        mdtype = np.dtype([('a', bool), ('b', bool)])
+        # soft mask
+        control = np.array([(False, True), (True, True)], dtype=mdtype)
+        a = np.ma.masked_all((2,), dtype=ndtype)
+        a['a'][0] = 2
+        assert_equal(a.mask, control)
+        a = np.ma.masked_all((2,), dtype=ndtype)
+        a[0]['a'] = 2
+        assert_equal(a.mask, control)
+        # hard mask
+        control = np.array([(True, True), (True, True)], dtype=mdtype)
+        a = np.ma.masked_all((2,), dtype=ndtype)
+        a.harden_mask()
+        a['a'][0] = 2
+        assert_equal(a.mask, control)
+        a = np.ma.masked_all((2,), dtype=ndtype)
+        a.harden_mask()
+        a[0]['a'] = 2
+        assert_equal(a.mask, control)
+
+
 #------------------------------------------------------------------------------
 
 class TestMaskedView(TestCase):
