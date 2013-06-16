@@ -212,7 +212,7 @@ typedef struct _tagPyUFuncObject {
          * A function which returns a masked inner loop for the ufunc.
          */
         PyUFunc_MaskedInnerLoopSelectionFunc *masked_inner_loop_selector;
-       
+
         /*
          * List of flags for each operand when ufunc is called by nditer object.
          * These flags will be used in addition to the default flags for each
@@ -406,7 +406,7 @@ typedef struct _loop1d_info {
     defined(__MINGW32__) || defined(__FreeBSD__)
 #include <fenv.h>
 #elif defined(__CYGWIN__)
-#include "fenv/fenv.c"
+#include "numpy/fenv/fenv.h"
 #endif
 
 #define UFUNC_CHECK_STATUS(ret) { \
