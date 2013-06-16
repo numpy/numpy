@@ -3003,7 +3003,7 @@ class MaskedArray(ndarray):
                 # We should always re-cast to mvoid, otherwise users can
                 # change masks on rows that already have masked values, but not
                 # on rows that have no masked values, which is inconsistent.
-                dout = mvoid(dout, mask=mask)
+                dout = mvoid(dout, mask=mask, hardmask=self._hardmask)
             # Just a scalar............
             elif _mask is not nomask and _mask[indx]:
                 return masked
@@ -5560,10 +5560,12 @@ class mvoid(MaskedArray):
     Fake a 'void' object to use for masked array with structured dtypes.
     """
     #
-    def __new__(self, data, mask=nomask, dtype=None, fill_value=None):
+    def __new__(self, data, mask=nomask, dtype=None, fill_value=None,
+                hardmask=False):
         dtype = dtype or data.dtype
         _data = np.array(data, dtype=dtype)
         _data = _data.view(self)
+        _data._hardmask = hardmask
         if mask is not nomask:
             if isinstance(mask, np.void):
                 _data._mask = mask
@@ -5593,7 +5595,10 @@ class mvoid(MaskedArray):
 
     def __setitem__(self, indx, value):
         self._data[indx] = value
-        self._mask[indx] |= getattr(value, "_mask", False)
+        if self._hardmask:
+            self._mask[indx] |= getattr(value, "_mask", False)
+        else:
+            self._mask[indx] = getattr(value, "_mask", False)
 
     def __str__(self):
         m = self._mask
