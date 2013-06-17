@@ -263,6 +263,11 @@ class TestRegression(TestCase):
         """Ticket #143"""
         assert_equal(0,np.add.identity)
 
+    def test_numpy_float_python_long_addition(self):
+        # Check that numpy float and python longs can be added correctly.
+        a = np.float_(23.) + 2**135
+        assert_equal(a, 23. + 2**135)
+
     def test_binary_repr_0(self,level=rlevel):
         """Ticket #151"""
         assert_equal('0',np.binary_repr(0))

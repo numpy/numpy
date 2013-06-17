@@ -70,14 +70,12 @@ PyArray_GetPriority(PyObject *obj, double default_)
         return priority;
 
     ret = PyArray_GetAttrString_SuppressException(obj, "__array_priority__");
-    if (ret != NULL) {
-        priority = PyFloat_AsDouble(ret);
+    if (ret == NULL) {
+        return default_;
     }
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
-        priority = default_;
-    }
-    Py_XDECREF(ret);
+
+    priority = PyFloat_AsDouble(ret);
+    Py_DECREF(ret);
     return priority;
 }
 
