@@ -49,31 +49,35 @@ PyArray_GetAttrString_SuppressException(PyObject *obj, char *name)
 {
     PyTypeObject *tp = Py_TYPE(obj);
     PyObject *res = (PyObject *)NULL;
-    if (/* Is not trivial type */
-        obj != Py_None &&
-        !PyList_CheckExact(obj) &&
-        !PyTuple_CheckExact(obj)) {
-        /* Attribute referenced by (char *)name */
-        if (tp->tp_getattr != NULL) {
-            res = (*tp->tp_getattr)(obj, name);
-            if (res == NULL) {
-                PyErr_Clear();
-            }
+
+    /* We do not need to check for special attributes on trivial types */
+    if (obj == Py_None ||
+            PyList_CheckExact(obj) ||
+            PyTuple_CheckExact(obj)) {
+        return NULL;
+    }
+
+    /* Attribute referenced by (char *)name */
+    if (tp->tp_getattr != NULL) {
+        res = (*tp->tp_getattr)(obj, name);
+        if (res == NULL) {
+            PyErr_Clear();
         }
-        /* Attribute referenced by (PyObject *)name */
-        else if (tp->tp_getattro != NULL) {
+    }
+    /* Attribute referenced by (PyObject *)name */
+    else if (tp->tp_getattro != NULL) {
 #if defined(NPY_PY3K)
-            PyObject *w = PyUnicode_InternFromString(name);
+        PyObject *w = PyUnicode_InternFromString(name);
 #else
-            PyObject *w = PyString_InternFromString(name);
+        PyObject *w = PyString_InternFromString(name);
 #endif
-            if (w == NULL)
-                return (PyObject *)NULL;
-            Py_DECREF(w);
-            res = (*tp->tp_getattro)(obj, w);
-            if (res == NULL) {
-                PyErr_Clear();
-            }
+        if (w == NULL) {
+            return (PyObject *)NULL;
+        }
+        res = (*tp->tp_getattro)(obj, w);
+        Py_DECREF(w);
+        if (res == NULL) {
+            PyErr_Clear();
         }
     }
     return res;
