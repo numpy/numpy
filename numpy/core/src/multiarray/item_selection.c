@@ -1045,6 +1045,8 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
         return -1;
     }
 
+    SWAPAXES2(op);
+
     switch (which) {
         case NPY_QUICKSORT :
             sort = npy_quicksort;
@@ -1060,9 +1062,6 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
                     "requested sort kind is not supported");
             goto fail;
     }
-
-
-    SWAPAXES2(op);
 
     ap = (PyArrayObject *)PyArray_FromAny((PyObject *)op,
                           NULL, 1, 0,
