@@ -373,15 +373,14 @@ NPY_NO_EXPORT void
 copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
               npy_intp srcstrides, int swap)
 {
-    npy_intp i;
-    char *s1 = (char *)src;
-    char *d1 = (char *)dst;
-
-
     if ((numitems == 1) || (itemsize == srcstrides)) {
-        memcpy(d1, s1, itemsize*numitems);
+        memcpy(dst, src, itemsize*numitems);
     }
     else {
+        npy_intp i;
+        char *s1 = (char *)src;
+        char *d1 = (char *)dst;
+
         for (i = 0; i < numitems; i++) {
             memcpy(d1, s1, itemsize);
             d1 += itemsize;
@@ -390,7 +389,7 @@ copy_and_swap(void *dst, void *src, int itemsize, npy_intp numitems,
     }
 
     if (swap) {
-        byte_swap_vector(d1, numitems, itemsize);
+        byte_swap_vector(dst, numitems, itemsize);
     }
 }
 
