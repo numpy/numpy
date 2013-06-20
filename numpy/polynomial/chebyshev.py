@@ -1795,7 +1795,7 @@ def chebcompanion(c):
     if len(c) < 2:
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array(-c[0]/c[1])
+        return np.array([[-c[0]/c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
