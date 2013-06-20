@@ -425,6 +425,22 @@ class TestFitting(TestCase):
         x = [1, 1j, -1, -1j]
         assert_almost_equal(lag.lagfit(x, x, 1), [1, -1])
 
+
+class TestCompanion(TestCase):
+
+    def test_raises(self):
+        assert_raises(ValueError, lag.lagcompanion, [])
+        assert_raises(ValueError, lag.lagcompanion, [1])
+
+    def test_dimensions(self):
+        for i in range(1, 5):
+            coef = [0]*i + [1]
+            assert_(lag.lagcompanion(coef).shape == (i, i))
+
+    def test_linear_root(self):
+        assert_(lag.lagcompanion([1, 2])[0, 0] == 1.5)
+
+
 class TestGauss(TestCase):
 
     def test_100(self):

@@ -383,6 +383,21 @@ class TestVander(TestCase):
         assert_(van.shape == (1, 5, 24))
 
 
+class TestCompanion(TestCase):
+
+    def test_raises(self):
+        assert_raises(ValueError, poly.polycompanion, [])
+        assert_raises(ValueError, poly.polycompanion, [1])
+
+    def test_dimensions(self):
+        for i in range(1, 5):
+            coef = [0]*i + [1]
+            assert_(poly.polycompanion(coef).shape == (i, i))
+
+    def test_linear_root(self):
+        assert_(poly.polycompanion([1, 2])[0, 0] == -.5)
+
+
 class TestMisc(TestCase) :
 
     def test_polyfromroots(self) :
