@@ -430,6 +430,22 @@ class TestFitting(TestCase):
         x = [1, 1j, -1, -1j]
         assert_almost_equal(herm.hermfit(x, x, 1), [0, .5])
 
+
+class TestCompanion(TestCase):
+
+    def test_raises(self):
+        assert_raises(ValueError, herm.hermcompanion, [])
+        assert_raises(ValueError, herm.hermcompanion, [1])
+
+    def test_dimensions(self):
+        for i in range(1, 5):
+            coef = [0]*i + [1]
+            assert_(herm.hermcompanion(coef).shape == (i, i))
+
+    def test_linear_root(self):
+        assert_(herm.hermcompanion([1, 2])[0, 0] == -.25)
+
+
 class TestGauss(TestCase):
 
     def test_100(self):

@@ -39,6 +39,7 @@ Misc Functions
 - `polyvander` -- Vandermonde-like matrix for powers.
 - `polyvander2d` -- Vandermonde-like matrix for 2D power series.
 - `polyvander3d` -- Vandermonde-like matrix for 3D power series.
+- `polycompanion` -- companion matrix in power series form.
 - `polyfit` -- least-squares fit returning a polynomial.
 - `polytrim` -- trim leading coefficients from a polynomial.
 - `polyline` -- polynomial representing given straight line.
@@ -1417,7 +1418,7 @@ def polycompanion(c):
     if len(c) < 2 :
         raise ValueError('Series must have maximum degree of at least 1.')
     if len(c) == 2:
-        return np.array(-c[0]/c[1])
+        return np.array([[-c[0]/c[1]]])
 
     n = len(c) - 1
     mat = np.zeros((n, n), dtype=c.dtype)
