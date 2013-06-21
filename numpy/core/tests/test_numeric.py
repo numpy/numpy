@@ -183,12 +183,6 @@ class TestNonarrayArgs(TestCase):
             assert_(isnan(mean([])))
             assert_(w[0].category is RuntimeWarning)
 
-    def test_nanmean(self):
-        A = [[1, nan, nan], [nan, 4, 5]]
-        assert_(nanmean(A) == (10.0 / 3))
-        assert_(all(nanmean(A,0) == array([1, 4, 5])))
-        assert_(all(nanmean(A,1) == array([1, 4.5])))
-
     def test_std(self):
         A = [[1,2,3],[4,5,6]]
         assert_almost_equal(std(A), 1.707825127659933)
@@ -200,12 +194,6 @@ class TestNonarrayArgs(TestCase):
             assert_(isnan(std([])))
             assert_(w[0].category is RuntimeWarning)
 
-    def test_nanstd(self):
-        A = [[1, nan, nan], [nan, 4, 5]]
-        assert_almost_equal(nanstd(A), 1.699673171197595)
-        assert_almost_equal(nanstd(A,0), array([0.0, 0.0, 0.0]))
-        assert_almost_equal(nanstd(A,1), array([0.0, 0.5]))
-
     def test_var(self):
         A = [[1,2,3],[4,5,6]]
         assert_almost_equal(var(A), 2.9166666666666665)
@@ -216,12 +204,6 @@ class TestNonarrayArgs(TestCase):
             warnings.filterwarnings('always', '', RuntimeWarning)
             assert_(isnan(mean([])))
             assert_(w[0].category is RuntimeWarning)
-
-    def test_nanvar(self):
-        A = [[1, nan, nan], [nan, 4, 5]]
-        assert_almost_equal(nanvar(A), 2.88888888889)
-        assert_almost_equal(nanvar(A,0), array([0.0, 0.0, 0.0]))
-        assert_almost_equal(nanvar(A,1), array([0.0, 0.25]))
 
 
 class TestBoolScalar(TestCase):
@@ -1481,40 +1463,6 @@ class TestIsclose(object):
         assert_array_equal(x, array([inf, 1]))
         assert_array_equal(y, array([0, inf]))
 
-class TestNaNMean(TestCase):
-    def setUp(self):
-        self.A = array([1,nan,-1,nan,nan,1,-1])
-        self.B = array([nan, nan, nan, nan])
-        self.real_mean = 0
-
-    def test_basic(self):
-        assert_almost_equal(nanmean(self.A),self.real_mean)
-
-    def test_mutation(self):
-        # Because of the "messing around" we do to replace NaNs with zeros
-        # this is meant to ensure we don't actually replace the NaNs in the
-        # actual array.
-        a_copy = self.A.copy()
-        b_copy = self.B.copy()
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            a_ret = nanmean(self.A)
-            assert_equal(self.A, a_copy)
-            b_ret = nanmean(self.B)
-            assert_equal(self.B, b_copy)
-
-    def test_allnans(self):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_(isnan(nanmean(self.B)))
-            assert_(w[0].category is RuntimeWarning)
-
-    def test_empty(self):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_(isnan(nanmean(array([]))))
-            assert_(w[0].category is RuntimeWarning)
-
 class TestStdVar(TestCase):
     def setUp(self):
         self.A = array([1,-1,1,-1])
@@ -1535,55 +1483,6 @@ class TestStdVar(TestCase):
                             self.real_var*len(self.A)/float(len(self.A)-2))
         assert_almost_equal(std(self.A,ddof=2)**2,
                             self.real_var*len(self.A)/float(len(self.A)-2))
-
-class TestNaNStdVar(TestCase):
-    def setUp(self):
-        self.A = array([nan,1,-1,nan,1,nan,-1])
-        self.B = array([nan, nan, nan, nan])
-        self.real_var = 1
-
-    def test_basic(self):
-        assert_almost_equal(nanvar(self.A),self.real_var)
-        assert_almost_equal(nanstd(self.A)**2,self.real_var)
-
-    def test_mutation(self):
-        # Because of the "messing around" we do to replace NaNs with zeros
-        # this is meant to ensure we don't actually replace the NaNs in the
-        # actual array.
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            a_copy = self.A.copy()
-            b_copy = self.B.copy()
-            a_ret = nanvar(self.A)
-            assert_equal(self.A, a_copy)
-            b_ret = nanstd(self.B)
-            assert_equal(self.B, b_copy)
-
-    def test_ddof1(self):
-        assert_almost_equal(nanvar(self.A,ddof=1),
-                self.real_var*sum(~isnan(self.A))/float(sum(~isnan(self.A))-1))
-        assert_almost_equal(nanstd(self.A,ddof=1)**2,
-                self.real_var*sum(~isnan(self.A))/float(sum(~isnan(self.A))-1))
-
-    def test_ddof2(self):
-        assert_almost_equal(nanvar(self.A,ddof=2),
-                self.real_var*sum(~isnan(self.A))/float(sum(~isnan(self.A))-2))
-        assert_almost_equal(nanstd(self.A,ddof=2)**2,
-                self.real_var*sum(~isnan(self.A))/float(sum(~isnan(self.A))-2))
-
-    def test_allnans(self):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_(isnan(nanvar(self.B)))
-            assert_(isnan(nanstd(self.B)))
-            assert_(w[0].category is RuntimeWarning)
-
-    def test_empty(self):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_(isnan(nanvar(array([]))))
-            assert_(isnan(nanstd(array([]))))
-            assert_(w[0].category is RuntimeWarning)
 
 class TestStdVarComplex(TestCase):
     def test_basic(self):
