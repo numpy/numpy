@@ -3,6 +3,7 @@
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
 import numpy as np
 
 __all__ = [
@@ -18,7 +19,7 @@ def _nanmean(a, axis=None, dtype=None, out=None, keepdims=False):
     mask = np.isnan(arr)
 
     # Cast bool, unsigned int, and int to float64
-    if np.dtype is None and issubclass(arr.dtype.type, (np.integer, np.bool_)):
+    if dtype is None and issubclass(arr.dtype.type, (np.integer, np.bool_)):
         ret = np.add.reduce(arr, axis=axis, dtype='f8',
                             out=out, keepdims=keepdims)
     else:
@@ -89,56 +90,363 @@ def _nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
 
     return ret
 
+def _count_reduce_items(arr, axis):
+    if axis is None:
+        axis = tuple(range(arr.ndim))
+    elif not isinstance(axis, tuple):
+        axis = (axis,)
+    items = 1
+    for ax in axis:
+        items *= arr.shape[ax]
+    return items
 
-def _nanop(op, fill, a, axis=None):
+
+def _replace_nan(a, val):
     """
-    General operation on arrays with not-a-number values.
+    If `a` is of inexact type, make a copy of `a`, replace NaN's with
+    the `val` value, and return the copy together with a boolean mask
+    marking the locations where NaN's were present. If `a` is not of
+    inexact type, do nothing and return `a` together with a mask of None.
 
     Parameters
     ----------
-    op : callable
-        Operation to perform.
-    fill : float
-        NaN values are set to fill before doing the operation.
     a : array-like
         Input array.
-    axis : {int, None}, optional
-        Axis along which the operation is computed.
-        By default the input is flattened.
+    val : float
+        NaN values are set to val before doing the operation.
 
     Returns
     -------
-    y : {ndarray, scalar}
-        Processed data.
+    y : ndarray
+        If `a` is of inexact type, return a copy of `a` with the NaN's
+        replaced by the fill value, otherwise return `a`.
+    mask: {bool, None}
+        If `a` is of inexact type, return a boolean mask marking locations of
+        NaN's, otherwise return None.
 
     """
-    y = np.array(a, subok=True)
-
-    # We only need to take care of NaN's in floating point arrays
-    dt = y.dtype
-    if np.issubdtype(dt, np.integer) or np.issubdtype(dt, np.bool_):
-        return op(y, axis=axis)
+    is_new = not isinstance(a, np.ndarray)
+    if is_new:
+        a = np.array(a)
+    if not issubclass(a.dtype.type, np.inexact):
+        return a, None
+    if not is_new:
+        # need copy
+        a = np.array(a, subok=True)
 
     mask = np.isnan(a)
-    # y[mask] = fill
-    # We can't use fancy indexing here as it'll mess w/ MaskedArrays
-    # Instead, let's fill the array directly...
-    np.copyto(y, fill, where=mask)
-    res = op(y, axis=axis)
-    mask_all_along_axis = mask.all(axis=axis)
+    np.copyto(a, val, where=mask)
+    return a, mask
 
-    # Along some axes, only nan's were encountered.  As such, any values
-    # calculated along that axis should be set to nan.
-    if mask_all_along_axis.any():
-        if np.isscalar(res):
-            res = np.nan
+
+def _copyto(a, val, mask):
+    """
+    Replace values in `a` with NaN where `mask` is True.  This differs from
+    copyto in that it will deal with the case that `a` is a numpy scalar.
+
+    Parameters
+    ----------
+    a : ndarray, numpy scalar
+        Array or numpy scalar some of whose values are to be replaced
+        by val.
+    val : numpy scalar
+        Value used a replacement.
+    mask : ndarray, scalar
+        Boolean array. Where True the corresponding element of `a` is
+        replaced by NaN. Broadcasts.
+
+    Returns
+    -------
+    res : ndarray, scalar
+        Array with elements replaced or scalar NaN.
+
+
+    """
+    if np.any(mask):
+        if isinstance(a, np.ndarray):
+            np.copyto(a, np.nan, where=mask, casting='unsafe')
         else:
-            res[mask_all_along_axis] = np.nan
+            a = a.dtype.type(val)
+    return a
 
-    return res
+
+def _divide_by_count(a, b):
+    """
+    Do true_divide of `a` by `b`, ignoring RuntimeWarnings. Does inplace
+    divide if `a` is an instance of ndarray.
+
+    Parameters
+    ----------
+    a, b : {ndarray, numpy scalar}
+        Numerator/Dividend respectively. The b variable will have
+        non-positive values replaced by nan.
+
+    Returns
+    -------
+    ret : {ndarray, numpy scalar}
+        The return value is a/b. If `a` was an ndarray the division is done
+        inplace. If `a` is a numpy scalar, the division preserves its type.
+
+    """
+    _copyto(b, np.nan, b <= 0)
+    if isinstance(a, np.ndarray):
+        return np.divide(a, b, out=a, casting='unsafe', subok=False)
+    return np.divide(a, b, dtype=a.dtype, casting='unsafe')
 
 
-def nansum(a, axis=None):
+def nanmin(a, axis=None, dtype=None, out=None, keepdims=False):
+    """
+    Return the minimum of an array or minimum along an axis, ignoring any NaNs.
+
+    Parameters
+    ----------
+    a : array_like
+        Array containing numbers whose minimum is desired. If `a` is not
+        an array, a conversion is attempted.
+    axis : int, optional
+        Axis along which the minimum is computed. The default is to compute
+        the minimum of the flattened array.
+    dtype : data-type code, optional
+        The type used to represent the intermediate results. Defaults
+        to the data-type of the output array if this is provided, or
+        the data-type of the input array if no output array is provided.
+
+        .. versionadded:: 1.8.0
+    out : ndarray, optional
+        Alternate output array in which to place the result.  The default
+        is ``None``; if provided, it must have the same shape as the
+        expected output, but the type will be cast if necessary.
+        See `doc.ufuncs` for details.
+
+        .. versionadded:: 1.8.0
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `a`.
+
+        .. versionadded:: 1.8.0
+
+    Returns
+    -------
+    nanmin : ndarray
+        An array with the same shape as `a`, with the specified axis removed.
+        If `a` is a 0-d array, or if axis is None, an ndarray scalar is
+        returned.  The same dtype as `a` is returned.
+
+    See Also
+    --------
+    nanmax :
+        The maximum value of an array along a given axis, ignoring any NaNs.
+    amin :
+        The minimum value of an array along a given axis, propagating any NaNs.
+    fmin :
+        Element-wise minimum of two arrays, ignoring any NaNs.
+    minimum :
+        Element-wise minimum of two arrays, propagating any NaNs.
+    isnan :
+        Shows which elements are Not a Number (NaN).
+    isfinite:
+        Shows which elements are neither NaN nor infinity.
+
+    amax, fmax, maximum
+
+    Notes
+    -----
+    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). This means that Not a Number is not equivalent to infinity.
+    Positive infinity is treated as a very large number and negative infinity
+    is treated as a very small (i.e. negative) number.
+
+    If the input has a integer type the function is equivalent to np.min.
+
+    Examples
+    --------
+    >>> a = np.array([[1, 2], [3, np.nan]])
+    >>> np.nanmin(a)
+    1.0
+    >>> np.nanmin(a, axis=0)
+    array([ 1.,  2.])
+    >>> np.nanmin(a, axis=1)
+    array([ 1.,  3.])
+
+    When positive infinity and negative infinity are present:
+
+    >>> np.nanmin([1, 2, np.nan, np.inf])
+    1.0
+    >>> np.nanmin([1, 2, np.nan, np.NINF])
+    -inf
+
+    """
+    return np.fmin.reduce(a, axis, dtype, out, keepdims)
+
+
+def nanargmin(a, axis=None):
+    """
+    Return indices of the minimum values over an axis, ignoring NaNs.
+
+    Parameters
+    ----------
+    a : array_like
+        Input data.
+    axis : int, optional
+        Axis along which to operate.  By default flattened input is used.
+
+    Returns
+    -------
+    index_array : ndarray
+        An array of indices or a single index value.
+
+    See Also
+    --------
+    argmin, nanargmax
+
+    Examples
+    --------
+    >>> a = np.array([[np.nan, 4], [2, 3]])
+    >>> np.argmin(a)
+    0
+    >>> np.nanargmin(a)
+    2
+    >>> np.nanargmin(a, axis=0)
+    array([1, 1])
+    >>> np.nanargmin(a, axis=1)
+    array([1, 0])
+
+    """
+    a, mask = _replace_nan(a, np.inf)
+    ind = np.argmin(a, axis)
+    if mask is None:
+        return ind
+    return _copyto(ind, np.nan, np.all(mask, axis))
+
+
+def nanmax(a, axis=None, dtype=None, out=None, keepdims=False):
+    """
+    Return the maximum of an array or maximum along an axis, ignoring any NaNs.
+
+    Parameters
+    ----------
+    a : array_like
+        Array containing numbers whose maximum is desired. If `a` is not
+        an array, a conversion is attempted.
+    axis : int, optional
+        Axis along which the maximum is computed. The default is to compute
+        the maximum of the flattened array.
+    dtype : data-type code, optional
+        The type used to represent the intermediate results. Defaults
+        to the data-type of the output array if this is provided, or
+        the data-type of the input array if no output array is provided.
+
+        .. versionadded:: 1.8.0
+    out : ndarray, optional
+        Alternate output array in which to place the result.  The default
+        is ``None``; if provided, it must have the same shape as the
+        expected output, but the type will be cast if necessary.
+        See `doc.ufuncs` for details.
+
+        .. versionadded:: 1.8.0
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `a`.
+
+        .. versionadded:: 1.8.0
+
+    Returns
+    -------
+    nanmax : ndarray
+        An array with the same shape as `a`, with the specified axis removed.
+        If `a` is a 0-d array, or if axis is None, an ndarray scalar is
+        returned.  The same dtype as `a` is returned.
+
+    See Also
+    --------
+    nanmin :
+        The minimum value of an array along a given axis, ignoring any NaNs.
+    amax :
+        The maximum value of an array along a given axis, propagating any NaNs.
+    fmax :
+        Element-wise maximum of two arrays, ignoring any NaNs.
+    maximum :
+        Element-wise maximum of two arrays, propagating any NaNs.
+    isnan :
+        Shows which elements are Not a Number (NaN).
+    isfinite:
+        Shows which elements are neither NaN nor infinity.
+
+    amin, fmin, minimum
+
+    Notes
+    -----
+    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
+    (IEEE 754). This means that Not a Number is not equivalent to infinity.
+    Positive infinity is treated as a very large number and negative infinity
+    is treated as a very small (i.e. negative) number.
+
+    If the input has a integer type the function is equivalent to np.max.
+
+    Examples
+    --------
+    >>> a = np.array([[1, 2], [3, np.nan]])
+    >>> np.nanmax(a)
+    3.0
+    >>> np.nanmax(a, axis=0)
+    array([ 3.,  2.])
+    >>> np.nanmax(a, axis=1)
+    array([ 2.,  3.])
+
+    When positive infinity and negative infinity are present:
+
+    >>> np.nanmax([1, 2, np.nan, np.NINF])
+    2.0
+    >>> np.nanmax([1, 2, np.nan, np.inf])
+    inf
+
+    """
+    return np.fmax.reduce(a, axis, dtype, out, keepdims)
+
+
+def nanargmax(a, axis=None):
+    """
+    Return indices of the maximum values over an axis, ignoring NaNs.
+
+    Parameters
+    ----------
+    a : array_like
+        Input data.
+    axis : int, optional
+        Axis along which to operate.  By default flattened input is used.
+
+    Returns
+    -------
+    index_array : ndarray
+        An array of indices or a single index value.
+
+    See Also
+    --------
+    argmax, nanargmin
+
+    Examples
+    --------
+    >>> a = np.array([[np.nan, 4], [2, 3]])
+    >>> np.argmax(a)
+    0
+    >>> np.nanargmax(a)
+    1
+    >>> np.nanargmax(a, axis=0)
+    array([1, 0])
+    >>> np.nanargmax(a, axis=1)
+    array([1, 1])
+
+    """
+    a, mask = _replace_nan(a, -np.inf)
+    ind = np.argmax(a, axis)
+    if mask is None:
+        return ind
+    return _copyto(ind, np.nan, np.all(mask, axis))
+
+
+def nansum(a, axis=None, dtype=None, out=None, keepdims=0):
     """
     Return the sum of array elements over a given axis treating
     Not a Numbers (NaNs) as zero.
@@ -204,221 +512,18 @@ def nansum(a, axis=None):
     nan
 
     """
-    return _nanop(np.sum, 0, a, axis)
+    a, mask = _replace_nan(a, 0)
+    if mask is None:
+        return a.sum(axis, dtype, out, keepdims)
 
+    a = a.sum(axis, dtype, out, keepdims)
+    if not issubclass(a.dtype.type, np.inexact):
+        msg = "Input is inexact, but either `dtype` or `out` is not."
+        raise TypeError(msg)
 
-def nanmin(a, axis=None):
-    """
-    Return the minimum of an array or minimum along an axis, ignoring any NaNs.
-
-    Parameters
-    ----------
-    a : array_like
-        Array containing numbers whose minimum is desired. If `a` is not
-        an array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the minimum is computed. The default is to compute
-        the minimum of the flattened array.
-
-    Returns
-    -------
-    nanmin : ndarray
-        An array with the same shape as `a`, with the specified axis removed.
-        If `a` is a 0-d array, or if axis is None, an ndarray scalar is
-        returned.  The same dtype as `a` is returned.
-
-    See Also
-    --------
-    nanmax :
-        The maximum value of an array along a given axis, ignoring any NaNs.
-    amin :
-        The minimum value of an array along a given axis, propagating any NaNs.
-    fmin :
-        Element-wise minimum of two arrays, ignoring any NaNs.
-    minimum :
-        Element-wise minimum of two arrays, propagating any NaNs.
-    isnan :
-        Shows which elements are Not a Number (NaN).
-    isfinite:
-        Shows which elements are neither NaN nor infinity.
-
-    amax, fmax, maximum
-
-    Notes
-    -----
-    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
-    (IEEE 754). This means that Not a Number is not equivalent to infinity.
-    Positive infinity is treated as a very large number and negative infinity
-    is treated as a very small (i.e. negative) number.
-
-    If the input has a integer type the function is equivalent to np.min.
-
-    Examples
-    --------
-    >>> a = np.array([[1, 2], [3, np.nan]])
-    >>> np.nanmin(a)
-    1.0
-    >>> np.nanmin(a, axis=0)
-    array([ 1.,  2.])
-    >>> np.nanmin(a, axis=1)
-    array([ 1.,  3.])
-
-    When positive infinity and negative infinity are present:
-
-    >>> np.nanmin([1, 2, np.nan, np.inf])
-    1.0
-    >>> np.nanmin([1, 2, np.nan, np.NINF])
-    -inf
-
-    """
-    a = np.asanyarray(a)
-    if axis is not None:
-        return np.fmin.reduce(a, axis)
-    else:
-        return np.fmin.reduce(a.flat)
-
-
-def nanargmin(a, axis=None):
-    """
-    Return indices of the minimum values over an axis, ignoring NaNs.
-
-    Parameters
-    ----------
-    a : array_like
-        Input data.
-    axis : int, optional
-        Axis along which to operate.  By default flattened input is used.
-
-    Returns
-    -------
-    index_array : ndarray
-        An array of indices or a single index value.
-
-    See Also
-    --------
-    argmin, nanargmax
-
-    Examples
-    --------
-    >>> a = np.array([[np.nan, 4], [2, 3]])
-    >>> np.argmin(a)
-    0
-    >>> np.nanargmin(a)
-    2
-    >>> np.nanargmin(a, axis=0)
-    array([1, 1])
-    >>> np.nanargmin(a, axis=1)
-    array([1, 0])
-
-    """
-    return _nanop(np.argmin, np.inf, a, axis)
-
-
-def nanmax(a, axis=None):
-    """
-    Return the maximum of an array or maximum along an axis, ignoring any NaNs.
-
-    Parameters
-    ----------
-    a : array_like
-        Array containing numbers whose maximum is desired. If `a` is not
-        an array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the maximum is computed. The default is to compute
-        the maximum of the flattened array.
-
-    Returns
-    -------
-    nanmax : ndarray
-        An array with the same shape as `a`, with the specified axis removed.
-        If `a` is a 0-d array, or if axis is None, an ndarray scalar is
-        returned.  The same dtype as `a` is returned.
-
-    See Also
-    --------
-    nanmin :
-        The minimum value of an array along a given axis, ignoring any NaNs.
-    amax :
-        The maximum value of an array along a given axis, propagating any NaNs.
-    fmax :
-        Element-wise maximum of two arrays, ignoring any NaNs.
-    maximum :
-        Element-wise maximum of two arrays, propagating any NaNs.
-    isnan :
-        Shows which elements are Not a Number (NaN).
-    isfinite:
-        Shows which elements are neither NaN nor infinity.
-
-    amin, fmin, minimum
-
-    Notes
-    -----
-    Numpy uses the IEEE Standard for Binary Floating-Point for Arithmetic
-    (IEEE 754). This means that Not a Number is not equivalent to infinity.
-    Positive infinity is treated as a very large number and negative infinity
-    is treated as a very small (i.e. negative) number.
-
-    If the input has a integer type the function is equivalent to np.max.
-
-    Examples
-    --------
-    >>> a = np.array([[1, 2], [3, np.nan]])
-    >>> np.nanmax(a)
-    3.0
-    >>> np.nanmax(a, axis=0)
-    array([ 3.,  2.])
-    >>> np.nanmax(a, axis=1)
-    array([ 2.,  3.])
-
-    When positive infinity and negative infinity are present:
-
-    >>> np.nanmax([1, 2, np.nan, np.NINF])
-    2.0
-    >>> np.nanmax([1, 2, np.nan, np.inf])
-    inf
-
-    """
-    a = np.asanyarray(a)
-    if axis is not None:
-        return np.fmax.reduce(a, axis)
-    else:
-        return np.fmax.reduce(a.flat)
-
-
-def nanargmax(a, axis=None):
-    """
-    Return indices of the maximum values over an axis, ignoring NaNs.
-
-    Parameters
-    ----------
-    a : array_like
-        Input data.
-    axis : int, optional
-        Axis along which to operate.  By default flattened input is used.
-
-    Returns
-    -------
-    index_array : ndarray
-        An array of indices or a single index value.
-
-    See Also
-    --------
-    argmax, nanargmin
-
-    Examples
-    --------
-    >>> a = np.array([[np.nan, 4], [2, 3]])
-    >>> np.argmax(a)
-    0
-    >>> np.nanargmax(a)
-    1
-    >>> np.nanargmax(a, axis=0)
-    array([1, 0])
-    >>> np.nanargmax(a, axis=1)
-    array([1, 1])
-
-    """
-    return _nanop(np.argmax, -np.inf, a, axis)
+    mask = mask.all(axis, keepdims=keepdims)
+    a = _copyto(a, np.nan, mask)
+    return a
 
 
 def nanmean(a, axis=None, dtype=None, out=None, keepdims=False):
@@ -428,6 +533,8 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=False):
     Returns the average of the array elements.  The average is taken over
     the flattened array by default, otherwise over the specified axis.
     `float64` intermediate and return values are used for integer inputs.
+
+    .. versionadded:: 1.8.0
 
     Parameters
     ----------
@@ -485,14 +592,111 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=False):
     array([ 1.,  3.5])
 
     """
+    a, mask = _replace_nan(a, 0)
+    if mask is None:
+        return np.mean(a, axis, dtype=dtype, out=out, keepdims=keepdims)
+
+    a = np.sum(a, axis, dtype=dtype, out=out, keepdims=keepdims)
+    if not issubclass(a.dtype.type, np.inexact):
+        msg = "Input is inexact, but either `dtype` or `out` is not."
+        raise TypeError(msg)
+
+    n = np.sum(~mask, axis, dtype=np.float64, keepdims=keepdims)
+    a = _divide_by_count(a, n)
+    return a
+
+
+def nanvar(a, axis=None, dtype=None, out=None, ddof=0,
+           keepdims=False):
+    """
+    Compute the variance along the specified axis, while ignoring NaNs.
+
+    Returns the variance of the array elements, a measure of the spread of a
+    distribution.  The variance is computed for the flattened array by
+    default, otherwise over the specified axis.
+
+    .. versionadded:: 1.8.0
+
+    Parameters
+    ----------
+    a : array_like
+        Array containing numbers whose variance is desired.  If `a` is not an
+        array, a conversion is attempted.
+    axis : int, optional
+        Axis along which the variance is computed.  The default is to compute
+        the variance of the flattened array.
+    dtype : data-type, optional
+        Type to use in computing the variance.  For arrays of integer type
+        the default is `float32`; for arrays of float types it is the same as
+        the array type.
+    out : ndarray, optional
+        Alternate output array in which to place the result.  It must have
+        the same shape as the expected output, but the type is cast if
+        necessary.
+    ddof : int, optional
+        "Delta Degrees of Freedom": the divisor used in the calculation is
+        ``N - ddof``, where ``N`` represents the number of elements. By
+        default `ddof` is zero.
+    keepdims : bool, optional
+        If this is set to True, the axes which are reduced are left
+        in the result as dimensions with size one. With this option,
+        the result will broadcast correctly against the original `arr`.
+
+    Returns
+    -------
+    variance : ndarray, see dtype parameter above
+        If ``out=None``, returns a new array containing the variance;
+        otherwise, a reference to the output array is returned.
+
+    See Also
+    --------
+    std : Standard deviation
+    mean : Average
+    var : Variance while not ignoring NaNs
+    nanstd, nanmean
+    numpy.doc.ufuncs : Section "Output arguments"
+
+    Notes
+    -----
+    The variance is the average of the squared deviations from the mean,
+    i.e.,  ``var = mean(abs(x - x.mean())**2)``.
+
+    The mean is normally calculated as ``x.sum() / N``, where ``N = len(x)``.
+    If, however, `ddof` is specified, the divisor ``N - ddof`` is used
+    instead.  In standard statistical practice, ``ddof=1`` provides an
+    unbiased estimator of the variance of a hypothetical infinite population.
+    ``ddof=0`` provides a maximum likelihood estimate of the variance for
+    normally distributed variables.
+
+    Note that for complex numbers, the absolute value is taken before
+    squaring, so that the result is always real and nonnegative.
+
+    For floating-point input, the variance is computed using the same
+    precision the input has.  Depending on the input data, this can cause
+    the results to be inaccurate, especially for `float32` (see example
+    below).  Specifying a higher-accuracy accumulator using the ``dtype``
+    keyword can alleviate this issue.
+
+    Examples
+    --------
+    >>> a = np.array([[1, np.nan], [3, 4]])
+    >>> np.var(a)
+    1.5555555555555554
+    >>> np.nanvar(a, axis=0)
+    array([ 1.,  0.])
+    >>> np.nanvar(a, axis=1)
+    array([ 0.,  0.25])
+
+    """
     if not (type(a) is np.ndarray):
         try:
-            mean = a.nanmean
-            return mean(axis=axis, dtype=dtype, out=out)
+            nanvar = a.nanvar
+            return nanvar(axis=axis, dtype=dtype, out=out, ddof=ddof)
         except AttributeError:
             pass
 
-    return _nanmean(a, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
+    return _nanvar(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
+                   keepdims=keepdims)
 
 
 def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
@@ -503,6 +707,8 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     Returns the standard deviation, a measure of the spread of a distribution,
     of the non-NaN array elements. The standard deviation is computed for the
     flattened array by default, otherwise over the specified axis.
+
+    .. versionadded:: 1.8.0
 
     Parameters
     ----------
@@ -587,92 +793,3 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
                    keepdims=keepdims)
 
 
-def nanvar(a, axis=None, dtype=None, out=None, ddof=0,
-           keepdims=False):
-    """
-    Compute the variance along the specified axis, while ignoring NaNs.
-
-    Returns the variance of the array elements, a measure of the spread of a
-    distribution.  The variance is computed for the flattened array by
-    default, otherwise over the specified axis.
-
-    Parameters
-    ----------
-    a : array_like
-        Array containing numbers whose variance is desired.  If `a` is not an
-        array, a conversion is attempted.
-    axis : int, optional
-        Axis along which the variance is computed.  The default is to compute
-        the variance of the flattened array.
-    dtype : data-type, optional
-        Type to use in computing the variance.  For arrays of integer type
-        the default is `float32`; for arrays of float types it is the same as
-        the array type.
-    out : ndarray, optional
-        Alternate output array in which to place the result.  It must have
-        the same shape as the expected output, but the type is cast if
-        necessary.
-    ddof : int, optional
-        "Delta Degrees of Freedom": the divisor used in the calculation is
-        ``N - ddof``, where ``N`` represents the number of elements. By
-        default `ddof` is zero.
-    keepdims : bool, optional
-        If this is set to True, the axes which are reduced are left
-        in the result as dimensions with size one. With this option,
-        the result will broadcast correctly against the original `arr`.
-
-    Returns
-    -------
-    variance : ndarray, see dtype parameter above
-        If ``out=None``, returns a new array containing the variance;
-        otherwise, a reference to the output array is returned.
-
-    See Also
-    --------
-    std : Standard deviation
-    mean : Average
-    var : Variance while not ignoring NaNs
-    nanstd, nanmean
-    numpy.doc.ufuncs : Section "Output arguments"
-
-    Notes
-    -----
-    The variance is the average of the squared deviations from the mean,
-    i.e.,  ``var = mean(abs(x - x.mean())**2)``.
-
-    The mean is normally calculated as ``x.sum() / N``, where ``N = len(x)``.
-    If, however, `ddof` is specified, the divisor ``N - ddof`` is used
-    instead.  In standard statistical practice, ``ddof=1`` provides an
-    unbiased estimator of the variance of a hypothetical infinite population.
-    ``ddof=0`` provides a maximum likelihood estimate of the variance for
-    normally distributed variables.
-
-    Note that for complex numbers, the absolute value is taken before
-    squaring, so that the result is always real and nonnegative.
-
-    For floating-point input, the variance is computed using the same
-    precision the input has.  Depending on the input data, this can cause
-    the results to be inaccurate, especially for `float32` (see example
-    below).  Specifying a higher-accuracy accumulator using the ``dtype``
-    keyword can alleviate this issue.
-
-    Examples
-    --------
-    >>> a = np.array([[1, np.nan], [3, 4]])
-    >>> np.var(a)
-    1.5555555555555554
-    >>> np.nanvar(a, axis=0)
-    array([ 1.,  0.])
-    >>> np.nanvar(a, axis=1)
-    array([ 0.,  0.25])
-
-    """
-    if not (type(a) is np.ndarray):
-        try:
-            nanvar = a.nanvar
-            return nanvar(axis=axis, dtype=dtype, out=out, ddof=ddof)
-        except AttributeError:
-            pass
-
-    return _nanvar(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
-                            keepdims=keepdims)
