@@ -377,15 +377,20 @@ def load(file, mmap_mode=None):
         N = len(format.MAGIC_PREFIX)
         magic = fid.read(N)
         fid.seek(-N, 1) # back-up
-        if magic.startswith(_ZIP_PREFIX):  # zip-file (assume .npz)
+        if magic.startswith(_ZIP_PREFIX):
+            # zip-file (assume .npz)
+            # Transfer file ownership to NpzFile
+            tmp = own_fid
             own_fid = False
-            return NpzFile(fid, own_fid=own_fid)
-        elif magic == format.MAGIC_PREFIX: # .npy file
+            return NpzFile(fid, own_fid=tmp)
+        elif magic == format.MAGIC_PREFIX:
+            # .npy file
             if mmap_mode:
                 return format.open_memmap(file, mode=mmap_mode)
             else:
                 return format.read_array(fid)
-        else:  # Try a pickle
+        else:
+            # Try a pickle
             try:
                 return pickle.load(fid)
             except:
