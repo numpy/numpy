@@ -62,9 +62,9 @@ def take(a, indices, axis=None, out=None, mode='raise'):
         The source array.
     indices : array_like
         The indices of the values to extract.
-        
+
         .. versionadded:: 1.8.0
-        
+
         Also allow scalars for indices.
     axis : int, optional
         The axis over which to select values. By default, the flattened
@@ -2664,8 +2664,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=False):
     See Also
     --------
     average : Weighted average
-    nanmean : Arithmetic mean while ignoring NaNs
-    var, nanvar
+    std, var, nanmean, nanstd, nanvar
 
     Notes
     -----
@@ -2752,8 +2751,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
 
     See Also
     --------
-    var, mean
-    nanmean, nanstd
+    var, mean, nanmean, nanstd, nanvar
     numpy.doc.ufuncs : Section "Output arguments"
 
     Notes
@@ -2856,8 +2854,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
 
     See Also
     --------
-    std : Standard deviation
-    mean : Average
+    std , mean, nanmean, nanstd, nanvar
     numpy.doc.ufuncs : Section "Output arguments"
 
     Notes
