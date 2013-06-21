@@ -3,6 +3,20 @@
 
 /* numpconfig.h is auto-generated */
 #include "numpyconfig.h"
+#ifdef HAVE_NPY_CONFIG_H
+#include <npy_config.h>
+#endif
+
+/*
+ * gcc does not unroll even with -O3
+ * use with care, unrolling on modern cpus rarely speeds things up
+ */
+#ifdef HAVE_ATTRIBUTE_OPTIMIZE_UNROLL_LOOPS
+#define NPY_GCC_UNROLL_LOOPS \
+    __attribute__((optimize("unroll-loops")))
+#else
+#define NPY_GCC_UNROLL_LOOPS
+#endif
 
 #if defined(_MSC_VER)
         #define NPY_INLINE __inline

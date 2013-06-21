@@ -113,6 +113,13 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_bswap64", '5u'),
                        ]
 
+# gcc function attributes
+# (attribute as understood by gcc, function name),
+# function name will be converted to HAVE_<upper-case-name> preprocessor macro
+OPTIONAL_GCC_ATTRIBUTES = [('__attribute__((optimize("unroll-loops")))',
+                            'attribute_optimize_unroll_loops'),
+                          ]
+
 # Subset of OPTIONAL_STDFUNCS which may alreay have HAVE_* defined by Python.h
 OPTIONAL_STDFUNCS_MAYBE = ["expm1", "log1p", "acosh", "atanh", "asinh", "hypot",
         "copysign"]
