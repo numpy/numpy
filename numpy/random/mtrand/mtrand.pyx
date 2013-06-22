@@ -1517,7 +1517,7 @@ cdef class RandomState:
         b : float
             Beta, non-negative.
         size : tuple of ints, optional
-            The number of samples to draw.  The ouput is packed according to
+            The number of samples to draw.  The output is packed according to
             the size given.
 
         Returns

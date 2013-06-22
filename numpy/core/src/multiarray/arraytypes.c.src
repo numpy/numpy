@@ -3971,7 +3971,7 @@ initialize_builtin_datetime_metadata(void)
     data2->meta.num = 1;
 
     _builtin_descrs[NPY_DATETIME]->c_metadata = (NpyAuxData *)data1;
-    _builtin_descrs[NPY_TIMEDELTA]->c_metadata = (NpyAuxData *)data1;
+    _builtin_descrs[NPY_TIMEDELTA]->c_metadata = (NpyAuxData *)data2;
 
     return 0;
 }

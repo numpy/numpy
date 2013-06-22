@@ -1,5 +1,5 @@
 import sys
-from tempfile import NamedTemporaryFile, mktemp
+from tempfile import NamedTemporaryFile, TemporaryFile, mktemp
 import os
 
 from numpy import memmap
@@ -37,6 +37,12 @@ class TestMemmap(TestCase):
         fp[:] = self.data[:]
         del fp
         os.unlink(tmpname)
+
+    def test_unnamed_file(self):
+        f =  TemporaryFile()
+        fp = memmap(f, dtype=self.dtype, shape=self.shape)
+        del fp
+        f.close()
 
     def test_attributes(self):
         offset = 1
