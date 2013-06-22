@@ -144,9 +144,14 @@ class TestSavezLoad(RoundtripTest, TestCase):
     @np.testing.dec.skipif(not IS_64BIT, "Works only with 64bit systems")
     @np.testing.dec.slow
     def test_big_arrays(self):
-        L = (1 << 31) + 100000
-        tmp = mktemp(suffix='.npz')
-        a = np.empty(L, dtype=np.uint8)
+        try:
+            a = np.empty((1 << 31) + 100000, dtype=np.uint8)
+        except MemoryError:
+            return
+
+        tmpdir = os.getcwd()
+        fd, tmp = mkstemp(suffix='.npz', dir=tmpdir)
+        os.close(fd)
         np.savez(tmp, a=a)
         del a
         npfile = np.load(tmp)

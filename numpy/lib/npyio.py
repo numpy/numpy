@@ -534,8 +534,8 @@ def savez_compressed(file, *args, **kwds):
 
     Parameters
     ----------
-    file : str
-        File name of .npz file.
+    file : str, file
+        File name of .npz file or filelike object.
     args : Arguments
         Function arguments.
     kwds : Keyword arguments
@@ -573,8 +573,17 @@ def _savez(file, args, kwds, compress):
 
     zip = zipfile_factory(file, mode="w", compression=compression)
 
-    # Stage arrays in a temporary file on disk, before writing to zip.
-    fd, tmpfile = tempfile.mkstemp(suffix='-numpy.npy')
+    # Stage arrays in a temporary file on disk, before writing to zip.  The
+    # default directory /tmp on linux may be size limited, so when possible
+    # use the same directory the output file will go in.
+    if isinstance(file, basestring):
+        tmpdir = os.path.dirname(file)
+    elif hasattr(file, 'name'):
+        tmpdir = os.path.dirname(file.name)
+    else:
+        tmpdir = None
+
+    fd, tmpfile = tempfile.mkstemp(suffix='-numpy.npy', dir=tmpdir)
     os.close(fd)
     try:
         for key, val in namedict.items():
