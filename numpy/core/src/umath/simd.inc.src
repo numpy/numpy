@@ -363,7 +363,7 @@ sse2_binary_scalar1_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
 }
 
 
-void
+static void
 sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_intp n)
 {
     const @vtype@ b = @vpre@_set1_@vsuf@(ip2[0]);
@@ -518,7 +518,6 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
  * # kind = logical_or, logical_and#
  * # and = 0, 1#
  * # op = ||, &&#
- * # vop = or, and#
  * # vpre = _mm*2#
  * # vsuf = si128*2#
  * # vtype = __m128i*2#
@@ -550,8 +549,8 @@ sse2_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2, npy_intp 
     LOOP_BLOCK_ALIGN_VAR(op, @type@, 16)
         op[i] = ip1[i] @op@ ip2[i];
     LOOP_BLOCKED(@type@, 16) {
-        @vtype@ a = @vloadu@((__m128i*)&ip1[i]);
-        @vtype@ b = @vloadu@((__m128i*)&ip2[i]);
+        @vtype@ a = @vloadu@((@vtype@*)&ip1[i]);
+        @vtype@ b = @vloadu@((@vtype@*)&ip2[i]);
 #if @and@
         const @vtype@ zero = @vpre@_setzero_@vsuf@();
         /* get 0xFF for non zeros*/
@@ -562,7 +561,7 @@ sse2_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2, npy_intp 
         @vtype@ tmp = @vpre@_or_@vsuf@(a, b);
 #endif
 
-        @vstore@((__m128i*)&op[i], byte_to_true(tmp));
+        @vstore@((@vtype@*)&op[i], byte_to_true(tmp));
     }
     LOOP_BLOCKED_END {
         op[i] = (ip1[i] @op@ ip2[i]);
@@ -589,7 +588,7 @@ sse2_@kind@_BOOL(@type@ * op, @type@ * ip, const npy_intp n)
     LOOP_BLOCK_ALIGN_VAR(op, @type@, 16)
         op[i] = (ip[i] @op@ 0);
     LOOP_BLOCKED(@type@, 16) {
-        @vtype@ a = @vloadu@((__m128i*)&ip[i]);
+        @vtype@ a = @vloadu@((@vtype@*)&ip[i]);
 #if @not@
         const @vtype@ zero = @vpre@_setzero_@vsuf@();
         const @vtype@ truemask = @vpre@_set1_epi8(1 == 1);
@@ -600,7 +599,7 @@ sse2_@kind@_BOOL(@type@ * op, @type@ * ip, const npy_intp n)
         /* abs is kind of pointless but maybe its used for byte_to_true */
         a = byte_to_true(a);
 #endif
-        @vstore@((__m128i*)&op[i], a);
+        @vstore@((@vtype@*)&op[i], a);
     }
     LOOP_BLOCKED_END {
         op[i] = (ip[i] @op@ 0);
