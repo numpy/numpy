@@ -197,6 +197,23 @@ run_binary_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
     return 0;
 }
 
+
+static void
+sse2_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, npy_intp n);
+
+static NPY_INLINE int
+run_reduce_simd_@kind@_BOOL(char **args, npy_intp *dimensions, npy_intp *steps)
+{
+#if defined HAVE_EMMINTRIN_H
+    if (sizeof(npy_bool) == 1 && IS_BLOCKABLE_REDUCE(sizeof(npy_bool), 16)) {
+        sse2_reduce_@kind@_BOOL((npy_bool*)args[0], (npy_bool*)args[1],
+                                dimensions[0]);
+        return 1;
+    }
+#endif
+    return 0;
+}
+
 /**end repeat**/
 
 /**begin repeat
@@ -518,10 +535,12 @@ sse2_@kind@_@TYPE@(@type@ * ip, @type@ * op, const npy_intp n)
  * # kind = logical_or, logical_and#
  * # and = 0, 1#
  * # op = ||, &&#
+ * # sc = !=, ==#
  * # vpre = _mm*2#
  * # vsuf = si128*2#
  * # vtype = __m128i*2#
  * # type = npy_bool*2#
+ * # vload = _mm_load_si128*2#
  * # vloadu = _mm_loadu_si128*2#
  * # vstore = _mm_store_si128*2#
  */
@@ -565,6 +584,38 @@ sse2_binary_@kind@_BOOL(npy_bool * op, npy_bool * ip1, npy_bool * ip2, npy_intp 
     }
     LOOP_BLOCKED_END {
         op[i] = (ip1[i] @op@ ip2[i]);
+    }
+}
+
+
+static void
+sse2_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, const npy_intp n)
+{
+    const @vtype@ zero = @vpre@_setzero_@vsuf@();
+    LOOP_BLOCK_ALIGN_VAR(ip, npy_bool, 16) {
+        *op = *op @op@ ip[i];
+        if (*op @sc@ 0) {
+            return;
+        }
+    }
+    LOOP_BLOCKED(npy_bool, 16) {
+        @vtype@ v = @vload@((@vtype@*)&ip[i]);
+        v = @vpre@_cmpeq_epi8(v, zero);
+#if @and@
+        if ((@vpre@_movemask_epi8(v) != 0)) {
+            *op = 0;
+#else
+        if ((@vpre@_movemask_epi8(v) != 0xFFFF)) {
+            *op = 1;
+#endif
+            return;
+        }
+    }
+    LOOP_BLOCKED_END {
+        *op = *op @op@ ip[i];
+        if (*op @sc@ 0) {
+            return;
+        }
     }
 }
 

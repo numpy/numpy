@@ -561,6 +561,9 @@ NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     if(IS_BINARY_REDUCE) {
+        if (run_reduce_simd_@kind@_BOOL(args, dimensions, steps)) {
+            return;
+        }
         BINARY_REDUCE_LOOP(npy_bool) {
             const npy_bool in2 = *(npy_bool *)ip2;
             io1 = io1 @OP@ in2;
