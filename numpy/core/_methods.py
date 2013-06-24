@@ -8,6 +8,7 @@ from __future__ import division, absolute_import, print_function
 from numpy.core import multiarray as mu
 from numpy.core import umath as um
 from numpy.core.numeric import asanyarray
+from numpy.core import numerictypes as nt
 
 def _amax(a, axis=None, out=None, keepdims=False):
     return um.maximum.reduce(a, axis=axis,
@@ -46,19 +47,21 @@ def _count_reduce_items(arr, axis):
 def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
     arr = asanyarray(a)
 
-    # Upgrade bool, unsigned int, and int to float64
-    if dtype is None and arr.dtype.kind in ['b','u','i']:
+    # Cast bool, unsigned int, and int to float64
+    if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
         ret = um.add.reduce(arr, axis=axis, dtype='f8',
                             out=out, keepdims=keepdims)
     else:
         ret = um.add.reduce(arr, axis=axis, dtype=dtype,
                             out=out, keepdims=keepdims)
+
     rcount = _count_reduce_items(arr, axis)
     if isinstance(ret, mu.ndarray):
         ret = um.true_divide(ret, rcount,
                         out=ret, casting='unsafe', subok=False)
     else:
-        ret = ret / float(rcount)
+        ret = ret / rcount
+
     return ret
 
 def _var(a, axis=None, dtype=None, out=None, ddof=0,
@@ -66,22 +69,23 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0,
     arr = asanyarray(a)
 
     # First compute the mean, saving 'rcount' for reuse later
-    if dtype is None and arr.dtype.kind in ['b','u','i']:
+    if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
         arrmean = um.add.reduce(arr, axis=axis, dtype='f8', keepdims=True)
     else:
         arrmean = um.add.reduce(arr, axis=axis, dtype=dtype, keepdims=True)
+
     rcount = _count_reduce_items(arr, axis)
     if isinstance(arrmean, mu.ndarray):
         arrmean = um.true_divide(arrmean, rcount,
                             out=arrmean, casting='unsafe', subok=False)
     else:
-        arrmean = arrmean / float(rcount)
+        arrmean = arrmean / rcount
 
     # arr - arrmean
     x = arr - arrmean
 
     # (arr - arrmean) ** 2
-    if arr.dtype.kind == 'c':
+    if issubclass(arr.dtype.type, nt.complex_):
         x = um.multiply(x, um.conjugate(x), out=x).real
     else:
         x = um.multiply(x, x, out=x)
@@ -97,7 +101,7 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0,
         ret = um.true_divide(ret, rcount,
                         out=ret, casting='unsafe', subok=False)
     else:
-        ret = ret / float(rcount)
+        ret = ret / rcount
 
     return ret
 
@@ -111,3 +115,4 @@ def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
         ret = um.sqrt(ret)
 
     return ret
+
