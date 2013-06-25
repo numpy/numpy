@@ -57,14 +57,12 @@ def foo(var1, var2, long_var_name='hi') :
 
     Returns
     -------
+    type
+        Explanation of anonymous return value of type ``type``.
     describe : type
-        Explanation
-    output : type
-        Explanation
-    tuple : type
-        Explanation
-    items : type
-        even more explaining
+        Explanation of return value named `describe`.
+    out : type
+        Explanation of `out`.
 
     Other Parameters
     ----------------
