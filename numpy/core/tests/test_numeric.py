@@ -588,6 +588,11 @@ class TestTypes(TestCase):
         assert_raises(TypeError, np.can_cast, 'i4', None)
         assert_raises(TypeError, np.can_cast, None, 'i4')
 
+
+# Custom exception class to test exception propagation in fromiter
+class NIterError(Exception): pass
+
+
 class TestFromiter(TestCase):
     def makegen(self):
         for x in range(24):
@@ -607,12 +612,8 @@ class TestFromiter(TestCase):
         a20 = fromiter(self.makegen(), int, 20)
         self.assertTrue(len(a) == len(expected))
         self.assertTrue(len(a20) == 20)
-        try:
-            fromiter(self.makegen(), int, len(expected) + 10)
-        except ValueError:
-            pass
-        else:
-            self.fail()
+        self.assertRaises(ValueError, fromiter, 
+                          self.makegen(), int, len(expected) + 10)
 
     def test_values(self):
         expected = array(list(self.makegen()))
@@ -620,6 +621,29 @@ class TestFromiter(TestCase):
         a20 = fromiter(self.makegen(), int, 20)
         self.assertTrue(alltrue(a == expected,axis=0))
         self.assertTrue(alltrue(a20 == expected[:20],axis=0))
+
+    def load_data(self, n, eindex):
+        """Utility method for the issue 2592 tests.
+
+        Raise an exception at the desired index in the iterator."""
+        for e in xrange(n):
+            if e == eindex:
+                raise NIterError('error at index %s' % eindex)
+            yield e
+
+    def test_2592(self):
+        """Test iteration exceptions are correctly raised."""
+        count, eindex = 10, 5
+        self.assertRaises(NIterError, np.fromiter,
+                          self.load_data(count, eindex), dtype=int, count=count)
+
+    def test_2592_edge(self):
+        """Test iter. exceptions, edge case (exception at end of iterator)."""
+        count = 10
+        eindex = count-1
+        self.assertRaises(NIterError, np.fromiter,
+                          self.load_data(count, eindex), dtype=int, count=count)
+
 
 class TestNonzero(TestCase):
     def test_nonzero_trivial(self):
