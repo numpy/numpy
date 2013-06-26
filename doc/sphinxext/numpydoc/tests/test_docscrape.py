@@ -47,6 +47,9 @@ doc_txt = '''\
 
       In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
       value drawn from the distribution.
+  list of str
+      This is not a real return value.  It exists to test
+      anonymous return values.
 
   Other Parameters
   ----------------
@@ -148,12 +151,18 @@ def test_other_parameters():
     assert desc[0].startswith('A parrot off its mortal coil')
 
 def test_returns():
-    assert_equal(len(doc['Returns']), 1)
+    assert_equal(len(doc['Returns']), 2)
     arg, arg_type, desc = doc['Returns'][0]
     assert_equal(arg, 'out')
     assert_equal(arg_type, 'ndarray')
     assert desc[0].startswith('The drawn samples')
     assert desc[-1].endswith('distribution.')
+
+    arg, arg_type, desc = doc['Returns'][1]
+    assert_equal(arg, 'list of str')
+    assert_equal(arg_type, '')
+    assert desc[0].startswith('This is not a real')
+    assert desc[-1].endswith('anonymous return values.')
 
 def test_notes():
     assert doc['Notes'][0].startswith('Instead')
@@ -218,6 +227,9 @@ out : ndarray
 
     In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
     value drawn from the distribution.
+list of str
+    This is not a real return value.  It exists to test
+    anonymous return values.
 
 Other Parameters
 ----------------
@@ -226,12 +238,12 @@ spam : parrot
 
 Raises
 ------
-RuntimeError :
+RuntimeError
     Some error
 
 Warns
 -----
-RuntimeWarning :
+RuntimeWarning
     Some warning
 
 Warnings
@@ -334,6 +346,11 @@ of the one-dimensional normal distribution to higher dimensions.
         In other words, each entry ``out[i,j,...,:]`` is an N-dimensional
         value drawn from the distribution.
 
+    list of str
+
+        This is not a real return value.  It exists to test
+        anonymous return values.
+
 :Other Parameters:
 
     **spam** : parrot
@@ -342,13 +359,13 @@ of the one-dimensional normal distribution to higher dimensions.
 
 :Raises:
 
-    **RuntimeError** :
+    **RuntimeError**
 
         Some error
 
 :Warns:
 
-    **RuntimeWarning** :
+    **RuntimeWarning**
 
         Some warning
 
@@ -698,11 +715,11 @@ def test_class_members_doc():
 
     Methods
     -------
-    a :
+    a
 
-    b :
+    b
 
-    c :
+    c
 
     .. index::
 
