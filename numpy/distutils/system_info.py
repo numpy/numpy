@@ -2291,16 +2291,17 @@ def check_blas_fortran_abi(blas_name, info):
         import textwrap
         msg = textwrap.dedent("""
 
-        *******************************************************************
+        ***********************************************************************
         WARNING:
 
         BLAS library (%s) detected, but its
         Fortran ABI is incompatible with the selected Fortran compiler.
         It is therefore not used now.
 
-        If you are using GNU Fortran Compiler, setting the environment
-        variable FOPT=\"-O2 -ff2c\" may fix this issue
-        *******************************************************************
+        If you are using GNU Fortran Compiler on OSX, setting
+        the environment variable FFLAGS=\"-arch i386 -arch x86_64 -fPIC -ff2c\"
+        may fix this issue.
+        ***********************************************************************
 
         """
         % (blas_name,))
