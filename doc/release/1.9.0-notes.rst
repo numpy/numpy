@@ -31,6 +31,10 @@ functions (ufuncs), ``numpy.core._dotblas.dot``, and
 ``numpy.core.multiarray.dot`` (the numpy.dot functions). By defining a
 ``__numpy_ufunc__`` method.
 
+Dtype parameter added to `np.linspace` and `np.logspace`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The returned data type from the `linspace` and `logspace` functions
+can now be specificed using the dtype parameter.
 
 Improvements
 ============
@@ -39,6 +43,7 @@ Improvements
 Changes
 =======
 
+ 
 C-API
 ~~~~~
 
