@@ -3413,13 +3413,13 @@ cdef class RandomState:
 
         Samples are drawn from a Binomial distribution with specified
         parameters, n trials and p probability of success where
-        n an integer > 0 and p is in the interval [0,1]. (n may be
+        n an integer >= 0 and p is in the interval [0,1]. (n may be
         input as a float, but it is truncated to an integer in use)
 
         Parameters
         ----------
         n : float (but truncated to an integer)
-                parameter, > 0.
+                parameter, >= 0.
         p : float
                 parameter, >= 0 and <=1.
         size : {tuple, int}
@@ -3493,8 +3493,8 @@ cdef class RandomState:
         fp = PyFloat_AsDouble(p)
         ln = PyInt_AsLong(n)
         if not PyErr_Occurred():
-            if ln <= 0:
-                raise ValueError("n <= 0")
+            if ln < 0:
+                raise ValueError("n < 0")
             if fp < 0:
                 raise ValueError("p < 0")
             elif fp > 1:
@@ -3505,8 +3505,8 @@ cdef class RandomState:
 
         on = <ndarray>PyArray_FROM_OTF(n, NPY_LONG, NPY_ARRAY_ALIGNED)
         op = <ndarray>PyArray_FROM_OTF(p, NPY_DOUBLE, NPY_ARRAY_ALIGNED)
-        if np.any(np.less_equal(n, 0)):
-            raise ValueError("n <= 0")
+        if np.any(np.less(n, 0)):
+            raise ValueError("n < 0")
         if np.any(np.less(p, 0)):
             raise ValueError("p < 0")
         if np.any(np.greater(p, 1)):

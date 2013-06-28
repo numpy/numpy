@@ -7,6 +7,17 @@ from numpy.compat import asbytes
 import numpy as np
 
 
+class TestBinomial(TestCase):
+    def test_n_zero(self):
+        # Tests the corner case of n == 0 for the binomial distribution.
+        # binomial(0, p) should be zero for any p in [0, 1].
+        # This test addresses issue #3480.
+        zeros = np.zeros(2, dtype='int')
+        for p in [0, .5, 1]:
+            assert_(random.binomial(0, p) == 0)
+            np.testing.assert_array_equal(random.binomial(zeros, p), zeros)
+
+
 class TestMultinomial(TestCase):
     def test_basic(self):
         random.multinomial(100, [0.2, 0.8])
