@@ -1024,7 +1024,7 @@ between NumPy arrays and C arrays:
     ``unsigned int``, ``long``, ``unsigned long``, ``long long``,
     ``unsigned long long``, ``float`` and ``double``.
 
-  * That support 70 different argument signatures for each data type,
+  * That support 74 different argument signatures for each data type,
     including:
 
     + One-dimensional, two-dimensional, three-dimensional and
@@ -1043,7 +1043,7 @@ The ``numpy.i`` interface file also provides additional tools for
 wrapper developers, including:
 
   * A `SWIG`_ macro (``%numpy_typemaps``) with three arguments for
-    implementing the 70 argument signatures for the user's choice of
+    implementing the 74 argument signatures for the user's choice of
     (1) C data type, (2) NumPy data type (assuming they match), and
     (3) dimension type.
 
