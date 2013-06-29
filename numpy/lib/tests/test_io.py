@@ -221,7 +221,7 @@ class TestSavezLoad(RoundtripTest, TestCase):
 
     def test_closing_fid(self):
         # Test that issue #1517 (too many opened files) remains closed
-        # It might be a "week" test since failed to get triggered on
+        # It might be a "weak" test since failed to get triggered on
         # e.g. Debian sid of 2012 Jul 05 but was reported to
         # trigger the failure on Ubuntu 10.04:
         # http://projects.scipy.org/numpy/ticket/1517#comment:2
@@ -249,6 +249,18 @@ class TestSavezLoad(RoundtripTest, TestCase):
                         raise AssertionError(msg)
         finally:
             os.remove(tmp)
+
+    def test_closing_zipfile_after_load(self):
+        # Check that zipfile owns file and can close it.
+        # This needs to pass a file name to load for the
+        # test.
+        fd, tmp = mkstemp(suffix='.npz')
+        os.close(fd)
+        np.savez(tmp, lab='place holder')
+        data = np.load(tmp)
+        fp = data.zip.fp
+        data.close()
+        assert_(fp.closed)
 
 
 class TestSaveTxt(TestCase):
