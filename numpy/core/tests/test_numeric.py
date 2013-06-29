@@ -293,6 +293,53 @@ class TestBoolArray(TestCase):
         assert_array_equal(self.im ^ False, self.im)
 
 
+class TestBoolCmp(TestCase):
+    def setUp(self):
+        self.f = ones(256, dtype=np.float32)
+        self.ef = ones(self.f.size, dtype=np.bool)
+        self.d = ones(128, dtype=np.float64)
+        self.ed = ones(self.d.size, dtype=np.bool)
+        # generate values for all permutation of 256bit simd vectors
+        s = 0
+        for i in range(32):
+            self.f[s:s+8] = [i & 2**x for x in range(8)]
+            self.ef[s:s+8] = [(i & 2**x) != 0 for x in range(8)]
+            s += 8
+        s = 0
+        for i in range(16):
+            self.d[s:s+4] = [i & 2**x for x in range(4)]
+            self.ed[s:s+4] = [(i & 2**x) != 0 for x in range(4)]
+            s += 4
+
+    def test_float(self):
+        # offset for alignment test
+        for i in range(4):
+            assert_array_equal(self.f[i:] != 0, self.ef[i:])
+            assert_array_equal(self.f[i:] > 0, self.ef[i:])
+            assert_array_equal(self.f[i:] - 1 >= 0, self.ef[i:])
+            assert_array_equal(self.f[i:] == 0, ~self.ef[i:])
+            assert_array_equal(-self.f[i:] < 0, self.ef[i:])
+            assert_array_equal(-self.f[i:] + 1 <= 0, self.ef[i:])
+
+            assert_array_equal(0 != self.f[i:], self.ef[i:])
+            assert_array_equal(np.zeros_like(self.f)[i:] != self.f[i:],
+                               self.ef[i:])
+
+    def test_double(self):
+        # offset for alignment test
+        for i in range(2):
+            assert_array_equal(self.d[i:] != 0, self.ed[i:])
+            assert_array_equal(self.d[i:] > 0, self.ed[i:])
+            assert_array_equal(self.d[i:] - 1 >= 0, self.ed[i:])
+            assert_array_equal(self.d[i:] == 0, ~self.ed[i:])
+            assert_array_equal(-self.d[i:] < 0, self.ed[i:])
+            assert_array_equal(-self.d[i:] + 1 <= 0, self.ed[i:])
+
+            assert_array_equal(0 != self.d[i:], self.ed[i:])
+            assert_array_equal(np.zeros_like(self.d)[i:] != self.d[i:],
+                               self.ed[i:])
+
+
 class TestSeterr(TestCase):
     def test_default(self):
         err = geterr()

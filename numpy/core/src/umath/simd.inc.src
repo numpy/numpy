@@ -24,6 +24,7 @@
 #endif
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h> /* for memcpy */
 
 int PyUFunc_getfperr(void);
 void PyUFunc_clearfperr(void);
@@ -59,6 +60,19 @@ void PyUFunc_clearfperr(void);
      ((abs(args[2] - args[0]) >= (vsize)) || (abs(args[2] - args[0]) == 0)) && \
      abs(args[2] - args[1]) >= (esize))
 
+#define IS_BLOCKABLE_BINARY_BOOL(esize, vsize) \
+    (steps[0] == (esize) && steps[0] == steps[1] && steps[2] == (1) && \
+     npy_is_aligned(args[1], (esize)) && \
+     npy_is_aligned(args[0], (esize)))
+
+#define IS_BLOCKABLE_BINARY_SCALAR1_BOOL(esize, vsize) \
+    (steps[0] == 0 && steps[1] == (esize) && steps[2] == (1) && \
+     npy_is_aligned(args[1], (esize)))
+
+#define IS_BLOCKABLE_BINARY_SCALAR2_BOOL(esize, vsize) \
+    (steps[0] == (esize) && steps[1] == 0 && steps[2] == (1) && \
+     npy_is_aligned(args[0], (esize)))
+
 /* align var to alignment */
 #define LOOP_BLOCK_ALIGN_VAR(var, type, alignment)\
     npy_intp i, peel = npy_aligned_block_offset(var, sizeof(type),\
@@ -71,6 +85,35 @@ void PyUFunc_clearfperr(void);
 
 #define LOOP_BLOCKED_END\
     for (; i < n; i++)
+
+/* fanout two bits to two bytes */
+static const npy_int16 fanout_2[] = {
+    0x0000,
+    0x0001,
+    0x0100,
+    0x0101,
+};
+
+/* fanout four bits to four bytes */
+static const npy_int32 fanout_4[] = {
+    0x00000000,
+    0x00000001,
+    0x00000100,
+    0x00000101,
+    0x00010000,
+    0x00010001,
+    0x00010100,
+    0x00010101,
+    0x01000000,
+    0x01000001,
+    0x01000100,
+    0x01000101,
+    0x01010000,
+    0x01010001,
+    0x01010100,
+    0x01010101
+};
+
 
 /*
  * Dispatcher functions
@@ -122,7 +165,6 @@ run_@name@_simd_@func@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps
 /**begin repeat1
  * Arithmetic
  * # kind = add, subtract, multiply, divide#
- * # OP = +, -, *, /#
  */
 
 #if @vector@ && defined HAVE_EMMINTRIN_H
@@ -159,6 +201,55 @@ run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps
         return 1;
     }
     else if (IS_BLOCKABLE_BINARY(sizeof(@type@), 16)) {
+        sse2_binary_@kind@_@TYPE@(op, ip1, ip2, n);
+        return 1;
+    }
+#endif
+    return 0;
+}
+
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = equal, not_equal, less, less_equal, greater, greater_equal,
+ *         logical_and, logical_or#
+ * #simd = 1, 1, 1, 1, 1, 1, 0, 0#
+ */
+
+#if @vector@ && @simd@ && defined HAVE_EMMINTRIN_H
+
+/* prototypes */
+static void
+sse2_binary_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
+                          npy_intp n);
+static void
+sse2_binary_scalar1_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
+                                  npy_intp n);
+static void
+sse2_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2,
+                                  npy_intp n);
+
+#endif
+
+static NPY_INLINE int
+run_binary_simd_@kind@_@TYPE@(char **args, npy_intp *dimensions, npy_intp *steps)
+{
+#if @vector@ && @simd@ && defined HAVE_EMMINTRIN_H
+    @type@ * ip1 = (@type@ *)args[0];
+    @type@ * ip2 = (@type@ *)args[1];
+    npy_bool * op = (npy_bool *)args[2];
+    npy_intp n = dimensions[0];
+    /* argument one scalar */
+    if (IS_BLOCKABLE_BINARY_SCALAR1_BOOL(sizeof(@type@), 16)) {
+        sse2_binary_scalar1_@kind@_@TYPE@(op, ip1, ip2, n);
+        return 1;
+    }
+    /* argument two scalar */
+    else if (IS_BLOCKABLE_BINARY_SCALAR2_BOOL(sizeof(@type@), 16)) {
+        sse2_binary_scalar2_@kind@_@TYPE@(op, ip1, ip2, n);
+        return 1;
+    }
+    else if (IS_BLOCKABLE_BINARY_BOOL(sizeof(@type@), 16)) {
         sse2_binary_@kind@_@TYPE@(op, ip1, ip2, n);
         return 1;
     }
@@ -281,7 +372,10 @@ static NPY_INLINE npy_double sse2_horizontal_@VOP@___m128d(__m128d v)
  *  #vtype = __m128, __m128d#
  *  #vpre = _mm, _mm#
  *  #vsuf = ps, pd#
+ *  #vsufs = ss, sd#
  *  #nan = NPY_NANF, NPY_NAN#
+ *  #mtype = npy_int32, npy_int16#
+ *  #fanout = fanout_4, fanout_2#
  */
 
 
@@ -405,6 +499,93 @@ sse2_binary_scalar2_@kind@_@TYPE@(@type@ * op, @type@ * ip1, @type@ * ip2, npy_i
     }
 }
 
+/**end repeat1**/
+
+/**begin repeat1
+ * #kind = equal, not_equal, less, less_equal, greater, greater_equal#
+ * #OP = ==, !=, <, <=, >, >=#
+ * #VOP = cmpeq, cmpneq, cmplt, cmple, cmpgt, cmpge#
+*/
+
+/* sets invalid fpu flag on QNaN for consistency with packed compare */
+static NPY_INLINE int
+sse2_ordered_cmp_@kind@_@TYPE@(const @type@ a, const @type@ b)
+{
+    @type@ tmp;
+    @vtype@ v = @vpre@_@VOP@_@vsufs@(@vpre@_load_@vsufs@(&a),
+                                     @vpre@_load_@vsufs@(&b));
+    @vpre@_store_@vsufs@(&tmp, v);
+    return sizeof(@type@) == 4 ?
+        (*(npy_uint32 *)&tmp) & 1 : (*(npy_uint64 *)&tmp) & 1;
+}
+
+static void
+sse2_binary_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
+{
+    npy_bool * r;
+    LOOP_BLOCK_ALIGN_VAR(ip1, @type@, 16) {
+        op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[i]);
+    }
+    r = &op[i];
+    LOOP_BLOCKED(@type@, 16) {
+        @vtype@ a = @vpre@_load_@vsuf@(&ip1[i]);
+        @vtype@ b = @vpre@_loadu_@vsuf@(&ip2[i]);
+        @vtype@ c = @vpre@_@VOP@_@vsuf@(a, b);
+        @mtype@ ir = @fanout@[@vpre@_movemask_@vsuf@(c)];
+        /* may be unaligned */
+        memcpy(r, &ir, sizeof(ir));
+        r += sizeof(ir);
+    }
+    LOOP_BLOCKED_END {
+        op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[i]);
+    }
+}
+
+
+static void
+sse2_binary_scalar1_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
+{
+    npy_bool * r;
+    @vtype@ a = @vpre@_set1_@vsuf@(ip1[0]);
+    LOOP_BLOCK_ALIGN_VAR(ip2, @type@, 16) {
+        op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[0], ip2[i]);
+    }
+    r = &op[i];
+    LOOP_BLOCKED(@type@, 16) {
+        @vtype@ b = @vpre@_load_@vsuf@(&ip2[i]);
+        @vtype@ c = @vpre@_@VOP@_@vsuf@(a, b);
+        @mtype@ ir = @fanout@[@vpre@_movemask_@vsuf@(c)];
+        /* may be unaligned */
+        memcpy(r, &ir, sizeof(ir));
+        r += sizeof(ir);
+    }
+    LOOP_BLOCKED_END {
+        op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[0], ip2[i]);
+    }
+}
+
+
+static void
+sse2_binary_scalar2_@kind@_@TYPE@(npy_bool * op, @type@ * ip1, @type@ * ip2, npy_intp n)
+{
+    npy_bool * r;
+    @vtype@ b = @vpre@_set1_@vsuf@(ip2[0]);
+    LOOP_BLOCK_ALIGN_VAR(ip1, @type@, 16) {
+        op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[0]);
+    }
+    r = &op[i];
+    LOOP_BLOCKED(@type@, 16) {
+        @vtype@ a = @vpre@_load_@vsuf@(&ip1[i]);
+        @vtype@ c = @vpre@_@VOP@_@vsuf@(a, b);
+        @mtype@ ir = @fanout@[@vpre@_movemask_@vsuf@(c)];
+        /* may be unaligned */
+        memcpy(r, &ir, sizeof(ir));
+        r += sizeof(ir);
+    }
+    LOOP_BLOCKED_END {
+        op[i] = sse2_ordered_cmp_@kind@_@TYPE@(ip1[i], ip2[0]);
+    }
+}
 /**end repeat1**/
 
 static void

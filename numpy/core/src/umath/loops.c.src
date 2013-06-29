@@ -1351,6 +1351,9 @@ NPY_NO_EXPORT void
 NPY_NO_EXPORT void
 @TYPE@_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
+    if (run_binary_simd_@kind@_@TYPE@(args, dimensions, steps)) {
+        return;
+    }
     BINARY_LOOP {
         const @type@ in1 = *(@type@ *)ip1;
         const @type@ in2 = *(@type@ *)ip2;
