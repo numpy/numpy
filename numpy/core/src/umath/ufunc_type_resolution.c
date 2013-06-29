@@ -2089,8 +2089,11 @@ type_tuple_type_resolver(PyUFuncObject *self,
                 }
             }
         } else {
-            if (types[nin] != specified_types[0]) {
-                matched = 0;
+            for (j = 0; j < nop; ++j) {
+                if (types[j] != specified_types[0]) {
+                    matched = 0;
+                    break;
+                }
             }
         }
         if (!matched) {

@@ -164,6 +164,17 @@ class TestUfunc(TestCase):
         # check PyUFunc_On_Om
         # fixme -- I don't know how to do this yet
 
+    def test_true_divide(self):
+        # true_divide has a non uniform signature, see 3484
+        a = np.zeros(10, dtype=np.int) + 550.
+        b = np.zeros(10, dtype=np.int) + 73.
+        r = np.array([550. / 73.] * 10)
+        assert_almost_equal(np.true_divide(a, b, dtype=np.float64), r)
+        assert_almost_equal(np.true_divide(a, b, dtype=np.float32), r)
+        assert_almost_equal(np.divide(a, b, dtype=np.float64), r)
+        assert_almost_equal(np.divide(a, b, dtype=np.float32), r)
+        assert_raises(TypeError, np.true_divide, a, b, dtype=np.int)
+
     def test_all_ufunc(self) :
         """Try to check presence and results of all ufuncs.
 
