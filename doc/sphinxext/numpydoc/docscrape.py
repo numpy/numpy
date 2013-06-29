@@ -334,7 +334,10 @@ class NumpyDocString(object):
         if self[name]:
             out += self._str_header(name)
             for param,param_type,desc in self[name]:
-                out += ['%s : %s' % (param, param_type)]
+                if param_type:
+                    out += ['%s : %s' % (param, param_type)]
+                else:
+                    out += [param]
                 out += self._str_indent(desc)
             out += ['']
         return out

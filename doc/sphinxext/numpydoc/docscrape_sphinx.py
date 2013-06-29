@@ -42,16 +42,37 @@ class SphinxDocString(NumpyDocString):
     def _str_extended_summary(self):
         return self['Extended Summary'] + ['']
 
+    def _str_returns(self):
+        out = []
+        if self['Returns']:
+            out += self._str_field_list('Returns')
+            out += ['']
+            for param, param_type, desc in self['Returns']:
+                if param_type:
+                    out += self._str_indent(['**%s** : %s' % (param.strip(),
+                                                              param_type)])
+                else:
+                    out += self._str_indent([param.strip()])
+                if desc:
+                    out += ['']
+                    out += self._str_indent(desc, 8)
+                out += ['']
+        return out
+
     def _str_param_list(self, name):
         out = []
         if self[name]:
             out += self._str_field_list(name)
             out += ['']
-            for param,param_type,desc in self[name]:
-                out += self._str_indent(['**%s** : %s' % (param.strip(),
-                                                          param_type)])
-                out += ['']
-                out += self._str_indent(desc,8)
+            for param, param_type, desc in self[name]:
+                if param_type:
+                    out += self._str_indent(['**%s** : %s' % (param.strip(),
+                                                              param_type)])
+                else:
+                    out += self._str_indent(['**%s**' % param.strip()])
+                if desc:
+                    out += ['']
+                    out += self._str_indent(desc, 8)
                 out += ['']
         return out
 
@@ -196,8 +217,9 @@ class SphinxDocString(NumpyDocString):
         out += self._str_index() + ['']
         out += self._str_summary()
         out += self._str_extended_summary()
-        for param_list in ('Parameters', 'Returns', 'Other Parameters',
-                           'Raises', 'Warns'):
+        out += self._str_param_list('Parameters')
+        out += self._str_returns()
+        for param_list in ('Other Parameters', 'Raises', 'Warns'):
             out += self._str_param_list(param_list)
         out += self._str_warnings()
         out += self._str_see_also(func_role)

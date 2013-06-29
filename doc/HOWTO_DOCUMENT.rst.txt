@@ -225,14 +225,30 @@ The sections of the docstring are:
 
 5. **Returns**
 
-   Explanation of the returned values and their types, of the same
-   format as **parameters**.
+   Explanation of the returned values and their types. Similar to the
+   **parameters** section, except the name of each return value is optional.
+   The type of each return value is always required::
+
+     Returns
+     -------
+     int
+         Description of anonymous integer return value.
+
+   If both the name and type are specified, the **returns** section takes the
+   same form as the **parameters** section::
+
+     Returns
+     -------
+     err_code : int
+         Non-zero value indicates error code, or zero on success.
+     err_msg : str or None
+         Human readable error message, or None on success.
 
 6. **Other parameters**
 
    An optional section used to describe infrequently used parameters.
    It should only be used if a function has a large number of keyword
-   prameters, to prevent cluttering the **parameters** section.
+   parameters, to prevent cluttering the **parameters** section.
 
 7. **Raises**
 
