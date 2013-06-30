@@ -117,9 +117,16 @@ causes the returned array to be inverted.
 
 Advanced indexing using `np.newaxis`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 It is now possible to use `np.newaxis`/`None` together with index
 arrays instead of only in simple indices. This means that
 ``array[np.newaxis, [0, 1]]`` will now work as expected.
+
+New functions `full` and `full_like`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+New convenience functions to create arrays filled with a specific value;
+complementary to the existing `zeros` and `zeros_like` functions.
 
 C-API
 ~~~~~
