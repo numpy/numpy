@@ -40,7 +40,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'Inf', 'inf', 'infty', 'Infinity',
            'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
            'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
-           'ComplexWarning', 'may_share_memory', 'filled', 'filled_like']
+           'ComplexWarning', 'may_share_memory', 'full', 'full_like']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -237,7 +237,7 @@ def ones_like(a, dtype=None, order='K', subok=True):
     multiarray.copyto(res, 1, casting='unsafe')
     return res
 
-def filled(shape, fill_value, dtype=None, order='C'):
+def full(shape, fill_value, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with `fill_value`.
 
@@ -264,17 +264,17 @@ def filled(shape, fill_value, dtype=None, order='C'):
     zeros_like : Return an array of zeros with shape and type of input.
     ones_like : Return an array of ones with shape and type of input.
     empty_like : Return an empty array with shape and type of input.
-    filled_like : Fill an array with shape and type of input.
+    full_like : Fill an array with shape and type of input.
     zeros : Return a new array setting values to zero.
     ones : Return a new array setting values to one.
     empty : Return a new uninitialized array.
 
     Examples
     --------
-    >>> np.filled((2, 2), np.inf)
+    >>> np.full((2, 2), np.inf)
     array([[ inf,  inf],
            [ inf,  inf]])
-    >>> np.filled((2, 2), 10, dtype=np.int)
+    >>> np.full((2, 2), 10, dtype=np.int)
     array([[10, 10],
            [10, 10]])
 
@@ -283,9 +283,9 @@ def filled(shape, fill_value, dtype=None, order='C'):
     multiarray.copyto(a, fill_value, casting='unsafe')
     return a
 
-def filled_like(a, fill_value, dtype=None, order='K', subok=True):
+def full_like(a, fill_value, dtype=None, order='K', subok=True):
     """
-    Return a filled array with the same shape and type as a given array.
+    Return a full array with the same shape and type as a given array.
 
     Parameters
     ----------
@@ -319,22 +319,22 @@ def filled_like(a, fill_value, dtype=None, order='K', subok=True):
     zeros : Return a new array setting values to zero.
     ones : Return a new array setting values to one.
     empty : Return a new uninitialized array.
-    filled : Fill a new array.
+    full : Fill a new array.
 
     Examples
     --------
     >>> x = np.arange(6, dtype=np.int)
-    >>> np.filled_like(x, 1)
+    >>> np.full_like(x, 1)
     array([1, 1, 1, 1, 1, 1])
-    >>> np.filled_like(x, 0.1)
+    >>> np.full_like(x, 0.1)
     array([0, 0, 0, 0, 0, 0])
-    >>> np.filled_like(x, 0.1, dtype=np.double)
+    >>> np.full_like(x, 0.1, dtype=np.double)
     array([ 0.1,  0.1,  0.1,  0.1,  0.1,  0.1])
-    >>> np.filled_like(x, np.nan, dtype=np.double)
+    >>> np.full_like(x, np.nan, dtype=np.double)
     array([ nan,  nan,  nan,  nan,  nan,  nan])
 
     >>> y = np.arange(6, dtype=np.double)
-    >>> np.filled_like(y, 0.1)
+    >>> np.full_like(y, 0.1)
     array([ 0.1,  0.1,  0.1,  0.1,  0.1,  0.1])
 
     """

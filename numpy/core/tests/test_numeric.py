@@ -1379,12 +1379,12 @@ class TestCreationFuncs(TestCase):
         self.check_function(np.empty)
 
     def test_filled(self):
-        self.check_function(np.filled, 0)
-        self.check_function(np.filled, 1)
+        self.check_function(np.full, 0)
+        self.check_function(np.full, 1)
 
 
 class TestLikeFuncs(TestCase):
-    '''Test ones_like, zeros_like, empty_like and filled_like'''
+    '''Test ones_like, zeros_like, empty_like and full_like'''
 
     def setUp(self):
         self.data = [
@@ -1494,11 +1494,11 @@ class TestLikeFuncs(TestCase):
         self.check_like_function(np.empty_like, None)
 
     def test_filled_like(self):
-        self.check_like_function(np.filled_like, 0, True)
-        self.check_like_function(np.filled_like, 1, True)
-        self.check_like_function(np.filled_like, 1000, True)
-        self.check_like_function(np.filled_like, 123.456, True)
-        self.check_like_function(np.filled_like, np.inf, True)
+        self.check_like_function(np.full_like, 0, True)
+        self.check_like_function(np.full_like, 1, True)
+        self.check_like_function(np.full_like, 1000, True)
+        self.check_like_function(np.full_like, 123.456, True)
+        self.check_like_function(np.full_like, np.inf, True)
 
 class _TestCorrelate(TestCase):
     def _setup(self, dt):
