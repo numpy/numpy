@@ -1398,8 +1398,63 @@ class TestStdVarComplex(TestCase):
         assert_almost_equal(std(A)**2,real_var)
 
 
+class TestCreationFuncs(TestCase):
+
+    '''Test ones, zeros, empty and filled'''
+
+    def setUp(self):
+        self.dtypes = ('b', 'i', 'u', 'f', 'c', 'S', 'a', 'U', 'V')
+        self.orders = {'C': 'c_contiguous', 'F': 'f_contiguous'}
+        self.ndims = 10
+
+    def check_function(self, func, fill_value=None):
+        fill_kwarg = {}
+        if fill_value is not None:
+            fill_kwarg = {'fill_value': fill_value}
+        for size in (0, 1, 2): # size in one dimension
+            for ndims in range(self.ndims): # [], [size], [size, size] etc.
+                shape = ndims * [size]
+                for order in self.orders: # C, F
+                    for type in self.dtypes: # bool, int, float etc.
+                        for bytes in 2**np.arange(9): # byte size for type
+                            try:
+                                dtype = np.dtype('{0}{1}'.format(type, bytes))
+                            except TypeError: # dtype combination does not exist
+                                continue
+                            else:
+                                # do not fill void type
+                                if fill_value is not None and type in 'V':
+                                    continue
+
+                                arr = func(shape, order=order, dtype=dtype,
+                                           **fill_kwarg)
+
+                                assert arr.dtype == dtype
+                                assert getattr(arr.flags, self.orders[order])
+
+                                if fill_value is not None:
+                                    if dtype.str.startswith('|S'):
+                                        val = str(fill_value)
+                                    else:
+                                        val = fill_value
+                                    assert_equal(arr, dtype.type(val))
+
+    def test_zeros(self):
+        self.check_function(np.zeros)
+
+    def test_ones(self):
+        self.check_function(np.zeros)
+
+    def test_empty(self):
+        self.check_function(np.empty)
+
+    def test_filled(self):
+        self.check_function(np.full, 0)
+        self.check_function(np.full, 1)
+
+
 class TestLikeFuncs(TestCase):
-    '''Test ones_like, zeros_like, and empty_like'''
+    '''Test ones_like, zeros_like, empty_like and full_like'''
 
     def setUp(self):
         self.data = [
@@ -1426,10 +1481,26 @@ class TestLikeFuncs(TestCase):
                 (arange(24).reshape(4,3,2).swapaxes(0,1), '?'),
                      ]
 
-    def check_like_function(self, like_function, value):
+    def compare_array_value(self, dz, value, fill_value):
+        if value is not None:
+            if fill_value:
+                try:
+                    z = dz.dtype.type(value)
+                except OverflowError:
+                    pass
+                else:
+                    assert_(all(dz == z))
+            else:
+                assert_(all(dz == value))
+
+    def check_like_function(self, like_function, value, fill_value=False):
+        if fill_value:
+            fill_kwarg = {'fill_value': value}
+        else:
+            fill_kwarg = {}
         for d, dtype in self.data:
             # default (K) order, dtype
-            dz = like_function(d, dtype=dtype)
+            dz = like_function(d, dtype=dtype, **fill_kwarg)
             assert_equal(dz.shape, d.shape)
             assert_equal(array(dz.strides)*d.dtype.itemsize,
                          array(d.strides)*dz.dtype.itemsize)
@@ -1439,33 +1510,30 @@ class TestLikeFuncs(TestCase):
                 assert_equal(dz.dtype, d.dtype)
             else:
                 assert_equal(dz.dtype, np.dtype(dtype))
-            if not value is None:
-                assert_(all(dz == value))
+            self.compare_array_value(dz, value, fill_value)
 
             # C order, default dtype
-            dz = like_function(d, order='C', dtype=dtype)
+            dz = like_function(d, order='C', dtype=dtype, **fill_kwarg)
             assert_equal(dz.shape, d.shape)
             assert_(dz.flags.c_contiguous)
             if dtype is None:
                 assert_equal(dz.dtype, d.dtype)
             else:
                 assert_equal(dz.dtype, np.dtype(dtype))
-            if not value is None:
-                assert_(all(dz == value))
+            self.compare_array_value(dz, value, fill_value)
 
             # F order, default dtype
-            dz = like_function(d, order='F', dtype=dtype)
+            dz = like_function(d, order='F', dtype=dtype, **fill_kwarg)
             assert_equal(dz.shape, d.shape)
             assert_(dz.flags.f_contiguous)
             if dtype is None:
                 assert_equal(dz.dtype, d.dtype)
             else:
                 assert_equal(dz.dtype, np.dtype(dtype))
-            if not value is None:
-                assert_(all(dz == value))
+            self.compare_array_value(dz, value, fill_value)
 
             # A order
-            dz = like_function(d, order='A', dtype=dtype)
+            dz = like_function(d, order='A', dtype=dtype, **fill_kwarg)
             assert_equal(dz.shape, d.shape)
             if d.flags.f_contiguous:
                 assert_(dz.flags.f_contiguous)
@@ -1475,16 +1543,15 @@ class TestLikeFuncs(TestCase):
                 assert_equal(dz.dtype, d.dtype)
             else:
                 assert_equal(dz.dtype, np.dtype(dtype))
-            if not value is None:
-                assert_(all(dz == value))
+            self.compare_array_value(dz, value, fill_value)
 
         # Test the 'subok' parameter
         a = np.matrix([[1,2],[3,4]])
 
-        b = like_function(a)
+        b = like_function(a, **fill_kwarg)
         assert_(type(b) is np.matrix)
 
-        b = like_function(a, subok=False)
+        b = like_function(a, subok=False, **fill_kwarg)
         assert_(type(b) is not np.matrix)
 
     def test_ones_like(self):
@@ -1495,6 +1562,13 @@ class TestLikeFuncs(TestCase):
 
     def test_empty_like(self):
         self.check_like_function(np.empty_like, None)
+
+    def test_filled_like(self):
+        self.check_like_function(np.full_like, 0, True)
+        self.check_like_function(np.full_like, 1, True)
+        self.check_like_function(np.full_like, 1000, True)
+        self.check_like_function(np.full_like, 123.456, True)
+        self.check_like_function(np.full_like, np.inf, True)
 
 class _TestCorrelate(TestCase):
     def _setup(self, dt):

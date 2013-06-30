@@ -40,7 +40,7 @@ __all__ = ['newaxis', 'ndarray', 'flatiter', 'nditer', 'nested_iters', 'ufunc',
            'Inf', 'inf', 'infty', 'Infinity',
            'nan', 'NaN', 'False_', 'True_', 'bitwise_not',
            'CLIP', 'RAISE', 'WRAP', 'MAXDIMS', 'BUFSIZE', 'ALLOW_THREADS',
-           'ComplexWarning', 'may_share_memory']
+           'ComplexWarning', 'may_share_memory', 'full', 'full_like']
 
 if sys.version_info[0] < 3:
     __all__.extend(['getbuffer', 'newbuffer'])
@@ -137,7 +137,21 @@ def ones(shape, dtype=None, order='C'):
     """
     Return a new array of given shape and type, filled with ones.
 
-    Please refer to the documentation for `zeros` for further details.
+    Parameters
+    ----------
+    shape : int or sequence of ints
+        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
+    dtype : data-type, optional
+        The desired data-type for the array, e.g., `numpy.int8`.  Default is
+        `numpy.float64`.
+    order : {'C', 'F'}, optional
+        Whether to store multidimensional data in C- or Fortran-contiguous
+        (row- or column-wise) order in memory.
+
+    Returns
+    -------
+    out : ndarray
+        Array of ones with the given shape, dtype, and order.
 
     See Also
     --------
@@ -221,6 +235,111 @@ def ones_like(a, dtype=None, order='K', subok=True):
     """
     res = empty_like(a, dtype=dtype, order=order, subok=subok)
     multiarray.copyto(res, 1, casting='unsafe')
+    return res
+
+def full(shape, fill_value, dtype=None, order='C'):
+    """
+    Return a new array of given shape and type, filled with `fill_value`.
+
+    Parameters
+    ----------
+    shape : int or sequence of ints
+        Shape of the new array, e.g., ``(2, 3)`` or ``2``.
+    fill_value : scalar
+        Fill value.
+    dtype : data-type, optional
+        The desired data-type for the array, e.g., `numpy.int8`.  Default is
+        is chosen as `np.array(fill_value).dtype`.
+    order : {'C', 'F'}, optional
+        Whether to store multidimensional data in C- or Fortran-contiguous
+        (row- or column-wise) order in memory.
+
+    Returns
+    -------
+    out : ndarray
+        Array of `fill_value` with the given shape, dtype, and order.
+
+    See Also
+    --------
+    zeros_like : Return an array of zeros with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    empty_like : Return an empty array with shape and type of input.
+    full_like : Fill an array with shape and type of input.
+    zeros : Return a new array setting values to zero.
+    ones : Return a new array setting values to one.
+    empty : Return a new uninitialized array.
+
+    Examples
+    --------
+    >>> np.full((2, 2), np.inf)
+    array([[ inf,  inf],
+           [ inf,  inf]])
+    >>> np.full((2, 2), 10, dtype=np.int)
+    array([[10, 10],
+           [10, 10]])
+
+    """
+    a = empty(shape, dtype, order)
+    multiarray.copyto(a, fill_value, casting='unsafe')
+    return a
+
+def full_like(a, fill_value, dtype=None, order='K', subok=True):
+    """
+    Return a full array with the same shape and type as a given array.
+
+    Parameters
+    ----------
+    a : array_like
+        The shape and data-type of `a` define these same attributes of
+        the returned array.
+    fill_value : scalar
+        Fill value.
+    dtype : data-type, optional
+        Overrides the data type of the result.
+    order : {'C', 'F', 'A', or 'K'}, optional
+        Overrides the memory layout of the result. 'C' means C-order,
+        'F' means F-order, 'A' means 'F' if `a` is Fortran contiguous,
+        'C' otherwise. 'K' means match the layout of `a` as closely
+        as possible.
+    subok : bool, optional.
+        If True, then the newly created array will use the sub-class
+        type of 'a', otherwise it will be a base-class array. Defaults
+        to True.
+
+    Returns
+    -------
+    out : ndarray
+        Array of `fill_value` with the same shape and type as `a`.
+
+    See Also
+    --------
+    zeros_like : Return an array of zeros with shape and type of input.
+    ones_like : Return an array of ones with shape and type of input.
+    empty_like : Return an empty array with shape and type of input.
+    zeros : Return a new array setting values to zero.
+    ones : Return a new array setting values to one.
+    empty : Return a new uninitialized array.
+    full : Fill a new array.
+
+    Examples
+    --------
+    >>> x = np.arange(6, dtype=np.int)
+    >>> np.full_like(x, 1)
+    array([1, 1, 1, 1, 1, 1])
+    >>> np.full_like(x, 0.1)
+    array([0, 0, 0, 0, 0, 0])
+    >>> np.full_like(x, 0.1, dtype=np.double)
+    array([ 0.1,  0.1,  0.1,  0.1,  0.1,  0.1])
+    >>> np.full_like(x, np.nan, dtype=np.double)
+    array([ nan,  nan,  nan,  nan,  nan,  nan])
+
+    >>> y = np.arange(6, dtype=np.double)
+    >>> np.full_like(y, 0.1)
+    array([ 0.1,  0.1,  0.1,  0.1,  0.1,  0.1])
+
+    """
+    res = empty_like(a, dtype=dtype, order=order, subok=subok)
+    multiarray.copyto(res, fill_value, casting='unsafe')
     return res
 
 
