@@ -2870,7 +2870,7 @@ class TestMemEventHook(TestCase):
         test_pydatamem_seteventhook_end()
 
 
-class PriorityNdarray():
+class PriorityNdarray(object):
     __array_priority__ = 1000
 
     def __init__(self, array):
