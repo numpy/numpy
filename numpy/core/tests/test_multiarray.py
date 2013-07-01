@@ -2870,5 +2870,152 @@ class TestMemEventHook(TestCase):
         test_pydatamem_seteventhook_end()
 
 
+class PriorityNdarray(object):
+    __array_priority__ = 1000
+
+    def __init__(self, array):
+        self.array = array
+
+    def __lt__(self, array):
+        if isinstance(array, PriorityNdarray):
+            array = array.array
+        return PriorityNdarray(self.array < array)
+
+    def __gt__(self, array):
+        if isinstance(array, PriorityNdarray):
+            array = array.array
+        return PriorityNdarray(self.array > array)
+
+    def __le__(self, array):
+        if isinstance(array, PriorityNdarray):
+            array = array.array
+        return PriorityNdarray(self.array <= array)
+
+    def __ge__(self, array):
+        if isinstance(array, PriorityNdarray):
+            array = array.array
+        return PriorityNdarray(self.array >= array)
+
+    def __eq__(self, array):
+        if isinstance(array, PriorityNdarray):
+            array = array.array
+        return PriorityNdarray(self.array == array)
+
+    def __ne__(self, array):
+        if isinstance(array, PriorityNdarray):
+            array = array.array
+        return PriorityNdarray(self.array != array)
+
+
+class TestArrayPriority(TestCase):
+    def test_lt(self):
+        l = np.asarray([0., -1., 1.], dtype=dtype)
+        r = np.asarray([0., 1., -1.], dtype=dtype)
+        lp = PriorityNdarray(l)
+        rp = PriorityNdarray(r)
+        res1 = l < r
+        res2 = l < rp
+        res3 = lp < r
+        res4 = lp < rp
+
+        assert_array_equal(res1, res2.array)
+        assert_array_equal(res1, res3.array)
+        assert_array_equal(res1, res4.array)
+        assert_(isinstance(res1, np.ndarray))
+        assert_(isinstance(res2, PriorityNdarray))
+        assert_(isinstance(res3, PriorityNdarray))
+        assert_(isinstance(res4, PriorityNdarray))
+
+    def test_gt(self):
+        l = np.asarray([0., -1., 1.], dtype=dtype)
+        r = np.asarray([0., 1., -1.], dtype=dtype)
+        lp = PriorityNdarray(l)
+        rp = PriorityNdarray(r)
+        res1 = l > r
+        res2 = l > rp
+        res3 = lp > r
+        res4 = lp > rp
+
+        assert_array_equal(res1, res2.array)
+        assert_array_equal(res1, res3.array)
+        assert_array_equal(res1, res4.array)
+        assert_(isinstance(res1, np.ndarray))
+        assert_(isinstance(res2, PriorityNdarray))
+        assert_(isinstance(res3, PriorityNdarray))
+        assert_(isinstance(res4, PriorityNdarray))
+
+    def test_le(self):
+        l = np.asarray([0., -1., 1.], dtype=dtype)
+        r = np.asarray([0., 1., -1.], dtype=dtype)
+        lp = PriorityNdarray(l)
+        rp = PriorityNdarray(r)
+        res1 = l <= r
+        res2 = l <= rp
+        res3 = lp <= r
+        res4 = lp <= rp
+
+        assert_array_equal(res1, res2.array)
+        assert_array_equal(res1, res3.array)
+        assert_array_equal(res1, res4.array)
+        assert_(isinstance(res1, np.ndarray))
+        assert_(isinstance(res2, PriorityNdarray))
+        assert_(isinstance(res3, PriorityNdarray))
+        assert_(isinstance(res4, PriorityNdarray))
+
+    def test_ge(self):
+        l = np.asarray([0., -1., 1.], dtype=dtype)
+        r = np.asarray([0., 1., -1.], dtype=dtype)
+        lp = PriorityNdarray(l)
+        rp = PriorityNdarray(r)
+        res1 = l >= r
+        res2 = l >= rp
+        res3 = lp >= r
+        res4 = lp >= rp
+
+        assert_array_equal(res1, res2.array)
+        assert_array_equal(res1, res3.array)
+        assert_array_equal(res1, res4.array)
+        assert_(isinstance(res1, np.ndarray))
+        assert_(isinstance(res2, PriorityNdarray))
+        assert_(isinstance(res3, PriorityNdarray))
+        assert_(isinstance(res4, PriorityNdarray))
+
+    def test_eq(self):
+        l = np.asarray([0., -1., 1.], dtype=dtype)
+        r = np.asarray([0., 1., -1.], dtype=dtype)
+        lp = PriorityNdarray(l)
+        rp = PriorityNdarray(r)
+        res1 = l == r
+        res2 = l == rp
+        res3 = lp == r
+        res4 = lp == rp
+
+        assert_array_equal(res1, res2.array)
+        assert_array_equal(res1, res3.array)
+        assert_array_equal(res1, res4.array)
+        assert_(isinstance(res1, np.ndarray))
+        assert_(isinstance(res2, PriorityNdarray))
+        assert_(isinstance(res3, PriorityNdarray))
+        assert_(isinstance(res4, PriorityNdarray))
+
+    def test_ne(self):
+        l = np.asarray([0., -1., 1.], dtype=dtype)
+        r = np.asarray([0., 1., -1.], dtype=dtype)
+        lp = PriorityNdarray(l)
+        rp = PriorityNdarray(r)
+        res1 = l != r
+        res2 = l != rp
+        res3 = lp != r
+        res4 = lp != rp
+
+        assert_array_equal(res1, res2.array)
+        assert_array_equal(res1, res3.array)
+        assert_array_equal(res1, res4.array)
+        assert_(isinstance(res1, np.ndarray))
+        assert_(isinstance(res2, PriorityNdarray))
+        assert_(isinstance(res3, PriorityNdarray))
+        assert_(isinstance(res4, PriorityNdarray))
+
+
 if __name__ == "__main__":
     run_module_suite()
