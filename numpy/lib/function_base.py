@@ -3742,7 +3742,7 @@ def insert(arr, obj, values, axis=None):
             # broadcasting is very different here, since a[:,0,:] = ... behaves
             # very different from a[:,[0],:] = ...! This changes values so that
             # it works likes the second case. (here a[:,0:1,:])
-            values = np.rollaxis(values, 0, axis+1)
+            values = np.rollaxis(values, 0, axis % ndim + 1)
         numnew = values.shape[axis]
         newshape[axis] += numnew
         new = empty(newshape, arr.dtype, arr.flags.fnc)
