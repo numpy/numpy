@@ -165,13 +165,13 @@ with misaligned data.
     at least *aobj* ->nd in size). You may want to typecast the
     returned pointer to the data type of the ndarray.
 
-.. cfunction:: void* PyArray_GETPTR1(PyObject* obj, <npy_intp> i)
+.. cfunction:: void* PyArray_GETPTR1(PyArrayObject* obj, npy_intp i)
 
-.. cfunction:: void* PyArray_GETPTR2(PyObject* obj, <npy_intp> i, <npy_intp> j)
+.. cfunction:: void* PyArray_GETPTR2(PyArrayObject* obj, npy_intp i, npy_intp j)
 
-.. cfunction:: void* PyArray_GETPTR3(PyObject* obj, <npy_intp> i, <npy_intp> j, <npy_intp> k)
+.. cfunction:: void* PyArray_GETPTR3(PyArrayObject* obj, npy_intp i, npy_intp j, npy_intp k)
 
-.. cfunction:: void* PyArray_GETPTR4(PyObject* obj, <npy_intp> i, <npy_intp> j, <npy_intp> k, <npy_intp> l)
+.. cfunction:: void* PyArray_GETPTR4(PyArrayObject* obj, npy_intp i, npy_intp j, npy_intp k, npy_intp l)
 
     Quick, inline access to the element at the given coordinates in
     the ndarray, *obj*, which must have respectively 1, 2, 3, or 4
@@ -1062,7 +1062,7 @@ Converting data types
     *arr* is an array scalar (has 0 dimensions), it finds the data type
     of smallest size to which the value may be converted
     without overflow or truncation to an integer.
-    
+
     This function will not demote complex to float or anything to
     boolean, but will demote a signed integer to an unsigned integer
     when the scalar value is positive.
@@ -1088,7 +1088,7 @@ Converting data types
     Categories are determined by first checking which of boolean,
     integer (int/uint), or floating point (float/complex) the maximum
     kind of all the arrays and the scalars are.
-    
+
     If there are only scalars or the maximum category of the scalars
     is higher than the maximum category of the arrays,
     the data types are combined with :cfunc:`PyArray_PromoteTypes`
@@ -1312,7 +1312,7 @@ of the constant names is deprecated in 1.7.
 
 .. note::
 
-    Arrays can be both C-style and Fortran-style contiguous simultaneously. 
+    Arrays can be both C-style and Fortran-style contiguous simultaneously.
     This is clear for 1-dimensional arrays, but can also be true for higher
     dimensional arrays.
 
