@@ -1291,6 +1291,8 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
          */
 
         if (PyArray_TYPE(self) == NPY_VOID) {
+            int _res;
+
             array_other = (PyArrayObject *)PyArray_FromAny(other, NULL, 0, 0, 0,
                                                            NULL);
             /*
@@ -1302,8 +1304,6 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
                 Py_INCREF(Py_NotImplemented);
                 return Py_NotImplemented;
             }
-
-            int _res;
 
             _res = PyObject_RichCompareBool
                 ((PyObject *)PyArray_DESCR(self),
@@ -1348,19 +1348,19 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
          */
 
         if (PyArray_TYPE(self) == NPY_VOID) {
+            int _res;
+
             array_other = (PyArrayObject *)PyArray_FromAny(other, NULL, 0, 0, 0,
                                                            NULL);
             /*
              * If not successful, indicate that the items cannot be compared
              * this way.
-            */
+             */
             if (array_other == NULL) {
                 PyErr_Clear();
                 Py_INCREF(Py_NotImplemented);
                 return Py_NotImplemented;
             }
-
-            int _res;
 
             _res = PyObject_RichCompareBool(
                     (PyObject *)PyArray_DESCR(self),
