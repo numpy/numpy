@@ -145,7 +145,9 @@ def check_fromroots(Poly):
     assert_almost_equal(p1(r), 0)
 
     # check that polynomial is monic
-    p2 = Polynomial.cast(p1, domain=d, window=w)
+    pdom = Polynomial.domain
+    pwin = Polynomial.window
+    p2 = Polynomial.cast(p1, domain=pdom, window=pwin)
     assert_almost_equal(p2.coef[-1], 1)
 
 
