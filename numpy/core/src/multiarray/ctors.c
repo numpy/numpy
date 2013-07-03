@@ -3522,7 +3522,14 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
     }
 
     if (i < count) {
-        PyErr_SetString(PyExc_ValueError, "iterator too short");
+        /* If value is NULL, there was an exception already set by the iterator
+           protocol, so we shouldn't override it with a new exception.  By
+           simply allowing the original exception to propagate, user code will
+           be easier to debug.
+         */
+        if (value != NULL) {
+            PyErr_SetString(PyExc_ValueError, "iterator too short");
+        }
         goto done;
     }
 
