@@ -626,7 +626,7 @@ class TestFromiter(TestCase):
         """Utility method for the issue 2592 tests.
 
         Raise an exception at the desired index in the iterator."""
-        for e in xrange(n):
+        for e in range(n):
             if e == eindex:
                 raise NIterError('error at index %s' % eindex)
             yield e
