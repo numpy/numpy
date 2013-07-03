@@ -346,13 +346,12 @@ class TestFloatExceptions(TestCase):
                     "Type %s raised wrong fpe error '%s'." % (ftype, exc))
 
     def assert_op_raises_fpe(self, fpeerr, flop, sc1, sc2):
-        """Check that fpe exception is raised.
+        # Check that fpe exception is raised.
+        #
+        # Given a floating operation `flop` and two scalar values, check that
+        # the operation raises the floating point exception specified by
+        #`fpeerr`. Tests all variants with 0-d array scalars as well.
 
-       Given a floating operation `flop` and two scalar values, check that
-       the operation raises the floating point exception specified by
-       `fpeerr`. Tests all variants with 0-d array scalars as well.
-
-        """
         self.assert_raises_fpe(fpeerr, flop, sc1, sc2);
         self.assert_raises_fpe(fpeerr, flop, sc1[()], sc2);
         self.assert_raises_fpe(fpeerr, flop, sc1, sc2[()]);
@@ -360,7 +359,7 @@ class TestFloatExceptions(TestCase):
 
     @dec.knownfailureif(True, "See ticket 1755")
     def test_floating_exceptions(self):
-        """Test basic arithmetic function errors"""
+        # Test basic arithmetic function errors
         oldsettings = np.seterr(all='raise')
         try:
             # Test for all real and complex float types
@@ -476,9 +475,11 @@ class TestTypes(TestCase):
         assert_equal(promote_func(array([b]),u64), np.dtype(uint64))
         assert_equal(promote_func(array([i8]),f64), np.dtype(float64))
         assert_equal(promote_func(array([u16]),f64), np.dtype(float64))
+
         # uint and int are treated as the same "kind" for
         # the purposes of array-scalar promotion.
         assert_equal(promote_func(array([u16]), i32), np.dtype(uint16))
+
         # float and complex are treated as the same "kind" for
         # the purposes of array-scalar promotion, so that you can do
         # (0j + float32array) to get a complex64 array instead of
@@ -612,7 +613,7 @@ class TestFromiter(TestCase):
         a20 = fromiter(self.makegen(), int, 20)
         self.assertTrue(len(a) == len(expected))
         self.assertTrue(len(a20) == 20)
-        self.assertRaises(ValueError, fromiter, 
+        self.assertRaises(ValueError, fromiter,
                           self.makegen(), int, len(expected) + 10)
 
     def test_values(self):
@@ -623,22 +624,21 @@ class TestFromiter(TestCase):
         self.assertTrue(alltrue(a20 == expected[:20],axis=0))
 
     def load_data(self, n, eindex):
-        """Utility method for the issue 2592 tests.
-
-        Raise an exception at the desired index in the iterator."""
+        # Utility method for the issue 2592 tests.
+        # Raise an exception at the desired index in the iterator.
         for e in range(n):
             if e == eindex:
                 raise NIterError('error at index %s' % eindex)
             yield e
 
     def test_2592(self):
-        """Test iteration exceptions are correctly raised."""
+        # Test iteration exceptions are correctly raised.
         count, eindex = 10, 5
         self.assertRaises(NIterError, np.fromiter,
                           self.load_data(count, eindex), dtype=int, count=count)
 
     def test_2592_edge(self):
-        """Test iter. exceptions, edge case (exception at end of iterator)."""
+        # Test iter. exceptions, edge case (exception at end of iterator).
         count = 10
         eindex = count-1
         self.assertRaises(NIterError, np.fromiter,
