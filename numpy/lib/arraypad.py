@@ -1079,7 +1079,7 @@ def _validate_lengths(narray, number_elements):
     normshp = _normalize_shape(narray, number_elements)
     for i in normshp:
         chk = [1 if x is None else x for x in i]
-        chk = [1 if x > 0 else -1 for x in chk]
+        chk = [1 if x >= 0 else -1 for x in chk]
         if (chk[0] < 0) or (chk[1] < 0):
             fmt = "%s cannot contain negative values."
             raise ValueError(fmt % (number_elements,))
