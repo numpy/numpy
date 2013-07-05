@@ -753,22 +753,30 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
     /* Get input arguments */
     for (i = 0; i < nin; ++i) {
         obj = PyTuple_GET_ITEM(args, i);
-        if (!PyArray_Check(obj) && !PyArray_IsScalar(obj, Generic)) {
-            /*
-             * TODO: There should be a comment here explaining what
-             *       context does.
-             */
-            context = Py_BuildValue("OOi", ufunc, args, i);
-            if (context == NULL) {
-                return -1;
+ 
+        /* If obj is scalar array and of dimension zero */
+        if(PyArray_IsZeroDim(obj) && PyArray_CheckScalar(obj)){
+            Py_INCREF(obj);
+            out_op[i] = (PyObject *)obj;
+        }else{
+            if (!PyArray_Check(obj) && !PyArray_IsScalar(obj, Generic)) {
+                /*
+                 * TODO: There should be a comment here explaining what
+                 *       context does.
+                 */
+                context = Py_BuildValue("OOi", ufunc, args, i);
+                if (context == NULL) {
+                    return -1;
+                }
             }
-        }
-        else {
-            context = NULL;
-        }
-        out_op[i] = (PyArrayObject *)PyArray_FromAny(obj,
+            else {
+                context = NULL;
+            }
+            out_op[i] = (PyArrayObject *)PyArray_FromAny(obj,
                                     NULL, 0, 0, 0, context);
-        Py_XDECREF(context);
+            Py_XDECREF(context);
+        }
+
         if (out_op[i] == NULL) {
             return -1;
         }
