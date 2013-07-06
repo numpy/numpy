@@ -755,7 +755,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
         obj = PyTuple_GET_ITEM(args, i);
  
         /* If obj is array and of dimension zero */
-        if(PyArray_IsZeroDim(obj) && PyArray_Check(obj)){
+        if(PyArray_Check(obj) && PyArray_IsZeroDim(obj)){
             Py_INCREF(obj);
             out_op[i] = (PyObject *)obj;
         }else{
