@@ -486,6 +486,14 @@ class TestEdge(TestCase):
         assert_array_equal(a, b)
 
 
+class TestZeroPadWidth(TestCase):
+    def test_zero_pad_width(self):
+        arr = np.arange(30)
+        arr = np.reshape(arr, (6, 5))
+        for pad_width in (0, (0, 0), ((0, 0), (0, 0))):
+            assert_array_equal(arr, pad(arr, pad_width, mode='constant'))
+
+
 class ValueError1(TestCase):
     def test_check_simple(self):
         arr = np.arange(30)
