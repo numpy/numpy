@@ -1798,11 +1798,10 @@ PyArray_FromArray(PyArrayObject *arr, PyArray_Descr *newtype, int flags)
 
     oldtype = PyArray_DESCR(arr);
     if (newtype == NULL) {
-        /* 
-         * Check if object is of array dimension zero with Null newtype. 
-         * If so return it directly instead of calling  PyArray_FromAny.
+        /* Check if object is of array with Null newtype. 
+         * If so return it directly instead of checking for casting.
          */
-        if (PyArray_NDIM(arr) == 0 && flags == 0) {
+        if (flags == 0) {
             Py_INCREF(arr);
             return (PyObject *)arr;
         }
