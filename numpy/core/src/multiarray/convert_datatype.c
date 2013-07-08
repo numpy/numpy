@@ -249,7 +249,7 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                         else if (PyArray_Check(data_obj)) {
                             /*
                              * Convert data array to list of objects since
-                             * GetArrayParamsFromObject won't iterator over
+                             * GetArrayParamsFromObject won't iterate over
                              * array.
                              */
                             list = PyArray_ToList(data_obj);

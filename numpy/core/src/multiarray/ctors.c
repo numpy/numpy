@@ -532,11 +532,11 @@ discover_itemsize(PyObject *s, int nd, int *itemsize, int size_as_string)
 
     if ((nd == 0) || PyString_Check(s) ||
 #if defined(NPY_PY3K)
-        PyMemoryView_Check(s) ||
+            PyMemoryView_Check(s) ||
 #else
-        PyBuffer_Check(s) ||
+            PyBuffer_Check(s) ||
 #endif
-        PyUnicode_Check(s)) {
+            PyUnicode_Check(s)) {
 
         /* If an object has no length, leave it be */
         if (size_as_string && s != NULL && !PyString_Check(s)) {
@@ -569,7 +569,7 @@ discover_itemsize(PyObject *s, int nd, int *itemsize, int size_as_string)
             return -1;
         }
 
-        r = discover_itemsize(e,nd-1,itemsize,size_as_string);
+        r = discover_itemsize(e, nd - 1, itemsize, size_as_string);
         Py_DECREF(e);
         if (r == -1) {
             return -1;
@@ -1541,7 +1541,8 @@ PyArray_GetArrayParamsFromObject(PyObject *op,
                             PyTypeNum_ISEXTENDED((*out_dtype)->type_num)) {
             int itemsize = 0;
             int size_as_string = 0;
-            if ((*out_dtype)->type_num == NPY_STRING || (*out_dtype)->type_num == NPY_UNICODE) {
+            if ((*out_dtype)->type_num == NPY_STRING ||
+                    (*out_dtype)->type_num == NPY_UNICODE) {
                 size_as_string = 1;
             }
             if (discover_itemsize(op, *out_ndim, &itemsize, size_as_string) < 0) {

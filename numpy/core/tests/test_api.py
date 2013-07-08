@@ -260,25 +260,19 @@ def test_array_astype():
     assert_equal(b.dtype, np.dtype('U10'))
 
     a = np.array(123456789012345678901234567890, dtype='O').astype('S')
-    assert_array_equal(a, np.array(b'123456789012345678901234567890',
-        dtype='S30'))
+    assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array(123456789012345678901234567890, dtype='O').astype('U')
-    assert_array_equal(a, np.array(sixu('123456789012345678901234567890'),
-        dtype='U30'))
+    assert_array_equal(a, np.array(sixu('1234567890' * 3), dtype='U30'))
 
     a = np.array([123456789012345678901234567890], dtype='O').astype('S')
-    assert_array_equal(a, np.array(b'123456789012345678901234567890',
-        dtype='S30'))
+    assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array([123456789012345678901234567890], dtype='O').astype('U')
-    assert_array_equal(a, np.array(sixu('123456789012345678901234567890'),
-        dtype='U30'))
+    assert_array_equal(a, np.array(sixu('1234567890' * 3), dtype='U30'))
     
     a = np.array(123456789012345678901234567890, dtype='S')
-    assert_array_equal(a, np.array(b'123456789012345678901234567890',
-        dtype='S30'))
+    assert_array_equal(a, np.array(b'1234567890' * 3, dtype='S30'))
     a = np.array(123456789012345678901234567890, dtype='U')
-    assert_array_equal(a, np.array(sixu('123456789012345678901234567890'),
-        dtype='U30'))
+    assert_array_equal(a, np.array(sixu('1234567890' * 3), dtype='U30'))
 
 
 def test_copyto_fromscalar():
