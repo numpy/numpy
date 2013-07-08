@@ -226,24 +226,36 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                     break;
                 case NPY_OBJECT:
                     size = 64;
-                    /* 
-                     * If we're adapting a string dtype for an array of string
-                     * objects, call GetArrayParamsFromObject to figure out
-                     * maximum string size, and use that as new dtype size.
-                     */
                     if ((flex_type_num == NPY_STRING ||
                             flex_type_num == NPY_UNICODE) &&
                             data_obj != NULL) {
-                        /*
-                         * Convert data array to list of objects since
-                         * GetArrayParamsFromObject won't iterate through
-                         * items in an array.
-                         */
-                        list = PyArray_ToList(data_obj);
-                        if (list != NULL) {
+                        if (PyArray_CheckScalar(data_obj)) {
+                            PyObject *scalar = PyArray_ToList(data_obj);
+                            if (scalar != NULL) {
+                                PyObject *s = PyObject_Str(scalar);
+                                if (s == NULL) {
+                                    Py_DECREF(scalar);
+                                    Py_DECREF(*flex_dtype);
+                                    *flex_dtype = NULL;
+                                    return;
+                                }
+                                else {
+                                    size = PyObject_Length(s);
+                                    Py_DECREF(s);
+                                }
+                                Py_DECREF(scalar);
+                            }
+                        }
+                        else if (PyArray_Check(data_obj)) {
+                            /*
+                             * Convert data array to list of objects since
+                             * GetArrayParamsFromObject won't iterate over
+                             * array.
+                             */
+                            list = PyArray_ToList(data_obj);
                             result = PyArray_GetArrayParamsFromObject(
                                     list,
-                                    flex_dtype,
+                                    *flex_dtype,
                                     0, &dtype,
                                     &ndim, dims, &arr, NULL);
                             if (result == 0 && dtype != NULL) {
@@ -255,6 +267,18 @@ PyArray_AdaptFlexibleDType(PyObject *data_obj, PyArray_Descr *data_dtype,
                                 }
                             }
                             Py_DECREF(list);
+                        }
+                        else if (PyArray_IsPythonScalar(data_obj)) {
+                            PyObject *s = PyObject_Str(data_obj);
+                            if (s == NULL) {
+                                Py_DECREF(*flex_dtype);
+                                *flex_dtype = NULL;
+                                return;
+                            }
+                            else {
+                                size = PyObject_Length(s);
+                                Py_DECREF(s);
+                            }
                         }
                     }
                     break;
