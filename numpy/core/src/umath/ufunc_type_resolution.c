@@ -422,6 +422,7 @@ PyUFunc_SimpleBinaryOperationTypeResolver(PyUFuncObject *ufunc,
      */
     type_num1 = PyArray_DESCR(operands[0])->type_num;
     type_num2 = PyArray_DESCR(operands[1])->type_num;
+
     if (type_num1 >= NPY_NTYPES || type_num2 >= NPY_NTYPES ||
             type_num1 == NPY_OBJECT || type_num2 == NPY_OBJECT) {
         return PyUFunc_DefaultTypeResolver(ufunc, casting, operands,
@@ -431,6 +432,7 @@ PyUFunc_SimpleBinaryOperationTypeResolver(PyUFuncObject *ufunc,
     if (type_tup == NULL) {
         /* Input types are the result type */
         out_dtypes[0] = PyArray_ResultType(2, operands, 0, NULL);
+
         if (out_dtypes[0] == NULL) {
             return -1;
         }

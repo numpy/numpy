@@ -754,15 +754,11 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
     for (i = 0; i < nin; ++i) {
         obj = PyTuple_GET_ITEM(args, i);
  
-        /*
-         * If obj is array of dimension zero. PyArray_FromAny(obj,NULL,0,0,0,NULL) calls
-         * PyArray_FromArray(obj,NULL,0) which return original obj
-         */
-        if(PyArray_IsZeroDim(obj) && PyArray_Check(obj)){
-            Py_INCREF(obj);
-            out_op[i] = (PyArrayObject *)obj;
-        }else{
-            if (!PyArray_Check(obj) && !PyArray_IsScalar(obj, Generic)) {
+        if (PyArray_Check(obj)) {
+            out_op[i] = (PyArrayObject *)PyArray_FromArray(obj,NULL,0);
+        }
+        else {
+            if (!PyArray_IsScalar(obj, Generic)) {
                 /*
                  * TODO: There should be a comment here explaining what
                  *       context does.
