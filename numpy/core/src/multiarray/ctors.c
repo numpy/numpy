@@ -3466,9 +3466,9 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         goto done;
     }
     elcount = (count < 0) ? 0 : count;
-    if ((elsize=dtype->elsize) == 0) {
-        PyErr_SetString(PyExc_ValueError, "Must specify length "\
-                        "when using variable-size data-type.");
+    if ((elsize = dtype->elsize) == 0) {
+        PyErr_SetString(PyExc_ValueError,
+                "Must specify length when using variable-size data-type.");
         goto done;
     }
 
@@ -3477,8 +3477,8 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
      * reference counts before throwing away any memory.
      */
     if (PyDataType_REFCHK(dtype)) {
-        PyErr_SetString(PyExc_ValueError, "cannot create "\
-                        "object arrays from iterator");
+        PyErr_SetString(PyExc_ValueError,
+                "cannot create object arrays from iterator");
         goto done;
     }
 
@@ -3505,7 +3505,7 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
             }
             if (new_data == NULL) {
                 PyErr_SetString(PyExc_MemoryError,
-                                "cannot allocate array memory");
+                        "cannot allocate array memory");
                 Py_DECREF(value);
                 goto done;
             }
@@ -3513,16 +3513,21 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
         }
         PyArray_DIMS(ret)[0] = i + 1;
 
-        if (((item = index2ptr(ret, i)) == NULL)
-            || (PyArray_DESCR(ret)->f->setitem(value, item, ret) == -1)) {
+        if (((item = index2ptr(ret, i)) == NULL) ||
+                (PyArray_DESCR(ret)->f->setitem(value, item, ret) == -1)) {
             Py_DECREF(value);
             goto done;
         }
         Py_DECREF(value);
     }
 
+
+    if (PyErr_Occurred()) {
+        goto done;
+    }
     if (i < count) {
-        PyErr_SetString(PyExc_ValueError, "iterator too short");
+        PyErr_SetString(PyExc_ValueError,
+                "iterator too short");
         goto done;
     }
 
@@ -3531,11 +3536,13 @@ PyArray_FromIter(PyObject *obj, PyArray_Descr *dtype, npy_intp count)
      * (assuming realloc is reasonably good about reusing space...)
      */
     if (i == 0) {
+        /* The size cannot be zero for PyDataMem_RENEW. */
         i = 1;
     }
     new_data = PyDataMem_RENEW(PyArray_DATA(ret), i * elsize);
     if (new_data == NULL) {
-        PyErr_SetString(PyExc_MemoryError, "cannot allocate array memory");
+        PyErr_SetString(PyExc_MemoryError,
+                "cannot allocate array memory");
         goto done;
     }
     ((PyArrayObject_fields *)ret)->data = new_data;
