@@ -2124,7 +2124,12 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
         x = x[~xinf]
         y = y[~xinf]
 
-    return all(less_equal(abs(x-y), atol + rtol * abs(y)))
+    # ignore invalid fpe's
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        r = all(less_equal(abs(x-y), atol + rtol * abs(y)))
+
+    return r
 
 def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     """
