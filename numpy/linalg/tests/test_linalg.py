@@ -147,6 +147,13 @@ class LinalgNonsquareTestCase(object):
         self.do(a, b)
 
 
+class LinalgZeroShapeTestCase(object):
+    def test_zero(self):
+        a = np.zeros((0,0))
+        b = np.zeros((0,5))
+        self.do(a, b)
+
+
 def _generalized_testcase(new_cls_name, old_cls):
     def get_method(old_name, new_name):
         def method(self):
@@ -191,7 +198,8 @@ def identity_like_generalized(a):
     return identity(a.shape[0])
 
 
-class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
+class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase,
+        LinalgZeroShapeTestCase, TestCase):
     def do(self, a, b):
         x = linalg.solve(a, b)
         assert_almost_equal(b, dot_generalized(a, x))
@@ -205,7 +213,8 @@ class TestSolve(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
             yield check, dtype
 
 
-class TestInv(LinalgTestCase, LinalgGeneralizedTestCase, TestCase):
+class TestInv(LinalgTestCase, LinalgGeneralizedTestCase,
+        LinalgZeroShapeTestCase, TestCase):
     def do(self, a, b):
         a_inv = linalg.inv(a)
         assert_almost_equal(dot_generalized(a, a_inv),
