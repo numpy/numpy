@@ -85,6 +85,19 @@ IO compatibility with large files
 
 Large NPZ files >2GB can be loaded on 64-bit systems.
 
+Binary operations with non-arrays as second argument
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Binary operations of the form ``<array-or-subclass> * <non-array-subclass>``
+where ``<non-array-subclass>`` declares an ``__array_priority__`` higher than
+that of ``<array-or-subclass>`` will now unconditionally return
+*NotImplemented*, giving ``<non-array-subclass>`` a chance to handle the
+operation.  Previously, `NotImplemented` would only be returned if
+``<non-array-subclass>`` actually implemented the reversed operation, and after
+a (potentially expensive) array conversion of ``<non-array-subclass>`` had been
+attempted. (`bug <https://github.com/numpy/numpy/issues/3375>`_, `pull request
+<https://github.com/numpy/numpy/pull/3501>`_)
+
 
 New Features
 ============

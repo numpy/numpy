@@ -834,5 +834,35 @@ class TestUfunc(TestCase):
             dtype=rational);
         assert_equal(result, expected);
 
+    def test_custom_array_like(self):
+        class MyThing(object):
+            __array_priority__ = 1000
+
+            rmul_count = 0
+            getitem_count = 0
+
+            def __init__(self, shape):
+                self.shape = shape
+
+            def __len__(self):
+                return self.shape[0]
+
+            def __getitem__(self, i):
+                MyThing.getitem_count += 1
+                if not isinstance(i, tuple):
+                    i = (i,)
+                if len(i) > len(self.shape):
+                    raise IndexError("boo")
+
+                return MyThing(self.shape[len(i):])
+
+            def __rmul__(self, other):
+                MyThing.rmul_count += 1
+                return self
+
+        np.float64(5)*MyThing((3, 3))
+        assert_(MyThing.rmul_count == 1, MyThing.rmul_count)
+        assert_(MyThing.getitem_count <= 2, MyThing.getitem_count)
+
 if __name__ == "__main__":
     run_module_suite()
