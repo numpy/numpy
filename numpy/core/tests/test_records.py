@@ -7,6 +7,7 @@ from numpy.compat import asbytes, asunicode
 
 import warnings
 import collections
+import pickle
 
 
 class TestFromrecords(TestCase):
@@ -145,6 +146,17 @@ class TestRecord(TestCase):
         x = self.data[['col1', 'col2']]
         y = self.data[['col2', 'col1']]
         assert_equal(x[0][0], y[0][1])
+
+    def test_pickle_1(self):
+        # Issue #1529
+        a = np.array([(1, [])], dtype=[('a', np.int32), ('b', np.int32, 0)])
+        assert_equal(a, pickle.loads(pickle.dumps(a)))
+        assert_equal(a[0], pickle.loads(pickle.dumps(a[0])))
+
+    def test_pickle_2(self):
+        a = self.data
+        assert_equal(a, pickle.loads(pickle.dumps(a)))
+        assert_equal(a[0], pickle.loads(pickle.dumps(a[0])))
 
 
 def test_find_duplicate():
