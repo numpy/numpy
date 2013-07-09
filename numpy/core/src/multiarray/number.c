@@ -209,6 +209,26 @@ PyArray_GenericBinaryFunction(PyArrayObject *m1, PyObject *m2, PyObject *op)
         Py_INCREF(Py_NotImplemented);
         return Py_NotImplemented;
     }
+
+    if (!PyArray_Check(m2)) {
+          /*
+           * Catch priority inversion and punt, but only if it's guaranteed
+           * that we were called through m1 and the other guy is not an array
+           * at all. Note that some arrays need to pass through here even
+           * with priorities inverted, for example: float(17) * np.matrix(...)
+           *
+           * See also:
+           * - https://github.com/numpy/numpy/issues/3502
+           * - https://github.com/numpy/numpy/issues/3503
+           */
+          double m1_prio = PyArray_GetPriority(m1, NPY_SCALAR_PRIORITY);
+          double m2_prio = PyArray_GetPriority(m2, NPY_SCALAR_PRIORITY);
+          if (m1_prio < m2_prio) {
+              Py_INCREF(Py_NotImplemented);
+              return Py_NotImplemented;
+          }
+    }
+
     return PyObject_CallFunction(op, "OO", m1, m2);
 }
 
