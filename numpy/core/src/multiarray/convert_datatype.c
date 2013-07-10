@@ -743,7 +743,11 @@ can_cast_scalar_to(PyArray_Descr *scal_type, char *scal_data,
     /* An aligned memory buffer large enough to hold any type */
     npy_longlong value[4];
 
-    if (casting == NPY_UNSAFE_CASTING) {
+    /* 
+     * If the two dtypes are actually references to the same object 
+     * or if casting type is forced unsafe then always OK. 
+     */
+    if (scal_type == to || casting == NPY_UNSAFE_CASTING ) {
         return 1;
     }
 
