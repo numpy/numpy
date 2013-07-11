@@ -93,8 +93,6 @@ array_getcharbuf(PyArrayObject *self, Py_ssize_t segment, constchar **ptrptr)
  * Py_buffers.
  *************************************************************************/
 
-#if PY_VERSION_HEX >= 0x02060000
-
 /*
  * Format string translator
  *
@@ -333,8 +331,10 @@ _buffer_format_string(PyArray_Descr *descr, _tmp_string_t *str,
             }
 
             if (is_native_only_type) {
-                /* It's not possible to express native-only data types
-                   in non-native npy_byte orders */
+                /*
+                 * It's not possible to express native-only data types
+                 * in non-native npy_byte orders
+                 */
                 PyErr_Format(PyExc_ValueError,
                              "cannot expose native-only dtype '%c' in "
                              "non-native byte order '%c' via buffer interface",
@@ -722,42 +722,24 @@ _array_dealloc_buffer_info(PyArrayObject *self)
     }
 }
 
-#else
-
-NPY_NO_EXPORT void
-_array_dealloc_buffer_info(PyArrayObject *self)
-{
-}
-
-#endif
 
 /*************************************************************************/
 
 NPY_NO_EXPORT PyBufferProcs array_as_buffer = {
 #if !defined(NPY_PY3K)
-#if PY_VERSION_HEX >= 0x02050000
     (readbufferproc)array_getreadbuf,       /*bf_getreadbuffer*/
     (writebufferproc)array_getwritebuf,     /*bf_getwritebuffer*/
     (segcountproc)array_getsegcount,        /*bf_getsegcount*/
     (charbufferproc)array_getcharbuf,       /*bf_getcharbuffer*/
-#else
-    (getreadbufferproc)array_getreadbuf,    /*bf_getreadbuffer*/
-    (getwritebufferproc)array_getwritebuf,  /*bf_getwritebuffer*/
-    (getsegcountproc)array_getsegcount,     /*bf_getsegcount*/
-    (getcharbufferproc)array_getcharbuf,    /*bf_getcharbuffer*/
 #endif
-#endif
-#if PY_VERSION_HEX >= 0x02060000
     (getbufferproc)array_getbuffer,
     (releasebufferproc)0,
-#endif
 };
 
 
 /*************************************************************************
  * Convert PEP 3118 format string to PyArray_Descr
  */
-#if PY_VERSION_HEX >= 0x02060000
 
 NPY_NO_EXPORT PyArray_Descr*
 _descriptor_from_pep3118_format(char *s)
@@ -817,15 +799,3 @@ _descriptor_from_pep3118_format(char *s)
     }
     return (PyArray_Descr*)descr;
 }
-
-#else
-
-NPY_NO_EXPORT PyArray_Descr*
-_descriptor_from_pep3118_format(char *s)
-{
-    PyErr_SetString(PyExc_RuntimeError,
-                    "PEP 3118 is not supported on Python versions < 2.6");
-    return NULL;
-}
-
-#endif

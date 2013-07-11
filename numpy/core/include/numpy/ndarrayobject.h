@@ -225,15 +225,8 @@ PyArray_XDECREF_ERR(PyArrayObject *arr)
                                    (PyTuple_GET_ITEM((value), 2) == (key)))
 
 
-/* Define python version independent deprecation macro */
-
-#if PY_VERSION_HEX >= 0x02050000
 #define DEPRECATE(msg) PyErr_WarnEx(PyExc_DeprecationWarning,msg,1)
 #define DEPRECATE_FUTUREWARNING(msg) PyErr_WarnEx(PyExc_FutureWarning,msg,1)
-#else
-#define DEPRECATE(msg) PyErr_Warn(PyExc_DeprecationWarning,msg)
-#define DEPRECATE_FUTUREWARNING(msg) PyErr_Warn(PyExc_FutureWarning,msg)
-#endif
 
 
 #ifdef __cplusplus

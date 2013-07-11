@@ -101,9 +101,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };
 /**end repeat**/
 
@@ -364,7 +362,6 @@ gentype_repr(PyObject *self)
     return ret;
 }
 
-#if PY_VERSION_HEX >= 0x02060000
 /*
  * The __format__ method for PEP 3101.
  */
@@ -435,7 +432,6 @@ gentype_format(PyObject *self, PyObject *args)
     Py_DECREF(obj);
     return ret;
 }
-#endif
 
 #ifdef FORCE_NO_LONG_DOUBLE_FORMATTING
 #undef NPY_LONGDOUBLE_FMT
@@ -517,11 +513,9 @@ format_@name@(char *buf, size_t buflen, @type@ val, unsigned int prec)
             fprintf(stderr, "Error while formatting\n");
             return;
         }
-#if PY_VERSION_HEX >= 0x02060000
         if (!npy_isfinite(val.imag)) {
             strncat(buf, "*", 1);
         }
-#endif
         strncat(buf, "j", 1);
     }
     else {
@@ -570,11 +564,9 @@ format_@name@(char *buf, size_t buflen, @type@ val, unsigned int prec)
                 else {
                         strcpy(im, "-inf");
                 }
-                #if PY_VERSION_HEX >= 0x02060000
                 if (!npy_isfinite(val.imag)) {
                         strncat(im, "*", 1);
                 }
-                #endif
         }
         PyOS_snprintf(buf, buflen, "(%s%sj)", re, im);
     }
@@ -1059,9 +1051,7 @@ static PyNumberMethods gentype_as_number = {
     (binaryfunc)gentype_true_divide,             /*nb_true_divide*/
     0,                                           /*nb_inplace_floor_divide*/
     0,                                           /*nb_inplace_true_divide*/
-#if PY_VERSION_HEX >= 0x02050000
     (unaryfunc)NULL,                             /*nb_index*/
-#endif
 };
 
 
@@ -2014,13 +2004,11 @@ static PyMethodDef gentype_methods[] = {
         (PyCFunction)gentype_round,
         METH_VARARGS | METH_KEYWORDS, NULL},
 #endif
-#if PY_VERSION_HEX >= 0x02060000
     /* For the format function */
     {"__format__",
         gentype_format,
         METH_VARARGS,
         "NumPy array scalar formatter"},
-#endif
     {"setflags",
         (PyCFunction)gentype_setflags,
         METH_VARARGS | METH_KEYWORDS, NULL},
@@ -2232,32 +2220,19 @@ fail:
 }
 
 static PyMappingMethods voidtype_as_mapping = {
-#if PY_VERSION_HEX >= 0x02050000
     (lenfunc)voidtype_length,                    /*mp_length*/
-#else
-    (inquiry)voidtype_length,                    /*mp_length*/
-#endif
     (binaryfunc)voidtype_subscript,              /*mp_subscript*/
     (objobjargproc)voidtype_ass_subscript,       /*mp_ass_subscript*/
 };
 
 
 static PySequenceMethods voidtype_as_sequence = {
-#if PY_VERSION_HEX >= 0x02050000
     (lenfunc)voidtype_length,                    /*sq_length*/
     0,                                           /*sq_concat*/
     0,                                           /*sq_repeat*/
     (ssizeargfunc)voidtype_item,                 /*sq_item*/
     0,                                           /*sq_slice*/
     (ssizeobjargproc)voidtype_ass_item,          /*sq_ass_item*/
-#else
-        (inquiry)voidtype_length,                /*sq_length*/
-    0,                                           /*sq_concat*/
-    0,                                           /*sq_repeat*/
-    (intargfunc)voidtype_item,                   /*sq_item*/
-    0,                                           /*sq_slice*/
-    (intobjargproc)voidtype_ass_item,            /*sq_ass_item*/
-#endif
     0,                                           /* ssq_ass_slice */
     0,                                           /* sq_contains */
     0,                                           /* sq_inplace_concat */
@@ -2325,7 +2300,6 @@ gentype_getcharbuf(PyObject *self, Py_ssize_t segment, constchar **ptrptr)
 }
 #endif /* !defined(NPY_PY3K) */
 
-#if PY_VERSION_HEX >= 0x02060000
 
 static int
 gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
@@ -2341,7 +2315,6 @@ gentype_getbuffer(PyObject *self, Py_buffer *view, int flags)
 
 /* releasebuffer is not needed */
 
-#endif
 
 static PyBufferProcs gentype_as_buffer = {
 #if !defined(NPY_PY3K)
@@ -2350,10 +2323,8 @@ static PyBufferProcs gentype_as_buffer = {
     gentype_getsegcount,                         /* bf_getsegcount*/
     gentype_getcharbuf,                          /* bf_getcharbuffer*/
 #endif
-#if PY_VERSION_HEX >= 0x02060000
     gentype_getbuffer,                           /* bf_getbuffer */
     NULL,                                        /* bf_releasebuffer */
-#endif
 };
 
 
@@ -2422,9 +2393,7 @@ NPY_NO_EXPORT PyTypeObject PyGenericArrType_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };
 
 static void
@@ -2741,7 +2710,6 @@ bool_arrtype_nonzero(PyObject *a)
     return a == PyArrayScalar_True;
 }
 
-#if PY_VERSION_HEX >= 0x02050000
 /**begin repeat
  * #name = byte, short, int, long, ubyte, ushort, longlong, uint,
  *         ulong, ulonglong#
@@ -2763,7 +2731,6 @@ bool_index(PyObject *a)
 {
     return PyInt_FromLong(PyArrayScalar_VAL(a, Bool));
 }
-#endif
 
 /* Arithmetic methods -- only so we can override &, |, ^. */
 NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
@@ -2825,9 +2792,7 @@ NPY_NO_EXPORT PyNumberMethods bool_arrtype_as_number = {
     0,                                           /* nb_inplace_floor_divide */
     0,                                           /* nb_inplace_true_divide */
     /* Added in release 2.5 */
-#if PY_VERSION_HEX >= 0x02050000
     0,                                           /* nb_index */
-#endif
 };
 
 static PyObject *
@@ -3182,7 +3147,6 @@ object_arrtype_inplace_repeat(PyObjectScalarObject *self, Py_ssize_t count)
 }
 
 static PySequenceMethods object_arrtype_as_sequence = {
-#if PY_VERSION_HEX >= 0x02050000
     (lenfunc)object_arrtype_length,              /*sq_length*/
     (binaryfunc)object_arrtype_concat,           /*sq_concat*/
     (ssizeargfunc)object_arrtype_repeat,         /*sq_repeat*/
@@ -3193,30 +3157,12 @@ static PySequenceMethods object_arrtype_as_sequence = {
     (objobjproc)object_arrtype_contains,         /* sq_contains */
     (binaryfunc)object_arrtype_inplace_concat,   /* sq_inplace_concat */
     (ssizeargfunc)object_arrtype_inplace_repeat, /* sq_inplace_repeat */
-#else
-    (inquiry)object_arrtype_length,              /*sq_length*/
-    (binaryfunc)object_arrtype_concat,           /*sq_concat*/
-    (intargfunc)object_arrtype_repeat,           /*sq_repeat*/
-    0,                                           /*sq_item*/
-    0,                                           /*sq_slice*/
-    0,                                           /* sq_ass_item */
-    0,                                           /* sq_ass_slice */
-    (objobjproc)object_arrtype_contains,         /* sq_contains */
-    (binaryfunc)object_arrtype_inplace_concat,   /* sq_inplace_concat */
-    (intargfunc)object_arrtype_inplace_repeat,   /* sq_inplace_repeat */
-#endif
 };
 
 static PyMappingMethods object_arrtype_as_mapping = {
-#if PY_VERSION_HEX >= 0x02050000
     (lenfunc)object_arrtype_length,
     (binaryfunc)object_arrtype_subscript,
     (objobjargproc)object_arrtype_ass_subscript,
-#else
-    (inquiry)object_arrtype_length,
-    (binaryfunc)object_arrtype_subscript,
-    (objobjargproc)object_arrtype_ass_subscript,
-#endif
 };
 
 #if !defined(NPY_PY3K)
@@ -3285,7 +3231,6 @@ object_arrtype_getcharbuf(PyObjectScalarObject *self, Py_ssize_t segment,
 }
 #endif
 
-#if PY_VERSION_HEX >= 0x02060000
 static int
 object_arrtype_getbuffer(PyObjectScalarObject *self, Py_buffer *view, int flags)
 {
@@ -3311,26 +3256,16 @@ object_arrtype_releasebuffer(PyObjectScalarObject *self, Py_buffer *view)
         (*pb->bf_releasebuffer)(self->obval, view);
     }
 }
-#endif
 
 static PyBufferProcs object_arrtype_as_buffer = {
 #if !defined(NPY_PY3K)
-#if PY_VERSION_HEX >= 0x02050000
     (readbufferproc)object_arrtype_getreadbuf,
     (writebufferproc)object_arrtype_getwritebuf,
     (segcountproc)object_arrtype_getsegcount,
     (charbufferproc)object_arrtype_getcharbuf,
-#else
-    (getreadbufferproc)object_arrtype_getreadbuf,
-    (getwritebufferproc)object_arrtype_getwritebuf,
-    (getsegcountproc)object_arrtype_getsegcount,
-    (getcharbufferproc)object_arrtype_getcharbuf,
 #endif
-#endif
-#if PY_VERSION_HEX >= 0x02060000
     (getbufferproc)object_arrtype_getbuffer,
     (releasebufferproc)object_arrtype_releasebuffer,
-#endif
 };
 
 static PyObject *
@@ -3395,9 +3330,7 @@ NPY_NO_EXPORT PyTypeObject PyObjectArrType_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };
 
 static PyObject *
@@ -3513,9 +3446,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };
 /**end repeat**/
 
@@ -3604,9 +3535,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };
 
 #undef _THIS_SIZE
@@ -3706,9 +3635,7 @@ NPY_NO_EXPORT PyTypeObject Py@NAME@ArrType_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };
 #undef _THIS_SIZE1
 #undef _THIS_SIZE2
@@ -4066,7 +3993,6 @@ initialize_numeric_types(void)
     PyGenericArrType_Type.tp_richcompare = gentype_richcompare;
 
     PyBoolArrType_Type.tp_as_number = &bool_arrtype_as_number;
-#if PY_VERSION_HEX >= 0x02050000
     /*
      * need to add dummy versions with filled-in nb_index
      * in-order for PyType_Ready to fill in .__index__() method
@@ -4083,7 +4009,6 @@ initialize_numeric_types(void)
 
     /**end repeat**/
     PyBoolArrType_Type.tp_as_number->nb_index = (unaryfunc)bool_index;
-#endif
 
     PyStringArrType_Type.tp_alloc = NULL;
     PyStringArrType_Type.tp_free = NULL;

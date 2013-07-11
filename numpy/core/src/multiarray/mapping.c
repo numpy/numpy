@@ -1502,11 +1502,7 @@ array_ass_sub(PyArrayObject *self, PyObject *ind, PyObject *op)
 }
 
 NPY_NO_EXPORT PyMappingMethods array_as_mapping = {
-#if PY_VERSION_HEX >= 0x02050000
     (lenfunc)array_length,              /*mp_length*/
-#else
-    (inquiry)array_length,              /*mp_length*/
-#endif
     (binaryfunc)array_subscript,        /*mp_subscript*/
     (objobjargproc)array_ass_sub,       /*mp_ass_subscript*/
 };
@@ -2235,9 +2231,7 @@ NPY_NO_EXPORT PyTypeObject PyArrayMapIter_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };
 
 /** END of Subscript Iterator **/

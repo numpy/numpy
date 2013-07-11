@@ -19,12 +19,7 @@
  * exponent.
  */
 
-/* We force 3 digits on windows for python < 2.6 for compatibility reason */
-#if defined(MS_WIN32) && (PY_VERSION_HEX < 0x02060000)
-#define MIN_EXPONENT_DIGITS 3
-#else
 #define MIN_EXPONENT_DIGITS 2
-#endif
 
 /*
  * Ensure that any exponent, if present, is at least MIN_EXPONENT_DIGITS

@@ -31,27 +31,6 @@ extern "C" {
 #define PyNumber_Int PyNumber_Long
 #endif
 
-#if (PY_VERSION_HEX < 0x02060000)
-#define Py_TYPE(o)    (((PyObject*)(o))->ob_type)
-#define Py_REFCNT(o)  (((PyObject*)(o))->ob_refcnt)
-#define Py_SIZE(o)    (((PyVarObject*)(o))->ob_size)
-#endif
-
-  /*
-#ifdef F2PY_REPORT_ATEXIT_DISABLE
-#undef F2PY_REPORT_ATEXIT
-#else
-
-#ifndef __FreeBSD__
-#ifndef __WIN32__
-#ifndef __APPLE__
-#define F2PY_REPORT_ATEXIT
-#endif
-#endif
-#endif
-
-#endif
-  */
 
 #ifdef F2PY_REPORT_ATEXIT
 #include <sys/timeb.h>

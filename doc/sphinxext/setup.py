@@ -1,11 +1,10 @@
 from __future__ import division, print_function
 
+import sys
 import setuptools
 from distutils.core import setup
 
-import sys
-if sys.version_info[0] >= 3 and sys.version_info[1] < 3 or \
-        sys.version_info[0] <= 2 and sys.version_info[1] < 6:
+if sys.version_info[:2] < (2, 6) or (3, 0) <= sys.version_info[0:2] < (3, 3):
     raise RuntimeError("Python version 2.6, 2.7 or >= 3.3 required.")
 
 version = "0.4.dev"

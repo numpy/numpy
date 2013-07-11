@@ -71,18 +71,8 @@ typedef Py_uintptr_t npy_uintp;
 #undef constchar
 #endif
 
-#if (PY_VERSION_HEX < 0x02050000)
-  #ifndef PY_SSIZE_T_MIN
-    typedef int Py_ssize_t;
-    #define PY_SSIZE_T_MAX INT_MAX
-    #define PY_SSIZE_T_MIN INT_MIN
-  #endif
-#define NPY_SSIZE_T_PYFMT "i"
-#define constchar const char
-#else
 #define NPY_SSIZE_T_PYFMT "n"
 #define constchar char
-#endif
 
 /* NPY_INTP_FMT Note:
  *      Unlike the other NPY_*_FMT macros which are used with

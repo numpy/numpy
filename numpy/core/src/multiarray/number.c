@@ -340,7 +340,6 @@ is_scalar_with_conversion(PyObject *o2, double* out_exponent)
             }
         }
     }
-#if (PY_VERSION_HEX >= 0x02050000)
     if (PyIndex_Check(o2)) {
         PyObject* value = PyNumber_Index(o2);
         Py_ssize_t val;
@@ -358,7 +357,6 @@ is_scalar_with_conversion(PyObject *o2, double* out_exponent)
         *out_exponent = (double) val;
         return NPY_INTPOS_SCALAR;
     }
-#endif
     return NPY_NOSCALAR;
 }
 
@@ -851,7 +849,6 @@ _array_copy_nice(PyArrayObject *self)
     return PyArray_Return((PyArrayObject *) PyArray_Copy(self));
 }
 
-#if PY_VERSION_HEX >= 0x02050000
 static PyObject *
 array_index(PyArrayObject *v)
 {
@@ -868,7 +865,6 @@ array_index(PyArrayObject *v)
     }
     return PyArray_DESCR(v)->f->getitem(PyArray_DATA(v), v);
 }
-#endif
 
 
 NPY_NO_EXPORT PyNumberMethods array_as_number = {
@@ -928,9 +924,5 @@ NPY_NO_EXPORT PyNumberMethods array_as_number = {
     (binaryfunc)array_true_divide,              /*nb_true_divide*/
     (binaryfunc)array_inplace_floor_divide,     /*nb_inplace_floor_divide*/
     (binaryfunc)array_inplace_true_divide,      /*nb_inplace_true_divide*/
-
-#if PY_VERSION_HEX >= 0x02050000
     (unaryfunc)array_index,                     /* nb_index */
-#endif
-
 };

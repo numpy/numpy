@@ -7,9 +7,6 @@
 #include "numpy/ufuncobject.h"
 #include "string.h"
 
-#if (PY_VERSION_HEX < 0x02060000)
-#define Py_TYPE(o)    (((PyObject*)(o))->ob_type)
-#endif
 
 static npy_intp
 incr_slot_(double x, double *bins, npy_intp lbins)
