@@ -1392,13 +1392,8 @@ emit_complexwarning(void)
         assert(cls != NULL);
         Py_DECREF(mod);
     }
-#if PY_VERSION_HEX >= 0x02050000
     return PyErr_WarnEx(cls,
             "Casting complex values to real discards the imaginary part", 1);
-#else
-    return PyErr_Warn(cls,
-            "Casting complex values to real discards the imaginary part");
-#endif
 }
 
 /**begin repeat
@@ -1658,9 +1653,7 @@ static PyNumberMethods @name@_as_number = {
     (binaryfunc)@name@_true_divide,             /*nb_true_divide*/
     0,                                          /*nb_inplace_floor_divide*/
     0,                                          /*nb_inplace_true_divide*/
-#if PY_VERSION_HEX >= 0x02050000
     (unaryfunc)NULL,                            /*nb_index*/
-#endif
 };
 /**end repeat**/
 
@@ -1679,9 +1672,7 @@ add_scalarmath(void)
      *          Half, Float, Double, LongDouble,
      *          CFloat, CDouble, CLongDouble#
      **/
-#if PY_VERSION_HEX >= 0x02050000
     @name@_as_number.nb_index = Py@NAME@ArrType_Type.tp_as_number->nb_index;
-#endif
     Py@NAME@ArrType_Type.tp_as_number = &(@name@_as_number);
     Py@NAME@ArrType_Type.tp_richcompare = @name@_richcompare;
     /**end repeat**/

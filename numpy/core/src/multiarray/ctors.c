@@ -590,9 +590,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
 {
     PyObject *e;
     int r, n, i;
-#if PY_VERSION_HEX >= 0x02060000
     Py_buffer buffer_view;
-#endif
 
     if (*maxndim == 0) {
         return 0;
@@ -655,7 +653,6 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
     }
 
     /* obj is a PEP 3118 buffer */
-#if PY_VERSION_HEX >= 0x02060000
     /* PEP 3118 buffer interface */
     if (PyObject_CheckBuffer(obj) == 1) {
         memset(&buffer_view, 0, sizeof(Py_buffer));
@@ -681,7 +678,6 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
             PyErr_Clear();
         }
     }
-#endif
 
     /* obj has the __array_struct__ interface */
     e = PyArray_GetAttrString_SuppressException(obj, "__array_struct__");
@@ -721,11 +717,7 @@ discover_dimensions(PyObject *obj, int *maxndim, npy_intp *d, int check_it,
                     *maxndim = nd;
                 }
                 for (i=0; i<*maxndim; i++) {
-#if (PY_VERSION_HEX >= 0x02050000)
                     d[i] = PyInt_AsSsize_t(PyTuple_GET_ITEM(new, i));
-#else
-                    d[i] = PyInt_AsLong(PyTuple_GET_ITEM(new, i));
-#endif
                     if (d[i] < 0) {
                         PyErr_SetString(PyExc_RuntimeError,
                                 "Invalid shape in __array_interface__");
@@ -1197,7 +1189,6 @@ PyArray_New(PyTypeObject *subtype, int nd, npy_intp *dims, int type_num,
 NPY_NO_EXPORT int
 _array_from_buffer_3118(PyObject *obj, PyObject **out)
 {
-#if PY_VERSION_HEX >= 0x02060000
     /* PEP 3118 */
     PyObject *memoryview;
     Py_buffer *view;
@@ -1286,9 +1277,6 @@ fail:
     Py_DECREF(memoryview);
     return -1;
 
-#else
-    return -1;
-#endif
 }
 
 /*NUMPY_API

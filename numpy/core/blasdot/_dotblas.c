@@ -14,12 +14,6 @@
 
 #include <stdio.h>
 
-#if (PY_VERSION_HEX < 0x02060000)
-#define Py_TYPE(o)    (((PyObject*)(o))->ob_type)
-#define Py_REFCNT(o)  (((PyObject*)(o))->ob_refcnt)
-#define Py_SIZE(o)    (((PyVarObject*)(o))->ob_size)
-#endif
-
 static char module_doc[] =
 "This module provides a BLAS optimized\nmatrix multiply, inner product and dot for numpy arrays";
 
