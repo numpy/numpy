@@ -351,8 +351,8 @@ class TestSeterr(TestCase):
         ))
 
     def test_set(self):
-        err = seterr()
-        try:
+        with np.errstate():
+            err = seterr()
             old = seterr(divide='print')
             self.assertTrue(err == old)
             new = seterr()
@@ -362,13 +362,10 @@ class TestSeterr(TestCase):
             self.assertTrue(new['divide'] == 'print')
             seterr(**old)
             self.assertTrue(geterr() == old)
-        finally:
-            seterr(**err)
 
     @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
     def test_divide_err(self):
-        err = seterr(divide='raise')
-        try:
+        with errstate(divide='raise'):
             try:
                 array([1.]) / array([0.])
             except FloatingPointError:
@@ -377,8 +374,6 @@ class TestSeterr(TestCase):
                 self.fail()
             seterr(divide='ignore')
             array([1.]) / array([0.])
-        finally:
-            seterr(**err)
 
 
 class TestFloatExceptions(TestCase):
@@ -407,8 +402,7 @@ class TestFloatExceptions(TestCase):
     @dec.knownfailureif(True, "See ticket 1755")
     def test_floating_exceptions(self):
         # Test basic arithmetic function errors
-        oldsettings = np.seterr(all='raise')
-        try:
+        with np.errstate(all='raise'):
             # Test for all real and complex float types
             for typecode in np.typecodes['AllFloat']:
                 ftype = np.obj2sctype(typecode)
@@ -459,8 +453,6 @@ class TestFloatExceptions(TestCase):
                         lambda a,b:a+b, ftype(np.inf), ftype(-np.inf))
                 self.assert_raises_fpe(invalid,
                         lambda a,b:a*b, ftype(0), ftype(np.inf))
-        finally:
-            np.seterr(**oldsettings)
 
 class TestTypes(TestCase):
     def check_promotion_cases(self, promote_func):

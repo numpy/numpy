@@ -71,14 +71,11 @@ def gisfinite(x):
     exception is always raised.
 
     This should be removed once this problem is solved at the Ufunc level."""
-    from numpy.core import isfinite, seterr
-    err = seterr(invalid='ignore')
-    try:
+    from numpy.core import isfinite, errstate
+    with errstate(invalid='ignore'):
         st = isfinite(x)
         if isinstance(st, type(NotImplemented)):
             raise TypeError("isfinite not supported for this type")
-    finally:
-        seterr(**err)
     return st
 
 def gisinf(x):
@@ -92,14 +89,11 @@ def gisinf(x):
     exception is always raised.
 
     This should be removed once this problem is solved at the Ufunc level."""
-    from numpy.core import isinf, seterr
-    err = seterr(invalid='ignore')
-    try:
+    from numpy.core import isinf, errstate
+    with errstate(invalid='ignore'):
         st = isinf(x)
         if isinstance(st, type(NotImplemented)):
             raise TypeError("isinf not supported for this type")
-    finally:
-        seterr(**err)
     return st
 
 def rand(*args):
@@ -539,13 +533,9 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
         return
     # Normalized the numbers to be in range (-10.0,10.0)
     # scale = float(pow(10,math.floor(math.log10(0.5*(abs(desired)+abs(actual))))))
-    err = np.seterr(invalid='ignore')
-    try:
+    with np.errstate(invalid='ignore'):
         scale = 0.5*(np.abs(desired) + np.abs(actual))
         scale = np.power(10,np.floor(np.log10(scale)))
-    finally:
-        np.seterr(**err)
-
     try:
         sc_desired = desired/scale
     except ZeroDivisionError:

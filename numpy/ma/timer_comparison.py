@@ -9,6 +9,7 @@ import np.core.fromnumeric as fromnumeric
 
 from np.testing.utils import build_err_msg
 
+# Fixme: this does not look right.
 np.seterr(all='ignore')
 
 pi = np.pi

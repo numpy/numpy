@@ -2125,8 +2125,7 @@ def allclose(a, b, rtol=1.e-5, atol=1.e-8):
         y = y[~xinf]
 
     # ignore invalid fpe's
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+    with errstate(invalid='ignore'):
         r = all(less_equal(abs(x-y), atol + rtol * abs(y)))
 
     return r
@@ -2191,11 +2190,8 @@ def isclose(a, b, rtol=1.e-5, atol=1.e-8, equal_nan=False):
     array([True, True])
     """
     def within_tol(x, y, atol, rtol):
-        err = seterr(invalid='ignore')
-        try:
+        with errstate(invalid='ignore'):
             result = less_equal(abs(x-y), atol + rtol * abs(y))
-        finally:
-            seterr(**err)
         if isscalar(a) and isscalar(b):
             result = bool(result)
         return result
@@ -2705,14 +2701,17 @@ class errstate(object):
     def __init__(self, **kwargs):
         self.call = kwargs.pop('call',_Unspecified)
         self.kwargs = kwargs
+
     def __enter__(self):
         self.oldstate = seterr(**self.kwargs)
         if self.call is not _Unspecified:
             self.oldcall = seterrcall(self.call)
+
     def __exit__(self, *exc_info):
         seterr(**self.oldstate)
         if self.call is not _Unspecified:
             seterrcall(self.oldcall)
+
 
 def _setdef():
     defval = [UFUNC_BUFSIZE_DEFAULT, ERR_DEFAULT2, None]
