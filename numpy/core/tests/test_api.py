@@ -68,26 +68,27 @@ def test_array_array():
 
     # test buffer
     _buffer = builtins.get("buffer")
-    if _buffer:
-        assert_equal(np.array(_buffer("1.0"), dtype=np.float64),
-                     np.array(1.0, dtype=np.float64))
-        assert_equal(np.array(_buffer("1.0"), dtype=np.float64).dtype,
-                     np.dtype("float64"))
-        assert_equal(np.array([_buffer("1.0")], dtype=np.float64),
-                     np.array([1.0], dtype=np.float64))
+    if _buffer and sys.version_info[:3] >= (2, 7, 5):
+        # This test fails for earlier versions of Python.
+        # Evidently a bug got fixed in 2.7.5.
+        dat = np.array(_buffer('1.0'), dtype=np.float64)
+        assert_equal(dat, [49.0, 46.0, 48.0])
+        assert_(dat.dtype.type is np.float64)
+
+        dat = np.array(_buffer(b'1.0'))
+        assert_equal(dat, [49, 46, 48])
+        assert_(dat.dtype.type is np.uint8)
 
     # test memoryview, new version of buffer
     _memoryview = builtins.get("memoryview")
     if _memoryview:
-        assert_equal(np.array(_memoryview(bytearray(b'1.0')),
-                              dtype=np.float64),
-                     np.array([49.0, 46.0, 48.0],
-                              dtype=np.float64))
-        assert_equal(np.array(_memoryview(bytearray(b'1.0')),
-                              dtype=np.float64).dtype,
-                     np.dtype("float64"))
-        assert_equal(np.array(_memoryview(bytearray(b'1.0'))).dtype,
-                     np.dtype('uint8'))
+        dat = np.array(_memoryview(b'1.0'), dtype=np.float64)
+        assert_equal(dat, [49.0, 46.0, 48.0])
+        assert_(dat.dtype.type is np.float64)
+
+        dat = np.array(_memoryview(b'1.0'))
+        assert_equal(dat, [49, 46, 48])
+        assert_(dat.dtype.type is np.uint8)
 
     # test array interface
     a = np.array(100.0, dtype=np.float64)
