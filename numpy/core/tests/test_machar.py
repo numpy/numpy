@@ -4,7 +4,7 @@ from numpy.testing import *
 
 from numpy.core.machar import MachAr
 import numpy.core.numerictypes as ntypes
-from numpy import seterr, array
+from numpy import errstate, array
 
 class TestMachAr(TestCase):
     def _run_machar_highprec(self):
@@ -19,14 +19,11 @@ class TestMachAr(TestCase):
     def test_underlow(self):
         """Regression testing for #759: instanciating MachAr for dtype =
         np.float96 raises spurious warning."""
-        serrstate = seterr(all='raise')
-        try:
+        with errstate(all='raise'):
             try:
                 self._run_machar_highprec()
             except FloatingPointError as e:
                 self.fail("Caught %s exception, should not have been raised." % e)
-        finally:
-            seterr(**serrstate)
 
 
 if __name__ == "__main__":

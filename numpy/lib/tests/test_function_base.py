@@ -1062,8 +1062,7 @@ class TestHistogramdd(TestCase):
 
     def test_inf_edges(self):
         """Test using +/-inf bin edges works. See #1788."""
-        olderr = np.seterr(invalid='ignore')
-        try:
+        with np.errstate(invalid='ignore'):
             x = np.arange(6).reshape(3, 2)
             expected = np.array([[1, 0], [0, 1], [0, 1]])
             h, e = np.histogramdd(x, bins=[3, [-np.inf, 2, 10]])
@@ -1072,8 +1071,6 @@ class TestHistogramdd(TestCase):
             assert_allclose(h, expected)
             h, e = np.histogramdd(x, bins=[3, [-np.inf, 3, np.inf]])
             assert_allclose(h, expected)
-        finally:
-            np.seterr(**olderr)
 
 
 class TestUnique(TestCase):

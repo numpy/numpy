@@ -3,14 +3,14 @@ from __future__ import division, absolute_import, print_function
 import sys
 from functools import reduce
 
-import numpy
+import numpy as np
 from numpy.ma import *
 from numpy.core.numerictypes import float32
 from numpy.ma.core import umath
 from numpy.testing import *
 
 
-pi = numpy.pi
+pi = np.pi
 def eq(v, w, msg=''):
     result = allclose(v, w)
     if not result:
@@ -22,16 +22,16 @@ def eq(v, w, msg=''):
 
 class TestMa(TestCase):
     def setUp (self):
-        x = numpy.array([1., 1., 1., -2., pi / 2.0, 4., 5., -10., 10., 1., 2., 3.])
-        y = numpy.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
+        x = np.array([1., 1., 1., -2., pi / 2.0, 4., 5., -10., 10., 1., 2., 3.])
+        y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
         m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0 , 0, 1]
         xm = array(x, mask=m1)
         ym = array(y, mask=m2)
-        z = numpy.array([-.5, 0., .5, .8])
+        z = np.array([-.5, 0., .5, .8])
         zm = array(z, mask=[0, 1, 0, 0])
-        xf = numpy.where(m1, 1e+20, x)
+        xf = np.where(m1, 1e+20, x)
         s = x.shape
         xm.set_fill_value(1e+20)
         self.d = (x, y, a10, m1, m2, xm, ym, z, zm, xf, s)
@@ -89,19 +89,13 @@ class TestMa(TestCase):
             self.assertTrue(eq(x + y, xm + ym))
             self.assertTrue(eq(x - y, xm - ym))
             self.assertTrue(eq(x * y, xm * ym))
-            olderr = numpy.seterr(divide='ignore', invalid='ignore')
-            try:
+            with np.errstate(divide='ignore', invalid='ignore'):
                 self.assertTrue(eq(x / y, xm / ym))
-            finally:
-                numpy.seterr(**olderr)
             self.assertTrue(eq(a10 + y, a10 + ym))
             self.assertTrue(eq(a10 - y, a10 - ym))
             self.assertTrue(eq(a10 * y, a10 * ym))
-            olderr = numpy.seterr(divide='ignore', invalid='ignore')
-            try:
+            with np.errstate(divide='ignore', invalid='ignore'):
                 self.assertTrue(eq(a10 / y, a10 / ym))
-            finally:
-                numpy.seterr(**olderr)
             self.assertTrue(eq(x + a10, xm + a10))
             self.assertTrue(eq(x - a10, xm - a10))
             self.assertTrue(eq(x * a10, xm * a10))
@@ -109,18 +103,15 @@ class TestMa(TestCase):
             self.assertTrue(eq(x ** 2, xm ** 2))
             self.assertTrue(eq(abs(x) ** 2.5, abs(xm) ** 2.5))
             self.assertTrue(eq(x ** y, xm ** ym))
-            self.assertTrue(eq(numpy.add(x, y), add(xm, ym)))
-            self.assertTrue(eq(numpy.subtract(x, y), subtract(xm, ym)))
-            self.assertTrue(eq(numpy.multiply(x, y), multiply(xm, ym)))
-            olderr = numpy.seterr(divide='ignore', invalid='ignore')
-            try:
-                self.assertTrue(eq(numpy.divide(x, y), divide(xm, ym)))
-            finally:
-                numpy.seterr(**olderr)
+            self.assertTrue(eq(np.add(x, y), add(xm, ym)))
+            self.assertTrue(eq(np.subtract(x, y), subtract(xm, ym)))
+            self.assertTrue(eq(np.multiply(x, y), multiply(xm, ym)))
+            with np.errstate(divide='ignore', invalid='ignore'):
+                self.assertTrue(eq(np.divide(x, y), divide(xm, ym)))
 
 
     def test_testMixedArithmetic(self):
-        na = numpy.array([1])
+        na = np.array([1])
         ma = array([1])
         self.assertTrue(isinstance(na + ma, MaskedArray))
         self.assertTrue(isinstance(ma + na, MaskedArray))
@@ -128,51 +119,48 @@ class TestMa(TestCase):
     def test_testUfuncs1 (self):
         "Test various functions such as sin, cos."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
-        self.assertTrue (eq(numpy.cos(x), cos(xm)))
-        self.assertTrue (eq(numpy.cosh(x), cosh(xm)))
-        self.assertTrue (eq(numpy.sin(x), sin(xm)))
-        self.assertTrue (eq(numpy.sinh(x), sinh(xm)))
-        self.assertTrue (eq(numpy.tan(x), tan(xm)))
-        self.assertTrue (eq(numpy.tanh(x), tanh(xm)))
-        olderr = numpy.seterr(divide='ignore', invalid='ignore')
-        try:
-            self.assertTrue (eq(numpy.sqrt(abs(x)), sqrt(xm)))
-            self.assertTrue (eq(numpy.log(abs(x)), log(xm)))
-            self.assertTrue (eq(numpy.log10(abs(x)), log10(xm)))
-        finally:
-            numpy.seterr(**olderr)
-        self.assertTrue (eq(numpy.exp(x), exp(xm)))
-        self.assertTrue (eq(numpy.arcsin(z), arcsin(zm)))
-        self.assertTrue (eq(numpy.arccos(z), arccos(zm)))
-        self.assertTrue (eq(numpy.arctan(z), arctan(zm)))
-        self.assertTrue (eq(numpy.arctan2(x, y), arctan2(xm, ym)))
-        self.assertTrue (eq(numpy.absolute(x), absolute(xm)))
-        self.assertTrue (eq(numpy.equal(x, y), equal(xm, ym)))
-        self.assertTrue (eq(numpy.not_equal(x, y), not_equal(xm, ym)))
-        self.assertTrue (eq(numpy.less(x, y), less(xm, ym)))
-        self.assertTrue (eq(numpy.greater(x, y), greater(xm, ym)))
-        self.assertTrue (eq(numpy.less_equal(x, y), less_equal(xm, ym)))
-        self.assertTrue (eq(numpy.greater_equal(x, y), greater_equal(xm, ym)))
-        self.assertTrue (eq(numpy.conjugate(x), conjugate(xm)))
-        self.assertTrue (eq(numpy.concatenate((x, y)), concatenate((xm, ym))))
-        self.assertTrue (eq(numpy.concatenate((x, y)), concatenate((x, y))))
-        self.assertTrue (eq(numpy.concatenate((x, y)), concatenate((xm, y))))
-        self.assertTrue (eq(numpy.concatenate((x, y, x)), concatenate((x, ym, x))))
+        self.assertTrue (eq(np.cos(x), cos(xm)))
+        self.assertTrue (eq(np.cosh(x), cosh(xm)))
+        self.assertTrue (eq(np.sin(x), sin(xm)))
+        self.assertTrue (eq(np.sinh(x), sinh(xm)))
+        self.assertTrue (eq(np.tan(x), tan(xm)))
+        self.assertTrue (eq(np.tanh(x), tanh(xm)))
+        with np.errstate(divide='ignore', invalid='ignore'):
+            self.assertTrue (eq(np.sqrt(abs(x)), sqrt(xm)))
+            self.assertTrue (eq(np.log(abs(x)), log(xm)))
+            self.assertTrue (eq(np.log10(abs(x)), log10(xm)))
+        self.assertTrue (eq(np.exp(x), exp(xm)))
+        self.assertTrue (eq(np.arcsin(z), arcsin(zm)))
+        self.assertTrue (eq(np.arccos(z), arccos(zm)))
+        self.assertTrue (eq(np.arctan(z), arctan(zm)))
+        self.assertTrue (eq(np.arctan2(x, y), arctan2(xm, ym)))
+        self.assertTrue (eq(np.absolute(x), absolute(xm)))
+        self.assertTrue (eq(np.equal(x, y), equal(xm, ym)))
+        self.assertTrue (eq(np.not_equal(x, y), not_equal(xm, ym)))
+        self.assertTrue (eq(np.less(x, y), less(xm, ym)))
+        self.assertTrue (eq(np.greater(x, y), greater(xm, ym)))
+        self.assertTrue (eq(np.less_equal(x, y), less_equal(xm, ym)))
+        self.assertTrue (eq(np.greater_equal(x, y), greater_equal(xm, ym)))
+        self.assertTrue (eq(np.conjugate(x), conjugate(xm)))
+        self.assertTrue (eq(np.concatenate((x, y)), concatenate((xm, ym))))
+        self.assertTrue (eq(np.concatenate((x, y)), concatenate((x, y))))
+        self.assertTrue (eq(np.concatenate((x, y)), concatenate((xm, y))))
+        self.assertTrue (eq(np.concatenate((x, y, x)), concatenate((x, ym, x))))
 
     def test_xtestCount (self):
         "Test count"
         ott = array([0., 1., 2., 3.], mask=[1, 0, 0, 0])
         if sys.version_info[0] >= 3:
-            self.assertTrue(isinstance(count(ott), numpy.integer))
+            self.assertTrue(isinstance(count(ott), np.integer))
         else:
             self.assertTrue(isinstance(count(ott), int))
         self.assertEqual(3, count(ott))
         self.assertEqual(1, count(1))
         self.assertTrue (eq(0, array(1, mask=[1])))
         ott = ott.reshape((2, 2))
-        assert_(isinstance(count(ott, 0), numpy.ndarray))
+        assert_(isinstance(count(ott, 0), np.ndarray))
         if sys.version_info[0] >= 3:
-            assert_(isinstance(count(ott), numpy.integer))
+            assert_(isinstance(count(ott), np.integer))
         else:
             assert_(isinstance(count(ott), int))
         self.assertTrue (eq(3, count(ott)))
@@ -182,7 +170,7 @@ class TestMa(TestCase):
     def test_testMinMax (self):
         "Test minimum and maximum."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
-        xr = numpy.ravel(x) #max doesn't work if shaped
+        xr = np.ravel(x) #max doesn't work if shaped
         xmr = ravel(xm)
 
         #true because of careful selection of data
@@ -194,34 +182,34 @@ class TestMa(TestCase):
     def test_testAddSumProd (self):
         "Test add, sum, product."
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
-        self.assertTrue (eq(numpy.add.reduce(x), add.reduce(x)))
-        self.assertTrue (eq(numpy.add.accumulate(x), add.accumulate(x)))
+        self.assertTrue (eq(np.add.reduce(x), add.reduce(x)))
+        self.assertTrue (eq(np.add.accumulate(x), add.accumulate(x)))
         self.assertTrue (eq(4, sum(array(4), axis=0)))
         self.assertTrue (eq(4, sum(array(4), axis=0)))
-        self.assertTrue (eq(numpy.sum(x, axis=0), sum(x, axis=0)))
-        self.assertTrue (eq(numpy.sum(filled(xm, 0), axis=0), sum(xm, axis=0)))
-        self.assertTrue (eq(numpy.sum(x, 0), sum(x, 0)))
-        self.assertTrue (eq(numpy.product(x, axis=0), product(x, axis=0)))
-        self.assertTrue (eq(numpy.product(x, 0), product(x, 0)))
-        self.assertTrue (eq(numpy.product(filled(xm, 1), axis=0),
+        self.assertTrue (eq(np.sum(x, axis=0), sum(x, axis=0)))
+        self.assertTrue (eq(np.sum(filled(xm, 0), axis=0), sum(xm, axis=0)))
+        self.assertTrue (eq(np.sum(x, 0), sum(x, 0)))
+        self.assertTrue (eq(np.product(x, axis=0), product(x, axis=0)))
+        self.assertTrue (eq(np.product(x, 0), product(x, 0)))
+        self.assertTrue (eq(np.product(filled(xm, 1), axis=0),
                             product(xm, axis=0)))
         if len(s) > 1:
-            self.assertTrue (eq(numpy.concatenate((x, y), 1),
+            self.assertTrue (eq(np.concatenate((x, y), 1),
                                 concatenate((xm, ym), 1)))
-            self.assertTrue (eq(numpy.add.reduce(x, 1), add.reduce(x, 1)))
-            self.assertTrue (eq(numpy.sum(x, 1), sum(x, 1)))
-            self.assertTrue (eq(numpy.product(x, 1), product(x, 1)))
+            self.assertTrue (eq(np.add.reduce(x, 1), add.reduce(x, 1)))
+            self.assertTrue (eq(np.sum(x, 1), sum(x, 1)))
+            self.assertTrue (eq(np.product(x, 1), product(x, 1)))
 
 
     def test_testCI(self):
         "Test of conversions and indexing"
-        x1 = numpy.array([1, 2, 4, 3])
+        x1 = np.array([1, 2, 4, 3])
         x2 = array(x1, mask=[1, 0, 0, 0])
         x3 = array(x1, mask=[0, 1, 0, 1])
         x4 = array(x1)
     # test conversion to strings
         junk, garbage = str(x2), repr(x2)
-        assert_(eq(numpy.sort(x1), sort(x2, fill_value=0)))
+        assert_(eq(np.sort(x1), sort(x2, fill_value=0)))
     # tests of indexing
         assert_(type(x2[1]) is type(x1[1]))
         assert_(x1[1] == x2[1])
@@ -248,13 +236,13 @@ class TestMa(TestCase):
         x4[:] = masked_array([1, 2, 3, 4], [0, 1, 1, 0])
         assert_(allequal(getmask(x4), array([0, 1, 1, 0])))
         assert_(allequal(x4, array([1, 2, 3, 4])))
-        x1 = numpy.arange(5) * 1.0
+        x1 = np.arange(5) * 1.0
         x2 = masked_values(x1, 3.0)
         assert_(eq(x1, x2))
         assert_(allequal(array([0, 0, 0, 1, 0], MaskType), x2.mask))
         assert_(eq(3.0, x2.fill_value))
         x1 = array([1, 'hello', 2, 3], object)
-        x2 = numpy.array([1, 'hello', 2, 3], object)
+        x2 = np.array([1, 'hello', 2, 3], object)
         s1 = x1[1]
         s2 = x2[1]
         self.assertEqual(type(s2), str)
@@ -271,7 +259,7 @@ class TestMa(TestCase):
         m3 = make_mask(m, copy=1)
         self.assertTrue(m is not m3)
 
-        x1 = numpy.arange(5)
+        x1 = np.arange(5)
         y1 = array(x1, mask=m)
         self.assertTrue(y1._data is not x1)
         self.assertTrue(allequal(x1, y1._data))
@@ -324,7 +312,7 @@ class TestMa(TestCase):
     def test_testMaPut(self):
         (x, y, a10, m1, m2, xm, ym, z, zm, xf, s) = self.d
         m = [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1]
-        i = numpy.nonzero(m)[0]
+        i = np.nonzero(m)[0]
         put(ym, i, zm)
         assert_(all(take(ym, i, axis=0) == zm))
 
@@ -439,15 +427,15 @@ class TestMa(TestCase):
     def test_testTakeTransposeInnerOuter(self):
         "Test of take, transpose, inner, outer products"
         x = arange(24)
-        y = numpy.arange(24)
+        y = np.arange(24)
         x[5:6] = masked
         x = x.reshape(2, 3, 4)
         y = y.reshape(2, 3, 4)
-        assert_(eq(numpy.transpose(y, (2, 0, 1)), transpose(x, (2, 0, 1))))
-        assert_(eq(numpy.take(y, (2, 0, 1), 1), take(x, (2, 0, 1), 1)))
-        assert_(eq(numpy.inner(filled(x, 0), filled(y, 0)),
+        assert_(eq(np.transpose(y, (2, 0, 1)), transpose(x, (2, 0, 1))))
+        assert_(eq(np.take(y, (2, 0, 1), 1), take(x, (2, 0, 1), 1)))
+        assert_(eq(np.inner(filled(x, 0), filled(y, 0)),
                                 inner(x, y)))
-        assert_(eq(numpy.outer(filled(x, 0), filled(y, 0)),
+        assert_(eq(np.outer(filled(x, 0), filled(y, 0)),
                                 outer(x, y)))
         y = array(['abc', 1, 'def', 2, 3], object)
         y[2] = masked
@@ -557,8 +545,8 @@ class TestMa(TestCase):
         self.assertTrue(allclose(average(x, axis=0, weights=w1), 2.5))
         y = array([arange(6), 2.0 * arange(6)])
         self.assertTrue(allclose(average(y, None),
-                                 numpy.add.reduce(numpy.arange(6)) * 3. / 12.))
-        self.assertTrue(allclose(average(y, axis=0), numpy.arange(6) * 3. / 2.))
+                                 np.add.reduce(np.arange(6)) * 3. / 12.))
+        self.assertTrue(allclose(average(y, axis=0), np.arange(6) * 3. / 2.))
         self.assertTrue(allclose(average(y, axis=1),
                                  [average(x, axis=0), average(x, axis=0) * 2.0]))
         self.assertTrue(allclose(average(y, None, weights=w2), 20. / 6.))
@@ -617,12 +605,9 @@ class TestMa(TestCase):
     def test_testScalarArithmetic(self):
         xm = array(0, mask=1)
         #TODO FIXME: Find out what the following raises a warning in r8247
-        err_status = numpy.geterr()
-        try:
-            numpy.seterr(divide='ignore')
+        with np.errstate():
+            np.seterr(divide='ignore')
             self.assertTrue((1 / array(0)).mask)
-        finally:
-            numpy.seterr(**err_status)
         self.assertTrue((1 + xm).mask)
         self.assertTrue((-xm).mask)
         self.assertTrue((-xm).mask)
@@ -656,7 +641,7 @@ class TestMa(TestCase):
         self.assertEqual(a.ndim, 1)
 
     def test_testAPI(self):
-        self.assertFalse([m for m in dir(numpy.ndarray)
+        self.assertFalse([m for m in dir(np.ndarray)
                      if m not in dir(MaskedArray) and not m.startswith('_')])
 
     def test_testSingleElementSubscript(self):
@@ -699,18 +684,15 @@ class TestUfuncs(TestCase):
                 uf = getattr(umath, f)
             except AttributeError:
                 uf = getattr(fromnumeric, f)
-            mf = getattr(numpy.ma, f)
+            mf = getattr(np.ma, f)
             args = self.d[:uf.nin]
-            olderr = numpy.geterr()
-            try:
+            with np.errstate():
                 if f in f_invalid_ignore:
-                    numpy.seterr(invalid='ignore')
+                    np.seterr(invalid='ignore')
                 if f in ['arctanh', 'log', 'log10']:
-                    numpy.seterr(divide='ignore')
+                    np.seterr(divide='ignore')
                 ur = uf(*args)
                 mr = mf(*args)
-            finally:
-                numpy.seterr(**olderr)
             self.assertTrue(eq(ur.filled(0), mr.filled(0), f))
             self.assertTrue(eqmask(ur.mask, mr.mask))
 
@@ -740,7 +722,7 @@ class TestUfuncs(TestCase):
 class TestArrayMethods(TestCase):
 
     def setUp(self):
-        x = numpy.array([ 8.375, 7.545, 8.828, 8.5  , 1.757, 5.928,
+        x = np.array([ 8.375, 7.545, 8.828, 8.5  , 1.757, 5.928,
                           8.43 , 7.78 , 9.865, 5.878, 8.979, 4.732,
                           3.012, 6.022, 5.095, 3.116, 5.238, 3.957,
                           6.04 , 9.63 , 7.712, 3.382, 4.489, 6.479,
@@ -749,7 +731,7 @@ class TestArrayMethods(TestCase):
         X = x.reshape(6, 6)
         XX = x.reshape(3, 2, 2, 3)
 
-        m = numpy.array([0, 1, 0, 1, 0, 0,
+        m = np.array([0, 1, 0, 1, 0, 0,
                          1, 0, 1, 1, 0, 1,
                          0, 0, 0, 1, 0, 1,
                          0, 0, 0, 1, 1, 1,
@@ -759,7 +741,7 @@ class TestArrayMethods(TestCase):
         mX = array(data=X, mask=m.reshape(X.shape))
         mXX = array(data=XX, mask=m.reshape(XX.shape))
 
-        m2 = numpy.array([1, 1, 0, 1, 0, 0,
+        m2 = np.array([1, 1, 0, 1, 0, 0,
                           1, 1, 1, 1, 0, 1,
                           0, 0, 1, 1, 0, 1,
                           0, 0, 0, 1, 1, 1,
@@ -789,8 +771,8 @@ class TestArrayMethods(TestCase):
         (x, X, XX, m, mx, mX, mXX,) = self.d
         (n, m) = X.shape
         self.assertEqual(mx.ptp(), mx.compressed().ptp())
-        rows = numpy.zeros(n, numpy.float_)
-        cols = numpy.zeros(m, numpy.float_)
+        rows = np.zeros(n, np.float_)
+        cols = np.zeros(m, np.float_)
         for k in range(m):
             cols[k] = mX[:, k].compressed().ptp()
         for k in range(n):
@@ -830,7 +812,7 @@ class TestArrayMethods(TestCase):
         for k in range(6):
             self.assertTrue(eq(mXvar1[k], mX[k].compressed().var()))
             self.assertTrue(eq(mXvar0[k], mX[:, k].compressed().var()))
-            self.assertTrue(eq(numpy.sqrt(mXvar0[k]),
+            self.assertTrue(eq(np.sqrt(mXvar0[k]),
                                mX[:, k].compressed().std()))
 
 
@@ -856,7 +838,7 @@ def eqmask(m1, m2):
 #""" % (n, t*1000.0, t1/t, t2/t)
 
 #def testta(n, f):
-#    x=numpy.arange(n) + 1.0
+#    x=np.arange(n) + 1.0
 #    tn0 = time.time()
 #    z = f(x)
 #    return time.time() - tn0

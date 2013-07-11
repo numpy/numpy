@@ -266,14 +266,11 @@ def nper(rate, pmt, pv, fv=0, when='end'):
     (rate, pmt, pv, fv, when) = map(np.asarray, [rate, pmt, pv, fv, when])
 
     use_zero_rate = False
-    old_err = np.seterr(divide="raise")
-    try:
+    with np.errstate(divide="raise"):
         try:
             z = pmt*(1.0+rate*when)/rate
         except FloatingPointError:
             use_zero_rate = True
-    finally:
-        np.seterr(**old_err)
 
     if use_zero_rate:
         return (-fv + pv) / (pmt + 0.0)

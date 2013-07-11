@@ -18,11 +18,12 @@ __all__ = ['matrix_power', 'solve', 'tensorsolve', 'tensorinv', 'inv',
 
 import warnings
 
-from numpy.core import array, asarray, zeros, empty, transpose, \
-        intc, single, double, csingle, cdouble, inexact, complexfloating, \
-        newaxis, ravel, all, Inf, dot, add, multiply, sqrt, maximum, \
-        fastCopyAndTranspose, sum, isfinite, size, finfo, errstate, \
-        geterrobj, longdouble, rollaxis, amin, amax
+from numpy.core import (
+    array, asarray, zeros, empty, transpose, intc, single, double, csingle,
+    cdouble, inexact, complexfloating, newaxis, ravel, all, Inf, dot, add,
+    multiply, sqrt, maximum, fastCopyAndTranspose, sum, isfinite, size,
+    finfo, errstate, geterrobj, longdouble, rollaxis, amin, amax
+    )
 from numpy.lib import triu, asfarray
 from numpy.linalg import lapack_lite, _umath_linalg
 from numpy.matrixlib.defmatrix import matrix_power
