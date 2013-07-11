@@ -643,11 +643,7 @@ arrayflags_richcompare(PyObject *self, PyObject *other, int cmp_op)
 }
 
 static PyMappingMethods arrayflags_as_mapping = {
-#if PY_VERSION_HEX >= 0x02050000
     (lenfunc)NULL,                       /*mp_length*/
-#else
-    (inquiry)NULL,                       /*mp_length*/
-#endif
     (binaryfunc)arrayflags_getitem,      /*mp_subscript*/
     (objobjargproc)arrayflags_setitem,   /*mp_ass_subscript*/
 };
@@ -725,7 +721,5 @@ NPY_NO_EXPORT PyTypeObject PyArrayFlags_Type = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
 };

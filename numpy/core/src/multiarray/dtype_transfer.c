@@ -669,15 +669,9 @@ get_nbo_cast_numeric_transfer_function(int aligned,
             cls = PyObject_GetAttrString(obj, "ComplexWarning");
             Py_DECREF(obj);
         }
-#if PY_VERSION_HEX >= 0x02050000
         ret = PyErr_WarnEx(cls,
-                           "Casting complex values to real discards "
-                           "the imaginary part", 1);
-#else
-        ret = PyErr_Warn(cls,
-                         "Casting complex values to real discards "
-                         "the imaginary part");
-#endif
+                "Casting complex values to real discards "
+                "the imaginary part", 1);
         Py_XDECREF(cls);
         if (ret < 0) {
             return NPY_FAIL;

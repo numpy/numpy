@@ -996,9 +996,7 @@ static PyTypeObject CfuncType = {
     0,                                          /* tp_subclasses */
     0,                                          /* tp_weaklist */
     0,                                          /* tp_del */
-#if PY_VERSION_HEX >= 0x02060000
     0,                                          /* tp_version_tag */
-#endif
     };
 
 /* CfuncObjects are created at the c-level only.  They ensure that each
@@ -2250,11 +2248,9 @@ _NA_maxType(PyObject *seq, int limit)
         }
         return maxtype;
     } else {
-#if PY_VERSION_HEX >= 0x02030000
         if (PyBool_Check(seq))
             return BOOL_SCALAR;
         else
-#endif
 #if defined(NPY_PY3K)
             if (PyInt_Check(seq))
                 return INT_SCALAR;

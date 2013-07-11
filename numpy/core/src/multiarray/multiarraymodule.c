@@ -1933,15 +1933,8 @@ array_count_nonzero(PyObject *NPY_UNUSED(self), PyObject *args, PyObject *kwds)
     }
 #if defined(NPY_PY3K)
     return PyLong_FromSsize_t(count);
-#elif PY_VERSION_HEX >= 0x02050000
-    return PyInt_FromSsize_t(count);
 #else
-    if ((npy_intp)((long)count) == count) {
-        return PyInt_FromLong(count);
-    }
-    else {
-        return PyLong_FromVoidPtr((void*)count);
-    }
+    return PyInt_FromSsize_t(count);
 #endif
 }
 
