@@ -921,6 +921,8 @@ typedef int (PyArray_FinalizeFunc)(PyArrayObject *, PyObject *);
 #define NPY_BEGIN_THREADS_DEF PyThreadState *_save=NULL;
 #define NPY_BEGIN_THREADS do {_save = PyEval_SaveThread();} while (0);
 #define NPY_END_THREADS   do {if (_save) PyEval_RestoreThread(_save);} while (0);
+#define NPY_BEGIN_THREADS_THRESHOLDED(loop_size) do { if (loop_size > 500) \
+                { _save = PyEval_SaveThread();} } while (0);
 
 #define NPY_BEGIN_THREADS_DESCR(dtype) \
         do {if (!(PyDataType_FLAGCHK(dtype, NPY_NEEDS_PYAPI))) \

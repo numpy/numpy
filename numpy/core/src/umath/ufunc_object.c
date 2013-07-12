@@ -1098,7 +1098,7 @@ trivial_two_operand_loop(PyArrayObject **op,
     NPY_UF_DBG_PRINT1("two operand loop count %d\n", (int)count[0]);
 
     if (!needs_api) {
-        NPY_BEGIN_THREADS;
+        NPY_BEGIN_THREADS_THRESHOLDED(count[0]);
     }
 
     innerloop(data, count, stride, innerloopdata);
@@ -1131,7 +1131,7 @@ trivial_three_operand_loop(PyArrayObject **op,
     NPY_UF_DBG_PRINT1("three operand loop count %d\n", (int)count[0]);
 
     if (!needs_api) {
-        NPY_BEGIN_THREADS;
+        NPY_BEGIN_THREADS_THRESHOLDED(count[0]);
     }
 
     innerloop(data, count, stride, innerloopdata);
