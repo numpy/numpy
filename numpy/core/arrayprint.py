@@ -546,8 +546,8 @@ class FloatFormat(object):
 
     def fillFormat(self, data):
         from . import numeric as _nc
-        errstate = _nc.seterr(all='ignore')
-        try:
+
+        with _nc.errstate(all='ignore'):
             special = isnan(data) | isinf(data)
             valid = not_equal(data, 0) & ~special
             non_zero = absolute(data.compress(valid))
@@ -562,8 +562,6 @@ class FloatFormat(object):
                 if not self.suppress_small and (min_val < 0.0001
                                            or max_val/min_val > 1000.):
                     self.exp_format = True
-        finally:
-            _nc.seterr(**errstate)
 
         if self.exp_format:
             self.large_exponent = 0 < min_val < 1e-99 or max_val >= 1e100
@@ -599,8 +597,8 @@ class FloatFormat(object):
 
     def __call__(self, x, strip_zeros=True):
         from . import numeric as _nc
-        err = _nc.seterr(invalid='ignore')
-        try:
+
+        with _nc.errstate(invalid='ignore'):
             if isnan(x):
                 if self.sign:
                     return self.special_fmt % ('+' + _nan_str,)
@@ -614,8 +612,6 @@ class FloatFormat(object):
                         return self.special_fmt % (_inf_str,)
                 else:
                     return self.special_fmt % ('-' + _inf_str,)
-        finally:
-            _nc.seterr(**err)
 
         s = self.format % x
         if self.large_exponent:

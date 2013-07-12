@@ -71,8 +71,7 @@ class TestHalf(TestCase):
         assert_equal(i_int,j)
 
     def test_nans_infs(self):
-        oldsettings = np.seterr(all='ignore')
-        try:
+        with np.errstate(all='ignore'):
             # Check some of the ufuncs
             assert_equal(np.isnan(self.all_f16), np.isnan(self.all_f32))
             assert_equal(np.isinf(self.all_f16), np.isinf(self.all_f32))
@@ -100,9 +99,6 @@ class TestHalf(TestCase):
 
             assert_(not (self.all_f16 >= nan).any())
             assert_(not (nan >= self.all_f16).any())
-        finally:
-            np.seterr(**oldsettings)
-
 
     def test_half_values(self):
         """Confirms a small number of known half values"""
@@ -363,8 +359,7 @@ class TestHalf(TestCase):
 
     @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
     def test_half_fpe(self):
-        oldsettings = np.seterr(all='raise')
-        try:
+        with np.errstate(all='raise'):
             sx16 = np.array((1e-4,),dtype=float16)
             bx16 = np.array((1e4,),dtype=float16)
             sy16 = float16(1e-4)
@@ -426,8 +421,6 @@ class TestHalf(TestCase):
             float16(-2**-14)/float16(2**10)
             float16(2**-14+2**-23)/float16(2)
             float16(-2**-14-2**-23)/float16(2)
-        finally:
-            np.seterr(**oldsettings)
 
     def test_half_array_interface(self):
         """Test that half is compatible with __array_interface__"""

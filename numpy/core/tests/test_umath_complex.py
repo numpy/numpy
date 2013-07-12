@@ -14,12 +14,9 @@ import numpy as np
 # At least on Windows the results of many complex functions are not conforming
 # to the C99 standard. See ticket 1574.
 # Ditto for Solaris (ticket 1642) and OS X on PowerPC.
-olderr = np.seterr(all='ignore')
-try:
+with np.errstate(all='ignore'):
     functions_seem_flaky = ((np.exp(complex(np.inf, 0)).imag != 0)
                             or (np.log(complex(np.NZERO, 0)).imag != np.pi))
-finally:
-    np.seterr(**olderr)
 # TODO: replace with a check on whether platform-provided C99 funcs are used
 skip_complex_tests = (not sys.platform.startswith('linux') or functions_seem_flaky)
 
@@ -78,52 +75,40 @@ class TestCexp(object):
         # cexp(-inf + inf i) is +-0 +- 0i (signs unspecified)
         def _check_ninf_inf(dummy):
             msgform = "cexp(-inf, inf) is (%f, %f), expected (+-0, +-0)"
-            err = np.seterr(invalid='ignore')
-            try:
+            with np.errstate(invalid='ignore'):
                 z = f(np.array(np.complex(-np.inf, np.inf)))
                 if z.real != 0 or z.imag != 0:
                     raise AssertionError(msgform %(z.real, z.imag))
-            finally:
-                np.seterr(**err)
 
         yield _check_ninf_inf, None
 
         # cexp(inf + inf i) is +-inf + NaNi and raised invalid FPU ex.
         def _check_inf_inf(dummy):
             msgform = "cexp(inf, inf) is (%f, %f), expected (+-inf, nan)"
-            err = np.seterr(invalid='ignore')
-            try:
+            with np.errstate(invalid='ignore'):
                 z = f(np.array(np.complex(np.inf, np.inf)))
                 if not np.isinf(z.real) or not np.isnan(z.imag):
                     raise AssertionError(msgform % (z.real, z.imag))
-            finally:
-                np.seterr(**err)
 
         yield _check_inf_inf, None
 
         # cexp(-inf + nan i) is +-0 +- 0i
         def _check_ninf_nan(dummy):
             msgform = "cexp(-inf, nan) is (%f, %f), expected (+-0, +-0)"
-            err = np.seterr(invalid='ignore')
-            try:
+            with np.errstate(invalid='ignore'):
                 z = f(np.array(np.complex(-np.inf, np.nan)))
                 if z.real != 0 or z.imag != 0:
                     raise AssertionError(msgform % (z.real, z.imag))
-            finally:
-                np.seterr(**err)
 
         yield _check_ninf_nan, None
 
         # cexp(inf + nan i) is +-inf + nan
         def _check_inf_nan(dummy):
             msgform = "cexp(-inf, nan) is (%f, %f), expected (+-inf, nan)"
-            err = np.seterr(invalid='ignore')
-            try:
+            with np.errstate(invalid='ignore'):
                 z = f(np.array(np.complex(np.inf, np.nan)))
                 if not np.isinf(z.real) or not np.isnan(z.imag):
                     raise AssertionError(msgform % (z.real, z.imag))
-            finally:
-                np.seterr(**err)
 
         yield _check_inf_nan, None
 
@@ -164,30 +149,24 @@ class TestClog(TestCase):
 
         # clog(-0 + i0) returns -inf + i pi and raises the 'divide-by-zero'
         # floating-point exception.
-        err = np.seterr(divide='raise')
-        try:
+        with np.errstate(divide='raise'):
             x = np.array([np.NZERO], dtype=np.complex)
             y = np.complex(-np.inf, np.pi)
             self.assertRaises(FloatingPointError, np.log, x)
-            np.seterr(divide='ignore')
+        with np.errstate(divide='ignore'):
             assert_almost_equal(np.log(x), y)
-        finally:
-            np.seterr(**err)
 
         xl.append(x)
         yl.append(y)
 
         # clog(+0 + i0) returns -inf + i0 and raises the 'divide-by-zero'
         # floating-point exception.
-        err = np.seterr(divide='raise')
-        try:
+        with np.errstate(divide='raise'):
             x = np.array([0], dtype=np.complex)
             y = np.complex(-np.inf, 0)
             self.assertRaises(FloatingPointError, np.log, x)
-            np.seterr(divide='ignore')
+        with np.errstate(divide='ignore'):
             assert_almost_equal(np.log(x), y)
-        finally:
-            np.seterr(**err)
 
         xl.append(x)
         yl.append(y)
@@ -206,27 +185,21 @@ class TestClog(TestCase):
 
         # clog(x + iNaN) returns NaN + iNaN and optionally raises the
         # 'invalid' floating- point exception, for finite x.
-        err = np.seterr(invalid='raise')
-        try:
+        with np.errstate(invalid='raise'):
             x = np.array([complex(1., np.nan)], dtype=np.complex)
             y = np.complex(np.nan, np.nan)
             #self.assertRaises(FloatingPointError, np.log, x)
-            np.seterr(invalid='ignore')
+        with np.errstate(invalid='ignore'):
             assert_almost_equal(np.log(x), y)
-        finally:
-            np.seterr(**err)
 
         xl.append(x)
         yl.append(y)
 
-        err = np.seterr(invalid='raise')
-        try:
+        with np.errstate(invalid='raise'):
             x = np.array([np.inf + 1j * np.nan], dtype=np.complex)
             #self.assertRaises(FloatingPointError, np.log, x)
-            np.seterr(invalid='ignore')
+        with np.errstate(invalid='ignore'):
             assert_almost_equal(np.log(x), y)
-        finally:
-            np.seterr(**err)
 
         xl.append(x)
         yl.append(y)
@@ -296,12 +269,9 @@ class TestClog(TestCase):
         # clog(conj(z)) = conj(clog(z)).
         xa = np.array(xl, dtype=np.complex)
         ya = np.array(yl, dtype=np.complex)
-        err = np.seterr(divide='ignore')
-        try:
+        with np.errstate(divide='ignore'):
             for i in range(len(xa)):
                 assert_almost_equal(np.log(np.conj(xa[i])), np.conj(np.log(xa[i])))
-        finally:
-            np.seterr(**err)
 
 class TestCsqrt(object):
 
@@ -362,12 +332,9 @@ class TestCsqrt(object):
             msgform = "csqrt(-inf, nan) is (%f, %f), expected (nan, +-inf)"
             z = np.sqrt(np.array(np.complex(-np.inf, np.nan)))
             #Fixme: ugly workaround for isinf bug.
-            err = np.seterr(invalid='ignore')
-            try:
+            with np.errstate(invalid='ignore'):
                 if not (np.isnan(z.real) and np.isinf(z.imag)):
                     raise AssertionError(msgform % (z.real, z.imag))
-            finally:
-                np.seterr(**err)
 
         yield _check_ninf_nan, None
 
@@ -558,16 +525,13 @@ def check_real_value(f, x1, y1, x, exact=True):
         assert_almost_equal(f(z1), x)
 
 def check_complex_value(f, x1, y1, x2, y2, exact=True):
-    err = np.seterr(invalid='ignore')
     z1 = np.array([complex(x1, y1)])
     z2 = np.complex(x2, y2)
-    try:
+    with np.errstate(invalid='ignore'):
         if exact:
             assert_equal(f(z1), z2)
         else:
             assert_almost_equal(f(z1), z2)
-    finally:
-        np.seterr(**err)
 
 if __name__ == "__main__":
     run_module_suite()

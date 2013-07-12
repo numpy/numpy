@@ -1,9 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
-from numpy.testing import *
 from numpy.lib import *
 from numpy.core import *
+from numpy.random import rand
 from numpy.compat import asbytes, long
+from numpy.testing import (
+        TestCase, assert_, assert_equal, assert_array_equal, run_module_suite)
 
 try:
     import ctypes
@@ -163,25 +165,16 @@ class TestIsnan(TestCase):
         assert_all(alltrue(res,axis=0))
 
     def test_posinf(self):
-        olderr = seterr(divide='ignore')
-        try:
+        with errstate(divide='ignore'):
             assert_all(isnan(array((1.,))/0.) == 0)
-        finally:
-            seterr(**olderr)
 
     def test_neginf(self):
-        olderr = seterr(divide='ignore')
-        try:
+        with errstate(divide='ignore'):
             assert_all(isnan(array((-1.,))/0.) == 0)
-        finally:
-            seterr(**olderr)
 
     def test_ind(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             assert_all(isnan(array((0.,))/0.) == 1)
-        finally:
-            seterr(**olderr)
 
     #def test_qnan(self):             log(-1) return pi*j now
     #    assert_all(isnan(log(-1.)) == 1)
@@ -193,11 +186,8 @@ class TestIsnan(TestCase):
         assert_all(isnan(1+1j) == 0)
 
     def test_complex1(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             assert_all(isnan(array(0+0j)/0.) == 1)
-        finally:
-            seterr(**olderr)
 
 
 class TestIsfinite(TestCase):
@@ -208,25 +198,16 @@ class TestIsfinite(TestCase):
         assert_all(alltrue(res,axis=0))
 
     def test_posinf(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             assert_all(isfinite(array((1.,))/0.) == 0)
-        finally:
-            seterr(**olderr)
 
     def test_neginf(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             assert_all(isfinite(array((-1.,))/0.) == 0)
-        finally:
-            seterr(**olderr)
 
     def test_ind(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             assert_all(isfinite(array((0.,))/0.) == 0)
-        finally:
-            seterr(**olderr)
 
     #def test_qnan(self):
     #    assert_all(isfinite(log(-1.)) == 0)
@@ -238,11 +219,8 @@ class TestIsfinite(TestCase):
         assert_all(isfinite(1+1j) == 1)
 
     def test_complex1(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             assert_all(isfinite(array(1+1j)/0.) == 0)
-        finally:
-            seterr(**olderr)
 
 
 class TestIsinf(TestCase):
@@ -253,39 +231,24 @@ class TestIsinf(TestCase):
         assert_all(alltrue(res,axis=0))
 
     def test_posinf(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             assert_all(isinf(array((1.,))/0.) == 1)
-        finally:
-            seterr(**olderr)
 
     def test_posinf_scalar(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             assert_all(isinf(array(1.,)/0.) == 1)
-        finally:
-            seterr(**olderr)
 
     def test_neginf(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             assert_all(isinf(array((-1.,))/0.) == 1)
-        finally:
-            seterr(**olderr)
 
     def test_neginf_scalar(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             assert_all(isinf(array(-1.)/0.) == 1)
-        finally:
-            seterr(**olderr)
 
     def test_ind(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             assert_all(isinf(array((0.,))/0.) == 0)
-        finally:
-            seterr(**olderr)
 
     #def test_qnan(self):
     #    assert_all(isinf(log(-1.)) == 0)
@@ -295,23 +258,18 @@ class TestIsinf(TestCase):
 class TestIsposinf(TestCase):
 
     def test_generic(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             vals = isposinf(array((-1.,0,1))/0.)
-        finally:
-            seterr(**olderr)
         assert_(vals[0] == 0)
         assert_(vals[1] == 0)
         assert_(vals[2] == 1)
 
 
 class TestIsneginf(TestCase):
+
     def test_generic(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             vals = isneginf(array((-1.,0,1))/0.)
-        finally:
-            seterr(**olderr)
         assert_(vals[0] == 1)
         assert_(vals[1] == 0)
         assert_(vals[2] == 0)
@@ -320,11 +278,8 @@ class TestIsneginf(TestCase):
 class TestNanToNum(TestCase):
 
     def test_generic(self):
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
             vals = nan_to_num(array((-1.,0,1))/0.)
-        finally:
-            seterr(**olderr)
         assert_all(vals[0] < -1e10) and assert_all(isfinite(vals[0]))
         assert_(vals[1] == 0)
         assert_all(vals[2] > 1e10) and assert_all(isfinite(vals[2]))
@@ -338,23 +293,17 @@ class TestNanToNum(TestCase):
         assert_all(vals == 1+1j)
 
     def test_complex_bad(self):
-        v = 1+1j
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
+            v = 1 + 1j
             v += array(0+1.j)/0.
-        finally:
-            seterr(**olderr)
         vals = nan_to_num(v)
         # !! This is actually (unexpectedly) zero
         assert_all(isfinite(vals))
 
     def test_complex_bad2(self):
-        v = 1+1j
-        olderr = seterr(divide='ignore', invalid='ignore')
-        try:
+        with errstate(divide='ignore', invalid='ignore'):
+            v = 1 + 1j
             v += array(-1+1.j)/0.
-        finally:
-            seterr(**olderr)
         vals = nan_to_num(v)
         assert_all(isfinite(vals))
         #assert_all(vals.imag > 1e10)  and assert_all(isfinite(vals))

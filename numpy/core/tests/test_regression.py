@@ -655,11 +655,8 @@ class TestRegression(TestCase):
     def test_array_str_64bit(self, level=rlevel):
         """Ticket #501"""
         s = np.array([1, np.nan],dtype=np.float64)
-        errstate = np.seterr(all='raise')
-        try:
+        with np.errstate(all='raise'):
             sstr = np.array_str(s)
-        finally:
-            np.seterr(**errstate)
 
     def test_frompyfunc_endian(self, level=rlevel):
         """Ticket #503"""
@@ -1120,14 +1117,11 @@ class TestRegression(TestCase):
 
     def test_sign_for_complex_nan(self, level=rlevel):
         """Ticket 794."""
-        olderr = np.seterr(invalid='ignore')
-        try:
+        with np.errstate(invalid='ignore'):
             C = np.array([-np.inf, -2+1j, 0, 2-1j, np.inf, np.nan])
             have = np.sign(C)
             want = np.array([-1+0j, -1+0j, 0+0j, 1+0j, 1+0j, np.nan])
             assert_equal(have, want)
-        finally:
-            np.seterr(**olderr)
 
     def test_for_equal_names(self, level=rlevel):
         """Ticket #674"""
@@ -1169,8 +1163,7 @@ class TestRegression(TestCase):
 
     def test_errobj_reference_leak(self, level=rlevel):
         """Ticket #955"""
-        old_err = np.seterr(all="ignore")
-        try:
+        with np.errstate(all="ignore"):
             z = int(0)
             p = np.int32(-1)
 
@@ -1180,8 +1173,6 @@ class TestRegression(TestCase):
             gc.collect()
             n_after = len(gc.get_objects())
             assert_(n_before >= n_after, (n_before, n_after))
-        finally:
-            np.seterr(**old_err)
 
     def test_void_scalar_with_titles(self, level=rlevel):
         """No ticket"""
@@ -1415,12 +1406,9 @@ class TestRegression(TestCase):
             min = np.array([np.iinfo(t).min])
             min //= -1
 
-        old_err = np.seterr(divide="ignore")
-        try:
+        with np.errstate(divide="ignore"):
             for t in (np.int8, np.int16, np.int32, np.int64, np.int, np.long):
                 test_type(t)
-        finally:
-            np.seterr(**old_err)
 
     def test_buffer_hashlib(self):
         try:

@@ -110,8 +110,7 @@ class TestPower(TestCase):
 
 class TestComplexDivision(TestCase):
     def test_zero_division(self):
-        err = np.seterr(all="ignore")
-        try:
+        with np.errstate(all="ignore"):
             for t in [np.complex64, np.complex128]:
                 a = t(0.0)
                 b = t(1.0)
@@ -126,8 +125,6 @@ class TestComplexDivision(TestCase):
                 assert_(np.isnan(b/a))
                 b = t(0.)
                 assert_(np.isnan(b/a))
-        finally:
-            np.seterr(**err)
 
 
 class TestConversion(TestCase):

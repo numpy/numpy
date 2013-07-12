@@ -838,13 +838,9 @@ class _MaskedUnaryOperation:
         d = getdata(a)
         # Case 1.1. : Domained function
         if self.domain is not None:
-            # Save the error status
-            err_status_ini = np.geterr()
-            try:
+            with np.errstate():
                 np.seterr(divide='ignore', invalid='ignore')
                 result = self.f(d, *args, **kwargs)
-            finally:
-                np.seterr(**err_status_ini)
             # Make a mask
             m = ~umath.isfinite(result)
             m |= self.domain(d)
@@ -931,12 +927,9 @@ class _MaskedBinaryOperation:
         else:
             m = umath.logical_or(ma, mb)
         # Get the result
-        err_status_ini = np.geterr()
-        try:
+        with np.errstate():
             np.seterr(divide='ignore', invalid='ignore')
             result = self.f(da, db, *args, **kwargs)
-        finally:
-            np.seterr(**err_status_ini)
         # Case 1. : scalar
         if not result.ndim:
             if m:
@@ -1069,12 +1062,9 @@ class _DomainedBinaryOperation:
         (da, db) = (getdata(a, subok=False), getdata(b, subok=False))
         (ma, mb) = (getmask(a), getmask(b))
         # Get the result
-        err_status_ini = np.geterr()
-        try:
+        with np.errstate():
             np.seterr(divide='ignore', invalid='ignore')
             result = self.f(da, db, *args, **kwargs)
-        finally:
-            np.seterr(**err_status_ini)
         # Get the mask as a combination of ma, mb and invalid
         m = ~umath.isfinite(result)
         m |= ma
@@ -3815,12 +3805,9 @@ class MaskedArray(ndarray):
         "Raise self to the power other, in place."
         other_data = getdata(other)
         other_mask = getmask(other)
-        err_status = np.geterr()
-        try:
+        with np.errstate():
             np.seterr(divide='ignore', invalid='ignore')
             ndarray.__ipow__(self._data, np.where(self._mask, 1, other_data))
-        finally:
-            np.seterr(**err_status)
         invalid = np.logical_not(np.isfinite(self._data))
         if invalid.any():
             if self._mask is not nomask:
@@ -6083,12 +6070,9 @@ def power(a, b, third=None):
     else:
         basetype = MaskedArray
     # Get the result and view it as a (subclass of) MaskedArray
-    err_status = np.geterr()
-    try:
+    with np.errstate():
         np.seterr(divide='ignore', invalid='ignore')
         result = np.where(m, fa, umath.power(fa, fb)).view(basetype)
-    finally:
-        np.seterr(**err_status)
     result._update_from(a)
     # Find where we're in trouble w/ NaNs and Infs
     invalid = np.logical_not(np.isfinite(result.view(ndarray)))
