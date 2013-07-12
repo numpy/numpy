@@ -1,11 +1,10 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import warnings
 
 import numpy as np
 from numpy.testing import *
-from numpy.testing.utils import WarningManager
-import warnings
 from numpy.compat import sixu
 
 # Switch between new behaviour when NPY_RELAXED_STRIDES_CHECKING is set.

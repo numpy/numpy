@@ -10,7 +10,6 @@ import warnings
 import gc
 from io import BytesIO
 from datetime import datetime
-from numpy.testing.utils import WarningManager
 
 import numpy as np
 import numpy.ma as ma
@@ -571,14 +570,13 @@ class TestLoadTxt(TestCase):
         dt = np.dtype([('name', 'S4'), ('x', float), ('y', float),
                        ('block', int, (2, 2, 3))])
         x = np.loadtxt(c, dtype=dt)
-        a = np.array([('aaaa', 1.0, 8.0, [[[1, 2, 3], [4, 5, 6]],[[7, 8, 9], [10, 11, 12]]])],
-                     dtype=dt)
+        a = np.array([('aaaa', 1.0, 8.0,
+                        [[[1, 2, 3], [4, 5, 6]],[[7, 8, 9], [10, 11, 12]]])],
+                    dtype=dt)
         assert_array_equal(x, a)
 
     def test_empty_file(self):
-        warn_ctx = WarningManager()
-        warn_ctx.__enter__()
-        try:
+        with warnings.catch_warnings():
             warnings.filterwarnings("ignore",
                     message="loadtxt: Empty input file:")
             c = TextIO()
@@ -587,8 +585,6 @@ class TestLoadTxt(TestCase):
             x = np.loadtxt(c, dtype=np.int64)
             assert_equal(x.shape, (0,))
             assert_(x.dtype == np.int64)
-        finally:
-            warn_ctx.__exit__()
 
 
     def test_unused_converter(self):
@@ -704,16 +700,12 @@ class TestLoadTxt(TestCase):
         assert_(x.shape == (3,))
 
         # Test ndmin kw with empty file.
-        warn_ctx = WarningManager()
-        warn_ctx.__enter__()
-        try:
+        with warnings.catch_warnings():
             warnings.filterwarnings("ignore",
                     message="loadtxt: Empty input file:")
             f = TextIO()
             assert_(np.loadtxt(f, ndmin=2).shape == (0, 1,))
             assert_(np.loadtxt(f, ndmin=1).shape == (0,))
-        finally:
-            warn_ctx.__exit__()
 
     def test_generator_source(self):
         def count():
@@ -841,11 +833,9 @@ class TestFromTxt(TestCase):
         assert_equal(test, ctrl)
 
     def test_skip_footer_with_invalid(self):
-        warn_ctx = WarningManager()
-        warn_ctx.__enter__()
-        try:
-            basestr = '1 1\n2 2\n3 3\n4 4\n5  \n6  \n7  \n'
+        with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
+            basestr = '1 1\n2 2\n3 3\n4 4\n5  \n6  \n7  \n'
             # Footer too small to get rid of all invalid values
             assert_raises(ValueError, np.genfromtxt,
                           TextIO(basestr), skip_footer=1)
@@ -862,9 +852,6 @@ class TestFromTxt(TestCase):
             assert_equal(a, np.array([[1., 1.], [3., 3.], [4., 4.], [6., 6.]]))
             a = np.genfromtxt(TextIO(basestr), skip_footer=3, invalid_raise=False)
             assert_equal(a, np.array([[1., 1.], [3., 3.], [4., 4.]]))
-        finally:
-            warn_ctx.__exit__()
-
 
     def test_header(self):
         "Test retrieving a header"
@@ -1168,15 +1155,12 @@ M   33  21.99
 
     def test_empty_file(self):
         "Test that an empty file raises the proper warning."
-        warn_ctx = WarningManager()
-        warn_ctx.__enter__()
-        try:
-            warnings.filterwarnings("ignore", message="genfromtxt: Empty input file:")
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore",
+                                    message="genfromtxt: Empty input file:")
             data = TextIO()
             test = np.genfromtxt(data)
             assert_equal(test, np.array([]))
-        finally:
-            warn_ctx.__exit__()
 
     def test_fancy_dtype_alt(self):
         "Check that a nested dtype isn't MIA"

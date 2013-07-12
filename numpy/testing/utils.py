@@ -1365,6 +1365,8 @@ class WarningMessage(object):
     """
     Holds the result of a single showwarning() call.
 
+    Deprecated in 1.8.0
+
     Notes
     -----
     `WarningMessage` is copied from the Python 2.6 warnings module,
@@ -1404,6 +1406,8 @@ class WarningManager(object):
     The 'module' argument is to specify an alternative module to the module
     named 'warnings' and imported under that name. This argument is only useful
     when testing the warnings module itself.
+
+    Deprecated in 1.8.0
 
     Notes
     -----
@@ -1467,13 +1471,8 @@ def assert_warns(warning_class, func, *args, **kw):
     The value returned by `func`.
 
     """
-
-    # XXX: once we may depend on python >= 2.6, this can be replaced by the
-    # warnings module context manager.
-    ctx = WarningManager(record=True)
-    l = ctx.__enter__()
-    warnings.simplefilter('always')
-    try:
+    with warnings.catch_warnings(record=True) as l:
+        warnings.simplefilter('always')
         result = func(*args, **kw)
         if not len(l) > 0:
             raise AssertionError("No warning raised when calling %s"
@@ -1481,8 +1480,6 @@ def assert_warns(warning_class, func, *args, **kw):
         if not l[0].category is warning_class:
             raise AssertionError("First warning for %s is not a " \
                     "%s( is %s)" % (func.__name__, warning_class, l[0]))
-    finally:
-        ctx.__exit__()
     return result
 
 def assert_no_warnings(func, *args, **kw):
@@ -1503,18 +1500,12 @@ def assert_no_warnings(func, *args, **kw):
     The value returned by `func`.
 
     """
-    # XXX: once we may depend on python >= 2.6, this can be replaced by the
-    # warnings module context manager.
-    ctx = WarningManager(record=True)
-    l = ctx.__enter__()
-    warnings.simplefilter('always')
-    try:
+    with warnings.catch_warnings(record=True) as l:
+        warnings.simplefilter('always')
         result = func(*args, **kw)
         if len(l) > 0:
             raise AssertionError("Got warnings when calling %s: %s"
                     % (func.__name__, l))
-    finally:
-        ctx.__exit__()
     return result
 
 
