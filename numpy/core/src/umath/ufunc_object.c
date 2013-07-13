@@ -5118,6 +5118,8 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
         i--;
     }
+    
+    NpyIter_Deallocate(iter_buffer);
 
     return op1;
 
