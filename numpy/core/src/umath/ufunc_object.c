@@ -5123,12 +5123,9 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
 fail:
 
-    if (op2_array != NULL)
-        Py_DECREF(op2_array);
-    if (iter != NULL)
-        Py_DECREF(iter);
-    if (iter2 != NULL)
-        Py_DECREF(iter2);
+    Py_XDECREF(op2_array);
+    Py_XDECREF(iter);
+    Py_XDECREF(iter2);
     return NULL;
 }
 
