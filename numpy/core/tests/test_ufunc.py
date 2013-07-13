@@ -983,6 +983,11 @@ class TestUfunc(TestCase):
         np.invert.at(a, [2, 5, 2])
         assert_equal(a, [0, 1, 2, 3, 4, 5 ^ 0xffffffff, 6, 7, 8, 9])
 
+        # Test empty subspace
+        orig = np.arange(4)
+        a = orig[:,None][:,0:0]
+        np.add.at(a, [0,1], 3)
+        assert_array_equal(orig, np.arange(4))
 
 if __name__ == "__main__":
     run_module_suite()
