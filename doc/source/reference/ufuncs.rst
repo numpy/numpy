@@ -418,9 +418,10 @@ an integer (or Boolean) data-type and smaller than the size of the
 (or :class:`uint`) data-type.
 
 Ufuncs also have a fifth method that allows in place operations to be
-performed using fancy indexing. No buffering is used, so the fancy index
-can list an item more than once and the operation will be performed on the
-result of the previous operation for that item.
+performed using fancy indexing. No buffering is used on the dimensions where
+fancy indexing is used, so the fancy index can list an item more than once and
+the operation will be performed on the result of the previous operation for
+that item.
 
 .. index::
    pair: ufunc; methods
