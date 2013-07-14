@@ -140,7 +140,7 @@ arrays instead of only in simple indices. This means that
 ``array[np.newaxis, [0, 1]]`` will now work as expected.
 
 New functions `full` and `full_like`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 New convenience functions to create arrays filled with a specific value;
 complementary to the existing `zeros` and `zeros_like` functions.
@@ -154,6 +154,13 @@ array would be sorted via a selection algorithm. In the resulting array all
 elements smaller than the sorted elements will placed before the it and all
 equal or larger behind it.
 This has a time complexity of O(n) compared to O(n log(n)) of a full sort.
+
+New functions `nanmean`, `nanvar` and `nanstd`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+New nan aware statistical functions are added. In these functions the
+results are what would be obtained if nan values were ommited from all
+computations.
 
 C-API
 ~~~~~
