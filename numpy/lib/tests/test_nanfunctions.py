@@ -4,236 +4,413 @@ import warnings
 
 import numpy as np
 from numpy.testing import (
-    run_module_suite, TestCase, assert_, assert_equal, assert_almost_equal
+    run_module_suite, TestCase, assert_, assert_equal, assert_almost_equal,
+    assert_raises
     )
 from numpy.lib import (
-    nansum, nanmax, nanargmax, nanargmin, nanmin, nanmean, nanvar, nanstd
+    nansum, nanmax, nanargmax, nanargmin, nanmin, nanmean, nanvar, nanstd,
+    NanWarning
     )
 
-class TestNaNFuncts(TestCase):
-    def setUp(self):
-        self.A = np.array([[[ np.nan, 0.01319214, 0.01620964],
-                         [ 0.11704017, np.nan, 0.75157887],
-                         [ 0.28333658, 0.1630199 , np.nan       ]],
-                        [[ 0.59541557, np.nan, 0.37910852],
-                         [ np.nan, 0.87964135, np.nan       ],
-                         [ 0.70543747, np.nan, 0.34306596]],
-                        [[ 0.72687499, 0.91084584, np.nan       ],
-                         [ 0.84386844, 0.38944762, 0.23913896],
-                         [ np.nan, 0.37068164, 0.33850425]]])
 
-    def test_nansum(self):
-        assert_almost_equal(nansum(self.A), 8.0664079100000006)
-        assert_almost_equal(nansum(self.A, 0),
-                            np.array([[ 1.32229056, 0.92403798, 0.39531816],
-                                   [ 0.96090861, 1.26908897, 0.99071783],
-                                   [ 0.98877405, 0.53370154, 0.68157021]]))
-        assert_almost_equal(nansum(self.A, 1),
-                            np.array([[ 0.40037675, 0.17621204, 0.76778851],
-                                   [ 1.30085304, 0.87964135, 0.72217448],
-                                   [ 1.57074343, 1.6709751 , 0.57764321]]))
-        assert_almost_equal(nansum(self.A, 2),
-                            np.array([[ 0.02940178, 0.86861904, 0.44635648],
-                                   [ 0.97452409, 0.87964135, 1.04850343],
-                                   [ 1.63772083, 1.47245502, 0.70918589]]))
+_ndat = np.array(
+        [[ 0.6244, np.nan, 0.2692,  0.0116, np.nan, 0.1170],
+         [ 0.5351, 0.9403, np.nan,  0.2100, 0.4759, 0.2833],
+         [ np.nan, np.nan, np.nan,  0.1042, np.nan, 0.5954],
+         [ 0.161 , np.nan, np.nan,  0.1859, 0.3146, np.nan]]
+        )
 
-    def test_nanmin(self):
-        assert_almost_equal(nanmin(self.A), 0.01319214)
-        assert_almost_equal(nanmin(self.A, 0),
-                            np.array([[ 0.59541557, 0.01319214, 0.01620964],
-                                   [ 0.11704017, 0.38944762, 0.23913896],
-                                   [ 0.28333658, 0.1630199 , 0.33850425]]))
-        assert_almost_equal(nanmin(self.A, 1),
-                            np.array([[ 0.11704017, 0.01319214, 0.01620964],
-                                   [ 0.59541557, 0.87964135, 0.34306596],
-                                   [ 0.72687499, 0.37068164, 0.23913896]]))
-        assert_almost_equal(nanmin(self.A, 2),
-                            np.array([[ 0.01319214, 0.11704017, 0.1630199 ],
-                                   [ 0.37910852, 0.87964135, 0.34306596],
-                                   [ 0.72687499, 0.23913896, 0.33850425]]))
-        assert_(np.isnan(nanmin([np.nan, np.nan])))
-
-    def test_nanargmin(self):
-        assert_almost_equal(nanargmin(self.A), 1)
-        assert_almost_equal(nanargmin(self.A, 0),
-                            np.array([[1, 0, 0],
-                                   [0, 2, 2],
-                                   [0, 0, 2]]))
-        assert_almost_equal(nanargmin(self.A, 1),
-                            np.array([[1, 0, 0],
-                                   [0, 1, 2],
-                                   [0, 2, 1]]))
-        assert_almost_equal(nanargmin(self.A, 2),
-                            np.array([[1, 0, 1],
-                                   [2, 1, 2],
-                                   [0, 2, 2]]))
-
-    def test_nanmax(self):
-        assert_almost_equal(nanmax(self.A), 0.91084584000000002)
-        assert_almost_equal(nanmax(self.A, 0),
-                            np.array([[ 0.72687499, 0.91084584, 0.37910852],
-                                   [ 0.84386844, 0.87964135, 0.75157887],
-                                   [ 0.70543747, 0.37068164, 0.34306596]]))
-        assert_almost_equal(nanmax(self.A, 1),
-                            np.array([[ 0.28333658, 0.1630199 , 0.75157887],
-                                   [ 0.70543747, 0.87964135, 0.37910852],
-                                   [ 0.84386844, 0.91084584, 0.33850425]]))
-        assert_almost_equal(nanmax(self.A, 2),
-                            np.array([[ 0.01620964, 0.75157887, 0.28333658],
-                                   [ 0.59541557, 0.87964135, 0.70543747],
-                                   [ 0.91084584, 0.84386844, 0.37068164]]))
-        assert_(np.isnan(nanmax([np.nan, np.nan])))
-
-    def test_nanmin_allnan_on_axis(self):
-        assert_equal(np.isnan(nanmin([[np.nan] * 2] * 3, axis=1)),
-                     [True, True, True])
-
-    def test_nanmin_masked(self):
-        a = np.ma.fix_invalid([[2, 1, 3, np.nan], [5, 2, 3, np.nan]])
-        ctrl_mask = a._mask.copy()
-        test = np.nanmin(a, axis=1)
-        assert_equal(test, [1, 2])
-        assert_equal(a._mask, ctrl_mask)
-        assert_equal(np.isinf(a), np.zeros((2, 4), dtype=bool))
-
-    def test_nanmean(self):
-        A = [[1, np.nan, np.nan], [np.nan, 4, 5]]
-        assert_(nanmean(A) == (10.0 / 3))
-        assert_(all(nanmean(A,0) == np.array([1, 4, 5])))
-        assert_(all(nanmean(A,1) == np.array([1, 4.5])))
-
-    def test_nanstd(self):
-        A = [[1, np.nan, np.nan], [np.nan, 4, 5]]
-        assert_almost_equal(nanstd(A), 1.699673171197595)
-        assert_almost_equal(nanstd(A,0), np.array([0.0, 0.0, 0.0]))
-        assert_almost_equal(nanstd(A,1), np.array([0.0, 0.5]))
-
-    def test_nanvar(self):
-        A = [[1, np.nan, np.nan], [np.nan, 4, 5]]
-        assert_almost_equal(nanvar(A), 2.88888888889)
-        assert_almost_equal(nanvar(A,0), np.array([0.0, 0.0, 0.0]))
-        assert_almost_equal(nanvar(A,1), np.array([0.0, 0.25]))
+# rows of _ndat with nans removed
+_rdat = [
+        np.array([ 0.6244, 0.2692, 0.0116, 0.1170]),
+        np.array([ 0.5351, 0.9403, 0.2100, 0.4759, 0.2833]),
+        np.array([ 0.1042, 0.5954]),
+        np.array([ 0.1610, 0.1859, 0.3146])
+       ]
 
 
-class TestNaNMean(TestCase):
-    def setUp(self):
-        self.A = np.array([1, np.nan, -1, np.nan, np.nan, 1, -1])
-        self.B = np.array([np.nan, np.nan, np.nan, np.nan])
-        self.real_mean = 0
+class TestNanFunctions_MinMax(TestCase):
 
-    def test_basic(self):
-        assert_almost_equal(nanmean(self.A),self.real_mean)
+    nanfuncs = [nanmin, nanmax]
+    stdfuncs = [np.min, np.max]
 
     def test_mutation(self):
-        # Because of the "messing around" we do to replace NaNs with zeros
-        # this is meant to ensure we don't actually replace the NaNs in the
-        # actual _array.
-        a_copy = self.A.copy()
-        b_copy = self.B.copy()
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            a_ret = nanmean(self.A)
-            assert_equal(self.A, a_copy)
-            b_ret = nanmean(self.B)
-            assert_equal(self.B, b_copy)
+        # Check that passes array is no modified.
+        ndat = _ndat.copy()
+        for f in self.nanfuncs:
+            f(ndat)
+            assert_equal(ndat, _ndat)
+
+    def test_keepdims(self):
+        mat = np.eye(3)
+        for nf, rf in zip(self.nanfuncs, self.stdfuncs):
+            for axis in [None, 0, 1]:
+                tgt = rf(mat, axis=axis, keepdims=True)
+                res = nf(mat, axis=axis, keepdims=True)
+                assert_(res.ndim == tgt.ndim)
+
+    def test_out(self):
+        mat = np.eye(3)
+        for nf, rf in zip(self.nanfuncs, self.stdfuncs):
+            resout = np.zeros(3)
+            tgt = rf(mat, axis=1)
+            res = nf(mat, axis=1, out=resout)
+            assert_almost_equal(res, resout)
+            assert_almost_equal(res, tgt)
+
+    def test_dtype_from_input(self):
+        codes = 'efdgFDG'
+        for nf, rf in zip(self.nanfuncs, self.stdfuncs):
+            for c in codes:
+                mat = np.eye(3, dtype=c)
+                tgt = rf(mat, axis=1).dtype.type
+                res = nf(mat, axis=1).dtype.type
+                assert_(res is tgt)
+                # scalar case
+                tgt = rf(mat, axis=None).dtype.type
+                res = nf(mat, axis=None).dtype.type
+                assert_(res is tgt)
+
+    def test_result_values(self):
+        for nf, rf in zip(self.nanfuncs, self.stdfuncs):
+            tgt = [rf(d) for d in _rdat]
+            res = nf(_ndat, axis=1)
+            assert_almost_equal(res, tgt)
 
     def test_allnans(self):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_(np.isnan(nanmean(self.B)))
-            assert_(w[0].category is RuntimeWarning)
+        mat = np.array([np.nan]*9).reshape(3, 3)
+        for f in self.nanfuncs:
+            for axis in [None, 0, 1]:
+                assert_(np.isnan(f(mat, axis=axis)).all())
 
-    def test_empty(self):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_(np.isnan(nanmean(np.array([]))))
-            assert_(w[0].category is RuntimeWarning)
+    def test_masked(self):
+        mat = np.ma.fix_invalid(_ndat)
+        msk = mat._mask.copy()
+        for f in [nanmin]:
+            res = f(mat, axis=1)
+            tgt = f(_ndat, axis=1)
+            assert_equal(res, tgt)
+            assert_equal(mat._mask, msk)
+            assert_(not np.isinf(mat).any())
 
 
-class TestNaNStdVar(TestCase):
-    def setUp(self):
-        self.A = np.array([np.nan, 1, -1, np.nan, 1, np.nan, -1])
-        self.B = np.array([np.nan, np.nan, np.nan, np.nan])
-        self.real_var = 1
+class TestNanFunctions_ArgminArgmax(TestCase):
 
-    def test_basic(self):
-        assert_almost_equal(nanvar(self.A),self.real_var)
-        assert_almost_equal(nanstd(self.A)**2,self.real_var)
+    nanfuncs = [nanargmin, nanargmax]
 
     def test_mutation(self):
-        # Because of the "messing around" we do to replace NaNs with zeros
-        # this is meant to ensure we don't actually replace the NaNs in the
-        # actual array.
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            a_copy = self.A.copy()
-            b_copy = self.B.copy()
-            a_ret = nanvar(self.A)
-            assert_equal(self.A, a_copy)
-            b_ret = nanstd(self.B)
-            assert_equal(self.B, b_copy)
+        # Check that passes array is no modified.
+        ndat = _ndat.copy()
+        for f in self.nanfuncs:
+            f(ndat)
+            assert_equal(ndat, _ndat)
 
-    def test_ddof1(self):
-        mask = ~np.isnan(self.A)
-        assert_almost_equal(nanvar(self.A,ddof=1),
-                self.real_var*sum(mask)/float(sum(mask) - 1))
-        assert_almost_equal(nanstd(self.A,ddof=1)**2,
-                self.real_var*sum(mask)/float(sum(mask) - 1))
-
-    def test_ddof2(self):
-        mask = ~np.isnan(self.A)
-        assert_almost_equal(nanvar(self.A,ddof=2),
-                self.real_var*sum(mask)/float(sum(mask) - 2))
-        assert_almost_equal(nanstd(self.A,ddof=2)**2,
-                self.real_var*sum(mask)/float(sum(mask) - 2))
+    def test_result_values(self):
+        for f, fcmp in zip(self.nanfuncs, [np.greater, np.less]):
+            for row in _ndat:
+                with warnings.catch_warnings():
+                    warnings.simplefilter('ignore')
+                    ind = f(row)
+                    val = row[ind]
+                    # comparing with NaN is tricky as the result
+                    # is always false except for NaN != NaN
+                    assert_(not np.isnan(val))
+                    assert_(not fcmp(val, row).any())
+                    assert_(not np.equal(val, row[:ind]).any())
 
     def test_allnans(self):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_(np.isnan(nanvar(self.B)))
-            assert_(np.isnan(nanstd(self.B)))
-            assert_(w[0].category is RuntimeWarning)
+        mat = np.array([np.nan]*9).reshape(3, 3)
+        tgt = np.iinfo(np.intp).min
+        for f in self.nanfuncs:
+            for axis in [None, 0, 1]:
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter('always')
+                    res = f(mat, axis=axis)
+                    assert_((res == tgt).all())
+                    assert_(len(w) == 1)
+                    assert_(issubclass(w[0].category, NanWarning))
 
     def test_empty(self):
-        with warnings.catch_warnings(record=True) as w:
-            warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_(np.isnan(nanvar(np.array([]))))
-            assert_(np.isnan(nanstd(np.array([]))))
-            assert_(w[0].category is RuntimeWarning)
+        mat = np.zeros((0,3))
+        for f in self.nanfuncs:
+            for axis in [0, None]:
+                assert_raises(ValueError, f, mat, axis=axis)
+            for axis in [1]:
+                res = f(mat, axis=axis)
+                assert_equal(res, np.zeros(0))
 
 
-class TestNanFunctsIntTypes(TestCase):
+class TestNanFunctions_IntTypes(TestCase):
 
     int_types = (
             np.int8, np.int16, np.int32, np.int64, np.uint8,
             np.uint16, np.uint32, np.uint64)
 
     def setUp(self, *args, **kwargs):
-        self.A = np.array([127, 39,  93,  87, 46])
+        self.mat = np.array([127, 39,  93,  87, 46])
 
     def integer_arrays(self):
         for dtype in self.int_types:
-            yield self.A.astype(dtype)
+            yield self.mat.astype(dtype)
 
     def test_nanmin(self):
-        min_value = min(self.A)
-        for A in self.integer_arrays():
-            assert_equal(nanmin(A), min_value)
+        min_value = min(self.mat)
+        for mat in self.integer_arrays():
+            assert_equal(nanmin(mat), min_value)
 
     def test_nanmax(self):
-        max_value = max(self.A)
-        for A in self.integer_arrays():
-            assert_equal(nanmax(A), max_value)
+        max_value = max(self.mat)
+        for mat in self.integer_arrays():
+            assert_equal(nanmax(mat), max_value)
 
     def test_nanargmin(self):
-        min_arg = np.argmin(self.A)
-        for A in self.integer_arrays():
-            assert_equal(nanargmin(A), min_arg)
+        min_arg = np.argmin(self.mat)
+        for mat in self.integer_arrays():
+            assert_equal(nanargmin(mat), min_arg)
 
     def test_nanargmax(self):
-        max_arg = np.argmax(self.A)
-        for A in self.integer_arrays():
-            assert_equal(nanargmax(A), max_arg)
+        max_arg = np.argmax(self.mat)
+        for mat in self.integer_arrays():
+            assert_equal(nanargmax(mat), max_arg)
+
+
+class TestNanFunctions_Sum(TestCase):
+
+    def test_mutation(self):
+        # Check that passes array is no modified.
+        ndat = _ndat.copy()
+        nansum(ndat)
+        assert_equal(ndat, _ndat)
+
+    def test_keepdims(self):
+        mat = np.eye(3)
+        for axis in [None, 0, 1]:
+            tgt = np.sum(mat, axis=axis, keepdims=True)
+            res = nansum(mat, axis=axis, keepdims=True)
+            assert_(res.ndim == tgt.ndim)
+
+    def test_out(self):
+        mat = np.eye(3)
+        resout = np.zeros(3)
+        tgt = np.sum(mat, axis=1)
+        res = nansum(mat, axis=1, out=resout)
+        assert_almost_equal(res, resout)
+        assert_almost_equal(res, tgt)
+
+    def test_dtype_from_dtype(self):
+        mat = np.eye(3)
+        codes = 'efdgFDG'
+        for c in codes:
+            tgt = np.sum(mat, dtype=np.dtype(c), axis=1).dtype.type
+            res = nansum(mat, dtype=np.dtype(c), axis=1).dtype.type
+            assert_(res is tgt)
+            # scalar case
+            tgt = np.sum(mat, dtype=np.dtype(c), axis=None).dtype.type
+            res = nansum(mat, dtype=np.dtype(c), axis=None).dtype.type
+            assert_(res is tgt)
+
+    def test_dtype_from_char(self):
+        mat = np.eye(3)
+        codes = 'efdgFDG'
+        for c in codes:
+            tgt = np.sum(mat, dtype=c, axis=1).dtype.type
+            res = nansum(mat, dtype=c, axis=1).dtype.type
+            assert_(res is tgt)
+            # scalar case
+            tgt = np.sum(mat, dtype=c, axis=None).dtype.type
+            res = nansum(mat, dtype=c, axis=None).dtype.type
+            assert_(res is tgt)
+
+    def test_dtype_from_input(self):
+        codes = 'efdgFDG'
+        for c in codes:
+            mat = np.eye(3, dtype=c)
+            tgt = np.sum(mat, axis=1).dtype.type
+            res = nansum(mat, axis=1).dtype.type
+            assert_(res is tgt)
+            # scalar case
+            tgt = np.sum(mat, axis=None).dtype.type
+            res = nansum(mat, axis=None).dtype.type
+            assert_(res is tgt)
+
+    def test_result_values(self):
+            tgt = [np.sum(d) for d in _rdat]
+            res = nansum(_ndat, axis=1)
+            assert_almost_equal(res, tgt)
+
+    def test_allnans(self):
+        # Check for FutureWarning and later change of return from
+        # NaN to zero.
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            res = nansum([np.nan]*3, axis=None)
+            if np.__version__[:3] < '1.9':
+                assert_(np.isnan(res), 'result is not NaN')
+                assert_(len(w) == 1, 'no warning raised')
+                assert_(issubclass(w[0].category, FutureWarning))
+            else:
+                assert_(res == 0, 'result is not 0')
+                assert_(len(w) == 0, 'warning raised')
+
+    def test_empty(self):
+        mat = np.zeros((0,3))
+        if np.__version__[:3] < '1.9':
+            tgt = [np.nan]*3
+            res = nansum(mat, axis=0)
+            assert_equal(res, tgt)
+            tgt = []
+            res = nansum(mat, axis=1)
+            assert_equal(res, tgt)
+            tgt = np.nan
+            res = nansum(mat, axis=None)
+            assert_equal(res, tgt)
+        else:
+            tgt = [0]*3
+            res = nansum(mat, axis=0)
+            assert_equal(res, tgt)
+            tgt = []
+            res = nansum(mat, axis=1)
+            assert_equal(res, tgt)
+            tgt = 0
+            res = nansum(mat, axis=None)
+            assert_equal(res, tgt)
+
+
+class TestNanFunctions_MeanVarStd(TestCase):
+
+    nanfuncs = [nanmean, nanvar, nanstd]
+    stdfuncs = [np.mean, np.var, np.std]
+
+    def test_mutation(self):
+        # Check that passes array is no modified.
+        ndat = _ndat.copy()
+        for f in self.nanfuncs:
+            f(ndat)
+            assert_equal(ndat, _ndat)
+
+    def test_dtype_error(self):
+        for f in self.nanfuncs:
+            for dtype in [np.bool_, np.int_, np.object]:
+                assert_raises( TypeError, f, _ndat, axis=1, dtype=np.int)
+
+    def test_out_dtype_error(self):
+        for f in self.nanfuncs:
+            for dtype in [np.bool_, np.int_, np.object]:
+                out = np.empty(_ndat.shape[0], dtype=dtype)
+                assert_raises( TypeError, f, _ndat, axis=1, out=out)
+
+    def test_keepdims(self):
+        mat = np.eye(3)
+        for nf, rf in zip(self.nanfuncs, self.stdfuncs):
+            for axis in [None, 0, 1]:
+                tgt = rf(mat, axis=axis, keepdims=True)
+                res = nf(mat, axis=axis, keepdims=True)
+                assert_(res.ndim == tgt.ndim)
+
+    def test_out(self):
+        mat = np.eye(3)
+        for nf, rf in zip(self.nanfuncs, self.stdfuncs):
+            resout = np.zeros(3)
+            tgt = rf(mat, axis=1)
+            res = nf(mat, axis=1, out=resout)
+            assert_almost_equal(res, resout)
+            assert_almost_equal(res, tgt)
+
+    def test_dtype_from_dtype(self):
+        mat = np.eye(3)
+        codes = 'efdgFDG'
+        for nf, rf in zip(self.nanfuncs, self.stdfuncs):
+            for c in codes:
+                tgt = rf(mat, dtype=np.dtype(c), axis=1).dtype.type
+                res = nf(mat, dtype=np.dtype(c), axis=1).dtype.type
+                assert_(res is tgt)
+                # scalar case
+                tgt = rf(mat, dtype=np.dtype(c), axis=None).dtype.type
+                res = nf(mat, dtype=np.dtype(c), axis=None).dtype.type
+                assert_(res is tgt)
+
+    def test_dtype_from_char(self):
+        mat = np.eye(3)
+        codes = 'efdgFDG'
+        for nf, rf in zip(self.nanfuncs, self.stdfuncs):
+            for c in codes:
+                tgt = rf(mat, dtype=c, axis=1).dtype.type
+                res = nf(mat, dtype=c, axis=1).dtype.type
+                assert_(res is tgt)
+                # scalar case
+                tgt = rf(mat, dtype=c, axis=None).dtype.type
+                res = nf(mat, dtype=c, axis=None).dtype.type
+                assert_(res is tgt)
+
+    def test_dtype_from_input(self):
+        codes = 'efdgFDG'
+        for nf, rf in zip(self.nanfuncs, self.stdfuncs):
+            for c in codes:
+                mat = np.eye(3, dtype=c)
+                tgt = rf(mat, axis=1).dtype.type
+                res = nf(mat, axis=1).dtype.type
+                assert_(res is tgt)
+                # scalar case
+                tgt = rf(mat, axis=None).dtype.type
+                res = nf(mat, axis=None).dtype.type
+                assert_(res is tgt)
+
+    def test_ddof(self):
+        nanfuncs = [nanvar, nanstd]
+        stdfuncs = [np.var, np.std]
+        for nf, rf in zip(nanfuncs, stdfuncs):
+            for ddof in [0, 1]:
+                tgt = [rf(d, ddof=ddof) for d in _rdat]
+                res = nf(_ndat, axis=1, ddof=ddof)
+                assert_almost_equal(res, tgt)
+
+    def test_ddof_too_big(self):
+        nanfuncs = [nanvar, nanstd]
+        stdfuncs = [np.var, np.std]
+        dsize = [len(d) for d in _rdat]
+        for nf, rf in zip(nanfuncs, stdfuncs):
+            for ddof in range(5):
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter('always')
+                    tgt = [ddof >= d for d in dsize]
+                    res = nf(_ndat, axis=1, ddof=ddof)
+                    assert_equal(np.isnan(res), tgt)
+                    if any(tgt):
+                        assert_(len(w) == 1)
+                        assert_(issubclass(w[0].category, NanWarning))
+                    else:
+                        assert_(len(w) == 0)
+
+    def test_result_values(self):
+        for nf, rf in zip(self.nanfuncs, self.stdfuncs):
+            tgt = [rf(d) for d in _rdat]
+            res = nf(_ndat, axis=1)
+            assert_almost_equal(res, tgt)
+
+    def test_allnans(self):
+        mat = np.array([np.nan]*9).reshape(3, 3)
+        for f in self.nanfuncs:
+            for axis in [None, 0, 1]:
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter('always')
+                    assert_(np.isnan(f(mat, axis=axis)).all())
+                    assert_(len(w) == 1)
+                    assert_(issubclass(w[0].category, NanWarning))
+
+    def test_empty(self):
+        mat = np.zeros((0,3))
+        for f in self.nanfuncs:
+            for axis in [0, None]:
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter('always')
+                    assert_(np.isnan(f(mat, axis=axis)).all())
+                    assert_(len(w) == 1)
+                    assert_(issubclass(w[0].category, NanWarning))
+            for axis in [1]:
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter('always')
+                    assert_equal(f(mat, axis=axis), np.zeros([]))
+                    assert_(len(w) == 0)
 
 
 if __name__ == "__main__":
