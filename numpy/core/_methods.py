@@ -57,10 +57,10 @@ def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
 
     rcount = _count_reduce_items(arr, axis)
     if isinstance(ret, mu.ndarray):
-        ret = um.true_divide(ret, rcount,
-                        out=ret, casting='unsafe', subok=False)
+        ret = um.true_divide(
+                ret, rcount, out=ret, casting='unsafe', subok=False)
     else:
-        ret = ret / rcount
+        ret = ret.dtype.type(ret / rcount)
 
     return ret
 
@@ -76,10 +76,10 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0,
 
     rcount = _count_reduce_items(arr, axis)
     if isinstance(arrmean, mu.ndarray):
-        arrmean = um.true_divide(arrmean, rcount,
-                            out=arrmean, casting='unsafe', subok=False)
+        arrmean = um.true_divide(
+                arrmean, rcount, out=arrmean, casting='unsafe', subok=False)
     else:
-        arrmean = arrmean / rcount
+        arrmean = arrmean.dtype.type(arrmean / rcount)
 
     # arr - arrmean
     x = arr - arrmean
@@ -98,10 +98,10 @@ def _var(a, axis=None, dtype=None, out=None, ddof=0,
         rcount = rcount.squeeze(axis=axis)
     rcount -= ddof
     if isinstance(ret, mu.ndarray):
-        ret = um.true_divide(ret, rcount,
-                        out=ret, casting='unsafe', subok=False)
+        ret = um.true_divide(
+                ret, rcount, out=ret, casting='unsafe', subok=False)
     else:
-        ret = ret / rcount
+        ret = ret.dtype.type(ret / rcount)
 
     return ret
 
@@ -112,7 +112,7 @@ def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     if isinstance(ret, mu.ndarray):
         ret = um.sqrt(ret, out=ret)
     else:
-        ret = um.sqrt(ret)
+        ret = ret.dtype.type(um.sqrt(ret))
 
     return ret
 
