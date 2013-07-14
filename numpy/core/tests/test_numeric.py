@@ -202,7 +202,7 @@ class TestNonarrayArgs(TestCase):
 
         with warnings.catch_warnings(record=True) as w:
             warnings.filterwarnings('always', '', RuntimeWarning)
-            assert_(isnan(mean([])))
+            assert_(isnan(var([])))
             assert_(w[0].category is RuntimeWarning)
 
 
