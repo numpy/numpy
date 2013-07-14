@@ -1,12 +1,11 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import warnings
 from decimal import Decimal
 
 import numpy as np
 from numpy.testing import *
-from numpy.testing.utils import WarningManager
-import warnings
 
 class TestEinSum(TestCase):
     def test_einsum_errors(self):
@@ -272,9 +271,7 @@ class TestEinSum(TestCase):
             assert_equal(np.einsum(a, [0], b, [1]), np.outer(a, b))
 
         # Suppress the complex warnings for the 'as f8' tests
-        ctx = WarningManager()
-        ctx.__enter__()
-        try:
+        with warnings.catch_warnings():
             warnings.simplefilter('ignore', np.ComplexWarning)
 
             # matvec(a,b) / a.dot(b) where a is matrix, b is vector
@@ -379,8 +376,6 @@ class TestEinSum(TestCase):
                                         dtype='f8', casting='unsafe')
                 assert_equal(c, np.tensordot(a.astype('f8'), b.astype('f8'),
                                         axes=([1,0],[0,1])).astype(dtype))
-        finally:
-            ctx.__exit__()
 
         # logical_and(logical_and(a!=0, b!=0), c!=0)
         a = np.array([1,   3,   -2,   0,   12,  13,   0,   1], dtype=dtype)

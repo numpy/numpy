@@ -16,7 +16,7 @@ from numpy.testing import (
         assert_almost_equal, assert_array_equal, assert_array_almost_equal,
         assert_raises, assert_warns, dec
         )
-from numpy.testing.utils import _assert_valid_refcount, WarningManager
+from numpy.testing.utils import _assert_valid_refcount
 from numpy.compat import asbytes, asunicode, asbytes_nested, long, sixu
 
 rlevel = 1
@@ -1545,13 +1545,9 @@ class TestRegression(TestCase):
         for tp in [np.csingle, np.cdouble, np.clongdouble]:
             x = tp(1+2j)
             assert_warns(np.ComplexWarning, float, x)
-            warn_ctx = WarningManager()
-            warn_ctx.__enter__()
-            try:
+            with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
                 assert_equal(float(x), float(x.real))
-            finally:
-                warn_ctx.__exit__()
 
     def test_complex_scalar_complex_cast(self):
         for tp in [np.csingle, np.cdouble, np.clongdouble]:
