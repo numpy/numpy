@@ -4883,6 +4883,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     int nop;
     
     NpyIter *iter_buffer;
+    NpyIter_IterNextFunc *iternext;
     npy_uint32 op_flags[NPY_MAXARGS];
     int buffersize;
     int errormask = 0;
@@ -5059,6 +5060,12 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     
     needs_api = NpyIter_IterationNeedsAPI(iter_buffer);
 
+    iternext = NpyIter_GetIterNext(iter_buffer, NULL);
+    if (iternext == NULL) {
+        NpyIter_Deallocate(iter_buffer);
+        goto fail;
+    }
+
     /*
      * Iterate over first and second operands and call ufunc
      * for each pair of inputs
@@ -5066,7 +5073,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     i = iter->size;
     while (i > 0)
     {
-        NpyIter_IterNextFunc *iternext;
         char *dataptr[3];
         char **buffer_dataptr;
 
@@ -5084,12 +5090,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             dataptr[2] = NULL;
         }
         
-        iternext = NpyIter_GetIterNext(iter_buffer, NULL);
-        if (iternext == NULL) {
-            NpyIter_Deallocate(iter_buffer);
-            goto fail;
-        }
-
         /* Reset NpyIter data pointers which will trigger a buffer copy */
         NpyIter_ResetBasePointers(iter_buffer, dataptr, NULL);
         buffer_dataptr = NpyIter_GetDataPtrArray(iter_buffer);
