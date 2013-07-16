@@ -5058,12 +5058,16 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         goto fail;
     }
     
-    needs_api = NpyIter_IterationNeedsAPI(iter_buffer);
+    needs_api = needs_api | NpyIter_IterationNeedsAPI(iter_buffer);
 
     iternext = NpyIter_GetIterNext(iter_buffer, NULL);
     if (iternext == NULL) {
         NpyIter_Deallocate(iter_buffer);
         goto fail;
+    }
+
+    if (!needs_api) {
+        NPY_BEGIN_THREADS;
     }
 
     /*
@@ -5094,10 +5098,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         NpyIter_ResetBasePointers(iter_buffer, dataptr, NULL);
         buffer_dataptr = NpyIter_GetDataPtrArray(iter_buffer);
 
-        if (!needs_api) {
-            NPY_BEGIN_THREADS;
-        }
-
         /* 
          * Even though we'll never loop more than once, call to iternext
          * triggers copy from buffer back to output array after innerloop
@@ -5107,10 +5107,6 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             innerloop(buffer_dataptr, count, stride, innerloopdata);
         } while (iternext(iter_buffer));
 
-        if (!needs_api) {
-            NPY_END_THREADS;
-        }
-
         PyArray_MapIterNext(iter);
         if (iter2 != NULL) {
             PyArray_ITER_NEXT(iter2);
@@ -5118,7 +5114,11 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
 
         i--;
     }
-    
+
+    if (!needs_api) {
+        NPY_END_THREADS;
+    }
+   
     NpyIter_Deallocate(iter_buffer);
 
     return op1;
