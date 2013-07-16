@@ -8,7 +8,6 @@ import warnings
 import numpy as np
 from nose import SkipTest
 from numpy.core import *
-from numpy.testing.utils import WarningManager
 from numpy.compat import asbytes, getexception, strchar, sixu
 from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
@@ -958,17 +957,13 @@ class TestMethods(TestCase):
         assert_equal(b.diagonal(0, 2, 1), [[0, 3], [4, 7]])
 
     def test_diagonal_deprecation(self):
-        import warnings
-        from numpy.testing.utils import WarningManager
+
         def collect_warning_types(f, *args, **kwargs):
-            ctx = WarningManager(record=True)
-            warning_log = ctx.__enter__()
-            warnings.simplefilter("always")
-            try:
+            with warnings.catch_warnings(record=True) as log:
+                warnings.simplefilter("always")
                 f(*args, **kwargs)
-            finally:
-                ctx.__exit__()
-            return [w.category for w in warning_log]
+            return [w.category for w in log]
+
         a = np.arange(9).reshape(3, 3)
         # All the different functions raise a warning, but not an error, and
         # 'a' is not modified:
@@ -2028,17 +2023,13 @@ class TestRecord(TestCase):
             assert_raises(ValueError, a.__getitem__, sixu('\u03e0'))
 
     def test_field_names_deprecation(self):
-        import warnings
-        from numpy.testing.utils import WarningManager
+
         def collect_warning_types(f, *args, **kwargs):
-            ctx = WarningManager(record=True)
-            warning_log = ctx.__enter__()
-            warnings.simplefilter("always")
-            try:
+            with warnings.catch_warnings(record=True) as log:
+                warnings.simplefilter("always")
                 f(*args, **kwargs)
-            finally:
-                ctx.__exit__()
-            return [w.category for w in warning_log]
+            return [w.category for w in log]
+
         a = np.zeros((1,), dtype=[('f1', 'i4'),
                                   ('f2', 'i4'),
                                   ('f3', [('sf1', 'i4')])])
@@ -2500,36 +2491,38 @@ class TestStackedNeighborhoodIter(TestCase):
         assert_array_equal(l, r)
 
 class TestWarnings(object):
+
     def test_complex_warning(self):
         x = np.array([1,2])
         y = np.array([1-2j,1+2j])
 
-        warn_ctx = WarningManager()
-        warn_ctx.__enter__()
-        try:
+        with warnings.catch_warnings():
             warnings.simplefilter("error", np.ComplexWarning)
             assert_raises(np.ComplexWarning, x.__setitem__, slice(None), y)
             assert_equal(x, [1,2])
-        finally:
-            warn_ctx.__exit__()
 
 class TestMinScalarType(object):
+
     def test_usigned_shortshort(self):
         dt = np.min_scalar_type(2**8-1)
         wanted = np.dtype('uint8')
         assert_equal(wanted, dt)
+
     def test_usigned_short(self):
         dt = np.min_scalar_type(2**16-1)
         wanted = np.dtype('uint16')
         assert_equal(wanted, dt)
+
     def test_usigned_int(self):
         dt = np.min_scalar_type(2**32-1)
         wanted = np.dtype('uint32')
         assert_equal(wanted, dt)
+
     def test_usigned_longlong(self):
         dt = np.min_scalar_type(2**63-1)
         wanted = np.dtype('uint64')
         assert_equal(wanted, dt)
+
     def test_object(self):
         dt = np.min_scalar_type(2**64)
         wanted = np.dtype('O')

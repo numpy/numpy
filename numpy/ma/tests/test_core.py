@@ -20,7 +20,6 @@ from numpy import ndarray
 from numpy.ma.testutils import *
 from numpy.ma.core import *
 from numpy.compat import asbytes, asbytes_nested
-from numpy.testing.utils import WarningManager
 
 pi = np.pi
 
@@ -422,13 +421,9 @@ class TestMaskedArray(TestCase):
         assert_equal(1.0, float(array([[1]])))
         self.assertRaises(TypeError, float, array([1, 1]))
         #
-        warn_ctx = WarningManager()
-        warn_ctx.__enter__()
-        try:
+        with warnings.catch_warnings():
             warnings.simplefilter('ignore', UserWarning)
             assert_(np.isnan(float(array([1], mask=[1]))))
-        finally:
-            warn_ctx.__exit__()
         #
         a = array([1, 2, 3], mask=[1, 0, 0])
         self.assertRaises(TypeError, lambda:float(a))
@@ -2764,23 +2759,15 @@ class TestMaskedArrayMathMethods(TestCase):
             self.assertTrue(method(0) is masked)
             self.assertTrue(method(-1) is masked)
             # Using a masked array as explicit output
-            warn_ctx = WarningManager()
-            warn_ctx.__enter__()
-            try:
+            with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
                 _ = method(out=mout)
-            finally:
-                warn_ctx.__exit__()
             self.assertTrue(mout is not masked)
             assert_equal(mout.mask, True)
             # Using a ndarray as explicit output
-            warn_ctx = WarningManager()
-            warn_ctx.__enter__()
-            try:
+            with warnings.catch_warnings():
                 warnings.simplefilter('ignore')
                 _ = method(out=nout)
-            finally:
-                warn_ctx.__exit__()
             self.assertTrue(np.isnan(nout))
         #
         x = array(arange(10), mask=True)
