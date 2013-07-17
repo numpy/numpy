@@ -150,7 +150,7 @@ In some cases, we are not interested in all the columns of the data but only a f
 We can select which columns to import with the :keyword:`usecols` argument.
 This argument accepts a single integer or a sequence of integers corresponding to the indices of the columns to import.
 Remember that by convention, the first column has an index of 0.
-Negative integers correspond to 
+Negative integers behave the same as regular Python negative indexes.
 
 For example, if we want to import only the first and the last columns, we can use ``usecols=(0, -1)``:
    >>> data = "1 2 3\n4 5 6"
@@ -301,7 +301,7 @@ However, some additional control may sometimes be required.
 For example, we may want to make sure that a date in a format ``YYYY/MM/DD`` is converted to a :class:`datetime` object, or that a string like ``xx%`` is properly converted to a float between 0 and 1.
 In such cases, we should define conversion functions with the :keyword:`converters` arguments.
 
-The value of this argument is typically a dictionary with column indices or column names as keys and a conversion function as values.
+The value of this argument is typically a dictionary with column indices or column names as keys and a conversion functions as values.
 These conversion functions can either be actual functions or lambda functions. In any case, they should accept only a string as input and output only a single element of the wanted type.
 
 In the following example, the second column is converted from as string representing a percentage to a float between 0 and 1
