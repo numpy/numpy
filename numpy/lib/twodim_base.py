@@ -547,7 +547,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
         An array of values ``w_i`` weighing each sample ``(x_i, y_i)``. Weights
         are normalized to 1 if `normed` is True. If `normed` is False, the
         values of the returned histogram are equal to the sum of the weights
-l        belonging to the samples falling into each bin.
+        belonging to the samples falling into each bin.
 
     Returns
     -------
