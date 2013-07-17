@@ -136,10 +136,17 @@ arrays instead of only in simple indices. This means that
 ``array[np.newaxis, [0, 1]]`` will now work as expected.
 
 New functions `full` and `full_like`
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 New convenience functions to create arrays filled with a specific value;
 complementary to the existing `zeros` and `zeros_like` functions.
+
+New functions `nanmean`, `nanvar` and `nanstd`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+New nan aware statistical functions are added. In these functions the
+results are what would be obtained if nan values were ommited from all
+computations.
 
 C-API
 ~~~~~

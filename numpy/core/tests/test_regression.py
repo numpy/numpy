@@ -1449,14 +1449,17 @@ class TestRegression(TestCase):
                       and not issubclass(x, np.timedelta64))]
         a = np.array([], dtypes[0])
         failures = []
-        for x in dtypes:
-            b = a.astype(x)
-            for y in dtypes:
-                c = a.astype(y)
-                try:
-                    np.dot(b, c)
-                except TypeError as e:
-                    failures.append((x, y))
+        # ignore complex warnings
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', np.ComplexWarning)
+            for x in dtypes:
+                b = a.astype(x)
+                for y in dtypes:
+                    c = a.astype(y)
+                    try:
+                        np.dot(b, c)
+                    except TypeError as e:
+                        failures.append((x, y))
         if failures:
             raise AssertionError("Failures: %r" % failures)
 
