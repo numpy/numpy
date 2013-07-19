@@ -790,6 +790,8 @@ def select(condlist, choicelist, default=0):
     for i in range(0,len(condlist)):
         if type(condlist[i]) is np.ndarray:
             cond_sizes[condlist[i].shape]=True 
+        else:
+            cond_sizes['scalar bool']=True
 
     for i in range(0,len(choicelist)):
         if type(choicelist[i]) is np.ndarray:
@@ -805,7 +807,7 @@ def select(condlist, choicelist, default=0):
     # If there is more than one size of array in condlist, we should broadcast them now.
     # (I am not sure if this is useful/meaningful, I will leave it to the user to find a use case). 
     if len(cond_sizes.keys())>1:
-        condlist=broadcast_arrays(*condlist)
+        condlist=np.broadcast_arrays(*condlist)
 
     # Reverse the lists to put lowest priority (end of condlist) conditions at the beginning.
     # This is so the low priority values are overwritten during successive stages of burning
