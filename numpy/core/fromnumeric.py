@@ -1378,7 +1378,7 @@ def compress(condition, a, axis=None, out=None):
     See Also
     --------
     take, choose, diag, diagonal, select
-    ndarray.compress : Equivalent method.
+    ndarray.extract : Equivalent method.
     numpy.doc.ufuncs : Section "Output arguments"
 
     Examples
