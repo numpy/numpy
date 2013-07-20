@@ -2029,8 +2029,7 @@ def norm(x, ord=None, axis=None):
 
     # Check the default case first and handle it immediately.
     if ord is None and axis is None:
-        s = (x.conj() * x).real
-        return sqrt(add.reduce((x.conj() * x).ravel().real))
+        return sqrt(add.reduce((x.conj() * x).real, axis=None))
 
     # Normalize the `axis` argument to a tuple.
     if axis is None:
