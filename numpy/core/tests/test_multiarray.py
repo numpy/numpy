@@ -1324,6 +1324,24 @@ class TestMethods(TestCase):
         a.dot(b=b, out=c)
         assert_equal(c, np.dot(a, b))
 
+    def test_dot_override(self):
+        class A(object):
+            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+                return "A"
+        
+        class B(object):
+            def __numpy_ufunc__(self, ufunc, method, pos, inputs, **kwargs):
+                return NotImplemented
+
+        a = A()
+        b = B()
+        c = np.array([[1]])
+
+        assert_equal(np.dot(a, b), "A")
+        assert_equal(c.dot(a), "A")
+        assert_raises(TypeError, np.dot, b, c)
+        assert_raises(TypeError, c.dot, b)
+
     def test_diagonal(self):
         a = np.arange(12).reshape((3, 4))
         assert_equal(a.diagonal(), [0, 5, 10])
