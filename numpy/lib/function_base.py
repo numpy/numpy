@@ -962,7 +962,7 @@ def diff(a, n=1, axis=-1):
 
     See Also
     --------
-    gradient, ediff1d
+    gradient, ediff1d, cumsum
 
     Examples
     --------
