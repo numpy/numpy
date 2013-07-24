@@ -4871,6 +4871,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     PyArrayIterObject *iter2 = NULL;
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
     PyArrayObject *operands[3] = {NULL, NULL, NULL};
+    PyArrayObject *array_operands[3] = {NULL, NULL, NULL};
     npy_intp dims[1] = {1};    
 
     int needs_api;
@@ -4985,29 +4986,29 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     count[0] = 1;
     stride[0] = 1;
 
-    operands[0] = PyArray_NewFromDescr(&PyArray_Type,
+    array_operands[0] = PyArray_NewFromDescr(&PyArray_Type,
                                        PyArray_DESCR(op1_array),
                                        1, dims, NULL, iter->dataptr,
                                        NPY_ARRAY_WRITEABLE, NULL);
     if (iter2 != NULL) {
-        operands[1] = PyArray_NewFromDescr(&PyArray_Type,
+        array_operands[1] = PyArray_NewFromDescr(&PyArray_Type,
                                            PyArray_DESCR(op2_array), 
                                            1, dims, NULL,
                                            PyArray_ITER_DATA(iter2),
                                            NPY_ARRAY_WRITEABLE, NULL);
-        operands[2] = PyArray_NewFromDescr(&PyArray_Type,
+        array_operands[2] = PyArray_NewFromDescr(&PyArray_Type,
                                            PyArray_DESCR(op1_array),
                                            1, dims, NULL,
                                            iter->dataptr,
                                            NPY_ARRAY_WRITEABLE, NULL);
     }
     else {
-        operands[1] = PyArray_NewFromDescr(&PyArray_Type,
+        array_operands[1] = PyArray_NewFromDescr(&PyArray_Type,
                                            PyArray_DESCR(op1_array),
                                            1, dims, NULL,
                                            iter->dataptr,
                                            NPY_ARRAY_WRITEABLE, NULL);
-        operands[2] = NULL;
+        array_operands[2] = NULL;
     }
 
     /* Set up the flags */
@@ -5043,7 +5044,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
      * pointers from the NpyIter object will then be passed to the inner loop
      * function.
      */
-    iter_buffer = NpyIter_AdvancedNew(nop, operands,
+    iter_buffer = NpyIter_AdvancedNew(nop, array_operands,
                         NPY_ITER_EXTERNAL_LOOP|
                         NPY_ITER_REFS_OK|
                         NPY_ITER_ZEROSIZE_OK|
@@ -5121,13 +5122,24 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
    
     NpyIter_Deallocate(iter_buffer);
 
-    return op1;
+    Py_XDECREF(op2_array);
+    Py_XDECREF(iter);
+    Py_XDECREF(iter2);
+    Py_XDECREF(array_operands[0]);
+    Py_XDECREF(array_operands[1]);
+    Py_XDECREF(array_operands[2]);
+
+    Py_RETURN_NONE;
 
 fail:
 
     Py_XDECREF(op2_array);
     Py_XDECREF(iter);
     Py_XDECREF(iter2);
+    Py_XDECREF(array_operands[0]);
+    Py_XDECREF(array_operands[1]);
+    Py_XDECREF(array_operands[2]);
+
     return NULL;
 }
 
