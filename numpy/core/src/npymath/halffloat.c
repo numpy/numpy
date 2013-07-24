@@ -137,7 +137,7 @@ npy_half npy_half_nextafter(npy_half x, npy_half y)
             ret = x+1;
         }
     }
-#ifdef NPY_HALF_GENERATE_OVERFLOW
+#if NPY_HALF_GENERATE_OVERFLOW
     if (npy_half_isinf(ret)) {
         npy_set_floatstatus_overflow();
     }
