@@ -561,8 +561,9 @@ class TestStructured(TestCase):
         a = np.zeros((3, 5), dtype=[('a', ('i4', (2, 2)))])
         a['a'] = np.arange(60).reshape(3, 5, 2, 2)
 
-        # Since the subarray is always in C-order, these aren't equal
-        assert_(np.any(a['a'].T != a.T['a']))
+        # Since the subarray is always in C-order, a transpose
+        # does not swap the subarray:
+        assert_array_equal(a.T['a'], a['a'].transpose(1, 0, 2, 3))
 
         # In Fortran order, the subarray gets appended
         # like in all other cases, not prepended as a special case

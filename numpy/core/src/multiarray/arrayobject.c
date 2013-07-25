@@ -1292,6 +1292,10 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         break;
     case Py_EQ:
         if (other == Py_None) {
+            if (DEPRECATE_FUTUREWARNING("comparison to `None` will result in "
+                    "an elementwise object comparison in the future.") < 0) {
+                return NULL;
+            }
             Py_INCREF(Py_False);
             return Py_False;
         }
@@ -1347,13 +1351,26 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
          * indicate that
          */
         if (result == NULL) {
+            /*
+             * Comparisons should raise errors when element-wise comparison
+             * is not possible.
+             */
             PyErr_Clear();
+            if (DEPRECATE("elementwise comparison failed; "
+                          "this will raise the error in the future.") < 0) {
+                return NULL;
+            }
+
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
         }
         break;
     case Py_NE:
         if (other == Py_None) {
+            if (DEPRECATE_FUTUREWARNING("comparison to `None` will result in "
+                    "an elementwise object comparison in the future.") < 0) {
+                return NULL;
+            }
             Py_INCREF(Py_True);
             return Py_True;
         }
@@ -1404,7 +1421,16 @@ array_richcompare(PyArrayObject *self, PyObject *other, int cmp_op)
         }
 
         if (result == NULL) {
+            /*
+             * Comparisons should raise errors when element-wise comparison
+             * is not possible.
+             */
             PyErr_Clear();
+            if (DEPRECATE("elementwise comparison failed; "
+                          "this will raise the error in the future.") < 0) {
+                return NULL;
+            }
+
             Py_INCREF(Py_NotImplemented);
             return Py_NotImplemented;
         }
