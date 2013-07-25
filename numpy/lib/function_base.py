@@ -776,13 +776,26 @@ def select(condlist, choicelist, default=0):
         return np.array([]) 
 
     # If cond array is not an ndarray in boolean format or scalar bool, abort.
-    for index,item in enumerate(condlist):
+    deprecated_ints=False
+    for i in range(0,len(condlist)):
+        item=condlist[i]
         if type(item) is not np.ndarray:
             if type(item) is not bool:
                 raise ValueError('invalid entry in choice array: should be boolean ndarray')
         else:
             if item.dtype != 'bool':
-                raise ValueError('invalid entry in choice array: should be boolean ndarray')
+                if np.issubdtype(item.dtype, int):
+                    # A previous implementation accepted int ndarrays accidentally.
+                    # Supported here deliberately, but deprecated and to be removed.
+                    condlist[i]=condlist[i].astype(bool)                    
+                    deprecated_ints=True
+                else:
+                    raise ValueError('invalid entry in choice array: should be boolean ndarray')
+
+    if deprecated_ints:
+        msg="select() condlists containing integer ndarrays are deprecated and will be removed " \
+            "in the future. Use .astype(bool) to convert to bools."
+        warnings.warn(msg, DeprecationWarning)   
 
     # Create dictionaries noting the sizes of the items in the lists. 
     cond_sizes = {} ; choice_sizes = {}    
@@ -830,8 +843,8 @@ def select(condlist, choicelist, default=0):
 
     to_broadcast = condlist + choicelist      # make into a single big list
     bc=np.broadcast_arrays(*to_broadcast)     # unpack values from big list and broadcast them
-    condlist=bc[:len(bc)/2]                   # split the bc'd big list back into 2 parts again
-    choicelist=bc[len(bc)/2:]                 # down the middle
+    condlist=bc[:len(bc)//2]                   # split the bc'd big list back into 2 parts again
+    choicelist=bc[len(bc)//2:]                 # down the middle
    
     # Setup an array filled with default values
     result=np.ones_like(condlist[0])*default      
