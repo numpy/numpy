@@ -53,9 +53,9 @@ def set_threshold(level, force=False):
         # likely a good reason why we're running at this level.
         _global_log.threshold = level
         if level <= DEBUG:
-            info('set_threshold: setting thershold to DEBUG level, it can be changed only with force argument')
+            info('set_threshold: setting threshold to DEBUG level, it can be changed only with force argument')
     else:
-        info('set_threshold: not changing thershold from DEBUG level %s to %s' % (prev_level,level))
+        info('set_threshold: not changing threshold from DEBUG level %s to %s' % (prev_level,level))
     return prev_level
 
 def set_verbosity(v, force=False):
