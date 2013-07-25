@@ -776,21 +776,17 @@ def select(condlist, choicelist, default=0):
         return np.array([]) 
 
     # If cond array is not an ndarray in boolean format or scalar bool, abort.
-    deprecated_ints=False
+    deprecated_ints=False    
     for i in range(0,len(condlist)):
-        item=condlist[i]
-        if type(item) is not np.ndarray:
-            if type(item) is not bool:
+        item=np.asarray(condlist[i])
+        if item.dtype != np.bool_:
+            if np.issubdtype(item.dtype, np.int_):
+                # A previous implementation accepted int ndarrays accidentally.
+                # Supported here deliberately, but deprecated and to be removed.
+                condlist[i]=condlist[i].astype(bool)
+                deprecated_ints=True
+            else:
                 raise ValueError('invalid entry in choice array: should be boolean ndarray')
-        else:
-            if item.dtype != 'bool':
-                if np.issubdtype(item.dtype, int):
-                    # A previous implementation accepted int ndarrays accidentally.
-                    # Supported here deliberately, but deprecated and to be removed.
-                    condlist[i]=condlist[i].astype(bool)                    
-                    deprecated_ints=True
-                else:
-                    raise ValueError('invalid entry in choice array: should be boolean ndarray')
 
     if deprecated_ints:
         msg="select() condlists containing integer ndarrays are deprecated and will be removed " \
