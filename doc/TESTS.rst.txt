@@ -104,7 +104,7 @@ a test class::
 
 Within these test methods, ``assert_()`` and related functions are used to test
 whether a certain assumption is valid. If the assertion fails, the test fails.
-Note that the Python builtin ``assert()`` should not be used, because it is
+Note that the Python builtin ``assert`` should not be used, because it is
 stripped during compilation with ``-O``.
 
 Note that ``test_`` functions or methods should not have a docstring, because
