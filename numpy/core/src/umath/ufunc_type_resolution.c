@@ -1260,6 +1260,16 @@ PyUFunc_DefaultLegacyInnerLoopSelector(PyUFuncObject *ufunc,
         }
     }
 
+    /* sig_index, return index based on precoded condition and case */
+    if(ufunc->sig_index != NULL){
+        i = ufunc->sig_index(dtypes[0]->type_num, dtypes[1]->type_num);
+        if ( i >=0 ) {
+            *out_innerloop = ufunc->functions[i];
+            *out_innerloopdata = ufunc->data[i];
+            return 0;
+        }
+    }
+
     types = ufunc->types;
     for (i = 0; i < ufunc->ntypes; ++i) {
         /* Copy the types into an int array for matching */

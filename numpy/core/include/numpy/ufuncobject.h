@@ -189,7 +189,6 @@ typedef struct _tagPyUFuncObject {
         int *core_offsets;
         /* signature string for printing purpose */
         char *core_signature;
-
         /*
          * A function which resolves the types and fills an array
          * with the dtypes for the inputs and outputs.
@@ -208,6 +207,12 @@ typedef struct _tagPyUFuncObject {
          * if NULL the legacy_inner_loop_selector is used instead.
          */
         PyUFunc_InnerLoopSelectionFunc *inner_loop_selector;
+        /*
+         * A function which returns index for innerloop and innerloopdata.
+         * It takes argument type_num, based on pre-generated condition find
+         * index
+         */
+        int (*sig_index)(int , int);
         /*
          * A function which returns a masked inner loop for the ufunc.
          */
