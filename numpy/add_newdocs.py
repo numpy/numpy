@@ -5819,44 +5819,50 @@ add_newdoc('numpy.core', 'ufunc', ('at',
     """
     at(a, indices, b=None)
 
-    Performs operation in place on array for items specified by indices.
-    For addition ufunc, this method is equivalent to a[indices] += b,
-    except that results are accumulated for indices listed more than once.
-    This solves the problem with a[indices] += b where each time a duplicate
-    index is encounted, the increment is performed on the original element.
-    As a result, an element that appears three times in the fancy indexing
-    list will only be incremented once in the final result, whereas with the
-    new 'at' method the original element will be incremented by three in the
-    final result.
+    Performs unbuffered in place operation on operand 'a' for elements
+    specified by 'indices'. For addition ufunc, this method is equivalent to
+    `a[indices] += b`, except that results are accumulated for elements that
+    are indexed more than once. For example, `a[[0,0]] += 1` will only
+    increment the first element once because of buffering, whereas
+    `add.at(a, [0,0], 1)` will increment the first element twice.
 
     Parameters
     ----------
     a : array_like
-        The array to act on.
-    indices : array_like
-        Paired indices, comma separated (not colon), specifying slices to
-        reduce.
-    b : array_like or scalar
-        Second operation for ufuncs requiring two operands.
+        The array to perform in place operation on.
+    indices : array_like or tuple
+        Array like index object or slice object for indexing into first
+        operand. If first operand has multiple dimensions, indices can be a
+        tuple of array like index objects or slice objects.
+    b : array_like
+        Second operand for ufuncs requiring two operands. Operand must be
+        broadcastable over first operand after indexing or slicing.
 
     Examples
     --------
     Set items 0 and 1 to their negative values:
 
-    np.negative.at(a, [0, 1])
+    >>> a = np.array([1, 2, 3, 4])
+    >>> np.negative.at(a, [0, 1])
+    array([-1, -2, 3, 4])
 
     ::
 
     Increment items 0 and 1, and increment item 2 twice:
 
-    np.add.at(a, [0, 1, 2, 2], 1)
+    >>> a = np.array([1, 2, 3, 4])
+    >>> np.add.at(a, [0, 1, 2, 2], 1)
+    array([2, 3, 5, 4])
 
     ::
 
     Add items 0 and 1 in first array to second array,
     and store results in first array:
 
-    np.add.at(a, [0, 1], b)
+    >>> a = np.array([1, 2, 3, 4])
+    >>> b = np.array([1, 2])
+    >>> np.add.at(a, [0, 1], b)
+    array([2, 4, 3, 4])
 
     """))
 
