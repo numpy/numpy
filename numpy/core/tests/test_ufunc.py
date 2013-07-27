@@ -989,11 +989,11 @@ class TestUfunc(TestCase):
         np.add.at(a, [0,1], 3)
         assert_array_equal(orig, np.arange(4))
 
-        dt = np.dtype(np.intp).newbyteorder()
-        index = np.array([1,2,3], dt)
-        dt = np.dtype(np.float_).newbyteorder()
-        values = np.array([1,2,3,4], dt)
+        # Test with swapped byte order
+        index = np.array([1,2,1], np.dtype('i').newbyteorder())
+        values = np.array([1,2,3,4], np.dtype('f').newbyteorder())
         np.add.at(values, index, 3)
+        assert_array_equal(values, [1,8,6,4])
 
 if __name__ == "__main__":
     run_module_suite()

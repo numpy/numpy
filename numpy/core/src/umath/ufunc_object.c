@@ -4986,16 +4986,19 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     count[0] = 1;
     stride[0] = 1;
 
+    Py_INCREF(PyArray_DESCR(op1_array));
     array_operands[0] = PyArray_NewFromDescr(&PyArray_Type,
                                        PyArray_DESCR(op1_array),
                                        1, dims, NULL, iter->dataptr,
                                        NPY_ARRAY_WRITEABLE, NULL);
     if (iter2 != NULL) {
+        Py_INCREF(PyArray_DESCR(op2_array));
         array_operands[1] = PyArray_NewFromDescr(&PyArray_Type,
                                            PyArray_DESCR(op2_array), 
                                            1, dims, NULL,
                                            PyArray_ITER_DATA(iter2),
                                            NPY_ARRAY_WRITEABLE, NULL);
+        Py_INCREF(PyArray_DESCR(op1_array));
         array_operands[2] = PyArray_NewFromDescr(&PyArray_Type,
                                            PyArray_DESCR(op1_array),
                                            1, dims, NULL,
@@ -5003,6 +5006,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
                                            NPY_ARRAY_WRITEABLE, NULL);
     }
     else {
+        Py_INCREF(PyArray_DESCR(op1_array));
         array_operands[1] = PyArray_NewFromDescr(&PyArray_Type,
                                            PyArray_DESCR(op1_array),
                                            1, dims, NULL,
@@ -5128,6 +5132,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     Py_XDECREF(array_operands[0]);
     Py_XDECREF(array_operands[1]);
     Py_XDECREF(array_operands[2]);
+    Py_XDECREF(errobj);
 
     Py_RETURN_NONE;
 
@@ -5139,6 +5144,7 @@ fail:
     Py_XDECREF(array_operands[0]);
     Py_XDECREF(array_operands[1]);
     Py_XDECREF(array_operands[2]);
+    Py_XDECREF(errobj);
 
     return NULL;
 }
