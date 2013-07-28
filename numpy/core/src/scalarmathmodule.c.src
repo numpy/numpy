@@ -731,12 +731,12 @@ _@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
 /* Same as above but added exact checks against known python types for speed */
 
 /**begin repeat
- * #name = long, double#
- * #type = npy_long, npy_double#
- * #Name = Long, Double#
- * #TYPE = NPY_LONG, NPY_DOUBLE#
- * #PYCHECKEXACT = PyInt_CheckExact, PyFloat_CheckExact#
- * #PYEXTRACTCTYPE = PyInt_AS_LONG, PyFloat_AS_DOUBLE#
+ * #name = double#
+ * #type = npy_double#
+ * #Name = Double#
+ * #TYPE = NPY_DOUBLE#
+ * #PYCHECKEXACT = PyFloat_CheckExact#
+ * #PYEXTRACTCTYPE = PyFloat_AS_DOUBLE#
  */
 
 static int
@@ -748,6 +748,36 @@ _@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
         *arg1 = @PYEXTRACTCTYPE@(a);
         return 0;
     }
+
+/**paste @general_converstion@**/
+}
+
+/**end repeat**/
+
+
+/**begin repeat
+ * #name = long#
+ * #type = npy_long#
+ * #Name = Long#
+ * #TYPE = NPY_LONG#
+ */
+
+static int
+_@name@_convert_to_ctype(PyObject *a, @type@ *arg1)
+{
+    PyObject *temp;
+
+#if PY_VERSION_HEX >= 0x03000000
+    if(PyLong_CheckExact(a)){
+        *arg1 = PyLong_AS_LONG(a);
+        return 0;        
+    }
+#else
+    if (PyInt_CheckExact(a)){
+        *arg1 = PyInt_AS_LONG(a);
+        return 0;
+    }
+#endif
 
 /**paste @general_converstion@**/
 }
