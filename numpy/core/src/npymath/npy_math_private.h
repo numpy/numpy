@@ -250,6 +250,45 @@ do {                                                            \
     typedef npy_uint32 ldouble_man_t;
     typedef npy_uint32 ldouble_exp_t;
     typedef npy_uint32 ldouble_sign_t;
+#elif defined(HAVE_LDOUBLE_MOTOROLA_EXTENDED_12_BYTES_BE)
+    /*
+     * Motorola extended 80 bits precision. Bit representation is
+     *          |     s  |eeeeeeeeeeeeeee|  junk  |mmmmmmmm................mmmmmmm|
+     *          |  1 bit |    15 bits    | 16 bits|            64 bits            |
+     *          |             a[0]                |     a[1]     |    a[2]        |
+     *
+     * 16 low bits of a[0] are junk
+     */
+    typedef npy_uint32 IEEEl2bitsrep_part;
+
+/* my machine */
+
+    union IEEEl2bitsrep {
+        npy_longdouble     e;
+        IEEEl2bitsrep_part a[3];
+    };
+
+    #define LDBL_MANL_INDEX     2
+    #define LDBL_MANL_MASK      0xFFFFFFFF
+    #define LDBL_MANL_SHIFT     0
+
+    #define LDBL_MANH_INDEX     1
+    #define LDBL_MANH_MASK      0xFFFFFFFF
+    #define LDBL_MANH_SHIFT     0
+
+    #define LDBL_EXP_INDEX      0
+    #define LDBL_EXP_MASK       0x7FFF0000
+    #define LDBL_EXP_SHIFT      16
+
+    #define LDBL_SIGN_INDEX     0
+    #define LDBL_SIGN_MASK      0x80000000
+    #define LDBL_SIGN_SHIFT     31
+
+    #define LDBL_NBIT           0x80000000
+
+    typedef npy_uint32 ldouble_man_t;
+    typedef npy_uint32 ldouble_exp_t;
+    typedef npy_uint32 ldouble_sign_t;
 #elif defined(HAVE_LDOUBLE_IEEE_DOUBLE_16_BYTES_BE) || \
       defined(HAVE_LDOUBLE_IEEE_DOUBLE_BE)
     /* 64 bits IEEE double precision aligned on 16 bytes: used by ppc arch on
