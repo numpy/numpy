@@ -185,7 +185,6 @@ do {                                                            \
      */
     typedef npy_uint32 IEEEl2bitsrep_part;
 
-/* my machine */
 
     union IEEEl2bitsrep {
         npy_longdouble     e;
@@ -261,7 +260,6 @@ do {                                                            \
      */
     typedef npy_uint32 IEEEl2bitsrep_part;
 
-/* my machine */
 
     union IEEEl2bitsrep {
         npy_longdouble     e;
