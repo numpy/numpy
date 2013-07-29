@@ -191,12 +191,11 @@ Notice that `x` is created with a list of tuples. ::
        (1.0, [[2.0, 6.0], [2.0, 6.0]])],
       dtype=[('x', '<f4'), ('value', '<f4', (2, 2))])
 
-Notice that the fields are always returned in the same order regardless of
-the sequence they are asked for. ::
+The fields are returned in the order they are asked for.::
 
  >>> x[['y','x']]
- array([(1.5, 2.5), (3.0, 4.0), (1.0, 3.0)],
-      dtype=[('x', '<f4'), ('y', '<f4')])
+ array([(2.5, 1.5), (4.0, 3.0), (3.0, 1.0)], 
+      dtype=[('y', '<f4'), ('x', '<f4')])
 
 Filling structured arrays
 =========================
