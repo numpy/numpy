@@ -766,7 +766,7 @@ def configuration(parent_package='',top_path=None):
             join('include', 'numpy', 'npy_cpu.h'),
             join('include', 'numpy', 'numpyconfig.h'),
             join('include', 'numpy', 'ndarraytypes.h'),
-            join('include', 'numpy', 'npy_deprecated_api.h'),
+            join('include', 'numpy', 'npy_1_7_deprecated_api.h'),
             join('include', 'numpy', '_numpyconfig.h.in'),
             ]
 
