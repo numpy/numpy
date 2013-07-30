@@ -49,13 +49,13 @@ internally convert it to a NumPy array before extracting its data
 and length.
 
 `SWIG`_ allows these types of conversions to be defined via a
-mechanism called typemaps.  This document provides information on how
-to use ``numpy.i``, a `SWIG`_ interface file that defines a series of
-typemaps intended to make the type of array-related conversions
+mechanism called *typemaps*.  This document provides information on
+how to use ``numpy.i``, a `SWIG`_ interface file that defines a series
+of typemaps intended to make the type of array-related conversions
 described above relatively simple to implement.  For example, suppose
 that the ``rms`` function prototype defined above was in a header file
-named ``rms.h``.  To obtain the Python interface discussed above,
-your `SWIG`_ interface file would need the following::
+named ``rms.h``.  To obtain the Python interface discussed above, your
+`SWIG`_ interface file would need the following::
 
     %{
     #define SWIG_FILE_WITH_INIT
@@ -76,16 +76,16 @@ either by type or by type and name.  We will refer to such lists as
 *signatures*.  One of the many typemaps defined by ``numpy.i`` is used
 above and has the signature ``(double* IN_ARRAY1, int DIM1)``.  The
 argument names are intended to suggest that the ``double*`` argument
-is an input array of one dimension and that the ``int`` represents
-that dimension.  This is precisely the pattern in the ``rms``
+is an input array of one dimension and that the ``int`` represents the
+size of that dimension.  This is precisely the pattern in the ``rms``
 prototype.
 
 Most likely, no actual prototypes to be wrapped will have the argument
-names ``IN_ARRAY1`` and ``DIM1``.  We use the ``%apply`` directive to
-apply the typemap for one-dimensional input arrays of type ``double``
-to the actual prototype used by ``rms``.  Using ``numpy.i``
-effectively, therefore, requires knowing what typemaps are available
-and what they do.
+names ``IN_ARRAY1`` and ``DIM1``.  We use the `SWIG`_ ``%apply``
+directive to apply the typemap for one-dimensional input arrays of
+type ``double`` to the actual prototype used by ``rms``.  Using
+``numpy.i`` effectively, therefore, requires knowing what typemaps are
+available and what they do.
 
 A `SWIG`_ interface file that includes the `SWIG`_ directives given
 above will produce wrapper code that looks something like::
@@ -169,8 +169,7 @@ Using numpy.i
 The ``numpy.i`` file is currently located in the ``numpy/docs/swig``
 sub-directory under the ``numpy`` installation directory.  Typically,
 you will want to copy it to the directory where you are developing
-your wrappers.  If it is ever adopted by `SWIG`_ developers, then it
-will be installed in a standard place where `SWIG`_ can find it.
+your wrappers.
 
 A simple module that only uses a single `SWIG`_ interface file should
 include the following::
@@ -232,7 +231,7 @@ could be any of the C data types listed above, and ``DIM_TYPE`` which
 should be one of the many types of integers.
 
 The typemap signatures are largely differentiated on the name given to
-the buffer pointer.  Names with ``FARRAY`` are for FORTRAN-ordered
+the buffer pointer.  Names with ``FARRAY`` are for Fortran-ordered
 arrays, and names with ``ARRAY`` are for C-ordered (or 1D arrays).
 
 Input Arrays
@@ -265,6 +264,14 @@ of array.  The input array signatures are
   * ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* IN_ARRAY3 )``
   * ``(	DATA_TYPE* IN_FARRAY3, int DIM1, int DIM2, int DIM3 )``
   * ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* IN_FARRAY3 )``
+
+4D:
+
+  * ``(DATA_TYPE IN_ARRAY4[ANY][ANY][ANY][ANY])``
+  * ``(DATA_TYPE* IN_ARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4)``
+  * ``(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, , DIM_TYPE DIM4, DATA_TYPE* IN_ARRAY4)``
+  * ``(DATA_TYPE* IN_FARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4)``
+  * ``(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4, DATA_TYPE* IN_FARRAY4)``
 
 The first signature listed, ``( DATA_TYPE IN_ARRAY[ANY] )`` is for
 one-dimensional arrays with hard-coded dimensions.  Likewise,
@@ -302,6 +309,14 @@ signatures are
   * ``(	DATA_TYPE* INPLACE_FARRAY3, int DIM1, int DIM2, int DIM3 )``
   * ``(	int DIM1, int DIM2, int DIM3, DATA_TYPE* INPLACE_FARRAY3 )``
 
+4D:
+
+  * ``(DATA_TYPE INPLACE_ARRAY4[ANY][ANY][ANY][ANY])``
+  * ``(DATA_TYPE* INPLACE_ARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4)``
+  * ``(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, , DIM_TYPE DIM4, DATA_TYPE* INPLACE_ARRAY4)``
+  * ``(DATA_TYPE* INPLACE_FARRAY4, DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4)``
+  * ``(DIM_TYPE DIM1, DIM_TYPE DIM2, DIM_TYPE DIM3, DIM_TYPE DIM4, DATA_TYPE* INPLACE_FARRAY4)``
+
 These typemaps now check to make sure that the ``INPLACE_ARRAY``
 arguments use native byte ordering.  If not, an exception is raised.
 
@@ -335,6 +350,10 @@ argument.  The argout signatures are
 
   * ``(	DATA_TYPE ARGOUT_ARRAY3[ANY][ANY][ANY] )``
 
+4D:
+
+  * ``(	DATA_TYPE ARGOUT_ARRAY4[ANY][ANY][ANY][ANY] )``
+
 These are typically used in situations where in C/C++, you would
 allocate a(n) array(s) on the heap, and call the function to fill the
 array(s) values.  In Python, the arrays are allocated for you and
@@ -345,8 +364,8 @@ or 3D.  This is because of a quirk with the `SWIG`_ typemap syntax and
 cannot be avoided.  Note that for these types of 1D typemaps, the
 Python function will take a single argument representing ``DIM1``.
 
-Argoutview Arrays
-`````````````````
+Argout View Arrays
+``````````````````
 
 Argoutview arrays are for when your C code provides you with a view of
 its internal data and does not require any memory to be allocated by
@@ -354,7 +373,7 @@ the user.  This can be dangerous.  There is almost no way to guarantee
 that the internal data from the C code will remain in existence for
 the entire lifetime of the NumPy array that encapsulates it.  If
 the user destroys the object that provides the view of the data before
-destroying the NumPy array, then using that array my result in bad
+destroying the NumPy array, then using that array may result in bad
 memory references or segmentation faults.  Nevertheless, there are
 situations, working with large data sets, where you simply have no
 other choice.
@@ -383,8 +402,49 @@ typemap signatures are therefore
   * ``( DATA_TYPE** ARGOUTVIEW_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
   * ``( DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEW_FARRAY3)``
 
+4D:
+
+  * ``(DATA_TYPE** ARGOUTVIEW_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)``
+  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEW_ARRAY4)``
+  * ``(DATA_TYPE** ARGOUTVIEW_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)``
+  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEW_FARRAY4)``
+
 Note that arrays with hard-coded dimensions are not supported.  These
 cannot follow the double pointer signatures of these typemaps.
+
+Memory Managed Argout View Arrays
+`````````````````````````````````
+
+A recent addition to ``numpy.i`` are typemaps that permit argout
+arrays with views into memory that is managed.  See the discussion `here
+<http://blog.enthought.com/python/numpy-arrays-with-pre-allocated-memory>`_.
+
+1D:
+
+  * ``(DATA_TYPE** ARGOUTVIEWM_ARRAY1, DIM_TYPE* DIM1)``
+  * ``(DIM_TYPE* DIM1, DATA_TYPE** ARGOUTVIEWM_ARRAY1)``
+
+2D:
+
+  * ``(DATA_TYPE** ARGOUTVIEWM_ARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)``
+  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEWM_ARRAY2)``
+  * ``(DATA_TYPE** ARGOUTVIEWM_FARRAY2, DIM_TYPE* DIM1, DIM_TYPE* DIM2)``
+  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DATA_TYPE** ARGOUTVIEWM_FARRAY2)``
+
+3D:
+
+  * ``(DATA_TYPE** ARGOUTVIEWM_ARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
+  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_ARRAY3)``
+  * ``(DATA_TYPE** ARGOUTVIEWM_FARRAY3, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3)``
+  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DATA_TYPE** ARGOUTVIEWM_FARRAY3)``
+
+4D:
+
+  * ``(DATA_TYPE** ARGOUTVIEWM_ARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)``
+  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_ARRAY4)``
+  * ``(DATA_TYPE** ARGOUTVIEWM_FARRAY4, DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4)``
+  * ``(DIM_TYPE* DIM1, DIM_TYPE* DIM2, DIM_TYPE* DIM3, DIM_TYPE* DIM4, DATA_TYPE** ARGOUTVIEWM_FARRAY4)``
+ 
 
 Output Arrays
 `````````````
@@ -556,9 +616,33 @@ Macros
     Evaluates to the ``i``-th dimension size of ``a``, assuming ``a``
     can be cast to a ``PyArrayObject*``.
 
+  **array_strides(a)**
+    Evaluates to an array of type ``npy_intp`` and length
+    ``array_numdims(a)``, giving the stridess of all of the dimensions
+    of ``a``, assuming ``a`` can be cast to a ``PyArrayObject*``.  A
+    stride is the distance in bytes between an element and its
+    immediate neighbor along the same axis.
+
+  **array_stride(a,i)**
+    Evaluates to the ``i``-th stride of ``a``, assuming ``a`` can be
+    cast to a ``PyArrayObject*``.
+
   **array_data(a)**
     Evaluates to a pointer of type ``void*`` that points to the data
     buffer of ``a``, assuming ``a`` can be cast to a ``PyArrayObject*``.
+
+  **array_descr(a)**
+    Returns a borrowed reference to the dtype property
+    (``PyArray_Descr*``) of ``a``, assuming ``a`` can be cast to a
+    ``PyArrayObject*``.
+
+  **array_flags(a)**
+    Returns an integer representing the flags of ``a``, assuming ``a``
+    can be cast to a ``PyArrayObject*``.
+
+  **array_enableflags(a,f)**
+    Sets the flag represented by ``f`` of ``a``, assuming ``a`` can be
+    cast to a ``PyArrayObject*``.
 
   **array_is_contiguous(a)**
     Evaluates as true if ``a`` is a contiguous array.  Equivalent to
@@ -576,7 +660,7 @@ Routines
 
   **pytype_string()**
 
-    Return type: ``char*``
+    Return type: ``const char*``
 
     Arguments:
 
@@ -587,7 +671,7 @@ Routines
 
   **typecode_string()**
 
-    Return type: ``char*``
+    Return type: ``const char*``
 
     Arguments:
 
@@ -668,6 +752,23 @@ Routines
     as a new object and return the pointer.
 
 
+  **make_fortran()**
+
+    Return type: ``PyArrayObject*``
+
+    Arguments
+
+    * ``PyArrayObject* ary``, a NumPy array.
+
+    * ``int* is_new_object``, returns a value of 0 if no conversion
+      performed, else 1.
+
+    Check to see if ``ary`` is Fortran contiguous.  If so, return the
+    input pointer and flag it as not a new object.  If it is not
+    Fortran contiguous, create a new ``PyArrayObject*`` using the
+    original data, flag it as a new object and return the pointer.
+
+
   **obj_to_array_contiguous_allow_conversion()**
 
     Return type: ``PyArrayObject*``
@@ -686,6 +787,26 @@ Routines
     specified type.  If the input object is not a contiguous
     ``PyArrayObject*``, a new one will be created and the new object
     flag will be set.
+
+
+  **obj_to_array_fortran_allow_conversion()**
+
+    Return type: ``PyArrayObject*``
+
+    Arguments:
+
+    * ``PyObject* input``, a general Python object.
+
+    * ``int typecode``, the desired NumPy typecode of the resulting
+      array.
+
+    * ``int* is_new_object``, returns a value of 0 if no conversion
+      performed, else 1.
+
+    Convert ``input`` to a Fortran contiguous ``PyArrayObject*`` of
+    the specified type.  If the input object is not a Fortran
+    contiguous ``PyArrayObject*``, a new one will be created and the
+    new object flag will be set.
 
 
   **require_contiguous()**
@@ -772,9 +893,9 @@ Routines
 
     * ``PyArrayObject* ary``, a NumPy array.
 
-    Require the given ``PyArrayObject`` to to be FORTRAN ordered.  If
-    the the ``PyArrayObject`` is already FORTRAN ordered, do nothing.
-    Else, set the FORTRAN ordering flag and recompute the strides.
+    Require the given ``PyArrayObject`` to to be Fortran ordered.  If
+    the the ``PyArrayObject`` is already Fortran ordered, do nothing.
+    Else, set the Fortran ordering flag and recompute the strides.
 
 
 Beyond the Provided Typemaps
@@ -848,7 +969,7 @@ There are other wrapping situations in which ``numpy.i`` may be
 helpful when you encounter them.
 
   * In some situations, it is possible that you could use the
-    ``%numpy_templates`` macro to implement typemaps for your own
+    ``%numpy_typemaps`` macro to implement typemaps for your own
     types.  See the `Other Common Types: bool`_ or `Other Common
     Types: complex`_ sections for examples.  Another situation is if
     your dimensions are of a type other than ``int`` (say ``long`` for
@@ -857,10 +978,10 @@ helpful when you encounter them.
         %numpy_typemaps(double, NPY_DOUBLE, long)
 
   * You can use the code in ``numpy.i`` to write your own typemaps.
-    For example, if you had a four-dimensional array as a function
-    argument, you could cut-and-paste the appropriate
-    three-dimensional typemaps into your interface file.  The
-    modifications for the fourth dimension would be trivial.
+    For example, if you had a five-dimensional array as a function
+    argument, you could cut-and-paste the appropriate four-dimensional
+    typemaps into your interface file.  The modifications for the
+    fourth dimension would be trivial.
 
   * Sometimes, the best approach is to use the ``%extend`` directive
     to define new methods for your classes (or overload existing ones)
@@ -903,27 +1024,32 @@ between NumPy arrays and C arrays:
     ``unsigned int``, ``long``, ``unsigned long``, ``long long``,
     ``unsigned long long``, ``float`` and ``double``.
 
-  * That support 41 different argument signatures for each data type,
+  * That support 74 different argument signatures for each data type,
     including:
 
-    + One-dimensional, two-dimensional and three-dimensional arrays.
+    + One-dimensional, two-dimensional, three-dimensional and
+      four-dimensional arrays.
 
-    + Input-only, in-place, argout and argoutview behavior.
+    + Input-only, in-place, argout, argoutview, and memory managed
+      argoutview behavior.
 
     + Hard-coded dimensions, data-buffer-then-dimensions
       specification, and dimensions-then-data-buffer specification.
 
-    + Both C-ordering ("last dimension fastest") or FORTRAN-ordering
-      ("first dimension fastest") support for 2D and 3D arrays.
+    + Both C-ordering ("last dimension fastest") or Fortran-ordering
+      ("first dimension fastest") support for 2D, 3D and 4D arrays.
 
 The ``numpy.i`` interface file also provides additional tools for
 wrapper developers, including:
 
   * A `SWIG`_ macro (``%numpy_typemaps``) with three arguments for
-    implementing the 41 argument signatures for the user's choice of
+    implementing the 74 argument signatures for the user's choice of
     (1) C data type, (2) NumPy data type (assuming they match), and
     (3) dimension type.
 
-  * Nine C macros and 13 C functions that can be used to write
-    specialized typemaps, extensions, or inlined functions that handle
-    cases not covered by the provided typemaps.
+  * Fourteen C macros and fifteen C functions that can be used to
+    write specialized typemaps, extensions, or inlined functions that
+    handle cases not covered by the provided typemaps.  Note that the
+    macros and functions are coded specifically to work with the NumPy
+    C/API regardless of NumPy version number, both before and after
+    the deprecation of some aspects of the API after version 1.6.

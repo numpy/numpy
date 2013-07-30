@@ -7,11 +7,11 @@
 // arrays with the forms
 //
 //     TYPE SNAMENorm(   TYPE tensor[2][2][2]);
-//     TYPE SNAMEMax(    TYPE * tensor, int rows, int cols, int num);
-//     TYPE SNAMEMin(    int rows, int cols, int num, TYPE * tensor);
+//     TYPE SNAMEMax(    TYPE * tensor, int slices, int rows, int cols);
+//     TYPE SNAMEMin(    int slices, int rows, int cols TYPE * tensor);
 //     void SNAMEScale(  TYPE tensor[3][3][3]);
-//     void SNAMEFloor(  TYPE * array,  int rows, int cols, int num, TYPE floor);
-//     void SNAMECeil(   int rows, int cols, int num, TYPE * array, TYPE ceil);
+//     void SNAMEFloor(  TYPE * array,  int slices, int rows, int cols, TYPE floor);
+//     void SNAMECeil(   int slices, int rows, int cols, TYPE * array, TYPE ceil);
 //     void SNAMELUSplit(TYPE in[2][2][2], TYPE lower[2][2][2], TYPE upper[2][2][2]);
 //
 // for any specified type TYPE (for example: short, unsigned int, long
@@ -35,32 +35,32 @@ TYPE SNAME ## Norm(TYPE tensor[2][2][2]) {	     \
   for (int k=0; k<2; ++k)			     \
     for (int j=0; j<2; ++j)			     \
       for (int i=0; i<2; ++i)			     \
-	result += tensor[i][j][k] * tensor[i][j][k]; \
+	result += tensor[k][j][i] * tensor[k][j][i]; \
   return (TYPE)sqrt(result/8);			     \
 }						     \
 \
-TYPE SNAME ## Max(TYPE * tensor, int rows, int cols, int num) { \
+TYPE SNAME ## Max(TYPE * tensor, int slices, int rows, int cols) { \
   int i, j, k, index;						\
   TYPE result = tensor[0];					\
-  for (k=0; k<num; ++k) {					\
-    for (j=0; j<cols; ++j) {					\
-      for (i=0; i<rows; ++i) {					\
-	index = k*rows*cols + j*rows + i;			\
-	if (tensor[index] > result) result = tensor[index];	\
+  for (k=0; k<slices; ++k) {					\
+    for (j=0; j<rows; ++j) {					\
+      for (i=0; i<cols; ++i) {					\
+        index = k*rows*cols + j*cols + i;			\
+        if (tensor[index] > result) result = tensor[index];	\
       }								\
     }								\
   }								\
   return result;						\
 }								\
 \
-TYPE SNAME ## Min(int rows, int cols, int num, TYPE * tensor) {	\
+TYPE SNAME ## Min(int slices, int rows, int cols, TYPE * tensor) {	\
   int i, j, k, index;						\
   TYPE result = tensor[0];					\
-  for (k=0; k<num; ++k) {					\
-    for (j=0; j<cols; ++j) {					\
-      for (i=0; i<rows; ++i) {					\
-	index = k*rows*cols + j*rows + i;			\
-	if (tensor[index] < result) result = tensor[index];	\
+  for (k=0; k<slices; ++k) {					\
+    for (j=0; j<rows; ++j) {					\
+      for (i=0; i<cols; ++i) {					\
+        index = k*rows*cols + j*cols + i;			\
+        if (tensor[index] < result) result = tensor[index];	\
       }								\
     }								\
   }								\
@@ -68,31 +68,31 @@ TYPE SNAME ## Min(int rows, int cols, int num, TYPE * tensor) {	\
 }								\
 \
 void SNAME ## Scale(TYPE array[3][3][3], TYPE val) { \
-  for (int i=0; i<3; ++i)			     \
+  for (int k=0; k<3; ++k)			     \
     for (int j=0; j<3; ++j)			     \
-      for (int k=0; k<3; ++k)			     \
-	array[i][j][k] *= val;			     \
+      for (int i=0; i<3; ++i)			     \
+        array[k][j][i] *= val;			     \
 }						     \
 \
-void SNAME ## Floor(TYPE * array, int rows, int cols, int num, TYPE floor) { \
+void SNAME ## Floor(TYPE * array, int slices, int rows, int cols, TYPE floor) { \
   int i, j, k, index;							     \
-  for (k=0; k<num; ++k) {						     \
-    for (j=0; j<cols; ++j) {						     \
-      for (i=0; i<rows; ++i) {						     \
-	index = k*cols*rows + j*rows + i;				     \
-	if (array[index] < floor) array[index] = floor;			     \
+  for (k=0; k<slices; ++k) {						     \
+    for (j=0; j<rows; ++j) {						     \
+      for (i=0; i<cols; ++i) {						     \
+        index = k*rows*cols + j*cols + i;				     \
+        if (array[index] < floor) array[index] = floor;			     \
       }									     \
     }									     \
   }									     \
 }									     \
 \
-void SNAME ## Ceil(int rows, int cols, int num, TYPE * array, TYPE ceil) { \
+void SNAME ## Ceil(int slices, int rows, int cols, TYPE * array, TYPE ceil) { \
   int i, j, k, index;							   \
-  for (k=0; k<num; ++k) {						   \
-    for (j=0; j<cols; ++j) {						   \
-      for (i=0; i<rows; ++i) {						   \
-	index = j*rows + i;						   \
-	if (array[index] > ceil) array[index] = ceil;			   \
+  for (k=0; k<slices; ++k) {						   \
+    for (j=0; j<rows; ++j) {						   \
+      for (i=0; i<cols; ++i) {						   \
+        index = k*rows*cols + j*cols + i;						   \
+        if (array[index] > ceil) array[index] = ceil;			   \
       }									   \
     }									   \
   }									   \
@@ -104,14 +104,14 @@ void SNAME ## LUSplit(TYPE tensor[2][2][2], TYPE lower[2][2][2], \
   for (int k=0; k<2; ++k) {					 \
     for (int j=0; j<2; ++j) {					 \
       for (int i=0; i<2; ++i) {					 \
-	sum = i + j + k;					 \
-	if (sum < 2) {						 \
-	  lower[i][j][k] = tensor[i][j][k];			 \
-	  upper[i][j][k] = 0;					 \
-	} else {						 \
-	  upper[i][j][k] = tensor[i][j][k];			 \
-	  lower[i][j][k] = 0;					 \
-	}							 \
+        sum = i + j + k;					 \
+        if (sum < 2) {						 \
+          lower[k][j][i] = tensor[k][j][i];			 \
+          upper[k][j][i] = 0;					 \
+        } else {						 \
+          upper[k][j][i] = tensor[k][j][i];			 \
+          lower[k][j][i] = 0;					 \
+        }							 \
       }								 \
     }								 \
   }								 \
