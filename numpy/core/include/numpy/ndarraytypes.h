@@ -1742,10 +1742,10 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
 #endif
 /*
  * There is no file npy_1_8_deprecated_api.h since there are no additional
- * deprecated API features in NumPy 1,8
+ * deprecated API features in NumPy 1.8.
  *
  * Note to maintainers: insert code like the following in future NumPy
- * versions:
+ * versions.
  *
  * #if !(defined(NPY_NO_DEPRECATED_API) && \
  *       (NPY_1_9_API_VERSION <= NPY_NO_DEPRECATED_API))
