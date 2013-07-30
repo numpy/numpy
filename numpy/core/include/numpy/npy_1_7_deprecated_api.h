@@ -1,55 +1,28 @@
-#ifndef _NPY_DEPRECATED_API_H
-#define _NPY_DEPRECATED_API_H
+#ifndef _NPY_1_7_DEPRECATED_API_H
+#define _NPY_1_7_DEPRECATED_API_H
 
-/* Note to maintainers: This code currently emits no warning if users define:
- *
- *   #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
- *
- * There is no change in the C-API from NumPy 1.7 to NumPy 1.8, so the API
- * version 7 is still valid in NumPy 1.8. If the API changes in the future,
- * please adapt the first line below so that the appropriate version numbers
- * are considered deprecated.
- */
-#if !defined NPY_NO_DEPRECATED_API || NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION
+#ifndef NPY_DEPRECATED_INCLUDES
+#error "Should never include npy_*_*_deprecated_api directly."
+#endif
+
 #if defined(_WIN32)
 #define _WARN___STR2__(x) #x
 #define _WARN___STR1__(x) _WARN___STR2__(x)
 #define _WARN___LOC__ __FILE__ "("_WARN___STR1__(__LINE__)") : Warning Msg: "
 #pragma message(_WARN___LOC__"Using deprecated NumPy API, disable it by " \
-                            "#defining NPY_NO_DEPRECATED_API NPY_1_8_API_VERSION")
+                         "#defining NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION")
 #elif defined(__GNUC__)
-#warning "Using deprecated NumPy API, disable it by #defining NPY_NO_DEPRECATED_API NPY_1_8_API_VERSION"
-#endif
+#warning "Using deprecated NumPy API, disable it by " \
+         "#defining NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION"
 #endif
 /* TODO: How to do this warning message for other compilers? */
 
 /*
- * This header exists to collect all dangerous/deprecated NumPy API.
+ * This header exists to collect all dangerous/deprecated NumPy API
+ * as of NumPy 1.7.
  *
  * This is an attempt to remove bad API, the proliferation of macros,
  * and namespace pollution currently produced by the NumPy headers.
- */
-
-/* This test was more useful in earlier versions when it triggered in more
- * situations than now. Feel free to remove this in the future; nothing will
- * break.
- */
-#if defined NPY_NO_DEPRECATED_API && NPY_API_VERSION <= NPY_NO_DEPRECATED_API
-#error Should never include npy_deprecated_api directly.
-#endif
-
-#if !defined NPY_NO_DEPRECATED_API || NPY_NO_DEPRECATED_API < NPY_1_8_API_VERSION
-/* Insert all definitions which are deprecated in Numpy 1.8 but need to be present
- * for the NumPy C-API version 1.7 or lower.
- *
- * (No entry so far. Maintainers: write analogous sections for future NumPy
- * versions.)
- */
-#endif
-
-#if !defined NPY_NO_DEPRECATED_API || NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION
-/* This block contains all definitions and header inclusions which are
- * deprecated in Numpy 1.7 but need to be present for the old NumPy C-API.
  */
 
 /* These array flags are deprecated as of NumPy 1.7 */
@@ -154,5 +127,4 @@
  */
 #include "old_defines.h"
 
-#endif // (!defined(NPY_NO_DEPRECATED_API) || NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION))
 #endif
