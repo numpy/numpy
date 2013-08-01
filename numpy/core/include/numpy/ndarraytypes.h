@@ -675,7 +675,8 @@ typedef struct tagPyArrayObject_fields {
  * To hide the implementation details, we only expose
  * the Python struct HEAD.
  */
-#if !(defined(NPY_NO_DEPRECATED_API) && (NPY_1_7_API_VERSION <= NPY_NO_DEPRECATED_API))
+#if !defined(NPY_NO_DEPRECATED_API) || \
+    (NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION)
 /*
  * Can't put this in npy_deprecated_api.h like the others.
  * PyArrayObject field access is deprecated as of NumPy 1.7.
@@ -1732,12 +1733,16 @@ typedef struct {
 typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
                                        void *user_data);
 
+/*
+ * Use the keyword NPY_DEPRECATED_INCLUDES to ensure that the header files
+ * npy_*_*_deprecated_api.h are only included from here and nowhere else.
+ */
 #ifdef NPY_DEPRECATED_INCLUDES
 #error "Do not use the reserved keyword NPY_DEPRECATED_INCLUDES."
 #endif
 #define NPY_DEPRECATED_INCLUDES
-#if !(defined(NPY_NO_DEPRECATED_API) && \
-      (NPY_1_7_API_VERSION <= NPY_NO_DEPRECATED_API))
+#if !defined(NPY_NO_DEPRECATED_API) || \
+    (NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION)
 #include "npy_1_7_deprecated_api.h"
 #endif
 /*
@@ -1747,8 +1752,8 @@ typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
  * Note to maintainers: insert code like the following in future NumPy
  * versions.
  *
- * #if !(defined(NPY_NO_DEPRECATED_API) && \
- *       (NPY_1_9_API_VERSION <= NPY_NO_DEPRECATED_API))
+ * #if !defined(NPY_NO_DEPRECATED_API) || \
+ *     (NPY_NO_DEPRECATED_API < NPY_1_9_API_VERSION)
  * #include "npy_1_9_deprecated_api.h"
  * #endif
  */
