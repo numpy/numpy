@@ -1357,7 +1357,7 @@ def startswith(a, prefix, start=0, end=None):
     ----------
     a : array_like of str or unicode
 
-    suffix : str
+    prefix : str
 
     start, end : int, optional
         With optional `start`, test beginning at that position. With
