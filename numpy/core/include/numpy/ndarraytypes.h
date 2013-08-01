@@ -627,8 +627,8 @@ typedef struct _arr_descr {
  * (PyArray_DATA and friends) to access fields here for a number of
  * releases. Direct access to the members themselves is deprecated.
  * To ensure that your code does not use deprecated access,
- * #define NPY_NO_DEPRECATED_API NPY_1_7_VERSION
- * (or NPY_1_8_VERSION or higher as required).
+ * #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+ * (or NPY_1_8_API_VERSION or higher as required).
  */
 /* This struct will be moved to a private header in a future release */
 typedef struct tagPyArrayObject_fields {
@@ -675,7 +675,8 @@ typedef struct tagPyArrayObject_fields {
  * To hide the implementation details, we only expose
  * the Python struct HEAD.
  */
-#if !(defined(NPY_NO_DEPRECATED_API) && (NPY_API_VERSION <= NPY_NO_DEPRECATED_API))
+#if !defined(NPY_NO_DEPRECATED_API) || \
+    (NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION)
 /*
  * Can't put this in npy_deprecated_api.h like the others.
  * PyArrayObject field access is deprecated as of NumPy 1.7.
@@ -1383,7 +1384,7 @@ PyArrayNeighborhoodIter_Next2D(PyArrayNeighborhoodIterObject* iter);
 #define PyArray_FORTRAN_IF(m) ((PyArray_CHKFLAGS(m, NPY_ARRAY_F_CONTIGUOUS) ? \
                                NPY_ARRAY_F_CONTIGUOUS : 0))
 
-#if (defined(NPY_NO_DEPRECATED_API) && (NPY_API_VERSION <= NPY_NO_DEPRECATED_API))
+#if (defined(NPY_NO_DEPRECATED_API) && (NPY_1_7_API_VERSION <= NPY_NO_DEPRECATED_API))
 /*
  * Changing access macros into functions, to allow for future hiding
  * of the internal memory layout. This later hiding will allow the 2.x series
@@ -1732,8 +1733,30 @@ typedef struct {
 typedef void (PyDataMem_EventHookFunc)(void *inp, void *outp, size_t size,
                                        void *user_data);
 
-#if !(defined(NPY_NO_DEPRECATED_API) && (NPY_API_VERSION <= NPY_NO_DEPRECATED_API))
-#include "npy_deprecated_api.h"
+/*
+ * Use the keyword NPY_DEPRECATED_INCLUDES to ensure that the header files
+ * npy_*_*_deprecated_api.h are only included from here and nowhere else.
+ */
+#ifdef NPY_DEPRECATED_INCLUDES
+#error "Do not use the reserved keyword NPY_DEPRECATED_INCLUDES."
 #endif
+#define NPY_DEPRECATED_INCLUDES
+#if !defined(NPY_NO_DEPRECATED_API) || \
+    (NPY_NO_DEPRECATED_API < NPY_1_7_API_VERSION)
+#include "npy_1_7_deprecated_api.h"
+#endif
+/*
+ * There is no file npy_1_8_deprecated_api.h since there are no additional
+ * deprecated API features in NumPy 1.8.
+ *
+ * Note to maintainers: insert code like the following in future NumPy
+ * versions.
+ *
+ * #if !defined(NPY_NO_DEPRECATED_API) || \
+ *     (NPY_NO_DEPRECATED_API < NPY_1_9_API_VERSION)
+ * #include "npy_1_9_deprecated_api.h"
+ * #endif
+ */
+#undef NPY_DEPRECATED_INCLUDES
 
 #endif /* NPY_ARRAYTYPES_H */
