@@ -3696,6 +3696,11 @@ def insert(arr, obj, values, axis=None):
             arr = arr.ravel()
         ndim = arr.ndim
         axis = ndim-1
+    else:
+        if ndim > 0 and (axis < -ndim or axis >= ndim):
+            raise IndexError("axis %i is out of bounds for an array "
+                             "of dimension %i" % (axis, ndim))
+        if (axis < 0): axis += ndim
     if (ndim == 0):
         warnings.warn("in the future the special handling of scalars "
                       "will be removed from insert and raise an error",
@@ -3742,7 +3747,7 @@ def insert(arr, obj, values, axis=None):
             # broadcasting is very different here, since a[:,0,:] = ... behaves
             # very different from a[:,[0],:] = ...! This changes values so that
             # it works likes the second case. (here a[:,0:1,:])
-            values = np.rollaxis(values, 0, axis+1)
+            values = np.rollaxis(values, 0, axis + 1)
         numnew = values.shape[axis]
         newshape[axis] += numnew
         new = empty(newshape, arr.dtype, arr.flags.fnc)
