@@ -5,6 +5,8 @@ import re
 import struct
 import sys
 import textwrap
+from operator import itemgetter
+from itertools import groupby
 
 sys.path.insert(0, os.path.dirname(__file__))
 import ufunc_docstrings as docstrings
@@ -191,6 +193,10 @@ chartoname = {'?': 'bool',
               'P': 'OBJECT',
               }
 
+#synced order of NPY_TYPES with NPY_TYPES from ndarraytypes.h
+NOT_FOUND = '-'
+NOT_UNIFORM = '-'
+NPY_TYPES = '?bBhHiIlLqQfdgFDGOSUVMmeac'
 all = '?bBhHiIlLqQefdgFDGOMm'
 O = 'O'
 P = 'P'
@@ -827,6 +833,97 @@ chartotype2 = {'e': 'ee_e',
                'G': 'GG_G',
                'O': 'OO_O',
                'P': 'OO_O_method'}
+
+#Dict with func and corresponding unique id of signature
+def func_signature_dict(funcdict):
+    typelist = []
+    func_input_dict = {}
+    names = sorted(funcdict.keys())
+    for name in names:
+        uf = funcdict[name]
+        siglist = [ ''.join(t.in_ + t.out) for t in uf.type_descriptions]
+        signature = ','.join(siglist)
+        if typelist.count(signature) == 0:
+            typelist.append(signature)
+        index = typelist.index(signature)
+        key = "type%d%d_id%d" % (uf.nin, uf.nout, index)
+        func_input_dict[name] = (key, signature)
+
+    return func_input_dict
+
+#Group NPY_TYPES by index difference
+def groupby_npy_shift(signature, nin, nout):
+    input_type = []
+    signature = signature.split(',')
+    input_type = [x[0] if nin == 1 or (nin == 2 and x[0]==x[1]) \
+              else NOT_UNIFORM  for x in signature]
+
+    all_types = NPY_TYPES+NOT_FOUND
+    input_pattern = ''.join(input_type)
+    diff = [ (x, x, signature[x][:nin]) if input_type[x] == NOT_UNIFORM \
+            else (x, x - all_types.index(input_type[x]),signature[x][:nin]) \
+            for x in range(len(input_type))]
+
+    dtypelist = sorted(diff, key=itemgetter(1, 0))
+    ranges = []
+    for key, group in groupby(enumerate(dtypelist), lambda kv: kv[0] - kv[1][0]):
+        group = list(group)
+        if len(group) > 1:
+            ranges.append((group[0][1], group[-1][1]))
+        else:
+            ranges.append((group[0][1],None))
+    return ranges
+
+#Make condition for grouped dtypes
+def case_code(name, group_diff):
+    codelist1 = []
+    codelist2 = []
+    for group in group_diff:
+        a, b = group
+        a_args = a[2]
+        nin = len(a[2])
+        uniform = nin == 1 or (len([e for e in range(len(a_args)-1) if a_args[e]==a_args[e+1]]) > 0)
+
+        a1 = 'NPY_%s' % (english_upper(chartoname[a_args[0]]),)
+        if uniform == True:
+            if b == None or len(group) == 1:
+                code = "if(x==%s){ return %d;}" % (a1, a[0])
+            else:
+                b_args = b[2]
+                b1 = 'NPY_%s' % (english_upper(chartoname[b_args[0]]),)
+                code = "if(x>=%s && x<=%s){ return x+(%d);}" % (a1, b1, a[1])         
+            codelist1.append(code)
+        else:
+            a2 = 'NPY_%s' % (english_upper(chartoname[a_args[1]]),)
+            code = "if(x==%s && y==%s){ return %d;}" % (a1, a2, a[0])
+            codelist2.append(code)
+
+    code="""static int %s_index(int x, int y){ if(x==y){ %s } %s return -1;}""" % \
+         ( name, ''.join(codelist1), ''.join(codelist2))
+    
+    return code
+
+#Build condition to provide index based on input type
+def lookup_case(funcdict):
+    func_sign_dict = func_signature_dict(funcdict)
+    sigtype_func = {}
+    codelist = []
+    for func_name in func_sign_dict.keys():
+        siglist = []
+        uf = funcdict[func_name]
+        key, signature = func_sign_dict[func_name]
+
+        is_there = (sys.version_info >= (3,0) and (key in sigtype_func)) \
+            or (sys.version_info < (3,0) and sigtype_func.has_key(key))
+            
+        if is_there == False:
+            sigtype_func[key] = signature
+            signature = signature.replace('P','O')
+            gp_diff = groupby_npy_shift(signature,uf.nin,uf.nout)
+            codelist.append(case_code(key, gp_diff))
+
+    return '\n'.join(codelist)
+
 #for each name
 # 1) create functions, data, and signature
 # 2) fill in functions and data in InitOperators
@@ -904,6 +1001,7 @@ def make_arrays(funcdict):
 def make_ufuncs(funcdict):
     code3list = []
     names = sorted(funcdict.keys())
+    func_sign_dict = func_signature_dict(funcdict)
     for name in names:
         uf = funcdict[name]
         mlist = []
@@ -921,6 +1019,7 @@ def make_ufuncs(funcdict):
         # string literal in C code. We split at endlines because textwrap.wrap
         # do not play well with \n
         docstring = '\\n\"\"'.join(docstring.split(r"\n"))
+
         mlist.append(\
 r"""f = PyUFunc_FromFuncAndData(%s_functions, %s_data, %s_signatures, %d,
                                 %d, %d, %s, "%s",
@@ -933,6 +1032,8 @@ r"""f = PyUFunc_FromFuncAndData(%s_functions, %s_data, %s_signatures, %d,
             mlist.append(
                 r"((PyUFuncObject *)f)->type_resolver = &%s;" %
                                                                 uf.typereso)
+        key, signature = func_sign_dict[name]
+        mlist.append("((PyUFuncObject *)f)->sig_index = &%s_index;" % key)          
         mlist.append(r"""PyDict_SetItemString(dictionary, "%s", f);""" % name)
         mlist.append(r"""Py_DECREF(f);""")
         code3list.append('\n'.join(mlist))
@@ -940,6 +1041,7 @@ r"""f = PyUFunc_FromFuncAndData(%s_functions, %s_data, %s_signatures, %d,
 
 
 def make_code(funcdict,filename):
+    code0 = lookup_case(funcdict)
     code1, code2 = make_arrays(funcdict)
     code3 = make_ufuncs(funcdict)
     code2 = indent(code2,4)
@@ -951,7 +1053,14 @@ def make_code(funcdict,filename):
     Please make changes to the code generator program (%s)
 **/
 
+/*
+ *Specilized function for each signature pattern types,
+ *to determine correct index for innerloop and datafunction
+ */
 %s
+
+%s
+
 
 static void
 InitOperators(PyObject *dictionary) {
@@ -960,7 +1069,7 @@ InitOperators(PyObject *dictionary) {
 %s
 %s
 }
-""" % (filename, code1, code2, code3)
+""" % (filename, code0, code1, code2, code3)
     return code;
 
 

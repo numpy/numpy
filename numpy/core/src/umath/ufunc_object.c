@@ -4292,6 +4292,7 @@ PyUFunc_FromFuncAndDataAndSignature(PyUFuncGenericFunction *func, void **data,
     ufunc->ptr = NULL;
     ufunc->obj = NULL;
     ufunc->userloops=NULL;
+    ufunc->sig_index=NULL;
 
     /* Type resolution and inner loop selection functions */
     ufunc->type_resolver = &PyUFunc_DefaultTypeResolver;
