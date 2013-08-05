@@ -108,7 +108,7 @@ Requirements
 
     - Be reverse engineered.  Datasets often live longer than the
       programs that created them.  A competent developer should be
-      able create a solution in his preferred programming language to
+      able to create a solution in his preferred programming language to
       read most NPY files that he has been given without much
       documentation.
 
