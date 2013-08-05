@@ -185,6 +185,18 @@ class TestInsert(TestCase):
         assert_equal(insert(a[:,:1], 1, a[:,1], axis=1), a)
         assert_equal(insert(a[:1,:], 1, a[1,:], axis=0), a)
 
+        # negative axis value
+        a = np.arange(24).reshape((2,3,4))
+        assert_equal(insert(a, 1, a[:,:,3], axis=-1),
+                     insert(a, 1, a[:,:,3], axis=2))
+        assert_equal(insert(a, 1, a[:,2,:], axis=-2),
+                     insert(a, 1, a[:,2,:], axis=1))
+
+        # invalid axis value
+        assert_raises(IndexError, insert, a, 1, a[:,2,:], axis=3)
+        assert_raises(IndexError, insert, a, 1, a[:,2,:], axis=-4)
+
+
 class TestAmax(TestCase):
     def test_basic(self):
         a = [3, 4, 5, 10, -3, -5, 6.0]
