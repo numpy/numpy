@@ -5844,7 +5844,7 @@ add_newdoc('numpy.core', 'ufunc', ('at',
 
     >>> a = np.array([1, 2, 3, 4])
     >>> np.negative.at(a, [0, 1])
-    >>> print a
+    >>> print(a)
     array([-1, -2, 3, 4])
 
     ::
@@ -5853,7 +5853,7 @@ add_newdoc('numpy.core', 'ufunc', ('at',
 
     >>> a = np.array([1, 2, 3, 4])
     >>> np.add.at(a, [0, 1, 2, 2], 1)
-    >>> print a
+    >>> print(a)
     array([2, 3, 5, 4])
 
     ::
@@ -5864,7 +5864,7 @@ add_newdoc('numpy.core', 'ufunc', ('at',
     >>> a = np.array([1, 2, 3, 4])
     >>> b = np.array([1, 2])
     >>> np.add.at(a, [0, 1], b)
-    >>> print a
+    >>> print(a)
     array([2, 4, 3, 4])
 
     """))
