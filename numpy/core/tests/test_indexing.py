@@ -84,7 +84,7 @@ class TestIndexing(TestCase):
         assert_equal(a[np.array(False)], a[0])
 
     def test_boolean_indexing_onedim(self):
-        # Indexing a 2-dimensional array with 
+        # Indexing a 2-dimensional array with
         # boolean array of length one
         a = np.array([[ 0.,  0.,  0.]])
         b = np.array([ True], dtype=bool)
@@ -93,8 +93,19 @@ class TestIndexing(TestCase):
         a[b] = 1.
         assert_equal(a, [[1., 1., 1.]])
 
+    def test_boolean_assignment_value_mismatch(self):
+        # A boolean assignment should fail when the shape of the values
+        # cannot be broadcasted to the subscription. (see also gh-3458)
+        a = np.arange(4)
+        def f(a, v):
+            a[a > -1] = v
+
+        assert_raises(ValueError, f, a, [])
+        assert_raises(ValueError, f, a, [1, 2, 3])
+        assert_raises(ValueError, f, a[:1], [1, 2, 3])
+
     def test_boolean_indexing_twodim(self):
-        # Indexing a 2-dimensional array with 
+        # Indexing a 2-dimensional array with
         # 2-dimensional boolean array
         a = np.array([[1, 2, 3],
                       [4 ,5, 6],
@@ -116,7 +127,7 @@ class TestIndexing(TestCase):
 class TestMultiIndexingAutomated(TestCase):
     """
      These test use code to mimic the C-Code indexing for selection.
-    
+
      NOTE: * This still lacks tests for complex item setting.
            * If you change behavoir of indexing, you might want to modify
              these tests to try more combinations.
@@ -160,7 +171,7 @@ class TestMultiIndexingAutomated(TestCase):
 
     def _get_multi_index(self, arr, indices):
         """Mimic multi dimensional indexing.
-        
+
         Parameters
         ----------
         arr : ndarray
@@ -185,7 +196,7 @@ class TestMultiIndexingAutomated(TestCase):
         in_indices = list(indices)
         indices = []
         # if False, this is a fancy or boolean index
-        no_copy = True 
+        no_copy = True
         # number of fancy/scalar indexes that are not consecutive
         num_fancy = 0
         # number of dimensions indexed by a "fancy" index
@@ -487,7 +498,7 @@ class TestMultiIndexingAutomated(TestCase):
                     self._check_multi_index(self.b, index)
         # Check very simple item getting:
         self._check_multi_index(self.a, (0,0,0,0))
-        self._check_multi_index(self.b, (0,0,0,0)) 
+        self._check_multi_index(self.b, (0,0,0,0))
         # Also check (simple cases of) too many indices:
         assert_raises(IndexError, self.a.__getitem__, (0,0,0,0,0))
         assert_raises(IndexError, self.a.__setitem__, (0,0,0,0,0), 0)
