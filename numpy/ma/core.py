@@ -46,7 +46,7 @@ __docformat__ = "restructuredtext en"
 __all__ = ['MAError', 'MaskError', 'MaskType', 'MaskedArray',
            'bool_',
            'abs', 'absolute', 'add', 'all', 'allclose', 'allequal', 'alltrue',
-           'amax', 'amin', 'angle', 'anom', 'anomalies', 'any', 'arange',
+           'amax', 'amin', 'angle', 'anom', 'anomalies', 'any', 'append','arange',
            'arccos', 'arccosh', 'arcsin', 'arcsinh', 'arctan', 'arctan2',
            'arctanh', 'argmax', 'argmin', 'argsort', 'around',
            'array', 'asarray', 'asanyarray',
@@ -7014,6 +7014,52 @@ def asanyarray(a, dtype=None):
 
     """
     return masked_array(a, dtype=dtype, copy=False, keep_mask=True, subok=True)
+
+def append(a, b, axis=0):
+    """
+    Append two masked arrays
+
+    Parameters
+    ----------
+    a : array_like
+        Input data, in any form that can be converted to an array.
+        If b is not a masked array, default is to assume the corresponding masks are False
+
+    b : array_like
+        Input data, in any form that can be converted to an array.
+        If b is not a masked array, default is to assume the corresponding masks are False
+
+    Returns
+    -------
+    out : MaskedArray
+        MaskedArray that is b appended to a.
+
+    See Also
+    --------
+    np.append()
+
+    Examples
+    --------
+    >>> a = np.ma.masked_equal([1,2,3], value=2)
+    >>> b = np.ma.masked_equal([4,3,2], value=2)
+    >>> c = np.ma.append(a,b)
+    >>> c
+    masked_array(data = [1 -- 3 4 3 --],
+             mask = [False, True, False, False, False, True],
+       fill_value = 999999)
+
+    """
+    # Convert to masked array, assuming masks are False
+    if type(a) != MaskedArray:
+        a = np.ma.masked_array(a)
+    if type(b) != MaskedArray:
+        b = np.ma.masked_array(b)
+    if not a.shape:
+        a = ma.atleast_1d(a)
+    if not b.shape:
+        b = ma.atleast_1d(b)
+    result = np.ma.concatenate([a,b], axis=axis)
+    return result
 
 
 #####--------------------------------------------------------------------------
