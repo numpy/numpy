@@ -135,6 +135,43 @@ def parse_structure(astr, level):
     spanlist.sort()
     return spanlist
 
+def process_copypaste(astr):
+
+    defbeg = "/**begin copy"
+    defend = "/**end copy**/"
+
+    ind = 0
+    replacelist = []
+    while True:
+        start = astr.find(defbeg, ind)
+        if start == -1:
+            break
+
+        start2 = astr.find("*/",start)
+        start2 = astr.find("\n",start2)
+        fini1 = astr.find(defend,start2)
+        fini2 = astr.find("\n",fini1)
+        starttag = astr[start:start2]
+        end_tag = astr[fini1:fini2]
+        content = ""
+        ind = fini2
+        replacelist.append((start,start2,fini1,fini2))
+
+
+    for start1,start2,end1,end2 in replacelist:
+        beg_tag = astr[start1:start2]
+        end_tag = astr[end1:end2]    
+        content = astr[start2+1:end1]
+
+        astr = astr.replace(beg_tag,'')
+        astr = astr.replace(end_tag,'')
+        result = re.search('@\w*@',beg_tag)
+        if result is not None:            
+            name = result.group(0)
+            astr = astr.replace(content,'')
+            astr = astr.replace("/**paste %s**/"%(name,),content)
+
+    return astr
 
 def paren_repl(obj):
     torep = obj.group(1)
@@ -259,6 +296,7 @@ def parse_string(astr, env, level, line) :
     return ''.join(code)
 
 def process_str(astr):
+    astr = process_copypaste(astr)
     code = [header]
     code.extend(parse_string(astr, global_names, 0, 1))
     return ''.join(code)
