@@ -189,7 +189,7 @@ def build_project(args):
         sys.exit(1)
 
     from distutils.sysconfig import get_python_lib
-    site_dir = get_python_lib(prefix=dst_dir)
+    site_dir = get_python_lib(prefix=dst_dir, plat_specific=True)
 
     return site_dir
 
