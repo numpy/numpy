@@ -5134,7 +5134,12 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     Py_XDECREF(array_operands[2]);
     Py_XDECREF(errobj);
 
-    Py_RETURN_NONE;
+    if (needs_api && PyErr_Occurred()) {
+        return NULL;
+    }
+    else {
+        Py_RETURN_NONE;
+    }
 
 fail:
 
