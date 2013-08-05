@@ -806,8 +806,7 @@ array_ass_boolean_subscript(PyArrayObject *self,
     }
 
     /* Tweak the strides for 0-dim and broadcasting cases */
-    if (PyArray_NDIM(v) > 0 && PyArray_DIMS(v)[0] > 1) {
-        v_stride = PyArray_STRIDES(v)[0];
+    if (PyArray_NDIM(v) > 0 && PyArray_DIMS(v)[0] != 1) {
         if (size != PyArray_DIMS(v)[0]) {
             PyErr_Format(PyExc_ValueError,
                     "NumPy boolean array indexing assignment "
@@ -816,6 +815,7 @@ array_ass_boolean_subscript(PyArrayObject *self,
                     (int)PyArray_DIMS(v)[0], (int)size);
             return -1;
         }
+        v_stride = PyArray_STRIDES(v)[0];
     }
     else {
         v_stride = 0;
