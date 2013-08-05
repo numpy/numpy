@@ -651,14 +651,14 @@ class TestMaskedArray(TestCase):
         "Test append"
         a_0d = [1.]
         b_0d = [2.]
-        a_1d = ma.masked_equal([1.,2.],value=2)
+        a_1d = np.ma.masked_equal([1.,2.],value=2)
         b_1d = [4,5,6]
-        a_2d = ma.masked_equal(np.array([1,2,3,4]).reshape([2,2]), value=2)
-        b_2d = ma.masked_equal(np.array([5,6,7,8]).reshape([2,2]), value=6)
-        assert_equal(ma.append(a_0d, b_0d), ma.masked_array([1.,2.],[0,0]))
-        assert_equal(ma.append(a_1d,b_1d), ma.masked_array([1.0,ma.masked,4.,5.,6.],[0,1,0,0,0]))
-        assert_equal(ma.append(a_2d,b_2d,axis=0), ma.masked_array([[1,ma.masked],[3,4],[5,ma.masked],[7,8]], [[0,1],[0,0],[0,1],[0,0]]))
-        assert_equal(ma.append(a_2d,b_2d,axis=1), [[1,ma.masked,5,ma.masked],[3,4,7,8]], [[0,1,0,1], [0,0,0,0]])
+        a_2d = np.ma.masked_equal(np.array([1,2,3,4]).reshape([2,2]), value=2)
+        b_2d = np.ma.masked_equal(np.array([5,6,7,8]).reshape([2,2]), value=6)
+        assert_equal(np.ma.append(a_0d, b_0d), np.ma.masked_array([1.,2.],[0,0]))
+        assert_equal(np.ma.append(a_1d,b_1d), np.ma.masked_array([1.0,np.ma.masked,4.,5.,6.],[0,1,0,0,0]))
+        assert_equal(np.ma.append(a_2d,b_2d,axis=0), np.ma.masked_array([[1,np.ma.masked],[3,4],[5,np.ma.masked],[7,8]], [[0,1],[0,0],[0,1],[0,0]]))
+        assert_equal(np.ma.append(a_2d,b_2d,axis=1), [[1,np.ma.masked,5,np.ma.masked],[3,4,7,8]], [[0,1,0,1], [0,0,0,0]])
 
 #------------------------------------------------------------------------------
 
