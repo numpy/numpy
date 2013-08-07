@@ -246,6 +246,12 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwa
         out = NULL;
     }
 
+
+    if((PyObject *)out == op1 || (PyObject *)out == op2)
+    {
+        PyErr_SetString(PyExc_ValueError, "One of the input arrays cannot be assigned to OUT");
+        return NULL;
+    }
     /*
      * "Matrix product" using the BLAS.
      * Only works for float double and complex types.
