@@ -394,6 +394,24 @@ class TestCreation(TestCase):
         arr = np.array([], dtype='V')
         assert_equal(arr.dtype.kind, 'V')
 
+    def test_zeros(self):
+        types = np.typecodes['AllInteger'] + np.typecodes['AllFloat']
+        for dt in types:
+            d = np.zeros((13,), dtype=dt)
+            assert_equal(np.count_nonzero(d), 0)
+            # true for ieee floats
+            assert_equal(d.sum(), 0)
+
+            d = np.zeros((30 * 1024**2,), dtype=dt)
+            assert_equal(np.count_nonzero(d), 0)
+            assert_equal(d.sum(), 0)
+
+    def test_zeros_obj(self):
+        # test initialization from PyLong(0)
+        d = np.zeros((13,), dtype=object)
+        assert_array_equal(d, [0] * 13)
+        assert_equal(np.count_nonzero(d), 0)
+
     def test_non_sequence_sequence(self):
         """Should not segfault.
 

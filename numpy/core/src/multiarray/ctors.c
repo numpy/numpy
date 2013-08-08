@@ -985,20 +985,22 @@ PyArray_NewFromDescr(PyTypeObject *subtype, PyArray_Descr *descr, int nd,
         if (sd == 0) {
             sd = descr->elsize;
         }
-        data = PyDataMem_NEW(sd);
+        /*
+         * It is bad to have unitialized OBJECT pointers
+         * which could also be sub-fields of a VOID array
+         */
+        if (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
+            data = PyDataMem_NEW_ZEROED(sd, 1);
+        }
+        else {
+            data = PyDataMem_NEW(sd);
+        }
         if (data == NULL) {
             PyErr_NoMemory();
             goto fail;
         }
         fa->flags |= NPY_ARRAY_OWNDATA;
 
-        /*
-         * It is bad to have unitialized OBJECT pointers
-         * which could also be sub-fields of a VOID array
-         */
-        if (PyDataType_FLAGCHK(descr, NPY_NEEDS_INIT)) {
-            memset(data, 0, sd);
-        }
     }
     else {
         /*
@@ -2683,22 +2685,43 @@ NPY_NO_EXPORT PyObject *
 PyArray_Zeros(int nd, npy_intp *dims, PyArray_Descr *type, int is_f_order)
 {
     PyArrayObject *ret;
+    int need_init;
 
     if (!type) {
         type = PyArray_DescrFromType(NPY_DEFAULT_TYPE);
     }
+
+    /* set init flag on copy of the descriptor to get zero memory */
+    PyArray_DESCR_REPLACE(type);
+    need_init = PyDataType_FLAGCHK(type, NPY_NEEDS_INIT);
+    type->flags |= NPY_NEEDS_INIT;
+
     ret = (PyArrayObject *)PyArray_NewFromDescr(&PyArray_Type,
                                                 type,
                                                 nd, dims,
                                                 NULL, NULL,
                                                 is_f_order, NULL);
+
     if (ret == NULL) {
         return NULL;
     }
-    if (_zerofill(ret) < 0) {
-        Py_DECREF(ret);
-        return NULL;
+
+    /* handle objects */
+    if (PyDataType_REFCHK(PyArray_DESCR(ret))) {
+        if (_zerofill(ret) < 0) {
+            Py_DECREF(ret);
+            return NULL;
+        }
     }
+
+    /*
+     * drop init flag again if its not needed,
+     * e.g. avoids unnecessary initializations of nditer buffers
+     */
+    if (!need_init) {
+        PyArray_DESCR(ret)->flags &= ~NPY_NEEDS_INIT;
+    }
+
     return (PyObject *)ret;
 
 }
