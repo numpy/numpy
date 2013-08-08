@@ -586,7 +586,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     --------
     2D-histogram with variable bin width:
 
-    >>> import matplotlib as mlp
+    >>> import matplotlib as mpl
     >>> import matplotlib.pyplot as plt
 
     # First we define the bin edges                                                
