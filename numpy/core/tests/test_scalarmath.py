@@ -139,6 +139,36 @@ class TestConversion(TestCase):
         assert_equal([int(_m) for _m in a], li[:3])
 
 
+    def test_int_value_behaviour(self):
+        l = [0, 2**7-1, 2**15-1, 2**31-1, 2**63-1]
+        li = [-1, -2**7, -2**15, -2**31, -2**63]
+        x = 1
+        for T in [np.int8, np.int16, np.int32, np.int64]:
+            a1 = np.array([l[:x]],dtype=T)
+            b1= np.array([li[:x]], dtype=T)
+            assert_equal(-a1-1,b1)
+
+            a2 = np.array([l[x]],dtype=T)
+            b2= np.array([li[x]], dtype=T)            
+            assert_equal(a2,b2-1)
+            x = x+1
+
+
+        l = [0, 2**8-1, 2**16-1, 2**32-1, 2**64-1]
+        li = [1, 2**8,  2**16, 2**32, 2**64]
+        x = 1
+        for T in [np.uint8, np.uint16, np.uint32, np.uint64]:
+            a1 = np.array([l[:x]],dtype=T)
+            b1= np.array([li[:x]], dtype=T)
+            assert_equal(a1+1,b1)
+
+            a2 = np.array([l[x]],dtype=T)
+            b2= np.array([0], dtype=T)            
+            assert_equal(a2+1,b2)
+            x = x+1
+
+
+
 #class TestRepr(TestCase):
 #    def test_repr(self):
 #        for t in types:
