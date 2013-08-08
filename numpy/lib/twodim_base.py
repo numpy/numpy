@@ -586,9 +586,8 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     --------
     2D-histogram with variable bin width:
 
-    >>> import matplotlib as ml
+    >>> import matplotlib as mlp
     >>> import matplotlib.pyplot as plt
-    >>> import numpy as np
 
     # First we define the bin edges                                                
     >>> xedges = [0, 1, 1.5, 3, 5]
@@ -620,7 +619,7 @@ def histogram2d(x, y, bins=10, range=None, normed=False, weights=None):
     # NonUniformImage displays exact bin edges with interpolation                  
     >>> ax = fig.add_subplot(133)
     >>> ax.set_title('NonUniformImage:\ninterpolated')
-    >>> im = ml.image.NonUniformImage(ax, interpolation='bilinear')
+    >>> im = mpl.image.NonUniformImage(ax, interpolation='bilinear')
     >>> xcenters = xedges[:-1] + 0.5 * (xedges[1:] - xedges[:-1])
     >>> ycenters = yedges[:-1] + 0.5 * (yedges[1:] - yedges[:-1])
     >>> im.set_data(xcenters, ycenters, H)
