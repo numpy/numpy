@@ -65,6 +65,20 @@ offset_bounds_from_strides(const int itemsize, const int nd,
                            const npy_intp *dims, const npy_intp *strides,
                            npy_intp *lower_offset, npy_intp *upper_offset);
 
+/*
+ * return true if pointer is aligned to 'alignment'
+ */
+static NPY_INLINE int
+npy_is_aligned(const void * p, const npy_uintp alignment)
+{
+    /* test for the and is still faster than a direct modulo */
+    if ((alignment & (alignment - 1)) == 0)
+        return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
+    else
+        return ((npy_uintp)(p) % alignment) == 0;
+}
+
+
 #include "ucsnarrow.h"
 
 #endif
