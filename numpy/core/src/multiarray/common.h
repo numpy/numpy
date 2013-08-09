@@ -1,5 +1,6 @@
 #ifndef _NPY_PRIVATE_COMMON_H_
 #define _NPY_PRIVATE_COMMON_H_
+#include <numpy/npy_common.h>
 
 #define error_converting(x)  (((x) == -1) && PyErr_Occurred())
 
@@ -71,11 +72,16 @@ offset_bounds_from_strides(const int itemsize, const int nd,
 static NPY_INLINE int
 npy_is_aligned(const void * p, const npy_uintp alignment)
 {
-    /* test for the and is still faster than a direct modulo */
-    if ((alignment & (alignment - 1)) == 0)
+    /*
+     * alignment is usually a power of two
+     * the test is faster than a direct modulo
+     */
+    if (NPY_LIKELY((alignment & (alignment - 1)) == 0)) {
         return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
-    else
+    }
+    else {
         return ((npy_uintp)(p) % alignment) == 0;
+    }
 }
 
 
