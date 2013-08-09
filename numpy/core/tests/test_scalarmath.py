@@ -1,6 +1,7 @@
 from __future__ import division, absolute_import, print_function
 
 import sys
+import platform
 from numpy.testing import *
 from numpy.testing.utils import gen_alignment_data
 import numpy as np
@@ -166,6 +167,24 @@ class TestConversion(TestCase):
             b2= np.array([0], dtype=T)            
             assert_equal(a2+1,b2)
             x = x+1
+
+
+    def test_long_os_behaviour(self):
+        Long = np.iinfo('l')
+        uLong = np.iinfo('L')
+        if sys.platform == "win32" or sys.platform == "win64" \
+            or platform.architecture()[0] == "32bit":
+            assert_equal(Long.max, 2**31-1)
+            assert_equal(Long.min, -2**31)            
+            assert_equal(uLong.max, 2**32-1)
+            assert_equal(uLong.min, 0)
+        elif platform.architecture()[0] == "64bit":
+            assert_equal(Long.max, 2**63-1)
+            assert_equal(Long.min, -2**63)
+            assert_equal(uLong.max, 2**64-1)
+            assert_equal(uLong.min, 0)
+
+
 
 
 
