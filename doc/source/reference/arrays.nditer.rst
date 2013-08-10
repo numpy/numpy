@@ -156,9 +156,9 @@ accessible by indexing into the iterator, and the index being tracked
 is the property `index` or `multi_index` depending on what was requested.
 
 The Python interactive interpreter unfortunately prints out the
-while-loop condition during each iteration of the loop. We have modified
-the output in the examples using this looping construct in order to
-be more readable.
+values of expressions inside the while loop during each iteration of the
+loop. We have modified the output in the examples using this looping
+construct in order to be more readable.
 
 .. admonition:: Example
 
