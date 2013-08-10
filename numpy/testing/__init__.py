@@ -11,7 +11,7 @@ from unittest import TestCase
 
 from . import decorators as dec
 from .utils import *
-from .numpytest import *
+from .numpytest import importall  # remove for numpy 1.9.0
 from .nosetester import NoseTester as Tester
 from .nosetester import run_module_suite
 test = Tester().test

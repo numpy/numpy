@@ -24,7 +24,7 @@ __all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
            'raises', 'rand', 'rundocs', 'runstring', 'verbose', 'measure',
            'assert_', 'assert_array_almost_equal_nulp',
            'assert_array_max_ulp', 'assert_warns', 'assert_no_warnings',
-           'assert_allclose']
+           'assert_allclose', 'IgnoreException']
 
 
 verbose = 0
@@ -915,7 +915,9 @@ def assert_string_equal(actual, desired):
         raise AssertionError(repr(type(actual)))
     if not isinstance(desired, str):
         raise AssertionError(repr(type(desired)))
-    if re.match(r'\A'+desired+r'\Z', actual, re.M): return
+    if re.match(r'\A'+desired+r'\Z', actual, re.M):
+        return
+
     diff = list(difflib.Differ().compare(actual.splitlines(1), desired.splitlines(1)))
     diff_list = []
     while diff:
@@ -1172,6 +1174,7 @@ def assert_allclose(actual, desired, rtol=1e-7, atol=0,
     import numpy as np
     def compare(x, y):
         return np.allclose(x, y, rtol=rtol, atol=atol)
+
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
     header = 'Not equal to tolerance rtol=%g, atol=%g' % (rtol, atol)
     assert_array_compare(compare, actual, desired, err_msg=str(err_msg),
@@ -1494,7 +1497,7 @@ def assert_no_warnings(func, *args, **kw):
         Arguments passed to `func`.
     \\*\\*kwargs : Kwargs
         Keyword arguments passed to `func`.
-    
+
     Returns
     -------
     The value returned by `func`.
@@ -1573,3 +1576,8 @@ def gen_alignment_data(dtype=float32, type='binary', max_size=24):
                     (o, o + 1, o, s - 1, dtype, 'aliased')
                 yield inp1()[:-1], inp1()[:-1], inp2()[1:], bfmt % \
                     (o, o, o + 1, s - 1, dtype, 'aliased')
+
+
+class IgnoreException(Exception):
+    "Ignoring this exception due to disabled feature"
+

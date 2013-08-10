@@ -15,9 +15,9 @@ function name, setup and teardown functions and so on - see
 """
 from __future__ import division, absolute_import, print_function
 
-import sys
 import warnings
 import collections
+
 
 def slow(t):
     """
