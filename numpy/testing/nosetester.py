@@ -9,9 +9,9 @@ from __future__ import division, absolute_import, print_function
 import os
 import sys
 import warnings
-import numpy.testing.utils
 from numpy.compat import basestring
 from numpy import ModuleDeprecationWarning
+
 
 def get_package_name(filepath):
     """
@@ -60,7 +60,6 @@ def import_nose():
     minimum_nose_version = (0,10,0)
     try:
         import nose
-        from nose.tools import raises
     except ImportError:
         fine_nose = False
     else:
