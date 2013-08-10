@@ -557,6 +557,30 @@ fail:
 
     return NULL;
 }
+
+#if !defined(NPY_PY3K)
+static PyObject *
+int_subclass(PyObject *dummy, PyObject *args)
+{
+
+  PyObject *result = NULL;
+  PyObject *scalar_object = NULL;
+
+  if (!PyArg_UnpackTuple(args, "test_int_subclass", 1, 1, &scalar_object))
+    return NULL;
+
+  if (PyInt_Check(scalar_object))
+    result = Py_True;
+  else
+    result = Py_False;
+
+  Py_INCREF(result);
+
+  return result;
+
+}
+#endif
+
 static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_neighborhood_iterator",
         test_neighborhood_iterator,
@@ -573,6 +597,11 @@ static PyMethodDef Multiarray_TestsMethods[] = {
     {"test_inplace_increment",
         inplace_increment,
         METH_VARARGS, NULL},
+#if !defined(NPY_PY3K)
+    {"test_int_subclass",
+        int_subclass,
+        METH_VARARGS, NULL},
+#endif
     {NULL, NULL, 0, NULL}        /* Sentinel */
 };
 

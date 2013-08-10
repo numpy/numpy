@@ -3783,6 +3783,19 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     }                                                                   \
     Py##child##ArrType_Type.tp_hash = Py##parent1##_Type.tp_hash;
 
+/*
+ * In Py3K, int is no longer a fixed-width integer type, so don't
+ * inherit numpy.int_ from it.
+ */
+#if defined(NPY_PY3K)
+#define INHERIT_INT(child, parent2)                                     \
+    SINGLE_INHERIT(child, parent2);
+#else
+#define INHERIT_INT(child, parent2)                                     \
+    Py##child##ArrType_Type.tp_flags |= Py_TPFLAGS_INT_SUBCLASS;        \
+    DUAL_INHERIT(child, Int, parent2);
+#endif
+
 #if defined(NPY_PY3K)
 #define DUAL_INHERIT_COMPARE(child, parent1, parent2)
 #else
@@ -3811,18 +3824,17 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
     SINGLE_INHERIT(Bool, Generic);
     SINGLE_INHERIT(Byte, SignedInteger);
     SINGLE_INHERIT(Short, SignedInteger);
-#if NPY_SIZEOF_INT == NPY_SIZEOF_LONG && !defined(NPY_PY3K)
-    DUAL_INHERIT(Int, Int, SignedInteger);
+
+#if NPY_SIZEOF_INT == NPY_SIZEOF_LONG
+    INHERIT_INT(Int, SignedInteger);
 #else
     SINGLE_INHERIT(Int, SignedInteger);
 #endif
-#if !defined(NPY_PY3K)
-    DUAL_INHERIT(Long, Int, SignedInteger);
-#else
-    SINGLE_INHERIT(Long, SignedInteger);
-#endif
-#if NPY_SIZEOF_LONGLONG == NPY_SIZEOF_LONG && !defined(NPY_PY3K)
-    DUAL_INHERIT(LongLong, Int, SignedInteger);
+
+    INHERIT_INT(Long, SignedInteger);
+
+#if NPY_SIZEOF_LONGLONG == NPY_SIZEOF_LONG
+    INHERIT_INT(LongLong, SignedInteger);
 #else
     SINGLE_INHERIT(LongLong, SignedInteger);
 #endif
@@ -3864,6 +3876,9 @@ setup_scalartypes(PyObject *NPY_UNUSED(dict))
 
 #undef SINGLE_INHERIT
 #undef DUAL_INHERIT
+#undef INHERIT_INT
+#undef DUAL_INHERIT2
+#undef DUAL_INHERIT_COMPARE
 
     /*
      * Clean up string and unicode array types so they act more like
