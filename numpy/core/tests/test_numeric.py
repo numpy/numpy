@@ -245,6 +245,23 @@ class TestBoolArray(TestCase):
         self.assertTrue(self.im.any())
         self.assertFalse(self.nm.all())
         self.assertFalse(self.im.all())
+        # check bad element in all positions
+        for i in range(256 - 7):
+            d = array([False] * 256, dtype=np.bool)[7::]
+            d[i] = True
+            self.assertTrue(np.any(d))
+            e = array([True] * 256, dtype=np.bool)[7::]
+            e[i] = False
+            self.assertFalse(np.all(e))
+            assert_array_equal(e, ~d)
+        # big array test for blocked libc loops
+        for i in list(range(9, 6000, 507)) + [7764, 90021, -10]:
+            d = array([False] * 100043, dtype=np.bool)
+            d[i] = True
+            self.assertTrue(np.any(d), msg="%r" % i)
+            e = array([True] * 100043, dtype=np.bool)
+            e[i] = False
+            self.assertFalse(np.all(e), msg="%r" % i)
 
     def test_logical_not_abs(self):
         assert_array_equal(~self.t, self.f)
