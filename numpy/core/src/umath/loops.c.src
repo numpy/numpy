@@ -20,6 +20,8 @@
 
 #include "ufunc_object.h"
 
+#include <string.h> /* for memchr */
+
 
 /*
  * include vectorized functions and dispatchers
@@ -555,15 +557,47 @@ BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED
  * #kind = logical_and, logical_or#
  * #OP =  &&, ||#
  * #SC =  ==, !=#
+ * #and = 1, 0#
  **/
 
 NPY_NO_EXPORT void
 BOOL_@kind@(char **args, npy_intp *dimensions, npy_intp *steps, void *NPY_UNUSED(func))
 {
     if(IS_BINARY_REDUCE) {
+#ifdef HAVE_EMMINTRIN_H
+        /*
+         * stick with our variant for more reliable performance, only known
+         * platform which outperforms it by ~20% is an i7 with glibc 2.17
+         */
         if (run_reduce_simd_@kind@_BOOL(args, dimensions, steps)) {
             return;
         }
+#else
+        /* for now only use libc on 32-bit/non-x86 */
+        if (steps[1] == 1) {
+            npy_bool * op = (npy_bool *)args[0];
+#if @and@
+            /* np.all(), search for a zero (false) */
+            if (*op) {
+                *op = memchr(args[1], 0, dimensions[0]) == NULL;
+            }
+#else
+            /*
+             * np.any(), search for a non-zero (true) via comparing against
+             * zero blocks, memcmp is faster than memchr on SSE4 machines
+             * with glibc >= 2.12 and memchr can only check for equal 1
+             */
+            static const npy_bool zero[4096]; /* zero by C standard */
+            npy_uintp i, n = dimensions[0];
+            for (i = 0; !*op && i < n - (n % sizeof(zero)); i += sizeof(zero)) {
+                *op = memcmp(&args[1][i], zero, sizeof(zero)) != 0;
+            }
+            if (!*op && n - i > 0)
+                *op = memcmp(&args[1][i], zero, n - i) != 0;
+#endif
+            return;
+        }
+#endif
         BINARY_REDUCE_LOOP(npy_bool) {
             const npy_bool in2 = *(npy_bool *)ip2;
             io1 = io1 @OP@ in2;

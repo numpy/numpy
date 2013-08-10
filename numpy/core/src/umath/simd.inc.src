@@ -779,14 +779,17 @@ sse2_reduce_@kind@_BOOL(npy_bool * op, npy_bool * ip, const npy_intp n)
             return;
         }
     }
-    LOOP_BLOCKED(npy_bool, 16) {
+    /* unrolled once to replace a slow movmsk with a fast pmaxb */
+    LOOP_BLOCKED(npy_bool, 32) {
         @vtype@ v = @vload@((@vtype@*)&ip[i]);
+        @vtype@ v2 = @vload@((@vtype@*)&ip[i + 16]);
         v = @vpre@_cmpeq_epi8(v, zero);
+        v2 = @vpre@_cmpeq_epi8(v2, zero);
 #if @and@
-        if ((@vpre@_movemask_epi8(v) != 0)) {
+        if ((@vpre@_movemask_epi8(@vpre@_max_epu8(v, v2)) != 0)) {
             *op = 0;
 #else
-        if ((@vpre@_movemask_epi8(v) != 0xFFFF)) {
+        if ((@vpre@_movemask_epi8(@vpre@_min_epu8(v, v2)) != 0xFFFF)) {
             *op = 1;
 #endif
             return;
