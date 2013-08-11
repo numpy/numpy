@@ -1306,9 +1306,10 @@ PyMODINIT_FUNC inittest_rational(void) {
     /* Create test ufunc with built in input types and rational output type */
     {
         int types3[3] = {NPY_INT64,NPY_INT64,npy_rational};
+
         PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,2,1,
-            PyUFunc_None,(char*)"test_add",
-            (char*)"add two matrices of int64 and return rational matrix",0);
+                PyUFunc_None,(char*)"test_add",
+                (char*)"add two matrices of int64 and return rational matrix",0);
         if (!ufunc) {
             goto fail;
         }
@@ -1322,14 +1323,15 @@ PyMODINIT_FUNC inittest_rational(void) {
     /* Create test ufunc with rational types using RegisterLoopForDescr */
     {
         PyObject* ufunc = PyUFunc_FromFuncAndData(0,0,0,0,2,1,
-            PyUFunc_None,(char*)"test_add_rationals",
-            (char*)"add two matrices of rationals and return rational matrix",0);
-        if (!ufunc) {
-            goto fail;
-        }
+                PyUFunc_None,(char*)"test_add_rationals",
+                (char*)"add two matrices of rationals and return rational matrix",0);
         PyArray_Descr* types[3] = {&npyrational_descr,
                                     &npyrational_descr,
                                     &npyrational_descr};
+
+        if (!ufunc) {
+            goto fail;
+        }
         if (PyUFunc_RegisterLoopForDescr((PyUFuncObject*)ufunc, &npyrational_descr,
                 rational_ufunc_test_add_rationals, types, 0) < 0) {
             goto fail;
