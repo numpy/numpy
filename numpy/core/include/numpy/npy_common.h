@@ -18,6 +18,24 @@
 #define NPY_GCC_UNROLL_LOOPS
 #endif
 
+/*
+ * give a hint to the compiler which branch is more likely or unlikely
+ * to occur, e.g. rare error cases:
+ *
+ * if (NPY_UNLIKELY(failure == 0))
+ *    return NULL;
+ *
+ * the double !! is to cast the expression (e.g. NULL) to a boolean required by
+ * the intrinsic
+ */
+#ifdef HAVE___BUILTIN_EXPECT
+#define NPY_LIKELY(x) __builtin_expect(!!(x), 1)
+#define NPY_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#else
+#define NPY_LIKELY(x) (x)
+#define NPY_UNLIKELY(x) (x)
+#endif
+
 #if defined(_MSC_VER)
         #define NPY_INLINE __inline
 #elif defined(__GNUC__)
