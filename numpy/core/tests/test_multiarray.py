@@ -95,6 +95,22 @@ class TestAttributes(TestCase):
         assert_equal(self.one.dtype.str[1], 'i')
         assert_equal(self.three.dtype.str[1], 'f')
 
+    def test_int_subclassing(self):
+        # Regression test for https://github.com/numpy/numpy/pull/3526
+
+        numpy_int = np.int_(0)
+
+        if sys.version_info[0] >= 3:
+            # On Py3k int_ should not inherit from int, because it's not fixed-width anymore
+            assert_equal(isinstance(numpy_int, int), False)
+        else:
+            # Otherwise, it should inherit from int...
+            assert_equal(isinstance(numpy_int, int), True)
+
+            # ... and fast-path checks on C-API level should also work
+            from numpy.core.multiarray_tests import test_int_subclass
+            assert_equal(test_int_subclass(numpy_int), True)
+
     def test_stridesattr(self):
         x = self.one
         def make_array(size, offset, strides):
