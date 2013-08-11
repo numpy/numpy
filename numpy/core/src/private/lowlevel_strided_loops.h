@@ -1,5 +1,6 @@
 #ifndef __LOWLEVEL_STRIDED_LOOPS_H
 #define __LOWLEVEL_STRIDED_LOOPS_H
+#include "common.h"
 #include <npy_config.h>
 
 /*
@@ -398,26 +399,18 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
                             char **out_dataC, npy_intp *out_stridesC);
 
 /*
- * return true if pointer is aligned to 'alignment'
- */
-static NPY_INLINE int
-npy_is_aligned(const void * p, const npy_uintp alignment)
-{
-    return ((npy_uintp)(p) & ((alignment) - 1)) == 0;
-}
-
-/*
  * Return number of elements that must be peeled from
  * the start of 'addr' with 'nvals' elements of size 'esize'
  * in order to reach 'alignment'.
+ * alignment must be a power of two.
  * see npy_blocked_end for an example
  */
-static NPY_INLINE npy_intp
-npy_aligned_block_offset(const void * addr, const npy_intp esize,
-                         const npy_intp alignment, const npy_intp nvals)
+static NPY_INLINE npy_uintp
+npy_aligned_block_offset(const void * addr, const npy_uintp esize,
+                         const npy_uintp alignment, const npy_uintp nvals)
 {
-    const npy_intp offset = (npy_intp)addr & (alignment - 1);
-    npy_intp peel = offset ? (alignment - offset) / esize : 0;
+    const npy_uintp offset = (npy_uintp)addr & (alignment - 1);
+    npy_uintp peel = offset ? (alignment - offset) / esize : 0;
     peel = nvals < peel ? nvals : peel;
     return peel;
 }
@@ -442,9 +435,9 @@ npy_aligned_block_offset(const void * addr, const npy_intp esize,
  * for(; i < n; i++)
  *   <scalar-op>
  */
-static NPY_INLINE npy_intp
-npy_blocked_end(const npy_intp offset, const npy_intp esize,
-                const npy_intp vsz, const npy_intp nvals)
+static NPY_INLINE npy_uintp
+npy_blocked_end(const npy_uintp offset, const npy_uintp esize,
+                const npy_uintp vsz, const npy_uintp nvals)
 {
     return nvals - offset - (nvals - offset) % (vsz / esize);
 }

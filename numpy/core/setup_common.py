@@ -111,6 +111,7 @@ OPTIONAL_INTRINSICS = [("__builtin_isnan", '5.'),
                        ("__builtin_isfinite", '5.'),
                        ("__builtin_bswap32", '5u'),
                        ("__builtin_bswap64", '5u'),
+                       ("__builtin_expect", '5, 0'),
                        ]
 
 # gcc function attributes
