@@ -705,7 +705,7 @@ array_might_be_written(PyArrayObject *obj)
     const char *msg =
         "Numpy has detected that you (may be) writing to an array returned\n"
         "by numpy.diagonal or by selecting multiple fields in a record\n"
-        "array. This code will likely break in the next numpy release --\n"
+        "array. This code will likely break in a future numpy release --\n"
         "see numpy.diagonal or arrays.indexing reference docs for details.\n"
         "The quick fix is to make an explicit copy (e.g., do\n"
         "arr.diagonal().copy() or arr[['f0','f1']].copy()).";

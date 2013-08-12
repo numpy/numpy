@@ -23,11 +23,6 @@ Support for SCons has been removed.
 Compatibility notes
 ===================
 
-numpy.diag, np.diagonal, and the diagonal method of ndarrays return a view
-onto the original array, instead of producing a copy.
-
-selecting multiple fields out of an array also produces a view.
-
 The hash function of numpy.void scalars has been changed.  Previously the
 pointer to the data was hashed as an integer.  Now, the hash function uses
 the tuple-hash algorithm to combine the hash functions of the elements of
