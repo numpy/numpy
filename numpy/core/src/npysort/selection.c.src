@@ -1,0 +1,459 @@
+/* -*- c -*- */
+
+/*
+ * 
+ * The code is loosely based on the quickselect from
+ * Nicolas Devillard - 1998 public domain
+ * http://ndevilla.free.fr/median/median/
+ *
+ * Quick select with median of 3 pivot is usually the fastest,
+ * but the worst case scenario can be quadratic complexcity,
+ * e.g. np.roll(np.arange(x), x / 2)
+ * To avoid this if it recurses too much it falls back to the
+ * worst case linear median of median of group 5 pivot strategy.
+ */
+
+
+#define NPY_NO_DEPRECATED_API NPY_API_VERSION
+
+#include "npy_sort.h"
+#include "npysort_common.h"
+#include "numpy/npy_math.h"
+#include "npy_partition.h"
+#include <stdlib.h>
+
+#define NOT_USED NPY_UNUSED(unused)
+
+
+/*
+ *****************************************************************************
+ **                            NUMERIC SORTS                                **
+ *****************************************************************************
+ */
+
+
+static NPY_INLINE void store_pivot(npy_intp pivot, npy_intp kth,
+                                   npy_intp * pivots, npy_intp * npiv)
+{
+    if (pivots == NULL) {
+        return;
+    }
+
+    /*
+     * If pivot is the requested kth store it, overwritting other pivots if
+     * required. This must be done so iterative partition can work without
+     * manually shifting lower data offset by kth each time
+     */
+    if (pivot == kth && *npiv == NPY_MAX_PIVOT_STACK) {
+        pivots[*npiv - 1] = pivot;
+    }
+    /*
+     * we only need pivots larger than current kth, larger pivots are not
+     * useful as partitions on smaller kth would reorder the stored pivots
+     */
+    else if (pivot >= kth && *npiv < NPY_MAX_PIVOT_STACK) {
+        pivots[*npiv] = pivot;
+        (*npiv) += 1;
+    }
+}
+
+/**begin repeat
+ *
+ * #TYPE = BOOL, BYTE, UBYTE, SHORT, USHORT, INT, UINT, LONG, ULONG,
+ *         LONGLONG, ULONGLONG, HALF, FLOAT, DOUBLE, LONGDOUBLE,
+ *         CFLOAT, CDOUBLE, CLONGDOUBLE#
+ * #suff = bool, byte, ubyte, short, ushort, int, uint, long, ulong,
+ *         longlong, ulonglong, half, float, double, longdouble,
+ *         cfloat, cdouble, clongdouble#
+ * #type = npy_bool, npy_byte, npy_ubyte, npy_short, npy_ushort, npy_int,
+ *         npy_uint, npy_long, npy_ulong, npy_longlong, npy_ulonglong,
+ *         npy_ushort, npy_float, npy_double, npy_longdouble, npy_cfloat,
+ *         npy_cdouble, npy_clongdouble#
+ */
+
+static npy_intp
+amedian_of_median5_@suff@(@type@ *v, npy_intp* tosort, const npy_intp num,
+                         npy_intp * pivots,
+                         npy_intp * npiv);
+
+static npy_intp
+median_of_median5_@suff@(@type@ *v, const npy_intp num,
+                         npy_intp * pivots,
+                         npy_intp * npiv);
+
+/**begin repeat1
+ * #name = , a#
+ * #idx = , tosort#
+ * #arg = 0, 1#
+ */
+#if @arg@
+/* helper macros to avoid duplication of direct/indirect selection */
+#define IDX(x) tosort[x]
+#define SORTEE(x) tosort[x]
+#define SWAP INTP_SWAP
+#define MEDIAN3_SWAP(v, tosort, low, mid, high) \
+    amedian3_swap_@suff@(v, tosort, low, mid, high)
+#define MEDIAN5(v, tosort, subleft) \
+        amedian5_@suff@(v, tosort + subleft)
+#define UNGUARDED_PARTITION(v, tosort, pivot, ll, hh) \
+        aunguarded_partition_@suff@(v, tosort, pivot, ll, hh)
+#define INTROSELECT(v, tosort, num, kth, pivots, npiv) \
+        aintroselect_@suff@(v, tosort, nmed, nmed / 2, pivots, npiv, NULL)
+#define DUMBSELECT(v, tosort, left, num, kth) \
+        adumb_select_@suff@(v, tosort + left, num, kth)
+#else
+#define IDX(x) (x)
+#define SORTEE(x) v[x]
+#define SWAP @TYPE@_SWAP
+#define MEDIAN3_SWAP(v, tosort, low, mid, high) \
+    median3_swap_@suff@(v, low, mid, high)
+#define MEDIAN5(v, tosort, subleft) \
+        median5_@suff@(v + subleft)
+#define UNGUARDED_PARTITION(v, tosort, pivot, ll, hh) \
+        unguarded_partition_@suff@(v, pivot, ll, hh)
+#define INTROSELECT(v, tosort, num, kth, pivots, npiv) \
+        introselect_@suff@(v, nmed, nmed / 2, pivots, npiv, NULL)
+#define DUMBSELECT(v, tosort, left, num, kth) \
+        dumb_select_@suff@(v + left, num, kth)
+#endif
+
+
+/*
+ * median of 3 pivot strategy
+ * gets min and median and moves median to low and min to low + 1
+ * for efficient partitioning, see unguarded_partition
+ */
+static NPY_INLINE void
+@name@median3_swap_@suff@(@type@ * v,
+#if @arg@
+                          npy_intp * tosort,
+#endif
+                          npy_intp low, npy_intp mid, npy_intp high)
+{
+    if (@TYPE@_LT(v[IDX(high)], v[IDX(mid)]))
+        SWAP(SORTEE(high), SORTEE(mid));
+    if (@TYPE@_LT(v[IDX(high)], v[IDX(low)]))
+        SWAP(SORTEE(high), SORTEE(low));
+    /* move pivot to low */
+    if (@TYPE@_LT(v[IDX(low)], v[IDX(mid)]))
+        SWAP(SORTEE(low), SORTEE(mid));
+    /* move 3-lowest element to low + 1 */
+    SWAP(SORTEE(mid), SORTEE(low + 1));
+}
+
+
+/* select index of median of five elements */
+static npy_intp @name@median5_@suff@(
+#if @arg@
+                                    const @type@ * v, npy_intp * tosort
+#else
+                                    @type@ * v
+#endif
+                                    )
+{
+    /* could be optimized as we only need the index (no swaps) */
+    if (@TYPE@_LT(v[IDX(1)], v[IDX(0)])) {
+        SWAP(SORTEE(1), SORTEE(0));
+    }
+    if (@TYPE@_LT(v[IDX(4)], v[IDX(3)])) {
+        SWAP(SORTEE(4), SORTEE(3));
+    }
+    if (@TYPE@_LT(v[IDX(3)], v[IDX(0)])) {
+        SWAP(SORTEE(3), SORTEE(0));
+    }
+    if (@TYPE@_LT(v[IDX(4)], v[IDX(1)])) {
+        SWAP(SORTEE(4), SORTEE(1));
+    }
+    if (@TYPE@_LT(v[IDX(2)], v[IDX(1)])) {
+        SWAP(SORTEE(2), SORTEE(1));
+    }
+    if (@TYPE@_LT(v[IDX(3)], v[IDX(2)])) {
+        if (@TYPE@_LT(v[IDX(3)], v[IDX(1)])) {
+            return 1;
+        }
+        else {
+            return 3;
+        }
+    }
+    else {
+        if (@TYPE@_LT(v[IDX(2)], v[IDX(1)])) {
+            return 1;
+        }
+        else {
+            return 2;
+        }
+    }
+}
+
+
+/*
+ * partition and return the index were the pivot belongs
+ * the data must have following property to avoid bound checks:
+ *                  ll ... hh
+ * lower-than-pivot [x x x x] larger-than-pivot
+ */
+static NPY_INLINE void
+@name@unguarded_partition_@suff@(@type@ * v,
+#if @arg@
+                                 npy_intp * tosort,
+#endif
+                                 const @type@ pivot,
+                                 npy_intp * ll, npy_intp * hh)
+{
+    for (;;) {
+        do (*ll)++; while (@TYPE@_LT(v[IDX(*ll)], pivot));
+        do (*hh)--; while (@TYPE@_LT(pivot, v[IDX(*hh)]));
+
+        if (*hh < *ll)
+            break;
+
+        SWAP(SORTEE(*ll), SORTEE(*hh));
+    }
+}
+
+
+/*
+ * select median of median of blocks of 5
+ * if used as partition pivot it splits the range into at least 30%/70%
+ * allowing linear time worstcase quickselect
+ */
+static npy_intp
+@name@median_of_median5_@suff@(@type@ *v,
+#if @arg@
+                               npy_intp* tosort,
+#endif
+                               const npy_intp num,
+                               npy_intp * pivots,
+                               npy_intp * npiv)
+{
+    npy_intp i, subleft;
+    npy_intp right = num - 1;
+    npy_intp nmed = (right + 1) / 5;
+    for (i = 0, subleft = 0; i < nmed; i++, subleft += 5) {
+        npy_intp m = MEDIAN5(v, tosort, subleft);
+        SWAP(SORTEE(subleft + m), SORTEE(i));
+    }
+
+    if (nmed > 2)
+        INTROSELECT(v, tosort, nmed, nmed / 2, pivots, npiv);
+    return nmed / 2;
+}
+
+
+/*
+ * N^2 selection, fast only for very small kth
+ * useful for close multiple partitions
+ * (e.g. even element median, interpolating percentile)
+ */
+static int
+@name@dumb_select_@suff@(@type@ *v,
+#if @arg@
+                         npy_intp * tosort,
+#endif
+                         npy_intp num, npy_intp kth)
+{
+    npy_intp i;
+    for (i = 0; i <= kth; i++) {
+        npy_intp minidx = i;
+        @type@ minval = v[IDX(i)];
+        npy_intp k;
+        for (k = i + 1; k < num; k++) {
+            if (@TYPE@_LT(v[IDX(k)], minval)) {
+                minidx = k;
+                minval = v[IDX(k)];
+            }
+        }
+        SWAP(SORTEE(i), SORTEE(minidx));
+    }
+
+    return 0;
+}
+
+
+/*
+ * iterative median of 3 quickselect with cutoff to median-of-medians-of5
+ * receives stack of already computed pivots in v to minimize the
+ * partition size were kth is searched in
+ *
+ * area that needs partitioning in [...]
+ * kth 0:  [8  7  6  5  4  3  2  1  0] -> med3 partitions elements [4, 2, 0]
+ *          0  1  2  3  4  8  7  5  6  -> pop requested kth -> stack [4, 2]
+ * kth 3:   0  1  2 [3] 4  8  7  5  6  -> stack [4]
+ * kth 5:   0  1  2  3  4 [8  7  5  6] -> stack [6]
+ * kth 8:   0  1  2  3  4  5  6 [8  7] -> stack []
+ *
+ */
+int
+@name@introselect_@suff@(@type@ *v,
+#if @arg@
+                         npy_intp* tosort,
+#endif
+                         npy_intp num, npy_intp kth,
+                         npy_intp * pivots,
+                         npy_intp * npiv,
+                         void *NOT_USED)
+{
+    npy_intp low  = 0;
+    npy_intp high = num - 1;
+    npy_intp depth_limit;
+
+    if (npiv == NULL)
+        pivots = NULL;
+
+    while (pivots != NULL && *npiv > 0) {
+        if (pivots[*npiv - 1] > kth) {
+            /* pivot larger than kth set it as upper bound */
+            high = pivots[*npiv - 1] - 1;
+            break;
+        }
+        else if (pivots[*npiv - 1] == kth) {
+            /* kth was already found in a previous iteration -> done */
+            return 0;
+        }
+
+        low = pivots[*npiv - 1] + 1;
+
+        /* pop from stack */
+        *npiv -= 1;
+    }
+
+    /*
+     * use a faster O(n*kth) algorithm for very small kth
+     * e.g. for interpolating percentile
+     */
+    if (kth - low < 3) {
+        DUMBSELECT(v, tosort, low, high - low + 1, kth - low);
+        store_pivot(kth, kth, pivots, npiv);
+        return 0;
+    }
+
+    /* dumb integer msb, float npy_log2 too slow for small parititions */
+    {
+        npy_uintp unum = num;
+        depth_limit = 0;
+        while (unum >>= 1)  {
+            depth_limit++;
+        }
+        depth_limit *= 2;
+    }
+
+    /* guarantee three elements */
+    for (;low + 1 < high;) {
+        npy_intp       ll = low + 1;
+        npy_intp       hh = high;
+
+        /*
+         * if we aren't making sufficient progress with median of 3
+         * fall back to median-of-median5 pivot for linear worst case
+         * med3 for small sizes is required to do unguarded partition
+         */
+        if (depth_limit > 0 || hh - ll < 5) {
+            const npy_intp mid = low + (high - low) / 2;
+            /* median of 3 pivot strategy,
+             * swapping for efficient partition */
+            MEDIAN3_SWAP(v, tosort, low, mid, high);
+        }
+        else {
+            npy_intp mid;
+            /* FIXME: always use pivots to optimize this iterative partition */
+#if @arg@
+            mid = ll + amedian_of_median5_@suff@(v, tosort + ll, hh - ll, NULL, NULL);
+#else
+            mid = ll + median_of_median5_@suff@(v + ll, hh - ll, NULL, NULL);
+#endif
+            SWAP(SORTEE(mid), SORTEE(low));
+            /* adapt for the larger partition than med3 pivot */
+            ll--;
+            hh++;
+        }
+
+        depth_limit--;
+
+        /*
+         * find place to put pivot (in low):
+         * previous swapping removes need for bound checks
+         * pivot 3-lowest [x x x] 3-highest
+         */
+        UNGUARDED_PARTITION(v, tosort, v[IDX(low)], &ll, &hh);
+
+        /* move pivot into position */
+        SWAP(SORTEE(low), SORTEE(hh));
+
+        store_pivot(hh, kth, pivots, npiv);
+
+        if (hh >= kth)
+            high = hh - 1;
+        if (hh <= kth)
+            low = ll;
+    }
+
+    /* two elements */
+    if (high == low + 1) {
+        if (@TYPE@_LT(v[IDX(high)], v[IDX(low)]))
+            SWAP(SORTEE(high), SORTEE(low))
+        store_pivot(low, kth, pivots, npiv);
+    }
+
+    return 0;
+}
+
+
+#undef IDX
+#undef SWAP
+#undef SORTEE
+#undef MEDIAN3_SWAP
+#undef MEDIAN5
+#undef UNGUARDED_PARTITION
+#undef INTROSELECT
+#undef DUMBSELECT
+/**end repeat1**/
+
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                             STRING SORTS                                **
+ *****************************************************************************
+ */
+
+
+/**begin repeat
+ *
+ * #TYPE = STRING, UNICODE#
+ * #suff = string, unicode#
+ * #type = npy_char, npy_ucs4#
+ */
+
+int
+introselect_@suff@(@type@ *start, npy_intp num, npy_intp kth, PyArrayObject *arr)
+{
+    return quicksort_@suff@(start, num, arr);
+}
+
+int
+aintroselect_@suff@(@type@ *v, npy_intp* tosort, npy_intp num, npy_intp kth, void *null)
+{
+    return aquicksort_@suff@(v, tosort, num, null);
+}
+
+/**end repeat**/
+
+
+/*
+ *****************************************************************************
+ **                             GENERIC SORT                                **
+ *****************************************************************************
+ */
+
+
+/*
+ * This sort has almost the same signature as libc qsort and is intended to
+ * supply an error return for compatibility with the other generic sort
+ * kinds.
+ */
+int
+npy_introselect(void *base, size_t num, size_t size, size_t kth, npy_comparator cmp)
+{
+    return npy_quicksort(base, num, size, cmp);
+}

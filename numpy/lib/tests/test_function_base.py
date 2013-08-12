@@ -1537,6 +1537,53 @@ def test_median():
     assert_allclose(np.median(a2), 2.5)
     assert_allclose(np.median(a2, axis=0), [1.5,  2.5,  3.5])
     assert_allclose(np.median(a2, axis=1), [1, 4])
+    assert_allclose(np.median(a2, axis=None), 2.5)
+    a3 = np.array([[2, 3],
+                   [0, 1],
+                   [6, 7],
+                   [4, 5]])
+    #check no overwrite
+    for a in [a3, np.random.randint(0, 100, size=(2, 3, 4))]:
+        orig = a.copy()
+        np.median(a, axis=None)
+        for ax in range(a.ndim):
+            np.median(a, axis=ax)
+        assert_array_equal(a, orig)
+
+    assert_allclose(np.median(a3, axis=0), [3,  4])
+    assert_allclose(np.median(a3.T, axis=1), [3,  4])
+    assert_allclose(np.median(a3), 3.5)
+    assert_allclose(np.median(a3, axis=None), 3.5)
+    assert_allclose(np.median(a3.T), 3.5)
+
+    a = np.array([0.0444502, 0.0463301, 0.141249, 0.0606775])
+    assert_almost_equal((a[1] + a[3]) / 2., np.median(a))
+    a = np.array([0.0463301, 0.0444502, 0.141249])
+    assert_almost_equal(a[0], np.median(a))
+    a = np.array([0.0444502, 0.141249, 0.0463301])
+    assert_almost_equal(a[-1], np.median(a))
+
+    assert_allclose(np.median(a0.copy(), overwrite_input=True), 1)
+    assert_allclose(np.median(a1.copy(), overwrite_input=True), 0.5)
+    assert_allclose(np.median(a2.copy(), overwrite_input=True), 2.5)
+    assert_allclose(np.median(a2.copy(), overwrite_input=True, axis=0),
+                    [1.5,  2.5,  3.5])
+    assert_allclose(np.median(a2.copy(), overwrite_input=True, axis=1), [1, 4])
+    assert_allclose(np.median(a2.copy(), overwrite_input=True, axis=None), 2.5)
+    assert_allclose(np.median(a3.copy(), overwrite_input=True, axis=0), [3,  4])
+    assert_allclose(np.median(a3.T.copy(), overwrite_input=True, axis=1),
+                    [3,  4])
+
+    a4 = np.arange(3 * 4 * 5, dtype=np.float32).reshape((3, 4, 5))
+    map(np.random.shuffle, a4)
+    assert_allclose(np.median(a4, axis=None),
+                    np.median(a4.copy(), axis=None, overwrite_input=True))
+    assert_allclose(np.median(a4, axis=0),
+                    np.median(a4.copy(), axis=0, overwrite_input=True))
+    assert_allclose(np.median(a4, axis=1),
+                    np.median(a4.copy(), axis=1, overwrite_input=True))
+    assert_allclose(np.median(a4, axis=2),
+                    np.median(a4.copy(), axis=2, overwrite_input=True))
 
 
 class TestAdd_newdoc_ufunc(TestCase):

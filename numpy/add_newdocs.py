@@ -3045,6 +3045,23 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('argsort',
     """))
 
 
+add_newdoc('numpy.core.multiarray', 'ndarray', ('argpartition',
+    """
+    a.argpartition(kth, axis=-1, kind='quickselect', order=None)
+
+    Returns the indices that would partition this array.
+
+    Refer to `numpy.argpartition` for full documentation.
+
+    .. versionadded:: 1.8.0
+
+    See Also
+    --------
+    numpy.argpartition : equivalent function
+
+    """))
+
+
 add_newdoc('numpy.core.multiarray', 'ndarray', ('astype',
     """
     a.astype(dtype, order='K', casting='unsafe', subok=True, copy=True)
@@ -4198,6 +4215,58 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('sort',
     array([('c', 1), ('a', 2)],
           dtype=[('x', '|S1'), ('y', '<i4')])
 
+    """))
+
+
+add_newdoc('numpy.core.multiarray', 'ndarray', ('partition',
+    """
+    a.partition(kth, axis=-1, kind='introselect', order=None)
+
+    Rearranges the elements in the array in such a way that value of the
+    element in kth position is in the position it would be in a sorted array.
+    All elements smaller than the kth element are moved before this element and
+    all equal or greater are moved behind it. The ordering of the elements in
+    the two partitions is undefined.
+
+    .. versionadded:: 1.8.0
+
+    Parameters
+    ----------
+    kth : int or sequence of ints
+        Element index to partition by. The kth element value will be in its
+        final sorted position and all smaller elements will be moved before it
+        and all equal or greater elements behind it.
+        The order all elements in the partitions is undefined.
+        If provided with a sequence of kth it will partition all elements
+        indexed by kth of them into their sorted position at once.
+    axis : int, optional
+        Axis along which to sort. Default is -1, which means sort along the
+        last axis.
+    kind : {'introselect'}, optional
+        Selection algorithm. Default is 'introselect'.
+    order : list, optional
+        When `a` is an array with fields defined, this argument specifies
+        which fields to compare first, second, etc.  Not all fields need be
+        specified.
+
+    See Also
+    --------
+    numpy.partition : Return a parititioned copy of an array.
+    argpartition : Indirect partition.
+
+    Notes
+    -----
+    See ``np.partition`` for notes on the different algorithms.
+
+    Examples
+    --------
+    >>> a = np.array([3, 4, 2, 1])
+    >>> a.partition(a, 3)
+    >>> a
+    array([2, 1, 3, 4])
+
+    >>> a.partition((1, 3))
+    array([1, 2, 3, 4])
     """))
 
 
