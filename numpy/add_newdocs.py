@@ -3299,7 +3299,9 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('diagonal',
     """
     a.diagonal(offset=0, axis1=0, axis2=1)
 
-    Return specified diagonals.
+    Return specified diagonals. In numpy 1.8 the returned
+    diagonals will be a readonly view instead if a copy.
+    In numpy 1.9 the readonly restriction will be removed.
 
     Refer to :func:`numpy.diagonal` for full documentation.
 
