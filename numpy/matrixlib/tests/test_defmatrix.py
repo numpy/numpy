@@ -283,8 +283,9 @@ class TestMatrixReturn(TestCase):
         excluded_methods = [
             'argmin', 'choose', 'dump', 'dumps', 'fill', 'getfield',
             'getA', 'getA1', 'item', 'nonzero', 'put', 'putmask', 'resize',
-            'searchsorted', 'setflags', 'setfield', 'sort', 'take',
-            'tofile', 'tolist', 'tostring', 'all', 'any', 'sum',
+            'searchsorted', 'setflags', 'setfield', 'sort',
+            'partition', 'argpartition',
+            'take', 'tofile', 'tolist', 'tostring', 'all', 'any', 'sum',
             'argmax', 'argmin', 'min', 'max', 'mean', 'var', 'ptp',
             'prod', 'std', 'ctypes', 'itemset', 'setasflat'
             ]

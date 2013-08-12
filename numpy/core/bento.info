@@ -13,6 +13,7 @@ Library:
             src/npysort/quicksort.c.src,
             src/npysort/mergesort.c.src,
             src/npysort/heapsort.c.src
+            src/npysort/selection.c.src,
     Extension: multiarray
         Sources:
             src/multiarray/multiarraymodule_onefile.c

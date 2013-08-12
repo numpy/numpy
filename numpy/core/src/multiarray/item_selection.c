@@ -20,6 +20,7 @@
 
 #include "item_selection.h"
 #include "npy_sort.h"
+#include "npy_partition.h"
 
 /*NUMPY_API
  * Take
@@ -768,14 +769,19 @@ PyArray_Choose(PyArrayObject *ip, PyObject *op, PyArrayObject *out,
  * over all but the desired sorting axis.
  */
 static int
-_new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
+_new_sortlike(PyArrayObject *op, int axis,
+              NPY_SORTKIND swhich,
+              PyArray_PartitionFunc * part,
+              NPY_SELECTKIND pwhich,
+              npy_intp * kth, npy_intp nkth)
 {
     PyArrayIterObject *it;
     int needcopy = 0, swap;
     npy_intp N, size;
     int elsize;
     npy_intp astride;
-    PyArray_SortFunc *sort;
+    PyArray_SortFunc *sort = NULL;
+
     NPY_BEGIN_THREADS_DEF;
 
     it = (PyArrayIterObject *)PyArray_IterAllButAxis((PyObject *)op, &axis);
@@ -785,7 +791,10 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     }
 
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(op));
-    sort = PyArray_DESCR(op)->f->sort[which];
+    if (part == NULL) {
+        sort = PyArray_DESCR(op)->f->sort[swhich];
+    }
+
     size = it->size;
     N = PyArray_DIMS(op)[axis];
     elsize = PyArray_DESCR(op)->elsize;
@@ -805,9 +814,22 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
             if (swap) {
                 _strided_byte_swap(buffer, (npy_intp) elsize, N, elsize);
             }
-            if (sort(buffer, N, op) < 0) {
-                PyDataMem_FREE(buffer);
-                goto fail;
+            if (part == NULL) {
+                if (sort(buffer, N, op) < 0) {
+                    PyDataMem_FREE(buffer);
+                    goto fail;
+                }
+            }
+            else {
+                npy_intp pivots[NPY_MAX_PIVOT_STACK];
+                npy_intp npiv = 0;
+                npy_intp i;
+                for (i = 0; i < nkth; i++) {
+                    if (part(buffer, N, kth[i], pivots, &npiv, op) < 0) {
+                        PyDataMem_FREE(buffer);
+                        goto fail;
+                    }
+                }
             }
             if (swap) {
                 _strided_byte_swap(buffer, (npy_intp) elsize, N, elsize);
@@ -820,8 +842,20 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     }
     else {
         while (size--) {
-            if (sort(it->dataptr, N, op) < 0) {
-                goto fail;
+            if (part == NULL) {
+                if (sort(it->dataptr, N, op) < 0) {
+                    goto fail;
+                }
+            }
+            else {
+                npy_intp pivots[NPY_MAX_PIVOT_STACK];
+                npy_intp npiv = 0;
+                npy_intp i;
+                for (i = 0; i < nkth; i++) {
+                    if (part(it->dataptr, N, kth[i], pivots, &npiv, op) < 0) {
+                        goto fail;
+                    }
+                }
             }
             PyArray_ITER_NEXT(it);
         }
@@ -839,7 +873,11 @@ _new_sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 }
 
 static PyObject*
-_new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
+_new_argsortlike(PyArrayObject *op, int axis,
+                 NPY_SORTKIND swhich,
+                 PyArray_ArgPartitionFunc * argpart,
+                 NPY_SELECTKIND pwhich,
+                 npy_intp * kth, npy_intp nkth)
 {
 
     PyArrayIterObject *it = NULL;
@@ -849,7 +887,8 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     npy_intp astride, rstride, *iptr;
     int elsize;
     int needcopy = 0, swap;
-    PyArray_ArgSortFunc *argsort;
+    PyArray_ArgSortFunc *argsort = NULL;
+
     NPY_BEGIN_THREADS_DEF;
 
     ret = (PyArrayObject *)PyArray_New(Py_TYPE(op),
@@ -868,7 +907,12 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     swap = !PyArray_ISNOTSWAPPED(op);
 
     NPY_BEGIN_THREADS_DESCR(PyArray_DESCR(op));
-    argsort = PyArray_DESCR(op)->f->argsort[which];
+    if (argpart == NULL) {
+        argsort = PyArray_DESCR(op)->f->argsort[swhich];
+    }
+    else {
+        argpart = get_argpartition_func(PyArray_TYPE(op), pwhich);
+    }
     size = it->size;
     N = PyArray_DIMS(op)[axis];
     elsize = PyArray_DESCR(op)->elsize;
@@ -900,10 +944,25 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
             for (i = 0; i < N; i++) {
                 *iptr++ = i;
             }
-            if (argsort(valbuffer, (npy_intp *)indbuffer, N, op) < 0) {
-                PyDataMem_FREE(valbuffer);
-                PyDataMem_FREE(indbuffer);
-                goto fail;
+            if (argpart == NULL) {
+                if (argsort(valbuffer, (npy_intp *)indbuffer, N, op) < 0) {
+                    PyDataMem_FREE(valbuffer);
+                    PyDataMem_FREE(indbuffer);
+                    goto fail;
+                }
+            }
+            else {
+                npy_intp pivots[NPY_MAX_PIVOT_STACK];
+                npy_intp npiv = 0;
+                npy_intp i;
+                for (i = 0; i < nkth; i++) {
+                    if (argpart(valbuffer, (npy_intp *)indbuffer,
+                                N, kth[i], pivots, &npiv, op) < 0) {
+                        PyDataMem_FREE(valbuffer);
+                        PyDataMem_FREE(indbuffer);
+                        goto fail;
+                    }
+                }
             }
             _unaligned_strided_byte_copy(rit->dataptr, rstride, indbuffer,
                                          sizeof(npy_intp), N, sizeof(npy_intp));
@@ -919,8 +978,22 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
             for (i = 0; i < N; i++) {
                 *iptr++ = i;
             }
-            if (argsort(it->dataptr, (npy_intp *)rit->dataptr, N, op) < 0) {
-                goto fail;
+            if (argpart == NULL) {
+                if (argsort(it->dataptr, (npy_intp *)rit->dataptr,
+                            N, op) < 0) {
+                    goto fail;
+                }
+            }
+            else {
+                npy_intp pivots[NPY_MAX_PIVOT_STACK];
+                npy_intp npiv = 0;
+                npy_intp i;
+                for (i = 0; i < nkth; i++) {
+                    if (argpart(it->dataptr, (npy_intp *)rit->dataptr,
+                                N, kth[i], pivots, &npiv, op) < 0) {
+                        goto fail;
+                    }
+                }
             }
             PyArray_ITER_NEXT(it);
             PyArray_ITER_NEXT(rit);
@@ -944,7 +1017,6 @@ _new_argsort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     Py_XDECREF(rit);
     return NULL;
 }
-
 
 /* Be sure to save this global_compare when necessary */
 static PyArrayObject *global_obj;
@@ -1036,7 +1108,7 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
 
     /* Determine if we should use type-specific algorithm or not */
     if (PyArray_DESCR(op)->f->sort[which] != NULL) {
-        return _new_sort(op, axis, which);
+        return _new_sortlike(op, axis, which, NULL, 0, NULL, 0);
     }
 
     if (PyArray_DESCR(op)->f->compare == NULL) {
@@ -1079,6 +1151,175 @@ PyArray_Sort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     /* Store global -- allows re-entry -- restore before leaving*/
     store_arr = global_obj;
     global_obj = ap;
+    for (ip = PyArray_DATA(ap), i = 0; i < n; i++, ip += elsize*m) {
+        res = sort(ip, m, elsize, sortCompare);
+        if (res < 0) {
+            break;
+        }
+    }
+    global_obj = store_arr;
+
+    if (PyErr_Occurred()) {
+        goto fail;
+    }
+    else if (res == -NPY_ENOMEM) {
+        PyErr_NoMemory();
+        goto fail;
+    }
+    else if (res == -NPY_ECOMP) {
+        PyErr_SetString(PyExc_TypeError,
+                "sort comparison failed");
+        goto fail;
+    }
+
+
+ finish:
+    Py_DECREF(ap);  /* Should update op if needed */
+    SWAPBACK2(op);
+    return 0;
+
+ fail:
+    Py_XDECREF(ap);
+    SWAPBACK2(op);
+    return -1;
+}
+
+
+/*
+ * make kth array positive, ravel and sort it
+ */
+static PyArrayObject *
+partition_prep_kth_array(PyArrayObject * ktharray,
+                         PyArrayObject * op,
+                         int axis)
+{
+    const npy_intp * shape = PyArray_SHAPE(op);
+    PyArrayObject * kthrvl;
+    npy_intp * kth;
+    npy_intp nkth, i;
+
+    if (!PyArray_CanCastSafely(PyArray_TYPE(ktharray), NPY_INTP)) {
+        if (DEPRECATE("Calling partition with a non integer index"
+                      " will result in an error in the future") < 0) {
+            return NULL;
+        }
+    }
+
+    if (PyArray_NDIM(ktharray) > 1) {
+        PyErr_Format(PyExc_ValueError, "kth array must have dimension <= 1");
+        return NULL;
+    }
+    kthrvl = PyArray_Cast(ktharray, NPY_INTP);
+
+    if (kthrvl == NULL)
+        return NULL;
+
+    kth = PyArray_DATA(kthrvl);
+    nkth = PyArray_SIZE(kthrvl);
+
+    for (i = 0; i < nkth; i++) {
+        if (kth[i] < 0) {
+            kth[i] += shape[axis];
+        }
+        if (PyArray_SIZE(op) != 0 && ((kth[i] < 0) || (kth[i] >= shape[axis]))) {
+            PyErr_Format(PyExc_ValueError, "kth(=%zd) out of bounds (%zd)",
+                         kth[i], shape[axis]);
+            Py_XDECREF(kthrvl);
+            return NULL;
+        }
+    }
+
+    /*
+     * sort the array of kths so the partitions will
+     * not trample on each other
+     */
+    PyArray_Sort(kthrvl, -1, NPY_QUICKSORT);
+
+    return kthrvl;
+}
+
+
+
+/*NUMPY_API
+ * Partition an array in-place
+ */
+NPY_NO_EXPORT int
+PyArray_Partition(PyArrayObject *op, PyArrayObject * ktharray, int axis, NPY_SELECTKIND which)
+{
+    PyArrayObject *ap = NULL, *store_arr = NULL;
+    char *ip;
+    npy_intp i, n, m;
+    int elsize, orign;
+    int res = 0;
+    int axis_orig = axis;
+    int (*sort)(void *, size_t, size_t, npy_comparator);
+    PyArray_PartitionFunc * part = get_partition_func(PyArray_TYPE(op), which);
+
+    n = PyArray_NDIM(op);
+    if ((n == 0)) {
+        return 0;
+    }
+    if (axis < 0) {
+        axis += n;
+    }
+    if ((axis < 0) || (axis >= n)) {
+        PyErr_Format(PyExc_ValueError, "axis(=%d) out of bounds", axis_orig);
+        return -1;
+    }
+    if (PyArray_FailUnlessWriteable(op, "sort array") < 0) {
+        return -1;
+    }
+
+    if (part) {
+        PyArrayObject * kthrvl = partition_prep_kth_array(ktharray, op, axis);
+        if (kthrvl == NULL)
+            return -1;
+
+        res = _new_sortlike(op, axis, 0,
+                            part, which,
+                            PyArray_DATA(kthrvl),
+                            PyArray_SIZE(kthrvl));
+        Py_DECREF(kthrvl);
+        return res;
+    }
+
+
+    if (PyArray_DESCR(op)->f->compare == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "type does not have compare function");
+        return -1;
+    }
+
+    SWAPAXES2(op);
+
+    /* select not implemented, use quicksort, slower but equivalent */
+    switch (which) {
+        case NPY_INTROSELECT :
+            sort = npy_quicksort;
+            break;
+        default:
+            PyErr_SetString(PyExc_TypeError,
+                    "requested sort kind is not supported");
+            goto fail;
+    }
+
+    ap = (PyArrayObject *)PyArray_FromAny((PyObject *)op,
+                          NULL, 1, 0,
+                          NPY_ARRAY_DEFAULT | NPY_ARRAY_UPDATEIFCOPY, NULL);
+    if (ap == NULL) {
+        goto fail;
+    }
+    elsize = PyArray_DESCR(ap)->elsize;
+    m = PyArray_DIMS(ap)[PyArray_NDIM(ap)-1];
+    if (m == 0) {
+        goto finish;
+    }
+    n = PyArray_SIZE(ap)/m;
+
+    /* Store global -- allows re-entry -- restore before leaving*/
+    store_arr = global_obj;
+    global_obj = ap;
+    /* we don't need to care about kth here as we are using a full sort */
     for (ip = PyArray_DATA(ap), i = 0; i < n; i++, ip += elsize*m) {
         res = sort(ip, m, elsize, sortCompare);
         if (res < 0) {
@@ -1160,7 +1401,8 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     }
     /* Determine if we should use new algorithm or not */
     if (PyArray_DESCR(op2)->f->argsort[which] != NULL) {
-        ret = (PyArrayObject *)_new_argsort(op2, axis, which);
+        ret = (PyArrayObject *)_new_argsortlike(op2, axis, which,
+                                                NULL, 0, NULL, 0);
         Py_DECREF(op2);
         return (PyObject *)ret;
     }
@@ -1217,6 +1459,143 @@ PyArray_ArgSort(PyArrayObject *op, int axis, NPY_SORTKIND which)
     global_data = PyArray_DATA(op);
     store = global_obj;
     global_obj = op;
+    for (i = 0; i < n; i++, ip += m, global_data += m*argsort_elsize) {
+        for (j = 0; j < m; j++) {
+            ip[j] = j;
+        }
+        res = sort((char *)ip, m, sizeof(npy_intp), argsort_static_compare);
+        if (res < 0) {
+            break;
+        }
+    }
+    global_data = store_ptr;
+    global_obj = store;
+
+    if (PyErr_Occurred()) {
+        goto fail;
+    }
+    else if (res == -NPY_ENOMEM) {
+        PyErr_NoMemory();
+        goto fail;
+    }
+    else if (res == -NPY_ECOMP) {
+        PyErr_SetString(PyExc_TypeError,
+                "sort comparison failed");
+        goto fail;
+    }
+
+ finish:
+    Py_DECREF(op);
+    SWAPBACK(op, ret);
+    return (PyObject *)op;
+
+ fail:
+    Py_XDECREF(op);
+    Py_XDECREF(ret);
+    return NULL;
+}
+
+
+/*NUMPY_API
+ * ArgPartition an array
+ */
+NPY_NO_EXPORT PyObject *
+PyArray_ArgPartition(PyArrayObject *op, PyArrayObject * ktharray, int axis, NPY_SELECTKIND which)
+{
+    PyArrayObject *ap = NULL, *ret = NULL, *store, *op2;
+    npy_intp *ip;
+    npy_intp i, j, n, m, orign;
+    int argsort_elsize;
+    char *store_ptr;
+    int res = 0;
+    int (*sort)(void *, size_t, size_t, npy_comparator);
+    PyArray_ArgPartitionFunc * argpart =
+        get_argpartition_func(PyArray_TYPE(op), which);
+
+    n = PyArray_NDIM(op);
+    if ((n == 0) || (PyArray_SIZE(op) == 1)) {
+        ret = (PyArrayObject *)PyArray_New(Py_TYPE(op), PyArray_NDIM(op),
+                                           PyArray_DIMS(op),
+                                           NPY_INTP,
+                                           NULL, NULL, 0, 0,
+                                           (PyObject *)op);
+        if (ret == NULL) {
+            return NULL;
+        }
+        *((npy_intp *)PyArray_DATA(ret)) = 0;
+        return (PyObject *)ret;
+    }
+
+    /* Creates new reference op2 */
+    if ((op2=(PyArrayObject *)PyArray_CheckAxis(op, &axis, 0)) == NULL) {
+        return NULL;
+    }
+
+    /* Determine if we should use new algorithm or not */
+    if (argpart) {
+        PyArrayObject * kthrvl = partition_prep_kth_array(ktharray, op2, axis);
+        if (kthrvl == NULL) {
+            Py_DECREF(op2);
+            return NULL;
+        }
+
+        ret = (PyArrayObject *)_new_argsortlike(op2, axis, 0,
+                                                argpart, which,
+                                                PyArray_DATA(kthrvl),
+                                                PyArray_SIZE(kthrvl));
+        Py_DECREF(kthrvl);
+        Py_DECREF(op2);
+        return (PyObject *)ret;
+    }
+
+    if (PyArray_DESCR(op2)->f->compare == NULL) {
+        PyErr_SetString(PyExc_TypeError,
+                "type does not have compare function");
+        Py_DECREF(op2);
+        op = NULL;
+        goto fail;
+    }
+
+    /* select not implemented, use quicksort, slower but equivalent */
+    switch (which) {
+        case NPY_INTROSELECT :
+            sort = npy_quicksort;
+            break;
+        default:
+            PyErr_SetString(PyExc_TypeError,
+                    "requested sort kind is not supported");
+            Py_DECREF(op2);
+            op = NULL;
+            goto fail;
+    }
+
+    /* ap will contain the reference to op2 */
+    SWAPAXES(ap, op2);
+    op = (PyArrayObject *)PyArray_ContiguousFromAny((PyObject *)ap,
+                                                    NPY_NOTYPE,
+                                                    1, 0);
+    Py_DECREF(ap);
+    if (op == NULL) {
+        return NULL;
+    }
+    ret = (PyArrayObject *)PyArray_New(Py_TYPE(op), PyArray_NDIM(op),
+                                       PyArray_DIMS(op), NPY_INTP,
+                                       NULL, NULL, 0, 0, (PyObject *)op);
+    if (ret == NULL) {
+        goto fail;
+    }
+    ip = (npy_intp *)PyArray_DATA(ret);
+    argsort_elsize = PyArray_DESCR(op)->elsize;
+    m = PyArray_DIMS(op)[PyArray_NDIM(op)-1];
+    if (m == 0) {
+        goto finish;
+    }
+    n = PyArray_SIZE(op)/m;
+    store_ptr = global_data;
+    global_data = PyArray_DATA(op);
+    store = global_obj;
+    global_obj = op;
+    /* we don't need to care about kth here as we are using a full sort */
     for (i = 0; i < n; i++, ip += m, global_data += m*argsort_elsize) {
         for (j = 0; j < m; j++) {
             ip[j] = j;

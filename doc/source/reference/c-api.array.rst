@@ -1810,6 +1810,27 @@ Item selection and manipulation
     would be placed. No checking is done on whether or not self is in
     ascending order.
 
+.. cfunction:: int PyArray_Partition(PyArrayObject *self, PyArrayObject * ktharray, int axis, NPY_SELECTKIND which)
+
+    Equivalent to :meth:`ndarray.partition` (*self*, *ktharray*, *axis*,
+    *kind*). Partitions the array so that the values of the element indexed by
+    *ktharray* are in the positions they would be if the array is fully sorted
+    and places all elements smaller than the kth before and all elements equal
+    or greater after the kth element. The ordering of all elements within the
+    partitions is undefined.
+    If *self*->descr is a data-type with fields defined, then
+    self->descr->names is used to determine the sort order. A comparison where
+    the first field is equal will use the second field and so on. To alter the
+    sort order of a record array, create a new data-type with a different
+    order of names and construct a view of the array with that new data-type.
+    Returns zero on success and -1 on failure.
+
+.. cfunction:: PyObject* PyArray_ArgPartition(PyArrayObject *op, PyArrayObject * ktharray, int axis, NPY_SELECTKIND which)
+
+    Equivalent to :meth:`ndarray.argpartition` (*self*, *ktharray*, *axis*,
+    *kind*). Return an array of indices such that selection of these indices
+    along the given ``axis`` would return a partitioned version of *self*.
+
 .. cfunction:: PyObject* PyArray_Diagonal(PyArrayObject* self, int offset, int axis1, int axis2)
 
     Equivalent to :meth:`ndarray.diagonal` (*self*, *offset*, *axis1*, *axis2*

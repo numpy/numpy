@@ -98,6 +98,10 @@ a (potentially expensive) array conversion of ``<non-array-subclass>`` had been
 attempted. (`bug <https://github.com/numpy/numpy/issues/3375>`_, `pull request
 <https://github.com/numpy/numpy/pull/3501>`_)
 
+Function `median` used with `overwrite_input` only partially sorts array
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+If `median` is used with `overwrite_input` option the input array will now only
+be partially sorted instead of fully sorted.
 
 New Features
 ============
@@ -140,6 +144,16 @@ New functions `full` and `full_like`
 
 New convenience functions to create arrays filled with a specific value;
 complementary to the existing `zeros` and `zeros_like` functions.
+
+New functions `partition` and `argpartition`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+New functions to partially sort arrays.
+Partial sorting moves the value of selected elements into their position if the
+array would be sorted via a selection algorithm. In the resulting array all
+elements smaller than the sorted elements will placed before the it and all
+equal or larger behind it.
+This has a time complexity of O(n) compared to O(n log(n)) of a full sort.
 
 C-API
 ~~~~~
@@ -204,6 +218,13 @@ In order to use the improved functions the SSE2 instruction set must be enabled
 at compile time. It is enabled by default on x86_64 systems. On x86_32 with a
 capable CPU it must be enabled by passing the appropriate flag to the CFLAGS
 build variable (-msse2 with gcc).
+
+Performance improvements to `median`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+`median` is now implemented in terms of `partition` instead of `sort` which
+reduces its time complexity from O(n log(n)) to O(n).
+If used with the `overwrite_input` option the array will now only be partially
+sorted instead of fully sorted.
 
 Changes
 =======
