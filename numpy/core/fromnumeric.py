@@ -539,7 +539,7 @@ def partition(a, kth, axis=-1, kind='introselect', order=None):
     """
     Return a partitioned copy of an array.
 
-    Creates a copy of the array with its elements rearranges in such a way that
+    Creates a copy of the array with its elements rearranged in such a way that
     the value of the element in kth position is in the position it would be in
     a sorted array. All elements smaller than the kth element are moved before
     this element and all equal or greater are moved behind it. The ordering of
@@ -653,7 +653,7 @@ def argpartition(a, kth, axis=-1, kind='introselect', order=None):
     Returns
     -------
     index_array : ndarray, int
-        Array of indices that partition`a` along the specified axis.
+        Array of indices that partition `a` along the specified axis.
         In other words, ``a[index_array]`` yields a sorted `a`.
 
     See Also
