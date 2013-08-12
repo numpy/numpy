@@ -103,6 +103,16 @@ Function `median` used with `overwrite_input` only partially sorts array
 If `median` is used with `overwrite_input` option the input array will now only
 be partially sorted instead of fully sorted.
 
+Fix to financial.npv
+~~~~~~~~~~~~~~~~~~~~
+
+The npv function had a bug. Contrary to what the documentation stated, it
+summed from indexes ``1`` to ``M`` instead of from ``0`` to ``M - 1``. The
+fix changes the returned value. The mirr function called the npv function,
+but worked around the problem, so that was also fixed and the return value
+of the mirr function remains unchanged.
+
+
 New Features
 ============
 
