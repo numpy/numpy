@@ -413,7 +413,14 @@ PyArray_FillWithScalar(PyArrayObject *arr, PyObject *obj)
     else {
         PyArrayObject *src_arr;
 
-        src_arr = (PyArrayObject *)PyArray_FromAny(obj, NULL, 0, 0, 0, NULL);
+        /**
+         * The dtype of the destination is used when converting
+         * from the pyobject, so that for example a tuple gets
+         * recognized as a struct scalar of the required type.
+         */
+        Py_INCREF(PyArray_DTYPE(arr));
+        src_arr = (PyArrayObject *)PyArray_FromAny(obj,
+                        PyArray_DTYPE(arr), 0, 0, 0, NULL);
         if (src_arr == NULL) {
             return -1;
         }
