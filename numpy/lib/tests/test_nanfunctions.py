@@ -35,7 +35,7 @@ class TestNanFunctions_MinMax(TestCase):
     stdfuncs = [np.min, np.max]
 
     def test_mutation(self):
-        # Check that passes array is no modified.
+        # Check that passed array is not modified.
         ndat = _ndat.copy()
         for f in self.nanfuncs:
             f(ndat)
@@ -99,7 +99,7 @@ class TestNanFunctions_ArgminArgmax(TestCase):
     nanfuncs = [nanargmin, nanargmax]
 
     def test_mutation(self):
-        # Check that passes array is no modified.
+        # Check that passed array is not modified.
         ndat = _ndat.copy()
         for f in self.nanfuncs:
             f(ndat)
@@ -177,7 +177,7 @@ class TestNanFunctions_IntTypes(TestCase):
 class TestNanFunctions_Sum(TestCase):
 
     def test_mutation(self):
-        # Check that passes array is no modified.
+        # Check that passed array is not modified.
         ndat = _ndat.copy()
         nansum(ndat)
         assert_equal(ndat, _ndat)
@@ -282,7 +282,7 @@ class TestNanFunctions_MeanVarStd(TestCase):
     stdfuncs = [np.mean, np.var, np.std]
 
     def test_mutation(self):
-        # Check that passes array is no modified.
+        # Check that passed array is not modified.
         ndat = _ndat.copy()
         for f in self.nanfuncs:
             f(ndat)

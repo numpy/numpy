@@ -47,6 +47,10 @@ case, now indicates a 0-D iteration and ``op_axes`` being NULL and the old
 usage is deprecated. This does not effect the ``NpyIter_New`` or
 ``NpyIter_MultiNew`` functions.
 
+The functions nanargmin and nanargmax now return np.iinfo['intp'].min for
+the index in all-NaN slices. Previously the functions would raise a ValueError
+for array returns and NaN for scalar returns.
+
 NPY_RELAXED_STRIDES_CHECKING
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There is a new compile time environment variable

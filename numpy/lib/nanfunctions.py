@@ -301,9 +301,10 @@ def nanmax(a, axis=None, out=None, keepdims=False):
 
 def nanargmin(a, axis=None):
     """
-    Return indices of the minimum values over an axis, ignoring NaNs.  For
-    all NaN slices the minimum value of the np.intp type is returned and a
-    `NanWarning` is raised.
+    Return the indices of the minimum values in the specified axis ignoring
+    NaNs. For all-NaN slices, the negative number ``np.iinfo('intp').min``
+    is returned. It is platform dependent. Warning: the results cannot be
+    trusted if a slice contains only NaNs and Infs.
 
     Parameters
     ----------
@@ -348,9 +349,11 @@ def nanargmin(a, axis=None):
 
 def nanargmax(a, axis=None):
     """
-    Return indices of the maximum values over an axis, ignoring NaNs. For
-    all NaN slices the minimum value of the np.intp type is returned and
-    a `NanWarning` is raised.
+    Return the indices of the maximum values in the specified axis ignoring
+    NaNs. For  all-NaN slices, the negative number ``np.iinfo('intp').min``
+    is returned. It is platform dependent. Warning: the results cannot be
+    trusted if a slice contains only NaNs and -Infs.
+
 
     Parameters
     ----------
@@ -399,8 +402,7 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=0):
     Not a Numbers (NaNs) as zero.
 
     FutureWarning: In Numpy versions <= 1.8 Nan is returned for slices that
-    are all NaN or empty. In later versions zero will be returned.
-
+    are all-NaN or empty. In later versions zero will be returned.
 
     Parameters
     ----------
@@ -467,14 +469,11 @@ def nansum(a, axis=None, dtype=None, out=None, keepdims=0):
     3.0
     >>> np.nansum(a, axis=0)
     array([ 2.,  1.])
-
-    When positive infinity and negative infinity are present
-
     >>> np.nansum([1, np.nan, np.inf])
     inf
     >>> np.nansum([1, np.nan, np.NINF])
     -inf
-    >>> np.nansum([1, np.nan, np.inf, np.NINF])
+    >>> np.nansum([1, np.nan, np.inf, -np.inf]) # both +/- infinity present
     nan
 
     """
@@ -501,7 +500,7 @@ def nanmean(a, axis=None, dtype=None, out=None, keepdims=False):
     the flattened array by default, otherwise over the specified axis.
     `float64` intermediate and return values are used for integer inputs.
 
-    For all NaN slices NaN is returned and a `NanWarning` is raised.
+    For all-NaN slices, NaN is returned and a `NanWarning` is raised.
 
     .. versionadded:: 1.8.0
 
@@ -597,7 +596,7 @@ def nanvar(a, axis=None, dtype=None, out=None, ddof=0,
     distribution.  The variance is computed for the flattened array by
     default, otherwise over the specified axis.
 
-    For all NaN slices NaN is returned and a `NanWarning` is raised.
+    For all-NaN slices, NaN is returned and a `NanWarning` is raised.
 
     .. versionadded:: 1.8.0
 
@@ -728,7 +727,7 @@ def nanstd(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     of the non-NaN array elements. The standard deviation is computed for the
     flattened array by default, otherwise over the specified axis.
 
-    For all NaN slices NaN is returned and a `NanWarning` is raised.
+    For all-NaN slices, NaN is returned and a `NanWarning` is raised.
 
     .. versionadded:: 1.8.0
 
