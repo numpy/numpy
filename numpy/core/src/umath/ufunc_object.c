@@ -753,7 +753,7 @@ static int get_ufunc_arguments(PyUFuncObject *ufunc,
     /* Get input arguments */
     for (i = 0; i < nin; ++i) {
         obj = PyTuple_GET_ITEM(args, i);
- 
+
         if (PyArray_Check(obj)) {
             out_op[i] = (PyArrayObject *)PyArray_FromArray(obj,NULL,0);
         }
@@ -1236,10 +1236,10 @@ iterator_loop(PyUFuncObject *ufunc,
     for (i = 0; i < nin; ++i) {
         op_flags[i] = NPY_ITER_READONLY |
                       NPY_ITER_ALIGNED;
-        /* 
+        /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
-         */ 
+         */
         op_flags[i] |= ufunc->op_flags[i];
         if (op_flags[i] & (NPY_ITER_READWRITE | NPY_ITER_WRITEONLY)) {
             op_flags[i] &= ~NPY_ITER_READONLY;
@@ -1541,10 +1541,10 @@ execute_fancy_ufunc_loop(PyUFuncObject *ufunc,
         op_flags[i] = default_op_in_flags |
                       NPY_ITER_READONLY |
                       NPY_ITER_ALIGNED;
-        /* 
+        /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
-         */       
+         */
         op_flags[i] |= ufunc->op_flags[i];
         if (op_flags[i] & (NPY_ITER_READWRITE | NPY_ITER_WRITEONLY)) {
             op_flags[i] &= ~NPY_ITER_READONLY;
@@ -2037,10 +2037,10 @@ PyUFunc_GeneralizedFunction(PyUFuncObject *ufunc,
         op_flags[i] = NPY_ITER_READONLY |
                       NPY_ITER_COPY |
                       NPY_ITER_ALIGNED;
-        /* 
+        /*
          * If READWRITE flag has been set for this operand,
          * then clear default READONLY flag
-         */ 
+         */
         op_flags[i] |= ufunc->op_flags[i];
         if (op_flags[i] & (NPY_ITER_READWRITE | NPY_ITER_WRITEONLY)) {
             op_flags[i] &= ~NPY_ITER_READONLY;
@@ -3344,15 +3344,31 @@ PyUFunc_Reduceat(PyUFuncObject *ufunc, PyArrayObject *arr, PyArrayObject *ind,
 
     /* Special case when the index array's size is zero */
     if (ind_size == 0) {
-        need_outer_iterator = 0;
-        if (out != NULL) {
-            if (PyArray_NDIM(out) != 1 || PyArray_DIM(out, 0) != 0) {
+        if (out == NULL) {
+            npy_intp out_shape[NPY_MAXDIMS];
+            memcpy(out_shape, PyArray_SHAPE(arr),
+                            PyArray_NDIM(arr) * NPY_SIZEOF_INTP);
+            out_shape[axis] = 0;
+            Py_INCREF(op_dtypes[0]);
+            op[0] = out = (PyArrayObject *)PyArray_NewFromDescr(
+                                        &PyArray_Type, op_dtypes[0],
+                                        PyArray_NDIM(arr), out_shape, NULL, NULL,
+                                        0, NULL);
+            if (out == NULL) {
+                goto fail;
+            }
+        }
+        else {
+            /* Allow any zero-sized output array in this case */
+            if (PyArray_SIZE(out) != 0) {
                 PyErr_SetString(PyExc_ValueError,
                         "output operand shape for reduceat is "
                         "incompatible with index array of shape (0,)");
                 goto fail;
             }
         }
+
+        goto finish;
     }
 
     if (need_outer_iterator) {
@@ -4501,7 +4517,7 @@ PyUFunc_RegisterLoopForDescr(PyUFuncObject *ufunc,
             arg_typenums[i] = user_dtype->type_num;
         }
     }
-    
+
     result = PyUFunc_RegisterLoopForType(ufunc, user_dtype->type_num,
         function, arg_typenums, data);
 
