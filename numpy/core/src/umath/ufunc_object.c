@@ -5103,14 +5103,17 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         NpyIter_ResetBasePointers(iter_buffer, dataptr, NULL);
         buffer_dataptr = NpyIter_GetDataPtrArray(iter_buffer);
 
+        innerloop(buffer_dataptr, count, stride, innerloopdata);
+
+        if (needs_api && PyErr_Occurred()) {
+            break;
+        }
+
         /* 
-         * Even though we'll never loop more than once, call to iternext
-         * triggers copy from buffer back to output array after innerloop
-         * puts result in buffer.
+         * Call to iternext triggers copy from buffer back to output array
+         * after innerloop puts result in buffer.
          */
-        do {
-            innerloop(buffer_dataptr, count, stride, innerloopdata);
-        } while (iternext(iter_buffer));
+        iternext(iter_buffer);
 
         PyArray_MapIterNext(iter);
         if (iter2 != NULL) {

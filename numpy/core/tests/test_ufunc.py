@@ -995,5 +995,10 @@ class TestUfunc(TestCase):
         np.add.at(values, index, 3)
         assert_array_equal(values, [1,8,6,4])
 
+        # Test exception thrown
+        values = np.array(['a', 1], dtype=np.object)
+        self.assertRaises(TypeError, np.add.at, values, [0,1], 1)
+        assert_array_equal(values, np.array(['a', 1], dtype=np.object))
+
 if __name__ == "__main__":
     run_module_suite()
