@@ -1303,7 +1303,7 @@ def ravel(a, order='C'):
     Returns
     -------
     1d_array : ndarray
-        Output of the same dtype as `a`, and of shape ``(a.size(),)``.
+        Output of the same dtype as `a`, and of shape ``(a.size,)``.
 
     See Also
     --------
