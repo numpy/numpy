@@ -29,7 +29,7 @@ static void add_uint64_triplet(char **args, npy_intp *dimensions,
     npy_intp is2=steps[1];
     npy_intp os=steps[2];
     npy_intp n=dimensions[0];
-    uint64_t *x, *y, *z;
+    npy_uint64 *x, *y, *z;
 
     char *i1=args[0];
     char *i2=args[1];
@@ -37,9 +37,9 @@ static void add_uint64_triplet(char **args, npy_intp *dimensions,
 
     for (i = 0; i < n; i++) {
 
-        x = (uint64_t*)i1;
-        y = (uint64_t*)i2;
-        z = (uint64_t*)op;
+        x = (npy_uint64*)i1;
+        y = (npy_uint64*)i2;
+        z = (npy_uint64*)op;
 
         z[0] = x[0] + y[0];
         z[1] = x[1] + y[1];
