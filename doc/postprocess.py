@@ -23,7 +23,7 @@ def main():
         p.error('unknown mode %s' % mode)
 
     for fn in args:
-        f = open(fn, 'r')
+        f = open(fn, 'r', encoding="utf-8")
         try:
             if mode == 'html':
                 lines = process_html(fn, f.readlines())
@@ -32,7 +32,7 @@ def main():
         finally:
             f.close()
 
-        f = open(fn, 'w')
+        f = open(fn, 'w', encoding="utf-8")
         f.write("".join(lines))
         f.close()
 
