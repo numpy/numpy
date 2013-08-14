@@ -13,7 +13,7 @@ from test_print import in_foreign_locale
 from numpy.core.multiarray_tests import (
         test_neighborhood_iterator, test_neighborhood_iterator_oob,
         test_pydatamem_seteventhook_start, test_pydatamem_seteventhook_end,
-        test_inplace_increment
+        test_inplace_increment, get_buffer_info
         )
 from numpy.testing import (
         TestCase, run_module_suite, assert_, assert_raises,
@@ -3120,6 +3120,10 @@ class TestNewBufferProtocol(object):
             assert_equal(y.format, 'i')
         else:
             assert_equal(y.format, '<i')
+
+    def test_export_flags(self):
+        # Check SIMPLE flag, see also gh-3613 (exception should be BufferError)
+        assert_raises(ValueError, get_buffer_info, np.arange(5)[::2], ('SIMPLE',))
 
     def test_padding(self):
         for j in range(8):
