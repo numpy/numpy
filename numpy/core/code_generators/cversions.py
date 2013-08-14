@@ -7,8 +7,8 @@ from __future__ import division, absolute_import, print_function
 
 from os.path import dirname
 
-from .genapi import fullapi_hash
-from . import numpy_api
+from genapi import fullapi_hash
+import numpy_api
 
 
 if __name__ == '__main__':
