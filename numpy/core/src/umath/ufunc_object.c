@@ -4974,7 +4974,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
         nop = 2;
     }
 
-    if (ufunc->type_resolver(ufunc, NPY_DEFAULT_ASSIGN_CASTING,
+    if (ufunc->type_resolver(ufunc, NPY_UNSAFE_CASTING,
                             operands, NULL, dtypes) < 0) {
         goto fail;
     }
