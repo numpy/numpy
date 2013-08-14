@@ -339,6 +339,7 @@ multiarray_funcs_api = {
     'PyArray_Partition':                    296,
     'PyArray_ArgPartition':                 297,
     'PyArray_SelectkindConverter':          298,
+    # End 1.8 API
 }
 
 ufunc_types_api = {
@@ -388,7 +389,9 @@ ufunc_funcs_api = {
     # End 1.6 API
     'PyUFunc_DefaultTypeResolver':              39,
     'PyUFunc_ValidateCasting':                  40,
+    # End 1.7 API
     'PyUFunc_RegisterLoopForDescr':             41,
+    # End 1.8 API
 }
 
 # List of all the dicts which define the C API

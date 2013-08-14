@@ -15,3 +15,5 @@
 0x00000007 = e396ba3912dcf052eaee1b0b203a7724
 # Version 8 Added interface to MapIterObject
 0x00000008 = 17321775fc884de0b1eda478cd61c74b
+# Version 9 Added interface for partition functions.
+0x00000009 = f99a02b75bd60205d1afe1eed080fd53
