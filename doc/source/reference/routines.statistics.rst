@@ -23,11 +23,14 @@ Averages and variances
 .. autosummary::
    :toctree: generated/
 
+   median
    average
    mean
-   median
    std
    var
+   nanmean
+   nanstd
+   nanvar
 
 Correlating
 -----------

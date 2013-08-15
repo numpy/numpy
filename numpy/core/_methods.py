@@ -5,9 +5,12 @@ and the Python code for the NumPy-namespace function
 """
 from __future__ import division, absolute_import, print_function
 
+import warnings
+
 from numpy.core import multiarray as mu
 from numpy.core import umath as um
 from numpy.core.numeric import asanyarray
+from numpy.core import numerictypes as nt
 
 def _amax(a, axis=None, out=None, keepdims=False):
     return um.maximum.reduce(a, axis=axis,
@@ -46,58 +49,65 @@ def _count_reduce_items(arr, axis):
 def _mean(a, axis=None, dtype=None, out=None, keepdims=False):
     arr = asanyarray(a)
 
-    # Upgrade bool, unsigned int, and int to float64
-    if dtype is None and arr.dtype.kind in ['b','u','i']:
-        ret = um.add.reduce(arr, axis=axis, dtype='f8',
-                            out=out, keepdims=keepdims)
-    else:
-        ret = um.add.reduce(arr, axis=axis, dtype=dtype,
-                            out=out, keepdims=keepdims)
     rcount = _count_reduce_items(arr, axis)
+    # Make this warning show up first
+    if rcount == 0:
+        warnings.warn("Mean of empty slice.", RuntimeWarning)
+
+
+    # Cast bool, unsigned int, and int to float64 by default
+    if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
+        dtype = mu.dtype('f8')
+
+    ret = um.add.reduce(arr, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
     if isinstance(ret, mu.ndarray):
-        ret = um.true_divide(ret, rcount,
-                        out=ret, casting='unsafe', subok=False)
+        ret = um.true_divide(
+                ret, rcount, out=ret, casting='unsafe', subok=False)
     else:
-        ret = ret / float(rcount)
+        ret = ret.dtype.type(ret / rcount)
+
     return ret
 
-def _var(a, axis=None, dtype=None, out=None, ddof=0,
-                            keepdims=False):
+def _var(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     arr = asanyarray(a)
 
-    # First compute the mean, saving 'rcount' for reuse later
-    if dtype is None and arr.dtype.kind in ['b','u','i']:
-        arrmean = um.add.reduce(arr, axis=axis, dtype='f8', keepdims=True)
-    else:
-        arrmean = um.add.reduce(arr, axis=axis, dtype=dtype, keepdims=True)
     rcount = _count_reduce_items(arr, axis)
+    # Make this warning show up on top.
+    if ddof >= rcount:
+        warnings.warn("Degrees of freedom <= 0 for slice", RuntimeWarning)
+
+    # Cast bool, unsigned int, and int to float64 by default
+    if dtype is None and issubclass(arr.dtype.type, (nt.integer, nt.bool_)):
+        dtype = mu.dtype('f8')
+
+    # Compute the mean.
+    # Note that if dtype is not of inexact type then arraymean will
+    # not be either.
+    arrmean = um.add.reduce(arr, axis=axis, dtype=dtype, keepdims=True)
     if isinstance(arrmean, mu.ndarray):
-        arrmean = um.true_divide(arrmean, rcount,
-                            out=arrmean, casting='unsafe', subok=False)
+        arrmean = um.true_divide(
+                arrmean, rcount, out=arrmean, casting='unsafe', subok=False)
     else:
-        arrmean = arrmean / float(rcount)
+        arrmean = arrmean.dtype.type(arrmean / rcount)
 
-    # arr - arrmean
+    # Compute sum of squared deviations from mean
+    # Note that x may not be inexact
     x = arr - arrmean
-
-    # (arr - arrmean) ** 2
-    if arr.dtype.kind == 'c':
+    if issubclass(arr.dtype.type, nt.complexfloating):
         x = um.multiply(x, um.conjugate(x), out=x).real
     else:
         x = um.multiply(x, x, out=x)
-
-    # add.reduce((arr - arrmean) ** 2, axis)
     ret = um.add.reduce(x, axis=axis, dtype=dtype, out=out, keepdims=keepdims)
 
-    # add.reduce((arr - arrmean) ** 2, axis) / (n - ddof)
-    if not keepdims and isinstance(rcount, mu.ndarray):
-        rcount = rcount.squeeze(axis=axis)
-    rcount -= ddof
+    # Compute degrees of freedom and make sure it is not negative.
+    rcount = max([rcount - ddof, 0])
+
+    # divide by degrees of freedom
     if isinstance(ret, mu.ndarray):
-        ret = um.true_divide(ret, rcount,
-                        out=ret, casting='unsafe', subok=False)
+        ret = um.true_divide(
+                ret, rcount, out=ret, casting='unsafe', subok=False)
     else:
-        ret = ret / float(rcount)
+        ret = ret.dtype.type(ret / rcount)
 
     return ret
 
@@ -108,6 +118,7 @@ def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     if isinstance(ret, mu.ndarray):
         ret = um.sqrt(ret, out=ret)
     else:
-        ret = um.sqrt(ret)
+        ret = ret.dtype.type(um.sqrt(ret))
 
     return ret
+
