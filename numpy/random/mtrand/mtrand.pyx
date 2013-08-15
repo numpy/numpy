@@ -538,7 +538,7 @@ cdef class RandomState:
 
     Parameters
     ----------
-    seed : int or array_like, optional
+    seed : {None, int, array_like}, optional
         Random seed initializing the pseudo-random number generator.
         Can be an integer, an array (or other sequence) of integers of
         any length, or ``None`` (the default).
