@@ -247,8 +247,7 @@ dotblas_matrixproduct(PyObject *NPY_UNUSED(dummy), PyObject *args, PyObject* kwa
     }
 
 
-    if((PyObject *)out == op1 || (PyObject *)out == op2)
-    {
+    if ((PyObject *)out == op1 || (PyObject *)out == op2) {
         PyErr_SetString(PyExc_ValueError, "One of the input arrays cannot be assigned to OUT");
         goto fail;
     }

@@ -925,11 +925,8 @@ class TestMethods(TestCase):
         b = np.array([[0, 1], [1, 0]])
         c = np.array([[9, 1], [1, -9]])
 
-        #new test
-        try:
-            np.dot(a,b,out=a)
-        except ValueError:
-            pass
+        #Test to verifiy that np.dot with "out" as one of the input arrays raises ValueError
+        assert_raises(ValueError,np.dot,a,b,out=a)
 
         assert_equal(np.dot(a, b), a.dot(b))
         assert_equal(np.dot(np.dot(a, b), c), a.dot(b).dot(c))
