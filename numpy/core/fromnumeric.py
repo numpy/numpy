@@ -14,17 +14,16 @@ from . import _methods
 _dt_ = nt.sctype2char
 
 
-# functions that are now methods
-__all__ = ['take', 'reshape', 'choose', 'repeat', 'put',
-           'swapaxes', 'transpose', 'sort', 'argsort', 'partition', 'argpartition',
-           'argmax', 'argmin',
-           'searchsorted', 'alen',
-           'resize', 'diagonal', 'trace', 'ravel', 'nonzero', 'shape',
-           'compress', 'clip', 'sum', 'product', 'prod', 'sometrue', 'alltrue',
-           'any', 'all', 'cumsum', 'cumproduct', 'cumprod', 'ptp', 'ndim',
-           'rank', 'size', 'around', 'round_', 'mean', 'std', 'var', 'squeeze',
-           'amax', 'amin',
-          ]
+# functions that are methods
+__all__ = [
+        'alen', 'all', 'alltrue', 'amax', 'amin', 'any', 'argmax',
+        'argmin', 'argpartition', 'argsort', 'around', 'choose', 'clip',
+        'compress', 'cumprod', 'cumproduct', 'cumsum', 'diagonal', 'mean',
+        'ndim', 'nonzero', 'partition', 'prod', 'product', 'ptp', 'put',
+        'rank', 'ravel', 'repeat', 'reshape', 'resize', 'round_',
+        'searchsorted', 'shape', 'size', 'sometrue', 'sort', 'squeeze',
+        'std', 'sum', 'swapaxes', 'take', 'trace', 'transpose', 'var',
+        ]
 
 
 try:
@@ -63,9 +62,9 @@ def take(a, indices, axis=None, out=None, mode='raise'):
         The source array.
     indices : array_like
         The indices of the values to extract.
-        
+
         .. versionadded:: 1.8.0
-        
+
         Also allow scalars for indices.
     axis : int, optional
         The axis over which to select values. By default, the flattened
@@ -2665,6 +2664,7 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=False):
     See Also
     --------
     average : Weighted average
+    std, var, nanmean, nanstd, nanvar
 
     Notes
     -----
@@ -2711,7 +2711,6 @@ def mean(a, axis=None, dtype=None, out=None, keepdims=False):
     return _methods._mean(a, axis=axis, dtype=dtype,
                             out=out, keepdims=keepdims)
 
-
 def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
     """
     Compute the standard deviation along the specified axis.
@@ -2752,7 +2751,7 @@ def std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
 
     See Also
     --------
-    var, mean
+    var, mean, nanmean, nanstd, nanvar
     numpy.doc.ufuncs : Section "Output arguments"
 
     Notes
@@ -2855,8 +2854,7 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
 
     See Also
     --------
-    std : Standard deviation
-    mean : Average
+    std , mean, nanmean, nanstd, nanvar
     numpy.doc.ufuncs : Section "Output arguments"
 
     Notes
@@ -2915,3 +2913,4 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                                 keepdims=keepdims)
+

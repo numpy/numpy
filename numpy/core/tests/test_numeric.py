@@ -3,6 +3,7 @@ from __future__ import division, absolute_import, print_function
 import sys
 import platform
 from decimal import Decimal
+import warnings
 
 import numpy as np
 from numpy.core import *
@@ -177,17 +178,32 @@ class TestNonarrayArgs(TestCase):
         assert_(all(mean(A,0) == array([2.5,3.5,4.5])))
         assert_(all(mean(A,1) == array([2.,5.])))
 
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_(isnan(mean([])))
+            assert_(w[0].category is RuntimeWarning)
+
     def test_std(self):
         A = [[1,2,3],[4,5,6]]
         assert_almost_equal(std(A), 1.707825127659933)
         assert_almost_equal(std(A,0), array([1.5, 1.5, 1.5]))
         assert_almost_equal(std(A,1), array([0.81649658, 0.81649658]))
 
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_(isnan(std([])))
+            assert_(w[0].category is RuntimeWarning)
+
     def test_var(self):
         A = [[1,2,3],[4,5,6]]
         assert_almost_equal(var(A), 2.9166666666666665)
         assert_almost_equal(var(A,0), array([2.25, 2.25, 2.25]))
         assert_almost_equal(var(A,1), array([0.66666667, 0.66666667]))
+
+        with warnings.catch_warnings(record=True) as w:
+            warnings.filterwarnings('always', '', RuntimeWarning)
+            assert_(isnan(var([])))
+            assert_(w[0].category is RuntimeWarning)
 
 
 class TestBoolScalar(TestCase):
@@ -1447,7 +1463,6 @@ class TestIsclose(object):
         assert_array_equal(x, array([inf, 1]))
         assert_array_equal(y, array([0, inf]))
 
-
 class TestStdVar(TestCase):
     def setUp(self):
         self.A = array([1,-1,1,-1])
@@ -1468,7 +1483,6 @@ class TestStdVar(TestCase):
                             self.real_var*len(self.A)/float(len(self.A)-2))
         assert_almost_equal(std(self.A,ddof=2)**2,
                             self.real_var*len(self.A)/float(len(self.A)-2))
-
 
 class TestStdVarComplex(TestCase):
     def test_basic(self):

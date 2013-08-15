@@ -377,6 +377,7 @@ class NoseTester(object):
             warnings.filterwarnings("ignore", message="numpy.dtype size changed")
             warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
             warnings.filterwarnings("ignore", category=ModuleDeprecationWarning)
+            warnings.filterwarnings("ignore", category=FutureWarning)
 
             from .noseclasses import NumpyTestProgram
 
