@@ -978,13 +978,16 @@ def outer(a,b):
 
     Parameters
     ----------
-    a, b : array_like, shape (M,), (N,)
-        First and second input vectors.  Inputs are flattened if they
-        are not already 1-dimensional.
+    a : (M,) array_like
+        First input vector.  Input is flattened if
+        not already 1-dimensional.
+    b : (N,) array_like
+        Second input vector.  Input is flattened if
+        not already 1-dimensional.
 
     Returns
     -------
-    out : ndarray, shape (M, N)
+    out : (M, N) ndarray
         ``out[i, j] = a[i] * b[j]``
 
     See also
@@ -1057,27 +1060,24 @@ def tensordot(a, b, axes=2):
     Compute tensor dot product along specified axes for arrays >= 1-D.
 
     Given two tensors (arrays of dimension greater than or equal to one),
-    ``a`` and ``b``, and an array_like object containing two array_like
-    objects, ``(a_axes, b_axes)``, sum the products of ``a``'s and ``b``'s
+    `a` and `b`, and an array_like object containing two array_like
+    objects, ``(a_axes, b_axes)``, sum the products of `a`'s and `b`'s
     elements (components) over the axes specified by ``a_axes`` and
     ``b_axes``. The third argument can be a single non-negative
     integer_like scalar, ``N``; if it is such, then the last ``N``
-    dimensions of ``a`` and the first ``N`` dimensions of ``b`` are summed
+    dimensions of `a` and the first ``N`` dimensions of `b` are summed
     over.
 
     Parameters
     ----------
     a, b : array_like, len(shape) >= 1
         Tensors to "dot".
-
     axes : variable type
-
-    * integer_like scalar
-      Number of axes to sum over (applies to both arrays); or
-
-    * array_like, shape = (2,), both elements array_like
-      Axes to be summed over, first sequence applying to ``a``, second
-      to ``b``.
+        * integer_like scalar
+          Number of axes to sum over (applies to both arrays); or
+        * (2,) array_like, both elements array_like of the same length
+          List of axes to be summed over, first sequence applying to `a`,
+          second to `b`.
 
     See Also
     --------
@@ -1086,7 +1086,7 @@ def tensordot(a, b, axes=2):
     Notes
     -----
     When there is more than one axis to sum over - and they are not the last
-    (first) axes of ``a`` (``b``) - the argument ``axes`` should consist of
+    (first) axes of `a` (`b`) - the argument `axes` should consist of
     two sequences of the same length, with the first axis to sum over given
     first in both sequences, the second axis second, and so forth.
 
