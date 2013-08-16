@@ -185,6 +185,16 @@ New nan aware statistical functions are added. In these functions the
 results are what would be obtained if nan values were ommited from all
 computations.
 
+In place fancy indexing for ufuncs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The function ``at`` has been added to ufunc objects to allow in place
+ufuncs with no buffering when fancy indexing is used. For example, the
+following will increment the first and second items in the array, and will
+increment the third item twice:
+numpy.add.at(array, [0, 1, 2, 2], 1)
+
+This is similar to doing array[[0, 1, 2, 2]] += 1
+
 C-API
 ~~~~~
 
