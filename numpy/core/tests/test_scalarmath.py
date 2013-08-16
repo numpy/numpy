@@ -140,49 +140,46 @@ class TestConversion(TestCase):
         assert_equal([int(_m) for _m in a], li[:3])
 
 
-    def test_int_value_behaviour(self):
-        l = [0, 2**7-1, 2**15-1, 2**31-1, 2**63-1]
-        li = [-1, -2**7, -2**15, -2**31, -2**63]
-        x = 1
-        for T in [np.int8, np.int16, np.int32, np.int64]:
-            a1 = np.array([l[:x]],dtype=T)
-            b1= np.array([li[:x]], dtype=T)
-            assert_equal(-a1-1,b1)
+    def test_iinfo_long_values(self):
+        for code in 'bBhH':
+            res = np.array(np.iinfo(code).max + 1, dtype=code)
+            tgt = np.iinfo(code).min
+            assert_(res == tgt)
 
-            a2 = np.array([l[x]],dtype=T)
-            b2= np.array([li[x]], dtype=T)            
-            assert_equal(a2,b2-1)
-            x = x+1
+        for code in np.typecodes['AllInteger']:
+            res = np.array(np.iinfo(code).max, dtype=code)
+            tgt = np.iinfo(code).max
+            assert_(res == tgt)
+
+        for code in np.typecodes['AllInteger']:
+            res = np.typeDict[code](np.iinfo(code).max)
+            tgt = np.iinfo(code).max
+            assert_(res == tgt)
 
 
-        l = [0, 2**8-1, 2**16-1, 2**32-1, 2**64-1]
-        li = [1, 2**8,  2**16, 2**32, 2**64]
-        x = 1
-        for T in [np.uint8, np.uint16, np.uint32, np.uint64]:
-            a1 = np.array([l[:x]],dtype=T)
-            b1= np.array([li[:x]], dtype=T)
-            assert_equal(a1+1,b1)
+    def test_int_raise_behaviour(self):
 
-            a2 = np.array([l[x]],dtype=T)
-            b2= np.array([0], dtype=T)            
-            assert_equal(a2+1,b2)
-            x = x+1
+        def Overflow_error_func(dtype): 
+            res = np.typeDict[dtype](np.iinfo(dtype).max + 1)
+
+        for code in 'lLqQ':
+            assert_raises(OverflowError, Overflow_error_func, code)
 
 
     def test_long_os_behaviour(self):
-        Long = np.iinfo('l')
-        uLong = np.iinfo('L')
-        if sys.platform == "win32" or sys.platform == "win64" \
-            or platform.architecture()[0] == "32bit":
-            assert_equal(Long.max, 2**31-1)
-            assert_equal(Long.min, -2**31)            
-            assert_equal(uLong.max, 2**32-1)
-            assert_equal(uLong.min, 0)
+        long_iinfo = np.iinfo('l')
+        ulong_iinfo = np.iinfo('L')
+        if (sys.platform == "win32" or sys.platform == "win64" or
+                platform.architecture()[0] == "32bit"):
+            assert_equal(long_iinfo.max, 2**31-1)
+            assert_equal(long_iinfo.min, -2**31)            
+            assert_equal(ulong_iinfo.max, 2**32-1)
+            assert_equal(ulong_iinfo.min, 0)
         elif platform.architecture()[0] == "64bit":
-            assert_equal(Long.max, 2**63-1)
-            assert_equal(Long.min, -2**63)
-            assert_equal(uLong.max, 2**64-1)
-            assert_equal(uLong.min, 0)
+            assert_equal(long_iinfo.max, 2**63-1)
+            assert_equal(long_iinfo.min, -2**63)
+            assert_equal(ulong_iinfo.max, 2**64-1)
+            assert_equal(ulong_iinfo.min, 0)
 
 
 
