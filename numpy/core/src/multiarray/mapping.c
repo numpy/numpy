@@ -1662,7 +1662,9 @@ PyArray_MapIterReset(PyArrayMapIterObject *mit)
 
     mit->index = 0;
 
-    copyswap = PyArray_DESCR(mit->iters[0]->ao)->f->copyswap;
+    if (mit->numiter > 0) {
+        copyswap = PyArray_DESCR(mit->iters[0]->ao)->f->copyswap;
+    }
 
     if (mit->subspace != NULL) {
         memcpy(coord, mit->bscoord, sizeof(npy_intp)*PyArray_NDIM(mit->ait->ao));
@@ -1712,7 +1714,11 @@ PyArray_MapIterNext(PyArrayMapIterObject *mit)
     if (mit->index >= mit->size) {
         return;
     }
-    copyswap = PyArray_DESCR(mit->iters[0]->ao)->f->copyswap;
+
+    if (mit->numiter > 0) {
+        copyswap = PyArray_DESCR(mit->iters[0]->ao)->f->copyswap;
+    }
+
     /* Sub-space iteration */
     if (mit->subspace != NULL) {
         PyArray_ITER_NEXT(mit->subspace);
