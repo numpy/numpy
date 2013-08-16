@@ -1866,8 +1866,7 @@ PyArray_LexSort(PyObject *sort_keys, int axis)
  *
  * For each key use bisection to find the first index i s.t. key <= arr[i].
  * When there is no such index i, set i = len(arr). Return the results in ret.
- * All arrays are assumed contiguous on entry and both arr and key must be of
- * the same comparable type.
+ * Both arr and key must be of the same comparable type.
  *
  * @param arr 1d, strided, sorted array to be searched.
  * @param key contiguous array of keys.
@@ -1910,8 +1909,7 @@ local_search_left(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
  *
  * For each key use bisection to find the first index i s.t. key < arr[i].
  * When there is no such index i, set i = len(arr). Return the results in ret.
- * All arrays are assumed contiguous on entry and both arr and key must be of
- * the same comparable type.
+ * Both arr and key must be of the same comparable type.
  *
  * @param arr 1d, strided, sorted array to be searched.
  * @param key contiguous array of keys.
@@ -1953,8 +1951,7 @@ local_search_right(PyArrayObject *arr, PyArrayObject *key, PyArrayObject *ret)
  *
  * For each key use bisection to find the first index i s.t. key <= arr[i].
  * When there is no such index i, set i = len(arr). Return the results in ret.
- * All arrays are assumed contiguous on entry and both arr and key must be of
- * the same comparable type.
+ * Both arr and key must be of the same comparable type.
  *
  * @param arr 1d, strided array to be searched.
  * @param key contiguous array of keys.
@@ -2007,8 +2004,7 @@ local_argsearch_left(PyArrayObject *arr, PyArrayObject *key,
  *
  * For each key use bisection to find the first index i s.t. key < arr[i].
  * When there is no such index i, set i = len(arr). Return the results in ret.
- * All arrays are assumed contiguous on entry and both arr and key must be of
- * the same comparable type.
+ * Both arr and key must be of the same comparable type.
  *
  * @param arr 1d, strided array to be searched.
  * @param key contiguous array of keys.
@@ -2115,6 +2111,10 @@ PyArray_SearchSorted(PyArrayObject *op1, PyObject *op2,
         return NULL;
     }
 
+    /*
+     * If the needle (ap2) is larger than the haystack (op1) we copy the
+     * haystack to a continuous array for improved cache utilization.
+     */
     if (PyArray_SIZE(ap2) > PyArray_SIZE(op1)) {
         ap1_flags |= NPY_ARRAY_CARRAY_RO;
     }
