@@ -1002,7 +1002,7 @@ def savetxt(fname, X, fmt='%.18e', delimiter=' ', newline='\n', header='',
                 fh = open(fname, 'wb')
             else:
                 fh = open(fname, 'w')
-    elif hasattr(fname, 'seek'):
+    elif hasattr(fname, 'write'):
         fh = fname
     else:
         raise ValueError('fname must be a string or file handle')
