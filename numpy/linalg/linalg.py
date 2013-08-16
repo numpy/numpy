@@ -1021,7 +1021,7 @@ def eig(a):
 
     The number `w` is an eigenvalue of `a` if there exists a vector
     `v` such that ``dot(a,v) = w * v``. Thus, the arrays `a`, `w`, and
-    `v` satisfy the equations ``dot(a[i,:], v[i]) = w[i] * v[:,i]``
+    `v` satisfy the equations ``dot(a[:,:], v[:,i]) = w[i] * v[:,i]``
     for :math:`i \\in \\{0,...,M-1\\}`.
 
     The array `v` of eigenvectors may not be of maximum rank, that is, some
