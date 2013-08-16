@@ -19,6 +19,20 @@ Support for Python versions 2.4 and 2.5 has been dropped,
 
 Support for SCons has been removed.
 
+Future Changes
+==============
+
+The Datetime64 type remains experimental in this release. In 1.9 there will
+probably be some changes to make it more useable.
+
+The diagonal method currently returns a new array and raises a
+FutureWarning. In 1.9 it will return a readonly view.
+
+Multiple field selection from a array of structured type currently
+returns a new array and raises a FutureWarning. In 1.9 it will return a
+readonly view.
+
+The numeric and numarray compatibility modules will be removed in 1.9.
 
 Compatibility notes
 ===================
@@ -268,8 +282,23 @@ Several changes to np.insert and np.delete:
 
 Padded regions from np.pad are now correctly rounded, not truncated.
 
-C-API
-~~~~~
+C-API Array Additions
+~~~~~~~~~~~~~~~~~~~~~
+
+Three new functions have been added to the array C-API.
+* PyArray_Partition
+* PyArray_ArgPartition
+* PyArray_SelectkindConverter
+* PyDataMem_NEW_ZEROED
+
+C-API Ufunc Additions
+~~~~~~~~~~~~~~~~~~~~~
+
+One new function has been added to the ufunc C-API that allows to register
+an inner loop for user types using the descr.
+* PyUFunc_RegisterLoopForDescr
+
+
 
 Deprecations
 ============
@@ -287,6 +316,8 @@ NumPy 1.8., and in some future version of NumPy they will raise an error.
 
 C-API
 ~~~~~
+
+None
 
 New Features
 ============
