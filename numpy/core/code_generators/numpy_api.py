@@ -339,6 +339,7 @@ multiarray_funcs_api = {
     'PyArray_Partition':                    296,
     'PyArray_ArgPartition':                 297,
     'PyArray_SelectkindConverter':          298,
+    'PyDataMem_NEW_ZEROED':                 299,
     # End 1.8 API
 }
 

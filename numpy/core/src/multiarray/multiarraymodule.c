@@ -3500,6 +3500,26 @@ PyDataMem_NEW(size_t size)
 }
 
 /*NUMPY_API
+ * Allocates zeroed memory for array data.
+ */
+NPY_NO_EXPORT void *
+PyDataMem_NEW_ZEROED(size_t size, size_t elsize)
+{
+    void *result;
+
+    result = calloc(size, elsize);
+    if (_PyDataMem_eventhook != NULL) {
+        PyGILState_STATE gilstate = PyGILState_Ensure();
+        if (_PyDataMem_eventhook != NULL) {
+            (*_PyDataMem_eventhook)(NULL, result, size * elsize,
+                                    _PyDataMem_eventhook_user_data);
+        }
+        PyGILState_Release(gilstate);
+    }
+    return (char *)result;
+}
+
+/*NUMPY_API
  * Free memory for array data.
  */
 NPY_NO_EXPORT void
