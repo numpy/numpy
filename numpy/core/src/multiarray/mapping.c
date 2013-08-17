@@ -1009,7 +1009,8 @@ array_subscript_fancy(PyArrayObject *self, PyObject *op, int fancy)
         Py_DECREF(mit);
         return rval;
     }
-    if (PyArray_MapIterBind(mit, self) != 0) { 
+    if (PyArray_MapIterBind(mit, self) != 0) {
+        Py_DECREF(mit);
         return NULL;
     }
     other = (PyObject *)PyArray_GetMap(mit);
@@ -1321,6 +1322,7 @@ array_ass_sub_fancy(PyArrayObject *self, PyObject *ind, PyObject *op, int fancy)
         return rval;
     }
     if (PyArray_MapIterBind(mit, self) != 0) {
+        Py_DECREF(mit);
         return -1;
     }
     ret = PyArray_SetMap(mit, op);
@@ -1782,12 +1784,12 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     if (subnd < 0) {
         PyErr_SetString(PyExc_IndexError,
                         "too many indices for array");
-        goto fail;
+        return -1;
     }
 
     mit->ait = (PyArrayIterObject *)PyArray_IterNew((PyObject *)arr);
     if (mit->ait == NULL) {
-        goto fail;
+        return -1;
     }
 
     /*
@@ -1806,14 +1808,14 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
         Py_INCREF(arr);
         obj = PyArray_EnsureArray((PyObject *)arr);
         if (obj == NULL) {
-            goto fail;
+            return -1;
         }
         sub = array_subscript_simple((PyArrayObject *)obj, mit->indexobj, 0);
         Py_DECREF(obj);
     }
 
     if (sub == NULL) {
-        goto fail;
+        return -1;
     }
 
     subnd = PyArray_NDIM(sub);
@@ -1830,7 +1832,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     mit->subspace = (PyArrayIterObject *)PyArray_IterNew(sub);
     Py_DECREF(sub);
     if (mit->subspace == NULL) {
-        goto fail;
+        return -1;
     }
 
     if (mit->nd + subnd > NPY_MAXDIMS) {
@@ -1838,7 +1840,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
                      "number of dimensions must be within [0, %d], "
                      "indexed array has %d",
                      NPY_MAXDIMS, mit->nd + subnd);
-        goto fail;
+        return -1;
     }
 
     /* Expand dimensions of result */
@@ -1901,7 +1903,7 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
                              "unexpected object "       \
                              "(%s) in selection position %d",
                              Py_TYPE(obj)->tp_name, i);
-                goto fail;
+                return -1;
             }
             else {
                 mit->bscoord[curraxis] = start;
@@ -1919,12 +1921,12 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
     if (mit->size < 0) {
         PyErr_SetString(PyExc_ValueError,
                         "dimensions too large in fancy indexing");
-        goto fail;
+        return -1;
     }
     if (mit->ait->size == 0 && mit->size != 0) {
         PyErr_SetString(PyExc_IndexError,
                         "invalid index into a 0-size array");
-        goto fail;
+        return -1;
     }
 
     for (i = 0; i < mit->numiter; i++) {
@@ -1936,20 +1938,13 @@ PyArray_MapIterBind(PyArrayMapIterObject *mit, PyArrayObject *arr)
             indptr = ((npy_intp *)it->dataptr);
             indval = *indptr;
             if (check_and_adjust_index(&indval, dimsize, mit->iteraxes[i]) < 0) {
-                goto fail;
+                return -1;
             }
             PyArray_ITER_NEXT(it);
         }
         PyArray_ITER_RESET(it);
     }
     return 0;
-
- fail:
-    Py_XDECREF(mit->subspace);
-    Py_XDECREF(mit->ait);
-    mit->subspace = NULL;
-    mit->ait = NULL;
-    return -1;
 }
 
 
@@ -2143,6 +2138,7 @@ PyArray_MapIterArray(PyArrayObject * a, PyObject * index)
     }
 
     if (PyArray_MapIterBind(mit, a) != 0) {
+        Py_DECREF(mit);
         return NULL;
     }
     PyArray_MapIterReset(mit);
