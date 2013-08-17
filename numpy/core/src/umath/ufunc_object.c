@@ -4872,23 +4872,23 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     PyArray_Descr *dtypes[3] = {NULL, NULL, NULL};
     PyArrayObject *operands[3] = {NULL, NULL, NULL};
     PyArrayObject *array_operands[3] = {NULL, NULL, NULL};
-    npy_intp dims[1] = {1};    
+    npy_intp dims[1] = {1};
 
     int needs_api;
-    NPY_BEGIN_THREADS_DEF;
 
     PyUFuncGenericFunction innerloop;
     void *innerloopdata;
     npy_intp count[1], stride[1];
     int i;
     int nop;
-    
+
     NpyIter *iter_buffer;
     NpyIter_IterNextFunc *iternext;
     npy_uint32 op_flags[NPY_MAXARGS];
     int buffersize;
     int errormask = 0;
-    PyObject *errobj = NULL;    
+    PyObject *errobj = NULL;
+    NPY_BEGIN_THREADS_DEF;
 
     if (ufunc->nin > 2) {
         PyErr_SetString(PyExc_ValueError,
@@ -4913,7 +4913,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     }
 
     op1_array = op1;
-    
+
     iter = PyArray_MapIterArray(op1_array, idx);
     if (iter == NULL) {
         goto fail;
@@ -4938,7 +4938,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             }
         }
 
-        /* 
+        /*
          * Create array iter object for second operand that
          * "matches" the map iter object for the first operand.
          * Then we can just iterate over the first and second
@@ -4994,7 +4994,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     if (iter2 != NULL) {
         Py_INCREF(PyArray_DESCR(op2_array));
         array_operands[1] = PyArray_NewFromDescr(&PyArray_Type,
-                                           PyArray_DESCR(op2_array), 
+                                           PyArray_DESCR(op2_array),
                                            1, dims, NULL,
                                            PyArray_ITER_DATA(iter2),
                                            NPY_ARRAY_WRITEABLE, NULL);
@@ -5062,7 +5062,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     if (iter_buffer == NULL) {
         goto fail;
     }
-    
+
     needs_api = needs_api | NpyIter_IterationNeedsAPI(iter_buffer);
 
     iternext = NpyIter_GetIterNext(iter_buffer, NULL);
@@ -5098,7 +5098,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             dataptr[1] = iter->dataptr;
             dataptr[2] = NULL;
         }
-        
+
         /* Reset NpyIter data pointers which will trigger a buffer copy */
         NpyIter_ResetBasePointers(iter_buffer, dataptr, NULL);
         buffer_dataptr = NpyIter_GetDataPtrArray(iter_buffer);
@@ -5109,7 +5109,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
             break;
         }
 
-        /* 
+        /*
          * Call to iternext triggers copy from buffer back to output array
          * after innerloop puts result in buffer.
          */
@@ -5126,7 +5126,7 @@ ufunc_at(PyUFuncObject *ufunc, PyObject *args)
     if (!needs_api) {
         NPY_END_THREADS;
     }
-   
+
     NpyIter_Deallocate(iter_buffer);
 
     Py_XDECREF(op2_array);
