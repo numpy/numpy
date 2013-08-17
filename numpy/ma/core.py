@@ -3129,6 +3129,11 @@ class MaskedArray(ndarray):
             if self._hardmask:
                 current_mask |= mask
             # Softmask: set everything to False
+            # If it's obviously a compatible scalar, use a quick update
+            # method...
+            elif isinstance(mask, (int, float, np.bool_, np.number)):
+                current_mask[...] = mask
+            # ...otherwise fall back to the slower, general purpose way.
             else:
                 current_mask.flat = mask
         # Named fields w/ ............
@@ -3158,6 +3163,11 @@ class MaskedArray(ndarray):
                 for n in idtype.names:
                     current_mask[n] |= mask[n]
             # Softmask: set everything to False
+            # If it's obviously a compatible scalar, use a quick update
+            # method...
+            elif isinstance(mask, (int, float, np.bool_, np.number)):
+                current_mask[...] = mask
+            # ...otherwise fall back to the slower, general purpose way.
             else:
                 current_mask.flat = mask
         # Reshape if needed
