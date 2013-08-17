@@ -2670,6 +2670,7 @@ def median(a, axis=None, out=None, overwrite_input=False):
     >>> assert not np.all(a==b)
 
     """
+    a = np.asarray(a)
     if axis is not None and axis >= a.ndim:
         raise IndexError("axis %d out of bounds (%d)" % (axis, a.ndim))
 
