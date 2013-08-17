@@ -870,7 +870,6 @@ class TestMethods(TestCase):
         # order.
 
         # check double
-        a = np.array([np.nan, 1, 0])
         a = np.array([0, 1, np.nan])
         msg = "Test real searchsorted with nans, side='l'"
         b = a.searchsorted(a, side='l')
@@ -896,6 +895,41 @@ class TestMethods(TestCase):
         a = np.array([0,128],dtype='>i4')
         b = a.searchsorted(np.array(128,dtype='>i4'))
         assert_equal(b, 1, msg)
+
+        # Check 0 elements
+        a = np.ones(0)
+        b = a.searchsorted([0, 1, 2], 'l')
+        assert_equal(b, [0, 0, 0])
+        b = a.searchsorted([0, 1, 2], 'r')
+        assert_equal(b, [0, 0, 0])
+        a = np.ones(1)
+        # Check 1 element
+        b = a.searchsorted([0, 1, 2], 'l')
+        assert_equal(b, [0, 0, 1])
+        b = a.searchsorted([0, 1, 2], 'r')
+        assert_equal(b, [0, 1, 1])
+        # Check all elements equal
+        a = np.ones(2)
+        b = a.searchsorted([0, 1, 2], 'l')
+        assert_equal(b, [0, 0, 2])
+        b = a.searchsorted([0, 1, 2], 'r')
+        assert_equal(b, [0, 2, 2])
+
+        # Test searching unaligned array
+        a = np.arange(10)
+        aligned = np.empty(a.itemsize * a.size + 1, 'uint8')
+        unaligned = aligned[1:].view(a.dtype)
+        unaligned[:] = a
+        # Test searching unaligned array
+        b = unaligned.searchsorted(a, 'l')
+        assert_equal(b, a)
+        b = unaligned.searchsorted(a, 'r')
+        assert_equal(b, a + 1)
+        # Test searching for unaligned keys
+        b = a.searchsorted(unaligned, 'l')
+        assert_equal(b, a)
+        b = a.searchsorted(unaligned, 'r')
+        assert_equal(b, a + 1)
 
     def test_searchsorted_unicode(self):
         # Test searchsorted on unicode strings.
@@ -935,8 +969,9 @@ class TestMethods(TestCase):
         # bounds check
         assert_raises(ValueError, np.searchsorted, a, 4, sorter=[0,1,2,3,5])
         assert_raises(ValueError, np.searchsorted, a, 0, sorter=[-1,0,1,2,3])
+        assert_raises(ValueError, np.searchsorted, a, 0, sorter=[4,0,-1,2,3])
 
-        a = np.random.rand(100)
+        a = np.random.rand(300)
         s = a.argsort()
         b = np.sort(a)
         k = np.linspace(0, 1, 20)
@@ -945,8 +980,30 @@ class TestMethods(TestCase):
         a = np.array([0, 1, 2, 3, 5]*20)
         s = a.argsort()
         k = [0, 1, 2, 3, 5]
-        assert_equal(a.searchsorted(k, side='l', sorter=s), [0, 20, 40, 60, 80])
-        assert_equal(a.searchsorted(k, side='r', sorter=s), [20, 40, 60, 80, 100])
+        expected = [0, 20, 40, 60, 80]
+        assert_equal(a.searchsorted(k, side='l', sorter=s), expected)
+        expected = [20, 40, 60, 80, 100]
+        assert_equal(a.searchsorted(k, side='r', sorter=s), expected)
+
+        # Test searching unaligned array
+        keys = np.arange(10)
+        a = keys.copy()
+        np.random.shuffle(s)
+        s = a.argsort()
+        aligned = np.empty(a.itemsize * a.size + 1, 'uint8')
+        unaligned = aligned[1:].view(a.dtype)
+        # Test searching unaligned array
+        unaligned[:] = a
+        b = unaligned.searchsorted(keys, 'l', s)
+        assert_equal(b, keys)
+        b = unaligned.searchsorted(keys, 'r', s)
+        assert_equal(b, keys + 1)
+        # Test searching for unaligned keys
+        unaligned[:] = keys
+        b = a.searchsorted(unaligned, 'l', s)
+        assert_equal(b, keys)
+        b = a.searchsorted(unaligned, 'r', s)
+        assert_equal(b, keys + 1)
 
 
     def test_partition(self):
