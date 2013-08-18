@@ -34,7 +34,7 @@ class TestMaskedArray(TestCase):
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-        m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0 , 0, 1]
+        m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1]
         xm = masked_array(x, mask=m1)
         ym = masked_array(y, mask=m2)
         z = np.array([-.5, 0., .5, .8])
@@ -79,8 +79,8 @@ class TestMaskedArray(TestCase):
         assert_equal(xm.shape, s)
         assert_equal(xm.dtype, x.dtype)
         assert_equal(zm.dtype, z.dtype)
-        assert_equal(xm.size , reduce(lambda x, y:x * y, s))
-        assert_equal(count(xm) , len(m1) - reduce(lambda x, y:x + y, m1))
+        assert_equal(xm.size, reduce(lambda x, y:x * y, s))
+        assert_equal(count(xm), len(m1) - reduce(lambda x, y:x + y, m1))
         assert_array_equal(xm, xf)
         assert_array_equal(filled(xm, 1.e20), xf)
         assert_array_equal(x, xm)
@@ -100,8 +100,8 @@ class TestMaskedArray(TestCase):
             self.assertTrue(isMaskedArray(xm))
             assert_equal(shape(xm), s)
             assert_equal(xm.shape, s)
-            assert_equal(xm.size , reduce(lambda x, y:x * y, s))
-            assert_equal(count(xm) , len(m1) - reduce(lambda x, y:x + y, m1))
+            assert_equal(xm.size, reduce(lambda x, y:x * y, s))
+            assert_equal(count(xm), len(m1) - reduce(lambda x, y:x + y, m1))
             assert_equal(xm, xf)
             assert_equal(filled(xm, 1.e20), xf)
             assert_equal(x, xm)
@@ -658,7 +658,7 @@ class TestMaskedArrayArithmetic(TestCase):
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-        m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0 , 0, 1]
+        m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1]
         xm = masked_array(x, mask=m1)
         ym = masked_array(y, mask=m2)
         z = np.array([-.5, 0., .5, .8])
@@ -717,7 +717,7 @@ class TestMaskedArrayArithmetic(TestCase):
         assert_equal(z, [[-1., 1., 1.], [-1., 4., 2.5]])
         assert_equal(z.mask, [[1, 0, 0], [1, 0, 0]])
         #
-        z = x / y[None, :]
+        z = x / y[None,:]
         assert_equal(z, [[-1., 1., 1.], [-1., 4., 2.5]])
         assert_equal(z.mask, [[1, 0, 0], [1, 0, 0]])
         #
@@ -1547,7 +1547,7 @@ class TestFillingValues(TestCase):
         "Test the behavior of fill_value in view"
 
         # Create initial masked array
-        x = array([1,2,3], fill_value=1, dtype=np.int64)
+        x = array([1, 2, 3], fill_value=1, dtype=np.int64)
 
         # Check that fill_value is preserved by default
         y = x.view()
@@ -1778,7 +1778,7 @@ class TestMaskedArrayInPlaceArithmetics(TestCase):
         x = [1., 1., 1., -2., pi / 2., 4., 5., -10., 10., 1., 2., 3.]
         y = [5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.]
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-        m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0 , 0, 1]
+        m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1]
         xm = masked_array(x, mask=m1)
         ym = masked_array(y, mask=m2)
         #
@@ -1952,10 +1952,10 @@ class TestMaskedArrayMethods(TestCase):
     "Test class for miscellaneous MaskedArrays methods."
     def setUp(self):
         "Base data definition."
-        x = np.array([ 8.375, 7.545, 8.828, 8.5  , 1.757, 5.928,
-                      8.43 , 7.78 , 9.865, 5.878, 8.979, 4.732,
+        x = np.array([ 8.375, 7.545, 8.828, 8.5, 1.757, 5.928,
+                      8.43, 7.78, 9.865, 5.878, 8.979, 4.732,
                       3.012, 6.022, 5.095, 3.116, 5.238, 3.957,
-                      6.04 , 9.63 , 7.712, 3.382, 4.489, 6.479,
+                      6.04, 9.63, 7.712, 3.382, 4.489, 6.479,
                       7.189, 9.645, 5.395, 4.961, 9.894, 2.893,
                       7.357, 9.828, 6.272, 3.758, 6.693, 0.993])
         X = x.reshape(6, 6)
@@ -2125,10 +2125,10 @@ class TestMaskedArrayMethods(TestCase):
 
     def test_clip(self):
         "Tests clip on MaskedArrays."
-        x = np.array([ 8.375, 7.545, 8.828, 8.5  , 1.757, 5.928,
-                       8.43 , 7.78 , 9.865, 5.878, 8.979, 4.732,
+        x = np.array([ 8.375, 7.545, 8.828, 8.5, 1.757, 5.928,
+                       8.43, 7.78, 9.865, 5.878, 8.979, 4.732,
                        3.012, 6.022, 5.095, 3.116, 5.238, 3.957,
-                       6.04 , 9.63 , 7.712, 3.382, 4.489, 6.479,
+                       6.04, 9.63, 7.712, 3.382, 4.489, 6.479,
                        7.189, 9.645, 5.395, 4.961, 9.894, 2.893,
                        7.357, 9.828, 6.272, 3.758, 6.693, 0.993])
         m = np.array([0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1,
@@ -2428,10 +2428,10 @@ class TestMaskedArrayMethods(TestCase):
 
     def test_swapaxes(self):
         "Tests swapaxes on MaskedArrays."
-        x = np.array([ 8.375, 7.545, 8.828, 8.5  , 1.757, 5.928,
-                      8.43 , 7.78 , 9.865, 5.878, 8.979, 4.732,
+        x = np.array([ 8.375, 7.545, 8.828, 8.5, 1.757, 5.928,
+                      8.43, 7.78, 9.865, 5.878, 8.979, 4.732,
                       3.012, 6.022, 5.095, 3.116, 5.238, 3.957,
-                      6.04 , 9.63 , 7.712, 3.382, 4.489, 6.479,
+                      6.04, 9.63, 7.712, 3.382, 4.489, 6.479,
                       7.189, 9.645, 5.395, 4.961, 9.894, 2.893,
                       7.357, 9.828, 6.272, 3.758, 6.693, 0.993])
         m = np.array([0, 1, 0, 1, 0, 0,
@@ -2467,7 +2467,7 @@ class TestMaskedArrayMethods(TestCase):
     def test_take_masked_indices(self):
         "Test take w/ masked indices"
         a = np.array((40, 18, 37, 9, 22))
-        indices = np.arange(3)[None, :] + np.arange(5)[:, None]
+        indices = np.arange(3)[None,:] + np.arange(5)[:, None]
         mindices = array(indices, mask=(indices >= len(a)))
         # No mask
         test = take(a, mindices, mode='clip')
@@ -2615,10 +2615,10 @@ class TestMaskedArrayMathMethods(TestCase):
 
     def setUp(self):
         "Base data definition."
-        x = np.array([ 8.375, 7.545, 8.828, 8.5  , 1.757, 5.928,
-                      8.43 , 7.78 , 9.865, 5.878, 8.979, 4.732,
+        x = np.array([ 8.375, 7.545, 8.828, 8.5, 1.757, 5.928,
+                      8.43, 7.78, 9.865, 5.878, 8.979, 4.732,
                       3.012, 6.022, 5.095, 3.116, 5.238, 3.957,
-                      6.04 , 9.63 , 7.712, 3.382, 4.489, 6.479,
+                      6.04, 9.63, 7.712, 3.382, 4.489, 6.479,
                       7.189, 9.645, 5.395, 4.961, 9.894, 2.893,
                       7.357, 9.828, 6.272, 3.758, 6.693, 0.993])
         X = x.reshape(6, 6)
@@ -2840,10 +2840,10 @@ class TestMaskedArrayMathMethodsComplex(TestCase):
     "Test class for miscellaneous MaskedArrays methods."
     def setUp(self):
         "Base data definition."
-        x = np.array([ 8.375j, 7.545j, 8.828j, 8.5j  , 1.757j, 5.928,
-                      8.43 , 7.78 , 9.865, 5.878, 8.979, 4.732,
+        x = np.array([ 8.375j, 7.545j, 8.828j, 8.5j, 1.757j, 5.928,
+                      8.43, 7.78, 9.865, 5.878, 8.979, 4.732,
                       3.012, 6.022, 5.095, 3.116, 5.238, 3.957,
-                      6.04 , 9.63 , 7.712, 3.382, 4.489, 6.479j,
+                      6.04, 9.63, 7.712, 3.382, 4.489, 6.479j,
                       7.189j, 9.645, 5.395, 4.961, 9.894, 2.893,
                       7.357, 9.828, 6.272, 3.758, 6.693, 0.993j])
         X = x.reshape(6, 6)
@@ -2897,7 +2897,7 @@ class TestMaskedArrayFunctions(TestCase):
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-        m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0 , 0, 1]
+        m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1]
         xm = masked_array(x, mask=m1)
         ym = masked_array(y, mask=m2)
         z = np.array([-.5, 0., .5, .8])
@@ -3079,7 +3079,7 @@ class TestMaskedArrayFunctions(TestCase):
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-        m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0 , 0, 1]
+        m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1]
         xm = masked_array(x, mask=m1)
         ym = masked_array(y, mask=m2)
         z = np.array([-.5, 0., .5, .8])
@@ -3110,7 +3110,7 @@ class TestMaskedArrayFunctions(TestCase):
         x[3] = masked
         c = x >= 8
         # Set False to masked
-        z = where(c , x, masked)
+        z = where(c, x, masked)
         assert_(z.dtype is x.dtype)
         assert_(z[3] is masked)
         assert_(z[4] is masked)
@@ -3119,7 +3119,7 @@ class TestMaskedArrayFunctions(TestCase):
         assert_(z[9] is not masked)
         assert_equal(x, z)
         # Set True to masked
-        z = where(c , masked, x)
+        z = where(c, masked, x)
         assert_(z.dtype is x.dtype)
         assert_(z[3] is masked)
         assert_(z[4] is not masked)
@@ -3369,7 +3369,7 @@ class TestMaskedArrayFunctions(TestCase):
         # Test compress function on ndarray and masked array
         # Address Github #2495.
         arr = np.arange(8)
-        arr.shape = 4,2
+        arr.shape = 4, 2
         cond = np.array([True, False, True, True])
         control = arr[[0, 2, 3]]
         test = np.ma.compress(cond, arr, axis=0)
@@ -3457,11 +3457,11 @@ class TestMaskedFields(TestCase):
         ndtype = [('a', int), ('b', float)]
         test = empty(3, dtype=ndtype)
         assert_equal(getmaskarray(test),
-                     np.array([(0, 0) , (0, 0), (0, 0)],
+                     np.array([(0, 0), (0, 0), (0, 0)],
                               dtype=[('a', '|b1'), ('b', '|b1')]))
         test[:] = masked
         assert_equal(getmaskarray(test),
-                     np.array([(1, 1) , (1, 1), (1, 1)],
+                     np.array([(1, 1), (1, 1), (1, 1)],
                               dtype=[('a', '|b1'), ('b', '|b1')]))
     #
     def test_view(self):

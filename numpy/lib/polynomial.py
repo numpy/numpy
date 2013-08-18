@@ -141,7 +141,7 @@ def poly(seq_of_zeros):
         roots = NX.asarray(seq_of_zeros, complex)
         pos_roots = sort_complex(NX.compress(roots.imag > 0, roots))
         neg_roots = NX.conjugate(sort_complex(
-                                        NX.compress(roots.imag < 0,roots)))
+                                        NX.compress(roots.imag < 0, roots)))
         if (len(pos_roots) == len(neg_roots) and
             NX.alltrue(neg_roots == pos_roots)):
             a = a.real.copy()
@@ -223,7 +223,7 @@ def roots(p):
     if N > 1:
         # build companion matrix and find its eigenvalues (the roots)
         A = diag(NX.ones((N-2,), p.dtype), -1)
-        A[0, :] = -p[1:] / p[0]
+        A[0,:] = -p[1:] / p[0]
         roots = eigvals(A)
     else:
         roots = NX.array([])
@@ -589,7 +589,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
     if full :
         return c, resids, rank, s, rcond
     elif cov :
-        Vbase = inv(dot(lhs.T,lhs))
+        Vbase = inv(dot(lhs.T, lhs))
         Vbase /= NX.outer(scale, scale)
         # Some literature ignores the extra -2.0 factor in the denominator, but
         #  it is included here because the covariance of Multivariate Student-T
@@ -599,7 +599,7 @@ def polyfit(x, y, deg, rcond=None, full=False, w=None, cov=False):
         if y.ndim == 1:
             return c, Vbase * fac
         else:
-            return c, Vbase[:,:,NX.newaxis] * fac
+            return c, Vbase[:,:, NX.newaxis] * fac
     else :
         return c
 
@@ -828,7 +828,7 @@ def polymul(a1, a2):
 
     """
     truepoly = (isinstance(a1, poly1d) or isinstance(a2, poly1d))
-    a1,a2 = poly1d(a1),poly1d(a2)
+    a1, a2 = poly1d(a1), poly1d(a2)
     val = NX.convolve(a1, a2)
     if truepoly:
         val = poly1d(val)
@@ -1200,7 +1200,7 @@ class poly1d(object):
     def __getattr__(self, key):
         if key in ['r', 'roots']:
             return roots(self.coeffs)
-        elif key in ['c','coef','coefficients']:
+        elif key in ['c', 'coef', 'coefficients']:
             return self.coeffs
         elif key in ['o']:
             return self.order
@@ -1261,4 +1261,4 @@ class poly1d(object):
 
 # Stuff to do on module import
 
-warnings.simplefilter('always',RankWarning)
+warnings.simplefilter('always', RankWarning)

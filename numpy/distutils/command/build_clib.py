@@ -42,13 +42,13 @@ class build_clib(old_build_clib):
 
     def have_f_sources(self):
         for (lib_name, build_info) in self.libraries:
-            if has_f_sources(build_info.get('sources',[])):
+            if has_f_sources(build_info.get('sources', [])):
                 return True
         return False
 
     def have_cxx_sources(self):
         for (lib_name, build_info) in self.libraries:
-            if has_cxx_sources(build_info.get('sources',[])):
+            if has_cxx_sources(build_info.get('sources', [])):
                 return True
         return False
 
@@ -63,7 +63,7 @@ class build_clib(old_build_clib):
         self.run_command('build_src')
 
         for (lib_name, build_info) in self.libraries:
-            l = build_info.get('language',None)
+            l = build_info.get('language', None)
             if l and l not in languages: languages.append(l)
 
         from distutils.ccompiler import new_compiler
@@ -136,7 +136,7 @@ class build_clib(old_build_clib):
         c_sources, cxx_sources, f_sources, fmodule_sources \
                    = filter_sources(sources)
         requiref90 = not not fmodule_sources or \
-                     build_info.get('language','c')=='f90'
+                     build_info.get('language', 'c')=='f90'
 
         # save source type information so that build_ext can use it.
         source_languages = []
@@ -148,14 +148,14 @@ class build_clib(old_build_clib):
 
         lib_file = compiler.library_filename(lib_name,
                                              output_dir=self.build_clib)
-        depends = sources + build_info.get('depends',[])
+        depends = sources + build_info.get('depends', [])
         if not (self.force or newer_group(depends, lib_file, 'newer')):
             log.debug("skipping '%s' library (up-to-date)", lib_name)
             return
         else:
             log.info("building '%s' library", lib_name)
 
-        config_fc = build_info.get('config_fc',{})
+        config_fc = build_info.get('config_fc', {})
         if fcompiler is not None and config_fc:
             log.info('using additional config_fc from setup script '\
                      'for fortran compiler: %s' \
@@ -229,7 +229,7 @@ class build_clib(old_build_clib):
                 if fcompiler.module_dir_switch is None:
                     existing_modules = glob('*.mod')
                 extra_postargs += fcompiler.module_options(\
-                    module_dirs,module_build_dir)
+                    module_dirs, module_build_dir)
 
             if fmodule_sources:
                 log.info("compiling Fortran 90 module sources")
@@ -276,9 +276,9 @@ class build_clib(old_build_clib):
                                    debug=self.debug)
 
         # fix library dependencies
-        clib_libraries = build_info.get('libraries',[])
+        clib_libraries = build_info.get('libraries', [])
         for lname, binfo in libraries:
             if lname in clib_libraries:
-                clib_libraries.extend(binfo[1].get('libraries',[]))
+                clib_libraries.extend(binfo[1].get('libraries', []))
         if clib_libraries:
             build_info['libraries'] = clib_libraries

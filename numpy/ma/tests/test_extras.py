@@ -277,8 +277,8 @@ class TestConcatenator(TestCase):
         assert_array_equal(d.mask, np.r_['1', m_1, m_2])
         d = mr_[b_1, b_2]
         self.assertTrue(d.shape == (10, 5))
-        assert_array_equal(d[:5, :], b_1)
-        assert_array_equal(d[5:, :], b_2)
+        assert_array_equal(d[:5,:], b_1)
+        assert_array_equal(d[5:,:], b_2)
         assert_array_equal(d.mask, np.r_[m_1, m_2])
 
 
@@ -688,7 +688,7 @@ class TestPolynomial(TestCase):
             assert_almost_equal(a, a_)
         #
         (C, R, K, S, D) = polyfit(x, y, 3, full=True)
-        (c, r, k, s, d) = np.polyfit(x[1:-1], y[1:-1, :], 3, full=True)
+        (c, r, k, s, d) = np.polyfit(x[1:-1], y[1:-1,:], 3, full=True)
         for (a, a_) in zip((C, R, K, S, D), (c, r, k, s, d)):
             assert_almost_equal(a, a_)
         #

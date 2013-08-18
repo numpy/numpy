@@ -17,7 +17,7 @@ if sys.version_info[0] >= 3:
 else:
     from StringIO import StringIO
 
-__all__ = ['assert_equal', 'assert_almost_equal','assert_approx_equal',
+__all__ = ['assert_equal', 'assert_almost_equal', 'assert_approx_equal',
            'assert_array_equal', 'assert_array_less', 'assert_string_equal',
            'assert_array_almost_equal', 'assert_raises', 'build_err_msg',
            'decorate_methods', 'jiffies', 'memusage', 'print_assert_equal',
@@ -118,7 +118,7 @@ if sys.platform[:5]=='linux':
         if not _load_time:
             _load_time.append(time.time())
         try:
-            f=open(_proc_pid_stat,'r')
+            f=open(_proc_pid_stat, 'r')
             l = f.readline().split(' ')
             f.close()
             return int(l[13])
@@ -129,7 +129,7 @@ if sys.platform[:5]=='linux':
         """ Return virtual memory size in bytes of the running python.
         """
         try:
-            f=open(_proc_pid_stat,'r')
+            f=open(_proc_pid_stat, 'r')
             l = f.readline().split(' ')
             f.close()
             return int(l[22])
@@ -164,7 +164,7 @@ if os.name=='nt' and sys.version[:3] > '2.3':
         # the CPU to 100%, but the above makes more sense :)
         import win32pdh
         if format is None: format = win32pdh.PDH_FMT_LONG
-        path = win32pdh.MakeCounterPath( (machine,object,instance, None, inum,counter) )
+        path = win32pdh.MakeCounterPath( (machine, object, instance, None, inum, counter) )
         hq = win32pdh.OpenQuery()
         try:
             hc = win32pdh.AddCounter(hq, path)
@@ -243,16 +243,16 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
     if isinstance(desired, dict):
         if not isinstance(actual, dict) :
             raise AssertionError(repr(type(actual)))
-        assert_equal(len(actual),len(desired),err_msg,verbose)
-        for k,i in desired.items():
+        assert_equal(len(actual), len(desired), err_msg, verbose)
+        for k, i in desired.items():
             if k not in actual :
                 raise AssertionError(repr(k))
-            assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k,err_msg), verbose)
+            assert_equal(actual[k], desired[k], 'key=%r\n%s' % (k, err_msg), verbose)
         return
-    if isinstance(desired, (list,tuple)) and isinstance(actual, (list,tuple)):
-        assert_equal(len(actual),len(desired),err_msg,verbose)
+    if isinstance(desired, (list, tuple)) and isinstance(actual, (list, tuple)):
+        assert_equal(len(actual), len(desired), err_msg, verbose)
         for k in range(len(desired)):
-            assert_equal(actual[k], desired[k], 'item=%r\n%s' % (k,err_msg), verbose)
+            assert_equal(actual[k], desired[k], 'item=%r\n%s' % (k, err_msg), verbose)
         return
     from numpy.core import ndarray, isscalar, signbit
     from numpy.lib import iscomplexobj, real, imag
@@ -316,7 +316,7 @@ def assert_equal(actual,desired,err_msg='',verbose=True):
     if desired != actual :
         raise AssertionError(msg)
 
-def print_assert_equal(test_string,actual,desired):
+def print_assert_equal(test_string, actual, desired):
     """
     Test if two objects are equal, and print an error message if test fails.
 
@@ -350,9 +350,9 @@ def print_assert_equal(test_string,actual,desired):
         msg = StringIO()
         msg.write(test_string)
         msg.write(' failed\nACTUAL: \n')
-        pprint.pprint(actual,msg)
+        pprint.pprint(actual, msg)
         msg.write('DESIRED: \n')
-        pprint.pprint(desired,msg)
+        pprint.pprint(desired, msg)
         raise AssertionError(msg.getvalue())
 
 def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
@@ -466,7 +466,7 @@ def assert_almost_equal(actual,desired,decimal=7,err_msg='',verbose=True):
             return
     except (NotImplementedError, TypeError):
         pass
-    if round(abs(desired - actual),decimal) != 0 :
+    if round(abs(desired - actual), decimal) != 0 :
         raise AssertionError(msg)
 
 
@@ -535,7 +535,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
     # scale = float(pow(10,math.floor(math.log10(0.5*(abs(desired)+abs(actual))))))
     with np.errstate(invalid='ignore'):
         scale = 0.5*(np.abs(desired) + np.abs(actual))
-        scale = np.power(10,np.floor(np.log10(scale)))
+        scale = np.power(10, np.floor(np.log10(scale)))
     try:
         sc_desired = desired/scale
     except ZeroDivisionError:
@@ -562,7 +562,7 @@ def assert_approx_equal(actual,desired,significant=7,err_msg='',verbose=True):
             return
     except (TypeError, NotImplementedError):
         pass
-    if np.abs(sc_desired - sc_actual) >= np.power(10.,-(significant-1)) :
+    if np.abs(sc_desired - sc_actual) >= np.power(10., -(significant-1)) :
         raise AssertionError(msg)
 
 def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
@@ -624,7 +624,7 @@ def assert_array_compare(comparison, x, y, err_msg='', verbose=True,
             else:
                 val = comparison(x, y)
         else:
-            val = comparison(x,y)
+            val = comparison(x, y)
 
         if isinstance(val, bool):
             cond = val
@@ -1100,7 +1100,7 @@ def measure(code_str,times=1,label=None):
 
     """
     frame = sys._getframe(1)
-    locs,globs = frame.f_locals,frame.f_globals
+    locs, globs = frame.f_locals, frame.f_globals
 
     code = compile(code_str,
                    'Test name: %s ' % label,
@@ -1109,7 +1109,7 @@ def measure(code_str,times=1,label=None):
     elapsed = jiffies()
     while i < times:
         i += 1
-        exec(code, globs,locs)
+        exec(code, globs, locs)
     elapsed = jiffies() - elapsed
     return 0.01*elapsed
 
@@ -1127,7 +1127,7 @@ def _assert_valid_refcount(op):
 
     rc = sys.getrefcount(i)
     for j in range(15):
-        d = op(b,c)
+        d = op(b, c)
 
     assert_(sys.getrefcount(i) >= rc)
 

@@ -15,7 +15,7 @@ But note that FCompiler.executables is actually a dictionary of commands.
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['FCompiler','new_fcompiler','show_fcompilers',
+__all__ = ['FCompiler', 'new_fcompiler', 'show_fcompilers',
            'dummy_fortran_file']
 
 import os
@@ -144,16 +144,16 @@ class FCompiler(CCompiler):
         ar = ('flags.ar', 'ARFLAGS', 'arflags', flaglist),
     )
 
-    language_map = {'.f':'f77',
-                    '.for':'f77',
-                    '.F':'f77',    # XXX: needs preprocessor
-                    '.ftn':'f77',
-                    '.f77':'f77',
-                    '.f90':'f90',
-                    '.F90':'f90',  # XXX: needs preprocessor
-                    '.f95':'f90',
+    language_map = {'.f': 'f77',
+                    '.for': 'f77',
+                    '.F': 'f77',    # XXX: needs preprocessor
+                    '.ftn': 'f77',
+                    '.f77': 'f77',
+                    '.f90': 'f90',
+                    '.F90': 'f90',  # XXX: needs preprocessor
+                    '.f95': 'f90',
                     }
-    language_order = ['f90','f77']
+    language_order = ['f90', 'f77']
 
 
     # These will be set by the subclass
@@ -164,14 +164,14 @@ class FCompiler(CCompiler):
 
     possible_executables = []
     executables = {
-        'version_cmd'  : ["f77", "-v"],
-        'compiler_f77' : ["f77"],
-        'compiler_f90' : ["f90"],
-        'compiler_fix' : ["f90", "-fixed"],
-        'linker_so'    : ["f90", "-shared"],
-        'linker_exe'   : ["f90"],
-        'archiver'     : ["ar", "-cr"],
-        'ranlib'       : None,
+        'version_cmd': ["f77", "-v"],
+        'compiler_f77': ["f77"],
+        'compiler_f90': ["f90"],
+        'compiler_fix': ["f90", "-fixed"],
+        'linker_so': ["f90", "-shared"],
+        'linker_exe': ["f90"],
+        'archiver': ["ar", "-cr"],
+        'ranlib': None,
         }
 
     # If compiler does not support compiling Fortran 90 then it can
@@ -196,7 +196,7 @@ class FCompiler(CCompiler):
 
     pic_flags = []           # Flags to create position-independent code
 
-    src_extensions = ['.for','.ftn','.f77','.f','.f90','.f95','.F','.F90']
+    src_extensions = ['.for', '.ftn', '.f77', '.f', '.f90', '.f95', '.F', '.F90']
     obj_extension = ".o"
 
     shared_lib_extension = get_shared_lib_extension()
@@ -543,10 +543,10 @@ class FCompiler(CCompiler):
         """Print out the attributes of a compiler instance."""
         props = []
         for key in list(self.executables.keys()) + \
-                ['version','libraries','library_dirs',
-                 'object_switch','compile_switch']:
-            if hasattr(self,key):
-                v = getattr(self,key)
+                ['version', 'libraries', 'library_dirs',
+                 'object_switch', 'compile_switch']:
+            if hasattr(self, key):
+                v = getattr(self, key)
                 props.append((key, None, '= '+repr(v)))
         props.sort()
 
@@ -572,17 +572,17 @@ class FCompiler(CCompiler):
             compiler = self.compiler_f90
             if compiler is None:
                 raise DistutilsExecError('f90 not supported by %s needed for %s'\
-                      % (self.__class__.__name__,src))
+                      % (self.__class__.__name__, src))
             extra_compile_args = self.extra_f90_compile_args or []
         else:
             flavor = ':fix'
             compiler = self.compiler_fix
             if compiler is None:
                 raise DistutilsExecError('f90 (fixed) not supported by %s needed for %s'\
-                      % (self.__class__.__name__,src))
+                      % (self.__class__.__name__, src))
             extra_compile_args = self.extra_f90_compile_args or []
         if self.object_switch[-1]==' ':
-            o_args = [self.object_switch.strip(),obj]
+            o_args = [self.object_switch.strip(), obj]
         else:
             o_args = [self.object_switch.strip()+obj]
 
@@ -593,7 +593,7 @@ class FCompiler(CCompiler):
             log.info('extra %s options: %r' \
                      % (flavor[1:], ' '.join(extra_compile_args)))
 
-        extra_flags = src_flags.get(self.compiler_type,[])
+        extra_flags = src_flags.get(self.compiler_type, [])
         if extra_flags:
             log.info('using compile options from source: %r' \
                      % ' '.join(extra_flags))
@@ -604,7 +604,7 @@ class FCompiler(CCompiler):
         display = '%s: %s' % (os.path.basename(compiler[0]) + flavor,
                               src)
         try:
-            self.spawn(command,display=display)
+            self.spawn(command, display=display)
         except DistutilsExecError:
             msg = str(get_exception())
             raise CompileError(msg)
@@ -613,18 +613,18 @@ class FCompiler(CCompiler):
         options = []
         if self.module_dir_switch is not None:
             if self.module_dir_switch[-1]==' ':
-                options.extend([self.module_dir_switch.strip(),module_build_dir])
+                options.extend([self.module_dir_switch.strip(), module_build_dir])
             else:
                 options.append(self.module_dir_switch.strip()+module_build_dir)
         else:
             print('XXX: module_build_dir=%r option ignored' % (module_build_dir))
-            print('XXX: Fix module_dir_switch for ',self.__class__.__name__)
+            print('XXX: Fix module_dir_switch for ', self.__class__.__name__)
         if self.module_include_switch is not None:
             for d in [module_build_dir]+module_dirs:
                 options.append('%s%s' % (self.module_include_switch, d))
         else:
             print('XXX: module_dirs=%r option ignored' % (module_dirs))
-            print('XXX: Fix module_include_switch for ',self.__class__.__name__)
+            print('XXX: Fix module_include_switch for ', self.__class__.__name__)
         return options
 
     def library_option(self, lib):
@@ -650,7 +650,7 @@ class FCompiler(CCompiler):
 
         if self._need_link(objects, output_filename):
             if self.library_switch[-1]==' ':
-                o_args = [self.library_switch.strip(),output_filename]
+                o_args = [self.library_switch.strip(), output_filename]
             else:
                 o_args = [self.library_switch.strip()+output_filename]
 
@@ -705,19 +705,19 @@ class FCompiler(CCompiler):
 
 _default_compilers = (
     # sys.platform mappings
-    ('win32', ('gnu','intelv','absoft','compaqv','intelev','gnu95','g95',
+    ('win32', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95',
                'intelvem', 'intelem')),
-    ('cygwin.*', ('gnu','intelv','absoft','compaqv','intelev','gnu95','g95')),
-    ('linux.*', ('gnu95','intel','lahey','pg','absoft','nag','vast','compaq',
-                'intele','intelem','gnu','g95','pathf95')),
+    ('cygwin.*', ('gnu', 'intelv', 'absoft', 'compaqv', 'intelev', 'gnu95', 'g95')),
+    ('linux.*', ('gnu95', 'intel', 'lahey', 'pg', 'absoft', 'nag', 'vast', 'compaq',
+                'intele', 'intelem', 'gnu', 'g95', 'pathf95')),
     ('darwin.*', ('gnu95', 'nag', 'absoft', 'ibm', 'intel', 'gnu', 'g95', 'pg')),
-    ('sunos.*', ('sun','gnu','gnu95','g95')),
-    ('irix.*', ('mips','gnu','gnu95',)),
-    ('aix.*', ('ibm','gnu','gnu95',)),
+    ('sunos.*', ('sun', 'gnu', 'gnu95', 'g95')),
+    ('irix.*', ('mips', 'gnu', 'gnu95',)),
+    ('aix.*', ('ibm', 'gnu', 'gnu95',)),
     # os.name mappings
-    ('posix', ('gnu','gnu95',)),
-    ('nt', ('gnu','gnu95',)),
-    ('mac', ('gnu95','gnu','pg')),
+    ('posix', ('gnu', 'gnu95',)),
+    ('nt', ('gnu', 'gnu95',)),
+    ('mac', ('gnu95', 'gnu', 'pg')),
     )
 
 fcompiler_class = None
@@ -925,18 +925,18 @@ def dummy_fortran_file():
     return name[:-2]
 
 
-is_f_file = re.compile(r'.*[.](for|ftn|f77|f)\Z',re.I).match
-_has_f_header = re.compile(r'-[*]-\s*fortran\s*-[*]-',re.I).search
-_has_f90_header = re.compile(r'-[*]-\s*f90\s*-[*]-',re.I).search
-_has_fix_header = re.compile(r'-[*]-\s*fix\s*-[*]-',re.I).search
-_free_f90_start = re.compile(r'[^c*!]\s*[^\s\d\t]',re.I).match
+is_f_file = re.compile(r'.*[.](for|ftn|f77|f)\Z', re.I).match
+_has_f_header = re.compile(r'-[*]-\s*fortran\s*-[*]-', re.I).search
+_has_f90_header = re.compile(r'-[*]-\s*f90\s*-[*]-', re.I).search
+_has_fix_header = re.compile(r'-[*]-\s*fix\s*-[*]-', re.I).search
+_free_f90_start = re.compile(r'[^c*!]\s*[^\s\d\t]', re.I).match
 
 def is_free_format(file):
     """Check if file is in free format Fortran."""
     # f90 allows both fixed and free format, assuming fixed unless
     # signs of free format are detected.
     result = 0
-    f = open_latin1(file,'r')
+    f = open_latin1(file, 'r')
     line = f.readline()
     n = 10000 # the number of non-comment lines to scan for hints
     if _has_f_header(line):
@@ -956,12 +956,12 @@ def is_free_format(file):
     return result
 
 def has_f90_header(src):
-    f = open_latin1(src,'r')
+    f = open_latin1(src, 'r')
     line = f.readline()
     f.close()
     return _has_f90_header(line) or _has_fix_header(line)
 
-_f77flags_re = re.compile(r'(c|)f77flags\s*\(\s*(?P<fcname>\w+)\s*\)\s*=\s*(?P<fflags>.*)',re.I)
+_f77flags_re = re.compile(r'(c|)f77flags\s*\(\s*(?P<fcname>\w+)\s*\)\s*=\s*(?P<fflags>.*)', re.I)
 def get_f77flags(src):
     """
     Search the first 20 lines of fortran 77 code for line pattern
@@ -969,7 +969,7 @@ def get_f77flags(src):
     Return a dictionary {<fcompiler type>:<f77 flags>}.
     """
     flags = {}
-    f = open_latin1(src,'r')
+    f = open_latin1(src, 'r')
     i = 0
     for line in f:
         i += 1

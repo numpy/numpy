@@ -26,23 +26,23 @@ class SubArray(np.ndarray):
         x.info = info
         return x
     def __array_finalize__(self, obj):
-        self.info = getattr(obj,'info',{})
+        self.info = getattr(obj, 'info', {})
         return
     def __add__(self, other):
         result = np.ndarray.__add__(self, other)
-        result.info.update({'added':result.info.pop('added',0)+1})
+        result.info.update({'added':result.info.pop('added', 0)+1})
         return result
 
 subarray = SubArray
 
-class MSubArray(SubArray,MaskedArray):
+class MSubArray(SubArray, MaskedArray):
     def __new__(cls, data, info={}, mask=nomask):
         subarr = SubArray(data, info)
         _data = MaskedArray.__new__(cls, data=subarr, mask=mask)
         _data.info = subarr.info
         return _data
-    def __array_finalize__(self,obj):
-        MaskedArray.__array_finalize__(self,obj)
+    def __array_finalize__(self, obj):
+        MaskedArray.__array_finalize__(self, obj)
         SubArray.__array_finalize__(self, obj)
         return
     def _get_series(self):
@@ -58,9 +58,9 @@ class MMatrix(MaskedArray, np.matrix,):
         mat = np.matrix(data)
         _data = MaskedArray.__new__(cls, data=mat, mask=mask)
         return _data
-    def __array_finalize__(self,obj):
+    def __array_finalize__(self, obj):
         np.matrix.__array_finalize__(self, obj)
-        MaskedArray.__array_finalize__(self,obj)
+        MaskedArray.__array_finalize__(self, obj)
         return
     def _get_series(self):
         _view = self.view(MaskedArray)
@@ -81,7 +81,7 @@ class TestSubclassing(TestCase):
     def test_data_subclassing(self):
         "Tests whether the subclass is kept."
         x = np.arange(5)
-        m = [0,0,1,0,0]
+        m = [0, 0, 1, 0, 0]
         xsub = SubArray(x)
         xmsub = masked_array(xsub, mask=m)
         self.assertTrue(isinstance(xmsub, MaskedArray))
@@ -104,21 +104,21 @@ class TestSubclassing(TestCase):
         "Tests masked_binary_operation"
         (x, mx) = self.data
         # Result should be a mmatrix
-        self.assertTrue(isinstance(add(mx,mx), mmatrix))
-        self.assertTrue(isinstance(add(mx,x), mmatrix))
+        self.assertTrue(isinstance(add(mx, mx), mmatrix))
+        self.assertTrue(isinstance(add(mx, x), mmatrix))
         # Result should work
-        assert_equal(add(mx,x), mx+x)
-        self.assertTrue(isinstance(add(mx,mx)._data, np.matrix))
-        self.assertTrue(isinstance(add.outer(mx,mx), mmatrix))
-        self.assertTrue(isinstance(hypot(mx,mx), mmatrix))
-        self.assertTrue(isinstance(hypot(mx,x), mmatrix))
+        assert_equal(add(mx, x), mx+x)
+        self.assertTrue(isinstance(add(mx, mx)._data, np.matrix))
+        self.assertTrue(isinstance(add.outer(mx, mx), mmatrix))
+        self.assertTrue(isinstance(hypot(mx, mx), mmatrix))
+        self.assertTrue(isinstance(hypot(mx, x), mmatrix))
 
     def test_masked_binary_operations2(self):
         "Tests domained_masked_binary_operation"
         (x, mx) = self.data
         xmx = masked_array(mx.data.__array__(), mask=mx.mask)
-        self.assertTrue(isinstance(divide(mx,mx), mmatrix))
-        self.assertTrue(isinstance(divide(mx,x), mmatrix))
+        self.assertTrue(isinstance(divide(mx, mx), mmatrix))
+        self.assertTrue(isinstance(divide(mx, x), mmatrix))
         assert_equal(divide(mx, mx), divide(xmx, xmx))
 
     def test_attributepropagation(self):
@@ -127,7 +127,7 @@ class TestSubclassing(TestCase):
         ym = msubarray(x)
         #
         z = (my+1)
-        self.assertTrue(isinstance(z,MaskedArray))
+        self.assertTrue(isinstance(z, MaskedArray))
         self.assertTrue(not isinstance(z, MSubArray))
         self.assertTrue(isinstance(z._data, SubArray))
         assert_equal(z._data.info, {})
@@ -138,10 +138,10 @@ class TestSubclassing(TestCase):
         self.assertTrue(isinstance(z._data, SubArray))
         self.assertTrue(z._data.info['added'] > 0)
         #
-        ym._set_mask([1,0,0,0,1])
-        assert_equal(ym._mask, [1,0,0,0,1])
-        ym._series._set_mask([0,0,0,0,1])
-        assert_equal(ym._mask, [0,0,0,0,1])
+        ym._set_mask([1, 0, 0, 0, 1])
+        assert_equal(ym._mask, [1, 0, 0, 0, 1])
+        ym._series._set_mask([0, 0, 0, 0, 1])
+        assert_equal(ym._mask, [0, 0, 0, 0, 1])
         #
         xsub = subarray(x, info={'name':'x'})
         mxsub = masked_array(xsub)
@@ -151,8 +151,8 @@ class TestSubclassing(TestCase):
     def test_subclasspreservation(self):
         "Checks that masked_array(...,subok=True) preserves the class."
         x = np.arange(5)
-        m = [0,0,1,0,0]
-        xinfo = [(i,j) for (i,j) in zip(x,m)]
+        m = [0, 0, 1, 0, 0]
+        xinfo = [(i, j) for (i, j) in zip(x, m)]
         xsub = MSubArray(x, mask=m, info={'xsub':xinfo})
         #
         mxsub = masked_array(xsub, subok=False)

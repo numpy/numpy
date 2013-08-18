@@ -1157,22 +1157,22 @@ array(data = %(data)s,
         return self
 
     def __eq__(self, other):
-        return equal(self,other)
+        return equal(self, other)
 
     def __ne__(self, other):
-        return not_equal(self,other)
+        return not_equal(self, other)
 
     def __lt__(self, other):
-        return less(self,other)
+        return less(self, other)
 
     def __le__(self, other):
-        return less_equal(self,other)
+        return less_equal(self, other)
 
     def __gt__(self, other):
-        return greater(self,other)
+        return greater(self, other)
 
     def __ge__(self, other):
-        return greater_equal(self,other)
+        return greater_equal(self, other)
 
     def astype (self, tc):
         "return self as array of given type."
@@ -1772,7 +1772,7 @@ def masked_where(condition, x, copy=1):
     """Return x as an array masked where condition is true.
        Also masked where x or condition masked.
     """
-    cm = filled(condition,1)
+    cm = filled(condition, 1)
     m = mask_or(getmask(x), cm)
     return array(filled(x), copy=copy, mask=m)
 
@@ -2179,7 +2179,7 @@ def _clip(self,a_min,a_max,out=None):
     return MaskedArray(data = self.data.clip(asarray(a_min).data,
                                              asarray(a_max).data),
                        mask = mask_or(self.mask,
-                                      mask_or(getmask(a_min),getmask(a_max))))
+                                      mask_or(getmask(a_min), getmask(a_max))))
 array.clip = _m(_clip)
 
 def _compress(self, cond, axis=None, out=None):
@@ -2237,7 +2237,7 @@ array.nonzero = _m(nonzero)
 array.prod = _m(product)
 
 def _ptp(a,axis=None,out=None):
-    return a.max(axis,out)-a.min(axis)
+    return a.max(axis, out)-a.min(axis)
 array.ptp = _m(_ptp)
 array.repeat = _m(new_repeat)
 array.resize = _m(resize)
@@ -2257,7 +2257,7 @@ array.squeeze = _m(_squeeze)
 
 array.strides = property(_m(not_implemented))
 array.sum = _m(sum)
-def _swapaxes(self,axis1,axis2):
+def _swapaxes(self, axis1, axis2):
     return MaskedArray(data = self.data.swapaxes(axis1, axis2),
                        mask = self.mask.swapaxes(axis1, axis2))
 array.swapaxes = _m(_swapaxes)
@@ -2269,13 +2269,13 @@ array.transpose = _m(transpose)
 def _var(self,axis=None,dtype=None, out=None):
     if axis is None:
         return numeric.asarray(self.compressed()).var()
-    a = self.swapaxes(axis,0)
+    a = self.swapaxes(axis, 0)
     a = a - a.mean(axis=0)
     a *= a
     a /= a.count(axis=0)
-    return a.swapaxes(0,axis).sum(axis)
+    return a.swapaxes(0, axis).sum(axis)
 def _std(self,axis=None, dtype=None, out=None):
-    return (self.var(axis,dtype))**0.5
+    return (self.var(axis, dtype))**0.5
 array.var = _m(_var)
 array.std = _m(_std)
 

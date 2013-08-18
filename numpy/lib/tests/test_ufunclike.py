@@ -54,7 +54,7 @@ class TestUfunclike(TestCase):
         a = nx.array([1.1, -1.1])
         m = MyArray(a, metadata='foo')
         f = ufl.fix(m)
-        assert_array_equal(f, nx.array([1,-1]))
+        assert_array_equal(f, nx.array([1, -1]))
         assert_(isinstance(f, MyArray))
         assert_equal(f.metadata, 'foo')
 

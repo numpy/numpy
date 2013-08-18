@@ -16,10 +16,10 @@ L2 = np.array([-1,  0,    3])/2
 L3 = np.array([ 0, -3,    0,    5])/2
 L4 = np.array([ 3,  0,  -30,    0,  35])/8
 L5 = np.array([ 0, 15,    0,  -70,   0,   63])/8
-L6 = np.array([-5,  0,  105,    0,-315,    0,   231])/16
-L7 = np.array([ 0,-35,    0,  315,   0, -693,     0,   429])/16
-L8 = np.array([35,  0,-1260,    0,6930,    0,-12012,     0,6435])/128
-L9 = np.array([ 0,315,    0,-4620,   0,18018,     0,-25740,   0,12155])/128
+L6 = np.array([-5,  0,  105,    0, -315,    0,   231])/16
+L7 = np.array([ 0, -35,    0,  315,   0, -693,     0,   429])/16
+L8 = np.array([35,  0, -1260,    0, 6930,    0, -12012,     0, 6435])/128
+L9 = np.array([ 0, 315,    0, -4620,   0, 18018,     0, -25740,   0, 12155])/128
 
 Llist = [L0, L1, L2, L3, L4, L5, L6, L7, L8, L9]
 
@@ -48,8 +48,8 @@ class TestArithmetic(TestCase) :
     def test_legadd(self) :
         for i in range(5) :
             for j in range(5) :
-                msg = "At i=%d, j=%d" % (i,j)
-                tgt = np.zeros(max(i,j) + 1)
+                msg = "At i=%d, j=%d" % (i, j)
+                tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] += 1
                 res = leg.legadd([0]*i + [1], [0]*j + [1])
@@ -58,8 +58,8 @@ class TestArithmetic(TestCase) :
     def test_legsub(self) :
         for i in range(5) :
             for j in range(5) :
-                msg = "At i=%d, j=%d" % (i,j)
-                tgt = np.zeros(max(i,j) + 1)
+                msg = "At i=%d, j=%d" % (i, j)
+                tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] -= 1
                 res = leg.legsub([0]*i + [1], [0]*j + [1])
@@ -67,7 +67,7 @@ class TestArithmetic(TestCase) :
 
     def test_legmulx(self):
         assert_equal(leg.legmulx([0]), [0])
-        assert_equal(leg.legmulx([1]), [0,1])
+        assert_equal(leg.legmulx([1]), [0, 1])
         for i in range(1, 5):
             tmp = 2*i + 1
             ser = [0]*i + [1]
@@ -80,7 +80,7 @@ class TestArithmetic(TestCase) :
             pol1 = [0]*i + [1]
             val1 = leg.legval(self.x, pol1)
             for j in range(5) :
-                msg = "At i=%d, j=%d" % (i,j)
+                msg = "At i=%d, j=%d" % (i, j)
                 pol2 = [0]*j + [1]
                 val2 = leg.legval(self.x, pol2)
                 pol3 = leg.legmul(pol1, pol2)
@@ -91,7 +91,7 @@ class TestArithmetic(TestCase) :
     def test_legdiv(self) :
         for i in range(5) :
             for j in range(5) :
-                msg = "At i=%d, j=%d" % (i,j)
+                msg = "At i=%d, j=%d" % (i, j)
                 ci = [0]*i + [1]
                 cj = [0]*j + [1]
                 tgt = leg.legadd(ci, cj)
@@ -115,7 +115,7 @@ class TestEvaluation(TestCase) :
         assert_equal(leg.legval([], [1]).size, 0)
 
         #check normal input)
-        x = np.linspace(-1,1)
+        x = np.linspace(-1, 1)
         y = [polyval(x, c) for c in Llist]
         for i in range(10) :
             msg = "At i=%d" % i
@@ -129,8 +129,8 @@ class TestEvaluation(TestCase) :
             dims = [2]*i
             x = np.zeros(dims)
             assert_equal(leg.legval(x, [1]).shape, dims)
-            assert_equal(leg.legval(x, [1,0]).shape, dims)
-            assert_equal(leg.legval(x, [1,0,0]).shape, dims)
+            assert_equal(leg.legval(x, [1, 0]).shape, dims)
+            assert_equal(leg.legval(x, [1, 0, 0]).shape, dims)
 
     def test_legval2d(self):
         x1, x2, x3 = self.x
@@ -145,9 +145,9 @@ class TestEvaluation(TestCase) :
         assert_almost_equal(res, tgt)
 
         #test shape
-        z = np.ones((2,3))
+        z = np.ones((2, 3))
         res = leg.legval2d(z, z, self.c2d)
-        assert_(res.shape == (2,3))
+        assert_(res.shape == (2, 3))
 
     def test_legval3d(self):
         x1, x2, x3 = self.x
@@ -162,7 +162,7 @@ class TestEvaluation(TestCase) :
         assert_almost_equal(res, tgt)
 
         #test shape
-        z = np.ones((2,3))
+        z = np.ones((2, 3))
         res = leg.legval3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3))
 
@@ -176,7 +176,7 @@ class TestEvaluation(TestCase) :
         assert_almost_equal(res, tgt)
 
         #test shape
-        z = np.ones((2,3))
+        z = np.ones((2, 3))
         res = leg.leggrid2d(z, z, self.c2d)
         assert_(res.shape == (2, 3)*2)
 
@@ -190,7 +190,7 @@ class TestEvaluation(TestCase) :
         assert_almost_equal(res, tgt)
 
         #test shape
-        z = np.ones((2,3))
+        z = np.ones((2, 3))
         res = leg.leggrid3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3)*3)
 
@@ -201,7 +201,7 @@ class TestIntegral(TestCase) :
         # check exceptions
         assert_raises(ValueError, leg.legint, [0], .5)
         assert_raises(ValueError, leg.legint, [0], -1)
-        assert_raises(ValueError, leg.legint, [0], 1, [0,0])
+        assert_raises(ValueError, leg.legint, [0], 1, [0, 0])
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -239,7 +239,7 @@ class TestIntegral(TestCase) :
 
         # check multiple integrations with default k
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
                 for k in range(j) :
@@ -249,7 +249,7 @@ class TestIntegral(TestCase) :
 
         # check multiple integrations with defined k
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
                 for k in range(j) :
@@ -259,7 +259,7 @@ class TestIntegral(TestCase) :
 
         # check multiple integrations with lbnd
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
                 for k in range(j) :
@@ -269,7 +269,7 @@ class TestIntegral(TestCase) :
 
         # check multiple integrations with scaling
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
                 for k in range(j) :
@@ -309,14 +309,14 @@ class TestDerivative(TestCase) :
 
         # check that derivation is the inverse of integration
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 tgt = [0]*i + [1]
                 res = leg.legder(leg.legint(tgt, m=j), m=j)
                 assert_almost_equal(trim(res), trim(tgt))
 
         # check derivation with scaling
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 tgt = [0]*i + [1]
                 res = leg.legder(leg.legint(tgt, m=j, scl=2), m=j, scl=.5)
                 assert_almost_equal(trim(res), trim(tgt))
@@ -397,10 +397,10 @@ class TestFitting(TestCase):
         assert_raises(TypeError,  leg.legfit, [1, 2], [1],      0)
         assert_raises(TypeError,  leg.legfit, [1],    [1, 2],   0)
         assert_raises(TypeError,  leg.legfit, [1],    [1],   0, w=[[1]])
-        assert_raises(TypeError,  leg.legfit, [1],    [1],   0, w=[1,1])
+        assert_raises(TypeError,  leg.legfit, [1],    [1],   0, w=[1, 1])
 
         # Test fit
-        x = np.linspace(0,2)
+        x = np.linspace(0, 2)
         y = f(x)
         #
         coef3 = leg.legfit(x, y, 3)
@@ -411,8 +411,8 @@ class TestFitting(TestCase):
         assert_equal(len(coef4), 5)
         assert_almost_equal(leg.legval(x, coef4), y)
         #
-        coef2d = leg.legfit(x, np.array([y,y]).T, 3)
-        assert_almost_equal(coef2d, np.array([coef3,coef3]).T)
+        coef2d = leg.legfit(x, np.array([y, y]).T, 3)
+        assert_almost_equal(coef2d, np.array([coef3, coef3]).T)
         # test weighting
         w = np.zeros_like(x)
         yw = y.copy()
@@ -421,8 +421,8 @@ class TestFitting(TestCase):
         wcoef3 = leg.legfit(x, yw, 3, w=w)
         assert_almost_equal(wcoef3, coef3)
         #
-        wcoef2d = leg.legfit(x, np.array([yw,yw]).T, 3, w=w)
-        assert_almost_equal(wcoef2d, np.array([coef3,coef3]).T)
+        wcoef2d = leg.legfit(x, np.array([yw, yw]).T, 3, w=w)
+        assert_almost_equal(wcoef2d, np.array([coef3, coef3]).T)
         # test scaling with complex values x points whose square
         # is zero when summed.
         x = [1, 1j, -1, -1j]
@@ -455,7 +455,7 @@ class TestGauss(TestCase):
         v = leg.legvander(x, 99)
         vv = np.dot(v.T * w, v)
         vd = 1/np.sqrt(vv.diagonal())
-        vv = vd[:,None] * vv * vd
+        vv = vd[:, None] * vv * vd
         assert_almost_equal(vv, np.eye(100))
 
         # check that the integral of 1 is correct
@@ -468,7 +468,7 @@ class TestMisc(TestCase) :
     def test_legfromroots(self) :
         res = leg.legfromroots([])
         assert_almost_equal(trim(res), [1])
-        for i in range(1,5) :
+        for i in range(1, 5) :
             roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
             pol = leg.legfromroots(roots)
             res = leg.legval(roots, pol)
@@ -480,7 +480,7 @@ class TestMisc(TestCase) :
     def test_legroots(self) :
         assert_almost_equal(leg.legroots([1]), [])
         assert_almost_equal(leg.legroots([1, 2]), [-.5])
-        for i in range(2,5) :
+        for i in range(2, 5) :
             tgt = np.linspace(-1, 1, i)
             res = leg.legroots(leg.legfromroots(tgt))
             assert_almost_equal(trim(res), trim(tgt))
@@ -497,7 +497,7 @@ class TestMisc(TestCase) :
         assert_equal(leg.legtrim(coef, 2), [0])
 
     def test_legline(self) :
-        assert_equal(leg.legline(3,4), [3, 4])
+        assert_equal(leg.legline(3, 4), [3, 4])
 
     def test_leg2poly(self) :
         for i in range(10) :

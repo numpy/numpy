@@ -57,7 +57,7 @@ def import_nose():
     """ Import nose only when needed.
     """
     fine_nose = True
-    minimum_nose_version = (0,10,0)
+    minimum_nose_version = (0, 10, 0)
     try:
         import nose
     except ImportError:
@@ -82,7 +82,7 @@ def run_module_suite(file_to_run = None):
         if file_to_run is None:
             raise AssertionError
 
-    import_nose().run(argv=['',file_to_run])
+    import_nose().run(argv=['', file_to_run])
 
 
 class NoseTester(object):
@@ -214,7 +214,7 @@ class NoseTester(object):
             spdir = os.path.dirname(scipy.__file__)
             print("SciPy is installed in %s" % spdir)
 
-        pyversion = sys.version.replace('\n','')
+        pyversion = sys.version.replace('\n', '')
         print("Python version %s" % pyversion)
         print("nose version %d.%d.%d" % nose.__versioninfo__)
 

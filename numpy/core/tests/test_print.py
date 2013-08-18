@@ -16,7 +16,7 @@ _REF = {np.inf: 'inf', -np.inf: '-inf', np.nan: 'nan'}
 
 
 def check_float_type(tp):
-    for x in [0, 1,-1, 1e20] :
+    for x in [0, 1, -1, 1e20] :
         assert_equal(str(tp(x)), str(float(x)),
                      err_msg='Failed str formatting for type %s' % tp)
 
@@ -56,7 +56,7 @@ def test_nan_inf_float():
         yield check_nan_inf_float, t
 
 def check_complex_type(tp):
-    for x in [0, 1,-1, 1e20] :
+    for x in [0, 1, -1, 1e20] :
         assert_equal(str(tp(x)), str(complex(x)),
                      err_msg='Failed str formatting for type %s' % tp)
         assert_equal(str(tp(x*1j)), str(complex(x*1j)),
@@ -130,7 +130,7 @@ def _test_redirected_print(x, tp, ref=None):
                  err_msg='print failed for type%s' % tp)
 
 def check_float_type_print(tp):
-    for x in [0, 1,-1, 1e20]:
+    for x in [0, 1, -1, 1e20]:
         _test_redirected_print(float(x), tp)
 
     for x in [np.inf, -np.inf, np.nan]:

@@ -49,8 +49,8 @@ class TestArithmetic(TestCase) :
     def test_hermadd(self) :
         for i in range(5) :
             for j in range(5) :
-                msg = "At i=%d, j=%d" % (i,j)
-                tgt = np.zeros(max(i,j) + 1)
+                msg = "At i=%d, j=%d" % (i, j)
+                tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] += 1
                 res = herm.hermadd([0]*i + [1], [0]*j + [1])
@@ -59,8 +59,8 @@ class TestArithmetic(TestCase) :
     def test_hermsub(self) :
         for i in range(5) :
             for j in range(5) :
-                msg = "At i=%d, j=%d" % (i,j)
-                tgt = np.zeros(max(i,j) + 1)
+                msg = "At i=%d, j=%d" % (i, j)
+                tgt = np.zeros(max(i, j) + 1)
                 tgt[i] += 1
                 tgt[j] -= 1
                 res = herm.hermsub([0]*i + [1], [0]*j + [1])
@@ -68,7 +68,7 @@ class TestArithmetic(TestCase) :
 
     def test_hermmulx(self):
         assert_equal(herm.hermmulx([0]), [0])
-        assert_equal(herm.hermmulx([1]), [0,.5])
+        assert_equal(herm.hermmulx([1]), [0, .5])
         for i in range(1, 5):
             ser = [0]*i + [1]
             tgt = [0]*(i - 1) + [i, 0, .5]
@@ -80,7 +80,7 @@ class TestArithmetic(TestCase) :
             pol1 = [0]*i + [1]
             val1 = herm.hermval(self.x, pol1)
             for j in range(5) :
-                msg = "At i=%d, j=%d" % (i,j)
+                msg = "At i=%d, j=%d" % (i, j)
                 pol2 = [0]*j + [1]
                 val2 = herm.hermval(self.x, pol2)
                 pol3 = herm.hermmul(pol1, pol2)
@@ -91,7 +91,7 @@ class TestArithmetic(TestCase) :
     def test_hermdiv(self) :
         for i in range(5) :
             for j in range(5) :
-                msg = "At i=%d, j=%d" % (i,j)
+                msg = "At i=%d, j=%d" % (i, j)
                 ci = [0]*i + [1]
                 cj = [0]*j + [1]
                 tgt = herm.hermadd(ci, cj)
@@ -116,7 +116,7 @@ class TestEvaluation(TestCase) :
         assert_equal(herm.hermval([], [1]).size, 0)
 
         #check normal input)
-        x = np.linspace(-1,1)
+        x = np.linspace(-1, 1)
         y = [polyval(x, c) for c in Hlist]
         for i in range(10) :
             msg = "At i=%d" % i
@@ -130,8 +130,8 @@ class TestEvaluation(TestCase) :
             dims = [2]*i
             x = np.zeros(dims)
             assert_equal(herm.hermval(x, [1]).shape, dims)
-            assert_equal(herm.hermval(x, [1,0]).shape, dims)
-            assert_equal(herm.hermval(x, [1,0,0]).shape, dims)
+            assert_equal(herm.hermval(x, [1, 0]).shape, dims)
+            assert_equal(herm.hermval(x, [1, 0, 0]).shape, dims)
 
     def test_hermval2d(self):
         x1, x2, x3 = self.x
@@ -146,9 +146,9 @@ class TestEvaluation(TestCase) :
         assert_almost_equal(res, tgt)
 
         #test shape
-        z = np.ones((2,3))
+        z = np.ones((2, 3))
         res = herm.hermval2d(z, z, self.c2d)
-        assert_(res.shape == (2,3))
+        assert_(res.shape == (2, 3))
 
     def test_hermval3d(self):
         x1, x2, x3 = self.x
@@ -163,9 +163,9 @@ class TestEvaluation(TestCase) :
         assert_almost_equal(res, tgt)
 
         #test shape
-        z = np.ones((2,3))
+        z = np.ones((2, 3))
         res = herm.hermval3d(z, z, z, self.c3d)
-        assert_(res.shape == (2,3))
+        assert_(res.shape == (2, 3))
 
     def test_hermgrid2d(self):
         x1, x2, x3 = self.x
@@ -177,7 +177,7 @@ class TestEvaluation(TestCase) :
         assert_almost_equal(res, tgt)
 
         #test shape
-        z = np.ones((2,3))
+        z = np.ones((2, 3))
         res = herm.hermgrid2d(z, z, self.c2d)
         assert_(res.shape == (2, 3)*2)
 
@@ -191,7 +191,7 @@ class TestEvaluation(TestCase) :
         assert_almost_equal(res, tgt)
 
         #test shape
-        z = np.ones((2,3))
+        z = np.ones((2, 3))
         res = herm.hermgrid3d(z, z, z, self.c3d)
         assert_(res.shape == (2, 3)*3)
 
@@ -202,7 +202,7 @@ class TestIntegral(TestCase) :
         # check exceptions
         assert_raises(ValueError, herm.hermint, [0], .5)
         assert_raises(ValueError, herm.hermint, [0], -1)
-        assert_raises(ValueError, herm.hermint, [0], 1, [0,0])
+        assert_raises(ValueError, herm.hermint, [0], 1, [0, 0])
 
         # test integration of zero polynomial
         for i in range(2, 5):
@@ -240,7 +240,7 @@ class TestIntegral(TestCase) :
 
         # check multiple integrations with default k
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
                 for k in range(j) :
@@ -250,7 +250,7 @@ class TestIntegral(TestCase) :
 
         # check multiple integrations with defined k
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
                 for k in range(j) :
@@ -260,7 +260,7 @@ class TestIntegral(TestCase) :
 
         # check multiple integrations with lbnd
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
                 for k in range(j) :
@@ -270,7 +270,7 @@ class TestIntegral(TestCase) :
 
         # check multiple integrations with scaling
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 pol = [0]*i + [1]
                 tgt = pol[:]
                 for k in range(j) :
@@ -310,14 +310,14 @@ class TestDerivative(TestCase) :
 
         # check that derivation is the inverse of integration
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 tgt = [0]*i + [1]
                 res = herm.hermder(herm.hermint(tgt, m=j), m=j)
                 assert_almost_equal(trim(res), trim(tgt))
 
         # check derivation with scaling
         for i in range(5) :
-            for j in range(2,5) :
+            for j in range(2, 5) :
                 tgt = [0]*i + [1]
                 res = herm.hermder(herm.hermint(tgt, m=j, scl=2), m=j, scl=.5)
                 assert_almost_equal(trim(res), trim(tgt))
@@ -399,10 +399,10 @@ class TestFitting(TestCase):
         assert_raises(TypeError,  herm.hermfit, [1, 2], [1],      0)
         assert_raises(TypeError,  herm.hermfit, [1],    [1, 2],   0)
         assert_raises(TypeError,  herm.hermfit, [1],    [1],   0, w=[[1]])
-        assert_raises(TypeError,  herm.hermfit, [1],    [1],   0, w=[1,1])
+        assert_raises(TypeError,  herm.hermfit, [1],    [1],   0, w=[1, 1])
 
         # Test fit
-        x = np.linspace(0,2)
+        x = np.linspace(0, 2)
         y = f(x)
         #
         coef3 = herm.hermfit(x, y, 3)
@@ -413,8 +413,8 @@ class TestFitting(TestCase):
         assert_equal(len(coef4), 5)
         assert_almost_equal(herm.hermval(x, coef4), y)
         #
-        coef2d = herm.hermfit(x, np.array([y,y]).T, 3)
-        assert_almost_equal(coef2d, np.array([coef3,coef3]).T)
+        coef2d = herm.hermfit(x, np.array([y, y]).T, 3)
+        assert_almost_equal(coef2d, np.array([coef3, coef3]).T)
         # test weighting
         w = np.zeros_like(x)
         yw = y.copy()
@@ -423,8 +423,8 @@ class TestFitting(TestCase):
         wcoef3 = herm.hermfit(x, yw, 3, w=w)
         assert_almost_equal(wcoef3, coef3)
         #
-        wcoef2d = herm.hermfit(x, np.array([yw,yw]).T, 3, w=w)
-        assert_almost_equal(wcoef2d, np.array([coef3,coef3]).T)
+        wcoef2d = herm.hermfit(x, np.array([yw, yw]).T, 3, w=w)
+        assert_almost_equal(wcoef2d, np.array([coef3, coef3]).T)
         # test scaling with complex values x points whose square
         # is zero when summed.
         x = [1, 1j, -1, -1j]
@@ -457,7 +457,7 @@ class TestGauss(TestCase):
         v = herm.hermvander(x, 99)
         vv = np.dot(v.T * w, v)
         vd = 1/np.sqrt(vv.diagonal())
-        vv = vd[:,None] * vv * vd
+        vv = vd[:, None] * vv * vd
         assert_almost_equal(vv, np.eye(100))
 
         # check that the integral of 1 is correct
@@ -470,7 +470,7 @@ class TestMisc(TestCase) :
     def test_hermfromroots(self) :
         res = herm.hermfromroots([])
         assert_almost_equal(trim(res), [1])
-        for i in range(1,5) :
+        for i in range(1, 5) :
             roots = np.cos(np.linspace(-np.pi, 0, 2*i + 1)[1::2])
             pol = herm.hermfromroots(roots)
             res = herm.hermval(roots, pol)
@@ -482,7 +482,7 @@ class TestMisc(TestCase) :
     def test_hermroots(self) :
         assert_almost_equal(herm.hermroots([1]), [])
         assert_almost_equal(herm.hermroots([1, 1]), [-.5])
-        for i in range(2,5) :
+        for i in range(2, 5) :
             tgt = np.linspace(-1, 1, i)
             res = herm.hermroots(herm.hermfromroots(tgt))
             assert_almost_equal(trim(res), trim(tgt))
@@ -499,7 +499,7 @@ class TestMisc(TestCase) :
         assert_equal(herm.hermtrim(coef, 2), [0])
 
     def test_hermline(self) :
-        assert_equal(herm.hermline(3,4), [3, 2])
+        assert_equal(herm.hermline(3, 4), [3, 2])
 
     def test_herm2poly(self) :
         for i in range(10) :

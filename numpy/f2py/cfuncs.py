@@ -39,12 +39,12 @@ typedefs_generated={'typedefs_generated':'/*need_typedefs_generated*/'}
 cppmacros={'cppmacros':'/*need_cppmacros*/'}
 cfuncs={'cfuncs':'/*need_cfuncs*/'}
 callbacks={'callbacks':'/*need_callbacks*/'}
-f90modhooks={'f90modhooks':'/*need_f90modhooks*/',
-             'initf90modhooksstatic':'/*initf90modhooksstatic*/',
-             'initf90modhooksdynamic':'/*initf90modhooksdynamic*/',
+f90modhooks={'f90modhooks': '/*need_f90modhooks*/',
+             'initf90modhooksstatic': '/*initf90modhooksstatic*/',
+             'initf90modhooksdynamic': '/*initf90modhooksdynamic*/',
              }
-commonhooks={'commonhooks':'/*need_commonhooks*/',
-             'initcommonhooks':'/*need_initcommonhooks*/',
+commonhooks={'commonhooks': '/*need_commonhooks*/',
+             'initcommonhooks': '/*need_initcommonhooks*/',
              }
 
 ############ Includes ###################
@@ -419,7 +419,7 @@ cppmacros['TRYCOMPLEXPYARRAYTEMPLATE']="""\
 ## """
 
 
-needs['GETSTRFROMPYTUPLE']=['STRINGCOPYN','PRINTPYOBJERR']
+needs['GETSTRFROMPYTUPLE']=['STRINGCOPYN', 'PRINTPYOBJERR']
 cppmacros['GETSTRFROMPYTUPLE']="""\
 #define GETSTRFROMPYTUPLE(tuple,index,str,len) {\\
 \t\tPyObject *rv_cb_str = PyTuple_GetItem((tuple),(index));\\
@@ -587,7 +587,7 @@ static int *nextforcomb(void) {
   if (forcombcache.tr) return i_tr;
   return i;
 }"""
-needs['try_pyarr_from_string']=['STRINGCOPYN','PRINTPYOBJERR','string']
+needs['try_pyarr_from_string']=['STRINGCOPYN', 'PRINTPYOBJERR', 'string']
 cfuncs['try_pyarr_from_string']="""\
 static int try_pyarr_from_string(PyObject *obj,const string str) {
 \tPyArrayObject *arr = NULL;
@@ -600,7 +600,7 @@ capi_fail:
 \treturn 0;
 }
 """
-needs['string_from_pyobj']=['string','STRINGMALLOC','STRINGCOPYN']
+needs['string_from_pyobj']=['string', 'STRINGMALLOC', 'STRINGCOPYN']
 cfuncs['string_from_pyobj']="""\
 static int string_from_pyobj(string *str,int *len,const string inistr,PyObject *obj,const char *errmess) {
 \tPyArrayObject *arr = NULL;
@@ -680,7 +680,7 @@ static int char_from_pyobj(char* v,PyObject *obj,const char *errmess) {
 \treturn 0;
 }
 """
-needs['signed_char_from_pyobj']=['int_from_pyobj','signed_char']
+needs['signed_char_from_pyobj']=['int_from_pyobj', 'signed_char']
 cfuncs['signed_char_from_pyobj']="""\
 static int signed_char_from_pyobj(signed_char* v,PyObject *obj,const char *errmess) {
 \tint i=0;
@@ -803,7 +803,7 @@ static int long_long_from_pyobj(long_long* v,PyObject *obj,const char *errmess) 
 \treturn 0;
 }
 """
-needs['long_double_from_pyobj']=['double_from_pyobj','long_double']
+needs['long_double_from_pyobj']=['double_from_pyobj', 'long_double']
 cfuncs['long_double_from_pyobj']="""\
 static int long_double_from_pyobj(long_double* v,PyObject *obj,const char *errmess) {
 \tdouble d=0;
@@ -875,7 +875,7 @@ static int float_from_pyobj(float* v,PyObject *obj,const char *errmess) {
 \treturn 0;
 }
 """
-needs['complex_long_double_from_pyobj']=['complex_long_double','long_double',
+needs['complex_long_double_from_pyobj']=['complex_long_double', 'long_double',
                                          'complex_double_from_pyobj']
 cfuncs['complex_long_double_from_pyobj']="""\
 static int complex_long_double_from_pyobj(complex_long_double* v,PyObject *obj,const char *errmess) {
@@ -976,7 +976,7 @@ static int complex_double_from_pyobj(complex_double* v,PyObject *obj,const char 
 \treturn 0;
 }
 """
-needs['complex_float_from_pyobj']=['complex_float','complex_double_from_pyobj']
+needs['complex_float_from_pyobj']=['complex_float', 'complex_double_from_pyobj']
 cfuncs['complex_float_from_pyobj']="""\
 static int complex_float_from_pyobj(complex_float* v,PyObject *obj,const char *errmess) {
 \tcomplex_double cd={0.0,0.0};
@@ -988,30 +988,30 @@ static int complex_float_from_pyobj(complex_float* v,PyObject *obj,const char *e
 \treturn 0;
 }
 """
-needs['try_pyarr_from_char']=['pyobj_from_char1','TRYPYARRAYTEMPLATE']
+needs['try_pyarr_from_char']=['pyobj_from_char1', 'TRYPYARRAYTEMPLATE']
 cfuncs['try_pyarr_from_char']='static int try_pyarr_from_char(PyObject* obj,char* v) {\n\tTRYPYARRAYTEMPLATE(char,\'c\');\n}\n'
-needs['try_pyarr_from_signed_char']=['TRYPYARRAYTEMPLATE','unsigned_char']
+needs['try_pyarr_from_signed_char']=['TRYPYARRAYTEMPLATE', 'unsigned_char']
 cfuncs['try_pyarr_from_unsigned_char']='static int try_pyarr_from_unsigned_char(PyObject* obj,unsigned_char* v) {\n\tTRYPYARRAYTEMPLATE(unsigned_char,\'b\');\n}\n'
-needs['try_pyarr_from_signed_char']=['TRYPYARRAYTEMPLATE','signed_char']
+needs['try_pyarr_from_signed_char']=['TRYPYARRAYTEMPLATE', 'signed_char']
 cfuncs['try_pyarr_from_signed_char']='static int try_pyarr_from_signed_char(PyObject* obj,signed_char* v) {\n\tTRYPYARRAYTEMPLATE(signed_char,\'1\');\n}\n'
-needs['try_pyarr_from_short']=['pyobj_from_short1','TRYPYARRAYTEMPLATE']
+needs['try_pyarr_from_short']=['pyobj_from_short1', 'TRYPYARRAYTEMPLATE']
 cfuncs['try_pyarr_from_short']='static int try_pyarr_from_short(PyObject* obj,short* v) {\n\tTRYPYARRAYTEMPLATE(short,\'s\');\n}\n'
-needs['try_pyarr_from_int']=['pyobj_from_int1','TRYPYARRAYTEMPLATE']
+needs['try_pyarr_from_int']=['pyobj_from_int1', 'TRYPYARRAYTEMPLATE']
 cfuncs['try_pyarr_from_int']='static int try_pyarr_from_int(PyObject* obj,int* v) {\n\tTRYPYARRAYTEMPLATE(int,\'i\');\n}\n'
-needs['try_pyarr_from_long']=['pyobj_from_long1','TRYPYARRAYTEMPLATE']
+needs['try_pyarr_from_long']=['pyobj_from_long1', 'TRYPYARRAYTEMPLATE']
 cfuncs['try_pyarr_from_long']='static int try_pyarr_from_long(PyObject* obj,long* v) {\n\tTRYPYARRAYTEMPLATE(long,\'l\');\n}\n'
-needs['try_pyarr_from_long_long']=['pyobj_from_long_long1','TRYPYARRAYTEMPLATE','long_long']
+needs['try_pyarr_from_long_long']=['pyobj_from_long_long1', 'TRYPYARRAYTEMPLATE', 'long_long']
 cfuncs['try_pyarr_from_long_long']='static int try_pyarr_from_long_long(PyObject* obj,long_long* v) {\n\tTRYPYARRAYTEMPLATE(long_long,\'L\');\n}\n'
-needs['try_pyarr_from_float']=['pyobj_from_float1','TRYPYARRAYTEMPLATE']
+needs['try_pyarr_from_float']=['pyobj_from_float1', 'TRYPYARRAYTEMPLATE']
 cfuncs['try_pyarr_from_float']='static int try_pyarr_from_float(PyObject* obj,float* v) {\n\tTRYPYARRAYTEMPLATE(float,\'f\');\n}\n'
-needs['try_pyarr_from_double']=['pyobj_from_double1','TRYPYARRAYTEMPLATE']
+needs['try_pyarr_from_double']=['pyobj_from_double1', 'TRYPYARRAYTEMPLATE']
 cfuncs['try_pyarr_from_double']='static int try_pyarr_from_double(PyObject* obj,double* v) {\n\tTRYPYARRAYTEMPLATE(double,\'d\');\n}\n'
-needs['try_pyarr_from_complex_float']=['pyobj_from_complex_float1','TRYCOMPLEXPYARRAYTEMPLATE','complex_float']
+needs['try_pyarr_from_complex_float']=['pyobj_from_complex_float1', 'TRYCOMPLEXPYARRAYTEMPLATE', 'complex_float']
 cfuncs['try_pyarr_from_complex_float']='static int try_pyarr_from_complex_float(PyObject* obj,complex_float* v) {\n\tTRYCOMPLEXPYARRAYTEMPLATE(float,\'F\');\n}\n'
-needs['try_pyarr_from_complex_double']=['pyobj_from_complex_double1','TRYCOMPLEXPYARRAYTEMPLATE','complex_double']
+needs['try_pyarr_from_complex_double']=['pyobj_from_complex_double1', 'TRYCOMPLEXPYARRAYTEMPLATE', 'complex_double']
 cfuncs['try_pyarr_from_complex_double']='static int try_pyarr_from_complex_double(PyObject* obj,complex_double* v) {\n\tTRYCOMPLEXPYARRAYTEMPLATE(double,\'D\');\n}\n'
 
-needs['create_cb_arglist']=['CFUNCSMESS','PRINTPYOBJERR','MINMAX']
+needs['create_cb_arglist']=['CFUNCSMESS', 'PRINTPYOBJERR', 'MINMAX']
 cfuncs['create_cb_arglist']="""\
 static int create_cb_arglist(PyObject* fun,PyTupleObject* xa,const int maxnofargs,const int nofoptargs,int *nofargs,PyTupleObject **args,const char *errmess) {
 \tPyObject *tmp = NULL;
@@ -1118,7 +1118,7 @@ def buildcfuncs():
     from .capi_maps import c2capi_map
     for k in c2capi_map.keys():
         m='pyarr_from_p_%s1'%k
-        cppmacros[m]='#define %s(v) (PyArray_SimpleNewFromData(0,NULL,%s,(char *)v))'%(m,c2capi_map[k])
+        cppmacros[m]='#define %s(v) (PyArray_SimpleNewFromData(0,NULL,%s,(char *)v))'%(m, c2capi_map[k])
     k='string'
     m='pyarr_from_p_%s1'%k
     cppmacros[m]='#define %s(v,dims) (PyArray_SimpleNewFromData(1,dims,NPY_CHAR,(char *)v))'%(m)
@@ -1127,10 +1127,10 @@ def buildcfuncs():
 ############ Auxiliary functions for sorting needs ###################
 
 def append_needs(need,flag=1):
-    global outneeds,needs
+    global outneeds, needs
     if isinstance(need, list):
         for n in need:
-            append_needs(n,flag)
+            append_needs(n, flag)
     elif isinstance(need, str):
         if not need: return
         if need in includes0:
@@ -1159,7 +1159,7 @@ def append_needs(need,flag=1):
             tmp={}
             if need in needs:
                 for nn in needs[need]:
-                    t=append_needs(nn,0)
+                    t=append_needs(nn, 0)
                     if isinstance(t, dict):
                         for nnn in t.keys():
                             if nnn in tmp:
@@ -1175,7 +1175,7 @@ def append_needs(need,flag=1):
             tmp={}
             if need in needs:
                 for nn in needs[need]:
-                    t=append_needs(nn,flag)
+                    t=append_needs(nn, flag)
                     if isinstance(t, dict):
                         for nnn in t.keys():
                             if nnn in tmp:
@@ -1190,7 +1190,7 @@ def append_needs(need,flag=1):
         errmess('append_needs: expected list or string but got :%s\n'%(repr(need)))
 
 def get_needs():
-    global outneeds,needs
+    global outneeds, needs
     res={}
     for n in outneeds.keys():
         out=[]
@@ -1210,9 +1210,9 @@ def get_needs():
                 else:
                     out.append(outneeds[n][0])
                     del outneeds[n][0]
-            if saveout and (0 not in map(lambda x,y:x==y, saveout, outneeds[n])) \
+            if saveout and (0 not in map(lambda x, y:x==y, saveout, outneeds[n])) \
                    and outneeds[n] != []:
-                print(n,saveout)
+                print(n, saveout)
                 errmess('get_needs: no progress in sorting needs, probably circular dependence, skipping.\n')
                 out=out+saveout
                 break

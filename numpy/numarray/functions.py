@@ -107,7 +107,7 @@ def and_(a, b):
 
 def divide_remainder(a, b):
     a, b = asarray(a), asarray(b)
-    return (a/b,a%b)
+    return (a/b, a%b)
 
 def around(array, digits=0, output=None):
     ret = np.around(array, digits, output)
@@ -211,13 +211,13 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
     ##try to estimate file size
     try:
         curpos=infile.tell()
-        infile.seek(0,2)
+        infile.seek(0, 2)
         endpos=infile.tell()
         infile.seek(curpos)
     except (AttributeError, IOError):
         initsize=blocksize
     else:
-        initsize=max(1,(endpos-curpos)//recsize)*recsize
+        initsize=max(1, (endpos-curpos)//recsize)*recsize
 
     buf = np.newbuffer(initsize)
 
@@ -228,7 +228,7 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
             break
         ##do we have space?
         if len(buf) < bytesread+blocksize:
-            buf=_resizebuf(buf,len(buf)+blocksize)
+            buf=_resizebuf(buf, len(buf)+blocksize)
             ## or rather a=resizebuf(a,2*len(a)) ?
         assert len(buf) >= bytesread+blocksize
         buf[bytesread:bytesread+blocksize]=data
@@ -241,7 +241,7 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
             _warnings.warn("Filesize does not match specified shape",
                            SizeMismatchWarning)
         try:
-            infile.seek(-(len(data) % recsize),1)
+            infile.seek(-(len(data) % recsize), 1)
         except AttributeError:
             _warnings.warn("Could not rewind (no seek support)",
                            FileSeekWarning)
@@ -250,7 +250,7 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
                            FileSeekWarning)
     datasize = (len(data)//recsize) * recsize
     if len(buf) != bytesread+datasize:
-        buf=_resizebuf(buf,bytesread+datasize)
+        buf=_resizebuf(buf, bytesread+datasize)
     buf[bytesread:bytesread+datasize]=data[:datasize]
     ##deduce shape from len(buf)
     shape = list(shape)
@@ -265,7 +265,7 @@ def fromfile(infile, type=None, shape=None, sizing=STRICT,
 
 # this function is referenced in the code above but not defined.  adding
 # it back. - phensley
-def _resizebuf(buf,newsize):
+def _resizebuf(buf, newsize):
     "Return a copy of BUF of size NEWSIZE."
     newbuf = np.newbuffer(newsize)
     if newsize > len(buf):
@@ -389,7 +389,7 @@ def info(obj, output=sys.stdout, numpy=0):
     print("data pointer: %s%s" % (hex(obj.ctypes._as_parameter_.value), extra), file=output)
     print("byteorder: ", end=' ', file=output)
     endian = obj.dtype.byteorder
-    if endian in ['|','=']:
+    if endian in ['|', '=']:
         print("%s%s%s" % (tic, sys.byteorder, tic), file=output)
         byteswap = False
     elif endian == '>':
@@ -472,14 +472,14 @@ def tensormultiply(a1, a2):
         raise ValueError("Unmatched dimensions")
     shape = a1.shape[:-1] + a2.shape[1:]
     return np.reshape(dot(np.reshape(a1, (-1, a1.shape[-1])),
-                          np.reshape(a2, (a2.shape[0],-1))),
+                          np.reshape(a2, (a2.shape[0], -1))),
                       shape)
 
 def cumsum(a1, axis=0, out=None, type=None, dim=0):
-    return np.asarray(a1).cumsum(axis,dtype=type,out=out)
+    return np.asarray(a1).cumsum(axis, dtype=type, out=out)
 
 def cumproduct(a1, axis=0, out=None, type=None, dim=0):
-    return np.asarray(a1).cumprod(axis,dtype=type,out=out)
+    return np.asarray(a1).cumprod(axis, dtype=type, out=out)
 
 def argmax(x, axis=-1):
     return np.argmax(x, axis)

@@ -32,7 +32,7 @@ from .fromnumeric import amax as max, amin as min, \
      round_ as round
 from .numeric import absolute as abs
 
-__all__ = ['char','rec','memmap']
+__all__ = ['char', 'rec', 'memmap']
 __all__ += numeric.__all__
 __all__ += fromnumeric.__all__
 __all__ += rec.__all__
@@ -58,7 +58,7 @@ def _ufunc_reconstruct(module, name):
 def _ufunc_reduce(func):
     from pickle import whichmodule
     name = func.__name__
-    return _ufunc_reconstruct, (whichmodule(func,name), name)
+    return _ufunc_reconstruct, (whichmodule(func, name), name)
 
 
 import sys

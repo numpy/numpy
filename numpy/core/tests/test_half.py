@@ -28,8 +28,8 @@ class TestHalf(TestCase):
 
         # An array of all non-NaN float16 values, in sorted order
         self.nonan_f16 = np.concatenate(
-                                    (np.arange(0xfc00,0x7fff,-1, dtype=uint16),
-                                     np.arange(0x0000,0x7c01,1, dtype=uint16))
+                                    (np.arange(0xfc00, 0x7fff, -1, dtype=uint16),
+                                     np.arange(0x0000, 0x7c01, 1, dtype=uint16))
                                     )
         self.nonan_f16.dtype = float16
         self.nonan_f32 = np.array(self.nonan_f16, dtype=float32)
@@ -65,10 +65,10 @@ class TestHalf(TestCase):
                      b.view(dtype=uint16))
 
         # Check the range for which all integers can be represented
-        i_int = np.arange(-2048,2049)
+        i_int = np.arange(-2048, 2049)
         i_f16 = np.array(i_int, dtype=float16)
         j = np.array(i_f16, dtype=np.int)
-        assert_equal(i_int,j)
+        assert_equal(i_int, j)
 
     def test_nans_infs(self):
         with np.errstate(all='ignore'):
@@ -223,17 +223,17 @@ class TestHalf(TestCase):
         assert_equal(a, np.ones((5,), dtype=float16))
 
         # nonzero and copyswap
-        a = np.array([0,0,-1,-1/1e20,0,2.0**-24, 7.629e-6], dtype=float16)
+        a = np.array([0, 0, -1, -1/1e20, 0, 2.0**-24, 7.629e-6], dtype=float16)
         assert_equal(a.nonzero()[0],
-                     [2,5,6])
+                     [2, 5, 6])
         a = a.byteswap().newbyteorder()
         assert_equal(a.nonzero()[0],
-                     [2,5,6])
+                     [2, 5, 6])
 
         # dot
         a = np.arange(0, 10, 0.5, dtype=float16)
         b = np.ones((20,), dtype=float16)
-        assert_equal(np.dot(a,b),
+        assert_equal(np.dot(a, b),
                      95)
 
         # argmax
@@ -247,7 +247,7 @@ class TestHalf(TestCase):
         # getitem
         a = np.arange(10, dtype=float16)
         for i in range(10):
-            assert_equal(a.item(i),i)
+            assert_equal(a.item(i), i)
 
     def test_spacing_nextafter(self):
         """Test np.spacing and np.nextafter"""
@@ -276,127 +276,127 @@ class TestHalf(TestCase):
     def test_half_ufuncs(self):
         """Test the various ufuncs"""
 
-        a = np.array([0,1,2,4,2], dtype=float16)
-        b = np.array([-2,5,1,4,3], dtype=float16)
-        c = np.array([0,-1,-np.inf,np.nan,6], dtype=float16)
+        a = np.array([0, 1, 2, 4, 2], dtype=float16)
+        b = np.array([-2, 5, 1, 4, 3], dtype=float16)
+        c = np.array([0, -1, -np.inf, np.nan, 6], dtype=float16)
 
-        assert_equal(np.add(a,b), [-2,6,3,8,5])
-        assert_equal(np.subtract(a,b), [2,-4,1,0,-1])
-        assert_equal(np.multiply(a,b), [0,5,2,16,6])
-        assert_equal(np.divide(a,b), [0,0.199951171875,2,1,0.66650390625])
+        assert_equal(np.add(a, b), [-2, 6, 3, 8, 5])
+        assert_equal(np.subtract(a, b), [2, -4, 1, 0, -1])
+        assert_equal(np.multiply(a, b), [0, 5, 2, 16, 6])
+        assert_equal(np.divide(a, b), [0, 0.199951171875, 2, 1, 0.66650390625])
 
-        assert_equal(np.equal(a,b), [False,False,False,True,False])
-        assert_equal(np.not_equal(a,b), [True,True,True,False,True])
-        assert_equal(np.less(a,b), [False,True,False,False,True])
-        assert_equal(np.less_equal(a,b), [False,True,False,True,True])
-        assert_equal(np.greater(a,b), [True,False,True,False,False])
-        assert_equal(np.greater_equal(a,b), [True,False,True,True,False])
-        assert_equal(np.logical_and(a,b), [False,True,True,True,True])
-        assert_equal(np.logical_or(a,b), [True,True,True,True,True])
-        assert_equal(np.logical_xor(a,b), [True,False,False,False,False])
-        assert_equal(np.logical_not(a), [True,False,False,False,False])
+        assert_equal(np.equal(a, b), [False, False, False, True, False])
+        assert_equal(np.not_equal(a, b), [True, True, True, False, True])
+        assert_equal(np.less(a, b), [False, True, False, False, True])
+        assert_equal(np.less_equal(a, b), [False, True, False, True, True])
+        assert_equal(np.greater(a, b), [True, False, True, False, False])
+        assert_equal(np.greater_equal(a, b), [True, False, True, True, False])
+        assert_equal(np.logical_and(a, b), [False, True, True, True, True])
+        assert_equal(np.logical_or(a, b), [True, True, True, True, True])
+        assert_equal(np.logical_xor(a, b), [True, False, False, False, False])
+        assert_equal(np.logical_not(a), [True, False, False, False, False])
 
-        assert_equal(np.isnan(c), [False,False,False,True,False])
-        assert_equal(np.isinf(c), [False,False,True,False,False])
-        assert_equal(np.isfinite(c), [True,True,False,False,True])
-        assert_equal(np.signbit(b), [True,False,False,False,False])
+        assert_equal(np.isnan(c), [False, False, False, True, False])
+        assert_equal(np.isinf(c), [False, False, True, False, False])
+        assert_equal(np.isfinite(c), [True, True, False, False, True])
+        assert_equal(np.signbit(b), [True, False, False, False, False])
 
-        assert_equal(np.copysign(b,a), [2,5,1,4,3])
+        assert_equal(np.copysign(b, a), [2, 5, 1, 4, 3])
 
-        assert_equal(np.maximum(a,b), [0,5,2,4,3])
-        x = np.maximum(b,c)
+        assert_equal(np.maximum(a, b), [0, 5, 2, 4, 3])
+        x = np.maximum(b, c)
         assert_(np.isnan(x[3]))
         x[3] = 0
-        assert_equal(x, [0,5,1,0,6])
-        assert_equal(np.minimum(a,b), [-2,1,1,4,2])
-        x = np.minimum(b,c)
+        assert_equal(x, [0, 5, 1, 0, 6])
+        assert_equal(np.minimum(a, b), [-2, 1, 1, 4, 2])
+        x = np.minimum(b, c)
         assert_(np.isnan(x[3]))
         x[3] = 0
-        assert_equal(x, [-2,-1,-np.inf,0,3])
-        assert_equal(np.fmax(a,b), [0,5,2,4,3])
-        assert_equal(np.fmax(b,c), [0,5,1,4,6])
-        assert_equal(np.fmin(a,b), [-2,1,1,4,2])
-        assert_equal(np.fmin(b,c), [-2,-1,-np.inf,4,3])
+        assert_equal(x, [-2, -1, -np.inf, 0, 3])
+        assert_equal(np.fmax(a, b), [0, 5, 2, 4, 3])
+        assert_equal(np.fmax(b, c), [0, 5, 1, 4, 6])
+        assert_equal(np.fmin(a, b), [-2, 1, 1, 4, 2])
+        assert_equal(np.fmin(b, c), [-2, -1, -np.inf, 4, 3])
 
-        assert_equal(np.floor_divide(a,b), [0,0,2,1,0])
-        assert_equal(np.remainder(a,b), [0,1,0,0,2])
-        assert_equal(np.square(b), [4,25,1,16,9])
-        assert_equal(np.reciprocal(b), [-0.5,0.199951171875,1,0.25,0.333251953125])
-        assert_equal(np.ones_like(b), [1,1,1,1,1])
+        assert_equal(np.floor_divide(a, b), [0, 0, 2, 1, 0])
+        assert_equal(np.remainder(a, b), [0, 1, 0, 0, 2])
+        assert_equal(np.square(b), [4, 25, 1, 16, 9])
+        assert_equal(np.reciprocal(b), [-0.5, 0.199951171875, 1, 0.25, 0.333251953125])
+        assert_equal(np.ones_like(b), [1, 1, 1, 1, 1])
         assert_equal(np.conjugate(b), b)
-        assert_equal(np.absolute(b), [2,5,1,4,3])
-        assert_equal(np.negative(b), [2,-5,-1,-4,-3])
-        assert_equal(np.sign(b), [-1,1,1,1,1])
-        assert_equal(np.modf(b), ([0,0,0,0,0],b))
-        assert_equal(np.frexp(b), ([-0.5,0.625,0.5,0.5,0.75],[2,3,1,3,2]))
-        assert_equal(np.ldexp(b,[0,1,2,4,2]), [-2,10,4,64,12])
+        assert_equal(np.absolute(b), [2, 5, 1, 4, 3])
+        assert_equal(np.negative(b), [2, -5, -1, -4, -3])
+        assert_equal(np.sign(b), [-1, 1, 1, 1, 1])
+        assert_equal(np.modf(b), ([0, 0, 0, 0, 0], b))
+        assert_equal(np.frexp(b), ([-0.5, 0.625, 0.5, 0.5, 0.75], [2, 3, 1, 3, 2]))
+        assert_equal(np.ldexp(b, [0, 1, 2, 4, 2]), [-2, 10, 4, 64, 12])
 
     def test_half_coercion(self):
         """Test that half gets coerced properly with the other types"""
-        a16 = np.array((1,),dtype=float16)
-        a32 = np.array((1,),dtype=float32)
+        a16 = np.array((1,), dtype=float16)
+        a32 = np.array((1,), dtype=float32)
         b16 = float16(1)
         b32 = float32(1)
 
-        assert_equal(np.power(a16,2).dtype, float16)
-        assert_equal(np.power(a16,2.0).dtype, float16)
-        assert_equal(np.power(a16,b16).dtype, float16)
-        assert_equal(np.power(a16,b32).dtype, float16)
-        assert_equal(np.power(a16,a16).dtype, float16)
-        assert_equal(np.power(a16,a32).dtype, float32)
+        assert_equal(np.power(a16, 2).dtype, float16)
+        assert_equal(np.power(a16, 2.0).dtype, float16)
+        assert_equal(np.power(a16, b16).dtype, float16)
+        assert_equal(np.power(a16, b32).dtype, float16)
+        assert_equal(np.power(a16, a16).dtype, float16)
+        assert_equal(np.power(a16, a32).dtype, float32)
 
-        assert_equal(np.power(b16,2).dtype, float64)
-        assert_equal(np.power(b16,2.0).dtype, float64)
-        assert_equal(np.power(b16,b16).dtype, float16)
-        assert_equal(np.power(b16,b32).dtype, float32)
-        assert_equal(np.power(b16,a16).dtype, float16)
-        assert_equal(np.power(b16,a32).dtype, float32)
+        assert_equal(np.power(b16, 2).dtype, float64)
+        assert_equal(np.power(b16, 2.0).dtype, float64)
+        assert_equal(np.power(b16, b16).dtype, float16)
+        assert_equal(np.power(b16, b32).dtype, float32)
+        assert_equal(np.power(b16, a16).dtype, float16)
+        assert_equal(np.power(b16, a32).dtype, float32)
 
-        assert_equal(np.power(a32,a16).dtype, float32)
-        assert_equal(np.power(a32,b16).dtype, float32)
-        assert_equal(np.power(b32,a16).dtype, float16)
-        assert_equal(np.power(b32,b16).dtype, float32)
+        assert_equal(np.power(a32, a16).dtype, float32)
+        assert_equal(np.power(a32, b16).dtype, float32)
+        assert_equal(np.power(b32, a16).dtype, float16)
+        assert_equal(np.power(b32, b16).dtype, float32)
 
     @dec.skipif(platform.machine() == "armv5tel", "See gh-413.")
     def test_half_fpe(self):
         with np.errstate(all='raise'):
-            sx16 = np.array((1e-4,),dtype=float16)
-            bx16 = np.array((1e4,),dtype=float16)
+            sx16 = np.array((1e-4,), dtype=float16)
+            bx16 = np.array((1e4,), dtype=float16)
             sy16 = float16(1e-4)
             by16 = float16(1e4)
 
             # Underflow errors
-            assert_raises_fpe('underflow', lambda a,b:a*b, sx16, sx16)
-            assert_raises_fpe('underflow', lambda a,b:a*b, sx16, sy16)
-            assert_raises_fpe('underflow', lambda a,b:a*b, sy16, sx16)
-            assert_raises_fpe('underflow', lambda a,b:a*b, sy16, sy16)
-            assert_raises_fpe('underflow', lambda a,b:a/b, sx16, bx16)
-            assert_raises_fpe('underflow', lambda a,b:a/b, sx16, by16)
-            assert_raises_fpe('underflow', lambda a,b:a/b, sy16, bx16)
-            assert_raises_fpe('underflow', lambda a,b:a/b, sy16, by16)
-            assert_raises_fpe('underflow', lambda a,b:a/b,
+            assert_raises_fpe('underflow', lambda a, b:a*b, sx16, sx16)
+            assert_raises_fpe('underflow', lambda a, b:a*b, sx16, sy16)
+            assert_raises_fpe('underflow', lambda a, b:a*b, sy16, sx16)
+            assert_raises_fpe('underflow', lambda a, b:a*b, sy16, sy16)
+            assert_raises_fpe('underflow', lambda a, b:a/b, sx16, bx16)
+            assert_raises_fpe('underflow', lambda a, b:a/b, sx16, by16)
+            assert_raises_fpe('underflow', lambda a, b:a/b, sy16, bx16)
+            assert_raises_fpe('underflow', lambda a, b:a/b, sy16, by16)
+            assert_raises_fpe('underflow', lambda a, b:a/b,
                                              float16(2.**-14), float16(2**11))
-            assert_raises_fpe('underflow', lambda a,b:a/b,
+            assert_raises_fpe('underflow', lambda a, b:a/b,
                                              float16(-2.**-14), float16(2**11))
-            assert_raises_fpe('underflow', lambda a,b:a/b,
+            assert_raises_fpe('underflow', lambda a, b:a/b,
                                              float16(2.**-14+2**-24), float16(2))
-            assert_raises_fpe('underflow', lambda a,b:a/b,
+            assert_raises_fpe('underflow', lambda a, b:a/b,
                                              float16(-2.**-14-2**-24), float16(2))
-            assert_raises_fpe('underflow', lambda a,b:a/b,
+            assert_raises_fpe('underflow', lambda a, b:a/b,
                                              float16(2.**-14+2**-23), float16(4))
 
             # Overflow errors
-            assert_raises_fpe('overflow', lambda a,b:a*b, bx16, bx16)
-            assert_raises_fpe('overflow', lambda a,b:a*b, bx16, by16)
-            assert_raises_fpe('overflow', lambda a,b:a*b, by16, bx16)
-            assert_raises_fpe('overflow', lambda a,b:a*b, by16, by16)
-            assert_raises_fpe('overflow', lambda a,b:a/b, bx16, sx16)
-            assert_raises_fpe('overflow', lambda a,b:a/b, bx16, sy16)
-            assert_raises_fpe('overflow', lambda a,b:a/b, by16, sx16)
-            assert_raises_fpe('overflow', lambda a,b:a/b, by16, sy16)
-            assert_raises_fpe('overflow', lambda a,b:a+b,
+            assert_raises_fpe('overflow', lambda a, b:a*b, bx16, bx16)
+            assert_raises_fpe('overflow', lambda a, b:a*b, bx16, by16)
+            assert_raises_fpe('overflow', lambda a, b:a*b, by16, bx16)
+            assert_raises_fpe('overflow', lambda a, b:a*b, by16, by16)
+            assert_raises_fpe('overflow', lambda a, b:a/b, bx16, sx16)
+            assert_raises_fpe('overflow', lambda a, b:a/b, bx16, sy16)
+            assert_raises_fpe('overflow', lambda a, b:a/b, by16, sx16)
+            assert_raises_fpe('overflow', lambda a, b:a/b, by16, sy16)
+            assert_raises_fpe('overflow', lambda a, b:a+b,
                                              float16(65504), float16(17))
-            assert_raises_fpe('overflow', lambda a,b:a-b,
+            assert_raises_fpe('overflow', lambda a, b:a-b,
                                              float16(-65504), float16(17))
             assert_raises_fpe('overflow', np.nextafter, float16(65504), float16(np.inf))
             assert_raises_fpe('overflow', np.nextafter, float16(-65504), float16(-np.inf))

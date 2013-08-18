@@ -12,22 +12,22 @@ rlevel = 1
 class TestRegression(TestCase):
     def test_poly1d(self,level=rlevel):
         """Ticket #28"""
-        assert_equal(np.poly1d([1]) - np.poly1d([1,0]),
-                     np.poly1d([-1,1]))
+        assert_equal(np.poly1d([1]) - np.poly1d([1, 0]),
+                     np.poly1d([-1, 1]))
 
     def test_cov_parameters(self,level=rlevel):
         """Ticket #91"""
-        x = np.random.random((3,3))
+        x = np.random.random((3, 3))
         y = x.copy()
         np.cov(x, rowvar=1)
         np.cov(y, rowvar=0)
-        assert_array_equal(x,y)
+        assert_array_equal(x, y)
 
     def test_mem_digitize(self,level=rlevel):
         """Ticket #95"""
         for i in range(100):
-            np.digitize([1,2,3,4],[1,3])
-            np.digitize([0,1,2,3,4],[1,3])
+            np.digitize([1, 2, 3, 4], [1, 3])
+            np.digitize([0, 1, 2, 3, 4], [1, 3])
 
     def test_unique_zero_sized(self,level=rlevel):
         """Ticket #205"""
@@ -36,51 +36,51 @@ class TestRegression(TestCase):
     def test_mem_vectorise(self, level=rlevel):
         """Ticket #325"""
         vt = np.vectorize(lambda *args: args)
-        vt(np.zeros((1,2,1)), np.zeros((2,1,1)), np.zeros((1,1,2)))
-        vt(np.zeros((1,2,1)), np.zeros((2,1,1)), np.zeros((1,1,2)), np.zeros((2,2)))
+        vt(np.zeros((1, 2, 1)), np.zeros((2, 1, 1)), np.zeros((1, 1, 2)))
+        vt(np.zeros((1, 2, 1)), np.zeros((2, 1, 1)), np.zeros((1, 1, 2)), np.zeros((2, 2)))
 
     def test_mgrid_single_element(self, level=rlevel):
         """Ticket #339"""
-        assert_array_equal(np.mgrid[0:0:1j],[0])
-        assert_array_equal(np.mgrid[0:0],[])
+        assert_array_equal(np.mgrid[0:0:1j], [0])
+        assert_array_equal(np.mgrid[0:0], [])
 
     def test_refcount_vectorize(self, level=rlevel):
         """Ticket #378"""
-        def p(x,y): return 123
+        def p(x, y): return 123
         v = np.vectorize(p)
         _assert_valid_refcount(v)
 
     def test_poly1d_nan_roots(self, level=rlevel):
         """Ticket #396"""
-        p = np.poly1d([np.nan,np.nan,1], r=0)
-        self.assertRaises(np.linalg.LinAlgError,getattr,p,"r")
+        p = np.poly1d([np.nan, np.nan, 1], r=0)
+        self.assertRaises(np.linalg.LinAlgError, getattr, p, "r")
 
     def test_mem_polymul(self, level=rlevel):
         """Ticket #448"""
-        np.polymul([],[1.])
+        np.polymul([], [1.])
 
     def test_mem_string_concat(self, level=rlevel):
         """Ticket #469"""
         x = np.array([])
-        np.append(x,'asdasd\tasdasd')
+        np.append(x, 'asdasd\tasdasd')
 
     def test_poly_div(self, level=rlevel):
         """Ticket #553"""
-        u = np.poly1d([1,2,3])
-        v = np.poly1d([1,2,3,4,5])
-        q,r = np.polydiv(u,v)
+        u = np.poly1d([1, 2, 3])
+        v = np.poly1d([1, 2, 3, 4, 5])
+        q, r = np.polydiv(u, v)
         assert_equal(q*v + r, u)
 
     def test_poly_eq(self, level=rlevel):
         """Ticket #554"""
-        x = np.poly1d([1,2,3])
-        y = np.poly1d([3,4])
+        x = np.poly1d([1, 2, 3])
+        y = np.poly1d([3, 4])
         assert_(x != y)
         assert_(x == x)
 
     def test_mem_insert(self, level=rlevel):
         """Ticket #572"""
-        np.lib.place(1,1,1)
+        np.lib.place(1, 1, 1)
 
     def test_polyfit_build(self):
         """Ticket #628"""
@@ -108,16 +108,16 @@ class TestRegression(TestCase):
         """Make polydiv work for complex types"""
         msg = "Wrong type, should be complex"
         x = np.ones(3, dtype=np.complex)
-        q,r = np.polydiv(x,x)
+        q, r = np.polydiv(x, x)
         assert_(q.dtype == np.complex, msg)
         msg = "Wrong type, should be float"
         x = np.ones(3, dtype=np.int)
-        q,r = np.polydiv(x,x)
+        q, r = np.polydiv(x, x)
         assert_(q.dtype == np.float, msg)
 
     def test_histogramdd_too_many_bins(self) :
         """Ticket 928."""
-        assert_raises(ValueError, np.histogramdd, np.ones((1,10)), bins=2**10)
+        assert_raises(ValueError, np.histogramdd, np.ones((1, 10)), bins=2**10)
 
     def test_polyint_type(self) :
         """Ticket #944"""
@@ -144,20 +144,20 @@ class TestRegression(TestCase):
         def dp():
             n = 3
             a = np.ones((n,)*5)
-            i = np.random.randint(0,n,size=thesize)
-            a[np.ix_(i,i,i,i,i)] = 0
+            i = np.random.randint(0, n, size=thesize)
+            a[np.ix_(i, i, i, i, i)] = 0
         def dp2():
             n = 3
             a = np.ones((n,)*5)
-            i = np.random.randint(0,n,size=thesize)
-            g = a[np.ix_(i,i,i,i,i)]
+            i = np.random.randint(0, n, size=thesize)
+            g = a[np.ix_(i, i, i, i, i)]
         self.assertRaises(ValueError, dp)
         self.assertRaises(ValueError, dp2)
 
     def test_void_coercion(self, level=rlevel):
-        dt = np.dtype([('a','f4'),('b','i4')])
-        x = np.zeros((1,),dt)
-        assert_(np.r_[x,x].dtype == dt)
+        dt = np.dtype([('a', 'f4'), ('b', 'i4')])
+        x = np.zeros((1,), dt)
+        assert_(np.r_[x, x].dtype == dt)
 
     def test_who_with_0dim_array(self, level=rlevel) :
         """ticket #1243"""
@@ -194,9 +194,9 @@ class TestRegression(TestCase):
         """Ticket #1676"""
         from numpy.lib.recfunctions import append_fields
         F = False
-        base = np.array([1,2,3], dtype=np.int32)
+        base = np.array([1, 2, 3], dtype=np.int32)
         data = np.eye(3).astype(np.int32)
-        names = ['a','b','c']
+        names = ['a', 'b', 'c']
         dlist = [np.float64, np.int32, np.int32]
         try:
             a = append_fields(base, names, data, dlist)
@@ -214,17 +214,17 @@ class TestRegression(TestCase):
         x = np.loadtxt(StringIO("0 1 2 3"), dtype=dt)
         assert_equal(x, np.array([((0, 1), (2, 3))], dtype=dt))
 
-        dt = [("a", [("a", 'u1', (1,3)), ("b", 'u1')])]
+        dt = [("a", [("a", 'u1', (1, 3)), ("b", 'u1')])]
         x = np.loadtxt(StringIO("0 1 2 3"), dtype=dt)
-        assert_equal(x, np.array([(((0,1,2), 3),)], dtype=dt))
+        assert_equal(x, np.array([(((0, 1, 2), 3),)], dtype=dt))
 
-        dt = [("a", 'u1', (2,2))]
+        dt = [("a", 'u1', (2, 2))]
         x = np.loadtxt(StringIO("0 1 2 3"), dtype=dt)
         assert_equal(x, np.array([(((0, 1), (2, 3)),)], dtype=dt))
 
-        dt = [("a", 'u1', (2,3,2))]
+        dt = [("a", 'u1', (2, 3, 2))]
         x = np.loadtxt(StringIO("0 1 2 3 4 5 6 7 8 9 10 11"), dtype=dt)
-        data = [((((0,1), (2,3), (4,5)), ((6,7), (8,9), (10,11))),)]
+        data = [((((0, 1), (2, 3), (4, 5)), ((6, 7), (8, 9), (10, 11))),)]
         assert_equal(x, np.array(data, dtype=dt))
 
     def test_nansum_with_boolean(self):

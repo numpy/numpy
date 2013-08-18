@@ -40,7 +40,7 @@ def _wrapit(obj, method, *args, **kwds):
         wrap = obj.__array_wrap__
     except AttributeError:
         wrap = None
-    result = getattr(asarray(obj),method)(*args, **kwds)
+    result = getattr(asarray(obj), method)(*args, **kwds)
     if wrap:
         if not isinstance(result, mu.ndarray):
             result = asarray(result)
@@ -2239,7 +2239,7 @@ def alen(a):
     try:
         return len(a)
     except TypeError:
-        return len(array(a,ndmin=1))
+        return len(array(a, ndmin=1))
 
 
 def prod(a, axis=None, dtype=None, out=None, keepdims=False):

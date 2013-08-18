@@ -26,7 +26,7 @@ class TestMa(TestCase):
         y = np.array([5., 0., 3., 2., -1., -4., 0., -10., 10., 1., 0., 3.])
         a10 = 10.
         m1 = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-        m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0 , 0, 1]
+        m2 = [0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1]
         xm = array(x, mask=m1)
         ym = array(y, mask=m2)
         z = np.array([-.5, 0., .5, .8])
@@ -44,8 +44,8 @@ class TestMa(TestCase):
         self.assertEqual(shape(xm), s)
         self.assertEqual(xm.shape, s)
         self.assertEqual(xm.dtype, x.dtype)
-        self.assertEqual(xm.size , reduce(lambda x, y:x * y, s))
-        self.assertEqual(count(xm) , len(m1) - reduce(lambda x, y:x + y, m1))
+        self.assertEqual(xm.size, reduce(lambda x, y:x * y, s))
+        self.assertEqual(count(xm), len(m1) - reduce(lambda x, y:x + y, m1))
         self.assertTrue(eq(xm, xf))
         self.assertTrue(eq(filled(xm, 1.e20), xf))
         self.assertTrue(eq(x, xm))
@@ -64,8 +64,8 @@ class TestMa(TestCase):
             self.assertTrue(isMaskedArray(xm))
             self.assertEqual(shape(xm), s)
             self.assertEqual(xm.shape, s)
-            self.assertEqual(xm.size , reduce(lambda x, y:x * y, s))
-            self.assertEqual(count(xm) , len(m1) - reduce(lambda x, y:x + y, m1))
+            self.assertEqual(xm.size, reduce(lambda x, y:x * y, s))
+            self.assertEqual(count(xm), len(m1) - reduce(lambda x, y:x + y, m1))
             self.assertTrue(eq(xm, xf))
             self.assertTrue(eq(filled(xm, 1.e20), xf))
             self.assertTrue(eq(x, xm))
@@ -333,7 +333,7 @@ class TestMa(TestCase):
         c = x >= 8
         assert_(count(where(c, masked, masked)) == 0)
         assert_(shape(where(c, masked, masked)) == c.shape)
-        z = where(c , x, masked)
+        z = where(c, x, masked)
         assert_(z.dtype is x.dtype)
         assert_(z[3] is masked)
         assert_(z[4] is masked)
@@ -341,7 +341,7 @@ class TestMa(TestCase):
         assert_(z[8] is not masked)
         assert_(z[9] is not masked)
         assert_(eq(x, z))
-        z = where(c , masked, x)
+        z = where(c, masked, x)
         assert_(z.dtype is x.dtype)
         assert_(z[3] is masked)
         assert_(z[4] is not masked)
@@ -574,12 +574,12 @@ class TestMa(TestCase):
         a = arange(6)
         b = arange(6) * 3
         r1, w1 = average([[a, b], [b, a]], axis=1, returned=1)
-        self.assertEqual(shape(r1) , shape(w1))
-        self.assertEqual(r1.shape , w1.shape)
+        self.assertEqual(shape(r1), shape(w1))
+        self.assertEqual(r1.shape, w1.shape)
         r2, w2 = average(ones((2, 2, 3)), axis=0, weights=[3, 1], returned=1)
-        self.assertEqual(shape(w2) , shape(r2))
+        self.assertEqual(shape(w2), shape(r2))
         r2, w2 = average(ones((2, 2, 3)), returned=1)
-        self.assertEqual(shape(w2) , shape(r2))
+        self.assertEqual(shape(w2), shape(r2))
         r2, w2 = average(ones((2, 2, 3)), weights=ones((2, 2, 3)), returned=1)
         self.assertTrue(shape(w2) == shape(r2))
         a2d = array([[1, 2], [0, 4]], float)
@@ -722,10 +722,10 @@ class TestUfuncs(TestCase):
 class TestArrayMethods(TestCase):
 
     def setUp(self):
-        x = np.array([ 8.375, 7.545, 8.828, 8.5  , 1.757, 5.928,
-                          8.43 , 7.78 , 9.865, 5.878, 8.979, 4.732,
+        x = np.array([ 8.375, 7.545, 8.828, 8.5, 1.757, 5.928,
+                          8.43, 7.78, 9.865, 5.878, 8.979, 4.732,
                           3.012, 6.022, 5.095, 3.116, 5.238, 3.957,
-                          6.04 , 9.63 , 7.712, 3.382, 4.489, 6.479,
+                          6.04, 9.63, 7.712, 3.382, 4.489, 6.479,
                           7.189, 9.645, 5.395, 4.961, 9.894, 2.893,
                           7.357, 9.828, 6.272, 3.758, 6.693, 0.993])
         X = x.reshape(6, 6)

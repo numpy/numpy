@@ -137,8 +137,8 @@ class IntelVisualFCompiler(BaseIntelFCompiler):
 
     executables = {
         'version_cmd'  : None,
-        'compiler_f77' : [None,"-FI","-w90","-w95"],
-        'compiler_fix' : [None,"-FI","-4L72","-w"],
+        'compiler_f77' : [None, "-FI", "-w90", "-w95"],
+        'compiler_fix' : [None, "-FI", "-4L72", "-w"],
         'compiler_f90' : [None],
         'linker_so'    : ['<F90>', "-shared"],
         'archiver'     : [ar_exe, "/verbose", "/OUT:"],
@@ -152,14 +152,14 @@ class IntelVisualFCompiler(BaseIntelFCompiler):
     module_include_switch = '/I'
 
     def get_flags(self):
-        opt = ['/nologo','/MD','/nbs','/Qlowercase','/us']
+        opt = ['/nologo', '/MD', '/nbs', '/Qlowercase', '/us']
         return opt
 
     def get_flags_free(self):
         return ["-FR"]
 
     def get_flags_debug(self):
-        return ['/4Yb','/d2']
+        return ['/4Yb', '/d2']
 
     def get_flags_opt(self):
         return ['/O2']
@@ -178,10 +178,10 @@ class IntelItaniumVisualFCompiler(IntelVisualFCompiler):
 
     executables = {
         'version_cmd'  : None,
-        'compiler_f77' : [None,"-FI","-w90","-w95"],
-        'compiler_fix' : [None,"-FI","-4L72","-w"],
+        'compiler_f77' : [None, "-FI", "-w90", "-w95"],
+        'compiler_fix' : [None, "-FI", "-4L72", "-w"],
         'compiler_f90' : [None],
-        'linker_so'    : ['<F90>',"-shared"],
+        'linker_so'    : ['<F90>', "-shared"],
         'archiver'     : [ar_exe, "/verbose", "/OUT:"],
         'ranlib'       : None
         }

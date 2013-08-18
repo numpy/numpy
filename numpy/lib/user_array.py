@@ -39,9 +39,9 @@ class container(object):
 
 
     def __setitem__(self, index, value):
-        self.array[index] = asarray(value,self.dtype)
+        self.array[index] = asarray(value, self.dtype)
     def __setslice__(self, i, j, value):
-        self.array[i:j] = asarray(value,self.dtype)
+        self.array[i:j] = asarray(value, self.dtype)
 
     def __abs__(self):
         return self._rc(absolute(self.array))
@@ -65,16 +65,16 @@ class container(object):
         return self
 
     def __mul__(self, other):
-        return self._rc(multiply(self.array,asarray(other)))
+        return self._rc(multiply(self.array, asarray(other)))
     __rmul__ = __mul__
     def __imul__(self, other):
         multiply(self.array, other, self.array)
         return self
 
     def __div__(self, other):
-        return self._rc(divide(self.array,asarray(other)))
+        return self._rc(divide(self.array, asarray(other)))
     def __rdiv__(self, other):
-        return self._rc(divide(asarray(other),self.array))
+        return self._rc(divide(asarray(other), self.array))
     def __idiv__(self, other):
         divide(self.array, other, self.array)
         return self
@@ -88,32 +88,32 @@ class container(object):
         return self
 
     def __divmod__(self, other):
-        return (self._rc(divide(self.array,other)),
+        return (self._rc(divide(self.array, other)),
                 self._rc(remainder(self.array, other)))
     def __rdivmod__(self, other):
         return (self._rc(divide(other, self.array)),
                 self._rc(remainder(other, self.array)))
 
-    def __pow__(self,other):
-        return self._rc(power(self.array,asarray(other)))
-    def __rpow__(self,other):
-        return self._rc(power(asarray(other),self.array))
-    def __ipow__(self,other):
+    def __pow__(self, other):
+        return self._rc(power(self.array, asarray(other)))
+    def __rpow__(self, other):
+        return self._rc(power(asarray(other), self.array))
+    def __ipow__(self, other):
         power(self.array, other, self.array)
         return self
 
-    def __lshift__(self,other):
+    def __lshift__(self, other):
         return self._rc(left_shift(self.array, other))
-    def __rshift__(self,other):
+    def __rshift__(self, other):
         return self._rc(right_shift(self.array, other))
-    def __rlshift__(self,other):
+    def __rlshift__(self, other):
         return self._rc(left_shift(other, self.array))
-    def __rrshift__(self,other):
+    def __rrshift__(self, other):
         return self._rc(right_shift(other, self.array))
-    def __ilshift__(self,other):
+    def __ilshift__(self, other):
         left_shift(self.array, other, self.array)
         return self
-    def __irshift__(self,other):
+    def __irshift__(self, other):
         right_shift(self.array, other, self.array)
         return self
 
@@ -163,12 +163,12 @@ class container(object):
     def __hex__(self): return self._scalarfunc(hex)
     def __oct__(self): return self._scalarfunc(oct)
 
-    def __lt__(self,other): return self._rc(less(self.array,other))
-    def __le__(self,other): return self._rc(less_equal(self.array,other))
-    def __eq__(self,other): return self._rc(equal(self.array,other))
-    def __ne__(self,other): return self._rc(not_equal(self.array,other))
-    def __gt__(self,other): return self._rc(greater(self.array,other))
-    def __ge__(self,other): return self._rc(greater_equal(self.array,other))
+    def __lt__(self, other): return self._rc(less(self.array, other))
+    def __le__(self, other): return self._rc(less_equal(self.array, other))
+    def __eq__(self, other): return self._rc(equal(self.array, other))
+    def __ne__(self, other): return self._rc(not_equal(self.array, other))
+    def __gt__(self, other): return self._rc(greater(self.array, other))
+    def __ge__(self, other): return self._rc(greater_equal(self.array, other))
 
     def copy(self): return self._rc(self.array.copy())
 
@@ -185,7 +185,7 @@ class container(object):
     def __array_wrap__(self, *args):
         return self.__class__(args[0])
 
-    def __setattr__(self,attr,value):
+    def __setattr__(self, attr, value):
         if attr == 'array':
             object.__setattr__(self, attr, value)
             return
@@ -195,7 +195,7 @@ class container(object):
             object.__setattr__(self, attr, value)
 
     # Only called after other approaches fail.
-    def __getattr__(self,attr):
+    def __getattr__(self, attr):
         if (attr == 'array'):
             return object.__getattribute__(self, attr)
         return self.array.__getattribute__(attr)
@@ -204,19 +204,19 @@ class container(object):
 # Test of class container
 #############################################################
 if __name__ == '__main__':
-    temp=reshape(arange(10000),(100,100))
+    temp=reshape(arange(10000), (100, 100))
 
     ua=container(temp)
     # new object created begin test
     print(dir(ua))
-    print(shape(ua),ua.shape) # I have changed Numeric.py
+    print(shape(ua), ua.shape) # I have changed Numeric.py
 
-    ua_small=ua[:3,:5]
+    ua_small=ua[:3, :5]
     print(ua_small)
-    ua_small[0,0]=10  # this did not change ua[0,0], which is not normal behavior
-    print(ua_small[0,0],ua[0,0])
+    ua_small[0, 0]=10  # this did not change ua[0,0], which is not normal behavior
+    print(ua_small[0, 0], ua[0, 0])
     print(sin(ua_small)/3.*6.+sqrt(ua_small**2))
-    print(less(ua_small,103),type(less(ua_small,103)))
-    print(type(ua_small*reshape(arange(15),shape(ua_small))))
-    print(reshape(ua_small,(5,3)))
+    print(less(ua_small, 103), type(less(ua_small, 103)))
+    print(type(ua_small*reshape(arange(15), shape(ua_small))))
+    print(reshape(ua_small, (5, 3)))
     print(transpose(ua_small))

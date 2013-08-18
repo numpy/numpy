@@ -167,19 +167,19 @@ def test_fastCopyAndTranspose():
     assert_(b.flags.owndata)
 
     # 1D array
-    a = np.array([3,2,7,0])
+    a = np.array([3, 2, 7, 0])
     b = np.fastCopyAndTranspose(a)
     assert_equal(b, a.T)
     assert_(b.flags.owndata)
 
     # 2D array
-    a = np.arange(6).reshape(2,3)
+    a = np.arange(6).reshape(2, 3)
     b = np.fastCopyAndTranspose(a)
     assert_equal(b, a.T)
     assert_(b.flags.owndata)
 
 def test_array_astype():
-    a = np.arange(6, dtype='f4').reshape(2,3)
+    a = np.arange(6, dtype='f4').reshape(2, 3)
     # Default behavior: allows unsafe casts, keeps memory layout,
     #                   always copies.
     b = a.astype('i4')
@@ -221,7 +221,7 @@ def test_array_astype():
     b = a.astype('f4', subok=0, copy=False)
     assert_(a is b)
 
-    a = np.matrix([[0,1,2],[3,4,5]], dtype='f4')
+    a = np.matrix([[0, 1, 2], [3, 4, 5]], dtype='f4')
 
     # subok=True passes through a matrix
     b = a.astype('f4', subok=True, copy=False)
@@ -276,7 +276,7 @@ def test_array_astype():
 
 
 def test_copyto_fromscalar():
-    a = np.arange(6, dtype='f4').reshape(2,3)
+    a = np.arange(6, dtype='f4').reshape(2, 3)
 
     # Simple copy
     np.copyto(a, 1.5)
@@ -285,23 +285,23 @@ def test_copyto_fromscalar():
     assert_equal(a, 2.5)
 
     # Where-masked copy
-    mask = np.array([[0,1,0],[0,0,1]], dtype='?')
+    mask = np.array([[0, 1, 0], [0, 0, 1]], dtype='?')
     np.copyto(a, 3.5, where=mask)
-    assert_equal(a, [[2.5,3.5,2.5],[2.5,2.5,3.5]])
-    mask = np.array([[0,1],[1,1],[1,0]], dtype='?')
+    assert_equal(a, [[2.5, 3.5, 2.5], [2.5, 2.5, 3.5]])
+    mask = np.array([[0, 1], [1, 1], [1, 0]], dtype='?')
     np.copyto(a.T, 4.5, where=mask)
-    assert_equal(a, [[2.5,4.5,4.5],[4.5,4.5,3.5]])
+    assert_equal(a, [[2.5, 4.5, 4.5], [4.5, 4.5, 3.5]])
 
 def test_copyto():
-    a = np.arange(6, dtype='i4').reshape(2,3)
+    a = np.arange(6, dtype='i4').reshape(2, 3)
 
     # Simple copy
-    np.copyto(a, [[3,1,5], [6,2,1]])
-    assert_equal(a, [[3,1,5], [6,2,1]])
+    np.copyto(a, [[3, 1, 5], [6, 2, 1]])
+    assert_equal(a, [[3, 1, 5], [6, 2, 1]])
 
     # Overlapping copy should work
-    np.copyto(a[:,:2], a[::-1, 1::-1])
-    assert_equal(a, [[2,6,5], [1,3,1]])
+    np.copyto(a[:, :2], a[::-1, 1::-1])
+    assert_equal(a, [[2, 6, 5], [1, 3, 1]])
 
     # Defaults to 'same_kind' casting
     assert_raises(TypeError, np.copyto, a, 1.5)
@@ -311,27 +311,27 @@ def test_copyto():
     assert_equal(a, 1)
 
     # Copying with a mask
-    np.copyto(a, 3, where=[True,False,True])
-    assert_equal(a, [[3,1,3],[3,1,3]])
+    np.copyto(a, 3, where=[True, False, True])
+    assert_equal(a, [[3, 1, 3], [3, 1, 3]])
 
     # Casting rule still applies with a mask
-    assert_raises(TypeError, np.copyto, a, 3.5, where=[True,False,True])
+    assert_raises(TypeError, np.copyto, a, 3.5, where=[True, False, True])
 
     # Lists of integer 0's and 1's is ok too
-    np.copyto(a, 4.0, casting='unsafe', where=[[0,1,1], [1,0,0]])
-    assert_equal(a, [[3,4,4], [4,1,3]])
+    np.copyto(a, 4.0, casting='unsafe', where=[[0, 1, 1], [1, 0, 0]])
+    assert_equal(a, [[3, 4, 4], [4, 1, 3]])
 
     # Overlapping copy with mask should work
-    np.copyto(a[:,:2], a[::-1, 1::-1], where=[[0,1],[1,1]])
-    assert_equal(a, [[3,4,4], [4,3,3]])
+    np.copyto(a[:, :2], a[::-1, 1::-1], where=[[0, 1], [1, 1]])
+    assert_equal(a, [[3, 4, 4], [4, 3, 3]])
 
     # 'dst' must be an array
-    assert_raises(TypeError, np.copyto, [1,2,3], [2,3,4])
+    assert_raises(TypeError, np.copyto, [1, 2, 3], [2, 3, 4])
 
 def test_copy_order():
-    a = np.arange(24).reshape(2,1,3,4)
+    a = np.arange(24).reshape(2, 1, 3, 4)
     b = a.copy(order='F')
-    c = np.arange(24).reshape(2,1,4,3).swapaxes(2,3)
+    c = np.arange(24).reshape(2, 1, 4, 3).swapaxes(2, 3)
 
     def check_copy_result(x, y, ccontig, fcontig, strides=False):
         assert_(not (x is y))
@@ -397,10 +397,10 @@ def test_copy_order():
     check_copy_result(res, c, ccontig=False, fcontig=False, strides=True)
 
 def test_contiguous_flags():
-    a = np.ones((4,4,1))[::2,:,:]
+    a = np.ones((4, 4, 1))[::2,:,:]
     if NPY_RELAXED_STRIDES_CHECKING:
         a.strides = a.strides[:2] + (-123,)
-    b = np.ones((2,2,1,2,2)).swapaxes(3,4)
+    b = np.ones((2, 2, 1, 2, 2)).swapaxes(3, 4)
 
     def check_contig(a, ccontig, fcontig):
         assert_(a.flags.c_contiguous == ccontig)
@@ -410,13 +410,13 @@ def test_contiguous_flags():
     check_contig(a, False, False)
     check_contig(b, False, False)
     if NPY_RELAXED_STRIDES_CHECKING:
-        check_contig(np.empty((2,2,0,2,2)), True, True)
-        check_contig(np.array([[[1],[2]]], order='F'), True, True)
+        check_contig(np.empty((2, 2, 0, 2, 2)), True, True)
+        check_contig(np.array([[[1], [2]]], order='F'), True, True)
     else:
-        check_contig(np.empty((2,2,0,2,2)), True, False)
-        check_contig(np.array([[[1],[2]]], order='F'), False, True)
-    check_contig(np.empty((2,2)), True, False)
-    check_contig(np.empty((2,2), order='F'), False, True)
+        check_contig(np.empty((2, 2, 0, 2, 2)), True, False)
+        check_contig(np.array([[[1], [2]]], order='F'), False, True)
+    check_contig(np.empty((2, 2)), True, False)
+    check_contig(np.empty((2, 2), order='F'), False, True)
 
     # Check that np.array creates correct contiguous flags:
     check_contig(np.array(a, copy=False), False, False)
@@ -426,27 +426,27 @@ def test_contiguous_flags():
     if NPY_RELAXED_STRIDES_CHECKING:
         # Check slicing update of flags and :
         check_contig(a[0], True, True)
-        check_contig(a[None,::4,...,None], True, True)
-        check_contig(b[0,0,...], False, True)
-        check_contig(b[:,:,0:0,:,:], True, True)
+        check_contig(a[None, ::4, ..., None], True, True)
+        check_contig(b[0, 0, ...], False, True)
+        check_contig(b[:,:, 0:0,:,:], True, True)
     else:
         # Check slicing update of flags:
         check_contig(a[0], True, False)
         # Would be nice if this was C-Contiguous:
-        check_contig(a[None,0,...,None], False, False)
-        check_contig(b[0,0,0,...], False, True)
+        check_contig(a[None, 0, ..., None], False, False)
+        check_contig(b[0, 0, 0, ...], False, True)
 
     # Test ravel and squeeze.
     check_contig(a.ravel(), True, True)
-    check_contig(np.ones((1,3,1)).squeeze(), True, True)
+    check_contig(np.ones((1, 3, 1)).squeeze(), True, True)
 
 def test_broadcast_arrays():
     # Test user defined dtypes
-    a = np.array([(1,2,3)], dtype='u4,u4,u4')
-    b = np.array([(1,2,3),(4,5,6),(7,8,9)], dtype='u4,u4,u4')
+    a = np.array([(1, 2, 3)], dtype='u4,u4,u4')
+    b = np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4')
     result = np.broadcast_arrays(a, b)
-    assert_equal(result[0], np.array([(1,2,3),(1,2,3),(1,2,3)], dtype='u4,u4,u4'))
-    assert_equal(result[1], np.array([(1,2,3),(4,5,6),(7,8,9)], dtype='u4,u4,u4'))
+    assert_equal(result[0], np.array([(1, 2, 3), (1, 2, 3), (1, 2, 3)], dtype='u4,u4,u4'))
+    assert_equal(result[1], np.array([(1, 2, 3), (4, 5, 6), (7, 8, 9)], dtype='u4,u4,u4'))
 
 if __name__ == "__main__":
     run_module_suite()

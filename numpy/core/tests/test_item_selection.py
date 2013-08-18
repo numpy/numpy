@@ -8,12 +8,12 @@ import sys, warnings
 class TestTake(TestCase):
     def test_simple(self):
         a = [[1, 2], [3, 4]]
-        a_str = [[b'1', b'2'],[b'3', b'4']]
+        a_str = [[b'1', b'2'], [b'3', b'4']]
         modes = ['raise', 'wrap', 'clip']
         indices = [-1, 4]
         index_arrays = [np.empty(0, dtype=np.intp),
                         np.empty(tuple(), dtype=np.intp),
-                        np.empty((1,1), dtype=np.intp)]
+                        np.empty((1, 1), dtype=np.intp)]
         real_indices = {}
         real_indices['raise'] = {-1:1, 4:IndexError}
         real_indices['wrap'] = {-1:1, 4:0}

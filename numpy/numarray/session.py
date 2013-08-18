@@ -119,9 +119,9 @@ def _callers_modules():
     global namespace."""
     g = _callers_globals()
     mods = []
-    for k,v in g.items():
+    for k, v in g.items():
         if isinstance(v, type(sys)):
-            mods.append(getattr(v,"__name__"))
+            mods.append(getattr(v, "__name__"))
     return mods
 
 def _errout(*args):
@@ -154,7 +154,7 @@ class _ModuleProxy(object):
             try:
                 self = _loadmodule(name)
             except ImportError:
-                _errout("warning: module", name,"import failed.")
+                _errout("warning: module", name, "import failed.")
         return self
 
     def __getnewargs__(self):
@@ -192,13 +192,13 @@ class _ObjectProxy(object):
             except (ImportError, KeyError):
                 _errout("warning: loading object proxy", module + "." + name,
                         "module import failed.")
-                return _ProxyingFailure(module,name,_type2)
+                return _ProxyingFailure(module, name, _type2)
             try:
                 self = getattr(m, name)
             except AttributeError:
                 _errout("warning: object proxy", module + "." + name,
                         "wouldn't reload from", m)
-                return _ProxyingFailure(module,name,_type2)
+                return _ProxyingFailure(module, name, _type2)
         return self
 
     def __getnewargs__(self):
@@ -234,7 +234,7 @@ def _locate(modules, object):
     for mname in modules:
         m = sys.modules[mname]
         if m:
-            for k,v in m.__dict__.items():
+            for k, v in m.__dict__.items():
                 if v is object:
                     return m.__name__, k
     else:
@@ -276,7 +276,7 @@ def save(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
 
     p = pickle.Pickler(file, protocol=2)
 
-    _verbose("variables:",keys)
+    _verbose("variables:", keys)
     for k in keys:
         v = dictionary[k]
         _verbose("saving", k, type(v))
@@ -291,7 +291,7 @@ def save(variables=None, file=SAVEFILE, dictionary=None, verbose=False):
                 try:
                     module, name = _locate(source_modules, v)
                 except ObjectNotFound:
-                    _errout("warning: couldn't find object",k,
+                    _errout("warning: couldn't find object", k,
                             "in any module... skipping.")
                     continue
                 else:

@@ -16,7 +16,7 @@ def example1(a):
            results[1] = 4.0;
            return_val = results;
            """
-    return weave.inline(code,['a'])
+    return weave.inline(code, ['a'])
 
 def arr(a):
     if a.ndim != 2:
@@ -36,16 +36,16 @@ def arr(a):
     }
     """
     b = zeros_like(a)
-    weave.inline(code,['a','b'])
+    weave.inline(code, ['a', 'b'])
     return b
 
 a = [None]*10
 print(example1(a))
 print(a)
 
-a = rand(512,512)
+a = rand(512, 512)
 b = arr(a)
 
-h = [[0.25,0.5,0.25],[0.5,1,0.5],[0.25,0.5,0.25]]
+h = [[0.25, 0.5, 0.25], [0.5, 1, 0.5], [0.25, 0.5, 0.25]]
 import scipy.signal as ss
-b2 = ss.convolve(h,a,'same')
+b2 = ss.convolve(h, a, 'same')

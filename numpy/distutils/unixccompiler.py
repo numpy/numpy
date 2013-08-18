@@ -31,7 +31,7 @@ def UnixCCompiler__compile(self, obj, src, ext, cc_args, extra_postargs, pp_opts
         ccomp += ['-AA']
         self.compiler_so = ccomp
 
-    display = '%s: %s' % (os.path.basename(self.compiler_so[0]),src)
+    display = '%s: %s' % (os.path.basename(self.compiler_so[0]), src)
     try:
         self.spawn(self.compiler_so + cc_args + [src, '-o', obj] +
                    extra_postargs, display = display)

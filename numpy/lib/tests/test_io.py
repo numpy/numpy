@@ -583,7 +583,7 @@ class TestLoadTxt(TestCase):
                        ('block', int, (2, 2, 3))])
         x = np.loadtxt(c, dtype=dt)
         a = np.array([('aaaa', 1.0, 8.0,
-                        [[[1, 2, 3], [4, 5, 6]],[[7, 8, 9], [10, 11, 12]]])],
+                        [[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]])],
                     dtype=dt)
         assert_array_equal(x, a)
 
@@ -1554,7 +1554,7 @@ M   33  21.99
 
     def test_gft_using_filename(self):
         # Test that we can load data from a filename as well as a file object
-        wanted = np.arange(6).reshape((2,3))
+        wanted = np.arange(6).reshape((2, 3))
         if sys.version_info[0] >= 3:
             # python 3k is known to fail for '\r'
             linesep = ('\n', '\r\n')

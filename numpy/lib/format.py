@@ -352,7 +352,7 @@ def read_array_header_1_0(fp):
 
     # Sanity-check the values.
     if (not isinstance(d['shape'], tuple) or
-        not numpy.all([isinstance(x, (int,long)) for x in d['shape']])):
+        not numpy.all([isinstance(x, (int, long)) for x in d['shape']])):
         msg = "shape is not valid: %r"
         raise ValueError(msg % (d['shape'],))
     if not isinstance(d['fortran_order'], bool):
@@ -366,7 +366,7 @@ def read_array_header_1_0(fp):
 
     return d['shape'], d['fortran_order'], dtype
 
-def write_array(fp, array, version=(1,0)):
+def write_array(fp, array, version=(1, 0)):
     """
     Write an array to an NPY file, including a header.
 
@@ -485,7 +485,7 @@ def read_array(fp):
 
 
 def open_memmap(filename, mode='r+', dtype=None, shape=None,
-                fortran_order=False, version=(1,0)):
+                fortran_order=False, version=(1, 0)):
     """
     Open a .npy file as a memory-mapped array.
 

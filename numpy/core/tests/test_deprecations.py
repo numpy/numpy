@@ -148,20 +148,20 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         assert_deprecated(lambda: a[0.0])
         assert_deprecated(lambda: a[0, 0.0])
         assert_deprecated(lambda: a[0.0, 0])
-        assert_deprecated(lambda: a[0.0, :])
+        assert_deprecated(lambda: a[0.0,:])
         assert_deprecated(lambda: a[:, 0.0])
-        assert_deprecated(lambda: a[:, 0.0, :])
-        assert_deprecated(lambda: a[0.0, :, :], num=2) # [1]
+        assert_deprecated(lambda: a[:, 0.0,:])
+        assert_deprecated(lambda: a[0.0,:,:], num=2) # [1]
         assert_deprecated(lambda: a[0, 0, 0.0])
         assert_deprecated(lambda: a[0.0, 0, 0])
         assert_deprecated(lambda: a[0, 0.0, 0])
         assert_deprecated(lambda: a[-1.4])
         assert_deprecated(lambda: a[0, -1.4])
         assert_deprecated(lambda: a[-1.4, 0])
-        assert_deprecated(lambda: a[-1.4, :])
+        assert_deprecated(lambda: a[-1.4,:])
         assert_deprecated(lambda: a[:, -1.4])
-        assert_deprecated(lambda: a[:, -1.4, :])
-        assert_deprecated(lambda: a[-1.4, :, :], num=2) # [1]
+        assert_deprecated(lambda: a[:, -1.4,:])
+        assert_deprecated(lambda: a[-1.4,:,:], num=2) # [1]
         assert_deprecated(lambda: a[0, 0, -1.4])
         assert_deprecated(lambda: a[-1.4, 0, 0])
         assert_deprecated(lambda: a[0, -1.4, 0])
@@ -170,7 +170,7 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         # Test that the slice parameter deprecation warning doesn't mask
         # the scalar index warning.
         assert_deprecated(lambda: a[0.0:, 0.0], num=2)
-        assert_deprecated(lambda: a[0.0:, 0.0, :], num=2)
+        assert_deprecated(lambda: a[0.0:, 0.0,:], num=2)
 
 
     def test_valid_indexing(self):
@@ -180,8 +180,8 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         assert_not_deprecated(lambda: a[np.array([0])])
         assert_not_deprecated(lambda: a[[0, 0]])
         assert_not_deprecated(lambda: a[:, [0, 0]])
-        assert_not_deprecated(lambda: a[:, 0, :])
-        assert_not_deprecated(lambda: a[:, :, :])
+        assert_not_deprecated(lambda: a[:, 0,:])
+        assert_not_deprecated(lambda: a[:,:,:])
 
 
     def test_slicing(self):
@@ -193,26 +193,26 @@ class TestFloatNonIntegerArgumentDeprecation(_DeprecationTestCase):
         assert_deprecated(lambda: a[0.0:])
         assert_deprecated(lambda: a[0:, 0.0:2])
         assert_deprecated(lambda: a[0.0::2, :0])
-        assert_deprecated(lambda: a[0.0:1:2, :])
+        assert_deprecated(lambda: a[0.0:1:2,:])
         assert_deprecated(lambda: a[:, 0.0:])
         # stop as float.
         assert_deprecated(lambda: a[:0.0])
         assert_deprecated(lambda: a[:0, 1:2.0])
         assert_deprecated(lambda: a[:0.0:2, :0])
-        assert_deprecated(lambda: a[:0.0, :])
+        assert_deprecated(lambda: a[:0.0,:])
         assert_deprecated(lambda: a[:, 0:4.0:2])
         # step as float.
         assert_deprecated(lambda: a[::1.0])
         assert_deprecated(lambda: a[0:, :2:2.0])
         assert_deprecated(lambda: a[1::4.0, :0])
-        assert_deprecated(lambda: a[::5.0, :])
+        assert_deprecated(lambda: a[::5.0,:])
         assert_deprecated(lambda: a[:, 0:4:2.0])
         # mixed.
         assert_deprecated(lambda: a[1.0:2:2.0], num=2)
         assert_deprecated(lambda: a[1.0::2.0], num=2)
         assert_deprecated(lambda: a[0:, :2.0:2.0], num=2)
         assert_deprecated(lambda: a[1.0:1:4.0, :0], num=2)
-        assert_deprecated(lambda: a[1.0:5.0:5.0, :], num=3)
+        assert_deprecated(lambda: a[1.0:5.0:5.0,:], num=3)
         assert_deprecated(lambda: a[:, 0.4:4.0:2.0], num=3)
         # should still get the DeprecationWarning if step = 0.
         assert_deprecated(lambda: a[::0.0], function_fails=True)
@@ -261,8 +261,8 @@ class TestBooleanArgumentDeprecation(_DeprecationTestCase):
         assert_raises(TypeError, operator.index, np.array(True))
         self.assert_deprecated(np.take, args=(a, [0], False))
         self.assert_deprecated(lambda: a[False:True:True], exceptions=IndexError, num=3)
-        self.assert_deprecated(lambda: a[False,0], exceptions=IndexError)
-        self.assert_deprecated(lambda: a[False,0,0], exceptions=IndexError)
+        self.assert_deprecated(lambda: a[False, 0], exceptions=IndexError)
+        self.assert_deprecated(lambda: a[False, 0, 0], exceptions=IndexError)
 
 
 class TestArrayToIndexDeprecation(_DeprecationTestCase):

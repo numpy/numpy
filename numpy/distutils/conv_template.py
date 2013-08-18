@@ -124,10 +124,10 @@ def parse_structure(astr, level):
         start = astr.find(loopbeg, ind)
         if start == -1:
             break
-        start2 = astr.find("*/",start)
-        start2 = astr.find("\n",start2)
-        fini1 = astr.find(loopend,start2)
-        fini2 = astr.find("\n",fini1)
+        start2 = astr.find("*/", start)
+        start2 = astr.find("\n", start2)
+        fini1 = astr.find(loopend, start2)
+        fini2 = astr.find("\n", fini1)
         line += astr.count("\n", ind, start2+1)
         spanlist.append((start, start2+1, fini1, fini2+1, line))
         line += astr.count("\n", start2+1, fini2)
@@ -150,7 +150,7 @@ def parse_values(astr):
     # split at ',' and a list of values returned.
     astr = parenrep.sub(paren_repl, astr)
     # replaces occurences of xxx*3 with xxx, xxx, xxx
-    astr = ','.join([plainrep.sub(paren_repl,x.strip())
+    astr = ','.join([plainrep.sub(paren_repl, x.strip())
                      for x in astr.split(',')])
     return astr.split(',')
 
@@ -188,7 +188,7 @@ def parse_loop_header(loophead) :
         elif nsub != size :
             msg = "Mismatch in number of values:\n%s = %s" % (name, vals)
             raise ValueError(msg)
-        names.append((name,vals))
+        names.append((name, vals))
 
 
     # Find any exclude variables
@@ -208,7 +208,7 @@ def parse_loop_header(loophead) :
         raise ValueError("No substitution variables found")
     for i in range(nsub) :
         tmp = {}
-        for name,vals in names :
+        for name, vals in names :
             tmp[name] = vals[i]
         dlist.append(tmp)
     return dlist
@@ -276,9 +276,9 @@ def resolve_includes(source):
         if m:
             fn = m.group('name')
             if not os.path.isabs(fn):
-                fn = os.path.join(d,fn)
+                fn = os.path.join(d, fn)
             if os.path.isfile(fn):
-                print('Including file',fn)
+                print('Including file', fn)
                 lines.extend(resolve_includes(fn))
             else:
                 lines.append(line)
@@ -289,7 +289,7 @@ def resolve_includes(source):
 
 def process_file(source):
     lines = resolve_includes(source)
-    sourcefile = os.path.normcase(source).replace("\\","\\\\")
+    sourcefile = os.path.normcase(source).replace("\\", "\\\\")
     try:
         code = process_str(''.join(lines))
     except ValueError:
@@ -323,10 +323,10 @@ if __name__ == "__main__":
         fid = sys.stdin
         outfile = sys.stdout
     else:
-        fid = open(file,'r')
+        fid = open(file, 'r')
         (base, ext) = os.path.splitext(file)
         newname = base
-        outfile = open(newname,'w')
+        outfile = open(newname, 'w')
 
     allstr = fid.read()
     try:

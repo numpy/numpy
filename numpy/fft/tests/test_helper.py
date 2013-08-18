@@ -25,7 +25,7 @@ class TestFFTShift(TestCase):
         assert_array_almost_equal(fft.ifftshift(y), x)
 
     def test_inverse(self):
-        for n in [1,4,9,100,211]:
+        for n in [1, 4, 9, 100, 211]:
             x = np.random.random((n,))
             assert_array_almost_equal(fft.ifftshift(fft.fftshift(x)), x)
 

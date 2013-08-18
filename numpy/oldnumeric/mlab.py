@@ -29,7 +29,7 @@ def eye(N, M=None, k=0, typecode=None, dtype=None):
     """
     dtype = convtypecode(typecode, dtype)
     if M is None: M = N
-    m = np.equal(np.subtract.outer(np.arange(N), np.arange(M)),-k)
+    m = np.equal(np.subtract.outer(np.arange(N), np.arange(M)), -k)
     if m.dtype != dtype:
         return m.astype(dtype)
 
@@ -39,7 +39,7 @@ def tri(N, M=None, k=0, typecode=None, dtype=None):
     """
     dtype = convtypecode(typecode, dtype)
     if M is None: M = N
-    m = np.greater_equal(np.subtract.outer(np.arange(N), np.arange(M)),-k)
+    m = np.greater_equal(np.subtract.outer(np.arange(N), np.arange(M)), -k)
     if m.dtype != dtype:
         return m.astype(dtype)
 
@@ -84,8 +84,8 @@ def cov(m, y=None, rowvar=0, bias=0):
     N = m.shape[0]
     if (y.shape[0] != N):
         raise ValueError("x and y must have the same number of observations")
-    m = m - _Nmean(m,axis=0)
-    y = y - _Nmean(y,axis=0)
+    m = m - _Nmean(m, axis=0)
+    y = y - _Nmean(y, axis=0)
     if bias:
         fact = N*1.0
     else:
@@ -96,7 +96,7 @@ from numpy import sqrt, multiply
 def corrcoef(x, y=None):
     c = cov(x, y)
     d = diag(c)
-    return c/sqrt(multiply.outer(d,d))
+    return c/sqrt(multiply.outer(d, d))
 
 from .compat import *
 from .functions import *

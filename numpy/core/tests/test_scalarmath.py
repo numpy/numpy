@@ -16,16 +16,16 @@ class TestTypes(TestCase):
     def test_types(self, level=1):
         for atype in types:
             a = atype(1)
-            assert_(a == 1, "error with %r: got %r" % (atype,a))
+            assert_(a == 1, "error with %r: got %r" % (atype, a))
 
     def test_type_add(self, level=1):
         # list of types
         for k, atype in enumerate(types):
             a_scalar = atype(3)
-            a_array = np.array([3],dtype=atype)
+            a_array = np.array([3], dtype=atype)
             for l, btype in enumerate(types):
                 b_scalar = btype(1)
-                b_array = np.array([1],dtype=btype)
+                b_array = np.array([1], dtype=btype)
                 c_scalar = a_scalar + b_scalar
                 c_array = a_array + b_array
                 # It was comparing the type numbers, but the new ufunc
@@ -36,13 +36,13 @@ class TestTypes(TestCase):
                 # does not produce properly symmetric results...
                 assert_equal(c_scalar.dtype, c_array.dtype,
                            "error with types (%d/'%c' + %d/'%c')" %
-                            (k,np.dtype(atype).char,l,np.dtype(btype).char))
+                            (k, np.dtype(atype).char, l, np.dtype(btype).char))
 
     def test_type_create(self, level=1):
         for k, atype in enumerate(types):
-            a = np.array([1,2,3],atype)
-            b = atype([1,2,3])
-            assert_equal(a,b)
+            a = np.array([1, 2, 3], atype)
+            b = atype([1, 2, 3])
+            assert_equal(a, b)
 
 
 class TestBaseMath(TestCase):
@@ -81,21 +81,21 @@ class TestPower(TestCase):
         for t in [np.int8, np.int16, np.float16]:
             a = t(3)
             b = a ** 4
-            assert_(b == 81, "error with %r: got %r" % (t,b))
+            assert_(b == 81, "error with %r: got %r" % (t, b))
 
     def test_large_types(self):
         for t in [np.int32, np.int64, np.float32, np.float64, np.longdouble]:
             a = t(51)
             b = a ** 4
-            msg = "error with %r: got %r" % (t,b)
+            msg = "error with %r: got %r" % (t, b)
             if np.issubdtype(t, np.integer):
                 assert_(b == 6765201, msg)
             else:
                 assert_almost_equal(b, 6765201, err_msg=msg)
     def test_mixed_types(self):
-        typelist = [np.int8,np.int16,np.float16,
-                    np.float32,np.float64,np.int8,
-                    np.int16,np.int32,np.int64]
+        typelist = [np.int8, np.int16, np.float16,
+                    np.float32, np.float64, np.int8,
+                    np.int16, np.int32, np.int64]
         for t1 in typelist:
             for t2 in typelist:
                 a = t1(3)
@@ -132,7 +132,7 @@ class TestConversion(TestCase):
         l = [1e6, 1e12, 1e18, -1e6, -1e12, -1e18]
         li = [10**6, 10**12, 10**18, -10**6, -10**12, -10**18]
         for T in [None, np.float64, np.int64]:
-            a = np.array(l,dtype=T)
+            a = np.array(l, dtype=T)
             assert_equal([int(_m) for _m in a], li)
 
         a = np.array(l[:3], dtype=np.uint64)
@@ -155,9 +155,9 @@ class TestRepr(object):
         last_exponent_bit_idx = finfo.nexp
         storage_bytes = np.dtype(t).itemsize*8
         # could add some more types to the list below
-        for which in ['small denorm','small norm']:
+        for which in ['small denorm', 'small norm']:
             # Values from http://en.wikipedia.org/wiki/IEEE_754
-            constr = np.array([0x00]*storage_bytes,dtype=np.uint8)
+            constr = np.array([0x00]*storage_bytes, dtype=np.uint8)
             if which == 'small denorm':
                 byte = last_fraction_bit_idx // 8
                 bytebit = 7-(last_fraction_bit_idx % 8)

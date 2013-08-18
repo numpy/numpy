@@ -17,7 +17,7 @@ _ndat = np.array(
         [[ 0.6244, np.nan, 0.2692,  0.0116, np.nan, 0.1170],
          [ 0.5351, 0.9403, np.nan,  0.2100, 0.4759, 0.2833],
          [ np.nan, np.nan, np.nan,  0.1042, np.nan, 0.5954],
-         [ 0.161 , np.nan, np.nan,  0.1859, 0.3146, np.nan]]
+         [ 0.161, np.nan, np.nan,  0.1859, 0.3146, np.nan]]
         )
 
 # rows of _ndat with nans removed
@@ -131,7 +131,7 @@ class TestNanFunctions_ArgminArgmax(TestCase):
                     assert_(issubclass(w[0].category, NanWarning))
 
     def test_empty(self):
-        mat = np.zeros((0,3))
+        mat = np.zeros((0, 3))
         for f in self.nanfuncs:
             for axis in [0, None]:
                 assert_raises(ValueError, f, mat, axis=axis)
@@ -253,7 +253,7 @@ class TestNanFunctions_Sum(TestCase):
                 assert_(len(w) == 0, 'warning raised')
 
     def test_empty(self):
-        mat = np.zeros((0,3))
+        mat = np.zeros((0, 3))
         if np.__version__[:3] < '1.9':
             tgt = [np.nan]*3
             res = nansum(mat, axis=0)
@@ -398,7 +398,7 @@ class TestNanFunctions_MeanVarStd(TestCase):
                     assert_(issubclass(w[0].category, NanWarning))
 
     def test_empty(self):
-        mat = np.zeros((0,3))
+        mat = np.zeros((0, 3))
         for f in self.nanfuncs:
             for axis in [0, None]:
                 with warnings.catch_warnings(record=True) as w:

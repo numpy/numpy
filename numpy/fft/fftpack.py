@@ -32,7 +32,7 @@ version of the FFTPACK routines.
 """
 from __future__ import division, absolute_import, print_function
 
-__all__ = ['fft','ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
+__all__ = ['fft', 'ifft', 'rfft', 'irfft', 'hfft', 'ihfft', 'rfftn',
            'irfftn', 'rfft2', 'irfft2', 'fft2', 'ifft2', 'fftn', 'ifftn']
 
 from numpy.core import asarray, zeros, swapaxes, shape, conjugate, \
@@ -62,11 +62,11 @@ def _raw_fft(a, n=None, axis=-1, init_function=fftpack.cffti,
         s = list(a.shape)
         if s[axis] > n:
             index = [slice(None)]*len(s)
-            index[axis] = slice(0,n)
+            index[axis] = slice(0, n)
             a = a[index]
         else:
             index = [slice(None)]*len(s)
-            index[axis] = slice(0,s[axis])
+            index[axis] = slice(0, s[axis])
             s[axis] = n
             z = zeros(s, a.dtype.char)
             z[index] = a
@@ -619,7 +619,7 @@ def fftn(a, s=None, axes=None):
 
     """
 
-    return _raw_fftnd(a,s,axes,fft)
+    return _raw_fftnd(a, s, axes, fft)
 
 def ifftn(a, s=None, axes=None):
     """
@@ -714,7 +714,7 @@ def ifftn(a, s=None, axes=None):
     return _raw_fftnd(a, s, axes, ifft)
 
 
-def fft2(a, s=None, axes=(-2,-1)):
+def fft2(a, s=None, axes=(-2, -1)):
     """
     Compute the 2-dimensional discrete Fourier Transform
 
@@ -792,10 +792,10 @@ def fft2(a, s=None, axes=(-2,-1)):
 
     """
 
-    return _raw_fftnd(a,s,axes,fft)
+    return _raw_fftnd(a, s, axes, fft)
 
 
-def ifft2(a, s=None, axes=(-2,-1)):
+def ifft2(a, s=None, axes=(-2, -1)):
     """
     Compute the 2-dimensional inverse discrete Fourier Transform.
 
@@ -965,7 +965,7 @@ def rfftn(a, s=None, axes=None):
         a = fft(a, s[ii], axes[ii])
     return a
 
-def rfft2(a, s=None, axes=(-2,-1)):
+def rfft2(a, s=None, axes=(-2, -1)):
     """
     Compute the 2-dimensional FFT of a real array.
 
@@ -1086,7 +1086,7 @@ def irfftn(a, s=None, axes=None):
     a = irfft(a, s[-1], axes[-1])
     return a
 
-def irfft2(a, s=None, axes=(-2,-1)):
+def irfft2(a, s=None, axes=(-2, -1)):
     """
     Compute the 2-dimensional inverse FFT of a real array.
 

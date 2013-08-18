@@ -16,9 +16,9 @@ else:
 
 def _fix_args(args,flag=1):
     if is_string(args):
-        return args.replace('%','%%')
+        return args.replace('%', '%%')
     if flag and is_sequence(args):
-        return tuple([_fix_args(a,flag=0) for a in args])
+        return tuple([_fix_args(a, flag=0) for a in args])
     return args
 
 
@@ -78,7 +78,7 @@ def set_verbosity(v, force=False):
         set_threshold(INFO, force)
     elif v >= 2:
         set_threshold(DEBUG, force)
-    return {FATAL:-2,ERROR:-1,WARN:0,INFO:1,DEBUG:2}.get(prev_level,1)
+    return {FATAL:-2,ERROR:-1,WARN:0,INFO:1,DEBUG:2}.get(prev_level, 1)
 
 
 _global_color_map = {

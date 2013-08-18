@@ -194,7 +194,7 @@ class TestArrayAlmostEqual(_GenericTest, unittest.TestCase):
     def test_inf(self):
         a = np.array([[1., 2.], [3., 4.]])
         b = a.copy()
-        a[0,0] = np.inf
+        a[0, 0] = np.inf
         self.assertRaises(AssertionError,
                 lambda : self._assert_func(a, b))
 

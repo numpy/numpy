@@ -80,15 +80,15 @@ class was %s
                     self.fcompiler.customize_cmd(self)
                     self.fcompiler.show_customization()
 
-    def _wrap_method(self,mth,lang,args):
+    def _wrap_method(self, mth, lang, args):
         from distutils.ccompiler import CompileError
         from distutils.errors import DistutilsExecError
         save_compiler = self.compiler
-        if lang in ['f77','f90']:
+        if lang in ['f77', 'f90']:
             self.compiler = self.fcompiler
         try:
             ret = mth(*((self,)+args))
-        except (DistutilsExecError,CompileError):
+        except (DistutilsExecError, CompileError):
             msg = str(get_exception())
             self.compiler = save_compiler
             raise CompileError
@@ -96,7 +96,7 @@ class was %s
         return ret
 
     def _compile (self, body, headers, include_dirs, lang):
-        return self._wrap_method(old_config._compile,lang,
+        return self._wrap_method(old_config._compile, lang,
                                  (body, headers, include_dirs, lang))
 
     def _link (self, body,
@@ -105,14 +105,14 @@ class was %s
         if self.compiler.compiler_type=='msvc':
             libraries = (libraries or [])[:]
             library_dirs = (library_dirs or [])[:]
-            if lang in ['f77','f90']:
+            if lang in ['f77', 'f90']:
                 lang = 'c' # always use system linker when using MSVC compiler
                 if self.fcompiler:
                     for d in self.fcompiler.library_dirs or []:
                         # correct path when compiling in Cygwin but with
                         # normal Win Python
                         if d.startswith('/usr/lib'):
-                            s,o = exec_command(['cygpath', '-w', d],
+                            s, o = exec_command(['cygpath', '-w', d],
                                                use_tee=False)
                             if not s: d = o
                         library_dirs.append(d)
@@ -123,7 +123,7 @@ class was %s
                 if libname.startswith('msvc'): continue
                 fileexists = False
                 for libdir in library_dirs or []:
-                    libfile = os.path.join(libdir,'%s.lib' % (libname))
+                    libfile = os.path.join(libdir, '%s.lib' % (libname))
                     if os.path.isfile(libfile):
                         fileexists = True
                         break
@@ -131,11 +131,11 @@ class was %s
                 # make g77-compiled static libs available to MSVC
                 fileexists = False
                 for libdir in library_dirs:
-                    libfile = os.path.join(libdir,'lib%s.a' % (libname))
+                    libfile = os.path.join(libdir, 'lib%s.a' % (libname))
                     if os.path.isfile(libfile):
                         # copy libname.a file to name.lib so that MSVC linker
                         # can find it
-                        libfile2 = os.path.join(libdir,'%s.lib' % (libname))
+                        libfile2 = os.path.join(libdir, '%s.lib' % (libname))
                         copy_file(libfile, libfile2)
                         self.temp_files.append(libfile2)
                         fileexists = True
@@ -145,7 +145,7 @@ class was %s
                          % (libname, library_dirs))
         elif self.compiler.compiler_type == 'mingw32':
             generate_manifest(self)
-        return self._wrap_method(old_config._link,lang,
+        return self._wrap_method(old_config._link, lang,
                                  (body, headers, include_dirs,
                                   libraries, library_dirs, lang))
 

@@ -3,12 +3,12 @@ from __future__ import division, print_function
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration
-    config = Configuration('swig_ext',parent_package,top_path)
+    config = Configuration('swig_ext', parent_package, top_path)
     config.add_extension('_example',
-                         ['src/example.i','src/example.c']
+                         ['src/example.i', 'src/example.c']
                          )
     config.add_extension('_example2',
-                         ['src/zoo.i','src/zoo.cc'],
+                         ['src/zoo.i', 'src/zoo.cc'],
                          depends=['src/zoo.h'],
                          include_dirs=['src']
                          )

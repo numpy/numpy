@@ -100,7 +100,7 @@ with warnings.catch_warnings():
 
 # Some aliases:
 ranf = random = sample = random_sample
-__all__.extend(['ranf','random','sample'])
+__all__.extend(['ranf', 'random', 'sample'])
 
 def __RandomState_ctor():
     """Return a RandomState instance.

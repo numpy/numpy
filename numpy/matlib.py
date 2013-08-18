@@ -168,8 +168,8 @@ def identity(n,dtype=None):
             [0, 0, 1]])
 
     """
-    a = array([1]+n*[0],dtype=dtype)
-    b = empty((n,n),dtype=dtype)
+    a = array([1]+n*[0], dtype=dtype)
+    b = empty((n, n), dtype=dtype)
     b.flat = a
     return b
 
@@ -210,7 +210,7 @@ def eye(n,M=None, k=0, dtype=float):
             [ 0.,  0.,  0.]])
 
     """
-    return asmatrix(np.eye(n,M,k,dtype))
+    return asmatrix(np.eye(n, M, k, dtype))
 
 def rand(*args):
     """
@@ -347,12 +347,12 @@ def repmat(a, m, n):
     a = asanyarray(a)
     ndim = a.ndim
     if ndim == 0:
-        origrows, origcols = (1,1)
+        origrows, origcols = (1, 1)
     elif ndim == 1:
         origrows, origcols = (1, a.shape[0])
     else:
         origrows, origcols = a.shape
     rows = origrows * m
     cols = origcols * n
-    c = a.reshape(1,a.size).repeat(m, 0).reshape(rows, origcols).repeat(n,0)
+    c = a.reshape(1, a.size).repeat(m, 0).reshape(rows, origcols).repeat(n, 0)
     return c.reshape(rows, cols)

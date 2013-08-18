@@ -6,8 +6,8 @@ __all__ = ['ravel_multi_index',
            'ogrid',
            'r_', 'c_', 's_',
            'index_exp', 'ix_',
-           'ndenumerate','ndindex',
-           'fill_diagonal','diag_indices','diag_indices_from']
+           'ndenumerate', 'ndindex',
+           'fill_diagonal', 'diag_indices', 'diag_indices_from']
 
 import sys
 import numpy.core.numeric as _nx
@@ -144,7 +144,7 @@ class nd_grid(object):
     """
     def __init__(self, sparse=False):
         self.sparse = sparse
-    def __getitem__(self,key):
+    def __getitem__(self, key):
         try:
             size = []
             typ = int
@@ -180,7 +180,7 @@ class nd_grid(object):
             if self.sparse:
                 slobj = [_nx.newaxis]*len(size)
                 for k in range(len(size)):
-                    slobj[k] = slice(None,None)
+                    slobj[k] = slice(None, None)
                     nn[k] = nn[k][slobj]
                     slobj[k] = _nx.newaxis
             return nn
@@ -195,12 +195,12 @@ class nd_grid(object):
                 if step != 1:
                     step = (key.stop-start)/float(step-1)
                 stop = key.stop+step
-                return _nx.arange(0, length,1, float)*step + start
+                return _nx.arange(0, length, 1, float)*step + start
             else:
                 return _nx.arange(start, stop, step)
 
-    def __getslice__(self,i,j):
-        return _nx.arange(i,j)
+    def __getslice__(self, i, j):
+        return _nx.arange(i, j)
 
     def __len__(self):
         return 0
@@ -237,12 +237,12 @@ class AxisConcatenator(object):
         self.trans1d = trans1d
         self.ndmin = ndmin
 
-    def __getitem__(self,key):
+    def __getitem__(self, key):
         trans1d = self.trans1d
         ndmin = self.ndmin
         if isinstance(key, str):
             frame = sys._getframe().f_back
-            mymat = matrix.bmat(key,frame.f_globals,frame.f_locals)
+            mymat = matrix.bmat(key, frame.f_globals, frame.f_locals)
             return mymat
         if not isinstance(key, tuple):
             key = (key,)
@@ -265,10 +265,10 @@ class AxisConcatenator(object):
                 else:
                     newobj = _nx.arange(start, stop, step)
                 if ndmin > 1:
-                    newobj = array(newobj,copy=False,ndmin=ndmin)
+                    newobj = array(newobj, copy=False, ndmin=ndmin)
                     if trans1d != -1:
-                        newobj = newobj.swapaxes(-1,trans1d)
-            elif isinstance(key[k],str):
+                        newobj = newobj.swapaxes(-1, trans1d)
+            elif isinstance(key[k], str):
                 if k != 0:
                     raise ValueError("special directives must be the "
                             "first entry.")
@@ -293,7 +293,7 @@ class AxisConcatenator(object):
                 except (ValueError, TypeError):
                     raise ValueError("unknown special directive")
             elif type(key[k]) in ScalarType:
-                newobj = array(key[k],ndmin=ndmin)
+                newobj = array(key[k], ndmin=ndmin)
                 scalars.append(k)
                 scalar = True
                 scalartypes.append(newobj.dtype)
@@ -323,11 +323,11 @@ class AxisConcatenator(object):
             for k in scalars:
                 objs[k] = objs[k].astype(final_dtype)
 
-        res = _nx.concatenate(tuple(objs),axis=self.axis)
+        res = _nx.concatenate(tuple(objs), axis=self.axis)
         return self._retval(res)
 
-    def __getslice__(self,i,j):
-        res = _nx.arange(i,j)
+    def __getslice__(self, i, j):
+        res = _nx.arange(i, j)
         return self._retval(res)
 
     def __len__(self):

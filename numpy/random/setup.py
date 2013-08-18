@@ -19,7 +19,7 @@ def needs_mingw_ftime_workaround():
 
 def configuration(parent_package='',top_path=None):
     from numpy.distutils.misc_util import Configuration, get_mathlibs
-    config = Configuration('random',parent_package,top_path)
+    config = Configuration('random', parent_package, top_path)
 
     def generate_libraries(ext, build_dir):
         config_cmd = config.get_config_cmd()
@@ -41,9 +41,9 @@ def configuration(parent_package='',top_path=None):
                                   ['mtrand.c', 'randomkit.c', 'initarray.c',
                                    'distributions.c']]+[generate_libraries],
                          libraries=libs,
-                         depends = [join('mtrand','*.h'),
-                                    join('mtrand','*.pyx'),
-                                    join('mtrand','*.pxi'),
+                         depends = [join('mtrand', '*.h'),
+                                    join('mtrand', '*.pyx'),
+                                    join('mtrand', '*.pxi'),
                                     ],
                          define_macros = defs,
                         )

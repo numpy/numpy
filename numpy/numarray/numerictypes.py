@@ -32,17 +32,17 @@ from __future__ import division, absolute_import, print_function
 import numpy
 from numpy.compat import long
 
-__all__ = ['NumericType','HasUInt64','typeDict','IsType',
+__all__ = ['NumericType', 'HasUInt64', 'typeDict', 'IsType',
            'BooleanType', 'SignedType', 'UnsignedType', 'IntegralType',
            'SignedIntegralType', 'UnsignedIntegralType', 'FloatingType',
            'ComplexType', 'AnyType', 'ObjectType', 'Any', 'Object',
            'Bool', 'Int8', 'Int16', 'Int32', 'Int64', 'Float32',
            'Float64', 'UInt8', 'UInt16', 'UInt32', 'UInt64',
-           'Complex32', 'Complex64', 'Byte', 'Short', 'Int','Long',
+           'Complex32', 'Complex64', 'Byte', 'Short', 'Int', 'Long',
            'Float', 'Complex', 'genericTypeRank', 'pythonTypeRank',
            'pythonTypeMap', 'scalarTypeMap', 'genericCoercions',
-           'typecodes', 'genericPromotionExclusions','MaximumType',
-           'getType','scalarTypes', 'typefrom']
+           'typecodes', 'genericPromotionExclusions', 'MaximumType',
+           'getType', 'scalarTypes', 'typefrom']
 
 MAX_ALIGN = 8
 MAX_INT_SIZE = 8
@@ -305,23 +305,23 @@ _scipy_alias("complex64", "Complex32")
 
 # Ranking of types from lowest to highest (sorta)
 if not HasUInt64:
-    genericTypeRank = ['Bool','Int8','UInt8','Int16','UInt16',
+    genericTypeRank = ['Bool', 'Int8', 'UInt8', 'Int16', 'UInt16',
                        'Int32', 'UInt32', 'Int64',
-                       'Float32','Float64', 'Complex32', 'Complex64',  'Object']
+                       'Float32', 'Float64', 'Complex32', 'Complex64',  'Object']
 else:
-    genericTypeRank = ['Bool','Int8','UInt8','Int16','UInt16',
+    genericTypeRank = ['Bool', 'Int8', 'UInt8', 'Int16', 'UInt16',
                        'Int32', 'UInt32', 'Int64', 'UInt64',
-                       'Float32','Float64', 'Complex32', 'Complex64', 'Object']
+                       'Float32', 'Float64', 'Complex32', 'Complex64', 'Object']
 
 pythonTypeRank = [ bool, int, long, float, complex ]
 
 # The next line is not platform independent XXX Needs to be generalized
 if not LP64:
     pythonTypeMap  = {
-        int:("Int32","int"),
-        long:("Int64","int"),
-        float:("Float64","float"),
-        complex:("Complex64","complex")}
+        int:("Int32", "int"),
+        long:("Int64", "int"),
+        float:("Float64", "float"),
+        complex:("Complex64", "complex")}
 
     scalarTypeMap = {
         int:"Int32",
@@ -330,10 +330,10 @@ if not LP64:
         complex:"Complex64"}
 else:
     pythonTypeMap  = {
-        int:("Int64","int"),
-        long:("Int64","int"),
-        float:("Float64","float"),
-        complex:("Complex64","complex")}
+        int:("Int64", "int"),
+        long:("Int64", "int"),
+        float:("Float64", "float"),
+        complex:("Complex64", "complex")}
 
     scalarTypeMap = {
         int:"Int64",
@@ -341,7 +341,7 @@ else:
         float:"Float64",
         complex:"Complex64"}
 
-pythonTypeMap.update({bool:("Bool","bool") })
+pythonTypeMap.update({bool:("Bool", "bool") })
 scalarTypeMap.update({bool:"Bool"})
 
 # Generate coercion matrix
@@ -415,16 +415,16 @@ def _initGenericCoercions():
     genericCoercions[("Complex32", "UInt64")] = "Complex64"
     genericCoercions[("UInt64", "Complex32")] = "Complex64"
 
-    genericCoercions[("Int64","Float32")] = "Float64"
+    genericCoercions[("Int64", "Float32")] = "Float64"
     genericCoercions[("Float32", "Int64")] = "Float64"
-    genericCoercions[("UInt64","Float32")] = "Float64"
+    genericCoercions[("UInt64", "Float32")] = "Float64"
     genericCoercions[("Float32", "UInt64")] = "Float64"
 
     genericCoercions[(float, "Bool")] = "Float64"
     genericCoercions[("Bool", float)] = "Float64"
 
-    genericCoercions[(float,float,float)] = "Float64" # for scipy.special
-    genericCoercions[(int,int,float)] = "Float64" # for scipy.special
+    genericCoercions[(float, float, float)] = "Float64" # for scipy.special
+    genericCoercions[(int, int, float)] = "Float64" # for scipy.special
 
 _initGenericCoercions()
 
@@ -433,12 +433,12 @@ genericPromotionExclusions = {
     'Bool': (),
     'Int8': (),
     'Int16': (),
-    'Int32': ('Float32','Complex32'),
+    'Int32': ('Float32', 'Complex32'),
     'UInt8': (),
     'UInt16': (),
-    'UInt32': ('Float32','Complex32'),
-    'Int64' : ('Float32','Complex32'),
-    'UInt64' : ('Float32','Complex32'),
+    'UInt32': ('Float32', 'Complex32'),
+    'Int64' : ('Float32', 'Complex32'),
+    'UInt64' : ('Float32', 'Complex32'),
     'Float32': (),
     'Float64': ('Complex32',),
     'Complex32':(),
@@ -510,7 +510,7 @@ def getType(type):
     except KeyError:
         raise TypeError("Not a numeric type")
 
-scalarTypes = (bool,int,long,float,complex)
+scalarTypes = (bool, int, long, float, complex)
 
 _scipy_dtypechar = {
     Int8 : 'b',
@@ -528,7 +528,7 @@ _scipy_dtypechar = {
     }
 
 _scipy_dtypechar_inverse = {}
-for key,value in _scipy_dtypechar.items():
+for key, value in _scipy_dtypechar.items():
     _scipy_dtypechar_inverse[value] = key
 
 _val = numpy.int_(0).itemsize

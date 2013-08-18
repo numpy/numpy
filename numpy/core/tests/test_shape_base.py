@@ -13,14 +13,14 @@ class TestAtleast1d(TestCase):
         a = array(1)
         b = array(2)
         res = [atleast_1d(a), atleast_1d(b)]
-        desired = [array([1]),array([2])]
+        desired = [array([1]), array([2])]
         assert_array_equal(res, desired)
 
     def test_1D_array(self):
         a = array([1, 2])
         b = array([2, 3])
         res = [atleast_1d(a), atleast_1d(b)]
-        desired = [array([1, 2]),array([2, 3])]
+        desired = [array([1, 2]), array([2, 3])]
         assert_array_equal(res, desired)
 
     def test_2D_array(self):
@@ -46,7 +46,7 @@ class TestAtleast1d(TestCase):
         assert_(atleast_1d(3j).shape == (1,))
         assert_(atleast_1d(long(3)).shape == (1,))
         assert_(atleast_1d(3.0).shape == (1,))
-        assert_(atleast_1d([[2,3],[4,5]]).shape == (2,2))
+        assert_(atleast_1d([[2, 3], [4, 5]]).shape == (2, 2))
 
 
 class TestAtleast2d(TestCase):
@@ -83,9 +83,9 @@ class TestAtleast2d(TestCase):
     def test_r2array(self):
         """ Test to make sure equivalent Travis O's r2array function
         """
-        assert_(atleast_2d(3).shape == (1,1))
-        assert_(atleast_2d([3j,1]).shape == (1,2))
-        assert_(atleast_2d([[[3,1],[4,5]],[[3,5],[1,2]]]).shape == (2,2,2))
+        assert_(atleast_2d(3).shape == (1, 1))
+        assert_(atleast_2d([3j, 1]).shape == (1, 2))
+        assert_(atleast_2d([[[3, 1], [4, 5]], [[3, 5], [1, 2]]]).shape == (2, 2, 2))
 
 
 class TestAtleast3d(TestCase):
@@ -107,7 +107,7 @@ class TestAtleast3d(TestCase):
         a = array([[1, 2], [1, 2]])
         b = array([[2, 3], [2, 3]])
         res = [atleast_3d(a), atleast_3d(b)]
-        desired = [a[:,:,newaxis], b[:,:,newaxis]]
+        desired = [a[:,:, newaxis], b[:,:, newaxis]]
         assert_array_equal(res, desired)
 
     def test_3D_array(self):
@@ -124,56 +124,56 @@ class TestHstack(TestCase):
     def test_0D_array(self):
         a = array(1)
         b = array(2)
-        res=hstack([a,b])
-        desired = array([1,2])
-        assert_array_equal(res,desired)
+        res=hstack([a, b])
+        desired = array([1, 2])
+        assert_array_equal(res, desired)
 
     def test_1D_array(self):
         a = array([1])
         b = array([2])
-        res=hstack([a,b])
-        desired = array([1,2])
-        assert_array_equal(res,desired)
+        res=hstack([a, b])
+        desired = array([1, 2])
+        assert_array_equal(res, desired)
 
     def test_2D_array(self):
-        a = array([[1],[2]])
-        b = array([[1],[2]])
-        res=hstack([a,b])
-        desired = array([[1,1],[2,2]])
-        assert_array_equal(res,desired)
+        a = array([[1], [2]])
+        b = array([[1], [2]])
+        res=hstack([a, b])
+        desired = array([[1, 1], [2, 2]])
+        assert_array_equal(res, desired)
 
 
 class TestVstack(TestCase):
     def test_0D_array(self):
         a = array(1)
         b = array(2)
-        res=vstack([a,b])
-        desired = array([[1],[2]])
-        assert_array_equal(res,desired)
+        res=vstack([a, b])
+        desired = array([[1], [2]])
+        assert_array_equal(res, desired)
 
     def test_1D_array(self):
         a = array([1])
         b = array([2])
-        res=vstack([a,b])
-        desired = array([[1],[2]])
-        assert_array_equal(res,desired)
+        res=vstack([a, b])
+        desired = array([[1], [2]])
+        assert_array_equal(res, desired)
 
     def test_2D_array(self):
-        a = array([[1],[2]])
-        b = array([[1],[2]])
-        res=vstack([a,b])
-        desired = array([[1],[2],[1],[2]])
-        assert_array_equal(res,desired)
+        a = array([[1], [2]])
+        b = array([[1], [2]])
+        res=vstack([a, b])
+        desired = array([[1], [2], [1], [2]])
+        assert_array_equal(res, desired)
 
     def test_2D_array2(self):
-        a = array([1,2])
-        b = array([1,2])
-        res=vstack([a,b])
-        desired = array([[1,2],[1,2]])
-        assert_array_equal(res,desired)
+        a = array([1, 2])
+        b = array([1, 2])
+        res=vstack([a, b])
+        desired = array([[1, 2], [1, 2]])
+        assert_array_equal(res, desired)
 
 def test_concatenate_axis_None():
-    a = np.arange(4, dtype=np.float64).reshape((2,2))
+    a = np.arange(4, dtype=np.float64).reshape((2, 2))
     b = list(range(3))
     c = ['x']
     r = np.concatenate((a, a), axis=None)
@@ -185,7 +185,7 @@ def test_concatenate_axis_None():
     r = np.concatenate((a, b, c), axis=None)
     d = array(['0', '1', '2', '3',
                '0', '1', '2', 'x'])
-    assert_array_equal(r,d)
+    assert_array_equal(r, d)
 
 
 def test_concatenate():
