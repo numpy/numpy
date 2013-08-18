@@ -32,10 +32,17 @@ Multiple field selection from a array of structured type currently
 returns a new array and raises a FutureWarning. In 1.9 it will return a
 readonly view.
 
-The numeric and numarray compatibility modules will be removed in 1.9.
+The numpy/oldnumeric and numpy/numarray compatibility modules will be
+removed in 1.9.
 
 Compatibility notes
 ===================
+
+The doc/sphinxext content has been moved into its own github repository,
+and is included in numpy as a submodule. See the instructions in
+doc/HOWTO_BUILD_DOCS.rst.txt for how to access the content.
+
+.. _numpydoc: https://github.com/numpy/numpydoc
 
 The hash function of numpy.void scalars has been changed.  Previously the
 pointer to the data was hashed as an integer.  Now, the hash function uses
