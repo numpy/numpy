@@ -488,14 +488,6 @@ class TestMultiIndexingAutomated(TestCase):
     def test_multidim(self):
         # Automatically test combinations with complex indexes on 2nd (or 1st)
         # spot and the simple ones in one other spot.
-
-        # These refcount check fails, however the error seems not the indexing
-        ## Store refcount of the indexing objects, to make sure we don't leak.
-        #gc.collect()
-        #complex_refs_old = [sys.getrefcount(_) for _ in self.complex_indices]
-        #simple_refs_old = [sys.getrefcount(_) for _ in self.simple_indices]
-        #fill_refs_old = [sys.getrefcount(_) for _ in self.fill_indices]
-
         with warnings.catch_warnings():
             # This is so that np.array(True) is not accepted in a full integer
             # index, when running the file seperatly.
@@ -509,16 +501,6 @@ class TestMultiIndexingAutomated(TestCase):
                     self._check_multi_index(self.a, index)
                     self._check_multi_index(self.b, index)
 
-        ## Test that none of the indexing objects leaked for any of the many
-        ## different tries (testing after every single one seems overly complex)
-        #complex_refs_new = [sys.getrefcount(_) for _ in self.complex_indices]
-        #simple_refs_new = [sys.getrefcount(_) for _ in self.simple_indices]
-        #fill_refs_new = [sys.getrefcount(_) for _ in self.fill_indices]
-        #gc.collect()
-        #assert_equal(complex_refs_new, complex_refs_old)
-        #assert_equal(simple_refs_new, simple_refs_old)
-        #assert_equal(fill_refs_new, fill_refs_old)
-
         # Check very simple item getting:
         self._check_multi_index(self.a, (0,0,0,0))
         self._check_multi_index(self.b, (0,0,0,0))
@@ -531,20 +513,11 @@ class TestMultiIndexingAutomated(TestCase):
 
     def test_1d(self):
         a = np.arange(10)
-
-        # These refcount check fails, however the error seems not the indexing
-        ## Store refcount of the indexing objects, to make sure we don't leak.
-        #gc.collect()
-        #complex_refs_old = [sys.getrefcount(_) for _ in self.complex_indices]
-
         with warnings.catch_warnings():
             warnings.filterwarnings('error', '', DeprecationWarning)
             for index in self.complex_indices:
                 self._check_single_index(a, index)
 
-        #gc.collect()
-        #complex_refs_new = [sys.getrefcount(_) for _ in self.complex_indices]
-        #assert_equal(complex_refs_new, complex_refs_old)
 
 
 if __name__ == "__main__":
