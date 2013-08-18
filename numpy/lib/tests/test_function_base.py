@@ -1288,6 +1288,9 @@ class TestPiecewise(TestCase):
         assert_(y.ndim == 0)
         assert_(y == 0)
 
+        y = piecewise(x, [True, False], [1, 0])
+        assert_(y.ndim == 0)
+        assert_(y == 1)
 
 class TestBincount(TestCase):
     def test_simple(self):
