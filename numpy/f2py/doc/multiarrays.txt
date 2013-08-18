@@ -89,7 +89,7 @@ subroutine foo(l,m,n,a)
   integer :: n
   real*8 dimension(l,m,n),check(rank(a)==3),depend(l,m,n), &
        check(shape(a,2)==l,shape(a,1)==m,shape(a,0)==n):: a
-  optional a 
+  optional a
 end
 Note again that the array a must depend on l,m,n. Then the array a will be
 allocated in the Python C/API module. Not also that
@@ -117,4 +117,3 @@ wrapping Fortran multidimensional arrays with f2py2e.
 
 Regards,
 	Pearu
-

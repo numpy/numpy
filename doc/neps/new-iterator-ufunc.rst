@@ -375,7 +375,7 @@ In general, it should be possible to emulate the current behavior where it
 is desired, but I believe the default should be to produce and manipulate
 memory layouts which will give the best performance.
 
-To support the new cache-friendly behavior, we introduce a new 
+To support the new cache-friendly behavior, we introduce a new
 option ‘K’ (for “keep”) for any ``order=`` parameter.
 
 The proposed ‘order=’ flags become as follows:
@@ -691,7 +691,7 @@ Construction and Destruction
     If copying is allowed, it will make a temporary copy if the data
     is castable.  If ``UPDATEIFCOPY`` is enabled, it will also copy
     the data back with another cast upon iterator destruction.
-    
+
     If ``a_ndim`` is greater than zero, ``axes`` must also be provided.
     In this case, ``axes`` is an ``a_ndim``-sized array of ``op``'s axes.
     A value of -1 in ``axes`` means ``newaxis``. Within the ``axes``
@@ -748,7 +748,7 @@ Construction and Destruction
     for each ``op[i]``.
 
     The parameter ``oa_ndim``, when non-zero, specifies the number of
-    dimensions that will be iterated with customized broadcasting.  
+    dimensions that will be iterated with customized broadcasting.
     If it is provided, ``op_axes`` must also be provided.
     These two parameters let you control in detail how the
     axes of the operand arrays get matched together and iterated.
@@ -778,7 +778,7 @@ Construction and Destruction
     iterator, are:
 
         ``NPY_ITER_C_INDEX``, ``NPY_ITER_F_INDEX``
-        
+
             Causes the iterator to track an index matching C or
             Fortran order. These options are mutually exclusive.
 
@@ -813,7 +813,7 @@ Construction and Destruction
             data type, calculated based on the ufunc type promotion rules.
             The flags for each operand must be set so that the appropriate
             casting is permitted, and copying or buffering must be enabled.
-            
+
             If the common data type is known ahead of time, don't use this
             flag.  Instead, set the requested dtype for all the operands.
 
@@ -936,7 +936,7 @@ Construction and Destruction
             is flagged for writing and is copied, causes the data
             in a copy to be copied back to ``op[i]`` when the iterator
             is destroyed.
-            
+
             If the operand is flagged as write-only and a copy is needed,
             an uninitialized temporary array will be created and then copied
             to back to ``op[i]`` on destruction, instead of doing
@@ -988,7 +988,7 @@ Construction and Destruction
             For use with ``NPY_ITER_ALLOCATE``, this flag disables
             allocating an array subtype for the output, forcing
             it to be a straight ndarray.
-            
+
             TODO: Maybe it would be better to introduce a function
             ``NpyIter_GetWrappedOutput`` and remove this flag?
 
@@ -1009,7 +1009,7 @@ Construction and Destruction
 
     Makes a copy of the given iterator.  This function is provided
     primarily to enable multi-threaded iteration of the data.
-    
+
     *TODO*: Move this to a section about multithreaded iteration.
 
     The recommended approach to multithreaded iteration is to
@@ -1052,7 +1052,7 @@ Construction and Destruction
     for any operand that later has ``NpyIter_UpdateIter`` called on it.
 
     The flags that may be passed in ``op_flags`` are
-    ``NPY_ITER_COPY``, ``NPY_ITER_UPDATEIFCOPY``, 
+    ``NPY_ITER_COPY``, ``NPY_ITER_UPDATEIFCOPY``,
     ``NPY_ITER_NBO``, ``NPY_ITER_ALIGNED``, ``NPY_ITER_CONTIG``.
 
 ``int NpyIter_RemoveAxis(NpyIter *iter, npy_intp axis)``
@@ -1242,7 +1242,7 @@ Construction and Destruction
 
     When using ranged iteration to multithread a reduction, there are
     two possible ways to do the reduction:
-    
+
     If there is a big reduction to a small output, make a temporary
     array initialized to the reduction unit for each thread, then have
     each thread reduce into its temporary.  When that is complete,
@@ -1341,14 +1341,14 @@ Construction and Destruction
     handle their processing manually.  By calling this function
     before removing the axes, you can get the strides for the
     manual processing.
-    
+
     Returns ``NULL`` on error.
 
 ``int NpyIter_GetShape(NpyIter *iter, npy_intp *outshape)``
 
     Returns the broadcast shape of the iterator in ``outshape``.
     This can only be called on an iterator which supports coordinates.
-    
+
     Returns ``NPY_SUCCEED`` or ``NPY_FAIL``.
 
 ``PyArray_Descr **NpyIter_GetDescrArray(NpyIter *iter)``
@@ -1658,7 +1658,7 @@ First, here is the definition of the ``luf`` function.::
 
     def luf(lamdaexpr, *args, **kwargs):
         """Lambda UFunc
-        
+
             e.g.
             c = luf(lambda i,j:i+j, a, b, order='K',
                                 casting='safe', buffersize=8192)
@@ -1721,7 +1721,7 @@ Python iterator protocol.::
 
         it = np.nditer([x,y,out], [],
                     [['readonly'],['readonly'],['writeonly','allocate']])
-        
+
         for (a, b, c) in it:
             addop(a, b, c)
 
@@ -1734,7 +1734,7 @@ Here is the same function, but following the C-style pattern.::
 
         it = np.nditer([x,y,out], [],
                     [['readonly'],['readonly'],['writeonly','allocate']])
-        
+
         while not it.finished:
             addop(it[0], it[1], it[2])
             it.iternext()
@@ -1772,7 +1772,7 @@ of the iterator, designed to help speed up the inner loops, is the flag
 
         it = np.nditer([x,y,out], ['no_inner_iteration'],
                     [['readonly'],['readonly'],['writeonly','allocate']])
-        
+
         for (a, b, c) in it:
             addop(a, b, c)
 
@@ -1809,7 +1809,7 @@ modify ``iter_add`` once again.::
     def iter_add_itview(x, y, out=None):
         it = np.nditer([x,y,out], [],
                     [['readonly'],['readonly'],['writeonly','allocate']])
-        
+
         (a, b, c) = it.itviews
         np.add(a, b, c)
 
@@ -1900,7 +1900,7 @@ easy it was to add an optional output parameter.::
       ....:         it[3] += it[0]
       ....:         it.iternext()
       ....:     return it.operands[3]
-    
+
     In [6]: timeit composite_over_it(image1, image2)
     1 loops, best of 3: 197 ms per loop
 
@@ -1978,4 +1978,3 @@ a dual core machine.::
     In [31]: ne.set_num_threads(1)
     In [32]: timeit composite_over_ne_it(image1,image2)
     10 loops, best of 3: 91.1 ms per loop
-

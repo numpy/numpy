@@ -193,14 +193,14 @@ def parse_loop_header(loophead) :
 
     # Find any exclude variables
     excludes = []
-    
+
     for obj in exclude_re.finditer(loophead):
         span = obj.span()
         # find next newline
         endline = loophead.find('\n', span[1])
         substr = loophead[span[1]:endline]
         ex_names = exclude_vars_re.findall(substr)
-        excludes.append(dict(ex_names))        
+        excludes.append(dict(ex_names))
 
     # generate list of dictionaries, one for each template iteration
     dlist = []

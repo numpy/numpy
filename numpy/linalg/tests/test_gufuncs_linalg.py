@@ -134,7 +134,7 @@ class MatrixGenerator(object):
              [2,1]]
 
         return a, b
-    
+
     def real_symmetric_matrices(self):
         a = [[ 2 ,-1],
              [-1 , 2]]
@@ -159,7 +159,7 @@ class MatrixGenerator(object):
 
         b = [[4+3j,3+2j],
              [2-1j,1+0j]]
-        
+
         return a, b
 
     def real_matrices_vector(self):
@@ -329,15 +329,15 @@ class TestDet(GeneralTestCase, TestCase):
         assert_equal(gula.slogdet(array([[0.0]], dtype=cdouble)), (0.0, -inf))
 
     def test_types(self):
-        for typ in [(single, single), 
-                    (double, double), 
+        for typ in [(single, single),
+                    (double, double),
                     (csingle, single),
                     (cdouble, double)]:
             for x in [ [0], [[0]], [[[0]]] ]:
                 assert_equal(gula.det(array(x, dtype=typ[0])).dtype, typ[0])
                 assert_equal(gula.slogdet(array(x, dtype=typ[0]))[0].dtype, typ[0])
                 assert_equal(gula.slogdet(array(x, dtype=typ[0]))[1].dtype, typ[1])
-        
+
 
 class TestEig(GeneralTestCase, TestCase):
     def do(self, a, b):
@@ -377,7 +377,7 @@ class TestSolve(GeneralTestCase,TestCase):
 
 class TestChosolve(HermitianTestCase, TestCase):
     def do(self, a, b):
-        """ 
+        """
         inner1d not defined for complex types.
         todo: implement alternative test
         """
@@ -427,7 +427,7 @@ class UfuncTestCase(object):
         parameter = self.__class__.parameter
         a = np.array([parameter, parameter], dtype=typ)
         self.do(a)
- 
+
     def test_single(self):
         self._check_for_type(single)
 

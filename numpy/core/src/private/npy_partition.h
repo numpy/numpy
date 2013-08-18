@@ -556,4 +556,3 @@ get_argpartition_func(int type, NPY_SELECTKIND which)
 }
 
 #endif
-

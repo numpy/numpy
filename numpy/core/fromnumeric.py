@@ -106,7 +106,7 @@ def take(a, indices, axis=None, out=None, mode='raise'):
     array([4, 3, 6])
 
     If `indices` is not one dimensional, the output also has these dimensions.
-    
+
     >>> np.take(a, [[0, 1], [2, 3]])
     array([[4, 3],
            [5, 7]])
@@ -2077,9 +2077,9 @@ def amax(a, axis=None, out=None, keepdims=False):
         Element-wise maximum of two arrays, propagating any NaNs.
     fmax :
         Element-wise maximum of two arrays, ignoring any NaNs.
-    argmax : 
+    argmax :
         Return the indices of the maximum values.
-    
+
     nanmin, minimum, fmin
 
     Notes
@@ -2087,9 +2087,9 @@ def amax(a, axis=None, out=None, keepdims=False):
     NaN values are propagated, that is if at least one item is NaN, the
     corresponding max value will be NaN as well. To ignore NaN values
     (MATLAB behavior), please use nanmax.
-    
+
     Don't use `amax` for element-wise comparison of 2 arrays; when
-    ``a.shape[0]`` is 2, ``maximum(a[0], a[1])`` is faster than 
+    ``a.shape[0]`` is 2, ``maximum(a[0], a[1])`` is faster than
     ``amax(a, axis=0)``.
 
     Examples
@@ -2161,7 +2161,7 @@ def amin(a, axis=None, out=None, keepdims=False):
         Element-wise minimum of two arrays, propagating any NaNs.
     fmin :
         Element-wise minimum of two arrays, ignoring any NaNs.
-    argmin : 
+    argmin :
         Return the indices of the minimum values.
 
     nanmax, maximum, fmax
@@ -2171,9 +2171,9 @@ def amin(a, axis=None, out=None, keepdims=False):
     NaN values are propagated, that is if at least one item is NaN, the
     corresponding min value will be NaN as well. To ignore NaN values
     (MATLAB behavior), please use nanmin.
-    
-    Don't use `amin` for element-wise comparison of 2 arrays; when 
-    ``a.shape[0]`` is 2, ``minimum(a[0], a[1])`` is faster than 
+
+    Don't use `amin` for element-wise comparison of 2 arrays; when
+    ``a.shape[0]`` is 2, ``minimum(a[0], a[1])`` is faster than
     ``amin(a, axis=0)``.
 
     Examples
@@ -2913,4 +2913,3 @@ def var(a, axis=None, dtype=None, out=None, ddof=0,
 
     return _methods._var(a, axis=axis, dtype=dtype, out=out, ddof=ddof,
                                 keepdims=keepdims)
-

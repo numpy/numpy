@@ -275,4 +275,3 @@ def hstack(tup):
         return _nx.concatenate(arrs, 0)
     else:
         return _nx.concatenate(arrs, 1)
-

@@ -2199,7 +2199,7 @@ add_newdoc('numpy.core.umath', 'maximum',
         The maximum value of an array along a given axis, propagating any NaNs.
     nanmax :
         The maximum value of an array along a given axis, ignoring any NaNs.
-    
+
     fmin, amin, nanmin
 
     Notes

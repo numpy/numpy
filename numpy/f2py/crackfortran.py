@@ -721,7 +721,7 @@ def _is_intent_callback(vdecl):
 def _resolvenameargspattern(line):
     line = markouterparen(line)
     m1=nameargspattern.match(line)
-    if m1:        
+    if m1:
         return m1.group('name'),m1.group('args'),m1.group('result'), m1.group('bind')
     m1=callnameargspattern.match(line)
     if m1:

@@ -35,4 +35,3 @@ class TestLinspace(TestCase):
         t3 = linspace(0,1,2).dtype
         assert_equal(t1, t2)
         assert_equal(t2, t3)
-

@@ -256,7 +256,7 @@ def test_ndindex():
     assert_equal(x, [()])
 
     x = list(np.ndindex(()))
-    assert_equal(x, [()])    
+    assert_equal(x, [()])
 
 
 if __name__ == "__main__":

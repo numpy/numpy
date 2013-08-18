@@ -46,7 +46,7 @@ Required arguments:
 
 >>> from Numeric import array
 >>> a = array(3)
->>> fun.foo.bar(a)     
+>>> fun.foo.bar(a)
  Hello from foo.bar
  a=           3
  a=           8
@@ -54,7 +54,7 @@ Required arguments:
 8
 >>>
 
-This works nicely with all supported Fortran compilers. 
+This works nicely with all supported Fortran compilers.
 
 However, the F compiler (http://www.fortran.com/F/compilers.html) is
 an exception. Namely, the F compiler is designed to recognize only
@@ -117,7 +117,7 @@ value of `a'.
 4) Build the extension module
 
    f2py -c foo.pyf foo.o --fcompiler=Gnu /opt/F/lib/quickfit.o \
-       /opt/F/lib/libf96.a 
+       /opt/F/lib/libf96.a
 
 This will create the extension module foo.so into the current
 directory.  Notice that you must use Gnu compiler (gcc) for linking.
@@ -137,7 +137,7 @@ Return objects:
 
 >>> foo.bar(3)
 8
->>> 
+>>>
 
 Notice that the F compiled module procedures are called as ordinary
 external procedures. Also I/O seems to be lacking for F compiled

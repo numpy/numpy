@@ -14,13 +14,13 @@ C expertise is required for using this tool.
 Features include:
 
    *** All basic Fortran types are supported:
-         integer[ | *1 | *2 | *4 | *8 ], logical[ | *1 | *2 | *4 | *8 ], 
+         integer[ | *1 | *2 | *4 | *8 ], logical[ | *1 | *2 | *4 | *8 ],
          character[ | *(*) | *1 | *2 | *3 | ... ]
          real[ | *4 | *8 | *16 ], double precision,
          complex[ | *8 | *16 | *32 ]
 
    *** Multi-dimensional arrays of (almost) all basic types.
-       Dimension specifications: 
+       Dimension specifications:
 		 <dim> | <start>:<end> | * | :
 
    *** Supported attributes and statements:
@@ -33,7 +33,7 @@ Features include:
 NEW:     intent(c), threadsafe, fortranname
 
    *** Calling Fortran 77/90/95 subroutines and functions.  Also
-       Fortran 90/95 module subroutines are supported.  Internal 
+       Fortran 90/95 module subroutines are supported.  Internal
        initialization of optional arguments.
 
    *** Accessing COMMON blocks from Python.
@@ -55,7 +55,7 @@ NEW:   Accessing Fortran 90/95 module data.
        dependencies, etc.
 
 NEW: * Automatically generates setup_<modulename>.py for building
-       extension modules using tools from distutils and 
+       extension modules using tools from distutils and
        fortran_support module (SciPy).
 
    *** Automatically generates Makefile for compiling Fortran and C
@@ -72,7 +72,7 @@ NEW: * Installation with distutils.
 
    *** And finally, many bugs are fixed.
 
-More information about f2py, see 
+More information about f2py, see
 
      http://cens.ioc.ee/projects/f2py2e/
 

@@ -361,7 +361,7 @@ _attempt_nocopy_reshape(PyArrayObject *self, int newnd, npy_intp* newdims,
     int oi, oj, ok, ni, nj, nk;
 
     oldnd = 0;
-    /* 
+    /*
      * Remove axes with dimension 1 from the old array. They have no effect
      * but would need special cases since their strides do not matter.
      */

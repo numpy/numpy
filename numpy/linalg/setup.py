@@ -15,9 +15,9 @@ def configuration(parent_package='',top_path=None):
     src_dir = 'lapack_lite'
     lapack_lite_src = [
         os.path.join(src_dir, 'python_xerbla.c'),
-        os.path.join(src_dir, 'zlapack_lite.c'), 
+        os.path.join(src_dir, 'zlapack_lite.c'),
         os.path.join(src_dir, 'dlapack_lite.c'),
-        os.path.join(src_dir, 'blas_lite.c'), 
+        os.path.join(src_dir, 'blas_lite.c'),
         os.path.join(src_dir, 'dlamch.c'),
         os.path.join(src_dir, 'f2c_lite.c'),
         os.path.join(src_dir, 'f2c.h'),

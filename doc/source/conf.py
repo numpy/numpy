@@ -84,7 +84,7 @@ themedir = os.path.join(os.pardir, 'scipy-sphinx-theme', '_theme')
 if not os.path.isdir(themedir):
     raise RuntimeError("Get the scipy-sphinx-theme first, "
                        "via git submodule init && git submodule update")
-    
+
 html_theme = 'scipy'
 html_theme_path = [themedir]
 
@@ -109,7 +109,7 @@ else:
 
 html_additional_pages = {
     'index': 'indexcontent.html',
-} 
+}
 
 html_title = "%s v%s Manual" % (project, version)
 html_static_path = ['_static']

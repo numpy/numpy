@@ -29,8 +29,8 @@ Requirements for SciPy packages
 
 SciPy consists of Python packages, called SciPy packages, that are
 available to Python users via the ``scipy`` namespace. Each SciPy package
-may contain other SciPy packages. And so on. Therefore, the SciPy 
-directory tree is a tree of packages with arbitrary depth and width. 
+may contain other SciPy packages. And so on. Therefore, the SciPy
+directory tree is a tree of packages with arbitrary depth and width.
 Any SciPy package may depend on NumPy packages but the dependence on other
 SciPy packages should be kept minimal or zero.
 
@@ -46,12 +46,12 @@ Their contents are described below.
 The ``setup.py`` file
 '''''''''''''''''''''
 
-In order to add a Python package to SciPy, its build script (``setup.py``) 
-must meet certain requirements. The most important requirement is that the 
-package define a ``configuration(parent_package='',top_path=None)`` function 
-which returns a dictionary suitable for passing to 
-``numpy.distutils.core.setup(..)``. To simplify the construction of 
-this dictionary, ``numpy.distutils.misc_util`` provides the 
+In order to add a Python package to SciPy, its build script (``setup.py``)
+must meet certain requirements. The most important requirement is that the
+package define a ``configuration(parent_package='',top_path=None)`` function
+which returns a dictionary suitable for passing to
+``numpy.distutils.core.setup(..)``. To simplify the construction of
+this dictionary, ``numpy.distutils.misc_util`` provides the
 ``Configuration`` class, described below.
 
 SciPy pure Python package example
@@ -72,13 +72,13 @@ Below is an example of a minimal ``setup.py`` file for a pure SciPy package::
 
 The arguments of the ``configuration`` function specifiy the name of
 parent SciPy package (``parent_package``) and the directory location
-of the main ``setup.py`` script (``top_path``).  These arguments, 
+of the main ``setup.py`` script (``top_path``).  These arguments,
 along with the name of the current package, should be passed to the
 ``Configuration`` constructor.
 
 The ``Configuration`` constructor has a fourth optional argument,
 ``package_path``, that can be used when package files are located in
-a different location than the directory of the ``setup.py`` file. 
+a different location than the directory of the ``setup.py`` file.
 
 Remaining ``Configuration`` arguments are all keyword arguments that will
 be used to initialize attributes of ``Configuration``
@@ -159,12 +159,12 @@ in writing setup scripts:
         sun.dat
       bar/
         car.dat
-      can.dat 
+      can.dat
 
   Path to data files can be a function taking no arguments and
   returning path(s) to data files -- this is a useful when data files
   are generated while building the package. (XXX: explain the step
-  when this function are called exactly) 
+  when this function are called exactly)
 
 + ``config.add_data_dir(data_path)`` --- add directory ``data_path``
   recursively to ``data_files``. The whole directory tree starting at
@@ -174,14 +174,14 @@ in writing setup scripts:
   directory and the second element specifies the path to data directory.
   By default, data directory are copied under package installation
   directory under the basename of ``data_path``. For example,
- 
+
   ::
 
     config.add_data_dir('fun')  # fun/ contains foo.dat bar/car.dat
     config.add_data_dir(('sun','fun'))
     config.add_data_dir(('gun','/full/path/to/fun'))
 
-  will install data files to the following locations 
+  will install data files to the following locations
 
   ::
 
@@ -204,7 +204,7 @@ in writing setup scripts:
   modules of the current package.
 
 + ``config.add_headers(*files)`` --- prepend ``files`` to ``headers``
-  list. By default, headers will be installed under 
+  list. By default, headers will be installed under
   ``<prefix>/include/pythonX.X/<config.name.replace('.','/')>/``
   directory. If ``files`` item is a tuple then it's first argument
   specifies the installation suffix relative to
@@ -216,7 +216,7 @@ in writing setup scripts:
   list. Scripts will be installed under ``<prefix>/bin/`` directory.
 
 + ``config.add_extension(name,sources,*kw)`` --- create and add an
-  ``Extension`` instance to ``ext_modules`` list. The first argument 
+  ``Extension`` instance to ``ext_modules`` list. The first argument
   ``name`` defines the name of the extension module that will be
   installed under ``config.name`` package. The second argument is
   a list of sources. ``add_extension`` method takes also keyword
@@ -269,10 +269,10 @@ in writing setup scripts:
   more information on arguments.
 
 + ``config.have_f77c()`` --- return True if Fortran 77 compiler is
-  available (read: a simple Fortran 77 code compiled succesfully). 
+  available (read: a simple Fortran 77 code compiled succesfully).
 
 + ``config.have_f90c()`` --- return True if Fortran 90 compiler is
-  available (read: a simple Fortran 90 code compiled succesfully). 
+  available (read: a simple Fortran 90 code compiled succesfully).
 
 + ``config.get_version()`` --- return version string of the current package,
   ``None`` if version information could not be detected. This methods
@@ -405,7 +405,7 @@ The header of a typical SciPy ``__init__.py`` is::
   """
   Package docstring, typically with a brief description and function listing.
   """
-  
+
   # py3k related imports
   from __future__ import division, print_function, absolute_import
 
@@ -414,7 +414,7 @@ The header of a typical SciPy ``__init__.py`` is::
   ...
 
   __all__ = [s for s in dir() if not s.startswith('_')]
-  
+
   from numpy.testing import Tester
   test = Tester().test
   bench = Tester().bench
@@ -441,7 +441,7 @@ will compile the ``library`` sources without optimization flags.
 It's recommended to specify only those config_fc options in such a way
 that are compiler independent.
 
-Getting extra Fortran 77 compiler options from source 
+Getting extra Fortran 77 compiler options from source
 -----------------------------------------------------
 
 Some old Fortran codes need special compiler options in order to
@@ -452,7 +452,7 @@ pattern::
   CF77FLAGS(<fcompiler type>) = <fcompiler f77flags>
 
 in the first 20 lines of the source and use the ``f77flags`` for
-specified type of the fcompiler (the first character ``C`` is optional). 
+specified type of the fcompiler (the first character ``C`` is optional).
 
 TODO: This feature can be easily extended for Fortran 90 codes as
 well. Let us know if you would need such a feature.

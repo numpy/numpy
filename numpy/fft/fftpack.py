@@ -273,7 +273,7 @@ def rfft(a, n=None, axis=-1):
     out : complex ndarray
         The truncated or zero-padded input, transformed along the axis
         indicated by `axis`, or the last one if `axis` is not specified.
-        If `n` is even, the length of the transformed axis is ``(n/2)+1``.  
+        If `n` is even, the length of the transformed axis is ``(n/2)+1``.
         If `n` is odd, the length is ``(n+1)/2``.
 
     Raises
@@ -298,13 +298,13 @@ def rfft(a, n=None, axis=-1):
     compute the negative frequency terms, and the length of the transformed
     axis of the output is therefore ``n//2+1``.
 
-    When ``A = rfft(a)`` and fs is the sampling frequency, ``A[0]`` contains 
+    When ``A = rfft(a)`` and fs is the sampling frequency, ``A[0]`` contains
     the zero-frequency term 0*fs, which is real due to Hermitian symmetry.
 
-    If `n` is even, ``A[-1]`` contains the term representing both positive 
-    and negative Nyquist frequency (+fs/2 and -fs/2), and must also be purely 
-    real. If `n` is odd, there is no term at fs/2; ``A[-1]`` contains 
-    the largest positive frequency (fs/2*(n-1)/n), and is complex in the 
+    If `n` is even, ``A[-1]`` contains the term representing both positive
+    and negative Nyquist frequency (+fs/2 and -fs/2), and must also be purely
+    real. If `n` is odd, there is no term at fs/2; ``A[-1]`` contains
+    the largest positive frequency (fs/2*(n-1)/n), and is complex in the
     general case.
 
     If the input `a` contains an imaginary part, it is silently discarded.

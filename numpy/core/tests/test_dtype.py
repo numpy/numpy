@@ -50,8 +50,8 @@ class TestBuiltin(TestCase):
 
     def test_invalid_types(self):
         # Make sure invalid type strings raise a warning.
-        # For now, display a deprecation warning for invalid 
-        # type sizes. In the future this should be changed 
+        # For now, display a deprecation warning for invalid
+        # type sizes. In the future this should be changed
         # to an exception.
 
         assert_warns(DeprecationWarning, np.dtype, 'O3')

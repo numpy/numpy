@@ -975,8 +975,8 @@ iter_ass_subscript(PyArrayIterObject *self, PyObject *ind, PyObject *val)
                 "Cannot delete iterator elements");
         return -1;
     }
-    
-    if (PyArray_FailUnlessWriteable(self->ao, "underlying array") < 0) 
+
+    if (PyArray_FailUnlessWriteable(self->ao, "underlying array") < 0)
         return -1;
 
     if (ind == Py_Ellipsis) {
@@ -1158,9 +1158,9 @@ iter_array(PyArrayIterObject *it, PyObject *NPY_UNUSED(op))
      *  2) underlying array is not contiguous
      *     -- make new 1-d contiguous array with updateifcopy flag set
      *        to copy back to the old array
-     * 
+     *
      *  If underlying array is readonly, then we make the output array readonly
-     *     and updateifcopy does not apply. 
+     *     and updateifcopy does not apply.
      */
     size = PyArray_SIZE(it->ao);
     Py_INCREF(PyArray_DESCR(it->ao));

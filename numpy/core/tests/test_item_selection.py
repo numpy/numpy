@@ -59,7 +59,7 @@ class TestTake(TestCase):
             a.take(b, out=a[:6])
             del a
             assert_(all(sys.getrefcount(o) == 3 for o in objects))
-    
+
 
 if __name__ == "__main__":
     run_module_suite()

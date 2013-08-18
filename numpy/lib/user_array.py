@@ -12,7 +12,7 @@ from numpy.core import (
         bitwise_xor, invert, less, less_equal, not_equal, equal, greater,
         greater_equal, shape, reshape, arange, sin, sqrt, transpose
         )
-from numpy.compat import long 
+from numpy.compat import long
 
 class container(object):
     def __init__(self, data, dtype=None, copy=True):

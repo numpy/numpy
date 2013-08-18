@@ -84,4 +84,3 @@ Convenience class
    :toctree: generated/
 
    chararray
-

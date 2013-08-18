@@ -122,7 +122,7 @@ class NumpyOutputChecker(doctest.OutputChecker):
         if not ret:
             if "#random" in want:
                 return True
-            
+
             # it would be useful to normalize endianness so that
             # bigendian machines don't fail all the tests (and there are
             # actually some bigendian examples in the doctests). Let's try

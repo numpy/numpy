@@ -32,4 +32,3 @@ class TestRegression(TestCase):
         x = np.asmatrix(np.random.uniform(0,1,(3,3)))
         self.assertEqual(x.std().shape, ())
         self.assertEqual(x.argmax().shape, ())
-

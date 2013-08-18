@@ -121,4 +121,3 @@ def _std(a, axis=None, dtype=None, out=None, ddof=0, keepdims=False):
         ret = ret.dtype.type(um.sqrt(ret))
 
     return ret
-

@@ -4245,4 +4245,3 @@ PyArray_PrepareThreeRawArrayIter(int ndim, npy_intp *shape,
     *out_ndim = ndim;
     return 0;
 }
-

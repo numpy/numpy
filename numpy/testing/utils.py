@@ -1580,4 +1580,3 @@ def gen_alignment_data(dtype=float32, type='binary', max_size=24):
 
 class IgnoreException(Exception):
     "Ignoring this exception due to disabled feature"
-

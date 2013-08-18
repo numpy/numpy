@@ -4,7 +4,7 @@
                   F2PY Users Guide and Reference Manual
 //////////////////////////////////////////////////////////////////////
 
-:Author: Pearu Peterson 
+:Author: Pearu Peterson
 :Contact: pearu@cens.ioc.ee
 :Web site: http://cens.ioc.ee/projects/f2py2e/
 :Date: $Date: 2005/04/02 10:03:26 $
@@ -97,7 +97,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
     a : input rank-1 array('d') with bounds (n)
   Optional arguments:
     n := len(a) input int
-  
+
   >>> a=Numeric.zeros(8,'d')
   >>> fib1.fib(a)
   >>> print a
@@ -125,7 +125,7 @@ Python the Fortran subroutine ``FIB`` is accessible via ``fib1.fib``::
       Traceback (most recent call last):
         File "<stdin>", line 1, in ?
       fib.error: (len(a)>=n) failed for 1st keyword n
-      >>> 
+      >>>
 
     This demonstrates one of the useful features in F2PY, that it,
     F2PY implements basic compatibility checks between related
@@ -236,8 +236,8 @@ In Python::
     n : input int
   Return objects:
     a : rank-1 array('d') with bounds (n)
-  
-  >>> print fib2.fib(8)     
+
+  >>> print fib2.fib(8)
   [  0.   1.   1.   2.   3.   5.   8.  13.]
 
 .. topic:: Comments
@@ -292,8 +292,8 @@ previous case::
     n : input int
   Return objects:
     a : rank-1 array('d') with bounds (n)
-  
-  >>> print fib3.fib(8)     
+
+  >>> print fib3.fib(8)
   [  0.   1.   1.   2.   3.   5.   8.  13.]
 
 
@@ -405,17 +405,17 @@ Type declarations
 
   ::
 
-    <typespec> := byte | character [<charselector>] 
+    <typespec> := byte | character [<charselector>]
                | complex [<kindselector>] | real [<kindselector>]
-               | double complex | double precision 
+               | double complex | double precision
                | integer [<kindselector>] | logical [<kindselector>]
 
-    <charselector> := * <charlen> 
+    <charselector> := * <charlen>
                    | ( [len=] <len> [ , [kind=] <kind>] )
                    | ( kind= <kind> [ , len= <len> ] )
     <kindselector> := * <intlen> | ( [kind=] <kind> )
 
-    <entitydecl> := <name> [ [ * <charlen> ] [ ( <arrayspec> ) ] 
+    <entitydecl> := <name> [ [ * <charlen> ] [ ( <arrayspec> ) ]
                           | [ ( <arrayspec> ) ] * <charlen> ]
                          | [ / <init_expr> / | = <init_expr> ] \
                            [ , <entitydecl> ]
@@ -425,7 +425,7 @@ Type declarations
   + ``<attrspec>`` is a comma separated list of attributes_;
 
   + ``<arrayspec>`` is a comma separated list of dimension bounds;
-  
+
   + ``<init_expr>`` is a `C expression`__.
 
   + ``<intlen>`` may be negative integer for ``integer`` type
@@ -463,7 +463,7 @@ Use statements:
      <rename_list> := <local_name> => <use_name> [ , <rename_list> ]
 
   Currently F2PY uses ``use`` statement only for linking call-back
-  modules and ``external`` arguments (call-back functions), see 
+  modules and ``external`` arguments (call-back functions), see
   `Call-back arguments`_.
 
 Common block statements:
@@ -570,10 +570,10 @@ __ external_
       corresponding prototype::
 
         extern <return type> FUNC_F(<routine name>,<ROUTINE NAME>)(<callprotoargument>);
- 
+
   + ``fortranname [<acctual Fortran/C routine name>]``
       You can use arbitrary ``<routine name>`` for a given Fortran/C
-      function. Then you have to specify 
+      function. Then you have to specify
       ``<acctual Fortran/C routine name>`` with this statement.
 
       If ``fortranname`` statement is used without
@@ -605,7 +605,7 @@ __ external_
       module methods ``PyMethodDef``-array. It must be a
       comma-separated list of C arrays (see `Extending and Embedding`__
       Python documentation for details).
-      ``pymethoddef`` statement can be used only inside 
+      ``pymethoddef`` statement can be used only inside
       ``python module`` block.
 
   __ http://www.python.org/doc/current/ext/ext.html
@@ -626,7 +626,7 @@ The following attributes are used by F2PY:
 
   For an optional array argument, all its dimensions must be bounded.
 
-``required`` 
+``required``
   The corresponding argument is considered as a required one. This is
   default. You need to specify ``required`` only if there is a need to
   disable automatic ``optional`` setting when ``<init_expr>`` is used.
@@ -691,7 +691,7 @@ The following attributes are used by F2PY:
       argument like in the following example::
 
         integer intent(hide),depend(a) :: n = len(a)
-        real intent(in),dimension(n) :: a      
+        real intent(in),dimension(n) :: a
 
   + ``c``
       The argument is treated as a C scalar or C array argument.  In
@@ -809,7 +809,7 @@ The following attributes are used by F2PY:
 
 ``external``
   The corresponding argument is a function provided by user. The
-  signature of this so-called call-back function can be defined 
+  signature of this so-called call-back function can be defined
 
   - in ``__user__`` module block,
   - or by demonstrative (or real, if the signature file is a real Fortran
@@ -964,12 +964,12 @@ All wrappers (to Fortran/C routines or to common blocks or to Fortran
 90 module data) generated by F2PY are exposed to Python as ``fortran``
 type objects.  Routine wrappers are callable ``fortran`` type objects
 while wrappers to Fortran data have attributes referring to data
-objects. 
+objects.
 
 All ``fortran`` type object have attribute ``_cpointer`` that contains
 CObject referring to the C pointer of the corresponding Fortran/C
 function or variable in C level. Such CObjects can be used as an
-callback argument of F2PY generated functions to bypass Python C/API 
+callback argument of F2PY generated functions to bypass Python C/API
 layer of calling Python functions from Fortran or C when the
 computational part of such functions is implemented in C or Fortran
 and wrapped with F2PY (or any other tool capable of providing CObject
@@ -1047,7 +1047,7 @@ expects an array version of a string in order to *in situ* changes to
 be effective.
 
 .. topic:: Example
-  
+
   Consider the following `Fortran 77 code`__:
 
   .. include:: string.f
@@ -1439,7 +1439,7 @@ distinguished by the usage of ``-c`` and ``-h`` switches:
 
       "filename.ext"
       <filename.ext>
-    
+
     The include statement is inserted just before the wrapper
     functions. This feature enables using arbitrary C functions
     (defined in ``<includefile>``) in F2PY generated wrappers.
@@ -1457,7 +1457,7 @@ distinguished by the usage of ``-c`` and ``-h`` switches:
   ``--include-paths <path1>:<path2>:..``
     Search include files from given directories.
 
-  ``--help-link [<list of resources names>]`` 
+  ``--help-link [<list of resources names>]``
     List system resources found by ``numpy_distutils/system_info.py``.
     For example, try ``f2py --help-link lapack_opt``.
 
@@ -1490,9 +1490,9 @@ distinguished by the usage of ``-c`` and ``-h`` switches:
   ``--fcompiler=<Vendor>``
     Specify Fortran compiler type by vendor.
   ``--f77exec=<path>``
-    Specify the path to F77 compiler 
+    Specify the path to F77 compiler
   ``--fcompiler-exec=<path>`` [depreciated]
-    Specify the path to F77 compiler 
+    Specify the path to F77 compiler
   ``--f90exec=<path>``
     Specify the path to F90 compiler
   ``--f90compiler-exec=<path>`` [depreciated]
@@ -1553,7 +1553,7 @@ distinguished by the usage of ``-c`` and ``-h`` switches:
 Other options:
 
 ``-m <modulename>``
-  Name of an extension module. Default is ``untitled``. Don't use this option 
+  Name of an extension module. Default is ``untitled``. Don't use this option
   if a signature file (*.pyf) is used.
 ``--[no-]lower``
   Do [not] lower the cases in ``<fortran files>``.  By default,
@@ -1602,7 +1602,7 @@ The following functions are provided by the ``f2py2e`` module:
 
 ``compile(source, modulename='untitled', extra_args='', verbose=1, source_fn=None)``
 
-  Build extension module from Fortran 77 source string ``source``. 
+  Build extension module from Fortran 77 source string ``source``.
   Return 0 if successful.
   Note that this function actually calls ``f2py -c ..`` from shell to
   ensure safety of the current Python process.
@@ -1618,7 +1618,7 @@ Using ``numpy_distutils``
 ``numpy_distutils`` is part of the SciPy_ project and aims to extend
 standard Python ``distutils`` to deal with Fortran sources and F2PY
 signature files, e.g. compile Fortran sources, call F2PY to construct
-extension modules, etc. 
+extension modules, etc.
 
 .. topic:: Example
 
@@ -1664,7 +1664,7 @@ extension modules, etc.
   ``config_fc``
     to change Fortran compiler options
 
-  as well as ``build_ext`` and  ``build_clib`` commands are enhanced 
+  as well as ``build_ext`` and  ``build_clib`` commands are enhanced
   to support Fortran sources.
 
   Run
@@ -1679,7 +1679,7 @@ extension modules, etc.
   can choose different Fortran compilers by using ``build_ext``
   command option ``--fcompiler=<Vendor>``. Here ``<Vendor>`` can be one of the
   following names::
- 
+
     absoft sun mips intel intelv intele intelev nag compaq compaqv gnu vast pg hpux
 
   See ``numpy_distutils/fcompiler.py`` for up-to-date list of
@@ -1712,7 +1712,7 @@ extension modules, etc.
   command option ``--fcompiler=<Vendor>`` or by defining environment
   variable ``FC_VENDOR=<Vendor>``. Here ``<Vendor>`` can be one of the
   following names::
- 
+
     Absoft Sun SGI Intel Itanium NAG Compaq Digital Gnu VAST PG
 
   See ``numpy_distutils/command/build_flib.py`` for up-to-date list of
@@ -1740,7 +1740,7 @@ wraps the C library function ``system()``::
 In Python:
 
 .. include:: spam_session.dat
-   :literal:  
+   :literal:
 
 Modifying the dictionary of a F2PY generated module
 ===================================================

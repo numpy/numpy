@@ -72,7 +72,7 @@ class Extension(old_Extension):
         self.module_dirs = module_dirs or []
         self.extra_f77_compile_args = extra_f77_compile_args or []
         self.extra_f90_compile_args = extra_f90_compile_args or []
-        
+
         return
 
     def has_cxx_sources(self):

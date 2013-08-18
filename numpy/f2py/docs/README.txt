@@ -21,10 +21,10 @@ __ FAQ.html
 .. topic:: NEWS!!!
 
   January 5, 2006
-  
+
     WARNING -- these notes are out of date! The package structure for NumPy and
     SciPy has changed considerably.  Much of this information is now incorrect.
-  
+
   January 30, 2005
 
     Latest F2PY release (version 2.45.241_1926).
@@ -47,7 +47,7 @@ __ FAQ.html
   __ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/HISTORY.txt.diff?r1=1.137&r2=1.131&f=h
 
   September 25, 2004
-    Latest F2PY release (version 2.43.239_1806). 
+    Latest F2PY release (version 2.43.239_1806).
     Support for ``ENTRY`` statement. New attributes:
     ``intent(inplace)``, ``intent(callback)``. Supports Numarray 1.1.
     Introduced ``-*- fix -*-`` header content. Improved ``PARAMETER`` support.
@@ -150,7 +150,7 @@ Here follows a more detailed list of F2PY features:
       <dim> | <start>:<end> | * | :
 
   + Attributes and statements::
-     
+
       intent([ in | inout | out | hide | in,out | inout,out | c |
                copy | cache | callback | inplace | aux ])
       dimension(<dimspec>)
@@ -249,7 +249,7 @@ Unpack the source file, change to directrory ``F2PY-?-???/`` and run
 
 The F2PY installation installs a Python package ``f2py2e`` to your
 Python ``site-packages`` directory and a script ``f2py`` to your
-Python executable path. 
+Python executable path.
 
 See also Installation__ section in `F2PY FAQ`_.
 
@@ -287,7 +287,7 @@ __ hello.f
 2) Run
 
   ::
-  
+
     f2py -c -m hello hello.f
 
   This will build an extension module ``hello.so`` (or ``hello.sl``,
@@ -299,12 +299,12 @@ __ hello.f
     >>> import hello
     >>> print hello.__doc__
     >>> print hello.foo.__doc__
-    >>> hello.foo(4)     
+    >>> hello.foo(4)
      Hello from Fortran!
      a= 4
-    >>> 
+    >>>
 
-If the above works, then you can try out more thorough 
+If the above works, then you can try out more thorough
 `F2PY unit tests`__ and read the `F2PY Users Guide and Reference Manual`_.
 
 __ FAQ.html#q-how-to-test-if-f2py-is-working-correctly
@@ -354,7 +354,7 @@ __ http://cens.ioc.ee/cgi-bin/cvsweb/python/f2py2e/docs/HISTORY.txt?rev=HEAD&con
 A mailing list f2py-users@cens.ioc.ee is open for F2PY releated
 discussion/questions/etc.
 
-* `Subscribe..`__ 
+* `Subscribe..`__
 * `Archives..`__
 
 __ http://cens.ioc.ee/mailman/listinfo/f2py-users
@@ -412,9 +412,9 @@ __ http://jrfonseca.dyndns.org/debian/
 * `American National Standard Programming Language FORTRAN ANSI(R) X3.9-1978`__
 * `J3`_ -- The US Fortran standards committee.
 * SWIG_ -- A software development tool that connects programs written
-  in C and C++ with a variety of high-level programming languages. 
+  in C and C++ with a variety of high-level programming languages.
 * `Mathtools.net`_ -- A technical computing portal for all scientific
-  and engineering needs. 
+  and engineering needs.
 
 .. __: http://www.fortran.com/fortran/F77_std/rjcnf.html
 
@@ -445,7 +445,7 @@ __ http://jrfonseca.dyndns.org/debian/
 .. _distutils: http://www.python.org/sigs/distutils-sig/
 .. _Numerical Python: http://www.numpy.org/
 .. _Pyfort: http://pyfortran.sourceforge.net/
-.. _Scientific Python: 
+.. _Scientific Python:
    http://starship.python.net/crew/hinsen/scientific.html
 .. _The Fortran Company: http://www.fortran.com/fortran/
 .. _J3: http://www.j3-fortran.org/

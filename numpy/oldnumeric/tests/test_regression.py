@@ -9,4 +9,3 @@ class TestRegression(TestCase):
         """Ticket #552"""
         from numpy.oldnumeric.random_array import randint
         randint(0,50,[2,3])
-

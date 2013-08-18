@@ -7,4 +7,3 @@ Mathematical functions with automatic domain (:mod:`numpy.emath`)
           available after :mod:`numpy` is imported.
 
 .. automodule:: numpy.lib.scimath
-

@@ -3,7 +3,7 @@ No-frill version:
 	* Clone bento::
 
 		git clone git://github.com/cournape/Bento.git bento-git
-	
+
 	* Bootstrap bento::
 
 		cd bento-git && python bootstrap.py

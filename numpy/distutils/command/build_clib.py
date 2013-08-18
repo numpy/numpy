@@ -104,7 +104,7 @@ class build_clib(old_build_clib):
 
         if self.inplace:
             for l in  self.distribution.installed_libraries:
-                libname = self.compiler.library_filename(l.name) 
+                libname = self.compiler.library_filename(l.name)
                 source = os.path.join(self.build_clib, libname)
                 target =  os.path.join(l.target_dir, libname)
                 self.mkpath(l.target_dir)

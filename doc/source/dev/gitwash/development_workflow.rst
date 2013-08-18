@@ -16,7 +16,7 @@ Basic workflow
 
 In short:
 
-1. Update your ``master`` branch if it's not up to date. 
+1. Update your ``master`` branch if it's not up to date.
    Then start a new *feature branch* for each set of edits that you do.
    See :ref:`below <making-a-new-feature-branch>`.
 
@@ -100,7 +100,7 @@ In git >= 1.7 you can ensure that the link is correctly set by using the
 ``--set-upstream`` option::
 
    git push --set-upstream origin my-new-feature
-   
+
 From now on git_ will know that ``my-new-feature`` is related to the
 ``my-new-feature`` branch in your own github_ repo.
 
@@ -144,7 +144,7 @@ In more detail
 
 #. Check what the actual changes are with ``git diff`` (`git diff`_).
 #. Add any new files to version control ``git add new_file_name`` (see
-   `git add`_). 
+   `git add`_).
 #. To commit all modified files into the local copy of your repo,, do
    ``git commit -am 'A commit message'``.  Note the ``-am`` options to
    ``commit``. The ``m`` flag just signals that you're going to type a
@@ -155,7 +155,7 @@ In more detail
    `tangled working copy problem`_. The section on
    :ref:`commit messages <writing-the-commit-message>` below might also be useful.
 #. To push the changes up to your forked repo on github_, do a ``git
-   push`` (see `git push`). 
+   push`` (see `git push`).
 
 
 .. _writing-the-commit-message:

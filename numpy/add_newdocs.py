@@ -2648,7 +2648,7 @@ add_newdoc('numpy.core.multiarray', 'ndarray', ('flags',
       or the ultimate owner of the memory exposes a writeable buffer
       interface or is a string.
 
-    Arrays can be both C-style and Fortran-style contiguous simultaneously. 
+    Arrays can be both C-style and Fortran-style contiguous simultaneously.
     This is clear for 1-dimensional arrays, but can also be true for higher
     dimensional arrays.
 

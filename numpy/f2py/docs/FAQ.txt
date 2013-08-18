@@ -238,7 +238,7 @@ constructs in future. But note that the task in non-trivial and may
 require the next edition of F2PY for which I don't have resources to
 work with at the moment.
 
-Jeffrey Hagelberg from LLNL has made progress on adding 
+Jeffrey Hagelberg from LLNL has made progress on adding
 support for derived types to f2py. He writes:
 
   At this point, I have a version of f2py that supports derived types
@@ -543,7 +543,7 @@ __ http://www.met.ed.ac.uk/~cory/PyARTS/
 
 + `Python interface to PSPLINE`__, a collection of Spline and
   Hermite interpolation tools for 1D, 2D, and 3D datasets on
-  rectilinear grids. 
+  rectilinear grids.
 
 __ http://pypspline.sourceforge.net
 
@@ -572,11 +572,11 @@ Here are some comments people have posted to f2py mailing list and c.l.py:
 
 + Fernando Perez: Anyway, many many thanks for this amazing tool.
 
-  I haven't used pyfort, but I can definitely vouch for the amazing quality of 
-  f2py.  And since f2py is actively used by numpy, it won't go unmaintained.  
+  I haven't used pyfort, but I can definitely vouch for the amazing quality of
+  f2py.  And since f2py is actively used by numpy, it won't go unmaintained.
   It's quite impressive, and very easy to use.
 
-+ Kevin Mueller: First off, thanks to those responsible for F2PY; 
++ Kevin Mueller: First off, thanks to those responsible for F2PY;
   its been an integral tool of my research for years now.
 
 + David Linke: Best regards and thanks for the great tool!

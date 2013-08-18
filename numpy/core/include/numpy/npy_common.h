@@ -952,4 +952,3 @@ typedef npy_int64 npy_datetime;
 /* End of typedefs for numarray style bit-width names */
 
 #endif
-

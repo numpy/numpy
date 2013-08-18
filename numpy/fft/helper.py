@@ -125,8 +125,8 @@ def fftfreq(n, d=1.0):
     """
     Return the Discrete Fourier Transform sample frequencies.
 
-    The returned float array `f` contains the frequency bin centers in cycles 
-    per unit of the sample spacing (with zero at the start).  For instance, if 
+    The returned float array `f` contains the frequency bin centers in cycles
+    per unit of the sample spacing (with zero at the start).  For instance, if
     the sample spacing is in seconds, then the frequency unit is cycles/second.
 
     Given a window length `n` and a sample spacing `d`::
@@ -140,7 +140,7 @@ def fftfreq(n, d=1.0):
         Window length.
     d : scalar, optional
         Sample spacing (inverse of the sampling rate). Defaults to 1.
-        
+
     Returns
     -------
     f : ndarray
@@ -172,11 +172,11 @@ def fftfreq(n, d=1.0):
 
 def rfftfreq(n, d=1.0):
     """
-    Return the Discrete Fourier Transform sample frequencies 
+    Return the Discrete Fourier Transform sample frequencies
     (for usage with rfft, irfft).
 
-    The returned float array `f` contains the frequency bin centers in cycles 
-    per unit of the sample spacing (with zero at the start).  For instance, if 
+    The returned float array `f` contains the frequency bin centers in cycles
+    per unit of the sample spacing (with zero at the start).  For instance, if
     the sample spacing is in seconds, then the frequency unit is cycles/second.
 
     Given a window length `n` and a sample spacing `d`::

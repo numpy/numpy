@@ -603,4 +603,3 @@ def common_type(*arrays):
         return array_type[1][precision]
     else:
         return array_type[0][precision]
-

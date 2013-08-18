@@ -801,7 +801,7 @@ class TestUfunc(TestCase):
 
         # no output type should raise TypeError
         assert_raises(TypeError, test_add, a, b)
-    
+
     def test_operand_flags(self):
         a = np.arange(16, dtype='l').reshape(4,4)
         b = np.arange(9, dtype='l').reshape(3,3)
@@ -814,7 +814,7 @@ class TestUfunc(TestCase):
         assert_equal(a, 3)
         opflag_tests.inplace_add(a, [3, 4])
         assert_equal(a, 10)
-    
+
     def test_struct_ufunc(self):
         import numpy.core.struct_ufunc_test as struct_ufunc
 
@@ -885,12 +885,12 @@ class TestUfunc(TestCase):
         b = np.array([100,200,300])
         np.add.at(a, (slice(None), slice(None), [1,2,1]), b)
         assert_equal(a,
-            [[[0,401,202], 
-              [3,404,205], 
+            [[[0,401,202],
+              [3,404,205],
               [6,407,208]],
-              
-             [[9, 410,211],  
-              [12,413,214], 
+
+             [[9, 410,211],
+              [12,413,214],
               [15,416,217]],
 
              [[18,419,220],
@@ -906,12 +906,12 @@ class TestUfunc(TestCase):
         b = np.array([100,200,300])
         np.add.at(a, (slice(None), [1,2,1], slice(None)), b)
         assert_equal(a,
-            [[[0,  1,  2  ], 
-              [203,404,605], 
+            [[[0,  1,  2  ],
+              [203,404,605],
               [106,207,308]],
-              
-             [[9,  10, 11 ],  
-              [212,413,614], 
+
+             [[9,  10, 11 ],
+              [212,413,614],
               [115,216,317]],
 
              [[18, 19, 20 ],
@@ -927,12 +927,12 @@ class TestUfunc(TestCase):
         b = np.array([100,200,300])
         np.add.at(a, ([1,2,1], 0, slice(None)), b)
         assert_equal(a,
-            [[[0,  1,  2], 
-              [3,  4,  5], 
+            [[[0,  1,  2],
+              [3,  4,  5],
               [6,  7,  8]],
-              
-             [[209,410,611],  
-              [12,  13, 14], 
+
+             [[209,410,611],
+              [12,  13, 14],
               [15,  16, 17]],
 
              [[118,219,320],
@@ -943,12 +943,12 @@ class TestUfunc(TestCase):
         b = np.array([100,200,300])
         np.add.at(a, (slice(None), slice(None), slice(None)), b)
         assert_equal(a,
-            [[[100,201,302], 
-              [103,204,305], 
+            [[[100,201,302],
+              [103,204,305],
               [106,207,308]],
-              
-             [[109,210,311],  
-              [112,213,314], 
+
+             [[109,210,311],
+              [112,213,314],
               [115,216,317]],
 
              [[118,219,320],
