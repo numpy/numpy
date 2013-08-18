@@ -99,6 +99,7 @@ PyArray_IntpConverter(PyObject *obj, PyArray_Dims *seq)
             /*
              * After the deprecation the PyNumber_Check could be replaced
              * by PyIndex_Check.
+             * FIXME 1.9 ?
              */
             len = 1;
         }
@@ -922,8 +923,8 @@ PyArray_IntpFromIndexSequence(PyObject *seq, npy_intp *vals, npy_intp maxvals)
                 return -1;
             }
 
-
             vals[i] = PyArray_PyIntAsIntp(op);
+            Py_DECREF(op);
             if(vals[i] == -1) {
                 err = PyErr_Occurred();
                 if (err &&
