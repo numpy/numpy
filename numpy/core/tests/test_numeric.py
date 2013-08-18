@@ -1546,6 +1546,20 @@ class TestCreationFuncs(TestCase):
         self.check_function(np.full, 0)
         self.check_function(np.full, 1)
 
+    def test_for_reference_leak(self):
+        # Make sure we have an object for reference
+        dim = 1
+        beg = sys.getrefcount(dim)
+        np.zeros([dim]*10)
+        assert_(sys.getrefcount(dim) == beg)
+        np.ones([dim]*10)
+        assert_(sys.getrefcount(dim) == beg)
+        np.empty([dim]*10)
+        assert_(sys.getrefcount(dim) == beg)
+        np.full([dim]*10, 0)
+        assert_(sys.getrefcount(dim) == beg)
+
+
 
 class TestLikeFuncs(TestCase):
     '''Test ones_like, zeros_like, empty_like and full_like'''
